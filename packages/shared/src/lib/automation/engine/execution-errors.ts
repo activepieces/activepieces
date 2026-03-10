@@ -29,6 +29,12 @@ export class ConnectionNotFoundError extends ExecutionError {
     }
 }
 
+export class LogSizeExceededError extends ExecutionError {
+    constructor(cause?: unknown) {
+        super('LogSizeExceededError', formatMessage('Flow run data size exceeded the maximum allowed size'), ExecutionErrorType.ENGINE, cause)
+    }
+}
+
 export class ConnectionLoadingError extends ExecutionError {
     constructor(connectionName: string, cause?: unknown) {
         super('ConnectionLoadingFailure', formatMessage(`Failed to load connection (${connectionName})`), ExecutionErrorType.USER, cause)

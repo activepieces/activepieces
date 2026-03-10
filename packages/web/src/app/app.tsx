@@ -1,9 +1,5 @@
 import { ErrorCode, isNil } from '@activepieces/shared';
 import {
-  DefaultErrorFunction,
-  SetErrorFunction,
-} from '@sinclair/typebox/errors';
-import {
   MutationCache,
   QueryClient,
   QueryClientProvider,
@@ -36,15 +32,6 @@ const queryClient = new QueryClient({
     },
   }),
 });
-
-let typesFormatsAdded = false;
-
-if (!typesFormatsAdded) {
-  SetErrorFunction((error) => {
-    return error?.schema?.errorMessage ?? DefaultErrorFunction(error);
-  });
-  typesFormatsAdded = true;
-}
 
 export function App() {
   const { i18n } = useTranslation();

@@ -11,13 +11,14 @@ export enum SystemJobName {
     DELETE_FLOW = 'delete-flow',
     UPDATE_FLOW_STATUS = 'update-flow-status',
     AI_CREDIT_UPDATE_CHECK = 'ai-credit-update-check',
+    HARD_DELETE_PROJECT = 'hard-delete-project',
     MIGRATE_FLOWS_MODEL = 'migrate-flows-model',
+    RESET_STUCK_FLOWS = 'reset-stuck-flows',
 }
 
 type DeleteFlowDurableSystemJobData =  {
     flow: Flow
     preDeleteDone: boolean
-    dbDeleteDone: boolean
 }
 
 type UpdateFlowStatusDurableSystemJobData =  {
@@ -30,6 +31,12 @@ type UpdateFlowStatusDurableSystemJobData =  {
 type AiCreditUpdateCheckSystemJobData = {
     apiKeyHash: string
     platformId: string
+}
+
+type HardDeleteProjectSystemJobData = {
+    projectId: ProjectId
+    platformId: PlatformId
+    preDeletedFlowIds: FlowId[]
 }
 
 type MigrateFlowsModelSystemJobData = {
@@ -48,7 +55,9 @@ type SystemJobDataMap = {
     [SystemJobName.DELETE_FLOW]: DeleteFlowDurableSystemJobData
     [SystemJobName.UPDATE_FLOW_STATUS]: UpdateFlowStatusDurableSystemJobData
     [SystemJobName.AI_CREDIT_UPDATE_CHECK]: AiCreditUpdateCheckSystemJobData
+    [SystemJobName.HARD_DELETE_PROJECT]: HardDeleteProjectSystemJobData
     [SystemJobName.MIGRATE_FLOWS_MODEL]: MigrateFlowsModelSystemJobData
+    [SystemJobName.RESET_STUCK_FLOWS]: Record<string, never>
 }
 
 export type SystemJobData<T extends SystemJobName = SystemJobName> = T extends SystemJobName ? SystemJobDataMap[T] : never

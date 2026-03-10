@@ -6,8 +6,7 @@ import {
   ProjectType,
   UserInvitationWithLink,
 } from '@activepieces/shared';
-import { typeboxResolver } from '@hookform/resolvers/typebox';
-import { Static, Type } from '@sinclair/typebox';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { CopyIcon } from 'lucide-react';
@@ -15,6 +14,7 @@ import { useState, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
+import { z } from 'zod';
 
 import { TagInput } from '@/components/custom/tag-input';
 import { useEmbedding } from '@/components/providers/embed-provider';
@@ -49,27 +49,20 @@ import { userInvitationsHooks } from '../../hooks/user-invitations-hooks';
 
 import { UserSuggestionsPopover } from './user-suggestions-popover';
 
-const FormSchema = Type.Object({
-  emails: Type.Array(Type.String(), {
-    errorMessage: t('Please enter at least one email address'),
-    minItems: 1,
+const FormSchema = z.object({
+  emails: z
+    .array(z.string())
+    .min(1, t('Please enter at least one email address')),
+  type: z.nativeEnum(InvitationType, {
+    message: t('Please select invitation type'),
   }),
-  type: Type.Enum(InvitationType, {
-    errorMessage: t('Please select invitation type'),
-    required: true,
+  platformRole: z.nativeEnum(PlatformRole, {
+    message: t('Please select platform role'),
   }),
-  platformRole: Type.Enum(PlatformRole, {
-    errorMessage: t('Please select platform role'),
-    required: true,
-  }),
-  projectRole: Type.Optional(
-    Type.String({
-      required: true,
-    }),
-  ),
+  projectRole: z.string().optional(),
 });
 
-type FormSchema = Static<typeof FormSchema>;
+type FormSchema = z.infer<typeof FormSchema>;
 
 export const InviteUserDialog = ({
   open,
@@ -141,7 +134,7 @@ export const InviteUserDialog = ({
   });
 
   const form = useForm<FormSchema>({
-    resolver: typeboxResolver(FormSchema),
+    resolver: zodResolver(FormSchema),
     defaultValues: {
       emails: [],
       type: isPlatformPage

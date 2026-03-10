@@ -1,10 +1,8 @@
 import { ProjectResourceType, securityAccess } from '@activepieces/server-common'
 import { FlowVersionMetadata, ListFlowVersionRequest, MigrateFlowsModelRequest, PrincipalType, SeekPage } from '@activepieces/shared'
-import {
-    FastifyPluginAsyncTypebox,
-    Type,
-} from '@fastify/type-provider-typebox'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
+import { z } from 'zod'
 import { flowVersionMigrationService } from '../flow-version/flow-version-migration.service'
 import { flowVersionService } from '../flow-version/flow-version.service'
 import { FlowEntity } from './flow.entity'
@@ -12,7 +10,7 @@ import { flowService } from './flow.service'
 
 const DEFAULT_PAGE_SIZE = 10
 
-export const flowVersionController: FastifyPluginAsyncTypebox = async (fastify) => {
+export const flowVersionController: FastifyPluginAsyncZod = async (fastify) => {
 
     fastify.get('/:flowId/versions', ListVersionParams, async (request) => {
         const flow = await flowService(request.log).getOneOrThrow({
@@ -55,8 +53,8 @@ const ListVersionParams = {
         }), 
     },
     schema: {
-        params: Type.Object({
-            flowId: Type.String(),
+        params: z.object({
+            flowId: z.string(),
         }),
         querystring: ListFlowVersionRequest,
         response: {

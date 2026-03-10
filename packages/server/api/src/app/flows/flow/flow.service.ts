@@ -81,9 +81,10 @@ export const flowService = (log: FastifyBaseLogger) => ({
             },
         })
             .catch((e) =>
-                log.error({ err: e }, '[flowService#create] Failed to track project telemetry'),
+                log.error({ err: e }, 'Failed to track project telemetry'),
             )
 
+        log.info({ flowId: savedFlow.id, projectId, displayName: request.displayName }, 'Flow created')
         return {
             ...savedFlow,
             version: savedFlowVersion,
@@ -204,7 +205,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
                     },
                 })
             }
-            const migratedVersion = await flowVersionMigrationService.migrate(flow.version)
+            const migratedVersion = await flowVersionMigrationService(log).migrate(flow.version)
             return {
                 ...flow,
                 version: migratedVersion,
@@ -229,7 +230,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
         if (isNil(flow)) {
             return null
         }
-        const projectExists = await projectService.exists({
+        const projectExists = await projectService(log).exists({
             projectId: flow.projectId,
         })
         if (!projectExists) {
@@ -238,7 +239,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
         return flow
     },
     async getOne({ id, projectId, entityManager }: GetOneParams): Promise<Flow | null> {
-        const projectExists = await projectService.exists({
+        const projectExists = await projectService(log).exists({
             projectId,
         })
         if (!projectExists) {
@@ -271,7 +272,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
             },
         })
 
-        const projectExists = await projectService.exists({
+        const projectExists = await projectService(log).exists({
             projectId,
         })
         if (isNil(flow) || !projectExists) {
@@ -361,6 +362,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
                     projectId,
                     newStatus: operation.request.status ?? FlowStatus.ENABLED,
                 })
+                log.info({ flowId: id, status: operation.request.status ?? FlowStatus.ENABLED }, 'Flow version published and status change requested')
                 break
             }
 
@@ -373,6 +375,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
                     projectId,
                     newStatus: operation.request.status,
                 })
+                log.info({ flowId: id, status: operation.request.status }, 'Flow status change requested')
                 break
             }
 
@@ -380,6 +383,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
                 await flowRepo().update(id, {
                     folderId: operation.request.folderId,
                 })
+                log.info({ flowId: id, folderId: operation.request.folderId }, 'Flow moved to folder')
                 break
             }
 
@@ -528,10 +532,11 @@ export const flowService = (log: FastifyBaseLogger) => ({
                 },
             })
         }
-        await this.addDeleteJob(flow)
+        await this.addDeleteFlowJob(flow)
         await flowRepo().update(id, {
             operationStatus: FlowOperationStatus.DELETING,
         })
+        log.info({ flowId: id, projectId }, 'Flow deletion requested')
     },
 
     async getAllEnabled(): Promise<PopulatedFlow[]> {
@@ -545,7 +550,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
         })))
     },
     async deleteAllByPlatformId(platformId: PlatformId): Promise<void> {
-        const projectIds = await projectService.getProjectIdsByPlatform(platformId)
+        const projectIds = await projectService(log).getProjectIdsByPlatform(platformId)
         const flows = await flowRepo().findBy({
             projectId: In(projectIds),
         })
@@ -636,14 +641,13 @@ export const flowService = (log: FastifyBaseLogger) => ({
         await flowRepo().save(flow)
     },
 
-    addDeleteJob: async (flow: Flow): Promise<void> => {
+    addDeleteFlowJob: async (flow: Flow): Promise<void> => {
         await systemJobsSchedule(log).upsertJob({
             job: {
                 name: SystemJobName.DELETE_FLOW,
                 data: {
                     flow,
                     preDeleteDone: false,
-                    dbDeleteDone: false,
                 },
                 jobId: `delete-flow-${flow.id}`,
             },
@@ -659,7 +663,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
             },
         })
     },
-    
+
     addUpdateStatusJob: async (data: Omit<SystemJobData<SystemJobName.UPDATE_FLOW_STATUS>, 'preUpdateDone'>): Promise<void> => {
         await systemJobsSchedule(log).upsertJob({
             job: {
@@ -734,16 +738,14 @@ const lockFlowVersionIfNotLocked = async ({
         flowVersion,
         userOperation: {
             type: FlowOperationType.LOCK_FLOW,
-            request: {
-                flowId: flowVersion.flowId,
-            },
+            request: {},
         },
         entityManager,
     })
 }
 
 
-const getFolderIdFromRequest = async ({ projectId, folderId, folderName, log }: { projectId: string, folderId: string | undefined, folderName: string | undefined, log: FastifyBaseLogger }) => {
+export const getFolderIdFromRequest = async ({ projectId, folderId, folderName, log }: { projectId: string, folderId: string | undefined, folderName: string | undefined, log: FastifyBaseLogger }) => {
     if (folderId) {
         return folderId
     }

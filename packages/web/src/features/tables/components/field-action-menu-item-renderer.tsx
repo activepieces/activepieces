@@ -35,12 +35,13 @@ const ApFieldActionMenuItemRenderer = ({
         <ConfirmationDeleteDialog
           title={t('Delete Field')}
           message={t(
-            'Are you sure you want to delete this field? This action cannot be undone.',
+            'This field and all its data will be permanently deleted.',
           )}
           mutationFn={async () => {
             await deleteField(field.index);
           }}
           entityName={t('field')}
+          buttonText={t('Delete')}
         >
           <DropdownMenuItem
             onSelect={(e) => {

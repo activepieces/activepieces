@@ -5,6 +5,7 @@ import {
   ExecutePropsResult,
 } from '@activepieces/pieces-framework';
 import {
+  AddPieceRequestBody,
   FlowActionType,
   flowPieceUtil,
   LocalesEnum,
@@ -354,6 +355,22 @@ export const piecesHooks = {
         });
       },
       staleTime: Infinity,
+    });
+  },
+};
+
+export const piecesMutations = {
+  useInstallPiece: ({
+    onSuccess,
+    onError,
+  }: {
+    onSuccess: () => void;
+    onError: (error: unknown) => void;
+  }) => {
+    return useMutation({
+      mutationFn: (data: AddPieceRequestBody) => piecesApi.install(data),
+      onSuccess,
+      onError,
     });
   },
 };

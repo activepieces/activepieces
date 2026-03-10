@@ -4,6 +4,11 @@ import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framewor
 
 export const BASE_URL = 'https://api.pdfcrowd.com/api';
 export const CONVERT_URL = 'https://api.pdfcrowd.com/convert/24.04/';
+export const DEFAULT_CONVERTER_VERSION = '24.04';
+
+export function getConvertUrl(version?: string): string {
+    return `https://api.pdfcrowd.com/convert/${version || DEFAULT_CONVERTER_VERSION}/`;
+}
 
 export async function makeRequest<T>(
     auth: AppConnectionValueForAuthProperty<typeof pdfcrowdAuth>,

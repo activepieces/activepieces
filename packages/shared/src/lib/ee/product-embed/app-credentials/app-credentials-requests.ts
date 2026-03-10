@@ -1,40 +1,40 @@
-import { Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
 import { AppCredentialType } from './app-credentials'
 
-export const ListAppCredentialsRequest = Type.Object({
-    projectId: Type.String(),
-    appName: Type.Optional(Type.String()),
-    limit: Type.Optional(Type.Number()),
-    cursor: Type.Optional(Type.String({})),
+export const ListAppCredentialsRequest = z.object({
+    projectId: z.string(),
+    appName: z.string().optional(),
+    limit: z.coerce.number().optional(),
+    cursor: z.string().optional(),
 })
 
 
-export type ListAppCredentialsRequest = Static<typeof ListAppCredentialsRequest>
+export type ListAppCredentialsRequest = z.infer<typeof ListAppCredentialsRequest>
 
-export const UpsertApiKeyCredentialRequest = Type.Object({
-    id: Type.Optional(Type.String()),
-    appName: Type.String(),
-    projectId: Type.String(),
-    settings: Type.Object({
-        type: Type.Literal(AppCredentialType.API_KEY),
+export const UpsertApiKeyCredentialRequest = z.object({
+    id: z.string().optional(),
+    appName: z.string(),
+    projectId: z.string(),
+    settings: z.object({
+        type: z.literal(AppCredentialType.API_KEY),
     }),
 })
 
 
-export const UpsertOAuth2CredentialRequest = Type.Object({
-    id: Type.Optional(Type.String()),
-    appName: Type.String(),
-    projectId: Type.String(),
-    settings: Type.Object({
-        type: Type.Literal(AppCredentialType.OAUTH2),
-        authUrl: Type.String({}),
-        scope: Type.String(),
-        tokenUrl: Type.String({}),
-        clientId: Type.String({}),
-        clientSecret: Type.String({}),
+export const UpsertOAuth2CredentialRequest = z.object({
+    id: z.string().optional(),
+    appName: z.string(),
+    projectId: z.string(),
+    settings: z.object({
+        type: z.literal(AppCredentialType.OAUTH2),
+        authUrl: z.string(),
+        scope: z.string(),
+        tokenUrl: z.string(),
+        clientId: z.string(),
+        clientSecret: z.string(),
     }),
 })
 
-export const UpsertAppCredentialRequest = Type.Union([UpsertOAuth2CredentialRequest, UpsertApiKeyCredentialRequest])
+export const UpsertAppCredentialRequest = z.union([UpsertOAuth2CredentialRequest, UpsertApiKeyCredentialRequest])
 
-export type UpsertAppCredentialRequest = Static<typeof UpsertAppCredentialRequest>
+export type UpsertAppCredentialRequest = z.infer<typeof UpsertAppCredentialRequest>

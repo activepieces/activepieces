@@ -12,7 +12,7 @@ export type FlowVerdict = {
     status: FlowRunStatus.SUCCEEDED
     stopResponse: RespondResponse | undefined
 } | {
-    status: FlowRunStatus.FAILED
+    status: FlowRunStatus.FAILED | FlowRunStatus.LOG_SIZE_EXCEEDED
     failedStep: FailedStep
 } | {
     status: FlowRunStatus.RUNNING
