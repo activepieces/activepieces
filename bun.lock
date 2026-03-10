@@ -5753,7 +5753,7 @@
     },
     "packages/pieces/community/slack": {
       "name": "@activepieces/piece-slack",
-      "version": "0.12.5",
+      "version": "0.12.6",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -7572,7 +7572,7 @@
     },
     "packages/shared": {
       "name": "@activepieces/shared",
-      "version": "0.42.1",
+      "version": "0.43.0",
       "dependencies": {
         "deepmerge-ts": "7.1.0",
         "nanoid": "3.3.8",
