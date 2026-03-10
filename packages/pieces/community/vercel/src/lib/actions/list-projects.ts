@@ -28,13 +28,14 @@ export const listProjects = createAction({
   },
   async run(context) {
     const { limit, search, from } = context.propsValue;
+    const normalizedLimit = Math.min(100, Math.max(1, limit ?? 20));
 
     return await vercelApiCall({
       method: HttpMethod.GET,
       path: '/v10/projects',
       auth: context.auth,
       query: {
-        limit: limit ?? 20,
+        limit: normalizedLimit,
         search,
         from,
       },

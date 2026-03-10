@@ -24,7 +24,6 @@ export const createDeployment = createAction({
         ],
       },
     }),
-    target: deploymentTargetProperty,
     source_fields: Property.DynamicProperties({
       displayName: 'Source Configuration',
       required: false,
@@ -47,6 +46,7 @@ export const createDeployment = createAction({
           return fields;
         }
 
+        fields['target'] = deploymentTargetProperty;
         fields['git_type'] = Property.StaticDropdown({
           displayName: 'Git Provider',
           description: 'Git provider used for the source deployment.',
@@ -116,7 +116,6 @@ export const createDeployment = createAction({
     const {
       project,
       deployment_source,
-      target,
       source_fields,
       force_new,
       skip_auto_detection_confirmation,
@@ -124,6 +123,7 @@ export const createDeployment = createAction({
 
     const deployment_id = source_fields?.['deployment_id'];
     const with_latest_commit = source_fields?.['with_latest_commit'];
+    const target = source_fields?.['target'];
     const git_type = source_fields?.['git_type'];
     const git_repo_org = source_fields?.['git_repo_org'];
     const git_repo_name = source_fields?.['git_repo_name'];
