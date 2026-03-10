@@ -96,6 +96,12 @@ async function downloadFile(url: string, dest: string, redirectDepth = 0): Promi
           console.log(`\n[oracle] Download complete: ${dest}`);
           file.close(() => resolve());
         });
+        file.on('error', (err) => {
+          console.error(`[oracle] Write error:`, err.message);
+          file.close();
+          fs.unlink(dest, () => {});
+          reject(err);
+        });
       })
       .on('error', (err) => {
         console.error(`[oracle] Download error:`, err.message);
@@ -171,7 +177,7 @@ async function ensureLibaio(libDir: string): Promise<void> {
     return;
   }
 
-  // Download the Debian package and extract libaio.so.1 (no root needed)
+  // Download the Debian package and extract libaio.so.1
   console.log('[oracle] libaio.so.1 not found. Downloading Debian package...');
   const debPath = path.join(os.tmpdir(), 'libaio1.deb');
   const extractDir = path.join(os.tmpdir(), 'libaio1-extract');
