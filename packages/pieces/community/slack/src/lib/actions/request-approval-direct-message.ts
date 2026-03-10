@@ -103,26 +103,30 @@ export const requestApprovalDirectMessageAction = createAction({
       const messageTs = context.resumePayload.queryParams['messageTs'];
 
       const token = context.auth.access_token;
-      if (token && channel && messageTs) {
-        const client = new WebClient(token);
-        const statusText = approved ? 'Approved' : 'Disapproved';
-        await client.chat.update({
-          channel,
-          ts: messageTs,
-          text: `${context.propsValue.text}\n\n${statusText}`,
-          blocks: [
-            ...textToSectionBlocks(`${context.propsValue.text}`),
-            {
-              type: 'section',
-              text: {
-                type: 'mrkdwn',
-                text: approved
-                  ? ':white_check_mark: *Approved*'
-                  : ':x: *Disapproved*',
+      try {
+        if (token && channel && messageTs) {
+          const client = new WebClient(token);
+          const statusText = approved ? 'Approved' : 'Disapproved';
+          await client.chat.update({
+            channel,
+            ts: messageTs,
+            text: `${context.propsValue.text}\n\n${statusText}`,
+            blocks: [
+              ...textToSectionBlocks(`${context.propsValue.text}`),
+              {
+                type: 'section',
+                text: {
+                  type: 'mrkdwn',
+                  text: approved
+                    ? ':white_check_mark: *Approved*'
+                    : ':x: *Disapproved*',
+                },
               },
-            },
-          ],
-        });
+            ],
+          });
+        }
+      } catch (e) {
+        // Ignore errors from updating the message, as it's cosmetic
       }
 
       return { approved, messageTs };
