@@ -131,9 +131,9 @@ export const AutomationsFilters = ({
   });
 
   return (
-    <div className={cn('mb-4', DASHBOARD_CONTENT_PADDING_X)}>
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-center gap-2 flex-wrap">
+    <div className={cn('overflow-x-auto mb-4', DASHBOARD_CONTENT_PADDING_X)}>
+      <div className="flex items-center justify-between gap-4 min-w-max">
+        <div className="flex items-center gap-2">
           <div className="relative">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
