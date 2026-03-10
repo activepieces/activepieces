@@ -24,6 +24,7 @@ export const rbacService = (log: FastifyBaseLogger) => ({
         switch (principal.type) {
             case PrincipalType.UNKNOWN:
             case PrincipalType.WORKER:
+            case PrincipalType.OAUTH:
                 throw new ActivepiecesError({
                     code: ErrorCode.AUTHORIZATION,
                     params: {

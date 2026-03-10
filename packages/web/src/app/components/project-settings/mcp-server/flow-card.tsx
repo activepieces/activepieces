@@ -32,9 +32,7 @@ export function FlowCard({ flow }: { flow: PopulatedFlow }) {
         <ItemContent>
           <ItemTitle>{flow.version.displayName}</ItemTitle>
           {description && (
-            <ItemDescription className="text-xs">
-              {description}
-            </ItemDescription>
+            <ItemDescription className="text-xs">{description}</ItemDescription>
           )}
         </ItemContent>
         <ItemActions>

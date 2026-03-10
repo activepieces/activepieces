@@ -44,12 +44,11 @@ export const recordSideEffects = (_log: FastifyBaseLogger) => ({
 
         await Promise.all(
             records.map(async (record) => {
-                await recordService.triggerWebhooks({
+                await recordService(logger).triggerWebhooks({
                     projectId,
                     tableId,
                     eventType,
                     data: { record },
-                    logger,
                     authorization,
                 })
             }),

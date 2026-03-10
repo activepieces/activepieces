@@ -6,7 +6,7 @@ import {
     ExternalTokenPayload,
 } from '../../src/app/ee/managed-authn/lib/external-token-extractor'
 
-const generateToken = ({
+export const generateToken = ({
     payload,
     algorithm = 'HS256',
     key = 'secret',

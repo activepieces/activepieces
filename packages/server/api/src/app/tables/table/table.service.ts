@@ -29,7 +29,6 @@ import { projectStateService } from '../../ee/projects/project-release/project-s
 import { getFolderIdFromRequest } from '../../flows/flow/flow.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
-import { system } from '../../helper/system/system'
 import { fieldService } from '../field/field.service'
 import { RecordEntity } from '../record/record.entity'
 import { TableWebhookEntity } from './table-webhook.entity'
@@ -40,12 +39,12 @@ export const recordRepo = repoFactory(RecordEntity)
 const tableWebhookRepo = repoFactory(TableWebhookEntity)
 const tablePieceName = '@activepieces/piece-tables'
 
-export const tableService = {
+export const tableService = (log: FastifyBaseLogger) => ({
     async create({
         projectId,
         request,
     }: CreateParams): Promise<Table> {
-        const folderId = await getFolderIdFromRequest({ projectId, folderId: request.folderId, folderName: request.folderName, log: system.globalLogger() })
+        const folderId = await getFolderIdFromRequest({ projectId, folderId: request.folderId, folderName: request.folderName, log })
         const table = await tableRepo().save({
             id: apId(),
             externalId: request.externalId ?? apId(),
@@ -55,7 +54,7 @@ export const tableService = {
         })
         if (request.fields) {
             await Promise.all(request.fields.map(async (field) => {
-                await fieldService.createFromState({ projectId, field, tableId: table.id })
+                await fieldService(log).createFromState({ projectId, field, tableId: table.id })
             }))
         }
         return table
@@ -140,14 +139,13 @@ export const tableService = {
         tableId,
         userMetadata,
         projectId,
-        log,
     }: GetTemplateParams): Promise<SharedTemplate> {
-        const table = await this.getOneOrThrow({
+        const table = await tableService(log).getOneOrThrow({
             id: tableId,
             projectId,
         })
 
-        const fields = await fieldService.getAll({ projectId, tableId })
+        const fields = await fieldService(log).getAll({ projectId, tableId })
 
         const populatedTable: PopulatedTable = {
             ...table,
@@ -215,10 +213,10 @@ export const tableService = {
         projectId,
         id,
     }: ExportTableParams): Promise<ExportTableResponse> {
-        const table = await this.getOneOrThrow({ projectId, id })
+        const table = await tableService(log).getOneOrThrow({ projectId, id })
 
         // TODO: Change field sorting to use position when it's added
-        const fields = await fieldService.getAll({ projectId, tableId: id })
+        const fields = await fieldService(log).getAll({ projectId, tableId: id })
 
         const records = await recordRepo().find({
             where: { tableId: id, projectId },
@@ -291,7 +289,7 @@ export const tableService = {
         }
 
         await tableRepo().update({ id, projectId }, updateData)
-        return this.getOneOrThrow({ projectId, id })
+        return tableService(log).getOneOrThrow({ projectId, id })
     },
     async count({ projectId, folderId }: CountParams): Promise<number> {
         const where: Record<string, unknown> = { projectId }
@@ -301,7 +299,7 @@ export const tableService = {
         return tableRepo().count({ where })
     },
 
-}
+})
 
 type CreateParams = {
     projectId: string
@@ -369,7 +367,6 @@ type CountParams = {
 
 type GetTemplateParams = {
     tableId: string
-    log: FastifyBaseLogger
     userMetadata: UserWithMetaInformation | null
     projectId: string
 }

@@ -8,7 +8,7 @@ import {
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { nanoid } from 'nanoid'
 import { authenticateOrThrow } from '../../../../src/app/core/security/v2/authn/authenticate'
-import { generateMockToken } from '../../../helpers/auth'
+import { generateMockToken, generateToken } from '../../../helpers/auth'
 import { db } from '../../../helpers/db'
 import {
     mockAndSaveBasicSetup,
@@ -146,6 +146,110 @@ describe('authenticateOrThrow', () => {
 
             expect(principal.type).toBe(PrincipalType.UNKNOWN)
             expect(principal.id).toBeDefined()
+        })
+    })
+
+    describe('Token Type Routing', () => {
+        it('should route OAuth JWT to OAUTH principal', async () => {
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
+
+            const oauthToken = generateToken({
+                payload: {
+                    sub: mockOwner.id,
+                    scope: 'mcp:read',
+                    platformId: mockPlatform.id,
+                    type: PrincipalType.OAUTH,
+                },
+            })
+
+            const principal = await authenticateOrThrow(log, `Bearer ${oauthToken}`)
+
+            expect(principal).toEqual({
+                id: mockOwner.id,
+                type: PrincipalType.OAUTH,
+                platform: {
+                    id: mockPlatform.id,
+                },
+            })
+        })
+
+        it('should route session USER JWT correctly and not treat as OAuth', async () => {
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
+
+            const mockPrincipal: Principal = {
+                id: mockOwner.id,
+                type: PrincipalType.USER,
+                platform: {
+                    id: mockPlatform.id,
+                },
+            }
+
+            const sessionToken = await generateMockToken(mockPrincipal)
+            const principal = await authenticateOrThrow(log, `Bearer ${sessionToken}`)
+
+            expect(principal.type).toBe(PrincipalType.USER)
+            expect(principal.id).toBe(mockOwner.id)
+        })
+
+        it('should throw INVALID_BEARER_TOKEN for unknown token type', async () => {
+            const token = generateToken({
+                payload: {
+                    type: 'MADE_UP_TYPE',
+                    id: nanoid(),
+                },
+            })
+
+            await expect(authenticateOrThrow(log, `Bearer ${token}`))
+                .rejects.toEqual(
+                    new ActivepiecesError({
+                        code: ErrorCode.INVALID_BEARER_TOKEN,
+                        params: {
+                            message: 'unknown token type: MADE_UP_TYPE',
+                        },
+                    }),
+                )
+        })
+
+        it('should throw INVALID_BEARER_TOKEN for tampered JWT with USER type', async () => {
+            const token = generateToken({
+                payload: {
+                    type: PrincipalType.USER,
+                    id: nanoid(),
+                },
+                key: 'wrong-secret-key',
+            })
+
+            await expect(authenticateOrThrow(log, `Bearer ${token}`))
+                .rejects.toThrow(ActivepiecesError)
+
+            await expect(authenticateOrThrow(log, `Bearer ${token}`))
+                .rejects.toMatchObject({
+                    error: expect.objectContaining({
+                        code: ErrorCode.INVALID_BEARER_TOKEN,
+                    }),
+                })
+        })
+
+        it('should throw INVALID_BEARER_TOKEN for bad-signature OAuth token with no fallback', async () => {
+            const token = generateToken({
+                payload: {
+                    sub: nanoid(),
+                    scope: 'mcp:read',
+                    platformId: nanoid(),
+                    type: PrincipalType.OAUTH,
+                },
+                key: 'wrong-secret-key',
+            })
+
+            await expect(authenticateOrThrow(log, `Bearer ${token}`))
+                .rejects.toEqual(
+                    new ActivepiecesError({
+                        code: ErrorCode.INVALID_BEARER_TOKEN,
+                        params: {
+                            message: 'invalid OAuth access token',
+                        },
+                    }),
+                )
         })
     })
 })

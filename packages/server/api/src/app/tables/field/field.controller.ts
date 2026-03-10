@@ -10,13 +10,13 @@ import { fieldService } from './field.service'
 export const fieldController: FastifyPluginAsyncZod = async (fastify) => {
 
     fastify.post('/', CreateRequest, async (request, reply) => {
-        const response = await fieldService.create({ request: request.body, projectId: request.projectId })
+        const response = await fieldService(request.log).create({ request: request.body, projectId: request.projectId })
         await reply.status(StatusCodes.CREATED).send(response)
     },
     )
 
     fastify.get('/', GetFieldsRequest, async (request) => {
-        return fieldService.getAll({
+        return fieldService(request.log).getAll({
             projectId: request.projectId,
             tableId: request.query.tableId,
         })
@@ -24,7 +24,7 @@ export const fieldController: FastifyPluginAsyncZod = async (fastify) => {
     )
 
     fastify.get('/:id', GetFieldByIdRequest, (request) => {
-        return fieldService.getById({
+        return fieldService(request.log).getById({
             id: request.params.id,
             projectId: request.projectId,
         })
@@ -32,7 +32,7 @@ export const fieldController: FastifyPluginAsyncZod = async (fastify) => {
     )
 
     fastify.delete('/:id', DeleteFieldRequest, async (request) => {
-        return fieldService.delete({
+        return fieldService(request.log).delete({
             id: request.params.id,
             projectId: request.projectId,
         })
@@ -40,7 +40,7 @@ export const fieldController: FastifyPluginAsyncZod = async (fastify) => {
     )
 
     fastify.post('/:id', UpdateRequest, async (request) => {
-        return fieldService.update({
+        return fieldService(request.log).update({
             id: request.params.id,
             projectId: request.projectId,
             request: request.body,

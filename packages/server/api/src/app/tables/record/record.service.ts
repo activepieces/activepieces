@@ -15,6 +15,7 @@ import {
     SeekPage,
     TableWebhookEventType,
     UpdateRecordRequest,
+    UpdateRecordsRequest,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { EntityManager, In } from 'typeorm'
@@ -34,13 +35,13 @@ const MAX_BATCH_SIZE = 50
 const recordRepo = repoFactory(RecordEntity)
 const cellsRepo = repoFactory(CellEntity)
 
-export const recordService = {
+export const recordService = (log: FastifyBaseLogger) => ({
     async create({
         request,
         projectId,
     }: CreateParams): Promise<PopulatedRecord[]> {
-        await this.validateCount({ projectId, tableId: request.tableId }, request.records.length)
-        const existingFields = await fieldService.getAll({
+        await recordService(log).validateCount({ projectId, tableId: request.tableId }, request.records.length)
+        const existingFields = await fieldService(log).getAll({
             tableId: request.tableId,
             projectId,
         })
@@ -78,7 +79,7 @@ export const recordService = {
                 created: 'ASC',
             },
         })
-        return formatRecordsAndFetchField({ records: insertedRecords, tableId: request.tableId, projectId })
+        return formatRecordsAndFetchField({ records: insertedRecords, tableId: request.tableId, projectId, log })
     },
 
     async list({
@@ -87,7 +88,7 @@ export const recordService = {
         filters,
         limit,
     }: ListParams): Promise<SeekPage<PopulatedRecord>> {
-        const fields = await fieldService.getAll({
+        const fields = await fieldService(log).getAll({
             tableId,
             projectId,
         })
@@ -115,16 +116,18 @@ export const recordService = {
             if (!filters || filters.length === 0) {
                 return true
             }
-            return filters.every((filter) => {
-                const cell = record.cells.find(c => c.fieldId === filter.fieldId)
-                if (!cell) {
-                    return filter.operator === FilterOperator.NOT_EXISTS
-                }
-                return doesCellValueMatchFilters(cell, [filter])
-            })
+
+            const relevantCells = record.cells.filter(cell =>
+                filters.some(filter => filter.fieldId === cell.fieldId),
+            )
+
+            if (relevantCells.length === 0) {
+                return false
+            }
+            return relevantCells.every((cell) => doesCellValueMatchFilters(cell, filters))
         })
 
-        const populatedRecords = await formatRecordsAndFetchField({ records: filteredOutRecords, tableId, projectId })
+        const populatedRecords = await formatRecordsAndFetchField({ records: filteredOutRecords, tableId, projectId, log })
 
         return {
             data: populatedRecords.slice(0, limit),
@@ -152,7 +155,7 @@ export const recordService = {
             })
         }
 
-        const result = await formatRecordsAndFetchField({ records: [record], tableId: record.tableId, projectId: record.projectId })
+        const result = await formatRecordsAndFetchField({ records: [record], tableId: record.tableId, projectId: record.projectId, log })
         return result[0]
     },
 
@@ -226,8 +229,69 @@ export const recordService = {
                 })
             }
 
-            const result = await formatRecordsAndFetchField({ records: [updatedRecord], tableId: updatedRecord.tableId, projectId: updatedRecord.projectId })
+            const result = await formatRecordsAndFetchField({ records: [updatedRecord], tableId: updatedRecord.tableId, projectId: updatedRecord.projectId, log })
             return result[0]
+        })
+    },
+
+    async updateMany({
+        projectId,
+        request,
+    }: UpdateManyParams): Promise<PopulatedRecord[]> {
+        const { tableId, records } = request
+        const allRecordIds = records.map((r) => r.recordId)
+
+        return transaction(async (entityManager: EntityManager) => {
+            const existingRecords = await entityManager.getRepository(RecordEntity).find({
+                where: { id: In(allRecordIds), projectId, tableId },
+            })
+
+            const existingRecordIds = new Set(existingRecords.map((r) => r.id))
+            const missingIds = allRecordIds.filter((id) => !existingRecordIds.has(id))
+            if (missingIds.length > 0) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.ENTITY_NOT_FOUND,
+                    params: {
+                        entityType: 'Record',
+                        entityId: missingIds[0],
+                    },
+                })
+            }
+
+            const existingFields = await entityManager
+                .getRepository(FieldEntity)
+                .find({ where: { projectId, tableId } })
+
+            const validFieldIds = new Set(existingFields.map((f) => f.id))
+
+            const allCellsToUpsert = records.flatMap((record) =>
+                record.cells
+                    .filter((cell) => validFieldIds.has(cell.fieldId))
+                    .map((cell) => ({
+                        recordId: record.recordId,
+                        fieldId: cell.fieldId,
+                        projectId,
+                        value: cell.value,
+                        id: apId(),
+                    })),
+            )
+
+            const batches = chunk(allCellsToUpsert, MAX_BATCH_SIZE)
+            for (const batch of batches) {
+                await entityManager
+                    .getRepository(CellEntity)
+                    .upsert(batch, ['projectId', 'fieldId', 'recordId'])
+            }
+
+            const updatedRecords = await entityManager
+                .getRepository(RecordEntity)
+                .find({
+                    where: { id: In(allRecordIds), projectId, tableId },
+                    relations: ['cells'],
+                    order: { created: 'ASC' },
+                })
+
+            return formatRecordsAndFetchField({ records: updatedRecords, tableId, projectId, log })
         })
     },
 
@@ -261,7 +325,7 @@ export const recordService = {
             return []
         }
 
-        return formatRecordsAndFetchField({ records, tableId: firstRecord.tableId, projectId })
+        return formatRecordsAndFetchField({ records, tableId: firstRecord.tableId, projectId, log })
     },
 
     async deleteAll({
@@ -291,7 +355,7 @@ export const recordService = {
             return []
         }
 
-        return formatRecordsAndFetchField({ records: deletedRecords, tableId, projectId })
+        return formatRecordsAndFetchField({ records: deletedRecords, tableId, projectId, log })
     },
 
     async triggerWebhooks({
@@ -299,10 +363,9 @@ export const recordService = {
         tableId,
         eventType,
         data,
-        logger,
         authorization,
     }: TriggerWebhooksParams): Promise<void> {
-        const webhooks = await tableService.getWebhooks({
+        const webhooks = await tableService(log).getWebhooks({
             projectId,
             id: tableId,
             events: [eventType],
@@ -326,7 +389,7 @@ export const recordService = {
                     queryParams: {},
                 }),
                 execute: true,
-                logger,
+                logger: log,
                 failParentOnFailure: true,
             })
         }))
@@ -338,7 +401,7 @@ export const recordService = {
         })
     },
     async validateCount(params: CountParams, insertCount: number): Promise<void> {
-        const countRes = await this.count(params)
+        const countRes = await recordService(log).count(params)
         if (countRes + insertCount > system.getNumberOrThrow(AppSystemProp.MAX_RECORDS_PER_TABLE)) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
@@ -348,12 +411,11 @@ export const recordService = {
             })
         }
     },
-}
+})
 
 type CreateParams = {
     request: CreateRecordsRequest
     projectId: string
-    logger: FastifyBaseLogger
 }
 
 type ListParams = {
@@ -375,6 +437,11 @@ type UpdateParams = {
     request: UpdateRecordRequest
 }
 
+type UpdateManyParams = {
+    projectId: string
+    request: UpdateRecordsRequest
+}
+
 type DeleteParams = {
     ids: string[]
     projectId: string
@@ -390,7 +457,6 @@ type TriggerWebhooksParams = {
     tableId: string
     eventType: TableWebhookEventType
     data: Record<string, unknown>
-    logger: FastifyBaseLogger
     authorization: string
 }
 type CountParams = {
@@ -448,8 +514,8 @@ function prepareCellInsertions(
     )
 }
 
-async function formatRecordsAndFetchField({ records, tableId, projectId }: { records: RecordSchema[], tableId: string, projectId: string }): Promise<PopulatedRecord[]> {
-    const fields = await fieldService.getAll({
+async function formatRecordsAndFetchField({ records, tableId, projectId, log }: { records: RecordSchema[], tableId: string, projectId: string, log: FastifyBaseLogger }): Promise<PopulatedRecord[]> {
+    const fields = await fieldService(log).getAll({
         tableId,
         projectId,
     })
@@ -532,5 +598,3 @@ const numberFilterValidator = ({ cellValue, filterValue, cb }: { cellValue: unkn
     }
     return false
 }
-
-

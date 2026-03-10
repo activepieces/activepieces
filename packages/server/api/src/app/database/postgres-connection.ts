@@ -340,7 +340,8 @@ import { AddScimEnabled1769720000000 } from './migration/postgres/1769720000000-
 import { AddSecretManagersEntity1770717998442 } from './migration/postgres/1770717998442-AddSecretManagersEntity'
 import { AddSecretManagersFlag1771167183104 } from './migration/postgres/1771167183104-AddSecretManagersFlag'
 import { AddPreSelectForNewProjectsToAppConnection1772027509095 } from './migration/postgres/1772027509095-AddPreSelectForNewProjectsToAppConnection'
-import { AddEnabledToolsToMcpServer1772027509096 } from './migration/postgres/1772027509096-AddEnabledToolsToMcpServer'
+import { AddOAuthTables1772500000000 } from './migration/postgres/1772500000000-AddOAuthTables'
+import { McpServerToUserScope1773000000000 } from './migration/postgres/1773000000000-McpServerToUserScope'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -697,7 +698,8 @@ export const getMigrations = (): (new () => MigrationInterface)[] => {
         AddSecretManagersEntity1770717998442,
         AddSecretManagersFlag1771167183104,
         AddPreSelectForNewProjectsToAppConnection1772027509095,
-        AddEnabledToolsToMcpServer1772027509096,
+        AddOAuthTables1772500000000,
+        McpServerToUserScope1773000000000,
     ]
     return migrations
 }

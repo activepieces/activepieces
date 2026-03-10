@@ -1,48 +1,39 @@
-import { McpServer, Project } from '@activepieces/shared'
+import { McpServer, User } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import { ApIdSchema, BaseColumnSchemaPart } from '../database/database-common'
 
-type McpServerWithSchema = McpServer & {  
-    project: Project
+type McpServerWithSchema = McpServer & {
+    user: User
 }
 
 export const McpServerEntity = new EntitySchema<McpServerWithSchema>({
     name: 'mcp_server',
     columns: {
         ...BaseColumnSchemaPart,
-        projectId: ApIdSchema,
+        userId: ApIdSchema,
         status: {
             type: String,
             nullable: false,
         },
-        token: {
-            type: String,
-            nullable: false,
-        },
-        enabledTools: {
-            type: 'jsonb',
-            nullable: true,
-        },
     },
     indices: [
         {
-            name: 'mcp_server_project_id',
-            columns: ['projectId'],
+            name: 'mcp_server_user_id',
+            columns: ['userId'],
             unique: true,
         },
     ],
     relations: {
-        project: {
+        user: {
             type: 'many-to-one',
-            target: 'project',
-            cascade: true,
+            target: 'user',
             onDelete: 'CASCADE',
             joinColumn: {
-                name: 'projectId',
+                name: 'userId',
                 referencedColumnName: 'id',
             },
         },
     },
-    
+
 })
 

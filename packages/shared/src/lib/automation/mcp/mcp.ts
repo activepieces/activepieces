@@ -14,10 +14,8 @@ export enum McpServerStatus {
 
 export const McpServer = z.object({
     ...BaseModelSchema,
-    projectId: ApId,
+    userId: ApId,
     status: z.nativeEnum(McpServerStatus),
-    token: ApId,
-    enabledTools: z.array(z.string()).nullable(),
 })
 
 export const PopulatedMcpServer = McpServer.extend({
