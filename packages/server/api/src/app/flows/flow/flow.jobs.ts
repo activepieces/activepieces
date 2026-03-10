@@ -1,4 +1,5 @@
 import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, FlowOperationStatus, FlowStatusUpdatedResponse, isNil, tryCatch, WebsocketClientEvent } from '@activepieces/shared'
+import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { websocketService } from '../../core/websockets.service'
 import { SystemJobData, SystemJobName } from '../../helper/system-jobs/common'
@@ -37,10 +38,10 @@ export const flowBackgroundJobs = (log: FastifyBaseLogger) => ({
 
     updateStatusHandler: async (data: SystemJobData<SystemJobName.UPDATE_FLOW_STATUS>) => {
         const { id, projectId, newStatus, preUpdateDone } = data
-        const job = await systemJobsSchedule(log).getJob(`update-flow-status-${id}`)
-        assertNotNullOrUndefined(job, 'job')
 
         const { error } = await tryCatch<unknown, ActivepiecesError>(async () => {
+            const job = await systemJobsSchedule(log).getJob(`update-flow-status-${id}`)
+            assertNotNullOrUndefined(job, 'job')
             const flowToUpdate = await flowService(log).getOneOrThrow({
                 id,
                 projectId,
@@ -101,5 +102,16 @@ export const flowBackgroundJobs = (log: FastifyBaseLogger) => ({
             throw error
         }
 
+    },
+
+    resetStuckFlowsHandler: async () => {
+        const cutoff = dayjs().subtract(10, 'minutes').toISOString()
+        await flowRepo()
+            .createQueryBuilder()
+            .update()
+            .set({ operationStatus: FlowOperationStatus.NONE })
+            .where('operationStatus != :none', { none: FlowOperationStatus.NONE })
+            .andWhere('updated < :cutoff', { cutoff })
+            .execute()
     },
 })

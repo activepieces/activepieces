@@ -217,6 +217,17 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     systemJobHandlers.registerJobHandler(SystemJobName.DELETE_FLOW, (data) => flowBackgroundJobs(app.log).deleteFlowHandler(data))
     systemJobHandlers.registerJobHandler(SystemJobName.UPDATE_FLOW_STATUS, (data) => flowBackgroundJobs(app.log).updateStatusHandler(data))
     systemJobHandlers.registerJobHandler(SystemJobName.HARD_DELETE_PROJECT, (data) => platformProjectBackgroundJobs(app.log).hardDeleteProjectHandler(data))
+    systemJobHandlers.registerJobHandler(SystemJobName.RESET_STUCK_FLOWS, () => flowBackgroundJobs(app.log).resetStuckFlowsHandler())
+    await systemJobsSchedule(app.log).upsertJob({
+        job: {
+            name: SystemJobName.RESET_STUCK_FLOWS,
+            data: {},
+        },
+        schedule: {
+            type: 'repeated',
+            cron: '*/5 * * * *',
+        },
+    })
 
     app.get(
         '/redirect',
