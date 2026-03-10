@@ -1,5 +1,5 @@
-import { mkdir } from 'fs/promises'
 import { spawn } from 'child_process'
+import { mkdir } from 'fs/promises'
 import path from 'path'
 import { arch } from 'process'
 import { execPromise } from '../utils/exec'

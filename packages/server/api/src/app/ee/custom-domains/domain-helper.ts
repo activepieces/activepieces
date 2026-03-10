@@ -34,7 +34,7 @@ export const domainHelper = {
         const hasWorkerModule = system.isWorker()
         if (hasWorkerModule) {
             const apiUrl = system.getOrThrow(AppSystemProp.API_URL)
-            return networkUtils.combineUrl(apiUrl, path ?? '')
+            return networkUtils.combineUrl(apiUrl, `/api/${cleanLeadingSlash(path ?? '')}`)
         }
         return this.getInternalApiUrl({ path: path ?? '', platformId })
     },

@@ -141,6 +141,7 @@
                   "group": "Get Started",
                   "pages": [
                      "install/overview",
+                     "install/options/quick-start",
                      "install/options/docker",
                      "install/options/docker-compose",
                      {

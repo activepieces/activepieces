@@ -13,7 +13,7 @@ const start = async (app: FastifyInstance): Promise<void> => {
     try {
         await app.listen({
             host: '0.0.0.0',
-            port: 3000,
+            port: parseInt(process.env.AP_PORT ?? '3000', 10),
         })
         if (system.isApp()) {
             await appPostBoot(app)

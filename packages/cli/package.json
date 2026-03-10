@@ -2,7 +2,7 @@
   "name": "@activepieces/cli",
   "version": "1.0.2",
   "bin": {
-    "pieces-cli": "../../dist/cli/src/index.js"
+    "activepieces": "../../dist/packages/cli/src/index.js"
   },
   "scripts": {
     "start": "ts-node src/index.ts",

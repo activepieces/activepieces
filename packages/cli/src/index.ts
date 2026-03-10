@@ -7,6 +7,7 @@ import { publishPieceCommand } from './lib/commands/publish-piece';
 import { buildPieceCommand } from './lib/commands/build-piece';
 import { generateWorkerTokenCommand } from './lib/commands/generate-worker-token';
 import { generateTranslationFileForAllPiecesCommand, generateTranslationFileForPieceCommand } from './lib/commands/generate-translation-file-for-piece';
+import { startCommand } from './lib/commands/start';
 
 const pieceCommand = new Command('pieces')
   .description('Manage pieces');
@@ -41,4 +42,5 @@ program.addCommand(pieceCommand);
 program.addCommand(actionCommand);
 program.addCommand(triggerCommand);
 program.addCommand(workerCommand);
+program.addCommand(startCommand);
 program.parse(process.argv);

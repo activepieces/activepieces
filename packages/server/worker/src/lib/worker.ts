@@ -37,6 +37,7 @@ export const worker = {
             auth: { token: workerToken, workerId, platformIdForDedicatedWorker },
             transports: ['websocket'],
             reconnection: true,
+            path: '/api/socket.io',
         })
 
         const apiClient = createRpcClient<WorkerToApiContract>(socket, 60_000)
@@ -143,7 +144,7 @@ async function executeJob(apiClient: WorkerToApiContract, job: ConsumeJobRequest
             apiClient,
             jobId: job.jobId,
             engineToken: job.engineToken,
-            internalApiUrl: ensureTrailingSlash(apiUrl),
+            internalApiUrl: ensureTrailingSlash(apiUrl) + 'api/',
             publicApiUrl: ensurePublicApiUrl(publicUrl),
             log,
         }
