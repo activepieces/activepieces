@@ -16,7 +16,7 @@ export const goodmemAuth = PieceAuth.CustomAuth({
       description: 'The base URL of your GoodMem API server (e.g., https://api.goodmem.ai or http://localhost:8080)',
       required: true,
     }),
-    apiKey: Property.LongText({
+    apiKey: PieceAuth.SecretText({
       displayName: 'API Key',
       description: 'Your GoodMem API key for authentication (X-API-Key)',
       required: true,

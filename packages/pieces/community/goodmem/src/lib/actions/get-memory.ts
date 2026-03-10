@@ -27,33 +27,16 @@ export const getMemory = createAction({
     const baseUrl = getBaseUrl(rawBaseUrl);
 
     try {
-      // Get memory metadata
-      const metadataResponse = await httpClient.sendRequest({
+      const response = await httpClient.sendRequest({
         method: HttpMethod.GET,
-        url: `${baseUrl}/v1/memories/${memoryId}`,
+        url: `${baseUrl}/v1/memories/${memoryId}?includeContent=${includeContent ?? false}`,
         headers: getCommonHeaders(apiKey),
       });
 
-      const result: any = {
+      return {
         success: true,
-        memory: metadataResponse.body,
+        memory: response.body,
       };
-
-      // If content requested, fetch it separately
-      if (includeContent) {
-        try {
-          const contentResponse = await httpClient.sendRequest({
-            method: HttpMethod.GET,
-            url: `${baseUrl}/v1/memories/${memoryId}/content`,
-            headers: getCommonHeaders(apiKey),
-          });
-          result.content = contentResponse.body;
-        } catch (contentError: any) {
-          result.contentError = 'Failed to fetch content: ' + (contentError.message || 'Unknown error');
-        }
-      }
-
-      return result;
     } catch (error: any) {
       return {
         success: false,

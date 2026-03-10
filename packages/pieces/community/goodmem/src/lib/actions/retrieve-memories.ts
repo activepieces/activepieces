@@ -144,11 +144,11 @@ export const retrieveMemories = createAction({
               abstractReply = item.abstractReply;
             } else if (item.retrievedItem) {
               results.push({
-                chunkId: item.retrievedItem.chunk?.chunk?.chunkId,
-                chunkText: item.retrievedItem.chunk?.chunk?.chunkText,
-                memoryId: item.retrievedItem.chunk?.chunk?.memoryId,
-                relevanceScore: item.retrievedItem.chunk?.relevanceScore,
-                memoryIndex: item.retrievedItem.chunk?.memoryIndex,
+                chunkId: item.retrievedItem.chunk?.chunkId,
+                chunkText: item.retrievedItem.chunk?.chunkText,
+                memoryId: item.retrievedItem.chunk?.memoryId,
+                relevanceScore: item.retrievedItem.relevanceScore,
+                memoryIndex: item.retrievedItem.memoryIndex,
               });
             }
           } catch (parseError) {

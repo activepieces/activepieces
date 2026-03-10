@@ -44,10 +44,6 @@ function extractDropdownAuth(auth: any): { baseUrl: string; apiKey: string } {
   };
 }
 
-function apiHeaders(apiKey: string): Record<string, string> {
-  return { 'X-API-Key': apiKey, 'Content-Type': 'application/json', 'Accept': 'application/json' };
-}
-
 export const spaceIdDropdown = Property.Dropdown<string, true, typeof goodmemAuth>({
   displayName: 'Space',
   description: 'Select a space to use',
@@ -63,7 +59,7 @@ export const spaceIdDropdown = Property.Dropdown<string, true, typeof goodmemAut
       const response = await httpClient.sendRequest({
         method: HttpMethod.GET,
         url: `${baseUrl}/v1/spaces`,
-        headers: apiHeaders(apiKey),
+        headers: getCommonHeaders(apiKey),
       });
       const body = response.body;
       const spaces = Array.isArray(body) ? body : (body?.spaces || []);
@@ -95,7 +91,7 @@ export const multiSpaceDropdown = Property.MultiSelectDropdown<string, true, typ
       const response = await httpClient.sendRequest({
         method: HttpMethod.GET,
         url: `${baseUrl}/v1/spaces`,
-        headers: apiHeaders(apiKey),
+        headers: getCommonHeaders(apiKey),
       });
       const body = response.body;
       const spaces = Array.isArray(body) ? body : (body?.spaces || []);
@@ -127,7 +123,7 @@ export const rerankerDropdown = Property.Dropdown<string, false, typeof goodmemA
       const response = await httpClient.sendRequest({
         method: HttpMethod.GET,
         url: `${baseUrl}/v1/rerankers`,
-        headers: apiHeaders(apiKey),
+        headers: getCommonHeaders(apiKey),
       });
       const body = response.body;
       const rerankers = Array.isArray(body) ? body : (body?.rerankers || []);
@@ -159,7 +155,7 @@ export const llmDropdown = Property.Dropdown<string, false, typeof goodmemAuth>(
       const response = await httpClient.sendRequest({
         method: HttpMethod.GET,
         url: `${baseUrl}/v1/llms`,
-        headers: apiHeaders(apiKey),
+        headers: getCommonHeaders(apiKey),
       });
       const body = response.body;
       const llms = Array.isArray(body) ? body : (body?.llms || []);
