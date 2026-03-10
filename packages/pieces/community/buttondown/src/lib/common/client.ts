@@ -25,14 +25,6 @@ export interface ButtondownPagedResponse<T> {
   previous?: string | null;
 }
 
-interface ButtondownErrorResponse {
-  detail?: string;
-  error?: string;
-  message?: string;
-  errors?: Array<{ field?: string; message?: string }>;
-  [key: string]: unknown;
-}
-
 const sanitizeHeaders = (headers: Record<string, string | undefined> = {}) =>
   Object.fromEntries(
     Object.entries(headers).filter(([, value]) => value !== undefined)
@@ -74,43 +66,18 @@ export const buttondownRequest = async <TResponse>({
   body,
   headers,
 }: ButtondownRequest): Promise<TResponse> => {
-  try {
-    const response = await httpClient.sendRequest<TResponse>({
-      method,
-      url: `${BUTTONDOWN_BASE_URL}${path}`,
-      headers: {
-        Authorization: `Token ${auth}`,
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-        ...sanitizeHeaders(headers),
-      },
-      queryParams: serializeQueryParams(query),
-      body,
-    });
+  const response = await httpClient.sendRequest<TResponse>({
+    method,
+    url: `${BUTTONDOWN_BASE_URL}${path}`,
+    headers: {
+      Authorization: `Token ${auth}`,
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      ...sanitizeHeaders(headers),
+    },
+    queryParams: serializeQueryParams(query),
+    body,
+  });
 
-    return response.body;
-  } catch (unknownError: unknown) {
-    const error = unknownError as {
-      response?: { status?: number; body?: ButtondownErrorResponse };
-      message?: string;
-    };
-
-    const status = error.response?.status;
-    const responseBody = error.response?.body ?? {};
-    const message =
-      responseBody.detail ??
-      responseBody.error ??
-      responseBody.message ??
-      (responseBody.errors && responseBody.errors.length > 0
-        ? responseBody.errors
-            .map((err) => err.message ?? JSON.stringify(err))
-            .join(', ')
-        : undefined) ??
-      error.message ??
-      'Unexpected Buttondown API error';
-
-    throw new Error(
-      `Buttondown API request failed${status ? ` (status ${status})` : ''}: ${message}`
-    );
-  }
+  return response.body;
 };

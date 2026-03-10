@@ -37,7 +37,7 @@ export const createButtondownWebhookTrigger = ({
     description,
     type: TriggerStrategy.WEBHOOK,
     props: {
-      description: Property.ShortText({
+      webhookDescription: Property.ShortText({
         displayName: 'Webhook Description',
         description: 'Optional description stored with the webhook in Buttondown.',
         required: false,
@@ -50,10 +50,6 @@ export const createButtondownWebhookTrigger = ({
     },
     sampleData,
     async onEnable(context) {
-      if (!context.auth?.secret_text) {
-        throw new Error('Authentication is required. Connect your Buttondown account.');
-      }
-
       const webhook = await buttondownRequest<ButtondownWebhook>({
         auth: context.auth.secret_text,
         method: HttpMethod.POST,
@@ -61,7 +57,7 @@ export const createButtondownWebhookTrigger = ({
         body: {
           url: context.webhookUrl,
           event_types: [eventType],
-          description: context.propsValue.description,
+          description: context.propsValue.webhookDescription,
           signing_key: context.propsValue.signingKey,
         },
       });
@@ -70,7 +66,7 @@ export const createButtondownWebhookTrigger = ({
     },
     async onDisable(context) {
       const webhookId = await context.store.get<string>('webhookId');
-      if (!webhookId || !context.auth?.secret_text) {
+      if (!webhookId) {
         return;
       }
 
@@ -87,7 +83,7 @@ export const createButtondownWebhookTrigger = ({
       }
 
       let enriched: Record<string, unknown> | undefined;
-      if (enrich && context.auth?.secret_text) {
+      if (enrich) {
         enriched = await enrich({
           apiKey: context.auth.secret_text,
           payload,

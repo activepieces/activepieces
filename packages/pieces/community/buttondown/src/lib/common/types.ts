@@ -139,11 +139,3 @@ export interface ButtondownWebhook {
   description?: string;
   signing_key?: string;
 }
-
-export interface ButtondownWebhookInput {
-  url: string;
-  event_types: ButtondownWebhookEvent[];
-  description?: string;
-  signing_key?: string;
-  status?: 'enabled' | 'disabled';
-}

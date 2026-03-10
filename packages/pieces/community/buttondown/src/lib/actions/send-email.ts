@@ -2,27 +2,13 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { buttondownAuth } from '../common/auth';
 import { buttondownRequest } from '../common/client';
+import { emailStatusOptions, emailTypeOptions } from '../common/options';
 import {
   ButtondownEmail,
   ButtondownEmailInput,
   ButtondownEmailStatus,
   ButtondownEmailType,
 } from '../common/types';
-
-const emailStatusOptions: { label: string; value: ButtondownEmailStatus }[] = [
-  { label: 'Send immediately (about_to_send)', value: 'about_to_send' },
-  { label: 'Draft', value: 'draft' },
-  { label: 'Scheduled', value: 'scheduled' },
-];
-
-const emailTypeOptions: { label: string; value: ButtondownEmailType }[] = [
-  { label: 'Public', value: 'public' },
-  { label: 'Private', value: 'private' },
-  { label: 'Premium', value: 'premium' },
-  { label: 'Free', value: 'free' },
-  { label: 'Churned', value: 'churned' },
-  { label: 'Archival', value: 'archival' },
-];
 
 export const sendEmail = createAction({
   auth: buttondownAuth,
@@ -104,10 +90,6 @@ export const sendEmail = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    if (!auth?.secret_text) {
-      throw new Error('Authentication is required. Connect your Buttondown account.');
-    }
-
     const status = (propsValue.status as ButtondownEmailStatus | undefined) ?? 'about_to_send';
 
     if (status === 'scheduled' && !propsValue.publishDate) {

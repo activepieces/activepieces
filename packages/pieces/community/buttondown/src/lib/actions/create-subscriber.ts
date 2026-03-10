@@ -2,30 +2,12 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { buttondownAuth } from '../common/auth';
 import { buttondownRequest } from '../common/client';
+import { subscriberTypeOptions } from '../common/options';
 import {
   ButtondownSubscriber,
   ButtondownSubscriberInput,
   ButtondownSubscriberType,
 } from '../common/types';
-
-const subscriberTypeOptions: { label: string; value: ButtondownSubscriberType }[] = [
-  { label: 'Regular', value: 'regular' },
-  { label: 'Premium', value: 'premium' },
-  { label: 'Unactivated', value: 'unactivated' },
-  { label: 'Paused', value: 'paused' },
-  { label: 'Trialed', value: 'trialed' },
-  { label: 'Upcoming', value: 'upcoming' },
-  { label: 'Churning', value: 'churning' },
-  { label: 'Churned', value: 'churned' },
-  { label: 'Unsubscribed', value: 'unsubscribed' },
-  { label: 'Undeliverable', value: 'undeliverable' },
-  { label: 'Blocked', value: 'blocked' },
-  { label: 'Complained', value: 'complained' },
-  { label: 'Gifted', value: 'gifted' },
-  { label: 'Past Due', value: 'past_due' },
-  { label: 'Removed', value: 'removed' },
-  { label: 'Unpaid', value: 'unpaid' },
-];
 
 export const createSubscriber = createAction({
   auth: buttondownAuth,
@@ -41,7 +23,7 @@ export const createSubscriber = createAction({
     type: Property.StaticDropdown({
       displayName: 'Subscriber Type',
       description:
-        'Set the subscriber status. Use “regular” to bypass double opt-in.',
+        'Set the subscriber status. Use "regular" to bypass double opt-in.',
       required: false,
       options: {
         options: subscriberTypeOptions,
@@ -115,10 +97,6 @@ export const createSubscriber = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    if (!auth?.secret_text) {
-      throw new Error('Authentication is required. Connect your Buttondown account.');
-    }
-
     const payload: ButtondownSubscriberInput = {
       email_address: propsValue.email,
     };
