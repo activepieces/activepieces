@@ -4,16 +4,16 @@ import {
     FlowOperationType,
     flowStructureUtil,
     isNil,
-    McpServer,
     McpToolDefinition,
     UpdateActionRequest,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
-import { flowService } from '../../flows/flow/flow.service'
-import { projectService } from '../../project/project-service'
+import { flowService } from '../../../flows/flow/flow.service'
+import { projectService } from '../../../project/project-service'
 
 const updateStepInput = z.object({
+    projectId: z.string(),
     flowId: z.string(),
     stepName: z.string(),
     displayName: z.string().optional(),
@@ -24,11 +24,12 @@ const updateStepInput = z.object({
     skip: z.boolean().optional(),
 })
 
-export const apUpdateStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
+export const updateStepTool = (log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_update_step',
         description: 'Update an existing step\'s settings in a flow. Use ap_flow_structure to get step names. Use ap_list_pieces to get valid pieceName, pieceVersion, actionName. Provide only the fields you want to change.',
         inputSchema: {
+            projectId: z.string().describe('The project ID. Use list_projects to find available projects.'),
             flowId: z.string().describe('The id of the flow'),
             stepName: z.string().describe('The name of the step to update (e.g. "step_1"). Use ap_flow_structure to get valid values.'),
             displayName: z.string().optional().describe('New display name for the step'),
@@ -39,11 +40,11 @@ export const apUpdateStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
             skip: z.boolean().optional().describe('Whether to skip this step during execution'),
         },
         execute: async (args) => {
-            const { flowId, stepName, displayName, input, auth, actionName, loopItems, skip } = updateStepInput.parse(args)
+            const { flowId, stepName, displayName, input, auth, actionName, loopItems, skip, projectId } = updateStepInput.parse(args)
 
             const [flow, project] = await Promise.all([
-                flowService(log).getOnePopulated({ id: flowId, projectId: mcp.projectId }),
-                projectService(log).getOneOrThrow(mcp.projectId),
+                flowService(log).getOnePopulated({ id: flowId, projectId }),
+                projectService(log).getOneOrThrow(projectId),
             ])
             if (isNil(flow)) {
                 return { content: [{ type: 'text', text: '❌ Flow not found' }] }
@@ -121,7 +122,7 @@ export const apUpdateStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
             try {
                 const updatedFlow = await flowService(log).update({
                     id: flow.id,
-                    projectId: mcp.projectId,
+                    projectId,
                     userId: null,
                     platformId: project.platformId,
                     operation,

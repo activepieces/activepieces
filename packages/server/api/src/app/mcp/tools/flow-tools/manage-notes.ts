@@ -3,16 +3,16 @@ import {
     FlowOperationRequest,
     FlowOperationType,
     isNil,
-    McpServer,
     McpToolDefinition,
     NoteColorVariant,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
-import { flowService } from '../../flows/flow/flow.service'
-import { projectService } from '../../project/project-service'
+import { flowService } from '../../../flows/flow/flow.service'
+import { projectService } from '../../../project/project-service'
 
 const manageNotesInput = z.object({
+    projectId: z.string(),
     flowId: z.string(),
     operation: z.enum(['ADD', 'UPDATE', 'DELETE']),
     noteId: z.string().optional(),
@@ -28,11 +28,12 @@ const manageNotesInput = z.object({
     }).optional(),
 })
 
-export const apManageNotesTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
+export const manageNotesTool = (log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_manage_notes',
         description: 'Add, update, or delete canvas notes on a flow. Notes are visual annotations on the flow canvas.',
         inputSchema: {
+            projectId: z.string().describe('The project ID. Use list_projects to find available projects.'),
             flowId: z.string().describe('The id of the flow'),
             operation: z.enum(['ADD', 'UPDATE', 'DELETE']).describe('Operation to perform: ADD a new note, UPDATE an existing note, or DELETE a note'),
             noteId: z.string().optional().describe('The note ID (required for UPDATE and DELETE)'),
@@ -48,11 +49,11 @@ export const apManageNotesTool = (mcp: McpServer, log: FastifyBaseLogger): McpTo
             }).optional().describe('Size of the note (optional, defaults to 200x200)'),
         },
         execute: async (args) => {
-            const { flowId, operation: op, noteId, content, color, position, size } = manageNotesInput.parse(args)
+            const { flowId, operation: op, noteId, content, color, position, size, projectId } = manageNotesInput.parse(args)
 
             const [flow, project] = await Promise.all([
-                flowService(log).getOnePopulated({ id: flowId, projectId: mcp.projectId }),
-                projectService(log).getOneOrThrow(mcp.projectId),
+                flowService(log).getOnePopulated({ id: flowId, projectId }),
+                projectService(log).getOneOrThrow(projectId),
             ])
             if (isNil(flow)) {
                 return { content: [{ type: 'text', text: '❌ Flow not found' }] }
@@ -119,7 +120,7 @@ export const apManageNotesTool = (mcp: McpServer, log: FastifyBaseLogger): McpTo
             try {
                 await flowService(log).update({
                     id: flow.id,
-                    projectId: mcp.projectId,
+                    projectId,
                     userId: null,
                     platformId: project.platformId,
                     operation,

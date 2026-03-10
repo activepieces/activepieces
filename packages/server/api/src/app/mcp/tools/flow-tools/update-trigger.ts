@@ -3,16 +3,16 @@ import {
     FlowOperationType,
     FlowTriggerType,
     isNil,
-    McpServer,
     McpToolDefinition,
     PieceTrigger,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
-import { flowService } from '../../flows/flow/flow.service'
-import { projectService } from '../../project/project-service'
+import { flowService } from '../../../flows/flow/flow.service'
+import { projectService } from '../../../project/project-service'
 
 const updateTriggerInput = z.object({
+    projectId: z.string(),
     flowId: z.string(),
     pieceName: z.string(),
     pieceVersion: z.string(),
@@ -22,11 +22,12 @@ const updateTriggerInput = z.object({
     displayName: z.string().optional(),
 })
 
-export const apUpdateTriggerTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
+export const updateTriggerTool = (log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_update_trigger',
         description: 'Set or update the trigger for a flow. Use ap_list_pieces to get valid pieceName, pieceVersion, and triggerName. Use ap_list_connections to get the connection externalId for auth.',
         inputSchema: {
+            projectId: z.string().describe('The project ID. Use list_projects to find available projects.'),
             flowId: z.string().describe('The id of the flow'),
             pieceName: z.string().describe('The piece name for the trigger (e.g. "@activepieces/piece-gmail"). Use ap_list_pieces to get valid values.'),
             pieceVersion: z.string().describe('The piece version (e.g. "~0.1.0"). Use ap_list_pieces to get valid values.'),
@@ -36,7 +37,7 @@ export const apUpdateTriggerTool = (mcp: McpServer, log: FastifyBaseLogger): Mcp
             displayName: z.string().optional().describe('Display name for the trigger step'),
         },
         execute: async (args) => {
-            const { flowId, pieceName, pieceVersion, triggerName, input: rawInput, auth, displayName: rawDisplayName } = updateTriggerInput.parse(args)
+            const { flowId, pieceName, pieceVersion, triggerName, input: rawInput, auth, displayName: rawDisplayName, projectId } = updateTriggerInput.parse(args)
 
             if (auth !== undefined && auth.includes('\'')) {
                 return {
@@ -51,8 +52,8 @@ export const apUpdateTriggerTool = (mcp: McpServer, log: FastifyBaseLogger): Mcp
             const displayName = rawDisplayName ?? triggerName
 
             const [flow, project] = await Promise.all([
-                flowService(log).getOnePopulated({ id: flowId, projectId: mcp.projectId }),
-                projectService(log).getOneOrThrow(mcp.projectId),
+                flowService(log).getOnePopulated({ id: flowId, projectId }),
+                projectService(log).getOneOrThrow(projectId),
             ])
             if (isNil(flow)) {
                 return { content: [{ type: 'text', text: '❌ Flow not found' }] }
@@ -89,7 +90,7 @@ export const apUpdateTriggerTool = (mcp: McpServer, log: FastifyBaseLogger): Mcp
             try {
                 const updatedFlow = await flowService(log).update({
                     id: flow.id,
-                    projectId: mcp.projectId,
+                    projectId,
                     userId: null,
                     platformId: project.platformId,
                     operation,

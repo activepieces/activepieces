@@ -1,10 +1,28 @@
-import { apId, isNil, McpServer as McpServerSchema, McpServerStatus, PopulatedMcpServer } from '@activepieces/shared'
+import { apId, isNil, McpServer as McpServerSchema, McpServerStatus, McpToolDefinition, PopulatedMcpServer } from '@activepieces/shared'
 import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../core/db/repo-factory'
 import { projectService } from '../project/project-service'
 import { McpServerEntity } from './mcp-entity'
-import { listFlows, registerFlowTools } from './tools/flow-tools'
+import { listConnectionsTool } from './tools/connection-tools'
+import {
+    addBranchTool,
+    addStepTool,
+    changeFlowStatusTool,
+    createFlowTool,
+    deleteBranchTool,
+    deleteStepTool,
+    flowStructureTool,
+    listFlows,
+    listFlowsTool,
+    lockAndPublishTool,
+    manageNotesTool,
+    registerFlowTools,
+    renameFlowTool,
+    updateStepTool,
+    updateTriggerTool,
+} from './tools/flow-tools'
+import { listPiecesTool } from './tools/piece-tools'
 import { registerProjectTools } from './tools/project-tools'
 import { registerTableTools } from './tools/table-tools'
 
@@ -52,11 +70,37 @@ export const mcpServerService = (log: FastifyBaseLogger) => {
 
             await registerFlowTools(server, mcp, log)
             registerProjectTools(server, projects)
-            await registerTableTools(server, projects, log)
+            registerControllableTools(server, log)
+            await registerTableTools(server, log)
             registerEmptyResourcesAndPrompts(server)
 
             return server
         },
+    }
+}
+
+function registerControllableTools(server: McpServer, log: FastifyBaseLogger): void {
+    const toolFactories: Array<(log: FastifyBaseLogger) => McpToolDefinition> = [
+        createFlowTool,
+        listFlowsTool,
+        renameFlowTool,
+        flowStructureTool,
+        updateTriggerTool,
+        addStepTool,
+        updateStepTool,
+        deleteStepTool,
+        addBranchTool,
+        deleteBranchTool,
+        lockAndPublishTool,
+        changeFlowStatusTool,
+        manageNotesTool,
+        listConnectionsTool,
+        listPiecesTool,
+    ]
+
+    for (const factory of toolFactories) {
+        const def = factory(log)
+        server.tool(def.title, def.description, def.inputSchema, async (args) => def.execute(args))
     }
 }
 

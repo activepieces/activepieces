@@ -121,7 +121,11 @@ export const recordService = (log: FastifyBaseLogger) => ({
                 filters.some(filter => filter.fieldId === cell.fieldId),
             )
 
-            if (relevantCells.length === 0) {
+            const cellFieldIds = new Set(relevantCells.map(cell => cell.fieldId))
+            const missingFieldFilters = filters.filter(f => !cellFieldIds.has(f.fieldId))
+            const allMissingAreNotExists = missingFieldFilters.every(f => f.operator === FilterOperator.NOT_EXISTS)
+
+            if (!allMissingAreNotExists) {
                 return false
             }
             return relevantCells.every((cell) => doesCellValueMatchFilters(cell, filters))

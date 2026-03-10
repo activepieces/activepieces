@@ -5,7 +5,6 @@ import {
     FlowOperationType,
     flowStructureUtil,
     isNil,
-    McpServer,
     McpToolDefinition,
     RouterExecutionType,
     StepLocationRelativeToParent,
@@ -13,10 +12,11 @@ import {
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
-import { flowService } from '../../flows/flow/flow.service'
-import { projectService } from '../../project/project-service'
+import { flowService } from '../../../flows/flow/flow.service'
+import { projectService } from '../../../project/project-service'
 
 const addStepInput = z.object({
+    projectId: z.string(),
     flowId: z.string(),
     parentStepName: z.string(),
     stepLocationRelativeToParent: z.enum(Object.values(StepLocationRelativeToParent) as [StepLocationRelativeToParent, ...StepLocationRelativeToParent[]]),
@@ -28,11 +28,12 @@ const addStepInput = z.object({
     actionName: z.string().optional(),
 })
 
-export const apAddStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
+export const addStepTool = (log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_add_step',
         description: 'Add a new step to a flow (skeleton only - configure it afterwards with ap_update_step or ap_update_trigger). Use ap_flow_structure to get valid parentStepName and insert locations. Use ap_list_pieces to get pieceName, pieceVersion, and actionName for PIECE steps.',
         inputSchema: {
+            projectId: z.string().describe('The project ID. Use list_projects to find available projects.'),
             flowId: z.string().describe('The id of the flow'),
             parentStepName: z.string().describe('The step name to insert after/into (e.g. "trigger", "step_1"). Use ap_flow_structure to get valid values.'),
             stepLocationRelativeToParent: z.enum(Object.values(StepLocationRelativeToParent) as [string, ...string[]]).describe('Where to place the step: AFTER = after the parent, INSIDE_LOOP = first action inside a loop, INSIDE_BRANCH = first action inside a router branch'),
@@ -44,11 +45,11 @@ export const apAddStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDe
             actionName: z.string().optional().describe('For PIECE steps: the action name within the piece. Use ap_list_pieces with includeActions=true to get valid values.'),
         },
         execute: async (args) => {
-            const { flowId, parentStepName, stepLocationRelativeToParent, branchIndex, stepType, displayName, pieceName, pieceVersion, actionName } = addStepInput.parse(args)
+            const { flowId, parentStepName, stepLocationRelativeToParent, branchIndex, stepType, displayName, pieceName, pieceVersion, actionName, projectId } = addStepInput.parse(args)
 
             const [flow, project] = await Promise.all([
-                flowService(log).getOnePopulated({ id: flowId, projectId: mcp.projectId }),
-                projectService(log).getOneOrThrow(mcp.projectId),
+                flowService(log).getOnePopulated({ id: flowId, projectId }),
+                projectService(log).getOneOrThrow(projectId),
             ])
             if (isNil(flow)) {
                 return { content: [{ type: 'text', text: '❌ Flow not found' }] }
@@ -154,7 +155,7 @@ export const apAddStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDe
             try {
                 await flowService(log).update({
                     id: flow.id,
-                    projectId: mcp.projectId,
+                    projectId,
                     userId: null,
                     platformId: project.platformId,
                     operation,

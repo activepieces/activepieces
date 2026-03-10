@@ -5,7 +5,6 @@ import {
     flowStructureUtil,
     FlowTriggerType,
     isNil,
-    McpServer,
     McpToolDefinition,
     Note,
     StepLocationRelativeToParent,
@@ -13,7 +12,7 @@ import {
 import type { Step } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
-import { flowService } from '../../flows/flow/flow.service'
+import { flowService } from '../../../flows/flow/flow.service'
 
 type StepInfo = {
     name: string
@@ -205,18 +204,19 @@ function formatFlowStructure(
     return lines.join('\n')
 }
 
-export const apFlowStructureTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
+export const flowStructureTool = (log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_flow_structure',
         description: 'Get the structure of a flow: step tree (parent/child), each step type, configuration status (configured/unconfigured/invalid), and valid insert locations for ap_add_step.',
         inputSchema: {
+            projectId: z.string().describe('The project ID. Use list_projects to find available projects.'),
             flowId: z.string().describe('The id of the flow'),
         },
-        execute: async ({ flowId }) => {
+        execute: async ({ flowId, projectId }) => {
             try {
                 const flow = await flowService(log).getOnePopulated({
                     id: flowId as string,
-                    projectId: mcp.projectId,
+                    projectId: projectId as string,
                 })
                 if (isNil(flow)) {
                     return { content: [{ type: 'text', text: '❌ Flow not found' }] }

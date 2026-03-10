@@ -3,10 +3,10 @@ import { FlowStatus, FlowTriggerType, FlowVersionState, MCP_TRIGGER_PIECE_NAME, 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
-import { flowService } from '../../flows/flow/flow.service'
-import { telemetry } from '../../helper/telemetry.utils'
-import { WebhookFlowVersionToRun } from '../../webhooks/webhook-handler'
-import { webhookService } from '../../webhooks/webhook.service'
+import { flowService } from '../../../flows/flow/flow.service'
+import { telemetry } from '../../../helper/telemetry.utils'
+import { WebhookFlowVersionToRun } from '../../../webhooks/webhook-handler'
+import { webhookService } from '../../../webhooks/webhook.service'
 
 export async function registerFlowTools(
     server: McpServer,

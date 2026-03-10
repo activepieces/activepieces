@@ -1,41 +1,32 @@
-import { FieldType, FilterOperator } from '@activepieces/shared'
+import { FieldType, Filter, FilterOperator } from '@activepieces/shared'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
-import { fieldService } from '../../tables/field/field.service'
-import { recordService } from '../../tables/record/record.service'
-import { tableService } from '../../tables/table/table.service'
+import { fieldService } from '../../../tables/field/field.service'
+import { recordService } from '../../../tables/record/record.service'
+import { tableService } from '../../../tables/table/table.service'
 
 export async function registerTableTools(
     server: McpServer,
-    projects: Array<{ id: string, displayName: string }>,
     log: FastifyBaseLogger,
 ): Promise<void> {
-    for (const project of projects) {
-        const prefix = slugify(project.displayName)
-        registerTableCrudTools(server, project.id, prefix, project.displayName, log)
-        registerFieldTools(server, project.id, prefix, project.displayName, log)
-        registerRecordTools(server, project.id, prefix, project.displayName, log)
-    }
+    registerTableCrudTools(server, log)
+    registerFieldTools(server, log)
+    registerRecordTools(server, log)
 }
 
-function slugify(name: string): string {
-    return name
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '_')
-        .replace(/^_|_$/g, '')
-        .substring(0, 30)
-}
-
-function registerTableCrudTools(server: McpServer, projectId: string, prefix: string, projectName: string, log: FastifyBaseLogger): void {
+function registerTableCrudTools(server: McpServer, log: FastifyBaseLogger): void {
     server.tool(
-        `${prefix}_list_tables`,
-        `List all tables in project "${projectName}". Optionally filter by name.`,
-        { name: z.string().optional().describe('Filter tables by name') },
+        'list_tables',
+        'List all tables. Optionally filter by name.',
+        {
+            projectId: z.string().describe('The project ID. Use list_projects to find available projects.'),
+            name: z.string().optional().describe('Filter tables by name'),
+        },
         async (args) => {
             return wrapServiceCall(log, () =>
                 tableService(log).list({
-                    projectId,
+                    projectId: args.projectId,
                     name: args.name,
                     cursor: undefined,
                     limit: 100,
@@ -47,56 +38,69 @@ function registerTableCrudTools(server: McpServer, projectId: string, prefix: st
     )
 
     server.tool(
-        `${prefix}_get_table`,
-        `Get a table by its ID in project "${projectName}".`,
-        { tableId: z.string().describe('The ID of the table to retrieve') },
+        'get_table',
+        'Get a table by its ID.',
+        {
+            projectId: z.string().describe('The project ID. Use list_projects to find available projects.'),
+            tableId: z.string().describe('The ID of the table to retrieve'),
+        },
         async (args) => {
             return wrapServiceCall(log, () =>
-                tableService(log).getOneOrThrow({ projectId, id: args.tableId }),
+                tableService(log).getOneOrThrow({ projectId: args.projectId, id: args.tableId }),
             )
         },
     )
 
     server.tool(
-        `${prefix}_create_table`,
-        `Create a new table with the given name in project "${projectName}".`,
-        { name: z.string().describe('The name of the table to create') },
+        'create_table',
+        'Create a new table with the given name.',
+        {
+            projectId: z.string().describe('The project ID. Use list_projects to find available projects.'),
+            name: z.string().describe('The name of the table to create'),
+        },
         async (args) => {
             return wrapServiceCall(log, () =>
-                tableService(log).create({ projectId, request: { projectId, name: args.name } }),
+                tableService(log).create({ projectId: args.projectId, request: { projectId: args.projectId, name: args.name } }),
             )
         },
     )
 
     server.tool(
-        `${prefix}_delete_table`,
-        `Delete a table by its ID in project "${projectName}". This will permanently remove the table and all its data.`,
-        { tableId: z.string().describe('The ID of the table to delete') },
+        'delete_table',
+        'Delete a table by its ID. This will permanently remove the table and all its data.',
+        {
+            projectId: z.string().describe('The project ID. Use list_projects to find available projects.'),
+            tableId: z.string().describe('The ID of the table to delete'),
+        },
         async (args) => {
             return wrapServiceCall(log, async () => {
-                await tableService(log).delete({ projectId, id: args.tableId })
+                await tableService(log).delete({ projectId: args.projectId, id: args.tableId })
                 return { success: true }
             })
         },
     )
 }
 
-function registerFieldTools(server: McpServer, projectId: string, prefix: string, projectName: string, log: FastifyBaseLogger): void {
+function registerFieldTools(server: McpServer, log: FastifyBaseLogger): void {
     server.tool(
-        `${prefix}_list_fields`,
-        `List all fields (columns) of a table in project "${projectName}". Use this to get field IDs before creating or updating records.`,
-        { tableId: z.string().describe('The ID of the table') },
+        'list_fields',
+        'List all fields (columns) of a table. Use this to get field IDs before creating or updating records.',
+        {
+            projectId: z.string().describe('The project ID. Use list_projects to find available projects.'),
+            tableId: z.string().describe('The ID of the table'),
+        },
         async (args) => {
             return wrapServiceCall(log, () =>
-                fieldService(log).getAll({ projectId, tableId: args.tableId }),
+                fieldService(log).getAll({ projectId: args.projectId, tableId: args.tableId }),
             )
         },
     )
 
     server.tool(
-        `${prefix}_create_field`,
-        `Create a new field (column) in a table in project "${projectName}". Supported types: TEXT, NUMBER, DATE, STATIC_DROPDOWN. For STATIC_DROPDOWN, provide data with options.`,
+        'create_field',
+        'Create a new field (column) in a table. Supported types: TEXT, NUMBER, DATE, STATIC_DROPDOWN. For STATIC_DROPDOWN, provide data with options.',
         {
+            projectId: z.string().describe('The project ID. Use list_projects to find available projects.'),
             tableId: z.string().describe('The ID of the table'),
             name: z.string().describe('The name of the field'),
             type: z.nativeEnum(FieldType).describe('The type of the field: TEXT, NUMBER, DATE, or STATIC_DROPDOWN'),
@@ -108,7 +112,7 @@ function registerFieldTools(server: McpServer, projectId: string, prefix: string
             return wrapServiceCall(log, () => {
                 if (args.type === FieldType.STATIC_DROPDOWN) {
                     return fieldService(log).create({
-                        projectId,
+                        projectId: args.projectId,
                         request: {
                             tableId: args.tableId,
                             name: args.name,
@@ -118,7 +122,7 @@ function registerFieldTools(server: McpServer, projectId: string, prefix: string
                     })
                 }
                 return fieldService(log).create({
-                    projectId,
+                    projectId: args.projectId,
                     request: {
                         tableId: args.tableId,
                         name: args.name,
@@ -130,37 +134,42 @@ function registerFieldTools(server: McpServer, projectId: string, prefix: string
     )
 
     server.tool(
-        `${prefix}_update_field`,
-        `Rename a field (column) in project "${projectName}".`,
+        'update_field',
+        'Rename a field (column).',
         {
+            projectId: z.string().describe('The project ID. Use list_projects to find available projects.'),
             fieldId: z.string().describe('The ID of the field to update'),
             name: z.string().describe('The new name for the field'),
         },
         async (args) => {
             return wrapServiceCall(log, () =>
-                fieldService(log).update({ id: args.fieldId, projectId, request: { name: args.name } }),
+                fieldService(log).update({ id: args.fieldId, projectId: args.projectId, request: { name: args.name } }),
             )
         },
     )
 
     server.tool(
-        `${prefix}_delete_field`,
-        `Delete a field (column) from a table in project "${projectName}".`,
-        { fieldId: z.string().describe('The ID of the field to delete') },
+        'delete_field',
+        'Delete a field (column) from a table.',
+        {
+            projectId: z.string().describe('The project ID. Use list_projects to find available projects.'),
+            fieldId: z.string().describe('The ID of the field to delete'),
+        },
         async (args) => {
             return wrapServiceCall(log, async () => {
-                await fieldService(log).delete({ id: args.fieldId, projectId })
+                await fieldService(log).delete({ id: args.fieldId, projectId: args.projectId })
                 return { success: true }
             })
         },
     )
 }
 
-function registerRecordTools(server: McpServer, projectId: string, prefix: string, projectName: string, log: FastifyBaseLogger): void {
+function registerRecordTools(server: McpServer, log: FastifyBaseLogger): void {
     server.tool(
-        `${prefix}_list_records`,
-        `List records (rows) in a table in project "${projectName}". Use list_fields first to get field IDs for filtering.`,
+        'list_records',
+        'List records (rows) in a table. Use list_fields first to get field IDs for filtering.',
         {
+            projectId: z.string().describe('The project ID. Use list_projects to find available projects.'),
             tableId: z.string().describe('The ID of the table'),
             limit: z.number().optional().describe('Maximum number of records to return (default 100)'),
             filters: z.array(z.object({
@@ -173,8 +182,8 @@ function registerRecordTools(server: McpServer, projectId: string, prefix: strin
             return wrapServiceCall(log, () =>
                 recordService(log).list({
                     tableId: args.tableId,
-                    projectId,
-                    filters: args.filters ?? null,
+                    projectId: args.projectId,
+                    filters: (args.filters as Filter[]) ?? null,
                     limit: args.limit ?? 100,
                     cursorRequest: null,
                 }),
@@ -183,9 +192,10 @@ function registerRecordTools(server: McpServer, projectId: string, prefix: strin
     )
 
     server.tool(
-        `${prefix}_create_records`,
-        `Create one or more records (rows) in a table in project "${projectName}". Use list_fields first to get field IDs. Each record is an array of cell objects with fieldId and value.`,
+        'create_records',
+        'Create one or more records (rows) in a table. Use list_fields first to get field IDs. Each record is an array of cell objects with fieldId and value.',
         {
+            projectId: z.string().describe('The project ID. Use list_projects to find available projects.'),
             tableId: z.string().describe('The ID of the table'),
             records: z.array(z.array(z.object({
                 fieldId: z.string().describe('The field ID'),
@@ -195,7 +205,7 @@ function registerRecordTools(server: McpServer, projectId: string, prefix: strin
         async (args) => {
             return wrapServiceCall(log, () =>
                 recordService(log).create({
-                    projectId,
+                    projectId: args.projectId,
                     request: { tableId: args.tableId, records: args.records },
                 }),
             )
@@ -203,20 +213,24 @@ function registerRecordTools(server: McpServer, projectId: string, prefix: strin
     )
 
     server.tool(
-        `${prefix}_get_record`,
-        `Get a single record by its ID in project "${projectName}".`,
-        { recordId: z.string().describe('The ID of the record to retrieve') },
+        'get_record',
+        'Get a single record by its ID.',
+        {
+            projectId: z.string().describe('The project ID. Use list_projects to find available projects.'),
+            recordId: z.string().describe('The ID of the record to retrieve'),
+        },
         async (args) => {
             return wrapServiceCall(log, () =>
-                recordService(log).getById({ id: args.recordId, projectId }),
+                recordService(log).getById({ id: args.recordId, projectId: args.projectId }),
             )
         },
     )
 
     server.tool(
-        `${prefix}_update_records`,
-        `Update one or more records in project "${projectName}". Each record specifies its ID and the cells to update.`,
+        'update_records',
+        'Update one or more records. Each record specifies its ID and the cells to update.',
         {
+            projectId: z.string().describe('The project ID. Use list_projects to find available projects.'),
             tableId: z.string().describe('The ID of the table containing the records'),
             records: z.array(z.object({
                 recordId: z.string().describe('The ID of the record to update'),
@@ -229,7 +243,7 @@ function registerRecordTools(server: McpServer, projectId: string, prefix: strin
         async (args) => {
             return wrapServiceCall(log, () =>
                 recordService(log).updateMany({
-                    projectId,
+                    projectId: args.projectId,
                     request: { tableId: args.tableId, records: args.records },
                 }),
             )
@@ -237,14 +251,15 @@ function registerRecordTools(server: McpServer, projectId: string, prefix: strin
     )
 
     server.tool(
-        `${prefix}_delete_records`,
-        `Delete one or more records by their IDs in project "${projectName}".`,
+        'delete_records',
+        'Delete one or more records by their IDs.',
         {
+            projectId: z.string().describe('The project ID. Use list_projects to find available projects.'),
             recordIds: z.array(z.string()).describe('Array of record IDs to delete'),
         },
         async (args) => {
             return wrapServiceCall(log, () =>
-                recordService(log).delete({ ids: args.recordIds, projectId }),
+                recordService(log).delete({ ids: args.recordIds, projectId: args.projectId }),
             )
         },
     )

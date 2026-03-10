@@ -4,35 +4,36 @@ import {
     FlowOperationType,
     flowStructureUtil,
     isNil,
-    McpServer,
     McpToolDefinition,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
-import { flowService } from '../../flows/flow/flow.service'
-import { projectService } from '../../project/project-service'
+import { flowService } from '../../../flows/flow/flow.service'
+import { projectService } from '../../../project/project-service'
 
 const deleteBranchInput = z.object({
+    projectId: z.string(),
     flowId: z.string(),
     routerStepName: z.string(),
     branchIndex: z.number().int().min(0),
 })
 
-export const apDeleteBranchTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
+export const deleteBranchTool = (log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_delete_branch',
         description: 'Delete a branch from a router (ROUTER) step. Cannot delete the last (fallback) branch. Use ap_flow_structure to get branch indices.',
         inputSchema: {
+            projectId: z.string().describe('The project ID. Use list_projects to find available projects.'),
             flowId: z.string().describe('The id of the flow'),
             routerStepName: z.string().describe('The name of the ROUTER step. Use ap_flow_structure to get valid values.'),
             branchIndex: z.number().describe('The index of the branch to delete (0-based). Cannot delete the fallback/last branch.'),
         },
         execute: async (args) => {
-            const { flowId, routerStepName, branchIndex } = deleteBranchInput.parse(args)
+            const { flowId, routerStepName, branchIndex, projectId } = deleteBranchInput.parse(args)
 
             const [flow, project] = await Promise.all([
-                flowService(log).getOnePopulated({ id: flowId, projectId: mcp.projectId }),
-                projectService(log).getOneOrThrow(mcp.projectId),
+                flowService(log).getOnePopulated({ id: flowId, projectId }),
+                projectService(log).getOneOrThrow(projectId),
             ])
             if (isNil(flow)) {
                 return { content: [{ type: 'text', text: '❌ Flow not found' }] }
@@ -77,7 +78,7 @@ export const apDeleteBranchTool = (mcp: McpServer, log: FastifyBaseLogger): McpT
             try {
                 await flowService(log).update({
                     id: flow.id,
-                    projectId: mcp.projectId,
+                    projectId,
                     userId: null,
                     platformId: project.platformId,
                     operation,

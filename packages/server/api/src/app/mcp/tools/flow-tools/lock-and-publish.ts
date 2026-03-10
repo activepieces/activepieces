@@ -4,31 +4,32 @@ import {
     FlowStatus,
     flowStructureUtil,
     isNil,
-    McpServer,
     McpToolDefinition,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
-import { flowService } from '../../flows/flow/flow.service'
-import { projectService } from '../../project/project-service'
+import { flowService } from '../../../flows/flow/flow.service'
+import { projectService } from '../../../project/project-service'
 
 const lockAndPublishInput = z.object({
+    projectId: z.string(),
     flowId: z.string(),
 })
 
-export const apLockAndPublishTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
+export const lockAndPublishTool = (log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_lock_and_publish',
         description: 'Publish and enable the current draft version of a flow. This locks the draft, sets it as the published version, and enables the flow. Returns validation errors if the flow is not ready.',
         inputSchema: {
+            projectId: z.string().describe('The project ID. Use list_projects to find available projects.'),
             flowId: z.string().describe('The id of the flow to publish'),
         },
         execute: async (args) => {
-            const { flowId } = lockAndPublishInput.parse(args)
+            const { flowId, projectId } = lockAndPublishInput.parse(args)
 
             const [flow, project] = await Promise.all([
-                flowService(log).getOnePopulated({ id: flowId, projectId: mcp.projectId }),
-                projectService(log).getOneOrThrow(mcp.projectId),
+                flowService(log).getOnePopulated({ id: flowId, projectId }),
+                projectService(log).getOneOrThrow(projectId),
             ])
             if (isNil(flow)) {
                 return { content: [{ type: 'text', text: '❌ Flow not found' }] }
@@ -54,7 +55,7 @@ export const apLockAndPublishTool = (mcp: McpServer, log: FastifyBaseLogger): Mc
             try {
                 await flowService(log).update({
                     id: flow.id,
-                    projectId: mcp.projectId,
+                    projectId,
                     userId: null,
                     platformId: project.platformId,
                     operation,

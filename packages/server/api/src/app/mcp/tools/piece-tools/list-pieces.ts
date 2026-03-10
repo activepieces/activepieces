@@ -1,15 +1,15 @@
 import {
     LocalesEnum,
-    McpServer,
     McpToolDefinition,
     PieceCategory,
     SuggestionType,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
-import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
+import { pieceMetadataService } from '../../../pieces/metadata/piece-metadata-service'
 
 const listPiecesSchema = z.object({
+    projectId: z.string(),
     categories: z.array(z.enum(Object.values(PieceCategory) as [string, ...string[]])).optional(),
     tags: z.array(z.string()).optional(),
     searchQuery: z.string().optional(),
@@ -19,11 +19,12 @@ const listPiecesSchema = z.object({
     includeTriggers: z.boolean().optional(),
 })
 
-export const apListPiecesTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
+export const listPiecesTool = (log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_list_pieces',
         description: 'List pieces (pieceName, pieceVersion, actions count, triggers count). Use includeActions=true to get action names and descriptions. Use includeTriggers=true to get trigger names and descriptions. Call before ap_add_step or ap_update_trigger to get valid piece names and action/trigger names.',
         inputSchema: {
+            projectId: z.string().describe('The project ID. Use list_projects to find available projects.'),
             categories: listPiecesSchema.shape.categories,
             tags: listPiecesSchema.shape.tags,
             searchQuery: listPiecesSchema.shape.searchQuery,
@@ -36,7 +37,7 @@ export const apListPiecesTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
             try {
                 const params = listPiecesSchema.parse(args ?? {})
                 const pieces = await pieceMetadataService(log).list({
-                    projectId: mcp.projectId,
+                    projectId: params.projectId,
                     includeHidden: true,
                     categories: params.categories as PieceCategory[] | undefined,
                     tags: params.tags,
@@ -66,7 +67,7 @@ export const apListPiecesTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
                     const fullPiece = await pieceMetadataService(log).get({
                         name: piece.name,
                         version: piece.version,
-                        projectId: mcp.projectId,
+                        projectId: params.projectId,
                         platformId: undefined,
                     })
                     if (fullPiece) {

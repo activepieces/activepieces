@@ -1,16 +1,19 @@
-import { McpServer, McpToolDefinition } from '@activepieces/shared'
+import { McpToolDefinition } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { flowService } from '../../flows/flow/flow.service'
+import { z } from 'zod'
+import { flowService } from '../../../flows/flow/flow.service'
 
-export const apListFlowsTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
+export const listFlowsTool = (log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_list_flows',
         description: 'List all flows in the current project',
-        inputSchema: {},
-        execute: async () => {
+        inputSchema: {
+            projectId: z.string().describe('The project ID. Use list_projects to find available projects.'),
+        },
+        execute: async (args) => {
             try {
                 const flows = await flowService(log).list({
-                    projectIds: [mcp.projectId],
+                    projectIds: [args.projectId as string],
                     cursorRequest: null,
                     limit: 1000000,
                 })

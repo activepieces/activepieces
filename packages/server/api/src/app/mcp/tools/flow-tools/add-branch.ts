@@ -5,26 +5,27 @@ import {
     FlowOperationType,
     flowStructureUtil,
     isNil,
-    McpServer,
     McpToolDefinition,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
-import { flowService } from '../../flows/flow/flow.service'
-import { projectService } from '../../project/project-service'
+import { flowService } from '../../../flows/flow/flow.service'
+import { projectService } from '../../../project/project-service'
 
 const addBranchInput = z.object({
+    projectId: z.string(),
     flowId: z.string(),
     routerStepName: z.string(),
     branchName: z.string(),
     conditions: z.array(z.array(BranchCondition)).optional(),
 })
 
-export const apAddBranchTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
+export const addBranchTool = (log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_add_branch',
         description: 'Add a new conditional branch to a router (ROUTER) step. The branch is inserted before the fallback branch. Use ap_flow_structure to get the router step name.',
         inputSchema: {
+            projectId: z.string().describe('The project ID. Use list_projects to find available projects.'),
             flowId: z.string().describe('The id of the flow'),
             routerStepName: z.string().describe('The name of the ROUTER step to add a branch to. Use ap_flow_structure to get valid values.'),
             branchName: z.string().describe('Display name for the new branch (e.g. "Branch 1")'),
@@ -40,11 +41,11 @@ export const apAddBranchTool = (mcp: McpServer, log: FastifyBaseLogger): McpTool
             ).optional().describe('Conditions array (outer array = OR groups, inner array = AND conditions). Required for condition-type branches; omit to use an empty condition group.'),
         },
         execute: async (args) => {
-            const { flowId, routerStepName, branchName, conditions } = addBranchInput.parse(args)
+            const { flowId, routerStepName, branchName, conditions, projectId } = addBranchInput.parse(args)
 
             const [flow, project] = await Promise.all([
-                flowService(log).getOnePopulated({ id: flowId, projectId: mcp.projectId }),
-                projectService(log).getOneOrThrow(mcp.projectId),
+                flowService(log).getOnePopulated({ id: flowId, projectId }),
+                projectService(log).getOneOrThrow(projectId),
             ])
             if (isNil(flow)) {
                 return { content: [{ type: 'text', text: '❌ Flow not found' }] }
@@ -81,7 +82,7 @@ export const apAddBranchTool = (mcp: McpServer, log: FastifyBaseLogger): McpTool
             try {
                 await flowService(log).update({
                     id: flow.id,
-                    projectId: mcp.projectId,
+                    projectId,
                     userId: null,
                     platformId: project.platformId,
                     operation,

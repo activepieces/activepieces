@@ -2,33 +2,34 @@ import {
     FlowOperationRequest,
     FlowOperationType,
     isNil,
-    McpServer,
     McpToolDefinition,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
-import { flowService } from '../../flows/flow/flow.service'
-import { projectService } from '../../project/project-service'
+import { flowService } from '../../../flows/flow/flow.service'
+import { projectService } from '../../../project/project-service'
 
 const renameFlowInput = z.object({
+    projectId: z.string(),
     flowId: z.string(),
     displayName: z.string(),
 })
 
-export const apRenameFlowTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
+export const renameFlowTool = (log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_rename_flow',
         description: 'Rename a flow. Use ap_list_flows to get valid flow IDs.',
         inputSchema: {
+            projectId: z.string().describe('The project ID. Use list_projects to find available projects.'),
             flowId: z.string().describe('The id of the flow to rename'),
             displayName: z.string().describe('The new display name for the flow'),
         },
         execute: async (args) => {
-            const { flowId, displayName } = renameFlowInput.parse(args)
+            const { flowId, displayName, projectId } = renameFlowInput.parse(args)
 
             const [flow, project] = await Promise.all([
-                flowService(log).getOnePopulated({ id: flowId, projectId: mcp.projectId }),
-                projectService(log).getOneOrThrow(mcp.projectId),
+                flowService(log).getOnePopulated({ id: flowId, projectId }),
+                projectService(log).getOneOrThrow(projectId),
             ])
             if (isNil(flow)) {
                 return { content: [{ type: 'text', text: '❌ Flow not found' }] }
@@ -42,7 +43,7 @@ export const apRenameFlowTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
             try {
                 await flowService(log).update({
                     id: flow.id,
-                    projectId: mcp.projectId,
+                    projectId,
                     userId: null,
                     platformId: project.platformId,
                     operation,
