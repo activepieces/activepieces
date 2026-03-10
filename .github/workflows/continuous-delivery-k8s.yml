@@ -133,8 +133,10 @@ jobs:
             local elapsed=0
             echo "Waiting for $name rollout..."
             while [ $elapsed -lt $timeout ]; do
-              PHASE=$(kubectl argo rollouts get rollout $name -n activepieces -o json 2>/dev/null \
-                | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('status',{}).get('phase','Unknown'))" 2>/dev/null || echo "Unknown")
+              # Use kubectl get with jsonpath — avoids argo plugin output format issues
+              PHASE=$(kubectl get rollout "$name" -n activepieces \
+                -o jsonpath='{.status.phase}' 2>/dev/null || echo "Unknown")
+              [ -z "$PHASE" ] && PHASE="Unknown"
               echo "$name phase: $PHASE"
               case $PHASE in
                 Paused|Healthy) return 0 ;;
@@ -143,7 +145,7 @@ jobs:
               sleep 10
               elapsed=$((elapsed + 10))
             done
-            echo "::error::$name timed out"
+            echo "::error::$name timed out after ${timeout}s (last phase: $PHASE)"
             return 1
           }
 
@@ -154,6 +156,9 @@ jobs:
           if [ $APP_OK -ne 0 ] || [ $WORKER_OK -ne 0 ]; then
             echo "--- Pod status ---"
             kubectl get pods -n activepieces
+            echo "--- Rollout details ---"
+            kubectl argo rollouts get rollout activepieces -n activepieces || true
+            kubectl argo rollouts get rollout activepieces-worker -n activepieces || true
             echo "--- Events ---"
             kubectl get events -n activepieces --sort-by='.lastTimestamp' | tail -30
             kubectl argo rollouts abort activepieces -n activepieces || true
