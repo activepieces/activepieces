@@ -5,7 +5,7 @@ export const StepFileUpsertRequest = z.object({
     flowId: z.string(),
     stepName: z.string(),
     file: ApMultipartFile.pick({ data: true }).optional(),
-    contentLength: z.number(),
+    contentLength: z.coerce.number().int().nonnegative(),
     fileName: z.string(),
 })
 

@@ -288,6 +288,7 @@ const OptionalAuthSchema = z
 const createFormSchema = (provider: AIProviderName, editMode: boolean) => {
   if (provider === AIProviderName.AZURE) {
     return z.object({
+      displayName: z.string().min(1),
       provider: z.literal(AIProviderName.AZURE),
       config: AzureProviderConfig,
       auth: editMode ? OptionalAuthSchema : AzureProviderAuthConfig,
@@ -295,6 +296,7 @@ const createFormSchema = (provider: AIProviderName, editMode: boolean) => {
   }
   if (provider === AIProviderName.CLOUDFLARE_GATEWAY) {
     return z.object({
+      displayName: z.string().min(1),
       provider: z.literal(AIProviderName.CLOUDFLARE_GATEWAY),
       config: CloudflareGatewayProviderConfig,
       auth: editMode ? OptionalAuthSchema : CloudflareGatewayProviderAuthConfig,
@@ -302,6 +304,7 @@ const createFormSchema = (provider: AIProviderName, editMode: boolean) => {
   }
   if (provider === AIProviderName.CUSTOM) {
     return z.object({
+      displayName: z.string().min(1),
       provider: z.literal(AIProviderName.CUSTOM),
       config: OpenAICompatibleProviderConfig,
       auth: editMode ? OptionalAuthSchema : OpenAICompatibleProviderAuthConfig,
@@ -313,6 +316,7 @@ const createFormSchema = (provider: AIProviderName, editMode: boolean) => {
     OpenAIProviderAuthConfig,
   ]);
   return z.object({
+    displayName: z.string().min(1),
     provider: z.literal(provider),
     auth: editMode ? OptionalAuthSchema : authSchema,
     config: z.union([
