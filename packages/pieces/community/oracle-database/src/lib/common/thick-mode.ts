@@ -18,9 +18,9 @@ function resolveOracleBaseDir(): string {
 
 const ORACLE_BASE_DIR = resolveOracleBaseDir();
 const ORACLE_TEMP_ZIP = path.join(os.tmpdir(), 'oracle-instantclient.zip');
+const ORACLE_INSTANT_CLIENT_ARCH = process.arch === 'arm64' ? 'linux.arm64' : 'linux.x64';
 const ORACLE_INSTANT_CLIENT_URL =
-  'https://download.oracle.com/otn_software/linux/instantclient/2326100/instantclient-basic-linux.x64-23.26.1.0.0.zip';
-
+  `https://download.oracle.com/otn_software/linux/instantclient/2326100/instantclient-basic-${ORACLE_INSTANT_CLIENT_ARCH}-23.26.1.0.0.zip`;
 // libaio1 Debian package — update version/hash when needed:
 // https://packages.debian.org/bullseye/libaio1
 const LIBAIO_DEB_ARCH = process.arch === 'arm64' ? 'arm64' : 'amd64';
@@ -33,8 +33,6 @@ const PATCHELF_ARCH = process.arch === 'arm64' ? 'aarch64' : 'x86_64';
 const PATCHELF_URL = `https://github.com/NixOS/patchelf/releases/download/${PATCHELF_VERSION}/patchelf-${PATCHELF_VERSION}-${PATCHELF_ARCH}.tar.gz`;
 const PATCHELF_BIN = path.join(ORACLE_BASE_DIR, 'bin', 'patchelf');
 
-// Ensures initOracleClient is called at most once per process (NJS-077 guard)
-let oracleClientInitialized = false;
 
 // Returns the latest valid instantclient_* dir that has libclntsh.so + libnnz.so
 function getOracleClientLibDir(): string | null {
@@ -52,8 +50,11 @@ function getOracleClientLibDir(): string | null {
   return dirs.length > 0 ? `${ORACLE_BASE_DIR}/${dirs[0]}` : null;
 }
 
-// Downloads a file over HTTPS, following redirects
-async function downloadFile(url: string, dest: string): Promise<void> {
+// Downloads a file over HTTPS, following up to 10 redirects
+async function downloadFile(url: string, dest: string, redirectDepth = 0): Promise<void> {
+  if (redirectDepth > 10) {
+    throw new Error(`[oracle] Too many redirects downloading ${url}`);
+  }
   return new Promise((resolve, reject) => {
     console.log(`[oracle] Downloading: ${url}`);
     const file = fs.createWriteStream(dest);
@@ -65,9 +66,10 @@ async function downloadFile(url: string, dest: string): Promise<void> {
 
         if ([301, 302, 307, 308].includes(statusCode!)) {
           console.log(`[oracle] Redirecting to: ${headers.location}`);
+          response.resume();
           file.close();
           fs.unlink(dest, () => {});
-          downloadFile(headers.location!, dest).then(resolve).catch(reject);
+          downloadFile(headers.location!, dest, redirectDepth + 1).then(resolve).catch(reject);
           return;
         }
 
@@ -156,7 +158,9 @@ async function ensureLibaio(libDir: string): Promise<void> {
   const systemLib = systemPaths.find((p) => fs.existsSync(p));
   if (systemLib) {
     console.log(`[oracle] libaio.so.1 found at ${systemLib}. Symlinking into libDir...`);
-    fs.symlinkSync(systemLib, path.join(libDir, 'libaio.so.1'));
+    const realLib = fs.realpathSync(systemLib);
+    console.log(`[oracle] Copying libaio.so.1 from ${realLib} into libDir...`);
+    fs.copyFileSync(realLib, path.join(libDir, 'libaio.so.1'));
     return;
   }
 
@@ -167,8 +171,15 @@ async function ensureLibaio(libDir: string): Promise<void> {
 
   await downloadFile(LIBAIO_DEB_URL, debPath);
 
+  // .deb is an ar archive — `ar` + `tar` works on all distros (not just Debian/Ubuntu)
   fs.mkdirSync(extractDir, { recursive: true });
-  execSync(`dpkg-deb --extract "${debPath}" "${extractDir}"`, { stdio: 'pipe' });
+  execSync(`ar x "${debPath}"`, { cwd: extractDir, stdio: 'pipe' });
+  const dataFile = fs.readdirSync(extractDir).find((f) => f.startsWith('data.tar'));
+  if (!dataFile) throw new Error('[oracle] Could not find data.tar in libaio1 deb');
+  execSync(`tar xf "${path.join(extractDir, dataFile)}" --wildcards '*.so*'`, {
+    cwd: extractDir,
+    stdio: 'pipe',
+  });
 
   const extracted = [
     `${extractDir}/usr/lib/x86_64-linux-gnu/libaio.so.1`,
@@ -226,24 +237,13 @@ async function registerOracleLibs(libDir: string): Promise<void> {
   }
 }
 
-/**
- * Ensures Oracle Instant Client is ready and initialises node-oracledb.
- *
- * thickMode = false → try system client (initOracleClient with no args),
- *                     silently stay in Thin mode if none found.
- * thickMode = true  → auto-download client if missing, patch RPATH,
- *                     then initOracleClient({ libDir }).
- */
-export async function ensureOracleClient(thickMode: boolean): Promise<void> {
+async function _initOracleClient(thickMode: boolean): Promise<void> {
   if (!thickMode) {
-    if (!oracleClientInitialized) {
-      try {
-        oracledb.initOracleClient();
-        oracleClientInitialized = true;
-        console.log('[oracle] System Oracle Client loaded. Thin mode active.');
-      } catch {
-        // No system client — staying in Thin mode
-      }
+    try {
+      oracledb.initOracleClient();
+      console.log('[oracle] System Oracle Client loaded. Thin mode active.');
+    } catch {
+      // No system client — staying in Thin mode
     }
     return;
   }
@@ -272,11 +272,29 @@ export async function ensureOracleClient(thickMode: boolean): Promise<void> {
     }
   }
 
-  if (!oracleClientInitialized) {
-    await ensureLibaio(libDir);
-    await registerOracleLibs(libDir);
-    oracledb.initOracleClient({ libDir });
-    oracleClientInitialized = true;
-    console.log(`[oracle] Instant Client loaded from ${libDir}. Thick mode active.`);
-  }
+  await ensureLibaio(libDir);
+  await registerOracleLibs(libDir);
+  oracledb.initOracleClient({ libDir });
+  console.log(`[oracle] Instant Client loaded from ${libDir}. Thick mode active.`);
 }
+
+/**
+ * Ensures Oracle Instant Client is ready and initialises node-oracledb.
+ *
+ * thickMode = false → try system client (initOracleClient with no args),
+ *                     silently stay in Thin mode if none found.
+ * thickMode = true  → auto-download client if missing, patch RPATH,
+ *                     then initOracleClient({ libDir }).
+ *
+ * Promise-based singleton — concurrent callers all await the same Promise
+ * so initOracleClient is never called twice (prevents NJS-077).
+ */
+export const ensureOracleClient: (thickMode: boolean) => Promise<void> = (() => {
+  let initPromise: Promise<void> | null = null;
+  return (thickMode: boolean): Promise<void> => {
+    if (!initPromise) {
+      initPromise = _initOracleClient(thickMode);
+    }
+    return initPromise;
+  };
+})();
