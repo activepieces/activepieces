@@ -93,7 +93,6 @@ export const formatUtils = {
         return t('Just now');
       }
       if (diffInMinutes < 60) {
-      if (diffInMinutes < 60) {
         return diffInMinutes === 1
           ? t('1 min ago')
           : t('{count} mins ago', { count: diffInMinutes });
