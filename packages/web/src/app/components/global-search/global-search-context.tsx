@@ -236,12 +236,11 @@ const TYPE_CATEGORIES = [
             <p className="text-sm text-muted-foreground">
               {t('No results found.')}
             </p>
-            <button
-              className="text-xs text-primary underline hover:no-underline"
-              onClick={() => setSearch('')}
-            >
-              {t('Clear Search')}
-            </button>
+              <button
+                type="button"
+                className="text-xs text-primary underline hover:no-underline"
+                onClick={() => setSearch('')}
+              >
           </div>
         )}
 
