@@ -330,3 +330,11 @@ queueUi:
   enabled: false                      # Set to true and configure credentials below
   username: ""
   password: ""
+
+# ============================================================================
+# Argo Rollouts — blue/green deployment strategy
+# ============================================================================
+rollout:
+  blueGreen:
+    autoPromotionEnabled: true
+    scaleDownDelaySeconds: 30     # keep old pods 30s after promotion for graceful drain

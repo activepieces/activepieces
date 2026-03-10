@@ -84,16 +84,19 @@ jobs:
         with:
           version: v3.14.0
 
+      - name: Install kubectl-argo-rollouts plugin
+        run: |
+          curl -fsSL https://github.com/argoproj/argo-rollouts/releases/latest/download/kubectl-argo-rollouts-linux-amd64 \
+            -o /usr/local/bin/kubectl-argo-rollouts
+          chmod +x /usr/local/bin/kubectl-argo-rollouts
+
       - name: Configure kubeconfig
         run: |
           mkdir -p ~/.kube
           echo "${{ secrets.HETZNER_KUBECONFIG }}" > ~/.kube/config
           chmod 600 ~/.kube/config
 
-      - name: Update Helm dependencies
-        run: helm dependency update deploy/activepieces-helm/
-
-      - name: Deploy APP and WORKER in parallel
+      - name: Deploy APP and WORKER
         run: |
           IMAGE_TAG=${{ needs.build-image.outputs.image_tag }}
 
@@ -101,16 +104,14 @@ jobs:
             --namespace activepieces \
             --values deploy/staging/stg-app-values.yaml \
             --set image.tag=$IMAGE_TAG \
-            --wait --timeout 5m \
-            --debug > /tmp/helm-app.log 2>&1 &
+            --debug &
           APP_PID=$!
 
           helm upgrade --install activepieces-worker deploy/activepieces-helm/ \
             --namespace activepieces \
             --values deploy/staging/stg-worker-values.yaml \
             --set image.tag=$IMAGE_TAG \
-            --wait --timeout 5m \
-            --debug > /tmp/helm-worker.log 2>&1 &
+            --debug &
           WORKER_PID=$!
 
           APP_EXIT=0; WORKER_EXIT=0
@@ -118,19 +119,51 @@ jobs:
           wait $WORKER_PID || WORKER_EXIT=$?
 
           if [ $APP_EXIT -ne 0 ] || [ $WORKER_EXIT -ne 0 ]; then
-            echo "::error::Deploy failed — rolling back both releases"
-            cat /tmp/helm-app.log
-            cat /tmp/helm-worker.log
+            exit 1
+          fi
+
+      - name: Wait for preview pods to be healthy
+        run: |
+          wait_for_rollout() {
+            local name=$1
+            local timeout=300
+            local elapsed=0
+            echo "Waiting for $name rollout..."
+            while [ $elapsed -lt $timeout ]; do
+              PHASE=$(kubectl argo rollouts get rollout $name -n activepieces -o json 2>/dev/null \
+                | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('status',{}).get('phase','Unknown'))" 2>/dev/null || echo "Unknown")
+              echo "$name phase: $PHASE"
+              case $PHASE in
+                Paused|Healthy) return 0 ;;
+                Degraded|Error|Aborted) echo "::error::$name rollout failed: $PHASE"; return 1 ;;
+              esac
+              sleep 10
+              elapsed=$((elapsed + 10))
+            done
+            echo "::error::$name timed out"
+            return 1
+          }
+
+          APP_OK=0; WORKER_OK=0
+          wait_for_rollout activepieces        || APP_OK=1
+          wait_for_rollout activepieces-worker || WORKER_OK=1
+
+          if [ $APP_OK -ne 0 ] || [ $WORKER_OK -ne 0 ]; then
             echo "--- Pod status ---"
             kubectl get pods -n activepieces
             echo "--- Events ---"
             kubectl get events -n activepieces --sort-by='.lastTimestamp' | tail -30
-            helm rollback activepieces -n activepieces || true
-            helm rollback activepieces-worker -n activepieces || true
+            kubectl argo rollouts abort activepieces -n activepieces || true
+            kubectl argo rollouts abort activepieces-worker -n activepieces || true
             exit 1
           fi
 
-      - name: Verify rollout
+      - name: Promote APP and WORKER
         run: |
-          kubectl rollout status deployment/activepieces -n activepieces --timeout=240s
-          kubectl rollout status deployment/activepieces-worker -n activepieces --timeout=240s
+          kubectl argo rollouts promote activepieces -n activepieces
+          kubectl argo rollouts promote activepieces-worker -n activepieces
+
+      - name: Wait for promotion to complete
+        run: |
+          kubectl argo rollouts status activepieces -n activepieces --timeout=5m
+          kubectl argo rollouts status activepieces-worker -n activepieces --timeout=5m
