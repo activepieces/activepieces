@@ -88,8 +88,9 @@ export const newMention = createTrigger({
         payloadBody.event.text?.includes(`<@${context.propsValue.user}>`)
       ) {
         if (context.propsValue.removeMention) {
+          const escapedUser = context.propsValue.user.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
           const cleanText = payloadBody.event.text
-            .replace(new RegExp(`<@${context.propsValue.user}>`, 'g'), ' ')
+            .replace(new RegExp(`<@${escapedUser}>`, 'g'), ' ')
             .replace(/ {2,}/g, ' ')
             .trim();
           return [{ ...payloadBody.event, clean_text: cleanText }];
