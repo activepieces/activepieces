@@ -319,7 +319,6 @@ export function DataTable<
   return (
     <div
       className={cn(
-        '-mx-4',
         virtualizeRows ? 'flex flex-col flex-1 min-h-0' : undefined,
       )}
     >
