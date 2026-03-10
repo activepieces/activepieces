@@ -62,7 +62,7 @@ tsconfig.json
 tsconfig.lib.json
 ```
 
-Copy config files from an existing simple piece (e.g. `packages/pieces/community/qrcode/`) and replace `<name>` throughout. Templates:
+Copy config files from an existing simple piece (e.g. `packages/pieces/core/qrcode/`) and replace `<name>` throughout. Templates:
 
 **package.json**
 

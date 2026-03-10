@@ -20,7 +20,6 @@ packages/pieces/
 | `custom/` | Building a private piece for a specific customer's internal system | Internal CRM, proprietary API |
 
 **For almost all piece building work, you will use `community/`.** The CLI scaffolds into `community/` by default.
-f
 ---
 
 ## Piece Type Enum (runtime)
