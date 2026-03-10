@@ -136,13 +136,13 @@ function GlobalSearchDialogContent({
   const hasQuery = debouncedSearch.length > 0;
   const noResults = hasQuery && !isLoading && groups.length === 0;
 
-  const TYPE_CATEGORIES = [
-    { type: 'flow', heading: t('Flows') },
-    { type: 'table', heading: t('Tables') },
-    { type: 'folder', heading: t('Folders') },
-    { type: 'project', heading: t('Projects') },
-    { type: 'page', heading: t('Pages') },
-  ] as const;
+const TYPE_CATEGORIES = [
+  { type: 'flow', heading: t('Flows') },
+  { type: 'table', heading: t('Tables') },
+  { type: 'folder', heading: t('Folders') },
+  { type: 'project', heading: t('Projects') },
+  { type: 'page', heading: t('Pages') },
+] as const;
 
   const mergedGroups = !hasQuery
     ? TYPE_CATEGORIES.map(({ type, heading }) => {
