@@ -5,7 +5,7 @@
 #     --set image.tag=<tag>
 # ============================================================================
 
-replicaCount: 8
+replicaCount: 32
 
 image:
   repository: ghcr.io/activepieces/activepieces-cloud
