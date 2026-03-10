@@ -1,6 +1,6 @@
 // Teable field types as returned by GET /api/table/{tableId}/field
 // @see https://help.teable.ai/en/api-reference/field/list-fields
-export const enum TeableFieldType {
+export enum TeableFieldType {
 	SINGLE_LINE_TEXT = 'singleLineText',
 	LONG_TEXT = 'longText',
 	USER = 'user',

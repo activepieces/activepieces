@@ -1,9 +1,6 @@
-import {
-  Property,
-  createAction,
-} from '@activepieces/pieces-framework';
+import { createAction } from '@activepieces/pieces-framework';
 import { TeableCommon, makeClient } from '../common';
-import { TeableAuth } from '../auth';
+import { TeableAuth, TeableAuthValue } from '../auth';
 
 export const deleteRecordAction = createAction({
   auth: TeableAuth,
@@ -13,16 +10,11 @@ export const deleteRecordAction = createAction({
   props: {
     base_id: TeableCommon.base_id,
     table_id: TeableCommon.table_id,
-    recordId: Property.ShortText({
-      displayName: 'Record ID',
-      description: 'The ID of the record to delete (e.g. recXXXXXXX).',
-      required: true,
-    }),
+    record_id: TeableCommon.record_id,
   },
   async run(context) {
-    const { table_id, recordId } = context.propsValue;
-    const client = makeClient(context.auth.props);
-    return await client.deleteRecord(table_id, recordId);
+    const { table_id, record_id } = context.propsValue;
+    const client = makeClient(context.auth as TeableAuthValue);
+    return await client.deleteRecord(table_id, record_id);
   },
 });
-

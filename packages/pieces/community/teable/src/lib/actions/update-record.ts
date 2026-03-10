@@ -1,10 +1,9 @@
 import {
 	DynamicPropsValue,
-	Property,
 	createAction,
 } from '@activepieces/pieces-framework';
 import { TeableCommon, makeClient } from '../common';
-import { TeableAuth } from '../auth';
+import { TeableAuth, TeableAuthValue } from '../auth';
 
 export const updateRecordAction = createAction({
 	auth: TeableAuth,
@@ -14,24 +13,21 @@ export const updateRecordAction = createAction({
 	props: {
 		base_id: TeableCommon.base_id,
 		table_id: TeableCommon.table_id,
-		recordId: Property.ShortText({
-			displayName: 'Record ID',
-			description: 'The ID of the record to update (e.g. recXXXXXXX).',
-			required: true,
-		}),
+		record_id: TeableCommon.record_id,
 		fields: TeableCommon.fields,
 	},
 	async run(context) {
-		const { table_id, recordId } = context.propsValue;
+		const { table_id, record_id } = context.propsValue;
 		const dynamicFields: DynamicPropsValue = context.propsValue.fields;
 
 		const fields: Record<string, unknown> = {};
+		for (const [key, value] of Object.entries(dynamicFields)) {
 			if (value !== undefined && value !== null && value !== '') {
+				fields[key] = value;
 			}
 		}
 
-		const client = makeClient(context.auth.props);
-		return await client.updateRecord(table_id, recordId, { record: { fields } });
+		const client = makeClient(context.auth as TeableAuthValue);
+		return await client.updateRecord(table_id, record_id, { record: { fields } });
 	},
 });
-

@@ -3,7 +3,7 @@ import {
   createAction,
 } from '@activepieces/pieces-framework';
 import { TeableCommon, makeClient } from '../common';
-import { TeableAuth } from '../auth';
+import { TeableAuth, TeableAuthValue } from '../auth';
 import { prepareQuery } from '../common/client';
 
 export const findRecordsAction = createAction({
@@ -53,7 +53,7 @@ export const findRecordsAction = createAction({
   async run(context) {
     const { table_id, filter, cellFormat, take, skip, selectedRecordIds } = context.propsValue;
 
-    const client = makeClient(context.auth.props);
+    const client = makeClient(context.auth as TeableAuthValue);
 
     return await client.listRecords(
       table_id,

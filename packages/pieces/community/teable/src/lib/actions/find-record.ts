@@ -3,7 +3,7 @@ import {
   createAction,
 } from '@activepieces/pieces-framework';
 import { TeableCommon, makeClient } from '../common';
-import { TeableAuth } from '../auth';
+import { TeableAuth, TeableAuthValue } from '../auth';
 import { prepareQuery } from '../common/client';
 
 export const findRecordAction = createAction({
@@ -14,11 +14,7 @@ export const findRecordAction = createAction({
   props: {
     base_id: TeableCommon.base_id,
     table_id: TeableCommon.table_id,
-    recordId: Property.ShortText({
-      displayName: 'Record ID',
-      description: 'The ID of the record to retrieve (e.g. recXXXXXXX).',
-      required: true,
-    }),
+    record_id: TeableCommon.record_id,
     cellFormat: Property.StaticDropdown({
       displayName: 'Cell Format',
       description: 'The format of the cell values in the response.',
@@ -33,15 +29,8 @@ export const findRecordAction = createAction({
     }),
   },
   async run(context) {
-    const { table_id, recordId, cellFormat } = context.propsValue;
-
-    const client = makeClient(context.auth.props);
-
-    return await client.getRecord(
-      table_id,
-      recordId,
-      prepareQuery({ cellFormat })
-    );
+    const { table_id, record_id, cellFormat } = context.propsValue;
+    const client = makeClient(context.auth as TeableAuthValue);
+    return await client.getRecord(table_id, record_id, prepareQuery({ cellFormat }));
   },
 });
-

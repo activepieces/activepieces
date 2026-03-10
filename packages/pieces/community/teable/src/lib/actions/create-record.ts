@@ -3,7 +3,7 @@ import {
   createAction,
 } from '@activepieces/pieces-framework';
 import { TeableCommon, makeClient } from '../common';
-import { TeableAuth } from '../auth';
+import { TeableAuth, TeableAuthValue } from '../auth';
 
 export const createRecordAction = createAction({
   auth: TeableAuth,
@@ -26,7 +26,7 @@ export const createRecordAction = createAction({
       }
     }
 
-    const client = makeClient(context.auth.props);
+    const client = makeClient(context.auth as TeableAuthValue);
     return await client.createRecord(table_id, {
       records: [{ fields }],
     });

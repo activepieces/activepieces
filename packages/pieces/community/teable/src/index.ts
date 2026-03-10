@@ -1,16 +1,18 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import {
-  createPiece,
-} from '@activepieces/pieces-framework';
+import { createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { createRecordAction } from './lib/actions/create-record';
 import { findRecordsAction } from './lib/actions/find-records';
-import { findRecordAction} from './lib/actions/find-record';
-import {deleteRecordAction } from './lib/actions/delete-record';
+import { findRecordAction } from './lib/actions/find-record';
+import { deleteRecordAction } from './lib/actions/delete-record';
 import { updateRecordAction } from './lib/actions/update-record';
 import { uploadAttachmentAction } from './lib/actions/upload-attachment';
-import { TeableAuth } from './lib/auth';
-import { TEABLE_CLOUD_URL } from './lib/common/constants';
+import {
+  TeableAuth,
+  TeableAuthValue,
+  getTeableToken,
+  getTeableBaseUrl,
+} from './lib/auth';
 
 export const teable = createPiece({
   displayName: 'Teable',
@@ -19,9 +21,7 @@ export const teable = createPiece({
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/teable.png',
   categories: [PieceCategory.PRODUCTIVITY],
-  authors: [
-    'codegino'
-  ],
+  authors: ['codegino', 'onyedikachi-david'],
   actions: [
     createRecordAction,
     findRecordsAction,
@@ -30,15 +30,12 @@ export const teable = createPiece({
     deleteRecordAction,
     uploadAttachmentAction,
     createCustomApiCallAction({
-      baseUrl: (auth) => {
-        return `${auth?.props.baseUrl || TEABLE_CLOUD_URL}/api`;
-      },
       auth: TeableAuth,
-     authMapping: async (auth) => ({
-        Authorization: `Bearer ${(auth?.props.token ?? '')}`,
+      baseUrl: (auth) => `${getTeableBaseUrl(auth as TeableAuthValue)}/api`,
+      authMapping: async (auth) => ({
+        Authorization: `Bearer ${getTeableToken(auth as TeableAuthValue)}`,
       }),
     }),
   ],
   triggers: [],
 });
-

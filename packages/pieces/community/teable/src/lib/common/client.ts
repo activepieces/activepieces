@@ -199,4 +199,21 @@ export class TeableClient {
       request
     );
   }
+
+  /**
+   * POST /api/table/{tableId}/record/{recordId}/{fieldId}/uploadAttachment
+   * Uploads a file as an attachment to a specific field in a record.
+   */
+  async uploadAttachment(tableId: string, recordId: string, fieldId: string, form: FormData) {
+    const res = await httpClient.sendRequest({
+      method: HttpMethod.POST,
+      url: `${this.apiBase}/table/${tableId}/record/${recordId}/${fieldId}/uploadAttachment`,
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token: this.token,
+      },
+      body: form,
+    });
+    return res.body;
+  }
 }

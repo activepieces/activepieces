@@ -1,19 +1,18 @@
-import { DynamicPropsValue, PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
-import { TeableAuth } from '../auth';
+import { DynamicPropsValue, Property } from '@activepieces/pieces-framework';
+import { TeableAuth, TeableAuthValue, getTeableToken, getTeableBaseUrl } from '../auth';
 import { TeableClient } from './client';
-import { TEABLE_CLOUD_URL, TeableComputedFieldTypes, TeableFieldType } from './constants';
+import { TeableComputedFieldTypes, TeableFieldType } from './constants';
 
-export function makeClient(auth: PiecePropValueSchema<typeof TeableAuth>) {
-	const client = new TeableClient(
-		auth.token,
-		auth.baseUrl || TEABLE_CLOUD_URL
+export function makeClient(auth: TeableAuthValue) {
+	return new TeableClient(
+		getTeableToken(auth),
+		getTeableBaseUrl(auth)
 	);
-	return client;
 }
 
 export const TeableCommon = {
 	base_id: Property.Dropdown({
-    auth: TeableAuth,
+		auth: TeableAuth,
 		displayName: 'Base',
 		required: true,
 		refreshers: [],
@@ -21,7 +20,7 @@ export const TeableCommon = {
 			if (!auth) {
 				return { disabled: true, options: [], placeholder: 'Connect your account first.' };
 			}
-			const client = makeClient(auth.props);
+			const client = makeClient(auth as TeableAuthValue);
 			const bases = await client.listBases();
 			return {
 				disabled: false,
@@ -30,7 +29,7 @@ export const TeableCommon = {
 		},
 	}),
 	table_id: Property.Dropdown({
-    auth: TeableAuth,
+		auth: TeableAuth,
 		displayName: 'Table',
 		description: 'The table inside the selected base.',
 		required: true,
@@ -39,11 +38,35 @@ export const TeableCommon = {
 			if (!auth || !base_id) {
 				return { disabled: true, options: [], placeholder: 'Select a base first.' };
 			}
-			const client = makeClient(auth.props);
+			const client = makeClient(auth as TeableAuthValue);
 			const tables = await client.listTables(base_id as string);
 			return {
 				disabled: false,
 				options: tables.map((t) => ({ label: t.name, value: t.id })),
+			};
+		},
+	}),
+	record_id: Property.Dropdown({
+		auth: TeableAuth,
+		displayName: 'Record',
+		description: 'The record to act on.',
+		required: true,
+		refreshers: ['table_id'],
+		options: async ({ auth, table_id }) => {
+			if (!auth || !table_id) {
+				return { disabled: true, options: [], placeholder: 'Select a table first.' };
+			}
+			const client = makeClient(auth as TeableAuthValue);
+			const response = await client.listRecords(table_id as string);
+			return {
+				disabled: false,
+				options: response.records.map((r) => {
+					const primaryValue = Object.values(r.fields)[0];
+					const label = primaryValue !== undefined && primaryValue !== null && primaryValue !== ''
+						? String(primaryValue)
+						: r.id;
+					return { label, value: r.id };
+				}),
 			};
 		},
 	}),
@@ -56,7 +79,7 @@ export const TeableCommon = {
 		props: async ({ auth, table_id }) => {
 			if (!auth || !table_id) return {};
 
-			const client = makeClient(auth.props);
+			const client = makeClient(auth as TeableAuthValue);
 			const fields = await client.listFields(table_id as string);
 
 			const props: DynamicPropsValue = {};
@@ -98,8 +121,6 @@ export const TeableCommon = {
 						});
 						break;
 					case TeableFieldType.LINK:
-						props[field.name] = Property.Array({ displayName: field.name, required: false });
-						break;
 					case TeableFieldType.USER:
 						props[field.name] = Property.Array({ displayName: field.name, required: false });
 						break;
@@ -116,4 +137,3 @@ export const TeableCommon = {
 
 // Re-export for convenience
 export { TeableFieldType, TeableComputedFieldTypes };
-
