@@ -14,26 +14,36 @@ export const flowBackgroundJobs = (log: FastifyBaseLogger) => ({
 
     deleteFlowHandler: async (data: SystemJobData<SystemJobName.DELETE_FLOW>) => {
         const { flow, preDeleteDone } = data
-        const job = await systemJobsSchedule(log).getJob(`delete-flow-${flow.id}`)
-        assertNotNullOrUndefined(job, 'job is required')
 
-        const flowExists = await flowRepo().existsBy({ id: flow.id })
-        if (!flowExists) {
-            log.info({ flowId: flow.id }, '[deleteFlowHandler] Flow already deleted, skipping')
-            return
-        }
+        const { error } = await tryCatch<unknown, Error>(async () => {
+            const job = await systemJobsSchedule(log).getJob(`delete-flow-${flow.id}`)
+            assertNotNullOrUndefined(job, 'job is required')
 
-        if (!preDeleteDone) {
-            await flowSideEffects(log).preDelete({
-                flowToDelete: flow,
+            const flowExists = await flowRepo().existsBy({ id: flow.id })
+            if (!flowExists) {
+                log.info({ flowId: flow.id }, '[deleteFlowHandler] Flow already deleted, skipping')
+                return
+            }
+
+            if (!preDeleteDone) {
+                await flowSideEffects(log).preDelete({
+                    flowToDelete: flow,
+                })
+                await job.updateData({
+                    ...data,
+                    preDeleteDone: true,
+                })
+            }
+            await flowRepo().delete({ id: flow.id })
+            await flowExecutionCache(log).invalidate(flow.id)
+        })
+
+        if (error) {
+            await flowRepo().update(flow.id, {
+                operationStatus: FlowOperationStatus.NONE,
             })
-            await job.updateData({
-                ...data,
-                preDeleteDone: true,
-            })
+            throw error
         }
-        await flowRepo().delete({ id: flow.id })
-        await flowExecutionCache(log).invalidate(flow.id)
     },
 
     updateStatusHandler: async (data: SystemJobData<SystemJobName.UPDATE_FLOW_STATUS>) => {
@@ -110,7 +120,7 @@ export const flowBackgroundJobs = (log: FastifyBaseLogger) => ({
             .createQueryBuilder()
             .update()
             .set({ operationStatus: FlowOperationStatus.NONE })
-            .where('operationStatus != :none', { none: FlowOperationStatus.NONE })
+            .where('operationStatus IN (:...statuses)', { statuses: [FlowOperationStatus.ENABLING, FlowOperationStatus.DISABLING] })
             .andWhere('updated < :cutoff', { cutoff })
             .execute()
     },
