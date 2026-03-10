@@ -1,4 +1,4 @@
-import { AgentTool, isNil, createToolName } from '@activepieces/shared';
+import { AgentTool, isNil, mcpToolNameUtils } from '@activepieces/shared';
 import Fuse from 'fuse.js';
 import { t } from 'i18next';
 import { Search } from 'lucide-react';
@@ -68,7 +68,10 @@ export const PieceActionsList: React.FC<PieceActionsDialogProps> = ({
       <div className="flex p-4 flex-col gap-2">
         {filteredActions.map((action) => {
           const isDisabled = selectedActionNames.has(
-            createToolName(`${selectedPiece.pieceName}-${action.name}`),
+            mcpToolNameUtils.createPieceToolName(
+              selectedPiece.pieceName,
+              action.name,
+            ),
           );
 
           return (

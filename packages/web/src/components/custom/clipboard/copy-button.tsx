@@ -1,8 +1,7 @@
-import { TooltipContentProps } from '@radix-ui/react-tooltip';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Check, Copy } from 'lucide-react';
-import { forwardRef, useState } from 'react';
+import React, { forwardRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import { Button, ButtonProps } from '@/components/ui/button';
@@ -14,7 +13,7 @@ import {
 
 interface CopyButtonProps extends ButtonProps {
   textToCopy: string;
-  tooltipSide?: TooltipContentProps['side'];
+  tooltipSide?: React.ComponentProps<typeof TooltipContent>['side'];
   withoutTooltip?: boolean;
   children?: React.ReactNode;
   variant?: 'ghost' | 'outline';

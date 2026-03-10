@@ -1,6 +1,6 @@
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { authnSsoSamlController } from './authn-sso-saml-controller'
 
-export const authnSsoSamlModule: FastifyPluginAsyncTypebox = async (app) => {
+export const authnSsoSamlModule: FastifyPluginAsyncZod = async (app) => {
     await app.register(authnSsoSamlController, { prefix: '/v1/authn/saml' })
 }

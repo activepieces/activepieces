@@ -1,5 +1,5 @@
 import { InvitationType, UserInvitation } from '@activepieces/shared';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 
 import { userInvitationApi } from '../api/user-invitation';
 
@@ -25,5 +25,24 @@ export const userInvitationsHooks = {
       isLoading: query.isLoading,
       refetch: query.refetch,
     };
+  },
+};
+
+export const userInvitationMutations = {
+  useAcceptInvitation: ({
+    onSuccess,
+    onError,
+  }: {
+    onSuccess: (registered: boolean) => void;
+    onError: (error: unknown) => void;
+  }) => {
+    return useMutation({
+      mutationFn: async (token: string) => {
+        const { registered } = await userInvitationApi.accept(token);
+        return registered;
+      },
+      onSuccess,
+      onError,
+    });
   },
 };

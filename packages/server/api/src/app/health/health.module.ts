@@ -1,14 +1,14 @@
 import { securityAccess } from '@activepieces/server-common'
 import { GetSystemHealthChecksResponse, PrincipalType } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { healthStatusService } from './health.service'
 
-export const healthModule: FastifyPluginAsyncTypebox = async (app) => {
+export const healthModule: FastifyPluginAsyncZod = async (app) => {
     await app.register(healthController, { prefix: '/v1/health' })
 }
 
-const healthController: FastifyPluginAsyncTypebox = async (app) => {
+const healthController: FastifyPluginAsyncZod = async (app) => {
     app.get(
         '/',
         {

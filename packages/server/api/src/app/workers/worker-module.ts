@@ -1,5 +1,5 @@
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyInstance } from 'fastify'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { runsMetadataQueue } from '../flows/flow-run/flow-runs-queue'
 import { pubsub } from '../helper/pubsub'
 import { flowEngineWorker } from './engine-controller'
@@ -9,7 +9,7 @@ import { queueMigration } from './queue/migration'
 import { setupBullMQBoard } from './queue/redis-bullboard'
 import { flowWorkerController } from './worker-controller'
 
-export const workerModule: FastifyPluginAsyncTypebox = async (app) => {
+export const workerModule: FastifyPluginAsyncZod = async (app) => {
     await app.register(flowWorkerController, {
         prefix: '/v1/workers',
     })

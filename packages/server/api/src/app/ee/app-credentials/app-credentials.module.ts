@@ -5,13 +5,14 @@ import {
     ListAppCredentialsRequest,
     PrincipalType,
     SeekPage, UpsertAppCredentialRequest } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
+import { z } from 'zod'
 import { AppCredentialEntity } from './app-credentials.entity'
 import { appCredentialService } from './app-credentials.service'
 
-export const appCredentialModule: FastifyPluginAsyncTypebox = async (app) => {
+export const appCredentialModule: FastifyPluginAsyncZod = async (app) => {
     await app.register(appCredentialController, {
         prefix: '/v1/app-credentials',
     })
@@ -19,7 +20,7 @@ export const appCredentialModule: FastifyPluginAsyncTypebox = async (app) => {
 
 const DEFAULT_LIMIT_SIZE = 10
 
-const appCredentialController: FastifyPluginAsyncTypebox = async (fastify) => {
+const appCredentialController: FastifyPluginAsyncZod = async (fastify) => {
     fastify.get(
         '/',
         ListCredsRequest,
@@ -109,8 +110,8 @@ const DeleteAppCredentialRequestOptions = {
         ),
     },
     schema: {
-        params: Type.Object({
-            id: Type.String(),
+        params: z.object({
+            id: z.string(),
         }),
     },
 }

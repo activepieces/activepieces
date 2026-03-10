@@ -10,8 +10,10 @@ import {
   SortingState,
   useReactTable,
 } from '@tanstack/react-table';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import { t } from 'i18next';
-import React, { useState, useEffect } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import React, { useRef, useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useDeepCompareEffect } from 'react-use';
 
@@ -53,7 +55,7 @@ export const LIMIT_QUERY_PARAM = 'limit';
 
 type DataTableAction<TData extends DataWithId> = (
   row: RowDataWithActions<TData>,
-) => JSX.Element;
+) => React.ReactNode;
 
 type ColumnDef<TData, TValue> = TanstackColumnDef<TData, TValue> & {
   notClickable?: boolean;
@@ -78,6 +80,7 @@ interface DataTableProps<
   actions?: DataTableAction<TData>[];
   hidePagination?: boolean;
   bulkActions?: BulkAction<TData>[];
+  toolbarButtons?: React.ReactNode[];
   emptyStateTextTitle: string;
   emptyStateTextDescription: string;
   emptyStateIcon: React.ReactNode;
@@ -85,6 +88,7 @@ interface DataTableProps<
   initialSorting?: SortingState;
   clientPagination?: boolean;
   getRowClassName?: (row: RowDataWithActions<TData>, index: number) => string;
+  virtualizeRows?: boolean;
 }
 
 export type DataTableFilters<Keys extends string> = DataTableFilterProps & {
@@ -112,6 +116,7 @@ export function DataTable<
   onSelectedRowsChange,
   hidePagination,
   bulkActions = [],
+  toolbarButtons,
   emptyStateTextTitle,
   emptyStateTextDescription,
   emptyStateIcon,
@@ -120,6 +125,7 @@ export function DataTable<
   initialSorting = [],
   clientPagination = false,
   getRowClassName,
+  virtualizeRows = false,
 }: DataTableProps<TData, TValue, Keys>) {
   const selectColumnDef: ColumnDef<RowDataWithActions<TData>, TValue> = {
     id: 'select',
@@ -155,6 +161,9 @@ export function DataTable<
       ? columnsWithSelect.concat([
           {
             accessorKey: '__actions',
+            size: 60,
+            minSize: 60,
+            maxSize: 60,
             header: ({ column }) => (
               <DataTableColumnHeader column={column} title="" />
             ),
@@ -225,14 +234,18 @@ export function DataTable<
   const table = useReactTable({
     data: tableData,
     columns,
-    manualPagination: !clientPagination,
+    manualPagination: virtualizeRows ? false : !clientPagination,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    ...(clientPagination && { getPaginationRowModel: getPaginationRowModel() }),
+    ...((clientPagination || virtualizeRows) && {
+      getPaginationRowModel: getPaginationRowModel(),
+    }),
     getRowId: () => apId(),
     initialState: {
       pagination: {
-        pageSize: parseInt(startingLimit),
+        pageSize: virtualizeRows
+          ? tableData.length || 1000
+          : parseInt(startingLimit),
       },
       columnVisibility,
       sorting: initialSorting,
@@ -249,11 +262,14 @@ export function DataTable<
     });
   }, []);
 
-  useDeepCompareEffect(() => {
-    onSelectedRowsChange?.(
-      table.getSelectedRowModel().rows.map((row) => row.original),
-    );
-  }, [table.getSelectedRowModel().rows]);
+  const rowSelection = table.getState().rowSelection;
+  const selectedRowOriginals = React.useMemo(
+    () => table.getSelectedRowModel().rows.map((row) => row.original),
+    [rowSelection],
+  );
+  useEffect(() => {
+    onSelectedRowsChange?.(selectedRowOriginals);
+  }, [selectedRowOriginals]);
 
   useEffect(() => {
     if (hidePagination) {
@@ -290,9 +306,25 @@ export function DataTable<
     table.toggleAllRowsSelected(false);
   };
 
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const rows = table.getRowModel().rows;
+  const virtualizer = useVirtualizer({
+    count: rows.length,
+    getScrollElement: () => scrollContainerRef.current,
+    estimateSize: () => 53,
+    overscan: 15,
+    enabled: virtualizeRows,
+  });
+
   return (
-    <div>
-      {((filters && filters.length > 0) || bulkActions.length > 0) && (
+    <div
+      className={cn(
+        virtualizeRows ? 'flex flex-col flex-1 min-h-0' : undefined,
+      )}
+    >
+      {((filters && filters.length > 0) ||
+        (customFilters && customFilters.length > 0) ||
+        (toolbarButtons && toolbarButtons.length > 0)) && (
         <DataTableToolbar>
           <div className="w-full flex items-center justify-between">
             <div className="flex items-center space-x-2">
@@ -309,24 +341,33 @@ export function DataTable<
                   <React.Fragment key={idx}>{filter}</React.Fragment>
                 ))}
             </div>
-            {bulkActions.length > 0 && (
-              <DataTableBulkActions
-                selectedRows={table
-                  .getSelectedRowModel()
-                  .rows.map((row) => row.original)}
-                actions={bulkActions.map((action) => ({
-                  render: (selectedRows: RowDataWithActions<TData>[]) =>
-                    action.render(selectedRows, resetSelection),
-                }))}
-              />
+            {toolbarButtons && toolbarButtons.length > 0 && (
+              <div className="flex items-center gap-2">
+                {toolbarButtons.map((button, idx) => (
+                  <React.Fragment key={idx}>{button}</React.Fragment>
+                ))}
+              </div>
             )}
           </div>
         </DataTableToolbar>
       )}
 
-      <div className="rounded-md mt-0 overflow-hidden">
+      <div
+        ref={scrollContainerRef}
+        className={cn('mt-0', {
+          'overflow-hidden': !virtualizeRows,
+          'flex-1 min-h-0 overflow-auto': virtualizeRows,
+        })}
+      >
         <Table className="table-fixed">
-          <TableHeader>
+          <TableHeader
+            className={cn(
+              'border-t',
+              virtualizeRows
+                ? 'sticky top-0 z-10 bg-background'
+                : 'bg-background',
+            )}
+          >
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id} className="hover:bg-transparent">
                 {headerGroup.headers.map((header) => {
@@ -362,83 +403,196 @@ export function DataTable<
                   <DataTableSkeleton />
                 </TableCell>
               </TableRow>
-            ) : table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row, rowIndex) => (
-                <TableRow
-                  className={cn(
-                    'cursor-pointer',
-                    {
-                      'hover:bg-background cursor-default': isNil(onRowClick),
-                    },
-                    getRowClassName?.(row.original, rowIndex),
+            ) : rows.length ? (
+              virtualizeRows ? (
+                <>
+                  {virtualizer.getVirtualItems().length > 0 && (
+                    <tr>
+                      <td
+                        colSpan={columns.length}
+                        style={{
+                          height: virtualizer.getVirtualItems()[0].start,
+                        }}
+                      />
+                    </tr>
                   )}
-                  onClick={(e) => {
-                    // Check if the clicked cell is not clickable
-                    const clickedCellIndex = (e.target as HTMLElement).closest(
-                      'td',
-                    )?.cellIndex;
-                    if (
-                      clickedCellIndex !== undefined &&
-                      columns[clickedCellIndex]?.notClickable
-                    ) {
-                      return; // Don't trigger onRowClick for not clickable columns
-                    }
-                    onRowClick?.(row.original, e.ctrlKey, e);
-                  }}
-                  onAuxClick={(e) => {
-                    // Similar check for auxiliary click (e.g., middle mouse button)
-                    const clickedCellIndex = (e.target as HTMLElement).closest(
-                      'td',
-                    )?.cellIndex;
-                    if (
-                      clickedCellIndex !== undefined &&
-                      columns[clickedCellIndex]?.notClickable
-                    ) {
-                      return;
-                    }
-                    onRowClick?.(row.original, true, e);
-                  }}
-                  key={row.id}
-                  data-state={row.getIsSelected() && 'selected'}
-                >
-                  {row.getVisibleCells().map((cell) => {
-                    const size = cell.column.columnDef.size;
+                  {virtualizer.getVirtualItems().map((virtualRow) => {
+                    const row = rows[virtualRow.index];
+                    const rowIndex = virtualRow.index;
                     return (
-                      <TableCell
-                        key={cell.id}
-                        style={
-                          size
-                            ? { width: size, minWidth: size, maxWidth: size }
-                            : undefined
-                        }
+                      <TableRow
+                        key={row.id}
+                        data-index={virtualRow.index}
+                        className={cn(
+                          'cursor-pointer',
+                          {
+                            'hover:bg-background cursor-default':
+                              isNil(onRowClick),
+                          },
+                          getRowClassName?.(row.original, rowIndex),
+                        )}
+                        onClick={(e) => {
+                          const clickedCellIndex = (
+                            e.target as HTMLElement
+                          ).closest('td')?.cellIndex;
+                          if (
+                            clickedCellIndex !== undefined &&
+                            columns[clickedCellIndex]?.notClickable
+                          ) {
+                            return;
+                          }
+                          onRowClick?.(row.original, e.ctrlKey, e);
+                        }}
+                        onAuxClick={(e) => {
+                          const clickedCellIndex = (
+                            e.target as HTMLElement
+                          ).closest('td')?.cellIndex;
+                          if (
+                            clickedCellIndex !== undefined &&
+                            columns[clickedCellIndex]?.notClickable
+                          ) {
+                            return;
+                          }
+                          onRowClick?.(row.original, true, e);
+                        }}
+                        data-state={row.getIsSelected() && 'selected'}
                       >
-                        <div
-                          className={cn('flex w-full items-center', {
-                            'justify-end': cell.column.id === 'actions',
-                            'justify-start': cell.column.id !== 'actions',
-                          })}
-                        >
-                          <div
-                            className="w-full"
-                            onClick={(e) => {
-                              if (cell.column.id === 'select') {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                return;
+                        {row.getVisibleCells().map((cell) => {
+                          const size = cell.column.columnDef.size;
+                          return (
+                            <TableCell
+                              key={cell.id}
+                              style={
+                                size
+                                  ? {
+                                      width: size,
+                                      minWidth: size,
+                                      maxWidth: size,
+                                    }
+                                  : undefined
                               }
-                            }}
-                          >
-                            {flexRender(
-                              cell.column.columnDef.cell,
-                              cell.getContext(),
-                            )}
-                          </div>
-                        </div>
-                      </TableCell>
+                            >
+                              <div
+                                className={cn('flex w-full items-center', {
+                                  'justify-end': cell.column.id === 'actions',
+                                  'justify-start': cell.column.id !== 'actions',
+                                })}
+                              >
+                                <div
+                                  className="w-full"
+                                  onClick={(e) => {
+                                    if (cell.column.id === 'select') {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      return;
+                                    }
+                                  }}
+                                >
+                                  {flexRender(
+                                    cell.column.columnDef.cell,
+                                    cell.getContext(),
+                                  )}
+                                </div>
+                              </div>
+                            </TableCell>
+                          );
+                        })}
+                      </TableRow>
                     );
                   })}
-                </TableRow>
-              ))
+                  {virtualizer.getVirtualItems().length > 0 && (
+                    <tr>
+                      <td
+                        colSpan={columns.length}
+                        style={{
+                          height:
+                            virtualizer.getTotalSize() -
+                            (virtualizer.getVirtualItems().at(-1)?.end ?? 0),
+                        }}
+                      />
+                    </tr>
+                  )}
+                </>
+              ) : (
+                rows.map((row, rowIndex) => (
+                  <TableRow
+                    className={cn(
+                      'cursor-pointer',
+                      {
+                        'hover:bg-background cursor-default': isNil(onRowClick),
+                      },
+                      getRowClassName?.(row.original, rowIndex),
+                    )}
+                    onClick={(e) => {
+                      const clickedCellIndex = (
+                        e.target as HTMLElement
+                      ).closest('td')?.cellIndex;
+                      if (
+                        clickedCellIndex !== undefined &&
+                        columns[clickedCellIndex]?.notClickable
+                      ) {
+                        return;
+                      }
+                      onRowClick?.(row.original, e.ctrlKey, e);
+                    }}
+                    onAuxClick={(e) => {
+                      const clickedCellIndex = (
+                        e.target as HTMLElement
+                      ).closest('td')?.cellIndex;
+                      if (
+                        clickedCellIndex !== undefined &&
+                        columns[clickedCellIndex]?.notClickable
+                      ) {
+                        return;
+                      }
+                      onRowClick?.(row.original, true, e);
+                    }}
+                    key={row.id}
+                    data-state={row.getIsSelected() && 'selected'}
+                  >
+                    {row.getVisibleCells().map((cell) => {
+                      const size = cell.column.columnDef.size;
+                      return (
+                        <TableCell
+                          key={cell.id}
+                          style={
+                            size
+                              ? {
+                                  width: size,
+                                  minWidth: size,
+                                  maxWidth: size,
+                                }
+                              : undefined
+                          }
+                        >
+                          <div
+                            className={cn('flex w-full items-center', {
+                              'justify-end': cell.column.id === 'actions',
+                              'justify-start': cell.column.id !== 'actions',
+                            })}
+                          >
+                            <div
+                              className="w-full"
+                              onClick={(e) => {
+                                if (cell.column.id === 'select') {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  return;
+                                }
+                              }}
+                            >
+                              {flexRender(
+                                cell.column.columnDef.cell,
+                                cell.getContext(),
+                              )}
+                            </div>
+                          </div>
+                        </TableCell>
+                      );
+                    })}
+                  </TableRow>
+                ))
+              )
             ) : (
               <TableRow className="hover:bg-background">
                 <TableCell
@@ -462,32 +616,37 @@ export function DataTable<
           </TableBody>
         </Table>
       </div>
-      {!hidePagination && (
-        <div className="flex items-center justify-end space-x-2 py-4">
-          <p className="text-sm font-medium">Rows per page</p>
-          <Select
-            value={`${table.getState().pagination.pageSize}`}
-            onValueChange={(value) => {
-              table.setPageSize(Number(value));
-              if (!clientPagination) {
-                setCurrentCursor(undefined);
-              }
-            }}
-          >
-            <SelectTrigger className="h-9 min-w-[70px] w-auto">
-              <SelectValue placeholder={table.getState().pagination.pageSize} />
-            </SelectTrigger>
-            <SelectContent side="top">
-              {[10, 30, 50].map((pageSize) => (
-                <SelectItem key={pageSize} value={`${pageSize}`}>
-                  {pageSize}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      {!hidePagination && !virtualizeRows && (
+        <div className="flex items-center justify-end gap-4 px-2 py-4 text-sm">
+          <div className="flex items-center gap-2">
+            <span className="text-muted-foreground">{t('Rows per page')}</span>
+            <Select
+              value={`${table.getState().pagination.pageSize}`}
+              onValueChange={(value) => {
+                table.setPageSize(Number(value));
+                if (!clientPagination) {
+                  setCurrentCursor(undefined);
+                }
+              }}
+            >
+              <SelectTrigger className="h-8 w-[70px]">
+                <SelectValue
+                  placeholder={table.getState().pagination.pageSize}
+                />
+              </SelectTrigger>
+              <SelectContent side="top">
+                {[10, 30, 50].map((pageSize) => (
+                  <SelectItem key={pageSize} value={`${pageSize}`}>
+                    {pageSize}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
+            className="gap-1"
             onClick={() => {
               if (clientPagination) {
                 table.previousPage();
@@ -501,11 +660,13 @@ export function DataTable<
                 : !previousPageCursor
             }
           >
+            <ChevronLeft className="h-4 w-4" />
             {t('Previous')}
           </Button>
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
+            className="gap-1"
             onClick={() => {
               if (clientPagination) {
                 table.nextPage();
@@ -518,8 +679,16 @@ export function DataTable<
             }
           >
             {t('Next')}
+            <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
+      )}
+      {bulkActions.length > 0 && (
+        <DataTableBulkActions
+          selectedRows={selectedRowOriginals}
+          actions={bulkActions}
+          resetSelection={resetSelection}
+        />
       )}
     </div>
   );

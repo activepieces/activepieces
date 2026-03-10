@@ -2,27 +2,27 @@ import { PiecePropertyMap } from "./property";
 import { WebhookRenewConfiguration } from "./trigger/trigger";
 import { ErrorHandlingOptionsParam } from "./action/action";
 import { PieceAuthProperty } from "./property/authentication";
-import { Static, Type } from "@sinclair/typebox";
-import { LocalesEnum, PackageType, PieceCategory, PieceType, ProjectId, TriggerStrategy, TriggerTestStrategy, WebhookHandshakeConfiguration } from "@activepieces/shared";
+import { z } from "zod";
+import { LocalesEnum, PackageType, PieceCategory, PieceType, TriggerStrategy, TriggerTestStrategy, WebhookHandshakeConfiguration } from "@activepieces/shared";
 import { ContextVersion } from "./context/versioning";
 
-const I18nForPiece =  Type.Optional(Type.Partial(Type.Record(Type.Enum(LocalesEnum), Type.Record(Type.String(), Type.String()))));
-export type I18nForPiece = Static<typeof I18nForPiece>
-export const PieceBase = Type.Object({
-  id: Type.Optional(Type.String()),
-  name: Type.String(),
-  displayName: Type.String(),
-  logoUrl: Type.String(),
-  description: Type.String(),
-  authors: Type.Array(Type.String()),
-  platformId: Type.Optional(Type.String()),
-  directoryPath: Type.Optional(Type.String()),
-  auth: Type.Optional(Type.Union([PieceAuthProperty, Type.Array(PieceAuthProperty)])),
-  version: Type.String(),
-  categories: Type.Optional(Type.Array(Type.Enum(PieceCategory))),
-  minimumSupportedRelease: Type.Optional(Type.String()),
-  maximumSupportedRelease: Type.Optional(Type.String()),
-  i18n:I18nForPiece,
+const I18nForPiece = z.record(z.string(), z.record(z.string(), z.string())).optional();
+export type I18nForPiece = Partial<Record<LocalesEnum, Record<string, string>>> | undefined
+export const PieceBase = z.object({
+  id: z.string().optional(),
+  name: z.string(),
+  displayName: z.string(),
+  logoUrl: z.string(),
+  description: z.string(),
+  authors: z.array(z.string()),
+  platformId: z.string().optional(),
+  directoryPath: z.string().optional(),
+  auth: z.union([PieceAuthProperty, z.array(PieceAuthProperty)]).optional(),
+  version: z.string(),
+  categories: z.array(z.nativeEnum(PieceCategory)).optional(),
+  minimumSupportedRelease: z.string().optional(),
+  maximumSupportedRelease: z.string().optional(),
+  i18n: I18nForPiece,
 })
 
 export type PieceBase = {
@@ -45,13 +45,13 @@ export type PieceBase = {
 }
 
 
-export const ActionBase = Type.Object({
-  name: Type.String(),
-  displayName: Type.String(),
-  description: Type.String(),
+export const ActionBase = z.object({
+  name: z.string(),
+  displayName: z.string(),
+  description: z.string(),
   props: PiecePropertyMap,
-  requireAuth: Type.Boolean(),
-  errorHandlingOptions: Type.Optional(ErrorHandlingOptionsParam),
+  requireAuth: z.boolean(),
+  errorHandlingOptions: ErrorHandlingOptionsParam.optional(),
 })
 
 export type ActionBase = {
@@ -63,16 +63,18 @@ export type ActionBase = {
   errorHandlingOptions?: ErrorHandlingOptionsParam;
 }
 
-export const TriggerBase = Type.Composite([
-  Type.Omit(ActionBase, ["requireAuth"]),
-  Type.Object({
-    type: Type.Enum(TriggerStrategy),
-    sampleData: Type.Unknown(),
-    handshakeConfiguration: Type.Optional(WebhookHandshakeConfiguration),
-    renewConfiguration: Type.Optional(WebhookRenewConfiguration),
-    testStrategy: Type.Enum(TriggerTestStrategy),
-  })
-])
+export const TriggerBase = z.object({
+  name: z.string(),
+  displayName: z.string(),
+  description: z.string(),
+  props: PiecePropertyMap,
+  errorHandlingOptions: ErrorHandlingOptionsParam.optional(),
+  type: z.nativeEnum(TriggerStrategy),
+  sampleData: z.unknown(),
+  handshakeConfiguration: z.custom<WebhookHandshakeConfiguration>().optional(),
+  renewConfiguration: WebhookRenewConfiguration.optional(),
+  testStrategy: z.nativeEnum(TriggerTestStrategy),
+})
 export type TriggerBase = ActionBase & {
   type: TriggerStrategy;
   sampleData: unknown,
@@ -81,13 +83,11 @@ export type TriggerBase = ActionBase & {
   testStrategy: TriggerTestStrategy;
 };
 
-export const PieceMetadata = Type.Composite([
-  PieceBase,
-  Type.Object({
-    actions: Type.Record(Type.String(), ActionBase),
-    triggers: Type.Record(Type.String(), TriggerBase),
-  })
-])
+export const PieceMetadata = z.object({
+  ...PieceBase.shape,
+  actions: z.record(z.string(), ActionBase),
+  triggers: z.record(z.string(), TriggerBase),
+})
 
 export type PieceMetadata = Omit<PieceBase, 'getContextInfo'> & {
   actions: Record<string, ActionBase>;
@@ -96,15 +96,13 @@ export type PieceMetadata = Omit<PieceBase, 'getContextInfo'> & {
   contextInfo: { version: ContextVersion } | undefined;
 };
 
-export const PieceMetadataSummary = Type.Composite([
-  Type.Omit(PieceMetadata, ["actions", "triggers"]),
-  Type.Object({
-    actions: Type.Number(),
-    triggers: Type.Number(),
-    suggestedActions: Type.Optional(Type.Array(TriggerBase)),
-    suggestedTriggers: Type.Optional(Type.Array(ActionBase)),
-  })
-])
+export const PieceMetadataSummary = z.object({
+  ...PieceBase.shape,
+  actions: z.number(),
+  triggers: z.number(),
+  suggestedActions: z.array(TriggerBase).optional(),
+  suggestedTriggers: z.array(ActionBase).optional(),
+})
 export type PieceMetadataSummary = Omit<PieceMetadata, "actions" | "triggers"> & {
   actions: number;
   triggers: number;
@@ -113,30 +111,30 @@ export type PieceMetadataSummary = Omit<PieceMetadata, "actions" | "triggers"> &
 }
 
 
-const PiecePackageMetadata = Type.Object({
-  projectUsage: Type.Number(),
-  tags: Type.Optional(Type.Array(Type.String())),
-  pieceType: Type.Enum(PieceType),
-  packageType: Type.Enum(PackageType),
-  platformId: Type.Optional(Type.String()),
-  archiveId: Type.Optional(Type.String()),
+const PiecePackageMetadata = z.object({
+  projectUsage: z.number(),
+  tags: z.array(z.string()).optional(),
+  pieceType: z.nativeEnum(PieceType),
+  packageType: z.nativeEnum(PackageType),
+  platformId: z.string().optional(),
+  archiveId: z.string().optional(),
 })
-type PiecePackageMetadata = Static<typeof PiecePackageMetadata>
+type PiecePackageMetadata = z.infer<typeof PiecePackageMetadata>
 
-export const PieceMetadataModel = Type.Composite([
-  PieceMetadata,
-  PiecePackageMetadata
-])
+export const PieceMetadataModel = z.object({
+  ...PieceMetadata.shape,
+  ...PiecePackageMetadata.shape,
+})
 export type PieceMetadataModel = PieceMetadata & PiecePackageMetadata
 
-export const PieceMetadataModelSummary = Type.Composite([
-  PieceMetadataSummary,
-  PiecePackageMetadata
-])
+export const PieceMetadataModelSummary = z.object({
+  ...PieceMetadataSummary.shape,
+  ...PiecePackageMetadata.shape,
+})
 export type PieceMetadataModelSummary = PieceMetadataSummary & PiecePackageMetadata;
 
-export const PiecePackageInformation = Type.Object({
-  name: Type.String(),
-  version: Type.String(),
+export const PiecePackageInformation = z.object({
+  name: z.string(),
+  version: z.string(),
 })
-export type PiecePackageInformation = Static<typeof PiecePackageInformation>
+export type PiecePackageInformation = z.infer<typeof PiecePackageInformation>

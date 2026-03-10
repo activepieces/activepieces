@@ -1,7 +1,5 @@
 # pieces-firecrawl
 
-This library was generated with [Nx](https://nx.dev).
-
 ## Building
 
-Run `nx build pieces-firecrawl` to build the library.
+Run `turbo run build --filter=@activepieces/piece-firecrawl` to build the library.

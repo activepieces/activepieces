@@ -1,6 +1,5 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { FlowAction, ApFlagId, FlowTrigger } from '@activepieces/shared';
-import { DialogClose } from '@radix-ui/react-dialog';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
@@ -12,6 +11,7 @@ import { SearchableSelect } from '@/components/custom/searchable-select';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogFooter,
   DialogHeader,

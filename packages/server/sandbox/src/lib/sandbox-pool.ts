@@ -12,7 +12,7 @@ export function createSandboxPool(sandboxFactory: SandboxFactory): SandboxPool {
 
     return {
         getTotalSandboxes: () => {
-            return workerConcurrency - sandboxQueue.length
+            return workerConcurrency
         },
         getFreeSandboxes: () => {
             return sandboxQueue.length

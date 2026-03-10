@@ -1,14 +1,18 @@
-import { AIProvider, AIProviderConfig, AIProviderName, Platform } from '@activepieces/shared'
-import { Static, Type } from '@sinclair/typebox'
+import { AIProviderConfig, AIProviderName, BaseModelSchema, Platform } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
+import { z } from 'zod'
 import { ApIdSchema, BaseColumnSchemaPart } from '../database/database-common'
 import { EncryptedObject } from '../helper/encryption'
 
-const AIProviderEncrypted = Type.Composite([Type.Omit(AIProvider, ['auth']), Type.Object({
+const AIProviderEncrypted = z.object({
+    ...BaseModelSchema,
+    displayName: z.string().min(1),
+    platformId: z.string(),
+    provider: z.nativeEnum(AIProviderName),
     auth: EncryptedObject,
     config: AIProviderConfig,
-})])
-type AIProviderEncrypted = Static<typeof AIProviderEncrypted>
+})
+type AIProviderEncrypted = z.infer<typeof AIProviderEncrypted>
 
 export type AIProviderSchema = AIProviderEncrypted & {
     platform: Platform

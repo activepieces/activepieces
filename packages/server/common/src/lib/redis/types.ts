@@ -1,4 +1,4 @@
-import { Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
 
 
 export enum RedisType {
@@ -7,19 +7,19 @@ export enum RedisType {
     STANDALONE = 'STANDALONE',
 }
 
-export const RedisConnectionSettings = Type.Object({
-    REDIS_TYPE: Type.String(),
-    REDIS_SSL_CA_FILE: Type.Union([Type.String(), Type.Undefined()]),
-    REDIS_DB: Type.Union([Type.Number(), Type.Undefined()]),
-    REDIS_HOST: Type.Union([Type.String(), Type.Undefined()]),
-    REDIS_PASSWORD: Type.Union([Type.String(), Type.Undefined()]),
-    REDIS_PORT: Type.Union([Type.String(), Type.Undefined()]),
-    REDIS_URL: Type.Union([Type.String(), Type.Undefined()]),
-    REDIS_USER: Type.Union([Type.String(), Type.Undefined()]),
-    REDIS_USE_SSL: Type.Union([Type.Boolean(), Type.Undefined()]),
-    REDIS_SENTINEL_ROLE: Type.Union([Type.String(), Type.Undefined()]),
-    REDIS_SENTINEL_HOSTS: Type.Union([Type.String(), Type.Undefined()]),
-    REDIS_SENTINEL_NAME: Type.Union([Type.String(), Type.Undefined()]),
+export const RedisConnectionSettings = z.object({
+    REDIS_TYPE: z.string(),
+    REDIS_SSL_CA_FILE: z.string().optional(),
+    REDIS_DB: z.number().optional(),
+    REDIS_HOST: z.string().optional(),
+    REDIS_PASSWORD: z.string().optional(),
+    REDIS_PORT: z.string().optional(),
+    REDIS_URL: z.string().optional(),
+    REDIS_USER: z.string().optional(),
+    REDIS_USE_SSL: z.boolean().optional(),
+    REDIS_SENTINEL_ROLE: z.string().optional(),
+    REDIS_SENTINEL_HOSTS: z.string().optional(),
+    REDIS_SENTINEL_NAME: z.string().optional(),
 })
 
-export type RedisConnectionSettings = Static<typeof RedisConnectionSettings>
+export type RedisConnectionSettings = z.infer<typeof RedisConnectionSettings>

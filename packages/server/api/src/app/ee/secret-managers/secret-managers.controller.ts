@@ -1,10 +1,10 @@
 import { securityAccess } from '@activepieces/server-common'
 import { ConnectSecretManagerRequestSchema, DisconnectSecretManagerRequestSchema, PrincipalType } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { secretManagerCache } from './secret-manager-cache'
 import { secretManagersService } from './secret-managers.service'
 
-export const secretManagersController: FastifyPluginAsyncTypebox = async (app) => {
+export const secretManagersController: FastifyPluginAsyncZod = async (app) => {
     const service = secretManagersService(app.log)
 
     app.get('/', ListSecretManagers, async (request) => {

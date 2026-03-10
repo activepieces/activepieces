@@ -1,7 +1,5 @@
 # pieces-clockify
 
-This library was generated with [Nx](https://nx.dev).
-
 ## Building
 
-Run `nx build pieces-clockify` to build the library.
+Run `turbo run build --filter=@activepieces/piece-clockify` to build the library.

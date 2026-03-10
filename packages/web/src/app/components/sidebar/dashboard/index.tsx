@@ -6,13 +6,17 @@ import {
   TemplateTelemetryEventType,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Search, Plus, LineChart, Trophy, Compass } from 'lucide-react';
+import { Search, Plus } from 'lucide-react';
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useDebounce } from 'use-debounce';
 
 import { NewProjectDialog } from '@/app/routes/platform/projects/new-project-dialog';
 import { SearchInput } from '@/components/custom/search-input';
+import { ChartLineIcon } from '@/components/icons/chart-line';
+import { CompassIcon } from '@/components/icons/compass';
+import { ShieldIcon } from '@/components/icons/shield';
+import { TrophyIcon } from '@/components/icons/trophy';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { Button } from '@/components/ui/button';
 import {
@@ -39,6 +43,7 @@ import {
 import { VirtualizedScrollArea } from '@/components/ui/virtualized-scroll-area';
 import { projectCollectionUtils } from '@/features/projects';
 import { templatesTelemetryApi } from '@/features/templates';
+import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { cn } from '@/lib/utils';
@@ -50,7 +55,9 @@ import { AppSidebarHeader } from '../sidebar-header';
 import SidebarUsageLimits from '../sidebar-usage-limits';
 import { SidebarUser } from '../sidebar-user';
 
-export function ProjectDashboardSidebar() {
+export function ProjectDashboardSidebar({
+  className,
+}: { className?: string } = {}) {
   const { data: projects } = projectCollectionUtils.useAll();
   const { embedState } = useEmbedding();
   const { state } = useSidebar();
@@ -107,7 +114,7 @@ export function ProjectDashboardSidebar() {
   const handleProjectSelect = useCallback(
     async (projectId: string) => {
       projectCollectionUtils.setCurrentProject(projectId);
-      navigate(`/projects/${projectId}/flows`);
+      navigate(`/projects/${projectId}/automations`);
       setSearchOpen(false);
     },
     [navigate],
@@ -131,7 +138,7 @@ export function ProjectDashboardSidebar() {
     to: '/templates',
     label: t('Explore'),
     show: true,
-    icon: Compass,
+    icon: CompassIcon,
     hasPermission: true,
     isSubItem: false,
     onClick: handleExploreClick,
@@ -141,7 +148,7 @@ export function ProjectDashboardSidebar() {
     type: 'link',
     to: '/impact',
     label: t('Impact'),
-    icon: LineChart,
+    icon: ChartLineIcon,
     show: true,
     hasPermission: true,
     isSubItem: false,
@@ -151,7 +158,7 @@ export function ProjectDashboardSidebar() {
     type: 'link',
     to: '/leaderboard',
     label: t('Leaderboard'),
-    icon: Trophy,
+    icon: TrophyIcon,
     show: true,
     hasPermission: true,
     isSubItem: false,
@@ -163,7 +170,11 @@ export function ProjectDashboardSidebar() {
 
   return (
     !embedState.hideSideNav && (
-      <Sidebar collapsible="icon" className="max-h-[100vh]">
+      <Sidebar
+        collapsible="icon"
+        id={SIDEBAR_ID}
+        className={cn('max-h-[100vh]', className)}
+      >
         <AppSidebarHeader />
 
         <SidebarContent className="overflow-x-hidden">
@@ -307,6 +318,7 @@ export function ProjectDashboardSidebar() {
         </SidebarContent>
         <SidebarFooter>
           {state === 'expanded' && <DelayedSidebarUsageLimits />}
+          <SidebarPlatformAdminLink />
           <SidebarUser />
         </SidebarFooter>
       </Sidebar>
@@ -328,3 +340,28 @@ function DelayedSidebarUsageLimits() {
     </div>
   ) : null;
 }
+
+function SidebarPlatformAdminLink() {
+  const showPlatformAdmin = useIsPlatformAdmin();
+  const { embedState } = useEmbedding();
+
+  if (embedState.isEmbedded || !showPlatformAdmin) {
+    return null;
+  }
+
+  return (
+    <SidebarMenu>
+      <ApSidebarItem
+        type="link"
+        to="/platform/projects"
+        label={t('Platform Admin')}
+        icon={ShieldIcon}
+        isSubItem={false}
+        show={true}
+        hasPermission={true}
+      />
+    </SidebarMenu>
+  );
+}
+
+export const SIDEBAR_ID = 'project-sidebar';

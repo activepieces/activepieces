@@ -41,7 +41,7 @@ export const FirstTimeTestingSection = ({
   ) {
     return (
       <div className="flex justify-center flex-col gap-2 items-center">
-        <TestButtonTooltip invalid={!isValid}>
+        <TestButtonTooltip saving={isSaving} invalid={!isValid}>
           <Button
             variant="outline"
             size="sm"
@@ -77,7 +77,7 @@ export const FirstTimeTestingSection = ({
   if (testType === 'mcp-tool') {
     return (
       <div className="flex justify-center">
-        <TestButtonTooltip invalid={!isValid}>
+        <TestButtonTooltip saving={isSaving} invalid={!isValid}>
           <Button
             variant="outline"
             size="sm"
@@ -96,7 +96,7 @@ export const FirstTimeTestingSection = ({
   }
   return (
     <div className="flex justify-center">
-      <TestButtonTooltip invalid={!isValid}>
+      <TestButtonTooltip saving={isSaving} invalid={!isValid}>
         <Button
           variant="outline"
           size="sm"

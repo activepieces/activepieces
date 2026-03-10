@@ -138,9 +138,9 @@ export const fileService = (log: FastifyBaseLogger) => ({
             compression: file.compression,
         })
         return {
-            metadata: file.metadata,
+            metadata: file.metadata ?? undefined,
             data,
-            fileName: file.fileName,
+            fileName: file.fileName ?? undefined,
         }
     },
     async deleteStaleBulk(types: FileType[]) {

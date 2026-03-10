@@ -1,5 +1,4 @@
 import { isNil, ProjectReleaseType } from '@activepieces/shared';
-import { useQuery } from '@tanstack/react-query';
 import { formatDistance } from 'date-fns';
 import { t } from 'i18next';
 import {
@@ -18,7 +17,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { projectReleaseApi } from '@/features/project-releases';
+import { projectReleaseQueries } from '@/features/project-releases';
 import { authenticationSession } from '@/lib/authentication-session';
 
 import { ApplyButton } from './apply-plan';
@@ -49,11 +48,10 @@ const getReleaseSummaryType = (type: ProjectReleaseType) => {
 const ViewRelease = () => {
   const { releaseId } = useParams();
   const navigate = useNavigate();
-  const { data: release, isLoading } = useQuery({
-    queryKey: ['release', releaseId],
-    queryFn: () => projectReleaseApi.get(releaseId || ''),
-    enabled: !!releaseId,
-  });
+  const { data: release, isLoading } = projectReleaseQueries.useProjectRelease(
+    releaseId || '',
+    !!releaseId,
+  );
 
   if (!releaseId) {
     return <Navigate to="/releases" replace />;

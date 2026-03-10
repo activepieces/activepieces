@@ -19,16 +19,16 @@ export const setupWorker = async (app: FastifyInstance): Promise<void> => {
 }
 
 export async function workerPostBoot(app: FastifyInstance): Promise<void> {
-    const workerToken = await generateWorkerToken()
+    const workerToken = await generateWorkerToken(app)
     await flowWorker(app.log).init({ workerToken, markAsHealthy: async () => healthStatusService(app.log).markWorkerHealthy() })
 }
 
 
 
-async function generateWorkerToken(): Promise<string> {
+async function generateWorkerToken(app: FastifyInstance): Promise<string> {
     const workerToken = system.get(WorkerSystemProp.WORKER_TOKEN)
     if (!isNil(workerToken)) {
         return workerToken
     }
-    return accessTokenManager.generateWorkerToken()
+    return accessTokenManager(app.log).generateWorkerToken()
 }

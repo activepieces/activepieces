@@ -11,7 +11,7 @@ export const NoteFooter = ({ creatorId, isDragging }: NoteFooterProps) => {
     return null;
   }
   return (
-    <div className="flex items-center justify-between gap-2 cursor-grabbing">
+    <div className="flex items-center justify-between gap-2 cursor-grabbing overflow-hidden">
       <div className="grow">
         {!isNil(creatorId) && (
           <ApAvatar

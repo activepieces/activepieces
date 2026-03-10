@@ -1,7 +1,7 @@
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { enterpriseLocalAuthnController } from './enterprise-local-authn-controller'
 
-export const enterpriseLocalAuthnModule: FastifyPluginAsyncTypebox = async (
+export const enterpriseLocalAuthnModule: FastifyPluginAsyncZod = async (
     app,
 ) => {
     await app.register(enterpriseLocalAuthnController, {

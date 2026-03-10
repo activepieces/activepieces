@@ -1,10 +1,6 @@
 import { createAction } from '@activepieces/pieces-framework';
-import {
-  httpClient,
-  HttpMethod,
-  AuthenticationType,
-} from '@activepieces/pieces-common';
-import { excelCommon } from '../common/common';
+import { commonProps } from '../common/props';
+import { getDrivePath, createMSGraphClient } from '../common/helpers';
 import { excelAuth } from '../auth';
 
 export const convertToRangeAction = createAction({
@@ -13,24 +9,26 @@ export const convertToRangeAction = createAction({
   description: 'Converts a table to a range',
   displayName: 'Convert to Range',
   props: {
-    workbook_id: excelCommon.workbook_id,
-    worksheet_id: excelCommon.worksheet_id,
-    table_id: excelCommon.table_id,
+    storageSource: commonProps.storageSource,
+    siteId: commonProps.siteId,
+    documentId: commonProps.documentId,
+    workbookId: commonProps.workbookId,
+    worksheetId: commonProps.worksheetId,
+    tableId: commonProps.tableId,
   },
   async run({ propsValue, auth }) {
-    const workbookId = propsValue['workbook_id'];
-    const worksheetId = propsValue['worksheet_id'];
-    const tableId = propsValue['table_id'];
+    const { storageSource, siteId, documentId, workbookId, worksheetId, tableId } = propsValue;
 
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: `${excelCommon.baseUrl}/items/${workbookId}/workbook/worksheets/${worksheetId}/tables/${tableId}/convertToRange`,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: auth['access_token'],
-      },
-    });
+    if (storageSource === 'sharepoint' && (!siteId || !documentId)) {
+      throw new Error('please select SharePoint site and document library.');
+    }
+    const drivePath = getDrivePath(storageSource, siteId as string, documentId as string);
 
-    return response.body;
+    const client = createMSGraphClient(auth['access_token']);
+    const response = await client
+      .api(`${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/tables/${tableId}/convertToRange`)
+      .post({});
+
+    return response;
   },
 });

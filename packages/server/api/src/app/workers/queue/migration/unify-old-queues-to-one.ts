@@ -69,7 +69,7 @@ async function migrateOneTimeJobs(log: FastifyBaseLogger): Promise<boolean> {
                 data: {
                     ...casedData,
                     flowId: flowVersion.flowId,
-                    platformId: await projectService.getPlatformId(casedData.projectId),
+                    platformId: await projectService(log).getPlatformId(casedData.projectId),
                     schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
                     jobType: WorkerJobType.EXECUTE_FLOW,
                 } as ExecuteFlowJobData,
@@ -100,7 +100,7 @@ async function migrateWebhookJobs(log: FastifyBaseLogger): Promise<boolean> {
             type: JobType.ONE_TIME,
             data: {
                 ...casedData,
-                platformId: await projectService.getPlatformId(casedData.projectId),
+                platformId: await projectService(log).getPlatformId(casedData.projectId),
                 jobType: WorkerJobType.EXECUTE_WEBHOOK,
             },
         })

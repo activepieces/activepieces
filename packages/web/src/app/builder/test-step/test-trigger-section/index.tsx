@@ -1,5 +1,4 @@
-import { FlowTrigger, isNil } from '@activepieces/shared';
-import dayjs from 'dayjs';
+import { FlowTrigger, flowStructureUtil, isNil } from '@activepieces/shared';
 import { t } from 'i18next';
 import React, { useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
@@ -32,7 +31,6 @@ const TestTriggerSection = React.memo(
     const formValues = form.getValues();
     const isValid = form.formState.isValid;
     const abortControllerRef = useRef<AbortController>(new AbortController());
-    const lastTestDate = formValues.settings.sampleData?.lastTestDate;
     const [isTestingDialogOpen, setIsTestingDialogOpen] = useState(false);
     const { pieceModel, isLoading: isPieceLoading } = piecesHooks.usePiece({
       name: formValues.settings.pieceName,
@@ -47,17 +45,25 @@ const TestTriggerSection = React.memo(
       undefined,
     );
 
-    const { sampleData, sampleDataInput, setChatDrawerOpenSource } =
-      useBuilderStateContext((state) => {
-        return {
-          sampleData: state.outputSampleData[formValues.name],
-          sampleDataInput: state.inputSampleData[formValues.name],
-          setChatDrawerOpenSource: state.setChatDrawerOpenSource,
-        };
-      });
+    const {
+      sampleData,
+      sampleDataInput,
+      setChatDrawerOpenSource,
+      lastTestDate,
+    } = useBuilderStateContext((state) => {
+      const step = flowStructureUtil.getStep(
+        formValues.name,
+        state.flowVersion.trigger,
+      );
+      return {
+        sampleData: state.outputSampleData[formValues.name],
+        sampleDataInput: state.inputSampleData[formValues.name],
+        setChatDrawerOpenSource: state.setChatDrawerOpenSource,
+        lastTestDate: step?.settings?.sampleData?.lastTestDate,
+      };
+    });
 
     const onTestSuccess = async () => {
-      form.setValue(`settings.sampleData.lastTestDate`, dayjs().toISOString());
       await refetch();
     };
 
@@ -90,9 +96,7 @@ const TestTriggerSection = React.memo(
 
     const sampleDataSelected = !isNil(lastTestDate) || !isNil(errorMessage);
 
-    const isTestedBefore = !isNil(
-      form.getValues().settings.sampleData?.lastTestDate,
-    );
+    const isTestedBefore = !isNil(lastTestDate);
     const showFirstTimeTestingSection = !isTestedBefore && !isSimulating;
 
     if (isPieceLoading || isNil(trigger)) {

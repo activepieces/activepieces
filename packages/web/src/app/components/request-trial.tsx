@@ -34,7 +34,7 @@ export type FeatureKey =
 type RequestTrialProps = {
   featureKey: FeatureKey;
   customButton?: React.ReactNode;
-  buttonVariant?: 'default' | 'outline-primary';
+  buttonVariant?: 'default' | 'basic';
 };
 
 export const RequestTrial = ({

@@ -1,7 +1,7 @@
 import { AppSystemProp } from '@activepieces/server-common'
 import { isNil } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyReply, FastifyRequest } from 'fastify'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { system } from '../../../../helper/system/system'
 import { adminPlatformTemplatesCloudController } from './admin-platform-templates-cloud.controller'
@@ -22,7 +22,7 @@ async function checkTemplatesApiKeyPreHandler(
     }
 }
 
-export const adminPlatformTemplatesCloudModule: FastifyPluginAsyncTypebox = async (app) => {
+export const adminPlatformTemplatesCloudModule: FastifyPluginAsyncZod = async (app) => {
     app.addHook('preHandler', checkTemplatesApiKeyPreHandler)
     await app.register(adminPlatformTemplatesCloudController, { prefix: '/v1/admin/templates' })
 }

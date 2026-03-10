@@ -96,7 +96,7 @@
                         "admin-guide/guides/secret-managers/aws",
                         "admin-guide/guides/secret-managers/hashicorp",
                         "admin-guide/guides/secret-managers/cyberark-conjur",
-                        "admin-guide/guides/secret-managers/1password"
+                        "admin-guide/guides/secret-managers/onepassword"
                       ]
                     },
                     "admin-guide/guides/permissions",
@@ -485,7 +485,8 @@
                      "handbook/engineering/onboarding/how-we-work",
                      "handbook/engineering/onboarding/on-call",
                      "handbook/engineering/onboarding/downtime-incident",
-                     "handbook/engineering/onboarding/stack"
+                     "handbook/engineering/onboarding/stack",
+                     "handbook/engineering/onboarding/release-cycle"
                   ]
                },
                {

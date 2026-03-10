@@ -52,7 +52,7 @@ export const AgentFlowToolComponent = ({
               `}
             >
               <span className="text-xs font-medium max-w-40 truncate">
-                {tool.toolName.split('_')[0] || t('Flow')}
+                {tool.flowDisplayName ?? tool.toolName ?? t('Flow')}
               </span>
 
               <Tooltip>

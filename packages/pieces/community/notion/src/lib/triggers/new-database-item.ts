@@ -6,11 +6,10 @@ import {
 import {
   createTrigger,
   TriggerStrategy,
-  OAuth2PropertyValue,
   AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
-import { notionCommon } from '../common';
+import { getNotionToken, NotionAuthValue, notionCommon } from '../common';
 import { Client } from '@notionhq/client';
 import { notionAuth } from '../auth';
 import { isNil } from '@activepieces/shared';
@@ -152,12 +151,12 @@ const polling: Polling<
 };
 
 const getResponse = async (
-  authentication: OAuth2PropertyValue,
+  authentication: NotionAuthValue,
   database_id: string,
   startDate: string | null
 ) => {
   const notion = new Client({
-    auth: authentication.access_token,
+    auth: getNotionToken(authentication),
     notionVersion: '2022-02-22',
   });
   let cursor;

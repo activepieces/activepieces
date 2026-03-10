@@ -1,7 +1,5 @@
 # pieces-comfyicu
 
-This library was generated with [Nx](https://nx.dev).
-
 ## Building
 
-Run `nx build pieces-comfyicu` to build the library.
+Run `turbo run build --filter=@activepieces/piece-comfyicu` to build the library.

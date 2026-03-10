@@ -1,10 +1,10 @@
-import { Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
 
-export const GetSystemHealthChecksResponse = Type.Object({
-    cpu: Type.Boolean(),
-    disk: Type.Boolean(),
-    ram: Type.Boolean(),
-    database: Type.Boolean(),
+export const GetSystemHealthChecksResponse = z.object({
+    cpu: z.boolean(),
+    disk: z.boolean(),
+    ram: z.boolean(),
+    database: z.boolean(),
 })
 
-export type GetSystemHealthChecksResponse = Static<typeof GetSystemHealthChecksResponse>
+export type GetSystemHealthChecksResponse = z.infer<typeof GetSystemHealthChecksResponse>

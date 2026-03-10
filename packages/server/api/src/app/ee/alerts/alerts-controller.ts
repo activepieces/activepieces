@@ -1,10 +1,11 @@
 import { ProjectResourceType, securityAccess } from '@activepieces/server-common'
 import { ApId, CreateAlertParams, ListAlertsParams, Permission, PrincipalType } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import { z } from 'zod'
 import { AlertEntity } from './alerts-entity'
 import { alertsService } from './alerts-service'
 
-export const alertsController: FastifyPluginAsyncTypebox = async (app) => {
+export const alertsController: FastifyPluginAsyncZod = async (app) => {
     app.get('/', ListAlertsRequest, async (req) => {
         return alertsService(req.log).list({
             projectId: req.query.projectId,
@@ -70,7 +71,7 @@ const DeleteAlertRequest = {
         ),
     },
     schema: {
-        params: Type.Object({
+        params: z.object({
             id: ApId,
         }),
     },

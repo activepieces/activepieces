@@ -1,9 +1,9 @@
-import { Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
 import { EmailType, PasswordType } from '../../user/user'
 
-export const SignInRequest = Type.Object({
+export const SignInRequest = z.object({
     email: EmailType,
     password: PasswordType,
 })
 
-export type SignInRequest = Static<typeof SignInRequest>
+export type SignInRequest = z.infer<typeof SignInRequest>

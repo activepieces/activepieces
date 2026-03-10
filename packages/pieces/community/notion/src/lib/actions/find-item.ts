@@ -1,6 +1,6 @@
 import { notionAuth } from '../auth';
 import { createAction } from '@activepieces/pieces-framework';
-import { notionCommon } from '../common';
+import { getNotionToken, notionCommon } from '../common';
 import { Client } from '@notionhq/client';
 
 export const findDatabaseItem = createAction({
@@ -17,7 +17,7 @@ export const findDatabaseItem = createAction({
     const filterFields = context.propsValue.filterDatabaseFields;
 
     const notion = new Client({
-      auth: context.auth.access_token,
+      auth: getNotionToken(context.auth),
       notionVersion: '2022-02-22',
     });
 

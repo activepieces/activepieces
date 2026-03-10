@@ -1,7 +1,5 @@
 # pieces-image-helper
 
-This library was generated with [Nx](https://nx.dev).
-
 ## Building
 
-Run `nx build pieces-image-helper` to build the library.
+Run `turbo run build --filter=@activepieces/piece-image-helper` to build the library.

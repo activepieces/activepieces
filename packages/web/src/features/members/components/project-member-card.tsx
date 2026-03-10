@@ -68,10 +68,10 @@ export function ProjectMemberCard({
               disabled={!userHasPermissionToRemoveMember}
             />
             <ConfirmationDeleteDialog
-              title={`${t('Remove')} ${member.user.firstName} ${
-                member.user.lastName
-              }`}
-              message={t('Are you sure you want to remove this member?')}
+              title={t('Remove Member')}
+              message={t(
+                'This member will lose access to the project immediately.',
+              )}
               mutationFn={() => deleteMember()}
               entityName={`${member.user.firstName} ${member.user.lastName}`}
             >

@@ -1,4 +1,4 @@
-import { Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
 import { BaseModelSchema, Nullable } from '../../core/common/base-model'
 import { ApId } from '../../core/common/id-generator'
 import { UserWithMetaInformation } from '../../core/user'
@@ -7,40 +7,40 @@ import { FlowTrigger } from './triggers/trigger'
 
 export type FlowVersionId = ApId
 
-export const LATEST_FLOW_SCHEMA_VERSION = '16'
+export const LATEST_FLOW_SCHEMA_VERSION = '18'
 
 export enum FlowVersionState {
     LOCKED = 'LOCKED',
     DRAFT = 'DRAFT',
 }
 
-export const FlowVersion = Type.Object({
+export const FlowVersion = z.object({
     ...BaseModelSchema,
-    flowId: Type.String(),
-    displayName: Type.String(),
+    flowId: z.string(),
+    displayName: z.string(),
     trigger: FlowTrigger,
-    updatedBy: Nullable(Type.String()),
-    valid: Type.Boolean(),
-    schemaVersion: Nullable(Type.String()),
-    agentIds: Type.Array(Type.String()),
-    state: Type.Enum(FlowVersionState),
-    connectionIds: Type.Array(Type.String()),
-    backupFiles: Nullable(Type.Record(Type.String(), Type.String())),
-    notes: Type.Array(Note),
+    updatedBy: Nullable(z.string()),
+    valid: z.boolean(),
+    schemaVersion: Nullable(z.string()),
+    agentIds: z.array(z.string()),
+    state: z.nativeEnum(FlowVersionState),
+    connectionIds: z.array(z.string()),
+    backupFiles: Nullable(z.record(z.string(), z.string())),
+    notes: z.array(Note),
 })
 
-export type FlowVersion = Static<typeof FlowVersion>
+export type FlowVersion = z.infer<typeof FlowVersion>
 
-export const FlowVersionMetadata = Type.Object({
+export const FlowVersionMetadata = z.object({
     ...BaseModelSchema,
-    flowId: Type.String(),
-    displayName: Type.String(),
-    valid: Type.Boolean(),
-    state: Type.Enum(FlowVersionState),
-    updatedBy: Nullable(Type.String()),
-    schemaVersion: Nullable(Type.String()),
+    flowId: z.string(),
+    displayName: z.string(),
+    valid: z.boolean(),
+    state: z.nativeEnum(FlowVersionState),
+    updatedBy: Nullable(z.string()),
+    schemaVersion: Nullable(z.string()),
     updatedByUser: Nullable(UserWithMetaInformation),
 })
 
-export type FlowVersionMetadata = Static<typeof FlowVersionMetadata>
+export type FlowVersionMetadata = z.infer<typeof FlowVersionMetadata>
 

@@ -81,7 +81,11 @@ describe('Platform API', () => {
             ])
             expect(responseBody.filteredPieceBehavior).toBe('ALLOWED')
             expect(responseBody.emailAuthEnabled).toBe(false)
-            expect(responseBody.federatedAuthProviders).toStrictEqual({})
+            expect(responseBody.federatedAuthProviders).toStrictEqual({
+                google: null,
+                github: null,
+                saml: null,
+            })
             expect(responseBody.cloudAuthEnabled).toBe(false)
         }),
 
@@ -122,6 +126,61 @@ describe('Platform API', () => {
             expect(responseBody.created).toBeDefined()
             expect(responseBody.updated).toBeDefined()
             expect(responseBody.name).toBe('updated name')
+
+            const baseUrl = 'http://localhost:4200/api/v1/platforms/assets'
+            expect(responseBody.logoIconUrl.startsWith(baseUrl)).toBeTruthy()
+            expect(responseBody.fullLogoUrl.startsWith(baseUrl)).toBeTruthy()
+            expect(responseBody.favIconUrl.startsWith(baseUrl)).toBeTruthy()
+        }),
+
+        it('updates platform with boolean and array fields via multipart form data', async () => {
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
+                plan: {
+                    embeddingEnabled: false,
+                },
+                platform: {
+                },
+            })
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockOwner.id,
+                platform: { id: mockPlatform.id },
+            })
+            const formData = new FormData()
+            formData.append('logoIcon', new Blob([faker.image.urlPlaceholder()], { type: 'image/png' }))
+            formData.append('fullLogo', new Blob([faker.image.urlPlaceholder()], { type: 'image/png' }))
+            formData.append('favIcon', new Blob([faker.image.urlPlaceholder()], { type: 'image/png' }))
+            formData.append('cloudAuthEnabled', 'false')
+            formData.append('emailAuthEnabled', 'false')
+            formData.append('enforceAllowedAuthDomains', 'true')
+            formData.append('filteredPieceNames', 'piece-1')
+            formData.append('allowedAuthDomains', 'example.com')
+            formData.append('pinnedPieces', 'pinned-1')
+            formData.append('name', 'updated name')
+            formData.append('filteredPieceBehavior', 'ALLOWED')
+
+            // act
+            const response = await app?.inject({
+                method: 'POST',
+                url: `/v1/platforms/${mockPlatform.id}`,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+                body: formData,
+            })
+
+            // assert
+            const responseBody = response?.json()
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(responseBody.cloudAuthEnabled).toBe(false)
+            expect(responseBody.emailAuthEnabled).toBe(false)
+            expect(responseBody.enforceAllowedAuthDomains).toBe(true)
+            expect(responseBody.filteredPieceNames).toStrictEqual(['piece-1'])
+            expect(responseBody.allowedAuthDomains).toStrictEqual(['example.com'])
+            expect(responseBody.pinnedPieces).toStrictEqual(['pinned-1'])
+            expect(responseBody.name).toBe('updated name')
+            expect(responseBody.filteredPieceBehavior).toBe('ALLOWED')
 
             const baseUrl = 'http://localhost:4200/api/v1/platforms/assets'
             expect(responseBody.logoIconUrl.startsWith(baseUrl)).toBeTruthy()

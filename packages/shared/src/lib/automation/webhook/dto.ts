@@ -1,8 +1,8 @@
-import { Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
 import { ApId } from '../../core/common/id-generator'
 
-export const WebhookUrlParams = Type.Object({
+export const WebhookUrlParams = z.object({
     flowId: ApId,
 })
 
-export type WebhookUrlParams = Static<typeof WebhookUrlParams>
+export type WebhookUrlParams = z.infer<typeof WebhookUrlParams>

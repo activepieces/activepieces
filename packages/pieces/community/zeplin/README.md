@@ -1,7 +1,5 @@
 # pieces-zeplin
 
-This library was generated with [Nx](https://nx.dev).
-
 ## Building
 
-Run `nx build pieces-zeplin` to build the library.
+Run `turbo run build --filter=@activepieces/piece-zeplin` to build the library.

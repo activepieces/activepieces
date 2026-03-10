@@ -1,7 +1,5 @@
 # pieces-queue
 
-This library was generated with [Nx](https://nx.dev).
-
 ## Building
 
-Run `nx build pieces-queue` to build the library.
+Run `turbo run build --filter=@activepieces/piece-queue` to build the library.

@@ -10,7 +10,7 @@
   },
   "devDependencies": {
     "@readme/openapi-parser": "^2.6.0",
-    "@types/node": "^20",
+    "@types/node": "^24",
     "dotenv": "^16.4.5",
     "mergician": "^2.0.2",
     "title-case": "^4.3.1",

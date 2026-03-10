@@ -189,7 +189,7 @@ export const gitRepoService = (_log: FastifyBaseLogger) => ({
         }
     },
     async getState({ gitRepo, userId, log }: PullGitRepoRequest): Promise<ProjectState> {
-        const { flowFolderPath, connectionsFolderPath, tablesFolderPath } = await gitHelper.createGitRepoAndReturnPaths(gitRepo, userId)
+        const { flowFolderPath, connectionsFolderPath, tablesFolderPath } = await gitHelper.createGitRepoAndReturnPaths(log, gitRepo, userId)
         return gitSyncHelper(log).getStateFromGit({
             flowPath: flowFolderPath,
             connectionsFolderPath,

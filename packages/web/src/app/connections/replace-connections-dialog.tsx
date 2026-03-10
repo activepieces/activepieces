@@ -1,5 +1,4 @@
 import { AppConnectionScope, PopulatedFlow } from '@activepieces/shared';
-import { DialogTrigger } from '@radix-ui/react-dialog';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { GlobeIcon, WorkflowIcon } from 'lucide-react';
@@ -14,10 +13,11 @@ import {
   Dialog,
   DialogClose,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
+  DialogTrigger,
 } from '@/components/ui/dialog';
 import { Form, FormField, FormMessage } from '@/components/ui/form';
 import { Label } from '@/components/ui/label';
@@ -318,7 +318,6 @@ const ReplaceConnectionsDialog = ({
                                   pieceName={conn!.pieceName}
                                   size="xs"
                                   border={false}
-                                  circle={false}
                                 />
                                 <span>{conn!.displayName}</span>
                               </div>
@@ -361,7 +360,6 @@ const ReplaceConnectionsDialog = ({
                                     pieceName={conn!.pieceName}
                                     size="xs"
                                     border={false}
-                                    circle={false}
                                   />
                                   {conn?.scope ===
                                     AppConnectionScope.PLATFORM && (

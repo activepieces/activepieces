@@ -100,7 +100,7 @@ const TestStepSectionImplementation = React.memo(
       <>
         {!sampleDataExists && !isTesting && (
           <div className="grow flex justify-center items-center w-full h-full">
-            <TestButtonTooltip invalid={!currentStep.valid}>
+            <TestButtonTooltip saving={isSaving} invalid={!currentStep.valid}>
               <Button
                 variant="outline"
                 size="sm"

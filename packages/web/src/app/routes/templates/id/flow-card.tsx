@@ -45,7 +45,6 @@ export const FlowCard = ({
               maxNumberOfIconsToShow={3}
               size="md"
               className="flex gap-1.5"
-              circle={false}
               background="white"
               excludeCore={true}
             />

@@ -1,4 +1,4 @@
-import { Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
 import { ApId } from '../../core/common/id-generator'
 
 export enum TriggerTestStrategy {
@@ -6,19 +6,19 @@ export enum TriggerTestStrategy {
     TEST_FUNCTION = 'TEST_FUNCTION',
 }
 
-export const TestTriggerRequestBody = Type.Object({
+export const TestTriggerRequestBody = z.object({
     projectId: ApId,
     flowId: ApId,
     flowVersionId: ApId,
-    testStrategy: Type.Enum(TriggerTestStrategy),
+    testStrategy: z.nativeEnum(TriggerTestStrategy),
 })
 
-export type TestTriggerRequestBody = Static<typeof TestTriggerRequestBody>
+export type TestTriggerRequestBody = z.infer<typeof TestTriggerRequestBody>
 
 
-export const CancelTestTriggerRequestBody = Type.Object({
+export const CancelTestTriggerRequestBody = z.object({
     projectId: ApId,
     flowId: ApId,
 })
 
-export type CancelTestTriggerRequestBody = Static<typeof CancelTestTriggerRequestBody>
+export type CancelTestTriggerRequestBody = z.infer<typeof CancelTestTriggerRequestBody>

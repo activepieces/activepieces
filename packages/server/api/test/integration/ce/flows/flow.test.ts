@@ -69,7 +69,7 @@ describe('Flow API', () => {
             expect(responseBody?.version?.updatedBy).toBeNull()
             expect(responseBody?.version?.flowId).toBe(responseBody?.id)
             expect(responseBody?.version?.displayName).toBe('test flow')
-            expect(Object.keys(responseBody?.version?.trigger)).toHaveLength(5)
+            expect(Object.keys(responseBody?.version?.trigger)).toHaveLength(6)
             expect(responseBody?.version?.trigger.type).toBe('EMPTY')
             expect(responseBody?.version?.trigger.name).toBe('trigger')
             expect(responseBody?.version?.trigger.settings).toMatchObject({})
@@ -127,6 +127,7 @@ describe('Flow API', () => {
                     valid: true,
                     name: 'trigger',
                     displayName: 'Schedule',
+                    lastUpdatedDate: new Date().toISOString(),
                 },
             })
             await db.save('flow_version', mockFlowVersion)
@@ -244,6 +245,7 @@ describe('Flow API', () => {
                     valid: true,
                     name: 'trigger',
                     displayName: 'Schedule',
+                    lastUpdatedDate: new Date().toISOString(),
                 },
             })
             await db.save('flow_version', mockFlowVersion)

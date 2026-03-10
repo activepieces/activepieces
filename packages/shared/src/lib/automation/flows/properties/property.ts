@@ -1,12 +1,12 @@
-import { Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
 
 export enum PropertyExecutionType {
     MANUAL = 'MANUAL',
     DYNAMIC = 'DYNAMIC',
 }
 
-export const PropertySettings = Type.Object({
-    type: Type.Enum(PropertyExecutionType),
-    schema: Type.Optional(Type.Any()),
+export const PropertySettings = z.object({
+    type: z.nativeEnum(PropertyExecutionType),
+    schema: z.any().optional(),
 })
-export type PropertySettings = Static<typeof PropertySettings>
+export type PropertySettings = z.infer<typeof PropertySettings>

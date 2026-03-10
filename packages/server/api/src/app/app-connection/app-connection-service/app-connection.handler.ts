@@ -18,7 +18,7 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
         const { appConnection, newAppConnection, userId } = params
 
         await Promise.all(flows.map(async (flow) => {
-            const project = await projectService.getOneOrThrow(flow.projectId)
+            const project = await projectService(log).getOneOrThrow(flow.projectId)
             const lastVersion = await flowVersionService(log).getFlowVersionOrThrow({
                 flowId: flow.id,
                 versionId: undefined,

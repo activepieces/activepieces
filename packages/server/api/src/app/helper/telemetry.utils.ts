@@ -32,7 +32,7 @@ export const telemetry = (log: FastifyBaseLogger) => ({
         if (!telemetryEnabled) {
             return
         }
-        const platform = await platformService.getOneOrThrow(platformId)
+        const platform = await platformService(log).getOneOrThrow(platformId)
         await this.trackUser(platform.ownerId, event)
     },
     async trackProject(
@@ -42,7 +42,7 @@ export const telemetry = (log: FastifyBaseLogger) => ({
         if (!telemetryEnabled) {
             return
         }
-        const project = await projectService.getOne(projectId)
+        const project = await projectService(log).getOne(projectId)
         this.trackUser(project!.ownerId, event).catch((e) =>
             log.error({ err: e }, '[telemetry#trackProject] Failed to track user'),
         )

@@ -1,20 +1,20 @@
-import { Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
 
-export const WorkerJobStats = Type.Object({
-    active: Type.Number(),
-    delayed: Type.Number(),
-    prioritized: Type.Number(),
-    waiting: Type.Number(),
-    'waiting-children': Type.Number(),
-    completed: Type.Number(),
-    failed: Type.Number(),
-    paused: Type.Number(),
+export const WorkerJobStats = z.object({
+    active: z.number(),
+    delayed: z.number(),
+    prioritized: z.number(),
+    waiting: z.number(),
+    'waiting-children': z.number(),
+    completed: z.number(),
+    failed: z.number(),
+    paused: z.number(),
 })
 
-export type WorkerJobStats = Static<typeof WorkerJobStats>
+export type WorkerJobStats = z.infer<typeof WorkerJobStats>
 
-export const QueueMetricsResponse = Type.Object({
+export const QueueMetricsResponse = z.object({
     stats: WorkerJobStats,
 })
 
-export type QueueMetricsResponse = Static<typeof QueueMetricsResponse>
+export type QueueMetricsResponse = z.infer<typeof QueueMetricsResponse>

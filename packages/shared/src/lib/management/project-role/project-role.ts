@@ -1,13 +1,13 @@
-import { Static, Type } from '@sinclair/typebox'
-import { BaseModelSchema } from '../../core/common'
+import { z } from 'zod'
+import { BaseModelSchema, Nullable } from '../../core/common'
 
-export const ProjectRole = Type.Object({
+export const ProjectRole = z.object({
     ...BaseModelSchema,
-    name: Type.String(),
-    permissions: Type.Array(Type.String()),
-    platformId: Type.Optional(Type.String()),
-    type: Type.String(),
-    userCount: Type.Optional(Type.Number()),
+    name: z.string(),
+    permissions: z.array(z.string()),
+    platformId: Nullable(z.string()),
+    type: z.string(),
+    userCount: z.number().optional(),
 })
 
-export type ProjectRole = Static<typeof ProjectRole>
+export type ProjectRole = z.infer<typeof ProjectRole>

@@ -1,6 +1,6 @@
-import { Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
 import { SAFE_STRING_PATTERN } from '../../core/common'
-import { BaseModelSchema, Nullable } from '../../core/common/base-model'
+import { BaseModelSchema, DateOrString, Nullable } from '../../core/common/base-model'
 import { ApId } from '../../core/common/id-generator'
 import { Metadata } from '../../core/common/metadata'
 
@@ -25,7 +25,7 @@ export enum PiecesFilterType {
     NONE = 'NONE',
     ALLOWED = 'ALLOWED',
 }
-    
+
 export enum ProjectType {
     TEAM = 'TEAM',
     PERSONAL = 'PERSONAL',
@@ -35,86 +35,78 @@ export enum ProjectType {
 
 export type ProjectPlanId = string
 
-export const ProjectPlan = Type.Object({
+export const ProjectPlan = z.object({
     ...BaseModelSchema,
-    projectId: Type.String(),
-    locked: Type.Boolean({ default: false }),
-    name: Type.String(),
-    piecesFilterType: Type.Enum(PiecesFilterType),
-    pieces: Type.Array(Type.String()),
+    projectId: z.string(),
+    locked: z.boolean().default(false),
+    name: z.string(),
+    piecesFilterType: z.nativeEnum(PiecesFilterType),
+    pieces: z.array(z.string()),
 })
 
-export type ProjectPlan = Static<typeof ProjectPlan>
+export type ProjectPlan = z.infer<typeof ProjectPlan>
 
-export const ProjectIcon = Type.Object({
-    color: Type.Enum(ColorName),
+export const ProjectIcon = z.object({
+    color: z.nativeEnum(ColorName),
 })
-export type ProjectIcon = Static<typeof ProjectIcon>
+export type ProjectIcon = z.infer<typeof ProjectIcon>
 
-export const Project = Type.Object({
+export const Project = z.object({
     ...BaseModelSchema,
-    deleted: Nullable(Type.String()),
-    ownerId: Type.String(),
-    displayName: Type.String(),
+    deleted: Nullable(DateOrString),
+    ownerId: z.string(),
+    displayName: z.string(),
     platformId: ApId,
-    maxConcurrentJobs: Nullable(Type.Number()),
-    type: Type.Enum(ProjectType),
+    maxConcurrentJobs: Nullable(z.number()),
+    type: z.nativeEnum(ProjectType),
     icon: ProjectIcon,
-    externalId: Type.Optional(Type.String()),
-    releasesEnabled: Type.Boolean(),
+    externalId: Nullable(z.string()),
+    releasesEnabled: z.boolean(),
     metadata: Nullable(Metadata),
 })
 
-const projectAnalytics = Type.Object(
-    {
-        totalUsers: Type.Number(),
-        activeUsers: Type.Number(),
-        totalFlows: Type.Number(),
-        activeFlows: Type.Number(),
-    },
-)
-export type Project = Static<typeof Project>
+const projectAnalytics = z.object({
+    totalUsers: z.number(),
+    activeUsers: z.number(),
+    totalFlows: z.number(),
+    activeFlows: z.number(),
+})
+export type Project = z.infer<typeof Project>
 
-export const ProjectWithLimits = Type.Composite([
-    Type.Omit(Project, ['deleted']),
-    Type.Object({
-        plan: ProjectPlan,
-        analytics: projectAnalytics,
-    }),
-
-])
-
-export const UpdateProjectRequestInCommunity = Type.Object({
-    displayName: Type.Optional(Type.String({
-        pattern: SAFE_STRING_PATTERN,
-    })),
-    metadata: Type.Optional(Metadata),
+export const ProjectWithLimits = Project.omit({ deleted: true }).extend({
+    plan: ProjectPlan,
+    analytics: projectAnalytics,
 })
 
-export type UpdateProjectRequestInCommunity = Static<typeof UpdateProjectRequestInCommunity>
-
-export type ProjectWithLimits = Static<typeof ProjectWithLimits>
-
-export const ProjectMetaData = Type.Object({
-    id: Type.String(),
-    displayName: Type.String(),
+export const UpdateProjectRequestInCommunity = z.object({
+    displayName: z.string().regex(new RegExp(SAFE_STRING_PATTERN)).optional(),
+    metadata: Metadata.optional(),
 })
 
-export type ProjectMetaData = Static<typeof ProjectMetaData>
+export type UpdateProjectRequestInCommunity = z.infer<typeof UpdateProjectRequestInCommunity>
 
-export const ProjectWithLimitsWithPlatform = Type.Object({
-    platformName: Type.String(),
-    projects: Type.Array(ProjectWithLimits),
+export type ProjectWithLimits = z.infer<typeof ProjectWithLimits>
+
+export const ProjectMetaData = z.object({
+    id: z.string(),
+    displayName: z.string(),
 })
 
-export type ProjectWithLimitsWithPlatform = Static<typeof ProjectWithLimitsWithPlatform>
+export type ProjectMetaData = z.infer<typeof ProjectMetaData>
 
-
-const ProjectColor = Type.Object({
-    textColor: Type.String(),
-    color: Type.String(),
+export const ProjectWithLimitsWithPlatform = z.object({
+    platformName: z.string(),
+    projects: z.array(ProjectWithLimits),
 })
-type ProjectColor = Static<typeof ProjectColor>
+
+export type ProjectWithLimitsWithPlatform = z.infer<typeof ProjectWithLimitsWithPlatform>
+
+
+const ProjectColor = z.object({
+    textColor: z.string(),
+    color: z.string(),
+})
+type ProjectColor = z.infer<typeof ProjectColor>
 
 export const PROJECT_COLOR_PALETTE: Record<ColorName, ProjectColor> = {
     [ColorName.RED]: {

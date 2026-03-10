@@ -120,7 +120,7 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
     },
     async downgradeToFreePlan(platformId: string): Promise<void> {
         await platformPlanService(log).update({ ...turnedOffFeatures, platformId })
-        await platformService.update({
+        await platformService(log).update({
             id: platformId,
             plan: {
                 ...turnedOffFeatures,
@@ -130,7 +130,7 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
     async applyLimits(platformId: string, key: LicenseKeyEntity): Promise<void> {
         const isInternalPlan = !key.ssoEnabled && !key.embeddingEnabled && system.getEdition() === ApEdition.CLOUD
         const teamProjectsLimit = key.manageProjectsEnabled ? TeamProjectsLimit.UNLIMITED : system.getEdition() === ApEdition.CLOUD ? TeamProjectsLimit.ONE : TeamProjectsLimit.NONE
-        await platformService.update({
+        await platformService(log).update({
             id: platformId,
             plan: {
                 plan: isInternalPlan ? 'internal' : PlanName.ENTERPRISE,

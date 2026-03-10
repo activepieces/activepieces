@@ -1,7 +1,5 @@
 # pieces-gender-api
 
-This library was generated with [Nx](https://nx.dev).
-
 ## Building
 
-Run `nx build pieces-gender-api` to build the library.
+Run `turbo run build --filter=@activepieces/piece-gender-api` to build the library.

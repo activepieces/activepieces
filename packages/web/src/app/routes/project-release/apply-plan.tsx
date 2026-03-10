@@ -3,15 +3,13 @@ import {
   isNil,
   ProjectReleaseType,
 } from '@activepieces/shared';
-import { useMutation } from '@tanstack/react-query';
 import { useState, ReactNode } from 'react';
 
 import { Button, ButtonProps } from '@/components/ui/button';
-import { internalErrorToast } from '@/components/ui/sonner';
 import {
-  projectReleaseApi,
   ConnectGitDialog,
   gitSyncHooks,
+  projectReleaseMutations,
 } from '@/features/project-releases';
 import { authenticationSession } from '@/lib/authentication-session';
 
@@ -38,17 +36,13 @@ export const ApplyButton = ({
   const [syncPlan, setSyncPlan] = useState<any>(null);
   const [loadingRequestId, setLoadingRequestId] = useState<string | null>(null);
 
-  const { mutate: loadSyncPlan } = useMutation({
-    mutationFn: (request: DiffReleaseRequest) => {
-      setIsCreateReleaseDialogOpen(true);
-      return projectReleaseApi.diff(request);
-    },
+  const { mutate: loadSyncPlan } = projectReleaseMutations.useDiffRelease({
     onSuccess: (plan) => {
       if (
         (!plan.flows || plan.flows.length === 0) &&
         (!plan.tables || plan.tables.length === 0)
       ) {
-        setSyncPlan(null); // Reset syncPlan when plan is empty
+        setSyncPlan(null);
         setLoadingRequestId(null);
         return;
       }
@@ -56,9 +50,8 @@ export const ApplyButton = ({
       setLoadingRequestId(null);
     },
     onError: () => {
-      setSyncPlan(null); // Reset syncPlan on error
+      setSyncPlan(null);
       setLoadingRequestId(null);
-      internalErrorToast();
     },
   });
 
@@ -79,6 +72,7 @@ export const ApplyButton = ({
             setGitDialogOpen(true);
           } else {
             setLoadingRequestId(requestId);
+            setIsCreateReleaseDialogOpen(true);
             loadSyncPlan(request);
           }
         }}

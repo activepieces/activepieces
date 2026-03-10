@@ -6,17 +6,14 @@ import {
   isNil,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Wand } from 'lucide-react';
 
-import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
+import { CenteredPage } from '@/app/components/centered-page';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { LoadingSpinner } from '@/components/custom/spinner';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import {
   ActiveFlowAddon,
   AICreditUsage,
-  FeatureStatus,
   LicenseKey,
   SubscriptionInfo,
   billingMutations,
@@ -34,15 +31,17 @@ export default function Billing() {
       locked={edition === ApEdition.COMMUNITY}
       lockTitle={t('Unlock Billing Page')}
       lockDescription={t(
-        'Upgrade to the Enterprise edition to access billing and usage management.',
+        'Switch to the Enterprise edition to access billing and usage management.',
       )}
+      lockDocumentationUrl="https://www.activepieces.com/docs/install/configuration/overview#enterprise-edition-optional"
+      showContactSales={false}
     >
       <BillingPageDetails />
     </LockedFeatureGuard>
   );
 }
 
-const BillingPageDetails = () => {
+function BillingPageDetails() {
   const { platform } = platformHooks.useCurrentPlatform();
 
   const {
@@ -74,58 +73,36 @@ const BillingPageDetails = () => {
   }
 
   return (
-    <>
-      <DashboardPageHeader
-        title={t('Billing')}
-        description={t('Manage billing, usage and limits')}
-      >
-        <div className="flex items-center gap-2">
-          {(isSubscriptionActive ||
-            platformPlanInfo?.plan.aiCreditsAutoTopUpState ===
-              AiCreditsAutoTopUpState.ENABLED) && (
-            <Button variant="outline" onClick={() => redirectToPortalSession()}>
-              {t('Access Billing Portal')}
-            </Button>
-          )}
-        </div>
-      </DashboardPageHeader>
-
-      <section className="flex flex-col w-full gap-6">
+    <CenteredPage
+      title={t('Billing')}
+      description={t(
+        'For questions about billing contact us at support@activepieces.com',
+      )}
+    >
+      <div className="flex flex-col gap-6">
         {isSubscriptionActive && <SubscriptionInfo info={platformPlanInfo} />}
 
-        {!isCommunity ? (
+        {(isSubscriptionActive ||
+          platformPlanInfo?.plan.aiCreditsAutoTopUpState ===
+            AiCreditsAutoTopUpState.ENABLED) && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-fit"
+            onClick={() => redirectToPortalSession()}
+          >
+            {t('Access Billing Portal')}
+          </Button>
+        )}
+
+        {!isCommunity && (
           <>
             <ActiveFlowAddon platformSubscription={platformPlanInfo} />
             <AICreditUsage platformSubscription={platformPlanInfo} />
-            <LicenseKey platform={platform} />
           </>
-        ) : (
-          <Card>
-            <CardHeader className="border-b">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center justify-center w-10 h-10 rounded-lg border">
-                    <Wand className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold">
-                      {t('Enabled Features')}
-                    </h3>
-                    <p className="text-sm text-muted-foreground">
-                      {t(
-                        'The following features are currently enabled as part of your platform plan.',
-                      )}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-6 p-6">
-              <FeatureStatus platform={platform} />
-            </CardContent>
-          </Card>
         )}
-      </section>
-    </>
+        <LicenseKey platform={platform} />
+      </div>
+    </CenteredPage>
   );
-};
+}

@@ -13,7 +13,7 @@
     "@activepieces/shared": "workspace:*",
     "@hyperdx/node-opentelemetry": "0.8.2",
     "@sentry/node": "7.120.0",
-    "@sinclair/typebox": "0.34.11",
+    "zod": "4.3.6",
     "async-mutex": "0.4.0",
     "axios": "1.13.5",
     "axios-retry": "4.4.1",
@@ -32,6 +32,6 @@
     "typeorm": "0.3.26"
   },
   "devDependencies": {
-    "@types/node": "20.19.9"
+    "@types/node": "24.11.0"
   }
 }

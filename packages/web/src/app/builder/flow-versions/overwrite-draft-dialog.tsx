@@ -51,13 +51,14 @@ const OverwriteDraftDialog = ({
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t('Are you sure?')}</DialogTitle>
+          <DialogTitle>{t('Overwrite Draft')}</DialogTitle>
           <DialogDescription>
-            {t('Your current draft version will be overwritten with')}{' '}
+            {t('Your current draft will be replaced with')}{' '}
             <span className="font-semibold">
-              {t('version #')}
-              {versionNumber}
+              {t('version #{versionNumber}', { versionNumber })}
             </span>
+            {'. '}
+            {t('This cannot be undone.')}
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="justify-end">
@@ -75,7 +76,7 @@ const OverwriteDraftDialog = ({
                 onConfirm?.();
               }}
             >
-              {t('Confirm')}
+              {t('Overwrite')}
             </Button>
           </DialogClose>
         </DialogFooter>

@@ -1,7 +1,5 @@
 # pieces-synthesia
 
-This library was generated with [Nx](https://nx.dev).
-
 ## Building
 
-Run `nx build pieces-synthesia` to build the library.
+Run `turbo run build --filter=@activepieces/piece-synthesia` to build the library.

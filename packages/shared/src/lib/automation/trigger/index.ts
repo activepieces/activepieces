@@ -1,4 +1,4 @@
-import { Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
 import { BaseModelSchema, Nullable } from '../../core/common'
 
 export enum TriggerStrategy {
@@ -19,31 +19,31 @@ export enum TriggerSourceScheduleType {
     CRON_EXPRESSION = 'CRON_EXPRESSION',
 }
 
-export const WebhookHandshakeConfiguration = Type.Object({
-    strategy: Type.Enum(WebhookHandshakeStrategy),
-    paramName: Type.Optional(Type.String()),
+export const WebhookHandshakeConfiguration = z.object({
+    strategy: z.nativeEnum(WebhookHandshakeStrategy),
+    paramName: z.string().optional(),
 })
-export type WebhookHandshakeConfiguration = Static<typeof WebhookHandshakeConfiguration>
-  
-export const ScheduleOptions = Type.Object({
-    type: Type.Enum(TriggerSourceScheduleType),
-    cronExpression: Type.String(),
-    timezone: Type.String(),
-})
-export type ScheduleOptions = Static<typeof ScheduleOptions>
+export type WebhookHandshakeConfiguration = z.infer<typeof WebhookHandshakeConfiguration>
 
-export const TriggerSource = Type.Object({
+export const ScheduleOptions = z.object({
+    type: z.nativeEnum(TriggerSourceScheduleType),
+    cronExpression: z.string(),
+    timezone: z.string(),
+})
+export type ScheduleOptions = z.infer<typeof ScheduleOptions>
+
+export const TriggerSource = z.object({
     ...BaseModelSchema,
-    type: Type.Enum(TriggerStrategy),
-    projectId: Type.String(),
-    flowId: Type.String(),
-    triggerName: Type.String(),
+    type: z.nativeEnum(TriggerStrategy),
+    projectId: z.string(),
+    flowId: z.string(),
+    triggerName: z.string(),
     schedule: Nullable(ScheduleOptions),
-    flowVersionId: Type.String(),
-    pieceName: Type.String(),
-    pieceVersion: Type.String(),
-    deleted: Nullable(Type.String()),
-    simulate: Type.Boolean(),
+    flowVersionId: z.string(),
+    pieceName: z.string(),
+    pieceVersion: z.string(),
+    deleted: Nullable(z.string()),
+    simulate: z.boolean(),
 })
 
-export type TriggerSource = Static<typeof TriggerSource>
+export type TriggerSource = z.infer<typeof TriggerSource>

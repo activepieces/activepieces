@@ -72,7 +72,7 @@ export const websocketService = {
         }
     },
     async verifyPrincipal(socket: Socket): Promise<Principal> {
-        return accessTokenManager.verifyPrincipal(socket.handshake.auth.token)
+        return accessTokenManager(app!.log).verifyPrincipal(socket.handshake.auth.token)
     },
     addListener<T, PR extends PrincipalType.WORKER | PrincipalType.USER>(principalType: PR, event: WebsocketServerEvent, handler: WebsocketListener<T, PR>): void {
         switch (principalType) {

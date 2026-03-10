@@ -11,11 +11,10 @@ function getChangedPiecePaths(): string[] | null {
 }
 
 function copyPieceAssets(piecePath: string): boolean {
-    const distPath = join('dist', piecePath)
+    const distPath = join(piecePath, 'dist')
 
     if (!existsSync(distPath)) {
-        console.info(`[copyPieceAssets] no dist output at ${distPath}, skipping ${piecePath}`)
-        return false
+        throw new Error(`[copyPieceAssets] no dist output at ${distPath} for ${piecePath}`)
     }
 
     copyPackageJson(piecePath, distPath)

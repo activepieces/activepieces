@@ -1,7 +1,5 @@
 # pieces-retune
 
-This library was generated with [Nx](https://nx.dev).
-
 ## Building
 
-Run `nx build pieces-retune` to build the library.
+Run `turbo run build --filter=@activepieces/piece-retune` to build the library.

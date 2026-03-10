@@ -7,7 +7,7 @@ import { alertsService } from '../alerts/alerts-service'
 
 export const projectEnterpriseHooks = (log: FastifyBaseLogger): ProjectHooks => ({
     async postCreate(project) {
-        const owner = await userService.getOneOrFail({
+        const owner = await userService(log).getOneOrFail({
             id: project.ownerId,
         })
         const identity = await userIdentityService(log).getOneOrFail({

@@ -1,7 +1,5 @@
 import { PieceAuth } from '@activepieces/pieces-framework';
-import { makeRequest } from './client';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { AppConnectionType } from '@activepieces/shared';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 
 export const pdfcrowdAuth = PieceAuth.BasicAuth({
     displayName: 'Pdfcrowd Credentials',
@@ -14,5 +12,23 @@ export const pdfcrowdAuth = PieceAuth.BasicAuth({
     password: {
         displayName: 'API Key',
         description: 'Your Pdfcrowd API key',
+    },
+    validate: async ({ auth }) => {
+        try {
+            const credentials = Buffer.from(`${auth.username}:${auth.password}`).toString('base64');
+            const response = await httpClient.sendRequest({
+                method: HttpMethod.GET,
+                url: 'https://api.pdfcrowd.com/api/info/',
+                headers: {
+                    'Authorization': `Basic ${credentials}`,
+                },
+            });
+            if (response.status >= 400) {
+                return { valid: false, error: 'Invalid username or API key' };
+            }
+            return { valid: true };
+        } catch (e) {
+            return { valid: false, error: 'Connection failed: ' + (e as Error).message };
+        }
     },
 });

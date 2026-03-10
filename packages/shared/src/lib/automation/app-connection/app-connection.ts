@@ -1,4 +1,4 @@
-import { Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
 import { BaseModel, BaseModelSchema, Nullable } from '../../core/common/base-model'
 import { ApId } from '../../core/common/id-generator'
 import { Metadata } from '../../core/common/metadata'
@@ -114,34 +114,32 @@ export type BasicAuthConnection = AppConnection<AppConnectionType.BASIC_AUTH>
 export type CustomAuthConnection = AppConnection<AppConnectionType.CUSTOM_AUTH>
 export type NoAuthConnection = AppConnection<AppConnectionType.NO_AUTH>
 
-export const AppConnectionWithoutSensitiveData = Type.Object({
+export const AppConnectionWithoutSensitiveData = z.object({
     ...BaseModelSchema,
-    externalId: Type.String(),
-    displayName: Type.String(),
-    type: Type.Enum(AppConnectionType),
-    pieceName: Type.String(),
-    projectIds: Type.Array(ApId),
-    platformId: Nullable(Type.String()),
-    scope: Type.Enum(AppConnectionScope),
-    status: Type.Enum(AppConnectionStatus),
-    ownerId: Nullable(Type.String()),
+    externalId: z.string(),
+    displayName: z.string(),
+    type: z.nativeEnum(AppConnectionType),
+    pieceName: z.string(),
+    projectIds: z.array(ApId),
+    platformId: Nullable(z.string()),
+    scope: z.nativeEnum(AppConnectionScope),
+    status: z.nativeEnum(AppConnectionStatus),
+    ownerId: Nullable(z.string()),
     owner: Nullable(UserWithMetaInformation),
     metadata: Nullable(Metadata),
-    flowIds: Nullable(Type.Array(ApId)),
-    pieceVersion: Type.String(),
-    preSelectForNewProjects: Type.Boolean(),
-}, {
-    description: 'App connection is a connection to an external app.',
-})
-export type AppConnectionWithoutSensitiveData = Static<typeof AppConnectionWithoutSensitiveData> & { __brand: 'AppConnectionWithoutSensitiveData' }
+    flowIds: Nullable(z.array(ApId)),
+    pieceVersion: z.string(),
+    preSelectForNewProjects: z.boolean(),
+}).describe('App connection is a connection to an external app.')
+export type AppConnectionWithoutSensitiveData = z.infer<typeof AppConnectionWithoutSensitiveData> & { __brand: 'AppConnectionWithoutSensitiveData' }
 
-export const AppConnectionOwners = Type.Object({
-    firstName: Type.String(),
-    lastName: Type.String(),
-    email: Type.String(),
+export const AppConnectionOwners = z.object({
+    firstName: z.string(),
+    lastName: z.string(),
+    email: z.string(),
 })
 
-export type AppConnectionOwners = Static<typeof AppConnectionOwners>
+export type AppConnectionOwners = z.infer<typeof AppConnectionOwners>
 /**i.e props: {projectId: "123"} and value: "{{projectId}}" will return "123" */
 export const resolveValueFromProps = (props: Record<string, unknown> | undefined, value: string)=>{
     let resolvedScope = value

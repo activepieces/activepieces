@@ -37,7 +37,7 @@ export const jobQueueWorker = (log: FastifyBaseLogger) => ({
                     log.info({
                         jobId: job.id,
                         jobData: job.data,
-                    }, '[jobQueueWorker] Skipping deprecated job')
+                    }, 'Skipping deprecated job')
                     return
                 }
                 const isOldSchemaVersion = ('schemaVersion' in job.data ? job.data.schemaVersion : 0) !== LATEST_JOB_DATA_SCHEMA_VERSION
@@ -58,10 +58,9 @@ export const jobQueueWorker = (log: FastifyBaseLogger) => ({
                         token,
                     )
                     log.info({
-                        message: '[jobQueueWorker] Job is throttled and will be retried',
                         jobId,
                         delayInSeconds,
-                    })
+                    }, 'Job is rate limited and will be retried')
                     await job.changePriority({
                         priority: JOB_PRIORITY[RATE_LIMIT_PRIORITY],
                     })
@@ -71,9 +70,8 @@ export const jobQueueWorker = (log: FastifyBaseLogger) => ({
                 }
                 const response = await jobConsmer(log).consumeJob(job)
                 log.info({
-                    message: '[jobQueueWorker] Consumed job',
                     response,
-                })
+                }, 'Consumed job')
                 const isInternalError = response.status === ConsumeJobResponseStatus.INTERNAL_ERROR
                 if (isInternalError) {
                     throw new Error(response.errorMessage ?? 'Unknown error')
@@ -108,9 +106,7 @@ export const jobQueueWorker = (log: FastifyBaseLogger) => ({
         },
         )
         await worker.waitUntilReady()
-        log.info({
-            message: 'Job queue worker started',
-        })
+        log.info('Job queue worker started')
     },
     async close(): Promise<void> {
         if (isNil(worker)) {

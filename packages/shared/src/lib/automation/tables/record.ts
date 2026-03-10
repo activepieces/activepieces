@@ -1,25 +1,19 @@
-import { Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
 import { BaseModelSchema } from '../../core/common'
 import { Cell } from './cell'
 
-export const Record = Type.Object({
+export const Record = z.object({
     ...BaseModelSchema,
-    tableId: Type.String(),
-    projectId: Type.String(),
+    tableId: z.string(),
+    projectId: z.string(),
 })
 
-export type Record = Static<typeof Record>
+export type Record = z.infer<typeof Record>
 
-export const PopulatedRecord = Type.Composite([
-    Record,
-    Type.Object({
-        cells: Type.Record(Type.String(), Type.Composite([
-            Type.Pick(Cell, ['updated', 'created', 'value']),
-            Type.Object({
-                fieldName: Type.String(),
-            }),
-        ])),
-    }),
-])
+export const PopulatedRecord = Record.extend({
+    cells: z.record(z.string(), Cell.pick({ updated: true, created: true, value: true }).extend({
+        fieldName: z.string(),
+    })),
+})
 
-export type PopulatedRecord = Static<typeof PopulatedRecord>
+export type PopulatedRecord = z.infer<typeof PopulatedRecord>

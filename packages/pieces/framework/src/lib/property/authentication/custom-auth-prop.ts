@@ -1,4 +1,4 @@
-import { Type } from '@sinclair/typebox';
+import { z } from 'zod';
 import { TPropertyValue } from '../input/common';
 import { PropertyType } from '../input/property-type';
 import { LongTextProperty, ShortTextProperty } from '../input/text-property';
@@ -10,7 +10,7 @@ import { SecretTextProperty } from './secret-text-property';
 import { BasePieceAuthSchema } from './common';
 import { MarkDownProperty } from '../input/markdown-property';
 
-const CustomAuthProps = Type.Record(Type.String(), Type.Union([
+const CustomAuthProps = z.record(z.string(), z.union([
   ShortTextProperty,
   LongTextProperty,
   NumberProperty,
@@ -30,13 +30,11 @@ export type CustomAuthProps = Record<
   | StaticMultiSelectDropdownProperty<unknown, boolean>
 >;
 
-export const CustomAuthProperty = Type.Composite([
-  BasePieceAuthSchema,
-  Type.Object({
-    props: CustomAuthProps,
-  }),
-  TPropertyValue(Type.Unknown(), PropertyType.CUSTOM_AUTH)
-])
+export const CustomAuthProperty = z.object({
+  ...BasePieceAuthSchema.shape,
+  props: CustomAuthProps,
+  ...TPropertyValue(z.unknown(), PropertyType.CUSTOM_AUTH).shape,
+})
 
 export type CustomAuthProperty<
   T extends CustomAuthProps
@@ -48,4 +46,3 @@ export type CustomAuthProperty<
     PropertyType.CUSTOM_AUTH,
     true
   >;
-

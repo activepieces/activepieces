@@ -2,7 +2,7 @@ import { isNil } from '@activepieces/shared';
 import { useReactFlow } from '@xyflow/react';
 import { useRef, useState } from 'react';
 
-import { useSidebar } from '@/components/ui/sidebar-shadcn';
+import { SIDEBAR_ID } from '@/app/components/sidebar/dashboard';
 
 import { useBuilderStateContext } from '../../../builder-hooks';
 import { NoteDragOverlayMode } from '../../../state/notes-state';
@@ -13,14 +13,12 @@ import {
 import { flowCanvasConsts } from '../../utils/consts';
 
 import { NoteContent } from '.';
+
 const NoteDragOverlay = () => {
-  const { open } = useSidebar();
   const { cursorPosition } = useCursorPosition();
   const [overlayPosition, setOverlayPosition] =
     useState<typeof cursorPosition>(cursorPosition);
-  const builderNavigationBar = document.getElementById(
-    flowCanvasConsts.BUILDER_NAVIGATION_SIDEBAR_ID,
-  );
+  const sidebar = document.getElementById(SIDEBAR_ID);
   const [draggedNote, noteDragOverlayMode, addNote, draggedNoteOffset] =
     useBuilderStateContext((state) => [
       state.draggedNote,
@@ -30,9 +28,7 @@ const NoteDragOverlay = () => {
     ]);
   const reactFlow = useReactFlow();
   const containerRef = useRef<HTMLDivElement>(null);
-  const builderNavigationBarWidth = open
-    ? builderNavigationBar?.clientWidth ?? 0
-    : 0;
+  const sidebarWidth = sidebar?.clientWidth ?? 0;
 
   const nodeSizeWithZoom = {
     width: (draggedNote?.size.width ?? 0) * reactFlow.getZoom(),
@@ -46,7 +42,7 @@ const NoteDragOverlay = () => {
     ? draggedNoteOffset.y
     : nodeSizeWithZoom.height / 2;
 
-  const left = `${overlayPosition.x - offsetX - builderNavigationBarWidth}px`;
+  const left = `${overlayPosition.x - offsetX - sidebarWidth}px`;
   const top = `${
     overlayPosition.y - offsetY - flowCanvasConsts.BUILDER_HEADER_HEIGHT
   }px`;

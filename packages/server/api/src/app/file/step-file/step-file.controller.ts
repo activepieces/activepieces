@@ -7,10 +7,10 @@ import {
     FileType,
     StepFileUpsertRequest,
 } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { Type } from '@sinclair/typebox'
 import { FastifyBaseLogger } from 'fastify'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
+import { z } from 'zod'
 import { jwtUtils } from '../../helper/jwt-utils'
 import { system } from '../../helper/system/system'
 import { projectService } from '../../project/project-service'
@@ -20,7 +20,7 @@ import { stepFileService } from './step-file.service'
 
 const useS3SignedUrls = system.getBoolean(AppSystemProp.S3_USE_SIGNED_URLS)
 
-export const stepFileController: FastifyPluginAsyncTypebox = async (app) => {
+export const stepFileController: FastifyPluginAsyncZod = async (app) => {
     app.get('/signed', SignedFileRequest, async (request, reply) => {
         const file = await getFileByToken(request.query.token, request.log)
 
@@ -46,7 +46,7 @@ export const stepFileController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.post('/', UpsertStepFileRequest, async (request) => {
-        const platformId = await projectService.getPlatformId(request.principal.projectId)
+        const platformId = await projectService(request.log).getPlatformId(request.principal.projectId)
         return stepFileService(request.log).saveAndEnrich({
             fileName: request.body.fileName,
             flowId: request.body.flowId,
@@ -89,8 +89,8 @@ const SignedFileRequest = {
         security: securityAccess.public(),
     },
     schema: {
-        querystring: Type.Object({
-            token: Type.String(),
+        querystring: z.object({
+            token: z.string(),
         }),
     },
 }

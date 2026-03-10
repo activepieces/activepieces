@@ -1,10 +1,10 @@
-import { typeboxResolver } from '@hookform/resolvers/typebox';
-import { Static, Type } from '@sinclair/typebox';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
+import { z } from 'zod';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -28,11 +28,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { api } from '@/lib/api';
 
-const formSchema = Type.Object({
-  packageName: Type.String({
-    minLength: 1,
-    errorMessage: t('The package name is required'),
-  }),
+const formSchema = z.object({
+  packageName: z.string().min(1, t('The package name is required')),
 });
 
 type AddNpmDialogProps = {
@@ -47,9 +44,9 @@ type AddNpmDialogProps = {
 };
 const AddNpmDialog = ({ children, onAdd }: AddNpmDialogProps) => {
   const [open, setOpen] = useState(false);
-  const form = useForm<Static<typeof formSchema>>({
+  const form = useForm<z.infer<typeof formSchema>>({
     defaultValues: {},
-    resolver: typeboxResolver(formSchema),
+    resolver: zodResolver(formSchema),
   });
 
   const { mutate, isPending } = useMutation({

@@ -5,12 +5,12 @@ import {
     PutStoreEntryRequest,
     STORE_VALUE_MAX_SIZE,
 } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import sizeof from 'object-sizeof'
 import { storeEntryService } from './store-entry.service'
 
-export const storeEntryController: FastifyPluginAsyncTypebox = async (fastify) => {
+export const storeEntryController: FastifyPluginAsyncZod = async (fastify) => {
     fastify.post( '/', CreateRequest, async (request, reply) => {
         const sizeOfValue = sizeof(request.body.value)
         if (sizeOfValue > STORE_VALUE_MAX_SIZE) {

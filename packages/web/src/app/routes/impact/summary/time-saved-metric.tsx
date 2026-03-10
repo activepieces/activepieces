@@ -68,8 +68,8 @@ export const TimeSavedMetric = ({
       subtitle={t('{days} workdays saved', {
         days: equivalentWorkdays.toLocaleString(),
       })}
-      iconColor="text-emerald-500"
-      iconBgColor="bg-emerald-500/10"
+      iconColor="text-success"
+      iconBgColor="bg-success/10"
     />
   );
 };

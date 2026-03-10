@@ -1,7 +1,7 @@
-import { Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
 
-export const AddSigningKeyRequestBody = Type.Object({
-    displayName: Type.String(),
+export const AddSigningKeyRequestBody = z.object({
+    displayName: z.string(),
 })
 
-export type AddSigningKeyRequestBody = Static<typeof AddSigningKeyRequestBody>
+export type AddSigningKeyRequestBody = z.infer<typeof AddSigningKeyRequestBody>

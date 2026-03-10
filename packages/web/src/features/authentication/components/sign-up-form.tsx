@@ -2,18 +2,14 @@ import {
   OtpType,
   ApEdition,
   ApFlagId,
-  AuthenticationResponse,
   ErrorCode,
   isNil,
-  SignUpRequest,
 } from '@activepieces/shared';
-import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useMemo, useRef, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { Link, useSearchParams } from 'react-router-dom';
 
-import { authenticationApi } from '@/api/authentication-api';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -33,12 +29,13 @@ import {
 import { CheckEmailNote } from '@/features/authentication/components/check-email-note';
 import { PasswordValidator } from '@/features/authentication/components/password-validator';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { HttpError, api } from '@/lib/api';
+import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/format-utils';
 import { useRedirectAfterLogin } from '@/lib/navigation-utils';
 import { cn } from '@/lib/utils';
 
+import { authMutations } from '../hooks/auth-hooks';
 import { passwordValidation } from '../utils/password-validation-utils';
 
 type SignUpSchema = {
@@ -99,12 +96,7 @@ const SignUpForm = ({
 
   const redirectAfterLogin = useRedirectAfterLogin();
 
-  const { mutate, isPending } = useMutation<
-    AuthenticationResponse,
-    HttpError,
-    SignUpRequest
-  >({
-    mutationFn: authenticationApi.signUp,
+  const { mutate, isPending } = authMutations.useSignUp({
     onSuccess: (data) => {
       if (data.verified) {
         authenticationSession.saveResponse(data, false);

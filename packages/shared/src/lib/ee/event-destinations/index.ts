@@ -1,33 +1,33 @@
-import { Static, Type } from '@sinclair/typebox'
-import { BaseModelSchema, DiscriminatedUnion } from '../../core/common/base-model'
+import { z } from 'zod'
+import { BaseModelSchema } from '../../core/common/base-model'
 import { ApplicationEventName } from '../audit-events/index'
 import { EventDestinationScope } from './dto'
 
 const EventDestinationBase = {
     ...BaseModelSchema,
-    platformId: Type.String(),
-    events: Type.Array(Type.Enum(ApplicationEventName)),
-    url: Type.String({ format: 'uri' }),
+    platformId: z.string(),
+    events: z.array(z.nativeEnum(ApplicationEventName)),
+    url: z.string().url(),
 }
 
 
 
-const EventDestinationProjectScope = Type.Object({
+const EventDestinationProjectScope = z.object({
     ...EventDestinationBase,
-    scope: Type.Literal(EventDestinationScope.PROJECT),
-    projectId: Type.String(),
+    scope: z.literal(EventDestinationScope.PROJECT),
+    projectId: z.string(),
 })
 
-export const EventDestinationPlatformScope = Type.Object({
+export const EventDestinationPlatformScope = z.object({
     ...EventDestinationBase,
-    scope: Type.Literal(EventDestinationScope.PLATFORM),
+    scope: z.literal(EventDestinationScope.PLATFORM),
 })
 
-export const EventDestination = DiscriminatedUnion('scope', [
+export const EventDestination = z.discriminatedUnion('scope', [
     EventDestinationPlatformScope,
     EventDestinationProjectScope,
 ])
 
-export type EventDestination = Static<typeof EventDestination>
+export type EventDestination = z.infer<typeof EventDestination>
 
 export * from './dto'

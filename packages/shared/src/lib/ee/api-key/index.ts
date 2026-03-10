@@ -1,35 +1,32 @@
-import { Static, Type } from '@sinclair/typebox'
-import { BaseModelSchema } from '../../core/common/base-model'
+import { z } from 'zod'
+import { BaseModelSchema, Nullable } from '../../core/common/base-model'
 import { ApId } from '../../core/common/id-generator'
 
-export const ApiKey = Type.Object({
+export const ApiKey = z.object({
     ...BaseModelSchema,
     platformId: ApId,
-    displayName: Type.String(),
-    hashedValue: Type.String(),
-    truncatedValue: Type.String(),
-    lastUsedAt: Type.Optional(Type.String()),
+    displayName: z.string(),
+    hashedValue: z.string(),
+    truncatedValue: z.string(),
+    lastUsedAt: Nullable(z.string()),
 })
 
-export type ApiKey = Static<typeof ApiKey>
+export type ApiKey = z.infer<typeof ApiKey>
 
-export const ApiKeyResponseWithValue = Type.Composite([
-    Type.Omit(ApiKey, ['hashedValue']),
-    Type.Object({
-        value: Type.String(),
-    }),
-])
-
-export type ApiKeyResponseWithValue = Static<typeof ApiKeyResponseWithValue>
-
-
-export const ApiKeyResponseWithoutValue = Type.Omit(ApiKey, ['hashedValue'])
-
-export type ApiKeyResponseWithoutValue = Static<typeof ApiKeyResponseWithoutValue>
-
-
-export const CreateApiKeyRequest = Type.Object({
-    displayName: Type.String(),
+export const ApiKeyResponseWithValue = ApiKey.omit({ hashedValue: true }).extend({
+    value: z.string(),
 })
 
-export type CreateApiKeyRequest = Static<typeof CreateApiKeyRequest>
+export type ApiKeyResponseWithValue = z.infer<typeof ApiKeyResponseWithValue>
+
+
+export const ApiKeyResponseWithoutValue = ApiKey.omit({ hashedValue: true })
+
+export type ApiKeyResponseWithoutValue = z.infer<typeof ApiKeyResponseWithoutValue>
+
+
+export const CreateApiKeyRequest = z.object({
+    displayName: z.string(),
+})
+
+export type CreateApiKeyRequest = z.infer<typeof CreateApiKeyRequest>

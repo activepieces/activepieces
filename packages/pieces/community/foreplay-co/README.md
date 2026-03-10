@@ -1,7 +1,5 @@
 # pieces-foreplay-co
 
-This library was generated with [Nx](https://nx.dev).
-
 ## Building
 
-Run `nx build pieces-foreplay-co` to build the library.
+Run `turbo run build --filter=@activepieces/piece-foreplay-co` to build the library.

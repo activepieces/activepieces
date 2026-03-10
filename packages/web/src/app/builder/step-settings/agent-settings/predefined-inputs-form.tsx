@@ -4,11 +4,11 @@ import {
   isNil,
   PredefinedInputField,
 } from '@activepieces/shared';
-import { typeboxResolver } from '@hookform/resolvers/typebox';
-import { Type, Static } from '@sinclair/typebox';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { t } from 'i18next';
 import { useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
+import { z } from 'zod';
 
 import { ApMarkdown } from '@/components/custom/markdown';
 import { Form, FormField } from '@/components/ui/form';
@@ -29,19 +29,15 @@ import { piecesHooks } from '@/features/pieces';
 import { selectGenericFormComponentForProperty } from '../../piece-properties/properties-utils';
 
 const createPredefinedInputsFormSchema = (requireAuth: boolean) =>
-  Type.Object(
-    requireAuth
-      ? {
-          auth: Type.String({ minLength: 1 }),
-        }
-      : {},
-    {
-      additionalProperties: true,
-      ...(requireAuth && { required: ['auth'] }),
-    },
-  );
+  requireAuth
+    ? z
+        .object({
+          auth: z.string().min(1),
+        })
+        .passthrough()
+    : z.object({}).passthrough();
 
-type PredefinedInputsFormValues = Static<
+type PredefinedInputsFormValues = z.infer<
   ReturnType<typeof createPredefinedInputsFormSchema>
 >;
 
@@ -89,7 +85,7 @@ export const PredefinedInputsForm = () => {
     return values;
   }, [predefinedInputs, requireAuth]);
   const form = useForm<PredefinedInputsFormValues>({
-    resolver: typeboxResolver(formSchema),
+    resolver: zodResolver(formSchema),
     defaultValues,
     mode: 'onChange',
     reValidateMode: 'onChange',

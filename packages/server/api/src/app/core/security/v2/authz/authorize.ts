@@ -16,7 +16,7 @@ export const authorizeOrThrow = async (principal: Principal, security: Authoriza
         case AuthorizationType.PLATFORM:
             await assertPrinicpalIsOneOf(security.authorization.allowedPrincipals, principal.type)
             if (security.authorization.adminOnly) {
-                await assertPlatformIsOwnedByCurrentPrincipal(principal)
+                await assertPlatformIsOwnedByCurrentPrincipal(principal, log)
             }
             break
         case AuthorizationType.UNSCOPED:
@@ -28,11 +28,11 @@ export const authorizeOrThrow = async (principal: Principal, security: Authoriza
 }
 
 
-async function assertPlatformIsOwnedByCurrentPrincipal(principal: Principal): Promise<void> {
+async function assertPlatformIsOwnedByCurrentPrincipal(principal: Principal, log: FastifyBaseLogger): Promise<void> {
     if (principal.type === PrincipalType.SERVICE) {
         return
     }
-    const user = await userService.getOneOrFail({ id: principal.id })
+    const user = await userService(log).getOneOrFail({ id: principal.id })
     if (user.platformRole !== PlatformRole.ADMIN) {
         throw new ActivepiecesError({
             code: ErrorCode.AUTHORIZATION,

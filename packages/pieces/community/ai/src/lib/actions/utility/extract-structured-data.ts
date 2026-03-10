@@ -229,15 +229,15 @@ export const extractStructuredData = createAction({
 				}
 				const fileType = file.extension ? mime.lookup(file.extension) : 'image/jpeg';
 
-				if (fileType && fileType.startsWith('image') && file.base64) {
+				if (fileType && fileType.startsWith('image') && file.data) {
 					contentParts.push({
 						type: 'image',
-						image: `data:${fileType};base64,${file.base64}`,
+						image: file.data,
 					});
-				} else if (fileType && fileType.startsWith('application/pdf') && file.base64) {
+				} else if (fileType && fileType.startsWith('application/pdf') && file.data) {
 					contentParts.push({
 						type: 'file',
-						data: `data:${fileType};base64,${file.base64}`,
+						data: file.data,
 						mediaType: fileType,
 						filename: file.filename,
 					});

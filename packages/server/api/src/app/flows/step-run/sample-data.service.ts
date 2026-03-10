@@ -13,31 +13,24 @@ import {
     ProjectId,
     SampleDataDataType,
     SampleDataFileType,
+    SampleDataSettings,
     SaveSampleDataResponse,
     Step,
-    stringifyNullOrUndefined,
-} from '@activepieces/shared'
+    stringifyNullOrUndefined } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { fileRepo, fileService } from '../../file/file.service'
 import { flowVersionService } from '../flow-version/flow-version.service'
 export const sampleDataService = (log: FastifyBaseLogger) => ({
-    async saveSampleDataFileIdsInStep(params: SaveSampleDataParams): Promise<Step> {
+    async saveSampleDataFileIdsInStep(params: SaveSampleDataParams): Promise<SampleDataSettings> {
         const flowVersion = await flowVersionService(log).getOneOrThrow(params.flowVersionId)
         const step = flowStructureUtil.getStepOrThrow(params.stepName, flowVersion.trigger)
         const sampleDataFile = await saveSampleData(params, log)
         const clonedStep: Step = JSON.parse(JSON.stringify(step))
         return {
-            ...clonedStep,
-            settings: {
-                ...clonedStep.settings,
-                sampleData: {
-                    ...clonedStep.settings.sampleData,
-                    sampleDataFileId: params.type === SampleDataFileType.OUTPUT ? sampleDataFile.id : clonedStep.settings.sampleData?.sampleDataFileId,
-                    sampleDataInputFileId: params.type === SampleDataFileType.INPUT ? sampleDataFile.id : clonedStep.settings.sampleData?.sampleDataInputFileId,
-                    lastTestDate: dayjs().toISOString(),
-                },
-            },
+            sampleDataFileId: params.type === SampleDataFileType.OUTPUT ? sampleDataFile.id : clonedStep.settings.sampleData?.sampleDataFileId,
+            sampleDataInputFileId: params.type === SampleDataFileType.INPUT ? sampleDataFile.id : clonedStep.settings.sampleData?.sampleDataInputFileId,
+            lastTestDate: dayjs().toISOString(),
         }
     },
     async getOrReturnEmpty(params: GetSampleDataParams): Promise<unknown> {

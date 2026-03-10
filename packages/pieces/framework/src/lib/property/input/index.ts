@@ -1,4 +1,4 @@
-import { Type } from '@sinclair/typebox';
+import { z } from 'zod';
 import { ArrayProperty } from './array-property';
 import { CheckboxProperty } from './checkbox-property';
 import { DateTimeProperty } from './date-time-property';
@@ -23,7 +23,7 @@ import { CustomProperty, CustomPropertyCodeFunctionParams } from './custom-prope
 import { ColorProperty } from './color-property';
 import { PieceAuthProperty } from '../authentication';
 
-export const InputProperty = Type.Union([
+export const InputProperty = z.union([
   ShortTextProperty,
   LongTextProperty,
   MarkDownProperty,
@@ -42,6 +42,7 @@ export const InputProperty = Type.Union([
   ColorProperty,
 ]);
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type InputProperty =
   | ShortTextProperty<boolean>
   | LongTextProperty<boolean>
@@ -53,8 +54,8 @@ export type InputProperty =
   | ArrayProperty<boolean>
   | ObjectProperty<boolean>
   | JsonProperty<boolean>
-  | MultiSelectDropdownProperty<unknown, boolean, PieceAuthProperty | undefined | PieceAuthProperty[]>
-  | StaticMultiSelectDropdownProperty<unknown, boolean>
+  | MultiSelectDropdownProperty<any, boolean, PieceAuthProperty | undefined | PieceAuthProperty[]>
+  | StaticMultiSelectDropdownProperty<any, boolean>
   | DynamicProperties<boolean, PieceAuthProperty | PieceAuthProperty[] | undefined>
   | DateTimeProperty<boolean>
   | FileProperty<boolean>
@@ -238,11 +239,11 @@ export const Property = {
   },
   Custom<R extends boolean>(
     request: Omit<Properties<CustomProperty<R>>, 'code'> & {
-      /** 
+      /**
        * This is designed to be self-contained and operates independently of any
        * external libraries or imported dependencies. All necessary logic and
        * functionality are implemented within this function itself.
-       * 
+       *
        * You can return a cleanup function that will be called when the component is unmounted in the frontend.
        * */
       code: ((ctx: CustomPropertyCodeFunctionParams) => (()=>void) | void)
@@ -268,4 +269,3 @@ export const Property = {
       : ColorProperty<false>;
   },
 };
-

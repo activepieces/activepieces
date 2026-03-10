@@ -13,6 +13,7 @@ import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { generateMockToken } from '../../../helpers/auth'
+import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { db } from '../../../helpers/db'
 import {
     createMockApiKey,
@@ -412,8 +413,8 @@ describe('Project API', () => {
 
             // assert
             expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
-            const deletedProject = await db.findOneBy<Project>('project', { id: mockProjectToDelete.id })
-            expect(deletedProject?.deleted).not.toBeNull()
+            const deletedProject = await databaseConnection().getRepository('project').findOne({ where: { id: mockProjectToDelete.id }, withDeleted: true })
+            expect(deletedProject!.deleted).not.toBeNull()
         })
 
         it('Succeeds if project has enabled flows', async () => {

@@ -13,9 +13,8 @@ import { AfterImportFlowRedirect } from '../guards/after-import-flow-redirect';
 import { RoutePermissionGuard } from '../guards/permission-guard';
 import { ProjectRouterWrapper } from '../guards/project-route-wrapper';
 
-const FlowsPage = React.lazy(() =>
-  import('./flows').then((m) => ({ default: m.FlowsPage })),
-);
+import { AutomationsPage } from './automations';
+
 const FlowBuilderPage = React.lazy(() =>
   import('./flows/id').then((m) => ({ default: m.FlowBuilderPage })),
 );
@@ -36,9 +35,6 @@ const FlowRunPage = React.lazy(() =>
 const AppConnectionsPage = React.lazy(() =>
   import('./connections').then((m) => ({ default: m.AppConnectionsPage })),
 );
-const ApTablesPage = React.lazy(() =>
-  import('./tables').then((m) => ({ default: m.ApTablesPage })),
-);
 const ApTableEditorPage = React.lazy(() =>
   import('./tables/id').then((m) => ({ default: m.ApTableEditorPage })),
 );
@@ -57,15 +53,21 @@ function SuspenseWrapper({ children }: { children: React.ReactNode }) {
   return <Suspense fallback={<LoadingScreen />}>{children}</Suspense>;
 }
 
+const automationsPagePermissions = [
+  Permission.READ_FLOW,
+  Permission.READ_TABLE,
+  Permission.READ_FOLDER,
+];
+
 export const projectRoutes = [
   ...ProjectRouterWrapper({
-    path: routesThatRequireProjectId.flows,
+    path: routesThatRequireProjectId.automations,
     element: (
       <ProjectDashboardLayout>
-        <RoutePermissionGuard permission={Permission.READ_FLOW}>
+        <RoutePermissionGuard requiredPermissions={automationsPagePermissions}>
           <PageTitle title="Flows">
             <SuspenseWrapper>
-              <FlowsPage />
+              <AutomationsPage />
             </SuspenseWrapper>
           </PageTitle>
         </RoutePermissionGuard>
@@ -73,9 +75,13 @@ export const projectRoutes = [
     ),
   }),
   ...ProjectRouterWrapper({
+    path: routesThatRequireProjectId.flows,
+    element: <Navigate to={routesThatRequireProjectId.automations} replace />,
+  }),
+  ...ProjectRouterWrapper({
     path: routesThatRequireProjectId.singleFlow,
     element: (
-      <RoutePermissionGuard permission={Permission.READ_FLOW}>
+      <RoutePermissionGuard requiredPermissions={Permission.READ_FLOW}>
         <PageTitle title="Builder">
           <BuilderLayout>
             <SuspenseWrapper>
@@ -93,7 +99,7 @@ export const projectRoutes = [
   ...ProjectRouterWrapper({
     path: routesThatRequireProjectId.singleRun,
     element: (
-      <RoutePermissionGuard permission={Permission.READ_RUN}>
+      <RoutePermissionGuard requiredPermissions={Permission.READ_RUN}>
         <PageTitle title="Flow Run">
           <BuilderLayout>
             <SuspenseWrapper>
@@ -108,7 +114,7 @@ export const projectRoutes = [
     path: routesThatRequireProjectId.runs,
     element: (
       <ProjectDashboardLayout>
-        <RoutePermissionGuard permission={Permission.READ_RUN}>
+        <RoutePermissionGuard requiredPermissions={Permission.READ_RUN}>
           <PageTitle title="Runs">
             <SuspenseWrapper>
               <RunsPage />
@@ -132,22 +138,12 @@ export const projectRoutes = [
   }),
   ...ProjectRouterWrapper({
     path: routesThatRequireProjectId.tables,
-    element: (
-      <ProjectDashboardLayout>
-        <RoutePermissionGuard permission={Permission.READ_TABLE}>
-          <PageTitle title="Tables">
-            <SuspenseWrapper>
-              <ApTablesPage />
-            </SuspenseWrapper>
-          </PageTitle>
-        </RoutePermissionGuard>
-      </ProjectDashboardLayout>
-    ),
+    element: <Navigate to={routesThatRequireProjectId.automations} replace />,
   }),
   ...ProjectRouterWrapper({
     path: routesThatRequireProjectId.singleTable,
     element: (
-      <RoutePermissionGuard permission={Permission.READ_TABLE}>
+      <RoutePermissionGuard requiredPermissions={Permission.READ_TABLE}>
         <PageTitle title="Table">
           <BuilderLayout>
             <ApTableStateProvider>
@@ -164,7 +160,9 @@ export const projectRoutes = [
     path: routesThatRequireProjectId.connections,
     element: (
       <ProjectDashboardLayout>
-        <RoutePermissionGuard permission={Permission.READ_APP_CONNECTION}>
+        <RoutePermissionGuard
+          requiredPermissions={Permission.READ_APP_CONNECTION}
+        >
           <PageTitle title="Connections">
             <SuspenseWrapper>
               <AppConnectionsPage />

@@ -16,10 +16,19 @@ We use two main hosting providers:
 - **DigitalOcean**: Hosts our databases including Redis and PostgreSQL.
 - **Hetzner**: Provides the machines that run our services.
 
+## Environments
+
+| Environment | Domain | Kamal Config |
+|---|---|---|
+| Staging | `stg.activepieces.com` | `mrsk/stg` |
+| Production | `cloud.activepieces.com` | `mrsk/prod` |
+
+Staging receives every merge to `main` and is promoted to production daily at 9 AM UTC. See the [Releases & Deployment](/handbook/engineering/playbooks/releases) playbook for the full flow.
+
 ## Observability: Logs & Telemetry
 
 We collect logs and telemetry from all services using **HyperDX**.
 
 ## Kamal for Deployment
 
-We use **Kamal** as a deployment tool to deploy our Docker containers to production with zero downtime.
+We use **Kamal** as a deployment tool to deploy our Docker containers to staging and production with zero downtime. Kamal configs live on the devops machine under `mrsk/stg` and `mrsk/prod`.

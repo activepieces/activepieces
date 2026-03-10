@@ -6,9 +6,9 @@ import {
   isNil,
   Permission,
 } from '@activepieces/shared';
-import { InfoCircledIcon } from '@radix-ui/react-icons';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
+import { Info } from 'lucide-react';
 
 import { RightSideBarType } from '@/app/builder/types';
 import { LoadingSpinner } from '@/components/custom/spinner';
@@ -98,7 +98,7 @@ const PublishFlowReminderWidget = () => {
   return (
     <LargeWidgetWrapper>
       <div className="flex items-center gap-2">
-        <InfoCircledIcon className="size-5" />
+        <Info className="size-5" />
         {showLoading ? loadingText : t('You have unpublished changes')}
       </div>
       {showLoading ? (

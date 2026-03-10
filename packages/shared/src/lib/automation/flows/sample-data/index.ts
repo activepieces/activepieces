@@ -1,4 +1,4 @@
-import { Pick, Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
 import { File } from '../../../core/file'
 
 export enum SampleDataFileType {
@@ -13,63 +13,60 @@ export enum SampleDataDataType {
     JSON = 'JSON',
     STRING = 'STRING',
 }
-export const SaveSampleDataRequest = Type.Object({
-    stepName: Type.String(),
-    payload: Type.Unknown(),
-    type: Type.Enum(SampleDataFileType),
+export const SaveSampleDataRequest = z.object({
+    stepName: z.string(),
+    payload: z.unknown(),
+    type: z.nativeEnum(SampleDataFileType),
 })
-export type SaveSampleDataRequest = Static<typeof SaveSampleDataRequest>
+export type SaveSampleDataRequest = z.infer<typeof SaveSampleDataRequest>
 
-export const GetSampleDataRequest = Type.Object({
-    flowId: Type.String(),
-    flowVersionId: Type.String(),
-    stepName: Type.String(),
-    projectId: Type.String(),
-    type: Type.Enum(SampleDataFileType),
+export const GetSampleDataRequest = z.object({
+    flowId: z.string(),
+    flowVersionId: z.string(),
+    stepName: z.string(),
+    projectId: z.string(),
+    type: z.nativeEnum(SampleDataFileType),
 })
-export type GetSampleDataRequest = Static<typeof GetSampleDataRequest>
+export type GetSampleDataRequest = z.infer<typeof GetSampleDataRequest>
 
-export const CreateStepRunRequestBody = Type.Object({
-    projectId: Type.String(),
-    flowVersionId: Type.String(),
-    stepName: Type.String(),
-})
-
-export type CreateStepRunRequestBody = Static<typeof CreateStepRunRequestBody>
-
-export const StepRunResponse = Type.Object({
-    runId: Type.String(),
-    success: Type.Boolean(),
-    input: Type.Unknown(),
-    output: Type.Unknown(),
-    sampleDataFileId: Type.Optional(Type.String()),
-    sampleDataInputFileId: Type.Optional(Type.String()),
-    standardError: Type.String(),
-    standardOutput: Type.String(),
+export const CreateStepRunRequestBody = z.object({
+    projectId: z.string(),
+    flowVersionId: z.string(),
+    stepName: z.string(),
 })
 
-export type StepRunResponse = Static<typeof StepRunResponse>
+export type CreateStepRunRequestBody = z.infer<typeof CreateStepRunRequestBody>
 
-export const StepExecutionPath = Type.Array(Type.Tuple([Type.String(), Type.Number()]))
-export type StepExecutionPath =  Static<typeof StepExecutionPath>
-export const SampleDataSetting = Type.Object(   
+export const StepRunResponse = z.object({
+    runId: z.string(),
+    success: z.boolean(),
+    input: z.unknown(),
+    output: z.unknown(),
+    sampleDataFileId: z.string().optional(),
+    sampleDataInputFileId: z.string().optional(),
+    standardError: z.string(),
+    standardOutput: z.string(),
+})
+
+export type StepRunResponse = z.infer<typeof StepRunResponse>
+
+export const StepExecutionPath = z.array(z.tuple([z.string(), z.number()]))
+export type StepExecutionPath = z.infer<typeof StepExecutionPath>
+export const SampleDataSetting = z.object(
     {
-        sampleDataFileId: Type.Optional(Type.String()),
-        sampleDataInputFileId: Type.Optional(Type.String()),
-        lastTestDate: Type.Optional(Type.String()),
+        sampleDataFileId: z.string().optional(),
+        sampleDataInputFileId: z.string().optional(),
+        lastTestDate: z.string().optional(),
     },
-    {
-        additionalProperties: true,
-    },
-)
+).passthrough()
 
-export type SampleDataSettings = Static<typeof SampleDataSetting>
+export type SampleDataSettings = z.infer<typeof SampleDataSetting>
 
 export const DEFAULT_SAMPLE_DATA_SETTINGS: SampleDataSettings = {
     sampleDataFileId: undefined,
     sampleDataInputFileId: undefined,
 }
 
-export const SaveSampleDataResponse = Pick(File, ['id', 'size', 'type'])
-export type SaveSampleDataResponse = Static<typeof SaveSampleDataResponse>
+export const SaveSampleDataResponse = File.pick({ id: true, size: true, type: true })
+export type SaveSampleDataResponse = z.infer<typeof SaveSampleDataResponse>
 

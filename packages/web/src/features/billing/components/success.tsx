@@ -31,8 +31,8 @@ export const Success = () => {
       case 'upgrade':
         return {
           icon: TrendingUp,
-          iconBg: 'bg-emerald-50 dark:bg-emerald-950',
-          iconColor: 'text-emerald-600 dark:text-emerald-400',
+          iconBg: 'bg-success-50 dark:bg-success-950',
+          iconColor: 'text-success-600 dark:text-success-400',
           title: t('Successfully Upgraded!'),
           description: t('Subscription updated successfully'),
         };

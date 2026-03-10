@@ -46,29 +46,18 @@ import { newCaseCreatedTrigger } from './lib/trigger/new-case-in-queue';
 
 export const salesforceAuth = PieceAuth.OAuth2({
 	props: {
-		environment: Property.StaticDropdown({
-			displayName: 'Environment',
-			description: 'Choose environment',
+		environment: Property.ShortText({
+			displayName: 'Salesforce Domain',
+			description:
+				'Enter your Salesforce domain. Use "login.salesforce.com" for Production, "test.salesforce.com" for Sandbox, or your custom My Domain (e.g. "mycompany.my.salesforce.com" or "mycompany.sandbox.my.salesforce.com").',
 			required: true,
-			options: {
-				options: [
-					{
-						label: 'Production',
-						value: 'login',
-					},
-					{
-						label: 'Development',
-						value: 'test',
-					},
-				],
-			},
-			defaultValue: 'login',
+			defaultValue: 'login.salesforce.com',
 		}),
 	},
 	required: true,
-	description: 'Authenticate with Salesforce Production',
-	authUrl: 'https://{environment}.salesforce.com/services/oauth2/authorize',
-	tokenUrl: 'https://{environment}.salesforce.com/services/oauth2/token',
+	description: 'Authenticate with Salesforce',
+	authUrl: 'https://{environment}/services/oauth2/authorize',
+	tokenUrl: 'https://{environment}/services/oauth2/token',
 	scope: ['refresh_token', 'full', 'api'],
 });
 

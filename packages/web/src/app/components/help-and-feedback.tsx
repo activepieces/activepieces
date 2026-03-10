@@ -1,7 +1,6 @@
 import { ApFlagId, supportUrl } from '@activepieces/shared';
-import { QuestionMarkCircledIcon } from '@radix-ui/react-icons';
 import { t } from 'i18next';
-import { BookOpen, History } from 'lucide-react';
+import { BookOpen, CircleHelp, History } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 import {
@@ -20,7 +19,7 @@ export const HelpAndFeedback = () => {
   return (
     <DropdownMenuSub>
       <DropdownMenuSubTrigger className="flex items-center w-full text-left px-2 py-1.5 text-sm rounded-sm cursor-pointer">
-        <QuestionMarkCircledIcon className="w-4 h-4 mr-2" />
+        <CircleHelp className="w-4 h-4 mr-2" />
         {t('Help & Feedback')}
       </DropdownMenuSubTrigger>
       <DropdownMenuSubContent className="w-[220px]">
@@ -65,7 +64,7 @@ export const HelpAndFeedback = () => {
                 className="flex justify-between w-full"
               >
                 <div className="flex items-center gap-2">
-                  <QuestionMarkCircledIcon className="size-4" />
+                  <CircleHelp className="size-4" />
                   <span>{t('Community Support')}</span>
                 </div>
               </Link>

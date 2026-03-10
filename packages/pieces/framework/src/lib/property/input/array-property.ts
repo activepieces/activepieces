@@ -1,4 +1,4 @@
-import { Type } from "@sinclair/typebox";
+import { z } from "zod";
 import { BasePropertySchema, TPropertyValue } from "./common";
 import { PropertyType } from "./property-type";
 import { LongTextProperty, ShortTextProperty } from "./text-property";
@@ -11,7 +11,7 @@ import { JsonProperty } from './json-property';
 import { ColorProperty } from "./color-property";
 import { DateTimeProperty } from './date-time-property';
 
-export const ArraySubProps = Type.Record(Type.String(), Type.Union([
+export const ArraySubProps = z.record(z.string(), z.union([
     ShortTextProperty,
     LongTextProperty,
     StaticDropdownProperty,
@@ -23,21 +23,19 @@ export const ArraySubProps = Type.Record(Type.String(), Type.Union([
     DateTimeProperty,
 ]))
 
-export const ArrayProperty = Type.Composite([
-    BasePropertySchema,
-    Type.Object({
-        properties: ArraySubProps
-    }),
-    TPropertyValue(Type.Array(Type.Unknown()), PropertyType.ARRAY)
-])
+export const ArrayProperty = z.object({
+    ...BasePropertySchema.shape,
+    properties: ArraySubProps,
+    ...TPropertyValue(z.array(z.unknown()), PropertyType.ARRAY).shape,
+})
 
 export type ArraySubProps<R extends boolean> = Record<
     string,
     | ShortTextProperty<R>
     | LongTextProperty<R>
-    | StaticDropdownProperty<any, R>
-    | MultiSelectDropdownProperty<any, R>
-    | StaticMultiSelectDropdownProperty<any, R>
+    | StaticDropdownProperty<unknown, R>
+    | MultiSelectDropdownProperty<unknown, R>
+    | StaticMultiSelectDropdownProperty<unknown, R>
     | CheckboxProperty<R>
     | NumberProperty<R>
     | FileProperty<R>

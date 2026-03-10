@@ -1,6 +1,4 @@
-import { Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
 
-export const ColorHex = Type.String({
-    pattern: '^#[0-9A-Fa-f]{6}$',
-})
-export type ColorHex = Static<typeof ColorHex>
+export const ColorHex = z.string().regex(/^#[0-9A-Fa-f]{6}$/)
+export type ColorHex = z.infer<typeof ColorHex>

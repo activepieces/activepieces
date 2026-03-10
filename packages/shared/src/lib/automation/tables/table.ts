@@ -1,5 +1,5 @@
-import { Static, Type } from '@sinclair/typebox'
-import { BaseModelSchema, NullableEnum } from '../../core/common'
+import { z } from 'zod'
+import { BaseModelSchema, Nullable, NullableEnum } from '../../core/common'
 import { Field } from './field'
 
 export enum TableAutomationTrigger {
@@ -12,23 +12,21 @@ export enum TableAutomationStatus {
     DISABLED = 'DISABLED',
 }
 
-export const Table = Type.Object({
+export const Table = z.object({
     ...BaseModelSchema,
-    name: Type.String(),
-    projectId: Type.String(),
-    externalId: Type.String(),
-    status: NullableEnum(Type.Enum(TableAutomationStatus)),
-    trigger: NullableEnum(Type.Enum(TableAutomationTrigger)),
+    name: z.string(),
+    folderId: Nullable(z.string()),
+    projectId: z.string(),
+    externalId: z.string(),
+    status: NullableEnum(TableAutomationStatus),
+    trigger: NullableEnum(TableAutomationTrigger),
 })
 
-export type Table = Static<typeof Table>
+export type Table = z.infer<typeof Table>
 
 
-export const PopulatedTable = Type.Composite([
-    Table,
-    Type.Object({
-        fields: Type.Array(Field),
-    }),
-])
+export const PopulatedTable = Table.extend({
+    fields: z.array(Field),
+})
 
-export type PopulatedTable = Static<typeof PopulatedTable>
+export type PopulatedTable = z.infer<typeof PopulatedTable>

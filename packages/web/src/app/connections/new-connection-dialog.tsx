@@ -1,6 +1,5 @@
 import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
 import { AppConnectionWithoutSensitiveData, isNil } from '@activepieces/shared';
-import { DialogTrigger } from '@radix-ui/react-dialog';
 import { t } from 'i18next';
 import React, { useState } from 'react';
 
@@ -12,6 +11,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';

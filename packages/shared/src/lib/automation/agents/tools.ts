@@ -1,19 +1,6 @@
-import { Static, Type } from '@sinclair/typebox'
-import { DiscriminatedUnion } from '../../core/common'
+import { z } from 'zod'
 
 export const TASK_COMPLETION_TOOL_NAME = 'updateTaskStatus'
-
-/**
- * Normalizes a string for use as an agent tool name: safe characters only,
- * collapsed underscores, max 60 chars, lowercase, and appends '_mcp'.
- */
-export function createToolName(name: string): string {
-    return String(name)
-        .replace(/[^a-zA-Z0-9_-]/g, '_')
-        .replace(/_+/g, '_')
-        .slice(0, 60)
-        .toLowerCase() + '_mcp'
-}
 
 export enum FieldControlMode {
     AGENT_DECIDE = 'agent-decide',
@@ -21,17 +8,17 @@ export enum FieldControlMode {
     LEAVE_EMPTY = 'leave-empty',
 }
 
-export const PredefinedInputField = Type.Object({
-    mode: Type.Enum(FieldControlMode),
-    value: Type.Unknown(),
+export const PredefinedInputField = z.object({
+    mode: z.nativeEnum(FieldControlMode),
+    value: z.unknown(),
 })
-export type PredefinedInputField = Static<typeof PredefinedInputField>
+export type PredefinedInputField = z.infer<typeof PredefinedInputField>
 
-export const PredefinedInputsStructure = Type.Object({
-    auth: Type.Optional(Type.String()),
-    fields: Type.Record(Type.String(), PredefinedInputField),
+export const PredefinedInputsStructure = z.object({
+    auth: z.string().optional(),
+    fields: z.record(z.string(), PredefinedInputField),
 })
-export type PredefinedInputsStructure = Static<typeof PredefinedInputsStructure>
+export type PredefinedInputsStructure = z.infer<typeof PredefinedInputsStructure>
 
 export enum AgentToolType {
     PIECE = 'PIECE',
@@ -53,71 +40,72 @@ export enum McpAuthType {
 }
 
 const AgentToolBase = {
-    toolName: Type.String({ minLength: 1 }),
+    toolName: z.string().min(1),
 }
 
-export const McpAuthNone = Type.Object({
-    type: Type.Literal(McpAuthType.NONE),
+export const McpAuthNone = z.object({
+    type: z.literal(McpAuthType.NONE),
 })
 
-export const McpAuthAccessToken = Type.Object({
-    type: Type.Literal(McpAuthType.ACCESS_TOKEN),
-    accessToken: Type.String(),
+export const McpAuthAccessToken = z.object({
+    type: z.literal(McpAuthType.ACCESS_TOKEN),
+    accessToken: z.string(),
 })
 
-export const McpAuthApiKey = Type.Object({
-    type: Type.Literal(McpAuthType.API_KEY),
-    apiKey: Type.String(),
-    apiKeyHeader: Type.String(),
+export const McpAuthApiKey = z.object({
+    type: z.literal(McpAuthType.API_KEY),
+    apiKey: z.string(),
+    apiKeyHeader: z.string(),
 })
 
-export const McpAuthHeaders = Type.Object({
-    type: Type.Literal(McpAuthType.HEADERS),
-    headers: Type.Record(Type.String(), Type.String()),
+export const McpAuthHeaders = z.object({
+    type: z.literal(McpAuthType.HEADERS),
+    headers: z.record(z.string(), z.string()),
 })
 
-export const McpAuthConfig = DiscriminatedUnion('type', [
+export const McpAuthConfig = z.discriminatedUnion('type', [
     McpAuthNone,
     McpAuthAccessToken,
     McpAuthApiKey,
     McpAuthHeaders,
 ])
-export type McpAuthConfig = Static<typeof McpAuthConfig>
+export type McpAuthConfig = z.infer<typeof McpAuthConfig>
 
-export const AgentPieceToolMetadata = Type.Object({
-    pieceName: Type.String(),
-    pieceVersion: Type.String(),
-    actionName: Type.String(),
-    predefinedInput: Type.Optional(PredefinedInputsStructure),
+export const AgentPieceToolMetadata = z.object({
+    pieceName: z.string(),
+    pieceVersion: z.string(),
+    actionName: z.string(),
+    predefinedInput: PredefinedInputsStructure.optional(),
 })
-export type AgentPieceToolMetadata = Static<typeof AgentPieceToolMetadata>
+export type AgentPieceToolMetadata = z.infer<typeof AgentPieceToolMetadata>
 
-export const AgentPieceTool = Type.Object({
-    type: Type.Literal(AgentToolType.PIECE),
+export const AgentPieceTool = z.object({
+    type: z.literal(AgentToolType.PIECE),
     ...AgentToolBase,
     pieceMetadata: AgentPieceToolMetadata,
 })
-export type AgentPieceTool = Static<typeof AgentPieceTool>
+export type AgentPieceTool = z.infer<typeof AgentPieceTool>
 
-export const AgentFlowTool = Type.Object({
-    type: Type.Literal(AgentToolType.FLOW),
+export const AgentFlowTool = z.object({
+    type: z.literal(AgentToolType.FLOW),
     ...AgentToolBase,
-    externalFlowId: Type.String(),
+    externalFlowId: z.string(),
+    flowDisplayName: z.string().optional(),
 })
-export type AgentFlowTool = Static<typeof AgentFlowTool>
+export type AgentFlowTool = z.infer<typeof AgentFlowTool>
 
-export const AgentMcpTool = Type.Object({
-    type: Type.Literal(AgentToolType.MCP),
+export const AgentMcpTool = z.object({
+    type: z.literal(AgentToolType.MCP),
     ...AgentToolBase,
-    serverUrl: Type.String({ format: 'uri' }),
-    protocol: Type.Enum(McpProtocol),
+    serverUrl: z.string().url(),
+    protocol: z.nativeEnum(McpProtocol),
     auth: McpAuthConfig,
 })
-export type AgentMcpTool = Static<typeof AgentMcpTool>
+export type AgentMcpTool = z.infer<typeof AgentMcpTool>
 
-export const AgentTool = DiscriminatedUnion('type', [
+export const AgentTool = z.discriminatedUnion('type', [
     AgentPieceTool,
     AgentFlowTool,
     AgentMcpTool,
 ])
-export type AgentTool = Static<typeof AgentTool>
+export type AgentTool = z.infer<typeof AgentTool>

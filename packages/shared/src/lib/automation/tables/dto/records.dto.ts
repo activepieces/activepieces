@@ -1,26 +1,27 @@
-import { Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
+import { OptionalArrayFromQuery } from '../../../core/common/base-model'
 import { Cursor } from '../../../core/common/seek-page'
 
-export const CreateRecordsRequest = Type.Object({
-    records: Type.Array(Type.Array(Type.Object({
-        fieldId: Type.String(),
-        value: Type.String(),
+export const CreateRecordsRequest = z.object({
+    records: z.array(z.array(z.object({
+        fieldId: z.string(),
+        value: z.string(),
     }))),
-    tableId: Type.String(),
+    tableId: z.string(),
 })
 
-export type CreateRecordsRequest = Static<typeof CreateRecordsRequest>
+export type CreateRecordsRequest = z.infer<typeof CreateRecordsRequest>
 
-export const UpdateRecordRequest = Type.Object({
-    cells: Type.Optional(Type.Array(Type.Object({
-        fieldId: Type.String(),
-        value: Type.String(),
-    }))),
-    tableId: Type.String(),
-    agentUpdate: Type.Optional(Type.Boolean()),
+export const UpdateRecordRequest = z.object({
+    cells: z.array(z.object({
+        fieldId: z.string(),
+        value: z.string(),
+    })).optional(),
+    tableId: z.string(),
+    agentUpdate: z.boolean().optional(),
 })
 
-export type UpdateRecordRequest = Static<typeof UpdateRecordRequest>
+export type UpdateRecordRequest = z.infer<typeof UpdateRecordRequest>
 
 
 export enum FilterOperator {
@@ -33,27 +34,27 @@ export enum FilterOperator {
     CO = 'co',
 }
 
-export const Filter = Type.Object({
-    fieldId: Type.String(),
-    value: Type.String(),
-    operator: Type.Optional(Type.Enum(FilterOperator)),
+export const Filter = z.object({
+    fieldId: z.string(),
+    value: z.string(),
+    operator: z.nativeEnum(FilterOperator).optional(),
 })
 
-export type Filter = Static<typeof Filter>
+export type Filter = z.infer<typeof Filter>
 
-export const ListRecordsRequest = Type.Object({
-    tableId: Type.String(),
-    limit: Type.Optional(Type.Number({})),
-    cursor: Type.Optional(Type.String({})),
-    filters: Type.Optional(Type.Array(Filter)),
+export const ListRecordsRequest = z.object({
+    tableId: z.string(),
+    limit: z.coerce.number().optional(),
+    cursor: z.string().optional(),
+    filters: OptionalArrayFromQuery(Filter),
 })
 
-export type ListRecordsRequest = Omit<Static<typeof ListRecordsRequest>, 'cursor'> & { cursor: Cursor | undefined }
+export type ListRecordsRequest = Omit<z.infer<typeof ListRecordsRequest>, 'cursor'> & { cursor: Cursor | undefined }
 
-export const DeleteRecordsRequest = Type.Object({
-    tableId: Type.String(),
-    ids: Type.Array(Type.String()),
+export const DeleteRecordsRequest = z.object({
+    tableId: z.string(),
+    ids: z.array(z.string()),
 })
 
-export type DeleteRecordsRequest = Static<typeof DeleteRecordsRequest>
+export type DeleteRecordsRequest = z.infer<typeof DeleteRecordsRequest>
 

@@ -1,14 +1,14 @@
-import { Type } from "@sinclair/typebox";
+import { z } from "zod";
 import { BasePieceAuthSchema } from "./common";
 import { TPropertyValue } from "../input/common";
 import { PropertyType } from "../input/property-type";
 
-export const SecretTextProperty = Type.Composite([
-    BasePieceAuthSchema,
-    TPropertyValue(Type.Object({
-        auth: Type.String()
-    }), PropertyType.SECRET_TEXT)
-])
+export const SecretTextProperty = z.object({
+    ...BasePieceAuthSchema.shape,
+    ...TPropertyValue(z.object({
+        auth: z.string()
+    }), PropertyType.SECRET_TEXT).shape,
+})
 
 
 export type SecretTextProperty<R extends boolean> =

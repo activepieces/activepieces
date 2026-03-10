@@ -1,12 +1,12 @@
-import { Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
 import { BaseModelSchema } from '../../core/common'
 
-export const Cell = Type.Object({
+export const Cell = z.object({
     ...BaseModelSchema,
-    recordId: Type.String(),
-    fieldId: Type.String(),
-    projectId: Type.String(),
-    value: Type.Unknown(),
+    recordId: z.string(),
+    fieldId: z.string(),
+    projectId: z.string(),
+    value: z.unknown(),
 })
 
-export type Cell = Static<typeof Cell>
+export type Cell = z.infer<typeof Cell>

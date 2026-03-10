@@ -8,15 +8,14 @@ import {
   HumanInputFormResult,
   createKeyForFormInput,
 } from '@activepieces/shared';
-import { typeboxResolver } from '@hookform/resolvers/typebox';
-import { Separator } from '@radix-ui/react-dropdown-menu';
-import { TSchema, Type } from '@sinclair/typebox';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
+import { z, ZodType } from 'zod';
 
 import { ApMarkdown } from '@/components/custom/markdown';
 import { ReadMoreDescription } from '@/components/custom/read-more-description';
@@ -31,6 +30,7 @@ import {
   FormItem,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { api } from '@/lib/api';
@@ -63,23 +63,24 @@ const requiredPropertySettings = {
   errorMessage: t('This field is required'),
 };
 
-const createPropertySchema = (input: FormInputWithName) => {
-  const schemaSettings = input.required ? requiredPropertySettings : {};
+const createPropertySchema = (input: FormInputWithName): ZodType => {
   switch (input.type) {
     case FormInputType.TOGGLE:
-      return Type.Boolean(schemaSettings);
+      return z.boolean();
     case FormInputType.TEXT:
     case FormInputType.TEXT_AREA:
-      return Type.String(schemaSettings);
+      return input.required
+        ? z.string().min(1, t('This field is required'))
+        : z.string();
     case FormInputType.FILE:
-      return Type.Unknown(schemaSettings);
+      return z.unknown();
   }
 };
 
 function buildSchema(inputs: FormInputWithName[]) {
   return {
-    properties: Type.Object(
-      inputs.reduce<Record<string, TSchema>>((acc, input) => {
+    properties: z.object(
+      inputs.reduce<Record<string, ZodType>>((acc, input) => {
         acc[input.name] = createPropertySchema(input);
         return acc;
       }, {}),
@@ -144,7 +145,7 @@ const ApForm = ({ form, useDraft }: ApFormProps) => {
   );
   const reactForm = useForm({
     defaultValues,
-    resolver: typeboxResolver(schema.properties),
+    resolver: zodResolver(schema.properties),
   });
 
   const { mutate, isPending } = useMutation<HumanInputFormResult | null, Error>(

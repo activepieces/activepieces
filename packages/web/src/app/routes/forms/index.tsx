@@ -1,14 +1,9 @@
-import {
-  FormResponse,
-  isNil,
-  USE_DRAFT_QUERY_PARAM_NAME,
-} from '@activepieces/shared';
-import { useQuery } from '@tanstack/react-query';
+import { isNil, USE_DRAFT_QUERY_PARAM_NAME } from '@activepieces/shared';
 import { useParams } from 'react-router-dom';
 import { useSearchParam } from 'react-use';
 
 import { LoadingScreen } from '@/components/custom/loading-screen';
-import { humanInputApi, ApForm } from '@/features/forms';
+import { ApForm, formsQueries } from '@/features/forms';
 
 import NotFoundPage from '../404-page';
 
@@ -20,13 +15,7 @@ export const FormPage = () => {
     data: form,
     isLoading,
     isError,
-  } = useQuery<FormResponse | null, Error>({
-    queryKey: ['form', flowId],
-    queryFn: () => humanInputApi.getForm(flowId!, useDraft),
-    enabled: !isNil(flowId),
-    retry: false,
-    staleTime: Infinity,
-  });
+  } = formsQueries.useForm(flowId!, useDraft, !isNil(flowId));
 
   return (
     <>

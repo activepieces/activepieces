@@ -1,6 +1,6 @@
 import { isNil, Permission } from '@activepieces/shared';
-import { InfoCircledIcon } from '@radix-ui/react-icons';
 import { t } from 'i18next';
+import { Info } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { flowHooks } from '@/features/flows';
@@ -33,7 +33,7 @@ const ViewingOldVersionWidget = () => {
     <LargeWidgetWrapper>
       <>
         <div className="flex items-center gap-2">
-          <InfoCircledIcon className="size-5" />
+          <Info className="size-5" />
           <span>
             {t('Viewing version')} #{versionNumber}
           </span>

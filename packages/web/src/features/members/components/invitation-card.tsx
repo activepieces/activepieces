@@ -47,7 +47,7 @@ export function InvitationCard({ invitation }: { invitation: UserInvitation }) {
             mutationFn={() => deleteInvitation()}
             entityName={invitation.email}
             title={t('Remove {email}', { email: invitation.email })}
-            message={t('Are you sure you want to remove this invitation?')}
+            message={t('This invitation will be revoked immediately.')}
           >
             <Button
               disabled={!userHasPermissionToRemoveInvitation}

@@ -1,10 +1,10 @@
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
 import { scimDiscoveryController } from './scim-discovery-controller'
 import { scimGroupController } from './scim-group-controller'
 import { scimUserController } from './scim-user-controller'
 
-export const scimModule: FastifyPluginAsyncTypebox = async (app) => {
+export const scimModule: FastifyPluginAsyncZod = async (app) => {
     app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.plan.scimEnabled))
     app.addContentTypeParser('application/scim+json', { parseAs: 'string' }, function (_req, body, done) {
         try {

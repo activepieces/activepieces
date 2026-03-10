@@ -1,14 +1,7 @@
-'use client';
-
 import * as React from 'react';
 import { Drawer as DrawerPrimitive } from 'vaul';
 
 import { cn } from '@/lib/utils';
-
-interface DrawerContentProps
-  extends React.ComponentProps<typeof DrawerPrimitive.Content> {
-  fullscreen?: boolean;
-}
 
 function Drawer({
   onOpenChange,
@@ -28,6 +21,7 @@ function Drawer({
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [open, onOpenChange, closeOnEscape]);
+
   return (
     <DrawerPrimitive.Root
       data-slot="drawer"
@@ -56,6 +50,22 @@ function DrawerClose({
   return <DrawerPrimitive.Close data-slot="drawer-close" {...props} />;
 }
 
+function DrawerOverlay({
+  className,
+  ...props
+}: React.ComponentProps<typeof DrawerPrimitive.Overlay>) {
+  return (
+    <DrawerPrimitive.Overlay
+      data-slot="drawer-overlay"
+      className={cn(
+        'fixed inset-0 z-50 bg-black/50 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:animate-in data-[state=open]:fade-in-0',
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
 function DrawerContent({
   className,
   children,
@@ -64,6 +74,7 @@ function DrawerContent({
 }: DrawerContentProps) {
   return (
     <DrawerPortal data-slot="drawer-portal">
+      <DrawerOverlay />
       {fullscreen && (
         <style>
           {`
@@ -100,7 +111,7 @@ function DrawerHeader({ className, ...props }: React.ComponentProps<'div'>) {
     <div
       data-slot="drawer-header"
       className={cn(
-        'flex flex-col border border-b  gap-0.5 p-0 group-data-[vaul-drawer-direction=bottom]/drawer-content:text-center group-data-[vaul-drawer-direction=top]/drawer-content:text-center md:gap-1.5 md:text-left',
+        'flex flex-col border border-b gap-0.5 p-0 group-data-[vaul-drawer-direction=bottom]/drawer-content:text-center group-data-[vaul-drawer-direction=top]/drawer-content:text-center md:gap-1.5 md:text-left',
         className,
       )}
       {...props}
@@ -147,6 +158,7 @@ function DrawerDescription({
 export {
   Drawer,
   DrawerPortal,
+  DrawerOverlay,
   DrawerTrigger,
   DrawerClose,
   DrawerContent,
@@ -154,4 +166,10 @@ export {
   DrawerFooter,
   DrawerTitle,
   DrawerDescription,
+};
+
+type DrawerContentProps = React.ComponentProps<
+  typeof DrawerPrimitive.Content
+> & {
+  fullscreen?: boolean;
 };

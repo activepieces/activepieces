@@ -45,7 +45,7 @@ export const flowTriggerSideEffect = (log: FastifyBaseLogger) => {
             }
             const { flowId, flowVersionId, projectId, simulate, pieceTrigger } = params
 
-            const platformId = await projectService.getPlatformId(projectId)
+            const platformId = await projectService(log).getPlatformId(projectId)
             const engineHelperResponse = await userInteractionWatcher(log).submitAndWaitForResponse<OperationResponse<EngineHelperTriggerResult<TriggerHookType.ON_ENABLE>>>({
                 jobType: WorkerJobType.EXECUTE_TRIGGER_HOOK,
                 hookType: TriggerHookType.ON_ENABLE,
@@ -92,7 +92,7 @@ export const flowTriggerSideEffect = (log: FastifyBaseLogger) => {
                 return
             }
             const { flowId, flowVersionId, projectId, simulate, pieceTrigger } = params
-            const platformId = await projectService.getPlatformId(projectId)
+            const platformId = await projectService(log).getPlatformId(projectId)
             const engineHelperResponse = await userInteractionWatcher(log).submitAndWaitForResponse<OperationResponse<EngineHelperTriggerResult<TriggerHookType.ON_DISABLE>>>({
                 jobType: WorkerJobType.EXECUTE_TRIGGER_HOOK,
                 hookType: TriggerHookType.ON_DISABLE,
@@ -153,7 +153,7 @@ async function handleWebhookTrigger({ flowId, flowVersionId, projectId, pieceTri
     const renewConfiguration = pieceTrigger.renewConfiguration
     switch (renewConfiguration?.strategy) {
         case WebhookRenewStrategy.CRON: {
-            const platformId = await projectService.getPlatformId(projectId)
+            const platformId = await projectService(log).getPlatformId(projectId)
             await jobQueue(log).add({
                 id: flowVersionId,
                 type: JobType.REPEATING,
@@ -190,7 +190,7 @@ async function handlePollingTrigger({ engineHelperResponse, flowId, flowVersionI
             type: TriggerSourceScheduleType.CRON_EXPRESSION,
         }
     }
-    const platformId = await projectService.getPlatformId(projectId)
+    const platformId = await projectService(log).getPlatformId(projectId)
     await jobQueue(log).add({
         id: flowVersionId,
         type: JobType.REPEATING,

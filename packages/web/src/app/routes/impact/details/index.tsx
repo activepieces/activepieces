@@ -41,6 +41,7 @@ import {
 } from '@/components/ui/tooltip';
 import { userHooks } from '@/hooks/user-hooks';
 import { formatUtils } from '@/lib/format-utils';
+import { cn, DASHBOARD_CONTENT_PADDING_X } from '@/lib/utils';
 
 import { TimeSavedFilterContent } from '../components/time-saved-filter-content';
 import { exportFlowDetailsCsv } from '../lib/impact-utils';
@@ -257,7 +258,12 @@ export function FlowsDetails({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center gap-3 flex-wrap">
+      <div
+        className={cn(
+          'flex items-center gap-3 flex-wrap',
+          DASHBOARD_CONTENT_PADDING_X,
+        )}
+      >
         <div className="relative w-[200px]">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -298,7 +304,7 @@ export function FlowsDetails({
       </div>
 
       {flowsMissingTimeSaved > 0 && (
-        <div className="flex items-start justify-between gap-3 p-4 rounded-lg border border-warning/50 bg-warning/10">
+        <div className="flex mx-3 items-start justify-between gap-3 p-4 rounded-lg border border-warning/50 bg-warning/10">
           <div className="flex items-start gap-3">
             <AlertCircle className="h-5 w-5 text-warning shrink-0 mt-0.5" />
             <div className="flex flex-col gap-1">

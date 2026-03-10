@@ -22,7 +22,7 @@ const TestStepContainer = React.memo(
     projectId,
   }: TestStepContainerProps) => {
     return (
-      <div className="flex flex-col gap-4 p-4 pb-10">
+      <div className="flex flex-col gap-3 p-4 pb-10">
         <div className="text-md font-semibold ">
           {t('Generate Sample Data')}
         </div>

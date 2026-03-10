@@ -7,13 +7,13 @@ import {
   isNil,
   SignInRequest,
 } from '@activepieces/shared';
-import { typeboxResolver } from '@hookform/resolvers/typebox';
-import { Static, Type } from '@sinclair/typebox';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { Link, Navigate } from 'react-router-dom';
+import { z } from 'zod';
 
 import { authenticationApi } from '@/api/authentication-api';
 import { Button } from '@/components/ui/button';
@@ -28,23 +28,17 @@ import { useRedirectAfterLogin } from '@/lib/navigation-utils';
 
 import { CheckEmailNote } from './check-email-note';
 
-const SignInSchema = Type.Object({
-  email: Type.String({
-    pattern: formatUtils.emailRegex.source,
-    errorMessage: t('Email is invalid'),
-  }),
-  password: Type.String({
-    minLength: 1,
-    errorMessage: t('Password is required'),
-  }),
+const SignInSchema = z.object({
+  email: z.string().regex(formatUtils.emailRegex, t('Email is invalid')),
+  password: z.string().min(1, t('Password is required')),
 });
 
-type SignInSchema = Static<typeof SignInSchema>;
+type SignInSchema = z.infer<typeof SignInSchema>;
 
 const SignInForm: React.FC = () => {
   const [showCheckYourEmailNote, setShowCheckYourEmailNote] = useState(false);
   const form = useForm<SignInSchema>({
-    resolver: typeboxResolver(SignInSchema),
+    resolver: zodResolver(SignInSchema),
     defaultValues: {
       email: '',
       password: '',

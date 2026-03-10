@@ -1,4 +1,4 @@
-import { Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
 import { Nullable, NullableEnum } from '../../core/common'
 import { PopulatedFlow } from '../flows/flow'
 import { TableAutomationStatus, TableAutomationTrigger } from '../tables/table'
@@ -20,140 +20,140 @@ export enum TableOperationType {
 }
 
 export const FlowState = PopulatedFlow
-export type FlowState = Static<typeof FlowState>
+export type FlowState = z.infer<typeof FlowState>
 
-export const ConnectionState = Type.Object({
-    externalId: Type.String(),
-    pieceName: Type.String(),
-    displayName: Type.String(),
+export const ConnectionState = z.object({
+    externalId: z.string(),
+    pieceName: z.string(),
+    displayName: z.string(),
 })
-export type ConnectionState = Static<typeof ConnectionState>
+export type ConnectionState = z.infer<typeof ConnectionState>
 
-export const FieldState = Type.Object({
-    name: Type.String(),
-    type: Type.String(),
-    data: Nullable(Type.Object({
-        options: Type.Array(Type.Object({
-            value: Type.String(),
+export const FieldState = z.object({
+    name: z.string(),
+    type: z.string(),
+    data: Nullable(z.object({
+        options: z.array(z.object({
+            value: z.string(),
         })),
     })),
-    externalId: Type.String(),
+    externalId: z.string(),
 })
-export type FieldState = Static<typeof FieldState>
+export type FieldState = z.infer<typeof FieldState>
 
-export const TableState = Type.Object({
-    id: Type.String(),
-    name: Type.String(),
-    externalId: Type.String(),
-    fields: Type.Array(FieldState),
-    status: NullableEnum(Type.Enum(TableAutomationStatus)),
-    trigger: NullableEnum(Type.Enum(TableAutomationTrigger)),
+export const TableState = z.object({
+    id: z.string(),
+    name: z.string(),
+    externalId: z.string(),
+    fields: z.array(FieldState),
+    status: NullableEnum(TableAutomationStatus),
+    trigger: NullableEnum(TableAutomationTrigger),
 })
-export type TableState = Static<typeof TableState>
+export type TableState = z.infer<typeof TableState>
 
-export const ProjectState = Type.Object({
-    flows: Type.Array(PopulatedFlow),
+export const ProjectState = z.object({
+    flows: z.array(PopulatedFlow),
     // NOTE: This is optional because in old releases, the connections, tables, agents and mcp state is not present
-    connections: Type.Optional(Type.Array(ConnectionState)),
-    tables: Type.Optional(Type.Array(TableState)),
+    connections: z.array(ConnectionState).optional(),
+    tables: z.array(TableState).optional(),
 })
-export type ProjectState = Static<typeof ProjectState>
+export type ProjectState = z.infer<typeof ProjectState>
 
-export const ProjectOperation = Type.Union([
-    Type.Object({
-        type: Type.Literal(FlowProjectOperationType.UPDATE_FLOW),
+export const ProjectOperation = z.union([
+    z.object({
+        type: z.literal(FlowProjectOperationType.UPDATE_FLOW),
         newFlowState: FlowState,
         flowState: FlowState,
     }),
-    Type.Object({
-        type: Type.Literal(FlowProjectOperationType.CREATE_FLOW),
+    z.object({
+        type: z.literal(FlowProjectOperationType.CREATE_FLOW),
         flowState: FlowState,
     }),
-    Type.Object({
-        type: Type.Literal(FlowProjectOperationType.DELETE_FLOW),
+    z.object({
+        type: z.literal(FlowProjectOperationType.DELETE_FLOW),
         flowState: FlowState,
     }),
 ])
-export type ProjectOperation = Static<typeof ProjectOperation>
+export type ProjectOperation = z.infer<typeof ProjectOperation>
 
-export const ConnectionOperation = Type.Union([
-    Type.Object({
-        type: Type.Literal(ConnectionOperationType.UPDATE_CONNECTION),
+export const ConnectionOperation = z.union([
+    z.object({
+        type: z.literal(ConnectionOperationType.UPDATE_CONNECTION),
         newConnectionState: ConnectionState,
         connectionState: ConnectionState,
     }),
-    Type.Object({
-        type: Type.Literal(ConnectionOperationType.CREATE_CONNECTION),
+    z.object({
+        type: z.literal(ConnectionOperationType.CREATE_CONNECTION),
         connectionState: ConnectionState,
     }),
 ])
-export type ConnectionOperation = Static<typeof ConnectionOperation>
+export type ConnectionOperation = z.infer<typeof ConnectionOperation>
 
-export const TableOperation = Type.Union([
-    Type.Object({
-        type: Type.Literal(TableOperationType.UPDATE_TABLE),
+export const TableOperation = z.union([
+    z.object({
+        type: z.literal(TableOperationType.UPDATE_TABLE),
         newTableState: TableState,
         tableState: TableState,
     }),
-    Type.Object({
-        type: Type.Literal(TableOperationType.CREATE_TABLE),
+    z.object({
+        type: z.literal(TableOperationType.CREATE_TABLE),
         tableState: TableState,
     }),
-    Type.Object({
-        type: Type.Literal(TableOperationType.DELETE_TABLE),
+    z.object({
+        type: z.literal(TableOperationType.DELETE_TABLE),
         tableState: TableState,
     }),
 ])
-export type TableOperation = Static<typeof TableOperation>
+export type TableOperation = z.infer<typeof TableOperation>
 
-export const DiffState = Type.Object({
-    flows: Type.Array(ProjectOperation),
-    connections: Type.Array(ConnectionOperation),
-    tables: Type.Array(TableOperation),
+export const DiffState = z.object({
+    flows: z.array(ProjectOperation),
+    connections: z.array(ConnectionOperation),
+    tables: z.array(TableOperation),
 })
-export type DiffState = Static<typeof DiffState>
+export type DiffState = z.infer<typeof DiffState>
 
 
-export const FlowSyncError = Type.Object({
-    flowId: Type.String(),
-    message: Type.String(),
+export const FlowSyncError = z.object({
+    flowId: z.string(),
+    message: z.string(),
 })
-export type FlowSyncError = Static<typeof FlowSyncError>
+export type FlowSyncError = z.infer<typeof FlowSyncError>
 
-export const FlowProjectOperation = Type.Union([
-    Type.Object({
-        type: Type.Literal(FlowProjectOperationType.CREATE_FLOW),
-        flow: Type.Object({
-            id: Type.String(),
-            displayName: Type.String(),
+export const FlowProjectOperation = z.union([
+    z.object({
+        type: z.literal(FlowProjectOperationType.CREATE_FLOW),
+        flow: z.object({
+            id: z.string(),
+            displayName: z.string(),
         }),
     }),
-    Type.Object({
-        type: Type.Literal(FlowProjectOperationType.UPDATE_FLOW),
-        flow: Type.Object({
-            id: Type.String(),
-            displayName: Type.String(),
+    z.object({
+        type: z.literal(FlowProjectOperationType.UPDATE_FLOW),
+        flow: z.object({
+            id: z.string(),
+            displayName: z.string(),
         }),
-        targetFlow: Type.Object({
-            id: Type.String(),
-            displayName: Type.String(),
+        targetFlow: z.object({
+            id: z.string(),
+            displayName: z.string(),
         }),
     }),
-    Type.Object({
-        type: Type.Literal(FlowProjectOperationType.DELETE_FLOW),
-        flow: Type.Object({
-            id: Type.String(),
-            displayName: Type.String(),
+    z.object({
+        type: z.literal(FlowProjectOperationType.DELETE_FLOW),
+        flow: z.object({
+            id: z.string(),
+            displayName: z.string(),
         }),
     }),
 ])
-export type FlowProjectOperation = Static<typeof FlowProjectOperation>
+export type FlowProjectOperation = z.infer<typeof FlowProjectOperation>
 
-export const ProjectSyncPlan = Type.Object({
-    flows: Type.Array(FlowProjectOperation),
-    connections: Type.Array(ConnectionOperation),
-    tables: Type.Array(TableOperation),
-    errors: Type.Array(FlowSyncError),
+export const ProjectSyncPlan = z.object({
+    flows: z.array(FlowProjectOperation),
+    connections: z.array(ConnectionOperation),
+    tables: z.array(TableOperation),
+    errors: z.array(FlowSyncError),
 })
-export type ProjectSyncPlan = Static<typeof ProjectSyncPlan>
+export type ProjectSyncPlan = z.infer<typeof ProjectSyncPlan>
 

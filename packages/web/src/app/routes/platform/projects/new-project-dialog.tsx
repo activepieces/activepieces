@@ -3,12 +3,12 @@ import {
   CreatePlatformProjectRequest,
   ProjectWithLimits,
 } from '@activepieces/shared';
-import { typeboxResolver } from '@hookform/resolvers/typebox';
-import { Type } from '@sinclair/typebox';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { z } from 'zod';
 
 import { DefaultTag } from '@/components/custom/global-connection-utils';
 import { MultiSelectPieceProperty } from '@/components/custom/multi-select-piece-property';
@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -53,7 +54,12 @@ export const NewProjectDialog = (props: NewProjectDialogProps) => {
       <DialogTrigger asChild>{props.children}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t('Create New Project')}</DialogTitle>
+          <DialogTitle>{t('Create Project')}</DialogTitle>
+          <DialogDescription>
+            {t(
+              'Set up a new project to organize your automations and connections.',
+            )}
+          </DialogDescription>
         </DialogHeader>
         {(!isLoadingConnections || !globalConnectionsEnabled) && (
           <NewProjectForm
@@ -87,12 +93,9 @@ const NewProjectForm = ({
     .map((connection) => connection.externalId);
 
   const form = useForm<CreatePlatformProjectRequest>({
-    resolver: typeboxResolver(
-      Type.Object({
-        displayName: Type.String({
-          minLength: 1,
-          errorMessage: t('Name is required'),
-        }),
+    resolver: zodResolver(
+      z.object({
+        displayName: z.string().min(1, t('Name is required')),
       }),
     ),
     defaultValues: {
@@ -195,7 +198,7 @@ const NewProjectForm = ({
             form.handleSubmit(() => mutate(form.getValues()))(e);
           }}
         >
-          {t('Save')}
+          {t('Create Project')}
         </Button>
       </DialogFooter>
     </>

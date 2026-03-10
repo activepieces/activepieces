@@ -13,7 +13,7 @@ export const authenticationMiddleware = async (request: FastifyRequest): Promise
         return
     }
 
-    const principal = await authenticateOrThrow(request.headers['authorization'] ?? null)
+    const principal = await authenticateOrThrow(request.log, request.headers['authorization'] ?? null)
     request.principal = principal
 }
 

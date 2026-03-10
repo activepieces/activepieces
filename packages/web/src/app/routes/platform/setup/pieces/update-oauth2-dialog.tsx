@@ -1,10 +1,10 @@
 import { isNil } from '@activepieces/shared';
-import { typeboxResolver } from '@hookform/resolvers/typebox';
-import { Static, Type } from '@sinclair/typebox';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { t } from 'i18next';
 import { Lock, Unlock } from 'lucide-react';
 import { useState, forwardRef } from 'react';
 import { useForm } from 'react-hook-form';
+import { z } from 'zod';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -31,15 +31,11 @@ type ConfigurePieceOAuth2DialogProps = {
   isEnabled: boolean;
 };
 
-const OAuth2FormValues = Type.Object({
-  clientId: Type.String({
-    minLength: 1,
-  }),
-  clientSecret: Type.String({
-    minLength: 1,
-  }),
+const OAuth2FormValues = z.object({
+  clientId: z.string().min(1),
+  clientSecret: z.string().min(1),
 });
-type OAuth2FormValues = Static<typeof OAuth2FormValues>;
+type OAuth2FormValues = z.infer<typeof OAuth2FormValues>;
 
 export const ConfigurePieceOAuth2Dialog = forwardRef<
   HTMLButtonElement,
@@ -47,7 +43,7 @@ export const ConfigurePieceOAuth2Dialog = forwardRef<
 >(({ pieceName, onConfigurationDone, isEnabled }, ref) => {
   const [open, setOpen] = useState(false);
   const form = useForm<OAuth2FormValues>({
-    resolver: typeboxResolver(OAuth2FormValues),
+    resolver: zodResolver(OAuth2FormValues),
   });
 
   const { oauth2App, refetch } =

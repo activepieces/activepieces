@@ -2,13 +2,13 @@ import {
   PlatformWithoutSensitiveData,
   UpdatePlatformRequestBody,
 } from '@activepieces/shared';
-import { typeboxResolver } from '@hookform/resolvers/typebox';
-import { Static, Type } from '@sinclair/typebox';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
+import { z } from 'zod';
 
 import { platformApi } from '@/api/platforms-api';
 import { ApMarkdown } from '@/components/custom/markdown';
@@ -33,15 +33,11 @@ type NewOAuth2DialogProps = {
   refetch: () => Promise<void>;
 };
 
-const OAuth2FormValues = Type.Object({
-  clientId: Type.String({
-    minLength: 1,
-  }),
-  clientSecret: Type.String({
-    minLength: 1,
-  }),
+const OAuth2FormValues = z.object({
+  clientId: z.string().min(1),
+  clientSecret: z.string().min(1),
 });
-type OAuth2FormValues = Static<typeof OAuth2FormValues>;
+type OAuth2FormValues = z.infer<typeof OAuth2FormValues>;
 
 export const NewOAuth2Dialog = ({
   providerDisplayName,
@@ -52,7 +48,7 @@ export const NewOAuth2Dialog = ({
 }: NewOAuth2DialogProps) => {
   const [open, setOpen] = useState(false);
   const form = useForm<OAuth2FormValues>({
-    resolver: typeboxResolver(OAuth2FormValues),
+    resolver: zodResolver(OAuth2FormValues),
   });
 
   const { mutate, isPending } = useMutation({
@@ -82,7 +78,7 @@ export const NewOAuth2Dialog = ({
         {connected ? (
           <Button
             size={'sm'}
-            className="w-32 text-destructive"
+            className="text-destructive"
             variant={'basic'}
             loading={isPending}
             onClick={(e) => {
@@ -97,12 +93,7 @@ export const NewOAuth2Dialog = ({
             {t('Disable')}
           </Button>
         ) : (
-          <Button
-            size={'sm'}
-            className="w-32"
-            variant={'basic'}
-            onClick={() => setOpen(true)}
-          >
+          <Button size={'sm'} variant={'basic'} onClick={() => setOpen(true)}>
             {t('Enable')}
           </Button>
         )}

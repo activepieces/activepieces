@@ -109,6 +109,4 @@ const VirtualizedScrollArea = <T,>({
   );
 };
 
-VirtualizedScrollArea.displayName = 'VirtualizedScrollArea';
-
 export { VirtualizedScrollArea };

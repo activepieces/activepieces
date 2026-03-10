@@ -2,38 +2,37 @@ import { apId, JobData, UploadLogsBehavior, WorkerJobType } from '@activepieces/
 import { FastifyBaseLogger } from 'fastify'
 import { flowRunLogsService } from '../../flows/flow-run/logs/flow-run-logs-service'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
-import { system } from '../../helper/system/system'
 
-const enrichFlowIdAndLogsUrl: JobMigration = {
-    runAtSchemaVersion: 0,
-    migrate: async (job: JobData) => {
-        if (job.jobType === WorkerJobType.EXECUTE_FLOW) {
-            const flowVersion = await flowVersionService(system.globalLogger()).getOne(job.flowVersionId)
-            const logsFileId = 'logsFileId' in job ? job.logsFileId : apId()
-            const logsUploadUrl = await flowRunLogsService(system.globalLogger()).constructUploadUrl({
-                logsFileId,
-                projectId: job.projectId,
-                flowRunId: job.runId,
-                behavior: UploadLogsBehavior.UPLOAD_DIRECTLY,
-            })
+function createMigrations(log: FastifyBaseLogger): JobMigration[] {
+    const enrichFlowIdAndLogsUrl: JobMigration = {
+        runAtSchemaVersion: 0,
+        migrate: async (job: JobData) => {
+            if (job.jobType === WorkerJobType.EXECUTE_FLOW) {
+                const flowVersion = await flowVersionService(log).getOne(job.flowVersionId)
+                const logsFileId = 'logsFileId' in job ? job.logsFileId : apId()
+                const logsUploadUrl = await flowRunLogsService(log).constructUploadUrl({
+                    logsFileId,
+                    projectId: job.projectId,
+                    flowRunId: job.runId,
+                    behavior: UploadLogsBehavior.UPLOAD_DIRECTLY,
+                })
+                return {
+                    ...job,
+                    flowId: flowVersion!.flowId,
+                    schemaVersion: 4,
+                    logsFileId,
+                    logsUploadUrl,
+                }
+            }
             return {
                 ...job,
-                flowId: flowVersion!.flowId,
                 schemaVersion: 4,
-                logsFileId,
-                logsUploadUrl,
             }
-        }
-        return {
-            ...job,
-            schemaVersion: 4,
-        }
-    },
+        },
+    }
+    return [enrichFlowIdAndLogsUrl]
 }
 
-const migrations: JobMigration[] = [
-    enrichFlowIdAndLogsUrl,
-]
 export const jobMigrations = (log: FastifyBaseLogger) => ({
     apply: async (job: Record<string, unknown>): Promise<JobData> => {
         let jobData = job as JobData
@@ -42,6 +41,7 @@ export const jobMigrations = (log: FastifyBaseLogger) => ({
             jobType: jobData.jobType,
             projectId: jobData.projectId,
         }, '[jobMigrations] Apply migration for job')
+        const migrations = createMigrations(log)
         for (const migration of migrations) {
             const schemaVersion = getSchemaVersion(jobData)
             if (schemaVersion === migration.runAtSchemaVersion) {

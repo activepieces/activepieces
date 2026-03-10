@@ -5,11 +5,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { isNil, PropertySettings } from '@activepieces/shared';
 import { t } from 'i18next';
-import {
-  ControllerRenderProps,
-  FieldValues,
-  UseFormReturn,
-} from 'react-hook-form';
+import { ControllerRenderProps, UseFormReturn } from 'react-hook-form';
 
 import { SecretInput } from '@/app/connections/secret-input';
 import { ColorPicker } from '@/components/custom/color-picker';
@@ -334,7 +330,7 @@ export type SelectGenericFormComponentForPropertyParams = {
   useMentionTextInput: boolean;
   disabled: boolean;
   dynamicInputModeToggled: boolean;
-  form: UseFormReturn<FieldValues, any, undefined>;
+  form: UseFormReturn;
   propertySettings: Record<string, PropertySettings> | null;
   enableMarkdownForInputWithMention?: boolean;
   dynamicPropsInfo:

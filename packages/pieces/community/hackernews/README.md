@@ -1,7 +1,5 @@
 # pieces-hackernews
 
-This library was generated with [Nx](https://nx.dev).
+## Building
 
-## Running lint
-
-Run `nx lint pieces-hackernews` to execute the lint via [ESLint](https://eslint.org/).
+Run `turbo run build --filter=@activepieces/piece-hackernews` to build the library.

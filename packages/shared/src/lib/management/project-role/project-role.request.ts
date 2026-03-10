@@ -1,29 +1,24 @@
-import { Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
 import { RoleType, SAFE_STRING_PATTERN } from '../../core/common'
 
-export const CreateProjectRoleRequestBody = Type.Object({
-    name: Type.String({
-        pattern: SAFE_STRING_PATTERN,
-    }),
-    permissions: Type.Array(Type.String()),
-    type: Type.Enum(RoleType),
+export const CreateProjectRoleRequestBody = z.object({
+    name: z.string().regex(new RegExp(SAFE_STRING_PATTERN)),
+    permissions: z.array(z.string()),
+    type: z.nativeEnum(RoleType),
 })
 
-export type CreateProjectRoleRequestBody = Static<typeof CreateProjectRoleRequestBody>
+export type CreateProjectRoleRequestBody = z.infer<typeof CreateProjectRoleRequestBody>
 
-export const UpdateProjectRoleRequestBody = Type.Object({
-    name: Type.Optional(Type.String({
-        pattern: SAFE_STRING_PATTERN,
-    })),
-    permissions: Type.Optional(Type.Array(Type.String())),
+export const UpdateProjectRoleRequestBody = z.object({
+    name: z.string().regex(new RegExp(SAFE_STRING_PATTERN)).optional(),
+    permissions: z.array(z.string()).optional(),
 })
 
-export type UpdateProjectRoleRequestBody = Static<typeof UpdateProjectRoleRequestBody>
+export type UpdateProjectRoleRequestBody = z.infer<typeof UpdateProjectRoleRequestBody>
 
-export const ListProjectMembersForProjectRoleRequestQuery = Type.Object({
-    cursor: Type.Optional(Type.String()),
-    limit: Type.Optional(Type.Number()),
+export const ListProjectMembersForProjectRoleRequestQuery = z.object({
+    cursor: z.string().optional(),
+    limit: z.coerce.number().optional(),
 })
 
-export type ListProjectMembersForProjectRoleRequestQuery = Static<typeof ListProjectMembersForProjectRoleRequestQuery>
-
+export type ListProjectMembersForProjectRoleRequestQuery = z.infer<typeof ListProjectMembersForProjectRoleRequestQuery>

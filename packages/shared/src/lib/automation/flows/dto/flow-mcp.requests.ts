@@ -1,8 +1,8 @@
-import { Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
 
-export const CreateMCPServerFromStepParams = Type.Object({
-    flowId: Type.String(),
-    flowVersionId: Type.String(),
-    stepName: Type.String(),
+export const CreateMCPServerFromStepParams = z.object({
+    flowId: z.string(),
+    flowVersionId: z.string(),
+    stepName: z.string(),
 })
-export type CreateMCPServerFromStepParams = Static<typeof CreateMCPServerFromStepParams>
+export type CreateMCPServerFromStepParams = z.infer<typeof CreateMCPServerFromStepParams>

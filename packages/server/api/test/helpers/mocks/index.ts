@@ -515,6 +515,7 @@ export const createMockFlowVersion = (
         settings: {},
         valid: false,
         displayName: 'Select Trigger',
+        lastUpdatedDate: dayjs().toISOString(),
     } as const
 
     return {
@@ -554,6 +555,7 @@ export const createMockConnection = (connection: Partial<AppConnection>, ownerId
         externalId: connection?.externalId ?? apId(),
         owner: null,
         pieceVersion: connection?.pieceVersion ?? '0.0.0',
+        preSelectForNewProjects: connection?.preSelectForNewProjects ?? false,
     }
 }
 

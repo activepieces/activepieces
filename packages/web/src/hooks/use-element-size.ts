@@ -1,7 +1,7 @@
 import { RefObject, useEffect, useState } from 'react';
 import { useDebouncedCallback } from 'use-debounce';
 
-export const useElementSize = (ref: RefObject<HTMLElement>) => {
+export const useElementSize = (ref: RefObject<HTMLElement | null>) => {
   const [size, setSize] = useState({ width: 0, height: 0 });
   const debouncedSetSize = useDebouncedCallback(setSize, 150);
   useEffect(() => {

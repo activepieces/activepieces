@@ -29,7 +29,7 @@ export const refillPollingJobs = (log: FastifyBaseLogger) => ({
                     type: JobType.REPEATING,
                     data: {
                         projectId: triggerSource.projectId,
-                        platformId: await projectService.getPlatformId(triggerSource.projectId),
+                        platformId: await projectService(log).getPlatformId(triggerSource.projectId),
                         schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
                         flowVersionId: triggerSource.flowVersionId,
                         flowId: triggerSource.flowId,

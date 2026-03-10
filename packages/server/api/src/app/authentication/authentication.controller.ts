@@ -8,14 +8,14 @@ import { ApplicationEventName,
     UserIdentityProvider,
 } from '@activepieces/shared'
 import { RateLimitOptions } from '@fastify/rate-limit'
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { applicationEvents } from '../helper/application-events'
 import { system } from '../helper/system/system'
 import { platformUtils } from '../platform/platform.utils'
 import { userService } from '../user/user-service'
 import { authenticationService } from './authentication.service'
 
-export const authenticationController: FastifyPluginAsyncTypebox = async (
+export const authenticationController: FastifyPluginAsyncZod = async (
     app,
 ) => {
     app.post('/sign-up', SignUpRequestOptions, async (request) => {
@@ -67,7 +67,7 @@ export const authenticationController: FastifyPluginAsyncTypebox = async (
     })
 
     app.post('/switch-platform', SwitchPlatformRequestOptions, async (request) => {
-        const user = await userService.getOneOrFail({ id: request.principal.id })
+        const user = await userService(request.log).getOneOrFail({ id: request.principal.id })
         return authenticationService(request.log).switchPlatform({
             identityId: user.identityId,
             platformId: request.body.platformId,

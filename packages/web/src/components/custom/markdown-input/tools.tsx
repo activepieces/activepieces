@@ -131,7 +131,7 @@ const ImageTool = ({
   containerRef,
 }: {
   editor: Editor;
-  containerRef: React.RefObject<HTMLDivElement>;
+  containerRef: React.RefObject<HTMLDivElement | null>;
 }) => {
   const [open, setOpen] = useState(false);
   const [imageUrl, setImageUrl] = useState('');

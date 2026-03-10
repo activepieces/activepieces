@@ -1,4 +1,4 @@
-import { Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
 import { BaseModelSchema, Nullable } from '../common'
 
 
@@ -8,18 +8,18 @@ export enum UserIdentityProvider {
     SAML = 'SAML',
     JWT = 'JWT',
 }
-export const UserIdentity = Type.Object({
+export const UserIdentity = z.object({
     ...BaseModelSchema,
-    firstName: Type.String(),
-    lastName: Type.String(),
-    email: Type.String(),
-    password: Type.String(),
-    trackEvents: Type.Boolean(),
-    newsLetter: Type.Boolean(),
-    verified: Type.Boolean(),
-    tokenVersion: Type.Optional(Type.String()),
-    provider: Type.Enum(UserIdentityProvider),
-    imageUrl: Nullable(Type.String()),
+    firstName: z.string(),
+    lastName: z.string(),
+    email: z.string(),
+    password: z.string(),
+    trackEvents: z.boolean(),
+    newsLetter: z.boolean(),
+    verified: z.boolean(),
+    tokenVersion: z.string().optional(),
+    provider: z.nativeEnum(UserIdentityProvider),
+    imageUrl: Nullable(z.string()),
 })
 
-export type UserIdentity = Static<typeof UserIdentity>
+export type UserIdentity = z.infer<typeof UserIdentity>

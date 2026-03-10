@@ -1,18 +1,18 @@
-import { Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
 import { BaseModelSchema } from '../../../core/common'
 
 export type FolderId = string
 
-export const Folder = Type.Object({
+export const Folder = z.object({
     ...BaseModelSchema,
-    id: Type.String(),
-    projectId: Type.String(),
-    displayName: Type.String(),
-    displayOrder: Type.Number(),
+    id: z.string(),
+    projectId: z.string(),
+    displayName: z.string(),
+    displayOrder: z.number(),
 })
 
 export const UncategorizedFolderId = 'NULL'
-export type Folder = Static<typeof Folder>
+export type Folder = z.infer<typeof Folder>
 
 export type FolderDto = Folder & { numberOfFlows: number }
 

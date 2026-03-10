@@ -1,4 +1,4 @@
-import { Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
 import { Nullable } from '../../core/common'
 export enum NoteColorVariant {
     ORANGE = 'orange',
@@ -8,20 +8,20 @@ export enum NoteColorVariant {
     PURPLE = 'purple',
     YELLOW = 'yellow',
 }
-export const Note = Type.Object({
-    id: Type.String(),
-    content: Type.String(),
-    ownerId: Nullable(Type.String()),
-    color: Type.Enum(NoteColorVariant),
-    position: Type.Object({
-        x: Type.Number(),
-        y: Type.Number(),
+export const Note = z.object({
+    id: z.string(),
+    content: z.string(),
+    ownerId: Nullable(z.string()),
+    color: z.nativeEnum(NoteColorVariant),
+    position: z.object({
+        x: z.number(),
+        y: z.number(),
     }),
-    size: Type.Object({
-        width: Type.Number(),
-        height: Type.Number(),
+    size: z.object({
+        width: z.number(),
+        height: z.number(),
     }),
-    createdAt: Type.String(),
-    updatedAt: Type.String(),
+    createdAt: z.string(),
+    updatedAt: z.string(),
 })
-export type Note = Static<typeof Note>
+export type Note = z.infer<typeof Note>

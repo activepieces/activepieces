@@ -65,9 +65,10 @@ async function uploadFileMetadata({ formData, engineToken, apiUrl }: { formData:
     })
 
     if (!response.ok) {
+        const bodyText = await response.text()
         throw new FileStoreError({
             status: response.status,
-            body: response.body,
+            body: bodyText,
         })
     }
 

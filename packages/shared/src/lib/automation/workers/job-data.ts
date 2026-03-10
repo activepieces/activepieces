@@ -1,5 +1,5 @@
 
-import { Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
 import { isNil } from '../../core/common'
 import { ProgressUpdateType, TriggerHookType, TriggerPayload } from '../engine'
 import { ExecutionType } from '../flow-run/execution/execution-output'
@@ -75,154 +75,154 @@ export const NON_SCHEDULED_JOB_TYPES: WorkerJobType[] = [
 ] as const
 
 // Never change without increasing LATEST_JOB_DATA_SCHEMA_VERSION, and adding a migration
-export const RenewWebhookJobData = Type.Object({
-    schemaVersion: Type.Number(),
-    projectId: Type.String(),
-    platformId: Type.String(),
-    flowVersionId: Type.String(),
-    flowId: Type.String(),
-    jobType: Type.Literal(WorkerJobType.RENEW_WEBHOOK),
+export const RenewWebhookJobData = z.object({
+    schemaVersion: z.number(),
+    projectId: z.string(),
+    platformId: z.string(),
+    flowVersionId: z.string(),
+    flowId: z.string(),
+    jobType: z.literal(WorkerJobType.RENEW_WEBHOOK),
 })
-export type RenewWebhookJobData = Static<typeof RenewWebhookJobData>
+export type RenewWebhookJobData = z.infer<typeof RenewWebhookJobData>
 
 // Never change without increasing LATEST_JOB_DATA_SCHEMA_VERSION, and adding a migration
-export const PollingJobData = Type.Object({
-    projectId: Type.String(),
-    platformId: Type.String(),
-    schemaVersion: Type.Number(),
-    flowVersionId: Type.String(),
-    flowId: Type.String(),
-    triggerType: Type.Enum(FlowTriggerType),
-    jobType: Type.Literal(WorkerJobType.EXECUTE_POLLING),
+export const PollingJobData = z.object({
+    projectId: z.string(),
+    platformId: z.string(),
+    schemaVersion: z.number(),
+    flowVersionId: z.string(),
+    flowId: z.string(),
+    triggerType: z.nativeEnum(FlowTriggerType),
+    jobType: z.literal(WorkerJobType.EXECUTE_POLLING),
 })
-export type PollingJobData = Static<typeof PollingJobData>
+export type PollingJobData = z.infer<typeof PollingJobData>
 
-export const ExecuteFlowJobData = Type.Object({
-    projectId: Type.String(),
-    platformId: Type.String(),
-    jobType: Type.Literal(WorkerJobType.EXECUTE_FLOW),
-    environment: Type.Enum(RunEnvironment),
-    schemaVersion: Type.Number(),
-    flowId: Type.String(),
-    flowVersionId: Type.String(),
-    runId: Type.String(),
-    synchronousHandlerId: Type.Optional(Type.Union([Type.String(), Type.Null()])),
-    httpRequestId: Type.Optional(Type.String()),
-    payload: Type.Any(),
-    executeTrigger: Type.Optional(Type.Boolean()),
-    executionType: Type.Enum(ExecutionType),
-    progressUpdateType: Type.Enum(ProgressUpdateType),
-    stepNameToTest: Type.Optional(Type.String()),
-    sampleData: Type.Optional(Type.Record(Type.String(), Type.Unknown())),
-    logsUploadUrl: Type.String(),
-    logsFileId: Type.String(),
-    traceContext: Type.Optional(Type.Record(Type.String(), Type.String())),
+export const ExecuteFlowJobData = z.object({
+    projectId: z.string(),
+    platformId: z.string(),
+    jobType: z.literal(WorkerJobType.EXECUTE_FLOW),
+    environment: z.nativeEnum(RunEnvironment),
+    schemaVersion: z.number(),
+    flowId: z.string(),
+    flowVersionId: z.string(),
+    runId: z.string(),
+    synchronousHandlerId: z.union([z.string(), z.null()]).optional(),
+    httpRequestId: z.string().optional(),
+    payload: z.any(),
+    executeTrigger: z.boolean().optional(),
+    executionType: z.nativeEnum(ExecutionType),
+    progressUpdateType: z.nativeEnum(ProgressUpdateType),
+    stepNameToTest: z.string().optional(),
+    sampleData: z.record(z.string(), z.unknown()).optional(),
+    logsUploadUrl: z.string(),
+    logsFileId: z.string(),
+    traceContext: z.record(z.string(), z.string()).optional(),
 })
-export type ExecuteFlowJobData = Static<typeof ExecuteFlowJobData>
+export type ExecuteFlowJobData = z.infer<typeof ExecuteFlowJobData>
 
-export const WebhookJobData = Type.Object({
-    projectId: Type.String(),
-    platformId: Type.String(),
-    schemaVersion: Type.Number(),
-    requestId: Type.String(),
-    payload: Type.Any(),
-    runEnvironment: Type.Enum(RunEnvironment),
-    flowId: Type.String(),
-    saveSampleData: Type.Boolean(),
-    flowVersionIdToRun: Type.String(),
-    execute: Type.Boolean(),
-    jobType: Type.Literal(WorkerJobType.EXECUTE_WEBHOOK),
-    parentRunId: Type.Optional(Type.String()),
-    failParentOnFailure: Type.Optional(Type.Boolean()),
-    traceContext: Type.Optional(Type.Record(Type.String(), Type.String())),
+export const WebhookJobData = z.object({
+    projectId: z.string(),
+    platformId: z.string(),
+    schemaVersion: z.number(),
+    requestId: z.string(),
+    payload: z.any(),
+    runEnvironment: z.nativeEnum(RunEnvironment),
+    flowId: z.string(),
+    saveSampleData: z.boolean(),
+    flowVersionIdToRun: z.string(),
+    execute: z.boolean(),
+    jobType: z.literal(WorkerJobType.EXECUTE_WEBHOOK),
+    parentRunId: z.string().optional(),
+    failParentOnFailure: z.boolean().optional(),
+    traceContext: z.record(z.string(), z.string()).optional(),
 })
-export type WebhookJobData = Static<typeof WebhookJobData>
+export type WebhookJobData = z.infer<typeof WebhookJobData>
 
-export const ExecuteValidateAuthJobData = Type.Object({
-    requestId: Type.String(),
-    webserverId: Type.String(),
-    jobType: Type.Literal(WorkerJobType.EXECUTE_VALIDATION),
-    projectId: Type.Optional(Type.String()),
-    platformId: Type.String(),
+export const ExecuteValidateAuthJobData = z.object({
+    requestId: z.string(),
+    webserverId: z.string(),
+    jobType: z.literal(WorkerJobType.EXECUTE_VALIDATION),
+    projectId: z.string().optional(),
+    platformId: z.string(),
     piece: PiecePackage,
-    schemaVersion: Type.Number(),
-    connectionValue: Type.Unknown(),
+    schemaVersion: z.number(),
+    connectionValue: z.unknown(),
 })
-export type ExecuteValidateAuthJobData = Static<typeof ExecuteValidateAuthJobData>
+export type ExecuteValidateAuthJobData = z.infer<typeof ExecuteValidateAuthJobData>
 
 
-export const ExecuteTriggerHookJobData = Type.Object({
-    requestId: Type.String(),
-    jobType: Type.Literal(WorkerJobType.EXECUTE_TRIGGER_HOOK),
-    platformId: Type.String(),
-    projectId: Type.String(),
-    schemaVersion: Type.Number(),
-    flowId: Type.String(),
-    flowVersionId: Type.String(),
-    test: Type.Boolean(),
-    webserverId: Type.String(),
-    hookType: Type.Enum(TriggerHookType),
-    triggerPayload: Type.Optional(TriggerPayload),
+export const ExecuteTriggerHookJobData = z.object({
+    requestId: z.string(),
+    jobType: z.literal(WorkerJobType.EXECUTE_TRIGGER_HOOK),
+    platformId: z.string(),
+    projectId: z.string(),
+    schemaVersion: z.number(),
+    flowId: z.string(),
+    flowVersionId: z.string(),
+    test: z.boolean(),
+    webserverId: z.string(),
+    hookType: z.nativeEnum(TriggerHookType),
+    triggerPayload: TriggerPayload.optional(),
 })
-export type ExecuteTriggerHookJobData = Static<typeof ExecuteTriggerHookJobData>
+export type ExecuteTriggerHookJobData = z.infer<typeof ExecuteTriggerHookJobData>
 
-export const ExecutePropertyJobData = Type.Object({
-    requestId: Type.String(),
-    jobType: Type.Literal(WorkerJobType.EXECUTE_PROPERTY),
-    projectId: Type.String(),
-    platformId: Type.String(),
-    schemaVersion: Type.Number(),
-    flowVersion: Type.Optional(FlowVersion),
-    propertyName: Type.String(),
+export const ExecutePropertyJobData = z.object({
+    requestId: z.string(),
+    jobType: z.literal(WorkerJobType.EXECUTE_PROPERTY),
+    projectId: z.string(),
+    platformId: z.string(),
+    schemaVersion: z.number(),
+    flowVersion: FlowVersion.optional(),
+    propertyName: z.string(),
     piece: PiecePackage,
-    actionOrTriggerName: Type.String(),
-    input: Type.Record(Type.String(), Type.Unknown()),
-    webserverId: Type.String(),
-    sampleData: Type.Record(Type.String(), Type.Unknown()),
-    searchValue: Type.Optional(Type.String()),
+    actionOrTriggerName: z.string(),
+    input: z.record(z.string(), z.unknown()),
+    webserverId: z.string(),
+    sampleData: z.record(z.string(), z.unknown()),
+    searchValue: z.string().optional(),
 })
-export type ExecutePropertyJobData = Static<typeof ExecutePropertyJobData>
+export type ExecutePropertyJobData = z.infer<typeof ExecutePropertyJobData>
 
-export const ExecuteExtractPieceMetadataJobData = Type.Object({
-    requestId: Type.String(),
-    webserverId: Type.String(),
-    schemaVersion: Type.Number(),
-    jobType: Type.Literal(WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION),
-    projectId: Type.Undefined(),
-    platformId: Type.String(),
+export const ExecuteExtractPieceMetadataJobData = z.object({
+    requestId: z.string(),
+    webserverId: z.string(),
+    schemaVersion: z.number(),
+    jobType: z.literal(WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION),
+    projectId: z.undefined(),
+    platformId: z.string(),
     piece: PiecePackage,
 })
-export type ExecuteExtractPieceMetadataJobData = Static<typeof ExecuteExtractPieceMetadataJobData>
+export type ExecuteExtractPieceMetadataJobData = z.infer<typeof ExecuteExtractPieceMetadataJobData>
 
-export const UserInteractionJobData = Type.Union([
+export const UserInteractionJobData = z.union([
     ExecuteValidateAuthJobData,
     ExecuteTriggerHookJobData,
     ExecutePropertyJobData,
     ExecuteExtractPieceMetadataJobData,
 ])
-export type UserInteractionJobData = Static<typeof UserInteractionJobData>
+export type UserInteractionJobData = z.infer<typeof UserInteractionJobData>
 
-export const UserInteractionJobDataWithoutWatchingInformation = Type.Union([
-    Type.Omit(ExecuteValidateAuthJobData, ['webserverId', 'requestId', 'schemaVersion']),
-    Type.Omit(ExecuteTriggerHookJobData, ['webserverId', 'requestId', 'schemaVersion']),
-    Type.Omit(ExecutePropertyJobData, ['webserverId', 'requestId', 'schemaVersion']),
-    Type.Omit(ExecuteExtractPieceMetadataJobData, ['webserverId', 'requestId', 'schemaVersion']),
+export const UserInteractionJobDataWithoutWatchingInformation = z.union([
+    ExecuteValidateAuthJobData.omit({ webserverId: true, requestId: true, schemaVersion: true }),
+    ExecuteTriggerHookJobData.omit({ webserverId: true, requestId: true, schemaVersion: true }),
+    ExecutePropertyJobData.omit({ webserverId: true, requestId: true, schemaVersion: true }),
+    ExecuteExtractPieceMetadataJobData.omit({ webserverId: true, requestId: true, schemaVersion: true }),
 ])
-export type UserInteractionJobDataWithoutWatchingInformation = Static<typeof UserInteractionJobDataWithoutWatchingInformation>
+export type UserInteractionJobDataWithoutWatchingInformation = z.infer<typeof UserInteractionJobDataWithoutWatchingInformation>
 
-export const EventDestinationJobData = Type.Object({
-    schemaVersion: Type.Number(),
-    platformId: Type.String(),
-    projectId: Type.Optional(Type.String()),
-    webhookId: Type.String(),
-    webhookUrl: Type.String(),
-    payload: Type.Unknown(),
-    jobType: Type.Literal(WorkerJobType.EVENT_DESTINATION),
+export const EventDestinationJobData = z.object({
+    schemaVersion: z.number(),
+    platformId: z.string(),
+    projectId: z.string().optional(),
+    webhookId: z.string(),
+    webhookUrl: z.string(),
+    payload: z.unknown(),
+    jobType: z.literal(WorkerJobType.EVENT_DESTINATION),
 })
 
-export type EventDestinationJobData = Static<typeof EventDestinationJobData>
+export type EventDestinationJobData = z.infer<typeof EventDestinationJobData>
 
-export const JobData = Type.Union([
+export const JobData = z.union([
     PollingJobData,
     RenewWebhookJobData,
     ExecuteFlowJobData,
@@ -230,4 +230,4 @@ export const JobData = Type.Union([
     UserInteractionJobData,
     EventDestinationJobData,
 ])
-export type JobData = Static<typeof JobData>
+export type JobData = z.infer<typeof JobData>

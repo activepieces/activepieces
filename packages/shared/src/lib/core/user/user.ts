@@ -1,5 +1,5 @@
-import { Static, Type } from '@sinclair/typebox'
-import { BaseModelSchema, Nullable } from '../common/base-model'
+import { z } from 'zod'
+import { BaseModelSchema, DateOrString, Nullable } from '../common/base-model'
 import { ApId } from '../common/id-generator'
 import { UserBadge } from './badges'
 
@@ -30,51 +30,46 @@ export enum UserStatus {
     INACTIVE = 'INACTIVE',
 }
 
-export const EmailType = Type.String({
-    format: 'email',
-})
+export const EmailType = z.string().email()
 
-export const PasswordType = Type.String({
-    minLength: 8,
-    maxLength: 64,
-})
+export const PasswordType = z.string().min(8).max(64)
 
-export const User = Type.Object({
+export const User = z.object({
     ...BaseModelSchema,
-    platformRole: Type.Enum(PlatformRole),
-    status: Type.Enum(UserStatus),
-    identityId: Type.String(),
-    externalId: Nullable(Type.String()),
-    platformId: Nullable(Type.String()),
-    lastActiveDate: Nullable(Type.String()),
+    platformRole: z.nativeEnum(PlatformRole),
+    status: z.nativeEnum(UserStatus),
+    identityId: z.string(),
+    externalId: Nullable(z.string()),
+    platformId: Nullable(z.string()),
+    lastActiveDate: Nullable(DateOrString),
 })
 
-export type User = Static<typeof User>
+export type User = z.infer<typeof User>
 
-export const UserWithMetaInformation = Type.Object({
-    id: Type.String(),
-    email: Type.String(),
-    firstName: Type.String(),
-    status: Type.Enum(UserStatus),
-    externalId: Nullable(Type.String()),
-    platformId: Nullable(Type.String()),
-    platformRole: Type.Enum(PlatformRole),
-    lastName: Type.String(),
-    created: Type.String(),
-    updated: Type.String(),
-    lastActiveDate: Nullable(Type.String()),
-    imageUrl: Nullable(Type.String()),
+export const UserWithMetaInformation = z.object({
+    id: z.string(),
+    email: z.string(),
+    firstName: z.string(),
+    status: z.nativeEnum(UserStatus),
+    externalId: Nullable(z.string()),
+    platformId: Nullable(z.string()),
+    platformRole: z.nativeEnum(PlatformRole),
+    lastName: z.string(),
+    created: DateOrString,
+    updated: DateOrString,
+    lastActiveDate: Nullable(DateOrString),
+    imageUrl: Nullable(z.string()),
 })
 
-export type UserWithMetaInformation = Static<typeof UserWithMetaInformation>
+export type UserWithMetaInformation = z.infer<typeof UserWithMetaInformation>
 
 
-export const UserWithBadges = Type.Object({
-    ...UserWithMetaInformation.properties,
-    badges: Type.Array(Type.Pick(UserBadge, ['name', 'created'])),
+export const UserWithBadges = z.object({
+    ...UserWithMetaInformation.shape,
+    badges: z.array(UserBadge.pick({ name: true, created: true })),
 })
 
-export type UserWithBadges = Static<typeof UserWithBadges>
+export type UserWithBadges = z.infer<typeof UserWithBadges>
 
 export const AP_MAXIMUM_PROFILE_PICTURE_SIZE = 5 * 1024 * 1024 // 5 MB
 
@@ -85,19 +80,19 @@ export const PROFILE_PICTURE_ALLOWED_TYPES = [
     'image/webp',
 ]
 
-export const UpdateMeRequestBody = Type.Object({
-    profilePicture: Type.Optional(Type.Any()),
+export const UpdateMeRequestBody = z.object({
+    profilePicture: z.any().optional(),
 })
 
-export type UpdateMeRequestBody = Static<typeof UpdateMeRequestBody>
+export type UpdateMeRequestBody = z.infer<typeof UpdateMeRequestBody>
 
-export const UpdateMeResponse = Type.Object({
-    email: Type.String(),
-    firstName: Type.String(),
-    lastName: Type.String(),
-    trackEvents: Type.Boolean(),
-    newsLetter: Type.Boolean(),
-    imageUrl: Nullable(Type.String()),
+export const UpdateMeResponse = z.object({
+    email: z.string(),
+    firstName: z.string(),
+    lastName: z.string(),
+    trackEvents: z.boolean(),
+    newsLetter: z.boolean(),
+    imageUrl: Nullable(z.string()),
 })
 
-export type UpdateMeResponse = Static<typeof UpdateMeResponse>
+export type UpdateMeResponse = z.infer<typeof UpdateMeResponse>

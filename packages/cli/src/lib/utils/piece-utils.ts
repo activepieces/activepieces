@@ -7,7 +7,7 @@ import axios from 'axios'
 import chalk from 'chalk'
 import FormData from 'form-data';
 import fs from 'fs';
-import { buildWorkspaceVersionMap, resolveWorkspaceDependencies } from '../../../../../tools/scripts/utils/workspace-utils';
+import { buildWorkspaceVersionMap, resolveWorkspaceDependencies } from './workspace-utils';
 
 export const piecesPath = () => path.join(cwd(), 'packages', 'pieces')
 export const customPiecePath = () => path.join(piecesPath(), 'custom')
