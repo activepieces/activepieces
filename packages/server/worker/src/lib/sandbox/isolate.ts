@@ -15,6 +15,7 @@ const getIsolateExecutableName = (): string => {
 }
 
 const isolateBinaryPath = path.resolve(process.cwd(), 'packages/server/api/src/assets', getIsolateExecutableName())
+const etcDir = path.resolve(process.cwd(), 'packages/server/api/src/assets/etc')
 const sandboxIndex: Record<string, number> = {}
 
 function getSandboxNumber(sandboxId: string): number {
@@ -58,7 +59,7 @@ export function isolateProcess(log: SandboxLogger, enginePath: string, _codeDire
             const args = [
                 '--dir=/usr/bin/',
                 '--dir=/usr/local/',
-                '--dir=/etc/',
+                `--dir=/etc/=${etcDir}`,
                 '--dir=/usr/src/node_modules/',
                 ...dirArgs,
                 '--share-net',
