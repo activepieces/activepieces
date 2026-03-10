@@ -1,4 +1,4 @@
-import { ActivepiecesError, apId, ConnectSecretManagerRequest, ErrorCode, isNil, isObject, isString, SecretManagerConfig, SecretManagerConnectionScope, SecretManagerConnectionWithStatus, SecretManagerFieldsSeparator, SeekPage } from '@activepieces/shared'
+import { ActivepiecesError, apId, ConnectSecretManagerRequest, ErrorCode, isNil, isObject, isString, SecretManagerConfig, SecretManagerConnectionScope, SecretManagerConnectionWithStatus, SecretManagerFieldsSeparator, SecretManagerProviderId, SeekPage } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
 import { encryptUtils } from '../../helper/encryption'
@@ -31,7 +31,7 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
             const decryptedConfig = connection.auth
                 ? await encryptUtils.decryptObject<SecretManagerConfig>(connection.auth)
                 : undefined
-            const connected = await checkConnection(log, decryptedConfig, platformId, connection.id)
+            const connected = await checkConnection(log, decryptedConfig, platformId, connection.id, connection.providerId)
 
             const { auth: _auth, scope, projectIds, ...rest } = connection
             const connectionStatus = { configured: !isNil(connection.auth), connected }
@@ -193,7 +193,7 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
     },
 })
 
-async function checkConnection(log: FastifyBaseLogger, config: SecretManagerConfig | undefined, platformId: string, connectionId: string): Promise<boolean> {
+async function checkConnection(log: FastifyBaseLogger, config: SecretManagerConfig | undefined, platformId: string, connectionId: string, providerId: SecretManagerProviderId): Promise<boolean> {
     if (isNil(config)) {
         return false
     }
@@ -201,11 +201,8 @@ async function checkConnection(log: FastifyBaseLogger, config: SecretManagerConf
     if (cached !== undefined) {
         return cached
     }
-    const connection = await secretManagerRepository().findOne({ where: { id: connectionId, platformId } })
-    if (isNil(connection)) {
-        return false
-    }
-    const provider = secretManagerProvider(log, connection.providerId)
+ 
+    const provider = secretManagerProvider(log, providerId)
     const connected = Boolean(await provider.checkConnection(config).catch(() => false))
     if (connected) {
         await secretManagerCache.setConnectionStatus(platformId, connectionId, true)
