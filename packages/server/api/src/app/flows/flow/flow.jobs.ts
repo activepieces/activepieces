@@ -120,7 +120,7 @@ export const flowBackgroundJobs = (log: FastifyBaseLogger) => ({
             .createQueryBuilder()
             .update()
             .set({ operationStatus: FlowOperationStatus.NONE })
-            .where('operationStatus IN (:...statuses)', { statuses: [FlowOperationStatus.ENABLING, FlowOperationStatus.DISABLING] })
+            .where('operationStatus != :none', { none: FlowOperationStatus.NONE })
             .andWhere('updated < :cutoff', { cutoff })
             .execute()
     },
