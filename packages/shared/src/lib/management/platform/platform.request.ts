@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { SAFE_STRING_PATTERN } from '../../core/common'
+import { OptionalArrayFromQuery, OptionalBooleanFromQuery } from '../../core/common/base-model'
 import { ApId } from '../../core/common/id-generator'
 import { ApMultipartFile } from '../../core/common/multipart-file'
 import { FederatedAuthnProviderConfig } from '../../core/federated-authn'
@@ -18,14 +19,14 @@ export const UpdatePlatformRequestBody = z.object({
     logoIcon: ApMultipartFile.optional(),
     fullLogo: ApMultipartFile.optional(),
     favIcon: ApMultipartFile.optional(),
-    filteredPieceNames: z.array(z.string()).optional(),
+    filteredPieceNames: OptionalArrayFromQuery(z.string()),
     filteredPieceBehavior: z.nativeEnum(FilteredPieceBehavior).optional(),
     federatedAuthProviders: FederatedAuthnProviderConfig.optional(),
-    cloudAuthEnabled: z.boolean().optional(),
-    emailAuthEnabled: z.boolean().optional(),
-    allowedAuthDomains: z.array(z.string()).optional(),
-    enforceAllowedAuthDomains: z.boolean().optional(),
-    pinnedPieces: z.array(z.string()).optional(),
+    cloudAuthEnabled: OptionalBooleanFromQuery,
+    emailAuthEnabled: OptionalBooleanFromQuery,
+    allowedAuthDomains: OptionalArrayFromQuery(z.string()),
+    enforceAllowedAuthDomains: OptionalBooleanFromQuery,
+    pinnedPieces: OptionalArrayFromQuery(z.string()),
 })
 
 export type UpdatePlatformRequestBody = z.infer<typeof UpdatePlatformRequestBody>
