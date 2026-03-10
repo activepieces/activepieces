@@ -128,7 +128,7 @@ export const credentialsOauth2Service = (log: FastifyBaseLogger): OAuth2Service<
         const appConnection = connectionValue
 
         if (!oauth2Util(log).isExpired(appConnection)) {
-            appConnection
+            return appConnection
         }
         const grantType =
             appConnection.grant_type ?? OAuth2GrantType.AUTHORIZATION_CODE   

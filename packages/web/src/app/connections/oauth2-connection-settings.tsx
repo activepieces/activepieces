@@ -73,7 +73,6 @@ function OAuth2ConnectionSettings({
   const projectId = isGlobalConnection
     ? undefined
     : authenticationSession.getProjectId()!;
-  console.log('projectId', projectId, isGlobalConnection);
 
   return (
     <div className="flex flex-col gap-4">

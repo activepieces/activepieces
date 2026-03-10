@@ -283,7 +283,7 @@ const AddEditSecretManagerForm = ({
             {t('Cancel')}
           </Button>
           <Button
-            disabled={!selectedProviderId}
+            disabled={!form.formState.isValid || !selectedProviderId}
             loading={isPending}
             type="submit"
           >

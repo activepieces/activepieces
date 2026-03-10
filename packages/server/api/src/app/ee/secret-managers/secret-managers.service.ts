@@ -163,7 +163,6 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
     },
 
     async resolveObject<T extends Record<string, unknown>>({ value, platformId, projectIds, throwOnFailure = true }: { value: T, platformId: string, projectIds?: string[], throwOnFailure?: boolean }): Promise<T> {
-        log.error({'value': value})
         const entries = await Promise.all(
             Object.entries(value).map(async ([field, fieldValue]) => [
                 field,
@@ -202,7 +201,7 @@ async function checkConnection(log: FastifyBaseLogger, config: SecretManagerConf
     if (cached !== undefined) {
         return cached
     }
-    const connection = await secretManagerRepository().findOne({ where: { id: connectionId } })
+    const connection = await secretManagerRepository().findOne({ where: { id: connectionId, platformId } })
     if (isNil(connection)) {
         return false
     }
