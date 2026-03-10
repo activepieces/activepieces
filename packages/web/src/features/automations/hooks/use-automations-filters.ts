@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useDebouncedCallback } from 'use-debounce';
 
@@ -45,6 +45,11 @@ export function useAutomationsFilters() {
   const [folderFilter, setFolderFilterState] = useState<string[]>(() =>
     searchParams.getAll(FOLDER_PARAM),
   );
+
+  const folderParamStr = searchParams.getAll(FOLDER_PARAM).join('\0');
+  useEffect(() => {
+    setFolderFilterState(folderParamStr ? folderParamStr.split('\0') : []);
+  }, [folderParamStr]);
 
   const updateParams = useCallback(
     (updates: Record<string, string | string[] | null>) => {
