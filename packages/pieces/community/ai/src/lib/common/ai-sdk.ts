@@ -132,7 +132,9 @@ export async function createAIModel({
                     if (isImage) {
                         return openaiProvider.imageModel(actualModelId)
                     }
-                    return openaiProvider.chat(actualModelId)
+                    return openaiResponsesModel
+                        ? openaiProvider.responses(actualModelId)
+                        : openaiProvider.chat(actualModelId)
                 }
                 default: {
                     return handleDefaultAiGatewayProvider({accountId, gatewayId, headers, isImage, modelId})
