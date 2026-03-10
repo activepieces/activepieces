@@ -135,7 +135,6 @@ export const createDeployment = createAction({
 
     const body: Record<string, unknown> = {
       project: String(project),
-      target: target ?? 'preview',
     };
 
     if (deployment_source === 'redeploy') {
@@ -151,6 +150,8 @@ export const createDeployment = createAction({
       if (!git_branch) {
         throw new Error('Git Branch / Ref is required when Deployment Source is Git Source.');
       }
+
+      body['target'] = target ?? 'preview';
 
       if (git_type === 'github' || git_type === 'github-limited') {
         if (git_repo_id) {
