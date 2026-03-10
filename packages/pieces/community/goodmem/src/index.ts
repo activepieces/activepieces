@@ -1,4 +1,8 @@
-import { PieceAuth, createPiece, Property } from '@activepieces/pieces-framework';
+import {
+  PieceAuth,
+  createPiece,
+  Property,
+} from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { createMemory } from './lib/actions/create-memory';
 import { retrieveMemories } from './lib/actions/retrieve-memories';
@@ -9,11 +13,13 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const goodmemAuth = PieceAuth.CustomAuth({
   displayName: 'GoodMem Authentication',
-  description: 'Connect to your GoodMem API instance for vector-based memory storage and semantic retrieval',
+  description:
+    'Connect to your GoodMem API instance for vector-based memory storage and semantic retrieval',
   props: {
     baseUrl: Property.ShortText({
       displayName: 'Base URL',
-      description: 'The base URL of your GoodMem API server (e.g., https://api.goodmem.ai or http://localhost:8080)',
+      description:
+        'The base URL of your GoodMem API server (e.g., https://api.goodmem.ai or http://localhost:8080)',
       required: true,
     }),
     apiKey: PieceAuth.SecretText({
@@ -48,12 +54,13 @@ export const goodmemAuth = PieceAuth.CustomAuth({
 
 export const goodmem = createPiece({
   displayName: 'GoodMem',
-  description: 'Store documents as memories with vector embeddings and perform similarity-based semantic retrieval using GoodMem',
+  description:
+    'Store documents as memories with vector embeddings and perform similarity-based semantic retrieval using GoodMem',
   auth: goodmemAuth,
   minimumSupportedRelease: '0.36.1',
-  logoUrl: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2NCIgaGVpZ2h0PSI2NCIgdmlld0JveD0iMCAwIDY0IDY0Ij48cmVjdCB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHJ4PSIxMiIgZmlsbD0iIzVCOUJGMiIvPjx0ZXh0IHg9IjMyIiB5PSI0NSIgZm9udC1mYW1pbHk9IkFyaWFsLEhlbHZldGljYSxzYW5zLXNlcmlmIiBmb250LXNpemU9IjQwIiBmb250LXdlaWdodD0iYm9sZCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiPkc8L3RleHQ+PC9zdmc+',
+  logoUrl: 'https://cdn.activepieces.com/pieces/goodmem.png',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
-  authors: ['bashareid'],
+  authors: ['bashareid', 'sanket-a11y'],
   actions: [
     createSpace,
     createMemory,

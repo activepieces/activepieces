@@ -103,15 +103,7 @@ export const createMemory = createAction({
         body: requestBody,
       });
 
-      return {
-        success: true,
-        memoryId: response.body.memoryId,
-        spaceId: response.body.spaceId,
-        status: response.body.processingStatus || 'PENDING',
-        contentType: requestBody.contentType,
-        fileName: file?.filename || null,
-        message: 'Memory created successfully',
-      };
+      return response.body;
     } catch (error: any) {
       return {
         success: false,
