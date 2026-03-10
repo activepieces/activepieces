@@ -97,7 +97,8 @@ export function ProjectSettingsDialog({
         ...initialValues,
         icon: project.icon,
       });
-      setActiveTab(initialTab);
+      const tabExists = tabs.some((tab) => tab.id === initialTab);
+      setActiveTab(tabExists ? initialTab : tabs[0]?.id ?? 'mcp');
     }
     previousOpenRef.current = open;
   }, [open, project]);

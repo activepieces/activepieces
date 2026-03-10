@@ -14,18 +14,6 @@ export const mcpHooks = {
     });
   },
 
-  useUpdateMcpServer(projectId: string) {
-    const queryClient = useQueryClient();
-
-    return useMutation({
-      mutationFn: (input: Parameters<typeof mcpApi.update>[1]) =>
-        mcpApi.update(projectId, input),
-      onSuccess: (data) => {
-        queryClient.setQueryData([...MCP_SERVER_QUERY_KEY, projectId], data);
-      },
-    });
-  },
-
   useRotateMcpToken(projectId: string) {
     const queryClient = useQueryClient();
 

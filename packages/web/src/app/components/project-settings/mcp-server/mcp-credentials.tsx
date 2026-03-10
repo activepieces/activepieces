@@ -1,12 +1,10 @@
-import { ApFlagId, Permission, PopulatedMcpServer } from '@activepieces/shared';
+import { Permission, PopulatedMcpServer, ApFlagId } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Eye, EyeOff, RefreshCw } from 'lucide-react';
 import { useState } from 'react';
 
 import { ButtonWithTooltip } from '@/components/custom/button-with-tooltip';
 import { CopyButton } from '@/components/custom/clipboard/copy-button';
-import { CollapsibleJson } from '@/components/custom/collapsible-json';
-import { Badge } from '@/components/ui/badge';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -31,43 +29,9 @@ export function McpCredentials({ mcpServer }: McpCredentialsProps) {
     return '••••••••' + tokenValue.slice(-4);
   };
 
-  const jsonConfiguration = {
-    mcpServers: {
-      activepieces: {
-        url: serverUrl,
-        headers: {
-          Authorization: `Bearer ${mcpServer?.token ?? ''}`,
-        },
-      },
-    },
-  };
-
-  const claudeDesktopConfiguration = {
-    mcpServers: {
-      activepieces: {
-        command: 'npx',
-        args: [
-          '-y',
-          'mcp-remote',
-          serverUrl,
-          '--header',
-          `Authorization: Bearer ${mcpServer?.token ?? 'YOUR_TOKEN'}`,
-        ],
-      },
-    },
-  };
-
-  const remote_mcp_server_url = `${serverUrl}?token=${encodeURIComponent(
-    mcpServer?.token ?? '',
-  )}`;
-
-  const customConnectorConfiguration = {
-    remote_mcp_server_url,
-  };
-
   return (
     <div className="space-y-4">
-      {/* Base URL Field */}
+      {/* Server URL Field */}
       <div className="flex flex-col gap-2">
         <label className="text-xs font-medium text-muted-foreground">
           {t('Server URL')}
@@ -129,43 +93,6 @@ export function McpCredentials({ mcpServer }: McpCredentialsProps) {
           )}
         </p>
       </div>
-
-      {/* JSON Configuration (Cursor / URL + headers) */}
-      <CollapsibleJson
-        json={jsonConfiguration}
-        label={t('MCP Client Configuration (JSON)')}
-        description={t(
-          'Copy to your MCP client (e.g. Cursor) if it supports url + headers. Use the Server URL above; it must end with /http (not /sse).',
-        )}
-        defaultOpen={false}
-      />
-
-      {/* Claude Desktop (mcp-remote) */}
-      <CollapsibleJson
-        json={claudeDesktopConfiguration}
-        label={t('Claude Desktop (mcp-remote)')}
-        description={t(
-          'Copy into your Claude Desktop config file (e.g. claude_desktop_config.json).',
-        )}
-        defaultOpen={false}
-      />
-
-      {/* Custom Connector (no custom headers) */}
-      <CollapsibleJson
-        json={customConnectorConfiguration}
-        label={
-          <span className="flex items-center gap-2">
-            {t('Claude Custom Connector')}
-            <Badge variant="outline" className="text-xs">
-              {t('Beta')}
-            </Badge>
-          </span>
-        }
-        description={t(
-          "Only use connectors from developers you trust. The platform does not control which tools developers make available and cannot verify that they will work as intended or that they won't change.",
-        )}
-        defaultOpen={false}
-      />
     </div>
   );
 }
