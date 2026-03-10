@@ -16,8 +16,8 @@ import {
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { SystemJobData, SystemJobName } from 'src/app/helper/system-jobs/common'
-import { systemJobsSchedule } from 'src/app/helper/system-jobs/system-job'
+import { SystemJobData, SystemJobName } from '../../helper/system-jobs/common'
+import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
 import { flowExecutionCache } from '../flow/flow-execution-cache'
 import { flowRepo } from '../flow/flow.repo'
 import { flowVersionBackupService } from './flow-version-backup.service'
@@ -79,7 +79,7 @@ export const flowVersionMigrationService = (log: FastifyBaseLogger) => ({
     },
 
     async migrateFlowsModelHandler(data: SystemJobData<SystemJobName.MIGRATE_FLOWS_MODEL>): Promise<void> {
-        const { jobId, platformId, request: { projectIds, sourceModel, targetModel } } = data
+        const { platformId, request: { projectIds, sourceModel, targetModel } } = data
         const BATCH_SIZE = 100
         let offset = 0
         let updatedFlows = 0
@@ -157,10 +157,5 @@ export const flowVersionMigrationService = (log: FastifyBaseLogger) => ({
         }
 
         log.info({ platformId, updatedFlows }, 'Flow model migration completed')
-
-        const job = await systemJobsSchedule(log).getJob<SystemJobName.MIGRATE_FLOWS_MODEL>(jobId)
-        if (job) {
-            await job.updateData({ ...data, updatedFlows })
-        }
     },
 })
