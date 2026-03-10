@@ -99,6 +99,7 @@ async function downloadFile(url: string, dest: string, redirectDepth = 0): Promi
       })
       .on('error', (err) => {
         console.error(`[oracle] Download error:`, err.message);
+        file.close();
         fs.unlink(dest, () => {});
         reject(err);
       });
