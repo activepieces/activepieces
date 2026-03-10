@@ -69,32 +69,3 @@ export function clearSearchHistory(): void {
     // ignore
   }
 }
-
-export function groupHistoryByTime(items: SearchHistoryItem[]): HistoryGroup[] {
-  const startOfToday = new Date();
-  startOfToday.setHours(0, 0, 0, 0);
-  const todayMs = startOfToday.getTime();
-  const yesterdayMs = todayMs - 86_400_000;
-  const lastWeekMs = todayMs - 7 * 86_400_000;
-
-  const groups: HistoryGroup[] = [
-    { label: 'Today', items: [] },
-    { label: 'Yesterday', items: [] },
-    { label: 'Last week', items: [] },
-    { label: 'Older', items: [] },
-  ];
-
-  for (const item of items) {
-    if (item.searchedAt >= todayMs) {
-      groups[0].items.push(item);
-    } else if (item.searchedAt >= yesterdayMs) {
-      groups[1].items.push(item);
-    } else if (item.searchedAt >= lastWeekMs) {
-      groups[2].items.push(item);
-    } else {
-      groups[3].items.push(item);
-    }
-  }
-
-  return groups.filter((g) => g.items.length > 0);
-}
