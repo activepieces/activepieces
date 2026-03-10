@@ -138,7 +138,7 @@ const BuilderPage = () => {
         <ResizablePanel
           panelRef={rightHandleRef}
           id="right-sidebar"
-          collapsible={true}
+          collapsible={rightSidebar === RightSideBarType.NONE}
           collapsedSize="0%"
           defaultSize="0%"
           minSize="400px"
