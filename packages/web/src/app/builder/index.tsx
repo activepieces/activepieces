@@ -138,11 +138,10 @@ const BuilderPage = () => {
         <ResizablePanel
           panelRef={rightHandleRef}
           id="right-sidebar"
-          collapsible={rightSidebar === RightSideBarType.NONE}
           collapsedSize="0%"
           defaultSize="0%"
-          minSize="400px"
-          maxSize="60%"
+          minSize={rightSidebar === RightSideBarType.NONE ? '0%' : '400px'}
+          maxSize={rightSidebar === RightSideBarType.NONE ? '0%' : '60%'}
           className={cn('min-w-0 bg-background z-30', {
             [animateResizeClassName]: !isDraggingHandle,
           })}
