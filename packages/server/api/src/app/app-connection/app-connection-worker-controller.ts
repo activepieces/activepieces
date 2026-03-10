@@ -35,7 +35,7 @@ export const appConnectionWorkerController: FastifyPluginAsyncZod = async (app) 
 
         return {
             ...appConnection,
-            value: await secretManagersService(request.log).resolveObject({ value: appConnection.value, platformId: enginePrincipal.platform.id, throwOnFailure: false }),
+            value: await secretManagersService(request.log).resolveObject({ value: appConnection.value, projectIds: [enginePrincipal.projectId], platformId: enginePrincipal.platform.id, throwOnFailure: false }),
         }
     },
     )

@@ -104,31 +104,30 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
         await secretManagerCache.invalidateConnectionEntries(platformId, id)
     },
 
-    getSecret: async ({ connectionId, path, platformId, projectId }: { connectionId: string, path: string, platformId: string, projectId?: string }): Promise<string> => {
-        const connection = await secretManagerRepository().findOneOrFail({
-            where: { id: connectionId },
-        })
-        if (connection.platformId !== platformId) {
+    getSecret: async ({ connectionId, path, platformId, projectIds }: { connectionId: string, path: string, platformId: string, projectIds?: string[] }): Promise<string> => {
+        const qb = secretManagerRepository()
+            .createQueryBuilder('sm')
+            .where('sm.id = :connectionId', { connectionId })
+            .andWhere('sm.platformId = :platformId', { platformId })
+            .andWhere(
+                '(sm.scope = :platformScope OR (sm.scope = :projectScope AND sm.projectIds @> :projectIds::jsonb))',
+                {
+                    platformScope: SecretManagerConnectionScope.PLATFORM,
+                    projectScope: SecretManagerConnectionScope.PROJECT,
+                    projectIds: JSON.stringify(projectIds ?? []),
+                },
+            )
+
+        const connection = await qb.getOne()
+        if (isNil(connection)) {
             throw new ActivepiecesError({
                 code: ErrorCode.SECRET_MANAGER_GET_SECRET_FAILED,
                 params: {
-                    message: 'Connection does not belong to this platform',
-                    provider: connection.providerId,
+                    message: 'Connection is not accessible',
+                    provider: connectionId,
                     request: { connectionId, path },
                 },
             })
-        }
-        if (connection.scope === SecretManagerConnectionScope.PROJECT) {
-            if (isNil(projectId) || !Array.isArray(connection.projectIds) || !connection.projectIds.includes(projectId)) {
-                throw new ActivepiecesError({
-                    code: ErrorCode.SECRET_MANAGER_GET_SECRET_FAILED,
-                    params: {
-                        message: 'Connection is not accessible for this project',
-                        provider: connection.providerId,
-                        request: { connectionId, path },
-                    },
-                })
-            }
         }
         const decryptedConfig = connection.auth
             ? await encryptUtils.decryptObject<SecretManagerConfig>(connection.auth)
@@ -153,38 +152,39 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
         return secret
     },
 
-    async resolveString({ key, platformId, projectId, throwOnFailure = true }: { key: string, platformId: string, projectId?: string, throwOnFailure?: boolean }): Promise<unknown> {
+    async resolveString({ key, platformId, projectIds, throwOnFailure = true }: { key: string, platformId: string, projectIds?: string[], throwOnFailure?: boolean }): Promise<unknown> {
         const { connectionId, path } = extractConnectionIdAndPath(key)
         try {
-            return await this.getSecret({ connectionId, path, platformId, projectId })
+            return await this.getSecret({ connectionId, path, platformId, projectIds })
         }
         catch (error) {
             return handleResolveError(error, throwOnFailure, key)
         }
     },
 
-    async resolveObject<T extends Record<string, unknown>>({ value, platformId, projectId, throwOnFailure = true }: { value: T, platformId: string, projectId?: string, throwOnFailure?: boolean }): Promise<T> {
+    async resolveObject<T extends Record<string, unknown>>({ value, platformId, projectIds, throwOnFailure = true }: { value: T, platformId: string, projectIds?: string[], throwOnFailure?: boolean }): Promise<T> {
+        log.error({'value': value})
         const entries = await Promise.all(
             Object.entries(value).map(async ([field, fieldValue]) => [
                 field,
-                await this.resolveUnknownValue({ value: fieldValue, platformId, projectId, throwOnFailure }),
+                await this.resolveUnknownValue({ value: fieldValue, platformId, projectIds, throwOnFailure }),
             ]),
         )
         return Object.fromEntries(entries) as T
     },
 
-    async resolveUnknownValue({ value, platformId, projectId, throwOnFailure }: { value: unknown, platformId: string, projectId?: string, throwOnFailure: boolean }): Promise<unknown> {
+    async resolveUnknownValue({ value, platformId, projectIds, throwOnFailure }: { value: unknown, platformId: string, projectIds?: string[], throwOnFailure: boolean }): Promise<unknown> {
         if (isObject(value)) {
             return this.resolveObject({
                 value,
                 platformId,
-                projectId,
+                projectIds,
                 throwOnFailure,
             })
         }
         if (isString(value)) {
             try {
-                return await this.resolveString({ key: value, platformId, projectId, throwOnFailure })
+                return await this.resolveString({ key: value, platformId, projectIds, throwOnFailure })
             }
             catch (error) {
                 return handleResolveError(error, throwOnFailure, value)
