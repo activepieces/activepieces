@@ -434,6 +434,18 @@ spec:
             - name: AP_ENGINE_EXECUTABLE_PATH
               value: {{ .Values.activepieces.engineExecutablePath | quote }}
             {{- end }}
+            {{- if .Values.stripe.enabled }}
+            - name: AP_STRIPE_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.stripe.externalSecret.name | quote }}
+                  key: {{ .Values.stripe.externalSecret.secretKeyKey | default "secretKey" | quote }}
+            - name: AP_STRIPE_WEBHOOK_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.stripe.externalSecret.name | quote }}
+                  key: {{ .Values.stripe.externalSecret.webhookSecretKey | default "webhookSecret" | quote }}
+            {{- end }}
             # OpenTelemetry configuration
             {{- if .Values.activepieces.otel.enabled }}
             - name: AP_OTEL_ENABLED

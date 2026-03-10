@@ -16,16 +16,16 @@ imagePullSecrets:
   - name: ghcr-pull-secret
 
 activepieces:
-  edition: "ce"
-  executionMode: "UNSANDBOXED"
+  edition: "cloud"
+  executionMode: "SANDBOXED"
   containerType: "APP"
-  clusterMode: true
   environment: "prod"
   logLevel: "info"
   logPretty: false
   enableFlowOnPublish: true
   telemetryEnabled: true
   frontendUrl: "https://stg.activepieces.dev"
+
 
 # External PostgreSQL (bundled subchart disabled)
 postgresql:
@@ -67,6 +67,14 @@ s3:
     name: "activepieces-s3-secret"
     accessKeyIdKey: "accessKeyId"
     secretAccessKeyKey: "secretAccessKey"
+
+# Stripe billing
+stripe:
+  enabled: true
+  externalSecret:
+    name: "activepieces-stripe-secret"
+    secretKeyKey: "secretKey"
+    webhookSecretKey: "webhookSecret"
 
 # nginx-ingress with cert-manager TLS
 ingress:

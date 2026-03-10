@@ -68,5 +68,11 @@ output "k8s_secrets_commands" {
       --from-literal=accessKeyId='PASTE_FROM_HETZNER_CONSOLE' \
       --from-literal=secretAccessKey='PASTE_FROM_HETZNER_CONSOLE' \
       -n activepieces
+
+    # Stripe billing keys — get from dashboard.stripe.com
+    kubectl create secret generic activepieces-stripe-secret \
+      --from-literal=secretKey='PASTE_STRIPE_SECRET_KEY' \
+      --from-literal=webhookSecret='PASTE_STRIPE_WEBHOOK_SECRET' \
+      -n activepieces
   EOT
 }

@@ -16,10 +16,9 @@ imagePullSecrets:
   - name: ghcr-pull-secret
 
 activepieces:
-  edition: "ce"
-  executionMode: "UNSANDBOXED"
+  edition: "cloud"
+  executionMode: "SANDBOXED"
   containerType: "WORKER"
-  clusterMode: true
   environment: "prod"
   logLevel: "info"
   logPretty: false
