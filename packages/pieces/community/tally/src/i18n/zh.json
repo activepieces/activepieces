@@ -1,7 +1,7 @@
 {
-  "Receive form submissions from Tally forms": "Receive form submissions from Tally forms",
-  "New Submission": "New Submission",
-  "Triggers when form receives a new submission": "Triggers when form receives a new submission",
+  "Receive form submissions from Tally forms": "从Tally forms 接收表单提交",
+  "New Submission": "新建提交",
+  "Triggers when form receives a new submission": "当表单收到新的提交时触发",
   "Markdown": "Markdown",
   "\nTo set up the trigger for new form submissions, follow these steps:\n\n1. Go to the \"Dashboard\" section.\n2. Select the form where you want the trigger to occur.\n3. Click on the \"Integrations\" section.\n4. Find the \"Webhooks\" integration and click on \"Connect\" to activate it.\n5. In the webhook settings, paste the following URL: \n  ```text\n  {{webhookUrl}}\n  ```\n\n  \n6. Click on \"Submit\".\n": "\nTo set up the trigger for new form submissions, follow these steps:\n\n1. Go to the \"Dashboard\" section.\n2. Select the form where you want the trigger to occur.\n3. Click on the \"Integrations\" section.\n4. Find the \"Webhooks\" integration and click on \"Connect\" to activate it.\n5. In the webhook settings, paste the following URL: \n  ```text\n  {{webhookUrl}}\n  ```\n\n  \n6. Click on \"Submit\".\n"
 }
