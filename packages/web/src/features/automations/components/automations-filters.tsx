@@ -35,6 +35,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { useOwnerOptions } from '@/features/automations/hooks/use-owner-options';
 import { formatUtils } from '@/lib/format-utils';
+import { cn, DASHBOARD_CONTENT_PADDING_X } from '@/lib/utils';
 
 import { MultiSelectFilter } from './multi-select-filter';
 
@@ -130,7 +131,7 @@ export const AutomationsFilters = ({
   });
 
   return (
-    <div className="mb-4">
+    <div className={cn('mb-4', DASHBOARD_CONTENT_PADDING_X)}>
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-2 flex-wrap">
           <div className="relative">
