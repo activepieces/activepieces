@@ -27,6 +27,7 @@ import {
   RefreshAnalyticsContext,
 } from '@/features/platform-admin';
 import { projectCollectionUtils } from '@/features/projects';
+import { cn, DASHBOARD_CONTENT_PADDING_X } from '@/lib/utils';
 
 import { ProjectSelect } from './components/project-select';
 import { FlowsDetails } from './details';
@@ -181,9 +182,12 @@ export default function ImpactPage() {
       <Tabs
         value={activeTab}
         onValueChange={handleTabChange}
-        className="w-full"
+        className="w-full "
       >
-        <TabsList variant="outline" className="border-b w-full">
+        <TabsList
+          variant="outline"
+          className={cn('border-b w-full', DASHBOARD_CONTENT_PADDING_X)}
+        >
           <TabsTrigger variant="outline" value="analytics">
             <LineChart className="w-4 h-4 mr-2" />
             {t('Analytics')}
@@ -195,7 +199,9 @@ export default function ImpactPage() {
         </TabsList>
 
         <TabsContent value="analytics">
-          <div className="flex flex-col gap-6">
+          <div
+            className={cn('flex flex-col gap-6', DASHBOARD_CONTENT_PADDING_X)}
+          >
             <Summary report={report ?? undefined} />
             <Trends report={report ?? undefined} />
           </div>
