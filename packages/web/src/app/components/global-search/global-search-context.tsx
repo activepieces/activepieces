@@ -133,7 +133,7 @@ function GlobalSearchDialogContent({
     [navigateToItem],
   );
 
-  const hasQuery = search.length > 0;
+  const hasQuery = debouncedSearch.length > 0;
   const noResults = hasQuery && !isLoading && groups.length === 0;
 
   const TYPE_CATEGORIES = [
