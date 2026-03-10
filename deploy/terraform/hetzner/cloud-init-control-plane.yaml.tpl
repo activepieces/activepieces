@@ -9,10 +9,12 @@ runcmd:
   # --disable traefik: we use nginx-ingress instead
   # --node-ip: advertise the private network IP
   - |
+    PUBLIC_IP=$(curl -s https://ipv4.icanhazip.com)
     curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION="v1.30.5+k3s1" sh -s - server \
       --token="${k3s_token}" \
       --node-ip="${node_ip}" \
       --advertise-address="${node_ip}" \
+      --tls-san="$PUBLIC_IP" \
       --disable=traefik \
       --disable=servicelb \
       --flannel-iface=enp7s0 \

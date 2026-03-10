@@ -5,7 +5,7 @@
 #     --set image.tag=<tag>
 # ============================================================================
 
-replicaCount: 4
+replicaCount: 32
 
 image:
   repository: ghcr.io/activepieces/activepieces-cloud
@@ -76,8 +76,8 @@ ingress:
   enabled: false
 
 # Workers don't serve HTTP — disable HTTP health checks
-livenessProbe: {}
-readinessProbe: {}
+livenessProbe: null
+readinessProbe: null
 
 # Privileged access required for sandboxed flow execution (Docker-in-Docker)
 securityContext:
