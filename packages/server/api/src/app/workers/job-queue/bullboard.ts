@@ -1,4 +1,4 @@
-import { ApEdition, assertNotNullOrUndefined, isNil } from '@activepieces/shared'
+import { assertNotNullOrUndefined, isNil } from '@activepieces/shared'
 import { createBullBoard } from '@bull-board/api'
 import { BullMQAdapter } from '@bull-board/api/bullMQAdapter'
 import { FastifyAdapter } from '@bull-board/fastify'
@@ -13,8 +13,7 @@ import { jobQueue } from './job-queue'
 const QUEUE_BASE_PATH = '/ui'
 
 export async function setupBullMQBoard(app: FastifyInstance): Promise<void> {
-    const edition = system.getEdition()
-    const isQueueEnabled = (edition !== ApEdition.CLOUD) && (system.getBoolean(AppSystemProp.QUEUE_UI_ENABLED) ?? false)
+    const isQueueEnabled = (system.getBoolean(AppSystemProp.QUEUE_UI_ENABLED) ?? false)
     if (!isQueueEnabled) {
         app.log.info('[setupBullMQBoard] Queue UI is disabled')
         return
