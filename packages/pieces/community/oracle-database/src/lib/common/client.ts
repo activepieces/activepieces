@@ -15,7 +15,7 @@ export class OracleDbClient {
   }
 
   private async connect(): Promise<void> {
-    await ensureOracleClient(this.auth.thickMode as boolean);
+    await ensureOracleClient(this.auth.thickMode ?? false);
 
     const connectString =
       this.auth.connectionType === 'serviceName'

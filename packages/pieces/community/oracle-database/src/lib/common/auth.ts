@@ -87,7 +87,7 @@ export const oracleDbAuth = PieceAuth.CustomAuth({
         connectString = typedAuth.connectionString;
       }
 
-      await ensureOracleClient(typedAuth.thickMode as boolean);
+      await ensureOracleClient(typedAuth.thickMode === true);
 
       connection = await oracledb.getConnection({
         user: typedAuth.user,

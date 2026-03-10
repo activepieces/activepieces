@@ -291,9 +291,25 @@ async function _initOracleClient(thickMode: boolean): Promise<void> {
  */
 export const ensureOracleClient: (thickMode: boolean) => Promise<void> = (() => {
   let initPromise: Promise<void> | null = null;
+  let initializedMode: boolean | null = null;
   return (thickMode: boolean): Promise<void> => {
+    // node-oracledb is process-global — thick/thin cannot be mixed in the same process
+    if (initPromise !== null && initializedMode !== thickMode) {
+      return Promise.reject(
+        new Error(
+          `Oracle client already initialised in ${initializedMode ? 'thick' : 'thin'} mode. ` +
+            `Cannot switch to ${thickMode ? 'thick' : 'thin'} mode without restarting the process.`
+        )
+      );
+    }
     if (!initPromise) {
-      initPromise = _initOracleClient(thickMode);
+      initializedMode = thickMode;
+      // Clear on failure so the next call can retry (e.g. transient network error)
+      initPromise = _initOracleClient(thickMode).catch((err) => {
+        initPromise = null;
+        initializedMode = null;
+        throw err;
+      });
     }
     return initPromise;
   };
