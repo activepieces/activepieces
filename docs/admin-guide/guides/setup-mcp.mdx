@@ -1,0 +1,78 @@
+---
+title: "Setup MCP Server"
+description: "Connect external AI agents to your Activepieces project via MCP (Model Context Protocol)"
+icon: "plug"
+---
+
+## Overview
+
+Every Activepieces project exposes an MCP server that lets external AI agents trigger your flows and manage your tables. The MCP server is always enabled — you only need the **Server URL** and **Token** from **Settings → MCP Server** to connect.
+
+## Connection Details
+
+| Field | Value |
+|---|---|
+| **Server URL** | `https://<YOUR_DOMAIN>/api/v1/projects/<PROJECT_ID>/mcp-server/http` |
+| **Token** | Found in **Settings → MCP Server** (click the eye icon to reveal) |
+
+<Tip>
+You can rotate the token at any time from the settings page. The old token stops working immediately.
+</Tip>
+
+## Client Setup
+
+### Cursor / JSON-based MCP Clients
+
+If your MCP client supports `url` + `headers` (e.g. Cursor), use this configuration:
+
+```json
+{
+  "mcpServers": {
+    "activepieces": {
+      "url": "https://<YOUR_DOMAIN>/api/v1/projects/<PROJECT_ID>/mcp-server/http",
+      "headers": {
+        "Authorization": "Bearer <YOUR_TOKEN>"
+      }
+    }
+  }
+}
+```
+
+<Note>
+The Server URL must end with `/http` (not `/sse`).
+</Note>
+
+### Claude Desktop (mcp-remote)
+
+Claude Desktop does not natively support HTTP+headers, so use the `mcp-remote` bridge. Add this to your `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "activepieces": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote",
+        "https://<YOUR_DOMAIN>/api/v1/projects/<PROJECT_ID>/mcp-server/http",
+        "--header",
+        "Authorization: Bearer <YOUR_TOKEN>"
+      ]
+    }
+  }
+}
+```
+
+### Claude Custom Connector
+
+For Claude's custom connector integration (which cannot send custom headers), append the token as a query parameter:
+
+```json
+{
+  "remote_mcp_server_url": "https://<YOUR_DOMAIN>/api/v1/projects/<PROJECT_ID>/mcp-server/http?token=<YOUR_TOKEN>"
+}
+```
+
+<Warning>
+Only use connectors from developers you trust. The platform does not control which tools developers make available and cannot verify that they will work as intended.
+</Warning>

@@ -1,5 +1,5 @@
 import { ProjectResourceType, securityAccess } from '@activepieces/server-common'
-import { AgentMcpTool, ApId, buildAuthHeaders, isNil, McpAuthConfig, McpProtocol, Permission, PopulatedMcpServer, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, UpdateMcpServerRequest } from '@activepieces/shared'
+import { AgentMcpTool, ApId, buildAuthHeaders, isNil, McpAuthConfig, McpProtocol, Permission, PopulatedMcpServer, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
 import { experimental_createMCPClient as createMCPClient, MCPClient, MCPTransport } from '@ai-sdk/mcp'
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js'
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'
@@ -12,14 +12,6 @@ export const mcpServerController: FastifyPluginAsyncZod = async (app) => {
 
     app.get('/', GetMcpRequest, async (req) => {
         return mcpServerService(req.log).getPopulatedByProjectId(req.projectId)
-    })
-
-    app.post('/', UpdateMcpRequest, async (req) => {
-        const { status } = req.body as UpdateMcpServerRequest
-        return mcpServerService(req.log).update({
-            projectId: req.projectId,
-            status,
-        })
     })
 
     app.post('/rotate', RotateTokenRequest, async (req) => {
@@ -46,7 +38,7 @@ export const mcpServerController: FastifyPluginAsyncZod = async (app) => {
                 message: 'Missing or invalid token. Use Authorization: Bearer <token> or add ?token=<token> to the URL (for clients that cannot send headers).',
             })
         }
-        const { server } = await mcpServerService(req.log).buildServer({
+        const mcpServer = await mcpServerService(req.log).buildServer({
             mcp,
         })
 
@@ -56,10 +48,10 @@ export const mcpServerController: FastifyPluginAsyncZod = async (app) => {
 
         reply.raw.on('close', async () => {
             await transport.close()
-            await server.close()
+            await mcpServer.close()
         })
 
-        await server.connect(transport)
+        await mcpServer.connect(transport)
         await transport.handleRequest(req.raw, reply.raw, req.body)
     })
 
@@ -144,27 +136,6 @@ const StreamableHttpRequestRequest = {
         params: z.object({
             projectId: ApId,
         }),
-    },
-}
-
-export const UpdateMcpRequest = {
-    config: {
-        security: securityAccess.project(
-            [PrincipalType.USER],
-            Permission.WRITE_MCP,
-            {
-                type: ProjectResourceType.PARAM,
-            },
-        ),
-    },
-    schema: {
-        tags: ['mcp'],
-        description: 'Update the project MCP server configuration',
-        security: [SERVICE_KEY_SECURITY_OPENAPI],
-        params: z.object({
-            projectId: ApId,
-        }),
-        body: UpdateMcpServerRequest,
     },
 }
 

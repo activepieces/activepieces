@@ -1,14 +1,10 @@
-import { rejectedPromiseHandler } from '@activepieces/server-common'
-import { apId, FlowStatus, FlowTriggerType, FlowVersionState, isNil, MCP_TRIGGER_PIECE_NAME, McpProperty, McpPropertyType, McpServer as McpServerSchema, McpServerStatus, mcpToolNameUtils, McpTrigger, PopulatedFlow, PopulatedMcpServer, TelemetryEventName } from '@activepieces/shared'
+import { apId, isNil, McpServer as McpServerSchema, McpServerStatus, PopulatedMcpServer } from '@activepieces/shared'
 import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { FastifyBaseLogger } from 'fastify'
-import { z } from 'zod'
 import { repoFactory } from '../core/db/repo-factory'
-import { flowService } from '../flows/flow/flow.service'
-import { telemetry } from '../helper/telemetry.utils'
-import { WebhookFlowVersionToRun } from '../webhooks/webhook-handler'
-import { webhookService } from '../webhooks/webhook.service'
 import { McpServerEntity } from './mcp-entity'
+import { listFlows, registerFlowTools } from './tools/flow-tools'
+import { registerTableTools } from './tools/table-tools'
 
 export const mcpServerRepository = repoFactory(McpServerEntity)
 
@@ -27,7 +23,7 @@ export const mcpServerService = (log: FastifyBaseLogger) => {
             if (isNil(mcpServer)) {
                 await mcpServerRepository().upsert({
                     id: apId(),
-                    status: McpServerStatus.DISABLED,
+                    status: McpServerStatus.ENABLED,
                     projectId,
                     token: apId(72),
                 }, ['projectId'])
@@ -39,13 +35,6 @@ export const mcpServerService = (log: FastifyBaseLogger) => {
             const mcp = await mcpServerService(log).getByProjectId(projectId)
             await mcpServerRepository().update(mcp.id, {
                 token: apId(72),
-            })
-            return mcpServerService(log).getPopulatedByProjectId(projectId)
-        },
-        update: async ({ projectId, status }: UpdateParams) => {
-            const mcp = await mcpServerService(log).getByProjectId(projectId)
-            await mcpServerRepository().update(mcp.id, {
-                status,
             })
             return mcpServerService(log).getPopulatedByProjectId(projectId)
         },
@@ -64,123 +53,22 @@ export const mcpServerService = (log: FastifyBaseLogger) => {
                     },
                 ],
             })
-            const enabledFlows = mcp.flows.filter((flow) => flow.status === FlowStatus.ENABLED)
-            for (const flow of enabledFlows) {
-                const mcpTrigger = flow.version.trigger.settings as McpTrigger
-                const mcpInputs = mcpTrigger.input?.inputSchema ?? []
-                const zodFromInputSchema = Object.fromEntries(mcpInputs.map((property) => [property.name, mcpPropertyToZod(property)]))
-                
-                const baseName = (mcpTrigger.input?.toolName ?? flow.version.displayName) + '_' + flow.id.substring(0, 4)
-                const toolName = mcpToolNameUtils.createToolName(baseName)
-                const toolDescription: string = mcpTrigger.input?.toolDescription ?? ''
 
-                server.tool(toolName, toolDescription, zodFromInputSchema, { title: toolName }, async (args) => {
-
-                    const returnsResponse = mcpTrigger.input?.returnsResponse
-                    const response = await webhookService.handleWebhook({
-                        data: () => {
-                            return Promise.resolve({
-                                body: {},
-                                method: 'POST',
-                                headers: {},
-                                queryParams: {},
-                            })
-                        },
-                        logger: log,
-                        flowId: flow.id,
-                        async: !returnsResponse,
-                        flowVersionToRun: WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST,
-                        saveSampleData: false,
-                        payload: args,
-                        execute: true,
-                        failParentOnFailure: false,
-                    })
-                    const isOkay = Math.floor(response.status / 100) === 2
-
-                    rejectedPromiseHandler(telemetry(log).trackProject(mcp.projectId, {
-                        name: TelemetryEventName.MCP_TOOL_CALLED,
-                        payload: {
-                            mcpId: mcp.projectId,
-                            toolName,
-                        },
-                    }), log)
-                    
-                    if (isOkay) {
-                        return {
-                            content: [{
-                                type: 'text',
-                                text: `✅ Successfully executed flow ${flow.version.displayName}\n\n` +
-                                    `Output:\n\`\`\`json\n${JSON.stringify(response, null, 2)}\n\`\`\``,
-                            }],
-                        }
-                    }
-                    return {
-                        content: [
-                            {
-                                type: 'text',
-                                text: `❌ Error executing flow ${flow.version.displayName}\n\n` +
-                                    `Error details:\n\`\`\`json\n${JSON.stringify(response, null, 2) || 'Unknown error occurred'}\n\`\`\``,
-                            },
-                        ],
-                    }
-                })
-            }
-
+            await registerFlowTools(server, mcp, log)
+            await registerTableTools(server, mcp.projectId, log)
             registerEmptyResourcesAndPrompts(server)
+
             return server
         },
     }
 }
 
-
-async function listFlows(mcp: McpServerSchema, logger: FastifyBaseLogger): Promise<PopulatedFlow[]> {
-    const flows = await flowService(logger).list({
-        projectIds: [mcp.projectId],
-        limit: 1000000,
-        cursorRequest: null,
-        versionState: FlowVersionState.DRAFT,
-        includeTriggerSource: false,
-    })
-    return flows.data.filter((flow) => flow.version.trigger.type === FlowTriggerType.PIECE && flow.version.trigger.settings.pieceName === MCP_TRIGGER_PIECE_NAME)
-}
-
-function mcpPropertyToZod(property: McpProperty): z.ZodTypeAny {
-    let schema: z.ZodTypeAny
-
-    switch (property.type) {
-        case McpPropertyType.TEXT:
-        case McpPropertyType.DATE:
-            schema = z.string()
-            break
-        case McpPropertyType.NUMBER:
-            schema = z.number()
-            break
-        case McpPropertyType.BOOLEAN:
-            schema = z.boolean()
-            break
-        case McpPropertyType.ARRAY:
-            schema = z.array(z.string())
-            break
-        case McpPropertyType.OBJECT:
-            schema = z.record(z.string(), z.string())
-            break
-        default:
-            schema = z.unknown()
-    }
-
-    if (property.description) {
-        schema = schema.describe(property.description)
-    }
-
-    return property.required ? schema : schema.nullish()
-}
-
 /**
  * Registers resources/list and prompts/list so they return empty lists.
- * 
+ *
  * - Resources: register a resource template with an empty list.
  * - Prompts: register an empty prompt so the handler is set and returns [].
- * 
+ *
  * Claude Desktop (mcp-remote) does not support prompts/list, so we register an empty prompt.
  */
 function registerEmptyResourcesAndPrompts(server: McpServer): void {
@@ -195,8 +83,6 @@ function registerEmptyResourcesAndPrompts(server: McpServer): void {
     server.registerPrompt('_', {}, () => ({ messages: [] }))
 }
 
-
-
 type BuildServerRequest = {
     mcp: PopulatedMcpServer
 }
@@ -205,7 +91,3 @@ type RotateTokenRequest = {
     projectId: string
 }
 
-type UpdateParams = {
-    status: McpServerStatus
-    projectId: string
-}

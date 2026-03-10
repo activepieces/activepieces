@@ -88,6 +88,7 @@
                   },
                     "admin-guide/guides/manage-oauth2",
                     "admin-guide/guides/setup-ai-providers",
+                    "admin-guide/guides/setup-mcp",
                     {
                       "group": "Secret Managers",
                       "icon": "key",
