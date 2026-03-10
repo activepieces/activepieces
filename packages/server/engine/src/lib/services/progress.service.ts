@@ -113,7 +113,7 @@ export const progressService = {
         await lock.runExclusive(async () => {
             const { flowExecutorContext, engineConstants } = updateParams
             const executionState = await logSerializer.serialize({
-                executionState: {   
+                executionState: {
                     steps: flowExecutorContext.steps,
                     tags: Array.from(flowExecutorContext.tags),
                 },

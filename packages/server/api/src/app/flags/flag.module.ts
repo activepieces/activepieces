@@ -1,3 +1,4 @@
+import { ALL_PRINCIPAL_TYPES } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { securityAccess } from '../core/security/authorization/fastify-security'
@@ -13,7 +14,7 @@ export const flagController: FastifyPluginAsyncZod = async (app) => {
         '/',
         {
             config: {
-                security: securityAccess.public(),
+                security: securityAccess.unscoped(ALL_PRINCIPAL_TYPES),
             },
             logLevel: 'silent',
         },

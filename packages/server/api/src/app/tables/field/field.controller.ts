@@ -85,7 +85,7 @@ const GetFieldByIdRequest = {
 
 const DeleteFieldRequest = {
     config: {
-        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE], undefined, {
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE], undefined, {
             type: ProjectResourceType.TABLE,
             tableName: FieldEntity,
         }),

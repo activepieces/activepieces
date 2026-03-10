@@ -255,7 +255,6 @@ describe('Flow Operations API', () => {
                     displayName: 'Schedule',
                 },
             })
-
             expect(response?.statusCode).toBe(StatusCodes.OK)
             const body = response?.json()
             expect(body.version.trigger.type).toBe(FlowTriggerType.PIECE)

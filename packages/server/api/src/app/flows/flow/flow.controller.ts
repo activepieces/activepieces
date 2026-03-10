@@ -82,7 +82,8 @@ export const flowController: FastifyPluginAsyncZod = async (app) => {
                 const migratedFlowTemplate = await migrateFlowVersionTemplate({
                     displayName: request.body.request.displayName,
                     trigger: request.body.request.trigger,
-                    schemaVersion: request.body.request.schemaVersion,
+                    //because the target for the first migraiton is undefined not null
+                    schemaVersion: request.body.request.schemaVersion ?? undefined,
                     notes: request.body.request.notes ?? [],
                     valid: false,
                 })

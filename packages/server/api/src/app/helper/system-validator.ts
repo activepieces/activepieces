@@ -1,5 +1,5 @@
 import { inspect } from 'util'
-import { ApEdition, ApEnvironment, ExecutionMode, FileLocation, isNil, PieceSyncMode } from '@activepieces/shared'
+import { ApEdition, ApEnvironment, DefaultProjectRole, ExecutionMode, FileLocation, isNil, PieceSyncMode } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { DatabaseType } from '../database/database-type'
 import { RedisType } from '../database/redis/types'
@@ -151,6 +151,7 @@ const systemPropValidators: {
     [AppSystemProp.EDITION]: enumValidator(Object.values(ApEdition)),
     [AppSystemProp.FEATUREBASE_API_KEY]: stringValidator,
     [AppSystemProp.OPENROUTER_PROVISION_KEY]: stringValidator,
+    [AppSystemProp.SCIM_DEFAULT_PROJECT_ROLE]: enumValidator(Object.values(DefaultProjectRole)),
 
     // AppSystemProp
     // Cloud

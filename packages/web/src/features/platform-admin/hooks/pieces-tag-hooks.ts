@@ -1,5 +1,5 @@
 import { Tag } from '@activepieces/shared';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { toast } from 'sonner';
 
@@ -21,6 +21,18 @@ export const piecesTagQueries = {
 };
 
 export const piecesTagMutations = {
+  useDeleteTag: ({ onSuccess }: { onSuccess: () => void }) => {
+    const queryClient = useQueryClient();
+    return useMutation({
+      mutationFn: (id: string) => piecesTagsApi.delete(id),
+      onSuccess: () => {
+        toast.success(t('Tag deleted'));
+        queryClient.invalidateQueries({ queryKey: piecesTagKeys.all });
+        queryClient.invalidateQueries({ queryKey: ['pieces'] });
+        onSuccess();
+      },
+    });
+  },
   useApplyTags: ({ onSuccess }: { onSuccess: () => void }) => {
     return useMutation({
       mutationFn: async ({ piecesName, tags }: ApplyTagsParams) => {

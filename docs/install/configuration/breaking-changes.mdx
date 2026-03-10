@@ -11,11 +11,16 @@ icon: "hammer"
 - `AP_WORKER_CONCURRENCY` and `AP_AGENTS_WORKER_CONCURRENCY` environment variables have been removed. Scaling is now done by adding more worker replicas.
 - The `AP_CONTAINER_TYPE` environment variable now controls which services run: `APP` (API server only), `WORKER` (worker only), or `WORKER_AND_APP` (both, default).
 - `AP_CLUSTER_MODE` environment variable has been removed. Use Kubernetes replicas for scaling app instead.
+- A new `UPDATE_SAMPLE_DATA_INFO` flow operation has been introduced to handle sample data updates independently.
+- `UPDATE_ACTION` and `UPDATE_TRIGGER` no longer accept or apply changes to `sampleData` in step settings. Any `sampleData` fields sent in these requests will be ignored and the existing sample data will be preserved.
+- A new required `lastUpdatedDate` field has been added to all actions and triggers, tracked automatically by the server. It is not accepted in `UPDATE_ACTION` or `UPDATE_TRIGGER` requests.
+- The flow schema version has been bumped from `17` to `18`. Existing flows are migrated automatically.
 
 ### Do you need to take action?
 - If you are using the `GET /v1/queue-metrics` endpoint, switch to `GET /v1/worker-machines`.
 - If you are using `AP_WORKER_CONCURRENCY` or `AP_AGENTS_WORKER_CONCURRENCY`, remove them and scale by adding more worker replicas instead.
 - If you are using `AP_CONTAINER_TYPE`, note the updated values: `APP`, `WORKER`, or `WORKER_AND_APP`.
+- If you are using the API to update sample data on steps via `UPDATE_ACTION` or `UPDATE_TRIGGER`, switch to the new `UPDATE_SAMPLE_DATA_INFO` operation instead.
 
 ## 0.78.1
 
@@ -52,9 +57,11 @@ icon: "hammer"
 ## 0.75.0
 
 ### What has changed?
+- When you navigate to a flow run inside the builder the url will change to /runs, this is something embedding customers might need to consider in case they have a route guard that only allows users to navigate to /flows.
 - In **development mode**, loading piece translations are now off by default. Set `AP_LOAD_TRANSLATIONS_FOR_DEV_PIECES=true` to enable.
 
 ### Do you need to take action?
+- Check your embedding navigation handler and see if it would be blocking the user from seeing the runs inside the builder or not.
 - If you want to load translations for pieces in development mode, set `AP_LOAD_TRANSLATIONS_FOR_DEV_PIECES=true` in your environment variables.
 
 ## 0.74.0
