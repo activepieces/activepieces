@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, DynamicPropsValue, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { vercelAuth } from '../common/auth';
 import { vercelApiCall } from '../common/client';
@@ -25,65 +25,79 @@ export const createDeployment = createAction({
       },
     }),
     target: deploymentTargetProperty,
-    deployment_id: Property.ShortText({
-      displayName: 'Existing Deployment ID',
-      description: 'Deployment ID to redeploy.',
+    source_fields: Property.DynamicProperties({
+      displayName: 'Source Configuration',
       required: false,
-    }),
-    with_latest_commit: Property.Checkbox({
-      displayName: 'Use Latest Commit for Redeploy',
-      description: 'Only applies when redeploying an existing deployment.',
-      required: false,
-      defaultValue: false,
-    }),
-    git_type: Property.StaticDropdown({
-      displayName: 'Git Provider',
-      description: 'Git provider used for the source deployment.',
-      required: false,
-      defaultValue: 'github',
-      options: {
-        options: [
-          { label: 'GitHub', value: 'github' },
-          { label: 'GitHub (Limited)', value: 'github-limited' },
-          { label: 'GitLab', value: 'gitlab' },
-          { label: 'Bitbucket', value: 'bitbucket' },
-        ],
+      refreshers: ['deployment_source'],
+      props: async ({ deployment_source }) => {
+        const fields: DynamicPropsValue = {};
+
+        if (deployment_source === 'redeploy') {
+          fields['deployment_id'] = Property.ShortText({
+            displayName: 'Existing Deployment ID',
+            description: 'Deployment ID to redeploy.',
+            required: true,
+          });
+          fields['with_latest_commit'] = Property.Checkbox({
+            displayName: 'Use Latest Commit for Redeploy',
+            description: 'Only applies when redeploying an existing deployment.',
+            required: false,
+            defaultValue: false,
+          });
+          return fields;
+        }
+
+        fields['git_type'] = Property.StaticDropdown({
+          displayName: 'Git Provider',
+          description: 'Git provider used for the source deployment.',
+          required: true,
+          defaultValue: 'github',
+          options: {
+            options: [
+              { label: 'GitHub', value: 'github' },
+              { label: 'GitHub (Limited)', value: 'github-limited' },
+              { label: 'GitLab', value: 'gitlab' },
+              { label: 'Bitbucket', value: 'bitbucket' },
+            ],
+          },
+        });
+        fields['git_repo_org'] = Property.ShortText({
+          displayName: 'Repository Organization / Workspace',
+          description: 'For GitHub use the org/owner. For Bitbucket slug mode, use the owner.',
+          required: false,
+        });
+        fields['git_repo_name'] = Property.ShortText({
+          displayName: 'Repository Name / Slug',
+          description: 'Repository name for GitHub or slug for Bitbucket slug mode.',
+          required: false,
+        });
+        fields['git_branch'] = Property.ShortText({
+          displayName: 'Git Branch / Ref',
+          description: 'Branch or ref to deploy.',
+          required: true,
+        });
+        fields['git_sha'] = Property.ShortText({
+          displayName: 'Git Commit SHA',
+          description: 'Optional commit SHA.',
+          required: false,
+        });
+        fields['git_repo_id'] = Property.ShortText({
+          displayName: 'Git Repository ID / Project ID',
+          description: 'Use this for GitHub repoId or GitLab projectId mode.',
+          required: false,
+        });
+        fields['git_repo_uuid'] = Property.ShortText({
+          displayName: 'Bitbucket Repository UUID',
+          description: 'Use this for Bitbucket UUID mode.',
+          required: false,
+        });
+        fields['git_workspace_uuid'] = Property.ShortText({
+          displayName: 'Bitbucket Workspace UUID',
+          description: 'Optional Bitbucket workspace UUID.',
+          required: false,
+        });
+        return fields;
       },
-    }),
-    git_repo_org: Property.ShortText({
-      displayName: 'Repository Organization / Workspace',
-      description: 'For GitHub use the org/owner. For Bitbucket slug mode, use the owner.',
-      required: false,
-    }),
-    git_repo_name: Property.ShortText({
-      displayName: 'Repository Name / Slug',
-      description: 'Repository name for GitHub or slug for Bitbucket slug mode.',
-      required: false,
-    }),
-    git_branch: Property.ShortText({
-      displayName: 'Git Branch / Ref',
-      description: 'Branch or ref to deploy.',
-      required: false,
-    }),
-    git_sha: Property.ShortText({
-      displayName: 'Git Commit SHA',
-      description: 'Optional commit SHA.',
-      required: false,
-    }),
-    git_repo_id: Property.ShortText({
-      displayName: 'Git Repository ID / Project ID',
-      description: 'Use this for GitHub repoId or GitLab projectId mode.',
-      required: false,
-    }),
-    git_repo_uuid: Property.ShortText({
-      displayName: 'Bitbucket Repository UUID',
-      description: 'Use this for Bitbucket UUID mode.',
-      required: false,
-    }),
-    git_workspace_uuid: Property.ShortText({
-      displayName: 'Bitbucket Workspace UUID',
-      description: 'Optional Bitbucket workspace UUID.',
-      required: false,
     }),
     force_new: Property.Checkbox({
       displayName: 'Force New Deployment',
@@ -103,19 +117,21 @@ export const createDeployment = createAction({
       project,
       deployment_source,
       target,
-      deployment_id,
-      with_latest_commit,
-      git_type,
-      git_repo_org,
-      git_repo_name,
-      git_branch,
-      git_sha,
-      git_repo_id,
-      git_repo_uuid,
-      git_workspace_uuid,
+      source_fields,
       force_new,
       skip_auto_detection_confirmation,
     } = context.propsValue;
+
+    const deployment_id = source_fields?.['deployment_id'];
+    const with_latest_commit = source_fields?.['with_latest_commit'];
+    const git_type = source_fields?.['git_type'];
+    const git_repo_org = source_fields?.['git_repo_org'];
+    const git_repo_name = source_fields?.['git_repo_name'];
+    const git_branch = source_fields?.['git_branch'];
+    const git_sha = source_fields?.['git_sha'];
+    const git_repo_id = source_fields?.['git_repo_id'];
+    const git_repo_uuid = source_fields?.['git_repo_uuid'];
+    const git_workspace_uuid = source_fields?.['git_workspace_uuid'];
 
     const body: Record<string, unknown> = {
       project: String(project),
