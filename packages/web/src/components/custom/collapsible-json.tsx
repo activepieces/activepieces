@@ -1,5 +1,5 @@
 import { ChevronDown, ChevronRight } from 'lucide-react';
-import { useState } from 'react';
+import React, { useState } from 'react';
 
 import { CopyButton } from '@/components/custom/clipboard/copy-button';
 
@@ -51,7 +51,7 @@ export function CollapsibleJson({
 
 type CollapsibleJsonProps = {
   json: unknown;
-  label: string;
+  label: React.ReactNode;
   description?: string;
   defaultOpen?: boolean;
   className?: string;
