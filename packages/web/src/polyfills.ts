@@ -9,7 +9,11 @@
  * This polyfill uses crypto.getRandomValues() (available in all contexts)
  * to generate a spec-compliant v4 UUID when randomUUID is missing.
  */
-if (typeof crypto !== 'undefined' && typeof crypto.randomUUID !== 'function') {
+if (
+  typeof crypto !== 'undefined' &&
+  typeof crypto.randomUUID !== 'function' &&
+  typeof crypto.getRandomValues === 'function'
+) {
   crypto.randomUUID =
     function randomUUID(): `${string}-${string}-${string}-${string}-${string}` {
       const bytes = new Uint8Array(16);
