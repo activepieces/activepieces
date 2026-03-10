@@ -37,9 +37,9 @@ function Checkbox({ className, variant, checked, ...props }: CheckboxProps) {
         className="grid place-content-center text-current transition-none"
       >
         {checked === 'indeterminate' ? (
-          <MinusIcon className="size-3.5" />
+          <MinusIcon className="size-3.5 text-current" />
         ) : (
-          <CheckIcon className="size-3.5" />
+          <CheckIcon className="size-3.5 text-current" />
         )}
       </CheckboxPrimitive.Indicator>
     </CheckboxPrimitive.Root>
