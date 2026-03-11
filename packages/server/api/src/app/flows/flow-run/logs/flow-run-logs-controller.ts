@@ -71,8 +71,7 @@ export const flowRunLogsController: FastifyPluginAsyncZod = async (app) => {
             })
         }
         const isCompressed = rawLogs.compression === FileCompression.ZSTD || isZstdCompressed(rawLogs.data)
-        if (isCompressed) {
-            void reply.header('Content-Encoding', CONTENT_ENCODING_ZSTD)
+            reply.header('Content-Encoding', CONTENT_ENCODING_ZSTD)
         }
         return reply.type('application/octet-stream').send(rawLogs.data)
     })
