@@ -16,6 +16,7 @@ const fetchWithRetry = fetchRetry(global.fetch)
 
 const BACKUP_INTERVAL_MS = 15000
 export let latestUpdateParams: UpdateStepProgressParams | null = null
+let savedStartTime: string | null = null
 let backupController: AbortController | null = null
 let backupLoopPromise: Promise<void> | null = null
 
@@ -53,6 +54,9 @@ export const progressService = {
     sendUpdate: async (params: UpdateStepProgressParams): Promise<void> => {
         return updateLock.runExclusive(async () => {
             const { engineConstants, flowExecutorContext, stepNameToUpdate } = params
+            if (params.startTime) {
+                savedStartTime = params.startTime
+            }
             latestUpdateParams = params
             if (!stepNameToUpdate || !engineConstants.isTestFlow) { // live runs are updated by backup job
                 return
@@ -146,6 +150,7 @@ export const progressService = {
                 stepNameToTest: engineConstants.stepNameToTest,
                 stepResponse,
                 pauseMetadata: flowExecutorContext.verdict.status === FlowRunStatus.PAUSED ? flowExecutorContext.verdict.pauseMetadata : undefined,
+                startTime: savedStartTime ?? undefined,
                 finishTime: isFlowRunStateTerminal({
                     status: flowExecutorContext.verdict.status,
                     ignoreInternalError: false,
@@ -172,6 +177,7 @@ export const progressService = {
         backupController = null
         backupLoopPromise = null
         latestUpdateParams = null
+        savedStartTime = null
         console.log('[Progress] Shutdown complete')
     },
 }

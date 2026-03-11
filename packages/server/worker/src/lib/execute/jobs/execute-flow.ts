@@ -146,5 +146,6 @@ async function reportFlowStatus(
         progressUpdateType: data.progressUpdateType,
         workerHandlerId: data.synchronousHandlerId ?? null,
         httpRequestId: data.httpRequestId ?? null,
+        finishTime: new Date().toISOString(),
     })
 }
