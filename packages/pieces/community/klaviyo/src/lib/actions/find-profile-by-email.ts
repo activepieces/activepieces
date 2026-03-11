@@ -3,6 +3,15 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { klaviyoAuth } from '../common/auth';
 import { klaviyoApiCall } from '../common/client';
 
+/**
+ * Escape a string value for use inside a Klaviyo filter expression.
+ * Klaviyo filter strings use `equals(field,"value")` syntax where the value
+ * is double-quote-delimited. We need to escape any embedded double quotes.
+ */
+function escapeFilterValue(value: string): string {
+  return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+}
+
 export const findProfileByEmailAction = createAction({
   auth: klaviyoAuth,
   name: 'find_profile_by_email',
@@ -28,8 +37,8 @@ export const findProfileByEmailAction = createAction({
     }
 
     const filter = email
-      ? `equals(email,"${email}")`
-      : `equals(phone_number,"${phone_number}")`;
+      ? `equals(email,"${escapeFilterValue(email)}")`
+      : `equals(phone_number,"${escapeFilterValue(phone_number!)}")`;
 
     return klaviyoApiCall({
       apiKey: context.auth,

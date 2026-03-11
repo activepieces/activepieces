@@ -38,6 +38,10 @@ export async function klaviyoApiCall<T>({
   return response.body;
 }
 
+/**
+ * Fetch all pages from a paginated Klaviyo endpoint, following `links.next` cursors.
+ * Used by dropdown helpers to ensure all items are returned (not just the first page).
+ */
 export async function klaviyoPaginatedFetch<T>(
   apiKey: string,
   endpoint: string,
@@ -83,7 +87,7 @@ export async function klaviyoPaginatedFetch<T>(
 
     nextUrl = page.links?.next ?? null;
 
-    // Safety limit to avoid infinite loops
+    // Safety limit to avoid infinite loops on very large accounts
     if (results.length > 10000) break;
   }
 

@@ -55,9 +55,15 @@ export const trackEventAction = createAction({
       throw new Error('Provide at least a profile email or profile ID.');
     }
 
-    const profile: Record<string, unknown> = {};
-    if (profile_id) profile['id'] = profile_id;
-    if (profile_email) profile['email'] = profile_email;
+    // Per Klaviyo API spec: profile `id` must be a top-level field on the
+    // profile data object, NOT inside `attributes`.
+    const profileData: Record<string, unknown> = { type: 'profile' };
+    if (profile_id) {
+      profileData['id'] = profile_id;
+    }
+    if (profile_email) {
+      profileData['attributes'] = { email: profile_email };
+    }
 
     const attributes: Record<string, unknown> = {
       metric: {
@@ -67,10 +73,7 @@ export const trackEventAction = createAction({
         },
       },
       profile: {
-        data: {
-          type: 'profile',
-          attributes: profile,
-        },
+        data: profileData,
       },
       properties: event_properties ?? {},
     };

@@ -12,7 +12,6 @@ import {
 } from '@activepieces/pieces-common';
 import { klaviyoAuth } from '../common/auth';
 import { klaviyoApiCall } from '../common/client';
-import { listIdDropdown } from '../common/props';
 
 type KlaviyoProfile = {
   id: string;
@@ -30,10 +29,7 @@ type Props = {
   list_or_segment_id: string;
 };
 
-const polling: Polling<
-  PiecePropValueSchema<typeof klaviyoAuth>,
-  Props
-> = {
+const polling: Polling<PiecePropValueSchema<typeof klaviyoAuth>, Props> = {
   strategy: DedupeStrategy.TIMEBASED,
   async items({ auth, propsValue }) {
     const { list_or_segment, list_or_segment_id } = propsValue;
@@ -42,21 +38,23 @@ const polling: Polling<
         ? `/lists/${list_or_segment_id}/profiles`
         : `/segments/${list_or_segment_id}/profiles`;
 
-    const response = await klaviyoApiCall<{
-      data: KlaviyoProfile[];
-    }>({
+    const response = await klaviyoApiCall<{ data: KlaviyoProfile[] }>({
       apiKey: auth as string,
       method: HttpMethod.GET,
       endpoint,
       queryParams: {
         'page[size]': '50',
-        sort: '-created',
+        // Sort by `updated` descending — picks up profiles that were newly added
+        // to the list (their `updated` timestamp changes on list membership change)
+        sort: '-updated',
         'fields[profile]': 'id,email,first_name,last_name,created,updated',
       },
     });
 
     return (response.data ?? []).map((profile) => ({
-      epochMilliSeconds: new Date(profile.attributes.created).valueOf(),
+      // Use `updated` as the dedup key so pre-existing profiles whose list
+      // membership just changed (updated timestamp bumped) are still surfaced.
+      epochMilliSeconds: new Date(profile.attributes.updated).valueOf(),
       data: profile,
     }));
   },

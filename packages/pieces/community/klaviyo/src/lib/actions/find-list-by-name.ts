@@ -3,6 +3,10 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { klaviyoAuth } from '../common/auth';
 import { klaviyoApiCall } from '../common/client';
 
+function escapeFilterValue(value: string): string {
+  return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+}
+
 export const findListByNameAction = createAction({
   auth: klaviyoAuth,
   name: 'find_list_by_name',
@@ -21,7 +25,7 @@ export const findListByNameAction = createAction({
       method: HttpMethod.GET,
       endpoint: '/lists',
       queryParams: {
-        filter: `equals(name,"${context.propsValue.name}")`,
+        filter: `equals(name,"${escapeFilterValue(context.propsValue.name)}")`,
       },
     });
   },

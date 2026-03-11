@@ -1,7 +1,5 @@
 import { Property } from '@activepieces/pieces-framework';
-import { klaviyoApiCall } from './client';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { klaviyoAuth } from './auth';
+import { klaviyoPaginatedFetch } from './client';
 
 export const listIdDropdown = Property.Dropdown({
   displayName: 'List',
@@ -14,17 +12,14 @@ export const listIdDropdown = Property.Dropdown({
       return { disabled: true, options: [], placeholder: 'Enter API key first' };
     }
     try {
-      const response = await klaviyoApiCall<{
-        data: { id: string; attributes: { name: string } }[];
-      }>({
-        apiKey: auth,
-        method: HttpMethod.GET,
-        endpoint: '/lists',
-        queryParams: { 'page[size]': '100' },
-      });
+      const lists = await klaviyoPaginatedFetch<{
+        id: string;
+        attributes: { name: string };
+      }>(auth, '/lists', { 'page[size]': '100', 'fields[list]': 'id,name' });
+
       return {
         disabled: false,
-        options: (response.data ?? []).map((list) => ({
+        options: lists.map((list) => ({
           label: list.attributes.name,
           value: list.id,
         })),
@@ -46,17 +41,17 @@ export const segmentIdDropdown = Property.Dropdown({
       return { disabled: true, options: [], placeholder: 'Enter API key first' };
     }
     try {
-      const response = await klaviyoApiCall<{
-        data: { id: string; attributes: { name: string } }[];
-      }>({
-        apiKey: auth,
-        method: HttpMethod.GET,
-        endpoint: '/segments',
-        queryParams: { 'page[size]': '100' },
+      const segments = await klaviyoPaginatedFetch<{
+        id: string;
+        attributes: { name: string };
+      }>(auth, '/segments', {
+        'page[size]': '100',
+        'fields[segment]': 'id,name',
       });
+
       return {
         disabled: false,
-        options: (response.data ?? []).map((seg) => ({
+        options: segments.map((seg) => ({
           label: seg.attributes.name,
           value: seg.id,
         })),
@@ -78,17 +73,17 @@ export const metricIdDropdown = Property.Dropdown({
       return { disabled: true, options: [], placeholder: 'Enter API key first' };
     }
     try {
-      const response = await klaviyoApiCall<{
-        data: { id: string; attributes: { name: string; integration?: { name: string } } }[];
-      }>({
-        apiKey: auth,
-        method: HttpMethod.GET,
-        endpoint: '/metrics',
-        queryParams: { 'page[size]': '100' },
+      const metrics = await klaviyoPaginatedFetch<{
+        id: string;
+        attributes: { name: string };
+      }>(auth, '/metrics', {
+        'page[size]': '100',
+        'fields[metric]': 'id,name',
       });
+
       return {
         disabled: false,
-        options: (response.data ?? []).map((m) => ({
+        options: metrics.map((m) => ({
           label: m.attributes.name,
           value: m.id,
         })),
