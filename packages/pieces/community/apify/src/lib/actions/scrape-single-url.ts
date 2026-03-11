@@ -68,30 +68,34 @@ export const scrapeSingleUrl = createAction({
       saveMarkdown: true,
     };
 
+    let run;
     try {
-      const run = await client.actor(WEBSITE_CONTENT_CRAWLER_ACTOR_ID).call(input);
-
-      // Fetch dataset items if available
-      if (run.defaultDatasetId) {
-        const result = await client.dataset(run.defaultDatasetId).listItems();
-
-        if (!result.items || result.items.length === 0) {
-          throw new Error('Scraping returned no results. The page may have been blocked or returned no content.');
-        }
-
-        const firstResultItem = result.items[0];
-
-        return {
-          url: firstResultItem['url'] ?? url,
-          markdown: firstResultItem['markdown'] ?? '',
-          html: firstResultItem['html'] ?? '',
-        };
-      }
-
-      return run;
-
+      run = await client.actor(WEBSITE_CONTENT_CRAWLER_ACTOR_ID).call(input);
     } catch (error: any) {
       throw new Error('Failed to scrape URL: ' + error.message);
     }
+
+    if (!run.defaultDatasetId) {
+      return run;
+    }
+
+    let result;
+    try {
+      result = await client.dataset(run.defaultDatasetId).listItems();
+    } catch (error: any) {
+      throw new Error('Failed to fetch scrape results: ' + error.message);
+    }
+
+    if (!result.items || result.items.length === 0) {
+      throw new Error('Scraping returned no results. The page may have been blocked or returned no content.');
+    }
+
+    const firstResultItem = result.items[0];
+
+    return {
+      url: firstResultItem['url'] ?? url,
+      markdown: firstResultItem['markdown'] ?? '',
+      html: firstResultItem['html'] ?? '',
+    };
   },
 });
