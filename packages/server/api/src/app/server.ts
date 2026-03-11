@@ -55,7 +55,6 @@ export const setupServer = async (): Promise<FastifyInstance> => {
         const frontendPath = path.resolve(process.cwd(), 'dist/packages/web')
         await app.register(fastifyStatic, {
             root: frontendPath,
-            wildcard: false,
             setHeaders: (res, filepath) => {
                 if (filepath.endsWith('.html')) {
                     res.setHeader('Cache-Control', 'public, max-age=120')
