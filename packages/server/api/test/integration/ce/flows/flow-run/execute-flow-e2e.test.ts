@@ -44,7 +44,7 @@ beforeAll(async () => {
     app = ctx.app
     await worker.start({
         apiUrl: ctx.apiUrl,
-        socketUrl: { url: ctx.apiUrl, path: '/socket.io/' },
+        socketUrl: { url: ctx.apiUrl, path: '/api/socket.io' },
         workerToken: ctx.workerToken,
     })
     await new Promise((resolve) => setTimeout(resolve, 5000))
