@@ -24,9 +24,7 @@ async function backupLoop(signal: AbortSignal): Promise<void> {
     while (!signal.aborted) {
         try {
             if (latestUpdateParams) {
-                console.log('[Progress] Backup interval fired, starting backup')
                 await progressService.backup(latestUpdateParams)
-                console.log('[Progress] Backup interval completed')
             }
         }
         catch (err) {

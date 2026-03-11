@@ -5,6 +5,7 @@ import {
     EngineResponseStatus,
     ErrorCode,
     ExecuteFlowJobData,
+    ExecutionState,
     ExecutionType,
     FlowRunStatus,
     FlowVersion,
@@ -12,6 +13,7 @@ import {
     ResumeExecuteFlowOperation,
     ResumePayload,
     WorkerJobType,
+    WorkerToApiContract,
 } from '@activepieces/shared'
 import { flowCache } from '../../cache/flow/flow-cache'
 import { provisioner } from '../../cache/provisioner'
@@ -46,7 +48,7 @@ export const executeFlowJob: JobHandler<ExecuteFlowJobData> = {
             })
 
             const resolvedPayload = await resolvePayload(data.payload, data.projectId, ctx.apiClient)
-            const operation = buildFlowOperation(ctx, data, resolvedPayload, flowVersion, timeoutInSeconds)
+            const operation = await buildFlowOperation(ctx, data, resolvedPayload, flowVersion, timeoutInSeconds)
             const result = await sandbox.execute(
                 EngineOperationType.EXECUTE_FLOW,
                 operation,
@@ -90,13 +92,13 @@ export const executeFlowJob: JobHandler<ExecuteFlowJobData> = {
     },
 }
 
-function buildFlowOperation(
+async function buildFlowOperation(
     ctx: JobContext,
     data: ExecuteFlowJobData,
     resolvedPayload: unknown,
     flowVersion: FlowVersion,
     timeoutInSeconds: number,
-): BeginExecuteFlowOperation | ResumeExecuteFlowOperation {
+): Promise<BeginExecuteFlowOperation | ResumeExecuteFlowOperation> {
     const base = {
         flowVersion,
         flowRunId: data.runId,
@@ -116,10 +118,11 @@ function buildFlowOperation(
     }
 
     if (data.executionType === ExecutionType.RESUME) {
+        const executionState = await fetchExecutionState(ctx.apiClient, data)
         return {
             ...base,
             executionType: ExecutionType.RESUME,
-            executionState: { steps: {}, tags: [] },
+            executionState,
             resumePayload: resolvedPayload as ResumePayload,
         }
     }
@@ -132,6 +135,15 @@ function buildFlowOperation(
         executeTrigger: data.executeTrigger ?? false,
         sampleData: data.sampleData,
     }
+}
+
+async function fetchExecutionState(apiClient: WorkerToApiContract, data: ExecuteFlowJobData): Promise<ExecutionState> {
+    if (isNil(data.logsFileId)) {
+        return { steps: {}, tags: [] }
+    }
+    const buffer = await apiClient.getPayloadFile({ fileId: data.logsFileId, projectId: data.projectId })
+    const parsed = JSON.parse(buffer.toString('utf-8'))
+    return parsed.executionState ?? { steps: {}, tags: [] }
 }
 
 async function reportFlowStatus(
