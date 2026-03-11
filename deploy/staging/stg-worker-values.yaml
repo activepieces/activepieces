@@ -7,11 +7,11 @@
 
 workloadType: statefulset
 
-replicaCount: 32
+replicaCount: 2
 
 image:
   repository: ghcr.io/activepieces/activepieces-cloud
-  tag: "0.79.2.1fa2a3b0e8924609d308d0ede8ff7c8f40aeeb68.beta"       # reference only — CI always overrides via --set image.tag=
+  tag: "0.79.2.a45aa3e55fa2edb3acf4528012534b769f23b61d.beta"       # reference only — CI always overrides via --set image.tag=
   pullPolicy: Always
 
 imagePullSecrets:
@@ -24,20 +24,32 @@ activepieces:
   environment: "prod"
   logLevel: "info"
   logPretty: false
-  # Workers share JWT and encryption keys with the APP release
-  jwtSecretName: "activepieces-jwt-secret"
-  encryptionSecretName: "activepieces-secrets"
   frontendUrl: "https://stg.activepieces.dev"
+  # Workers share JWT, encryption keys and worker token with the APP release
+  workerToken:
+    externalSecret:
+      name: "activepieces-worker-token"
+      key: "worker-token"
+  encryptionKey:
+    externalSecret:
+      name: "activepieces-secrets"
+      key: "encryption-key"
+  jwtSecret:
+    externalSecret:
+      name: "activepieces-jwt-secret"
+      key: "jwt-secret"
 
 # External PostgreSQL (bundled subchart disabled)
 postgresql:
   enabled: false
-  port: 5432
   useSSL: false
-  host: "10.0.1.4"
+  externalSecret:
+    name: "activepieces-db-secret"
+    hostKey: "host"
+    portKey: "port"
   auth:
-    database: "activepieces"
-    username: "postgres"
+    database: "ap-pool"
+    username: "ap"
     externalSecret:
       name: "activepieces-db-secret"
       key: "password"
@@ -45,9 +57,11 @@ postgresql:
 # External Redis (bundled subchart disabled)
 redis:
   enabled: false
-  port: 6379
   type: "standalone"
-  host: "10.0.1.5"
+  externalSecret:
+    name: "activepieces-redis-secret"
+    hostKey: "host"
+    portKey: "port"
   auth:
     enabled: true
     externalSecret:
@@ -62,9 +76,9 @@ kubernetes-secret-generator:
 s3:
   enabled: true
   useSignedUrls: true
-  bucket: "activepiecesstagingbucket"
-  region: "eu-central-1"
-  endpoint: "https://fsn1.your-objectstorage.com"
+  bucket: "ap-files-dev"
+  region: "us-east-1"
+  endpoint: "https://1c441b119970086c90b78ad3be4a478f.r2.cloudflarestorage.com"
   externalSecret:
     name: "activepieces-s3-secret"
     accessKeyIdKey: "accessKeyId"
