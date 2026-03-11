@@ -28,8 +28,6 @@ app_node_count            = 0
 worker_server_type = ""                     # e.g. cx43 (4 vCPU, 8GB)
 worker_node_count  = 0
 
-db_server_type = ""                         # e.g. cx23 (2 vCPU, 4GB RAM)
-
 s3_bucket_name = ""                         # created manually
 
 load_balancer_type = ""                     # e.g. lb11
@@ -73,8 +71,8 @@ helm upgrade --install argo-rollouts argo-rollouts \
 ### Create Secrets
 
 ```bash
-# Get kubectl setup commands for secrets
-terraform output -raw k8s_secrets_commands
+# Apply all secrets from your env file (see deploy/scripts/apply-secrets.sh)
+./deploy/scripts/apply-secrets.sh --env-file .env.production --namespace activepieces
 
 # Create docker registry creds
 kubectl create secret docker-registry ghcr-pull-secret \

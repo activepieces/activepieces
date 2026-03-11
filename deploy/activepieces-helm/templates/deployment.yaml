@@ -59,9 +59,16 @@ spec:
             - name: AP_FRONTEND_URL
               value: {{ .Values.activepieces.frontendUrl | quote }}
             {{- end }}
-            {{- if .Values.activepieces.apiKey }}
+            {{- if or .Values.activepieces.apiKey ((.Values.activepieces.apiKeySecret).externalSecret) }}
             - name: AP_API_KEY
+              {{- if (.Values.activepieces.apiKeySecret).externalSecret }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.activepieces.apiKeySecret.externalSecret.name | quote }}
+                  key: {{ .Values.activepieces.apiKeySecret.externalSecret.key | default "api-key" | quote }}
+              {{- else }}
               value: {{ .Values.activepieces.apiKey | quote }}
+              {{- end }}
             {{- end }}
             {{- if .Values.activepieces.clientRealIpHeader }}
             - name: AP_CLIENT_REAL_IP_HEADER
@@ -150,13 +157,23 @@ spec:
             - name: AP_ENCRYPTION_KEY
               valueFrom:
                 secretKeyRef:
+                  {{- if (.Values.activepieces.encryptionKey).externalSecret }}
+                  name: {{ .Values.activepieces.encryptionKey.externalSecret.name | quote }}
+                  key: {{ .Values.activepieces.encryptionKey.externalSecret.key | default "encryption-key" | quote }}
+                  {{- else }}
                   name: {{ .Values.activepieces.encryptionSecretName | default (printf "%s-secrets" (include "activepieces.fullname" .)) }}
                   key: encryption-key
+                  {{- end }}
             - name: AP_JWT_SECRET
               valueFrom:
                 secretKeyRef:
+                  {{- if (.Values.activepieces.jwtSecret).externalSecret }}
+                  name: {{ .Values.activepieces.jwtSecret.externalSecret.name | quote }}
+                  key: {{ .Values.activepieces.jwtSecret.externalSecret.key | default "jwt-secret" | quote }}
+                  {{- else }}
                   name: {{ .Values.activepieces.jwtSecretName | default (printf "%s-jwt-secret" (include "activepieces.fullname" .)) }}
                   key: jwt-secret
+                  {{- end }}
             {{- if .Values.activepieces.environment }}
             - name: AP_ENVIRONMENT
               value: {{ .Values.activepieces.environment | quote }}
@@ -172,6 +189,13 @@ spec:
             {{- if .Values.activepieces.containerType }}
             - name: AP_CONTAINER_TYPE
               value: {{ .Values.activepieces.containerType | quote }}
+            {{- end }}
+            {{- if (.Values.activepieces.workerToken).externalSecret }}
+            - name: AP_WORKER_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.activepieces.workerToken.externalSecret.name | quote }}
+                  key: {{ .Values.activepieces.workerToken.externalSecret.key | default "worker-token" | quote }}
             {{- end }}
             {{- if .Values.activepieces.clusterMode }}
             - name: AP_CLUSTER_MODE
@@ -213,7 +237,7 @@ spec:
             - name: AP_EXECUTION_DATA_RETENTION_DAYS
               value: {{ .Values.activepieces.executionDataRetentionDays | quote }}
             {{- end }}
-            {{- if or .Values.postgresql.enabled (or .Values.postgresql.host .Values.postgresql.url) }}
+            {{- if or .Values.postgresql.enabled (or .Values.postgresql.host (or .Values.postgresql.url (.Values.postgresql.externalSecret))) }}
             # PostgreSQL configuration (subchart or external)
             - name: AP_DB_TYPE
               value: "POSTGRES"
@@ -221,6 +245,18 @@ spec:
             - name: AP_POSTGRES_DATABASE
               value: {{ .Values.postgresql.auth.database | quote }}
             {{- end }}
+            {{- if (.Values.postgresql.externalSecret) }}
+            - name: AP_POSTGRES_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.postgresql.externalSecret.name | quote }}
+                  key: {{ .Values.postgresql.externalSecret.hostKey | default "host" | quote }}
+            - name: AP_POSTGRES_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.postgresql.externalSecret.name | quote }}
+                  key: {{ .Values.postgresql.externalSecret.portKey | default "port" | quote }}
+            {{- else }}
             {{- if .Values.postgresql.host }}
             - name: AP_POSTGRES_HOST
               value: {{ .Values.postgresql.host | quote }}
@@ -231,6 +267,7 @@ spec:
             {{- if .Values.postgresql.port }}
             - name: AP_POSTGRES_PORT
               value: {{ .Values.postgresql.port | quote }}
+            {{- end }}
             {{- end }}
             {{- if .Values.postgresql.auth.username }}
             - name: AP_POSTGRES_USERNAME
@@ -256,7 +293,13 @@ spec:
             - name: AP_POSTGRES_USE_SSL
               value: {{ .Values.postgresql.useSSL | quote }}
             {{- end }}
-            {{- if .Values.postgresql.sslCa }}
+            {{- if (.Values.postgresql.sslCaSecret).externalSecret }}
+            - name: AP_POSTGRES_SSL_CA
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.postgresql.sslCaSecret.externalSecret.name | quote }}
+                  key: {{ .Values.postgresql.sslCaSecret.externalSecret.key | default "ssl-ca" | quote }}
+            {{- else if .Values.postgresql.sslCa }}
             - name: AP_POSTGRES_SSL_CA
               value: {{ .Values.postgresql.sslCa | quote }}
             {{- end }}
@@ -269,8 +312,20 @@ spec:
             - name: AP_DB_TYPE
               value: "SQLITE3"
             {{- end }}
-            {{- if or .Values.redis.enabled (or .Values.redis.host .Values.redis.url) }}
+            {{- if or .Values.redis.enabled (or .Values.redis.host (or .Values.redis.url .Values.redis.externalSecret)) }}
             # Redis configuration (subchart or external)
+            {{- if (.Values.redis.externalSecret) }}
+            - name: AP_REDIS_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.redis.externalSecret.name | quote }}
+                  key: {{ .Values.redis.externalSecret.hostKey | default "host" | quote }}
+            - name: AP_REDIS_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.redis.externalSecret.name | quote }}
+                  key: {{ .Values.redis.externalSecret.portKey | default "port" | quote }}
+            {{- else }}
             {{- if .Values.redis.host }}
             - name: AP_REDIS_HOST
               value: {{ .Values.redis.host | quote }}
@@ -281,6 +336,7 @@ spec:
             {{- if .Values.redis.port }}
             - name: AP_REDIS_PORT
               value: {{ .Values.redis.port | quote }}
+            {{- end }}
             {{- end }}
             {{- if .Values.redis.useSSL }}
             - name: AP_REDIS_USE_SSL
@@ -361,13 +417,27 @@ spec:
             - name: AP_SMTP_PORT
               value: {{ .Values.smtp.port | quote }}
             {{- end }}
-            {{- if .Values.smtp.username }}
+            {{- if or .Values.smtp.username (.Values.smtp.externalSecret) }}
             - name: AP_SMTP_USERNAME
+              {{- if (.Values.smtp.externalSecret) }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.smtp.externalSecret.name | quote }}
+                  key: {{ .Values.smtp.externalSecret.usernameKey | default "username" | quote }}
+              {{- else }}
               value: {{ .Values.smtp.username | quote }}
+              {{- end }}
             {{- end }}
-            {{- if .Values.smtp.password }}
+            {{- if or .Values.smtp.password (.Values.smtp.externalSecret) }}
             - name: AP_SMTP_PASSWORD
+              {{- if (.Values.smtp.externalSecret) }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.smtp.externalSecret.name | quote }}
+                  key: {{ .Values.smtp.externalSecret.passwordKey | default "password" | quote }}
+              {{- else }}
               value: {{ .Values.smtp.password | quote }}
+              {{- end }}
             {{- end }}
             {{- if .Values.smtp.senderEmail }}
             - name: AP_SMTP_SENDER_EMAIL
