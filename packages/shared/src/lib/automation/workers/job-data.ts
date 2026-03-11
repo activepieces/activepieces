@@ -8,7 +8,19 @@ import { FlowVersion } from '../flows/flow-version'
 import { FlowTriggerType } from '../flows/triggers/trigger'
 import { PiecePackage } from '../pieces/piece'
 
-export const LATEST_JOB_DATA_SCHEMA_VERSION = 4
+export const LATEST_JOB_DATA_SCHEMA_VERSION = 5
+
+export const InlineJobPayload = z.object({
+    type: z.literal('inline'),
+    value: z.any(),
+})
+
+export const RefJobPayload = z.object({
+    type: z.literal('ref'),
+    fileId: z.string(),
+})
+
+export const JobPayload = z.discriminatedUnion('type', [InlineJobPayload, RefJobPayload])
 
 
 export const JOB_PRIORITY = {
@@ -108,7 +120,7 @@ export const ExecuteFlowJobData = z.object({
     runId: z.string(),
     synchronousHandlerId: z.union([z.string(), z.null()]).optional(),
     httpRequestId: z.string().optional(),
-    payload: z.any(),
+    payload: JobPayload,
     executeTrigger: z.boolean().optional(),
     executionType: z.nativeEnum(ExecutionType),
     progressUpdateType: z.nativeEnum(ProgressUpdateType),
@@ -125,7 +137,7 @@ export const WebhookJobData = z.object({
     platformId: z.string(),
     schemaVersion: z.number(),
     requestId: z.string(),
-    payload: z.any(),
+    payload: JobPayload,
     runEnvironment: z.nativeEnum(RunEnvironment),
     flowId: z.string(),
     saveSampleData: z.boolean(),
@@ -223,3 +235,4 @@ export const JobData = z.union([
     EventDestinationJobData,
 ])
 export type JobData = z.infer<typeof JobData>
+export type JobPayload = z.infer<typeof JobPayload>

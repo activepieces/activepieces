@@ -40,6 +40,7 @@ import { AppSystemProp } from '../../helper/system/system-props'
 import { projectService } from '../../project/project-service'
 import { engineResponseWatcher } from '../../workers/engine-response-watcher'
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
+import { payloadOffloader } from '../../workers/payload-offloader'
 import { sampleDataService } from '../step-run/sample-data.service'
 import { FlowRunEntity } from './flow-run-entity'
 import { flowRunSideEffects } from './flow-run-side-effects'
@@ -594,6 +595,10 @@ async function addToQueue(params: AddToQueueParams, log: FastifyBaseLogger): Pro
     const traceContext: Record<string, string> = {}
     propagation.inject(context.active(), traceContext)
 
+    const jobPayload = isNil(params.synchronousHandlerId)
+        ? await payloadOffloader.offloadPayload(log, params.payload, params.flowRun.projectId, params.platformId)
+        : await payloadOffloader.maybeOffloadPayload(log, params.payload, params.flowRun.projectId, params.platformId)
+
     await jobQueue(log).add({
         id: params.flowRun.id,
         type: JobType.ONE_TIME,
@@ -607,7 +612,7 @@ async function addToQueue(params: AddToQueueParams, log: FastifyBaseLogger): Pro
             runId: params.flowRun.id,
             jobType: WorkerJobType.EXECUTE_FLOW,
             flowVersionId: params.flowRun.flowVersionId,
-            payload: params.payload,
+            payload: jobPayload,
             executeTrigger: params.executeTrigger,
             httpRequestId: params.httpRequestId,
             executionType: params.executionType,

@@ -42,6 +42,7 @@ export type WorkerToApiContract = {
     getPiece(input: GetPieceRequest): Promise<unknown>
     getPieceArchive(input: { archiveId: string }): Promise<Buffer>
     extendLock(input: { jobId: string }): Promise<void>
+    getPayloadFile(input: { fileId: string, projectId: string }): Promise<Buffer>
     getUsedPieces(input: Record<string, never>): Promise<PiecePackage[]>
     markPieceAsUsed(input: { pieces: PiecePackage[] }): Promise<void>
 }

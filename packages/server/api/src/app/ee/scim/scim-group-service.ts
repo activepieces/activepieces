@@ -1,4 +1,3 @@
-import { AppSystemProp } from '../../helper/system/system-props'
 import {
     CreateScimGroupRequest,
     DefaultProjectRole,
@@ -20,6 +19,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { repoFactory } from '../../core/db/repo-factory'
 import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-props'
 import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'

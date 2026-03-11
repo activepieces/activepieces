@@ -178,6 +178,10 @@ const systemPropValidators: {
         }
         return true
     },
+
+    // Webhook payload limits
+    [AppSystemProp.MAX_WEBHOOK_PAYLOAD_SIZE_MB]: numberValidator,
+    [AppSystemProp.WEBHOOK_PAYLOAD_INLINE_THRESHOLD_KB]: numberValidator,
 }
 
 

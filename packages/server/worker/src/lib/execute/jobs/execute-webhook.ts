@@ -5,6 +5,7 @@ import {
     isNil,
     ProgressUpdateType,
     TriggerHookType,
+    TriggerPayload,
     WebhookJobData,
     WorkerJobType,
 } from '@activepieces/shared'
@@ -14,6 +15,7 @@ import { workerSettings } from '../../config/worker-settings'
 import { sandboxManager } from '../sandbox-manager'
 import { JobContext, JobHandler, JobResult } from '../types'
 import { extractCodeArtifacts, extractPiecePackages } from '../utils/flow-helpers'
+import { resolvePayload } from '../utils/resolve-payload'
 import { getWebhookUrl } from '../utils/webhook-url'
 
 export const executeWebhookJob: JobHandler<WebhookJobData> = {
@@ -21,6 +23,7 @@ export const executeWebhookJob: JobHandler<WebhookJobData> = {
     async execute(ctx: JobContext, data: WebhookJobData): Promise<JobResult> {
         const settings = workerSettings.getSettings()
         const timeoutInSeconds = settings.TRIGGER_TIMEOUT_SECONDS
+        const resolvedPayload = await resolvePayload(data.payload, data.projectId, ctx.apiClient)
 
         const flowVersion = await flowCache(ctx.log, ctx.apiClient).getVersion({ flowVersionId: data.flowVersionIdToRun })
         if (isNil(flowVersion)) {
@@ -47,7 +50,7 @@ export const executeWebhookJob: JobHandler<WebhookJobData> = {
                         hookType: TriggerHookType.RUN,
                         flowVersion,
                         webhookUrl: getWebhookUrl(settings.PUBLIC_URL, data.flowId, true),
-                        triggerPayload: data.payload,
+                        triggerPayload: resolvedPayload as TriggerPayload,
                         test: true,
                         projectId: data.projectId,
                         platformId: data.platformId,
@@ -82,7 +85,7 @@ export const executeWebhookJob: JobHandler<WebhookJobData> = {
                     hookType: TriggerHookType.RUN,
                     flowVersion,
                     webhookUrl: getWebhookUrl(settings.PUBLIC_URL, data.flowId),
-                    triggerPayload: data.payload,
+                    triggerPayload: resolvedPayload as TriggerPayload,
                     test: false,
                     projectId: data.projectId,
                     platformId: data.platformId,

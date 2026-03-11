@@ -251,6 +251,7 @@ function isExecutionDataFileThatExpires(type: FileType) {
         case FileType.FLOW_STEP_FILE:
         case FileType.TRIGGER_PAYLOAD:
         case FileType.TRIGGER_EVENT_FILE:
+        case FileType.WEBHOOK_PAYLOAD:
             return true
         case FileType.PLATFORM_ASSET:
         case FileType.USER_PROFILE_PICTURE:

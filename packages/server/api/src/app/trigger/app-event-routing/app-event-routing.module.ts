@@ -24,6 +24,7 @@ import { rejectedPromiseHandler } from '../../helper/promise-handler'
 import { projectService } from '../../project/project-service'
 import { WebhookFlowVersionToRun, webhookService } from '../../webhooks/webhook.service'
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
+import { payloadOffloader } from '../../workers/payload-offloader'
 import { triggerSourceService } from '../trigger-source/trigger-source-service'
 import { appEventRoutingService } from './app-event-routing.service'
 
@@ -127,6 +128,7 @@ export const appEventRoutingController: FastifyPluginAsyncZod = async (
                 }
                 const flowVersionIdToRun = await webhookService.getFlowVersionIdToRun(WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST, flow)
                 const platformId = await projectService(request.log).getPlatformId(listener.projectId)
+                const jobPayload = await payloadOffloader.offloadPayload(request.log, payload, listener.projectId, platformId)
                 return jobQueue(request.log).add({
                     id: requestId,
                     type: JobType.ONE_TIME,
@@ -135,7 +137,7 @@ export const appEventRoutingController: FastifyPluginAsyncZod = async (
                         projectId: listener.projectId,
                         schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
                         requestId,
-                        payload,
+                        payload: jobPayload,
                         flowId: listener.flowId,
                         jobType: WorkerJobType.EXECUTE_WEBHOOK,
                         runEnvironment: RunEnvironment.PRODUCTION,

@@ -19,6 +19,7 @@ import { workerSettings } from '../../config/worker-settings'
 import { sandboxManager } from '../sandbox-manager'
 import { JobContext, JobHandler, JobResult } from '../types'
 import { extractCodeArtifacts, extractPiecePackages } from '../utils/flow-helpers'
+import { resolvePayload } from '../utils/resolve-payload'
 
 export const executeFlowJob: JobHandler<ExecuteFlowJobData> = {
     jobType: WorkerJobType.EXECUTE_FLOW,
@@ -44,7 +45,8 @@ export const executeFlowJob: JobHandler<ExecuteFlowJobData> = {
                 mounts: [],
             })
 
-            const operation = buildFlowOperation(ctx, data, flowVersion, timeoutInSeconds)
+            const resolvedPayload = await resolvePayload(data.payload, data.projectId, ctx.apiClient)
+            const operation = buildFlowOperation(ctx, data, resolvedPayload, flowVersion, timeoutInSeconds)
             const result = await sandbox.execute(
                 EngineOperationType.EXECUTE_FLOW,
                 operation,
@@ -91,6 +93,7 @@ export const executeFlowJob: JobHandler<ExecuteFlowJobData> = {
 function buildFlowOperation(
     ctx: JobContext,
     data: ExecuteFlowJobData,
+    resolvedPayload: unknown,
     flowVersion: FlowVersion,
     timeoutInSeconds: number,
 ): BeginExecuteFlowOperation | ResumeExecuteFlowOperation {
@@ -117,7 +120,7 @@ function buildFlowOperation(
             ...base,
             executionType: ExecutionType.RESUME,
             executionState: { steps: {}, tags: [] },
-            resumePayload: data.payload as ResumePayload,
+            resumePayload: resolvedPayload as ResumePayload,
         }
     }
 
@@ -125,7 +128,7 @@ function buildFlowOperation(
         ...base,
         executionType: ExecutionType.BEGIN,
         executionState: { steps: {}, tags: [] },
-        triggerPayload: data.payload,
+        triggerPayload: resolvedPayload,
         executeTrigger: data.executeTrigger ?? false,
         sampleData: data.sampleData,
     }

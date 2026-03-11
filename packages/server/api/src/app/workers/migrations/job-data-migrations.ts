@@ -30,7 +30,21 @@ function createMigrations(log: FastifyBaseLogger): JobMigration[] {
             }
         },
     }
-    return [enrichFlowIdAndLogsUrl]
+    const migratePayloadToUnion: JobMigration = {
+        runAtSchemaVersion: 4,
+        migrate: async (job: JobData) => {
+            if (job.jobType === WorkerJobType.EXECUTE_FLOW || job.jobType === WorkerJobType.EXECUTE_WEBHOOK) {
+                return {
+                    ...job,
+                    schemaVersion: 5,
+                    payload: { type: 'inline', value: job.payload },
+                }
+            }
+            return { ...job, schemaVersion: 5 }
+        },
+    }
+
+    return [enrichFlowIdAndLogsUrl, migratePayloadToUnion]
 }
 
 export const jobMigrations = (log: FastifyBaseLogger) => ({

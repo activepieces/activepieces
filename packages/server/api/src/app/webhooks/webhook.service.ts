@@ -12,10 +12,12 @@ import { AppSystemProp } from '../helper/system/system-props'
 import { triggerSourceService } from '../trigger/trigger-source/trigger-source-service'
 import { engineResponseWatcher } from '../workers/engine-response-watcher'
 import { jobQueue, JobType } from '../workers/job-queue/job-queue'
+import { payloadOffloader } from '../workers/payload-offloader'
 import { webhookHandshake } from './webhook-handshake'
 
 const tracer = trace.getTracer('webhook-service')
 const WEBHOOK_TIMEOUT_MS = system.getNumberOrThrow(AppSystemProp.WEBHOOK_TIMEOUT_SECONDS) * 1000
+const MAX_PAYLOAD_SIZE_BYTES = system.getNumberOrThrow(AppSystemProp.MAX_WEBHOOK_PAYLOAD_SIZE_MB) * 1024 * 1024
 
 export enum WebhookFlowVersionToRun {
     LOCKED_FALL_BACK_TO_LATEST = 'locked_fall_back_to_latest',
@@ -123,6 +125,20 @@ export const webhookService = {
 
                 pinoLogger.info('Adding webhook job to queue')
 
+                const resolvedPayload = payload ?? await data(flow.projectId)
+
+                const payloadSize = payloadOffloader.getPayloadSizeInBytes(resolvedPayload)
+                if (payloadSize > MAX_PAYLOAD_SIZE_BYTES) {
+                    pinoLogger.warn({ payloadSize, maxPayloadSizeBytes: MAX_PAYLOAD_SIZE_BYTES }, 'Webhook payload too large')
+                    span.setAttribute('webhook.payloadTooLarge', true)
+                    return {
+                        status: StatusCodes.REQUEST_TOO_LONG,
+                        body: { message: 'Payload too large' },
+                        headers: {
+                            [webhookHeader]: webhookRequestId,
+                        },
+                    }
+                }
 
                 if (async) {
                     span.setAttribute('webhook.mode', 'async')
@@ -131,7 +147,7 @@ export const webhookService = {
                         saveSampleData,
                         platformId: flowExecutionResult.platformId,
                         flowVersionIdToRun,
-                        payload: payload ?? await data(flow.projectId),
+                        payload: resolvedPayload,
                         logger: pinoLogger,
                         webhookRequestId,
                         runEnvironment: flowVersionToRun === WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST ? RunEnvironment.PRODUCTION : RunEnvironment.TESTING,
@@ -145,7 +161,7 @@ export const webhookService = {
 
                 span.setAttribute('webhook.mode', 'sync')
                 const flowHttpResponse = await handleSync({
-                    payload: payload ?? await data(flow.projectId),
+                    payload: resolvedPayload,
                     projectId: flow.projectId,
                     flow,
                     platformId: flowExecutionResult.platformId,
@@ -195,6 +211,8 @@ async function handleAsync(params: AsyncWebhookParams): Promise<EngineHttpRespon
             const traceContext: Record<string, string> = {}
             propagation.inject(context.active(), traceContext)
 
+            const jobPayload = await payloadOffloader.offloadPayload(logger, payload, flow.projectId, platformId)
+
             await jobQueue(logger).add({
                 id: webhookRequestId,
                 type: JobType.ONE_TIME,
@@ -203,7 +221,7 @@ async function handleAsync(params: AsyncWebhookParams): Promise<EngineHttpRespon
                     projectId: flow.projectId,
                     schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
                     requestId: webhookRequestId,
-                    payload,
+                    payload: jobPayload,
                     jobType: WorkerJobType.EXECUTE_WEBHOOK,
                     flowId: flow.id,
                     saveSampleData,

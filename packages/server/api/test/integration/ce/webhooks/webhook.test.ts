@@ -286,6 +286,105 @@ describe('Webhook Service', () => {
         expect(response?.statusCode).toBe(StatusCodes.OK)
     })
 
+    it('should return 413 when webhook payload exceeds MAX_WEBHOOK_PAYLOAD_SIZE_MB', async () => {
+        const { mockProject, mockPlatform, mockOwner } = await mockAndSaveBasicSetup()
+        const mockFlow = createMockFlow({
+            projectId: mockProject.id,
+            status: FlowStatus.ENABLED,
+        })
+        await db.save('flow', [mockFlow])
+        const mockFlowVersion = createMockFlowVersion({
+            flowId: mockFlow.id,
+        })
+        await db.save('flow_version', [mockFlowVersion])
+        await db.update('flow', mockFlow.id, {
+            publishedVersionId: mockFlowVersion.id,
+        })
+        const mockToken = await generateMockToken({
+            type: PrincipalType.USER,
+            platform: {
+                id: mockPlatform.id,
+            },
+            id: mockOwner.id,
+        })
+        // Generate payload larger than 25MB (default limit)
+        const largePayload = { data: 'x'.repeat(26 * 1024 * 1024) }
+        const response = await app?.inject({
+            method: 'POST',
+            url: `/v1/webhooks/${mockFlow.id}`,
+            headers: {
+                authorization: `Bearer ${mockToken}`,
+            },
+            body: largePayload,
+        })
+        expect(response?.statusCode).toBe(StatusCodes.REQUEST_TOO_LONG)
+    })
+
+    it('should accept webhook payload under MAX_WEBHOOK_PAYLOAD_SIZE_MB', async () => {
+        const { mockProject, mockPlatform, mockOwner } = await mockAndSaveBasicSetup()
+        const mockFlow = createMockFlow({
+            projectId: mockProject.id,
+            status: FlowStatus.ENABLED,
+        })
+        await db.save('flow', [mockFlow])
+        const mockFlowVersion = createMockFlowVersion({
+            flowId: mockFlow.id,
+        })
+        await db.save('flow_version', [mockFlowVersion])
+        await db.update('flow', mockFlow.id, {
+            publishedVersionId: mockFlowVersion.id,
+        })
+        const mockToken = await generateMockToken({
+            type: PrincipalType.USER,
+            platform: {
+                id: mockPlatform.id,
+            },
+            id: mockOwner.id,
+        })
+        const response = await app?.inject({
+            method: 'POST',
+            url: `/v1/webhooks/${mockFlow.id}`,
+            headers: {
+                authorization: `Bearer ${mockToken}`,
+            },
+            body: { test: true },
+        })
+        expect(response?.statusCode).toBe(StatusCodes.OK)
+    })
+
+    it('should return 413 for sync webhook when payload exceeds limit', async () => {
+        const { mockProject, mockPlatform, mockOwner } = await mockAndSaveBasicSetup()
+        const mockFlow = createMockFlow({
+            projectId: mockProject.id,
+            status: FlowStatus.ENABLED,
+        })
+        await db.save('flow', [mockFlow])
+        const mockFlowVersion = createMockFlowVersion({
+            flowId: mockFlow.id,
+        })
+        await db.save('flow_version', [mockFlowVersion])
+        await db.update('flow', mockFlow.id, {
+            publishedVersionId: mockFlowVersion.id,
+        })
+        const mockToken = await generateMockToken({
+            type: PrincipalType.USER,
+            platform: {
+                id: mockPlatform.id,
+            },
+            id: mockOwner.id,
+        })
+        const largePayload = { data: 'x'.repeat(26 * 1024 * 1024) }
+        const response = await app?.inject({
+            method: 'POST',
+            url: `/v1/webhooks/${mockFlow.id}/sync`,
+            headers: {
+                authorization: `Bearer ${mockToken}`,
+            },
+            body: largePayload,
+        })
+        expect(response?.statusCode).toBe(StatusCodes.REQUEST_TOO_LONG)
+    })
+
     it('should accept webhook on test endpoint without execution', async () => {
         const { mockProject, mockPlatform, mockOwner } = await mockAndSaveBasicSetup()
         const mockFlow = createMockFlow({

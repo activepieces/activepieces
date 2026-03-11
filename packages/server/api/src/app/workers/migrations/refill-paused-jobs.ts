@@ -80,7 +80,7 @@ export const refillPausedRuns = (log: FastifyBaseLogger) => ({
                         progressUpdateType: pausedRun.pauseMetadata.progressUpdateType ?? ProgressUpdateType.NONE,
                         jobType: WorkerJobType.EXECUTE_FLOW,
                         executionType: ExecutionType.RESUME,
-                        payload: {},
+                        payload: { type: 'inline' as const, value: {} },
                         logsUploadUrl,
                         logsFileId,
                     },
