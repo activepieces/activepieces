@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Readable } from 'stream'
 import { S3 } from '@aws-sdk/client-s3'
+import { AppSystemProp } from '@activepieces/server-common'
 import { customAlphabet } from 'nanoid'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 import { system } from '../../../helper/system/system'
@@ -10,7 +11,7 @@ const log = system.globalLogger()
 const ALPHABET = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
 const generateId = customAlphabet(ALPHABET, 21)
 
-const FILE_STORAGE_LOCATION = process.env.AP_FILE_STORAGE_LOCATION ?? 'DB'
+const FILE_STORAGE_LOCATION = system.get<string>(AppSystemProp.FILE_STORAGE_LOCATION) ?? 'DB'
 
 async function migrateSteps(
     step: any,
@@ -102,16 +103,29 @@ async function migrateStep(
         const outputBuffer = Buffer.from(outputJson, 'utf-8')
         sampleDataFileId = generateId()
 
+        let useDbStorage = FILE_STORAGE_LOCATION !== 'S3'
+
         if (FILE_STORAGE_LOCATION === 'S3') {
             const s3Key = `project/${projectId}/SAMPLE_DATA/${sampleDataFileId}`
-            await uploadToS3(s3Key, outputBuffer)
-            await queryRunner.query(
-                `INSERT INTO "file" ("id", "created", "updated", "projectId", "type", "compression", "location", "data", "size", "s3Key", "metadata")
-                 VALUES ($1, NOW(), NOW(), $2, 'SAMPLE_DATA', 'NONE', 'S3', NULL, $3, $4, $5)`,
-                [sampleDataFileId, projectId, outputBuffer.length, s3Key, JSON.stringify(sharedMetadata)],
-            )
+            try {
+                await uploadToS3(s3Key, outputBuffer)
+                await queryRunner.query(
+                    `INSERT INTO "file" ("id", "created", "updated", "projectId", "type", "compression", "location", "data", "size", "s3Key", "metadata")
+                     VALUES ($1, NOW(), NOW(), $2, 'SAMPLE_DATA', 'NONE', 'S3', NULL, $3, $4, $5)`,
+                    [sampleDataFileId, projectId, outputBuffer.length, s3Key, JSON.stringify(sharedMetadata)],
+                )
+            }
+            catch (error) {
+                log.warn({
+                    error,
+                    flowVersionId,
+                    stepName: step.name,
+                }, 'MigrateSampleDataToFiles1739600000000: S3 upload failed, falling back to database storage')
+                useDbStorage = true
+            }
         }
-        else {
+
+        if (useDbStorage) {
             await queryRunner.query(
                 `INSERT INTO "file" ("id", "created", "updated", "projectId", "type", "compression", "location", "data", "size", "metadata")
                  VALUES ($1, NOW(), NOW(), $2, 'SAMPLE_DATA', 'NONE', 'DB', $3, $4, $5)`,
@@ -120,36 +134,45 @@ async function migrateStep(
         }
     }
 
-    const { currentSelectedData: _removed, ...restInputUiInfo } = inputUiInfo
     return {
         ...step,
         settings: {
             ...step.settings,
             inputUiInfo: {
-                ...restInputUiInfo,
+                ...inputUiInfo,
                 sampleDataFileId,
             },
         },
     }
 }
 
-async function uploadToS3(s3Key: string, data: Buffer): Promise<void> {
-    const useIRSA = process.env.AP_S3_USE_IRSA === 'true'
-    const region = process.env.AP_S3_REGION
-    const endpoint = process.env.AP_S3_ENDPOINT
-    const bucket = process.env.AP_S3_BUCKET!
+let s3Client: S3 | null = null
 
-    const client = new S3({
+function getS3Client(): S3 {
+    if (s3Client) {
+        return s3Client
+    }
+    const useIRSA = system.getBoolean(AppSystemProp.S3_USE_IRSA)
+    const region = system.get<string>(AppSystemProp.S3_REGION)
+    const endpoint = system.get<string>(AppSystemProp.S3_ENDPOINT)
+
+    s3Client = new S3({
         region,
         forcePathStyle: endpoint ? true : undefined,
         endpoint,
         ...(!useIRSA && {
             credentials: {
-                accessKeyId: process.env.AP_S3_ACCESS_KEY_ID!,
-                secretAccessKey: process.env.AP_S3_SECRET_ACCESS_KEY!,
+                accessKeyId: system.getOrThrow<string>(AppSystemProp.S3_ACCESS_KEY_ID),
+                secretAccessKey: system.getOrThrow<string>(AppSystemProp.S3_SECRET_ACCESS_KEY),
             },
         }),
     })
+    return s3Client
+}
+
+async function uploadToS3(s3Key: string, data: Buffer): Promise<void> {
+    const bucket = system.getOrThrow<string>(AppSystemProp.S3_BUCKET)
+    const client = getS3Client()
 
     await client.putObject({
         Bucket: bucket,
