@@ -7,35 +7,79 @@ import { fileSystemUtils } from './file-system-utils'
 
 const execAsync = promisify(exec)
 
+let prevCpuUsage = process.cpuUsage()
+let prevTimestamp = Date.now()
+
+async function readCgroupFile(path: string): Promise<string | null> {
+    const { data, error } = await tryCatch(async () => {
+        if (!await fileSystemUtils.fileExists(path)) return null
+        return (await fs.promises.readFile(path, 'utf8')).trim()
+    })
+    if (error) return null
+    return data
+}
+
+async function getCgroupMemory(): Promise<{ totalRamInBytes: number, ramUsage: number } | null> {
+    const paths = [
+        { limit: '/sys/fs/cgroup/memory.max', usage: '/sys/fs/cgroup/memory.current' },
+        { limit: '/sys/fs/cgroup/memory/memory.limit_in_bytes', usage: '/sys/fs/cgroup/memory/memory.usage_in_bytes' },
+    ]
+    for (const { limit, usage } of paths) {
+        const limitStr = await readCgroupFile(limit)
+        if (!limitStr || limitStr === 'max') continue
+        const usageStr = await readCgroupFile(usage)
+        if (!usageStr) continue
+        const totalRamInBytes = parseInt(limitStr)
+        const usedBytes = parseInt(usageStr)
+        if (isNaN(totalRamInBytes) || isNaN(usedBytes) || totalRamInBytes <= 0) continue
+        return {
+            totalRamInBytes,
+            ramUsage: (usedBytes / totalRamInBytes) * 100,
+        }
+    }
+    return null
+}
+
+function getConstrainedMemoryTotal(): number | null {
+    const constrained = process.constrainedMemory?.()
+    if (constrained && constrained > 0) return constrained
+    return null
+}
+
+async function getCgroupCpuCores(): Promise<number | null> {
+    const v2Content = await readCgroupFile('/sys/fs/cgroup/cpu.max')
+    if (v2Content) {
+        const [quota, period] = v2Content.split(' ')
+        if (quota !== 'max') {
+            const cores = parseInt(quota) / parseInt(period)
+            if (!isNaN(cores) && cores > 0) return cores
+        }
+    }
+
+    const quotaStr = await readCgroupFile('/sys/fs/cgroup/cpu/cpu.cfs_quota_us')
+    const periodStr = await readCgroupFile('/sys/fs/cgroup/cpu/cpu.cfs_period_us')
+    if (quotaStr && periodStr) {
+        const quota = parseInt(quotaStr)
+        const period = parseInt(periodStr)
+        if (quota > 0 && period > 0) return quota / period
+    }
+
+    return null
+}
+
 export const systemUsage = {
-    async calcMemory(memLimitPath: string, memUsagePath: string) {
-        const { data, error } = await tryCatch(async () => {
-            const exists = await fileSystemUtils.fileExists(memLimitPath) && await fileSystemUtils.fileExists(memUsagePath)
-            if (!exists) return null
-            const memLimit = await fs.promises.readFile(memLimitPath, 'utf8')
-            if (memLimit.trim() === 'max') return null
-            const memUsage = await fs.promises.readFile(memUsagePath, 'utf8')
-            return {
-                totalRamInBytes: parseInt(memLimit),
-                ramUsage: (parseInt(memUsage) / parseInt(memLimit)) * 100,
-            }
-        })
-        if (error) return null
-        return data
-    },
-
     async getContainerMemoryUsage() {
-        const memLimitPathV1 = '/sys/fs/cgroup/memory/memory.limit_in_bytes'
-        const memUsagePathV1 = '/sys/fs/cgroup/memory/memory.usage_in_bytes'
+        const cgroupMemory = await getCgroupMemory()
+        if (cgroupMemory) return cgroupMemory
 
-        const memLimitPathV2 = '/sys/fs/cgroup/memory.max'
-        const memUsagePathV2 = '/sys/fs/cgroup/memory.current'
-
-        const memoryV2 = await systemUsage.calcMemory(memLimitPathV2, memUsagePathV2)
-        if (memoryV2) return memoryV2
-
-        const memoryV1 = await systemUsage.calcMemory(memLimitPathV1, memUsagePathV1)
-        if (memoryV1) return memoryV1
+        const constrainedTotal = getConstrainedMemoryTotal()
+        if (constrainedTotal) {
+            const used = constrainedTotal - (process.availableMemory?.() ?? 0)
+            return {
+                totalRamInBytes: constrainedTotal,
+                ramUsage: Math.max(0, (used / constrainedTotal) * 100),
+            }
+        }
 
         return {
             totalRamInBytes: os.totalmem(),
@@ -91,39 +135,23 @@ export const systemUsage = {
     },
 
     getCpuUsage(): number {
-        const cpus = os.cpus()
-        return cpus.reduce((acc, cpu) => {
-            const total = Object.values(cpu.times).reduce((acc, time) => acc + time, 0)
-            const idle = cpu.times.idle
-            return acc + (1 - idle / total)
-        }, 0) / cpus.length * 100
+        const currentCpuUsage = process.cpuUsage(prevCpuUsage)
+        const currentTimestamp = Date.now()
+        const elapsedMs = currentTimestamp - prevTimestamp
+
+        prevCpuUsage = process.cpuUsage()
+        prevTimestamp = currentTimestamp
+
+        if (elapsedMs <= 0) return 0
+
+        const totalCpuUs = currentCpuUsage.user + currentCpuUsage.system
+        const elapsedUs = elapsedMs * 1000
+        return Math.min(100, (totalCpuUs / elapsedUs) * 100)
     },
 
     async getCpuCores(): Promise<number> {
-        const cgroupV2Path = '/sys/fs/cgroup/cpu.max'
-        const quotaPath = '/sys/fs/cgroup/cpu/cpu.cfs_quota_us'
-        const periodPath = '/sys/fs/cgroup/cpu/cpu.cfs_period_us'
-
-        const { data, error } = await tryCatch(async () => {
-            if (await fileSystemUtils.fileExists(cgroupV2Path)) {
-                const content = await fs.promises.readFile(cgroupV2Path, 'utf8')
-                const [quota, period] = content.trim().split(' ')
-                if (quota !== 'max') {
-                    return parseInt(quota) / parseInt(period)
-                }
-            }
-            else if (await fileSystemUtils.fileExists(quotaPath) && await fileSystemUtils.fileExists(periodPath)) {
-                const quota = parseInt(await fs.promises.readFile(quotaPath, 'utf8'))
-                const period = parseInt(await fs.promises.readFile(periodPath, 'utf8'))
-                if (quota > 0) {
-                    return quota / period
-                }
-            }
-            return null
-        })
-        if (error || data === null) {
-            return os.cpus().length
-        }
-        return data
+        const cgroupCores = await getCgroupCpuCores()
+        if (cgroupCores) return cgroupCores
+        return os.availableParallelism?.() ?? os.cpus().length
     },
 }
