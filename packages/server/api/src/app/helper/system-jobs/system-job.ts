@@ -2,6 +2,7 @@ import { apDayjs, apDayjsDuration } from '@activepieces/server-utils'
 import { assertNotNullOrUndefined, isNil, spreadIfDefined, tryCatch } from '@activepieces/shared'
 import { Job, JobsOptions, Queue, Worker } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
+import { exceptionHandler } from '../exception-handler'
 import { redisConnections } from '../../database/redis-connections'
 import { JobSchedule, SystemJobData, SystemJobName, SystemJobSchedule } from './common'
 import { systemJobHandlers } from './job-handlers'
@@ -45,6 +46,14 @@ export const systemJobsSchedule = (log: FastifyBaseLogger): SystemJobSchedule =>
                 concurrency: 1,
             },
         )
+
+        systemJobWorker.on('failed', (job, err) => {
+            const attemptsUsed = job?.attemptsMade ?? 0
+            const maxAttempts = job?.opts?.attempts ?? Infinity
+            if (attemptsUsed >= maxAttempts) {
+                exceptionHandler.handle(err, log)
+            }
+        })
 
         await Promise.all([
             systemJobsQueue.waitUntilReady(),
