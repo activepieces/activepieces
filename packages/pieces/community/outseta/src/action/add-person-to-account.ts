@@ -30,15 +30,12 @@ export const addPersonToAccountAction = createAction({
       apiSecret: context.auth.props.apiSecret,
     });
 
-    const result = await client.put<any>(
-      `/api/v1/crm/accounts/${context.propsValue.accountUid}`,
+    const result = await client.post<any>(
+      `/api/v1/crm/accounts/${context.propsValue.accountUid}/memberships`,
       {
-        PersonAccount: [
-          {
-            Person: { Uid: context.propsValue.personUid },
-            IsPrimary: context.propsValue.isPrimary ?? false,
-          },
-        ],
+        Account: { Uid: context.propsValue.accountUid },
+        Person: { Uid: context.propsValue.personUid },
+        IsPrimary: context.propsValue.isPrimary ?? false,
       }
     );
 
