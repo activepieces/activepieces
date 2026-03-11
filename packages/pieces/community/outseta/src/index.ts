@@ -8,7 +8,6 @@ import { getPersonAction } from './action/get-person';
 import { getSubscriptionAction } from './action/get-subscription';
 import { changeSubscriptionPlanAction } from './action/change-subscription-plan';
 import { addSubscriptionUsageAction } from './action/add-subscription-usage';
-import { cancelSubscriptionAction } from './action/cancel-subscription';
 import { addPersonToAccountAction } from './action/add-person-to-account';
 
 import { accountCreatedTrigger } from './triggers/account-created';
@@ -44,7 +43,6 @@ export const outseta = createPiece({
     getSubscriptionAction,
     changeSubscriptionPlanAction,
     addSubscriptionUsageAction,
-    cancelSubscriptionAction,
     addPersonToAccountAction,
     createCustomApiCallAction({
       auth: outsetaAuth,
