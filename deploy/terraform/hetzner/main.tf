@@ -24,6 +24,10 @@ provider "hcloud" {
 resource "hcloud_ssh_key" "default" {
   name       = "${var.cluster_name}-key"
   public_key = var.ssh_public_key
+
+  lifecycle {
+    ignore_changes = [public_key]
+  }
 }
 
 # ============================================================================
@@ -152,6 +156,7 @@ resource "hcloud_server" "app_nodes" {
     k3s_token          = random_string.k3s_token.result
     control_plane_ip   = "10.0.1.1"
     node_label         = "role=app"
+    floating_ip        = ""
   })
 
   lifecycle {
@@ -183,9 +188,35 @@ resource "hcloud_server" "worker_nodes" {
     k3s_token          = random_string.k3s_token.result
     control_plane_ip   = "10.0.1.1"
     node_label         = "role=worker"
+    floating_ip        = ""
   })
 
+  lifecycle {
+    ignore_changes = [user_data]
+  }
+
   depends_on = [hcloud_server.control_plane]
+}
+
+# ============================================================================
+# Floating IPs for Worker Nodes — gives each worker a stable outbound IP
+# that won't get recycled when the server is replaced
+# ============================================================================
+
+resource "hcloud_floating_ip" "worker" {
+  count         = var.worker_node_count
+  type          = "ipv4"
+  home_location = var.location
+  name          = "${var.cluster_name}-worker-fip-${count.index + 1}"
+  labels        = { role = "worker" }
+}
+
+resource "hcloud_floating_ip_assignment" "worker" {
+  count          = var.worker_node_count
+  floating_ip_id = hcloud_floating_ip.worker[count.index].id
+  server_id      = hcloud_server.worker_nodes[count.index].id
+
+  depends_on = [hcloud_floating_ip.worker]
 }
 
 # ============================================================================

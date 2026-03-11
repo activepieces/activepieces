@@ -5,11 +5,13 @@
 #     --set image.tag=<tag>
 # ============================================================================
 
+workloadType: statefulset
+
 replicaCount: 32
 
 image:
   repository: ghcr.io/activepieces/activepieces-cloud
-  tag: "0.79.2"       # reference only — CI always overrides via --set image.tag=
+  tag: "0.79.2.1fa2a3b0e8924609d308d0ede8ff7c8f40aeeb68.beta"       # reference only — CI always overrides via --set image.tag=
   pullPolicy: Always
 
 imagePullSecrets:
@@ -25,9 +27,7 @@ activepieces:
   # Workers share JWT and encryption keys with the APP release
   jwtSecretName: "activepieces-jwt-secret"
   encryptionSecretName: "activepieces-secrets"
-  # Workers connect to APP via internal K8s service name
-  frontendUrl: "http://activepieces"
-  internalUrl: "http://activepieces"
+  frontendUrl: "https://stg.activepieces.dev"
 
 # External PostgreSQL (bundled subchart disabled)
 postgresql:
@@ -70,6 +70,9 @@ s3:
     accessKeyIdKey: "accessKeyId"
     secretAccessKeyKey: "secretAccessKey"
 
+stripe:
+  enabled: false
+
 # Workers are not exposed externally
 ingress:
   enabled: false
@@ -95,19 +98,17 @@ volumes:
 autoscaling:
   enabled: false
 
-rollout:
-  blueGreen:
-    autoPromotionEnabled: false
-    scaleDownDelaySeconds: 30
-    
 persistence:
   enabled: true
-  size: 5Gi
+  size: 15Gi
+
+nodeSelector:
+  role: worker
 
 resources:
   requests:
-    cpu: "250m"
-    memory: "512Mi"
+    cpu: "500m"
+    memory: "1Gi"
   limits:
     cpu: "500m"
     memory: "1Gi"
