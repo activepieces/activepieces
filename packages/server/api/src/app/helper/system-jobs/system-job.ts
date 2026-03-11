@@ -48,7 +48,7 @@ export const systemJobsSchedule = (log: FastifyBaseLogger): SystemJobSchedule =>
 
         systemJobWorker.on('failed', (job, err) => {
             const attemptsUsed = job?.attemptsMade ?? 0
-            const maxAttempts = job?.opts?.attempts ?? 0
+            const maxAttempts = job?.opts?.attempts ?? Infinity
             if (attemptsUsed >= maxAttempts) {
                 exceptionHandler.handle(err, log)
             }
