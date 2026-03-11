@@ -218,7 +218,7 @@ export const addTextToPdf = createAction({
           let textRotation = 0;
 
           if (rotationAngle === 90) {
-            iX = item.distanceFromTop; 
+            iX = vY;
             iY = vX;
             textRotation = 90;
           } else if (rotationAngle === 180) {
@@ -226,7 +226,7 @@ export const addTextToPdf = createAction({
             iY = vHeight - vY;
             textRotation = 180;
           } else if (rotationAngle === 270) {
-            iX = vY;
+            iX = item.distanceFromTop;
             iY = vWidth - vX;
             textRotation = -90;
           }
