@@ -118,6 +118,24 @@ export async function createAIModel({
                     }
                     return handleDefaultAiGatewayProvider({accountId, gatewayId, headers, isImage, modelId})
                 }
+                case 'openai': {
+                    const openaiProvider = createOpenAI({
+                        apiKey: 'no-key',
+                        baseURL: `https://gateway.ai.cloudflare.com/v1/${accountId}/${gatewayId}/openai`,
+                        headers,
+                        fetch: (input, init) => {
+                            const hdrs = new Headers(init?.headers)
+                            hdrs.delete('Authorization')
+                            return fetch(input, { ...init, headers: hdrs })
+                        },
+                    })
+                    if (isImage) {
+                        return openaiProvider.imageModel(actualModelId)
+                    }
+                    return openaiResponsesModel
+                        ? openaiProvider.responses(actualModelId)
+                        : openaiProvider.chat(actualModelId)
+                }
                 default: {
                     return handleDefaultAiGatewayProvider({accountId, gatewayId, headers, isImage, modelId})
                 }
