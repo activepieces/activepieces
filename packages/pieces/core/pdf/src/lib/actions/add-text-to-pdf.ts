@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { PDFDocument, rgb, StandardFonts, PDFFont } from 'pdf-lib';
+import { PDFDocument, rgb, StandardFonts, PDFFont, degrees } from 'pdf-lib';
 
 const fontOptions = Object.entries(StandardFonts).map(([key, value]) => {
   const formattedLabel = key.replace(/([A-Z])/g, ' $1').trim();
@@ -149,32 +149,38 @@ export const addTextToPdf = createAction({
 
         for (const targetPage of targetPages) {
           const { width, height } = targetPage.getSize();
+          const rotationAngle = targetPage.getRotation().angle % 360;
 
-          const pdfY = height - item.distanceFromTop;
+          const isLandscape = rotationAngle === 90 || rotationAngle === 270;
+          const vWidth = isLandscape ? height : width;
+          const vHeight = isLandscape ? width : height;
+
+          const vX = item.distanceFromLeft;
+          const vY = vHeight - item.distanceFromTop;
           
           // Check Left Edge
-          if (item.distanceFromLeft < 0 || item.distanceFromLeft > width) {
+          if (vX < 0 || vX > vWidth) {
             throw new Error(
-              `The Left distance (${item.distanceFromLeft}pts) for "${cleanTextSample}..." is outside the page width. Current PDF's max width is ${Math.round(width)}pts.`
+              `The Left distance (${item.distanceFromLeft}pts) for "${cleanTextSample}..." is outside the page width. Current PDF's max width is ${Math.round(vWidth)}pts.`
             );
           }
 
           // Check Right Edge (Long text running off the right edge)
-          if (item.distanceFromLeft + maxTextWidth > width) {
+          if (vX + maxTextWidth > vWidth) {
               throw new Error(
                 `The text "${cleanTextSample}..." is too long and runs off the right edge. Reduce the Left distance or font size.`
               );
           }
 
           // Check Top Edge
-          if (pdfY < 0 || pdfY > height) {
+          if (vY < 0 || vY > vHeight) {
             throw new Error(
-              `The Top distance (${item.distanceFromTop}pts) for "${cleanTextSample}..." is outside the page height. Current PDF's max height is ${Math.round(height)}pts.`
+              `The Top distance (${item.distanceFromTop}pts) for "${cleanTextSample}..." is outside the page height. Current PDF's max height is ${Math.round(vHeight)}pts.`
             );
           }
 
           // Check Bottom Edge (Multi-line text running off the bottom)
-          const lowestYPosition = pdfY - ((lines.length - 1) * actualLineHeight);
+          const lowestYPosition = vY - ((lines.length - 1) * actualLineHeight);
           
           if (lowestYPosition < 0) {
             throw new Error(
@@ -182,13 +188,33 @@ export const addTextToPdf = createAction({
             );
           }
 
+          // Map Visual coordinates back to Intrinsic coordinates for pdf-lib
+          let iX = vX;
+          let iY = vY;
+          let textRotation = 0;
+
+          if (rotationAngle === 90) {
+            iX = item.distanceFromTop; 
+            iY = vX;
+            textRotation = 90;
+          } else if (rotationAngle === 180) {
+            iX = vWidth - vX;
+            iY = vHeight - vY;
+            textRotation = 180;
+          } else if (rotationAngle === 270) {
+            iX = vY;
+            iY = vWidth - vX;
+            textRotation = -90;
+          }
+
           targetPage.drawText(cleanText, {
-            x: item.distanceFromLeft,
-            y: pdfY,
+            x: iX,
+            y: iY,
             size: item.fontSize,
             font: font,
             color: rgb(0, 0, 0),
             lineHeight: actualLineHeight,
+            rotate: degrees(textRotation),
           });
         }
       }
