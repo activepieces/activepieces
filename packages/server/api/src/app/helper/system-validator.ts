@@ -46,7 +46,6 @@ const systemPropValidators: {
     [key in SystemProp]: (value: string) => true | string
 } = {
     // AppSystemProp
-    [AppSystemProp.API_URL]: urlValidator,
     [AppSystemProp.EXECUTION_MODE]: enumValidator(Object.values(ExecutionMode)),
     [AppSystemProp.SKIP_PROJECT_LIMITS_CHECK]: booleanValidator,
     [AppSystemProp.LOG_LEVEL]: enumValidator(['error', 'warn', 'info', 'debug', 'trace']),

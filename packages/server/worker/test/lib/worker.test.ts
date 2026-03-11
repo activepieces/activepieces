@@ -79,14 +79,15 @@ describe('worker integration', () => {
 
     beforeEach(async () => {
         httpServer = createServer()
-        ioServer = new IOServer(httpServer, { transports: ['websocket'] })
+        ioServer = new IOServer(httpServer, { transports: ['websocket'], path: '/api/socket.io' })
         await new Promise<void>((resolve) => {
             httpServer.listen(0, () => {
                 port = (httpServer.address() as { port: number }).port
                 resolve()
             })
         })
-        process.env.AP_API_URL = `http://127.0.0.1:${port}`
+        process.env.AP_FRONTEND_URL = `http://127.0.0.1:${port}`
+        process.env.AP_CONTAINER_TYPE = 'WORKER'
     })
 
     afterEach(async () => {
@@ -156,10 +157,17 @@ describe('worker integration', () => {
                     getFlowVersion: vi.fn(),
                     getPiece: vi.fn(),
                     getPieceArchive: vi.fn(),
+                    extendLock: vi.fn(),
+                    getUsedPieces: vi.fn().mockResolvedValue([]),
+                    markPieceAsUsed: vi.fn(),
                 }
                 createRpcServer<WorkerToApiContract>(serverSocket, handlers)
             })
-            worker.start(`http://127.0.0.1:${port}`, 'test-token')
+            worker.start({
+                apiUrl: `http://127.0.0.1:${port}/api/`,
+                socketUrl: { url: `http://127.0.0.1:${port}`, path: '/api/socket.io' },
+                workerToken: 'test-token',
+            })
         })
     }
 

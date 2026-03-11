@@ -12,11 +12,6 @@ if [ "$AP_CONTAINER_TYPE" != "WORKER" ]; then
     echo "Nginx started"
 fi
 
-# For WORKER_AND_APP, default API URL to localhost
-if [ "$AP_CONTAINER_TYPE" = "WORKER_AND_APP" ]; then
-    export AP_API_URL="${AP_API_URL:-http://localhost:3000}"
-fi
-
 # Auto-generate worker token if not set and JWT secret is available
 if [ -z "$AP_WORKER_TOKEN" ] && [ -n "$AP_JWT_SECRET" ]; then
     echo "Auto-generating AP_WORKER_TOKEN..."

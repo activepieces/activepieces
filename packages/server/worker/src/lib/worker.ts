@@ -15,7 +15,7 @@ import { nanoid } from 'nanoid'
 import { io, Socket } from 'socket.io-client'
 import { initCachePaths } from './cache/cache-paths'
 import { pieceInstaller } from './cache/pieces/piece-installer'
-import { system, WorkerSystemProp } from './config/configs'
+import { getApiUrl, system, WorkerSystemProp } from './config/configs'
 import { logger } from './config/logger'
 import { workerSettings } from './config/worker-settings'
 import { getHandler } from './execute/job-registry'
@@ -31,10 +31,11 @@ let polling = false
 const workerId = `worker-${nanoid()}`
 
 export const worker = {
-    async start(apiUrl: string, workerToken: string): Promise<void> {
+    async start({ apiUrl, socketUrl, workerToken }: WorkerStartParams): Promise<void> {
         const platformIdForDedicatedWorker = system.get(WorkerSystemProp.PLATFORM_ID_FOR_DEDICATED_WORKER)
-        socket = io(apiUrl, {
+        socket = io(socketUrl.url, {
             auth: { token: workerToken, workerId, platformIdForDedicatedWorker },
+            path: socketUrl.path,
             transports: ['websocket'],
             reconnection: true,
         })
@@ -57,7 +58,7 @@ export const worker = {
             logger.error({ error: error.message }, 'Socket.IO connection error')
         })
 
-        logger.info({ apiUrl }, 'Worker started, polling for jobs...')
+        logger.info({ apiUrl, socketUrl }, 'Worker started, polling for jobs...')
     },
 
     async stop(): Promise<void> {
@@ -136,14 +137,14 @@ async function executeJob(apiClient: WorkerToApiContract, job: ConsumeJobRequest
         },
     }, async (span) => {
         const log = logger.child({ jobId: job.jobId, jobType: jobData.jobType })
-        const apiUrl = system.getOrThrow(WorkerSystemProp.API_URL)
+        const apiUrl = getApiUrl()
         const { PUBLIC_URL: publicUrl } = await workerSettings.waitForSettings()
         log.info({ apiUrl, publicUrl }, 'Worker settings resolved')
         const ctx: JobContext = {
             apiClient,
             jobId: job.jobId,
             engineToken: job.engineToken,
-            internalApiUrl: ensureTrailingSlash(apiUrl),
+            internalApiUrl: apiUrl,
             publicApiUrl: ensurePublicApiUrl(publicUrl),
             log,
         }
@@ -163,10 +164,6 @@ async function executeJob(apiClient: WorkerToApiContract, job: ConsumeJobRequest
             span.end()
         }
     })
-}
-
-function ensureTrailingSlash(url: string): string {
-    return url.endsWith('/') ? url : url + '/'
 }
 
 function ensurePublicApiUrl(publicUrl: string): string {
@@ -233,4 +230,10 @@ async function warmupPiecesOnStartup(apiClient: WorkerToApiContract): Promise<vo
 
 function sleep(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+type WorkerStartParams = {
+    apiUrl: string
+    socketUrl: { url: string, path: string }
+    workerToken: string
 }

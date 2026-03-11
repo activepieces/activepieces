@@ -66,10 +66,6 @@ spec:
             - name: AP_DEV_PIECES
               value: {{ .Values.activepieces.devPieces | quote }}
             {{- end }}
-            {{- if .Values.activepieces.internalUrl }}
-            - name: AP_API_URL
-              value: {{ .Values.activepieces.internalUrl | quote }}
-            {{- end }}
             {{- if .Values.activepieces.maxConcurrentJobsPerProject }}
             - name: AP_MAX_CONCURRENT_JOBS_PER_PROJECT
               value: {{ .Values.activepieces.maxConcurrentJobsPerProject | quote }}

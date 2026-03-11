@@ -7,7 +7,6 @@ export type SystemProp = AppSystemProp | WorkerSystemProp
 let cachedVersion: string | undefined
 
 export enum AppSystemProp {
-    API_URL = 'API_URL',
     API_KEY = 'API_KEY',
     TEMPLATES_API_KEY = 'TEMPLATES_API_KEY',
     TEMPLATE_MANAGER_API_KEY = 'TEMPLATE_MANAGER_API_KEY',

@@ -1,12 +1,11 @@
-import { system, WorkerSystemProp } from './config/configs'
+import { getApiUrl, getSocketUrl, system, WorkerSystemProp } from './config/configs'
 import { logger } from './config/logger'
 import { worker } from './worker'
 
-const apiUrl = system.getOrThrow(WorkerSystemProp.API_URL)
 const workerToken = system.getOrThrow(WorkerSystemProp.WORKER_TOKEN)
 
 async function main(): Promise<void> {
-    await worker.start(apiUrl, workerToken)
+    await worker.start({ apiUrl: getApiUrl(), socketUrl: getSocketUrl(), workerToken })
 
     const shutdown = async () => {
         const timeout = setTimeout(() => {
