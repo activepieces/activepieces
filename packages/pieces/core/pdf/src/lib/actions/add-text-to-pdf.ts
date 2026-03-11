@@ -149,7 +149,7 @@ export const addTextToPdf = createAction({
 
         for (const targetPage of targetPages) {
           const { width, height } = targetPage.getSize();
-          const rotationAngle = targetPage.getRotation().angle % 360;
+          const rotationAngle = (targetPage.getRotation()?.angle ?? 0) % 360;
 
           const isLandscape = rotationAngle === 90 || rotationAngle === 270;
           const vWidth = isLandscape ? height : width;
