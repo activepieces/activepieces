@@ -1,4 +1,4 @@
-import { ActivepiecesError, ApEdition, ApEnvironment, assertNotNullOrUndefined, AuthenticationResponse, EndpointScope, ErrorCode, isNil, PrincipalType, Project, TelemetryEventName, User, UserIdentity, UserIdentityProvider, UserStatus } from '@activepieces/shared'
+import { ActivepiecesError, ApEdition, ApEnvironment, assertNotNullOrUndefined, AuthenticationResponse, EndpointScope, ErrorCode, isNil, PrincipalType, Project, ProjectType, TelemetryEventName, User, UserIdentity, UserIdentityProvider, UserStatus } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyRequest } from 'fastify'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
