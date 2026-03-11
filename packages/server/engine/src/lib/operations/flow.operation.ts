@@ -27,12 +27,10 @@ export const flowOperation = {
         const input = operation as ExecuteFlowOperation
         const constants = EngineConstants.fromExecuteFlowInput(input)
         const output: FlowExecutorContext = (await executieSingleStepOrFlowOperation(input)).finishExecution()
-        console.log('[FlowOperation] Flow execution finished, calling explicit final backup')
         await progressService.backup({
             engineConstants: constants,
             flowExecutorContext: output,
         })
-        console.log('[FlowOperation] Explicit final backup completed')
         return {
             status: EngineResponseStatus.OK,
             response: undefined,
