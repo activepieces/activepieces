@@ -35,6 +35,7 @@ export const platformBackgroundJobs = (log: FastifyBaseLogger) => ({
                 where: {
                     identityId,
                 },
+                withDeleted: true,
             })
             if (usersUsingIdentity.length === 0) {
                 await userIdentityRepository(entityManager).delete({
