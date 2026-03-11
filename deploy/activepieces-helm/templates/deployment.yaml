@@ -434,7 +434,7 @@ spec:
             - name: AP_ENGINE_EXECUTABLE_PATH
               value: {{ .Values.activepieces.engineExecutablePath | quote }}
             {{- end }}
-            {{- if .Values.stripe.enabled }}
+            {{- if and .Values.stripe .Values.stripe.enabled }}
             - name: AP_STRIPE_SECRET_KEY
               valueFrom:
                 secretKeyRef:
