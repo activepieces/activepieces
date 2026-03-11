@@ -18,6 +18,11 @@ output "worker_node_ips" {
   value       = hcloud_server.worker_nodes[*].ipv4_address
 }
 
+output "worker_floating_ips" {
+  description = "Floating IPs assigned to WORKER nodes (used for outbound traffic)"
+  value       = hcloud_floating_ip.worker[*].ip_address
+}
+
 output "redis_private_ip" {
   description = "Private IP of the Redis VM (use this as redis.host in Helm values)"
   value       = "10.0.1.5"

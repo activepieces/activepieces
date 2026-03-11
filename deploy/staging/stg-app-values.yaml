@@ -9,7 +9,7 @@ replicaCount: 4
 
 image:
   repository: ghcr.io/activepieces/activepieces-cloud
-  tag: "0.79.2"       # reference only — CI always overrides via --set image.tag=
+  tag: "0.79.2.1fa2a3b0e8924609d308d0ede8ff7c8f40aeeb68.beta"       # reference only — CI always overrides via --set image.tag=
   pullPolicy: Always
 
 imagePullSecrets:
@@ -88,10 +88,19 @@ ingress:
       paths:
         - path: /
           pathType: Prefix
+    - host: "fallback.activepieces.dev"
+      paths:
+        - path: /
+          pathType: Prefix
   tls:
     - secretName: activepieces-tls
       hosts:
         - stg.activepieces.dev
+
+queueUi:
+  enabled: true
+  username: ""
+  password: ""
 
 rollout:
   blueGreen:
@@ -115,13 +124,15 @@ autoscaling:
   enabled: false
 
 persistence:
-  enabled: true
-  size: 5Gi
+  enabled: false
+
+nodeSelector:
+  role: app
 
 resources:
   requests:
-    cpu: "500m"
-    memory: "1Gi"
+    cpu: "1"
+    memory: "2Gi"
   limits:
     cpu: "1"
     memory: "2Gi"

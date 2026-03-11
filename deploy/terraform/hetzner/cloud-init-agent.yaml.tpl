@@ -10,6 +10,21 @@ runcmd:
     curl -fsSL https://get.docker.com | sh
     systemctl enable --now docker
     %{ endif }
+  # Configure floating IP on the network interface (if provided)
+  - |
+    %{ if floating_ip != "" }
+    cat > /etc/netplan/60-floating-ip.yaml <<NETPLAN
+    network:
+      version: 2
+      renderer: networkd
+      ethernets:
+        eth0:
+          addresses:
+          - ${floating_ip}/32
+    NETPLAN
+    chmod 600 /etc/netplan/60-floating-ip.yaml
+    netplan apply
+    %{ endif }
   # Wait for control plane to be ready before joining
   - sleep 60
   # Install k3s as an agent (worker) node and join the cluster

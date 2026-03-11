@@ -185,6 +185,7 @@ activepieces:
   # Networking & API
   clientRealIpHeader: ""              # Header to extract real client IP (e.g., X-Forwarded-For)
   apiKey: ""                          # API key for platform authentication
+  internalUrl: ""                     # Internal URL for service communication
   
   # Performance & Limits
   maxConcurrentJobsPerProject: ""     # Limit concurrent jobs per project
