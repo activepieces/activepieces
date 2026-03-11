@@ -43,7 +43,7 @@ jobs:
       always() &&
       ((github.event_name == 'push' && needs.check-freeze.outputs.frozen == 'false') ||
        (github.event_name == 'workflow_dispatch' && (github.event.inputs.action == 'deploy-staging' || github.event.inputs.action == 'deploy-staging-skip-freeze')))
-    runs-on: depot-ubuntu-24.04
+    runs-on: ubuntu-24.04
     concurrency:
       group: deploy-staging
       cancel-in-progress: true  # Latest merge wins
@@ -148,7 +148,7 @@ jobs:
   weekly-release:
     needs: promote-to-production
     if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'weekly-release')
-    runs-on: depot-ubuntu-24.04
+    runs-on: ubuntu-24.04
     steps:
       - name: Check if Sunday (skip on other days for scheduled runs)
         id: day-check

@@ -37,7 +37,7 @@ jobs:
       always() &&
       ((github.event_name == 'push' && needs.check-freeze.outputs.frozen == 'false') ||
        (github.event_name == 'workflow_dispatch' && (github.event.inputs.action == 'deploy-staging' || github.event.inputs.action == 'deploy-staging-skip-freeze')))
-    runs-on: depot-ubuntu-24.04
+    runs-on: ubuntu-24.04
     concurrency:
       group: deploy-hetzner-build
       cancel-in-progress: true
