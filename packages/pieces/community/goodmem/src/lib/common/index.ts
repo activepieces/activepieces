@@ -63,15 +63,17 @@ export const spaceIdDropdown = Property.Dropdown<
     }
     try {
       const { baseUrl, apiKey } = auth.props;
+      const baseUrlClean = baseUrl.replace(/\/$/, '');
       const response = await httpClient.sendRequest({
         method: HttpMethod.GET,
-        url: `${baseUrl}/v1/spaces`,
+        url: `${baseUrlClean}/v1/spaces`,
         headers: getCommonHeaders(apiKey),
       });
       const body = response.body;
+      const spaces = Array.isArray(body) ? body : (body?.spaces ?? []);
       return {
         disabled: false,
-        options: body.spaces.map((s: any) => ({
+        options: spaces.map((s: any) => ({
           label: s.name,
           value: s.spaceId,
         })),
@@ -106,17 +108,19 @@ export const multiSpaceDropdown = Property.MultiSelectDropdown<
     }
     try {
       const { baseUrl, apiKey } = auth.props;
+      const baseUrlClean = baseUrl.replace(/\/$/, '');
       const response = await httpClient.sendRequest({
         method: HttpMethod.GET,
-        url: `${baseUrl}/v1/spaces`,
+        url: `${baseUrlClean}/v1/spaces`,
         headers: getCommonHeaders(apiKey),
       });
       const body = response.body;
+      const spaces = Array.isArray(body) ? body : (body?.spaces ?? []);
       return {
         disabled: false,
-        options: body.spaces.map((s: any) => ({
+        options: spaces.map((s: any) => ({
           label: s.name,
-          value: s.spaceId || s.id,
+          value: s.spaceId,
         })),
       };
     } catch (error) {
@@ -149,15 +153,17 @@ export const rerankerDropdown = Property.Dropdown<
     }
     try {
       const { baseUrl, apiKey } = auth.props;
+      const baseUrlClean = baseUrl.replace(/\/$/, '');
       const response = await httpClient.sendRequest({
         method: HttpMethod.GET,
-        url: `${baseUrl}/v1/rerankers`,
+        url: `${baseUrlClean}/v1/rerankers`,
         headers: getCommonHeaders(apiKey),
       });
       const body = response.body;
+      const rerankers = Array.isArray(body) ? body : (body?.rerankers ?? []);
       return {
         disabled: false,
-        options: body.rerankers.map((r: any) => ({
+        options: rerankers.map((r: any) => ({
           label: r.displayName,
           value: r.rerankerId,
         })),
@@ -190,15 +196,17 @@ export const llmDropdown = Property.Dropdown<string, false, typeof goodmemAuth>(
       }
       try {
         const { baseUrl, apiKey } = auth.props;
+        const baseUrlClean = baseUrl.replace(/\/$/, '');
         const response = await httpClient.sendRequest({
           method: HttpMethod.GET,
-          url: `${baseUrl}/v1/llms`,
+          url: `${baseUrlClean}/v1/llms`,
           headers: getCommonHeaders(apiKey),
         });
         const body = response.body;
+        const llms = Array.isArray(body) ? body : (body?.llms ?? []);
         return {
           disabled: false,
-          options: body.llms.map((l: any) => ({
+          options: llms.map((l: any) => ({
             label: l.displayName,
             value: l.llmId,
           })),
