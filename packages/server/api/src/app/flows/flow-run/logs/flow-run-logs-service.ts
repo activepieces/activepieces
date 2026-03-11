@@ -1,8 +1,10 @@
-import { ExecutioOutputFile, File, FileCompression, FileType, isNil, UploadLogsBehavior, UploadLogsToken } from '@activepieces/shared'
+import { fileCompressor } from '@activepieces/server-common'
+import { ExecutioOutputFile, File, FileCompression, FileLocation, FileType, isNil, UploadLogsBehavior, UploadLogsToken } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { domainHelper } from '../../../ee/custom-domains/domain-helper'
-import { fileService } from '../../../file/file.service'
+import { fileService, fileRepo } from '../../../file/file.service'
+import { s3Helper } from '../../../file/s3-helper'
 import { JwtSignAlgorithm, jwtUtils } from '../../../helper/jwt-utils'
 
 export const flowRunLogsService = (log: FastifyBaseLogger) => {
@@ -45,14 +47,29 @@ export const flowRunLogsService = (log: FastifyBaseLogger) => {
             await upsertFile(request, log, content)
         },
         async getLogs(request: GetLogsParams): Promise<ExecutioOutputFile | null> {
-            const file = await fileService(log).getDataOrUndefined({
-                fileId: request.logsFileId,
+            const rawLogs = await this.getRawLogs(request)
+            if (isNil(rawLogs)) {
+                return null
+            }
+            const decompressed = await fileCompressor.decompress({
+                data: rawLogs.data,
+                compression: rawLogs.compression,
+            })
+            return JSON.parse(decompressed.toString('utf-8'))
+        },
+        async getRawLogs(request: GetLogsParams): Promise<RawLogsResponse | null> {
+            const file = await fileRepo().findOneBy({
+                id: request.logsFileId,
                 projectId: request.projectId,
             })
             if (isNil(file)) {
                 return null
             }
-            return JSON.parse(file.data.toString('utf-8'))
+            const data = file.location === FileLocation.DB ? file.data : await s3Helper(log).getFile(file.s3Key!)
+            return {
+                data,
+                compression: file.compression,
+            }
         },
     }
 }
@@ -64,12 +81,17 @@ function upsertFile(request: UploadLogsToken, log: FastifyBaseLogger, content: B
         data: content,
         size: content?.length ?? 0,
         type: FileType.FLOW_RUN_LOG,
-        compression: FileCompression.NONE,
+        compression: FileCompression.ZSTD,
         metadata: {
             flowRunId: request.flowRunId,
             projectId: request.projectId,
         },
     })
+}
+
+type RawLogsResponse = {
+    data: Buffer
+    compression: FileCompression
 }
 
 type GetLogsParams = {

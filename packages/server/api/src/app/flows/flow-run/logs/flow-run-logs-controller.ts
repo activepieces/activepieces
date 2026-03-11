@@ -1,5 +1,5 @@
 import { securityAccess } from '@activepieces/server-common'
-import { ActivepiecesError, ALL_PRINCIPAL_TYPES, assertNotNullOrUndefined, ErrorCode, FileType, isNil, UploadLogsBehavior, UploadLogsQueryParams } from '@activepieces/shared'
+import { ActivepiecesError, ALL_PRINCIPAL_TYPES, assertNotNullOrUndefined, CONTENT_ENCODING_ZSTD, ErrorCode, FileCompression, FileType, isNil, isZstdCompressed, UploadLogsBehavior, UploadLogsQueryParams } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
@@ -21,7 +21,7 @@ export const flowRunLogsController: FastifyPluginAsyncZod = async (app) => {
             const decodedToken = await flowRunLogsService(request.log).verifyToken(token)
             if (decodedToken.behavior === UploadLogsBehavior.REDIRECT_TO_S3) {
                 const fileMetadata = await flowRunLogsService(request.log).upsertMetadata(decodedToken)
-                const s3SignedUrl = await s3Helper(request.log).putS3SignedUrl(fileMetadata.s3Key!)
+                const s3SignedUrl = await s3Helper(request.log).putS3SignedUrl(fileMetadata.s3Key!, undefined, CONTENT_ENCODING_ZSTD)
                 request.log.info({
                     s3Key: fileMetadata.s3Key,
                 }, 'Redirecting to S3 signed URL')
@@ -59,8 +59,8 @@ export const flowRunLogsController: FastifyPluginAsyncZod = async (app) => {
             const s3SignedUrl = await s3Helper(request.log).getS3SignedUrl(file.s3Key, file.fileName ?? file.id)
             return reply.redirect(s3SignedUrl)
         }
-        const logs = await flowRunLogsService(request.log).getLogs(decodedToken)
-        if (isNil(logs)) {
+        const rawLogs = await flowRunLogsService(request.log).getRawLogs(decodedToken)
+        if (isNil(rawLogs)) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {
@@ -70,6 +70,10 @@ export const flowRunLogsController: FastifyPluginAsyncZod = async (app) => {
                 },
             })
         }
-        return reply.send(logs)
+        const isCompressed = rawLogs.compression === FileCompression.ZSTD || isZstdCompressed(rawLogs.data)
+        if (isCompressed) {
+            void reply.header('Content-Encoding', CONTENT_ENCODING_ZSTD)
+        }
+        return reply.type('application/octet-stream').send(rawLogs.data)
     })
 }
