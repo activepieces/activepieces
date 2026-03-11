@@ -6,6 +6,7 @@ export AP_PORT="${AP_PORT:-80}"
 
 echo "AP_CONTAINER_TYPE: $AP_CONTAINER_TYPE"
 echo "AP_WORKERS: $AP_WORKERS"
+echo "AP_PORT: $AP_PORT"
 
 # Auto-generate worker token if not set and JWT secret is available
 if [ -z "$AP_WORKER_TOKEN" ] && [ -n "$AP_JWT_SECRET" ]; then

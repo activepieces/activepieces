@@ -57,10 +57,10 @@ export const setupServer = async (): Promise<FastifyInstance> => {
             root: frontendPath,
             setHeaders: (res, filepath) => {
                 if (filepath.endsWith('.html')) {
-                    res.setHeader('Cache-Control', 'public, max-age=120')
+                    void res.setHeader('Cache-Control', 'public, max-age=120')
                 }
                 else {
-                    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable')
+                    void res.setHeader('Cache-Control', 'public, max-age=31536000, immutable')
                 }
             },
         })
@@ -77,8 +77,8 @@ export const setupServer = async (): Promise<FastifyInstance> => {
     })
 
     app.addHook('onSend', async (_request, reply) => {
-        reply.header('X-Content-Type-Options', 'nosniff')
-        reply.header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload')
+        void reply.header('X-Content-Type-Options', 'nosniff')
+        void reply.header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload')
     })
 
     return app

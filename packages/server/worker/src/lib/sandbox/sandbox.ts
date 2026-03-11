@@ -186,6 +186,7 @@ export function createSandbox(
             connectedSocket = null
             engineClient = null
             if (io) {
+                // eslint-disable-next-line @typescript-eslint/await-thenable
                 await io.close()
             }
             io = null
