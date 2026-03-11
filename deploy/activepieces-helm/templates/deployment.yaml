@@ -15,7 +15,7 @@ spec:
   {{- end }}
   {{- if eq (.Values.workloadType | default "rollout") "statefulset" }}
   serviceName: {{ include "activepieces.fullname" . }}
-  podManagementPolicy: OrderedReady
+  podManagementPolicy: {{ .Values.podManagementPolicy | default "OrderedReady" }}
   {{- end }}
   selector:
     matchLabels:
