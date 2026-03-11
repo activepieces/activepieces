@@ -109,4 +109,30 @@ export class BaserowClient {
       })
     );
   }
+  async createWebhook(
+    table_id: number,
+    url: string,
+    events: string[],
+    name: string
+  ) {
+    return await this.makeRequest<{ id: number }>(
+      HttpMethod.POST,
+      `/database/webhooks/table/${table_id}/`,
+      undefined,
+      {
+        url,
+        events,
+        name,
+        request_method: 'POST',
+        use_user_field_names: true,
+        include_all_events: false,
+      }
+    );
+  }
+  async deleteWebhook(webhook_id: number) {
+    return await this.makeRequest(
+      HttpMethod.DELETE,
+      `/database/webhooks/${webhook_id}/`
+    );
+  }
 }
