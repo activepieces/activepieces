@@ -7,8 +7,8 @@ import {
   OAuth2PropertyValue,
   Property,
 } from '@activepieces/pieces-framework';
-import { canvaAuth } from '../../lib/auth';
-import { CANVA_BASE_URL } from '../../lib/common';
+import { canvaAuth } from '../auth';
+import { CANVA_BASE_URL } from '../common';
 
 export const listDesigns = createAction({
   auth: canvaAuth,
