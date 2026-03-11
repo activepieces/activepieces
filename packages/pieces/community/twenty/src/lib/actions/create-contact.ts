@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { twentyAuth } from '../auth';
+import { twentyRequest } from '../common';
 
 export const createContact = createAction({
   auth: twentyAuth,
@@ -8,7 +9,6 @@ export const createContact = createAction({
   displayName: 'Create Contact',
   description: 'Creates a new person record in your Twenty CRM workspace.',
   props: {
-    
     firstName: Property.ShortText({
       displayName: 'First Name',
       required: true,
@@ -22,38 +22,20 @@ export const createContact = createAction({
       required: false,
     }),
   },
- async run(context) {
-    // 1. Get the auth object
-    const auth = context.auth as any;
+  async run(context) {
+    const { firstName, lastName, email } = context.propsValue;
 
-    // 2. Extract values with fallbacks to handle framework nesting
-    const baseUrl = auth?.props.base_url || "";
-    const apiKey = auth?.props.api_key || "";
-
-    if (!baseUrl || !apiKey) {
-        throw new Error("Connection data is missing. Please try deleting and recreating your Twenty connection.");
-    }
-
-   const sanitizedUrl = baseUrl.replace(/\/$/, '');
-   
-    const { firstName, lastName, email } = context?.propsValue;
-
-    const response = await httpClient.sendRequest({
-        method: HttpMethod.POST,
-        url: `${sanitizedUrl}/rest/people`,
-        headers: {
-            'Authorization': `Bearer ${apiKey}`,
-            'Content-Type': 'application/json',
+    return await twentyRequest(
+      context.auth,
+      HttpMethod.POST,
+      '/rest/people',
+      {
+        name: {
+          firstName,
+          lastName,
         },
-        body: {
-          name: {
-            firstName,
-            lastName
-          },
-            emails: email ? { primaryEmail: email } : undefined,
-        },
-    });
-
-    return response.body;
-},
+        emails: email ? { primaryEmail: email } : undefined,
+      },
+    );
+  },
 });

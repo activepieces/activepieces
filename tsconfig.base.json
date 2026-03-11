@@ -1162,6 +1162,9 @@
       "@activepieces/piece-twitter": [
         "packages/pieces/community/twitter/src/index.ts"
       ],
+      "@activepieces/piece-twenty": [
+        "packages/pieces/community/twenty/src/index.ts"
+      ],
       "@activepieces/piece-typeform": [
         "packages/pieces/community/typeform/src/index.ts"
       ],

@@ -22,7 +22,7 @@ const polling: Polling<
     const body = await twentyRequest(
       auth,
       HttpMethod.GET,
-      '/rest/people',
+      '/rest/companies',
       undefined,
       { 'sort[createdAt]': 'desc' },
     );
@@ -36,22 +36,19 @@ const polling: Polling<
   },
 };
 
-export const newPerson = createTrigger({
+export const newCompany = createTrigger({
   auth: twentyAuth,
-  name: 'new_person',
-  displayName: 'New Person',
-  description: 'Triggers when a new person is created in Twenty CRM.',
+  name: 'new_company',
+  displayName: 'New Company',
+  description: 'Triggers when a new company is created in Twenty CRM.',
   props: {},
   type: TriggerStrategy.POLLING,
   sampleData: {
-    id: '303030-3030-3030',
-    name: {
-      firstName: 'John',
-      lastName: 'Doe',
-    },
-    emails: {
-      primaryEmail: 'john@example.com',
-    },
+    id: '404040-4040-4040',
+    name: 'Acme Corp',
+    domainName: 'acme.com',
+    address: '123 Main St',
+    employees: 50,
     createdAt: '2026-02-27T10:00:00Z',
   },
   async test(context) {
