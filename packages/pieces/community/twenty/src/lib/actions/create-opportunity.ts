@@ -33,6 +33,12 @@ export const createOpportunity = createAction({
       description: 'The monetary value of the deal.',
       required: false,
     }),
+    currency: Property.ShortText({
+      displayName: 'Currency Code',
+      description: 'ISO 4217 currency code (e.g. USD, EUR, GBP).',
+      required: false,
+      defaultValue: 'USD',
+    }),
     closeDate: Property.ShortText({
       displayName: 'Close Date',
       description: 'Expected close date (e.g. 2026-06-30).',
@@ -45,7 +51,7 @@ export const createOpportunity = createAction({
     }),
   },
   async run(context) {
-    const { name, stage, amount, closeDate, companyId } = context.propsValue;
+    const { name, stage, amount, currency, closeDate, companyId } = context.propsValue;
 
     return await twentyRequest(
       context.auth,
@@ -54,7 +60,7 @@ export const createOpportunity = createAction({
       {
         name,
         stage: stage ?? undefined,
-        amount: amount ?? undefined,
+        amount: amount != null ? { amountMicros: Math.round(amount * 1_000_000), currencyCode: currency ?? 'USD' } : undefined,
         closeDate: closeDate ?? undefined,
         companyId: companyId ?? undefined,
       },

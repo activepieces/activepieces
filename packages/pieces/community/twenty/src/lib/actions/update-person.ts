@@ -32,9 +32,15 @@ export const updatePerson = createAction({
 
     const body: Record<string, unknown> = {};
     if (firstName || lastName) {
+      const existing = await twentyRequest<Record<string, unknown>>(
+        context.auth,
+        HttpMethod.GET,
+        `/rest/people/${personId}`,
+      );
+      const existingName = (existing['name'] as Record<string, string>) ?? {};
       body['name'] = {
-        ...(firstName ? { firstName } : {}),
-        ...(lastName ? { lastName } : {}),
+        firstName: firstName ?? existingName['firstName'],
+        lastName: lastName ?? existingName['lastName'],
       };
     }
     if (email) {
