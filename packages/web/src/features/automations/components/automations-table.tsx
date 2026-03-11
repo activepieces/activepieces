@@ -103,7 +103,7 @@ export const AutomationsTable = ({
             {t('Last modified')}
           </div>
           {!embedState.isEmbedded && (
-            <div className="w-[170px] shrink-0 px-2 flex items-center gap-1.5">
+            <div className="w-[250px] shrink-0 px-2 flex items-center gap-1.5">
               <User className="h-3.5 w-3.5" />
               {t('Owner')}
             </div>

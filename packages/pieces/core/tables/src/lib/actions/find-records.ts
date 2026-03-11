@@ -73,12 +73,14 @@ export const findRecords = createAction({
                     { label: 'Less Than', value: FilterOperator.LT },
                     { label: 'Less Than or Equal', value: FilterOperator.LTE },
                     { label: 'Contains', value: FilterOperator.CO },
+                    { label: 'Exists', value: FilterOperator.EXISTS },
+                    { label: 'Does not exist', value: FilterOperator.NOT_EXISTS },
                   ],
                 },
               }),
               value: Property.ShortText({
                 displayName: 'Value',
-                required: true,
+                required: false,
               }),
             },
           }),
@@ -92,6 +94,10 @@ export const findRecords = createAction({
     const filtersArray: { field: FieldInfo; operator: FilterOperator; value: unknown }[] = filters?.['filters'] ?? [];
 
     for (const filter of filtersArray) {
+      if (filter.operator === FilterOperator.EXISTS || filter.operator === FilterOperator.NOT_EXISTS) {
+        continue;
+      }
+
       const value = filter.value;
       const fieldType = filter.field.type;
 
@@ -124,11 +130,19 @@ export const findRecords = createAction({
       await propsValidation.validateZod({ value }, schema);
     }
 
-    const parsedFilters: Filter[] = filtersArray.map((filter) => ({
-      fieldId: filter.field.id,
-      operator: filter.operator,
-      value: filter.value as string,
-    }));
+    const parsedFilters: Filter[] = filtersArray.map((filter) => {
+      if (filter.operator === FilterOperator.EXISTS || filter.operator === FilterOperator.NOT_EXISTS) {
+        return {
+          fieldId: filter.field.id,
+          operator: filter.operator,
+        };
+      }
+      return {
+        fieldId: filter.field.id,
+        operator: filter.operator,
+        value: filter.value as string,
+      };
+    });
 
     const request: ListRecordsRequest = {
       tableId,

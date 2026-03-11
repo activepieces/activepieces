@@ -4,6 +4,7 @@ import { AppSystemProp, ContainerType, DatabaseType, environmentVariables, pinoL
 import {
     ActivepiecesError,
     ApEdition,
+    DefaultProjectRole,
     ErrorCode,
     ExecutionMode,
     FileLocation,
@@ -60,6 +61,7 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.ENABLE_FLOW_ON_PUBLISH]: 'true',
     [AppSystemProp.ISSUE_ARCHIVE_DAYS]: '7',
     [AppSystemProp.POSTGRES_IDLE_TIMEOUT_MS]: '300000',
+    [AppSystemProp.SCIM_DEFAULT_PROJECT_ROLE]: DefaultProjectRole.EDITOR,
 }
 
 let globalLogger: FastifyBaseLogger

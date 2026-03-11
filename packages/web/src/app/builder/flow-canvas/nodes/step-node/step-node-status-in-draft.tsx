@@ -16,6 +16,7 @@ import {
   TooltipContent,
 } from '@/components/ui/tooltip';
 import { StepStatusIcon, flowRunUtils } from '@/features/flow-runs';
+import { pieceSelectorUtils } from '@/features/pieces';
 
 import { useBuilderStateContext } from '../../../builder-hooks';
 import { flowCanvasUtils } from '../../utils/flow-canvas-utils';
@@ -40,8 +41,15 @@ const ApStepNodeStatusInDraft = ({ stepName }: { stepName: string }) => {
     isInDraft,
     isStepValid,
     isSkipped,
+    isManualTrigger,
   ] = useBuilderStateContext((state) => {
     const step = flowStructureUtil.getStep(stepName, state.flowVersion.trigger);
+    const isManualTrigger =
+      step?.type === FlowTriggerType.PIECE &&
+      pieceSelectorUtils.isManualTrigger({
+        pieceName: step?.settings.pieceName,
+        triggerName: step?.settings.triggerName ?? '',
+      });
     return [
       state.run,
       state.isStepBeingTested(stepName),
@@ -52,8 +60,10 @@ const ApStepNodeStatusInDraft = ({ stepName }: { stepName: string }) => {
       state.flowVersion.state === FlowVersionState.DRAFT,
       !!step?.valid,
       flowCanvasUtils.isSkipped(stepName, state.flowVersion.trigger),
+      isManualTrigger,
     ];
   });
+
   const draftStatusConfig: Record<
     DraftStepStatus,
     {
@@ -139,7 +149,12 @@ const ApStepNodeStatusInDraft = ({ stepName }: { stepName: string }) => {
     lastUpdatedDate,
   ]);
 
-  if (!isNil(run) || stepType === FlowTriggerType.EMPTY || !isInDraft) {
+  if (
+    !isNil(run) ||
+    stepType === FlowTriggerType.EMPTY ||
+    !isInDraft ||
+    isManualTrigger
+  ) {
     return null;
   }
 

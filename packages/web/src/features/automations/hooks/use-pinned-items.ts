@@ -1,5 +1,7 @@
+import { t } from 'i18next';
 import { useCallback, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { toast } from 'sonner';
 
 import { authenticationSession } from '@/lib/authentication-session';
 
@@ -65,6 +67,7 @@ export function usePinnedItems() {
 
   const togglePin = useCallback(
     (itemId: string) => {
+      const wasPinned = pinnedList.includes(itemId);
       setPinnedList((prev) => {
         const idx = prev.indexOf(itemId);
         let next: string[];
@@ -76,8 +79,13 @@ export function usePinnedItems() {
         writePinnedList(projectId, userId, next);
         return next;
       });
+      if (wasPinned) {
+        toast.success(t('Removed from favorites.'));
+      } else {
+        toast.success(t('Favorited and moved to the top.'));
+      }
     },
-    [projectId, userId],
+    [projectId, userId, pinnedList],
   );
 
   const unpinItem = useCallback(

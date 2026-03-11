@@ -7,7 +7,6 @@ import {
 import { t } from 'i18next';
 import {
   ChevronRight,
-  Import,
   Plus,
   Sparkles,
   Table2,
@@ -294,7 +293,7 @@ export const AutomationsEmptyState = ({
               hasPermission={userHasPermissionToWriteTable}
             />
             <ActionRow
-              icon={<Import className="h-4 w-4" />}
+              icon={<Upload className="h-4 w-4" />}
               label={t('Import')}
               onClick={() => setIsImportTableDialogOpen(true)}
               hasPermission={userHasPermissionToWriteTable}

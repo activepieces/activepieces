@@ -1,6 +1,6 @@
 import { inspect } from 'util'
 import { AppSystemProp, ContainerType, DatabaseType, RedisType, SystemProp, WorkerSystemProp } from '@activepieces/server-common'
-import { ApEdition, ApEnvironment, ExecutionMode, FileLocation, isNil, PieceSyncMode } from '@activepieces/shared'
+import { ApEdition, ApEnvironment, DefaultProjectRole, ExecutionMode, FileLocation, isNil, PieceSyncMode } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { packageManager, registryPieceManager } from 'worker'
 import { s3Helper } from '../file/s3-helper'
@@ -147,6 +147,7 @@ const systemPropValidators: {
     [AppSystemProp.EDITION]: enumValidator(Object.values(ApEdition)),
     [AppSystemProp.FEATUREBASE_API_KEY]: stringValidator,
     [AppSystemProp.OPENROUTER_PROVISION_KEY]: stringValidator,
+    [AppSystemProp.SCIM_DEFAULT_PROJECT_ROLE]: enumValidator(Object.values(DefaultProjectRole)),
 
     // AppSystemProp
     [WorkerSystemProp.WORKER_CONCURRENCY]: numberValidator,

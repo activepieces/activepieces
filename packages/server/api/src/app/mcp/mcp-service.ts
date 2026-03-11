@@ -1,5 +1,5 @@
 import { rejectedPromiseHandler } from '@activepieces/server-common'
-import { apId, FlowStatus, FlowTriggerType, FlowVersionState, isNil, MCP_TRIGGER_PIECE_NAME, McpProperty, McpPropertyType, McpServer as McpServerSchema, McpServerStatus, mcpToolNameUtils, McpTrigger, PopulatedFlow, PopulatedMcpServer, TelemetryEventName } from '@activepieces/shared'
+import { apId, FlowStatus, FlowTriggerType, FlowVersionState, isNil, MCP_TRIGGER_PIECE_NAME, McpProperty, McpPropertyType, McpServer as McpServerSchema, McpServerStatus, mcpToolNameUtils, McpTrigger, PopulatedFlow, PopulatedMcpServer, spreadIfNotUndefined, TelemetryEventName } from '@activepieces/shared'
 import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
@@ -9,6 +9,7 @@ import { telemetry } from '../helper/telemetry.utils'
 import { WebhookFlowVersionToRun } from '../webhooks/webhook-handler'
 import { webhookService } from '../webhooks/webhook.service'
 import { McpServerEntity } from './mcp-entity'
+import { activepiecesTools, ALL_CONTROLLABLE_TOOL_NAMES, LOCKED_TOOL_NAMES } from './tools'
 
 export const mcpServerRepository = repoFactory(McpServerEntity)
 
@@ -30,6 +31,7 @@ export const mcpServerService = (log: FastifyBaseLogger) => {
                     status: McpServerStatus.DISABLED,
                     projectId,
                     token: apId(72),
+                    enabledTools: ALL_CONTROLLABLE_TOOL_NAMES,
                 }, ['projectId'])
                 return mcpServerRepository().findOneByOrFail({ projectId })
             }
@@ -42,11 +44,15 @@ export const mcpServerService = (log: FastifyBaseLogger) => {
             })
             return mcpServerService(log).getPopulatedByProjectId(projectId)
         },
-        update: async ({ projectId, status }: UpdateParams) => {
+        update: async ({ projectId, status, enabledTools }: UpdateParams) => {
             const mcp = await mcpServerService(log).getByProjectId(projectId)
-            await mcpServerRepository().update(mcp.id, {
-                status,
-            })
+            const patch = {
+                ...spreadIfNotUndefined('status', status),
+                ...spreadIfNotUndefined('enabledTools', enabledTools),
+            }
+            if (Object.keys(patch).length > 0) {
+                await mcpServerRepository().update(mcp.id, patch)
+            }
             return mcpServerService(log).getPopulatedByProjectId(projectId)
         },
         buildServer: async ({ mcp }: BuildServerRequest): Promise<McpServer> => {
@@ -125,6 +131,13 @@ export const mcpServerService = (log: FastifyBaseLogger) => {
                     }
                 })
             }
+            
+            const allTools = activepiecesTools(mcp, log)
+            const enabledControllable = new Set(mcp.enabledTools ?? ALL_CONTROLLABLE_TOOL_NAMES)
+            const tools = allTools.filter(t => LOCKED_TOOL_NAMES.includes(t.title) || enabledControllable.has(t.title))
+            tools.forEach((tool) => {
+                server.registerTool(tool.title, { title: tool.title, description: tool.description, inputSchema: tool.inputSchema }, (args: Record<string, unknown>) => tool.execute(args))
+            })
 
             registerEmptyResourcesAndPrompts(server)
             return server
@@ -206,6 +219,7 @@ type RotateTokenRequest = {
 }
 
 type UpdateParams = {
-    status: McpServerStatus
+    status?: McpServerStatus
     projectId: string
+    enabledTools?: string[]
 }
