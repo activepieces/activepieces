@@ -1,4 +1,4 @@
-import { apDayjs, apDayjsDuration } from '@activepieces/server-common'
+import { apDayjs, apDayjsDuration, exceptionHandler } from '@activepieces/server-common'
 import { assertNotNullOrUndefined, isNil, spreadIfDefined, tryCatch } from '@activepieces/shared'
 import { Job, JobsOptions, Queue, Worker } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
@@ -45,6 +45,14 @@ export const systemJobsSchedule = (log: FastifyBaseLogger): SystemJobSchedule =>
                 concurrency: 1,
             },
         )
+
+        systemJobWorker.on('failed', (job, err) => {
+            const attemptsUsed = job?.attemptsMade ?? 0
+            const maxAttempts = job?.opts?.attempts ?? 0
+            if (attemptsUsed >= maxAttempts) {
+                exceptionHandler.handle(err, log)
+            }
+        })
 
         await Promise.all([
             systemJobsQueue.waitUntilReady(),
