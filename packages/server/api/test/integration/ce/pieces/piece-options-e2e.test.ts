@@ -92,7 +92,7 @@ describe('Piece Options E2E', () => {
 
         const response = await app.inject({
             method: 'POST',
-            url: '/v1/pieces/options',
+            url: '/api/v1/pieces/options',
             headers: {
                 authorization: `Bearer ${token}`,
             },

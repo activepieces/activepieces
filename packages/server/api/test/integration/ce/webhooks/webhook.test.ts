@@ -39,7 +39,7 @@ describe('Webhook Service', () => {
         })
         const response = await app?.inject({
             method: 'POST',
-            url: `/v1/webhooks/${mockFlow.id}`,
+            url: `/api/v1/webhooks/${mockFlow.id}`,
             headers: {
                 authorization: `Bearer ${mockToken}`,
             },
@@ -60,7 +60,7 @@ describe('Webhook Service', () => {
 
         const response = await app?.inject({
             method: 'GET',
-            url: `/v1/webhooks/${MOCK_FLOW_ID}`,
+            url: `/api/v1/webhooks/${MOCK_FLOW_ID}`,
             headers: {
                 authorization: `Bearer ${mockToken}`,
             },
@@ -90,7 +90,7 @@ describe('Webhook Service', () => {
         })
         const response = await app?.inject({
             method: 'GET',
-            url: `/v1/webhooks/${mockFlow.id}`,
+            url: `/api/v1/webhooks/${mockFlow.id}`,
             headers: {
                 authorization: `Bearer ${mockToken}`,
             },
@@ -121,7 +121,7 @@ describe('Webhook Service', () => {
         })
         const response = await app?.inject({
             method: 'POST',
-            url: `/v1/webhooks/${mockFlow.id}?foo=bar&baz=qux`,
+            url: `/api/v1/webhooks/${mockFlow.id}?foo=bar&baz=qux`,
             headers: {
                 authorization: `Bearer ${mockToken}`,
             },
@@ -153,7 +153,7 @@ describe('Webhook Service', () => {
         })
         const response = await app?.inject({
             method: 'GET',
-            url: `/v1/webhooks/${mockFlow.id}`,
+            url: `/api/v1/webhooks/${mockFlow.id}`,
             headers: {
                 authorization: `Bearer ${mockToken}`,
             },
@@ -184,7 +184,7 @@ describe('Webhook Service', () => {
         })
         const response = await app?.inject({
             method: 'PUT',
-            url: `/v1/webhooks/${mockFlow.id}`,
+            url: `/api/v1/webhooks/${mockFlow.id}`,
             headers: {
                 authorization: `Bearer ${mockToken}`,
             },
@@ -216,7 +216,7 @@ describe('Webhook Service', () => {
         })
         const response = await app?.inject({
             method: 'DELETE',
-            url: `/v1/webhooks/${mockFlow.id}`,
+            url: `/api/v1/webhooks/${mockFlow.id}`,
             headers: {
                 authorization: `Bearer ${mockToken}`,
             },
@@ -247,7 +247,7 @@ describe('Webhook Service', () => {
         })
         const response = await app?.inject({
             method: 'POST',
-            url: `/v1/webhooks/${mockFlow.id}`,
+            url: `/api/v1/webhooks/${mockFlow.id}`,
             headers: {
                 authorization: `Bearer ${mockToken}`,
             },
@@ -277,7 +277,7 @@ describe('Webhook Service', () => {
         })
         const response = await app?.inject({
             method: 'POST',
-            url: `/v1/webhooks/${mockFlow.id}/draft`,
+            url: `/api/v1/webhooks/${mockFlow.id}/draft`,
             headers: {
                 authorization: `Bearer ${mockToken}`,
             },
@@ -311,7 +311,7 @@ describe('Webhook Service', () => {
         const largePayload = { data: 'x'.repeat(26 * 1024 * 1024) }
         const response = await app?.inject({
             method: 'POST',
-            url: `/v1/webhooks/${mockFlow.id}`,
+            url: `/api/v1/webhooks/${mockFlow.id}`,
             headers: {
                 authorization: `Bearer ${mockToken}`,
             },
@@ -343,7 +343,7 @@ describe('Webhook Service', () => {
         })
         const response = await app?.inject({
             method: 'POST',
-            url: `/v1/webhooks/${mockFlow.id}`,
+            url: `/api/v1/webhooks/${mockFlow.id}`,
             headers: {
                 authorization: `Bearer ${mockToken}`,
             },
@@ -376,7 +376,7 @@ describe('Webhook Service', () => {
         const largePayload = { data: 'x'.repeat(26 * 1024 * 1024) }
         const response = await app?.inject({
             method: 'POST',
-            url: `/v1/webhooks/${mockFlow.id}/sync`,
+            url: `/api/v1/webhooks/${mockFlow.id}/sync`,
             headers: {
                 authorization: `Bearer ${mockToken}`,
             },
@@ -405,7 +405,7 @@ describe('Webhook Service', () => {
         })
         const response = await app?.inject({
             method: 'POST',
-            url: `/v1/webhooks/${mockFlow.id}/test`,
+            url: `/api/v1/webhooks/${mockFlow.id}/test`,
             headers: {
                 authorization: `Bearer ${mockToken}`,
             },

@@ -396,7 +396,7 @@ describe('Flow API', () => {
 
             const response = await app?.inject({
                 method: 'GET',
-                url: `/v1/flows/${mockFlow.id}/template`,
+                url: `/api/v1/flows/${mockFlow.id}/template`,
                 headers: { authorization: `Bearer ${mockToken}` },
             })
 

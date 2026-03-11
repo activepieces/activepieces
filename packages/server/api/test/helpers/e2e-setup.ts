@@ -23,20 +23,6 @@ export async function setupE2eEnvironment(): Promise<E2eContext> {
     // for WORKER_AND_APP container type, which is used as internalApiUrl for engine RPC.
     await app.listen({ port: 3000, host: '127.0.0.1' })
 
-    // In production, nginx strips the /api/ prefix. In tests there's no proxy,
-    // so intercept at the raw HTTP level and rewrite /api/* → /* before Fastify routes.
-    const httpServer = app.server
-    const originalListeners = httpServer.listeners('request').slice()
-    httpServer.removeAllListeners('request')
-    httpServer.on('request', (req, res) => {
-        if (req.url?.startsWith('/api/')) {
-            req.url = req.url.substring(4)
-        }
-        for (const listener of originalListeners) {
-            (listener as (req: unknown, res: unknown) => void)(req, res)
-        }
-    })
-
     await migrateQueuesAndRunConsumers(app)
 
     const workerToken = await accessTokenManager(app.log).generateWorkerToken()

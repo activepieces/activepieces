@@ -23,7 +23,6 @@ services:
     env_file: .env
     environment:
       - AP_CONTAINER_TYPE=WORKER
-      - AP_API_URL=http://app:3000
     deploy:
       replicas: 5
     volumes:

@@ -81,7 +81,7 @@ describe('Event Destinations API', () => {
 
             const response = await ctx.inject({
                 method: 'PATCH',
-                url: `/v1/event-destinations/${destId}`,
+                url: `/api/v1/event-destinations/${destId}`,
                 body: {
                     url: 'https://example.com/updated',
                     events: [ApplicationEventName.FLOW_DELETED, ApplicationEventName.FLOW_CREATED],
@@ -100,7 +100,7 @@ describe('Event Destinations API', () => {
 
             const response = await ctx.inject({
                 method: 'PATCH',
-                url: `/v1/event-destinations/${nonExistentId}`,
+                url: `/api/v1/event-destinations/${nonExistentId}`,
                 body: {
                     url: 'https://example.com/updated',
                     events: [ApplicationEventName.FLOW_CREATED],
@@ -156,7 +156,7 @@ describe('Event Destinations API', () => {
 
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/event-destinations',
+                url: '/api/v1/event-destinations',
                 headers: { authorization: `Bearer ${memberToken}` },
                 body: {
                     url: 'https://example.com/unauthorized',

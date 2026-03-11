@@ -33,7 +33,8 @@ export const domainHelper = {
     async getApiUrlForWorker({ path, platformId }: PublicUrlParams): Promise<string> {
         const hasWorkerModule = system.isWorker()
         if (hasWorkerModule) {
-            return networkUtils.combineUrl('http://127.0.0.1:3000', path ?? '')
+            const port = system.get(WorkerSystemProp.PORT)
+            return networkUtils.combineUrl(`http://127.0.0.1:${port}/api`, path ?? '')
         }
         return this.getInternalApiUrl({ path: path ?? '', platformId })
     },

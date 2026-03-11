@@ -12,11 +12,11 @@ export const authorizationMiddleware = async (request: FastifyRequest): Promise<
     await authorizeOrThrow(request.principal, securityAccessRequest, request.log)
 
     const requestPath = request.routeOptions.config.url
-    const bullmqRoute = requestPath.startsWith('/ui')
+    const bullmqRoute = requestPath.startsWith('/ui') || requestPath.startsWith('/api/ui')
     if (bullmqRoute) {
         return
     }
-    if (security.kind === RouteKind.AUTHENTICATED && security.authorization.type === AuthorizationType.PROJECT) {
+    if (!isNil(security) && security.kind === RouteKind.AUTHENTICATED && security.authorization.type === AuthorizationType.PROJECT) {
         // @ts-expect-error: explicit override for Fastify typing assignment
         request.projectId = securityAccessRequest.authorization.projectId
     }

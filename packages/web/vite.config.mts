@@ -24,7 +24,6 @@ export default defineConfig(({ command, mode }) => {
           target: 'http://127.0.0.1:3000',
           secure: false,
           changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/api/, ''),
           headers: {
             Host: '127.0.0.1:4200',
           },

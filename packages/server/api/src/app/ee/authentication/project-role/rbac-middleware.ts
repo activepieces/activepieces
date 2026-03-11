@@ -99,7 +99,7 @@ const ignoreRequest = (req: FastifyRequest): boolean => {
     if (EDITION_IS_COMMUNITY) {
         return true
     }
-    const ignoredPrefixes = ['/redirect', '/ui']
+    const ignoredPrefixes = ['/redirect', '/ui', '/api/ui']
     if (ignoredPrefixes.some(p => req.url.startsWith(p))) {
         return true
     }

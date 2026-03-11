@@ -74,6 +74,7 @@ const systemPropValidators: {
     [WorkerSystemProp.FRONTEND_URL]: urlValidator,
     [WorkerSystemProp.CONTAINER_TYPE]: enumValidator(Object.values(ContainerType)),
     [WorkerSystemProp.WORKER_TOKEN]: stringValidator,
+    [WorkerSystemProp.PORT]: numberValidator,
     [WorkerSystemProp.PLATFORM_ID_FOR_DEDICATED_WORKER]: stringValidator,
     [WorkerSystemProp.PRE_WARM_CACHE]: booleanValidator,
     // AppSystemProp
