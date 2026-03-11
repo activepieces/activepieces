@@ -11,11 +11,8 @@ import customHtmlPlugin from './vite-plugins/html-plugin';
 export default defineConfig(({ command, mode }) => {
   const isDev = command === 'serve' || mode === 'development';
 
-  const AP_TITLE = isDev ? 'Activepieces' : '${AP_APP_TITLE}';
-
-  const AP_FAVICON = isDev
-    ? 'https://activepieces.com/favicon.ico'
-    : '${AP_FAVICON_URL}';
+  const AP_TITLE = 'Activepieces';
+  const AP_FAVICON = 'https://activepieces.com/favicon.ico';
 
   return {
     root: __dirname,
