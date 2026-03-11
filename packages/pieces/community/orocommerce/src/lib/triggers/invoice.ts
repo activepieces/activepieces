@@ -4,8 +4,7 @@ import { invoiceCreateData, invoiceUpdateData, invoiceDeleteData } from '../exam
 export const newInvoice = createOroWebhookTrigger({
   name: 'new_invoice',
   description: 'Triggered when a new invoice is created',
-  topic: 'invoice',
-  event: 'create',
+  topic: 'invoice.create',
   displayName: 'New Invoice',
   sampleData: invoiceCreateData,
 });
@@ -13,8 +12,7 @@ export const newInvoice = createOroWebhookTrigger({
 export const updatedInvoice = createOroWebhookTrigger({
   name: 'updated_invoice',
   description: 'Triggered when an invoice is updated',
-  topic: 'invoice',
-  event: 'update',
+  topic: 'invoice.update',
   displayName: 'Invoice Update',
   sampleData: invoiceUpdateData,
 });
@@ -22,8 +20,15 @@ export const updatedInvoice = createOroWebhookTrigger({
 export const removedInvoice = createOroWebhookTrigger({
   name: 'removed_invoice',
   description: 'Triggered when an invoice is deleted',
-  topic: 'invoice',
-  event: 'delete',
+  topic: 'invoice.delete',
   displayName: 'Invoice Removal',
+  sampleData: invoiceDeleteData,
+});
+
+export const paymentForInvoice = createOroWebhookTrigger({
+  name: 'invoice_payment',
+  description: 'Triggered when an invoice payment status is changed',
+  topic: 'invoice.payment_status_change',
+  displayName: 'Invoice Payment Status Changed',
   sampleData: invoiceDeleteData,
 });

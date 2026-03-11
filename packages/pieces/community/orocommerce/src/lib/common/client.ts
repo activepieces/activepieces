@@ -22,9 +22,10 @@ async function getAccessToken(auth: OroAuth): Promise<string> {
     return cachedToken;
   }
 
+  const baseUrl = auth.props.serverUrl.replace(/\/*$/, '');
   const response = await httpClient.sendRequest<OroAuthResponseType>({
     method: HttpMethod.POST,
-    url: auth.props.serverUrl + '/oauth2-token',
+    url: `${baseUrl}/oauth2-token`,
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
     },
@@ -50,9 +51,13 @@ export async function oroApiCall({
   headers: extraHeaders,
 }: OroApiCallParams): Promise<HttpResponse<HttpMessageBody>> {
   try {
+    const serverUrl = auth.props.serverUrl.replace(/\/*$/, '');
+    const adminPrefix = auth.props.adminPrefix.replace(/^\/+|\/+$/g, '');
+    const resource = resourceUri.replace(/^\/+/, '');
+
     return await httpClient.sendRequest({
       method,
-      url: `${auth.props.serverUrl}/${auth.props.adminPrefix}/api${resourceUri}`,
+      url: `${serverUrl}/${adminPrefix}/api/${resource}`,
       headers: {
         'Content-Type': 'application/vnd.api+json',
         ...extraHeaders,

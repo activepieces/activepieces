@@ -12,14 +12,12 @@ export const createOroWebhookTrigger = ({
   description,
   displayName,
   topic,
-  event,
   sampleData,
 }: {
   name: string;
   description: string;
   displayName: string;
   topic: string;
-  event: string;
   sampleData: Record<string, unknown>;
 }): Trigger =>
   createTrigger({
@@ -34,14 +32,13 @@ export const createOroWebhookTrigger = ({
     async onEnable(context) {
       const response = await oroApiCall({
         method: HttpMethod.POST,
-        resourceUri: '/remotewebhooks',
+        resourceUri: '/webhookproducersettings',
         auth: context.auth,
         body: {
           data: {
-            type: 'remotewebhooks',
+            type: 'webhookproducersettings',
             attributes: {
-              channel: topic,
-              event,
+              topic: topic,
               enabled: true,
               notificationUrl: context.webhookUrl,
             },
@@ -53,8 +50,7 @@ export const createOroWebhookTrigger = ({
         `_orocommerce_${name}_trigger`,
         {
           webhookId: response.body.data.id,
-          topic,
-          event,
+          topic
         }
       );
     },
@@ -67,7 +63,7 @@ export const createOroWebhookTrigger = ({
       if (webhookInfo !== null && webhookInfo !== undefined) {
         await oroApiCall({
           method: HttpMethod.DELETE,
-          resourceUri: `/remotewebhooks/${webhookInfo.webhookId}`,
+          resourceUri: `/webhookproducersettings/${webhookInfo.webhookId}`,
           auth: context.auth,
         });
       }
@@ -81,5 +77,4 @@ export const createOroWebhookTrigger = ({
 interface WebhookInformation {
   webhookId: string;
   topic: string;
-  event: string;
 }

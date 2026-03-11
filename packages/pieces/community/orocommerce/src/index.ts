@@ -6,6 +6,7 @@ import {
   newInvoice,
   removedInvoice,
   updatedInvoice,
+  paymentForInvoice,
 } from './lib/triggers/invoice';
 import {
   createInvoiceAction,
@@ -38,5 +39,6 @@ export const orocommerce = createPiece({
     newInvoice,
     removedInvoice,
     updatedInvoice,
+    paymentForInvoice,
   ],
 });
