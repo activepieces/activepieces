@@ -150,7 +150,7 @@ export const projectService = (log: FastifyBaseLogger) => ({
                 },
             })
         }
-        return projects[0]
+        return projects.find((p) => p.ownerId === userId && p.type === ProjectType.PERSONAL) ?? projects[0]
     },
 
     async getAllForUser(params: GetAllForUserParams): Promise<Project[]> {
