@@ -230,4 +230,169 @@ describe('worker integration', () => {
         expect(completeJobCalls[0].jobId).toBe('job-after-null')
         expect(completeJobCalls[0].status).toBe(ConsumeJobResponseStatus.OK)
     }, 15_000)
+
+    describe('resilience to invalid job data', () => {
+        it('survives a job with invalid jobData fields and continues processing', async () => {
+            const expectedResult = { delayInSeconds: 5 }
+            mockGetHandler.mockReturnValue({
+                jobType: WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
+                execute: vi.fn().mockResolvedValue(expectedResult),
+            })
+
+            const invalidJob = buildConsumeJobRequest({
+                jobId: 'job-invalid-fields',
+                jobData: { jobType: 'EXECUTE_EXTRACT_PIECE_INFORMATION', schemaVersion: 4 } as any,
+            })
+            const validJob = buildConsumeJobRequest({ jobId: 'job-valid' })
+
+            const { completeJobCalls } = await connectWorkerWithPoll([invalidJob, validJob, null])
+
+            expect(completeJobCalls.length).toBe(2)
+            expect(completeJobCalls[0].jobId).toBe('job-invalid-fields')
+            expect(completeJobCalls[0].status).toBe(ConsumeJobResponseStatus.INTERNAL_ERROR)
+            expect(completeJobCalls[1].jobId).toBe('job-valid')
+            expect(completeJobCalls[1].status).toBe(ConsumeJobResponseStatus.OK)
+            expect(mockGetHandler).toHaveBeenCalledTimes(1)
+        }, 15_000)
+
+        it('survives a job with an unrecognized jobType and continues polling', async () => {
+            const expectedResult = { delayInSeconds: 5 }
+            mockGetHandler.mockReturnValue({
+                jobType: WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
+                execute: vi.fn().mockResolvedValue(expectedResult),
+            })
+
+            const invalidJob = buildConsumeJobRequest({
+                jobId: 'job-bad-type',
+                jobData: { jobType: 'NONEXISTENT_TYPE', schemaVersion: 4, platformId: 'p' } as any,
+            })
+            const validJob = buildConsumeJobRequest({ jobId: 'job-valid' })
+
+            const { completeJobCalls } = await connectWorkerWithPoll([invalidJob, validJob, null])
+
+            expect(completeJobCalls.length).toBe(2)
+            expect(completeJobCalls[0].jobId).toBe('job-bad-type')
+            expect(completeJobCalls[0].status).toBe(ConsumeJobResponseStatus.INTERNAL_ERROR)
+            expect(completeJobCalls[1].jobId).toBe('job-valid')
+            expect(completeJobCalls[1].status).toBe(ConsumeJobResponseStatus.OK)
+        }, 15_000)
+
+        it('survives a job with empty object as jobData and continues polling', async () => {
+            mockGetHandler.mockReturnValue({
+                jobType: WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
+                execute: vi.fn().mockResolvedValue({}),
+            })
+
+            const invalidJob = buildConsumeJobRequest({
+                jobId: 'job-empty-data',
+                jobData: {} as any,
+            })
+            const validJob = buildConsumeJobRequest({ jobId: 'job-valid' })
+
+            const { completeJobCalls } = await connectWorkerWithPoll([invalidJob, validJob, null])
+
+            expect(completeJobCalls.length).toBe(2)
+            expect(completeJobCalls[0].jobId).toBe('job-empty-data')
+            expect(completeJobCalls[0].status).toBe(ConsumeJobResponseStatus.INTERNAL_ERROR)
+            expect(completeJobCalls[1].jobId).toBe('job-valid')
+            expect(completeJobCalls[1].status).toBe(ConsumeJobResponseStatus.OK)
+        }, 15_000)
+
+        it('survives a job with non-object primitive jobData and continues polling', async () => {
+            mockGetHandler.mockReturnValue({
+                jobType: WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
+                execute: vi.fn().mockResolvedValue({}),
+            })
+
+            const invalidJob = buildConsumeJobRequest({
+                jobId: 'job-primitive-data',
+                jobData: 'garbage' as any,
+            })
+            const validJob = buildConsumeJobRequest({ jobId: 'job-valid' })
+
+            const { completeJobCalls } = await connectWorkerWithPoll([invalidJob, validJob, null])
+
+            expect(completeJobCalls.length).toBe(2)
+            expect(completeJobCalls[0].jobId).toBe('job-primitive-data')
+            expect(completeJobCalls[0].status).toBe(ConsumeJobResponseStatus.INTERNAL_ERROR)
+            expect(completeJobCalls[1].jobId).toBe('job-valid')
+            expect(completeJobCalls[1].status).toBe(ConsumeJobResponseStatus.OK)
+        }, 15_000)
+
+        it('survives multiple consecutive invalid jobs and still processes a valid one', async () => {
+            const expectedResult = { delayInSeconds: 7 }
+            mockGetHandler.mockReturnValue({
+                jobType: WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
+                execute: vi.fn().mockResolvedValue(expectedResult),
+            })
+
+            const invalid1 = buildConsumeJobRequest({ jobId: 'bad-1', jobData: {} as any })
+            const invalid2 = buildConsumeJobRequest({ jobId: 'bad-2', jobData: 'garbage' as any })
+            const invalid3 = buildConsumeJobRequest({
+                jobId: 'bad-3',
+                jobData: { jobType: 'NONEXISTENT_TYPE' } as any,
+            })
+            const validJob = buildConsumeJobRequest({ jobId: 'job-valid' })
+
+            const { completeJobCalls } = await connectWorkerWithPoll([invalid1, invalid2, invalid3, validJob, null])
+
+            expect(completeJobCalls.length).toBe(4)
+            expect(completeJobCalls[0].status).toBe(ConsumeJobResponseStatus.INTERNAL_ERROR)
+            expect(completeJobCalls[1].status).toBe(ConsumeJobResponseStatus.INTERNAL_ERROR)
+            expect(completeJobCalls[2].status).toBe(ConsumeJobResponseStatus.INTERNAL_ERROR)
+            expect(completeJobCalls[3].jobId).toBe('job-valid')
+            expect(completeJobCalls[3].status).toBe(ConsumeJobResponseStatus.OK)
+            expect(completeJobCalls[3].delayInSeconds).toBe(7)
+            expect(mockGetHandler).toHaveBeenCalledTimes(1)
+        }, 15_000)
+
+        it('continues processing after a handler throws and handles the next job', async () => {
+            mockGetHandler
+                .mockReturnValueOnce({
+                    jobType: WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
+                    execute: vi.fn().mockRejectedValue(new Error('handler crashed')),
+                })
+                .mockReturnValueOnce({
+                    jobType: WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
+                    execute: vi.fn().mockResolvedValue({ delayInSeconds: 5 }),
+                })
+
+            const job1 = buildConsumeJobRequest({ jobId: 'job-crash' })
+            const job2 = buildConsumeJobRequest({ jobId: 'job-ok' })
+
+            const { completeJobCalls } = await connectWorkerWithPoll([job1, job2, null])
+
+            expect(completeJobCalls.length).toBe(2)
+            expect(completeJobCalls[0].jobId).toBe('job-crash')
+            expect(completeJobCalls[0].status).toBe(ConsumeJobResponseStatus.INTERNAL_ERROR)
+            expect(completeJobCalls[0].errorMessage).toBe('handler crashed')
+            expect(completeJobCalls[1].jobId).toBe('job-ok')
+            expect(completeJobCalls[1].status).toBe(ConsumeJobResponseStatus.OK)
+            expect(completeJobCalls[1].delayInSeconds).toBe(5)
+        }, 15_000)
+
+        it('handles interleaved nulls, invalid jobs, and valid jobs', async () => {
+            mockGetHandler.mockReturnValue({
+                jobType: WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
+                execute: vi.fn().mockResolvedValue({}),
+            })
+
+            const validJob1 = buildConsumeJobRequest({ jobId: 'valid-1' })
+            const invalidJob = buildConsumeJobRequest({ jobId: 'bad-1', jobData: {} as any })
+            const validJob2 = buildConsumeJobRequest({ jobId: 'valid-2' })
+
+            const { completeJobCalls } = await connectWorkerWithPoll([
+                null, validJob1, invalidJob, null, validJob2, null,
+            ])
+
+            expect(completeJobCalls.length).toBe(3)
+            expect(completeJobCalls[0].jobId).toBe('valid-1')
+            expect(completeJobCalls[0].status).toBe(ConsumeJobResponseStatus.OK)
+            expect(completeJobCalls[1].jobId).toBe('bad-1')
+            expect(completeJobCalls[1].status).toBe(ConsumeJobResponseStatus.INTERNAL_ERROR)
+            expect(completeJobCalls[2].jobId).toBe('valid-2')
+            expect(completeJobCalls[2].status).toBe(ConsumeJobResponseStatus.OK)
+            expect(mockGetHandler).toHaveBeenCalledTimes(2)
+        }, 15_000)
+    })
 })

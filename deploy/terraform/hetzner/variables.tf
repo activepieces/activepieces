@@ -64,12 +64,6 @@ variable "worker_node_count" {
   default     = 4
 }
 
-variable "db_server_type" {
-  description = "Server type for the PostgreSQL VM"
-  type        = string
-  default     = "cx23"   # 2 vCPU, 4GB RAM
-}
-
 variable "s3_bucket_name" {
   description = "Name for the Hetzner Object Storage bucket (must be globally unique)"
   type        = string

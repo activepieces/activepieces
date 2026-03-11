@@ -184,7 +184,12 @@ activepieces:
   
   # Networking & API
   clientRealIpHeader: ""              # Header to extract real client IP (e.g., X-Forwarded-For)
-  apiKey: ""                          # API key for platform authentication
+  apiKey: ""                          # API key for platform authentication (use apiKeySecret.externalSecret instead for production)
+  apiKeySecret:
+    externalSecret: {}
+    # externalSecret:
+    #   name: "activepieces-api-key"
+    #   key: "api-key"                # optional, defaults to "api-key"
   internalUrl: ""                     # Internal URL for service communication
   
   # Performance & Limits
@@ -205,6 +210,25 @@ activepieces:
   # System Paths
   configPath: ""                      # Custom config file path
   engineExecutablePath: "dist/packages/engine/main.js"  # Engine executable path
+
+  # Secrets — use externalSecret to reference an existing K8s secret instead of the auto-generated one
+  # If omitted, falls back to encryptionSecretName / jwtSecretName (or the auto-generated secret).
+  workerToken:
+    externalSecret: {}
+    # externalSecret:
+    #   name: "activepieces-worker-token"
+    #   key: "worker-token"             # optional, defaults to "worker-token"
+
+  encryptionKey:
+    externalSecret: {}
+    # externalSecret:
+    #   name: "activepieces-secrets"
+    #   key: "encryption-key"   # optional, defaults to "encryption-key"
+  jwtSecret:
+    externalSecret: {}
+    # externalSecret:
+    #   name: "activepieces-jwt-secret"
+    #   key: "jwt-secret"       # optional, defaults to "jwt-secret"
 
   # OpenTelemetry Configuration (for observability)
   otel:
@@ -231,6 +255,16 @@ postgresql:
   url: ""
   # SSL CA certificate for PostgreSQL (if useSSL is true)
   sslCa: ""
+  sslCaSecret:
+    externalSecret: {}
+    # externalSecret:
+    #   name: "activepieces-db-secret"
+    #   key: "ssl-ca"             # optional, defaults to "ssl-ca"
+  # External secret for host and port (alternative to host/port fields above)
+  # externalSecret:
+  #   name: "activepieces-db-secret"
+  #   hostKey: "host"       # optional, defaults to "host"
+  #   portKey: "port"       # optional, defaults to "port"
   auth:
     database: "activepieces"
     username: "postgres"
@@ -259,6 +293,11 @@ redis:
   host: ""
   # Redis port
   port: 6379
+  # External secret for host and port (alternative to host/port fields above)
+  # externalSecret:
+  #   name: "activepieces-redis-secret"
+  #   hostKey: "host"       # optional, defaults to "host"
+  #   portKey: "port"       # optional, defaults to "port"
   # Enable SSL for Redis connection
   useSSL: false
   # SSL CA certificate file path for Redis (if useSSL is true)
@@ -307,6 +346,11 @@ smtp:
   password: ""
   senderEmail: ""
   senderName: ""
+  externalSecret: {}
+  # externalSecret:
+  #   name: "activepieces-smtp-secret"
+  #   usernameKey: "username"         # optional, defaults to "username"
+  #   passwordKey: "password"         # optional, defaults to "password"
 
 # ============================================================================
 # OPTIONAL: S3 Storage Configuration
