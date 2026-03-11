@@ -1,9 +1,7 @@
 import { promisify } from 'node:util'
-import { gzip as gzipCallback, unzip as unzipCallback, zstdCompress as zstdCompressCallback, zstdDecompress as zstdDecompressCallback } from 'node:zlib'
+import { zstdCompress as zstdCompressCallback, zstdDecompress as zstdDecompressCallback } from 'node:zlib'
 import { FileCompression, isZstdCompressed } from '@activepieces/shared'
 
-const gzip = promisify(gzipCallback)
-const unzip = promisify(unzipCallback)
 const zstdCompress = promisify(zstdCompressCallback)
 const zstdDecompress = promisify(zstdDecompressCallback)
 
@@ -12,8 +10,6 @@ export const fileCompressor = {
         switch (compression) {
             case FileCompression.NONE:
                 return data
-            case FileCompression.GZIP:
-                return gzip(data)
             case FileCompression.ZSTD:
                 return zstdCompress(data)
         }
@@ -26,8 +22,6 @@ export const fileCompressor = {
                     return zstdDecompress(data)
                 }
                 return data
-            case FileCompression.GZIP:
-                return unzip(data)
             case FileCompression.ZSTD:
                 return zstdDecompress(data)
         }

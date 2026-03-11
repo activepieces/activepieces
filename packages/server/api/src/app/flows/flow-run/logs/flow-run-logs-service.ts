@@ -1,5 +1,5 @@
 import { fileCompressor } from '@activepieces/server-common'
-import { ExecutioOutputFile, File, FileCompression, FileLocation, FileType, isNil, UploadLogsBehavior, UploadLogsToken } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, ExecutioOutputFile, File, FileCompression, FileLocation, FileType, isNil, UploadLogsBehavior, UploadLogsToken } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { domainHelper } from '../../../ee/custom-domains/domain-helper'
@@ -46,30 +46,39 @@ export const flowRunLogsService = (log: FastifyBaseLogger) => {
         async uploadDirectly(request: UploadLogsToken, content: Buffer): Promise<void> {
             await upsertFile(request, log, content)
         },
-        async getLogs(request: GetLogsParams): Promise<ExecutioOutputFile | null> {
-            const rawLogs = await this.getRawLogs(request)
-            if (isNil(rawLogs)) {
-                return null
-            }
-            const decompressed = await fileCompressor.decompress({
-                data: rawLogs.data,
-                compression: rawLogs.compression,
-            })
-            return JSON.parse(decompressed.toString('utf-8'))
-        },
-        async getRawLogs(request: GetLogsParams): Promise<RawLogsResponse | null> {
+        async getFileOrThrow(request: GetLogsParams): Promise<File> {
             const file = await fileRepo().findOneBy({
                 id: request.logsFileId,
                 projectId: request.projectId,
+                type: FileType.FLOW_RUN_LOG,
+            })
+            if (isNil(file)) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.ENTITY_NOT_FOUND,
+                    params: {
+                        entityType: 'file',
+                        entityId: request.logsFileId,
+                        message: 'Logs file not found',
+                    },
+                })
+            }
+            return file
+        },
+        async getLogs(request: GetLogsParams): Promise<ExecutioOutputFile | null> {
+            const file = await fileRepo().findOneBy({
+                id: request.logsFileId,
+                projectId: request.projectId,
+                type: FileType.FLOW_RUN_LOG,
             })
             if (isNil(file)) {
                 return null
             }
             const data = file.location === FileLocation.DB ? file.data : await s3Helper(log).getFile(file.s3Key!)
-            return {
+            const decompressed = await fileCompressor.decompress({
                 data,
                 compression: file.compression,
-            }
+            })
+            return JSON.parse(decompressed.toString('utf-8'))
         },
     }
 }
@@ -87,11 +96,6 @@ function upsertFile(request: UploadLogsToken, log: FastifyBaseLogger, content: B
             projectId: request.projectId,
         },
     })
-}
-
-type RawLogsResponse = {
-    data: Buffer
-    compression: FileCompression
 }
 
 type GetLogsParams = {

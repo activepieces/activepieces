@@ -30,8 +30,6 @@ export enum FileType {
 }
 export enum FileCompression {
     NONE = 'NONE',
-    /** @deprecated Use ZSTD instead */
-    GZIP = 'GZIP',
     ZSTD = 'ZSTD',
 }
 
