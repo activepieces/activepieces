@@ -4,15 +4,41 @@ We control the clusters through the devops machine.
 
 ## Terraform Setup
 
+State is stored remotely in Hetzner Object Storage. Each environment uses a separate Terraform workspace so state is fully isolated.
+
+### First-time init (run once per machine)
+
 ```bash
 cd /root/k8s/deploy/terraform/hetzner
-# Modify terraform.tfvars or create new one based on env (e.g. terraform-stg.tfvars)
-terraform apply -var-file="terraform-stg.tfvars"
+
+# Export S3 credentials for the remote backend (Hetzner Object Storage)
+export AWS_ACCESS_KEY_ID=<hetzner-s3-access-key>
+export AWS_SECRET_ACCESS_KEY=<hetzner-s3-secret-key>
+
+terraform init
+
+# Create workspaces (one-time)
+terraform workspace new prod
+terraform workspace new stg
 ```
+
+### Apply per environment
+
+```bash
+# Staging
+terraform workspace select stg
+terraform apply -var-file="terraform-stg.tfvars"
+
+# Production
+terraform workspace select prod
+terraform apply -var-file="terraform-prod.tfvars"
+```
+
+State is stored at `env:/<workspace>/hetzner/terraform.tfstate` in the `activepieces-tf-state` bucket.
 
 tfvars template:
 ```hcl
-hcloud_token   = ""                         # Hetzner Cloud project API token
+hcloud_token   = ""                         # Hetzner Cloud project API token (separate project per env)
 ssh_public_key = ""                         # devops machine ssh key
 
 cluster_name = ""                           # Prefix for all resource names (e.g. "activepieces-staging")
@@ -84,10 +110,13 @@ kubectl create secret docker-registry ghcr-pull-secret \
 
 ### Deploy App and Worker
 
+> **Always pass `--force-conflicts`** when upgrading the app. Argo Rollouts takes server-side apply ownership of `.spec.selector` on the preview Service at runtime; without this flag Helm will fail with a conflict error on subsequent upgrades.
+
 ```bash
 helm upgrade --install activepieces deploy/activepieces-helm/ \
   -n activepieces \
   -f deploy/staging/stg-app-values.yaml \
+  --force-conflicts \
   --set image.tag=<>   # ignore if set in values.yaml
 
 helm upgrade --install activepieces-worker deploy/activepieces-helm/ \
@@ -194,6 +223,7 @@ kubectl scale statefulset activepieces-worker -n activepieces --replicas=32
 helm upgrade --install activepieces deploy/activepieces-helm/ \
   -n activepieces \
   -f deploy/staging/stg-app-values.yaml \
+  --force-conflicts \
   --set image.tag=<>
 
 helm upgrade --install activepieces-worker deploy/activepieces-helm/ \
