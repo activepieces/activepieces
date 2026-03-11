@@ -127,13 +127,12 @@ jobs:
 
       - name: Wait for preview pods to be healthy
         run: |
-          wait_for_rollout() {
+          wait_for_argo_rollout() {
             local name=$1
             local timeout=300
             local elapsed=0
             echo "Waiting for $name rollout..."
             while [ $elapsed -lt $timeout ]; do
-              # Use kubectl get with jsonpath — avoids argo plugin output format issues
               PHASE=$(kubectl get rollout "$name" -n activepieces \
                 -o jsonpath='{.status.phase}' 2>/dev/null || echo "Unknown")
               [ -z "$PHASE" ] && PHASE="Unknown"
@@ -150,28 +149,25 @@ jobs:
           }
 
           APP_OK=0; WORKER_OK=0
-          wait_for_rollout activepieces        || APP_OK=1
-          wait_for_rollout activepieces-worker || WORKER_OK=1
+          wait_for_argo_rollout activepieces || APP_OK=1
+          kubectl rollout status statefulset/activepieces-worker -n activepieces --timeout=300s || WORKER_OK=1
 
           if [ $APP_OK -ne 0 ] || [ $WORKER_OK -ne 0 ]; then
             echo "--- Pod status ---"
             kubectl get pods -n activepieces
             echo "--- Rollout details ---"
             kubectl argo rollouts get rollout activepieces -n activepieces || true
-            kubectl argo rollouts get rollout activepieces-worker -n activepieces || true
+            kubectl describe statefulset activepieces-worker -n activepieces || true
             echo "--- Events ---"
             kubectl get events -n activepieces --sort-by='.lastTimestamp' | tail -30
             kubectl argo rollouts abort activepieces -n activepieces || true
-            kubectl argo rollouts abort activepieces-worker -n activepieces || true
             exit 1
           fi
 
-      - name: Promote APP and WORKER
+      - name: Promote APP
         run: |
           kubectl argo rollouts promote activepieces -n activepieces
-          kubectl argo rollouts promote activepieces-worker -n activepieces
 
       - name: Wait for promotion to complete
         run: |
           kubectl argo rollouts status activepieces -n activepieces --timeout=5m
-          kubectl argo rollouts status activepieces-worker -n activepieces --timeout=5m
