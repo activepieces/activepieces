@@ -139,12 +139,26 @@ async function buildFlowOperation(
 
 async function fetchExecutionState(apiClient: WorkerToApiContract, data: ExecuteFlowJobData): Promise<ExecutionState> {
     if (isNil(data.logsFileId)) {
-        throw new Error(`[fetchExecutionState] logsFileId is missing for RESUME operation, runId=${data.runId}`)
+        throw new ActivepiecesError({
+            code: ErrorCode.ENTITY_NOT_FOUND,
+            params: {
+                message: 'logsFileId is missing for RESUME operation',
+                entityType: 'logs_file',
+                entityId: data.runId,
+            },
+        })
     }
     const buffer = await apiClient.getPayloadFile({ fileId: data.logsFileId, projectId: data.projectId })
     const parsed = JSON.parse(buffer.toString('utf-8'))
     if (isNil(parsed.executionState)) {
-        throw new Error(`[fetchExecutionState] executionState is missing in logs file, runId=${data.runId}, logsFileId=${data.logsFileId}`)
+        throw new ActivepiecesError({
+            code: ErrorCode.ENTITY_NOT_FOUND,
+            params: {
+                message: 'executionState is missing in logs file',
+                entityType: 'execution_state',
+                entityId: data.logsFileId,
+            },
+        })
     }
     return parsed.executionState
 }
