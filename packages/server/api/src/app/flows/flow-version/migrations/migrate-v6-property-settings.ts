@@ -17,7 +17,7 @@ export const migratePropertySettingsV6: Migration = {
                 settings: {
                     ...step.settings,
                     customLogoUrl,
-                    sampleDataSettings: {
+                    sampleData: {
                         sampleDataFileId,
                         sampleDataInputFileId,
                         lastTestDate,
