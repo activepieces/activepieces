@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Readable } from 'stream'
-import { S3 } from '@aws-sdk/client-s3'
 import { AppSystemProp } from '@activepieces/server-common'
+import { S3 } from '@aws-sdk/client-s3'
 import { customAlphabet } from 'nanoid'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 import { system } from '../../../helper/system/system'
@@ -79,7 +79,7 @@ async function migrateStep(
     flowVersionId: string,
     flowId: string,
     projectId: string,
-): Promise<any | null> {
+): Promise<any> {
     const inputUiInfo = step.settings?.inputUiInfo
     if (!inputUiInfo) {
         return null
