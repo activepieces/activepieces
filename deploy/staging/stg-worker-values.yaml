@@ -9,6 +9,8 @@ workloadType: statefulset
 
 replicaCount: 2
 
+podManagementPolicy: Parallel
+
 image:
   repository: ghcr.io/activepieces/activepieces-cloud
   tag: "0.79.2.a45aa3e55fa2edb3acf4528012534b769f23b61d.beta"       # reference only — CI always overrides via --set image.tag=
