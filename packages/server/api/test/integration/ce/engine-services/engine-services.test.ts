@@ -37,7 +37,7 @@ beforeAll(async () => {
         await app.listen({ port: 0, host: '127.0.0.1' })
     }
     const port = (app.server.address() as AddressInfo).port
-    apiUrl = `http://127.0.0.1:${port}/`
+    apiUrl = `http://127.0.0.1:${port}/api/`
 })
 
 afterAll(async () => {

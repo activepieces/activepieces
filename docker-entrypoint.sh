@@ -2,15 +2,10 @@
 
 export AP_CONTAINER_TYPE="${AP_CONTAINER_TYPE:-WORKER_AND_APP}"
 export AP_WORKERS="${AP_WORKERS:-1}"
+export AP_PORT=80
 
 echo "AP_CONTAINER_TYPE: $AP_CONTAINER_TYPE"
 echo "AP_WORKERS: $AP_WORKERS"
-
-# Start Nginx for modes that serve frontend
-if [ "$AP_CONTAINER_TYPE" != "WORKER" ]; then
-    nginx -g "daemon off;" &
-    echo "Nginx started"
-fi
 
 # Auto-generate worker token if not set and JWT secret is available
 if [ -z "$AP_WORKER_TOKEN" ] && [ -n "$AP_JWT_SECRET" ]; then

@@ -52,7 +52,7 @@ describe('Secret Managers API', () => {
 
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/secret-managers',
+                url: '/api/v1/secret-managers',
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -86,7 +86,7 @@ describe('Secret Managers API', () => {
             // Connect first
             await app?.inject({
                 method: 'POST',
-                url: '/v1/secret-managers',
+                url: '/api/v1/secret-managers',
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -99,7 +99,7 @@ describe('Secret Managers API', () => {
             // List and check connected status
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/secret-managers',
+                url: '/api/v1/secret-managers',
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -131,7 +131,7 @@ describe('Secret Managers API', () => {
             // Connect first
             await app?.inject({
                 method: 'POST',
-                url: '/v1/secret-managers',
+                url: '/api/v1/secret-managers',
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -203,7 +203,7 @@ describe('Secret Managers API', () => {
 
             await app?.inject({
                 method: 'POST',
-                url: '/v1/secret-managers',
+                url: '/api/v1/secret-managers',
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -245,7 +245,7 @@ describe('Secret Managers API', () => {
             // Connect first
             await app?.inject({
                 method: 'POST',
-                url: '/v1/secret-managers',
+                url: '/api/v1/secret-managers',
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -277,7 +277,7 @@ describe('Secret Managers API', () => {
 
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/global-connections',
+                url: '/api/v1/global-connections',
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },

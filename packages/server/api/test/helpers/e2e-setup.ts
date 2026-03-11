@@ -15,7 +15,7 @@ export async function setupE2eEnvironment(): Promise<E2eContext> {
     await app.listen({ port: 0, host: '127.0.0.1' })
     const addr = app.server.address()
     const port = typeof addr === 'object' && addr !== null ? addr.port : 0
-    const apiUrl = `http://127.0.0.1:${port}`
+    const apiUrl = `http://127.0.0.1:${port}/api`
 
     await migrateQueuesAndRunConsumers(app)
 

@@ -52,7 +52,7 @@ describe('Flow API for Worker', () => {
 
             const response = await app?.inject({
                 method: 'GET',
-                url: `/v1/worker/flows/${mockFlowVersion.id}`,
+                url: `/api/v1/worker/flows/${mockFlowVersion.id}`,
                 headers: {
                     authorization: `Bearer ${mockToken}`,
                 },

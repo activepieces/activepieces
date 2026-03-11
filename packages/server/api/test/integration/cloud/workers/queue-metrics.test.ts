@@ -65,7 +65,7 @@ describe('Queue Metrics API', () => {
 
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/worker-machines/queue-metrics',
+                url: '/api/v1/worker-machines/queue-metrics',
                 headers: { authorization: `Bearer ${testToken}` },
             })
 
@@ -75,7 +75,7 @@ describe('Queue Metrics API', () => {
         it('unauthenticated request is rejected', async () => {
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/worker-machines/queue-metrics',
+                url: '/api/v1/worker-machines/queue-metrics',
             })
 
             expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)

@@ -84,7 +84,7 @@ describe('Human Input API', () => {
 
             const response = await app?.inject({
                 method: 'GET',
-                url: `/v1/human-input/form/${mockFlow.id}`,
+                url: `/api/v1/human-input/form/${mockFlow.id}`,
             })
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
@@ -102,7 +102,7 @@ describe('Human Input API', () => {
             const nonExistentId = apId()
             const response = await app?.inject({
                 method: 'GET',
-                url: `/v1/human-input/form/${nonExistentId}`,
+                url: `/api/v1/human-input/form/${nonExistentId}`,
             })
 
             expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
@@ -126,7 +126,7 @@ describe('Human Input API', () => {
 
             const response = await app?.inject({
                 method: 'GET',
-                url: `/v1/human-input/form/${mockFlow.id}`,
+                url: `/api/v1/human-input/form/${mockFlow.id}`,
             })
 
             expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
@@ -177,7 +177,7 @@ describe('Human Input API', () => {
 
             const response = await app?.inject({
                 method: 'GET',
-                url: `/v1/human-input/chat/${mockFlow.id}`,
+                url: `/api/v1/human-input/chat/${mockFlow.id}`,
             })
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
@@ -195,7 +195,7 @@ describe('Human Input API', () => {
             const nonExistentId = apId()
             const response = await app?.inject({
                 method: 'GET',
-                url: `/v1/human-input/chat/${nonExistentId}`,
+                url: `/api/v1/human-input/chat/${nonExistentId}`,
             })
 
             expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)

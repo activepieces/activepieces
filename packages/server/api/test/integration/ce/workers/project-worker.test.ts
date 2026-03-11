@@ -30,7 +30,7 @@ describe('Project Worker API', () => {
 
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/worker/project',
+                url: '/api/v1/worker/project',
                 headers: {
                     authorization: `Bearer ${mockToken}`,
                 },
@@ -44,7 +44,7 @@ describe('Project Worker API', () => {
         it('should reject request without authorization', async () => {
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/worker/project',
+                url: '/api/v1/worker/project',
             })
 
             expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)

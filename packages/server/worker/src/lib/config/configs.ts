@@ -5,7 +5,8 @@ const env = from(process.env)
 function getApiUrl(): string {
     const containerType = system.get(WorkerSystemProp.CONTAINER_TYPE) ?? 'WORKER_AND_APP'
     if (containerType === 'WORKER_AND_APP') {
-        return 'http://127.0.0.1:3000/'
+        const port = system.get(WorkerSystemProp.PORT)
+        return `http://127.0.0.1:${port}/api/`
     }
     const frontendUrl = system.getOrThrow(WorkerSystemProp.FRONTEND_URL).replace(/\/+$/, '')
     return frontendUrl + '/api/'
@@ -14,7 +15,8 @@ function getApiUrl(): string {
 function getSocketUrl(): { url: string, path: string } {
     const containerType = system.get(WorkerSystemProp.CONTAINER_TYPE) ?? 'WORKER_AND_APP'
     if (containerType === 'WORKER_AND_APP') {
-        return { url: 'http://127.0.0.1:3000', path: '/socket.io' }
+        const port = system.get(WorkerSystemProp.PORT)
+        return { url: `http://127.0.0.1:${port}`, path: '/api/socket.io' }
     }
     const frontendUrl = system.getOrThrow(WorkerSystemProp.FRONTEND_URL).replace(/\/+$/, '')
     return { url: frontendUrl, path: '/api/socket.io' }
@@ -24,6 +26,7 @@ export enum WorkerSystemProp {
     FRONTEND_URL = 'AP_FRONTEND_URL',
     CONTAINER_TYPE = 'AP_CONTAINER_TYPE',
     WORKER_TOKEN = 'AP_WORKER_TOKEN',
+    PORT = 'AP_PORT',
     LOG_LEVEL = 'AP_LOG_LEVEL',
     LOG_PRETTY = 'AP_LOG_PRETTY',
     OTEL_ENABLED = 'AP_OTEL_ENABLED',
@@ -32,6 +35,7 @@ export enum WorkerSystemProp {
 }
 
 const defaultValues: Partial<Record<WorkerSystemProp, string>> = {
+    [WorkerSystemProp.PORT]: '3000',
     [WorkerSystemProp.LOG_LEVEL]: 'info',
     [WorkerSystemProp.LOG_PRETTY]: 'false',
     [WorkerSystemProp.OTEL_ENABLED]: 'false',

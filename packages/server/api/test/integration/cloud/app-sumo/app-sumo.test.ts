@@ -35,7 +35,7 @@ describe('AppSumo API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/appsumo/action',
+                url: '/api/v1/appsumo/action',
                 headers: {
                     authorization: `Bearer ${appSumoToken}`,
                 },
