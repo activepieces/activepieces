@@ -51,7 +51,7 @@ export const setupServer = async (): Promise<FastifyInstance> => {
     }
 
     const environment = system.get(AppSystemProp.ENVIRONMENT)
-    if (environment !== ApEnvironment.DEVELOPMENT) {
+    if (system.isApp() && environment !== ApEnvironment.DEVELOPMENT) {
         const frontendPath = path.resolve(process.cwd(), 'dist/packages/web')
         await app.register(fastifyStatic, {
             root: frontendPath,
@@ -71,7 +71,7 @@ export const setupServer = async (): Promise<FastifyInstance> => {
         if (request.url.startsWith('/api/')) {
             return reply.code(404).send({ statusCode: 404, error: 'Not Found', message: 'Route not found' })
         }
-        if (environment !== ApEnvironment.DEVELOPMENT) {
+        if (system.isApp() && environment !== ApEnvironment.DEVELOPMENT) {
             return reply.sendFile('index.html')
         }
         return reply.code(404).send({ statusCode: 404, error: 'Not Found', message: 'Route not found' })
@@ -79,6 +79,7 @@ export const setupServer = async (): Promise<FastifyInstance> => {
 
     app.addHook('onSend', async (_request, reply) => {
         reply.header('X-Content-Type-Options', 'nosniff')
+        reply.header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload')
     })
 
     return app
