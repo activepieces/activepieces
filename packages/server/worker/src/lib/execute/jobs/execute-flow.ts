@@ -139,11 +139,14 @@ async function buildFlowOperation(
 
 async function fetchExecutionState(apiClient: WorkerToApiContract, data: ExecuteFlowJobData): Promise<ExecutionState> {
     if (isNil(data.logsFileId)) {
-        return { steps: {}, tags: [] }
+        throw new Error(`[fetchExecutionState] logsFileId is missing for RESUME operation, runId=${data.runId}`)
     }
     const buffer = await apiClient.getPayloadFile({ fileId: data.logsFileId, projectId: data.projectId })
     const parsed = JSON.parse(buffer.toString('utf-8'))
-    return parsed.executionState ?? { steps: {}, tags: [] }
+    if (isNil(parsed.executionState)) {
+        throw new Error(`[fetchExecutionState] executionState is missing in logs file, runId=${data.runId}, logsFileId=${data.logsFileId}`)
+    }
+    return parsed.executionState
 }
 
 async function reportFlowStatus(
