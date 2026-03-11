@@ -149,7 +149,7 @@ export const addTextToPdf = createAction({
 
         for (const targetPage of targetPages) {
           const { width, height } = targetPage.getSize();
-          const rotationAngle = (targetPage.getRotation()?.angle ?? 0) % 360;
+          const rotationAngle = ((targetPage.getRotation()?.angle ?? 0) % 360 + 360) % 360;
 
           const isLandscape = rotationAngle === 90 || rotationAngle === 270;
           const vWidth = isLandscape ? height : width;
@@ -179,13 +179,37 @@ export const addTextToPdf = createAction({
             );
           }
 
-          // Check Bottom Edge (Multi-line text running off the bottom)
-          const lowestYPosition = vY - ((lines.length - 1) * actualLineHeight);
-          
-          if (lowestYPosition < 0) {
-            throw new Error(
-              `The text "${cleanTextSample}..." contains too many lines and runs off the bottom of the page. Reduce the Top distance, Font Size, or Line Spacing.`
-            );
+          // Check multi-line overflow along the axis that lines stack on after page rotation:
+          // 0°   → lines stack downward  → check vY - (n-1)*lineHeight >= 0
+          // 90°  → lines stack leftward  → check vX - (n-1)*lineHeight >= 0
+          // 180° → lines stack upward    → check vY + (n-1)*lineHeight <= vHeight
+          // 270° → lines stack rightward → check vX + (n-1)*lineHeight <= vWidth
+          const lineOverflow = (lines.length - 1) * actualLineHeight;
+          if (rotationAngle === 90) {
+            if (vX - lineOverflow < 0) {
+              throw new Error(
+                `The text "${cleanTextSample}..." contains too many lines and runs off the left edge of the page. Reduce the Left distance, Font Size, or Line Spacing.`
+              );
+            }
+          } else if (rotationAngle === 180) {
+            if (vY + lineOverflow > vHeight) {
+              throw new Error(
+                `The text "${cleanTextSample}..." contains too many lines and runs off the top of the page. Reduce the Top distance, Font Size, or Line Spacing.`
+              );
+            }
+          } else if (rotationAngle === 270) {
+            if (vX + lineOverflow > vWidth) {
+              throw new Error(
+                `The text "${cleanTextSample}..." contains too many lines and runs off the right edge of the page. Reduce the Left distance, Font Size, or Line Spacing.`
+              );
+            }
+          } else {
+            // 0° — lines stack downward
+            if (vY - lineOverflow < 0) {
+              throw new Error(
+                `The text "${cleanTextSample}..." contains too many lines and runs off the bottom of the page. Reduce the Top distance, Font Size, or Line Spacing.`
+              );
+            }
           }
 
           // Map Visual coordinates back to Intrinsic coordinates for pdf-lib
