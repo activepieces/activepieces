@@ -88,8 +88,9 @@ export const newMention = createTrigger({
         payloadBody.event.text?.includes(`<@${context.propsValue.user}>`)
       ) {
         if (context.propsValue.removeMention) {
+          const mentionRegex = new RegExp(`<@${context.propsValue.user}>`, 'g');
           const cleanText = (payloadBody.event.text ?? '')
-            .replace(`<@${context.propsValue.user}>`, '')
+            .replace(mentionRegex, '')
             .trim();
           return [{ ...payloadBody.event, clean_text: cleanText }];
         }
