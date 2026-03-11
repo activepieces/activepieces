@@ -3,12 +3,11 @@ name: Smoke Test
 on:
   workflow_dispatch:
 
-concurrency:
-  group: smoke-test-${{ matrix.runner }}
-  cancel-in-progress: true
-
 jobs:
   smoke-test:
+    concurrency:
+      group: smoke-test-${{ matrix.arch }}
+      cancel-in-progress: true
     strategy:
       matrix:
         include:
