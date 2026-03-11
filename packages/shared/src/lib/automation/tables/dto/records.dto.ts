@@ -32,13 +32,32 @@ export enum FilterOperator {
     LT = 'lt',
     LTE = 'lte',
     CO = 'co',
+    EXISTS = 'exists',
+    NOT_EXISTS = 'not_exists',
 }
 
-export const Filter = z.object({
+const valueFilter = <T extends FilterOperator>(op: T) => z.object({
     fieldId: z.string(),
+    operator: z.literal(op),
     value: z.string(),
-    operator: z.nativeEnum(FilterOperator).optional(),
 })
+
+const existenceFilter = <T extends FilterOperator>(op: T) => z.object({
+    fieldId: z.string(),
+    operator: z.literal(op),
+})
+
+export const Filter = z.discriminatedUnion('operator', [
+    valueFilter(FilterOperator.EQ),
+    valueFilter(FilterOperator.NEQ),
+    valueFilter(FilterOperator.GT),
+    valueFilter(FilterOperator.GTE),
+    valueFilter(FilterOperator.LT),
+    valueFilter(FilterOperator.LTE),
+    valueFilter(FilterOperator.CO),
+    existenceFilter(FilterOperator.EXISTS),
+    existenceFilter(FilterOperator.NOT_EXISTS),
+])
 
 export type Filter = z.infer<typeof Filter>
 
