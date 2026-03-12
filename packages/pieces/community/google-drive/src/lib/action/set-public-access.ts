@@ -36,7 +36,7 @@ export const setPublicAccess = createAction({
 
     const drive = google.drive({ version: 'v3', auth: authClient });
     const permission = {
-      role: role,
+      role,
       type: 'anyone',
     };
     const res = await drive.permissions.create({
