@@ -71,12 +71,13 @@ export const s3Helper = (log: FastifyBaseLogger) => ({
             expiresIn: dayjs.duration(7, 'days').asSeconds(),
         })
     },
-    async putS3SignedUrl(s3Key: string, contentLength?: number | undefined): Promise<string> {
+    async putS3SignedUrl({ s3Key, contentLength, contentEncoding }: PutS3SignedUrlParams): Promise<string> {
         const client = getS3Client()
         const command = new PutObjectCommand({
             Bucket: getS3BucketName(),
             Key: s3Key,
             ContentLength: contentLength,
+            ContentEncoding: contentEncoding,
         })
         return getSignedUrl(client, command, {
             expiresIn: dayjs.duration(7, 'days').asSeconds(),
@@ -158,4 +159,10 @@ const getS3Client = () => {
 
 const getS3BucketName = () => {
     return system.getOrThrow<string>(AppSystemProp.S3_BUCKET)
+}
+
+type PutS3SignedUrlParams = {
+    s3Key: string
+    contentLength?: number
+    contentEncoding?: string
 }

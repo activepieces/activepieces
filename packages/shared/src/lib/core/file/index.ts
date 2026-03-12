@@ -34,9 +34,20 @@ export enum FileType {
 }
 export enum FileCompression {
     NONE = 'NONE',
-    /** @deprecated Use ZSTD instead */
-    GZIP = 'GZIP',
     ZSTD = 'ZSTD',
+}
+
+export const CONTENT_ENCODING_ZSTD = 'zstd'
+
+const ZSTD_MAGIC = 0xFD2FB528
+const ZSTD_SKIPPABLE_START = 0x184D2A50
+const ZSTD_SKIPPABLE_END = 0x184D2A5F
+
+// @TODO: remove after 30 days
+export const isZstdCompressed = (data: Buffer | Uint8Array): boolean => {
+    if (data.length < 4) return false
+    const magic = (data[0] | (data[1] << 8) | (data[2] << 16) | (data[3] << 24)) >>> 0
+    return magic === ZSTD_MAGIC || (magic >= ZSTD_SKIPPABLE_START && magic <= ZSTD_SKIPPABLE_END)
 }
 
 export enum FileLocation {
