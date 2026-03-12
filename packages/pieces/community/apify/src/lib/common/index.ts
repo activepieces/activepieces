@@ -489,10 +489,11 @@ export const deleteWebhook = async (
 export const generateIdempotencyKey = (
   id: string,
   eventTypes: WebhookEventType[],
+  webhookUrl: string,
 ): string => {
   const sortedEventTypes = [...eventTypes].sort();
   const hash = createHash('sha256');
-  hash.update(`${id}:${sortedEventTypes.join(',')}`);
+  hash.update(`${id}:${sortedEventTypes.join(',')}:${webhookUrl}`);
   return hash.digest('hex');
 };
 

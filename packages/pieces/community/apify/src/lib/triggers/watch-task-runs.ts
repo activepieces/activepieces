@@ -26,7 +26,7 @@ export const watchTaskRunsTrigger = createTrigger({
     const client = createApifyClient(context.auth.props.apikey);
     const taskId = context.propsValue.taskid;
     const statuses = context.propsValue.statuses as WebhookEventType[];
-    const idempotencyKey = generateIdempotencyKey(taskId, statuses);
+    const idempotencyKey = generateIdempotencyKey(taskId, statuses, context.webhookUrl);
 
     const webhookId = await createWebhook(
       client,

@@ -75,6 +75,10 @@ export const scrapeSingleUrl = createAction({
       throw new Error('Failed to scrape URL: ' + error.message);
     }
 
+    if (run.status !== 'SUCCEEDED') {
+      throw new Error(`Website Content Crawler run finished with status "${run.status}". Run ID: ${run.id}`);
+    }
+
     if (!run.defaultDatasetId) {
       return run;
     }

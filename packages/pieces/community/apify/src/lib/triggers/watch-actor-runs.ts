@@ -28,7 +28,7 @@ export const watchActorRunsTrigger = createTrigger({
     const client = createApifyClient(context.auth.props.apikey);
     const actorId = context.propsValue.actorid;
     const statuses = context.propsValue.statuses as WebhookEventType[];
-    const idempotencyKey = generateIdempotencyKey(actorId, statuses);
+    const idempotencyKey = generateIdempotencyKey(actorId, statuses, context.webhookUrl);
 
     const webhookId = await createWebhook(
       client,
