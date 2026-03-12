@@ -33,7 +33,7 @@ export const searchAnalytics = createAction({
         'The dimensions to group results by. Valid values: "query", "page", "country", "device", "searchAppearance", "date", "hour".',
       required: false,
     }),
-    type: Property.StaticDropdown({
+    searchType: Property.StaticDropdown({
       displayName: 'Search Type',
       description:
         'Filter results by search type. Defaults to "web".',
@@ -107,7 +107,7 @@ export const searchAnalytics = createAction({
     }),
     rowLimit: Property.Number({
       displayName: 'Row Limit',
-      description: 'The maximum number of rows to return. Min: 1, Max: 25,000. Defaults to 1,000.',
+      description: 'The maximum number of rows to return. Min: 1, Max: 5,000. Defaults to 1,000.',
       required: false,
     }),
     startRow: Property.Number({
@@ -126,7 +126,7 @@ export const searchAnalytics = createAction({
         startDate: dayjs(context.propsValue.startDate).format('YYYY-MM-DD'),
         endDate: dayjs(context.propsValue.endDate).format('YYYY-MM-DD'),
         dimensions: context.propsValue.dimensions as string[],
-        type: context.propsValue.type,
+        searchType: context.propsValue.searchType,
         dimensionFilterGroups: filters?.length
           ? [{
               filters: filters.map((filter: any) => ({
