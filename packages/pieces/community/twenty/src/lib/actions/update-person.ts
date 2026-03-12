@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { twentyAuth } from '../auth';
-import { twentyRequest } from '../common';
+import { twentyRequest, parseSingleRecord } from '../common';
 
 export const updatePerson = createAction({
   auth: twentyAuth,
@@ -37,7 +37,7 @@ export const updatePerson = createAction({
         HttpMethod.GET,
         `/rest/people/${personId}`,
       );
-      const personData = (existing as Record<string, unknown>)['data'] as Record<string, unknown> ?? existing;
+      const personData = parseSingleRecord(existing);
       const existingName = (personData['name'] as Record<string, string>) ?? {};
       body['name'] = {
         firstName: firstName ?? existingName['firstName'],
@@ -46,6 +46,14 @@ export const updatePerson = createAction({
     }
     if (email) {
       body['emails'] = { primaryEmail: email };
+    }
+
+    if (Object.keys(body).length === 0) {
+      return await twentyRequest(
+        context.auth,
+        HttpMethod.GET,
+        `/rest/people/${personId}`,
+      );
     }
 
     return await twentyRequest(

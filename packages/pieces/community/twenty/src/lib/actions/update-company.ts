@@ -42,6 +42,14 @@ export const updateCompany = createAction({
     if (address) body['address'] = { addressStreet1: address };
     if (employees != null) body['employees'] = employees;
 
+    if (Object.keys(body).length === 0) {
+      return await twentyRequest(
+        context.auth,
+        HttpMethod.GET,
+        `/rest/companies/${companyId}`,
+      );
+    }
+
     return await twentyRequest(
       context.auth,
       HttpMethod.PATCH,

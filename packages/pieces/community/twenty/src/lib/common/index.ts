@@ -35,6 +35,14 @@ export async function twentyRequest<T = unknown>(
   return response.body as T;
 }
 
+export function parseSingleRecord(body: unknown): Record<string, unknown> {
+  const data = body as Record<string, unknown>;
+  if (data?.['data'] != null && typeof data['data'] === 'object' && !Array.isArray(data['data'])) {
+    return data['data'] as Record<string, unknown>;
+  }
+  return data;
+}
+
 export function parseRecords(body: unknown): Record<string, unknown>[] {
   const data = body as Record<string, unknown>;
   const items = data?.['data'] ?? body;

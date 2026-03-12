@@ -5,10 +5,10 @@ import {
 } from '@activepieces/pieces-framework';
 import {
   DedupeStrategy,
+  HttpMethod,
   Polling,
   pollingHelper,
 } from '@activepieces/pieces-common';
-import { HttpMethod } from '@activepieces/pieces-common';
 import dayjs from 'dayjs';
 import { twentyAuth } from '../auth';
 import { twentyRequest, parseRecords } from '../common';
@@ -24,7 +24,7 @@ const polling: Polling<
       HttpMethod.GET,
       '/rest/people',
       undefined,
-      { 'sort[createdAt]': 'desc' },
+      { 'sort[createdAt]': 'desc', 'limit': '100' },
     );
 
     const records = parseRecords(body);
