@@ -81,7 +81,7 @@ export const mcpTool = createTrigger({
 
     if (inputSchema) {
       const missingFields = inputSchema
-        .filter(param => param.required && isNil(payload[param.name]))
+        .filter(param => param.required && isNil(payload[fixPropertyName(param.name)]))
         .map(param => param.name);
 
       if (missingFields.length > 0) {
@@ -95,3 +95,7 @@ export const mcpTool = createTrigger({
     return [{}];
   },
 });
+
+function fixPropertyName(name: string): string {
+  return name.replace(/[\s/@-]+/g, '_');
+}
