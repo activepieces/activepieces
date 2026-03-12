@@ -51,7 +51,7 @@ export function useGlobalSearchResults(query: string, open: boolean) {
     queryKey: ['global-search-folders', projectId],
     queryFn: () => foldersApi.list(),
     staleTime: 60_000,
-    enabled: !!projectId,
+    enabled: !!projectId && open,
   });
 
   const folderMap = new Map(
