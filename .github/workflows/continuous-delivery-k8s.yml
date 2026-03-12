@@ -84,7 +84,7 @@ jobs:
       cancel-in-progress: false   # never cancel mid-flight helm upgrade
     uses: ./.github/workflows/_deploy-k8s-env.yml
     with:
-      deploy_path: /root/k8n2/staging
+      deploy_path: /root/k8n/staging
       app_values: ./stg-app-values.yaml
       worker_values: ./stg-worker-values.yaml
       image_tag: ${{ needs.build-image.outputs.image_tag }}
@@ -150,7 +150,7 @@ jobs:
       cancel-in-progress: false
     uses: ./.github/workflows/_deploy-k8s-env.yml
     with:
-      deploy_path: /root/k8n2/prod
+      deploy_path: /root/k8n/prod
       app_values: ./prod-app-values.yaml
       worker_values: ./prod-worker-values.yaml
       image_tag: ${{ needs.get-prod-image-tag.outputs.image_tag }}
