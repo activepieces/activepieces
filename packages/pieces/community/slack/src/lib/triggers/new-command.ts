@@ -16,7 +16,7 @@ export const newCommand = createTrigger({
     'Triggers when a specific command is sent to the bot (e.g., @bot command arg1 arg2)',
   props: {
     info: multiSelectChannelInfo,
-    user: userId,
+    user: userId(true),
     commands: Property.Array({
       displayName: 'Commands',
       description:
