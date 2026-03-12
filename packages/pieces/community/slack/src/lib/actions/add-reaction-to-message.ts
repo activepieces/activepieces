@@ -4,6 +4,12 @@ import { singleSelectChannelInfo, slackChannel } from '../common/props';
 
 import { WebClient } from '@slack/web-api';
 import { processMessageTimestamp } from '../common/utils';
+import {
+  getBotToken,
+  getUserToken,
+  requireUserToken,
+  SlackAuthValue,
+} from '../common/auth-helpers';
 
 export const addRectionToMessageAction = createAction({
   auth: slackAuth,
@@ -27,7 +33,8 @@ export const addRectionToMessageAction = createAction({
     }),
     reactAsUser: Property.Checkbox({
       displayName: 'React as user?',
-      description: 'If enabled, the reaction will be added as the authenticated user instead of the bot.',
+      description:
+        'If enabled, the reaction will be added as the authenticated user instead of the bot.',
       required: true,
       defaultValue: false,
     }),
@@ -37,8 +44,8 @@ export const addRectionToMessageAction = createAction({
     const { channel, ts, reaction, reactAsUser } = context.propsValue;
 
     const token = reactAsUser
-      ? context.auth.data?.authed_user?.access_token
-      : context.auth.access_token;
+      ? requireUserToken(context.auth as SlackAuthValue)
+      : getBotToken(context.auth as SlackAuthValue);
 
     const slack = new WebClient(token);
 
