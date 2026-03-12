@@ -283,7 +283,7 @@ async function propertyToSchema(propertyName: string, property: PieceProperty, o
             schema = z.object({}).loose()
             break
         case PropertyType.JSON:
-            schema = z.union([z.object({}).loose(), z.array(z.object({}).loose())])
+            schema = z.union([z.object({}).loose(), z.array(z.unknown())])
             break
         case PropertyType.DYNAMIC: {
             schema = await buildDynamicSchema(propertyName, operation, resolvedInput)
