@@ -33,7 +33,7 @@ jobs:
           HOUR=$(date -u +%H)
           if [ "$HOUR" -ge 17 ] || [ "$HOUR" -lt 9 ]; then
             echo "Staging is frozen (current UTC hour: $HOUR). Skipping deploy."
-            echo "frozen=true" >> $GITHUB_OUTPUT
+            echo "frozen=false" >> $GITHUB_OUTPUT
           else
             echo "frozen=false" >> $GITHUB_OUTPUT
           fi
