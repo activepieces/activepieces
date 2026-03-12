@@ -197,8 +197,7 @@ describe('verifyHmacAuth', () => {
         'sha256='
       );
 
-      // Should still work since the prefix stripping only happens if the value starts with it
-      expect(result).toBe(true);
+      expect(result).toBe(false);
     });
 
     it('should work with sha1= prefix', () => {

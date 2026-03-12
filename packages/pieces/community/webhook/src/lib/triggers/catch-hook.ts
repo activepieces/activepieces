@@ -275,13 +275,18 @@ export function verifyHmacAuth(
     return false;
   }
 
-  // Strip prefix if specified
+  // Strip prefix if specified, or reject if prefix is configured but missing
   let receivedSignature = headerValue;
-  if (signaturePrefix && headerValue.startsWith(signaturePrefix)) {
+  if (signaturePrefix) {
+    if (!headerValue.startsWith(signaturePrefix)) {
+      return false;
+    }
     receivedSignature = headerValue.substring(signaturePrefix.length);
   }
 
   // Convert rawBody to string for HMAC computation
+  // rawBody should ideally be the raw unparsed request body (string or Buffer)
+  // to ensure the signature matches the exact bytes sent by the webhook provider.
   let bodyString: string;
   if (rawBody instanceof Buffer) {
     bodyString = rawBody.toString('utf8');
