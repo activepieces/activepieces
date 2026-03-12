@@ -18,7 +18,6 @@ export const azureAdAuth = PieceAuth.OAuth2({
     tokenUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/token',
     required: true,
     scope: [
-    scope: [
         'User.Read.All',
         'User.ReadWrite.All',
         'Group.ReadWrite.All',
