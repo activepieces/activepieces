@@ -28,7 +28,131 @@ ingress:
       paths:
         - path: /
           pathType: Prefix
-    - host: "fallback.activepieces.dev"
+    - host: cloud.activepieces.com
+      paths:
+        - path: /
+          pathType: Prefix
+    - host: platform.flowzues.com
+      paths:
+        - path: /
+          pathType: Prefix
+    - host: workflow-builder.mekari.com
+      paths:
+        - path: /
+          pathType: Prefix
+    - host: app.forma-sync.com
+      paths:
+        - path: /
+          pathType: Prefix
+    - host: flows.logixx.io
+      paths:
+        - path: /
+          pathType: Prefix
+    - host: app.digiforma-sync.com
+      paths:
+        - path: /
+          pathType: Prefix
+    - host: bloomfilter.activepieces.com
+      paths:
+        - path: /
+          pathType: Prefix
+    - host: handbid.activepieces.com
+      paths:
+        - path: /
+          pathType: Prefix
+    - host: app.flowzy.ai
+      paths:
+        - path: /
+          pathType: Prefix
+    - host: workflow.synthflow.ai
+      paths:
+        - path: /
+          pathType: Prefix
+    - host: pricehubble.activepieces.com
+      paths:
+        - path: /
+          pathType: Prefix
+    - host: workflow-agents.bestbrain.ai
+      paths:
+        - path: /
+          pathType: Prefix
+    - host: automate.ezily.io
+      paths:
+        - path: /
+          pathType: Prefix
+    - host: hooks.aicalllab.com
+      paths:
+        - path: /
+          pathType: Prefix
+    - host: workflows.moffin.mx
+      paths:
+        - path: /
+          pathType: Prefix
+    - host: fleetio.activepieces.com
+      paths:
+        - path: /
+          pathType: Prefix
+    ### Internal
+    - host: app.passr.dev
+      paths:
+        - path: /
+          pathType: Prefix
+    - host: beaver.passr.dev
+      paths:
+        - path: /
+          pathType: Prefix
+    - host: quick.activepieces.com
+      paths:
+        - path: /
+          pathType: Prefix
+    ## Free (Friends)
+    - host: lucidya.activepieces.com
+      paths:
+        - path: /
+          pathType: Prefix
+    - host: village.activepieces.com
+      paths:
+        - path: /
+          pathType: Prefix
+    - host: arabyleads.activepieces.com
+      paths:
+        - path: /
+          pathType: Prefix
+    ## Partners
+    - host: shai.activepieces.com
+      paths:
+        - path: /
+          pathType: Prefix
+    - host: cognida-partner.activepieces.com
+      paths:
+        - path: /
+          pathType: Prefix
+    - host: shakudo.activepieces.com
+      paths:
+        - path: /
+          pathType: Prefix
+    ### Trial
+    - host: skyswitch.activepieces.com
+      paths:
+        - path: /
+          pathType: Prefix
+    - host: myob.activepieces.com
+      paths:
+        - path: /
+          pathType: Prefix
+    - host: mews.activepieces.com
+      paths:
+        - path: /
+          pathType: Prefix
+    - host: thyssenkrupp-automotive.activepieces.com
+      paths:
+        - path: /
+          pathType: Prefix
+    - host: thepinnaclelifegroup.activepieces.com
+      paths:
+        - path: /
+          pathType: Prefix
+    - host: humain.activepieces.com
       paths:
         - path: /
           pathType: Prefix
@@ -51,7 +175,7 @@ livenessProbe:
 readinessProbe:
   httpGet:
     path: /v1/health
-    port: 3000        # probe Node.js directly — avoids nginx IPv6 upstream flapping (502s)
+    port: http
   initialDelaySeconds: 5
   periodSeconds: 5
 
