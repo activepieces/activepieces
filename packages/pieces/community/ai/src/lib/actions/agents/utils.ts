@@ -12,6 +12,7 @@ import {
   McpPropertyType,
   AgentFlowTool,
   mcpToolNameUtils,
+  RAW_PAYLOAD_HEADER,
 } from '@activepieces/shared';
 import { z, ZodObject } from 'zod';
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
@@ -138,11 +139,15 @@ function isOkSuccess(status: number) {
 
 async function callMcpFlowTool(params: CallMcpFlowToolParams): Promise<ExecuteToolResponse> {
   const syncSuffix = params.async ? '' : '/sync';
+  const url = `${params.publicUrl}v1/webhooks/${params.flowId}${syncSuffix}`;
 
   try {
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
-      url: `${params.publicUrl}v1/webhooks/${params.flowId}${syncSuffix}`,
+      url,
+      headers: {
+        [RAW_PAYLOAD_HEADER]: 'true',
+      },
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token: params.token,

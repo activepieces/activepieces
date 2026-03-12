@@ -6,6 +6,7 @@ import {
     FlowRun,
     isMultipartFile,
     PARENT_RUN_ID_HEADER,
+    RAW_PAYLOAD_HEADER,
     WebhookUrlParams,
     WebsocketClientEvent,
 } from '@activepieces/shared'
@@ -48,6 +49,7 @@ export const webhookController: FastifyPluginAsyncZod = async (app) => {
                         },
                         ),
                         execute: true,
+                        ...extractRawPayload(request),
                         ...extractHeaderFromRequest(request),
                     })
                     span.setAttribute('webhook.response.status', response.status)
@@ -87,6 +89,7 @@ export const webhookController: FastifyPluginAsyncZod = async (app) => {
                         ),
                         flowVersionToRun: WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST,
                         execute: true,
+                        ...extractRawPayload(request),
                         ...extractHeaderFromRequest(request),
                     })
                     span.setAttribute('webhook.response.status', response.status)
@@ -243,6 +246,13 @@ async function convertBody(
     return request.body
 }
 
+
+function extractRawPayload(request: FastifyRequest): { payload?: Record<string, unknown> } {
+    if (request.headers[RAW_PAYLOAD_HEADER] === 'true') {
+        return { payload: request.body as Record<string, unknown> }
+    }
+    return {}
+}
 
 function extractHeaderFromRequest(request: FastifyRequest): Pick<FlowRun, 'parentRunId' | 'failParentOnFailure'> {
     return {

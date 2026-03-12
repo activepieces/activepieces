@@ -40,6 +40,11 @@ export const agentToolHooks = {
               displayName: contentBlock.displayName ?? contentBlock.toolName,
               logoUrl: null,
             };
+          case ToolCallType.UNKNOWN:
+            return {
+              displayName: contentBlock.displayName ?? contentBlock.toolName,
+              logoUrl: null,
+            };
           default:
             return { displayName: null, logoUrl: null };
         }
