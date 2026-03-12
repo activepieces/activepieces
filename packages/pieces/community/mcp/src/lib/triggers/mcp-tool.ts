@@ -88,10 +88,12 @@ export const mcpTool = createTrigger({
     const inputSchema = context.propsValue.inputSchema as { name: string; required: boolean }[] | undefined;
 
     if (inputSchema) {
-      const missingFields = inputSchema
-        .filter(param => param.required && isNil(payload[param.name]))
-        .map(param => param.name);
-
+      const missingFields: string[] = [];
+      for (const param of inputSchema) {
+        if (param.required && isNil(payload[param.name])) {
+          missingFields.push(param.name);
+        }
+      }
       if (missingFields.length > 0) {
         throw new Error(`Missing required parameters: ${missingFields.join(', ')}`);
       }

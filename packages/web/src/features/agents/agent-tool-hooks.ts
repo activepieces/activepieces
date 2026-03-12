@@ -36,10 +36,6 @@ export const agentToolHooks = {
               logoUrl: null,
             };
           case ToolCallType.MCP:
-            return {
-              displayName: contentBlock.displayName ?? contentBlock.toolName,
-              logoUrl: null,
-            };
           case ToolCallType.UNKNOWN:
             return {
               displayName: contentBlock.displayName ?? contentBlock.toolName,
