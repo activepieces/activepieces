@@ -14,7 +14,7 @@ const start = async (app: FastifyInstance): Promise<void> => {
     try {
         const port = Number(system.get(WorkerSystemProp.PORT))
         await app.listen({
-            host: '0.0.0.0',
+            host: '::',
             port,
         })
         if (system.isApp()) {

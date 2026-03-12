@@ -207,7 +207,7 @@ Use `cat ~/.kube/config` output for `HETZNER_KUBECONFIG` GitHub secret.
 Edit `worker_node_count` / `app_node_count` in terraform.tfvars, then:
 
 ```bash
-terraform apply -var-file=<> -target=<hcloud_server.worker_nodes or hcloud_server.app_nodes>
+terraform apply -var-file=<> -target=<hcloud_server.worker_nodes or hcloud_server.app_nodes> -target=hcloud_floating_ip_assignment.worker
 ```
 
 ### Add Pods
@@ -275,7 +275,7 @@ After deploying worker pods, verify they can reach Google APIs over both IPv4 an
 kubectl get pods -n activepieces -l app=activepieces-worker
 
 # IPv4 check
-kubectl exec -n activepieces <POD_NAME> -- curl -s -o /dev/null -w "%{http_code}" -4 https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com
+kubectl exec -n activepieces activepieces-worker-0 -- curl -s -o /dev/null -w "%{http_code}" -4 https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com
 
 # IPv6 check
 kubectl exec -n activepieces <POD_NAME> -- curl -s -o /dev/null -w "%{http_code}" -6 https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com
