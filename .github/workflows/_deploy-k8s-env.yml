@@ -48,6 +48,7 @@ jobs:
       - name: Wait for APP rollout to be healthy
         run: |
           ssh ops 'cd ${{ inputs.deploy_path }} && bash -s' <<'ENDSSH'
+          cd ${{ inputs.deploy_path }}
           set -euo pipefail
           timeout=300
           elapsed=0
@@ -82,7 +83,7 @@ jobs:
       - name: Deploy WORKER
         run: |
           ssh ops "cd ${{ inputs.deploy_path }} && \
-            helm upgrade --install activepieces-worker deploy/activepieces-helm/ \
+            helm upgrade --install activepieces-worker ../activepieces-helm/ \
               --namespace activepieces \
               --values ${{ inputs.worker_values }} \
               --set image.tag=${{ inputs.image_tag }}"
@@ -90,6 +91,7 @@ jobs:
       - name: Wait for WORKER to be healthy
         run: |
           ssh ops 'cd ${{ inputs.deploy_path }} && bash -s' <<'ENDSSH'
+          cd ${{ inputs.deploy_path }}
           set -euo pipefail
           if ! kubectl rollout status statefulset/activepieces-worker \
               -n activepieces --timeout=300s; then

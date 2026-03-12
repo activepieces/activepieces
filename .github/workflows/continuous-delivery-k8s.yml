@@ -38,47 +38,48 @@ jobs:
             echo "frozen=false" >> $GITHUB_OUTPUT
           fi
 
-  build-image:
-    needs: [check-freeze]
-    if: |
-      always() &&
-      ((github.event_name == 'push' && needs.check-freeze.outputs.frozen == 'false') ||
-       (github.event_name == 'workflow_dispatch' && (github.event.inputs.action == 'deploy-staging' || github.event.inputs.action == 'deploy-staging-skip-freeze' || github.event.inputs.action == 'cloud-hotfix')))
-    runs-on: ubuntu-24.04
-    concurrency:
-      group: deploy-k8s-build
-      cancel-in-progress: true
-    outputs:
-      image_tag: ${{ steps.set-tag.outputs.image_tag }}
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set image tag
-        id: set-tag
-        run: |
-          RELEASE=$(node --print "require('./package.json').version")
-          echo "image_tag=${RELEASE}.${{ github.sha }}.beta" >> $GITHUB_OUTPUT
-      - uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - uses: depot/setup-action@v1
-      - uses: depot/build-push-action@v1
-        with:
-          project: du7O4b0e8P
-          token: ${{ secrets.DEPOT_PROJECT_TOKEN }}
-          context: .
-          file: ./Dockerfile
-          platforms: |
-            linux/amd64
-            linux/arm64
-          push: true
-          no-cache: true
-          tags: ghcr.io/activepieces/activepieces-cloud:${{ steps.set-tag.outputs.image_tag }}
+  # build-image:
+  #   needs: [check-freeze]
+  #   if: |
+  #     always() &&
+  #     ((github.event_name == 'push' && needs.check-freeze.outputs.frozen == 'false') ||
+  #      (github.event_name == 'workflow_dispatch' && (github.event.inputs.action == 'deploy-staging' || github.event.inputs.action == 'deploy-staging-skip-freeze' || github.event.inputs.action == 'cloud-hotfix')))
+  #   runs-on: ubuntu-24.04
+  #   concurrency:
+  #     group: deploy-k8s-build
+  #     cancel-in-progress: true
+  #   outputs:
+  #     image_tag: ${{ steps.set-tag.outputs.image_tag }}
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - name: Set image tag
+  #       id: set-tag
+  #       run: |
+  #         RELEASE=$(node --print "require('./package.json').version")
+  #         echo "image_tag=${RELEASE}.${{ github.sha }}.beta" >> $GITHUB_OUTPUT
+  #     - uses: docker/login-action@v3
+  #       with:
+  #         registry: ghcr.io
+  #         username: ${{ github.actor }}
+  #         password: ${{ secrets.GITHUB_TOKEN }}
+  #     - uses: depot/setup-action@v1
+  #     - uses: depot/build-push-action@v1
+  #       with:
+  #         project: du7O4b0e8P
+  #         token: ${{ secrets.DEPOT_PROJECT_TOKEN }}
+  #         context: .
+  #         file: ./Dockerfile
+  #         platforms: |
+  #           linux/amd64
+  #           linux/arm64
+  #         push: true
+  #         no-cache: true
+  #         tags: ghcr.io/activepieces/activepieces-cloud:${{ steps.set-tag.outputs.image_tag }}
 
   deploy-staging:
-    needs: build-image
-    if: always() && needs.build-image.result == 'success'
+    needs: [check-freeze]
+
+    if: always()
     concurrency:
       group: deploy-k8s-staging
       cancel-in-progress: false   # never cancel mid-flight helm upgrade
@@ -87,7 +88,7 @@ jobs:
       deploy_path: /root/k8n2/staging
       app_values: ./stg-app-values.yaml
       worker_values: ./stg-worker-values.yaml
-      image_tag: ${{ needs.build-image.outputs.image_tag }}
+      image_tag: 0.79.2.5224e3c80d9916785eb43a66e50f4e925dd2a650.beta
     secrets: inherit
 
   # --- PROMOTION JOBS (run on schedule OR manual "promote-to-production") ---
@@ -153,7 +154,7 @@ jobs:
       deploy_path: /root/k8n2/prod
       app_values: ./prod-app-values.yaml
       worker_values: ./prod-worker-values.yaml
-      image_tag: ${{ needs.get-prod-image-tag.outputs.image_tag }}
+      image_tag: 0.79.2.5224e3c80d9916785eb43a66e50f4e925dd2a650.beta
     secrets: inherit
 
   # --- WEEKLY RELEASE (runs on Sunday schedule or manual "weekly-release") ---
