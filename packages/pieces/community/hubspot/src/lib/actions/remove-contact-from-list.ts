@@ -1,4 +1,4 @@
-import { hubspotAuth } from '../../';
+import { hubspotAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { staticListsDropdown } from '../common/props';
 import { HttpMethod } from '@activepieces/pieces-common';

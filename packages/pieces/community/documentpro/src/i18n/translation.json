@@ -29,6 +29,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "The document file to upload (PDF, JPEG, PNG, or TIFF, max 6MB)": "The document file to upload (PDF, JPEG, PNG, or TIFF, max 6MB)",
   "The unique identifier of the document to parse": "The unique identifier of the document to parse",
   "The unique identifier of the Workflow/template to use": "The unique identifier of the Workflow/template to use",

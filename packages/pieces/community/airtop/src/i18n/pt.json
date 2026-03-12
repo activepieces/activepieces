@@ -84,10 +84,12 @@
   "Method": "Método",
   "Headers": "Cabeçalhos",
   "Query Parameters": "Parâmetros da consulta",
+  "Body Type": "Tipo de Corpo",
   "Body": "Conteúdo",
   "Response is Binary ?": "A resposta é binária ?",
   "No Error on Failure": "Nenhum erro no Failure",
   "Timeout (in seconds)": "Tempo limite (em segundos)",
+  "Follow redirects": "Seguir redirecionamentos",
   "Name of a profile to load into the session.": "Nome de um perfil para carregar na sessão.",
   "List of Chrome extension IDs from Google Web Store.": "Lista de IDs de extensões do Chrome do Google Web Store.",
   "Enable Airtop-provided proxy. If disabled, configure a custom proxy.": "Ativa o proxy fornecido pelo Airtop. Se desativado, configure um proxy personalizado.",
@@ -155,7 +157,7 @@
   "Describe the element to hover, e.g. \"the search box input in the top right corner\".": "Descreva o elemento para passar, por exemplo, \"a caixa de pesquisa na parte superior direita\".",
   "Wait for page navigation to complete after hovering (default: false).": "Aguarde a conclusão da navegação da página após o cursor (padrão: falso).",
   "Authorization headers are injected automatically from your connection.": "Os cabeçalhos de autorização são inseridos automaticamente a partir da sua conexão.",
-  "Enable for files like PDFs, images, etc..": "Habilitar para arquivos como PDFs, imagens, etc..",
+  "Enable for files like PDFs, images, etc.": "Habilitar para arquivos como PDFs, imagens, etc.",
   "1280x720 (Default)": "1280x720 (Padrão)",
   "1920x1080": "1920x1080",
   "1366x768": "1366x768",
@@ -203,5 +205,9 @@
   "PATCH": "COMPRAR",
   "PUT": "COLOCAR",
   "DELETE": "EXCLUIR",
-  "HEAD": "CABEÇA"
+  "HEAD": "CABEÇA",
+  "None": "Nenhuma",
+  "JSON": "JSON",
+  "Form Data": "Dados de Formulário",
+  "Raw": "RAW"
 }

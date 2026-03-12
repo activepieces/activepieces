@@ -30,7 +30,7 @@ export const folkClient = {
       method,
       url: `${this.baseUrl}${url}`,
       headers: {
-        Authorization: `Bearer ${apiKey}`,
+        Authorization: `Bearer ${apiKey.secret_text}`,
         'Content-Type': 'application/json',
         ...headers,
       },

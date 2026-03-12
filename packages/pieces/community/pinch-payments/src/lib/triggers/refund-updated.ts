@@ -13,6 +13,7 @@ export const refundUpdatedTrigger = createTrigger({
     const credentials = {
       username: context.auth.props.username,
       password: context.auth.props.password,
+      environment: context.auth.props.environment
     };
 
     const webhook = await createWebhook(credentials, {
@@ -29,6 +30,7 @@ export const refundUpdatedTrigger = createTrigger({
       const credentials = {
         username: context.auth.props.username,
         password: context.auth.props.password,
+        environment: context.auth.props.environment
       };
       await deleteWebhook(credentials, webhook.id);
     }

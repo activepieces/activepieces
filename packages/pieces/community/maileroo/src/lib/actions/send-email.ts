@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 
-import { mailerooAuth } from '../../';
+import { mailerooAuth } from '../auth';
 import {
   createCommonProps,
   createFormData,

@@ -1,4 +1,4 @@
-import { EntitySourceType, ProjectResourceType, securityAccess } from '@activepieces/server-shared'
+import { EntitySourceType, ProjectResourceType, securityAccess } from '@activepieces/server-common'
 import {
     CreateRecordsRequest,
     DeleteRecordsRequest,
@@ -10,11 +10,9 @@ import {
     SERVICE_KEY_SECURITY_OPENAPI,
     UpdateRecordRequest,
 } from '@activepieces/shared'
-import {
-    FastifyPluginAsyncTypebox,
-    Type,
-} from '@fastify/type-provider-typebox'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
+import { z } from 'zod'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
 import { TableEntity } from '../table/table.entity'
 import { recordSideEffects } from './record-side-effects'
@@ -23,7 +21,7 @@ import { recordService } from './record.service'
 
 const DEFAULT_PAGE_SIZE = 10
 
-export const recordController: FastifyPluginAsyncTypebox = async (fastify) => {
+export const recordController: FastifyPluginAsyncZod = async (fastify) => {
     fastify.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
 
     fastify.post('/', CreateRequest, async (request, reply) => {
@@ -71,7 +69,7 @@ export const recordController: FastifyPluginAsyncTypebox = async (fastify) => {
             ids: request.body.ids,
             projectId: request.projectId,
         })
-        await reply.status(StatusCodes.NO_CONTENT).send()
+        await reply.status(StatusCodes.OK).send([])
         await recordSideEffects(fastify.log).handleRecordsEvent({
             tableId: deletedRecords[0]?.tableId,
             projectId: request.projectId,
@@ -94,7 +92,7 @@ export const recordController: FastifyPluginAsyncTypebox = async (fastify) => {
 
 const CreateRequest = {
     config: {
-        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE], undefined, {
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE], undefined, {
             type: ProjectResourceType.TABLE,
             tableName: TableEntity,
             entitySourceType: EntitySourceType.BODY,
@@ -107,32 +105,32 @@ const CreateRequest = {
     schema: {
         body: CreateRecordsRequest,
         response: {
-            [StatusCodes.CREATED]: Type.Array(PopulatedRecord),
+            [StatusCodes.CREATED]: z.array(PopulatedRecord),
         },
     },
 }
 
 const GetRecordByIdRequest = {
     config: {
-        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE], undefined, {
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE], undefined, {
             type: ProjectResourceType.TABLE,
             tableName: RecordEntity,
         }),
     },
     schema: {
-        params: Type.Object({
-            id: Type.String(),
+        params: z.object({
+            id: z.string(),
         }),
         response: {
             [StatusCodes.OK]: PopulatedRecord,
-            [StatusCodes.NOT_FOUND]: Type.String(),
+            [StatusCodes.NOT_FOUND]: z.string(),
         },
     },
 }
 
 const UpdateRequest = {
     config: {
-        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE], Permission.WRITE_TABLE, {
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE], Permission.WRITE_TABLE, {
             type: ProjectResourceType.TABLE,
             tableName: RecordEntity,
         }),
@@ -141,8 +139,8 @@ const UpdateRequest = {
         tags: ['records'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         description: 'Update a record',
-        params: Type.Object({
-            id: Type.String(),
+        params: z.object({
+            id: z.string(),
         }),
         body: UpdateRecordRequest,
         response: {
@@ -154,7 +152,7 @@ const UpdateRequest = {
 
 const DeleteRecordRequest = {
     config: {
-        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE], Permission.WRITE_TABLE, {
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE], Permission.WRITE_TABLE, {
             type: ProjectResourceType.TABLE,
             tableName: TableEntity,
             entitySourceType: EntitySourceType.BODY,
@@ -170,14 +168,14 @@ const DeleteRecordRequest = {
         description: 'Delete records',
         body: DeleteRecordsRequest,
         response: {
-            [StatusCodes.OK]: Type.Array(PopulatedRecord),
+            [StatusCodes.OK]: z.array(PopulatedRecord),
         },
     },
 }
 
 const ListRequest = {
     config: {
-        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE], Permission.READ_TABLE, {
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE], Permission.READ_TABLE, {
             type: ProjectResourceType.TABLE,
             tableName: TableEntity,
             entitySourceType: EntitySourceType.QUERY,

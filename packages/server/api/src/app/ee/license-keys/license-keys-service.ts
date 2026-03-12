@@ -1,4 +1,4 @@
-import { AppSystemProp, rejectedPromiseHandler } from '@activepieces/server-shared'
+import { AppSystemProp, rejectedPromiseHandler } from '@activepieces/server-common'
 import { ActivepiecesError, ApEdition, CreateTrialLicenseKeyRequestBody, ErrorCode, isNil, LicenseKeyEntity, PlanName, TeamProjectsLimit, TelemetryEventName } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
@@ -11,7 +11,7 @@ import { platformPlanService } from '../platform/platform-plan/platform-plan.ser
 const secretManagerLicenseKeysRoute = 'https://secrets.activepieces.com/license-keys'
 
 const handleUnexpectedSecretsManagerError = (log: FastifyBaseLogger, message: string) => {
-    log.error(`[ERROR]: Unexpected error from secret manager: ${message}`)
+    log.error({ message }, '[licenseKeysService#handleUnexpectedSecretsManagerError] Unexpected error from secret manager')
     throw new Error(message)
 }
 
@@ -120,7 +120,7 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
     },
     async downgradeToFreePlan(platformId: string): Promise<void> {
         await platformPlanService(log).update({ ...turnedOffFeatures, platformId })
-        await platformService.update({
+        await platformService(log).update({
             id: platformId,
             plan: {
                 ...turnedOffFeatures,
@@ -130,13 +130,14 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
     async applyLimits(platformId: string, key: LicenseKeyEntity): Promise<void> {
         const isInternalPlan = !key.ssoEnabled && !key.embeddingEnabled && system.getEdition() === ApEdition.CLOUD
         const teamProjectsLimit = key.manageProjectsEnabled ? TeamProjectsLimit.UNLIMITED : system.getEdition() === ApEdition.CLOUD ? TeamProjectsLimit.ONE : TeamProjectsLimit.NONE
-        await platformService.update({
+        await platformService(log).update({
             id: platformId,
             plan: {
                 plan: isInternalPlan ? 'internal' : PlanName.ENTERPRISE,
                 licenseKey: key.key,
                 licenseExpiresAt: key.expiresAt,
                 ssoEnabled: key.ssoEnabled,
+                scimEnabled: key.scimEnabled,
                 environmentsEnabled: key.environmentsEnabled,
                 showPoweredBy: key.showPoweredBy,
                 embeddingEnabled: key.embeddingEnabled,
@@ -146,19 +147,17 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
                 customRolesEnabled: key.customRolesEnabled,
                 teamProjectsLimit,
                 managePiecesEnabled: key.managePiecesEnabled,
-                mcpsEnabled: key.mcpsEnabled,
-                todosEnabled: key.todosEnabled,
-                tablesEnabled: key.tablesEnabled,
                 activeFlowsLimit: undefined,
                 projectsLimit: undefined,
                 stripeSubscriptionId: undefined,
                 stripeSubscriptionStatus: undefined,
-                agentsEnabled: key.agentsEnabled,
                 manageTemplatesEnabled: key.manageTemplatesEnabled,
                 apiKeysEnabled: key.apiKeysEnabled,
                 customDomainsEnabled: key.customDomainsEnabled,
                 projectRolesEnabled: key.projectRolesEnabled,
                 analyticsEnabled: key.analyticsEnabled,
+                eventStreamingEnabled: key.eventStreamingEnabled,
+                secretManagersEnabled: key.secretManagersEnabled,
             },
         })
     },
@@ -166,6 +165,7 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
 
 const turnedOffFeatures: Omit<LicenseKeyEntity, 'id' | 'createdAt' | 'expiresAt' | 'activatedAt' | 'isTrial' | 'email' | 'customerName' | 'key'> = {
     ssoEnabled: false,
+    scimEnabled: false,
     analyticsEnabled: false,
     environmentsEnabled: false,
     showPoweredBy: false,
@@ -180,8 +180,6 @@ const turnedOffFeatures: Omit<LicenseKeyEntity, 'id' | 'createdAt' | 'expiresAt'
     globalConnectionsEnabled: false,
     customRolesEnabled: false,
     projectRolesEnabled: false,
-    agentsEnabled: false,
-    mcpsEnabled: false,
-    tablesEnabled: false,
-    todosEnabled: false,
+    eventStreamingEnabled: false,
+    secretManagersEnabled: false,
 }

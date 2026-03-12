@@ -39,6 +39,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "Select your preferred language for the translated output.": "Select your preferred language for the translated output.",
   "Filter by style (optional)": "Filter by style (optional)",
   "List of texts to translate": "List of texts to translate",

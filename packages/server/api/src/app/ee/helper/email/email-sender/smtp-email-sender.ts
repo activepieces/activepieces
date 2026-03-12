@@ -1,5 +1,5 @@
 import { readFile } from 'node:fs/promises'
-import { AppSystemProp } from '@activepieces/server-shared'
+import { AppSystemProp } from '@activepieces/server-common'
 import { ActivepiecesError, ApEdition, ApEnvironment, ErrorCode, isNil, Platform } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import Mustache from 'mustache'
@@ -32,33 +32,45 @@ export const smtpEmailSender = (log: FastifyBaseLogger): SMTPEmailSender => {
             }
         },
         async send({ emails, platformId, templateData }) {
-            const platform = await getPlatform(platformId)
-            const emailSubject = getEmailSubject(templateData.name, templateData.vars)
-            const senderName = system.get(AppSystemProp.SMTP_SENDER_NAME)
-            const senderEmail = system.get(AppSystemProp.SMTP_SENDER_EMAIL)
-
-            if (!smtpEmailSender(log).isSmtpConfigured()) {
-                log.error(`SMTP isn't configured for sending the email ${emailSubject}`)
-                return
+            try {
+                const platform = await getPlatform(platformId, log)
+                const emailSubject = getEmailSubject(templateData.name, templateData.vars)
+                const senderName = system.get(AppSystemProp.SMTP_SENDER_NAME)
+                const senderEmail = system.get(AppSystemProp.SMTP_SENDER_EMAIL)
+    
+                if (!smtpEmailSender(log).isSmtpConfigured()) {
+                    log.error({ emailSubject }, '[smtpEmailSender#send] SMTP is not configured')
+                    return
+                }
+    
+                const emailBody = await renderEmailBody({
+                    platform,
+                    templateData,
+                })
+    
+                const smtpClient = initSmtpClient()
+                log.info({
+                    emails,
+                    platformId,
+                    templateData,
+                }, '[smtpEmailSender#send] sending email')
+                await smtpClient.sendMail({
+                    from: `${senderName} <${senderEmail}>`,
+                    to: emails.join(','),
+                    subject: emailSubject,
+                    html: emailBody,
+                })
             }
-
-            const emailBody = await renderEmailBody({
-                platform,
-                templateData,
-            })
-
-            const smtpClient = initSmtpClient()
-            log.info({
-                emails,
-                platformId,
-                templateData,
-            }, '[smtpEmailSender#send] sending email')
-            await smtpClient.sendMail({
-                from: `${senderName} <${senderEmail}>`,
-                to: emails.join(','),
-                subject: emailSubject,
-                html: emailBody,
-            })
+            catch (e) {
+                log.error({
+                    error: e,
+                    emails,
+                    platformId,
+                    title: templateData.name,
+                }, '[smtpEmailSender#send] error sending email')
+                throw e
+            }
+          
         },
 
         isSmtpConfigured(): boolean {
@@ -68,8 +80,8 @@ export const smtpEmailSender = (log: FastifyBaseLogger): SMTPEmailSender => {
     }
 }
 
-const getPlatform = async (platformId: string | undefined): Promise<Platform | null> => {
-    return platformId ? platformService.getOne(platformId) : null
+const getPlatform = async (platformId: string | undefined, log: FastifyBaseLogger): Promise<Platform | null> => {
+    return platformId ? platformService(log).getOne(platformId) : null
 }
 
 const renderEmailBody = async ({ platform, templateData }: RenderEmailBodyArgs): Promise<string> => {
@@ -117,11 +129,13 @@ const initSmtpClient = (): Transporter => {
 const getEmailSubject = (templateName: EmailTemplateData['name'], vars: Record<string, string>): string => {
     const templateToSubject: Record<EmailTemplateData['name'], string> = {
         'invitation-email': 'You have been invited to a team',
+        'project-member-added': `You've been added to ${vars.projectName}`,
         'badge-awarded': 'You earned a new badge',
         'verify-email': 'Verify your email address',
         'reset-password': 'Reset your password',
         'issue-created': `[ACTION REQUIRED] New issue in ${vars.flowName}`,
         'trigger-failure': `[ACTION REQUIRED] ${vars.flowName} trigger is failing`,
+        'scim-user-welcome': 'Welcome! Your account has been created',
     }
 
     return templateToSubject[templateName]

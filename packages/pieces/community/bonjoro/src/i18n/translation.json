@@ -23,6 +23,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "Note to send with the greet": "Note to send with the greet",
   "Email to send the greet to": "Email to send the greet to",
   "First name of the person to greet": "First name of the person to greet",

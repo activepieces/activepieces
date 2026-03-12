@@ -4,7 +4,7 @@ import {
   Polling,
   pollingHelper,
 } from '@activepieces/pieces-common';
-import { comfyIcuAuth } from '../../index';
+import { comfyIcuAuth } from '../auth';
 import {
   AppConnectionValueForAuthProperty,
   createTrigger,

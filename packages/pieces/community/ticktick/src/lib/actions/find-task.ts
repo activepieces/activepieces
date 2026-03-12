@@ -1,6 +1,6 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { ticktickAuth } from '../../index';
+import { ticktickAuth } from '../auth';
 import { tickTickApiCall } from '../common/client';
 import { projectId } from '../common/props';
 

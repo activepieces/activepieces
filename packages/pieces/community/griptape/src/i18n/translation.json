@@ -29,6 +29,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "Select the assistant": "Select the assistant",
   "Input to provide to the assistant": "Input to provide to the assistant",
   "Select knowledge bases to use": "Select knowledge bases to use",

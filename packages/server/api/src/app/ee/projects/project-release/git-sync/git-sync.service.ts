@@ -1,19 +1,17 @@
 import {
-    ConfigureRepoRequest,
-    GitBranchType,
-    GitPushOperationType,
-    GitRepo,
-    PushGitRepoRequest,
-} from '@activepieces/ee-shared'
-import {
     ActivepiecesError,
     ApEdition,
     apId,
+    ConfigureRepoRequest,
     ErrorCode,
+
+    GitBranchType,
+    GitPushOperationType,
+    GitRepo,
     isNil,
     ProjectState,
-    SeekPage,
-} from '@activepieces/shared'
+    PushGitRepoRequest,
+    SeekPage } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../../../core/db/repo-factory'
 import { paginationHelper } from '../../../../helper/pagination/pagination-utils'
@@ -191,7 +189,7 @@ export const gitRepoService = (_log: FastifyBaseLogger) => ({
         }
     },
     async getState({ gitRepo, userId, log }: PullGitRepoRequest): Promise<ProjectState> {
-        const { flowFolderPath, connectionsFolderPath, tablesFolderPath } = await gitHelper.createGitRepoAndReturnPaths(gitRepo, userId)
+        const { flowFolderPath, connectionsFolderPath, tablesFolderPath } = await gitHelper.createGitRepoAndReturnPaths(log, gitRepo, userId)
         return gitSyncHelper(log).getStateFromGit({
             flowPath: flowFolderPath,
             connectionsFolderPath,

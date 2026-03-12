@@ -1,5 +1,5 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { beamerAuth } from '../../index';
+import { beamerAuth } from '../auth';
 import { beamerCommon } from '../common';
 import {
   HttpMethod,

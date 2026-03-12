@@ -1,5 +1,5 @@
 import { Property, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
-import { slackAuth } from '../../';
+import { slackAuth } from '../auth';
 
 
 

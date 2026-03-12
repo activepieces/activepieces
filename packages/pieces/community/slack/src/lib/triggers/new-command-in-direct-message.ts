@@ -4,7 +4,7 @@ import {
   createTrigger,
 } from '@activepieces/pieces-framework';
 import { userId } from '../common/props';
-import { slackAuth } from '../../';
+import { slackAuth } from '../auth';
 import { parseCommand } from '../common/utils';
 
 export const newCommandInDirectMessageTrigger = createTrigger({
@@ -14,7 +14,7 @@ export const newCommandInDirectMessageTrigger = createTrigger({
   description:
     'Triggers when a specific command is sent to the bot (e.g., @bot command arg1 arg2) via Direct Message.',
   props: {
-    user: userId,
+    user: userId(true),
     commands: Property.Array({
       displayName: 'Commands',
       description:

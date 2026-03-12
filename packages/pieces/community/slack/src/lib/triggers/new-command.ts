@@ -5,7 +5,7 @@ import {
   createTrigger,
 } from '@activepieces/pieces-framework';
 import { getChannels, multiSelectChannelInfo, userId } from '../common/props';
-import { slackAuth } from '../../';
+import { slackAuth } from '../auth';
 import { parseCommand } from '../common/utils';
 
 export const newCommand = createTrigger({
@@ -16,7 +16,7 @@ export const newCommand = createTrigger({
     'Triggers when a specific command is sent to the bot (e.g., @bot command arg1 arg2)',
   props: {
     info: multiSelectChannelInfo,
-    user: userId,
+    user: userId(true),
     commands: Property.Array({
       displayName: 'Commands',
       description:

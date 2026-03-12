@@ -1,4 +1,4 @@
-import { slackAuth } from '../../index';
+import { slackAuth } from '../auth';
 import { createAction } from '@activepieces/pieces-framework';
 import { singleSelectChannelInfo, slackChannel, userId } from '../common/props';
 import { WebClient } from '@slack/web-api';
@@ -11,7 +11,7 @@ export const inviteUserToChannelAction = createAction({
 	props: {
 		info: singleSelectChannelInfo,
 		channel: slackChannel(true),
-		userId,
+		userId: userId(true),
 	},
 	async run(context) {
 		const client = new WebClient(context.auth.access_token);

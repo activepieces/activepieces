@@ -3,7 +3,7 @@ import {
   TriggerStrategy,
   createTrigger,
 } from '@activepieces/pieces-framework';
-import { slackAuth } from '../../';
+import { slackAuth } from '../auth';
 import { userId } from '../common/props';
 
 export const newMentionInDirectMessageTrigger = createTrigger({
@@ -13,7 +13,7 @@ export const newMentionInDirectMessageTrigger = createTrigger({
   description:
     'Triggers when a username is mentioned in a direct message channel.',
   props: {
-    user: userId,
+    user: userId(true),
     ignoreBots: Property.Checkbox({
       displayName: 'Ignore Bot Messages ?',
       required: true,

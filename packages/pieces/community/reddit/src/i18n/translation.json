@@ -42,6 +42,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "Select the category of posts to retrieve": "Select the category of posts to retrieve",
   "The subreddit to fetch posts from": "The subreddit to fetch posts from",
   "Number of posts to fetch (max 100)": "Number of posts to fetch (max 100)",

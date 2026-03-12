@@ -22,6 +22,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "The email of the customer to send the invite to (required if Phone Number is empty)": "The email of the customer to send the invite to (required if Phone Number is empty)",
   "The phone number of the customer to send the invite to (required if Email is empty)": "The phone number of the customer to send the invite to (required if Email is empty)",
   "The number of days to delay the invite (i.e send after X days)": "The number of days to delay the invite (i.e send after X days)",

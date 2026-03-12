@@ -5,7 +5,7 @@ import {
 } from '@activepieces/pieces-framework'
 import {
     AppSystemProp,
-} from '@activepieces/server-shared'
+} from '@activepieces/server-common'
 import {
     ActivepiecesError,
     ApEnvironment,
@@ -25,7 +25,7 @@ import { FastifyBaseLogger } from 'fastify'
 import {
     EngineHelperTriggerResult,
     OperationResponse,
-} from 'server-worker'
+} from 'worker'
 import { system } from '../../helper/system/system'
 import { projectService } from '../../project/project-service'
 import { jobQueue } from '../../workers/queue/job-queue'
@@ -45,7 +45,7 @@ export const flowTriggerSideEffect = (log: FastifyBaseLogger) => {
             }
             const { flowId, flowVersionId, projectId, simulate, pieceTrigger } = params
 
-            const platformId = await projectService.getPlatformId(projectId)
+            const platformId = await projectService(log).getPlatformId(projectId)
             const engineHelperResponse = await userInteractionWatcher(log).submitAndWaitForResponse<OperationResponse<EngineHelperTriggerResult<TriggerHookType.ON_ENABLE>>>({
                 jobType: WorkerJobType.EXECUTE_TRIGGER_HOOK,
                 hookType: TriggerHookType.ON_ENABLE,
@@ -80,6 +80,11 @@ export const flowTriggerSideEffect = (log: FastifyBaseLogger) => {
                         ...params,
                     })
                 }
+                case TriggerStrategy.MANUAL: {
+                    return {
+                        scheduleOptions: undefined,
+                    }
+                }
             }
         },
         async disable(params: DisableFlowTriggerParams): Promise<void> {
@@ -87,7 +92,7 @@ export const flowTriggerSideEffect = (log: FastifyBaseLogger) => {
                 return
             }
             const { flowId, flowVersionId, projectId, simulate, pieceTrigger } = params
-            const platformId = await projectService.getPlatformId(projectId)
+            const platformId = await projectService(log).getPlatformId(projectId)
             const engineHelperResponse = await userInteractionWatcher(log).submitAndWaitForResponse<OperationResponse<EngineHelperTriggerResult<TriggerHookType.ON_DISABLE>>>({
                 jobType: WorkerJobType.EXECUTE_TRIGGER_HOOK,
                 hookType: TriggerHookType.ON_DISABLE,
@@ -121,6 +126,8 @@ export const flowTriggerSideEffect = (log: FastifyBaseLogger) => {
                         flowVersionId,
                     })
                     break
+                case TriggerStrategy.MANUAL:
+                    break
             }
         },
 
@@ -146,7 +153,7 @@ async function handleWebhookTrigger({ flowId, flowVersionId, projectId, pieceTri
     const renewConfiguration = pieceTrigger.renewConfiguration
     switch (renewConfiguration?.strategy) {
         case WebhookRenewStrategy.CRON: {
-            const platformId = await projectService.getPlatformId(projectId)
+            const platformId = await projectService(log).getPlatformId(projectId)
             await jobQueue(log).add({
                 id: flowVersionId,
                 type: JobType.REPEATING,
@@ -176,7 +183,6 @@ async function handleWebhookTrigger({ flowId, flowVersionId, projectId, pieceTri
 
 async function handlePollingTrigger({ engineHelperResponse, flowId, flowVersionId, projectId, log }: ActiveTriggerParams): Promise<ActiveTriggerReturn> {
     const pollingFrequencyCronExpression = `*/${system.getNumber(AppSystemProp.TRIGGER_DEFAULT_POLL_INTERVAL) ?? 5} * * * *`
-
     if (isNil(engineHelperResponse.result.scheduleOptions)) {
         engineHelperResponse.result.scheduleOptions = {
             cronExpression: pollingFrequencyCronExpression,
@@ -184,7 +190,7 @@ async function handlePollingTrigger({ engineHelperResponse, flowId, flowVersionI
             type: TriggerSourceScheduleType.CRON_EXPRESSION,
         }
     }
-    const platformId = await projectService.getPlatformId(projectId)
+    const platformId = await projectService(log).getPlatformId(projectId)
     await jobQueue(log).add({
         id: flowVersionId,
         type: JobType.REPEATING,

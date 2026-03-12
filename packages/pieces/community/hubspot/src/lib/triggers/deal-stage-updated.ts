@@ -9,7 +9,7 @@ import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-com
 
 import dayjs from 'dayjs';
 
-import { hubspotAuth } from '../../';
+import { hubspotAuth } from '../auth';
 
 import {
 	getDefaultPropertiesForObject,
