@@ -25,12 +25,22 @@ export const addRectionToMessageAction = createAction({
       required: true,
       description: 'e.g.`thumbsup`',
     }),
+    reactAsUser: Property.Checkbox({
+      displayName: 'React as user?',
+      description: 'If enabled, the reaction will be added as the authenticated user instead of the bot.',
+      required: true,
+      defaultValue: false,
+    }),
   },
 
   async run(context) {
-    const { channel, ts, reaction } = context.propsValue;
+    const { channel, ts, reaction, reactAsUser } = context.propsValue;
 
-    const slack = new WebClient(context.auth.access_token);
+    const token = reactAsUser
+      ? context.auth.data?.authed_user?.access_token
+      : context.auth.access_token;
+
+    const slack = new WebClient(token);
 
     const messageTimestamp = processMessageTimestamp(ts);
 
