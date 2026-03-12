@@ -43,10 +43,13 @@ export const findOrAddAccountAction = createAction({
     );
 
     const items = searchResult?.items ?? searchResult?.Items ?? [];
-    if (items.length > 0) {
+    const exactMatch = items.find(
+      (item: any) => item.Name === context.propsValue.name
+    );
+    if (exactMatch) {
       return {
         created: false,
-        account: items[0],
+        account: exactMatch,
       };
     }
 

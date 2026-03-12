@@ -43,10 +43,14 @@ export const findOrAddPersonAction = createAction({
     );
 
     const items = searchResult?.items ?? searchResult?.Items ?? [];
-    if (items.length > 0) {
+    const exactMatch = items.find(
+      (item: any) =>
+        item.Email?.toLowerCase() === context.propsValue.email.toLowerCase()
+    );
+    if (exactMatch) {
       return {
         created: false,
-        person: items[0],
+        person: exactMatch,
       };
     }
 
