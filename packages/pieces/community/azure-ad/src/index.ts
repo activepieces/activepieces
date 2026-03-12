@@ -30,7 +30,7 @@ export const azureAd = createPiece({
     minimumSupportedRelease: '0.36.1',
     logoUrl: 'https://cdn.activepieces.com/pieces/azure-ad.png',
     categories: [PieceCategory.SALES_AND_CRM],
-    authors: [],
+    authors: ['maurivan'],
     auth: azureAdAuth,
     actions: [
         addMemberToGroupAction,
