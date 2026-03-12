@@ -9,6 +9,7 @@ import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 
 import { STATIC_PAGES, type StaticPage } from './static-pages';
+import { t } from 'i18next';
 
 const SEARCH_LIMIT = 5;
 
@@ -177,32 +178,32 @@ export function useGlobalSearchResults(query: string, open: boolean) {
   const groups: SearchResultGroup[] = [
     {
       type: 'flow',
-      heading: 'Flows',
+      heading: t('Flows'),
       items: flowResults,
       isLoading: flowsQuery.isLoading && (searchEnabled || suggestionsEnabled),
     },
     {
       type: 'table',
-      heading: 'Tables',
+      heading: t('Tables'),
       items: tableResults,
       isLoading: tablesQuery.isLoading && (searchEnabled || suggestionsEnabled),
     },
     {
       type: 'folder',
-      heading: 'Folders',
+      heading: t('Folders'),
       items: folderResults,
       isLoading:
         foldersQuery.isLoading && (searchEnabled || suggestionsEnabled),
     },
     {
       type: 'project',
-      heading: 'Projects',
+      heading: t('Projects'),
       items: projectResults,
       isLoading: false,
     },
     {
       type: 'page',
-      heading: 'Pages',
+      heading: t('Pages'),
       items: pageResults,
       isLoading: false,
     },
