@@ -7,6 +7,7 @@ import { processMessageTimestamp } from '../common/utils';
 import {
   getBotToken,
   getUserToken,
+  requireUserToken,
   SlackAuthValue,
 } from '../common/auth-helpers';
 
@@ -43,7 +44,7 @@ export const addRectionToMessageAction = createAction({
     const { channel, ts, reaction, reactAsUser } = context.propsValue;
 
     const token = reactAsUser
-      ? getUserToken(context.auth as SlackAuthValue)
+      ? requireUserToken(context.auth as SlackAuthValue)
       : getBotToken(context.auth as SlackAuthValue);
 
     const slack = new WebClient(token);

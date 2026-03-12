@@ -82,3 +82,29 @@ export async function getTeamId(auth: SlackAuthValue): Promise<string> {
   }
   return response.body.team_id;
 }
+
+
+export async function getUserId(auth: SlackAuthValue): Promise<string> {
+  const a = auth as SlackAuth;
+  if (!isCustomAuth(a)) {
+    const userId = (a.data['authed_user'] as Record<string, string> | undefined)?.id;
+    if (!userId) {
+      throw new Error('Failed to get user ID from Slack auth data');
+    }
+    return userId;
+  }
+  const response = await httpClient.sendRequest<{
+    ok: boolean;
+    user_id: string;
+  }>({
+    method: HttpMethod.GET,
+    url: 'https://slack.com/api/auth.test',
+    headers: {
+      Authorization: `Bearer ${a.props.botToken}`,
+    },
+  });
+  if (!response.body.ok) {
+    throw new Error('Failed to get user ID from Slack auth.test');
+  }
+  return response.body.user_id;
+}

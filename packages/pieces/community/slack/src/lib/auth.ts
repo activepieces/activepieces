@@ -40,6 +40,7 @@ export const slackOAuth2Auth = PieceAuth.OAuth2({
 });
 
 const slackCustomAuth = PieceAuth.CustomAuth({
+  displayName: 'Bot Token',
   description: 'Authenticate using a Slack bot token (and optional user token).',
   required: true,
   props: {
