@@ -36,8 +36,8 @@ export const createCompany = createAction({
       '/rest/companies',
       {
         name,
-        domainName: domainName ?? undefined,
-        address: address ?? undefined,
+        domainName: domainName ? { primaryLinkUrl: domainName, primaryLinkLabel: '' } : undefined,
+        address: address ? { addressStreet1: address } : undefined,
         employees: employees ?? undefined,
       },
     );

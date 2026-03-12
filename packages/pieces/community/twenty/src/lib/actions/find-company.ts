@@ -28,7 +28,7 @@ export const findCompany = createAction({
       queryParams['filter[name][eq]'] = name;
     }
     if (domainName) {
-      queryParams['filter[domainName][eq]'] = domainName;
+      queryParams['filter[domainName][primaryLinkUrl][eq]'] = domainName;
     }
 
     const body = await twentyRequest(

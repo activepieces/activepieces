@@ -38,8 +38,8 @@ export const updateCompany = createAction({
 
     const body: Record<string, unknown> = {};
     if (name) body['name'] = name;
-    if (domainName) body['domainName'] = domainName;
-    if (address) body['address'] = address;
+    if (domainName) body['domainName'] = { primaryLinkUrl: domainName, primaryLinkLabel: '' };
+    if (address) body['address'] = { addressStreet1: address };
     if (employees != null) body['employees'] = employees;
 
     return await twentyRequest(
