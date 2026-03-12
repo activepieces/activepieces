@@ -1,6 +1,7 @@
 # Kubernetes Infrastructure Guide
 
-We control the clusters through the devops machine.
+We control the prod / staging clusters through 
+ssh <ssh_user>@<control_plane_ip_for_prod/stg> cat /etc/rancher/k3s/k3s.yaml | sed 's/127.0.0.1/<control_plane_ip_for_prod/stg>/g' > ~/.kube/config
 
 ## Terraform Setup
 
@@ -67,17 +68,14 @@ Create helm values.yaml files for app and worker (e.g. deploy/staging/).
 # Get control plane IP
 terraform output control_plane_ip
 
-# Open tunnel in background
-ssh -fN -L 6443:127.0.0.1:6443 root@<control_plane_ip_address>
-
 # Copy cluster config
-ssh root@<control_plane_ip_address> cat /etc/rancher/k3s/k3s.yaml > ~/.kube/config
+ssh <ssh_user>@<control_plane_ip_for_prod/stg> cat /etc/rancher/k3s/k3s.yaml | sed 's/127.0.0.1/<control_plane_ip_for_prod/stg>/g' > ~/.kube/config
 
 # Check running nodes
 kubectl get nodes
 ```
 
-### Install kubectl-argo-rollouts plugin
+### Install kubectl-argo-rollouts plugin if not exist
 
 ```bash
 curl -fsSL https://github.com/argoproj/argo-rollouts/releases/latest/download/kubectl-argo-rollouts-linux-amd64 \
@@ -85,7 +83,7 @@ curl -fsSL https://github.com/argoproj/argo-rollouts/releases/latest/download/ku
 chmod +x /usr/local/bin/kubectl-argo-rollouts
 ```
 
-### Setup Argo Rollouts
+### Setup Argo Rollouts ( first time only )
 
 ```bash
 helm upgrade --install argo-rollouts argo-rollouts \
@@ -98,7 +96,9 @@ helm upgrade --install argo-rollouts argo-rollouts \
 
 ```bash
 # Apply all secrets from your env file (see deploy/scripts/apply-secrets.sh)
-./deploy/scripts/apply-secrets.sh --env-file .env.production --namespace activepieces
+./deploy/scripts/apply-secrets.sh --env-file .env.* --namespace activepieces --env <prod or stg>
+options: --dry-run for previewing
+
 
 # Create docker registry creds
 kubectl create secret docker-registry ghcr-pull-secret \
@@ -116,7 +116,6 @@ kubectl create secret docker-registry ghcr-pull-secret \
 helm upgrade --install activepieces deploy/activepieces-helm/ \
   -n activepieces \
   -f deploy/staging/stg-app-values.yaml \
-  --force-conflicts \
   --set image.tag=<>   # ignore if set in values.yaml
 
 helm upgrade --install activepieces-worker deploy/activepieces-helm/ \

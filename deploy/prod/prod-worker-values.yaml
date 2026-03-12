@@ -1,7 +1,7 @@
 # ============================================================================
-# Activepieces — Staging WORKER (Hetzner)
+# Activepieces — Production WORKER (Hetzner)
 #   helm upgrade --install activepieces-worker deploy/activepieces-helm/ \
-#     --values deploy/staging/stg-worker-values.yaml \
+#     --values deploy/prod/prod-worker-values.yaml \
 #     --set image.tag=<tag>
 # ============================================================================
 

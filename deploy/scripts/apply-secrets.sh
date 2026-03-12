@@ -1,14 +1,22 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# apply-secrets.sh — Read a .env file and upsert Kubernetes secrets.
+# apply-secrets.sh — Read a .env file and upsert the single "activepieces-secrets" Kubernetes secret.
+#
+# All AP_* and OTEL_* variables from the env file are written as keys into one secret:
+#   activepieces-secrets
 #
 # Usage:
-#   ./deploy/scripts/apply-secrets.sh [--env-file FILE] [--namespace NS] [--dry-run]
+#   ./deploy/scripts/apply-secrets.sh [--env-file FILE] [--namespace NS] [--dry-run] [--env stg|prod]
+#
+# When a value contains a $(cat <path>) command substitution (e.g. AP_POSTGRES_SSL_CA),
+# the script SSHes to root@49.13.51.126 and reads the file from /root/mrsk/<env>/<path>.
 
 ENV_FILE=".env.local"
 NAMESPACE="activepieces"
 DRY_RUN=false
+DEPLOY_ENV=""
+DEVOPS_HOST="root@49.13.51.126"
 
 # ---------------------------------------------------------------------------
 # Argument parsing
@@ -18,6 +26,7 @@ while [[ $# -gt 0 ]]; do
     --env-file)   ENV_FILE="$2"; shift 2 ;;
     --namespace)  NAMESPACE="$2"; shift 2 ;;
     --dry-run)    DRY_RUN=true; shift ;;
+    --env)        DEPLOY_ENV="$2"; shift 2 ;;
     *) echo "Unknown argument: $1" >&2; exit 1 ;;
   esac
 done
@@ -28,103 +37,89 @@ if [[ ! -f "$ENV_FILE" ]]; then
 fi
 
 # ---------------------------------------------------------------------------
-# Helper: look up a variable's value from the env file.
-# Prints the value (possibly empty) and returns 0 if the key exists, 1 if not.
+# Helper: resolve a value that may be a $(cat <path>) command substitution.
+# If the value matches that pattern, SSHes to the devops machine and reads
+# the file from /root/mrsk/<DEPLOY_ENV>/<path>.
 # ---------------------------------------------------------------------------
-get_env_value() {
-  local target_key="$1"
-  while IFS= read -r line || [[ -n "$line" ]]; do
-    [[ -z "$line" || "$line" =~ ^[[:space:]]*# ]] && continue
-    local key="${line%%=*}"
-    if [[ "$key" == "$target_key" ]]; then
-      local value="${line#*=}"
-      # Strip surrounding single or double quotes
-      if [[ "$value" =~ ^\'(.*)\'$ ]]; then
-        value="${BASH_REMATCH[1]}"
-      elif [[ "$value" =~ ^\"(.*)\"$ ]]; then
-        value="${BASH_REMATCH[1]}"
-      fi
-      printf '%s' "$value"
-      return 0
+resolve_value() {
+  local value="$1"
+  # Match $( cat <path> ) with optional whitespace
+  local cat_pattern='^\$\(cat[[:space:]]+([^)]+)\)$'
+  if [[ "$value" =~ $cat_pattern ]]; then
+    local file_path="${BASH_REMATCH[1]}"
+    if [[ -z "$DEPLOY_ENV" ]]; then
+      echo "Error: value uses \$(cat ...) substitution but --env (stg|prod) was not specified." >&2
+      exit 1
     fi
-  done < "$ENV_FILE"
-  return 1
+    local remote_path="/root/mrsk/${DEPLOY_ENV}/${file_path}"
+    ssh -n -o BatchMode=yes "$DEVOPS_HOST" "cat ${remote_path}"
+    return $?
+  fi
+  printf '%s' "$value"
 }
 
 # ---------------------------------------------------------------------------
-# Secret definitions: "SECRET_NAME KEY ENV_VAR"
-# Entries with the same SECRET_NAME are grouped together.
+# Build kubectl args: one --from-literal (or --from-file for multiline) per var
 # ---------------------------------------------------------------------------
-SECRET_DEFS=(
-  "activepieces-db-secret      host               AP_POSTGRES_HOST"
-  "activepieces-db-secret      port               AP_POSTGRES_PORT"
-  "activepieces-db-secret      password           AP_POSTGRES_PASSWORD"
-  "activepieces-db-ssl-ca      ssl-ca             AP_POSTGRES_SSL_CA"
-  "activepieces-redis-secret   host               AP_REDIS_HOST"
-  "activepieces-redis-secret   port               AP_REDIS_PORT"
-  "activepieces-redis-secret   password           AP_REDIS_PASSWORD"
-  "activepieces-s3-secret      accessKeyId        AP_S3_ACCESS_KEY_ID"
-  "activepieces-s3-secret      secretAccessKey    AP_S3_SECRET_ACCESS_KEY"
-  "activepieces-smtp-secret    username           AP_SMTP_USERNAME"
-  "activepieces-smtp-secret    password           AP_SMTP_PASSWORD"
-  "activepieces-stripe-secret  secretKey          AP_STRIPE_SECRET_KEY"
-  "activepieces-stripe-secret  webhookSecret      AP_STRIPE_WEBHOOK_SECRET"
-  "activepieces-api-key        api-key            AP_API_KEY"
-  "activepieces-worker-token   worker-token       AP_WORKER_TOKEN"
-  "activepieces-secrets        encryption-key     AP_ENCRYPTION_KEY"
-  "activepieces-jwt-secret     jwt-secret         AP_JWT_SECRET"
-)
+kubectl_args=()
+tmp_files=()
 
-# Derive ordered unique list of secret names
-SECRET_NAMES=()
-for def in "${SECRET_DEFS[@]}"; do
-  name="${def%%[[:space:]]*}"
-  # Add to list only if not already present
-  found=false
-  for existing in "${SECRET_NAMES[@]+"${SECRET_NAMES[@]}"}"; do
-    [[ "$existing" == "$name" ]] && found=true && break
-  done
-  "$found" || SECRET_NAMES+=("$name")
-done
+while IFS= read -r line || [[ -n "$line" ]]; do
+  # Skip blank lines and comments
+  [[ -z "$line" || "$line" =~ ^[[:space:]]*# ]] && continue
 
-# ---------------------------------------------------------------------------
-# Apply (or preview) each secret
-# ---------------------------------------------------------------------------
-applied=()
-skipped=()
+  key="${line%%=*}"
+  raw_value="${line#*=}"
 
-for secret_name in "${SECRET_NAMES[@]}"; do
-  # Collect --from-literal args for every key whose env var is present
-  literal_args=()
-  for def in "${SECRET_DEFS[@]}"; do
-    read -r sname key env_var <<< "$def"
-    [[ "$sname" != "$secret_name" ]] && continue
-    value="$(get_env_value "$env_var")" || continue
-    literal_args+=("--from-literal=${key}=${value}")
-  done
-
-  if [[ ${#literal_args[@]} -eq 0 ]]; then
-    skipped+=("$secret_name")
-    continue
+  # Strip surrounding single or double quotes
+  if [[ "$raw_value" =~ ^\'(.*)\'$ ]]; then
+    raw_value="${BASH_REMATCH[1]}"
+  elif [[ "$raw_value" =~ ^\"(.*)\"$ ]]; then
+    raw_value="${BASH_REMATCH[1]}"
   fi
 
-  if "$DRY_RUN"; then
-    echo "=== [DRY RUN] Would apply secret: $secret_name ==="
-    printf 'kubectl create secret generic %s \\\n' "$secret_name"
-    for arg in "${literal_args[@]}"; do
-      printf '  %s \\\n' "$arg"
-    done
-    printf '  -n %s --dry-run=client -o yaml | kubectl apply -f -\n\n' "$NAMESPACE"
+  value="$(resolve_value "$raw_value")"
+
+  # Multiline values (e.g. PEM certs) must use --from-file via a temp file
+  if [[ "$value" == *$'\n'* ]]; then
+    tmp=$(mktemp)
+    tmp_files+=("$tmp")
+    printf '%s' "$value" > "$tmp"
+    kubectl_args+=("--from-file=${key}=${tmp}")
   else
-    echo "Applying secret: $secret_name ..."
-    kubectl create secret generic "$secret_name" \
-      "${literal_args[@]}" \
-      -n "$NAMESPACE" \
-      --dry-run=client -o yaml \
-      | kubectl apply -f -
+    kubectl_args+=("--from-literal=${key}=${value}")
   fi
+done < "$ENV_FILE"
 
-  applied+=("$secret_name")
+# ---------------------------------------------------------------------------
+# Apply (or preview) the single secret
+# ---------------------------------------------------------------------------
+SECRET_NAME="activepieces-secrets"
+
+if [[ ${#kubectl_args[@]} -eq 0 ]]; then
+  echo "No variables found in '$ENV_FILE' — nothing to apply." >&2
+  exit 1
+fi
+
+if "$DRY_RUN"; then
+  echo "=== [DRY RUN] Would apply secret: $SECRET_NAME ==="
+  printf 'kubectl create secret generic %s \\\n' "$SECRET_NAME"
+  for arg in "${kubectl_args[@]}"; do
+    printf '  %s \\\n' "$arg"
+  done
+  printf '  -n %s --dry-run=client -o yaml | kubectl apply -f -\n' "$NAMESPACE"
+else
+  echo "Applying secret: $SECRET_NAME ..."
+  kubectl create secret generic "$SECRET_NAME" \
+    "${kubectl_args[@]}" \
+    -n "$NAMESPACE" \
+    --dry-run=client -o yaml \
+    | kubectl apply -f -
+fi
+
+# Clean up any temp files used for multiline values
+for tmp in "${tmp_files[@]+"${tmp_files[@]}"}"; do
+  rm -f "$tmp"
 done
 
 # ---------------------------------------------------------------------------
@@ -132,16 +127,8 @@ done
 # ---------------------------------------------------------------------------
 echo ""
 echo "=== Summary ==="
-if [[ ${#applied[@]} -gt 0 ]]; then
-  if "$DRY_RUN"; then
-    echo "Would apply (${#applied[@]}):"
-  else
-    echo "Applied (${#applied[@]}):"
-  fi
-  for s in "${applied[@]}"; do echo "  + $s"; done
-fi
-
-if [[ ${#skipped[@]} -gt 0 ]]; then
-  echo "Skipped — no vars present (${#skipped[@]}):"
-  for s in "${skipped[@]}"; do echo "  - $s"; done
+if "$DRY_RUN"; then
+  echo "Would apply: $SECRET_NAME (${#kubectl_args[@]} keys)"
+else
+  echo "Applied: $SECRET_NAME (${#kubectl_args[@]} keys)"
 fi

@@ -24,8 +24,9 @@ export const deleteLegacyRedisKeys = (log: FastifyBaseLogger) => ({
         for (const pattern of LEGACY_PATTERNS) {
             const keys = await redisHelper.scanAll(redisConnection, pattern)
             log.info({ pattern, count: keys.length }, '[deleteLegacyRedisKeys] Found legacy keys')
-            if (keys.length > 0) {
-                await redisConnection.del(...keys)
+            const BATCH_SIZE = 1000
+            for (let i = 0; i < keys.length; i += BATCH_SIZE) {
+                await redisConnection.del(...keys.slice(i, i + BATCH_SIZE))
             }
         }
         await redisConnection.set(DELETE_LEGACY_REDIS_KEYS_KEY, 'true')

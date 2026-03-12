@@ -1,12 +1,12 @@
 # ============================================================================
-# Activepieces — Staging APP (Hetzner)
+# Activepieces — Production APP (Hetzner)
 #   helm upgrade --install activepieces deploy/activepieces-helm/ \
-#     --values deploy/staging/stg-app-values.yaml \
+#     --values deploy/prod/prod-app-values.yaml \
 #     --set image.tag=<tag> \
 #     --force-conflicts
 # ============================================================================
 
-replicaCount: 2
+replicaCount: 4
 
 image:
   repository: ghcr.io/activepieces/activepieces-cloud
@@ -24,7 +24,7 @@ ingress:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
     nginx.ingress.kubernetes.io/ssl-redirect: "false"
   hosts:
-    - host: stg.activepieces.dev
+    - host: prod.activepieces.dev
       paths:
         - path: /
           pathType: Prefix
@@ -35,8 +35,7 @@ ingress:
   tls:
     - secretName: activepieces-tls
       hosts:
-        - stg.activepieces.dev
-
+        - prod.activepieces.dev
 
 rollout:
   blueGreen:
@@ -71,7 +70,7 @@ activepiecesConfig:
 resources:
   requests:
     cpu: "1"
-    memory: "2Gi"
+    memory: "8Gi"
   limits:
     cpu: "1"
-    memory: "2Gi"
+    memory: "8Gi"

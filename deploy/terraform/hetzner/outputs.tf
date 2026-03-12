@@ -43,3 +43,18 @@ output "tunnel_command" {
   value       = "ssh -N -L 6443:127.0.0.1:6443 root@${hcloud_server.control_plane.ipv4_address}"
 }
 
+output "k8s_secrets_commands" {
+  description = "kubectl commands to create secrets — run after fetching kubeconfig"
+  sensitive   = true
+  value       = <<-EOT
+    kubectl create namespace activepieces
+
+    # Use deploy/scripts/apply-secrets.sh --env-file .env to apply all secrets at once.
+
+    # To update specific secrets, run the following commands:
+    kubectl create secret generic activepieces-s3-secret \
+      --from-literal=accessKeyId='' \
+      --from-literal=secretAccessKey='' \
+      -n activepieces
+  EOT
+}
