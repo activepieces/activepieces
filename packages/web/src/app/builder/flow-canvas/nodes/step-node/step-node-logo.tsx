@@ -12,7 +12,7 @@ const StepNodeLogo = ({
 }) => {
   return (
     <div
-      className={cn('flex items-center justify-center rounded-sm', {
+      className={cn('flex items-center justify-center rounded-sm shrink-0', {
         'opacity-80': isSkipped,
       })}
     >
