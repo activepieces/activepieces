@@ -60,27 +60,6 @@ async function migrateSteps(
         }
     }
 
-    if (current.type === 'BRANCH') {
-        let branchUpdated = false
-        if (current.onSuccessAction) {
-            const result = await migrateSteps({ step: current.onSuccessAction, queryRunner, flowVersionId, flowId, projectId })
-            if (result.updated) {
-                current = { ...current, onSuccessAction: result.trigger }
-                branchUpdated = true
-            }
-        }
-        if (current.onFailureAction) {
-            const result = await migrateSteps({ step: current.onFailureAction, queryRunner, flowVersionId, flowId, projectId })
-            if (result.updated) {
-                current = { ...current, onFailureAction: result.trigger }
-                branchUpdated = true
-            }
-        }
-        if (branchUpdated) {
-            updated = true
-        }
-    }
-
     if (current.type === 'LOOP_ON_ITEMS' && current.firstLoopAction) {
         const result = await migrateSteps({ step: current.firstLoopAction, queryRunner, flowVersionId, flowId, projectId })
         if (result.updated) {
