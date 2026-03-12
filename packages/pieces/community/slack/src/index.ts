@@ -44,7 +44,7 @@ import { inviteUserToChannelAction } from './lib/actions/invite-user-to-channel'
 import { listUsers } from './lib/actions/list-users';
 import { deleteMessageAction } from './lib/actions/delete-message';
 import { newModalInteractionTrigger } from './lib/triggers/new-modal-interaction';
-import { slackAuth, slackOAuth2Auth } from './lib/auth';
+import { slackAuth } from './lib/auth';
 import { getBotToken, getUserToken } from './lib/common/auth-helpers';
 import type { SlackAuthValue } from './lib/common/auth-helpers';
 
