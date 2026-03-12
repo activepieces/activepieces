@@ -1,5 +1,6 @@
 import { PROJECT_COLOR_PALETTE } from '@activepieces/shared';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { t } from 'i18next';
 
 import { flowsApi } from '@/features/flows';
 import { foldersApi } from '@/features/folders';
@@ -9,7 +10,6 @@ import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 
 import { STATIC_PAGES, type StaticPage } from './static-pages';
-import { t } from 'i18next';
 
 const SEARCH_LIMIT = 5;
 
