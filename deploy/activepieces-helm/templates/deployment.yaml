@@ -60,13 +60,15 @@ spec:
             - name: {{ $key }}
               value: {{ $value | quote }}
             {{- end }}
-            {{- range .Values.activepiecesEnvVariables }}
+            {{- range $secretName, $vars := .Values.activepiecesEnvVariables }}
+            {{- range $vars }}
             - name: {{ . }}
               valueFrom:
                 secretKeyRef:
-                  name: "activepieces-secrets"
+                  name: {{ $secretName | quote }}
                   key: {{ . }}
                   optional: true
+            {{- end }}
             {{- end }}
           {{- end }}
           {{- with .Values.livenessProbe }}

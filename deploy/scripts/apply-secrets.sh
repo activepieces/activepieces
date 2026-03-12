@@ -1,32 +1,40 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# apply-secrets.sh — Read a .env file and upsert the single "activepieces-secrets" Kubernetes secret.
+# apply-secrets.sh — Read a .env file and upsert Kubernetes secrets.
 #
-# All AP_* and OTEL_* variables from the env file are written as keys into one secret:
-#   activepieces-secrets
+# Without --secret-name: applies ALL secret groups defined in values.yaml,
+# filtering the env file to each group's declared variables. Requires yq.
+#
+# With --secret-name: applies only that one secret using all vars in the env file.
 #
 # Usage:
-#   ./deploy/scripts/apply-secrets.sh [--env-file FILE] [--namespace NS] [--dry-run] [--env stg|prod]
+#   ./deploy/scripts/apply-secrets.sh --env-file FILE [--namespace NS] [--dry-run] [--env stg|prod]
+#   ./deploy/scripts/apply-secrets.sh --env-file FILE --secret-name NAME [--namespace NS] [--dry-run] [--env stg|prod]
 #
 # When a value contains a $(cat <path>) command substitution (e.g. AP_POSTGRES_SSL_CA),
 # the script SSHes to root@49.13.51.126 and reads the file from /root/mrsk/<env>/<path>.
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+VALUES_FILE="${SCRIPT_DIR}/../activepieces-helm/values.yaml"
 
 ENV_FILE=".env.local"
 NAMESPACE="activepieces"
 DRY_RUN=false
 DEPLOY_ENV=""
 DEVOPS_HOST="root@49.13.51.126"
+SECRET_NAME=""   # empty = apply all groups
 
 # ---------------------------------------------------------------------------
 # Argument parsing
 # ---------------------------------------------------------------------------
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --env-file)   ENV_FILE="$2"; shift 2 ;;
-    --namespace)  NAMESPACE="$2"; shift 2 ;;
-    --dry-run)    DRY_RUN=true; shift ;;
-    --env)        DEPLOY_ENV="$2"; shift 2 ;;
+    --env-file)    ENV_FILE="$2"; shift 2 ;;
+    --namespace)   NAMESPACE="$2"; shift 2 ;;
+    --dry-run)     DRY_RUN=true; shift ;;
+    --env)         DEPLOY_ENV="$2"; shift 2 ;;
+    --secret-name) SECRET_NAME="$2"; shift 2 ;;
     *) echo "Unknown argument: $1" >&2; exit 1 ;;
   esac
 done
@@ -43,15 +51,19 @@ fi
 # ---------------------------------------------------------------------------
 resolve_value() {
   local value="$1"
-  # Match $( cat <path> ) with optional whitespace
   local cat_pattern='^\$\(cat[[:space:]]+([^)]+)\)$'
   if [[ "$value" =~ $cat_pattern ]]; then
+    # In dry-run mode, skip the SSH fetch and echo the raw substitution as a placeholder.
+    if "$DRY_RUN"; then
+      printf '%s' "$value"
+      return 0
+    fi
     local file_path="${BASH_REMATCH[1]}"
     if [[ -z "$DEPLOY_ENV" ]]; then
       echo "Error: value uses \$(cat ...) substitution but --env (stg|prod) was not specified." >&2
       exit 1
     fi
-    local remote_path="/root/mrsk/${DEPLOY_ENV}/${file_path}"
+    local remote_path="k8n/${DEPLOY_ENV}/${file_path}"
     ssh -n -o BatchMode=yes "$DEVOPS_HOST" "cat ${remote_path}"
     return $?
   fi
@@ -59,76 +71,140 @@ resolve_value() {
 }
 
 # ---------------------------------------------------------------------------
-# Build kubectl args: one --from-literal (or --from-file for multiline) per var
+# Build kubectl --from-literal/--from-file args from the env file.
+# $1: newline-separated list of allowed var names, or "*" to include all.
+# Outputs args to the `kubectl_args` array and temp paths to `tmp_files`.
 # ---------------------------------------------------------------------------
-kubectl_args=()
-tmp_files=()
+build_kubectl_args() {
+  local allowed="$1"
+  kubectl_args=()
+  tmp_files=()
 
-while IFS= read -r line || [[ -n "$line" ]]; do
-  # Skip blank lines and comments
-  [[ -z "$line" || "$line" =~ ^[[:space:]]*# ]] && continue
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    [[ -z "$line" || "$line" =~ ^[[:space:]]*# ]] && continue
 
-  key="${line%%=*}"
-  raw_value="${line#*=}"
+    key="${line%%=*}"
+    raw_value="${line#*=}"
 
-  # Strip surrounding single or double quotes
-  if [[ "$raw_value" =~ ^\'(.*)\'$ ]]; then
-    raw_value="${BASH_REMATCH[1]}"
-  elif [[ "$raw_value" =~ ^\"(.*)\"$ ]]; then
-    raw_value="${BASH_REMATCH[1]}"
+    # Skip vars not in the allowed list (unless all)
+    if [[ "$allowed" != "*" ]]; then
+      printf '%s\n' "$allowed" | grep -qxF "$key" || continue
+    fi
+
+    # Strip surrounding single or double quotes
+    if [[ "$raw_value" =~ ^\'(.*)\'$ ]]; then
+      raw_value="${BASH_REMATCH[1]}"
+    elif [[ "$raw_value" =~ ^\"(.*)\"$ ]]; then
+      raw_value="${BASH_REMATCH[1]}"
+    fi
+
+    local value
+    value="$(resolve_value "$raw_value")"
+
+    # Multiline values (e.g. PEM certs) must use --from-file via a temp file
+    if [[ "$value" == *$'\n'* ]]; then
+      local tmp
+      tmp=$(mktemp)
+      tmp_files+=("$tmp")
+      printf '%s' "$value" > "$tmp"
+      kubectl_args+=("--from-file=${key}=${tmp}")
+    else
+      kubectl_args+=("--from-literal=${key}=${value}")
+    fi
+  done < "$ENV_FILE"
+}
+
+# ---------------------------------------------------------------------------
+# Apply a single secret by name, using pre-built kubectl_args.
+# ---------------------------------------------------------------------------
+apply_secret() {
+  local name="$1"
+
+  if [[ ${#kubectl_args[@]} -eq 0 ]]; then
+    echo "  (no matching variables found — skipping $name)"
+    return
   fi
 
-  value="$(resolve_value "$raw_value")"
-
-  # Multiline values (e.g. PEM certs) must use --from-file via a temp file
-  if [[ "$value" == *$'\n'* ]]; then
-    tmp=$(mktemp)
-    tmp_files+=("$tmp")
-    printf '%s' "$value" > "$tmp"
-    kubectl_args+=("--from-file=${key}=${tmp}")
+  if "$DRY_RUN"; then
+    echo "=== [DRY RUN] Would apply secret: $name ==="
+    printf 'kubectl create secret generic %s \\\n' "$name"
+    for arg in "${kubectl_args[@]}"; do
+      printf '  %s \\\n' "$arg"
+    done
+    printf '  -n %s --dry-run=client -o yaml | kubectl apply -f -\n' "$NAMESPACE"
   else
-    kubectl_args+=("--from-literal=${key}=${value}")
+    echo "Applying secret: $name (${#kubectl_args[@]} keys) ..."
+    kubectl create secret generic "$name" \
+      "${kubectl_args[@]}" \
+      -n "$NAMESPACE" \
+      --dry-run=client -o yaml \
+      | kubectl apply -f -
   fi
-done < "$ENV_FILE"
 
-# ---------------------------------------------------------------------------
-# Apply (or preview) the single secret
-# ---------------------------------------------------------------------------
-SECRET_NAME="activepieces-secrets"
-
-if [[ ${#kubectl_args[@]} -eq 0 ]]; then
-  echo "No variables found in '$ENV_FILE' — nothing to apply." >&2
-  exit 1
-fi
-
-if "$DRY_RUN"; then
-  echo "=== [DRY RUN] Would apply secret: $SECRET_NAME ==="
-  printf 'kubectl create secret generic %s \\\n' "$SECRET_NAME"
-  for arg in "${kubectl_args[@]}"; do
-    printf '  %s \\\n' "$arg"
+  # Clean up temp files for this batch
+  for tmp in "${tmp_files[@]+"${tmp_files[@]}"}"; do
+    rm -f "$tmp"
   done
-  printf '  -n %s --dry-run=client -o yaml | kubectl apply -f -\n' "$NAMESPACE"
-else
-  echo "Applying secret: $SECRET_NAME ..."
-  kubectl create secret generic "$SECRET_NAME" \
-    "${kubectl_args[@]}" \
-    -n "$NAMESPACE" \
-    --dry-run=client -o yaml \
-    | kubectl apply -f -
-fi
-
-# Clean up any temp files used for multiline values
-for tmp in "${tmp_files[@]+"${tmp_files[@]}"}"; do
-  rm -f "$tmp"
-done
+}
 
 # ---------------------------------------------------------------------------
-# Summary
+# Main: single secret or all groups
 # ---------------------------------------------------------------------------
-echo ""
-echo "=== Summary ==="
-if "$DRY_RUN"; then
-  echo "Would apply: $SECRET_NAME (${#kubectl_args[@]} keys)"
+if [[ -n "$SECRET_NAME" ]]; then
+  # Single secret — filter vars from values.yaml if the group is defined there,
+  # otherwise include all vars from the env file (custom/ad-hoc secrets).
+  if [[ -f "$VALUES_FILE" ]] && command -v yq &>/dev/null; then
+    allowed_vars="$(yq ".activepiecesEnvVariables[\"$SECRET_NAME\"] // [] | .[]" "$VALUES_FILE")"
+  else
+    allowed_vars=""
+  fi
+
+  if [[ -n "$allowed_vars" ]]; then
+    build_kubectl_args "$allowed_vars"
+  else
+    build_kubectl_args "*"
+  fi
+
+  apply_secret "$SECRET_NAME"
+  echo ""
+  echo "=== Summary ==="
+  if "$DRY_RUN"; then
+    echo "Would apply: $SECRET_NAME (${#kubectl_args[@]} keys)"
+  else
+    echo "Applied: $SECRET_NAME (${#kubectl_args[@]} keys)"
+  fi
 else
-  echo "Applied: $SECRET_NAME (${#kubectl_args[@]} keys)"
+  # Apply all groups — read secret names and their var lists from values.yaml
+  if ! command -v yq &>/dev/null; then
+    echo "Error: yq is required to apply all secret groups. Install yq or pass --secret-name." >&2
+    exit 1
+  fi
+  if [[ ! -f "$VALUES_FILE" ]]; then
+    echo "Error: values.yaml not found at '$VALUES_FILE'." >&2
+    exit 1
+  fi
+
+  echo "Applying all secret groups from $VALUES_FILE ..."
+  echo ""
+
+  total_applied=0
+  secret_names=()
+  while IFS= read -r sname; do
+    secret_names+=("$sname")
+  done < <(yq '.activepiecesEnvVariables | keys | .[]' "$VALUES_FILE")
+
+  for sname in "${secret_names[@]}"; do
+    allowed_vars="$(yq ".activepiecesEnvVariables[\"$sname\"][]" "$VALUES_FILE")"
+    build_kubectl_args "$allowed_vars"
+    apply_secret "$sname"
+    total_applied=$(( total_applied + ${#kubectl_args[@]} ))
+  done
+
+  echo ""
+  echo "=== Summary ==="
+  if "$DRY_RUN"; then
+    echo "Would apply: ${#secret_names[@]} secrets, $total_applied total keys"
+  else
+    echo "Applied: ${#secret_names[@]} secrets, $total_applied total keys"
+  fi
 fi

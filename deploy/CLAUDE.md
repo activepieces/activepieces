@@ -94,11 +94,19 @@ helm upgrade --install argo-rollouts argo-rollouts \
 
 ### Create Secrets
 
-```bash
-# Apply all secrets from your env file (see deploy/scripts/apply-secrets.sh)
-./deploy/scripts/apply-secrets.sh --env-file .env.* --namespace activepieces --env <prod or stg>
-options: --dry-run for previewing
+Secrets are split into groups matching the `activepiecesEnvVariables` map in `values.yaml`.
+A single `.env` file containing all variables is sufficient — the script filters each group automatically.
 
+```bash
+# Apply ALL secret groups from one env file (requires yq)
+./deploy/scripts/apply-secrets.sh --env-file .env. --namespace activepieces --env <staging or prod>
+
+# Apply a single group (e.g. after rotating DB credentials)
+./deploy/scripts/apply-secrets.sh --env-file .env. --namespace activepieces --env <staging or prod> \
+  --secret-name activepieces-db-secrets
+
+# Preview without applying (works with both modes)
+./deploy/scripts/apply-secrets.sh --env-file .env. --dry-run
 
 # Create docker registry creds
 kubectl create secret docker-registry ghcr-pull-secret \
