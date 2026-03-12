@@ -1,3 +1,4 @@
+import { t } from 'i18next';
 import { Dot, FolderIcon, User } from 'lucide-react';
 
 import { TableIcon } from '@/components/icons/table';
@@ -135,7 +136,6 @@ export function SearchResultRow({ item }: { item: SearchResultItem }) {
       <span className="min-w-0 shrink truncate text-sm font-medium">
         {item.label}
       </span>
-      {item.status === 'ENABLED' && (
       {item.status === 'ENABLED' && (
         <span className="shrink-0 rounded-full bg-green-500/10 px-1.5 py-0.5 text-[10px] font-medium text-green-600">
           {t('Live')}

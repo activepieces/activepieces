@@ -267,24 +267,24 @@ function GlobalSearchDialogContent({
           ))}
       </CommandList>
 
-      <div className="flex items-center gap-4 border-t px-4 py-2.5 text-[11px] text-muted-foreground">
+      <div className="flex items-center gap-4 border-t bg-muted/50 px-4 py-2.5 text-[11px] text-muted-foreground">
         <span className="flex items-center gap-1.5">
-          <kbd className="inline-flex h-5 items-center rounded border bg-muted px-1 font-mono">
+          <kbd className="inline-flex h-5 items-center rounded border bg-background px-1 font-mono">
             ↑
           </kbd>
-          <kbd className="inline-flex h-5 items-center rounded border bg-muted px-1 font-mono">
+          <kbd className="inline-flex h-5 items-center rounded border bg-background px-1 font-mono">
             ↓
           </kbd>
           {t('to navigate')}
         </span>
         <span className="flex items-center gap-1.5">
-          <kbd className="inline-flex h-5 items-center rounded border bg-muted px-1 font-mono">
+          <kbd className="inline-flex h-5 items-center rounded border bg-background px-1 font-mono">
             ↵
           </kbd>
           {t('to select')}
         </span>
         <span className="flex items-center gap-1.5">
-          <kbd className="inline-flex h-5 items-center rounded border bg-muted px-1.5 font-mono text-[10px]">
+          <kbd className="inline-flex h-5 items-center rounded border bg-background px-1.5 font-mono text-[10px]">
             esc
           </kbd>
           {t('to close')}
