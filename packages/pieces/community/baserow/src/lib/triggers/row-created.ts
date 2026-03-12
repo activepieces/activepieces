@@ -1,9 +1,6 @@
 import { Property, createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { MarkdownVariant } from '@activepieces/shared';
 import { baserowAuth } from '../auth';
-import { makeClient } from '../common';
-
-const WEBHOOK_KEY = 'baserow_row_created_webhook';
-
 export const rowCreatedTrigger = createTrigger({
   name: 'baserow_row_created',
   auth: baserowAuth,
@@ -11,11 +8,21 @@ export const rowCreatedTrigger = createTrigger({
   description: 'Triggers when a new row is created in a Baserow table.',
   type: TriggerStrategy.WEBHOOK,
   props: {
-    table_id: Property.Number({
-      displayName: 'Table ID',
-      required: true,
-      description:
-        "Please enter the table ID to watch. You can find the ID by clicking on the three dots next to the table. It's the number between brackets.",
+    instructions: Property.MarkDown({
+      value: `
+## Setup Instructions
+
+1. In Baserow, click the **···** menu beside your table and select **Webhooks**.
+2. Click **Create webhook +**.
+3. Set the HTTP method to **POST**.
+4. Paste the following URL into the endpoint field:
+\`\`\`text
+{{webhookUrl}}
+\`\`\`
+5. Under events, select **Rows created**.
+6. Click **Save**.
+`,
+      variant: MarkdownVariant.INFO,
     }),
   },
   sampleData: {
@@ -32,27 +39,11 @@ export const rowCreatedTrigger = createTrigger({
       },
     ],
   },
-  async onEnable(context) {
-    const client = makeClient(context.auth.props);
-    const table_id = context.propsValue.table_id!;
-
-    const webhook = await client.createWebhook(
-      table_id,
-      context.webhookUrl,
-      ['rows.created'],
-      `activepieces_row_created_${table_id}`
-    );
-
-    await context.store.put(WEBHOOK_KEY, {
-      webhookId: webhook.id,
-    });
+  async onEnable() {
+    // Manual setup required — user registers the webhook URL in Baserow UI.
   },
-  async onDisable(context) {
-    const stored = await context.store.get<{ webhookId: number }>(WEBHOOK_KEY);
-    if (stored) {
-      const client = makeClient(context.auth.props);
-      await client.deleteWebhook(stored.webhookId);
-    }
+  async onDisable() {
+    // Manual cleanup — user deletes the webhook in Baserow UI.
   },
   async run(context) {
     return [context.payload.body];

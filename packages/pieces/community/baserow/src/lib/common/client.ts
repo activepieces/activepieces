@@ -4,7 +4,7 @@ import {
   QueryParams,
   httpClient,
 } from '@activepieces/pieces-common';
-import { BaserowField } from './types';
+import { BaserowField, BaserowTable } from './types';
 
 function emptyValueFilter(
   accessor: (key: string) => any
@@ -46,6 +46,12 @@ export class BaserowClient {
       body,
     });
     return res.body;
+  }
+  async listTables(): Promise<BaserowTable[]> {
+    return await this.makeRequest<BaserowTable[]>(
+      HttpMethod.GET,
+      `/database/tables/all-tables/`
+    );
   }
   async listTableFields(table_id: number): Promise<BaserowField[]> {
     return await this.makeRequest<BaserowField[]>(
@@ -94,6 +100,7 @@ export class BaserowClient {
   }
   async listRows(
     table_id: number,
+    page?: number,
     limit?: number,
     search?: string,
     order_by?: string
@@ -103,36 +110,11 @@ export class BaserowClient {
       `/database/rows/table/${table_id}/`,
       prepareQuery({
         user_field_names: 'true',
+        page: page,
         size: limit,
         search: search,
         order_by: order_by,
       })
-    );
-  }
-  async createWebhook(
-    table_id: number,
-    url: string,
-    events: string[],
-    name: string
-  ) {
-    return await this.makeRequest<{ id: number }>(
-      HttpMethod.POST,
-      `/database/webhooks/table/${table_id}/`,
-      undefined,
-      {
-        url,
-        events,
-        name,
-        request_method: 'POST',
-        use_user_field_names: true,
-        include_all_events: false,
-      }
-    );
-  }
-  async deleteWebhook(webhook_id: number) {
-    return await this.makeRequest(
-      HttpMethod.DELETE,
-      `/database/webhooks/${webhook_id}/`
     );
   }
 }
