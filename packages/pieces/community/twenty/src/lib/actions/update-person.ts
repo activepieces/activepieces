@@ -37,7 +37,8 @@ export const updatePerson = createAction({
         HttpMethod.GET,
         `/rest/people/${personId}`,
       );
-      const existingName = (existing['name'] as Record<string, string>) ?? {};
+      const personData = (existing as Record<string, unknown>)['data'] as Record<string, unknown> ?? existing;
+      const existingName = (personData['name'] as Record<string, string>) ?? {};
       body['name'] = {
         firstName: firstName ?? existingName['firstName'],
         lastName: lastName ?? existingName['lastName'],
