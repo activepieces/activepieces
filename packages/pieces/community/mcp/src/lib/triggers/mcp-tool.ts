@@ -3,7 +3,7 @@ import {
     Property,
     TriggerStrategy,
   } from '@activepieces/pieces-framework';
-import { McpPropertyType } from '@activepieces/shared';
+import { isNil, McpPropertyType } from '@activepieces/shared';
 
 
 export const mcpTool = createTrigger({
@@ -76,7 +76,20 @@ export const mcpTool = createTrigger({
     // ignore
   },
   async run(context) {
-    return [context.payload];
+    const payload = context.payload as Record<string, unknown>;
+    const inputSchema = context.propsValue.inputSchema as { name: string; required: boolean }[] | undefined;
+
+    if (inputSchema) {
+      const missingFields = inputSchema
+        .filter(param => param.required && isNil(payload[param.name]))
+        .map(param => param.name);
+
+      if (missingFields.length > 0) {
+        throw new Error(`Missing required parameters: ${missingFields.join(', ')}`);
+      }
+    }
+
+    return [payload];
   },
   async test() {
     return [{}];
