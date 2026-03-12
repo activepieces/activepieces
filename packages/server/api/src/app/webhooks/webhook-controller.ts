@@ -248,7 +248,7 @@ async function convertBody(
 
 
 function extractRawPayload(request: FastifyRequest): { payload?: Record<string, unknown> } {
-    if (request.headers[RAW_PAYLOAD_HEADER] === 'true' && request.headers.authorization) {
+    if (request.headers[RAW_PAYLOAD_HEADER] === 'true' && request.headers.authorization && request.body != null) {
         return { payload: request.body as Record<string, unknown> }
     }
     return {}
