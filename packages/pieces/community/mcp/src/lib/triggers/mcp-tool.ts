@@ -80,7 +80,8 @@ export const mcpTool = createTrigger({
     const body = rawPayload['body'];
     const headers = rawPayload['headers'];
     const isTriggerPayloadEnvelope = typeof body === 'object' && body !== null && !Array.isArray(body)
-      && typeof headers === 'object' && headers !== null;
+      && typeof headers === 'object' && headers !== null
+      && 'queryParams' in rawPayload;
     const payload = isTriggerPayloadEnvelope
       ? body as Record<string, unknown>
       : rawPayload;
