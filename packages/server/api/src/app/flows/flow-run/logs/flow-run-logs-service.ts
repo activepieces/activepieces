@@ -3,7 +3,7 @@ import { ActivepiecesError, ErrorCode, ExecutioOutputFile, File, FileCompression
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { domainHelper } from '../../../ee/custom-domains/domain-helper'
-import { fileService, fileRepo } from '../../../file/file.service'
+import { fileRepo, fileService } from '../../../file/file.service'
 import { s3Helper } from '../../../file/s3-helper'
 import { JwtSignAlgorithm, jwtUtils } from '../../../helper/jwt-utils'
 
