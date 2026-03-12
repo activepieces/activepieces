@@ -2,6 +2,7 @@ import {
     FlowVersion, 
     isNil,
     LATEST_FLOW_SCHEMA_VERSION,
+    ProjectId,
     spreadIfDefined,
 } from '@activepieces/shared'
 import { system } from '../../helper/system/system'
@@ -12,7 +13,7 @@ import { flowMigrations } from './migrations'
 const log = system.globalLogger()
 
 export const flowVersionMigrationService = {
-    async migrate(flowVersion: FlowVersion): Promise<FlowVersion> {
+    async migrate(flowVersion: FlowVersion, projectId?: ProjectId): Promise<FlowVersion> {
         // Early exit if already at latest version
         if (flowVersion.schemaVersion === LATEST_FLOW_SCHEMA_VERSION) {
             return flowVersion
@@ -25,7 +26,7 @@ export const flowVersionMigrationService = {
             backupFiles[flowVersion.schemaVersion] = await flowVersionBackupService.store(flowVersion)
         }
 
-        const migratedFlowVersion: FlowVersion = await flowMigrations.apply(flowVersion)
+        const migratedFlowVersion: FlowVersion = await flowMigrations.apply(flowVersion, { log, projectId })
 
         await flowVersionRepo().update(flowVersion.id, {
             schemaVersion: migratedFlowVersion.schemaVersion,

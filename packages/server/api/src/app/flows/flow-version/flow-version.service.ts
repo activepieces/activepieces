@@ -267,6 +267,7 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
         removeConnectionsName = false,
         removeSampleData = false,
         entityManager,
+        projectId,
     }: GetFlowVersionOrThrowParams): Promise<FlowVersion> {
         const flowVersion: FlowVersion | null = await findOne({
             where: {
@@ -277,7 +278,7 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
             order: {
                 created: 'DESC',
             },
-        }, entityManager)
+        }, entityManager, projectId)
 
         if (isNil(flowVersion)) {
             throw new ActivepiecesError({
@@ -345,12 +346,12 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
 
 
 
-async function findOne(options: FindOneOptions, entityManager?: EntityManager): Promise<FlowVersion | null> {
+async function findOne(options: FindOneOptions, entityManager?: EntityManager, projectId?: ProjectId): Promise<FlowVersion | null> {
     const flowVersion = await flowVersionRepo(entityManager).findOne(options)
     if (isNil(flowVersion)) {
         return null
     }
-    return flowVersionMigrationService.migrate(flowVersion)
+    return flowVersionMigrationService.migrate(flowVersion, projectId)
 }
 
 
@@ -404,6 +405,7 @@ type GetFlowVersionOrThrowParams = {
     removeConnectionsName?: boolean
     removeSampleData?: boolean
     entityManager?: EntityManager
+    projectId?: ProjectId
 }
 
 type NewFlowVersion = Omit<FlowVersion, 'created' | 'updated'>
