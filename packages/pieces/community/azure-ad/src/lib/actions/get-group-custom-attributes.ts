@@ -16,7 +16,7 @@ export const getGroupCustomAttributesAction = createAction({
         const { groupId } = context.propsValue;
         const group = await callGraphApi<Record<string, unknown>>(token, {
             method: HttpMethod.GET,
-            url: `https://graph.microsoft.com/v1.0/groups/${groupId}?$select=id,displayName,description`,
+            url: `https://graph.microsoft.com/v1.0/groups/${groupId}`,
         });
         const out: Record<string, unknown> = {
             group_id: group['id'],
