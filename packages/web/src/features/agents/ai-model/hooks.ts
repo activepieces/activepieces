@@ -39,9 +39,7 @@ const GOOGLE_MODELS = [
   'gemini-3.1-pro-preview',
 ] as const;
 
-const X_AI_OPENROUTER_MODELS = [
-  'grok-4.1-fast',
-] as const;
+const X_AI_OPENROUTER_MODELS = ['grok-4.1-fast'] as const;
 
 const ALLOWED_MODELS_BY_PROVIDER: Partial<Record<Provider, readonly string[]>> =
   {
