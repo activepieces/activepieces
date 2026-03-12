@@ -79,94 +79,21 @@ jobs:
   deploy-staging:
     needs: build-image
     if: always() && needs.build-image.result == 'success'
-    runs-on: ubuntu-latest
     concurrency:
       group: deploy-k8s-staging
       cancel-in-progress: false   # never cancel mid-flight helm upgrade
-    steps:
-      - name: Configure SSH
-        run: |
-          mkdir -p ~/.ssh/
-          echo "$SSH_KEY" > ~/.ssh/ops.key
-          chmod 600 ~/.ssh/ops.key
-          cat >>~/.ssh/config <<END
-          Host ops
-            HostName $SSH_HOST
-            User $SSH_USER
-            IdentityFile ~/.ssh/ops.key
-            StrictHostKeyChecking no
-          END
-        env:
-          SSH_USER: ${{ secrets.DEV_OPS_USERNAME }}
-          SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          SSH_HOST: ${{ secrets.DEV_OPS_HOST }}
-
-      - name: Deploy APP to staging
-        run: |
-          ssh ops "cd /root/k8n2/staging && \
-            helm upgrade --install activepieces ../activepieces-helm/ \
-              --namespace activepieces \
-              --values ./stg-app-values.yaml \
-              --set image.tag=${{ needs.build-image.outputs.image_tag }} \
-
-      - name: Wait for APP rollout to be healthy
-        run: |
-          ssh ops 'bash -s' <<'ENDSSH'
-          set -euo pipefail
-          timeout=300
-          elapsed=0
-          while [ $elapsed -lt $timeout ]; do
-            PHASE=$(kubectl --context stg get rollout activepieces -n activepieces \
-              -o jsonpath='{.status.phase}' 2>/dev/null || echo "Unknown")
-            [ -z "$PHASE" ] && PHASE="Unknown"
-            echo "APP phase: $PHASE"
-            case $PHASE in
-              Paused|Healthy) exit 0 ;;
-              Degraded|Error|Aborted)
-                echo "::error::APP rollout failed: $PHASE"
-                kubectl --context stg get pods -n activepieces
-                kubectl --context stg argo rollouts get rollout activepieces -n activepieces || true
-                kubectl --context stg get events -n activepieces --sort-by='.lastTimestamp' | tail -30
-                kubectl --context stg argo rollouts abort activepieces -n activepieces || true
-                exit 1 ;;
-            esac
-            sleep 10
-            elapsed=$((elapsed + 10))
-          done
-          echo "::error::APP rollout timed out after ${timeout}s (last phase: $PHASE)"
-          exit 1
-          ENDSSH
-
-      - name: Promote APP
-        run: ssh ops 'kubectl --context stg argo rollouts promote activepieces -n activepieces'
-
-      - name: Wait for APP promotion to complete
-        run: ssh ops 'kubectl --context stg argo rollouts status activepieces -n activepieces --timeout=5m'
-
-      - name: Deploy WORKER to staging
-        run: |
-          ssh ops "cd /root/k8n2/staging && \
-            helm upgrade --install activepieces-worker deploy/activepieces-helm/ \
-              --namespace activepieces \
-              --values deploy/staging/stg-worker-values.yaml \
-              --set image.tag=${{ needs.build-image.outputs.image_tag }}"
-
-      - name: Wait for WORKER to be healthy
-        run: |
-          ssh ops 'bash -s' <<'ENDSSH'
-          set -euo pipefail
-          if ! kubectl --context stg rollout status statefulset/activepieces-worker \
-              -n activepieces --timeout=300s; then
-            kubectl --context stg get pods -n activepieces
-            kubectl --context stg describe statefulset activepieces-worker -n activepieces || true
-            kubectl --context stg get events -n activepieces --sort-by='.lastTimestamp' | tail -30
-            exit 1
-          fi
-          ENDSSH
+    uses: ./.github/workflows/_deploy-k8s-env.yml
+    with:
+      deploy_path: /root/k8n2/staging
+      kube_context: stg
+      app_values: ./stg-app-values.yaml
+      worker_values: ./stg-worker-values.yaml
+      image_tag: ${{ needs.build-image.outputs.image_tag }}
+    secrets: inherit
 
   # --- PROMOTION JOBS (run on schedule OR manual "promote-to-production") ---
 
-  promote-to-production:
+  get-prod-image-tag:
     needs: [deploy-staging]
     if: |
       always() &&
@@ -174,12 +101,8 @@ jobs:
        (github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'promote-to-production') ||
        (github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'cloud-hotfix' && needs.deploy-staging.result == 'success'))
     runs-on: ubuntu-latest
-    environment:
-      name: production         # GitHub Environment gate — requires reviewer approval
-      url: https://cloud.activepieces.com
-    concurrency:
-      group: promote-production
-      cancel-in-progress: false
+    outputs:
+      image_tag: ${{ steps.tag.outputs.image_tag }}
     steps:
       - name: Configure SSH
         run: |
@@ -198,8 +121,8 @@ jobs:
           SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           SSH_HOST: ${{ secrets.DEV_OPS_HOST }}
 
-      - name: Get staging image tag
-        id: image
+      - name: Read image tag from staging rollout
+        id: tag
         run: |
           TAG=$(ssh ops 'bash -s' <<'ENDSSH'
           kubectl --context stg get rollout activepieces -n activepieces \
@@ -209,69 +132,23 @@ jobs:
           )
           echo "image_tag=$TAG" >> $GITHUB_OUTPUT
 
-      - name: Deploy APP to production
-        run: |
-          ssh ops "cd /root/k8n2/prod && \
-            helm upgrade --install activepieces deploy/activepieces-helm/ \
-              --namespace activepieces \
-              --values deploy/prod/prod-app-values.yaml \
-              --set image.tag=${{ steps.image.outputs.image_tag }} \
-              --server-side --force-conflicts"
-
-      - name: Wait for APP rollout to be healthy
-        run: |
-          ssh ops 'bash -s' <<'ENDSSH'
-          set -euo pipefail
-          timeout=300
-          elapsed=0
-          while [ $elapsed -lt $timeout ]; do
-            PHASE=$(kubectl --context prod get rollout activepieces -n activepieces \
-              -o jsonpath='{.status.phase}' 2>/dev/null || echo "Unknown")
-            [ -z "$PHASE" ] && PHASE="Unknown"
-            echo "APP phase: $PHASE"
-            case $PHASE in
-              Paused|Healthy) exit 0 ;;
-              Degraded|Error|Aborted)
-                echo "::error::APP rollout failed: $PHASE"
-                kubectl --context prod get pods -n activepieces
-                kubectl --context prod argo rollouts get rollout activepieces -n activepieces || true
-                kubectl --context prod get events -n activepieces --sort-by='.lastTimestamp' | tail -30
-                kubectl --context prod argo rollouts abort activepieces -n activepieces || true
-                exit 1 ;;
-            esac
-            sleep 10
-            elapsed=$((elapsed + 10))
-          done
-          echo "::error::APP rollout timed out after ${timeout}s (last phase: $PHASE)"
-          exit 1
-          ENDSSH
-
-      - name: Promote APP
-        run: ssh ops 'kubectl --context prod argo rollouts promote activepieces -n activepieces'
-
-      - name: Wait for APP promotion to complete
-        run: ssh ops 'kubectl --context prod argo rollouts status activepieces -n activepieces --timeout=5m'
-
-      - name: Deploy WORKER to production
-        run: |
-          ssh ops "cd /root/k8n2/prod && \
-            helm upgrade --install activepieces-worker deploy/activepieces-helm/ \
-              --namespace activepieces \
-              --values deploy/prod/prod-worker-values.yaml \
-              --set image.tag=${{ steps.image.outputs.image_tag }}"
-
-      - name: Wait for WORKER to be healthy
-        run: |
-          ssh ops 'bash -s' <<'ENDSSH'
-          set -euo pipefail
-          if ! kubectl --context prod rollout status statefulset/activepieces-worker \
-              -n activepieces --timeout=300s; then
-            kubectl --context prod get pods -n activepieces
-            kubectl --context prod describe statefulset activepieces-worker -n activepieces || true
-            kubectl --context prod get events -n activepieces --sort-by='.lastTimestamp' | tail -30
-            exit 1
-          fi
-          ENDSSH
+  promote-to-production:
+    needs: [get-prod-image-tag]
+    if: always() && needs.get-prod-image-tag.result == 'success'
+    concurrency:
+      group: promote-production
+      cancel-in-progress: false
+    environment:
+      name: production         # GitHub Environment gate — requires reviewer approval
+      url: https://cloud.activepieces.com
+    uses: ./.github/workflows/_deploy-k8s-env.yml
+    with:
+      deploy_path: /root/k8n2/prod
+      kube_context: prod
+      app_values: ./prod-app-values.yaml
+      worker_values: ./prod-worker-values.yaml
+      image_tag: ${{ needs.get-prod-image-tag.outputs.image_tag }}
+    secrets: inherit
 
   # --- WEEKLY RELEASE (runs on Sunday schedule or manual "weekly-release") ---
 

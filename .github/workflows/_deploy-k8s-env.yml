@@ -1,0 +1,104 @@
+name: _Deploy K8s Environment
+
+on:
+  workflow_call:
+    inputs:
+      deploy_path:
+        required: true
+        type: string
+      kube_context:
+        required: true
+        type: string
+      app_values:
+        required: true
+        type: string
+      worker_values:
+        required: true
+        type: string
+      image_tag:
+        required: true
+        type: string
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh/
+          echo "$SSH_KEY" > ~/.ssh/ops.key
+          chmod 600 ~/.ssh/ops.key
+          cat >>~/.ssh/config <<END
+          Host ops
+            HostName $SSH_HOST
+            User $SSH_USER
+            IdentityFile ~/.ssh/ops.key
+            StrictHostKeyChecking no
+          END
+        env:
+          SSH_USER: ${{ secrets.DEV_OPS_USERNAME }}
+          SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_HOST: ${{ secrets.DEV_OPS_HOST }}
+
+      - name: Deploy APP
+        run: |
+          ssh ops "cd ${{ inputs.deploy_path }} && \
+            helm upgrade --install activepieces ../activepieces-helm/ \
+              --namespace activepieces \
+              --values ${{ inputs.app_values }} \
+              --set image.tag=${{ inputs.image_tag }}"
+
+      - name: Wait for APP rollout to be healthy
+        run: |
+          ssh ops 'bash -s' <<'ENDSSH'
+          set -euo pipefail
+          timeout=300
+          elapsed=0
+          while [ $elapsed -lt $timeout ]; do
+            PHASE=$(kubectl --context ${{ inputs.kube_context }} get rollout activepieces -n activepieces \
+              -o jsonpath='{.status.phase}' 2>/dev/null || echo "Unknown")
+            [ -z "$PHASE" ] && PHASE="Unknown"
+            echo "APP phase: $PHASE"
+            case $PHASE in
+              Paused|Healthy) exit 0 ;;
+              Degraded|Error|Aborted)
+                echo "::error::APP rollout failed: $PHASE"
+                kubectl --context ${{ inputs.kube_context }} get pods -n activepieces
+                kubectl --context ${{ inputs.kube_context }} argo rollouts get rollout activepieces -n activepieces || true
+                kubectl --context ${{ inputs.kube_context }} get events -n activepieces --sort-by='.lastTimestamp' | tail -30
+                kubectl --context ${{ inputs.kube_context }} argo rollouts abort activepieces -n activepieces || true
+                exit 1 ;;
+            esac
+            sleep 10
+            elapsed=$((elapsed + 10))
+          done
+          echo "::error::APP rollout timed out after ${timeout}s (last phase: $PHASE)"
+          exit 1
+          ENDSSH
+
+      - name: Promote APP
+        run: ssh ops 'kubectl --context ${{ inputs.kube_context }} argo rollouts promote activepieces -n activepieces'
+
+      - name: Wait for APP promotion to complete
+        run: ssh ops 'kubectl --context ${{ inputs.kube_context }} argo rollouts status activepieces -n activepieces --timeout=5m'
+
+      - name: Deploy WORKER
+        run: |
+          ssh ops "cd ${{ inputs.deploy_path }} && \
+            helm upgrade --install activepieces-worker deploy/activepieces-helm/ \
+              --namespace activepieces \
+              --values ${{ inputs.worker_values }} \
+              --set image.tag=${{ inputs.image_tag }}"
+
+      - name: Wait for WORKER to be healthy
+        run: |
+          ssh ops 'bash -s' <<'ENDSSH'
+          set -euo pipefail
+          if ! kubectl --context ${{ inputs.kube_context }} rollout status statefulset/activepieces-worker \
+              -n activepieces --timeout=300s; then
+            kubectl --context ${{ inputs.kube_context }} get pods -n activepieces
+            kubectl --context ${{ inputs.kube_context }} describe statefulset activepieces-worker -n activepieces || true
+            kubectl --context ${{ inputs.kube_context }} get events -n activepieces --sort-by='.lastTimestamp' | tail -30
+            exit 1
+          fi
+          ENDSSH
