@@ -99,7 +99,7 @@ livenessProbe:
 readinessProbe:
   httpGet:
     path: /v1/health
-    port: 3000
+    port: http
   initialDelaySeconds: 5
   periodSeconds: 5
 
