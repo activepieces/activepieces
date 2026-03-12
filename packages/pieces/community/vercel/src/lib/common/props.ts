@@ -51,5 +51,5 @@ export const envTargetsProperty = Property.StaticMultiSelectDropdown({
       { label: 'Development', value: 'development' },
     ],
   },
-  defaultValue: ['preview'],
+  defaultValue: ['production', 'preview', 'development'],
 });

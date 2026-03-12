@@ -127,3 +127,31 @@ export function toProjectDropdownOptions(projects: VercelProject[]) {
     value: project.id,
   }));
 }
+
+export type VercelDeployment = {
+  uid: string;
+  name: string;
+  url: string | null;
+  state?: string;
+  target?: string | null;
+  created: number;
+};
+
+export async function listDeployments(
+  auth: VercelAuthValue,
+  projectId: string,
+): Promise<VercelDeployment[]> {
+  const response = await vercelApiCall<{
+    deployments: VercelDeployment[];
+    pagination: { next?: number | null };
+  }>({
+    method: HttpMethod.GET,
+    path: '/v6/deployments',
+    auth,
+    query: {
+      projectId,
+      limit: 100,
+    },
+  });
+  return response.deployments ?? [];
+}

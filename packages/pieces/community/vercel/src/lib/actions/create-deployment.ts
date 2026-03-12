@@ -1,7 +1,7 @@
 import { createAction, DynamicPropsValue, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { vercelAuth } from '../common/auth';
-import { vercelApiCall } from '../common/client';
+import { vercelAuth, VercelAuthValue } from '../common/auth';
+import { listDeployments, vercelApiCall } from '../common/client';
 import { deploymentTargetProperty, vercelProjectDropdown } from '../common/props';
 
 export const createDeployment = createAction({
@@ -27,19 +27,37 @@ export const createDeployment = createAction({
     source_fields: Property.DynamicProperties({
       displayName: 'Source Configuration',
       required: false,
-      refreshers: ['deployment_source'],
-      props: async ({ deployment_source }) => {
+      auth: vercelAuth,
+      refreshers: ['deployment_source', 'project'],
+      props: async ({ auth, deployment_source, project }) => {
         const fields: DynamicPropsValue = {};
 
         if (deployment_source === 'redeploy') {
-          fields['deployment_id'] = Property.ShortText({
-            displayName: 'Existing Deployment ID',
-            description: 'Deployment ID to redeploy.',
+          fields['deployment_id'] = Property.Dropdown({
+            displayName: 'Deployment',
+            description: 'Select the deployment to redeploy.',
             required: true,
+            auth: vercelAuth,
+            refreshers: ['auth', 'project'],
+            options: async () => {
+              if (!auth || !project) {
+                return { disabled: true, placeholder: 'Select a project first', options: [] };
+              }
+              const deployments = await listDeployments(auth as VercelAuthValue, String(project));
+              return {
+                disabled: false,
+                options: deployments.map((d) => ({
+                  label: d.url
+                    ? `${d.url} (${d.state ?? 'unknown'}${d.target ? ` · ${d.target}` : ''})`
+                    : d.name,
+                  value: d.uid,
+                })),
+              };
+            },
           });
           fields['with_latest_commit'] = Property.Checkbox({
             displayName: 'Use Latest Commit for Redeploy',
-            description: 'Only applies when redeploying an existing deployment.',
+            description: 'When enabled, redeploys using the latest commit instead of the original deployment files.',
             required: false,
             defaultValue: false,
           });
@@ -107,7 +125,7 @@ export const createDeployment = createAction({
     }),
     skip_auto_detection_confirmation: Property.Checkbox({
       displayName: 'Skip Auto Detection Confirmation',
-      description: 'Skips framework auto-detection confirmation when supported.',
+      description: 'Automatically confirm framework detection without prompting.',
       required: false,
       defaultValue: true,
     }),
@@ -133,13 +151,15 @@ export const createDeployment = createAction({
     const git_repo_uuid = source_fields?.['git_repo_uuid'];
     const git_workspace_uuid = source_fields?.['git_workspace_uuid'];
 
+    const projectId = String(project);
     const body: Record<string, unknown> = {
-      project: String(project),
+      name: projectId,
+      project: projectId,
     };
 
     if (deployment_source === 'redeploy') {
       if (!deployment_id) {
-        throw new Error('Existing Deployment ID is required when Deployment Source is Redeploy Existing Deployment.');
+        throw new Error('Please select a deployment to redeploy.');
       }
 
       body['deploymentId'] = deployment_id;

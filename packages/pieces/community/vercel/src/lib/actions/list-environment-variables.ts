@@ -13,7 +13,7 @@ export const listEnvironmentVariables = createAction({
     project: vercelProjectDropdown,
     decrypt: Property.Checkbox({
       displayName: 'Decrypt Values',
-      description: 'If enabled, Vercel will attempt to return decrypted values when allowed.',
+      description: 'Deprecated by Vercel. If enabled, Vercel will attempt to return decrypted values when allowed.',
       required: false,
       defaultValue: false,
     }),
