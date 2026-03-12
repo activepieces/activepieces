@@ -20,7 +20,7 @@ export const flowRunLogsController: FastifyPluginAsyncZod = async (app) => {
             const decodedToken = await flowRunLogsService(request.log).verifyToken(token)
             if (decodedToken.behavior === UploadLogsBehavior.REDIRECT_TO_S3) {
                 const fileMetadata = await flowRunLogsService(request.log).upsertMetadata(decodedToken)
-                const s3SignedUrl = await s3Helper(request.log).putS3SignedUrl(fileMetadata.s3Key!, undefined, CONTENT_ENCODING_ZSTD)
+                const s3SignedUrl = await s3Helper(request.log).putS3SignedUrl({ s3Key: fileMetadata.s3Key!, contentEncoding: CONTENT_ENCODING_ZSTD })
                 request.log.info({
                     s3Key: fileMetadata.s3Key,
                 }, 'Redirecting to S3 signed URL')

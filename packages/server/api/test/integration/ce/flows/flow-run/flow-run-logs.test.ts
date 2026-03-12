@@ -382,11 +382,10 @@ describe('Flow Run Logs API', () => {
 
             // Verify putS3SignedUrl was called with zstd content encoding
             const mockInstance = s3HelperSpy.mock.results[0].value
-            expect(mockInstance.putS3SignedUrl).toHaveBeenCalledWith(
-                expect.any(String),
-                undefined,
-                'zstd',
-            )
+            expect(mockInstance.putS3SignedUrl).toHaveBeenCalledWith({
+                s3Key: expect.any(String),
+                contentEncoding: 'zstd',
+            })
 
             s3HelperSpy.mockRestore()
         })
