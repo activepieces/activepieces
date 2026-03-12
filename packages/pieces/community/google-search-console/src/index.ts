@@ -21,7 +21,7 @@ export const googleSearchConsolePiece = createPiece({
   minimumSupportedRelease: '0.30.0',
   auth: googleSearchConsoleAuth,
   logoUrl: 'https://cdn.activepieces.com/pieces/google-search-console.png',
-  authors: ['Gushkool','kishanprmr'],
+  authors: ['Gushkool','kishanprmr','itsishant','sanket-a11y'],
   triggers: [],
   actions: [
     searchAnalytics,
@@ -40,4 +40,3 @@ export const googleSearchConsolePiece = createPiece({
     }),
   ],
 });
-//TODO : remove this comment, add Gushkool's email to local git configuration
