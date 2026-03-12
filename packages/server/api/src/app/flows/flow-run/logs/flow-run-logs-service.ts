@@ -1,10 +1,8 @@
-import { fileCompressor } from '@activepieces/server-common'
-import { ActivepiecesError, ErrorCode, ExecutioOutputFile, File, FileCompression, FileLocation, FileType, isNil, UploadLogsBehavior, UploadLogsToken } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, ExecutioOutputFile, File, FileCompression, FileType, isNil, UploadLogsBehavior, UploadLogsToken } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { domainHelper } from '../../../ee/custom-domains/domain-helper'
 import { fileRepo, fileService } from '../../../file/file.service'
-import { s3Helper } from '../../../file/s3-helper'
 import { JwtSignAlgorithm, jwtUtils } from '../../../helper/jwt-utils'
 
 export const flowRunLogsService = (log: FastifyBaseLogger) => {
@@ -65,20 +63,15 @@ export const flowRunLogsService = (log: FastifyBaseLogger) => {
             return file
         },
         async getLogs(request: GetLogsParams): Promise<ExecutioOutputFile | null> {
-            const file = await fileRepo().findOneBy({
-                id: request.logsFileId,
+            const result = await fileService(log).getDataOrUndefined({
                 projectId: request.projectId,
+                fileId: request.logsFileId,
                 type: FileType.FLOW_RUN_LOG,
             })
-            if (isNil(file)) {
+            if (isNil(result)) {
                 return null
             }
-            const data = file.location === FileLocation.DB ? file.data : await s3Helper(log).getFile(file.s3Key!)
-            const decompressed = await fileCompressor.decompress({
-                data,
-                compression: file.compression,
-            })
-            return JSON.parse(decompressed.toString('utf-8'))
+            return JSON.parse(result.data.toString('utf-8'))
         },
     }
 }
