@@ -38,12 +38,10 @@ export const newDirectMessageTrigger = createTrigger({
 	async run(context) {
 		const payloadBody = context.payload.body as PayloadBody;
 		const userId = await getUserId(context.auth as SlackAuthValue)
-		console.log('userId', userId);
 
 		if (payloadBody.event.channel_type !== 'im') {
 			return [];
 		}
-		console.log('New message in direct message channel');
 		// check for bot messages
 		if (
 			(context.propsValue.ignoreBots && payloadBody.event.bot_id) ||
@@ -52,7 +50,6 @@ export const newDirectMessageTrigger = createTrigger({
 			return [];
 		}
 
-		console.log('New message in direct message channel final');
 		return [payloadBody.event];
 	},
 });
