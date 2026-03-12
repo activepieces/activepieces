@@ -80,9 +80,6 @@ function GlobalSearchDialogContent({
   useEffect(() => {
     if (open) {
       setHistory(getSearchHistory());
-      queryClient.invalidateQueries({ queryKey: ['global-search-folders'] });
-      queryClient.invalidateQueries({ queryKey: ['global-search-flows'] });
-      queryClient.invalidateQueries({ queryKey: ['global-search-tables'] });
     }
   }, [open, queryClient]);
 
