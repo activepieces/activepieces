@@ -63,7 +63,7 @@ export async function createGoogleClient(auth: GmailAuthValue): Promise<OAuth2Cl
       email: serviceAccount.client_email,
       key: serviceAccount.private_key,
       scopes: gmailScopes,
-      subject: auth.props.userEmail,
+      subject: auth.props.userEmail?.trim() || undefined,
     });
   }
   const authClient = new OAuth2Client();
