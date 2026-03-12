@@ -1,6 +1,7 @@
 import { Action, DropdownOption, ExecutePropsResult, PieceProperty, PropertyType } from '@activepieces/pieces-framework'
 import { AgentPieceTool, ExecuteToolOperation, ExecuteToolResponse, ExecutionToolStatus, FieldControlMode, FlowActionType, isNil, PieceAction, PropertyExecutionType, StepOutputStatus } from '@activepieces/shared'
 import { generateText, JSONParseError, LanguageModel, NoObjectGeneratedError, Output, Tool, zodSchema } from 'ai'
+import dayjs from 'dayjs'
 import { z } from 'zod'
 import { EngineConstants } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
@@ -156,7 +157,7 @@ async function execute(operation: ExecuteToolOperationWithModel): Promise<Execut
             name: operation.actionName,
             displayName: operation.actionName,
             type: FlowActionType.PIECE,
-            lastUpdatedDate: new Date().toISOString(),
+            lastUpdatedDate: dayjs().toISOString(),
             settings: {
                 input: resolvedInput,
                 actionName: operation.actionName,
