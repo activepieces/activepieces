@@ -1,8 +1,11 @@
 import { Property } from '@activepieces/pieces-framework';
+import { SardisClient } from '@sardis/sdk';
+
+export function makeSardisClient(apiKey: string): SardisClient {
+  return new SardisClient({ apiKey });
+}
 
 export const sardisCommon = {
-  baseUrl: 'https://api.sardis.sh/api/v2',
-
   walletId: Property.ShortText({
     displayName: 'Wallet ID',
     description: 'Your Sardis wallet ID (starts with wal_)',

@@ -1,11 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  httpClient,
-  HttpMethod,
-  AuthenticationType,
-} from '@activepieces/pieces-common';
 import { sardisAuth } from '../..';
-import { sardisCommon } from '../common';
+import { sardisCommon, makeSardisClient } from '../common';
 
 export const sardisListTransactions = createAction({
   name: 'list_transactions',
@@ -24,20 +19,11 @@ export const sardisListTransactions = createAction({
   },
   async run(context) {
     const { walletId, limit } = context.propsValue;
+    const client = makeSardisClient(context.auth.secret_text);
 
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.GET,
-      url: `${sardisCommon.baseUrl}/ledger/entries`,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth as string,
-      },
-      queryParams: {
-        wallet_id: walletId,
-        limit: String(Math.min(limit ?? 50, 500)),
-      },
+    return await client.ledger.listEntries({
+      wallet_id: walletId,
+      limit: Math.min(limit ?? 50, 500),
     });
-
-    return response.body;
   },
 });

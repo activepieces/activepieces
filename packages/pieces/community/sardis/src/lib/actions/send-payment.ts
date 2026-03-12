@@ -1,11 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  httpClient,
-  HttpMethod,
-  AuthenticationType,
-} from '@activepieces/pieces-common';
+import type { Chain, Token } from '@sardis/sdk';
 import { sardisAuth } from '../..';
-import { sardisCommon } from '../common';
+import { sardisCommon, makeSardisClient } from '../common';
 
 export const sardisSendPayment = createAction({
   name: 'send_payment',
@@ -36,23 +32,14 @@ export const sardisSendPayment = createAction({
   },
   async run(context) {
     const { walletId, to, amount, token, chain, memo } = context.propsValue;
+    const client = makeSardisClient(context.auth.secret_text);
 
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: `${sardisCommon.baseUrl}/wallets/${walletId}/pay/onchain`,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth as string,
-      },
-      body: {
-        to,
-        amount: amount.toString(),
-        token: token ?? 'USDC',
-        chain: chain ?? 'base',
-        memo: memo ?? undefined,
-      },
+    return await client.wallets.transfer(walletId, {
+      destination: to,
+      amount: amount.toString(),
+      token: (token ?? 'USDC') as Token,
+      chain: (chain ?? 'base') as Chain,
+      memo: memo ?? undefined,
     });
-
-    return response.body;
   },
 });

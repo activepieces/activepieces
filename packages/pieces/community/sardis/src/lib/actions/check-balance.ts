@@ -1,11 +1,6 @@
 import { createAction } from '@activepieces/pieces-framework';
-import {
-  httpClient,
-  HttpMethod,
-  AuthenticationType,
-} from '@activepieces/pieces-common';
 import { sardisAuth } from '../..';
-import { sardisCommon } from '../common';
+import { sardisCommon, makeSardisClient } from '../common';
 
 export const sardisCheckBalance = createAction({
   name: 'check_balance',
@@ -20,20 +15,12 @@ export const sardisCheckBalance = createAction({
   },
   async run(context) {
     const { walletId, token, chain } = context.propsValue;
+    const client = makeSardisClient(context.auth.secret_text);
 
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.GET,
-      url: `${sardisCommon.baseUrl}/wallets/${walletId}/balance`,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth as string,
-      },
-      queryParams: {
-        token: token ?? 'USDC',
-        chain: chain ?? 'base',
-      },
-    });
-
-    return response.body;
+    return await client.wallets.getBalance(
+      walletId,
+      chain ?? 'base',
+      token ?? 'USDC',
+    );
   },
 });

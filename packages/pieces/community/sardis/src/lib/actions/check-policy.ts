@@ -1,11 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  httpClient,
-  HttpMethod,
-  AuthenticationType,
-} from '@activepieces/pieces-common';
 import { sardisAuth } from '../..';
-import { sardisCommon } from '../common';
+import { sardisCommon, makeSardisClient } from '../common';
 
 export const sardisCheckPolicy = createAction({
   name: 'check_policy',
@@ -40,22 +35,13 @@ export const sardisCheckPolicy = createAction({
   },
   async run(context) {
     const { walletId, amount, merchant, currency } = context.propsValue;
+    const client = makeSardisClient(context.auth.secret_text);
 
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: `${sardisCommon.baseUrl}/policies/check`,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth as string,
-      },
-      body: {
-        agent_id: walletId,
-        amount: amount,
-        currency: currency ?? 'USD',
-        merchant_id: merchant ?? undefined,
-      },
+    return await client.policies.check({
+      agent_id: walletId,
+      amount: amount.toString(),
+      currency: currency ?? 'USD',
+      merchant_id: merchant ?? undefined,
     });
-
-    return response.body;
   },
 });
