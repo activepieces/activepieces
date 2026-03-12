@@ -98,6 +98,8 @@ const getPinnedPieces = (
 
 const POPULAR_PIECES_NAMES = [
   '@activepieces/piece-google-sheets',
+  '@activepieces/piece-marzipa',
+  '@activepieces/piece-azure-ad',
   '@activepieces/piece-slack',
   '@activepieces/piece-notion',
   '@activepieces/piece-gmail',

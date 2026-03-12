@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs'
 import { readdir, readFile, stat } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 import { cwd } from 'node:process'
@@ -8,7 +9,23 @@ import clearModule from 'clear-module'
 import { FastifyBaseLogger } from 'fastify'
 import { AppSystemProp, environmentVariables } from '../system-props'
 
-const SOURCE_PIECES_PATH = resolve(cwd(), 'packages', 'pieces')
+function getSourcePiecesPath(): string {
+    const fromCwd = resolve(cwd(), 'packages', 'pieces')
+    if (existsSync(fromCwd)) {
+        return fromCwd
+    }
+    const fromApiFolder = resolve(cwd(), '..', '..', '..', 'packages', 'pieces')
+    if (existsSync(fromApiFolder)) {
+        return fromApiFolder
+    }
+    const fromCommon = resolve(__dirname, '..', '..', '..', '..', '..', 'packages', 'pieces')
+    if (existsSync(fromCommon)) {
+        return fromCommon
+    }
+    return fromCwd
+}
+
+const SOURCE_PIECES_PATH = getSourcePiecesPath()
 
 export const filePiecesUtils = (log: FastifyBaseLogger) => ({
 
@@ -59,8 +76,18 @@ export const filePiecesUtils = (log: FastifyBaseLogger) => ({
         try {
             const devPieces = await findAllDistPiecesFolders(SOURCE_PIECES_PATH)
             const paths = devPieces.filter(path => piecesNames.some(name => path.endsWith(sep + name + sep + 'dist')))
-            const pieces = await Promise.all(paths.map((p) => loadPieceFromFolder(p)))
-            return pieces.filter((p): p is PieceMetadata => p !== null)
+            const results = await Promise.all(
+                paths.map(async (p) => {
+                    try {
+                        return await loadPieceFromFolder(p)
+                    }
+                    catch (e) {
+                        log.warn({ err: e as Error, path: p }, '[filePieceMetadataService#loadDistPiecesMetadata] Failed to load piece from folder')
+                        return null
+                    }
+                }),
+            )
+            return results.filter((p): p is PieceMetadata => p !== null)
         }
         catch (e) {
             const err = e as Error

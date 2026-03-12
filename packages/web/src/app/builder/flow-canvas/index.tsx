@@ -13,14 +13,15 @@ import {
   SelectionMode,
   OnSelectionChangeParams,
   useStoreApi,
+  useReactFlow,
+  useStore,
   PanOnScrollMode,
   useKeyPress,
   BackgroundVariant,
-  getNodesBounds,
   CoordinateExtent,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useBuilderStateContext } from '../builder-hooks';
 import { useHandleKeyPressOnCanvas } from '../shortcuts';
@@ -37,6 +38,38 @@ import { flowCanvasUtils } from './utils/flow-canvas-utils';
 import { AboveFlowWidgets } from './widgets';
 import Minimap from './widgets/minimap';
 import { useShowChevronNextToSelection } from './widgets/selection-chevron-button';
+
+function TranslateExtentSync({
+  graphKey,
+  onExtentChange,
+}: {
+  graphKey: string
+  onExtentChange: (extent: CoordinateExtent) => void
+}) {
+  const { getNodesBounds } = useReactFlow()
+  const nodes = useStore((state) => state.nodes)
+
+  useEffect(() => {
+    const graphRectangle = getNodesBounds(nodes)
+    const windowWidth = window.innerWidth
+    const windowHeight = window.innerHeight + 100
+    const start = {
+      x: graphRectangle.x - windowWidth,
+      y: graphRectangle.y - windowHeight,
+    }
+    const end = {
+      x: graphRectangle.x + graphRectangle.width + windowWidth,
+      y: graphRectangle.y + graphRectangle.height + windowHeight,
+    }
+    const extent: CoordinateExtent = [
+      [start.x, start.y],
+      [end.x, end.y],
+    ]
+    onExtentChange(extent)
+  }, [graphKey, getNodesBounds, nodes, onExtentChange])
+
+  return null
+}
 
 export const FlowCanvas = React.memo(
   ({
@@ -170,25 +203,13 @@ export const FlowCanvas = React.memo(
     }, [selectedNodes, reactFlowStore, selectedStep]);
 
     const { setCursorPosition } = useCursorPosition();
-    const translateExtent = useMemo(() => {
-      const windowWidth = window.innerWidth;
-      const windowHeight = window.innerHeight + 100;
-      const nodes = graph.nodes;
-      const graphRectangle = getNodesBounds(nodes);
-      const start = {
-        x: graphRectangle.x - windowWidth,
-        y: graphRectangle.y - windowHeight,
-      };
-      const end = {
-        x: graphRectangle.x + graphRectangle.width + windowWidth,
-        y: graphRectangle.y + graphRectangle.height + windowHeight,
-      };
-      const extent: CoordinateExtent = [
-        [start.x, start.y],
-        [end.x, end.y],
-      ];
-      return extent;
-    }, [graphKey]);
+    const [translateExtent, setTranslateExtent] = useState<CoordinateExtent>(
+      () => flowCanvasConsts.DEFAULT_TRANSLATE_EXTENT,
+    );
+
+    useEffect(() => {
+      setTranslateExtent(flowCanvasConsts.DEFAULT_TRANSLATE_EXTENT)
+    }, [graphKey])
 
     return (
       <div
@@ -234,6 +255,10 @@ export const FlowCanvas = React.memo(
               onSelectionChange={onSelectionChange}
               onSelectionEnd={onSelectionEnd}
             >
+              <TranslateExtentSync
+                graphKey={graphKey}
+                onExtentChange={setTranslateExtent}
+              />
               <AboveFlowWidgets></AboveFlowWidgets>
               <Background
                 gap={10}

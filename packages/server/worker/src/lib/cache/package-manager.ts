@@ -32,7 +32,11 @@ export const packageManager = (log: FastifyBaseLogger) => ({
             timeoutMs: dayjs.duration(10, 'minutes').asMilliseconds(),
         }))
         if (error) {
-            log.error({ error }, '[PackageManager#install] Failed to install dependencies')
+            const errorMessage = error instanceof Error ? error.message : String(error)
+            log.error({
+                message: errorMessage,
+                stack: error instanceof Error ? error.stack : undefined,
+            }, '[PackageManager#install] Failed to install dependencies')
             throw error
         }
         return data

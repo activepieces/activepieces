@@ -37,8 +37,11 @@ export async function loadDevPiecesIfEnabled(log: FastifyBaseLogger): Promise<Pi
     if (isNil(devPiecesConfig) || isEmpty(devPiecesConfig)) {
         return []
     }
-    const piecesNames = devPiecesConfig.split(',')
+    const piecesNames = devPiecesConfig.split(',').map((name) => name.trim()).filter(Boolean)
     const pieces = await filePiecesUtils(log).loadDistPiecesMetadata(piecesNames)
+    if (pieces.length > 0) {
+        log.debug({ names: pieces.map(p => p.name), count: pieces.length }, '[loadDevPiecesIfEnabled] Loaded dev pieces')
+    }
 
     return pieces.map((p): PieceMetadataSchema => ({
         id: apId(),

@@ -8,6 +8,7 @@ import {
   FLOW_CANVAS_VSPACE,
   NoteColorVariant,
 } from '@activepieces/shared';
+import type { CoordinateExtent } from '@xyflow/react';
 
 import { ApLoopReturnLineCanvasEdge as ApLoopReturnCanvasEdge } from '../edges/loop-return-edge';
 import { ApLoopStartLineCanvasEdge as ApLoopStartCanvasEdge } from '../edges/loop-start-edge';
@@ -127,4 +128,8 @@ export const flowCanvasConsts = {
   DEFAULT_NOTE_CONTENT: '<br>',
   DEFAULT_NOTE_COLOR: NoteColorVariant.BLUE,
   BUILDER_HEADER_HEIGHT: 60,
+  DEFAULT_TRANSLATE_EXTENT: [
+    [-5000, -5000],
+    [5000, 5000],
+  ] as CoordinateExtent,
 };
