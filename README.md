@@ -115,7 +115,7 @@ You can easily create your own integration using our TypeScript framework. For d
 Activepieces' Community Edition is released as open source under the [MIT license](https://github.com/activepieces/activepieces/blob/main/LICENSE) and enterprise features are released under [Commercial License](https://github.com/activepieces/activepieces/blob/main/packages/ee/LICENSE)
 
 
-Read more about the feature comparison here https://www.activepieces.com/docs/about/editions
+Read more about the feature comparison here https://www.activepieces.com/pricing
 <br>
 <br>
 
