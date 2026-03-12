@@ -40,7 +40,6 @@ import { AddUserSessionId1727130193726 } from './migration/common/1727130193726-
 import { AddLicenseKeyIntoPlatform1728827704109 } from './migration/common/1728827704109-AddLicenseKeyIntoPlatform'
 import { ChangeProjectUniqueConstraintToPartialIndex1729098769827 } from './migration/common/1729098769827-ChangeProjectUniqueConstraintToPartialIndex'
 import { SwitchToRouter1731019013340 } from './migration/common/1731019013340-switch-to-router'
-import { MigrateSampleDataToFiles1739600000000 } from './migration/common/1739600000000-MigrateSampleDataToFiles'
 import { ChangeExternalIdsForTables1747346473001 } from './migration/common/1747346473001-ChangeExternalIdsForTables'
 import { UpgradePieceVersionsToLatest1748253670449 } from './migration/common/1748253670449-UpgradePieceVersionsToLatest'
 import { DeprecateApproval1748648340742 } from './migration/common/1748648340742-DeprecateApproval'
@@ -463,7 +462,6 @@ export const getMigrations = (): (new () => MigrationInterface)[] => {
         AddUserIdentity1735590074879,
         RenameGitRepoPermission1736813103505,
         RestrictPieces1739546878775,
-        MigrateSampleDataToFiles1739600000000,
         CreateTableWebhooks1741669458075,
         AddDataColumnToFieldEntity1742395892304,
         AddManualTaskTable1742304857701,
