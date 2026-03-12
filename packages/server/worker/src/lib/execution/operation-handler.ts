@@ -207,6 +207,7 @@ async function executeSingleTask<Result extends OperationResult>(log: FastifyBas
         let sandbox: Sandbox | undefined
         try {
             sandbox = await sandboxPool.allocate(log)
+            log.info({ sandboxId: sandbox.id, operationType }, 'Sandbox allocated')
             await sandbox.start({
                 flowVersionId: getFlowVersionId(operation, operationType),
                 platformId: operation.platformId,
@@ -215,6 +216,7 @@ async function executeSingleTask<Result extends OperationResult>(log: FastifyBas
 
             const { engine, stdError, stdOut } = await sandbox.execute(operationType, operation, { timeoutInSeconds })
             span.setAttribute('engine.responseStatus', engine.status)
+            log.info({ sandboxId: sandbox.id, operationType, engineStatus: engine.status }, 'Sandbox execution completed')
             return {
                 status: engine.status,
                 delayInSeconds: engine.delayInSeconds,
@@ -224,7 +226,7 @@ async function executeSingleTask<Result extends OperationResult>(log: FastifyBas
             }
         }
         finally {
-            log.debug({ sandboxId: sandbox?.id }, 'Releasing sandbox')
+            log.info({ sandboxId: sandbox?.id }, 'Releasing sandbox')
             await sandboxPool.release(sandbox, log)
             span.end()
         }

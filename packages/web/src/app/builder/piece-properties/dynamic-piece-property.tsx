@@ -190,6 +190,9 @@ const DynamicPropertiesImplementation = React.memo(
             disabled={props.disabled}
             propertySettings={props.propertySettings}
             dynamicPropsInfo={null}
+            onValueChange={() => {
+              form.trigger();
+            }}
           ></GenericPropertiesForm>
         )}
       </>

@@ -93,7 +93,7 @@ const ApTableEditorPage = () => {
   const rows = mapRecordsToRows(records, fields);
 
   const handleBack = () => {
-    navigate(`/projects/${projectId}/tables`);
+    navigate(`/projects/${projectId}/automations`);
   };
 
   return (

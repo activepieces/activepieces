@@ -93,7 +93,9 @@ const BranchSingleCondition = ({
         {isInvalid && (
           <Tooltip>
             <TooltipTrigger asChild>
-              <InvalidStepIcon className="h-4 w-4 shrink-0"></InvalidStepIcon>
+              <div>
+                <InvalidStepIcon className="h-4 w-4 shrink-0"></InvalidStepIcon>
+              </div>
             </TooltipTrigger>
             <TooltipContent side="bottom">
               {t('Incomplete condition')}
@@ -121,7 +123,6 @@ const BranchSingleCondition = ({
                     }}
                     initialValue={field.value}
                   ></TextInputWithMentions>
-                  <FormMessage />
                 </FormItem>
               );
             }}
@@ -153,7 +154,6 @@ const BranchSingleCondition = ({
                     form.trigger();
                   }}
                 />
-                <FormMessage />
               </FormItem>
             )}
           />
@@ -172,7 +172,6 @@ const BranchSingleCondition = ({
                       form.trigger();
                     }}
                   ></TextInputWithMentions>
-                  <FormMessage />
                 </FormItem>
               )}
             />

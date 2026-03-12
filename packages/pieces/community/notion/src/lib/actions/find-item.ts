@@ -1,6 +1,6 @@
 import { notionAuth } from '../auth';
 import { createAction } from '@activepieces/pieces-framework';
-import { notionCommon } from '../common';
+import { getNotionToken, notionCommon } from '../common';
 import { Client } from '@notionhq/client';
 
 export const findDatabaseItem = createAction({
@@ -17,7 +17,7 @@ export const findDatabaseItem = createAction({
     const filterFields = context.propsValue.filterDatabaseFields;
 
     const notion = new Client({
-      auth: context.auth.access_token,
+      auth: getNotionToken(context.auth),
       notionVersion: '2022-02-22',
     });
 
@@ -76,6 +76,40 @@ export const findDatabaseItem = createAction({
           filterArray.push({
             property: fieldKey,
             title: { equals: fieldValue },
+          });
+          break;
+        case 'date':
+          filterArray.push({
+            property: fieldKey,
+            date: { equals: fieldValue },
+          });
+          break;
+        case 'checkbox':
+          filterArray.push({
+            property: fieldKey,
+            checkbox: { equals: Boolean(fieldValue) },
+          });
+          break;
+        case 'status':
+          filterArray.push({
+            property: fieldKey,
+            status: { equals: fieldValue },
+          });
+          break;
+        case 'multi_select':
+          for (const value of Array.isArray(fieldValue)
+            ? fieldValue
+            : [fieldValue]) {
+            filterArray.push({
+              property: fieldKey,
+              multi_select: { contains: value },
+            });
+          }
+          break;
+        case 'people':
+          filterArray.push({
+            property: fieldKey,
+            people: { contains: fieldValue },
           });
           break;
       }

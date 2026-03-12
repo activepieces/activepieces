@@ -1,7 +1,5 @@
 # pieces-blockscout
 
-This library was generated with [Nx](https://nx.dev).
-
 ## Building
 
-Run `nx build pieces-blockscout` to build the library.
+Run `turbo run build --filter=@activepieces/piece-blockscout` to build the library.

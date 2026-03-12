@@ -1,4 +1,4 @@
-import { Type } from '@sinclair/typebox'
+import { z } from 'zod'
 import { TriggerPayload } from '../../engine'
 import { StepOutput } from './step-output'
 
@@ -12,9 +12,9 @@ export type ExecutionState = {
     tags: string[]
 }
 
-export const ExecutionState = Type.Object({
-    steps: Type.Record(Type.String(), Type.Unknown()),
-    tags: Type.Array(Type.String()),
+export const ExecutionState = z.object({
+    steps: z.record(z.string(), z.unknown()),
+    tags: z.array(z.string()),
 })
 
 export type ExecutioOutputFile = {

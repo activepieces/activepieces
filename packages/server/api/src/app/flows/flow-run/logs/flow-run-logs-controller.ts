@@ -1,20 +1,20 @@
 import { securityAccess } from '@activepieces/server-common'
 import { ActivepiecesError, ALL_PRINCIPAL_TYPES, assertNotNullOrUndefined, ErrorCode, FileType, isNil, UploadLogsBehavior, UploadLogsQueryParams } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { Type } from '@sinclair/typebox'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
+import { z } from 'zod'
 import { fileService } from '../../../file/file.service'
 import { s3Helper } from '../../../file/s3-helper'
 import { flowRunLogsService } from './flow-run-logs-service'
 
-export const flowRunLogsController: FastifyPluginAsyncTypebox = async (app) => {
+export const flowRunLogsController: FastifyPluginAsyncZod = async (app) => {
     app.put('/logs', {
         config: {
             security: securityAccess.unscoped(ALL_PRINCIPAL_TYPES),
         },
         schema: {
             querystring: UploadLogsQueryParams,
-            body: Type.Unknown(),
+            body: z.unknown(),
         },
         onRequest: async (request, reply) => {
             const { token } = request.query as { token: string }

@@ -14,7 +14,7 @@ export const newMention = createTrigger({
   description: 'Triggers when a username is mentioned.',
   props: {
     info: multiSelectChannelInfo,
-    user: userId,
+    user: userId(true),
     channels: Property.MultiSelectDropdown({
       auth: slackAuth,
       displayName: 'Channels',
@@ -41,6 +41,12 @@ export const newMention = createTrigger({
     }),
     ignoreBots: Property.Checkbox({
       displayName: 'Ignore Bot Messages ?',
+      required: true,
+      defaultValue: false,
+    }),
+    removeMention: Property.Checkbox({
+      displayName: 'Remove Mention from Message',
+      description: 'If enabled, provides a clean_text field with the user mention removed from the message.',
       required: true,
       defaultValue: false,
     }),
@@ -78,6 +84,13 @@ export const newMention = createTrigger({
         context.propsValue.user &&
         payloadBody.event.text?.includes(`<@${context.propsValue.user}>`)
       ) {
+        if (context.propsValue.removeMention) {
+          const mentionRegex = new RegExp(`<@${context.propsValue.user}>`, 'g');
+          const cleanText = (payloadBody.event.text ?? '')
+            .replace(mentionRegex, '')
+            .trim();
+          return [{ ...payloadBody.event, clean_text: cleanText }];
+        }
         return [payloadBody.event];
       }
     }

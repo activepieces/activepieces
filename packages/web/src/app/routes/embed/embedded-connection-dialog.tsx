@@ -138,7 +138,7 @@ const EmbeddedConnectionDialogContent = ({
               isLoadingPiece,
           },
         )}
-        withCloseButton={!isLoadingPiece}
+        showCloseButton={!isLoadingPiece}
       >
         {isLoadingPiece ||
           (loadingPiecesOAuth2AppsMap && (

@@ -12,7 +12,7 @@ export const inviteUserToChannelAction = createAction({
 	props: {
 		info: singleSelectChannelInfo,
 		channel: slackChannel(true),
-		userId,
+		userId: userId(true),
 	},
 	async run(context) {
 		const client = new WebClient(getBotToken(context.auth as SlackAuthValue));

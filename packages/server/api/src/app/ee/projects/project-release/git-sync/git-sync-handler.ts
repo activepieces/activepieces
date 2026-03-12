@@ -15,7 +15,7 @@ export const gitSyncHandler = (log: FastifyBaseLogger) => ({
     flows: {
         async push({ id, platformId, userId, request }: FlowOperationParams): Promise<void> {
             const gitRepo = await gitRepoService(log).getOrThrow({ id })
-            const { git, flowFolderPath } = await gitHelper.createGitRepoAndReturnPaths(gitRepo, userId)
+            const { git, flowFolderPath } = await gitHelper.createGitRepoAndReturnPaths(log, gitRepo, userId)
 
             const flows = await listFlowsByExternalIds(log, gitRepo.projectId, request.externalFlowIds)
             
@@ -40,7 +40,7 @@ export const gitSyncHandler = (log: FastifyBaseLogger) => ({
 
         async delete({ id, platformId, userId, request }: FlowOperationParams): Promise<void> {
             const gitRepo = await gitRepoService(log).getOrThrow({ id })
-            const { git, flowFolderPath } = await gitHelper.createGitRepoAndReturnPaths(gitRepo, userId)
+            const { git, flowFolderPath } = await gitHelper.createGitRepoAndReturnPaths(log, gitRepo, userId)
 
             const flows = await listFlowsByExternalIds(log, gitRepo.projectId, request.externalFlowIds)
 
@@ -63,7 +63,7 @@ export const gitSyncHandler = (log: FastifyBaseLogger) => ({
     connections: {
         async push({ id, platformId, userId }: ConnectionOperationParams): Promise<void> {
             const gitRepo = await gitRepoService(log).getOrThrow({ id })
-            const { git, connectionsFolderPath, flowFolderPath } = await gitHelper.createGitRepoAndReturnPaths(gitRepo, userId)
+            const { git, connectionsFolderPath, flowFolderPath } = await gitHelper.createGitRepoAndReturnPaths(log, gitRepo, userId)
 
             await gitSyncHelper(log).updateConectionStateOnGit({
                 flowFolderPath,
@@ -79,7 +79,7 @@ export const gitSyncHandler = (log: FastifyBaseLogger) => ({
     tables: {
         async push({ id, userId, request }: TableOperationParams): Promise<void> {
             const gitRepo = await gitRepoService(log).getOrThrow({ id })
-            const { git, tablesFolderPath } = await gitHelper.createGitRepoAndReturnPaths(gitRepo, userId)
+            const { git, tablesFolderPath } = await gitHelper.createGitRepoAndReturnPaths(log, gitRepo, userId)
 
             const populatedTables: PopulatedTable[] = await listTablesByExternalIds(gitRepo.projectId, request.externalTableIds)
 
@@ -97,7 +97,7 @@ export const gitSyncHandler = (log: FastifyBaseLogger) => ({
 
         async delete({ id, userId, request }: TableOperationParams): Promise<void> {
             const gitRepo = await gitRepoService(log).getOrThrow({ id })
-            const { git, tablesFolderPath } = await gitHelper.createGitRepoAndReturnPaths(gitRepo, userId)
+            const { git, tablesFolderPath } = await gitHelper.createGitRepoAndReturnPaths(log, gitRepo, userId)
 
             const populatedTables = await listTablesByExternalIds(gitRepo.projectId, request.externalTableIds)
             for (const table of populatedTables) {
@@ -114,6 +114,7 @@ export const gitSyncHandler = (log: FastifyBaseLogger) => ({
 
 async function listTablesByExternalIds(projectId: string, externalIds: string[]): Promise<PopulatedTable[]> {
     const tables = await tableService.list({
+        folderId: undefined,
         projectId,
         limit: 10000,
         cursor: undefined,

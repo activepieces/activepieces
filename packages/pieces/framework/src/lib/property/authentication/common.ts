@@ -1,9 +1,9 @@
-import { Type } from '@sinclair/typebox';
+import { z } from 'zod';
 import { ServerContext } from '../../context';
 
-export const BasePieceAuthSchema = Type.Object({
-  displayName: Type.String(),
-  description: Type.Optional(Type.String())
+export const BasePieceAuthSchema = z.object({
+  displayName: z.string(),
+  description: z.string().optional()
 });
 
 export type BasePieceAuthSchema<AuthValueSchema> = {
