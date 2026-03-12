@@ -104,11 +104,10 @@ jobs:
       - name: Deploy APP to staging
         run: |
           ssh ops "cd /root/k8n2/staging && \
-            helm upgrade --install activepieces deploy/activepieces-helm/ \
+            helm upgrade --install activepieces ../activepieces-helm/ \
               --namespace activepieces \
-              --values deploy/staging/stg-app-values.yaml \
+              --values ./stg-app-values.yaml \
               --set image.tag=${{ needs.build-image.outputs.image_tag }} \
-              --server-side --force-conflicts"
 
       - name: Wait for APP rollout to be healthy
         run: |
