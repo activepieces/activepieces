@@ -10,7 +10,7 @@ replicaCount: 2
 
 image:
   repository: ghcr.io/activepieces/activepieces-cloud
-  tag: "0.79.2.a45aa3e55fa2edb3acf4528012534b769f23b61d.beta"       # reference only — CI always overrides via --set image.tag=
+  tag: "0.79.2.5224e3c80d9916785eb43a66e50f4e925dd2a650.beta"       # reference only — CI always overrides via --set image.tag=
   pullPolicy: Always
 
 imagePullSecrets:
@@ -51,8 +51,8 @@ livenessProbe:
   periodSeconds: 10
 readinessProbe:
   httpGet:
-    path: /api/v1/health
-    port: http
+    path: /v1/health
+    port: 3000        # probe Node.js directly — avoids nginx IPv6 upstream flapping (502s)
   initialDelaySeconds: 5
   periodSeconds: 5
 

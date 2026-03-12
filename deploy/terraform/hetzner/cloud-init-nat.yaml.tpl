@@ -32,4 +32,4 @@ runcmd:
 
   # Persist nftables rules so they survive reboots
   - nft list ruleset > /etc/nftables.conf
-  - systemctl enable nftables
+  - systemctl enable --now nftables

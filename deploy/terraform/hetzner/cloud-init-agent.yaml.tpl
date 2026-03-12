@@ -39,6 +39,7 @@ runcmd:
           dhcp4-overrides:
             route-metric: 200
         enp7s0:
+          dhcp4: true
           dhcp4-overrides:
             route-metric: 100
           routes:

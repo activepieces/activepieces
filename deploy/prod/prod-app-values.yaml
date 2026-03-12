@@ -50,8 +50,8 @@ livenessProbe:
   periodSeconds: 10
 readinessProbe:
   httpGet:
-    path: /api/v1/health
-    port: http
+    path: /v1/health
+    port: 3000        # probe Node.js directly — avoids nginx IPv6 upstream flapping (502s)
   initialDelaySeconds: 5
   periodSeconds: 5
 
