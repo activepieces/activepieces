@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useDebouncedCallback } from 'use-debounce';
 
@@ -42,14 +42,11 @@ export function useAutomationsFilters() {
   const [ownerFilter, setOwnerFilterState] = useState<string[]>(() =>
     searchParams.getAll(OWNER_PARAM),
   );
-  const [folderFilter, setFolderFilterState] = useState<string[]>(() =>
-    searchParams.getAll(FOLDER_PARAM),
-  );
-
   const folderParamStr = searchParams.getAll(FOLDER_PARAM).join('\0');
-  useEffect(() => {
-    setFolderFilterState(folderParamStr ? folderParamStr.split('\0') : []);
-  }, [folderParamStr]);
+  const folderFilter = useMemo(
+    () => searchParams.getAll(FOLDER_PARAM),
+    [folderParamStr],
+  );
 
   const updateParams = useCallback(
     (updates: Record<string, string | string[] | null>) => {
@@ -120,7 +117,6 @@ export function useAutomationsFilters() {
 
   const setFolderFilter = useCallback(
     (value: string[]) => {
-      setFolderFilterState(value);
       updateParams({ [FOLDER_PARAM]: value.length > 0 ? value : null });
     },
     [updateParams],
@@ -144,7 +140,6 @@ export function useAutomationsFilters() {
     setStatusFilterState([]);
     setConnectionFilterState([]);
     setOwnerFilterState([]);
-    setFolderFilterState([]);
     updateParams(Object.fromEntries(FILTER_PARAMS.map((key) => [key, null])));
   }, [updateParams]);
 
