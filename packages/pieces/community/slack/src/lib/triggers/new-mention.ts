@@ -5,7 +5,7 @@ import {
   createTrigger,
 } from '@activepieces/pieces-framework';
 import { getChannels, multiSelectChannelInfo, userId } from '../common/props';
-import { slackAuth } from '../../';
+import { slackAuth } from '../auth';
 
 export const newMention = createTrigger({
   auth: slackAuth,
@@ -45,6 +45,12 @@ export const newMention = createTrigger({
       required: true,
       defaultValue: false,
     }),
+    removeMention: Property.Checkbox({
+      displayName: 'Remove Mention from Message',
+      description: 'If enabled, provides a clean_text field with the user mention removed from the message.',
+      required: true,
+      defaultValue: false,
+    }),
   },
   type: TriggerStrategy.APP_WEBHOOK,
   sampleData: undefined,
@@ -81,6 +87,13 @@ export const newMention = createTrigger({
         context.propsValue.user &&
         payloadBody.event.text?.includes(`<@${context.propsValue.user}>`)
       ) {
+        if (context.propsValue.removeMention) {
+          const mentionRegex = new RegExp(`<@${context.propsValue.user}>`, 'g');
+          const cleanText = (payloadBody.event.text ?? '')
+            .replace(mentionRegex, '')
+            .trim();
+          return [{ ...payloadBody.event, clean_text: cleanText }];
+        }
         return [payloadBody.event];
       }
     }

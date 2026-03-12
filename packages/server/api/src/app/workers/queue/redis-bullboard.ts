@@ -1,4 +1,4 @@
-import { AppSystemProp } from '@activepieces/server-shared'
+import { AppSystemProp } from '@activepieces/server-common'
 import { ApEdition, assertNotNullOrUndefined, isNil } from '@activepieces/shared'
 import { createBullBoard } from '@bull-board/api'
 import { BullMQAdapter } from '@bull-board/api/bullMQAdapter'

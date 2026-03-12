@@ -1,4 +1,4 @@
-import { exceptionHandler } from '@activepieces/server-shared'
+import { exceptionHandler } from '@activepieces/server-common'
 import {
     FileType,
     FlowOperationRequest,

@@ -1,8 +1,6 @@
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { userBadgeController } from './badge-controller'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { userBadgeService } from './badge-service'
 
-export const userBadgeModule: FastifyPluginAsyncTypebox = async (app) => {
+export const userBadgeModule: FastifyPluginAsyncZod = async (app) => {
     userBadgeService(app.log).setup()
-    await app.register(userBadgeController, { prefix: '/v1/user-badges' })
 }

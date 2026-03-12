@@ -1,5 +1,5 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { microsoftToDoAuth } from '../../index';
+import { microsoftToDoAuth } from '../auth';
 import { Client } from '@microsoft/microsoft-graph-client';
 
 export const createTaskListAction = createAction({

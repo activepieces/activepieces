@@ -1,6 +1,6 @@
 import { OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
 import { UsersListResponse, WebClient } from '@slack/web-api';
-import {slackAuth} from '../../index';
+import { slackAuth } from '../auth';
 const slackChannelBotInstruction = `
 	Please make sure add the bot to the channel by following these steps:
 	  1. Type /invite in the channel's chat.
@@ -59,6 +59,12 @@ export const username = Property.ShortText({
 export const profilePicture = Property.ShortText({
   displayName: 'Profile Picture',
   description: 'The profile picture of the bot',
+  required: false,
+});
+
+export const iconEmoji = Property.ShortText({
+  displayName: 'Icon Emoji',
+  description: 'The icon emoji of the bot',
   required: false,
 });
 

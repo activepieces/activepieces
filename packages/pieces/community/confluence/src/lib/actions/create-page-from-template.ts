@@ -1,4 +1,4 @@
-import { confluenceAuth } from "../../index";
+import { confluenceAuth } from '../auth';
 import { createAction, Property } from "@activepieces/pieces-framework";
 import { folderIdProp, spaceIdProp, templateIdProp, templateVariablesProp } from "../common/props";
 import { confluenceApiCall } from "../common";

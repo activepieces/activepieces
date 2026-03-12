@@ -29,6 +29,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "The title of the task": "The title of the task",
   "A URL associated with the task (e.g., link to a ticket or resource)": "A URL associated with the task (e.g., link to a ticket or resource)",
   "When the task is due": "When the task is due",

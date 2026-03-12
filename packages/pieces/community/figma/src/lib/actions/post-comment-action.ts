@@ -2,7 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { assertNotNullOrUndefined } from '@activepieces/shared';
 import { figmaCommon } from '../common';
 import { figmaPostRequestWithMessage } from '../common/utils';
-import { figmaAuth } from '../../';
+import { figmaAuth } from '../auth';
 
 export const postCommentAction = createAction({
   auth: figmaAuth,

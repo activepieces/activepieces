@@ -1,4 +1,4 @@
-import { AppSystemProp, exceptionHandler } from '@activepieces/server-shared'
+import { AppSystemProp, exceptionHandler } from '@activepieces/server-common'
 import { apId, ApMultipartFile } from '@activepieces/shared'
 import cors from '@fastify/cors'
 import formBody from '@fastify/formbody'
@@ -6,6 +6,7 @@ import fastifyMultipart, { MultipartFile } from '@fastify/multipart'
 import fastify, { FastifyInstance } from 'fastify'
 import fastifyFavicon from 'fastify-favicon'
 import { fastifyRawBody } from 'fastify-raw-body'
+import { validatorCompiler } from 'fastify-type-provider-zod'
 import qs from 'qs'
 import { setupApp } from './app'
 import { healthModule } from './health/health.module'
@@ -42,15 +43,21 @@ async function setupBaseApp(): Promise<FastifyInstance> {
         genReqId: () => {
             return `req_${apId()}`
         },
-        ajv: {
-            customOptions: {
-                removeAdditional: 'all',
-                useDefaults: true,
-                keywords: ['discriminator'],
-                coerceTypes: 'array',
-                formats: {},
-            },
-        },
+    })
+
+    app.setValidatorCompiler(validatorCompiler)
+    app.setSerializerCompiler(({ schema: maybeSchema }) => {
+        const schema = resolveZodSchema(maybeSchema)
+        return (data) => {
+            if (schema) {
+                const preprocessed = convertDatesToStrings(data)
+                const result = schema.safeParse(preprocessed)
+                if (result.success) {
+                    return JSON.stringify(result.data)
+                }
+            }
+            return JSON.stringify(data)
+        }
     })
 
     await app.register(fastifyFavicon)
@@ -94,4 +101,39 @@ async function setupBaseApp(): Promise<FastifyInstance> {
     await app.register(healthModule)
     return app
 }
+
+type ZodLike = { safeParse: (data: unknown) => { success: boolean, data?: unknown } }
+
+function resolveZodSchema(maybeSchema: unknown): ZodLike | null {
+    if (typeof maybeSchema === 'object' && maybeSchema !== null) {
+        if ('safeParse' in maybeSchema) {
+            return maybeSchema as ZodLike
+        }
+        if ('properties' in maybeSchema) {
+            const props = (maybeSchema as Record<string, unknown>).properties
+            if (typeof props === 'object' && props !== null && 'safeParse' in props) {
+                return props as ZodLike
+            }
+        }
+    }
+    return null
+}
+
+function convertDatesToStrings(data: unknown): unknown {
+    if (data instanceof Date) {
+        return data.toISOString()
+    }
+    if (Array.isArray(data)) {
+        return data.map(convertDatesToStrings)
+    }
+    if (typeof data === 'object' && data !== null) {
+        const result: Record<string, unknown> = {}
+        for (const [key, value] of Object.entries(data)) {
+            result[key] = convertDatesToStrings(value)
+        }
+        return result
+    }
+    return data
+}
+
 

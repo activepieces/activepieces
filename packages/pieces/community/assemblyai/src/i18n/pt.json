@@ -93,10 +93,12 @@
   "Method": "Método",
   "Headers": "Cabeçalhos",
   "Query Parameters": "Parâmetros da consulta",
+  "Body Type": "Tipo de Corpo",
   "Body": "Conteúdo",
   "Response is Binary ?": "A resposta é binária ?",
   "No Error on Failure": "Nenhum erro no Failure",
   "Timeout (in seconds)": "Tempo limite (em segundos)",
+  "Follow redirects": "Seguir redirecionamentos",
   "The File or URL of the audio or video file.": "O arquivo ou URL do arquivo de áudio ou vídeo.",
   "The URL of the audio or video file to transcribe.": "URL do arquivo de áudio ou vídeo a ser transcrito.",
   "The language of your audio file. Possible values are found in [Supported Languages](https://www.assemblyai.com/docs/concepts/supported-languages).\nThe default value is 'en_us'.\n": "Idioma do seu arquivo de áudio. Possíveis valores são encontrados em [Idiomas Suportados](https://www.assemblyai.com/docs/concepts/supported-languages).\nO valor padrão é 'en_us'.\n",
@@ -156,7 +158,7 @@
   "The temperature to use for the model.\nHigher values result in answers that are more creative, lower values are more conservative.\nCan be any value between 0.0 and 1.0 inclusive.\n": "A temperatura para usar para o modelo.\nValores maiores resultam em respostas que são mais criativas, valores mais baixos são mais conservadores.\nPode ser qualquer valor entre 0.0 e 1.0 inclusive.\n",
   "The ID of the LeMUR request whose data you want to delete. This would be found in the response of the original request.": "O ID da solicitação LeMUR cujos dados você deseja excluir. Isto pode ser encontrado na resposta da solicitação original.",
   "Authorization headers are injected automatically from your connection.": "Os cabeçalhos de autorização são inseridos automaticamente a partir da sua conexão.",
-  "Enable for files like PDFs, images, etc..": "Habilitar para arquivos como PDFs, imagens, etc..",
+  "Enable for files like PDFs, images, etc.": "Habilitar para arquivos como PDFs, imagens, etc.",
   "English (Global)": "Inglês (Global)",
   "English (Australian)": "Inglês (australiano)",
   "English (British)": "Português (Brasil)",
@@ -340,5 +342,9 @@
   "PATCH": "COMPRAR",
   "PUT": "COLOCAR",
   "DELETE": "EXCLUIR",
-  "HEAD": "CABEÇA"
+  "HEAD": "CABEÇA",
+  "None": "Nenhuma",
+  "JSON": "JSON",
+  "Form Data": "Dados de Formulário",
+  "Raw": "RAW"
 }

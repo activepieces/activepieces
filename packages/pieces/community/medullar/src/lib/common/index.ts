@@ -1,6 +1,6 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { AppConnectionValueForAuthProperty, Property } from '@activepieces/pieces-framework';
-import { medullarAuth } from '../..';
+import { medullarAuth } from '../auth';
 
 export const medullarCommon = {
   baseUrl: 'https://api.medullar.com',

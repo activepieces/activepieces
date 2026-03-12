@@ -1,4 +1,4 @@
-import { airtableAuth } from '../..';
+import { airtableAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { airtableCommon } from '../common';
 import { AirtableTable } from './../common/models';

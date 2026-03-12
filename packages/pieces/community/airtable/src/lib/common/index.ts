@@ -24,7 +24,7 @@ import {
   AirtableView,
 } from './models';
 import { isNil } from '@activepieces/shared';
-import { airtableAuth } from '../..';
+import { airtableAuth } from '../auth';
 
 
 interface Params {
@@ -606,7 +606,7 @@ export const airtableCommon = {
       if (!tableId) return {};
 
       const airtable: AirtableTable = await fetchTable({
-        token: auth as unknown as string,
+        token: auth.secret_text,
         baseId: base as unknown as string,
         tableId: tableId as unknown as string,
       });

@@ -1,22 +1,20 @@
 import { PieceMetadataModel } from '@activepieces/pieces-framework'
-import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
+import { securityAccess } from '@activepieces/server-common'
 import { AddPieceRequestBody, PrincipalType } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { pieceInstallService } from './piece-install-service'
 
-export const communityPiecesModule: FastifyPluginAsyncTypebox = async (app) => {
+export const communityPiecesModule: FastifyPluginAsyncZod = async (app) => {
     await app.register(communityPiecesController, { prefix: '/v1/pieces' })
 }
 
-const communityPiecesController: FastifyPluginAsyncTypebox = async (app) => {
+const communityPiecesController: FastifyPluginAsyncZod = async (app) => {
     app.post(
         '/',
         {
             config: {
-                security: securityAccess.project([PrincipalType.USER], undefined, {
-                    type: ProjectResourceType.BODY,
-                }),
+                security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
             },
             schema: {
                 body: AddPieceRequestBody,
@@ -24,10 +22,8 @@ const communityPiecesController: FastifyPluginAsyncTypebox = async (app) => {
         },
         async (req, res): Promise<PieceMetadataModel> => {
             const platformId = req.principal.platform.id
-            const projectId = req.projectId
             const pieceMetadata = await pieceInstallService(req.log).installPiece(
                 platformId,
-                projectId,
                 req.body,
             )
             return res.code(StatusCodes.CREATED).send(pieceMetadata)

@@ -13,8 +13,6 @@ import { projectService } from '../../../project/project-service'
 import { flowService } from '../../flow/flow.service'
 import { Migration } from '.'
 
-
-
 export const migrateV12FixPieceVersion: Migration = {
     targetSchemaVersion: '12',
     migrate: async (flowVersion: FlowVersion): Promise<FlowVersion> => {
@@ -32,7 +30,7 @@ export const migrateV12FixPieceVersion: Migration = {
                 schemaVersion: '13',
             }
         }
-        const platformId = await projectService.getPlatformId(flow.projectId)
+        const platformId = await projectService(system.globalLogger()).getPlatformId(flow.projectId)
         const stepNameToPieceVersion: Record<string, string> = {}
         const steps = flowStructureUtil.getAllSteps(flowVersion.trigger)
         for (const step of steps) {

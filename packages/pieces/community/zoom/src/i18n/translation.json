@@ -43,6 +43,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "The meeting's topic": "The meeting's topic",
   "Meeting start date-time": "Meeting start date-time",
   "Duration of the meeting": "Duration of the meeting",

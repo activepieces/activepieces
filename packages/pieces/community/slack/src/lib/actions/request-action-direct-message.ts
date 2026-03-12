@@ -1,5 +1,5 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { slackAuth } from '../..';
+import { slackAuth } from '../auth';
 import { assertNotNullOrUndefined } from '@activepieces/shared';
 import {
   profilePicture,
@@ -7,6 +7,7 @@ import {
   userId,
   username,
   actions,
+  mentionOriginFlow,
 } from '../common/props';
 import { requestAction } from '../common/request-action';
 
@@ -22,6 +23,7 @@ export const requestActionDirectMessageAction = createAction({
     actions,
     username,
     profilePicture,
+    mentionOriginFlow,
   },
   async run(context) {
     const { userId } = context.propsValue;

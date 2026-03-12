@@ -2,7 +2,7 @@ import { AppConnectionValueForAuthProperty, OAuth2PropertyValue, Property } from
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import { getTaskListsDropdown } from '../common';
-import { microsoftToDoAuth } from '../../index';
+import { microsoftToDoAuth } from '../auth';
 import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
 import dayjs from 'dayjs';
 import { TodoTask } from '@microsoft/microsoft-graph-types';

@@ -1,9 +1,9 @@
 import { writeFile } from 'node:fs/promises';
 import chalk from 'chalk';
 import { Command } from 'commander';
-import { buildPiece, findPiece, findPieces } from '../utils/piece-utils';
-import { makeFolderRecursive } from '../utils/files';
-import { join, basename } from 'node:path';
+import { buildPackage, findPiece, findPieces } from '../utils/piece-utils';
+import { makeFolderRecursive, readPackageJson } from '../utils/files';
+import { join } from 'node:path';
 import { exec } from '../utils/exec';
 import { pieceTranslation } from '@activepieces/pieces-framework';
 import { MAX_KEY_LENGTH_FOR_CORWDIN } from '@activepieces/shared';
@@ -66,11 +66,11 @@ const generateTranslationFileFromPiece = (piece: Record<string, unknown>) => { c
 
 const generateTranslationFile = async (pieceName: string) => {
   const pieceRoot = await findPiece(pieceName)
-  await buildPiece(pieceRoot)
-  const outputFolder = pieceRoot.replace('packages/', 'dist/packages/')
+  const packageJson = await readPackageJson(pieceRoot)
+  await buildPackage(packageJson.name)
   try{
-    await installDependencies(outputFolder)
-    const pieceFromModule = await findPieceInModule(outputFolder);
+    await installDependencies(pieceRoot)
+    const pieceFromModule = await findPieceInModule(pieceRoot);
     const i18n = generateTranslationFileFromPiece({actions: (pieceFromModule as any)._actions, triggers: (pieceFromModule as any)._triggers, description: (pieceFromModule as any).description, displayName: (pieceFromModule as any).displayName, auth: (pieceFromModule as any).auth});
     const i18nFolder = join(pieceRoot, 'src', 'i18n')
     await makeFolderRecursive(i18nFolder);

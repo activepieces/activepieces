@@ -1,9 +1,8 @@
-import { apAxios, AppSystemProp, exceptionHandler, QueueName, redisMetadataKey, RunsMetadataJobData, RunsMetadataQueueConfig, runsMetadataQueueFactory, RunsMetadataUpsertData } from '@activepieces/server-shared'
-import { assertNotNullOrUndefined, FlowRun, FlowRunStatus, isNil, PauseMetadata, PauseType, spreadIfDefined, WebsocketClientEvent } from '@activepieces/shared'
+import { apAxios, AppSystemProp, exceptionHandler, QueueName, redisMetadataKey, RunsMetadataJobData, RunsMetadataQueueConfig, runsMetadataQueueFactory, RunsMetadataUpsertData } from '@activepieces/server-common'
+import { assertNotNullOrUndefined, FlowRun, FlowRunStatus, isNil, PauseMetadata, PauseType, spreadIfDefined } from '@activepieces/shared'
 import { Queue, Worker } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
 import { FastifyBaseLogger } from 'fastify'
-import { websocketService } from '../../core/websockets.service'
 import { distributedLock, distributedStore, redisConnections } from '../../database/redis-connections'
 import { domainHelper } from '../../ee/custom-domains/domain-helper'
 import { system } from '../../helper/system/system'
@@ -91,7 +90,7 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                             const parentRunId = savedFlowRun.parentRunId
                             const shouldMarkParentAsFailed = savedFlowRun.failParentOnFailure && !isNil(parentRunId) && ![FlowRunStatus.SUCCEEDED, FlowRunStatus.RUNNING, FlowRunStatus.PAUSED, FlowRunStatus.QUEUED].includes(savedFlowRun.status)
                             if (shouldMarkParentAsFailed) {
-                                const platformId = await projectService.getPlatformId(savedFlowRun.projectId)
+                                const platformId = await projectService(log).getPlatformId(savedFlowRun.projectId)
                                 await markParentRunAsFailed({
                                     parentRunId,
                                     childRunId: savedFlowRun.id,
@@ -109,10 +108,6 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                             if (runMetadata.status === FlowRunStatus.PAUSED) {
                                 await jobQueue(log).promoteChildRuns(savedFlowRun.id)
                             }
-
-                            websocketService.to(savedFlowRun.projectId).emit(WebsocketClientEvent.FLOW_RUN_PROGRESS, {
-                                runId: savedFlowRun.id,
-                            })
                         }
                         catch (error) {
                             log.error({
