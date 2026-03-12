@@ -7,7 +7,7 @@ To connect to Azure Active Directory (Microsoft Entra ID), you need to register 
 1. Go to [Azure Portal](https://portal.azure.com) → **Microsoft Entra ID** (or Azure Active Directory) → **App registrations** → **New registration**.
 2. Enter a name, select supported account types, and set the **Redirect URI** to **Web** and use: {{redirectUrl}}
 3. After creation, go to **API permissions** → **Add a permission** → **Microsoft Graph** → **Delegated permissions**.
-4. Add at least: **User.Read.All**, **User.ReadWrite.All**, **Group.ReadWrite.All**, **Directory.Read.All**, **LicenseAssignment.ReadWrite.All** (and **User.ManageIdentities.All** if you use revoke sign-in).
+4. Add at least: **User.Read.All**, **User.ReadWrite.All**, **Group.ReadWrite.All**, **Directory.Read.All**, **LicenseAssignment.ReadWrite.All**, and **User.RevokeSessions.All** (required for the Revoke Sign-in Session action).
 5. Grant admin consent if required by your tenant.
 6. Under **Certificates & secrets**, create a client secret and use it with the Application (client) ID and Directory (tenant) ID in the connection.
 `;
@@ -20,6 +20,7 @@ export const azureAdAuth = PieceAuth.OAuth2({
     scope: [
         'User.Read.All',
         'User.ReadWrite.All',
+        'User.RevokeSessions.All',
         'Group.ReadWrite.All',
         'Directory.Read.All',
         'LicenseAssignment.ReadWrite.All',

@@ -11,7 +11,7 @@ export const newUpdatedMemberRealtimeTrigger = createTrigger({
     auth: azureAdAuth,
     name: 'new_updated_member_realtime',
     displayName: 'New/Updated Member (Real-time)',
-    description: 'New or updated member in Microsoft Entra ID (fires when group membership changes)',
+    description: 'Fires when a group is updated (e.g. display name, description, or membership). Uses Microsoft Graph subscription on the group resource.',
     type: TriggerStrategy.WEBHOOK,
     props: {},
     sampleData: {

@@ -7,12 +7,12 @@ export const addOrRemoveUserLicenseAction = createAction({
     auth: azureAdAuth,
     name: 'add_or_remove_user_license',
     displayName: 'Add or Remove User License',
-    description: 'Assigns or removes licenses for a user. Use addLicenses to add and removeLicenses to remove (by SkuId).',
+    description: 'Assigns or removes licenses for a user. Use addLicenses to add (include disabledPlans to disable specific service plans) and removeLicenses to remove by SkuId.',
     props: {
         userId: userDropdown,
         addLicenses: Property.Json({
             displayName: 'Add Licenses',
-            description: 'JSON array of license assignments to add. Example: [{"skuId":"sku-guid"}]',
+            description: 'JSON array of license assignments. Example: [{"skuId":"sku-guid"}] or [{"skuId":"sku-guid","disabledPlans":["plan-guid-1"]}] to disable specific plans.',
             required: false,
             defaultValue: [],
         }),
@@ -29,7 +29,10 @@ export const addOrRemoveUserLicenseAction = createAction({
         const add = Array.isArray(addLicenses) ? addLicenses : [];
         const remove = Array.isArray(removeLicenses) ? removeLicenses : [];
         const body = {
-            addLicenses: add.map((a: { skuId: string }) => ({ skuId: a.skuId })),
+            addLicenses: add.map((a: { skuId: string; disabledPlans?: string[] }) => ({
+                skuId: a.skuId,
+                ...(Array.isArray(a.disabledPlans) && a.disabledPlans.length > 0 && { disabledPlans: a.disabledPlans }),
+            })),
             removeLicenses: remove,
         };
         const user = await callGraphApi<Record<string, unknown>>(token, {

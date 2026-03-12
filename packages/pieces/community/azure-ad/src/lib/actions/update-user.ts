@@ -50,7 +50,7 @@ export const updateUserAction = createAction({
         if (props['surname'] !== undefined && props['surname'] !== '') body['surname'] = props['surname'];
         if (props['jobTitle'] !== undefined && props['jobTitle'] !== '') body['jobTitle'] = props['jobTitle'];
         if (props['mail'] !== undefined && props['mail'] !== '') body['mail'] = props['mail'];
-        if (props['mobilePhone'] !== undefined) body['mobilePhone'] = props['mobilePhone'];
+        if (props['mobilePhone'] !== undefined && props['mobilePhone'] !== '') body['mobilePhone'] = props['mobilePhone'];
         if (props['accountEnabled'] !== undefined) body['accountEnabled'] = props['accountEnabled'];
         if (Object.keys(body).length === 0) {
             return { success: false, message: 'No fields to update were provided.' };
