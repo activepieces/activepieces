@@ -1,8 +1,9 @@
 import { securityAccess } from '@activepieces/server-common'
-import { ALL_PRINCIPAL_TYPES, assertNotNullOrUndefined, CONTENT_ENCODING_ZSTD, FileCompression, FileLocation, isZstdCompressed, UploadLogsBehavior, UploadLogsQueryParams } from '@activepieces/shared'
+import { ALL_PRINCIPAL_TYPES, assertNotNullOrUndefined, CONTENT_ENCODING_ZSTD, FileCompression, FileLocation, FileType, isZstdCompressed, UploadLogsBehavior, UploadLogsQueryParams } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
+import { fileService } from '../../../file/file.service'
 import { s3Helper } from '../../../file/s3-helper'
 import { flowRunLogsService } from './flow-run-logs-service'
 
@@ -48,7 +49,11 @@ export const flowRunLogsController: FastifyPluginAsyncZod = async (app) => {
     }, async (request, reply) => {
         const { token } = request.query
         const decodedToken = await flowRunLogsService(request.log).verifyToken(token)
-        const file = await flowRunLogsService(request.log).getFileOrThrow(decodedToken)
+        const file = await fileService(request.log).getFileOrThrow({
+            projectId: decodedToken.projectId,
+            fileId: decodedToken.logsFileId,
+            type: FileType.FLOW_RUN_LOG,
+        })
         if (decodedToken.behavior === UploadLogsBehavior.REDIRECT_TO_S3) {
             assertNotNullOrUndefined(file.s3Key, 's3Key')
             const s3SignedUrl = await s3Helper(request.log).getS3SignedUrl(file.s3Key, file.fileName ?? file.id)

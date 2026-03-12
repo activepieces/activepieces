@@ -1,8 +1,8 @@
-import { ActivepiecesError, ErrorCode, ExecutioOutputFile, File, FileCompression, FileType, isNil, UploadLogsBehavior, UploadLogsToken } from '@activepieces/shared'
+import { ExecutioOutputFile, File, FileCompression, FileType, isNil, UploadLogsBehavior, UploadLogsToken } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { domainHelper } from '../../../ee/custom-domains/domain-helper'
-import { fileRepo, fileService } from '../../../file/file.service'
+import { fileService } from '../../../file/file.service'
 import { JwtSignAlgorithm, jwtUtils } from '../../../helper/jwt-utils'
 
 export const flowRunLogsService = (log: FastifyBaseLogger) => {
@@ -43,24 +43,6 @@ export const flowRunLogsService = (log: FastifyBaseLogger) => {
         },
         async uploadDirectly(request: UploadLogsToken, content: Buffer): Promise<void> {
             await upsertFile(request, log, content)
-        },
-        async getFileOrThrow(request: GetLogsParams): Promise<File> {
-            const file = await fileRepo().findOneBy({
-                id: request.logsFileId,
-                projectId: request.projectId,
-                type: FileType.FLOW_RUN_LOG,
-            })
-            if (isNil(file)) {
-                throw new ActivepiecesError({
-                    code: ErrorCode.ENTITY_NOT_FOUND,
-                    params: {
-                        entityType: 'file',
-                        entityId: request.logsFileId,
-                        message: 'Logs file not found',
-                    },
-                })
-            }
-            return file
         },
         async getLogs(request: GetLogsParams): Promise<ExecutioOutputFile | null> {
             const result = await fileService(log).getDataOrUndefined({
