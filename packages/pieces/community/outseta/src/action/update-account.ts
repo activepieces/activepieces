@@ -49,6 +49,12 @@ export const updateAccountAction = createAction({
     if (context.propsValue.invoiceNotes)
       body['InvoiceNotes'] = context.propsValue.invoiceNotes;
 
+    if (Object.keys(body).length === 0) {
+      throw new Error(
+        'At least one field (Account Name, Account Stage, or Invoice Notes) must be provided.'
+      );
+    }
+
     const result = await client.put<any>(
       `/api/v1/crm/accounts/${context.propsValue.accountUid}`,
       body

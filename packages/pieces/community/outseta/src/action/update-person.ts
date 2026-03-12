@@ -50,6 +50,12 @@ export const updatePersonAction = createAction({
       body['PhoneMobile'] = context.propsValue.phoneMobile;
     if (context.propsValue.title) body['Title'] = context.propsValue.title;
 
+    if (Object.keys(body).length === 0) {
+      throw new Error(
+        'At least one field (Email, First Name, Last Name, Mobile Phone, or Title) must be provided.'
+      );
+    }
+
     const result = await client.put<any>(
       `/api/v1/crm/people/${context.propsValue.personUid}`,
       body
