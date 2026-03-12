@@ -1,4 +1,5 @@
-import { FlowVersion, FlowVersionState, FlowVersionTemplate } from '@activepieces/shared'
+import { FlowVersion, FlowVersionState, FlowVersionTemplate, ProjectId } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { migrateBranchToRouter } from './migrate-v0-branch-to-router'
 import { migrateConnectionIds } from './migrate-v1-connection-ids'
 import { migrateV10AiPiecesProviderId } from './migrate-v10-ai-pieces-provider-id'
@@ -16,9 +17,14 @@ import { moveAgentsToFlowVerion } from './migrate-v7-agents-to-flow-version'
 import { cleanUpAgentTools } from './migrate-v8-agent-tools'
 import { migrateV9AiPieces } from './migrate-v9-ai-pieces'
 
+export type MigrationContext = {
+    log: FastifyBaseLogger
+    projectId?: ProjectId
+}
+
 export type Migration = {
     targetSchemaVersion: string | undefined
-    migrate: (flowVersion: FlowVersion) => Promise<FlowVersion>
+    migrate: (flowVersion: FlowVersion, context?: MigrationContext) => Promise<FlowVersion>
 }
 
 const migrations: Migration[] = [
@@ -41,10 +47,10 @@ const migrations: Migration[] = [
 ] as const
 
 export const flowMigrations = {
-    apply: async (flowVersion: FlowVersion): Promise<FlowVersion> => {
+    apply: async (flowVersion: FlowVersion, context?: MigrationContext): Promise<FlowVersion> => {
         for (const migration of migrations) {
             if (flowVersion.schemaVersion === migration.targetSchemaVersion) {
-                flowVersion = await migration.migrate(flowVersion)
+                flowVersion = await migration.migrate(flowVersion, context)
             }
         }
         return flowVersion
