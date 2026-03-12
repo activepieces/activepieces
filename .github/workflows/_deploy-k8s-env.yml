@@ -6,9 +6,6 @@ on:
       deploy_path:
         required: true
         type: string
-      kube_context:
-        required: true
-        type: string
       app_values:
         required: true
         type: string
@@ -50,12 +47,12 @@ jobs:
 
       - name: Wait for APP rollout to be healthy
         run: |
-          ssh ops 'bash -s' <<'ENDSSH'
+          ssh ops 'cd ${{ inputs.deploy_path }} && bash -s' <<'ENDSSH'
           set -euo pipefail
           timeout=300
           elapsed=0
           while [ $elapsed -lt $timeout ]; do
-            PHASE=$(kubectl --context ${{ inputs.kube_context }} get rollout activepieces -n activepieces \
+            PHASE=$(kubectl get rollout activepieces -n activepieces \
               -o jsonpath='{.status.phase}' 2>/dev/null || echo "Unknown")
             [ -z "$PHASE" ] && PHASE="Unknown"
             echo "APP phase: $PHASE"
@@ -63,10 +60,10 @@ jobs:
               Paused|Healthy) exit 0 ;;
               Degraded|Error|Aborted)
                 echo "::error::APP rollout failed: $PHASE"
-                kubectl --context ${{ inputs.kube_context }} get pods -n activepieces
-                kubectl --context ${{ inputs.kube_context }} argo rollouts get rollout activepieces -n activepieces || true
-                kubectl --context ${{ inputs.kube_context }} get events -n activepieces --sort-by='.lastTimestamp' | tail -30
-                kubectl --context ${{ inputs.kube_context }} argo rollouts abort activepieces -n activepieces || true
+                kubectl get pods -n activepieces
+                kubectl argo rollouts get rollout activepieces -n activepieces || true
+                kubectl get events -n activepieces --sort-by='.lastTimestamp' | tail -30
+                kubectl argo rollouts abort activepieces -n activepieces || true
                 exit 1 ;;
             esac
             sleep 10
@@ -77,10 +74,10 @@ jobs:
           ENDSSH
 
       - name: Promote APP
-        run: ssh ops 'kubectl --context ${{ inputs.kube_context }} argo rollouts promote activepieces -n activepieces'
+        run: ssh ops 'cd ${{ inputs.deploy_path }} && kubectl argo rollouts promote activepieces -n activepieces'
 
       - name: Wait for APP promotion to complete
-        run: ssh ops 'kubectl --context ${{ inputs.kube_context }} argo rollouts status activepieces -n activepieces --timeout=5m'
+        run: ssh ops 'cd ${{ inputs.deploy_path }} && kubectl argo rollouts status activepieces -n activepieces --timeout=5m'
 
       - name: Deploy WORKER
         run: |
@@ -92,13 +89,13 @@ jobs:
 
       - name: Wait for WORKER to be healthy
         run: |
-          ssh ops 'bash -s' <<'ENDSSH'
+          ssh ops 'cd ${{ inputs.deploy_path }} && bash -s' <<'ENDSSH'
           set -euo pipefail
-          if ! kubectl --context ${{ inputs.kube_context }} rollout status statefulset/activepieces-worker \
+          if ! kubectl rollout status statefulset/activepieces-worker \
               -n activepieces --timeout=300s; then
-            kubectl --context ${{ inputs.kube_context }} get pods -n activepieces
-            kubectl --context ${{ inputs.kube_context }} describe statefulset activepieces-worker -n activepieces || true
-            kubectl --context ${{ inputs.kube_context }} get events -n activepieces --sort-by='.lastTimestamp' | tail -30
+            kubectl get pods -n activepieces
+            kubectl describe statefulset activepieces-worker -n activepieces || true
+            kubectl get events -n activepieces --sort-by='.lastTimestamp' | tail -30
             exit 1
           fi
           ENDSSH

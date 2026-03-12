@@ -85,7 +85,6 @@ jobs:
     uses: ./.github/workflows/_deploy-k8s-env.yml
     with:
       deploy_path: /root/k8n2/staging
-      kube_context: stg
       app_values: ./stg-app-values.yaml
       worker_values: ./stg-worker-values.yaml
       image_tag: ${{ needs.build-image.outputs.image_tag }}
@@ -132,19 +131,26 @@ jobs:
           )
           echo "image_tag=$TAG" >> $GITHUB_OUTPUT
 
-  promote-to-production:
+  # Holds the GitHub Environment approval gate — environment: and uses: cannot be on the same job
+  approve-production:
     needs: [get-prod-image-tag]
     if: always() && needs.get-prod-image-tag.result == 'success'
-    concurrency:
-      group: promote-production
-      cancel-in-progress: false
+    runs-on: ubuntu-latest
     environment:
       name: production         # GitHub Environment gate — requires reviewer approval
       url: https://cloud.activepieces.com
+    steps:
+      - run: echo "Production deployment approved"
+
+  promote-to-production:
+    needs: [approve-production, get-prod-image-tag]
+    if: always() && needs.approve-production.result == 'success'
+    concurrency:
+      group: promote-production
+      cancel-in-progress: false
     uses: ./.github/workflows/_deploy-k8s-env.yml
     with:
       deploy_path: /root/k8n2/prod
-      kube_context: prod
       app_values: ./prod-app-values.yaml
       worker_values: ./prod-worker-values.yaml
       image_tag: ${{ needs.get-prod-image-tag.outputs.image_tag }}
