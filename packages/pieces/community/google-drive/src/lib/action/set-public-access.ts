@@ -46,8 +46,13 @@ export const setPublicAccess = createAction({
 
     const file = await drive.files.get({
       fileId: fileId,
-      fields: 'name,webContentLink',
+      fields: 'name,mimeType,webContentLink,webViewLink',
     });
+
+    if (file.data.mimeType === 'application/vnd.google-apps.folder') {
+      return { ...res.data, webViewLink: file.data.webViewLink, downloadUrl: null };
+    }
+
     const content = await downloadFileFromDrive(
       context.auth,
       context.files,
