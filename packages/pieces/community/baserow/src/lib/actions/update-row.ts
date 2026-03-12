@@ -1,6 +1,5 @@
 import {
   DynamicPropsValue,
-  Property,
   createAction,
 } from '@activepieces/pieces-framework';
 import { baserowAuth } from '../auth';
@@ -18,7 +17,7 @@ export const updateRowAction = createAction({
     table_fields: baserowCommon.tableFields(true),
   },
   async run(context) {
-    const { table_id, row_id } = context.propsValue;
+    const { table_id, row_id } = context.propsValue as {table_id: number, row_id: number};
     const tableFieldsInput = context.propsValue.table_fields!;
     const formattedTableFields: DynamicPropsValue = {};
 

@@ -12,10 +12,8 @@ export const getRowAction = createAction({
     row_id: baserowCommon.rowId(),
   },
   async run(context) {
-    const { table_id, row_id } = context.propsValue;
-    const client = makeClient(
-      context.auth.props
-    );
+    const { table_id, row_id } = context.propsValue as {table_id: number, row_id: number};
+    const client = makeClient(context.auth.props);
     return await client.getRow(table_id, row_id);
   },
 });

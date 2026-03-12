@@ -12,7 +12,7 @@ export const deleteRowAction = createAction({
     row_id: baserowCommon.rowId(),
   },
   async run(context) {
-    const { table_id, row_id } = context.propsValue;
+    const { table_id, row_id } = context.propsValue as { table_id: number; row_id: number };
     const client = makeClient(
       context.auth.props
     );

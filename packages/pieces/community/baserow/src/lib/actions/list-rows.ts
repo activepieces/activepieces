@@ -38,7 +38,7 @@ export const listRowsAction = createAction({
     }),
   },
   async run(context) {
-    const { table_id, page, limit, search, order_by } = context.propsValue;
+    const { table_id, page, limit, search, order_by } = context.propsValue as {table_id: number, page?: number, limit?: number, search?: string, order_by?: string};
     const client = makeClient(context.auth.props);
     return await client.listRows(table_id, page, limit, search, order_by);
   },
