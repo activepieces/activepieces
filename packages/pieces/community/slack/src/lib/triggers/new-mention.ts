@@ -14,7 +14,7 @@ export const newMention = createTrigger({
   description: 'Triggers when a username is mentioned.',
   props: {
     info: multiSelectChannelInfo,
-    user: userId,
+    user: userId(true),
     channels: Property.MultiSelectDropdown({
       auth: slackAuth,
       displayName: 'Channels',
