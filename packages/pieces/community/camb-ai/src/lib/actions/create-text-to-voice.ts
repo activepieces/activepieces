@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { cambaiAuth } from '../auth';
-import { API_BASE_URL, POLLING_INTERVAL_MS, MAX_POLLING_ATTEMPTS, pollTaskUntilComplete } from '../common';
+import { API_BASE_URL, LONG_POLLING_INTERVAL_MS, LONG_MAX_POLLING_ATTEMPTS, pollTaskUntilComplete } from '../common';
 
 export const createTextToVoice = createAction({
     auth: cambaiAuth,
@@ -40,8 +40,8 @@ export const createTextToVoice = createAction({
         const runId = await pollTaskUntilComplete(
             auth.secret_text,
             `${API_BASE_URL}/text-to-voice/${taskId}`,
-            MAX_POLLING_ATTEMPTS,
-            POLLING_INTERVAL_MS,
+            LONG_MAX_POLLING_ATTEMPTS,
+            LONG_POLLING_INTERVAL_MS,
         );
 
         const resultResponse = await httpClient.sendRequest({

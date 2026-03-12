@@ -19,7 +19,7 @@ export const cambAi = createPiece({
     auth: cambaiAuth,
     minimumSupportedRelease: '0.36.1',
     logoUrl: "https://cdn.activepieces.com/pieces/camb-ai.png",
-    authors: ['david-oluwaseun420','sanket-a11y'],
+    authors: ['david-oluwaseun420','sanket-a11y','neilruaro-camb'],
     categories:[PieceCategory.ARTIFICIAL_INTELLIGENCE],
     actions: [
         createTextToSound,

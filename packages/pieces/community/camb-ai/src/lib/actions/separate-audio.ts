@@ -1,7 +1,7 @@
 import { createAction, Property, ApFile, DynamicPropsValue } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient, HttpHeaders } from '@activepieces/pieces-common';
 import { cambaiAuth } from '../auth';
-import { API_BASE_URL, POLLING_INTERVAL_MS, LONG_MAX_POLLING_ATTEMPTS, pollTaskUntilComplete } from '../common';
+import { API_BASE_URL, LONG_POLLING_INTERVAL_MS, LONG_MAX_POLLING_ATTEMPTS, pollTaskUntilComplete } from '../common';
 import FormData from 'form-data';
 
 export const separateAudio = createAction({
@@ -80,7 +80,7 @@ export const separateAudio = createAction({
             auth.secret_text,
             `${API_BASE_URL}/audio-separation/${taskId}`,
             LONG_MAX_POLLING_ATTEMPTS,
-            POLLING_INTERVAL_MS,
+            LONG_POLLING_INTERVAL_MS,
         );
 
         const resultResponse = await httpClient.sendRequest<{
