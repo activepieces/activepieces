@@ -13,13 +13,19 @@ const generateId = customAlphabet(ALPHABET, 21)
 
 const FILE_STORAGE_LOCATION = system.get<string>(AppSystemProp.FILE_STORAGE_LOCATION) ?? 'DB'
 
+const BATCH_SIZE = 100
+
+type MigrateContext = {
+    queryRunner: QueryRunner
+    flowVersionId: string
+    flowId: string
+    projectId: string
+}
+
 async function migrateSteps(
-    step: any,
-    queryRunner: QueryRunner,
-    flowVersionId: string,
-    flowId: string,
-    projectId: string,
+    params: { step: any } & MigrateContext,
 ): Promise<{ updated: boolean, trigger: any }> {
+    const { step, queryRunner, flowVersionId, flowId, projectId } = params
     if (!step) {
         return { updated: false, trigger: step }
     }
@@ -27,7 +33,7 @@ async function migrateSteps(
     let updated = false
     let current: any = JSON.parse(JSON.stringify(step))
 
-    const migratedStep = await migrateStep(current, queryRunner, flowVersionId, flowId, projectId)
+    const migratedStep = await migrateStep({ step: current, queryRunner, flowVersionId, flowId, projectId })
     if (migratedStep !== null) {
         current = migratedStep
         updated = true
@@ -38,7 +44,7 @@ async function migrateSteps(
         let childrenUpdated = false
         for (const child of current.children) {
             if (child) {
-                const result = await migrateSteps(child, queryRunner, flowVersionId, flowId, projectId)
+                const result = await migrateSteps({ step: child, queryRunner, flowVersionId, flowId, projectId })
                 newChildren.push(result.trigger)
                 if (result.updated) {
                     childrenUpdated = true
@@ -54,8 +60,29 @@ async function migrateSteps(
         }
     }
 
+    if (current.type === 'BRANCH') {
+        let branchUpdated = false
+        if (current.onSuccessAction) {
+            const result = await migrateSteps({ step: current.onSuccessAction, queryRunner, flowVersionId, flowId, projectId })
+            if (result.updated) {
+                current = { ...current, onSuccessAction: result.trigger }
+                branchUpdated = true
+            }
+        }
+        if (current.onFailureAction) {
+            const result = await migrateSteps({ step: current.onFailureAction, queryRunner, flowVersionId, flowId, projectId })
+            if (result.updated) {
+                current = { ...current, onFailureAction: result.trigger }
+                branchUpdated = true
+            }
+        }
+        if (branchUpdated) {
+            updated = true
+        }
+    }
+
     if (current.type === 'LOOP_ON_ITEMS' && current.firstLoopAction) {
-        const result = await migrateSteps(current.firstLoopAction, queryRunner, flowVersionId, flowId, projectId)
+        const result = await migrateSteps({ step: current.firstLoopAction, queryRunner, flowVersionId, flowId, projectId })
         if (result.updated) {
             current = { ...current, firstLoopAction: result.trigger }
             updated = true
@@ -63,7 +90,7 @@ async function migrateSteps(
     }
 
     if (current.nextAction) {
-        const result = await migrateSteps(current.nextAction, queryRunner, flowVersionId, flowId, projectId)
+        const result = await migrateSteps({ step: current.nextAction, queryRunner, flowVersionId, flowId, projectId })
         if (result.updated) {
             current = { ...current, nextAction: result.trigger }
             updated = true
@@ -73,13 +100,8 @@ async function migrateSteps(
     return { updated, trigger: current }
 }
 
-async function migrateStep(
-    step: any,
-    queryRunner: QueryRunner,
-    flowVersionId: string,
-    flowId: string,
-    projectId: string,
-): Promise<any> {
+async function migrateStep(params: { step: any } & MigrateContext): Promise<any> {
+    const { step, queryRunner, flowVersionId, flowId, projectId } = params
     const inputUiInfo = step.settings?.inputUiInfo
     if (!inputUiInfo) {
         return null
@@ -99,7 +121,7 @@ async function migrateStep(
 
     let sampleDataFileId = inputUiInfo.sampleDataFileId
     if (!sampleDataFileId) {
-        const outputJson = JSON.stringify(currentSelectedData)
+        const outputJson = typeof currentSelectedData === 'string' ? currentSelectedData : JSON.stringify(currentSelectedData)
         const outputBuffer = Buffer.from(outputJson, 'utf-8')
         sampleDataFileId = generateId()
 
@@ -132,6 +154,14 @@ async function migrateStep(
                 [sampleDataFileId, projectId, outputBuffer, outputBuffer.length, JSON.stringify(sharedMetadata)],
             )
         }
+
+        log.info({
+            sampleDataFileId,
+            flowVersionId,
+            flowId,
+            stepName: step.name,
+            location: useDbStorage ? 'DB' : 'S3',
+        }, 'MigrateSampleDataToFiles1739600000000: created sample data file')
     }
 
     return {
@@ -186,38 +216,58 @@ export class MigrateSampleDataToFiles1739600000000 implements MigrationInterface
     name = 'MigrateSampleDataToFiles1739600000000'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        const flowVersionRows: { id: string, trigger: any, flowId: string, projectId: string }[] =
-            await queryRunner.query(`
+        let offset = 0
+        let totalProcessed = 0
+        let updatedFlows = 0
+
+        while (true) {
+            const flowVersionRows: { id: string, trigger: any, flowId: string, projectId: string }[] =
+                await queryRunner.query(
+                    `
                 SELECT fv.id, fv.trigger, fv."flowId", f."projectId"
                 FROM flow_version fv
                 JOIN flow f ON fv."flowId" = f.id
                 WHERE CAST(fv.trigger AS TEXT) LIKE '%currentSelectedData%'
-            `)
-
-        log.info({
-            count: flowVersionRows.length,
-        }, 'MigrateSampleDataToFiles1739600000000: found flow versions with currentSelectedData')
-
-        let updatedFlows = 0
-        for (const row of flowVersionRows) {
-            const trigger = typeof row.trigger === 'string' ? JSON.parse(row.trigger) : row.trigger
-            const { updated, trigger: updatedTrigger } = await migrateSteps(
-                trigger,
-                queryRunner,
-                row.id,
-                row.flowId,
-                row.projectId,
-            )
-            if (updated) {
-                await queryRunner.query(
-                    'UPDATE flow_version SET trigger = $1 WHERE id = $2',
-                    [JSON.stringify(updatedTrigger), row.id],
+                ORDER BY fv.id
+                LIMIT $1 OFFSET $2
+            `,
+                    [BATCH_SIZE, offset],
                 )
-                updatedFlows++
+
+            if (flowVersionRows.length === 0) {
+                break
             }
+
+            log.info({
+                batch: Math.floor(offset / BATCH_SIZE) + 1,
+                batchSize: flowVersionRows.length,
+                offset,
+            }, 'MigrateSampleDataToFiles1739600000000: processing batch')
+
+            for (const row of flowVersionRows) {
+                const trigger = typeof row.trigger === 'string' ? JSON.parse(row.trigger) : row.trigger
+                const { updated, trigger: updatedTrigger } = await migrateSteps({
+                    step: trigger,
+                    queryRunner,
+                    flowVersionId: row.id,
+                    flowId: row.flowId,
+                    projectId: row.projectId,
+                })
+                if (updated) {
+                    await queryRunner.query(
+                        'UPDATE flow_version SET trigger = $1 WHERE id = $2',
+                        [JSON.stringify(updatedTrigger), row.id],
+                    )
+                    updatedFlows++
+                }
+            }
+
+            totalProcessed += flowVersionRows.length
+            offset += BATCH_SIZE
         }
 
         log.info({
+            totalProcessed,
             updatedFlows,
         }, 'MigrateSampleDataToFiles1739600000000: migration complete')
     }
