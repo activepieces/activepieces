@@ -93,8 +93,9 @@ export const agentUtils = {
     const flowExternalIds = flowTools.map((tool) => tool.externalFlowId)
     const flows = await params.fetchFlows({ externalIds: flowExternalIds })
 
+    const flowsByExternalId = new Map(flows.data.map(f => [f.externalId, f]));
     const flowToolsWithPopulatedFlows = flowTools.map((tool) => {
-      const populatedFlow = flows.data.find(f => f.externalId === tool.externalFlowId);
+      const populatedFlow = flowsByExternalId.get(tool.externalFlowId);
       return !isNil(populatedFlow) ? { ...tool, flow: populatedFlow } : undefined
     }).filter(tool => !isNil(tool));
 
