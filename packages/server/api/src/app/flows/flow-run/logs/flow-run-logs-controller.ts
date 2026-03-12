@@ -57,7 +57,7 @@ export const flowRunLogsController: FastifyPluginAsyncZod = async (app) => {
         const data = file.location === FileLocation.DB ? file.data : await s3Helper(request.log).getFile(file.s3Key!)
         const isCompressed = file.compression === FileCompression.ZSTD || isZstdCompressed(data)
         if (isCompressed) {
-            reply.header('Content-Encoding', CONTENT_ENCODING_ZSTD)
+            void reply.header('Content-Encoding', CONTENT_ENCODING_ZSTD)
         }
         return reply.type('application/octet-stream').send(data)
     })
