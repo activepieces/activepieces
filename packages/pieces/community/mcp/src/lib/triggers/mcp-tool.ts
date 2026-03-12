@@ -78,7 +78,10 @@ export const mcpTool = createTrigger({
   async run(context) {
     const rawPayload = context.payload as Record<string, unknown>;
     const body = rawPayload['body'];
-    const payload = (typeof body === 'object' && body !== null && !Array.isArray(body))
+    const headers = rawPayload['headers'];
+    const isTriggerPayloadEnvelope = typeof body === 'object' && body !== null && !Array.isArray(body)
+      && typeof headers === 'object' && headers !== null;
+    const payload = isTriggerPayloadEnvelope
       ? body as Record<string, unknown>
       : rawPayload;
     const inputSchema = context.propsValue.inputSchema as { name: string; required: boolean }[] | undefined;
