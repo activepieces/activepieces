@@ -29,13 +29,13 @@ export async function callGraphApi<T>(
     return res.body as T;
 }
 
-export function flattenUser(user: Record<string, unknown>): Record<string, unknown> {
+export function flattenObject(obj: Record<string, unknown>): Record<string, unknown> {
     const out: Record<string, unknown> = {};
-    for (const [k, v] of Object.entries(user)) {
+    for (const [k, v] of Object.entries(obj)) {
         if (v !== null && typeof v === 'object' && !Array.isArray(v) && !(v instanceof Date)) {
-            const obj = v as Record<string, unknown>;
-            if (obj['@odata.type']) continue;
-            for (const [k2, v2] of Object.entries(obj)) {
+            const nested = v as Record<string, unknown>;
+            if (nested['@odata.type']) continue;
+            for (const [k2, v2] of Object.entries(nested)) {
                 out[`${k}_${k2}`] = v2;
             }
         } else {
@@ -45,21 +45,10 @@ export function flattenUser(user: Record<string, unknown>): Record<string, unkno
     return out;
 }
 
-export function flattenGroup(group: Record<string, unknown>): Record<string, unknown> {
-    const out: Record<string, unknown> = {};
-    for (const [k, v] of Object.entries(group)) {
-        if (v !== null && typeof v === 'object' && !Array.isArray(v) && !(v instanceof Date)) {
-            const obj = v as Record<string, unknown>;
-            if (obj['@odata.type']) continue;
-            for (const [k2, v2] of Object.entries(obj)) {
-                out[`${k}_${k2}`] = v2;
-            }
-        } else {
-            out[k] = v;
-        }
-    }
-    return out;
-}
+/** @deprecated use flattenObject */
+export const flattenUser = flattenObject;
+/** @deprecated use flattenObject */
+export const flattenGroup = flattenObject;
 
 const SUBSCRIPTION_MAX_MINUTES = 2880; // 2 days (Graph allows up to 4230 for some resources)
 

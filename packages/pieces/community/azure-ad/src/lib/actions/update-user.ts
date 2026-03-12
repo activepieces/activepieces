@@ -57,11 +57,7 @@ export const updateUserAction = createAction({
         if (props['mobilePhone'] !== undefined) body['mobilePhone'] = props['mobilePhone'];
         if (props['accountEnabled'] !== undefined) body['accountEnabled'] = props['accountEnabled'];
         if (Object.keys(body).length === 0) {
-            const user = await callGraphApi<Record<string, unknown>>(token, {
-                method: HttpMethod.GET,
-                url: `https://graph.microsoft.com/v1.0/users/${encodeURIComponent(userId)}`,
-            });
-            return flattenUser(user);
+            return { success: false, message: 'No fields to update were provided.' };
         }
         await callGraphApi(token, {
             method: HttpMethod.PATCH,

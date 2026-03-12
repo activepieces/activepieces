@@ -22,7 +22,7 @@ export const createGroupAction = createAction({
         mailNickname: Property.ShortText({
             displayName: 'Mail Nickname',
             description: 'Mail alias (e.g. "team-alpha"). Used for mail-enabled groups; must be unique.',
-            required: false,
+            required: true,
         }),
         mailEnabled: Property.Checkbox({
             displayName: 'Mail Enabled',
