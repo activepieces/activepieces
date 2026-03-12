@@ -18,12 +18,13 @@ export const azureAdAuth = PieceAuth.OAuth2({
     tokenUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/token',
     required: true,
     scope: [
+    scope: [
         'User.Read.All',
         'User.ReadWrite.All',
-        'User.RevokeSessions.All',
         'Group.ReadWrite.All',
         'Directory.Read.All',
         'LicenseAssignment.ReadWrite.All',
+        'User.RevokeSessions.All',
         'offline_access',
     ],
     validate: async ({ auth }) => {

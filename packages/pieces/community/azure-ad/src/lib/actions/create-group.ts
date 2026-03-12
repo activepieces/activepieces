@@ -46,7 +46,7 @@ export const createGroupAction = createAction({
             securityEnabled: props.securityEnabled ?? true,
         };
         if (props['description']) body['description'] = props['description'];
-        if (props['mailNickname']) body['mailNickname'] = props['mailNickname'];
+        body['mailNickname'] = props['mailNickname'];
         const group = await callGraphApi<Record<string, unknown>>(token, {
             method: HttpMethod.POST,
             url: 'https://graph.microsoft.com/v1.0/groups',
