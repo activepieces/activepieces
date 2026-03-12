@@ -1,11 +1,11 @@
 import { Property, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
-import { slackOAuth2Auth } from '../auth';
+import { slackAuth } from '../auth';
 import { getTeamId, getUserId, SlackAuthValue } from '../common/auth-helpers';
 
 
 
 export const newDirectMessageTrigger = createTrigger({
-	auth: slackOAuth2Auth,
+	auth: slackAuth,
 	name: 'new-direct-message',
 	displayName: 'New Direct Message',
 	description: 'Triggers when a message was posted in a direct message channel.',

@@ -67,7 +67,7 @@ const slackCustomAuth = PieceAuth.CustomAuth({
       if (!response.body.ok) {
         return {
           valid: false,
-          error: `Slack auth.test failed: ${response.body.error}`,
+          error: `Slack auth test failed: ${response.body.error}`,
         };
       }
       return { valid: true };

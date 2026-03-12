@@ -3,12 +3,12 @@ import {
   TriggerStrategy,
   createTrigger,
 } from '@activepieces/pieces-framework';
-import { slackOAuth2Auth } from '../auth';
+import { slackAuth } from '../auth';
 import { userId } from '../common/props';
 import { getTeamId, getUserId, SlackAuthValue } from '../common/auth-helpers';
 
 export const newMentionInDirectMessageTrigger = createTrigger({
-  auth: slackOAuth2Auth,
+  auth: slackAuth,
   name: 'new-mention-in-direct-message',
   displayName: 'New Mention in Direct Message',
   description:
