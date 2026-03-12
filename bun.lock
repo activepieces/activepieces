@@ -5480,6 +5480,17 @@
         "tslib": "^2.3.0",
       },
     },
+    "packages/pieces/community/sardis": {
+      "name": "@activepieces/piece-sardis",
+      "version": "0.1.0",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "@sardis/sdk": "1.0.0",
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/scenario": {
       "name": "@activepieces/piece-scenario",
       "version": "0.1.4",
@@ -8698,6 +8709,8 @@
 
     "@activepieces/piece-sap-ariba": ["@activepieces/piece-sap-ariba@workspace:packages/pieces/community/sap-ariba"],
 
+    "@activepieces/piece-sardis": ["@activepieces/piece-sardis@workspace:packages/pieces/community/sardis"],
+
     "@activepieces/piece-scenario": ["@activepieces/piece-scenario@workspace:packages/pieces/community/scenario"],
 
     "@activepieces/piece-schedule": ["@activepieces/piece-schedule@workspace:packages/pieces/core/schedule"],
@@ -10275,6 +10288,8 @@
     "@runware/sdk-js": ["@runware/sdk-js@1.1.44", "", { "dependencies": { "uuid": "^9.0.1", "ws": "^8.18.0" }, "optionalDependencies": { "bufferutil": "^4.0.8" } }, "sha512-D9rpdcTL3DVWCH8IQUjD8MXBlAGYWuXaLH9+1XwMKCVTgmpm8ohxI2v0or63CHPwf1bd4NHUR4PiwYxHMpuRSA=="],
 
     "@runwayml/sdk": ["@runwayml/sdk@2.9.0", "", { "dependencies": { "@types/node": "^18.11.18", "@types/node-fetch": "^2.6.4", "abort-controller": "^3.0.0", "agentkeepalive": "^4.2.1", "form-data-encoder": "1.7.2", "formdata-node": "^4.3.2", "node-fetch": "^2.6.7" } }, "sha512-ho/9+hqBAoHeR7CR94nA2iyrXWoMWzjwGGRhsvLAD3kiWiLJtr5ZMGjBGpmHHHNYJOLhHnBOR4USeQfdux3low=="],
+
+    "@sardis/sdk": ["@sardis/sdk@1.0.0", "", { "dependencies": { "axios": "^1.13.5", "zod": "^4.3.6" }, "peerDependencies": { "typescript": ">=4.7.0" }, "optionalPeers": ["typescript"] }, "sha512-I0jG47rMDXyBZ2JLq0VW3Z26QIQQxu2tgPmbibb3MomNilWO2eKWiSc6UWncUcxOEUrJkgKZWbU2EG+Ncw1ReA=="],
 
     "@scrapeless-ai/sdk": ["@scrapeless-ai/sdk@1.5.1", "", { "dependencies": { "dotenv": "^16.5.0", "form-data": "^4.0.2", "node-fetch": "2.7.0", "playwright-core": "^1.52.0", "puppeteer-core": "^24.9.0", "stack-trace": "1.0.0-pre2", "tsdown": "^0.11.13", "winston": "^3.17.0", "winston-daily-rotate-file": "^5.0.0", "winston-transport": "^4.9.0", "zod": "^3.25.42", "zod-to-json-schema": "^3.24.5" } }, "sha512-dZ92ERwMMH3zR8tIYuYnk9sBuRzddlOJTTlBFxvSHAN7bkDEa0d8YGio+YsrNwJ7S2bNuU1NCcTK95WdbaSRJw=="],
 
