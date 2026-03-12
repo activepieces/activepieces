@@ -46,8 +46,11 @@ export const addAddonUsageAction = createAction({
       throw new Error('This account does not have an active subscription.');
     }
 
-    const subscriptionAddOns =
-      account.CurrentSubscription.SubscriptionAddOns ?? [];
+    // Normalize SubscriptionAddOns — may be a plain array or a paginated object
+    const rawAddOns = account.CurrentSubscription.SubscriptionAddOns;
+    const subscriptionAddOns: any[] = Array.isArray(rawAddOns)
+      ? rawAddOns
+      : (rawAddOns?.items ?? rawAddOns?.Items ?? []);
     const matchingAddOn = subscriptionAddOns.find(
       (sa: any) => sa.AddOn?.Uid === context.propsValue.addOnUid
     );

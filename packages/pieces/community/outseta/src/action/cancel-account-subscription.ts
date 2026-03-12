@@ -25,7 +25,7 @@ export const cancelAccountSubscriptionAction = createAction({
       apiSecret: context.auth.props.apiSecret,
     });
 
-    // Get the account to find the current subscription
+    // Get the account to verify it has an active subscription
     const account = await client.get<any>(
       `/api/v1/crm/accounts/${context.propsValue.accountUid}?fields=Uid,CurrentSubscription.Uid`
     );
@@ -36,15 +36,14 @@ export const cancelAccountSubscriptionAction = createAction({
       );
     }
 
-    // Cancel by setting the account to Canceling stage
+    // Cancel via the subscription-level endpoint to ensure billing is stopped
+    const subscriptionUid = account.CurrentSubscription.Uid;
     const result = await client.put<any>(
-      `/api/v1/crm/accounts/${context.propsValue.accountUid}`,
+      `/api/v1/billing/subscriptions/${subscriptionUid}/cancel`,
       {
-        AccountStage: 4, // Canceling
-        AccountCancellation: {
-          CancellationReason:
-            context.propsValue.cancellationReason ?? '',
-        },
+        Account: { Uid: context.propsValue.accountUid },
+        CancellationReason:
+          context.propsValue.cancellationReason ?? '',
       }
     );
 
