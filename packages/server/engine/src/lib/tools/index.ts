@@ -276,7 +276,7 @@ async function propertyToSchema(propertyName: string, property: PieceProperty, o
                 schema = z.array(await buildObjectSchemaFromProperties(property.properties, operation, resolvedInput))
             }
             else {
-                schema = z.array(z.string())
+                schema = z.array(z.union([z.string(), z.number(), z.boolean(), z.object({}).loose()]))
             }
             break
         }
@@ -308,7 +308,7 @@ async function propertyToSchema(propertyName: string, property: PieceProperty, o
     return property.required ? schema : schema.nullable()
 }
 
-async function buildObjectSchemaFromProperties(properties: Record<string, PieceProperty>, operation: ExecuteToolOperation, resolvedInput: Record<string, unknown>): Promise<z.ZodObject<Record<string, z.ZodTypeAny>>> {
+async function buildObjectSchemaFromProperties(properties: Record<string, PieceProperty>, operation: ExecuteToolOperation, resolvedInput: Record<string, unknown>): Promise<z.ZodTypeAny> {
     const entries = Object.entries(properties)
     const schemas = await Promise.all(entries.map(([key, value]) =>
         propertyToSchema(key, value, operation, resolvedInput),
@@ -317,7 +317,7 @@ async function buildObjectSchemaFromProperties(properties: Record<string, PieceP
     for (let i = 0; i < entries.length; i++) {
         schemaMap[entries[i][0]] = schemas[i]
     }
-    return z.object(schemaMap)
+    return z.object(schemaMap).loose()
 }
 
 async function buildDynamicSchema(propertyName: string, operation: ExecuteToolOperation, resolvedInput: Record<string, unknown>): Promise<z.ZodTypeAny> {
