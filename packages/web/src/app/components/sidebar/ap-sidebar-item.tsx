@@ -1,8 +1,8 @@
 import { LockKeyhole } from 'lucide-react';
-import { ComponentType, SVGProps } from 'react';
+import React, { ComponentType, useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-import { Dot } from '@/components/ui/dot';
+import { Dot } from '@/components/custom/dot';
 import {
   SidebarMenuButton,
   SidebarMenuItem,
@@ -14,7 +14,7 @@ export type SidebarItemType = {
   to: string;
   label: string;
   type: 'link';
-  icon?: ComponentType<SVGProps<SVGSVGElement>>;
+  icon?: ComponentType<{ className?: string }>;
   notification?: boolean;
   locked?: boolean;
   newWindow?: boolean;
@@ -29,9 +29,19 @@ export const ApSidebarItem = (item: SidebarItemType) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { state } = useSidebar();
+  const iconRef = useRef<AnimatedIconHandle | null>(null);
+  const [isHovered, setIsHovered] = useState(false);
   const isLinkActive =
     location.pathname.startsWith(item.to) || item.isActive?.(location.pathname);
   const isCollapsed = state === 'collapsed';
+
+  useEffect(() => {
+    if (isHovered) {
+      iconRef.current?.startAnimation?.();
+    } else {
+      iconRef.current?.stopAnimation?.();
+    }
+  }, [isHovered]);
 
   return (
     <SidebarMenuItem>
@@ -41,8 +51,10 @@ export const ApSidebarItem = (item: SidebarItemType) => {
           '',
         )}
         onClick={() => navigate(item.to)}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
       >
-        {item.icon && <item.icon className="size-4" />}
+        {item.icon && renderIcon(item.icon, iconRef)}
         {!isCollapsed && <span className="text-sm">{item.label}</span>}
         {!isCollapsed && item.locked && (
           <LockKeyhole className="size-3.5! ml-auto" />
@@ -56,4 +68,19 @@ export const ApSidebarItem = (item: SidebarItemType) => {
       </SidebarMenuButton>
     </SidebarMenuItem>
   );
+};
+
+function renderIcon(
+  Icon: ComponentType<{ className?: string }>,
+  ref: React.RefObject<AnimatedIconHandle | null>,
+) {
+  return React.createElement(Icon, {
+    className: 'size-4 pointer-events-none',
+    ref,
+  } as { className: string });
+}
+
+type AnimatedIconHandle = {
+  startAnimation: () => void;
+  stopAnimation: () => void;
 };

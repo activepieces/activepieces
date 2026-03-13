@@ -2,6 +2,7 @@ import { Permission } from '@activepieces/shared';
 import { t } from 'i18next';
 import { useState } from 'react';
 
+import { RightSideBarType } from '@/app/builder/types';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { Button } from '@/components/ui/button';
 import {
@@ -14,9 +15,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { flowHooks } from '@/features/flows/lib/flow-hooks';
+import { flowHooks } from '@/features/flows';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { RightSideBarType } from '@/lib/types';
 
 import { useBuilderStateContext } from '../builder-hooks';
 
@@ -51,13 +51,14 @@ const OverwriteDraftDialog = ({
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t('Are you sure?')}</DialogTitle>
+          <DialogTitle>{t('Overwrite Draft')}</DialogTitle>
           <DialogDescription>
-            {t('Your current draft version will be overwritten with')}{' '}
+            {t('Your current draft will be replaced with')}{' '}
             <span className="font-semibold">
-              {t('version #')}
-              {versionNumber}
+              {t('version #{versionNumber}', { versionNumber })}
             </span>
+            {'. '}
+            {t('This cannot be undone.')}
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="justify-end">
@@ -75,7 +76,7 @@ const OverwriteDraftDialog = ({
                 onConfirm?.();
               }}
             >
-              {t('Confirm')}
+              {t('Overwrite')}
             </Button>
           </DialogClose>
         </DialogFooter>

@@ -1,47 +1,48 @@
-import { Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
 
-export const VerifyLicenseKeyRequestBody = Type.Object({
-    licenseKey: Type.String(),
-    platformId: Type.String(),
+export const VerifyLicenseKeyRequestBody = z.object({
+    licenseKey: z.string(),
+    platformId: z.string(),
 })
 
-export type VerifyLicenseKeyRequestBody = Static<typeof VerifyLicenseKeyRequestBody>
+export type VerifyLicenseKeyRequestBody = z.infer<typeof VerifyLicenseKeyRequestBody>
 
-export const LicenseKeyEntity = Type.Object({
-    id: Type.String(),
-    email: Type.String(),
-    expiresAt: Type.String(),
-    activatedAt: Type.String(),
-    createdAt: Type.String(),
-    key: Type.String(),
-    ssoEnabled: Type.Boolean(),
-    environmentsEnabled: Type.Boolean(),
-    showPoweredBy: Type.Boolean(),
-    embeddingEnabled: Type.Boolean(),
-    auditLogEnabled: Type.Boolean(),
-    customAppearanceEnabled: Type.Boolean(),
-    manageProjectsEnabled: Type.Boolean(),
-    managePiecesEnabled: Type.Boolean(),
-    manageTemplatesEnabled: Type.Boolean(),
-    apiKeysEnabled: Type.Boolean(),
-    customDomainsEnabled: Type.Boolean(),
-    projectRolesEnabled: Type.Boolean(),
-    analyticsEnabled: Type.Boolean(),
-    globalConnectionsEnabled: Type.Boolean(),
-    customRolesEnabled: Type.Boolean(),
-    eventStreamingEnabled: Type.Boolean(),
-    secretManagersEnabled: Type.Boolean(),
+export const LicenseKeyEntity = z.object({
+    id: z.string(),
+    email: z.string(),
+    expiresAt: z.string(),
+    activatedAt: z.string(),
+    createdAt: z.string(),
+    key: z.string(),
+    ssoEnabled: z.boolean(),
+    scimEnabled: z.boolean(),
+    environmentsEnabled: z.boolean(),
+    showPoweredBy: z.boolean(),
+    embeddingEnabled: z.boolean(),
+    auditLogEnabled: z.boolean(),
+    customAppearanceEnabled: z.boolean(),
+    manageProjectsEnabled: z.boolean(),
+    managePiecesEnabled: z.boolean(),
+    manageTemplatesEnabled: z.boolean(),
+    apiKeysEnabled: z.boolean(),
+    customDomainsEnabled: z.boolean(),
+    projectRolesEnabled: z.boolean(),
+    analyticsEnabled: z.boolean(),
+    globalConnectionsEnabled: z.boolean(),
+    customRolesEnabled: z.boolean(),
+    eventStreamingEnabled: z.boolean(),
+    secretManagersEnabled: z.boolean(),
 })
 
 
-export const CreateTrialLicenseKeyRequestBody = Type.Composite([Type.Object({
-    email: Type.String(),
-    companyName: Type.String(),
-    goal: Type.String(),
-    keyType: Type.Optional(Type.String()),
-}), Type.Omit(LicenseKeyEntity, ['id', 'email', 'expiresAt', 'activatedAt', 'key', 'createdAt'])])
+export const CreateTrialLicenseKeyRequestBody = z.object({
+    email: z.string(),
+    companyName: z.string(),
+    goal: z.string(),
+    keyType: z.string().optional(),
+}).merge(LicenseKeyEntity.omit({ id: true, email: true, expiresAt: true, activatedAt: true, key: true, createdAt: true }))
 
-export type CreateTrialLicenseKeyRequestBody = Static<typeof CreateTrialLicenseKeyRequestBody>
+export type CreateTrialLicenseKeyRequestBody = z.infer<typeof CreateTrialLicenseKeyRequestBody>
 
 
-export type LicenseKeyEntity = Static<typeof LicenseKeyEntity>
+export type LicenseKeyEntity = z.infer<typeof LicenseKeyEntity>

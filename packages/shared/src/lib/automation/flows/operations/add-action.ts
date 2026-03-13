@@ -1,12 +1,10 @@
-import { TypeCompiler } from '@sinclair/typebox/compiler'
+import dayjs from 'dayjs'
 import { isNil } from '../../../core/common'
 import { ActivepiecesError, ErrorCode } from '../../../core/common/activepieces-error'
 import { FlowAction, FlowActionType, LoopOnItemsAction, RouterAction, SingleActionSchema } from '../actions/action'
 import { FlowVersion } from '../flow-version'
 import { flowStructureUtil, Step } from '../util/flow-structure-util'
 import { AddActionRequest, StepLocationRelativeToParent, UpdateActionRequest } from './index'
-
-const actionSchemaValidator = TypeCompiler.Compile(SingleActionSchema)
 
 type ActionCreationProps = {
     nextAction?: FlowAction
@@ -20,6 +18,7 @@ function createAction(request: UpdateActionRequest, {
         name: request.name,
         valid: false,
         skip: request.skip,
+        lastUpdatedDate: dayjs().toISOString(),
         settings: {
             ...request.settings,
             customLogoUrl: request.settings.customLogoUrl,
@@ -59,7 +58,8 @@ function createAction(request: UpdateActionRequest, {
             }
             break
     }
-    const valid = (isNil(request.valid) ? true : request.valid) && actionSchemaValidator.Check(action)
+    const parseResult = SingleActionSchema.safeParse(action)
+    const valid = (isNil(request.valid) ? true : request.valid) && parseResult.success
     return {
         ...action,
         valid,

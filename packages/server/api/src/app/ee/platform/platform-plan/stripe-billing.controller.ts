@@ -1,7 +1,7 @@
 import { AppSystemProp, exceptionHandler, securityAccess } from '@activepieces/server-common'
 import { ApSubscriptionStatus, isNil, PlanName, STANDARD_CLOUD_PLAN } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import Stripe from 'stripe'
 import { system } from '../../../helper/system/system'
@@ -9,7 +9,7 @@ import { platformAiCreditsService } from './platform-ai-credits.service'
 import { ACTIVE_FLOW_PRICE_ID, platformPlanService } from './platform-plan.service'
 import { StripeCheckoutType, stripeHelper } from './stripe-helper'
 
-export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify) => {
+export const stripeBillingController: FastifyPluginAsyncZod = async (fastify) => {
     fastify.post(
         '/stripe/webhook',
         WebhookRequest,
@@ -114,14 +114,13 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
                         break
                     }
                     default:
-                        request.log.info(`Unhandled webhook event type: ${webhook.type}`)
+                        request.log.info({ webhookType: webhook.type }, 'Unhandled webhook event type')
                         break
                 }
                 return await reply.status(StatusCodes.OK).send({ received: true })
             }
             catch (err) {
-                request.log.error(err)
-                request.log.warn('⚠️  Webhook signature verification failed.')
+                request.log.error({ err }, 'Stripe webhook processing failed')
                 exceptionHandler.handle(err, request.log)
                 return reply
                     .status(StatusCodes.BAD_REQUEST)

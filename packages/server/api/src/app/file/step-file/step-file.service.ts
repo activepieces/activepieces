@@ -31,7 +31,7 @@ export const stepFileService = (log: FastifyBaseLogger) => ({
             size: params.contentLength,
         })
         return {
-            uploadUrl: await constructUploadUrl(log, file.s3Key, params.data, params.contentLength),
+            uploadUrl: await constructUploadUrl(log, file.s3Key ?? undefined, params.data, params.contentLength),
             url: await constructDownloadUrl(params.platformId, file),
         }
     },
@@ -43,7 +43,7 @@ async function constructUploadUrl(log: FastifyBaseLogger, s3Key: string | undefi
     if (isNotS3 || dataSent) {
         return undefined
     }
-    return s3Helper(log).putS3SignedUrl(s3Key, contentLength)
+    return s3Helper(log).putS3SignedUrl({ s3Key, contentLength })
 }
 
 async function constructDownloadUrl(platformId: string, file: File): Promise<string> {

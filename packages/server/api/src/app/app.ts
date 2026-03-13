@@ -43,11 +43,13 @@ import { platformAiCreditsService } from './ee/platform/platform-plan/platform-a
 import { platformPlanModule } from './ee/platform/platform-plan/platform-plan.module'
 import { platformWebhooksModule } from './ee/platform-webhooks/platform-webhooks.module'
 import { projectEnterpriseHooks } from './ee/projects/ee-project-hooks'
+import { platformProjectBackgroundJobs } from './ee/projects/platform-project-jobs'
 import { platformProjectModule } from './ee/projects/platform-project-module'
 import { projectMemberModule } from './ee/projects/project-members/project-member.module'
 import { gitRepoModule } from './ee/projects/project-release/git-sync/git-sync.module'
 import { projectReleaseModule } from './ee/projects/project-release/project-release.module'
 import { projectRoleModule } from './ee/projects/project-role/project-role.module'
+import { scimModule } from './ee/scim/scim-module'
 import { secretManagersModule } from './ee/secret-managers/secret-managers.module'
 import { signingKeyModule } from './ee/signing-key/signing-key-module'
 import { userModule } from './ee/users/user.module'
@@ -71,6 +73,7 @@ import { pieceModule } from './pieces/metadata/piece-metadata-controller'
 import { pieceMetadataService } from './pieces/metadata/piece-metadata-service'
 import { pieceSyncService } from './pieces/piece-sync-service'
 import { tagsModule } from './pieces/tags/tags-module'
+import { platformBackgroundJobs } from './platform/platform-jobs'
 import { platformModule } from './platform/platform.module'
 import { projectHooks } from './project/project-hooks'
 import { projectModule } from './project/project-module'
@@ -93,7 +96,8 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
         return payload as Buffer
     })
 
-    await app.register(swagger, {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await app.register(swagger as any, {
         hideUntagged: true,
         openapi: {
             servers: [
@@ -211,8 +215,11 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(templateModule)
     await app.register(userBadgeModule)
     await app.register(platformAnalyticsModule)
-    systemJobHandlers.registerJobHandler(SystemJobName.DELETE_FLOW, (data) => flowBackgroundJobs(app.log).deleteHandler(data))
+    systemJobHandlers.registerJobHandler(SystemJobName.DELETE_FLOW, (data) => flowBackgroundJobs(app.log).deleteFlowHandler(data))
     systemJobHandlers.registerJobHandler(SystemJobName.UPDATE_FLOW_STATUS, (data) => flowBackgroundJobs(app.log).updateStatusHandler(data))
+    systemJobHandlers.registerJobHandler(SystemJobName.HARD_DELETE_PROJECT, (data) => platformProjectBackgroundJobs(app.log).hardDeleteProjectHandler(data))
+
+
 
     app.get(
         '/redirect',
@@ -289,10 +296,12 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(projectReleaseModule)
             await app.register(globalConnectionModule)
             await app.register(secretManagersModule)
+            await app.register(scimModule)
             setPlatformOAuthService(platformOAuth2Service(app.log))
             projectHooks.set(projectEnterpriseHooks)
             flagHooks.set(enterpriseFlagsHooks)
             exceptionHandler.initializeSentry(system.get(AppSystemProp.SENTRY_DSN))
+            systemJobHandlers.registerJobHandler(SystemJobName.HARD_DELETE_PLATFORM, (data) => platformBackgroundJobs(app.log).hardDeletePlatformHandler(data))
             break
         case ApEdition.ENTERPRISE:
             await platformAiCreditsService(app.log).init()
@@ -317,6 +326,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(globalConnectionModule)
             await app.register(queueMetricsModule)
             await app.register(secretManagersModule)
+            await app.register(scimModule)
             setPlatformOAuthService(platformOAuth2Service(app.log))
             projectHooks.set(projectEnterpriseHooks)
             flagHooks.set(enterpriseFlagsHooks)

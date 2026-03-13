@@ -9,14 +9,17 @@ import {
   CarouselPrevious,
   useCarousel,
 } from '@/components/ui/carousel';
+import { cn, DASHBOARD_CONTENT_PADDING_X } from '@/lib/utils';
 
 type CategoryFilterCarouselProps = {
   categories: string[];
   selectedCategory: string;
   onCategorySelect: (category: string) => void;
+  className?: string;
 };
 
 const CarouselContentWithButtons = ({
+  className,
   categories,
   selectedCategory,
   onCategorySelect,
@@ -25,13 +28,13 @@ const CarouselContentWithButtons = ({
 
   return (
     <div
-      className="relative my-4 transition-[padding] duration-200 py-3 border-b border-t"
+      className={`relative my-4 transition-[padding] duration-200 py-3 border-b border-t `}
       style={{
         paddingLeft: canScrollPrev ? '3rem' : '0',
         paddingRight: canScrollNext ? '3rem' : '0',
       }}
     >
-      <CarouselContent className="-ml-2 gap-1">
+      <CarouselContent className={cn('-ml-2 gap-1', className)}>
         {categories.map((category) => {
           const isSelected = selectedCategory === category;
           return (
@@ -79,6 +82,7 @@ export const CategoryFilterCarousel = ({
       className="w-full"
     >
       <CarouselContentWithButtons
+        className={DASHBOARD_CONTENT_PADDING_X}
         categories={categories}
         selectedCategory={selectedCategory}
         onCategorySelect={onCategorySelect}

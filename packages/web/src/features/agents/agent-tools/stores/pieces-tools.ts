@@ -4,12 +4,11 @@ import {
   AgentToolType,
   isNil,
   PredefinedInputsStructure,
+  mcpToolNameUtils,
 } from '@activepieces/shared';
 import { create } from 'zustand';
 
-import { PieceStepMetadataWithSuggestions } from '@/lib/types';
-
-import { sanitizeToolName } from '../componenets/piece-tool';
+import { PieceStepMetadataWithSuggestions } from '@/features/pieces/types';
 
 type SelectedDialogPage = 'pieces-list' | 'actions-list' | 'action-inputs';
 
@@ -130,8 +129,9 @@ export const usePieceToolsDialogStore = create<PiecesToolDialogsState>(
 
       return {
         type: AgentToolType.PIECE,
-        toolName: sanitizeToolName(
-          `${selectedPiece.pieceName}-${selectedAction.name}`,
+        toolName: mcpToolNameUtils.createPieceToolName(
+          selectedPiece.pieceName,
+          selectedAction.name,
         ),
         pieceMetadata: {
           pieceVersion: selectedPiece.pieceVersion,

@@ -9,7 +9,7 @@ import { Trophy } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
-import { useSocket } from '@/components/socket-provider';
+import { useSocket } from '@/components/providers/socket-provider';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 
@@ -18,7 +18,7 @@ import { AccountSettingsDialog } from './account-settings';
 export const BadgeCelebrate = () => {
   const socket = useSocket();
   const { refetch } = userHooks.useCurrentUser();
-  const cleanupRef = useRef<() => void>();
+  const cleanupRef = useRef<() => void>(undefined);
   const { data: showBadges } = flagsHooks.useFlag<boolean>(
     ApFlagId.SHOW_BADGES,
   );

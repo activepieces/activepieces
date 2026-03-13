@@ -8,7 +8,7 @@ import {
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
-} from '@/components/ui/empty';
+} from '@/components/custom/empty';
 import { Skeleton } from '@/components/ui/skeleton';
 
 import { TemplateCardSkeleton } from './skeletons/template-card-skeleton';
@@ -66,7 +66,7 @@ export const SelectedCategoryView = ({
     <div className="space-y-4">
       {showCategoryTitle && (
         <div className="flex items-center gap-2">
-          <h2 className="text-2xl font-semibold">{category}</h2>
+          <h2 className="text-xl font-medium">{category}</h2>
         </div>
       )}
 

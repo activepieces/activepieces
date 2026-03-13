@@ -1,70 +1,72 @@
-import { Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
 import { FlowStatus } from '../../automation/flows/flow'
-import { BaseModelSchema, Nullable } from '../../core/common/base-model'
+import { BaseModelSchema, DateOrString, Nullable } from '../../core/common/base-model'
 import { UserWithMetaInformation } from '../../core/user'
 
 export enum AnalyticsTimePeriod {
     LAST_WEEK = 'last-week',
     LAST_MONTH = 'last-month',
-    ALL_TIME = 'all-time',
+    LAST_THREE_MONTHS = 'last-three-months',
+    LAST_SIX_MONTHS = 'last-six-months',
+    LAST_YEAR = 'last-year',
 }
 
-export const AnalyticsRunsUsageItem = Type.Object({
-    day: Type.String(),
-    flowId: Type.String(),
-    runs: Type.Number(),
+export const AnalyticsRunsUsageItem = z.object({
+    day: z.string(),
+    flowId: z.string(),
+    runs: z.number(),
 })
-export type AnalyticsRunsUsageItem = Static<typeof AnalyticsRunsUsageItem>
+export type AnalyticsRunsUsageItem = z.infer<typeof AnalyticsRunsUsageItem>
 
-export const AnalyticsRunsUsage = Type.Array(AnalyticsRunsUsageItem)
-export type AnalyticsRunsUsage = Static<typeof AnalyticsRunsUsage>
+export const AnalyticsRunsUsage = z.array(AnalyticsRunsUsageItem)
+export type AnalyticsRunsUsage = z.infer<typeof AnalyticsRunsUsage>
 
-export const AnalyticsFlowReportItem = Type.Object({
-    flowId: Type.String(),
-    flowName: Type.String(),
-    projectId: Type.String(),
-    projectName: Type.String(),
-    status: Type.Enum(FlowStatus),
-    timeSavedPerRun: Nullable(Type.Number()),
-    ownerId: Nullable(Type.String()),
+export const AnalyticsFlowReportItem = z.object({
+    flowId: z.string(),
+    flowName: z.string(),
+    projectId: z.string(),
+    projectName: z.string(),
+    status: z.nativeEnum(FlowStatus),
+    timeSavedPerRun: Nullable(z.number()),
+    ownerId: Nullable(z.string()),
 })
-export type AnalyticsFlowReportItem = Static<typeof AnalyticsFlowReportItem>
+export type AnalyticsFlowReportItem = z.infer<typeof AnalyticsFlowReportItem>
 
-export const AnalyticsFlowReport = Type.Array(AnalyticsFlowReportItem)
-export type AnalyticsFlowReport = Static<typeof AnalyticsFlowReport>
+export const AnalyticsFlowReport = z.array(AnalyticsFlowReportItem)
+export type AnalyticsFlowReport = z.infer<typeof AnalyticsFlowReport>
 
-export const PlatformAnalyticsReport = Type.Object({
+export const PlatformAnalyticsReport = z.object({
     ...BaseModelSchema,
-    cachedAt: Type.String(),
+    cachedAt: DateOrString,
     runs: AnalyticsRunsUsage,
-    outdated: Type.Boolean(),
+    outdated: z.boolean(),
     flows: AnalyticsFlowReport,
-    platformId: Type.String(),
-    users: Type.Array(UserWithMetaInformation),
+    platformId: z.string(),
+    users: z.array(UserWithMetaInformation),
 })
-export type PlatformAnalyticsReport = Static<typeof PlatformAnalyticsReport>
+export type PlatformAnalyticsReport = z.infer<typeof PlatformAnalyticsReport>
 
-export const ProjectLeaderboardItem = Type.Object({
-    projectId: Type.String(),
-    projectName: Type.String(),
-    flowCount: Type.Number(),
-    minutesSaved: Nullable(Type.Number()),
+export const ProjectLeaderboardItem = z.object({
+    projectId: z.string(),
+    projectName: z.string(),
+    flowCount: z.number(),
+    minutesSaved: Nullable(z.number()),
 })
-export type ProjectLeaderboardItem = Static<typeof ProjectLeaderboardItem>
+export type ProjectLeaderboardItem = z.infer<typeof ProjectLeaderboardItem>
 
-export const UserLeaderboardItem = Type.Object({
-    userId: Type.String(),
-    flowCount: Type.Number(),
-    minutesSaved: Nullable(Type.Number()),
+export const UserLeaderboardItem = z.object({
+    userId: z.string(),
+    flowCount: z.number(),
+    minutesSaved: Nullable(z.number()),
 })
-export type UserLeaderboardItem = Static<typeof UserLeaderboardItem>
+export type UserLeaderboardItem = z.infer<typeof UserLeaderboardItem>
 
-export const AnalyticsReportRequest = Type.Object({
-    timePeriod: Type.Optional(Type.Enum(AnalyticsTimePeriod)),
+export const AnalyticsReportRequest = z.object({
+    timePeriod: z.nativeEnum(AnalyticsTimePeriod).optional(),
 })
-export type AnalyticsReportRequest = Static<typeof AnalyticsReportRequest>
+export type AnalyticsReportRequest = z.infer<typeof AnalyticsReportRequest>
 
-export const LeaderboardRequest = Type.Object({
-    timePeriod: Type.Enum(AnalyticsTimePeriod),
+export const LeaderboardRequest = z.object({
+    timePeriod: z.nativeEnum(AnalyticsTimePeriod),
 })
-export type LeaderboardRequest = Static<typeof LeaderboardRequest>
+export type LeaderboardRequest = z.infer<typeof LeaderboardRequest>

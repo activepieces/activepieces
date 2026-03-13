@@ -11,19 +11,19 @@ import React, { useMemo } from 'react';
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { PieceSelector } from '@/app/builder/pieces-selector';
 import { LoopIterationInput } from '@/app/builder/run-details/loop-iteration-input';
-import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
-import { RightSideBarType } from '@/lib/types';
+import { RightSideBarType } from '@/app/builder/types';
+import { stepsHooks } from '@/features/pieces';
 import { cn } from '@/lib/utils';
 
 import { flowCanvasConsts } from '../../utils/consts';
 import { flowCanvasUtils } from '../../utils/flow-canvas-utils';
 import { ApStepNode } from '../../utils/types';
 
-import { StepInvalidOrSkippedIcon } from './step-invalid-or-skipped-icon';
 import { StepNodeChevron } from './step-node-chevron';
 import { StepNodeDisplayName } from './step-node-display-name';
 import { StepNodeLogo } from './step-node-logo';
 import { StepNodeName } from './step-node-name';
+import { ApStepNodeStatusInDraft } from './step-node-status-in-draft';
 import { ApStepNodeStatusInRun } from './step-node-status-in-run';
 import { TriggerWidget } from './trigger-widget';
 
@@ -38,7 +38,6 @@ const ApStepCanvasNode = React.memo(
       setSelectedBranchIndex,
       isPieceSelectorOpened,
       setOpenedPieceSelectorStepNameOrAddButtonId,
-      isStepValid,
       isRightSidebarOpen,
     ] = useBuilderStateContext((state) => [
       state.selectStepByName,
@@ -49,7 +48,6 @@ const ApStepCanvasNode = React.memo(
       state.setSelectedBranchIndex,
       state.openedPieceSelectorStepNameOrAddButtonId === step.name,
       state.setOpenedPieceSelectorStepNameOrAddButtonId,
-      !!flowStructureUtil.getStep(step.name, state.flowVersion.trigger)?.valid,
       state.rightSidebar !== RightSideBarType.NONE,
     ]);
     const { stepMetadata } = stepsHooks.useStepMetadata({
@@ -149,9 +147,9 @@ const ApStepCanvasNode = React.memo(
         {...stepNodeDivListeners}
       >
         {isTrigger && <TriggerWidget isSelected={isSelected} />}
-        <StepInvalidOrSkippedIcon isValid={isStepValid} isSkipped={isSkipped} />
         <LoopIterationInput stepName={step.name} />
         <ApStepNodeStatusInRun stepName={step.name} />
+        <ApStepNodeStatusInDraft stepName={step.name} />
         <StepNodeName stepName={step.name} />
         <div className="px-3 h-full w-full overflow-hidden">
           {!isDragging && (

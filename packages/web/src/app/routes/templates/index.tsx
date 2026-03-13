@@ -5,17 +5,17 @@ import {
   UncategorizedFolderId,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Plus, Search } from 'lucide-react';
-import { useMemo } from 'react';
+import { Plus } from 'lucide-react';
+import { useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { ApSidebarToggle } from '@/components/custom/ap-sidebar-toggle';
-import { InputWithIcon } from '@/components/custom/input-with-icon';
+import { PageHeader } from '@/components/custom/page-header';
+import { SearchInput } from '@/components/custom/search-input';
 import { Button } from '@/components/ui/button';
-import { flowHooks } from '@/features/flows/lib/flow-hooks';
-import { templatesHooks } from '@/features/templates/hooks/templates-hook';
-import { templatesTelemetryApi } from '@/features/templates/lib/templates-telemetry-api';
+import { flowHooks } from '@/features/flows';
+import { templatesTelemetryApi, templatesHooks } from '@/features/templates';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { DASHBOARD_CONTENT_PADDING_X } from '@/lib/utils';
 
 import { AllCategoriesView } from './all-categories-view';
 import { CategoryFilterCarousel } from './category-filter-carousel';
@@ -37,19 +37,22 @@ const TemplatesPage = () => {
   const { mutate: createFlow, isPending: isCreateFlowPending } =
     flowHooks.useStartFromScratch(UncategorizedFolderId);
 
-  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearch(event.target.value);
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
   };
 
-  const handleTemplateSelect = (template: Template) => {
-    navigate(`/templates/${template.id}`);
-    if (template.type === TemplateType.OFFICIAL) {
-      templatesTelemetryApi.sendEvent({
-        eventType: TemplateTelemetryEventType.VIEW,
-        templateId: template.id,
-      });
-    }
-  };
+  const handleTemplateSelect = useCallback(
+    (template: Template) => {
+      navigate(`/templates/${template.id}`);
+      if (template.type === TemplateType.OFFICIAL) {
+        templatesTelemetryApi.sendEvent({
+          eventType: TemplateTelemetryEventType.VIEW,
+          templateId: template.id,
+        });
+      }
+    },
+    [navigate],
+  );
 
   const templatesByCategory = useMemo(() => {
     const grouped: Record<string, Template[]> = {} as Record<
@@ -95,29 +98,33 @@ const TemplatesPage = () => {
   return (
     <div>
       <div>
-        <div className="sticky top-0 z-10 bg-background mb-6 pt-4">
-          <div className="flex flex-row w-full justify-between gap-2">
-            <ApSidebarToggle />
-            <InputWithIcon
-              icon={<Search className="text-gray-500 w-4 h-4" />}
-              type="text"
-              value={search}
-              onChange={handleSearchChange}
-              className="bg-sidebar-accent w-[50%]"
-              placeholder={t('Search templates by name or description')}
-            />
-            <div className="flex flex-row justify-end w-[50%]">
-              <Button
-                variant="outline"
-                className="gap-2 h-full"
-                onClick={() => createFlow()}
-                disabled={isCreateFlowPending}
-              >
-                <Plus className="w-4 h-4" />
-                {t('Start from scratch')}
-              </Button>
-            </div>
-          </div>
+        <div className="sticky top-0 z-10 bg-background mb-6 ">
+          <PageHeader
+            showSidebarToggle={true}
+            title={
+              <>
+                <div className="flex flex-row w-full justify-between gap-1">
+                  <SearchInput
+                    value={search}
+                    onChange={handleSearchChange}
+                    placeholder={t('Search templates by name or description')}
+                  ></SearchInput>
+                  <div className="flex flex-row justify-end w-[50%]">
+                    <Button
+                      variant="outline"
+                      className="gap-2 h-full"
+                      onClick={() => createFlow()}
+                      disabled={isCreateFlowPending}
+                    >
+                      <Plus className="w-4 h-4" />
+                      {t('Start from scratch')}
+                    </Button>
+                  </div>
+                </div>
+              </>
+            }
+          ></PageHeader>
+
           {isShowingOfficialTemplates && categories && (
             <CategoryFilterCarousel
               categories={categories}
@@ -126,27 +133,28 @@ const TemplatesPage = () => {
             />
           )}
         </div>
-
-        {!hasTemplates && !showLoading ? (
-          <EmptyTemplatesView />
-        ) : showAllCategories ? (
-          <AllCategoriesView
-            templatesByCategory={templatesByCategory}
-            categories={categories}
-            onCategorySelect={setCategory}
-            onTemplateSelect={handleTemplateSelect}
-            isLoading={showLoading}
-            hideHeader={!isShowingOfficialTemplates}
-          />
-        ) : (
-          <SelectedCategoryView
-            category={selectedCategory}
-            templates={selectedCategoryTemplates}
-            onTemplateSelect={handleTemplateSelect}
-            isLoading={showLoading}
-            showCategoryTitle={showCategoryTitleForOfficialTemplates}
-          />
-        )}
+        <div className={DASHBOARD_CONTENT_PADDING_X}>
+          {!hasTemplates && !showLoading ? (
+            <EmptyTemplatesView />
+          ) : showAllCategories ? (
+            <AllCategoriesView
+              templatesByCategory={templatesByCategory}
+              categories={categories}
+              onCategorySelect={setCategory}
+              onTemplateSelect={handleTemplateSelect}
+              isLoading={showLoading}
+              hideHeader={!isShowingOfficialTemplates}
+            />
+          ) : (
+            <SelectedCategoryView
+              category={selectedCategory}
+              templates={selectedCategoryTemplates}
+              onTemplateSelect={handleTemplateSelect}
+              isLoading={showLoading}
+              showCategoryTitle={showCategoryTitleForOfficialTemplates}
+            />
+          )}
+        </div>
       </div>
     </div>
   );

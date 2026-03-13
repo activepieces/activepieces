@@ -12,19 +12,20 @@ import {
   debounce,
   FlowAction,
   FlowTrigger,
+  Step,
+  FlowActionType,
 } from '@activepieces/shared';
 import { QueryClient } from '@tanstack/react-query';
 import { StoreApi } from 'zustand';
 
-import { flowsApi } from '@/features/flows/lib/flows-api';
-import { sampleDataHooks } from '@/features/flows/lib/sample-data-hooks';
-import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
-import { PromiseQueue } from '@/lib/promise-queue';
+import { RightSideBarType } from '@/app/builder/types';
+import { flowsApi, sampleDataHooks } from '@/features/flows';
 import {
   PieceSelectorItem,
   PieceSelectorOperation,
-  RightSideBarType,
-} from '@/lib/types';
+  pieceSelectorUtils,
+} from '@/features/pieces';
+import { PromiseQueue } from '@/lib/promise-queue';
 
 import { BuilderState } from '../builder-hooks';
 import { flowCanvasUtils } from '../flow-canvas/utils/flow-canvas-utils';
@@ -219,7 +220,6 @@ export const createFlowState = (
         switch (operation.type) {
           case FlowOperationType.SAVE_SAMPLE_DATA: {
             flowUpdatesQueue.add(updateRequest);
-
             break;
           }
           case FlowOperationType.UPDATE_TRIGGER:
@@ -403,7 +403,7 @@ export const createFlowState = (
     },
   };
 };
-
+/**Because the server creates the sample data files ids and we need to update the local flow version with the new sample data files ids so when an update happens again in the future it doesn't get unset */
 const handleUpdatingSampleDataForStepLocallyAfterServerUpdate = ({
   operation,
   localFlowVersion,
@@ -418,7 +418,7 @@ const handleUpdatingSampleDataForStepLocallyAfterServerUpdate = ({
   }
   const localStep = flowStructureUtil.getStep(
     operation.request.stepName,
-    updatedFlowVersion.trigger,
+    localFlowVersion.trigger,
   );
   const updatedStep = flowStructureUtil.getStep(
     operation.request.stepName,
@@ -428,23 +428,11 @@ const handleUpdatingSampleDataForStepLocallyAfterServerUpdate = ({
     console.error(`Step ${operation.request.stepName} not found`);
     return localFlowVersion;
   }
-  const clonedLocalStepWithUpdatedSampleDataProperty: FlowAction | FlowTrigger =
-    JSON.parse(JSON.stringify(localStep));
-  clonedLocalStepWithUpdatedSampleDataProperty.settings.sampleData =
-    updatedStep.settings.sampleData;
-  if (
-    flowStructureUtil.isAction(
-      clonedLocalStepWithUpdatedSampleDataProperty.type,
-    )
-  ) {
-    return flowOperations.apply(localFlowVersion, {
-      type: FlowOperationType.UPDATE_ACTION,
-      request: clonedLocalStepWithUpdatedSampleDataProperty as FlowAction,
-    });
-  } else {
-    return flowOperations.apply(localFlowVersion, {
-      type: FlowOperationType.UPDATE_TRIGGER,
-      request: clonedLocalStepWithUpdatedSampleDataProperty as FlowTrigger,
-    });
-  }
+  return flowOperations.apply(localFlowVersion, {
+    type: FlowOperationType.UPDATE_SAMPLE_DATA_INFO,
+    request: {
+      stepName: operation.request.stepName,
+      sampleDataSettings: updatedStep.settings.sampleData,
+    },
+  });
 };

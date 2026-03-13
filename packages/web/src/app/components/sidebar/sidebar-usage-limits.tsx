@@ -10,11 +10,11 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { projectCollectionUtils } from '@/features/projects';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { projectCollectionUtils } from '@/hooks/project-collection';
 import { userHooks } from '@/hooks/user-hooks';
-import { formatUtils } from '@/lib/utils';
+import { formatUtils } from '@/lib/format-utils';
 
 const SidebarUsageLimits = React.memo(() => {
   const { project } = projectCollectionUtils.useCurrentProject();
@@ -29,8 +29,8 @@ const SidebarUsageLimits = React.memo(() => {
 
   if (isNil(project)) {
     return (
-      <div className="flex flex-col w-full p-4 bg-background rounded-md border">
-        <div className="flex flex-col gap-3">
+      <div className="flex flex-col w-full p-2.5 bg-background rounded-md border">
+        <div className="flex flex-col gap-2">
           {[1, 2, 3].map((i) => (
             <div key={i} className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -46,8 +46,8 @@ const SidebarUsageLimits = React.memo(() => {
   }
 
   return (
-    <div className="flex flex-col w-full p-4 bg-background rounded-md border">
-      <div className="flex flex-col gap-2.5">
+    <div className="flex flex-col w-full p-2.5 bg-background rounded-md border">
+      <div className="flex flex-col gap-1.5">
         <UsageRow
           name={t('Runs')}
           icon={<Play className="size-4 text-foreground" />}
@@ -71,7 +71,7 @@ const SidebarUsageLimits = React.memo(() => {
         {isPlatformAdmin && (
           <Link
             to="/platform/setup/billing"
-            className="flex items-center gap-1 text-xs text-foreground/80 hover:text-foreground mt-2 w-fit"
+            className="flex items-center gap-1 text-xs text-foreground/80 hover:text-foreground mt-1 w-fit"
           >
             <span>{t('Manage Plan')}</span>
             <ChevronRight className="size-4" />

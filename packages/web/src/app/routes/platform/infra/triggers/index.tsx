@@ -13,16 +13,15 @@ import {
 } from 'lucide-react';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
-import { DataTable } from '@/components/ui/data-table';
-import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
+import { DataTable } from '@/components/custom/data-table';
+import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import {
   Tooltip,
   TooltipTrigger,
   TooltipContent,
 } from '@/components/ui/tooltip';
-import { triggerRunHooks } from '@/features/flows/lib/trigger-run-api';
-import PieceDisplayName from '@/features/pieces/components/piece-display-name';
-import PieceIconWithPieceName from '@/features/pieces/components/piece-icon-from-name';
+import { triggerRunHooks } from '@/features/flows';
+import { PieceDisplayName, PieceIconWithPieceName } from '@/features/pieces';
 import { cn } from '@/lib/utils';
 
 import { StatusProgressBar, type DayStatus } from './status-progress-bar';
@@ -118,7 +117,7 @@ export default function TriggerHealthPage() {
   const getStatusIcon = (statusType: string) => {
     switch (statusType) {
       case STATUS.SUCCESS:
-        return <CheckCircle size={16} className="text-emerald-700" />;
+        return <CheckCircle size={16} className="text-success-700" />;
       case STATUS.WARNING:
         return <AlertCircle size={16} className="text-amber-700" />;
       case STATUS.FAULT:
@@ -131,7 +130,7 @@ export default function TriggerHealthPage() {
   const getStatusColor = (statusType: string) => {
     switch (statusType) {
       case STATUS.SUCCESS:
-        return 'text-emerald-700';
+        return 'text-success-700';
       case STATUS.WARNING:
         return 'text-amber-700';
       case STATUS.FAULT:
@@ -148,7 +147,7 @@ export default function TriggerHealthPage() {
   const columns = [
     {
       accessorKey: 'pieceDisplayName',
-      size: 200,
+      size: 220,
       header: ({ column }: any) => (
         <DataTableColumnHeader column={column} title="Piece" icon={Puzzle} />
       ),
@@ -204,7 +203,7 @@ export default function TriggerHealthPage() {
     },
     {
       accessorKey: 'lastResults',
-      size: 200,
+      size: 190,
       header: ({ column }: any) => (
         <DataTableColumnHeader
           column={column}
@@ -218,13 +217,9 @@ export default function TriggerHealthPage() {
     },
     {
       accessorKey: 'last24Hours',
-      size: 120,
+      size: 70,
       header: ({ column }: any) => (
-        <DataTableColumnHeader
-          column={column}
-          title="Last 24 Hours"
-          icon={Clock}
-        />
+        <DataTableColumnHeader column={column} title="24H" icon={Clock} />
       ),
       cell: ({ row }: any) => (
         <div className={cn('font-medium')}>{row.original.last24Hours}%</div>
@@ -232,13 +227,9 @@ export default function TriggerHealthPage() {
     },
     {
       accessorKey: 'last7Days',
-      size: 120,
+      size: 65,
       header: ({ column }: any) => (
-        <DataTableColumnHeader
-          column={column}
-          title="Last 7 Days"
-          icon={Calendar}
-        />
+        <DataTableColumnHeader column={column} title="7D" icon={Calendar} />
       ),
       cell: ({ row }: any) => (
         <div className={cn('font-medium')}>{row.original.last7Days}%</div>
@@ -246,13 +237,9 @@ export default function TriggerHealthPage() {
     },
     {
       accessorKey: 'last14Days',
-      size: 120,
+      size: 65,
       header: ({ column }: any) => (
-        <DataTableColumnHeader
-          column={column}
-          title="Last 14 Days"
-          icon={Calendar}
-        />
+        <DataTableColumnHeader column={column} title="14D" icon={Calendar} />
       ),
       cell: ({ row }: any) => (
         <div className={cn('font-medium')}>{row.original.last14Days}%</div>

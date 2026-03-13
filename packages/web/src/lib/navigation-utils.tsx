@@ -1,6 +1,6 @@
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import { useEmbedding } from '../components/embed-provider';
+import { useEmbedding } from '@/components/providers/embed-provider';
 
 export const useNewWindow = () => {
   const { embedState } = useEmbedding();

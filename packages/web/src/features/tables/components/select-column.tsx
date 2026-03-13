@@ -3,7 +3,7 @@ import { useHeaderRowSelection, useRowSelection } from 'react-data-grid';
 import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 
-import { Row } from '../lib/types';
+import { Row } from '../types/types';
 
 export function SelectHeaderCell() {
   const { isRowSelected, onRowSelectionChange } = useHeaderRowSelection();

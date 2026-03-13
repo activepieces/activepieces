@@ -1,4 +1,4 @@
-import { Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
 import { BaseModelSchema } from '../../core/common'
 
 export enum FieldType {
@@ -8,28 +8,28 @@ export enum FieldType {
     STATIC_DROPDOWN = 'STATIC_DROPDOWN',
 }
 
-export const Field = Type.Union([Type.Object({
+export const Field = z.union([z.object({
     ...BaseModelSchema,
-    name: Type.String(),
-    externalId: Type.String(),
-    type: Type.Literal(FieldType.STATIC_DROPDOWN),
-    tableId: Type.String(),
-    projectId: Type.String(),
-    data: Type.Object({
-        options: Type.Array(Type.Object({
-            value: Type.String(),
+    name: z.string(),
+    externalId: z.string(),
+    type: z.literal(FieldType.STATIC_DROPDOWN),
+    tableId: z.string(),
+    projectId: z.string(),
+    data: z.object({
+        options: z.array(z.object({
+            value: z.string(),
         })),
     }),
-}), Type.Object({
+}), z.object({
     ...BaseModelSchema,
-    name: Type.String(),
-    externalId: Type.String(),
-    type: Type.Union([Type.Literal(FieldType.TEXT), Type.Literal(FieldType.NUMBER), Type.Literal(FieldType.DATE)]),
-    tableId: Type.String(),
-    projectId: Type.String(),
+    name: z.string(),
+    externalId: z.string(),
+    type: z.union([z.literal(FieldType.TEXT), z.literal(FieldType.NUMBER), z.literal(FieldType.DATE)]),
+    tableId: z.string(),
+    projectId: z.string(),
 })])
 
-export type Field = Static<typeof Field>
+export type Field = z.infer<typeof Field>
 
 export const StaticDropdownEmptyOption = {
     label: '',

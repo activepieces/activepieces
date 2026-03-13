@@ -6,21 +6,23 @@ import {
 } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Sparkles, Settings, Plus } from 'lucide-react';
+import { Sparkles, Settings } from 'lucide-react';
 import { useState } from 'react';
 
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-import { Switch } from '@/components/ui/switch';
 import {
-  Tooltip,
-  TooltipTrigger,
-  TooltipContent,
-} from '@/components/ui/tooltip';
+  Item,
+  ItemMedia,
+  ItemContent,
+  ItemTitle,
+  ItemDescription,
+  ItemActions,
+} from '@/components/custom/item';
+import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { isRunningCloudInDevMode } from '@/lib/api';
 
-import { billingMutations } from '../../lib/billing-hooks';
+import { billingMutations } from '../../hooks/billing-hooks';
 
 import { AutoTopUpConfigDialog } from './auto-topup-config-dialog';
 import { PurchaseAICreditsDialog } from './purchase-ai-credits-dialog';
@@ -32,15 +34,13 @@ interface AiCreditUsageProps {
 export function AICreditUsage({ platformSubscription }: AiCreditUsageProps) {
   const queryClient = useQueryClient();
   const { plan, usage } = platformSubscription;
-
   const [isPurchaseDialogOpen, setIsPurchaseDialogOpen] = useState(false);
   const [isAutoTopUpDialogOpen, setIsAutoTopUpDialogOpen] = useState(false);
   const [isAutoTopUpEditing, setIsAutoTopUpEditing] = useState(false);
 
-  const planIncludedCredits = plan.includedAiCredits;
   const totalCreditsUsed = usage.totalAiCreditsUsed;
   const creditsRemaining = usage.aiCreditsRemaining;
-
+  const isCloud = window.location.hostname.includes('cloud.activepieces.com');
   const autoTopUpState =
     plan.aiCreditsAutoTopUpState ?? AiCreditsAutoTopUpState.DISABLED;
 
@@ -52,156 +52,106 @@ export function AICreditUsage({ platformSubscription }: AiCreditUsageProps) {
   const { mutate: updateAutoTopUp, isPending: isDisablingAutoTopUp } =
     billingMutations.useUpdateAutoTopUp(queryClient);
 
-  const handleToggleAutoTopUp = (checked: boolean) => {
-    if (checked) {
-      setIsAutoTopUpEditing(false);
-      setIsAutoTopUpDialogOpen(true);
-    } else {
-      updateAutoTopUp({ state: AiCreditsAutoTopUpState.DISABLED });
-    }
-  };
-
-  const handleConfigureAutoTopUp = () => {
-    setIsAutoTopUpEditing(true);
-    setIsAutoTopUpDialogOpen(true);
-  };
+  if (!isCloud && !isRunningCloudInDevMode) {
+    return null;
+  }
 
   return (
-    <Card className="w-full">
-      <CardHeader className="border-b">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-10 h-10 rounded-lg border">
-              <Sparkles className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold">{t('AI Credits')}</h3>
-              <p className="text-sm text-muted-foreground">
-                {t('Manage your AI credits wallet and auto-topup')}
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            {canBuyCredits && (
+    <div className="flex flex-col gap-4">
+      <Item variant="outline">
+        <ItemMedia variant="icon">
+          <Sparkles />
+        </ItemMedia>
+        <ItemContent>
+          <ItemTitle>{t('AI Credits')}</ItemTitle>
+          <ItemDescription>
+            {Math.round(creditsRemaining).toLocaleString()}{' '}
+            {t('credits available')}
+            <span className="ml-2 text-xs">
+              ({t('Total used')}:{' '}
+              {Math.round(totalCreditsUsed).toLocaleString()})
+            </span>
+          </ItemDescription>
+        </ItemContent>
+        {canBuyCredits && (
+          <ItemActions>
+            <Button
+              variant="basic"
+              size="sm"
+              onClick={() => setIsPurchaseDialogOpen(true)}
+            >
+              {t('Purchase Credits')}
+            </Button>
+          </ItemActions>
+        )}
+      </Item>
+
+      {canBuyCredits && (
+        <Item variant="outline">
+          <ItemMedia variant="icon">
+            <Settings />
+          </ItemMedia>
+          <ItemContent>
+            <ItemTitle>{t('Auto Top-up')}</ItemTitle>
+            <ItemDescription>
+              {isAutoTopUpEnabled
+                ? buildAutoTopUpSummary(plan)
+                : t('Automatically purchase credits when balance is low.')}
+            </ItemDescription>
+          </ItemContent>
+          <ItemActions>
+            {isAutoTopUpEnabled && (
               <Button
-                variant="default"
-                className="gap-2"
-                onClick={() => setIsPurchaseDialogOpen(true)}
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => {
+                  setIsAutoTopUpEditing(true);
+                  setIsAutoTopUpDialogOpen(true);
+                }}
               >
-                <Plus className="w-4 h-4" />
-                {t('Purchase Credits')}
+                <Settings className="size-4" />
               </Button>
             )}
-          </div>
-        </div>
-      </CardHeader>
+            <Switch
+              checked={isAutoTopUpEnabled}
+              onCheckedChange={(checked) => {
+                if (checked) {
+                  setIsAutoTopUpEditing(false);
+                  setIsAutoTopUpDialogOpen(true);
+                } else {
+                  updateAutoTopUp({ state: AiCreditsAutoTopUpState.DISABLED });
+                }
+              }}
+              disabled={isDisablingAutoTopUp}
+            />
+          </ItemActions>
+        </Item>
+      )}
 
-      <CardContent className="p-6 space-y-8">
-        <div className="space-y-6">
-          <div className="p-4 rounded-lg border bg-primary/5 space-y-2">
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-primary" />
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="text-sm font-medium text-primary cursor-help">
-                    {t('Wallet Balance')}
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent>
-                  {t('You get {credits} free credits monthly', {
-                    credits: planIncludedCredits.toLocaleString(),
-                  })}
-                </TooltipContent>
-              </Tooltip>
-            </div>
-            <div className="flex items-baseline justify-between">
-              <div className="text-3xl font-bold">
-                {Math.round(creditsRemaining).toLocaleString()}
-                <span className="text-sm font-normal text-muted-foreground ml-2">
-                  {t('credits available')}
-                </span>
-              </div>
-              <div className="text-xs text-muted-foreground">
-                {t('Total lifetime usage')}:{' '}
-                {Math.round(totalCreditsUsed).toLocaleString()}
-              </div>
-            </div>
-          </div>
-        </div>
+      <PurchaseAICreditsDialog
+        isOpen={isPurchaseDialogOpen}
+        onOpenChange={setIsPurchaseDialogOpen}
+      />
 
-        <Separator />
-
-        <div className="space-y-6">
-          {canBuyCredits && (
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <h4 className="text-base font-medium">{t('Auto Top-up')}</h4>
-                  {isAutoTopUpEnabled && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6"
-                      onClick={handleConfigureAutoTopUp}
-                    >
-                      <Settings className="w-3 h-3" />
-                    </Button>
-                  )}
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  {t('Automatically purchase credits when balance is low.')}
-                </p>
-                {isAutoTopUpEnabled &&
-                  plan.aiCreditsAutoTopUpThreshold &&
-                  plan.aiCreditsAutoTopUpCreditsToAdd && (
-                    <div className="space-y-0.5 mt-1">
-                      <p className="text-xs text-primary">
-                        {t(
-                          'Adds {credits} credits when balance drops below {threshold}',
-                          {
-                            credits:
-                              plan.aiCreditsAutoTopUpCreditsToAdd.toLocaleString(),
-                            threshold:
-                              plan.aiCreditsAutoTopUpThreshold.toLocaleString(),
-                          },
-                        )}
-                      </p>
-                      {plan.maxAutoTopUpCreditsMonthly && (
-                        <p className="text-xs text-muted-foreground">
-                          {t('Monthly spending limit: {limit} credits', {
-                            limit:
-                              plan.maxAutoTopUpCreditsMonthly.toLocaleString(),
-                          })}
-                        </p>
-                      )}
-                    </div>
-                  )}
-              </div>
-              <div className="flex items-center gap-3">
-                <Switch
-                  checked={isAutoTopUpEnabled}
-                  onCheckedChange={handleToggleAutoTopUp}
-                  disabled={isDisablingAutoTopUp}
-                />
-              </div>
-            </div>
-          )}
-        </div>
-
-        <PurchaseAICreditsDialog
-          isOpen={isPurchaseDialogOpen}
-          onOpenChange={setIsPurchaseDialogOpen}
-        />
-
-        <AutoTopUpConfigDialog
-          isOpen={isAutoTopUpDialogOpen}
-          onOpenChange={setIsAutoTopUpDialogOpen}
-          isEditing={isAutoTopUpEditing}
-          currentThreshold={plan.aiCreditsAutoTopUpThreshold}
-          currentCreditsToAdd={plan.aiCreditsAutoTopUpCreditsToAdd}
-          currentMaxMonthlyLimit={plan.maxAutoTopUpCreditsMonthly}
-        />
-      </CardContent>
-    </Card>
+      <AutoTopUpConfigDialog
+        isOpen={isAutoTopUpDialogOpen}
+        onOpenChange={setIsAutoTopUpDialogOpen}
+        isEditing={isAutoTopUpEditing}
+        currentThreshold={plan.aiCreditsAutoTopUpThreshold}
+        currentCreditsToAdd={plan.aiCreditsAutoTopUpCreditsToAdd}
+        currentMaxMonthlyLimit={plan.maxAutoTopUpCreditsMonthly}
+      />
+    </div>
   );
+}
+
+function buildAutoTopUpSummary(plan: PlatformBillingInformation['plan']) {
+  if (plan.aiCreditsAutoTopUpThreshold && plan.aiCreditsAutoTopUpCreditsToAdd) {
+    return t('Adds {credits} credits when below {threshold}', {
+      credits: plan.aiCreditsAutoTopUpCreditsToAdd.toLocaleString(),
+      threshold: plan.aiCreditsAutoTopUpThreshold.toLocaleString(),
+    });
+  }
+  return t('Enabled');
 }

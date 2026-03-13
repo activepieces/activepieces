@@ -3,6 +3,8 @@ import {
   FlowActionType,
   FlowOperationType,
   FlowRun,
+  FlowTrigger,
+  flowOperations,
   flowStructureUtil,
   FlowVersion,
   isNil,
@@ -12,11 +14,12 @@ import {
   stringifyNullOrUndefined,
   WebsocketClientEvent,
 } from '@activepieces/shared';
+import dayjs from 'dayjs';
 import { Socket } from 'socket.io-client';
 import { StoreApi } from 'zustand';
 
 import { internalErrorToast } from '@/components/ui/sonner';
-import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
+import { flowRunUtils } from '@/features/flow-runs';
 
 import { BuilderState } from '../builder-hooks';
 import { defaultAgentOutput, isRunAgent } from '../test-step/agent-test-step';
@@ -175,6 +178,21 @@ export const createRunState = (
               stepName,
               response.standardError === '' ? null : response.standardError,
             );
+            set((state) => {
+              const failedStep = flowStructureUtil.getStep(
+                stepName,
+                state.flowVersion.trigger,
+              );
+              return {
+                flowVersion: flowOperations.apply(state.flowVersion, {
+                  type: FlowOperationType.UPDATE_SAMPLE_DATA_INFO,
+                  request: {
+                    stepName,
+                    sampleDataSettings: failedStep?.settings.sampleData ?? {},
+                  },
+                }),
+              };
+            });
           }
           if (step.type === FlowActionType.CODE) {
             get().setConsoleLogs(
@@ -244,6 +262,20 @@ export const createRunState = (
         internalErrorToast();
         return;
       }
+
+      set((state) => {
+        // only update the last test date
+        return {
+          flowVersion: flowOperations.apply(state.flowVersion, {
+            type: FlowOperationType.UPDATE_SAMPLE_DATA_INFO,
+            request: {
+              stepName: step.name,
+              sampleDataSettings: step.settings.sampleData ?? {},
+            },
+          }),
+        };
+      });
+
       setSampleDataLocally({
         stepName: step.name,
         type: 'output',

@@ -1,12 +1,12 @@
-import { Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
 import { Nullable } from '../../../core/common'
 import { Metadata } from '../../../core/common/metadata'
-import { BranchCondition, CodeActionSchema, LoopOnItemsActionSchema, PieceActionSchema, RouterActionSchema } from '../actions/action'
+import { BranchCondition, CodeActionSchema, CodeActionSettings, LoopOnItemsActionSchema, LoopOnItemsActionSettings, PieceActionSchema, PieceActionSettings, RouterActionSchema, RouterActionSettings } from '../actions/action'
 import { FlowStatus } from '../flow'
 import { FlowVersion, FlowVersionState } from '../flow-version'
 import { Note } from '../note'
-import { SaveSampleDataRequest } from '../sample-data'
-import { EmptyTrigger, FlowTrigger, FlowTriggerType, PieceTrigger } from '../triggers/trigger'
+import { SampleDataSetting, SaveSampleDataRequest } from '../sample-data'
+import { EmptyTrigger, FlowTrigger, FlowTriggerType, PieceTrigger, PieceTriggerSettings } from '../triggers/trigger'
 import { flowPieceUtil } from '../util/flow-piece-util'
 import { flowStructureUtil } from '../util/flow-structure-util'
 import { _addAction } from './add-action'
@@ -22,6 +22,7 @@ import { notesOperations } from './notes-operations'
 import { _getOperationsForPaste } from './paste-operations'
 import { _skipAction } from './skip-action'
 import { _updateAction } from './update-action'
+import { _updateSampleDataInfo } from './update-sample-data-info'
 import { _updateTrigger } from './update-trigger'
 
 export enum FlowOperationType {
@@ -50,49 +51,57 @@ export enum FlowOperationType {
     UPDATE_NOTE = 'UPDATE_NOTE',
     DELETE_NOTE = 'DELETE_NOTE',
     ADD_NOTE = 'ADD_NOTE',
+    UPDATE_SAMPLE_DATA_INFO = 'UPDATE_SAMPLE_DATA_INFO',
 }
 
-export const DeleteBranchRequest = Type.Object({
-    branchIndex: Type.Number(),
-    stepName: Type.String(),
+export const DeleteBranchRequest = z.object({
+    branchIndex: z.number(),
+    stepName: z.string(),
 })
 
-export const UpdateNoteRequest = Type.Omit(Note, [ 'createdAt', 'updatedAt'])
-export const DeleteNoteRequest = Type.Object({
-    id: Type.String(),
+export const UpdateNoteRequest = Note.omit({ createdAt: true, updatedAt: true })
+export const DeleteNoteRequest = z.object({
+    id: z.string(),
 })
-export const AddNoteRequest = Type.Omit(Note, ['createdAt', 'updatedAt', 'ownerId'])
+export const AddNoteRequest = Note.omit({ createdAt: true, updatedAt: true, ownerId: true })
 
-export const AddBranchRequest = Type.Object({
-    branchIndex: Type.Number(),
-    stepName: Type.String(),
-    conditions: Type.Optional(Type.Array(Type.Array(BranchCondition))),
-    branchName: Type.String(),
+export const AddBranchRequest = z.object({
+    branchIndex: z.number(),
+    stepName: z.string(),
+    conditions: z.array(z.array(BranchCondition)).optional(),
+    branchName: z.string(),
 })
-export const MoveBranchRequest = Type.Object({
-    sourceBranchIndex: Type.Number(),
-    targetBranchIndex: Type.Number(),
-    stepName: Type.String(),
+export const MoveBranchRequest = z.object({
+    sourceBranchIndex: z.number(),
+    targetBranchIndex: z.number(),
+    stepName: z.string(),
 })
-export type MoveBranchRequest = Static<typeof MoveBranchRequest>
+export type MoveBranchRequest = z.infer<typeof MoveBranchRequest>
 
-export const SkipActionRequest = Type.Object({
-    names: Type.Array(Type.String()),
-    skip: Type.Boolean(),
+export const SkipActionRequest = z.object({
+    names: z.array(z.string()),
+    skip: z.boolean(),
 })
 
-export type SkipActionRequest = Static<typeof SkipActionRequest>
+export type SkipActionRequest = z.infer<typeof SkipActionRequest>
 
-export const DuplicateBranchRequest = Type.Object({
-    branchIndex: Type.Number(),
-    stepName: Type.String(),
+export const UpdateSampleDataInfoRequest = z.object({
+    stepName: z.string(),
+    sampleDataSettings: SampleDataSetting.omit({ lastTestDate: true }),
 })
-export type DeleteBranchRequest = Static<typeof DeleteBranchRequest>
-export type AddBranchRequest = Static<typeof AddBranchRequest>
-export type DuplicateBranchRequest = Static<typeof DuplicateBranchRequest>
-export type UpdateNoteRequest = Static<typeof UpdateNoteRequest>
-export type DeleteNoteRequest = Static<typeof DeleteNoteRequest>
-export type AddNoteRequest = Static<typeof AddNoteRequest>
+export type UpdateSampleDataInfoRequest = z.infer<typeof UpdateSampleDataInfoRequest>
+
+
+export const DuplicateBranchRequest = z.object({
+    branchIndex: z.number(),
+    stepName: z.string(),
+})
+export type DeleteBranchRequest = z.infer<typeof DeleteBranchRequest>
+export type AddBranchRequest = z.infer<typeof AddBranchRequest>
+export type DuplicateBranchRequest = z.infer<typeof DuplicateBranchRequest>
+export type UpdateNoteRequest = z.infer<typeof UpdateNoteRequest>
+export type DeleteNoteRequest = z.infer<typeof DeleteNoteRequest>
+export type AddNoteRequest = z.infer<typeof AddNoteRequest>
 
 export enum StepLocationRelativeToParent {
     AFTER = 'AFTER',
@@ -100,333 +109,218 @@ export enum StepLocationRelativeToParent {
     INSIDE_BRANCH = 'INSIDE_BRANCH',
 }
 
-export const UseAsDraftRequest = Type.Object({
-    versionId: Type.String(),
+export const UseAsDraftRequest = z.object({
+    versionId: z.string(),
 })
-export type UseAsDraftRequest = Static<typeof UseAsDraftRequest>
+export type UseAsDraftRequest = z.infer<typeof UseAsDraftRequest>
 
-export const LockFlowRequest = Type.Object({})
+export const LockFlowRequest = z.object({})
 
-export type LockFlowRequest = Static<typeof LockFlowRequest>
+export type LockFlowRequest = z.infer<typeof LockFlowRequest>
 
-export const ImportFlowRequest = Type.Object({
-    displayName: Type.String({}),
+export const ImportFlowRequest = z.object({
+    displayName: z.string(),
     trigger: FlowTrigger,
-    schemaVersion: Nullable(Type.String()),
-    notes: Nullable(Type.Array(Note)),
+    schemaVersion: Nullable(z.string()),
+    notes: Nullable(z.array(Note)),
 })
 
-export type ImportFlowRequest = Static<typeof ImportFlowRequest>
+export type ImportFlowRequest = z.infer<typeof ImportFlowRequest>
 
-export const ChangeFolderRequest = Type.Object({
-    folderId: Nullable(Type.String({})),
+export const ChangeFolderRequest = z.object({
+    folderId: Nullable(z.string()),
 })
 
-export type ChangeFolderRequest = Static<typeof ChangeFolderRequest>
+export type ChangeFolderRequest = z.infer<typeof ChangeFolderRequest>
 
-export const ChangeNameRequest = Type.Object({
-    displayName: Type.String({}),
+export const ChangeNameRequest = z.object({
+    displayName: z.string(),
 })
 
-export type ChangeNameRequest = Static<typeof ChangeNameRequest>
+export type ChangeNameRequest = z.infer<typeof ChangeNameRequest>
 
 
-export const DeleteActionRequest = Type.Object({
-    names: Type.Array(Type.String()),
+export const DeleteActionRequest = z.object({
+    names: z.array(z.string()),
 })
 
-export type DeleteActionRequest = Static<typeof DeleteActionRequest>
+export type DeleteActionRequest = z.infer<typeof DeleteActionRequest>
 
-export const UpdateActionRequest = Type.Union([
-    CodeActionSchema,
-    LoopOnItemsActionSchema,
-    PieceActionSchema,
-    RouterActionSchema,
+export const UpdateActionRequest = z.union([
+    CodeActionSchema.omit({ lastUpdatedDate: true, settings: true }).and(z.object({ settings: CodeActionSettings.omit({ sampleData: true }) })),
+    LoopOnItemsActionSchema.omit({ lastUpdatedDate: true, settings: true }).and(z.object({ settings: LoopOnItemsActionSettings.omit({ sampleData: true }) })),
+    PieceActionSchema.omit({ lastUpdatedDate: true, settings: true }).and(z.object({ settings: PieceActionSettings.omit({ sampleData: true }) })),
+    RouterActionSchema.omit({ lastUpdatedDate: true, settings: true }).and(z.object({ settings: RouterActionSettings.omit({ sampleData: true }) })),
 ])
 
-export type UpdateActionRequest = Static<typeof UpdateActionRequest>
 
-export const DuplicateStepRequest = Type.Object({
-    stepName: Type.String(),
+
+export type UpdateActionRequest = z.infer<typeof UpdateActionRequest>
+
+export const DuplicateStepRequest = z.object({
+    stepName: z.string(),
 })
 
-export type DuplicateStepRequest = Static<typeof DuplicateStepRequest>
+export type DuplicateStepRequest = z.infer<typeof DuplicateStepRequest>
 
-export const MoveActionRequest = Type.Object({
-    name: Type.String(),
-    newParentStep: Type.String(),
-    stepLocationRelativeToNewParent: Type.Optional(
-        Type.Enum(StepLocationRelativeToParent),
-    ),
-    branchIndex: Type.Optional(Type.Number()),
+export const MoveActionRequest = z.object({
+    name: z.string(),
+    newParentStep: z.string(),
+    stepLocationRelativeToNewParent: z.nativeEnum(StepLocationRelativeToParent).optional(),
+    branchIndex: z.number().optional(),
 })
-export type MoveActionRequest = Static<typeof MoveActionRequest>
+export type MoveActionRequest = z.infer<typeof MoveActionRequest>
 
-export const AddActionRequest = Type.Object({
-    parentStep: Type.String(),
-    stepLocationRelativeToParent: Type.Optional(
-        Type.Enum(StepLocationRelativeToParent),
-    ),
-    branchIndex: Type.Optional(Type.Number()),
+export const AddActionRequest = z.object({
+    parentStep: z.string(),
+    stepLocationRelativeToParent: z.nativeEnum(StepLocationRelativeToParent).optional(),
+    branchIndex: z.number().optional(),
     action: UpdateActionRequest,
 })
-export type AddActionRequest = Static<typeof AddActionRequest>
+export type AddActionRequest = z.infer<typeof AddActionRequest>
 
-export const UpdateTriggerRequest = Type.Union([EmptyTrigger, PieceTrigger])
-export type UpdateTriggerRequest = Static<typeof UpdateTriggerRequest>
+export const UpdateTriggerRequest = z.union([
+    EmptyTrigger.omit({ lastUpdatedDate: true }),
+    PieceTrigger.omit({ lastUpdatedDate: true, settings: true }).and(z.object({ settings: PieceTriggerSettings.omit({ sampleData: true }) })),
+])
+export type UpdateTriggerRequest = z.infer<typeof UpdateTriggerRequest>
 
-export const UpdateFlowStatusRequest = Type.Object({
-    status: Type.Enum(FlowStatus),
+export const UpdateFlowStatusRequest = z.object({
+    status: z.nativeEnum(FlowStatus),
 })
-export type UpdateFlowStatusRequest = Static<typeof UpdateFlowStatusRequest>
+export type UpdateFlowStatusRequest = z.infer<typeof UpdateFlowStatusRequest>
 
-export const ChangePublishedVersionIdRequest = Type.Object({
-    status: Type.Optional(Type.Enum(FlowStatus)),
+export const ChangePublishedVersionIdRequest = z.object({
+    status: z.nativeEnum(FlowStatus).optional(),
 })
-export type ChangePublishedVersionIdRequest = Static<
+export type ChangePublishedVersionIdRequest = z.infer<
     typeof ChangePublishedVersionIdRequest
 >
 
-export const UpdateMetadataRequest = Type.Object({
+export const UpdateMetadataRequest = z.object({
     metadata: Nullable(Metadata),
 })
-export type UpdateMetadataRequest = Static<typeof UpdateMetadataRequest>
+export type UpdateMetadataRequest = z.infer<typeof UpdateMetadataRequest>
 
-export const UpdateMinutesSavedRequest = Type.Object({
-    timeSavedPerRun: Nullable(Type.Number()),
+export const UpdateMinutesSavedRequest = z.object({
+    timeSavedPerRun: Nullable(z.number()),
 })
-export type UpdateMinutesSavedRequest = Static<typeof UpdateMinutesSavedRequest>
+export type UpdateMinutesSavedRequest = z.infer<typeof UpdateMinutesSavedRequest>
 
-export const UpdateOwnerRequest = Type.Object({
-    ownerId: Type.String(),
+export const UpdateOwnerRequest = z.object({
+    ownerId: z.string(),
 })
-export type UpdateOwnerRequest = Static<typeof UpdateOwnerRequest>
-export const FlowOperationRequest = Type.Union([
-    Type.Object(
-        {
-            type: Type.Literal(FlowOperationType.MOVE_ACTION),
-            request: MoveActionRequest,
-        },
-        {
-            title: 'Move Action',
-        },
-    ),
-    Type.Object(
-        {
-            type: Type.Literal(FlowOperationType.CHANGE_STATUS),
-            request: UpdateFlowStatusRequest,
-        },
-        {
-            title: 'Change Status',
-        },
-    ),
-    Type.Object(
-        {
-            type: Type.Literal(FlowOperationType.LOCK_AND_PUBLISH),
-            request: ChangePublishedVersionIdRequest,
-        },
-        {
-            title: 'Lock and Publish',
-        },
-    ),
-    Type.Object(
-        {
-            type: Type.Literal(FlowOperationType.USE_AS_DRAFT),
-            request: UseAsDraftRequest,
-        },
-        {
-            title: 'Copy as Draft',
-        },
-    ),
-    Type.Object(
-        {
-            type: Type.Literal(FlowOperationType.LOCK_FLOW),
-            request: LockFlowRequest,
-        },
-        {
-            title: 'Lock Flow',
-        },
-    ),
-    Type.Object(
-        {
-            type: Type.Literal(FlowOperationType.IMPORT_FLOW),
-            request: ImportFlowRequest,
-        },
-        {
-            title: 'Import Flow',
-        },
-    ),
-    Type.Object(
-        {
-            type: Type.Literal(FlowOperationType.CHANGE_NAME),
-            request: ChangeNameRequest,
-        },
-        {
-            title: 'Change Name',
-        },
-    ),
-    Type.Object(
-        {
-            type: Type.Literal(FlowOperationType.DELETE_ACTION),
-            request: DeleteActionRequest,
-        },
-        {
-            title: 'Delete Action',
-        },
-    ),
-    Type.Object(
-        {
-            type: Type.Literal(FlowOperationType.UPDATE_ACTION),
-            request: UpdateActionRequest,
-        },
-        {
-            title: 'Update Action',
-        },
-    ),
-    Type.Object(
-        {
-            type: Type.Literal(FlowOperationType.ADD_ACTION),
-            request: AddActionRequest,
-        },
-        {
-            title: 'Add Action',
-        },
-    ),
-    Type.Object(
-        {
-            type: Type.Literal(FlowOperationType.UPDATE_TRIGGER),
-            request: UpdateTriggerRequest,
-        },
-        {
-            title: 'Update Trigger',
-        },
-    ),
-    Type.Object(
-        {
-            type: Type.Literal(FlowOperationType.CHANGE_FOLDER),
-            request: ChangeFolderRequest,
-        },
-        {
-            title: 'Change Folder',
-        },
-    ),
-    Type.Object(
-        {
-            type: Type.Literal(FlowOperationType.DUPLICATE_ACTION),
-            request: DuplicateStepRequest,
-        },
-        {
-            title: 'Duplicate Action',
-        },
-    ),
-    Type.Object(
-        {
-            type: Type.Literal(FlowOperationType.DELETE_BRANCH),
-            request: DeleteBranchRequest,
-        },
-        {
-            title: 'Delete Branch',
-        },
-    ),
-    Type.Object(
-        {
-            type: Type.Literal(FlowOperationType.ADD_BRANCH),
-            request: AddBranchRequest,
-        },
-        {
-            title: 'Add Branch',
-        },
-    ),
-    Type.Object(
-        {
-            type: Type.Literal(FlowOperationType.DUPLICATE_BRANCH),
-            request: DuplicateBranchRequest,
-        },
-        {
-            title: 'Duplicate Branch',
-        },
-    ),
-    Type.Object(
-        {
-            type: Type.Literal(FlowOperationType.SET_SKIP_ACTION),
-            request: SkipActionRequest,
-        },
-        {
-            title: 'Skip Action',
-        },
-    ),
-    Type.Object(
-        {
-            type: Type.Literal(FlowOperationType.UPDATE_METADATA),
-            request: UpdateMetadataRequest,
-        },
-        {
-            title: 'Update Metadata',
-        },
-    ),
-    Type.Object(
-        {
-            type: Type.Literal(FlowOperationType.MOVE_BRANCH),
-            request: MoveBranchRequest,
-        },
-    ),
-    Type.Object(
-        {
-            type: Type.Literal(FlowOperationType.SAVE_SAMPLE_DATA),
-            request: SaveSampleDataRequest,
-        },
-    ),
-    Type.Object(
-        {
-            type: Type.Literal(FlowOperationType.UPDATE_MINUTES_SAVED),
-            request: UpdateMinutesSavedRequest,
-        },
-        {
-            title: 'Update Minutes Saved',
-        },
-    ),
-    Type.Object(
-        {
-            type: Type.Literal(FlowOperationType.UPDATE_OWNER),
-            request: UpdateOwnerRequest,
-        },
-        {
-            title: 'Update Owner',
-        },
-    ),
-    Type.Object(
-        {
-            type: Type.Literal(FlowOperationType.UPDATE_NOTE),
-            request: UpdateNoteRequest,
-        },
-        {
-            title: 'Update Note',
-        },
-    ),
-    Type.Object(
-        {
-            type: Type.Literal(FlowOperationType.DELETE_NOTE),
-            request: DeleteNoteRequest,
-        },
-        {
-            title: 'Delete Note',
-        },
-    ),
-    Type.Object(
-        {
-            type: Type.Literal(FlowOperationType.ADD_NOTE),
-            request: AddNoteRequest,
-        },
-        {
-            title: 'Add Note',
-        },
-    ),
- 
+export type UpdateOwnerRequest = z.infer<typeof UpdateOwnerRequest>
+export const FlowOperationRequest = z.union([
+    z.object({
+        type: z.literal(FlowOperationType.MOVE_ACTION),
+        request: MoveActionRequest,
+    }).describe('Move Action'),
+    z.object({
+        type: z.literal(FlowOperationType.CHANGE_STATUS),
+        request: UpdateFlowStatusRequest,
+    }).describe('Change Status'),
+    z.object({
+        type: z.literal(FlowOperationType.LOCK_AND_PUBLISH),
+        request: ChangePublishedVersionIdRequest,
+    }).describe('Lock and Publish'),
+    z.object({
+        type: z.literal(FlowOperationType.USE_AS_DRAFT),
+        request: UseAsDraftRequest,
+    }).describe('Copy as Draft'),
+    z.object({
+        type: z.literal(FlowOperationType.LOCK_FLOW),
+        request: LockFlowRequest,
+    }).describe('Lock Flow'),
+    z.object({
+        type: z.literal(FlowOperationType.IMPORT_FLOW),
+        request: ImportFlowRequest,
+    }).describe('Import Flow'),
+    z.object({
+        type: z.literal(FlowOperationType.CHANGE_NAME),
+        request: ChangeNameRequest,
+    }).describe('Change Name'),
+    z.object({
+        type: z.literal(FlowOperationType.DELETE_ACTION),
+        request: DeleteActionRequest,
+    }).describe('Delete Action'),
+    z.object({
+        type: z.literal(FlowOperationType.UPDATE_ACTION),
+        request: UpdateActionRequest,
+    }).describe('Update Action'),
+    z.object({
+        type: z.literal(FlowOperationType.ADD_ACTION),
+        request: AddActionRequest,
+    }).describe('Add Action'),
+    z.object({
+        type: z.literal(FlowOperationType.UPDATE_TRIGGER),
+        request: UpdateTriggerRequest,
+    }).describe('Update Trigger'),
+    z.object({
+        type: z.literal(FlowOperationType.CHANGE_FOLDER),
+        request: ChangeFolderRequest,
+    }).describe('Change Folder'),
+    z.object({
+        type: z.literal(FlowOperationType.DUPLICATE_ACTION),
+        request: DuplicateStepRequest,
+    }).describe('Duplicate Action'),
+    z.object({
+        type: z.literal(FlowOperationType.DELETE_BRANCH),
+        request: DeleteBranchRequest,
+    }).describe('Delete Branch'),
+    z.object({
+        type: z.literal(FlowOperationType.ADD_BRANCH),
+        request: AddBranchRequest,
+    }).describe('Add Branch'),
+    z.object({
+        type: z.literal(FlowOperationType.DUPLICATE_BRANCH),
+        request: DuplicateBranchRequest,
+    }).describe('Duplicate Branch'),
+    z.object({
+        type: z.literal(FlowOperationType.SET_SKIP_ACTION),
+        request: SkipActionRequest,
+    }).describe('Skip Action'),
+    z.object({
+        type: z.literal(FlowOperationType.UPDATE_METADATA),
+        request: UpdateMetadataRequest,
+    }).describe('Update Metadata'),
+    z.object({
+        type: z.literal(FlowOperationType.MOVE_BRANCH),
+        request: MoveBranchRequest,
+    }),
+    z.object({
+        type: z.literal(FlowOperationType.SAVE_SAMPLE_DATA),
+        request: SaveSampleDataRequest,
+    }),
+    z.object({
+        type: z.literal(FlowOperationType.UPDATE_MINUTES_SAVED),
+        request: UpdateMinutesSavedRequest,
+    }).describe('Update Minutes Saved'),
+    z.object({
+        type: z.literal(FlowOperationType.UPDATE_OWNER),
+        request: UpdateOwnerRequest,
+    }).describe('Update Owner'),
+    z.object({
+        type: z.literal(FlowOperationType.UPDATE_NOTE),
+        request: UpdateNoteRequest,
+    }).describe('Update Note'),
+    z.object({
+        type: z.literal(FlowOperationType.DELETE_NOTE),
+        request: DeleteNoteRequest,
+    }).describe('Delete Note'),
+    z.object({
+        type: z.literal(FlowOperationType.ADD_NOTE),
+        request: AddNoteRequest,
+    }).describe('Add Note'),
+    z.object({
+        type: z.literal(FlowOperationType.UPDATE_SAMPLE_DATA_INFO),
+        request: UpdateSampleDataInfoRequest,
+    }).describe('Update Sample Data Info'),
 ])
 
 
 
-export type FlowOperationRequest = Static<typeof FlowOperationRequest>
+export type FlowOperationRequest = z.infer<typeof FlowOperationRequest>
 
 export const flowOperations = {
     getActionsForCopy: _getActionsForCopy,
@@ -518,6 +412,10 @@ export const flowOperations = {
             }
             case FlowOperationType.ADD_NOTE: {
                 clonedVersion = notesOperations.addNote(clonedVersion, operation.request)
+                break
+            }
+            case FlowOperationType.UPDATE_SAMPLE_DATA_INFO: {
+                clonedVersion = _updateSampleDataInfo(clonedVersion, operation.request)
                 break
             }
       

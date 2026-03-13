@@ -16,10 +16,10 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { projectCollectionUtils } from '@/features/projects';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { projectCollectionUtils } from '@/hooks/project-collection';
 import { userHooks } from '@/hooks/user-hooks';
 import { cn } from '@/lib/utils';
 
@@ -124,7 +124,7 @@ export function ProjectSettingsDialog({
     },
     {
       id: 'alerts' as TabId,
-      label: t('Alerts'),
+      label: t('Alert Emails'),
       icon: <Bell className="w-4 h-4" />,
       disabled:
         project.type !== ProjectType.TEAM ||
@@ -154,7 +154,7 @@ export function ProjectSettingsDialog({
   const renderTabContent = () => {
     switch (activeTab) {
       case 'general':
-        return <GeneralSettings form={form} isSaving={false} />;
+        return <GeneralSettings form={form} />;
       case 'members':
         return <MembersSettings />;
       case 'alerts':
@@ -191,16 +191,11 @@ export function ProjectSettingsDialog({
     return (
       <div className="border-t bg-background rounded-br-md">
         <div className="flex items-center justify-end gap-3 px-6 py-4">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onClose}
-            disabled={false}
-          >
+          <Button variant="outline" size="sm" onClick={onClose}>
             {t('Close')}
           </Button>
           <Button
-            disabled={false}
+            disabled={!form.formState.isDirty}
             size="sm"
             onClick={form.handleSubmit(handleSave)}
           >
@@ -223,7 +218,7 @@ export function ProjectSettingsDialog({
                 title={form.watch('projectName') ?? project.displayName}
                 icon={form.watch('icon') ?? project.icon}
                 containerClassName="px-3 my-4"
-                titleClassName="text-md font-bold"
+                titleClassName="text-sm font-medium"
                 maxLengthToNotShowTooltip={18}
                 projectType={project.type}
               />

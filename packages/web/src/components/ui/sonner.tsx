@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import { Toaster as Sonner, toast, type ToasterProps } from 'sonner';
 
-import { useTheme } from '@/components/theme-provider';
+import { useTheme } from '@/components/providers/theme-provider';
 
 export const INTERNAL_ERROR_MESSAGE =
   'An unexpected error occurred. Please try again in a moment.';
@@ -31,8 +31,9 @@ export const UNSAVED_CHANGES_TOAST = {
   duration: Infinity,
 };
 
-const Toaster = ({ ...props }: ToasterProps) => {
+function Toaster({ ...props }: ToasterProps) {
   const { theme } = useTheme();
+
   return (
     <Sonner
       theme={theme as ToasterProps['theme']}
@@ -41,14 +42,14 @@ const Toaster = ({ ...props }: ToasterProps) => {
       toastOptions={{
         classNames: {
           toast: `
-            data-[type=error]:text-destructive-300!
-            data-[type=warning]:text-warning-300!
-            data-[type=success]:text-success-300!
+            data-[type=error]:text-destructive-700!
+            data-[type=warning]:text-warning-700!
+            data-[type=success]:text-success-700!
           `,
           description: `
-            data-[type=error]:text-destructive-300!
-            data-[type=warning]:text-warning-300!
-            data-[type=success]:text-success-300!
+            data-[type=error]:text-destructive-700!
+            data-[type=warning]:text-warning-700!
+            data-[type=success]:text-success-700!
           `,
         },
         descriptionClassName: 'text-inherit!',
@@ -71,6 +72,6 @@ const Toaster = ({ ...props }: ToasterProps) => {
       {...props}
     />
   );
-};
+}
 
 export { Toaster };

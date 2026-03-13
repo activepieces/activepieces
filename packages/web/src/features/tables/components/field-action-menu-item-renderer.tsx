@@ -2,10 +2,10 @@ import { t } from 'i18next';
 import { Pencil, Trash } from 'lucide-react';
 import { useContext } from 'react';
 
-import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
+import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { DropdownMenuItem } from '@/components/ui/dropdown-menu';
 
-import { FieldHeaderContext } from '../lib/utils';
+import { FieldHeaderContext } from '../utils/utils';
 
 import { useTableState } from './ap-table-state-provider';
 import RenameFieldPopoverContent from './rename-field-popovercontent';
@@ -35,12 +35,13 @@ const ApFieldActionMenuItemRenderer = ({
         <ConfirmationDeleteDialog
           title={t('Delete Field')}
           message={t(
-            'Are you sure you want to delete this field? This action cannot be undone.',
+            'This field and all its data will be permanently deleted.',
           )}
           mutationFn={async () => {
             await deleteField(field.index);
           }}
           entityName={t('field')}
+          buttonText={t('Delete')}
         >
           <DropdownMenuItem
             onSelect={(e) => {

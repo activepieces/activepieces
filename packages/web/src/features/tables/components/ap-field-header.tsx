@@ -15,8 +15,8 @@ import {
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { cn } from '@/lib/utils';
 
-import { ClientField } from '../lib/store/ap-tables-client-state';
-import { FieldHeaderContext, tablesUtils } from '../lib/utils';
+import { ClientField } from '../stores/store/ap-tables-client-state';
+import { FieldHeaderContext, tablesUtils } from '../utils/utils';
 
 import ApFieldActionMenuItemRenderer, {
   FieldActionType,

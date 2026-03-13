@@ -1,7 +1,5 @@
 # pieces-kallabot-ai
 
-This library was generated with [Nx](https://nx.dev).
-
 ## Building
 
-Run `nx build pieces-kallabot-ai` to build the library.
+Run `turbo run build --filter=@activepieces/piece-kallabot-ai` to build the library.

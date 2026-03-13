@@ -17,10 +17,6 @@ export const filePiecesUtils = (log: FastifyBaseLogger) => ({
         return packageJson.name
     },
 
-    getProjectJsonFromFolderPath: async (folderPath: string): Promise<string> => {
-        return join(folderPath, 'project.json')
-    },
-
     getPieceDependencies: async (folderPath: string): Promise<Record<string, string> | null> => {
         try {
             const packageJson =  await readFile(join(folderPath, 'package.json'), 'utf-8').then(JSON.parse)
@@ -68,7 +64,7 @@ export const filePiecesUtils = (log: FastifyBaseLogger) => ({
         }
         catch (e) {
             const err = e as Error
-            log.warn({ name: 'FilePieceMetadataService#loadPiecesFromFolder', message: err.message, stack: err.stack })
+            log.warn({ err }, '[filePieceMetadataService#loadDistPiecesMetadata] Failed to load pieces from folder')
             return []
         }
     },

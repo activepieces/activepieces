@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { internalErrorToast } from '@/components/ui/sonner';
-import { flowHooks } from '@/features/flows/lib/flow-hooks';
+import { flowHooks } from '@/features/flows/hooks/flow-hooks';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { FROM_QUERY_PARAM } from '@/lib/navigation-utils';

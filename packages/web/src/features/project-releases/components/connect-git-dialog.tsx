@@ -5,7 +5,7 @@ import {
   ApErrorParams,
   ErrorCode,
 } from '@activepieces/shared';
-import { typeboxResolver } from '@hookform/resolvers/typebox';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useForm } from 'react-hook-form';
@@ -37,8 +37,8 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 
-import { gitSyncApi } from '../lib/git-sync-api';
-import { gitSyncHooks } from '../lib/git-sync-hooks';
+import { gitSyncApi } from '../api/git-sync-api';
+import { gitSyncHooks } from '../hooks/git-sync-hooks';
 
 type ConnectGitProps = {
   open?: boolean;
@@ -59,7 +59,7 @@ const ConnectGitDialog = ({ open, setOpen, showButton }: ConnectGitProps) => {
       slug: '',
       branch: '',
     },
-    resolver: typeboxResolver(ConfigureRepoRequest),
+    resolver: zodResolver(ConfigureRepoRequest),
   });
 
   const { refetch } = gitSyncHooks.useGitSync(

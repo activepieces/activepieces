@@ -71,6 +71,9 @@
       "@activepieces/piece-amazon-sqs": [
         "packages/pieces/community/amazon-sqs/src/index.ts"
       ],
+      "@activepieces/piece-amazon-textract": [
+        "packages/pieces/community/amazon-textract/src/index.ts"
+      ],
       "@activepieces/piece-aminos": [
         "packages/pieces/community/aminos/src/index.ts"
       ],
@@ -219,6 +222,9 @@
       "@activepieces/piece-chatbase": [
         "packages/pieces/community/chatbase/src/index.ts"
       ],
+      "@activepieces/piece-chatwoot": [
+      "packages/pieces/community/chatwoot/src/index.ts"
+      ],
       "@activepieces/piece-checkout": [
         "packages/pieces/community/checkout/src/index.ts"
       ],
@@ -251,6 +257,9 @@
       ],
       "@activepieces/piece-close": [
         "packages/pieces/community/close/src/index.ts"
+      ],
+      "@activepieces/piece-cohere": [
+      "packages/pieces/community/cohere/src/index.ts"
       ],
       "@activepieces/piece-cloudconvert": [
         "packages/pieces/community/cloudconvert/src/index.ts"
@@ -811,7 +820,7 @@
       "@activepieces/piece-pastefy": [
         "packages/pieces/community/pastefy/src/index.ts"
       ],
-      "@activepieces/piece-pdf": ["packages/pieces/community/pdf/src/index.ts"],
+      "@activepieces/piece-pdf": ["packages/pieces/core/pdf/src/index.ts"],
       "@activepieces/piece-pdf-co": [
         "packages/pieces/community/pdf-co/src/index.ts"
       ],
@@ -1049,6 +1058,9 @@
       ],
       "@activepieces/piece-stability-ai": [
         "packages/pieces/community/stability-ai/src/index.ts"
+      ],
+      "@activepieces/piece-modelslab": [
+        "packages/pieces/community/modelslab/src/index.ts"
       ],
       "@activepieces/piece-stable-diffusion-webui": [
         "packages/pieces/community/stable-diffusion-webui/src/index.ts"
@@ -1809,15 +1821,12 @@
       "@activepieces/piece-amazon-secrets-manager": [
         "packages/pieces/community/amazon-secrets-manager/src/index.ts"
       ],
-      "ai-gateway-provider/providers/anthropic": [
-        "node_modules/ai-gateway-provider/dist/providers/anthropic.d.ts"
-      ],
-      "ai-gateway-provider/providers/google": [
-        "node_modules/ai-gateway-provider/dist/providers/google.d.ts"
-      ],
       "@activepieces/piece-validatedmails": [
         "packages/pieces/community/validatedmails/src/index.ts"
       ],
+      "@activepieces/piece-coralogix": [
+        "packages/pieces/community/coralogix/src/index.ts"
+      ]
     },
     "resolveJsonModule": true
   },

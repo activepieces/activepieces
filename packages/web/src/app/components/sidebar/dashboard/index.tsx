@@ -6,20 +6,24 @@ import {
   TemplateTelemetryEventType,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Search, Plus, LineChart, Trophy, Compass } from 'lucide-react';
+import { Search, Plus } from 'lucide-react';
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useDebounce } from 'use-debounce';
 
 import { NewProjectDialog } from '@/app/routes/platform/projects/new-project-dialog';
-import { useEmbedding } from '@/components/embed-provider';
+import { SearchInput } from '@/components/custom/search-input';
+import { ChartLineIcon } from '@/components/icons/chart-line';
+import { CompassIcon } from '@/components/icons/compass';
+import { ShieldIcon } from '@/components/icons/shield';
+import { TrophyIcon } from '@/components/icons/trophy';
+import { useEmbedding } from '@/components/providers/embed-provider';
 import { Button } from '@/components/ui/button';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { SearchInput } from '@/components/ui/search-input';
 import {
   Sidebar,
   SidebarContent,
@@ -37,12 +41,14 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { VirtualizedScrollArea } from '@/components/ui/virtualized-scroll-area';
-import { templatesTelemetryApi } from '@/features/templates/lib/templates-telemetry-api';
+import { projectCollectionUtils } from '@/features/projects';
+import { templatesTelemetryApi } from '@/features/templates';
+import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { projectCollectionUtils } from '@/hooks/project-collection';
 import { userHooks } from '@/hooks/user-hooks';
 import { cn } from '@/lib/utils';
 
+import { GlobalSearchCommand } from '../../global-search/global-search-command';
 import { SidebarGeneralItemType } from '../ap-sidebar-group';
 import { ApSidebarItem, SidebarItemType } from '../ap-sidebar-item';
 import ProjectSideBarItem from '../project';
@@ -50,7 +56,9 @@ import { AppSidebarHeader } from '../sidebar-header';
 import SidebarUsageLimits from '../sidebar-usage-limits';
 import { SidebarUser } from '../sidebar-user';
 
-export function ProjectDashboardSidebar() {
+export function ProjectDashboardSidebar({
+  className,
+}: { className?: string } = {}) {
   const { data: projects } = projectCollectionUtils.useAll();
   const { embedState } = useEmbedding();
   const { state } = useSidebar();
@@ -107,13 +115,12 @@ export function ProjectDashboardSidebar() {
   const handleProjectSelect = useCallback(
     async (projectId: string) => {
       projectCollectionUtils.setCurrentProject(projectId);
-      navigate(`/projects/${projectId}/flows`);
+      navigate(`/projects/${projectId}/automations`);
       setSearchOpen(false);
     },
     [navigate],
   );
 
-  const ITEM_HEIGHT = state === 'collapsed' ? 40 : 44;
   const permissionFilter = (link: SidebarGeneralItemType) => {
     if (link.type === 'link') {
       return isNil(link.hasPermission) || link.hasPermission;
@@ -132,7 +139,7 @@ export function ProjectDashboardSidebar() {
     to: '/templates',
     label: t('Explore'),
     show: true,
-    icon: Compass,
+    icon: CompassIcon,
     hasPermission: true,
     isSubItem: false,
     onClick: handleExploreClick,
@@ -142,7 +149,7 @@ export function ProjectDashboardSidebar() {
     type: 'link',
     to: '/impact',
     label: t('Impact'),
-    icon: LineChart,
+    icon: ChartLineIcon,
     show: true,
     hasPermission: true,
     isSubItem: false,
@@ -152,7 +159,7 @@ export function ProjectDashboardSidebar() {
     type: 'link',
     to: '/leaderboard',
     label: t('Leaderboard'),
-    icon: Trophy,
+    icon: TrophyIcon,
     show: true,
     hasPermission: true,
     isSubItem: false,
@@ -164,11 +171,18 @@ export function ProjectDashboardSidebar() {
 
   return (
     !embedState.hideSideNav && (
-      <Sidebar collapsible="icon" className="max-h-[100vh]">
+      <Sidebar
+        collapsible="icon"
+        id={SIDEBAR_ID}
+        className={cn('max-h-[100vh]', className)}
+      >
         <AppSidebarHeader />
 
         <SidebarContent className="overflow-x-hidden">
           <SidebarGroup>
+            <div className="mb-1 group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center">
+              <GlobalSearchCommand />
+            </div>
             <SidebarMenu>
               {items.map((item) => (
                 <ApSidebarItem key={item.label} {...item} />
@@ -279,7 +293,7 @@ export function ProjectDashboardSidebar() {
                         : 'scrollbar-hover',
                     )}
                     items={displayProjects}
-                    estimateSize={() => ITEM_HEIGHT}
+                    estimateSize={() => 35}
                     getItemKey={(index) => displayProjects[index]?.id ?? index}
                     overscan={10}
                     renderItem={(project) => (
@@ -308,6 +322,7 @@ export function ProjectDashboardSidebar() {
         </SidebarContent>
         <SidebarFooter>
           {state === 'expanded' && <DelayedSidebarUsageLimits />}
+          <SidebarPlatformAdminLink />
           <SidebarUser />
         </SidebarFooter>
       </Sidebar>
@@ -329,3 +344,28 @@ function DelayedSidebarUsageLimits() {
     </div>
   ) : null;
 }
+
+function SidebarPlatformAdminLink() {
+  const showPlatformAdmin = useIsPlatformAdmin();
+  const { embedState } = useEmbedding();
+
+  if (embedState.isEmbedded || !showPlatformAdmin) {
+    return null;
+  }
+
+  return (
+    <SidebarMenu>
+      <ApSidebarItem
+        type="link"
+        to="/platform/projects"
+        label={t('Platform Admin')}
+        icon={ShieldIcon}
+        isSubItem={false}
+        show={true}
+        hasPermission={true}
+      />
+    </SidebarMenu>
+  );
+}
+
+export const SIDEBAR_ID = 'project-sidebar';

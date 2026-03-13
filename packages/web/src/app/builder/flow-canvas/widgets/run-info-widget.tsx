@@ -3,12 +3,13 @@ import {
   FlowRunStatus,
   isFlowRunStateTerminal,
 } from '@activepieces/shared';
-import { QuestionMarkIcon } from '@radix-ui/react-icons';
 import { t } from 'i18next';
+import { CircleHelp } from 'lucide-react';
 
-import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
+import { flowRunUtils } from '@/features/flow-runs';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { cn, formatUtils } from '@/lib/utils';
+import { formatUtils } from '@/lib/format-utils';
+import { cn } from '@/lib/utils';
 
 import { EditFlowOrViewDraftButton } from '../../builder-header/flow-status/view-draft-or-edit-flow-button';
 import { useBuilderStateContext } from '../../builder-hooks';
@@ -33,6 +34,10 @@ function getStatusText({
       return t('Run Paused');
     case FlowRunStatus.QUOTA_EXCEEDED:
       return t('Quota Exceeded');
+    case FlowRunStatus.LOG_SIZE_EXCEEDED:
+      return t(
+        'Run failed due to output of steps exceeding the log size limit',
+      );
     case FlowRunStatus.MEMORY_LIMIT_EXCEEDED:
       return t(
         'Run failed due to exceeding the memory limit of {memoryLimit} MB',
@@ -59,7 +64,7 @@ const RunInfoWidget = () => {
   const [run] = useBuilderStateContext((state) => [state.run]);
   const { variant, Icon } = run
     ? flowRunUtils.getStatusIcon(run.status)
-    : { variant: 'default' as const, Icon: QuestionMarkIcon };
+    : { variant: 'default' as const, Icon: CircleHelp };
   const { data: timeoutSeconds } = flagsHooks.useFlag<number>(
     ApFlagId.FLOW_RUN_TIME_SECONDS,
   );
