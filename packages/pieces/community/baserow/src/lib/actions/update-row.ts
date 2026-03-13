@@ -33,17 +33,21 @@ export const updateRowAction = createAction({
     }
 
     Object.keys(tableFieldsInput).forEach((key) => {
+      const value = tableFieldsInput[key];
+      if (value === null || value === undefined || value === '') {
+        return;
+      }
       const fieldType: string = fieldIDTypeMap[key];
       if (fieldType === BaserowFieldType.LINK_TO_TABLE) {
-        formattedTableFields[key] = tableFieldsInput[key].map((id: string) =>
+        formattedTableFields[key] = (value as string[]).map((id: string) =>
           parseInt(id, 10)
         );
       } else if (fieldType === BaserowFieldType.MULTIPLE_COLLABORATORS) {
-        formattedTableFields[key] = tableFieldsInput[key].map((id: string) => ({
+        formattedTableFields[key] = (value as string[]).map((id: string) => ({
           id: parseInt(id, 10),
         }));
       } else {
-        formattedTableFields[key] = tableFieldsInput[key];
+        formattedTableFields[key] = value;
       }
     });
     return await client.updateRow(table_id, row_id, formattedTableFields);
