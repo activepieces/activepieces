@@ -15,7 +15,7 @@ export const triggerScheduledPost = createAction({
     const { scheduleId } = context.propsValue;
 
     return await sendItRequest(
-      context.auth,
+      context.auth.secret_text,
       HttpMethod.POST,
       `/scheduled/${scheduleId}/trigger`
     );

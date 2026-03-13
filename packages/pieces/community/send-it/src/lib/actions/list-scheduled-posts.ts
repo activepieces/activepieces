@@ -16,7 +16,7 @@ export const listScheduledPosts = createAction({
     const params = platformFilter ? { platform: platformFilter } : undefined;
 
     return await sendItRequest(
-      context.auth,
+      context.auth.secret_text,
       HttpMethod.GET,
       '/scheduled',
       undefined,

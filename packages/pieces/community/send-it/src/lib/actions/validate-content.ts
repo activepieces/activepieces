@@ -23,10 +23,11 @@ export const validateContent = createAction({
     mediaType: mediaTypeProperty,
   },
   async run(context) {
-    const { platforms, text, mediaUrl, mediaUrls, mediaType } = context.propsValue;
+    const { platforms, text, mediaUrl, mediaUrls, mediaType } =
+      context.propsValue;
 
     return await sendItRequest(
-      context.auth,
+      context.auth.secret_text,
       HttpMethod.POST,
       '/validate',
       {

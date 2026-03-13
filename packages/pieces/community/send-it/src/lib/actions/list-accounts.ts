@@ -11,7 +11,7 @@ export const listAccounts = createAction({
   props: {},
   async run(context) {
     return await sendItRequest(
-      context.auth,
+      context.auth.secret_text,
       HttpMethod.GET,
       '/accounts'
     );

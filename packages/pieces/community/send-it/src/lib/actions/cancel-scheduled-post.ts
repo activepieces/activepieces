@@ -15,7 +15,7 @@ export const cancelScheduledPost = createAction({
     const { scheduleId } = context.propsValue;
 
     return await sendItRequest(
-      context.auth,
+      context.auth.secret_text,
       HttpMethod.DELETE,
       `/scheduled/${scheduleId}`
     );

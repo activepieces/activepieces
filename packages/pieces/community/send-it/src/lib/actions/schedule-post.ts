@@ -24,7 +24,7 @@ export const schedulePost = createAction({
     const { platforms, text, mediaUrl, scheduledTime } = context.propsValue;
 
     return await sendItRequest(
-      context.auth,
+      context.auth.secret_text,
       HttpMethod.POST,
       '/schedule',
       {

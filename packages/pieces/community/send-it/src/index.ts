@@ -1,4 +1,6 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { PieceCategory } from '@activepieces/shared';
 import { publishPost } from './lib/actions/publish-post';
 import { schedulePost } from './lib/actions/schedule-post';
 import { cancelScheduledPost } from './lib/actions/cancel-scheduled-post';
@@ -9,20 +11,44 @@ import { listScheduledPosts } from './lib/actions/list-scheduled-posts';
 import { postPublished } from './lib/triggers/post-published';
 import { postScheduled } from './lib/triggers/post-scheduled';
 import { postFailed } from './lib/triggers/post-failed';
+import { BASE_URL } from './lib/common';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const sendItAuth = PieceAuth.SecretText({
   displayName: 'API Key',
-  description: 'Your SendIt API key (starts with sk_live_). Get it from your SendIt Dashboard.',
+  description: `To get your SendIt API key:
+1. Log in to your [SendIt dashboard](https://sendit.infiniteappsai.com/dashboard)
+2. Go to **Settings > API Keys**
+3. Click **Create API Key** — the key is only shown once, so copy it immediately
+4. Paste the key below (it starts with \`sk_live_\`)`,
   required: true,
+  validate: async ({ auth }) => {
+    try {
+      await httpClient.sendRequest({
+        method: HttpMethod.GET,
+        url: `${BASE_URL}/accounts`,
+        headers: { Authorization: `Bearer ${auth}` },
+      });
+      return { valid: true };
+    } catch {
+      return {
+        valid: false,
+        error:
+          'Invalid API key. Make sure you copied the full key starting with sk_live_.',
+      };
+    }
+  },
 });
 
 export const sendIt = createPiece({
   displayName: 'SendIt',
-  description: 'Multi-platform social media publishing. Schedule and publish content to LinkedIn, Instagram, Threads, TikTok, and X.',
+  description:
+    'Multi-platform social media publishing. Schedule and publish content to LinkedIn, Instagram, Threads, TikTok, X, and 30+ more platforms.',
   auth: sendItAuth,
   minimumSupportedRelease: '0.20.0',
   logoUrl: 'https://sendit.infiniteappsai.com/logo.png',
-  authors: ['infiniteappsai'],
+  categories: [PieceCategory.MARKETING],
+  authors: ['infiniteappsai', 'sanket-a11y'],
   actions: [
     publishPost,
     schedulePost,
@@ -31,10 +57,13 @@ export const sendIt = createPiece({
     validateContent,
     listAccounts,
     listScheduledPosts,
+    createCustomApiCallAction({
+      baseUrl: () => BASE_URL,
+      auth: sendItAuth,
+      authMapping: async (auth) => ({
+        Authorization: `Bearer ${auth.secret_text}`,
+      }),
+    }),
   ],
-  triggers: [
-    postPublished,
-    postScheduled,
-    postFailed,
-  ],
+  triggers: [postPublished, postScheduled, postFailed],
 });
