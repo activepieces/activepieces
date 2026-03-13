@@ -45,6 +45,7 @@ export const getFullList = createAction({
     let allItems: unknown[] = [];
     let page = 1;
     const perPage = 200;
+    let serverTotalItems = 0;
 
     while (true) {
       const queryParams: Record<string, string> = {
@@ -66,12 +67,13 @@ export const getFullList = createAction({
 
       const body = response.body as { items: unknown[]; totalItems: number };
       if (!body.items || body.items.length === 0) break;
+      serverTotalItems = body.totalItems;
       allItems = allItems.concat(body.items);
 
       if (allItems.length >= body.totalItems) break;
       page++;
     }
 
-    return { items: allItems, totalItems: allItems.length };
+    return { items: allItems, totalItems: serverTotalItems };
   },
 });
