@@ -1,5 +1,6 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
+import { createCustomApiCallAction } from "@activepieces/pieces-common";
 import { getDatasetItems } from './lib/actions/get-dataset-items';
 import { runActor } from './lib/actions/run-actor';
 import { createApifyClient } from './lib/common';
@@ -49,6 +50,16 @@ export const apify = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/apify.png',
   categories: [PieceCategory.BUSINESS_INTELLIGENCE],
   authors: ['buttonsbond'],
-  actions: [getDatasetItems, runActor, runTask, getKeyValueStoreRecord, scrapeSingleUrl],
+  actions: [getDatasetItems, runActor, runTask, getKeyValueStoreRecord, scrapeSingleUrl,
+    createCustomApiCallAction({
+      auth: apifyAuth,
+      baseUrl: () => 'https://api.apify.com/v2',
+      authMapping: async (auth) => {
+        return {
+          'Authorization': `Bearer ${auth.props.apikey}`
+        }
+      }
+    })
+  ],
   triggers: [watchActorRunsTrigger, watchTaskRunsTrigger],
 });
