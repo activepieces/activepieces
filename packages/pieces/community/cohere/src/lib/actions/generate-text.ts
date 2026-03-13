@@ -1,11 +1,11 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { cohereAuth } from '../../index';
 import {
   CohereChatRequest,
   CohereChatResponse,
   CohereErrorResponse,
 } from '../common/types';
+import { cohereAuth } from '../auth';
 
 const COHERE_CHAT_URL = 'https://api.cohere.com/v2/chat';
 const MAX_RETRIES = 3;
@@ -50,9 +50,6 @@ async function generateWithRetry(
       }
 
       const backoffMs = INITIAL_BACKOFF_MS * Math.pow(2, attempt);
-      console.log(
-        `[Cohere] Retrying in ${backoffMs}ms (attempt ${attempt + 1}/${MAX_RETRIES})`,
-      );
       await new Promise((resolve) => setTimeout(resolve, backoffMs));
     }
   }
@@ -108,10 +105,6 @@ export const generateText = createAction({
     const { prompt, model, temperature, maxTokens } = context.propsValue;
     const apiKey = context.auth.secret_text;
 
-    console.log(
-      `[Cohere] Generating text with model: ${model}, prompt length: ${prompt.length}`,
-    );
-
     const request: CohereChatRequest = {
       model,
       messages: [{ role: 'user', content: prompt }],
@@ -130,10 +123,6 @@ export const generateText = createAction({
 
     const generatedText =
       response.message?.content?.[0]?.text ?? '';
-
-    console.log(
-      `[Cohere] Generated ${generatedText.length} chars, finish_reason: ${response.finish_reason}`,
-    );
 
     return {
       text: generatedText,

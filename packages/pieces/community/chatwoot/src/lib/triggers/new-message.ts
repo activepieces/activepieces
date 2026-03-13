@@ -1,6 +1,5 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { chatwootAuth } from '../../index';
 import { chatwootEndpoints, CHATWOOT_AUTH_HEADER } from '../common/constants';
 import {
   getChatwootAuth,
@@ -8,6 +7,7 @@ import {
   ChatwootWebhookResponse,
   ChatwootParsedMessage,
 } from '../common/types';
+import { chatwootAuth } from '../auth';
 
 const WEBHOOK_STORE_KEY = '_chatwoot_webhook_id';
 
@@ -85,7 +85,6 @@ export const newMessage = createTrigger({
       const existing = list.find((w) => normalizeUrl(w.url) === targetUrl);
       if (existing) {
         webhookId = existing.id;
-        console.log(`[Chatwoot] Reusing existing webhook (id: ${webhookId}) for: ${webhookUrl}`);
       } else {
         const createRes = await httpClient.sendRequest<ChatwootWebhookResponse>({
           method: HttpMethod.POST,
@@ -99,8 +98,8 @@ export const newMessage = createTrigger({
             subscriptions: ['message_created'],
           },
         });
-        webhookId = createRes.body.id;
-        console.log(`[Chatwoot] Webhook created successfully (id: ${webhookId})`);
+
+        webhookId = createRes.body.payload.webhook.id;
       }
     } catch (err: unknown) {
       const status = (err as { response?: { status?: number } })?.response?.status;
@@ -117,7 +116,6 @@ export const newMessage = createTrigger({
         const existing = list.find((w) => normalizeUrl(w.url) === targetUrl);
         if (existing?.id) {
           webhookId = existing.id;
-          console.log(`[Chatwoot] Reusing existing webhook (id: ${webhookId}) after 422`);
         } else {
           throw err;
         }
@@ -141,14 +139,8 @@ export const newMessage = createTrigger({
     );
 
     if (!stored?.webhookId) {
-      console.log('[Chatwoot] No stored webhook ID to delete');
       return;
     }
-
-    console.log(
-      `[Chatwoot] Deleting webhook (id: ${stored.webhookId})`,
-    );
-
     try {
       await httpClient.sendRequest({
         method: HttpMethod.DELETE,
@@ -157,7 +149,6 @@ export const newMessage = createTrigger({
           [CHATWOOT_AUTH_HEADER]: authValue.apiAccessToken,
         },
       });
-      console.log('[Chatwoot] Webhook deleted successfully');
     } catch (error) {
       console.error('[Chatwoot] Error deleting webhook:', error);
     }
@@ -173,31 +164,22 @@ export const newMessage = createTrigger({
       : (rawBody as ChatwootWebhookPayload | undefined);
 
     if (!payload || typeof payload !== 'object') {
-      console.log('[Chatwoot] No payload or invalid body received');
       return [];
     }
 
     const event = payload['event'];
-    console.log(`[Chatwoot] Received webhook event: ${event}`);
-
     if (event !== 'message_created') {
-      console.log(
-        `[Chatwoot] Ignoring non-message event: ${event}`,
-      );
+
       return [];
     }
 
     const messageType = payload['message_type'];
     if (messageType !== 'incoming') {
-      console.log(
-        `[Chatwoot] Ignoring non-incoming message (type: ${messageType}) to avoid reply loops`,
-      );
       return [];
     }
 
     const content = payload['content'];
     if (content == null || String(content).trim().length === 0) {
-      console.log('[Chatwoot] Ignoring message with empty content');
       return [];
     }
 
@@ -243,10 +225,6 @@ export const newMessage = createTrigger({
       accountId,
       createdAt,
     };
-
-    console.log(
-      `[Chatwoot] Parsed incoming message from ${parsed.contactName} in conversation ${parsed.conversationId}: "${parsed.content}"`,
-    );
 
     return [parsed];
   },

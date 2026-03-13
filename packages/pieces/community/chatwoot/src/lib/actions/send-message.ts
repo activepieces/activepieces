@@ -1,11 +1,11 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { chatwootAuth } from '../../index';
 import { chatwootEndpoints, CHATWOOT_AUTH_HEADER } from '../common/constants';
 import {
   getChatwootAuth,
   ChatwootSendMessageResponse,
 } from '../common/types';
+import { chatwootAuth } from '../auth';
 
 const MAX_RETRIES = 3;
 const INITIAL_BACKOFF_MS = 1000;
@@ -51,9 +51,6 @@ async function sendWithRetry(
       }
 
       const backoffMs = INITIAL_BACKOFF_MS * Math.pow(2, attempt);
-      console.log(
-        `[Chatwoot] Retrying send in ${backoffMs}ms (attempt ${attempt + 1}/${MAX_RETRIES})`,
-      );
       await new Promise((resolve) => setTimeout(resolve, backoffMs));
     }
   }
@@ -97,20 +94,12 @@ export const sendMessage = createAction({
       content_type: 'text',
     };
 
-    console.log(
-      `[Chatwoot] Sending message to conversation ${conversationId}`,
-    );
-
     const result = await sendWithRetry(
       authValue.baseUrl,
       authValue.accountId,
       conversationId,
       authValue.apiAccessToken,
       body,
-    );
-
-    console.log(
-      `[Chatwoot] Message sent successfully (id: ${result.id})`,
     );
 
     return {

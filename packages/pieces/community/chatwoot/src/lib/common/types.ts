@@ -1,3 +1,6 @@
+import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
+import { chatwootAuth } from '../auth';
+
 export interface ChatwootWebhookSender {
   id: number;
   name: string;
@@ -57,10 +60,11 @@ export interface ChatwootCreateWebhookRequest {
 }
 
 export interface ChatwootWebhookResponse {
-  id: number;
-  url: string;
-  subscriptions: string[];
-  account_id: number;
+  payload:{
+    webhook:{
+      id:number
+    }
+  }
 }
 
 /** Single webhook in list response (GET /webhooks) */
@@ -101,14 +105,10 @@ export interface ChatwootAuthProps {
 }
 
 /** Normalize auth from either V0 (props only) or V1 (connection value with type + props) */
-export function getChatwootAuth(auth: unknown): ChatwootAuthProps {
-  const raw = (auth as { props?: ChatwootAuthProps })?.props ?? (auth as ChatwootAuthProps);
-  const token = typeof raw.apiAccessToken === 'object' && raw.apiAccessToken !== null && 'secret_text' in raw.apiAccessToken
-    ? (raw.apiAccessToken as { secret_text: string }).secret_text
-    : raw.apiAccessToken;
+export function getChatwootAuth(auth: AppConnectionValueForAuthProperty<typeof chatwootAuth>): ChatwootAuthProps {
   return {
-    baseUrl: raw.baseUrl ?? '',
-    accountId: raw.accountId ?? 0,
-    apiAccessToken: token ?? '',
+    baseUrl: auth.props.baseUrl ?? '',
+    accountId: auth.props.accountId ?? 0,
+    apiAccessToken: auth.props.apiAccessToken ?? '',
   };
 }
