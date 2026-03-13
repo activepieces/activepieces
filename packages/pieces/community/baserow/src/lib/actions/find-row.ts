@@ -43,6 +43,9 @@ export const findRowAction = createAction({
       field_name: string;
       field_value: string;
     };
+    if (!field_value) {
+      return { found: false, row: null };
+    }
     const client = makeClient(context.auth.props);
     const response = await client.listRows(
       table_id,

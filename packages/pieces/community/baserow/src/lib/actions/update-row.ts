@@ -34,7 +34,7 @@ export const updateRowAction = createAction({
 
     Object.keys(tableFieldsInput).forEach((key) => {
       const value = tableFieldsInput[key];
-      if (value === null || value === undefined || value === '') {
+      if (value === null || value === undefined) {
         return;
       }
       const fieldType: string = fieldIDTypeMap[key];

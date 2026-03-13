@@ -29,6 +29,11 @@ export const rowUpdatedTrigger = createTrigger({
     id: 1,
     order: '1.00000000000000000000',
     Name: 'Updated row',
+    old_item: {
+      id: 1,
+      order: '1.00000000000000000000',
+      Name: 'Original row',
+    },
   },
   async onEnable() {
     // Manual setup required — user registers the webhook URL in Baserow UI.
@@ -37,7 +42,10 @@ export const rowUpdatedTrigger = createTrigger({
     // Manual cleanup — user deletes the webhook in Baserow UI.
   },
   async run(context) {
-    const body = context.payload.body as { items?: unknown[] };
-    return body.items ?? [];
+    const body = context.payload.body as { items?: unknown[]; old_items?: unknown[] };
+    return (body.items ?? []).map((item, i) => ({
+      ...(item as Record<string, unknown>),
+      old_item: body.old_items?.[i] ?? null,
+    }));
   },
 });
