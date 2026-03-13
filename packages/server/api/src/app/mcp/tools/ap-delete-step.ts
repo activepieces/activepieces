@@ -24,6 +24,7 @@ export const apDeleteStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
             flowId: z.string().describe('The id of the flow'),
             stepName: z.string().describe('The name of the step to delete. Use ap_flow_structure to get valid values.'),
         },
+        annotations: { destructiveHint: true },
         execute: async (args) => {
             const { flowId, stepName } = deleteStepInput.parse(args)
 

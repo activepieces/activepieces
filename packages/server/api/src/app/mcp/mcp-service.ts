@@ -136,7 +136,7 @@ export const mcpServerService = (log: FastifyBaseLogger) => {
             const enabledControllable = new Set(mcp.enabledTools ?? ALL_CONTROLLABLE_TOOL_NAMES)
             const tools = allTools.filter(t => LOCKED_TOOL_NAMES.includes(t.title) || enabledControllable.has(t.title))
             tools.forEach((tool) => {
-                server.registerTool(tool.title, { title: tool.title, description: tool.description, inputSchema: tool.inputSchema }, (args: Record<string, unknown>) => tool.execute(args))
+                server.registerTool(tool.title, { title: tool.title, description: tool.description, inputSchema: tool.inputSchema, annotations: tool.annotations }, (args: Record<string, unknown>) => tool.execute(args))
             })
 
             registerEmptyResourcesAndPrompts(server)

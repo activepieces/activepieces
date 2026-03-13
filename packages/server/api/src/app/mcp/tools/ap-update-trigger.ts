@@ -35,6 +35,7 @@ export const apUpdateTriggerTool = (mcp: McpServer, log: FastifyBaseLogger): Mcp
             auth: z.string().optional().describe('Connection `externalId` from `ap_list_connections`. The tool wraps it automatically as `{{connections[\'externalId\']}}`.'),
             displayName: z.string().optional().describe('Display name for the trigger step'),
         },
+        annotations: { destructiveHint: false, idempotentHint: true },
         execute: async (args) => {
             const { flowId, pieceName, pieceVersion, triggerName, input: rawInput, auth, displayName: rawDisplayName } = updateTriggerInput.parse(args)
 

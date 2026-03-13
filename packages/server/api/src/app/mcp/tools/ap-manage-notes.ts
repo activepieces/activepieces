@@ -47,6 +47,7 @@ export const apManageNotesTool = (mcp: McpServer, log: FastifyBaseLogger): McpTo
                 height: z.number(),
             }).optional().describe('Size of the note (optional, defaults to 200x200)'),
         },
+        annotations: { destructiveHint: true },
         execute: async (args) => {
             const { flowId, operation: op, noteId, content, color, position, size } = manageNotesInput.parse(args)
 

@@ -39,6 +39,7 @@ export const apAddBranchTool = (mcp: McpServer, log: FastifyBaseLogger): McpTool
                 ),
             ).optional().describe('Conditions array (outer array = OR groups, inner array = AND conditions). Required for condition-type branches; omit to use an empty condition group.'),
         },
+        annotations: { destructiveHint: false, idempotentHint: false },
         execute: async (args) => {
             const { flowId, routerStepName, branchName, conditions } = addBranchInput.parse(args)
 

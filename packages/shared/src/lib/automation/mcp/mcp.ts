@@ -40,5 +40,11 @@ export type McpToolDefinition = {
     title: string
     description: string
     inputSchema: Record<string, z.ZodTypeAny>
+    annotations?: {
+        readOnlyHint?: boolean
+        destructiveHint?: boolean
+        idempotentHint?: boolean
+        openWorldHint?: boolean
+    }
     execute: (args: Record<string, unknown>) => Promise<{ content: Array<{ type: 'text', text: string }> }>
 }

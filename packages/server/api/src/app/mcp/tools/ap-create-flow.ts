@@ -10,6 +10,7 @@ export const apCreateFlowTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
         inputSchema: {
             flowName: z.string().describe('The name of the flow'),
         },
+        annotations: { destructiveHint: false, idempotentHint: false },
         execute: async (args) => {
             const { flowName } = z.object({ flowName: z.string() }).parse(args)
             try {
