@@ -2,13 +2,13 @@ import * as crypto from 'crypto'
 import { randomBytes } from 'node:crypto'
 import { promisify } from 'util'
 
-import { AppSystemProp, RedisType } from '@activepieces/server-shared'
+import { AppSystemProp, RedisType } from '@activepieces/server-common'
 import {
     assertNotNullOrUndefined,
     isNil,
 } from '@activepieces/shared'
-import { Static, Type } from '@sinclair/typebox'
 import { Mutex } from 'async-mutex'
+import { z } from 'zod'
 import { redisConnections } from '../database/redis-connections'
 import { localFileStore } from './local-store'
 import { system } from './system/system'
@@ -17,11 +17,11 @@ const algorithm = 'aes-256-cbc'
 const ivLength = 16
 const mutexLock = new Mutex()
 
-export const EncryptedObject = Type.Composite([Type.Object({
-    iv: Type.String(),
-    data: Type.String(),
-})])
-export type EncryptedObject = Static<typeof EncryptedObject>
+export const EncryptedObject = z.object({
+    iv: z.string(),
+    data: z.string(),
+})
+export type EncryptedObject = z.infer<typeof EncryptedObject>
 const redisType = redisConnections.getRedisType()
 
 

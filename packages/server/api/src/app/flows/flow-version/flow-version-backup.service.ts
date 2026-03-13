@@ -1,15 +1,13 @@
-import { 
-    FileCompression, 
-    FileType, 
-    FlowVersion, 
+import {
+    FileCompression,
+    FileType,
+    FlowVersion,
     spreadIfDefined,
 } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { fileService } from '../../file/file.service'
-import { system } from '../../helper/system/system'
 
-const log = system.globalLogger()
-
-export const flowVersionBackupService = {
+export const flowVersionBackupService = (log: FastifyBaseLogger) => ({
     async store(flowVersion: FlowVersion): Promise<string> {
         const data = Buffer.from(JSON.stringify(flowVersion))
         const file = await fileService(log).save({
@@ -51,7 +49,7 @@ export const flowVersionBackupService = {
         }, 'Backup version retrieved for flow version')
         return backupFlowVersion
     },
-}
+})
 
 type GetBackupVersionParams = {
     flowVersion: FlowVersion

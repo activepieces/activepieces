@@ -1,9 +1,10 @@
 import os from 'os'
 import path from 'path'
-import { AppSystemProp, ContainerType, DatabaseType, environmentVariables, pinoLogging, RedisType, SystemProp, WorkerSystemProp } from '@activepieces/server-shared'
+import { AppSystemProp, ContainerType, DatabaseType, environmentVariables, pinoLogging, RedisType, SystemProp, WorkerSystemProp } from '@activepieces/server-common'
 import {
     ActivepiecesError,
     ApEdition,
+    DefaultProjectRole,
     ErrorCode,
     ExecutionMode,
     FileLocation,
@@ -60,6 +61,7 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.ENABLE_FLOW_ON_PUBLISH]: 'true',
     [AppSystemProp.ISSUE_ARCHIVE_DAYS]: '7',
     [AppSystemProp.POSTGRES_IDLE_TIMEOUT_MS]: '300000',
+    [AppSystemProp.SCIM_DEFAULT_PROJECT_ROLE]: DefaultProjectRole.EDITOR,
 }
 
 let globalLogger: FastifyBaseLogger

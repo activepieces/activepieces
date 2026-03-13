@@ -1,4 +1,4 @@
-import { EntitySourceType, ProjectResourceType, securityAccess } from '@activepieces/server-shared'
+import { EntitySourceType, ProjectResourceType, securityAccess } from '@activepieces/server-common'
 import {
     CreateRecordsRequest,
     DeleteRecordsRequest,
@@ -10,11 +10,9 @@ import {
     SERVICE_KEY_SECURITY_OPENAPI,
     UpdateRecordRequest,
 } from '@activepieces/shared'
-import {
-    FastifyPluginAsyncTypebox,
-    Type,
-} from '@fastify/type-provider-typebox'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
+import { z } from 'zod'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
 import { TableEntity } from '../table/table.entity'
 import { recordSideEffects } from './record-side-effects'
@@ -23,7 +21,7 @@ import { recordService } from './record.service'
 
 const DEFAULT_PAGE_SIZE = 10
 
-export const recordController: FastifyPluginAsyncTypebox = async (fastify) => {
+export const recordController: FastifyPluginAsyncZod = async (fastify) => {
     fastify.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
 
     fastify.post('/', CreateRequest, async (request, reply) => {
@@ -107,7 +105,7 @@ const CreateRequest = {
     schema: {
         body: CreateRecordsRequest,
         response: {
-            [StatusCodes.CREATED]: Type.Array(PopulatedRecord),
+            [StatusCodes.CREATED]: z.array(PopulatedRecord),
         },
     },
 }
@@ -120,12 +118,12 @@ const GetRecordByIdRequest = {
         }),
     },
     schema: {
-        params: Type.Object({
-            id: Type.String(),
+        params: z.object({
+            id: z.string(),
         }),
         response: {
             [StatusCodes.OK]: PopulatedRecord,
-            [StatusCodes.NOT_FOUND]: Type.String(),
+            [StatusCodes.NOT_FOUND]: z.string(),
         },
     },
 }
@@ -141,8 +139,8 @@ const UpdateRequest = {
         tags: ['records'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         description: 'Update a record',
-        params: Type.Object({
-            id: Type.String(),
+        params: z.object({
+            id: z.string(),
         }),
         body: UpdateRecordRequest,
         response: {
@@ -170,7 +168,7 @@ const DeleteRecordRequest = {
         description: 'Delete records',
         body: DeleteRecordsRequest,
         response: {
-            [StatusCodes.OK]: Type.Array(PopulatedRecord),
+            [StatusCodes.OK]: z.array(PopulatedRecord),
         },
     },
 }

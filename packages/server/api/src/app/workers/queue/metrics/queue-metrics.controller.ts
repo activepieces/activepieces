@@ -1,10 +1,10 @@
-import { securityAccess } from '@activepieces/server-shared'
+import { securityAccess } from '@activepieces/server-common'
 import { PrincipalType, QueueMetricsResponse, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { queueMetricService } from './queue-metrics.service'
 
-export const queueMetricsController: FastifyPluginAsyncTypebox = async (app) => {
+export const queueMetricsController: FastifyPluginAsyncZod = async (app) => {
     app.get('/', GetMetrics, async (request) => queueMetricService(request.log).getMetrics())
 }
 

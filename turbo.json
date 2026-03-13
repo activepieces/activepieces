@@ -11,22 +11,60 @@
         "!src/**/*.spec.ts",
         "!src/**/*.test.ts",
         "!vitest.config.*"
-      ]
+      ],
+      "cache": false
     },
-    "@activepieces/engine#build": {
+    "web#build": {
       "dependsOn": ["^build"],
-      "outputs": ["../../dist/packages/engine/**"],
+      "outputs": ["../../dist/packages/web/**"],
       "cache": false,
       "inputs": [
         "src/**",
         "tsconfig*.json",
         "package.json",
-        "webpack.config.js",
+        "vite.config.*",
         "!src/**/*.spec.ts",
         "!src/**/*.test.ts"
       ]
     },
+    "api#build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**"],
+      "cache": false,
+      "inputs": [
+        "src/**",
+        "tsconfig*.json",
+        "package.json",
+        "!src/**/*.spec.ts",
+        "!src/**/*.test.ts"
+      ]
+    },
+    "@activepieces/engine#build": {
+      "dependsOn": [],
+      "outputs": ["../../../dist/packages/engine/**"],
+      "cache": false,
+      "inputs": [
+        "src/**",
+        "tsconfig*.json",
+        "package.json",
+        "esbuild.config.mjs",
+        "!src/**/*.spec.ts",
+        "!src/**/*.test.ts"
+      ]
+    },
+    "@activepieces/engine#test": {
+      "dependsOn": [
+        "build",
+        "@activepieces/piece-http#build",
+        "@activepieces/piece-data-mapper#build",
+        "@activepieces/piece-approval#build",
+        "@activepieces/piece-webhook#build"
+      ],
+      "inputs": ["src/**", "test/**", "tsconfig*.json", "vitest.config.*"],
+      "outputs": ["coverage/**"]
+    },
     "lint": {
+      "dependsOn": ["^build"],
       "inputs": ["src/**", ".eslintrc.json", "../../.eslintrc.json"],
       "outputs": []
     },

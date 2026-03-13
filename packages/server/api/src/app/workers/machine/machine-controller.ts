@@ -1,10 +1,10 @@
-import { securityAccess } from '@activepieces/server-shared'
+import { securityAccess } from '@activepieces/server-common'
 import { PrincipalType, WebsocketServerEvent, WorkerMachineHealthcheckRequest } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { websocketService } from '../../core/websockets.service'
 import { machineService } from './machine-service'
 
-export const workerMachineController: FastifyPluginAsyncTypebox = async (app) => {
+export const workerMachineController: FastifyPluginAsyncZod = async (app) => {
 
     websocketService.addListener(PrincipalType.WORKER, WebsocketServerEvent.FETCH_WORKER_SETTINGS, (socket) => {
         return async (request: WorkerMachineHealthcheckRequest, _principal, _projectId, callback?: (data: unknown) => void) => {

@@ -1,4 +1,4 @@
-import { pinoLogging } from '@activepieces/server-shared'
+import { pinoLogging } from '@activepieces/server-common'
 import { apId, EngineHttpResponse, EventPayload, FlowRun, FlowStatus, isNil, RunEnvironment, TriggerPayload } from '@activepieces/shared'
 import { trace } from '@opentelemetry/api'
 import { FastifyBaseLogger } from 'fastify'
@@ -56,7 +56,7 @@ export const webhookService = {
                 }
                 const { flow } = flowExecutionResult
                 if (flow.status === FlowStatus.DISABLED && !saveSampleData) {
-                    pinoLogger.info('trigger source not found, returning NOT FOUND')
+                    pinoLogger.warn({ flowId }, 'Webhook received for disabled flow')
                     span.setAttribute('webhook.triggerSourceFound', false)
                     return {
                         status: StatusCodes.NOT_FOUND,
@@ -81,7 +81,6 @@ export const webhookService = {
                 })
                 if (!isNil(response)) {
                     logger.info({
-                        message: 'Handshake request completed',
                         flowId: flow.id,
                         flowVersionId: flowVersionIdToRun,
                         webhookRequestId,

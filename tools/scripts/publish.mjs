@@ -22,8 +22,8 @@ function invariant(condition, message) {
 const outputPaths = {
   shared: 'packages/shared/dist',
   engine: 'dist/packages/engine',
-  'pieces-framework': 'packages/pieces/community/framework/dist',
-  'pieces-common': 'packages/pieces/community/common/dist',
+  'pieces-framework': 'packages/pieces/framework/dist',
+  'pieces-common': 'packages/pieces/common/dist',
 };
 
 // Executing publish script: node path/to/publish.mjs {name} --version {version} --tag {tag}
