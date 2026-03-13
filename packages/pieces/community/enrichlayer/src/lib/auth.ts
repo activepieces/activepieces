@@ -9,14 +9,11 @@ export const enrichlayerAuth = PieceAuth.SecretText({
   required: true,
   validate: async ({ auth }) => {
     try {
-      const response = await enrichlayerApiCall(
+       await enrichlayerApiCall(
             auth as string,
             ENDPOINTS.CREDIT_BALANCE,
             {},
           );
-      if (response.status === 401) {
-        return { valid: false, error: 'Invalid API key' };
-      }
       return { valid: true };
     } catch (e) {
       return { valid: false, error: 'Could not validate API key' };
