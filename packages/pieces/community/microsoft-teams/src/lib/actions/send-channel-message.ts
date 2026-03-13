@@ -58,16 +58,28 @@ export const sendChannelMessageAction = createAction({
       };
     }> = [];
     const mentionPattern = /(^|[\s(>])@([A-Za-z0-9._-]+)/g;
+    const normalize = (value: string) => value.trim().toLowerCase();
     const mentionHandles = Array.from(
       content.matchAll(new RegExp(mentionPattern.source, 'g')),
       (match) => match[2]
     );
 
     if (mentionHandles.length > 0) {
+      const uniqueHandles = [...new Set(mentionHandles.map(normalize))];
+
+      // Build OData $filter to only fetch members matching any mentioned handle.
+      // Use startswith for email so "@username" matches "username@test.com".
+      const filterClauses = uniqueHandles.flatMap((handle) => [
+        `microsoft.graph.aadUserConversationMember/displayName eq '${handle}'`,
+        `startswith(microsoft.graph.aadUserConversationMember/email, '${handle}@')`,
+      ]);
+
       const members: ConversationMember[] = [];
       let response: PageCollection = await client
         .api(`/teams/${teamId}/members`)
+        .filter(filterClauses.join(' or '))
         .get();
+
       while (response.value.length > 0) {
         members.push(...(response.value as ConversationMember[]));
         if (response['@odata.nextLink']) {
@@ -77,7 +89,6 @@ export const sendChannelMessageAction = createAction({
         }
       }
 
-      const normalize = (value: string) => value.trim().toLowerCase();
       const byHandle = new Map<string, ConversationMember>();
 
       for (const member of members) {
