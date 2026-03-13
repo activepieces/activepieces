@@ -62,10 +62,18 @@ export const ProviderModelConfig = z.object({
 })
 export type ProviderModelConfig = z.infer<typeof ProviderModelConfig>
 
+export const CustomHeader = z.object({
+    key: z.string(),
+    value: z.string(),
+})
+export type CustomHeader = z.infer<typeof CustomHeader>
+
 export const OpenAICompatibleProviderConfig = z.object({
     apiKeyHeader: z.string(),
     baseUrl: z.string(),
     models: z.array(ProviderModelConfig),
+    defaultHeaders: z.array(CustomHeader).optional(),
+    sendMetadataHeaders: z.boolean().optional(),
 })
 export type OpenAICompatibleProviderConfig = z.infer<typeof OpenAICompatibleProviderConfig>
 
@@ -207,6 +215,7 @@ export const GetProviderConfigResponse = z.object({
     provider: z.nativeEnum(AIProviderName),
     config: AIProviderConfig,
     auth: AIProviderAuthConfig,
+    platformId: z.string(),
 })
 export type GetProviderConfigResponse = z.infer<typeof GetProviderConfigResponse>
 

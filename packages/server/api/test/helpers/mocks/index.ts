@@ -782,7 +782,7 @@ export const createMockAIProvider = async (aiProvider?: Partial<AIProvider>): Pr
         auth: await encryptUtils.encryptObject({
             apiKey: process.env.OPENAI_API_KEY ?? faker.string.uuid(),
         }),
-        config: {},
+        config: aiProvider?.config ?? {},
     }
     
 }
