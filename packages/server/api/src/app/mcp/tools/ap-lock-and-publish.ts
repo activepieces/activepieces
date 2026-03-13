@@ -23,7 +23,7 @@ export const apLockAndPublishTool = (mcp: McpServer, log: FastifyBaseLogger): Mc
         inputSchema: {
             flowId: z.string().describe('The id of the flow to publish'),
         },
-        annotations: { destructiveHint: false, idempotentHint: true },
+        annotations: { destructiveHint: false, idempotentHint: false },
         execute: async (args) => {
             const { flowId } = lockAndPublishInput.parse(args)
 
