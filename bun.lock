@@ -1482,6 +1482,16 @@
         "tslib": "^2.3.0",
       },
     },
+    "packages/pieces/community/chatwoot": {
+      "name": "@activepieces/piece-chatwoot",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/checkout": {
       "name": "@activepieces/piece-checkout",
       "version": "0.1.3",
@@ -1689,6 +1699,16 @@
     "packages/pieces/community/cognito-forms": {
       "name": "@activepieces/piece-cognito-forms",
       "version": "0.1.4",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
+      },
+    },
+    "packages/pieces/community/cohere": {
+      "name": "@activepieces/piece-cohere",
+      "version": "0.0.1",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -7948,6 +7968,8 @@
 
     "@activepieces/piece-chatsistant": ["@activepieces/piece-chatsistant@workspace:packages/pieces/community/chatsistant"],
 
+    "@activepieces/piece-chatwoot": ["@activepieces/piece-chatwoot@workspace:packages/pieces/community/chatwoot"],
+
     "@activepieces/piece-checkout": ["@activepieces/piece-checkout@workspace:packages/pieces/community/checkout"],
 
     "@activepieces/piece-circle": ["@activepieces/piece-circle@workspace:packages/pieces/community/circle"],
@@ -7985,6 +8007,8 @@
     "@activepieces/piece-cody": ["@activepieces/piece-cody@workspace:packages/pieces/community/cody"],
 
     "@activepieces/piece-cognito-forms": ["@activepieces/piece-cognito-forms@workspace:packages/pieces/community/cognito-forms"],
+
+    "@activepieces/piece-cohere": ["@activepieces/piece-cohere@workspace:packages/pieces/community/cohere"],
 
     "@activepieces/piece-cometapi": ["@activepieces/piece-cometapi@workspace:packages/pieces/community/cometapi"],
 
