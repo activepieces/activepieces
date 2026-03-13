@@ -39,7 +39,7 @@ export const findOrAddPersonAction = createAction({
 
     // Search for existing person by email
     const searchResult = await client.get<any>(
-      `/api/v1/crm/people?Email=${encodeURIComponent(context.propsValue.email)}`
+      `/api/v1/crm/people?Email=${encodeURIComponent(context.propsValue.email)}&limit=1000`
     );
 
     const items = searchResult?.items ?? searchResult?.Items ?? [];

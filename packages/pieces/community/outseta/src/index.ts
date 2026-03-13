@@ -9,7 +9,6 @@ import { getPersonAction } from './action/get-person';
 import { getAccountPlanAction } from './action/get-account-plan';
 import { changeAccountPlanAction } from './action/change-account-plan';
 import { addAddonUsageAction } from './action/add-addon-usage';
-import { cancelAccountSubscriptionAction } from './action/cancel-account-subscription';
 import { updateAccountAction } from './action/update-account';
 import { updatePersonAction } from './action/update-person';
 import { findOrAddPersonAction } from './action/find-or-add-person';
@@ -68,7 +67,6 @@ export const outseta = createPiece({
     getAccountPlanAction,
     changeAccountPlanAction,
     addAddonUsageAction,
-    cancelAccountSubscriptionAction,
     updateAccountAction,
     updatePersonAction,
     findOrAddPersonAction,

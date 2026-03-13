@@ -39,7 +39,7 @@ export const findOrAddAccountAction = createAction({
 
     // Search for existing account by name
     const searchResult = await client.get<any>(
-      `/api/v1/crm/accounts?Name=${encodeURIComponent(context.propsValue.name)}`
+      `/api/v1/crm/accounts?Name=${encodeURIComponent(context.propsValue.name)}&limit=1000`
     );
 
     const items = searchResult?.items ?? searchResult?.Items ?? [];

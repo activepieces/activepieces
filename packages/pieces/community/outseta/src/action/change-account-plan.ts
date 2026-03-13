@@ -54,7 +54,7 @@ export const changeAccountPlanAction = createAction({
     const subscriptionUid = account.CurrentSubscription.Uid;
 
     const result = await client.put<any>(
-      `/api/v1/billing/subscriptions/${subscriptionUid}/changeSubscription`,
+      `/api/v1/billing/subscriptions/${subscriptionUid}/changesubscription`,
       {
         Account: { Uid: context.propsValue.accountUid },
         Plan: { Uid: context.propsValue.planUid },
