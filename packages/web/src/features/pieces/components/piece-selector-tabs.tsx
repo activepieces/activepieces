@@ -19,10 +19,10 @@ export const PieceSelectorTabs = ({ tabs }: { tabs: TabType[] }) => {
     <Tabs
       value={selectedTab}
       onValueChange={(value) => setSelectedTab(value as PieceSelectorTabType)}
-      className="max-w-md w-full dak"
+      className="w-full"
     >
       <TabsList
-        className={`h-full w-full flex gap-3 px-2  justify-start rounded-none`}
+        className={`h-full w-full flex gap-3 px-2  justify-start rounded-none bg-background`}
         style={{
           gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))`,
         }}

@@ -76,7 +76,7 @@ export const AutomationsTable = ({
   const groups = groupTreeItemsByFolder(items);
 
   return (
-    <div className="-mx-3 overflow-x-auto">
+    <div className="overflow-x-auto">
       <div className="min-w-[1000px]">
         <div className="flex items-center h-10 text-xs border-b border-t font-medium text-foreground bg-background">
           <div className="w-10 shrink-0 pl-4 pr-1">
@@ -103,7 +103,7 @@ export const AutomationsTable = ({
             {t('Last modified')}
           </div>
           {!embedState.isEmbedded && (
-            <div className="w-[170px] shrink-0 px-2 flex items-center gap-1.5">
+            <div className="w-[250px] shrink-0 px-2 flex items-center gap-1.5">
               <User className="h-3.5 w-3.5" />
               {t('Owner')}
             </div>

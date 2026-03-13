@@ -6,6 +6,7 @@ import {
 import { userId } from '../common/props';
 import { slackAuth } from '../auth';
 import { parseCommand } from '../common/utils';
+import { getTeamId, getUserId, SlackAuthValue } from '../common/auth-helpers';
 
 export const newCommandInDirectMessageTrigger = createTrigger({
   auth: slackAuth,
@@ -14,7 +15,7 @@ export const newCommandInDirectMessageTrigger = createTrigger({
   description:
     'Triggers when a specific command is sent to the bot (e.g., @bot command arg1 arg2) via Direct Message.',
   props: {
-    user: userId,
+    user: userId(true),
     commands: Property.Array({
       displayName: 'Commands',
       description:
@@ -37,8 +38,8 @@ export const newCommandInDirectMessageTrigger = createTrigger({
   sampleData: undefined,
   onEnable: async (context) => {
     // Older OAuth2 has team_id, newer has team.id
-    const teamId =
-      context.auth.data['team_id'] ?? context.auth.data['team']['id'];
+    		const teamId = await getTeamId(context.auth as SlackAuthValue);
+
     context.app.createListeners({
       events: ['message'],
       identifierValue: teamId,
@@ -52,7 +53,7 @@ export const newCommandInDirectMessageTrigger = createTrigger({
     const payloadBody = context.payload.body as PayloadBody;
     const commands = (context.propsValue.commands as string[]) ?? [];
     const user = context.propsValue.user as string;
-    const authUserId = context.auth.data['authed_user']?.id;
+    const authUserId = await getUserId(context.auth as SlackAuthValue)
 
 
     if (payloadBody.event.channel_type !== 'im') {
