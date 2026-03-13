@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { enrichlayerAuth } from '../../';
-import { enrichlayerApiCall } from '../api';
-import { ENDPOINTS } from '../common';
+import { enrichlayerAuth } from '../auth';
+import { enrichlayerApiCall } from '../common/client';
+import { ENDPOINTS } from '../common/constants';
 
 export const getRoleLookup = createAction({
   name: 'get_role_lookup',
@@ -35,7 +35,7 @@ export const getRoleLookup = createAction({
   },
   async run(context) {
     return await enrichlayerApiCall(
-      context.auth as string,
+      context.auth.secret_text as string,
       ENDPOINTS.ROLE_LOOKUP,
       {
         company_name: context.propsValue.company_name,

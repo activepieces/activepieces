@@ -3,7 +3,8 @@ import {
   httpClient,
   AuthenticationType,
 } from '@activepieces/pieces-common';
-import { BASE_URL } from './common';
+import { BASE_URL } from './constants';
+import { isNil } from '@activepieces/shared';
 
 export async function enrichlayerApiCall(
   auth: string,
@@ -12,7 +13,7 @@ export async function enrichlayerApiCall(
 ) {
   const filteredParams: Record<string, string> = {};
   for (const [key, value] of Object.entries(queryParams)) {
-    if (value !== undefined && value !== '') {
+    if (!isNil(value) && value !== '') {
       filteredParams[key] = value;
     }
   }

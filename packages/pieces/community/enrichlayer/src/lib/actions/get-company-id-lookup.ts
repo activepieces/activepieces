@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { enrichlayerAuth } from '../../';
-import { enrichlayerApiCall } from '../api';
-import { ENDPOINTS } from '../common';
+import { enrichlayerApiCall } from '../common/client';
+import { ENDPOINTS } from '../common/constants';
+import { enrichlayerAuth } from '../auth';
 
 export const getCompanyIdLookup = createAction({
   name: 'get_company_id_lookup',
@@ -19,7 +19,7 @@ export const getCompanyIdLookup = createAction({
   },
   async run(context) {
     return await enrichlayerApiCall(
-      context.auth as string,
+      context.auth.secret_text as string,
       ENDPOINTS.COMPANY_ID_LOOKUP,
       {
         id: context.propsValue.id,

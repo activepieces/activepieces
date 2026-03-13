@@ -1,4 +1,4 @@
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
@@ -27,29 +27,8 @@ import { getJobCount } from './lib/actions/get-job-count';
 import { getCompanySearch } from './lib/actions/get-company-search';
 import { getPersonSearch } from './lib/actions/get-person-search';
 import { getCreditBalance } from './lib/actions/get-credit-balance';
+import { enrichlayerAuth } from './lib/auth';
 
-export const enrichlayerAuth = PieceAuth.SecretText({
-  displayName: 'API Key',
-  description:
-    'Your Enrich Layer API key. Get one at https://enrichlayer.com',
-  required: true,
-  validate: async ({ auth }) => {
-    try {
-      const response = await fetch(
-        'https://enrichlayer.com/api/v2/credit-balance',
-        {
-          headers: { Authorization: `Bearer ${auth}` },
-        },
-      );
-      if (response.status === 401) {
-        return { valid: false, error: 'Invalid API key' };
-      }
-      return { valid: true };
-    } catch (e) {
-      return { valid: false, error: 'Could not validate API key' };
-    }
-  },
-});
 
 export const enrichlayer = createPiece({
   displayName: 'Enrich Layer',
@@ -90,7 +69,7 @@ export const enrichlayer = createPiece({
       auth: enrichlayerAuth,
       baseUrl: () => 'https://enrichlayer.com',
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${auth as string}`,
+        Authorization: `Bearer ${auth.secret_text as string}`,
       }),
     }),
   ],

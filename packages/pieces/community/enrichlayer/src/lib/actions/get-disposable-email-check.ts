@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { enrichlayerAuth } from '../../';
-import { enrichlayerApiCall } from '../api';
-import { ENDPOINTS } from '../common';
+import { enrichlayerAuth } from '../auth';
+import { enrichlayerApiCall } from '../common/client';
+import { ENDPOINTS } from '../common/constants';
 
 export const getDisposableEmailCheck = createAction({
   name: 'get_disposable_email_check',
@@ -19,7 +19,7 @@ export const getDisposableEmailCheck = createAction({
   },
   async run(context) {
     return await enrichlayerApiCall(
-      context.auth as string,
+      context.auth.secret_text as string,
       ENDPOINTS.DISPOSABLE_EMAIL,
       {
         email: context.propsValue.email,

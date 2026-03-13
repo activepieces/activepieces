@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { enrichlayerAuth } from '../../';
-import { enrichlayerApiCall } from '../api';
-import { ENDPOINTS } from '../common';
+import { enrichlayerAuth } from '../auth';
+import { enrichlayerApiCall } from '../common/client';
+import { ENDPOINTS } from '../common/constants';
 
 export const getEmployeeListing = createAction({
   name: 'get_employee_listing',
@@ -114,7 +114,7 @@ export const getEmployeeListing = createAction({
   },
   async run(context) {
     return await enrichlayerApiCall(
-      context.auth as string,
+      context.auth.secret_text as string,
       ENDPOINTS.EMPLOYEE_LISTING,
       {
         url: context.propsValue.url,

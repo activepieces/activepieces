@@ -1,7 +1,7 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { enrichlayerAuth } from '../../';
-import { enrichlayerApiCall } from '../api';
-import { ENDPOINTS } from '../common';
+import { enrichlayerAuth } from '../auth';
+import { enrichlayerApiCall } from '../common/client';
+import { ENDPOINTS } from '../common/constants';
 
 export const getCreditBalance = createAction({
   name: 'get_credit_balance',
@@ -12,7 +12,7 @@ export const getCreditBalance = createAction({
   props: {},
   async run(context) {
     return await enrichlayerApiCall(
-      context.auth as string,
+      context.auth.secret_text as string,
       ENDPOINTS.CREDIT_BALANCE,
       {},
     );

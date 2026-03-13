@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { enrichlayerAuth } from '../../';
-import { enrichlayerApiCall } from '../api';
-import { ENDPOINTS } from '../common';
+import { enrichlayerAuth } from '../auth';
+import { ENDPOINTS } from '../common/constants';
+import { enrichlayerApiCall } from '../common/client';
 
 export const getStudentListing = createAction({
   name: 'get_student_listing',
@@ -84,7 +84,7 @@ export const getStudentListing = createAction({
   },
   async run(context) {
     return await enrichlayerApiCall(
-      context.auth as string,
+      context.auth.secret_text as string,
       ENDPOINTS.STUDENT_LISTING,
       {
         school_url: context.propsValue.school_url,
