@@ -1,6 +1,6 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { sendItAuth } from '../../index';
+import { sendItAuth } from '../auth';
 import { sendItRequest } from '../common';
 
 export const listAccounts = createAction({

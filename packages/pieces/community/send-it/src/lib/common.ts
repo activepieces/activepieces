@@ -1,6 +1,6 @@
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { Property } from '@activepieces/pieces-framework';
-import { sendItAuth } from '../index';
+import { sendItAuth } from './auth';
 
 const API_BASE = 'https://sendit.infiniteappsai.com/api/v1';
 
@@ -142,29 +142,31 @@ export const scheduleIdProperty = Property.Dropdown({
 
       return {
         disabled: false,
-        options: posts.map((post) => {
-          const platforms = Array.isArray(post['platforms'])
-            ? (post['platforms'] as string[]).join(', ')
-            : String(post['platform'] ?? 'Unknown');
-          const content = post['content'] as
-            | Record<string, unknown>
-            | undefined;
-          const rawText = String(content?.['text'] ?? '');
-          const snippet =
-            rawText.length > 40
-              ? rawText.substring(0, 40) + '…'
-              : rawText || 'No text';
-          const scheduledTime = post['scheduledTime']
-            ? new Date(String(post['scheduledTime'])).toLocaleString()
-            : '';
-          const id = String(post['id'] ?? post['scheduleId'] ?? '');
-          return {
-            label: `${platforms} — ${snippet}${
-              scheduledTime ? ` (${scheduledTime})` : ''
-            }`,
-            value: id,
-          };
-        }),
+        options: posts
+          .map((post) => {
+            const platforms = Array.isArray(post['platforms'])
+              ? (post['platforms'] as string[]).join(', ')
+              : String(post['platform'] ?? 'Unknown');
+            const content = post['content'] as
+              | Record<string, unknown>
+              | undefined;
+            const rawText = String(content?.['text'] ?? '');
+            const snippet =
+              rawText.length > 40
+                ? rawText.substring(0, 40) + '…'
+                : rawText || 'No text';
+            const scheduledTime = post['scheduledTime']
+              ? new Date(String(post['scheduledTime'])).toLocaleString()
+              : '';
+            const id = String(post['id'] ?? post['scheduleId'] ?? '');
+            return {
+              label: `${platforms} — ${snippet}${
+                scheduledTime ? ` (${scheduledTime})` : ''
+              }`,
+              value: id,
+            };
+          })
+          .filter((opt) => opt.value !== ''),
       };
     } catch {
       return {

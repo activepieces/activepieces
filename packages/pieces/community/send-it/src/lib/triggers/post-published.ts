@@ -1,6 +1,6 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { sendItAuth } from '../../index';
+import { sendItAuth } from '../auth';
 import { sendItRequest } from '../common';
 
 type PublishedPayload = {
@@ -35,7 +35,6 @@ export const postPublished = createTrigger({
     )) as { webhook: { id: string; secret: string } };
 
     await context.store.put('webhookId', response.webhook.id);
-    await context.store.put('webhookSecret', response.webhook.secret);
   },
   async onDisable(context) {
     const webhookId = await context.store.get<string>('webhookId');

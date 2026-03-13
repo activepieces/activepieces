@@ -1,6 +1,7 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { createPiece } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { PieceCategory } from '@activepieces/shared';
+import { sendItAuth } from './lib/auth';
 import { publishPost } from './lib/actions/publish-post';
 import { schedulePost } from './lib/actions/schedule-post';
 import { cancelScheduledPost } from './lib/actions/cancel-scheduled-post';
@@ -12,33 +13,6 @@ import { postPublished } from './lib/triggers/post-published';
 import { postScheduled } from './lib/triggers/post-scheduled';
 import { postFailed } from './lib/triggers/post-failed';
 import { BASE_URL } from './lib/common';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-
-export const sendItAuth = PieceAuth.SecretText({
-  displayName: 'API Key',
-  description: `To get your SendIt API key:
-1. Log in to your [SendIt dashboard](https://sendit.infiniteappsai.com/dashboard)
-2. Go to **Settings > API Keys**
-3. Click **Create API Key** — the key is only shown once, so copy it immediately
-4. Paste the key below (it starts with \`sk_live_\`)`,
-  required: true,
-  validate: async ({ auth }) => {
-    try {
-      await httpClient.sendRequest({
-        method: HttpMethod.GET,
-        url: `${BASE_URL}/accounts`,
-        headers: { Authorization: `Bearer ${auth}` },
-      });
-      return { valid: true };
-    } catch {
-      return {
-        valid: false,
-        error:
-          'Invalid API key. Make sure you copied the full key starting with sk_live_.',
-      };
-    }
-  },
-});
 
 export const sendIt = createPiece({
   displayName: 'SendIt',
