@@ -2,7 +2,6 @@ import {
   AIProviderName,
   AIProviderModelType,
   CreateAIProviderRequest,
-  CustomHeader,
   ProviderModelConfig,
 } from '@activepieces/shared';
 import { t } from 'i18next';
@@ -253,7 +252,10 @@ export const UpsertProviderConfigForm = ({
             )}
           />
 
-          <CustomHeadersSection form={form} isLoading={isLoading} />
+          <CustomHeadersSection
+            form={form as unknown as UseFormReturn<CustomProviderFormValues>}
+            isLoading={isLoading}
+          />
         </>
       )}
 
@@ -306,8 +308,13 @@ export const UpsertProviderConfigForm = ({
   );
 };
 
+type CustomProviderFormValues = Extract<
+  CreateAIProviderRequest,
+  { provider: 'custom' }
+>;
+
 type CustomHeadersSectionProps = {
-  form: UseFormReturn<CreateAIProviderRequest>;
+  form: UseFormReturn<CustomProviderFormValues>;
   isLoading?: boolean;
 };
 
@@ -318,20 +325,16 @@ const METADATA_HEADERS = [
   'x-ap-run-id',
 ];
 
-const SEND_METADATA_PATH =
-  'config.sendMetadataHeaders' as unknown as keyof CreateAIProviderRequest;
-
 const CustomHeadersSection = ({
   form,
   isLoading,
 }: CustomHeadersSectionProps) => {
   const { fields, append, remove } = useFieldArray({
     control: form.control,
-    name: 'config.defaultHeaders' as 'config.models',
+    name: 'config.defaultHeaders',
   });
 
-  const headers = fields as unknown as (CustomHeader & { id: string })[];
-  const sendMetadata = !!form.watch(SEND_METADATA_PATH);
+  const sendMetadata = !!form.watch('config.sendMetadataHeaders');
 
   return (
     <div className="space-y-4">
@@ -343,7 +346,7 @@ const CustomHeadersSection = ({
           <Switch
             checked={sendMetadata}
             onCheckedChange={(checked) => {
-              form.setValue(SEND_METADATA_PATH, checked as never, {
+              form.setValue('config.sendMetadataHeaders', checked, {
                 shouldDirty: true,
               });
             }}
@@ -380,7 +383,7 @@ const CustomHeadersSection = ({
             variant="basic"
             disabled={isLoading}
             onClick={() =>
-              (append as unknown as (val: CustomHeader) => void)({
+              append({
                 key: '',
                 value: '',
               })
@@ -391,7 +394,7 @@ const CustomHeadersSection = ({
           </Button>
         </div>
 
-        {headers.length === 0 ? (
+        {fields.length === 0 ? (
           <div className="text-center py-6 border border-dashed rounded-lg flex flex-col items-center justify-center gap-1">
             <p className="text-sm text-muted-foreground">
               {t('No custom headers configured.')}
@@ -399,16 +402,14 @@ const CustomHeadersSection = ({
           </div>
         ) : (
           <div className="space-y-2">
-            {headers.map((header, index) => (
+            {fields.map((header, index) => (
               <div
                 key={header.id}
                 className="flex items-center gap-2 p-3 border rounded-lg"
               >
                 <FormField
                   control={form.control}
-                  name={
-                    `config.defaultHeaders.${index}.key` as `config.models.${number}.modelId`
-                  }
+                  name={`config.defaultHeaders.${index}.key`}
                   render={({ field }) => (
                     <FormItem className="flex-1 space-y-0">
                       {index === 0 && (
@@ -429,9 +430,7 @@ const CustomHeadersSection = ({
                 />
                 <FormField
                   control={form.control}
-                  name={
-                    `config.defaultHeaders.${index}.value` as `config.models.${number}.modelName`
-                  }
+                  name={`config.defaultHeaders.${index}.value`}
                   render={({ field }) => (
                     <FormItem className="flex-1 space-y-0">
                       {index === 0 && (

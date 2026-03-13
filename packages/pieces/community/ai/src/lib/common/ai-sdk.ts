@@ -163,9 +163,9 @@ export async function createAIModel({
                 name: 'openai-compatible',
                 baseURL: baseUrl,
                 headers: {
-                    [apiKeyHeader]: auth.apiKey,
                     ...metadataHeaders,
                     ...customHeaders,
+                    [apiKeyHeader]: auth.apiKey,
                 },
             })
             if (isImage) {
