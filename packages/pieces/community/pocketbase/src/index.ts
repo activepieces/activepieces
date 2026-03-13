@@ -36,7 +36,8 @@ export const pocketbaseAuth = PieceAuth.CustomAuth({
   },
   validate: async ({ auth }) => {
     try {
-      const { host, email, password } = auth;
+      const host = auth.host.replace(/\/+$/, '');
+      const { email, password } = auth;
 
       try {
         const parsedUrl = new URL(host);
@@ -62,8 +63,6 @@ export const pocketbaseAuth = PieceAuth.CustomAuth({
             password: password,
           },
         });
-
-        console.log('Authentication response:', response);
 
         if (response.body?.token) {
           return { valid: true };

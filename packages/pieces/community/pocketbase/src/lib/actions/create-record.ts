@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { pocketbaseAuth } from '../../index';
-import { pocketbaseAuthenticate } from '../common/client';
+import { pocketbaseAuthenticate, normalizeHost } from '../common/client';
 
 export const createRecord = createAction({
   name: 'createRecord',
@@ -31,7 +31,8 @@ export const createRecord = createAction({
     }),
   },
   async run(context) {
-    const { host, email, password } = context.auth.props;
+    const { host: rawHost, email, password } = context.auth.props;
+    const host = normalizeHost(rawHost);
     const { collection, recordData, expand, fields } = context.propsValue;
 
     const token = await pocketbaseAuthenticate(host, email, password);
