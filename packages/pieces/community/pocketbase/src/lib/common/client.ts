@@ -5,10 +5,9 @@ export function normalizeHost(host: string): string {
 }
 
 export async function pocketbaseAuthenticate(host: string, email: string, password: string): Promise<string> {
-  const normalizedHost = normalizeHost(host);
   const response = await httpClient.sendRequest({
     method: HttpMethod.POST,
-    url: `${normalizedHost}/api/collections/_superusers/auth-with-password`,
+    url: `${host}/api/collections/_superusers/auth-with-password`,
     body: {
       identity: email,
       password: password,
