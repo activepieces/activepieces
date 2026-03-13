@@ -13,7 +13,7 @@ async function processBatches<T>(items: T[], batchSize: number, processor: (item
 
 const main = async () => {
   const piecesMetadata = await findAllPiecesDirectoryInSource()
-  const sharedDeps = ['packages/pieces/community/framework', 'packages/pieces/community/common']
+  const sharedDeps = ['packages/pieces/framework', 'packages/pieces/common']
   
   const sharedResults = await Promise.all(sharedDeps.map(packagePrePublishChecks))
   const validationResults = await processBatches(

@@ -5,8 +5,9 @@
     "rootDir": ".",
     "baseUrl": ".",
     "paths": {},
-    "outDir": "../../../../dist/packages/pieces/community/seven",
+    "outDir": "./dist",
     "declaration": true,
+    "declarationMap": true,
     "types": [
       "node"
     ]

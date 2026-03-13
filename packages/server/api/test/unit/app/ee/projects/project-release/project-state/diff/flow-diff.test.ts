@@ -1,4 +1,3 @@
-import { faker } from '@faker-js/faker'
 import { FlowVersion } from '@activepieces/shared'
 import { nanoid } from 'nanoid'
 import { projectDiffService } from '../../../../../../../../src/app/ee/projects/project-release/project-state/project-diff.service'

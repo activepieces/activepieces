@@ -1,4 +1,4 @@
-import { AppSystemProp } from '@activepieces/server-shared'
+import { AppSystemProp } from '@activepieces/server-common'
 import {
     ActivepiecesError,
     ApEdition,
@@ -34,10 +34,11 @@ import {
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import semver from 'semver'
-import { OperationResponse } from 'server-worker'
 import { ArrayContains, Equal, FindOperator, FindOptionsWhere, ILike, In } from 'typeorm'
+import { OperationResponse } from 'worker'
 import { repoFactory } from '../../core/db/repo-factory'
 import { projectMemberService } from '../../ee/projects/project-members/project-member.service'
+import { secretManagersService } from '../../ee/secret-managers/secret-managers.service'
 import { flowService } from '../../flows/flow/flow.service'
 import { encryptUtils } from '../../helper/encryption'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
@@ -61,7 +62,7 @@ export const appConnectionsRepo = repoFactory(AppConnectionEntity)
 
 export const appConnectionService = (log: FastifyBaseLogger) => ({
     async upsert(params: UpsertParams): Promise<AppConnectionWithoutSensitiveData> {
-        const { projectIds, externalId, value, displayName, pieceName, ownerId, platformId, scope, type, status, metadata } = params
+        const { projectIds, externalId, value, displayName, pieceName, ownerId, platformId, scope, type, status, metadata, preSelectForNewProjects } = params
         const pieceVersion = params.pieceVersion ?? ( await pieceMetadataService(log).getOrThrow({
             name: pieceName,
             platformId,
@@ -69,7 +70,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
         validatePieceVersion(pieceVersion)
         await assertProjectIds(projectIds, platformId)
         const validatedConnectionValue = await validateConnectionValue({
-            value,
+            value: scope === AppConnectionScope.PROJECT ? value : await secretManagersService(log).resolveObject({ value, platformId }),
             pieceName,
             projectId: projectIds[0],
             platformId,
@@ -101,6 +102,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             projectIds,
             platformId,
             ...spreadIfDefined('metadata', metadata),
+            ...spreadIfDefined('preSelectForNewProjects', preSelectForNewProjects),
             pieceVersion,
         }
 
@@ -112,6 +114,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             ...(projectIds ? { projectIds: ArrayContains(projectIds) } : {}),
             scope,
         })
+        log.info({ connectionId: newId, pieceName, platformId, isNew: isNil(existingConnection) }, 'App connection upserted')
         return this.removeSensitiveData(updatedConnection)
     },
     async update(params: UpdateParams): Promise<AppConnectionWithoutSensitiveData> {
@@ -132,6 +135,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             displayName: request.displayName,
             ...spreadIfDefined('projectIds', request.projectIds),
             ...spreadIfDefined('metadata', request.metadata),
+            ...spreadIfDefined('preSelectForNewProjects', request.preSelectForNewProjects),
         })
 
         const updatedConnection = await appConnectionsRepo().findOneByOrFail(filter)
@@ -159,7 +163,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             return null
         }
 
-        const owner = isNil(connection.ownerId) ? null : await userService.getMetaInformation({
+        const owner = isNil(connection.ownerId) ? null : await userService(log).getMetaInformation({
             id: connection.ownerId,
         })
         return {
@@ -238,6 +242,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             userId,
         })
 
+        log.info({ oldConnectionId: sourceAppConnectionId, newConnectionId: targetAppConnectionId, affectedFlows: flows.data.length }, 'App connection replaced')
         await this.delete({
             id: sourceAppConnection.id,
             platformId,
@@ -253,6 +258,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             scope: params.scope,
             ...(params.projectId ? { projectIds: ArrayContains([params.projectId]) } : {}),
         })
+        log.info({ connectionId: params.id, platformId: params.platformId }, 'App connection deleted')
     },
 
     async list({
@@ -350,8 +356,9 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             projectIds: ArrayContains([projectId]),
         })
     },
+
     async getOwners({ projectId, platformId }: { projectId: ProjectId, platformId: PlatformId }): Promise<AppConnectionOwners[]> {
-        const platformAdmins = (await userService.getByPlatformRole(platformId, PlatformRole.ADMIN)).map(user => ({
+        const platformAdmins = (await userService(log).getByPlatformRole(platformId, PlatformRole.ADMIN)).map(user => ({
             firstName: user.identity.firstName,
             lastName: user.identity.lastName,
             email: user.identity.email,
@@ -374,6 +381,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
         }))
         return [...platformAdmins, ...projectMembersDetails]
     },
+
 })
 
 async function assertProjectIds(projectIds: ProjectId[], platformId: string): Promise<void> {
@@ -517,8 +525,8 @@ const engineValidateAuth = async (
 
     if (engineResponse.status !== EngineResponseStatus.OK) {
         log.error(
-            engineResponse,
-            '[AppConnectionService#engineValidateAuth] engineResponse',
+            { engineResponse },
+            'Engine validate auth failed',
         )
         throw new ActivepiecesError({
             code: ErrorCode.ENGINE_OPERATION_FAILURE,
@@ -626,6 +634,7 @@ type UpsertParams = {
     pieceName: string
     metadata?: Metadata
     pieceVersion?: string
+    preSelectForNewProjects?: boolean
 }
 
 
@@ -680,6 +689,7 @@ type UpdateParams = {
         displayName: string
         projectIds: ProjectId[] | null
         metadata?: Metadata
+        preSelectForNewProjects?: boolean
     }
 }
 

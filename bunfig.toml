@@ -1,2 +1,2 @@
 [install]
-linker = "hoisted"
+linker = "isolated"

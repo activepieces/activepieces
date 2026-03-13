@@ -19,8 +19,8 @@ nginx -g "daemon off;" &
 # Start backend server
 if [ "$AP_CONTAINER_TYPE" = "APP" ] && [ "$AP_PM2_ENABLED" = "true" ]; then
     echo "Starting backend server with PM2 (APP mode)"
-    pm2-runtime start packages/server/api/src/bootstrap.ts --interpreter tsx --name "activepieces-app" --node-args="--enable-source-maps --tsconfig packages/server/api/tsconfig.app.json" -i 0
+    pm2-runtime start packages/server/api/dist/src/bootstrap.js --name "activepieces-app" --node-args="--enable-source-maps" -i 0
 else
     echo "Starting backend server with Node.js (WORKER mode or default)"
-    tsx --enable-source-maps --tsconfig packages/server/api/tsconfig.app.json packages/server/api/src/bootstrap.ts
+    node --enable-source-maps packages/server/api/dist/src/bootstrap.js
 fi

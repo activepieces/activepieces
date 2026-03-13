@@ -557,6 +557,45 @@ export const salesforcesCommon = {
 			}
 		},
 	}),
+	caseQueueId: Property.Dropdown({
+		auth: salesforceAuth,
+		displayName: 'Case Queue',
+		description: 'The queue to monitor for new cases.',
+		required: true,
+		refreshers: [],
+		refreshOnSearch: true,
+		options: async ({ auth }, { searchValue }) => {
+			if (!auth) {
+				return {
+					disabled: true,
+					placeholder: 'Connect your account first',
+					options: [],
+				};
+			}
+
+			let query = `
+					SELECT QueueId, Queue.Name
+					FROM QueueSobject
+					WHERE SobjectType = 'Case'
+					`;
+
+			if (searchValue) {
+				const sanitizedSearch = searchValue.replace(/'/g, "\\'");
+				query += ` AND Queue.Name LIKE '${sanitizedSearch}%'`;
+			}
+
+			const response = await querySalesforceApi<{
+				records: { QueueId: string; Queue: { Name: string } }[];
+			}>(HttpMethod.GET, auth as OAuth2PropertyValue, query);
+			return {
+				disabled: false,
+				options: response.body.records.map((record) => ({
+					label: record.Queue.Name,
+					value: record.QueueId,
+				})),
+			};
+		},
+	}),
 	optionalContact: Property.Dropdown({
 		auth: salesforceAuth,
 		displayName: 'Contact',

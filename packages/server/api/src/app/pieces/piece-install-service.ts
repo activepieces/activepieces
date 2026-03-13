@@ -17,7 +17,7 @@ import {
     WorkerJobType,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { OperationResponse } from 'server-worker'
+import { OperationResponse } from 'worker'
 import { fileService } from '../file/file.service'
 import { userInteractionWatcher } from '../workers/user-interaction-watcher'
 import { pieceMetadataService } from './metadata/piece-metadata-service'
@@ -53,7 +53,7 @@ export const pieceInstallService = (log: FastifyBaseLogger) => ({
             return savedPiece
         }
         catch (error) {
-            log.error(error, '[PieceService#add]')
+            log.error({ err: error }, '[pieceInstallService#add] Failed to add piece')
 
             if ((error as ActivepiecesError).error.code === ErrorCode.VALIDATION) {
                 throw error
