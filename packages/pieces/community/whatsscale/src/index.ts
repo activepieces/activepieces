@@ -70,10 +70,15 @@ export const whatsscale = createPiece({
   displayName: 'WhatsScale',
   auth: whatsscaleAuth,
   minimumSupportedRelease: '0.36.0',
-  logoUrl: 'https://whatsscale.com/whatsscale-icon-only.svg',
+  logoUrl: 'https://cdn.activepieces.com/pieces/whatsscale.png',
   authors: ['whatsscale'],
-  description: 'Send WhatsApp messages, manage contacts, and automate conversations via WAHA',
-  categories: [PieceCategory.COMMUNICATION, PieceCategory.MARKETING, PieceCategory.SALES_AND_CRM],
+  description:
+    'Send WhatsApp messages, manage contacts, and automate conversations via WAHA',
+  categories: [
+    PieceCategory.COMMUNICATION,
+    PieceCategory.MARKETING,
+    PieceCategory.SALES_AND_CRM,
+  ],
   actions: [
     // Text actions
     sendTextManualAction,
@@ -125,9 +130,9 @@ export const whatsscale = createPiece({
     checkWhatsappAction,
   ],
   triggers: [
-    watchIncomingMessagesTrigger,
-    watchGroupMessagesTrigger,
     watchChannelMessagesTrigger,
+    watchGroupMessagesTrigger,
+    watchIncomingMessagesTrigger,
     watchSpecificGroupMessagesTrigger,
     watchSpecificChannelMessagesTrigger,
   ],
