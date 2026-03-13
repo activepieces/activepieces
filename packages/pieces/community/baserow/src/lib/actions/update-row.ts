@@ -34,18 +34,11 @@ export const updateRowAction = createAction({
 
     Object.keys(tableFieldsInput).forEach((key) => {
       const value = tableFieldsInput[key];
-      if (value === null || value === undefined) {
+      // Skip empty/unset values so untouched fields remain unchanged
+      if (value === null || value === undefined || value === '') {
         return;
       }
       const fieldType: string = fieldIDTypeMap[key];
-      // Skip empty values for select fields — Baserow API rejects them
-      if (
-        value === '' &&
-        (fieldType === BaserowFieldType.SINGLE_SELECT ||
-          fieldType === BaserowFieldType.MULTI_SELECT)
-      ) {
-        return;
-      }
       if (fieldType === BaserowFieldType.LINK_TO_TABLE) {
         formattedTableFields[key] = (value as string[]).map((id: string) =>
           parseInt(id, 10)
