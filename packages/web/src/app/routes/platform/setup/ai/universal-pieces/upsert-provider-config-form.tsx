@@ -337,18 +337,27 @@ const CustomHeadersSection = ({
     <div className="space-y-4">
       <Separator />
 
-      <div className="flex items-center justify-between p-4 border rounded-lg">
-        <div className="space-y-1">
-          <Label className="text-sm font-medium">
-            {t('Send Metadata Headers')}
-          </Label>
-          <p className="text-sm text-muted-foreground">
-            {t(
-              'Include execution context headers with every request to the provider.',
-            )}
-          </p>
-          {sendMetadata && (
-            <div className="flex flex-wrap gap-1.5 pt-1">
+      <div className="grid space-y-3">
+        <div className="flex items-center justify-between">
+          <FormLabel>{t('Send Metadata Headers')}</FormLabel>
+          <Switch
+            checked={sendMetadata}
+            onCheckedChange={(checked) => {
+              form.setValue(SEND_METADATA_PATH, checked as never, {
+                shouldDirty: true,
+              });
+            }}
+            disabled={isLoading}
+          />
+        </div>
+        {sendMetadata && (
+          <div className="p-3 border rounded-lg space-y-2">
+            <p className="text-sm text-muted-foreground">
+              {t(
+                'Include execution context headers with every request to the provider.',
+              )}
+            </p>
+            <div className="flex flex-wrap gap-1.5">
               {METADATA_HEADERS.map((header) => (
                 <span
                   key={header}
@@ -358,17 +367,8 @@ const CustomHeadersSection = ({
                 </span>
               ))}
             </div>
-          )}
-        </div>
-        <Switch
-          checked={sendMetadata}
-          onCheckedChange={(checked) => {
-            form.setValue(SEND_METADATA_PATH, checked as never, {
-              shouldDirty: true,
-            });
-          }}
-          disabled={isLoading}
-        />
+          </div>
+        )}
       </div>
 
       <div className="space-y-3">
