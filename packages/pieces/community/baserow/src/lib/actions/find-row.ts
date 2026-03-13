@@ -5,6 +5,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { baserowAuth } from '../auth';
 import { baserowCommon, makeClient } from '../common';
+import { BaserowFieldType } from '../common/constants';
 
 export const findRowAction = createAction({
   name: 'baserow_find_row',
@@ -25,9 +26,17 @@ export const findRowAction = createAction({
         }
         const client = makeClient(auth.props);
         const fields = await client.listTableFields(table_id as unknown as number);
+        // Only show fields that support the "equal" filter lookup
+        const unsupportedTypes: string[] = [
+          BaserowFieldType.LINK_TO_TABLE,
+          BaserowFieldType.MULTI_SELECT,
+          BaserowFieldType.MULTIPLE_COLLABORATORS,
+          BaserowFieldType.FILE,
+        ];
+        const filterable = fields.filter((f) => !unsupportedTypes.includes(f.type));
         return {
           disabled: false,
-          options: fields.map((f) => ({ label: f.name, value: `field_${f.id}` })),
+          options: filterable.map((f) => ({ label: f.name, value: `field_${f.id}` })),
         };
       },
     }),
@@ -43,7 +52,7 @@ export const findRowAction = createAction({
       field_name: string;
       field_value: string;
     };
-    if (!field_value) {
+    if (!field_name || !field_value) {
       return { found: false, row: null };
     }
     const client = makeClient(context.auth.props);
