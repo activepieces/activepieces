@@ -5544,6 +5544,16 @@
         "tslib": "2.6.2",
       },
     },
+    "packages/pieces/community/send-it": {
+      "name": "@activepieces/piece-send-it",
+      "version": "0.1.0",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/sender": {
       "name": "@activepieces/piece-sender",
       "version": "0.1.3",
@@ -8732,6 +8742,8 @@
     "@activepieces/piece-seek-table": ["@activepieces/piece-seek-table@workspace:packages/pieces/community/seek-table"],
 
     "@activepieces/piece-segment": ["@activepieces/piece-segment@workspace:packages/pieces/community/segment"],
+
+    "@activepieces/piece-send-it": ["@activepieces/piece-send-it@workspace:packages/pieces/community/send-it"],
 
     "@activepieces/piece-sender": ["@activepieces/piece-sender@workspace:packages/pieces/community/sender"],
 
