@@ -30,13 +30,35 @@ export const addPersonToAccountAction = createAction({
       apiSecret: context.auth.props.apiSecret,
     });
 
-    const result = await client.post<any>(
-      `/api/v1/crm/accounts/${context.propsValue.accountUid}/memberships`,
+    // Fetch the account with existing PersonAccount memberships
+    const account = await client.get<any>(
+      `/api/v1/crm/accounts/${context.propsValue.accountUid}?fields=Uid,PersonAccount.*,PersonAccount.Person.Uid`
+    );
+
+    const existingMemberships = account.PersonAccount ?? [];
+
+    // Check if person is already linked to this account
+    const alreadyLinked = existingMemberships.some(
+      (pa: any) => pa.Person?.Uid === context.propsValue.personUid
+    );
+    if (alreadyLinked) {
+      throw new Error(
+        `Person ${context.propsValue.personUid} is already a member of account ${context.propsValue.accountUid}.`
+      );
+    }
+
+    // Add the new person to the PersonAccount array
+    const updatedMemberships = [
+      ...existingMemberships,
       {
-        Account: { Uid: context.propsValue.accountUid },
         Person: { Uid: context.propsValue.personUid },
         IsPrimary: context.propsValue.isPrimary ?? false,
-      }
+      },
+    ];
+
+    const result = await client.put<any>(
+      `/api/v1/crm/accounts/${context.propsValue.accountUid}`,
+      { PersonAccount: updatedMemberships }
     );
 
     return result;
