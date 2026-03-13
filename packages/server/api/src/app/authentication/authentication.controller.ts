@@ -1,6 +1,5 @@
-import { ApplicationEventName } from '@activepieces/ee-shared'
-import { AppSystemProp, networkUtils, securityAccess } from '@activepieces/server-shared'
-import {
+import { AppSystemProp, networkUtils, securityAccess } from '@activepieces/server-common'
+import { ApplicationEventName,
     assertNotNullOrUndefined,
     PrincipalType,
     SignInRequest,
@@ -9,14 +8,14 @@ import {
     UserIdentityProvider,
 } from '@activepieces/shared'
 import { RateLimitOptions } from '@fastify/rate-limit'
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { applicationEvents } from '../helper/application-events'
 import { system } from '../helper/system/system'
 import { platformUtils } from '../platform/platform.utils'
 import { userService } from '../user/user-service'
 import { authenticationService } from './authentication.service'
 
-export const authenticationController: FastifyPluginAsyncTypebox = async (
+export const authenticationController: FastifyPluginAsyncZod = async (
     app,
 ) => {
     app.post('/sign-up', SignUpRequestOptions, async (request) => {
@@ -28,7 +27,7 @@ export const authenticationController: FastifyPluginAsyncTypebox = async (
             platformId: platformId ?? null,
         })
 
-        applicationEvents.sendUserEvent({
+        applicationEvents(request.log).sendUserEvent({
             platformId: signUpResponse.platformId!,
             userId: signUpResponse.id,
             projectId: signUpResponse.projectId,
@@ -54,7 +53,7 @@ export const authenticationController: FastifyPluginAsyncTypebox = async (
 
         const responsePlatformId = response.platformId
         assertNotNullOrUndefined(responsePlatformId, 'Platform ID is required')
-        applicationEvents.sendUserEvent({
+        applicationEvents(request.log).sendUserEvent({
             platformId: responsePlatformId,
             userId: response.id,
             projectId: response.projectId,
@@ -68,7 +67,7 @@ export const authenticationController: FastifyPluginAsyncTypebox = async (
     })
 
     app.post('/switch-platform', SwitchPlatformRequestOptions, async (request) => {
-        const user = await userService.getOneOrFail({ id: request.principal.id })
+        const user = await userService(request.log).getOneOrFail({ id: request.principal.id })
         return authenticationService(request.log).switchPlatform({
             identityId: user.identityId,
             platformId: request.body.platformId,

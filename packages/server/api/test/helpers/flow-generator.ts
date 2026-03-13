@@ -1,4 +1,4 @@
-import { apId, FlowAction, FlowActionType, FlowStatus, FlowTrigger, FlowTriggerType, FlowVersion, FlowVersionState, PopulatedFlow } from '@activepieces/shared'
+import { apId, FlowAction, FlowActionType, FlowOperationStatus, FlowStatus, FlowTrigger, FlowTriggerType, FlowVersion, FlowVersionState, PopulatedFlow, PropertyExecutionType } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 
 
@@ -8,14 +8,14 @@ export const flowGenerator = {
     },
     randomizeMetadata(externalId: string | undefined, version: Omit<FlowVersion, 'flowId'>): PopulatedFlow {
         const flowId = apId()
-        const result = {
+        const result: PopulatedFlow = {
             externalId: externalId ?? flowId,
             version: {
                 ...version,
                 trigger: randomizeTriggerMetadata(version.trigger),
                 flowId,
             },
-            schedule: null,
+            operationStatus: FlowOperationStatus.NONE,
             status: faker.helpers.enumValue(FlowStatus),
             id: flowId,
             projectId: apId(),
@@ -43,6 +43,7 @@ const flowVersionGenerator = {
             state: FlowVersionState.DRAFT,
             connectionIds: [],
             agentIds: [],
+            notes: [],
         }
     },
 }
@@ -53,10 +54,10 @@ function randomizeTriggerMetadata(trigger: FlowTrigger): FlowTrigger {
         settings: {
             ...trigger.settings,
             propertySettings: {
-                server: faker.internet.url(),
-                port: faker.color.cmyk(),
-                username: faker.internet.userName(),
-                password: faker.internet.password(),
+                server: { type: PropertyExecutionType.MANUAL },
+                port: { type: PropertyExecutionType.MANUAL },
+                username: { type: PropertyExecutionType.DYNAMIC },
+                password: { type: PropertyExecutionType.MANUAL },
             },
         },
     }

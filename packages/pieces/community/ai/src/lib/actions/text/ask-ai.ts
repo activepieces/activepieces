@@ -51,6 +51,13 @@ export const askAI = createAction({
       props: async (propsValue) => {
         const webSearchEnabled = propsValue['webSearch'] as unknown as boolean;
         const provider = propsValue['provider'] as unknown as string;
+        const isOpenRouterProvider =
+          provider === AIProviderName.OPENROUTER ||
+          provider === AIProviderName.ACTIVEPIECES;
+        const supportsToolBasedWebSearch =
+          provider === AIProviderName.OPENAI ||
+          provider === AIProviderName.ANTHROPIC ||
+          provider === AIProviderName.GOOGLE;
 
         if (!webSearchEnabled) {
           return {};
@@ -61,16 +68,24 @@ export const askAI = createAction({
             displayName: 'Max Web Search Uses',
             required: false,
             defaultValue: 5,
-            description: 'Maximum number of searches to use. Default is 5.',
-          }),
-          includeSources: Property.Checkbox({
-            displayName: 'Include Sources',
-            description:
-              'Whether to include the sources in the response. Useful for getting web search details (e.g. search queries, searched URLs, etc).',
-            required: false,
-            defaultValue: false,
+            description: isOpenRouterProvider
+              ? 'For OpenRouter/Activepieces, this maps to OpenRouter web plugin max_results (1-10). Default is 5.'
+              : 'Maximum number of searches to use. Default is 5.',
           }),
         };
+
+        if (supportsToolBasedWebSearch) {
+          options = {
+            ...options,
+            includeSources: Property.Checkbox({
+              displayName: 'Include Sources',
+              description:
+                'Whether to include the sources in the response. Useful for getting web search details (e.g. search queries, searched URLs, etc).',
+              required: false,
+              defaultValue: false,
+            }),
+          };
+        }
 
         const userLocationOptions = {
           userLocationCity: Property.ShortText({
@@ -161,6 +176,11 @@ export const askAI = createAction({
     const storage = context.store;
     const webSearchOptions = context.propsValue.webSearchOptions as WebSearchOptions;
 
+    const isOpenRouterWebSearch =
+      context.propsValue.webSearch &&
+      (provider === AIProviderName.OPENROUTER ||
+        provider === AIProviderName.ACTIVEPIECES);
+
     const model = await createAIModel({
       provider: provider as AIProviderName,
       modelId,
@@ -184,6 +204,28 @@ export const askAI = createAction({
       }
     }
 
+    const tools = !context.propsValue.webSearch || isOpenRouterWebSearch
+      ? undefined
+      : createWebSearchTool(provider, webSearchOptions);
+
+    const stopWhen = tools
+      ? stepCountIs(webSearchOptions?.maxUses ?? 5)
+      : undefined;
+
+    const providerOptions = isOpenRouterWebSearch
+      ? {
+        openrouter: {
+          plugins: [{
+            id: 'web' as const,
+            max_results: Math.min(
+              Math.max(webSearchOptions?.maxUses ?? 5, 1),
+              10
+            ),
+          }],
+        },
+      }
+      : undefined;
+
     const response = await generateText({
       model,
       messages: [
@@ -195,10 +237,9 @@ export const askAI = createAction({
       ],
       maxOutputTokens: context.propsValue.maxOutputTokens,
       temperature: (context.propsValue.creativity ?? 100) / 100,
-      tools: context.propsValue.webSearch
-        ? createWebSearchTool(provider, webSearchOptions)
-        : undefined,
-      stopWhen: stepCountIs(webSearchOptions?.maxUses ?? 5),
+      tools,
+      stopWhen,
+      providerOptions,
     });
 
     conversation?.push({
@@ -215,7 +256,7 @@ export const askAI = createAction({
       await storage.put(conversationKey, conversation);
     }
 
-    const includeSources = webSearchOptions.includeSources;
+    const includeSources = !isOpenRouterWebSearch && webSearchOptions.includeSources;
     if (includeSources) {
       return { text: response.text, sources: response.sources };
     }

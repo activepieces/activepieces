@@ -1,11 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  httpClient,
-  HttpMethod,
-  AuthenticationType
-} from '@activepieces/pieces-common';
-import { excelAuth } from '../../index';
-import { excelCommon } from '../common/common';
+import { excelAuth } from '../auth';
+import { commonProps } from '../common/props';
+import { getDrivePath, createMSGraphClient } from '../common/helpers';
 
 const namingRules = `
 The new name for the worksheet. The name must adhere to the following rules:
@@ -21,8 +17,11 @@ export const renameWorksheetAction = createAction({
   displayName: 'Rename Worksheet',
   description: 'Change the name of an existing worksheet.',
   props: {
-    workbook_id: excelCommon.workbook_id,
-    worksheet_id: excelCommon.worksheet_id,
+    storageSource: commonProps.storageSource,
+    siteId: commonProps.siteId,
+    documentId: commonProps.documentId,
+    workbookId: commonProps.workbookId,
+    worksheetId: commonProps.worksheetId,
     new_name: Property.ShortText({
       displayName: 'New Worksheet Name',
       description: namingRules,
@@ -30,23 +29,21 @@ export const renameWorksheetAction = createAction({
     })
   },
   async run(context) {
-    const { workbook_id, worksheet_id, new_name } = context.propsValue;
+    const { storageSource, siteId, documentId, workbookId, worksheetId, new_name } = context.propsValue;
     const { access_token } = context.auth;
+
+    if (storageSource === 'sharepoint' && (!siteId || !documentId)) {
+      throw new Error('please select SharePoint site and document library.');
+    }
+    const drivePath = getDrivePath(storageSource, siteId as string, documentId as string);
 
     // The worksheet_id prop from excelCommon returns the worksheet's current name,
     // which can be used to identify it in the API URL.
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.PATCH,
-      url: `${excelCommon.baseUrl}/items/${workbook_id}/workbook/worksheets/${worksheet_id}`,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: access_token
-      },
-      body: {
-        name: new_name
-      }
-    });
+    const client = createMSGraphClient(access_token);
+    const response = await client
+      .api(`${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}`)
+      .patch({ name: new_name });
 
-    return response.body;
+    return response;
   }
 });

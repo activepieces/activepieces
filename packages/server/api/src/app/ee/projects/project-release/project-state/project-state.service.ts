@@ -1,5 +1,4 @@
-import { AppConnectionScope, AppConnectionStatus, AppConnectionType, assertNotNullOrUndefined, ConnectionOperationType, ConnectionState, DiffState, FieldState, FieldType, FileCompression, FileId, FileType, FlowAction, FlowProjectOperationType, FlowState, FlowStatus, FlowSyncError, isNil, PopulatedFlow, PopulatedTable, ProjectId, ProjectState, TableOperationType, TableState } from '@activepieces/shared'
-import { Value } from '@sinclair/typebox/value'
+import { AppConnectionScope, AppConnectionStatus, AppConnectionType, ConnectionOperationType, ConnectionState, DiffState, FieldState, FieldType, FileCompression, FileId, FileType, FlowAction, FlowProjectOperationType, FlowState, FlowStatus, FlowSyncError, isNil, PopulatedFlow, PopulatedTable, ProjectId, ProjectState, TableOperationType, TableState } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { appConnectionService } from '../../../../app-connection/app-connection-service/app-connection-service'
 import { fileService } from '../../../../file/file.service'
@@ -69,7 +68,7 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
                     })
 
                     await Promise.all(operation.tableState.fields.map(async (field) => {
-                        await handleCreateField(projectId, field, table.id)
+                        await fieldService.createFromState({ projectId, field, tableId: table.id })
                     }))
                     break
                 }
@@ -97,7 +96,7 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
                             })
                         }
                         else {
-                            await handleCreateField(projectId, field, table.id)
+                            await fieldService.createFromState({ projectId, field, tableId: table.id })
                         }
                     }))
 
@@ -187,6 +186,7 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
         })
 
         const tables = await tableService.list({
+            folderId: undefined,
             projectId,
             cursor: undefined,
             limit: 1000,
@@ -214,8 +214,8 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
             externalId: flow.externalId ?? flow.id,
             version: await flowMigrations.apply(flow.version),
         }
-        const cleanedFlowState = Value.Clean(FlowState, flowState) as FlowState
-        cleanedFlowState.version.trigger.nextAction = isNil(cleanedFlowState.version.trigger.nextAction) ? undefined : Value.Clean(FlowAction, cleanedFlowState.version.trigger.nextAction)
+        const cleanedFlowState = FlowState.parse(flowState)
+        cleanedFlowState.version.trigger.nextAction = isNil(cleanedFlowState.version.trigger.nextAction) ? undefined : FlowAction.parse(cleanedFlowState.version.trigger.nextAction)
         return cleanedFlowState
     },
     getTableState(table: PopulatedTable): TableState {
@@ -231,42 +231,9 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
             name: table.name,
             fields,
         }
-        return Value.Clean(TableState, tableState) as TableState
+        return TableState.parse(tableState)
     },
 })
-
-async function handleCreateField(projectId: ProjectId, field: FieldState, tableId: string) {
-    switch (field.type) {
-        case FieldType.STATIC_DROPDOWN: {
-            assertNotNullOrUndefined(field.data, 'Data is required for static dropdown field')
-            await fieldService.create({
-                projectId,
-                request: {
-                    name: field.name,
-                    type: field.type,
-                    tableId,
-                    data: field.data,
-                    externalId: field.externalId,
-                },
-            })
-            break
-        }
-        case FieldType.DATE:
-        case FieldType.NUMBER:
-        case FieldType.TEXT: {
-            await fieldService.create({
-                projectId,
-                request: {
-                    name: field.name,
-                    type: field.type,
-                    tableId,
-                    externalId: field.externalId,
-                },
-            })
-            break
-        }
-    }
-}
 
 async function toProjectState({ flows, connections, tables, log }: ToProjectStateParams): Promise<ProjectState> {
     const flowsInProjectState: FlowState[] = await Promise.all(flows.map(async (flow) => projectStateService(log).getFlowState(flow)))

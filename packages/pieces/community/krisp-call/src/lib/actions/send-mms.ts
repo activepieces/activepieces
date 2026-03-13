@@ -1,6 +1,6 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { krispcallAuth } from '../..';
+import { krispcallAuth } from '../auth';
 import { Property, PiecePropValueSchema } from '@activepieces/pieces-framework';
 
 interface Item {

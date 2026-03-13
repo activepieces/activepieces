@@ -1,4 +1,4 @@
-import { rejectedPromiseHandler } from '@activepieces/server-shared'
+import { rejectedPromiseHandler } from '@activepieces/server-common'
 import { ActivepiecesError, ErrorCode, isNil, Principal, PrincipalForType, PrincipalType, WebsocketServerEvent } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Socket } from 'socket.io'
@@ -72,7 +72,7 @@ export const websocketService = {
         }
     },
     async verifyPrincipal(socket: Socket): Promise<Principal> {
-        return accessTokenManager.verifyPrincipal(socket.handshake.auth.token)
+        return accessTokenManager(app!.log).verifyPrincipal(socket.handshake.auth.token)
     },
     addListener<T, PR extends PrincipalType.WORKER | PrincipalType.USER>(principalType: PR, event: WebsocketServerEvent, handler: WebsocketListener<T, PR>): void {
         switch (principalType) {

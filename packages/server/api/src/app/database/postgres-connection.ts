@@ -1,6 +1,6 @@
 import { TlsOptions } from 'node:tls'
 import 'pg'
-import { AppSystemProp } from '@activepieces/server-shared'
+import { AppSystemProp } from '@activepieces/server-common'
 import { isNil, spreadIfDefined } from '@activepieces/shared'
 import { DataSource, MigrationInterface } from 'typeorm'
 import { MakeStripeSubscriptionNullable1685053959806 } from '../ee/database/migrations/postgres/1685053959806-MakeStripeSubscriptionNullable'
@@ -323,9 +323,24 @@ import { AddMaxAutoTopUpCreditsMonthlyToPlatformPlan1767016169819 } from './migr
 import { AnalyticsAndOwnerToFlowId1767127482383 } from './migration/postgres/1767127482383-AnalyticsAndOwnerToFlowId'
 import { AddBadges1767141831647 } from './migration/postgres/1767141831647-AddBadges'
 import { AddFlowOwnerIndex1767610587266 } from './migration/postgres/1767610587266-AddFlowOwnerIndex'
+import { MigrateOldTemplateCategoriesToDynamicOne1767624311536 } from './migration/postgres/1767624311536-MigrateOldTemplateCategoriesToDynamicOne'
 import { AddTriggeredBy1767697998391 } from './migration/postgres/1767697998391-AddTriggeredBy'
 import { UpdateCacheStructure1767904545112 } from './migration/postgres/1767904545112-UpdateCacheStructure'
 import { AddOutdatedToReport1767994436597 } from './migration/postgres/1767994436597-AddOutdatedToReport'
+import { AddNotesToFlowVersion1768130030028 } from './migration/postgres/1768130030028-AddNotesToFlowVersion'
+import { AddTablesIntoTemplateEntity1768306510367 } from './migration/postgres/1768306510367-AddTablesIntoTemplateEntity'
+import { AddImageToUser1768502658760 } from './migration/postgres/1768502658760-ADDIMAGETOUSER'
+import { RemoveUsageCountFromTemplates1768738475196 } from './migration/postgres/1768738475196-RemoveUsageCountFromTemplates'
+import { AddTemplateIdToFlowEntity1768829135202 } from './migration/postgres/1768829135202-AddTemplateIdToFlowEntity'
+import { AddEventStreaming1769084311004 } from './migration/postgres/1769084311004-AddEventStreaming'
+import { RemoveOperatorRole1769613456917 } from './migration/postgres/1769613456917-RemoveOperatorRole'
+import { AddFolderColumnToTable1769638834372 } from './migration/postgres/1769638834372-add-folder-column-to-table'
+import { AddTableFolderForeignKey1769638834373 } from './migration/postgres/1769638834373-AddTableFolderForeignKey'
+import { AddScimEnabled1769720000000 } from './migration/postgres/1769720000000-AddScimEnabled'
+import { AddSecretManagersEntity1770717998442 } from './migration/postgres/1770717998442-AddSecretManagersEntity'
+import { AddSecretManagersFlag1771167183104 } from './migration/postgres/1771167183104-AddSecretManagersFlag'
+import { AddPreSelectForNewProjectsToAppConnection1772027509095 } from './migration/postgres/1772027509095-AddPreSelectForNewProjectsToAppConnection'
+import { AddEnabledToolsToMcpServer1772027509096 } from './migration/postgres/1772027509096-AddEnabledToolsToMcpServer'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -668,6 +683,21 @@ export const getMigrations = (): (new () => MigrationInterface)[] => {
         AddTriggeredBy1767697998391,
         UpdateCacheStructure1767904545112,
         AddOutdatedToReport1767994436597,
+        AddNotesToFlowVersion1768130030028,
+        MigrateOldTemplateCategoriesToDynamicOne1767624311536,
+        AddEventStreaming1769084311004,
+        AddImageToUser1768502658760,
+        RemoveUsageCountFromTemplates1768738475196,
+        AddTablesIntoTemplateEntity1768306510367,
+        AddTemplateIdToFlowEntity1768829135202,
+        RemoveOperatorRole1769613456917,
+        AddFolderColumnToTable1769638834372,
+        AddTableFolderForeignKey1769638834373,
+        AddScimEnabled1769720000000,
+        AddSecretManagersEntity1770717998442,
+        AddSecretManagersFlag1771167183104,
+        AddPreSelectForNewProjectsToAppConnection1772027509095,
+        AddEnabledToolsToMcpServer1772027509096,
     ]
     return migrations
 }

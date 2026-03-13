@@ -185,10 +185,12 @@
   "Method": "Método",
   "Headers": "Encabezados",
   "Query Parameters": "Parámetros de consulta",
+  "Body Type": "Tipo de cuerpo",
   "Body": "Cuerpo",
   "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
+  "Follow redirects": "Seguir redirecciones",
   "At least one of: First Name, Last Name, Email, Mobile Number, Home Number, Work Number is required.": "Al menos uno de ellos: Nombre, Apellido, Correo Electrónico, Número de Móvil, Número de Inicio, Número de Trabajo es requerido.",
   "Will the customer receive notifications": "Recibirá notificaciones del cliente",
   "Array of tags to assign to the customer": "Arreglo de etiquetas para asignar al cliente",
@@ -311,7 +313,7 @@
   "Filter leads by a list of tags": "Filtrar prospectos mediante una lista de etiquetas",
   "The type to convert the lead to. Must be either 'estimate' or 'job'": "El tipo al que convertir la prueba. Debe ser 'estimar' o 'trabajo'",
   "Authorization headers are injected automatically from your connection.": "Las cabeceras de autorización se inyectan automáticamente desde tu conexión.",
-  "Enable for files like PDFs, images, etc..": "Activar para archivos como PDF, imágenes, etc.",
+  "Enable for files like PDFs, images, etc.": "Activar para archivos como PDFs, imágenes, etc.",
   "Attachments": "Adjuntos",
   "Do Not Service": "No prestar servicio",
   "Created At": "Creado el",
@@ -344,5 +346,9 @@
   "PATCH": "PATCH",
   "PUT": "PUT",
   "DELETE": "BORRAR",
-  "HEAD": "LIMPIO"
+  "HEAD": "LIMPIO",
+  "None": "Ninguna",
+  "JSON": "JSON",
+  "Form Data": "Datos de Formulario",
+  "Raw": "Rápido"
 }

@@ -1,10 +1,11 @@
-import { securityAccess } from '@activepieces/server-shared'
+import { securityAccess } from '@activepieces/server-common'
 import { AIProviderModel, AIProviderName, CreateAIProviderRequest, PrincipalType, UpdateAIProviderRequest } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
+import { z } from 'zod'
 import { aiProviderService } from './ai-provider-service'
 
-export const aiProviderController: FastifyPluginAsyncTypebox = async (app) => {
+export const aiProviderController: FastifyPluginAsyncZod = async (app) => {
     app.get('/', ListAIProviders, async (request) => {
         const platformId = request.principal.platform.id
         return aiProviderService(app.log).listProviders(platformId)
@@ -43,22 +44,22 @@ const GetAIProviderConfig = {
         security: securityAccess.engine(),
     },
     schema: {
-        params: Type.Object({
-            provider: Type.Enum(AIProviderName),
+        params: z.object({
+            provider: z.nativeEnum(AIProviderName),
         }),
     },
 }
 
 const ListModels = {
     config: {
-        security: securityAccess.engine(),
+        security: securityAccess.publicPlatform([PrincipalType.USER, PrincipalType.ENGINE]),
     },
     schema: {
-        params: Type.Object({
-            provider: Type.Enum(AIProviderName),
+        params: z.object({
+            provider: z.nativeEnum(AIProviderName),
         }),
         response: {
-            [StatusCodes.OK]: Type.Array(AIProviderModel),
+            [StatusCodes.OK]: z.array(AIProviderModel),
         },
     },
 }
@@ -77,8 +78,8 @@ const UpdateAIProvider = {
         security: securityAccess.publicPlatform([PrincipalType.USER]),
     },
     schema: {
-        params: Type.Object({
-            id: Type.String(),
+        params: z.object({
+            id: z.string(),
         }),
         body: UpdateAIProviderRequest,
     },
@@ -89,8 +90,8 @@ const DeleteAIProvider = {
         security: securityAccess.publicPlatform([PrincipalType.USER]),
     },
     schema: {
-        params: Type.Object({
-            id: Type.String(),
+        params: z.object({
+            id: z.string(),
         }),
     },
 }

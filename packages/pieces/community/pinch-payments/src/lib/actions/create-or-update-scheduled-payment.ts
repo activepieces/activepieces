@@ -1,7 +1,7 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { pinchPaymentsAuth, getPinchPaymentsToken } from '../common/auth';
-import { listPayers } from '../common/client';
+import { listPayers, pinchPaymentsClient } from '../common/client';
 
 export const createOrUpdateScheduledPaymentAction = createAction({
   auth: pinchPaymentsAuth,
@@ -29,7 +29,7 @@ export const createOrUpdateScheduledPaymentAction = createAction({
           };
         }
 
-        const credentials = auth.props as { username: string; password: string };
+        const credentials = auth.props as { username: string; password: string; environment: string };
         const response = await listPayers(credentials, { pageSize: 500 });
 
         return {
@@ -113,20 +113,9 @@ export const createOrUpdateScheduledPaymentAction = createAction({
     const credentials = {
       username: context.auth.props.username,
       password: context.auth.props.password,
+      environment: context.auth.props.environment
     };
-
-    const tokenResponse = await getPinchPaymentsToken(credentials);
-
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: 'https://api.getpinch.com.au/test/payments',
-      headers: {
-        'Authorization': `Bearer ${tokenResponse.access_token}`,
-        'Content-Type': 'application/json',
-      },
-      body: paymentData,
-    });
-
-    return response.body;
+    
+    return pinchPaymentsClient(credentials, HttpMethod.POST, '/payments', paymentData);
   },
 });

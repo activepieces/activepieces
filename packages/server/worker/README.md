@@ -1,7 +1,5 @@
-# server-worker
-
-This library was generated with [Nx](https://nx.dev).
+# worker
 
 ## Building
 
-Run `nx build server-worker` to build the library.
+Run `turbo run build --filter=worker` to build the library.

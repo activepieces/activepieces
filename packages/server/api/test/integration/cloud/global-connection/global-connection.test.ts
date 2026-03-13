@@ -1,3 +1,4 @@
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 import {
     apId,
     AppConnectionScope,
@@ -10,9 +11,8 @@ import {
 } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { databaseConnection } from '../../../../src/app/database/database-connection'
-import { setupServer } from '../../../../src/app/server'
 import { generateMockToken } from '../../../helpers/auth'
+import { db } from '../../../helpers/db'
 import {
     createMockPieceMetadata,
     mockAndSaveBasicSetup,
@@ -22,15 +22,12 @@ import {
 let app: FastifyInstance | null = null
 
 beforeAll(async () => {
-    await databaseConnection().initialize()
-    app = await setupServer()
+    app = await setupTestEnvironment()
 })
 
 afterAll(async () => {
-    await databaseConnection().destroy()
-    await app?.close()
+    await teardownTestEnvironment()
 })
-
 const setupWithGlobalConnections = () => {
     return mockAndSaveBasicSetup({
         platform: {
@@ -48,11 +45,10 @@ describe('GlobalConnection API', () => {
             const { mockPlatform, mockProject, mockOwner } = await setupWithGlobalConnections()
 
             const mockPieceMetadata = createMockPieceMetadata({
-                projectId: mockProject.id,
                 platformId: mockPlatform.id,
                 packageType: PackageType.REGISTRY,
             })
-            await databaseConnection().getRepository('piece_metadata').save([mockPieceMetadata])
+            await db.save('piece_metadata', [mockPieceMetadata])
 
             
 
@@ -105,10 +101,9 @@ describe('GlobalConnection API', () => {
                 },
             })
             const mockPieceMetadata = createMockPieceMetadata({
-                projectId: mockProject.id,
                 platformId: mockPlatform.id,
             })
-            await databaseConnection().getRepository('piece_metadata').save([mockPieceMetadata])
+            await db.save('piece_metadata', [mockPieceMetadata])
 
             
 
@@ -152,14 +147,13 @@ describe('GlobalConnection API', () => {
 
         it('Fails if project ids are invalid', async () => {
             // arrange
-            const { mockPlatform, mockProject, mockOwner } = await setupWithGlobalConnections()
+            const { mockPlatform, mockOwner } = await setupWithGlobalConnections()
 
             const mockPieceMetadata = createMockPieceMetadata({
-                projectId: mockProject.id,
                 platformId: mockPlatform.id,
                 packageType: PackageType.REGISTRY,
             })
-            await databaseConnection().getRepository('piece_metadata').save([mockPieceMetadata])
+            await db.save('piece_metadata', [mockPieceMetadata])
 
             
 
@@ -265,11 +259,10 @@ describe('GlobalConnection API', () => {
             const { mockPlatform, mockProject, mockOwner } = await setupWithGlobalConnections()
 
             const mockPieceMetadata = createMockPieceMetadata({
-                projectId: mockProject.id,
                 platformId: mockPlatform.id,
                 packageType: PackageType.REGISTRY,
             })
-            await databaseConnection().getRepository('piece_metadata').save([mockPieceMetadata])
+            await db.save('piece_metadata', [mockPieceMetadata])
 
             const mockToken = await generateMockToken({
                 id: mockOwner.id,
@@ -325,11 +318,10 @@ describe('GlobalConnection API', () => {
                 },
             })
             const mockPieceMetadata = createMockPieceMetadata({
-                projectId: mockProject.id,
                 platformId: mockPlatform.id,
                 packageType: PackageType.REGISTRY,
             })
-            await databaseConnection().getRepository('piece_metadata').save([mockPieceMetadata])
+            await db.save('piece_metadata', [mockPieceMetadata])
 
             
 
@@ -395,11 +387,10 @@ describe('GlobalConnection API', () => {
             const { mockPlatform, mockProject, mockOwner } = await setupWithGlobalConnections()
 
             const mockPieceMetadata = createMockPieceMetadata({
-                projectId: mockProject.id,
                 platformId: mockPlatform.id,
                 packageType: PackageType.REGISTRY,
             })
-            await databaseConnection().getRepository('piece_metadata').save([mockPieceMetadata])
+            await db.save('piece_metadata', [mockPieceMetadata])
 
             
 
@@ -467,11 +458,10 @@ describe('GlobalConnection API', () => {
             })
 
             const mockPieceMetadata = createMockPieceMetadata({
-                projectId: mockProject.id,
                 platformId: mockPlatform.id,
                 packageType: PackageType.REGISTRY,
             })
-            await databaseConnection().getRepository('piece_metadata').save([mockPieceMetadata])
+            await db.save('piece_metadata', [mockPieceMetadata])
 
             
 
@@ -541,11 +531,10 @@ describe('GlobalConnection API', () => {
             const { mockPlatform, mockProject, mockOwner } = await setupWithGlobalConnections()
 
             const mockPieceMetadata = createMockPieceMetadata({
-                projectId: mockProject.id,
                 platformId: mockPlatform.id,
                 packageType: PackageType.REGISTRY,
             })
-            await databaseConnection().getRepository('piece_metadata').save([mockPieceMetadata])
+            await db.save('piece_metadata', [mockPieceMetadata])
 
             
 

@@ -1,4 +1,4 @@
-import { AppSystemProp, exceptionHandler } from '@activepieces/server-shared'
+import { AppSystemProp, exceptionHandler } from '@activepieces/server-common'
 import { apId, ApMultipartFile } from '@activepieces/shared'
 import cors from '@fastify/cors'
 import formBody from '@fastify/formbody'
@@ -6,6 +6,7 @@ import fastifyMultipart, { MultipartFile } from '@fastify/multipart'
 import fastify, { FastifyInstance } from 'fastify'
 import fastifyFavicon from 'fastify-favicon'
 import { fastifyRawBody } from 'fastify-raw-body'
+import { validatorCompiler } from 'fastify-type-provider-zod'
 import qs from 'qs'
 import { setupApp } from './app'
 import { healthModule } from './health/health.module'
@@ -29,8 +30,8 @@ export const setupServer = async (): Promise<FastifyInstance> => {
 }
 
 async function setupBaseApp(): Promise<FastifyInstance> {
-    const MAX_FILE_SIZE_MB = system.getNumberOrThrow(AppSystemProp.MAX_FILE_SIZE_MB)
-    const fileSizeLimit = Math.max(25 * 1024 * 1024, (MAX_FILE_SIZE_MB + 4) * 1024 * 1024)
+    const fileSizeLimit = system.getNumberOrThrow(AppSystemProp.MAX_FILE_SIZE_MB)
+    const flowRunLogSizeLimit = system.getNumberOrThrow(AppSystemProp.MAX_FLOW_RUN_LOG_SIZE_MB)
     const app = fastify({
         disableRequestLogging: true,
         querystringParser: qs.parse,
@@ -38,19 +39,25 @@ async function setupBaseApp(): Promise<FastifyInstance> {
         ignoreTrailingSlash: true,
         pluginTimeout: 30000,
         // Default 100MB, also set in nginx.conf
-        bodyLimit: fileSizeLimit,
+        bodyLimit: Math.max(fileSizeLimit + 4, flowRunLogSizeLimit + 4, 25) * 1024 * 1024,
         genReqId: () => {
             return `req_${apId()}`
         },
-        ajv: {
-            customOptions: {
-                removeAdditional: 'all',
-                useDefaults: true,
-                keywords: ['discriminator'],
-                coerceTypes: 'array',
-                formats: {},
-            },
-        },
+    })
+
+    app.setValidatorCompiler(validatorCompiler)
+    app.setSerializerCompiler(({ schema: maybeSchema }) => {
+        const schema = resolveZodSchema(maybeSchema)
+        return (data) => {
+            if (schema) {
+                const preprocessed = convertDatesToStrings(data)
+                const result = schema.safeParse(preprocessed)
+                if (result.success) {
+                    return JSON.stringify(result.data)
+                }
+            }
+            return JSON.stringify(data)
+        }
     })
 
     await app.register(fastifyFavicon)
@@ -94,4 +101,39 @@ async function setupBaseApp(): Promise<FastifyInstance> {
     await app.register(healthModule)
     return app
 }
+
+type ZodLike = { safeParse: (data: unknown) => { success: boolean, data?: unknown } }
+
+function resolveZodSchema(maybeSchema: unknown): ZodLike | null {
+    if (typeof maybeSchema === 'object' && maybeSchema !== null) {
+        if ('safeParse' in maybeSchema) {
+            return maybeSchema as ZodLike
+        }
+        if ('properties' in maybeSchema) {
+            const props = (maybeSchema as Record<string, unknown>).properties
+            if (typeof props === 'object' && props !== null && 'safeParse' in props) {
+                return props as ZodLike
+            }
+        }
+    }
+    return null
+}
+
+function convertDatesToStrings(data: unknown): unknown {
+    if (data instanceof Date) {
+        return data.toISOString()
+    }
+    if (Array.isArray(data)) {
+        return data.map(convertDatesToStrings)
+    }
+    if (typeof data === 'object' && data !== null) {
+        const result: Record<string, unknown> = {}
+        for (const [key, value] of Object.entries(data)) {
+            result[key] = convertDatesToStrings(value)
+        }
+        return result
+    }
+    return data
+}
+
 

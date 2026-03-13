@@ -6,7 +6,7 @@ import {
   pollingHelper,
 } from '@activepieces/pieces-common';
 import { calltidycalapi } from '../common';
-import { tidyCalAuth } from '../../';
+import { tidyCalAuth } from '../auth';
 import dayjs from 'dayjs';
 
 export const tidycalnewcontact = createTrigger({

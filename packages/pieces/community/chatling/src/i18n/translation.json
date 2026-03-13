@@ -25,6 +25,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "Select a chatbot": "Select a chatbot",
   "The message to send to the AI": "The message to send to the AI",
   "Select the AI model to use": "Select the AI model to use",

@@ -1,9 +1,8 @@
-import { ApplicationEventName, FlowRunEvent } from '@activepieces/ee-shared'
-import { BADGES, FlowRunStatus, isFailedState, isNil, RunEnvironment } from '@activepieces/shared'
+import { ApplicationEvent, ApplicationEventName, BADGES, FlowRunEvent, FlowRunStatus, isFailedState, isNil, RunEnvironment } from '@activepieces/shared'
 import { BadgeCheck, BadgeCheckResult } from '../badge-check'
 
 export const flowRunsBadgesCheck: BadgeCheck = {
-    eval: async ({ event }): Promise<BadgeCheckResult> => {
+    eval: async (event: ApplicationEvent): Promise<BadgeCheckResult> => {
         const badges: (keyof typeof BADGES)[] = []
 
         if (event.action !== ApplicationEventName.FLOW_RUN_FINISHED) {
@@ -17,7 +16,7 @@ export const flowRunsBadgesCheck: BadgeCheck = {
         if (isNil(triggeredBy)) {
             return { userId: null, badges }
         }
-        const status = flowRunEvent.data.flowRun.status
+        const status = flowRunEvent.data.flowRun.status as FlowRunStatus
 
         if (isFailedState(status)) {
             badges.push('back-again')

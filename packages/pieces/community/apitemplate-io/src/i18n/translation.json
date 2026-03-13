@@ -67,6 +67,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "JSON data with overrides array to populate the template. Format: {\"overrides\": [{\"name\": \"object_name\", \"property\": \"value\"}]}.": "JSON data with overrides array to populate the template. Format: {\"overrides\": [{\"name\": \"object_name\", \"property\": \"value\"}]}.",
   "Delay in milliseconds before PDF generation": "Delay in milliseconds before PDF generation",
   "Specify an external reference ID for your own reference": "Specify an external reference ID for your own reference",

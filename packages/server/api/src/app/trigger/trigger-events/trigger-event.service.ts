@@ -18,7 +18,7 @@ import {
     WorkerJobType,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { EngineHelperResponse, EngineHelperTriggerResult } from 'server-worker'
+import { EngineHelperTriggerResult, OperationResponse } from 'worker'
 import { repoFactory } from '../../core/db/repo-factory'
 import { fileService } from '../../file/file.service'
 import { flowService } from '../../flows/flow/flow.service'
@@ -71,12 +71,12 @@ export const triggerEventService = (log: FastifyBaseLogger) => ({
         flow,
     }: TestParams): Promise<SeekPage<TriggerEventWithPayload>> {
         const trigger = flow.version.trigger
-        const platformId = await projectService.getPlatformId(projectId)
+        const platformId = await projectService(log).getPlatformId(projectId)
         const emptyPage = paginationHelper.createPage<TriggerEventWithPayload>([], null)
         switch (trigger.type) {
             case FlowTriggerType.PIECE: {
 
-                const engineResponse = await userInteractionWatcher(log).submitAndWaitForResponse<EngineHelperResponse<EngineHelperTriggerResult<TriggerHookType.TEST>>>({
+                const engineResponse = await userInteractionWatcher(log).submitAndWaitForResponse<OperationResponse<EngineHelperTriggerResult<TriggerHookType.TEST>>>({
                     hookType: TriggerHookType.TEST,
                     flowId: flow.id,
                     flowVersionId: flow.version.id,

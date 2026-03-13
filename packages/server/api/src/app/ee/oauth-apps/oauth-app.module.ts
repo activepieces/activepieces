@@ -1,28 +1,24 @@
+import { securityAccess } from '@activepieces/server-common'
 import {
+    assertNotNullOrUndefined,
     ListOAuth2AppRequest,
     OAuthApp,
-    UpsertOAuth2AppRequest,
-} from '@activepieces/ee-shared'
-import { securityAccess } from '@activepieces/server-shared'
-import { assertNotNullOrUndefined, PrincipalType, SeekPage } from '@activepieces/shared'
-import {
-    FastifyPluginAsyncTypebox,
-    Static,
-    Type,
-} from '@fastify/type-provider-typebox'
+    PrincipalType, SeekPage, UpsertOAuth2AppRequest } from '@activepieces/shared'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
+import { z } from 'zod'
 import { oauthAppService } from './oauth-app.service'
 
-export const oauthAppModule: FastifyPluginAsyncTypebox = async (app) => {
+export const oauthAppModule: FastifyPluginAsyncZod = async (app) => {
     await app.register(oauthAppController, { prefix: '/v1/oauth-apps' })
 }
 
-const oauthAppController: FastifyPluginAsyncTypebox = async (app) => {
+const oauthAppController: FastifyPluginAsyncZod = async (app) => {
     app.get(
         '/',
         {
             config: {
-                security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+                security: securityAccess.publicPlatform([PrincipalType.USER]),
             },
             schema: {
                 querystring: ListOAuth2AppRequest,
@@ -82,8 +78,8 @@ const oauthAppController: FastifyPluginAsyncTypebox = async (app) => {
     )
 }
 
-const GetIdParams = Type.Object({
-    id: Type.String(),
+const GetIdParams = z.object({
+    id: z.string(),
 })
 
-type GetIdParams = Static<typeof GetIdParams>
+type GetIdParams = z.infer<typeof GetIdParams>

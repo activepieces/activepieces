@@ -1,0 +1,17 @@
+{
+  "Parse documents and extract data from PDFs, DOCX files, images, and webpages using Parser Expert's powerful API.": "Analisar documentos e extrair dados de PDFs, arquivos DOCX, imagens e páginas web usando a poderosa API do Parser Expert.",
+  "Your Parser Expert API key. You can find this in your dashboard under Integration -> New API Key.": "Sua chave de API do Parser Expert. Você pode encontrar isso no seu painel de controle em Integração -> Nova chave de API.",
+  "Upload Document": "Upload de documento",
+  "Get Extracted Data": "Obter dados extraídos",
+  "Upload a document or provide a webpage URL to parse. Supported formats: PDF, DOCX, Image, Txt File (maximum 10 pages per document).": "Envie um documento ou forneça uma URL de página da web para analisar. Formatos suportados: PDF, DOCX, Imagem, Arquivo Txt (máximo de 10 páginas por documento).",
+  "Retrieve the extracted data using the parser ID and bucket ID. The parser ID is returned when you upload a document.": "Recupera os dados extraídos usando o analisador ID e o bucket ID. O ID do analisador é retornado quando você faz upload de um documento.",
+  "Bucket ID": "ID do Balde",
+  "File": "Arquivo",
+  "Webpage URL": "URL da Página Web",
+  "Parser ID": "Parser ID",
+  "The ID of the bucket where the data will be stored. You can find this in your dashboard under Manage Bucket.": "O ID do balde onde os dados serão armazenados. Você pode encontrar isso no seu painel em Gerenciar Bucket.",
+  "The file to upload. Supported formats: PDF, DOCX, Image, Txt File (maximum 10 pages per document). This will be ignored if webpage URL is provided.": "O arquivo a ser enviado. Formatos suportados: PDF, DOCX, Imagem, Arquivo Txt (máximo de 10 páginas por documento). Isto será ignorado se a URL da página da Web for fornecida.",
+  "The URL of the webpage to extract content from. This will be ignored if file is provided.": "A URL da página da Web para extrair conteúdo. Isto será ignorado se o arquivo for fornecido.",
+  "The ID of the parser. This is returned when content is uploaded.": "O ID do analisador. Isto é retornado quando o conteúdo é carregado.",
+  "The ID of the bucket where the data is stored.": "O ID do balde onde os dados são armazenados."
+}

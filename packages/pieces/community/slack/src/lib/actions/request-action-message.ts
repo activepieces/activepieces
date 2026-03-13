@@ -1,5 +1,5 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { slackAuth } from '../..';
+import { slackAuth } from '../auth';
 import { assertNotNullOrUndefined } from '@activepieces/shared';
 import {
   profilePicture,
@@ -9,6 +9,7 @@ import {
   actions,
   singleSelectChannelInfo,
   threadTs,
+  mentionOriginFlow,
 } from '../common/props';
 import { requestAction } from '../common/request-action';
 
@@ -26,6 +27,7 @@ export const requestActionMessageAction = createAction({
     threadTs,
     username,
     profilePicture,
+    mentionOriginFlow,
   },
   async run(context) {
     const { channel } = context.propsValue;

@@ -1,0 +1,16 @@
+{
+  "Automate any workflow with AI. Build custom AI automations to scale your marketing, sales, and operations.": "Automatize qualquer fluxo de trabalho com AI. Crie automações de IA personalizadas para dimensionar seu marketing, vendas e operações.",
+  "Provide your Leap AI API key. \n\n**How to get your API key:**\n1. Go to [app.tryleap.ai](https://app.tryleap.ai)\n2. Click on **Settings** in the left sidebar (bottom)\n3. Navigate to the **API** section\n4. Click **Create API Key** to generate a new key\n5. Copy and paste the key here": "Forneça sua chave de API do Leap. \n\n**Como obter sua chave de API:**\n1. Vá para [app.tryleap.ai](https://app.tryleap.ai)\n2. Clique em **Configurações** na barra lateral esquerda (inferior)\n3. Navegue até a seção **API**\n4. Clique em **Criar chave de API** para gerar uma nova chave\n5. Copie e cole a chave aqui",
+  "Get a Workflow Run": "Obter uma Corrida de Workflow",
+  "Run a Workflow": "Executar um Workflow",
+  "Retrieve the status and results of a workflow run": "Recuperar o status e os resultados de uma execução de fluxo de trabalho",
+  "Execute a Leap AI workflow and return the run ID": "Executar um fluxo de trabalho Leap AI e retornar o ID de execução",
+  "Workflow Run ID": "ID de execução do workflow",
+  "Workflow ID": "ID do workflow",
+  "Webhook URL": "URL do webhook",
+  "Input Variables": "Input Variables",
+  "The ID of the workflow run to retrieve": "O ID do workflow executado para recuperar",
+  "The ID of the workflow to run": "O ID do workflow a ser executado",
+  "The URL to which workflow results should be sent on completion (optional)": "A URL para a qual os resultados do workflow devem ser enviados na conclusão (opcional)",
+  "Variables that the workflow can use globally and their values (optional)": "Variáveis que o fluxo de trabalho pode usar globalmente e seus valores (opcional)"
+}

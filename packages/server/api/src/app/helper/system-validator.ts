@@ -1,8 +1,8 @@
 import { inspect } from 'util'
-import { AppSystemProp, ContainerType, DatabaseType, RedisType, SystemProp, WorkerSystemProp } from '@activepieces/server-shared'
-import { ApEdition, ApEnvironment, ExecutionMode, FileLocation, isNil, PieceSyncMode } from '@activepieces/shared'
+import { AppSystemProp, ContainerType, DatabaseType, RedisType, SystemProp, WorkerSystemProp } from '@activepieces/server-common'
+import { ApEdition, ApEnvironment, DefaultProjectRole, ExecutionMode, FileLocation, isNil, PieceSyncMode } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { packageManager, registryPieceManager } from 'server-worker'
+import { packageManager, registryPieceManager } from 'worker'
 import { s3Helper } from '../file/s3-helper'
 import { encryptUtils } from './encryption'
 import { jwtUtils } from './jwt-utils'
@@ -53,9 +53,11 @@ const systemPropValidators: {
     [AppSystemProp.TRIGGER_TIMEOUT_SECONDS]: numberValidator,
     [AppSystemProp.TRIGGER_HOOKS_TIMEOUT_SECONDS]: numberValidator,
     [AppSystemProp.FLOW_TIMEOUT_SECONDS]: numberValidator,
+    [AppSystemProp.EVENT_DESTINATION_TIMEOUT_SECONDS]: numberValidator,
     [AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS]: numberValidator,
     [AppSystemProp.APP_WEBHOOK_SECRETS]: stringValidator,
     [AppSystemProp.MAX_FILE_SIZE_MB]: numberValidator,
+    [AppSystemProp.MAX_FLOW_RUN_LOG_SIZE_MB]: numberValidator,
     [AppSystemProp.SANDBOX_MEMORY_LIMIT]: numberValidator,
     [AppSystemProp.SANDBOX_PROPAGATED_ENV_VARS]: stringValidator,
     [AppSystemProp.SENTRY_DSN]: urlValidator,
@@ -74,6 +76,7 @@ const systemPropValidators: {
     // AppSystemProp
     [AppSystemProp.API_KEY]: stringValidator,
     [AppSystemProp.TEMPLATES_API_KEY]: stringValidator,
+    [AppSystemProp.TEMPLATE_MANAGER_API_KEY]: stringValidator,
     [AppSystemProp.API_RATE_LIMIT_AUTHN_ENABLED]: booleanValidator,
     [AppSystemProp.API_RATE_LIMIT_AUTHN_MAX]: numberValidator,
     [AppSystemProp.API_RATE_LIMIT_AUTHN_WINDOW]: stringValidator,
@@ -86,6 +89,7 @@ const systemPropValidators: {
     [AppSystemProp.EXECUTION_DATA_RETENTION_DAYS]: numberValidator,
     [AppSystemProp.JWT_SECRET]: stringValidator,
     [AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT]: numberValidator,
+    [AppSystemProp.PIECES_CACHE_MAX_ENTRIES]: numberValidator,
     [AppSystemProp.PIECES_SYNC_MODE]: enumValidator(Object.values(PieceSyncMode)),
     [AppSystemProp.POSTGRES_DATABASE]: stringValidator,
     [AppSystemProp.POSTGRES_HOST]: stringValidator,
@@ -143,6 +147,7 @@ const systemPropValidators: {
     [AppSystemProp.EDITION]: enumValidator(Object.values(ApEdition)),
     [AppSystemProp.FEATUREBASE_API_KEY]: stringValidator,
     [AppSystemProp.OPENROUTER_PROVISION_KEY]: stringValidator,
+    [AppSystemProp.SCIM_DEFAULT_PROJECT_ROLE]: enumValidator(Object.values(DefaultProjectRole)),
 
     // AppSystemProp
     [WorkerSystemProp.WORKER_CONCURRENCY]: numberValidator,
@@ -265,6 +270,8 @@ export const validateEnvPropsOnStartup = async (log: FastifyBaseLogger): Promise
         }
     }
 
-    await packageManager(log).validate()
-    await registryPieceManager(log).validate()
+    if (environment !== ApEnvironment.TESTING) {
+        await packageManager(log).validate()
+        await registryPieceManager(log).validate()
+    }
 }

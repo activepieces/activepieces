@@ -1,4 +1,4 @@
-import { securityAccess } from '@activepieces/server-shared'
+import { securityAccess } from '@activepieces/server-common'
 import {
     ActivepiecesError,
     ALL_PRINCIPAL_TYPES,
@@ -6,7 +6,6 @@ import {
     ApFlagId,
     CreateTemplateRequestBody,
     ErrorCode,
-    FlowVersionTemplate,
     isNil,
     ListTemplatesRequestQuery,
     Principal,
@@ -16,22 +15,21 @@ import {
     TemplateType,
     UpdateTemplateRequestBody,
 } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { Static, Type } from '@sinclair/typebox'
 import { FastifyBaseLogger } from 'fastify'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
+import { z } from 'zod'
 import { platformMustBeOwnedByCurrentUser } from '../ee/authentication/ee-authorization'
 import { flagService } from '../flags/flag.service'
-import { migrateFlowVersionTemplate } from '../flows/flow-version/migrations'
+import { migrateFlowVersionTemplateList } from '../flows/flow-version/migrations'
 import { system } from '../helper/system/system'
 import { platformService } from '../platform/platform.service'
-import { communityTemplates } from './community-flow-template.service'
+import { communityTemplates } from './community-templates.service'
 import { templateService } from './template.service'
 
 const edition = system.getEdition()
 
-
-export const templateController: FastifyPluginAsyncTypebox = async (app) => {
+export const templateController: FastifyPluginAsyncZod = async (app) => {
     app.get('/:id', GetParams, async (request) => {
         const template = await templateService(app.log).getOne({ id: request.params.id })
         if (!isNil(template)) {
@@ -50,9 +48,9 @@ export const templateController: FastifyPluginAsyncTypebox = async (app) => {
         })
     })
 
-    app.get('/categories', GetCategoriesParams, async () => {
+    app.get('/categories', GetCategoriesParams, async (request) => {
         if (edition === ApEdition.CLOUD) {
-            return flagService.getOne(ApFlagId.TEMPLATES_CATEGORIES)
+            return flagService(request.log).getOne(ApFlagId.TEMPLATES_CATEGORIES)
         }
         return communityTemplates.getCategories()
     })
@@ -71,14 +69,7 @@ export const templateController: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/', {
         ...CreateParams,
         preValidation: async (request) => {
-            const migratedFlows = await Promise.all((request.body.flows ?? []).map(async (flow: FlowVersionTemplate) => {
-                const migratedFlow = await migrateFlowVersionTemplate(flow.trigger, flow.schemaVersion)
-                return {
-                    ...flow,
-                    trigger: migratedFlow.trigger,
-                    schemaVersion: migratedFlow.schemaVersion,
-                }
-            }))
+            const migratedFlows = await migrateFlowVersionTemplateList(request.body.flows ?? [])
             request.body.flows = migratedFlows
         },
     }, async (request, reply) => {
@@ -106,14 +97,14 @@ export const templateController: FastifyPluginAsyncTypebox = async (app) => {
         return reply.status(StatusCodes.CREATED).send(result)
     })
 
-    app.post('/:id', UpdateParams, async (request, reply) => {
+    app.post('/:id', { ...UpdateParams,
+        preValidation: async (request) => {
+            const migratedFlows = await migrateFlowVersionTemplateList(request.body.flows ?? [])
+            request.body.flows = migratedFlows
+        },
+    }, async (request, reply) => {
         const result = await templateService(app.log).update({ id: request.params.id, params: request.body })
         return reply.status(StatusCodes.OK).send(result)
-    })
-
-    app.post('/:id/increment-usage-count', IncrementUsageCountParams, async (request, reply) => {
-        await templateService(app.log).incrementUsageCount({ id: request.params.id })
-        return reply.status(StatusCodes.OK).send()
     })
 
     app.delete('/:id', DeleteParams, async (request, reply) => {
@@ -128,12 +119,13 @@ export const templateController: FastifyPluginAsyncTypebox = async (app) => {
         })
         return reply.status(StatusCodes.NO_CONTENT).send()
     })
+    
 }
 
-const GetIdParams = Type.Object({
-    id: Type.String(),
+const GetIdParams = z.object({
+    id: z.string(),
 })
-type GetIdParams = Static<typeof GetIdParams>
+type GetIdParams = z.infer<typeof GetIdParams>
 
 const GetCategoriesParams = {
     config: {
@@ -207,19 +199,6 @@ const UpdateParams = {
     },
 }
 
-const IncrementUsageCountParams = {
-    config: {
-        security: securityAccess.publicPlatform([PrincipalType.USER, PrincipalType.SERVICE]),
-    },
-    schema: {
-        description: 'Increment usage count of a template.',
-        tags: ['templates'],
-        security: [SERVICE_KEY_SECURITY_OPENAPI],
-        params: GetIdParams,
-    },
-}
-
-
 async function loadOfficialTemplatesOrReturnEmpty(
     log: FastifyBaseLogger,
     query: ListTemplatesRequestQuery,
@@ -251,7 +230,7 @@ async function loadCustomTemplatesOrReturnEmpty(
     if (isNil(platformId)) {
         return []
     }
-    const platform = await platformService.getOneWithPlanOrThrow(platformId)
+    const platform = await platformService(log).getOneWithPlanOrThrow(platformId)
     if (!platform.plan.manageTemplatesEnabled) {
         return []
     }

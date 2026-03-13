@@ -14,18 +14,16 @@ import {
     PieceTriggerSettings,
     PlatformId,
     RouterActionSettingsWithValidation,
+    UserId,
 } from '@activepieces/shared'
-import { Type } from '@sinclair/typebox'
-import { TypeCompiler } from '@sinclair/typebox/compiler'
 import { FastifyBaseLogger } from 'fastify'
+import { z } from 'zod'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
 
-const loopSettingsValidator = TypeCompiler.Compile(Type.Intersect([LoopOnItemsActionSettings, Type.Object({
-    items: Type.String({
-        minLength: 1,
-    }),
-})]))
-const routerSettingsValidator = TypeCompiler.Compile(RouterActionSettingsWithValidation)
+const loopSettingsValidator = LoopOnItemsActionSettings.and(z.object({
+    items: z.string().min(1),
+}))
+const routerSettingsValidator = RouterActionSettingsWithValidation
 
 type ValidationResult = {
     valid: boolean
@@ -33,16 +31,16 @@ type ValidationResult = {
 }
 
 export const flowVersionValidationUtil = (log: FastifyBaseLogger) => ({
-    async prepareRequest({ platformId, request }: PrepareRequestParams): Promise<FlowOperationRequest> {
+    async prepareRequest({ platformId, request, userId }: PrepareRequestParams): Promise<FlowOperationRequest> {
         const clonedRequest: FlowOperationRequest = JSON.parse(JSON.stringify(request))
 
         switch (clonedRequest.type) {
             case FlowOperationType.ADD_ACTION:
                 switch (clonedRequest.request.action.type) {
                     case FlowActionType.LOOP_ON_ITEMS:
-                        clonedRequest.request.action.valid = loopSettingsValidator.Check(
+                        clonedRequest.request.action.valid = loopSettingsValidator.safeParse(
                             clonedRequest.request.action.settings,
-                        ) 
+                        ).success
                         break
                     case FlowActionType.PIECE: {
                         const result = await validateAction(
@@ -55,9 +53,9 @@ export const flowVersionValidationUtil = (log: FastifyBaseLogger) => ({
                         break
                     }
                     case FlowActionType.ROUTER:
-                        clonedRequest.request.action.valid = routerSettingsValidator.Check(
+                        clonedRequest.request.action.valid = routerSettingsValidator.safeParse(
                             clonedRequest.request.action.settings,
-                        )
+                        ).success
                         break
                     case FlowActionType.CODE: {
                         break
@@ -67,9 +65,9 @@ export const flowVersionValidationUtil = (log: FastifyBaseLogger) => ({
             case FlowOperationType.UPDATE_ACTION:
                 switch (clonedRequest.request.type) {
                     case FlowActionType.LOOP_ON_ITEMS:
-                        clonedRequest.request.valid = loopSettingsValidator.Check(
+                        clonedRequest.request.valid = loopSettingsValidator.safeParse(
                             clonedRequest.request.settings,
-                        )
+                        ).success
                         break
                     case FlowActionType.PIECE: {
                         const result = await validateAction(
@@ -82,9 +80,9 @@ export const flowVersionValidationUtil = (log: FastifyBaseLogger) => ({
                         break
                     }
                     case FlowActionType.ROUTER:
-                        clonedRequest.request.valid = routerSettingsValidator.Check(
+                        clonedRequest.request.valid = routerSettingsValidator.safeParse(
                             clonedRequest.request.settings,
-                        )
+                        ).success
                         break
                     case FlowActionType.CODE: {
                         break
@@ -108,6 +106,16 @@ export const flowVersionValidationUtil = (log: FastifyBaseLogger) => ({
                     }
                 }
                 break
+            case FlowOperationType.IMPORT_FLOW:{
+                const notes = clonedRequest.request.notes
+                if (!isNil(notes)) {
+                    clonedRequest.request.notes = notes.map(note => ({
+                        ...note,
+                        ownerId: userId,
+                    }))
+                }
+                break
+            }
             default:
                 break
         }
@@ -141,7 +149,7 @@ async function validateAction({ settings, platformId, log }: ValidateActionParam
     }
 
     const props = { ...action.props }
-  
+
     return validateProps(props, settings.input, piece.auth, action.requireAuth)
 }
 
@@ -167,8 +175,8 @@ async function validateTrigger({ settings, platformId, log }: ValidateTriggerPar
     if (isNil(trigger)) {
         return { valid: false }
     }
-    const props = { ...trigger.props } 
-   
+    const props = { ...trigger.props }
+
     return validateProps(props, settings.input, piece.auth, trigger.requireAuth)
 }
 
@@ -179,13 +187,13 @@ function validateProps(
     //if require auth is not defined, we default to true, because at first all auth was required
     requireAuth: boolean | undefined = true,
 ): ValidationResult {
-    const propsWithAuthSchema = piecePropertiesUtils.buildSchema(props, auth,  requireAuth)
-    const inputValidator = TypeCompiler.Compile(propsWithAuthSchema)
+    const propsSchema = piecePropertiesUtils.buildSchema(props, auth, requireAuth)
+    const schemaKeys = Object.keys((propsSchema as z.ZodObject<z.ZodRawShape>).shape)
     const cleanInput = !isNil(input) ? Object.fromEntries(
-        Object.keys(propsWithAuthSchema.properties).map(key => [key, input?.[key]]),
+        schemaKeys.map(key => [key, input?.[key]]),
     ) : undefined
     return {
-        valid: inputValidator.Check(cleanInput),
+        valid: propsSchema.safeParse(cleanInput).success,
         cleanInput,
     }
 }
@@ -194,6 +202,7 @@ function validateProps(
 type PrepareRequestParams = {
     platformId?: PlatformId
     request: FlowOperationRequest
+    userId: UserId | null
 }
 
 type ValidateActionParams = {

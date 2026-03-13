@@ -1,5 +1,5 @@
 
-import { securityAccess } from '@activepieces/server-shared'
+import { securityAccess } from '@activepieces/server-common'
 import {
     EventPayload,
     FAIL_PARENT_ON_FAILURE_HEADER,
@@ -9,9 +9,9 @@ import {
     WebhookUrlParams,
     WebsocketClientEvent,
 } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { trace } from '@opentelemetry/api'
 import { FastifyRequest } from 'fastify'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import mime from 'mime-types'
 import { stepFileService } from '../file/step-file/step-file.service'
 import { projectService } from '../project/project-service'
@@ -22,7 +22,7 @@ import { webhookService } from './webhook.service'
 
 const tracer = trace.getTracer('webhook-controller')
 
-export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
+export const webhookController: FastifyPluginAsyncZod = async (app) => {
 
     app.all(
         '/:flowId/sync',
@@ -199,7 +199,7 @@ async function convertBody(
             request.body as Record<string, unknown>,
         )
 
-        const platformId = await projectService.getPlatformId(projectId)
+        const platformId = await projectService(request.log).getPlatformId(projectId)
 
         for (const [key, value] of requestBodyEntries) {
             if (isMultipartFile(value)) {
@@ -222,7 +222,7 @@ async function convertBody(
     }
     const contentType = request.headers['content-type']
     if (isBinaryContentType(contentType) && Buffer.isBuffer(request.body)) {
-        const platformId = await projectService.getPlatformId(projectId)
+        const platformId = await projectService(request.log).getPlatformId(projectId)
         const extension = mime.extension(contentType?.split(';')[0] || '') || 'bin'
         const fileName = `file.${extension}`
 

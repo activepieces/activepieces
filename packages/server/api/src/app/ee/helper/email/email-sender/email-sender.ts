@@ -1,4 +1,4 @@
-import { AppSystemProp } from '@activepieces/server-shared'
+import { AppSystemProp } from '@activepieces/server-common'
 import { ApEnvironment } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { system } from '../../../../helper/system/system'
@@ -26,9 +26,15 @@ type BaseEmailTemplateData<Name extends string, Vars extends Record<string, stri
 }
 
 type InvitationEmailTemplateData = BaseEmailTemplateData<'invitation-email', {
-    projectOrPlatformName: string
+    projectName: string
     role: string
     setupLink: string
+}>
+
+type ProjectMemberAddedEmailTemplateData = BaseEmailTemplateData<'project-member-added', {
+    projectName: string
+    role: string
+    loginLink: string
 }>
 
 type ResetPasswordEmailTemplateData = BaseEmailTemplateData<'reset-password', {
@@ -58,13 +64,19 @@ type BadgeAwardedTemplateData = BaseEmailTemplateData<'badge-awarded', {
     firstName: string
 }>
 
+type ScimUserWelcomeTemplateData = BaseEmailTemplateData<'scim-user-welcome', {
+    loginLink: string
+}>
+
 export type EmailTemplateData =
   | InvitationEmailTemplateData
+  | ProjectMemberAddedEmailTemplateData
   | ResetPasswordEmailTemplateData
   | VerifyEmailTemplateData
   | IssueCreatedTemplateData
   | TriggerFailureThresholdTemplateData
   | BadgeAwardedTemplateData
+  | ScimUserWelcomeTemplateData
 
 type SendArgs = {
     emails: string[]

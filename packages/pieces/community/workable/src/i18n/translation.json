@@ -33,6 +33,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "Default is 50": "Default is 50",
   "Filter for member of specified role": "Filter for member of specified role",
   "Shortcode of specific job": "Shortcode of specific job",

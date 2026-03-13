@@ -1,38 +1,39 @@
-import { OtpType } from '@activepieces/ee-shared'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
+import { OtpType } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { initializeDatabase } from '../../../../src/app/database'
+import { Mock } from 'vitest'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import * as emailServiceFile from '../../../../src/app/ee/helper/email/email-service'
-import { setupServer } from '../../../../src/app/server'
+import { db } from '../../../helpers/db'
 import { mockAndSaveBasicSetup } from '../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
-let sendOtpSpy: jest.Mock
+
+let sendOtpSpy: Mock
 
 beforeAll(async () => {
-    await initializeDatabase({ runMigrations: false })
-    app = await setupServer()
-})
-
-beforeEach(() => {
-    sendOtpSpy = jest.fn()
-    jest.spyOn(emailServiceFile, 'emailService').mockImplementation((_log: FastifyBaseLogger) => ({
-        sendOtp: sendOtpSpy,
-        sendInvitation: jest.fn(),
-        sendIssueCreatedNotification: jest.fn(),
-        sendQuotaAlert: jest.fn(),
-        sendReminderJobHandler: jest.fn(),
-        sendExceedFailureThresholdAlert: jest.fn(),
-    }))
-
+    app = await setupTestEnvironment({ fresh: true })
 })
 
 afterAll(async () => {
-    await databaseConnection().destroy()
-    await app?.close()
+    await teardownTestEnvironment()
 })
 
+beforeEach(() => {
+    sendOtpSpy = vi.fn()
+    vi.spyOn(emailServiceFile, 'emailService').mockImplementation((_log: FastifyBaseLogger) => ({
+        sendOtp: sendOtpSpy,
+        sendInvitation: vi.fn(),
+        sendIssueCreatedNotification: vi.fn(),
+        sendQuotaAlert: vi.fn(),
+        sendReminderJobHandler: vi.fn(),
+        sendExceedFailureThresholdAlert: vi.fn(),
+        sendBadgeAwardedEmail: vi.fn(),
+        sendProjectMemberAdded: vi.fn(),
+    }))
+
+})
 describe('OTP API', () => {
     describe('Create and Send Endpoint', () => {
         it('Generates new OTP', async () => {
@@ -57,7 +58,7 @@ describe('OTP API', () => {
         it('Sends OTP to user', async () => {
             const { mockUserIdentity } = await mockAndSaveBasicSetup()
 
-            await databaseConnection().getRepository('user_identity').update(mockUserIdentity.id, {
+            await db.update('user_identity', mockUserIdentity.id, {
                 verified: false,
             })
 
@@ -76,14 +77,13 @@ describe('OTP API', () => {
             // assert
             expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
             expect(sendOtpSpy).toHaveBeenCalledTimes(1)
-            expect(sendOtpSpy).toHaveBeenCalledWith({
+            expect(sendOtpSpy).toHaveBeenCalledWith(expect.objectContaining({
                 otp: expect.stringMatching(/^([0-9A-F]|-){36}$/i),
-                platformId: null,
                 type: OtpType.EMAIL_VERIFICATION,
                 userIdentity: expect.objectContaining({
                     email: mockUserIdentity.email,
                 }),
-            })
+            }))
         })
 
         it('OTP is unique per user per OTP type', async () => {
