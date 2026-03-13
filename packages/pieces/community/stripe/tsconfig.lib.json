@@ -5,8 +5,9 @@
     "rootDir": ".",
     "baseUrl": ".",
     "paths": {},
-    "outDir": "../../../../dist/packages/pieces/community/stripe",
+    "outDir": "./dist",
     "declaration": true,
+    "declarationMap": true,
     "types": ["node"]
   },
   "exclude": ["jest.config.ts", "src/**/*.spec.ts", "src/**/*.test.ts"],

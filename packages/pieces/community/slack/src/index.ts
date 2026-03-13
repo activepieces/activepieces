@@ -1,12 +1,6 @@
-import {
-  createCustomApiCallAction,
-  httpClient,
-  HttpMethod,
-} from '@activepieces/pieces-common';
+import { createCustomApiCallAction, httpClient, HttpMethod } from '@activepieces/pieces-common';
 import {
   createPiece,
-  OAuth2PropertyValue,
-  PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
 
@@ -49,27 +43,26 @@ import { newTeamCustomEmojiTrigger } from './lib/triggers/new-team-custom-emoji'
 import { inviteUserToChannelAction } from './lib/actions/invite-user-to-channel';
 import { listUsers } from './lib/actions/list-users';
 import { deleteMessageAction } from './lib/actions/delete-message';
+import { newModalInteractionTrigger } from './lib/triggers/new-modal-interaction';
 import { slackAuth } from './lib/auth';
+import { getBotToken, getUserToken } from './lib/common/auth-helpers';
+import type { SlackAuthValue } from './lib/common/auth-helpers';
+
+export { slackAuth, slackOAuth2Auth } from './lib/auth';
 
 export const slack = createPiece({
   displayName: 'Slack',
   description: 'Channel-based messaging platform',
-  minimumSupportedRelease: '0.66.7',
+  minimumSupportedRelease: '0.79.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/slack.png',
   categories: [PieceCategory.COMMUNICATION],
   auth: slackAuth,
   events: {
     parseAndReply: ({ payload, server }) => {
-      if (
-        payload.headers['content-type'] === 'application/x-www-form-urlencoded'
-      ) {
-        if (
-          payload.body &&
-          typeof payload.body == 'object' &&
-          'payload' in payload.body
-        ) {
+      if (payload.headers['content-type'] === 'application/x-www-form-urlencoded') {
+        if (payload.body && typeof payload.body == 'object' && 'payload' in payload.body) {
           const interactionPayloadBody = JSON.parse(
-            (payload.body as { payload: string }).payload
+            (payload.body as { payload: string }).payload,
           ) as InteractionPayloadBody;
           if (interactionPayloadBody.type === 'block_actions') {
             const action = interactionPayloadBody.actions?.[0];
@@ -85,6 +78,23 @@ export const slack = createPiece({
                 body: interactionPayloadBody,
               });
             }
+          } else if (
+            interactionPayloadBody.type === 'view_submission' ||
+            interactionPayloadBody.type === 'view_closed'
+          ) {
+            const viewModalPayload = interactionPayloadBody as unknown as {
+              type: string;
+              team: {
+                id: string;
+                token: string;
+                api_app_id: string;
+              };
+            };
+
+            return {
+              event: viewModalPayload.type,
+              identifierValue: viewModalPayload.team.id,
+            };
           }
         }
         return {
@@ -163,19 +173,18 @@ export const slack = createPiece({
       },
       auth: slackAuth,
       authMapping: async (auth, propsValue) => {
+        const typedAuth = auth as SlackAuthValue;
         if (propsValue.useUserToken) {
-          return {
-            Authorization: `Bearer ${
-              (auth as OAuth2PropertyValue).data['authed_user']?.access_token
-            }`,
-          };
-        } else {
-          return {
-            Authorization: `Bearer ${
-              (auth as OAuth2PropertyValue).access_token
-            }`,
-          };
+          const userToken = getUserToken(typedAuth);
+          if (userToken) {
+            return {
+              Authorization: `Bearer ${userToken}`,
+            };
+          }
         }
+        return {
+          Authorization: `Bearer ${getBotToken(typedAuth)}`,
+        };
       },
       extraProps: {
         useUserToken: Property.Checkbox({
@@ -200,6 +209,7 @@ export const slack = createPiece({
     newUserTrigger,
     newSavedMessageTrigger,
     newTeamCustomEmojiTrigger,
+    newModalInteractionTrigger,
   ],
 });
 

@@ -9,14 +9,9 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
-    testTimeout: 250000,
-    hookTimeout: 250000,
+    testTimeout: 60000,
+    hookTimeout: 60000,
     pool: 'forks',
-    poolOptions: {
-      forks: {
-        singleFork: true,
-      },
-    },
     setupFiles: [path.resolve(__dirname, 'vitest.setup.ts')],
     include: [path.resolve(__dirname, 'test/**/*.test.ts')],
   },
@@ -24,10 +19,10 @@ export default defineConfig({
     alias: {
       'isolated-vm': path.resolve(__dirname, '__mocks__/isolated-vm.js'),
       '@activepieces/shared': path.resolve(__dirname, '../../../packages/shared/src/index.ts'),
-      '@activepieces/ee-shared': path.resolve(__dirname, '../../../packages/ee/shared/src/index.ts'),
-      '@activepieces/pieces-framework': path.resolve(__dirname, '../../../packages/pieces/community/framework/src/index.ts'),
-      '@activepieces/pieces-common': path.resolve(__dirname, '../../../packages/pieces/community/common/src/index.ts'),
-      '@activepieces/server-shared': path.resolve(__dirname, '../../../packages/server/shared/src/index.ts'),
+      '@activepieces/pieces-framework': path.resolve(__dirname, '../../../packages/pieces/framework/src/index.ts'),
+      '@activepieces/pieces-common': path.resolve(__dirname, '../../../packages/pieces/common/src/index.ts'),
+      '@activepieces/server-common': path.resolve(__dirname, '../../../packages/server/common/src/index.ts'),
+      '@activepieces/sandbox': path.resolve(__dirname, '../../../packages/server/sandbox/src/index.ts'),
     },
   },
 })
