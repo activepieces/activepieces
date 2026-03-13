@@ -2,10 +2,10 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { pocketbaseAuth } from '../../index';
 
-export const getFullList = createAction({
-  name: 'Get Full List',
-  displayName: 'Get Full List',
-  description: 'Gets all the data for a given collection',
+export const deleteRecord = createAction({
+  name: 'deleteRecord',
+  displayName: 'Delete Record',
+  description: 'Deletes a single record from a collection',
   auth: pocketbaseAuth,
   props: {
     collection: Property.ShortText({
@@ -13,10 +13,15 @@ export const getFullList = createAction({
       description: 'The name of the PocketBase collection',
       required: true,
     }),
+    recordId: Property.ShortText({
+      displayName: 'Record ID',
+      description: 'ID of the record to delete',
+      required: true,
+    }),
   },
   async run(context) {
     const { host, email, password } = context.auth.props;
-    const { collection } = context.propsValue;
+    const { collection, recordId } = context.propsValue;
 
     const authResponse = await httpClient.sendRequest({
       method: HttpMethod.POST,
@@ -29,14 +34,14 @@ export const getFullList = createAction({
 
     const token = authResponse.body.token;
 
-    const records = await httpClient.sendRequest({
-      method: HttpMethod.GET,
-      url: `${host}/api/collections/${encodeURIComponent(collection)}/records`,
+    await httpClient.sendRequest({
+      method: HttpMethod.DELETE,
+      url: `${host}/api/collections/${encodeURIComponent(collection)}/records/${encodeURIComponent(recordId)}`,
       headers: {
         Authorization: `Bearer ${token}`,
       },
     });
 
-    return records.body;
+    return { success: true };
   },
 });
