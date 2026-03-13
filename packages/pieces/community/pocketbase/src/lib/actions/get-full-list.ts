@@ -1,9 +1,10 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { pocketbaseAuth } from '../../index';
+import { pocketbaseAuthenticate } from '../common/client';
 
 export const getFullList = createAction({
-  name: 'Get Full List',
+  name: 'getFullList',
   displayName: 'Get Full List',
   description: 'Gets all the data for a given collection',
   auth: pocketbaseAuth,
@@ -18,25 +19,27 @@ export const getFullList = createAction({
     const { host, email, password } = context.auth.props;
     const { collection } = context.propsValue;
 
-    const authResponse = await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: `${host}/api/collections/_superusers/auth-with-password`,
-      body: {
-        identity: email,
-        password: password,
-      },
-    });
+    const token = await pocketbaseAuthenticate(host, email, password);
 
-    const token = authResponse.body.token;
+    let allItems: unknown[] = [];
+    let page = 1;
+    const perPage = 200;
 
-    const records = await httpClient.sendRequest({
-      method: HttpMethod.GET,
-      url: `${host}/api/collections/${encodeURIComponent(collection)}/records`,
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    while (true) {
+      const response = await httpClient.sendRequest({
+        method: HttpMethod.GET,
+        url: `${host}/api/collections/${encodeURIComponent(collection)}/records`,
+        headers: { Authorization: `Bearer ${token}` },
+        queryParams: { page: String(page), perPage: String(perPage) },
+      });
 
-    return records.body;
+      const body = response.body as { items: unknown[]; totalItems: number };
+      allItems = allItems.concat(body.items);
+
+      if (allItems.length >= body.totalItems) break;
+      page++;
+    }
+
+    return { items: allItems, totalItems: allItems.length };
   },
 });

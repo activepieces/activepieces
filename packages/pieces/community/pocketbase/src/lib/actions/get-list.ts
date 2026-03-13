@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { pocketbaseAuth } from '../../index';
+import { pocketbaseAuthenticate } from '../common/client';
 
 export const getList = createAction({
   name: 'getList',
@@ -54,18 +55,7 @@ export const getList = createAction({
     const { host, email, password } = context.auth.props;
     const { collection, page, perPage, sort, filter, expand, fields, skipTotal } = context.propsValue;
 
-    const authResponse = await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: `${host}/api/collections/_superusers/auth-with-password`,
-      body: {
-        identity: email,
-        password: password,
-      },
-    });
-    
-    console.log(authResponse)
-
-    const token = authResponse.body.token;
+    const token = await pocketbaseAuthenticate(host, email, password);
 
     const queryParams: Record<string, string> = {};
     if (page) queryParams['page'] = String(page);

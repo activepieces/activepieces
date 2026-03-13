@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { pocketbaseAuth } from '../../index';
+import { pocketbaseAuthenticate } from '../common/client';
 
 export const getRecord = createAction({
   name: 'getRecord',
@@ -33,16 +34,7 @@ export const getRecord = createAction({
     const { host, email, password } = context.auth.props;
     const { collection, recordId, expand, fields } = context.propsValue;
 
-    const authResponse = await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: `${host}/api/collections/_superusers/auth-with-password`,
-      body: {
-        identity: email,
-        password: password,
-      },
-    });
-
-    const token = authResponse.body.token;
+    const token = await pocketbaseAuthenticate(host, email, password);
 
     const queryParams: Record<string, string> = {};
     if (expand) queryParams['expand'] = expand;

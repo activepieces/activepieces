@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { pocketbaseAuth } from '../../index';
+import { pocketbaseAuthenticate } from '../common/client';
 
 export const deleteRecord = createAction({
   name: 'deleteRecord',
@@ -23,16 +24,7 @@ export const deleteRecord = createAction({
     const { host, email, password } = context.auth.props;
     const { collection, recordId } = context.propsValue;
 
-    const authResponse = await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: `${host}/api/collections/_superusers/auth-with-password`,
-      body: {
-        identity: email,
-        password: password,
-      },
-    });
-
-    const token = authResponse.body.token;
+    const token = await pocketbaseAuthenticate(host, email, password);
 
     await httpClient.sendRequest({
       method: HttpMethod.DELETE,
