@@ -20,7 +20,7 @@ export const sendIt = createPiece({
     'Multi-platform social media publishing. Schedule and publish content to LinkedIn, Instagram, Threads, TikTok, X, and 30+ more platforms.',
   auth: sendItAuth,
   minimumSupportedRelease: '0.20.0',
-  logoUrl: 'https://sendit.infiniteappsai.com/logo.png',
+  logoUrl: 'https://cdn.activepieces.com/pieces/send-it.png',
   categories: [PieceCategory.MARKETING],
   authors: ['infiniteappsai', 'sanket-a11y'],
   actions: [
