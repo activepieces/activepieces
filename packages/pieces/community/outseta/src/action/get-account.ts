@@ -24,10 +24,6 @@ export const getAccountAction = createAction({
       `/api/v1/crm/accounts/${context.propsValue.accountUid}`
     );
 
-    return {
-      accountUid: context.propsValue.accountUid,
-      account,
-      rawResponse: account,
-    };
+    return account;
   },
 });

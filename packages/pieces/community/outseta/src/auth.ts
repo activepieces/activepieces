@@ -29,7 +29,7 @@ export const outsetaAuth = PieceAuth.CustomAuth({
           apiSecret: auth.apiSecret,
         });
 
-        await client.get<any>(`/api/v1/crm/people`);
+        await client.get<any>(`/api/v1/crm/people?limit=1`);
 
         return {
           valid: true,

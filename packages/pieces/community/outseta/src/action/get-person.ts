@@ -24,10 +24,6 @@ export const getPersonAction = createAction({
       `/api/v1/crm/people/${context.propsValue.personUid}`
     );
 
-    return {
-      personUid: context.propsValue.personUid,
-      person,
-      rawResponse: person,
-    };
+    return person;
   },
 });
