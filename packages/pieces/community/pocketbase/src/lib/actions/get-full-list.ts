@@ -34,6 +34,7 @@ export const getFullList = createAction({
       });
 
       const body = response.body as { items: unknown[]; totalItems: number };
+      if (!body.items || body.items.length === 0) break;
       allItems = allItems.concat(body.items);
 
       if (allItems.length >= body.totalItems) break;
