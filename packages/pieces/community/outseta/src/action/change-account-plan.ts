@@ -2,17 +2,13 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { outsetaAuth } from '../auth';
 import { OutsetaClient } from '../common/client';
 
-export const changeSubscriptionPlanAction = createAction({
-  name: 'change_subscription_plan',
+export const changeAccountPlanAction = createAction({
+  name: 'change_account_plan',
   auth: outsetaAuth,
-  displayName: 'Change subscription plan',
+  displayName: 'Change Account Plan',
   description:
-    'Change an existing subscription to a different plan (upgrade, downgrade, or switch to free)',
+    'Change an account\'s current plan to a different one (upgrade, downgrade, or switch to free)',
   props: {
-    subscriptionUid: Property.ShortText({
-      displayName: 'Subscription UID',
-      required: true,
-    }),
     accountUid: Property.ShortText({
       displayName: 'Account UID',
       required: true,
@@ -31,6 +27,8 @@ export const changeSubscriptionPlanAction = createAction({
         options: [
           { label: 'Monthly', value: 1 },
           { label: 'Annual', value: 2 },
+          { label: 'Quarterly', value: 3 },
+          { label: 'One-time', value: 4 },
         ],
       },
     }),
@@ -42,8 +40,21 @@ export const changeSubscriptionPlanAction = createAction({
       apiSecret: context.auth.props.apiSecret,
     });
 
+    // First, get the account's current subscription UID
+    const account = await client.get<any>(
+      `/api/v1/crm/accounts/${context.propsValue.accountUid}?fields=Uid,CurrentSubscription.Uid`
+    );
+
+    if (!account.CurrentSubscription?.Uid) {
+      throw new Error(
+        'This account does not have an active subscription to change.'
+      );
+    }
+
+    const subscriptionUid = account.CurrentSubscription.Uid;
+
     const result = await client.put<any>(
-      `/api/v1/billing/subscriptions/${context.propsValue.subscriptionUid}/changeSubscription`,
+      `/api/v1/billing/subscriptions/${subscriptionUid}/changeSubscription`,
       {
         Account: { Uid: context.propsValue.accountUid },
         Plan: { Uid: context.propsValue.planUid },
