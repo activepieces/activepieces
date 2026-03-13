@@ -1,12 +1,14 @@
-import { securityAccess } from '@activepieces/server-shared'
+import { securityAccess } from '@activepieces/server-common'
 import {
     ApId,
+    OptionalBooleanFromQuery,
     USE_DRAFT_QUERY_PARAM_NAME,
 } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import { z } from 'zod'
 import { humanInputService } from './human-input.service'
 
-export const formController: FastifyPluginAsyncTypebox = async (app) => {
+export const formController: FastifyPluginAsyncZod = async (app) => {
     app.get('/form/:flowId', GetFormRequest, async (request) => {
         return humanInputService(request.log).getFormByFlowIdOrThrow(request.params.flowId, request.query.useDraft ?? false)
     })
@@ -18,11 +20,11 @@ const GetFormRequest = {
     },
     schema: {
         description: 'Get a form by flow id',
-        params: Type.Object({
+        params: z.object({
             flowId: ApId,
         }),
-        querystring: Type.Object({
-            [USE_DRAFT_QUERY_PARAM_NAME]: Type.Optional(Type.Boolean()),
+        querystring: z.object({
+            [USE_DRAFT_QUERY_PARAM_NAME]: OptionalBooleanFromQuery,
         }),
     },
 } 

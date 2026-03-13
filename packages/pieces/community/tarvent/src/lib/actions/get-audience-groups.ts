@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { tarventAuth } from '../..';
+import { tarventAuth } from '../auth';
 import { makeClient, tarventCommon } from '../common';
 
 export const getAudienceGroups = createAction({

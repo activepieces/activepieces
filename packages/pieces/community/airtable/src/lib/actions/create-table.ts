@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { airtableAuth } from '../../index';
+import { airtableAuth } from '../auth';
 import { airtableCommon } from '../common';
 import { AirtableFieldConfig } from '../common/models';
 

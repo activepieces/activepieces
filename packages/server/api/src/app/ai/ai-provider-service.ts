@@ -41,7 +41,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
             provider: AIProviderName.ACTIVEPIECES,
         })
 
-        if (flagService.aiCreditsEnabled() && !activepiecesExists) {
+        if (flagService(log).aiCreditsEnabled() && !activepiecesExists) {
             await aiProviderRepo().save({
                 id: apId(),
                 auth: await encryptUtils.encryptObject({}),
@@ -136,7 +136,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         catch (error: unknown) {
             const errorMessage = error instanceof Error ? error.message : 'Unknown error'
             const includeHttpErrorInMessage = provider === AIProviderName.CLOUDFLARE_GATEWAY
-            log.error(error)
+            log.error({ err: error }, '[aiProviderService#validateProviderCredentials] Failed to validate provider credentials')
             throw new ActivepiecesError({
                 code: ErrorCode.INVALID_AI_PROVIDER_CREDENTIALS,
                 params: {

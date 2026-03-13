@@ -1,5 +1,5 @@
 import { Property, createAction, OAuth2PropertyValue } from '@activepieces/pieces-framework';
-import { microsoftToDoAuth } from '../../index';
+import { microsoftToDoAuth } from '../auth';
 import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
 import { TodoTaskList } from '@microsoft/microsoft-graph-types';
 

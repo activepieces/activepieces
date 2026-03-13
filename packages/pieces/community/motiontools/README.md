@@ -1,7 +1,5 @@
 # pieces-motiontools
 
-This library was generated with [Nx](https://nx.dev).
-
 ## Building
 
-Run `nx build pieces-motiontools` to build the library.
+Run `turbo run build --filter=@activepieces/piece-motiontools` to build the library.

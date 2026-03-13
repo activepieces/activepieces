@@ -1,17 +1,17 @@
-import { securityAccess } from '@activepieces/server-shared'
+import { securityAccess } from '@activepieces/server-common'
 import { ActivepiecesError, ApFlagId, CreateTemplateRequestBody, ErrorCode, TemplateType, UpdateTemplateRequestBody, UpdateTemplatesCategoriesFlagRequestBody } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { Type } from '@sinclair/typebox'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import { z } from 'zod'
 import { flagService } from '../../../../flags/flag.service'
 import { migrateFlowVersionTemplateList } from '../../../../flows/flow-version/migrations'
 import { templateService } from '../../../../template/template.service'
 
-export const adminPlatformTemplatesCloudController: FastifyPluginAsyncTypebox = async (
+export const adminPlatformTemplatesCloudController: FastifyPluginAsyncZod = async (
     app,
 ) => {
 
     app.post('/categories', UpdateTemplatesCategoriesFlagRequest, async (request) => {
-        return flagService.save({
+        return flagService(request.log).save({
             id: ApFlagId.TEMPLATES_CATEGORIES,
             value: request.body.value,
         })
@@ -89,8 +89,8 @@ const GetTemplateRequest = {
         security: securityAccess.public(),
     },
     schema: {
-        params: Type.Object({
-            id: Type.String(),
+        params: z.object({
+            id: z.string(),
         }),
     },
 }
@@ -118,8 +118,8 @@ const UpdateTemplateRequest = {
         security: securityAccess.public(),
     },
     schema: {
-        params: Type.Object({
-            id: Type.String(),
+        params: z.object({
+            id: z.string(),
         }),
         body: UpdateTemplateRequestBody,
     },
@@ -130,8 +130,8 @@ const DeleteTemplateRequest = {
         security: securityAccess.public(),
     },
     schema: {
-        params: Type.Object({
-            id: Type.String(),
+        params: z.object({
+            id: z.string(),
         }),
     },
 }

@@ -1,5 +1,5 @@
 import { createHash } from 'crypto'
-import { cryptoUtils } from '@activepieces/server-shared'
+import { cryptoUtils } from '@activepieces/server-common'
 import {
     AuthenticationResponse,
     isNil,
@@ -34,10 +34,10 @@ export const managedAuthnService = (log: FastifyBaseLogger) => ({
         const { project } = await getOrCreateProject({
             platformId: externalPrincipal.platformId,
             externalProjectId: externalPrincipal.externalProjectId,
-        })
+        }, log)
 
         if (!isNil(externalPrincipal.projectDisplayName)) {
-            await projectService.update(project.id, {
+            await projectService(log).update(project.id, {
                 type: project.type,
                 displayName: externalPrincipal.projectDisplayName,
             })
@@ -63,7 +63,7 @@ export const managedAuthnService = (log: FastifyBaseLogger) => ({
             id: user.identityId,
         })
 
-        const token = await accessTokenManager.generateToken({
+        const token = await accessTokenManager(log).generateToken({
             id: user.id,
             type: PrincipalType.USER,
             platform: {
@@ -116,7 +116,7 @@ const getOrCreateUser = async (
     params: GetOrCreateUserParams,
     log: FastifyBaseLogger,
 ): Promise<User> => {
-    const existingUser = await userService.getByPlatformAndExternalId({
+    const existingUser = await userService(log).getByPlatformAndExternalId({
         platformId: params.platformId,
         externalId: params.externalUserId,
     })
@@ -125,7 +125,7 @@ const getOrCreateUser = async (
         return existingUser
     }
     const identity = await getOrCreateUserIdentity(params, log)
-    const user = await userService.create({
+    const user = await userService(log).create({
         externalId: params.externalUserId,
         platformId: params.platformId,
         identityId: identity.id,
@@ -158,8 +158,8 @@ const getOrCreateUserIdentity = async (
 const getOrCreateProject = async ({
     platformId,
     externalProjectId,
-}: GetOrCreateProjectParams): Promise<{ project: Project, isNewProject: boolean }> => {
-    const existingProject = await projectService.getByPlatformIdAndExternalId({
+}: GetOrCreateProjectParams, log: FastifyBaseLogger): Promise<{ project: Project, isNewProject: boolean }> => {
+    const existingProject = await projectService(log).getByPlatformIdAndExternalId({
         platformId,
         externalId: externalProjectId,
     })
@@ -168,9 +168,9 @@ const getOrCreateProject = async ({
         return { project: existingProject, isNewProject: false }
     }
 
-    const platform = await platformService.getOneOrThrow(platformId)
+    const platform = await platformService(log).getOneOrThrow(platformId)
 
-    const project = await projectService.create({
+    const project = await projectService(log).create({
         displayName: externalProjectId,
         ownerId: platform.ownerId,
         platformId,

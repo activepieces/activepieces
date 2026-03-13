@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { amazonS3Auth } from '../..';
+import { amazonS3Auth } from '../auth';
 import { createS3 } from '../common';
 
 export const moveFile = createAction({

@@ -1,11 +1,11 @@
+import { securityAccess } from '@activepieces/server-common'
 import {
     ResetPasswordRequestBody,
-    VerifyEmailRequestBody } from '@activepieces/ee-shared'
-import { securityAccess } from '@activepieces/server-shared'
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+    VerifyEmailRequestBody } from '@activepieces/shared'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { enterpriseLocalAuthnService } from './enterprise-local-authn-service'
 
-export const enterpriseLocalAuthnController: FastifyPluginAsyncTypebox = async (
+export const enterpriseLocalAuthnController: FastifyPluginAsyncZod = async (
     app,
 ) => {
     app.post('/verify-email', VerifyEmailRequest, async (req) => {
