@@ -38,6 +38,9 @@ export const updateRowAction = createAction({
       if (value === null || value === undefined || value === '') {
         return;
       }
+      if (Array.isArray(value) && value.length === 0) {
+        return;
+      }
       const fieldType: string = fieldIDTypeMap[key];
       if (fieldType === BaserowFieldType.LINK_TO_TABLE) {
         formattedTableFields[key] = (value as string[]).map((id: string) =>
