@@ -14,10 +14,30 @@ export const getFullList = createAction({
       description: 'The name of the PocketBase collection',
       required: true,
     }),
+    sort: Property.ShortText({
+      displayName: 'Sort',
+      description: 'Order attribute(s). Use - for DESC, + for ASC. E.g.: -created,id',
+      required: false,
+    }),
+    filter: Property.ShortText({
+      displayName: 'Filter',
+      description: "Filter expression. E.g.: (id='abc' && created>'2022-01-01')",
+      required: false,
+    }),
+    expand: Property.ShortText({
+      displayName: 'Expand',
+      description: 'Auto expand relations. E.g.: relField1,relField2.subRelField',
+      required: false,
+    }),
+    fields: Property.ShortText({
+      displayName: 'Fields',
+      description: 'Comma separated fields to return. E.g.: *,expand.relField.name',
+      required: false,
+    }),
   },
   async run(context) {
     const { host, email, password } = context.auth.props;
-    const { collection } = context.propsValue;
+    const { collection, sort, filter, expand, fields } = context.propsValue;
 
     const token = await pocketbaseAuthenticate(host, email, password);
 
@@ -26,11 +46,21 @@ export const getFullList = createAction({
     const perPage = 200;
 
     while (true) {
+      const queryParams: Record<string, string> = {
+        page: String(page),
+        perPage: String(perPage),
+        skipTotal: 'false',
+      };
+      if (sort) queryParams['sort'] = sort;
+      if (filter) queryParams['filter'] = filter;
+      if (expand) queryParams['expand'] = expand;
+      if (fields) queryParams['fields'] = fields;
+
       const response = await httpClient.sendRequest({
         method: HttpMethod.GET,
         url: `${host}/api/collections/${encodeURIComponent(collection)}/records`,
         headers: { Authorization: `Bearer ${token}` },
-        queryParams: { page: String(page), perPage: String(perPage) },
+        queryParams,
       });
 
       const body = response.body as { items: unknown[]; totalItems: number };
