@@ -73,6 +73,7 @@ import { pieceModule } from './pieces/metadata/piece-metadata-controller'
 import { pieceMetadataService } from './pieces/metadata/piece-metadata-service'
 import { pieceSyncService } from './pieces/piece-sync-service'
 import { tagsModule } from './pieces/tags/tags-module'
+import { platformBackgroundJobs } from './platform/platform-jobs'
 import { platformModule } from './platform/platform.module'
 import { projectHooks } from './project/project-hooks'
 import { projectModule } from './project/project-module'
@@ -218,6 +219,8 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     systemJobHandlers.registerJobHandler(SystemJobName.UPDATE_FLOW_STATUS, (data) => flowBackgroundJobs(app.log).updateStatusHandler(data))
     systemJobHandlers.registerJobHandler(SystemJobName.HARD_DELETE_PROJECT, (data) => platformProjectBackgroundJobs(app.log).hardDeleteProjectHandler(data))
 
+
+
     app.get(
         '/redirect',
         async (
@@ -298,6 +301,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             projectHooks.set(projectEnterpriseHooks)
             flagHooks.set(enterpriseFlagsHooks)
             exceptionHandler.initializeSentry(system.get(AppSystemProp.SENTRY_DSN))
+            systemJobHandlers.registerJobHandler(SystemJobName.HARD_DELETE_PLATFORM, (data) => platformBackgroundJobs(app.log).hardDeletePlatformHandler(data))
             break
         case ApEdition.ENTERPRISE:
             await platformAiCreditsService(app.log).init()

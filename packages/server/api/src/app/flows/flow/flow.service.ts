@@ -205,7 +205,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
                     },
                 })
             }
-            const migratedVersion = await flowVersionMigrationService(log).migrate(flow.version)
+            const migratedVersion = await flowVersionMigrationService(log).migrate(flow.version, flow.projectId)
             return {
                 ...flow,
                 version: migratedVersion,
@@ -285,6 +285,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
             removeConnectionsName,
             removeSampleData,
             entityManager,
+            projectId,
         })
 
         const triggerSource = await triggerSourceService(log).getByFlowId({

@@ -4,6 +4,7 @@ import { WebClient } from '@slack/web-api';
 import {
   slackChannel,
 } from '../common/props';
+import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
 
 export const uploadFile = createAction({
   auth: slackAuth,
@@ -26,7 +27,7 @@ export const uploadFile = createAction({
     channel: slackChannel(false),
   },
   async run(context) {
-    const token = context.auth.access_token;
+    const token = getBotToken(context.auth as SlackAuthValue);
     const { file, title, filename, channel } = context.propsValue;
     const client = new WebClient(token);
     return await client.files.uploadV2({

@@ -10,6 +10,9 @@ import { deleteRowAction } from './lib/actions/delete-row';
 import { getRowAction } from './lib/actions/get-row';
 import { listRowsAction } from './lib/actions/list-rows';
 import { updateRowAction } from './lib/actions/update-row';
+import { rowCreatedTrigger } from './lib/triggers/row-created';
+import { rowUpdatedTrigger } from './lib/triggers/row-updated';
+import { rowDeletedTrigger } from './lib/triggers/row-deleted';
 import { baserowAuth } from './lib/auth';
 
 export const baserow = createPiece({
@@ -39,5 +42,5 @@ export const baserow = createPiece({
       }),
     }),
   ],
-  triggers: [],
+  triggers: [rowCreatedTrigger, rowUpdatedTrigger, rowDeletedTrigger],
 });

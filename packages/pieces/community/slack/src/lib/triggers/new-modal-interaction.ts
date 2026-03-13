@@ -1,5 +1,6 @@
 import { Property, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { slackAuth } from '../auth';
+import { getTeamId, SlackAuthValue } from '../common/auth-helpers';
 import { ViewSubmissionPayload } from '../common/types';
 
 export const newModalInteractionTrigger = createTrigger({
@@ -25,8 +26,7 @@ export const newModalInteractionTrigger = createTrigger({
     type: TriggerStrategy.APP_WEBHOOK,
     sampleData: undefined,
     onEnable: async (context) => {
-        // Older OAuth2 has team_id, newer has team.id
-        const teamId = context.auth.data['team_id'] ?? context.auth.data['team']['id'];
+        const teamId = await getTeamId(context.auth as SlackAuthValue);
         context.app.createListeners({
             events: [context.propsValue.interactionType as string],
             identifierValue: teamId,

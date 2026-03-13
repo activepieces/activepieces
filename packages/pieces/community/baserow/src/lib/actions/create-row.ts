@@ -13,12 +13,7 @@ export const createRowAction = createAction({
   description: 'Creates a new row.',
   auth: baserowAuth,
   props: {
-    table_id: Property.Number({
-      displayName: 'Table ID',
-      required: true,
-      description:
-        "Please enter the table ID where the row must be created in. You can find the ID by clicking on the three dots next to the table. It's the number between brackets.",
-    }),
+    table_id: baserowCommon.tableId(),
     table_fields: baserowCommon.tableFields(true),
   },
   async run(context) {

@@ -78,6 +78,40 @@ export const findDatabaseItem = createAction({
             title: { equals: fieldValue },
           });
           break;
+        case 'date':
+          filterArray.push({
+            property: fieldKey,
+            date: { equals: fieldValue },
+          });
+          break;
+        case 'checkbox':
+          filterArray.push({
+            property: fieldKey,
+            checkbox: { equals: Boolean(fieldValue) },
+          });
+          break;
+        case 'status':
+          filterArray.push({
+            property: fieldKey,
+            status: { equals: fieldValue },
+          });
+          break;
+        case 'multi_select':
+          for (const value of Array.isArray(fieldValue)
+            ? fieldValue
+            : [fieldValue]) {
+            filterArray.push({
+              property: fieldKey,
+              multi_select: { contains: value },
+            });
+          }
+          break;
+        case 'people':
+          filterArray.push({
+            property: fieldKey,
+            people: { contains: fieldValue },
+          });
+          break;
       }
     }
 

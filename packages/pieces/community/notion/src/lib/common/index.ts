@@ -256,31 +256,55 @@ export const notionCommon = {
         const { properties } = await notion.databases.retrieve({
           database_id: database_id as unknown as string,
         });
-
         for (const key in properties) {
-          const property = properties[key];
-          if (
-            [
-              'rollup',
-              'button',
-              'files',
-              'verification',
-              'status',
-              'multi_select',
-              'formula',
-              'unique_id',
-              'relation',
-              'checkbox',
-              'created_by',
-              'created_time',
-              'last_edited_by',
-              'last_edited_time',
-            ].includes(property.type)
-          ) {
-            continue;
+          try {
+            const property = properties[key];
+            if (
+              [
+                'rollup',
+                'button',
+                'files',
+                'verification',
+                'formula',
+                'unique_id',
+                'relation',
+                'created_by',
+                'created_time',
+                'last_edited_by',
+                'last_edited_time',
+              ].includes(property.type)
+            ) {
+              continue;
+            }
+            if (property.type === 'people') {
+              const { results } = await notion.users.list({ page_size: 100 });
+              fields[property.name] = Property.StaticDropdown({
+                displayName: property.name,
+                required: false,
+                options: {
+                  disabled: false,
+                  options: results
+                    .filter(
+                      (user) => user.type === 'person' && user.name !== null
+                    )
+                    .map((option) => ({
+                      label: option.name as string,
+                      value: option.id,
+                    })),
+                },
+              });
+            } else {
+              fields[property.name] =
+                NotionFieldMapping[property.type].buildActivepieceType(
+                  property
+                );
+            }
+          } catch (e) {
+            console.error(
+              'Notion: could not generate dynamic filter property',
+              e
+            );
           }
-          fields[property.name] =
-            NotionFieldMapping[property.type].buildActivepieceType(property);
         }
       } catch (e) {
         console.debug(e);

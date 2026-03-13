@@ -2,6 +2,7 @@ import {
     FlowVersion,
     isNil,
     LATEST_FLOW_SCHEMA_VERSION,
+    ProjectId,
     spreadIfDefined,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -10,7 +11,7 @@ import { flowVersionRepo } from './flow-version.service'
 import { flowMigrations } from './migrations'
 
 export const flowVersionMigrationService = (log: FastifyBaseLogger) => ({
-    async migrate(flowVersion: FlowVersion): Promise<FlowVersion> {
+    async migrate(flowVersion: FlowVersion, projectId?: ProjectId): Promise<FlowVersion> {
         // Early exit if already at latest version
         if (flowVersion.schemaVersion === LATEST_FLOW_SCHEMA_VERSION) {
             return flowVersion
@@ -23,7 +24,7 @@ export const flowVersionMigrationService = (log: FastifyBaseLogger) => ({
             backupFiles[flowVersion.schemaVersion] = await flowVersionBackupService(log).store(flowVersion)
         }
 
-        const migratedFlowVersion: FlowVersion = await flowMigrations.apply(flowVersion)
+        const migratedFlowVersion: FlowVersion = await flowMigrations.apply(flowVersion, { log, projectId })
 
         await flowVersionRepo().update(flowVersion.id, {
             schemaVersion: migratedFlowVersion.schemaVersion,

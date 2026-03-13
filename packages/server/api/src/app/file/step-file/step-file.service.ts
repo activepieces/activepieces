@@ -43,7 +43,7 @@ async function constructUploadUrl(log: FastifyBaseLogger, s3Key: string | undefi
     if (isNotS3 || dataSent) {
         return undefined
     }
-    return s3Helper(log).putS3SignedUrl(s3Key, contentLength)
+    return s3Helper(log).putS3SignedUrl({ s3Key, contentLength })
 }
 
 async function constructDownloadUrl(platformId: string, file: File): Promise<string> {
