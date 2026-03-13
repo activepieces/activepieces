@@ -18,7 +18,7 @@ export const baserowCommon = {
   tableId: (required = true) =>
     Property.Dropdown({
       displayName: 'Table',
-      description: 'Select the table to watch.',
+      description: 'Select the table.',
       required,
       auth: baserowAuth,
       refreshers: ['auth'],
@@ -48,7 +48,7 @@ export const baserowCommon = {
           return { disabled: true, placeholder: 'Select a table first.', options: [] };
         }
         const client = makeClient(auth.props);
-        const response = await client.listRows(table_id as unknown as number) as { results: Record<string, unknown>[] };
+        const response = await client.listRows(table_id as unknown as number, undefined, 200) as { results: Record<string, unknown>[] };
         return {
           disabled: false,
           options: response.results.map((row) => {
