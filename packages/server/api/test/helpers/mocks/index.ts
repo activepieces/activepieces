@@ -15,9 +15,9 @@ import {
     assertNotNullOrUndefined,
     Cell,
     ColorName,
-
     CustomDomain,
     CustomDomainStatus,
+    EventDestinationScope,
     Field,
     FieldType,
     File,
@@ -33,6 +33,7 @@ import {
     FlowTriggerType,
     FlowVersion,
     FlowVersionState,
+    Folder,
     GitBranchType,
     GitRepo,
     InvitationStatus,
@@ -251,6 +252,7 @@ export const createMockPlatformPlan = (platformPlan?: Partial<PlatformPlan>): Pl
         stripeSubscriptionStartDate: apDayjs().startOf('month').unix(),
         plan: platformPlan?.plan,
         secretManagersEnabled: platformPlan?.secretManagersEnabled ?? false,
+        scimEnabled: platformPlan?.scimEnabled ?? false,
     }
 }
 export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
@@ -513,6 +515,7 @@ export const createMockFlowVersion = (
         settings: {},
         valid: false,
         displayName: 'Select Trigger',
+        lastUpdatedDate: dayjs().toISOString(),
     } as const
 
     return {
@@ -552,10 +555,11 @@ export const createMockConnection = (connection: Partial<AppConnection>, ownerId
         externalId: connection?.externalId ?? apId(),
         owner: null,
         pieceVersion: connection?.pieceVersion ?? '0.0.0',
+        preSelectForNewProjects: connection?.preSelectForNewProjects ?? false,
     }
 }
 
-const createMockTable = ({ projectId }: { projectId: string }): Table => {
+export const createMockTable = ({ projectId }: { projectId: string }): Table => {
     return {
         id: apId(),
         created: faker.date.recent().toISOString(),
@@ -566,7 +570,7 @@ const createMockTable = ({ projectId }: { projectId: string }): Table => {
     }
 }
 
-const createMockField = ({ tableId, projectId }: { tableId: string, projectId: string }): Field => {
+export const createMockField = ({ tableId, projectId }: { tableId: string, projectId: string }): Field => {
     return {
         id: apId(),
         created: faker.date.recent().toISOString(),
@@ -581,7 +585,7 @@ const createMockField = ({ tableId, projectId }: { tableId: string, projectId: s
         type: FieldType.STATIC_DROPDOWN,
     }
 }
-const createMockRecord = ({ tableId, projectId }: { tableId: string, projectId: string }): Record => {
+export const createMockRecord = ({ tableId, projectId }: { tableId: string, projectId: string }): Record => {
     return {
         id: apId(),
         created: faker.date.recent().toISOString(),
@@ -591,7 +595,7 @@ const createMockRecord = ({ tableId, projectId }: { tableId: string, projectId: 
     }
 }
 
-const createMockCell = ({ recordId, fieldId, projectId }: { recordId: string, fieldId: string, projectId: string }): Cell => {
+export const createMockCell = ({ recordId, fieldId, projectId }: { recordId: string, fieldId: string, projectId: string }): Cell => {
     return {
         id: apId(),
         created: faker.date.recent().toISOString(),
@@ -798,6 +802,45 @@ export const mockPieceMetadata = async (mockLog: FastifyBaseLogger): Promise<Pie
     await databaseConnection().getRepository('piece_metadata').save([mockPieceMetadata])
     pieceMetadataService(mockLog).getOrThrow = vi.fn().mockResolvedValue(mockPieceMetadata)
     return mockPieceMetadata
+}
+
+export const createMockFolder = (folder?: Partial<Folder>): Folder => {
+    return {
+        id: folder?.id ?? apId(),
+        created: folder?.created ?? faker.date.recent().toISOString(),
+        updated: folder?.updated ?? faker.date.recent().toISOString(),
+        projectId: folder?.projectId ?? apId(),
+        displayName: folder?.displayName ?? faker.lorem.word(),
+        displayOrder: folder?.displayOrder ?? faker.number.int({ min: 0, max: 100 }),
+    }
+}
+
+export const createMockEventDestination = (eventDestination?: Partial<{
+    id: string
+    created: string
+    updated: string
+    platformId: string
+    events: ApplicationEventName[]
+    url: string
+    scope: EventDestinationScope
+}>): {
+    id: string
+    created: string
+    updated: string
+    platformId: string
+    events: ApplicationEventName[]
+    url: string
+    scope: EventDestinationScope
+} => {
+    return {
+        id: eventDestination?.id ?? apId(),
+        created: eventDestination?.created ?? faker.date.recent().toISOString(),
+        updated: eventDestination?.updated ?? faker.date.recent().toISOString(),
+        platformId: eventDestination?.platformId ?? apId(),
+        events: eventDestination?.events ?? [faker.helpers.enumValue(ApplicationEventName)],
+        url: eventDestination?.url ?? faker.internet.url(),
+        scope: eventDestination?.scope ?? EventDestinationScope.PLATFORM,
+    }
 }
 
 type CreateMockPlatformWithOwnerParams = {

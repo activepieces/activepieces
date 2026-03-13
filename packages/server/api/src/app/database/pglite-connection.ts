@@ -64,10 +64,10 @@ export const createPGliteDataSource = (): DataSource => {
                 },
             },
         }).driver,
-        migrationsRun: true,
+        migrationsRun: env !== ApEnvironment.TESTING,
         migrationsTransactionMode: 'each',
-        migrations: getMigrations(),
-        synchronize: false,
+        migrations: env !== ApEnvironment.TESTING ? getMigrations() : [],
+        synchronize: env === ApEnvironment.TESTING,
         ...commonProperties,
     })
 }

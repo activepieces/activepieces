@@ -1,4 +1,4 @@
-import { AgentTool, isNil } from '@activepieces/shared';
+import { AgentTool, isNil, mcpToolNameUtils } from '@activepieces/shared';
 import Fuse from 'fuse.js';
 import { t } from 'i18next';
 import { Search } from 'lucide-react';
@@ -8,7 +8,6 @@ import { useDebounce } from 'use-debounce';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
-import { sanitizeToolName } from '../../componenets/piece-tool';
 import { usePieceToolsDialogStore } from '../../stores/pieces-tools';
 
 interface PieceActionsDialogProps {
@@ -69,7 +68,10 @@ export const PieceActionsList: React.FC<PieceActionsDialogProps> = ({
       <div className="flex p-4 flex-col gap-2">
         {filteredActions.map((action) => {
           const isDisabled = selectedActionNames.has(
-            sanitizeToolName(`${selectedPiece.pieceName}-${action.name}`),
+            mcpToolNameUtils.createPieceToolName(
+              selectedPiece.pieceName,
+              action.name,
+            ),
           );
 
           return (

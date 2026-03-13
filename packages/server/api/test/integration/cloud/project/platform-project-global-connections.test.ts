@@ -1,54 +1,42 @@
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 import {
     apId,
     AppConnectionScope,
     AppConnectionType,
     PackageType,
-    PrincipalType,
     UpsertGlobalConnectionRequestBody,
 } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { initializeDatabase } from '../../../../src/app/database'
-import { databaseConnection } from '../../../../src/app/database/database-connection'
-import { setupServer } from '../../../../src/app/server'
-import { generateMockToken } from '../../../helpers/auth'
+import { db } from '../../../helpers/db'
 import {
     createMockPieceMetadata,
-    mockAndSaveBasicSetup,
 } from '../../../helpers/mocks'
+import { createTestContext } from '../../../helpers/test-context'
 
 let app: FastifyInstance | null = null
 
 beforeAll(async () => {
-    await initializeDatabase({ runMigrations: false })
-    app = await setupServer()
+    app = await setupTestEnvironment()
 })
 
 afterAll(async () => {
-    await databaseConnection().destroy()
-    await app?.close()
+    await teardownTestEnvironment()
 })
-
 const setupPlatformWithGlobalConnections = async () => {
-    const setup = await mockAndSaveBasicSetup({
+    const ctx = await createTestContext(app!, {
         plan: {
             globalConnectionsEnabled: true,
         },
     })
 
     const mockPieceMetadata = createMockPieceMetadata({
-        platformId: setup.mockPlatform.id,
+        platformId: ctx.platform.id,
         packageType: PackageType.REGISTRY,
     })
-    await databaseConnection().getRepository('piece_metadata').save([mockPieceMetadata])
+    await db.save('piece_metadata', mockPieceMetadata)
 
-    const mockToken = await generateMockToken({
-        id: setup.mockOwner.id,
-        type: PrincipalType.USER,
-        platform: { id: setup.mockPlatform.id },
-    })
-
-    return { ...setup, mockPieceMetadata, mockToken }
+    return { ctx, mockPieceMetadata }
 }
 
 async function createGlobalConnection(
@@ -99,28 +87,28 @@ describe('Platform Project Global Connections', () => {
     describe('Create Project with globalConnectionExternalIds', () => {
 
         it('assigns selected global connections to the new project', async () => {
-            const { mockToken, mockPieceMetadata, mockProject } = await setupPlatformWithGlobalConnections()
+            const { ctx, mockPieceMetadata } = await setupPlatformWithGlobalConnections()
 
-            const conn1 = await createGlobalConnection(mockToken, {
+            const conn1 = await createGlobalConnection(ctx.token, {
                 pieceName: mockPieceMetadata.name,
                 pieceVersion: mockPieceMetadata.version,
-                projectIds: [mockProject.id],
+                projectIds: [ctx.project.id],
             })
-            const conn2 = await createGlobalConnection(mockToken, {
+            const conn2 = await createGlobalConnection(ctx.token, {
                 pieceName: mockPieceMetadata.name,
                 pieceVersion: mockPieceMetadata.version,
-                projectIds: [mockProject.id],
+                projectIds: [ctx.project.id],
             })
-            const connNotSelected = await createGlobalConnection(mockToken, {
+            const connNotSelected = await createGlobalConnection(ctx.token, {
                 pieceName: mockPieceMetadata.name,
                 pieceVersion: mockPieceMetadata.version,
-                projectIds: [mockProject.id],
+                projectIds: [ctx.project.id],
             })
 
             const createResponse = await app?.inject({
                 method: 'POST',
                 url: '/v1/projects',
-                headers: { authorization: `Bearer ${mockToken}` },
+                headers: { authorization: `Bearer ${ctx.token}` },
                 body: {
                     displayName: 'Project With Connections',
                     globalConnectionExternalIds: [conn1.externalId, conn2.externalId],
@@ -130,7 +118,7 @@ describe('Platform Project Global Connections', () => {
             expect(createResponse?.statusCode).toBe(StatusCodes.CREATED)
             const newProject = createResponse!.json()
 
-            const { data: connections } = await listGlobalConnections(mockToken)
+            const { data: connections } = await listGlobalConnections(ctx.token)
 
             const updatedConn1 = connections.find((c) => c.id === conn1.id)
             const updatedConn2 = connections.find((c) => c.id === conn2.id)
@@ -142,18 +130,18 @@ describe('Platform Project Global Connections', () => {
         })
 
         it('creates project without assigning connections when none specified', async () => {
-            const { mockToken, mockPieceMetadata, mockProject } = await setupPlatformWithGlobalConnections()
+            const { ctx, mockPieceMetadata } = await setupPlatformWithGlobalConnections()
 
-            const conn = await createGlobalConnection(mockToken, {
+            const conn = await createGlobalConnection(ctx.token, {
                 pieceName: mockPieceMetadata.name,
                 pieceVersion: mockPieceMetadata.version,
-                projectIds: [mockProject.id],
+                projectIds: [ctx.project.id],
             })
 
             const createResponse = await app?.inject({
                 method: 'POST',
                 url: '/v1/projects',
-                headers: { authorization: `Bearer ${mockToken}` },
+                headers: { authorization: `Bearer ${ctx.token}` },
                 body: {
                     displayName: 'Project Without Connections',
                 },
@@ -162,33 +150,22 @@ describe('Platform Project Global Connections', () => {
             expect(createResponse?.statusCode).toBe(StatusCodes.CREATED)
             const newProject = createResponse!.json()
 
-            const { data: connections } = await listGlobalConnections(mockToken)
+            const { data: connections } = await listGlobalConnections(ctx.token)
             const updatedConn = connections.find((c) => c.id === conn.id)
 
             expect(updatedConn?.projectIds).not.toContain(newProject.id)
         })
 
         it('ignores globalConnectionExternalIds when feature is disabled', async () => {
-            const setup = await mockAndSaveBasicSetup({
+            const ctx = await createTestContext(app!, {
                 plan: {
                     globalConnectionsEnabled: false,
                 },
             })
 
-            const mockToken = await generateMockToken({
-                id: setup.mockOwner.id,
-                type: PrincipalType.USER,
-                platform: { id: setup.mockPlatform.id },
-            })
-
-            const createResponse = await app?.inject({
-                method: 'POST',
-                url: '/v1/projects',
-                headers: { authorization: `Bearer ${mockToken}` },
-                body: {
-                    displayName: 'Project Feature Disabled',
-                    globalConnectionExternalIds: ['non-existent-external-id'],
-                },
+            const createResponse = await ctx.post('/v1/projects', {
+                displayName: 'Project Feature Disabled',
+                globalConnectionExternalIds: ['non-existent-external-id'],
             })
 
             expect(createResponse?.statusCode).toBe(StatusCodes.CREATED)
@@ -198,23 +175,23 @@ describe('Platform Project Global Connections', () => {
     describe('Update Project globalConnectionExternalIds', () => {
 
         it('adds global connections to a project', async () => {
-            const { mockToken, mockPieceMetadata, mockProject } = await setupPlatformWithGlobalConnections()
+            const { ctx, mockPieceMetadata } = await setupPlatformWithGlobalConnections()
 
-            const conn1 = await createGlobalConnection(mockToken, {
+            const conn1 = await createGlobalConnection(ctx.token, {
                 pieceName: mockPieceMetadata.name,
                 pieceVersion: mockPieceMetadata.version,
-                projectIds: [mockProject.id],
+                projectIds: [ctx.project.id],
             })
-            const conn2 = await createGlobalConnection(mockToken, {
+            const conn2 = await createGlobalConnection(ctx.token, {
                 pieceName: mockPieceMetadata.name,
                 pieceVersion: mockPieceMetadata.version,
-                projectIds: [mockProject.id],
+                projectIds: [ctx.project.id],
             })
 
             const newProjectRes = await app?.inject({
                 method: 'POST',
                 url: '/v1/projects',
-                headers: { authorization: `Bearer ${mockToken}` },
+                headers: { authorization: `Bearer ${ctx.token}` },
                 body: { displayName: 'Target Project' },
             })
             const newProject = newProjectRes!.json()
@@ -222,7 +199,7 @@ describe('Platform Project Global Connections', () => {
             const updateResponse = await app?.inject({
                 method: 'POST',
                 url: `/v1/projects/${newProject.id}`,
-                headers: { authorization: `Bearer ${mockToken}` },
+                headers: { authorization: `Bearer ${ctx.token}` },
                 body: {
                     globalConnectionExternalIds: [conn1.externalId, conn2.externalId],
                 },
@@ -230,7 +207,7 @@ describe('Platform Project Global Connections', () => {
 
             expect(updateResponse?.statusCode).toBe(StatusCodes.OK)
 
-            const { data: connections } = await listGlobalConnections(mockToken)
+            const { data: connections } = await listGlobalConnections(ctx.token)
             const updatedConn1 = connections.find((c) => c.id === conn1.id)
             const updatedConn2 = connections.find((c) => c.id === conn2.id)
 
@@ -239,18 +216,18 @@ describe('Platform Project Global Connections', () => {
         })
 
         it('removes global connections from a project', async () => {
-            const { mockToken, mockPieceMetadata, mockProject } = await setupPlatformWithGlobalConnections()
+            const { ctx, mockPieceMetadata } = await setupPlatformWithGlobalConnections()
 
-            const conn = await createGlobalConnection(mockToken, {
+            const conn = await createGlobalConnection(ctx.token, {
                 pieceName: mockPieceMetadata.name,
                 pieceVersion: mockPieceMetadata.version,
-                projectIds: [mockProject.id],
+                projectIds: [ctx.project.id],
             })
 
             const newProjectRes = await app?.inject({
                 method: 'POST',
                 url: '/v1/projects',
-                headers: { authorization: `Bearer ${mockToken}` },
+                headers: { authorization: `Bearer ${ctx.token}` },
                 body: {
                     displayName: 'Remove Test',
                     globalConnectionExternalIds: [conn.externalId],
@@ -259,7 +236,7 @@ describe('Platform Project Global Connections', () => {
             const newProject = newProjectRes!.json()
 
             // Verify the connection was assigned
-            let connectionsResult = await listGlobalConnections(mockToken)
+            let connectionsResult = await listGlobalConnections(ctx.token)
             let updatedConn = connectionsResult.data.find((c) => c.id === conn.id)
             expect(updatedConn?.projectIds).toContain(newProject.id)
 
@@ -267,7 +244,7 @@ describe('Platform Project Global Connections', () => {
             const updateResponse = await app?.inject({
                 method: 'POST',
                 url: `/v1/projects/${newProject.id}`,
-                headers: { authorization: `Bearer ${mockToken}` },
+                headers: { authorization: `Bearer ${ctx.token}` },
                 body: {
                     globalConnectionExternalIds: [],
                 },
@@ -275,30 +252,30 @@ describe('Platform Project Global Connections', () => {
 
             expect(updateResponse?.statusCode).toBe(StatusCodes.OK)
 
-            connectionsResult = await listGlobalConnections(mockToken)
+            connectionsResult = await listGlobalConnections(ctx.token)
             updatedConn = connectionsResult.data.find((c) => c.id === conn.id)
             expect(updatedConn?.projectIds).not.toContain(newProject.id)
         })
 
         it('swaps global connections: adds new ones and removes old ones', async () => {
-            const { mockToken, mockPieceMetadata, mockProject } = await setupPlatformWithGlobalConnections()
+            const { ctx, mockPieceMetadata } = await setupPlatformWithGlobalConnections()
 
-            const connA = await createGlobalConnection(mockToken, {
+            const connA = await createGlobalConnection(ctx.token, {
                 pieceName: mockPieceMetadata.name,
                 pieceVersion: mockPieceMetadata.version,
-                projectIds: [mockProject.id],
+                projectIds: [ctx.project.id],
                 displayName: 'Connection A',
             })
-            const connB = await createGlobalConnection(mockToken, {
+            const connB = await createGlobalConnection(ctx.token, {
                 pieceName: mockPieceMetadata.name,
                 pieceVersion: mockPieceMetadata.version,
-                projectIds: [mockProject.id],
+                projectIds: [ctx.project.id],
                 displayName: 'Connection B',
             })
-            const connC = await createGlobalConnection(mockToken, {
+            const connC = await createGlobalConnection(ctx.token, {
                 pieceName: mockPieceMetadata.name,
                 pieceVersion: mockPieceMetadata.version,
-                projectIds: [mockProject.id],
+                projectIds: [ctx.project.id],
                 displayName: 'Connection C',
             })
 
@@ -306,7 +283,7 @@ describe('Platform Project Global Connections', () => {
             const newProjectRes = await app?.inject({
                 method: 'POST',
                 url: '/v1/projects',
-                headers: { authorization: `Bearer ${mockToken}` },
+                headers: { authorization: `Bearer ${ctx.token}` },
                 body: {
                     displayName: 'Swap Test',
                     globalConnectionExternalIds: [connA.externalId, connB.externalId],
@@ -318,7 +295,7 @@ describe('Platform Project Global Connections', () => {
             const updateResponse = await app?.inject({
                 method: 'POST',
                 url: `/v1/projects/${newProject.id}`,
-                headers: { authorization: `Bearer ${mockToken}` },
+                headers: { authorization: `Bearer ${ctx.token}` },
                 body: {
                     globalConnectionExternalIds: [connB.externalId, connC.externalId],
                 },
@@ -326,7 +303,7 @@ describe('Platform Project Global Connections', () => {
 
             expect(updateResponse?.statusCode).toBe(StatusCodes.OK)
 
-            const { data: connections } = await listGlobalConnections(mockToken)
+            const { data: connections } = await listGlobalConnections(ctx.token)
             const finalA = connections.find((c) => c.id === connA.id)
             const finalB = connections.find((c) => c.id === connB.id)
             const finalC = connections.find((c) => c.id === connC.id)
@@ -337,18 +314,18 @@ describe('Platform Project Global Connections', () => {
         })
 
         it('does not duplicate projectId when assigning same connection twice', async () => {
-            const { mockToken, mockPieceMetadata, mockProject } = await setupPlatformWithGlobalConnections()
-            
-            const conn = await createGlobalConnection(mockToken, {
+            const { ctx, mockPieceMetadata } = await setupPlatformWithGlobalConnections()
+
+            const conn = await createGlobalConnection(ctx.token, {
                 pieceName: mockPieceMetadata.name,
                 pieceVersion: mockPieceMetadata.version,
-                projectIds: [mockProject.id],
+                projectIds: [ctx.project.id],
             })
 
             const newProjectRes = await app?.inject({
                 method: 'POST',
                 url: '/v1/projects',
-                headers: { authorization: `Bearer ${mockToken}` },
+                headers: { authorization: `Bearer ${ctx.token}` },
                 body: {
                     displayName: 'Idempotency Test',
                     globalConnectionExternalIds: [conn.externalId],
@@ -360,13 +337,13 @@ describe('Platform Project Global Connections', () => {
             await app?.inject({
                 method: 'POST',
                 url: `/v1/projects/${newProject.id}`,
-                headers: { authorization: `Bearer ${mockToken}` },
+                headers: { authorization: `Bearer ${ctx.token}` },
                 body: {
                     globalConnectionExternalIds: [conn.externalId],
                 },
             })
 
-            const { data: connections } = await listGlobalConnections(mockToken)
+            const { data: connections } = await listGlobalConnections(ctx.token)
             const updatedConn = connections.find((c) => c.id === conn.id)
 
             const occurrences = updatedConn?.projectIds.filter((id: string) => id === newProject.id).length
@@ -378,17 +355,17 @@ describe('Platform Project Global Connections', () => {
             const platform2 = await setupPlatformWithGlobalConnections()
 
             // Create a connection on platform2 with the same externalId pattern
-            const connOnPlatform2 = await createGlobalConnection(platform2.mockToken, {
+            const connOnPlatform2 = await createGlobalConnection(platform2.ctx.token, {
                 pieceName: platform2.mockPieceMetadata.name,
                 pieceVersion: platform2.mockPieceMetadata.version,
-                projectIds: [platform2.mockProject.id],
+                projectIds: [platform2.ctx.project.id],
             })
 
             // Create a project on platform1 and try to assign platform2's connection externalId
             const newProjectRes = await app?.inject({
                 method: 'POST',
                 url: '/v1/projects',
-                headers: { authorization: `Bearer ${platform1.mockToken}` },
+                headers: { authorization: `Bearer ${platform1.ctx.token}` },
                 body: {
                     displayName: 'Cross Platform Test',
                     globalConnectionExternalIds: [connOnPlatform2.externalId],
@@ -397,24 +374,24 @@ describe('Platform Project Global Connections', () => {
             const newProject = newProjectRes!.json()
 
             // The platform2 connection should NOT have the platform1 project
-            const { data: p2Connections } = await listGlobalConnections(platform2.mockToken)
+            const { data: p2Connections } = await listGlobalConnections(platform2.ctx.token)
             const p2Conn = p2Connections.find((c) => c.id === connOnPlatform2.id)
             expect(p2Conn?.projectIds).not.toContain(newProject.id)
         })
 
         it('preserves existing project fields when updating connections', async () => {
-            const { mockToken, mockPieceMetadata, mockProject } = await setupPlatformWithGlobalConnections()
+            const { ctx, mockPieceMetadata } = await setupPlatformWithGlobalConnections()
 
-            const conn = await createGlobalConnection(mockToken, {
+            const conn = await createGlobalConnection(ctx.token, {
                 pieceName: mockPieceMetadata.name,
                 pieceVersion: mockPieceMetadata.version,
-                projectIds: [mockProject.id],
+                projectIds: [ctx.project.id],
             })
 
             const newProjectRes = await app?.inject({
                 method: 'POST',
                 url: '/v1/projects',
-                headers: { authorization: `Bearer ${mockToken}` },
+                headers: { authorization: `Bearer ${ctx.token}` },
                 body: { displayName: 'Original Name' },
             })
             const newProject = newProjectRes!.json()
@@ -422,7 +399,7 @@ describe('Platform Project Global Connections', () => {
             const updateResponse = await app?.inject({
                 method: 'POST',
                 url: `/v1/projects/${newProject.id}`,
-                headers: { authorization: `Bearer ${mockToken}` },
+                headers: { authorization: `Bearer ${ctx.token}` },
                 body: {
                     displayName: 'Updated Name',
                     globalConnectionExternalIds: [conn.externalId],
@@ -433,7 +410,7 @@ describe('Platform Project Global Connections', () => {
             const updatedProject = updateResponse!.json()
             expect(updatedProject.displayName).toBe('Updated Name')
 
-            const { data: connections } = await listGlobalConnections(mockToken)
+            const { data: connections } = await listGlobalConnections(ctx.token)
             const updatedConn = connections.find((c) => c.id === conn.id)
             expect(updatedConn?.projectIds).toContain(newProject.id)
         })

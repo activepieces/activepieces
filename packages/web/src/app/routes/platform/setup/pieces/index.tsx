@@ -5,16 +5,8 @@ import {
 import { isNil, OAuth2GrantType, PieceScope } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import {
-  CheckIcon,
-  Package,
-  Tag,
-  Hash,
-  GitBranch,
-  Tags,
-  Puzzle,
-} from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { CheckIcon, Package, Hash, GitBranch, Puzzle } from 'lucide-react';
+import { useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
@@ -23,14 +15,12 @@ import { ApplyTags } from '@/app/routes/platform/setup/pieces/apply-tags';
 import { PieceActions } from '@/app/routes/platform/setup/pieces/piece-actions';
 import { SyncPiecesButton } from '@/app/routes/platform/setup/pieces/sync-pieces';
 import { ConfigurePieceOAuth2Dialog } from '@/app/routes/platform/setup/pieces/update-oauth2-dialog';
+import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
+import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
+import { LockedAlert } from '@/components/custom/locked-alert';
 import { Badge } from '@/components/ui/badge';
-import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
-import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
-import { LockedAlert } from '@/components/ui/locked-alert';
-import { oauthAppsQueries } from '@/features/connections/lib/oauth-apps-hooks';
-import { InstallPieceDialog } from '@/features/pieces/components/install-piece-dialog';
-import { PieceIcon } from '@/features/pieces/components/piece-icon';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
+import { oauthAppsQueries } from '@/features/connections';
+import { InstallPieceDialog, PieceIcon, piecesHooks } from '@/features/pieces';
 import { platformHooks } from '@/hooks/platform-hooks';
 
 const PlatformPiecesPage = () => {
@@ -55,47 +45,48 @@ const PlatformPiecesPage = () => {
     useMemo(
       () => [
         {
-          accessorKey: 'name',
-          size: 80,
+          accessorKey: 'displayName',
+          size: 300,
           header: ({ column }) => (
             <DataTableColumnHeader
               column={column}
-              title={t('Piece')}
+              title={t('Name')}
               icon={Puzzle}
             />
           ),
           cell: ({ row }) => {
             return (
-              <div className="text-left">
+              <div className="flex items-center gap-2">
                 <PieceIcon
-                  circle={true}
-                  size={'md'}
+                  size={'sm'}
                   border={true}
                   displayName={row.original.displayName}
                   logoUrl={row.original.logoUrl}
                   showTooltip={false}
                 />
+                <div className="flex flex-col gap-0.5">
+                  <span>{row.original.displayName}</span>
+                  {row.original.tags && row.original.tags.length > 0 && (
+                    <div className="flex gap-1">
+                      {row.original.tags.map((tag) => (
+                        <Badge
+                          key={tag}
+                          variant="outline"
+                          className="text-xs py-0 px-1.5"
+                        >
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             );
           },
         },
         {
-          accessorKey: 'displayName',
-          size: 180,
-          header: ({ column }) => (
-            <DataTableColumnHeader
-              column={column}
-              title={t('Display Name')}
-              icon={Tag}
-            />
-          ),
-          cell: ({ row }) => {
-            return <div className="text-left">{row.original.displayName}</div>;
-          },
-        },
-        {
           accessorKey: 'packageName',
-          size: 200,
+          size: 250,
           header: ({ column }) => (
             <DataTableColumnHeader
               column={column}
@@ -109,7 +100,7 @@ const PlatformPiecesPage = () => {
         },
         {
           accessorKey: 'version',
-          size: 100,
+          size: 80,
           header: ({ column }) => (
             <DataTableColumnHeader
               column={column}
@@ -122,29 +113,8 @@ const PlatformPiecesPage = () => {
           },
         },
         {
-          accessorKey: 'tags',
-          size: 150,
-          header: ({ column }) => (
-            <DataTableColumnHeader
-              column={column}
-              title={t('Tags')}
-              icon={Tags}
-            />
-          ),
-          cell: ({ row }) => {
-            return (
-              <div className="text-left">
-                <div className="flex gap-2">
-                  {row.original.tags?.map((tag) => (
-                    <Badge key={tag}>{tag}</Badge>
-                  ))}
-                </div>
-              </div>
-            );
-          },
-        },
-        {
           id: 'actions',
+          size: 80,
           cell: ({ row }) => {
             return (
               <div className="flex justify-end">
@@ -170,31 +140,13 @@ const PlatformPiecesPage = () => {
       [],
     );
 
-  const [selectedPieces, setSelectedPieces] = useState<
-    PieceMetadataModelSummary[]
-  >([]);
-
   return (
     <>
       <DashboardPageHeader
         description={t('Manage the pieces that are available to your users')}
         title={t('Pieces')}
-      >
-        <div className="flex gap-3">
-          <ApplyTags
-            selectedPieces={selectedPieces}
-            onApplyTags={() => {
-              refetchPieces();
-            }}
-          ></ApplyTags>
-          <SyncPiecesButton />
-          <InstallPieceDialog
-            onInstallPiece={() => refetchPieces()}
-            scope={PieceScope.PLATFORM}
-          />
-        </div>
-      </DashboardPageHeader>
-      <div className="mx-auto w-full flex-col">
+      />
+      <div className="mx-auto w-full flex flex-col flex-1 min-h-0">
         {!isEnabled && (
           <LockedAlert
             title={t('Control Pieces')}
@@ -204,7 +156,7 @@ const PlatformPiecesPage = () => {
             button={
               <RequestTrial
                 featureKey="ENTERPRISE_PIECES"
-                buttonVariant="outline-primary"
+                buttonVariant="basic"
               />
             }
           />
@@ -230,8 +182,27 @@ const PlatformPiecesPage = () => {
             previous: null,
           }}
           isLoading={isLoading}
+          bulkActions={[
+            {
+              render: (selectedRows) => (
+                <ApplyTags
+                  selectedPieces={selectedRows}
+                  onApplyTags={() => refetchPieces()}
+                />
+              ),
+            },
+          ]}
+          toolbarButtons={[
+            <SyncPiecesButton key="sync" />,
+            <InstallPieceDialog
+              key="install"
+              onInstallPiece={() => refetchPieces()}
+              scope={PieceScope.PLATFORM}
+            />,
+          ]}
           selectColumn={true}
-          onSelectedRowsChange={setSelectedPieces}
+          virtualizeRows={true}
+          hidePagination={true}
         />
       </div>
     </>

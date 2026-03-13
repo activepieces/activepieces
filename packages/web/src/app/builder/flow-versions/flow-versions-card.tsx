@@ -3,14 +3,15 @@ import {
   FlowVersionState,
   Permission,
 } from '@activepieces/shared';
-import { DotsVerticalIcon } from '@radix-ui/react-icons';
 import { t } from 'i18next';
-import { Eye, EyeIcon, Pencil } from 'lucide-react';
+import { EllipsisVertical, Eye, EyeIcon, Pencil } from 'lucide-react';
 import React, { useState } from 'react';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { CardListItem } from '@/components/custom/card-list';
-import { useEmbedding } from '@/components/embed-provider';
+import { FormattedDate } from '@/components/custom/formatted-date';
+import { UserAvatar } from '@/components/custom/user-avatar';
+import { useEmbedding } from '@/components/providers/embed-provider';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -18,15 +19,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { FormattedDate } from '@/components/ui/formatted-date';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { UserAvatar } from '@/components/ui/user-avatar';
-import { FlowVersionStateDot } from '@/features/flows/components/flow-version-state-dot';
-import { flowHooks } from '@/features/flows/lib/flow-hooks';
+import { FlowVersionStateDot, flowHooks } from '@/features/flows';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 
 import { OverwriteDraftDialog } from './overwrite-draft-dialog';
@@ -106,7 +104,7 @@ const FlowVersionDetailsCard = React.memo(
           >
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" disabled={isPending} size={'icon'}>
-                <DotsVerticalIcon />
+                <EllipsisVertical />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-40">

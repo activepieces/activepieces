@@ -17,21 +17,18 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
-import { PiecesSearchInput } from '@/features/pieces/components/piece-selector-search';
-import { PieceSelectorTabs } from '@/features/pieces/components/piece-selector-tabs';
 import {
+  PiecesSearchInput,
+  PieceSelectorTabs,
   PieceSelectorTabsProvider,
   PieceSelectorTabType,
-} from '@/features/pieces/lib/piece-selector-tabs-provider';
-import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
-import { platformHooks } from '@/hooks/platform-hooks';
-import { useIsMobile } from '@/hooks/use-mobile';
-import { PieceSelectorOperation } from '@/lib/types';
-
-import {
+  PieceSelectorOperation,
+  pieceSelectorUtils,
   PieceSearchProvider,
   usePieceSearchContext,
-} from '../../../features/pieces/lib/piece-search-context';
+} from '@/features/pieces';
+import { platformHooks } from '@/hooks/platform-hooks';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 import { AITabContent } from './ai-tab-content';
 import { ApprovalsTabContent } from './approvals-tab-content';

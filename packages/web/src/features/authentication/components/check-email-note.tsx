@@ -1,14 +1,12 @@
 import { CreateOtpRequestBody, OtpType } from '@activepieces/shared';
-import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { MailCheck } from 'lucide-react';
 import { toast } from 'sonner';
 
-import { authenticationApi } from '@/lib/authentication-api';
+import { authMutations } from '../hooks/auth-hooks';
 
 const CheckEmailNote = ({ email, type }: CreateOtpRequestBody) => {
-  const { mutate: resendVerification } = useMutation({
-    mutationFn: authenticationApi.sendOtpEmail,
+  const { mutate: resendVerification } = authMutations.useSendOtpEmail({
     onSuccess: () => {
       toast.success(
         type === OtpType.EMAIL_VERIFICATION

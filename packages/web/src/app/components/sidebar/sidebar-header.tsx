@@ -3,7 +3,7 @@ import { t } from 'i18next';
 import { ChevronsUpDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-import { useEmbedding } from '@/components/embed-provider';
+import { useEmbedding } from '@/components/providers/embed-provider';
 import { Button } from '@/components/ui/button';
 import {
   SidebarHeader,
@@ -12,11 +12,11 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar-shadcn';
-import { PlatformSwitcher } from '@/features/projects/components/platform-switcher';
+import { PlatformSwitcher } from '@/features/projects';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { determineDefaultRoute } from '@/lib/utils';
+import { determineDefaultRoute } from '@/lib/route-utils';
 
 function SidebarLogoCollapsed({ linkTo }: { linkTo?: string }) {
   const branding = flagsHooks.useWebsiteBranding();
@@ -45,7 +45,7 @@ function SidebarLogoFull({ linkTo }: { linkTo?: string }) {
   return (
     <SidebarMenuButton
       onClick={() => navigate(linkTo || '/')}
-      className="h-10! group-data-[collapsible=icon]:h-10! justify-center items-center"
+      className="h-10! group-data-[collapsible=icon]:h-10! justify-start items-center"
     >
       <img
         src={branding.logos.fullLogoUrl}
@@ -65,19 +65,19 @@ export const AppSidebarHeader = () => {
   const { platform: currentPlatform } = platformHooks.useCurrentPlatform();
   const { checkAccess } = useAuthorization();
   const defaultRoute = determineDefaultRoute(checkAccess);
+  const branding = flagsHooks.useWebsiteBranding();
 
   if (!showSwitcher) {
     return (
-      <SidebarHeader>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            {state === 'collapsed' ? (
-              <SidebarLogoCollapsed />
-            ) : (
-              <SidebarLogoFull />
-            )}
-          </SidebarMenuItem>
-        </SidebarMenu>
+      <SidebarHeader className="pb-0">
+        <div className="w-full flex items-center gap-2">
+          <SidebarLogoCollapsed linkTo={defaultRoute} />
+          {state !== 'collapsed' && (
+            <h1 className="truncate text-sm font-medium">
+              {branding.websiteName}
+            </h1>
+          )}
+        </div>
       </SidebarHeader>
     );
   }

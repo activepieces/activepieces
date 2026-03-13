@@ -15,16 +15,16 @@ import { ErrorBoundary } from 'react-error-boundary';
 import { ControllerRenderProps, useFormContext } from 'react-hook-form';
 import { toast } from 'sonner';
 
+import { ReadMoreDescription } from '@/components/custom/read-more-description';
 import { Button } from '@/components/ui/button';
 import { FormItem, FormLabel } from '@/components/ui/form';
-import { ReadMoreDescription } from '@/components/ui/read-more-description';
 import { Toggle } from '@/components/ui/toggle';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { formUtils } from '@/features/pieces/lib/form-utils';
+import { formUtils } from '@/features/pieces';
 import { cn } from '@/lib/utils';
 
 import { ArrayPiecePropertyInInlineItemMode } from './array-property-in-inline-item-mode';
@@ -122,7 +122,7 @@ function AutoFormFielWrapperErrorBoundary({
     <ErrorBoundary
       fallbackRender={() => (
         <div className="text-sm  flex items-center justify-between">
-          <div className="text-red-500">
+          <div className="text-destructive">
             {t('input value is invalid, please contact support')}
           </div>
           <Button

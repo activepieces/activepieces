@@ -2,8 +2,8 @@ import { isNil } from '@activepieces/shared';
 import { t } from 'i18next';
 import { useContext } from 'react';
 
+import { Dot } from '@/components/custom/dot';
 import { Button } from '@/components/ui/button';
-import { Dot } from '@/components/ui/dot';
 
 import { DynamicPropertiesContext } from '../../piece-properties/dynamic-properties-context';
 import { TestButtonTooltip } from '../test-step-tooltip';
@@ -41,7 +41,7 @@ export const FirstTimeTestingSection = ({
   ) {
     return (
       <div className="flex justify-center flex-col gap-2 items-center">
-        <TestButtonTooltip invalid={!isValid}>
+        <TestButtonTooltip saving={isSaving} invalid={!isValid}>
           <Button
             variant="outline"
             size="sm"
@@ -77,7 +77,7 @@ export const FirstTimeTestingSection = ({
   if (testType === 'mcp-tool') {
     return (
       <div className="flex justify-center">
-        <TestButtonTooltip invalid={!isValid}>
+        <TestButtonTooltip saving={isSaving} invalid={!isValid}>
           <Button
             variant="outline"
             size="sm"
@@ -96,7 +96,7 @@ export const FirstTimeTestingSection = ({
   }
   return (
     <div className="flex justify-center">
-      <TestButtonTooltip invalid={!isValid}>
+      <TestButtonTooltip saving={isSaving} invalid={!isValid}>
         <Button
           variant="outline"
           size="sm"

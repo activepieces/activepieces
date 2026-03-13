@@ -18,17 +18,15 @@ import {
     SeekPage,
     SERVICE_KEY_SECURITY_OPENAPI,
 } from '@activepieces/shared'
-import {
-    FastifyPluginAsyncTypebox,
-    Type,
-} from '@fastify/type-provider-typebox'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
+import { z } from 'zod'
 import { FlowRunEntity } from './flow-run-entity'
 import { flowRunService } from './flow-run-service'
 
 const DEFAULT_PAGING_LIMIT = 10
 
-export const flowRunController: FastifyPluginAsyncTypebox = async (app) => {
+export const flowRunController: FastifyPluginAsyncZod = async (app) => {
     app.get('/', ListRequest, async (request) => {
         return flowRunService(request.log).list({
             projectId: request.query.projectId,
@@ -101,9 +99,11 @@ export const flowRunController: FastifyPluginAsyncTypebox = async (app) => {
 
         if (isNil(flowRun)) {
             throw new ActivepiecesError({
-                code: ErrorCode.FLOW_RUN_NOT_FOUND,
+                code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {
-                    id: req.params.id,
+                    entityType: 'flow_run',
+                    entityId: req.params.id,
+                    message: 'Flow run not found',
                 },
             })
         }
@@ -152,8 +152,8 @@ export const flowRunController: FastifyPluginAsyncTypebox = async (app) => {
 
 }
 
-const FlowRunFiltered = Type.Omit(FlowRun, ['pauseMetadata'])
-const FlowRunFilteredWithNoSteps = Type.Omit(FlowRun, ['pauseMetadata', 'steps'])
+const FlowRunFiltered = FlowRun.omit({ pauseMetadata: true })
+const FlowRunFilteredWithNoSteps = FlowRun.omit({ pauseMetadata: true, steps: true })
 
 const ListRequest = {
     config: {
@@ -187,7 +187,7 @@ const GetRequest = {
         tags: ['flow-runs'],
         description: 'Get Flow Run',
         security: [SERVICE_KEY_SECURITY_OPENAPI],
-        params: Type.Object({
+        params: z.object({
             id: ApId,
         }),
         response: {
@@ -201,9 +201,9 @@ const ResumeFlowRunRequest = {
         security: securityAccess.unscoped(ALL_PRINCIPAL_TYPES),
     },
     schema: {
-        params: Type.Object({
+        params: z.object({
             id: ApId,
-            requestId: Type.String(),
+            requestId: z.string(),
         }),
     },
 }
@@ -218,7 +218,7 @@ const RetryFlowRequest = {
             }),
     },
     schema: {
-        params: Type.Object({
+        params: z.object({
             id: ApId,
         }),
         body: RetryFlowRequestBody,

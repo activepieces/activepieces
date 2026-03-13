@@ -1,4 +1,4 @@
-import { assertNotNullOrUndefined, ConsumeJobResponse, ConsumeJobResponseStatus, PollingJobData, ProgressUpdateType, RunEnvironment, TriggerPayload, TriggerRunStatus } from '@activepieces/shared'
+import { ConsumeJobResponse, ConsumeJobResponseStatus, isNil, PollingJobData, ProgressUpdateType, RunEnvironment, TriggerPayload, TriggerRunStatus } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { workerApiService } from '../../api/server-api.service'
 import { flowWorkerCache } from '../../cache/flow-worker-cache'
@@ -12,7 +12,15 @@ export const executeTriggerExecutor = (log: FastifyBaseLogger) => ({
             engineToken,
             flowVersionId,
         })
-        assertNotNullOrUndefined(flowVersion, 'flowVersion')
+        if (isNil(flowVersion)) {
+            log.info({
+                message: '[executeTriggerExecutor] Flow version not found, skipping',
+                flowVersionId,
+            })
+            return {
+                status: ConsumeJobResponseStatus.OK,
+            }
+        }
 
         const { payloads, status, errorMessage } = await triggerHooks(log).extractPayloads(engineToken, {
             projectId: data.projectId,

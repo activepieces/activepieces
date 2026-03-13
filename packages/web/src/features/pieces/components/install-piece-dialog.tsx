@@ -4,18 +4,19 @@ import {
   PackageType,
   PieceScope,
 } from '@activepieces/shared';
-import { typeboxResolver } from '@hookform/resolvers/typebox';
-import { Static, Type } from '@sinclair/typebox';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { HttpStatusCode } from 'axios';
 import { t } from 'i18next';
-import { Plus } from 'lucide-react';
 import pako from 'pako';
 import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
+import { z } from 'zod';
 
+import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import { ApMarkdown } from '@/components/custom/markdown';
+import { PlusIcon } from '@/components/icons/plus';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -45,21 +46,14 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 
-import { piecesApi } from '../lib/pieces-api';
-const FormSchema = Type.Object(
-  {
-    packageType: Type.Enum(PackageType),
-    pieceName: Type.Optional(Type.String()),
-    scope: Type.Enum(PieceScope),
-    pieceVersion: Type.Optional(Type.String()),
-    pieceArchive: Type.Optional(Type.Any()),
-  },
-  {
-    errorMessage: {
-      required: t('Please select a package type'),
-    },
-  },
-);
+import { piecesApi } from '../api/pieces-api';
+const FormSchema = z.object({
+  packageType: z.nativeEnum(PackageType),
+  pieceName: z.string().optional(),
+  scope: z.nativeEnum(PieceScope),
+  pieceVersion: z.string().optional(),
+  pieceArchive: z.unknown().optional(),
+});
 
 type InstallPieceDialogProps = {
   onInstallPiece: () => void;
@@ -77,8 +71,8 @@ const InstallPieceDialog = ({
     ApFlagId.PRIVATE_PIECES_ENABLED,
   );
 
-  const form = useForm<Static<typeof FormSchema>>({
-    resolver: typeboxResolver(FormSchema),
+  const form = useForm<z.infer<typeof FormSchema>>({
+    resolver: zodResolver(FormSchema),
     defaultValues: {
       scope,
       packageType: PackageType.REGISTRY,
@@ -170,10 +164,9 @@ const InstallPieceDialog = ({
   return (
     <Dialog open={isOpen} onOpenChange={(open) => setIsOpen(open)}>
       <DialogTrigger asChild>
-        <Button size="sm" className="flex items-center justify-center gap-2">
-          <Plus className="size-4" />
+        <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm">
           {t('Install Piece')}
-        </Button>
+        </AnimatedIconButton>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -181,7 +174,7 @@ const InstallPieceDialog = ({
           <DialogDescription>
             <ApMarkdown
               markdown={
-                'Use this to install a [custom piece]("https://www.activepieces.com/docs/developers/building-pieces/create-action") that you (or someone else) created. Once the piece is installed, you can use it in the flow builder.\n\nWarning: Make sure you trust the author as the piece will have access to your flow data and it might not be compatible with the current version of Activepieces.'
+                'Use this to install a [custom piece]("https://www.activepieces.com/docs/build-pieces/building-pieces/create-action") that you (or someone else) created. Once the piece is installed, you can use it in the flow builder.\n\nWarning: Make sure you trust the author as the piece will have access to your flow data and it might not be compatible with the current version of Activepieces.'
               }
             />
           </DialogDescription>

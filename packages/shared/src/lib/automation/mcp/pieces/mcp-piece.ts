@@ -1,4 +1,4 @@
-import { Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
 
 export enum McpPropertyType {
     TEXT = 'Text',
@@ -9,25 +9,25 @@ export enum McpPropertyType {
     OBJECT = 'Object',
 }
 
-export const McpProperty = Type.Object({
-    name: Type.String(),
-    description: Type.Optional(Type.String()),
-    type: Type.String(),
-    required: Type.Boolean(),
+export const McpProperty = z.object({
+    name: z.string(),
+    description: z.string().optional(),
+    type: z.string(),
+    required: z.boolean(),
 })
 
-export type McpProperty = Static<typeof McpProperty>
+export type McpProperty = z.infer<typeof McpProperty>
 
-export const McpTrigger = Type.Object({
-    pieceName: Type.String(),
-    triggerName: Type.String(),
-    input: Type.Object({
-        toolName: Type.String(),
-        toolDescription: Type.String(),
-        inputSchema: Type.Array(McpProperty),
-        returnsResponse: Type.Boolean(),
+export const McpTrigger = z.object({
+    pieceName: z.string(),
+    triggerName: z.string(),
+    input: z.object({
+        toolName: z.string(),
+        toolDescription: z.string(),
+        inputSchema: z.array(McpProperty),
+        returnsResponse: z.boolean(),
     }),
 })
 
-export type McpTrigger = Static<typeof McpTrigger>
+export type McpTrigger = z.infer<typeof McpTrigger>
 

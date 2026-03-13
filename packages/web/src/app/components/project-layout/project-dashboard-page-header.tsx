@@ -7,29 +7,26 @@ import {
   UserStatus,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { UserPlus, UsersRound, Settings, Lock } from 'lucide-react';
+import { UsersRound, Lock } from 'lucide-react';
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
-import { ApSidebarToggle } from '@/components/custom/ap-sidebar-toggle';
+import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import { PageHeader } from '@/components/custom/page-header';
+import { SettingsIcon } from '@/components/icons/settings';
+import { UserRoundPlusIcon } from '@/components/icons/user-round-plus';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { InviteUserDialog } from '@/features/members/component/invite-user/invite-user-dialog';
-import { projectMembersHooks } from '@/features/members/lib/project-members-hooks';
+import { InviteUserDialog, projectMembersHooks } from '@/features/members';
+import { getProjectName, projectCollectionUtils } from '@/features/projects';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import {
-  getProjectName,
-  projectCollectionUtils,
-} from '@/hooks/project-collection';
 import { userHooks } from '@/hooks/user-hooks';
 
 import { ApProjectDisplay } from '../ap-project-display';
@@ -101,13 +98,11 @@ export const ProjectDashboardPageHeader = ({
   };
 
   const titleContent = (
-    <div className="flex items-center gap-2">
-      <ApSidebarToggle />
-      <Separator orientation="vertical" className="h-5 mr-2" />
+    <div className="flex items-center gap-1">
       <ApProjectDisplay
         title={getProjectName(project)}
         maxLengthToNotShowTooltip={30}
-        titleClassName="text-base"
+        titleClassName="text-sm font-medium"
         projectType={project.type}
       />
       {project.type === ProjectType.PERSONAL && (
@@ -150,17 +145,19 @@ export const ProjectDashboardPageHeader = ({
         </Button>
       )}
       {showInviteUserButton && (
-        <Button
+        <AnimatedIconButton
+          icon={UserRoundPlusIcon}
+          iconSize={16}
           variant="ghost"
           size="sm"
-          className="gap-2"
           onClick={() => setInviteOpen(true)}
         >
-          <UserPlus className="w-4 h-4" />
           <span className="text-sm font-medium">{t('Add Members')}</span>
-        </Button>
+        </AnimatedIconButton>
       )}
-      <Button
+      <AnimatedIconButton
+        icon={SettingsIcon}
+        iconSize={16}
         variant="ghost"
         size="icon"
         className="h-8 w-8"
@@ -168,9 +165,7 @@ export const ProjectDashboardPageHeader = ({
           setSettingsInitialTab(getFirstAvailableTab());
           setSettingsOpen(true);
         }}
-      >
-        <Settings className="w-4 h-4" />
-      </Button>
+      />
     </div>
   ) : (
     children
@@ -182,7 +177,8 @@ export const ProjectDashboardPageHeader = ({
         title={titleContent}
         description={description}
         rightContent={rightContent}
-        className="min-w-full px-4"
+        showSidebarToggle={true}
+        className="min-w-full px-3"
       />
       <InviteUserDialog open={inviteOpen} setOpen={setInviteOpen} />
       <ProjectSettingsDialog

@@ -8,7 +8,7 @@ import CodeMirror, {
 import React, { RefObject, useRef, useState } from 'react';
 import { ControllerRenderProps } from 'react-hook-form';
 
-import { useTheme } from '@/components/theme-provider';
+import { useTheme } from '@/components/providers/theme-provider';
 import { cn } from '@/lib/utils';
 
 const styleTheme = EditorView.baseTheme({
@@ -38,7 +38,7 @@ const tryParseJson = (value: unknown): unknown => {
 type JsonEditorProps = {
   field: ControllerRenderProps<Record<string, any>, string>;
   readonly: boolean;
-  onFocus?: (ref: RefObject<ReactCodeMirrorRef>) => void;
+  onFocus?: (ref: RefObject<ReactCodeMirrorRef | null>) => void;
   className?: string;
 };
 
