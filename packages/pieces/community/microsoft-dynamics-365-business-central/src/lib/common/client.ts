@@ -1,4 +1,4 @@
-import { businessCentralAuth } from '../../';
+import { businessCentralAuth } from '../auth';
 import {
   HttpMessageBody,
   HttpMethod,

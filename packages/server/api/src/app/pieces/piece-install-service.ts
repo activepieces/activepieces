@@ -17,11 +17,9 @@ import {
     WorkerJobType,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { OperationResponse } from 'server-worker'
+import { OperationResponse } from 'worker'
 import { fileService } from '../file/file.service'
-import { pubsub } from '../helper/pubsub'
 import { userInteractionWatcher } from '../workers/user-interaction-watcher'
-import { REDIS_REFRESH_LOCAL_PIECES_CHANNEL } from './metadata/local-piece-cache'
 import { pieceMetadataService } from './metadata/piece-metadata-service'
 
 export const pieceInstallService = (log: FastifyBaseLogger) => ({
@@ -52,11 +50,10 @@ export const pieceInstallService = (log: FastifyBaseLogger) => ({
                 pieceType: PieceType.CUSTOM,
                 archiveId,
             })
-            await pubsub.publish(REDIS_REFRESH_LOCAL_PIECES_CHANNEL, '')
             return savedPiece
         }
         catch (error) {
-            log.error(error, '[PieceService#add]')
+            log.error({ err: error }, '[pieceInstallService#add] Failed to add piece')
 
             if ((error as ActivepiecesError).error.code === ErrorCode.VALIDATION) {
                 throw error

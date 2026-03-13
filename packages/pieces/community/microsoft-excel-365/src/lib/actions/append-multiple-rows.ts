@@ -1,29 +1,14 @@
-import {
-	AuthenticationType,
-	httpClient,
-	HttpMethod,
-	HttpRequest,
-} from '@activepieces/pieces-common';
-import {
-	createAction,
-	DropdownOption,
-	DynamicPropsValue,
-	OAuth2PropertyValue,
-	Property,
-} from '@activepieces/pieces-framework';
-import { excelAuth } from '../../index';
-import { excelCommon } from '../common/common';
-import { isEmpty, MarkdownVariant } from '@activepieces/shared';
-import { Client } from '@microsoft/microsoft-graph-client';
+import { createAction, DynamicPropsValue, Property } from '@activepieces/pieces-framework';
+import { MarkdownVariant } from '@activepieces/shared';
 import { WorkbookRange } from '@microsoft/microsoft-graph-types';
-
-const createEmptyOptions = (message: string) => {
-	return {
-		placeholder: message,
-		options: [],
-		disabled: true,
-	};
-};
+import {
+	createMSGraphClient,
+	getHeaders,
+	getLastUsedRow,
+	numberToColumnName,
+} from '../common/helpers';
+import { commonProps } from '../common/props';
+import { excelAuth } from '../auth';
 
 export enum FilterOperator {
 	TEXT_CONTAINS = 'TEXT_CONTAINS',
@@ -58,92 +43,62 @@ export const appendMultipleRowsAction = createAction({
 	description: 'Appends multiple row of values to a worksheet.',
 	displayName: 'Append Multiple Rows',
 	props: {
-		workbook_id: excelCommon.workbook_id,
-		worksheet_id: excelCommon.worksheet_id,
-		values: Property.DynamicProperties({
-			auth: excelAuth,
-			displayName: 'Values',
-			required: true,
-			refreshers: ['workbook_id', 'worksheet_id'],
-			props: async ({ auth, workbook_id, worksheet_id }) => {
-				if (
-					!auth ||
-					(workbook_id ?? '').toString().length === 0 ||
-					(worksheet_id ?? '').toString().length === 0
-				) {
-					return {};
-				}
+		storageSource: commonProps.storageSource,
+		siteId: commonProps.siteId,
+		documentId: commonProps.documentId,
+		workbookId: commonProps.workbookId,
+		worksheetId: commonProps.worksheetId,
+		values: commonProps.worksheetMultiValues,
+		// values: Property.DynamicProperties({
+		// 	auth: excelAuth,
+		// 	displayName: 'Values',
+		// 	required: true,
+		// 	refreshers: ['workbook_id', 'worksheet_id'],
+		// 	props: async ({ auth, workbook_id, worksheet_id }) => {
+		// 		if (
+		// 			!auth ||
+		// 			(workbook_id ?? '').toString().length === 0 ||
+		// 			(worksheet_id ?? '').toString().length === 0
+		// 		) {
+		// 			return {};
+		// 		}
 
-				const authProp: OAuth2PropertyValue = auth as OAuth2PropertyValue;
+		// 		const authProp: OAuth2PropertyValue = auth as OAuth2PropertyValue;
 
-				const firstRow = await excelCommon.getHeaders(
-					workbook_id as unknown as string,
-					authProp['access_token'],
-					worksheet_id as unknown as string,
-				);
+		// 		const firstRow = await excelCommon.getHeaders(
+		// 			workbook_id as unknown as string,
+		// 			authProp['access_token'],
+		// 			worksheet_id as unknown as string
+		// 		);
 
-				const fields: DynamicPropsValue = {};
+		// 		const fields: DynamicPropsValue = {};
 
-				const columns: {
-					[key: string]: any;
-				} = {};
-				for (const key in firstRow) {
-					columns[key] = Property.ShortText({
-						displayName: firstRow[key].toString(),
-						description: firstRow[key].toString(),
-						required: false,
-						defaultValue: '',
-					});
-				}
+		// 		const columns: {
+		// 			[key: string]: any;
+		// 		} = {};
+		// 		for (const key in firstRow) {
+		// 			columns[key] = Property.ShortText({
+		// 				displayName: firstRow[key].toString(),
+		// 				description: firstRow[key].toString(),
+		// 				required: false,
+		// 				defaultValue: '',
+		// 			});
+		// 		}
 
-				fields['values'] = Property.Array({
-					displayName: 'Values',
-					required: true,
-					properties: columns,
-				});
+		// 		fields['values'] = Property.Array({
+		// 			displayName: 'Values',
+		// 			required: true,
+		// 			properties: columns,
+		// 		});
 
-				return fields;
-			},
-		}),
+		// 		return fields;
+		// 	},
+		// }),
 		filterMarkdown: Property.MarkDown({
 			variant: MarkdownVariant.INFO,
 			value: `Use below Filter properties to insert only the rows that meet your conditions.`,
 		}),
-		filterColumn: Property.Dropdown({
-			displayName: 'Filter Column',
-			refreshers: ['workbook_id', 'worksheet_id'],
-			auth: excelAuth,
-			required: false,
-			async options({ auth, worksheet_id, workbook_id }) {
-				if (!auth) {
-					return createEmptyOptions('please connect account first.');
-				}
-				if (!workbook_id) {
-					return createEmptyOptions('please select workbook first.');
-				}
-				if (!worksheet_id) {
-					return createEmptyOptions('please select worksheet first.');
-				}
-
-				const firstRow = await excelCommon.getHeaders(
-					workbook_id as string,
-					auth.access_token,
-					worksheet_id as string,
-				);
-
-				const options: DropdownOption<string>[] = [];
-
-				for (const key in firstRow) {
-					if (isEmpty(firstRow[key])) continue;
-					options.push({ value: key, label: firstRow[key].toString() });
-				}
-
-				return {
-					disabled: false,
-					options,
-				};
-			},
-		}),
+		filterColumn: commonProps.filterColumn,
 		filterType: Property.StaticDropdown({
 			displayName: 'Filter Type',
 			required: false,
@@ -205,17 +160,30 @@ export const appendMultipleRowsAction = createAction({
 		}),
 	},
 	async run({ propsValue, auth }) {
-		const workbookId = propsValue['workbook_id'];
-		const worksheetId = propsValue['worksheet_id'];
-		const filterColumn = propsValue.filterColumn;
-		const filterCondition = propsValue.filterType;
+		const {
+			workbookId,
+			worksheetId,
+			storageSource,
+			siteId,
+			documentId,
+			filterColumn,
+			filterType: filterCondition,
+		} = propsValue;
 		const rawFilterValue = propsValue.filterValue?.['value'];
 		const inputValues: Array<Record<string, any>> = propsValue.values['values'] ?? [];
 
-		const firstRow = await excelCommon.getHeaders(
-			workbookId as string,
+		if (storageSource === 'sharepoint' && (!siteId || !documentId)) {
+			throw new Error('please select SharePoint site and document library.');
+		}
+
+		const drivePath =
+			storageSource === 'onedrive' ? '/me/drive' : `/sites/${siteId}/drives/${documentId}`;
+
+		const firstRow = await getHeaders(
 			auth.access_token,
-			worksheetId as string,
+			drivePath,
+			workbookId as unknown as string,
+			worksheetId as unknown as string
 		);
 
 		const columnCount = firstRow.length;
@@ -225,7 +193,7 @@ export const appendMultipleRowsAction = createAction({
 		if (filterColumn) {
 			if (!filterCondition || !rawFilterValue) {
 				throw new Error(
-					'When a filter column is selected, filter condition and value are required.',
+					'When a filter column is selected, filter condition and value are required.'
 				);
 			}
 
@@ -260,31 +228,30 @@ export const appendMultipleRowsAction = createAction({
 		}
 
 		const formattedValues = filteredRowValues.map((v) =>
-			Array.from({ length: columnCount }, (_, i) => v[i] ?? null),
+			Array.from({ length: columnCount }, (_, i) => v[i] ?? null)
 		);
 
 		if (formattedValues.length === 0) {
-			throw new Error('No rows to insert. The provided/filtered rows did not contain any values.');
+			throw new Error(
+				'No rows to insert. The provided/filtered rows did not contain any values.'
+			);
 		}
 
-		const lastUsedRow = await excelCommon.getLastUsedRow(
+		const lastUsedRow = await getLastUsedRow(
+			auth.access_token,
+			drivePath,
 			workbookId,
-			worksheetId,
-			auth['access_token'],
+			worksheetId
 		);
 
-		const lastUsedColumn = excelCommon.numberToColumnName(columnCount);
+		const lastUsedColumn = numberToColumnName(columnCount);
 
 		const rangeFrom = `A${lastUsedRow + 1}`;
 		const rangeTo = `${lastUsedColumn}${lastUsedRow + formattedValues.length}`;
 
-		const client = Client.initWithMiddleware({
-			authProvider: {
-				getAccessToken: () => Promise.resolve(auth.access_token),
-			},
-		});
+		const client = createMSGraphClient(auth.access_token);
 
-		const url = `/me/drive/items/${workbookId}/workbook/worksheets/${worksheetId}/range(address='${rangeFrom}:${rangeTo}')`;
+		const url = `${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/range(address='${rangeFrom}:${rangeTo}')`;
 
 		const requestBody = {
 			values: formattedValues,

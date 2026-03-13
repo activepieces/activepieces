@@ -1,6 +1,6 @@
 import { PiecePropValueSchema, DropdownOption, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { fountainAuth } from '../../';
+import { fountainAuth } from '../auth';
 import { getAuthHeaders, getApiUrl } from './auth';
 
 export async function getFunnelsDropdown(auth: AppConnectionValueForAuthProperty<typeof fountainAuth>): Promise<DropdownOption<string>[]> {

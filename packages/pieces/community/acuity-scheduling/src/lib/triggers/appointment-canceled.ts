@@ -6,7 +6,7 @@ import {
 	HttpRequest,
 	QueryParams,
 } from '@activepieces/pieces-common';
-import { acuitySchedulingAuth } from '../../index';
+import { acuitySchedulingAuth } from '../auth';
 import { API_URL, getAppointmentDetails } from '../common';
 import { appointmentTypeIdDropdown, calendarIdDropdown } from '../common/props';
 

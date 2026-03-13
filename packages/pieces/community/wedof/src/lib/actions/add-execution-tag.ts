@@ -1,4 +1,4 @@
-import { wedofAuth } from '../../index';
+import { wedofAuth } from '../auth';
 import { Property, createAction } from '@activepieces/pieces-framework';
 
 export const addExecutionTag = createAction({

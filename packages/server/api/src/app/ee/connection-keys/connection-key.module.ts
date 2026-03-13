@@ -1,20 +1,19 @@
+import { ProjectResourceType, securityAccess } from '@activepieces/server-common'
 import {
+    AppConnectionScope,
     ConnectionKeyId,
     GetOrDeleteConnectionFromTokenRequest,
     ListConnectionKeysRequest,
-    UpsertConnectionFromToken,
-    UpsertSigningKeyConnection,
-} from '@activepieces/ee-shared'
-import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
-import { AppConnectionScope, PrincipalType } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+    PrincipalType,
+    UpsertConnectionFromToken, UpsertSigningKeyConnection } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
 import { projectService } from '../../project/project-service'
 import { connectionKeyService } from './connection-key.service'
 
-export const connectionKeyModule: FastifyPluginAsyncTypebox = async (app) => {
+export const connectionKeyModule: FastifyPluginAsyncZod = async (app) => {
     await app.register(connectionKeyController, {
         prefix: '/v1/connection-keys',
     })
@@ -22,7 +21,7 @@ export const connectionKeyModule: FastifyPluginAsyncTypebox = async (app) => {
 
 const DEFAULT_LIMIT_SIZE = 10
 
-const connectionKeyController: FastifyPluginAsyncTypebox = async (fastify) => {
+const connectionKeyController: FastifyPluginAsyncZod = async (fastify) => {
     fastify.delete(
         '/app-connections',
         {
@@ -37,7 +36,7 @@ const connectionKeyController: FastifyPluginAsyncTypebox = async (fastify) => {
             const appConnection = await connectionKeyService(request.log).getConnection(
                 request.query,
             )
-            const platformId = await projectService.getPlatformId(request.query.projectId)
+            const platformId = await projectService(request.log).getPlatformId(request.query.projectId)
             if (appConnection !== null) {
                 await appConnectionService(request.log).delete({
                     scope: AppConnectionScope.PROJECT,

@@ -1,5 +1,4 @@
-import { ApplicationEvent } from '@activepieces/ee-shared'
-import { BADGES } from '@activepieces/shared'
+import { ApplicationEvent, BADGES } from '@activepieces/shared'
 
 export type BadgeCheckResult = {
     userId: string | null

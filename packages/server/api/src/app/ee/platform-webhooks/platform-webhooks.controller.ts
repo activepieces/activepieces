@@ -1,11 +1,11 @@
-import { CreatePlatformEventDestinationRequestBody, EventDestination, ListPlatformEventDestinationsRequestBody, TestPlatformEventDestinationRequestBody, UpdatePlatformEventDestinationRequestBody } from '@activepieces/ee-shared'
-import { securityAccess } from '@activepieces/server-shared'
-import { PrincipalType, SeekPage } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
+import { securityAccess } from '@activepieces/server-common'
+import { CreatePlatformEventDestinationRequestBody, EventDestination, ListPlatformEventDestinationsRequestBody, PrincipalType, SeekPage, TestPlatformEventDestinationRequestBody, UpdatePlatformEventDestinationRequestBody } from '@activepieces/shared'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
+import { z } from 'zod'
 import { eventDestinationService } from '../../event-destinations/event-destinations.service'
 
-export const platformWebhooksController: FastifyPluginAsyncTypebox = async (app) => {
+export const platformWebhooksController: FastifyPluginAsyncZod = async (app) => {
     app.post('/', CreateEventDestinationRequest, async (req) => {
         return eventDestinationService(req.log).create(req.body, req.principal.platform.id)
     })
@@ -52,8 +52,8 @@ export const CreateEventDestinationRequest = {
 export const UpdateEventDestinationRequest = {
     schema: {
         body: UpdatePlatformEventDestinationRequestBody,
-        params: Type.Object({
-            id: Type.String(),
+        params: z.object({
+            id: z.string(),
         }),
     },
     config: {
@@ -80,8 +80,8 @@ export const ListEventDestinationsRequest = {
 
 export const DeleteEventDestinationRequest = {
     schema: {
-        params: Type.Object({
-            id: Type.String(),
+        params: z.object({
+            id: z.string(),
         }),
     },
     config: {

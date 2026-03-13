@@ -1,4 +1,4 @@
-import { AppSystemProp, exceptionHandler, fileCompressor, WorkerSystemProp } from '@activepieces/server-shared'
+import { AppSystemProp, exceptionHandler, fileCompressor, WorkerSystemProp } from '@activepieces/server-common'
 import {
     ActivepiecesError,
     apId,
@@ -95,9 +95,11 @@ export const fileService = (log: FastifyBaseLogger) => ({
         const file = await this.getFile(params)
         if (isNil(file)) {
             throw new ActivepiecesError({
-                code: ErrorCode.FILE_NOT_FOUND,
+                code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {
-                    id: params.fileId,
+                    entityType: 'file',
+                    entityId: params.fileId,
+                    message: 'File not found',
                 },
             })
         }
@@ -123,9 +125,11 @@ export const fileService = (log: FastifyBaseLogger) => ({
         })
         if (isNil(file)) {
             throw new ActivepiecesError({
-                code: ErrorCode.FILE_NOT_FOUND,
+                code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {
-                    id: fileId,
+                    entityType: 'file',
+                    entityId: fileId,
+                    message: 'File not found',
                 },
             })
         }
@@ -134,9 +138,9 @@ export const fileService = (log: FastifyBaseLogger) => ({
             compression: file.compression,
         })
         return {
-            metadata: file.metadata,
+            metadata: file.metadata ?? undefined,
             data,
-            fileName: file.fileName,
+            fileName: file.fileName ?? undefined,
         }
     },
     async deleteStaleBulk(types: FileType[]) {
@@ -245,9 +249,9 @@ function isExecutionDataFileThatExpires(type: FileType) {
         case FileType.FLOW_STEP_FILE:
         case FileType.TRIGGER_PAYLOAD:
         case FileType.TRIGGER_EVENT_FILE:
+            return true
         case FileType.PLATFORM_ASSET:
         case FileType.USER_PROFILE_PICTURE:
-            return true
         case FileType.SAMPLE_DATA:
         case FileType.SAMPLE_DATA_INPUT:
         case FileType.PACKAGE_ARCHIVE:

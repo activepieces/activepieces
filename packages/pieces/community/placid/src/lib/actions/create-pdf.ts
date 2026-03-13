@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { placidAuth } from '../../index';
+import { placidAuth } from '../auth';
 import { PlacidClient } from '../common/client';
 import {
 	pdfTemplateDropdown,
