@@ -57,6 +57,7 @@ export const BranchesList = ({
   >(null);
   const form = useFormContext<RouterAction>();
   return (
+    <>
     <Sortable
       value={step.settings.branches.map((branch, idx) => ({
         id: idx + 1,
@@ -67,9 +68,7 @@ export const BranchesList = ({
       }}
     >
       {step.settings.branches.map((branch, index) =>
-        branch.branchType === BranchExecutionType.FALLBACK ? (
-          <React.Fragment key={index}></React.Fragment>
-        ) : (
+        branch.branchType === BranchExecutionType.FALLBACK ? null : (
           <SortableItem key={index} value={index + 1} asChild>
             <div>
               <BranchListItem
@@ -108,6 +107,37 @@ export const BranchesList = ({
         ),
       )}
     </Sortable>
+    {step.settings.branches.map((branch, index) =>
+      branch.branchType === BranchExecutionType.FALLBACK ? (
+        <div key={index}>
+          <Separator />
+          <BranchListItem
+            branch={branch}
+            branchIndex={index}
+            readonly={readonly}
+            onClick={() => {
+              setSelectedBranchIndex(index);
+            }}
+            errors={errors}
+            duplicateBranch={() => {}}
+            deleteBranch={() => {}}
+            isEditingBranchName={branchNameEditingIndex === index}
+            setIsEditingBranchName={(isEditing) =>
+              isEditing
+                ? setBranchNameEditingIndex(index)
+                : setBranchNameEditingIndex(null)
+            }
+            branchNameChanged={(name) => {
+              branchNameChanged(index, name);
+            }}
+            showDeleteButton={false}
+            showDuplicateButton={false}
+            showDragHandle={false}
+          />
+        </div>
+      ) : null,
+    )}
+  </>
   );
 };
 
@@ -123,6 +153,8 @@ type BranchListItemProps = {
   setIsEditingBranchName: (isEditing: boolean) => void;
   branchNameChanged: (name: string) => void;
   showDeleteButton: boolean;
+  showDuplicateButton?: boolean;
+  showDragHandle?: boolean;
 };
 
 export const BranchListItem = ({
@@ -137,6 +169,8 @@ export const BranchListItem = ({
   setIsEditingBranchName,
   branchNameChanged,
   showDeleteButton,
+  showDuplicateButton = true,
+  showDragHandle = true,
 }: BranchListItemProps) => {
   return (
     <div
@@ -213,34 +247,38 @@ export const BranchListItem = ({
           <TooltipContent side="bottom">{t('Rename')}</TooltipContent>
         </Tooltip>
 
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant={'ghost'}
-              size={'icon'}
-              onClick={(e) => {
-                e.stopPropagation();
-                duplicateBranch();
-              }}
-            >
-              <CopyPlus className="h-4 w-4" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">{t('Duplicate')}</TooltipContent>
-        </Tooltip>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <SortableDragHandle
-              variant="ghost"
-              size="icon"
-              disabled={readonly}
-              className={'shrink-0 size-7'}
-            >
-              <GripVertical className="size-4" aria-hidden="true" />
-            </SortableDragHandle>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">{t('Move')}</TooltipContent>
-        </Tooltip>
+        {showDuplicateButton && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={'ghost'}
+                size={'icon'}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  duplicateBranch();
+                }}
+              >
+                <CopyPlus className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">{t('Duplicate')}</TooltipContent>
+          </Tooltip>
+        )}
+        {showDragHandle && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <SortableDragHandle
+                variant="ghost"
+                size="icon"
+                disabled={readonly}
+                className={'shrink-0 size-7'}
+              >
+                <GripVertical className="size-4" aria-hidden="true" />
+              </SortableDragHandle>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">{t('Move')}</TooltipContent>
+          </Tooltip>
+        )}
       </div>
     </div>
   );
