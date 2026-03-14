@@ -3,11 +3,16 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const sendNotification = createAction({
   name: 'send_notification',
-  auth: true, // Requires the piece auth to be configured (if any) or simply skipped if auth is None.
   requireAuth: false,
   displayName: 'Send Notification',
-  description: 'Send a push notification to a ntfy.sh topic',
+  description: 'Send a push notification to a ntfy topic',
   props: {
+    serverUrl: Property.ShortText({
+      displayName: 'Server URL',
+      description: 'The ntfy server URL. Defaults to https://ntfy.sh',
+      required: false,
+      defaultValue: 'https://ntfy.sh',
+    }),
     topic: Property.ShortText({
       displayName: 'Topic',
       description: 'The ntfy topic to send the message to (e.g., my_alerts)',
@@ -45,7 +50,7 @@ export const sendNotification = createAction({
     }),
   },
   async run(context) {
-    const { topic, message, title, priority, tags } = context.propsValue;
+    const { serverUrl, topic, message, title, priority, tags } = context.propsValue;
 
     const headers: Record<string, string> = {
       'Content-Type': 'text/plain',
@@ -55,9 +60,12 @@ export const sendNotification = createAction({
     if (priority) headers['Priority'] = priority.toString();
     if (tags) headers['Tags'] = tags;
 
+    const baseUrl = serverUrl ? serverUrl.replace(/\/$/, '') : 'https://ntfy.sh';
+    const encodedTopic = encodeURIComponent(topic);
+
     const response = await httpClient.sendRequest<string>({
       method: HttpMethod.POST,
-      url: `https://ntfy.sh/${topic}`,
+      url: `${baseUrl}/${encodedTopic}`,
       headers,
       body: message,
     });
