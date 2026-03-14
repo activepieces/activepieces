@@ -9,6 +9,7 @@ import { amazons3UploadFile } from './lib/actions/upload-file';
 import { createS3 } from './lib/common';
 import { newFile } from './lib/triggers/new-file';
 import { generateSignedUrl } from './lib/actions/generate-signed-url';
+import { generateSignedUploadUrl } from './lib/actions/generate-signed-upload-url';
 import { moveFile } from './lib/actions/move-file';
 import { deleteFile } from './lib/actions/delete-file';
 import { listFiles } from './lib/actions/list-files';
@@ -29,9 +30,9 @@ export const amazonS3 = createPiece({
 
   logoUrl: 'https://cdn.activepieces.com/pieces/amazon-s3.png',
   minimumSupportedRelease: '0.30.0',
-  authors: ["Willianwg","kishanprmr","MoShizzle","AbdulTheActivePiecer","khaledmashaly","abuaboud", "Kevinyu-alan"],
+  authors: ["Willianwg","kishanprmr","MoShizzle","AbdulTheActivePiecer","khaledmashaly","abuaboud", "Kevinyu-alan", "hugh-codes"],
   categories: [PieceCategory.DEVELOPER_TOOLS],
   auth: amazonS3Auth,
-  actions: [amazons3UploadFile, readFile, generateSignedUrl, moveFile, deleteFile, listFiles, decryptPgpFile],
+  actions: [amazons3UploadFile, readFile, generateSignedUrl, generateSignedUploadUrl, moveFile, deleteFile, listFiles, decryptPgpFile],
   triggers: [newFile],
 });
