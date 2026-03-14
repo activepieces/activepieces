@@ -417,26 +417,27 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             projectId: undefined,
         })
         const synchronousHandlerId = engineResponseWatcher(log).getServerId()
-        const matchRequestId = isNil(flowRun.pauseMetadata) || (flowRun.pauseMetadata.type === PauseType.WEBHOOK && requestId === flowRun.pauseMetadata.requestId)
-        assertNotNullOrUndefined(synchronousHandlerId, 'synchronousHandlerId is required for sync resume request is required')
-        if (!matchRequestId) {
+        assertNotNullOrUndefined(synchronousHandlerId, 'synchronousHandlerId is required for sync resume request')
+        const resolved = await resolveFlowRunForResume({ flowRun, requestId, checkRequestId: true }, log)
+        if (isNil(resolved)) {
             return {
                 status: StatusCodes.NOT_FOUND,
                 body: {},
                 headers: {},
             }
         }
-        if (flowRun.status !== FlowRunStatus.PAUSED) {
+        if (resolved.status !== FlowRunStatus.PAUSED) {
             return {
                 status: StatusCodes.CONFLICT,
-                body: { 'message': 'Flow run is not paused', 'flowRunStatus': flowRun.status },
+                body: { 'message': 'Flow run is not paused', 'flowRunStatus': resolved.status },
                 headers: {},
             }
         }
+        await flowRunSideEffects(log).onResume(resolved)
         await addToQueue({
             payload,
-            flowRun,
-            platformId: await projectService(log).getPlatformId(flowRun.projectId),
+            flowRun: resolved,
+            platformId: await projectService(log).getPlatformId(resolved.projectId),
             synchronousHandlerId,
             httpRequestId: requestId,
             executeTrigger: false,

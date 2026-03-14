@@ -2,6 +2,8 @@ import { redisMetadataKey } from '@activepieces/server-common'
 import { apId, FlowRun, FlowRunStatus, FlowVersionState, PauseType, RunEnvironment } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { distributedStore } from '../../../../../src/app/database/redis-connections'
+import { pubsub } from '../../../../../src/app/helper/pubsub'
+import { engineResponseWatcher } from '../../../../../src/app/workers/engine-response-watcher'
 import * as flowRunServiceModule from '../../../../../src/app/flows/flow-run/flow-run-service'
 import { createTestContext, TestContext } from '../../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../../helpers/test-setup'
@@ -236,6 +238,60 @@ describe('Resume flow run — subflow race condition (Redis metadata fallback)',
         finally {
             spy.mockRestore()
         }
+    })
+
+    it('sync: should return 404 when requestId mismatches both DB and Redis', async () => {
+        const dbRequestId = apId()
+        const unknownRequestId = apId()
+
+        const { flowRun } = await createPausedFlowRun({
+            projectId: ctx.project.id,
+            pauseRequestId: dbRequestId,
+        })
+
+        const response = await app.inject({
+            method: 'POST',
+            url: `/v1/flow-runs/${flowRun.id}/requests/${unknownRequestId}/sync`,
+            body: { data: 'test' },
+        })
+
+        expect(response.statusCode).toBe(404)
+    })
+
+    it('sync: should accept request when DB is stale but Redis has matching requestId', async () => {
+        const staleRequestId = apId()
+        const newRequestId = apId()
+
+        const { flowRun } = await createPausedFlowRun({
+            projectId: ctx.project.id,
+            pauseRequestId: staleRequestId,
+        })
+
+        await distributedStore.merge(redisMetadataKey(flowRun.id), {
+            pauseMetadata: {
+                type: PauseType.WEBHOOK,
+                requestId: newRequestId,
+                response: {},
+            },
+        })
+
+        // Publish a mock engine response right after injection starts,
+        // so the sync handler's oneTimeListener resolves immediately.
+        const responsePromise = app.inject({
+            method: 'POST',
+            url: `/v1/flow-runs/${flowRun.id}/requests/${newRequestId}/sync`,
+            body: { data: 'test' },
+        })
+
+        // Small delay to let the handler register its listener before we publish
+        await new Promise((resolve) => setTimeout(resolve, 500))
+        await pubsub.publish(`engine-run:sync:${engineResponseWatcher(app.log).getServerId()}`, JSON.stringify({
+            requestId: newRequestId,
+            response: { status: 200, body: { ok: true }, headers: {} },
+        }))
+
+        const response = await responsePromise
+        expect(response.statusCode).toBe(200)
     })
 
     it('should not resume when Redis metadata hash has no pauseMetadata and DB mismatches', async () => {
