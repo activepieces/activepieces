@@ -231,20 +231,20 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         }, 'Resuming flow run')
 
         const flowRun = await findFlowRunOrThrow(flowRunId)
-        const platformId = await projectService(log).getPlatformId(flowRun.projectId)
-        const resolved = await resolveFlowRunForResume({ flowRun, requestId, checkRequestId }, log)
+        const resolvedRun = await resolveFlowRunForResume({ flowRun, requestId, checkRequestId }, log)
 
-        if (isNil(resolved)) {
+        if (isNil(resolvedRun)) {
             return flowRun
         }
 
-        await flowRunSideEffects(log).onResume(resolved)
+        const platformId = await projectService(log).getPlatformId(resolvedRun.projectId)
+        await flowRunSideEffects(log).onResume(resolvedRun)
         return addToQueue({
             payload,
-            flowRun: resolved,
+            flowRun: resolvedRun,
             platformId,
-            synchronousHandlerId: returnHandlerId(resolved.pauseMetadata, requestId, log),
-            httpRequestId: resolved.pauseMetadata?.type === PauseType.WEBHOOK ? resolved.pauseMetadata.requestIdToReply ?? undefined : undefined,
+            synchronousHandlerId: returnHandlerId(resolvedRun.pauseMetadata, requestId, log),
+            httpRequestId: resolvedRun.pauseMetadata?.type === PauseType.WEBHOOK ? resolvedRun.pauseMetadata.requestIdToReply ?? undefined : undefined,
             progressUpdateType,
             executeTrigger: false,
             executionType,
@@ -418,26 +418,27 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         })
         const synchronousHandlerId = engineResponseWatcher(log).getServerId()
         assertNotNullOrUndefined(synchronousHandlerId, 'synchronousHandlerId is required for sync resume request')
-        const resolved = await resolveFlowRunForResume({ flowRun, requestId, checkRequestId: true }, log)
-        if (isNil(resolved)) {
+        const resolvedRun = await resolveFlowRunForResume({ flowRun, requestId, checkRequestId: true }, log)
+        if (isNil(resolvedRun)) {
             return {
                 status: StatusCodes.NOT_FOUND,
                 body: {},
                 headers: {},
             }
         }
-        if (resolved.status !== FlowRunStatus.PAUSED) {
+        if (resolvedRun.status !== FlowRunStatus.PAUSED) {
             return {
                 status: StatusCodes.CONFLICT,
-                body: { 'message': 'Flow run is not paused', 'flowRunStatus': resolved.status },
+                body: { 'message': 'Flow run is not paused', 'flowRunStatus': resolvedRun.status },
                 headers: {},
             }
         }
-        await flowRunSideEffects(log).onResume(resolved)
+        const platformId = await projectService(log).getPlatformId(resolvedRun.projectId)
+        await flowRunSideEffects(log).onResume(resolvedRun)
         await addToQueue({
             payload,
-            flowRun: resolved,
-            platformId: await projectService(log).getPlatformId(resolved.projectId),
+            flowRun: resolvedRun,
+            platformId,
             synchronousHandlerId,
             httpRequestId: requestId,
             executeTrigger: false,
