@@ -230,93 +230,25 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             runId: flowRunId,
         }, 'Resuming flow run')
 
-        const flowRun = await queryBuilderForFlowRun(flowRunRepo()).where({ id: flowRunId }).getOne()
-
-        if (isNil(flowRun)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.ENTITY_NOT_FOUND,
-                params: {
-                    entityType: 'flow_run',
-                    entityId: flowRunId,
-                    message: 'Flow run not found',
-                },
-            })
-        }
-
-
-        const pauseMetadata = flowRun.pauseMetadata
-        const matchRequestId = isNil(pauseMetadata) || (pauseMetadata.type === PauseType.WEBHOOK && requestId === pauseMetadata.requestId)
+        const flowRun = await findFlowRunOrThrow(flowRunId)
         const platformId = await projectService(log).getPlatformId(flowRun.projectId)
-        if (matchRequestId || !checkRequestId) {
-            return addToQueue({
-                payload,
-                flowRun,
-                platformId,
-                synchronousHandlerId: returnHandlerId(pauseMetadata, requestId, log),
-                httpRequestId: flowRun.pauseMetadata?.requestIdToReply ?? undefined,
-                progressUpdateType,
-                executeTrigger: false,
-                executionType,
-            }, log)
+        const resolved = await resolveFlowRunForResume({ flowRun, requestId, checkRequestId }, log)
+
+        if (isNil(resolved)) {
+            return flowRun
         }
 
-        // Check metadata is still not persisted to DB but exists in Redis queue 
-        if (checkRequestId && !isNil(requestId)) {
-            const redisMetadata = await distributedStore.hgetJson<RunsMetadataUpsertData>(redisMetadataKey(flowRunId))
-            const redisPauseMetadata = redisMetadata?.pauseMetadata
-            const redisMatch = redisPauseMetadata?.type === PauseType.WEBHOOK && requestId === redisPauseMetadata.requestId
-            if (redisMatch) {
-                log.info({
-                    runId: flowRunId,
-                    requestId,
-                }, '[resume] requestId matched Redis metadata hash (DB not yet persisted) — proceeding with resume')
-                return addToQueue({
-                    payload,
-                    flowRun: {
-                        ...flowRun,
-                        pauseMetadata: redisPauseMetadata,
-                    },
-                    platformId,
-                    synchronousHandlerId: returnHandlerId(redisPauseMetadata, requestId, log),
-                    httpRequestId: redisPauseMetadata.requestIdToReply ?? undefined,
-                    progressUpdateType,
-                    executeTrigger: false,
-                    executionType,
-                }, log)
-            }
-            // Redis hash is empty — the metadata worker already consumed it and
-            // persisted to DB (worker always updates DB before deleting Redis).
-            // Re-read DB to pick up the freshly persisted pauseMetadata.
-            if (isNil(redisMetadata)) {
-                const freshFlowRun = await queryBuilderForFlowRun(flowRunRepo()).where({ id: flowRunId }).getOne()
-                const freshPauseMetadata = freshFlowRun?.pauseMetadata
-                const freshMatch = !isNil(freshPauseMetadata) && freshPauseMetadata.type === PauseType.WEBHOOK && requestId === freshPauseMetadata.requestId
-                if (freshMatch && freshFlowRun) {
-                    log.info({
-                        runId: flowRunId,
-                        requestId,
-                    }, '[resume] requestId matched DB on re-read (worker consumed Redis between reads) — proceeding with resume')
-                    return addToQueue({
-                        payload,
-                        flowRun: freshFlowRun,
-                        platformId,
-                        synchronousHandlerId: returnHandlerId(freshPauseMetadata, requestId, log),
-                        httpRequestId: freshPauseMetadata.requestIdToReply ?? undefined,
-                        progressUpdateType,
-                        executeTrigger: false,
-                        executionType,
-                    }, log)
-                }
-            }
-            log.error({
-                runId: flowRunId,
-                requestId,
-                dbPauseRequestId: pauseMetadata?.type === PauseType.WEBHOOK ? pauseMetadata.requestId : undefined,
-                redisPauseRequestId: redisPauseMetadata?.type === PauseType.WEBHOOK ? redisPauseMetadata.requestId : undefined,
-            }, '[resume] requestId mismatch in both DB and Redis — dropping resume')
-        }
-        await flowRunSideEffects(log).onResume(flowRun)
-        return flowRun
+        await flowRunSideEffects(log).onResume(resolved)
+        return addToQueue({
+            payload,
+            flowRun: resolved,
+            platformId,
+            synchronousHandlerId: returnHandlerId(resolved.pauseMetadata, requestId, log),
+            httpRequestId: resolved.pauseMetadata?.type === PauseType.WEBHOOK ? resolved.pauseMetadata.requestIdToReply ?? undefined : undefined,
+            progressUpdateType,
+            executeTrigger: false,
+            executionType,
+        }, log)
     },
 
     async start({
@@ -678,6 +610,68 @@ async function addToQueue(params: AddToQueueParams, log: FastifyBaseLogger): Pro
         },
     })
     return params.flowRun
+}
+
+async function findFlowRunOrThrow(flowRunId: FlowRunId): Promise<FlowRun> {
+    const flowRun = await queryBuilderForFlowRun(flowRunRepo()).where({ id: flowRunId }).getOne()
+    if (isNil(flowRun)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.ENTITY_NOT_FOUND,
+            params: {
+                entityType: 'flow_run',
+                entityId: flowRunId,
+                message: 'Flow run not found',
+            },
+        })
+    }
+    return flowRun
+}
+
+function matchesPauseRequestId(pauseMetadata: PauseMetadata | undefined, requestId: string | undefined): boolean {
+    return isNil(pauseMetadata) || (pauseMetadata.type === PauseType.WEBHOOK && requestId === pauseMetadata.requestId)
+}
+
+/**
+ * Pause metadata is persisted asynchronously (engine → Redis hash → DB).
+ * When a subflow completes before the worker flushes to DB, the DB is stale.
+ * 3-tier lookup: DB → Redis hash → DB re-read (worker updates DB before deleting Redis).
+ * Returns null on genuine requestId mismatch.
+ */
+async function resolveFlowRunForResume(
+    { flowRun, requestId, checkRequestId }: { flowRun: FlowRun, requestId: string | undefined, checkRequestId: boolean },
+    log: FastifyBaseLogger,
+): Promise<FlowRun | null> {
+    if (!checkRequestId || matchesPauseRequestId(flowRun.pauseMetadata, requestId)) {
+        return flowRun
+    }
+
+    if (isNil(requestId)) {
+        return null
+    }
+
+    const redisMetadata = await distributedStore.hgetJson<RunsMetadataUpsertData>(redisMetadataKey(flowRun.id))
+    const redisPauseMetadata = redisMetadata?.pauseMetadata
+
+    if (redisPauseMetadata?.type === PauseType.WEBHOOK && requestId === redisPauseMetadata.requestId) {
+        log.info({ runId: flowRun.id, requestId }, '[resume] requestId matched Redis (DB not yet persisted)')
+        return { ...flowRun, pauseMetadata: redisPauseMetadata }
+    }
+
+    if (isNil(redisMetadata)) {
+        const freshFlowRun = await findFlowRunOrThrow(flowRun.id)
+        if (matchesPauseRequestId(freshFlowRun.pauseMetadata, requestId)) {
+            log.info({ runId: flowRun.id, requestId }, '[resume] requestId matched DB on re-read (worker consumed Redis between reads)')
+            return freshFlowRun
+        }
+    }
+
+    log.error({
+        runId: flowRun.id,
+        requestId,
+        dbPauseRequestId: flowRun.pauseMetadata?.type === PauseType.WEBHOOK ? flowRun.pauseMetadata.requestId : undefined,
+        redisPauseRequestId: redisPauseMetadata?.type === PauseType.WEBHOOK ? redisPauseMetadata.requestId : undefined,
+    }, '[resume] requestId mismatch in both DB and Redis — dropping resume')
+    return null
 }
 
 function queryBuilderForFlowRun(repo: Repository<FlowRun>): SelectQueryBuilder<FlowRun> {
