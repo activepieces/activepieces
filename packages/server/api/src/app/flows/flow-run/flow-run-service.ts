@@ -1,4 +1,4 @@
-import { AppSystemProp } from '@activepieces/server-common'
+import { AppSystemProp, redisMetadataKey, RunsMetadataUpsertData } from '@activepieces/server-common'
 import {
     ActivepiecesError,
     apId,
@@ -43,6 +43,7 @@ import { jobQueue } from '../../workers/queue/job-queue'
 import { JobType } from '../../workers/queue/queue-manager'
 import { sampleDataService } from '../step-run/sample-data.service'
 import { FlowRunEntity } from './flow-run-entity'
+import { distributedStore } from '../../database/redis-connections'
 import { flowRunSideEffects } from './flow-run-side-effects'
 import { runsMetadataQueue } from './flow-runs-queue'
 import { flowRunLogsService } from './logs/flow-run-logs-service'
@@ -257,6 +258,62 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                 executeTrigger: false,
                 executionType,
             }, log)
+        }
+
+        // Check metadata is still not persisted to DB but exists in Redis queue 
+        if (checkRequestId && !isNil(requestId)) {
+            const redisMetadata = await distributedStore.hgetJson<RunsMetadataUpsertData>(redisMetadataKey(flowRunId))
+            const redisPauseMetadata = redisMetadata?.pauseMetadata
+            const redisMatch = redisPauseMetadata?.type === PauseType.WEBHOOK && requestId === redisPauseMetadata.requestId
+            if (redisMatch) {
+                log.info({
+                    runId: flowRunId,
+                    requestId,
+                }, '[resume] requestId matched Redis metadata hash (DB not yet persisted) — proceeding with resume')
+                return addToQueue({
+                    payload,
+                    flowRun: {
+                        ...flowRun,
+                        pauseMetadata: redisPauseMetadata,
+                    },
+                    platformId,
+                    synchronousHandlerId: returnHandlerId(redisPauseMetadata, requestId, log),
+                    httpRequestId: redisPauseMetadata.requestIdToReply ?? undefined,
+                    progressUpdateType,
+                    executeTrigger: false,
+                    executionType,
+                }, log)
+            }
+            // Redis hash is empty — the metadata worker already consumed it and
+            // persisted to DB (worker always updates DB before deleting Redis).
+            // Re-read DB to pick up the freshly persisted pauseMetadata.
+            if (isNil(redisMetadata)) {
+                const freshFlowRun = await queryBuilderForFlowRun(flowRunRepo()).where({ id: flowRunId }).getOne()
+                const freshPauseMetadata = freshFlowRun?.pauseMetadata
+                const freshMatch = !isNil(freshPauseMetadata) && freshPauseMetadata.type === PauseType.WEBHOOK && requestId === freshPauseMetadata.requestId
+                if (freshMatch && freshFlowRun) {
+                    log.info({
+                        runId: flowRunId,
+                        requestId,
+                    }, '[resume] requestId matched DB on re-read (worker consumed Redis between reads) — proceeding with resume')
+                    return addToQueue({
+                        payload,
+                        flowRun: freshFlowRun,
+                        platformId,
+                        synchronousHandlerId: returnHandlerId(freshPauseMetadata, requestId, log),
+                        httpRequestId: freshPauseMetadata.requestIdToReply ?? undefined,
+                        progressUpdateType,
+                        executeTrigger: false,
+                        executionType,
+                    }, log)
+                }
+            }
+            log.error({
+                runId: flowRunId,
+                requestId,
+                dbPauseRequestId: pauseMetadata?.type === PauseType.WEBHOOK ? pauseMetadata.requestId : undefined,
+                redisPauseRequestId: redisPauseMetadata?.type === PauseType.WEBHOOK ? redisPauseMetadata.requestId : undefined,
+            }, '[resume] requestId mismatch in both DB and Redis — dropping resume')
         }
         await flowRunSideEffects(log).onResume(flowRun)
         return flowRun
