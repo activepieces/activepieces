@@ -3,23 +3,31 @@ import { OptionalArrayFromQuery } from '../../../core/common/base-model'
 import { Cursor } from '../../../core/common/seek-page'
 
 export const CreateRecordsRequest = z.object({
-    records: z.array(z.array(z.object({
+  records: z.array(
+    z.array(
+      z.object({
         fieldId: z.string(),
-        value: z.string(),
-    }))),
-    tableId: z.string(),
-})
+        value: z.union([z.string(), z.number(), z.boolean(), z.null()]),
+      })
+    )
+  ),
+  tableId: z.string(),
+});
 
 export type CreateRecordsRequest = z.infer<typeof CreateRecordsRequest>
 
 export const UpdateRecordRequest = z.object({
-    cells: z.array(z.object({
+  cells: z
+    .array(
+      z.object({
         fieldId: z.string(),
-        value: z.string(),
-    })).optional(),
-    tableId: z.string(),
-    agentUpdate: z.boolean().optional(),
-})
+        value: z.union([z.string(), z.number(), z.boolean(), z.null()]),
+      })
+    )
+    .optional(),
+  tableId: z.string(),
+  agentUpdate: z.boolean().optional(),
+});
 
 export type UpdateRecordRequest = z.infer<typeof UpdateRecordRequest>
 
