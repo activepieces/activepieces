@@ -3,6 +3,17 @@ import { googleDocsAuth, createGoogleClient } from '../auth';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { google } from 'googleapis';
 
+const PLACEHOLDER_FORMATS: Record<string, string> = {
+  'curly_braces': '{{KEY}}',
+  'square_brackets': '[[KEY]]',
+  'single_curly': '{KEY}',
+  'single_square': '[KEY]',
+  '{{KEY}}': '{{KEY}}',
+  '[[KEY]]': '[[KEY]]',
+  '{KEY}': '{KEY}',
+  '[KEY]': '[KEY]',
+};
+
 export const createDocumentBasedOnTemplate = createAction({
   auth: googleDocsAuth,
   name: 'create_document_based_on_template',
@@ -46,16 +57,7 @@ export const createDocumentBasedOnTemplate = createAction({
     const documentId: string = context.propsValue.template;
     const values = context.propsValue.values;
     const placeholderType = context.propsValue.placeholder_format;
-
-    // Map placeholder type to actual format
-    const placeholderFormats: Record<string, string> = {
-      'curly_braces': '{{KEY}}',
-      'square_brackets': '[[KEY]]',
-      'single_curly': '{KEY}',
-      'single_square': '[KEY]'
-    };
-
-    const placeholder_format = placeholderFormats[placeholderType] || '[[KEY]]';
+    const placeholder_format = PLACEHOLDER_FORMATS[placeholderType] || '[[KEY]]';
 
     const authClient = await createGoogleClient(context.auth);
     const docs = google.docs('v1');
