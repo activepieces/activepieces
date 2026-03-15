@@ -8,7 +8,8 @@ import { ProviderOptions } from '@ai-sdk/provider-utils';
 import { spreadIfDefined, AIProviderName } from '@activepieces/shared';
 import { anthropicSearchTool, openaiSearchTool, googleSearchTool } from './ai-sdk';
 
-function buildWebSearchOptionsProps(provider: string): InputPropertyMap {
+function buildWebSearchOptionsProps(provider: string, params?: { showIncludeSources?: boolean }): InputPropertyMap {
+  const showIncludeSources = params?.showIncludeSources ?? true;
   const isOpenRouterProvider =
     provider === AIProviderName.OPENROUTER ||
     provider === AIProviderName.ACTIVEPIECES;
@@ -28,7 +29,7 @@ function buildWebSearchOptionsProps(provider: string): InputPropertyMap {
     }),
   };
 
-  if (supportsToolBasedWebSearch) {
+  if (supportsToolBasedWebSearch && showIncludeSources) {
     options = {
       ...options,
       includeSources: Property.Checkbox({
@@ -218,6 +219,7 @@ function createWebSearchTool(
 export function buildWebSearchOptionsProperty(
   getProvider: (propsValue: Record<string, unknown>) => string | undefined,
   refreshers: string[],
+  params?: { showIncludeSources?: boolean },
 ) {
   return Property.DynamicProperties({
     displayName: 'Web Search Options',
@@ -233,7 +235,7 @@ export function buildWebSearchOptionsProperty(
       if (!provider) {
         return {};
       }
-      return buildWebSearchOptionsProps(provider);
+      return buildWebSearchOptionsProps(provider, params);
     },
   });
 }

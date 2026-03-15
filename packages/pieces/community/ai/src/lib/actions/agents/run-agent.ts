@@ -116,6 +116,7 @@ export const runAgent = createAction({
     [AgentPieceProps.WEB_SEARCH_OPTIONS]: buildWebSearchOptionsProperty(
       (propsValue) => (propsValue['aiProviderModel'] as unknown as AgentProviderModel)?.provider,
       ['webSearch', 'aiProviderModel'],
+      { showIncludeSources: false },
     ),
   },
   async run(context) {
