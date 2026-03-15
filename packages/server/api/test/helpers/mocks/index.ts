@@ -1,5 +1,5 @@
 import { LATEST_CONTEXT_VERSION, PieceMetadata } from '@activepieces/pieces-framework'
-import { apDayjs } from '@activepieces/server-common'
+import { apDayjs } from '@activepieces/server-utils'
 import {
     AiCreditsAutoTopUpState,
     AIProvider,
@@ -559,7 +559,7 @@ export const createMockConnection = (connection: Partial<AppConnection>, ownerId
     }
 }
 
-const createMockTable = ({ projectId }: { projectId: string }): Table => {
+export const createMockTable = ({ projectId }: { projectId: string }): Table => {
     return {
         id: apId(),
         created: faker.date.recent().toISOString(),
@@ -570,7 +570,7 @@ const createMockTable = ({ projectId }: { projectId: string }): Table => {
     }
 }
 
-const createMockField = ({ tableId, projectId }: { tableId: string, projectId: string }): Field => {
+export const createMockField = ({ tableId, projectId }: { tableId: string, projectId: string }): Field => {
     return {
         id: apId(),
         created: faker.date.recent().toISOString(),
@@ -585,7 +585,7 @@ const createMockField = ({ tableId, projectId }: { tableId: string, projectId: s
         type: FieldType.STATIC_DROPDOWN,
     }
 }
-const createMockRecord = ({ tableId, projectId }: { tableId: string, projectId: string }): Record => {
+export const createMockRecord = ({ tableId, projectId }: { tableId: string, projectId: string }): Record => {
     return {
         id: apId(),
         created: faker.date.recent().toISOString(),
@@ -595,7 +595,7 @@ const createMockRecord = ({ tableId, projectId }: { tableId: string, projectId: 
     }
 }
 
-const createMockCell = ({ recordId, fieldId, projectId }: { recordId: string, fieldId: string, projectId: string }): Cell => {
+export const createMockCell = ({ recordId, fieldId, projectId }: { recordId: string, fieldId: string, projectId: string }): Cell => {
     return {
         id: apId(),
         created: faker.date.recent().toISOString(),
@@ -782,7 +782,7 @@ export const createMockAIProvider = async (aiProvider?: Partial<AIProvider>): Pr
         auth: await encryptUtils.encryptObject({
             apiKey: process.env.OPENAI_API_KEY ?? faker.string.uuid(),
         }),
-        config: {},
+        config: aiProvider?.config ?? {},
     }
     
 }

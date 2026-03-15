@@ -1,6 +1,6 @@
-import { apAxios } from '@activepieces/server-common'
 import { ActivepiecesError, ErrorCode, SecretManagerProviderId, SecretManagerProviderMetaData } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { apAxios } from '../../../helper/ap-axios'
 import { SecretManagerProvider } from './secret-manager-providers'
 
 export const HASHICORP_PROVIDER_METADATA: SecretManagerProviderMetaData = {

@@ -48,6 +48,7 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { cn } from '@/lib/utils';
 
+import { GlobalSearchCommand } from '../../global-search/global-search-command';
 import { SidebarGeneralItemType } from '../ap-sidebar-group';
 import { ApSidebarItem, SidebarItemType } from '../ap-sidebar-item';
 import ProjectSideBarItem from '../project';
@@ -170,11 +171,18 @@ export function ProjectDashboardSidebar({
 
   return (
     !embedState.hideSideNav && (
-      <Sidebar collapsible="icon" className={cn('max-h-[100vh]', className)}>
+      <Sidebar
+        collapsible="icon"
+        id={SIDEBAR_ID}
+        className={cn('max-h-[100vh]', className)}
+      >
         <AppSidebarHeader />
 
         <SidebarContent className="overflow-x-hidden">
           <SidebarGroup>
+            <div className="mb-1 group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center">
+              <GlobalSearchCommand />
+            </div>
             <SidebarMenu>
               {items.map((item) => (
                 <ApSidebarItem key={item.label} {...item} />
@@ -359,3 +367,5 @@ function SidebarPlatformAdminLink() {
     </SidebarMenu>
   );
 }
+
+export const SIDEBAR_ID = 'project-sidebar';

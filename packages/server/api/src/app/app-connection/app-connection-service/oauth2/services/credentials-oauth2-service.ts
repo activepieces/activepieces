@@ -1,5 +1,4 @@
 import { OAuth2AuthorizationMethod } from '@activepieces/pieces-framework'
-import { apAxios } from '@activepieces/server-common'
 import { ActivepiecesError,
     AppConnectionType,
     BaseOAuth2ConnectionValue,
@@ -12,6 +11,7 @@ import { ActivepiecesError,
 import { AxiosError } from 'axios'
 import { FastifyBaseLogger } from 'fastify'
 import { secretManagersService } from '../../../../ee/secret-managers/secret-managers.service'
+import { apAxios } from '../../../../helper/ap-axios'
 import {
     ClaimOAuth2Request,
     OAuth2Service,

@@ -1,5 +1,5 @@
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
-import { apAxios } from '@activepieces/server-common'
+import { apAxios } from '../../../../src/app/helper/ap-axios'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { MockInstance } from 'vitest'
@@ -70,7 +70,7 @@ describe('Secret Managers API', () => {
 
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/secret-managers',
+                url: '/api/v1/secret-managers',
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -99,7 +99,7 @@ describe('Secret Managers API', () => {
 
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/secret-managers',
+                url: '/api/v1/secret-managers',
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -407,7 +407,7 @@ describe('Secret Managers API', () => {
 
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/global-connections',
+                url: '/api/v1/global-connections',
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
