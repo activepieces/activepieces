@@ -1,5 +1,6 @@
 
 import {
+    RAW_PAYLOAD_HEADER,
     WebhookUrlParams,
     WebsocketClientEvent,
 } from '@activepieces/shared'
@@ -39,6 +40,7 @@ export const webhookController: FastifyPluginAsyncZod = async (app) => {
                         },
                         ),
                         execute: true,
+                        ...extractRawPayload(request),
                         ...extractHeaderFromRequest(request),
                     })
                     span.setAttribute('webhook.response.status', response.status)
@@ -78,6 +80,7 @@ export const webhookController: FastifyPluginAsyncZod = async (app) => {
                         ),
                         flowVersionToRun: WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST,
                         execute: true,
+                        ...extractRawPayload(request),
                         ...extractHeaderFromRequest(request),
                     })
                     span.setAttribute('webhook.response.status', response.status)
@@ -158,4 +161,17 @@ const WEBHOOK_PARAMS = {
     schema: {
         params: WebhookUrlParams,
     },
+}
+
+
+function extractRawPayload(request: FastifyRequest): { payload?: Record<string, unknown> } {
+    const isRawPayload = request.headers[RAW_PAYLOAD_HEADER] === 'true'
+        && request.headers.authorization
+        && request.body != null
+        && !Array.isArray(request.body)
+        && !Buffer.isBuffer(request.body)
+    if (isRawPayload) {
+        return { payload: request.body as Record<string, unknown> }
+    }
+    return {}
 }
