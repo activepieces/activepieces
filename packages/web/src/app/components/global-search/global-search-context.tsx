@@ -193,7 +193,7 @@ function GlobalSearchDialogContent({
         onValueChange={setSearch}
       />
 
-      <CommandList className="max-h-[620px] overflow-y-auto! scrollbar-hover">
+      <CommandList className="max-h-[620px] overflow-y-auto!">
         {!hasQuery &&
           mergedGroups.map((group, idx) => (
             <React.Fragment key={group.type}>
