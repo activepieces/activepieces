@@ -37,7 +37,11 @@ beforeAll(async () => {
     const ctx = await setupE2eEnvironment()
     app = ctx.app
     apiUrl = ctx.apiUrl
-    await worker.start(ctx.apiUrl, ctx.workerToken)
+    await worker.start({
+        apiUrl: ctx.apiUrl,
+        socketUrl: { url: ctx.apiUrl, path: '/api/socket.io' },
+        workerToken: ctx.workerToken,
+    })
     // Give the worker time to connect and fetch settings
     await new Promise((resolve) => setTimeout(resolve, 5000))
 }, 30_000)

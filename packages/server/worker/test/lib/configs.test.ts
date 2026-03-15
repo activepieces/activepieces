@@ -22,7 +22,7 @@ describe('getApiUrl', () => {
 
     it('returns localhost when CONTAINER_TYPE is WORKER_AND_APP', () => {
         process.env.AP_CONTAINER_TYPE = 'WORKER_AND_APP'
-        expect(getApiUrl()).toBe('http://127.0.0.1:3000/')
+        expect(getApiUrl()).toBe('http://127.0.0.1:3000/api/')
     })
 
     it('returns FRONTEND_URL/api/ when CONTAINER_TYPE is WORKER (with trailing slash)', () => {
@@ -44,7 +44,7 @@ describe('getSocketUrl', () => {
 
     it('returns localhost socket for WORKER_AND_APP', () => {
         process.env.AP_CONTAINER_TYPE = 'WORKER_AND_APP'
-        expect(getSocketUrl()).toEqual({ url: 'http://127.0.0.1:3000', path: '/socket.io' })
+        expect(getSocketUrl()).toEqual({ url: 'http://127.0.0.1:3000', path: '/api/socket.io' })
     })
 
     it('returns FRONTEND_URL socket for WORKER', () => {
