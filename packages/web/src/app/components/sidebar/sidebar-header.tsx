@@ -26,7 +26,7 @@ function SidebarLogoCollapsed({ linkTo }: { linkTo?: string }) {
       variant="ghost"
       size="icon"
       onClick={() => navigate(linkTo || '/')}
-      className="h-10! w-8! p-0! group-data-[collapsible=icon]:h-10! items-center justify-center"
+      className="h-9! w-9! p-0! group-data-[collapsible=icon]:h-9! items-center justify-center"
     >
       <img
         src={branding.logos.logoIconUrl}
@@ -45,7 +45,7 @@ function SidebarLogoFull({ linkTo }: { linkTo?: string }) {
   return (
     <SidebarMenuButton
       onClick={() => navigate(linkTo || '/')}
-      className="h-10! group-data-[collapsible=icon]:h-10! justify-start items-center"
+      className="h-9! group-data-[collapsible=icon]:h-9! justify-start items-center"
     >
       <img
         src={branding.logos.fullLogoUrl}
@@ -90,7 +90,7 @@ export const AppSidebarHeader = () => {
           {state !== 'collapsed' && (
             <div className="flex-1 min-w-0">
               <PlatformSwitcher>
-                <SidebarMenuButton className="h-10! w-full">
+                <SidebarMenuButton className="h-9! w-full">
                   <span className="truncate font-medium flex-1 text-left text-sm">
                     {currentPlatform?.name ?? t('platform')}
                   </span>
