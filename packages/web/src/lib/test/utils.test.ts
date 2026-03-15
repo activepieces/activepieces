@@ -6,7 +6,9 @@ vi.mock('i18next', () => ({
   default: { language: 'en' },
   t: (key: string, opts?: Record<string, unknown>) => {
     if (!opts) return key;
-    return key.replace(/\{(\w+)\}/g, (_, k: string) => String(opts[k] ?? `{${k}}`));
+    return key.replace(/\{(\w+)\}/g, (_, k: string) =>
+      String(opts[k] ?? `{${k}}`),
+    );
   },
 }));
 
