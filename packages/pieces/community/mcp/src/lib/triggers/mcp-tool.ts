@@ -3,7 +3,7 @@ import {
     Property,
     TriggerStrategy,
   } from '@activepieces/pieces-framework';
-import { isNil, McpPropertyType } from '@activepieces/shared';
+import { isNil, McpProperty, McpPropertyType } from '@activepieces/shared';
 
 
 export const mcpTool = createTrigger({
@@ -85,7 +85,7 @@ export const mcpTool = createTrigger({
     const payload = isTriggerPayloadEnvelope
       ? body as Record<string, unknown>
       : rawPayload;
-    const inputSchema = context.propsValue.inputSchema as { name: string; required: boolean }[] | undefined;
+    const inputSchema = context.propsValue.inputSchema as McpProperty[] | undefined;
 
     if (inputSchema) {
       const missingFields: string[] = [];
@@ -102,36 +102,23 @@ export const mcpTool = createTrigger({
     return [payload];
   },
   async test(context) {
-    const inputSchema = context.propsValue.inputSchema as { name: string; type: string; required: boolean }[] | undefined;
+    const inputSchema = context.propsValue.inputSchema as McpProperty[] | undefined;
     if (!inputSchema || inputSchema.length === 0) {
       return [{}];
     }
     const sampleData: Record<string, unknown> = {};
     for (const param of inputSchema) {
-      switch (param.type) {
-        case McpPropertyType.TEXT:
-          sampleData[param.name] = `sample ${param.name}`;
-          break;
-        case McpPropertyType.NUMBER:
-          sampleData[param.name] = 0;
-          break;
-        case McpPropertyType.BOOLEAN:
-          sampleData[param.name] = false;
-          break;
-        case McpPropertyType.DATE:
-          sampleData[param.name] = new Date().toISOString();
-          break;
-        case McpPropertyType.ARRAY:
-          sampleData[param.name] = [];
-          break;
-        case McpPropertyType.OBJECT:
-          sampleData[param.name] = {};
-          break;
-        default:
-          sampleData[param.name] = `sample ${param.name}`;
-          break;
-      }
+      sampleData[param.name] = SAMPLE_VALUES[param.type] ?? `sample ${param.name}`;
     }
     return [sampleData];
   },
 });
+
+const SAMPLE_VALUES: Record<string, unknown> = {
+  [McpPropertyType.TEXT]: 'sample text',
+  [McpPropertyType.NUMBER]: 0,
+  [McpPropertyType.BOOLEAN]: false,
+  [McpPropertyType.DATE]: '2025-01-01T00:00:00.000Z',
+  [McpPropertyType.ARRAY]: [],
+  [McpPropertyType.OBJECT]: {},
+};
