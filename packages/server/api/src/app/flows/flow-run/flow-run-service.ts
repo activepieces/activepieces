@@ -685,9 +685,9 @@ async function queueOrCreateInstantly(params: CreateParams, log: FastifyBaseLogg
     }
 }
 
-function isOutsideRetentionWindow(finishTime: string, retentionDays: number): boolean {
-    if (!finishTime) return false
-    return apDayjs(finishTime).add(retentionDays, 'day').isBefore(apDayjs())
+function isOutsideRetentionWindow(createdTime: string, retentionDays: number): boolean {
+    if (!createdTime) return false
+    return apDayjs(createdTime).add(retentionDays, 'day').isBefore(apDayjs())
 }
 
 type CreateParams = {

@@ -200,6 +200,8 @@ export const RunsTable = () => {
             onClick: () => setFailedRetryDialogOpen(true),
           },
           duration: 15000,
+          closeButton: true,
+          dismissible: true,
         },
       );
     },

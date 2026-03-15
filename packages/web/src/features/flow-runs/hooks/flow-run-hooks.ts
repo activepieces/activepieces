@@ -71,6 +71,8 @@ export const flowRunMutations = {
                 },
               ),
               duration: 5000,
+              closeButton: true,
+              dismissible: true,
             });
           }
           return;
