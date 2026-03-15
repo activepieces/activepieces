@@ -29,6 +29,7 @@ import {
     mockAndSaveBasicSetup,
 } from '../../../helpers/mocks'
 import { worker } from '../../../../../worker/src/lib/worker'
+import { apDayjs } from '@activepieces/server-utils'
 
 let app: FastifyInstance
 let apiUrl: string
@@ -75,6 +76,7 @@ describe('Piece Options E2E', () => {
                     propertySettings: {},
                 },
                 valid: true,
+                lastUpdatedDate: apDayjs().toISOString(),
             },
         })
         await db.save('flow_version', mockFlowVersion)
