@@ -3,6 +3,9 @@ name: _Deploy K8s Environment
 on:
   workflow_call:
     inputs:
+      deploy_path:
+        required: true
+        type: string
       app_values:
         required: true
         type: string
@@ -40,7 +43,8 @@ jobs:
       - name: Deploy APP
         run: |
           ssh ops "\
-            helm upgrade --install activepieces /root/k8n/activepieces-helm/ \
+            cd ${{ inputs.deploy_path }} && \
+            helm upgrade --install activepieces ../activepieces-helm/ \
               --namespace activepieces \
               --kube-context ${{ inputs.kube_context }} \
               --values ${{ inputs.app_values }} \
@@ -49,6 +53,7 @@ jobs:
       - name: Wait for APP rollout to be healthy
         run: |
           ssh ops 'bash -s' <<'ENDSSH'
+          cd ${{ inputs.deploy_path }}
           set -euo pipefail
           timeout=300
           elapsed=0
@@ -83,7 +88,8 @@ jobs:
       - name: Deploy WORKER
         run: |
           ssh ops "\
-            helm upgrade --install activepieces-worker /root/k8n/activepieces-helm/ \
+            cd ${{ inputs.deploy_path }} && \
+            helm upgrade --install activepieces-worker ../activepieces-helm/ \
               --namespace activepieces \
               --kube-context ${{ inputs.kube_context }} \
               --values ${{ inputs.worker_values }} \
@@ -92,6 +98,7 @@ jobs:
       - name: Wait for WORKER to be healthy
         run: |
           ssh ops 'bash -s' <<'ENDSSH'
+          cd ${{ inputs.deploy_path }}
           set -euo pipefail
           if ! kubectl rollout status statefulset/activepieces-worker --context ${{ inputs.kube_context }} \
               -n activepieces --timeout=300s; then
