@@ -73,9 +73,9 @@ export const flowRunMutations = {
               duration: 5000,
             });
           }
-        } else {
-          internalErrorToast();
+          return;
         }
+        internalErrorToast();
       },
     });
   },
