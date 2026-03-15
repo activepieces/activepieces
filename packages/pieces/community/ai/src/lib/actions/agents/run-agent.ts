@@ -16,6 +16,7 @@ import {
   AgentProviderModel,
   ExecutionToolStatus,
   normalizeToolOutputToExecuteResponse,
+  spreadIfDefined,
 } from '@activepieces/shared';
 import { hasToolCall, stepCountIs, streamText } from 'ai';
 import { agentOutputBuilder } from './agent-output-builder';
@@ -23,6 +24,7 @@ import { createAIModel } from '../../common/ai-sdk';
 import { inspect } from 'util';
 import { agentUtils } from './utils';
 import { constructAgentTools } from './tools';
+import { buildWebSearchOptionsProperty, buildWebSearchConfig, WebSearchOptions } from '../../common/web-search';
 
 const agentToolArrayItems: ArraySubProps<boolean> = {
   type: Property.ShortText({
@@ -104,19 +106,40 @@ export const runAgent = createAction({
       required: true,
       defaultValue: 20,
     }),
+    [AgentPieceProps.WEB_SEARCH]: Property.Checkbox({
+      displayName: 'Web Search',
+      required: false,
+      defaultValue: false,
+      description:
+        'Whether to use web search to find information for the AI to use.',
+    }),
+    [AgentPieceProps.WEB_SEARCH_OPTIONS]: buildWebSearchOptionsProperty(
+      (propsValue) => (propsValue['aiProviderModel'] as unknown as AgentProviderModel)?.provider,
+      ['webSearch', 'aiProviderModel'],
+    ),
   },
   async run(context) {
     const { prompt, maxSteps, aiProviderModel } = context.propsValue;
     const agentProviderModel = aiProviderModel as AgentProviderModel
+    const provider = agentProviderModel.provider as AIProviderName;
+    const webSearchEnabled = !!(context.propsValue.webSearch);
+    const webSearchOptions = (context.propsValue.webSearchOptions ?? {}) as WebSearchOptions;
+
+    const { tools: webSearchTools, providerOptions } = buildWebSearchConfig({
+      provider,
+      webSearchEnabled,
+      webSearchOptions,
+    });
 
     const model = await createAIModel({
       modelId: agentProviderModel.model,
-      provider: agentProviderModel.provider as AIProviderName,
+      provider,
       engineToken: context.server.token,
       apiUrl: context.server.apiUrl,
       projectId: context.project.id,
       flowId: context.flows.current.id,
       runId: context.run.id,
+      ...spreadIfDefined('openaiResponsesModel', webSearchEnabled && provider === AIProviderName.OPENAI ? true : undefined),
     });
     const outputBuilder = agentOutputBuilder(prompt);
     const hasStructuredOutput =
@@ -133,6 +156,10 @@ export const runAgent = createAction({
     });
     outputBuilder.setToolMap(toolKeyToAgentTool);
 
+    const allTools = webSearchTools
+      ? { ...tools, ...webSearchTools }
+      : tools;
+
     const errors: { type: string; message: string; details?: unknown }[] = [];
 
     try {
@@ -140,8 +167,9 @@ export const runAgent = createAction({
         model: model,
         system: agentUtils.getPrompts(prompt).system,
         prompt: agentUtils.getPrompts(prompt).prompt,
-        tools,
+        tools: allTools,
         stopWhen: [stepCountIs(maxSteps), hasToolCall(TASK_COMPLETION_TOOL_NAME)],
+        providerOptions,
         onFinish: async () => {
           await Promise.all(mcpClients.map(async (client) => client.close()));
         },
