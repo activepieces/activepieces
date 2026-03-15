@@ -37,7 +37,7 @@ export const projectCollection = createCollection<ProjectWithLimits, string>(
       };
       const response = await api.get<SeekPage<ProjectWithLimits>>(
         '/v1/projects',
-        request,
+        request
       );
       return response.data;
     },
@@ -57,7 +57,7 @@ export const projectCollection = createCollection<ProjectWithLimits, string>(
         };
         await api.post<ProjectWithLimits>(
           `/v1/projects/${original.id}`,
-          request,
+          request
         );
       }
     },
@@ -71,13 +71,13 @@ export const projectCollection = createCollection<ProjectWithLimits, string>(
         await api.delete<void>(`/v1/projects/${original.id}`);
       }
     },
-  }),
+  })
 );
 
 export const projectCollectionUtils = {
   useCreateProject: (
     onSuccess: (project: ProjectWithLimits) => void,
-    onError: (error: Error) => void,
+    onError: (error: Error) => void
   ) => {
     return useMutation({
       mutationFn: (request: CreatePlatformProjectRequest) =>
@@ -93,7 +93,7 @@ export const projectCollectionUtils = {
   },
   useUpdateProject: (
     onSuccess: () => void,
-    onError: (error: Error) => void,
+    onError: (error: Error) => void
   ) => {
     return useMutation({
       mutationFn: ({
@@ -115,8 +115,8 @@ export const projectCollectionUtils = {
       Object.assign(
         draft,
         Object.fromEntries(
-          Object.entries(request).filter(([_, value]) => value !== undefined),
-        ),
+          Object.entries(request).filter(([_, value]) => value !== undefined)
+        )
       );
     });
   },
@@ -128,7 +128,7 @@ export const projectCollectionUtils = {
     if (pathName) {
       const pathNameWithNewProjectId = pathName.replace(
         /\/projects\/\w+/,
-        `/projects/${projectId}`,
+        `/projects/${projectId}`
       );
       window.location.href = pathNameWithNewProjectId;
     }
@@ -142,28 +142,21 @@ export const projectCollectionUtils = {
           .where(({ project }) => eq(project.id, projectId))
           .select(({ project }) => ({ ...project }))
           .findOne(),
-      [projectId],
+      [projectId]
     );
     return {
       project: data!,
     };
   },
   useAll: () => {
-    const currentUserId = authenticationSession.getCurrentUserId();
     return useLiveSuspenseQuery(
       (q) =>
         q
           .from({ project: projectCollection })
-          .where(({ project }) =>
-            or(
-              eq(project.type, ProjectType.TEAM),
-              eq(project.ownerId, currentUserId),
-            ),
-          )
           .orderBy(({ project }) => project.type, 'asc')
           .orderBy(({ project }) => project.created, 'asc')
           .select(({ project }) => ({ ...project })),
-      [currentUserId],
+      []
     );
   },
   useAllPlatformProjects: (filters?: {
@@ -176,7 +169,7 @@ export const projectCollectionUtils = {
 
         if (filters?.displayName) {
           query = query.where(({ project }) =>
-            like(project.displayName, `%${filters.displayName}%`),
+            like(project.displayName, `%${filters.displayName}%`)
           );
         }
 
@@ -189,7 +182,7 @@ export const projectCollectionUtils = {
             const conditions = types.map((t) => eq(project.type, t)) as [
               any,
               any,
-              ...any[],
+              ...any[]
             ];
             return or(...conditions);
           });
@@ -200,7 +193,7 @@ export const projectCollectionUtils = {
           .orderBy(({ project }) => project.created, 'asc')
           .select(({ project }) => ({ ...project }));
       },
-      [filters?.displayName, filters?.type?.join(',')],
+      [filters?.displayName, filters?.type?.join(',')]
     );
   },
   useHasAccessToProject: (projectId: string) => {
@@ -209,7 +202,7 @@ export const projectCollectionUtils = {
         .from({ project: projectCollection })
         .where(({ project }) => eq(project.id, projectId))
         .select(({ project }) => ({ ...project }))
-        .findOne(),
+        .findOne()
     );
     return !isNil(data);
   },
@@ -226,7 +219,7 @@ export const projectHooks = {
       queryKey: ['projects-for-platforms'],
       queryFn: async () => {
         return api.get<ProjectWithLimitsWithPlatform[]>(
-          '/v1/users/projects/platforms',
+          '/v1/users/projects/platforms'
         );
       },
     });
@@ -251,7 +244,7 @@ export const projectHooks = {
       return () => {
         document.removeEventListener(
           'visibilitychange',
-          handleVisibilityChange,
+          handleVisibilityChange
         );
       };
     }, [projectId, embedState.isEmbedded, location.pathname]);
