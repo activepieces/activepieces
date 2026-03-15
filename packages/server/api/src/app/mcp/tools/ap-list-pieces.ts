@@ -32,6 +32,7 @@ export const apListPiecesTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
             includeActions: z.boolean().optional().describe('When true, include action names and descriptions for each piece'),
             includeTriggers: z.boolean().optional().describe('When true, include trigger names and descriptions for each piece'),
         },
+        annotations: { readOnlyHint: true, openWorldHint: false },
         execute: async (args) => {
             try {
                 const params = listPiecesSchema.parse(args ?? {})
