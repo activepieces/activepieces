@@ -43,7 +43,7 @@ async function createBullMQWorker(queueName: string, log: FastifyBaseLogger): Pr
         },
     )
     await worker.waitUntilReady()
-    worker.startStalledCheckTimer()
+    await worker.startStalledCheckTimer()
 
     log.info({ queueName }, '[jobBroker] BullMQ worker initialized')
     return worker
