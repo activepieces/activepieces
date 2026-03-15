@@ -1,4 +1,4 @@
-import { systemUsage } from '@activepieces/server-common'
+import { systemUsage } from '@activepieces/server-utils'
 import { GetSystemHealthChecksResponse } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { databaseConnection } from '../database/database-connection'

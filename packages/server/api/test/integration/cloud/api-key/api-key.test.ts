@@ -67,7 +67,7 @@ describe('API Key API', () => {
 
             const response = await app?.inject({
                 method: 'DELETE',
-                url: `/v1/api-keys/${mockApiKey.id}`,
+                url: `/api/v1/api-keys/${mockApiKey.id}`,
                 headers: { authorization: `Bearer ${testToken}` },
             })
 

@@ -1,9 +1,9 @@
-import { AppSystemProp } from '@activepieces/server-common'
 import { isNil } from '@activepieces/shared'
 import { FastifyReply, FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { system } from '../../../../helper/system/system'
+import { AppSystemProp } from '../../../../helper/system/system-props'
 import { adminPlatformTemplatesCloudController } from './admin-platform-templates-cloud.controller'
 
 const TEMPLATES_API_KEY_HEADER = 'templates-api-key'
