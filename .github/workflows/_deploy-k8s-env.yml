@@ -3,9 +3,6 @@ name: _Deploy K8s Environment
 on:
   workflow_call:
     inputs:
-      deploy_path:
-        required: true
-        type: string
       app_values:
         required: true
         type: string
@@ -13,6 +10,9 @@ on:
         required: true
         type: string
       image_tag:
+        required: true
+        type: string
+      kube_context:
         required: true
         type: string
 
@@ -39,21 +39,21 @@ jobs:
 
       - name: Deploy APP
         run: |
-          ssh ops "cd ${{ inputs.deploy_path }} && \
+          ssh ops "\
             helm upgrade --install activepieces ../activepieces-helm/ \
               --namespace activepieces \
+              --kube-context ${{ inputs.kube_context }} \
               --values ${{ inputs.app_values }} \
               --set image.tag=${{ inputs.image_tag }}"
 
       - name: Wait for APP rollout to be healthy
         run: |
           ssh ops 'bash -s' <<'ENDSSH'
-          cd ${{ inputs.deploy_path }}
           set -euo pipefail
           timeout=300
           elapsed=0
           while [ $elapsed -lt $timeout ]; do
-            PHASE=$(kubectl get rollout activepieces -n activepieces \
+            PHASE=$(kubectl get rollout activepieces -n activepieces --context ${{ inputs.kube_context }} \
               -o jsonpath='{.status.phase}' 2>/dev/null || echo "Unknown")
             [ -z "$PHASE" ] && PHASE="Unknown"
             echo "APP phase: $PHASE"
@@ -61,10 +61,10 @@ jobs:
               Paused|Healthy) exit 0 ;;
               Degraded|Error|Aborted)
                 echo "::error::APP rollout failed: $PHASE"
-                kubectl get pods -n activepieces
-                kubectl argo rollouts get rollout activepieces -n activepieces || true
-                kubectl get events -n activepieces --sort-by='.lastTimestamp' | tail -30
-                kubectl argo rollouts abort activepieces -n activepieces || true
+                kubectl get pods -n activepieces --context ${{ inputs.kube_context }}
+                kubectl argo rollouts get rollout activepieces -n activepieces --context ${{ inputs.kube_context }} || true
+                kubectl get events -n activepieces --sort-by='.lastTimestamp' --context ${{ inputs.kube_context }} | tail -30
+                kubectl argo rollouts abort activepieces -n activepieces --context ${{ inputs.kube_context }} || true
                 exit 1 ;;
             esac
             sleep 10
@@ -75,29 +75,29 @@ jobs:
           ENDSSH
 
       - name: Promote APP
-        run: ssh ops 'cd ${{ inputs.deploy_path }} && kubectl argo rollouts promote activepieces -n activepieces'
+        run: ssh ops 'kubectl argo rollouts promote activepieces -n activepieces --context ${{ inputs.kube_context }}'
 
       - name: Wait for APP promotion to complete
-        run: ssh ops 'cd ${{ inputs.deploy_path }} && kubectl argo rollouts status activepieces -n activepieces --timeout=5m'
+        run: ssh ops 'kubectl argo rollouts status activepieces -n activepieces --context ${{ inputs.kube_context }} --timeout=5m'
 
       - name: Deploy WORKER
         run: |
-          ssh ops "cd ${{ inputs.deploy_path }} && \
+          ssh ops "\
             helm upgrade --install activepieces-worker ../activepieces-helm/ \
               --namespace activepieces \
+              --kube-context ${{ inputs.kube_context }} \
               --values ${{ inputs.worker_values }} \
               --set image.tag=${{ inputs.image_tag }}"
 
       - name: Wait for WORKER to be healthy
         run: |
           ssh ops 'bash -s' <<'ENDSSH'
-          cd ${{ inputs.deploy_path }}
           set -euo pipefail
-          if ! kubectl rollout status statefulset/activepieces-worker \
+          if ! kubectl rollout status statefulset/activepieces-worker --context ${{ inputs.kube_context }} \
               -n activepieces --timeout=300s; then
-            kubectl get pods -n activepieces
-            kubectl describe statefulset activepieces-worker -n activepieces || true
-            kubectl get events -n activepieces --sort-by='.lastTimestamp' | tail -30
+            kubectl get pods -n activepieces --context ${{ inputs.kube_context }}
+            kubectl describe statefulset activepieces-worker -n activepieces --context ${{ inputs.kube_context }} || true
+            kubectl get events -n activepieces --sort-by='.lastTimestamp' --context ${{ inputs.kube_context }} | tail -30
             exit 1
           fi
           ENDSSH

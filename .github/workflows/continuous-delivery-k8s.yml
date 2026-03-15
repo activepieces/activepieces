@@ -84,10 +84,10 @@ jobs:
       cancel-in-progress: false   # never cancel mid-flight helm upgrade
     uses: ./.github/workflows/_deploy-k8s-env.yml
     with:
-      deploy_path: /root/k8n/staging
       app_values: ./stg-app-values.yaml
       worker_values: ./stg-worker-values.yaml
       image_tag: ${{ needs.build-image.outputs.image_tag }}
+      kube_context: stg
     secrets: inherit
 
   # --- PROMOTION JOBS (run on schedule OR manual "promote-to-production") ---
@@ -124,7 +124,7 @@ jobs:
         id: tag
         run: |
           TAG=$(ssh ops 'bash -s' <<'ENDSSH'
-          kubectl --context stg get rollout activepieces -n activepieces \
+          kubectl get rollout activepieces -n activepieces --context stg \
             -o jsonpath='{.spec.template.spec.containers[0].image}' \
             | awk -F: '{print $NF}'
           ENDSSH
@@ -150,10 +150,10 @@ jobs:
       cancel-in-progress: false
     uses: ./.github/workflows/_deploy-k8s-env.yml
     with:
-      deploy_path: /root/k8n/prod
       app_values: ./prod-app-values.yaml
       worker_values: ./prod-worker-values.yaml
       image_tag: ${{ needs.get-prod-image-tag.outputs.image_tag }}
+      kube_context: prod
     secrets: inherit
 
   # --- WEEKLY RELEASE (runs on Sunday schedule or manual "weekly-release") ---
