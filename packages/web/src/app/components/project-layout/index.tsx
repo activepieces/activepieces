@@ -121,9 +121,7 @@ function ProjectDashboardLayoutInner({
             {!hideHeader && (
               <ProjectDashboardLayoutHeader key={currentProjectId} />
             )}
-            <div className="flex-1 overflow-auto scrollbar-none">
-              {children}
-            </div>
+            <div className="flex-1 overflow-auto">{children}</div>
           </div>
         </div>
       </SidebarInset>

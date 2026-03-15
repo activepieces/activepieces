@@ -395,10 +395,8 @@
   }
 
   /*
-   * Global sleek scrollbar — applied to all scrollable elements.
-   * Uses a 6px-wide track with a pill-shaped thumb that fades in on hover.
-   * Matches the Radix ScrollArea thumb colour (--border) so every scrollbar
-   * looks consistent whether it's a native overflow or a ScrollArea.
+   * Global sleek scrollbar — 6px pill thumb, hidden at rest, fades in on hover.
+   * Consistent across all overflow containers. scrollbar-none opts out.
    */
   *::-webkit-scrollbar {
     width: 6px;
@@ -410,9 +408,13 @@
   }
 
   *::-webkit-scrollbar-thumb {
-    background-color: var(--border);
+    background-color: transparent;
     border-radius: 9999px;
-    transition: background-color 0.15s;
+    transition: background-color 0.2s;
+  }
+
+  *:hover::-webkit-scrollbar-thumb {
+    background-color: var(--border);
   }
 
   *::-webkit-scrollbar-thumb:hover {
@@ -423,9 +425,13 @@
     background: transparent;
   }
 
-  /* Firefox */
+  /* Firefox — thin track, hidden at rest, visible on hover */
   * {
     scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+  }
+
+  *:hover {
     scrollbar-color: var(--border) transparent;
   }
 
