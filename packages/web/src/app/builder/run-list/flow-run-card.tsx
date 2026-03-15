@@ -26,6 +26,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuContent,
 } from '@/components/ui/dropdown-menu';
+import { internalErrorToast } from '@/components/ui/sonner';
 import {
   Tooltip,
   TooltipContent,
@@ -34,11 +35,10 @@ import {
 import { flowRunUtils } from '@/features/flow-runs';
 import { flowRunMutations } from '@/features/flow-runs/hooks/flow-run-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
+import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/format-utils';
 import { cn } from '@/lib/utils';
-import { api } from '@/lib/api';
-import { internalErrorToast } from '@/components/ui/sonner';
 
 type FlowRunCardProps = {
   run: FlowRun;
@@ -58,30 +58,13 @@ const FlowRunCard = React.memo(
 
     const [isRetryDropdownOpen, setIsRetryDropdownOpen] =
       useState<boolean>(false);
-
     const { mutate: retryRun, isPending: isRetryingRun } =
       flowRunMutations.useRetryRun({
         onSuccess: ({ run }) => {
           refetchRuns();
           navigate(`/runs/${run.id}`);
         },
-        onError: (error: unknown) => {
-          if (api.isError(error)) {
-            const apError = error.response?.data as ApErrorParams;
-            if (apError.code === ErrorCode.FLOW_RUN_RETRY_OUTSIDE_RETENTION) {
-              toast.error(t('Retry failed'), {
-                description: t('Retry is only available for {failedJobRetentionDays} after a run fails.', {
-                  failedJobRetentionDays: apError.params.failedJobRetentionDays,
-                }),
-                duration: 5000,
-              });
-            }
-          } else {
-            internalErrorToast();
-          }
-        },
       });
-
     return (
       <CardListItem
         className={cn('px-3 group', {

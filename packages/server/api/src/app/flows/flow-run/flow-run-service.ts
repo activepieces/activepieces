@@ -12,6 +12,7 @@ import {
     FlowRun,
     FlowRunId,
     FlowRunStatus,
+    FlowRunWithRetryError,
     FlowVersionId,
     isFlowRunStateTerminal,
     isNil,
@@ -127,23 +128,23 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         const { data, cursor: newCursor } = await paginator.paginate(query)
         return paginationHelper.createPage<FlowRun>(data, newCursor)
     },
-    async retry({ flowRunId, strategy, projectId }: RetryParams): Promise<FlowRun | null> {
+    async retry({ flowRunId, strategy, projectId }: RetryParams): Promise<FlowRun> {
         const oldFlowRun = await flowRunService(log).getOnePopulatedOrThrow({
             id: flowRunId,
             projectId,
         })
         log.info({ runId: flowRunId, flowId: oldFlowRun.flowId, strategy }, 'Flow run retry initiated')
 
-        const redisFailedJobRetentionDays = system.getNumberOrThrow(AppSystemProp.REDIS_FAILED_JOB_RETENTION_DAYS)
+        const retentionDays = system.getNumberOrThrow(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS)
         if (
             isFlowRunStateTerminal({ status: oldFlowRun.status, ignoreInternalError: false }) &&
-            isOutsideRetentionWindow(oldFlowRun.finishTime, redisFailedJobRetentionDays)
+            isOutsideRetentionWindow(oldFlowRun.created, retentionDays)
         ) {
             throw new ActivepiecesError({
                 code: ErrorCode.FLOW_RUN_RETRY_OUTSIDE_RETENTION,
                 params: {
                     flowRunId: oldFlowRun.id,
-                    failedJobRetentionDays: redisFailedJobRetentionDays,
+                    failedJobRetentionDays: retentionDays,
                 },
             })
         }
@@ -223,14 +224,27 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             archivedAt: new Date().toISOString(),
         })
     },
-    async bulkRetry(params: BulkRetryParams): Promise<(FlowRun | null)[]> {
+    async bulkRetry(params: BulkRetryParams): Promise<FlowRunWithRetryError[]> {
         const filteredFlowRuns = await filterFlowRunsAndApplyFilters(params)
         const limit = pLimit(10)
-        return Promise.all(
+        const results = await Promise.allSettled(
             filteredFlowRuns.map(flowRun =>
                 limit(() => this.retry({ flowRunId: flowRun.id, strategy: params.strategy, projectId: params.projectId })),
             ),
         )
+        return results.map((result, i) => {
+            if (result.status === 'fulfilled') {
+                return result.value
+            }
+            const error = result.reason instanceof ActivepiecesError ? result.reason : undefined
+            return {
+                ...filteredFlowRuns[i],
+                error: {
+                    errorCode: error?.error.code ?? ErrorCode.INTERNAL_SERVER_ERROR,
+                    errorMessage: error?.message ?? 'Internal server error',
+                },
+            }
+        })
     },
     async resume({
         flowRunId,
@@ -239,7 +253,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         progressUpdateType,
         executionType,
         checkRequestId,
-    }: ResumeWebhookParams): Promise<FlowRun | null> {
+    }: ResumeWebhookParams): Promise<FlowRun> {
         log.info({
             runId: flowRunId,
         }, 'Resuming flow run')

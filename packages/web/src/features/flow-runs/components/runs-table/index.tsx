@@ -1,12 +1,11 @@
 import {
-  ErrorCode,
   FlowRetryStrategy,
   FlowRun,
   FlowRunStatus,
+  FlowRunWithRetryError,
   isFailedState,
   isFlowRunStateTerminal,
   Permission,
-  ApErrorParams,
 } from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
@@ -49,12 +48,11 @@ import { formatUtils } from '@/lib/format-utils';
 import { useNewWindow } from '@/lib/navigation-utils';
 
 import { runsTableColumns } from './columns';
+import { FailedRetryRunsDialog } from './failed-retry-runs-dialog';
 import {
   RetriedRunsSnackbar,
   RUN_IDS_QUERY_PARAM,
 } from './retried-runs-snackbar';
-import { api } from '@/lib/api';
-import { internalErrorToast } from '@/components/ui/sonner';
 
 type SelectedRow = {
   id: string;
@@ -68,6 +66,10 @@ export const RunsTable = () => {
 
   const projectId = authenticationSession.getProjectId()!;
   const [retriedRunsIds, setRetriedRunsIds] = useState<string[]>([]);
+  const [failedRetryRuns, setFailedRetryRuns] = useState<
+    Required<FlowRunWithRetryError>[]
+  >([]);
+  const [failedRetryDialogOpen, setFailedRetryDialogOpen] = useState(false);
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['flow-run-table', searchParams.toString(), projectId],
     staleTime: 0,
@@ -188,20 +190,18 @@ export const RunsTable = () => {
         });
       }
     },
-    onError: (error) => {
-      if (api.isError(error)) {
-        const apError = error.response?.data as ApErrorParams;
-        if (apError.code === ErrorCode.FLOW_RUN_RETRY_OUTSIDE_RETENTION) {
-          toast.error(t('Retry failed'), {
-            description: t('Retry is only available for {failedJobRetentionDays} after a run fails.', {
-              failedJobRetentionDays: apError.params.failedJobRetentionDays,
-            }),
-            duration: 5000,
-          });
-        }
-      } else {
-        internalErrorToast();
-      }
+    onPartialFailure: (failedRuns) => {
+      setFailedRetryRuns(failedRuns);
+      toast.error(
+        t('{count} run(s) failed to retry', { count: failedRuns.length }),
+        {
+          action: {
+            label: t('More'),
+            onClick: () => setFailedRetryDialogOpen(true),
+          },
+          duration: 15000,
+        },
+      );
     },
   });
 
@@ -507,6 +507,7 @@ export const RunsTable = () => {
             key="retried-runs-filter"
             variant="outline"
             onClick={() => {
+              setSearchParams({});
               navigate(authenticationSession.appendProjectRoutePrefix(`/runs`));
             }}
           >
@@ -538,6 +539,11 @@ export const RunsTable = () => {
       <RetriedRunsSnackbar
         retriedRunsIds={retriedRunsIds}
         clearRetriedRuns={() => setRetriedRunsIds([])}
+      />
+      <FailedRetryRunsDialog
+        open={failedRetryDialogOpen}
+        onOpenChange={setFailedRetryDialogOpen}
+        failedRuns={failedRetryRuns}
       />
     </div>
   );
