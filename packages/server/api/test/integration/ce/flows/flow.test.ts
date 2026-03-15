@@ -22,7 +22,6 @@ import {
     createMockFlow,
     createMockFlowVersion,
     createMockPieceMetadata,
-    mockAndSaveBasicSetup,
 } from '../../../helpers/mocks'
 import { createTestContext } from '../../../helpers/test-context'
 
