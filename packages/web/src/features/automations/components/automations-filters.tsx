@@ -131,7 +131,12 @@ export const AutomationsFilters = ({
   });
 
   return (
-    <div className={cn('overflow-x-auto mb-4', DASHBOARD_CONTENT_PADDING_X)}>
+    <div
+      className={cn(
+        'sticky top-0 z-30 overflow-x-auto bg-background py-3 border-b',
+        DASHBOARD_CONTENT_PADDING_X,
+      )}
+    >
       <div className="flex items-center justify-between gap-4 min-w-max">
         <div className="flex items-center gap-2">
           <div className="relative">
@@ -224,7 +229,7 @@ export const AutomationsFilters = ({
             <Button
               variant="link"
               size="sm"
-              className="h-9 text-sm gap-1 text-muted-foreground hover:text-foreground"
+              className="text-sm gap-1 text-muted-foreground hover:text-foreground"
               onClick={() => {
                 onClearAllFilters();
                 onFilterChange?.();
@@ -245,7 +250,6 @@ export const AutomationsFilters = ({
                   iconSize={16}
                   variant="outline"
                   size="sm"
-                  className="h-9"
                 >
                   {t('Import')}
                 </AnimatedIconButton>
@@ -281,12 +285,7 @@ export const AutomationsFilters = ({
 
           <DropdownMenu open={isCreatingFlow || isCreatingTable || undefined}>
             <DropdownMenuTrigger asChild>
-              <AnimatedIconButton
-                icon={PlusIcon}
-                iconSize={16}
-                size="sm"
-                className="h-9"
-              >
+              <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm">
                 {t('Create New')}
               </AnimatedIconButton>
             </DropdownMenuTrigger>

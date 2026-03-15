@@ -78,7 +78,7 @@ export const AutomationsTable = ({
   return (
     <div className="overflow-x-auto">
       <div className="min-w-[1000px]">
-        <div className="flex items-center h-10 text-xs border-b border-t font-medium text-foreground bg-background">
+        <div className="flex items-center h-8 text-xs border-b font-medium text-foreground bg-muted/50">
           <div className="w-10 shrink-0 pl-4 pr-1">
             <Checkbox
               checked={
@@ -118,8 +118,8 @@ export const AutomationsTable = ({
         {isLoading ? (
           <div className="p-2">
             {Array.from({ length: 10 }).map((_, i) => (
-              <div key={i} className="w-full h-10 mb-4 rounded-sm">
-                <Skeleton className="w-full min-h-10" />
+              <div key={i} className="w-full h-9 mb-3 rounded-sm">
+                <Skeleton className="w-full min-h-9" />
               </div>
             ))}
           </div>
