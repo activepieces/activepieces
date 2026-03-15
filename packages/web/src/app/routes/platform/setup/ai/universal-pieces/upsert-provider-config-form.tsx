@@ -253,7 +253,7 @@ export const UpsertProviderConfigForm = ({
 
           <FormField
             control={form.control}
-            name={'config.defaultHeaders' as any}
+            name="config.defaultHeaders"
             render={({ field }) => (
               <div className="space-y-3">
                 <Label className="text-sm font-medium">
