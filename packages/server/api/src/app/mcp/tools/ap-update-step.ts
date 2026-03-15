@@ -38,7 +38,7 @@ export const apUpdateStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
             loopItems: z.string().optional().describe('For LOOP steps: expression for the items to iterate over'),
             skip: z.boolean().optional().describe('Whether to skip this step during execution'),
         },
-        annotations: { destructiveHint: false, idempotentHint: true },
+        annotations: { destructiveHint: false, idempotentHint: true, openWorldHint: false },
         execute: async (args) => {
             const { flowId, stepName, displayName, input, auth, actionName, loopItems, skip } = updateStepInput.parse(args)
 

@@ -49,7 +49,7 @@ export const apManageNotesTool = (mcp: McpServer, log: FastifyBaseLogger): McpTo
         },
         // destructiveHint is false because ADD and UPDATE are the common paths;
         // DELETE is possible but clients shouldn't over-restrict the whole tool.
-        annotations: { destructiveHint: false, idempotentHint: false },
+        annotations: { destructiveHint: false, idempotentHint: false, openWorldHint: false },
         execute: async (args) => {
             const { flowId, operation: op, noteId, content, color, position, size } = manageNotesInput.parse(args)
 

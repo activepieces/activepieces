@@ -49,7 +49,7 @@ export const apListConnectionsTool = (mcp: McpServer, log: FastifyBaseLogger): M
             displayName: listConnectionsSchema.shape.displayName,
             status: listConnectionsSchema.shape.status,
         },
-        annotations: { readOnlyHint: true },
+        annotations: { readOnlyHint: true, openWorldHint: false },
         execute: async (args) => {
             try {
                 const params = listConnectionsSchema.parse(args ?? {})
