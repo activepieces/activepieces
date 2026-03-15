@@ -1,4 +1,4 @@
-import { Type } from "@sinclair/typebox";
+import { z } from "zod";
 import { StaticDropdownProperty, StaticMultiSelectDropdownProperty } from "./dropdown/static-dropdown";
 import { ShortTextProperty } from "./text-property";
 import { BasePropertySchema, TPropertyValue } from "./common";
@@ -8,7 +8,7 @@ import { JsonProperty } from "./json-property";
 import { ArrayProperty } from "./array-property";
 import { ExtractPieceAuthPropertyTypeForMethods, InputPropertyMap, PieceAuthProperty } from "..";
 
-export const DynamicProp = Type.Union([
+export const DynamicProp = z.union([
   ShortTextProperty,
   StaticDropdownProperty,
   JsonProperty,
@@ -16,6 +16,7 @@ export const DynamicProp = Type.Union([
   StaticMultiSelectDropdownProperty,
 ])
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type DynamicProp =
   | ShortTextProperty<boolean>
   | StaticDropdownProperty<any, boolean>
@@ -23,17 +24,15 @@ export type DynamicProp =
   | ArrayProperty<boolean>
   | StaticMultiSelectDropdownProperty<any, boolean>;
 
-export const DynamicPropsValue = Type.Record(Type.String(), DynamicProp);
+export const DynamicPropsValue = z.record(z.string(), DynamicProp);
 
 export type DynamicPropsValue = Record<string, DynamicProp['valueSchema']>;
 
-export const DynamicProperties = Type.Composite([
-  Type.Object({
-    refreshers: Type.Array(Type.String()),
-  }),
-  BasePropertySchema,
-  TPropertyValue(Type.Unknown(), PropertyType.DYNAMIC),
-])
+export const DynamicProperties = z.object({
+  refreshers: z.array(z.string()),
+  ...BasePropertySchema.shape,
+  ...TPropertyValue(z.unknown(), PropertyType.DYNAMIC).shape,
+})
 
 export type DynamicProperties<R extends boolean, PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | undefined = undefined> = BasePropertySchema &
 {

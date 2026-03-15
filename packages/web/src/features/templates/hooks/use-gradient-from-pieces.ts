@@ -219,5 +219,5 @@ export const useGradientFromPieces = (
     return buildGradientFromColors(allColors);
   }, [colorQueries, logosToProcess.length]);
 
-  return gradient;
+  return { gradient, piecesMetadata: uniqueMetadata };
 };

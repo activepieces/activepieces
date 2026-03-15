@@ -1,15 +1,14 @@
-import { Omit, Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
 import { Note } from '../../automation/flows'
 import { FlowVersion } from '../../automation/flows/flow-version'
-import { TableState } from '../../automation/project-release/project-state'
 import { BaseModelSchema, ColorHex, Metadata, Nullable } from '../../core/common'
 
-export const TemplateTag = Type.Object({
-    title: Type.String(),
+export const TemplateTag = z.object({
+    title: z.string(),
     color: ColorHex,
-    icon: Type.Optional(Type.String()),
+    icon: z.string().optional(),
 })
-export type TemplateTag = Static<typeof TemplateTag>
+export type TemplateTag = z.infer<typeof TemplateTag>
 
 
 export enum TemplateType {
@@ -18,15 +17,23 @@ export enum TemplateType {
     CUSTOM = 'CUSTOM',
 }
 
-export const FlowVersionTemplate = Type.Composite([Type.Omit(
-    FlowVersion,
-    ['id', 'created', 'updated', 'flowId', 'state', 'updatedBy', 'agentIds', 'connectionIds', 'backupFiles', 'notes'],
-), Type.Object({
-    description: Type.Optional(Type.String()),
+export const FlowVersionTemplate = FlowVersion.omit({
+    id: true,
+    created: true,
+    updated: true,
+    flowId: true,
+    state: true,
+    updatedBy: true,
+    agentIds: true,
+    connectionIds: true,
+    backupFiles: true,
+    notes: true,
+}).extend({
+    description: z.string().optional(),
     //notes were optional for old json templates
-    notes: Type.Optional(Type.Array(Note)),
-})])
-export type FlowVersionTemplate = Static<typeof FlowVersionTemplate>
+    notes: z.array(Note).optional(),
+})
+export type FlowVersionTemplate = z.infer<typeof FlowVersionTemplate>
 
 export enum TemplateStatus {
     PUBLISHED = 'PUBLISHED',
@@ -37,38 +44,52 @@ export enum TableImportDataType {
     CSV = 'CSV',
 }
 
-export const TableDataState = Type.Object({
-    type: Type.Enum(TableImportDataType),
-    rows: Type.Array(Type.Array(Type.Object({
-        fieldId: Type.String(),
-        value: Type.String(),
+export const TableDataState = z.object({
+    type: z.nativeEnum(TableImportDataType),
+    rows: z.array(z.array(z.object({
+        fieldId: z.string(),
+        value: z.string(),
     }))),
 })
-export type TableDataState = Static<typeof TableDataState>
+export type TableDataState = z.infer<typeof TableDataState>
 
-export const TableTemplate = Type.Composite([Type.Omit(TableState, ['id', 'created', 'updated']), Type.Object({
+export const TableTemplate = z.object({
+    name: z.string(),
+    externalId: z.string(),
+    fields: z.array(z.object({
+        name: z.string(),
+        type: z.string(),
+        data: z.object({
+            options: z.array(z.object({
+                value: z.string(),
+            })),
+        }).nullable().optional(),
+        externalId: z.string(),
+    })),
+    status: Nullable(z.string()),
+    trigger: Nullable(z.string()),
     data: Nullable(TableDataState),
-})])
-export type TableTemplate = Static<typeof TableTemplate>
-
-export const Template = Type.Object({
-    ...BaseModelSchema,
-    name: Type.String(),
-    type: Type.Enum(TemplateType),
-    summary: Type.String(),
-    description: Type.String(),
-    tags: Type.Array(TemplateTag),
-    blogUrl: Nullable(Type.String()),
-    metadata: Nullable(Metadata),
-    author: Type.String(),
-    categories: Type.Array(Type.String()),
-    pieces: Type.Array(Type.String()),
-    platformId: Nullable(Type.String()),
-    flows: Type.Optional(Type.Array(FlowVersionTemplate)),
-    tables: Type.Optional(Type.Array(TableTemplate)),
-    status: Type.Enum(TemplateStatus),
 })
-export type Template = Static<typeof Template>
+export type TableTemplate = z.infer<typeof TableTemplate>
 
-export const SharedTemplate = Omit(Template, ['platformId', 'id', 'created', 'updated'])
-export type SharedTemplate = Static<typeof SharedTemplate>
+export const Template = z.object({
+    ...BaseModelSchema,
+    name: z.string(),
+    type: z.nativeEnum(TemplateType),
+    summary: z.string(),
+    description: z.string(),
+    tags: z.array(TemplateTag),
+    blogUrl: Nullable(z.string()),
+    metadata: Nullable(Metadata),
+    author: z.string(),
+    categories: z.array(z.string()),
+    pieces: z.array(z.string()),
+    platformId: Nullable(z.string()),
+    flows: z.array(FlowVersionTemplate).optional(),
+    tables: z.array(TableTemplate).optional(),
+    status: z.nativeEnum(TemplateStatus),
+})
+export type Template = z.infer<typeof Template>
+
+export const SharedTemplate = Template.omit({ platformId: true, id: true, created: true, updated: true })
+export type SharedTemplate = z.infer<typeof SharedTemplate>

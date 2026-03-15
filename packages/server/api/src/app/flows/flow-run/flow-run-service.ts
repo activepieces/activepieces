@@ -132,6 +132,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             id: flowRunId,
             projectId,
         })
+        log.info({ runId: flowRunId, flowId: oldFlowRun.flowId, strategy }, 'Flow run retry initiated')
 
         const redisFailedJobRetentionDays = system.getNumberOrThrow(AppSystemProp.REDIS_FAILED_JOB_RETENTION_DAYS)
         if (
@@ -169,7 +170,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                 return this.start({
                     flowId: oldFlowRun.flowId,
                     payload,
-                    platformId: await projectService.getPlatformId(oldFlowRun.projectId),
+                    platformId: await projectService(log).getPlatformId(oldFlowRun.projectId),
                     executionType: ExecutionType.BEGIN,
                     progressUpdateType: ProgressUpdateType.NONE,
                     synchronousHandlerId: undefined,
@@ -200,7 +201,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         log.info({
             flowRunsCount: flowRuns.length,
             childFlowCount: childFlows.length,
-        }, '[cancelChildFlows] Found cancellable descendant flows (paused/queued)')
+        }, 'Found cancellable descendant flows')
 
         const canceChildlPromises = await Promise.allSettled(childFlows.map(flowRun => cancelSingleRun(log, flowRun, platformId)))
         if (cancelParentFlowRuns.some(r => r.status === 'rejected')) {
@@ -241,7 +242,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
     }: ResumeWebhookParams): Promise<FlowRun | null> {
         log.info({
             runId: flowRunId,
-        }, '[flowRunService#resume] Adding flow run to queue')
+        }, 'Resuming flow run')
 
         const flowRun = await queryBuilderForFlowRun(flowRunRepo()).where({ id: flowRunId }).getOne()
 
@@ -259,7 +260,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
 
         const pauseMetadata = flowRun.pauseMetadata
         const matchRequestId = isNil(pauseMetadata) || (pauseMetadata.type === PauseType.WEBHOOK && requestId === pauseMetadata.requestId)
-        const platformId = await projectService.getPlatformId(flowRun.projectId)
+        const platformId = await projectService(log).getPlatformId(flowRun.projectId)
         if (matchRequestId || !checkRequestId) {
             return addToQueue({
                 payload,
@@ -330,6 +331,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
 
                 span.setAttribute('flowRun.queued', true)
                 await flowRunSideEffects(log).onStart(newFlowRun)
+                log.info({ runId: newFlowRun.id, flowId, projectId, executionType }, 'Flow run started')
                 return newFlowRun
             }
             finally {
@@ -363,7 +365,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             executionType: ExecutionType.BEGIN,
             synchronousHandlerId: undefined,
             httpRequestId: undefined,
-            platformId: await projectService.getPlatformId(projectId),
+            platformId: await projectService(log).getPlatformId(projectId),
             executeTrigger: false,
             progressUpdateType: ProgressUpdateType.TEST_FLOW,
             sampleData: !isNil(stepNameToTest) ? await sampleDataService(log).getSampleDataForFlow(projectId, flowVersion, SampleDataFileType.OUTPUT) : undefined,
@@ -388,7 +390,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             executionType: ExecutionType.BEGIN,
             synchronousHandlerId: undefined,
             httpRequestId: undefined,
-            platformId: await projectService.getPlatformId(projectId),
+            platformId: await projectService(log).getPlatformId(projectId),
             executeTrigger: false,
             progressUpdateType: ProgressUpdateType.TEST_FLOW,
             sampleData: undefined,
@@ -460,7 +462,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         await addToQueue({
             payload,
             flowRun,
-            platformId: await projectService.getPlatformId(flowRun.projectId),
+            platformId: await projectService(log).getPlatformId(flowRun.projectId),
             synchronousHandlerId,
             httpRequestId: requestId,
             executeTrigger: false,
@@ -487,8 +489,9 @@ async function cancelSingleRun(log: FastifyBaseLogger, flowRun: FlowRun, platfor
         status: FlowRunStatus.CANCELED,
     })
     log.info({
-        flowRunId: flowRun.id,
-    }, '[cancelFlowRuns] Canceled flow run')
+        runId: flowRun.id,
+        flowId: flowRun.flowId,
+    }, 'Flow run cancelled')
 }
 
 async function getAllChildRuns(parentRunIds: string[]): Promise<FlowRun[]> {

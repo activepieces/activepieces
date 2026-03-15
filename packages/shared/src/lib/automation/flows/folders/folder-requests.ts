@@ -1,30 +1,30 @@
-import { Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
 import { Cursor } from '../../../core/common/seek-page'
 
-export const CreateFolderRequest = Type.Object({
-    displayName: Type.String(),
-    projectId: Type.String(),
+export const CreateFolderRequest = z.object({
+    displayName: z.string(),
+    projectId: z.string(),
 })
 
-export type CreateFolderRequest = Static<typeof CreateFolderRequest>
+export type CreateFolderRequest = z.infer<typeof CreateFolderRequest>
 
-export const UpdateFolderRequest = Type.Object({
-    displayName: Type.String(),
+export const UpdateFolderRequest = z.object({
+    displayName: z.string(),
 })
 
-export type UpdateFolderRequest = Static<typeof UpdateFolderRequest>
+export type UpdateFolderRequest = z.infer<typeof UpdateFolderRequest>
 
 
-export const DeleteFolderRequest = Type.Object({
-    id: Type.String(),
+export const DeleteFolderRequest = z.object({
+    id: z.string(),
 })
 
-export type DeleteFlowRequest = Static<typeof DeleteFolderRequest>
+export type DeleteFlowRequest = z.infer<typeof DeleteFolderRequest>
 
-export const ListFolderRequest = Type.Object({
-    limit: Type.Optional(Type.Number({})),
-    cursor: Type.Optional(Type.String({})),
-    projectId: Type.String(),
+export const ListFolderRequest = z.object({
+    limit: z.coerce.number().optional(),
+    cursor: z.string().optional(),
+    projectId: z.string(),
 })
 
-export type ListFolderRequest = Omit<Static<typeof ListFolderRequest>, 'cursor'> & { cursor: Cursor | undefined }
+export type ListFolderRequest = Omit<z.infer<typeof ListFolderRequest>, 'cursor'> & { cursor: Cursor | undefined }

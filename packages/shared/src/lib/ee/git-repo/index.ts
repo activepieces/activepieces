@@ -1,25 +1,25 @@
-import { Static, Type } from '@sinclair/typebox'
-import { BaseModelSchema } from '../../core/common/base-model'
+import { z } from 'zod'
+import { BaseModelSchema, Nullable } from '../../core/common/base-model'
 
 export enum GitBranchType {
     PRODUCTION = 'PRODUCTION',
     DEVELOPMENT = 'DEVELOPMENT',
 }
 
-export const GitRepo = Type.Object({
+export const GitRepo = z.object({
     ...BaseModelSchema,
-    remoteUrl: Type.String(),
-    branch: Type.String(),
-    branchType: Type.Enum(GitBranchType),
-    projectId: Type.String(),
-    sshPrivateKey: Type.String(),
-    slug: Type.String(),
+    remoteUrl: z.string(),
+    branch: z.string(),
+    branchType: z.nativeEnum(GitBranchType),
+    projectId: z.string(),
+    sshPrivateKey: Nullable(z.string()),
+    slug: z.string(),
 })
 
-export type GitRepo = Static<typeof GitRepo>
+export type GitRepo = z.infer<typeof GitRepo>
 
-export const GitRepoWithoutSensitiveData = Type.Omit(GitRepo, ['sshPrivateKey'])
-export type GitRepoWithoutSensitiveData = Static<typeof GitRepoWithoutSensitiveData>
+export const GitRepoWithoutSensitiveData = GitRepo.omit({ sshPrivateKey: true })
+export type GitRepoWithoutSensitiveData = z.infer<typeof GitRepoWithoutSensitiveData>
 
 export enum GitPushOperationType {
     PUSH_FLOW = 'PUSH_FLOW',
@@ -29,55 +29,39 @@ export enum GitPushOperationType {
     PUSH_EVERYTHING = 'PUSH_EVERYTHING',
 }
 
-export const PushFlowsGitRepoRequest = Type.Object({
-    type: Type.Union([Type.Literal(GitPushOperationType.PUSH_FLOW), Type.Literal(GitPushOperationType.DELETE_FLOW)]),
-    commitMessage: Type.String({
-        minLength: 1,
-    }),
-    externalFlowIds: Type.Array(Type.String()),
+export const PushFlowsGitRepoRequest = z.object({
+    type: z.union([z.literal(GitPushOperationType.PUSH_FLOW), z.literal(GitPushOperationType.DELETE_FLOW)]),
+    commitMessage: z.string().min(1),
+    externalFlowIds: z.array(z.string()),
 })
 
-export type PushFlowsGitRepoRequest = Static<typeof PushFlowsGitRepoRequest>
+export type PushFlowsGitRepoRequest = z.infer<typeof PushFlowsGitRepoRequest>
 
-export const PushTablesGitRepoRequest = Type.Object({
-    type: Type.Union([Type.Literal(GitPushOperationType.PUSH_TABLE), Type.Literal(GitPushOperationType.DELETE_TABLE)]),
-    commitMessage: Type.String({
-        minLength: 1,
-    }),
-    externalTableIds: Type.Array(Type.String()),
+export const PushTablesGitRepoRequest = z.object({
+    type: z.union([z.literal(GitPushOperationType.PUSH_TABLE), z.literal(GitPushOperationType.DELETE_TABLE)]),
+    commitMessage: z.string().min(1),
+    externalTableIds: z.array(z.string()),
 })
 
-export type PushTablesGitRepoRequest = Static<typeof PushTablesGitRepoRequest>
+export type PushTablesGitRepoRequest = z.infer<typeof PushTablesGitRepoRequest>
 
-export const PushEverythingGitRepoRequest = Type.Object({
-    type: Type.Literal(GitPushOperationType.PUSH_EVERYTHING),
-    commitMessage: Type.String({
-        minLength: 1,
-    }),
+export const PushEverythingGitRepoRequest = z.object({
+    type: z.literal(GitPushOperationType.PUSH_EVERYTHING),
+    commitMessage: z.string().min(1),
 })
-export type PushEverythingGitRepoRequest = Static<typeof PushEverythingGitRepoRequest>
+export type PushEverythingGitRepoRequest = z.infer<typeof PushEverythingGitRepoRequest>
 
-export const PushGitRepoRequest = Type.Union([PushFlowsGitRepoRequest, PushTablesGitRepoRequest, PushEverythingGitRepoRequest])
+export const PushGitRepoRequest = z.union([PushFlowsGitRepoRequest, PushTablesGitRepoRequest, PushEverythingGitRepoRequest])
 
-export type PushGitRepoRequest = Static<typeof PushGitRepoRequest>
+export type PushGitRepoRequest = z.infer<typeof PushGitRepoRequest>
 
-export const ConfigureRepoRequest = Type.Object({
-    projectId: Type.String({
-        minLength: 1,
-    }),
-    remoteUrl: Type.String({
-        pattern: '^git@',
-    }),
-    branch: Type.String({
-        minLength: 1,
-    }),
-    branchType: Type.Enum(GitBranchType),
-    sshPrivateKey: Type.String({
-        minLength: 1,
-    }),
-    slug: Type.String({
-        minLength: 1,
-    }),
+export const ConfigureRepoRequest = z.object({
+    projectId: z.string().min(1),
+    remoteUrl: z.string().regex(/^git@/),
+    branch: z.string().min(1),
+    branchType: z.nativeEnum(GitBranchType),
+    sshPrivateKey: z.string().min(1),
+    slug: z.string().min(1),
 })
 
-export type ConfigureRepoRequest = Static<typeof ConfigureRepoRequest>
+export type ConfigureRepoRequest = z.infer<typeof ConfigureRepoRequest>

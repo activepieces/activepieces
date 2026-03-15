@@ -1,70 +1,45 @@
 import { SigningKey } from '@activepieces/shared';
-import { useQuery } from '@tanstack/react-query';
-import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Key, Plus, Trash, Hash, Tag, Clock } from 'lucide-react';
-import { Trans } from 'react-i18next';
-import { Link } from 'react-router-dom';
+import { ExternalLink, Key, MoreHorizontal, Trash } from 'lucide-react';
 
-import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
+import { CenteredPage } from '@/app/components/centered-page';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
-import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
-import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
+import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
-import { FormattedDate } from '@/components/custom/formatted-date';
+import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemGroup,
+  ItemMedia,
+  ItemTitle,
+} from '@/components/custom/item';
+import { PlusIcon } from '@/components/icons/plus';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { SkeletonList } from '@/components/ui/skeleton';
 import { internalErrorToast } from '@/components/ui/sonner';
-import { signingKeyApi, NewSigningKeyDialog } from '@/features/platform-admin';
+import {
+  signingKeyApi,
+  NewSigningKeyDialog,
+  signingKeyQueries,
+} from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { formatUtils } from '@/lib/format-utils';
 
 const SigningKeysPage = () => {
-  const { data, isLoading, refetch } = useQuery({
-    queryKey: ['signing-keys'],
-    queryFn: () => signingKeyApi.list(),
-  });
-
-  const columns: ColumnDef<RowDataWithActions<SigningKey>>[] = [
-    {
-      accessorKey: 'id',
-      size: 200,
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Id')} icon={Hash} />
-      ),
-      cell: ({ row }) => {
-        return <div className="text-left">{row.original.id}</div>;
-      },
-    },
-    {
-      accessorKey: 'displayName',
-      size: 200,
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Name')} icon={Tag} />
-      ),
-      cell: ({ row }) => {
-        return <div className="text-left">{row.original.displayName}</div>;
-      },
-    },
-    {
-      accessorKey: 'created',
-      size: 150,
-      header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          title={t('Created')}
-          icon={Clock}
-        />
-      ),
-      cell: ({ row }) => {
-        return (
-          <div className="text-left">
-            <FormattedDate date={new Date(row.original.created)} />
-          </div>
-        );
-      },
-    },
-  ];
-
   const { platform } = platformHooks.useCurrentPlatform();
+
+  const { data, isLoading, refetch } = signingKeyQueries.useSigningKeys();
+
+  const signingKeys: SigningKey[] = data?.data ?? [];
+
   return (
     <LockedFeatureGuard
       featureKey="SIGNING_KEYS"
@@ -74,72 +49,109 @@ const SigningKeysPage = () => {
         'Enable signing keys to access embedding functionalities.',
       )}
     >
-      <div className="flex-col w-full">
-        <DashboardPageHeader
-          title={t('Signing Keys')}
-          description={
-            <Trans>
-              Use our embedding{' '}
-              <Link
-                rel="noopener noreferrer"
+      <CenteredPage
+        title={t('Embedding')}
+        description={
+          <>
+            {t("Show your product's automations inside your own UI.")}
+            <Button
+              variant="link"
+              size="sm"
+              className="h-auto p-0 mt-0.5"
+              asChild
+            >
+              <a
+                href="https://www.activepieces.com/docs/embedding/overview"
                 target="_blank"
-                className="font-medium text-primary underline underline-offset-4"
-                to="https://www.activepieces.com/docs/embedding/provision-users"
+                rel="noopener noreferrer"
               >
-                JavaScript SDK
-              </Link>{' '}
-              to authenticate users with signing keys.
-            </Trans>
-          }
-        >
-          <NewSigningKeyDialog onCreate={() => refetch()}>
-            <Button size="sm" className="flex items-center gap-2">
-              <Plus className="size-4" />
-              {t('New Signing Key')}
+                {t('Read more')}
+                <ExternalLink className="size-3" />
+              </a>
             </Button>
+          </>
+        }
+        actions={
+          <NewSigningKeyDialog onCreate={() => refetch()}>
+            <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm">
+              {t('New Signing Key')}
+            </AnimatedIconButton>
           </NewSigningKeyDialog>
-        </DashboardPageHeader>
-        <DataTable
-          emptyStateTextTitle={t('No signing keys found')}
-          emptyStateTextDescription={t(
-            'Create a signing key to authenticate users with embedding',
-          )}
-          emptyStateIcon={<Key className="size-14" />}
-          columns={columns}
-          page={data}
-          isLoading={isLoading}
-          actions={[
-            (row) => (
-              <div className="flex items-end justify-end">
-                <ConfirmationDeleteDialog
-                  title={t('Delete Signing Key')}
-                  message={t(
-                    'Are you sure you want to delete this signing key?',
-                  )}
-                  entityName={t('Signing Key')}
-                  mutationFn={async () => {
-                    await signingKeyApi.delete(row.id);
-                  }}
-                  onError={(error) => {
-                    console.error(error);
-                    internalErrorToast();
-                  }}
-                >
-                  <Button
-                    variant="ghost"
-                    className="size-8 p-0"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                    }}
-                  >
-                    <Trash className="size-4 text-destructive" />
-                  </Button>
-                </ConfirmationDeleteDialog>
-              </div>
-            ),
-          ]}
-        />
-      </div>
+        }
+      >
+        {isLoading && (
+          <SkeletonList numberOfItems={3} className="w-full h-[72px]" />
+        )}
+
+        {!isLoading && signingKeys.length === 0 && (
+          <div className="flex flex-col items-center gap-3 py-12 text-muted-foreground">
+            <Key className="size-10" />
+            <p className="text-sm">{t('No signing keys found')}</p>
+          </div>
+        )}
+
+        {!isLoading && signingKeys.length > 0 && (
+          <ItemGroup className="gap-2">
+            {signingKeys.map((signingKey) => (
+              <Item
+                key={signingKey.id}
+                variant="outline"
+                size="sm"
+                className="items-center"
+              >
+                <ItemMedia variant="icon">
+                  <Key />
+                </ItemMedia>
+                <ItemContent className="gap-0">
+                  <ItemTitle className="flex items-center gap-2">
+                    {signingKey.displayName}{' '}
+                  </ItemTitle>
+                  <ItemDescription className="text-xs">
+                    {' ' + t('Created')}{' '}
+                    {formatUtils.formatDateToAgo(new Date(signingKey.created))}
+                    <br />
+                    <span className="text-xs text-muted-foreground">
+                      kid: {signingKey.id}
+                    </span>
+                  </ItemDescription>
+                </ItemContent>
+                <ItemActions>
+                  <DropdownMenu modal={true}>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="sm" className="size-8 p-0">
+                        <MoreHorizontal className="size-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <ConfirmationDeleteDialog
+                        title={t('Delete Signing Key')}
+                        message={t(
+                          'Deleting this signing key will invalidate any tokens signed with it.',
+                        )}
+                        entityName={t('Signing Key')}
+                        buttonText={t('Delete')}
+                        mutationFn={async () => {
+                          await signingKeyApi.delete(signingKey.id);
+                          refetch();
+                        }}
+                        onError={() => internalErrorToast()}
+                      >
+                        <DropdownMenuItem
+                          className="text-destructive focus:text-destructive"
+                          onSelect={(e) => e.preventDefault()}
+                        >
+                          <Trash className="size-4 mr-2 text-destructive" />
+                          {t('Delete Signing Key')}
+                        </DropdownMenuItem>
+                      </ConfirmationDeleteDialog>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </ItemActions>
+              </Item>
+            ))}
+          </ItemGroup>
+        )}
+      </CenteredPage>
     </LockedFeatureGuard>
   );
 };

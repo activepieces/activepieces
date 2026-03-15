@@ -61,8 +61,8 @@ export function AnalyticsAreaChart({
     <Card ref={chartRef}>
       <CardHeader className="space-y-0 pb-2">
         <div className="flex items-start justify-between">
-          <div className="space-y-1">
-            <CardTitle className="text-base font-semibold">{title}</CardTitle>
+          <div className="space-y-0.5">
+            <CardTitle className="text-base font-medium">{title}</CardTitle>
             <p className="text-sm text-muted-foreground">{subtitle}</p>
           </div>
           <Tooltip>

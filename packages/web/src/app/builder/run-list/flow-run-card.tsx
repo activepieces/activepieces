@@ -9,10 +9,8 @@ import {
   PopulatedFlow,
   ApErrorParams,
 } from '@activepieces/shared';
-import { StopwatchIcon } from '@radix-ui/react-icons';
-import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Eye, Repeat } from 'lucide-react';
+import { Eye, Repeat, Timer } from 'lucide-react';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -33,8 +31,8 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { flowRunsApi, flowRunUtils } from '@/features/flow-runs';
-import { flowsApi } from '@/features/flows';
+import { flowRunUtils } from '@/features/flow-runs';
+import { flowRunMutations } from '@/features/flow-runs/hooks/flow-run-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/format-utils';
@@ -61,53 +59,28 @@ const FlowRunCard = React.memo(
     const [isRetryDropdownOpen, setIsRetryDropdownOpen] =
       useState<boolean>(false);
 
-    const { mutate: retryRun, isPending: isRetryingRun } = useMutation<
-      {
-        run: FlowRun;
-        populatedFlow: PopulatedFlow;
-      },
-      Error,
-      {
-        run: FlowRun;
-        retryStrategy: FlowRetryStrategy;
-      }
-    >({
-      mutationFn: async ({ run, retryStrategy }) => {
-        if (projectId) {
-          const updatedRun = await flowRunsApi.retry(run.id, {
-            projectId,
-            strategy: retryStrategy,
-          });
-          const populatedFlow = await flowsApi.get(run.flowId, {
-            versionId: updatedRun.flowVersionId,
-          });
-          return {
-            run: updatedRun,
-            populatedFlow,
-          };
-        }
-        throw Error("Project id isn't defined");
-      },
-      onSuccess: ({ run }) => {
-        refetchRuns();
-        navigate(`/runs/${run.id}`);
-      },
-      onError: (error: unknown) => {
-        if (api.isError(error)) {
-          const apError = error.response?.data as ApErrorParams;
-          if (apError.code === ErrorCode.FLOW_RUN_RETRY_OUTSIDE_RETENTION) {
-            toast.error(t('Retry failed'), {
-              description: t('Retry is only available for {failedJobRetentionDays} after a run fails.', {
-                failedJobRetentionDays: apError.params.failedJobRetentionDays,
-              }),
-              duration: 5000,
-            });
+    const { mutate: retryRun, isPending: isRetryingRun } =
+      flowRunMutations.useRetryRun({
+        onSuccess: ({ run }) => {
+          refetchRuns();
+          navigate(`/runs/${run.id}`);
+        },
+        onError: (error: unknown) => {
+          if (api.isError(error)) {
+            const apError = error.response?.data as ApErrorParams;
+            if (apError.code === ErrorCode.FLOW_RUN_RETRY_OUTSIDE_RETENTION) {
+              toast.error(t('Retry failed'), {
+                description: t('Retry is only available for {failedJobRetentionDays} after a run fails.', {
+                  failedJobRetentionDays: apError.params.failedJobRetentionDays,
+                }),
+                duration: 5000,
+              });
+            }
+          } else {
+            internalErrorToast();
           }
-        } else {
-          internalErrorToast();
-        }
-      },
-    });
+        },
+      });
 
     return (
       <CardListItem
@@ -158,7 +131,7 @@ const FlowRunCard = React.memo(
             ignoreInternalError: false,
           }) && (
             <p className="flex gap-1 text-xs text-muted-foreground">
-              <StopwatchIcon className="h-3.5 w-3.5" />
+              <Timer className="h-3.5 w-3.5" />
               {t('Took')}{' '}
               {formatUtils.formatDuration(
                 run.startTime && run.finishTime
@@ -224,7 +197,9 @@ const FlowRunCard = React.memo(
                       e.preventDefault();
                       e.stopPropagation();
                       retryRun({
-                        run,
+                        runId: run.id,
+                        flowId: run.flowId,
+                        projectId: projectId!,
                         retryStrategy: FlowRetryStrategy.ON_LATEST_VERSION,
                       });
                     }}
@@ -242,7 +217,9 @@ const FlowRunCard = React.memo(
                         e.stopPropagation();
                         if (!isRetryingRun) {
                           retryRun({
-                            run,
+                            runId: run.id,
+                            flowId: run.flowId,
+                            projectId: projectId!,
                             retryStrategy: FlowRetryStrategy.FROM_FAILED_STEP,
                           });
                         }

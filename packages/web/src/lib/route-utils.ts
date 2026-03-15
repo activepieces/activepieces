@@ -7,6 +7,7 @@ export const routesThatRequireProjectId = {
   singleRun: '/runs/:runId',
   flows: '/flows',
   singleFlow: '/flows/:flowId',
+  automations: '/automations',
   connections: '/connections',
   singleConnection: '/connections/:connectionId',
   tables: '/tables',
@@ -19,8 +20,8 @@ export const routesThatRequireProjectId = {
 export const determineDefaultRoute = (
   checkAccess: (permission: Permission) => boolean,
 ) => {
-  if (checkAccess(Permission.READ_FLOW)) {
-    return authenticationSession.appendProjectRoutePrefix('/flows');
+  if (checkAccess(Permission.READ_FLOW) || checkAccess(Permission.READ_TABLE)) {
+    return authenticationSession.appendProjectRoutePrefix('/automations');
   }
   if (checkAccess(Permission.READ_RUN)) {
     return authenticationSession.appendProjectRoutePrefix('/runs');

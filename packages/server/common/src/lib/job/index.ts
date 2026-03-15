@@ -4,7 +4,7 @@ import {
     ProgressUpdateType,
     RunEnvironment,
 } from '@activepieces/shared'
-import { Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
 
 export * from './runs-metadata-queue-factory'
 
@@ -22,47 +22,47 @@ export const getPlatformQueueName = (platformId: string): string => {
     return `platform-${platformId}-jobs`
 }
 
-export const ApQueueJob = Type.Object({
-    id: Type.String(),
-    data: JobData,
-    engineToken: Type.String(),
-    attempsStarted: Type.Number(),
+export const ApQueueJob = z.object({
+    id: z.string(),
+    data: z.custom<JobData>(),
+    engineToken: z.string(),
+    attempsStarted: z.number(),
 })
 
-export type ApQueueJob = Static<typeof ApQueueJob>
-export const SendEngineUpdateRequest = Type.Object({
-    workerServerId: Type.String(),
-    requestId: Type.String(),
-    response: Type.Unknown(),
+export type ApQueueJob = z.infer<typeof ApQueueJob>
+export const SendEngineUpdateRequest = z.object({
+    workerServerId: z.string(),
+    requestId: z.string(),
+    response: z.unknown(),
 })
-export type SendEngineUpdateRequest = Static<typeof SendEngineUpdateRequest>
+export type SendEngineUpdateRequest = z.infer<typeof SendEngineUpdateRequest>
 
-export const MigrateJobsRequest = Type.Object({
-    jobData: Type.Record(Type.String(), Type.Unknown()),
+export const MigrateJobsRequest = z.object({
+    jobData: z.record(z.string(), z.unknown()),
 })
-export type MigrateJobsRequest = Static<typeof MigrateJobsRequest>
+export type MigrateJobsRequest = z.infer<typeof MigrateJobsRequest>
 
-export const SavePayloadRequest = Type.Object({
-    flowId: Type.String(),
-    projectId: Type.String(),
-    payloads: Type.Array(Type.Unknown()),
+export const SavePayloadRequest = z.object({
+    flowId: z.string(),
+    projectId: z.string(),
+    payloads: z.array(z.unknown()),
 })
-export type SavePayloadRequest = Static<typeof SavePayloadRequest>
+export type SavePayloadRequest = z.infer<typeof SavePayloadRequest>
 
-export const SubmitPayloadsRequest = Type.Object({
-    flowVersionId: Type.String(),
-    projectId: Type.String(),
-    progressUpdateType: Type.Enum(ProgressUpdateType),
-    synchronousHandlerId: Type.Optional(Type.String()),
-    httpRequestId: Type.Optional(Type.String()),
-    payloads: Type.Array(Type.Unknown()),
-    environment: Type.Enum(RunEnvironment),
-    parentRunId: Type.Optional(Type.String()),
-    failParentOnFailure: Type.Optional(Type.Boolean()),
-    platformId: Type.String(),
+export const SubmitPayloadsRequest = z.object({
+    flowVersionId: z.string(),
+    projectId: z.string(),
+    progressUpdateType: z.nativeEnum(ProgressUpdateType),
+    synchronousHandlerId: z.string().optional(),
+    httpRequestId: z.string().optional(),
+    payloads: z.array(z.unknown()),
+    environment: z.nativeEnum(RunEnvironment),
+    parentRunId: z.string().optional(),
+    failParentOnFailure: z.boolean().optional(),
+    platformId: z.string(),
 })
 
-export type SubmitPayloadsRequest = Static<typeof SubmitPayloadsRequest>
+export type SubmitPayloadsRequest = z.infer<typeof SubmitPayloadsRequest>
 
 
 

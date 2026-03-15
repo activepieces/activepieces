@@ -1,5 +1,5 @@
 
-import { Type } from "@sinclair/typebox";
+import { z } from "zod";
 import { BasicAuthProperty } from "./basic-auth-prop";
 import { CustomAuthProperty, CustomAuthProps } from "./custom-auth-prop";
 import { SecretTextProperty } from "./secret-text-property";
@@ -7,13 +7,14 @@ import { PropertyType } from "../input/property-type";
 import { OAuth2Property, OAuth2Props } from "./oauth2-prop";
 import { AppConnectionType, isNil } from "@activepieces/shared";
 
-export const PieceAuthProperty = Type.Union([
+export const PieceAuthProperty = z.union([
   BasicAuthProperty,
   CustomAuthProperty,
   OAuth2Property,
   SecretTextProperty,
 ])
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type PieceAuthProperty = BasicAuthProperty | CustomAuthProperty<any> | OAuth2Property<any> | SecretTextProperty<boolean>;
 
 type AuthProperties<T> = Omit<Properties<T>, 'displayName'> & {
