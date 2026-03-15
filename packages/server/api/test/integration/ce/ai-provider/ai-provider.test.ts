@@ -63,7 +63,7 @@ describe('AI Providers API', () => {
                     baseUrl: 'https://api.example.com/v1',
                     apiKeyHeader: 'Authorization',
                     models: [],
-                } as any,
+                },
             })
 
             const response = await ctx.post(`/v1/ai-providers/${provider.id}`, {
@@ -95,7 +95,7 @@ describe('AI Providers API', () => {
                     apiKeyHeader: 'Authorization',
                     models: [],
                     defaultHeaders: { 'X-Org': 'org-789' },
-                } as any,
+                },
             })
 
             const engineToken = await generateMockToken({
@@ -107,13 +107,13 @@ describe('AI Providers API', () => {
 
             const response = await app!.inject({
                 method: 'GET',
-                url: `/v1/ai-providers/${AIProviderName.CUSTOM}/config`,
+                url: `/api/v1/ai-providers/${AIProviderName.CUSTOM}/config`,
                 headers: { authorization: `Bearer ${engineToken}` },
             })
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
             const body = response?.json()
-
+           
             expect(body.provider).toBe(AIProviderName.CUSTOM)
             expect(body.platformId).toBe(ctx.platform.id)
             expect(body.config.defaultHeaders).toEqual({ 'X-Org': 'org-789' })
@@ -128,7 +128,7 @@ describe('AI Providers API', () => {
                     baseUrl: 'https://api.example.com/v1',
                     apiKeyHeader: 'Authorization',
                     models: [],
-                } as any,
+                },
             })
 
             const engineToken = await generateMockToken({
@@ -140,7 +140,7 @@ describe('AI Providers API', () => {
 
             const response = await app!.inject({
                 method: 'GET',
-                url: `/v1/ai-providers/${AIProviderName.CUSTOM}/config`,
+                url: `/api/v1/ai-providers/${AIProviderName.CUSTOM}/config`,
                 headers: { authorization: `Bearer ${engineToken}` },
             })
 
@@ -163,7 +163,7 @@ describe('AI Providers API', () => {
                     apiKeyHeader: 'Authorization',
                     models: [],
                     defaultHeaders: { 'X-Test': 'test' },
-                } as any,
+                }
             })
 
             const response = await ctx.get('/v1/ai-providers')
