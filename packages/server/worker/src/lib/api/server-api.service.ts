@@ -1,12 +1,15 @@
+import { promisify } from 'node:util'
+import { zstdDecompress as zstdDecompressCallback } from 'node:zlib'
 import { PieceMetadataModel } from '@activepieces/pieces-framework'
-import { MigrateJobsRequest, SavePayloadRequest, SubmitPayloadsRequest } from '@activepieces/server-shared'
-import { ExecutioOutputFile, FlowRun, FlowVersion, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, JobData, tryCatch } from '@activepieces/shared'
+import { MigrateJobsRequest, SavePayloadRequest, SubmitPayloadsRequest } from '@activepieces/server-common'
+import { CONTENT_ENCODING_ZSTD, ExecutioOutputFile, FlowRun, FlowVersion, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, isZstdCompressed, JobData, tryCatch } from '@activepieces/shared'
 import { trace } from '@opentelemetry/api'
 import fetchRetry from 'fetch-retry'
 import pLimit from 'p-limit'
 import { workerMachine } from '../utils/machine'
 import { ApAxiosClient } from './ap-axios'
 
+const zstdDecompress = promisify(zstdDecompressCallback)
 const fetchWithRetry = fetchRetry(global.fetch)
 
 const tracer = trace.getTracer('worker-api-service')
@@ -22,9 +25,6 @@ export const flowRunLogs = {
             async () => {
                 const response = await fetchWithRetry(fullUrl, {
                     method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
                     retries: 3,
                     retryDelay: 3000,
                     retryOn: (status: number) => Math.floor(status / 100) === 5,
@@ -33,7 +33,12 @@ export const flowRunLogs = {
                 if (response.status === 404) {
                     return null
                 }
-                return (await response.json()) as ExecutioOutputFile
+                const contentEncoding = response.headers.get('content-encoding')
+                const buffer = Buffer.from(await response.arrayBuffer())
+
+                const needsDecompression = contentEncoding === CONTENT_ENCODING_ZSTD || isZstdCompressed(buffer)
+                const data = needsDecompression ? await zstdDecompress(buffer) : buffer
+                return JSON.parse(data.toString('utf-8')) as ExecutioOutputFile
             },
         )
         if (error) {

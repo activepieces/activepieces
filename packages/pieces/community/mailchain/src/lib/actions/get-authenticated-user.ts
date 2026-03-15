@@ -1,5 +1,4 @@
 import { createAction } from '@activepieces/pieces-framework';
-// eslint-disable-next-line @nx/enforce-module-boundaries
 import { Mailchain } from '@mailchain/sdk';
 import { mailchainCommon } from '../common/common';
 

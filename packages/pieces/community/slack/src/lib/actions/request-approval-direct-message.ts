@@ -1,13 +1,14 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { slackSendMessage } from '../common/utils';
-import { slackAuth } from '../..';
+import { buildFlowOriginContextBlock, slackSendMessage, textToSectionBlocks } from '../common/utils';
+import { slackAuth } from '../auth';
 import {
   assertNotNullOrUndefined,
   ExecutionType,
   PauseType,
 } from '@activepieces/shared';
-import { profilePicture, text, userId, username } from '../common/props';
+import { profilePicture, text, userId, username, mentionOriginFlow } from '../common/props';
 import { ChatPostMessageResponse, WebClient } from '@slack/web-api';
+import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
 
 export const requestApprovalDirectMessageAction = createAction({
   auth: slackAuth,
@@ -16,15 +17,16 @@ export const requestApprovalDirectMessageAction = createAction({
   description:
     'Send approval message to a user and then wait until the message is approved or disapproved',
   props: {
-    userId,
+    userId: userId(true),
     text,
     username,
     profilePicture,
+    mentionOriginFlow,
   },
   async run(context) {
     if (context.executionType === ExecutionType.BEGIN) {
-      const token = context.auth.access_token;
-      const { userId, username, profilePicture } = context.propsValue;
+      const token = getBotToken(context.auth as SlackAuthValue);
+      const { userId, username, profilePicture, mentionOriginFlow } = context.propsValue;
 
       assertNotNullOrUndefined(token, 'token');
       assertNotNullOrUndefined(text, 'text');
@@ -54,13 +56,7 @@ export const requestApprovalDirectMessageAction = createAction({
         channel:dmId,
         text: context.propsValue.text,
         blocks: [
-          {
-            type: 'section',
-            text: {
-              type: 'mrkdwn',
-              text: `${context.propsValue.text}`,
-            },
-          },
+          ...textToSectionBlocks(`${context.propsValue.text}`),
           {
             type: 'actions',
             block_id: 'actions',
@@ -85,6 +81,7 @@ export const requestApprovalDirectMessageAction = createAction({
               },
             ],
           },
+          ...(mentionOriginFlow ? [buildFlowOriginContextBlock(context)] : []),
         ],
       });
 

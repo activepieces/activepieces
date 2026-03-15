@@ -1,6 +1,7 @@
 import { createAction, Property} from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { autocallsAuth, baseApiUrl } from '../..';
+import { autocallsAuth } from '../..';
+import { baseApiUrl } from '../..';
 
 export const sendSms = createAction({
   auth:autocallsAuth,

@@ -4,7 +4,8 @@ import {
   httpClient,
   HttpMethod,
 } from '@activepieces/pieces-common';
-import { LEVER_BASE_URL, LeverAuth, leverAuth } from '../..';
+import { LeverAuth, leverAuth } from '../..';
+import { LEVER_BASE_URL } from '../..';
 
 export const updateOpportunityStage = createAction({
   name: 'updateOpportunityStage',

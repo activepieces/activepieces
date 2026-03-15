@@ -24,7 +24,7 @@ const start = async (app: FastifyInstance): Promise<void> => {
         }
     }
     catch (err) {
-        app.log.error(err)
+        app.log.error({ err }, 'Failed to start server')
         process.exit(1)
     }
 }
@@ -42,8 +42,7 @@ const stop = async (app: FastifyInstance): Promise<void> => {
         process.exit(0)
     }
     catch (err) {
-        app.log.error('Error stopping server')
-        app.log.error(err)
+        app.log.error({ err }, 'Error stopping server')
         process.exit(1)
     }
 }
@@ -68,18 +67,18 @@ const main = async (): Promise<void> => {
     const app = await setupServer()
 
     process.on('SIGINT', async () => {
-        await stop(app).catch((e) => system.globalLogger().error(e, '[Main#stop]'))
+        await stop(app).catch((e) => system.globalLogger().error({ err: e }, '[main#stop] Failed to stop server'))
     })
 
     process.on('SIGTERM', async () => {
-        await stop(app).catch((e) => system.globalLogger().error(e, '[Main#stop]'))
+        await stop(app).catch((e) => system.globalLogger().error({ err: e }, '[main#stop] Failed to stop server'))
     })
 
     await start(app)
 }
 
 main().catch((e) => {
-    system.globalLogger().error(e, '[Main#main]')
+    system.globalLogger().error({ err: e }, '[main#start] Failed to start server')
     process.exit(1)
 })
 

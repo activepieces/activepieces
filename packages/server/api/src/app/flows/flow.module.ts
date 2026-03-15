@@ -1,5 +1,5 @@
 import { EmitTestStepProgressRequest, PrincipalType, TestFlowRunRequestBody, UpdateRunProgressRequest, WebsocketClientEvent, WebsocketServerEvent } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { websocketService } from '../core/websockets.service'
 import { flowWorkerController } from '../workers/worker-controller'
 import { flowVersionController } from './flow/flow-version.controller'
@@ -7,7 +7,7 @@ import { flowController } from './flow/flow.controller'
 import { flowRunService } from './flow-run/flow-run-service'
 import { sampleDataController } from './step-run/sample-data.controller'
 
-export const flowModule: FastifyPluginAsyncTypebox = async (app) => {
+export const flowModule: FastifyPluginAsyncZod = async (app) => {
     await app.register(flowWorkerController, { prefix: '/v1/worker/flows' })
     await app.register(flowVersionController, { prefix: '/v1/flows' })
     await app.register(flowController, { prefix: '/v1/flows' })

@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { githubAuth } from '../../index';
+import { githubAuth } from '../auth';
 import { githubApiCall, githubCommon } from '../common';
 import { HttpError, HttpMethod } from '@activepieces/pieces-common';
 import { HttpStatusCode } from 'axios';

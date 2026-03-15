@@ -21,7 +21,7 @@ export class CascadeProjectDeleteToActivity1710720610670 implements MigrationInt
                 ON DELETE CASCADE ON UPDATE RESTRICT
         `)
 
-        log.info({ name: this.name }, 'up')
+        log.info('[cascadeProjectDeleteToActivity1710720610670#up]')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -36,6 +36,6 @@ export class CascadeProjectDeleteToActivity1710720610670 implements MigrationInt
             ADD CONSTRAINT "fk_activity_project_id" FOREIGN KEY ("projectId") REFERENCES "project"("id")
                 ON DELETE RESTRICT ON UPDATE RESTRICT
         `)
-        log.info({ name: this.name }, 'down')
+        log.info('[cascadeProjectDeleteToActivity1710720610670#down]')
     }
 }

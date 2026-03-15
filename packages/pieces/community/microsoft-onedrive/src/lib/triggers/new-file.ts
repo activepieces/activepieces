@@ -2,7 +2,7 @@ import { AppConnectionValueForAuthProperty, PiecePropValueSchema, Property, crea
 import { TriggerStrategy } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import dayjs from 'dayjs';
-import { oneDriveAuth } from '../..';
+import { oneDriveAuth } from '../auth';
 import { oneDriveCommon } from '../common/common';
 import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
 import { DriveItem } from '@microsoft/microsoft-graph-types';

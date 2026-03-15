@@ -4,6 +4,18 @@ description: "This list shows all versions that include breaking changes and how
 icon: "hammer"
 ---
 
+## 0.80.0
+### What has changed?
+
+- A new `UPDATE_SAMPLE_DATA_INFO` flow operation has been introduced to handle sample data updates independently.
+- `UPDATE_ACTION` and `UPDATE_TRIGGER` no longer accept or apply changes to `sampleData` in step settings. Any `sampleData` fields sent in these requests will be ignored and the existing sample data will be preserved.
+- A new required `lastUpdatedDate` field has been added to all actions and triggers, tracked automatically by the server. It is not accepted in `UPDATE_ACTION` or `UPDATE_TRIGGER` requests.
+- The flow schema version has been bumped from `17` to `18`. Existing flows are migrated automatically.
+
+### Do you need to take action?
+
+- If you are using the API to update sample data on steps via `UPDATE_ACTION` or `UPDATE_TRIGGER`, switch to the new `UPDATE_SAMPLE_DATA_INFO` operation instead.
+
 ## 0.78.1
 
 ### What has changed?
@@ -15,7 +27,13 @@ icon: "hammer"
 ## 0.78.0
 ### What has changed?
 
-- Templates no longer include a `usageCount` field in API responses or the database.
+- The `usageCount` field has been removed from both the template API responses and the database—it's no longer available.
+- The Todos feature is now deprecated and will not be supported going forward.
+
+### Do you need to take action?
+
+- If you're using the Todos feature, update your flows to use the new approvals channels available from the approvals tab in the piece selector.
+
 
 ## 0.77.0
 ### What has changed?
@@ -33,9 +51,11 @@ icon: "hammer"
 ## 0.75.0
 
 ### What has changed?
+- When you navigate to a flow run inside the builder the url will change to /runs, this is something embedding customers might need to consider in case they have a route guard that only allows users to navigate to /flows.
 - In **development mode**, loading piece translations are now off by default. Set `AP_LOAD_TRANSLATIONS_FOR_DEV_PIECES=true` to enable.
 
 ### Do you need to take action?
+- Check your embedding navigation handler and see if it would be blocking the user from seeing the runs inside the builder or not.
 - If you want to load translations for pieces in development mode, set `AP_LOAD_TRANSLATIONS_FOR_DEV_PIECES=true` in your environment variables.
 
 ## 0.74.0

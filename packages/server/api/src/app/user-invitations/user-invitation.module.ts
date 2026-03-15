@@ -1,4 +1,4 @@
-import { securityAccess } from '@activepieces/server-shared'
+import { ProjectResourceType, securityAccess } from '@activepieces/server-common'
 import {
     ActivepiecesError,
     assertNotNullOrUndefined,
@@ -17,10 +17,11 @@ import {
     UserInvitation,
     UserInvitationWithLink,
 } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger, FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
+import { z } from 'zod'
 import { userIdentityService } from '../authentication/user-identity/user-identity-service'
 import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled, projectMustBeTeamType } from '../ee/authentication/ee-authorization'
 import { assertRoleHasPermission } from '../ee/authentication/project-role/rbac-middleware'
@@ -29,11 +30,11 @@ import { projectService } from '../project/project-service'
 import { userService } from '../user/user-service'
 import { userInvitationsService } from './user-invitation.service'
 
-export const invitationModule: FastifyPluginAsyncTypebox = async (app) => {
+export const invitationModule: FastifyPluginAsyncZod = async (app) => {
     await app.register(invitationController, { prefix: '/v1/user-invitations' })
 }
 
-const invitationController: FastifyPluginAsyncTypebox = async (app) => {
+const invitationController: FastifyPluginAsyncZod = async (app) => {
 
     app.post('/', UpsertUserInvitationRequestParams, async (request, reply) => {
         const { email, type } = request.body
@@ -156,7 +157,7 @@ async function shouldAutoAcceptInvitation(principal: Principal, request: SendUse
         return false
     }
     
-    const user = await userService.getOneByIdentityIdOnly({ identityId: identity.id })
+    const user = await userService(log).getOneByIdentityIdOnly({ identityId: identity.id })
     return !isNil(user)
 }
 
@@ -164,7 +165,7 @@ async function assertPrincipalHasPermissionToProject<R extends Principal & { pla
     fastify: FastifyInstance,
     request: FastifyRequest, reply: FastifyReply, principal: R,
     projectId: string, permission: Permission): Promise<void> {
-    const project = await projectService.getOneOrThrow(projectId)
+    const project = await projectService(request.log).getOneOrThrow(projectId)
     if (isNil(project) || project.platformId !== principal.platform.id) {
         throw new ActivepiecesError({
             code: ErrorCode.AUTHORIZATION,
@@ -180,7 +181,10 @@ async function assertPrincipalHasPermissionToProject<R extends Principal & { pla
 
 const ListUserInvitationsRequestParams = {
     config: {
-        security: securityAccess.publicPlatform([PrincipalType.USER, PrincipalType.SERVICE]),
+        security: securityAccess.publicPlatform([PrincipalType.USER, PrincipalType.SERVICE], {
+            type: ProjectResourceType.QUERY,
+            queryKey: 'projectId',
+        }),
     },
     schema: {
         tags: ['user-invitations'],
@@ -197,8 +201,8 @@ const AcceptUserInvitationRequestParams = {
         security: securityAccess.public(),
     },
     schema: {
-        body: Type.Object({
-            invitationToken: Type.String(),
+        body: z.object({
+            invitationToken: z.string(),
         }),
     },
 }
@@ -210,18 +214,20 @@ const DeleteInvitationRequestParams = {
     schema: {
         tags: ['user-invitations'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
-        params: Type.Object({
-            id: Type.String(),
+        params: z.object({
+            id: z.string(),
         }),
         response: {
-            [StatusCodes.NO_CONTENT]: Type.Never(),
+            [StatusCodes.NO_CONTENT]: z.never(),
         },
     },
 }
 
 const UpsertUserInvitationRequestParams = {
     config: {
-        security: securityAccess.publicPlatform([PrincipalType.USER, PrincipalType.SERVICE]),
+        security: securityAccess.publicPlatform([PrincipalType.USER, PrincipalType.SERVICE], {
+            type: ProjectResourceType.BODY,
+        }),
     },
     schema: {
         body: SendUserInvitationRequest,

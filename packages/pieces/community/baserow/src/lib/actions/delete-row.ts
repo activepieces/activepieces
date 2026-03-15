@@ -1,9 +1,6 @@
-import {
-  Property,
-  createAction,
-} from '@activepieces/pieces-framework';
-import { baserowAuth } from '../..';
-import { makeClient } from '../common';
+import { createAction } from '@activepieces/pieces-framework';
+import { baserowAuth } from '../auth';
+import { baserowCommon, makeClient } from '../common';
 
 export const deleteRowAction = createAction({
   name: 'baserow_delete_row',
@@ -11,20 +8,11 @@ export const deleteRowAction = createAction({
   description: 'Deletes an existing row.',
   auth: baserowAuth,
   props: {
-    table_id: Property.Number({
-      displayName: 'Table ID',
-      required: true,
-      description:
-        "Please enter the table ID where the row must be deleted in.You can find the ID by clicking on the three dots next to the table. It's the number between brackets.",
-    }),
-    row_id: Property.Number({
-      displayName: 'Row ID',
-      required: true,
-      description: 'Please enter the row ID that needs to be deleted.',
-    }),
+    table_id: baserowCommon.tableId(),
+    row_id: baserowCommon.rowId(),
   },
   async run(context) {
-    const { table_id, row_id } = context.propsValue;
+    const { table_id, row_id } = context.propsValue as { table_id: number; row_id: number };
     const client = makeClient(
       context.auth.props
     );

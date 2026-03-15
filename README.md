@@ -28,7 +28,7 @@ src="https://github.com/activepieces/activepieces/assets/1812998/76c97441-c285-4
     target="_blank"
   ><b>Documentation</b></a>&nbsp;&nbsp;&nbsp;🌪️&nbsp;&nbsp;&nbsp;
    <a
-    href="https://www.activepieces.com/docs/developers/building-pieces/overview"
+    href="https://www.activepieces.com/docs/build-pieces/building-pieces/overview"
     target="_blank"
   ><b>Create a Piece</b></a>&nbsp;&nbsp;&nbsp;🖉&nbsp;&nbsp;&nbsp;
   <a
@@ -115,7 +115,7 @@ You can easily create your own integration using our TypeScript framework. For d
 Activepieces' Community Edition is released as open source under the [MIT license](https://github.com/activepieces/activepieces/blob/main/LICENSE) and enterprise features are released under [Commercial License](https://github.com/activepieces/activepieces/blob/main/packages/ee/LICENSE)
 
 
-Read more about the feature comparison here https://www.activepieces.com/docs/about/editions
+Read more about the feature comparison here https://www.activepieces.com/pricing
 <br>
 <br>
 
@@ -455,6 +455,8 @@ Not into coding but still interested in contributing? Come join our [Discord](ht
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/vishakha1411"><img src="https://avatars.githubusercontent.com/u/119448495?v=4?s=100" width="100px;" alt="vishakha1411"/><br /><sub><b>vishakha1411</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=vishakha1411" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/murex971"><img src="https://avatars.githubusercontent.com/u/46920259?v=4?s=100" width="100px;" alt="Nupur Agrawal"/><br /><sub><b>Nupur Agrawal</b></sub></a><br /><a href="#plugin-murex971" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://www.shreepandeydev.com"><img src="https://avatars.githubusercontent.com/u/56151022?v=4?s=100" width="100px;" alt="Shreedhar Pandey"/><br /><sub><b>Shreedhar Pandey</b></sub></a><br /><a href="#plugin-Shree-git" title="Plugin/utility libraries">🔌</a></td>
     </tr>
   </tbody>
 </table>
