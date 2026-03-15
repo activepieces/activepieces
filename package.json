@@ -288,7 +288,7 @@
     "rss-parser": "3.13.0",
     "samlify": "2.10.0",
     "semver": "7.6.0",
-    "simple-git": "3.21.0",
+    "simple-git": "3.32.3",
     "slackify-markdown": "4.4.0",
     "socket.io": "4.8.1",
     "socket.io-client": "4.8.1",
