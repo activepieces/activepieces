@@ -457,7 +457,7 @@ describe('Platform API', () => {
 
             const response = await app?.inject({
                 method: 'DELETE',
-                url: `/v1/platforms/${account.mockPlatform.id}`,
+                url: `/api/v1/platforms/${account.mockPlatform.id}`,
                 headers: { authorization: `Bearer ${testToken}` },
             })
 
@@ -526,7 +526,7 @@ describe('Platform API', () => {
 
             const response = await app?.inject({
                 method: 'DELETE',
-                url: `/v1/platforms/${account.mockPlatform.id}`,
+                url: `/api/v1/platforms/${account.mockPlatform.id}`,
                 headers: { authorization: `Bearer ${testToken}` },
             })
 
