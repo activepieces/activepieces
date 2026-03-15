@@ -24,29 +24,6 @@ beforeEach(async () => {
 
 describe('AI Providers API', () => {
     describe('POST /v1/ai-providers (create)', () => {
-        it('should create a custom provider with sendMetadataHeaders', async () => {
-            const response = await ctx.post('/v1/ai-providers', {
-                provider: AIProviderName.CUSTOM,
-                displayName: 'My Custom Provider',
-                config: {
-                    baseUrl: 'https://api.example.com/v1',
-                    apiKeyHeader: 'Authorization',
-                    models: [],
-                    sendMetadataHeaders: true,
-                },
-                auth: { apiKey: 'test-key' },
-            })
-
-            expect(response?.statusCode).toBe(StatusCodes.OK)
-
-            const saved = await db.findOneBy('ai_provider', {
-                platformId: ctx.platform.id,
-                provider: AIProviderName.CUSTOM,
-            })
-            expect(saved).not.toBeNull()
-            expect((saved as any).config.sendMetadataHeaders).toBe(true)
-        })
-
         it('should create a custom provider with defaultHeaders', async () => {
             const response = await ctx.post('/v1/ai-providers', {
                 provider: AIProviderName.CUSTOM,
@@ -55,10 +32,10 @@ describe('AI Providers API', () => {
                     baseUrl: 'https://api.example.com/v1',
                     apiKeyHeader: 'Authorization',
                     models: [],
-                    defaultHeaders: [
-                        { key: 'X-Organization-Id', value: 'org-123' },
-                        { key: 'X-Tenant', value: 'tenant-abc' },
-                    ],
+                    defaultHeaders: {
+                        'X-Organization-Id': 'org-123',
+                        'X-Tenant': 'tenant-abc',
+                    },
                 },
                 auth: { apiKey: 'test-key' },
             })
@@ -69,70 +46,14 @@ describe('AI Providers API', () => {
                 platformId: ctx.platform.id,
                 provider: AIProviderName.CUSTOM,
             })
-            expect((saved as any).config.defaultHeaders).toEqual([
-                { key: 'X-Organization-Id', value: 'org-123' },
-                { key: 'X-Tenant', value: 'tenant-abc' },
-            ])
-        })
-
-        it('should create a custom provider with both sendMetadataHeaders and defaultHeaders', async () => {
-            const response = await ctx.post('/v1/ai-providers', {
-                provider: AIProviderName.CUSTOM,
-                displayName: 'Full Custom Provider',
-                config: {
-                    baseUrl: 'https://api.example.com/v1',
-                    apiKeyHeader: 'X-Api-Key',
-                    models: [],
-                    sendMetadataHeaders: true,
-                    defaultHeaders: [
-                        { key: 'X-Organization-Id', value: 'org-456' },
-                    ],
-                },
-                auth: { apiKey: 'test-key' },
+            expect((saved as any).config.defaultHeaders).toEqual({
+                'X-Organization-Id': 'org-123',
+                'X-Tenant': 'tenant-abc',
             })
-
-            expect(response?.statusCode).toBe(StatusCodes.OK)
-
-            const saved = await db.findOneBy('ai_provider', {
-                platformId: ctx.platform.id,
-                provider: AIProviderName.CUSTOM,
-            })
-            expect((saved as any).config.sendMetadataHeaders).toBe(true)
-            expect((saved as any).config.defaultHeaders).toHaveLength(1)
         })
     })
 
     describe('POST /v1/ai-providers/:id (update)', () => {
-        it('should update sendMetadataHeaders on an existing provider', async () => {
-            const provider = await mockAndSaveAIProvider({
-                platformId: ctx.platform.id,
-                provider: AIProviderName.CUSTOM,
-                displayName: 'Existing Provider',
-                config: {
-                    baseUrl: 'https://api.example.com/v1',
-                    apiKeyHeader: 'Authorization',
-                    models: [],
-                    sendMetadataHeaders: false,
-                } as any,
-            })
-
-            const response = await ctx.post(`/v1/ai-providers/${provider.id}`, {
-                displayName: 'Existing Provider',
-                config: {
-                    baseUrl: 'https://api.example.com/v1',
-                    apiKeyHeader: 'Authorization',
-                    models: [],
-                    sendMetadataHeaders: true,
-                },
-                auth: { apiKey: 'test-key' },
-            })
-
-            expect(response?.statusCode).toBe(StatusCodes.OK)
-
-            const saved = await db.findOneBy('ai_provider', { id: provider.id })
-            expect((saved as any).config.sendMetadataHeaders).toBe(true)
-        })
-
         it('should update defaultHeaders on an existing provider', async () => {
             const provider = await mockAndSaveAIProvider({
                 platformId: ctx.platform.id,
@@ -151,9 +72,7 @@ describe('AI Providers API', () => {
                     baseUrl: 'https://api.example.com/v1',
                     apiKeyHeader: 'Authorization',
                     models: [],
-                    defaultHeaders: [
-                        { key: 'X-Custom', value: 'value-1' },
-                    ],
+                    defaultHeaders: { 'X-Custom': 'value-1' },
                 },
                 auth: { apiKey: 'test-key' },
             })
@@ -161,14 +80,12 @@ describe('AI Providers API', () => {
             expect(response?.statusCode).toBe(StatusCodes.OK)
 
             const saved = await db.findOneBy('ai_provider', { id: provider.id })
-            expect((saved as any).config.defaultHeaders).toEqual([
-                { key: 'X-Custom', value: 'value-1' },
-            ])
+            expect((saved as any).config.defaultHeaders).toEqual({ 'X-Custom': 'value-1' })
         })
     })
 
     describe('GET /v1/ai-providers/:provider/config', () => {
-        it('should return config with sendMetadataHeaders and platformId', async () => {
+        it('should return config with defaultHeaders and platformId', async () => {
             await mockAndSaveAIProvider({
                 platformId: ctx.platform.id,
                 provider: AIProviderName.CUSTOM,
@@ -177,10 +94,7 @@ describe('AI Providers API', () => {
                     baseUrl: 'https://api.example.com/v1',
                     apiKeyHeader: 'Authorization',
                     models: [],
-                    sendMetadataHeaders: true,
-                    defaultHeaders: [
-                        { key: 'X-Org', value: 'org-789' },
-                    ],
+                    defaultHeaders: { 'X-Org': 'org-789' },
                 } as any,
             })
 
@@ -202,10 +116,7 @@ describe('AI Providers API', () => {
 
             expect(body.provider).toBe(AIProviderName.CUSTOM)
             expect(body.platformId).toBe(ctx.platform.id)
-            expect(body.config.sendMetadataHeaders).toBe(true)
-            expect(body.config.defaultHeaders).toEqual([
-                { key: 'X-Org', value: 'org-789' },
-            ])
+            expect(body.config.defaultHeaders).toEqual({ 'X-Org': 'org-789' })
         })
 
         it('should return platformId even without custom headers config', async () => {
@@ -237,13 +148,12 @@ describe('AI Providers API', () => {
             const body = response?.json()
 
             expect(body.platformId).toBe(ctx.platform.id)
-            expect(body.config.sendMetadataHeaders).toBeUndefined()
             expect(body.config.defaultHeaders).toBeUndefined()
         })
     })
 
     describe('GET /v1/ai-providers (list)', () => {
-        it('should include config with new fields when listing providers', async () => {
+        it('should include config with defaultHeaders when listing providers', async () => {
             await mockAndSaveAIProvider({
                 platformId: ctx.platform.id,
                 provider: AIProviderName.CUSTOM,
@@ -252,8 +162,7 @@ describe('AI Providers API', () => {
                     baseUrl: 'https://api.example.com/v1',
                     apiKeyHeader: 'Authorization',
                     models: [],
-                    sendMetadataHeaders: true,
-                    defaultHeaders: [{ key: 'X-Test', value: 'test' }],
+                    defaultHeaders: { 'X-Test': 'test' },
                 } as any,
             })
 
@@ -266,10 +175,7 @@ describe('AI Providers API', () => {
                 (p: any) => p.provider === AIProviderName.CUSTOM,
             )
             expect(customProvider).toBeDefined()
-            expect(customProvider.config.sendMetadataHeaders).toBe(true)
-            expect(customProvider.config.defaultHeaders).toEqual([
-                { key: 'X-Test', value: 'test' },
-            ])
+            expect(customProvider.config.defaultHeaders).toEqual({ 'X-Test': 'test' })
         })
     })
 })

@@ -5,9 +5,7 @@ import { useRef } from 'react';
 import { TextWithIcon } from '@/components/custom/text-with-icon';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { cn, GAP_SIZE_FOR_STEP_SETTINGS } from '@/lib/utils';
-
-import { TextInputWithMentions } from './text-input-with-mentions';
+import { cn } from '@/lib/utils';
 
 type DictionaryInputItem = {
   key: string;
@@ -15,18 +13,14 @@ type DictionaryInputItem = {
   id: string;
 };
 
-type DictionaryInputProps = {
-  values: Record<string, string> | undefined;
-  onChange: (values: Record<string, string>) => void;
-  disabled?: boolean;
-  useMentionTextInput?: boolean;
-};
-
-export const DictionaryProperty = ({
+export const DictionaryInput = ({
   values,
   onChange,
   disabled,
-  useMentionTextInput,
+  renderValueInput,
+  keyInputClassName,
+  keyPlaceholder,
+  valuePlaceholder,
 }: DictionaryInputProps) => {
   const id = useRef(1);
   const valuesArray = Object.entries(values ?? {}).map((el) => {
@@ -94,15 +88,14 @@ export const DictionaryProperty = ({
     const value = items.reduce((acc, current) => {
       return { ...acc, [current.key]: current.value };
     }, {});
-    // Wrap in event-like object to prevent RHF from breaking when
-    // the dictionary has a "target" key. RHF's getEventValue extracts
-    // target.value from event-like objects, so this ensures the actual
-    // dictionary value is preserved.
+    // Wrap in event-like object so RHF's field.onChange correctly extracts
+    // target.value instead of treating the record itself as an event.
     // See: https://github.com/react-hook-form/react-hook-form/issues/13078
     onChange({ target: { value } } as unknown as Record<string, string>);
   };
+
   return (
-    <div className={cn('flex w-full flex-col', GAP_SIZE_FOR_STEP_SETTINGS)}>
+    <div className={cn('flex w-full flex-col gap-2')}>
       {valuesArrayRef.current.map(({ key, value, id }, index) => (
         <div
           key={'dictionary-input-' + id}
@@ -111,25 +104,26 @@ export const DictionaryProperty = ({
           <Input
             value={key}
             disabled={disabled}
-            className="basis-[50%] h-full max-w-[50%] h-[38px]"
+            placeholder={keyPlaceholder}
+            className={cn('basis-[50%] max-w-[50%]', keyInputClassName)}
             onChange={(e) => onChangeValue(index, undefined, e.target.value)}
           />
           <div className="basis-[50%] max-w-[50%]">
-            {useMentionTextInput ? (
-              <TextInputWithMentions
-                initialValue={value}
-                disabled={disabled}
-                onChange={(e) => onChangeValue(index, e, undefined)}
-              ></TextInputWithMentions>
+            {renderValueInput ? (
+              renderValueInput({
+                value,
+                onChange: (v) => onChangeValue(index, v, undefined),
+                disabled,
+              })
             ) : (
               <Input
                 value={value}
                 disabled={disabled}
-                className="h-full"
+                placeholder={valuePlaceholder}
                 onChange={(e) =>
                   onChangeValue(index, e.target.value, undefined)
                 }
-              ></Input>
+              />
             )}
           </div>
 
@@ -157,4 +151,18 @@ export const DictionaryProperty = ({
       </Button>
     </div>
   );
+};
+
+export type DictionaryInputProps = {
+  values: Record<string, string> | undefined;
+  onChange: (values: Record<string, string>) => void;
+  disabled?: boolean;
+  keyInputClassName?: string;
+  keyPlaceholder?: string;
+  valuePlaceholder?: string;
+  renderValueInput?: (params: {
+    value: string;
+    onChange: (v: string) => void;
+    disabled?: boolean;
+  }) => React.ReactNode;
 };

@@ -143,21 +143,16 @@ export async function createAIModel({
             }
         }
         case AIProviderName.CUSTOM: {
-            const { apiKeyHeader, baseUrl, defaultHeaders, sendMetadataHeaders } = config as OpenAICompatibleProviderConfig
+            const { apiKeyHeader, baseUrl, defaultHeaders } = config as OpenAICompatibleProviderConfig
 
-            const customHeaders = defaultHeaders?.reduce((acc, { key, value }) => {
-                if (key) {
-                    acc[key] = value
-                }
-                return acc
-            }, {} as Record<string, string>) ?? {}
+            const customHeaders = defaultHeaders ?? {}
 
-            const metadataHeaders: Record<string, string> = sendMetadataHeaders ? {
+            const metadataHeaders: Record<string, string> = {
                 'x-ap-project-id': projectId,
                 'x-ap-platform-id': platformId,
                 'x-ap-flow-id': flowId,
                 'x-ap-run-id': runId,
-            } : {}
+            }
 
             const provider = createOpenAICompatible({ 
                 name: 'openai-compatible',

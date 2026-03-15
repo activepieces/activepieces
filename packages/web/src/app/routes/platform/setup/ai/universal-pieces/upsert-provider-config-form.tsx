@@ -16,6 +16,7 @@ import {
 import { useState } from 'react';
 import { UseFormReturn, useFieldArray } from 'react-hook-form';
 
+import { DictionaryInput } from '@/components/custom/dictionary-input';
 import { Button } from '@/components/ui/button';
 import {
   FormControl,
@@ -26,8 +27,6 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
-import { Switch } from '@/components/ui/switch';
 import {
   Tooltip,
   TooltipContent,
@@ -252,9 +251,23 @@ export const UpsertProviderConfigForm = ({
             )}
           />
 
-          <CustomHeadersSection
-            form={form as unknown as UseFormReturn<CustomProviderFormValues>}
-            isLoading={isLoading}
+          <FormField
+            control={form.control}
+            name={'config.defaultHeaders' as any}
+            render={({ field }) => (
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">
+                  {t('Custom Headers')}
+                </Label>
+                <DictionaryInput
+                  values={field.value}
+                  onChange={field.onChange}
+                  disabled={isLoading}
+                  keyPlaceholder={t('Header name')}
+                  valuePlaceholder={t('Header value')}
+                />
+              </div>
+            )}
           />
         </>
       )}
@@ -304,166 +317,6 @@ export const UpsertProviderConfigForm = ({
           )}
         </div>
       )}
-    </div>
-  );
-};
-
-type CustomProviderFormValues = Extract<
-  CreateAIProviderRequest,
-  { provider: 'custom' }
->;
-
-type CustomHeadersSectionProps = {
-  form: UseFormReturn<CustomProviderFormValues>;
-  isLoading?: boolean;
-};
-
-const METADATA_HEADERS = [
-  'x-ap-project-id',
-  'x-ap-platform-id',
-  'x-ap-flow-id',
-  'x-ap-run-id',
-];
-
-const CustomHeadersSection = ({
-  form,
-  isLoading,
-}: CustomHeadersSectionProps) => {
-  const { fields, append, remove } = useFieldArray({
-    control: form.control,
-    name: 'config.defaultHeaders',
-  });
-
-  const sendMetadata = !!form.watch('config.sendMetadataHeaders');
-
-  return (
-    <div className="space-y-4">
-      <Separator />
-
-      <div className="grid space-y-3">
-        <div className="flex items-center justify-between">
-          <FormLabel>{t('Send Metadata Headers')}</FormLabel>
-          <Switch
-            checked={sendMetadata}
-            onCheckedChange={(checked) => {
-              form.setValue('config.sendMetadataHeaders', checked, {
-                shouldDirty: true,
-              });
-            }}
-            disabled={isLoading}
-          />
-        </div>
-        {sendMetadata && (
-          <div className="p-3 border rounded-lg space-y-2">
-            <p className="text-sm text-muted-foreground">
-              {t(
-                'Include execution context headers with every request to the provider.',
-              )}
-            </p>
-            <div className="flex flex-wrap gap-1.5">
-              {METADATA_HEADERS.map((header) => (
-                <span
-                  key={header}
-                  className="inline-flex items-center rounded-md bg-muted px-2 py-0.5 text-xs font-mono text-muted-foreground"
-                >
-                  {header}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <Label className="text-sm font-medium">{t('Custom Headers')}</Label>
-          <Button
-            type="button"
-            size="sm"
-            variant="basic"
-            disabled={isLoading}
-            onClick={() =>
-              append({
-                key: '',
-                value: '',
-              })
-            }
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            {t('Add Header')}
-          </Button>
-        </div>
-
-        {fields.length === 0 ? (
-          <div className="text-center py-6 border border-dashed rounded-lg flex flex-col items-center justify-center gap-1">
-            <p className="text-sm text-muted-foreground">
-              {t('No custom headers configured.')}
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {fields.map((header, index) => (
-              <div
-                key={header.id}
-                className="flex items-center gap-2 p-3 border rounded-lg"
-              >
-                <FormField
-                  control={form.control}
-                  name={`config.defaultHeaders.${index}.key`}
-                  render={({ field }) => (
-                    <FormItem className="flex-1 space-y-0">
-                      {index === 0 && (
-                        <FormLabel className="text-xs text-muted-foreground mb-1">
-                          {t('Name')}
-                        </FormLabel>
-                      )}
-                      <FormControl>
-                        <Input
-                          {...field}
-                          placeholder="X-Organization-Id"
-                          disabled={isLoading}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name={`config.defaultHeaders.${index}.value`}
-                  render={({ field }) => (
-                    <FormItem className="flex-1 space-y-0">
-                      {index === 0 && (
-                        <FormLabel className="text-xs text-muted-foreground mb-1">
-                          {t('Value')}
-                        </FormLabel>
-                      )}
-                      <FormControl>
-                        <Input
-                          {...field}
-                          placeholder="your-value"
-                          disabled={isLoading}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className={index === 0 ? 'mt-5' : ''}
-                  onClick={() => remove(index)}
-                  disabled={isLoading}
-                >
-                  <Trash2 className="h-4 w-4 text-destructive" />
-                </Button>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
     </div>
   );
 };

@@ -209,50 +209,52 @@ export const UpsertAIProviderDialogContent = ({
             onSubmit={form.handleSubmit(handleSave)}
           >
             <ScrollArea viewPortClassName="max-h-[calc(70vh)] p-px">
-              <FormField
-                control={form.control}
-                name="displayName"
-                render={({ field }) => (
-                  <FormItem
-                    className="space-y-3"
-                    hidden={
-                      currentProviderDef.provider !== AIProviderName.CUSTOM
-                    }
-                  >
-                    <FormLabel>{t('Display Name')}</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        placeholder={'My Provider'}
-                        disabled={isPending}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+              <div className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="displayName"
+                  render={({ field }) => (
+                    <FormItem
+                      className="space-y-3"
+                      hidden={
+                        currentProviderDef.provider !== AIProviderName.CUSTOM
+                      }
+                    >
+                      <FormLabel>{t('Display Name')}</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          placeholder={'My Provider'}
+                          disabled={isPending}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {currentProviderDef.markdown && (
+                  <div className="text-sm text-muted-foreground">
+                    <ApMarkdown
+                      markdown={currentProviderDef.markdown}
+                    ></ApMarkdown>
+                  </div>
                 )}
-              />
 
-              {currentProviderDef.markdown && (
-                <div className="mb-4 text-sm text-muted-foreground">
-                  <ApMarkdown
-                    markdown={currentProviderDef.markdown}
-                  ></ApMarkdown>
-                </div>
-              )}
+                <UpsertProviderConfigForm
+                  form={form}
+                  provider={provider}
+                  apiKeyRequired={!config}
+                  isLoading={isPending}
+                  isEditMode={!!providerId}
+                />
 
-              <UpsertProviderConfigForm
-                form={form}
-                provider={provider}
-                apiKeyRequired={!config}
-                isLoading={isPending}
-                isEditMode={!!providerId}
-              />
-
-              {form.formState.errors.root?.serverError && (
-                <FormMessage className="mt-2">
-                  {form.formState.errors.root.serverError.message}
-                </FormMessage>
-              )}
+                {form.formState.errors.root?.serverError && (
+                  <FormMessage>
+                    {form.formState.errors.root.serverError.message}
+                  </FormMessage>
+                )}
+              </div>
             </ScrollArea>
 
             <DialogFooter>
