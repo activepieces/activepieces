@@ -51,7 +51,7 @@ export const askAI = createAction({
     const provider = context.propsValue.provider;
     const modelId = context.propsValue.model;
     const storage = context.store;
-    const webSearchOptions = context.propsValue.webSearchOptions as WebSearchOptions;
+    const webSearchOptions = (context.propsValue.webSearchOptions ?? {}) as WebSearchOptions;
 
     const { tools: webSearchTools, providerOptions } = buildWebSearchConfig({
       provider,
