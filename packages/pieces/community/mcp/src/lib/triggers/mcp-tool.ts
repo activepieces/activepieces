@@ -101,7 +101,37 @@ export const mcpTool = createTrigger({
 
     return [payload];
   },
-  async test() {
-    return [{}];
+  async test(context) {
+    const inputSchema = context.propsValue.inputSchema as { name: string; type: string; required: boolean }[] | undefined;
+    if (!inputSchema || inputSchema.length === 0) {
+      return [{}];
+    }
+    const sampleData: Record<string, unknown> = {};
+    for (const param of inputSchema) {
+      switch (param.type) {
+        case McpPropertyType.TEXT:
+          sampleData[param.name] = `sample ${param.name}`;
+          break;
+        case McpPropertyType.NUMBER:
+          sampleData[param.name] = 0;
+          break;
+        case McpPropertyType.BOOLEAN:
+          sampleData[param.name] = false;
+          break;
+        case McpPropertyType.DATE:
+          sampleData[param.name] = new Date().toISOString();
+          break;
+        case McpPropertyType.ARRAY:
+          sampleData[param.name] = [];
+          break;
+        case McpPropertyType.OBJECT:
+          sampleData[param.name] = {};
+          break;
+        default:
+          sampleData[param.name] = `sample ${param.name}`;
+          break;
+      }
+    }
+    return [sampleData];
   },
 });
