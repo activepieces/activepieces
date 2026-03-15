@@ -1,6 +1,6 @@
 import { z } from 'zod'
-import { BaseModelSchema, Nullable } from '../../core/common/base-model'
 import { ErrorCode } from '../../core/common/activepieces-error'
+import { BaseModelSchema, Nullable } from '../../core/common/base-model'
 import { ApId } from '../../core/common/id-generator'
 import { ExecutionState } from './execution/execution-output'
 import { FlowRunStatus, PauseMetadata } from './execution/flow-execution'
@@ -64,5 +64,5 @@ export type FailedStep = z.infer<typeof FailedStep>
 export type FlowRun = z.infer<typeof FlowRun> & ExecutionState
 
 export type FlowRunWithRetryError = FlowRun & {
-    error?: { errorCode: ErrorCode; errorMessage: string }
+    error?: { errorCode: ErrorCode, errorMessage: string }
 }

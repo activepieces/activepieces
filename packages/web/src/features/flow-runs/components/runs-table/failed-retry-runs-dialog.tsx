@@ -1,4 +1,8 @@
-import { ApFlagId, ErrorCode, FlowRunWithRetryError } from '@activepieces/shared';
+import {
+  ApFlagId,
+  ErrorCode,
+  FlowRunWithRetryError,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import { ExternalLink } from 'lucide-react';
 
@@ -29,7 +33,7 @@ export const FailedRetryRunsDialog = ({
   failedRuns,
 }: FailedRetryRunsDialogProps) => {
   const openNewWindow = useNewWindow();
-  const { data: rententionDays } = flagsHooks.useFlag<number>(
+  const { data: retentionDays } = flagsHooks.useFlag<number>(
     ApFlagId.EXECUTION_DATA_RETENTION_DAYS,
   );
   return (
@@ -67,7 +71,7 @@ export const FailedRetryRunsDialog = ({
                         ? t(
                             'Retry is only available for {failedJobRetentionDays} after a run fails.',
                             {
-                              failedJobRetentionDays: rententionDays,
+                              failedJobRetentionDays: retentionDays,
                             },
                           )
                         : run.error.errorMessage ?? t('Internal server error')}
