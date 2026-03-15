@@ -60,8 +60,16 @@ export function createSandbox(
         if (!isNil(connectedSocket) && connectedSocket.connected) {
             return Promise.resolve()
         }
-        return new Promise<void>((resolve) => {
-            connectionResolve = resolve
+        return new Promise<void>((resolve, reject) => {
+            const timeout = setTimeout(() => {
+                connectionResolve = null
+                reject(new Error(`Sandbox ${sandboxId} did not connect within 30 seconds`))
+            }, 30_000)
+
+            connectionResolve = () => {
+                clearTimeout(timeout)
+                resolve()
+            }
         })
     }
 
@@ -95,7 +103,14 @@ export function createSandbox(
                 },
             })
 
-            await waitForConnection()
+            const exitPromise = new Promise<never>((_, reject) => {
+                childProcess!.once('exit', (code, signal) => {
+                    reject(new Error(`Sandbox ${sandboxId} exited before connecting (code=${code}, signal=${signal})`))
+                })
+            })
+
+            await Promise.race([waitForConnection(), exitPromise])
+            childProcess!.removeAllListeners('exit')
 
             log.debug({
                 sandboxId,
