@@ -24,6 +24,7 @@ export const apChangeFlowStatusTool = (mcp: McpServer, log: FastifyBaseLogger): 
             flowId: z.string().describe('The id of the flow'),
             status: z.enum([FlowStatus.ENABLED, FlowStatus.DISABLED]).describe('The new status: ENABLED to activate the flow, DISABLED to pause it'),
         },
+        annotations: { destructiveHint: false, idempotentHint: true, openWorldHint: false },
         execute: async (args) => {
             const { flowId, status } = changeFlowStatusInput.parse(args)
 
