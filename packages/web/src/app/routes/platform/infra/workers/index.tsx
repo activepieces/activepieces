@@ -95,66 +95,70 @@ export default function WorkersPage() {
   );
 
   return (
-    <div className="flex flex-col w-full gap-4">
+    <div className="flex flex-col w-full">
       <DashboardPageHeader
         description={t('Check the health of your worker machines')}
         title={t('Workers Machine')}
       />
-      {showDemoData && (
-        <Alert variant="default">
-          <div className="flex items-center gap-2">
-            <InfoIcon size={16} />
-            <AlertDescription>
-              {t(
-                'This is demo data. In a real environment, this would show your actual worker machines.',
-              )}
-            </AlertDescription>
+      <div className="flex flex-col gap-4 px-4 py-4">
+        {showDemoData && (
+          <Alert variant="default">
+            <div className="flex items-center gap-2">
+              <InfoIcon size={16} />
+              <AlertDescription>
+                {t(
+                  'This is demo data. In a real environment, this would show your actual worker machines.',
+                )}
+              </AlertDescription>
+            </div>
+          </Alert>
+        )}
+
+        {isLoading && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+            {[0, 1, 2].map((i) => (
+              <Card key={i} className="animate-pulse">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <div className="h-4 w-28 bg-muted rounded" />
+                    <div className="h-5 w-16 bg-muted rounded-full" />
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="h-3 w-full bg-muted rounded" />
+                  <div className="h-3 w-full bg-muted rounded" />
+                  <div className="h-3 w-full bg-muted rounded" />
+                </CardContent>
+                <CardFooter>
+                  <div className="h-4 w-full bg-muted rounded" />
+                </CardFooter>
+              </Card>
+            ))}
           </div>
-        </Alert>
-      )}
+        )}
 
-      {isLoading && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-          {[0, 1, 2].map((i) => (
-            <Card key={i} className="animate-pulse">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <div className="h-4 w-28 bg-muted rounded" />
-                  <div className="h-5 w-16 bg-muted rounded-full" />
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="h-3 w-full bg-muted rounded" />
-                <div className="h-3 w-full bg-muted rounded" />
-                <div className="h-3 w-full bg-muted rounded" />
-              </CardContent>
-              <CardFooter>
-                <div className="h-4 w-full bg-muted rounded" />
-              </CardFooter>
-            </Card>
-          ))}
-        </div>
-      )}
+        {!isLoading && (workersData ?? []).length === 0 && (
+          <div className="flex flex-col items-center justify-center py-16 gap-3 text-muted-foreground">
+            <Server className="size-14" />
+            <p className="font-medium text-foreground">
+              {t('No workers found')}
+            </p>
+            <p className="text-sm text-center max-w-sm">
+              {t(
+                "You don't have any worker machines yet. Spin up new machines to execute your automations",
+              )}
+            </p>
+          </div>
+        )}
 
-      {!isLoading && (workersData ?? []).length === 0 && (
-        <div className="flex flex-col items-center justify-center py-16 gap-3 text-muted-foreground">
-          <Server className="size-14" />
-          <p className="font-medium text-foreground">{t('No workers found')}</p>
-          <p className="text-sm text-center max-w-sm">
-            {t(
-              "You don't have any worker machines yet. Spin up new machines to execute your automations",
-            )}
-          </p>
-        </div>
-      )}
-
-      {!isLoading && (workersData ?? []).length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-          {(workersData ?? []).map((worker, index) => (
-            <WorkerCard key={worker.id} worker={worker} index={index} />
-          ))}
-        </div>
-      )}
+        {!isLoading && (workersData ?? []).length > 0 && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+            {(workersData ?? []).map((worker, index) => (
+              <WorkerCard key={worker.id} worker={worker} index={index} />
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
