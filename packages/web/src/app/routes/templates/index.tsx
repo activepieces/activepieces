@@ -29,7 +29,7 @@ const TemplatesPage = () => {
   const isShowingOfficialTemplates = !platform.plan.manageTemplatesEnabled;
   const { templates, isLoading, search, setSearch, category, setCategory } =
     templatesHooks.useTemplates(
-      isShowingOfficialTemplates ? TemplateType.OFFICIAL : TemplateType.CUSTOM,
+      isShowingOfficialTemplates ? TemplateType.OFFICIAL : TemplateType.CUSTOM
     );
   const selectedCategory = category as string;
   const { data: allOfficialTemplates, isLoading: isAllTemplatesLoading } =
@@ -51,7 +51,7 @@ const TemplatesPage = () => {
         });
       }
     },
-    [navigate],
+    [navigate]
   );
 
   const templatesByCategory = useMemo(() => {
@@ -98,7 +98,7 @@ const TemplatesPage = () => {
   return (
     <div>
       <div>
-        <div className="sticky top-0 z-10 bg-background mb-6 ">
+        <div>
           <PageHeader
             showSidebarToggle={true}
             title={

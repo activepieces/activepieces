@@ -119,7 +119,7 @@ export const AutomationsFilters = ({
 
   const connectionOptions = (connections || []).map((connection) => {
     const pieceIcon = pieces?.find(
-      (p) => p.name === connection.pieceName,
+      (p) => p.name === connection.pieceName
     )?.logoUrl;
     return {
       value: connection.externalId,
@@ -133,8 +133,8 @@ export const AutomationsFilters = ({
   return (
     <div
       className={cn(
-        'sticky top-0 z-30 overflow-x-auto bg-background py-3 border-b',
-        DASHBOARD_CONTENT_PADDING_X,
+        'overflow-x-auto bg-background py-3 border-b',
+        DASHBOARD_CONTENT_PADDING_X
       )}
     >
       <div className="flex items-center justify-between gap-4 min-w-max">
