@@ -1,12 +1,13 @@
 import { Readable } from 'stream'
-import { AppSystemProp, exceptionHandler } from '@activepieces/server-common'
 import { apId, FileType, isNil, ProjectId } from '@activepieces/shared'
 import { DeleteObjectsCommand, GetObjectCommand, PutObjectCommand, S3, S3ClientConfig } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import contentDisposition from 'content-disposition'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
+import { exceptionHandler } from '../helper/exception-handler'
 import { system } from '../helper/system/system'
+import { AppSystemProp } from '../helper/system/system-props'
 import { fileRepo } from './file.service'
 
 export const s3Helper = (log: FastifyBaseLogger) => ({

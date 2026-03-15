@@ -1,5 +1,5 @@
-import { redisMetadataKey } from '@activepieces/server-common'
 import { apId, FlowRun, FlowRunStatus, FlowVersionState, PauseType, RunEnvironment } from '@activepieces/shared'
+import { redisMetadataKey } from '../../../../../src/app/workers/job'
 import { FastifyInstance } from 'fastify'
 import { distributedStore } from '../../../../../src/app/database/redis-connections'
 import { pubsub } from '../../../../../src/app/helper/pubsub'
@@ -70,7 +70,7 @@ describe('Resume flow run — subflow race condition (Redis metadata fallback)',
 
         const response = await app.inject({
             method: 'POST',
-            url: `/v1/flow-runs/${flowRun.id}/requests/${correctRequestId}`,
+            url: `/api/v1/flow-runs/${flowRun.id}/requests/${correctRequestId}`,
             body: {
                 status: 'success',
                 data: { greeting: 'Hello' },
@@ -102,7 +102,7 @@ describe('Resume flow run — subflow race condition (Redis metadata fallback)',
         // Child flow calls back with the NEW requestId — should succeed via Redis fallback
         const response = await app.inject({
             method: 'POST',
-            url: `/v1/flow-runs/${flowRun.id}/requests/${newRequestId}`,
+            url: `/api/v1/flow-runs/${flowRun.id}/requests/${newRequestId}`,
             body: {
                 status: 'success',
                 data: { greeting: 'Hello' },
@@ -135,7 +135,7 @@ describe('Resume flow run — subflow race condition (Redis metadata fallback)',
         const requestId = apId()
         const response = await app.inject({
             method: 'POST',
-            url: `/v1/flow-runs/${flowRun.id}/requests/${requestId}`,
+            url: `/api/v1/flow-runs/${flowRun.id}/requests/${requestId}`,
             body: {
                 status: 'success',
                 data: { greeting: 'Hello' },
@@ -167,7 +167,7 @@ describe('Resume flow run — subflow race condition (Redis metadata fallback)',
         // Callback with an unknown requestId — should not resume
         const response = await app.inject({
             method: 'POST',
-            url: `/v1/flow-runs/${flowRun.id}/requests/${unknownRequestId}`,
+            url: `/api/v1/flow-runs/${flowRun.id}/requests/${unknownRequestId}`,
             body: {
                 status: 'success',
                 data: { greeting: 'Hello' },
@@ -224,7 +224,7 @@ describe('Resume flow run — subflow race condition (Redis metadata fallback)',
         try {
             const response = await app.inject({
                 method: 'POST',
-                url: `/v1/flow-runs/${flowRun.id}/requests/${newRequestId}`,
+                url: `/api/v1/flow-runs/${flowRun.id}/requests/${newRequestId}`,
                 body: {
                     status: 'success',
                     data: { greeting: 'Hello' },
@@ -251,7 +251,7 @@ describe('Resume flow run — subflow race condition (Redis metadata fallback)',
 
         const response = await app.inject({
             method: 'POST',
-            url: `/v1/flow-runs/${flowRun.id}/requests/${unknownRequestId}/sync`,
+            url: `/api/v1/flow-runs/${flowRun.id}/requests/${unknownRequestId}/sync`,
             body: { data: 'test' },
         })
 
@@ -279,7 +279,7 @@ describe('Resume flow run — subflow race condition (Redis metadata fallback)',
         // so the sync handler's oneTimeListener resolves immediately.
         const responsePromise = app.inject({
             method: 'POST',
-            url: `/v1/flow-runs/${flowRun.id}/requests/${newRequestId}/sync`,
+            url: `/api/v1/flow-runs/${flowRun.id}/requests/${newRequestId}/sync`,
             body: { data: 'test' },
         })
 
@@ -310,7 +310,7 @@ describe('Resume flow run — subflow race condition (Redis metadata fallback)',
 
         const response = await app.inject({
             method: 'POST',
-            url: `/v1/flow-runs/${flowRun.id}/requests/${newRequestId}`,
+            url: `/api/v1/flow-runs/${flowRun.id}/requests/${newRequestId}`,
             body: {
                 status: 'success',
                 data: { greeting: 'Hello' },

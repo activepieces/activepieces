@@ -43,7 +43,7 @@ describe('Templates', () => {
 
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/templates',
+                url: '/api/v1/templates',
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -63,7 +63,7 @@ describe('Templates', () => {
         it('should list cloud platform template for anonymous users', async () => {
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/templates',
+                url: '/api/v1/templates',
                 query: {
                     type: TemplateType.OFFICIAL,
                 },
@@ -125,7 +125,7 @@ describe('Templates', () => {
 
             const response = await app?.inject({
                 method: 'DELETE',
-                url: `/v1/templates/${mockPlatformTemplate.id}`,
+                url: `/api/v1/templates/${mockPlatformTemplate.id}`,
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -148,7 +148,7 @@ describe('Templates', () => {
 
             const response = await app?.inject({
                 method: 'DELETE',
-                url: `/v1/templates/${mockPlatformTemplate.id}`,
+                url: `/api/v1/templates/${mockPlatformTemplate.id}`,
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -166,7 +166,7 @@ describe('Templates', () => {
 
             const response = await app?.inject({
                 method: 'DELETE',
-                url: `/v1/templates/${mockPlatformTemplate.id}`,
+                url: `/api/v1/templates/${mockPlatformTemplate.id}`,
             })
 
             // assert
