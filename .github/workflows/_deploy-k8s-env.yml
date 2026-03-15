@@ -40,7 +40,7 @@ jobs:
       - name: Deploy APP
         run: |
           ssh ops "\
-            helm upgrade --install activepieces ../activepieces-helm/ \
+            helm upgrade --install activepieces /root/k8n/activepieces-helm/ \
               --namespace activepieces \
               --kube-context ${{ inputs.kube_context }} \
               --values ${{ inputs.app_values }} \
@@ -83,7 +83,7 @@ jobs:
       - name: Deploy WORKER
         run: |
           ssh ops "\
-            helm upgrade --install activepieces-worker ../activepieces-helm/ \
+            helm upgrade --install activepieces-worker /root/k8n/activepieces-helm/ \
               --namespace activepieces \
               --kube-context ${{ inputs.kube_context }} \
               --values ${{ inputs.worker_values }} \
