@@ -43,11 +43,13 @@ export const htmlToPdfAction = createAction({
       displayName: 'Page Width',
       description: 'Set custom page dimensions when standard sizes don\'t fit your needs. Useful for banners, receipts, custom forms, or when matching specific printing equipment. The safe maximum is 200in - larger sizes may fail to open in some PDF viewers. For standard sizes like A4 or Letter, use the predefined page size option instead.',
       required: false,
+      defaultValue: '8.27in',
     }),
     page_height: Property.ShortText({
       displayName: 'Page Height',
       description: 'Set custom page height for specific formats like receipts, banners, or legal documents. Set to "-1" for a single-page PDF that expands to fit all content vertically - ideal for web pages, infographics, or documents where page breaks are undesirable. The safe maximum is 200in otherwise some viewers cannot open the PDF. For standard sizes, use the predefined page size option instead.',
       required: false,
+      defaultValue: '11.7in',
     }),
     orientation: Property.StaticDropdown({
       displayName: 'Orientation',
@@ -55,8 +57,8 @@ export const htmlToPdfAction = createAction({
       required: false,
       options: {
         options: [
-          { label: 'Portrait', value: 'portrait' },
-          { label: 'Landscape', value: 'landscape' },
+          { label: 'landscape', value: 'landscape' },
+          { label: 'portrait', value: 'portrait' },
         ],
       },
       defaultValue: 'portrait',
@@ -101,11 +103,11 @@ export const htmlToPdfAction = createAction({
       required: false,
       options: {
         options: [
-          { label: 'Balanced', value: 'balanced' },
-          { label: 'Small', value: 'small' },
-          { label: 'Medium', value: 'medium' },
-          { label: 'Large', value: 'large' },
-          { label: 'Extra Large', value: 'extra-large' },
+          { label: 'balanced', value: 'balanced' },
+          { label: 'small', value: 'small' },
+          { label: 'medium', value: 'medium' },
+          { label: 'large', value: 'large' },
+          { label: 'extra-large', value: 'extra-large' },
         ],
       },
       defaultValue: 'medium',
@@ -116,8 +118,8 @@ export const htmlToPdfAction = createAction({
       required: false,
       options: {
         options: [
-          { label: 'Auto', value: 'auto' },
-          { label: 'Large', value: 'large' },
+          { label: 'auto', value: 'auto' },
+          { label: 'large', value: 'large' },
         ],
       },
       defaultValue: 'auto',
@@ -128,13 +130,13 @@ export const htmlToPdfAction = createAction({
       required: false,
       options: {
         options: [
-          { label: 'Auto', value: 'auto' },
-          { label: 'Smart Scaling', value: 'smart-scaling' },
-          { label: 'No Scaling', value: 'no-scaling' },
-          { label: 'Viewport Width', value: 'viewport-width' },
-          { label: 'Content Width', value: 'content-width' },
-          { label: 'Single Page', value: 'single-page' },
-          { label: 'Single Page Ratio', value: 'single-page-ratio' },
+          { label: 'auto', value: 'auto' },
+          { label: 'smart-scaling', value: 'smart-scaling' },
+          { label: 'no-scaling', value: 'no-scaling' },
+          { label: 'viewport-width', value: 'viewport-width' },
+          { label: 'content-width', value: 'content-width' },
+          { label: 'single-page', value: 'single-page' },
+          { label: 'single-page-ratio', value: 'single-page-ratio' },
         ],
       },
       defaultValue: 'auto',
@@ -145,9 +147,9 @@ export const htmlToPdfAction = createAction({
       required: false,
       options: {
         options: [
-          { label: 'Trailing', value: 'trailing' },
-          { label: 'All', value: 'all' },
-          { label: 'None', value: 'none' },
+          { label: 'trailing', value: 'trailing' },
+          { label: 'all', value: 'all' },
+          { label: 'none', value: 'none' },
         ],
       },
       defaultValue: 'trailing',
@@ -266,9 +268,9 @@ export const htmlToPdfAction = createAction({
       required: false,
       options: {
         options: [
-          { label: 'All', value: 'all' },
-          { label: 'Same Origin', value: 'same-origin' },
-          { label: 'None', value: 'none' },
+          { label: 'all', value: 'all' },
+          { label: 'same-origin', value: 'same-origin' },
+          { label: 'none', value: 'none' },
         ],
       },
       defaultValue: 'all',
@@ -326,9 +328,9 @@ export const htmlToPdfAction = createAction({
       required: false,
       options: {
         options: [
-          { label: 'Default', value: 'default' },
-          { label: 'Mode 1', value: 'mode1' },
-          { label: 'Mode 2', value: 'mode2' },
+          { label: 'default', value: 'default' },
+          { label: 'mode1', value: 'mode1' },
+          { label: 'mode2', value: 'mode2' },
         ],
       },
       defaultValue: 'default',
@@ -370,9 +372,9 @@ export const htmlToPdfAction = createAction({
       required: false,
       options: {
         options: [
-          { label: 'Cut Out', value: 'cut-out' },
-          { label: 'Remove Siblings', value: 'remove-siblings' },
-          { label: 'Hide Siblings', value: 'hide-siblings' },
+          { label: 'cut-out', value: 'cut-out' },
+          { label: 'remove-siblings', value: 'remove-siblings' },
+          { label: 'hide-siblings', value: 'hide-siblings' },
         ],
       },
       defaultValue: 'cut-out',
@@ -393,11 +395,11 @@ export const htmlToPdfAction = createAction({
       required: false,
       options: {
         options: [
-          { label: 'None', value: 'none' },
-          { label: 'Readability V1', value: 'readability-v1' },
-          { label: 'Readability V2', value: 'readability-v2' },
-          { label: 'Readability V3', value: 'readability-v3' },
-          { label: 'Readability V4', value: 'readability-v4' },
+          { label: 'none', value: 'none' },
+          { label: 'readability-v1', value: 'readability-v1' },
+          { label: 'readability-v2', value: 'readability-v2' },
+          { label: 'readability-v3', value: 'readability-v3' },
+          { label: 'readability-v4', value: 'readability-v4' },
         ],
       },
       defaultValue: 'none',
@@ -420,9 +422,9 @@ export const htmlToPdfAction = createAction({
       required: false,
       options: {
         options: [
-          { label: 'None', value: 'none' },
-          { label: 'Opaque', value: 'opaque' },
-          { label: 'All', value: 'all' },
+          { label: 'none', value: 'none' },
+          { label: 'opaque', value: 'opaque' },
+          { label: 'all', value: 'all' },
         ],
       },
       defaultValue: 'none',
@@ -503,10 +505,10 @@ export const htmlToPdfAction = createAction({
       required: false,
       options: {
         options: [
-          { label: 'Single Page', value: 'single-page' },
-          { label: 'One Column', value: 'one-column' },
-          { label: 'Two Column Left', value: 'two-column-left' },
-          { label: 'Two Column Right', value: 'two-column-right' },
+          { label: 'single-page', value: 'single-page' },
+          { label: 'one-column', value: 'one-column' },
+          { label: 'two-column-left', value: 'two-column-left' },
+          { label: 'two-column-right', value: 'two-column-right' },
         ],
       },
     }),
@@ -516,9 +518,9 @@ export const htmlToPdfAction = createAction({
       required: false,
       options: {
         options: [
-          { label: 'Full Screen', value: 'full-screen' },
-          { label: 'Thumbnails', value: 'thumbnails' },
-          { label: 'Outlines', value: 'outlines' },
+          { label: 'full-screen', value: 'full-screen' },
+          { label: 'thumbnails', value: 'thumbnails' },
+          { label: 'outlines', value: 'outlines' },
         ],
       },
     }),
@@ -528,9 +530,9 @@ export const htmlToPdfAction = createAction({
       required: false,
       options: {
         options: [
-          { label: 'Fit Width', value: 'fit-width' },
-          { label: 'Fit Height', value: 'fit-height' },
-          { label: 'Fit Page', value: 'fit-page' },
+          { label: 'fit-width', value: 'fit-width' },
+          { label: 'fit-height', value: 'fit-height' },
+          { label: 'fit-page', value: 'fit-page' },
         ],
       },
     }),
@@ -577,6 +579,52 @@ export const htmlToPdfAction = createAction({
     right_to_left: Property.Checkbox({
       displayName: 'Right To Left',
       description: 'Set the predominant reading order for text to right-to-left. This option has no direct effect on the document\'s contents or page numbering but can be used to determine the relative positioning of pages when displayed side by side or printed n-up.',
+      required: false,
+    }),
+    data_string: Property.LongText({
+      displayName: 'Data String',
+      description: 'Set the input data for template rendering. The data format can be JSON, XML, YAML or CSV.',
+      required: false,
+    }),
+    data_format: Property.StaticDropdown({
+      displayName: 'Data Format',
+      description: 'Specify the input data format. Use "auto" for automatic detection or explicitly set to JSON, XML, YAML, or CSV when format is known.',
+      required: false,
+      options: {
+        options: [
+          { label: 'auto', value: 'auto' },
+          { label: 'json', value: 'json' },
+          { label: 'xml', value: 'xml' },
+          { label: 'yaml', value: 'yaml' },
+          { label: 'csv', value: 'csv' },
+        ],
+      },
+      defaultValue: 'auto',
+    }),
+    data_encoding: Property.ShortText({
+      displayName: 'Data Encoding',
+      description: 'Set the encoding of the data file set by setDataFile.',
+      required: false,
+      defaultValue: 'utf-8',
+    }),
+    data_ignore_undefined: Property.Checkbox({
+      displayName: 'Data Ignore Undefined',
+      description: 'Ignore undefined variables in the HTML template. The default mode is strict so any undefined variable causes the conversion to fail. You can use {% if variable is defined %} to check if the variable is defined.',
+      required: false,
+    }),
+    data_auto_escape: Property.Checkbox({
+      displayName: 'Data Auto Escape',
+      description: 'Auto escape HTML symbols in the input data before placing them into the output.',
+      required: false,
+    }),
+    data_trim_blocks: Property.Checkbox({
+      displayName: 'Data Trim Blocks',
+      description: 'Auto trim whitespace around each template command block.',
+      required: false,
+    }),
+    data_options: Property.ShortText({
+      displayName: 'Data Options',
+      description: 'Set the advanced data options:csv_delimiter - The CSV data delimiter, the default is ,.xml_remove_root - Remove the root XML element from the input data.data_root - The name of the root element inserted into the input data without a root node (e.g. CSV), the default is data.',
       required: false,
     }),
     debug_log: Property.Checkbox({
@@ -748,6 +796,13 @@ export const htmlToPdfAction = createAction({
       'center_window',
       'display_title',
       'right_to_left',
+      'data_string',
+      'data_format',
+      'data_encoding',
+      'data_ignore_undefined',
+      'data_auto_escape',
+      'data_trim_blocks',
+      'data_options',
       'debug_log',
       'tag',
       'http_proxy',
@@ -787,7 +842,7 @@ export const htmlToPdfAction = createAction({
       url: getConvertUrl(converterVersion),
       headers: {
         Authorization: getAuthHeader(auth),
-        'User-Agent': 'pdfcrowd-activepieces/0.0.5',
+        'User-Agent': 'pdfcrowd-activepieces/1.1.0',
         ...formData.getHeaders(),
       },
       body: formBuffer,
