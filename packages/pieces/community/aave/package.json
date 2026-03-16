@@ -1,0 +1,18 @@
+{
+  "name": "@activepieces/piece-aave",
+  "version": "0.0.1",
+  "displayName": "Aave",
+  "description": "Aave V3 DeFi lending protocol — read reserve data, user positions, protocol stats, market rates, and rate history via The Graph.",
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
+    "tslib": "2.6.2"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json && cp package.json dist/",
+    "lint": "eslint 'src/**/*.ts'"
+  }
+}
