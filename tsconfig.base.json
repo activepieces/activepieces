@@ -379,6 +379,9 @@
       "@activepieces/piece-dumpling-ai": [
         "packages/pieces/community/dumpling-ai/src/index.ts"
       ],
+      "@activepieces/piece-dune-analytics": [
+        "packages/pieces/community/dune-analytics/src/index.ts"
+      ],
       "@activepieces/piece-eden-ai": [
         "packages/pieces/community/eden-ai/src/index.ts"
       ],
