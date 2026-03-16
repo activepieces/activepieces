@@ -1,0 +1,34 @@
+{
+  "name": "@activepieces/piece-fantom",
+  "version": "0.0.1",
+  "description": "Fantom FTM blockchain: TVL, price, chain breakdown, historical data via DeFiLlama and CoinGecko",
+  "keywords": [
+    "activepieces",
+    "fantom",
+    "ftm",
+    "defi",
+    "blockchain",
+    "tvl",
+    "defillama",
+    "coingecko"
+  ],
+  "homepage": "",
+  "bugs": {
+    "url": "https://github.com/activepieces/activepieces/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/activepieces/activepieces.git"
+  },
+  "license": "MIT",
+  "author": "",
+  "main": "./src/index.ts",
+  "scripts": {
+    "publish-piece": "node ../../../../.scripts/publish-piece.mjs"
+  },
+  "peerDependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*"
+  }
+}
