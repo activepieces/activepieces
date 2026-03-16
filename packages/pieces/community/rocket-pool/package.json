@@ -1,0 +1,33 @@
+{
+  "name": "@activepieces/piece-rocket-pool",
+  "version": "0.0.1",
+  "description": "Rocket Pool decentralized ETH staking: TVL, rETH price, RPL price, staking APY, chain analytics",
+  "keywords": [
+    "activepieces",
+    "rocket-pool",
+    "defi",
+    "staking",
+    "ethereum",
+    "reth",
+    "rpl"
+  ],
+  "homepage": "",
+  "bugs": {
+    "url": "https://github.com/activepieces/activepieces/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/activepieces/activepieces.git"
+  },
+  "license": "MIT",
+  "author": "",
+  "main": "./src/index.ts",
+  "scripts": {
+    "publish-piece": "node ../../../../.scripts/publish-piece.mjs"
+  },
+  "peerDependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*"
+  }
+}
