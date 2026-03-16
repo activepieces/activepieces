@@ -19,7 +19,7 @@ export const getAllProtocols = createAction({
   name: 'get_all_protocols',
   displayName: 'Get All Protocols',
   description:
-    'Fetch all DeFi protocols with TVL data, sorted by total value locked.',
+    'Fetch all DeFi protocols with TVL data, sorted by total value locked. Note: Downloads all ~4,000 DeFi protocols and filters in memory. TVL filter and limit apply after download.',
   props: {
     limit: Property.Number({
       displayName: 'Limit',

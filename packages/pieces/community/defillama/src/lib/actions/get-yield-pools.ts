@@ -24,7 +24,7 @@ export const getYieldPools = createAction({
   name: 'get_yield_pools',
   displayName: 'Get Yield Pools',
   description:
-    'Get top yield farming opportunities with APY and TVL data.',
+    'Get top yield farming opportunities with APY and TVL data. Note: Downloads the full yield pools dataset (~4,000+ entries) and filters in memory. Best suited for broad queries.',
   props: {
     min_apy: Property.Number({
       displayName: 'Minimum APY',

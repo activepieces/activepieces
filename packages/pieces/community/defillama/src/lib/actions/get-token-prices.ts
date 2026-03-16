@@ -29,7 +29,7 @@ export const getTokenPrices = createAction({
   async run({ propsValue }) {
     const coins = propsValue.coins.trim();
     const data = await defillamaRequest<PricesResponse>(
-      coinsUrl(`/prices/current/${encodeURIComponent(coins)}`)
+      coinsUrl(`/prices/current/${coins}`)
     );
 
     const prices = Object.entries(data.coins).map(([key, coin]) => ({
