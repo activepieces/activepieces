@@ -26,7 +26,7 @@ export const secretManagersApi = {
     );
   },
   update(id: string, config: ConnectSecretManagerRequest) {
-    return api.patch<SecretManagerConnectionWithStatus>(
+    return api.post<SecretManagerConnectionWithStatus>(
       `/v1/secret-managers/${id}`,
       config,
     );

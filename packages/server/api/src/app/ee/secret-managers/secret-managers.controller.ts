@@ -25,7 +25,7 @@ export const secretManagersController: FastifyPluginAsyncZod = async (app) => {
         return reply.status(201).send(connection)
     })
 
-    app.patch('/:id', UpdateSecretManagerConnection, async (request) => {
+    app.post('/:id', UpdateSecretManagerConnection, async (request) => {
         return service.update({
             id: request.params.id,
             platformId: request.principal.platform.id,
