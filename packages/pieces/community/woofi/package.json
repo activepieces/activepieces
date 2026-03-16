@@ -1,0 +1,17 @@
+{
+  "name": "@activepieces/piece-woofi",
+  "version": "0.0.1",
+  "description": "WOOFi DEX - Cross-chain decentralized exchange with sPMM algorithm",
+  "keywords": ["activepieces", "woofi", "woo", "defi", "dex", "crypto"],
+  "homepage": "https://www.woo.org/",
+  "license": "MIT",
+  "main": "src/index.ts",
+  "scripts": { "build": "tsc" },
+  "files": ["src"],
+  "peerDependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*"
+  },
+  "devDependencies": { "typescript": "catalog:" }
+}
