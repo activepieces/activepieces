@@ -1,0 +1,22 @@
+{
+  "name": "@activepieces/piece-uniswap",
+  "version": "0.0.1",
+  "description": "Uniswap DEX — swap quotes, pool data, and token prices from the largest decentralized exchange",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": ["dist"],
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "nx build piece-uniswap"
+  },
+  "keywords": ["activepieces", "uniswap", "dex", "defi"],
+  "authors": ["Bossco"],
+  "dependencies": {
+    "@activepieces/pieces-common": "*",
+    "@activepieces/pieces-framework": "*",
+    "@activepieces/shared": "*"
+  }
+}
