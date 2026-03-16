@@ -44,9 +44,8 @@ export const getTokenTrades = createAction({
     }),
   },
   async run(context) {
-    return birdeyeRequest(context.auth, '/defi/txs/token', {
+    return birdeyeRequest(context.auth, '/defi/txs/token', context.propsValue.chain as string, {
       address: context.propsValue.address,
-      chain: context.propsValue.chain as string,
       limit: context.propsValue.limit ?? 20,
       tx_type: context.propsValue.tx_type as string,
     });
