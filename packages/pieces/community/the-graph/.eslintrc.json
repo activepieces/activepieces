@@ -1,0 +1,13 @@
+{
+  "extends": ["../../../../../.eslintrc.json"],
+  "ignorePatterns": ["!**/*"],
+  "overrides": [
+    {
+      "files": ["*.ts"],
+      "parserOptions": {
+        "project": ["packages/pieces/community/the-graph/tsconfig.*?.json"]
+      },
+      "rules": {}
+    }
+  ]
+}
