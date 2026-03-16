@@ -1,0 +1,18 @@
+{
+  "name": "@activepieces/piece-morpho",
+  "version": "0.1.0",
+  "description": "Morpho optimized lending protocol piece for Activepieces",
+  "keywords": ["activepieces", "morpho", "lending", "defi", "yield optimization"],
+  "homepage": "https://morpho.org",
+  "license": "MIT",
+  "exports": {
+    ".": {
+      "import": "./src/index.ts"
+    }
+  },
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*"
+  }
+}
