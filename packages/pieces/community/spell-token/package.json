@@ -1,0 +1,12 @@
+{
+  "name": "@activepieces/piece-spell-token",
+  "version": "0.0.1",
+  "description": "Spell Token (Abracadabra) DeFi protocol integration",
+  "keywords": ["activepieces", "piece", "spell", "spell-token", "abracadabra", "mim", "defi"],
+  "homepage": "https://www.activepieces.com",
+  "license": "MIT",
+  "main": "src/index.ts",
+  "files": ["src"],
+  "scripts": {"build": "tsc"},
+  "peerDependencies": {"@activepieces/pieces-framework": "workspace:*"}
+}
