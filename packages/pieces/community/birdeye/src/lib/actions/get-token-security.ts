@@ -23,9 +23,8 @@ export const getTokenSecurity = createAction({
     }),
   },
   async run(context) {
-    return birdeyeRequest(context.auth, '/defi/token_security', {
+    return birdeyeRequest(context.auth, '/defi/token_security', context.propsValue.chain as string, {
       address: context.propsValue.address,
-      chain: context.propsValue.chain as string,
     });
   },
 });
