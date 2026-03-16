@@ -1,0 +1,13 @@
+{
+  "name": "@activepieces/piece-bancor",
+  "version": "0.0.1",
+  "description": "Bancor DEX with impermanent loss protection",
+  "keywords": ["activepieces", "bancor", "defi", "dex", "crypto"],
+  "homepage": "https://bancor.network",
+  "license": "MIT",
+  "exports": { ".": "./src/index.ts" },
+  "dependencies": {
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/pieces-common": "workspace:*"
+  }
+}
