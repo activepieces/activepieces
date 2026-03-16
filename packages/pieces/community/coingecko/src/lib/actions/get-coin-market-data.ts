@@ -56,8 +56,8 @@ export const getCoinMarketData = createAction({
   },
   async run({ auth, propsValue }) {
     const vsCurrency = propsValue.vsCurrency ?? 'usd';
-    const perPage = propsValue.perPage ?? 10;
-    const page = propsValue.page ?? 1;
+    const perPage = Math.min(250, Math.max(1, propsValue.perPage ?? 10));
+    const page = Math.max(1, propsValue.page ?? 1);
 
     const params: Record<string, string> = {
       vs_currency: vsCurrency,
