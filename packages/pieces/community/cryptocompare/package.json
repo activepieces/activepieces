@@ -1,0 +1,28 @@
+{
+  "name": "@activepieces/piece-cryptocompare",
+  "version": "0.0.1",
+  "description": "CryptoCompare crypto market data, OHLCV history, and news",
+  "type": "module",
+  "scripts": {},
+  "keywords": [
+    "activepieces",
+    "piece",
+    "cryptocompare",
+    "crypto",
+    "ohlcv",
+    "market-data"
+  ],
+  "homepage": "",
+  "authors": [
+    "Bossco"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
