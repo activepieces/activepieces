@@ -56,7 +56,8 @@ export const getTokenTransfers = createAction({
       '/v1/evm/transfers',
       {
         network: network as string,
-        to_address: address as string,
+        // Include both directions by omitting directional filter (API returns all transfers for address)
+        address: address as string,
         limit: String(limit ?? 10),
       }
     );
