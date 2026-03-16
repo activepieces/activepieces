@@ -67,7 +67,7 @@ export const FlowStepInputOutput = () => {
 
   const {
     data: fetchedStepData,
-    isLoading: isStepDataLoading,
+    isPending: isStepDataPending,
     isError: isStepDataError,
   } = useQuery({
     queryKey: [
@@ -91,7 +91,7 @@ export const FlowStepInputOutput = () => {
     isTruncated: run?.stepsDataTruncated === true,
     selectedStepData: selectedStepData ?? undefined,
     fetchedStepData,
-    isLoading: isStepDataLoading,
+    isPending: isStepDataPending,
     isError: isStepDataError,
   });
 
@@ -262,13 +262,13 @@ function resolveStepDataState({
   isTruncated,
   selectedStepData,
   fetchedStepData,
-  isLoading,
+  isPending,
   isError,
 }: {
   isTruncated: boolean;
   selectedStepData: StepOutput | undefined;
   fetchedStepData: StepOutput | undefined;
-  isLoading: boolean;
+  isPending: boolean;
   isError: boolean;
 }): StepDataState {
   if (!selectedStepData) {
@@ -280,7 +280,7 @@ function resolveStepDataState({
   if (fetchedStepData) {
     return { status: StepDataStatus.READY, fullData: fetchedStepData };
   }
-  if (isLoading) {
+  if (isPending) {
     return { status: StepDataStatus.LOADING, metadata: selectedStepData };
   }
   if (isError) {

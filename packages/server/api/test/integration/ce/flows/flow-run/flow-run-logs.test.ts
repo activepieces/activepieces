@@ -127,12 +127,12 @@ describe('Flow Run Logs API', () => {
             expect(uploadResponse.statusCode).toBe(StatusCodes.OK)
 
             // Read via service (same path the frontend uses via getOnePopulatedOrThrow)
-            const logs = await flowRunLogsService(app!.log).getLogs({
+            const result = await flowRunLogsService(app!.log).getLogs({
                 logsFileId,
                 projectId: mockProject.id,
             })
 
-            expect(logs).toEqual(MOCK_EXECUTION_OUTPUT)
+            expect(result!.logs).toEqual(MOCK_EXECUTION_OUTPUT)
         })
 
         it('should overwrite logs on re-upload and return updated content', async () => {
@@ -174,11 +174,11 @@ describe('Flow Run Logs API', () => {
             })
 
             // Verify the latest upload wins
-            const logs = await flowRunLogsService(app!.log).getLogs({
+            const result = await flowRunLogsService(app!.log).getLogs({
                 logsFileId,
                 projectId: mockProject.id,
             })
-            expect(logs).toEqual(secondOutput)
+            expect(result!.logs).toEqual(secondOutput)
         })
     })
 
@@ -235,11 +235,11 @@ describe('Flow Run Logs API', () => {
             })
             await db.save('file', mockFile)
 
-            const logs = await flowRunLogsService(app!.log).getLogs({
+            const result = await flowRunLogsService(app!.log).getLogs({
                 logsFileId,
                 projectId: mockProject.id,
             })
-            expect(logs).toEqual(MOCK_EXECUTION_OUTPUT)
+            expect(result!.logs).toEqual(MOCK_EXECUTION_OUTPUT)
         })
 
         it('should serve pre-existing zstd-compressed DB file with Content-Encoding header', async () => {
@@ -302,11 +302,11 @@ describe('Flow Run Logs API', () => {
             await db.save('file', mockFile)
 
             // Service getLogs should detect zstd magic bytes and decompress
-            const logs = await flowRunLogsService(app!.log).getLogs({
+            const result = await flowRunLogsService(app!.log).getLogs({
                 logsFileId,
                 projectId: mockProject.id,
             })
-            expect(logs).toEqual(MOCK_EXECUTION_OUTPUT)
+            expect(result!.logs).toEqual(MOCK_EXECUTION_OUTPUT)
 
             // HTTP GET should also detect and set Content-Encoding header
             const token = await generateLogsToken({
@@ -461,12 +461,12 @@ describe('Flow Run Logs API', () => {
             })
 
             // Read via service (same path the frontend uses via getOnePopulatedOrThrow)
-            const logs = await flowRunLogsService(app!.log).getLogs({
+            const result = await flowRunLogsService(app!.log).getLogs({
                 logsFileId,
                 projectId: mockProject.id,
             })
 
-            expect(logs).toEqual(MOCK_EXECUTION_OUTPUT)
+            expect(result!.logs).toEqual(MOCK_EXECUTION_OUTPUT)
             expect(s3HelperSpy.mock.results[0].value.getFile).toHaveBeenCalledWith(s3Key)
 
             s3HelperSpy.mockRestore()
@@ -549,12 +549,12 @@ describe('Flow Run Logs API', () => {
         it('should return null from getLogs when file does not exist', async () => {
             const { mockProject } = await mockAndSaveBasicSetup()
 
-            const logs = await flowRunLogsService(app!.log).getLogs({
+            const result = await flowRunLogsService(app!.log).getLogs({
                 logsFileId: apId(),
                 projectId: mockProject.id,
             })
 
-            expect(logs).toBeNull()
+            expect(result).toBeNull()
         })
 
         it('should not return logs for a different project', async () => {
@@ -584,12 +584,12 @@ describe('Flow Run Logs API', () => {
             })
 
             // Try to read with otherProject via service
-            const logs = await flowRunLogsService(app!.log).getLogs({
+            const result = await flowRunLogsService(app!.log).getLogs({
                 logsFileId,
                 projectId: otherProject.id,
             })
 
-            expect(logs).toBeNull()
+            expect(result).toBeNull()
         })
 
         it('should reject requests with an invalid token', async () => {

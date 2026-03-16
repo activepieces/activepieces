@@ -132,8 +132,14 @@ export const executionJournal = {
         }
         return pathStr.split(',').map(segment => {
             const lastColon = segment.lastIndexOf(':')
+            if (lastColon === -1) {
+                throw new Error(`Invalid path segment "${segment}", expected format "stepName:index"`)
+            }
             const name = segment.substring(0, lastColon)
             const index = Number.parseInt(segment.substring(lastColon + 1), 10)
+            if (Number.isNaN(index)) {
+                throw new Error(`Invalid index in path segment "${segment}", expected a number after ":"`)
+            }
             return [name, index] as const
         })
     },
