@@ -1,6 +1,6 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { etherscanAuth } from '../..';
-import { etherscanRequest, gweiFromWei } from '../common/etherscan-api';
+import { etherscanRequest } from '../common/etherscan-api';
 
 interface GasOracleResult {
   LastBlock: string;

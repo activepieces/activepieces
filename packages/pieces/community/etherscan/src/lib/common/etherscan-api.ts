@@ -1,4 +1,4 @@
-const ETHERSCAN_API_BASE = 'https://api.etherscan.io/api';
+const ETHERSCAN_API_BASE = 'https://api.etherscan.io/v2/api';
 
 export interface EtherscanResponse<T = string> {
   status: string;
@@ -11,6 +11,7 @@ export async function etherscanRequest<T = string>(
   params: Record<string, string>
 ): Promise<EtherscanResponse<T>> {
   const queryParams = new URLSearchParams({
+    chainid: '1',
     ...params,
     apikey: apiKey,
   });
@@ -25,8 +26,10 @@ export async function etherscanRequest<T = string>(
 
   const data = (await response.json()) as EtherscanResponse<T>;
 
-  if (data.status === '0' && data.message === 'NOTOK') {
-    throw new Error(`Etherscan API error: ${data.result}`);
+  if (data.status === '0' || data.message === 'NOTOK') {
+    const errorMessage =
+      typeof data.result === 'string' ? data.result : data.message;
+    throw new Error(`Etherscan API error: ${errorMessage}`);
   }
 
   return data;
@@ -34,16 +37,16 @@ export async function etherscanRequest<T = string>(
 
 export function weiToEth(wei: string): string {
   const weiBigInt = BigInt(wei);
-  const ethWhole = weiBigInt / BigInt(1e18);
-  const ethFraction = weiBigInt % BigInt(1e18);
+  const ethWhole = weiBigInt / BigInt('1000000000000000000');
+  const ethFraction = weiBigInt % BigInt('1000000000000000000');
   const fractionStr = ethFraction.toString().padStart(18, '0').replace(/0+$/, '');
   return fractionStr ? `${ethWhole}.${fractionStr}` : `${ethWhole}`;
 }
 
 export function gweiFromWei(wei: string): string {
   const weiBigInt = BigInt(wei);
-  const gweiWhole = weiBigInt / BigInt(1e9);
-  const gweiFraction = weiBigInt % BigInt(1e9);
+  const gweiWhole = weiBigInt / BigInt('1000000000');
+  const gweiFraction = weiBigInt % BigInt('1000000000');
   const fractionStr = gweiFraction.toString().padStart(9, '0').replace(/0+$/, '');
   return fractionStr ? `${gweiWhole}.${fractionStr}` : `${gweiWhole}`;
 }

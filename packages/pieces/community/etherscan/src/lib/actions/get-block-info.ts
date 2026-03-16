@@ -37,7 +37,7 @@ export const getBlockInfo = createAction({
       timestamp: response.result.timeStamp,
       miner: response.result.blockMiner,
       block_reward: response.result.blockReward,
-      uncle_count: response.result.uncles.length,
+      uncle_count: response.result.uncles?.length ?? 0,
       uncle_inclusion_reward: response.result.uncleInclusionReward,
     };
   },
