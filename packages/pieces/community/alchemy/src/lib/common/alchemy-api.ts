@@ -1,3 +1,5 @@
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+
 export async function alchemyRpcRequest<T>(
   apiKey: string,
   network: string,
@@ -6,33 +8,32 @@ export async function alchemyRpcRequest<T>(
 ): Promise<T> {
   const url = `https://${network}.g.alchemy.com/v2/${apiKey}`;
 
-  const response = await fetch(url, {
-    method: 'POST',
+  const response = await httpClient.sendRequest<{
+    result?: T;
+    error?: { message: string; code: number };
+  }>({
+    method: HttpMethod.POST,
+    url,
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
+    body: {
       jsonrpc: '2.0',
       id: 1,
       method,
       params,
-    }),
+    },
   });
 
-  if (!response.ok) {
-    throw new Error(
-      `Alchemy API error: ${response.status} ${response.statusText}`
-    );
-  }
-
-  const json = (await response.json()) as {
-    result?: T;
-    error?: { message: string; code: number };
-  };
+  const json = response.body;
 
   if (json.error) {
     throw new Error(`Alchemy RPC error: ${json.error.message}`);
   }
 
-  return json.result as T;
+  if (json.result === undefined || json.result === null) {
+    throw new Error(`Alchemy RPC returned no result for method: ${method}`);
+  }
+
+  return json.result;
 }
 
 export async function alchemyNftRequest<T>(
@@ -41,19 +42,13 @@ export async function alchemyNftRequest<T>(
   endpoint: string,
   queryParams: Record<string, string>
 ): Promise<T> {
-  const qs = new URLSearchParams(queryParams).toString();
-  const url = `https://${network}.g.alchemy.com/nft/v3/${apiKey}/${endpoint}${qs ? '?' + qs : ''}`;
+  const url = `https://${network}.g.alchemy.com/nft/v3/${apiKey}/${endpoint}`;
 
-  const response = await fetch(url, {
-    method: 'GET',
-    headers: { 'Content-Type': 'application/json' },
+  const response = await httpClient.sendRequest<T>({
+    method: HttpMethod.GET,
+    url,
+    queryParams,
   });
 
-  if (!response.ok) {
-    throw new Error(
-      `Alchemy NFT API error: ${response.status} ${response.statusText}`
-    );
-  }
-
-  return (await response.json()) as T;
+  return response.body;
 }
