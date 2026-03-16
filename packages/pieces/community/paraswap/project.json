@@ -1,0 +1,30 @@
+{
+  "name": "piece-paraswap",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/paraswap/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/paraswap",
+        "main": "packages/pieces/community/paraswap/src/index.ts",
+        "tsConfig": "packages/pieces/community/paraswap/tsconfig.json",
+        "assets": [
+          {
+            "input": "packages/pieces/community/paraswap",
+            "glob": "**/!(*.ts)",
+            "output": "/"
+          },
+          {
+            "input": "packages/pieces/community/paraswap",
+            "glob": "**/*.d.ts",
+            "output": "/"
+          }
+        ]
+      }
+    }
+  },
+  "tags": []
+}
