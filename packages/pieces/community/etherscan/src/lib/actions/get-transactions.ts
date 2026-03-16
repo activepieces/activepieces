@@ -46,7 +46,7 @@ export const getTransactions = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const limit = propsValue.limit ?? 10;
+    const limit = Math.min(Math.max(1, propsValue.limit ?? 10), 10000);
     const sort = propsValue.sort ?? 'desc';
 
     const response = await etherscanRequest<Transaction[]>(auth as string, {

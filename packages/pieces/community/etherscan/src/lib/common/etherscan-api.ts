@@ -1,3 +1,5 @@
+import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+
 const ETHERSCAN_API_BASE = 'https://api.etherscan.io/v2/api';
 
 export interface EtherscanResponse<T = string> {
@@ -10,26 +12,32 @@ export async function etherscanRequest<T = string>(
   apiKey: string,
   params: Record<string, string>
 ): Promise<EtherscanResponse<T>> {
-  const queryParams = new URLSearchParams({
+  const queryParams: Record<string, string> = {
     chainid: '1',
     ...params,
     apikey: apiKey,
+  };
+
+  const response = await httpClient.sendRequest({
+    method: HttpMethod.GET,
+    url: ETHERSCAN_API_BASE,
+    queryParams,
   });
 
-  const response = await fetch(`${ETHERSCAN_API_BASE}?${queryParams}`);
+  const data = response.body as EtherscanResponse<T>;
 
-  if (!response.ok) {
-    throw new Error(
-      `Etherscan API error: ${response.status} ${response.statusText}`
-    );
-  }
-
-  const data = (await response.json()) as EtherscanResponse<T>;
-
-  if (data.message === 'NOTOK') {
+  if (data.status === '0' && data.message === 'NOTOK') {
     const errorMessage =
       typeof data.result === 'string' ? data.result : data.message;
     throw new Error(`Etherscan API error: ${errorMessage}`);
+  }
+
+  // Handle empty results (status='0' with 'No transactions found' etc.) as valid empty arrays
+  if (data.status === '0' && typeof data.message === 'string' && data.message.toLowerCase().includes('no ')) {
+    return {
+      ...data,
+      result: [] as unknown as T,
+    };
   }
 
   return data;
