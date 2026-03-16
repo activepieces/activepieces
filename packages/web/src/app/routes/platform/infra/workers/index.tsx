@@ -37,7 +37,7 @@ import { cn } from '@/lib/utils';
 import { WorkerConfigsModal } from './worker-configs-dialog';
 
 export default function WorkersPage() {
-  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+  flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const isCloud = true;
   const { data: workersData, isLoading } = workersQueries.useWorkerMachines();
 
