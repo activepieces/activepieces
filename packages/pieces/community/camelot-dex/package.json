@@ -1,0 +1,17 @@
+{
+  "name": "@activepieces/piece-camelot-dex",
+  "version": "0.0.1",
+  "description": "Camelot DEX - Native Arbitrum AMM",
+  "keywords": ["activepieces", "piece", "camelot", "dex", "arbitrum", "defi", "grail"],
+  "homepage": "https://camelot.exchange",
+  "license": "MIT",
+  "exports": "./src/index.ts",
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*"
+  },
+  "scripts": {
+    "build": "tsc"
+  }
+}
