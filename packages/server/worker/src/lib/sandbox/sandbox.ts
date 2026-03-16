@@ -96,6 +96,7 @@ export function createSandbox(
                 customPieceMounts.push({
                     hostPath: customPiecesHostPath,
                     sandboxPath: '/root/custom_pieces',
+                    optional: true,
                 })
             }
 
