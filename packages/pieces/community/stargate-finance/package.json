@@ -1,0 +1,12 @@
+{
+  "name": "@activepieces/piece-stargate-finance",
+  "version": "0.1.0",
+  "description": "Stargate Finance cross-chain bridge piece for Activepieces",
+  "main": "src/index.ts",
+  "keywords": ["activepieces", "stargate", "bridge", "layerzero", "defi", "cross-chain"],
+  "scripts": { "build": "tsc" },
+  "peerDependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*"
+  }
+}
