@@ -1,0 +1,13 @@
+{
+  "name": "@activepieces/piece-gmx",
+  "version": "0.0.1",
+  "description": "GMX decentralized perpetuals and spot trading data for Activepieces",
+  "main": "src/index.ts",
+  "keywords": ["activepieces", "gmx", "defi", "perpetuals", "arbitrum"],
+  "authors": ["Activepieces"],
+  "license": "MIT",
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*"
+  }
+}
