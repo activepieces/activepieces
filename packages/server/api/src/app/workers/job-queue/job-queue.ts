@@ -86,6 +86,7 @@ export const jobQueue = (log: FastifyBaseLogger) => ({
                     delay: !isNil(dependOnJobId) ? apDayjsDuration(1, 'year').asMilliseconds() : params.delay,
                     jobId: params.id,
                     removeOnFail: data.jobType === WorkerJobType.EVENT_DESTINATION,
+                    ...isUserInteractionJob(data.jobType) ? { attempts: 1 } : {},
                 })
             }
         }
@@ -208,6 +209,17 @@ async function ensureQueueExists({ log, queueName }: { log: FastifyBaseLogger, q
             return queue
         },
     })
+}
+
+const USER_INTERACTION_JOB_TYPES = new Set([
+    WorkerJobType.EXECUTE_PROPERTY,
+    WorkerJobType.EXECUTE_VALIDATION,
+    WorkerJobType.EXECUTE_TRIGGER_HOOK,
+    WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
+])
+
+function isUserInteractionJob(jobType: WorkerJobType): boolean {
+    return USER_INTERACTION_JOB_TYPES.has(jobType)
 }
 
 async function getQueueName(platformId: string | null, log: FastifyBaseLogger): Promise<string> {

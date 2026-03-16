@@ -57,7 +57,11 @@ async function getPiecePackage(query: PieceCacheKey, apiClient: WorkerToApiContr
     const pieceMetadata = await apiClient.getPiece({
         name: query.pieceName,
         version: query.pieceVersion,
-    }) as { packageType: PackageType, name: string, version: string, pieceType: PieceType, archiveId?: string }
+    }) as { packageType: PackageType, name: string, version: string, pieceType: PieceType, archiveId?: string } | null
+
+    if (!pieceMetadata) {
+        throw new Error(`Piece metadata not found for ${query.pieceName}@${query.pieceVersion}`)
+    }
 
     const baseProps = {
         packageType: pieceMetadata.packageType,
