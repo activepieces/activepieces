@@ -59,6 +59,8 @@ export enum AgentPieceProps {
     PROMPT = 'prompt',
     MAX_STEPS = 'maxSteps',
     AI_PROVIDER_MODEL = 'aiProviderModel',
+    WEB_SEARCH = 'webSearch',
+    WEB_SEARCH_OPTIONS = 'webSearchOptions',
 }
 
 export type AgentProviderModel = {
