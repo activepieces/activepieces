@@ -1,0 +1,18 @@
+{
+  "name": "@activepieces/piece-coinglass",
+  "version": "0.0.1",
+  "description": "CoinGlass crypto futures analytics — open interest, funding rates, liquidations",
+  "type": "commonjs",
+  "keywords": ["activepieces", "crypto", "coinglass", "open-interest", "funding-rates", "liquidations"],
+  "homepage": "https://activepieces.com",
+  "license": "MIT",
+  "main": "./src/index.ts",
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
