@@ -1,0 +1,13 @@
+{
+  "name": "@activepieces/piece-alchemix",
+  "version": "0.0.1",
+  "description": "Activepieces piece for Alchemix — self-repaying DeFi loans protocol",
+  "keywords": ["activepieces", "defi", "alchemix", "self-repaying", "alusd"],
+  "homepage": "https://alchemix.fi",
+  "license": "MIT",
+  "exports": "./src/index.ts",
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*"
+  }
+}
