@@ -14,6 +14,10 @@ vi.mock('tree-kill', () => ({
     default: treeKillMock,
 }))
 
+vi.mock('../../../src/lib/cache/cache-paths', () => ({
+    getGlobalCachePathLatestVersion: vi.fn(() => '/tmp/test-cache'),
+}))
+
 function createMockLogger(): SandboxLogger {
     return {
         info: vi.fn(),
@@ -102,10 +106,15 @@ describe('createSandbox', () => {
                 expect.objectContaining({
                     sandboxId: 'sb-1',
                     command: [],
-                    mounts: [],
+                    mounts: expect.arrayContaining([
+                        expect.objectContaining({
+                            sandboxPath: '/root/custom_pieces',
+                        }),
+                    ]),
                     env: expect.objectContaining({
                         MY_VAR: 'value',
                         AP_SANDBOX_WS_PORT: expect.any(String),
+                        AP_CUSTOM_PIECES_PATHS: '/root/custom_pieces',
                     }),
                     resourceLimits: {
                         memoryBytes: 256 * 1024 * 1024,
@@ -114,6 +123,19 @@ describe('createSandbox', () => {
                     },
                 }),
             )
+        })
+
+        it('does not add custom piece mount when platformId is empty', async () => {
+            const log = createMockLogger()
+            const workerHandlers = createMockWorkerHandlers()
+            testPM = createTestProcessMaker()
+            sandbox = createSandbox(log, 'sb-no-mount', defaultOptions, testPM.maker, workerHandlers)
+
+            await sandbox.start({ flowVersionId: 'fv-1', platformId: '', mounts: [] })
+
+            const createCall = (testPM.maker.create as ReturnType<typeof vi.fn>).mock.calls[0][0]
+            expect(createCall.mounts).toEqual([])
+            expect(createCall.env.AP_CUSTOM_PIECES_PATHS).toBeUndefined()
         })
 
         it('is idempotent when already connected', async () => {

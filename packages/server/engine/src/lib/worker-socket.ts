@@ -29,7 +29,7 @@ export const workerSocket = {
             reconnection: true,
         })
 
-        workerClient = createRpcClient<WorkerContract>(socket)
+        workerClient = createRpcClient<WorkerContract>(socket, 60_000)
         notifyClient = createNotifyClient<WorkerNotifyContract>(socket)
 
         const originalLog = console.log

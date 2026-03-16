@@ -1,6 +1,6 @@
 {
-  "name": "@activepieces/piece-intercom",
-  "version": "0.7.0",
+  "name": "@activepieces/piece-twenty",
+  "version": "0.0.1",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "dependencies": {
@@ -8,8 +8,6 @@
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
     "dayjs": "1.11.9",
-    "intercom-client": "6.2.0",
-    "string-strip-html": "8.5.0",
     "tslib": "2.6.2"
   },
   "scripts": {
