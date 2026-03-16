@@ -1,0 +1,34 @@
+{
+  "name": "@activepieces/piece-blast",
+  "version": "0.0.1",
+  "description": "Blast native-yield Ethereum L2: TVL, price, chain breakdown, TVL history, and protocol stats via DeFiLlama and CoinGecko",
+  "keywords": [
+    "activepieces",
+    "blast",
+    "ethereum",
+    "layer2",
+    "defi",
+    "yield",
+    "defillama",
+    "coingecko"
+  ],
+  "homepage": "",
+  "bugs": {
+    "url": "https://github.com/activepieces/activepieces/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/activepieces/activepieces.git"
+  },
+  "license": "MIT",
+  "author": "",
+  "main": "./src/index.ts",
+  "scripts": {
+    "publish-piece": "node ../../../../.scripts/publish-piece.mjs"
+  },
+  "peerDependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*"
+  }
+}
