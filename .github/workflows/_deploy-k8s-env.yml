@@ -95,6 +95,10 @@ jobs:
               --values ${{ inputs.worker_values }} \
               --set image.tag=${{ inputs.image_tag }}"
 
+      - name: Deploy dedicated workers
+        if: ${{ inputs.kube_context == 'prod' }}
+        run: ssh ops '/root/k8n/scripts/deploy-dedicated-workers.sh'
+
       - name: Wait for WORKER to be healthy
         run: |
           ssh ops 'bash -s' <<'ENDSSH'
@@ -109,6 +113,4 @@ jobs:
           fi
           ENDSSH
 
-      - name: Deploy dedicated workers
-        if: ${{ inputs.kube_context == 'prod' }}
-        run: ssh ops '/root/k8n/scripts/deploy-dedicated-workers.sh'
+
