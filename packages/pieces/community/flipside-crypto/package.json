@@ -1,0 +1,21 @@
+{
+  "name": "@activepieces/piece-flipside-crypto",
+  "version": "0.1.0",
+  "description": "Flipside Crypto on-chain SQL analytics piece for Activepieces",
+  "keywords": [
+    "activepieces",
+    "flipside",
+    "crypto",
+    "blockchain",
+    "analytics",
+    "sql"
+  ],
+  "license": "MIT",
+  "main": "src/index.ts",
+  "scripts": {},
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*"
+  }
+}
