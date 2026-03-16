@@ -1,0 +1,37 @@
+{
+  "name": "piece-synthetix",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/synthetix/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/synthetix",
+        "main": "packages/pieces/community/synthetix/src/index.ts",
+        "tsConfig": "packages/pieces/community/synthetix/tsconfig.lib.json",
+        "assets": [
+          {
+            "glob": "**/!(*.ts)",
+            "input": "packages/pieces/community/synthetix/src",
+            "output": "./src"
+          },
+          {
+            "glob": "**/*.d.ts",
+            "input": "packages/pieces/community/synthetix/src",
+            "output": "./src"
+          },
+          {
+            "glob": "package.json",
+            "input": "packages/pieces/community/synthetix",
+            "output": "."
+          }
+        ]
+      }
+    }
+  },
+  "tags": []
+}
