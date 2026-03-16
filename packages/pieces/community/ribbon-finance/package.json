@@ -1,0 +1,14 @@
+{
+  "name": "@activepieces/piece-ribbon-finance",
+  "version": "0.0.1",
+  "description": "Ribbon Finance piece for Activepieces",
+  "main": "src/index.ts",
+  "keywords": ["activepieces", "ribbon", "defi", "options", "structured-products"],
+  "files": ["src"],
+  "scripts": {"build": "nx build ribbon-finance"},
+  "dependencies": {
+    "@activepieces/pieces-common": "*",
+    "@activepieces/pieces-framework": "*",
+    "@activepieces/shared": "*"
+  }
+}
