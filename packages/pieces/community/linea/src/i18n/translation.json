@@ -1,0 +1,7 @@
+{
+  "get_protocol_tvl": "Get Protocol TVL",
+  "get_eth_price": "Get ETH Price",
+  "get_chain_breakdown": "Get Chain Breakdown",
+  "get_tvl_history": "Get TVL History",
+  "get_protocol_stats": "Get Protocol Stats"
+}
