@@ -1,34 +1,12 @@
 {
   "name": "@activepieces/piece-liquity",
   "version": "0.0.1",
-  "description": "Liquity decentralized borrowing protocol: TVL, LUSD price, LQTY price, chain breakdown, historical data",
-  "keywords": [
-    "activepieces",
-    "liquity",
-    "defi",
-    "borrowing",
-    "lusd",
-    "lqty",
-    "ethereum",
-    "stablecoin"
-  ],
-  "homepage": "",
-  "bugs": {
-    "url": "https://github.com/activepieces/activepieces/issues"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/activepieces/activepieces.git"
-  },
+  "description": "Liquity zero-interest stablecoin protocol integration",
+  "keywords": ["activepieces", "piece", "liquity", "lqty", "lusd", "defi"],
+  "homepage": "https://www.activepieces.com",
   "license": "MIT",
-  "author": "",
-  "main": "./src/index.ts",
-  "scripts": {
-    "publish-piece": "node ../../../../.scripts/publish-piece.mjs"
-  },
-  "peerDependencies": {
-    "@activepieces/pieces-common": "workspace:*",
-    "@activepieces/pieces-framework": "workspace:*",
-    "@activepieces/shared": "workspace:*"
-  }
+  "main": "src/index.ts",
+  "files": ["src"],
+  "scripts": {"build": "tsc"},
+  "peerDependencies": {"@activepieces/pieces-framework": "workspace:*"}
 }
