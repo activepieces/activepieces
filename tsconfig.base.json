@@ -155,6 +155,9 @@
       "@activepieces/piece-binance": [
         "packages/pieces/community/binance/src/index.ts"
       ],
+      "@activepieces/piece-coinpaprika": [
+        "packages/pieces/community/coinpaprika/src/index.ts"
+      ],
       "@activepieces/piece-bitly": [
         "packages/pieces/community/bitly/src/index.ts"
       ],
