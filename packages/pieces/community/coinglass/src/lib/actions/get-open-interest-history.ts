@@ -63,8 +63,8 @@ export const getOpenInterestHistory = createAction({
         symbol: symbol.toUpperCase(),
         interval,
         exchange: exchange || undefined,
-        startTime: startTime || undefined,
-        endTime: endTime || undefined,
+        startTime: startTime != null ? startTime : undefined,
+        endTime: endTime != null ? endTime : undefined,
         limit: clampedLimit,
       }
     );

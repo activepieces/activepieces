@@ -59,8 +59,8 @@ export const getLongShortRatio = createAction({
         symbol: symbol.toUpperCase(),
         exchange,
         interval,
-        startTime: startTime || undefined,
-        endTime: endTime || undefined,
+        startTime: startTime != null ? startTime : undefined,
+        endTime: endTime != null ? endTime : undefined,
       }
     );
     return data;

@@ -49,8 +49,8 @@ export const getLiquidationHistory = createAction({
       {
         symbol: symbol.toUpperCase(),
         interval,
-        startTime: startTime || undefined,
-        endTime: endTime || undefined,
+        startTime: startTime != null ? startTime : undefined,
+        endTime: endTime != null ? endTime : undefined,
       }
     );
     return data;
