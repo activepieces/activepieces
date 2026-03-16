@@ -1,7 +1,7 @@
-import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { ConnectSecretManagerRequestSchema, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { z } from 'zod'
+import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { secretManagerCache } from './secret-manager-cache'
 import { secretManagerProvidersMetadata } from './secret-manager-providers/secret-manager-providers'
 import { secretManagersService } from './secret-managers.service'

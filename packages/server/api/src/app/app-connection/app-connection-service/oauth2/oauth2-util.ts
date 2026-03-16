@@ -120,12 +120,7 @@ export const oauth2Util = (log: FastifyBaseLogger) => ({
             key: clientId,
             platformId,
             throwOnFailure: false,
-        }).catch((error) => {
-            if (error instanceof ActivepiecesError && error.error.code === ErrorCode.SECRET_MANAGER_KEY_NOT_SECRET) {
-                return clientId
-            }
-            throw error
-        }) as string
+        })
 
         const authUrl = resolveValueFromProps(props, pieceAuth.authUrl)
         const scope = resolveValueFromProps(props, pieceAuth.scope.join(' '))

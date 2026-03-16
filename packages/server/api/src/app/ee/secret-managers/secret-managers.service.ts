@@ -152,13 +152,13 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
         return secret
     },
 
-    async resolveString({ key, platformId, projectIds, throwOnFailure = true }: { key: string, platformId: string, projectIds?: string[], throwOnFailure?: boolean }): Promise<unknown> {
-        const { connectionId, path } = extractConnectionIdAndPath(key)
+    async resolveString({ key, platformId, projectIds, throwOnFailure = true }: { key: string, platformId: string, projectIds?: string[], throwOnFailure?: boolean }): Promise<string> {
         try {
+            const { connectionId, path } = extractConnectionIdAndPath(key)
             return await this.getSecret({ connectionId, path, platformId, projectIds })
         }
         catch (error) {
-            return handleResolveError(error, throwOnFailure, key)
+            return handleResolveError({ error, throwOnFailure, originalValue: key, log })
         }
     },
 
@@ -186,7 +186,7 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
                 return await this.resolveString({ key: value, platformId, projectIds, throwOnFailure })
             }
             catch (error) {
-                return handleResolveError(error, throwOnFailure, value)
+                return handleResolveError({ error, throwOnFailure, originalValue: value, log })
             }
         }
         return value
@@ -210,7 +210,15 @@ async function checkConnection(log: FastifyBaseLogger, config: SecretManagerConf
     return connected
 }
 
-function handleResolveError(error: unknown, throwOnFailure: boolean, originalValue: unknown): unknown {
+function handleResolveError<T>({ error, throwOnFailure, originalValue, log }: { error: unknown, throwOnFailure: boolean, originalValue: T, log: FastifyBaseLogger }): T {
+    
+    if (!throwOnFailure) {
+        log.warn({ error }, '[handleResolveError] Failed to resolve secret')
+    }
+    else {
+        log.error({ error }, '[handleResolveError] Failed to resolve secret')
+    }
+    
     if (!throwOnFailure) {
         return originalValue
     }
@@ -270,7 +278,7 @@ export function containsSecretManagerReference(value: unknown): boolean {
         return trimmed.startsWith('{{') && trimmed.includes(SecretManagerFieldsSeparator) && trimmed.endsWith('}}')
     }
     if (typeof value === 'object' && value !== null) {
-        return Object.values(value as Record<string, unknown>).some(containsSecretManagerReference)
+        return Object.values(value).some(containsSecretManagerReference)
     }
     return false
 }
