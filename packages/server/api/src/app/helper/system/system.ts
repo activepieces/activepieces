@@ -1,6 +1,5 @@
 import os from 'os'
 import path from 'path'
-import { AppSystemProp, ContainerType, DatabaseType, environmentVariables, pinoLogging, RedisType, SystemProp, WorkerSystemProp } from '@activepieces/server-common'
 import {
     ActivepiecesError,
     ApEdition,
@@ -12,7 +11,10 @@ import {
     PieceSyncMode,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { Level } from 'pino'
+import { DatabaseType } from '../../database/database-type'
+import { RedisType } from '../../database/redis/types'
+import { pinoLogging } from '../logger'
+import { AppSystemProp, ContainerType, environmentVariables, SystemProp, WorkerSystemProp } from './system-props'
 
 
 
@@ -20,7 +22,7 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.API_RATE_LIMIT_AUTHN_ENABLED]: 'true',
     [AppSystemProp.API_RATE_LIMIT_AUTHN_MAX]: '50',
     [AppSystemProp.API_RATE_LIMIT_AUTHN_WINDOW]: '1 minute',
-    [AppSystemProp.PM2_ENABLED]: 'false',
+    [AppSystemProp.WORKERS]: '1',
     [AppSystemProp.CLIENT_REAL_IP_HEADER]: 'x-real-ip',
     [AppSystemProp.CLOUD_AUTH_ENABLED]: 'true',
     [AppSystemProp.CONFIG_PATH]: path.join(os.homedir(), '.activepieces'),
@@ -28,13 +30,13 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.EDITION]: ApEdition.COMMUNITY,
     [AppSystemProp.APP_WEBHOOK_SECRETS]: '{}',
     [WorkerSystemProp.CONTAINER_TYPE]: ContainerType.WORKER_AND_APP,
+    [WorkerSystemProp.PORT]: '3000',
     [AppSystemProp.EXECUTION_DATA_RETENTION_DAYS]: '30',
     [AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS]: '30',
     [AppSystemProp.PIECES_CACHE_MAX_ENTRIES]: '1000',
     [AppSystemProp.PIECES_SYNC_MODE]: PieceSyncMode.OFFICIAL_AUTO,
     [AppSystemProp.ENVIRONMENT]: 'prod',
     [AppSystemProp.EXECUTION_MODE]: ExecutionMode.UNSANDBOXED,
-    [WorkerSystemProp.WORKER_CONCURRENCY]: '5',
     [AppSystemProp.WEBHOOK_TIMEOUT_SECONDS]: '30',
     [AppSystemProp.LOAD_TRANSLATIONS_FOR_DEV_PIECES]: 'false',
     [AppSystemProp.LOG_LEVEL]: 'info',
@@ -42,6 +44,8 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.S3_USE_SIGNED_URLS]: 'false',
     [AppSystemProp.MAX_FILE_SIZE_MB]: '25',
     [AppSystemProp.MAX_FLOW_RUN_LOG_SIZE_MB]: '25',
+    [AppSystemProp.MAX_WEBHOOK_PAYLOAD_SIZE_MB]: '25',
+    [AppSystemProp.WEBHOOK_PAYLOAD_INLINE_THRESHOLD_KB]: '512',
     [AppSystemProp.FILE_STORAGE_LOCATION]: FileLocation.DB,
     [AppSystemProp.SANDBOX_MEMORY_LIMIT]: '1048576',
     [AppSystemProp.FLOW_RUN_LOG_LAZY_LOAD_THRESHOLD_MB]: '25',
@@ -69,19 +73,7 @@ let globalLogger: FastifyBaseLogger
 export const system = {
     globalLogger(): FastifyBaseLogger {
         if (isNil(globalLogger)) {
-            const logLevel: Level = this.get(AppSystemProp.LOG_LEVEL) ?? 'info'
-            const logPretty = this.getBoolean(AppSystemProp.LOG_PRETTY) ?? false
-            const lokiUrl = this.get(AppSystemProp.LOKI_URL)
-            const lokiPassword = this.get(AppSystemProp.LOKI_PASSWORD)
-            const lokiUsername = this.get(AppSystemProp.LOKI_USERNAME)
-            const hyperdxToken = this.get(AppSystemProp.HYPERDX_TOKEN)
-            globalLogger = pinoLogging.initLogger(logLevel, logPretty, {
-                url: lokiUrl,
-                password: lokiPassword,
-                username: lokiUsername,
-            }, {
-                token: hyperdxToken,
-            })
+            globalLogger = pinoLogging.initLogger()
         }
         return globalLogger
     },

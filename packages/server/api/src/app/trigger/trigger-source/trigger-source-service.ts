@@ -14,7 +14,8 @@ export const triggerSourceService = (log: FastifyBaseLogger) => {
         async enable(params: EnableTriggerParams): Promise<TriggerSource> {
             const { flowVersion, projectId, simulate, templateId } = params
             log.info({
-                flowVersion,
+                flowId: flowVersion.flowId,
+                flowVersionId: flowVersion.id,
                 projectId,
                 simulate,
             }, '[triggerSourceService#enable] Enabling trigger source')

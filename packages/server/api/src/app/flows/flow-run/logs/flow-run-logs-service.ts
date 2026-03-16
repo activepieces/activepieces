@@ -45,16 +45,17 @@ export const flowRunLogsService = (log: FastifyBaseLogger) => {
             await upsertFile(request, log, content)
         },
         async getLogs(request: GetLogsParams): Promise<{ logs: ExecutioOutputFile, sizeInBytes: number } | null> {
-            const file = await fileService(log).getDataOrUndefined({
-                fileId: request.logsFileId,
+            const result = await fileService(log).getDataOrUndefined({
                 projectId: request.projectId,
+                fileId: request.logsFileId,
+                type: FileType.FLOW_RUN_LOG,
             })
-            if (isNil(file)) {
+            if (isNil(result)) {
                 return null
             }
             return {
-                logs: JSON.parse(file.data.toString('utf-8')),
-                sizeInBytes: file.data.length,
+                logs: JSON.parse(result.data.toString('utf-8')),
+                sizeInBytes: result.data.length,
             }
         },
     }
@@ -67,7 +68,7 @@ function upsertFile(request: UploadLogsToken, log: FastifyBaseLogger, content: B
         data: content,
         size: content?.length ?? 0,
         type: FileType.FLOW_RUN_LOG,
-        compression: FileCompression.NONE,
+        compression: FileCompression.ZSTD,
         metadata: {
             flowRunId: request.flowRunId,
             projectId: request.projectId,
