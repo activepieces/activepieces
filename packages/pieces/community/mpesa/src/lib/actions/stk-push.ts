@@ -10,7 +10,7 @@ export const stkPush = createAction({
   props: {
     phoneNumber: Property.ShortText({
       displayName: 'Phone Number',
-      description: 'Customer phone number e.g 254712345678',
+      description: 'Customer phone number e.g. 0712345678, 254712345678 or +254712345678',
       required: true,
     }),
     amount: Property.Number({
@@ -25,12 +25,12 @@ export const stkPush = createAction({
     }),
     accountReference: Property.ShortText({
       displayName: 'Account Reference',
-      description: 'Order ID or account number',
+      description: 'Order ID or account number (max 12 characters)',
       required: true,
     }),
     transactionDesc: Property.ShortText({
       displayName: 'Transaction Description',
-      description: 'Short description of the transaction',
+      description: 'Short description of the transaction (max 13 characters)',
       required: true,
     }),
   },
@@ -40,6 +40,14 @@ export const stkPush = createAction({
     const baseUrl = environment === 'production'
       ? 'https://api.safaricom.co.ke'
       : 'https://sandbox.safaricom.co.ke';
+
+    // phone number to 254XXXXXXXXX format
+    let phone = context.propsValue.phoneNumber.trim();
+    if (phone.startsWith('+')) {
+      phone = phone.slice(1);
+    } else if (phone.startsWith('0')) {
+      phone = '254' + phone.slice(1);
+    }
 
     const credentials = Buffer.from(`${consumerKey}:${consumerSecret}`).toString('base64');
     const tokenResponse = await httpClient.sendRequest({
@@ -70,12 +78,12 @@ export const stkPush = createAction({
         Timestamp: timestamp,
         TransactionType: 'CustomerPayBillOnline',
         Amount: Math.floor(context.propsValue.amount),
-        PartyA: context.propsValue.phoneNumber,
+        PartyA: phone,
         PartyB: shortCode,
-        PhoneNumber: context.propsValue.phoneNumber,
+        PhoneNumber: phone,
         CallBackURL: context.propsValue.callbackUrl,
-        AccountReference: context.propsValue.accountReference,
-        TransactionDesc: context.propsValue.transactionDesc,
+        AccountReference: context.propsValue.accountReference.slice(0, 12),
+        TransactionDesc: context.propsValue.transactionDesc.slice(0, 13),
       },
     });
 
