@@ -32,7 +32,8 @@ export const getTokenPrices = createAction({
       coinsUrl(`/prices/current/${coins}`)
     );
 
-    const prices = Object.entries(data.coins).map(([key, coin]) => ({
+    const coins = data.coins ?? {};
+    const prices = Object.entries(coins).map(([key, coin]) => ({
       coin: key,
       price: coin.price,
       symbol: coin.symbol,
@@ -42,7 +43,7 @@ export const getTokenPrices = createAction({
 
     return {
       count: prices.length,
-      prices,
+      prices: prices,
     };
   },
 });

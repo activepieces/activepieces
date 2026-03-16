@@ -30,14 +30,16 @@ export const getProtocolTvl = createAction({
     }),
   },
   async run({ propsValue }) {
-    const slug = propsValue.protocol.toLowerCase().trim();
+    const rawSlug = propsValue.protocol.toLowerCase().trim();
+    const slug = rawSlug.replace(/[/?#]/g, '');
     const data = await defillamaRequest<ProtocolTvlResponse>(
       apiUrl(`/protocol/${slug}`)
     );
 
+    const tvlData = data.tvl ?? [];
     const currentTvl =
-      data.tvl.length > 0
-        ? data.tvl[data.tvl.length - 1].totalLiquidityUSD
+      tvlData.length > 0
+        ? tvlData[tvlData.length - 1].totalLiquidityUSD
         : 0;
 
     return {
@@ -48,7 +50,7 @@ export const getProtocolTvl = createAction({
       chains: data.chains,
       current_tvl: currentTvl,
       chain_tvls: data.currentChainTvls,
-      historical_tvl: data.tvl.slice(-30).map((point) => ({
+      historical_tvl: tvlData.slice(-30).map((point) => ({
         date: new Date(point.date * 1000).toISOString().split('T')[0],
         tvl: point.totalLiquidityUSD,
       })),

@@ -49,7 +49,7 @@ export const getYieldPools = createAction({
       yieldsUrl('/pools')
     );
 
-    let pools = data.data;
+    let pools = data.data ?? [];
 
     if (propsValue.chain) {
       const chainFilter = propsValue.chain.toLowerCase().trim();
