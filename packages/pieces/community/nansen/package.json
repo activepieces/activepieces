@@ -14,7 +14,7 @@
   "scripts": {
     "build": "tsc"
   },
-  "peerDependencies": {
+  "dependencies": {
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*"
