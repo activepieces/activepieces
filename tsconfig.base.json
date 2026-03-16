@@ -1321,6 +1321,9 @@
       "activepieces/piece-cashfree-payments": [
         "packages/pieces/community/cashfree-payments/src/index.ts"
       ],
+      "@activepieces/piece-mpesa": [
+        "packages/pieces/community/mpesa/src/index.ts"
+      ],
       "ee-embed-sdk": ["packages/ee/embed-sdk/src/index.ts"],
       "ui-feature-forms": ["packages/ui/features-forms/src/index.ts"],
       "@activepieces/piece-kissflow": [

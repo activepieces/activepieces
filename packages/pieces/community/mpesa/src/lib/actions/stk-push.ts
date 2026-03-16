@@ -51,6 +51,10 @@ export const stkPush = createAction({
     });
 
     const accessToken = tokenResponse.body['access_token'];
+    if (!accessToken) {
+      throw new Error('Failed to obtain M-Pesa access token. Check your Consumer Key and Secret.');
+    }
+
     const timestamp = new Date().toISOString().replace(/[^0-9]/g, '').slice(0, 14);
     const password = Buffer.from(`${shortCode}${passkey}${timestamp}`).toString('base64');
 
@@ -75,6 +79,11 @@ export const stkPush = createAction({
       },
     });
 
-    return response.body;
+    const data = response.body;
+    if (data.ResponseCode !== '0') {
+      throw new Error(`STK Push failed: ${data.ResponseDescription}`);
+    }
+
+    return data;
   },
 });
