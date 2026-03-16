@@ -1,0 +1,12 @@
+{
+  "name": "@activepieces/piece-hop-protocol",
+  "version": "0.1.0",
+  "description": "Hop Protocol L2 bridge piece for Activepieces",
+  "main": "src/index.ts",
+  "keywords": ["activepieces", "hop", "bridge", "l2", "defi", "cross-chain"],
+  "scripts": { "build": "tsc" },
+  "peerDependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*"
+  }
+}
