@@ -1,0 +1,14 @@
+{
+  "name": "@activepieces/piece-makerdao",
+  "version": "0.0.1",
+  "description": "MakerDAO DAI stablecoin protocol data",
+  "main": "./dist/src/index.js",
+  "scripts": {
+    "build": "nx build piece-makerdao"
+  },
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*"
+  }
+}
