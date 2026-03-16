@@ -9,9 +9,10 @@ function createQueueDispatcher(params: {
     queueName: string
     worker: BullMQWorker
     dequeue: (worker: BullMQWorker, queueName: string, log: FastifyBaseLogger) => Promise<ConsumeJobRequest | null>
+    onOrphanedJob: (jobId: string, log: FastifyBaseLogger) => Promise<void>
     log: FastifyBaseLogger
 }): QueueDispatcher {
-    const { queueName, worker, dequeue, log } = params
+    const { queueName, worker, dequeue, onOrphanedJob, log } = params
     const waiters: Waiter[] = []
     let loopRunning = false
 
@@ -52,9 +53,11 @@ function createQueueDispatcher(params: {
 
             const waiter = waiters.shift()
             if (isNil(waiter)) {
-                // No waiter left — this shouldn't happen since we check waiters.length,
-                // but just in case, log and continue
-                log.warn({ queueName }, '[QueueDispatcher] job dequeued but no waiter available')
+                log.warn({ queueName, jobId: job.jobId }, '[QueueDispatcher] job dequeued but no waiter available, returning to queue')
+                const { error: orphanError } = await tryCatch(() => onOrphanedJob(job.jobId, log))
+                if (orphanError) {
+                    log.error({ queueName, jobId: job.jobId, error: String(orphanError) }, '[QueueDispatcher] failed to return orphaned job to queue')
+                }
                 continue
             }
 
@@ -70,7 +73,8 @@ function createQueueDispatcher(params: {
             waiter.resolve(null)
         }
         waiters.length = 0
-        loopRunning = false
+        // Do not reset loopRunning here — the in-flight runLoop will exit
+        // naturally when it sees waiters.length === 0 after dequeue returns.
     }
 
     function waiterCount(): number {

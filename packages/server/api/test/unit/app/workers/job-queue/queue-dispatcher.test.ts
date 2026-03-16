@@ -31,6 +31,7 @@ function createFakeJob(id: string): ConsumeJobRequest {
 describe('QueueDispatcher', () => {
     let dispatcher: QueueDispatcher
     let dequeueMock: ReturnType<typeof vi.fn>
+    let onOrphanedJobMock: ReturnType<typeof vi.fn>
     let dequeueCallCount: number
     let pendingDequeues: Array<{
         resolve: (value: ConsumeJobRequest | null) => void
@@ -49,10 +50,13 @@ describe('QueueDispatcher', () => {
             })
         })
 
+        onOrphanedJobMock = vi.fn().mockResolvedValue(undefined)
+
         dispatcher = createQueueDispatcher({
             queueName: 'test-queue',
             worker: mockWorker,
             dequeue: dequeueMock,
+            onOrphanedJob: onOrphanedJobMock,
             log: mockLog,
         })
     })
@@ -227,5 +231,58 @@ describe('QueueDispatcher', () => {
         dispatcher.poll()
 
         expect(dispatcher.waiterCount()).toBe(2)
+    })
+
+    it('should call onOrphanedJob when job is dequeued but all waiters timed out', async () => {
+        const pollPromise = dispatcher.poll()
+
+        await vi.advanceTimersByTimeAsync(0)
+        expect(pendingDequeues).toHaveLength(1)
+
+        // Waiter times out before dequeue returns
+        await vi.advanceTimersByTimeAsync(WAITER_TIMEOUT_MS + 100)
+        const result = await pollPromise
+        expect(result).toBeNull()
+
+        // Now dequeue returns a job — but no waiter is left
+        const orphanedJob = createFakeJob('orphaned-job')
+        pendingDequeues[0].resolve(orphanedJob)
+        await vi.advanceTimersByTimeAsync(0)
+
+        expect(onOrphanedJobMock).toHaveBeenCalledWith('orphaned-job', mockLog)
+    })
+
+    it('should not spawn a second concurrent loop after close() while dequeue is in-flight', async () => {
+        const poll1 = dispatcher.poll()
+        await vi.advanceTimersByTimeAsync(0)
+
+        // Dequeue #1 is in-flight. Close the dispatcher.
+        dispatcher.close()
+        const result1 = await poll1
+        expect(result1).toBeNull()
+
+        // A new poll arrives while the in-flight dequeue hasn't resolved yet.
+        // startLoop() sees loopRunning=true and does NOT spawn a second loop.
+        const poll2 = dispatcher.poll()
+        await vi.advanceTimersByTimeAsync(0)
+
+        // Still only 1 dequeue call — no second concurrent call was made
+        expect(dequeueCallCount).toBe(1)
+        expect(pendingDequeues).toHaveLength(1)
+
+        // The in-flight dequeue resolves — the existing loop finds the new waiter
+        // and continues (single loop, no concurrency). It makes dequeue call #2.
+        pendingDequeues[0].resolve(null)
+        await vi.advanceTimersByTimeAsync(0)
+
+        expect(dequeueCallCount).toBe(2)
+
+        // Resolve dequeue #2 with a job for the second waiter
+        const job = createFakeJob('job-after-close')
+        pendingDequeues[1].resolve(job)
+        await vi.advanceTimersByTimeAsync(0)
+
+        const result2 = await poll2
+        expect(result2).toEqual(job)
     })
 })

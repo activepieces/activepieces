@@ -59,6 +59,7 @@ function ensureDispatcher(queueName: string, worker: BullMQWorker, log: FastifyB
         queueName,
         worker,
         dequeue: tryDequeue,
+        onOrphanedJob: returnJobToQueue,
         log,
     })
     dispatchers.set(queueName, dispatcher)
@@ -101,6 +102,24 @@ async function tryDequeue(worker: BullMQWorker, queueName: string, log: FastifyB
         attempsStarted: job.attemptsMade,
         engineToken,
     }
+}
+
+async function returnJobToQueue(jobId: string, log: FastifyBaseLogger): Promise<void> {
+    const entry = activeJobs.get(jobId)
+    if (!entry) {
+        log.warn({ jobId }, '[jobBroker#returnJobToQueue] job not found in activeJobs')
+        return
+    }
+    const { job, token, jobData } = entry
+    await job.moveToDelayed(Date.now(), token)
+    activeJobs.delete(jobId)
+    for (const interceptor of interceptors) {
+        const { error } = await tryCatch(() => interceptor.onJobFinished({ jobId, jobData, log }))
+        if (error) {
+            log.error({ jobId, error: String(error) }, '[jobBroker#returnJobToQueue] interceptor cleanup failed')
+        }
+    }
+    log.info({ jobId }, '[jobBroker#returnJobToQueue] orphaned job returned to queue')
 }
 
 async function runInterceptors({ jobId, jobData, job, log }: { jobId: string, jobData: JobData, job: Job, log: FastifyBaseLogger }): Promise<{ delayInMs: number, priority?: number } | null> {
