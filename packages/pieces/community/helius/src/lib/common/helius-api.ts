@@ -55,5 +55,8 @@ export async function heliusRpcRequest<T>(
     throw new Error(`Helius RPC error: ${json.error.message}`);
   }
 
+  if (json.result === undefined) {
+    throw new Error('Helius RPC returned unexpected response: no result field');
+  }
   return json.result as T;
 }
