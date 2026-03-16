@@ -61,10 +61,12 @@ export const getLogEvents = createAction({
   },
   async run({ auth, propsValue }) {
     const { contract_address, limit, chain_name } = propsValue;
+    // Use a recent block window (last ~50,000 blocks ≈ ~7 days on Ethereum)
+    // Covalent requires numeric block values; 'latest' is not a valid param
     const data = await covalentRequest<LogEventsResponse>(
       auth as string,
       `${chain_name}/events/address/${contract_address}/`,
-      { 'starting-block': 'latest', limit: String(limit ?? 10) }
+      { 'page-size': String(limit ?? 10), 'page-number': '0' }
     );
     return {
       updated_at: data.updated_at,
