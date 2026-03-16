@@ -30,11 +30,10 @@ export const getTokenPrice = createAction({
   async run(context) {
     const params: Record<string, string | number | undefined> = {
       address: context.propsValue.address,
-      chain: context.propsValue.chain as string,
     };
     if (context.propsValue.check_liquidity) {
       params['check_liquidity'] = context.propsValue.check_liquidity;
     }
-    return birdeyeRequest(context.auth, '/defi/price', params);
+    return birdeyeRequest(context.auth, '/defi/price', context.propsValue.chain as string, params);
   },
 });
