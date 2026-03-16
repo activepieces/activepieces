@@ -6,6 +6,7 @@ import { trace } from '@opentelemetry/api'
 import { Logger } from 'pino'
 import { workerSettings } from '../../config/worker-settings'
 import { cacheState, NO_SAVE_GUARD } from '../cache-state'
+import { withFileLock } from '../file-lock'
 import { bunRunner } from './bun-runner'
 
 const tracer = trace.getTracer('code-builder')
@@ -69,7 +70,7 @@ export const codeBuilder = (log: Logger) => ({
             cacheMiss: (value: string) => {
                 return value !== currentHash
             },
-            installFn: async () => {
+            installFn: () => withFileLock(codePath, async () => {
                 const { code, packageJson } = sourceCode
 
                 const codeNeedCleanUp = await fileSystemUtils.fileExists(codePath)
@@ -117,7 +118,7 @@ export const codeBuilder = (log: Logger) => ({
                 // node_modules is no longer needed after bun build bundles everything into index.js
                 await tryCatch(() => rm(path.join(codePath, 'node_modules'), { recursive: true }))
                 return currentHash
-            },
+            }),
             skipSave: NO_SAVE_GUARD,
         })
     },

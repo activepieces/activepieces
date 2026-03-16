@@ -19,6 +19,7 @@ import writeFileAtomic from 'write-file-atomic'
 import { workerSettings } from '../../config/worker-settings'
 import { getGlobalCacheCommonPath, getGlobalCachePathLatestVersion } from '../cache-paths'
 import { bunRunner } from '../code/bun-runner'
+import { withFileLock } from '../file-lock'
 
 const tracer = trace.getTracer('piece-installer')
 
@@ -63,63 +64,65 @@ async function installPieces(rootWorkspace: string, pieces: PiecePackage[], incl
         piecesToInstall: piecesToInstall.map(piece => `${piece.pieceName}-${piece.pieceVersion}`),
     }, '[pieceInstaller] Installing pieces in workspace')
 
-    await memoryLock.runExclusive({
-        key: `install-pieces-${rootWorkspace}`,
-        fn: async () => {
-            const { piecesToInstall } = await partitionPiecesToInstall(rootWorkspace, pieces)
-            if (isEmpty(piecesToInstall)) {
-                log.info({ rootWorkspace }, '[pieceInstaller] No new pieces to install in lock (already installed)')
-                return
-            }
-            log.info({
-                rootWorkspace,
-                pieces: piecesToInstall.map(piece => `${piece.pieceName}-${piece.pieceVersion}`),
-            }, '[pieceInstaller] acquired lock and starting to install pieces')
+    await withFileLock(rootWorkspace, async () => {
+        await memoryLock.runExclusive({
+            key: `install-pieces-${rootWorkspace}`,
+            fn: async () => {
+                const { piecesToInstall } = await partitionPiecesToInstall(rootWorkspace, pieces)
+                if (isEmpty(piecesToInstall)) {
+                    log.info({ rootWorkspace }, '[pieceInstaller] No new pieces to install in lock (already installed)')
+                    return
+                }
+                log.info({
+                    rootWorkspace,
+                    pieces: piecesToInstall.map(piece => `${piece.pieceName}-${piece.pieceVersion}`),
+                }, '[pieceInstaller] acquired lock and starting to install pieces')
 
-            await createRootPackageJson({
-                path: rootWorkspace,
-            })
+                await createRootPackageJson({
+                    path: rootWorkspace,
+                })
 
-            await savePackageArchivesToDiskIfNotCached(rootWorkspace, piecesToInstall, apiClient)
+                await savePackageArchivesToDiskIfNotCached(rootWorkspace, piecesToInstall, apiClient)
 
-            await Promise.all(piecesToInstall.map(piece => createPiecePackageJson({
-                rootWorkspace,
-                piecePackage: piece,
-            })))
+                await Promise.all(piecesToInstall.map(piece => createPiecePackageJson({
+                    rootWorkspace,
+                    piecePackage: piece,
+                })))
 
-            await tracer.startActiveSpan('pieceInstaller.bunInstall', async (span) => {
-                try {
-                    span.setAttribute('pieces.count', piecesToInstall.length)
-                    span.setAttribute('pieces.rootWorkspace', rootWorkspace)
+                await tracer.startActiveSpan('pieceInstaller.bunInstall', async (span) => {
+                    try {
+                        span.setAttribute('pieces.count', piecesToInstall.length)
+                        span.setAttribute('pieces.rootWorkspace', rootWorkspace)
 
-                    const { error: installError } = await tryCatch(async () => bunRunner(log).install({
-                        path: rootWorkspace,
-                        filtersPath: includeFilters ? piecesToInstall.map(relativePiecePath) : [],
-                    }))
+                        const { error: installError } = await tryCatch(async () => bunRunner(log).install({
+                            path: rootWorkspace,
+                            filtersPath: includeFilters ? piecesToInstall.map(relativePiecePath) : [],
+                        }))
 
-                    if (!isNil(installError)) {
-                        log.error({
+                        if (!isNil(installError)) {
+                            log.error({
+                                rootWorkspace,
+                                pieces: piecesToInstall.map(piece => `${piece.pieceName}-${piece.pieceVersion}`),
+                                error: installError,
+                            }, '[pieceInstaller] Piece installation failed, rolling back')
+                            span.recordException(installError instanceof Error ? installError : new Error(String(installError)))
+                            await rollbackInstallation(rootWorkspace, piecesToInstall)
+                            throw installError
+                        }
+
+                        await markPiecesAsUsed(rootWorkspace, piecesToInstall)
+
+                        log.info({
                             rootWorkspace,
-                            pieces: piecesToInstall.map(piece => `${piece.pieceName}-${piece.pieceVersion}`),
-                            error: installError,
-                        }, '[pieceInstaller] Piece installation failed, rolling back')
-                        span.recordException(installError instanceof Error ? installError : new Error(String(installError)))
-                        await rollbackInstallation(rootWorkspace, piecesToInstall)
-                        throw installError
+                            piecesCount: piecesToInstall.length,
+                        }, '[pieceInstaller] Installed registry pieces using bun')
                     }
-
-                    await markPiecesAsUsed(rootWorkspace, piecesToInstall)
-
-                    log.info({
-                        rootWorkspace,
-                        piecesCount: piecesToInstall.length,
-                    }, '[pieceInstaller] Installed registry pieces using bun')
-                }
-                finally {
-                    span.end()
-                }
-            })
-        },
+                    finally {
+                        span.end()
+                    }
+                })
+            },
+        })
     })
 }
 
