@@ -1,9 +1,15 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import {
-	OAuth2PropertyValue,
+	AuthenticationType,
+	createCustomApiCallAction,
+	httpClient,
+	HttpMethod,
+} from '@activepieces/pieces-common';
+import {
+	PieceAuth,
 	createPiece,
 } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
+import { getIntercomRegion, getIntercomToken, IntercomAuthValue } from './lib/common';
 import { sendMessageAction } from './lib/actions/send-message.action';
 import crypto from 'node:crypto';
 import { noteAddedToConversation } from './lib/triggers/note-added-to-conversation';
@@ -45,13 +51,75 @@ import { leadConvertedToUserTrigger } from './lib/triggers/lead-converted-to-use
 import { newUserTrigger } from './lib/triggers/new-user';
 import { tagAddedToUserTrigger } from './lib/triggers/tag-added-to-user';
 import { contactUpdatedTrigger } from './lib/triggers/contact-updated';
-import { intercomAuth } from './lib/auth';
-import { assignConversationAction } from './lib/actions/assign-conversation-to-admin';
+
+const regionProp = Property.StaticDropdown({
+	displayName: 'Region',
+	required: true,
+	options: {
+		options: [
+			{ label: 'US', value: 'intercom' },
+			{ label: 'EU', value: 'eu.intercom' },
+			{ label: 'AU', value: 'au.intercom' },
+		],
+	},
+});
+
+const oauthDescription = `
+Please follow the instructions to create Intercom Oauth2 app.
+
+1.Log in to your Intercom account and navigate to **Settings > Integrations > Developer Hub**.
+2.Click on **Create a new app** and select the appropriate workspace.
+3.In **Authentication** section, add Redirect URL.
+4.In **Webhooks** section, select the events you want to receive.
+5.Go to the **Basic Information** section and copy the Client ID and Client Secret.
+`;
+
+export const intercomOAuth2Auth = PieceAuth.OAuth2({
+	authUrl: 'https://app.{region}.com/oauth',
+	tokenUrl: 'https://api.{region}.io/auth/eagle/token',
+	required: true,
+	description: oauthDescription,
+	scope: [],
+	props: {
+		region: regionProp,
+	},
+});
+
+const intercomCustomAuth = PieceAuth.CustomAuth({
+	displayName: 'Access Token',
+	description:
+		'Connect using an Intercom Access Token. You can find your token in **Settings > Integrations > Developer Hub > Your App > Authentication**.',
+	required: true,
+	props: {
+		accessToken: PieceAuth.SecretText({
+			displayName: 'Access Token',
+			required: true,
+		}),
+		region: regionProp,
+	},
+	validate: async ({ auth }) => {
+		try {
+			await httpClient.sendRequest({
+				method: HttpMethod.GET,
+				url: `https://api.${auth.region}.io/me`,
+				authentication: {
+					type: AuthenticationType.BEARER_TOKEN,
+					token: auth.accessToken,
+				},
+			});
+			return { valid: true };
+		} catch (e) {
+			return { valid: false, error: (e as Error).message };
+		}
+	},
+});
+
+export const intercomAuth = [intercomOAuth2Auth, intercomCustomAuth];
 
 export const intercom = createPiece({
 	displayName: 'Intercom',
 	description: 'Customer messaging platform for sales, marketing, and support',
-	minimumSupportedRelease: '0.29.0', // introduction of new intercom APP_WEBHOOK
+	minimumSupportedRelease: '0.79.0',
 	logoUrl: 'https://cdn.activepieces.com/pieces/intercom.png',
 	categories: [PieceCategory.CUSTOMER_SUPPORT],
 	auth: intercomAuth,
@@ -87,10 +155,11 @@ export const intercom = createPiece({
 		listAllTagsAction,
 		getConversationAction,
 		createCustomApiCallAction({
-			baseUrl: (auth) => `https://api.${(auth as OAuth2PropertyValue).props?.['region']}.io`,
+			baseUrl: (auth) =>
+				`https://api.${getIntercomRegion(auth as IntercomAuthValue)}.io`,
 			auth: intercomAuth,
 			authMapping: async (auth) => ({
-				Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+				Authorization: `Bearer ${getIntercomToken(auth as IntercomAuthValue)}`,
 			}),
 		}),
 	],
