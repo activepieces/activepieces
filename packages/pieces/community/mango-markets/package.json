@@ -1,0 +1,20 @@
+{
+  "name": "@activepieces/piece-mango-markets",
+  "version": "0.0.1",
+  "description": "Mango Markets Solana DEX spot and perpetuals trading data",
+  "keywords": [
+    "activepieces",
+    "piece",
+    "mango",
+    "solana",
+    "defi",
+    "perps"
+  ],
+  "license": "MIT",
+  "author": "bossco7598",
+  "main": "src/index.ts",
+  "scripts": {},
+  "peerDependencies": {
+    "@activepieces/pieces-framework": "workspace:*"
+  }
+}
