@@ -1,0 +1,13 @@
+{
+  "name": "@activepieces/piece-optimism",
+  "version": "0.0.1",
+  "description": "Optimism Layer-2 rollup data for Activepieces",
+  "main": "src/index.ts",
+  "keywords": ["activepieces", "optimism", "layer2", "ethereum", "l2", "op", "defi"],
+  "authors": ["Activepieces"],
+  "license": "MIT",
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*"
+  }
+}
