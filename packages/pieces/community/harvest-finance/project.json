@@ -1,0 +1,25 @@
+{
+  "name": "piece-harvest-finance",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "sourceRoot": "packages/pieces/community/harvest-finance/src",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/harvest-finance",
+        "tsConfig": "packages/pieces/community/harvest-finance/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/harvest-finance/package.json",
+        "main": "packages/pieces/community/harvest-finance/src/index.ts",
+        "assets": [
+          {
+            "input": "packages/pieces/community/harvest-finance",
+            "glob": "**/*.md",
+            "output": "/"
+          }
+        ]
+      }
+    }
+  }
+}
