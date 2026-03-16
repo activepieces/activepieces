@@ -1,0 +1,33 @@
+{
+  "name": "@activepieces/piece-scroll",
+  "version": "0.0.1",
+  "description": "Scroll ZK rollup Layer-2: TVL, SCR price, chain breakdown, historical data",
+  "keywords": [
+    "activepieces",
+    "scroll",
+    "zk-rollup",
+    "layer2",
+    "ethereum",
+    "defi",
+    "tvl"
+  ],
+  "homepage": "",
+  "bugs": {
+    "url": "https://github.com/activepieces/activepieces/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/activepieces/activepieces.git"
+  },
+  "license": "MIT",
+  "author": "",
+  "main": "./src/index.ts",
+  "scripts": {
+    "publish-piece": "node ../../../../.scripts/publish-piece.mjs"
+  },
+  "peerDependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*"
+  }
+}
