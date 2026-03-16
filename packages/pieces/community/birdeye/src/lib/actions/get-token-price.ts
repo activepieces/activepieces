@@ -31,7 +31,7 @@ export const getTokenPrice = createAction({
     const params: Record<string, string | number | undefined> = {
       address: context.propsValue.address,
     };
-    if (context.propsValue.check_liquidity) {
+    if (context.propsValue.check_liquidity !== undefined) {
       params['check_liquidity'] = context.propsValue.check_liquidity;
     }
     return birdeyeRequest(context.auth, '/defi/price', context.propsValue.chain as string, params);
