@@ -543,9 +543,6 @@
       "@activepieces/piece-hedy": [
         "packages/pieces/community/hedy/src/index.ts"
       ],
-      "@activepieces/piece-helius": [
-        "packages/pieces/community/helius/src/index.ts"
-      ],
       "@activepieces/piece-help-scout": [
         "packages/pieces/community/help-scout/src/index.ts"
       ],
