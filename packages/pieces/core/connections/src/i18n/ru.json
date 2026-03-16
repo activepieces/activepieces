@@ -1,9 +1,0 @@
-{
-  "Connections": "Connections",
-  "Read connections dynamically": "Динамически считывать соединения",
-  "Read Connection": "Чтение соединения",
-  "Fetch connection by name": "Получить соединение по имени",
-  "Markdown": "Markdown",
-  "Connection External ID": "Внешний ID подключения",
-  "\n**Advanced Piece**\n<br>\nUse this piece if you are unsure which connection to use beforehand, such as when the connection external ID is sent through a webhook message.\n\n**Notes:**\n- You can retrieve the external ID from the connection settings page by hovering over the connection name.\n- Use this action to retrieve connection values by their external IDs from this project.\n- After testing the step, you can use the dynamic value in the piece by clicking (X) and referring to this step.\n": "\n**Advanced Piece**\n<br>\nИспользуйте эту часть, если не уверены, какое соединение использовать заранее, например, когда внешний ID подключения отправляется через сообщение webhook.\n\n**Примечание:**\n- Вы можете получить внешний ID на странице настроек соединения, нажимая на имя соединения.\n- Используйте это действие для получения значений подключения их внешними идентификаторами из этого проекта.\n- После тестирования этого шага можно использовать динамическое значение частицы, нажав (X) и ссылаясь на этот шаг.\n"
-}

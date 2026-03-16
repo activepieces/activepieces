@@ -1,8 +1,0 @@
-{
-  "Read connections dynamically": "Verbindingen dynamisch lezen",
-  "Read Connection": "Contact lezen",
-  "Fetch connection by name": "Verbinding met naam ophalen",
-  "Markdown": "Markdown",
-  "Connection External ID": "Verbinding extern ID",
-  "\n**Advanced Piece**\n<br>\nUse this piece if you are unsure which connection to use beforehand, such as when the connection external ID is sent through a webhook message.\n\n**Notes:**\n- You can retrieve the external ID from the connection settings page by hovering over the connection name.\n- Use this action to retrieve connection values by their external IDs from this project.\n- After testing the step, you can use the dynamic value in the piece by clicking (X) and referring to this step.\n": "\n**Geavanceerde Piece**\n<br>\nGebruik dit stuk als u niet zeker weet welke verbinding u vooraf wilt gebruiken. zoals wanneer de verbinding externe ID via een webhook wordt verzonden.\n\n**Toelichting:**\n- U kunt het externe ID ophalen van de verbindingsinstellingen pagina door over de verbindingsnaam te zweven.\n- Gebruik deze actie om verbindingswaarden op te halen door hun externe ID's uit dit project.\n- Na het testen van de stap, kunt u de dynamische waarde van het stuk gebruiken door op (X) te klikken en te verwijzen naar deze stap.\n"
-}
