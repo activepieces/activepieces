@@ -2,7 +2,7 @@ name: Continuous Delivery — K8s (Hetzner)
 
 on:
   push:
-    branches: [main, feat/worker-v2]
+    branches: [main]
   schedule:
     - cron: '0 9 * * *'  # Daily at 9 AM UTC — promote staging to prod (+ official release on Sundays)
   workflow_dispatch:
