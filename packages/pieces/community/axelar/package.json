@@ -1,0 +1,13 @@
+{
+  "name": "@activepieces/piece-axelar",
+  "version": "0.0.1",
+  "description": "Activepieces piece for Axelar Network — decentralized cross-chain communication protocol",
+  "keywords": ["activepieces", "defi", "axelar", "cross-chain", "interoperability", "axl"],
+  "homepage": "https://axelar.network",
+  "license": "MIT",
+  "exports": "./src/index.ts",
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*"
+  }
+}
