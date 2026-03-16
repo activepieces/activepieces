@@ -1,0 +1,13 @@
+{
+  "name": "@activepieces/piece-clearpool",
+  "version": "0.0.1",
+  "description": "Clearpool institutional credit markets",
+  "keywords": ["activepieces", "clearpool", "credit", "lending", "defi", "crypto"],
+  "homepage": "https://clearpool.finance",
+  "license": "MIT",
+  "exports": { ".": "./src/index.ts" },
+  "dependencies": {
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/pieces-common": "workspace:*"
+  }
+}
