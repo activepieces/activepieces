@@ -1,9 +1,11 @@
 import { ChildProcess } from 'child_process'
 import { createServer, Server as HttpServer } from 'http'
+import path from 'path'
 import { ActivepiecesError, assertNotNullOrUndefined, createNotifyServer, createRpcClient, createRpcServer, EngineContract, EngineOperation, EngineOperationType, EngineResponse, EngineStderr, EngineStdout, ErrorCode, isNil, WorkerContract, WorkerNotifyContract } from '@activepieces/shared'
 import { Socket, Server as SocketIOServer } from 'socket.io'
 import treeKill from 'tree-kill'
-import { Sandbox, SandboxInitOptions, SandboxLogger, SandboxOptions, SandboxProcessMaker, SandboxResult } from './types'
+import { getGlobalCachePathLatestVersion } from '../cache/cache-paths'
+import { Sandbox, SandboxInitOptions, SandboxLogger, SandboxMount, SandboxOptions, SandboxProcessMaker, SandboxResult } from './types'
 
 export function createSandbox(
     log: SandboxLogger,
@@ -88,13 +90,25 @@ export function createSandbox(
 
             const port = createSocketServer()
 
+            const customPieceMounts: SandboxMount[] = []
+            if (platformId) {
+                const customPiecesHostPath = path.resolve(getGlobalCachePathLatestVersion(), 'custom_pieces', platformId)
+                customPieceMounts.push({
+                    hostPath: customPiecesHostPath,
+                    sandboxPath: '/root/custom_pieces',
+                })
+            }
+
             childProcess = await processMaker.create({
                 sandboxId,
                 command: options.command ?? [],
-                mounts: [...(options.baseMounts ?? []), ...mounts],
+                mounts: [...(options.baseMounts ?? []), ...mounts, ...customPieceMounts],
                 env: {
                     ...options.env,
                     AP_SANDBOX_WS_PORT: String(port),
+                    ...(customPieceMounts.length > 0
+                        ? { AP_CUSTOM_PIECES_PATHS: '/root/custom_pieces' }
+                        : {}),
                 },
                 resourceLimits: {
                     memoryBytes: options.memoryLimitMb * 1024 * 1024,
