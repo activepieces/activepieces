@@ -1,0 +1,29 @@
+{
+  "name": "piece-dodo",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/dodo/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/dodo",
+        "main": "packages/pieces/community/dodo/src/index.ts",
+        "tsConfig": "packages/pieces/community/dodo/tsconfig.lib.json",
+        "assets": [
+          {
+            "glob": "**/*.{svg,png}",
+            "input": "packages/pieces/community/dodo",
+            "output": "."
+          }
+        ]
+      }
+    }
+  },
+  "tags": [
+    "piece"
+  ]
+}
