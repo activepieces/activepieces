@@ -1,0 +1,22 @@
+{
+  "name": "@activepieces/piece-debank",
+  "version": "0.0.1",
+  "description": "DeBank DeFi portfolio tracker — wallet positions, token balances, NFTs across 30+ chains",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": ["dist"],
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "nx build piece-debank"
+  },
+  "keywords": ["activepieces", "debank", "defi", "portfolio", "wallet"],
+  "authors": ["Bossco"],
+  "dependencies": {
+    "@activepieces/pieces-common": "*",
+    "@activepieces/pieces-framework": "*",
+    "@activepieces/shared": "*"
+  }
+}
