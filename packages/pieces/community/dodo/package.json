@@ -1,0 +1,22 @@
+{
+  "name": "@activepieces/piece-dodo",
+  "version": "0.0.1",
+  "description": "DODO Protocol DEX and PMM liquidity data",
+  "keywords": [
+    "activepieces",
+    "piece",
+    "dodo",
+    "defi",
+    "dex"
+  ],
+  "homepage": "",
+  "bugs": {},
+  "repository": {},
+  "license": "MIT",
+  "author": "bossco7598",
+  "main": "src/index.ts",
+  "scripts": {},
+  "peerDependencies": {
+    "@activepieces/pieces-framework": "workspace:*"
+  }
+}
