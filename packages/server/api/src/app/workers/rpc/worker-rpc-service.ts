@@ -162,6 +162,7 @@ export function createHandlers(log: FastifyBaseLogger, platformIdForDedicatedWor
                 name: input.name,
                 version: input.version,
                 projectId: input.projectId,
+                platformId: input.platformId,
             })
         },
 

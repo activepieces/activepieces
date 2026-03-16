@@ -57,6 +57,7 @@ async function getPiecePackage(query: PieceCacheKey, apiClient: WorkerToApiContr
     const pieceMetadata = await apiClient.getPiece({
         name: query.pieceName,
         version: query.pieceVersion,
+        platformId: query.platformId,
     }) as { packageType: PackageType, name: string, version: string, pieceType: PieceType, archiveId?: string } | null
 
     if (!pieceMetadata) {
