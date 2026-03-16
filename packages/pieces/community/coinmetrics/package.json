@@ -1,0 +1,19 @@
+{
+  "name": "@activepieces/piece-coinmetrics",
+  "version": "0.0.1",
+  "description": "CoinMetrics - institutional crypto network data",
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
+  "repository": "https://github.com/activepieces/activepieces",
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json && cp package.json dist/",
+    "lint": "eslint 'src/**/*.ts'"
+  },
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
+    "tslib": "2.6.2"
+  }
+}
