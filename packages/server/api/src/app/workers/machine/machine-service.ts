@@ -95,6 +95,7 @@ export const machineService = (log: FastifyBaseLogger) => {
                 information: request,
                 cacheId,
                 type,
+                platformId: platformIdForDedicatedWorker,
             }, existingWorker)
             const settings = await buildSettingsResponse(log, platformIdForDedicatedWorker)
             return {
@@ -102,7 +103,7 @@ export const machineService = (log: FastifyBaseLogger) => {
                 WORKER_CACHE_ID: cacheId,
             }
         },
-        async list(): Promise<WorkerMachineWithStatus[]> {
+        async list(platformId: string): Promise<WorkerMachineWithStatus[]> {
             const allWorkers = await workerMachineCache().find()
 
             const offlineThreshold = dayjs().subtract(60, 'seconds').utc()
@@ -111,11 +112,13 @@ export const machineService = (log: FastifyBaseLogger) => {
 
             await workerMachineCache().delete(offLineWorkers.map(worker => worker.id))
 
-            return onlineWorkers.map(worker => ({
-                ...worker,
-                status: WorkerMachineStatus.ONLINE,
-                type: worker.type === 'DEDICATED' ? WorkerMachineType.DEDICATED : WorkerMachineType.SHARED,
-            }))
+            return onlineWorkers
+                .filter(worker => worker.platformId === platformId || worker.type === 'SHARED')
+                .map(worker => ({
+                    ...worker,
+                    status: WorkerMachineStatus.ONLINE,
+                    type: worker.type === 'DEDICATED' ? WorkerMachineType.DEDICATED : WorkerMachineType.SHARED,
+                }))
         },
     }
 }
