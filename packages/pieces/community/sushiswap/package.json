@@ -1,0 +1,17 @@
+{
+  "name": "@activepieces/piece-sushiswap",
+  "version": "0.0.1",
+  "description": "SushiSwap - Multi-chain decentralized exchange",
+  "keywords": ["activepieces", "piece", "sushiswap", "sushi", "dex", "defi"],
+  "homepage": "https://sushi.com",
+  "license": "MIT",
+  "exports": "./src/index.ts",
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*"
+  },
+  "scripts": {
+    "build": "tsc"
+  }
+}
