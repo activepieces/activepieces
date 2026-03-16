@@ -1,0 +1,14 @@
+{
+  "name": "@activepieces/piece-platypus-finance",
+  "version": "0.1.0",
+  "description": "Platypus Finance integration for Activepieces - Avalanche stableswap AMM",
+  "keywords": ["activepieces", "platypus-finance", "defi", "stableswap", "avalanche"],
+  "homepage": "https://github.com/activepieces/activepieces",
+  "license": "MIT",
+  "main": "src/index.ts",
+  "files": ["src"],
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*"
+  }
+}
