@@ -1,0 +1,11 @@
+{
+  "name": "@activepieces/piece-vertex-protocol",
+  "version": "0.0.1",
+  "description": "Vertex Protocol cross-margined DEX with spot, perps, and money markets",
+  "license": "MIT",
+  "main": "src/index.ts",
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:^",
+    "@activepieces/pieces-framework": "workspace:^"
+  }
+}
