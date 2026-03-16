@@ -1,0 +1,28 @@
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { createAction } from '@activepieces/pieces-framework';
+
+export const getTvlHistory = createAction({
+  name: 'get_tvl_history',
+  displayName: 'Get TVL History',
+  description: 'Fetch the last 30 days of historical TVL data for Synapse Protocol from DeFiLlama.',
+  props: {},
+  async run() {
+    const response = await httpClient.sendRequest({
+      method: HttpMethod.GET,
+      url: 'https://api.llama.fi/protocol/synapse',
+    });
+    const data = response.body as Record<string, unknown>;
+    const tvlArr = data['tvl'] as Array<{ date: number; totalLiquidityUSD: number }> | undefined;
+    const thirtyDaysAgo = Date.now() / 1000 - 30 * 24 * 60 * 60;
+    const history = (tvlArr ?? [])
+      .filter((entry) => entry.date >= thirtyDaysAgo)
+      .map((entry) => ({
+        date: new Date(entry.date * 1000).toISOString().split('T')[0],
+        tvl_usd: entry.totalLiquidityUSD,
+      }));
+    return {
+      days_returned: history.length,
+      history,
+    };
+  },
+});
