@@ -18,8 +18,6 @@ export function createSandbox(
     let httpServer: HttpServer | null = null
     let io: SocketIOServer | null = null
     let connectedSocket: Socket | null = null
-    let engineClient: EngineContract | null = null
-
     let connectionResolve: (() => void) | null = null
 
     function createSocketServer(): number {
@@ -35,12 +33,10 @@ export function createSandbox(
             log.info({ sandboxId, socketId: socket.id }, '[WebSocket] Sandbox connected')
 
             createRpcServer<WorkerContract>(socket, workerHandlers)
-            engineClient = createRpcClient<EngineContract>(socket)
 
             socket.on('disconnect', (reason) => {
                 log.info({ sandboxId, reason, socketId: socket.id }, '[WebSocket] Sandbox disconnected')
                 connectedSocket = null
-                engineClient = null
             })
 
             if (connectionResolve) {
@@ -137,7 +133,7 @@ export function createSandbox(
             let timeout: NodeJS.Timeout | null = null
             const operationPromise = new Promise<SandboxResult>((resolve, reject) => {
                 assertNotNullOrUndefined(childProcess, 'Sandbox process should not be null')
-                assertNotNullOrUndefined(engineClient, 'Engine client should not be null')
+                assertNotNullOrUndefined(connectedSocket, 'Connected socket should not be null')
 
                 let stdError = ''
                 let stdOut = ''
@@ -215,7 +211,6 @@ export function createSandbox(
             }
             connectedSocket?.disconnect()
             connectedSocket = null
-            engineClient = null
             if (io) {
                 // eslint-disable-next-line @typescript-eslint/await-thenable
                 await io.close()
