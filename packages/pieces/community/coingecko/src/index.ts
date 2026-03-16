@@ -20,7 +20,7 @@ export const coingecko = createPiece({
   auth: coingeckoAuth,
   minimumSupportedRelease: '0.20.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/coingecko.png',
-  categories: [PieceCategory.BUSINESS_INTELLIGENCE],
+  categories: [PieceCategory.FINANCE],
   authors: ['bossco7598'],
   actions: [
     getCoinPrice,
