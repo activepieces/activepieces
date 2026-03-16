@@ -1,0 +1,13 @@
+{
+  "name": "@activepieces/piece-index-coop",
+  "version": "0.0.1",
+  "description": "Index Coop structured crypto products and index token data",
+  "keywords": ["activepieces", "piece", "index-coop", "defi", "index"],
+  "license": "MIT",
+  "author": "bossco7598",
+  "main": "src/index.ts",
+  "scripts": {},
+  "peerDependencies": {
+    "@activepieces/pieces-framework": "workspace:*"
+  }
+}
