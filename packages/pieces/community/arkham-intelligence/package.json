@@ -1,0 +1,19 @@
+{
+  "name": "@activepieces/piece-arkham-intelligence",
+  "version": "0.0.1",
+  "description": "Arkham Intelligence crypto wallet entity profiling and on-chain analytics",
+  "type": "module",
+  "scripts": {},
+  "keywords": ["activepieces", "piece", "arkham", "crypto", "intelligence", "wallet"],
+  "homepage": "",
+  "authors": ["Bossco"],
+  "license": "MIT",
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
