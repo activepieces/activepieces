@@ -1,0 +1,14 @@
+{
+  "name": "@activepieces/piece-euler",
+  "version": "0.0.1",
+  "description": "Euler Finance piece for Activepieces",
+  "main": "src/index.ts",
+  "keywords": ["activepieces", "euler", "defi", "lending", "ethereum"],
+  "files": ["src"],
+  "scripts": {"build": "nx build euler"},
+  "dependencies": {
+    "@activepieces/pieces-common": "*",
+    "@activepieces/pieces-framework": "*",
+    "@activepieces/shared": "*"
+  }
+}
