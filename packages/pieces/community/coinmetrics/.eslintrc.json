@@ -1,0 +1,13 @@
+{
+  "extends": ["../../../../../.eslintrc.json"],
+  "ignorePatterns": ["!**/*", "dist/**"],
+  "overrides": [
+    {
+      "files": ["*.ts"],
+      "parserOptions": {
+        "project": ["packages/pieces/community/coinmetrics/tsconfig.json"],
+        "createDefaultProgram": true
+      }
+    }
+  ]
+}
