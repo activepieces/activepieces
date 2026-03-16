@@ -20,8 +20,8 @@ import { JsonViewer } from '@/components/custom/json-viewer';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AgentTimeline } from '@/features/agents';
-import { flowRunsApi } from '@/features/flow-runs/api/flow-runs-api';
 import { StepStatusIcon, flowRunUtils } from '@/features/flow-runs';
+import { flowRunsApi } from '@/features/flow-runs/api/flow-runs-api';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { formatUtils } from '@/lib/format-utils';
 
@@ -65,7 +65,11 @@ export const FlowStepInputOutput = () => {
     );
   }, [run, selectedStep?.name, loopsIndexes]);
 
-  const { data: fetchedStepData, isLoading: isStepDataLoading, isError: isStepDataError } = useQuery({
+  const {
+    data: fetchedStepData,
+    isLoading: isStepDataLoading,
+    isError: isStepDataError,
+  } = useQuery({
     queryKey: [
       'stepData',
       run?.id,
@@ -196,9 +200,7 @@ export const FlowStepInputOutput = () => {
 
           {isAgent && (
             <TabsContent value="timeline">
-              <AgentTimeline
-                agentResult={fullData.output as AgentResult}
-              />
+              <AgentTimeline agentResult={fullData.output as AgentResult} />
             </TabsContent>
           )}
           <TabsContent value="output">
@@ -282,7 +284,10 @@ function resolveStepDataState({
     return { status: StepDataStatus.LOADING, metadata: selectedStepData };
   }
   if (isError) {
-    return { status: StepDataStatus.FAILED_TO_LOAD, metadata: selectedStepData };
+    return {
+      status: StepDataStatus.FAILED_TO_LOAD,
+      metadata: selectedStepData,
+    };
   }
   return { status: StepDataStatus.MISSING };
 }
