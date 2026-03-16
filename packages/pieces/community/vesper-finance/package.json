@@ -1,0 +1,11 @@
+{
+  "name": "@activepieces/piece-vesper-finance",
+  "version": "0.0.1",
+  "description": "Vesper Finance DeFi yield optimization vaults",
+  "license": "MIT",
+  "main": "src/index.ts",
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:^",
+    "@activepieces/pieces-framework": "workspace:^"
+  }
+}
