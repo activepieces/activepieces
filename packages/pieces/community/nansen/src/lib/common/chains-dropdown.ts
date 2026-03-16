@@ -1,0 +1,15 @@
+export const CHAIN_OPTIONS = [
+  { label: 'Ethereum', value: 'ethereum' },
+  { label: 'Solana', value: 'solana' },
+  { label: 'Base', value: 'base' },
+  { label: 'BNB Chain', value: 'bnb' },
+  { label: 'Arbitrum', value: 'arbitrum' },
+  { label: 'Polygon', value: 'polygon' },
+  { label: 'Optimism', value: 'optimism' },
+  { label: 'Avalanche', value: 'avalanche' },
+  { label: 'Linea', value: 'linea' },
+  { label: 'Scroll', value: 'scroll' },
+  { label: 'zkSync', value: 'zksync' },
+  { label: 'Mantle', value: 'mantle' },
+  { label: 'Ronin', value: 'ronin' },
+];
