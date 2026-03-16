@@ -1,0 +1,48 @@
+{
+  "name": "@activepieces/piece-lido-finance",
+  "version": "0.1.0",
+  "description": "Lido Finance liquid staking integration for Activepieces",
+  "keywords": [
+    "activepieces",
+    "lido",
+    "staking",
+    "defi",
+    "ethereum"
+  ],
+  "homepage": "https://www.activepieces.com",
+  "license": "MIT",
+  "main": "src/index.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "nx build piece-lido-finance"
+  },
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*"
+  },
+  "nx": {
+    "name": "piece-lido-finance",
+    "targets": {
+      "build": {
+        "executor": "@nx/js:tsc",
+        "outputs": [
+          "{options.outputPath}"
+        ],
+        "options": {
+          "outputPath": "dist/packages/pieces/community/lido-finance",
+          "tsConfig": "packages/pieces/community/lido-finance/tsconfig.json",
+          "main": "packages/pieces/community/lido-finance/src/index.ts",
+          "assets": [
+            {
+              "input": "packages/pieces/community/lido-finance",
+              "glob": "**/*.{json,png,svg}",
+              "output": "."
+            }
+          ]
+        }
+      }
+    }
+  }
+}
