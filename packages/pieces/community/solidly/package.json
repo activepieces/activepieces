@@ -1,0 +1,17 @@
+{
+  "name": "@activepieces/piece-solidly",
+  "version": "0.0.1",
+  "description": "Solidly - ve(3,3) decentralized exchange protocol multi-chain",
+  "keywords": ["activepieces", "solidly", "solid", "defi", "dex", "ve33", "venom"],
+  "homepage": "https://solidly.com/",
+  "license": "MIT",
+  "main": "src/index.ts",
+  "scripts": { "build": "tsc" },
+  "files": ["src"],
+  "peerDependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*"
+  },
+  "devDependencies": { "typescript": "catalog:" }
+}
