@@ -279,6 +279,7 @@
       "@activepieces/piece-cognito-forms": [
         "packages/pieces/community/cognito-forms/src/index.ts"
       ],
+      "@activepieces/piece-coingecko": ["packages/pieces/community/coingecko/src/index.ts"],
       "@activepieces/piece-cometapi": [
         "packages/pieces/community/cometapi/src/index.ts"
       ],
@@ -744,6 +745,9 @@
       ],
       "@activepieces/piece-mongodb": [
         "packages/pieces/community/mongodb/src/index.ts"
+      ],
+      "@activepieces/piece-moralis": [
+        "packages/pieces/community/moralis/src/index.ts"
       ],
       "@activepieces/piece-motion": [
         "packages/pieces/community/motion/src/index.ts"
