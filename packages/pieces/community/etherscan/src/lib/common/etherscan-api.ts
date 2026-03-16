@@ -42,11 +42,3 @@ export function weiToEth(wei: string): string {
   const fractionStr = ethFraction.toString().padStart(18, '0').replace(/0+$/, '');
   return fractionStr ? `${ethWhole}.${fractionStr}` : `${ethWhole}`;
 }
-
-export function gweiFromWei(wei: string): string {
-  const weiBigInt = BigInt(wei);
-  const gweiWhole = weiBigInt / BigInt('1000000000');
-  const gweiFraction = weiBigInt % BigInt('1000000000');
-  const fractionStr = gweiFraction.toString().padStart(9, '0').replace(/0+$/, '');
-  return fractionStr ? `${gweiWhole}.${fractionStr}` : `${gweiWhole}`;
-}
