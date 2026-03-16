@@ -1,0 +1,14 @@
+{
+  "name": "@activepieces/piece-notional-finance",
+  "version": "0.0.1",
+  "description": "Notional Finance piece for Activepieces",
+  "main": "src/index.ts",
+  "keywords": ["activepieces", "notional", "defi", "fixed-rate", "lending"],
+  "files": ["src"],
+  "scripts": {"build": "nx build notional-finance"},
+  "dependencies": {
+    "@activepieces/pieces-common": "*",
+    "@activepieces/pieces-framework": "*",
+    "@activepieces/shared": "*"
+  }
+}
