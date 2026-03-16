@@ -10,11 +10,13 @@ import { getPlatformQueueName, QueueName } from '../job'
 import { jobMigrations } from '../migrations/job-data-migrations'
 import { rateLimiterInterceptor } from './interceptors/rate-limiter-interceptor'
 import { InterceptorVerdict, JobInterceptor } from './job-interceptor'
+import { createQueueDispatcher, QueueDispatcher } from './queue-dispatcher'
 
 const DRAIN_DELAY_SECONDS = 15
 
 const interceptors: JobInterceptor[] = [rateLimiterInterceptor]
 const workerPromises = new Map<string, Promise<BullMQWorker>>()
+const dispatchers = new Map<string, QueueDispatcher>()
 const activeJobs = new Map<string, { job: Job, token: string, jobData: JobData }>()
 
 function ensureBullMQWorker(queueName: string, log: FastifyBaseLogger): Promise<BullMQWorker> {
@@ -47,6 +49,20 @@ async function createBullMQWorker(queueName: string, log: FastifyBaseLogger): Pr
 
     log.info({ queueName }, '[jobBroker] BullMQ worker initialized')
     return worker
+}
+
+function ensureDispatcher(queueName: string, worker: BullMQWorker, log: FastifyBaseLogger): QueueDispatcher {
+    const existing = dispatchers.get(queueName)
+    if (existing) return existing
+
+    const dispatcher = createQueueDispatcher({
+        queueName,
+        worker,
+        dequeue: tryDequeue,
+        log,
+    })
+    dispatchers.set(queueName, dispatcher)
+    return dispatcher
 }
 
 async function tryDequeue(worker: BullMQWorker, queueName: string, log: FastifyBaseLogger): Promise<ConsumeJobRequest | null> {
@@ -114,7 +130,8 @@ export const jobBroker = (log: FastifyBaseLogger) => ({
     async poll(platformId?: string): Promise<ConsumeJobRequest | null> {
         const queueName = platformId ? getPlatformQueueName(platformId) : QueueName.WORKER_JOBS
         const worker = await ensureBullMQWorker(queueName, log)
-        return tryDequeue(worker, queueName, log)
+        const dispatcher = ensureDispatcher(queueName, worker, log)
+        return dispatcher.poll()
     },
 
     async completeJob(input: ConsumeJobResponse & { jobId: string }): Promise<void> {
@@ -164,6 +181,11 @@ export const jobBroker = (log: FastifyBaseLogger) => ({
     },
 
     async close(): Promise<void> {
+        for (const dispatcher of dispatchers.values()) {
+            dispatcher.close()
+        }
+        dispatchers.clear()
+
         const workers = await Promise.allSettled([...workerPromises.values()])
         await Promise.allSettled(
             workers
