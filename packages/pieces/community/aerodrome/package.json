@@ -1,0 +1,12 @@
+{
+  "name": "@activepieces/piece-aerodrome",
+  "version": "0.1.0",
+  "description": "Aerodrome Finance DeFi piece for Activepieces",
+  "main": "src/index.ts",
+  "keywords": ["activepieces", "aerodrome", "defi", "base", "dex"],
+  "scripts": { "build": "tsc" },
+  "peerDependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*"
+  }
+}
