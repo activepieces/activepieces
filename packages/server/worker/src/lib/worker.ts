@@ -13,7 +13,6 @@ import {
 import { trace } from '@opentelemetry/api'
 import { nanoid } from 'nanoid'
 import { io, Socket } from 'socket.io-client'
-import { initCachePaths } from './cache/cache-paths'
 import { pieceInstaller } from './cache/pieces/piece-installer'
 import { getApiUrl, system, WorkerSystemProp } from './config/configs'
 import { logger } from './config/logger'
@@ -181,9 +180,8 @@ async function fetchAndStoreSettings(sock: Socket): Promise<void> {
     }
     return new Promise<void>((resolve) => {
         sock.emit(WebsocketServerEvent.FETCH_WORKER_SETTINGS, request, (response: WorkerSettingsResponse) => {
-            initCachePaths(response.WORKER_CACHE_ID)
             workerSettings.set(response)
-            logger.info({ environment: response.ENVIRONMENT, executionMode: response.EXECUTION_MODE, workerCacheId: response.WORKER_CACHE_ID }, 'Worker settings loaded')
+            logger.info({ environment: response.ENVIRONMENT, executionMode: response.EXECUTION_MODE }, 'Worker settings loaded')
             resolve()
         })
     })
