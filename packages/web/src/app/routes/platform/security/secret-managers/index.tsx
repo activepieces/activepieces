@@ -68,7 +68,9 @@ const SecretManagersPage = () => {
         />
       ),
       cell: ({ row }) => {
-        const provider = findProvider(providers, row.original.providerId);
+        const provider = providers?.find(
+          (p) => p.id === row.original.providerId,
+        );
         return (
           <div className="flex items-center gap-2 w-fit">
             <PieceIcon
@@ -223,10 +225,3 @@ const SecretManagersPage = () => {
 };
 
 export default SecretManagersPage;
-
-function findProvider(
-  providers: SecretManagerProviderMetaData[] | undefined,
-  providerId: string,
-): SecretManagerProviderMetaData | undefined {
-  return providers?.find((p) => p.id === providerId);
-}

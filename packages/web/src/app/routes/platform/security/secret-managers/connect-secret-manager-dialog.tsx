@@ -1,15 +1,21 @@
 import {
   ConnectSecretManagerRequest,
+  ConnectSecretManagerRequestSchema,
   SecretManagerConnectionScope,
   SecretManagerConnectionWithStatus,
-  SecretManagerProviderMetaData,
   SecretManagerProviderId,
+  SecretManagerProviderMetaData,
   ApErrorParams,
   ErrorCode,
+  HashicorpProviderConfig,
+  AWSProviderConfig,
+  CyberarkConjurProviderConfig,
+  OnePasswordProviderConfig,
 } from '@activepieces/shared';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { t } from 'i18next';
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, type FieldPath } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -23,6 +29,7 @@ import {
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Select,
   SelectContent,
@@ -34,10 +41,7 @@ import { AssignConnectionToProjectsControl } from '@/features/connections';
 import { secretManagersHooks } from '@/features/secret-managers';
 import { api } from '@/lib/api';
 
-type AddEditSecretManagerConnectionDialogProps = {
-  connection?: SecretManagerConnectionWithStatus;
-  children: React.ReactNode;
-};
+import { secretManagersUtils } from './util';
 
 const AddEditSecretManagerConnectionDialog = ({
   children,
@@ -77,31 +81,16 @@ const AddEditSecretManagerForm = ({
   const isEdit = !!connection;
   const { data: providers } = secretManagersHooks.useListProviders();
 
-  const [selectedProviderId, setSelectedProviderId] =
-    useState<SecretManagerProviderId | null>(
-      connection ? (connection.providerId as SecretManagerProviderId) : null,
-    );
-
-  const selectedProvider: SecretManagerProviderMetaData | undefined =
-    providers?.find((p) => p.id === selectedProviderId);
-
-  type FormValues = {
-    name: string;
-    scope: SecretManagerConnectionScope;
-    projectIds: string[];
-    config: Record<string, string>;
-  };
-
-  const form = useForm<FormValues>({
-    defaultValues: {
-      name: connection?.name ?? '',
-      scope: getConnectionScope(connection),
-      projectIds: getProjectIds(connection),
-      config: {},
-    },
+  const form = useForm<ConnectSecretManagerRequest>({
+    resolver: zodResolver(ConnectSecretManagerRequestSchema),
+    mode: 'onChange',
+    defaultValues: secretManagersUtils.getDefaultValues(connection),
   });
 
+  const watchedProviderId = form.watch('providerId');
   const watchedScope = form.watch('scope');
+  const selectedProvider: SecretManagerProviderMetaData | undefined =
+    providers?.find((p) => p.id === watchedProviderId);
 
   const { mutate: createConnection, isPending: isCreating } =
     secretManagersHooks.useCreateSecretManagerConnection({
@@ -117,29 +106,12 @@ const AddEditSecretManagerForm = ({
 
   const isPending = isCreating || isUpdating;
 
-  const handleSubmit = () => {
+  const handleSubmit = (values: ConnectSecretManagerRequest) => {
     form.clearErrors('root.serverError');
-
-    const values = form.getValues();
-    if (!selectedProviderId) {
-      return;
-    }
-
-    const requestBase: ConnectSecretManagerRequest = {
-      providerId: selectedProviderId,
-      name: values.name,
-      scope: values.scope,
-      projectIds:
-        values.scope === SecretManagerConnectionScope.PROJECT
-          ? values.projectIds
-          : undefined,
-      config: values.config,
-    } as ConnectSecretManagerRequest;
-
     if (isEdit && connection) {
-      updateConnection({ id: connection.id, config: requestBase });
+      updateConnection({ id: connection.id, config: values });
     } else {
-      createConnection(requestBase);
+      createConnection(values);
     }
   };
 
@@ -149,128 +121,150 @@ const AddEditSecretManagerForm = ({
         className="grid space-y-4"
         onSubmit={form.handleSubmit(handleSubmit)}
       >
-        {!isEdit && (
-          <div className="space-y-2">
-            <Label>{t('Provider')}</Label>
-            <div className="grid grid-cols-2 gap-3">
-              {providers?.map((provider) => (
-                <button
-                  key={provider.id}
-                  type="button"
-                  className={`flex items-center gap-3 p-3 border rounded-lg text-left transition-colors ${
-                    selectedProviderId === provider.id
-                      ? 'border-primary bg-primary/5'
-                      : 'border-border hover:border-primary/50'
-                  }`}
-                  onClick={() =>
-                    setSelectedProviderId(
-                      provider.id as SecretManagerProviderId,
-                    )
-                  }
-                >
-                  <img
-                    src={provider.logo}
-                    alt={provider.name}
-                    className="w-8 h-8 object-contain"
-                  />
-                  <span className="text-sm font-medium">{provider.name}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        <FormField
-          name="name"
-          rules={{ required: t('Name is required') }}
-          render={({ field }) => (
-            <FormItem className="space-y-2">
-              <Label htmlFor="connection-name">
-                {t('Name')}
-                <span className="text-red-500 ml-1">*</span>
-              </Label>
-              <Input
-                {...field}
-                id="connection-name"
-                placeholder={t('e.g. Production HashiCorp')}
-                className="rounded-sm"
-              />
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          name="scope"
-          rules={{ required: t('Scope is required') }}
-          render={({ field }) => (
-            <FormItem className="space-y-2">
-              <Label htmlFor="connection-scope">
-                {t('Scope')}
-                <span className="text-red-500 ml-1">*</span>
-              </Label>
-              <Select value={field.value} onValueChange={field.onChange}>
-                <SelectTrigger id="connection-scope">
-                  <SelectValue placeholder={t('Select scope')} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={SecretManagerConnectionScope.PLATFORM}>
-                    {t('Platform')}
-                  </SelectItem>
-                  <SelectItem value={SecretManagerConnectionScope.PROJECT}>
-                    {t('Project')}
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        {watchedScope === SecretManagerConnectionScope.PROJECT && (
-          <AssignConnectionToProjectsControl
-            control={form.control}
-            name="projectIds"
-          />
-        )}
-
-        {selectedProvider &&
-          Object.entries(selectedProvider.fields).map(([fieldId, field]) => (
-            <FormField
-              key={fieldId}
-              rules={{ required: !field.optional }}
-              name={`config.${fieldId}`}
-              render={({ field: formField }) => (
-                <FormItem className="space-y-2">
-                  <Label htmlFor={fieldId}>
-                    {field.displayName}
-                    {!field.optional && (
+        <ScrollArea className="max-h-[500px]">
+          <div className="grid space-y-3">
+            {!isEdit && (
+              <FormField
+                name="providerId"
+                render={({ field }) => (
+                  <FormItem className="space-y-2">
+                    <Label htmlFor="provider-select">
+                      {t('Provider')}
                       <span className="text-red-500 ml-1">*</span>
-                    )}
+                    </Label>
+                    <Select
+                      value={field.value ?? ''}
+                      onValueChange={(val) => {
+                        const provider = providers?.find((p) => p.id === val);
+                        field.onChange(val);
+                        if (provider) {
+                          form.setValue(
+                            'config',
+                            secretManagersUtils.getEmptySecretManagerConfig(
+                              provider.id,
+                            ),
+                          );
+                        }
+                      }}
+                    >
+                      <SelectTrigger id="provider-select">
+                        <SelectValue placeholder={t('Select a provider')} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {providers?.map((provider) => (
+                          <SelectItem key={provider.id} value={provider.id}>
+                            <div className="flex items-center gap-2">
+                              <img
+                                src={provider.logo}
+                                alt={provider.name}
+                                className="w-4 h-4 object-contain"
+                              />
+                              <span>{provider.name}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
+            <FormField
+              name="name"
+              rules={{ required: t('Name is required') }}
+              render={({ field }) => (
+                <FormItem className="space-y-2">
+                  <Label htmlFor="connection-name">
+                    {t('Name')}
+                    <span className="text-red-500 ml-1">*</span>
                   </Label>
-                  <div className="flex gap-2 items-center justify-center">
-                    <Input
-                      {...formField}
-                      required={!field.optional}
-                      id={fieldId}
-                      placeholder={field.placeholder}
-                      className="rounded-sm"
-                      type={field.type}
-                    />
-                  </div>
+                  <Input
+                    {...field}
+                    id="connection-name"
+                    placeholder={t('e.g. Production HashiCorp')}
+                    className="rounded-sm"
+                  />
                   <FormMessage />
                 </FormItem>
               )}
             />
-          ))}
 
+            <FormField
+              name="scope"
+              rules={{ required: t('Scope is required') }}
+              render={({ field }) => (
+                <FormItem className="space-y-2">
+                  <Label htmlFor="connection-scope">
+                    {t('Scope')}
+                    <span className="text-red-500 ml-1">*</span>
+                  </Label>
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger id="connection-scope">
+                      <SelectValue placeholder={t('Select scope')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={SecretManagerConnectionScope.PLATFORM}>
+                        {t('Platform')}
+                      </SelectItem>
+                      <SelectItem value={SecretManagerConnectionScope.PROJECT}>
+                        {t('Project')}
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {watchedScope === SecretManagerConnectionScope.PROJECT && (
+              <AssignConnectionToProjectsControl
+                control={form.control}
+                name="projectIds"
+              />
+            )}
+
+            {selectedProvider &&
+              Object.entries(selectedProvider.fields).map(
+                ([fieldId, field]) => (
+                  <FormField
+                    key={fieldId}
+                    name={`config.${fieldId}`}
+                    rules={{ required: !field.optional }}
+                    render={({ field: formField }) => (
+                      <FormItem className="space-y-2">
+                        <Label htmlFor={fieldId}>
+                          {field.displayName}
+                          {!field.optional && (
+                            <span className="text-red-500 ml-1">*</span>
+                          )}
+                        </Label>
+                        <div className="flex gap-2 items-center justify-center">
+                          <Input
+                            {...formField}
+                            id={fieldId}
+                            placeholder={field.placeholder}
+                            className="rounded-sm"
+                            type={field.type}
+                            value={formField.value}
+                          />
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                ),
+              )}
+          </div>
+        </ScrollArea>
         {form.formState.errors.root?.serverError && (
           <FormMessage>
             {form.formState.errors.root.serverError.message}
           </FormMessage>
         )}
 
-        <DialogFooter>
+        <DialogFooter className="mt-1">
           <Button
             variant="outline"
             type="button"
@@ -282,11 +276,7 @@ const AddEditSecretManagerForm = ({
           >
             {t('Cancel')}
           </Button>
-          <Button
-            disabled={!form.formState.isValid || !selectedProviderId}
-            loading={isPending}
-            type="submit"
-          >
+          <Button loading={isPending} type="submit">
             {t('Save')}
           </Button>
         </DialogFooter>
@@ -294,23 +284,6 @@ const AddEditSecretManagerForm = ({
     </Form>
   );
 };
-
-function getConnectionScope(
-  connection?: SecretManagerConnectionWithStatus,
-): SecretManagerConnectionScope {
-  if (!connection) return SecretManagerConnectionScope.PLATFORM;
-  return connection.scope as SecretManagerConnectionScope;
-}
-
-function getProjectIds(
-  connection?: SecretManagerConnectionWithStatus,
-): string[] {
-  if (!connection) return [];
-  if (connection.scope === SecretManagerConnectionScope.PROJECT) {
-    return (connection as { projectIds: string[] }).projectIds ?? [];
-  }
-  return [];
-}
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function handleMutationError(
@@ -334,3 +307,8 @@ function handleMutationError(
     });
   }
 }
+
+type AddEditSecretManagerConnectionDialogProps = {
+  connection?: SecretManagerConnectionWithStatus;
+  children: React.ReactNode;
+};

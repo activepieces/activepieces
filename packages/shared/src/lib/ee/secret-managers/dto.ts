@@ -12,83 +12,93 @@ export enum SecretManagerConnectionScope {
     PROJECT = 'PROJECT',
 }
 
-/**
- * Hashicorp Provider Config
- */
+
 
 export const HashicorpProviderConfigSchema = z.object({
-    url: z.string(),
+    url: z.string().min(1, 'required'),
     namespace: z.string().optional(),
-    roleId: z.string(),
-    secretId: z.string(),
+    roleId: z.string().min(1, 'required'),
+    secretId: z.string().min(1, 'required'),
 })
 export type HashicorpProviderConfig = z.infer<typeof HashicorpProviderConfigSchema>
 
-/**
- * AWS Provider Config
- */
+
 
 export const AWSProviderConfigSchema = z.object({
-    accessKeyId: z.string(),
-    secretAccessKey: z.string(),
-    region: z.string(),
+    accessKeyId: z.string().min(1, 'required'),
+    secretAccessKey: z.string().min(1, 'required'),
+    region: z.string().min(1, 'required'),
 })
 export type AWSProviderConfig = z.infer<typeof AWSProviderConfigSchema>
 
 
-/**
- * Cyberark Conjur Provider Config
- */
+
 
 export const CyberarkConjurProviderConfigSchema = z.object({
-    organizationAccountName: z.string(),
-    loginId: z.string(),
-    url: z.string(),
-    apiKey: z.string(),
+    organizationAccountName: z.string().min(1, 'required'),
+    loginId: z.string().min(1, 'required'),
+    url: z.string().min(1, 'required'),
+    apiKey: z.string().min(1, 'required'),
 })
 export type CyberarkConjurProviderConfig = z.infer<typeof CyberarkConjurProviderConfigSchema>
 
-/**
- * 1Password Provider Config
- */
 
 export const OnePasswordProviderConfigSchema = z.object({
-    serviceAccountToken: z.string(),
+    serviceAccountToken: z.string().min(1, 'required'),
 })
 export type OnePasswordProviderConfig = z.infer<typeof OnePasswordProviderConfigSchema>
 
 const SecretManagerConnectionScopeFields = {
-    name: z.string(),
-    scope: z.nativeEnum(SecretManagerConnectionScope),
+    name: z.string().min(1, 'required'),
+    scope: z.enum(SecretManagerConnectionScope),
     projectIds: z.array(z.string()).optional(),
 }
 
-export const ConnectSecretManagerRequestSchema = z.discriminatedUnion('providerId', [
-    z.object({
-        ...SecretManagerConnectionScopeFields,
-        providerId: z.literal(SecretManagerProviderId.HASHICORP),
-        config: HashicorpProviderConfigSchema,
-    }),
-    z.object({
-        ...SecretManagerConnectionScopeFields,
-        providerId: z.literal(SecretManagerProviderId.AWS),
-        config: AWSProviderConfigSchema,
-    }),
-    z.object({
-        ...SecretManagerConnectionScopeFields,
-        providerId: z.literal(SecretManagerProviderId.CYBERARK),
-        config: CyberarkConjurProviderConfigSchema,
-    }),
-    z.object({
-        ...SecretManagerConnectionScopeFields,
-        providerId: z.literal(SecretManagerProviderId.ONEPASSWORD),
-        config: OnePasswordProviderConfigSchema,
-    }),
-])
+export const ConnectSecretManagerRequestSchema = z
+    .discriminatedUnion('providerId', [
+        z.object({
+            ...SecretManagerConnectionScopeFields,
+            providerId: z.literal(SecretManagerProviderId.HASHICORP),
+            config: HashicorpProviderConfigSchema,
+        }),
+        z.object({
+            ...SecretManagerConnectionScopeFields,
+            providerId: z.literal(SecretManagerProviderId.AWS),
+            config: AWSProviderConfigSchema,
+        }),
+        z.object({
+            ...SecretManagerConnectionScopeFields,
+            providerId: z.literal(SecretManagerProviderId.CYBERARK),
+            config: CyberarkConjurProviderConfigSchema,
+        }),
+        z.object({
+            ...SecretManagerConnectionScopeFields,
+            providerId: z.literal(SecretManagerProviderId.ONEPASSWORD),
+            config: OnePasswordProviderConfigSchema,
+        }),
+    ])
+    .superRefine((data, ctx) => {
+        if (data.scope === SecretManagerConnectionScope.PROJECT) {
+            if (!data.projectIds || data.projectIds.length < 1) {
+                ctx.addIssue({
+                    code: 'custom',
+                    message: 'Please select at least one project',
+                    path: ['projectIds'],
+                })
+            }
+        }
+    })
 
 export type ConnectSecretManagerRequest = z.infer<typeof ConnectSecretManagerRequestSchema>
 
 export const DisconnectSecretManagerRequestSchema = z.object({
-    providerId: z.nativeEnum(SecretManagerProviderId),
+    providerId: z.enum(SecretManagerProviderId),
 })
 export type DisconnectSecretManagerRequest = z.infer<typeof DisconnectSecretManagerRequestSchema>
+
+
+export type SecretManagerProviderConfig =
+  | HashicorpProviderConfig
+  | AWSProviderConfig
+  | CyberarkConjurProviderConfig
+  | OnePasswordProviderConfig
