@@ -1,0 +1,13 @@
+{
+  "name": "@activepieces/piece-olympus-dao",
+  "version": "0.0.1",
+  "description": "Activepieces piece for Olympus DAO — decentralized reserve currency protocol",
+  "keywords": ["activepieces", "defi", "olympus", "ohm", "reserve-currency"],
+  "homepage": "https://www.olympusdao.finance",
+  "license": "MIT",
+  "exports": "./src/index.ts",
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*"
+  }
+}
