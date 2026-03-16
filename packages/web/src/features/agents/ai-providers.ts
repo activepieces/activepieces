@@ -68,8 +68,8 @@ It is strongly recommended that you add your credit card information to your Ope
     markdown:
       t(`Follow these instructions to get your OpenAI Compatible API Key:
 1. Set the base url to your proxy url.
-2. In the api key header, set the value of your auth header name.
-3. In the api key, set your auth header value (full value including the Bearer if any).`),
+2. In the api key input, make sure to include any required prefix, i.e 'Bearer sk-****************'.
+3. In the api key header, set the value of your auth header name (e.g. 'Authorization').`),
   },
 ];
 

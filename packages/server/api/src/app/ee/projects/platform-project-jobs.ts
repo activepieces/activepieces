@@ -1,6 +1,6 @@
 import { AppConnectionScope, assertNotNullOrUndefined } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { ArrayContains } from 'typeorm'
+import { ArrayContains, In } from 'typeorm'
 import { appConnectionsRepo } from '../../app-connection/app-connection-service/app-connection-service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
@@ -39,7 +39,12 @@ export const platformProjectBackgroundJobs = (log: FastifyBaseLogger) => ({
             })
         }
 
+        const flowIds = allFlows.map(flow => flow.id)
+
         await transaction(async (entityManager) => {
+            if (flowIds.length > 0) {
+                await flowRepo(entityManager).delete({ id: In(flowIds) })
+            }
             await appConnectionsRepo(entityManager).delete({
                 scope: AppConnectionScope.PROJECT,
                 projectIds: ArrayContains([projectId]),
@@ -50,6 +55,6 @@ export const platformProjectBackgroundJobs = (log: FastifyBaseLogger) => ({
             })
         })
 
-        await flowExecutionCache(log).invalidate(...allFlows.map(flow => flow.id))
+        await flowExecutionCache(log).invalidate(...flowIds)
     },
 })

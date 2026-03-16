@@ -7,6 +7,11 @@ export enum WorkerMachineStatus {
     OFFLINE = 'OFFLINE',
 }
 
+export enum WorkerMachineType {
+    SHARED = 'SHARED',
+    DEDICATED = 'DEDICATED',
+}
+
 
 export const MachineInformation = z.object({
     cpuUsagePercentage: z.number(),
@@ -22,8 +27,6 @@ export const MachineInformation = z.object({
     totalAvailableRamInBytes: z.number(),
     totalCpuCores: z.number(),
     ip: z.string(),
-    totalSandboxes: z.number(),
-    freeSandboxes: z.number(),
 })
 
 export type MachineInformation = z.infer<typeof MachineInformation>
@@ -37,6 +40,7 @@ export type WorkerMachine = z.infer<typeof WorkerMachine>
 
 export const WorkerMachineWithStatus = WorkerMachine.extend({
     status: z.nativeEnum(WorkerMachineStatus),
+    type: z.nativeEnum(WorkerMachineType),
 })
 
 export type WorkerMachineWithStatus = z.infer<typeof WorkerMachineWithStatus>
@@ -60,6 +64,7 @@ export const ConsumeJobResponse = z.object({
     status: z.nativeEnum(ConsumeJobResponseStatus),
     errorMessage: z.string().optional(),
     delayInSeconds: z.number().optional(),
+    response: z.unknown().optional(),
 })
 
 
@@ -70,13 +75,13 @@ export const WorkerMachineHealthcheckRequest = MachineInformation
 export type WorkerMachineHealthcheckRequest = z.infer<typeof WorkerMachineHealthcheckRequest>
 
 export const WorkerSettingsResponse = z.object({
+    WORKER_CACHE_ID: z.number(),
     PUBLIC_URL: z.string(),
     TRIGGER_TIMEOUT_SECONDS: z.number(),
     TRIGGER_HOOKS_TIMEOUT_SECONDS: z.number(),
     PAUSED_FLOW_TIMEOUT_DAYS: z.number(),
     EXECUTION_MODE: z.string(),
     FLOW_TIMEOUT_SECONDS: z.number(),
-    WORKER_CONCURRENCY: z.number(),
     LOG_LEVEL: z.string(),
     LOG_PRETTY: z.string(),
     ENVIRONMENT: z.string(),
@@ -90,28 +95,12 @@ export const WorkerSettingsResponse = z.object({
     LOKI_PASSWORD: z.string().optional(),
     LOKI_URL: z.string().optional(),
     LOKI_USERNAME: z.string().optional(),
+    BETTERSTACK_HOST: z.string().optional(),
+    BETTERSTACK_TOKEN: z.string().optional(),
     OTEL_ENABLED: z.boolean(),
     HYPERDX_TOKEN: z.string().optional(),
     FILE_STORAGE_LOCATION: z.string(),
     S3_USE_SIGNED_URLS: z.string(),
-    QUEUE_MODE: z.string().optional(),
-    REDIS_TYPE: z.string(),
-    REDIS_SSL_CA_FILE: z.string().optional(),
-    REDIS_DB: z.number().optional(),
-    REDIS_HOST: z.string().optional(),
-    REDIS_PASSWORD: z.string().optional(),
-    REDIS_PORT: z.string().optional(),
-    REDIS_URL: z.string().optional(),
-    REDIS_USER: z.string().optional(),
-    REDIS_USE_SSL: z.boolean().optional(),
-    REDIS_SENTINEL_ROLE: z.string().optional(),
-    REDIS_SENTINEL_HOSTS: z.string().optional(),
-    REDIS_SENTINEL_NAME: z.string().optional(),
-    REDIS_FAILED_JOB_RETENTION_DAYS: z.number(),
-    REDIS_FAILED_JOB_RETENTION_MAX_COUNT: z.number(),
-    PROJECT_RATE_LIMITER_ENABLED: z.boolean(),
-    MAX_CONCURRENT_JOBS_PER_PROJECT: z.number(),
-    JWT_SECRET: z.string(),
     EVENT_DESTINATION_TIMEOUT_SECONDS: z.number(),
     PLATFORM_ID_FOR_DEDICATED_WORKER: z.string().optional(),
     EDITION: z.string(),
