@@ -1,0 +1,14 @@
+{
+  "name": "@activepieces/piece-lyra-finance",
+  "version": "0.0.1",
+  "description": "Lyra Finance piece for Activepieces",
+  "main": "src/index.ts",
+  "keywords": ["activepieces", "lyra", "defi", "options", "optimism"],
+  "files": ["src"],
+  "scripts": {"build": "nx build lyra-finance"},
+  "dependencies": {
+    "@activepieces/pieces-common": "*",
+    "@activepieces/pieces-framework": "*",
+    "@activepieces/shared": "*"
+  }
+}
