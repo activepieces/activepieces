@@ -1,0 +1,14 @@
+{
+  "name": "@activepieces/piece-spookyswap",
+  "version": "0.1.0",
+  "description": "SpookySwap DEX integration for Activepieces - leading Fantom DEX",
+  "keywords": ["activepieces", "spookyswap", "defi", "dex", "fantom"],
+  "homepage": "https://github.com/activepieces/activepieces",
+  "license": "MIT",
+  "main": "src/index.ts",
+  "files": ["src"],
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*"
+  }
+}
