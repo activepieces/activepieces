@@ -1,0 +1,30 @@
+{
+  "name": "@activepieces/piece-geckoterminal",
+  "version": "0.0.1",
+  "description": "GeckoTerminal DEX pool data and OHLCV piece for Activepieces",
+  "keywords": [
+    "activepieces-piece"
+  ],
+  "homepage": "https://www.activepieces.com",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/activepieces/activepieces.git",
+    "directory": "packages/pieces/community/geckoterminal"
+  },
+  "files": [
+    "dist"
+  ],
+  "type": "commonjs",
+  "scripts": {},
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*"
+  },
+  "peerDependencies": {
+    "typescript": "5.x"
+  }
+}
