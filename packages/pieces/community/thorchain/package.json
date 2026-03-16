@@ -1,0 +1,25 @@
+{
+  "name": "@activepieces/piece-thorchain",
+  "version": "0.1.0",
+  "description": "THORChain — decentralized cross-chain liquidity protocol. Native asset swaps (BTC↔ETH↔BNB etc.) powered by RUNE.",
+  "keywords": ["activepieces", "thorchain", "defi", "crypto", "rune", "cross-chain", "tvl", "defillama"],
+  "homepage": "https://activepieces.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/activepieces/activepieces.git"
+  },
+  "license": "MIT",
+  "author": "Activepieces",
+  "main": "src/index.ts",
+  "scripts": {
+    "lint": "eslint --ext .ts src/"
+  },
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
