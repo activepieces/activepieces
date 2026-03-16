@@ -19,7 +19,7 @@ export const duneAnalytics = createPiece({
   auth: duneAnalyticsAuth,
   minimumSupportedRelease: '0.20.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/dune-analytics.png',
-  categories: [PieceCategory.BUSINESS_INTELLIGENCE],
+  categories: [PieceCategory.FINANCE],
   authors: ['bossco7598'],
   actions: [
     executeQuery,
