@@ -1,0 +1,16 @@
+{
+  "name": "@activepieces/piece-instadapp",
+  "version": "0.1.0",
+  "description": "Instadapp DeFi aggregator and smart account infrastructure integration",
+  "keywords": ["activepieces", "instadapp", "defi", "smart-accounts", "fluid"],
+  "homepage": "https://www.activepieces.com",
+  "license": "MIT",
+  "main": "./src/index.ts",
+  "scripts": {
+    "build": "nx build piece-instadapp"
+  },
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*"
+  }
+}
