@@ -1,0 +1,22 @@
+{
+  "GET_PROTOCOL_TVL": {
+    "DISPLAY_NAME": "Get Protocol TVL",
+    "DESCRIPTION": "Fetch the total value locked (TVL) for the Kava protocol from DeFiLlama."
+  },
+  "GET_KAVA_PRICE": {
+    "DISPLAY_NAME": "Get KAVA Price",
+    "DESCRIPTION": "Get the current price and market data for the KAVA token from CoinGecko."
+  },
+  "GET_CHAIN_BREAKDOWN": {
+    "DISPLAY_NAME": "Get Chain Breakdown",
+    "DESCRIPTION": "Get the TVL breakdown by chain for the Kava protocol from DeFiLlama."
+  },
+  "GET_TVL_HISTORY": {
+    "DISPLAY_NAME": "Get TVL History",
+    "DESCRIPTION": "Retrieve the last 30 days of historical TVL data for the Kava protocol."
+  },
+  "GET_PROTOCOL_STATS": {
+    "DISPLAY_NAME": "Get Protocol Stats",
+    "DESCRIPTION": "Get key protocol statistics including TVL, chains supported, and category from DeFiLlama."
+  }
+}
