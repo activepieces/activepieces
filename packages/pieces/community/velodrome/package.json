@@ -1,0 +1,13 @@
+{
+  "name": "@activepieces/piece-velodrome",
+  "version": "0.0.1",
+  "description": "Velodrome Finance DEX data for Activepieces (Optimism)",
+  "main": "src/index.ts",
+  "keywords": ["activepieces", "velodrome", "defi", "dex", "optimism"],
+  "authors": ["Activepieces"],
+  "license": "MIT",
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*"
+  }
+}
