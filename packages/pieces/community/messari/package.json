@@ -1,0 +1,22 @@
+{
+  "name": "@activepieces/piece-messari",
+  "version": "0.0.1",
+  "description": "Messari institutional crypto research data for Activepieces",
+  "keywords": [
+    "activepieces",
+    "messari",
+    "crypto",
+    "research",
+    "market-data"
+  ],
+  "homepage": "https://www.activepieces.com",
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc"
+  },
+  "peerDependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*"
+  }
+}
