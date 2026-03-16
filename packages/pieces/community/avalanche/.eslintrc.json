@@ -1,0 +1,14 @@
+{
+  "extends": ["../../../../.eslintrc.json"],
+  "ignorePatterns": ["!**/*"],
+  "overrides": [
+    {
+      "files": ["*.ts"],
+      "parserOptions": {
+        "project": ["packages/pieces/community/avalanche/tsconfig.*?.json"],
+        "createDefaultProgram": true
+      },
+      "rules": {}
+    }
+  ]
+}
