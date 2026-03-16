@@ -65,7 +65,7 @@ export const FlowStepInputOutput = () => {
     );
   }, [run, selectedStep?.name, loopsIndexes]);
 
-  const { data: fetchedStepData, isLoading: isStepDataLoading } = useQuery({
+  const { data: fetchedStepData, isLoading: isStepDataLoading, isError: isStepDataError } = useQuery({
     queryKey: [
       'stepData',
       run?.id,
@@ -88,6 +88,7 @@ export const FlowStepInputOutput = () => {
     selectedStepData: selectedStepData ?? undefined,
     fetchedStepData,
     isLoading: isStepDataLoading,
+    isError: isStepDataError,
   });
 
   const tabCount = isAgent ? 3 : 2;
@@ -113,25 +114,30 @@ export const FlowStepInputOutput = () => {
 
   if (stepDataState.status === StepDataStatus.LOADING) {
     return (
-      <ScrollArea className="h-full p-4">
-        <div className="flex flex-col gap-4">
-          <div className="flex items-center gap-2 text-base font-medium">
-            <StepStatusIcon status={stepDataState.metadata.status} size="4.5" />
-            <span>{selectedStep?.displayName}</span>
-          </div>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Timer className="w-4 h-4" />
-            <span>
-              {t('Duration')}:{' '}
-              {formatUtils.formatDuration(
-                stepDataState.metadata.duration ?? 0,
-                false,
-              )}
-            </span>
-          </div>
-          <StepOutputSkeleton className="p-4" />
+      <StepMetadataHeader
+        metadata={stepDataState.metadata}
+        displayName={selectedStep?.displayName}
+      >
+        <StepOutputSkeleton className="p-4" />
+      </StepMetadataHeader>
+    );
+  }
+
+  if (stepDataState.status === StepDataStatus.FAILED_TO_LOAD) {
+    return (
+      <StepMetadataHeader
+        metadata={stepDataState.metadata}
+        displayName={selectedStep?.displayName}
+      >
+        <div className="flex flex-col justify-center items-center gap-4 w-full pt-8 px-5">
+          <Info size={36} className="text-muted-foreground" />
+          <h4 className="px-6 text-sm text-center text-muted-foreground">
+            {t(
+              'Failed to load step data. Please try selecting the step again.',
+            )}
+          </h4>
         </div>
-      </ScrollArea>
+      </StepMetadataHeader>
     );
   }
 
@@ -208,15 +214,46 @@ export const FlowStepInputOutput = () => {
   );
 };
 
+function StepMetadataHeader({
+  metadata,
+  displayName,
+  children,
+}: {
+  metadata: StepOutput;
+  displayName: string | undefined;
+  children: React.ReactNode;
+}) {
+  return (
+    <ScrollArea className="h-full p-4">
+      <div className="flex flex-col gap-4">
+        <div className="flex items-center gap-2 text-base font-medium">
+          <StepStatusIcon status={metadata.status} size="4.5" />
+          <span>{displayName}</span>
+        </div>
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Timer className="w-4 h-4" />
+          <span>
+            {t('Duration')}:{' '}
+            {formatUtils.formatDuration(metadata.duration ?? 0, false)}
+          </span>
+        </div>
+        {children}
+      </div>
+    </ScrollArea>
+  );
+}
+
 enum StepDataStatus {
   MISSING,
   LOADING,
-  READY
+  FAILED_TO_LOAD,
+  READY,
 }
 
 type StepDataState =
   | { status: StepDataStatus.MISSING }
   | { status: StepDataStatus.LOADING; metadata: StepOutput }
+  | { status: StepDataStatus.FAILED_TO_LOAD; metadata: StepOutput }
   | { status: StepDataStatus.READY; fullData: StepOutput };
 
 function resolveStepDataState({
@@ -224,11 +261,13 @@ function resolveStepDataState({
   selectedStepData,
   fetchedStepData,
   isLoading,
+  isError,
 }: {
   isTruncated: boolean;
   selectedStepData: StepOutput | undefined;
   fetchedStepData: StepOutput | undefined;
   isLoading: boolean;
+  isError: boolean;
 }): StepDataState {
   if (!selectedStepData) {
     return { status: StepDataStatus.MISSING };
@@ -241,6 +280,9 @@ function resolveStepDataState({
   }
   if (isLoading) {
     return { status: StepDataStatus.LOADING, metadata: selectedStepData };
+  }
+  if (isError) {
+    return { status: StepDataStatus.FAILED_TO_LOAD, metadata: selectedStepData };
   }
   return { status: StepDataStatus.MISSING };
 }
