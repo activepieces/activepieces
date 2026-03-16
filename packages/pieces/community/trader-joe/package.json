@@ -1,0 +1,14 @@
+{
+  "name": "@activepieces/piece-trader-joe",
+  "version": "0.1.0",
+  "description": "Trader Joe DEX integration for Activepieces - multi-chain DEX on Avalanche and Arbitrum",
+  "keywords": ["activepieces", "trader-joe", "defi", "dex", "avalanche"],
+  "homepage": "https://github.com/activepieces/activepieces",
+  "license": "MIT",
+  "main": "src/index.ts",
+  "files": ["src"],
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*"
+  }
+}
