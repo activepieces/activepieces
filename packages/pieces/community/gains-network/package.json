@@ -1,0 +1,11 @@
+{
+  "name": "@activepieces/piece-gains-network",
+  "version": "0.0.1",
+  "description": "Gains Network decentralized leveraged trading (crypto, forex, stocks)",
+  "license": "MIT",
+  "main": "src/index.ts",
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:^",
+    "@activepieces/pieces-framework": "workspace:^"
+  }
+}
