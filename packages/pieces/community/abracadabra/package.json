@@ -1,0 +1,13 @@
+{
+  "name": "@activepieces/piece-abracadabra",
+  "version": "0.0.1",
+  "description": "Activepieces piece for Abracadabra Money — interest-bearing stablecoin (MIM) protocol",
+  "keywords": ["activepieces", "defi", "abracadabra", "mim", "stablecoin"],
+  "homepage": "https://abracadabra.money",
+  "license": "MIT",
+  "exports": "./src/index.ts",
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*"
+  }
+}
