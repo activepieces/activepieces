@@ -108,3 +108,7 @@ jobs:
             exit 1
           fi
           ENDSSH
+
+      - name: Deploy dedicated workers
+        if: inputs.kube_context == 'prod'
+        run: ssh ops '/root/k8n/scripts/deploy-dedicated-workers.sh'

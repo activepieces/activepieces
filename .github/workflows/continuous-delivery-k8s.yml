@@ -158,31 +158,6 @@ jobs:
       kube_context: prod
     secrets: inherit
 
-  deploy-dedicated-workers:
-    needs: [promote-to-production]
-    if: always() && needs.promote-to-production.result == 'success'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Configure SSH
-        run: |
-          mkdir -p ~/.ssh/
-          echo "$SSH_KEY" > ~/.ssh/ops.key
-          chmod 600 ~/.ssh/ops.key
-          cat >>~/.ssh/config <<END
-          Host ops
-            HostName $SSH_HOST
-            User $SSH_USER
-            IdentityFile ~/.ssh/ops.key
-            StrictHostKeyChecking no
-          END
-        env:
-          SSH_USER: ${{ secrets.DEV_OPS_USERNAME }}
-          SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          SSH_HOST: ${{ secrets.DEV_OPS_HOST }}
-
-      - name: Deploy dedicated workers
-        run: ssh ops '/root/k8n/scripts/deploy-dedicated-workers.sh'
-
   # --- WEEKLY RELEASE (runs on Sunday schedule or manual "weekly-release") ---
 
   weekly-release:
