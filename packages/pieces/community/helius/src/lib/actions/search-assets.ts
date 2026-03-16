@@ -2,7 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { heliusAuth } from '../..';
 import { heliusRpcRequest } from '../common/helius-api';
 
-interface SearchResponse {
+interface SearchAssetsResponse {
   total: number;
   limit: number;
   page: number;
@@ -13,55 +13,46 @@ export const searchAssets = createAction({
   name: 'search_assets',
   displayName: 'Search Assets',
   description:
-    'Search Solana assets by owner, creator, or collection.',
+    'Search for Solana assets by owner address and token type using Helius DAS API.',
   auth: heliusAuth,
   requireAuth: true,
   props: {
-    owner_address: Property.ShortText({
+    ownerAddress: Property.ShortText({
       displayName: 'Owner Address',
-      description: 'Filter assets by owner wallet address.',
-      required: false,
+      description: 'The Solana wallet address to search assets for.',
+      required: true,
     }),
-    creator_address: Property.ShortText({
-      displayName: 'Creator Address',
-      description: 'Filter assets by creator address.',
+    tokenType: Property.StaticDropdown({
+      displayName: 'Token Type',
+      description: 'Filter by token type.',
       required: false,
-    }),
-    group_value: Property.ShortText({
-      displayName: 'Collection Address',
-      description: 'Filter assets by collection group value.',
-      required: false,
-    }),
-    page: Property.Number({
-      displayName: 'Page',
-      description: 'Page number for pagination (starts at 1).',
-      required: false,
-      defaultValue: 1,
+      defaultValue: 'all',
+      options: {
+        options: [
+          { label: 'All', value: 'all' },
+          { label: 'Fungible', value: 'fungible' },
+          { label: 'Non-Fungible', value: 'nonFungible' },
+        ],
+      },
     }),
     limit: Property.Number({
       displayName: 'Limit',
-      description: 'Maximum number of assets to return (max 1000).',
+      description: 'Maximum number of results to return (max 1000).',
       required: false,
-      defaultValue: 10,
+      defaultValue: 20,
     }),
   },
   async run({ auth, propsValue }) {
+    const limit = Math.min(propsValue.limit ?? 20, 1000);
     const params: Record<string, unknown> = {
-      page: propsValue.page ?? 1,
-      limit: propsValue.limit ?? 10,
+      ownerAddress: propsValue.ownerAddress,
+      limit,
     };
-
-    if (propsValue.owner_address) {
-      params['ownerAddress'] = propsValue.owner_address;
-    }
-    if (propsValue.creator_address) {
-      params['creatorAddress'] = propsValue.creator_address;
-    }
-    if (propsValue.group_value) {
-      params['grouping'] = ['collection', propsValue.group_value];
+    if (propsValue.tokenType && propsValue.tokenType !== 'all') {
+      params['tokenType'] = propsValue.tokenType;
     }
 
-    const data = await heliusRpcRequest<SearchResponse>(
+    const data = await heliusRpcRequest<SearchAssetsResponse>(
       auth as string,
       'searchAssets',
       params
@@ -69,8 +60,8 @@ export const searchAssets = createAction({
 
     return {
       total: data.total,
-      page: data.page,
       limit: data.limit,
+      page: data.page,
       asset_count: data.items.length,
       assets: data.items,
     };
