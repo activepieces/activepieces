@@ -1,0 +1,16 @@
+{
+  "name": "@activepieces/piece-pancakeswap",
+  "version": "0.1.0",
+  "description": "PancakeSwap DEX integration for Activepieces - BNB Chain leader",
+  "keywords": ["activepieces", "pancakeswap", "defi", "dex", "bnb", "bsc"],
+  "homepage": "https://www.activepieces.com",
+  "license": "MIT",
+  "main": "./src/index.ts",
+  "scripts": {
+    "build": "nx build piece-pancakeswap"
+  },
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*"
+  }
+}
