@@ -71,8 +71,9 @@ export const executePollingJob: JobHandler<PollingJobData> = {
             return {}
         }
         catch (e) {
+            ctx.log.error({ error: String(e) }, 'Polling trigger failed, will retry on next scheduled cycle')
             await sandboxManager.invalidate(ctx.log)
-            throw e
+            return {}
         }
         finally {
             await sandboxManager.release(ctx.log)
