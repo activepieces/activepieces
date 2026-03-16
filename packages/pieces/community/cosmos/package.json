@@ -1,0 +1,23 @@
+{
+  "name": "@activepieces/piece-cosmos",
+  "version": "0.1.0",
+  "description": "Cosmos Hub ATOM staking integration - track TVL, ATOM price, and staking analytics",
+  "keywords": [
+    "activepieces",
+    "cosmos",
+    "atom",
+    "staking",
+    "defi",
+    "blockchain"
+  ],
+  "homepage": "https://www.activepieces.com",
+  "license": "MIT",
+  "main": "./src/index.ts",
+  "scripts": {
+    "build": "nx build piece-cosmos"
+  },
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*"
+  }
+}
