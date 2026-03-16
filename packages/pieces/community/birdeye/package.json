@@ -1,0 +1,25 @@
+{
+  "name": "@activepieces/piece-birdeye",
+  "version": "0.1.0",
+  "description": "Birdeye — Solana and multi-chain DeFi analytics (token prices, trades, OHLCV, security)",
+  "keywords": ["activepieces", "birdeye", "solana", "defi", "crypto", "blockchain", "analytics"],
+  "homepage": "https://activepieces.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/activepieces/activepieces.git"
+  },
+  "license": "MIT",
+  "author": "Activepieces",
+  "main": "src/index.ts",
+  "scripts": {
+    "lint": "eslint --ext .ts src/"
+  },
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
