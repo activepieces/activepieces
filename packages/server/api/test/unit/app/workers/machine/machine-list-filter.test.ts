@@ -119,4 +119,17 @@ describe('machineService.list — platform filtering', () => {
         const ids = result.map(w => w.id).sort()
         expect(ids).toEqual(['dedicated-mine', 'shared-1'])
     })
+
+    it('should include legacy workers with no type as shared', async () => {
+        await workerMachineCache().upsert({
+            id: 'legacy-worker',
+            information: fakeMachineInfo('legacy-worker'),
+            cacheId: 20,
+        })
+
+        const result = await machineService(mockLogger).list('any-platform')
+        expect(result).toHaveLength(1)
+        expect(result[0].id).toBe('legacy-worker')
+        expect(result[0].type).toBe(WorkerMachineType.SHARED)
+    })
 })
