@@ -1,0 +1,18 @@
+{
+  "name": "@activepieces/piece-debridge",
+  "version": "0.1.0",
+  "description": "deBridge cross-chain interoperability protocol piece for Activepieces",
+  "keywords": ["activepieces", "debridge", "cross-chain", "bridge", "defi"],
+  "homepage": "https://debridge.finance",
+  "license": "MIT",
+  "exports": {
+    ".": {
+      "import": "./src/index.ts"
+    }
+  },
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*"
+  }
+}
