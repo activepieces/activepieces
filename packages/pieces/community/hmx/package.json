@@ -1,0 +1,17 @@
+{
+  "name": "@activepieces/piece-hmx",
+  "version": "0.0.1",
+  "description": "HMX Protocol - Decentralized perpetual trading on Arbitrum",
+  "keywords": ["activepieces", "piece", "hmx", "defi", "perpetuals", "arbitrum"],
+  "homepage": "https://hmx.org",
+  "license": "MIT",
+  "exports": "./src/index.ts",
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*"
+  },
+  "scripts": {
+    "build": "tsc"
+  }
+}
