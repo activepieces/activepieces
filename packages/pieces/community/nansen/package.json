@@ -1,0 +1,22 @@
+{
+  "name": "@activepieces/piece-nansen",
+  "version": "0.0.1",
+  "description": "Nansen smart money analytics for Activepieces",
+  "keywords": [
+    "activepieces",
+    "nansen",
+    "crypto",
+    "blockchain",
+    "smart-money"
+  ],
+  "homepage": "https://www.activepieces.com",
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc"
+  },
+  "peerDependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*"
+  }
+}
