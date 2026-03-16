@@ -1,0 +1,14 @@
+{
+  "name": "@activepieces/piece-quickswap",
+  "version": "0.1.0",
+  "description": "QuickSwap DEX integration for Activepieces - native Polygon DEX",
+  "keywords": ["activepieces", "quickswap", "defi", "dex", "polygon"],
+  "homepage": "https://github.com/activepieces/activepieces",
+  "license": "MIT",
+  "main": "src/index.ts",
+  "files": ["src"],
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*"
+  }
+}
