@@ -1,0 +1,13 @@
+{
+  "name": "@activepieces/piece-tokemak",
+  "version": "0.0.1",
+  "description": "Activepieces piece for Tokemak — liquidity-as-a-service DeFi protocol",
+  "keywords": ["activepieces", "defi", "tokemak", "liquidity", "toke"],
+  "homepage": "https://www.tokemak.xyz",
+  "license": "MIT",
+  "exports": "./src/index.ts",
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*"
+  }
+}
