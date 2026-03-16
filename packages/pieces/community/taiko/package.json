@@ -1,0 +1,33 @@
+{
+  "name": "@activepieces/piece-taiko",
+  "version": "0.0.1",
+  "description": "Taiko ZK-EVM rollup: TVL, price, chain breakdown, historical data, and protocol stats",
+  "keywords": [
+    "activepieces",
+    "taiko",
+    "zkevm",
+    "ethereum",
+    "rollup",
+    "defi",
+    "tvl"
+  ],
+  "homepage": "",
+  "bugs": {
+    "url": "https://github.com/activepieces/activepieces/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/activepieces/activepieces.git"
+  },
+  "license": "MIT",
+  "author": "",
+  "main": "./src/index.ts",
+  "scripts": {
+    "publish-piece": "node ../../../../.scripts/publish-piece.mjs"
+  },
+  "peerDependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*"
+  }
+}
