@@ -1,0 +1,20 @@
+{
+  "name": "@activepieces/piece-balancer",
+  "version": "0.1.0",
+  "description": "Balancer Finance AMM pools and protocol stats integration for Activepieces",
+  "keywords": ["activepieces", "piece", "balancer", "defi", "amm", "ethereum"],
+  "homepage": "https://www.activepieces.com",
+  "bugs": { "url": "https://github.com/activepieces/activepieces/issues" },
+  "license": "MIT",
+  "author": "Activepieces",
+  "files": ["dist"],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": { "build": "tsc" },
+  "peerDependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*"
+  },
+  "devDependencies": { "typescript": "^5.1.6" }
+}
