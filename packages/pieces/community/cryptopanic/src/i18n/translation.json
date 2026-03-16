@@ -1,0 +1,22 @@
+{
+  "CryptoPanic": "CryptoPanic",
+  "Get the latest crypto news and sentiment from CryptoPanic": "Get the latest crypto news and sentiment from CryptoPanic",
+  "API Key": "API Key",
+  "CryptoPanic API key (optional, for more data)": "CryptoPanic API key (optional, for more data)",
+  "Get Latest News": "Get Latest News",
+  "Fetch the latest crypto news posts from CryptoPanic": "Fetch the latest crypto news posts from CryptoPanic",
+  "Get Hot News": "Get Hot News",
+  "Fetch hot/trending crypto news from CryptoPanic": "Fetch hot/trending crypto news from CryptoPanic",
+  "Get News for Specific Coins": "Get News for Specific Coins",
+  "Fetch news for specific cryptocurrencies from CryptoPanic": "Fetch news for specific cryptocurrencies from CryptoPanic",
+  "Get Bullish Posts": "Get Bullish Posts",
+  "Fetch bullish sentiment posts from CryptoPanic": "Fetch bullish sentiment posts from CryptoPanic",
+  "Get Bearish Posts": "Get Bearish Posts",
+  "Fetch bearish sentiment posts from CryptoPanic": "Fetch bearish sentiment posts from CryptoPanic",
+  "Kind": "Kind",
+  "Filter by content kind (news, media, or all)": "Filter by content kind (news, media, or all)",
+  "Currencies": "Currencies",
+  "Comma-separated list of currency symbols (e.g. BTC,ETH)": "Comma-separated list of currency symbols (e.g. BTC,ETH)",
+  "Regions": "Regions",
+  "Comma-separated language codes (e.g. en,de)": "Comma-separated language codes (e.g. en,de)"
+}
