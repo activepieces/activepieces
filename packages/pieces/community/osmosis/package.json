@@ -1,0 +1,16 @@
+{
+  "name": "@activepieces/piece-osmosis",
+  "version": "0.1.0",
+  "description": "Osmosis DEX integration - leading Cosmos ecosystem decentralized exchange",
+  "keywords": ["activepieces", "osmosis", "cosmos", "defi", "dex", "ibc"],
+  "homepage": "https://www.activepieces.com",
+  "license": "MIT",
+  "main": "./src/index.ts",
+  "scripts": {
+    "build": "nx build piece-osmosis"
+  },
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*"
+  }
+}
