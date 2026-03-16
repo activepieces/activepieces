@@ -1,0 +1,12 @@
+{
+  "name": "@activepieces/piece-drift-protocol",
+  "version": "0.1.0",
+  "description": "Drift Protocol Solana perps piece for Activepieces",
+  "main": "src/index.ts",
+  "keywords": ["activepieces", "drift", "solana", "perps", "defi"],
+  "scripts": { "build": "tsc" },
+  "peerDependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*"
+  }
+}
