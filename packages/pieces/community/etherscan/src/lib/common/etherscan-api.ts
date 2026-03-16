@@ -26,7 +26,7 @@ export async function etherscanRequest<T = string>(
 
   const data = (await response.json()) as EtherscanResponse<T>;
 
-  if (data.status === '0' || data.message === 'NOTOK') {
+  if (data.message === 'NOTOK') {
     const errorMessage =
       typeof data.result === 'string' ? data.result : data.message;
     throw new Error(`Etherscan API error: ${errorMessage}`);

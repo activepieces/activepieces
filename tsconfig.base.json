@@ -391,6 +391,7 @@
       "@activepieces/piece-eth-name-service": [
         "packages/pieces/community/eth-name-service/src/index.ts"
       ],
+      "@activepieces/piece-etherscan": ["packages/pieces/community/etherscan/src/index.ts"],
       "@activepieces/piece-exa": ["packages/pieces/community/exa/src/index.ts"],
       "@activepieces/piece-facebook-leads": [
         "packages/pieces/community/facebook-leads/src/index.ts"
@@ -541,6 +542,9 @@
       ],
       "@activepieces/piece-hedy": [
         "packages/pieces/community/hedy/src/index.ts"
+      ],
+      "@activepieces/piece-helius": [
+        "packages/pieces/community/helius/src/index.ts"
       ],
       "@activepieces/piece-help-scout": [
         "packages/pieces/community/help-scout/src/index.ts"
