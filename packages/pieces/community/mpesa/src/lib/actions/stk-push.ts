@@ -15,7 +15,7 @@ export const stkPush = createAction({
     }),
     amount: Property.Number({
       displayName: 'Amount',
-      description: 'Amount to charge in KES',
+      description: 'Amount to charge in KES (must be a whole number)',
       required: true,
     }),
     callbackUrl: Property.ShortText({
@@ -35,11 +35,16 @@ export const stkPush = createAction({
     }),
   },
   async run(context) {
-const { consumerKey, consumerSecret, shortCode, passkey } = context.auth.props;
+    const { consumerKey, consumerSecret, shortCode, passkey, environment } = context.auth.props;
+
+    const baseUrl = environment === 'production'
+      ? 'https://api.safaricom.co.ke'
+      : 'https://sandbox.safaricom.co.ke';
+
     const credentials = Buffer.from(`${consumerKey}:${consumerSecret}`).toString('base64');
     const tokenResponse = await httpClient.sendRequest({
       method: HttpMethod.GET,
-      url: 'https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials',
+      url: `${baseUrl}/oauth/v1/generate?grant_type=client_credentials`,
       headers: {
         Authorization: `Basic ${credentials}`,
       },
@@ -51,7 +56,7 @@ const { consumerKey, consumerSecret, shortCode, passkey } = context.auth.props;
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
-      url: 'https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest',
+      url: `${baseUrl}/mpesa/stkpush/v1/processrequest`,
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
@@ -60,7 +65,7 @@ const { consumerKey, consumerSecret, shortCode, passkey } = context.auth.props;
         Password: password,
         Timestamp: timestamp,
         TransactionType: 'CustomerPayBillOnline',
-        Amount: context.propsValue.amount,
+        Amount: Math.floor(context.propsValue.amount),
         PartyA: context.propsValue.phoneNumber,
         PartyB: shortCode,
         PhoneNumber: context.propsValue.phoneNumber,
