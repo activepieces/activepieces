@@ -1,0 +1,13 @@
+{
+  "extends": ["../../../../../.eslintrc.json"],
+  "ignorePatterns": ["!**/*", "dist/**"],
+  "overrides": [
+    {
+      "files": ["*.ts"],
+      "parserOptions": {
+        "project": ["packages/pieces/community/glassnode/tsconfig.json"],
+        "createDefaultProgram": true
+      }
+    }
+  ]
+}
