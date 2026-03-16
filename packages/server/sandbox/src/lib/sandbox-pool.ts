@@ -9,6 +9,7 @@ export function createSandboxPool(sandboxFactory: SandboxFactory): SandboxPool {
     let workerConcurrency = 0
     let reusable = false
     let getGeneration: () => number = () => 0
+    let initialized = false
 
     return {
         getTotalSandboxes: () => {
@@ -18,10 +19,13 @@ export function createSandboxPool(sandboxFactory: SandboxFactory): SandboxPool {
             return sandboxQueue.length
         },
         init: (_log: SandboxLogger, options: SandboxPoolInitOptions) => {
-            workerConcurrency = options.concurrency
             reusable = options.reusable
             getGeneration = options.getGeneration
-            sandboxQueue = Array.from({ length: workerConcurrency }, () => nanoid())
+            if (!initialized || workerConcurrency !== options.concurrency) {
+                workerConcurrency = options.concurrency
+                sandboxQueue = Array.from({ length: workerConcurrency }, () => nanoid())
+                initialized = true
+            }
         },
         allocate: async (log: SandboxLogger): Promise<Sandbox> => {
             const sandboxId = sandboxQueue.shift()
