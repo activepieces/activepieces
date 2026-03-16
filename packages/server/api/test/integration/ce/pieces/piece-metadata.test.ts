@@ -42,7 +42,7 @@ describe('Piece Metadata CE API', () => {
 
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/pieces/categories',
+                url: '/api/v1/pieces/categories',
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -72,7 +72,7 @@ describe('Piece Metadata CE API', () => {
 
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/pieces',
+                url: '/api/v1/pieces',
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -108,7 +108,7 @@ describe('Piece Metadata CE API', () => {
 
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/pieces?searchQuery=Searchable+Unique',
+                url: '/api/v1/pieces?searchQuery=Searchable+Unique',
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -139,7 +139,7 @@ describe('Piece Metadata CE API', () => {
 
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/pieces/ce-get-test-piece',
+                url: '/api/v1/pieces/ce-get-test-piece',
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -161,7 +161,7 @@ describe('Piece Metadata CE API', () => {
 
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/pieces/non-existent-piece-xyz',
+                url: '/api/v1/pieces/non-existent-piece-xyz',
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },

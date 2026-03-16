@@ -1,7 +1,7 @@
-import { securityAccess } from '@activepieces/server-common'
 import { GetSystemHealthChecksResponse, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
+import { securityAccess } from '../core/security/authorization/fastify-security'
 import { healthStatusService } from './health.service'
 
 export const healthModule: FastifyPluginAsyncZod = async (app) => {
