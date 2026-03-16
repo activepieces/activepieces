@@ -5,7 +5,7 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 import { AppConnectionType } from '@activepieces/shared';
-import { intercomAuth } from '../../index';
+import { intercomAuth } from '../auth';
 
 export type IntercomAuthValue = AppConnectionValueForAuthProperty<
   typeof intercomAuth

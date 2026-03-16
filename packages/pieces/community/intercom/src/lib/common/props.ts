@@ -1,11 +1,11 @@
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { getIntercomRegion, getIntercomToken, intercomClient, IntercomAuthValue } from '.';
-import { intercomAuth } from '../../index';
 import {
 	DropdownOption,
 	DynamicPropsValue,
 	Property,
 } from '@activepieces/pieces-framework';
+import { intercomAuth } from '../auth';
 
 export const conversationIdProp = (displayName: string, required = true) =>
 	Property.Dropdown({
@@ -266,8 +266,8 @@ export const ticketStateIdProp = (displayName: string, required = true) =>
 			}
 
 			return {
-				disabled: true,
-				options: [],
+				disabled: false,
+				options,
 			};
 		},
 	});
@@ -376,7 +376,7 @@ export const ticketPropertiesProp = (displayName: string, required = true) =>
 						break;
 					case 'list':
 						{
-							const options = field.input_options.list_options as Array<{
+							const options = field.input_options?.['list_options'] as Array<{
 								label: string;
 								id: string;
 							}>;
