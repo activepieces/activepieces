@@ -54,7 +54,7 @@ export const getWalletNfts = createAction({
       `/${propsValue.address}/nft`,
       {
         chain: propsValue.chain,
-        limit: String(propsValue.limit ?? 10),
+        limit: String(Math.min(100, Math.max(1, propsValue.limit ?? 10))),
       }
     );
 
