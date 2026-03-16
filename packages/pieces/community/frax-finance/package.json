@@ -1,0 +1,14 @@
+{
+  "name": "@activepieces/piece-frax-finance",
+  "version": "0.1.0",
+  "description": "Frax Finance integration - algorithmic stablecoin and liquid staking",
+  "keywords": ["activepieces", "frax", "stablecoin", "defi", "frxeth"],
+  "homepage": "https://www.activepieces.com",
+  "license": "MIT",
+  "main": "./src/index.ts",
+  "scripts": { "build": "nx build piece-frax-finance" },
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*"
+  }
+}
