@@ -1,0 +1,11 @@
+{
+  "name": "@activepieces/piece-barnbridge",
+  "version": "0.0.1",
+  "description": "BarnBridge structured yield and tranched risk products",
+  "license": "MIT",
+  "main": "src/index.ts",
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:^",
+    "@activepieces/pieces-framework": "workspace:^"
+  }
+}
