@@ -1,0 +1,13 @@
+{
+  "extends": "../../../../tsconfig.base.json",
+  "compilerOptions": {
+    "declaration": true,
+    "declarationMap": true,
+    "inlineSources": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "tsBuildInfoFile": "../../node_modules/.cache/typescript/piece-balancer.tsbuildinfo"
+  },
+  "include": ["src/**/*.ts"],
+  "references": []
+}
