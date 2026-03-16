@@ -92,7 +92,9 @@ describeWithAuth('Get flow run endpoint', () => app!, (setup) => {
         })
         await db.save('flow_run', mockRun)
 
-        const response = await ctx.get(`/v1/flow-runs/${mockRun.id}`)
+        const response = await ctx.get(`/v1/flow-runs/${mockRun.id}`, {
+            truncateStepsIfSizeExceedsThreshold: 'true',
+        })
 
         expect(response?.statusCode).toBe(200)
         const body = response?.json()
@@ -136,7 +138,9 @@ describeWithAuth('Get flow run endpoint', () => app!, (setup) => {
         })
         await db.save('flow_run', mockRun)
 
-        const response = await ctx.get(`/v1/flow-runs/${mockRun.id}`)
+        const response = await ctx.get(`/v1/flow-runs/${mockRun.id}`, {
+            truncateStepsIfSizeExceedsThreshold: 'true',
+        })
 
         expect(response?.statusCode).toBe(200)
         const body = response?.json()
@@ -146,6 +150,43 @@ describeWithAuth('Get flow run endpoint', () => app!, (setup) => {
         expect(body.steps.step_1.duration).toBe(300)
         expect(body.steps.step_1.input).toBeUndefined()
         expect(body.steps.step_1.output).toBeUndefined()
+    })
+
+    it('should return full steps for large run without truncate flag', async () => {
+        const ctx = await setup()
+
+        const steps = {
+            step_1: {
+                type: FlowActionType.CODE,
+                status: StepOutputStatus.SUCCEEDED,
+                input: { code: 'big' },
+                output: { result: 'big' },
+                duration: 300,
+            },
+        }
+
+        const logFile = createLargeLogFile(ctx.project.id, ctx.platform.id, steps)
+        await db.save('file', logFile)
+
+        const { mockFlow, mockFlowVersion } = await createFlowAndVersion(ctx.project.id)
+
+        const mockRun = createMockFlowRun({
+            projectId: ctx.project.id,
+            flowId: mockFlow.id,
+            flowVersionId: mockFlowVersion.id,
+            logsFileId: logFile.id,
+            status: FlowRunStatus.SUCCEEDED,
+            environment: RunEnvironment.PRODUCTION,
+        })
+        await db.save('flow_run', mockRun)
+
+        const response = await ctx.get(`/v1/flow-runs/${mockRun.id}`)
+
+        expect(response?.statusCode).toBe(200)
+        const body = response?.json()
+        expect(body.stepsDataTruncated).toBeUndefined()
+        expect(body.steps.step_1.input).toEqual({ code: 'big' })
+        expect(body.steps.step_1.output).toEqual({ result: 'big' })
     })
 
     it('should preserve loop iteration structure for large truncated run', async () => {
@@ -206,7 +247,9 @@ describeWithAuth('Get flow run endpoint', () => app!, (setup) => {
         })
         await db.save('flow_run', mockRun)
 
-        const response = await ctx.get(`/v1/flow-runs/${mockRun.id}`)
+        const response = await ctx.get(`/v1/flow-runs/${mockRun.id}`, {
+            truncateStepsIfSizeExceedsThreshold: 'true',
+        })
 
         expect(response?.statusCode).toBe(200)
         const body = response?.json()

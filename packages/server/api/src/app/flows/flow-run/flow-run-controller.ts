@@ -11,6 +11,7 @@ import {
     FlowRun,
     isNil,
     ListFlowRunsRequestQuery,
+    OptionalBooleanFromQuery,
     Permission,
     PrincipalType,
     ProgressUpdateType,
@@ -219,7 +220,7 @@ const GetRequest = {
             id: ApId,
         }),
         querystring: z.object({
-            truncateStepsIfSizeExceedsThreshold: z.coerce.boolean().optional(),
+            truncateStepsIfSizeExceedsThreshold: OptionalBooleanFromQuery,
         }),
         response: {
             [StatusCodes.OK]: FlowRunFiltered,

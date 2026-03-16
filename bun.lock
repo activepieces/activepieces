@@ -1,6 +1,5 @@
 {
   "lockfileVersion": 1,
-  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "activepieces",
@@ -473,7 +472,7 @@
     },
     "packages/pieces/community/ai": {
       "name": "@activepieces/piece-ai",
-      "version": "0.1.21",
+      "version": "0.2.0",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -7625,7 +7624,7 @@
     },
     "packages/shared": {
       "name": "@activepieces/shared",
-      "version": "0.44.0",
+      "version": "0.45.0",
       "dependencies": {
         "deepmerge-ts": "7.1.0",
         "nanoid": "3.3.8",

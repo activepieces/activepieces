@@ -159,13 +159,13 @@ describeWithAuth('Get step output endpoint', () => app!, (setup) => {
         expect(response?.statusCode).toBe(404)
     })
 
-    it('should return 404 for cross-project access', async () => {
+    it('should deny cross-project access', async () => {
         const ctx = await setup()
         const otherCtx = await setup()
         const mockRun = await createRunWithSteps(otherCtx)
 
         const response = await ctx.get(`/v1/flow-runs/${mockRun.id}/steps/step_1`)
 
-        expect(response?.statusCode).toBe(404)
+        expect(response?.statusCode).toBe(403)
     })
 })
