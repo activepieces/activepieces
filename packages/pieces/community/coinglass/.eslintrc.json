@@ -1,0 +1,14 @@
+{
+  "extends": ["../../../.eslintrc.json"],
+  "ignorePatterns": ["!**/*"],
+  "overrides": [
+    {
+      "files": ["*.ts"],
+      "parserOptions": {
+        "project": ["packages/pieces/community/coinglass/tsconfig.*?.json"],
+        "createDefaultProgram": true
+      },
+      "rules": {}
+    }
+  ]
+}
