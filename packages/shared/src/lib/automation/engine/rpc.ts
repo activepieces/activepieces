@@ -1,7 +1,5 @@
 const RPC_EVENT = 'rpc'
 const NOTIFY_EVENT = 'rpc-notify'
-const DEFAULT_TIMEOUT_MS = 16000
-
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Contract = Record<string, (input: any) => any>
 
@@ -14,7 +12,7 @@ type RpcSocket = {
 
 export function createRpcClient<T extends Contract>(
     socket: RpcSocket,
-    timeoutMs = DEFAULT_TIMEOUT_MS,
+    timeoutMs: number,
 ): T {
     return new Proxy({} as T, {
         get(_target, method: string) {
