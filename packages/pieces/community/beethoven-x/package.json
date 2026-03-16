@@ -1,0 +1,17 @@
+{
+  "name": "@activepieces/piece-beethoven-x",
+  "version": "0.0.1",
+  "description": "Beethoven X - Balancer fork AMM on Optimism and Fantom",
+  "keywords": ["activepieces", "beethoven-x", "beets", "defi", "dex", "amm", "balancer"],
+  "homepage": "https://beets.fi/",
+  "license": "MIT",
+  "main": "src/index.ts",
+  "scripts": { "build": "tsc" },
+  "files": ["src"],
+  "peerDependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*"
+  },
+  "devDependencies": { "typescript": "catalog:" }
+}
