@@ -1,9 +1,0 @@
-{
-  "Tags": "Теги",
-  "Add custom tags to your run for filtration": "Добавить пользовательские теги к вашему запуску для фильтрации",
-  "Add Tag": "Добавить тег",
-  "Add a tag to the current execution": "Добавить тег к текущему исполнению",
-  "Markdown": "Markdown",
-  "Tag Name": "Имя тега",
-  "\nThis action add a tag to the current execution, this tag can be used to filter the execution in the **API** only at this moment.\n<br>\n<br>\n**Note:** If you are looking to use it in the user interface, please open a feature request.\n": "\nЭто действие добавит тег для текущего выполнения, этот тег может использоваться для фильтрации выполнения в **API** только в данный момент.\n<br>\n<br>\n**Примечание:** Если вы хотите использовать его в пользовательском интерфейсе, пожалуйста, откройте запрос функции.\n"
-}
