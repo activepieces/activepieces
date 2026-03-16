@@ -48,6 +48,7 @@ function createQueueDispatcher(params: {
             }
 
             if (isNil(job)) {
+                if (waiters.length === 0) break
                 continue
             }
 

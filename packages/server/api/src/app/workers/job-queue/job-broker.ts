@@ -111,7 +111,7 @@ async function returnJobToQueue(jobId: string, log: FastifyBaseLogger): Promise<
         return
     }
     const { job, token, jobData } = entry
-    await job.moveToDelayed(Date.now(), token)
+    await job.moveToDelayed(Date.now() + 100, token)
     activeJobs.delete(jobId)
     for (const interceptor of interceptors) {
         const { error } = await tryCatch(() => interceptor.onJobFinished({ jobId, jobData, log }))
