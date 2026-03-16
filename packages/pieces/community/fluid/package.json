@@ -1,0 +1,23 @@
+{
+  "name": "@activepieces/piece-fluid",
+  "version": "0.1.0",
+  "description": "Fluid (Instadapp) DeFi protocol — AMM DEX and lending integration",
+  "keywords": [
+    "activepieces",
+    "fluid",
+    "instadapp",
+    "defi",
+    "tvl",
+    "lending"
+  ],
+  "homepage": "https://www.activepieces.com",
+  "license": "MIT",
+  "main": "./src/index.ts",
+  "scripts": {
+    "build": "nx build piece-fluid"
+  },
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*"
+  }
+}
