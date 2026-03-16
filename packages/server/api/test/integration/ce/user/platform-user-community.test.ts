@@ -42,7 +42,7 @@ describe('User API', () => {
             // act
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/users',
+                url: '/api/v1/users',
                 query: {},
                 headers: {
                     authorization: `Bearer ${testToken}`,
@@ -82,7 +82,7 @@ describe('User API', () => {
             // act
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/users',
+                url: '/api/v1/users',
                 query: {},
                 headers: {
                     authorization: `Bearer ${testToken}`,
@@ -117,7 +117,7 @@ describe('User API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: `/v1/users/${mockUser.id}`,
+                url: `/api/v1/users/${mockUser.id}`,
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -158,7 +158,7 @@ describe('User API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: `/v1/users/${nonExistentUserId}`,
+                url: `/api/v1/users/${nonExistentUserId}`,
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -192,7 +192,7 @@ describe('User API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: `/v1/users/${mockUser.id}`,
+                url: `/api/v1/users/${mockUser.id}`,
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -231,7 +231,7 @@ describe('User API', () => {
             // act
             const response = await app?.inject({
                 method: 'DELETE',
-                url: `/v1/users/${mockEditor.id}`,
+                url: `/api/v1/users/${mockEditor.id}`,
                 headers: {
                     authorization: `Bearer ${mockOwnerToken}`,
                 },
@@ -263,7 +263,7 @@ describe('User API', () => {
             // act
             const response = await app?.inject({
                 method: 'DELETE',
-                url: `/v1/users/${mockUser.id}`,
+                url: `/api/v1/users/${mockUser.id}`,
                 headers: {
                     authorization: `Bearer ${mockUserToken}`,
                 },

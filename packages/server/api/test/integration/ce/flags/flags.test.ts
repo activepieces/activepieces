@@ -17,7 +17,7 @@ describe('Flags API', () => {
         it('should return flags without authentication', async () => {
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/flags',
+                url: '/api/v1/flags',
             })
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
