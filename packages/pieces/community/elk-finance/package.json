@@ -1,0 +1,17 @@
+{
+  "name": "@activepieces/piece-elk-finance",
+  "version": "0.0.1",
+  "description": "Elk Finance - Cross-chain DEX and DeFi protocol on 12+ networks",
+  "keywords": ["activepieces", "elk-finance", "elk", "defi", "dex", "cross-chain"],
+  "homepage": "https://elk.finance/",
+  "license": "MIT",
+  "main": "src/index.ts",
+  "scripts": { "build": "tsc" },
+  "files": ["src"],
+  "peerDependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*"
+  },
+  "devDependencies": { "typescript": "catalog:" }
+}

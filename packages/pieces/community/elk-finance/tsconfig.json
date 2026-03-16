@@ -1,0 +1,12 @@
+{
+  "extends": "../../../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "../../../../dist/out-tsc",
+    "declarationDir": "../../../../dist/out-tsc"
+  },
+  "include": ["src/**/*.ts"],
+  "references": [
+    { "path": "../../common" },
+    { "path": "../../../framework" }
+  ]
+}
