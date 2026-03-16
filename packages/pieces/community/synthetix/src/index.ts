@@ -1,24 +1,25 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
-import { getStakingStats } from './lib/actions/get-staking-stats';
-import { getSynthSupply } from './lib/actions/get-synth-supply';
+import { getSynthRates } from './lib/actions/get-synth-rates';
+import { getSnxStakers } from './lib/actions/get-snx-stakers';
+import { getExchangeStats } from './lib/actions/get-exchange-stats';
+import { getIssuedSynths } from './lib/actions/get-issued-synths';
 import { getFeePool } from './lib/actions/get-fee-pool';
-import { getExchanges } from './lib/actions/get-exchanges';
-import { getDebtSnapshot } from './lib/actions/get-debt-snapshot';
 
 export const synthetix = createPiece({
   displayName: 'Synthetix',
-  auth: PieceAuth.None(),
+  description: 'Fetch synthetic asset rates, SNX staking data, and exchange statistics from the Synthetix protocol',
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/synthetix.png',
-  authors: ['bossco7598'],
   categories: [PieceCategory.BUSINESS_INTELLIGENCE],
+  auth: PieceAuth.None(),
   actions: [
-    getStakingStats,
-    getSynthSupply,
+    getSynthRates,
+    getSnxStakers,
+    getExchangeStats,
+    getIssuedSynths,
     getFeePool,
-    getExchanges,
-    getDebtSnapshot,
   ],
+  authors: ['bossco7598'],
   triggers: [],
 });
