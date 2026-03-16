@@ -8,14 +8,6 @@ vi.mock('../../../../../src/app/workers/machine/machine-cache', () => ({
     })),
 }))
 
-vi.mock('../../../../../src/app/workers/machine/worker-id-generator', () => ({
-    workerIdGenerator: {
-        allocate: vi.fn().mockResolvedValue(0),
-        renew: vi.fn().mockResolvedValue(undefined),
-        release: vi.fn().mockResolvedValue(undefined),
-    },
-}))
-
 vi.mock('../../../../../src/app/helper/system/system', () => ({
     system: {
         getOrThrow: vi.fn().mockReturnValue('test-value'),
