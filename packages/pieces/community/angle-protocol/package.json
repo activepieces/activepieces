@@ -1,0 +1,13 @@
+{
+  "name": "@activepieces/piece-angle-protocol",
+  "version": "0.0.1",
+  "description": "Angle Protocol decentralized stablecoin",
+  "keywords": ["activepieces", "angle", "stablecoin", "defi", "crypto"],
+  "homepage": "https://angle.money",
+  "license": "MIT",
+  "exports": { ".": "./src/index.ts" },
+  "dependencies": {
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/pieces-common": "workspace:*"
+  }
+}
