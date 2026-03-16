@@ -1,0 +1,19 @@
+{
+  "name": "@activepieces/piece-coinstats",
+  "version": "0.0.1",
+  "description": "CoinStats crypto portfolio and market data integration",
+  "type": "module",
+  "scripts": {},
+  "keywords": ["activepieces", "piece", "coinstats", "crypto", "portfolio"],
+  "homepage": "",
+  "authors": ["Bossco"],
+  "license": "MIT",
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
