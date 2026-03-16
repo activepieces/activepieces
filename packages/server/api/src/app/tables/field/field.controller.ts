@@ -1,8 +1,9 @@
-import { EntitySourceType, ProjectResourceType, securityAccess } from '@activepieces/server-common'
 import { CreateFieldRequest, Field, ListFieldsRequestQuery, PrincipalType, UpdateFieldRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
+import { EntitySourceType, ProjectResourceType } from '../../core/security/authorization/common'
+import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { TableEntity } from '../table/table.entity'
 import { FieldEntity } from './field.entity'
 import { fieldService } from './field.service'
@@ -84,7 +85,7 @@ const GetFieldByIdRequest = {
 
 const DeleteFieldRequest = {
     config: {
-        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE], undefined, {
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE], undefined, {
             type: ProjectResourceType.TABLE,
             tableName: FieldEntity,
         }),

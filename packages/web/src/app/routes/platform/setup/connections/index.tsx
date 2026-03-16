@@ -35,7 +35,10 @@ import {
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { FormattedDate } from '@/components/custom/formatted-date';
-import { DefaultTag } from '@/components/custom/global-connection-utils';
+import {
+  DefaultTag,
+  DeleteConnectionWarning,
+} from '@/components/custom/global-connection-utils';
 import { StatusIconWithText } from '@/components/custom/status-icon-with-text';
 import { PlusIcon } from '@/components/icons/plus';
 import { Button } from '@/components/ui/button';
@@ -247,8 +250,9 @@ const GlobalConnectionsTable = () => {
               <ConfirmationDeleteDialog
                 title={t('Delete Connections')}
                 message={t(
-                  'The selected connections will be permanently deleted. Flows using them will stop working.',
+                  'The selected connections will be permanently deleted.',
                 )}
+                warning={<DeleteConnectionWarning />}
                 entityName="connections"
                 buttonText={t('Delete')}
                 mutationFn={async () => {

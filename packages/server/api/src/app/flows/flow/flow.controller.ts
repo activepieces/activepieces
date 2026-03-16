@@ -1,4 +1,3 @@
-import { ProjectResourceType, securityAccess } from '@activepieces/server-common'
 import { ActivepiecesError, ApId, ApplicationEventName,
     CountFlowsRequest,
     CreateFlowRequest,
@@ -27,6 +26,8 @@ import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { authenticationUtils } from '../../authentication/authentication-utils'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
+import { ProjectResourceType } from '../../core/security/authorization/common'
+import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { assertUserHasPermissionToFlow } from '../../ee/authentication/project-role/rbac-middleware'
 import { platformPlanService } from '../../ee/platform/platform-plan/platform-plan.service'
 import { gitRepoService } from '../../ee/projects/project-release/git-sync/git-sync.service'
@@ -81,7 +82,8 @@ export const flowController: FastifyPluginAsyncZod = async (app) => {
                 const migratedFlowTemplate = await migrateFlowVersionTemplate({
                     displayName: request.body.request.displayName,
                     trigger: request.body.request.trigger,
-                    schemaVersion: request.body.request.schemaVersion,
+                    //because the target for the first migraiton is undefined not null
+                    schemaVersion: request.body.request.schemaVersion ?? undefined,
                     notes: request.body.request.notes ?? [],
                     valid: false,
                 })

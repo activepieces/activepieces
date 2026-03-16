@@ -65,7 +65,7 @@ describe('OAuth App API', () => {
 
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/oauth-apps',
+                url: '/api/v1/oauth-apps',
                 body: upsertRequest,
                 headers: {
                     authorization: `Bearer ${testToken}`,
@@ -100,7 +100,7 @@ describe('OAuth App API', () => {
             // act
             const response = await app?.inject({
                 method: 'DELETE',
-                url: `/v1/oauth-apps/${mockOAuthApp.id}`,
+                url: `/api/v1/oauth-apps/${mockOAuthApp.id}`,
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -176,7 +176,7 @@ describe('OAuth App API', () => {
             // act
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/oauth-apps',
+                url: '/api/v1/oauth-apps',
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },

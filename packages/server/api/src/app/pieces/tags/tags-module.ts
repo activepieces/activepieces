@@ -1,8 +1,8 @@
-import { securityAccess } from '@activepieces/server-common'
-import { assertNotNullOrUndefined, ListTagsRequest, PrincipalType, SeekPage, SetPieceTagsRequest, Tag, UpsertTagRequest } from '@activepieces/shared'
+import { assertNotNullOrUndefined, DeleteTagRequest, ListTagsRequest, PrincipalType, SeekPage, SetPieceTagsRequest, Tag, UpsertTagRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
+import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { pieceTagService } from './pieces/piece-tag.service'
 import { tagService } from './tag-service'
 
@@ -37,7 +37,13 @@ const tagsController: FastifyPluginAsyncZod = async (fastify) => {
         await Promise.all(pieces)
         await reply.status(StatusCodes.CREATED).send({})
     })
-    
+
+    fastify.delete('/:id', DeleteTagParams, async (req, reply) => {
+        const platformId = req.principal.platform.id
+        await tagService.delete(platformId, req.params.id)
+        await reply.status(StatusCodes.NO_CONTENT).send()
+    })
+
 }
 
 const UpsertTagParams = {
@@ -60,6 +66,18 @@ const setPiecesTagsParams = {
         body: SetPieceTagsRequest,
         response: {
             [StatusCodes.CREATED]: z.object({}),
+        },
+    },
+}
+
+const DeleteTagParams = {
+    config: {
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+    },
+    schema: {
+        params: DeleteTagRequest,
+        response: {
+            [StatusCodes.NO_CONTENT]: z.undefined(),
         },
     },
 }

@@ -1,13 +1,15 @@
-import { AppSystemProp, apVersionUtil, webhookSecretsUtils } from '@activepieces/server-common'
 import { ApEdition, ApFlagId, ExecutionMode, Flag, isNil } from '@activepieces/shared'
+import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { In } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { federatedAuthnService } from '../ee/authentication/federated-authn/federated-authn-service'
 import { domainHelper } from '../ee/custom-domains/domain-helper'
 import { system } from '../helper/system/system'
+import { AppSystemProp, apVersionUtil } from '../helper/system/system-props'
 import { FlagEntity } from './flag.entity'
 import { defaultTheme } from './theme'
+import { webhookSecretsUtils } from './webhook-secrets-util'
 
 const flagRepo = repoFactory(FlagEntity)
 
@@ -55,7 +57,7 @@ export const flagService = (log: FastifyBaseLogger) => ({
                 ApFlagId.TEMPLATES_CATEGORIES,
             ]),
         })
-        const now = new Date().toISOString()
+        const now = dayjs().toISOString()
         const created = now
         const updated = now
         const currentVersion = await apVersionUtil.getCurrentRelease()

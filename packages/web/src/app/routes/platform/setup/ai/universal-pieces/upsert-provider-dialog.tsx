@@ -209,50 +209,52 @@ export const UpsertAIProviderDialogContent = ({
             onSubmit={form.handleSubmit(handleSave)}
           >
             <ScrollArea viewPortClassName="max-h-[calc(70vh)] p-px">
-              <FormField
-                control={form.control}
-                name="displayName"
-                render={({ field }) => (
-                  <FormItem
-                    className="space-y-3"
-                    hidden={
-                      currentProviderDef.provider !== AIProviderName.CUSTOM
-                    }
-                  >
-                    <FormLabel>{t('Display Name')}</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        placeholder={'My Provider'}
-                        disabled={isPending}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+              <div className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="displayName"
+                  render={({ field }) => (
+                    <FormItem
+                      className="space-y-3"
+                      hidden={
+                        currentProviderDef.provider !== AIProviderName.CUSTOM
+                      }
+                    >
+                      <FormLabel>{t('Display Name')}</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          placeholder={'My Provider'}
+                          disabled={isPending}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {currentProviderDef.markdown && (
+                  <div className="text-sm text-muted-foreground">
+                    <ApMarkdown
+                      markdown={currentProviderDef.markdown}
+                    ></ApMarkdown>
+                  </div>
                 )}
-              />
 
-              {currentProviderDef.markdown && (
-                <div className="mb-4 text-sm text-muted-foreground">
-                  <ApMarkdown
-                    markdown={currentProviderDef.markdown}
-                  ></ApMarkdown>
-                </div>
-              )}
+                <UpsertProviderConfigForm
+                  form={form}
+                  provider={provider}
+                  apiKeyRequired={!config}
+                  isLoading={isPending}
+                  isEditMode={!!providerId}
+                />
 
-              <UpsertProviderConfigForm
-                form={form}
-                provider={provider}
-                apiKeyRequired={!config}
-                isLoading={isPending}
-                isEditMode={!!providerId}
-              />
-
-              {form.formState.errors.root?.serverError && (
-                <FormMessage className="mt-2">
-                  {form.formState.errors.root.serverError.message}
-                </FormMessage>
-              )}
+                {form.formState.errors.root?.serverError && (
+                  <FormMessage>
+                    {form.formState.errors.root.serverError.message}
+                  </FormMessage>
+                )}
+              </div>
             </ScrollArea>
 
             <DialogFooter>
@@ -288,6 +290,7 @@ const OptionalAuthSchema = z
 const createFormSchema = (provider: AIProviderName, editMode: boolean) => {
   if (provider === AIProviderName.AZURE) {
     return z.object({
+      displayName: z.string().min(1),
       provider: z.literal(AIProviderName.AZURE),
       config: AzureProviderConfig,
       auth: editMode ? OptionalAuthSchema : AzureProviderAuthConfig,
@@ -295,6 +298,7 @@ const createFormSchema = (provider: AIProviderName, editMode: boolean) => {
   }
   if (provider === AIProviderName.CLOUDFLARE_GATEWAY) {
     return z.object({
+      displayName: z.string().min(1),
       provider: z.literal(AIProviderName.CLOUDFLARE_GATEWAY),
       config: CloudflareGatewayProviderConfig,
       auth: editMode ? OptionalAuthSchema : CloudflareGatewayProviderAuthConfig,
@@ -302,6 +306,7 @@ const createFormSchema = (provider: AIProviderName, editMode: boolean) => {
   }
   if (provider === AIProviderName.CUSTOM) {
     return z.object({
+      displayName: z.string().min(1),
       provider: z.literal(AIProviderName.CUSTOM),
       config: OpenAICompatibleProviderConfig,
       auth: editMode ? OptionalAuthSchema : OpenAICompatibleProviderAuthConfig,
@@ -313,6 +318,7 @@ const createFormSchema = (provider: AIProviderName, editMode: boolean) => {
     OpenAIProviderAuthConfig,
   ]);
   return z.object({
+    displayName: z.string().min(1),
     provider: z.literal(provider),
     auth: editMode ? OptionalAuthSchema : authSchema,
     config: z.union([

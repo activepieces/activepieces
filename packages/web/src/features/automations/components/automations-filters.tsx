@@ -35,6 +35,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { useOwnerOptions } from '@/features/automations/hooks/use-owner-options';
 import { formatUtils } from '@/lib/format-utils';
+import { cn, DASHBOARD_CONTENT_PADDING_X } from '@/lib/utils';
 
 import { MultiSelectFilter } from './multi-select-filter';
 
@@ -130,7 +131,7 @@ export const AutomationsFilters = ({
   });
 
   return (
-    <div className="overflow-x-auto mb-4">
+    <div className={cn('overflow-x-auto mb-4', DASHBOARD_CONTENT_PADDING_X)}>
       <div className="flex items-center justify-between gap-4 min-w-max">
         <div className="flex items-center gap-2">
           <div className="relative">
@@ -142,7 +143,7 @@ export const AutomationsFilters = ({
                 onSearchChange(e.target.value);
                 onFilterChange?.();
               }}
-              className="min-w-[220px] max-w-xs pl-8 pr-8"
+              className="min-w-[300px] max-w-xs pl-8 pr-8 focus-visible:ring-0 focus-visible:ring-offset-0"
             />
             {searchTerm && (
               <button
@@ -191,17 +192,19 @@ export const AutomationsFilters = ({
             searchable
           />
 
-          <MultiSelectFilter
-            label={t('Owner')}
-            icon={<User className="h-4 w-4" />}
-            options={ownerOptions}
-            selectedValues={ownerFilter}
-            onChange={(values) => {
-              onOwnerFilterChange(values);
-              onFilterChange?.();
-            }}
-            searchable
-          />
+          {!embedState.isEmbedded && (
+            <MultiSelectFilter
+              label={t('Owner')}
+              icon={<User className="h-4 w-4" />}
+              options={ownerOptions}
+              selectedValues={ownerFilter}
+              onChange={(values) => {
+                onOwnerFilterChange(values);
+                onFilterChange?.();
+              }}
+              searchable
+            />
+          )}
 
           {folderOptions.length > 0 && (
             <MultiSelectFilter
