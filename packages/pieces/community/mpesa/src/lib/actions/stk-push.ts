@@ -18,6 +18,17 @@ export const stkPush = createAction({
       description: 'Amount to charge in KES (must be a whole number)',
       required: true,
     }),
+    transactionType: Property.StaticDropdown({
+      displayName: 'Transaction Type',
+      description: 'Select Paybill for Paybill short codes, or Buy Goods for Till Numbers',
+      required: true,
+      options: {
+        options: [
+          { label: 'Paybill (CustomerPayBillOnline)', value: 'CustomerPayBillOnline' },
+          { label: 'Buy Goods / Till (CustomerBuyGoodsOnline)', value: 'CustomerBuyGoodsOnline' },
+        ],
+      },
+    }),
     callbackUrl: Property.ShortText({
       displayName: 'Callback URL',
       description: 'URL to receive payment confirmation',
@@ -76,7 +87,7 @@ export const stkPush = createAction({
         BusinessShortCode: shortCode,
         Password: password,
         Timestamp: timestamp,
-        TransactionType: 'CustomerPayBillOnline',
+        TransactionType: context.propsValue.transactionType,
         Amount: Math.floor(context.propsValue.amount),
         PartyA: phone,
         PartyB: shortCode,
