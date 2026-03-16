@@ -33,7 +33,7 @@ export const getCoinPrice = createAction({
     const vsCurrency = propsValue.vsCurrency ?? 'usd';
 
     const params: Record<string, string> = {
-      ids: propsValue.coinIds,
+      ids: propsValue.coinIds.split(',').map((id) => id.trim()).join(','),
       vs_currencies: vsCurrency,
     };
 
