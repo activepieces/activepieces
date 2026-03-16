@@ -27,7 +27,7 @@ export const whatsscaleProps = {
         const response = await whatsscaleClient(
           auth.secret_text,
           HttpMethod.GET,
-          '/make/sessions',
+          '/make/sessions'
         );
         const sessions = response.body as { label: string; value: string }[];
         if (!sessions || sessions.length === 0) {
@@ -79,7 +79,7 @@ export const whatsscaleProps = {
           HttpMethod.GET,
           '/make/contacts',
           undefined,
-          { session: session as string },
+          { session: session as string }
         );
         const contacts = response.body as { label: string; value: string }[];
         if (!contacts || contacts.length === 0) {
@@ -127,7 +127,7 @@ export const whatsscaleProps = {
           HttpMethod.GET,
           '/make/groups',
           undefined,
-          { session: session as string },
+          { session: session as string }
         );
         const groups = response.body as { label: string; value: string }[];
         if (!groups || groups.length === 0) {
@@ -175,7 +175,7 @@ export const whatsscaleProps = {
           HttpMethod.GET,
           '/make/channels',
           undefined,
-          { session: session as string },
+          { session: session as string }
         );
         const channels = response.body as { label: string; value: string }[];
         if (!channels || channels.length === 0) {
@@ -201,7 +201,7 @@ export const whatsscaleProps = {
     auth: whatsscaleAuth,
     displayName: 'CRM Contact',
     required: true,
-    refreshers: [],
+    refreshers: ['auth'],
     options: async ({ auth }): Promise<DropdownState<string>> => {
       if (!auth) {
         return {
@@ -214,9 +214,9 @@ export const whatsscaleProps = {
         const response = await whatsscaleClient(
           auth.secret_text,
           HttpMethod.GET,
-          '/make/crm/contacts',
+          '/make/crm/contacts'
         );
-        const contacts = response.body as { label: string; value: string }[];
+        const contacts = response.body;
         if (!contacts || contacts.length === 0) {
           return {
             disabled: true,
@@ -224,7 +224,13 @@ export const whatsscaleProps = {
             placeholder: 'No CRM contacts found',
           };
         }
-        return { disabled: false, options: contacts };
+        return {
+          disabled: false,
+          options: contacts.map((contact: any) => ({
+            label: contact.name,
+            value: contact.id,
+          })),
+        };
       } catch (e) {
         console.debug(e);
         return {
@@ -253,7 +259,7 @@ export const whatsscaleProps = {
         const response = await whatsscaleClient(
           auth.secret_text,
           HttpMethod.GET,
-          '/make/crm/tags',
+          '/make/crm/tags'
         );
         const tags = response.body as { label: string; value: string }[];
         if (!tags || tags.length === 0) {

@@ -8,8 +8,9 @@ export const whatsscaleAuth = PieceAuth.SecretText({
     To obtain your API key:
 
     1. Log in to your WhatsScale account at https://whatsscale.com/dashboard
-    2. Navigate to the API Keys section
-    3. Copy your API key and paste it here
+    2. Navigate to Setting => API Keys section
+    3. Create a new API key if you don't have one already
+    4. Copy your API key and paste it here
   `,
   validate: async ({ auth }) => {
     try {
