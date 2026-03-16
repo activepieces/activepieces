@@ -1,0 +1,13 @@
+{
+  "name": "@activepieces/piece-truefi",
+  "version": "0.0.1",
+  "description": "TrueFi uncollateralized lending protocol",
+  "keywords": ["activepieces", "truefi", "lending", "defi", "crypto"],
+  "homepage": "https://truefi.io",
+  "license": "MIT",
+  "exports": { ".": "./src/index.ts" },
+  "dependencies": {
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/pieces-common": "workspace:*"
+  }
+}
