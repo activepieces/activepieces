@@ -1,3 +1,5 @@
+import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+
 const DEFILLAMA_API_BASE = 'https://api.llama.fi';
 const DEFILLAMA_COINS_BASE = 'https://coins.llama.fi';
 const DEFILLAMA_YIELDS_BASE = 'https://yields.llama.fi';
@@ -5,15 +7,12 @@ const DEFILLAMA_YIELDS_BASE = 'https://yields.llama.fi';
 export async function defillamaRequest<T>(
   url: string
 ): Promise<T> {
-  const response = await fetch(url);
+  const response = await httpClient.sendRequest<T>({
+    method: HttpMethod.GET,
+    url,
+  });
 
-  if (!response.ok) {
-    throw new Error(
-      `DefiLlama API error: ${response.status} ${response.statusText}`
-    );
-  }
-
-  return (await response.json()) as T;
+  return response.body;
 }
 
 export function apiUrl(path: string): string {

@@ -13,7 +13,7 @@ export const defillama = createPiece({
   auth: PieceAuth.None(),
   minimumSupportedRelease: '0.20.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/defillama.png',
-  categories: [PieceCategory.BUSINESS_INTELLIGENCE],
+  categories: [PieceCategory.FINANCE],
   authors: ['bossco7598'],
   actions: [
     getAllProtocols,
