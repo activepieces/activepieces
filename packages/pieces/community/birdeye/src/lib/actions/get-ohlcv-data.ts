@@ -63,10 +63,9 @@ export const getOhlcvData = createAction({
       address: context.propsValue.address,
       address_type: 'token',
       type: context.propsValue.type as string,
-      chain: context.propsValue.chain as string,
       time_from: context.propsValue.time_from ?? now - 86400,
       time_to: context.propsValue.time_to ?? now,
     };
-    return birdeyeRequest(context.auth, '/defi/ohlcv', params);
+    return birdeyeRequest(context.auth, '/defi/ohlcv', context.propsValue.chain as string, params);
   },
 });
