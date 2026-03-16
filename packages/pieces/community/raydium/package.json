@@ -1,0 +1,52 @@
+{
+  "name": "@activepieces/piece-raydium",
+  "version": "0.0.1",
+  "description": "Raydium DEX piece for Activepieces - Solana's largest AMM/DEX protocol data",
+  "keywords": [
+    "activepieces",
+    "raydium",
+    "solana",
+    "dex",
+    "defi",
+    "amm"
+  ],
+  "homepage": "https://www.activepieces.com",
+  "bugs": {
+    "url": "https://github.com/activepieces/activepieces/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/activepieces/activepieces.git",
+    "directory": "packages/pieces/community/raydium"
+  },
+  "license": "MIT",
+  "author": "bossco7598",
+  "main": "./src/index.ts",
+  "nx": {
+    "targets": {
+      "build": {
+        "executor": "@nx/js:tsc",
+        "outputs": [
+          "{options.outputPath}"
+        ],
+        "options": {
+          "outputPath": "dist/packages/pieces/community/raydium",
+          "main": "packages/pieces/community/raydium/src/index.ts",
+          "tsConfig": "packages/pieces/community/raydium/tsconfig.lib.json",
+          "assets": [
+            {
+              "input": "packages/pieces/community/raydium",
+              "glob": "**/{*.json,*.md}",
+              "output": "."
+            }
+          ]
+        }
+      }
+    }
+  },
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*"
+  }
+}
