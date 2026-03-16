@@ -103,7 +103,7 @@ export const requestApprovalDirectMessageAction = createAction({
       const channel = context.resumePayload.queryParams['channel'];
       const messageTs = context.resumePayload.queryParams['messageTs'];
 
-      const token = context.auth.access_token;
+      const token = getBotToken(context.auth as SlackAuthValue);
       try {
         if (token && channel && messageTs) {
           const client = new WebClient(token);
