@@ -1,0 +1,16 @@
+{
+  "name": "@activepieces/piece-paraswap",
+  "version": "0.0.1",
+  "description": "ParaSwap DEX aggregator swap prices and protocol data",
+  "keywords": ["activepieces", "piece", "paraswap", "dex", "defi"],
+  "homepage": "",
+  "bugs": {},
+  "repository": {},
+  "license": "MIT",
+  "author": "bossco7598",
+  "main": "src/index.ts",
+  "scripts": {},
+  "peerDependencies": {
+    "@activepieces/pieces-framework": "workspace:*"
+  }
+}
