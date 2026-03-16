@@ -23,9 +23,8 @@ export const getTokenOverview = createAction({
     }),
   },
   async run(context) {
-    return birdeyeRequest(context.auth, '/defi/token_overview', {
+    return birdeyeRequest(context.auth, '/defi/token_overview', context.propsValue.chain as string, {
       address: context.propsValue.address,
-      chain: context.propsValue.chain as string,
     });
   },
 });
