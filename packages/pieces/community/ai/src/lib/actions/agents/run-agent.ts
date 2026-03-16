@@ -158,7 +158,7 @@ export const runAgent = createAction({
     outputBuilder.setToolMap(toolKeyToAgentTool);
 
     const allTools = webSearchTools
-      ? { ...tools, ...webSearchTools }
+      ? { ...webSearchTools, ...tools }
       : tools;
 
     const errors: { type: string; message: string; details?: unknown }[] = [];
