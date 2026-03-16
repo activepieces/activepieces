@@ -1804,6 +1804,9 @@
       "@activepieces/piece-alai": [
         "packages/pieces/community/alai/src/index.ts"
       ],
+      "@activepieces/piece-alchemy": [
+        "packages/pieces/community/alchemy/src/index.ts"
+      ],
       "@activepieces/piece-kapso": [
         "packages/pieces/community/kapso/src/index.ts"
       ],
