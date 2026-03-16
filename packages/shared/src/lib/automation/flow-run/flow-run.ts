@@ -51,6 +51,7 @@ export const FlowRun = z.object({
     stepNameToTest: z.string().optional(),
     archivedAt: Nullable(z.string()),
     stepsCount: z.number().optional(),
+    stepsDataTruncated: z.boolean().optional(),
 })
 
 export const FailedStep = z.object({

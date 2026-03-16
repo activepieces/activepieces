@@ -1,7 +1,9 @@
 import {
+  executionJournal,
   FlowRun,
   ListFlowRunsRequestQuery,
   RetryFlowRequestBody,
+  StepOutput,
   TestFlowRunRequestBody,
   WebsocketServerEvent,
   WebsocketClientEvent,
@@ -24,7 +26,9 @@ export const flowRunsApi = {
     return api.get<SeekPage<FlowRun>>('/v1/flow-runs', request);
   },
   getPopulated(id: string): Promise<FlowRun> {
-    return api.get<FlowRun>(`/v1/flow-runs/${id}`);
+    return api.get<FlowRun>(`/v1/flow-runs/${id}`, {
+      truncateStepsIfSizeExceedsThreshold: 'true',
+    });
   },
   bulkRetry(request: BulkActionOnRunsRequestBody): Promise<FlowRun[]> {
     return api.post<FlowRun[]>('/v1/flow-runs/retry', request);
@@ -37,6 +41,16 @@ export const flowRunsApi = {
   },
   retry(flowRunId: string, request: RetryFlowRequestBody): Promise<FlowRun> {
     return api.post<FlowRun>(`/v1/flow-runs/${flowRunId}/retry`, request);
+  },
+  getStepOutput(
+    runId: string,
+    stepName: string,
+    path: readonly [string, number][],
+  ): Promise<StepOutput> {
+    const pathStr = executionJournal.serializePath(path);
+    return api.get<StepOutput>(`/v1/flow-runs/${runId}/steps/${stepName}`, {
+      ...(pathStr ? { path: pathStr } : {}),
+    });
   },
   async subscribeToTestFlowOrManualRun(
     socket: Socket,

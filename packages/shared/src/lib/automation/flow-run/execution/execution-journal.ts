@@ -122,6 +122,22 @@ export const executionJournal = {
         return false
     },
 
+    serializePath(path: readonly [string, number][]): string {
+        return path.map(([name, index]) => `${name}:${index}`).join(',')
+    },
+
+    parsePath(pathStr: string | undefined | null): readonly [string, number][] {
+        if (isNil(pathStr) || pathStr === '') {
+            return []
+        }
+        return pathStr.split(',').map(segment => {
+            const lastColon = segment.lastIndexOf(':')
+            const name = segment.substring(0, lastColon)
+            const index = Number.parseInt(segment.substring(lastColon + 1), 10)
+            return [name, index] as const
+        })
+    },
+
     getPathToStep(
         steps: Record<string, StepOutput>,
         stepName: string,

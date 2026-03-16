@@ -59,8 +59,8 @@ export const flowRunLogsController: FastifyPluginAsyncZod = async (app) => {
             const s3SignedUrl = await s3Helper(request.log).getS3SignedUrl(file.s3Key, file.fileName ?? file.id)
             return reply.redirect(s3SignedUrl)
         }
-        const logs = await flowRunLogsService(request.log).getLogs(decodedToken)
-        if (isNil(logs)) {
+        const result = await flowRunLogsService(request.log).getLogs(decodedToken)
+        if (isNil(result)) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {
@@ -70,6 +70,6 @@ export const flowRunLogsController: FastifyPluginAsyncZod = async (app) => {
                 },
             })
         }
-        return reply.send(logs)
+        return reply.send(result.logs)
     })
 }

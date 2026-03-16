@@ -6,7 +6,9 @@ import {
     Cursor,
     EngineHttpResponse,
     ErrorCode,
+    executionJournal,
     ExecutionType,
+    FlowActionType,
     FlowId,
     FlowRetryStrategy,
     FlowRun,
@@ -23,6 +25,7 @@ import {
     RunEnvironment,
     SampleDataFileType,
     SeekPage,
+    StepOutput,
     UploadLogsBehavior,
     WorkerJobType,
 } from '@activepieces/shared'
@@ -54,6 +57,7 @@ const tracer = trace.getTracer('flow-run-service')
 export const WEBHOOK_TIMEOUT_MS = system.getNumberOrThrow(AppSystemProp.WEBHOOK_TIMEOUT_SECONDS) * 1000
 export const flowRunRepo = repoFactory<FlowRun>(FlowRunEntity)
 const USE_SIGNED_URL = system.getBoolean(AppSystemProp.S3_USE_SIGNED_URLS) ?? false
+const LAZY_LOAD_THRESHOLD_BYTES = system.getNumberOrThrow(AppSystemProp.FLOW_RUN_LOG_LAZY_LOAD_THRESHOLD_MB) * 1024 * 1024
 
 export const flowRunService = (log: FastifyBaseLogger) => ({
     async upsert({ id, projectId }: { id: FlowRunId, projectId: ProjectId }): Promise<FlowRun> {
@@ -405,21 +409,54 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
 
         return flowRun
     },
-    async getOnePopulatedOrThrow(params: GetOneParams): Promise<FlowRun> {
+    async getOnePopulatedOrThrow(params: GetOnePopulatedParams): Promise<FlowRun> {
         const flowRun = await this.getOneOrThrow(params)
-        let steps = {}
+        let steps: Record<string, StepOutput> = {}
+        let stepsDataTruncated = false
         if (!isNil(flowRun.logsFileId)) {
-            const stateFile = await flowRunLogsService(log).getLogs({
+            const result = await flowRunLogsService(log).getLogs({
                 logsFileId: flowRun.logsFileId,
                 projectId: flowRun.projectId,
             })
-            if (!isNil(stateFile)) {
-                steps = stateFile.executionState.steps
+            if (!isNil(result)) {
+                if (params.truncateStepsDataIfAboveSizeThreshold && result.sizeInBytes > LAZY_LOAD_THRESHOLD_BYTES) {
+                    steps = stripStepInputOutput(result.logs.executionState.steps)
+                    stepsDataTruncated = true
+                }
+                else {
+                    steps = result.logs.executionState.steps
+                }
             }
         }
         return {
             ...flowRun,
             steps,
+            ...(stepsDataTruncated ? { stepsDataTruncated } : {}),
+        }
+    },
+    async getStepOutput(params: GetStepOutputParams): Promise<StepOutput | null> {
+        const flowRun = await this.getOneOrThrow({ id: params.flowRunId, projectId: params.projectId })
+        if (isNil(flowRun.logsFileId)) {
+            return null
+        }
+        const result = await flowRunLogsService(log).getLogs({
+            logsFileId: flowRun.logsFileId,
+            projectId: flowRun.projectId,
+        })
+        if (isNil(result)) {
+            return null
+        }
+        const { steps } = result.logs.executionState
+        try {
+            return executionJournal.getStep({
+                stepName: params.stepName,
+                path: params.path,
+                steps,
+            }) ?? null
+        }
+        catch (e) {
+            log.error({ stepName: params.stepName, path: params.path, error: e }, 'Step not found in execution journal')
+            return null
         }
     },
     async handleSyncResumeFlow({ runId, payload, requestId }: { runId: string, payload: unknown, requestId: string }): Promise<EngineHttpResponse> {
@@ -623,6 +660,27 @@ async function addToQueue(params: AddToQueueParams, log: FastifyBaseLogger): Pro
     return params.flowRun
 }
 
+function stripStepInputOutput(steps: Record<string, StepOutput>): Record<string, StepOutput> {
+    const result: Record<string, StepOutput> = {}
+    for (const [name, step] of Object.entries(steps)) {
+        if (step.type === FlowActionType.LOOP_ON_ITEMS && step.output?.iterations) {
+            result[name] = {
+                ...step,
+                input: undefined,
+                output: {
+                    ...step.output,
+                    item: undefined,
+                    iterations: step.output.iterations.map((iter: Record<string, StepOutput>) => stripStepInputOutput(iter)),
+                },
+            } as StepOutput
+        }
+        else {
+            result[name] = { ...step, input: undefined, output: undefined } as StepOutput
+        }
+    }
+    return result
+}
+
 function queryBuilderForFlowRun(repo: Repository<FlowRun>): SelectQueryBuilder<FlowRun> {
     return repo.createQueryBuilder('flow_run')
         .leftJoinAndSelect('flow_run.flowVersion', 'flowVersion')
@@ -686,6 +744,10 @@ type ListParams = {
 type GetOneParams = {
     id: FlowRunId
     projectId: ProjectId | undefined
+}
+
+type GetOnePopulatedParams = GetOneParams & {
+    truncateStepsDataIfAboveSizeThreshold?: boolean
 }
 
 type AddToQueueParams = {
@@ -795,4 +857,11 @@ type FilterFlowRunsAndApplyFiltersParams = {
     createdBefore?: string
     excludeFlowRunIds?: FlowRunId[]
     failedStepName?: string
+}
+
+type GetStepOutputParams = {
+    flowRunId: FlowRunId
+    projectId: ProjectId
+    stepName: string
+    path: readonly [string, number][]
 }

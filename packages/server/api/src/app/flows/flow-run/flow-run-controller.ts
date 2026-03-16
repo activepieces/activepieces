@@ -7,6 +7,7 @@ import {
     BulkArchiveActionOnRunsRequestBody,
     BulkCancelFlowRequestBody,
     ErrorCode,
+    executionJournal,
     ExecutionType,
     FlowRun,
     isNil,
@@ -50,8 +51,34 @@ export const flowRunController: FastifyPluginAsyncZod = async (app) => {
             const flowRun = await flowRunService(request.log).getOnePopulatedOrThrow({
                 projectId: request.projectId,
                 id: request.params.id,
+                truncateStepsDataIfAboveSizeThreshold: request.query.truncateStepsIfSizeExceedsThreshold === true,
             })
             await reply.send(flowRun)
+        },
+    )
+
+    app.get(
+        '/:id/steps/:stepName',
+        GetStepOutputRequest,
+        async (request, reply) => {
+            const path = executionJournal.parsePath(request.query.path)
+            const stepOutput = await flowRunService(request.log).getStepOutput({
+                flowRunId: request.params.id,
+                projectId: request.projectId,
+                stepName: request.params.stepName,
+                path,
+            })
+            if (isNil(stepOutput)) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.ENTITY_NOT_FOUND,
+                    params: {
+                        entityType: 'step_output',
+                        entityId: request.params.stepName,
+                        message: 'Step output not found',
+                    },
+                })
+            }
+            await reply.send(stepOutput)
         },
     )
 
@@ -177,7 +204,7 @@ const ListRequest = {
 const GetRequest = {
     config: {
         security: securityAccess.project(
-            [PrincipalType.USER, PrincipalType.SERVICE], 
+            [PrincipalType.USER, PrincipalType.SERVICE],
             Permission.READ_RUN, {
                 type: ProjectResourceType.TABLE,
                 tableName: FlowRunEntity,
@@ -189,6 +216,9 @@ const GetRequest = {
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         params: z.object({
             id: ApId,
+        }),
+        querystring: z.object({
+            truncateStepsIfSizeExceedsThreshold: z.coerce.boolean().optional(),
         }),
         response: {
             [StatusCodes.OK]: FlowRunFiltered,
@@ -254,10 +284,30 @@ const ArchiveFlowRunRequest = {
     },
 }
 
+const GetStepOutputRequest = {
+    config: {
+        security: securityAccess.project(
+            [PrincipalType.USER, PrincipalType.SERVICE],
+            Permission.READ_RUN, {
+                type: ProjectResourceType.TABLE,
+                tableName: FlowRunEntity,
+            }),
+    },
+    schema: {
+        params: z.object({
+            id: ApId,
+            stepName: z.string(),
+        }),
+        querystring: z.object({
+            path: z.string().optional(),
+        }),
+    },
+}
+
 const BulkRetryFlowRequest = {
     config: {
         security: securityAccess.project(
-            [PrincipalType.USER, PrincipalType.SERVICE], 
+            [PrincipalType.USER, PrincipalType.SERVICE],
             Permission.WRITE_RUN, {
                 type: ProjectResourceType.BODY,
             }),
@@ -266,3 +316,4 @@ const BulkRetryFlowRequest = {
         body: BulkActionOnRunsRequestBody,
     },
 }
+

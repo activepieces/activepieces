@@ -44,7 +44,7 @@ export const flowRunLogsService = (log: FastifyBaseLogger) => {
         async uploadDirectly(request: UploadLogsToken, content: Buffer): Promise<void> {
             await upsertFile(request, log, content)
         },
-        async getLogs(request: GetLogsParams): Promise<ExecutioOutputFile | null> {
+        async getLogs(request: GetLogsParams): Promise<{ logs: ExecutioOutputFile, sizeInBytes: number } | null> {
             const file = await fileService(log).getDataOrUndefined({
                 fileId: request.logsFileId,
                 projectId: request.projectId,
@@ -52,7 +52,10 @@ export const flowRunLogsService = (log: FastifyBaseLogger) => {
             if (isNil(file)) {
                 return null
             }
-            return JSON.parse(file.data.toString('utf-8'))
+            return {
+                logs: JSON.parse(file.data.toString('utf-8')),
+                sizeInBytes: file.data.length,
+            }
         },
     }
 }
