@@ -1824,6 +1824,9 @@
       ],
       "@activepieces/piece-coralogix": [
         "packages/pieces/community/coralogix/src/index.ts"
+      ],
+      "@activepieces/piece-cryptopanic": [
+        "packages/pieces/community/cryptopanic/src/index.ts"
       ]
     },
     "resolveJsonModule": true
