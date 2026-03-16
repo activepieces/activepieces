@@ -1,0 +1,17 @@
+{
+  "name": "@activepieces/piece-perp-protocol",
+  "version": "0.0.1",
+  "description": "Perp Protocol - Decentralized perpetual futures exchange",
+  "keywords": ["activepieces", "piece", "perp", "perpetual", "defi", "dex"],
+  "homepage": "https://perp.com",
+  "license": "MIT",
+  "exports": "./src/index.ts",
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*"
+  },
+  "scripts": {
+    "build": "tsc"
+  }
+}
