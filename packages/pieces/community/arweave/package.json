@@ -1,0 +1,23 @@
+{
+  "name": "@activepieces/piece-arweave",
+  "version": "0.0.1",
+  "description": "Arweave permanent storage network piece for Activepieces",
+  "keywords": [
+    "activepieces",
+    "piece",
+    "arweave",
+    "ar",
+    "storage",
+    "web3"
+  ],
+  "homepage": "https://www.activepieces.com",
+  "license": "MIT",
+  "main": "./src/index.ts",
+  "scripts": {
+    "build": "nx build piece-arweave"
+  },
+  "peerDependencies": {
+    "@activepieces/pieces-common": "*",
+    "@activepieces/pieces-framework": "*"
+  }
+}
