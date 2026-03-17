@@ -86,7 +86,10 @@ export const jobQueue = (log: FastifyBaseLogger) => ({
                     delay: !isNil(dependOnJobId) ? apDayjsDuration(1, 'year').asMilliseconds() : params.delay,
                     jobId: params.id,
                     removeOnFail: data.jobType === WorkerJobType.EVENT_DESTINATION,
-                    ...isUserInteractionJob(data.jobType) ? { attempts: 1 } : {},
+                    ...isUserInteractionJob(data.jobType) ? {
+                        attempts: 1,
+                        removeOnComplete: { age: 300 },
+                    } : {},
                 })
             }
         }
