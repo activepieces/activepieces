@@ -37,6 +37,9 @@ export const findRowAction = createAction({
           BaserowFieldType.COUNT,
           BaserowFieldType.LAST_MODIFIED_BY,
           BaserowFieldType.CREATED_BY,
+          BaserowFieldType.DATE,
+          BaserowFieldType.LAST_MODIFIED,
+          BaserowFieldType.CREATED_ON,
         ];
         const filterable = fields.filter((f) => !unsupportedTypes.includes(f.type));
         return {
