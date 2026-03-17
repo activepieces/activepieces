@@ -1,6 +1,28 @@
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { KlaviyoAuthValue, getAuthorizationHeader } from './auth';
 
+export async function fetchProfilesByIds(
+  auth: KlaviyoAuthValue,
+  ids: string[]
+): Promise<Map<string, Record<string, unknown>>> {
+  const CHUNK_SIZE = 100;
+  const profileMap = new Map<string, Record<string, unknown>>();
+
+  for (let i = 0; i < ids.length; i += CHUNK_SIZE) {
+    const chunk = ids.slice(i, i + CHUNK_SIZE);
+    const params = new URLSearchParams();
+    params.set('filter', `any(id,${JSON.stringify(chunk)})`);
+    params.set('page[size]', String(CHUNK_SIZE));
+
+    const response = await makeRequest(auth, HttpMethod.GET, `/profiles?${params.toString()}`);
+    for (const profile of (response.data as any[]) ?? []) {
+      profileMap.set(profile.id as string, profile.attributes as Record<string, unknown>);
+    }
+  }
+
+  return profileMap;
+}
+
 export const BASE_URL = `https://a.klaviyo.com/api`;
 
 export async function makeRequest(

@@ -11,8 +11,6 @@
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
-    "axios": "1.13.5",
-    "zod": "4.3.6",
     "tslib": "2.6.2"
   }
 }

@@ -18,12 +18,12 @@ export const findListByName = createAction({
   auth: klaviyoAuth,
   name: 'findListByName',
   displayName: 'Find List by Name',
-  description: 'Find lists by name using exact match or multiple names.',
+  description: 'Find lists by name with optional additional data',
   props: {
     search_query: Property.LongText({
       displayName: 'List Name(s)',
       description:
-        'Enter one list name, or multiple names separated by commas (e.g., "Newsletter, VIP List, Promotions")',
+        'Enter list name',
       required: true,
     }),
 
@@ -66,7 +66,7 @@ export const findListByName = createAction({
     if (lists.length === 0) {
       return {
         success: false,
-        message: `No lists found with  ${trimmedQuery}`,
+        message: `No lists found with ${trimmedQuery}`,
         lists: [],
         count: 0,
       };
