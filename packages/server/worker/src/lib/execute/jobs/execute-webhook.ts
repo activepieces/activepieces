@@ -47,7 +47,7 @@ export const executeWebhookJob: JobHandler<WebhookJobData> = {
             return {}
         }
 
-        const { appWebhookUrl, webhookSecret } = getAppWebhookDetails(flowVersion, settings.PUBLIC_URL, settings.APP_WEBHOOK_SECRETS)
+        const { appWebhookUrl, webhookSecret } = getAppWebhookDetails(flowVersion, ctx.publicApiUrl, settings.APP_WEBHOOK_SECRETS)
 
         const provisioned = await provisionFlowPieces({ flowVersion, platformId: data.platformId, flowId: data.flowId, projectId: data.projectId, log: ctx.log, apiClient: ctx.apiClient })
         if (!provisioned) {
@@ -68,7 +68,7 @@ export const executeWebhookJob: JobHandler<WebhookJobData> = {
                     {
                         hookType: TriggerHookType.RUN,
                         flowVersion,
-                        webhookUrl: getWebhookUrl(settings.PUBLIC_URL, data.flowId, true),
+                        webhookUrl: getWebhookUrl(ctx.publicApiUrl, data.flowId, true),
                         triggerPayload: resolvedPayload as TriggerPayload,
                         test: true,
                         projectId: data.projectId,
@@ -105,7 +105,7 @@ export const executeWebhookJob: JobHandler<WebhookJobData> = {
                 {
                     hookType: TriggerHookType.RUN,
                     flowVersion,
-                    webhookUrl: getWebhookUrl(settings.PUBLIC_URL, data.flowId),
+                    webhookUrl: getWebhookUrl(ctx.publicApiUrl, data.flowId),
                     triggerPayload: resolvedPayload as TriggerPayload,
                     test: false,
                     projectId: data.projectId,
