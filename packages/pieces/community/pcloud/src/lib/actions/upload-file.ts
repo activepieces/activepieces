@@ -87,10 +87,10 @@ export const pcloudUploadFile = createAction({
       },
     });
 
-    const body = result.body as { result: number; error?: string };
-    if (body.result !== 0) {
-      throw new Error(`pCloud error: ${body.error ?? "result code " + body.result}`);
+    const responseBody = result.body as { result: number; error?: string };
+    if (responseBody.result !== 0) {
+      throw new Error(`pCloud error: ${responseBody.error ?? "result code " + responseBody.result}`);
     }
-    return body;
+    return responseBody;
   },
 });
