@@ -1,7 +1,7 @@
 import { createClient } from '@1password/sdk'
 import { ActivepiecesError, ErrorCode, OnePasswordProviderConfig, SecretManagerProviderId, SecretManagerProviderMetaData } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { SecretManagerProvider } from './secret-manager-providers'
+import { SecretManagerProvider, throwConnectionError, throwGetSecretError } from './secret-manager-providers'
 
 export const ONEPASSWORD_PROVIDER_METADATA: SecretManagerProviderMetaData = {
     id: SecretManagerProviderId.ONEPASSWORD,
@@ -39,12 +39,7 @@ export const onePasswordProvider = (log: FastifyBaseLogger): SecretManagerProvid
             return true
         }
         catch (error: unknown) {
-            const message = error instanceof Error ? error.message : 'Unknown error'
-            log.error({ message, provider: SecretManagerProviderId.ONEPASSWORD }, '[onePasswordProvider#checkConnection]')
-            throw new ActivepiecesError({
-                code: ErrorCode.SECRET_MANAGER_CONNECTION_FAILED,
-                params: { message, provider: SecretManagerProviderId.ONEPASSWORD },
-            })
+            throwConnectionError({ error, provider: SecretManagerProviderId.ONEPASSWORD, log })
         }
     },
     connect: async (config) => {
@@ -61,13 +56,7 @@ export const onePasswordProvider = (log: FastifyBaseLogger): SecretManagerProvid
         }
         catch (error: unknown) {
             if (error instanceof ActivepiecesError) throw error
-            let message = error instanceof Error ? error.message : 'Unknown error'
-            message = `[${request.path}] ${message}`
-            log.error({ message, provider: SecretManagerProviderId.ONEPASSWORD, request }, '[onePasswordProvider#getSecret]')
-            throw new ActivepiecesError({
-                code: ErrorCode.SECRET_MANAGER_GET_SECRET_FAILED,
-                params: { message, provider: SecretManagerProviderId.ONEPASSWORD, request },
-            })
+            throwGetSecretError({ error, path: request.path, provider: SecretManagerProviderId.ONEPASSWORD, request, log })
         }
     },
 })

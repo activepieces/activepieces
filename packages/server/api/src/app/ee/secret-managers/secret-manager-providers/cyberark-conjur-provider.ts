@@ -1,8 +1,8 @@
 import https from 'https'
-import { ActivepiecesError, ErrorCode, SecretManagerProviderId, SecretManagerProviderMetaData } from '@activepieces/shared'
+import { SecretManagerProviderId, SecretManagerProviderMetaData } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { apAxios } from '../../../helper/ap-axios'
-import { SecretManagerProvider } from './secret-manager-providers'
+import { SecretManagerProvider, throwConnectionError, throwGetSecretError } from './secret-manager-providers'
 
 export const CYBERARK_PROVIDER_METADATA: SecretManagerProviderMetaData = {
     id: SecretManagerProviderId.CYBERARK,
@@ -48,23 +48,11 @@ export const cyberarkConjurProvider = (log: FastifyBaseLogger): SecretManagerPro
             method: 'POST',
             body: config.apiKey,
         }).catch((error) => {
-            throw new ActivepiecesError({
-                code: ErrorCode.SECRET_MANAGER_CONNECTION_FAILED,
-                params: {
-                    message: error.message,
-                    provider: SecretManagerProviderId.CYBERARK,
-                },
-            })
+            throwConnectionError({ error, provider: SecretManagerProviderId.CYBERARK, log })
         })
         const token = response.data
         if (!token) {
-            throw new ActivepiecesError({
-                code: ErrorCode.SECRET_MANAGER_CONNECTION_FAILED,
-                params: {
-                    message: 'No token received',
-                    provider: SecretManagerProviderId.CYBERARK,
-                },
-            })
+            throwConnectionError({ error: 'No token received', provider: SecretManagerProviderId.CYBERARK, log })
         }
         return Buffer.from(String(token).trim(), 'utf8').toString('base64')
     },
@@ -83,39 +71,12 @@ export const cyberarkConjurProvider = (log: FastifyBaseLogger): SecretManagerPro
             token,
             method: 'GET',
         }).catch((error) => {
-            let message = error instanceof Error ? error.message : 'Unknown error'
-            message = `[${request.path}] ${message}`
-            log.error({
-                message,
-                provider: SecretManagerProviderId.CYBERARK,
-                request,
-            }, '[cyberarkConjurProvider#getSecret]')
-            throw new ActivepiecesError({
-                code: ErrorCode.SECRET_MANAGER_GET_SECRET_FAILED,
-                params: {
-                    message,
-                    provider: SecretManagerProviderId.CYBERARK,
-                    request,
-                },
-            })
+            throwGetSecretError({ error, path: request.path, provider: SecretManagerProviderId.CYBERARK, request, log })
         })
         const data = response.data
 
         if (!data) {
-            const message = `[${request.path}] No secret found at requested path`
-            log.error({
-                message,
-                provider: SecretManagerProviderId.CYBERARK,
-                request,
-            }, '[cyberarkConjurProvider#getSecret]')
-            throw new ActivepiecesError({
-                code: ErrorCode.SECRET_MANAGER_GET_SECRET_FAILED,
-                params: {
-                    message,
-                    provider: SecretManagerProviderId.CYBERARK,
-                    request,
-                },
-            })
+            throwGetSecretError({ error: 'No secret found at requested path', path: request.path, provider: SecretManagerProviderId.CYBERARK, request, log })
         }
         return data
     },
