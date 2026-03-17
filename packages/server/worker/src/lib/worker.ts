@@ -12,6 +12,7 @@ import {
 } from '@activepieces/shared'
 import { trace } from '@opentelemetry/api'
 import { nanoid } from 'nanoid'
+import os from 'os'
 import { io, Socket } from 'socket.io-client'
 import { pieceInstaller } from './cache/pieces/piece-installer'
 import { getApiUrl, system, WorkerSystemProp } from './config/configs'
@@ -28,6 +29,8 @@ let socket: Socket | null = null
 let polling = false
 
 const workerId = `worker-${nanoid()}`
+
+const workerHostname = os.hostname()
 
 let sandboxManagers: SandboxManager[] = []
 
@@ -209,15 +212,20 @@ async function buildMachineInfo(): Promise<WorkerMachineHealthcheckRequest> {
     const memInfo = await systemUsage.getContainerMemoryUsage()
     const diskInfo = await systemUsage.getDiskInfo()
     const cpuCores = await systemUsage.getCpuCores()
+    const settings = workerSettings.getSettings()
     return {
         workerId,
         cpuUsagePercentage: systemUsage.getCpuUsage(),
         diskInfo,
-        workerProps: {},
+        workerProps: {
+            EXECUTION_MODE: settings.EXECUTION_MODE,
+            WORKER_CONCURRENCY: system.get(WorkerSystemProp.WORKER_CONCURRENCY)!,
+            SANDBOX_MEMORY_LIMIT: settings.SANDBOX_MEMORY_LIMIT,
+        },
         ramUsagePercentage: memInfo.ramUsage,
         totalAvailableRamInBytes: memInfo.totalRamInBytes,
         totalCpuCores: cpuCores,
-        ip: '127.0.0.1',
+        ip: workerHostname,
     }
 }
 
