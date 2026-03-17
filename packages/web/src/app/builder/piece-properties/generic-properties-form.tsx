@@ -29,7 +29,6 @@ export const GenericPropertiesForm = React.memo(
     useMentionTextInput,
     onValueChange,
     dynamicPropsInfo,
-    showSecretInput = false,
   }: GenericPropertiesFormProps) => {
     const form = useFormContext();
     return (
@@ -50,7 +49,6 @@ export const GenericPropertiesForm = React.memo(
                 control={form.control}
                 render={({ field }) =>
                   selectGenericFormComponentForProperty({
-                    showSecretInput,
                     field: {
                       ...field,
                       onChange: (value) => {
@@ -89,7 +87,6 @@ export const GenericPropertiesForm = React.memo(
 GenericPropertiesForm.displayName = 'GenericFormComponent';
 
 type GenericPropertiesFormProps = {
-  showSecretInput?: boolean;
   props: PiecePropertyMap | OAuth2Props | ArraySubProps<boolean>;
   /**Use this to allow user toggling property execution type */
   propertySettings: Record<string, PropertySettings> | null;

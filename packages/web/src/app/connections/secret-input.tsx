@@ -5,7 +5,7 @@ import {
 import { t } from 'i18next';
 import { KeyRound } from 'lucide-react';
 import * as React from 'react';
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Input, InputProps } from '@/components/ui/input';
@@ -22,6 +22,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { secretManagersHooks } from '@/features/secret-managers';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { cn } from '@/lib/utils';
 
 type SecretInputProps = Omit<InputProps, 'value' | 'onChange'> & {
@@ -79,12 +80,13 @@ const SecretInput = React.forwardRef<HTMLInputElement, SecretInputProps>(
   ) => {
     const { onBlur, name, disabled, ...otherProps } = restProps;
 
+    const { platform } = platformHooks.useCurrentPlatform();
     const { data: connections } =
       secretManagersHooks.useListSecretManagerConnections({
         connectedOnly: true,
       });
 
-    const getSecretParamsForConnection = (connectionId: string | null) => {
+    const getSecretParamsForConnection = (connectionId: string | undefined) => {
       if (!connectionId || !connections) return [];
       const connection = connections.find((c) => c.id === connectionId);
       if (!connection) return [];
@@ -97,19 +99,13 @@ const SecretInput = React.forwardRef<HTMLInputElement, SecretInputProps>(
     const [showSecretManagerInput, setShowSecretInput] = useState(false);
 
     const [selectedConnectionId, setSelectedConnectionId] = useState<
-      string | null
-    >(null);
-
-    useEffect(() => {
-      if (connections && connections.length > 0 && !selectedConnectionId) {
-        setSelectedConnectionId(connections[0].id);
-      }
-    }, [connections]);
+      string | undefined
+    >(undefined);
 
     const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
 
     const buildSecretValue = (
-      connectionId: string | null,
+      connectionId: string | undefined,
       fieldValues: Record<string, string>,
     ): string => {
       const values = getSecretParamsForConnection(connectionId).map(
@@ -121,7 +117,7 @@ const SecretInput = React.forwardRef<HTMLInputElement, SecretInputProps>(
       return `{{${parts}}}`;
     };
 
-    const toggleSecretManager = useCallback(() => {
+    const toggleSecretManager = () => {
       const newShowSecretInput = !showSecretManagerInput;
       setShowSecretInput(newShowSecretInput);
 
@@ -131,45 +127,36 @@ const SecretInput = React.forwardRef<HTMLInputElement, SecretInputProps>(
       } else {
         onChange?.('');
       }
-    }, [showSecretManagerInput, selectedConnectionId, fieldValues, onChange]);
+    };
 
-    const handleConnectionChange = useCallback(
-      (newConnectionId: string) => {
-        setSelectedConnectionId(newConnectionId);
-        const newFieldValues: Record<string, string> = {};
-        getSecretParamsForConnection(newConnectionId).forEach((param) => {
-          newFieldValues[param.name] = '';
-        });
-        setFieldValues(newFieldValues);
-        const newValue = buildSecretValue(newConnectionId, newFieldValues);
-        onChange?.(newValue);
-      },
-      [onChange, connections],
-    );
+    const handleConnectionChange = (newConnectionId: string) => {
+      setSelectedConnectionId(newConnectionId);
+      const newFieldValues: Record<string, string> = {};
+      getSecretParamsForConnection(newConnectionId).forEach((param) => {
+        newFieldValues[param.name] = '';
+      });
+      setFieldValues(newFieldValues);
+      const newValue = buildSecretValue(newConnectionId, newFieldValues);
+      onChange?.(newValue);
+    };
 
-    const handleFieldChange = useCallback(
-      (fieldKey: string, fieldValue: string) => {
-        const newFieldValues = { ...fieldValues, [fieldKey]: fieldValue };
-        setFieldValues(newFieldValues);
-        const newValue = buildSecretValue(selectedConnectionId, newFieldValues);
-        onChange?.(newValue);
-      },
-      [fieldValues, selectedConnectionId, onChange],
-    );
+    const handleFieldChange = (fieldKey: string, fieldValue: string) => {
+      const newFieldValues = { ...fieldValues, [fieldKey]: fieldValue };
+      setFieldValues(newFieldValues);
+      const newValue = buildSecretValue(selectedConnectionId, newFieldValues);
+      onChange?.(newValue);
+    };
 
-    const handleNormalInputChange = useCallback(
-      (e: React.ChangeEvent<HTMLInputElement>) => {
-        onChange?.(e.target.value);
-      },
-      [onChange],
-    );
+    const handleNormalInputChange = (
+      e: React.ChangeEvent<HTMLInputElement>,
+    ) => {
+      onChange?.(e.target.value);
+    };
 
-    const currentFields = useMemo(
-      () => getSecretParamsForConnection(selectedConnectionId) || [],
-      [selectedConnectionId, showSecretManagerInput, connections],
-    );
+    const currentFields =
+      getSecretParamsForConnection(selectedConnectionId) || [];
 
-    const getProviderForConnection = (connectionId: string | null) => {
+    const getProviderForConnection = (connectionId: string | undefined) => {
       if (!connectionId || !connections) return undefined;
       const connection = connections.find((c) => c.id === connectionId);
       return SECRET_MANAGER_PROVIDERS_METADATA.find(
@@ -182,7 +169,7 @@ const SecretInput = React.forwardRef<HTMLInputElement, SecretInputProps>(
     );
     const selectedProvider = getProviderForConnection(selectedConnectionId);
 
-    if (selectedConnectionId && showSecretManagerInput) {
+    if (showSecretManagerInput) {
       return (
         <div className={cn('flex flex-col gap-2', className)}>
           <div className="flex items-center gap-2">
@@ -232,16 +219,26 @@ const SecretInput = React.forwardRef<HTMLInputElement, SecretInputProps>(
                 })}
               </SelectContent>
             </Select>
-            {currentFields.map((param) => (
+            {currentFields.length === 0 ? (
               <Input
-                key={param.name}
-                placeholder={param.placeholder}
-                value={fieldValues[param.name] || ''}
-                onChange={(e) => handleFieldChange(param.name, e.target.value)}
-                disabled={disabled}
+                disabled
                 type="text"
+                className="bg-muted/50 cursor-not-allowed!"
               />
-            ))}
+            ) : (
+              currentFields.map((param) => (
+                <Input
+                  key={param.name}
+                  placeholder={param.placeholder}
+                  value={fieldValues[param.name] || ''}
+                  onChange={(e) =>
+                    handleFieldChange(param.name, e.target.value)
+                  }
+                  disabled={disabled}
+                  type="text"
+                />
+              ))
+            )}
           </div>
         </div>
       );
@@ -249,7 +246,8 @@ const SecretInput = React.forwardRef<HTMLInputElement, SecretInputProps>(
 
     return (
       <div className={cn('flex items-center gap-2', className)}>
-        {connections &&
+        {platform.plan.secretManagersEnabled &&
+          connections &&
           connections.length > 0 &&
           allowTogglingSecretManagerMode && (
             <SecretManagerToggleButton

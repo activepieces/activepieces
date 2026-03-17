@@ -157,11 +157,6 @@ export type UpsertGlobalConnectionRequestBody = z.infer<typeof UpsertGlobalConne
 export const GetOAuth2AuthorizationUrlRequestBody = z.object({
     pieceName: z.string(),
     pieceVersion: z.string().optional(),
-    connectionType: z.union([
-        z.literal(AppConnectionType.OAUTH2),
-        z.literal(AppConnectionType.CLOUD_OAUTH2),
-        z.literal(AppConnectionType.PLATFORM_OAUTH2),
-    ]),
     projectId: z.string().optional(),
     clientId: z.string(),
     redirectUrl: z.string(),

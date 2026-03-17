@@ -42,8 +42,6 @@ const SecretManagersPage = () => {
     secretManagersHooks.useListSecretManagerConnections();
   const { mutate: deleteConnection } =
     secretManagersHooks.useDeleteSecretManagerConnection();
-  const { mutate: clearCache, isPending: isClearingCache } =
-    secretManagersHooks.useClearCache();
 
   const isLoading = isLoadingConnections;
 

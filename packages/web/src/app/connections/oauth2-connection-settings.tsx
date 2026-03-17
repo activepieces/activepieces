@@ -139,7 +139,6 @@ function OAuth2ConnectionSettings({
                   redirectUrl,
                   form.getValues().request.value.client_id,
                   form.getValues().request.value.props,
-                  oauth2App.oauth2Type,
                   piece.name,
                   form,
                 );
@@ -168,10 +167,6 @@ async function openPopup(
   redirectUrl: string,
   clientId: string,
   props: Record<string, unknown> | undefined,
-  connectionType:
-    | AppConnectionType.OAUTH2
-    | AppConnectionType.CLOUD_OAUTH2
-    | AppConnectionType.PLATFORM_OAUTH2,
   pieceName: string,
   form: UseFormReturn<{
     request:
@@ -183,7 +178,6 @@ async function openPopup(
   const { authorizationUrl, codeVerifier } =
     await appConnectionsApi.getOAuth2AuthorizationUrl({
       pieceName,
-      connectionType,
       clientId,
       redirectUrl,
       props,

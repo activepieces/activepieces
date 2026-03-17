@@ -43,7 +43,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { AssignConnectionToProjectsControl } from '@/features/connections';
+import { ProjectSelector } from '@/features/connections';
 import { secretManagersHooks } from '@/features/secret-managers';
 import { api } from '@/lib/api';
 
@@ -230,10 +230,7 @@ const AddEditSecretManagerForm = ({
             />
 
             {watchedScope === SecretManagerConnectionScope.PROJECT && (
-              <AssignConnectionToProjectsControl
-                control={form.control}
-                name="projectIds"
-              />
+              <ProjectSelector control={form.control} name="projectIds" />
             )}
 
             {selectedProvider &&
@@ -242,7 +239,6 @@ const AddEditSecretManagerForm = ({
                   <FormField
                     key={fieldId}
                     name={`config.${fieldId}`}
-                    
                     render={({ field: formField }) => (
                       <FormItem className="space-y-2">
                         <Label htmlFor={fieldId}>
