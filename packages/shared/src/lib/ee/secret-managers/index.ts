@@ -24,7 +24,7 @@ export type SecretManager = z.infer<typeof SecretManagerEntitySchema>
 const SecretManagerConnectionBase = {
     ...BaseModelSchema,
     platformId: z.string(),
-    providerId: z.nativeEnum(SecretManagerProviderId),
+    providerId: z.enum(SecretManagerProviderId),
     name: z.string(),
 }
 

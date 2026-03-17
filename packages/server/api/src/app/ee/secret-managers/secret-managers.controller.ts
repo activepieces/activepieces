@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { secretManagerCache } from './secret-manager-cache'
 import { secretManagersService } from './secret-managers.service'
+import { StatusCodes } from 'http-status-codes'
 
 export const secretManagersController: FastifyPluginAsyncZod = async (app) => {
     const service = secretManagersService(app.log)
@@ -16,8 +17,7 @@ export const secretManagersController: FastifyPluginAsyncZod = async (app) => {
     })
 
     app.post('/', CreateSecretManagerConnection, async (request, reply) => {
-        const connection = await service.create({ ...request.body, platformId: request.principal.platform.id })
-        return reply.status(201).send(connection)
+        return await service.create({ ...request.body, platformId: request.principal.platform.id })
     })
 
     app.post('/:id', UpdateSecretManagerConnection, async (request) => {
@@ -33,12 +33,12 @@ export const secretManagersController: FastifyPluginAsyncZod = async (app) => {
             id: request.params.id,
             platformId: request.principal.platform.id,
         })
-        return reply.status(204).send()
+        return reply.status(StatusCodes.NO_CONTENT).send()
     })
 
     app.delete('/cache', ClearSecretManagerCache, async (request, reply) => {
         await secretManagerCache.invalidateConnectionEntries(request.principal.platform.id, request.query.connectionId)
-        return reply.status(204).send()
+        return reply.status(StatusCodes.NO_CONTENT).send()
     })
 }
 
