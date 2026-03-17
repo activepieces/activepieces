@@ -11,7 +11,7 @@ export const pdfcrowd = createPiece({
   auth: pdfcrowdAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/pdfcrowd.png',
-  authors: ['pdfcrowd'],
+  authors: ['pdfcrowd', 'sanket-a11y'],
   categories: [PieceCategory.CONTENT_AND_FILES],
   description:
     'Convert web pages and HTML to PDF with advanced formatting options',
