@@ -1,0 +1,24 @@
+{
+  "actions": {
+    "get_protocol_tvl": {
+      "displayName": "Get Protocol TVL",
+      "description": "Fetch the current Total Value Locked (TVL) for the Stacks protocol from DeFiLlama."
+    },
+    "get_stx_price": {
+      "displayName": "Get STX Price",
+      "description": "Fetch the current price and market data for STX (Stacks native token) from CoinGecko."
+    },
+    "get_chain_breakdown": {
+      "displayName": "Get Chain TVL Breakdown",
+      "description": "Fetch the TVL breakdown by chain for the Stacks protocol from DeFiLlama."
+    },
+    "get_tvl_history": {
+      "displayName": "Get TVL History",
+      "description": "Fetch the last 30 days of historical TVL data for the Stacks protocol from DeFiLlama."
+    },
+    "get_protocol_stats": {
+      "displayName": "Get Protocol Stats",
+      "description": "Fetch key statistics for the Stacks protocol including TVL, chains, and category from DeFiLlama."
+    }
+  }
+}
