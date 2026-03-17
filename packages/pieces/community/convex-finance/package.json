@@ -1,0 +1,36 @@
+{
+  "name": "@activepieces/piece-convex-finance",
+  "version": "0.1.0",
+  "description": "Convex Finance — veCRV booster protocol with CVX governance token",
+  "keywords": [
+    "activepieces",
+    "convex",
+    "curve",
+    "defi",
+    "crypto",
+    "yield"
+  ],
+  "homepage": "https://activepieces.com",
+  "bugs": {
+    "url": "https://github.com/activepieces/activepieces/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/activepieces/activepieces.git"
+  },
+  "license": "MIT",
+  "author": "Activepieces",
+  "main": "./src/index.ts",
+  "scripts": {
+    "publish-piece": "node ../../../../.scripts/publish-piece.mjs",
+    "lint": "eslint --ext .ts src/"
+  },
+  "peerDependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
