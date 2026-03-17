@@ -1,6 +1,9 @@
 import {
+    ActivepiecesError,
     AppConnectionValue,
     EngineOperationType,
+    EngineResponseStatus,
+    ErrorCode,
     ExecuteValidateAuthJobData,
     WorkerJobType,
 } from '@activepieces/shared'
@@ -50,6 +53,14 @@ export const executeValidationJob: JobHandler<ExecuteValidateAuthJobData> = {
         }
         catch (e) {
             await ctx.sandboxManager.invalidate(ctx.log)
+            if (e instanceof ActivepiecesError && e.error.code === ErrorCode.SANDBOX_EXECUTION_TIMEOUT) {
+                return {
+                    response: {
+                        status: EngineResponseStatus.TIMEOUT,
+                        response: { valid: false, error: 'Validation timed out' },
+                    },
+                }
+            }
             throw e
         }
         finally {
