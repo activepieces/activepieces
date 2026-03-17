@@ -1,0 +1,29 @@
+{
+  "name": "@activepieces/piece-stakestone",
+  "version": "0.0.1",
+  "description": "StakeStone piece for Activepieces — omnichain yield-bearing ETH liquid staking",
+  "keywords": [
+    "activepieces",
+    "stakestone",
+    "stone",
+    "defi",
+    "tvl",
+    "ethereum"
+  ],
+  "homepage": "https://stakestone.io",
+  "license": "MIT",
+  "main": "src/index.ts",
+  "scripts": {
+    "build": "nx build piece-stakestone"
+  },
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*"
+  },
+  "nx": {
+    "name": "piece-stakestone",
+    "tags": [
+      "piece"
+    ]
+  }
+}

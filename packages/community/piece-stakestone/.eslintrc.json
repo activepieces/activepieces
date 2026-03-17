@@ -1,0 +1,21 @@
+{
+  "extends": [
+    "../../../.eslintrc.json"
+  ],
+  "ignorePatterns": [
+    "!**/*"
+  ],
+  "overrides": [
+    {
+      "files": [
+        "*.ts"
+      ],
+      "parserOptions": {
+        "project": [
+          "packages/community/piece-stakestone/tsconfig.*?.json"
+        ]
+      },
+      "rules": {}
+    }
+  ]
+}
