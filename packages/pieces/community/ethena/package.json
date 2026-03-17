@@ -1,0 +1,38 @@
+{
+  "name": "@activepieces/piece-ethena",
+  "version": "0.0.1",
+  "description": "Ethena is a synthetic dollar protocol built on Ethereum, offering USDe — a crypto-native stablecoin backed by delta-hedged ETH derivatives. sUSDe earns staking rewards. ENA is the governance token.",
+  "keywords": [
+    "activepieces",
+    "piece",
+    "ethena",
+    "defi",
+    "usde",
+    "ena",
+    "stablecoin",
+    "defillama",
+    "coingecko"
+  ],
+  "homepage": "https://www.activepieces.com",
+  "bugs": {
+    "url": "https://github.com/activepieces/activepieces/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/activepieces/activepieces.git",
+    "directory": "packages/pieces/community/ethena"
+  },
+  "license": "MIT",
+  "author": "bossco7598",
+  "main": "./src/index.ts",
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
