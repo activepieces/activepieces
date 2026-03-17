@@ -1,28 +1,32 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { defiLlamaRequest } from '../sudoswap-api';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 
 export const getChainBreakdown = createAction({
-  name: 'get_chain_breakdown',
-  displayName: 'Get Chain TVL Breakdown',
-  description:
-    'Retrieve the TVL breakdown across all chains where Sudoswap is deployed, sourced from DeFiLlama.',
+  name: 'getChainBreakdown',
+  displayName: 'Get Chain Breakdown',
+  description: 'Fetch the TVL breakdown by blockchain for the Sudoswap protocol via DeFiLlama.',
   props: {},
   async run() {
-    const data = await defiLlamaRequest<any>('/protocol/sudoswap');
+    const response = await httpClient.sendRequest<Record<string, unknown>>({
+      method: HttpMethod.GET,
+      url: 'https://api.llama.fi/protocol/sudoswap',
+    });
 
-    const chainTvls = data.currentChainTvls ?? {};
-    const breakdown = Object.entries(chainTvls).map(([chain, tvl]) => ({
+    const data = response.body;
+    const currentChainTvls = (data['currentChainTvls'] as Record<string, number>) || {};
+    const chains = (data['chains'] as string[]) || [];
+
+    const breakdown = chains.map((chain: string) => ({
       chain,
-      tvlUSD: tvl,
+      tvl_usd: currentChainTvls[chain] || 0,
     }));
 
-    breakdown.sort((a: any, b: any) => (b.tvlUSD as number) - (a.tvlUSD as number));
+    breakdown.sort((a, b) => b.tvl_usd - a.tvl_usd);
 
     return {
+      total_chains: chains.length,
       chains: breakdown,
-      totalChains: breakdown.length,
-      dominantChain: breakdown[0]?.chain ?? null,
-      dominantChainTvl: breakdown[0]?.tvlUSD ?? null,
+      last_updated: new Date().toISOString(),
     };
   },
 });
