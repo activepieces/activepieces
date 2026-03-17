@@ -1,0 +1,24 @@
+{
+  "name": "@activepieces/piece-symbiosis-finance",
+  "version": "0.1.0",
+  "description": "Symbiosis Finance cross-chain swap protocol piece for Activepieces",
+  "keywords": [
+    "activepieces",
+    "symbiosis",
+    "cross-chain",
+    "swap",
+    "defi"
+  ],
+  "homepage": "https://symbiosis.finance",
+  "license": "MIT",
+  "exports": {
+    ".": {
+      "import": "./src/index.ts"
+    }
+  },
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*"
+  }
+}
