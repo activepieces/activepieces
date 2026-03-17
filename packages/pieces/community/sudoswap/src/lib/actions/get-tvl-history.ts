@@ -1,58 +1,52 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { defiLlamaRequest } from '../sudoswap-api';
+import { createAction } from '@activepieces/pieces-framework';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+
+interface TvlDataPoint {
+  date: number;
+  totalLiquidityUSD: number;
+}
 
 export const getTvlHistory = createAction({
-  name: 'get_tvl_history',
+  name: 'getTvlHistory',
   displayName: 'Get TVL History',
-  description:
-    'Retrieve historical TVL data for Sudoswap over the last N days from DeFiLlama.',
-  props: {
-    days: Property.StaticDropdown({
-      displayName: 'Days of History',
-      description: 'Number of past days to return.',
-      required: true,
-      defaultValue: '30',
-      options: {
-        options: [
-          { label: '7 Days', value: '7' },
-          { label: '30 Days', value: '30' },
-          { label: '90 Days', value: '90' },
-          { label: 'All Time', value: 'all' },
-        ],
-      },
-    }),
-  },
-  async run({ propsValue }) {
-    const { days } = propsValue;
-    const data = await defiLlamaRequest<any>('/protocol/sudoswap');
+  description: 'Fetch the last 30 days of historical TVL data for Sudoswap via DeFiLlama.',
+  props: {},
+  async run() {
+    const response = await httpClient.sendRequest<TvlDataPoint[]>({
+      method: HttpMethod.GET,
+      url: 'https://api.llama.fi/protocol/sudoswap',
+    });
 
-    const tvlSeries: Array<{ date: string; tvlUSD: number }> = (data.tvl ?? []).map(
-      (entry: { date: number; totalLiquidityUSD: number }) => ({
-        date: new Date(entry.date * 1000).toISOString().split('T')[0],
-        tvlUSD: entry.totalLiquidityUSD,
-      })
-    );
+    const data = response.body as unknown as Record<string, unknown>;
+    const tvlHistory = (data['tvl'] as TvlDataPoint[]) || [];
 
-    const limit = days === 'all' ? tvlSeries.length : parseInt(days as string, 10);
-    const sliced = tvlSeries.slice(-limit);
+    // Get last 30 days
+    const thirtyDaysAgo = Math.floor(Date.now() / 1000) - 30 * 24 * 60 * 60;
+    const recent = tvlHistory
+      .filter((point: TvlDataPoint) => point.date >= thirtyDaysAgo)
+      .map((point: TvlDataPoint) => ({
+        date: new Date(point.date * 1000).toISOString().split('T')[0],
+        timestamp: point.date,
+        tvl_usd: point.totalLiquidityUSD,
+      }));
 
-    const tvlValues = sliced.map((e) => e.tvlUSD);
-    const maxTvl = Math.max(...tvlValues);
-    const minTvl = Math.min(...tvlValues);
-    const latestTvl = sliced[sliced.length - 1]?.tvlUSD ?? null;
-    const earliestTvl = sliced[0]?.tvlUSD ?? null;
-    const changePercent =
-      earliestTvl && earliestTvl !== 0
-        ? (((latestTvl - earliestTvl) / earliestTvl) * 100).toFixed(2)
-        : null;
+    const tvlValues = recent.map((p) => p.tvl_usd);
+    const maxTvl = tvlValues.length > 0 ? Math.max(...tvlValues) : 0;
+    const minTvl = tvlValues.length > 0 ? Math.min(...tvlValues) : 0;
+    const avgTvl =
+      tvlValues.length > 0
+        ? tvlValues.reduce((a, b) => a + b, 0) / tvlValues.length
+        : 0;
 
     return {
-      history: sliced,
-      dataPoints: sliced.length,
-      latestTvl,
-      maxTvl,
-      minTvl,
-      changePercent: changePercent !== null ? parseFloat(changePercent) : null,
+      period: '30d',
+      data_points: recent.length,
+      history: recent,
+      stats: {
+        max_tvl_usd: maxTvl,
+        min_tvl_usd: minTvl,
+        avg_tvl_usd: Math.round(avgTvl),
+      },
     };
   },
 });
