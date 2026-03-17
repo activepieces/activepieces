@@ -1,5 +1,5 @@
-import { securityAccess } from '@activepieces/server-common'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import { securityAccess } from '../core/security/authorization/fastify-security'
 import { projectService } from './project-service'
 
 export const projectWorkerController: FastifyPluginAsyncZod = async (

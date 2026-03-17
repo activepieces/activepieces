@@ -1,8 +1,8 @@
 import { PieceMetadataModel } from '@activepieces/pieces-framework'
-import { securityAccess } from '@activepieces/server-common'
 import { AddPieceRequestBody, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
+import { securityAccess } from '../core/security/authorization/fastify-security'
 import { pieceInstallService } from './piece-install-service'
 
 export const communityPiecesModule: FastifyPluginAsyncZod = async (app) => {

@@ -1,22 +1,23 @@
 import { apId, LATEST_JOB_DATA_SCHEMA_VERSION, UserInteractionJobDataWithoutWatchingInformation } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { engineResponseWatcher } from './engine-response-watcher'
-import { jobQueue } from './queue/job-queue'
-import { JobType } from './queue/queue-manager'
+import { jobQueue, JobType } from './job-queue/job-queue'
 
 export const userInteractionWatcher = (log: FastifyBaseLogger) => ({
     submitAndWaitForResponse: async <T>(request: UserInteractionJobDataWithoutWatchingInformation, requestId?: string): Promise<T> => {
         const id = requestId ?? apId()
-        await jobQueue(log).add({
+        const job = await jobQueue(log).add({
             id,
             type: JobType.ONE_TIME,
             data: {
                 ...request,
-                requestId: id,
-                webserverId: engineResponseWatcher(log).getServerId(),
                 schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
             },
         })
-        return engineResponseWatcher(log).oneTimeListener<T>(id, false, undefined, undefined)
+        if (!job) {
+            throw new Error('Failed to create job')
+        }
+        const queueEvents = await jobQueue(log).getQueueEvents(request.platformId)
+        const result = await job.waitUntilFinished(queueEvents)
+        return result.response as T
     },
 })

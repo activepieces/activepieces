@@ -8,15 +8,12 @@ export const workersKeys = {
 };
 
 export const workersQueries = {
-  useWorkerMachines: (
-    showDemoData: boolean,
-    demoData: WorkerMachineWithStatus[],
-  ) =>
+  useWorkerMachines: () =>
     useQuery<WorkerMachineWithStatus[]>({
       queryKey: workersKeys.all,
       staleTime: 0,
       gcTime: 0,
       refetchInterval: 5000,
-      queryFn: async () => (showDemoData ? demoData : await workersApi.list()),
+      queryFn: () => workersApi.list(),
     }),
 };

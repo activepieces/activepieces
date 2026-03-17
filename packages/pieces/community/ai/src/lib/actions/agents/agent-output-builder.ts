@@ -148,7 +148,13 @@ function getToolMetadata({
   toolKeyToAgentTool,
 }: GetToolMetadataParams): ToolCallContentBlock {
   const tool = toolKeyToAgentTool[toolName];
-  assertNotNullOrUndefined(tool, `Tool ${toolName} not found`);
+  if (isNil(tool)) {
+    return {
+      ...baseTool,
+      toolCallType: ToolCallType.UNKNOWN,
+      displayName: toolName,
+    };
+  }
 
   switch (tool.type) {
     case AgentToolType.PIECE: {

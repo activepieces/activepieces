@@ -1,4 +1,3 @@
-import { AppSystemProp, networkUtils, securityAccess } from '@activepieces/server-common'
 import { ApplicationEventName,
     assertNotNullOrUndefined,
     PrincipalType,
@@ -9,8 +8,11 @@ import { ApplicationEventName,
 } from '@activepieces/shared'
 import { RateLimitOptions } from '@fastify/rate-limit'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import { securityAccess } from '../core/security/authorization/fastify-security'
 import { applicationEvents } from '../helper/application-events'
+import { networkUtils } from '../helper/network-utils'
 import { system } from '../helper/system/system'
+import { AppSystemProp } from '../helper/system/system-props'
 import { platformUtils } from '../platform/platform.utils'
 import { userService } from '../user/user-service'
 import { authenticationService } from './authentication.service'

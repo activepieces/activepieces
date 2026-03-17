@@ -1,6 +1,5 @@
 import { ContextVersion } from '@activepieces/pieces-framework'
 import { AppConnection, AppConnectionStatus, AppConnectionType, AppConnectionValue, ConnectionExpiredError, ConnectionLoadingError, ConnectionNotFoundError, ExecutionError, FetchError } from '@activepieces/shared'
-import { StatusCodes } from 'http-status-codes'
 import { utils } from '../utils'
     
 export const createConnectionService = ({ projectId, engineToken, apiUrl, contextVersion }: CreateConnectionServiceParams): ConnectionService => {
@@ -44,7 +43,7 @@ export const createConnectionService = ({ projectId, engineToken, apiUrl, contex
 }
 
 const handleResponseError = ({ externalId, httpStatus }: HandleResponseErrorParams): never => {
-    if (httpStatus === StatusCodes.NOT_FOUND.valueOf()) {
+    if (httpStatus === 404) {
         throw new ConnectionNotFoundError(externalId)
     }
 

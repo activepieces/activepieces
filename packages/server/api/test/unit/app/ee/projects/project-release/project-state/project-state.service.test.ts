@@ -1,4 +1,4 @@
-import { FlowVersion, PopulatedFlow } from '@activepieces/shared'
+import { FlowOperationStatus, FlowVersion, PopulatedFlow } from '@activepieces/shared'
 import { projectStateService } from '../../../../../../../src/app/ee/projects/project-release/project-state/project-state.service'
 import { system } from '../../../../../../../src/app/helper/system/system'
 import { flowGenerator } from '../../../../../../helpers/flow-generator'
@@ -21,6 +21,14 @@ describe('ProjectStateService', () => {
             } as PopulatedFlow
             const flowState = await projectStateService(logger).getFlowState(flow)
             expect(flowState).not.toHaveProperty('extraProperty')
+        })
+
+        it('should default operationStatus to NONE when missing (e.g. flow stored in git before field was added)', async () => {
+            const flow = flowGenerator.simpleActionAndTrigger()
+            const flowWithoutOperationStatus = { ...flow } as Partial<PopulatedFlow>
+            delete flowWithoutOperationStatus.operationStatus
+            const flowState = await projectStateService(logger).getFlowState(flowWithoutOperationStatus as PopulatedFlow)
+            expect(flowState.operationStatus).toBe(FlowOperationStatus.NONE)
         })
     })
 

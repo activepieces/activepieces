@@ -187,7 +187,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         }
         
         
-        return { provider: aiProvider.provider, auth, config: aiProvider.config }
+        return { provider: aiProvider.provider, auth, config: aiProvider.config, platformId }
     },
     async getActivepiecesProviderIfEnriched(platformId: PlatformId): Promise<ActivePiecesProviderAuthConfig | null> {
         const aiProvider = await aiProviderRepo().findOneBy({
@@ -271,7 +271,7 @@ async function enrichWithKeysIfNeeded(aiProvider: AIProviderSchema, platformId: 
         platformId,
         lastFreeAiCreditsRenewalDate: new Date().toISOString(),
     })
-    return { provider: savedAiProvider.provider, auth: rawAuth, config: savedAiProvider.config }
+    return { provider: savedAiProvider.provider, auth: rawAuth, config: savedAiProvider.config, platformId }
 }
 
 

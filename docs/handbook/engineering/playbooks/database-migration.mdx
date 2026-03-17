@@ -60,7 +60,7 @@ PGlite is a lightweight PostgreSQL implementation that runs embedded, so migrati
 While PGlite is mostly PostgreSQL-compatible, some features are not supported. When using features like `CONCURRENTLY` for index operations, you need to conditionally handle PGlite:
 
 ```typescript
-import { AppSystemProp } from '@activepieces/server-common'
+import { AppSystemProp } from '@activepieces/server-utils'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 import { DatabaseType, system } from '../../../helper/system/system'
 

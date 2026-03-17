@@ -83,7 +83,7 @@ describe('App Credentials API', () => {
 
             const response = await app?.inject({
                 method: 'GET',
-                url: `/v1/app-credentials?projectId=${ctx.project.id}`,
+                url: `/api/v1/app-credentials?projectId=${ctx.project.id}`,
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -116,7 +116,7 @@ describe('App Credentials API', () => {
 
             const response = await app?.inject({
                 method: 'GET',
-                url: `/v1/app-credentials?projectId=${ctx.project.id}&appName=filter-app-a`,
+                url: `/api/v1/app-credentials?projectId=${ctx.project.id}&appName=filter-app-a`,
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -153,7 +153,7 @@ describe('App Credentials API', () => {
 
             const response = await app?.inject({
                 method: 'GET',
-                url: `/v1/app-credentials?projectId=${ctx.project.id}&appName=censor-test-app`,
+                url: `/api/v1/app-credentials?projectId=${ctx.project.id}&appName=censor-test-app`,
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },

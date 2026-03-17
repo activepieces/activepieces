@@ -1,4 +1,3 @@
-import { ProjectResourceType, securityAccess } from '@activepieces/server-common'
 import {
     AppConnectionScope,
     ConnectionKeyId,
@@ -10,6 +9,8 @@ import { FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
+import { ProjectResourceType } from '../../core/security/authorization/common'
+import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { projectService } from '../../project/project-service'
 import { connectionKeyService } from './connection-key.service'
 

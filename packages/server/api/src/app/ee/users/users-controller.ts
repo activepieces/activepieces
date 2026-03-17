@@ -1,4 +1,3 @@
-import { securityAccess } from '@activepieces/server-common'
 import {
     AP_MAXIMUM_PROFILE_PICTURE_SIZE,
     ApId,
@@ -14,6 +13,7 @@ import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { userIdentityService } from '../../authentication/user-identity/user-identity-service'
+import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { fileService } from '../../file/file.service'
 import { userService } from '../../user/user-service'
 

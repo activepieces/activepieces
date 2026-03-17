@@ -1,6 +1,5 @@
 import { ContextVersion } from '@activepieces/pieces-framework'
 import { applyFunctionToValues, isNil, isString } from '@activepieces/shared'
-import replaceAsync from 'string-replace-async'
 import { initCodeSandbox } from '../core/code/code-sandbox'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { createConnectionService } from '../services/connections.service'
@@ -123,7 +122,7 @@ async function resolveInputAsync(params: ResolveInputInternalParams): Promise<un
         return mergeFlattenedKeysArraysIntoOneArray(input, tokensThatNeedResolving, resolveOptions, params.contextVersion)
     }
 
-    return replaceAsync(input, VARIABLE_PATTERN, async (_fullMatch, variableName) => {
+    return stringReplaceAsync(input, VARIABLE_PATTERN, async (_fullMatch, variableName) => {
         const result = await resolveSingleToken({
             ...resolveOptions,
             variableName,
@@ -257,6 +256,25 @@ type ResolveInputParams = {
 type ResolveResult<T = unknown> = {
     resolvedInput: T
     censoredInput: unknown
+}
+
+async function stringReplaceAsync(str: string, regex: RegExp, replacer: (...args: string[]) => Promise<string>): Promise<string> {
+    const matches: { match: string, groups: string[], index: number }[] = []
+    str.replace(regex, (match, ...args) => {
+        const groups = args.slice(0, -2) as string[]
+        const index = args[args.length - 2] as unknown as number
+        matches.push({ match, groups, index })
+        return match
+    })
+    let result = ''
+    let lastIndex = 0
+    for (const { match, groups, index } of matches) {
+        result += str.slice(lastIndex, index)
+        result += await replacer(match, ...groups)
+        lastIndex = index + match.length
+    }
+    result += str.slice(lastIndex)
+    return result
 }
 
 type PropsResolverParams = {

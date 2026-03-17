@@ -1,6 +1,5 @@
 
 import { OAuth2AuthorizationMethod } from '@activepieces/pieces-framework'
-import { apAxios } from '@activepieces/server-common'
 import {
     ActivepiecesError,
     AppConnectionType,
@@ -8,6 +7,7 @@ import {
     ErrorCode,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { apAxios } from '../../../../helper/ap-axios'
 import { system } from '../../../../helper/system/system'
 import {
     ClaimOAuth2Request,

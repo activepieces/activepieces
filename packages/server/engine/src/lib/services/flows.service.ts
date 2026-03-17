@@ -1,13 +1,6 @@
 import { FlowsContext, ListFlowsContextParams } from '@activepieces/pieces-framework'
-import { PopulatedFlow, SeekPage } from '@activepieces/shared'
+import { FetchError, PopulatedFlow, SeekPage } from '@activepieces/shared'
 
-
-type CreateFlowsServiceParams = {
-    engineToken: string
-    internalApiUrl: string
-    flowId: string
-    flowVersionId: string
-}
 export const createFlowsContext = ({ engineToken, internalApiUrl, flowId, flowVersionId }: CreateFlowsServiceParams): FlowsContext => {
     return {
         async list(params: ListFlowsContextParams): Promise<SeekPage<PopulatedFlow>> {
@@ -15,13 +8,16 @@ export const createFlowsContext = ({ engineToken, internalApiUrl, flowId, flowVe
             if (params?.externalIds) {
                 queryParams.set('externalIds', params.externalIds.join(','))
             }
-            const response = await fetch(`${internalApiUrl}v1/engine/populated-flows?${queryParams.toString()}`, {
+            const url = `${internalApiUrl}v1/engine/populated-flows?${queryParams.toString()}`
+            const response = await fetch(url, {
                 method: 'GET',
                 headers: {
-                    'Content-Type': 'application/json',
                     Authorization: `Bearer ${engineToken}`,
                 },
             })
+            if (!response.ok) {
+                throw new FetchError(url, `status=${response.status}`)
+            }
             return response.json()
         },
         current: {
@@ -31,4 +27,11 @@ export const createFlowsContext = ({ engineToken, internalApiUrl, flowId, flowVe
             },
         },
     }
+}
+
+type CreateFlowsServiceParams = {
+    engineToken: string
+    internalApiUrl: string
+    flowId: string
+    flowVersionId: string
 }

@@ -212,6 +212,7 @@ export const apFlowStructureTool = (mcp: McpServer, log: FastifyBaseLogger): Mcp
         inputSchema: {
             flowId: z.string().describe('The id of the flow'),
         },
+        annotations: { readOnlyHint: true, openWorldHint: false },
         execute: async ({ flowId }) => {
             try {
                 const flow = await flowService(log).getOnePopulated({

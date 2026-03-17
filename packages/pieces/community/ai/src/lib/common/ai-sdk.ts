@@ -38,6 +38,7 @@ export async function createAIModel({
     const { body: {
         config,
         auth,
+        platformId,
     } } = await httpClient.sendRequest<GetProviderConfigResponse>({
         method: HttpMethod.GET,
         url: `${apiUrl}v1/ai-providers/${provider}/config`,
@@ -142,14 +143,25 @@ export async function createAIModel({
             }
         }
         case AIProviderName.CUSTOM: {
-            const { apiKeyHeader, baseUrl } = config as OpenAICompatibleProviderConfig
+            const { apiKeyHeader, baseUrl, defaultHeaders } = config as OpenAICompatibleProviderConfig
+
+            const customHeaders = defaultHeaders ?? {}
+
+            const metadataHeaders: Record<string, string> = {
+                'x-ap-project-id': projectId,
+                'x-ap-platform-id': platformId,
+                'x-ap-flow-id': flowId,
+                'x-ap-run-id': runId,
+            }
 
             const provider = createOpenAICompatible({ 
                 name: 'openai-compatible',
                 baseURL: baseUrl,
                 headers: {
-                    [apiKeyHeader]: auth.apiKey
-                }
+                    ...metadataHeaders,
+                    ...customHeaders,
+                    [apiKeyHeader]: auth.apiKey,
+                },
             })
             if (isImage) {
                 return provider.imageModel(modelId)

@@ -195,6 +195,7 @@ describe('Flow Diff Service', () => {
                     type: flowOne.version.trigger.type, // type third
                     name: flowOne.version.trigger.name, // name fourth
                     displayName: flowOne.version.trigger.displayName, // displayName last
+                    lastUpdatedDate: flowOne.version.trigger.lastUpdatedDate,
                     nextAction: flowOne.version.trigger.nextAction,
                 },
             },

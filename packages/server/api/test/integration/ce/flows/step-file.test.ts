@@ -37,7 +37,7 @@ describe('Step File API', () => {
 
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/step-files',
+                url: '/api/v1/step-files',
                 headers: {
                     authorization: `Bearer ${mockToken}`,
                 },
@@ -68,7 +68,7 @@ describe('Step File API', () => {
 
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/step-files',
+                url: '/api/v1/step-files',
                 headers: {
                     authorization: `Bearer ${mockToken}`,
                 },

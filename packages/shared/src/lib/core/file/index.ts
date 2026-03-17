@@ -27,6 +27,10 @@ export enum FileType {
      * User profile pictures, should be stored in the database.
      */
     USER_PROFILE_PICTURE = 'USER_PROFILE_PICTURE',
+    /**
+     * Large webhook payloads offloaded from Redis to file storage.
+     */
+    WEBHOOK_PAYLOAD = 'WEBHOOK_PAYLOAD',
 }
 export enum FileCompression {
     NONE = 'NONE',

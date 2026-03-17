@@ -1,9 +1,15 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import {
-	OAuth2PropertyValue,
+	AuthenticationType,
+	createCustomApiCallAction,
+	httpClient,
+	HttpMethod,
+} from '@activepieces/pieces-common';
+import {
+	PieceAuth,
 	createPiece,
 } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
+import { getIntercomRegion, getIntercomToken, IntercomAuthValue } from './lib/common';
 import { sendMessageAction } from './lib/actions/send-message.action';
 import crypto from 'node:crypto';
 import { noteAddedToConversation } from './lib/triggers/note-added-to-conversation';
@@ -51,7 +57,7 @@ import { assignConversationAction } from './lib/actions/assign-conversation-to-a
 export const intercom = createPiece({
 	displayName: 'Intercom',
 	description: 'Customer messaging platform for sales, marketing, and support',
-	minimumSupportedRelease: '0.29.0', // introduction of new intercom APP_WEBHOOK
+	minimumSupportedRelease: '0.79.0',
 	logoUrl: 'https://cdn.activepieces.com/pieces/intercom.png',
 	categories: [PieceCategory.CUSTOMER_SUPPORT],
 	auth: intercomAuth,
@@ -87,10 +93,11 @@ export const intercom = createPiece({
 		listAllTagsAction,
 		getConversationAction,
 		createCustomApiCallAction({
-			baseUrl: (auth) => `https://api.${(auth as OAuth2PropertyValue).props?.['region']}.io`,
+			baseUrl: (auth) =>
+				`https://api.${getIntercomRegion(auth as IntercomAuthValue)}.io`,
 			auth: intercomAuth,
 			authMapping: async (auth) => ({
-				Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+				Authorization: `Bearer ${getIntercomToken(auth as IntercomAuthValue)}`,
 			}),
 		}),
 	],

@@ -1,4 +1,3 @@
-import { ProjectResourceType, securityAccess } from '@activepieces/server-common'
 import {
     ConfigureRepoRequest,
     GitRepoWithoutSensitiveData,
@@ -9,6 +8,8 @@ import { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { entitiesMustBeOwnedByCurrentProject } from '../../../../authentication/authorization'
+import { ProjectResourceType } from '../../../../core/security/authorization/common'
+import { securityAccess } from '../../../../core/security/authorization/fastify-security'
 import { platformMustHaveFeatureEnabled } from '../../../authentication/ee-authorization'
 import { GitRepoEntity } from './git-sync.entity'
 import { gitRepoService } from './git-sync.service'

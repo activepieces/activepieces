@@ -180,6 +180,14 @@ async function findDistPackageJsonFiles(dirPath: string): Promise<string[]> {
 
 
 async function traverseAllParentFoldersToFindPiece(packageName: string): Promise<string | null> {
+    const customPaths = (process.env.AP_CUSTOM_PIECES_PATHS ?? '').split(':').filter(Boolean)
+    for (const customPath of customPaths) {
+        const piecePath = path.resolve(customPath, 'pieces', packageName, 'node_modules', trimVersionFromAlias(packageName))
+        if (await utils.folderExists(piecePath)) {
+            return path.join(piecePath, 'src', 'index.js')
+        }
+    }
+
     const rootDir = path.parse(__dirname).root
     let currentDir = __dirname
     const maxIterations = currentDir.split(path.sep).length

@@ -1,4 +1,3 @@
-import { ProjectResourceType, securityAccess } from '@activepieces/server-common'
 import {
     GetCurrentProjectMemberRoleQuery,
     ListProjectMembersRequestQuery,
@@ -12,6 +11,8 @@ import {
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
+import { ProjectResourceType } from '../../../core/security/authorization/common'
+import { securityAccess } from '../../../core/security/authorization/fastify-security'
 import { ProjectMemberEntity } from './project-member.entity'
 import { projectMemberService } from './project-member.service'
 

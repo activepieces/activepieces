@@ -121,7 +121,8 @@ const failIfLogSizeExceeded = async (flowExecutionContext: FlowExecutorContext, 
             type: action.type,
             status: StepOutputStatus.FAILED,
             output: undefined,
-        }))
+        })
+        .setErrorMessage('Flow run data size exceeded the maximum allowed size'))
         .setVerdict({
             status: FlowRunStatus.LOG_SIZE_EXCEEDED,
             failedStep: {

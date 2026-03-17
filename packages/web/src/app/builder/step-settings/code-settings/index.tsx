@@ -3,6 +3,7 @@ import { t } from 'i18next';
 import React from 'react';
 import { useFormContext } from 'react-hook-form';
 
+import { DictionaryInput } from '@/components/custom/dictionary-input';
 import { ApMarkdown } from '@/components/custom/markdown';
 import {
   FormField,
@@ -11,7 +12,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 
-import { DictionaryProperty } from '../../piece-properties/dictionary-property';
+import { TextInputWithMentions } from '../../piece-properties/text-input-with-mentions';
 
 import { CodeEditor } from './code-editor';
 
@@ -46,12 +47,19 @@ const CodeSettings = React.memo(({ readonly }: CodeSettingsProps) => {
               <FormLabel>{t('Inputs')}</FormLabel>
             </div>
 
-            <DictionaryProperty
+            <DictionaryInput
               disabled={readonly}
               values={field.value}
               onChange={field.onChange}
-              useMentionTextInput={true}
-            ></DictionaryProperty>
+              keyInputClassName="h-[38px]"
+              renderValueInput={({ value, onChange, disabled }) => (
+                <TextInputWithMentions
+                  initialValue={value}
+                  disabled={disabled}
+                  onChange={onChange}
+                />
+              )}
+            />
             <FormMessage />
           </FormItem>
         )}

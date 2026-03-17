@@ -1,7 +1,7 @@
-import { AppSystemProp } from '@activepieces/server-common'
 import { ApEdition } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 import { system } from '../../../helper/system/system'
+import { AppSystemProp } from '../../../helper/system/system-props'
 
 const OPERATOR_ROLE_ID = '3Wl9IAw5aM0HLafHgMYkb'
 

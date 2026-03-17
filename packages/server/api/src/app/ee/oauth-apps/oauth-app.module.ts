@@ -1,4 +1,3 @@
-import { securityAccess } from '@activepieces/server-common'
 import {
     assertNotNullOrUndefined,
     ListOAuth2AppRequest,
@@ -7,6 +6,7 @@ import {
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
+import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { oauthAppService } from './oauth-app.service'
 
 export const oauthAppModule: FastifyPluginAsyncZod = async (app) => {

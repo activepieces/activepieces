@@ -114,7 +114,7 @@ describe('Authentication API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/authentication/sign-up',
+                url: '/api/v1/authentication/sign-up',
                 body: mockSignUpRequest,
                 headers: {
                     Host: mockCustomDomain.domain,
@@ -143,7 +143,7 @@ describe('Authentication API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/authentication/sign-up',
+                url: '/api/v1/authentication/sign-up',
                 body: mockSignUpRequest,
                 headers: {
                     Host: mockCustomDomain.domain,
@@ -172,7 +172,7 @@ describe('Authentication API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/authentication/sign-up',
+                url: '/api/v1/authentication/sign-up',
                 body: mockSignUpRequest,
                 headers: {
                 },
@@ -214,7 +214,7 @@ describe('Authentication API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/authentication/sign-up',
+                url: '/api/v1/authentication/sign-up',
                 body: mockSignUpRequest,
                 headers: {
                 },
@@ -288,7 +288,7 @@ describe('Authentication API', () => {
 
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/authentication/sign-up',
+                url: '/api/v1/authentication/sign-up',
                 headers: {
                     Host: mockCustomDomain.domain,
                 },
@@ -338,7 +338,7 @@ describe('Authentication API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/authentication/sign-up',
+                url: '/api/v1/authentication/sign-up',
                 headers: {
                     Host: mockCustomDomain.domain,
                 },
@@ -390,7 +390,7 @@ describe('Authentication API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/authentication/sign-in',
+                url: '/api/v1/authentication/sign-in',
                 headers: {
                     Host: mockCustomDomain.domain,
                 },
@@ -444,7 +444,7 @@ describe('Authentication API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/authentication/sign-in',
+                url: '/api/v1/authentication/sign-in',
                 headers: {
                     Host: mockPlatformDomain,
                 },
@@ -491,7 +491,7 @@ describe('Authentication API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/authentication/sign-in',
+                url: '/api/v1/authentication/sign-in',
                 body: mockSignInRequest,
             })
 
@@ -565,7 +565,7 @@ describe('Authentication API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/authentication/sign-in',
+                url: '/api/v1/authentication/sign-in',
                 headers: {
                     Host: mockPlatformDomain,
                 },
@@ -619,7 +619,7 @@ describe('Authentication API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/authentication/sign-in',
+                url: '/api/v1/authentication/sign-in',
                 headers: {
                     Host: mockCustomDomain.domain,
                 },
@@ -670,7 +670,7 @@ describe('Authentication API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/authentication/sign-in',
+                url: '/api/v1/authentication/sign-in',
                 body: mockSignInRequest,
             })
 
@@ -728,7 +728,7 @@ describe('Authentication API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/authentication/sign-in',
+                url: '/api/v1/authentication/sign-in',
                 body: mockSignInRequest,
             })
 

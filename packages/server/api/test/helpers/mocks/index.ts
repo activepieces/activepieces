@@ -1,5 +1,5 @@
 import { LATEST_CONTEXT_VERSION, PieceMetadata } from '@activepieces/pieces-framework'
-import { apDayjs } from '@activepieces/server-common'
+import { apDayjs } from '@activepieces/server-utils'
 import {
     AiCreditsAutoTopUpState,
     AIProvider,
@@ -782,7 +782,7 @@ export const createMockAIProvider = async (aiProvider?: Partial<AIProvider>): Pr
         auth: await encryptUtils.encryptObject({
             apiKey: process.env.OPENAI_API_KEY ?? faker.string.uuid(),
         }),
-        config: {},
+        config: aiProvider?.config ?? {},
     }
     
 }

@@ -1,5 +1,5 @@
 import { SecretManagerProviderId, SecretManagerFieldsSeparator } from '@activepieces/shared'
-import { apAxios } from '@activepieces/server-common'
+import { apAxios } from '../../../../src/app/helper/ap-axios'
 import { PlatformRole, PrincipalType } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -58,7 +58,7 @@ describe('Secret Manager Cache', () => {
 
             await app!.inject({
                 method: 'POST',
-                url: '/v1/secret-managers',
+                url: '/api/v1/secret-managers',
                 headers: { authorization: `Bearer ${testToken}` },
                 body: { providerId: SecretManagerProviderId.HASHICORP, config: mockVaultConfig },
             })
@@ -68,7 +68,7 @@ describe('Secret Manager Cache', () => {
             // First list — triggers checkConnection
             await app!.inject({
                 method: 'GET',
-                url: '/v1/secret-managers',
+                url: '/api/v1/secret-managers',
                 headers: { authorization: `Bearer ${testToken}` },
             })
 
@@ -77,7 +77,7 @@ describe('Secret Manager Cache', () => {
             // Second list — should hit cache, no HTTP calls
             await app!.inject({
                 method: 'GET',
-                url: '/v1/secret-managers',
+                url: '/api/v1/secret-managers',
                 headers: { authorization: `Bearer ${testToken}` },
             })
 
@@ -100,7 +100,7 @@ describe('Secret Manager Cache', () => {
 
             await app!.inject({
                 method: 'POST',
-                url: '/v1/secret-managers',
+                url: '/api/v1/secret-managers',
                 headers: { authorization: `Bearer ${testToken}` },
                 body: { providerId: SecretManagerProviderId.HASHICORP, config: mockVaultConfig },
             })
@@ -112,7 +112,7 @@ describe('Secret Manager Cache', () => {
             // First list — checkConnection fails, should NOT be cached
             await app!.inject({
                 method: 'GET',
-                url: '/v1/secret-managers',
+                url: '/api/v1/secret-managers',
                 headers: { authorization: `Bearer ${testToken}` },
             })
 
@@ -122,7 +122,7 @@ describe('Secret Manager Cache', () => {
             // Second list — not cached, should try again
             await app!.inject({
                 method: 'GET',
-                url: '/v1/secret-managers',
+                url: '/api/v1/secret-managers',
                 headers: { authorization: `Bearer ${testToken}` },
             })
 
@@ -147,7 +147,7 @@ describe('Secret Manager Cache', () => {
 
             await app!.inject({
                 method: 'POST',
-                url: '/v1/secret-managers',
+                url: '/api/v1/secret-managers',
                 headers: { authorization: `Bearer ${testToken}` },
                 body: { providerId: SecretManagerProviderId.HASHICORP, config: mockVaultConfig },
             })
@@ -191,21 +191,21 @@ describe('Secret Manager Cache', () => {
             // First connect + list to populate cache
             await app!.inject({
                 method: 'POST',
-                url: '/v1/secret-managers',
+                url: '/api/v1/secret-managers',
                 headers: { authorization: `Bearer ${testToken}` },
                 body: { providerId: SecretManagerProviderId.HASHICORP, config: mockVaultConfig },
             })
 
             await app!.inject({
                 method: 'GET',
-                url: '/v1/secret-managers',
+                url: '/api/v1/secret-managers',
                 headers: { authorization: `Bearer ${testToken}` },
             })
 
             // Second connect — clears cache
             await app!.inject({
                 method: 'POST',
-                url: '/v1/secret-managers',
+                url: '/api/v1/secret-managers',
                 headers: { authorization: `Bearer ${testToken}` },
                 body: { providerId: SecretManagerProviderId.HASHICORP, config: mockVaultConfig },
             })
@@ -215,7 +215,7 @@ describe('Secret Manager Cache', () => {
             // List after reconnect — cache was cleared, fresh checkConnection expected
             await app!.inject({
                 method: 'GET',
-                url: '/v1/secret-managers',
+                url: '/api/v1/secret-managers',
                 headers: { authorization: `Bearer ${testToken}` },
             })
 
@@ -239,28 +239,28 @@ describe('Secret Manager Cache', () => {
             // Connect and list to populate cache
             await app!.inject({
                 method: 'POST',
-                url: '/v1/secret-managers',
+                url: '/api/v1/secret-managers',
                 headers: { authorization: `Bearer ${testToken}` },
                 body: { providerId: SecretManagerProviderId.HASHICORP, config: mockVaultConfig },
             })
 
             await app!.inject({
                 method: 'GET',
-                url: '/v1/secret-managers',
+                url: '/api/v1/secret-managers',
                 headers: { authorization: `Bearer ${testToken}` },
             })
 
             // Disconnect — clears cache and config
             await app!.inject({
                 method: 'DELETE',
-                url: '/v1/secret-managers?providerId=hashicorp',
+                url: '/api/v1/secret-managers?providerId=hashicorp',
                 headers: { authorization: `Bearer ${testToken}` },
             })
 
             // Reconnect with fresh config
             await app!.inject({
                 method: 'POST',
-                url: '/v1/secret-managers',
+                url: '/api/v1/secret-managers',
                 headers: { authorization: `Bearer ${testToken}` },
                 body: { providerId: SecretManagerProviderId.HASHICORP, config: mockVaultConfig },
             })
@@ -270,7 +270,7 @@ describe('Secret Manager Cache', () => {
             // List — cache was cleared by disconnect, fresh checkConnection expected
             await app!.inject({
                 method: 'GET',
-                url: '/v1/secret-managers',
+                url: '/api/v1/secret-managers',
                 headers: { authorization: `Bearer ${testToken}` },
             })
 
@@ -295,7 +295,7 @@ describe('Secret Manager Cache', () => {
 
             await app!.inject({
                 method: 'POST',
-                url: '/v1/secret-managers',
+                url: '/api/v1/secret-managers',
                 headers: { authorization: `Bearer ${testToken}` },
                 body: { providerId: SecretManagerProviderId.HASHICORP, config: mockVaultConfig },
             })
@@ -303,7 +303,7 @@ describe('Secret Manager Cache', () => {
             // Populate cache with first list
             await app!.inject({
                 method: 'GET',
-                url: '/v1/secret-managers',
+                url: '/api/v1/secret-managers',
                 headers: { authorization: `Bearer ${testToken}` },
             })
 
@@ -312,7 +312,7 @@ describe('Secret Manager Cache', () => {
             // Clear cache via endpoint
             const cacheResponse = await app!.inject({
                 method: 'DELETE',
-                url: '/v1/secret-managers/cache',
+                url: '/api/v1/secret-managers/cache',
                 headers: { authorization: `Bearer ${testToken}` },
             })
 
@@ -323,7 +323,7 @@ describe('Secret Manager Cache', () => {
             // List again — cache cleared, fresh checkConnection expected
             await app!.inject({
                 method: 'GET',
-                url: '/v1/secret-managers',
+                url: '/api/v1/secret-managers',
                 headers: { authorization: `Bearer ${testToken}` },
             })
 
@@ -353,7 +353,7 @@ describe('Secret Manager Cache', () => {
 
             const response = await app!.inject({
                 method: 'DELETE',
-                url: '/v1/secret-managers/cache',
+                url: '/api/v1/secret-managers/cache',
                 headers: { authorization: `Bearer ${nonAdminToken}` },
             })
 

@@ -62,7 +62,7 @@ describe('Git API', () => {
 
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/git-repos',
+                url: '/api/v1/git-repos',
                 payload: request,
                 headers: {
                     authorization: `Bearer ${token}`,
@@ -100,7 +100,7 @@ describe('Git API', () => {
 
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/git-repos',
+                url: '/api/v1/git-repos',
                 payload: request,
                 headers: {
                     authorization: `Bearer ${token}`,
@@ -143,7 +143,7 @@ describe('Git API', () => {
 
             const response = await app?.inject({
                 method: 'DELETE',
-                url: '/v1/git-repos/' + mockGitRepo.id,
+                url: '/api/v1/git-repos/' + mockGitRepo.id,
                 headers: {
                     authorization: `Bearer ${token}`,
                 },
@@ -183,7 +183,7 @@ describe('Git API', () => {
 
             const response = await app?.inject({
                 method: 'DELETE',
-                url: '/v1/git-repos/' + mockGitRepo.id,
+                url: '/api/v1/git-repos/' + mockGitRepo.id,
                 headers: {
                     authorization: `Bearer ${token}`,
                 },
@@ -219,7 +219,7 @@ describe('Git API', () => {
 
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/git-repos?projectId=' + mockProject3.id,
+                url: '/api/v1/git-repos?projectId=' + mockProject3.id,
                 headers: {
                     authorization: `Bearer ${mockApiKey.value}`,
                 },
@@ -261,7 +261,7 @@ describe('Git API', () => {
 
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/git-repos?projectId=' + mockProject3.id,
+                url: '/api/v1/git-repos?projectId=' + mockProject3.id,
                 headers: {
                     authorization: `Bearer ${token}`,
                 },
@@ -296,7 +296,7 @@ describe('Git API', () => {
 
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/git-repos?projectId=' + mockProject.id,
+                url: '/api/v1/git-repos?projectId=' + mockProject.id,
                 headers: {
                     authorization: `Bearer ${token}`,
                 },

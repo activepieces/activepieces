@@ -144,7 +144,7 @@
                      "install/options/docker",
                      "install/options/docker-compose",
                      {
-                        "group": "Others Options",
+                        "group": "Other Options",
                         "pages": [
                            "install/options/helm",
                            "install/options/easypanel",
@@ -191,7 +191,7 @@
                      "install/architecture/overview",
                      "install/architecture/workers",
                      "install/architecture/engine",
-                     "install/architecture/performance"
+                     "install/architecture/benchmark"
                   ]
                }
             ]
@@ -436,10 +436,10 @@
                         ]
                      },
                      {
-                        "group": "Queue Metrics",
-                        "icon": "gauge-high",
+                        "group": "Worker Machines",
+                        "icon": "server",
                         "pages": [
-                           "endpoints/queue-metrics/metrics"
+                           "endpoints/worker-machines/queue-metrics"
                         ]
                      }
                   ]

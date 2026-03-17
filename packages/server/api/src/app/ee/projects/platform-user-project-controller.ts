@@ -1,4 +1,3 @@
-import { securityAccess } from '@activepieces/server-common'
 import {
     assertNotNullOrUndefined,
     PrincipalType,
@@ -8,6 +7,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
+import { securityAccess } from '../../core/security/authorization/fastify-security'
 import Paginator from '../../helper/pagination/paginator'
 import { platformService } from '../../platform/platform.service'
 import { platformUtils } from '../../platform/platform.utils'

@@ -1,4 +1,3 @@
-import { WorkerSystemProp } from '@activepieces/server-common'
 import {
     ActivepiecesError,
     apId,
@@ -15,8 +14,8 @@ import { applicationEvents } from '../helper/application-events'
 import { buildPaginator } from '../helper/pagination/build-paginator'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { system } from '../helper/system/system'
-import { jobQueue } from '../workers/queue/job-queue'
-import { JobType } from '../workers/queue/queue-manager'
+import { WorkerSystemProp } from '../helper/system/system-props'
+import { jobQueue, JobType } from '../workers/job-queue/job-queue'
 import {
     EventDestinationEntity,
     EventDestinationSchema,

@@ -1,7 +1,8 @@
-import { AppSystemProp, DatabaseType } from '@activepieces/server-common'
 import { ApEnvironment } from '@activepieces/shared'
 import { DataSource, EntityMetadata, MigrationInterface, QueryRunner } from 'typeorm'
 import { system } from '../../../helper/system/system'
+import { AppSystemProp } from '../../../helper/system/system-props'
+import { DatabaseType } from '../../database-type'
 import { createSqlLiteDataSourceForMigrations } from '../../sqlite-connection'
 
 const log = system.globalLogger()

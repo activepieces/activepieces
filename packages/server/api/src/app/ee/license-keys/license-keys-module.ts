@@ -1,6 +1,6 @@
-import { exceptionHandler } from '@activepieces/server-common'
 import { isEmpty, isNil } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import { exceptionHandler } from '../../helper/exception-handler'
 import { SystemJobName } from '../../helper/system-jobs/common'
 import { systemJobHandlers } from '../../helper/system-jobs/job-handlers'
 import { systemJobsSchedule } from '../../helper/system-jobs/system-job'

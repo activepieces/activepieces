@@ -30,10 +30,22 @@ export const decryptPgpFile = createAction({
       description: 'The AWS region where the Secrets Manager secret is stored (defaults to S3 region if not provided)',
       required: false,
     }),
+    allowUnauthenticatedMessages: Property.Checkbox({
+      displayName: 'Allow Unauthenticated Messages',
+      description: 'Allow decryption of messages without integrity protection (no MDC). WARNING: Without MDC, a malicious actor can silently modify the ciphertext, so the decrypted output may have been tampered with. Only enable this when working with legacy files where integrity protection was never used.',
+      required: false,
+      defaultValue: false,
+    }),
+    allowInsecureDecryptionWithSigningKeys: Property.Checkbox({
+      displayName: 'Allow Decryption With Signing Keys',
+      description: 'Allow decryption using a key not marked for encryption (e.g. a signing-only key). Enable this if your PGP key was not flagged for encryption use.',
+      required: false,
+      defaultValue: false,
+    }),
   },
   async run(context) {
     const { bucket } = context.auth.props;
-    const { key, secretArn, passphraseArn, secretsManagerRegion } = context.propsValue;
+    const { key, secretArn, passphraseArn, secretsManagerRegion, allowUnauthenticatedMessages, allowInsecureDecryptionWithSigningKeys } = context.propsValue;
     const { accessKeyId, secretAccessKey, region } = context.auth.props;
 
     // Create S3 client
@@ -46,7 +58,7 @@ export const decryptPgpFile = createAction({
         Bucket: bucket,
         Key: key,
       });
-      
+
       const base64 = await file.Body?.transformToString('base64');
       if (!base64) {
         throw new Error(`Could not read file ${key} from S3`);
@@ -70,11 +82,11 @@ export const decryptPgpFile = createAction({
         SecretId: secretArn,
       });
       const response = await secretsClient.send(command);
-      
+
       if (!response.SecretString) {
         throw new Error(`Secret ${secretArn} does not contain a string value`);
       }
-      
+
       // Trim whitespace from the key (AWS Secrets Manager might add extra whitespace)
       privateKeyArmored = response.SecretString.trim();
     } catch (error: any) {
@@ -108,11 +120,11 @@ export const decryptPgpFile = createAction({
           SecretId: passphraseArn,
         });
         const passphraseResponse = await secretsClient.send(passphraseCommand);
-        
+
         if (!passphraseResponse.SecretString) {
           throw new Error(`Secret ${passphraseArn} does not contain a string value`);
         }
-        
+
         passphrase = passphraseResponse.SecretString.trim();
       } catch (error: any) {
         // Provide more specific error messages for common issues
@@ -159,7 +171,7 @@ export const decryptPgpFile = createAction({
       let privateKey = await openpgp.readPrivateKey({
         armoredKey: privateKeyArmored,
       });
-      
+
       if (!privateKey.isPrivate()) {
         throw new Error('The provided key is not a private key. Please ensure you are using a private key, not a public key.');
       }
@@ -186,7 +198,8 @@ export const decryptPgpFile = createAction({
         decryptionKeys: privateKey,
         format: 'binary',
         config: {
-          allowInsecureDecryptionWithSigningKeys: false,
+          allowInsecureDecryptionWithSigningKeys: allowInsecureDecryptionWithSigningKeys ?? false,
+          allowUnauthenticatedMessages: allowUnauthenticatedMessages ?? false,
         },
       });
 

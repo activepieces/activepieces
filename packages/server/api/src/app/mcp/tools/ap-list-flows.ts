@@ -7,6 +7,7 @@ export const apListFlowsTool = (mcp: McpServer, log: FastifyBaseLogger): McpTool
         title: 'ap_list_flows',
         description: 'List all flows in the current project',
         inputSchema: {},
+        annotations: { readOnlyHint: true, openWorldHint: false },
         execute: async () => {
             try {
                 const flows = await flowService(log).list({
