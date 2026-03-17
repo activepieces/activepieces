@@ -39,7 +39,7 @@ export async function makeRequest(
         Authorization: getAuthorizationHeader(auth),
         accept: 'application/vnd.api+json',
         'content-type': 'application/vnd.api+json',
-        revision: '2026-01-15',
+        revision: '2025-04-15',
       },
       body,
     });
