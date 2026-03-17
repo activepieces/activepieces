@@ -1,53 +1,59 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { coinGeckoRequest } from '../sudoswap-api';
+import { createAction } from '@activepieces/pieces-framework';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+
+interface CoinGeckoResponse {
+  id: string;
+  symbol: string;
+  name: string;
+  market_data: {
+    current_price: { usd: number };
+    market_cap: { usd: number };
+    total_volume: { usd: number };
+    price_change_percentage_24h: number;
+    price_change_percentage_7d: number;
+    circulating_supply: number;
+    total_supply: number;
+    ath: { usd: number };
+    atl: { usd: number };
+  };
+  last_updated: string;
+}
 
 export const getSudoPrice = createAction({
-  name: 'get_sudo_price',
-  displayName: 'Get SUDO Token Price',
-  description:
-    'Fetch the current price, market cap, volume, and 24-hour change for the SUDO governance token from CoinGecko.',
-  props: {
-    vs_currency: Property.StaticDropdown({
-      displayName: 'vs Currency',
-      description: 'The currency to show price in.',
-      required: true,
-      defaultValue: 'usd',
-      options: {
-        options: [
-          { label: 'USD', value: 'usd' },
-          { label: 'ETH', value: 'eth' },
-          { label: 'BTC', value: 'btc' },
-          { label: 'EUR', value: 'eur' },
-        ],
+  name: 'getSudoPrice',
+  displayName: 'Get SUDO Price',
+  description: 'Fetch current SUDO governance token price and market data via CoinGecko.',
+  props: {},
+  async run() {
+    const response = await httpClient.sendRequest<CoinGeckoResponse>({
+      method: HttpMethod.GET,
+      url: 'https://api.coingecko.com/api/v3/coins/sudoswap',
+      queryParams: {
+        localization: 'false',
+        tickers: 'false',
+        community_data: 'false',
+        developer_data: 'false',
+        sparkline: 'false',
       },
-    }),
-  },
-  async run({ propsValue }) {
-    const { vs_currency } = propsValue;
-    const data = await coinGeckoRequest<any>('/coins/sudoswap', {
-      localization: 'false',
-      tickers: 'false',
-      community_data: 'false',
-      developer_data: 'false',
     });
 
-    const currency = vs_currency as string;
+    const data = response.body;
     const marketData = data.market_data;
 
     return {
       id: data.id,
-      symbol: data.symbol?.toUpperCase(),
+      symbol: data.symbol,
       name: data.name,
-      price: marketData?.current_price?.[currency],
-      marketCap: marketData?.market_cap?.[currency],
-      volume24h: marketData?.total_volume?.[currency],
-      priceChange24h: marketData?.price_change_percentage_24h,
-      priceChange7d: marketData?.price_change_percentage_7d,
-      allTimeHigh: marketData?.ath?.[currency],
-      allTimeLow: marketData?.atl?.[currency],
-      circulatingSupply: marketData?.circulating_supply,
-      totalSupply: marketData?.total_supply,
-      lastUpdated: data.last_updated,
+      price_usd: marketData.current_price.usd,
+      market_cap_usd: marketData.market_cap.usd,
+      volume_24h_usd: marketData.total_volume.usd,
+      price_change_24h_percent: marketData.price_change_percentage_24h,
+      price_change_7d_percent: marketData.price_change_percentage_7d,
+      circulating_supply: marketData.circulating_supply,
+      total_supply: marketData.total_supply,
+      ath_usd: marketData.ath.usd,
+      atl_usd: marketData.atl.usd,
+      last_updated: data.last_updated,
     };
   },
 });
