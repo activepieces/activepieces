@@ -1,0 +1,12 @@
+{
+  "name": "@activepieces/piece-livepeer",
+  "version": "0.0.1",
+  "description": "Livepeer decentralized video transcoding network piece for Activepieces",
+  "type": "module",
+  "exports": "./src/index.ts",
+  "license": "MIT",
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*"
+  }
+}
