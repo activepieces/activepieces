@@ -3,11 +3,11 @@ title: "Infrastructure Upgrade Incident — March 16–17, 2026"
 hidden: true
 ---
 
-# Infrastructure Upgrade Incident — March 16–17, 2026
-
 ## Summary
 
-On March 16–17, 2026, Activepieces experienced a service disruption lasting approximately 12–24 hours (with the first ~6 hours being the most severe) after rolling out a new worker architecture on Kubernetes. This infrastructure change was made to improve the stability and scalability of Activepieces. Two cascading issues — a persistent volume provisioning problem and a dedicated worker misconfiguration — caused flow execution failures for most cloud customers and one enterprise customer.
+On March 16–17, 2026, Activepieces experienced a service disruption lasting approximately 12–24 hours (with the first ~6 hours being the most severe) after rolling out a new worker architecture on Kubernetes. 
+
+This infrastructure change was made to improve the stability and scalability of Activepieces. Two cascading issues — a persistent volume provisioning problem and a dedicated worker misconfiguration — caused flow execution failures for most cloud customers and one enterprise customer.
 
 ## Impact
 
@@ -77,7 +77,7 @@ By 11:30 AM, all systems were fully operational. We then identified every execut
 | Add test coverage for worker trust level and sandbox configuration | Done |
 | Support canary deployments | To do |
 
-## Improvements Since the Incident
+## Improvements Done 
 
 Following this incident, we invested heavily in test coverage and stability improvements to prevent similar issues and catch misconfigurations before they reach production:
 
