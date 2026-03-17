@@ -243,8 +243,28 @@ describe('provisionFlowPieces', () => {
         })
     })
 
-    it('returns false and calls disableFlow when provisioner fails', async () => {
+    it('throws on transient provisioner errors without disabling the flow', async () => {
         mockProvision.mockRejectedValue(new Error('Failed to provision piece'))
+        const fv = makeFlowVersion({
+            ...pieceTrigger,
+            nextAction: { ...pieceAction },
+        })
+        await expect(provisionFlowPieces({
+            flowVersion: fv,
+            platformId: mockPlatformId,
+            flowId: 'flow-1',
+            projectId: 'project-1',
+            log: logWithWarn,
+            apiClient: apiClientWithDisable,
+        })).rejects.toThrow('Failed to provision piece')
+        expect(mockDisableFlow).not.toHaveBeenCalled()
+    })
+
+    it('returns false even if disableFlow fails', async () => {
+        mockGetPiece.mockRejectedValue(new Error('Piece metadata not found for @activepieces/piece-agent@0.3.7'))
+        mockDisableFlow.mockRejectedValue(new Error('Network error'))
+        const mockError = vi.fn()
+        const logWithError = { warn: mockWarn, error: mockError } as any
         const fv = makeFlowVersion({
             ...pieceTrigger,
             nextAction: { ...pieceAction },
@@ -254,13 +274,10 @@ describe('provisionFlowPieces', () => {
             platformId: mockPlatformId,
             flowId: 'flow-1',
             projectId: 'project-1',
-            log: logWithWarn,
+            log: logWithError,
             apiClient: apiClientWithDisable,
         })
         expect(result).toBe(false)
-        expect(mockDisableFlow).toHaveBeenCalledWith({
-            flowId: 'flow-1',
-            projectId: 'project-1',
-        })
+        expect(mockError).toHaveBeenCalled()
     })
 })

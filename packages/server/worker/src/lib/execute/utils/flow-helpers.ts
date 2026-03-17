@@ -19,11 +19,23 @@ export async function provisionFlowPieces(params: {
         await provisioner(log, apiClient).provision({ pieces, codeSteps })
     })
     if (error) {
+        if (!isPieceNotFoundError(error)) {
+            throw error
+        }
         log.warn({ error: String(error), flowId }, 'Flow disabled due to missing piece')
-        await apiClient.disableFlow({ flowId, projectId })
+        const { error: disableError } = await tryCatch(
+            () => apiClient.disableFlow({ flowId, projectId }),
+        )
+        if (disableError) {
+            log.error({ error: String(disableError), flowId }, 'Failed to disable flow after missing piece')
+        }
         return false
     }
     return true
+}
+
+function isPieceNotFoundError(error: unknown): boolean {
+    return error instanceof Error && error.message.includes('Piece metadata not found')
 }
 
 export async function extractPiecePackages(flowVersion: FlowVersion, platformId: string, log: Logger, apiClient: WorkerToApiContract): Promise<PiecePackage[]> {
