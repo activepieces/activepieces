@@ -51,6 +51,7 @@
   "No Error on Failure": "失敗時にエラーはありません",
   "Timeout (in seconds)": "タイムアウト（秒）",
   "Follow redirects": "リダイレクトをフォローする",
+  "Use @username to mention team members in the message.": "メッセージ内でチームメンバーにメンションするには、@username を使用します。",
   "ID of the parent message to reply to.": "返信する親メッセージのID。",
   "The ID of the message to retrieve.": "取得するメッセージのID。",
   "The ID of the message to delete.": "削除するメッセージのID。",
