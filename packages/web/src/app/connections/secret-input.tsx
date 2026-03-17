@@ -67,15 +67,7 @@ const SecretManagerToggleButton = React.memo(
 SecretManagerToggleButton.displayName = 'SecretManagerToggleButton';
 
 const SecretInput = React.forwardRef<HTMLInputElement, SecretInputProps>(
-  (
-    {
-      className,
-      value,
-      onChange,
-      ...restProps
-    },
-    ref,
-  ) => {
+  ({ className, value, onChange, ...restProps }, ref) => {
     const { onBlur, name, disabled, ...otherProps } = restProps;
 
     const { platform } = platformHooks.useCurrentPlatform();
