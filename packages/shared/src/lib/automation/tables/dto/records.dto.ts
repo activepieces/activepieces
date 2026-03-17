@@ -5,7 +5,7 @@ import { Cursor } from '../../../core/common/seek-page'
 export const CreateRecordsRequest = z.object({
     records: z.array(z.array(z.object({
         fieldId: z.string(),
-        value: z.string(),
+        value: z.coerce.string(),
     }))),
     tableId: z.string(),
 })
@@ -15,7 +15,7 @@ export type CreateRecordsRequest = z.infer<typeof CreateRecordsRequest>
 export const UpdateRecordRequest = z.object({
     cells: z.array(z.object({
         fieldId: z.string(),
-        value: z.string(),
+        value: z.coerce.string(),
     })).optional(),
     tableId: z.string(),
     agentUpdate: z.boolean().optional(),
