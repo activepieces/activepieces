@@ -52,7 +52,10 @@ function getCustomPiecesPath(platformId: string): string {
 }
 
 async function installPieces(rootWorkspace: string, pieces: PiecePackage[], includeFilters: boolean, log: Logger, apiClient: WorkerToApiContract): Promise<void> {
-    const { piecesToInstall } = await partitionPiecesToInstall(rootWorkspace, pieces)
+    const devPieces = workerSettings.getSettings().DEV_PIECES
+    const nonDevPieces = pieces.filter(p => !devPieces.includes(p.pieceName.replace('@activepieces/piece-', '')))
+
+    const { piecesToInstall } = await partitionPiecesToInstall(rootWorkspace, nonDevPieces)
 
     if (isEmpty(piecesToInstall)) {
         log.debug({ rootWorkspace }, '[pieceInstaller] No new pieces to install (already installed)')
@@ -66,7 +69,7 @@ async function installPieces(rootWorkspace: string, pieces: PiecePackage[], incl
     await memoryLock.runExclusive({
         key: `install-pieces-${rootWorkspace}`,
         fn: async () => {
-            const { piecesToInstall } = await partitionPiecesToInstall(rootWorkspace, pieces)
+            const { piecesToInstall } = await partitionPiecesToInstall(rootWorkspace, nonDevPieces)
             if (isEmpty(piecesToInstall)) {
                 log.info({ rootWorkspace }, '[pieceInstaller] No new pieces to install in lock (already installed)')
                 return
