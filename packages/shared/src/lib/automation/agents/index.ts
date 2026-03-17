@@ -36,6 +36,7 @@ export enum ToolCallType {
     PIECE = 'PIECE',
     FLOW = 'FLOW',
     MCP = 'MCP',
+    UNKNOWN = 'UNKNOWN',
 }
 
 export const AgentOutputField = z.object({
@@ -58,6 +59,8 @@ export enum AgentPieceProps {
     PROMPT = 'prompt',
     MAX_STEPS = 'maxSteps',
     AI_PROVIDER_MODEL = 'aiProviderModel',
+    WEB_SEARCH = 'webSearch',
+    WEB_SEARCH_OPTIONS = 'webSearchOptions',
 }
 
 export type AgentProviderModel = {
@@ -102,6 +105,11 @@ export const ToolCallContentBlock = z.discriminatedUnion('toolCallType', [
         toolCallType: z.literal(ToolCallType.MCP),
         displayName: z.string(),
         serverUrl: z.string(),
+    }),
+    z.object({
+        ...ToolCallBaseSchema.shape,
+        toolCallType: z.literal(ToolCallType.UNKNOWN),
+        displayName: z.string(),
     }),
 ])
 

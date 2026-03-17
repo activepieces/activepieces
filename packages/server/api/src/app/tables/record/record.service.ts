@@ -1,4 +1,3 @@
-import { AppSystemProp } from '@activepieces/server-common'
 import {
     ActivepiecesError,
     apId,
@@ -21,8 +20,8 @@ import { EntityManager, In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
 import { system } from '../../helper/system/system'
-import { WebhookFlowVersionToRun } from '../../webhooks/webhook-handler'
-import { webhookService } from '../../webhooks/webhook.service'
+import { AppSystemProp } from '../../helper/system/system-props'
+import { WebhookFlowVersionToRun, webhookService } from '../../webhooks/webhook.service'
 import { FieldEntity } from '../field/field.entity'
 import { fieldService } from '../field/field.service'
 import { tableService } from '../table/table.service'

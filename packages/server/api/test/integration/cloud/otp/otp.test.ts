@@ -47,7 +47,7 @@ describe('OTP API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/otp',
+                url: '/api/v1/otp',
                 body: mockCreateOtpRequest,
             })
 
@@ -70,7 +70,7 @@ describe('OTP API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/otp',
+                url: '/api/v1/otp',
                 body: mockCreateOtpRequest,
             })
 
@@ -97,13 +97,13 @@ describe('OTP API', () => {
             // act
             const response1 = await app?.inject({
                 method: 'POST',
-                url: '/v1/otp',
+                url: '/api/v1/otp',
                 body: mockCreateOtpRequest,
             })
 
             const response2 = await app?.inject({
                 method: 'POST',
-                url: '/v1/otp',
+                url: '/api/v1/otp',
                 body: mockCreateOtpRequest,
             })
 
