@@ -1,22 +1,25 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { ribbonRequest } from '../ribbon-api';
+import { createAction } from '@activepieces/pieces-framework';
 
 export const getProtocolTvl = createAction({
   name: 'get_protocol_tvl',
   displayName: 'Get Protocol TVL',
-  description: 'Retrieve Ribbon Finance total value locked (TVL), chains, and protocol description from DeFiLlama.',
+  description: 'Fetch Ribbon Finance total value locked (TVL) from DeFiLlama',
   props: {},
   async run() {
-    const data = await ribbonRequest('https://api.llama.fi/protocol/ribbon');
+    const response = await fetch('https://api.llama.fi/protocol/ribbon-finance');
+    if (!response.ok) {
+      throw new Error(`DeFiLlama API error: ${response.status} ${response.statusText}`);
+    }
+    const data = await response.json();
     return {
       name: data.name,
-      description: data.description,
+      symbol: data.symbol,
       tvl: data.tvl,
-      chains: data.chains,
       currentChainTvls: data.currentChainTvls,
+      mcap: data.mcap,
       category: data.category,
+      description: data.description,
       url: data.url,
-      twitter: data.twitter,
     };
   },
 });
