@@ -1,4 +1,5 @@
 import { createAction } from '@activepieces/pieces-framework';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const getProtocolTvl = createAction({
   name: 'get_protocol_tvl',
@@ -7,25 +8,21 @@ export const getProtocolTvl = createAction({
   auth: undefined,
   props: {},
   async run() {
-    const response = await fetch('https://api.llama.fi/protocol/mango-markets');
-    if (!response.ok) {
-      throw new Error(`DeFiLlama API error: ${response.status}`);
-    }
-    const data = await response.json();
+    const response = await httpClient.sendRequest({
+      method: HttpMethod.GET,
+      url: 'https://api.llama.fi/protocol/mango-markets',
+    });
 
-    const totalTvl = data.currentChainTvls
-      ? Object.values(data.currentChainTvls as Record<string, number>).reduce(
-          (sum: number, v: number) => sum + v,
-          0
-        )
-      : (data.tvl as Array<{ totalLiquidityUSD: number }> | undefined)?.slice(-1)[0]?.totalLiquidityUSD ?? 0;
+    const data = response.body as Record<string, unknown>;
+    const chainTvls = (data['currentChainTvls'] ?? {}) as Record<string, number>;
+    const totalTvl = Object.values(chainTvls).reduce((sum, v) => sum + v, 0);
 
     return {
       totalTvl,
-      chainTvls: data.currentChainTvls ?? {},
-      name: data.name ?? 'Mango Markets',
-      symbol: data.symbol ?? 'MNGO',
-      chain: data.chain ?? 'Solana',
+      chainTvls,
+      name: (data['name'] as string) ?? 'Mango Markets',
+      symbol: (data['symbol'] as string) ?? 'MNGO',
+      chain: (data['chain'] as string) ?? 'Solana',
     };
   },
 });
