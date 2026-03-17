@@ -4,7 +4,7 @@ import {
   HttpMethod,
   AuthenticationType,
 } from "@activepieces/pieces-common";
-import { pcloudAuth } from "../auth";
+import { pcloudAuth, getPcloudApiUrl } from "../auth";
 
 export const pcloudDownloadFile = createAction({
   auth: pcloudAuth,
@@ -39,7 +39,7 @@ export const pcloudDownloadFile = createAction({
     // First get the file link
     const linkResult = await httpClient.sendRequest({
       method: HttpMethod.GET,
-      url: "https://api.pcloud.com/getfilelink",
+      url: `${getPcloudApiUrl(context.auth)}/getfilelink`,
       queryParams,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,

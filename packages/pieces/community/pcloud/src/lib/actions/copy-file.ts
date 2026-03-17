@@ -4,7 +4,7 @@ import {
   HttpMethod,
   AuthenticationType,
 } from "@activepieces/pieces-common";
-import { pcloudAuth } from "../auth";
+import { pcloudAuth, getPcloudApiUrl } from "../auth";
 
 export const pcloudCopyFile = createAction({
   auth: pcloudAuth,
@@ -64,13 +64,13 @@ export const pcloudCopyFile = createAction({
       );
     }
 
-    if (context.propsValue.overwrite) {
-      queryParams["noover"] = "0";
+    if (!context.propsValue.overwrite) {
+      queryParams["noover"] = "1";
     }
 
     const result = await httpClient.sendRequest({
       method: HttpMethod.GET,
-      url: "https://api.pcloud.com/copyfile",
+      url: `${getPcloudApiUrl(context.auth)}/copyfile`,
       queryParams,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,

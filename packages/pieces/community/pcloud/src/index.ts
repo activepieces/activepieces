@@ -14,7 +14,7 @@ import { pcloudDeleteFolder } from "./lib/actions/delete-folder";
 import { pcloudCopyFile } from "./lib/actions/copy-file";
 import { pcloudRenameFile } from "./lib/actions/rename-file";
 import { pcloudGetFileLink } from "./lib/actions/get-file-link";
-import { pcloudAuth } from "./lib/auth";
+import { pcloudAuth, getPcloudApiUrl } from "./lib/auth";
 
 export const pcloud = createPiece({
   minimumSupportedRelease: "0.30.0",
@@ -30,7 +30,7 @@ export const pcloud = createPiece({
     pcloudRenameFile,
     pcloudGetFileLink,
     createCustomApiCallAction({
-      baseUrl: () => "https://api.pcloud.com",
+      baseUrl: (auth) => getPcloudApiUrl(auth),
       auth: pcloudAuth,
       authMapping: async (auth) => ({
         Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
@@ -39,7 +39,7 @@ export const pcloud = createPiece({
   ],
   displayName: "pCloud",
   description: "Cloud storage and file management",
-  authors: [],
+  authors: ["skylerwarren1985-ui"],
   categories: [PieceCategory.CONTENT_AND_FILES],
   triggers: [],
   auth: pcloudAuth,

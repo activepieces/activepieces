@@ -4,7 +4,7 @@ import {
   HttpMethod,
   AuthenticationType,
 } from "@activepieces/pieces-common";
-import { pcloudAuth } from "../auth";
+import { pcloudAuth, getPcloudApiUrl } from "../auth";
 
 export const pcloudUploadFile = createAction({
   auth: pcloudAuth,
@@ -77,7 +77,7 @@ export const pcloudUploadFile = createAction({
 
     const result = await httpClient.sendRequest({
       method: HttpMethod.POST,
-      url: "https://api.pcloud.com/uploadfile",
+      url: `${getPcloudApiUrl(context.auth)}/uploadfile`,
       queryParams,
       headers: {
         "Content-Type": `multipart/form-data; boundary=${boundary}`,

@@ -4,7 +4,7 @@ import {
   HttpMethod,
   AuthenticationType,
 } from "@activepieces/pieces-common";
-import { pcloudAuth } from "../auth";
+import { pcloudAuth, getPcloudApiUrl } from "../auth";
 
 export const pcloudCreateFolder = createAction({
   auth: pcloudAuth,
@@ -51,7 +51,7 @@ export const pcloudCreateFolder = createAction({
 
     const result = await httpClient.sendRequest({
       method: HttpMethod.GET,
-      url: "https://api.pcloud.com/createfolderifnotexists",
+      url: `${getPcloudApiUrl(context.auth)}/createfolderifnotexists`,
       queryParams,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,

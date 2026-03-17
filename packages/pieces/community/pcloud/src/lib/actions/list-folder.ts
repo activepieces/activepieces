@@ -4,7 +4,7 @@ import {
   HttpMethod,
   AuthenticationType,
 } from "@activepieces/pieces-common";
-import { pcloudAuth } from "../auth";
+import { pcloudAuth, getPcloudApiUrl } from "../auth";
 
 export const pcloudListFolder = createAction({
   auth: pcloudAuth,
@@ -49,7 +49,7 @@ export const pcloudListFolder = createAction({
 
     const result = await httpClient.sendRequest({
       method: HttpMethod.GET,
-      url: "https://api.pcloud.com/listfolder",
+      url: `${getPcloudApiUrl(context.auth)}/listfolder`,
       queryParams: Object.fromEntries(
         Object.entries(params).map(([k, v]) => [k, String(v)])
       ),

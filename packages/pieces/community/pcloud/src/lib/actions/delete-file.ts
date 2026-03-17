@@ -4,7 +4,7 @@ import {
   HttpMethod,
   AuthenticationType,
 } from "@activepieces/pieces-common";
-import { pcloudAuth } from "../auth";
+import { pcloudAuth, getPcloudApiUrl } from "../auth";
 
 export const pcloudDeleteFile = createAction({
   auth: pcloudAuth,
@@ -38,7 +38,7 @@ export const pcloudDeleteFile = createAction({
 
     const result = await httpClient.sendRequest({
       method: HttpMethod.GET,
-      url: "https://api.pcloud.com/deletefile",
+      url: `${getPcloudApiUrl(context.auth)}/deletefile`,
       queryParams,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,

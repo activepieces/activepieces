@@ -4,7 +4,7 @@ import {
   HttpMethod,
   AuthenticationType,
 } from "@activepieces/pieces-common";
-import { pcloudAuth } from "../auth";
+import { pcloudAuth, getPcloudApiUrl } from "../auth";
 
 export const pcloudDeleteFolder = createAction({
   auth: pcloudAuth,
@@ -37,7 +37,7 @@ export const pcloudDeleteFolder = createAction({
 
     const result = await httpClient.sendRequest({
       method: HttpMethod.GET,
-      url: "https://api.pcloud.com/deletefolderrecursive",
+      url: `${getPcloudApiUrl(context.auth)}/deletefolderrecursive`,
       queryParams,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
