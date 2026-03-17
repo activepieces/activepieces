@@ -1,0 +1,33 @@
+{
+  "name": "@activepieces/piece-sudoswap",
+  "version": "0.0.1",
+  "description": "Sudoswap NFT AMM protocol: TVL, SUDO token price, chain breakdown, and protocol analytics",
+  "keywords": [
+    "activepieces",
+    "sudoswap",
+    "nft",
+    "amm",
+    "defi",
+    "ethereum",
+    "sudo"
+  ],
+  "homepage": "",
+  "bugs": {
+    "url": "https://github.com/activepieces/activepieces/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/activepieces/activepieces.git"
+  },
+  "license": "MIT",
+  "author": "",
+  "main": "./src/index.ts",
+  "scripts": {
+    "publish-piece": "node ../../../../.scripts/publish-piece.mjs"
+  },
+  "peerDependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*"
+  }
+}
