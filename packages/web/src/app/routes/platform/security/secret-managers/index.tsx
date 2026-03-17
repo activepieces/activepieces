@@ -39,7 +39,9 @@ import AddEditSecretManagerConnectionDialog from './connect-secret-manager-dialo
 const SecretManagersPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: connections, isLoading: isLoadingConnections } =
-    secretManagersHooks.useListSecretManagerConnections();
+    secretManagersHooks.useListSecretManagerConnections({
+      listForPlatform: true,
+    });
   const { mutate: deleteConnection } =
     secretManagersHooks.useDeleteSecretManagerConnection();
 

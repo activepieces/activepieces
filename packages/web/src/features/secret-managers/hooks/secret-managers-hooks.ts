@@ -14,9 +14,12 @@ import { secretManagersApi } from '../api/secret-managers-api';
 export const secretManagersHooks = {
   useListSecretManagerConnections: ({
     connectedOnly,
-  }: { connectedOnly?: boolean } = {}) => {
+    listForPlatform,
+  }: { connectedOnly?: boolean; listForPlatform?: boolean } = {}) => {
     const { platform } = platformHooks.useCurrentPlatform();
-    const projectId = authenticationSession.getProjectId()!;
+    const projectId = listForPlatform
+      ? undefined
+      : authenticationSession.getProjectId()!;
     return useQuery<SecretManagerConnectionWithStatus[]>({
       queryKey: ['secret-managers', projectId],
       queryFn: async () => {
