@@ -60,9 +60,12 @@ export const pcloudDownloadFile = createAction({
       responseType: "arraybuffer",
     });
 
-    // Extract filename from path
-    const filePath = context.propsValue.path || `file_${context.propsValue.fileId}`;
-    const fileName = (filePath.match(/[^/]+$/) ?? ["downloaded_file"])[0];
+    // Extract filename - prefer the real filename from pCloud API response
+    const apiPath = linkBody.path || "";
+    const realName = apiPath.match(/[^/]+$/)?.[0] || "";
+    const userPath = context.propsValue.path || "";
+    const userName = userPath.match(/[^/]+$/)?.[0] || "";
+    const fileName = realName || userName || `file_${context.propsValue.fileId || "download"}`;
 
     return {
       file: await context.files.write({
