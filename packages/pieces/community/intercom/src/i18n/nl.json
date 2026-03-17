@@ -1,10 +1,5 @@
 {
   "Customer messaging platform for sales, marketing, and support": "Klanten berichten platform voor verkoop, marketing en ondersteuning",
-  "Region": "Regio",
-  "US": "VS",
-  "EU": "EU",
-  "AU": "AU",
-  "\nPlease follow the instructions to create Intercom Oauth2 app.\n\n1.Log in to your Intercom account and navigate to **Settings > Integrations > Developer Hub**.\n2.Click on **Create a new app** and select the appropriate workspace.\n3.In **Authentication** section, add Redirect URL.\n4.In **Webhooks** section, select the events you want to receive.\n5.Go to the **Basic Information** section and copy the Client ID and Client Secret.\n": "\nVolg de instructies om een intercom Oauth2 app te maken.\n\n1. log in naar je intercom account en navigeer naar **Instellingen > Integraties > Developer Hub**.\n2.Klik op **Maak een nieuwe app** en selecteer de juiste werkruimte.\n3.In **Authenticatie** sectie voeg je een doorstuur URL toe.\n4.In **Webhooks** sectie, selecteer je de evenementen die je wilt ontvangen.\n5.Ga naar de **Basis Informatie** sectie en kopieer het Client-ID en Client-geheim.\n",
   "Add Note": "Notitie toevoegen",
   "Add note to conversation": "Notitie aan gesprek toevoegen",
   "Add/Remove Tag on Contact": "Toevoegen/Verwijderen Tag bij Contact",
