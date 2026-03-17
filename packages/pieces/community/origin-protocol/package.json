@@ -1,0 +1,37 @@
+{
+  "name": "@activepieces/piece-origin-protocol",
+  "version": "0.0.1",
+  "description": "Origin Protocol OUSD/OETH liquid staking and yield data piece",
+  "keywords": [
+    "activepieces",
+    "piece",
+    "origin-protocol",
+    "defi",
+    "ousd",
+    "oeth",
+    "ogn"
+  ],
+  "homepage": "https://www.activepieces.com",
+  "license": "MIT",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "publishConfig": {
+    "main": "./dist/index.js",
+    "exports": {
+      ".": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*"
+  },
+  "scripts": {
+    "build": "nx build piece-origin-protocol"
+  }
+}
