@@ -195,7 +195,7 @@ async function executeJob(apiClient: WorkerToApiContract, job: ConsumeJobRequest
     })
 }
 
-function ensurePublicApiUrl(publicUrl: string): string {
+export function ensurePublicApiUrl(publicUrl: string): string {
     if (publicUrl.endsWith('/api/')) return publicUrl
     if (publicUrl.endsWith('/api')) return publicUrl + '/'
     if (publicUrl.endsWith('/')) return publicUrl + 'api/'

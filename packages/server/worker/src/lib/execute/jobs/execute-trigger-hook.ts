@@ -39,7 +39,7 @@ export const executeTriggerHookJob: JobHandler<ExecuteTriggerHookJobData> = {
                 {
                     hookType: data.hookType,
                     flowVersion,
-                    webhookUrl: getWebhookUrl(settings.PUBLIC_URL, data.flowId, data.test),
+                    webhookUrl: getWebhookUrl(ctx.publicApiUrl, data.flowId, data.test),
                     triggerPayload: data.triggerPayload,
                     test: data.test,
                     projectId: data.projectId,
