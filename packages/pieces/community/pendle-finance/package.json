@@ -1,0 +1,32 @@
+{
+  "name": "@activepieces/piece-pendle-finance",
+  "version": "0.1.0",
+  "description": "Pendle Finance — yield tokenization protocol with PT/YT tokens and PENDLE governance",
+  "keywords": [
+    "activepieces",
+    "pendle",
+    "defi",
+    "crypto",
+    "yield",
+    "tokenization"
+  ],
+  "homepage": "https://activepieces.com",
+  "bugs": {
+    "url": "https://github.com/activepieces/activepieces/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/activepieces/activepieces.git"
+  },
+  "license": "MIT",
+  "author": "Activepieces",
+  "main": "./src/index.ts",
+  "scripts": {
+    "publish-piece": "node ../../../../.scripts/publish-piece.mjs"
+  },
+  "peerDependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*"
+  }
+}
