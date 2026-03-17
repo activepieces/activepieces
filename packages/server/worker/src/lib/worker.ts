@@ -27,6 +27,7 @@ const tracer = trace.getTracer('worker')
 
 let socket: Socket | null = null
 let polling = false
+let connectionGeneration = 0
 
 const workerId = `worker-${nanoid()}`
 
@@ -50,10 +51,13 @@ export const worker = {
             logger.info('Connected to API server via Socket.IO')
             await fetchAndStoreSettings(socket!)
             void warmupPiecesOnStartup(apiClient)
-            void startPollingWorkers(apiClient)
+            void startPollingWorkers(apiClient).catch((err) => {
+                logger.error({ error: err }, 'Polling workers crashed unexpectedly')
+            })
         })
 
         socket.on('disconnect', (reason) => {
+            connectionGeneration++
             polling = false
             logger.warn({ reason }, 'Disconnected from API server')
         })
@@ -79,22 +83,27 @@ async function startPollingWorkers(apiClient: WorkerToApiContract): Promise<void
     if (polling) return
     polling = true
 
-    const concurrency = Number(system.get(WorkerSystemProp.WORKER_CONCURRENCY) ?? '1')
+    const generation = connectionGeneration
+    const rawConcurrency = Number(system.get(WorkerSystemProp.WORKER_CONCURRENCY) ?? '1')
+    const concurrency = Number.isInteger(rawConcurrency) && rawConcurrency > 0 ? rawConcurrency : 1
+    if (!Number.isInteger(rawConcurrency) || rawConcurrency < 1) {
+        logger.warn({ rawConcurrency }, 'Invalid AP_WORKER_CONCURRENCY value, falling back to 1')
+    }
     sandboxManagers = Array.from({ length: concurrency }, (_, i) => createSandboxManager(i + 1))
 
     logger.info({ concurrency }, 'Starting polling workers')
 
     const workers = sandboxManagers.map((sbManager, index) =>
-        pollAndExecute(apiClient, sbManager, index),
+        pollAndExecute(apiClient, sbManager, index, generation),
     )
     await Promise.all(workers)
 }
 
-async function pollAndExecute(apiClient: WorkerToApiContract, sbManager: SandboxManager, workerIndex: number): Promise<void> {
+async function pollAndExecute(apiClient: WorkerToApiContract, sbManager: SandboxManager, workerIndex: number, generation: number): Promise<void> {
     const workerLog = logger.child({ workerIndex })
     workerLog.info('Polling worker started')
 
-    while (polling) {
+    while (polling && connectionGeneration === generation) {
         const { data: machineInfo, error: machineError } = await tryCatch(buildMachineInfo)
         if (machineError) {
             workerLog.error({ error: machineError }, 'Failed to build machine info')

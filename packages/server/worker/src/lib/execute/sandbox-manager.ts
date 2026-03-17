@@ -29,7 +29,9 @@ export function createSandboxManager(boxId: number): SandboxManager {
             }
             if (currentSandbox) {
                 params.log.info('Sandbox not ready or not reusable, creating fresh one')
-                void currentSandbox.shutdown()
+                currentSandbox.shutdown().catch((err) =>
+                    params.log.error({ err }, 'Error shutting down previous sandbox'),
+                )
             }
             currentSandbox = createSandboxForJob({ ...params, boxId })
             return currentSandbox
