@@ -1,0 +1,15 @@
+{
+  "name": "@activepieces/piece-etherfi",
+  "version": "0.1.0",
+  "description": "Activepieces community piece for Ether.fi — the largest Ethereum liquid restaking protocol",
+  "repository": "https://github.com/activepieces/activepieces",
+  "license": "MIT",
+  "type": "commonjs",
+  "scripts": {
+    "build": "nx build piece-etherfi"
+  },
+  "peerDependencies": {
+    "@activepieces/pieces-common": "*",
+    "@activepieces/pieces-framework": "*"
+  }
+}
