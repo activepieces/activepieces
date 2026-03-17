@@ -1,6 +1,7 @@
 
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
-import { AuthorizationRouteSecurity, AuthorizationType, RouteKind } from '@activepieces/server-common'
+import { AuthorizationRouteSecurity } from '../../../../src/app/core/security/authorization/authorization'
+import { AuthorizationType, RouteKind } from '../../../../src/app/core/security/authorization/common'
 import {
     ActivepiecesError,
     apId,
