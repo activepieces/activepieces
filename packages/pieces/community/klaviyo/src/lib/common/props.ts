@@ -61,9 +61,9 @@ export const profileIdsMultiSelectDropdown = Property.MultiSelectDropdown({
   description: 'Select one or more Klaviyo profiles',
   required: true,
   auth: klaviyoAuth,
-  refreshers: ['auth'],
-  options: async ({ auth }) => {
-    if (!auth) {
+  refreshers: ['auth','list_id'],
+  options: async ({ auth, list_id }) => {
+    if (!auth || !list_id) {
       return {
         disabled: true,
         placeholder: 'Connect your account',
@@ -73,8 +73,7 @@ export const profileIdsMultiSelectDropdown = Property.MultiSelectDropdown({
     const profiles = await makeRequest(
       auth as KlaviyoAuthValue,
       HttpMethod.GET,
-      '/profiles',
-      {}
+      `/lists/${list_id}/profiles`,
     );
 
     const options = (profiles.data as KlaviyoProfile[]).map((field) => {

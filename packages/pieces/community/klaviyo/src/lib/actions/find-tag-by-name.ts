@@ -31,7 +31,7 @@ export const findTagByName = createAction({
     }
 
     const trimmedQuery = search_query.trim();
-    const filter = `contains(name,"${trimmedQuery}")`;
+    const filter = `contains(name,"${trimmedQuery.replace(/"/g, '\\"')}")`;
 
     const queryParams = new URLSearchParams();
     queryParams.append('filter', filter);

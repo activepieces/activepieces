@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { klaviyoAuth, KlaviyoAuthValue } from '../common/auth';
 import { listIdDropdown, profileIdsMultiSelectDropdown } from '../common/props';
-import { fetchProfilesByIds, makeRequest } from '../common/client';
+import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
 
 export const unsubscribeProfile = createAction({
@@ -55,11 +55,20 @@ export const unsubscribeProfile = createAction({
       throw new Error('At least one unsubscribe channel must be selected.');
     }
 
-    // Batch-fetch profile details to include email/phone_number (required by Klaviyo)
-    const profileMap = await fetchProfilesByIds(auth as unknown as KlaviyoAuthValue, profile_ids as string[]);
+    // Fetch profile details to include email/phone_number
+    const profileDetails = await Promise.all(
+      (profile_ids as string[]).map((id) =>
+        makeRequest(
+          auth as unknown as KlaviyoAuthValue,
+          HttpMethod.GET,
+          `/profiles/${id}`,
+          {}
+        )
+      )
+    );
 
-    const profileData = (profile_ids as string[]).map((profileId) => {
-      const attrs = profileMap.get(profileId) ?? {};
+    const profileData = (profile_ids as string[]).map((profileId, index) => {
+      const attrs = profileDetails[index]?.data?.attributes ?? {};
       const subscriptions: any = {};
 
       if (unsubscribe_email) {

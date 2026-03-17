@@ -33,8 +33,8 @@ export const klaviyoAuth = [
     },
   }),
   PieceAuth.OAuth2({
-    description: `To use your own Klaviyo OAuth app, follow the [Klaviyo OAuth setup guide](https://developers.klaviyo.com/en/docs/set_up_oauth),
-set the **Redirect URI** to {{redirectUrl}} and request the following **scopes**:
+    description: `
+To connect via OAuth2, follow the [Klaviyo OAuth setup guide](https://developers.klaviyo.com/en/docs/set_up_oauth) to register your app, then set the **Redirect URI** to {{redirectUrl}} and enable the following **scopes** in your app settings:
   - profiles:read
   - profiles:write
   - lists:read
