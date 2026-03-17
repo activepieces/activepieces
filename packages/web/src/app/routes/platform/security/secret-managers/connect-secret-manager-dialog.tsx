@@ -54,7 +54,6 @@ const AddEditSecretManagerConnectionDialog = ({
   connection,
 }: AddEditSecretManagerConnectionDialogProps) => {
   const [open, setOpen] = useState(false);
-  const isEdit = !!connection;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -67,7 +66,9 @@ const AddEditSecretManagerConnectionDialog = ({
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {isEdit ? t('Edit Connection') : t('New Secret Manager Connection')}
+            {connection
+              ? `${t('Edit')} ${connection.name}`
+              : t('New Secret Manager Connection')}
           </DialogTitle>
         </DialogHeader>
         <AddEditSecretManagerForm

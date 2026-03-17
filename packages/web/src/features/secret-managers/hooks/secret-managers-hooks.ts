@@ -7,15 +7,16 @@ import { t } from 'i18next';
 import { toast } from 'sonner';
 
 import { platformHooks } from '@/hooks/platform-hooks';
+import { authenticationSession } from '@/lib/authentication-session';
 
 import { secretManagersApi } from '../api/secret-managers-api';
 
 export const secretManagersHooks = {
   useListSecretManagerConnections: ({
-    projectId,
     connectedOnly,
-  }: { projectId?: string; connectedOnly?: boolean } = {}) => {
+  }: { connectedOnly?: boolean } = {}) => {
     const { platform } = platformHooks.useCurrentPlatform();
+    const projectId = authenticationSession.getProjectId()!;
     return useQuery<SecretManagerConnectionWithStatus[]>({
       queryKey: ['secret-managers', projectId],
       queryFn: async () => {

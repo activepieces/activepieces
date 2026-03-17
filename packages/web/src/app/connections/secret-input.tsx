@@ -28,7 +28,6 @@ type SecretInputProps = Omit<InputProps, 'value' | 'onChange'> & {
   value?: string;
   onChange?: (value: string) => void;
   allowTogglingSecretManagerMode?: boolean;
-  projectId?: string;
 };
 
 type SecretManagerToggleButtonProps = {
@@ -74,7 +73,6 @@ const SecretInput = React.forwardRef<HTMLInputElement, SecretInputProps>(
       value,
       onChange,
       allowTogglingSecretManagerMode = true,
-      projectId,
       ...restProps
     },
     ref,
@@ -84,7 +82,6 @@ const SecretInput = React.forwardRef<HTMLInputElement, SecretInputProps>(
     const { data: connections } =
       secretManagersHooks.useListSecretManagerConnections({
         connectedOnly: true,
-        projectId,
       });
 
     const getSecretParamsForConnection = (connectionId: string | null) => {

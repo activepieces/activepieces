@@ -1,10 +1,10 @@
 import { ConnectSecretManagerRequestSchema, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { secretManagerCache } from './secret-manager-cache'
 import { secretManagersService } from './secret-managers.service'
-import { StatusCodes } from 'http-status-codes'
 
 export const secretManagersController: FastifyPluginAsyncZod = async (app) => {
     const service = secretManagersService(app.log)
@@ -16,8 +16,8 @@ export const secretManagersController: FastifyPluginAsyncZod = async (app) => {
         })
     })
 
-    app.post('/', CreateSecretManagerConnection, async (request, reply) => {
-        return await service.create({ ...request.body, platformId: request.principal.platform.id })
+    app.post('/', CreateSecretManagerConnection, async (request) => {
+        return service.create({ ...request.body, platformId: request.principal.platform.id })
     })
 
     app.post('/:id', UpdateSecretManagerConnection, async (request) => {
