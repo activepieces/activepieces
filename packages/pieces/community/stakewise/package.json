@@ -1,0 +1,18 @@
+{
+  "name": "@activepieces/piece-stakewise",
+  "version": "0.0.1",
+  "description": "StakeWise Ethereum liquid staking vault data",
+  "keywords": ["activepieces", "stakewise", "liquid staking", "osETH", "SWISE"],
+  "homepage": "https://stakewise.io/",
+  "authors": ["Bossco"],
+  "license": "MIT",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "peerDependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*"
+  }
+}
