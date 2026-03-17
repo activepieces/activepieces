@@ -1,26 +1,27 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { coinGeckoRequest } from '../rocket-pool-api';
+import { fetchRethCoin } from '../rocket-pool-api';
 
 export const getRethPrice = createAction({
   name: 'get_reth_price',
   displayName: 'Get rETH Price',
-  description: 'Get current price, market cap, and 24h change for Rocket Pool ETH (rETH) via CoinGecko',
+  description:
+    'Fetch the current price, market cap, and 24h change for Rocket Pool ETH (rETH) from CoinGecko.',
   props: {},
   async run() {
-    const data = await coinGeckoRequest<any>('/coins/rocket-pool-eth?localization=false&tickers=false&community_data=false&developer_data=false');
-    const market = data.market_data ?? {};
+    const data = await fetchRethCoin();
+    const m = data.market_data ?? {};
     return {
       name: data.name,
       symbol: data.symbol?.toUpperCase(),
-      priceUSD: market.current_price?.usd,
-      priceETH: market.current_price?.eth,
-      marketCapUSD: market.market_cap?.usd,
-      totalVolume24hUSD: market.total_volume?.usd,
-      priceChange24hPct: market.price_change_percentage_24h,
-      priceChange7dPct: market.price_change_percentage_7d,
-      circulatingSupply: market.circulating_supply,
-      ath: market.ath?.usd,
-      atl: market.atl?.usd,
+      priceUSD: m.current_price?.usd ?? null,
+      priceETH: m.current_price?.eth ?? null,
+      marketCapUSD: m.market_cap?.usd ?? null,
+      totalVolume24hUSD: m.total_volume?.usd ?? null,
+      priceChange24hPct: m.price_change_percentage_24h ?? null,
+      priceChange7dPct: m.price_change_percentage_7d ?? null,
+      circulatingSupply: m.circulating_supply ?? null,
+      ath: m.ath?.usd ?? null,
+      atl: m.atl?.usd ?? null,
       lastUpdated: data.last_updated,
     };
   },
