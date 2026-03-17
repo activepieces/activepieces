@@ -48,8 +48,12 @@ export const addPersonToAccountAction = createAction({
     }
 
     // Add the new person to the PersonAccount array
+    // Strip existing memberships to minimal shape to avoid sending metadata back
     const updatedMemberships = [
-      ...existingMemberships,
+      ...existingMemberships.map((pa: any) => ({
+        Person: { Uid: pa.Person?.Uid },
+        IsPrimary: pa.IsPrimary ?? false,
+      })),
       {
         Person: { Uid: context.propsValue.personUid },
         IsPrimary: context.propsValue.isPrimary ?? false,
