@@ -64,6 +64,22 @@ describe('Record API', () => {
             expect(body.length).toBe(3)
         })
 
+        it('should create a record with a numeric value coerced to string', async () => {
+            const ctx = await setup()
+            const { table, field } = await createTableWithField(ctx)
+
+            const response = await ctx.post('/v1/records', {
+                tableId: table.id,
+                records: [
+                    [{ fieldId: field.id, value: 0 }],
+                ],
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.CREATED)
+            const body = response?.json()
+            expect(body[0].cells[field.id].value).toBe('0')
+        })
+
         it('should silently drop cells with non-existent fieldId', async () => {
             const ctx = await setup()
             const { table, field } = await createTableWithField(ctx)
@@ -232,7 +248,7 @@ describe('Record API', () => {
 
             const response = await ctx.inject({
                 method: 'GET',
-                url: `/v1/records?${qs.stringify({ tableId: table.id, filters: [{ fieldId: field.id, operator: FilterOperator.EXISTS }] })}`,
+                url: `/api/v1/records?${qs.stringify({ tableId: table.id, filters: [{ fieldId: field.id, operator: FilterOperator.EXISTS }] })}`,
             })
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
@@ -252,7 +268,7 @@ describe('Record API', () => {
 
             const response = await ctx.inject({
                 method: 'GET',
-                url: `/v1/records?${qs.stringify({ tableId: table.id, filters: [{ fieldId: field.id, operator: FilterOperator.EXISTS }] })}`,
+                url: `/api/v1/records?${qs.stringify({ tableId: table.id, filters: [{ fieldId: field.id, operator: FilterOperator.EXISTS }] })}`,
             })
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
@@ -272,7 +288,7 @@ describe('Record API', () => {
 
             const response = await ctx.inject({
                 method: 'GET',
-                url: `/v1/records?${qs.stringify({ tableId: table.id, filters: [{ fieldId: field.id, operator: FilterOperator.NOT_EXISTS }] })}`,
+                url: `/api/v1/records?${qs.stringify({ tableId: table.id, filters: [{ fieldId: field.id, operator: FilterOperator.NOT_EXISTS }] })}`,
             })
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
@@ -292,7 +308,7 @@ describe('Record API', () => {
 
             const response = await ctx.inject({
                 method: 'GET',
-                url: `/v1/records?${qs.stringify({ tableId: table.id, filters: [{ fieldId: field.id, operator: FilterOperator.NOT_EXISTS }] })}`,
+                url: `/api/v1/records?${qs.stringify({ tableId: table.id, filters: [{ fieldId: field.id, operator: FilterOperator.NOT_EXISTS }] })}`,
             })
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
@@ -312,7 +328,7 @@ describe('Record API', () => {
 
             const response = await ctx.inject({
                 method: 'GET',
-                url: `/v1/records?${qs.stringify({ tableId: table.id, filters: [{ fieldId: field.id, operator: FilterOperator.NOT_EXISTS }] })}`,
+                url: `/api/v1/records?${qs.stringify({ tableId: table.id, filters: [{ fieldId: field.id, operator: FilterOperator.NOT_EXISTS }] })}`,
             })
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
@@ -334,7 +350,7 @@ describe('Record API', () => {
 
             const response = await ctx.inject({
                 method: 'GET',
-                url: `/v1/records?${qs.stringify({ tableId: table.id, filters: [{ fieldId: field.id, operator: FilterOperator.EQ, value: 'target' }] })}`,
+                url: `/api/v1/records?${qs.stringify({ tableId: table.id, filters: [{ fieldId: field.id, operator: FilterOperator.EQ, value: 'target' }] })}`,
             })
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
@@ -353,7 +369,7 @@ describe('Record API', () => {
 
             const response = await ctx.inject({
                 method: 'DELETE',
-                url: '/v1/records',
+                url: '/api/v1/records',
                 body: {
                     tableId: table.id,
                     ids: [record.id],
@@ -372,7 +388,7 @@ describe('Record API', () => {
 
             const response = await ctx.inject({
                 method: 'DELETE',
-                url: '/v1/records',
+                url: '/api/v1/records',
                 body: {
                     tableId: table.id,
                     ids: [apId()],

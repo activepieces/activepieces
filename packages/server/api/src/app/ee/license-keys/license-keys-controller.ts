@@ -1,7 +1,7 @@
-import { securityAccess } from '@activepieces/server-common'
 import { ActivepiecesError, ErrorCode, isNil, VerifyLicenseKeyRequestBody } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { z } from 'zod'
+import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { licenseKeysService } from './license-keys-service'
 
 export const licenseKeysController: FastifyPluginAsyncZod = async (app) => {
