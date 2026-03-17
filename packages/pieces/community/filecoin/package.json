@@ -1,0 +1,23 @@
+{
+  "name": "@activepieces/piece-filecoin",
+  "version": "0.0.1",
+  "description": "Filecoin decentralized storage network piece for Activepieces",
+  "keywords": [
+    "activepieces",
+    "piece",
+    "filecoin",
+    "fil",
+    "defi",
+    "storage"
+  ],
+  "homepage": "https://www.activepieces.com",
+  "license": "MIT",
+  "main": "./src/index.ts",
+  "scripts": {
+    "build": "nx build piece-filecoin"
+  },
+  "peerDependencies": {
+    "@activepieces/pieces-common": "*",
+    "@activepieces/pieces-framework": "*"
+  }
+}
