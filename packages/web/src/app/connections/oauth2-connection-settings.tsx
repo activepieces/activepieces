@@ -92,7 +92,7 @@ function OAuth2ConnectionSettings({
             name="request.value.client_id"
             control={form.control}
             render={({ field }) => (
-              <FormItem className="flex flex-col">
+              <FormItem className="flex flex-col gap-2">
                 <FormLabel>{t('Client ID')}</FormLabel>
                 <FormControl>
                   <SecretInput {...field} type="text" projectId={projectId} />
@@ -105,7 +105,7 @@ function OAuth2ConnectionSettings({
             name="request.value.client_secret"
             control={form.control}
             render={({ field }) => (
-              <FormItem className="flex flex-col">
+              <FormItem className="flex flex-col gap-2">
                 <FormLabel>{t('Client Secret')}</FormLabel>
                 <FormControl>
                   <SecretInput
@@ -198,7 +198,6 @@ async function openPopup(
       redirectUrl,
       props,
     });
-
   const { code } = await oauth2Utils.openOAuth2Popup({
     authorizationUrl,
     redirectUrl,

@@ -158,7 +158,7 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
             return await this.getSecret({ connectionId, path, platformId, projectIds })
         }
         catch (error) {
-            return handleResolveError({ error, throwOnFailure, originalValue: key, log })
+            return handleResolveError({ error, throwOnFailure, originalValue: key })
         }
     },
 
@@ -186,7 +186,7 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
                 return await this.resolveString({ key: value, platformId, projectIds, throwOnFailure })
             }
             catch (error) {
-                return handleResolveError({ error, throwOnFailure, originalValue: value, log })
+                return handleResolveError({ error, throwOnFailure, originalValue: value })
             }
         }
         return value
@@ -210,14 +210,8 @@ async function checkConnection(log: FastifyBaseLogger, config: SecretManagerConf
     return connected
 }
 
-function handleResolveError<T>({ error, throwOnFailure, originalValue, log }: { error: unknown, throwOnFailure: boolean, originalValue: T, log: FastifyBaseLogger }): T {
+function handleResolveError<T>({ error, throwOnFailure, originalValue }: { error: unknown, throwOnFailure: boolean, originalValue: T }): T {
     
-    if (!throwOnFailure) {
-        log.warn({ error }, '[handleResolveError] Failed to resolve secret')
-    }
-    else {
-        log.error({ error }, '[handleResolveError] Failed to resolve secret')
-    }
     
     if (!throwOnFailure) {
         return originalValue

@@ -159,19 +159,7 @@ const SecretManagersPage = () => {
                 <Pencil className="size-4" />
               </Button>
             </AddEditSecretManagerConnectionDialog>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  loading={isClearingCache}
-                  onClick={() => clearCache(connection.id)}
-                >
-                  <RefreshCcw className="size-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>{t('Clear Cache')}</TooltipContent>
-            </Tooltip>
+            <SecretManagerClearCacheButton connection={connection} />
             <ConfirmationDeleteDialog
               title={t('Delete Connection')}
               message={t(
@@ -180,9 +168,16 @@ const SecretManagersPage = () => {
               entityName={connection.name}
               mutationFn={async () => deleteConnection(connection.id)}
             >
-              <Button variant="ghost" size="sm">
-                <Trash className="size-4 text-destructive" />
-              </Button>
+              <div>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="ghost" size="sm">
+                      <Trash className="size-4 text-destructive" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>{t('Delete')}</TooltipContent>
+                </Tooltip>
+              </div>
             </ConfirmationDeleteDialog>
           </div>
         );
@@ -225,3 +220,27 @@ const SecretManagersPage = () => {
 };
 
 export default SecretManagersPage;
+
+const SecretManagerClearCacheButton = ({
+  connection,
+}: {
+  connection: SecretManagerConnectionWithStatus;
+}) => {
+  const { mutate: clearCache, isPending: isClearingCache } =
+    secretManagersHooks.useClearCache();
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          variant="ghost"
+          size="sm"
+          loading={isClearingCache}
+          onClick={() => clearCache(connection.id)}
+        >
+          <RefreshCcw className="size-4" />
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>{t('Clear Cache')}</TooltipContent>
+    </Tooltip>
+  );
+};
