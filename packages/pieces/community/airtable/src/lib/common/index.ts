@@ -788,7 +788,9 @@ export const airtableCommon = {
         } else if (
           ['multipleRecordLinks', 'multipleSelects'].includes(field.type)
         ) {
-          if (allowEmpty || (Array.isArray(fields[key]) && (fields[key] as any[]).length > 0)) {
+          if (allowEmpty) {
+            newFields[key] = Array.isArray(fields[key]) ? fields[key] : [];
+          } else if (Array.isArray(fields[key]) && (fields[key] as any[]).length > 0) {
             newFields[key] = fields[key];
           }
         } else {
