@@ -1,0 +1,22 @@
+{
+  "name": "@activepieces/piece-gmx",
+  "version": "0.0.1",
+  "description": "GMX decentralized perpetual exchange piece for Activepieces",
+  "keywords": [
+    "activepieces",
+    "piece",
+    "gmx",
+    "defi",
+    "perpetuals"
+  ],
+  "homepage": "https://www.activepieces.com",
+  "license": "MIT",
+  "main": "./src/index.ts",
+  "scripts": {
+    "build": "nx build piece-gmx"
+  },
+  "peerDependencies": {
+    "@activepieces/pieces-common": "*",
+    "@activepieces/pieces-framework": "*"
+  }
+}

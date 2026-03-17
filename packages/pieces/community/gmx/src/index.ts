@@ -1,0 +1,1 @@
+export { gmx } from './lib/gmx';
