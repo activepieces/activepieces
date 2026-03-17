@@ -32,7 +32,7 @@ export const decryptPgpFile = createAction({
     }),
     allowUnauthenticatedMessages: Property.Checkbox({
       displayName: 'Allow Unauthenticated Messages',
-      description: 'Allow decryption of messages without integrity protection (no MDC). Enable this if the file was encrypted without a Modification Detection Code.',
+      description: 'Allow decryption of messages without integrity protection (no MDC). WARNING: Without MDC, a malicious actor can silently modify the ciphertext, so the decrypted output may have been tampered with. Only enable this when working with legacy files where integrity protection was never used.',
       required: false,
       defaultValue: false,
     }),
