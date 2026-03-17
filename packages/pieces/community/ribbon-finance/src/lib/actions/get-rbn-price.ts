@@ -1,26 +1,32 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { ribbonRequest } from '../ribbon-api';
 
 export const getRbnPrice = createAction({
   name: 'get_rbn_price',
   displayName: 'Get RBN Token Price',
-  description: 'Retrieve RBN token price, market cap, and 24h volume from CoinGecko.',
+  description: 'Get RBN governance token price, market cap, and 24h change from CoinGecko',
   props: {},
   async run() {
-    const data = await ribbonRequest('https://api.coingecko.com/api/v3/coins/ribbon-finance');
-    const marketData = data.market_data;
+    const response = await fetch(
+      'https://api.coingecko.com/api/v3/coins/ribbon-finance?localization=false&tickers=false&community_data=false&developer_data=false&sparkline=false'
+    );
+    if (!response.ok) {
+      throw new Error(`CoinGecko API error: ${response.status} ${response.statusText}`);
+    }
+    const data = await response.json();
+    const market = data.market_data;
     return {
+      id: data.id,
+      symbol: data.symbol,
       name: data.name,
-      symbol: data.symbol?.toUpperCase(),
-      current_price_usd: marketData?.current_price?.usd,
-      market_cap_usd: marketData?.market_cap?.usd,
-      total_volume_usd: marketData?.total_volume?.usd,
-      price_change_24h_percent: marketData?.price_change_percentage_24h,
-      high_24h_usd: marketData?.high_24h?.usd,
-      low_24h_usd: marketData?.low_24h?.usd,
-      circulating_supply: marketData?.circulating_supply,
-      total_supply: marketData?.total_supply,
-      last_updated: marketData?.last_updated,
+      price_usd: market?.current_price?.usd,
+      market_cap_usd: market?.market_cap?.usd,
+      price_change_24h: market?.price_change_24h,
+      price_change_percentage_24h: market?.price_change_percentage_24h,
+      total_volume_usd: market?.total_volume?.usd,
+      circulating_supply: market?.circulating_supply,
+      total_supply: market?.total_supply,
+      ath_usd: market?.ath?.usd,
+      last_updated: market?.last_updated,
     };
   },
 });
