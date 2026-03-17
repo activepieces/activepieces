@@ -772,20 +772,29 @@ export const airtableCommon = {
       if (!AirtableEnterpriseFields.includes(field.type)) {
         const key = field.id;
 
-        if (field.type === 'multipleAttachments' && fields[key]) {
-          newFields[key] = [
-            {
-              url: fields[key] as string,
-            },
-          ];
+        if (!(key in fields)) {
+          return;
+        }
+        if (field.type === 'multipleAttachments') {
+          if (allowEmpty && !fields[key]) {
+            newFields[key] = [];
+          } else if (fields[key]) {
+            newFields[key] = [
+              {
+                url: fields[key] as string,
+              },
+            ];
+          }
         } else if (
           ['multipleRecordLinks', 'multipleSelects'].includes(field.type)
         ) {
-          if ((allowEmpty && fields[key] !== undefined) || (Array.isArray(fields[key]) && (fields[key] as any[]).length > 0)) {
+          if (allowEmpty || (Array.isArray(fields[key]) && (fields[key] as any[]).length > 0)) {
             newFields[key] = fields[key];
           }
         } else {
-          newFields[key] = fields[key];
+          if (allowEmpty || fields[key] !== undefined) {
+            newFields[key] = fields[key];
+          }
         }
       }
     });
