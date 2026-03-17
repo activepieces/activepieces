@@ -32,14 +32,15 @@ export const createOroWebhookTrigger = ({
     async onEnable(context) {
       const response = await oroApiCall({
         method: HttpMethod.POST,
-        resourceUri: '/webhookproducersettings',
+        resourceUri: '/webhooks',
         auth: context.auth,
         body: {
           data: {
-            type: 'webhookproducersettings',
+            type: 'webhooks',
             attributes: {
               topic: topic,
               enabled: true,
+              format: 'default',
               notificationUrl: context.webhookUrl,
             },
           },
@@ -63,7 +64,7 @@ export const createOroWebhookTrigger = ({
       if (webhookInfo !== null && webhookInfo !== undefined) {
         await oroApiCall({
           method: HttpMethod.DELETE,
-          resourceUri: `/webhookproducersettings/${webhookInfo.webhookId}`,
+          resourceUri: `/webhooks/${webhookInfo.webhookId}`,
           auth: context.auth,
         });
       }

@@ -4,7 +4,7 @@ import { orderCreateData, orderUpdateData, orderDeleteData } from '../examples/o
 export const newOrder = createOroWebhookTrigger({
   name: 'new_order',
   description: 'Triggered when a new order is created',
-  topic: 'order.create',
+  topic: 'order.created',
   displayName: 'New Order',
   sampleData: orderCreateData,
 });
@@ -12,7 +12,7 @@ export const newOrder = createOroWebhookTrigger({
 export const updatedOrder = createOroWebhookTrigger({
   name: 'updated_order',
   description: 'Triggered when an order is updated',
-  topic: 'order.update',
+  topic: 'order.updated',
   displayName: 'Order Update',
   sampleData: orderUpdateData,
 });
@@ -20,7 +20,7 @@ export const updatedOrder = createOroWebhookTrigger({
 export const removedOrder = createOroWebhookTrigger({
   name: 'removed_order',
   description: 'Triggered when an order is deleted',
-  topic: 'order.delete',
+  topic: 'order.deleted',
   displayName: 'Order Removal',
   sampleData: orderDeleteData,
 });
