@@ -4,38 +4,6 @@ import { workerSettings } from '../config/worker-settings'
 import { Sandbox } from '../sandbox/types'
 import { createSandboxForJob } from './create-sandbox-for-job'
 
-let currentSandbox: Sandbox | null = null
-
-export const sandboxManager = {
-    acquire(params: { log: Logger, apiClient: WorkerToApiContract }): Sandbox {
-        if (canReuseSandbox() && currentSandbox && currentSandbox.isReady()) {
-            return currentSandbox
-        }
-        if (currentSandbox) {
-            params.log.info('Sandbox not ready or not reusable, creating fresh one')
-            void currentSandbox.shutdown()
-        }
-        currentSandbox = createSandboxForJob(params)
-        return currentSandbox
-    },
-    async invalidate(log: Logger): Promise<void> {
-        if (currentSandbox) {
-            log.info('Invalidating sandbox')
-            const sb = currentSandbox
-            currentSandbox = null
-            await sb.shutdown()
-        }
-    },
-    async release(log: Logger): Promise<void> {
-        if (!canReuseSandbox()) {
-            await this.invalidate(log)
-        }
-    },
-    async shutdown(log: Logger): Promise<void> {
-        await this.invalidate(log)
-    },
-}
-
 function canReuseSandbox(): boolean {
     const settings = workerSettings.getSettings()
     if (settings.ENVIRONMENT === ApEnvironment.DEVELOPMENT) {
@@ -49,4 +17,47 @@ function canReuseSandbox(): boolean {
         return true
     }
     return false
+}
+
+export function createSandboxManager(boxId: number): SandboxManager {
+    let currentSandbox: Sandbox | null = null
+
+    return {
+        acquire(params: { log: Logger, apiClient: WorkerToApiContract }): Sandbox {
+            if (canReuseSandbox() && currentSandbox && currentSandbox.isReady()) {
+                return currentSandbox
+            }
+            if (currentSandbox) {
+                params.log.info('Sandbox not ready or not reusable, creating fresh one')
+                currentSandbox.shutdown().catch((err) =>
+                    params.log.error({ err }, 'Error shutting down previous sandbox'),
+                )
+            }
+            currentSandbox = createSandboxForJob({ ...params, boxId })
+            return currentSandbox
+        },
+        async invalidate(log: Logger): Promise<void> {
+            if (currentSandbox) {
+                log.info('Invalidating sandbox')
+                const sb = currentSandbox
+                currentSandbox = null
+                await sb.shutdown()
+            }
+        },
+        async release(log: Logger): Promise<void> {
+            if (!canReuseSandbox()) {
+                await this.invalidate(log)
+            }
+        },
+        async shutdown(log: Logger): Promise<void> {
+            await this.invalidate(log)
+        },
+    }
+}
+
+export type SandboxManager = {
+    acquire(params: { log: Logger, apiClient: WorkerToApiContract }): Sandbox
+    invalidate(log: Logger): Promise<void>
+    release(log: Logger): Promise<void>
+    shutdown(log: Logger): Promise<void>
 }
