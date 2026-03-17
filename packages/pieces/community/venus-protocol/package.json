@@ -1,0 +1,30 @@
+{
+  "name": "@activepieces/piece-venus-protocol",
+  "version": "0.0.1",
+  "description": "Venus Protocol is the leading decentralized money market on BNB Chain, offering lending, borrowing, and synthetic stablecoin (VAI) minting. XVS is the governance token.",
+  "keywords": [
+    "activepieces",
+    "piece",
+    "venus",
+    "venus-protocol",
+    "defi",
+    "bnb",
+    "lending",
+    "borrowing",
+    "xvs"
+  ],
+  "homepage": "https://www.activepieces.com",
+  "license": "MIT",
+  "author": "bossco7598",
+  "main": "./src/index.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json"
+  },
+  "peerDependencies": {
+    "@activepieces/pieces-framework": "*"
+  },
+  "dependencies": {
+    "@activepieces/pieces-common": "*",
+    "@activepieces/pieces-framework": "*"
+  }
+}
