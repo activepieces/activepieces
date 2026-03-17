@@ -1,5 +1,6 @@
 import {
   DynamicPropsValue,
+  DropdownState,
   PiecePropValueSchema,
   Property,
 } from '@activepieces/pieces-framework';
@@ -263,4 +264,55 @@ export const snowflakeCommonProps = {
       return fields;
     },
   }),
+  table_update_values: Property.DynamicProperties({
+    auth: snowflakeAuth,
+    displayName: 'Columns to Update',
+    description:
+      'Only filled columns will be updated. Leave a column empty to keep its existing value.',
+    required: true,
+    refreshers: ['database', 'schema', 'table'],
+    props: async ({ auth, table }) => {
+      if (!auth) return {};
+      if (!table) return {};
+
+      const authValue = auth;
+
+      const connection = configureConnection(authValue.props);
+      await connect(connection);
+      const response = await execute(connection, `DESCRIBE TABLE ${table}`, []);
+      await destroy(connection);
+
+      const fields: DynamicPropsValue = {};
+
+      if (response) {
+        for (const column of response) {
+          fields[column.name] = Property.ShortText({
+            displayName: column.name,
+            required: false,
+          });
+        }
+      }
+
+      return fields;
+    },
+  }),
 };
+
+export async function getTableColumnOptions(
+  auth: PiecePropValueSchema<typeof snowflakeAuth>,
+  table: string
+): Promise<DropdownState<string>> {
+  const connection = configureConnection(auth);
+  await connect(connection);
+  const response = await execute(connection, `DESCRIBE TABLE ${table}`, []);
+  await destroy(connection);
+  return {
+    disabled: false,
+    options: response
+      ? (response as { name: string }[]).map((col) => ({
+          label: col.name,
+          value: col.name,
+        }))
+      : [],
+  };
+}
