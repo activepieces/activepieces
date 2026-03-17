@@ -133,7 +133,7 @@ async function pollRecentMessages({
 
   // construct query
   const query = ['has:attachment'];
-  const maxResults = lastFetchEpochMS === 0 ? 5 : 100;
+  const maxResults = lastFetchEpochMS === 0 ? 5 : 20;
   const afterUnixSeconds = Math.floor(lastFetchEpochMS / 1000);
 
   if (props.from) query.push(`from:(${props.from})`);
@@ -153,34 +153,44 @@ async function pollRecentMessages({
     maxResults,
   });
 
+  // Reverse to process oldest-first so partial progress doesn't skip messages
+  const messages = (messagesResponse.data.messages || []).slice().reverse();
+
   const pollingResponse = [];
-  for (const message of messagesResponse.data.messages || []) {
-    const rawMailResponse = await gmail.users.messages.get({
-      userId: 'me',
-      id: message.id!,
-      format: 'raw',
-    });
-
-    const parsedMailResponse = await parseStream(
-      Buffer.from(rawMailResponse.data.raw as string, 'base64').toString(
-        'utf-8'
-      )
-    );
-
-    const { attachments, ...restOfParsedMailResponse } = parsedMailResponse;
-    const parsedAttachments = await convertAttachment(attachments, files);
-
-    for (const attachment of parsedAttachments) {
-      pollingResponse.push({
-        epochMilliSeconds: dayjs(restOfParsedMailResponse.date).valueOf(),
-        data: {
-          attachment,
-          message: {
-            id: message.id,
-            ...restOfParsedMailResponse,
-          },
-        },
+  for (const message of messages) {
+    try {
+      const rawMailResponse = await gmail.users.messages.get({
+        userId: 'me',
+        id: message.id!,
+        format: 'raw',
       });
+
+      const parsedMailResponse = await parseStream(
+        Buffer.from(rawMailResponse.data.raw as string, 'base64').toString(
+          'utf-8'
+        )
+      );
+
+      const { attachments, ...restOfParsedMailResponse } = parsedMailResponse;
+      const parsedAttachments = await convertAttachment(attachments, files);
+
+      for (const attachment of parsedAttachments) {
+        pollingResponse.push({
+          epochMilliSeconds: dayjs(restOfParsedMailResponse.date).valueOf(),
+          data: {
+            attachment,
+            message: {
+              id: message.id,
+              ...restOfParsedMailResponse,
+            },
+          },
+        });
+      }
+    } catch (error: any) {
+      if (error.code === 429) {
+        break;
+      }
+      throw error;
     }
   }
 
