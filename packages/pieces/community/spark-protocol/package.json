@@ -1,0 +1,24 @@
+{
+  "name": "@activepieces/piece-spark-protocol",
+  "version": "0.0.1",
+  "description": "Spark Protocol lending market piece for Activepieces",
+  "keywords": ["activepieces", "spark", "defi", "lending", "makerDAO"],
+  "homepage": "https://spark.fi",
+  "authors": [{"name": "Bossco"}],
+  "license": "MIT",
+  "main": "src/index.ts",
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*"
+  },
+  "nx": {
+    "targets": {
+      "build": {
+        "executor": "@nx/js:tsc",
+        "options": {
+          "main": "src/index.ts"
+        }
+      }
+    }
+  }
+}
