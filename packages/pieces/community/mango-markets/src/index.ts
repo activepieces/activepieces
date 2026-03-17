@@ -1,8 +1,9 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { getProtocolTvl } from './lib/actions/get-protocol-tvl';
 import { getMngoPrice } from './lib/actions/get-mngo-price';
-import { getMarkets } from './lib/actions/get-markets';
 import { getChainBreakdown } from './lib/actions/get-chain-breakdown';
+import { getTvlHistory } from './lib/actions/get-tvl-history';
 import { getProtocolStats } from './lib/actions/get-protocol-stats';
 
 export const mangoMarkets = createPiece({
@@ -11,6 +12,7 @@ export const mangoMarkets = createPiece({
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/mango-markets.png',
   authors: ['bossco7598'],
-  actions: [getProtocolTvl, getMngoPrice, getMarkets, getChainBreakdown, getProtocolStats],
+  categories: [PieceCategory.BUSINESS_INTELLIGENCE],
+  actions: [getProtocolTvl, getMngoPrice, getChainBreakdown, getTvlHistory, getProtocolStats],
   triggers: [],
 });
