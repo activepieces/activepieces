@@ -14,6 +14,7 @@ import {
   isNil,
 } from '@activepieces/shared';
 import { t } from 'i18next';
+import { Dispatch, SetStateAction, useState } from 'react';
 import { useFormContext, UseFormReturn } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
@@ -67,6 +68,7 @@ function OAuth2ConnectionSettings({
   const showRedirectUrlInput =
     oauth2App.oauth2Type === AppConnectionType.OAUTH2 &&
     grantType === OAuth2GrantType.AUTHORIZATION_CODE;
+  const [loading, setLoading] = useState(false);
 
   return (
     <div className="flex flex-col gap-4">
@@ -132,6 +134,7 @@ function OAuth2ConnectionSettings({
             variant={'basic'}
             className={hasCode ? 'text-destructive' : ''}
             disabled={!isConnectButtonEnabled}
+            loading={loading}
             type="button"
             onClick={async () => {
               if (!hasCode) {
@@ -141,6 +144,7 @@ function OAuth2ConnectionSettings({
                   form.getValues().request.value.props,
                   piece.name,
                   form,
+                  setLoading,
                 );
               } else {
                 form.setValue('request.value.code', '', {
@@ -174,14 +178,31 @@ async function openPopup(
       | UpsertOAuth2Request
       | UpsertPlatformOAuth2Request;
   }>,
+  setLoading: Dispatch<SetStateAction<boolean>>,
 ) {
-  const { authorizationUrl, codeVerifier } =
-    await appConnectionsApi.getOAuth2AuthorizationUrl({
+  let authorizationUrl, codeVerifier;
+  try {
+    setLoading(true);
+    const result = await appConnectionsApi.getOAuth2AuthorizationUrl({
       pieceName,
       clientId,
       redirectUrl,
       props,
     });
+    authorizationUrl = result.authorizationUrl;
+    codeVerifier = result.codeVerifier;
+  } catch (error: unknown) {
+    form.setError('request.value.client_id', {
+      type: 'manual',
+      message:
+        error instanceof Error
+          ? error.message
+          : 'Failed to initiate OAuth2 authentication',
+    });
+    setLoading(false);
+    return;
+  }
+  setLoading(false);
   const { code } = await oauth2Utils.openOAuth2Popup({
     authorizationUrl,
     redirectUrl,
