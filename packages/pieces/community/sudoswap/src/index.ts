@@ -9,6 +9,8 @@ import { getProtocolStats } from './lib/actions/get-protocol-stats';
 export const sudoswap = createPiece({
   displayName: 'Sudoswap',
   auth: PieceAuth.None(),
+  description:
+    'Sudoswap is an Ethereum NFT AMM protocol enabling automated, on-chain NFT trading with custom bonding curves. SUDO is the governance token.',
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/sudoswap.png',
   authors: ['bossco7598'],
