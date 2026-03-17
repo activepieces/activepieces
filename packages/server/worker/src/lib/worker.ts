@@ -217,20 +217,29 @@ async function fetchAndStoreSettings(sock: Socket): Promise<void> {
     })
 }
 
+function getWorkerProps(): Record<string, string> {
+    try {
+        const settings = workerSettings.getSettings()
+        return {
+            EXECUTION_MODE: settings.EXECUTION_MODE,
+            WORKER_CONCURRENCY: system.get(WorkerSystemProp.WORKER_CONCURRENCY)!,
+            SANDBOX_MEMORY_LIMIT: settings.SANDBOX_MEMORY_LIMIT,
+        }
+    }
+    catch {
+        return {}
+    }
+}
+
 async function buildMachineInfo(): Promise<WorkerMachineHealthcheckRequest> {
     const memInfo = await systemUsage.getContainerMemoryUsage()
     const diskInfo = await systemUsage.getDiskInfo()
     const cpuCores = await systemUsage.getCpuCores()
-    const settings = workerSettings.getSettings()
     return {
         workerId,
         cpuUsagePercentage: systemUsage.getCpuUsage(),
         diskInfo,
-        workerProps: {
-            EXECUTION_MODE: settings.EXECUTION_MODE,
-            WORKER_CONCURRENCY: system.get(WorkerSystemProp.WORKER_CONCURRENCY)!,
-            SANDBOX_MEMORY_LIMIT: settings.SANDBOX_MEMORY_LIMIT,
-        },
+        workerProps: getWorkerProps(),
         ramUsagePercentage: memInfo.ramUsage,
         totalAvailableRamInBytes: memInfo.totalRamInBytes,
         totalCpuCores: cpuCores,
