@@ -1,5 +1,5 @@
 import { AgentToolType } from '@activepieces/shared';
-import type { AgentPieceTool, AgentTool } from '@activepieces/shared';
+import type { AgentKnowledgeBaseTool, AgentPieceTool, AgentTool } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Plus } from 'lucide-react';
 import { ControllerRenderProps } from 'react-hook-form';
@@ -9,9 +9,11 @@ import { Button } from '@/components/ui/button';
 import {
   AddToolDropdown,
   AgentFlowToolComponent,
+  AgentKnowledgeBaseToolComponent,
   AgentMcpToolComponent,
   AgentPieceToolComponent,
   AgentFlowToolDialog,
+  AgentKnowledgeBaseDialog,
   AgentMcpDialog,
 } from '@/features/agents';
 
@@ -45,6 +47,10 @@ export const AgentTools = ({
 
   const flowTools = tools.filter((tool) => tool.type === AgentToolType.FLOW);
   const mcpTools = tools.filter((tool) => tool.type === AgentToolType.MCP);
+  const kbTools = tools.filter(
+    (tool): tool is AgentKnowledgeBaseTool =>
+      tool.type === AgentToolType.KNOWLEDGE_BASE,
+  );
   const pieceToToolMap = tools
     .filter((tool) => tool.type === AgentToolType.PIECE)
     .reduce<Record<string, AgentPieceTool[]>>((acc, tool) => {
@@ -87,6 +93,13 @@ export const AgentTools = ({
                 <AgentMcpToolComponent
                   disabled={disabled}
                   tools={mcpTools}
+                  removeTool={removeTool}
+                />
+              )}
+              {kbTools.length > 0 && (
+                <AgentKnowledgeBaseToolComponent
+                  disabled={disabled}
+                  tools={kbTools}
                   removeTool={removeTool}
                 />
               )}
@@ -139,6 +152,7 @@ export const AgentTools = ({
       <AgentFlowToolDialog onToolsUpdate={onToolsUpdate} tools={tools} />
       <AgentPieceDialog tools={tools} onToolsUpdate={onToolsUpdate} />
       <AgentMcpDialog tools={tools} onToolsUpdate={onToolsUpdate} />
+      <AgentKnowledgeBaseDialog tools={tools} onToolsUpdate={onToolsUpdate} />
     </div>
   );
 };

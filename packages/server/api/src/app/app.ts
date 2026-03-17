@@ -13,6 +13,7 @@ import { rateLimitModule } from './core/security/rate-limit'
 import { authenticationMiddleware } from './core/security/v2/authn/authentication-middleware'
 import { authorizationMiddleware } from './core/security/v2/authz/authorization-middleware'
 import { distributedLock, redisConnections } from './database/redis-connections'
+import { knowledgeBaseModule } from './knowledge-base/knowledge-base.module'
 import { alertsModule } from './ee/alerts/alerts-module'
 import { apiKeyModule } from './ee/api-keys/api-key-module'
 import { platformOAuth2Service } from './ee/app-connections/platform-oauth2-service'
@@ -209,6 +210,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(aiProviderModule)
     await app.register(licenseKeysModule)
     await app.register(tablesModule)
+    await app.register(knowledgeBaseModule)
     await app.register(userModule)
     await app.register(templateModule)
     await app.register(userBadgeModule)

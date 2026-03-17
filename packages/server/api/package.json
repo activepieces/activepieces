@@ -25,6 +25,7 @@
     "@bull-board/api": "6.10.1",
     "@bull-board/fastify": "6.10.1",
     "@electric-sql/pglite": "0.3.14",
+    "pdf-parse": "1.1.1",
     "@hyperdx/node-opentelemetry": "0.8.2",
     "@sentry/node": "7.120.0",
     "@fastify/basic-auth": "6.2.0",
