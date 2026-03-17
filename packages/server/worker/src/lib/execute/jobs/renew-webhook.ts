@@ -41,7 +41,7 @@ export const renewWebhookJob: JobHandler<RenewWebhookJobData> = {
                 {
                     hookType: TriggerHookType.RENEW,
                     flowVersion,
-                    webhookUrl: getWebhookUrl(settings.PUBLIC_URL, data.flowId),
+                    webhookUrl: getWebhookUrl(ctx.publicApiUrl, data.flowId),
                     test: false,
                     projectId: data.projectId,
                     platformId: data.platformId,
