@@ -8,15 +8,20 @@ import {
 } from '@activepieces/shared'
 import type { FlowVersion } from '@activepieces/shared'
 import { extractPiecePackages, extractCodeArtifacts, provisionFlowPieces } from '../../../../src/lib/execute/utils/flow-helpers'
+import { PieceNotFoundError } from '../../../../src/lib/cache/pieces/piece-cache'
 
 const mockGetPiece = vi.fn()
 const mockProvision = vi.fn()
 
-vi.mock('../../../../src/lib/cache/pieces/piece-cache', () => ({
-    pieceCache: () => ({
-        getPiece: mockGetPiece,
-    }),
-}))
+vi.mock('../../../../src/lib/cache/pieces/piece-cache', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('../../../../src/lib/cache/pieces/piece-cache')>()
+    return {
+        ...actual,
+        pieceCache: () => ({
+            getPiece: mockGetPiece,
+        }),
+    }
+})
 
 vi.mock('../../../../src/lib/cache/provisioner', () => ({
     provisioner: () => ({
@@ -223,7 +228,7 @@ describe('provisionFlowPieces', () => {
     })
 
     it('returns false and calls disableFlow when piece metadata is not found', async () => {
-        mockGetPiece.mockRejectedValue(new Error('Piece metadata not found for @activepieces/piece-agent@0.3.7'))
+        mockGetPiece.mockRejectedValue(new PieceNotFoundError('@activepieces/piece-agent', '0.3.7'))
         const fv = makeFlowVersion({
             ...pieceTrigger,
             nextAction: { ...pieceAction },
@@ -261,7 +266,7 @@ describe('provisionFlowPieces', () => {
     })
 
     it('returns false even if disableFlow fails', async () => {
-        mockGetPiece.mockRejectedValue(new Error('Piece metadata not found for @activepieces/piece-agent@0.3.7'))
+        mockGetPiece.mockRejectedValue(new PieceNotFoundError('@activepieces/piece-agent', '0.3.7'))
         mockDisableFlow.mockRejectedValue(new Error('Network error'))
         const mockError = vi.fn()
         const logWithError = { warn: mockWarn, error: mockError } as any

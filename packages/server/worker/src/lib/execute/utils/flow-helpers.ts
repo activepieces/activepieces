@@ -1,7 +1,7 @@
 import { FlowActionType, flowStructureUtil, FlowTriggerType, FlowVersion, PiecePackage, tryCatch, WorkerToApiContract } from '@activepieces/shared'
 import { Logger } from 'pino'
 import { CodeArtifact } from '../../cache/code/code-builder'
-import { pieceCache } from '../../cache/pieces/piece-cache'
+import { pieceCache, PieceNotFoundError } from '../../cache/pieces/piece-cache'
 import { provisioner } from '../../cache/provisioner'
 
 export async function provisionFlowPieces(params: {
@@ -19,7 +19,7 @@ export async function provisionFlowPieces(params: {
         await provisioner(log, apiClient).provision({ pieces, codeSteps })
     })
     if (error) {
-        if (!isPieceNotFoundError(error)) {
+        if (!(error instanceof PieceNotFoundError)) {
             throw error
         }
         log.warn({ error: String(error), flowId }, 'Flow disabled due to missing piece')
@@ -32,10 +32,6 @@ export async function provisionFlowPieces(params: {
         return false
     }
     return true
-}
-
-function isPieceNotFoundError(error: unknown): boolean {
-    return error instanceof Error && error.message.includes('Piece metadata not found')
 }
 
 export async function extractPiecePackages(flowVersion: FlowVersion, platformId: string, log: Logger, apiClient: WorkerToApiContract): Promise<PiecePackage[]> {

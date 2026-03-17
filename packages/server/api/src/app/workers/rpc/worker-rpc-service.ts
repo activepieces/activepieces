@@ -221,7 +221,7 @@ export function createHandlers(log: FastifyBaseLogger, platformIdForDedicatedWor
                     request: { status: FlowStatus.DISABLED },
                 },
             })
-            log.info({ flowId, projectId }, '[workerRpc#disableFlow] Flow disabled due to missing piece')
+            log.info({ flowId, projectId }, '[workerRpc#disableFlow] Flow disabled by worker request')
         },
     }
 }
