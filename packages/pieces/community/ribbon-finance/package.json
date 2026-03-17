@@ -1,14 +1,27 @@
 {
   "name": "@activepieces/piece-ribbon-finance",
   "version": "0.0.1",
-  "description": "Ribbon Finance piece for Activepieces",
-  "main": "src/index.ts",
-  "keywords": ["activepieces", "ribbon", "defi", "options", "structured-products"],
-  "files": ["src"],
-  "scripts": {"build": "nx build ribbon-finance"},
-  "dependencies": {
-    "@activepieces/pieces-common": "*",
-    "@activepieces/pieces-framework": "*",
-    "@activepieces/shared": "*"
+  "description": "Ribbon Finance structured vaults and options strategy data",
+  "keywords": [
+    "activepieces",
+    "piece",
+    "ribbon-finance",
+    "defi",
+    "options",
+    "structured-vaults"
+  ],
+  "homepage": "https://www.ribbonfinance.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/activepieces/activepieces"
+  },
+  "license": "MIT",
+  "author": "bossco7598",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "peerDependencies": {
+    "@activepieces/pieces-framework": "workspace:*"
   }
 }
