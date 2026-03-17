@@ -2,7 +2,10 @@ import {
     EngineOperationType,
     EngineResponseStatus,
     ExecuteTriggerResponse,
+    FlowVersion,
     isNil,
+    parseToJsonIfPossible,
+    PieceTrigger,
     ProgressUpdateType,
     TriggerHookType,
     TriggerPayload,
@@ -15,7 +18,22 @@ import { workerSettings } from '../../config/worker-settings'
 import { JobContext, JobHandler, JobResult } from '../types'
 import { extractCodeArtifacts, extractPiecePackages } from '../utils/flow-helpers'
 import { resolvePayload } from '../utils/resolve-payload'
-import { getWebhookUrl } from '../utils/webhook-url'
+import { getAppWebhookUrl, getWebhookUrl } from '../utils/webhook-url'
+
+function getAppWebhookDetails(flowVersion: FlowVersion, publicApiUrl: string, appWebhookSecretsJson: string): { appWebhookUrl?: string, webhookSecret?: string | Record<string, string> } {
+    const trigger = flowVersion.trigger as PieceTrigger
+    const pieceName = trigger?.settings?.pieceName
+    if (isNil(pieceName)) {
+        return {}
+    }
+    const secrets = parseToJsonIfPossible(appWebhookSecretsJson) as Record<string, { webhookSecret: string | Record<string, string> }> | undefined
+    const webhookSecret = secrets?.[pieceName]?.webhookSecret
+    const pieceUrlName = pieceName.replace('@activepieces/piece-', '')
+    return {
+        appWebhookUrl: getAppWebhookUrl(publicApiUrl, pieceUrlName),
+        webhookSecret,
+    }
+}
 
 export const executeWebhookJob: JobHandler<WebhookJobData> = {
     jobType: WorkerJobType.EXECUTE_WEBHOOK,
@@ -29,6 +47,8 @@ export const executeWebhookJob: JobHandler<WebhookJobData> = {
             ctx.log.info({ flowVersionId: data.flowVersionIdToRun }, 'Flow version not found for webhook, skipping')
             return {}
         }
+
+        const { appWebhookUrl, webhookSecret } = getAppWebhookDetails(flowVersion, settings.PUBLIC_URL, settings.APP_WEBHOOK_SECRETS)
 
         const pieces = await extractPiecePackages(flowVersion, data.platformId, ctx.log, ctx.apiClient)
         const codeSteps = extractCodeArtifacts(flowVersion)
@@ -57,6 +77,8 @@ export const executeWebhookJob: JobHandler<WebhookJobData> = {
                         internalApiUrl: ctx.internalApiUrl,
                         publicApiUrl: ctx.publicApiUrl,
                         timeoutInSeconds,
+                        appWebhookUrl,
+                        webhookSecret,
                     },
                     { timeoutInSeconds },
                 )
@@ -92,6 +114,8 @@ export const executeWebhookJob: JobHandler<WebhookJobData> = {
                     internalApiUrl: ctx.internalApiUrl,
                     publicApiUrl: ctx.publicApiUrl,
                     timeoutInSeconds,
+                    appWebhookUrl,
+                    webhookSecret,
                 },
                 { timeoutInSeconds },
             )
