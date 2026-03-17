@@ -1,4 +1,5 @@
 import { createAction } from '@activepieces/pieces-framework';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const getChainBreakdown = createAction({
   name: 'get_chain_breakdown',
@@ -7,13 +8,13 @@ export const getChainBreakdown = createAction({
   auth: undefined,
   props: {},
   async run() {
-    const response = await fetch('https://api.llama.fi/protocol/mango-markets');
-    if (!response.ok) {
-      throw new Error(`DeFiLlama API error: ${response.status}`);
-    }
-    const data = await response.json();
+    const response = await httpClient.sendRequest({
+      method: HttpMethod.GET,
+      url: 'https://api.llama.fi/protocol/mango-markets',
+    });
 
-    const chainTvls: Record<string, number> = data.currentChainTvls ?? {};
+    const data = response.body as Record<string, unknown>;
+    const chainTvls = (data['currentChainTvls'] ?? {}) as Record<string, number>;
     const totalTvl = Object.values(chainTvls).reduce((sum, v) => sum + v, 0);
 
     const breakdown = Object.entries(chainTvls).map(([chain, tvl]) => ({
@@ -22,10 +23,12 @@ export const getChainBreakdown = createAction({
       percentage: totalTvl > 0 ? ((tvl / totalTvl) * 100).toFixed(2) + '%' : '0%',
     }));
 
+    const sorted = [...breakdown].sort((a, b) => b.tvlUsd - a.tvlUsd);
+
     return {
       totalTvlUsd: totalTvl,
-      chains: breakdown,
-      primaryChain: breakdown.sort((a, b) => b.tvlUsd - a.tvlUsd)[0]?.chain ?? 'Solana',
+      chains: sorted,
+      primaryChain: sorted[0]?.chain ?? 'Solana',
     };
   },
 });
