@@ -473,7 +473,7 @@
     },
     "packages/pieces/community/ai": {
       "name": "@activepieces/piece-ai",
-      "version": "0.1.21",
+      "version": "0.2.0",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -7471,6 +7471,7 @@
         "@segment/analytics-next": "1.72.0",
         "@segment/analytics-node": "2.2.0",
         "@sentry/node": "7.120.0",
+        "@smithy/node-http-handler": "4.4.14",
         "@socket.io/redis-adapter": "8.3.0",
         "ai": "^6.0.0",
         "ai-gateway-provider": "3.1.1",
@@ -7625,7 +7626,7 @@
     },
     "packages/shared": {
       "name": "@activepieces/shared",
-      "version": "0.44.0",
+      "version": "0.45.0",
       "dependencies": {
         "deepmerge-ts": "7.1.0",
         "nanoid": "3.3.8",
