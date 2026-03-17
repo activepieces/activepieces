@@ -120,7 +120,7 @@ export const oauth2Util = (log: FastifyBaseLogger) => ({
         const resolvedClientId = await secretManagersService(log).resolveString({
             key: clientId,
             platformId,
-            throwOnFailure: false,
+            throwOnFailure: true,
             projectIds: projectId ? [projectId] : undefined,
         })
         const authUrl = resolveValueFromProps(props, pieceAuth.authUrl)

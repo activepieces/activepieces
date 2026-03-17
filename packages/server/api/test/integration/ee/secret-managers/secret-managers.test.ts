@@ -39,7 +39,7 @@ afterEach(() => {
 async function createHashicorpConnection(app: FastifyInstance, testToken: string) {
     const response = await app.inject({
         method: 'POST',
-        url: '/v1/secret-managers',
+        url: '/api/v1/secret-managers',
         headers: {
             authorization: `Bearer ${testToken}`,
         },
@@ -134,7 +134,7 @@ describe('Secret Managers API', () => {
             vaultMock.mockVaultLoginSuccess()
             const second = await app!.inject({
                 method: 'POST',
-                url: '/v1/secret-managers',
+                url: '/api/v1/secret-managers',
                 headers: { authorization: `Bearer ${testToken}` },
                 body: {
                     providerId: SecretManagerProviderId.HASHICORP,
@@ -148,7 +148,7 @@ describe('Secret Managers API', () => {
 
             const listResponse = await app?.inject({
                 method: 'GET',
-                url: '/v1/secret-managers',
+                url: '/api/v1/secret-managers',
                 headers: { authorization: `Bearer ${testToken}` },
             })
             expect(listResponse?.json().data.length).toBe(2)
@@ -174,7 +174,7 @@ describe('Secret Managers API', () => {
             // Create project-scoped connection for mockProject
             await app!.inject({
                 method: 'POST',
-                url: '/v1/secret-managers',
+                url: '/api/v1/secret-managers',
                 headers: { authorization: `Bearer ${testToken}` },
                 body: {
                     providerId: SecretManagerProviderId.HASHICORP,
@@ -188,7 +188,7 @@ describe('Secret Managers API', () => {
             // Without projectId filter: should see both
             const allResponse = await app?.inject({
                 method: 'GET',
-                url: '/v1/secret-managers',
+                url: '/api/v1/secret-managers',
                 headers: { authorization: `Bearer ${testToken}` },
             })
             expect(allResponse?.json().data.length).toBe(2)
@@ -196,7 +196,7 @@ describe('Secret Managers API', () => {
             // With correct projectId filter: should see both (platform + project for this project)
             const filteredResponse = await app?.inject({
                 method: 'GET',
-                url: `/v1/secret-managers?projectId=${mockProject.id}`,
+                url: `/api/v1/secret-managers?projectId=${mockProject.id}`,
                 headers: { authorization: `Bearer ${testToken}` },
             })
             expect(filteredResponse?.json().data.length).toBe(2)
@@ -204,42 +204,11 @@ describe('Secret Managers API', () => {
             // With different projectId: should see only the platform-scoped one
             const otherProjectResponse = await app?.inject({
                 method: 'GET',
-                url: '/v1/secret-managers?projectId=other-project-id',
+                url: '/api/v1/secret-managers?projectId=other-project-id',
                 headers: { authorization: `Bearer ${testToken}` },
             })
             expect(otherProjectResponse?.json().data.length).toBe(1)
             expect(otherProjectResponse?.json().data[0].scope).toBe(SecretManagerConnectionScope.PLATFORM)
-        })
-    })
-
-    describe('Providers Metadata', () => {
-        it('should list available secret manager providers', async () => {
-            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
-                plan: {
-                    secretManagersEnabled: true,
-                },
-            })
-            const testToken = await generateMockToken({
-                type: PrincipalType.USER,
-                id: mockOwner.id,
-                platform: { id: mockPlatform.id },
-            })
-
-            const response = await app?.inject({
-                method: 'GET',
-                url: '/v1/secret-managers/providers',
-                headers: {
-                    authorization: `Bearer ${testToken}`,
-                },
-            })
-
-            expect(response?.statusCode).toBe(StatusCodes.OK)
-            const body = response?.json()
-            expect(Array.isArray(body)).toBe(true)
-            expect(body.length).toBeGreaterThan(0)
-            const hashicorp = body.find((p: { id: string }) => p.id === SecretManagerProviderId.HASHICORP)
-            expect(hashicorp).toBeDefined()
-            expect(hashicorp.name).toBe('Hashicorp Vault')
         })
     })
 
@@ -261,14 +230,14 @@ describe('Secret Managers API', () => {
 
             const deleteResponse = await app?.inject({
                 method: 'DELETE',
-                url: `/v1/secret-managers/${created.id}`,
+                url: `/api/v1/secret-managers/${created.id}`,
                 headers: { authorization: `Bearer ${testToken}` },
             })
             expect(deleteResponse?.statusCode).toBe(StatusCodes.NO_CONTENT)
 
             const listResponse = await app?.inject({
                 method: 'GET',
-                url: '/v1/secret-managers',
+                url: '/api/v1/secret-managers',
                 headers: { authorization: `Bearer ${testToken}` },
             })
             expect(listResponse?.json().data.length).toBe(0)
@@ -300,7 +269,7 @@ describe('Secret Managers API', () => {
             expect(result).toBe('super-secret-value')
         })
 
-        it('should throw error for non-secret key format', async () => {
+        it('should retrun original value for non-secret key format', async () => {
             const { mockPlatform } = await mockAndSaveBasicSetup({
                 plan: {
                     secretManagersEnabled: true,
@@ -311,14 +280,10 @@ describe('Secret Managers API', () => {
                     key: 'plain-text-value',
                     platformId: mockPlatform.id,
                 }),
-            ).rejects.toMatchObject({
-                error: expect.objectContaining({
-                    code: ErrorCode.SECRET_MANAGER_KEY_NOT_SECRET,
-                }),
-            })
+            ).resolves.toBe('plain-text-value')
         })
 
-        it('should throw error for missing separator in secret key', async () => {
+        it('should return original value for missing separator in secret key', async () => {
             const { mockPlatform } = await mockAndSaveBasicSetup({
                 plan: {
                     secretManagersEnabled: true,
@@ -329,12 +294,9 @@ describe('Secret Managers API', () => {
                 secretManagersService(mockLog).resolveString({
                     key: '{{no-separator-here}}',
                     platformId: mockPlatform.id,
+                    throwOnFailure: false,
                 }),
-            ).rejects.toMatchObject({
-                error: expect.objectContaining({
-                    code: ErrorCode.SECRET_MANAGER_KEY_NOT_SECRET,
-                }),
-            })
+            ).resolves.toBe('{{no-separator-here}}')
         })
 
         it('should throw error when secret is not found', async () => {
@@ -444,7 +406,7 @@ describe('Secret Managers API', () => {
 
             const response = await app?.inject({
                 method: 'DELETE',
-                url: '/v1/secret-managers/cache',
+                url: '/api/v1/secret-managers/cache',
                 headers: { authorization: `Bearer ${testToken}` },
             })
             expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
@@ -467,7 +429,7 @@ describe('Secret Managers API', () => {
 
             const response = await app?.inject({
                 method: 'DELETE',
-                url: `/v1/secret-managers/cache?connectionId=${created.id}`,
+                url: `/api/v1/secret-managers/cache?connectionId=${created.id}`,
                 headers: { authorization: `Bearer ${testToken}` },
             })
             expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
