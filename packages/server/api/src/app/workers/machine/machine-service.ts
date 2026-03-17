@@ -93,8 +93,11 @@ export const machineService = (log: FastifyBaseLogger) => {
 
             await workerMachineCache().delete(offLineWorkers.map(worker => worker.id))
 
+            const hasDedicated = onlineWorkers.some(w => w.type === WorkerMachineType.DEDICATED && w.platformId === platformId)
             return onlineWorkers
-                .filter(worker => worker.type !== 'DEDICATED' || worker.platformId === platformId)
+                .filter(worker => hasDedicated
+                    ? (worker.type === WorkerMachineType.DEDICATED && worker.platformId === platformId)
+                    : worker.type !== WorkerMachineType.DEDICATED)
                 .map(worker => ({
                     ...worker,
                     status: WorkerMachineStatus.ONLINE,
