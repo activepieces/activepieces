@@ -1,32 +1,25 @@
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { createAction } from '@activepieces/pieces-framework';
+import { fetchAnkrProtocol } from '../ankr-api';
 
 export const getProtocolTvl = createAction({
   name: 'get_protocol_tvl',
   displayName: 'Get Protocol TVL',
-  description: 'Get the current Total Value Locked (TVL) for Ankr Network from DeFiLlama.',
+  description: "Fetch Ankr's Total Value Locked (TVL) from DeFiLlama, including chain breakdown.",
+  auth: undefined,
   props: {},
   async run() {
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.GET,
-      url: 'https://api.llama.fi/protocol/ankr',
-    });
-
-    const data = response.body as Record<string, unknown>;
-    const tvlHistory = data['tvl'] as Array<{ date: number; totalLiquidityUSD: number }>;
-    const latestTvl = tvlHistory && tvlHistory.length > 0
-      ? tvlHistory[tvlHistory.length - 1].totalLiquidityUSD
-      : null;
+    const protocol = await fetchAnkrProtocol();
 
     return {
-      name: data['name'],
-      symbol: data['symbol'],
-      tvl: latestTvl,
-      description: data['description'],
-      url: data['url'],
-      twitter: data['twitter'],
-      category: data['category'],
-      chains: data['chains'],
+      name: protocol.name,
+      tvl: protocol.tvl,
+      chains: protocol.chains,
+      change_1h: protocol.change_1h,
+      change_1d: protocol.change_1d,
+      change_7d: protocol.change_7d,
+      category: protocol.category,
+      url: protocol.url,
+      description: protocol.description,
     };
   },
 });

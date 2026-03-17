@@ -1,16 +1,18 @@
 {
   "name": "@activepieces/piece-ankr",
   "version": "0.0.1",
-  "main": "./dist/src/index.js",
-  "types": "./dist/src/index.d.ts",
-  "scripts": {
-    "build": "tsc -p tsconfig.lib.json && cp package.json dist/",
-    "lint": "eslint 'src/**/*.ts'"
+  "description": "Ankr multi-chain staking and Web3 infrastructure data",
+  "keywords": ["activepieces", "ankr", "liquid staking", "ankrETH", "ANKR"],
+  "homepage": "https://www.ankr.com/",
+  "authors": ["Bossco"],
+  "license": "MIT",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
   },
-  "dependencies": {
+  "peerDependencies": {
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
-    "@activepieces/shared": "workspace:*",
-    "tslib": "2.6.2"
+    "@activepieces/shared": "workspace:*"
   }
 }

@@ -1,54 +1,46 @@
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { createAction } from '@activepieces/pieces-framework';
+import { fetchAnkrProtocol, fetchAnkrPrice } from '../ankr-api';
 
 export const getProtocolStats = createAction({
   name: 'get_protocol_stats',
   displayName: 'Get Protocol Stats',
-  description: 'Get key statistics and metadata for Ankr Network from DeFiLlama.',
+  description: "Fetch a comprehensive overview of Ankr — combining TVL and ANKR token price data in a single parallel call.",
+  auth: undefined,
   props: {},
   async run() {
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.GET,
-      url: 'https://api.llama.fi/protocol/ankr',
-    });
+    const [protocol, priceData] = await Promise.all([
+      fetchAnkrProtocol(),
+      fetchAnkrPrice(),
+    ]);
 
-    const data = response.body as Record<string, unknown>;
-    const tvlHistory = data['tvl'] as Array<{ date: number; totalLiquidityUSD: number }>;
-
-    const currentTvl = tvlHistory && tvlHistory.length > 0
-      ? tvlHistory[tvlHistory.length - 1].totalLiquidityUSD
-      : null;
-
-    const tvl7dAgo = tvlHistory && tvlHistory.length > 7
-      ? tvlHistory[tvlHistory.length - 8].totalLiquidityUSD
-      : null;
-
-    const tvl30dAgo = tvlHistory && tvlHistory.length > 30
-      ? tvlHistory[tvlHistory.length - 31].totalLiquidityUSD
-      : null;
-
-    const change7d = currentTvl && tvl7dAgo
-      ? ((currentTvl - tvl7dAgo) / tvl7dAgo) * 100
-      : null;
-
-    const change30d = currentTvl && tvl30dAgo
-      ? ((currentTvl - tvl30dAgo) / tvl30dAgo) * 100
-      : null;
-
-    const chains = data['chains'] as string[];
+    const ankrPrice = priceData['ankr-network'];
+    const currentChainTvls = protocol.currentChainTvls ?? {};
+    const chainCount = Object.keys(currentChainTvls).length;
 
     return {
-      name: data['name'],
-      symbol: data['symbol'],
-      category: data['category'],
-      description: data['description'],
-      url: data['url'],
-      twitter: data['twitter'],
-      current_tvl_usd: currentTvl,
-      change_7d_pct: change7d !== null ? Math.round(change7d * 100) / 100 : null,
-      change_30d_pct: change30d !== null ? Math.round(change30d * 100) / 100 : null,
-      chain_count: chains ? chains.length : 0,
-      chains: chains,
+      protocol: {
+        name: protocol.name,
+        tvl: protocol.tvl,
+        chains: protocol.chains,
+        chain_count: chainCount,
+        category: protocol.category,
+        change_1h: protocol.change_1h,
+        change_1d: protocol.change_1d,
+        change_7d: protocol.change_7d,
+        url: protocol.url,
+      },
+      token: {
+        symbol: 'ANKR',
+        price_usd: ankrPrice.usd,
+        market_cap_usd: ankrPrice.usd_market_cap,
+        change_24h_percent: ankrPrice.usd_24h_change,
+      },
+      computed: {
+        tvl_to_mcap_ratio:
+          ankrPrice.usd_market_cap > 0
+            ? parseFloat((protocol.tvl / ankrPrice.usd_market_cap).toFixed(4))
+            : null,
+      },
     };
   },
 });

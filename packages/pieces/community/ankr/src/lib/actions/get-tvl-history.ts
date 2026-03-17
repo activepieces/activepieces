@@ -1,46 +1,63 @@
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
+import { fetchAnkrProtocol, DefiLlamaTvlEntry } from '../ankr-api';
+
+interface HistoricalTvlEntry {
+  date: string;
+  timestamp: number;
+  tvl: number;
+  change_from_baseline_percent: number;
+}
 
 export const getTvlHistory = createAction({
   name: 'get_tvl_history',
   displayName: 'Get TVL History',
-  description: 'Get the historical TVL data for Ankr Network over the last N days from DeFiLlama.',
+  description: "Fetch historical TVL data for Ankr from DeFiLlama with configurable time range.",
+  auth: undefined,
   props: {
     days: Property.Number({
-      displayName: 'Number of Days',
-      description: 'Number of days of history to retrieve (default: 30).',
+      displayName: 'Days',
+      description: 'Number of historical days to retrieve (default: 30)',
       required: false,
       defaultValue: 30,
     }),
   },
   async run(context) {
     const days = context.propsValue.days ?? 30;
+    const protocol = await fetchAnkrProtocol();
 
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.GET,
-      url: 'https://api.llama.fi/protocol/ankr',
-    });
+    // DeFiLlama returns tvl as array of {date, totalLiquidityUSD}
+    const tvlData: DefiLlamaTvlEntry[] = (protocol as unknown as { tvl: DefiLlamaTvlEntry[] }).tvl ?? [];
 
-    const data = response.body as Record<string, unknown>;
-    const tvlHistory = data['tvl'] as Array<{ date: number; totalLiquidityUSD: number }>;
+    const cutoffTimestamp = Math.floor(Date.now() / 1000) - days * 24 * 60 * 60;
+    const filtered = tvlData.filter((entry) => entry.date >= cutoffTimestamp);
 
-    if (!tvlHistory || tvlHistory.length === 0) {
-      return { history: [] };
-    }
+    const baseline = filtered.length > 0 ? filtered[0].totalLiquidityUSD : 0;
 
-    const cutoffDate = Math.floor(Date.now() / 1000) - days * 86400;
-    const filtered = tvlHistory
-      .filter((entry) => entry.date >= cutoffDate)
-      .map((entry) => ({
-        date: new Date(entry.date * 1000).toISOString().split('T')[0],
-        tvl_usd: entry.totalLiquidityUSD,
-      }));
+    const history: HistoricalTvlEntry[] = filtered.map((entry) => ({
+      date: new Date(entry.date * 1000).toISOString().split('T')[0],
+      timestamp: entry.date,
+      tvl: entry.totalLiquidityUSD,
+      change_from_baseline_percent:
+        baseline > 0
+          ? parseFloat((((entry.totalLiquidityUSD - baseline) / baseline) * 100).toFixed(2))
+          : 0,
+    }));
+
+    const latest = history[history.length - 1];
+    const earliest = history[0];
 
     return {
-      protocol: 'Ankr',
       days_requested: days,
-      data_points: filtered.length,
-      history: filtered,
+      data_points: history.length,
+      baseline_tvl: baseline,
+      latest_tvl: latest?.tvl ?? null,
+      overall_change_percent:
+        baseline > 0 && latest
+          ? parseFloat((((latest.tvl - baseline) / baseline) * 100).toFixed(2))
+          : null,
+      period_start: earliest?.date ?? null,
+      period_end: latest?.date ?? null,
+      history,
     };
   },
 });
