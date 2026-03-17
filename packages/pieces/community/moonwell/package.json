@@ -1,0 +1,23 @@
+{
+  "name": "@activepieces/piece-moonwell",
+  "version": "0.0.1",
+  "description": "Moonwell is a leading open lending and borrowing protocol on Base and Moonbeam, backed by Coinbase Ventures.",
+  "main": "./src/index.ts",
+  "keywords": [
+    "activepieces",
+    "piece",
+    "moonwell",
+    "defi",
+    "lending",
+    "base",
+    "moonbeam",
+    "well"
+  ],
+  "scripts": {},
+  "license": "MIT",
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*"
+  }
+}
