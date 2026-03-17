@@ -17,19 +17,19 @@ Most cloud customers experienced failed or delayed flow executions over a ~12–
 
 ### Enterprise customer (Issue 2)
 
-One enterprise customer with a dedicated worker had flows fail because npm was blocked after a trust level misconfiguration during the namespace migration. All affected executions were replayed from the failed step once the issue was resolved.
+One enterprise customer with a dedicated worker had flows fail because npm was blocked after a trust level misconfiguration during pre incident migration. All affected executions were replayed from the failed step once the issue was resolved.
 
 ## Timeline
 
 All times are in UTC.
 
-**Mar 14–15 (Pre-incident):** As part of our infrastructure upgrade, we moved enterprise dedicated workers to their own Kubernetes namespaces to isolate them from shared infrastructure changes. We then began rolling out the new architecture for shared workers.
+**Mar 14–15 (Pre-incident):** As part of our infrastructure upgrade, we moved enterprise dedicated workers one by one first and isolated them from shared infrastructure changes. We then began rolling out the new architecture for shared workers.
 
 1. **Mar 16, 8:13 PM** — Shared workers begin failing after the architecture refactor deployment is applied.
 2. **Mar 16, 8:50 PM** — Brief recovery observed.
 3. **Mar 16, 8:52 PM** — Errors resurface shortly after the brief recovery.
 4. **Mar 17, 3:26 AM** — Root cause identified: persistent volumes (PVCs) filled up with no way to fix them in-place and no shell access to debug. Decision made to revert to the previous deployment method (Kamal) with multi-tenant workers.
-5. **Mar 17, 8:13 AM** — Discovered a separate issue: one enterprise customer's dedicated worker had been misconfigured with the wrong trust level during the namespace migration, causing npm to be blocked in their sandbox environment.
+5. **Mar 17, 8:13 AM** — Discovered a separate issue: one enterprise customer's dedicated worker had been misconfigured with the wrong trust level, causing npm to be blocked in their sandbox environment.
 6. **Mar 17, 11:30 AM** — Trust level configuration fixed, full rollout completed, and all failed executions replayed from their failed step.
 
 ## Root Causes
