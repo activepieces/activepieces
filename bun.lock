@@ -7374,6 +7374,9 @@
         "http-status-codes": "2.2.0",
         "tslib": "2.6.2",
       },
+      "devDependencies": {
+        "vitest": "3.0.8",
+      },
     },
     "packages/pieces/core/xml": {
       "name": "@activepieces/piece-xml",
