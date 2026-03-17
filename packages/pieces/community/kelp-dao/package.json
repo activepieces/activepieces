@@ -1,0 +1,28 @@
+{
+  "name": "@activepieces/piece-kelp-dao",
+  "version": "0.0.1",
+  "description": "Activepieces community piece for Kelp DAO — liquid restaking protocol built on EigenLayer",
+  "keywords": [
+    "activepieces",
+    "piece",
+    "kelp-dao",
+    "defi",
+    "liquid-restaking",
+    "eigenlayer",
+    "rseth"
+  ],
+  "homepage": "https://github.com/activepieces/activepieces",
+  "license": "MIT",
+  "main": "./src/index.ts",
+  "scripts": {
+    "build": "nx build piece-kelp-dao",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
