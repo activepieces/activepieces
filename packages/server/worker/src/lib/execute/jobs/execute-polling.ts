@@ -12,7 +12,6 @@ import {
 import { flowCache } from '../../cache/flow/flow-cache'
 import { provisioner } from '../../cache/provisioner'
 import { workerSettings } from '../../config/worker-settings'
-import { sandboxManager } from '../sandbox-manager'
 import { JobContext, JobHandler, JobResult } from '../types'
 import { extractCodeArtifacts, extractPiecePackages } from '../utils/flow-helpers'
 import { getWebhookUrl } from '../utils/webhook-url'
@@ -30,7 +29,7 @@ export const executePollingJob: JobHandler<PollingJobData> = {
         const codeSteps = extractCodeArtifacts(flowVersion)
         await provisioner(ctx.log, ctx.apiClient).provision({ pieces, codeSteps })
 
-        const sandbox = sandboxManager.acquire({ log: ctx.log, apiClient: ctx.apiClient })
+        const sandbox = ctx.sandboxManager.acquire({ log: ctx.log, apiClient: ctx.apiClient })
         try {
             await sandbox.start({
                 flowVersionId: flowVersion.id,
@@ -72,11 +71,11 @@ export const executePollingJob: JobHandler<PollingJobData> = {
         }
         catch (e) {
             ctx.log.error({ error: String(e) }, 'Polling trigger failed, will retry on next scheduled cycle')
-            await sandboxManager.invalidate(ctx.log)
+            await ctx.sandboxManager.invalidate(ctx.log)
             return {}
         }
         finally {
-            await sandboxManager.release(ctx.log)
+            await ctx.sandboxManager.release(ctx.log)
         }
     },
 }

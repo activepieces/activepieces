@@ -6,7 +6,6 @@ import {
 import { flowCache } from '../../cache/flow/flow-cache'
 import { provisioner } from '../../cache/provisioner'
 import { workerSettings } from '../../config/worker-settings'
-import { sandboxManager } from '../sandbox-manager'
 import { JobContext, JobHandler, JobResult } from '../types'
 import { extractCodeArtifacts, extractPiecePackages } from '../utils/flow-helpers'
 import { getWebhookUrl } from '../utils/webhook-url'
@@ -27,7 +26,7 @@ export const executeTriggerHookJob: JobHandler<ExecuteTriggerHookJobData> = {
         const codeSteps = extractCodeArtifacts(flowVersion)
         await provisioner(ctx.log, ctx.apiClient).provision({ pieces, codeSteps })
 
-        const sandbox = sandboxManager.acquire({ log: ctx.log, apiClient: ctx.apiClient })
+        const sandbox = ctx.sandboxManager.acquire({ log: ctx.log, apiClient: ctx.apiClient })
         try {
             await sandbox.start({
                 flowVersionId: flowVersion.id,
@@ -61,11 +60,11 @@ export const executeTriggerHookJob: JobHandler<ExecuteTriggerHookJobData> = {
             }
         }
         catch (e) {
-            await sandboxManager.invalidate(ctx.log)
+            await ctx.sandboxManager.invalidate(ctx.log)
             throw e
         }
         finally {
-            await sandboxManager.release(ctx.log)
+            await ctx.sandboxManager.release(ctx.log)
         }
     },
 }
