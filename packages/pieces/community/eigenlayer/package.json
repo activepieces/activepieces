@@ -1,0 +1,30 @@
+{
+  "name": "@activepieces/piece-eigenlayer",
+  "version": "0.0.1",
+  "description": "Activepieces piece for EigenLayer — the foundational restaking protocol on Ethereum",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/activepieces/activepieces.git",
+    "directory": "packages/pieces/community/eigenlayer"
+  },
+  "keywords": [
+    "activepieces",
+    "eigenlayer",
+    "defi",
+    "restaking",
+    "ethereum",
+    "avs"
+  ],
+  "scripts": {
+    "build": "nx build piece-eigenlayer"
+  },
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*"
+  }
+}
