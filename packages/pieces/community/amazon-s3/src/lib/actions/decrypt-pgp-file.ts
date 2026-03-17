@@ -198,8 +198,8 @@ export const decryptPgpFile = createAction({
         decryptionKeys: privateKey,
         format: 'binary',
         config: {
-          allowInsecureDecryptionWithSigningKeys,
-          allowUnauthenticatedMessages,
+          allowInsecureDecryptionWithSigningKeys: allowInsecureDecryptionWithSigningKeys ?? false,
+          allowUnauthenticatedMessages: allowUnauthenticatedMessages ?? false,
         },
       });
 
