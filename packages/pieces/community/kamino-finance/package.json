@@ -1,0 +1,24 @@
+{
+  "name": "@activepieces/piece-kamino-finance",
+  "version": "0.0.1",
+  "description": "Kamino Finance Solana lending and liquidity piece for Activepieces",
+  "keywords": ["activepieces", "kamino", "solana", "defi", "lending"],
+  "homepage": "https://kamino.finance",
+  "authors": [{"name": "Bossco"}],
+  "license": "MIT",
+  "main": "src/index.ts",
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*"
+  },
+  "nx": {
+    "targets": {
+      "build": {
+        "executor": "@nx/js:tsc",
+        "options": {
+          "main": "src/index.ts"
+        }
+      }
+    }
+  }
+}
