@@ -1,41 +1,33 @@
 import { createAction } from '@activepieces/pieces-framework';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const getProtocolStats = createAction({
   name: 'get_protocol_stats',
   displayName: 'Get Protocol Stats',
-  description: 'Get combined Mango Markets protocol statistics: TVL, MNGO price, market cap, and number of markets.',
+  description: 'Get key Mango Markets protocol statistics: TVL, chains, and category from DeFiLlama.',
   auth: undefined,
   props: {},
   async run() {
-    const [llamaResp, geckoResp, marketsResp] = await Promise.all([
-      fetch('https://api.llama.fi/protocol/mango-markets'),
-      fetch('https://api.coingecko.com/api/v3/coins/mango-markets?localization=false&tickers=false&community_data=false&developer_data=false'),
-      fetch('https://api.mngo.cloud/data/v4/markets'),
-    ]);
+    const response = await httpClient.sendRequest({
+      method: HttpMethod.GET,
+      url: 'https://api.llama.fi/protocol/mango-markets',
+    });
 
-    if (!llamaResp.ok) throw new Error(`DeFiLlama error: ${llamaResp.status}`);
-    if (!geckoResp.ok) throw new Error(`CoinGecko error: ${geckoResp.status}`);
-    if (!marketsResp.ok) throw new Error(`Mango API error: ${marketsResp.status}`);
-
-    const [llama, gecko, marketsData] = await Promise.all([
-      llamaResp.json(),
-      geckoResp.json(),
-      marketsResp.json(),
-    ]);
-
-    const chainTvls: Record<string, number> = llama.currentChainTvls ?? {};
-    const totalTvl = Object.values(chainTvls).reduce((sum: number, v: number) => sum + v, 0);
-    const markets = Array.isArray(marketsData) ? marketsData : (marketsData.markets ?? []);
-    const market = gecko.market_data ?? {};
+    const data = response.body as Record<string, unknown>;
+    const chainTvls = (data['currentChainTvls'] ?? {}) as Record<string, number>;
+    const totalTvl = Object.values(chainTvls).reduce((sum, v) => sum + v, 0);
+    const tvlArr = (data['tvl'] as Array<{ date: number; totalLiquidityUSD: number }>) ?? [];
+    const allTimeHighTvl = tvlArr.reduce((max, entry) => Math.max(max, entry.totalLiquidityUSD), 0);
 
     return {
+      name: (data['name'] as string) ?? 'Mango Markets',
+      symbol: (data['symbol'] as string) ?? 'MNGO',
+      category: (data['category'] as string) ?? 'Dexes',
       tvlUsd: totalTvl,
-      primaryChain: 'Solana',
-      mngoPrice: market.current_price?.usd ?? null,
-      marketCapUsd: market.market_cap?.usd ?? null,
-      priceChange24hPercent: market.price_change_percentage_24h ?? null,
-      marketsCount: markets.length,
-      lastUpdated: new Date().toISOString(),
+      chains: Object.keys(chainTvls),
+      chainCount: Object.keys(chainTvls).length,
+      allTimeHighTvlUsd: allTimeHighTvl,
+      description: (data['description'] as string) ?? '',
     };
   },
 });
