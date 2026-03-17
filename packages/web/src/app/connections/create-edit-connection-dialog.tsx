@@ -45,7 +45,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { SkeletonList } from '@/components/ui/skeleton';
 import {
-  AssignConnectionToProjectsControl,
+  ProjectSelector,
   appConnectionsMutations,
   oauthAppsQueries,
   oauth2Utils,
@@ -175,7 +175,7 @@ function CreateOrEditConnectionSection({
             )}
             {isGlobalConnection && isNil(reconnectConnection) && (
               <div className="my-4 flex flex-col gap-4">
-                <AssignConnectionToProjectsControl
+                <ProjectSelector
                   control={form.control}
                   name="request.projectIds"
                 />
