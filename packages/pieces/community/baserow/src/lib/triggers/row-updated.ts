@@ -29,7 +29,7 @@ export const rowUpdatedTrigger = createTrigger({
     id: 1,
     order: '1.00000000000000000000',
     Name: 'Updated row',
-    old_item: {
+    __old_item__: {
       id: 1,
       order: '1.00000000000000000000',
       Name: 'Original row',
@@ -45,7 +45,7 @@ export const rowUpdatedTrigger = createTrigger({
     const body = context.payload.body as { items?: unknown[]; old_items?: unknown[] };
     return (body.items ?? []).map((item, i) => ({
       ...(item as Record<string, unknown>),
-      old_item: body.old_items?.[i] ?? null,
+      __old_item__: body.old_items?.[i] ?? null,
     }));
   },
 });
