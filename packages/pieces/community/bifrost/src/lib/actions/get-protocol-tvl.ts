@@ -1,30 +1,27 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { PieceCategory } from '@activepieces/shared';
+import { fetchProtocol } from '../bifrost-api';
 
 export const getProtocolTvl = createAction({
   name: 'get_protocol_tvl',
   displayName: 'Get Protocol TVL',
-  description: 'Fetch the current Total Value Locked (TVL) for Bifrost Finance from DeFiLlama.',
+  description: 'Fetch the current Total Value Locked (TVL) for Bifrost Liquid Staking from DeFiLlama.',
   props: {},
   async run() {
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.GET,
-      url: 'https://api.llama.fi/protocol/bifrost-finance',
-    });
+    const protocol = await fetchProtocol();
 
-    const data = response.body as Record<string, unknown>;
+    const tvl = protocol.tvl ?? 0;
+    const currentChainTvls = protocol.currentChainTvls ?? {};
 
     return {
-      name: data['name'],
-      symbol: data['symbol'],
-      tvl: data['tvl'],
-      chainTvls: data['chainTvls'],
-      category: data['category'],
-      description: data['description'],
-      url: data['url'],
-      twitter: data['twitter'],
-      governanceID: data['governanceID'],
+      protocolName: protocol.name,
+      symbol: protocol.symbol,
+      tvlUSD: tvl,
+      tvlFormatted: `$${tvl.toLocaleString('en-US', { maximumFractionDigits: 2 })}`,
+      chain: protocol.chain,
+      chains: protocol.chains,
+      currentChainTvls,
+      url: protocol.url,
+      fetchedAt: new Date().toISOString(),
     };
   },
 });
