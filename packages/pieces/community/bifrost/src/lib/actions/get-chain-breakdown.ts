@@ -1,37 +1,37 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { fetchProtocol, ChainBreakdownItem } from '../bifrost-api';
 
 export const getChainBreakdown = createAction({
   name: 'get_chain_breakdown',
   displayName: 'Get Chain Breakdown',
-  description: 'Fetch the TVL breakdown by blockchain for Bifrost Finance from DeFiLlama.',
+  description: 'Fetch the TVL breakdown by chain for Bifrost Liquid Staking, sorted descending with percentage of total.',
   props: {},
   async run() {
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.GET,
-      url: 'https://api.llama.fi/protocol/bifrost-finance',
-    });
+    const protocol = await fetchProtocol();
 
-    const data = response.body as Record<string, unknown>;
-    const chainTvls = (data['chainTvls'] ?? {}) as Record<string, unknown>;
+    const currentChainTvls = protocol.currentChainTvls ?? {};
+    const totalTvl = Object.values(currentChainTvls).reduce((sum, v) => sum + v, 0);
 
-    const chains: Array<{ chain: string; tvl: number }> = [];
-
-    for (const [chain, chainData] of Object.entries(chainTvls)) {
-      const cd = chainData as Record<string, unknown>;
-      const tvlArr = cd['tvl'] as Array<Record<string, number>> | undefined;
-      if (tvlArr && tvlArr.length > 0) {
-        const latest = tvlArr[tvlArr.length - 1];
-        chains.push({ chain, tvl: latest['totalLiquidityUSD'] ?? 0 });
-      }
-    }
-
-    chains.sort((a, b) => b.tvl - a.tvl);
+    const breakdown: ChainBreakdownItem[] = Object.entries(currentChainTvls)
+      .map(([chain, tvlUSD]) => ({
+        chain,
+        tvlUSD,
+        percentage: totalTvl > 0 ? (tvlUSD / totalTvl) * 100 : 0,
+      }))
+      .sort((a, b) => b.tvlUSD - a.tvlUSD);
 
     return {
-      protocol: data['name'],
-      chains,
-      total_chains: chains.length,
+      totalTvlUSD: totalTvl,
+      totalTvlFormatted: `$${totalTvl.toLocaleString('en-US', { maximumFractionDigits: 2 })}`,
+      chainCount: breakdown.length,
+      breakdown: breakdown.map((item) => ({
+        chain: item.chain,
+        tvlUSD: item.tvlUSD,
+        tvlFormatted: `$${item.tvlUSD.toLocaleString('en-US', { maximumFractionDigits: 2 })}`,
+        percentage: parseFloat(item.percentage.toFixed(2)),
+        percentageFormatted: `${item.percentage.toFixed(2)}%`,
+      })),
+      fetchedAt: new Date().toISOString(),
     };
   },
 });
