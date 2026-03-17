@@ -9,7 +9,7 @@ import { BaserowFieldType } from '../common/constants';
 export const updateRowAction = createAction({
   name: 'baserow_update_row',
   displayName: 'Update Row',
-  description: 'Updates an existing row.',
+  description: 'Updates fields in an existing row. Empty or blank values are skipped (leaving those fields unchanged). To explicitly clear a field, use the Clean Row action.',
   auth: baserowAuth,
   props: {
     table_id: baserowCommon.tableId(),

@@ -32,6 +32,11 @@ export const findRowAction = createAction({
           BaserowFieldType.MULTI_SELECT,
           BaserowFieldType.MULTIPLE_COLLABORATORS,
           BaserowFieldType.FILE,
+          BaserowFieldType.ROLLUP,
+          BaserowFieldType.LOOKUP,
+          BaserowFieldType.COUNT,
+          BaserowFieldType.LAST_MODIFIED_BY,
+          BaserowFieldType.CREATED_BY,
         ];
         const filterable = fields.filter((f) => !unsupportedTypes.includes(f.type));
         return {
