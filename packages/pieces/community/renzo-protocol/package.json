@@ -1,0 +1,34 @@
+{
+  "name": "@activepieces/piece-renzo-protocol",
+  "version": "0.0.1",
+  "description": "Renzo Protocol liquid restaking piece for Activepieces",
+  "keywords": [
+    "activepieces",
+    "renzo",
+    "restaking",
+    "eigenlayer",
+    "ezETH"
+  ],
+  "homepage": "https://renzoprotocol.com",
+  "authors": [
+    {
+      "name": "Bossco"
+    }
+  ],
+  "license": "MIT",
+  "main": "src/index.ts",
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*"
+  },
+  "nx": {
+    "targets": {
+      "build": {
+        "executor": "@nx/js:tsc",
+        "options": {
+          "main": "src/index.ts"
+        }
+      }
+    }
+  }
+}
