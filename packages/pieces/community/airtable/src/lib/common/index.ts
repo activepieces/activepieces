@@ -753,7 +753,8 @@ export const airtableCommon = {
     auth: string,
     base: string,
     tableId: string,
-    fields: Record<string, unknown>
+    fields: Record<string, unknown>,
+    allowEmpty = false
   ) => {
     if (!auth) return fields;
     if (!base) return fields;
@@ -780,7 +781,7 @@ export const airtableCommon = {
         } else if (
           ['multipleRecordLinks', 'multipleSelects'].includes(field.type)
         ) {
-          if (Array.isArray(fields[key]) && (fields[key] as any[]).length > 0) {
+          if (allowEmpty || (Array.isArray(fields[key]) && (fields[key] as any[]).length > 0)) {
             newFields[key] = fields[key];
           }
         } else {

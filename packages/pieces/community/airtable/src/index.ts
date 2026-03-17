@@ -10,6 +10,7 @@ import { airtableCreateRecordAction } from './lib/actions/create-record';
 import { airtableDeleteRecordAction } from './lib/actions/delete-record';
 import { airtableFindRecordAction } from './lib/actions/find-record';
 import { airtableUpdateRecordAction } from './lib/actions/update-record';
+import { airtableCleanRecordAction } from './lib/actions/clean-record';
 import { airtableNewRecordTrigger } from './lib/trigger/new-record.trigger';
 import { airtableUpdatedRecordTrigger } from './lib/trigger/update-record.trigger';
 import { airtableUploadFileToColumnAction } from './lib/actions/upload-file-to-column';
@@ -47,6 +48,7 @@ export const airtable = createPiece({
     airtableCreateRecordAction,
     airtableFindRecordAction,
     airtableUpdateRecordAction,
+    airtableCleanRecordAction,
     airtableDeleteRecordAction,
     airtableUploadFileToColumnAction,
     airtableAddCommentToRecordAction,
