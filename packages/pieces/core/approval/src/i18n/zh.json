@@ -1,9 +1,9 @@
 {
-  "Build approval process in your workflows": "Build approval process in your workflows",
-  "Wait for Approval": "Wait for Approval",
-  "Create Approval Links": "Create Approval Links",
-  "Pauses the flow and wait for the approval from the user": "Pauses the flow and wait for the approval from the user",
-  "Create links only without pausing the flow, use wait for approval to pause": "Create links only without pausing the flow, use wait for approval to pause",
+  "Build approval process in your workflows": "在您的工作流中构建审批过程",
+  "Wait for Approval": "等待批准",
+  "Create Approval Links": "创建审批链接",
+  "Pauses the flow and wait for the approval from the user": "暂停流量并等待用户批准",
+  "Create links only without pausing the flow, use wait for approval to pause": "只在不暂停流程的情况下创建链接，请等待审批以暂停",
   "Markdown": "Markdown",
-  "Please use Manual Task feature instead from 0.48.0 and above": "Please use Manual Task feature instead from 0.48.0 and above"
+  "Please use Manual Task feature instead from 0.48.0 and above": "请使用来自0.48.0及以上的手动任务功能"
 }
