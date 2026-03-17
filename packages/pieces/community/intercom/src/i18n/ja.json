@@ -1,10 +1,5 @@
 {
   "Customer messaging platform for sales, marketing, and support": "営業、マーケティング、サポートのための顧客メッセージングプラットフォーム",
-  "Region": "地域",
-  "US": "米国",
-  "EU": "EU",
-  "AU": "AU",
-  "\nPlease follow the instructions to create Intercom Oauth2 app.\n\n1.Log in to your Intercom account and navigate to **Settings > Integrations > Developer Hub**.\n2.Click on **Create a new app** and select the appropriate workspace.\n3.In **Authentication** section, add Redirect URL.\n4.In **Webhooks** section, select the events you want to receive.\n5.Go to the **Basic Information** section and copy the Client ID and Client Secret.\n": "\nPlease follow the instructions to create Intercom Oauth2 app.\n\n1.Log in to your Intercom account and navigate to **Settings > Integrations > Developer Hub**.\n2.Click on **Create a new app** and select the appropriate workspace.\n3.In **Authentication** section, add Redirect URL.\n4.In **Webhooks** section, select the events you want to receive.\n5.Go to the **Basic Information** section and copy the Client ID and Client Secret.\n",
   "Add Note": "メモを追加",
   "Add note to conversation": "会話にメモを追加",
   "Add/Remove Tag on Contact": "連絡先にタグを追加/削除",
