@@ -44,7 +44,8 @@ export const findOrAddAccountAction = createAction({
 
     const items = searchResult?.items ?? searchResult?.Items ?? [];
     const exactMatch = items.find(
-      (item: any) => item.Name === context.propsValue.name
+      (item: any) =>
+        item.Name?.toLowerCase() === context.propsValue.name.toLowerCase()
     );
     if (exactMatch) {
       return {
@@ -63,8 +64,8 @@ export const findOrAddAccountAction = createAction({
         {
           Person: {
             Email: context.propsValue.contactEmail,
-            FirstName: context.propsValue.contactFirstName ?? '',
-            LastName: context.propsValue.contactLastName ?? '',
+            ...(context.propsValue.contactFirstName ? { FirstName: context.propsValue.contactFirstName } : {}),
+            ...(context.propsValue.contactLastName ? { LastName: context.propsValue.contactLastName } : {}),
           },
           IsPrimary: true,
         },
