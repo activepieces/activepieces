@@ -1,7 +1,9 @@
 import {
     ExecutionType,
     FileType,
+    FlowOperationType,
     FlowRunStatus,
+    FlowStatus,
     isNil,
     PiecePackage,
     ProgressUpdateType,
@@ -200,6 +202,26 @@ export function createHandlers(log: FastifyBaseLogger, platformIdForDedicatedWor
             if (newPieces.length > 0) {
                 await distributedStore.put(redisKey, [...existing, ...newPieces])
             }
+        },
+
+        async disableFlow(input) {
+            const { flowId, projectId } = input
+            const flow = await flowService(log).getOneOrThrow({ id: flowId, projectId })
+            if (flow.status === FlowStatus.DISABLED) {
+                return
+            }
+            const platformId = await projectService(log).getPlatformId(projectId)
+            await flowService(log).update({
+                id: flowId,
+                userId: null,
+                projectId,
+                platformId,
+                operation: {
+                    type: FlowOperationType.CHANGE_STATUS,
+                    request: { status: FlowStatus.DISABLED },
+                },
+            })
+            log.info({ flowId, projectId }, '[workerRpc#disableFlow] Flow disabled due to missing piece')
         },
     }
 }

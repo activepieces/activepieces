@@ -7,13 +7,20 @@ import {
     PieceType,
 } from '@activepieces/shared'
 import type { FlowVersion } from '@activepieces/shared'
-import { extractPiecePackages, extractCodeArtifacts } from '../../../../src/lib/execute/utils/flow-helpers'
+import { extractPiecePackages, extractCodeArtifacts, provisionFlowPieces } from '../../../../src/lib/execute/utils/flow-helpers'
 
 const mockGetPiece = vi.fn()
+const mockProvision = vi.fn()
 
 vi.mock('../../../../src/lib/cache/pieces/piece-cache', () => ({
     pieceCache: () => ({
         getPiece: mockGetPiece,
+    }),
+}))
+
+vi.mock('../../../../src/lib/cache/provisioner', () => ({
+    provisioner: () => ({
+        provision: mockProvision,
     }),
 }))
 
@@ -175,5 +182,85 @@ describe('extractCodeArtifacts', () => {
         expect(packages).toHaveLength(2)
         expect(artifacts).toHaveLength(1)
         expect(artifacts[0].name).toBe('step_2')
+    })
+})
+
+describe('provisionFlowPieces', () => {
+    const mockDisableFlow = vi.fn()
+    const mockWarn = vi.fn()
+    const logWithWarn = { warn: mockWarn } as any
+    const apiClientWithDisable = { disableFlow: mockDisableFlow } as any
+
+    beforeEach(() => {
+        mockGetPiece.mockReset()
+        mockProvision.mockReset()
+        mockDisableFlow.mockReset()
+        mockWarn.mockReset()
+        mockGetPiece.mockImplementation(({ pieceName, pieceVersion }: { pieceName: string, pieceVersion: string }) => ({
+            pieceName,
+            pieceVersion,
+            packageType: PackageType.REGISTRY,
+            pieceType: PieceType.OFFICIAL,
+        }))
+        mockProvision.mockResolvedValue(undefined)
+    })
+
+    it('returns true when provisioning succeeds', async () => {
+        const fv = makeFlowVersion({
+            ...pieceTrigger,
+            nextAction: { ...pieceAction },
+        })
+        const result = await provisionFlowPieces({
+            flowVersion: fv,
+            platformId: mockPlatformId,
+            flowId: 'flow-1',
+            projectId: 'project-1',
+            log: logWithWarn,
+            apiClient: apiClientWithDisable,
+        })
+        expect(result).toBe(true)
+        expect(mockDisableFlow).not.toHaveBeenCalled()
+    })
+
+    it('returns false and calls disableFlow when piece metadata is not found', async () => {
+        mockGetPiece.mockRejectedValue(new Error('Piece metadata not found for @activepieces/piece-agent@0.3.7'))
+        const fv = makeFlowVersion({
+            ...pieceTrigger,
+            nextAction: { ...pieceAction },
+        })
+        const result = await provisionFlowPieces({
+            flowVersion: fv,
+            platformId: mockPlatformId,
+            flowId: 'flow-1',
+            projectId: 'project-1',
+            log: logWithWarn,
+            apiClient: apiClientWithDisable,
+        })
+        expect(result).toBe(false)
+        expect(mockDisableFlow).toHaveBeenCalledWith({
+            flowId: 'flow-1',
+            projectId: 'project-1',
+        })
+    })
+
+    it('returns false and calls disableFlow when provisioner fails', async () => {
+        mockProvision.mockRejectedValue(new Error('Failed to provision piece'))
+        const fv = makeFlowVersion({
+            ...pieceTrigger,
+            nextAction: { ...pieceAction },
+        })
+        const result = await provisionFlowPieces({
+            flowVersion: fv,
+            platformId: mockPlatformId,
+            flowId: 'flow-1',
+            projectId: 'project-1',
+            log: logWithWarn,
+            apiClient: apiClientWithDisable,
+        })
+        expect(result).toBe(false)
+        expect(mockDisableFlow).toHaveBeenCalledWith({
+            flowId: 'flow-1',
+            projectId: 'project-1',
+        })
     })
 })

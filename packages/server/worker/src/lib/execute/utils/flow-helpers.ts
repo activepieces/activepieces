@@ -1,7 +1,30 @@
-import { FlowActionType, flowStructureUtil, FlowTriggerType, FlowVersion, PiecePackage, WorkerToApiContract } from '@activepieces/shared'
+import { FlowActionType, flowStructureUtil, FlowTriggerType, FlowVersion, PiecePackage, tryCatch, WorkerToApiContract } from '@activepieces/shared'
 import { Logger } from 'pino'
 import { CodeArtifact } from '../../cache/code/code-builder'
 import { pieceCache } from '../../cache/pieces/piece-cache'
+import { provisioner } from '../../cache/provisioner'
+
+export async function provisionFlowPieces(params: {
+    flowVersion: FlowVersion
+    platformId: string
+    flowId: string
+    projectId: string
+    log: Logger
+    apiClient: WorkerToApiContract
+}): Promise<boolean> {
+    const { flowVersion, platformId, flowId, projectId, log, apiClient } = params
+    const { error } = await tryCatch(async () => {
+        const pieces = await extractPiecePackages(flowVersion, platformId, log, apiClient)
+        const codeSteps = extractCodeArtifacts(flowVersion)
+        await provisioner(log, apiClient).provision({ pieces, codeSteps })
+    })
+    if (error) {
+        log.warn({ error: String(error), flowId }, 'Flow disabled due to missing piece')
+        await apiClient.disableFlow({ flowId, projectId })
+        return false
+    }
+    return true
+}
 
 export async function extractPiecePackages(flowVersion: FlowVersion, platformId: string, log: Logger, apiClient: WorkerToApiContract): Promise<PiecePackage[]> {
     const pieceSteps = flowStructureUtil.getAllSteps(flowVersion.trigger)
