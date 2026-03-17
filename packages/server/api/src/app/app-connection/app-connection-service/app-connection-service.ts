@@ -334,7 +334,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
         return {
             ...appConnectionWithoutSensitiveData,
             usingSecretManager: containsSecretManagerReference(value),
-        } as AppConnectionWithoutSensitiveData
+        }
     },
 
     async decryptAndRefreshConnection(

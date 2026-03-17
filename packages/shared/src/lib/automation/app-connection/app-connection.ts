@@ -132,7 +132,7 @@ export const AppConnectionWithoutSensitiveData = z.object({
     preSelectForNewProjects: z.boolean(),
     usingSecretManager: z.boolean(),
 }).describe('App connection is a connection to an external app.')
-export type AppConnectionWithoutSensitiveData = z.infer<typeof AppConnectionWithoutSensitiveData> & { __brand: 'AppConnectionWithoutSensitiveData' }
+export type AppConnectionWithoutSensitiveData = z.infer<typeof AppConnectionWithoutSensitiveData>
 
 export const AppConnectionOwners = z.object({
     firstName: z.string(),
