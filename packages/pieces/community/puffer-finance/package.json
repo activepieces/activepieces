@@ -1,0 +1,24 @@
+{
+  "name": "@activepieces/piece-puffer-finance",
+  "version": "0.0.1",
+  "description": "Puffer Finance liquid restaking piece for Activepieces",
+  "keywords": ["activepieces", "puffer", "restaking", "eigenlayer", "defi"],
+  "homepage": "https://puffer.fi",
+  "authors": [{"name": "Bossco"}],
+  "license": "MIT",
+  "main": "src/index.ts",
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*"
+  },
+  "nx": {
+    "targets": {
+      "build": {
+        "executor": "@nx/js:tsc",
+        "options": {
+          "main": "src/index.ts"
+        }
+      }
+    }
+  }
+}
