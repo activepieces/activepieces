@@ -1,3 +1,4 @@
+import os from 'os'
 import { systemUsage } from '@activepieces/server-utils'
 import {
     ConsumeJobRequest,
@@ -12,7 +13,6 @@ import {
 } from '@activepieces/shared'
 import { trace } from '@opentelemetry/api'
 import { nanoid } from 'nanoid'
-import os from 'os'
 import { io, Socket } from 'socket.io-client'
 import { pieceInstaller } from './cache/pieces/piece-installer'
 import { getApiUrl, system, WorkerSystemProp } from './config/configs'

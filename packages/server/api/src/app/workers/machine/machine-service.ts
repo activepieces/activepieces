@@ -119,7 +119,7 @@ async function getExecutionMode(log: FastifyBaseLogger, platformIdForDedicatedWo
         return executionMode
     }
     if (dedicatedWorkerConfig.trustedEnvironment) {
-        return ExecutionMode.SANDBOX_CODE_ONLY
+        return ExecutionMode.SANDBOX_PROCESS
     }
     return ExecutionMode.SANDBOX_CODE_AND_PROCESS
 }

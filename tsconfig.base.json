@@ -608,6 +608,9 @@
       "@activepieces/piece-kizeo-forms": [
         "packages/pieces/community/kizeo-forms/src/index.ts"
       ],
+      "@activepieces/piece-klaviyo": [
+        "packages/pieces/community/klaviyo/src/index.ts"
+      ],
       "@activepieces/piece-knack": [
         "packages/pieces/community/knack/src/index.ts"
       ],
@@ -1827,6 +1830,9 @@
       ],
       "@activepieces/piece-coralogix": [
         "packages/pieces/community/coralogix/src/index.ts"
+      ],
+      "@activepieces/piece-pocketbase": [
+        "packages/pieces/community/pocketbase/src/index.ts"
       ]
     },
     "resolveJsonModule": true
