@@ -1,0 +1,22 @@
+{
+  "name": "@activepieces/piece-minimax",
+  "version": "0.0.1",
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
+    "openai": "4.67.1",
+    "zod": "4.3.6",
+    "tslib": "2.6.2"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json && cp package.json dist/",
+    "lint": "eslint 'src/**/*.ts'"
+  },
+  "description": "[MiniMax](https://www.minimax.io) is an AI company offering large language models with 204K context windows.",
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
