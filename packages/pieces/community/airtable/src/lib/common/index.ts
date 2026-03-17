@@ -776,9 +776,9 @@ export const airtableCommon = {
           return;
         }
         if (field.type === 'multipleAttachments') {
-          if (allowEmpty && !fields[key]) {
+          if (allowEmpty && (!fields[key] || (Array.isArray(fields[key]) && (fields[key] as any[]).length === 0))) {
             newFields[key] = [];
-          } else if (fields[key]) {
+          } else if (fields[key] && !(Array.isArray(fields[key]) && (fields[key] as any[]).length === 0)) {
             newFields[key] = [
               {
                 url: fields[key] as string,
@@ -794,7 +794,9 @@ export const airtableCommon = {
             newFields[key] = fields[key];
           }
         } else {
-          if (allowEmpty || fields[key] !== undefined) {
+          if (allowEmpty) {
+            newFields[key] = (fields[key] === '' || fields[key] === undefined) ? null : fields[key];
+          } else if (fields[key] !== undefined) {
             newFields[key] = fields[key];
           }
         }
