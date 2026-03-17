@@ -83,7 +83,7 @@ describe('Secret Manager Cache', () => {
 
             expect(axiosRequestSpy.mock.calls.length).toBe(callsAfterFirstList)
 
-            await secretManagerCache.invalidateConnectionEntries(mockPlatform.id)
+            await secretManagerCache.invalidateConnectionEntries({ platformId: mockPlatform.id })
         })
 
         it('should not cache when checkConnection fails', async () => {
@@ -128,7 +128,7 @@ describe('Secret Manager Cache', () => {
 
             expect(axiosRequestSpy.mock.calls.length).toBe(callsAfterFirstList * 2)
 
-            await secretManagerCache.invalidateConnectionEntries(mockPlatform.id)
+            await secretManagerCache.invalidateConnectionEntries({ platformId: mockPlatform.id })
         })
     })
 
@@ -172,7 +172,7 @@ describe('Secret Manager Cache', () => {
 
             expect(axiosRequestSpy.mock.calls.length).toBe(callsAfterFirst)
 
-            await secretManagerCache.invalidateConnectionEntries(mockPlatform.id)
+            await secretManagerCache.invalidateConnectionEntries({ platformId: mockPlatform.id })
         })
     })
 
@@ -222,7 +222,7 @@ describe('Secret Manager Cache', () => {
 
             expect(axiosRequestSpy.mock.calls.length).toBeGreaterThan(0)
 
-            await secretManagerCache.invalidateConnectionEntries(mockPlatform.id)
+            await secretManagerCache.invalidateConnectionEntries({ platformId: mockPlatform.id })
         })
 
         it('should clear cache on disconnect', async () => {
@@ -279,7 +279,7 @@ describe('Secret Manager Cache', () => {
 
             expect(axiosRequestSpy.mock.calls.length).toBeGreaterThan(0)
 
-            await secretManagerCache.invalidateConnectionEntries(mockPlatform.id)
+            await secretManagerCache.invalidateConnectionEntries({ platformId: mockPlatform.id })
         })
     })
 

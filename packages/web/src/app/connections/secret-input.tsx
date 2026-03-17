@@ -28,7 +28,6 @@ import { cn } from '@/lib/utils';
 type SecretInputProps = Omit<InputProps, 'value' | 'onChange'> & {
   value?: string;
   onChange?: (value: string) => void;
-  allowTogglingSecretManagerMode?: boolean;
 };
 
 type SecretManagerToggleButtonProps = {
@@ -73,7 +72,6 @@ const SecretInput = React.forwardRef<HTMLInputElement, SecretInputProps>(
       className,
       value,
       onChange,
-      allowTogglingSecretManagerMode = true,
       ...restProps
     },
     ref,
@@ -248,8 +246,7 @@ const SecretInput = React.forwardRef<HTMLInputElement, SecretInputProps>(
       <div className={cn('flex items-center gap-2', className)}>
         {platform.plan.secretManagersEnabled &&
           connections &&
-          connections.length > 0 &&
-          allowTogglingSecretManagerMode && (
+          connections.length > 0 && (
             <SecretManagerToggleButton
               isActive={false}
               onClick={toggleSecretManager}

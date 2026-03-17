@@ -63,7 +63,7 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
             auth: encryptedConfig,
         })
 
-        await secretManagerCache.invalidateConnectionEntries(request.platformId)
+        await secretManagerCache.invalidateConnectionEntries({ platformId: request.platformId })
         const { auth: _auth, scope, projectIds, ...savedRest } = saved
         if (scope === SecretManagerConnectionScope.PROJECT) {
             return { ...savedRest, scope, projectIds: projectIds ?? [], connection: { configured: true, connected: true } }
@@ -85,7 +85,7 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
             projectIds: request.scope === SecretManagerConnectionScope.PROJECT ? request.projectIds : undefined,
             auth: encryptedConfig,
         })
-        await secretManagerCache.invalidateConnectionEntries(platformId, existing.id)
+        await secretManagerCache.invalidateConnectionEntries({ platformId, connectionId: existing.id })
         const updated = await secretManagerRepository().findOneOrFail({ where: { id, platformId } })
         const { auth: _auth, scope, projectIds, ...updatedRest } = updated
         if (scope === SecretManagerConnectionScope.PROJECT) {
@@ -101,7 +101,7 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
         const provider = secretManagerProvider(log, connection.providerId)
         await provider.disconnect()
         await secretManagerRepository().delete({ id, platformId })
-        await secretManagerCache.invalidateConnectionEntries(platformId, id)
+        await secretManagerCache.invalidateConnectionEntries({ platformId, connectionId: id })
     },
 
     getSecret: async ({ connectionId, path, platformId, projectIds }: { connectionId: string, path: string, platformId: string, projectIds?: string[] }): Promise<string> => {
@@ -142,13 +142,13 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
                 },
             })
         }
-        const cached = await secretManagerCache.getSecretValue(platformId, connectionId, path)
+        const cached = await secretManagerCache.getSecretValue({ platformId, connectionId, path })
         if (cached !== undefined) {
             return cached
         }
         const provider = secretManagerProvider(log, connection.providerId)
         const secret = await provider.getSecret({ path }, decryptedConfig)
-        await secretManagerCache.setSecretValue(platformId, connectionId, path, secret)
+        await secretManagerCache.setSecretValue({ platformId, connectionId, path, value: secret })
         return secret
     },
 
@@ -197,7 +197,7 @@ async function checkConnection(log: FastifyBaseLogger, config: SecretManagerConf
     if (isNil(config)) {
         return false
     }
-    const cached = await secretManagerCache.getConnectionStatus(platformId, connectionId)
+    const cached = await secretManagerCache.getConnectionStatus({ platformId, connectionId })
     if (cached !== undefined) {
         return cached
     }
@@ -205,7 +205,7 @@ async function checkConnection(log: FastifyBaseLogger, config: SecretManagerConf
     const provider = secretManagerProvider(log, providerId)
     const connected = Boolean(await provider.checkConnection(config).catch(() => false))
     if (connected) {
-        await secretManagerCache.setConnectionStatus(platformId, connectionId, true)
+        await secretManagerCache.setConnectionStatus({ platformId, connectionId, value: true })
     }
     return connected
 }
