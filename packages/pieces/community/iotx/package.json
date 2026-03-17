@@ -1,0 +1,12 @@
+{
+  "name": "@activepieces/piece-iotx",
+  "version": "0.0.1",
+  "description": "IoTeX DePIN blockchain piece for Activepieces",
+  "type": "module",
+  "exports": "./src/index.ts",
+  "license": "MIT",
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*"
+  }
+}
