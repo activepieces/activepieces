@@ -3,15 +3,10 @@ import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { z } from 'zod'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { secretManagerCache } from './secret-manager-cache'
-import { secretManagerProvidersMetadata } from './secret-manager-providers/secret-manager-providers'
 import { secretManagersService } from './secret-managers.service'
 
 export const secretManagersController: FastifyPluginAsyncZod = async (app) => {
     const service = secretManagersService(app.log)
-
-    app.get('/providers', ListSecretManagerProviders, async (_request) => {
-        return secretManagerProvidersMetadata()
-    })
 
     app.get('/', ListSecretManagerConnections, async (request) => {
         return service.list({
@@ -45,12 +40,6 @@ export const secretManagersController: FastifyPluginAsyncZod = async (app) => {
         await secretManagerCache.invalidateConnectionEntries(request.principal.platform.id, request.query.connectionId)
         return reply.status(204).send()
     })
-}
-
-const ListSecretManagerProviders = {
-    config: {
-        security: securityAccess.publicPlatform([PrincipalType.USER]),
-    },
 }
 
 const ListSecretManagerConnections = {

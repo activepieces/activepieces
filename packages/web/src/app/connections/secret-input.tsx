@@ -1,4 +1,7 @@
-import { SecretManagerFieldsSeparator } from '@activepieces/shared';
+import {
+  SECRET_MANAGER_PROVIDERS_METADATA,
+  SecretManagerFieldsSeparator,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import { KeyRound } from 'lucide-react';
 import * as React from 'react';
@@ -84,13 +87,13 @@ const SecretInput = React.forwardRef<HTMLInputElement, SecretInputProps>(
         projectId,
       });
 
-    const { data: providers } = secretManagersHooks.useListProviders();
-
     const getSecretParamsForConnection = (connectionId: string | null) => {
-      if (!connectionId || !connections || !providers) return [];
+      if (!connectionId || !connections) return [];
       const connection = connections.find((c) => c.id === connectionId);
       if (!connection) return [];
-      const provider = providers.find((p) => p.id === connection.providerId);
+      const provider = SECRET_MANAGER_PROVIDERS_METADATA.find(
+        (p) => p.id === connection.providerId,
+      );
       return provider?.secretParams ?? [];
     };
 
@@ -144,7 +147,7 @@ const SecretInput = React.forwardRef<HTMLInputElement, SecretInputProps>(
         const newValue = buildSecretValue(newConnectionId, newFieldValues);
         onChange?.(newValue);
       },
-      [onChange, connections, providers],
+      [onChange, connections],
     );
 
     const handleFieldChange = useCallback(
@@ -166,13 +169,15 @@ const SecretInput = React.forwardRef<HTMLInputElement, SecretInputProps>(
 
     const currentFields = useMemo(
       () => getSecretParamsForConnection(selectedConnectionId) || [],
-      [selectedConnectionId, showSecretManagerInput, connections, providers],
+      [selectedConnectionId, showSecretManagerInput, connections],
     );
 
     const getProviderForConnection = (connectionId: string | null) => {
-      if (!connectionId || !connections || !providers) return undefined;
+      if (!connectionId || !connections) return undefined;
       const connection = connections.find((c) => c.id === connectionId);
-      return providers.find((p) => p.id === connection?.providerId);
+      return SECRET_MANAGER_PROVIDERS_METADATA.find(
+        (p) => p.id === connection?.providerId,
+      );
     };
 
     const selectedConnection = connections?.find(
@@ -210,7 +215,7 @@ const SecretInput = React.forwardRef<HTMLInputElement, SecretInputProps>(
               </SelectTrigger>
               <SelectContent>
                 {connections?.map((connection) => {
-                  const provider = providers?.find(
+                  const provider = SECRET_MANAGER_PROVIDERS_METADATA.find(
                     (p) => p.id === connection.providerId,
                   );
                   return (

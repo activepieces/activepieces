@@ -1,9 +1,9 @@
-import { ActivepiecesError, ConnectSecretManagerRequest, ErrorCode, SecretManagerProviderId, SecretManagerProviderMetaData } from '@activepieces/shared'
+import { ActivepiecesError, ConnectSecretManagerRequest, ErrorCode, SecretManagerProviderId } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { AWS_PROVIDER_METADATA, awsProvider } from './aws-provider'
-import { CYBERARK_PROVIDER_METADATA, cyberarkConjurProvider } from './cyberark-conjur-provider'
-import { HASHICORP_PROVIDER_METADATA, hashicorpProvider } from './hashicorp-provider'
-import { ONEPASSWORD_PROVIDER_METADATA, onePasswordProvider } from './onepassword-provider'
+import { awsProvider } from './aws-provider'
+import { cyberarkConjurProvider } from './cyberark-conjur-provider'
+import { hashicorpProvider } from './hashicorp-provider'
+import { onePasswordProvider } from './onepassword-provider'
 
 function extractErrorMessage(error: unknown): string {
     if (error instanceof Error) return error.message
@@ -67,10 +67,3 @@ const secretManagerProvidersMap = (log: FastifyBaseLogger): SecretManagerProvide
 export const secretManagerProvider = <K extends SecretManagerProviderId>(log: FastifyBaseLogger, providerId: K): SecretManagerProvider<K> => {
     return secretManagerProvidersMap(log)[providerId]
 }
-
-export const secretManagerProvidersMetadata = (): SecretManagerProviderMetaData[] => [
-    HASHICORP_PROVIDER_METADATA,
-    AWS_PROVIDER_METADATA,
-    CYBERARK_PROVIDER_METADATA,
-    ONEPASSWORD_PROVIDER_METADATA,
-]

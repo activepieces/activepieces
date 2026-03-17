@@ -1,44 +1,7 @@
-import { ActivepiecesError, ErrorCode, SecretManagerProviderId, SecretManagerProviderMetaData } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, SecretManagerProviderId } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { apAxios } from '../../../helper/ap-axios'
 import { SecretManagerProvider, throwConnectionError, throwGetSecretError } from './secret-manager-providers'
-
-export const HASHICORP_PROVIDER_METADATA: SecretManagerProviderMetaData = {
-    id: SecretManagerProviderId.HASHICORP,
-    name: 'Hashicorp Vault',
-    logo: 'https://cdn.activepieces.com/pieces/hashi-corp-vault.png',
-    fields: {
-        url: {
-            displayName: 'URL',
-            placeholder: 'http://localhost:8200',
-            type: 'text',
-        },
-        namespace: {
-            displayName: 'Namespace',
-            placeholder: 'namespace',
-            optional: true,
-            type: 'text',
-        },
-        roleId: {
-            displayName: 'Role ID',
-            placeholder: 'role-id',
-            type: 'password',
-        },
-        secretId: {
-            displayName: 'Secret ID',
-            placeholder: 'secret-id',
-            type: 'password',
-        },
-    },
-    secretParams: [
-        {
-            name: 'path',
-            displayName: 'Secret Path',
-            placeholder: 'eg: secret/data/keys/my-key',
-            type: 'text',
-        },
-    ],
-}
 
 export const hashicorpProvider = (log: FastifyBaseLogger): SecretManagerProvider<SecretManagerProviderId.HASHICORP> => ({
     checkConnection: async (config) => {

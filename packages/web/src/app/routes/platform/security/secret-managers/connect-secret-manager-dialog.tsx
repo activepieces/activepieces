@@ -1,6 +1,7 @@
 import {
   ConnectSecretManagerRequest,
   ConnectSecretManagerRequestSchema,
+  SECRET_MANAGER_PROVIDERS_METADATA,
   SecretManagerConnectionScope,
   SecretManagerConnectionWithStatus,
   SecretManagerProviderId,
@@ -89,7 +90,6 @@ const AddEditSecretManagerForm = ({
   setOpen: (open: boolean) => void;
 }) => {
   const isEdit = !!connection;
-  const { data: providers } = secretManagersHooks.useListProviders();
 
   const form = useForm<ConnectSecretManagerRequest>({
     resolver: zodResolver(ConnectSecretManagerRequestSchema),
@@ -100,7 +100,7 @@ const AddEditSecretManagerForm = ({
   const watchedProviderId = form.watch('providerId');
   const watchedScope = form.watch('scope');
   const selectedProvider: SecretManagerProviderMetaData | undefined =
-    providers?.find((p) => p.id === watchedProviderId);
+    SECRET_MANAGER_PROVIDERS_METADATA.find((p) => p.id === watchedProviderId);
 
   const { mutate: createConnection, isPending: isCreating } =
     secretManagersHooks.useCreateSecretManagerConnection({
@@ -145,7 +145,9 @@ const AddEditSecretManagerForm = ({
                     <Select
                       value={field.value ?? ''}
                       onValueChange={(val) => {
-                        const provider = providers?.find((p) => p.id === val);
+                        const provider = SECRET_MANAGER_PROVIDERS_METADATA.find(
+                          (p) => p.id === val,
+                        );
                         field.onChange(val);
                         if (provider) {
                           form.setValue(
@@ -161,7 +163,7 @@ const AddEditSecretManagerForm = ({
                         <SelectValue placeholder={t('Select a provider')} />
                       </SelectTrigger>
                       <SelectContent>
-                        {providers?.map((provider) => (
+                        {SECRET_MANAGER_PROVIDERS_METADATA.map((provider) => (
                           <SelectItem key={provider.id} value={provider.id}>
                             <div className="flex items-center gap-2">
                               <img

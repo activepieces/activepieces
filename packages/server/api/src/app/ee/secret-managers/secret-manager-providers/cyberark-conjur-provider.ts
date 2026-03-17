@@ -1,44 +1,8 @@
 import https from 'https'
-import { SecretManagerProviderId, SecretManagerProviderMetaData } from '@activepieces/shared'
+import { SecretManagerProviderId } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { apAxios } from '../../../helper/ap-axios'
 import { SecretManagerProvider, throwConnectionError, throwGetSecretError } from './secret-manager-providers'
-
-export const CYBERARK_PROVIDER_METADATA: SecretManagerProviderMetaData = {
-    id: SecretManagerProviderId.CYBERARK,
-    name: 'Cyberark Conjur',
-    logo: 'https://cdn.activepieces.com/pieces/cyberark.png',
-    fields: {
-        url: {
-            displayName: 'URL',
-            placeholder: 'https://conjur.example.com',
-            type: 'text',
-        },
-        organizationAccountName: {
-            displayName: 'Organization Account Name',
-            placeholder: 'Your Conjur Organization Account Name',
-            type: 'text',
-        },
-        loginId: {
-            displayName: 'Login ID',
-            placeholder: 'Your Conjur Login ID',
-            type: 'text',
-        },
-        apiKey: {
-            displayName: 'API Key',
-            placeholder: 'Your Conjur API Key',
-            type: 'password',
-        },
-    },
-    secretParams: [
-        {
-            name: 'secretKey',
-            displayName: 'Secret key',
-            placeholder: 'Your Conjur Secret Key',
-            type: 'text',
-        },
-    ],
-}
 
 export const cyberarkConjurProvider = (log: FastifyBaseLogger): SecretManagerProvider<SecretManagerProviderId.CYBERARK> => ({
     checkConnection: async (config) => {

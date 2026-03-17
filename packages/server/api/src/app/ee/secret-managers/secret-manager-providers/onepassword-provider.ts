@@ -1,28 +1,8 @@
 import { createClient } from '@1password/sdk'
-import { ActivepiecesError, ErrorCode, OnePasswordProviderConfig, SecretManagerProviderId, SecretManagerProviderMetaData } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, OnePasswordProviderConfig, SecretManagerProviderId } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { SecretManagerProvider, throwConnectionError, throwGetSecretError } from './secret-manager-providers'
 
-export const ONEPASSWORD_PROVIDER_METADATA: SecretManagerProviderMetaData = {
-    id: SecretManagerProviderId.ONEPASSWORD,
-    name: '1Password',
-    logo: 'https://cdn.activepieces.com/pieces/1password.png',
-    fields: {
-        serviceAccountToken: {
-            displayName: 'Service Account Token',
-            placeholder: 'ops_...',
-            type: 'text',
-        },
-    },
-    secretParams: [
-        {
-            name: 'path',
-            displayName: 'Secret Reference',
-            placeholder: 'op://vault/item/field',
-            type: 'text',
-        },
-    ],
-}
 async function buildClient(config: OnePasswordProviderConfig) {
     return createClient({
         auth: config.serviceAccountToken,

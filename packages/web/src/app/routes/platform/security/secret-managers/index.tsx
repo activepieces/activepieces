@@ -1,7 +1,7 @@
 import {
+  SECRET_MANAGER_PROVIDERS_METADATA,
   SecretManagerConnectionScope,
   SecretManagerConnectionWithStatus,
-  SecretManagerProviderMetaData,
 } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
@@ -40,14 +40,12 @@ const SecretManagersPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: connections, isLoading: isLoadingConnections } =
     secretManagersHooks.useListSecretManagerConnections();
-  const { data: providers, isLoading: isLoadingProviders } =
-    secretManagersHooks.useListProviders();
   const { mutate: deleteConnection } =
     secretManagersHooks.useDeleteSecretManagerConnection();
   const { mutate: clearCache, isPending: isClearingCache } =
     secretManagersHooks.useClearCache();
 
-  const isLoading = isLoadingConnections || isLoadingProviders;
+  const isLoading = isLoadingConnections;
 
   const page = connections
     ? { data: connections, next: null, previous: null }
@@ -68,7 +66,7 @@ const SecretManagersPage = () => {
         />
       ),
       cell: ({ row }) => {
-        const provider = providers?.find(
+        const provider = SECRET_MANAGER_PROVIDERS_METADATA.find(
           (p) => p.id === row.original.providerId,
         );
         return (
