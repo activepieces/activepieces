@@ -64,11 +64,9 @@ export const pcloudRenameFile = createAction({
       if (context.propsValue.toName) {
         queryParams["toname"] = context.propsValue.toName;
       }
-    } else if (context.propsValue.toName) {
-      queryParams["toname"] = context.propsValue.toName;
     } else {
       throw new Error(
-        "Either destination path, destination folder ID, or new name must be provided."
+        "Either destination path (toPath) or both destination folder ID (toFolderId) and new file name (toName) must be provided."
       );
     }
 
