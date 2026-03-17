@@ -122,14 +122,14 @@ const failIfLogSizeExceeded = async (flowExecutionContext: FlowExecutorContext, 
             status: StepOutputStatus.FAILED,
             output: undefined,
         }))
-        .setVerdict({
-            status: FlowRunStatus.LOG_SIZE_EXCEEDED,
-            failedStep: {
-                name: action.name,
-                displayName: action.displayName,
-                message: 'Flow run logs size exceeded',
-            },
-        })
+            .setVerdict({
+                status: FlowRunStatus.LOG_SIZE_EXCEEDED,
+                failedStep: {
+                    name: action.name,
+                    displayName: action.displayName,
+                    message: 'Flow run logs size exceeded',
+                },
+            })
 
     await progressService.sendUpdate({
         engineConstants: constants,
