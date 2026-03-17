@@ -1,0 +1,25 @@
+{
+  "name": "@activepieces/piece-swell-network",
+  "version": "0.0.1",
+  "description": "Activepieces piece for Swell Network - Ethereum liquid staking and restaking protocol",
+  "keywords": ["activepieces", "swell", "sweth", "rsweth", "defi", "staking", "restaking", "ethereum"],
+  "homepage": "https://www.swellnetwork.io",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/activepieces/activepieces"
+  },
+  "license": "MIT",
+  "author": "Activepieces Community",
+  "main": "src/index.ts",
+  "files": [
+    "src"
+  ],
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*"
+  },
+  "scripts": {
+    "build": "nx build piece-swell-network"
+  }
+}
