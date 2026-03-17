@@ -10,10 +10,9 @@ import {
     WorkerJobType,
 } from '@activepieces/shared'
 import { flowCache } from '../../cache/flow/flow-cache'
-import { provisioner } from '../../cache/provisioner'
 import { workerSettings } from '../../config/worker-settings'
 import { JobContext, JobHandler, JobResult } from '../types'
-import { extractCodeArtifacts, extractPiecePackages } from '../utils/flow-helpers'
+import { provisionFlowPieces } from '../utils/flow-helpers'
 import { getWebhookUrl } from '../utils/webhook-url'
 
 export const executePollingJob: JobHandler<PollingJobData> = {
@@ -25,9 +24,10 @@ export const executePollingJob: JobHandler<PollingJobData> = {
         const flowVersion = await flowCache(ctx.log, ctx.apiClient).getVersion({ flowVersionId: data.flowVersionId })
         assertNotNullOrUndefined(flowVersion, 'flowVersion')
 
-        const pieces = await extractPiecePackages(flowVersion, data.platformId, ctx.log, ctx.apiClient)
-        const codeSteps = extractCodeArtifacts(flowVersion)
-        await provisioner(ctx.log, ctx.apiClient).provision({ pieces, codeSteps })
+        const provisioned = await provisionFlowPieces({ flowVersion, platformId: data.platformId, flowId: data.flowId, projectId: data.projectId, log: ctx.log, apiClient: ctx.apiClient })
+        if (!provisioned) {
+            return {}
+        }
 
         const sandbox = ctx.sandboxManager.acquire({ log: ctx.log, apiClient: ctx.apiClient })
         try {
