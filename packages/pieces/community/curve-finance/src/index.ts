@@ -1,16 +1,24 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { getPools } from './lib/actions/get-pools';
-import { getPoolStats } from './lib/actions/get-pool-stats';
-import { getProtocolStats } from './lib/actions/get-protocol-stats';
-import { getTokenPrice } from './lib/actions/get-token-price';
-import { getGaugeData } from './lib/actions/get-gauge-data';
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
+import { getProtocolTvlAction } from './lib/actions/get-protocol-tvl';
+import { getCrvPriceAction } from './lib/actions/get-crv-price';
+import { getChainBreakdownAction } from './lib/actions/get-chain-breakdown';
+import { getTvlHistoryAction } from './lib/actions/get-tvl-history';
+import { getProtocolStatsAction } from './lib/actions/get-protocol-stats';
 
 export const curveFinance = createPiece({
   displayName: 'Curve Finance',
-  auth: PieceAuth.None(),
-  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/curve-finance.png',
+  auth: PieceAuth.None(),
+  minimumSupportedRelease: '0.36.1',
+  categories: [PieceCategory.BUSINESS_INTELLIGENCE],
   authors: ['bossco7598'],
-  actions: [getPools, getPoolStats, getProtocolStats, getTokenPrice, getGaugeData],
+  actions: [
+    getProtocolTvlAction,
+    getCrvPriceAction,
+    getChainBreakdownAction,
+    getTvlHistoryAction,
+    getProtocolStatsAction,
+  ],
   triggers: [],
 });
