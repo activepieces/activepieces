@@ -1,47 +1,129 @@
 import {
-    MachineInformation,
+    ExecutionMode,
+    isNil,
+    partition,
+    WorkerMachineHealthcheckRequest,
     WorkerMachineStatus,
+    WorkerMachineType,
     WorkerMachineWithStatus,
-    WorkerPrincipal,
+    WorkerSettingsResponse,
 } from '@activepieces/shared'
+
 import dayjs from 'dayjs'
-import { repoFactory } from '../../core/db/repo-factory'
-import { WorkerMachineEntity } from './machine-entity'
+import utc from 'dayjs/plugin/utc'
+import { FastifyBaseLogger } from 'fastify'
+import { domainHelper } from '../../ee/custom-domains/domain-helper'
+import { dedicatedWorkers } from '../../ee/platform/platform-plan/platform-dedicated-workers'
+import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-props'
+import { workerMachineCache } from './machine-cache'
 
-const workerRepo = repoFactory(WorkerMachineEntity)
-const OFFLINE_THRESHOLD = dayjs.duration(60, 's').asMilliseconds()
+dayjs.extend(utc)
 
-export const machineService = {
-    async upsert(request: UpsertParams): Promise<void> {
-        await workerRepo().upsert({
-            information: {
-                diskInfo: request.diskInfo,
-                cpuUsagePercentage: request.cpuUsagePercentage,
-                ramUsagePercentage: request.ramUsagePercentage,
-                totalAvailableRamInBytes: request.totalAvailableRamInBytes,
-                workerProps: request.workerProps,
-                ip: request.ip,
-            },
-            updated: dayjs().toISOString(),
-            id: request.workerId,
-        }, ['id'])
-    },
-    async list(): Promise<WorkerMachineWithStatus[]> {
-        const workers = await workerRepo().createQueryBuilder('machine').where('machine.updated > :updated', { updated: new Date(dayjs().subtract(OFFLINE_THRESHOLD, 'ms').toISOString()) }).getMany()
-        return workers.map(worker => {
-            const isOnline = dayjs(worker.updated).isAfter(dayjs().subtract(OFFLINE_THRESHOLD, 'ms').toISOString())
-            return { ...worker, status: isOnline ? WorkerMachineStatus.ONLINE : WorkerMachineStatus.OFFLINE }
-        })
-    },
+const settingsCache = new Map<string, WorkerSettingsResponse>()
+
+async function buildSettingsResponse(log: FastifyBaseLogger, platformIdForDedicatedWorker?: string): Promise<WorkerSettingsResponse> {
+    const cacheKey = platformIdForDedicatedWorker ?? '__shared__'
+    const cached = settingsCache.get(cacheKey)
+    if (cached) {
+        return cached
+    }
+    const executionMode = await getExecutionMode(log, platformIdForDedicatedWorker)
+    const settings = {
+        TRIGGER_TIMEOUT_SECONDS: system.getNumberOrThrow(AppSystemProp.TRIGGER_TIMEOUT_SECONDS),
+        PAUSED_FLOW_TIMEOUT_DAYS: system.getNumberOrThrow(AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS),
+        EXECUTION_MODE: executionMode,
+        TRIGGER_HOOKS_TIMEOUT_SECONDS: system.getNumberOrThrow(AppSystemProp.TRIGGER_HOOKS_TIMEOUT_SECONDS),
+        FLOW_TIMEOUT_SECONDS: system.getNumberOrThrow(AppSystemProp.FLOW_TIMEOUT_SECONDS),
+        LOG_LEVEL: system.getOrThrow(AppSystemProp.LOG_LEVEL),
+        LOG_PRETTY: system.getOrThrow(AppSystemProp.LOG_PRETTY),
+        ENVIRONMENT: system.getOrThrow(AppSystemProp.ENVIRONMENT),
+        APP_WEBHOOK_SECRETS: system.getOrThrow(AppSystemProp.APP_WEBHOOK_SECRETS),
+        MAX_FLOW_RUN_LOG_SIZE_MB: system.getNumberOrThrow(AppSystemProp.MAX_FLOW_RUN_LOG_SIZE_MB),
+        MAX_FILE_SIZE_MB: system.getNumberOrThrow(AppSystemProp.MAX_FILE_SIZE_MB),
+        SANDBOX_MEMORY_LIMIT: system.getOrThrow(AppSystemProp.SANDBOX_MEMORY_LIMIT),
+        SANDBOX_PROPAGATED_ENV_VARS: system.get(AppSystemProp.SANDBOX_PROPAGATED_ENV_VARS)?.split(',').map(f => f.trim()) ?? [],
+        DEV_PIECES: system.get(AppSystemProp.DEV_PIECES)?.split(',') ?? [],
+        SENTRY_DSN: system.get(AppSystemProp.SENTRY_DSN),
+        LOKI_PASSWORD: system.get(AppSystemProp.LOKI_PASSWORD),
+        LOKI_URL: system.get(AppSystemProp.LOKI_URL),
+        LOKI_USERNAME: system.get(AppSystemProp.LOKI_USERNAME),
+        BETTERSTACK_HOST: system.get(AppSystemProp.BETTERSTACK_HOST),
+        BETTERSTACK_TOKEN: system.get(AppSystemProp.BETTERSTACK_TOKEN),
+        OTEL_ENABLED: system.get(AppSystemProp.OTEL_ENABLED) === 'true',
+        PUBLIC_URL: await domainHelper.getPublicUrl({
+            path: '',
+        }),
+        FILE_STORAGE_LOCATION: system.getOrThrow(AppSystemProp.FILE_STORAGE_LOCATION),
+        S3_USE_SIGNED_URLS: system.getOrThrow(AppSystemProp.S3_USE_SIGNED_URLS),
+        EVENT_DESTINATION_TIMEOUT_SECONDS: system.getNumberOrThrow(AppSystemProp.EVENT_DESTINATION_TIMEOUT_SECONDS),
+        EDITION: system.getOrThrow(AppSystemProp.EDITION),
+    }
+    settingsCache.set(cacheKey, settings)
+    return settings
 }
 
-type UpsertParams = {
+export const machineService = (log: FastifyBaseLogger) => {
+    return {
+        async onDisconnect(request: OnDisconnectParams): Promise<void> {
+            log.info({
+                message: 'Worker disconnected',
+                workerId: request.workerId,
+            })
+            await workerMachineCache().delete([request.workerId])
+        },
+        async onConnection(request: WorkerMachineHealthcheckRequest, platformIdForDedicatedWorker?: string | undefined): Promise<WorkerSettingsResponse> {
+            const existingWorker = await workerMachineCache().findOne(request.workerId)
+
+            const type = isNil(platformIdForDedicatedWorker) ? 'SHARED' : 'DEDICATED'
+            await workerMachineCache().upsert({
+                id: request.workerId,
+                information: request,
+                type,
+                platformId: platformIdForDedicatedWorker,
+            }, existingWorker)
+            return buildSettingsResponse(log, platformIdForDedicatedWorker)
+        },
+        async list(platformId: string): Promise<WorkerMachineWithStatus[]> {
+            const allWorkers = await workerMachineCache().find()
+
+            const offlineThreshold = dayjs().subtract(60, 'seconds').utc()
+
+            const [onlineWorkers, offLineWorkers] = partition(allWorkers, (worker) => dayjs(worker.updated).isAfter(offlineThreshold))
+
+            await workerMachineCache().delete(offLineWorkers.map(worker => worker.id))
+
+            const hasDedicated = onlineWorkers.some(w => w.type === WorkerMachineType.DEDICATED && w.platformId === platformId)
+            return onlineWorkers
+                .filter(worker => hasDedicated
+                    ? (worker.type === WorkerMachineType.DEDICATED && worker.platformId === platformId)
+                    : worker.type !== WorkerMachineType.DEDICATED)
+                .map(worker => ({
+                    ...worker,
+                    status: WorkerMachineStatus.ONLINE,
+                    type: worker.type === 'DEDICATED' ? WorkerMachineType.DEDICATED : WorkerMachineType.SHARED,
+                }))
+        },
+    }
+}
+
+
+async function getExecutionMode(log: FastifyBaseLogger, platformIdForDedicatedWorker: string | undefined): Promise<ExecutionMode> {
+    const executionMode = system.getOrThrow<ExecutionMode>(AppSystemProp.EXECUTION_MODE)
+    if (isNil(platformIdForDedicatedWorker)) {
+        return executionMode
+    }
+
+    const dedicatedWorkerConfig = await dedicatedWorkers(log).getWorkerConfig(platformIdForDedicatedWorker)
+    if (isNil(dedicatedWorkerConfig)) {
+        return executionMode
+    }
+    if (dedicatedWorkerConfig.trustedEnvironment) {
+        return ExecutionMode.SANDBOX_CODE_ONLY
+    }
+    return ExecutionMode.SANDBOX_CODE_AND_PROCESS
+}
+
+type OnDisconnectParams = {
     workerId: string
-    cpuUsagePercentage: number
-    diskInfo: MachineInformation['diskInfo']
-    ramUsagePercentage: number
-    totalAvailableRamInBytes: number
-    ip: string
-    workerProps: Record<string, string>
-    workerPrincipal: WorkerPrincipal
 }

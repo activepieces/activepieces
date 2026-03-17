@@ -6,51 +6,61 @@ import {
     ErrorCode,
     ExportTableResponse,
     isNil,
-    PlatformUsageMetric,
+    PopulatedTable,
     SeekPage,
+    SharedTemplate,
+    spreadIfDefined,
     Table,
+    TableDataState,
+    TableImportDataType,
+    TableTemplate,
     TableWebhook,
     TableWebhookEventType,
+    TemplateStatus,
+    TemplateType,
+    UncategorizedFolderId,
     UpdateTableRequest,
+    UserWithMetaInformation,
 } from '@activepieces/shared'
-import { ILike, In } from 'typeorm'
+import { FastifyBaseLogger } from 'fastify'
+import { ArrayContains, ILike, In, IsNull } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
-import { APArrayContains } from '../../database/database-connection'
-import { PlatformPlanHelper } from '../../ee/platform/platform-plan/platform-plan-helper'
+import { projectStateService } from '../../ee/projects/project-release/project-state/project-state.service'
+import { getFolderIdFromRequest } from '../../flows/flow/flow.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
-import { projectService } from '../../project/project-service'
+import { system } from '../../helper/system/system'
 import { fieldService } from '../field/field.service'
 import { RecordEntity } from '../record/record.entity'
 import { TableWebhookEntity } from './table-webhook.entity'
 import { TableEntity } from './table.entity'
 
 export const tableRepo = repoFactory(TableEntity)
-const recordRepo = repoFactory(RecordEntity)
+export const recordRepo = repoFactory(RecordEntity)
 const tableWebhookRepo = repoFactory(TableWebhookEntity)
+const tablePieceName = '@activepieces/piece-tables'
 
 export const tableService = {
     async create({
         projectId,
         request,
     }: CreateParams): Promise<Table> {
-
-        const platformId = await projectService.getPlatformId(projectId)
-        await PlatformPlanHelper.checkQuotaOrThrow({
-            platformId,
-            projectId,
-            metric: PlatformUsageMetric.TABLES,
-        })
-
+        const folderId = await getFolderIdFromRequest({ projectId, folderId: request.folderId, folderName: request.folderName, log: system.globalLogger() })
         const table = await tableRepo().save({
             id: apId(),
             externalId: request.externalId ?? apId(),
             name: request.name,
             projectId,
+            folderId,
         })
+        if (request.fields) {
+            await Promise.all(request.fields.map(async (field) => {
+                await fieldService.createFromState({ projectId, field, tableId: table.id })
+            }))
+        }
         return table
     },
-    async list({ projectId, cursor, limit, name, externalIds }: ListParams): Promise<SeekPage<Table>> {
+    async list({ projectId, cursor, limit, name, externalIds, folderId, includeRowCount }: ListParams): Promise<SeekPage<Table & { rowCount?: number }>> {
         const decodedCursor = paginationHelper.decodeCursor(cursor ?? null)
 
         const paginator = buildPaginator({
@@ -69,21 +79,34 @@ export const tableService = {
         if (!isNil(externalIds)) {
             queryWhere.externalId = In(externalIds)
         }
-        const paginationResult = await paginator.paginate(
-            tableRepo().createQueryBuilder('table').where(queryWhere),
-        )
+
+        if (!isNil(folderId)) {
+            queryWhere.folderId = folderId === UncategorizedFolderId ? IsNull() : folderId
+        }
+
+        const queryBuilder = tableRepo().createQueryBuilder('table').where(queryWhere)
+
+        if (includeRowCount) {
+            queryBuilder.addSelect((subQuery) => {
+                return subQuery
+                    .select('COUNT(*)::int', 'rowCount')
+                    .from('record', 'record')
+                    .where('record."tableId" = table.id')
+            }, 'rowCount')
+        }
+
+        const paginationResult = await paginator.paginate<Table & { rowCount?: number }>(queryBuilder)
 
         return paginationHelper.createPage(paginationResult.data, paginationResult.cursor)
     },
 
-    async getById({
+    async getOneOrThrow({
         projectId,
         id,
     }: GetByIdParams): Promise<Table> {
         const table = await tableRepo().findOne({
             where: { projectId, id },
         })
-
         if (isNil(table)) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
@@ -93,14 +116,95 @@ export const tableService = {
                 },
             })
         }
-
         return table
+    },
+
+    async getOneByExternalIdOrThrow({
+        projectId,
+        externalId,
+    }: GetOneByExternalIdParams): Promise<Table> {
+        const table = await tableRepo().findOneBy({ projectId, externalId })
+        if (isNil(table)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: {
+                    entityType: 'Table',
+                    entityId: externalId,
+                },
+            })
+        }
+        return table
+    },
+
+    async getTemplate({
+        tableId,
+        userMetadata,
+        projectId,
+        log,
+    }: GetTemplateParams): Promise<SharedTemplate> {
+        const table = await this.getOneOrThrow({
+            id: tableId,
+            projectId,
+        })
+
+        const fields = await fieldService.getAll({ projectId, tableId })
+
+        const populatedTable: PopulatedTable = {
+            ...table,
+            fields,
+        }
+
+        const tableState = projectStateService(log).getTableState(populatedTable)
+
+        const records = await recordRepo().find({
+            where: { tableId: table.id, projectId },
+            relations: ['cells'],
+        })
+
+        const rows: TableDataState['rows'] = records.map((record) => {
+            const row: { fieldId: string, value: string }[] = []
+            for (const field of fields) {
+                const cell = record.cells.find((c) => c.fieldId === field.id)
+                row.push({
+                    fieldId: field.externalId,
+                    value: cell?.value?.toString() ?? '',
+                })
+            }
+            return row
+        })
+
+        const tableTemplate: TableTemplate = {
+            ...tableState,
+            data: {
+                type: TableImportDataType.CSV,
+                rows,
+            },
+        }
+
+        const template: SharedTemplate = {
+            name: table.name,
+            summary: '',
+            description: '',
+            pieces: [tablePieceName],
+            tables: [tableTemplate],
+            tags: [],
+            blogUrl: '',
+            metadata: {
+                externalId: table.externalId,
+            },
+            author: userMetadata ? `${userMetadata.firstName} ${userMetadata.lastName}` : '',
+            categories: [],
+            type: TemplateType.SHARED,
+            status: TemplateStatus.PUBLISHED,
+        }
+        return template
     },
 
     async delete({
         projectId,
         id,
     }: DeleteParams): Promise<void> {
+
         await tableRepo().delete({
             projectId,
             id,
@@ -111,7 +215,7 @@ export const tableService = {
         projectId,
         id,
     }: ExportTableParams): Promise<ExportTableResponse> {
-        const table = await this.getById({ projectId, id })
+        const table = await this.getOneOrThrow({ projectId, id })
 
         // TODO: Change field sorting to use position when it's added
         const fields = await fieldService.getAll({ projectId, tableId: id })
@@ -169,7 +273,7 @@ export const tableService = {
         events,
     }: GetWebhooksParams): Promise<TableWebhook[]> {
         return tableWebhookRepo().find({
-            where: { projectId, tableId: id, ...APArrayContains('events', events) },
+            where: { projectId, tableId: id, events: ArrayContains(events) },
         })
     },
 
@@ -178,20 +282,25 @@ export const tableService = {
         id,
         request,
     }: UpdateParams): Promise<Table> {
-        await tableRepo().update({
-            id,
-            projectId,
-        }, {
-            name: request.name,
-        })
-        return this.getById({ projectId, id })
+
+        const updateData: Record<string, unknown> = {
+            ...spreadIfDefined('name', request.name),
+            ...spreadIfDefined('trigger', request.trigger),
+            ...spreadIfDefined('status', request.status),
+            folderId: request.folderId,
+        }
+
+        await tableRepo().update({ id, projectId }, updateData)
+        return this.getOneOrThrow({ projectId, id })
     },
-    async count({ projectId }: CountParams): Promise<number> {
-        return tableRepo().count({
-            where: { projectId },
-        })
+    async count({ projectId, folderId }: CountParams): Promise<number> {
+        const where: Record<string, unknown> = { projectId }
+        if (!isNil(folderId)) {
+            where.folderId = folderId === UncategorizedFolderId ? null : folderId
+        }
+        return tableRepo().count({ where })
     },
-  
+
 }
 
 type CreateParams = {
@@ -205,11 +314,18 @@ type ListParams = {
     limit: number
     name: string | undefined
     externalIds: string[] | undefined
+    folderId: string | undefined
+    includeRowCount?: boolean
 }
 
 type GetByIdParams = {
     projectId: string
     id: string
+}
+
+type GetOneByExternalIdParams = {
+    projectId: string
+    externalId: string
 }
 
 type DeleteParams = {
@@ -247,5 +363,13 @@ type UpdateParams = {
 }
 
 type CountParams = {
+    projectId: string
+    folderId?: string
+}
+
+type GetTemplateParams = {
+    tableId: string
+    log: FastifyBaseLogger
+    userMetadata: UserWithMetaInformation | null
     projectId: string
 }

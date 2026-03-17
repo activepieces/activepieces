@@ -202,13 +202,13 @@ export const TelemetryQueries = {
         interval: "<interval>",
         from: "<startDate>", to: "<endDate>"
       ) {
-        speed(agg: MED)
-        powertrainType(agg: RAND)
-        powertrainRange(agg: MIN)
-        exteriorAirTemperature(agg: MAX)
-        vehicleIdentificationModel(agg: RAND)
-        chassisAxleRow1WheelLeftTirePressure(agg: MIN)
         timestamp
+        currentLocationLatitude(agg: LAST)
+        currentLocationLongitude(agg: LAST)
+        speed(agg: LAST)
+        powertrainType(agg: LAST)
+        powertrainRange(agg: LAST)
+        exteriorAirTemperature(agg: LAST)
       }
     }
   `,
@@ -217,10 +217,22 @@ export const TelemetryQueries = {
       signals(
         tokenId: <tokenId>,
         from: "<startDate>", to: "<endDate>",
-        interval: "<interval>"
+        interval: "24h"
       ) {
         timestamp
         avgSpeed: speed(agg: AVG)
+      }
+    }
+  `,
+  getEvents: `
+    query {
+      events(
+        tokenId: <tokenId>,
+        from: "<startDate>", to: "<endDate>"
+      ) {
+        name
+        metadata
+        timestamp
       }
     }
   `,

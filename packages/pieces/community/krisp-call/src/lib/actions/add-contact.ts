@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { krispcallAuth } from '../..';
+import { krispcallAuth } from '../auth';
 
 export const addContact = createAction({
   name: 'addContact',
@@ -13,7 +13,7 @@ export const addContact = createAction({
       description: 'Enter your name',
       required: false,
     }),
-    number: Property.Number({
+    number: Property.ShortText({
       displayName: 'Contact number',
       description: 'Enter contact number',
       required: true,
@@ -37,9 +37,9 @@ export const addContact = createAction({
   async run({ auth, propsValue }) {
     const res = await httpClient.sendRequest<string[]>({
       method: HttpMethod.POST,
-      url: 'https://automationapi.krispcall.com/api/v1/platform/activepiece/add-contact',
+      url: 'https://app.krispcall.com/api/v3/platform/activepiece/add-contact',
       headers: {
-        'X-API-KEY': auth.apiKey,
+        'X-API-KEY': auth.props.apiKey,
       },
       body: {
         name: propsValue.name,

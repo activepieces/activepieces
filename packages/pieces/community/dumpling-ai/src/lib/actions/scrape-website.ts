@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { dumplingAuth } from '../../index';
+import { dumplingAuth } from '../auth';
 
 export const scrapeWebsite = createAction({
 	name: 'scrape_website',
@@ -55,7 +55,7 @@ export const scrapeWebsite = createAction({
 			url: 'https://app.dumplingai.com/api/v1/scrape',
 			headers: {
 				'Content-Type': 'application/json',
-				Authorization: `Bearer ${context.auth}`,
+				Authorization: `Bearer ${context.auth.secret_text}`,
 			},
 			body: requestBody,
 		});

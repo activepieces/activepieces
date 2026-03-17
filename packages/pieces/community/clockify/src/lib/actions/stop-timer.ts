@@ -1,6 +1,6 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction } from '@activepieces/pieces-framework';
-import { clockifyAuth } from '../../index';
+import { clockifyAuth } from '../auth';
 import { clockifyApiCall } from '../common/client';
 import { workspaceId } from '../common/props';
 
@@ -19,7 +19,7 @@ export const stopTimerAction = createAction({
 		const { workspaceId } = context.propsValue;
 
 		const currentUserResponse = await clockifyApiCall<{ id: string; email: string }>({
-			apiKey: context.auth,
+			apiKey: context.auth.secret_text,
 			method: HttpMethod.GET,
 			resourceUri: `/user`,
 		});
@@ -27,7 +27,7 @@ export const stopTimerAction = createAction({
 		const userId = currentUserResponse.id;
 
 		const response = await clockifyApiCall({
-			apiKey: context.auth,
+			apiKey: context.auth.secret_text,
 			method: HttpMethod.PATCH,
 			resourceUri: `/workspaces/${workspaceId}/user/${userId}/time-entries`,
 			body: {

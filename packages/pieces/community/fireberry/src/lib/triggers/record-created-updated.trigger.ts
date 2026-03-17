@@ -1,6 +1,6 @@
 import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { fireberryAuth } from '../../index';
+import { fireberryAuth } from '../auth';
 import { objectTypeDropdown } from '../common/props';
 import { FireberryClient } from '../common/client';
 
@@ -40,7 +40,7 @@ export const recordCreatedOrUpdatedTrigger = createTrigger({
     accountid: "12345678-1234-1234-1234-123456789abc",
   },
   async test({ auth, propsValue }) {
-    const client = new FireberryClient(auth as string);
+    const client = new FireberryClient(auth);
     const { objectType } = propsValue;
     
     if (!objectType) {
@@ -132,7 +132,7 @@ export const recordCreatedOrUpdatedTrigger = createTrigger({
     await store.delete('lastPollTime');
   },
   async run({ auth, propsValue, store }) {
-    const client = new FireberryClient(auth as string);
+    const client = new FireberryClient(auth);
     const { objectType, triggerType, lookbackMinutes } = propsValue;
     
     let lastPollTime = await store.get<string>('lastPollTime');

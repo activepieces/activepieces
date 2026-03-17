@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest } from '../common/client';
-import { copyAiAuth } from '../../index';
+import { copyAiAuth } from '../auth';
 
 export const getWorkflowRunOutputsAction = createAction({
     auth:copyAiAuth,
@@ -21,7 +21,7 @@ export const getWorkflowRunOutputsAction = createAction({
 	},
 	async run({ propsValue, auth }) {
 		const response = await makeRequest(
-			auth as string,
+			auth.secret_text,
 			HttpMethod.GET,
 			`/workflow/${propsValue.workflowId}/run/${propsValue.runId}`,
 		);

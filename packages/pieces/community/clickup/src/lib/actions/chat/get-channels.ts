@@ -5,7 +5,7 @@ import {
   propsValidation,
 } from '@activepieces/pieces-common';
 import { callClickUpApi3, clickupCommon } from '../../common';
-import { clickupAuth } from '../../../';
+import { clickupAuth } from '../../auth';
 import { z } from 'zod';
 
 export const getClickupChannels = createAction({

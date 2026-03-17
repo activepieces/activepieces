@@ -16,7 +16,7 @@ export const getRecipient = createAction({
     }),
   },
   async run(context) {
-    const onfleetApi = new Onfleet(context.auth);
+    const onfleetApi = new Onfleet(context.auth.secret_text);
 
     return await onfleetApi.recipients.get(context.propsValue['id']);
   },

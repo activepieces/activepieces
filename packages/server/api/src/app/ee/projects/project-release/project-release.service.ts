@@ -1,5 +1,5 @@
-import { memoryLock } from '@activepieces/server-shared'
-import { ActivepiecesError, ApId, apId, CreateProjectReleaseRequestBody, DiffReleaseRequest, DiffState, ErrorCode, isNil, ListProjectReleasesRequest, PlatformId, ProjectId, ProjectOperationType, ProjectRelease, ProjectReleaseType, ProjectState, ProjectSyncError, ProjectSyncPlan, ProjectSyncPlanOperation, SeekPage } from '@activepieces/shared'
+import { memoryLock } from '@activepieces/server-utils'
+import { ActivepiecesError, apId, ApId, CreateProjectReleaseRequestBody, DiffReleaseRequest, DiffState, ErrorCode, FlowProjectOperation, FlowProjectOperationType, FlowSyncError, isNil, ListProjectReleasesRequest, PlatformId, ProjectId, ProjectRelease, ProjectReleaseType, ProjectState, ProjectSyncPlan, SeekPage } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { buildPaginator } from '../../../helper/pagination/build-paginator'
@@ -18,10 +18,11 @@ export const projectReleaseService = {
         const lock = await memoryLock.acquire(lockKey)
         try {
             const diffs = await findDiffStates(projectId, ownerId, params, log)
+            const flowIdsToApply = params.selectedFlowsIds ?? diffs.flows.map((flow) => flow.flowState.id)
+            const filteredDiffs = await projectDiffService.filterFlows(flowIdsToApply, diffs)
             await projectStateService(log).apply({
                 projectId,
-                diffs,
-                selectedFlowsIds: params.selectedFlowsIds ?? null,
+                diffs: filteredDiffs,
                 log,
                 platformId,
             })
@@ -50,7 +51,7 @@ export const projectReleaseService = {
             errors: [],
         })
     },
-    async list({ projectId, request }: ListParams): Promise<SeekPage<ProjectRelease>> {
+    async list({ projectId, request, log }: ListParams): Promise<SeekPage<ProjectRelease>> {
         const decodedCursor = paginationHelper.decodeCursor(request.cursor ?? null)
         const paginator = buildPaginator({
             entity: ProjectReleaseEntity,
@@ -68,14 +69,14 @@ export const projectReleaseService = {
             })
             .orderBy('created', 'DESC'))
         const enrichedData = await Promise.all(data.map(
-            async (projectRelease) => this.enrich(projectRelease),
+            async (projectRelease) => this.enrich(projectRelease, log),
         ))
         return paginationHelper.createPage<ProjectRelease>(enrichedData, cursor)
     },
-    async enrich(projectRelease: ProjectRelease): Promise<ProjectRelease> {
+    async enrich(projectRelease: ProjectRelease, log: FastifyBaseLogger): Promise<ProjectRelease> {
         return {
             ...projectRelease,
-            importedByUser: isNil(projectRelease.importedBy) ? undefined : await userService.getMetaInformation({
+            importedByUser: isNil(projectRelease.importedBy) ? undefined : await userService(log).getMetaInformation({
                 id: projectRelease.importedBy,
             }) ?? undefined,
         }
@@ -98,7 +99,7 @@ export const projectReleaseService = {
 }
 async function findDiffStates(projectId: ProjectId, ownerId: ApId, params: DiffReleaseRequest | CreateProjectReleaseRequestBody, log: FastifyBaseLogger): Promise<DiffState> {
     const newState = await getStateFromCreateRequest(projectId, ownerId, params, log) as ProjectState
-    const currentState = await projectStateService(log).getCurrentState(projectId, log) as ProjectState
+    const currentState = await projectStateService(log).getProjectState(projectId, log) as ProjectState
     const diffs = await projectDiffService.diff({
         newState,
         currentState,
@@ -108,10 +109,10 @@ async function findDiffStates(projectId: ProjectId, ownerId: ApId, params: DiffR
 
 async function toResponse(params: toResponseParams): Promise<ProjectSyncPlan> {
     const { diffs, errors } = params
-    const { operations, connections, tables } = diffs
-    const responsePlans: ProjectSyncPlanOperation[] = operations.map((operation) => {
+    const { flows, connections, tables } = diffs
+    const responsePlans: FlowProjectOperation[] = flows.map((operation) => {
         switch (operation.type) {
-            case ProjectOperationType.DELETE_FLOW:
+            case FlowProjectOperationType.DELETE_FLOW:
                 return {
                     type: operation.type,
                     flow: {
@@ -119,7 +120,7 @@ async function toResponse(params: toResponseParams): Promise<ProjectSyncPlan> {
                         displayName: operation.flowState.version.displayName,
                     },
                 }
-            case ProjectOperationType.CREATE_FLOW:
+            case FlowProjectOperationType.CREATE_FLOW:
                 return {
                     type: operation.type,
                     flow: {
@@ -127,15 +128,15 @@ async function toResponse(params: toResponseParams): Promise<ProjectSyncPlan> {
                         displayName: operation.flowState.version.displayName,
                     },
                 }
-            case ProjectOperationType.UPDATE_FLOW:
+            case FlowProjectOperationType.UPDATE_FLOW:
                 return {
                     type: operation.type,
                     flow: {
-                        id: operation.newFlowState.id,
+                        id: operation.flowState.id,
                         displayName: operation.newFlowState.version.displayName,
                     },
                     targetFlow: {
-                        id: operation.flowState.id,
+                        id: operation.newFlowState.id,
                         displayName: operation.flowState.version.displayName,
                     },
                 }
@@ -143,7 +144,7 @@ async function toResponse(params: toResponseParams): Promise<ProjectSyncPlan> {
     })
     return {
         errors,
-        operations: responsePlans,
+        flows: responsePlans,
         connections,
         tables,
     }
@@ -155,7 +156,7 @@ async function getStateFromCreateRequest(projectId: string, ownerId: ApId, reque
             return gitRepoService(log).getState({ gitRepo, userId: ownerId, log })
         }
         case ProjectReleaseType.PROJECT: {
-            return projectStateService(log).getCurrentState(request.targetProjectId, log)
+            return projectStateService(log).getProjectState(request.targetProjectId, log)
         }
         case ProjectReleaseType.ROLLBACK: {
             const projectRelease = await projectReleaseService.getOneOrThrow({
@@ -177,12 +178,13 @@ type CreateProjectReleaseParams = {
 
 type toResponseParams = {
     diffs: DiffState
-    errors: ProjectSyncError[]
+    errors: FlowSyncError[]
 }
 
 type ListParams = {
     projectId: ProjectId
     request: ListProjectReleasesRequest
+    log: FastifyBaseLogger
 }
 
 type GetOneProjectReleaseParams = {

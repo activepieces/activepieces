@@ -1,0 +1,16 @@
+{
+  "Run MindStudio workflows and get AI results.": "Voer de MindStudio workflows uit en krijg de AI resultaten.",
+  "Your MindStudio API key (Bearer token).": "Uw MindStudio API-sleutel (drar token).",
+  "Run Workflow": "Workflow uitvoeren",
+  "Run a workflow from your MindStudio app and start a thread.": "Voer een workflow uit vanuit uw MindStudio app en start een thread.",
+  "App ID": "App ID",
+  "Workflow": "Werkstroom",
+  "Variables": "Variabelen",
+  "Callback URL": "Callback URL",
+  "Include Billing Cost": "Inclusief factureringskosten",
+  "MindStudio app ID to run.": "MindStudio app ID om te gebruiken.",
+  "Workflow name to run (without the .flow extension).": "Workflow naam om uit te voeren (zonder de .flow extensie).",
+  "Key-value variables passed to the app.": "Key-value variabelen doorgegeven aan de app.",
+  "URL to receive the execution result asynchronously.": "URL om het uitvoeringsresultaat asynchroon te ontvangen.",
+  "Return the billing cost in the response.": "Retourneert de kosten van het factureringsbericht in het antwoord."
+}

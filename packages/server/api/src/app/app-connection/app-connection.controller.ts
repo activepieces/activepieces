@@ -1,9 +1,8 @@
-import { ApplicationEventName } from '@activepieces/ee-shared'
-import {
-    ApId,
+import { ApId,
     AppConnectionOwners,
     AppConnectionScope,
     AppConnectionWithoutSensitiveData,
+    ApplicationEventName,
     ListAppConnectionOwnersRequestQuery,
     ListAppConnectionsRequestQuery,
     Permission,
@@ -14,20 +13,21 @@ import {
     UpdateConnectionValueRequestBody,
     UpsertAppConnectionRequestBody,
 } from '@activepieces/shared'
-import {
-    FastifyPluginCallbackTypebox,
-    Type,
-} from '@fastify/type-provider-typebox'
+import { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
-import { eventsHooks } from '../helper/application-events'
+import { z } from 'zod'
+import { ProjectResourceType } from '../core/security/authorization/common'
+import { securityAccess } from '../core/security/authorization/fastify-security'
+import { applicationEvents } from '../helper/application-events'
 import { securityHelper } from '../helper/security-helper'
 import { appConnectionService } from './app-connection-service/app-connection-service'
+import { AppConnectionEntity } from './app-connection.entity'
 
-export const appConnectionController: FastifyPluginCallbackTypebox = (app, _opts, done) => {
+export const appConnectionController: FastifyPluginCallbackZod = (app, _opts, done) => {
     app.post('/', UpsertAppConnectionRequest, async (request, reply) => {
         const appConnection = await appConnectionService(request.log).upsert({
             platformId: request.principal.platform.id,
-            projectIds: [request.principal.projectId],
+            projectIds: [request.projectId],
             type: request.body.type,
             externalId: request.body.externalId,
             value: request.body.value,
@@ -36,8 +36,9 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (app, _opts
             ownerId: await securityHelper.getUserIdFromRequest(request),
             scope: AppConnectionScope.PROJECT,
             metadata: request.body.metadata,
+            pieceVersion: request.body.pieceVersion,
         })
-        eventsHooks.get(request.log).sendUserEventFromRequest(request, {
+        applicationEvents(request.log).sendUserEvent(request, {
             action: ApplicationEventName.CONNECTION_UPSERTED,
             data: {
                 connection: appConnection,
@@ -52,7 +53,7 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (app, _opts
         const appConnection = await appConnectionService(request.log).update({
             id: request.params.id,
             platformId: request.principal.platform.id,
-            projectIds: [request.principal.projectId],
+            projectIds: [request.projectId],
             scope: AppConnectionScope.PROJECT,
             request: {
                 displayName: request.body.displayName,
@@ -72,7 +73,7 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (app, _opts
             status,
             scope,
             platformId: request.principal.platform.id,
-            projectId: request.principal.projectId,
+            projectId: request.projectId,
             cursorRequest: cursor ?? null,
             limit: limit ?? DEFAULT_PAGE_SIZE,
             externalIds: undefined,
@@ -87,7 +88,7 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (app, _opts
     )
     app.get('/owners', ListAppConnectionOwnersRequest, async (request): Promise<SeekPage<AppConnectionOwners>> => {
         const owners = await appConnectionService(request.log).getOwners({
-            projectId: request.principal.projectId,
+            projectId: request.projectId,
             platformId: request.principal.platform.id,
         })
         return {
@@ -103,20 +104,20 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (app, _opts
         await appConnectionService(request.log).replace({
             sourceAppConnectionId,
             targetAppConnectionId,
-            projectId: request.principal.projectId,
+            projectId: request.projectId,
             platformId: request.principal.platform.id,
             userId: request.principal.id,
         })
-        await reply.status(StatusCodes.OK).send()
+        await reply.status(StatusCodes.NO_CONTENT).send()
     })
 
     app.delete('/:id', DeleteAppConnectionRequest, async (request, reply): Promise<void> => {
         const connection = await appConnectionService(request.log).getOneOrThrowWithoutValue({
             id: request.params.id,
             platformId: request.principal.platform.id,
-            projectId: request.principal.projectId,
+            projectId: request.projectId,
         })
-        eventsHooks.get(request.log).sendUserEventFromRequest(request, {
+        applicationEvents(request.log).sendUserEvent(request, {
             action: ApplicationEventName.CONNECTION_DELETED,
             data: {
                 connection,
@@ -126,7 +127,7 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (app, _opts
             id: request.params.id,
             platformId: request.principal.platform.id,
             scope: AppConnectionScope.PROJECT,
-            projectId: request.principal.projectId,
+            projectId: request.projectId,
         })
         await reply.status(StatusCodes.NO_CONTENT).send()
     })
@@ -139,8 +140,13 @@ const DEFAULT_PAGE_SIZE = 10
 
 const UpsertAppConnectionRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
-        permission: Permission.WRITE_APP_CONNECTION,
+        security: securityAccess.project(
+            [PrincipalType.USER, PrincipalType.SERVICE],
+            Permission.WRITE_APP_CONNECTION,
+            {
+                type: ProjectResourceType.BODY,
+            },
+        ),
     },
     schema: {
         tags: ['app-connections'],
@@ -155,15 +161,21 @@ const UpsertAppConnectionRequest = {
 
 const UpdateConnectionValueRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
-        permission: Permission.WRITE_APP_CONNECTION,
+        security: securityAccess.project(
+            [PrincipalType.USER, PrincipalType.SERVICE],
+            Permission.WRITE_APP_CONNECTION,
+            {
+                type: ProjectResourceType.TABLE,
+                tableName: AppConnectionEntity,
+            },
+        ),
     },
     schema: {
         tags: ['app-connections'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         description: 'Update an app connection value',
         body: UpdateConnectionValueRequestBody,
-        params: Type.Object({
+        params: z.object({
             id: ApId,
         }),
     },
@@ -171,8 +183,13 @@ const UpdateConnectionValueRequest = {
 
 const ReplaceAppConnectionsRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
-        permission: Permission.WRITE_APP_CONNECTION,
+        security: securityAccess.project(
+            [PrincipalType.USER, PrincipalType.SERVICE],
+            Permission.WRITE_APP_CONNECTION,
+            {
+                type: ProjectResourceType.BODY,
+            },
+        ),
     },
     schema: {
         tags: ['app-connections'],
@@ -180,15 +197,20 @@ const ReplaceAppConnectionsRequest = {
         description: 'Replace app connections',
         body: ReplaceAppConnectionsRequestBody,
         response: {
-            [StatusCodes.NO_CONTENT]: Type.Never(),
+            [StatusCodes.NO_CONTENT]: z.never(),
         },
     },
 }
 
 const ListAppConnectionsRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
-        permission: Permission.READ_APP_CONNECTION,
+        security: securityAccess.project(
+            [PrincipalType.USER, PrincipalType.SERVICE],
+            Permission.READ_APP_CONNECTION,
+            {
+                type: ProjectResourceType.QUERY,
+            },
+        ),
     },
     schema: {
         tags: ['app-connections'],
@@ -202,8 +224,13 @@ const ListAppConnectionsRequest = {
 }
 const ListAppConnectionOwnersRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
-        permission: Permission.READ_APP_CONNECTION,
+        security: securityAccess.project(
+            [PrincipalType.USER, PrincipalType.SERVICE],
+            Permission.READ_APP_CONNECTION,
+            {
+                type: ProjectResourceType.QUERY,
+            },
+        ),
     },
     schema: {
         querystring: ListAppConnectionOwnersRequestQuery,
@@ -218,18 +245,24 @@ const ListAppConnectionOwnersRequest = {
 
 const DeleteAppConnectionRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
-        permission: Permission.WRITE_APP_CONNECTION,
+        security: securityAccess.project(
+            [PrincipalType.USER, PrincipalType.SERVICE],
+            Permission.WRITE_APP_CONNECTION,
+            {
+                type: ProjectResourceType.TABLE,
+                tableName: AppConnectionEntity,
+            },
+        ),
     },
     schema: {
         tags: ['app-connections'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         description: 'Delete an app connection',
-        params: Type.Object({
+        params: z.object({
             id: ApId,
         }),
         response: {
-            [StatusCodes.NO_CONTENT]: Type.Never(),
+            [StatusCodes.NO_CONTENT]: z.never(),
         },
     },
 }

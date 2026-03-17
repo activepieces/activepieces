@@ -18,9 +18,9 @@ export const checkoutComAuth = PieceAuth.SecretText({
   displayName: 'Secret Key',
   description: 'Your Checkout.com secret key. Use sandbox key (sk_sbox_...) for testing or production key (sk_...) for live transactions. You can find it in the Checkout.com dashboard under Developers > API keys.',
   required: true,
-  validate: async (auth) => {
+  validate: async ({auth}) => {
     try {
-      const secretKey = auth.auth;
+      const secretKey = auth;
       if (!secretKey.startsWith('sk_')) {
         return { valid: false, error: 'Invalid API key format. Must start with "sk_" for production or "sk_sbox_" for sandbox.' };
       }

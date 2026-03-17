@@ -10,27 +10,10 @@ import { deleteRowAction } from './lib/actions/delete-row';
 import { getRowAction } from './lib/actions/get-row';
 import { listRowsAction } from './lib/actions/list-rows';
 import { updateRowAction } from './lib/actions/update-row';
-
-export const baserowAuth = PieceAuth.CustomAuth({
-  required: true,
-  description: `
-  1. Log in to your Baserow Account.
-  2. Click on your profile-pic(top-left) and navigate to **Settings->Database tokens**.
-  3. Create new token with any name and appropriate workspace.
-  4. After token creation,click on **:** right beside token name and copy database token.
-  5. Enter your Baserow API URL.If you are using baserow.io, you can leave the default one.`,
-  props: {
-    apiUrl: Property.ShortText({
-      displayName: 'API URL',
-      required: true,
-      defaultValue: 'https://api.baserow.io',
-    }),
-    token: PieceAuth.SecretText({
-      displayName: 'Database Token',
-      required: true,
-    }),
-  },
-});
+import { rowCreatedTrigger } from './lib/triggers/row-created';
+import { rowUpdatedTrigger } from './lib/triggers/row-updated';
+import { rowDeletedTrigger } from './lib/triggers/row-deleted';
+import { baserowAuth } from './lib/auth';
 
 export const baserow = createPiece({
   displayName: 'Baserow',
@@ -48,13 +31,16 @@ export const baserow = createPiece({
     updateRowAction,
     createCustomApiCallAction({
       baseUrl: (auth) => {
-        return (auth as { apiUrl: string }).apiUrl;
+        if (!auth) {
+          return '';
+        }
+        return auth.props.apiUrl;
       },
       auth: baserowAuth,
       authMapping: async (auth) => ({
-        Authorization: `Token ${(auth as { token: string }).token}`,
+        Authorization: `Token ${auth.props.token}`,
       }),
     }),
   ],
-  triggers: [],
+  triggers: [rowCreatedTrigger, rowUpdatedTrigger, rowDeletedTrigger],
 });

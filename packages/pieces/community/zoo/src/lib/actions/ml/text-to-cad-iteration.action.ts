@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { zooAuth } from '../../../index'
+import { zooAuth } from '../../auth'
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const textToCadIterationAction = createAction({
@@ -20,7 +20,7 @@ export const textToCadIterationAction = createAction({
       method: HttpMethod.POST,
       url: 'https://api.zoo.dev/ml/text-to-cad/iteration',
       headers: {
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       },
       body: {
         prompt: propsValue.prompt,

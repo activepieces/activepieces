@@ -1,9 +1,10 @@
-import { Field, Project, Record, Table, TableWebhook } from '@activepieces/shared'
+import { Field, Folder, Project, Record, Table, TableWebhook } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import { ApIdSchema, BaseColumnSchemaPart } from '../../database/database-common'
 
 type TableSchema = Table & {
     project: Project
+    folder?: Folder
     fields: Field[]
     records: Record[]
     tableWebhooks: TableWebhook[]
@@ -16,8 +17,20 @@ export const TableEntity = new EntitySchema<TableSchema>({
         name: {
             type: String,
         },
+        folderId: {
+            ...ApIdSchema,
+            nullable: true,
+        },
         externalId: {
             type: String,
+        },
+        trigger: {
+            type: String,
+            nullable: true,
+        },
+        status: {
+            type: String,
+            nullable: true,
         },
         projectId: {
             ...ApIdSchema,
@@ -29,6 +42,11 @@ export const TableEntity = new EntitySchema<TableSchema>({
             name: 'idx_table_project_id_name',
             columns: ['projectId', 'name'],
         },
+        {
+            name: 'idx_table_folder_id',
+            columns: ['folderId'],
+            unique: false,
+        },
     ],
     relations: {
         project: {
@@ -39,6 +57,16 @@ export const TableEntity = new EntitySchema<TableSchema>({
             joinColumn: {
                 name: 'projectId',
                 foreignKeyConstraintName: 'fk_table_project_id',
+            },
+        },
+        folder: {
+            type: 'many-to-one',
+            target: 'folder',
+            onDelete: 'SET NULL',
+            nullable: true,
+            joinColumn: {
+                name: 'folderId',
+                foreignKeyConstraintName: 'fk_table_folder_id',
             },
         },
         fields: {

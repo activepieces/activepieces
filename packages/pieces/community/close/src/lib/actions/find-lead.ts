@@ -1,6 +1,6 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { closeAuth } from '../../';
+import { closeAuth } from '../auth';
 import { CloseCRMSearchQuery } from '../common/types';
 import { closeApiCall } from '../common/client';
 
@@ -59,7 +59,7 @@ export const findLead = createAction({
 					cursor?: string;
 					data: Record<string, any>[];
 				}>({
-					accessToken: context.auth,
+					accessToken: context.auth.secret_text,
 					method: HttpMethod.POST,
 					resourceUri: '/data/search/',
 					body: {

@@ -1,5 +1,5 @@
 import { clockodoCommon, makeClient } from '../../common';
-import { clockodoAuth } from '../../../';
+import { clockodoAuth } from '../../auth';
 import { createAction } from '@activepieces/pieces-framework';
 
 export default createAction({
@@ -11,7 +11,7 @@ export default createAction({
     service_id: clockodoCommon.service_id(true, false),
   },
   async run({ auth, propsValue }) {
-    const client = makeClient(auth);
+    const client = makeClient(auth.props);
     await client.deleteService(propsValue.service_id as number);
   },
 });

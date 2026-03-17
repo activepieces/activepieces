@@ -1,6 +1,11 @@
-FROM node:18.20.5-bullseye-slim AS base
+FROM node:24.14.0-bullseye-slim AS base
 
-# Use a cache mount for apt to speed up the process
+# Set environment variables early for better layer caching
+ENV LANG=en_US.UTF-8 \
+    LANGUAGE=en_US:en \
+    LC_ALL=en_US.UTF-8
+
+# Install all system dependencies in a single layer with cache mounts
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     apt-get update && \
@@ -12,86 +17,107 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         git \
         poppler-utils \
         poppler-data \
-        procps && \
+        procps \
+        locales \
+        unzip \
+        curl \
+        ca-certificates \
+        libcap-dev && \
     yarn config set python /usr/bin/python3 && \
-    npm install -g node-gyp
-RUN npm i -g npm@9.9.3 pnpm@9.15.0
+    sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen && \
+    locale-gen en_US.UTF-8
 
-# Set the locale
-ENV LANG en_US.UTF-8
-ENV LANGUAGE en_US:en
-ENV LC_ALL en_US.UTF-8
-ENV NX_DAEMON=false
+RUN export ARCH=$(uname -m) && \
+    if [ "$ARCH" = "x86_64" ]; then \
+      curl -fSL https://github.com/oven-sh/bun/releases/download/bun-v1.3.1/bun-linux-x64-baseline.zip -o bun.zip; \
+    elif [ "$ARCH" = "aarch64" ]; then \
+      curl -fSL https://github.com/oven-sh/bun/releases/download/bun-v1.3.1/bun-linux-aarch64.zip -o bun.zip; \
+    fi
 
-RUN apt-get update \
-  && apt-get install -y --no-install-recommends \
-    locales \
-    locales-all \
-    libcap-dev \
- && rm -rf /var/lib/apt/lists/*
+RUN unzip bun.zip \
+    && mv bun-*/bun /usr/local/bin/bun \
+    && chmod +x /usr/local/bin/bun \
+    && rm -rf bun.zip bun-*
 
-# install isolated-vm in a parent directory to avoid linking the package in every sandbox
-RUN cd /usr/src && npm i isolated-vm@5.0.1
+RUN bun --version
 
-RUN pnpm store add @tsconfig/node18@1.0.0
-RUN pnpm store add @types/node@18.17.1
+# Install global npm packages in a single layer
+RUN --mount=type=cache,target=/root/.npm \
+    npm install -g --no-fund --no-audit \
+    node-gyp \
+    npm@11.11.0 \
+    pm2@6.0.10 \
+    typescript@4.9.4
 
-RUN pnpm store add typescript@4.9.4
+# Install isolated-vm globally (needed for sandboxes)
+RUN --mount=type=cache,target=/root/.bun/install/cache \
+    cd /usr/src && bun install isolated-vm@6.0.2
 
 ### STAGE 1: Build ###
 FROM base AS build
 
-# Set up backend
 WORKDIR /usr/src/app
 
-COPY .npmrc package.json package-lock.json ./
-RUN npm ci
+# Copy dependency files and workspace package.json files for resolution
+COPY .npmrc package.json bun.lock bunfig.toml ./
+COPY packages/ ./packages/
 
+# Install all dependencies with frozen lockfile
+RUN --mount=type=cache,target=/root/.bun/install/cache \
+    bun install --frozen-lockfile
+
+# Copy remaining source code (turbo config, etc.)
 COPY . .
 
-RUN npx nx run-many --target=build --projects=server-api --configuration production
-RUN npx nx run-many --target=build --projects=react-ui
+# Build frontend, engine, server API, and worker
+RUN npx turbo run build --filter=web --filter=@activepieces/engine --filter=api --filter=worker
 
-# Install backend production dependencies
-RUN cd dist/packages/server/api && npm install --production --force
+# Remove piece directories not needed at runtime (keeps only the 4 pieces api imports)
+# Then regenerate bun.lock so it matches the trimmed workspace
+RUN rm -rf packages/pieces/core packages/pieces/custom && \
+    find packages/pieces/community -mindepth 1 -maxdepth 1 -type d \
+      ! -name slack \
+      ! -name square \
+      ! -name facebook-leads \
+      ! -name intercom \
+      -exec rm -rf {} + && \
+    rm -f bun.lock && bun install
 
 ### STAGE 2: Run ###
 FROM base AS run
 
-# Set up backend
 WORKDIR /usr/src/app
 
-COPY packages/server/api/src/assets/default.cf /usr/local/etc/isolate
+# Copy static configuration files first (better layer caching)
+COPY --from=build /usr/src/app/packages/server/api/src/assets/default.cf /usr/local/etc/isolate
+COPY docker-entrypoint.sh .
 
-# Install Nginx and gettext for envsubst
-RUN apt-get update && apt-get install -y nginx gettext
+# Create all necessary directories in one layer
+RUN mkdir -p \
+    /usr/src/app/dist/packages/engine && \
+    chmod +x docker-entrypoint.sh
 
-# Copy Nginx configuration template
-COPY nginx.react.conf /etc/nginx/nginx.conf
-
+# Copy root config files needed for dependency resolution
+COPY --from=build /usr/src/app/package.json ./
+COPY --from=build /usr/src/app/.npmrc ./
+COPY --from=build /usr/src/app/bun.lock ./
+COPY --from=build /usr/src/app/bunfig.toml ./
 COPY --from=build /usr/src/app/LICENSE .
 
-RUN mkdir -p /usr/src/app/dist/packages/server/
-RUN mkdir -p /usr/src/app/dist/packages/engine/
-RUN mkdir -p /usr/src/app/dist/packages/shared/
+# Copy workspace package.json files (needed for bun workspace resolution)
+COPY --from=build /usr/src/app/packages ./packages
 
-# Copy Output files to appropriate directory from build stage
-COPY --from=build /usr/src/app/dist/packages/engine/ /usr/src/app/dist/packages/engine/
-COPY --from=build /usr/src/app/dist/packages/server/ /usr/src/app/dist/packages/server/
-COPY --from=build /usr/src/app/dist/packages/shared/ /usr/src/app/dist/packages/shared/
+# Copy built engine
+COPY --from=build /usr/src/app/dist/packages/engine/ ./dist/packages/engine/
 
-RUN cd /usr/src/app/dist/packages/server/api/ && npm install --production --force
+# Regenerate lockfile and install production dependencies (pieces were trimmed from workspace)
+RUN --mount=type=cache,target=/root/.bun/install/cache \
+    bun install --production
 
-# Copy Output files to appropriate directory from build stage
-COPY --from=build /usr/src/app/packages packages
-# Copy frontend files to Nginx document root directory from build stage
-COPY --from=build /usr/src/app/dist/packages/react-ui /usr/share/nginx/html/
+# Copy frontend files
+COPY --from=build /usr/src/app/dist/packages/web ./dist/packages/web/
 
 LABEL service=activepieces
 
-# Set up entrypoint script
-COPY docker-entrypoint.sh .
-RUN chmod +x docker-entrypoint.sh
 ENTRYPOINT ["./docker-entrypoint.sh"]
-
 EXPOSE 80

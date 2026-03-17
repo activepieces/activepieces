@@ -17,7 +17,7 @@ export const listFields = createAction({
   description: 'Returns a list of all custom fields',
   props: {},
   async run(context) {
-    return fetchCustomFields(context.auth);
+    return fetchCustomFields(context.auth.secret_text);
   },
 });
 

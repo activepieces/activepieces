@@ -2,6 +2,8 @@ import { createTrigger } from '@activepieces/pieces-framework';
 import { TriggerStrategy } from '@activepieces/pieces-framework';
 import { stripeCommon } from '../common';
 import { stripeAuth } from '../..';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { isEmpty } from '@activepieces/shared';
 
 export const stripeNewCustomer = createTrigger({
   auth: stripeAuth,
@@ -44,7 +46,7 @@ export const stripeNewCustomer = createTrigger({
     const webhook = await stripeCommon.subscribeWebhook(
       'customer.created',
       context.webhookUrl,
-      context.auth
+      context.auth.secret_text
     );
     await context.store.put<WebhookInformation>('_new_customer_trigger', {
       webhookId: webhook.id,
@@ -55,8 +57,25 @@ export const stripeNewCustomer = createTrigger({
       '_new_customer_trigger'
     );
     if (response !== null && response !== undefined) {
-      await stripeCommon.unsubscribeWebhook(response.webhookId, context.auth);
+      await stripeCommon.unsubscribeWebhook(response.webhookId, context.auth.secret_text);
     }
+  },
+  async test(context) {
+    const response = await httpClient.sendRequest<{ data: { id: string }[] }>({
+      method: HttpMethod.GET,
+      url: 'https://api.stripe.com/v1/customers',
+      headers: {
+        Authorization: 'Bearer ' + context.auth.secret_text,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      queryParams: {
+        limit: '5',
+      },
+    });
+
+    if (isEmpty(response.body) || isEmpty(response.body.data)) return [];
+
+    return response.body.data;
   },
   async run(context) {
     const payloadBody = context.payload.body as PayloadBody;

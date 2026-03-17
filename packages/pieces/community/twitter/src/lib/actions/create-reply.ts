@@ -32,7 +32,7 @@ export const createReply = createAction({
       });
 
       const { consumerKey, consumerSecret, accessToken, accessTokenSecret } =
-        context.auth;
+        context.auth.props;
       const userClient = new TwitterApi({
         appKey: consumerKey,
         appSecret: consumerSecret,

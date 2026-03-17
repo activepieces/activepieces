@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpError } from '@activepieces/pieces-common';
-import { dimoAuth } from '../../../index';
+import { dimoAuth } from '../../auth';
 import { DimoClient } from '../../common/helpers';
 import { TelemetryQueries } from '../../common/queries';
 
@@ -23,9 +23,11 @@ const telemetryApiDateInputProps = {
     }),
 }
 
+const { interval, ...telemetryApiDateInputPropsWithoutInterval } = telemetryApiDateInputProps;
+
 const telemetryApiCustomQueryAction = createAction({
 	auth: dimoAuth,
-	name: 'telemetry-api-custom-query',
+	name: 'telemetry-custom-query',
 	displayName: 'Telemetry : Custom Query',
 	description: 'Query DIMO Telemetry API using a custom GraphQL query.',
 	props: {
@@ -43,7 +45,7 @@ const telemetryApiCustomQueryAction = createAction({
 		}),
 	},
 	async run(context) {
-		const { clientId, apiKey, redirectUri } = context.auth;
+		const { clientId, apiKey, redirectUri } = context.auth.props;
 
 		const { customQuery, vehicleTokenId, variables = {} } = context.propsValue;
 
@@ -84,7 +86,7 @@ const availableSignalsAction = createAction({
 		}),
 	},
 	async run(context) {
-		const { clientId, apiKey, redirectUri } = context.auth;
+		const { clientId, apiKey, redirectUri } = context.auth.props;
 		const { vehicleTokenId } = context.propsValue;
 
 		const dimo = new DimoClient({
@@ -127,7 +129,7 @@ const signalsAction = createAction({
         ...telemetryApiDateInputProps,
 	},
 	async run(context) {
-		const { clientId, apiKey, redirectUri } = context.auth;
+		const { clientId, apiKey, redirectUri } = context.auth.props;
 		const { vehicleTokenId, startDate, endDate, interval } = context.propsValue;
 
 		const dimo = new DimoClient({
@@ -160,6 +162,7 @@ const signalsAction = createAction({
 	},
 });
 
+
 const getDailyAvgSpeedOfVehicleAction = createAction({
 	auth: dimoAuth,
 	name: 'telemetry-daily-avg-speed',
@@ -170,11 +173,11 @@ const getDailyAvgSpeedOfVehicleAction = createAction({
 			displayName: 'Vehicle Token ID',
 			required: true,
 		}),
-        ...telemetryApiDateInputProps,
+        ...telemetryApiDateInputPropsWithoutInterval,
 	},
 	async run(context) {
-		const { clientId, apiKey, redirectUri } = context.auth;
-		const { vehicleTokenId, startDate, endDate, interval } = context.propsValue;
+		const { clientId, apiKey, redirectUri } = context.auth.props;
+		const { vehicleTokenId, startDate, endDate } = context.propsValue;
 
 		const dimo = new DimoClient({
 			clientId,
@@ -190,8 +193,7 @@ const getDailyAvgSpeedOfVehicleAction = createAction({
 			const query = TelemetryQueries.getDailyAvgSpeedOfVehicle
 				.replace('<tokenId>', String(vehicleTokenId))
 				.replace('<startDate>', startDate)
-				.replace('<endDate>', endDate)
-				.replace('<interval>', interval);
+				.replace('<endDate>', endDate);
 
 			const response = await dimo.sendTelemetryGraphQLRequest({
 				vehiclejwt: vehicleJwt,
@@ -207,6 +209,52 @@ const getDailyAvgSpeedOfVehicleAction = createAction({
 	},
 });
 
+const getEvents = createAction({
+	auth: dimoAuth,
+	name: 'telemetry-event',
+	displayName: 'Telemetry: Events',
+	description: 'Get the vehicle events over a specific time period.',
+	props: {
+		vehicleTokenId: Property.Number({
+		displayName: 'Vehicle Token ID',
+		required: true,
+	}),
+	...telemetryApiDateInputPropsWithoutInterval,
+    },
+	async run(context) {
+		const { clientId, apiKey, redirectUri } = context.auth.props;
+		const { vehicleTokenId, startDate, endDate } = context.propsValue;
+
+		const dimo = new DimoClient({
+			clientId,
+			apiKey,
+			redirectUri,
+		});
+
+        try {
+			const developerJwt = await dimo.getDeveloperJwt();
+
+			const vehicleJwt = await dimo.getVehicleJwt({ developerJwt, tokenId: vehicleTokenId });
+
+			const query = TelemetryQueries.getEvents
+				.replace('<tokenId>', String(vehicleTokenId))
+				.replace('<startDate>', startDate)
+				.replace('<endDate>', endDate);
+
+			const response = await dimo.sendTelemetryGraphQLRequest({
+				vehiclejwt: vehicleJwt,
+				query,
+				variables: {},
+			});
+
+			return response;
+		} catch (err) {
+			const message = (err as HttpError).message;
+			throw new Error(message);
+		}
+    },
+});
+
 const getMaxSpeedOfVehicleAction = createAction({
 	auth: dimoAuth,
 	name: 'telemetry-max-speed',
@@ -220,7 +268,7 @@ const getMaxSpeedOfVehicleAction = createAction({
         ...telemetryApiDateInputProps,
 	},
 	async run(context) {
-		const { clientId, apiKey, redirectUri } = context.auth;
+		const { clientId, apiKey, redirectUri } = context.auth.props;
 		const { vehicleTokenId, startDate, endDate, interval } = context.propsValue;
 
 		const dimo = new DimoClient({
@@ -266,7 +314,7 @@ const getVinVcLatestAction = createAction({
 		}),
 	},
 	async run(context) {
-		const { clientId, apiKey, redirectUri } = context.auth;
+		const { clientId, apiKey, redirectUri } = context.auth.props;
 
 		const { vehicleTokenId } = context.propsValue;
 
@@ -302,6 +350,7 @@ export const telemetryApiActions = [
 	availableSignalsAction,
 	signalsAction,
 	getDailyAvgSpeedOfVehicleAction,
+	getEvents,
 	getMaxSpeedOfVehicleAction,
 	getVinVcLatestAction,
 ];

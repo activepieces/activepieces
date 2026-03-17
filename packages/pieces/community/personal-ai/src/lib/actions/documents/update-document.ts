@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { BASE_URL, personalAiAuth } from '../../../index';
+import { personalAiAuth } from '../../auth';
+import { BASE_URL } from '../../../index';
 
 export const updateDocument = createAction({
   auth:personalAiAuth,
@@ -59,7 +60,7 @@ export const updateDocument = createAction({
       url: `${BASE_URL}/update-document`,
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': auth as string,
+        'x-api-key': auth.secret_text,
       },
       body: {
         DocumentId: documentId,

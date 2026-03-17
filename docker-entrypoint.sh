@@ -1,20 +1,60 @@
 #!/bin/sh
 
-# Set default values if not provided
-export AP_APP_TITLE="${AP_APP_TITLE:-Activepieces}"
-export AP_FAVICON_URL="${AP_FAVICON_URL:-https://cdn.activepieces.com/brand/favicon.ico}"
+export AP_CONTAINER_TYPE="${AP_CONTAINER_TYPE:-WORKER_AND_APP}"
+export AP_WORKERS="${AP_WORKERS:-1}"
+export AP_PORT="${AP_PORT:-80}"
 
-# Debug: Print environment variables
-echo "AP_APP_TITLE: $AP_APP_TITLE"
-echo "AP_FAVICON_URL: $AP_FAVICON_URL"
+echo "AP_CONTAINER_TYPE: $AP_CONTAINER_TYPE"
+echo "AP_WORKERS: $AP_WORKERS"
+echo "AP_PORT: $AP_PORT"
 
-# Process environment variables in index.html BEFORE starting services
-envsubst '${AP_APP_TITLE} ${AP_FAVICON_URL}' < /usr/share/nginx/html/index.html > /usr/share/nginx/html/index.html.tmp && \
-mv /usr/share/nginx/html/index.html.tmp /usr/share/nginx/html/index.html
+# Auto-generate worker token if not set and JWT secret is available
+if [ -z "$AP_WORKER_TOKEN" ] && [ -n "$AP_JWT_SECRET" ]; then
+    echo "Auto-generating AP_WORKER_TOKEN..."
+    export AP_WORKER_TOKEN=$(node -e "
+        const jwt = require('jsonwebtoken');
+        const crypto = require('crypto');
+        const token = jwt.sign(
+            { id: crypto.randomUUID(), type: 'WORKER' },
+            process.env.AP_JWT_SECRET,
+            { expiresIn: '100y', keyid: '1', algorithm: 'HS256', issuer: 'activepieces' }
+        );
+        process.stdout.write(token);
+    ")
+fi
 
+# Build PM2 ecosystem config
+APPS=""
 
-# Start Nginx server
-nginx -g "daemon off;" &
+if [ "$AP_CONTAINER_TYPE" = "APP" ] || [ "$AP_CONTAINER_TYPE" = "WORKER_AND_APP" ]; then
+    APPS="${APPS}
+    {
+        name: 'activepieces-app',
+        script: 'packages/server/api/dist/src/bootstrap.js',
+        node_args: '--enable-source-maps',
+        instances: 1,
+        exec_mode: 'fork',
+        env: { AP_CONTAINER_TYPE: 'APP' }
+    },"
+fi
 
-# Start backend server
-node --enable-source-maps dist/packages/server/api/main.js
+if [ "$AP_CONTAINER_TYPE" = "WORKER" ] || [ "$AP_CONTAINER_TYPE" = "WORKER_AND_APP" ]; then
+    APPS="${APPS}
+    {
+        name: 'activepieces-worker',
+        script: 'packages/server/worker/dist/src/bootstrap.js',
+        node_args: '--enable-source-maps',
+        instances: ${AP_WORKERS},
+        exec_mode: 'fork'
+    },"
+fi
+
+cat > /tmp/ecosystem.config.js << ENDOFFILE
+module.exports = {
+    apps: [${APPS}
+    ]
+};
+ENDOFFILE
+
+echo "Starting Activepieces with PM2 (${AP_CONTAINER_TYPE} mode)"
+pm2-runtime start /tmp/ecosystem.config.js

@@ -1,0 +1,76 @@
+---
+title: 'Overview'
+description: ''
+---
+
+This tutorial explains three techniques for creating triggers:
+
+- `Polling`: Periodically call endpoints to check for changes.
+- `Webhooks`: Listen to user events through a single URL.
+- `App Webhooks (Subscriptions)`: Use a developer app (using OAuth2) to receive all authorized user events at a single URL (Not Supported).
+
+to create new trigger run following command,
+
+```bash
+npm run cli triggers create
+```
+
+1. `Piece Folder Name`: This is the name associated with the folder where the trigger resides. It helps organize and categorize triggers within the piece.
+2. `Trigger Display Name`: The name users see in the interface, conveying the trigger's purpose clearly.
+3. `Trigger Description`: A brief, informative text in the UI, guiding users about the trigger's function and purpose.
+4. `Trigger Technique`: Specifies the trigger type - either polling or webhook.
+
+# Trigger Structure
+
+```typescript
+export const createNewIssue = createTrigger({
+    auth: PieceAuth | undefined
+    name: string, // Unique name across the piece.
+    displayName: string, // Display name on the interface.
+	description: string, // Description for the action
+    sampleData: null,
+    type: TriggerStrategy.WEBHOOK | TriggerStrategy.POLLING | TriggerStrategy.APP_WEBHOOK,
+
+    props: {}; // Required properties from the user.
+    // Run when the user enable or publish the flow.
+
+	onEnable: (ctx) => {},
+    // Run when the user disable the flow or
+    // the old flow is deleted after new one is published.
+	onDisable: (ctx) => {},
+
+    // Trigger implementation, It takes context as parameter.
+    // should returns an array of payload, each payload considered
+    run: async run(ctx): unknown[] => {}
+})
+```
+
+<Tip>
+  It's important to note that the `run` method returns an array. The reason for
+  this is that a single polling can contain multiple triggers, so each item in
+  the array will trigger the flow to run.
+</Tip>
+
+## Context Object
+
+The Context object contains multiple helpful pieces of information and tools that can be useful while developing.
+
+```typescript
+// Store: A simple, lightweight key-value store that is helpful when you are developing triggers that persist between runs, used to store information like the last polling date.
+await context.store.put('_lastFetchedDate', new Date());
+const lastFetchedData = await context.store.get('_lastFetchedDate', new Date());
+
+// Webhook URL: A unique, auto-generated URL that will trigger the flow. Useful when you need to develop a trigger based on webhooks.
+context.webhookUrl;
+
+// Payload: Contains information about the HTTP request sent by the third party. It has three properties: status, headers, and body.
+context.payload;
+
+// PropsValue: Contains the information filled by the user in defined properties.
+context.propsValue;
+```
+
+**App Webhooks (Not Supported)**
+
+Certain services, such as `Slack` and `Square`, only support webhooks at the developer app level.
+This means that all authorized users for the app will be sent to the same endpoint. While this technique will be supported soon, for now, a workaround is to perform polling on the endpoint.

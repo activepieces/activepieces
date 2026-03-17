@@ -1,10 +1,11 @@
-import { ApEdition, FilteredPieceBehavior, isNil, PiecesFilterType, PlatformWithoutSensitiveData } from '@activepieces/shared'
+import { ApEdition, FilteredPieceBehavior, isNil, PiecesFilterType, Platform } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { system } from '../../../helper/system/system'
-import { PieceMetadataSchema } from '../../../pieces/piece-metadata-entity'
+import { PieceMetadataSchema } from '../../../pieces/metadata/piece-metadata-entity'
 import { platformService } from '../../../platform/platform.service'
 import { projectLimitsService } from '../../projects/project-plan/project-plan.service'
 
-export const enterpriseFilteringUtils = {
+export const enterpriseFilteringUtils = (log: FastifyBaseLogger) => ({
     async filter(params: FilterParams): Promise<PieceMetadataSchema[]> {
         const edition = system.getEdition()
         if (![ApEdition.ENTERPRISE, ApEdition.CLOUD].includes(edition)) {
@@ -15,7 +16,7 @@ export const enterpriseFilteringUtils = {
             return pieces
         }
 
-        const platformWithPlan = await platformService.getOneWithPlan(platformId)
+        const platformWithPlan = await platformService(log).getOne(platformId)
         if (isNil(platformWithPlan)) {
             return pieces
         }
@@ -23,17 +24,17 @@ export const enterpriseFilteringUtils = {
         if (isNil(projectId)) {
             return platformFilteredPieces
         }
-        return filterBasedOnProject(projectId, platformFilteredPieces)
+        return filterBasedOnProject(log, projectId, platformFilteredPieces)
     },
     async isFiltered({ piece, projectId, platformId }: IsFilteredParams): Promise<boolean> {
-        const filteredPieces = await enterpriseFilteringUtils.filter({
+        const filteredPieces = await this.filter({
             pieces: [piece],
             projectId,
             platformId,
         })
         return filteredPieces.length === 0
     },
-}
+})
 
 type IsFilteredParams = {
     piece: PieceMetadataSchema
@@ -49,10 +50,11 @@ type FilterParams = {
 }
 
 async function filterBasedOnProject(
+    log: FastifyBaseLogger,
     projectId: string,
     pieces: PieceMetadataSchema[],
 ): Promise<PieceMetadataSchema[]> {
-    const { pieces: allowedPieces, piecesFilterType } = await projectLimitsService(system.globalLogger()).getPlanWithPlatformLimits(projectId)
+    const { pieces: allowedPieces, piecesFilterType } = await projectLimitsService(log).getOrCreateDefaultPlan(projectId)
 
     const filterPredicate: Record<
     PiecesFilterType,
@@ -71,7 +73,7 @@ async function filterBasedOnProject(
     @deprecated This function is deprecated and will be removed in the future. replaced with project filtering
 */
 async function filterPiecesBasedPlatform(
-    platformWithPlan: PlatformWithoutSensitiveData,
+    platformWithPlan: Platform,
     pieces: PieceMetadataSchema[],
 ): Promise<PieceMetadataSchema[]> {
 

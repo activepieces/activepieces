@@ -9,6 +9,7 @@ export const askGroq = createAction({
 	description: 'Ask Groq anything using fast language models.',
 	props: {
 		model: Property.Dropdown({
+			auth: groqAuth,
 			displayName: 'Model',
 			required: true,
 			description: 'The model which will generate the completion.',
@@ -28,7 +29,7 @@ export const askGroq = createAction({
 						method: HttpMethod.GET,
 						authentication: {
 							type: AuthenticationType.BEARER_TOKEN,
-							token: auth as string,
+							token: auth.secret_text,
 						},
 					});
 					// Filter out audio models
@@ -149,7 +150,7 @@ export const askGroq = createAction({
 			url: 'https://api.groq.com/openai/v1/chat/completions',
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
-				token: auth,
+				token: auth.secret_text,
 			},
 			body: {
 				model: model,

@@ -1,0 +1,12 @@
+{
+  "Validate phone numbers and retrieve line type, carrier, and location information": "電話番号を検証し、行の種類、配送業者、位置情報を取得します",
+  "\nTo get your API Key:\n\n1. Sign up and create an account at Phone Validator\n2. Visit your account information to obtain your API key\n3. Copy your API key and paste it here\n": "\nTo get your API Key:\n\n1. Sign up and create an account at Phone Validator\n2. Visit your account information to obtain your API key\n3. Copy your API key and paste it here\n",
+  "Validate Phone Number": "電話番号を検証する",
+  "Validate a phone number and retrieve line type, carrier, and location information": "電話番号を検証し、行の種類、配送業者、位置情報を取得します",
+  "Phone Number": "電話番号",
+  "Search Type": "検索タイプ",
+  "The phone number to validate (e.g., 7029270000, 1-702-927-0000)": "検証する電話番号（例：7029270000、1-702-927-0000）",
+  "Type of phone lookup to perform": "実行する携帯電話のルックアップの種類",
+  "Basic (Line Type + Carrier + Location + Fake Check)": "ベーシック（ラインタイプ+キャリア+場所+偽造チェック）",
+  "Fake Number Check Only": "偽の番号のチェックのみ"
+}

@@ -2,7 +2,7 @@ import {
   DynamicPropsValue,
   createAction,
 } from '@activepieces/pieces-framework';
-import { mondayAuth } from '../..';
+import { mondayAuth } from '../auth';
 import { makeClient, mondayCommon } from '../common';
 import {
   convertPropValueToMondayColumnValue,
@@ -25,7 +25,7 @@ export const updateColumnValuesOfItemAction = createAction({
     const columnValuesInput = context.propsValue.column_values;
     const mondayColumnValues: DynamicPropsValue = {};
 
-    const client = makeClient(context.auth as string);
+    const client = makeClient(context.auth);
     const res = await client.listBoardColumns({
       boardId: board_id as unknown as string,
     });

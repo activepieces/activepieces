@@ -27,7 +27,7 @@ export const deepgramPiece = createPiece({
       baseUrl: () => BASE_URL,
       authMapping: async (auth) => {
         return {
-          Authorization: `Token ${auth}`,
+          Authorization: `Token ${auth.secret_text}`,
         };
       },
     }),

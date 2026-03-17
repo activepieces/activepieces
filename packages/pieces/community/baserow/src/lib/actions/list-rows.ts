@@ -1,10 +1,9 @@
 import {
-  PiecePropValueSchema,
   Property,
   createAction,
 } from '@activepieces/pieces-framework';
-import { baserowAuth } from '../..';
-import { makeClient } from '../common';
+import { baserowAuth } from '../auth';
+import { baserowCommon, makeClient } from '../common';
 
 export const listRowsAction = createAction({
   name: 'baserow_list_rows',
@@ -12,16 +11,18 @@ export const listRowsAction = createAction({
   description: 'Finds a page of rows in given table.',
   auth: baserowAuth,
   props: {
-    table_id: Property.Number({
-      displayName: 'Table ID',
-      required: true,
-      description:
-        "Please enter the table ID where you want to get the rows from. You can find the ID by clicking on the three dots next to the table. It's the number between brackets.",
+    table_id: baserowCommon.tableId(),
+    page: Property.Number({
+      displayName: 'Page',
+      required: false,
+      defaultValue: 1,
+      description: 'Page number to return. Defaults to 1.',
     }),
     limit: Property.Number({
-      displayName: 'Limit',
+      displayName: 'Page Size',
       required: false,
-      description: 'The maximum number of rows to return.',
+      defaultValue: 100,
+      description: 'Number of rows to return per page. Defaults to 100.',
     }),
     search: Property.ShortText({
       displayName: 'Search',
@@ -37,10 +38,8 @@ export const listRowsAction = createAction({
     }),
   },
   async run(context) {
-    const { table_id, limit, search, order_by } = context.propsValue;
-    const client = makeClient(
-      context.auth as PiecePropValueSchema<typeof baserowAuth>
-    );
-    return await client.listRows(table_id, limit, search, order_by);
+    const { table_id, page, limit, search, order_by } = context.propsValue as {table_id: number, page?: number, limit?: number, search?: string, order_by?: string};
+    const client = makeClient(context.auth.props);
+    return await client.listRows(table_id, page, limit, search, order_by);
   },
 });

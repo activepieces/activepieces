@@ -4,7 +4,7 @@ import {
   HttpMethod,
   httpClient,
 } from '@activepieces/pieces-common';
-import { discordAuth } from '../../index';
+import { discordAuth } from '../auth';
 import { discordCommon } from '../common';
 import { Member } from '../common/models';
 
@@ -27,7 +27,7 @@ export const discordFindGuildMemberByUsername = createAction({
       method: HttpMethod.GET,
       url: `https://discord.com/api/v9/guilds/${configValue.propsValue.guild_id}/members`,
       headers: {
-        authorization: `Bot ${configValue.auth}`,
+        authorization: `Bot ${configValue.auth.secret_text}`,
         'Content-Type': 'application/json',
       },
     };

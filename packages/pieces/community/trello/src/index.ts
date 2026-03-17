@@ -5,10 +5,17 @@ import {
 } from '@activepieces/pieces-common';
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
-import { createCard } from './lib/actions/create-card';
-import { getCard } from './lib/actions/get-card';
+import { createCard } from './lib/actions/card/create-card';
+import { getCard } from './lib/actions/card/get-card';
+import { updateCard } from './lib/actions/card/update-card';
+import { deleteCard } from './lib/actions/card/delete-card';
+import { getCardAttachments } from './lib/actions/card-attachment/get-card-attachments';
+import { addCardAttachment } from './lib/actions/card-attachment/add-card-attachment';
+import { getCardAttachment } from './lib/actions/card-attachment/get-card-attachment';
+import { deleteCardAttachment } from './lib/actions/card-attachment/delete-card-attachment';
 import { cardMovedTrigger } from './lib/triggers/cardMoved';
 import { newCardTrigger } from './lib/triggers/newCard';
+import { deadlineTrigger } from './lib/triggers/deadline';
 
 const markdownProperty = `
 To obtain your API key and token, follow these steps:
@@ -69,9 +76,9 @@ export const trello = createPiece({
   description: 'Project management tool for teams',
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/trello.png',
-  authors: ["Salem-Alaa","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
+  authors: ["Salem-Alaa","kishanprmr","MoShizzle","khaledmashaly","abuaboud","AshotZaqoyan"],
   categories: [PieceCategory.PRODUCTIVITY],
   auth: trelloAuth,
-  actions: [createCard, getCard],
-  triggers: [cardMovedTrigger, newCardTrigger],
+  actions: [createCard, getCard, updateCard, deleteCard, getCardAttachments, addCardAttachment, getCardAttachment, deleteCardAttachment],
+  triggers: [cardMovedTrigger, newCardTrigger, deadlineTrigger],
 });

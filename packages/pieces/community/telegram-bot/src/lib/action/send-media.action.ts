@@ -61,6 +61,7 @@ export const telegramSendMediaAction = createAction({
       },
     }),
     media: Property.DynamicProperties({
+      auth: telegramBotAuth,
       displayName: 'Media Properties',
       required: false,
       refreshers: ['media_type'],
@@ -70,11 +71,6 @@ export const telegramSendMediaAction = createAction({
             photo: Property.File({
               displayName: 'Image',
               description: 'The image to be uploaded as a file',
-              required: false,
-            }),
-            photoUrl: Property.ShortText({
-              displayName: 'Image Url',
-              description: 'The image url to be downloaded by Telegram',
               required: false,
             }),
             photoId: Property.ShortText({
@@ -88,11 +84,6 @@ export const telegramSendMediaAction = createAction({
             video: Property.File({
               displayName: 'Video',
               description: 'The video to be uploaded as a file',
-              required: false,
-            }),
-            videoUrl: Property.ShortText({
-              displayName: 'Video Url',
-              description: 'The video url to be downloaded by Telegram',
               required: false,
             }),
             videoId: Property.ShortText({
@@ -115,12 +106,6 @@ export const telegramSendMediaAction = createAction({
                 'Emoji associated with the sticker. Only for just uploaded stickers',
               required: false,
             }),
-            stickerUrl: Property.ShortText({
-              displayName: 'Sticker Url',
-              description:
-                'The static sticker url to be downloaded by Telegram (supports only .WEBP files)',
-              required: false,
-            }),
             stickerId: Property.ShortText({
               displayName: 'Sticker Id',
               description:
@@ -133,12 +118,6 @@ export const telegramSendMediaAction = createAction({
               displayName: 'GIF',
               description:
                 'The GIF or MPEG-4 without sound file to be uploaded as a auto-playing animation',
-              required: false,
-            }),
-            animationUrl: Property.ShortText({
-              displayName: 'GIF Url',
-              description:
-                'The GIF or MPEG-4 without sound url to be downloaded by Telegram',
               required: false,
             }),
             animationId: Property.ShortText({
@@ -198,11 +177,9 @@ export const telegramSendMediaAction = createAction({
     let method = 'sendMessage';
     if (typeof mediaType !== 'undefined') {
       // send media message
-      const [file, url, id] = [
-        ctx.propsValue.media?.[mediaType] as ApFile,
-        ctx.propsValue.media?.[mediaType + 'Url'] as string,
-        ctx.propsValue.media?.[mediaType + 'Id'] as string,
-      ];
+      const file = ctx.propsValue.media?.[mediaType] as ApFile | undefined;
+      // const url = ctx.propsValue.media?.[mediaType + 'Url'] as string;
+      const id = ctx.propsValue.media?.[mediaType + 'Id'] as string;
 
       const methods: Partial<Record<string, string>> = {
         photo: 'sendPhoto',
@@ -218,25 +195,27 @@ export const telegramSendMediaAction = createAction({
       }
       method = mediaMethod;
 
-      if (typeof file !== 'undefined') {
+      if (file && file.data && file.filename) {
         // upload
-        headers['Content-Type'] = 'multipart/form-data';
         const form = new FormData();
-        form.append('file', file.data, file.extension);
-        body = form;
-        queryParams.chat_id = ctx.propsValue['chat_id'];
-        queryParams.caption = ctx.propsValue['message'];
+        form.append(mediaType, file.data, file.filename);
+        form.append('chat_id', ctx.propsValue['chat_id']);
+        form.append('caption', ctx.propsValue['message']);
         if (ctx.propsValue['message_thread_id'])
-          queryParams.message_thread_id = ctx.propsValue['message_thread_id'];
-        queryParams.parse_mode = ctx.propsValue['format'] ?? 'MarkdownV2';
+          form.append('message_thread_id', ctx.propsValue['message_thread_id']);
+        form.append('parse_mode', ctx.propsValue['format'] ?? 'MarkdownV2');
+        if (ctx.propsValue['reply_markup'])
+          form.append(
+            'reply_markup',
+            JSON.stringify(ctx.propsValue['reply_markup'])
+          );
 
-        // TODO: research how to
-        // if (ctx.propsValue['reply_markup'])
-        //   queryParams.reply_markup = ctx.propsValue['reply_markup'];
-      } else if (typeof url !== 'undefined' || typeof id !== 'undefined') {
+        body = form;
+        Object.assign(headers, form.getHeaders());
+      } else if (typeof id !== 'undefined') {
         // download
         body = body || {};
-        body[mediaType] = url ?? id;
+        body[mediaType] = id;
         body.chat_id = ctx.propsValue['chat_id'];
         body.caption = ctx.propsValue['message'];
         body.message_thread_id =

@@ -28,7 +28,7 @@ export const sendgrid = createPiece({
       baseUrl: () => sendgridCommon.baseUrl,
       auth: sendgridAuth,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       }),
     }),
   ],

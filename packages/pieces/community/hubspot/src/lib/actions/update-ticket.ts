@@ -2,7 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { Client } from '@hubspot/api-client';
 
 import { MarkdownVariant } from '@activepieces/shared';
-import { hubspotAuth } from '../../';
+import { hubspotAuth } from '../auth';
 import { getDefaultPropertiesForObject, pipelineDropdown, pipelineStageDropdown, standardObjectDynamicProperties, standardObjectPropertiesDropdown } from '../common/props';
 import { OBJECT_TYPE } from '../common/constants';
 
@@ -79,6 +79,9 @@ export const updateTicketAction = createAction({
 
         // Add additional properties to the ticketProperties object
         Object.entries(objectProperties).forEach(([key, value]) => {
+            if ((Array.isArray(value) && value.length === 0)) {
+                return;  
+			}
             // Format values if they are arrays
             ticketProperties[key] = Array.isArray(value) ? value.join(';') : value;
         });

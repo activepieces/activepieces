@@ -1,7 +1,7 @@
 import { Property, createAction } from "@activepieces/pieces-framework";
-import { googleDriveAuth } from "../../";
+import { googleDriveAuth, createGoogleClient } from '../auth';
 import { google } from 'googleapis';
-import { OAuth2Client } from 'googleapis-common';
+import { common } from "../common";
 
 export const addPermission = createAction({
     auth: googleDriveAuth,
@@ -49,19 +49,18 @@ export const addPermission = createAction({
             ]
             }
         }),
+        include_team_drives: common.properties.include_team_drives,
         send_invitation_email: Property.Checkbox({
             displayName: 'Send invitation email',
             description: 'Send an email to the user to notify them of the new permissions',
             required: true,
         }),
-
        },
 
     async run(context) {
-        const [fileId, user_email, permission_name, send_invitation_email] = [context.propsValue.fileId, context.propsValue.user_email, context.propsValue.permission_name, context.propsValue.send_invitation_email];
+        const {fileId, user_email, permission_name, send_invitation_email,include_team_drives} = context.propsValue;
 
-        const authClient = new OAuth2Client();
-        authClient.setCredentials(context.auth)
+        const authClient = await createGoogleClient(context.auth);
 
         const drive = google.drive({ version: 'v3', auth: authClient });
 
@@ -70,7 +69,8 @@ export const addPermission = createAction({
         const result = await drive.permissions.create({
             requestBody: permission,
             fileId: fileId,
-            sendNotificationEmail: send_invitation_email
+            sendNotificationEmail: send_invitation_email,
+            supportsAllDrives: include_team_drives,
         });
 
         return result.data;

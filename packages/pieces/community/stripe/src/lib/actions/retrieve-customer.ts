@@ -28,7 +28,7 @@ export const stripeRetrieveCustomer = createAction({
       url: `https://api.stripe.com/v1/customers/${customer.id}`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth,
+        token: context.auth.secret_text,
       },
     });
 

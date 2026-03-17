@@ -43,10 +43,10 @@ export const brilliantDirectories = createPiece({
   actions: [
     createNewUser,
     createCustomApiCallAction({
-      baseUrl: (auth) => (auth as { site_url: string }).site_url,
+      baseUrl: (auth) => auth?.props?.site_url || '',
       auth: brilliantDirectoriesAuth,
       authMapping: async (auth) => ({
-        'X-Api-Key': `${(auth as { api_key: string }).api_key}`,
+        'X-Api-Key': `${auth.props.api_key}`,
       }),
     }),
   ],

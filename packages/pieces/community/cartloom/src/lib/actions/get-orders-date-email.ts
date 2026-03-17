@@ -25,7 +25,7 @@ export const getOrderEmailAction = createAction({
     }),
   },
   async run(context) {
-    return await getOrdersByDate(context.auth, {
+    return await getOrdersByDate(context.auth.props, {
       search_type: 'email',
       keyword: context.propsValue.email,
       start_date: context.propsValue.start.split('T')[0],

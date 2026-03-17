@@ -62,7 +62,7 @@ export const wedofCommon = {
         const webhookId = await wedofCommon.subscribeWebhook(
           events,
           context.webhookUrl,
-          context.auth as string,
+          context.auth.secret_text,
           name
         );
         await context.store.put('_webhookId', webhookId);
@@ -581,6 +581,10 @@ export const wedofCommon = {
           label: 'Abandonné',
           value: 'aborted',
         },
+        {
+          label: 'À enregistrer',
+          value: 'toRegister',
+        },
       ],
       disabled: false,
     },
@@ -668,10 +672,6 @@ export const wedofCommon = {
     defaultValue: null,
     options: {
       options: [
-        {
-          label: 'Aucune période',
-          value: null,
-        },
         {
           label: 'Personnalisée',
           value: 'custom',
@@ -768,6 +768,9 @@ export const wedofCommon = {
           label: 'Date de mise à jour',
           value: 'lastUpdate',
         },
+        { 
+          label: 'Dernière mise à jour', 
+          value: 'updatedOn' },
         {
           label: 'Date de Création',
           value: 'createdOn',
@@ -854,6 +857,144 @@ export const wedofCommon = {
           label: 'Date de fin de session',
           value: 'sessionEndDate',
         },
+        {
+          label: 'Date prévisionnelle de paiment',
+          value: 'paymentScheduledDate',
+        },
+      ],
+    },
+  }),
+
+  filterOnStateDateCf: Property.StaticDropdown({
+    displayName: '(Période) Basé sur la date de',
+    required: true,
+    defaultValue: 'stateLastUpdate',
+    options: {
+      disabled: false,
+      options: [
+        { 
+          label: 'Dernièr changement d’état', 
+          value: 'stateLastUpdate' },
+        { 
+          label: 'Dernière mise à jour', 
+          value: 'updatedOn' },
+        { 
+          label: 'Passage à À prendre en charge', 
+          value: 'toTakeDate' },
+        { 
+          label: 'Passage à À reprogrammer', 
+          value: 'toRetakeDate' },
+        { 
+          label: 'Passage à À contrôler', 
+          value: 'toControlDate' },
+        { 
+          label: 'Passage à Échec', 
+          value: 'failedDate' },
+        { 
+          label: 'Passage à Succès', 
+          value: 'successDate' },
+        { 
+          label: 'Passage à À inscrire', 
+          value: 'toRegisterDate' },
+        { 
+          label: 'Passage à Enregistrer', 
+          value: 'registeredDate' },
+        { 
+          label: 'Passage à Refusé', 
+          value: 'refusedDate' },
+        { 
+          label: 'Passage à Abandonné', 
+          value: 'abortedDate' },
+        {
+          label: 'Passage à Non traité',
+          value: 'notProcessedRegistrationFolderStateDate',
+        },
+        {
+          label: 'Passage à Validé',
+          value: 'validatedRegistrationFolderStateDate',
+        },
+        {
+          label: 'Passage à Accepté',
+          value: 'acceptedRegistrationFolderStateDate',
+        },
+        {
+          label: 'Passage à En formation',
+          value: 'inTrainingRegistrationFolderStateDate',
+        },
+        {
+          label: 'Passage à Sortie de formation',
+          value: 'terminatedRegistrationFolderStateDate',
+        },
+        {
+          label: 'Passage à Service fait déclaré',
+          value: 'serviceDoneDeclaredRegistrationFolderStateDate',
+        },
+        {
+          label: 'Passage à Service fait validé',
+          value: 'serviceDoneValidatedRegistrationFolderStateDate',
+        },
+        {
+          label: 'Passage à À facturer',
+          value: 'billedRegistrationFolderStateDate',
+        },
+        {
+          label: 'Passage à Refusé par le titulaire',
+          value: 'refusedByAttendeeRegistrationFolderStateDate',
+        },
+        {
+          label: 'Passage à Refusé par l’organisme',
+          value: 'refusedByOrganismRegistrationFolderStateDate',
+        },
+        {
+          label: 'Passage à Annulé par le titulaire',
+          value: 'canceledByAttendeeRegistrationFolderStateDate',
+        },
+        {
+          label: 'Passage à Annulé par l’organisme',
+          value: 'canceledByOrganismRegistrationFolderStateDate',
+        },
+        {
+          label: 'Passage à Annulation non réalisée (titulaire)',
+          value: 'canceledByAttendeeNotRealizedRegistrationFolderStateDate',
+        },
+        {
+          label: 'Passage à Annulé sans suite',
+          value: 'rejectedWithoutTitulaireSuiteRegistrationFolderStateDate',
+        },
+        {
+          label: 'Date de début de session',
+          value: 'sessionStartDateRegistrationFolderDate',
+        },
+        {
+          label: 'Date de fin de session',
+          value: 'sessionEndDateRegistrationFolderDate',
+        },
+        { label: 'Facturable par WEDOF', value: 'wedofInvoice' },
+        { label: "Date d'inscription", value: 'enrollmentDate' },
+        { label: "Date début de l'examen", value: 'examinationDate' },
+        { label: "Date fin de l'examen", value: 'examinationEndDate' },
+      ],
+    },
+  }),
+
+  filterOnStateDateFutureCf: Property.StaticDropdown({
+    displayName: '(Période) Basé sur la date de',
+    required: true,
+    options: {
+      disabled: false,
+      options: [
+        {
+          label: "Date d'inscription",
+          value: 'enrollmentDate',
+        },
+        {
+          label: "Date début de l'examen",
+          value: 'examinationDate',
+        },
+        {
+          label: "Date fin de l'examen",
+          value: 'examinationEndDate',
+        },
       ],
     },
   }),
@@ -861,6 +1002,7 @@ export const wedofCommon = {
   sort: Property.StaticDropdown({
     displayName: 'Tri sur critère',
     required: true,
+    defaultValue: 'stateLastUpdate',
     options: {
       disabled: false,
       options: [
@@ -871,6 +1013,10 @@ export const wedofCommon = {
         {
           label: 'Date du dernier dossier mis à réussi',
           value: 'successDate',
+        },
+        {
+          label: 'ID de base de donnée',
+          value: 'id',
         },
       ],
     },
@@ -1079,7 +1225,7 @@ export const wedofCommon = {
   cdcState: Property.StaticDropdown({
     displayName: "État de l'accrochage",
     description:
-      "Permet d'indiquer où en est le dossier de certification dans le processus d'accrochage auprès de la CDC",
+      "Permet de n'obtenir que les dossiers dans l'état considéré lié à l'export des dossiers - par défaut tous les dossiers sont retournés",
     required: false,
     options: {
       disabled: false,

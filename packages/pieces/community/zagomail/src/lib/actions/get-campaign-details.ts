@@ -1,4 +1,4 @@
-import { zagomailAuth } from '../../';
+import { zagomailAuth } from '../auth';
 import { createAction } from '@activepieces/pieces-framework';
 import { zagoMailApiService } from '../common/request';
 import { campaignUid } from '../common/props';
@@ -14,6 +14,6 @@ export const getCampaignDetails = createAction({
   async run({propsValue, auth}) {
     const campaignUid = propsValue.campaignUid;
 
-    return await zagoMailApiService.getCampaignDetails(auth, campaignUid)
+    return await zagoMailApiService.getCampaignDetails(auth.secret_text, campaignUid)
   },
 });

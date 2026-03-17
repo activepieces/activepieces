@@ -39,7 +39,10 @@ export const pastefy = createPiece({
     ...actions,
     createCustomApiCallAction({
       baseUrl: (auth) => {
-        const typedAuth = auth as { instance_url: string };
+        if (!auth) {
+          return '';
+        }
+        const typedAuth = auth.props as { instance_url: string };
         return typedAuth.instance_url + '/api/v2';
       },
       auth: pastefyAuth,

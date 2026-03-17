@@ -1,6 +1,6 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { firefliesAiAuth } from '../../index';
+import { firefliesAiAuth } from '../auth';
 import { getTranscript } from '../common/queries';
 import { isNil } from '@activepieces/shared';
 import { BASE_URL } from '../common';
@@ -19,7 +19,7 @@ export const findRecentMeetingAction = createAction({
 			method: HttpMethod.POST,
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
-				token: context.auth,
+				token: context.auth.secret_text,
 			},
 			body: {
 				query: `
@@ -58,7 +58,7 @@ export const findRecentMeetingAction = createAction({
 			method: HttpMethod.POST,
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
-				token: context.auth,
+				token: context.auth.secret_text,
 			},
 			body: {
 				query: getTranscript,

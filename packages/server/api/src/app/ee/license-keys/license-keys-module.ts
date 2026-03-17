@@ -1,18 +1,18 @@
-import { exceptionHandler } from '@activepieces/server-shared'
 import { isEmpty, isNil } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { systemJobsSchedule } from '../../helper/system-jobs'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import { exceptionHandler } from '../../helper/exception-handler'
 import { SystemJobName } from '../../helper/system-jobs/common'
 import { systemJobHandlers } from '../../helper/system-jobs/job-handlers'
+import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
 import { platformService } from '../../platform/platform.service'
 import { licenseKeysController } from './license-keys-controller'
 import { licenseKeysService } from './license-keys-service'
 
-export const licenseKeysModule: FastifyPluginAsyncTypebox = async (app) => {
+export const licenseKeysModule: FastifyPluginAsyncZod = async (app) => {
     systemJobHandlers.registerJobHandler(SystemJobName.TRIAL_TRACKER, async () => {
-        const platforms = await platformService.getAll()
+        const platforms = await platformService(app.log).getAll()
         for (const platform of platforms) {
-            const platformWithPlan = await platformService.getOneWithPlan(platform.id)
+            const platformWithPlan = await platformService(app.log).getOneWithPlan(platform.id)
             if (isNil(platformWithPlan)) {
                 continue
             }

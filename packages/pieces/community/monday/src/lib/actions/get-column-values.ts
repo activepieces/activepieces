@@ -1,5 +1,5 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { mondayAuth } from '../..';
+import { mondayAuth } from '../auth';
 import { makeClient, mondayCommon } from '../common';
 import { parseMondayColumnValue } from '../common/helper';
 
@@ -17,7 +17,7 @@ export const getItemsColumnValuesAction = createAction({
   async run(context) {
     const { board_id, item_id, column_ids } = context.propsValue;
 
-    const client = makeClient(context.auth as string);
+    const client = makeClient(context.auth);
     const res = await client.getItemColumnValues({
       boardId: board_id as string,
       itemId: item_id as string,

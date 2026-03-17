@@ -30,7 +30,7 @@ export const validateEmail = createAction({
     }
     const res = await httpClient.sendRequest<string[]>({
       method: HttpMethod.GET,
-      url: `https://api.zerobounce.net/v2/validate?email=${propsValue.email}&api_key=${auth}`,
+      url: `https://api.zerobounce.net/v2/validate?email=${propsValue.email}&api_key=${auth.secret_text}`,
     });
     if (propsValue.cacheResponse) {
       await store.put(key, res.body, StoreScope.PROJECT);

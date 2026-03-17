@@ -7,7 +7,7 @@ import {
   QueryParams,
 } from '@activepieces/pieces-common';
 import { googleContactsCommon } from '../common';
-import { googleContactsAuth } from '../../';
+import { googleContactsAuth } from '../auth';
 
 export const googleContactsSearchContactsAction = createAction({
   auth: googleContactsAuth,

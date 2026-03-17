@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { zooAuth } from '../../../index'
+import { zooAuth } from '../../auth'
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const updateShortlinkAction = createAction({
@@ -25,7 +25,7 @@ export const updateShortlinkAction = createAction({
       method: HttpMethod.PUT,
       url: `https://api.zoo.dev/user/shortlinks/${propsValue.key}`,
       headers: {
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       },
       body: {
         url: propsValue.url,

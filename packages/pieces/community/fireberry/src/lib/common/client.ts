@@ -1,4 +1,6 @@
 import { HttpMethod, httpClient, HttpRequest, AuthenticationType } from '@activepieces/pieces-common';
+import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
+import { fireberryAuth } from '../auth';
 
 const FIREBERRY_API_BASE_URL = 'https://api.fireberry.com';
 const MAX_RETRIES = 3;
@@ -22,8 +24,8 @@ function normalizeQueryParams(params?: Record<string, string | number | boolean>
 export class FireberryClient {
   private apiKey: string;
 
-  constructor(apiKey: string) {
-    this.apiKey = apiKey;
+  constructor(apiKey: AppConnectionValueForAuthProperty<typeof fireberryAuth>) {
+    this.apiKey = apiKey.secret_text;
   }
 
   private parseError(error: any): string {
@@ -35,7 +37,9 @@ export class FireberryClient {
           if (body.error.message) return body.error.message;
         }
         if (body?.message) return body.message;
-      } catch {}
+      } catch {
+        return 'Unknown error';
+      }
     }
     if (error?.message) return error.message;
     return 'Unknown error';

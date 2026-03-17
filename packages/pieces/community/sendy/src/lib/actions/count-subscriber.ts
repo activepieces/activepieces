@@ -9,7 +9,8 @@ export const countAction = createAction({
   displayName: 'Count Active Subscribers',
   description: 'Get the active subscriber count for a list',
   props: {
-    list: Property.Dropdown({
+    list: Property.Dropdown({ 
+      auth: sendyAuth,
       displayName: 'List',
       description: 'Select the list to get the status from',
       required: true,

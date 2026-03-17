@@ -83,7 +83,7 @@ export const getContacts = createAction({
   },
 
   async run(context) {
-    const FDapiToken = context.auth.access_token;
+    const FDapiToken = context.auth.props.access_token;
 
     const headers = {
       Authorization: FDapiToken,
@@ -111,7 +111,7 @@ export const getContacts = createAction({
       );
     }
     // Remove trailing slash from base_url
-    const baseUrl = context.auth.base_url.replace(/\/$/, '');
+    const baseUrl = context.auth.props.base_url.replace(/\/$/, '');
     const url = `${baseUrl}/api/v2/contacts/?${queryParams.toString()}`;
     const httprequestdata = {
       method: HttpMethod.GET,

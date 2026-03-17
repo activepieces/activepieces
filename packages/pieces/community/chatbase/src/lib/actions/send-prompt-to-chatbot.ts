@@ -1,6 +1,6 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { chatbaseAuth } from '../../index';
+import { chatbaseAuth } from '../auth';
 import { makeRequest } from '../common';
 import { chatbotIdDropdown } from '../common/props';
 
@@ -75,7 +75,7 @@ export const sendPromptToChatbotAction = createAction({
 	async run(context) {
 		const { chatbotId, message, temperature, model, conversationId } = context.propsValue;
 
-		const apiKey = context.auth as string;
+		const apiKey = context.auth.secret_text;
 
 		const payload: Record<string, any> = {
 			chatbotId,

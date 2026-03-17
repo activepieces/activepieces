@@ -1,10 +1,8 @@
 import {
   DynamicPropsValue,
-  PiecePropValueSchema,
-  Property,
   createAction,
 } from '@activepieces/pieces-framework';
-import { baserowAuth } from '../..';
+import { baserowAuth } from '../auth';
 import { baserowCommon, makeClient } from '../common';
 import { BaserowFieldType } from '../common/constants';
 
@@ -14,26 +12,17 @@ export const updateRowAction = createAction({
   description: 'Updates an existing row.',
   auth: baserowAuth,
   props: {
-    table_id: Property.Number({
-      displayName: 'Table ID',
-      required: true,
-      description:
-        "Please enter the table ID where the row must be updated in. You can find the ID by clicking on the three dots next to the table. It's the number between brackets.",
-    }),
-    row_id: Property.Number({
-      displayName: 'Row ID',
-      required: true,
-      description: 'Please enter the row ID that needs to be updated.',
-    }),
+    table_id: baserowCommon.tableId(),
+    row_id: baserowCommon.rowId(),
     table_fields: baserowCommon.tableFields(true),
   },
   async run(context) {
-    const { table_id, row_id } = context.propsValue;
+    const { table_id, row_id } = context.propsValue as {table_id: number, row_id: number};
     const tableFieldsInput = context.propsValue.table_fields!;
     const formattedTableFields: DynamicPropsValue = {};
 
     const client = makeClient(
-      context.auth as PiecePropValueSchema<typeof baserowAuth>
+      context.auth.props
     );
     const tableSchema = await client.listTableFields(table_id);
 

@@ -1,6 +1,6 @@
 import { Property, createAction, OAuth2PropertyValue } from '@activepieces/pieces-framework';
 import { getTaskListsDropdown, getTasksInListDropdown } from '../common';
-import { microsoftToDoAuth } from '../../index';
+import { microsoftToDoAuth } from '../auth';
 import { Client } from '@microsoft/microsoft-graph-client';
 import { Importance, TaskStatus, TodoTask } from '@microsoft/microsoft-graph-types';
 
@@ -11,6 +11,7 @@ export const updateTaskAction = createAction({
 	description: 'Update an existing task.',
 	props: {
 		task_list_id: Property.Dropdown({
+   auth: microsoftToDoAuth,
 			displayName: 'Task List',
 			description: 'The task list containing the task to update.',
 			required: true,
@@ -23,6 +24,7 @@ export const updateTaskAction = createAction({
 			},
 		}),
 		task_id: Property.Dropdown({
+   auth: microsoftToDoAuth,
 			displayName: 'Task',
 			description: 'The task to update.',
 			required: true,

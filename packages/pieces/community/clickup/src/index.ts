@@ -36,14 +36,7 @@ import { updateClickupMessage } from './lib/actions/chat/update-message';
 import { deleteClickupMessage } from './lib/actions/chat/delete-message';
 import { deleteClickupMessageReaction } from './lib/actions/chat/delete-message-reaction';
 import { getClickupTaskByName } from './lib/actions/tasks/get-task-by-name';
-
-export const clickupAuth = PieceAuth.OAuth2({
-  description: '',
-  authUrl: 'https://app.clickup.com/api',
-  tokenUrl: 'https://api.clickup.com/api/v2/oauth/token',
-  required: true,
-  scope: [],
-});
+import { clickupAuth } from './lib/auth';
 
 export const clickup = createPiece({
   displayName: 'ClickUp',
@@ -90,7 +83,7 @@ export const clickup = createPiece({
       },
       authMapping: async (auth) => {
         return {
-          Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+          Authorization: `Bearer ${auth.access_token}`,
         };
       },
     }),

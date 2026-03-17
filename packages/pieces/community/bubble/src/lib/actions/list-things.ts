@@ -5,7 +5,7 @@ import {
   HttpMethod,
 } from '@activepieces/pieces-common';
 
-import { bubbleAuth } from '../../index';
+import { bubbleAuth } from '../auth';
 import { bubbleCommon } from '../common';
 
 export const bubbleListThingsAction = createAction({
@@ -70,7 +70,7 @@ export const bubbleListThingsAction = createAction({
     }),
   },
   async run(context) {
-    const { appname, token } = context.auth;
+    const { appname, token } = context.auth.props;
     const { typename, constraint, field, value, cursor, limit } =
       context.propsValue;
 

@@ -1,4 +1,4 @@
-import { zagomailAuth } from '../../';
+import { zagomailAuth } from '../auth';
 import { createAction } from '@activepieces/pieces-framework';
 import { zagoMailApiService } from '../common/request';
 import { listFields, listUId } from '../common/props';
@@ -36,6 +36,6 @@ export const createSubscriber = createAction({
 			payload[field] = formattedValue;
 		}
 
-		return await zagoMailApiService.createSubscriber(auth, listUId, payload);
+		return await zagoMailApiService.createSubscriber(auth.secret_text, listUId, payload);
 	},
 });

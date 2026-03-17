@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { amazonS3Auth } from '../..';
+import { amazonS3Auth } from '../auth';
 import { createS3 } from '../common';
 
 export const moveFile = createAction({
@@ -20,9 +20,9 @@ export const moveFile = createAction({
     }),
   },
   async run(context) {
-    const { bucket } = context.auth;
+    const { bucket } = context.auth.props;
     const { fileKey, folderKey } = context.propsValue;
-    const s3 = createS3(context.auth);
+    const s3 = createS3(context.auth.props);
 
     const fileName = fileKey.split('/').pop();
 

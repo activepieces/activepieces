@@ -1,4 +1,4 @@
-import { activeCampaignAuth } from '../../../';
+import { activeCampaignAuth } from '../../auth';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { activecampaignCommon, makeClient } from '../../common';
 import { CreateContactRequest } from '../../common/types';
@@ -42,7 +42,7 @@ export const createContactAction = createAction({
 			createContactParams.fieldValues.push({ field: key, value: value });
 		});
 
-		const client = makeClient(context.auth);
+		const client = makeClient(context.auth.props);
 		return await client.createContact(createContactParams);
 	},
 });

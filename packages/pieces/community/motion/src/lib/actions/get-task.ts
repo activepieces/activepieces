@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { motionAuth } from '../../index';
+import { motionAuth } from '../auth';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { BASE_URL } from '../common/props';
 
@@ -19,7 +19,7 @@ export const getTask = createAction({
       method: HttpMethod.GET,
       url:`${BASE_URL}/tasks/${propsValue.taskId}`,
       headers: {
-        'X-API-Key': auth,
+        'X-API-Key': auth.secret_text,
       },
     });
 

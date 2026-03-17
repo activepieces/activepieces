@@ -4,7 +4,7 @@ import {
   HttpMethod,
   httpClient,
 } from '@activepieces/pieces-common';
-import { beamerAuth } from '../../index';
+import { beamerAuth } from '../auth';
 import { beamerCommon } from '../common';
 
 export const createBeamerPost = createAction({
@@ -126,7 +126,7 @@ export const createBeamerPost = createAction({
   },
 
   async run(context) {
-    const apiKey = context.auth;
+    const apiKey = context.auth.secret_text;
 
     const request: HttpRequest = {
       method: HttpMethod.POST,

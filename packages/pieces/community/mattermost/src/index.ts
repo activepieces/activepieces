@@ -43,11 +43,11 @@ export const mattermost = createPiece({
   actions: [
     sendMessage,
     createCustomApiCallAction({
-      baseUrl: (auth) =>
-        (auth as { workspace_url: string }).workspace_url + '/api/v4',
+          baseUrl: (auth) =>auth ?
+        (auth.props.workspace_url) + '/api/v4' : '',
       auth: mattermostAuth,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${(auth as { token: string }).token}`,
+        Authorization: `Bearer ${(auth ).props .token}`,
       }),
     }),
   ],

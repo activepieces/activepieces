@@ -3,7 +3,7 @@ import {
   Property,
   createAction,
 } from '@activepieces/pieces-framework';
-import { flowluAuth } from '../../..';
+import { flowluAuth } from '../../auth';
 import { flowluCommon, makeClient } from '../../common';
 import { flowluProps } from '../../common/props';
 
@@ -32,7 +32,7 @@ export const updateContactAction = createAction({
   async run(context) {
     const id = context.propsValue.id!;
     const client = makeClient(
-      context.auth as PiecePropValueSchema<typeof flowluAuth>
+      context.auth
     );
     return await client.updateContact(id, { type: 2, ...context.propsValue });
   },

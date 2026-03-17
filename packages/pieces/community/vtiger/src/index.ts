@@ -13,6 +13,7 @@ import { updateRecord } from './lib/actions/update-record';
 import { instanceLogin, isBaseUrl } from './lib/common';
 import { newOrUpdatedRecord } from './lib/triggers/new-or-updated-record';
 import { queryRecords } from './lib/actions/query-records';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 const markdownProperty = `
 To obtain your Access Key, follow these steps:
@@ -74,7 +75,7 @@ export const vtigerAuth = PieceAuth.CustomAuth({
         return {
           valid: false,
           error:
-            'Add the url without the endpoint. For example add https://<instance>.od2.vtiger.com/ instead of https://<instance>.od2.vtiger.com/restapi/v1/vtiger/default',
+            'Add the url without the endpoint. For example add https://<instance>.od2.vtiger.com instead of https://<instance>.od2.vtiger.com/restapi/v1/vtiger/default',
         };
       }
 
@@ -106,7 +107,7 @@ export const vtiger = createPiece({
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/vtiger.png',
   categories: [PieceCategory.SALES_AND_CRM],
-  authors: ["kanarelo","kishanprmr","abuaboud"],
+  authors: ["kanarelo","kishanprmr","abuaboud", "privatestefans"],
   actions: [
     createRecord,
     getRecord,
@@ -114,7 +115,19 @@ export const vtiger = createPiece({
     deleteRecord,
     queryRecords,
     searchRecords,
-    makeAPICall,
+    makeAPICall, // deprecated
+    createCustomApiCallAction({
+      auth: vtigerAuth,
+      baseUrl: (auth: any) => `${auth.instance_url}/restapi/v1/vtiger/default`,
+      authMapping: async (auth: any) => {
+        const { username, password } = auth;
+        return {
+          Authorization: `Basic ${Buffer.from(`${username}:${password}`).toString(
+            'base64'
+          )}`,
+        };
+      },
+    }),
   ],
   triggers: [newOrUpdatedRecord],
 });

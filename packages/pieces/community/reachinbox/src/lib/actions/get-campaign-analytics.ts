@@ -61,13 +61,21 @@ export const getCampaignAnalytics = createAction({
     'Fetch analytics data for a selected campaign based on a date range.',
   props: {
     campaignId: Property.Dropdown({
+  auth: ReachinboxAuth,
       displayName: 'Select Campaign',
       description:
         'Choose a campaign from the list or enter the campaign ID manually.',
       required: true,
       refreshers: ['auth'],
       options: async ({ auth }) => {
-        const campaigns = await fetchCampaigns(auth as string);
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please connect your account first',
+          };
+        }
+        const campaigns = await fetchCampaigns(auth.secret_text);
 
         return {
           options: campaigns.map((campaign) => ({
@@ -101,7 +109,7 @@ export const getCampaignAnalytics = createAction({
         method: HttpMethod.GET,
         url: url,
         headers: {
-          Authorization: `Bearer ${context.auth as string}`,
+          Authorization: `Bearer ${context.auth.secret_text}`,
         },
       });
 

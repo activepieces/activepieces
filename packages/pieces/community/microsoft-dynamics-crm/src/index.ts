@@ -1,42 +1,11 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import {
-  createPiece,
-  OAuth2PropertyValue,
-  PieceAuth,
-  Property,
-} from '@activepieces/pieces-framework';
+import { createPiece } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { createRecordAction } from './lib/actions/create-record';
 import { deleteRecordAction } from './lib/actions/delete-record';
 import { getRecordAction } from './lib/actions/get-record';
 import { updateRecordAction } from './lib/actions/update-record';
-import { PieceCategory } from '@activepieces/shared';
-
-export const dynamicsCRMAuth = PieceAuth.OAuth2({
-  props: {
-    hostUrl: Property.ShortText({
-      displayName: 'Host URL (without trailing slash)',
-      description:
-        'Host URL without trailing slash.For example **https://demo.crm.dynamics.com**',
-      required: true,
-    }),
-    tenantId: Property.ShortText({
-      displayName: 'Tenant ID',
-      description: 'You can find this in the Azure portal.',
-      defaultValue: 'common',
-      required: true,
-    }),
-    proxyUrl: Property.ShortText({
-      displayName: 'Proxy URL with Port',
-      description:
-        'Keep empty if not needed. Optional proxy URL used for establishing connections when proxying requests is needed. For example: **https://proxy.com:8080**.',
-      required: false,
-    }),
-  },
-  required: true,
-  scope: ['{hostUrl}/.default', 'openid', 'email', 'profile', 'offline_access'],
-  authUrl: 'https://login.microsoftonline.com/{tenantId}/oauth2/v2.0/authorize',
-  tokenUrl: 'https://login.microsoftonline.com/{tenantId}/oauth2/v2.0/token',
-});
+import { dynamicsCRMAuth } from './lib/auth';
 
 export function getBaseUrl(host: string, proxyUrl?: string): string {
   if (proxyUrl && proxyUrl !== '') {
@@ -62,17 +31,17 @@ export const microsoftDynamicsCrm = createPiece({
     createCustomApiCallAction({
       auth: dynamicsCRMAuth,
       baseUrl: (auth) => {
-        const props = (auth as OAuth2PropertyValue).props as {
-          hostUrl: string;
-          proxyUrl: string;
-        };
+        const props = auth?.props;
+        if (!props) {
+          return '';
+        }
         return `${getBaseUrl(
-          props?.['hostUrl'],
-          props.proxyUrl
+          props['hostUrl'] as string,
+          props['proxyUrl'] as string
         )}/api/data/v9.2`;
       },
       authMapping: async (auth) => ({
-        Authorization: `Bearer  ${(auth as OAuth2PropertyValue).access_token}`,
+        Authorization: `Bearer  ${auth.access_token}`,
       }),
     }),
   ],

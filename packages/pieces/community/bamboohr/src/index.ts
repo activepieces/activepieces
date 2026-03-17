@@ -1,27 +1,7 @@
-import {
-  createPiece,
-  PieceAuth,
-  Property,
-} from '@activepieces/pieces-framework';
+import { createPiece } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-
-export const bambooHrAuth = PieceAuth.CustomAuth({
-  required: true,
-  description:
-    'Follow [these instructions](https://documentation.bamboohr.com/docs/getting-started#authentication) to get your API key',
-  props: {
-    companyDomain: Property.ShortText({
-      displayName: 'Company domain',
-      description:
-        'The subdomain used to access BambooHR. If you access BambooHR at https://mycompany.bamboohr.com, then the companyDomain is "mycompany"',
-      required: true,
-    }),
-    apiKey: PieceAuth.SecretText({
-      displayName: 'API key',
-      required: true,
-    }),
-  },
-});
+import { reportFieldChanged } from './lib/triggers/report-field-changed';
+import { bambooHrAuth } from './lib/common/auth';
 
 export const bambooHr = createPiece({
   displayName: 'BambooHR',
@@ -32,12 +12,10 @@ export const bambooHr = createPiece({
   actions: [
     createCustomApiCallAction({
       baseUrl: (auth) =>
-        `https://api.bamboohr.com/api/gateway.php/${
-          (auth as { companyDomain: string }).companyDomain
-        }/v1/`,
+        `https://api.bamboohr.com/api/gateway.php/${auth?.props?.companyDomain}/v1/`,
       auth: bambooHrAuth,
       authMapping: async (auth) => {
-        const { apiKey } = auth as { apiKey: string };
+        const { apiKey } = auth.props;
         return {
           Authorization: `Basic ${Buffer.from(`${apiKey}:`).toString(
             'base64'
@@ -46,5 +24,5 @@ export const bambooHr = createPiece({
       },
     }),
   ],
-  triggers: [],
+  triggers: [reportFieldChanged],
 });

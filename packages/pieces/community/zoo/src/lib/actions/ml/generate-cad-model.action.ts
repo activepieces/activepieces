@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { zooAuth } from '../../../index'
+import { zooAuth } from '../../auth'
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const generateCadModelAction = createAction({
@@ -38,7 +38,7 @@ export const generateCadModelAction = createAction({
       method: HttpMethod.POST,
       url: `https://api.zoo.dev/ai/text-to-cad/${propsValue.outputFormat}`,
       headers: {
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       },
       body: {
         output_kcl: propsValue.outputKcl,

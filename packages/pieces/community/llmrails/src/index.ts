@@ -43,7 +43,7 @@ export const llmrails = createPiece({
       baseUrl: () => 'https://api.llmrails.com/v1',
       auth: llmrailsAuth,
       authMapping: async (auth) => ({
-        'X-API-KEY': auth as string,
+        'X-API-KEY': auth.secret_text,
       }),
     }),
   ],

@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { JinaAICommon } from '../common';
-import { jinaAiAuth } from '../../index';
+import { jinaAiAuth } from '../auth';
 
 export const extractWebpageContentAction = createAction({
   auth:jinaAiAuth,
@@ -213,7 +213,7 @@ export const extractWebpageContentAction = createAction({
     const response = await JinaAICommon.makeRequest({
       url: finalUrl,
       method: HttpMethod.GET,
-      auth: apiKey as string,
+      auth: apiKey.secret_text,
       body: undefined,
       headers,
     });

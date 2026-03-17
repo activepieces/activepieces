@@ -13,7 +13,7 @@ export const getTeam = createAction({
     team: common.team,
   },
   async run(context) {
-    const onfleetApi = new Onfleet(context.auth);
+    const onfleetApi = new Onfleet(context.auth.secret_text);
 
     return await onfleetApi.teams.get(context.propsValue.team as string);
   },

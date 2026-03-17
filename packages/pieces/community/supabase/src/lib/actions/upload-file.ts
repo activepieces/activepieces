@@ -1,4 +1,4 @@
-import { supabaseAuth } from '../../index';
+import { supabaseAuth } from '../auth';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { createClient } from '@supabase/supabase-js';
 
@@ -22,7 +22,7 @@ export const uploadFile = createAction({
     }),
   },
   async run(context) {
-    const { url, apiKey } = context.auth;
+    const { url, apiKey } = context.auth.props;
     const { file, filePath, bucket } = context.propsValue;
     const base64 = file.base64;
     // Convert base64 to array buffer

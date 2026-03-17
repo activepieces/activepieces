@@ -1,5 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { LEVER_BASE_URL, LeverAuth, leverAuth } from '../..';
+import { LeverAuth, leverAuth } from '../..';
+import { LEVER_BASE_URL } from '../..';
 import {
   AuthenticationType,
   httpClient,
@@ -18,6 +19,7 @@ export const listOpportunityForms = createAction({
       required: true,
     }),
     template: Property.Dropdown({
+      auth: leverAuth,
       displayName: 'Form template',
       required: false,
       refreshers: ['auth'],
@@ -34,7 +36,7 @@ export const listOpportunityForms = createAction({
           url: `${LEVER_BASE_URL}/form_templates?include=text`,
           authentication: {
             type: AuthenticationType.BASIC,
-            username: (auth as LeverAuth).apiKey,
+            username: auth.props.apiKey,
             password: '',
           },
         });
@@ -54,7 +56,7 @@ export const listOpportunityForms = createAction({
       url: `${LEVER_BASE_URL}/opportunities/${propsValue.opportunityId}/forms`,
       authentication: {
         type: AuthenticationType.BASIC,
-        username: auth.apiKey,
+        username: auth.props.apiKey,
         password: '',
       },
     });

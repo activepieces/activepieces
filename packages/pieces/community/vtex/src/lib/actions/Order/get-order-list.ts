@@ -41,7 +41,7 @@ export const getOrderList = createAction({
     }),
   },
   async run(context) {
-    const { hostUrl, appKey, appToken } = context.auth;
+    const { hostUrl, appKey, appToken } = context.auth.props;
     const { fromYear, toYear, fromMonth, toMonth, fromDay, toDay } =
       context.propsValue;
 

@@ -1,13 +1,16 @@
 # See http://help.github.com/ignore-files/ for more about ignoring files.
 
+pieces-cache-db-*.sqlite
+
 # compiled output
 dist
 tmp
-.nx/
+.turbo/
 /out-tsc
 firebase-admin-sdk.json
 dev
 /cache
+/logs/
 .env
 
 # SDK Build
@@ -41,7 +44,7 @@ npm-debug.log
 yarn-error.log
 testem.log
 /typings
-.nx/
+.turbo/
 # System Files
 .DS_Store
 Thumbs.db
@@ -62,12 +65,25 @@ scratch.md
 
 # environment variables
 .env
+.env.local*
 
 .cursor/rules/nx-rules.mdc
 .github/instructions/nx.instructions.md
+
+# Turborepo
+.turbo
 
 # Playwright
 /test-results/
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+/redis-binaries/
+
+# Terraform
+deploy/terraform/**/.terraform/
+deploy/terraform/**/*.tfstate
+deploy/terraform/**/*.tfstate.backup
+deploy/terraform/**/.terraform.lock.hcl
+deploy/terraform/**/terraform.tfvars
+deploy/terraform/**/terraform-*.tfvars

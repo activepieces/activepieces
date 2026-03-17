@@ -5,8 +5,8 @@ base_url: 'https://api.crowdin.com'
 preserve_hierarchy: 1
 files:
   - type: i18next_json
-    source: packages/react-ui/public/locales/en/translation.json
-    translation: /packages/react-ui/public/locales/%two_letters_code%/translation.json
+    source: packages/web/public/locales/en/translation.json
+    translation: /packages/web/public/locales/%two_letters_code%/translation.json
   - type: json
     source: packages/pieces/**/**/src/i18n/translation.json
     translation: /packages/pieces/**/**/src/i18n/%two_letters_code%.json

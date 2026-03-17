@@ -11,7 +11,7 @@ export const getCategories = createAction({
   description: 'Get your categories',
   props: {},
   async run(context) {
-    await initializeAndDownloadBudget(api, context.auth)
+    await initializeAndDownloadBudget(api, context.auth.props)
     const categories = await api.getCategories();
     await api.shutdown();
     return categories;

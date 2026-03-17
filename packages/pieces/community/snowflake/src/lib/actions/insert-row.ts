@@ -1,5 +1,5 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { snowflakeAuth } from '../../';
+import { snowflakeAuth } from '../auth';
 import {
   configureConnection,
   connect,
@@ -29,7 +29,7 @@ export const insertRowAction = createAction({
       .join(', ');
     const statement = `INSERT INTO ${tableName}(${columns}) VALUES(${valuePlaceholders})`;
 
-    const connection = configureConnection(context.auth);
+    const connection = configureConnection(context.auth.props);
     await connect(connection);
 
     const response = await execute(

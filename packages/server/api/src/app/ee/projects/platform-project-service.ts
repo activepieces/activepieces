@@ -1,261 +1,282 @@
+import { apDayjs } from '@activepieces/server-utils'
 import {
-    UpdateProjectPlatformRequest,
-} from '@activepieces/ee-shared'
-import {
-    ActivepiecesError,
-    assertNotNullOrUndefined,
+    apId,
+    AppConnectionScope,
     Cursor,
-    ErrorCode,
-    FlowStatus,
     isNil,
+    Metadata,
+    PiecesFilterType,
     PlatformId,
     Project,
     ProjectId,
+    ProjectType,
     ProjectWithLimits,
     SeekPage,
     spreadIfDefined,
-    UserStatus,
-} from '@activepieces/shared'
+    TeamProjectsLimit,
+    UpdateProjectPlatformRequest,
+    UserId } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { EntityManager, Equal, ILike, In, IsNull } from 'typeorm'
-import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
+import { ArrayContains, Equal, ILike, In, IsNull } from 'typeorm'
+import { appConnectionsRepo } from '../../app-connection/app-connection-service/app-connection-service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
 import { flowService } from '../../flows/flow/flow.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
-import { system } from '../../helper/system/system'
+import { Order } from '../../helper/pagination/paginator'
+import { SystemJobName } from '../../helper/system-jobs/common'
+import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
 import { platformService } from '../../platform/platform.service'
 import { ProjectEntity } from '../../project/project-entity'
-import { projectService } from '../../project/project-service'
-import { userService } from '../../user/user-service'
+import { applyProjectsAccessFilters, projectService } from '../../project/project-service'
 import { platformPlanService } from '../platform/platform-plan/platform-plan.service'
-import { platformUsageService } from '../platform/platform-usage-service'
-import { platformProjectSideEffects } from './platform-project-side-effects'
-import { ProjectMemberEntity } from './project-members/project-member.entity'
+import { projectMemberService } from './project-members/project-member.service'
+import { ProjectPlanEntity } from './project-plan/project-plan.entity'
 import { projectLimitsService } from './project-plan/project-plan.service'
 const projectRepo = repoFactory(ProjectEntity)
-const projectMemberRepo = repoFactory(ProjectMemberEntity)
+const projectPlanRepo = repoFactory(ProjectPlanEntity)
 
 export const platformProjectService = (log: FastifyBaseLogger) => ({
-    async getAllForPlatform(params: GetAllForParamsAndUser): Promise<SeekPage<ProjectWithLimits>> {
-        const user = await userService.getOneOrFail({
-            id: params.userId,
+    async getForPlatform(params: GetAllForParamsAndUser): Promise<SeekPage<ProjectWithLimits>> {
+        const { cursorRequest, limit, platformId, displayName, externalId, userId, types, isPrivileged } = params
+        const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
+        const paginator = buildPaginator({
+            entity: ProjectEntity,
+            query: {
+                limit,
+                afterCursor: decodedCursor.nextCursor,
+                beforeCursor: decodedCursor.previousCursor,
+                orderBy: [
+                    { field: 'type', order: Order.ASC },
+                    { field: 'displayName', order: Order.ASC },
+                    { field: 'id', order: Order.ASC },
+                ],
+            },
         })
-        assertNotNullOrUndefined(user.platformId, 'platformId is undefined')
-        const projects = await projectService.getAllForUser({
-            platformId: user.platformId,
-            userId: params.userId,
-            displayName: params.displayName,
+
+        const filters = {
+            platformId: Equal(platformId),
+            ...spreadIfDefined('displayName', displayName ? ILike(`%${displayName}%`) : undefined),
+            ...spreadIfDefined('externalId', externalId),
+            ...(types && types.length > 0 ? { type: In(types) } : {}),
+            deleted: IsNull(),
+        }
+
+        const queryBuilder = projectRepo()
+            .createQueryBuilder('project')
+            .where(filters)
+
+        await applyProjectsAccessFilters(queryBuilder, { platformId, userId, isPrivileged })
+
+        const { data, cursor } = await paginator.paginate(queryBuilder)
+        const projects: ProjectWithLimits[] = await enrichProjects(data, log)
+        return paginationHelper.createPage<ProjectWithLimits>(projects, cursor)
+    },
+    async create(params: CreateProjectParams): Promise<ProjectWithLimits> {
+        const platformPlan = await platformPlanService(log).getOrCreateForPlatform(params.platformId)
+        const platform = await platformService(log).getOneOrThrow(params.platformId)
+        const project = await transaction(async (entityManager) => {
+            const savedProject = await projectService(log).create({
+                ownerId: platform.ownerId,
+                displayName: params.displayName,
+                platformId: params.platformId,
+                externalId: params.externalId,
+                metadata: params.metadata,
+                maxConcurrentJobs: params.maxConcurrentJobs,
+                type: ProjectType.TEAM,
+                callPostCreateHooks: false,
+                entityManager,
+            })
+
+            await projectPlanRepo(entityManager).upsert({
+                id: apId(),
+                projectId: savedProject.id,
+                pieces: [],
+                piecesFilterType: PiecesFilterType.NONE,
+                locked: false,
+                name: 'platform',
+            }, ['projectId'])
+
+            if (platformPlan.globalConnectionsEnabled) {
+                const connectionExternalIds = params.globalConnectionExternalIds ?? []
+                if (connectionExternalIds.length > 0) {
+                    await appConnectionsRepo(entityManager)
+                        .createQueryBuilder()
+                        .update()
+                        .set({
+                            projectIds: () => 'array_append("projectIds", :projectId)',
+                        })
+                        .where({
+                            externalId: In(connectionExternalIds),
+                            platformId: params.platformId,
+                            scope: AppConnectionScope.PLATFORM,
+                        })
+                        .andWhere('NOT ("projectIds" @> ARRAY[:projectId]::varchar[])')
+                        .setParameter('projectId', savedProject.id)
+                        .execute()
+                }
+            }
+            return savedProject
         })
-        return getProjects({
-            ...params,
-            projectIds: projects.map((project) => project.id),
-        }, log)
+
+        await projectService(log).callProjectPostCreateHooks(project)
+
+        return this.getWithPlanAndUsageOrThrow(project.id)
     },
     async update({
         projectId,
         request,
     }: UpdateParams): Promise<ProjectWithLimits> {
-        await projectService.update(projectId, request)
-        if (!isNil(request.plan)) {
-            const project = await projectService.getOneOrThrow(projectId)
-            const platform = await platformService.getOneWithPlanOrThrow(project.platformId)
-            if (platform.plan.manageProjectsEnabled) {
-                await projectLimitsService(log).upsert(
-                    {
-                        ...spreadIfDefined('pieces', request.plan.pieces),
-                        ...spreadIfDefined('piecesFilterType', request.plan.piecesFilterType),
-                        tasks: request.plan.tasks ?? null,
-                        aiCredits: request.plan.aiCredits ?? null,
+        const project = await projectService(log).getOneOrThrow(projectId)
+        const platformPlan = await platformPlanService(log).getOrCreateForPlatform(project.platformId)
+        const { globalConnectionExternalIds, ...rest } = request
+        await transaction(async (entityManager) => {
+            await projectService(log).update(projectId, {
+                type: project.type,
+                ...rest,
+            }, entityManager)
+            if (platformPlan.globalConnectionsEnabled && globalConnectionExternalIds) {
+                const projectGlobalConnections = await appConnectionsRepo(entityManager).find({
+                    where: {
+                        projectIds: ArrayContains([projectId]),
+                        scope: AppConnectionScope.PLATFORM,
                     },
-                    projectId,
-                )
+                })
+                const existingGlobalConnectionExternalIds = projectGlobalConnections.map(connection => connection.externalId)
+                const globalConnectionsToAddProjectTo = globalConnectionExternalIds.filter(externalId => !existingGlobalConnectionExternalIds.includes(externalId)) ?? []
+                const globalConnectionsToRemoveProjectFrom = existingGlobalConnectionExternalIds.filter(externalId => !globalConnectionExternalIds?.includes(externalId)) ?? []
+                if (globalConnectionsToAddProjectTo.length > 0) {
+                    await appConnectionsRepo(entityManager).createQueryBuilder()
+                        .update()
+                        .set({
+                            projectIds: () => 'array_append("projectIds", :projectId)',
+                        })
+                        .where({
+                            platformId: project.platformId,
+                            externalId: In(globalConnectionsToAddProjectTo),
+                            scope: AppConnectionScope.PLATFORM,
+                        })
+                        .andWhere('NOT ("projectIds" @> ARRAY[:projectId]::varchar[])')
+                        .setParameter('projectId', projectId)
+                        .execute()
+                }
+                if (globalConnectionsToRemoveProjectFrom.length > 0) {
+                    await appConnectionsRepo(entityManager).createQueryBuilder()
+                        .update()
+                        .set({
+                            projectIds: () => 'array_remove("projectIds", :projectId)',
+                        })
+                        .where({
+                            platformId: project.platformId,
+                            externalId: In(globalConnectionsToRemoveProjectFrom),
+                            scope: AppConnectionScope.PLATFORM,
+                        })
+                        .andWhere('("projectIds" @> ARRAY[:projectId]::varchar[])')
+                        .setParameter('projectId', projectId)
+                        .execute()
+                }
             }
-        }
+            if (!isNil(request.plan)) {
+                const platform = await platformService(log).getOneWithPlanOrThrow(project.platformId)
+                if (platform.plan.teamProjectsLimit !== TeamProjectsLimit.NONE) {
+                    await projectLimitsService(log).upsert(
+                        {
+                            ...spreadIfDefined('pieces', request.plan.pieces),
+                            ...spreadIfDefined('piecesFilterType', request.plan.piecesFilterType),
+                        },
+                        projectId,
+                        entityManager,
+                    )
+                }
+            }
+        })
         return this.getWithPlanAndUsageOrThrow(projectId)
     },
     async getWithPlanAndUsageOrThrow(
         projectId: string,
     ): Promise<ProjectWithLimits> {
-        return enrichProject(
-            await projectRepo().findOneByOrFail({
-                id: projectId,
-                deleted: IsNull(),
-            }),
-            log,
-        )
+        const project = await projectRepo().findOneByOrFail({
+            id: projectId,
+        })
+        return (await enrichProjects([project], log))[0]
+    },
+    async deletePersonalProjectForUser({ userId, platformId }: DeletePersonalProjectForUserParams): Promise<void> {
+        const personalProject = await projectRepo().findOneBy({
+            platformId,
+            ownerId: userId,
+            type: ProjectType.PERSONAL,
+        })
+        if (!isNil(personalProject)) {
+            await this.markForDeletion({ id: personalProject.id, platformId })
+        }
     },
 
-    async softDelete({ id, platformId }: SoftDeleteParams): Promise<void> {
-        await transaction(async (entityManager) => {
-            await assertAllProjectFlowsAreDisabled({
-                projectId: id,
-                entityManager,
-            }, log)
-
-            await softDeleteOrThrow({
-                id,
-                platformId,
-                entityManager,
-            })
-
-            await platformProjectSideEffects(log).onSoftDelete({
-                id,
-            })
+    async markForDeletion({ id, platformId }: DeleteProjectParams): Promise<void> {
+        await projectRepo().softDelete({ id, platformId })
+        await systemJobsSchedule(log).upsertJob({
+            job: {
+                name: SystemJobName.HARD_DELETE_PROJECT,
+                data: {
+                    projectId: id,
+                    platformId,
+                    preDeletedFlowIds: [],
+                },
+                jobId: `hard-delete-project-${id}`,
+            },
+            schedule: {
+                type: 'one-time',
+                date: apDayjs(),
+            },
         })
-    },
-
-    async hardDelete({ id }: HardDeleteParams): Promise<void> {
-        await projectRepo().delete({
-            id,
-        })
-        await appConnectionService(log).deleteAllProjectConnections(id)
     },
 })
 
-async function getProjects(params: GetAllParams & { projectIds?: string[] }, log: FastifyBaseLogger): Promise<SeekPage<ProjectWithLimits>> {
-    const { cursorRequest, limit, platformId, displayName, externalId, projectIds } = params
-    const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
-    const paginator = buildPaginator({
-        entity: ProjectEntity,
-        query: {
-            limit,
-            order: 'ASC',
-            afterCursor: decodedCursor.nextCursor,
-            beforeCursor: decodedCursor.previousCursor,
-        },
+async function enrichProjects(
+    projects: Project[],
+    log: FastifyBaseLogger,
+): Promise<ProjectWithLimits[]> {
+    if (projects.length === 0) return []
+    
+    const projectIds = projects.map(p => p.id)
+    
+    const [totalUsersMap, activeUsersMap, totalFlowsMap, activeFlowsMap, plansMap] = await Promise.all([
+        projectMemberService(log).countTotalUsersByProjects(projectIds),
+        projectMemberService(log).countActiveUsersByProjects(projectIds),
+        flowService(log).countFlowsByProjects(projectIds),
+        flowService(log).countActiveFlowsByProjects(projectIds),
+        projectLimitsService(log).getOrCreateDefaultPlansForProjects(projectIds),
+    ])
+
+    return projects.map(project => {
+        return {
+            ...project,
+            plan: plansMap.get(project.id)!,
+            analytics: {
+                activeFlows: activeFlowsMap.get(project.id) ?? 0,
+                totalFlows: totalFlowsMap.get(project.id) ?? 0,
+                totalUsers: totalUsersMap.get(project.id) ?? 0,
+                activeUsers: activeUsersMap.get(project.id) ?? 0,
+            },
+        }
     })
-    const displayNameFilter = displayName ? ILike(`%${displayName}%`) : undefined
-    const filters = {
-        platformId: Equal(platformId),
-        deleted: IsNull(),
-        ...spreadIfDefined('externalId', externalId),
-        ...spreadIfDefined('displayName', displayNameFilter),
-        ...(projectIds ? { id: In(projectIds) } : {}),
-    }
-
-    const queryBuilder = projectRepo()
-        .createQueryBuilder('project')
-        .leftJoinAndMapOne(
-            'project.plan',
-            'project_plan',
-            'project_plan',
-            'project.id = "project_plan"."projectId"',
-        )
-        .where(filters)
-        .groupBy('project.id')
-        .addGroupBy('"project_plan"."id"')
-
-    const { data, cursor } = await paginator.paginate(queryBuilder)
-    const projects: ProjectWithLimits[] = await Promise.all(
-        data.map((project) => enrichProject(project, log)),
-    )
-    return paginationHelper.createPage<ProjectWithLimits>(projects, cursor)
 }
+
 
 type GetAllForParamsAndUser = {
     userId: string
-} & GetAllParams
-
-type GetAllParams = {
     platformId: string
     displayName?: string
     externalId?: string
     cursorRequest: Cursor | null
     limit: number
+    types?: ProjectType[]
+    isPrivileged: boolean
 }
 
-async function enrichProject(
-    project: Project,
-    log: FastifyBaseLogger,
-): Promise<ProjectWithLimits> {
-    const totalUsers = await projectMemberRepo().countBy({
-        projectId: project.id,
-    })
-    const activeUsers = await projectMemberRepo()
-        .createQueryBuilder('project_member')
-        .leftJoin('user', 'user', 'user.id = project_member."userId"')
-        .groupBy('user.id')
-        .where(`user.status = '${UserStatus.ACTIVE}' and project_member."projectId" = '${project.id}'`)
-        .getCount()
-
-    const totalFlows = await flowService(log).count({
-        projectId: project.id,
-    })
-
-    const activeFlows = await flowService(log).count({
-        projectId: project.id,
-        status: FlowStatus.ENABLED,
-    })
-
-
-    const platformBilling = await platformPlanService(log).getOrCreateForPlatform(project.platformId)
-
-    const { startDate, endDate } = await platformPlanService(system.globalLogger()).getBillingDates(platformBilling)
-    const projectTasksUsage = await platformUsageService(log).getProjectUsage({ projectId: project.id, metric: 'tasks', startDate, endDate })
-    const projectAICreditUsage = await platformUsageService(log).getProjectUsage({ projectId: project.id, metric: 'ai_credits', startDate, endDate })
-    return {
-        ...project,
-        plan: await projectLimitsService(log).getPlanWithPlatformLimits(
-            project.id,
-        ),
-        usage: {
-            aiCredits: projectAICreditUsage,
-            tasks: projectTasksUsage,
-            nextLimitResetDate: endDate,
-        },
-        analytics: {
-            activeFlows,
-            totalFlows,
-            totalUsers,
-            activeUsers,
-        },
-    }
-}
-
-const assertAllProjectFlowsAreDisabled = async (
-    params: AssertAllProjectFlowsAreDisabledParams,
-    log: FastifyBaseLogger,
-): Promise<void> => {
-    const { projectId, entityManager } = params
-
-    const projectHasEnabledFlows = await flowService(log).existsByProjectAndStatus({
-        projectId,
-        status: FlowStatus.ENABLED,
-        entityManager,
-    })
-
-    if (projectHasEnabledFlows) {
-        throw new ActivepiecesError({
-            code: ErrorCode.VALIDATION,
-            params: {
-                message: 'PROJECT_HAS_ENABLED_FLOWS',
-            },
-        })
-    }
-}
-
-const softDeleteOrThrow = async ({
-    id,
-    platformId,
-    entityManager,
-}: SoftDeleteOrThrowParams): Promise<void> => {
-    const deleteResult = await projectRepo(entityManager).softDelete({
-        id,
-        platformId,
-        deleted: IsNull(),
-    })
-
-    if (deleteResult.affected !== 1) {
-        throw new ActivepiecesError({
-            code: ErrorCode.ENTITY_NOT_FOUND,
-            params: {
-                entityId: id,
-                entityType: 'project',
-            },
-        })
-    }
+type DeletePersonalProjectForUserParams = {
+    userId: UserId
+    platformId: PlatformId
 }
 
 type UpdateParams = {
@@ -264,20 +285,16 @@ type UpdateParams = {
     platformId?: PlatformId
 }
 
-type SoftDeleteParams = {
+type CreateProjectParams = {
+    platformId: string
+    displayName: string
+    externalId?: string
+    metadata?: Metadata
+    maxConcurrentJobs?: number
+    globalConnectionExternalIds?: string[]
+}
+
+type DeleteProjectParams = {
     id: ProjectId
     platformId: PlatformId
-}
-
-type SoftDeleteOrThrowParams = SoftDeleteParams & {
-    entityManager: EntityManager
-}
-
-type AssertAllProjectFlowsAreDisabledParams = {
-    projectId: ProjectId
-    entityManager: EntityManager
-}
-
-type HardDeleteParams = {
-    id: ProjectId
 }

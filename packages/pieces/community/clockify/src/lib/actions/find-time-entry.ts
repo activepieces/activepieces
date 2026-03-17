@@ -1,6 +1,6 @@
 import { HttpMethod, QueryParams } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { clockifyAuth } from '../../index';
+import { clockifyAuth } from '../auth';
 import { clockifyApiCall } from '../common/client';
 import { projectId, taskId, workspaceId } from '../common/props';
 
@@ -39,7 +39,7 @@ export const findTimeEntryAction = createAction({
 		const { workspaceId, projectId, start, end, description, taskId } = context.propsValue;
 
 		const currentUserResponse = await clockifyApiCall<{ id: string; email: string }>({
-			apiKey: context.auth,
+			apiKey: context.auth.secret_text,
 			method: HttpMethod.GET,
 			resourceUri: `/user`,
 		});
@@ -51,11 +51,11 @@ export const findTimeEntryAction = createAction({
 		if (description) qs['description'] = description;
 		if (start) qs['start'] = start;
 		if (end) qs['end'] = end;
-		if (projectId) qs['project'] = projectId;
-		if (taskId) qs['task'] = taskId;
+		if (projectId) qs['project'] = projectId as string;
+		if (taskId) qs['task'] = taskId as string;
 
 		const response = await clockifyApiCall({
-			apiKey: context.auth,
+			apiKey: context.auth.secret_text,
 			method: HttpMethod.GET,
 			resourceUri: `/workspaces/${workspaceId}/user/${userId}/time-entries`,
 			query: qs,

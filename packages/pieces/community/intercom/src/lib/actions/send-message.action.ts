@@ -1,6 +1,6 @@
 import { createAction, DynamicPropsValue, Property } from '@activepieces/pieces-framework';
 import { commonProps, intercomClient } from '../common';
-import { intercomAuth } from '../..';
+import { intercomAuth } from '../auth';
 
 export const sendMessageAction = createAction({
 	auth: intercomAuth,
@@ -20,6 +20,7 @@ export const sendMessageAction = createAction({
 			defaultValue: 'email',
 		}),
 		email_required_fields: Property.DynamicProperties({
+			auth: intercomAuth,
 			displayName: 'Email Required Fields',
 			required: true,
 			refreshers: ['message_type'],

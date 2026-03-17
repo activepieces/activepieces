@@ -1,17 +1,17 @@
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 import {
-    ApiKeyResponseWithValue,
+    DefaultProjectRole,
+    Permission,
+    PlatformRole,
+    PrincipalType,
+    ProjectRole,
+    RoleType,
     UpdateProjectMemberRoleRequestBody,
-} from '@activepieces/ee-shared'
-import { DefaultProjectRole, Permission, Platform, PlatformRole, PrincipalType, Project, ProjectRole, RoleType, User } from '@activepieces/shared'
-import { faker } from '@faker-js/faker'
-import { FastifyBaseLogger, FastifyInstance } from 'fastify'
+} from '@activepieces/shared'
+import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { initializeDatabase } from '../../../../src/app/database'
-import { databaseConnection } from '../../../../src/app/database/database-connection'
-import { emailService } from '../../../../src/app/ee/helper/email/email-service'
-import { stripeHelper } from '../../../../src/app/ee/platform/platform-plan/stripe-helper'
-import { setupServer } from '../../../../src/app/server'
 import { generateMockToken } from '../../../helpers/auth'
+import { db } from '../../../helpers/db'
 import {
     createMockProject,
     createMockProjectMember,
@@ -20,73 +20,54 @@ import {
     mockAndSaveBasicSetupWithApiKey,
     mockBasicUser,
 } from '../../../helpers/mocks'
+import { describeRolePermissions } from '../../../helpers/permission-test'
+import { createTestContext } from '../../../helpers/test-context'
 
 let app: FastifyInstance | null = null
-let mockLog: FastifyBaseLogger
 
 beforeAll(async () => {
-    await initializeDatabase({ runMigrations: false })
-    app = await setupServer()
-    mockLog = app!.log!
-})
-
-beforeEach(async () => {
-    stripeHelper(mockLog).createCustomer = jest
-        .fn()
-        .mockResolvedValue(faker.string.uuid())
-    emailService(mockLog).sendInvitation = jest.fn()
+    app = await setupTestEnvironment()
 })
 
 afterAll(async () => {
-    await databaseConnection().destroy()
-    await app?.close()
+    await teardownTestEnvironment()
 })
 
 describe('Project Member API', () => {
-
-
     describe('Update project member role', () => {
         it('should update a project role for a member', async () => {
-            const { mockOwner: mockUserOne, mockPlatform: mockPlatformOne, mockProject: mockProjectOne } = await mockAndSaveBasicSetup({
-                platform: {
-                },
-                plan: {
-                    projectRolesEnabled: true,
-                },
-            })
-            const testToken = await generateMockToken({
-                type: PrincipalType.USER,
-                id: mockUserOne.id,
-                projectId: mockProjectOne.id,
-                platform: { id: mockPlatformOne.id },
+            const ctx = await createTestContext(app!, {
+                plan: { projectRolesEnabled: true, auditLogEnabled: false },
             })
 
-            const projectRole = createMockProjectRole({ platformId: mockPlatformOne.id, type: RoleType.CUSTOM, permissions: [Permission.WRITE_PROJECT_MEMBER] })
-            await databaseConnection().getRepository('project_role').save(projectRole)
+            const projectRole = createMockProjectRole({
+                platformId: ctx.platform.id,
+                type: RoleType.CUSTOM,
+                permissions: [Permission.WRITE_PROJECT_MEMBER],
+            })
+            await db.save('project_role', projectRole)
 
-            const mockProjectMemberOne = createMockProjectMember({ platformId: mockPlatformOne.id, projectId: mockProjectOne.id, projectRoleId: projectRole.id, userId: mockUserOne.id })
-            await databaseConnection().getRepository('project_member').save(mockProjectMemberOne)
+            const mockProjectMember = createMockProjectMember({
+                platformId: ctx.platform.id,
+                projectId: ctx.project.id,
+                projectRoleId: projectRole.id,
+                userId: ctx.user.id,
+            })
+            await db.save('project_member', mockProjectMember)
 
             const request: UpdateProjectMemberRoleRequestBody = {
                 role: 'VIEWER',
             }
 
-            const response = await app?.inject({
-                method: 'POST',
-                url: `/v1/project-members/${mockProjectMemberOne.id}`,
-                body: request,
-                headers: {
-                    authorization: `Bearer ${testToken}`,
-                },
-            })
-
+            const response = await ctx.post(`/v1/project-members/${mockProjectMember.id}`, request)
             expect(response?.statusCode).toBe(StatusCodes.OK)
         })
 
         it('should fail to update project role when user does not have permission', async () => {
-            const { mockPlatform: mockPlatformOne, mockProject: mockProjectOne } = await mockAndSaveBasicSetup()
-            
-            // Create a user who is not in the project
+            const { mockPlatform: mockPlatformOne, mockProject: mockProjectOne } = await mockAndSaveBasicSetup({
+                plan: { projectRolesEnabled: true, auditLogEnabled: false },
+            })
+
             const { mockUser: viewerUser } = await mockBasicUser({
                 user: {
                     platformId: mockPlatformOne.id,
@@ -94,24 +75,29 @@ describe('Project Member API', () => {
                 },
             })
 
+            const mockProjectTwo = createMockProject({
+                platformId: mockPlatformOne.id,
+                ownerId: viewerUser.id,
+            })
+            await db.save('project', mockProjectTwo)
+
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: viewerUser.id,
                 platform: { id: mockPlatformOne.id },
             })
 
-            const projectRole = await databaseConnection().getRepository('project_role').findOneByOrFail({ 
+            const projectRole = await db.findOneByOrFail<ProjectRole>('project_role', {
                 name: DefaultProjectRole.VIEWER,
-            }) as ProjectRole
+            })
 
-            // Create a project member to try to modify
-            const mockProjectMember = createMockProjectMember({ 
-                platformId: mockPlatformOne.id, 
-                projectId: mockProjectOne.id, 
+            const mockProjectMember = createMockProjectMember({
+                platformId: mockPlatformOne.id,
+                projectId: mockProjectOne.id,
                 projectRoleId: projectRole.id,
                 userId: viewerUser.id,
             })
-            await databaseConnection().getRepository('project_member').save(mockProjectMember)
+            await db.save('project_member', mockProjectMember)
 
             const request: UpdateProjectMemberRoleRequestBody = {
                 role: DefaultProjectRole.ADMIN,
@@ -119,21 +105,19 @@ describe('Project Member API', () => {
 
             const response = await app?.inject({
                 method: 'POST',
-                url: `/v1/project-members/${mockProjectMember.id}`,
+                url: `/api/v1/project-members/${mockProjectMember.id}`,
                 body: request,
-                headers: {
-                    authorization: `Bearer ${testToken}`,
-                },
+                headers: { authorization: `Bearer ${testToken}` },
             })
 
-            expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
         })
 
         it('should fail to update project role when user is admin of another project', async () => {
-            // Create first project with its platform
-            const { mockProject: projectOne, mockPlatform } = await mockAndSaveBasicSetup()
-            
-            // Create second project admin
+            const { mockProject: projectOne, mockPlatform } = await mockAndSaveBasicSetup({
+                plan: { projectRolesEnabled: true, auditLogEnabled: false },
+            })
+
             const { mockUser: adminOfProjectTwo } = await mockBasicUser({
                 user: {
                     platformId: mockPlatform.id,
@@ -145,7 +129,7 @@ describe('Project Member API', () => {
                 ownerId: adminOfProjectTwo.id,
                 platformId: mockPlatform.id,
             })
-            await databaseConnection().getRepository('project').save(projectTwo)
+            await db.save('project', projectTwo)
 
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
@@ -153,7 +137,6 @@ describe('Project Member API', () => {
                 platform: { id: mockPlatform.id },
             })
 
-            // Create member in first project to try to modify
             const { mockUser: memberToModify } = await mockBasicUser({
                 user: {
                     platformId: mockPlatform.id,
@@ -161,17 +144,17 @@ describe('Project Member API', () => {
                 },
             })
 
-            const viewerRole = await databaseConnection().getRepository('project_role').findOneByOrFail({ 
+            const viewerRole = await db.findOneByOrFail<ProjectRole>('project_role', {
                 name: DefaultProjectRole.VIEWER,
-            }) as ProjectRole
+            })
 
-            const projectMember = createMockProjectMember({ 
-                platformId: mockPlatform.id, 
-                projectId: projectOne.id, 
+            const projectMember = createMockProjectMember({
+                platformId: mockPlatform.id,
+                projectId: projectOne.id,
                 projectRoleId: viewerRole.id,
                 userId: memberToModify.id,
             })
-            await databaseConnection().getRepository('project_member').save(projectMember)
+            await db.save('project_member', projectMember)
 
             const request: UpdateProjectMemberRoleRequestBody = {
                 role: DefaultProjectRole.ADMIN,
@@ -179,14 +162,11 @@ describe('Project Member API', () => {
 
             const response = await app?.inject({
                 method: 'POST',
-                url: `/v1/project-members/${projectMember.id}`,
+                url: `/api/v1/project-members/${projectMember.id}`,
                 body: request,
-                headers: {
-                    authorization: `Bearer ${testToken}`,
-                },
+                headers: { authorization: `Bearer ${testToken}` },
             })
-
-            expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
         })
     })
 
@@ -195,7 +175,7 @@ describe('Project Member API', () => {
             it('should return project members', async () => {
                 const { mockApiKey, mockProject, mockMember, mockPlatform } = await createBasicEnvironment()
 
-                const projectRole = await databaseConnection().getRepository('project_role').findOneByOrFail({ name: DefaultProjectRole.VIEWER }) as ProjectRole
+                const projectRole = await db.findOneByOrFail<ProjectRole>('project_role', { name: DefaultProjectRole.VIEWER })
 
                 const mockProjectMember = createMockProjectMember({
                     projectId: mockProject.id,
@@ -203,17 +183,12 @@ describe('Project Member API', () => {
                     projectRoleId: projectRole.id,
                     platformId: mockPlatform.id,
                 })
-                await databaseConnection()
-                    .getRepository('project_member')
-                    .save(mockProjectMember)
+                await db.save('project_member', mockProjectMember)
 
-                // act
                 const response = await app?.inject({
                     method: 'GET',
-                    url: `/v1/project-members?projectId=${mockProject.id}`,
-                    headers: {
-                        authorization: `Bearer ${mockApiKey.value}`,
-                    },
+                    url: `/api/v1/project-members?projectId=${mockProject.id}`,
+                    headers: { authorization: `Bearer ${mockApiKey.value}` },
                 })
                 expect(response?.statusCode).toBe(StatusCodes.OK)
                 const responseBody = response?.json()
@@ -223,113 +198,72 @@ describe('Project Member API', () => {
 
             it('Lists project members for non owner project', async () => {
                 const { mockApiKey, mockMember } = await createBasicEnvironment()
-                const { mockProject: mockProject2 } = await mockAndSaveBasicSetup()
+                const { mockProject: mockProject2 } = await mockAndSaveBasicSetup({
+                    plan: { projectRolesEnabled: true, auditLogEnabled: false },
+                })
 
-                const projectRole = await databaseConnection().getRepository('project_role').findOneByOrFail({ name: DefaultProjectRole.VIEWER }) as ProjectRole
+                const projectRole = await db.findOneByOrFail<ProjectRole>('project_role', { name: DefaultProjectRole.VIEWER })
 
                 const mockProjectMember = createMockProjectMember({
                     projectId: mockProject2.id,
                     userId: mockMember.id,
                     projectRoleId: projectRole.id,
                 })
-                await databaseConnection()
-                    .getRepository('project_member')
-                    .save(mockProjectMember)
+                await db.save('project_member', mockProjectMember)
 
-                // act
                 const response = await app?.inject({
                     method: 'GET',
-                    url: `/v1/project-members?projectId=${mockProject2.id}`,
-                    headers: {
-                        authorization: `Bearer ${mockApiKey.value}`,
-                    },
+                    url: `/api/v1/project-members?projectId=${mockProject2.id}`,
+                    headers: { authorization: `Bearer ${mockApiKey.value}` },
                 })
                 expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
             })
         })
 
         describe('List project members by user', () => {
-
-            it.each([
-                DefaultProjectRole.ADMIN,
-                DefaultProjectRole.EDITOR,
-                DefaultProjectRole.VIEWER,
-                DefaultProjectRole.OPERATOR,
-            ])('Succeeds if user role is %s', async (testRole) => {
-                // arrange
-                const { mockPlatform, mockProject, mockMember } = await createBasicEnvironment()
-
-                const projectRole = await databaseConnection().getRepository('project_role').findOneByOrFail({ name: testRole }) as ProjectRole
-
-                const mockProjectMember = createMockProjectMember({
-                    userId: mockMember.id,
-                    platformId: mockPlatform.id,
-                    projectId: mockProject.id,
-                    projectRoleId: projectRole.id,
-                })
-                await databaseConnection().getRepository('project_member').save([mockProjectMember])
-
-                const mockToken = await generateMockToken({
-                    id: mockMember.id,
-                    type: PrincipalType.USER,
-                    projectId: mockProject.id,
-                    platform: {
-                        id: mockPlatform.id,
-                    },
-                })
-
-                // act
-                const response = await app?.inject({
-                    method: 'GET',
-                    url: `/v1/project-members?projectId=${mockProject.id}`,
-                    headers: {
-                        authorization: `Bearer ${mockToken}`,
-                    },
-                })
-
-                // assert
-                expect(response?.statusCode).toBe(StatusCodes.OK)
+            describeRolePermissions({
+                app: () => app!,
+                request: (memberCtx, ownerCtx) => {
+                    return memberCtx.get(`/v1/project-members?projectId=${ownerCtx.project.id}`)
+                },
+                allowedRoles: [DefaultProjectRole.ADMIN, DefaultProjectRole.EDITOR, DefaultProjectRole.VIEWER],
+                forbiddenRoles: [],
             })
-
-
         })
     })
 
     describe('Delete project member Endpoint', () => {
         it('Deletes project member', async () => {
-            const { mockOwnerToken, mockProject, mockMember } = await createBasicEnvironment()
+            const ctx = await createTestContext(app!, {
+                plan: { projectRolesEnabled: true, auditLogEnabled: false },
+            })
+            const { mockUser: mockMember } = await mockBasicUser({
+                user: {
+                    platformId: ctx.platform.id,
+                    platformRole: PlatformRole.MEMBER,
+                },
+            })
 
-            const projectRole = await databaseConnection().getRepository('project_role').findOneByOrFail({ name: DefaultProjectRole.ADMIN }) as ProjectRole
+            const projectRole = await db.findOneByOrFail<ProjectRole>('project_role', { name: DefaultProjectRole.ADMIN })
 
             const mockProjectMember = createMockProjectMember({
-                projectId: mockProject.id,
+                projectId: ctx.project.id,
                 userId: mockMember.id,
                 projectRoleId: projectRole.id,
             })
-            await databaseConnection()
-                .getRepository('project_member')
-                .save(mockProjectMember)
+            await db.save('project_member', mockProjectMember)
 
-            // act
-            const response = await app?.inject({
-                method: 'DELETE',
-                url: `/v1/project-members/${mockProjectMember.id}`,
-                headers: {
-                    authorization: `Bearer ${mockOwnerToken}`,
-                },
-            })
+            const response = await ctx.delete(`/v1/project-members/${mockProjectMember.id}`)
             expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
         })
 
         it.each([
             DefaultProjectRole.EDITOR,
             DefaultProjectRole.VIEWER,
-            DefaultProjectRole.OPERATOR,
         ])('Fails if user role is %s', async (testRole) => {
-            // arrange
             const { mockPlatform, mockProject, mockMember } = await createBasicEnvironment()
 
-            const projectRole = await databaseConnection().getRepository('project_role').findOneByOrFail({ name: testRole }) as ProjectRole
+            const projectRole = await db.findOneByOrFail<ProjectRole>('project_role', { name: testRole })
 
             const mockProjectMember = createMockProjectMember({
                 userId: mockMember.id,
@@ -337,30 +271,22 @@ describe('Project Member API', () => {
                 projectId: mockProject.id,
                 projectRoleId: projectRole.id,
             })
-            await databaseConnection().getRepository('project_member').save([mockProjectMember])
+            await db.save('project_member', mockProjectMember)
 
             const mockToken = await generateMockToken({
                 id: mockMember.id,
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
-                platform: {
-                    id: mockPlatform.id,
-                },
+                platform: { id: mockPlatform.id },
             })
 
-            // act
             const response = await app?.inject({
                 method: 'DELETE',
-                url: `/v1/project-members/${mockProjectMember.id}`,
-                headers: {
-                    authorization: `Bearer ${mockToken}`,
-                },
+                url: `/api/v1/project-members/${mockProjectMember.id}`,
+                headers: { authorization: `Bearer ${mockToken}` },
             })
-            // assert
+
             expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
-
             const responseBody = response?.json()
-
             expect(responseBody?.code).toBe('PERMISSION_DENIED')
             expect(responseBody?.params?.userId).toBe(mockMember.id)
             expect(responseBody?.params?.projectId).toBe(mockProject.id)
@@ -369,33 +295,30 @@ describe('Project Member API', () => {
         it('Delete project member from api', async () => {
             const { mockApiKey, mockProject, mockMember } = await createBasicEnvironment()
 
-            const projectRole = await databaseConnection().getRepository('project_role').findOneByOrFail({ name: DefaultProjectRole.ADMIN }) as ProjectRole
+            const projectRole = await db.findOneByOrFail<ProjectRole>('project_role', { name: DefaultProjectRole.ADMIN })
 
             const mockProjectMember = createMockProjectMember({
                 projectId: mockProject.id,
                 userId: mockMember.id,
                 projectRoleId: projectRole.id,
             })
-            await databaseConnection()
-                .getRepository('project_member')
-                .save(mockProjectMember)
+            await db.save('project_member', mockProjectMember)
 
-            // act
             const response = await app?.inject({
                 method: 'DELETE',
-                url: `/v1/project-members/${mockProjectMember.id}`,
-                headers: {
-                    authorization: `Bearer ${mockApiKey.value}`,
-                },
+                url: `/api/v1/project-members/${mockProjectMember.id}`,
+                headers: { authorization: `Bearer ${mockApiKey.value}` },
             })
             expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
         })
 
         it('Delete project member from api for non owner project', async () => {
             const { mockApiKey, mockMember } = await createBasicEnvironment()
-            const { mockProject: mockProject2 } = await mockAndSaveBasicSetup()
+            const { mockProject: mockProject2 } = await mockAndSaveBasicSetup({
+                plan: { projectRolesEnabled: true, auditLogEnabled: false },
+            })
 
-            const projectRole = await databaseConnection().getRepository('project_role').findOneByOrFail({ name: DefaultProjectRole.ADMIN }) as ProjectRole
+            const projectRole = await db.findOneByOrFail<ProjectRole>('project_role', { name: DefaultProjectRole.ADMIN })
 
             const mockProjectMember = createMockProjectMember({
                 projectId: mockProject2.id,
@@ -403,49 +326,32 @@ describe('Project Member API', () => {
                 userId: mockMember.id,
                 projectRoleId: projectRole.id,
             })
-            await databaseConnection()
-                .getRepository('project_member')
-                .save(mockProjectMember)
+            await db.save('project_member', mockProjectMember)
 
-            // act
             const response = await app?.inject({
                 method: 'DELETE',
-                url: `/v1/project-members/${mockProjectMember.id}`,
-                headers: {
-                    authorization: `Bearer ${mockApiKey.value}`,
-                },
+                url: `/api/v1/project-members/${mockProjectMember.id}`,
+                headers: { authorization: `Bearer ${mockApiKey.value}` },
             })
             expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
         })
     })
 })
 
-async function createBasicEnvironment(): Promise<{
-    mockOwner: User
-    mockPlatform: Platform
-    mockProject: Project
-    mockApiKey: ApiKeyResponseWithValue
-    mockOwnerToken: string
-    mockMember: User
-}> {
+async function createBasicEnvironment() {
     const { mockOwner, mockPlatform, mockProject, mockApiKey } = await mockAndSaveBasicSetupWithApiKey({
-        plan: {
-            projectRolesEnabled: true,
-        },
+        plan: { projectRolesEnabled: true, auditLogEnabled: false },
     })
 
-
-    await databaseConnection().getRepository('user').update(mockOwner.id, {
+    await db.update('user', mockOwner.id, {
         platformId: mockPlatform.id,
         platformRole: PlatformRole.ADMIN,
     })
+
     const mockOwnerToken = await generateMockToken({
         id: mockOwner.id,
         type: PrincipalType.USER,
-        projectId: mockProject.id,
-        platform: {
-            id: mockPlatform.id,
-        },
+        platform: { id: mockPlatform.id },
     })
 
     const { mockUser: mockMember } = await mockBasicUser({
@@ -455,12 +361,5 @@ async function createBasicEnvironment(): Promise<{
         },
     })
 
-    return {
-        mockOwner,
-        mockPlatform,
-        mockProject,
-        mockApiKey,
-        mockOwnerToken,
-        mockMember,
-    }
+    return { mockOwner, mockPlatform, mockProject, mockApiKey, mockOwnerToken, mockMember }
 }

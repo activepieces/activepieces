@@ -1,10 +1,11 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { fireberryAuth } from '../../index';
+import { fireberryAuth } from '../auth';
 import { objectTypeDropdown } from '../common/props';
 import { FireberryClient } from '../common/client';
 
 const recordDropdown = Property.Dropdown({
+  auth: fireberryAuth,
   displayName: 'Record',
   required: true,
   refreshers: ['objectType'],
@@ -18,9 +19,8 @@ const recordDropdown = Property.Dropdown({
     }
 
     try {
-      const authStr = typeof auth === 'string' ? auth : (auth as { value: string })?.value;
       const objectTypeStr = typeof objectType === 'string' ? objectType : (objectType as { value: string })?.value;
-      const client = new FireberryClient(authStr);
+      const client = new FireberryClient(auth);
       
       const response = await client.request<{ 
         success: boolean; 
@@ -77,12 +77,12 @@ const updateFields = Property.DynamicProperties({
   displayName: 'Fields to Update',
   refreshers: ['objectType'],
   required: true,
+  auth: fireberryAuth,
   props: async ({ auth, objectType }) => {
     if (!auth || !objectType) return {};
     
-    const authStr = typeof auth === 'string' ? auth : (auth as { value: string })?.value;
     const objectTypeStr = typeof objectType === 'string' ? objectType : (objectType as { value: string })?.value;
-    const client = new FireberryClient(authStr);
+    const client = new FireberryClient(auth);
     
     try {
       const metadata = await client.getObjectFieldsMetadata(objectTypeStr);
@@ -150,7 +150,7 @@ const updateFields = Property.DynamicProperties({
               description: 'Leave empty to keep current value',
             });
             break;
-          case 'picklist':
+          case 'picklist': {
             const largeLists = ['objecttypecode', 'resultcode'];
             if (largeLists.includes(field.fieldName.toLowerCase())) {
               props[field.fieldName] = Property.ShortText({
@@ -188,14 +188,16 @@ const updateFields = Property.DynamicProperties({
               }
             }
             break;
-          case 'longtext':
+          }
+          case 'longtext': {
             props[field.fieldName] = Property.LongText({
               displayName: field.label || field.fieldName,
               required: isRequired,
               description: 'Leave empty to keep current value',
             });
             break;
-          case 'lookup':
+          }
+          case 'lookup': {
             let description = 'Record ID (leave empty to keep current)';
             if (field.fieldName.includes('account')) description = 'Account record ID (leave empty to keep current)';
             else if (field.fieldName.includes('contact')) description = 'Contact record ID (leave empty to keep current)';
@@ -209,12 +211,15 @@ const updateFields = Property.DynamicProperties({
               description,
             });
             break;
-          default:
+          }
+          default: {
             props[field.fieldName] = Property.ShortText({
               displayName: field.label || field.fieldName,
               required: isRequired,
               description: 'Leave empty to keep current value',
             });
+            break;
+          }
         }
       }
       
@@ -237,7 +242,7 @@ export const updateRecordAction = createAction({
     fields: updateFields,
   },
   async run({ auth, propsValue }) {
-    const client = new FireberryClient(auth as string);
+    const client = new FireberryClient(auth);
     const { objectType, recordId, fields } = propsValue;
     
     if (!recordId) {
@@ -259,6 +264,6 @@ export const updateRecordAction = createAction({
     
     const recordToUpdate = { id: recordId, record: updateData };
     
-    return await client.batchUpdate(objectType, [recordToUpdate]);
+    return await client.batchUpdate(objectType as string, [recordToUpdate]);
   },
 }); 

@@ -1,7 +1,7 @@
   import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest } from '../common';
-import { kommoAuth } from '../../index';
+import { kommoAuth } from '../auth';
 import { userDropdown } from '../common/props';
 
 interface KommoCustomFieldValue {
@@ -54,10 +54,7 @@ export const createContactAction = createAction({
     const tagsToAdd = context.propsValue.tags_to_add ?? [];
 
 
-    const { subdomain, apiToken } = context.auth as {
-      subdomain: string;
-      apiToken: string;
-    };
+    const { subdomain, apiToken } = context.auth.props
 
     const customFields: KommoCustomFieldValue[] = [];
 

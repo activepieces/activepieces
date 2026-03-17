@@ -55,6 +55,27 @@ const packageChangedFromMainBranch = async (path: string): Promise<boolean> => {
   }
 }
 
+const packageJsonChangedFromMainBranch = async (path: string): Promise<boolean> => {
+  const cleaned = path.includes('/packages') ? `packages/` + path.split('packages/')[1] : path
+  if (!cleaned.startsWith('packages/')) {
+    throw new Error(`[packageJsonChangedFromMainBranch] path=${cleaned} is not a valid package path`)
+  }
+  const packageJsonPath = `${cleaned}/package.json`
+  console.info(`[packageJsonChangedFromMainBranch] path=${packageJsonPath}`)
+
+  try {
+    await exec(`git diff --quiet origin/main -- ${packageJsonPath}`)
+    return false
+  }
+  catch (e) {
+    if ((e as ExecException).code === 1) {
+      return true
+    }
+
+    throw e
+  }
+}
+
 /**
  * Validates the package before publishing.
  * returns false if package can be published.
@@ -75,6 +96,13 @@ export const packagePrePublishChecks = async (path: string): Promise<boolean> =>
     const packageChanged = await packageChangedFromMainBranch(path)
 
     if (packageChanged) {
+      const packageJsonChanged = await packageJsonChangedFromMainBranch(path)
+
+      if (packageJsonChanged) {
+        console.info(`[packagePrePublishValidation] package already published from this branch (package.json changed), path=${path}, version=${currentVersion}`)
+        return true
+      }
+
       throw new Error(`[packagePrePublishValidation] package version not incremented, path=${path}, version=${currentVersion}`)
     }
 

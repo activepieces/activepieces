@@ -1,35 +1,16 @@
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import {
   createPiece,
   OAuth2PropertyValue,
-  PieceAuth,
-  Property,
 } from '@activepieces/pieces-framework';
-import { createRecordAction } from './lib/actions/create-record.action';
-import { getRecordAction } from './lib/actions/get-record.action';
-import { updateRecordAction } from './lib/actions/update-record.action';
-import { deleteRecordAction } from './lib/actions/delete-record.action';
-import { newOrUpdatedRecordTrigger } from './lib/triggers/new-or-updated-record.trigger';
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { searchRecordsAction } from './lib/actions/search-records.action';
 import { PieceCategory } from '@activepieces/shared';
-
-export const businessCentralAuth = PieceAuth.OAuth2({
-  props: {
-    environment: Property.ShortText({
-      displayName: 'Environment',
-      description: `Name of the environment to connect to, e.g. 'Production' or 'Sandbox'. Environment names can be found in the Business Central Admin Center.`,
-      required: true,
-      defaultValue: 'Production',
-    }),
-  },
-  required: true,
-  scope: [
-    'https://api.businesscentral.dynamics.com/user_impersonation',
-    'https://api.businesscentral.dynamics.com/Financials.ReadWrite.All',
-  ],
-  authUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
-  tokenUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/token',
-});
+import { createRecordAction } from './lib/actions/create-record.action';
+import { deleteRecordAction } from './lib/actions/delete-record.action';
+import { getRecordAction } from './lib/actions/get-record.action';
+import { searchRecordsAction } from './lib/actions/search-records.action';
+import { updateRecordAction } from './lib/actions/update-record.action';
+import { businessCentralAuth } from './lib/auth';
+import { newOrUpdatedRecordTrigger } from './lib/triggers/new-or-updated-record.trigger';
 
 export const microsoftDynamics365BusinessCentral = createPiece({
   displayName: 'Microsoft Dynamics 365 Business Central',

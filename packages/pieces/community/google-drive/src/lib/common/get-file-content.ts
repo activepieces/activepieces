@@ -1,23 +1,20 @@
 import {
   FilesService,
-  OAuth2PropertyValue,
-  OAuth2Props,
-  Property,
-  ShortTextProperty,
-  StaticPropsValue,
 } from '@activepieces/pieces-framework';
 import { extension } from 'mime-types';
+import { GoogleDriveAuthValue, getAccessToken } from '../auth';
 
 async function getMimeType(
-  auth: OAuth2PropertyValue<OAuth2Props>,
+  auth: GoogleDriveAuthValue,
   fileId: string
 ): Promise<string> {
+  const accessToken = await getAccessToken(auth);
   const mimeType = (
     await fetch(
-      `https://www.googleapis.com/drive/v3/files/${fileId}?fields=mimeType`,
+      `https://www.googleapis.com/drive/v3/files/${fileId}?fields=mimeType&supportsAllDrives=true`,
       {
         headers: {
-          Authorization: `Bearer ${auth.access_token}`,
+          Authorization: `Bearer ${accessToken}`,
         },
       }
     ).then((res) => res.json())
@@ -27,16 +24,17 @@ async function getMimeType(
 
 const googledlCall = async (
   url: string,
-  auth: OAuth2PropertyValue<OAuth2Props>,
+  auth: GoogleDriveAuthValue,
   fileId: string,
   files: FilesService,
   fileName: string | undefined
 ) => {
   const mimeType = await getMimeType(auth, fileId);
+  const accessToken = await getAccessToken(auth);
 
   const download = await fetch(url, {
     headers: {
-      Authorization: `Bearer ${auth.access_token}`,
+      Authorization: `Bearer ${accessToken}`,
     },
   })
     .then((response) =>
@@ -52,12 +50,9 @@ const googledlCall = async (
       )
     );
 
-  const fileExtension = '.' + extension(mimeType);
+  const extensionResult = extension(mimeType);
+  const fileExtension = extensionResult ? '.' + extensionResult : '';
   const srcFileName = fileName ?? fileId + fileExtension;
-  // const name =
-  //   (srcFileName
-  //     ? srcFileName.replace(new RegExp(fileExtension + '$'), '')
-  //     : fileId) + fileExtension;
 
   return files.write({
     fileName: srcFileName,
@@ -66,7 +61,7 @@ const googledlCall = async (
 };
 
 export async function downloadFileFromDrive(
-  auth: OAuth2PropertyValue<OAuth2Props>,
+  auth: GoogleDriveAuthValue,
   files: FilesService,
   fileId: string,
   fileName: string | undefined
@@ -96,7 +91,7 @@ export async function downloadFileFromDrive(
         break;
     }
     return await googledlCall(
-      `https://www.googleapis.com/drive/v3/files/${fileId}/export?mimeType=${mimeType}`,
+      `https://www.googleapis.com/drive/v3/files/${fileId}/export?mimeType=${mimeType}&supportsAllDrives=true`,
       auth,
       fileId,
       files,
@@ -104,7 +99,7 @@ export async function downloadFileFromDrive(
     );
   } else {
     return await googledlCall(
-      `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
+      `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&supportsAllDrives=true`,
       auth,
       fileId,
       files,

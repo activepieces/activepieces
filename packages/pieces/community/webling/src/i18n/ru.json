@@ -1,0 +1,15 @@
+{
+  "Webling": "Ветер",
+  "Base URL": "Базовый URL",
+  "API Key": "Ключ API",
+  "Get Events by ID": "Получить события по ID",
+  "Gets event data by a list of event IDs and optional calendar ID to filter.": "Получает данные событий списком идентификаторов событий и необязательным идентификатором календаря для фильтрации.",
+  "Event ID list": "Список событий",
+  "Calendar": "Календарь",
+  "Comma separated list of event IDs (e.g. '536,525,506,535'). When at least one ID doesn't exist the whole query return a 404 error.": "Разделенный запятыми список идентификаторов событий (например, '536,525,506,535'). Если хотя бы один ID не существует весь запрос возвращает ошибку 404.",
+  "Calendar to filter the events by.": "Календарь для фильтрации событий.",
+  "New or Updated Event": "Новое или обновленное событие",
+  "On Changed Data": "При изменении данных",
+  "Triggers when an event is added or updated.": "Триггеры при добавлении или обновлении события.",
+  "Triggers when anything was added, updated or deleted since last request.": "Включает при добавлении, обновлении или удалении с момента последнего запроса."
+}

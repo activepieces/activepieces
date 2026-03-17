@@ -19,7 +19,7 @@ export const identifyUser = createAction({
   },
   auth: segmentAuth,
   async run(context) {
-    const analytics = new Analytics({ writeKey: context.auth })
+    const analytics = new Analytics({ writeKey: context.auth.secret_text })
     analytics.identify({
       userId: context.propsValue.userId,
       traits: context.propsValue.traits,

@@ -1,6 +1,6 @@
 import { isNil } from '@activepieces/shared';
-import { googleSheetsAuth } from '../../';
-import { areSheetIdsValid, columnToLabel, labelToColumn } from '../common/common';
+import { googleSheetsAuth } from '../common/common';
+import { areSheetIdsValid, columnToLabel, GoogleSheetsAuthValue, labelToColumn } from '../common/common';
 import {
 	createFileNotification,
 	deleteFileNotification,
@@ -9,7 +9,7 @@ import {
 	hashObject,
 	isChangeContentMessage,
 	isSyncMessage,
-	transformWorkSheetValues,
+	mapRowsToColumnLabels,
 	WebhookInformation,
 } from './helpers';
 
@@ -19,7 +19,6 @@ import {
 	DEDUPE_KEY_PROPERTY,
 	WebhookRenewStrategy,
 	Property,
-	PiecePropValueSchema,
 	DropdownOption,
 } from '@activepieces/pieces-framework';
 
@@ -40,10 +39,12 @@ export const newOrUpdatedRowTrigger = createTrigger({
 		}),
 		...commonProps,
 		trigger_column: Property.Dropdown({
+			auth: googleSheetsAuth,
 			displayName: 'Trigger Column',
-			description: `Trigger on changes to cells in this column only.Select **All Columns** if you want the flow to trigger on changes to any cell within the row.`,
+			description: `Trigger on changes to cells in this column only. \nSelect **Any Column** if you want the flow to trigger on changes to any cell within the row.`,
 			required: false,
 			refreshers: ['spreadsheetId', 'sheetId'],
+			defaultValue: ALL_COLUMNS,
 			options: async ({ auth, spreadsheetId, sheetId }) => {
 				if (!auth || !spreadsheetId || isNil(sheetId)) {
 					return {
@@ -53,31 +54,30 @@ export const newOrUpdatedRowTrigger = createTrigger({
 					};
 				}
 
-				const authValue = auth as PiecePropValueSchema<typeof googleSheetsAuth>;
 				const spreadsheet_id = spreadsheetId as string;
 				const sheet_id = sheetId as number;
 
-				const sheetName = await getWorkSheetName(authValue, spreadsheet_id, sheet_id);
+				const sheetName = await getWorkSheetName(auth, spreadsheet_id, sheet_id);
 
 				const firstRowValues = await getWorkSheetValues(
-					authValue,
+					auth,
 					spreadsheet_id,
 					`${sheetName}!1:1`,
 				);
 
 				const headers = firstRowValues[0] ?? [];
 				const headerCount = headers.length;
-				const labeledRowValues = transformWorkSheetValues(firstRowValues, 0, headerCount);
-
-				const options: DropdownOption<string>[] = [{ label: 'All Columns', value: ALL_COLUMNS }];
-
-				Object.entries(labeledRowValues[0].values).forEach(([key, value]) => {
-					options.push({ label: value as string, value: key });
-				});
+				const labeledRowValues = mapRowsToColumnLabels(firstRowValues, 0, headerCount);
+                const labledHeaders = labeledRowValues.length > 0 ? labeledRowValues[0].values : {};
+				
+				const options = Object.entries(labledHeaders).reduce((accumlator:DropdownOption<string>[],[key,value]) => {
+					accumlator.push({ label: value as string, value: key });
+					return accumlator;
+				}, [{ label: 'Any Column', value: ALL_COLUMNS }]);
 
 				return {
-					disabled: false,
-					options,
+					disabled: options.length === 0,
+    				options,
 				};
 			},
 		}),
@@ -146,7 +146,13 @@ export const newOrUpdatedRowTrigger = createTrigger({
 		const webhook = await context.store.get<WebhookInformation>('google-sheets-new-or-updated-row');
 
 		if (webhook != null && webhook.id != null && webhook.resourceId != null) {
+			try
+			{
 			await deleteFileNotification(context.auth, webhook.id, webhook.resourceId);
+			}
+			catch(err){
+  				console.debug("deleteFileNotification failed :",JSON.stringify(err));
+			}
 		}
 	},
 
@@ -262,8 +268,7 @@ export const newOrUpdatedRowTrigger = createTrigger({
 		const headers = currentSheetValues[0] ?? [];
 		const headerCount = headers.length;
 
-		// transform row values
-		const transformedRowValues = transformWorkSheetValues(currentSheetValues, 0, headerCount)
+		const transformedRowValues = mapRowsToColumnLabels(currentSheetValues, 0, headerCount)
 			.slice(-5)
 			.reverse();
 

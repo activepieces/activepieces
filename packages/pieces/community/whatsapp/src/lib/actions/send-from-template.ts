@@ -1,4 +1,4 @@
-import { whatsappAuth } from '../..';
+import { whatsappAuth } from '../auth';
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { commonProps } from '../common/utils';
@@ -68,7 +68,7 @@ export const sendTemplateMessageAction = createAction({
 			url: `https://graph.facebook.com/v20.0/${templateId}`,
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
-				token: context.auth.access_token,
+				token: context.auth.props.access_token,
 			},
 			queryParams: {
 				fields: 'id,name,language',
@@ -84,7 +84,7 @@ export const sendTemplateMessageAction = createAction({
 			url: `https://graph.facebook.com/v20.0/${phoneNumberId}/messages`,
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
-				token: context.auth.access_token,
+				token: context.auth.props.access_token,
 			},
 			body: {
 				messaging_product: 'whatsapp',

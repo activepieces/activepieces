@@ -3,7 +3,7 @@ import {
   createAction,
 } from '@activepieces/pieces-framework';
 import { airtableCommon } from '../common';
-import { airtableAuth } from '../../index';
+import { airtableAuth } from '../auth';
 
 export const airtableCreateRecordAction = createAction({
   auth: airtableAuth,
@@ -27,14 +27,14 @@ export const airtableCreateRecordAction = createAction({
     });
     const newFields: Record<string, unknown> =
       await airtableCommon.createNewFields(
-        personalToken,
+        personalToken.secret_text,
         baseId,
         tableId as string,
         fieldsWithoutEmptyStrings
       );
 
     return airtableCommon.createRecord({
-      personalToken,
+      personalToken: personalToken.secret_text,
       baseId,
       tableId: tableId as string,
       fields: newFields,

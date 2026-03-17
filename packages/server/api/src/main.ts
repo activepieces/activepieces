@@ -1,27 +1,28 @@
+import './instrumentation'
 
+
+import dayjs from 'dayjs'
 import { FastifyInstance } from 'fastify'
 import { appPostBoot } from './app/app'
 import { initializeDatabase } from './app/database'
-import { initializeLock } from './app/helper/lock'
+import { distributedLock } from './app/database/redis-connections'
 import { system } from './app/helper/system/system'
+import { WorkerSystemProp } from './app/helper/system/system-props'
 import { setupServer } from './app/server'
-import { workerPostBoot } from './app/worker'
 
 const start = async (app: FastifyInstance): Promise<void> => {
     try {
+        const port = Number(system.get(WorkerSystemProp.PORT))
         await app.listen({
-            host: '0.0.0.0',
-            port: 3000,
+            host: '::',
+            port,
         })
-        if (system.isWorker()) {
-            await workerPostBoot(app)
-        }
         if (system.isApp()) {
             await appPostBoot(app)
         }
     }
     catch (err) {
-        app.log.error(err)
+        app.log.error({ err }, 'Failed to start server')
         process.exit(1)
     }
 }
@@ -39,8 +40,7 @@ const stop = async (app: FastifyInstance): Promise<void> => {
         process.exit(0)
     }
     catch (err) {
-        app.log.error('Error stopping server')
-        app.log.error(err)
+        app.log.error({ err }, 'Error stopping server')
         process.exit(1)
     }
 }
@@ -56,24 +56,27 @@ function setupTimeZone(): void {
 const main = async (): Promise<void> => {
     setupTimeZone()
     if (system.isApp()) {
-        await initializeDatabase({ runMigrations: true })
-        initializeLock()
+        await distributedLock(system.globalLogger()).runExclusive({
+            key: 'database-migration-lock',
+            timeoutInSeconds: dayjs.duration(10, 'minutes').asSeconds(),
+            fn: async () => initializeDatabase({ runMigrations: true }),
+        })
     }
     const app = await setupServer()
 
     process.on('SIGINT', async () => {
-        await stop(app).catch((e) => system.globalLogger().error(e, '[Main#stop]'))
+        await stop(app).catch((e) => system.globalLogger().error({ err: e }, '[main#stop] Failed to stop server'))
     })
 
     process.on('SIGTERM', async () => {
-        await stop(app).catch((e) => system.globalLogger().error(e, '[Main#stop]'))
+        await stop(app).catch((e) => system.globalLogger().error({ err: e }, '[main#stop] Failed to stop server'))
     })
 
     await start(app)
 }
 
 main().catch((e) => {
-    system.globalLogger().error(e, '[Main#main]')
+    system.globalLogger().error({ err: e }, '[main#start] Failed to start server')
     process.exit(1)
 })
 

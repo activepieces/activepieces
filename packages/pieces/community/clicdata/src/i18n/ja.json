@@ -1,0 +1,20 @@
+{
+  "ClicData enables True Performance with an end-to-end data analytics platform: connect, transform, automate, visualize and share data from 300+ sources.": "ClicDataは、300以上のソースからのデータの接続、変換、自動化、可視化、共有など、エンドツーエンドのデータ分析プラットフォームを備えたTrue Performance を実現します。",
+  "Insert Row": "Insert Row",
+  "Refresh Table": "表を更新",
+  "Insert rows into a ClicData table (maximum 500 rows)": "ClicDataテーブルに行を挿入します(最大500行)",
+  "Refresh the selected table depending on the refresh mode": "リフレッシュモードに応じて選択したテーブルを更新",
+  "Table": "表",
+  "Row Data": "行データ",
+  "API Version": "API バージョン",
+  "Refresh Mode": "更新モード",
+  "Select the table to insert data into": "データを挿入するテーブルを選択します",
+  "Array of objects representing rows to insert. Each object should have column names as keys. Maximum 500 rows.": "挿入する行を表すオブジェクトの配列。各オブジェクトはキーとして列名を持つ必要があります。最大500行です。",
+  "Defaults to 2022.01": "デフォルトは2022.01",
+  "Select the refresh mode for the table": "テーブルの更新モードを選択します",
+  "Reload": "Reload",
+  "Rebuild": "再構築",
+  "Update": "更新",
+  "Append": "追加",
+  "Update + Append": "更新 + 追加"
+}
