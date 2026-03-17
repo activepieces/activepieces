@@ -13,6 +13,7 @@ import {
     FlowRunStatus,
     FlowVersionId,
     isNil,
+    JobPayload,
     LATEST_JOB_DATA_SCHEMA_VERSION,
     PauseMetadata,
     PauseType,
@@ -587,9 +588,11 @@ async function addToQueue(params: AddToQueueParams, log: FastifyBaseLogger): Pro
     const traceContext: Record<string, string> = {}
     propagation.inject(context.active(), traceContext)
 
-    const jobPayload = isNil(params.synchronousHandlerId)
-        ? await payloadOffloader.offloadPayload(log, params.payload, params.flowRun.projectId, params.platformId)
-        : await payloadOffloader.maybeOffloadPayload(log, params.payload, params.flowRun.projectId, params.platformId)
+    const jobPayload: JobPayload = isNil(params.payload)
+        ? { type: 'inline', value: null }
+        : isNil(params.synchronousHandlerId)
+            ? await payloadOffloader.offloadPayload(log, params.payload, params.flowRun.projectId, params.platformId)
+            : await payloadOffloader.maybeOffloadPayload(log, params.payload, params.flowRun.projectId, params.platformId)
 
     await jobQueue(log).add({
         id: params.flowRun.id,
