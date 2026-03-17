@@ -1,0 +1,18 @@
+{
+  "name": "@activepieces/piece-stakedao",
+  "version": "0.0.1",
+  "description": "StakeDAO yield optimization protocol piece for Activepieces",
+  "keywords": ["activepieces", "stakedao", "defi", "yield", "curve", "convex"],
+  "homepage": "https://www.stakedao.org/",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./src/index.ts"
+    }
+  },
+  "dependencies": {
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/pieces-common": "workspace:*"
+  }
+}
