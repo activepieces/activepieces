@@ -186,7 +186,6 @@ const AddEditSecretManagerForm = ({
 
             <FormField
               name="name"
-              rules={{ required: t('Name is required') }}
               render={({ field }) => (
                 <FormItem className="space-y-2">
                   <Label htmlFor="connection-name">
@@ -206,7 +205,6 @@ const AddEditSecretManagerForm = ({
 
             <FormField
               name="scope"
-              rules={{ required: t('Scope is required') }}
               render={({ field }) => (
                 <FormItem className="space-y-2">
                   <Label htmlFor="connection-scope">
@@ -244,7 +242,7 @@ const AddEditSecretManagerForm = ({
                   <FormField
                     key={fieldId}
                     name={`config.${fieldId}`}
-                    rules={{ required: !field.optional }}
+                    
                     render={({ field: formField }) => (
                       <FormItem className="space-y-2">
                         <Label htmlFor={fieldId}>
