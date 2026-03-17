@@ -1,7 +1,7 @@
-import { exceptionHandler } from '@activepieces/server-shared'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { FastifyError, FastifyReply, FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { exceptionHandler } from './exception-handler'
 
 
 export const errorHandler = async (
@@ -18,10 +18,8 @@ export const errorHandler = async (
             [ErrorCode.FEATURE_DISABLED]: StatusCodes.PAYMENT_REQUIRED,
             [ErrorCode.AI_CREDIT_LIMIT_EXCEEDED]: StatusCodes.PAYMENT_REQUIRED,
             [ErrorCode.PERMISSION_DENIED]: StatusCodes.FORBIDDEN,
-            [ErrorCode.FILE_NOT_FOUND]: StatusCodes.NOT_FOUND,
             [ErrorCode.ENTITY_NOT_FOUND]: StatusCodes.NOT_FOUND,
             [ErrorCode.EXISTING_USER]: StatusCodes.CONFLICT,
-            [ErrorCode.PROVIDER_PROXY_CONFIG_NOT_FOUND_FOR_PROVIDER]: StatusCodes.NOT_IMPLEMENTED,
             [ErrorCode.EXISTING_ALERT_CHANNEL]: StatusCodes.CONFLICT,
             [ErrorCode.FLOW_IN_USE]: StatusCodes.CONFLICT,
             [ErrorCode.FLOW_OPERATION_IN_PROGRESS]: StatusCodes.CONFLICT,
@@ -55,7 +53,7 @@ export const errorHandler = async (
         })
     }
     else {
-        request.log.error('[errorHandler]: ' + JSON.stringify(error))
+        request.log.error({ err: error }, '[errorHandler]')
         if (
             !error.statusCode ||
       error.statusCode === StatusCodes.INTERNAL_SERVER_ERROR.valueOf()

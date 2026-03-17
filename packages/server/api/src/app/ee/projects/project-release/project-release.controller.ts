@@ -1,32 +1,34 @@
-import { ApplicationEventName } from '@activepieces/ee-shared'
-import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
-import { ApId, CreateProjectReleaseRequestBody, DiffReleaseRequest, ListProjectReleasesRequest, PrincipalType, ProjectRelease, SeekPage, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
+import { ApId, ApplicationEventName, CreateProjectReleaseRequestBody, DiffReleaseRequest, ListProjectReleasesRequest, PrincipalType, ProjectRelease, SeekPage, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
+import { z } from 'zod'
+import { ProjectResourceType } from '../../../core/security/authorization/common'
+import { securityAccess } from '../../../core/security/authorization/fastify-security'
 import { applicationEvents } from '../../../helper/application-events'
 import { platformService } from '../../../platform/platform.service'
 import { ProjectReleaseEntity } from './project-release.entity'
 import { projectReleaseService } from './project-release.service'
 
-export const projectReleaseController: FastifyPluginAsyncTypebox = async (app) => {
+export const projectReleaseController: FastifyPluginAsyncZod = async (app) => {
 
     app.get('/:id', GetProjectReleaseRequest, async (req) => {
         const release = await projectReleaseService.getOneOrThrow({
             id: req.params.id,
             projectId: req.projectId,
         })
-        return projectReleaseService.enrich(release)
+        return projectReleaseService.enrich(release, req.log)
     })
 
     app.get('/', ListProjectReleasesRequestParams, async (req) => {
         return projectReleaseService.list({
             projectId: req.projectId,
             request: req.query,
+            log: req.log,
         })
     })
 
     app.post('/', CreateProjectReleaseRequest, async (req) => {
-        const platform = await platformService.getOneOrThrow(req.principal.platform.id)
+        const platform = await platformService(req.log).getOneOrThrow(req.principal.platform.id)
         const ownerId = platform.ownerId
         const release = await projectReleaseService.create({
             platformId: req.principal.platform.id,
@@ -46,7 +48,7 @@ export const projectReleaseController: FastifyPluginAsyncTypebox = async (app) =
     })
 
     app.post('/diff', DiffProjectReleaseRequest, async (req) => {
-        const platform = await platformService.getOneOrThrow(req.principal.platform.id)
+        const platform = await platformService(req.log).getOneOrThrow(req.principal.platform.id)
         const ownerId = platform.ownerId
         return projectReleaseService.releasePlan(req.projectId, ownerId, req.body, req.log)
     })
@@ -64,7 +66,7 @@ const GetProjectReleaseRequest = {
         ),
     },
     schema: {
-        params: Type.Object({
+        params: z.object({
             id: ApId,
         }),
     },

@@ -1,5 +1,5 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { slackAuth } from '../..';
+import { slackAuth } from '../auth';
 import { assertNotNullOrUndefined } from '@activepieces/shared';
 import {
   profilePicture,
@@ -18,7 +18,7 @@ export const requestActionDirectMessageAction = createAction({
   description:
     'Send a message to a user and wait until the user selects an action',
   props: {
-    userId,
+    userId: userId(true),
     text,
     actions,
     username,

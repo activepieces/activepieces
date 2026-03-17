@@ -1,8 +1,6 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { google } from 'googleapis';
-import { OAuth2Client } from 'googleapis-common';
-import { googleCalendarAuth } from '../../index';
-import { googleCalendarCommon } from '../common';
+import { googleCalendarCommon, googleCalendarAuth, createGoogleClient } from '../common';
 
 export const deleteEventAction = createAction({
   displayName: 'Delete Event',
@@ -17,8 +15,7 @@ export const deleteEventAction = createAction({
     }),
   },
   async run(context) {
-    const authClient = new OAuth2Client();
-    authClient.setCredentials(context.auth);
+    const authClient = await createGoogleClient(context.auth);
 
     const calendarId = context.propsValue.calendar_id;
     const eventId = context.propsValue.eventId;

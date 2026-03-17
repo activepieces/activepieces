@@ -1,23 +1,20 @@
 import {
+    ApId,
     ApiKeyResponseWithoutValue,
-    ApiKeyResponseWithValue,
-    CreateApiKeyRequest } from '@activepieces/ee-shared'
-import { securityAccess } from '@activepieces/server-shared'
-import { ApId, assertNotNullOrUndefined, PrincipalType, SeekPage } from '@activepieces/shared'
-import {
-    FastifyPluginAsyncTypebox,
-    Type,
-} from '@fastify/type-provider-typebox'
+    ApiKeyResponseWithValue, assertNotNullOrUndefined, CreateApiKeyRequest, PrincipalType, SeekPage } from '@activepieces/shared'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
+import { z } from 'zod'
+import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
 import { apiKeyService } from './api-key-service'
 
-export const apiKeyModule: FastifyPluginAsyncTypebox = async (app) => {
+export const apiKeyModule: FastifyPluginAsyncZod = async (app) => {
     app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.plan.apiKeysEnabled))
     await app.register(apiKeyController, { prefix: '/v1/api-keys' })
 }
 
-export const apiKeyController: FastifyPluginAsyncTypebox = async (app) => {
+export const apiKeyController: FastifyPluginAsyncZod = async (app) => {
     app.post('/', CreateRequest, async (req, res) => {
         const platformId = req.principal.platform.id
         assertNotNullOrUndefined(platformId, 'platformId')
@@ -77,7 +74,7 @@ const DeleteRequest = {
         security: securityAccess.platformAdminOnly([PrincipalType.USER]),
     },
     schema: {
-        params: Type.Object({
+        params: z.object({
             id: ApId,
         }),
     },

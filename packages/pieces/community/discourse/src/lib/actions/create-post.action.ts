@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { discourseAuth } from '../../index';
+import { discourseAuth } from '../auth';
 import { Property, createAction } from '@activepieces/pieces-framework';
 
 export const createPost = createAction({

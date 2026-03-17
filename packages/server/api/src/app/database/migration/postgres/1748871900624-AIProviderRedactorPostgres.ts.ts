@@ -39,7 +39,7 @@ export class AIProviderRedactorPostgres1748871900624 implements MigrationInterfa
                 }
 
                 if (apiKey === '') {
-                    log.error(`No API key found for AI provider ${provider.id}`)
+                    log.error({ providerId: provider.id }, '[AIProviderRedactorPostgres1748871900624#up] No API key found for AI provider')
                     continue
                 }
 

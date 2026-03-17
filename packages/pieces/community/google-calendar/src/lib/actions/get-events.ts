@@ -5,9 +5,8 @@ import {
   AuthenticationType,
   httpClient,
 } from '@activepieces/pieces-common';
-import { googleCalendarCommon } from '../common';
+import { googleCalendarCommon, googleCalendarAuth, getAccessToken } from '../common';
 import dayjs from 'dayjs';
-import { googleCalendarAuth } from '../../';
 
 export const getEvents = createAction({
   auth: googleCalendarAuth,
@@ -71,7 +70,7 @@ export const getEvents = createAction({
       event_types,
       singleEvents,
     } = configValue.propsValue;
-    const { access_token: token } = configValue.auth;
+    const token = await getAccessToken(configValue.auth);
     const queryParams: Record<string, string> = { showDeleted: 'false' };
     let url = `${googleCalendarCommon.baseUrl}/calendars/${calendarId}/events`;
 

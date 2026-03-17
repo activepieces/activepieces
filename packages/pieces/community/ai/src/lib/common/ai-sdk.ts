@@ -38,6 +38,7 @@ export async function createAIModel({
     const { body: {
         config,
         auth,
+        platformId,
     } } = await httpClient.sendRequest<GetProviderConfigResponse>({
         method: HttpMethod.GET,
         url: `${apiUrl}v1/ai-providers/${provider}/config`,
@@ -118,35 +119,66 @@ export async function createAIModel({
                     }
                     return handleDefaultAiGatewayProvider({accountId, gatewayId, headers, isImage, modelId})
                 }
+                case 'openai': {
+                    const openaiProvider = createOpenAI({
+                        apiKey: 'no-key',
+                        baseURL: `https://gateway.ai.cloudflare.com/v1/${accountId}/${gatewayId}/openai`,
+                        headers,
+                        fetch: (input, init) => {
+                            const hdrs = new Headers(init?.headers)
+                            hdrs.delete('Authorization')
+                            return fetch(input, { ...init, headers: hdrs })
+                        },
+                    })
+                    if (isImage) {
+                        return openaiProvider.imageModel(actualModelId)
+                    }
+                    return openaiResponsesModel
+                        ? openaiProvider.responses(actualModelId)
+                        : openaiProvider.chat(actualModelId)
+                }
                 default: {
                     return handleDefaultAiGatewayProvider({accountId, gatewayId, headers, isImage, modelId})
                 }
             }
         }
         case AIProviderName.CUSTOM: {
-            const { apiKeyHeader, baseUrl } = config as OpenAICompatibleProviderConfig
+            const { apiKeyHeader, baseUrl, defaultHeaders } = config as OpenAICompatibleProviderConfig
+
+            const customHeaders = defaultHeaders ?? {}
+
+            const metadataHeaders: Record<string, string> = {
+                'x-ap-project-id': projectId,
+                'x-ap-platform-id': platformId,
+                'x-ap-flow-id': flowId,
+                'x-ap-run-id': runId,
+            }
 
             const provider = createOpenAICompatible({ 
                 name: 'openai-compatible',
                 baseURL: baseUrl,
                 headers: {
-                    [apiKeyHeader]: auth.apiKey
-                }
+                    ...metadataHeaders,
+                    ...customHeaders,
+                    [apiKeyHeader]: auth.apiKey,
+                },
             })
             if (isImage) {
                 return provider.imageModel(modelId)
             }
             return provider.chatModel(modelId)
         }
-        case AIProviderName.ACTIVEPIECES: 
+        case AIProviderName.ACTIVEPIECES:
         case AIProviderName.OPENROUTER: {
-            const provider = createOpenRouter({ apiKey: auth.apiKey })
-            return provider.chat(modelId) as LanguageModel
+            const openRouterProvider = createOpenRouter({ apiKey: auth.apiKey })
+            return openRouterProvider.chat(modelId) as LanguageModel
         }
         default:
             throw new Error(`Provider ${provider} is not supported`)
     }
 }
+
+
 
 export const anthropicSearchTool = anthropic.tools.webSearch_20250305;
 export const openaiSearchTool = openai.tools.webSearchPreview;

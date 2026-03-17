@@ -1,8 +1,8 @@
-import { ApplicationEventName, ProjectMemberWithUser } from '@activepieces/ee-shared'
-import { securityAccess } from '@activepieces/server-shared'
-import { ApId, CreateProjectRoleRequestBody, ListProjectMembersForProjectRoleRequestQuery, PrincipalType, ProjectRole, SeekPage, SERVICE_KEY_SECURITY_OPENAPI, UpdateProjectRoleRequestBody } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
+import { ApId, ApplicationEventName, CreateProjectRoleRequestBody, ListProjectMembersForProjectRoleRequestQuery, PrincipalType, ProjectMemberWithUser, ProjectRole, SeekPage, SERVICE_KEY_SECURITY_OPENAPI, UpdateProjectRoleRequestBody } from '@activepieces/shared'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
+import { z } from 'zod'
+import { securityAccess } from '../../../core/security/authorization/fastify-security'
 import { applicationEvents } from '../../../helper/application-events'
 import { platformMustHaveFeatureEnabled } from '../../authentication/ee-authorization'
 import { projectMemberService } from '../project-members/project-member.service'
@@ -10,7 +10,7 @@ import { projectRoleService } from './project-role.service'
 
 const DEFAULT_LIMIT_SIZE = 10
 
-export const projectRoleController: FastifyPluginAsyncTypebox = async (app) => {
+export const projectRoleController: FastifyPluginAsyncZod = async (app) => {
     
     app.get('/:id', GetProjectRoleRequest, async (req) => {
         return projectRoleService.getOneOrThrowById({
@@ -88,7 +88,7 @@ const GetProjectRoleRequest = {
         security: securityAccess.publicPlatform([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     schema: {
-        params: Type.Object({
+        params: z.object({
             id: ApId,
         }),
     },
@@ -123,7 +123,7 @@ const UpdateProjectRoleRequest = {
     },
     schema: {
         body: UpdateProjectRoleRequestBody,
-        params: Type.Object({
+        params: z.object({
             id: ApId,
         }),
         response: {
@@ -137,11 +137,11 @@ const DeleteProjectRoleRequest = {
         security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     schema: {
-        params: Type.Object({
-            name: Type.String(),
+        params: z.object({
+            name: z.string(),
         }),
         response: {
-            [StatusCodes.NO_CONTENT]: Type.Null(),
+            [StatusCodes.NO_CONTENT]: z.null(),
         },
     },
 }
@@ -153,7 +153,7 @@ const ListProjectMembersForProjectRoleRequest = {
     schema: {
         tags: ['project-members'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
-        params: Type.Object({
+        params: z.object({
             id: ApId,
         }),
         querystring: ListProjectMembersForProjectRoleRequestQuery,

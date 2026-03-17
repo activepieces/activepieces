@@ -6,16 +6,15 @@ import {
 } from '@activepieces/pieces-framework';
 import { TriggerStrategy } from '@activepieces/pieces-framework';
 import { excelCommon } from '../common/common';
+import { commonProps } from '../common/props';
+import { getDrivePath, createMSGraphClient } from '../common/helpers';
 import {
     DedupeStrategy,
     Polling,
     pollingHelper,
-    httpClient,
-    HttpMethod,
-    AuthenticationType
 } from '@activepieces/pieces-common';
 import { isNil } from '@activepieces/shared';
-import { excelAuth } from '../..';
+import { excelAuth } from '../auth';
 
 interface TableRow {
     index: number;
@@ -23,17 +22,13 @@ interface TableRow {
 }
 
 // Helper function to get all rows from a specific table
-async function getTableRows(auth: OAuth2PropertyValue, workbookId: string, tableId: string): Promise<TableRow[]> {
+async function getTableRows(auth: OAuth2PropertyValue, workbookId: string, tableId: string, drivePath: string): Promise<TableRow[]> {
     try {
-        const response = await httpClient.sendRequest<{ value: TableRow[] }>({
-            method: HttpMethod.GET,
-            url: `${excelCommon.baseUrl}/items/${workbookId}/workbook/tables/${encodeURIComponent(tableId)}/rows`,
-            authentication: {
-                type: AuthenticationType.BEARER_TOKEN,
-                token: auth.access_token,
-            },
-        });
-        return response.body.value ?? [];
+        const client = createMSGraphClient(auth.access_token);
+        const response = await client
+            .api(`${drivePath}/items/${workbookId}/workbook/tables/${encodeURIComponent(tableId)}/rows`)
+            .get();
+        return response.value ?? [];
     } catch (error) {
         throw new Error(`Failed to fetch table rows: ${error}`);
     }
@@ -42,15 +37,20 @@ async function getTableRows(auth: OAuth2PropertyValue, workbookId: string, table
 const polling: Polling<
     AppConnectionValueForAuthProperty<typeof excelAuth>,
     {
-        workbook_id: string;
-        worksheet_id: string;
-        table_id: string;
+        storageSource: string;
+        siteId?: string;
+        documentId?: string;
+        workbookId: string;
+        worksheetId: string;
+        tableId: string;
         has_headers: boolean;
     }
 > = {
     strategy: DedupeStrategy.LAST_ITEM,
     items: async ({ auth, propsValue, lastItemId, store }) => {
-        const rows = await getTableRows(auth, propsValue.workbook_id, propsValue.table_id);
+        const { storageSource, siteId, documentId, workbookId, worksheetId, tableId } = propsValue;
+        const drivePath = getDrivePath(storageSource, siteId, documentId);
+        const rows = await getTableRows(auth, workbookId, tableId, drivePath);
 
         if (rows.length === 0) {
             return [];
@@ -64,10 +64,11 @@ const polling: Polling<
         } else {
             try {
                 headers = await excelCommon.getTableHeaders(
-                    propsValue.workbook_id,
+                    drivePath,
+                    workbookId,
                     auth.access_token,
-                    propsValue.worksheet_id,
-                    propsValue.table_id
+                    worksheetId,
+                    tableId
                 );
                 await store.put('table_headers', headers);
             } catch (error) {
@@ -114,9 +115,12 @@ export const newRowInTableTrigger = createTrigger({
     displayName: 'New Row in Table',
     description: 'Fires when a new row is added to a table within a worksheet.',
     props: {
-        workbook_id: excelCommon.workbook_id,
-        worksheet_id: excelCommon.worksheet_id,
-        table_id: excelCommon.table_id,
+        storageSource: commonProps.storageSource,
+        siteId: commonProps.siteId,
+        documentId: commonProps.documentId,
+        workbookId: commonProps.workbookId,
+        worksheetId: commonProps.worksheetId,
+        tableId: commonProps.tableId,
         has_headers: Property.Checkbox({
             displayName: "My table has headers",
             description: "Enable this if the first row of your table is a header row.",
@@ -135,6 +139,10 @@ export const newRowInTableTrigger = createTrigger({
     },
 
     onEnable: async (context) => {
+        const { storageSource, siteId, documentId } = context.propsValue as any;
+        if (storageSource === 'sharepoint' && (!siteId || !documentId)) {
+            throw new Error('please select SharePoint site and document library.');
+        }
         await pollingHelper.onEnable(polling, {
             auth: context.auth,
             store: context.store,

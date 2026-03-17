@@ -1,5 +1,4 @@
 import { OAuth2AuthorizationMethod } from '@activepieces/pieces-framework'
-import { apAxios } from '@activepieces/server-shared'
 import { ActivepiecesError,
     AppConnectionType,
     BaseOAuth2ConnectionValue,
@@ -11,6 +10,7 @@ import { ActivepiecesError,
 } from '@activepieces/shared'
 import { AxiosError } from 'axios'
 import { FastifyBaseLogger } from 'fastify'
+import { apAxios } from '../../../../helper/ap-axios'
 import {
     ClaimOAuth2Request,
     OAuth2Service,

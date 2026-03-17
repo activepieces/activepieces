@@ -1,13 +1,12 @@
-import { ApplicationEventName, ManagedAuthnRequestBody } from '@activepieces/ee-shared'
-import { securityAccess } from '@activepieces/server-shared'
-import {
-    AuthenticationResponse,
+import { ApplicationEventName, AuthenticationResponse,
+    ManagedAuthnRequestBody,
 } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { applicationEvents } from '../../helper/application-events'
 import { managedAuthnService } from './managed-authn-service'
 
-export const managedAuthnController: FastifyPluginAsyncTypebox = async (
+export const managedAuthnController: FastifyPluginAsyncZod = async (
     app,
 ) => {
     app.post(

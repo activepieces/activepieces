@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { serpApiAuth } from '../../index';
+import { serpApiAuth } from '../auth';
 import { SerpApiClient } from '../services/serp-api-client';
 import { GoogleTrendsSearchConfig, SerpApiEngine } from '../types';
 

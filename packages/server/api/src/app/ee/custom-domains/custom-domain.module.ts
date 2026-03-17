@@ -1,30 +1,26 @@
 import {
     AddDomainRequest,
-    ListCustomDomainsRequest,
-} from '@activepieces/ee-shared'
-import { securityAccess } from '@activepieces/server-shared'
-import { assertNotNullOrUndefined, PrincipalType } from '@activepieces/shared'
-import {
-    FastifyPluginAsyncTypebox,
-    Static,
-    Type,
-} from '@fastify/type-provider-typebox'
+    assertNotNullOrUndefined,
+    ListCustomDomainsRequest, PrincipalType } from '@activepieces/shared'
 import { HttpStatusCode } from 'axios'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
+import { z } from 'zod'
+import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
 import { customDomainService } from './custom-domain.service'
 
-const GetOneRequest = Type.Object({
-    id: Type.String(),
+const GetOneRequest = z.object({
+    id: z.string(),
 })
-type GetOneRequest = Static<typeof GetOneRequest>
+type GetOneRequest = z.infer<typeof GetOneRequest>
 
-export const customDomainModule: FastifyPluginAsyncTypebox = async (app) => {
+export const customDomainModule: FastifyPluginAsyncZod = async (app) => {
     app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.plan.customDomainsEnabled))
     await app.register(customDomainController, { prefix: '/v1/custom-domains' })
 }
 
-const customDomainController: FastifyPluginAsyncTypebox = async (app) => {
+const customDomainController: FastifyPluginAsyncZod = async (app) => {
     app.post(
         '/',
         {
