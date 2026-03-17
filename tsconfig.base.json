@@ -1827,6 +1827,9 @@
       ],
       "@activepieces/piece-coralogix": [
         "packages/pieces/community/coralogix/src/index.ts"
+      ],
+      "@activepieces/piece-pocketbase": [
+        "packages/pieces/community/pocketbase/src/index.ts"
       ]
     },
     "resolveJsonModule": true
