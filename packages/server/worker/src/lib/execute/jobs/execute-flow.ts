@@ -78,7 +78,7 @@ export const executeFlowJob: JobHandler<ExecuteFlowJobData> = {
                     return {}
                 }
                 if (e.error.code === ErrorCode.SANDBOX_LOG_SIZE_EXCEEDED) {
-                    await reportFlowStatus(ctx, data, FlowRunStatus.INTERNAL_ERROR)
+                    await reportFlowStatus(ctx, data, FlowRunStatus.LOG_SIZE_EXCEEDED)
                     return {}
                 }
             }
