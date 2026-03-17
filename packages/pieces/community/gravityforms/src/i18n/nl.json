@@ -1,7 +1,0 @@
-{
-  "Build and publish your WordPress forms": "Bouw en publiceer uw WordPress formulieren",
-  "New Submission": "Nieuwe inzending",
-  "Triggers when form receives a new submission": "Triggert wanneer het formulier een nieuwe uitwerking ontvangt",
-  "Markdown": "Markdown",
-  "\n- Go to the \"Plugins\" section.\n- Find and click on the \"Webhook\" plugin to activate it.\n- Now, locate the form where you want the trigger to occur.\n- Add a webhook to that form.\n- In the webhook settings, paste this URL: \n  ```text\n  {{webhookUrl}}\n  ```\n\n- Keep the other settings unchanged (default).\n": "\n- Ga naar de \"Plug-ins\" sectie.\n- Zoek en klik op de \"Webhook\" plugin om deze te activeren.\n- Zoek nu het formulier waar de trigger zich voordoet.\n- Voeg een webhook toe aan dat formulier.\n- In de webhook instellingen, plak deze URL: \n  ```text\n  {{webhookUrl}}\n  ```\n\n- Houd de andere instellingen ongewijzigd (standaard).\n"
-}

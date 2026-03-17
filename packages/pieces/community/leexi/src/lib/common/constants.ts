@@ -1,1 +1,0 @@
-export const BASE_URL ='https://public-api.leexi.ai/v1'

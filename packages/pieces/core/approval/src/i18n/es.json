@@ -1,9 +1,0 @@
-{
-  "Build approval process in your workflows": "Construir proceso de aprobación en sus flujos de trabajo",
-  "Wait for Approval": "Espere a la aprobación",
-  "Create Approval Links": "Crear enlaces de aprobación",
-  "Pauses the flow and wait for the approval from the user": "Pausa el flujo y espera la aprobación del usuario",
-  "Create links only without pausing the flow, use wait for approval to pause": "Crear enlaces solo sin pausar el flujo, usar esperar aprobación para pausar",
-  "Markdown": "Markdown",
-  "Please use Manual Task feature instead from 0.48.0 and above": "Por favor, utilice la función de tarea manual en lugar de 0.48.0 o superior"
-}

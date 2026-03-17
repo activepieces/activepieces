@@ -1,0 +1,18 @@
+{
+  "name": "@activepieces/piece-stader-labs",
+  "version": "0.0.1",
+  "description": "Stader Labs multi-chain liquid staking protocol data",
+  "keywords": ["activepieces", "stader", "liquid staking", "ETHx", "SD"],
+  "homepage": "https://www.stader.io/",
+  "authors": ["Bossco"],
+  "license": "MIT",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "peerDependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*"
+  }
+}

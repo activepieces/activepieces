@@ -1,9 +1,0 @@
-{
-  "Fetch the price of a crypto pair from Binance": "Fetch the price of a crypto pair from Binance",
-  "Fetch Pair Price": "Fetch Pair Price",
-  "Fetch the current price of a pair (e.g. BTC/USDT)": "Fetch the current price of a pair (e.g. BTC/USDT)",
-  "First Coin Symbol": "First Coin Symbol",
-  "Second Coin Symbol": "Second Coin Symbol",
-  "The currency to fetch the price for (e.g. 'BTC' in 'BTC/USDT')": "The currency to fetch the price for (e.g. 'BTC' in 'BTC/USDT')",
-  "The currency to fetch the price in (e.g. 'USDT' in 'BTC/USDT')": "The currency to fetch the price in (e.g. 'USDT' in 'BTC/USDT')"
-}

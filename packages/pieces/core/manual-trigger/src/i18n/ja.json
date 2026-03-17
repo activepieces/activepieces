@@ -1,6 +1,0 @@
-{
-  "Manual Trigger": "手動トリガー",
-  "Manually start your own flow without any extra configurations": "追加設定なしで手動でフローを開始する",
-  "Markdown": "Markdown",
-  "Manual triggers are used to start a flow on demand, publish your flow and click (Run Flow) at the start of the flow.": "手動トリガーは、フローをオンデマンドで開始し、フローを公開し、フローの開始時にformat@@0をクリックします。"
-}
