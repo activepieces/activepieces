@@ -5,16 +5,26 @@ icon: "hammer"
 ---
 
 ## 0.80.0
+
 ### What has changed?
 
+#### Infrastructure
+- `AP_WORKER_CONCURRENCY` and `AP_AGENTS_WORKER_CONCURRENCY` environment variables have been removed. Scaling is now done by adding more worker replicas.
+- The `AP_CONTAINER_TYPE` environment variable now controls which services run: `APP` (API server only), `WORKER` (worker only), or `WORKER_AND_APP` (both, default).
+- A new environment variable `AP_MAX_WEBHOOK_PAYLOAD_SIZE_MB` has been introduced to control the maximum allowed webhook payload size. The default is `25` MB. Webhooks exceeding this limit will be rejected with a `413 Request Too Long` response.
+- Nginx has been removed from the Docker image. Fastify now serves both the API and the React frontend directly. All API routes are now under the `/api` prefix natively. If you were using `/v1/health` as a health check endpoint (e.g. in Kubernetes probes or load balancer checks), update it to `/api/v1/health`.
+
+#### API
 - A new `UPDATE_SAMPLE_DATA_INFO` flow operation has been introduced to handle sample data updates independently.
 - `UPDATE_ACTION` and `UPDATE_TRIGGER` no longer accept or apply changes to `sampleData` in step settings. Any `sampleData` fields sent in these requests will be ignored and the existing sample data will be preserved.
 - A new required `lastUpdatedDate` field has been added to all actions and triggers, tracked automatically by the server. It is not accepted in `UPDATE_ACTION` or `UPDATE_TRIGGER` requests.
-- The flow schema version has been bumped from `17` to `18`. Existing flows are migrated automatically.
 
 ### Do you need to take action?
-
+- If you are using `AP_WORKER_CONCURRENCY` or `AP_AGENTS_WORKER_CONCURRENCY`, remove them and scale by adding more worker replicas instead.
+- If you are using `AP_CONTAINER_TYPE`, note the updated values: `APP`, `WORKER`, or `WORKER_AND_APP`.
+- If you want to restrict webhook payload sizes below the new `25` MB default, set `AP_MAX_WEBHOOK_PAYLOAD_SIZE_MB` to your desired limit.
 - If you are using the API to update sample data on steps via `UPDATE_ACTION` or `UPDATE_TRIGGER`, switch to the new `UPDATE_SAMPLE_DATA_INFO` operation instead.
+- If you have custom health checks pointing to `/v1/health`, update them to `/api/v1/health`.
 
 ## 0.78.1
 

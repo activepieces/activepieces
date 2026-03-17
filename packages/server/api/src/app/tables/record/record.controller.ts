@@ -1,4 +1,3 @@
-import { EntitySourceType, ProjectResourceType, securityAccess } from '@activepieces/server-common'
 import {
     CreateRecordsRequest,
     DeleteRecordsRequest,
@@ -14,6 +13,8 @@ import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
+import { EntitySourceType, ProjectResourceType } from '../../core/security/authorization/common'
+import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { TableEntity } from '../table/table.entity'
 import { recordSideEffects } from './record-side-effects'
 import { RecordEntity } from './record.entity'
