@@ -588,11 +588,13 @@ async function addToQueue(params: AddToQueueParams, log: FastifyBaseLogger): Pro
     const traceContext: Record<string, string> = {}
     propagation.inject(context.active(), traceContext)
 
-    const jobPayload: JobPayload = isNil(params.payload)
-        ? { type: 'inline', value: null }
-        : isNil(params.synchronousHandlerId)
-            ? await payloadOffloader.offloadPayload(log, params.payload, params.flowRun.projectId, params.platformId)
-            : await payloadOffloader.maybeOffloadPayload(log, params.payload, params.flowRun.projectId, params.platformId)
+    let jobPayload: JobPayload = { type: 'inline', value: null }
+    if (!isNil(params.payload) && isNil(params.synchronousHandlerId)) {
+        jobPayload = await payloadOffloader.offloadPayload(log, params.payload, params.flowRun.projectId, params.platformId)
+    }
+    else if (!isNil(params.payload)) {
+        jobPayload = await payloadOffloader.maybeOffloadPayload(log, params.payload, params.flowRun.projectId, params.platformId)
+    }
 
     await jobQueue(log).add({
         id: params.flowRun.id,
@@ -752,7 +754,7 @@ type GetOneParams = {
 type AddToQueueParams = {
     flowRun: FlowRun
     platformId: PlatformId
-    payload: unknown
+    payload?: unknown
     executeTrigger: boolean
     executionType: ExecutionType
     synchronousHandlerId: string | undefined
