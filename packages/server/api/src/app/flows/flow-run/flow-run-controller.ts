@@ -63,7 +63,18 @@ export const flowRunController: FastifyPluginAsyncZod = async (app) => {
         '/:id/steps/:stepName',
         GetStepOutputRequest,
         async (request, reply) => {
-            const path = executionJournal.parsePath(request.query.path)
+            let path: readonly [string, number][]
+            try {
+                path = executionJournal.parsePath(request.query.path)
+            }
+            catch (e) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.VALIDATION,
+                    params: {
+                        message: e instanceof Error ? e.message : 'Invalid path format',
+                    },
+                })
+            }
             const stepOutput = await flowRunService(request.log).getStepOutput({
                 flowRunId: request.params.id,
                 projectId: request.projectId,
