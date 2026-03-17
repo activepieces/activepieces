@@ -52,12 +52,15 @@ export const cleanRowAction = createAction({
         } else {
           formattedTableFields[key] = [];
         }
-      } else if (
-        fieldType === BaserowFieldType.SINGLE_SELECT ||
-        fieldType === BaserowFieldType.MULTI_SELECT
-      ) {
+      } else if (fieldType === BaserowFieldType.SINGLE_SELECT) {
+        if (value === null || value === undefined || value === '' || (Array.isArray(value) && value.length === 0)) {
+          formattedTableFields[key] = null;
+        } else {
+          formattedTableFields[key] = value;
+        }
+      } else if (fieldType === BaserowFieldType.MULTI_SELECT) {
         if (value === null || value === undefined || value === '') {
-          formattedTableFields[key] = fieldType === BaserowFieldType.MULTI_SELECT ? [] : null;
+          formattedTableFields[key] = [];
         } else {
           formattedTableFields[key] = value;
         }

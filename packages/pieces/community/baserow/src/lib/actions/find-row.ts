@@ -74,8 +74,8 @@ export const findRowAction = createAction({
     ) as { results: Record<string, unknown>[]; count: number };
 
     if (response.results.length === 0) {
-      return { found: false, row: null };
+      return { found: false, row: null, count: 0 };
     }
-    return { found: true, row: response.results[0] };
+    return { found: true, row: response.results[0], count: response.count };
   },
 });
