@@ -1,1 +1,0 @@
-export const feedbackUrl = 'https://feedback.activepieces.com'
