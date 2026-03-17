@@ -5,7 +5,7 @@ import { OutsetaClient } from '../common/client';
 export const getPersonAction = createAction({
   name: 'get_person',
   auth: outsetaAuth,
-  displayName: 'Get person',
+  displayName: 'Get Person',
   description: 'Retrieve an Outseta person by its UID',
   props: {
     personUid: Property.ShortText({

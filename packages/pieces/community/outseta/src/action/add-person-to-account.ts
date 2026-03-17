@@ -5,7 +5,7 @@ import { OutsetaClient } from '../common/client';
 export const addPersonToAccountAction = createAction({
   name: 'add_person_to_account',
   auth: outsetaAuth,
-  displayName: 'Add person to account',
+  displayName: 'Add Person to Account',
   description: 'Add an existing person to an existing account',
   props: {
     accountUid: Property.ShortText({

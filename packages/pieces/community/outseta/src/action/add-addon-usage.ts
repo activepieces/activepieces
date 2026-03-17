@@ -5,9 +5,9 @@ import { OutsetaClient } from '../common/client';
 export const addAddonUsageAction = createAction({
   name: 'add_addon_usage',
   auth: outsetaAuth,
-  displayName: 'Add Addon Usage',
+  displayName: 'Track Add-on Usage',
   description:
-    'Record usage for a metered (usage-based) add-on on an account',
+    'Track usage for a metered (usage-based) add-on on an account',
   props: {
     accountUid: Property.ShortText({
       displayName: 'Account UID',
