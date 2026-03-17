@@ -54,10 +54,10 @@ When moving enterprise dedicated workers to the new server, a code change accide
 ## What Went Wrong
 
 1. **No rollback plan for the Kubernetes deployment.** The migration to Kubernetes was deployed without a documented or tested rollback strategy. When PVCs filled up, there was no fast path back, delaying recovery by several hours.
-3. **PVC sizing was not validated under production load.** Persistent volumes were provisioned without load-testing against real production traffic patterns, causing them to fill up unexpectedly fast.
-5. **Trust level configuration had no test coverage.** The code path that set `trustedEnvironment` for dedicated workers was not covered by tests, allowing a misconfiguration to ship undetected.
-6. **No canary deployment strategy.** The new architecture was rolled out to all shared workers at once rather than incrementally, so there was no opportunity to catch issues on a small subset before full impact.
-7. **Issue 2 was discovered late.** The enterprise worker misconfiguration was not found until ~12 hours after the initial incident began, because investigation was focused on the PVC issue affecting shared workers.
+2. **PVC sizing was not validated under production load.** Persistent volumes were provisioned without load-testing against real production traffic patterns, causing them to fill up unexpectedly fast.
+3. **Trust level configuration had no test coverage.** The code path that set `trustedEnvironment` for dedicated workers was not covered by tests, allowing a misconfiguration to ship undetected.
+4. **No canary deployment strategy.** The new architecture was rolled out to all shared workers at once rather than incrementally, so there was no opportunity to catch issues on a small subset before full impact.
+5. **Issue 2 was discovered late.** The enterprise worker misconfiguration was not found until ~12 hours after the initial incident began, because investigation was focused on the PVC issue affecting shared workers.
 
 ## What We Did
 
@@ -75,7 +75,7 @@ By 11:30 AM, all systems were fully operational. We then identified every execut
 |---|---|
 | Implement a documented and tested rollback plan for all infrastructure migrations | To do |
 | Add test coverage for worker trust level and sandbox configuration | Done |
-|  Support canary deployments  To do |
+| Support canary deployments | To do |
 
 ## Improvements Since the Incident
 
