@@ -1,0 +1,32 @@
+{
+  "name": "@activepieces/piece-compound-finance",
+  "version": "0.0.1",
+  "description": "Compound Finance DeFi lending protocol piece for Activepieces",
+  "keywords": [
+    "activepieces",
+    "piece",
+    "compound",
+    "defi",
+    "lending",
+    "tvl",
+    "crypto"
+  ],
+  "homepage": "https://www.activepieces.com",
+  "license": "MIT",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "nx build piece-compound-finance"
+  },
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*"
+  }
+}
