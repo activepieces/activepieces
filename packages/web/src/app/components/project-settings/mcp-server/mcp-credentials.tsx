@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { ButtonWithTooltip } from '@/components/custom/button-with-tooltip';
 import { CopyButton } from '@/components/custom/clipboard/copy-button';
 import { CollapsibleJson } from '@/components/custom/collapsible-json';
+import { Badge } from '@/components/ui/badge';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -152,7 +153,14 @@ export function McpCredentials({ mcpServer }: McpCredentialsProps) {
       {/* Custom Connector (no custom headers) */}
       <CollapsibleJson
         json={customConnectorConfiguration}
-        label={t('Claude Custom Connector')}
+        label={
+          <span className="flex items-center gap-2">
+            {t('Claude Custom Connector')}
+            <Badge variant="outline" className="text-xs">
+              {t('Beta')}
+            </Badge>
+          </span>
+        }
         description={t(
           "Only use connectors from developers you trust. The platform does not control which tools developers make available and cannot verify that they will work as intended or that they won't change.",
         )}

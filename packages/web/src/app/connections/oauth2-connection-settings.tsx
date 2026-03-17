@@ -28,7 +28,6 @@ import { Input } from '@/components/ui/input';
 import { OAuth2App, oauth2Utils } from '@/features/connections';
 import { appConnectionsApi } from '@/features/connections/api/app-connections';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { authenticationSession } from '@/lib/authentication-session';
 
 import { GenericPropertiesForm } from '../builder/piece-properties/generic-properties-form';
 
@@ -39,7 +38,6 @@ function OAuth2ConnectionSettings({
   oauth2App,
   piece,
   grantType,
-  isGlobalConnection,
 }: OAuth2ConnectionSettingsProps) {
   const form = useFormContext<{
     request:
@@ -70,10 +68,6 @@ function OAuth2ConnectionSettings({
     oauth2App.oauth2Type === AppConnectionType.OAUTH2 &&
     grantType === OAuth2GrantType.AUTHORIZATION_CODE;
 
-  const projectId = isGlobalConnection
-    ? undefined
-    : authenticationSession.getProjectId()!;
-
   return (
     <div className="flex flex-col gap-4">
       {showRedirectUrlInput && (
@@ -92,10 +86,10 @@ function OAuth2ConnectionSettings({
             name="request.value.client_id"
             control={form.control}
             render={({ field }) => (
-              <FormItem className="flex flex-col">
+              <FormItem className="flex flex-col gap-2">
                 <FormLabel>{t('Client ID')}</FormLabel>
                 <FormControl>
-                  <SecretInput {...field} type="text" projectId={projectId} />
+                  <SecretInput {...field} type="text" />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -105,14 +99,10 @@ function OAuth2ConnectionSettings({
             name="request.value.client_secret"
             control={form.control}
             render={({ field }) => (
-              <FormItem className="flex flex-col">
+              <FormItem className="flex flex-col gap-2">
                 <FormLabel>{t('Client Secret')}</FormLabel>
                 <FormControl>
-                  <SecretInput
-                    {...field}
-                    type="password"
-                    projectId={projectId}
-                  />
+                  <SecretInput {...field} type="password" />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -198,7 +188,6 @@ async function openPopup(
       redirectUrl,
       props,
     });
-
   const { code } = await oauth2Utils.openOAuth2Popup({
     authorizationUrl,
     redirectUrl,
@@ -215,5 +204,4 @@ type OAuth2ConnectionSettingsProps = {
   authProperty: OAuth2Property<OAuth2Props>;
   oauth2App: OAuth2App;
   grantType: OAuth2GrantType;
-  isGlobalConnection: boolean;
 };

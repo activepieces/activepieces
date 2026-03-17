@@ -1,7 +1,7 @@
 import {
+  SECRET_MANAGER_PROVIDERS_METADATA,
   SecretManagerConnectionScope,
   SecretManagerConnectionWithStatus,
-  SecretManagerProviderMetaData,
 } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
@@ -40,14 +40,12 @@ const SecretManagersPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: connections, isLoading: isLoadingConnections } =
     secretManagersHooks.useListSecretManagerConnections();
-  const { data: providers, isLoading: isLoadingProviders } =
-    secretManagersHooks.useListProviders();
   const { mutate: deleteConnection } =
     secretManagersHooks.useDeleteSecretManagerConnection();
   const { mutate: clearCache, isPending: isClearingCache } =
     secretManagersHooks.useClearCache();
 
-  const isLoading = isLoadingConnections || isLoadingProviders;
+  const isLoading = isLoadingConnections;
 
   const page = connections
     ? { data: connections, next: null, previous: null }
@@ -68,7 +66,9 @@ const SecretManagersPage = () => {
         />
       ),
       cell: ({ row }) => {
-        const provider = findProvider(providers, row.original.providerId);
+        const provider = SECRET_MANAGER_PROVIDERS_METADATA.find(
+          (p) => p.id === row.original.providerId,
+        );
         return (
           <div className="flex items-center gap-2 w-fit">
             <PieceIcon
@@ -157,19 +157,7 @@ const SecretManagersPage = () => {
                 <Pencil className="size-4" />
               </Button>
             </AddEditSecretManagerConnectionDialog>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  loading={isClearingCache}
-                  onClick={() => clearCache(connection.id)}
-                >
-                  <RefreshCcw className="size-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>{t('Clear Cache')}</TooltipContent>
-            </Tooltip>
+            <SecretManagerClearCacheButton connection={connection} />
             <ConfirmationDeleteDialog
               title={t('Delete Connection')}
               message={t(
@@ -178,9 +166,16 @@ const SecretManagersPage = () => {
               entityName={connection.name}
               mutationFn={async () => deleteConnection(connection.id)}
             >
-              <Button variant="ghost" size="sm">
-                <Trash className="size-4 text-destructive" />
-              </Button>
+              <div>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="ghost" size="sm">
+                      <Trash className="size-4 text-destructive" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>{t('Delete')}</TooltipContent>
+                </Tooltip>
+              </div>
             </ConfirmationDeleteDialog>
           </div>
         );
@@ -224,9 +219,26 @@ const SecretManagersPage = () => {
 
 export default SecretManagersPage;
 
-function findProvider(
-  providers: SecretManagerProviderMetaData[] | undefined,
-  providerId: string,
-): SecretManagerProviderMetaData | undefined {
-  return providers?.find((p) => p.id === providerId);
-}
+const SecretManagerClearCacheButton = ({
+  connection,
+}: {
+  connection: SecretManagerConnectionWithStatus;
+}) => {
+  const { mutate: clearCache, isPending: isClearingCache } =
+    secretManagersHooks.useClearCache();
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          variant="ghost"
+          size="sm"
+          loading={isClearingCache}
+          onClick={() => clearCache(connection.id)}
+        >
+          <RefreshCcw className="size-4" />
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>{t('Clear Cache')}</TooltipContent>
+    </Tooltip>
+  );
+};

@@ -11,24 +11,19 @@ import {
   FormItem,
   FormLabel,
 } from '@/components/ui/form';
-import { authenticationSession } from '@/lib/authentication-session';
 
 import { SecretInput } from './secret-input';
 
 type BasicAuthConnectionSettingsProps = {
   authProperty: BasicAuthProperty;
-  isGlobalConnection: boolean;
 };
 
 const BasicAuthConnectionSettings = React.memo(
-  ({ authProperty, isGlobalConnection }: BasicAuthConnectionSettingsProps) => {
+  ({ authProperty }: BasicAuthConnectionSettingsProps) => {
     const forSchema = z.object({
       request: UpsertBasicAuthRequest,
     });
     const form = useFormContext<z.infer<typeof forSchema>>();
-    const projectId = isGlobalConnection
-      ? undefined
-      : authenticationSession.getProjectId()!;
 
     return (
       <>
@@ -39,7 +34,7 @@ const BasicAuthConnectionSettings = React.memo(
             <FormItem className="flex flex-col">
               <FormLabel>{authProperty.username.displayName}</FormLabel>
               <FormControl>
-                <SecretInput {...field} type="text" projectId={projectId} />
+                <SecretInput {...field} type="text" />
               </FormControl>
               <FormDescription>
                 {authProperty.username.description}
@@ -54,7 +49,7 @@ const BasicAuthConnectionSettings = React.memo(
             <FormItem className="flex flex-col mt-3.5">
               <FormLabel>{authProperty.password.displayName}</FormLabel>
               <FormControl>
-                <SecretInput {...field} type="password" projectId={projectId} />
+                <SecretInput {...field} type="password" />
               </FormControl>
               <FormDescription>
                 {authProperty.password.description}

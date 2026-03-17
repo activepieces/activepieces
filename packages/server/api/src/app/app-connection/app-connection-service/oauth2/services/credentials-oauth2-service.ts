@@ -1,5 +1,4 @@
 import { OAuth2AuthorizationMethod } from '@activepieces/pieces-framework'
-import { apAxios } from '@activepieces/server-common'
 import { ActivepiecesError,
     AppConnectionType,
     BaseOAuth2ConnectionValue,
@@ -12,6 +11,7 @@ import { ActivepiecesError,
 import { AxiosError } from 'axios'
 import { FastifyBaseLogger } from 'fastify'
 import { secretManagersService } from '../../../../ee/secret-managers/secret-managers.service'
+import { apAxios } from '../../../../helper/ap-axios'
 import {
     ClaimOAuth2Request,
     OAuth2Service,
@@ -115,21 +115,17 @@ export const credentialsOauth2Service = (log: FastifyBaseLogger): OAuth2Service<
     async refresh({
         platformId,
         projectId,
-        connectionValue,
+        connectionValue: appConnection,
     }: RefreshOAuth2Request<OAuth2ConnectionValueWithApp>): Promise<OAuth2ConnectionValueWithApp> {
-        const resolvedConnectionValues = await secretManagersService(log).resolveObject({
-            value: connectionValue,
-            platformId,
-            projectIds: projectId ? [projectId] : undefined,
-            throwOnFailure: true,
-        })
-        // only pick the client id and client secret from the resolved connection values
-        const { client_id, client_secret } = resolvedConnectionValues
-        const appConnection = connectionValue
-
         if (!oauth2Util(log).isExpired(appConnection)) {
             return appConnection
         }
+        const smService = secretManagersService(log)
+        const resolveParams = { platformId, projectIds: projectId ? [projectId] : undefined, throwOnFailure: true }
+        const [client_id, client_secret] = await Promise.all([
+            smService.resolveString({ key: appConnection.client_id, ...resolveParams }),
+            smService.resolveString({ key: appConnection.client_secret, ...resolveParams }),
+        ])
         const grantType =
             appConnection.grant_type ?? OAuth2GrantType.AUTHORIZATION_CODE   
         const body: Record<string, string> = {}
@@ -208,5 +204,5 @@ function mergeNonNull(
     return {
         ...appConnection,
         ...formattedOAuth2Response,
-    } as OAuth2ConnectionValueWithApp
+    }
 }

@@ -12,7 +12,7 @@ import {
   isNil,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Plus, Globe } from 'lucide-react';
+import { Plus, Globe, Key } from 'lucide-react';
 import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
@@ -253,19 +253,14 @@ function ConnectionSelect(params: ConnectionSelectProps) {
                             key={connection.externalId}
                           >
                             <div className="flex items-center gap-2">
+                              {connection.usingSecretManager && (
+                                <Key size={16} className="shrink-0" />
+                              )}
                               {connection.scope ===
                                 AppConnectionScope.PLATFORM && (
                                 <Globe size={16} className="shrink-0" />
                               )}
                               {connection.displayName}
-                              {connection.usingSecretManager && (
-                                <Badge
-                                  variant="outline"
-                                  className="text-xs py-0 px-1 shrink-0"
-                                >
-                                  {t('Secret Manager')}
-                                </Badge>
-                              )}
                             </div>
                           </SelectItem>
                         );

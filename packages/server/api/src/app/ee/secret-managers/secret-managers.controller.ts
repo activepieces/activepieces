@@ -1,17 +1,13 @@
-import { securityAccess } from '@activepieces/server-common'
 import { ConnectSecretManagerRequestSchema, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
+import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { secretManagerCache } from './secret-manager-cache'
-import { secretManagerProvidersMetadata } from './secret-manager-providers/secret-manager-providers'
 import { secretManagersService } from './secret-managers.service'
 
 export const secretManagersController: FastifyPluginAsyncZod = async (app) => {
     const service = secretManagersService(app.log)
-
-    app.get('/providers', ListSecretManagerProviders, async (_request) => {
-        return secretManagerProvidersMetadata()
-    })
 
     app.get('/', ListSecretManagerConnections, async (request) => {
         return service.list({
@@ -20,12 +16,11 @@ export const secretManagersController: FastifyPluginAsyncZod = async (app) => {
         })
     })
 
-    app.post('/', CreateSecretManagerConnection, async (request, reply) => {
-        const connection = await service.create({ ...request.body, platformId: request.principal.platform.id })
-        return reply.status(201).send(connection)
+    app.post('/', CreateSecretManagerConnection, async (request) => {
+        return service.create({ ...request.body, platformId: request.principal.platform.id })
     })
 
-    app.patch('/:id', UpdateSecretManagerConnection, async (request) => {
+    app.post('/:id', UpdateSecretManagerConnection, async (request) => {
         return service.update({
             id: request.params.id,
             platformId: request.principal.platform.id,
@@ -38,19 +33,13 @@ export const secretManagersController: FastifyPluginAsyncZod = async (app) => {
             id: request.params.id,
             platformId: request.principal.platform.id,
         })
-        return reply.status(204).send()
+        return reply.status(StatusCodes.NO_CONTENT).send()
     })
 
     app.delete('/cache', ClearSecretManagerCache, async (request, reply) => {
         await secretManagerCache.invalidateConnectionEntries(request.principal.platform.id, request.query.connectionId)
-        return reply.status(204).send()
+        return reply.status(StatusCodes.NO_CONTENT).send()
     })
-}
-
-const ListSecretManagerProviders = {
-    config: {
-        security: securityAccess.publicPlatform([PrincipalType.USER]),
-    },
 }
 
 const ListSecretManagerConnections = {

@@ -1,4 +1,3 @@
-import { AppSystemProp } from '@activepieces/server-common'
 import {
     ActivepiecesError,
     ApEdition,
@@ -14,6 +13,7 @@ import {
     AppConnectionWithoutSensitiveData,
     ConnectionState,
     Cursor,
+    EngineResponse,
     EngineResponseStatus,
     ErrorCode,
     ExecuteValidateAuthResponse,
@@ -35,7 +35,6 @@ import {
 import { FastifyBaseLogger } from 'fastify'
 import semver from 'semver'
 import { ArrayContains, Equal, FindOperator, FindOptionsWhere, ILike, In } from 'typeorm'
-import { OperationResponse } from 'worker'
 import { repoFactory } from '../../core/db/repo-factory'
 import { projectMemberService } from '../../ee/projects/project-members/project-member.service'
 import { containsSecretManagerReference, secretManagersService } from '../../ee/secret-managers/secret-managers.service'
@@ -44,6 +43,7 @@ import { encryptUtils } from '../../helper/encryption'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-props'
 import {
     getPiecePackageWithoutArchive,
     pieceMetadataService,
@@ -334,7 +334,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
         return {
             ...appConnectionWithoutSensitiveData,
             usingSecretManager: containsSecretManagerReference(value),
-        } as AppConnectionWithoutSensitiveData
+        }
     },
 
     async decryptAndRefreshConnection(
@@ -515,7 +515,7 @@ const engineValidateAuth = async (
         platformId,
     })
 
-    const engineResponse = await userInteractionWatcher(log).submitAndWaitForResponse<OperationResponse<ExecuteValidateAuthResponse>>({
+    const engineResponse = await userInteractionWatcher(log).submitAndWaitForResponse<EngineResponse<ExecuteValidateAuthResponse>>({
         piece: await getPiecePackageWithoutArchive(log, platformId, {
             pieceName,
             pieceVersion: pieceMetadata.version,
@@ -540,7 +540,7 @@ const engineValidateAuth = async (
         })
     }
 
-    const validateAuthResult = engineResponse.result
+    const validateAuthResult = engineResponse.response
 
     if (!validateAuthResult.valid) {
         throw new ActivepiecesError({

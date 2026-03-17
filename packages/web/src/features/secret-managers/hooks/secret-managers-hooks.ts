@@ -1,30 +1,22 @@
 import {
   ConnectSecretManagerRequest,
   SecretManagerConnectionWithStatus,
-  SecretManagerProviderMetaData,
 } from '@activepieces/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { toast } from 'sonner';
 
 import { platformHooks } from '@/hooks/platform-hooks';
+import { authenticationSession } from '@/lib/authentication-session';
 
 import { secretManagersApi } from '../api/secret-managers-api';
 
 export const secretManagersHooks = {
-  useListProviders: () => {
-    const { platform } = platformHooks.useCurrentPlatform();
-    return useQuery<SecretManagerProviderMetaData[]>({
-      queryKey: ['secret-managers-providers'],
-      queryFn: () => secretManagersApi.listProviders(),
-      enabled: platform.plan.secretManagersEnabled,
-    });
-  },
   useListSecretManagerConnections: ({
-    projectId,
     connectedOnly,
-  }: { projectId?: string; connectedOnly?: boolean } = {}) => {
+  }: { connectedOnly?: boolean } = {}) => {
     const { platform } = platformHooks.useCurrentPlatform();
+    const projectId = authenticationSession.getProjectId()!;
     return useQuery<SecretManagerConnectionWithStatus[]>({
       queryKey: ['secret-managers', projectId],
       queryFn: async () => {

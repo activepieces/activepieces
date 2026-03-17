@@ -191,6 +191,9 @@ export function buildFilteredTreeItems(
   page: number,
   pageSize: number,
   pinnedList?: string[],
+  searchTerm?: string,
+  folderContents?: Map<string, FolderContent>,
+  folderCounts?: Map<string, number>,
 ): { items: TreeItem[]; totalItems: number } {
   const folderMap = new Map<string, FolderDto>();
   folders.forEach((f) => folderMap.set(f.id, f));
@@ -239,6 +242,8 @@ export function buildFilteredTreeItems(
   });
 
   const folderItems: TreeItem[] = [];
+  const addedFolderIds = new Set<string>();
+
   for (const [folderId, children] of folderChildren) {
     const folder = folderMap.get(folderId)!;
     children.sort((a, b) => getUpdatedDate(b.data!) - getUpdatedDate(a.data!));
@@ -251,6 +256,39 @@ export function buildFilteredTreeItems(
       folderId: null,
       childCount: children.length,
     });
+    addedFolderIds.add(folderId);
+  }
+
+  if (searchTerm) {
+    const term = searchTerm.toLowerCase();
+    for (const folder of folders) {
+      if (
+        !addedFolderIds.has(folder.id) &&
+        folder.displayName.toLowerCase().includes(term)
+      ) {
+        const content = folderContents?.get(folder.id);
+        const totalCount = folderCounts?.get(folder.id) ?? 0;
+        if (content) {
+          const children = buildFolderChildren(
+            content,
+            folder.id,
+            folderVisibleCounts.get(folder.id) ?? FOLDER_PAGE_SIZE,
+            totalCount,
+          );
+          folderChildren.set(folder.id, children);
+        }
+        folderItems.push({
+          id: folder.id,
+          type: 'folder',
+          name: folder.displayName,
+          data: folder,
+          depth: 0,
+          folderId: null,
+          childCount: totalCount,
+        });
+        addedFolderIds.add(folder.id);
+      }
+    }
   }
 
   const allTopLevel = [...folderItems, ...rootItems];

@@ -1,4 +1,3 @@
-import { securityAccess } from '@activepieces/server-common'
 import {
     CreateScimGroupRequest,
     PrincipalType,
@@ -9,6 +8,7 @@ import {
 } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
+import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { scimGroupService } from './scim-group-service'
 
 export const scimGroupController: FastifyPluginAsyncZod = async (app) => {

@@ -10,26 +10,20 @@ import {
   FormItem,
   FormLabel,
 } from '@/components/ui/form';
-import { authenticationSession } from '@/lib/authentication-session';
 
 import { SecretInput } from './secret-input';
 
 type SecretTextConnectionSettingsProps = {
   authProperty: SecretTextProperty<boolean>;
-  isGlobalConnection: boolean;
 };
 
 const SecretTextConnectionSettings = React.memo(
-  ({ authProperty, isGlobalConnection }: SecretTextConnectionSettingsProps) => {
+  ({ authProperty }: SecretTextConnectionSettingsProps) => {
     const formSchema = z.object({
       request: UpsertSecretTextRequest,
     });
 
     const form = useFormContext<z.infer<typeof formSchema>>();
-
-    const projectId = isGlobalConnection
-      ? undefined
-      : authenticationSession.getProjectId()!;
 
     return (
       <FormField
@@ -39,7 +33,7 @@ const SecretTextConnectionSettings = React.memo(
           <FormItem className="flex flex-col gap-2">
             <FormLabel>{authProperty.displayName}</FormLabel>
             <FormControl>
-              <SecretInput {...field} type="password" projectId={projectId} />
+              <SecretInput {...field} type="password" />
             </FormControl>
           </FormItem>
         )}

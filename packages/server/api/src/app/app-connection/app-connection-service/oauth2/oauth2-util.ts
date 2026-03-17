@@ -98,6 +98,7 @@ export const oauth2Util = (log: FastifyBaseLogger) => ({
         pieceVersion,
         clientId,
         redirectUrl,
+        projectId,
         props,
     }: BuildAuthorizationUrlParams): Promise<GetOAuth2AuthorizationUrlResponse> => {
         const pieceMetadata = await pieceMetadataService(log).getOrThrow({
@@ -120,13 +121,8 @@ export const oauth2Util = (log: FastifyBaseLogger) => ({
             key: clientId,
             platformId,
             throwOnFailure: false,
-        }).catch((error) => {
-            if (error instanceof ActivepiecesError && error.error.code === ErrorCode.SECRET_MANAGER_KEY_NOT_SECRET) {
-                return clientId
-            }
-            throw error
-        }) as string
-
+            projectIds: projectId ? [projectId] : undefined,
+        })
         const authUrl = resolveValueFromProps(props, pieceAuth.authUrl)
         const scope = resolveValueFromProps(props, pieceAuth.scope.join(' '))
 
@@ -204,4 +200,5 @@ type BuildAuthorizationUrlParams = {
     clientId: string
     redirectUrl: string
     props?: Record<string, unknown>
+    projectId?: string
 }
