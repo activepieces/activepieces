@@ -30,9 +30,9 @@ export const addPersonToAccountAction = createAction({
       apiSecret: context.auth.props.apiSecret,
     });
 
-    // Fetch the account with existing PersonAccount memberships
+    // Fetch the full account so PUT sends all fields back (Outseta uses full-replacement PUT)
     const account = await client.get<any>(
-      `/api/v1/crm/accounts/${context.propsValue.accountUid}?fields=Uid,PersonAccount.*,PersonAccount.Person.Uid`
+      `/api/v1/crm/accounts/${context.propsValue.accountUid}`
     );
 
     const existingMemberships = account.PersonAccount ?? [];
@@ -58,7 +58,7 @@ export const addPersonToAccountAction = createAction({
 
     const result = await client.put<any>(
       `/api/v1/crm/accounts/${context.propsValue.accountUid}`,
-      { PersonAccount: updatedMemberships }
+      { ...account, PersonAccount: updatedMemberships }
     );
 
     return result;
