@@ -82,6 +82,10 @@ export const pcloudRenameFile = createAction({
       },
     });
 
-    return result.body;
+    const body = result.body as { result: number; error?: string };
+    if (body.result !== 0) {
+      throw new Error(`pCloud error: ${body.error ?? "result code " + body.result}`);
+    }
+    return body;
   },
 });

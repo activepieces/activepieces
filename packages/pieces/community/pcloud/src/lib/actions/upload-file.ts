@@ -58,10 +58,8 @@ export const pcloudUploadFile = createAction({
 
     queryParams["filename"] = context.propsValue.filename;
 
-    if (context.propsValue.overwrite) {
-      queryParams["renameifexists"] = "0";
-    } else {
-      queryParams["renameifexists"] = "1";
+    if (!context.propsValue.overwrite) {
+      queryParams["noover"] = "1";
     }
 
     const boundary = "----ActivepiecesBoundary" + Date.now();
@@ -89,6 +87,10 @@ export const pcloudUploadFile = createAction({
       },
     });
 
-    return result.body;
+    const body = result.body as { result: number; error?: string };
+    if (body.result !== 0) {
+      throw new Error(`pCloud error: ${body.error ?? "result code " + body.result}`);
+    }
+    return body;
   },
 });

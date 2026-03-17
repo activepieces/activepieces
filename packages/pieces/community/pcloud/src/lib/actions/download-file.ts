@@ -47,7 +47,10 @@ export const pcloudDownloadFile = createAction({
       },
     });
 
-    const linkBody = linkResult.body as { hosts: string[]; path: string };
+    const linkBody = linkResult.body as { result: number; error?: string; hosts: string[]; path: string };
+    if (linkBody.result !== 0) {
+      throw new Error(`pCloud error: ${linkBody.error ?? "result code " + linkBody.result}`);
+    }
     const downloadUrl = `https://${linkBody.hosts[0]}${linkBody.path}`;
 
     // Download the actual file

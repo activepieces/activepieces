@@ -1,7 +1,7 @@
 import { PieceAuth, Property } from "@activepieces/pieces-framework";
 
 export const pcloudAuth = PieceAuth.OAuth2({
-  description: "Authenticate with your pCloud account. Select your region (US or EU) based on where your account was registered.",
+  description: "Authenticate with your pCloud account. **Important:** OAuth authorization and token URLs are hardcoded to US endpoints (my.pcloud.com / api.pcloud.com). EU users (eapi.pcloud.com) may need to register a US-region pCloud app or use an API key instead. The region selector below only affects API data calls, not the OAuth flow.",
   authUrl: "https://my.pcloud.com/oauth2/authorize",
   tokenUrl: "https://api.pcloud.com/oauth2_token",
   required: true,
