@@ -1,32 +1,18 @@
 {
   "name": "@activepieces/piece-yearn-finance",
-  "version": "0.0.1",
-  "description": "Yearn Finance yield aggregator: vaults, APY, TVL, strategies across 5 chains",
-  "keywords": [
-    "activepieces",
-    "yearn",
-    "defi",
-    "yield",
-    "vault",
-    "apy"
-  ],
-  "homepage": "",
-  "bugs": {
-    "url": "https://github.com/activepieces/activepieces/issues"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/activepieces/activepieces.git"
-  },
+  "version": "0.1.0",
+  "description": "Yearn Finance — OG DeFi yield aggregator with auto-compounding vaults and YFI governance",
+  "keywords": ["activepieces", "yearn", "yfi", "defi", "crypto", "yield", "vaults"],
+  "homepage": "https://activepieces.com",
+  "repository": {"type": "git", "url": "https://github.com/activepieces/activepieces.git"},
   "license": "MIT",
-  "author": "",
-  "main": "./src/index.ts",
-  "scripts": {
-    "publish-piece": "node ../../../../.scripts/publish-piece.mjs"
-  },
-  "peerDependencies": {
+  "author": "Activepieces",
+  "main": "src/index.ts",
+  "scripts": {"lint": "eslint --ext .ts src/"},
+  "dependencies": {
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*"
-  }
+  },
+  "publishConfig": {"access": "public"}
 }
