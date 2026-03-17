@@ -1,0 +1,35 @@
+{
+  "name": "@activepieces/piece-parallel",
+  "version": "0.0.1",
+  "description": "Parallel Finance - Polkadot DeFi super app offering lending, borrowing, liquid staking, and AMM",
+  "keywords": [
+    "activepieces",
+    "piece",
+    "parallel",
+    "defi",
+    "polkadot"
+  ],
+  "homepage": "https://parallel.fi",
+  "license": "MIT",
+  "main": "src/index.ts",
+  "files": [
+    "src"
+  ],
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*"
+  },
+  "nx": {
+    "targets": {
+      "build": {
+        "executor": "@nx/js:tsc",
+        "options": {
+          "main": "packages/pieces/community/parallel/src/index.ts",
+          "tsConfig": "packages/pieces/community/parallel/tsconfig.lib.json",
+          "outputPath": "dist/packages/pieces/community/parallel"
+        }
+      }
+    }
+  }
+}
