@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { klaviyoAuth } from '../common/auth';
+import { klaviyoAuth, KlaviyoAuthValue } from '../common/auth';
 import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
 
@@ -57,7 +57,7 @@ export const createProfile = createAction({
       required: false,
     }),
     address2: Property.ShortText({
-      displayName: 'Address 2', 
+      displayName: 'Address 2',
       description: 'Street address line 2',
       required: false,
     }),
@@ -92,7 +92,7 @@ export const createProfile = createAction({
       required: false,
     }),
     longitude: Property.Number({
-      displayName: 'Longitude', 
+      displayName: 'Longitude',
       description: 'Longitude coordinate (4 decimal places recommended)',
       required: false,
     }),
@@ -114,7 +114,7 @@ export const createProfile = createAction({
       defaultValue: false,
     }),
   },
-  async run({auth, propsValue}) {
+  async run({ auth, propsValue }) {
     const {
       email,
       phone_number,
@@ -137,27 +137,39 @@ export const createProfile = createAction({
       longitude,
       custom_properties,
       include_subscriptions,
-      include_predictive_analytics
+      include_predictive_analytics,
     } = propsValue;
 
     if (!email && !phone_number && !external_id) {
-      throw new Error('At least one identifier is required: email, phone_number, or external_id');
+      throw new Error(
+        'At least one identifier is required: email, phone_number, or external_id'
+      );
     }
 
     const attributes: Record<string, any> = {};
-    
+
     if (email) attributes['email'] = email;
     if (phone_number) attributes['phone_number'] = phone_number;
     if (external_id) attributes['external_id'] = external_id;
-    
+
     if (first_name) attributes['first_name'] = first_name;
     if (last_name) attributes['last_name'] = last_name;
     if (organization) attributes['organization'] = organization;
     if (locale) attributes['locale'] = locale;
     if (title) attributes['title'] = title;
     if (image) attributes['image'] = image;
-    
-    const hasLocationData = address1 || address2 || city || country || region || zip || timezone || ip || latitude || longitude;
+
+    const hasLocationData =
+      address1 ||
+      address2 ||
+      city ||
+      country ||
+      region ||
+      zip ||
+      timezone ||
+      ip ||
+      latitude ||
+      longitude;
     if (hasLocationData) {
       attributes['location'] = {};
       if (address1) attributes['location']['address1'] = address1;
@@ -185,22 +197,27 @@ export const createProfile = createAction({
 
     const queryParams = new URLSearchParams();
     const additionalFields = [];
-    
+
     if (include_subscriptions) {
       additionalFields.push('subscriptions');
     }
     if (include_predictive_analytics) {
       additionalFields.push('predictive_analytics');
     }
-    
+
     if (additionalFields.length > 0) {
-      queryParams.append('additional-fields[profile]', additionalFields.join(','));
+      queryParams.append(
+        'additional-fields[profile]',
+        additionalFields.join(',')
+      );
     }
 
-    const endpoint = `/profiles${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
+    const endpoint = `/profiles${
+      queryParams.toString() ? '?' + queryParams.toString() : ''
+    }`;
 
     return await makeRequest(
-      auth.access_token,
+      auth as KlaviyoAuthValue,
       HttpMethod.POST,
       endpoint,
       body

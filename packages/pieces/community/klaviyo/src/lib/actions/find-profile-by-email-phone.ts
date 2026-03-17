@@ -1,5 +1,5 @@
-import { createAction, Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
-import { klaviyoAuth } from '../common/auth';
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { klaviyoAuth, KlaviyoAuthValue } from '../common/auth';
 import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
 
@@ -32,7 +32,8 @@ export const findProfileByEmailPhone = createAction({
   props: {
     search_query: Property.ShortText({
       displayName: 'Email or Phone Number',
-      description: 'Enter an email address or phone number (E.164 format recommended)',
+      description:
+        'Enter an email address or phone number (E.164 format recommended)',
       required: true,
     }),
     include_additional_data: Property.Checkbox({
@@ -50,10 +51,10 @@ export const findProfileByEmailPhone = createAction({
     }
 
     const trimmedQuery = search_query.trim();
-    
+
     let filter = '';
     const isEmail = trimmedQuery.includes('@');
-    
+
     if (isEmail) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(trimmedQuery)) {
@@ -63,7 +64,9 @@ export const findProfileByEmailPhone = createAction({
     } else {
       const phoneRegex = /^[\+]?[1-9][\d\s\-\(\)\.]{7,15}$/;
       if (!phoneRegex.test(trimmedQuery)) {
-        throw new Error('Please enter a valid phone number (E.164 format recommended, e.g., +1234567890)');
+        throw new Error(
+          'Please enter a valid phone number (E.164 format recommended, e.g., +1234567890)'
+        );
       }
       filter = `equals(phone_number,"${trimmedQuery}")`;
     }
@@ -72,24 +75,28 @@ export const findProfileByEmailPhone = createAction({
     const queryParams = new URLSearchParams();
     queryParams.append('filter', filter);
     queryParams.append('page[size]', '50');
-    
+
     if (include_additional_data) {
-      queryParams.append('additional-fields[profile]', 'subscriptions,predictive_analytics');
+      queryParams.append(
+        'additional-fields[profile]',
+        'subscriptions,predictive_analytics'
+      );
     }
 
-    const authProp: OAuth2PropertyValue = auth as OAuth2PropertyValue;
     const response = await makeRequest(
-      authProp.access_token,
+      auth as KlaviyoAuthValue,
       HttpMethod.GET,
       `/profiles?${queryParams.toString()}`
     );
 
     const profiles: KlaviyoProfile[] = response.data || [];
-    
+
     if (profiles.length === 0) {
       return {
         success: false,
-        message: `No profile found with ${isEmail ? 'email' : 'phone number'}: ${trimmedQuery}`,
+        message: `No profile found with ${
+          isEmail ? 'email' : 'phone number'
+        }: ${trimmedQuery}`,
         profiles: [],
         count: 0,
       };
@@ -102,9 +109,10 @@ export const findProfileByEmailPhone = createAction({
       first_name: profile.attributes.first_name,
       last_name: profile.attributes.last_name,
       external_id: profile.attributes.external_id,
-      full_name: [profile.attributes.first_name, profile.attributes.last_name]
-        .filter(Boolean)
-        .join(' ') || null,
+      full_name:
+        [profile.attributes.first_name, profile.attributes.last_name]
+          .filter(Boolean)
+          .join(' ') || null,
       created: profile.attributes.created,
       updated: profile.attributes.updated,
       full_profile: profile.attributes,
@@ -112,7 +120,9 @@ export const findProfileByEmailPhone = createAction({
 
     return {
       success: true,
-      message: `Found ${profiles.length} profile(s) matching ${isEmail ? 'email' : 'phone number'}: ${trimmedQuery}`,
+      message: `Found ${profiles.length} profile(s) matching ${
+        isEmail ? 'email' : 'phone number'
+      }: ${trimmedQuery}`,
       profiles: formattedProfiles,
       count: profiles.length,
       raw_response: response,

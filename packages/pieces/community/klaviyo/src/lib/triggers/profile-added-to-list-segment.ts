@@ -1,20 +1,17 @@
-
-import { 
-  createTrigger, 
-  TriggerStrategy, 
-  Property, 
-  PiecePropValueSchema, 
+import {
+  createTrigger,
+  TriggerStrategy,
+  Property,
   StaticPropsValue,
-  OAuth2PropertyValue 
 } from '@activepieces/pieces-framework';
-import { 
-  DedupeStrategy, 
-  HttpMethod, 
-  Polling, 
-  pollingHelper 
+import {
+  DedupeStrategy,
+  HttpMethod,
+  Polling,
+  pollingHelper,
 } from '@activepieces/pieces-common';
 import dayjs from 'dayjs';
-import { klaviyoAuth } from '../common/auth';
+import { klaviyoAuth, KlaviyoAuthValue } from '../common/auth';
 import { makeRequest } from '../common/client';
 
 interface KlaviyoProfile {
@@ -26,20 +23,34 @@ interface KlaviyoProfile {
     external_id?: string;
     first_name?: string;
     last_name?: string;
+    organization?: string;
+    locale?: string;
+    title?: string;
+    image?: string;
     created: string;
     updated: string;
     last_event_date?: string;
-    location?: object;
+    joined_group_at?: string;
+    location?: {
+      address1?: string;
+      address2?: string;
+      city?: string;
+      country?: string;
+      region?: string;
+      zip?: string;
+      timezone?: string;
+      ip?: string;
+      latitude?: number;
+      longitude?: number;
+    };
     properties?: object;
   };
-  relationships?: object;
-  links?: object;
 }
 
 const props = {
   targetType: Property.StaticDropdown({
     displayName: 'Target Type',
-    description: 'Monitor a list or segment for new profile additions',
+    description: 'Monitor a list or segment for new profile additions.',
     required: true,
     options: {
       options: [
@@ -50,220 +61,149 @@ const props = {
   }),
   listId: Property.Dropdown({
     displayName: 'List',
-    description: 'Select the list to monitor for new profile additions',
+    description: 'Select the list to monitor for new profile additions.',
     required: false,
+    auth: klaviyoAuth,
     refreshers: ['auth', 'targetType'],
     options: async ({ auth, targetType }) => {
       if ((targetType as unknown as string) !== 'list') {
-        return {
-          disabled: true,
-          options: [],
-        };
+        return { disabled: true, options: [] };
       }
-      
       if (!auth) {
-        return {
-          disabled: true,
-          placeholder: 'Connect your account',
-          options: [],
-        };
+        return { disabled: true, placeholder: 'Connect your account', options: [] };
       }
-
       try {
-        const authProp: OAuth2PropertyValue = auth as OAuth2PropertyValue;
-        const lists = await makeRequest(authProp.access_token, HttpMethod.GET, '/lists', {});
-        
-        const options = (lists.data || []).map((list: any) => ({
-          label: list.attributes.name || list.id,
-          value: list.id,
-        }));
-
+        const lists = await makeRequest(auth as KlaviyoAuthValue, HttpMethod.GET, '/lists', {});
         return {
           disabled: false,
-          options: options,
+          options: (lists.data || []).map((list: any) => ({
+            label: list.attributes.name || list.id,
+            value: list.id,
+          })),
         };
-      } catch (error) {
-        return {
-          disabled: true,
-          placeholder: 'Error loading lists',
-          options: [],
-        };
+      } catch {
+        return { disabled: true, placeholder: 'Error loading lists', options: [] };
       }
     },
   }),
   segmentId: Property.Dropdown({
     displayName: 'Segment',
-    description: 'Select the segment to monitor for new profile additions',
+    description: 'Select the segment to monitor for new profile additions.',
     required: false,
+    auth: klaviyoAuth,
     refreshers: ['auth', 'targetType'],
     options: async ({ auth, targetType }) => {
       if ((targetType as unknown as string) !== 'segment') {
-        return {
-          disabled: true,
-          options: [],
-        };
+        return { disabled: true, options: [] };
       }
-      
       if (!auth) {
-        return {
-          disabled: true,
-          placeholder: 'Connect your account',
-          options: [],
-        };
+        return { disabled: true, placeholder: 'Connect your account', options: [] };
       }
-
       try {
-        const authProp: OAuth2PropertyValue = auth as OAuth2PropertyValue;
-        const segments = await makeRequest(authProp.access_token, HttpMethod.GET, '/segments', {});
-        
-        const options = (segments.data || []).map((segment: any) => ({
-          label: segment.attributes.name || segment.id,
-          value: segment.id,
-        }));
-
+        const segments = await makeRequest(auth as KlaviyoAuthValue, HttpMethod.GET, '/segments', {});
         return {
           disabled: false,
-          options: options,
+          options: (segments.data || []).map((segment: any) => ({
+            label: segment.attributes.name || segment.id,
+            value: segment.id,
+          })),
         };
-      } catch (error) {
-        return {
-          disabled: true,
-          placeholder: 'Error loading segments',
-          options: [],
-        };
+      } catch {
+        return { disabled: true, placeholder: 'Error loading segments', options: [] };
       }
     },
   }),
 };
 
-const polling: Polling<PiecePropValueSchema<typeof klaviyoAuth>, StaticPropsValue<typeof props>> = {
+const polling: Polling<KlaviyoAuthValue, StaticPropsValue<typeof props>> = {
   strategy: DedupeStrategy.TIMEBASED,
-  items: async ({ auth, propsValue, lastFetchEpochMS, store }) => {
-    const authProp: OAuth2PropertyValue = auth as OAuth2PropertyValue;
-    
-    try {
-      if (propsValue.targetType === 'list' && !propsValue.listId) {
-        throw new Error('List ID is required when monitoring a list');
-      }
-      if (propsValue.targetType === 'segment' && !propsValue.segmentId) {
-        throw new Error('Segment ID is required when monitoring a segment');
-      }
+  items: async ({ auth, propsValue, lastFetchEpochMS }) => {
+    const { targetType, listId, segmentId } = propsValue;
 
-      const targetId = propsValue.targetType === 'list' ? propsValue.listId : propsValue.segmentId;
-      const targetName = propsValue.targetType === 'list' ? 'list' : 'segment';
-      
-      const basePath = propsValue.targetType === 'list' 
-        ? `/lists/${targetId}/profiles`
-        : `/segments/${targetId}/profiles`;
-
-      const queryParams = new URLSearchParams();
-      queryParams.append('page[size]', '100');
-      queryParams.append('sort', 'created');
-
-      const response = await makeRequest(
-        authProp.access_token,
-        HttpMethod.GET,
-        `${basePath}?${queryParams.toString()}`
-      );
-
-      const profiles: KlaviyoProfile[] = response.data || [];
-      
-      let allProfiles = [...profiles];
-      let nextCursor = response.links?.next;
-      
-      while (nextCursor && allProfiles.length < 1000) {
-        try {
-          const cursorMatch = nextCursor.match(/page%5Bcursor%5D=([^&]+)/);
-          if (!cursorMatch) break;
-          
-          const cursor = decodeURIComponent(cursorMatch[1]);
-          const paginationParams = new URLSearchParams();
-          paginationParams.append('page[size]', '100');
-          paginationParams.append('page[cursor]', cursor);
-          paginationParams.append('sort', 'created');
-          
-          const pageResponse = await makeRequest(
-            authProp.access_token,
-            HttpMethod.GET,
-            `${basePath}?${paginationParams.toString()}`
-          );
-          
-          const pageProfiles: KlaviyoProfile[] = pageResponse.data || [];
-          allProfiles.push(...pageProfiles);
-          nextCursor = pageResponse.links?.next;
-        } catch (error) {
-          console.warn('Error fetching additional pages:', error);
-          break;
-        }
-      }
-
-      const storeKey = `klaviyo_${targetName}_${targetId}_profiles`;
-      const lastProfileIds = (await store.get(storeKey)) as string[] || [];
-      
-      const currentProfileIds = allProfiles.map(p => p.id);
-      
-      const newProfileIds = currentProfileIds.filter(id => !lastProfileIds.includes(id));
-      
-      await store.put(storeKey, currentProfileIds);
-      
-      const newProfiles = allProfiles.filter(p => newProfileIds.includes(p.id));
-      
-      if (lastProfileIds.length === 0 && lastFetchEpochMS) {
-        const since = dayjs().subtract(24, 'hours');
-        const recentProfiles = newProfiles.filter(p => 
-          dayjs(p.attributes.created).isAfter(since)
-        );
-        
-        console.log(`Initial run: found ${newProfiles.length} total profiles, ${recentProfiles.length} recent additions`);
-        
-        return recentProfiles.map((profile) => ({
-          epochMilliSeconds: dayjs(profile.attributes.created).valueOf(),
-          data: {
-            ...profile,
-            profile_id: profile.id,
-            email: profile.attributes.email,
-            phone_number: profile.attributes.phone_number,
-            first_name: profile.attributes.first_name,
-            last_name: profile.attributes.last_name,
-            full_name: [profile.attributes.first_name, profile.attributes.last_name]
-              .filter(Boolean)
-              .join(' ') || null,
-            created_at: profile.attributes.created,
-            updated_at: profile.attributes.updated,
-            target_type: propsValue.targetType,
-            target_id: targetId,
-            added_to: `${targetName} ${targetId}`,
-          },
-        }));
-      }
-
-      console.log(`Found ${newProfiles.length} new profiles added to ${targetName} ${targetId}`);
-      
-      return newProfiles.map((profile) => ({
-        epochMilliSeconds: Date.now(),
-        data: {
-          ...profile,
-          profile_id: profile.id,
-          email: profile.attributes.email,
-          phone_number: profile.attributes.phone_number,
-          first_name: profile.attributes.first_name,
-          last_name: profile.attributes.last_name,
-          full_name: [profile.attributes.first_name, profile.attributes.last_name]
-            .filter(Boolean)
-            .join(' ') || null,
-          created_at: profile.attributes.created,
-          updated_at: profile.attributes.updated,
-          target_type: propsValue.targetType,
-          target_id: targetId,
-          added_to: `${targetName} ${targetId}`,
-          detected_at: new Date().toISOString(),
-        },
-      }));
-    } catch (error) {
-      console.error('Error fetching profiles from list/segment:', error);
-      throw new Error(`Failed to fetch profiles from ${propsValue.targetType}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    if (targetType === 'list' && !listId) {
+      throw new Error('Please select a list to monitor.');
     }
-  }
+    if (targetType === 'segment' && !segmentId) {
+      throw new Error('Please select a segment to monitor.');
+    }
+
+    const targetId = targetType === 'list' ? listId : segmentId;
+    const basePath = targetType === 'list'
+      ? `/lists/${targetId}/profiles`
+      : `/segments/${targetId}/profiles`;
+
+    // Use joined_group_at to only fetch profiles added since the last poll
+    const since = lastFetchEpochMS
+      ? new Date(lastFetchEpochMS).toISOString()
+      : dayjs().subtract(24, 'hours').toISOString();
+
+    const queryParams = new URLSearchParams();
+    queryParams.append('filter', `greater-than(joined_group_at,${since})`);
+    queryParams.append('page[size]', '100');
+    queryParams.append('sort', 'joined_group_at');
+
+    const allProfiles: KlaviyoProfile[] = [];
+
+    let response = await makeRequest(
+      auth,
+      HttpMethod.GET,
+      `${basePath}?${queryParams.toString()}`
+    );
+
+    allProfiles.push(...(response.data || []));
+
+    // Paginate through remaining results
+    while (response.links?.next && allProfiles.length < 1000) {
+      const cursorMatch = (response.links.next as string).match(/page%5Bcursor%5D=([^&]+)/);
+      if (!cursorMatch) break;
+
+      const cursor = decodeURIComponent(cursorMatch[1]);
+      const pageParams = new URLSearchParams();
+      pageParams.append('filter', `greater-than(joined_group_at,${since})`);
+      pageParams.append('page[size]', '100');
+      pageParams.append('page[cursor]', cursor);
+      pageParams.append('sort', 'joined_group_at');
+
+      response = await makeRequest(auth, HttpMethod.GET, `${basePath}?${pageParams.toString()}`);
+      allProfiles.push(...(response.data || []));
+    }
+
+    return allProfiles.map((profile) => {
+      const loc = profile.attributes.location ?? {};
+      return {
+        epochMilliSeconds: dayjs(profile.attributes.joined_group_at ?? profile.attributes.created).valueOf(),
+        data: {
+          id: profile.id,
+          email: profile.attributes.email ?? null,
+          phone_number: profile.attributes.phone_number ?? null,
+          external_id: profile.attributes.external_id ?? null,
+          first_name: profile.attributes.first_name ?? null,
+          last_name: profile.attributes.last_name ?? null,
+          full_name: [profile.attributes.first_name, profile.attributes.last_name].filter(Boolean).join(' ') || null,
+          organization: profile.attributes.organization ?? null,
+          locale: profile.attributes.locale ?? null,
+          title: profile.attributes.title ?? null,
+          image: profile.attributes.image ?? null,
+          created: profile.attributes.created,
+          updated: profile.attributes.updated,
+          joined_group_at: profile.attributes.joined_group_at ?? null,
+          last_event_date: profile.attributes.last_event_date ?? null,
+          address1: loc.address1 ?? null,
+          address2: loc.address2 ?? null,
+          city: loc.city ?? null,
+          country: loc.country ?? null,
+          region: loc.region ?? null,
+          zip: loc.zip ?? null,
+          timezone: loc.timezone ?? null,
+          ip: loc.ip ?? null,
+          latitude: loc.latitude ?? null,
+          longitude: loc.longitude ?? null,
+          target_type: targetType,
+          target_id: targetId,
+        },
+      };
+    });
+  },
 };
 
 export const profileAddedToListOrSegmentTrigger = createTrigger({
@@ -273,72 +213,39 @@ export const profileAddedToListOrSegmentTrigger = createTrigger({
   description: 'Triggers when a profile is added to a specific list or segment.',
   props,
   sampleData: {
-    type: "profile",
-    id: "01JZTTZ2NNC8ZCP45SM4J84RG2",
-    attributes: {
-      email: "sarah.mason@klaviyo-demo.com",
-      phone_number: "+15005550006",
-      external_id: null,
-      first_name: "Sarah",
-      last_name: "Mason",
-      organization: null,
-      locale: null,
-      title: "Regional Manager",
-      image: null,
-      created: "2025-07-10T18:53:32+00:00",
-      updated: "2025-07-10T18:53:32+00:00",
-      last_event_date: null,
-      location: {
-        zip: null,
-        country: null,
-        address1: null,
-        address2: null,
-        city: null,
-        latitude: null,
-        region: null,
-        longitude: null,
-        timezone: null,
-        ip: null
-      },
-      properties: {
-        "$phone_number_region": "US"
-      }
-    },
-    relationships: {
-      lists: {
-        links: {
-          self: "https://a.klaviyo.com/api/profiles/01JZTTZ2NNC8ZCP45SM4J84RG2/relationships/lists/",
-          related: "https://a.klaviyo.com/api/profiles/01JZTTZ2NNC8ZCP45SM4J84RG2/lists/"
-        }
-      },
-      segments: {
-        links: {
-          self: "https://a.klaviyo.com/api/profiles/01JZTTZ2NNC8ZCP45SM4J84RG2/relationships/segments/",
-          related: "https://a.klaviyo.com/api/profiles/01JZTTZ2NNC8ZCP45SM4J84RG2/segments/"
-        }
-      }
-    },
-    links: {
-      self: "https://a.klaviyo.com/api/profiles/01JZTTZ2NNC8ZCP45SM4J84RG2/"
-    },
-    profile_id: "01JZTTZ2NNC8ZCP45SM4J84RG2",
-    email: "sarah.mason@klaviyo-demo.com",
-    phone_number: "+15005550006",
-    first_name: "Sarah",
-    last_name: "Mason",
-    full_name: "Sarah Mason",
-    created_at: "2025-07-10T18:53:32+00:00",
-    updated_at: "2025-07-10T18:53:32+00:00",
-    target_type: "list",
-    target_id: "RB89mt",
-    added_to: "list RB89mt",
-    detected_at: "2025-01-16T15:30:00Z"
+    id: '01JZTTZ2NNC8ZCP45SM4J84RG2',
+    email: 'sarah.mason@klaviyo-demo.com',
+    phone_number: '+15005550006',
+    external_id: null,
+    first_name: 'Sarah',
+    last_name: 'Mason',
+    full_name: 'Sarah Mason',
+    organization: null,
+    locale: null,
+    title: 'Regional Manager',
+    image: null,
+    created: '2025-07-10T18:53:32+00:00',
+    updated: '2025-07-10T18:53:32+00:00',
+    joined_group_at: '2025-07-16T10:00:00+00:00',
+    last_event_date: null,
+    address1: null,
+    address2: null,
+    city: null,
+    country: null,
+    region: null,
+    zip: null,
+    timezone: null,
+    ip: null,
+    latitude: null,
+    longitude: null,
+    target_type: 'list',
+    target_id: 'RB89mt',
   },
   type: TriggerStrategy.POLLING,
   async test(context) {
     return await pollingHelper.test(polling, {
       store: context.store,
-      auth: context.auth as PiecePropValueSchema<typeof klaviyoAuth>,
+      auth: context.auth as KlaviyoAuthValue,
       propsValue: context.propsValue as StaticPropsValue<typeof props>,
       files: context.files,
     });
@@ -346,21 +253,21 @@ export const profileAddedToListOrSegmentTrigger = createTrigger({
   async onEnable(context) {
     await pollingHelper.onEnable(polling, {
       store: context.store,
-      auth: context.auth as PiecePropValueSchema<typeof klaviyoAuth>,
+      auth: context.auth as KlaviyoAuthValue,
       propsValue: context.propsValue as StaticPropsValue<typeof props>,
     });
   },
   async onDisable(context) {
     await pollingHelper.onDisable(polling, {
       store: context.store,
-      auth: context.auth as PiecePropValueSchema<typeof klaviyoAuth>,
+      auth: context.auth as KlaviyoAuthValue,
       propsValue: context.propsValue as StaticPropsValue<typeof props>,
     });
   },
   async run(context) {
     return await pollingHelper.poll(polling, {
       store: context.store,
-      auth: context.auth as PiecePropValueSchema<typeof klaviyoAuth>,
+      auth: context.auth as KlaviyoAuthValue,
       propsValue: context.propsValue as StaticPropsValue<typeof props>,
       files: context.files,
     });

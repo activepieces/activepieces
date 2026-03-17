@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { profileIdDropdown, countryCode } from '../common/props';
-import { klaviyoAuth } from '../common/auth';
+import { klaviyoAuth, KlaviyoAuthValue } from '../common/auth';
 import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
 
@@ -17,8 +17,8 @@ export const updateProfile = createAction({
       required: false,
     }),
     phone_number: Property.ShortText({
-      displayName: 'Phone Number', 
-      description: "Phone number in E.164 format (e.g., +15005550006)",
+      displayName: 'Phone Number',
+      description: 'Phone number in E.164 format (e.g., +15005550006)',
       required: false,
     }),
     external_id: Property.ShortText({
@@ -37,7 +37,7 @@ export const updateProfile = createAction({
       required: false,
     }),
     last_name: Property.ShortText({
-      displayName: 'Last Name', 
+      displayName: 'Last Name',
       description: "Individual's last name",
       required: false,
     }),
@@ -57,7 +57,7 @@ export const updateProfile = createAction({
       required: false,
     }),
     image: Property.ShortText({
-      displayName: 'Image URL', 
+      displayName: 'Image URL',
       description: 'URL pointing to profile image location',
       required: false,
     }),
@@ -69,7 +69,7 @@ export const updateProfile = createAction({
     }),
     address2: Property.ShortText({
       displayName: 'Address 2',
-      description: 'Second line of street address', 
+      description: 'Second line of street address',
       required: false,
     }),
     city: Property.ShortText({
@@ -104,7 +104,7 @@ export const updateProfile = createAction({
       required: false,
     }),
     longitude: Property.Number({
-      displayName: 'Longitude', 
+      displayName: 'Longitude',
       description: 'Longitude coordinate (4 decimal places recommended)',
       required: false,
     }),
@@ -121,7 +121,7 @@ export const updateProfile = createAction({
     }),
     include_predictive_analytics: Property.Checkbox({
       displayName: 'Include Predictive Analytics',
-      description: 'Include predictive analytics data in response', 
+      description: 'Include predictive analytics data in response',
       required: false,
       defaultValue: false,
     }),
@@ -155,7 +155,7 @@ export const updateProfile = createAction({
     } = propsValue;
 
     const attributes: Record<string, any> = {};
-    
+
     if (email !== undefined) attributes['email'] = email;
     if (phone_number !== undefined) attributes['phone_number'] = phone_number;
     if (external_id !== undefined) attributes['external_id'] = external_id;
@@ -167,12 +167,18 @@ export const updateProfile = createAction({
     if (title !== undefined) attributes['title'] = title;
     if (image !== undefined) attributes['image'] = image;
 
-    const hasLocationData = address1 !== undefined || address2 !== undefined || 
-                           city !== undefined || country !== undefined || 
-                           region !== undefined || zip !== undefined || 
-                           timezone !== undefined || ip !== undefined || 
-                           latitude !== undefined || longitude !== undefined;
-    
+    const hasLocationData =
+      address1 !== undefined ||
+      address2 !== undefined ||
+      city !== undefined ||
+      country !== undefined ||
+      region !== undefined ||
+      zip !== undefined ||
+      timezone !== undefined ||
+      ip !== undefined ||
+      latitude !== undefined ||
+      longitude !== undefined;
+
     if (hasLocationData) {
       const location: Record<string, any> = {};
       if (address1 !== undefined) location['address1'] = address1;
@@ -185,7 +191,7 @@ export const updateProfile = createAction({
       if (ip !== undefined) location['ip'] = ip;
       if (latitude !== undefined) location['latitude'] = latitude;
       if (longitude !== undefined) location['longitude'] = longitude;
-      
+
       attributes['location'] = location;
     }
 
@@ -203,22 +209,25 @@ export const updateProfile = createAction({
 
     const queryParams: string[] = [];
     const additionalFields: string[] = [];
-    
+
     if (include_subscriptions) {
       additionalFields.push('subscriptions');
     }
     if (include_predictive_analytics) {
       additionalFields.push('predictive_analytics');
     }
-    
+
     if (additionalFields.length > 0) {
-      queryParams.push(`additional-fields[profile]=${additionalFields.join(',')}`);
+      queryParams.push(
+        `additional-fields[profile]=${additionalFields.join(',')}`
+      );
     }
 
-    const queryString = queryParams.length > 0 ? `?${queryParams.join('&')}` : '';
+    const queryString =
+      queryParams.length > 0 ? `?${queryParams.join('&')}` : '';
 
     return await makeRequest(
-      auth.access_token,
+      auth as KlaviyoAuthValue,
       HttpMethod.PATCH,
       `/profiles/${profile_id}${queryString}`,
       body

@@ -1,6 +1,12 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { createPiece } from '@activepieces/pieces-framework';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { PieceCategory } from '@activepieces/shared';
 
-import { klaviyoAuth } from './lib/common/auth';
+import {
+  klaviyoAuth,
+  KlaviyoAuthValue,
+  getAuthorizationHeader,
+} from './lib/common/auth';
 import { createProfile } from './lib/actions/create-profile';
 import { updateProfile } from './lib/actions/update-profile';
 
@@ -16,10 +22,11 @@ import { unsubscribeProfile } from './lib/actions/unsubscribe-profile';
 import { profileAddedToListOrSegmentTrigger } from './lib/triggers/profile-added-to-list-segment';
 
 export const klaviyo = createPiece({
-  displayName: "Klaviyo",
+  displayName: 'Klaviyo',
   auth: klaviyoAuth,
   minimumSupportedRelease: '0.36.1',
-  logoUrl: "https://cdn.activepieces.com/pieces/Klaviyo.png",
+  logoUrl: 'https://cdn.activepieces.com/pieces/klaviyo.png',
+  categories: [PieceCategory.MARKETING],
   authors: ['Sanket6652'],
   actions: [
     createProfile,
@@ -32,6 +39,15 @@ export const klaviyo = createPiece({
     removeProfileFromList,
     subscribeProfile,
     unsubscribeProfile,
+    createCustomApiCallAction({
+      baseUrl: () => 'https://a.klaviyo.com/api',
+      auth: klaviyoAuth,
+      authMapping: async (auth) => ({
+        Authorization: getAuthorizationHeader(auth as KlaviyoAuthValue),
+        revision: '2025-04-15',
+        accept: 'application/vnd.api+json',
+      }),
+    }),
   ],
   triggers: [newProfileTrigger, profileAddedToListOrSegmentTrigger],
 });

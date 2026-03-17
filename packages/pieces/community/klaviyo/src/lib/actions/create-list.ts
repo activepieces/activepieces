@@ -1,5 +1,5 @@
-import { createAction, Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
-import { klaviyoAuth } from '../common/auth';
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { klaviyoAuth, KlaviyoAuthValue } from '../common/auth';
 import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
 
@@ -31,9 +31,8 @@ export const createList = createAction({
       },
     };
 
-    const authProp: OAuth2PropertyValue = auth as OAuth2PropertyValue;
     const response = await makeRequest(
-      authProp.access_token,
+      auth as KlaviyoAuthValue,
       HttpMethod.POST,
       '/lists',
       data

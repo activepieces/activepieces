@@ -473,7 +473,7 @@
     },
     "packages/pieces/community/ai": {
       "name": "@activepieces/piece-ai",
-      "version": "0.1.21",
+      "version": "0.2.0",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -3542,6 +3542,18 @@
     "packages/pieces/community/kizeo-forms": {
       "name": "@activepieces/piece-kizeo-forms",
       "version": "0.4.4",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "axios": "1.13.5",
+        "tslib": "2.6.2",
+        "zod": "4.3.6",
+      },
+    },
+    "packages/pieces/community/klaviyo": {
+      "name": "@activepieces/piece-klaviyo",
+      "version": "0.0.1",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -7625,7 +7637,7 @@
     },
     "packages/shared": {
       "name": "@activepieces/shared",
-      "version": "0.44.0",
+      "version": "0.45.0",
       "dependencies": {
         "deepmerge-ts": "7.1.0",
         "nanoid": "3.3.8",
@@ -8377,6 +8389,8 @@
     "@activepieces/piece-kissflow": ["@activepieces/piece-kissflow@workspace:packages/pieces/community/kissflow"],
 
     "@activepieces/piece-kizeo-forms": ["@activepieces/piece-kizeo-forms@workspace:packages/pieces/community/kizeo-forms"],
+
+    "@activepieces/piece-klaviyo": ["@activepieces/piece-klaviyo@workspace:packages/pieces/community/klaviyo"],
 
     "@activepieces/piece-knack": ["@activepieces/piece-knack@workspace:packages/pieces/community/knack"],
 
