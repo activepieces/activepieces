@@ -1,15 +1,16 @@
 {
-  "extends": "./tsconfig.json",
+  "extends": "../../../../tsconfig.base.json",
   "compilerOptions": {
     "module": "commonjs",
-    "rootDir": ".",
-    "baseUrl": ".",
-    "paths": {},
-    "outDir": "./dist",
-    "declaration": true,
-    "declarationMap": true,
-    "types": ["node"]
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "noImplicitOverride": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "outDir": "./dist"
   },
-  "exclude": ["jest.config.ts", "src/**/*.spec.ts", "src/**/*.test.ts"],
-  "include": ["src/**/*.ts"]
+  "files": [],
+  "include": ["src/**/*"],
+  "exclude": ["**/*.spec.ts", "**/*.test.ts"]
 }
