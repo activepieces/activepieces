@@ -28,8 +28,8 @@ if you want to generate sample data without triggering the flow, append \`/test\
 
 const syncMarkdown = `**Synchronous Requests:**
 
-If you expect a response from this webhook, add \`/sync\` to the end of the URL. 
-If it takes more than 30 seconds, it will return a 408 Request Timeout response.
+If you expect a response from this webhook, add \`/sync\` to the end of the URL.
+If it takes more than {{webhookTimeoutSeconds}} seconds, it will return a 408 Request Timeout response.
 
 To return data, add an Webhook step to your flow with the Return Response action.
 `;
