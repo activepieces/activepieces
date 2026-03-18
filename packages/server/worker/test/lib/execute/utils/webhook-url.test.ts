@@ -74,26 +74,52 @@ describe('end-to-end: ensurePublicApiUrl + getWebhookUrl', () => {
     const flowId = 'flow-456'
 
     it.each([
-        ['https://example.com', 'https://example.com/api/v1/webhooks/flow-456'],
-        ['https://example.com/', 'https://example.com/api/v1/webhooks/flow-456'],
-        ['https://example.com/api', 'https://example.com/api/v1/webhooks/flow-456'],
-        ['https://example.com/api/', 'https://example.com/api/v1/webhooks/flow-456'],
-        ['https://cloud.activepieces.com', 'https://cloud.activepieces.com/api/v1/webhooks/flow-456'],
-        ['https://cloud.activepieces.com/', 'https://cloud.activepieces.com/api/v1/webhooks/flow-456'],
-    ])('produces correct webhook URL for publicUrl=%s', (publicUrl, expected) => {
+        'https://example.com',
+        'https://example.com/',
+        'https://example.com/api',
+        'https://example.com/api/',
+    ])('produces correct webhook URL for publicUrl=%s', (publicUrl) => {
         const apiUrl = ensurePublicApiUrl(publicUrl)
-        expect(getWebhookUrl(apiUrl, flowId)).toBe(expected)
+        expect(getWebhookUrl(apiUrl, flowId))
+            .toBe('https://example.com/api/v1/webhooks/flow-456')
     })
 
     it.each([
-        ['https://example.com', 'https://example.com/api/v1/app-events/slack'],
-        ['https://example.com/', 'https://example.com/api/v1/app-events/slack'],
-        ['https://example.com/api', 'https://example.com/api/v1/app-events/slack'],
-        ['https://example.com/api/', 'https://example.com/api/v1/app-events/slack'],
-        ['https://cloud.activepieces.com', 'https://cloud.activepieces.com/api/v1/app-events/slack'],
-        ['https://cloud.activepieces.com/', 'https://cloud.activepieces.com/api/v1/app-events/slack'],
-    ])('produces correct app webhook URL for publicUrl=%s', (publicUrl, expected) => {
+        'https://example.com',
+        'https://example.com/',
+        'https://example.com/api',
+        'https://example.com/api/',
+    ])('produces correct app webhook URL for publicUrl=%s', (publicUrl) => {
         const apiUrl = ensurePublicApiUrl(publicUrl)
-        expect(getAppWebhookUrl(apiUrl, 'slack')).toBe(expected)
+        expect(getAppWebhookUrl(apiUrl, 'slack'))
+            .toBe('https://example.com/api/v1/app-events/slack')
+    })
+})
+
+describe('regression: cloud.activepieces.com double-slash bug', () => {
+    const flowId = 'flow-abc'
+
+    it('old behavior would produce double slash — fixed behavior produces correct URL', () => {
+        // Before the fix, PUBLIC_URL was used directly (e.g. "https://cloud.activepieces.com/")
+        // which produced "https://cloud.activepieces.com//v1/webhooks/flow-abc"
+        const publicUrl = 'https://cloud.activepieces.com/'
+        const apiUrl = ensurePublicApiUrl(publicUrl)
+        expect(apiUrl).toBe('https://cloud.activepieces.com/api/')
+        expect(getWebhookUrl(apiUrl, flowId))
+            .toBe('https://cloud.activepieces.com/api/v1/webhooks/flow-abc')
+    })
+
+    it('handles cloud URL without trailing slash', () => {
+        const publicUrl = 'https://cloud.activepieces.com'
+        const apiUrl = ensurePublicApiUrl(publicUrl)
+        expect(getWebhookUrl(apiUrl, flowId))
+            .toBe('https://cloud.activepieces.com/api/v1/webhooks/flow-abc')
+    })
+
+    it('produces correct app webhook URL for cloud', () => {
+        const publicUrl = 'https://cloud.activepieces.com'
+        const apiUrl = ensurePublicApiUrl(publicUrl)
+        expect(getAppWebhookUrl(apiUrl, 'slack'))
+            .toBe('https://cloud.activepieces.com/api/v1/app-events/slack')
     })
 })
