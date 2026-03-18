@@ -6744,6 +6744,16 @@
         "tslib": "2.6.2",
       },
     },
+    "packages/pieces/community/whatsscale": {
+      "name": "@activepieces/piece-whatsscale",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/wonderchat": {
       "name": "@activepieces/piece-wonderchat",
       "version": "0.1.3",
@@ -9019,6 +9029,8 @@
     "@activepieces/piece-whatsable": ["@activepieces/piece-whatsable@workspace:packages/pieces/community/whatsable"],
 
     "@activepieces/piece-whatsapp": ["@activepieces/piece-whatsapp@workspace:packages/pieces/community/whatsapp"],
+
+    "@activepieces/piece-whatsscale": ["@activepieces/piece-whatsscale@workspace:packages/pieces/community/whatsscale"],
 
     "@activepieces/piece-wonderchat": ["@activepieces/piece-wonderchat@workspace:packages/pieces/community/wonderchat"],
 
