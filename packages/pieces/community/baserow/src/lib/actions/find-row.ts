@@ -61,7 +61,7 @@ export const findRowAction = createAction({
       field_value: string;
     };
     if (!field_name || !field_value) {
-      return { found: false, row: null };
+      return { found: false, row: null, count: 0 };
     }
     const client = makeClient(context.auth.props);
     const response = await client.listRows(
