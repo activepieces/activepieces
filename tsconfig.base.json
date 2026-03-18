@@ -1234,6 +1234,9 @@
       "@activepieces/piece-whatsapp": [
         "packages/pieces/community/whatsapp/src/index.ts"
       ],
+      "@activepieces/piece-whatsscale": [
+        "packages/pieces/community/whatsscale/src/index.ts"
+      ],
       "@activepieces/piece-wonderchat": [
         "packages/pieces/community/wonderchat/src/index.ts"
       ],
