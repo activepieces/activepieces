@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const { execSync } = require('child_process');
+const { execSync, spawn } = require('child_process');
 const fs = require('fs');
 
 // Check Node.js version
@@ -36,3 +36,24 @@ try {
 }
 
 execSync('bun install', { stdio: 'inherit' });
+
+// Pre-build dev pieces so dist/ exists before the server starts
+const dotenv = require('dotenv');
+const envConfig = fs.existsSync('.env.dev') ? dotenv.parse(fs.readFileSync('.env.dev', 'utf-8')) : {};
+const devPieces = process.env.AP_DEV_PIECES || envConfig.AP_DEV_PIECES;
+
+if (devPieces) {
+  const pieceFilters = devPieces
+    .split(',')
+    .map(name => `--filter=@activepieces/piece-${name.trim()}`)
+    .join(' ');
+  console.log(`Building dev pieces: ${devPieces}`);
+  execSync(`npx turbo run build ${pieceFilters}`, { stdio: 'inherit' });
+
+  // Spawn file watcher for dev pieces as a detached background process
+  const watchProcess = spawn('node', ['tools/watch-dev-pieces.js', devPieces], {
+    stdio: 'inherit',
+    detached: true,
+  });
+  watchProcess.unref();
+}
