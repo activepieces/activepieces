@@ -32,7 +32,15 @@ export const systemJobsSchedule = (log: FastifyBaseLogger): SystemJobSchedule =>
         }
 
         systemJobsQueue = new Queue(SYSTEM_JOB_QUEUE, queueConfig)
+        await systemJobsQueue.waitUntilReady()
 
+        const { error } = await tryCatch(async () => removeDeprecatedJobs())
+        if (!isNil(error)) {
+            log.error({ err: error }, '[systemJob#init] Error removing deprecated jobs')
+        }
+    },
+
+    async startWorker(): Promise<void> {
         systemJobWorker = new Worker(
             SYSTEM_JOB_QUEUE,
             async (job) => {
@@ -55,14 +63,7 @@ export const systemJobsSchedule = (log: FastifyBaseLogger): SystemJobSchedule =>
             }
         })
 
-        await Promise.all([
-            systemJobsQueue.waitUntilReady(),
-            systemJobWorker.waitUntilReady(),
-        ])
-        const { error } = await tryCatch(async () => removeDeprecatedJobs())
-        if (!isNil(error)) {
-            log.error({ err: error }, '[systemJob#init] Error removing deprecated jobs')
-        }
+        await systemJobWorker.waitUntilReady()
     },
 
     async upsertJob({ job, schedule, customConfig }): Promise<void> {
