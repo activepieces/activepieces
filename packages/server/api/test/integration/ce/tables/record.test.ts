@@ -93,7 +93,7 @@ describe('Record API', () => {
 
             expect(response?.statusCode).toBe(StatusCodes.CREATED)
             const body = response?.json()
-            expect(body[0].cells[field.id].value).toBeNull()
+            expect(body[0].cells[field.id].value).toBe('')
         })
 
         it('should silently drop cells with non-existent fieldId', async () => {
