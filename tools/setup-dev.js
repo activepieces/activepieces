@@ -39,13 +39,16 @@ execSync('bun install', { stdio: 'inherit' });
 
 // Pre-build dev pieces so dist/ exists before the server starts
 const dotenv = require('dotenv');
-const envConfig = fs.existsSync('.env.dev') ? dotenv.parse(fs.readFileSync('.env.dev', 'utf-8')) : {};
+let envConfig = {};
+try {
+  envConfig = dotenv.parse(fs.readFileSync('.env.dev', 'utf-8'));
+} catch {}
 const devPieces = process.env.AP_DEV_PIECES || envConfig.AP_DEV_PIECES;
 
 if (devPieces) {
-  const pieceFilters = devPieces
-    .split(',')
-    .map(name => `--filter=@activepieces/piece-${name.trim()}`)
+  const pieceNames = [...new Set(devPieces.split(',').map(n => n.trim()))];
+  const pieceFilters = pieceNames
+    .map(name => `--filter=@activepieces/piece-${name}`)
     .join(' ');
   console.log(`Building dev pieces: ${devPieces}`);
   execSync(`npx turbo run build ${pieceFilters}`, { stdio: 'inherit' });

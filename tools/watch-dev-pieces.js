@@ -31,6 +31,10 @@ function buildPiece(pieceName) {
   const buildProcess = spawn('npx', ['turbo', 'run', 'build', filter], {
     stdio: 'inherit',
   });
+  buildProcess.on('error', (err) => {
+    rebuilding.delete(pieceName);
+    console.error(`[piece-watcher] Failed to spawn build for ${pieceName}:`, err.message);
+  });
   buildProcess.on('close', (code) => {
     rebuilding.delete(pieceName);
     if (code === 0) {
@@ -60,6 +64,10 @@ watcher.on('all', (_event, filePath) => {
     }
     buildPiece(pieceName);
   }, 300));
+});
+
+watcher.on('error', (err) => {
+  console.error(`[piece-watcher] Watcher error:`, err.message);
 });
 
 console.log(`[piece-watcher] Watching for changes in: ${pieceNames.join(', ')}`);
