@@ -5421,7 +5421,7 @@
     },
     "packages/pieces/community/returning-ai": {
       "name": "@activepieces/piece-returning-ai",
-      "version": "0.1.4",
+      "version": "0.2.0",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
