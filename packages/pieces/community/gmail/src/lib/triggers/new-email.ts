@@ -4,7 +4,6 @@ import {
   PiecePropValueSchema,
   FilesService,
 } from '@activepieces/pieces-framework';
-import dayjs from 'dayjs';
 import { GmailLabel } from '../common/models';
 import { GmailProps } from '../common/props';
 import { gmailAuth } from '../auth';
@@ -142,7 +141,7 @@ async function pollRecentMessages({
       );
 
       pollingResponse.push({
-        epochMilliSeconds: dayjs(parsedMailResponse.date).valueOf(),
+        epochMilliSeconds: Number(rawMailResponse.data.internalDate),
         data: {
           message: {
             ...parsedMailResponse,
@@ -157,7 +156,11 @@ async function pollRecentMessages({
         },
       });
     } catch (error: any) {
-      if (error.code === 429) {
+      const isRateLimit =
+        error.status === 429 ||
+        (error.status === 403 &&
+          /quota|rate.?limit/i.test(error.message ?? ''));
+      if (isRateLimit) {
         break;
       }
       throw error;

@@ -15,7 +15,6 @@ import {
   getFirstFiveOrAll,
 } from '../common/data';
 import { GmailLabel } from '../common/models';
-import dayjs from 'dayjs';
 
 type Props = {
   from?: string;
@@ -176,7 +175,7 @@ async function pollRecentMessages({
 
       for (const attachment of parsedAttachments) {
         pollingResponse.push({
-          epochMilliSeconds: dayjs(restOfParsedMailResponse.date).valueOf(),
+          epochMilliSeconds: Number(rawMailResponse.data.internalDate),
           data: {
             attachment,
             message: {
@@ -187,7 +186,11 @@ async function pollRecentMessages({
         });
       }
     } catch (error: any) {
-      if (error.code === 429) {
+      const isRateLimit =
+        error.status === 429 ||
+        (error.status === 403 &&
+          /quota|rate.?limit/i.test(error.message ?? ''));
+      if (isRateLimit) {
         break;
       }
       throw error;
