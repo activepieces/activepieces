@@ -1,3 +1,5 @@
+/// <reference types="vitest/globals" />
+
 import { createHmac } from 'crypto';
 import { verifyHmacAuth } from '../src/lib/triggers/catch-hook';
 
@@ -20,7 +22,7 @@ describe('verifyHmacAuth', () => {
   describe('with hex encoding', () => {
     const encoding = 'hex';
 
-    it('should return true for valid signature', () => {
+    test('should return true for valid signature', () => {
       const body = JSON.stringify({ event: 'test', data: 'payload' });
       const signature = computeSignature(body, secret, algorithm, encoding);
       const headers = { 'x-signature': signature };
@@ -38,7 +40,7 @@ describe('verifyHmacAuth', () => {
       expect(result).toBe(true);
     });
 
-    it('should return false for invalid signature', () => {
+    test('should return false for invalid signature', () => {
       const body = JSON.stringify({ event: 'test', data: 'payload' });
       const headers = { 'x-signature': 'invalid-signature' };
 
@@ -55,7 +57,7 @@ describe('verifyHmacAuth', () => {
       expect(result).toBe(false);
     });
 
-    it('should return false when signature header is missing', () => {
+    test('should return false when signature header is missing', () => {
       const body = JSON.stringify({ event: 'test', data: 'payload' });
       const headers = {};
 
@@ -72,7 +74,7 @@ describe('verifyHmacAuth', () => {
       expect(result).toBe(false);
     });
 
-    it('should return false when signature is computed with wrong secret', () => {
+    test('should return false when signature is computed with wrong secret', () => {
       const body = JSON.stringify({ event: 'test', data: 'payload' });
       const wrongSignature = computeSignature(
         body,
@@ -95,7 +97,7 @@ describe('verifyHmacAuth', () => {
       expect(result).toBe(false);
     });
 
-    it('should return false when body has been tampered with', () => {
+    test('should return false when body has been tampered with', () => {
       const originalBody = JSON.stringify({ event: 'test', data: 'payload' });
       const signature = computeSignature(
         originalBody,
@@ -123,7 +125,7 @@ describe('verifyHmacAuth', () => {
   describe('with base64 encoding', () => {
     const encoding = 'base64';
 
-    it('should return true for valid base64 signature', () => {
+    test('should return true for valid base64 signature', () => {
       const body = JSON.stringify({ event: 'test', data: 'payload' });
       const signature = computeSignature(body, secret, algorithm, encoding);
       const headers = { 'x-signature': signature };
@@ -141,7 +143,7 @@ describe('verifyHmacAuth', () => {
       expect(result).toBe(true);
     });
 
-    it('should return false for invalid base64 signature', () => {
+    test('should return false for invalid base64 signature', () => {
       const body = JSON.stringify({ event: 'test', data: 'payload' });
       const headers = { 'x-signature': 'aW52YWxpZC1zaWduYXR1cmU=' };
 
@@ -162,7 +164,7 @@ describe('verifyHmacAuth', () => {
   describe('with signature prefix', () => {
     const encoding = 'hex';
 
-    it('should strip prefix before verification (GitHub style sha256=)', () => {
+    test('should strip prefix before verification (GitHub style sha256=)', () => {
       const body = JSON.stringify({ event: 'push', ref: 'refs/heads/main' });
       const signature = computeSignature(body, secret, algorithm, encoding);
       const prefixedSignature = `sha256=${signature}`;
@@ -181,7 +183,7 @@ describe('verifyHmacAuth', () => {
       expect(result).toBe(true);
     });
 
-    it('should fail if prefix is missing when expected', () => {
+    test('should fail if prefix is missing when expected', () => {
       const body = JSON.stringify({ event: 'push', ref: 'refs/heads/main' });
       const signature = computeSignature(body, secret, algorithm, encoding);
       // Signature without prefix, but prefix is configured
@@ -200,7 +202,7 @@ describe('verifyHmacAuth', () => {
       expect(result).toBe(false);
     });
 
-    it('should work with sha1= prefix', () => {
+    test('should work with sha1= prefix', () => {
       const sha1Algorithm = 'sha1';
       const body = JSON.stringify({ event: 'ping' });
       const signature = computeSignature(body, secret, sha1Algorithm, encoding);
@@ -224,7 +226,7 @@ describe('verifyHmacAuth', () => {
   describe('with different algorithms', () => {
     const encoding = 'hex';
 
-    it('should work with SHA-1 algorithm', () => {
+    test('should work with SHA-1 algorithm', () => {
       const sha1Algorithm = 'sha1';
       const body = JSON.stringify({ data: 'test' });
       const signature = computeSignature(body, secret, sha1Algorithm, encoding);
@@ -243,7 +245,7 @@ describe('verifyHmacAuth', () => {
       expect(result).toBe(true);
     });
 
-    it('should work with SHA-512 algorithm', () => {
+    test('should work with SHA-512 algorithm', () => {
       const sha512Algorithm = 'sha512';
       const body = JSON.stringify({ data: 'test' });
       const signature = computeSignature(
@@ -267,7 +269,7 @@ describe('verifyHmacAuth', () => {
       expect(result).toBe(true);
     });
 
-    it('should fail when algorithm mismatches', () => {
+    test('should fail when algorithm mismatches', () => {
       const body = JSON.stringify({ data: 'test' });
       // Compute with SHA-256
       const signature = computeSignature(body, secret, 'sha256', encoding);
@@ -291,7 +293,7 @@ describe('verifyHmacAuth', () => {
   describe('with different body types', () => {
     const encoding = 'hex';
 
-    it('should handle string body', () => {
+    test('should handle string body', () => {
       const body = 'plain text body';
       const signature = computeSignature(body, secret, algorithm, encoding);
       const headers = { 'x-signature': signature };
@@ -309,7 +311,7 @@ describe('verifyHmacAuth', () => {
       expect(result).toBe(true);
     });
 
-    it('should handle Buffer body', () => {
+    test('should handle Buffer body', () => {
       const bodyString = 'buffer body content';
       const body = Buffer.from(bodyString, 'utf8');
       const signature = computeSignature(
@@ -333,7 +335,7 @@ describe('verifyHmacAuth', () => {
       expect(result).toBe(true);
     });
 
-    it('should handle object body by JSON stringifying', () => {
+    test('should handle object body by JSON stringifying', () => {
       const bodyObject = { event: 'test', nested: { key: 'value' } };
       const expectedBodyString = JSON.stringify(bodyObject);
       const signature = computeSignature(
@@ -357,7 +359,7 @@ describe('verifyHmacAuth', () => {
       expect(result).toBe(true);
     });
 
-    it('should handle undefined body as empty string', () => {
+    test('should handle undefined body as empty string', () => {
       const signature = computeSignature('', secret, algorithm, encoding);
       const headers = { 'x-signature': signature };
 
@@ -374,7 +376,7 @@ describe('verifyHmacAuth', () => {
       expect(result).toBe(true);
     });
 
-    it('should handle null body as empty string', () => {
+    test('should handle null body as empty string', () => {
       const signature = computeSignature('', secret, algorithm, encoding);
       const headers = { 'x-signature': signature };
 
@@ -395,7 +397,7 @@ describe('verifyHmacAuth', () => {
   describe('header name case sensitivity', () => {
     const encoding = 'hex';
 
-    it('should find header with lowercase conversion', () => {
+    test('should find header with lowercase conversion', () => {
       const body = JSON.stringify({ event: 'test' });
       const signature = computeSignature(body, secret, algorithm, encoding);
       // Header stored with lowercase (as HTTP headers typically are)
@@ -414,7 +416,7 @@ describe('verifyHmacAuth', () => {
       expect(result).toBe(true);
     });
 
-    it('should find header with all caps conversion', () => {
+    test('should find header with all caps conversion', () => {
       const body = JSON.stringify({ event: 'test' });
       const signature = computeSignature(body, secret, algorithm, encoding);
       const headers = { 'x-hub-signature-256': signature };
@@ -436,7 +438,7 @@ describe('verifyHmacAuth', () => {
   describe('timing-safe comparison', () => {
     const encoding = 'hex';
 
-    it('should return false for signatures of different lengths', () => {
+    test('should return false for signatures of different lengths', () => {
       const body = JSON.stringify({ event: 'test' });
       // Short invalid signature
       const headers = { 'x-signature': 'abc123' };
@@ -454,7 +456,7 @@ describe('verifyHmacAuth', () => {
       expect(result).toBe(false);
     });
 
-    it('should return false for empty signature', () => {
+    test('should return false for empty signature', () => {
       const body = JSON.stringify({ event: 'test' });
       const headers = { 'x-signature': '' };
 
