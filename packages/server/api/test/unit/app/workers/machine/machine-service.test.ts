@@ -62,7 +62,7 @@ describe('machineService — getExecutionMode', () => {
         vi.resetModules()
     })
 
-    it('should return SANDBOX_CODE_ONLY for trusted dedicated worker', async () => {
+    it('should return SANDBOX_PROCESS for trusted dedicated worker', async () => {
         vi.mocked(system.getOrThrow).mockReturnValue(ExecutionMode.SANDBOX_PROCESS as any)
         vi.mocked(dedicatedWorkers).mockReturnValue({
             getWorkerConfig: vi.fn().mockResolvedValue({ trustedEnvironment: true }),
@@ -74,7 +74,7 @@ describe('machineService — getExecutionMode', () => {
         const { machineService: freshMachineService } = await import('../../../../../src/app/workers/machine/machine-service')
         const result = await freshMachineService(mockLog).onConnection(mockHealthcheck, 'platform-123')
 
-        expect(result.EXECUTION_MODE).toBe(ExecutionMode.SANDBOX_CODE_ONLY)
+        expect(result.EXECUTION_MODE).toBe(ExecutionMode.SANDBOX_PROCESS)
     })
 
     it('should return SANDBOX_CODE_AND_PROCESS for untrusted dedicated worker', async () => {
