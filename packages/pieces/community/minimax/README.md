@@ -6,6 +6,8 @@
 
 | Model | Description |
 |-------|-------------|
+| MiniMax-M2.7 | Latest flagship model with enhanced reasoning and coding |
+| MiniMax-M2.7-highspeed | High-speed version of M2.7 for low-latency scenarios |
 | MiniMax-M2.5 | Peak Performance. Ultimate Value. Master the Complex |
 | MiniMax-M2.5-highspeed | Same performance, faster and more agile |
 

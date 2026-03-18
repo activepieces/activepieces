@@ -19,8 +19,8 @@ export const askMinimax = createAction({
       displayName: 'Model',
       required: true,
       description:
-        'The model which will generate the completion. MiniMax-M2.5 offers peak performance, while MiniMax-M2.5-highspeed provides the same performance with faster speed.',
-      defaultValue: 'MiniMax-M2.5',
+        'The model which will generate the completion. MiniMax-M2.7 is the latest flagship model with enhanced reasoning and coding capabilities.',
+      defaultValue: 'MiniMax-M2.7',
       options: {
         options: defaultModels,
       },
