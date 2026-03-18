@@ -1,6 +1,7 @@
 import { authenticationSession } from '@/lib/authentication-session';
 
 const MAX_ITEMS = 50;
+const EXPIRY_MS = 30 * 24 * 60 * 60 * 1000;
 
 function getKey(): string {
   const userId = authenticationSession.getCurrentUserId();
@@ -25,7 +26,9 @@ export function getAccessHistory(): AccessedItem[] {
   try {
     const raw = localStorage.getItem(getKey());
     if (!raw) return [];
-    return JSON.parse(raw) as AccessedItem[];
+    const items = JSON.parse(raw) as AccessedItem[];
+    const cutoff = Date.now() - EXPIRY_MS;
+    return items.filter((item) => item.accessedAt >= cutoff);
   } catch {
     return [];
   }

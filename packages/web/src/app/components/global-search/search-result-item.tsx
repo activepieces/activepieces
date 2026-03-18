@@ -1,10 +1,10 @@
 import { t } from 'i18next';
 import { Dot, FolderIcon, User } from 'lucide-react';
 
-import { type SearchResultItem } from './use-global-search-results';
-
 import { TableIcon } from '@/components/icons/table';
 import { WorkflowIcon } from '@/components/icons/workflow';
+
+import { type SearchResultItem } from './use-global-search-results';
 
 function timeAgo(date: Date | string): string {
   const ms = Date.now() - new Date(date).getTime();

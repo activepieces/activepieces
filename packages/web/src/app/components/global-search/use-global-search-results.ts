@@ -2,15 +2,15 @@ import { PROJECT_COLOR_PALETTE } from '@activepieces/shared';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 
-import { getAccessHistory } from './access-history';
-import { STATIC_PAGES, type StaticPage } from './static-pages';
-
 import { flowsApi } from '@/features/flows';
 import { foldersApi } from '@/features/folders';
 import { projectCollectionUtils, getProjectName } from '@/features/projects';
 import { tablesApi } from '@/features/tables';
 import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
+
+import { getAccessHistory } from './access-history';
+import { STATIC_PAGES, type StaticPage } from './static-pages';
 
 const SEARCH_LIMIT = 6;
 const SUPPLEMENT_THRESHOLD = 5;
@@ -185,7 +185,7 @@ export function useGlobalSearchResults(query: string, open: boolean) {
 
       type PoolItem = { item: SearchResultItem; timestamp: number };
 
-      const pool: PoolItem[] = accessHistory.map((h) => ({
+      const historyPool: PoolItem[] = accessHistory.map((h) => ({
         timestamp: h.accessedAt,
         item: {
           id: h.id,
@@ -205,6 +205,8 @@ export function useGlobalSearchResults(query: string, open: boolean) {
         },
       }));
 
+      const suggestedItems: SearchResultItem[] = [];
+
       if (needsSupplement) {
         const remaining = SUPPLEMENT_THRESHOLD - accessHistory.length;
         const fillCandidates: PoolItem[] = [
@@ -220,7 +222,9 @@ export function useGlobalSearchResults(query: string, open: boolean) {
           ...pageResults.map((r) => ({ item: r, timestamp: 0 })),
         ].filter((p) => !historyIds.has(p.item.id));
 
-        pool.push(...fillCandidates.slice(0, remaining));
+        suggestedItems.push(
+          ...fillCandidates.slice(0, remaining).map((p) => p.item),
+        );
       }
 
       const buckets: Record<string, SearchResultItem[]> = {
@@ -230,10 +234,8 @@ export function useGlobalSearchResults(query: string, open: boolean) {
         'last-30-days': [],
       };
 
-      for (const { item, timestamp } of pool) {
-        const period =
-          timestamp > 0 ? getTimePeriod(timestamp) : 'last-30-days';
-        buckets[period].push(item);
+      for (const { item, timestamp } of historyPool) {
+        buckets[getTimePeriod(timestamp)].push(item);
       }
 
       const periodDefs = [
@@ -257,7 +259,19 @@ export function useGlobalSearchResults(query: string, open: boolean) {
           isLoading: false,
         }));
 
-      if (isFillLoading && pool.length < SUPPLEMENT_THRESHOLD) {
+      if (suggestedItems.length > 0) {
+        groups.push({
+          type: 'suggestions',
+          heading: t('Suggested'),
+          items: suggestedItems,
+          isLoading: false,
+        });
+      }
+
+      if (
+        isFillLoading &&
+        historyPool.length + suggestedItems.length < SUPPLEMENT_THRESHOLD
+      ) {
         groups.push({
           type: 'suggestions-loading',
           heading: '',

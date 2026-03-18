@@ -10,13 +10,6 @@ import React, {
 import { useNavigate } from 'react-router-dom';
 import { useDebounce } from 'use-debounce';
 
-import { recordAccess, type AccessedItemType } from './access-history';
-import { SearchResultRow } from './search-result-item';
-import {
-  type SearchResultItem,
-  useGlobalSearchResults,
-} from './use-global-search-results';
-
 import {
   CommandDialog,
   CommandGroup,
@@ -26,6 +19,13 @@ import {
   CommandSeparator,
 } from '@/components/ui/command';
 import { projectCollectionUtils } from '@/features/projects';
+
+import { recordAccess, type AccessedItemType } from './access-history';
+import { SearchResultRow } from './search-result-item';
+import {
+  type SearchResultItem,
+  useGlobalSearchResults,
+} from './use-global-search-results';
 
 type GlobalSearchContextType = {
   open: boolean;

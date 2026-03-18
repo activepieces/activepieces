@@ -12,16 +12,6 @@ import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useDebounce } from 'use-debounce';
 
-import { recordAccess } from '../../global-search/access-history';
-import { GlobalSearchCommand } from '../../global-search/global-search-command';
-import { STATIC_PAGES } from '../../global-search/static-pages';
-import { SidebarGeneralItemType } from '../ap-sidebar-group';
-import { ApSidebarItem, SidebarItemType } from '../ap-sidebar-item';
-import ProjectSideBarItem from '../project';
-import { AppSidebarHeader } from '../sidebar-header';
-import SidebarUsageLimits from '../sidebar-usage-limits';
-import { SidebarUser } from '../sidebar-user';
-
 import { NewProjectDialog } from '@/app/routes/platform/projects/new-project-dialog';
 import { SearchInput } from '@/components/custom/search-input';
 import { ChartLineIcon } from '@/components/icons/chart-line';
@@ -58,6 +48,16 @@ import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { cn } from '@/lib/utils';
+
+import { recordAccess } from '../../global-search/access-history';
+import { GlobalSearchCommand } from '../../global-search/global-search-command';
+import { STATIC_PAGES } from '../../global-search/static-pages';
+import { SidebarGeneralItemType } from '../ap-sidebar-group';
+import { ApSidebarItem, SidebarItemType } from '../ap-sidebar-item';
+import ProjectSideBarItem from '../project';
+import { AppSidebarHeader } from '../sidebar-header';
+import SidebarUsageLimits from '../sidebar-usage-limits';
+import { SidebarUser } from '../sidebar-user';
 
 export function ProjectDashboardSidebar({
   className,
