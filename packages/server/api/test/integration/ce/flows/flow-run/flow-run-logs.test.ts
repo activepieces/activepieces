@@ -84,7 +84,7 @@ describe('Flow Run Logs API', () => {
             // Upload
             const uploadResponse = await app!.inject({
                 method: 'PUT',
-                url: '/v1/flow-runs/logs',
+                url: '/api/v1/flow-runs/logs',
                 query: { token },
                 body: compressedData,
                 headers: {
@@ -96,7 +96,7 @@ describe('Flow Run Logs API', () => {
             // Download via HTTP
             const downloadResponse = await app!.inject({
                 method: 'GET',
-                url: '/v1/flow-runs/logs',
+                url: '/api/v1/flow-runs/logs',
                 query: { token },
             })
 
@@ -129,7 +129,7 @@ describe('Flow Run Logs API', () => {
             // Upload
             const uploadResponse = await app!.inject({
                 method: 'PUT',
-                url: '/v1/flow-runs/logs',
+                url: '/api/v1/flow-runs/logs',
                 query: { token },
                 body: compressedData,
                 headers: {
@@ -166,7 +166,7 @@ describe('Flow Run Logs API', () => {
 
             await app!.inject({
                 method: 'PUT',
-                url: '/v1/flow-runs/logs',
+                url: '/api/v1/flow-runs/logs',
                 query: { token },
                 body: await zstdCompress(Buffer.from(JSON.stringify(firstOutput))),
                 headers: { 'content-type': 'application/octet-stream' },
@@ -179,7 +179,7 @@ describe('Flow Run Logs API', () => {
 
             await app!.inject({
                 method: 'PUT',
-                url: '/v1/flow-runs/logs',
+                url: '/api/v1/flow-runs/logs',
                 query: { token },
                 body: await zstdCompress(Buffer.from(JSON.stringify(secondOutput))),
                 headers: { 'content-type': 'application/octet-stream' },
@@ -220,7 +220,7 @@ describe('Flow Run Logs API', () => {
 
             const response = await app!.inject({
                 method: 'GET',
-                url: '/v1/flow-runs/logs',
+                url: '/api/v1/flow-runs/logs',
                 query: { token },
             })
 
@@ -281,7 +281,7 @@ describe('Flow Run Logs API', () => {
 
             const response = await app!.inject({
                 method: 'GET',
-                url: '/v1/flow-runs/logs',
+                url: '/api/v1/flow-runs/logs',
                 query: { token },
             })
 
@@ -330,7 +330,7 @@ describe('Flow Run Logs API', () => {
 
             const response = await app!.inject({
                 method: 'GET',
-                url: '/v1/flow-runs/logs',
+                url: '/api/v1/flow-runs/logs',
                 query: { token },
             })
 
@@ -379,7 +379,7 @@ describe('Flow Run Logs API', () => {
 
             const response = await app!.inject({
                 method: 'PUT',
-                url: '/v1/flow-runs/logs',
+                url: '/api/v1/flow-runs/logs',
                 query: { token },
                 body: Buffer.from('test'),
                 headers: {
@@ -433,7 +433,7 @@ describe('Flow Run Logs API', () => {
 
             const response = await app!.inject({
                 method: 'GET',
-                url: '/v1/flow-runs/logs',
+                url: '/api/v1/flow-runs/logs',
                 query: { token },
             })
 
@@ -520,7 +520,7 @@ describe('Flow Run Logs API', () => {
 
             const response = await app!.inject({
                 method: 'GET',
-                url: '/v1/flow-runs/logs',
+                url: '/api/v1/flow-runs/logs',
                 query: { token },
             })
 
@@ -551,7 +551,7 @@ describe('Flow Run Logs API', () => {
 
             const response = await app!.inject({
                 method: 'GET',
-                url: '/v1/flow-runs/logs',
+                url: '/api/v1/flow-runs/logs',
                 query: { token },
             })
 
@@ -589,7 +589,7 @@ describe('Flow Run Logs API', () => {
 
             await app!.inject({
                 method: 'PUT',
-                url: '/v1/flow-runs/logs',
+                url: '/api/v1/flow-runs/logs',
                 query: { token },
                 body: compressedData,
                 headers: { 'content-type': 'application/octet-stream' },
@@ -607,7 +607,7 @@ describe('Flow Run Logs API', () => {
         it('should reject requests with an invalid token', async () => {
             const response = await app!.inject({
                 method: 'GET',
-                url: '/v1/flow-runs/logs',
+                url: '/api/v1/flow-runs/logs',
                 query: { token: 'invalid-jwt-token' },
             })
 

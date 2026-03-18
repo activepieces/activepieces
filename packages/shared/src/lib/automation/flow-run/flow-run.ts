@@ -7,6 +7,7 @@ import { FlowRunStatus, PauseMetadata } from './execution/flow-execution'
 
 export const PARENT_RUN_ID_HEADER = 'ap-parent-run-id'
 export const FAIL_PARENT_ON_FAILURE_HEADER = 'ap-fail-parent-on-failure'
+export const RAW_PAYLOAD_HEADER = 'ap-raw-payload'
 
 export type FlowRunId = ApId
 
