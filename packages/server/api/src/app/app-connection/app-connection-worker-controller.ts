@@ -1,7 +1,6 @@
 import {
     ActivepiecesError,
     AppConnection,
-    AppConnectionScope,
     assertNotNullOrUndefined,
     EnginePrincipal,
     ErrorCode,
@@ -36,7 +35,7 @@ export const appConnectionWorkerController: FastifyPluginAsyncZod = async (app) 
 
         return {
             ...appConnection,
-            value: appConnection.scope === AppConnectionScope.PROJECT ? appConnection.value : await secretManagersService(request.log).resolveObject({ value: appConnection.value, platformId: enginePrincipal.platform.id, throwOnFailure: false }),
+            value: await secretManagersService(request.log).resolveObject({ value: appConnection.value, projectIds: [enginePrincipal.projectId], platformId: enginePrincipal.platform.id, throwOnFailure: false }),
         }
     },
     )

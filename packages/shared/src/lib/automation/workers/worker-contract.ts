@@ -46,4 +46,10 @@ export type WorkerToApiContract = {
     getPayloadFile(input: { fileId: string, projectId: string }): Promise<Buffer>
     getUsedPieces(input: Record<string, never>): Promise<PiecePackage[]>
     markPieceAsUsed(input: { pieces: PiecePackage[] }): Promise<void>
+    disableFlow(input: DisableFlowRequest): Promise<void>
+}
+
+export type DisableFlowRequest = {
+    flowId: string
+    projectId: string
 }

@@ -1,7 +1,9 @@
 import {
     ExecutionType,
     FileType,
-    FlowRunStatus,
+    FlowOperationType,
+    FlowStatus,
+    isFlowRunStateTerminal,
     isNil,
     PiecePackage,
     ProgressUpdateType,
@@ -69,7 +71,11 @@ export function createHandlers(log: FastifyBaseLogger, platformIdForDedicatedWor
 
             if (input.stepResponse && input.progressUpdateType === ProgressUpdateType.TEST_FLOW) {
                 const stepData = { ...input.stepResponse, projectId: input.projectId }
-                if (input.status === FlowRunStatus.RUNNING) {
+                const isTerminalStatus = isFlowRunStateTerminal({
+                    status: input.status,
+                    ignoreInternalError: false,
+                })   
+                if (!isTerminalStatus) {
                     websocketService.to(input.projectId).emit(WebsocketClientEvent.TEST_STEP_PROGRESS, stepData)
                 }
                 else {
@@ -200,6 +206,26 @@ export function createHandlers(log: FastifyBaseLogger, platformIdForDedicatedWor
             if (newPieces.length > 0) {
                 await distributedStore.put(redisKey, [...existing, ...newPieces])
             }
+        },
+
+        async disableFlow(input) {
+            const { flowId, projectId } = input
+            const flow = await flowService(log).getOneOrThrow({ id: flowId, projectId })
+            if (flow.status === FlowStatus.DISABLED) {
+                return
+            }
+            const platformId = await projectService(log).getPlatformId(projectId)
+            await flowService(log).update({
+                id: flowId,
+                userId: null,
+                projectId,
+                platformId,
+                operation: {
+                    type: FlowOperationType.CHANGE_STATUS,
+                    request: { status: FlowStatus.DISABLED },
+                },
+            })
+            log.info({ flowId, projectId }, '[workerRpc#disableFlow] Flow disabled by worker request')
         },
     }
 }
