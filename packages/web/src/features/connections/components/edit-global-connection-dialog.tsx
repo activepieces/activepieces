@@ -25,9 +25,8 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 
+import { ProjectSelector } from '../../projects/components/projects-selector';
 import { globalConnectionsMutations } from '../hooks/global-connections-hooks';
-
-import { AssignConnectionToProjectsControl } from './assign-global-connection-to-projects';
 
 const EditGlobalConnectionSchema = z.object({
   displayName: z.string(),
@@ -132,7 +131,7 @@ const EditGlobalConnectionDialog: React.FC<EditGlobalConnectionDialogProps> = ({
                     </FormItem>
                   )}
                 />
-                <AssignConnectionToProjectsControl
+                <ProjectSelector
                   control={editConnectionForm.control}
                   name="projectIds"
                 />
