@@ -33,17 +33,25 @@ export const createRowAction = createAction({
     }
 
     Object.keys(tableFieldsInput).forEach((key) => {
+      const value = tableFieldsInput[key];
+      // Skip empty/unset values so untouched fields use their defaults
+      if (value === null || value === undefined || value === '') {
+        return;
+      }
+      if (Array.isArray(value) && value.length === 0) {
+        return;
+      }
       const fieldType: string = fieldIDTypeMap[key];
       if (fieldType === BaserowFieldType.LINK_TO_TABLE) {
-        formattedTableFields[key] = tableFieldsInput[key].map((id: string) =>
+        formattedTableFields[key] = (value as string[]).map((id: string) =>
           parseInt(id, 10)
         );
       } else if (fieldType === BaserowFieldType.MULTIPLE_COLLABORATORS) {
-        formattedTableFields[key] = tableFieldsInput[key].map((id: string) => ({
+        formattedTableFields[key] = (value as string[]).map((id: string) => ({
           id: parseInt(id, 10),
         }));
       } else {
-        formattedTableFields[key] = tableFieldsInput[key];
+        formattedTableFields[key] = value;
       }
     });
 
