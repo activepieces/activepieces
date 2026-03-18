@@ -163,6 +163,9 @@ const SecretManagersPage = () => {
               message={t(
                 'Are you sure you want to delete this secret manager connection?',
               )}
+              warning={t(
+                'Deleting this secret manager connection will break all flows/app connections using it.',
+              )}
               entityName={connection.name}
               mutationFn={async () => deleteConnection(connection.id)}
             >
