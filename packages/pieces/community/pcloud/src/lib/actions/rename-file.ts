@@ -66,7 +66,7 @@ export const pcloudRenameFile = createAction({
       }
     } else {
       throw new Error(
-        "Either destination path (toPath) or both destination folder ID (toFolderId) and new file name (toName) must be provided."
+        "Either destination path (toPath) or destination folder ID (toFolderId) must be provided. New file name (toName) is optional when moving."
       );
     }
 
