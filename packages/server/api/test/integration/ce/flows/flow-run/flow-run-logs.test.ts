@@ -8,7 +8,9 @@ import {
     FileLocation,
     FileType,
     FlowRetryStrategy,
+    FlowRun,
     FlowRunStatus,
+    FlowVersionState,
     PrincipalType,
     RunEnvironment,
     UploadLogsBehavior,
@@ -18,6 +20,7 @@ import { StatusCodes } from 'http-status-codes'
 import * as s3HelperModule from '../../../../../src/app/file/s3-helper'
 import { flowRunLogsService } from '../../../../../src/app/flows/flow-run/logs/flow-run-logs-service'
 import { jwtUtils, JwtSignAlgorithm } from '../../../../../src/app/helper/jwt-utils'
+import { databaseConnection } from '../../../../../src/app/database/database-connection'
 import { generateMockToken } from '../../../../helpers/auth'
 import { db } from '../../../../helpers/db'
 import {
@@ -628,7 +631,7 @@ describe('Flow Run Logs API', () => {
             const flow = createMockFlow({ projectId: mockProject.id })
             await db.save('flow', flow)
 
-            const flowVersion = createMockFlowVersion({ flowId: flow.id })
+            const flowVersion = createMockFlowVersion({ flowId: flow.id, state: FlowVersionState.LOCKED })
             await db.save('flow_version', flowVersion)
 
             const oneYearAgo = new Date(Date.now() - 366 * 24 * 60 * 60 * 1000).toISOString()
@@ -638,27 +641,33 @@ describe('Flow Run Logs API', () => {
                 flowVersionId: flowVersion.id,
                 status: FlowRunStatus.FAILED,
                 environment: RunEnvironment.PRODUCTION,
-                created: oneYearAgo,
                 finishTime: oneYearAgo,
             })
             await db.save('flow_run', flowRun)
+            await databaseConnection().query(
+                'UPDATE flow_run SET created = $1 WHERE id = $2',
+                [oneYearAgo, flowRun.id],
+            )
 
             return { token, mockProject, flowRun }
         }
 
         it('should return 410 GONE when retrying a single run created over a year ago', async () => {
             const { token, mockProject, flowRun } = await setupOutdatedFlowRun()
+           // fetch the run from the database
+           const run = await db.findOneByOrFail('flow_run', { id: flowRun.id })
+           //log the run
+           console.log(run)
 
             const response = await app!.inject({
                 method: 'POST',
-                url: `/v1/flow-runs/${flowRun.id}/retry`,
+                url: `/api/v1/flow-runs/${flowRun.id}/retry`,
                 headers: { authorization: `Bearer ${token}` },
                 body: {
                     strategy: FlowRetryStrategy.ON_LATEST_VERSION,
                     projectId: mockProject.id,
                 },
             })
-
             expect(response.statusCode).toBe(StatusCodes.GONE)
         })
 
@@ -667,7 +676,7 @@ describe('Flow Run Logs API', () => {
 
             const response = await app!.inject({
                 method: 'POST',
-                url: '/v1/flow-runs/retry',
+                url: '/api/v1/flow-runs/retry',
                 headers: { authorization: `Bearer ${token}` },
                 body: {
                     projectId: mockProject.id,
