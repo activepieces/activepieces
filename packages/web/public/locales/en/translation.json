@@ -1191,6 +1191,8 @@
   "Retry": "Retry",
   "on latest version": "on latest version",
   "Only failed runs can be retried from failed step": "Only failed runs can be retried from failed step",
+  "Retry is only available for {failedJobRetentionDays} after a run fails.": "Retry is only available for {failedJobRetentionDays, plural, =0 {0 days} =1 {1 day} other {# days}} after a run fails.",
+  "Retry failed": "Retry failed",
   "from failed step": "from failed step",
   "Viewing retried runs": "",
   "No flow runs found": "No flow runs found",
