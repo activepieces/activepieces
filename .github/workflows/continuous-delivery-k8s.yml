@@ -133,19 +133,21 @@ jobs:
           echo "image_tag=$TAG" >> $GITHUB_OUTPUT
 
   # Holds the GitHub Environment approval gate — environment: and uses: cannot be on the same job
-  approve-production:
+  approve-production-k8n:
     needs: [get-prod-image-tag]
     if: always() && needs.get-prod-image-tag.result == 'success'
     runs-on: ubuntu-latest
     environment:
       name: production         # GitHub Environment gate — requires reviewer approval
       url: https://cloud.activepieces.com
+    outputs:
+      image_tag: ${{ needs.get-prod-image-tag.outputs.image_tag }}
     steps:
       - run: echo "Production deployment approved"
 
   promote-to-production:
-    needs: [approve-production, get-prod-image-tag]
-    if: always() && needs.approve-production.result == 'success'
+    needs: [approve-production-k8n]
+    if: always() && needs.approve-production-k8n.result == 'success'
     concurrency:
       group: promote-production
       cancel-in-progress: false
@@ -154,7 +156,7 @@ jobs:
       deploy_path: /root/k8n/prod
       app_values: ./prod-app-values.yaml
       worker_values: ./prod-worker-values.yaml
-      image_tag: ${{ needs.get-prod-image-tag.outputs.image_tag }}
+      image_tag: ${{ needs.approve-production-k8n.outputs.image_tag }}
       kube_context: prod
     secrets: inherit
 

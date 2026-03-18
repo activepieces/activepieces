@@ -6,11 +6,9 @@ import {
     WorkerJobType,
 } from '@activepieces/shared'
 import { flowCache } from '../../cache/flow/flow-cache'
-import { provisioner } from '../../cache/provisioner'
 import { workerSettings } from '../../config/worker-settings'
-import { sandboxManager } from '../sandbox-manager'
 import { JobContext, JobHandler, JobResult } from '../types'
-import { extractCodeArtifacts, extractPiecePackages } from '../utils/flow-helpers'
+import { provisionFlowPieces } from '../utils/flow-helpers'
 import { getWebhookUrl } from '../utils/webhook-url'
 
 export const renewWebhookJob: JobHandler<RenewWebhookJobData> = {
@@ -25,11 +23,12 @@ export const renewWebhookJob: JobHandler<RenewWebhookJobData> = {
             return {}
         }
 
-        const pieces = await extractPiecePackages(flowVersion, data.platformId, ctx.log, ctx.apiClient)
-        const codeSteps = extractCodeArtifacts(flowVersion)
-        await provisioner(ctx.log, ctx.apiClient).provision({ pieces, codeSteps })
+        const provisioned = await provisionFlowPieces({ flowVersion, platformId: data.platformId, flowId: data.flowId, projectId: data.projectId, log: ctx.log, apiClient: ctx.apiClient })
+        if (!provisioned) {
+            return {}
+        }
 
-        const sandbox = sandboxManager.acquire({ log: ctx.log, apiClient: ctx.apiClient })
+        const sandbox = ctx.sandboxManager.acquire({ log: ctx.log, apiClient: ctx.apiClient })
         try {
             await sandbox.start({
                 flowVersionId: flowVersion.id,
@@ -42,7 +41,7 @@ export const renewWebhookJob: JobHandler<RenewWebhookJobData> = {
                 {
                     hookType: TriggerHookType.RENEW,
                     flowVersion,
-                    webhookUrl: getWebhookUrl(settings.PUBLIC_URL, data.flowId),
+                    webhookUrl: getWebhookUrl(ctx.publicApiUrl, data.flowId),
                     test: false,
                     projectId: data.projectId,
                     platformId: data.platformId,
@@ -57,11 +56,11 @@ export const renewWebhookJob: JobHandler<RenewWebhookJobData> = {
             return {}
         }
         catch (e) {
-            await sandboxManager.invalidate(ctx.log)
+            await ctx.sandboxManager.invalidate(ctx.log)
             throw e
         }
         finally {
-            await sandboxManager.release(ctx.log)
+            await ctx.sandboxManager.release(ctx.log)
         }
     },
 }

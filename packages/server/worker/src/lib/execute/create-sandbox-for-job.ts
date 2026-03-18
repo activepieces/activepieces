@@ -11,8 +11,9 @@ import { Sandbox, SandboxMount } from '../sandbox/types'
 export function createSandboxForJob(params: {
     log: Logger
     apiClient: WorkerToApiContract
+    boxId: number
 }): Sandbox {
-    const { log, apiClient } = params
+    const { log, apiClient, boxId } = params
     const settings = workerSettings.getSettings()
     const sandboxId = nanoid()
 
@@ -24,7 +25,7 @@ export function createSandboxForJob(params: {
     }
 
     const memoryLimitMb = parseMemoryLimit(settings.SANDBOX_MEMORY_LIMIT)
-    const processMaker = getProcessMaker(settings.EXECUTION_MODE, log)
+    const processMaker = getProcessMaker(settings.EXECUTION_MODE, log, boxId)
 
     const baseMounts: SandboxMount[] = [
         { hostPath: getGlobalCacheCommonPath(), sandboxPath: '/root/common' },
@@ -46,11 +47,11 @@ export function createSandboxForJob(params: {
     )
 }
 
-function getProcessMaker(executionMode: string, log: Logger) {
+function getProcessMaker(executionMode: string, log: Logger, boxId: number) {
     switch (executionMode) {
         case ExecutionMode.SANDBOX_PROCESS:
         case ExecutionMode.SANDBOX_CODE_AND_PROCESS:
-            return isolateProcess(log, getEnginePath(), getGlobalCodeCachePath())
+            return isolateProcess(log, getEnginePath(), getGlobalCodeCachePath(), boxId)
         case ExecutionMode.UNSANDBOXED:
         case ExecutionMode.SANDBOX_CODE_ONLY:
         default:
