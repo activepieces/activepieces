@@ -1262,6 +1262,7 @@
   "Folder name already used": "Folder name already used",
   "New Folder Name": "New Folder Name",
   "This field is required": "This field is required",
+  "required": "Required",
   "Your submission was successfully received.": "Your submission was successfully received.",
   "The flow you are trying to submit to does not exist.": "The flow you are trying to submit to does not exist.",
   "The flow failed to execute.": "The flow failed to execute.",
