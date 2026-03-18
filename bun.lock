@@ -6181,7 +6181,7 @@
     },
     "packages/pieces/community/telegram-bot": {
       "name": "@activepieces/piece-telegram-bot",
-      "version": "0.5.5",
+      "version": "0.5.6",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -6714,7 +6714,7 @@
     },
     "packages/pieces/community/whatsscale": {
       "name": "@activepieces/piece-whatsscale",
-      "version": "0.1.0",
+      "version": "0.0.1",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
