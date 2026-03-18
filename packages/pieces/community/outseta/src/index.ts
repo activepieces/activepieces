@@ -8,12 +8,17 @@ import { getAccountAction } from './action/get-account';
 import { getPersonAction } from './action/get-person';
 import { getAccountPlanAction } from './action/get-account-plan';
 import { changeAccountPlanAction } from './action/change-account-plan';
+import { cancelAccountAction } from './action/cancel-account';
 import { addAddonUsageAction } from './action/add-addon-usage';
 import { updateAccountAction } from './action/update-account';
 import { updatePersonAction } from './action/update-person';
 import { findOrAddPersonAction } from './action/find-or-add-person';
 import { findOrAddAccountAction } from './action/find-or-add-account';
 import { addPersonToAccountAction } from './action/add-person-to-account';
+import { createDealAction } from './action/create-deal';
+import { getDealAction } from './action/get-deal';
+import { updateDealAction } from './action/update-deal';
+import { deleteDealAction } from './action/delete-deal';
 
 // Triggers
 import { accountAddedTrigger } from './triggers/account-added';
@@ -33,6 +38,8 @@ import { accountSubscriptionRenewalExtendedTrigger } from './triggers/account-su
 import { personAddedTrigger } from './triggers/person-added';
 import { personUpdatedTrigger } from './triggers/person-updated';
 import { personDeletedTrigger } from './triggers/person-deleted';
+import { dealCreatedTrigger } from './triggers/deal-created';
+import { dealUpdatedTrigger } from './triggers/deal-updated';
 
 export const outseta = createPiece({
   displayName: 'Outseta',
@@ -60,18 +67,25 @@ export const outseta = createPiece({
     personAddedTrigger,
     personUpdatedTrigger,
     personDeletedTrigger,
+    dealCreatedTrigger,
+    dealUpdatedTrigger,
   ],
   actions: [
     getAccountAction,
     getPersonAction,
     getAccountPlanAction,
     changeAccountPlanAction,
+    cancelAccountAction,
     addAddonUsageAction,
     updateAccountAction,
     updatePersonAction,
     findOrAddPersonAction,
     findOrAddAccountAction,
     addPersonToAccountAction,
+    createDealAction,
+    getDealAction,
+    updateDealAction,
+    deleteDealAction,
     createCustomApiCallAction({
       auth: outsetaAuth,
       baseUrl: (auth) => `${auth.props.domain}/api/v1`,
