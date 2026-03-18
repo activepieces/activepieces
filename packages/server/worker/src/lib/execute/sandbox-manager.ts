@@ -9,11 +9,11 @@ function canReuseSandbox(): boolean {
     if (settings.ENVIRONMENT === ApEnvironment.DEVELOPMENT) {
         return true
     }
-    const trustedModes = [ExecutionMode.SANDBOX_CODE_ONLY, ExecutionMode.UNSANDBOXED]
-    if (trustedModes.includes(settings.EXECUTION_MODE as ExecutionMode)) {
+    if (!isNil(settings.PLATFORM_ID_FOR_DEDICATED_WORKER)) {
         return true
     }
-    if (!isNil(settings.PLATFORM_ID_FOR_DEDICATED_WORKER)) {
+    const trustedModes = [ExecutionMode.SANDBOX_CODE_ONLY, ExecutionMode.UNSANDBOXED]
+    if (trustedModes.includes(settings.EXECUTION_MODE as ExecutionMode)) {
         return true
     }
     return false
