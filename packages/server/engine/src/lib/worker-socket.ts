@@ -7,6 +7,7 @@ import {
     EngineResponse,
     EngineResponseStatus,
     ERROR_MESSAGES_TO_REDACT,
+    LogSizeExceededError,
     tryCatch,
     WorkerContract,
     WorkerNotifyContract,
@@ -65,9 +66,12 @@ export const workerSocket = {
 
                 if (result.error) {
                     console.error(result.error)
+                    const status = result.error instanceof LogSizeExceededError
+                        ? EngineResponseStatus.LOG_SIZE_EXCEEDED
+                        : EngineResponseStatus.INTERNAL_ERROR
                     return {
                         response: undefined,
-                        status: EngineResponseStatus.INTERNAL_ERROR,
+                        status,
                         error: inspect(result.error),
                     }
                 }

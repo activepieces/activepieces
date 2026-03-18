@@ -55,6 +55,11 @@ export const executeFlowJob: JobHandler<ExecuteFlowJobData> = {
                 { timeoutInSeconds },
             )
 
+            if (result.engine.status === EngineResponseStatus.LOG_SIZE_EXCEEDED) {
+                await reportFlowStatus(ctx, data, FlowRunStatus.LOG_SIZE_EXCEEDED)
+                return {}
+            }
+
             if (result.engine.status === EngineResponseStatus.INTERNAL_ERROR) {
                 await reportFlowStatus(ctx, data, FlowRunStatus.INTERNAL_ERROR)
                 return {}

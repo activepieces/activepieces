@@ -80,13 +80,14 @@ export const flowExecutor = {
             }).catch(error => {
                 console.error('Error sending update:', error)
             })
-            await failIfLogSizeExceeded(flowExecutionContext, previousAction!, constants)
 
             flowExecutionContext = await handler.handle({
                 action: currentAction,
                 executionState: flowExecutionContext,
                 constants,
             })
+
+            await failIfLogSizeExceeded(flowExecutionContext, currentAction, constants)
 
             const shouldBreakExecution = flowExecutionContext.verdict.status !== FlowRunStatus.RUNNING || testSingleStepMode
             previousAction = currentAction
@@ -122,7 +123,7 @@ const failIfLogSizeExceeded = async (flowExecutionContext: FlowExecutorContext, 
             status: StepOutputStatus.FAILED,
             output: undefined,
         })
-            .setErrorMessage('Flow run data size exceeded the maximum allowed size'))
+            .setErrorMessage(`Flow run data size exceeded the maximum allowed size of ${loggingUtils.maxLogSizeMb} MB`))
         .setVerdict({
             status: FlowRunStatus.LOG_SIZE_EXCEEDED,
             failedStep: {
