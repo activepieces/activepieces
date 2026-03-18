@@ -4,6 +4,7 @@ import {
     FlowOperationType,
     FlowRunStatus,
     FlowStatus,
+    isFlowRunStateTerminal,
     isNil,
     PiecePackage,
     ProgressUpdateType,
@@ -71,7 +72,11 @@ export function createHandlers(log: FastifyBaseLogger, platformIdForDedicatedWor
 
             if (input.stepResponse && input.progressUpdateType === ProgressUpdateType.TEST_FLOW) {
                 const stepData = { ...input.stepResponse, projectId: input.projectId }
-                if (input.status === FlowRunStatus.RUNNING) {
+                const isTerminalStatus = isFlowRunStateTerminal({
+                    status: input.status,
+                    ignoreInternalError: false,
+                })   
+                if (!isTerminalStatus) {
                     websocketService.to(input.projectId).emit(WebsocketClientEvent.TEST_STEP_PROGRESS, stepData)
                 }
                 else {
