@@ -123,9 +123,9 @@ export const sendMessage = createAction({
       description: 'The message to be posted (optional if images are provided)',
       required: false,
     }),
-    images: Property.LongText({
+    images: Property.Array({
       displayName: 'Images',
-      description: 'Image URLs separated by commas (e.g., https://example.com/image1.png, https://example.com/image2.png)',
+      description: 'Image URLs separated (e.g., https://example.com/image1.png, https://example.com/image2.png)',
       required: false,
     }),
   },
@@ -137,9 +137,8 @@ export const sendMessage = createAction({
     // Parse comma-separated image URLs
     const imageUrls = propsValue.images
       ? propsValue.images
-          .split(',')
-          .map((url) => url.trim())
-          .filter((url) => url.length > 0)
+          .map((url:string) => url.trim())
+          .filter((url:string) => url.length > 0)
       : [];
 
     // Validate that at least message or images is provided
