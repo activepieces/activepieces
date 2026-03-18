@@ -4173,7 +4173,7 @@
     },
     "packages/pieces/community/microsoft-excel-365": {
       "name": "@activepieces/piece-microsoft-excel-365",
-      "version": "0.5.1",
+      "version": "0.5.2",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -4249,7 +4249,7 @@
     },
     "packages/pieces/community/microsoft-sharepoint": {
       "name": "@activepieces/piece-microsoft-sharepoint",
-      "version": "0.2.12",
+      "version": "0.2.13",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -5838,7 +5838,7 @@
     },
     "packages/pieces/community/slack": {
       "name": "@activepieces/piece-slack",
-      "version": "0.14.0",
+      "version": "0.14.2",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -6744,6 +6744,16 @@
         "tslib": "2.6.2",
       },
     },
+    "packages/pieces/community/whatsscale": {
+      "name": "@activepieces/piece-whatsscale",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/wonderchat": {
       "name": "@activepieces/piece-wonderchat",
       "version": "0.1.3",
@@ -7400,13 +7410,16 @@
     },
     "packages/pieces/core/webhook": {
       "name": "@activepieces/piece-webhook",
-      "version": "0.1.30",
+      "version": "0.1.31",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "http-status-codes": "2.2.0",
         "tslib": "2.6.2",
+      },
+      "devDependencies": {
+        "vitest": "3.0.8",
       },
     },
     "packages/pieces/core/xml": {
@@ -9019,6 +9032,8 @@
     "@activepieces/piece-whatsable": ["@activepieces/piece-whatsable@workspace:packages/pieces/community/whatsable"],
 
     "@activepieces/piece-whatsapp": ["@activepieces/piece-whatsapp@workspace:packages/pieces/community/whatsapp"],
+
+    "@activepieces/piece-whatsscale": ["@activepieces/piece-whatsscale@workspace:packages/pieces/community/whatsscale"],
 
     "@activepieces/piece-wonderchat": ["@activepieces/piece-wonderchat@workspace:packages/pieces/community/wonderchat"],
 
