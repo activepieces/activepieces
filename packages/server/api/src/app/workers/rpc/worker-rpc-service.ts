@@ -2,7 +2,6 @@ import {
     ExecutionType,
     FileType,
     FlowOperationType,
-    FlowRunStatus,
     FlowStatus,
     isFlowRunStateTerminal,
     isNil,
