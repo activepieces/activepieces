@@ -63,8 +63,10 @@ export const pcloudUploadFile = createAction({
     }
 
     const boundary = "----ActivepiecesBoundary" + Date.now();
+    const safeName = context.propsValue.filename.replace(/[
+"]/g, "_");
     const header =
-      `--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="${context.propsValue.filename}"\r\nContent-Type: application/octet-stream\r\n\r\n`;
+      `--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="${safeName}"\r\nContent-Type: application/octet-stream\r\n\r\n`;
     const footer = `\r\n--${boundary}--\r\n`;
 
     const body = Buffer.concat([
