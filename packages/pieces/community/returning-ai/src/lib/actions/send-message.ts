@@ -125,18 +125,19 @@ export const sendMessage = createAction({
     }),
     images: Property.Array({
       displayName: 'Images',
-      description: 'Image URLs separated (e.g., https://example.com/image1.png, https://example.com/image2.png)',
+      description: 'Add one image URL per entry (e.g., https://example.com/image1.png)',
       required: false,
     }),
   },
   async run({ propsValue, auth }) {
     const authToken = auth.secret_text;
     const channelData = JSON.parse(propsValue.channel as string);
+    const imagesInput = propsValue.images as unknown as string[];
     const dynamicFields = propsValue.dynamicFields as DynamicPropsValue;
 
     // Parse comma-separated image URLs
-    const imageUrls = propsValue.images
-      ? propsValue.images
+    const imageUrls = imagesInput
+      ? imagesInput
           .map((url:string) => url.trim())
           .filter((url:string) => url.length > 0)
       : [];
