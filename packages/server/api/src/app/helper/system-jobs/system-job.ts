@@ -98,8 +98,8 @@ export const systemJobsSchedule = (log: FastifyBaseLogger): SystemJobSchedule =>
         }
 
         await Promise.all([
-            systemJobWorker.close(),
             systemJobsQueue.close(),
+            systemJobWorker?.close(),
         ])
     },
 })
