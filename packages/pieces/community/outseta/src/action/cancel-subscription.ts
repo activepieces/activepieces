@@ -55,11 +55,15 @@ export const cancelSubscriptionAction = createAction({
       body
     );
 
-    // If cancel immediately, also set the account to expired right away
+    // If cancel immediately, fetch the full account first to avoid wiping fields
     if (context.propsValue.cancelImmediately) {
+      const account = await client.get<any>(
+        `/api/v1/crm/accounts/${context.propsValue.accountUid}`
+      );
+      account.AccountStage = 6;
       await client.put<any>(
         `/api/v1/crm/accounts/${context.propsValue.accountUid}`,
-        { AccountStage: 6 }
+        account
       );
     }
 
