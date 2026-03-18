@@ -8,7 +8,7 @@ import { MultiSelectPieceProperty } from '../../../components/custom/multi-selec
 import { FormField, FormItem, FormMessage } from '../../../components/ui/form';
 import { Label } from '../../../components/ui/label';
 
-export const AssignConnectionToProjectsControl = ({
+export const ProjectSelector = ({
   control,
   name,
 }: {
@@ -39,7 +39,7 @@ export const AssignConnectionToProjectsControl = ({
             showDeselect={field.value.length > 0}
           />
 
-          <FormMessage className="mt-4!" />
+          <FormMessage />
         </FormItem>
       )}
     />

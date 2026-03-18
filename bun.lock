@@ -1,6 +1,5 @@
 {
   "lockfileVersion": 1,
-  "configVersion": 1,
   "workspaces": {
     "": {
       "name": "activepieces",
@@ -140,7 +139,6 @@
         "bullmq-otel": "1.0.1",
         "canvas-confetti": "^1.9.4",
         "checkly": "6.9.10",
-        "chokidar": "4.0.3",
         "class-variance-authority": "0.7.0",
         "clear-module": "4.1.2",
         "cli-table3": "0.6.3",
@@ -4173,7 +4171,7 @@
     },
     "packages/pieces/community/microsoft-excel-365": {
       "name": "@activepieces/piece-microsoft-excel-365",
-      "version": "0.5.1",
+      "version": "0.5.2",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -4249,7 +4247,7 @@
     },
     "packages/pieces/community/microsoft-sharepoint": {
       "name": "@activepieces/piece-microsoft-sharepoint",
-      "version": "0.2.12",
+      "version": "0.2.13",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -5421,7 +5419,7 @@
     },
     "packages/pieces/community/returning-ai": {
       "name": "@activepieces/piece-returning-ai",
-      "version": "0.1.3",
+      "version": "0.2.0",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -5838,7 +5836,7 @@
     },
     "packages/pieces/community/slack": {
       "name": "@activepieces/piece-slack",
-      "version": "0.14.0",
+      "version": "0.14.2",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -6744,6 +6742,16 @@
         "tslib": "2.6.2",
       },
     },
+    "packages/pieces/community/whatsscale": {
+      "name": "@activepieces/piece-whatsscale",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/wonderchat": {
       "name": "@activepieces/piece-wonderchat",
       "version": "0.1.3",
@@ -7400,13 +7408,16 @@
     },
     "packages/pieces/core/webhook": {
       "name": "@activepieces/piece-webhook",
-      "version": "0.1.30",
+      "version": "0.1.31",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "http-status-codes": "2.2.0",
         "tslib": "2.6.2",
+      },
+      "devDependencies": {
+        "vitest": "3.0.8",
       },
     },
     "packages/pieces/core/xml": {
@@ -7502,6 +7513,7 @@
         "bcrypt": "6.0.0",
         "bullmq": "5.61.0",
         "bullmq-otel": "1.0.1",
+        "chokidar": "4.0.3",
         "clear-module": "4.1.2",
         "content-disposition": "0.5.4",
         "dayjs": "1.11.9",
@@ -7625,8 +7637,6 @@
         "@opentelemetry/sdk-trace-base": "2.1.0",
         "@opentelemetry/semantic-conventions": "1.37.0",
         "async-mutex": "0.4.0",
-        "chalk": "4.1.2",
-        "clear-module": "4.1.2",
         "dayjs": "1.11.9",
         "dotenv": "16.4.7",
         "env-var": "7.5.0",
@@ -7647,7 +7657,7 @@
     },
     "packages/shared": {
       "name": "@activepieces/shared",
-      "version": "0.45.0",
+      "version": "0.46.0",
       "dependencies": {
         "deepmerge-ts": "7.1.0",
         "nanoid": "3.3.8",
@@ -9019,6 +9029,8 @@
     "@activepieces/piece-whatsable": ["@activepieces/piece-whatsable@workspace:packages/pieces/community/whatsable"],
 
     "@activepieces/piece-whatsapp": ["@activepieces/piece-whatsapp@workspace:packages/pieces/community/whatsapp"],
+
+    "@activepieces/piece-whatsscale": ["@activepieces/piece-whatsscale@workspace:packages/pieces/community/whatsscale"],
 
     "@activepieces/piece-wonderchat": ["@activepieces/piece-wonderchat@workspace:packages/pieces/community/wonderchat"],
 
@@ -15138,7 +15150,7 @@
 
     "@dnd-kit/accessibility/tslib": ["tslib@2.8.1", "", {}, "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="],
 
-    "@dust-tt/client/@modelcontextprotocol/sdk": ["@modelcontextprotocol/sdk@github:dust-tt/typescript-sdk#bca26e4", { "dependencies": { "ajv": "^6.12.6", "content-type": "^1.0.5", "cors": "^2.8.5", "cross-spawn": "^7.0.5", "eventsource": "^3.0.2", "express": "^5.0.1", "express-rate-limit": "^7.5.0", "pkce-challenge": "^5.0.0", "raw-body": "^3.0.0", "zod": "^3.23.8", "zod-to-json-schema": "^3.24.1" } }, "dust-tt-typescript-sdk-bca26e4", "sha512-oxLE3SEGCVIhVNbn7xB9YgL7I6zrKujcH9s6e/1KcAj1VOht4lnM/oetqhwh9XhBh02cDHwkqHTzzIEBnBViiw=="],
+    "@dust-tt/client/@modelcontextprotocol/sdk": ["@modelcontextprotocol/sdk@github:dust-tt/typescript-sdk#bca26e4", { "dependencies": { "ajv": "^6.12.6", "content-type": "^1.0.5", "cors": "^2.8.5", "cross-spawn": "^7.0.5", "eventsource": "^3.0.2", "express": "^5.0.1", "express-rate-limit": "^7.5.0", "pkce-challenge": "^5.0.0", "raw-body": "^3.0.0", "zod": "^3.23.8", "zod-to-json-schema": "^3.24.1" } }, "dust-tt-typescript-sdk-bca26e4"],
 
     "@dust-tt/client/eventsource-parser": ["eventsource-parser@1.1.2", "", {}, "sha512-v0eOBUbiaFojBu2s2NPBfYUoRR9GjcDNvCXVaqEf5vVfpIAh9f8RCo4vXTP8c63QRKCFwoLpMpTdPwwhEKVgzA=="],
 

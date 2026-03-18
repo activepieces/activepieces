@@ -1,4 +1,4 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { createPiece } from '@activepieces/pieces-framework';
 import { replyMessage } from './lib/actions/reply-message';
 import { sendMessage } from './lib/actions/send-message';
 import { reactMessage } from './lib/actions/react-message';

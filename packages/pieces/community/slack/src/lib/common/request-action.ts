@@ -37,7 +37,7 @@ export const requestAction = async (conversationId: string, context: any) => {
         });
 
         const token = getBotToken(context.auth as SlackAuthValue);
-        const { text, username, profilePicture } = context.propsValue;
+        const { text, username, profilePicture, replyBroadcast } = context.propsValue;
 
         assertNotNullOrUndefined(token, 'token');
         assertNotNullOrUndefined(text, 'text');
@@ -69,6 +69,7 @@ export const requestAction = async (conversationId: string, context: any) => {
             threadTs: context.propsValue.threadTs
                 ? processMessageTimestamp(context.propsValue.threadTs)
                 : undefined,
+            replyBroadcast,
             blocks: [
                 ...textToSectionBlocks(`${context.propsValue.text}`),
                 {
