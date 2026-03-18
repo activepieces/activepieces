@@ -7637,8 +7637,6 @@
         "@opentelemetry/sdk-trace-base": "2.1.0",
         "@opentelemetry/semantic-conventions": "1.37.0",
         "async-mutex": "0.4.0",
-        "chalk": "4.1.2",
-        "clear-module": "4.1.2",
         "dayjs": "1.11.9",
         "dotenv": "16.4.7",
         "env-var": "7.5.0",
