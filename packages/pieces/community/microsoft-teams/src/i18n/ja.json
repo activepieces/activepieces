@@ -13,7 +13,7 @@
   "Find Team Member": "チームメンバーを探す",
   "Request Approval in Channel": "チャネルで承認を要求する",
   "Request Approval from a User": "ユーザーからの承認要求",
-  "Custom API Call": "カスタムでAPIを設定する",
+  "Custom API Call": "カスタムAPI呼び出し",
   "Create a new channel in Microsoft Teams.": "Microsoft Teamsに新しいチャンネルを作成します。",
   "Sends a message to a teams's channel.": "チームのチャンネルにメッセージを送信します。",
   "Sends a message in an existing chat.": "既存のチャットにメッセージを送信します。",
