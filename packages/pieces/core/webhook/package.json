@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-webhook",
-  "version": "0.1.30",
+  "version": "0.1.31",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "scripts": {
