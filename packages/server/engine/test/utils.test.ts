@@ -2,8 +2,8 @@ import { utils } from '../src/lib/utils'
 
 describe('utils.sizeof', () => {
     it('should return correct size for a simple string', () => {
-        const str = 'hello'
-        expect(utils.sizeof(str)).toBe(Buffer.byteLength(JSON.stringify(str), 'utf8'))
+        // "hello" = 7 bytes (5 chars + 2 quotes)
+        expect(utils.sizeof('hello')).toBe(7)
     })
 
     it('should return correct size for a number', () => {
@@ -30,22 +30,19 @@ describe('utils.sizeof', () => {
     })
 
     it('should return correct size for a nested object', () => {
+        // {"key":"value","num":123,"nested":{"a":true}} = 45 bytes
         const obj = { key: 'value', num: 123, nested: { a: true } }
-        expect(utils.sizeof(obj)).toBe(Buffer.byteLength(JSON.stringify(obj), 'utf8'))
+        expect(utils.sizeof(obj)).toBe(45)
     })
 
     it('should return correct size for multi-byte UTF-8 characters', () => {
-        const str = 'héllo 🌍'
-        expect(utils.sizeof(str)).toBe(Buffer.byteLength(JSON.stringify(str), 'utf8'))
+        // "héllo 🌍" — é is 2 UTF-8 bytes, 🌍 is 4 UTF-8 bytes, 4 ASCII chars + space = 5, quotes = 2 → 13
+        expect(utils.sizeof('héllo 🌍')).toBe(13)
     })
 
-    it('should match JSON serialized byte length for complex data', () => {
-        const data = {
-            steps: {
-                step1: { input: { url: 'https://example.com' }, output: { status: 200, body: 'x'.repeat(1000) } },
-                step2: { input: { items: [1, 2, 3] }, output: null },
-            },
-        }
-        expect(utils.sizeof(data)).toBe(Buffer.byteLength(JSON.stringify(data), 'utf8'))
+    it('should return correct size for complex nested data', () => {
+        // {"a":{"b":[1,2,3]},"c":"x"} = 27 bytes
+        const data = { a: { b: [1, 2, 3] }, c: 'x' }
+        expect(utils.sizeof(data)).toBe(27)
     })
 })
