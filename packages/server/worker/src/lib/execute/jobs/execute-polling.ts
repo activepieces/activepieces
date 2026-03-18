@@ -10,11 +10,9 @@ import {
     WorkerJobType,
 } from '@activepieces/shared'
 import { flowCache } from '../../cache/flow/flow-cache'
-import { provisioner } from '../../cache/provisioner'
 import { workerSettings } from '../../config/worker-settings'
-import { sandboxManager } from '../sandbox-manager'
 import { JobContext, JobHandler, JobResult } from '../types'
-import { extractCodeArtifacts, extractPiecePackages } from '../utils/flow-helpers'
+import { provisionFlowPieces } from '../utils/flow-helpers'
 import { getWebhookUrl } from '../utils/webhook-url'
 
 export const executePollingJob: JobHandler<PollingJobData> = {
@@ -26,11 +24,12 @@ export const executePollingJob: JobHandler<PollingJobData> = {
         const flowVersion = await flowCache(ctx.log, ctx.apiClient).getVersion({ flowVersionId: data.flowVersionId })
         assertNotNullOrUndefined(flowVersion, 'flowVersion')
 
-        const pieces = await extractPiecePackages(flowVersion, data.platformId, ctx.log, ctx.apiClient)
-        const codeSteps = extractCodeArtifacts(flowVersion)
-        await provisioner(ctx.log, ctx.apiClient).provision({ pieces, codeSteps })
+        const provisioned = await provisionFlowPieces({ flowVersion, platformId: data.platformId, flowId: data.flowId, projectId: data.projectId, log: ctx.log, apiClient: ctx.apiClient })
+        if (!provisioned) {
+            return {}
+        }
 
-        const sandbox = sandboxManager.acquire({ log: ctx.log, apiClient: ctx.apiClient })
+        const sandbox = ctx.sandboxManager.acquire({ log: ctx.log, apiClient: ctx.apiClient })
         try {
             await sandbox.start({
                 flowVersionId: flowVersion.id,
@@ -43,7 +42,7 @@ export const executePollingJob: JobHandler<PollingJobData> = {
                 {
                     hookType: TriggerHookType.RUN,
                     flowVersion,
-                    webhookUrl: getWebhookUrl(settings.PUBLIC_URL, data.flowId),
+                    webhookUrl: getWebhookUrl(ctx.publicApiUrl, data.flowId),
                     test: false,
                     projectId: data.projectId,
                     platformId: data.platformId,
@@ -72,11 +71,11 @@ export const executePollingJob: JobHandler<PollingJobData> = {
         }
         catch (e) {
             ctx.log.error({ error: String(e) }, 'Polling trigger failed, will retry on next scheduled cycle')
-            await sandboxManager.invalidate(ctx.log)
+            await ctx.sandboxManager.invalidate(ctx.log)
             return {}
         }
         finally {
-            await sandboxManager.release(ctx.log)
+            await ctx.sandboxManager.release(ctx.log)
         }
     },
 }

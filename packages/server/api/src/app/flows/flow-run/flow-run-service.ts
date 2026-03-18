@@ -1,3 +1,4 @@
+import { apDayjs } from '@activepieces/server-utils'
 import {
     ActivepiecesError,
     apId,
@@ -11,8 +12,11 @@ import {
     FlowRun,
     FlowRunId,
     FlowRunStatus,
+    FlowRunWithRetryError,
     FlowVersionId,
+    isFlowRunStateTerminal,
     isNil,
+    JobPayload,
     LATEST_JOB_DATA_SCHEMA_VERSION,
     PauseMetadata,
     PauseType,
@@ -128,12 +132,26 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         const { data, cursor: newCursor } = await paginator.paginate(query)
         return paginationHelper.createPage<FlowRun>(data, newCursor)
     },
-    async retry({ flowRunId, strategy, projectId }: RetryParams): Promise<FlowRun | null> {
+    async retry({ flowRunId, strategy, projectId }: RetryParams): Promise<FlowRun> {
         const oldFlowRun = await flowRunService(log).getOnePopulatedOrThrow({
             id: flowRunId,
             projectId,
         })
         log.info({ runId: flowRunId, flowId: oldFlowRun.flowId, strategy }, 'Flow run retry initiated')
+        
+        const retentionDays = system.getNumberOrThrow(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS)
+        if (
+            isFlowRunStateTerminal({ status: oldFlowRun.status, ignoreInternalError: false }) &&
+            isOutsideRetentionWindow(oldFlowRun.created, retentionDays)
+        ) {
+            throw new ActivepiecesError({
+                code: ErrorCode.FLOW_RUN_RETRY_OUTSIDE_RETENTION,
+                params: {
+                    flowRunId: oldFlowRun.id,
+                    failedJobRetentionDays: retentionDays,
+                },
+            })
+        }
 
         switch (strategy) {
             case FlowRetryStrategy.FROM_FAILED_STEP:
@@ -210,14 +228,27 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             archivedAt: new Date().toISOString(),
         })
     },
-    async bulkRetry(params: BulkRetryParams): Promise<(FlowRun | null)[]> {
+    async bulkRetry(params: BulkRetryParams): Promise<FlowRunWithRetryError[]> {
         const filteredFlowRuns = await filterFlowRunsAndApplyFilters(params)
         const limit = pLimit(10)
-        return Promise.all(
+        const results = await Promise.allSettled(
             filteredFlowRuns.map(flowRun =>
                 limit(() => this.retry({ flowRunId: flowRun.id, strategy: params.strategy, projectId: params.projectId })),
             ),
         )
+        return results.map((result, i) => {
+            if (result.status === 'fulfilled') {
+                return result.value
+            }
+            const error = result.reason instanceof ActivepiecesError ? result.reason : undefined
+            return {
+                ...filteredFlowRuns[i],
+                error: {
+                    errorCode: error?.error.code ?? ErrorCode.INTERNAL_SERVER_ERROR,
+                    errorMessage: error?.message ?? 'Internal server error',
+                },
+            }
+        })
     },
     async resume({
         flowRunId,
@@ -226,7 +257,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         progressUpdateType,
         executionType,
         checkRequestId,
-    }: ResumeWebhookParams): Promise<FlowRun | null> {
+    }: ResumeWebhookParams): Promise<FlowRun> {
         log.info({
             runId: flowRunId,
         }, 'Resuming flow run')
@@ -587,9 +618,13 @@ async function addToQueue(params: AddToQueueParams, log: FastifyBaseLogger): Pro
     const traceContext: Record<string, string> = {}
     propagation.inject(context.active(), traceContext)
 
-    const jobPayload = isNil(params.synchronousHandlerId)
-        ? await payloadOffloader.offloadPayload(log, params.payload, params.flowRun.projectId, params.platformId)
-        : await payloadOffloader.maybeOffloadPayload(log, params.payload, params.flowRun.projectId, params.platformId)
+    let jobPayload: JobPayload = { type: 'inline', value: null }
+    if (!isNil(params.payload) && isNil(params.synchronousHandlerId)) {
+        jobPayload = await payloadOffloader.offloadPayload(log, params.payload, params.flowRun.projectId, params.platformId)
+    }
+    else if (!isNil(params.payload)) {
+        jobPayload = await payloadOffloader.maybeOffloadPayload(log, params.payload, params.flowRun.projectId, params.platformId)
+    }
 
     await jobQueue(log).add({
         id: params.flowRun.id,
@@ -714,7 +749,10 @@ async function queueOrCreateInstantly(params: CreateParams, log: FastifyBaseLogg
     }
 }
 
-
+function isOutsideRetentionWindow(createdTime: string, retentionDays: number): boolean {
+    if (!createdTime) return false
+    return apDayjs(createdTime).add(retentionDays, 'day').isBefore(apDayjs())
+}
 
 type CreateParams = {
     projectId: ProjectId
@@ -749,7 +787,7 @@ type GetOneParams = {
 type AddToQueueParams = {
     flowRun: FlowRun
     platformId: PlatformId
-    payload: unknown
+    payload?: unknown
     executeTrigger: boolean
     executionType: ExecutionType
     synchronousHandlerId: string | undefined
