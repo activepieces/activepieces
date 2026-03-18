@@ -13,7 +13,7 @@ export const updateDealAction = createAction({
       required: true,
     }),
     name: Property.ShortText({
-      displayName: 'Deal Name',
+      displayName: 'Name',
       required: false,
     }),
     dealPipelineStageUid: Property.ShortText({
@@ -26,10 +26,22 @@ export const updateDealAction = createAction({
       required: false,
       description: 'The monetary value of the deal.',
     }),
+    assignedToPersonClientIdentifier: Property.ShortText({
+      displayName: 'Assigned To (Person Client Identifier)',
+      required: false,
+    }),
+    dueDate: Property.DateTime({
+      displayName: 'Due Date',
+      required: false,
+    }),
     accountUid: Property.ShortText({
       displayName: 'Account UID',
       required: false,
-      description: 'The UID of the account to associate with this deal.',
+    }),
+    personUid: Property.ShortText({
+      displayName: 'Person UID',
+      required: false,
+      description: 'The UID of the person to associate with this deal.',
     }),
   },
   async run(context) {
@@ -39,7 +51,6 @@ export const updateDealAction = createAction({
       apiSecret: context.auth.props.apiSecret,
     });
 
-    // Fetch the full deal first to avoid wiping fields with a partial PUT
     const deal = await client.get<any>(
       `/api/v1/crm/deals/${context.propsValue.dealUid}`
     );
@@ -53,8 +64,20 @@ export const updateDealAction = createAction({
     if (context.propsValue.amount != null) {
       deal.Amount = context.propsValue.amount;
     }
+    if (context.propsValue.assignedToPersonClientIdentifier) {
+      deal.AssignedToPersonClientIdentifier =
+        context.propsValue.assignedToPersonClientIdentifier;
+    }
+    if (context.propsValue.dueDate) {
+      deal.DueDate = context.propsValue.dueDate;
+    }
     if (context.propsValue.accountUid) {
       deal.Account = { Uid: context.propsValue.accountUid };
+    }
+    if (context.propsValue.personUid) {
+      deal.DealPeople = [
+        { Person: { Uid: context.propsValue.personUid } },
+      ];
     }
 
     return await client.put<any>(

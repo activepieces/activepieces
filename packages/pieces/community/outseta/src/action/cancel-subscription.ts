@@ -2,16 +2,23 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { outsetaAuth } from '../auth';
 import { OutsetaClient } from '../common/client';
 
-export const cancelAccountAction = createAction({
-  name: 'cancel_account',
+export const cancelSubscriptionAction = createAction({
+  name: 'cancel_subscription',
   auth: outsetaAuth,
-  displayName: 'Cancel Account',
+  displayName: 'Cancel Subscription',
   description:
-    'Submit a cancellation request for an account. The account must be in the subscribing stage. At subscription renewal, the subscription will end and the account will be set to expired.',
+    'Cancel the current subscription on an account. By default, the subscription expires at the end of the current term. You can also cancel immediately.',
   props: {
     accountUid: Property.ShortText({
       displayName: 'Account UID',
       required: true,
+    }),
+    cancelImmediately: Property.Checkbox({
+      displayName: 'Cancel Immediately',
+      required: false,
+      defaultValue: false,
+      description:
+        'If checked, the subscription is cancelled immediately. Otherwise it expires at the end of the current billing term.',
     }),
     cancellationReason: Property.ShortText({
       displayName: 'Cancellation Reason',
@@ -42,9 +49,20 @@ export const cancelAccountAction = createAction({
       body['Comment'] = context.propsValue.comment;
     }
 
-    return await client.put<any>(
+    // Submit cancellation request
+    const result = await client.put<any>(
       `/api/v1/crm/accounts/cancellation/${context.propsValue.accountUid}`,
       body
     );
+
+    // If cancel immediately, also set the account to expired right away
+    if (context.propsValue.cancelImmediately) {
+      await client.put<any>(
+        `/api/v1/crm/accounts/${context.propsValue.accountUid}`,
+        { AccountStage: 6 }
+      );
+    }
+
+    return result;
   },
 });

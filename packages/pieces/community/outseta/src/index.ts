@@ -8,17 +8,19 @@ import { getAccountAction } from './action/get-account';
 import { getPersonAction } from './action/get-person';
 import { getAccountPlanAction } from './action/get-account-plan';
 import { changeAccountPlanAction } from './action/change-account-plan';
-import { cancelAccountAction } from './action/cancel-account';
+import { cancelSubscriptionAction } from './action/cancel-subscription';
 import { addAddonUsageAction } from './action/add-addon-usage';
 import { updateAccountAction } from './action/update-account';
 import { updatePersonAction } from './action/update-person';
 import { findOrAddPersonAction } from './action/find-or-add-person';
 import { findOrAddAccountAction } from './action/find-or-add-account';
 import { addPersonToAccountAction } from './action/add-person-to-account';
-import { createDealAction } from './action/create-deal';
+import { addDealAction } from './action/add-deal';
 import { getDealAction } from './action/get-deal';
 import { updateDealAction } from './action/update-deal';
 import { deleteDealAction } from './action/delete-deal';
+import { subscribeToEmailListAction } from './action/subscribe-to-email-list';
+import { addCustomActivityAction } from './action/add-custom-activity';
 
 // Triggers
 import { accountAddedTrigger } from './triggers/account-added';
@@ -71,20 +73,22 @@ export const outseta = createPiece({
     dealUpdatedTrigger,
   ],
   actions: [
+    findOrAddAccountAction,
+    findOrAddPersonAction,
     getAccountAction,
     getPersonAction,
+    getDealAction,
     getAccountPlanAction,
-    changeAccountPlanAction,
-    cancelAccountAction,
-    addAddonUsageAction,
     updateAccountAction,
     updatePersonAction,
-    findOrAddPersonAction,
-    findOrAddAccountAction,
-    addPersonToAccountAction,
-    createDealAction,
-    getDealAction,
     updateDealAction,
+    addDealAction,
+    addPersonToAccountAction,
+    addCustomActivityAction,
+    changeAccountPlanAction,
+    cancelSubscriptionAction,
+    addAddonUsageAction,
+    subscribeToEmailListAction,
     deleteDealAction,
     createCustomApiCallAction({
       auth: outsetaAuth,

@@ -2,14 +2,15 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { outsetaAuth } from '../auth';
 import { OutsetaClient } from '../common/client';
 
-export const createDealAction = createAction({
-  name: 'create_deal',
+export const addDealAction = createAction({
+  name: 'add_deal',
   auth: outsetaAuth,
-  displayName: 'Create Deal',
-  description: 'Create a new deal in the CRM pipeline.',
+  displayName: 'Add Deal',
+  description:
+    'Create a deal and optionally associate it with an account or a person.',
   props: {
     name: Property.ShortText({
-      displayName: 'Deal Name',
+      displayName: 'Name',
       required: true,
     }),
     dealPipelineStageUid: Property.ShortText({
@@ -21,6 +22,15 @@ export const createDealAction = createAction({
       displayName: 'Amount',
       required: false,
       description: 'The monetary value of the deal.',
+    }),
+    assignedToPersonClientIdentifier: Property.ShortText({
+      displayName: 'Assigned To (Person Client Identifier)',
+      required: false,
+      description: 'The client identifier of the person this deal is assigned to.',
+    }),
+    dueDate: Property.DateTime({
+      displayName: 'Due Date',
+      required: false,
     }),
     accountUid: Property.ShortText({
       displayName: 'Account UID',
@@ -47,6 +57,13 @@ export const createDealAction = createAction({
 
     if (context.propsValue.amount != null) {
       body['Amount'] = context.propsValue.amount;
+    }
+    if (context.propsValue.assignedToPersonClientIdentifier) {
+      body['AssignedToPersonClientIdentifier'] =
+        context.propsValue.assignedToPersonClientIdentifier;
+    }
+    if (context.propsValue.dueDate) {
+      body['DueDate'] = context.propsValue.dueDate;
     }
     if (context.propsValue.accountUid) {
       body['Account'] = { Uid: context.propsValue.accountUid };

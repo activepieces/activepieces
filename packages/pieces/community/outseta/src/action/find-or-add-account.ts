@@ -10,24 +10,86 @@ export const findOrAddAccountAction = createAction({
     'Search for an account by name. If not found, create a new one.',
   props: {
     name: Property.ShortText({
-      displayName: 'Account Name',
+      displayName: 'Name',
       required: true,
       description: 'Name to search for (or to use when creating)',
     }),
+    accountStage: Property.StaticDropdown({
+      displayName: 'Account Stage',
+      required: false,
+      description: 'Used when creating a new account',
+      options: {
+        options: [
+          { label: 'Lead', value: 1 },
+          { label: 'Trialing', value: 2 },
+          { label: 'Subscribing', value: 3 },
+          { label: 'Delinquent', value: 4 },
+          { label: 'Cancelling', value: 5 },
+          { label: 'Expired', value: 6 },
+          { label: 'Demo', value: 7 },
+        ],
+      },
+    }),
+    clientIdentifier: Property.ShortText({
+      displayName: 'Client Identifier',
+      required: false,
+      description: 'A custom identifier for this account',
+    }),
     contactEmail: Property.ShortText({
-      displayName: 'Primary Contact Email',
+      displayName: 'Email',
       required: false,
       description: 'Email for the primary contact (used when creating)',
     }),
     contactFirstName: Property.ShortText({
-      displayName: 'Primary Contact First Name',
+      displayName: 'First Name',
       required: false,
-      description: 'First name for the primary contact (used when creating)',
     }),
     contactLastName: Property.ShortText({
-      displayName: 'Primary Contact Last Name',
+      displayName: 'Last Name',
       required: false,
-      description: 'Last name for the primary contact (used when creating)',
+    }),
+    addressLine1: Property.ShortText({
+      displayName: 'Address Line 1',
+      required: false,
+    }),
+    addressLine2: Property.ShortText({
+      displayName: 'Address Line 2',
+      required: false,
+    }),
+    addressLine3: Property.ShortText({
+      displayName: 'Address Line 3',
+      required: false,
+    }),
+    city: Property.ShortText({
+      displayName: 'City',
+      required: false,
+    }),
+    state: Property.ShortText({
+      displayName: 'State/Region',
+      required: false,
+    }),
+    postalCode: Property.ShortText({
+      displayName: 'Postal Code',
+      required: false,
+    }),
+    country: Property.ShortText({
+      displayName: 'Country',
+      required: false,
+    }),
+    planUid: Property.ShortText({
+      displayName: 'Plan UID',
+      required: false,
+      description: 'The UID of the plan to subscribe this account to.',
+    }),
+    billingRenewalTerm: Property.StaticDropdown({
+      displayName: 'Billing Renewal Term',
+      required: false,
+      options: {
+        options: [
+          { label: 'Monthly', value: 1 },
+          { label: 'Yearly', value: 2 },
+        ],
+      },
     }),
   },
   async run(context) {
@@ -37,7 +99,6 @@ export const findOrAddAccountAction = createAction({
       apiSecret: context.auth.props.apiSecret,
     });
 
-    // Search for existing account by name
     const searchResult = await client.get<any>(
       `/api/v1/crm/accounts?Name=${encodeURIComponent(context.propsValue.name)}&$top=100`
     );
@@ -48,38 +109,57 @@ export const findOrAddAccountAction = createAction({
         item.Name?.toLowerCase() === context.propsValue.name.toLowerCase()
     );
     if (exactMatch) {
-      return {
-        created: false,
-        account: exactMatch,
-      };
+      return { created: false, account: exactMatch };
     }
 
-    // Not found, create a new account
     const body: Record<string, unknown> = {
       Name: context.propsValue.name,
     };
 
+    if (context.propsValue.accountStage != null) {
+      body['AccountStage'] = context.propsValue.accountStage;
+    }
+    if (context.propsValue.clientIdentifier) {
+      body['ClientIdentifier'] = context.propsValue.clientIdentifier;
+    }
+
+    // Address
+    const hasAddress = context.propsValue.addressLine1 || context.propsValue.city || context.propsValue.country;
+    if (hasAddress) {
+      const address: Record<string, unknown> = {};
+      if (context.propsValue.addressLine1) address['AddressLine1'] = context.propsValue.addressLine1;
+      if (context.propsValue.addressLine2) address['AddressLine2'] = context.propsValue.addressLine2;
+      if (context.propsValue.addressLine3) address['AddressLine3'] = context.propsValue.addressLine3;
+      if (context.propsValue.city) address['City'] = context.propsValue.city;
+      if (context.propsValue.state) address['State'] = context.propsValue.state;
+      if (context.propsValue.postalCode) address['PostalCode'] = context.propsValue.postalCode;
+      if (context.propsValue.country) address['Country'] = context.propsValue.country;
+      body['BillingAddress'] = address;
+    }
+
+    // Primary contact
     if (context.propsValue.contactEmail) {
-      body['PersonAccount'] = [
+      const person: Record<string, unknown> = {
+        Email: context.propsValue.contactEmail,
+      };
+      if (context.propsValue.contactFirstName) person['FirstName'] = context.propsValue.contactFirstName;
+      if (context.propsValue.contactLastName) person['LastName'] = context.propsValue.contactLastName;
+      body['PersonAccount'] = [{ Person: person, IsPrimary: true }];
+    }
+
+    // Subscription
+    if (context.propsValue.planUid) {
+      body['Subscriptions'] = [
         {
-          Person: {
-            Email: context.propsValue.contactEmail,
-            ...(context.propsValue.contactFirstName ? { FirstName: context.propsValue.contactFirstName } : {}),
-            ...(context.propsValue.contactLastName ? { LastName: context.propsValue.contactLastName } : {}),
-          },
-          IsPrimary: true,
+          Plan: { Uid: context.propsValue.planUid },
+          ...(context.propsValue.billingRenewalTerm != null
+            ? { BillingRenewalTerm: context.propsValue.billingRenewalTerm }
+            : {}),
         },
       ];
     }
 
-    const newAccount = await client.post<any>(
-      `/api/v1/crm/accounts`,
-      body
-    );
-
-    return {
-      created: true,
-      account: newAccount,
-    };
+    const newAccount = await client.post<any>('/api/v1/crm/accounts', body);
+    return { created: true, account: newAccount };
   },
 });
