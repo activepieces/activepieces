@@ -68,6 +68,7 @@ function buildSandboxEnv(settings: ReturnType<typeof workerSettings.getSettings>
     const env: Record<string, string> = {
         AP_EXECUTION_MODE: settings.EXECUTION_MODE,
         NODE_PATH: '/usr/src/node_modules',
+         ...(settings.DEV_PIECES.length > 0 ? { AP_DEV_PIECES: settings.DEV_PIECES.join(',') } : {}),
     }
     for (const key of settings.SANDBOX_PROPAGATED_ENV_VARS) {
         if (process.env[key]) {

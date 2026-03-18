@@ -1,6 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction } from '@activepieces/pieces-framework';
 import { outsetaAuth } from '../auth';
 import { OutsetaClient } from '../common/client';
+import { dealUidDropdown } from '../common/dropdowns';
 
 export const deleteDealAction = createAction({
   name: 'delete_deal',
@@ -8,10 +9,7 @@ export const deleteDealAction = createAction({
   displayName: 'Delete Deal',
   description: 'Delete a deal from the CRM.',
   props: {
-    dealUid: Property.ShortText({
-      displayName: 'Deal UID',
-      required: true,
-    }),
+    dealUid: dealUidDropdown(),
   },
   async run(context) {
     const client = new OutsetaClient({
@@ -24,6 +22,6 @@ export const deleteDealAction = createAction({
       `/api/v1/crm/deals/${context.propsValue.dealUid}`
     );
 
-    return { deleted: true, dealUid: context.propsValue.dealUid };
+    return { deleted: true, deal_uid: context.propsValue.dealUid };
   },
 });

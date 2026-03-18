@@ -1,28 +1,20 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { outsetaAuth } from '../auth';
 import { OutsetaClient } from '../common/client';
+import { makeClient } from '../common/dropdowns';
 
 export const addCustomActivityAction = createAction({
   name: 'add_custom_activity',
   auth: outsetaAuth,
   displayName: 'Add Custom Activity',
   description:
-    'Record a custom activity on an account, person, or deal. These activities show up on the activity feed and can trigger drip campaigns.',
+    'Record a custom activity on an account, person, or deal. Activities show on the activity feed and can trigger drip campaigns.',
   props: {
     title: Property.ShortText({
       displayName: 'Title',
       required: true,
       description:
         'The activity title. Must match the start/stop value in drip campaigns if used for automation.',
-    }),
-    description: Property.LongText({
-      displayName: 'Description',
-      required: false,
-    }),
-    activityData: Property.LongText({
-      displayName: 'Data',
-      required: false,
-      description: 'A string that can be used to store serialized JSON.',
     }),
     entityType: Property.StaticDropdown({
       displayName: 'Entity Type',
@@ -35,10 +27,52 @@ export const addCustomActivityAction = createAction({
         ],
       },
     }),
-    entityUid: Property.ShortText({
-      displayName: 'Entity UID',
+    entityUid: Property.Dropdown({
+      auth: outsetaAuth,
+      displayName: 'Entity',
+      description: 'Select the account, person, or deal to record the activity on.',
+      refreshers: ['entityType'],
       required: true,
-      description: 'The UID of the account, person, or deal.',
+      options: async ({ auth, entityType }) => {
+        const client = makeClient(auth);
+        if (!client) {
+          return { disabled: true, options: [], placeholder: 'Connect your Outseta account first.' };
+        }
+        if (!entityType) {
+          return { disabled: true, options: [], placeholder: 'Select an entity type first.' };
+        }
+        try {
+          let path = '';
+          if (entityType === 1) path = '/api/v1/crm/accounts?$top=100';
+          else if (entityType === 2) path = '/api/v1/crm/people?$top=100';
+          else if (entityType === 3) path = '/api/v1/crm/deals?$top=100';
+          else return { disabled: true, options: [], placeholder: 'Unknown entity type.' };
+
+          const res = await client.get<any>(path);
+          const items: any[] = res?.items ?? res?.Items ?? [];
+          return {
+            disabled: false,
+            options: items.map((item: any) => {
+              if (entityType === 2) {
+                 
+                return { label: `${item.FullName} (${item.Email ?? item.Uid})`, value: item.Uid };
+              }
+              return { label: item.Name ?? item.Uid, value: item.Uid };
+            }),
+          };
+        } catch {
+          return { disabled: true, options: [], placeholder: 'Failed to load entities.' };
+        }
+      },
+    }),
+    description: Property.LongText({
+      displayName: 'Description',
+      required: false,
+    }),
+    activityData: Property.LongText({
+      displayName: 'Data',
+      required: false,
+      description: 'Optional string to store serialized JSON or other metadata with this activity.',
     }),
   },
   async run(context) {
@@ -61,9 +95,17 @@ export const addCustomActivityAction = createAction({
       body['ActivityData'] = context.propsValue.activityData;
     }
 
-    return await client.post<any>(
+    const result = await client.post<any>(
       '/api/v1/activities/customactivity',
       body
     );
+
+    return {
+      uid: result.Uid ?? null,
+      title: result.Title ?? null,
+      entity_type: result.EntityType ?? null,
+      entity_uid: result.EntityUid ?? null,
+      created: result.Created ?? null,
+    };
   },
 });

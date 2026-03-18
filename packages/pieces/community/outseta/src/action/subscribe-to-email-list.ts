@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { outsetaAuth } from '../auth';
 import { OutsetaClient } from '../common/client';
+import { emailListUidDropdown } from '../common/dropdowns';
 
 export const subscribeToEmailListAction = createAction({
   name: 'subscribe_to_email_list',
@@ -8,14 +9,11 @@ export const subscribeToEmailListAction = createAction({
   displayName: 'Subscribe to Email List',
   description: "Add a person's email address to a mailing list.",
   props: {
-    emailListUid: Property.ShortText({
-      displayName: 'Email List UID',
-      required: true,
-      description: 'The UID of the email list.',
-    }),
+    emailListUid: emailListUidDropdown(),
     email: Property.ShortText({
       displayName: 'Email',
       required: true,
+      description: 'The email address to subscribe.',
     }),
     firstName: Property.ShortText({
       displayName: 'First Name',
@@ -29,6 +27,7 @@ export const subscribeToEmailListAction = createAction({
       displayName: 'Send Welcome Email',
       required: false,
       defaultValue: false,
+      description: 'If checked, Outseta will send the list welcome email to this subscriber.',
     }),
   },
   async run(context) {
@@ -48,7 +47,7 @@ export const subscribeToEmailListAction = createAction({
       person['LastName'] = context.propsValue.lastName;
     }
 
-    return await client.post<any>(
+    const result = await client.post<any>(
       `/api/v1/email/lists/${context.propsValue.emailListUid}/subscriptions`,
       {
         EmailList: { Uid: context.propsValue.emailListUid },
@@ -56,5 +55,13 @@ export const subscribeToEmailListAction = createAction({
         SendWelcomeEmail: context.propsValue.sendWelcomeEmail ?? false,
       }
     );
+
+    return {
+      uid: result.Uid ?? null,
+      email_list_uid: result.EmailList?.Uid ?? null,
+      person_email: result.Person?.Email ?? null,
+      person_uid: result.Person?.Uid ?? null,
+      created: result.Created ?? null,
+    };
   },
 });

@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { outsetaAuth } from '../auth';
 import { OutsetaClient } from '../common/client';
+import { accountUidDropdown, personUidDropdown, pipelineStageUidDropdown } from '../common/dropdowns';
 
 export const addDealAction = createAction({
   name: 'add_deal',
@@ -12,36 +13,25 @@ export const addDealAction = createAction({
     name: Property.ShortText({
       displayName: 'Name',
       required: true,
+      description: 'The name or title of the deal.',
     }),
-    dealPipelineStageUid: Property.ShortText({
-      displayName: 'Pipeline Stage UID',
-      required: true,
-      description: 'The UID of the pipeline stage for this deal.',
-    }),
+    dealPipelineStageUid: pipelineStageUidDropdown(),
     amount: Property.Number({
       displayName: 'Amount',
       required: false,
       description: 'The monetary value of the deal.',
     }),
     assignedToPersonClientIdentifier: Property.ShortText({
-      displayName: 'Assigned To (Person Client Identifier)',
+      displayName: 'Assigned To (Client Identifier)',
       required: false,
-      description: 'The client identifier of the person this deal is assigned to.',
+      description: "The client identifier of the team member this deal is assigned to. Found in the person's Outseta profile.",
     }),
     dueDate: Property.DateTime({
       displayName: 'Due Date',
       required: false,
     }),
-    accountUid: Property.ShortText({
-      displayName: 'Account UID',
-      required: false,
-      description: 'The UID of the account to associate with this deal.',
-    }),
-    personUid: Property.ShortText({
-      displayName: 'Person UID',
-      required: false,
-      description: 'The UID of the person to associate with this deal.',
-    }),
+    accountUid: accountUidDropdown({ required: false, displayName: 'Account' }),
+    personUid: personUidDropdown({ required: false, displayName: 'Person' }),
   },
   async run(context) {
     const client = new OutsetaClient({
@@ -74,6 +64,18 @@ export const addDealAction = createAction({
       ];
     }
 
-    return await client.post<any>('/api/v1/crm/deals', body);
+    const deal = await client.post<any>('/api/v1/crm/deals', body);
+
+    return {
+      uid: deal.Uid ?? null,
+      name: deal.Name ?? null,
+      amount: deal.Amount ?? null,
+      due_date: deal.DueDate ?? null,
+      pipeline_stage_uid: deal.DealPipelineStage?.Uid ?? null,
+      pipeline_stage_name: deal.DealPipelineStage?.Name ?? null,
+      account_uid: deal.Account?.Uid ?? null,
+      account_name: deal.Account?.Name ?? null,
+      created: deal.Created ?? null,
+    };
   },
 });

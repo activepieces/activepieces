@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { outsetaAuth } from '../auth';
 import { OutsetaClient } from '../common/client';
+import { personUidDropdown } from '../common/dropdowns';
 
 export const updatePersonAction = createAction({
   name: 'update_person',
@@ -8,10 +9,7 @@ export const updatePersonAction = createAction({
   displayName: 'Update Person',
   description: 'Update an existing person in Outseta.',
   props: {
-    personUid: Property.ShortText({
-      displayName: 'Person UID',
-      required: true,
-    }),
+    personUid: personUidDropdown(),
     email: Property.ShortText({
       displayName: 'Email',
       required: false,
@@ -35,6 +33,7 @@ export const updatePersonAction = createAction({
     title: Property.ShortText({
       displayName: 'Title',
       required: false,
+      description: 'Job title (e.g. CEO, Engineer).',
     }),
     addressLine1: Property.ShortText({
       displayName: 'Address Line 1',
@@ -98,9 +97,21 @@ export const updatePersonAction = createAction({
       throw new Error('At least one field must be provided.');
     }
 
-    return await client.put<any>(
+    const person = await client.put<any>(
       `/api/v1/crm/people/${context.propsValue.personUid}`,
       person
     );
+
+    return {
+      uid: person.Uid ?? null,
+      email: person.Email ?? null,
+      first_name: person.FirstName ?? null,
+      last_name: person.LastName ?? null,
+      full_name: person.FullName ?? null,
+      phone_mobile: person.PhoneMobile ?? null,
+      phone_work: person.PhoneWork ?? null,
+      title: person.Title ?? null,
+      updated: person.Updated ?? null,
+    };
   },
 });

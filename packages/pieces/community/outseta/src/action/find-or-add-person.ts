@@ -12,7 +12,7 @@ export const findOrAddPersonAction = createAction({
     email: Property.ShortText({
       displayName: 'Email',
       required: true,
-      description: 'Email to search for (or to use when creating)',
+      description: 'Email to search for. If no match is found, a new person is created with this email.',
     }),
     firstName: Property.ShortText({
       displayName: 'First Name',

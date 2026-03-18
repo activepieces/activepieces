@@ -28,7 +28,12 @@ const piecePath = (rootWorkspace: string, piece: PiecePackage) => join(rootWorks
 
 export const pieceInstaller = (log: Logger, apiClient: WorkerToApiContract) => ({
     async install({ pieces, includeFilters }: InstallParams): Promise<void> {
-        const groupedPieces = groupPiecesByPackagePath(pieces)
+        const devPieces = workerSettings.getSettings().DEV_PIECES
+        const nonDevPieces = pieces.filter(piece => !devPieces.includes(piece.pieceName.replace('@activepieces/piece-', '')))
+        if (nonDevPieces.length !== pieces.length) {
+            log.info({ skipped: pieces.length - nonDevPieces.length }, '[pieceInstaller] Skipping dev pieces (loaded from local dist folder)')
+        }
+        const groupedPieces = groupPiecesByPackagePath(nonDevPieces)
         const installPromises = Object.entries(groupedPieces).map(async ([packagePath, piecesInGroup]) => {
             await installPieces(packagePath, piecesInGroup, includeFilters, log, apiClient)
         })

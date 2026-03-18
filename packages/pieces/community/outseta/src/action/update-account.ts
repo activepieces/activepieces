@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { outsetaAuth } from '../auth';
 import { OutsetaClient } from '../common/client';
+import { accountUidDropdown } from '../common/dropdowns';
 
 export const updateAccountAction = createAction({
   name: 'update_account',
@@ -8,10 +9,7 @@ export const updateAccountAction = createAction({
   displayName: 'Update Account',
   description: 'Update an existing account in Outseta.',
   props: {
-    accountUid: Property.ShortText({
-      displayName: 'Account UID',
-      required: true,
-    }),
+    accountUid: accountUidDropdown(),
     name: Property.ShortText({
       displayName: 'Name',
       required: false,
@@ -34,10 +32,12 @@ export const updateAccountAction = createAction({
     clientIdentifier: Property.ShortText({
       displayName: 'Client Identifier',
       required: false,
+      description: 'A custom identifier you assign to this account (e.g. your internal customer ID).',
     }),
     invoiceNotes: Property.LongText({
       displayName: 'Invoice Notes',
       required: false,
+      description: 'Notes that appear on invoices sent to this account.',
     }),
     addressLine1: Property.ShortText({
       displayName: 'Address Line 1',
@@ -99,9 +99,19 @@ export const updateAccountAction = createAction({
       throw new Error('At least one field must be provided.');
     }
 
-    return await client.put<any>(
+    const account = await client.put<any>(
       `/api/v1/crm/accounts/${context.propsValue.accountUid}`,
       account
     );
+
+    return {
+      uid: account.Uid ?? null,
+      name: account.Name ?? null,
+      account_stage: account.AccountStage ?? null,
+      account_stage_label: account.AccountStageLabel ?? null,
+      client_identifier: account.ClientIdentifier ?? null,
+      invoice_notes: account.InvoiceNotes ?? null,
+      updated: account.Updated ?? null,
+    };
   },
 });

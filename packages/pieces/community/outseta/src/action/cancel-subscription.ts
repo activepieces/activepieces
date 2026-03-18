@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { outsetaAuth } from '../auth';
 import { OutsetaClient } from '../common/client';
+import { accountUidDropdown } from '../common/dropdowns';
 
 export const cancelSubscriptionAction = createAction({
   name: 'cancel_subscription',
@@ -9,10 +10,7 @@ export const cancelSubscriptionAction = createAction({
   description:
     'Cancel the current subscription on an account. By default, the subscription expires at the end of the current term. You can also cancel immediately.',
   props: {
-    accountUid: Property.ShortText({
-      displayName: 'Account UID',
-      required: true,
-    }),
+    accountUid: accountUidDropdown(),
     cancelImmediately: Property.Checkbox({
       displayName: 'Cancel Immediately',
       required: false,
@@ -23,12 +21,12 @@ export const cancelSubscriptionAction = createAction({
     cancellationReason: Property.ShortText({
       displayName: 'Cancellation Reason',
       required: false,
-      description: 'Reason for the cancellation (e.g. "Too expensive")',
+      description: 'Reason for the cancellation (e.g. "Too expensive").',
     }),
     comment: Property.LongText({
       displayName: 'Comment',
       required: false,
-      description: 'Additional comment about the cancellation',
+      description: 'Additional comment about the cancellation.',
     }),
   },
   async run(context) {
@@ -50,8 +48,7 @@ export const cancelSubscriptionAction = createAction({
       body['Comment'] = context.propsValue.comment;
     }
 
-    // Submit cancellation request
-    const result = await client.put<any>(
+    await client.put<any>(
       `/api/v1/crm/accounts/cancellation/${context.propsValue.accountUid}`,
       body
     );
@@ -70,6 +67,10 @@ export const cancelSubscriptionAction = createAction({
       );
     }
 
-    return result;
+    return {
+      account_uid: context.propsValue.accountUid,
+      cancelled: true,
+      cancelled_immediately: context.propsValue.cancelImmediately ?? false,
+    };
   },
 });

@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { outsetaAuth } from '../auth';
 import { OutsetaClient } from '../common/client';
+import { planUidDropdown } from '../common/dropdowns';
 
 export const findOrAddAccountAction = createAction({
   name: 'find_or_add_account',
@@ -12,12 +13,12 @@ export const findOrAddAccountAction = createAction({
     name: Property.ShortText({
       displayName: 'Name',
       required: true,
-      description: 'Name to search for (or to use when creating)',
+      description: 'Account name to search for. If no exact match is found, a new account is created with this name.',
     }),
     accountStage: Property.StaticDropdown({
       displayName: 'Account Stage',
       required: false,
-      description: 'Used when creating a new account',
+      description: 'The lifecycle stage for the account (used when creating).',
       options: {
         options: [
           { label: 'Lead', value: 1 },
@@ -33,12 +34,12 @@ export const findOrAddAccountAction = createAction({
     clientIdentifier: Property.ShortText({
       displayName: 'Client Identifier',
       required: false,
-      description: 'A custom identifier for this account',
+      description: 'A custom identifier for this account (e.g. your internal customer ID). Used when creating.',
     }),
     contactEmail: Property.ShortText({
       displayName: 'Email',
       required: false,
-      description: 'Email for the primary contact (used when creating)',
+      description: 'Email for the primary contact (used when creating).',
     }),
     contactFirstName: Property.ShortText({
       displayName: 'First Name',
@@ -76,14 +77,11 @@ export const findOrAddAccountAction = createAction({
       displayName: 'Country',
       required: false,
     }),
-    planUid: Property.ShortText({
-      displayName: 'Plan UID',
-      required: false,
-      description: 'The UID of the plan to subscribe this account to.',
-    }),
+    planUid: planUidDropdown({ required: false, displayName: 'Plan (for subscription)' }),
     billingRenewalTerm: Property.StaticDropdown({
       displayName: 'Billing Renewal Term',
       required: false,
+      description: 'Used when creating a new account with a plan.',
       options: {
         options: [
           { label: 'Monthly', value: 1 },
@@ -109,7 +107,17 @@ export const findOrAddAccountAction = createAction({
         item.Name?.toLowerCase() === context.propsValue.name.toLowerCase()
     );
     if (exactMatch) {
-      return { created: false, account: exactMatch };
+      return {
+        created: false,
+        uid: exactMatch.Uid ?? null,
+        name: exactMatch.Name ?? null,
+        account_stage: exactMatch.AccountStage ?? null,
+        account_stage_label: exactMatch.AccountStageLabel ?? null,
+        client_identifier: exactMatch.ClientIdentifier ?? null,
+        primary_contact_email: exactMatch.PrimaryContact?.Email ?? null,
+        created_at: exactMatch.Created ?? null,
+        updated_at: exactMatch.Updated ?? null,
+      };
     }
 
     const body: Record<string, unknown> = {
@@ -123,7 +131,6 @@ export const findOrAddAccountAction = createAction({
       body['ClientIdentifier'] = context.propsValue.clientIdentifier;
     }
 
-    // Address
     const hasAddress = context.propsValue.addressLine1 || context.propsValue.city || context.propsValue.country;
     if (hasAddress) {
       const address: Record<string, unknown> = {};
@@ -137,7 +144,6 @@ export const findOrAddAccountAction = createAction({
       body['BillingAddress'] = address;
     }
 
-    // Primary contact
     if (context.propsValue.contactEmail) {
       const person: Record<string, unknown> = {
         Email: context.propsValue.contactEmail,
@@ -147,7 +153,6 @@ export const findOrAddAccountAction = createAction({
       body['PersonAccount'] = [{ Person: person, IsPrimary: true }];
     }
 
-    // Subscription
     if (context.propsValue.planUid) {
       body['Subscriptions'] = [
         {
@@ -160,6 +165,17 @@ export const findOrAddAccountAction = createAction({
     }
 
     const newAccount = await client.post<any>('/api/v1/crm/accounts', body);
-    return { created: true, account: newAccount };
+
+    return {
+      created: true,
+      uid: newAccount.Uid ?? null,
+      name: newAccount.Name ?? null,
+      account_stage: newAccount.AccountStage ?? null,
+      account_stage_label: newAccount.AccountStageLabel ?? null,
+      client_identifier: newAccount.ClientIdentifier ?? null,
+      primary_contact_email: newAccount.PrimaryContact?.Email ?? null,
+      created_at: newAccount.Created ?? null,
+      updated_at: newAccount.Updated ?? null,
+    };
   },
 });
