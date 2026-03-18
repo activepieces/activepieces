@@ -1,4 +1,4 @@
-import { SecretManagerProviderId, SecretManagerFieldsSeparator } from '@activepieces/shared'
+import { SecretManagerProviderId, SecretManagerFieldsSeparator, SecretManagerConnectionScope } from '@activepieces/shared'
 import { apAxios } from '../../../../src/app/helper/ap-axios'
 import { PlatformRole, PrincipalType } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
@@ -60,7 +60,7 @@ describe('Secret Manager Cache', () => {
                 method: 'POST',
                 url: '/api/v1/secret-managers',
                 headers: { authorization: `Bearer ${testToken}` },
-                body: { providerId: SecretManagerProviderId.HASHICORP, config: mockVaultConfig },
+                body: { providerId: SecretManagerProviderId.HASHICORP, config: mockVaultConfig, name: 'test-vault', scope: SecretManagerConnectionScope.PLATFORM },
             })
 
             axiosRequestSpy.mockClear()
@@ -83,7 +83,7 @@ describe('Secret Manager Cache', () => {
 
             expect(axiosRequestSpy.mock.calls.length).toBe(callsAfterFirstList)
 
-            await secretManagerCache.invalidatePlatformEntries(mockPlatform.id)
+            await secretManagerCache.invalidateConnectionEntries({ platformId: mockPlatform.id })
         })
 
         it('should not cache when checkConnection fails', async () => {
@@ -102,7 +102,7 @@ describe('Secret Manager Cache', () => {
                 method: 'POST',
                 url: '/api/v1/secret-managers',
                 headers: { authorization: `Bearer ${testToken}` },
-                body: { providerId: SecretManagerProviderId.HASHICORP, config: mockVaultConfig },
+                body: { providerId: SecretManagerProviderId.HASHICORP, config: mockVaultConfig, name: 'test-vault', scope: SecretManagerConnectionScope.PLATFORM },
             })
 
             // Now make checkConnection fail for subsequent calls
@@ -128,7 +128,7 @@ describe('Secret Manager Cache', () => {
 
             expect(axiosRequestSpy.mock.calls.length).toBe(callsAfterFirstList * 2)
 
-            await secretManagerCache.invalidatePlatformEntries(mockPlatform.id)
+            await secretManagerCache.invalidateConnectionEntries({ platformId: mockPlatform.id })
         })
     })
 
@@ -143,20 +143,21 @@ describe('Secret Manager Cache', () => {
                 platform: { id: mockPlatform.id },
             })
 
-            vaultMock.mockVaultGetSecretSuccess({ 'my-api-key': 'super-secret-value' })
-
-            await app!.inject({
+            vaultMock.mockVaultLoginSuccess()
+            const createResponse = await app!.inject({
                 method: 'POST',
                 url: '/api/v1/secret-managers',
                 headers: { authorization: `Bearer ${testToken}` },
-                body: { providerId: SecretManagerProviderId.HASHICORP, config: mockVaultConfig },
+                body: { providerId: SecretManagerProviderId.HASHICORP, config: mockVaultConfig, name: 'test-vault', scope: SecretManagerConnectionScope.PLATFORM },
             })
+            const { id: connectionId } = createResponse.json<{ id: string }>()
 
+            vaultMock.mockVaultGetSecretSuccess({ 'my-api-key': 'super-secret-value' })
             axiosRequestSpy.mockClear()
 
             // First resolveString — calls provider
             await secretManagersService(mockLog).resolveString({
-                key: `{{hashicorp${SecretManagerFieldsSeparator}secret/data/keys/my-api-key}}`,
+                key: `{{${connectionId}${SecretManagerFieldsSeparator}secret/data/keys/my-api-key}}`,
                 platformId: mockPlatform.id,
             })
 
@@ -165,13 +166,13 @@ describe('Secret Manager Cache', () => {
 
             // Second resolveString — should hit cache
             await secretManagersService(mockLog).resolveString({
-                key: `{{hashicorp${SecretManagerFieldsSeparator}secret/data/keys/my-api-key}}`,
+                key: `{{${connectionId}${SecretManagerFieldsSeparator}secret/data/keys/my-api-key}}`,
                 platformId: mockPlatform.id,
             })
 
             expect(axiosRequestSpy.mock.calls.length).toBe(callsAfterFirst)
 
-            await secretManagerCache.invalidatePlatformEntries(mockPlatform.id)
+            await secretManagerCache.invalidateConnectionEntries({ platformId: mockPlatform.id })
         })
     })
 
@@ -193,7 +194,7 @@ describe('Secret Manager Cache', () => {
                 method: 'POST',
                 url: '/api/v1/secret-managers',
                 headers: { authorization: `Bearer ${testToken}` },
-                body: { providerId: SecretManagerProviderId.HASHICORP, config: mockVaultConfig },
+                body: { providerId: SecretManagerProviderId.HASHICORP, config: mockVaultConfig, name: 'test-vault', scope: SecretManagerConnectionScope.PLATFORM },
             })
 
             await app!.inject({
@@ -207,7 +208,7 @@ describe('Secret Manager Cache', () => {
                 method: 'POST',
                 url: '/api/v1/secret-managers',
                 headers: { authorization: `Bearer ${testToken}` },
-                body: { providerId: SecretManagerProviderId.HASHICORP, config: mockVaultConfig },
+                body: { providerId: SecretManagerProviderId.HASHICORP, config: mockVaultConfig, name: 'test-vault', scope: SecretManagerConnectionScope.PLATFORM },
             })
 
             axiosRequestSpy.mockClear()
@@ -221,7 +222,7 @@ describe('Secret Manager Cache', () => {
 
             expect(axiosRequestSpy.mock.calls.length).toBeGreaterThan(0)
 
-            await secretManagerCache.invalidatePlatformEntries(mockPlatform.id)
+            await secretManagerCache.invalidateConnectionEntries({ platformId: mockPlatform.id })
         })
 
         it('should clear cache on disconnect', async () => {
@@ -237,12 +238,13 @@ describe('Secret Manager Cache', () => {
             vaultMock.mockVaultLoginSuccess()
 
             // Connect and list to populate cache
-            await app!.inject({
+            const connectResponse = await app!.inject({
                 method: 'POST',
                 url: '/api/v1/secret-managers',
                 headers: { authorization: `Bearer ${testToken}` },
-                body: { providerId: SecretManagerProviderId.HASHICORP, config: mockVaultConfig },
+                body: { providerId: SecretManagerProviderId.HASHICORP, config: mockVaultConfig, name: 'test-vault', scope: SecretManagerConnectionScope.PLATFORM },
             })
+            const { id: connectionId } = connectResponse.json<{ id: string }>()
 
             await app!.inject({
                 method: 'GET',
@@ -250,19 +252,20 @@ describe('Secret Manager Cache', () => {
                 headers: { authorization: `Bearer ${testToken}` },
             })
 
-            // Disconnect — clears cache and config
+            // Delete — clears cache
             await app!.inject({
                 method: 'DELETE',
-                url: '/api/v1/secret-managers?providerId=hashicorp',
+                url: `/v1/secret-managers/${connectionId}`,
                 headers: { authorization: `Bearer ${testToken}` },
             })
 
             // Reconnect with fresh config
+            vaultMock.mockVaultLoginSuccess()
             await app!.inject({
                 method: 'POST',
                 url: '/api/v1/secret-managers',
                 headers: { authorization: `Bearer ${testToken}` },
-                body: { providerId: SecretManagerProviderId.HASHICORP, config: mockVaultConfig },
+                body: { providerId: SecretManagerProviderId.HASHICORP, config: mockVaultConfig, name: 'test-vault-2', scope: SecretManagerConnectionScope.PLATFORM },
             })
 
             axiosRequestSpy.mockClear()
@@ -276,7 +279,7 @@ describe('Secret Manager Cache', () => {
 
             expect(axiosRequestSpy.mock.calls.length).toBeGreaterThan(0)
 
-            await secretManagerCache.invalidatePlatformEntries(mockPlatform.id)
+            await secretManagerCache.invalidateConnectionEntries({ platformId: mockPlatform.id })
         })
     })
 
@@ -297,7 +300,7 @@ describe('Secret Manager Cache', () => {
                 method: 'POST',
                 url: '/api/v1/secret-managers',
                 headers: { authorization: `Bearer ${testToken}` },
-                body: { providerId: SecretManagerProviderId.HASHICORP, config: mockVaultConfig },
+                body: { providerId: SecretManagerProviderId.HASHICORP, config: mockVaultConfig, name: 'test-vault', scope: SecretManagerConnectionScope.PLATFORM },
             })
 
             // Populate cache with first list

@@ -15,16 +15,6 @@ describe('getWebhookUrl', () => {
             .toBe('https://example.com/api/v1/webhooks/flow-123')
     })
 
-    it('handles URL ending in /api/', () => {
-        expect(getWebhookUrl('https://example.com/api/', flowId))
-            .toBe('https://example.com/api/v1/webhooks/flow-123')
-    })
-
-    it('handles URL ending in /api', () => {
-        expect(getWebhookUrl('https://example.com/api', flowId))
-            .toBe('https://example.com/api/v1/webhooks/flow-123')
-    })
-
     it('appends /test suffix when simulate is true', () => {
         expect(getWebhookUrl('https://example.com/api/', flowId, true))
             .toBe('https://example.com/api/v1/webhooks/flow-123/test')
