@@ -43,6 +43,7 @@ export const cancelSubscriptionAction = createAction({
     };
 
     if (context.propsValue.cancellationReason) {
+      // "CancelationReason" is the correct field name per Outseta's API (single 'l')
       body['CancelationReason'] = context.propsValue.cancellationReason;
     }
     if (context.propsValue.comment) {
@@ -55,7 +56,9 @@ export const cancelSubscriptionAction = createAction({
       body
     );
 
-    // If cancel immediately, fetch the full account first to avoid wiping fields
+    // If cancel immediately, set account to Expired (stage 6).
+    // Outseta does not have a dedicated "cancel now" API endpoint — the cancellation
+    // request only schedules expiry at renewal. Setting AccountStage=6 forces immediate expiry.
     if (context.propsValue.cancelImmediately) {
       const account = await client.get<any>(
         `/api/v1/crm/accounts/${context.propsValue.accountUid}`

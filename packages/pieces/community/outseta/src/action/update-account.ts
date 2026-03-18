@@ -71,31 +71,37 @@ export const updateAccountAction = createAction({
       apiSecret: context.auth.props.apiSecret,
     });
 
-    const body: Record<string, unknown> = {};
-    if (context.propsValue.name) body['Name'] = context.propsValue.name;
-    if (context.propsValue.accountStage != null) body['AccountStage'] = context.propsValue.accountStage;
-    if (context.propsValue.clientIdentifier) body['ClientIdentifier'] = context.propsValue.clientIdentifier;
-    if (context.propsValue.invoiceNotes) body['InvoiceNotes'] = context.propsValue.invoiceNotes;
+    // Fetch full account first to avoid wiping fields with a partial PUT
+    const account = await client.get<any>(
+      `/api/v1/crm/accounts/${context.propsValue.accountUid}`
+    );
+
+    let changed = false;
+    if (context.propsValue.name) { account.Name = context.propsValue.name; changed = true; }
+    if (context.propsValue.accountStage != null) { account.AccountStage = context.propsValue.accountStage; changed = true; }
+    if (context.propsValue.clientIdentifier) { account.ClientIdentifier = context.propsValue.clientIdentifier; changed = true; }
+    if (context.propsValue.invoiceNotes) { account.InvoiceNotes = context.propsValue.invoiceNotes; changed = true; }
 
     const hasAddress = context.propsValue.addressLine1 || context.propsValue.city || context.propsValue.country;
     if (hasAddress) {
-      const address: Record<string, unknown> = {};
-      if (context.propsValue.addressLine1) address['AddressLine1'] = context.propsValue.addressLine1;
-      if (context.propsValue.addressLine2) address['AddressLine2'] = context.propsValue.addressLine2;
-      if (context.propsValue.city) address['City'] = context.propsValue.city;
-      if (context.propsValue.state) address['State'] = context.propsValue.state;
-      if (context.propsValue.postalCode) address['PostalCode'] = context.propsValue.postalCode;
-      if (context.propsValue.country) address['Country'] = context.propsValue.country;
-      body['BillingAddress'] = address;
+      const address = account.BillingAddress ?? {};
+      if (context.propsValue.addressLine1) address.AddressLine1 = context.propsValue.addressLine1;
+      if (context.propsValue.addressLine2) address.AddressLine2 = context.propsValue.addressLine2;
+      if (context.propsValue.city) address.City = context.propsValue.city;
+      if (context.propsValue.state) address.State = context.propsValue.state;
+      if (context.propsValue.postalCode) address.PostalCode = context.propsValue.postalCode;
+      if (context.propsValue.country) address.Country = context.propsValue.country;
+      account.BillingAddress = address;
+      changed = true;
     }
 
-    if (Object.keys(body).length === 0) {
+    if (!changed) {
       throw new Error('At least one field must be provided.');
     }
 
     return await client.put<any>(
       `/api/v1/crm/accounts/${context.propsValue.accountUid}`,
-      body
+      account
     );
   },
 });

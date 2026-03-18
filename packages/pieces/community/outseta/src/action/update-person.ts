@@ -68,33 +68,39 @@ export const updatePersonAction = createAction({
       apiSecret: context.auth.props.apiSecret,
     });
 
-    const body: Record<string, unknown> = {};
-    if (context.propsValue.email) body['Email'] = context.propsValue.email;
-    if (context.propsValue.firstName) body['FirstName'] = context.propsValue.firstName;
-    if (context.propsValue.lastName) body['LastName'] = context.propsValue.lastName;
-    if (context.propsValue.phoneMobile) body['PhoneMobile'] = context.propsValue.phoneMobile;
-    if (context.propsValue.phoneWork) body['PhoneWork'] = context.propsValue.phoneWork;
-    if (context.propsValue.title) body['Title'] = context.propsValue.title;
+    // Fetch full person first to avoid wiping fields with a partial PUT
+    const person = await client.get<any>(
+      `/api/v1/crm/people/${context.propsValue.personUid}`
+    );
+
+    let changed = false;
+    if (context.propsValue.email) { person.Email = context.propsValue.email; changed = true; }
+    if (context.propsValue.firstName) { person.FirstName = context.propsValue.firstName; changed = true; }
+    if (context.propsValue.lastName) { person.LastName = context.propsValue.lastName; changed = true; }
+    if (context.propsValue.phoneMobile) { person.PhoneMobile = context.propsValue.phoneMobile; changed = true; }
+    if (context.propsValue.phoneWork) { person.PhoneWork = context.propsValue.phoneWork; changed = true; }
+    if (context.propsValue.title) { person.Title = context.propsValue.title; changed = true; }
 
     const hasAddress = context.propsValue.addressLine1 || context.propsValue.city || context.propsValue.country;
     if (hasAddress) {
-      const address: Record<string, unknown> = {};
-      if (context.propsValue.addressLine1) address['AddressLine1'] = context.propsValue.addressLine1;
-      if (context.propsValue.addressLine2) address['AddressLine2'] = context.propsValue.addressLine2;
-      if (context.propsValue.city) address['City'] = context.propsValue.city;
-      if (context.propsValue.state) address['State'] = context.propsValue.state;
-      if (context.propsValue.postalCode) address['PostalCode'] = context.propsValue.postalCode;
-      if (context.propsValue.country) address['Country'] = context.propsValue.country;
-      body['MailingAddress'] = address;
+      const address = person.MailingAddress ?? {};
+      if (context.propsValue.addressLine1) address.AddressLine1 = context.propsValue.addressLine1;
+      if (context.propsValue.addressLine2) address.AddressLine2 = context.propsValue.addressLine2;
+      if (context.propsValue.city) address.City = context.propsValue.city;
+      if (context.propsValue.state) address.State = context.propsValue.state;
+      if (context.propsValue.postalCode) address.PostalCode = context.propsValue.postalCode;
+      if (context.propsValue.country) address.Country = context.propsValue.country;
+      person.MailingAddress = address;
+      changed = true;
     }
 
-    if (Object.keys(body).length === 0) {
+    if (!changed) {
       throw new Error('At least one field must be provided.');
     }
 
     return await client.put<any>(
       `/api/v1/crm/people/${context.propsValue.personUid}`,
-      body
+      person
     );
   },
 });
