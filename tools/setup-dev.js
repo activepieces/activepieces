@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const { execSync, spawn } = require('child_process');
+const { execSync } = require('child_process');
 const fs = require('fs');
 
 // Check Node.js version
@@ -52,11 +52,4 @@ if (devPieces) {
     .join(' ');
   console.log(`Building dev pieces: ${devPieces}`);
   execSync(`npx turbo run build ${pieceFilters}`, { stdio: 'inherit' });
-
-  // Spawn file watcher for dev pieces as a detached background process
-  const watchProcess = spawn('node', ['tools/watch-dev-pieces.js', devPieces], {
-    stdio: 'inherit',
-    detached: true,
-  });
-  watchProcess.unref();
 }
