@@ -92,7 +92,7 @@ async function setupBaseApp(): Promise<FastifyInstance> {
         querystringParser: qs.parse,
         loggerInstance: system.globalLogger(),
         ignoreTrailingSlash: true,
-        pluginTimeout: 30000,
+        pluginTimeout: 120000,
         bodyLimit: Math.max(fileSizeLimit + 4, flowRunLogSizeLimit + 4, 25) * 1024 * 1024,
         genReqId: () => {
             return `req_${apId()}`

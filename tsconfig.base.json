@@ -1350,6 +1350,9 @@
       "@activepieces/piece-formspark": [
         "packages/pieces/community/formspark/src/index.ts"
       ],
+      "@activepieces/piece-webex": [
+        "packages/pieces/community/webex/src/index.ts"
+      ],
       "@activepieces/piece-tableau": [
         "packages/pieces/community/tableau/src/index.ts"
       ],
@@ -1803,6 +1806,9 @@
       ],
       "@activepieces/piece-google-search": [
         "packages/pieces/community/google-search/src/index.ts"
+      ],
+      "@activepieces/piece-microsoft-copilot": [
+        "packages/pieces/community/microsoft-copilot/src/index.ts"
       ],
       "@activepieces/piece-asknews": [
         "packages/pieces/community/asknews/src/index.ts"

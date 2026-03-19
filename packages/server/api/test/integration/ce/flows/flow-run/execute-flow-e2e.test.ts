@@ -532,6 +532,109 @@ describe('Execute Flow E2E', () => {
         )
     }, 180_000)
 
+    it('executes a webhook → delay_for → code flow without infinite loop', async () => {
+        const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
+
+        const webhookPiece = createMockPieceMetadata({
+            name: '@activepieces/piece-webhook',
+            version: '0.1.29',
+            platformId: undefined,
+            packageType: PackageType.REGISTRY,
+            pieceType: PieceType.OFFICIAL,
+        })
+        const delayPiece = createMockPieceMetadata({
+            name: '@activepieces/piece-delay',
+            version: '0.3.26',
+            platformId: undefined,
+            packageType: PackageType.REGISTRY,
+            pieceType: PieceType.OFFICIAL,
+        })
+        await databaseConnection().getRepository('piece_metadata').save([webhookPiece, delayPiece])
+
+        const codeAction = {
+            type: FlowActionType.CODE as const,
+            name: 'step_2',
+            displayName: 'After Delay',
+            valid: true,
+            settings: {
+                sourceCode: {
+                    code: `export const code = async (inputs) => {
+                        return { resumed: true, timestamp: Date.now() };
+                    }`,
+                    packageJson: '{}',
+                },
+                input: {},
+                errorHandlingOptions: {},
+            },
+        }
+
+        const delayAction = {
+            type: FlowActionType.PIECE as const,
+            name: 'step_1',
+            displayName: 'Delay For',
+            valid: true,
+            settings: {
+                pieceName: '@activepieces/piece-delay',
+                pieceVersion: '~0.3.26',
+                actionName: 'delayFor',
+                input: {
+                    unit: 'seconds',
+                    delayFor: 11,
+                },
+                propertySettings: {},
+                errorHandlingOptions: {},
+            },
+            nextAction: codeAction,
+        }
+
+        const mockFlow = createMockFlow({
+            projectId: mockProject.id,
+        })
+        await db.save('flow', mockFlow)
+
+        const mockFlowVersion = createMockFlowVersion({
+            flowId: mockFlow.id,
+            state: FlowVersionState.DRAFT,
+            trigger: {
+                type: FlowTriggerType.PIECE,
+                name: 'trigger',
+                displayName: 'Catch Webhook',
+                valid: true,
+                settings: {
+                    pieceName: '@activepieces/piece-webhook',
+                    pieceVersion: '~0.1.29',
+                    triggerName: 'catch_webhook',
+                    input: { authType: 'none' },
+                    propertySettings: {},
+                },
+                nextAction: delayAction,
+            },
+        })
+        await db.save('flow_version', mockFlowVersion)
+
+        const flowRun = await flowRunService(app.log).start({
+            flowId: mockFlow.id,
+            payload: { body: { test: true } },
+            platformId: mockPlatform.id,
+            executionType: ExecutionType.BEGIN,
+            environment: RunEnvironment.TESTING,
+            progressUpdateType: ProgressUpdateType.NONE,
+            executeTrigger: false,
+            flowVersionId: mockFlowVersion.id,
+            projectId: mockProject.id,
+            synchronousHandlerId: undefined,
+            httpRequestId: undefined,
+            failParentOnFailure: undefined,
+        })
+
+        const result = await pollFlowRunToCompletion(flowRun.id, mockProject.id)
+
+        expect(result.status).toBe(FlowRunStatus.SUCCEEDED)
+        expect(result.steps.step_2.output).toEqual(
+            expect.objectContaining({ resumed: true }),
+        )
+    }, 60_000)
+
     it('executes parent → child subflow with wait-for-response in test step mode', async () => {
         const { parentFlow, parentFlowVersion, mockPlatform, mockProject } = await setupSubflowFixtures()
 

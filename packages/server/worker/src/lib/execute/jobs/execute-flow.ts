@@ -119,6 +119,15 @@ async function buildFlowOperation(
 
     if (data.executionType === ExecutionType.RESUME) {
         const executionState = await fetchExecutionState(ctx.apiClient, data)
+        if (Object.keys(executionState.steps).length === 0) {
+            ctx.log.error({ runId: data.runId, executionType: data.executionType }, 'RESUME operation has empty execution state — this is a bug that would cause an infinite loop')
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: {
+                    message: 'RESUME operation received with empty execution state',
+                },
+            })
+        }
         return {
             ...base,
             executionType: ExecutionType.RESUME,
