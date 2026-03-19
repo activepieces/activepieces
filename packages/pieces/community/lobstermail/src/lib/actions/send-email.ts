@@ -54,21 +54,32 @@ export const sendEmail = createAction({
     const { from, to, subject, body_text, body_html, cc, in_reply_to } =
       context.propsValue;
 
-    const body: Record<string, unknown> = {
+    if (!body_text && !body_html) {
+      throw new Error(
+        'At least one of "Body (Plain Text)" or "Body (HTML)" must be provided.',
+      );
+    }
+
+    const payload: Record<string, unknown> = {
       from,
       to,
       subject,
-      body: {} as Record<string, string>,
     };
-    if (body_text) (body['body'] as Record<string, string>)['text'] = body_text;
-    if (body_html) (body['body'] as Record<string, string>)['html'] = body_html;
-    if (cc && (cc as string[]).length > 0) body['cc'] = cc;
-    if (in_reply_to) body['inReplyTo'] = in_reply_to;
+
+    const bodyObj: Record<string, string> = {};
+    if (body_text) bodyObj['text'] = body_text;
+    if (body_html) bodyObj['html'] = body_html;
+    if (Object.keys(bodyObj).length > 0) {
+      payload['body'] = bodyObj;
+    }
+
+    if (cc && (cc as string[]).length > 0) payload['cc'] = cc;
+    if (in_reply_to) payload['inReplyTo'] = in_reply_to;
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
       url: `${lobstermailCommon.baseUrl}/v1/emails/send`,
-      body,
+      body: payload,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token: context.auth,

@@ -32,18 +32,16 @@ export const newEmailTrigger = createTrigger({
   async onEnable(context) {
     // Store the current timestamp so we only fetch new emails after enabling
     await context.store.put('lastPollTime', new Date().toISOString());
+    await context.store.put('lastSeenIds', [] as string[]);
   },
-  async onDisable() {
-    // Nothing to clean up for polling
+  async onDisable(context) {
+    await context.store.delete('lastPollTime');
+    await context.store.delete('lastSeenIds');
   },
-  async run(context) {
-    const lastPollTime =
-      (await context.store.get<string>('lastPollTime')) ??
-      new Date(0).toISOString();
-
+  async test(context) {
+    // Fetch the latest emails as sample data for the user
     const params = new URLSearchParams();
-    params.set('since', lastPollTime);
-    params.set('limit', '50');
+    params.set('limit', '5');
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.GET,
@@ -55,13 +53,51 @@ export const newEmailTrigger = createTrigger({
     });
 
     const emails = response.body?.data ?? [];
+    return emails.map((email: Record<string, unknown>) => email);
+  },
+  async run(context) {
+    const lastPollTime =
+      (await context.store.get<string>('lastPollTime')) ??
+      new Date(0).toISOString();
+    const lastSeenIds =
+      (await context.store.get<string[]>('lastSeenIds')) ?? [];
 
-    if (emails.length > 0) {
-      // Update the poll timestamp to the latest email's creation time
-      const latestEmail = emails[0];
-      await context.store.put('lastPollTime', latestEmail.createdAt);
+    // Add 1ms to avoid re-fetching the last email (inclusive filter)
+    const sinceDate = new Date(new Date(lastPollTime).getTime() + 1);
+    const params = new URLSearchParams();
+    params.set('since', sinceDate.toISOString());
+    params.set('limit', '50');
+
+    const response = await httpClient.sendRequest({
+      method: HttpMethod.GET,
+      url: `${lobstermailCommon.baseUrl}/v1/inboxes/${context.propsValue.inbox_id}/emails?${params.toString()}`,
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token: context.auth,
+      },
+    });
+
+    const emails: Record<string, unknown>[] = response.body?.data ?? [];
+
+    // Deduplicate against previously seen IDs
+    const newEmails = emails.filter(
+      (email) => !lastSeenIds.includes(email['id'] as string),
+    );
+
+    if (newEmails.length > 0) {
+      // Find the maximum createdAt across all returned emails
+      const maxCreatedAt = newEmails.reduce((max, email) => {
+        const ts = email['createdAt'] as string;
+        return ts > max ? ts : max;
+      }, lastPollTime);
+
+      await context.store.put('lastPollTime', maxCreatedAt);
+      await context.store.put(
+        'lastSeenIds',
+        newEmails.map((e) => e['id'] as string),
+      );
     }
 
-    return emails.map((email: Record<string, unknown>) => email);
+    return newEmails;
   },
 });
