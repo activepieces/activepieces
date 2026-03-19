@@ -175,19 +175,9 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
                 auth = activePiecesAuth
             }
 
-            rejectedPromiseHandler(systemJobsSchedule(log).upsertJob({
-                job: {
-                    name: SystemJobName.AI_CREDIT_UPDATE_CHECK,
-                    data: { apiKeyHash: (auth as ActivePiecesProviderAuthConfig).apiKeyHash, platformId },
-                },
-                schedule: {
-                    type: 'one-time',
-                    date: dayjs(),
-                },
-            }), log)
         }
-        
-        
+
+
         return { provider: aiProvider.provider, auth, config: aiProvider.config, platformId }
     },
     async getActivepiecesProviderIfEnriched(platformId: PlatformId): Promise<ActivePiecesProviderAuthConfig | null> {
@@ -224,7 +214,19 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         }
 
         const { auth } = await this.getConfigOrThrow({ platformId, provider: AIProviderName.ACTIVEPIECES })
-        return auth as ActivePiecesProviderAuthConfig
+        const activePiecesAuth = auth as ActivePiecesProviderAuthConfig
+        rejectedPromiseHandler(systemJobsSchedule(log).upsertJob({
+            job: {
+                name: SystemJobName.AI_CREDIT_UPDATE_CHECK,
+                data: { apiKeyHash: activePiecesAuth.apiKeyHash, platformId },
+                jobId: `ai-credit-update-check-${platformId}`,
+            },
+            schedule: {
+                type: 'one-time',
+                date: dayjs(),
+            },
+        }), log)
+        return activePiecesAuth
     },
 
     async getAllActivePiecesProvidersConfigs(platformIds?: string[]): Promise<{ [platformId: string]: ActivePiecesProviderAuthConfig }> {

@@ -74,6 +74,7 @@ export const piecesAnalyticsService = (log: FastifyBaseLogger) => ({
             job: {
                 name: SystemJobName.PIECES_ANALYTICS,
                 data: {},
+                jobId: 'pieces-analytics',
             },
             schedule: {
                 type: 'repeated',

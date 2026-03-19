@@ -25,6 +25,7 @@ export const pieceSyncService = (log: FastifyBaseLogger) => ({
             job: {
                 name: SystemJobName.PIECES_SYNC,
                 data: {},
+                jobId: 'pieces-sync',
             },
             schedule: {
                 type: 'repeated',

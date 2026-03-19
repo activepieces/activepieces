@@ -59,6 +59,7 @@ export const flowRunModule: FastifyPluginAsync = async (app) => {
         job: {
             name: SystemJobName.RUN_TELEMETRY,
             data: {},
+            jobId: 'run-telemetry',
         },
         schedule: {
             type: 'repeated',

@@ -1,5 +1,5 @@
 import { apDayjs, apDayjsDuration } from '@activepieces/server-utils'
-import { assertNotNullOrUndefined, isNil, spreadIfDefined, tryCatch } from '@activepieces/shared'
+import { assertNotNullOrUndefined, isNil, tryCatch } from '@activepieces/shared'
 import { Job, JobsOptions, Queue, Worker } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
 import { redisConnections } from '../../database/redis-connections'
@@ -126,9 +126,17 @@ async function removeDeprecatedJobs(): Promise<void> {
         assertNotNullOrUndefined(job.id, 'Job id is required')
         await job.remove()
     }
+
+    const knownJobNames = Object.values(SystemJobName)
+    const legacySchedulers = allSystemJobs.filter(f =>
+        knownJobNames.includes(f.name as SystemJobName) && f.key.includes('::'),
+    )
+    for (const job of legacySchedulers) {
+        await systemJobsQueue.removeJobScheduler(job.id ?? job.key)
+    }
 }
 
-const configureJobOptions = ({ schedule, jobId, customConfig }: { schedule: JobSchedule, jobId?: string, customConfig?: JobsOptions }): JobsOptions => {
+const configureJobOptions = ({ schedule, jobId, customConfig }: { schedule: JobSchedule, jobId: string, customConfig?: JobsOptions }): JobsOptions => {
     const config: JobsOptions = customConfig ?? {}
 
     switch (schedule.type) {
@@ -148,19 +156,14 @@ const configureJobOptions = ({ schedule, jobId, customConfig }: { schedule: JobS
 
     return {
         ...config,
-        ...spreadIfDefined('jobId', jobId),
+        jobId,
     }
 }
 
-const getJobByNameAndJobId = async (name: string, jobId?: string): Promise<Job | undefined> => {
-    const allSystemJobs = await systemJobsQueue.getJobs()
-    return allSystemJobs.find(job => {
-        if (isNil(job)) {
-            return false
-        }
-        if (!isNil(jobId)) {
-            return job.name === name && job.id === jobId
-        }
-        return job.name === name
-    })
+const getJobByNameAndJobId = async (name: string, jobId: string): Promise<Job | undefined> => {
+    const job = await systemJobsQueue.getJob(jobId)
+    if (!isNil(job) && job.name === name) {
+        return job
+    }
+    return undefined
 }
