@@ -51,13 +51,15 @@ export const loadDataFromStageAction = createAction({
     }),
     skip_header: Property.Number({
       displayName: 'Skip Header Rows',
-      description: 'Number of header rows to skip at the top of each CSV file (CSV only). Defaults to 0.',
+      description:
+        'Number of header rows to skip at the top of each CSV file (CSV only). Defaults to 0.',
       required: false,
       defaultValue: 0,
     }),
     error_on_column_count_mismatch: Property.Checkbox({
       displayName: 'Error on Column Count Mismatch',
-      description: 'If enabled, COPY fails when the number of columns in the file does not match the table.',
+      description:
+        'If enabled, COPY fails when the number of columns in the file does not match the table.',
       required: false,
       defaultValue: true,
     }),
@@ -87,9 +89,12 @@ export const loadDataFromStageAction = createAction({
     } = context.propsValue;
 
     let fileFormatClause = `TYPE = '${file_format_type}'`;
-    if (skip_header) fileFormatClause += ` SKIP_HEADER = ${Number(skip_header)}`;
+    if (skip_header)
+      fileFormatClause += ` SKIP_HEADER = ${Number(skip_header)}`;
     if (error_on_column_count_mismatch !== undefined) {
-      fileFormatClause += ` ERROR_ON_COLUMN_COUNT_MISMATCH = ${error_on_column_count_mismatch ? 'TRUE' : 'FALSE'}`;
+      fileFormatClause += ` ERROR_ON_COLUMN_COUNT_MISMATCH = ${
+        error_on_column_count_mismatch ? 'TRUE' : 'FALSE'
+      }`;
     }
 
     let sql = `COPY INTO ${table} FROM ${stage_path} FILE_FORMAT = (${fileFormatClause})`;

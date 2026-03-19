@@ -93,7 +93,7 @@ export const flowBackgroundJobs = (log: FastifyBaseLogger) => ({
         })
         const response: FlowStatusUpdatedResponse = {
             flow,
-            error: isNil(error) || error?.error.code !== ErrorCode.TRIGGER_UPDATE_STATUS ? undefined : error?.error,
+            error: isNil(error) || error?.error?.code !== ErrorCode.TRIGGER_UPDATE_STATUS ? undefined : error?.error,
         }
         websocketService.to(projectId).emit(WebsocketClientEvent.FLOW_STATUS_UPDATED, response)
 

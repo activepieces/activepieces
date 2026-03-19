@@ -342,6 +342,8 @@ import { AddSecretManagersFlag1771167183104 } from './migration/postgres/1771167
 import { AddSecretManagerConnectionEntity1772000000000 } from './migration/postgres/1772000000000-AddSecretManagerConnectionEntity'
 import { AddPreSelectForNewProjectsToAppConnection1772027509095 } from './migration/postgres/1772027509095-AddPreSelectForNewProjectsToAppConnection'
 import { AddEnabledToolsToMcpServer1772027509096 } from './migration/postgres/1772027509096-AddEnabledToolsToMcpServer'
+import { AddFlowProjectIdStatusIndex1772027509097 } from './migration/postgres/1772027509097-AddFlowProjectIdStatusIndex'
+import { AddProjectPlatformIdIndex1773930744000 } from './migration/postgres/1773930744000-AddProjectPlatformIdIndex'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -700,6 +702,8 @@ export const getMigrations = (): (new () => MigrationInterface)[] => {
         AddSecretManagerConnectionEntity1772000000000,
         AddPreSelectForNewProjectsToAppConnection1772027509095,
         AddEnabledToolsToMcpServer1772027509096,
+        AddFlowProjectIdStatusIndex1772027509097,
+        AddProjectPlatformIdIndex1773930744000,
     ]
     return migrations
 }

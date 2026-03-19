@@ -51,7 +51,7 @@ export const systemJobsSchedule = (log: FastifyBaseLogger): SystemJobSchedule =>
             },
             {
                 connection: await redisConnections.create(),
-                concurrency: 1,
+                concurrency: 5,
             },
         )
 
@@ -111,7 +111,6 @@ async function removeDeprecatedJobs(): Promise<void> {
         'usage-report',
         'archive-old-issues',
         'platform-usage-report',
-        'hard-delete-project',
         'seven-days-in-trial',
         'issue-reminder',
     ]

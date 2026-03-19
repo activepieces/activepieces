@@ -207,15 +207,16 @@ async function handlePollingTrigger({ engineHelperResponse, flowId, flowVersionI
 
 function assertEngineResponseIsOk(engineHelperResponse: EngineResponse<ExecuteTriggerResponse<TriggerHookType.ON_ENABLE | TriggerHookType.ON_DISABLE>>, flowId: FlowId, flowVersionId: FlowVersionId) {
     if (engineHelperResponse.status !== EngineResponseStatus.OK) {
+        const standardError = engineHelperResponse.error ?? ''
         throw new ActivepiecesError({
             code: ErrorCode.TRIGGER_UPDATE_STATUS,
             params: {
                 flowId,
                 flowVersionId,
                 standardOutput: '',
-                standardError: engineHelperResponse.error ?? '',
+                standardError,
             },
-        })
+        }, `flowId=${flowId} standardError=${standardError}`)
     }
 }
 
