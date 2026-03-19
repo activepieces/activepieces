@@ -4149,6 +4149,18 @@
         "tslib": "^2.3.0",
       },
     },
+    "packages/pieces/community/microsoft-copilot": {
+      "name": "@activepieces/piece-microsoft-copilot",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "@microsoft/microsoft-graph-client": "3.0.7",
+        "@microsoft/microsoft-graph-types": "2.40.0",
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/microsoft-dynamics-365-business-central": {
       "name": "@activepieces/piece-microsoft-dynamics-365-business-central",
       "version": "0.1.6",
@@ -8536,6 +8548,8 @@
     "@activepieces/piece-microsoft-365-people": ["@activepieces/piece-microsoft-365-people@workspace:packages/pieces/community/microsoft-365-people"],
 
     "@activepieces/piece-microsoft-365-planner": ["@activepieces/piece-microsoft-365-planner@workspace:packages/pieces/community/microsoft-365-planner"],
+
+    "@activepieces/piece-microsoft-copilot": ["@activepieces/piece-microsoft-copilot@workspace:packages/pieces/community/microsoft-copilot"],
 
     "@activepieces/piece-microsoft-dynamics-365-business-central": ["@activepieces/piece-microsoft-dynamics-365-business-central@workspace:packages/pieces/community/microsoft-dynamics-365-business-central"],
 
