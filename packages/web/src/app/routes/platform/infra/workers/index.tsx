@@ -176,8 +176,7 @@ function WorkerCard({ worker, index, isCloud }: WorkerCardProps) {
     totalCpuCores,
   } = worker.information;
 
-  const usedRamBytes =
-    totalAvailableRamInBytes * (ramUsagePercentage / 100);
+  const usedRamBytes = totalAvailableRamInBytes * (ramUsagePercentage / 100);
   const usedDiskBytes = diskInfo.used;
 
   const version = workerProps.version ?? 'v0.39.4';
@@ -256,7 +255,9 @@ function WorkerCard({ worker, index, isCloud }: WorkerCardProps) {
             </>
           }
           value={ramUsagePercentage}
-          detail={`${prettyBytes(usedRamBytes, { binary: true })} / ${prettyBytes(totalAvailableRamInBytes, { binary: true })}`}
+          detail={`${prettyBytes(usedRamBytes, {
+            binary: true,
+          })} / ${prettyBytes(totalAvailableRamInBytes, { binary: true })}`}
         />
         <StatBar
           label={
@@ -266,7 +267,9 @@ function WorkerCard({ worker, index, isCloud }: WorkerCardProps) {
             </>
           }
           value={diskInfo.percentage}
-          detail={`${prettyBytes(usedDiskBytes, { binary: true })} / ${prettyBytes(diskInfo.total, { binary: true })}`}
+          detail={`${prettyBytes(usedDiskBytes, {
+            binary: true,
+          })} / ${prettyBytes(diskInfo.total, { binary: true })}`}
         />
       </CardContent>
 
