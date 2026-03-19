@@ -1,32 +1,27 @@
 import { t } from 'i18next';
-import { Info } from 'lucide-react';
-import React, { useState } from 'react';
+import React from 'react';
 
-import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 
 interface Props {
   workerProps: Record<string, string>;
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
-export const WorkerConfigsModal: React.FC<Props> = ({ workerProps }) => {
-  const [isOpen, setIsOpen] = useState(false);
-
+export const WorkerConfigsModal: React.FC<Props> = ({
+  workerProps,
+  isOpen,
+  onOpenChange,
+}) => {
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="flex items-center gap-2">
-          <Info size={14} />
-          {t('Configs')}
-        </Button>
-      </DialogTrigger>
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="w-[95vw] max-w-[600px] max-h-[80vh]">
         <DialogHeader>
           <DialogTitle>{t('Environment Variables')}</DialogTitle>

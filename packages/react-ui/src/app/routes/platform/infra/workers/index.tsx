@@ -1,7 +1,9 @@
+import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
 import {
+  Info,
   InfoIcon,
   Network,
   Server,
@@ -18,7 +20,8 @@ import {
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import { CircularIcon } from '@/components/custom/circular-icon';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { DataTable } from '@/components/ui/data-table';
+import { Button } from '@/components/ui/button';
+import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { workersApi } from '@/features/platform-admin/lib/workers-api';
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -96,6 +99,25 @@ export default function WorkersPage() {
     queryFn: async () =>
       showDemoData ? DEMO_WORKERS_DATA : await workersApi.list(),
   });
+
+  const [openWorkerProps, setOpenWorkerProps] = useState<Record<string, string> | null>(null);
+
+  const actions = useMemo(
+    () => [
+      (row: RowDataWithActions<WorkerMachineWithStatus>) => (
+        <Button
+          variant="outline"
+          size="sm"
+          className="flex items-center gap-2"
+          onClick={() => setOpenWorkerProps(row.information.workerProps)}
+        >
+          <Info size={14} />
+          {t('Configs')}
+        </Button>
+      ),
+    ],
+    [],
+  );
 
   return (
     <div className="flex flex-col w-full gap-4">
@@ -306,14 +328,19 @@ export default function WorkersPage() {
             },
           },
         ]}
-        actions={[
-          (row) => (
-            <WorkerConfigsModal workerProps={row.information.workerProps} />
-          ),
-        ]}
+        actions={actions}
         page={{ data: workersData ?? [], previous: '', next: '' }}
         isLoading={isLoading}
       />
+      {openWorkerProps !== null && (
+        <WorkerConfigsModal
+          workerProps={openWorkerProps}
+          isOpen={true}
+          onOpenChange={(open) => {
+            if (!open) setOpenWorkerProps(null);
+          }}
+        />
+      )}
     </div>
   );
 }

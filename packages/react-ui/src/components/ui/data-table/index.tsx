@@ -228,7 +228,7 @@ export function DataTable<
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     ...(clientPagination && { getPaginationRowModel: getPaginationRowModel() }),
-    getRowId: () => apId(),
+    getRowId: (row, index) => row.id ?? String(index),
     initialState: {
       pagination: {
         pageSize: parseInt(startingLimit),
