@@ -4,7 +4,6 @@ import {
 } from '@activepieces/pieces-framework';
 import { microsoft365CopilotAuth } from './lib/common/auth';
 import { chatWithCopilot } from './lib/actions/chat-with-copilot';
-import { retrieveGroundingData } from './lib/actions/retrieve-grounding-data';
 import { searchCopilot } from './lib/actions/search-copilot';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
