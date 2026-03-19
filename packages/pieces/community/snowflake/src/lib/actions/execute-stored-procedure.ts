@@ -40,12 +40,16 @@ export const executeStoredProcedureAction = createAction({
         }
         const connection = configureConnection(auth as SnowflakeAuthValue);
         await connect(connection);
-        const result = await execute(
-          connection,
-          `SHOW PROCEDURES IN SCHEMA ${database}.${schema}`,
-          []
-        );
-        await destroy(connection);
+        let result;
+        try {
+          result = await execute(
+            connection,
+            `SHOW PROCEDURES IN SCHEMA ${database}.${schema}`,
+            []
+          );
+        } finally {
+          await destroy(connection);
+        }
         return {
           disabled: false,
           options: result

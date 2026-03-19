@@ -24,7 +24,8 @@ export const updateRowAction = createAction({
       displayName: 'WHERE Condition',
       description:
         "A SQL condition to filter which rows to update (e.g. `id = 42` or `status = 'active'`). " +
-        'Leave empty to update ALL rows in the table (use with caution).',
+        'Leave empty to update ALL rows in the table (use with caution). ' +
+        '**Security note:** this value is embedded directly in SQL. Only use static values or data from trusted, internal steps — never pass unvalidated end-user input here.',
       required: false,
     }),
   },

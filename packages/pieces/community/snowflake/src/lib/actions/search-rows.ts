@@ -23,13 +23,15 @@ export const searchRowsAction = createAction({
       displayName: 'WHERE Condition',
       description:
         "Optional SQL condition to filter results (e.g. `status = 'active' AND age > 18`). " +
-        'Leave empty to return all rows (subject to the row limit).',
+        'Leave empty to return all rows (subject to the row limit). ' +
+        '**Security note:** this value is embedded directly in SQL. Only use static values or data from trusted, internal steps — never pass unvalidated end-user input here.',
       required: false,
     }),
     order_by: Property.ShortText({
       displayName: 'ORDER BY',
       description:
-        'Optional column(s) to sort by (e.g. `created_at DESC` or `name ASC, age DESC`).',
+        'Optional column(s) to sort by (e.g. `created_at DESC` or `name ASC, age DESC`). ' +
+        '**Security note:** this value is embedded directly in SQL. Only use static values or data from trusted, internal steps — never pass unvalidated end-user input here.',
       required: false,
     }),
     limit: Property.Number({

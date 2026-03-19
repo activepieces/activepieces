@@ -50,11 +50,26 @@ export const createDynamicTableAction = createAction({
     const { database, schema, table_name, target_lag, warehouse, query } =
       context.propsValue;
 
+    const identifierRegex = /^[A-Za-z_][A-Za-z0-9_$]*$/;
+    if (!identifierRegex.test(table_name)) {
+      throw new Error(
+        'Invalid table name: only letters, digits, underscores, and $ are allowed.'
+      );
+    }
+    if (target_lag.includes("'")) {
+      throw new Error("Invalid target_lag value: single quotes are not allowed.");
+    }
+
     const effectiveWarehouse =
       warehouse || (context.auth as SnowflakeAuthValue).props?.warehouse;
     if (!effectiveWarehouse) {
       throw new Error(
         'A warehouse is required. Provide it in the action props or set a default in your connection.'
+      );
+    }
+    if (!identifierRegex.test(effectiveWarehouse)) {
+      throw new Error(
+        'Invalid warehouse name: only letters, digits, underscores, and $ are allowed.'
       );
     }
 

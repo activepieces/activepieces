@@ -65,8 +65,13 @@ export const upsertRowAction = createAction({
     // Build MERGE INTO statement
     // source: SELECT ? AS col1, ? AS col2, ...
     const sourceSelects = columns.map((col) => `? AS ${col}`).join(', ');
-    const updateSets = columns
-      .filter((col) => col !== match_column)
+    const updateEntries = columns.filter((col) => col !== match_column);
+    if (updateEntries.length === 0) {
+      throw new Error(
+        'At least one column other than the match column must be provided to update.'
+      );
+    }
+    const updateSets = updateEntries
       .map((col) => `target.${col} = source.${col}`)
       .join(', ');
     const insertCols = columns.join(', ');

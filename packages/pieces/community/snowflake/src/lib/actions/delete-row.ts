@@ -23,7 +23,8 @@ export const deleteRowAction = createAction({
       displayName: 'WHERE Condition',
       description:
         "A SQL condition to filter which rows to delete (e.g. `id = 42` or `status = 'archived'`). " +
-        'This field is required to prevent accidental deletion of all rows.',
+        'This field is required to prevent accidental deletion of all rows. ' +
+        '**Security note:** this value is embedded directly in SQL. Only use static values or data from trusted, internal steps — never pass unvalidated end-user input here.',
       required: true,
     }),
   },

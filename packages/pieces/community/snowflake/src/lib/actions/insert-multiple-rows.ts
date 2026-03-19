@@ -53,6 +53,20 @@ export const insertMultipleRowsAction = createAction({
       );
     }
 
+    const columnSet = new Set(columns);
+    parsedRows.forEach((row, i) => {
+      const rowKeys = Object.keys(row);
+      const missing = columns.filter((col) => !(col in row));
+      const extra = rowKeys.filter((k) => !columnSet.has(k));
+      if (missing.length > 0 || extra.length > 0) {
+        throw new Error(
+          `Row ${i + 1} has a different column set than the first row.` +
+            (missing.length > 0 ? ` Missing: ${missing.join(', ')}.` : '') +
+            (extra.length > 0 ? ` Extra: ${extra.join(', ')}.` : '')
+        );
+      }
+    });
+
     const rowPlaceholders = parsedRows
       .map(() => `(${columns.map(() => '?').join(', ')})`)
       .join(', ');
@@ -61,9 +75,10 @@ export const insertMultipleRowsAction = createAction({
       columns.map((col) => row[col])
     ) as string[];
 
-    const sql = `INSERT INTO ${table} (${columns.join(
-      ', '
-    )}) VALUES ${rowPlaceholders}`;
+    const quotedColumns = columns
+      .map((col) => `"${col.replace(/"/g, '""')}"`)
+      .join(', ');
+    const sql = `INSERT INTO ${table} (${quotedColumns}) VALUES ${rowPlaceholders}`;
 
     const connection = configureConnection(context.auth as SnowflakeAuthValue);
     await connect(connection);

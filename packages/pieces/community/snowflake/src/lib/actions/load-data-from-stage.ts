@@ -49,12 +49,17 @@ export const loadDataFromStageAction = createAction({
         'Optional regex pattern to filter files in the stage (e.g. `.*\\.csv` to load only CSV files).',
       required: false,
     }),
-    additional_options: Property.LongText({
-      displayName: 'Additional COPY Options',
-      description:
-        'Optional extra COPY INTO options as raw SQL (e.g. `SKIP_HEADER = 1 ERROR_ON_COLUMN_COUNT_MISMATCH = FALSE`). ' +
-        'These are appended inside the FILE_FORMAT clause.',
+    skip_header: Property.Number({
+      displayName: 'Skip Header Rows',
+      description: 'Number of header rows to skip at the top of each CSV file (CSV only). Defaults to 0.',
       required: false,
+      defaultValue: 0,
+    }),
+    error_on_column_count_mismatch: Property.Checkbox({
+      displayName: 'Error on Column Count Mismatch',
+      description: 'If enabled, COPY fails when the number of columns in the file does not match the table.',
+      required: false,
+      defaultValue: true,
     }),
     on_error: Property.StaticDropdown({
       displayName: 'On Error',
@@ -76,14 +81,19 @@ export const loadDataFromStageAction = createAction({
       stage_path,
       file_format_type,
       file_pattern,
-      additional_options,
+      skip_header,
+      error_on_column_count_mismatch,
       on_error,
     } = context.propsValue;
 
-    let sql = `COPY INTO ${table} FROM ${stage_path} FILE_FORMAT = (TYPE = '${file_format_type}'`;
-    if (additional_options) sql += ` ${additional_options}`;
-    sql += ')';
-    if (file_pattern) sql += ` PATTERN = '${file_pattern}'`;
+    let fileFormatClause = `TYPE = '${file_format_type}'`;
+    if (skip_header) fileFormatClause += ` SKIP_HEADER = ${Number(skip_header)}`;
+    if (error_on_column_count_mismatch !== undefined) {
+      fileFormatClause += ` ERROR_ON_COLUMN_COUNT_MISMATCH = ${error_on_column_count_mismatch ? 'TRUE' : 'FALSE'}`;
+    }
+
+    let sql = `COPY INTO ${table} FROM ${stage_path} FILE_FORMAT = (${fileFormatClause})`;
+    if (file_pattern) sql += ` PATTERN = '${file_pattern.replace(/'/g, "''")}'`;
     sql += ` ON_ERROR = '${on_error ?? 'ABORT_STATEMENT'}'`;
 
     const connection = configureConnection(context.auth as SnowflakeAuthValue);
