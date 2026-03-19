@@ -1,7 +1,7 @@
 import { createAction, DynamicPropsValue, Property } from '@activepieces/pieces-framework';
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { BASE_URL, subscriberId } from '../common/props';
-import { manychatAuth } from '../../index';
+import { manychatAuth } from '../auth';
 
 export const setCustomFieldAction = createAction({
 	auth: manychatAuth,

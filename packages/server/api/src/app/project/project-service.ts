@@ -1,4 +1,3 @@
-import { getProjectMaxConcurrentJobsKey } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ApId,
@@ -15,33 +14,30 @@ import {
     spreadIfDefined,
     UserId,
 } from '@activepieces/shared'
-import { Brackets, IsNull, Not, ObjectLiteral, SelectQueryBuilder } from 'typeorm'
+import { FastifyBaseLogger } from 'fastify'
+import { Brackets, EntityManager, IsNull, Not, ObjectLiteral, SelectQueryBuilder } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
+import { getProjectMaxConcurrentJobsKey } from '../database/redis/keys'
 import { distributedStore } from '../database/redis-connections'
-import { system } from '../helper/system/system'
 import { userService } from '../user/user-service'
 import { ProjectEntity } from './project-entity'
 import { projectHooks } from './project-hooks'
 
 export const projectRepo = repoFactory(ProjectEntity)
 
-export const projectService = {
+export const projectService = (log: FastifyBaseLogger) => ({
     async create(params: CreateParams): Promise<Project> {
-        const colors = Object.values(ColorName)
-        const icon: ProjectIcon = {
-            color: colors[Math.floor(Math.random() * colors.length)],
-        }
+        const { callPostCreateHooks = true, entityManager, ...rest } = params
+        const icon = this.createProjectIcon()
         const newProject: NewProject = {
             id: apId(),
-            ...params,
+            ...rest,
             icon,
-            maxConcurrentJobs: params.maxConcurrentJobs,
             releasesEnabled: false,
         }
-        const savedProject = await projectRepo().save(newProject)
-        await projectHooks.get(system.globalLogger()).postCreate(savedProject)
-        if (!isNil(params.maxConcurrentJobs)) {
-            await distributedStore.put(getProjectMaxConcurrentJobsKey(savedProject.id), params.maxConcurrentJobs)
+        const savedProject = await projectRepo(entityManager).save(newProject)
+        if (callPostCreateHooks) {
+            await this.callProjectPostCreateHooks(savedProject)
         }
         return savedProject
     },
@@ -82,7 +78,7 @@ export const projectService = {
         })
     },
 
-    async update(projectId: ProjectId, request: UpdateParams): Promise<Project> {
+    async update(projectId: ProjectId, request: UpdateParams, entityManager?: EntityManager): Promise<Project> {
         const externalId = request.externalId?.trim() !== '' ? request.externalId : undefined
         await assertExternalIdIsUnique(externalId, projectId)
 
@@ -98,12 +94,12 @@ export const projectService = {
             ...spreadIfDefined('icon', request.icon),
         } : {}
 
-        await projectRepo().update({ id: projectId }, { ...baseUpdate, ...teamUpdate })
+        await projectRepo(entityManager).update({ id: projectId }, { ...baseUpdate, ...teamUpdate })
         return this.getOneOrThrow(projectId)
     },
 
     async getPlatformId(projectId: ProjectId): Promise<string> {
-        const result = await projectRepo().createQueryBuilder('project').select('"platformId"').where({
+        const result = await projectRepo().createQueryBuilder('project').withDeleted().select('"platformId"').where({
             id: projectId,
         }).getRawOne()
         const platformId = result?.platformId
@@ -138,12 +134,12 @@ export const projectService = {
         return !isNil(project)
     },
     async getUserProjectOrThrow(userId: UserId): Promise<Project> {
-        const user = await userService.getOneOrFail({ id: userId })
+        const user = await userService(log).getOneOrFail({ id: userId })
         assertNotNullOrUndefined(user.platformId, 'platformId is undefined')
         const projects = await this.getAllForUser({
             platformId: user.platformId,
             userId,
-            isPrivileged: userService.isUserPrivileged(user),
+            isPrivileged: userService(log).isUserPrivileged(user),
         })
         if (isNil(projects) || projects.length === 0) {
             throw new ActivepiecesError({
@@ -154,7 +150,7 @@ export const projectService = {
                 },
             })
         }
-        return projects[0]
+        return projects.find((p) => p.ownerId === userId && p.type === ProjectType.PERSONAL) ?? projects[0]
     },
 
     async getAllForUser(params: GetAllForUserParams): Promise<Project[]> {
@@ -208,7 +204,20 @@ export const projectService = {
             externalId,
         })
     },
-}
+    createProjectIcon: ()=>{
+        const colors = Object.values(ColorName)
+        const icon: ProjectIcon = {
+            color: colors[Math.floor(Math.random() * colors.length)],
+        }
+        return icon
+    },
+    callProjectPostCreateHooks: async (savedProject: Project)=>{
+        await projectHooks.get(log).postCreate(savedProject)
+        if (!isNil(savedProject.maxConcurrentJobs)) {
+            await distributedStore.put(getProjectMaxConcurrentJobsKey(savedProject.id), savedProject.maxConcurrentJobs)
+        }
+    },
+})
 
 
 export async function applyProjectsAccessFilters<T extends ObjectLiteral>(
@@ -293,6 +302,8 @@ type CreateParams = {
     externalId?: string
     metadata?: Metadata
     maxConcurrentJobs?: number
+    callPostCreateHooks?: boolean
+    entityManager?: EntityManager
 }
 
 type GetByPlatformIdAndExternalIdParams = {

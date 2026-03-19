@@ -1,17 +1,23 @@
-import { AppSystemProp, exceptionHandler } from '@activepieces/server-shared'
-import { apId, ApMultipartFile } from '@activepieces/shared'
+import path from 'path'
+import { ApEnvironment, apId, ApMultipartFile, spreadIfDefined } from '@activepieces/shared'
 import cors from '@fastify/cors'
 import formBody from '@fastify/formbody'
 import fastifyMultipart, { MultipartFile } from '@fastify/multipart'
+import fastifyStatic from '@fastify/static'
 import fastify, { FastifyInstance } from 'fastify'
-import fastifyFavicon from 'fastify-favicon'
 import { fastifyRawBody } from 'fastify-raw-body'
+import fastifySocketIO from 'fastify-socket'
+import { validatorCompiler } from 'fastify-type-provider-zod'
 import qs from 'qs'
-import { setupApp } from './app'
+import { Socket } from 'socket.io'
+import { getAdapter, setupApp } from './app'
+import { websocketService } from './core/websockets.service'
 import { healthModule } from './health/health.module'
 import { errorHandler } from './helper/error-handler'
+import { exceptionHandler } from './helper/exception-handler'
+import { rejectedPromiseHandler } from './helper/promise-handler'
 import { system } from './helper/system/system'
-import { setupWorker } from './worker'
+import { AppSystemProp } from './helper/system/system-props'
 
 
 export let app: FastifyInstance | undefined = undefined
@@ -19,12 +25,62 @@ export let app: FastifyInstance | undefined = undefined
 export const setupServer = async (): Promise<FastifyInstance> => {
     app = await setupBaseApp()
 
+    await app.register(async (apiApp) => {
+        await apiApp.register(healthModule)
+        if (system.isApp()) {
+            await setupApp(apiApp)
+        }
+    }, { prefix: '/api' })
+
     if (system.isApp()) {
-        await setupApp(app)
+        await app.register(fastifySocketIO, {
+            cors: { origin: '*' },
+            maxHttpBufferSize: 1e8,
+            path: '/api/socket.io',
+            ...spreadIfDefined('adapter', await getAdapter()),
+            transports: ['websocket'],
+        })
+        app.io.use((socket: Socket, next: (err?: Error) => void) => {
+            websocketService
+                .verifyPrincipal(socket)
+                .then(() => next())
+                .catch(() => next(new Error('Authentication error')))
+        })
+        app.io.on('connection', (socket: Socket) => rejectedPromiseHandler(websocketService.init(socket, app!.log), app!.log))
+        app.io.on('disconnect', (socket: Socket) => rejectedPromiseHandler(websocketService.onDisconnect(socket), app!.log))
     }
-    if (system.isWorker()) {
-        await setupWorker(app)
+
+    const environment = system.get(AppSystemProp.ENVIRONMENT)
+    if (system.isApp() && environment !== ApEnvironment.DEVELOPMENT) {
+        const frontendPath = path.resolve(process.cwd(), 'dist/packages/web')
+        await app.register(fastifyStatic, {
+            root: frontendPath,
+            setHeaders: (res, filepath) => {
+                if (filepath.endsWith('.html')) {
+                    void res.setHeader('Cache-Control', 'public, max-age=120')
+                }
+                else {
+                    void res.setHeader('Cache-Control', 'public, max-age=31536000, immutable')
+                }
+            },
+        })
     }
+
+    app.setNotFoundHandler(async (request, reply) => {
+        if (request.url.startsWith('/api/')) {
+            return reply.code(404).send({ statusCode: 404, error: 'Not Found', message: 'Route not found' })
+        }
+        if (system.isApp() && environment !== ApEnvironment.DEVELOPMENT) {
+            return reply.sendFile('index.html')
+        }
+        return reply.code(404).send({ statusCode: 404, error: 'Not Found', message: 'Route not found' })
+    })
+
+    app.addHook('onSend', async (_request, reply) => {
+        void reply.header('X-Content-Type-Options', 'nosniff')
+        void reply.header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload')
+    })
+
     return app
 }
 
@@ -37,23 +93,27 @@ async function setupBaseApp(): Promise<FastifyInstance> {
         loggerInstance: system.globalLogger(),
         ignoreTrailingSlash: true,
         pluginTimeout: 30000,
-        // Default 100MB, also set in nginx.conf
         bodyLimit: Math.max(fileSizeLimit + 4, flowRunLogSizeLimit + 4, 25) * 1024 * 1024,
         genReqId: () => {
             return `req_${apId()}`
         },
-        ajv: {
-            customOptions: {
-                removeAdditional: 'all',
-                useDefaults: true,
-                keywords: ['discriminator'],
-                coerceTypes: 'array',
-                formats: {},
-            },
-        },
     })
 
-    await app.register(fastifyFavicon)
+    app.setValidatorCompiler(validatorCompiler)
+    app.setSerializerCompiler(({ schema: maybeSchema }) => {
+        const schema = resolveZodSchema(maybeSchema)
+        return (data) => {
+            if (schema) {
+                const preprocessed = convertDatesToStrings(data)
+                const result = schema.safeParse(preprocessed)
+                if (result.success) {
+                    return JSON.stringify(result.data)
+                }
+            }
+            return JSON.stringify(data)
+        }
+    })
+
     await app.register(fastifyMultipart, {
         attachFieldsToBody: 'keyValues',
         async onFile(part: MultipartFile) {
@@ -91,7 +151,41 @@ async function setupBaseApp(): Promise<FastifyInstance> {
         { parseAs: 'string' },
         app.getDefaultJsonParser('ignore', 'ignore'),
     )
-    await app.register(healthModule)
     return app
 }
+
+type ZodLike = { safeParse: (data: unknown) => { success: boolean, data?: unknown } }
+
+function resolveZodSchema(maybeSchema: unknown): ZodLike | null {
+    if (typeof maybeSchema === 'object' && maybeSchema !== null) {
+        if ('safeParse' in maybeSchema) {
+            return maybeSchema as ZodLike
+        }
+        if ('properties' in maybeSchema) {
+            const props = (maybeSchema as Record<string, unknown>).properties
+            if (typeof props === 'object' && props !== null && 'safeParse' in props) {
+                return props as ZodLike
+            }
+        }
+    }
+    return null
+}
+
+function convertDatesToStrings(data: unknown): unknown {
+    if (data instanceof Date) {
+        return data.toISOString()
+    }
+    if (Array.isArray(data)) {
+        return data.map(convertDatesToStrings)
+    }
+    if (typeof data === 'object' && data !== null) {
+        const result: Record<string, unknown> = {}
+        for (const [key, value] of Object.entries(data)) {
+            result[key] = convertDatesToStrings(value)
+        }
+        return result
+    }
+    return data
+}
+
 

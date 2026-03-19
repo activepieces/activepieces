@@ -1,5 +1,5 @@
 import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
-import { hystructAuth } from '../../index';
+import { hystructAuth } from '../auth';
 
 export const workflowEvent = createTrigger({
   auth: hystructAuth,

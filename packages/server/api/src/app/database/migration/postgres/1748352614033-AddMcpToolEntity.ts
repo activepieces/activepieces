@@ -135,7 +135,7 @@ export class AddMcpToolEntity1748352614033 implements MigrationInterface {
             DROP TABLE "mcp_piece"
         `)
 
-        log.info(`Migration AddMcpToolEntity1748352614033 completed successfully. Added ${totalPieces} MCP piece tools`)
+        log.info({ totalPieces }, '[AddMcpToolEntity1748352614033#up] Migration completed successfully')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -174,7 +174,7 @@ async function AddMcpPieceTools(queryRunner: QueryRunner, mcpId: string, pieceNa
     `, [mcpId])
 
     totalPieces += pieces.length
-    log.info(`Adding ${pieces.length} MCP piece tools for MCP ${mcpId}`)
+    log.info({ count: pieces.length, mcpId }, '[AddMcpPieceTools] Adding MCP piece tools')
 
     await Promise.all(pieces.map(async (piece: McpPieceWithConnection) => {
         const pieceMetadataInfo = pieceNameToLatestVersion.get(piece.pieceName)

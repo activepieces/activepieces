@@ -1,13 +1,13 @@
 
-import { securityAccess } from '@activepieces/server-shared'
 import {  FlowVersion, GetFlowVersionForWorkerRequest, ListFlowsRequest } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { entitiesMustBeOwnedByCurrentProject } from '../authentication/authorization'
+import { securityAccess } from '../core/security/authorization/fastify-security'
 import { flowService } from '../flows/flow/flow.service'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
 
-export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
+export const flowEngineWorker: FastifyPluginAsyncZod = async (app) => {
 
     app.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
 
@@ -47,7 +47,7 @@ const GetAllFlowsByProjectParams = {
         security: securityAccess.engine(),
     },
     schema: {
-        querystring: Type.Omit(ListFlowsRequest, ['projectId']),
+        querystring: ListFlowsRequest.omit({ projectId: true }),
     },
 }
 

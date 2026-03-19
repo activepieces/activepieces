@@ -8,7 +8,7 @@ import {
   Property,
   createAction,
 } from '@activepieces/pieces-framework';
-import { googleGeminiAuth } from '../../index';
+import { googleGeminiAuth } from '../auth';
 import { defaultLLM, getGeminiModelOptions } from '../common/common';
 
 export const generateContentFromImageAction = createAction({

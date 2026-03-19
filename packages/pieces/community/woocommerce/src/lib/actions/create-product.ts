@@ -6,7 +6,7 @@ import {
   HttpRequest,
 } from '@activepieces/pieces-common';
 
-import { wooAuth } from '../..';
+import { wooAuth } from '../auth';
 
 export const wooCreateProduct = createAction({
   name: 'Create Product',

@@ -1,7 +1,5 @@
 # pieces-docsbot
 
-This library was generated with [Nx](https://nx.dev).
-
 ## Building
 
-Run `nx build pieces-docsbot` to build the library.
+Run `turbo run build --filter=@activepieces/piece-docsbot` to build the library.

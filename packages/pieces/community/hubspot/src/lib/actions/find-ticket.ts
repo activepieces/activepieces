@@ -1,7 +1,7 @@
 import { MarkdownVariant } from '@activepieces/shared';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { Client } from '@hubspot/api-client';
-import { hubspotAuth } from '../../';
+import { hubspotAuth } from '../auth';
 import { getDefaultPropertiesForObject, standardObjectPropertiesDropdown } from '../common/props';
 import { OBJECT_TYPE, MAX_SEARCH_PAGE_SIZE } from '../common/constants';
 import { FilterOperatorEnum } from '../common/types';

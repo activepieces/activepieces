@@ -17,7 +17,7 @@ export default createAction({
   async run({ auth, propsValue }) {
     const client = makeClient({ auth });
     await client.removeItemsFromPlaylist(propsValue.playlist_id as string, {
-      tracks: propsValue.items.map((uri) => ({ uri: uri as string })),
+      items: propsValue.items.map((uri) => ({ uri: uri as string })),
     });
   },
 });

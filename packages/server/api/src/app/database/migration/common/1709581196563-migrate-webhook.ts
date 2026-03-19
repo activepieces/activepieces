@@ -9,7 +9,7 @@ export class MigrateWebhook1709581196563 implements MigrationInterface {
     name = 'MigrateWebhook1709581196563'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        log.info('MigrateWebhook1709581196563, started')
+        log.info('[migrateWebhook1709581196563#up]')
 
         let count = 0
         const flowVersionsIds = await queryRunner.query('SELECT id FROM flow_version')
@@ -37,11 +37,11 @@ export class MigrateWebhook1709581196563 implements MigrationInterface {
                 )
             }
         }
-        log.info('MigrateWebhook1709581196563, migrated flows ' + count)
+        log.info({ count }, '[migrateWebhook1709581196563#up] Migrated flows')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        log.info('rolling back MigrateWebhook1709581196563, started')
+        log.info('[migrateWebhook1709581196563#down]')
 
         let count = 0
         const flowVersionsIds = await queryRunner.query('SELECT id FROM flow_version')
@@ -66,9 +66,7 @@ export class MigrateWebhook1709581196563 implements MigrationInterface {
                 }
             }
         }
-        log.info(
-            'rolling back  MigrateWebhook1709581196563, finished flows ' + count,
-        )
+        log.info({ count }, '[migrateWebhook1709581196563#down] Migrated flows')
     }
 }
 

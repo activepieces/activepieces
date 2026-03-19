@@ -1,6 +1,6 @@
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { Property } from '@activepieces/pieces-framework';
-import { manychatAuth } from '../..';
+import { manychatAuth } from '../auth';
 
 export const BASE_URL = 'https://api.manychat.com/fb';
 
