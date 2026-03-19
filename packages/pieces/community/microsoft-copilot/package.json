@@ -1,13 +1,15 @@
 {
-  "name": "@activepieces/piece-snowflake",
-  "version": "0.2.0",
+  "name": "@activepieces/piece-microsoft-copilot",
+  "version": "0.0.1",
+  "type": "commonjs",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "dependencies": {
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
-    "snowflake-sdk": "2.3.4",
+    "@microsoft/microsoft-graph-client": "3.0.7",
+    "@microsoft/microsoft-graph-types": "2.40.0",
     "tslib": "2.6.2"
   },
   "scripts": {

@@ -4149,6 +4149,18 @@
         "tslib": "^2.3.0",
       },
     },
+    "packages/pieces/community/microsoft-copilot": {
+      "name": "@activepieces/piece-microsoft-copilot",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "@microsoft/microsoft-graph-client": "3.0.7",
+        "@microsoft/microsoft-graph-types": "2.40.0",
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/microsoft-dynamics-365-business-central": {
       "name": "@activepieces/piece-microsoft-dynamics-365-business-central",
       "version": "0.1.6",
@@ -6661,6 +6673,16 @@
         "tslib": "^2.3.0",
       },
     },
+    "packages/pieces/community/webex": {
+      "name": "@activepieces/piece-webex",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/webflow": {
       "name": "@activepieces/piece-webflow",
       "version": "0.2.4",
@@ -8527,6 +8549,8 @@
 
     "@activepieces/piece-microsoft-365-planner": ["@activepieces/piece-microsoft-365-planner@workspace:packages/pieces/community/microsoft-365-planner"],
 
+    "@activepieces/piece-microsoft-copilot": ["@activepieces/piece-microsoft-copilot@workspace:packages/pieces/community/microsoft-copilot"],
+
     "@activepieces/piece-microsoft-dynamics-365-business-central": ["@activepieces/piece-microsoft-dynamics-365-business-central@workspace:packages/pieces/community/microsoft-dynamics-365-business-central"],
 
     "@activepieces/piece-microsoft-dynamics-crm": ["@activepieces/piece-microsoft-dynamics-crm@workspace:packages/pieces/community/microsoft-dynamics-crm"],
@@ -9014,6 +9038,8 @@
     "@activepieces/piece-waitwhile": ["@activepieces/piece-waitwhile@workspace:packages/pieces/community/waitwhile"],
 
     "@activepieces/piece-wealthbox": ["@activepieces/piece-wealthbox@workspace:packages/pieces/community/wealthbox"],
+
+    "@activepieces/piece-webex": ["@activepieces/piece-webex@workspace:packages/pieces/community/webex"],
 
     "@activepieces/piece-webflow": ["@activepieces/piece-webflow@workspace:packages/pieces/community/webflow"],
 
