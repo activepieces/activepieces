@@ -12,7 +12,6 @@ export const roomIdDropdown = (rooms: { id: string; title: string }[]) =>
     displayName: 'Room',
     description: 'Select the room',
     required: true,
-
     options: {
       disabled: false,
       options: rooms.map((room) => ({ label: room.title, value: room.id })),

@@ -31,6 +31,7 @@ export const createMessage = createAction({
       displayName: 'Destination',
       required: true,
       refreshers: ['messageType'],
+      auth:webexAuth,
       async props({ messageType, auth }): Promise<DynamicPropsValue> {
         const type = messageType as unknown as string;
         if (type === 'room') {

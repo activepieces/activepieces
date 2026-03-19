@@ -1,7 +1,5 @@
-# pieces-webex
-
-This library was generated with [Nx](https://nx.dev).
+# pieces-wealthbox
 
 ## Building
 
-Run `nx build pieces-webex` to build the library.
+Run `turbo run build --filter=@activepieces/piece-webex` to build the library.
