@@ -40,6 +40,7 @@ export const findRowAction = createAction({
           BaserowFieldType.DATE,
           BaserowFieldType.LAST_MODIFIED,
           BaserowFieldType.CREATED_ON,
+          BaserowFieldType.DURATION,
         ];
         const filterable = fields.filter((f) => !unsupportedTypes.includes(f.type));
         return {
