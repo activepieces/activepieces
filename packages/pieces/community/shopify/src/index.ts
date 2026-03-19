@@ -1,5 +1,4 @@
 import {
-  HttpMethod,
   createCustomApiCallAction,
 } from '@activepieces/pieces-common';
 import {
@@ -7,7 +6,10 @@ import {
   Property,
   createPiece,
 } from '@activepieces/pieces-framework';
-import { AppConnectionType, PieceCategory, OAuth2GrantType } from '@activepieces/shared';
+import {
+  PieceCategory,
+  OAuth2GrantType,
+} from '@activepieces/shared';
 import { adjustInventoryLevelAction } from './lib/actions/adjust-inventory-level';
 import { cancelOrderAction } from './lib/actions/cancel-order';
 import { closeOrderAction } from './lib/actions/close-order';
@@ -34,7 +36,7 @@ import { updateCustomerAction } from './lib/actions/update-customer';
 import { updateOrderAction } from './lib/actions/update-order';
 import { updateProductAction } from './lib/actions/update-product';
 import { uploadProductImageAction } from './lib/actions/upload-product-image';
-import { getBaseUrl, sendShopifyRequest } from './lib/common';
+import { getBaseUrl } from './lib/common';
 import { newAbandonedCheckout } from './lib/triggers/new-abandoned-checkout';
 import { newCancelledOrder } from './lib/triggers/new-cancelled-order';
 import { newCustomer } from './lib/triggers/new-customer';
@@ -51,7 +53,7 @@ const markdown = `
 4. Under **API credentials**, copy your **Client ID** and **Client Secret**
 5. Go to **Home** → **New versin**
 6. Update scope (Select the following scopes 'read_orders', 'write_orders', 'write_customers', 'read_customers', 'write_products', 'read_products', 'write_draft_orders', 'read_draft_orders')
-7. Redirect URLs
+7. Redirect URLs {{redirectUrl}}
 7. Click **Release**
 **Shop Name**:
 You can find your shop name in the admin URL. For example, if the URL is \`https://example.myshopify.com/admin\`, then your shop name is **example**.
@@ -67,12 +69,22 @@ export const shopifyAuth = PieceAuth.OAuth2({
     shopName: Property.ShortText({
       displayName: 'Shop Name',
       required: true,
-      description: 'The subdomain of your Shopify store (e.g., "mystore" from "mystore.myshopify.com")',
+      description:
+        'The subdomain of your Shopify store (e.g., "mystore" from "mystore.myshopify.com")',
     }),
   },
   authUrl: 'https://{shopName}.myshopify.com/admin/oauth/authorize',
   tokenUrl: 'https://{shopName}.myshopify.com/admin/oauth/access_token',
-  scope: ['write_orders', 'read_orders', 'write_customers', 'read_customers', 'write_products', 'read_products', 'write_draft_orders', 'read_draft_orders'],
+  scope: [
+    'write_orders',
+    'read_orders',
+    'write_customers',
+    'read_customers',
+    'write_products',
+    'read_products',
+    'write_draft_orders',
+    'read_draft_orders',
+  ],
   prompt: 'omit',
   grantType: OAuth2GrantType.AUTHORIZATION_CODE,
 });
@@ -81,7 +93,15 @@ export const shopify = createPiece({
   displayName: 'Shopify',
   description: 'Ecommerce platform for online stores',
   logoUrl: 'https://cdn.activepieces.com/pieces/shopify.png',
-  authors: ["kishanprmr","MoShizzle","AbdulTheActivePiecer","khaledmashaly","abuaboud","ikus060",'sanket-a11y'],
+  authors: [
+    'kishanprmr',
+    'MoShizzle',
+    'AbdulTheActivePiecer',
+    'khaledmashaly',
+    'abuaboud',
+    'ikus060',
+    'sanket-a11y',
+  ],
   categories: [PieceCategory.COMMERCE],
   minimumSupportedRelease: '0.30.0',
   auth: shopifyAuth,
