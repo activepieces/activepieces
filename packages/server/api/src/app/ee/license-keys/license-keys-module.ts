@@ -39,7 +39,7 @@ export const licenseKeysModule: FastifyPluginAsyncZod = async (app) => {
         job: {
             name: SystemJobName.TRIAL_TRACKER,
             data: {},
-            jobId: 'trial-tracker',
+            jobId: SystemJobName.TRIAL_TRACKER,
         },
         schedule: {
             type: 'repeated',

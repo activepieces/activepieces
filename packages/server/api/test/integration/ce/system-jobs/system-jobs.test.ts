@@ -178,7 +178,7 @@ describe('System Jobs', () => {
         expect(newAfter.length).toBeGreaterThanOrEqual(1)
     })
 
-    it('should return undefined when jobId exists but name does not match', async () => {
+    it('should not match job when jobId exists but name differs', async () => {
         const jobId = 'test-name-guard'
 
         await schedule.upsertJob({
@@ -193,10 +193,28 @@ describe('System Jobs', () => {
             },
         })
 
-        const result = await systemJobsQueue.getJob(jobId)
-        expect(result).toBeDefined()
+        // Raw BullMQ lookup finds the job
+        const raw = await systemJobsQueue.getJob(jobId)
+        expect(raw).toBeDefined()
+        expect(raw!.name).toBe(SystemJobName.FILE_CLEANUP_TRIGGER)
 
-        const guarded = await schedule.getJob(jobId)
-        expect(guarded).toBeDefined()
+        // Upserting with same jobId but different name treats it as non-existent
+        // (name guard rejects the match), so upsert attempts to add again.
+        // BullMQ deduplicates by jobId, so the original job persists unchanged.
+        await schedule.upsertJob({
+            job: {
+                name: SystemJobName.RUN_TELEMETRY,
+                data: {},
+                jobId,
+            },
+            schedule: {
+                type: 'one-time',
+                date: apDayjs().add(2, 'hours'),
+            },
+        })
+
+        const after = await systemJobsQueue.getJob(jobId)
+        expect(after).toBeDefined()
+        expect(after!.name).toBe(SystemJobName.FILE_CLEANUP_TRIGGER)
     })
 })
