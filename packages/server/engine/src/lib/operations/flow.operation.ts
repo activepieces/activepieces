@@ -14,6 +14,7 @@ import {
     StepOutputStatus,
     TriggerHookType,
     TriggerPayload,
+    EngineGenericError,
 } from '@activepieces/shared'
 import { EngineConstants } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
@@ -69,6 +70,9 @@ const executieSingleStepOrFlowOperation = async (input: ExecuteFlowOperation): P
 async function getFlowExecutionState(input: ExecuteFlowOperation, flowContext: FlowExecutorContext): Promise<FlowExecutorContext> {
     switch (input.executionType) {
         case ExecutionType.BEGIN: {
+            if (Object.keys(input.executionState.steps).length > 0) {
+                throw new EngineGenericError('InvalidBeginStateError', 'BEGIN operation received with non-empty execution state')
+            }
             const newPayload = await runOrReturnPayload(input)
             flowContext = flowContext.upsertStep(input.flowVersion.trigger.name, GenericStepOutput.create({
                 type: input.flowVersion.trigger.type,
