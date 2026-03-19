@@ -218,8 +218,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     systemJobHandlers.registerJobHandler(SystemJobName.UPDATE_FLOW_STATUS, (data) => flowBackgroundJobs(app.log).updateStatusHandler(data))
     systemJobHandlers.registerJobHandler(SystemJobName.HARD_DELETE_PROJECT, (data) => platformProjectBackgroundJobs(app.log).hardDeleteProjectHandler(data))
 
-
-
     app.get(
         '/redirect',
         async (
@@ -317,6 +315,8 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(communityPiecesModule)
             break
     }
+
+    await systemJobsSchedule(app.log).startWorker()
 
     app.addHook('onClose', async () => {
         app.log.info('Shutting down')
