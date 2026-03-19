@@ -16,7 +16,8 @@ Need help? See [Outseta API docs](https://documenter.getpostman.com/view/3613332
   props: {
     domain: Property.ShortText({
       displayName: 'Outseta Domain',
-      description: 'Your full Outseta domain URL, e.g. https://yourcompany.outseta.com',
+      description:
+        'Your full Outseta domain URL, e.g. https://yourcompany.outseta.com',
       required: true,
     }),
     apiKey: Property.ShortText({
@@ -26,7 +27,8 @@ Need help? See [Outseta API docs](https://documenter.getpostman.com/view/3613332
     }),
     apiSecret: Property.ShortText({
       displayName: 'API Secret',
-      description: 'Found alongside your API Key in Outseta → Settings → Integrations → API',
+      description:
+        'Found alongside your API Key in Outseta → Settings → Integrations → API',
       required: true,
     }),
   },

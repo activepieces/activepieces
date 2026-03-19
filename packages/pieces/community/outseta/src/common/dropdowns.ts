@@ -182,53 +182,7 @@ export function planUidDropdown(options?: {
   });
 }
 
-export function pipelineStageUidDropdown(options?: { required?: boolean }) {
-  return Property.Dropdown({
-    auth: outsetaAuth,
-    displayName: 'Pipeline Stage',
-    description: 'Select the deal pipeline stage.',
-    refreshers: [],
-    required: options?.required ?? true,
-    options: async ({ auth }) => {
-      const client = makeClient(auth);
-      if (!client) {
-        return {
-          disabled: true,
-          options: [],
-          placeholder: 'Connect your Outseta account first.',
-        };
-      }
-      try {
-        const res = await client.get<any>(
-          '/api/v1/crm/deals/pipelines?$top=100'
-        );
-        const pipelines: any[] =
-          res?.items ?? res?.Items ?? (Array.isArray(res) ? res : []);
-        const opts: { label: string; value: string }[] = [];
-        for (const pipeline of pipelines) {
-          const stages: any[] =
-            pipeline.DealPipelineStages?.items ??
-            pipeline.DealPipelineStages?.Items ??
-            pipeline.DealPipelineStages ??
-            [];
-          for (const stage of stages) {
-            opts.push({
-              label: `${pipeline.Name} → ${stage.Name}`,
-              value: stage.Uid,
-            });
-          }
-        }
-        return { disabled: false, options: opts };
-      } catch {
-        return {
-          disabled: true,
-          options: [],
-          placeholder: 'Failed to load pipeline stages.',
-        };
-      }
-    },
-  });
-}
+
 
 export function addOnUidDropdown(options?: { required?: boolean }) {
   return Property.Dropdown({

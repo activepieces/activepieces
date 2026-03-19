@@ -68,27 +68,53 @@ export const updatePersonAction = createAction({
     });
 
     // Fetch full person first to avoid wiping fields with a partial PUT
-    const person = await client.get<any>(
-      `/api/v1/crm/people/${context.propsValue.personUid}`
-    );
-
+    // const person = await client.get<any>(
+    //   `/api/v1/crm/people/${context.propsValue.personUid}`
+    // );
+    const person: any = {};
+     console.log('Fetched person:', person);
     let changed = false;
-    if (context.propsValue.email) { person.Email = context.propsValue.email; changed = true; }
-    if (context.propsValue.firstName) { person.FirstName = context.propsValue.firstName; changed = true; }
-    if (context.propsValue.lastName) { person.LastName = context.propsValue.lastName; changed = true; }
-    if (context.propsValue.phoneMobile) { person.PhoneMobile = context.propsValue.phoneMobile; changed = true; }
-    if (context.propsValue.phoneWork) { person.PhoneWork = context.propsValue.phoneWork; changed = true; }
-    if (context.propsValue.title) { person.Title = context.propsValue.title; changed = true; }
+    if (context.propsValue.email) {
+      person.Email = context.propsValue.email;
+      changed = true;
+    }
+    if (context.propsValue.firstName) {
+      person.FirstName = context.propsValue.firstName;
+      changed = true;
+    }
+    if (context.propsValue.lastName) {
+      person.LastName = context.propsValue.lastName;
+      changed = true;
+    }
+    if (context.propsValue.phoneMobile) {
+      person.PhoneMobile = context.propsValue.phoneMobile;
+      changed = true;
+    }
+    if (context.propsValue.phoneWork) {
+      person.PhoneWork = context.propsValue.phoneWork;
+      changed = true;
+    }
+    if (context.propsValue.title) {
+      person.Title = context.propsValue.title;
+      changed = true;
+    }
 
-    const hasAddress = context.propsValue.addressLine1 || context.propsValue.city || context.propsValue.country;
+    const hasAddress =
+      context.propsValue.addressLine1 ||
+      context.propsValue.city ||
+      context.propsValue.country;
     if (hasAddress) {
       const address = person.MailingAddress ?? {};
-      if (context.propsValue.addressLine1) address.AddressLine1 = context.propsValue.addressLine1;
-      if (context.propsValue.addressLine2) address.AddressLine2 = context.propsValue.addressLine2;
+      if (context.propsValue.addressLine1)
+        address.AddressLine1 = context.propsValue.addressLine1;
+      if (context.propsValue.addressLine2)
+        address.AddressLine2 = context.propsValue.addressLine2;
       if (context.propsValue.city) address.City = context.propsValue.city;
       if (context.propsValue.state) address.State = context.propsValue.state;
-      if (context.propsValue.postalCode) address.PostalCode = context.propsValue.postalCode;
-      if (context.propsValue.country) address.Country = context.propsValue.country;
+      if (context.propsValue.postalCode)
+        address.PostalCode = context.propsValue.postalCode;
+      if (context.propsValue.country)
+        address.Country = context.propsValue.country;
       person.MailingAddress = address;
       changed = true;
     }
@@ -97,21 +123,11 @@ export const updatePersonAction = createAction({
       throw new Error('At least one field must be provided.');
     }
 
-    const person = await client.put<any>(
+    const updatedPerson = await client.put<any>(
       `/api/v1/crm/people/${context.propsValue.personUid}`,
       person
     );
 
-    return {
-      uid: person.Uid ?? null,
-      email: person.Email ?? null,
-      first_name: person.FirstName ?? null,
-      last_name: person.LastName ?? null,
-      full_name: person.FullName ?? null,
-      phone_mobile: person.PhoneMobile ?? null,
-      phone_work: person.PhoneWork ?? null,
-      title: person.Title ?? null,
-      updated: person.Updated ?? null,
-    };
+    return updatedPerson;
   },
 });

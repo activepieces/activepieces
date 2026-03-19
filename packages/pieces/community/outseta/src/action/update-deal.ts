@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { outsetaAuth } from '../auth';
 import { OutsetaClient } from '../common/client';
-import { accountUidDropdown, dealUidDropdown, personUidDropdown, pipelineStageUidDropdown } from '../common/dropdowns';
+import { accountUidDropdown, dealUidDropdown, personUidDropdown } from '../common/dropdowns';
 
 export const updateDealAction = createAction({
   name: 'update_deal',
@@ -14,7 +14,11 @@ export const updateDealAction = createAction({
       displayName: 'Name',
       required: false,
     }),
-    dealPipelineStageUid: pipelineStageUidDropdown({ required: false }),
+    dealPipelineStageUid: Property.ShortText({
+      displayName: 'Pipeline Stage UID',
+      required: false,
+      description: 'The UID of the pipeline stage for this deal.',
+    }),
     amount: Property.Number({
       displayName: 'Amount',
       required: false,
@@ -39,9 +43,10 @@ export const updateDealAction = createAction({
       apiSecret: context.auth.props.apiSecret,
     });
 
-    const deal = await client.get<any>(
-      `/api/v1/crm/deals/${context.propsValue.dealUid}`
-    );
+    // const deal = await client.get<any>(
+    //   `/api/v1/crm/deals/${context.propsValue.dealUid}`
+    // );
+    const deal: any = {};
 
     if (context.propsValue.name) {
       deal.Name = context.propsValue.name;

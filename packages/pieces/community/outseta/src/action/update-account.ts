@@ -71,11 +71,12 @@ export const updateAccountAction = createAction({
       apiSecret: context.auth.props.apiSecret,
     });
 
-    // Fetch full account first to avoid wiping fields with a partial PUT
-    const account = await client.get<any>(
-      `/api/v1/crm/accounts/${context.propsValue.accountUid}`
-    );
-
+    // // Fetch full account first to avoid wiping fields with a partial PUT
+    // const account = await client.get<any>(
+    //   `/api/v1/crm/accounts/${context.propsValue.accountUid}`
+    // );
+    const account: any = {}; 
+    console.log('Fetched account:', account);
     let changed = false;
     if (context.propsValue.name) { account.Name = context.propsValue.name; changed = true; }
     if (context.propsValue.accountStage != null) { account.AccountStage = context.propsValue.accountStage; changed = true; }
@@ -99,19 +100,11 @@ export const updateAccountAction = createAction({
       throw new Error('At least one field must be provided.');
     }
 
-    const account = await client.put<any>(
+    const updatedAccount = await client.put<any>(
       `/api/v1/crm/accounts/${context.propsValue.accountUid}`,
       account
     );
 
-    return {
-      uid: account.Uid ?? null,
-      name: account.Name ?? null,
-      account_stage: account.AccountStage ?? null,
-      account_stage_label: account.AccountStageLabel ?? null,
-      client_identifier: account.ClientIdentifier ?? null,
-      invoice_notes: account.InvoiceNotes ?? null,
-      updated: account.Updated ?? null,
-    };
+    return updatedAccount
   },
 });

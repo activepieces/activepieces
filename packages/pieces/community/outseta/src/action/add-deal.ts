@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { outsetaAuth } from '../auth';
 import { OutsetaClient } from '../common/client';
-import { accountUidDropdown, personUidDropdown, pipelineStageUidDropdown } from '../common/dropdowns';
+import { accountUidDropdown, personUidDropdown } from '../common/dropdowns';
 
 export const addDealAction = createAction({
   name: 'add_deal',
@@ -15,7 +15,11 @@ export const addDealAction = createAction({
       required: true,
       description: 'The name or title of the deal.',
     }),
-    dealPipelineStageUid: pipelineStageUidDropdown(),
+    dealPipelineStageUid: Property.ShortText({
+      displayName: 'Pipeline Stage UID',
+      required: true,
+      description: 'The UID of the pipeline stage for this deal.',
+    }),
     amount: Property.Number({
       displayName: 'Amount',
       required: false,
@@ -66,16 +70,6 @@ export const addDealAction = createAction({
 
     const deal = await client.post<any>('/api/v1/crm/deals', body);
 
-    return {
-      uid: deal.Uid ?? null,
-      name: deal.Name ?? null,
-      amount: deal.Amount ?? null,
-      due_date: deal.DueDate ?? null,
-      pipeline_stage_uid: deal.DealPipelineStage?.Uid ?? null,
-      pipeline_stage_name: deal.DealPipelineStage?.Name ?? null,
-      account_uid: deal.Account?.Uid ?? null,
-      account_name: deal.Account?.Name ?? null,
-      created: deal.Created ?? null,
-    };
+    return deal;
   },
 });
