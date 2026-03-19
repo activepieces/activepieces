@@ -22,12 +22,13 @@ All times are in UTC.
 
 **Mar 14–15 (Pre-incident):** As part of our infrastructure upgrade, we moved enterprise dedicated workers one by one first and isolated them from shared infrastructure changes. We then began rolling out the new architecture for shared workers.
 
-1. **Mar 16, 8:13 PM** — Shared workers begin failing after the architecture refactor deployment is applied.
+1. **Mar 16, 8:13 PM** — Shared workers begin failing after the architecture refactor deployment is applied. Team immediately begins investigating.
 2. **Mar 16, 8:50 PM** — Brief recovery observed.
-3. **Mar 16, 8:52 PM** — Errors resurface shortly after the brief recovery.
-4. **Mar 17, 3:26 AM** — Root cause identified: persistent volumes (PVCs) filled up with no way to fix them in-place and no shell access to debug. Decision made to revert to the previous deployment method (Kamal) with multi-tenant workers.
-5. **Mar 17, 8:13 AM** — Discovered a separate issue: one enterprise customer's dedicated worker had been misconfigured with the wrong trust level, causing npm to be blocked in their sandbox environment.
-6. **Mar 17, 11:30 AM** — Trust level configuration fixed, full rollout completed, and all failed executions replayed from their failed step.
+3. **Mar 16, 8:52 PM** — Errors resurface. Pattern of brief recoveries followed by recurring errors points to a resource issue rather than a code bug.
+4. **Mar 17, 3:26 AM** — Root cause identified: persistent volumes (PVCs) filled up with no shell access to worker pods to fix in-place. Decision made to revert to the previous deployment method (Kamal) with multi-tenant workers. This was not a simple rollback — reverting to Kamal required significant code changes to re-adapt the worker architecture back to the previous multi-tenant deployment model.
+5. **Mar 17, ~8:00 AM** — Kamal revert deployed, flow execution restored for cloud customers.
+6. **Mar 17, 8:13 AM** — Attention turned to enterprise dedicated workers. Discovered one customer's dedicated worker had `trustedEnvironment` incorrectly set to `false` after the namespace migration, blocking npm libraries in their sandbox.
+7. **Mar 17, 11:30 AM** — Trust level configuration fixed, test coverage added for this code path. All failed executions identified across cloud and enterprise customers and replayed from the exact failed step. No customer data or automation results were permanently lost.
 
 ## Root Causes
 
