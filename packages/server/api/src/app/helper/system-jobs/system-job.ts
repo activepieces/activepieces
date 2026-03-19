@@ -111,7 +111,6 @@ async function removeDeprecatedJobs(): Promise<void> {
         'usage-report',
         'archive-old-issues',
         'platform-usage-report',
-        'hard-delete-project',
         'seven-days-in-trial',
         'issue-reminder',
     ]
