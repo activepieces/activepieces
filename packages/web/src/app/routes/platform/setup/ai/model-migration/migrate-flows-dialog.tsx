@@ -4,7 +4,7 @@ import {
   ErrorCode,
   MigrateFlowsModelRequest,
 } from '@activepieces/shared';
-import { typeboxResolver } from '@hookform/resolvers/typebox';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
@@ -115,7 +115,7 @@ const MigrateFlowsDialogContent = ({
   setOpen: (val: boolean) => void;
 }) => {
   const form = useForm<MigrateFlowsModelRequest>({
-    resolver: typeboxResolver(MigrateFlowsModelRequest),
+    resolver: zodResolver(MigrateFlowsModelRequest),
     defaultValues: {
       projectIds: [],
       sourceModel: { provider: AIProviderName.ACTIVEPIECES, model: '' },
@@ -126,7 +126,7 @@ const MigrateFlowsDialogContent = ({
   const sourceProvider = form.watch('sourceModel.provider');
   const targetProvider = form.watch('targetModel.provider');
 
-  const { data: projects } = projectCollectionUtils.useAll();
+  const { data: projects } = projectCollectionUtils.useAllPlatformProjects();
 
   const { mutate, isPending } = useMutation({
     mutationFn: (data: MigrateFlowsModelRequest) =>

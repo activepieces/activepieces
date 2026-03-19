@@ -4,10 +4,10 @@ import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { ProjectResourceType } from '../../core/security/authorization/common'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
+import { flowVersionMigrationService } from '../flow-version/flow-version-migration.service'
 import { flowVersionService } from '../flow-version/flow-version.service'
 import { FlowEntity } from './flow.entity'
 import { flowService } from './flow.service'
-import { flowVersionMigrationService } from '../flow-version/flow-version-migration.service'
 
 const DEFAULT_PAGE_SIZE = 10
 
@@ -27,7 +27,8 @@ export const flowVersionController: FastifyPluginAsyncZod = async (fastify) => {
 
     fastify.post('/versions/migrate-ai-model', MigrateAIModel, async (request, reply) => {
         const platformId = request.principal.platform.id
-        await flowVersionMigrationService(request.log).enqueueMigrateFlowsModel(platformId, request.body, request.log)
+        const userId = request.principal.id
+        await flowVersionMigrationService(request.log).enqueueMigrateFlowsModel(platformId, userId, request.body, request.log)
         return reply.status(StatusCodes.NO_CONTENT).send()
     })
 

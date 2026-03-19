@@ -11,12 +11,15 @@ import {
     LATEST_FLOW_SCHEMA_VERSION,
     MigrateFlowsModelRequest,
     PlatformId,
-    sanitizeObjectForPostgresql,
     ProjectId,
+    sanitizeObjectForPostgresql,
     spreadIfDefined,
+    UserId,
+    WebsocketClientEvent,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
+import { websocketService } from '../../core/websockets.service'
 import { SystemJobData, SystemJobName } from '../../helper/system-jobs/common'
 import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
 import { flowExecutionCache } from '../flow/flow-execution-cache'
@@ -52,7 +55,7 @@ export const flowVersionMigrationService = (log: FastifyBaseLogger) => ({
         return migratedFlowVersion
     },
 
-    async enqueueMigrateFlowsModel(platformId: PlatformId, request: MigrateFlowsModelRequest, reqLog: FastifyBaseLogger): Promise<void> {
+    async enqueueMigrateFlowsModel(platformId: PlatformId, userId: UserId, request: MigrateFlowsModelRequest, reqLog: FastifyBaseLogger): Promise<void> {
         const jobId = `migrate-flow-model-${platformId}`
         const existingJob = await systemJobsSchedule(reqLog).getJob<SystemJobName.MIGRATE_FLOWS_MODEL>(jobId)
         const SKIP_JOB_STATES = ['active', 'delayed', 'waiting']
@@ -65,7 +68,7 @@ export const flowVersionMigrationService = (log: FastifyBaseLogger) => ({
         await systemJobsSchedule(reqLog).upsertJob({
             job: {
                 name: SystemJobName.MIGRATE_FLOWS_MODEL,
-                data: { jobId, platformId, request },
+                data: { jobId, platformId, userId, request },
                 jobId,
             },
             schedule: {
@@ -80,7 +83,7 @@ export const flowVersionMigrationService = (log: FastifyBaseLogger) => ({
     },
 
     async migrateFlowsModelHandler(data: SystemJobData<SystemJobName.MIGRATE_FLOWS_MODEL>): Promise<void> {
-        const { platformId, request: { projectIds, sourceModel, targetModel } } = data
+        const { platformId, userId, request: { projectIds, sourceModel, targetModel } } = data
         const BATCH_SIZE = 100
         let offset = 0
         let updatedFlows = 0
@@ -129,10 +132,12 @@ export const flowVersionMigrationService = (log: FastifyBaseLogger) => ({
                     if (provider === sourceModel.provider && model === sourceModel.model) {
                         hasChanges = true
                         const clonedStep = JSON.parse(JSON.stringify(step))
-                        clonedStep.settings.input['model'] = targetModel.model
-                        clonedStep.settings.input['provider'] = targetModel.provider
                         if (step.settings.actionName === 'run_agent') {
                             clonedStep.settings.input[AgentPieceProps.AI_PROVIDER_MODEL] = targetModel
+                        }
+                        else {
+                            clonedStep.settings.input['model'] = targetModel.model
+                            clonedStep.settings.input['provider'] = targetModel.provider
                         }
                         return clonedStep
                     }
@@ -140,15 +145,18 @@ export const flowVersionMigrationService = (log: FastifyBaseLogger) => ({
                 })
 
                 if (hasChanges) {
+                    const isDraft = flowVersion.state === FlowVersionState.DRAFT
                     const newVersion = sanitizeObjectForPostgresql({
                         ...updatedVersion,
                         id: apId(),
-                        state: FlowVersionState.LOCKED,
+                        state: isDraft ? FlowVersionState.DRAFT : FlowVersionState.LOCKED,
                         created: dayjs().toISOString(),
                         updated: dayjs().toISOString(),
                     })
                     await flowVersionRepo().save(newVersion)
-                    await flowRepo().update(newVersion.flowId, { publishedVersionId: newVersion.id })
+                    if (!isDraft) {
+                        await flowRepo().update(newVersion.flowId, { publishedVersionId: newVersion.id })
+                    }
                     await flowExecutionCache(log).invalidate(newVersion.flowId)
                     updatedFlows++
                 }
@@ -158,5 +166,6 @@ export const flowVersionMigrationService = (log: FastifyBaseLogger) => ({
         }
 
         log.info({ platformId, updatedFlows }, 'Flow model migration completed')
+        websocketService.to(userId).emit(WebsocketClientEvent.FLOWS_MODEL_MIGRATION_COMPLETED, { updatedFlows })
     },
 })
