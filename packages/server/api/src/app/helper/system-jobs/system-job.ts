@@ -51,7 +51,7 @@ export const systemJobsSchedule = (log: FastifyBaseLogger): SystemJobSchedule =>
             },
             {
                 connection: await redisConnections.create(),
-                concurrency: 1,
+                concurrency: 10,
             },
         )
 
