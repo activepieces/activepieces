@@ -56,6 +56,7 @@ export const executeFlowJob: JobHandler<ExecuteFlowJobData> = {
             )
 
             if (result.engine.status === EngineResponseStatus.LOG_SIZE_EXCEEDED) {
+                await reportFlowStatus(ctx, data, FlowRunStatus.LOG_SIZE_EXCEEDED)
                 return {}
             }
 

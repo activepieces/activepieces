@@ -59,14 +59,21 @@ export const workerSocket = {
             executeOperation: async ({ operationType, operation }): Promise<EngineResponse<unknown>> => {
                 const result = await tryCatch(async () => {
                     progressService.init()
-                    const response = await execute(operationType, operation)
-                    await progressService.shutdown()
-                    return JSON.parse(JSON.stringify(response)) as EngineResponse<unknown>
+                    try {
+                        const response = await execute(operationType, operation)
+                        return JSON.parse(JSON.stringify(response)) as EngineResponse<unknown>
+                    }
+                    finally {
+                        await progressService.shutdown()
+                    }
                 })
 
                 if (result.error) {
-                    console.error(result.error)
-                    const status = result.error instanceof LogSizeExceededError
+                    const isLogSizeExceeded = result.error instanceof LogSizeExceededError
+                    if (!isLogSizeExceeded) {
+                        console.error(result.error)
+                    }
+                    const status = isLogSizeExceeded
                         ? EngineResponseStatus.LOG_SIZE_EXCEEDED
                         : EngineResponseStatus.INTERNAL_ERROR
                     return {
