@@ -113,7 +113,7 @@ export const flowExecutor = {
 }
 
 const failIfLogSizeExceeded = async (flowExecutionContext: FlowExecutorContext, action: FlowAction | FlowTrigger, constants: EngineConstants) => {
-    if (loggingUtils.isWithinSizeLimit(flowExecutionContext.steps) || action.type === FlowActionType.LOOP_ON_ITEMS || action.type === FlowActionType.ROUTER) {
+    if (loggingUtils.isWithinSizeLimit(flowExecutionContext.steps)) {
         return
     }
     flowExecutionContext = flowExecutionContext

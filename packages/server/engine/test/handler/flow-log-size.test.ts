@@ -121,6 +121,23 @@ describe('flow executor log size exceeded', () => {
             )
         })
 
+        it('should throw LogSizeExceededError when terminal loop action exceeds log size limit', async () => {
+            const loopAction = buildSimpleLoopAction({
+                name: 'loop',
+                loopItems: '{{ [1, 2, 3] }}',
+                firstLoopAction: buildCodeAction({
+                    name: 'echo_step',
+                    input: { key: 'x'.repeat(10000) },
+                }),
+            })
+
+            await expect(freshExecutor.execute({
+                action: loopAction,
+                executionState: FreshContext.empty(),
+                constants: generateMockEngineConstants(),
+            })).rejects.toThrow('Flow run data size exceeded the maximum allowed size')
+        })
+
         it('should throw LogSizeExceededError when trigger output exceeds log size limit', async () => {
             const triggerName = 'trigger'
             const trigger = {
@@ -188,7 +205,7 @@ describe('flow executor log size exceeded', () => {
         expect(result.steps.echo_step.status).toBe(StepOutputStatus.SUCCEEDED)
     })
 
-    it('should skip log size check for loop actions', async () => {
+    it('should not throw for loop actions when log size is within limit', async () => {
         const loopAction = buildSimpleLoopAction({
             name: 'loop',
             loopItems: '{{ [1, 2, 3] }}',
