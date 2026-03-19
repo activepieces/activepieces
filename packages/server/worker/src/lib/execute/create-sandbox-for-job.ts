@@ -71,8 +71,8 @@ function buildSandboxEnv(settings: ReturnType<typeof workerSettings.getSettings>
         AP_MAX_FILE_SIZE_MB: String(settings.MAX_FILE_SIZE_MB),
         NODE_PATH: '/usr/src/node_modules',
     }
-    if (process.env['AP_DEV_PIECES']) {
-        env['AP_DEV_PIECES'] = process.env['AP_DEV_PIECES']
+    if (settings.DEV_PIECES.length > 0) {
+        env['AP_DEV_PIECES'] = settings.DEV_PIECES.join(',')
     }
     for (const key of settings.SANDBOX_PROPAGATED_ENV_VARS) {
         if (process.env[key]) {
