@@ -1,6 +1,6 @@
 import deepEqual from 'deep-equal';
 import { t } from 'i18next';
-import { Check, ChevronsUpDown, RefreshCcw, X } from 'lucide-react';
+import { Check, ChevronsUpDown, RefreshCcw, Trash2, X } from 'lucide-react';
 import React, { useState, useRef } from 'react';
 
 import { SelectUtilButton } from '@/components/custom/select-util-button';
@@ -51,6 +51,7 @@ type SearchableSelectProps<T> = {
     value: T;
     label: string;
   }[];
+  onOptionDelete?: (value: T) => void;
 };
 
 const useOpenState = (openStateInitializer?: {
@@ -82,6 +83,7 @@ export const SearchableSelect = <T,>({
   openState: openStateInitializer,
   refreshOnSearch,
   cachedOptions = [],
+  onOptionDelete,
 }: SearchableSelectProps<T>) => {
   const triggerRef = useRef<HTMLButtonElement>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -248,18 +250,38 @@ export const SearchableSelect = <T,>({
                         className="flex gap-2 flex-col items-start"
                       >
                         <div className="flex gap-2 items-center justify-between w-full">
-                          {option.label === '' ? (
-                            <span className="">&nbsp;</span>
-                          ) : valuesRendering ? (
-                            valuesRendering(option.value)
-                          ) : (
-                            option.label
-                          )}
-                          <Check
-                            className={cn('shrink-0 w-4 h-4', {
-                              hidden: selectedOption?.value !== option.value,
-                            })}
-                          />
+                          <span className="truncate">
+                            {option.label === '' ? (
+                              <span className="">&nbsp;</span>
+                            ) : valuesRendering ? (
+                              valuesRendering(option.value)
+                            ) : (
+                              option.label
+                            )}
+                          </span>
+                          <div className="flex items-center gap-1 shrink-0">
+                            {onOptionDelete && (
+                              <button
+                                type="button"
+                                className={cn(
+                                  'size-5 flex items-center justify-center rounded-sm',
+                                  'text-muted-foreground hover:text-destructive hover:bg-destructive/10',
+                                )}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  e.preventDefault();
+                                  onOptionDelete(option.value);
+                                }}
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </button>
+                            )}
+                            <Check
+                              className={cn('shrink-0 w-4 h-4', {
+                                hidden: selectedOption?.value !== option.value,
+                              })}
+                            />
+                          </div>
                         </div>
                         {option.description && (
                           <div className="text-sm text-muted-foreground">

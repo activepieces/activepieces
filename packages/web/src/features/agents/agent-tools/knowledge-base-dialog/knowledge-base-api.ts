@@ -20,4 +20,10 @@ export const knowledgeBaseApi = {
       },
     );
   },
+  delete(fileId: string): Promise<void> {
+    const projectId = authenticationSession.getProjectId()!;
+    return api.delete<void>(`/v1/knowledge-base/files/${fileId}`, {
+      projectId,
+    });
+  },
 };

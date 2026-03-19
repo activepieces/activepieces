@@ -25,3 +25,16 @@ export const useUploadKnowledgeBaseFile = () => {
     },
   });
 };
+
+export const useDeleteKnowledgeBaseFile = () => {
+  const queryClient = useQueryClient();
+  const projectId = authenticationSession.getProjectId();
+  return useMutation<void, Error, string>({
+    mutationFn: (fileId: string) => knowledgeBaseApi.delete(fileId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ['knowledge-base-files', projectId],
+      });
+    },
+  });
+};

@@ -34,6 +34,7 @@ import { authenticationSession } from '@/lib/authentication-session';
 import { useKnowledgeBaseToolDialogStore } from '../stores/knowledge-base-tools';
 
 import {
+  useDeleteKnowledgeBaseFile,
   useKnowledgeBaseFiles,
   useUploadKnowledgeBaseFile,
 } from './knowledge-base-hooks';
@@ -80,6 +81,7 @@ function KnowledgeBaseDialogContent({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const uploadMutation = useUploadKnowledgeBaseFile();
+  const deleteMutation = useDeleteKnowledgeBaseFile();
   const { data: kbFiles, isLoading: kbFilesLoading } =
     useKnowledgeBaseFiles();
 
@@ -228,6 +230,24 @@ function KnowledgeBaseDialogContent({
                 }}
                 placeholder={t('Select a knowledge base file')}
                 loading={kbFilesLoading}
+                onOptionDelete={(fileId) => {
+                  if (deleteMutation.isPending) return;
+                  deleteMutation.mutate(fileId, {
+                    onSuccess: () => {
+                      toast(t('File deleted successfully'));
+                      if (sourceId === fileId) {
+                        setSourceId('');
+                        setSourceName('');
+                        if (!editingKbTool) {
+                          setToolName('');
+                        }
+                      }
+                    },
+                    onError: () => {
+                      toast.error(t('Failed to delete file'));
+                    },
+                  });
+                }}
               />
               <input
                 ref={fileInputRef}

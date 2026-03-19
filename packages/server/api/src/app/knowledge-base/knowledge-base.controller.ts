@@ -160,7 +160,7 @@ const ListKnowledgeBaseFilesRequest = {
 const DeleteKnowledgeBaseFileRequest = {
     config: {
         security: securityAccess.project(KB_PRINCIPALS, Permission.WRITE_KNOWLEDGE_BASE, {
-            type: ProjectResourceType.PARAM,
+            type: ProjectResourceType.QUERY,
         }),
     },
     schema: {
@@ -169,6 +169,9 @@ const DeleteKnowledgeBaseFileRequest = {
         description: 'Delete a knowledge base file and all its chunks',
         params: z.object({
             id: z.string(),
+        }),
+        querystring: z.object({
+            projectId: z.string(),
         }),
     },
 }
