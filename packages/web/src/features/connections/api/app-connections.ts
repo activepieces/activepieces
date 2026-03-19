@@ -1,6 +1,8 @@
 import {
   AppConnectionOwners,
   AppConnectionWithoutSensitiveData,
+  GetOAuth2AuthorizationUrlRequestBody,
+  GetOAuth2AuthorizationUrlResponse,
   ListAppConnectionOwnersRequestQuery,
   ListAppConnectionsRequestQuery,
   ReplaceAppConnectionsRequestBody,
@@ -10,6 +12,7 @@ import {
 } from '@activepieces/shared';
 
 import { api } from '@/lib/api';
+import { authenticationSession } from '@/lib/authentication-session';
 
 export const appConnectionsApi = {
   list(
@@ -49,6 +52,15 @@ export const appConnectionsApi = {
     return api.get<SeekPage<AppConnectionOwners>>(
       '/v1/app-connections/owners',
       request,
+    );
+  },
+  getOAuth2AuthorizationUrl(
+    request: Omit<GetOAuth2AuthorizationUrlRequestBody, 'projectId'>,
+  ): Promise<GetOAuth2AuthorizationUrlResponse> {
+    const projectId = authenticationSession.getProjectId();
+    return api.post<GetOAuth2AuthorizationUrlResponse>(
+      '/v1/app-connections/oauth2/authorization-url',
+      { ...request, projectId },
     );
   },
 };

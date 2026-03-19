@@ -6,7 +6,6 @@ import {
   OAuth2GrantType,
   ThirdPartyAuthnProviderEnum,
 } from '@activepieces/shared';
-import { nanoid } from 'nanoid';
 import { useSearchParams } from 'react-router-dom';
 
 import {
@@ -41,12 +40,10 @@ async function openOAuth2Popup(
   params: OAuth2PopupParams,
 ): Promise<OAuth2PopupResponse> {
   closeOAuth2Popup();
-  const pckeChallenge = nanoid(43);
-  const url = await constructUrl(params, pckeChallenge);
-  currentPopup = openWindow(url);
+  currentPopup = openWindow(params.authorizationUrl);
   return {
     code: await getCode(params.redirectUrl),
-    codeChallenge: params.pkce ? pckeChallenge : undefined,
+    codeVerifier: params.codeVerifier,
   };
 }
 
@@ -69,54 +66,6 @@ function openWindow(url: string): Window | null {
 
 function closeOAuth2Popup() {
   currentPopup?.close();
-}
-
-async function generateCodeChallenge(codeVerifier: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(codeVerifier);
-  const digest = await window.crypto.subtle.digest('SHA-256', data);
-
-  const base64String = btoa(String.fromCharCode(...new Uint8Array(digest)));
-  return base64String.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-}
-
-async function constructUrl(params: OAuth2PopupParams, pckeChallenge: string) {
-  const queryParams: Record<string, string> = {
-    response_type: 'code',
-    client_id: params.clientId,
-    redirect_uri: params.redirectUrl,
-    access_type: 'offline',
-    state: nanoid(),
-    prompt: 'consent',
-    scope: params.scope,
-    ...(params.extraParams || {}),
-  };
-
-  if (params.prompt === 'omit') {
-    delete queryParams['prompt'];
-  } else if (!isNil(params.prompt)) {
-    queryParams['prompt'] = params.prompt;
-  }
-
-  if (params.pkce) {
-    const method = params.pkceMethod || 'plain';
-    queryParams['code_challenge_method'] = method;
-
-    if (method === 'S256') {
-      queryParams['code_challenge'] = await generateCodeChallenge(
-        pckeChallenge,
-      );
-    } else {
-      queryParams['code_challenge'] = pckeChallenge;
-    }
-  }
-  const url = new URL(params.authUrl);
-  Object.entries(queryParams).forEach(([key, value]) => {
-    if (value !== '') {
-      url.searchParams.append(key, value);
-    }
-  });
-  return url.toString();
 }
 
 function getCode(redirectUrl: string): Promise<string> {
@@ -191,17 +140,12 @@ export type PiecesOAuth2AppsMap = Record<
 >;
 
 type OAuth2PopupParams = {
-  authUrl: string;
-  clientId: string;
+  authorizationUrl: string;
   redirectUrl: string;
-  scope: string;
-  prompt?: 'none' | 'consent' | 'login' | 'omit';
-  pkce: boolean;
-  pkceMethod?: 'plain' | 'S256';
-  extraParams?: Record<string, string>;
+  codeVerifier?: string;
 };
 
 type OAuth2PopupResponse = {
   code: string;
-  codeChallenge: string | undefined;
+  codeVerifier: string | undefined;
 };

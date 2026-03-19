@@ -1175,6 +1175,8 @@
   "Retry": "再試行する",
   "on latest version": "最新バージョンで",
   "Only failed runs can be retried from failed step": "失敗した実行のみが失敗したステップから再試行することができます",
+  "Retry is only available for {failedJobRetentionDays} after a run fails.": "実行が失敗してから {failedJobRetentionDays, plural, =0 {0 日} =1 {1 日} other {# 日}} 間のみ再試行できます。",
+  "Retry failed": "再試行に失敗しました",
   "from failed step": "失敗したステップから",
   "Viewing retried runs": "",
   "No flow runs found": "フローの実行が見つかりません",

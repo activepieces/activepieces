@@ -1,28 +1,21 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { outsetaAuth } from '../auth';
 import { OutsetaClient } from '../common/client';
+import { accountUidDropdown, addOnUidDropdown } from '../common/dropdowns';
 
 export const addAddonUsageAction = createAction({
   name: 'add_addon_usage',
   auth: outsetaAuth,
-  displayName: 'Add Addon Usage',
+  displayName: 'Track Add-on Usage',
   description:
-    'Record usage for a metered (usage-based) add-on on an account',
+    'Track usage for a metered (usage-based) add-on on an account.',
   props: {
-    accountUid: Property.ShortText({
-      displayName: 'Account UID',
-      required: true,
-    }),
-    addOnUid: Property.ShortText({
-      displayName: 'Add-On UID',
-      required: true,
-      description:
-        'The UID of the add-on product. Find it in Outseta → Billing → Add-ons.',
-    }),
+    accountUid: accountUidDropdown(),
+    addOnUid: addOnUidDropdown(),
     amount: Property.Number({
       displayName: 'Amount',
       required: true,
-      description: 'The usage amount to record',
+      description: 'The usage amount to record.',
     }),
     usageDate: Property.DateTime({
       displayName: 'Usage Date',
@@ -46,7 +39,6 @@ export const addAddonUsageAction = createAction({
       throw new Error('This account does not have an active subscription.');
     }
 
-    // Normalize SubscriptionAddOns — may be a plain array or a paginated object
     const rawAddOns = account.CurrentSubscription.SubscriptionAddOns;
     const subscriptionAddOns: any[] = Array.isArray(rawAddOns)
       ? rawAddOns
@@ -62,14 +54,17 @@ export const addAddonUsageAction = createAction({
     }
 
     const result = await client.post<any>(`/api/v1/billing/usage`, {
-      UsageDate:
-        context.propsValue.usageDate ?? new Date().toISOString(),
+      UsageDate: context.propsValue.usageDate ?? new Date().toISOString(),
       Amount: context.propsValue.amount,
-      SubscriptionAddOn: {
-        Uid: matchingAddOn.Uid,
-      },
+      SubscriptionAddOn: { Uid: matchingAddOn.Uid },
     });
 
-    return result;
+    return {
+      uid: result.Uid ?? null,
+      amount: result.Amount ?? null,
+      usage_date: result.UsageDate ?? null,
+      add_on_uid: result.SubscriptionAddOn?.Uid ?? null,
+      created: result.Created ?? null,
+    };
   },
 });

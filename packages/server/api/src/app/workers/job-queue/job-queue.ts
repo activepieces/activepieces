@@ -183,7 +183,7 @@ async function ensureQueueExists({ log, queueName }: { log: FastifyBaseLogger, q
                 telemetry: isOtpEnabled ? new BullMQOtel(queueName) : undefined,
                 connection: await redisConnections.create(),
                 defaultJobOptions: {
-                    attempts: 5,
+                    attempts: 2,
                     backoff: {
                         type: 'exponential',
                         delay: EIGHT_MINUTES_IN_MILLISECONDS,

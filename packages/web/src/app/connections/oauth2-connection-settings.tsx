@@ -5,7 +5,6 @@ import {
   PieceMetadataModelSummary,
 } from '@activepieces/pieces-framework';
 import {
-  resolveValueFromProps,
   ApFlagId,
   AppConnectionType,
   OAuth2GrantType,
@@ -15,6 +14,7 @@ import {
   isNil,
 } from '@activepieces/shared';
 import { t } from 'i18next';
+import { Dispatch, SetStateAction, useState } from 'react';
 import { useFormContext, UseFormReturn } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
@@ -27,9 +27,12 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { OAuth2App, oauth2Utils } from '@/features/connections';
+import { appConnectionsApi } from '@/features/connections/api/app-connections';
 import { flagsHooks } from '@/hooks/flags-hooks';
 
 import { GenericPropertiesForm } from '../builder/piece-properties/generic-properties-form';
+
+import { SecretInput } from './secret-input';
 
 function OAuth2ConnectionSettings({
   authProperty,
@@ -65,6 +68,7 @@ function OAuth2ConnectionSettings({
   const showRedirectUrlInput =
     oauth2App.oauth2Type === AppConnectionType.OAUTH2 &&
     grantType === OAuth2GrantType.AUTHORIZATION_CODE;
+  const [loading, setLoading] = useState(false);
 
   return (
     <div className="flex flex-col gap-4">
@@ -84,10 +88,10 @@ function OAuth2ConnectionSettings({
             name="request.value.client_id"
             control={form.control}
             render={({ field }) => (
-              <FormItem className="flex flex-col">
+              <FormItem className="flex flex-col gap-2">
                 <FormLabel>{t('Client ID')}</FormLabel>
                 <FormControl>
-                  <Input {...field} type="text" placeholder={t('Client ID')} />
+                  <SecretInput {...field} type="text" />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -97,14 +101,10 @@ function OAuth2ConnectionSettings({
             name="request.value.client_secret"
             control={form.control}
             render={({ field }) => (
-              <FormItem className="flex flex-col">
+              <FormItem className="flex flex-col gap-2">
                 <FormLabel>{t('Client Secret')}</FormLabel>
                 <FormControl>
-                  <Input
-                    {...field}
-                    type="password"
-                    placeholder={t('Client Secret')}
-                  />
+                  <SecretInput {...field} type="password" />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -134,6 +134,7 @@ function OAuth2ConnectionSettings({
             variant={'basic'}
             className={hasCode ? 'text-destructive' : ''}
             disabled={!isConnectButtonEnabled}
+            loading={loading}
             type="button"
             onClick={async () => {
               if (!hasCode) {
@@ -141,8 +142,9 @@ function OAuth2ConnectionSettings({
                   redirectUrl,
                   form.getValues().request.value.client_id,
                   form.getValues().request.value.props,
-                  authProperty,
+                  piece.name,
                   form,
+                  setLoading,
                 );
               } else {
                 form.setValue('request.value.code', '', {
@@ -169,29 +171,45 @@ async function openPopup(
   redirectUrl: string,
   clientId: string,
   props: Record<string, unknown> | undefined,
-  authProperty: OAuth2Property<OAuth2Props>,
+  pieceName: string,
   form: UseFormReturn<{
     request:
       | UpsertCloudOAuth2Request
       | UpsertOAuth2Request
       | UpsertPlatformOAuth2Request;
   }>,
+  setLoading: Dispatch<SetStateAction<boolean>>,
 ) {
-  const scope = resolveValueFromProps(props, authProperty.scope.join(' '));
-  const authUrl = resolveValueFromProps(props, authProperty.authUrl);
-
-  const { code, codeChallenge } = await oauth2Utils.openOAuth2Popup({
-    authUrl,
-    clientId,
+  let authorizationUrl, codeVerifier;
+  try {
+    setLoading(true);
+    const result = await appConnectionsApi.getOAuth2AuthorizationUrl({
+      pieceName,
+      clientId,
+      redirectUrl,
+      props,
+    });
+    authorizationUrl = result.authorizationUrl;
+    codeVerifier = result.codeVerifier;
+  } catch (error: unknown) {
+    form.setError('request.value.client_id', {
+      type: 'manual',
+      message:
+        error instanceof Error
+          ? error.message
+          : 'Failed to initiate OAuth2 authentication',
+    });
+    setLoading(false);
+    return;
+  }
+  setLoading(false);
+  const { code } = await oauth2Utils.openOAuth2Popup({
+    authorizationUrl,
     redirectUrl,
-    scope,
-    prompt: authProperty.prompt,
-    pkce: authProperty.pkce ?? false,
-    pkceMethod: authProperty.pkceMethod ?? 'plain',
-    extraParams: authProperty.extra ?? {},
+    codeVerifier,
   });
   form.setValue('request.value.code', code, { shouldValidate: true });
-  form.setValue('request.value.code_challenge', codeChallenge, {
+  form.setValue('request.value.code_challenge', codeVerifier ?? '', {
     shouldValidate: true,
   });
 }

@@ -7,31 +7,34 @@ const ONE_HOUR_SECONDS = apDayjsDuration(1, 'hour').asSeconds()
 
 const KEY_PREFIX = 'secret-manager'
 
-const buildConnectionCheckKey = (platformId: string, providerId: string) =>
-    `${KEY_PREFIX}:${platformId}:check:${providerId}`
+const buildConnectionCheckKey = ({ platformId, connectionId }: { platformId: string, connectionId: string }) =>
+    `${KEY_PREFIX}:check:${platformId}:${connectionId}`
 
-const buildSecretValueKey = (platformId: string, providerId: string, path: string) =>
-    `${KEY_PREFIX}:${platformId}:secret:${providerId}:${path}`
+const buildSecretValueKey = ({ platformId, connectionId, path }: { platformId: string, connectionId: string, path: string }) =>
+    `${KEY_PREFIX}:secret:${platformId}:${connectionId}:${path}`
 
 export const secretManagerCache = {
-    async getConnectionStatus(platformId: string, providerId: string): Promise<boolean | undefined> {
-        const result = await distributedStore.get<boolean>(buildConnectionCheckKey(platformId, providerId))
+    async getConnectionStatus({ platformId, connectionId }: { platformId: string, connectionId: string }): Promise<boolean | undefined> {
+        const result = await distributedStore.get<boolean>(buildConnectionCheckKey({ platformId, connectionId }))
         return result ?? undefined
     },
-    async setConnectionStatus(platformId: string, providerId: string, value: boolean): Promise<void> {
-        await distributedStore.put(buildConnectionCheckKey(platformId, providerId), value, ONE_HOUR_SECONDS)
+    async setConnectionStatus({ platformId, connectionId, value }: { platformId: string, connectionId: string, value: boolean }): Promise<void> {
+        await distributedStore.put(buildConnectionCheckKey({ platformId, connectionId }), value, ONE_HOUR_SECONDS)
     },
-    async getSecretValue(platformId: string, providerId: string, path: string): Promise<string | undefined> {
-        const result = await distributedStore.get<EncryptedObject>(buildSecretValueKey(platformId, providerId, path))
+    async getSecretValue({ platformId, connectionId, path }: { platformId: string, connectionId: string, path: string }): Promise<string | undefined> {
+        const result = await distributedStore.get<EncryptedObject>(buildSecretValueKey({ platformId, connectionId, path }))
         return result ? encryptUtils.decryptString(result) : undefined
     },
-    async setSecretValue(platformId: string, providerId: string, path: string, value: string): Promise<void> {
+    async setSecretValue({ platformId, connectionId, path, value }: { platformId: string, connectionId: string, path: string, value: string }): Promise<void> {
         const encryptedValue = await encryptUtils.encryptString(value)
-        await distributedStore.put(buildSecretValueKey(platformId, providerId, path), encryptedValue, ONE_HOUR_SECONDS)
+        await distributedStore.put(buildSecretValueKey({ platformId, connectionId, path }), encryptedValue, ONE_HOUR_SECONDS)
     },
-    async invalidatePlatformEntries(platformId: string): Promise<void> {
+    async invalidateConnectionEntries({ platformId, connectionId }: { platformId: string, connectionId?: string }): Promise<void> {
         const redis = await redisConnections.useExisting()
-        const keys = await redisHelper.scanAll(redis, `${KEY_PREFIX}:${platformId}:*`)
+        const pattern = connectionId
+            ? `${KEY_PREFIX}:*:${platformId}:${connectionId}*`
+            : `${KEY_PREFIX}:*:${platformId}:*`
+        const keys = await redisHelper.scanAll(redis, pattern)
         if (keys.length > 0) {
             await redis.del(keys)
         }

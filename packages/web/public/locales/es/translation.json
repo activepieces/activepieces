@@ -1175,6 +1175,8 @@
   "Retry": "Reintentar",
   "on latest version": "en la última versión",
   "Only failed runs can be retried from failed step": "Sólo las ejecuciones fallidas pueden ser reintentadas desde el paso fallido",
+  "Retry is only available for {failedJobRetentionDays} after a run fails.": "El reintento solo está disponible durante {failedJobRetentionDays, plural, =0 {0 días} =1 {1 día} other {# días}} después de que falle una ejecución.",
+  "Retry failed": "Reintento fallido",
   "from failed step": "del paso fallido",
   "Viewing retried runs": "",
   "No flow runs found": "No hay ejecuciones de flujo",

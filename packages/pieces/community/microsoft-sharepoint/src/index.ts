@@ -18,6 +18,7 @@ import { copyItemWithinSiteAction } from './lib/actions/copy-item-within-site';
 import { findFileAction } from './lib/actions/find-file';
 import { getFolderContentsAction } from './lib/actions/get-folder-contents';
 import { getSiteInformationAction } from './lib/actions/get-site-information';
+import { findSiteAction } from './lib/actions/find-site';
 import { moveFileAction } from './lib/actions/move-file';
 import { publishPageAction } from './lib/actions/publish-page';
 
@@ -53,6 +54,7 @@ export const microsoftSharePoint = createPiece({
     findFileAction,
     getFolderContentsAction,
     getSiteInformationAction,
+    findSiteAction,
     createCustomApiCallAction({
       auth: microsoftSharePointAuth,
       baseUrl: () => 'https://graph.microsoft.com/v1.0',

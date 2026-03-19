@@ -15,11 +15,10 @@ import { SecretInput } from './secret-input';
 
 type SecretTextConnectionSettingsProps = {
   authProperty: SecretTextProperty<boolean>;
-  isGlobalConnection: boolean;
 };
 
 const SecretTextConnectionSettings = React.memo(
-  ({ authProperty, isGlobalConnection }: SecretTextConnectionSettingsProps) => {
+  ({ authProperty }: SecretTextConnectionSettingsProps) => {
     const formSchema = z.object({
       request: UpsertSecretTextRequest,
     });
@@ -34,11 +33,7 @@ const SecretTextConnectionSettings = React.memo(
           <FormItem className="flex flex-col gap-2">
             <FormLabel>{authProperty.displayName}</FormLabel>
             <FormControl>
-              <SecretInput
-                {...field}
-                type="password"
-                allowTogglingSecretManagerMode={isGlobalConnection}
-              />
+              <SecretInput {...field} type="password" />
             </FormControl>
           </FormItem>
         )}

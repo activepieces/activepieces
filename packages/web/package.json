@@ -69,6 +69,7 @@
     "pako": "2.1.0",
     "papaparse": "5.5.3",
     "posthog-js": "1.195.0",
+    "pretty-bytes": "7.1.0",
     "qs": "6.14.2",
     "radix-ui": "1.4.3",
     "react": "19",

@@ -5,11 +5,10 @@ import { GenericPropertiesForm } from '@/app/builder/piece-properties/generic-pr
 
 type CustomAuthConnectionSettingsProps = {
   authProperty: CustomAuthProperty<any>;
-  isGlobalConnection: boolean;
 };
 
 const CustomAuthConnectionSettings = React.memo(
-  ({ authProperty, isGlobalConnection }: CustomAuthConnectionSettingsProps) => {
+  ({ authProperty }: CustomAuthConnectionSettingsProps) => {
     return (
       <GenericPropertiesForm
         prefixValue="request.value.props"
@@ -17,7 +16,6 @@ const CustomAuthConnectionSettings = React.memo(
         useMentionTextInput={false}
         propertySettings={null}
         dynamicPropsInfo={null}
-        showSecretInput={isGlobalConnection}
       />
     );
   },

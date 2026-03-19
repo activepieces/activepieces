@@ -184,8 +184,6 @@ const ActionsCell = ({
       ? `${row.original.data.user.firstName} ${row.original.data.user.lastName}`
       : row.original.data.email;
 
-  const removeLabel = `${t('Remove')} ${displayName}`;
-
   return (
     <PermissionNeededTooltip hasPermission={userHasPermissionToDelete}>
       <ConfirmationDeleteDialog

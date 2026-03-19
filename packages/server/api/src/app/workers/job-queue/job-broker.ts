@@ -1,4 +1,4 @@
-import { ConsumeJobRequest, ConsumeJobResponse, ConsumeJobResponseStatus, isNil, JobData, tryCatch } from '@activepieces/shared'
+import { ConsumeJobRequest, ConsumeJobResponse, ConsumeJobResponseStatus, ExecutionType, isNil, JobData, tryCatch } from '@activepieces/shared'
 import { Worker as BullMQWorker, Job } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
 import { FastifyBaseLogger } from 'fastify'
@@ -164,6 +164,7 @@ export const jobBroker = (log: FastifyBaseLogger) => ({
 
         const { error } = await tryCatch(async () => {
             if (input.delayInSeconds && input.delayInSeconds > 0) {
+                await job.updateData({ ...job.data, executionType: ExecutionType.RESUME })
                 await job.moveToDelayed(Date.now() + input.delayInSeconds * 1000, token)
                 return
             }

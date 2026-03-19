@@ -1175,6 +1175,8 @@
   "Retry": "Wiederholen",
   "on latest version": "auf neueste Version",
   "Only failed runs can be retried from failed step": "Nur fehlgeschlagene Abläufe können aus fehlgeschlagenen Schritt erneut ausprobiert werden",
+  "Retry is only available for {failedJobRetentionDays} after a run fails.": "Wiederholen ist nur {failedJobRetentionDays, plural, =0 {0 Tage} =1 {1 Tag} other {# Tage}} nach einem fehlgeschlagenen Lauf möglich.",
+  "Retry failed": "Wiederholen fehlgeschlagen",
   "from failed step": "vom fehlgeschlagenen Schritt",
   "Viewing retried runs": "",
   "No flow runs found": "Keine Abläufe gefunden",

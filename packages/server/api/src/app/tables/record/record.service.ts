@@ -194,7 +194,7 @@ export const recordService = {
                         recordId: id,
                         fieldId: cellData.fieldId,
                         projectId,
-                        value: cellData.value,
+                        value: cellData.value ?? '',
                         id: apId(),
                     }
                 })
@@ -413,7 +413,7 @@ type CellInsertion = {
 }
 
 function prepareRecordInsertions(
-    records: Array<Array<{ fieldId: string, value: string }>>,
+    records: Array<Array<{ fieldId: string, value: string | null }>>,
     tableId: string,
     projectId: string,
     baseDate: Date,
@@ -430,7 +430,7 @@ function prepareRecordInsertions(
 }
 
 function prepareCellInsertions(
-    records: Array<Array<{ fieldId: string, value: string }>>,
+    records: Array<Array<{ fieldId: string, value: string | null }>>,
     recordInsertions: RecordInsertion[],
     projectId: string,
 ): CellInsertion[] {
@@ -440,7 +440,7 @@ function prepareCellInsertions(
                 recordId: recordInsertions[index].id,
                 fieldId: cellData.fieldId,
                 projectId,
-                value: cellData.value,
+                value: cellData.value ?? '',
                 id: apId(),
             }
         }),

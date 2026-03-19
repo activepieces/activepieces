@@ -45,7 +45,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { SkeletonList } from '@/components/ui/skeleton';
 import {
-  AssignConnectionToProjectsControl,
+  ProjectSelector,
   appConnectionsMutations,
   oauthAppsQueries,
   oauth2Utils,
@@ -175,7 +175,7 @@ function CreateOrEditConnectionSection({
             )}
             {isGlobalConnection && isNil(reconnectConnection) && (
               <div className="my-4 flex flex-col gap-4">
-                <AssignConnectionToProjectsControl
+                <ProjectSelector
                   control={form.control}
                   name="request.projectIds"
                 />
@@ -215,11 +215,7 @@ function CreateOrEditConnectionSection({
               </div>
             )}
             <div className="mt-3.5">
-              <ConnectionSettings
-                selectedAuth={selectedAuth}
-                piece={piece}
-                isGlobalConnection={isGlobalConnection}
-              />
+              <ConnectionSettings selectedAuth={selectedAuth} piece={piece} />
             </div>
           </ScrollArea>
           {errorMessage && (
@@ -260,31 +256,22 @@ function CreateOrEditConnectionSection({
     </>
   );
 }
-function ConnectionSettings({
-  selectedAuth,
-  piece,
-  isGlobalConnection,
-}: ConnectionSettingsProps) {
+function ConnectionSettings({ selectedAuth, piece }: ConnectionSettingsProps) {
   switch (selectedAuth.authProperty.type) {
     case PropertyType.SECRET_TEXT:
       return (
         <SecretTextConnectionSettings
           authProperty={selectedAuth.authProperty}
-          isGlobalConnection={isGlobalConnection}
         />
       );
     case PropertyType.BASIC_AUTH:
       return (
-        <BasicAuthConnectionSettings
-          authProperty={selectedAuth.authProperty}
-          isGlobalConnection={isGlobalConnection}
-        />
+        <BasicAuthConnectionSettings authProperty={selectedAuth.authProperty} />
       );
     case PropertyType.CUSTOM_AUTH:
       return (
         <CustomAuthConnectionSettings
           authProperty={selectedAuth.authProperty}
-          isGlobalConnection={isGlobalConnection}
         />
       );
     case PropertyType.OAUTH2:
@@ -511,7 +498,6 @@ type CreateOrEditConnectionSectionProps =
 type ConnectionSettingsProps = {
   piece: PieceMetadataModelSummary | PieceMetadataModel;
   selectedAuth: AuthListItem;
-  isGlobalConnection: boolean;
 };
 
 type ConnectionFormValues = {
