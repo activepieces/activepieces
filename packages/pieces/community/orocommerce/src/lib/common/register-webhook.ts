@@ -38,10 +38,22 @@ export const createOroWebhookTrigger = ({
           data: {
             type: 'webhooks',
             attributes: {
-              topic: topic,
               enabled: true,
-              format: 'default',
               notificationUrl: context.webhookUrl,
+            },
+            relationships: {
+              topic: {
+                data: {
+                  type: 'webhooktopics',
+                  id: topic,
+                },
+              },
+              format: {
+                data: {
+                  type: 'webhookformats',
+                  id: 'default',
+                },
+              },
             },
           },
         },
