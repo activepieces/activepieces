@@ -36,6 +36,7 @@ Redis became overloaded due to multiple compounding factors:
 | Action Item | Status |
 |---|---|
 | Register system job handlers before worker initialization to prevent race condition | Done |
+| Investigate and fix the bug causing the subflow to recursively reschedule itself | To do |
 | Optimize rate limiter Redis usage to reduce load under high concurrency | To do |
 | Lower concurrency for runs metadata processing to reduce Redis pressure | To do |
 | Add monitoring/alerts for Redis resource utilization | To do |
