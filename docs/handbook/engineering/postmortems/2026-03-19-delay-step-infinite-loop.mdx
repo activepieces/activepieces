@@ -1,0 +1,55 @@
+---
+title: "(Cloud) Delay Step Infinite Loop — March 19, 2026"
+---
+
+## Summary
+
+On March 19, 2026, a bug in the job execution system caused any flow with a **Delay** step to get stuck in an infinite loop. Instead of waiting and then continuing, the flow kept restarting from the beginning every time the delay expired. This affected all cloud customers using the Delay step.
+
+## Impact
+
+### Cloud customers
+
+Any cloud customer with a flow using the Delay step saw their flow get stuck. The flow would show as "Paused" but never finish. Behind the scenes, it kept restarting over and over without making progress. Customers' delayed actions (like sending a follow-up email after 20 seconds) never executed.
+
+## Timeline
+
+All times are in UTC.
+
+1. **Detection** — Flows with delay steps found stuck in PAUSED state, restarting repeatedly instead of completing.
+2. **Investigation** — Traced the issue to `job-broker.ts`. When a flow hit a delay step, the job was put on hold but still marked as "start from the beginning" instead of "continue where you left off."
+3. **Fix deployed** — Updated the job data to mark it as "resume" before putting it on hold, so it continues from the right step after the delay.
+
+## Root Cause
+
+When a flow reaches a Delay step, the system puts the job on hold for the requested duration. The problem was that the job still carried its original instruction: `executionType: BEGIN` (start the flow from scratch).
+
+When the delay expired and the job ran again, the worker saw `BEGIN` and re-ran the entire flow from the first step. The flow hit the Delay step again, paused again, and the cycle repeated forever.
+
+```
+Trigger → Step 1 → Delay(20s) → PAUSE
+    ↓ (20s later, job still says "BEGIN")
+Trigger → Step 1 → Delay(20s) → PAUSE
+    ↓ (20s later, job still says "BEGIN")
+    ... forever
+```
+
+The fix was to update the job data to `executionType: RESUME` before putting it on hold, so the worker knows to continue from where the flow left off.
+
+## What Went Wrong
+
+1. **Job data was not updated before delaying.** BullMQ's `moveToDelayed()` keeps the original job data as-is. The code assumed the job would somehow know to resume, but it still had the "begin" instruction.
+2. **No test coverage for the delay-then-resume path.** There was no test that verified a delayed job actually resumes instead of restarting.
+3. **No monitoring for repeated pauses.** There was no alert for flows that kept entering PAUSED state without making progress, so the loop went unnoticed until customers reported it.
+
+## Action Items
+
+| Action Item | Status |
+|---|---|
+| Update job data to `RESUME` before calling `moveToDelayed()` | Done |
+| Add test coverage for delay step resume behavior | To do |
+| Add monitoring for flows that pause repeatedly without progressing | To do |
+
+---
+
+We take the reliability of our platform seriously and sincerely apologize for the disruption this caused. If you have any questions or concerns, please reach out to our support team.
