@@ -54,9 +54,11 @@ Trigger -> Step 1 -> Delay(20s) -> PAUSE
 | Add test coverage for delay step resume behavior | Done |
 | Optimize rate limiter Redis usage ([ENG-319](https://linear.app/activepieces/issue/ENG-319)) | To do |
 | Lower concurrency for runs metadata processing ([ENG-318](https://linear.app/activepieces/issue/ENG-318)) | To do |
-| Prevent a flow from entering infinite state in any way | To do |
+| Prevent a flow from entering infinite state in any way ([ENG-320](https://linear.app/activepieces/issue/ENG-320)) | Done |
 
 ## Improvements Done
 
 - **Delay step fix** — Updated job data to `executionType: RESUME` before calling `moveToDelayed()`, so the worker continues from where the flow left off instead of restarting.
 - **System job handler registration fix** — Split `systemJobsSchedule.init()` into two phases: `init()` (creates the queue) and `startWorker()` (starts consuming jobs). `init()` runs early so modules can call `upsertJob` during registration, while `startWorker()` runs after all handlers are registered ([PR #12048](https://github.com/activepieces/activepieces/pull/12048)).
+- **Defense-in-depth: RESUME empty state guard** — Worker validates that RESUME operations have non-empty execution state. An empty state with RESUME is the exact signature of the original bug and is rejected with `VALIDATION` error.
+- **Defense-in-depth: BEGIN non-empty state assertion** — Engine asserts that BEGIN operations have empty execution state. A BEGIN with pre-existing steps would indicate a code regression.
