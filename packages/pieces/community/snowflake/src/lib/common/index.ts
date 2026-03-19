@@ -3,7 +3,7 @@ import {
   PiecePropValueSchema,
   Property,
 } from '@activepieces/pieces-framework';
-import { snowflakeAuth } from '../..';
+import { snowflakeAuth } from '../auth';
 import snowflake from 'snowflake-sdk';
 
 const DEFAULT_APPLICATION_NAME = 'ActivePieces';

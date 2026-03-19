@@ -1,22 +1,20 @@
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 import {
     ApiKeyResponseWithValue,
-    UpdateProjectPlatformRequest,
-} from '@activepieces/ee-shared'
-import {
     FlowStatus,
+
     Platform,
     PlatformRole,
     PrincipalType,
     Project,
-    User,
-} from '@activepieces/shared'
+    UpdateProjectPlatformRequest,
+    User } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { initializeDatabase } from '../../../../src/app/database'
-import { databaseConnection } from '../../../../src/app/database/database-connection'
-import { setupServer } from '../../../../src/app/server'
 import { generateMockToken } from '../../../helpers/auth'
+import { databaseConnection } from '../../../../src/app/database/database-connection'
+import { db } from '../../../helpers/db'
 import {
     createMockApiKey,
     createMockFlow,
@@ -29,16 +27,12 @@ let app: FastifyInstance | null = null
 
 
 beforeAll(async () => {
-    await initializeDatabase({ runMigrations: false })
-    app = await setupServer()
-
+    app = await setupTestEnvironment()
 })
 
 afterAll(async () => {
-    await databaseConnection().destroy()
-    await app?.close()
+    await teardownTestEnvironment()
 })
-
 describe('Project API', () => {
     describe('Create Project', () => {
         it('it should create project by user', async () => {
@@ -54,7 +48,7 @@ describe('Project API', () => {
             const metadata = { foo: 'bar' }
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/projects',
+                url: '/api/v1/projects',
                 body: {
                     displayName,
                     metadata,
@@ -80,12 +74,12 @@ describe('Project API', () => {
             const apiKey = createMockApiKey({
                 platformId: mockPlatform.id,
             })
-            await databaseConnection().getRepository('api_key').save([apiKey])
+            await db.save('api_key', apiKey)
 
             const displayName = faker.animal.bird()
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/projects',
+                url: '/api/v1/projects',
                 body: {
                     displayName,
                 },
@@ -111,11 +105,11 @@ describe('Project API', () => {
             const apiKey = createMockApiKey({
                 platformId: mockPlatform.id,
             })
-            await databaseConnection().getRepository('api_key').save([apiKey])
+            await db.save('api_key', apiKey)
 
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/projects',
+                url: '/api/v1/projects',
                 headers: {
                     authorization: `Bearer ${apiKey.value}`,
                 },
@@ -144,7 +138,7 @@ describe('Project API', () => {
 
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/projects',
+                url: '/api/v1/projects',
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -165,18 +159,18 @@ describe('Project API', () => {
             mockUser.platformId = mockPlatform.id
             mockUser.platformRole = PlatformRole.ADMIN
 
-            await databaseConnection().getRepository('user').save(mockUser)
+            await db.save('user', mockUser)
 
             const mockProject = createMockProject({
                 ownerId: mockUser.id,
                 platformId: mockPlatform.id,
             })
-            await databaseConnection().getRepository('project').save([mockProject])
+            await db.save('project', mockProject)
 
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockUser.id,
-                
+
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -189,7 +183,7 @@ describe('Project API', () => {
             }
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/projects/' + mockProject.id,
+                url: '/api/v1/projects/' + mockProject.id,
                 body: request,
                 headers: {
                     authorization: `Bearer ${testToken}`,
@@ -215,7 +209,7 @@ describe('Project API', () => {
             }
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/projects/' + mockProject.id,
+                url: '/api/v1/projects/' + mockProject.id,
                 body: request,
                 headers: {
                     authorization: `Bearer ${mockApiKey.value}`,
@@ -231,14 +225,12 @@ describe('Project API', () => {
                 ownerId: mockUser.id,
                 platformId: mockPlatform.id,
             })
-            await databaseConnection()
-                .getRepository('project')
-                .save([mockProject, mockProjectTwo])
+            await db.save('project', [mockProject, mockProjectTwo])
 
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockUser.id,
-                
+
                 platform: { id: mockPlatform.id },
             })
 
@@ -250,7 +242,7 @@ describe('Project API', () => {
 
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/projects/' + mockProjectTwo.id,
+                url: '/api/v1/projects/' + mockProjectTwo.id,
                 body: request,
                 headers: {
                     authorization: `Bearer ${testToken}`,
@@ -281,14 +273,12 @@ describe('Project API', () => {
                 ownerId: platformOwnerUser.id,
                 platformId: mockPlatform.id,
             })
-            await databaseConnection()
-                .getRepository('project')
-                .save([mockProject, mockProjectTwo])
+            await db.save('project', [mockProject, mockProjectTwo])
 
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: memberUser.id,
-                
+
                 platform: { id: mockPlatform.id },
             })
 
@@ -297,7 +287,7 @@ describe('Project API', () => {
             }
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/projects/' + mockProjectTwo.id,
+                url: '/api/v1/projects/' + mockProjectTwo.id,
                 body: request,
                 headers: {
                     authorization: `Bearer ${testToken}`,
@@ -330,7 +320,7 @@ describe('Project API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: `/v1/projects/${mockProject.id}`,
+                url: `/api/v1/projects/${mockProject.id}`,
                 body: request,
                 headers: {
                     authorization: `Bearer ${mockToken}`,
@@ -351,18 +341,18 @@ describe('Project API', () => {
             mockUser.platformId = mockPlatform.id
             mockUser.platformRole = PlatformRole.ADMIN
 
-            await databaseConnection().getRepository('user').save(mockUser)
+            await db.save('user', mockUser)
 
             const mockProject = createMockProject({
                 ownerId: mockUser.id,
                 platformId: mockPlatform.id,
             })
-            await databaseConnection().getRepository('project').save([mockProject])
+            await db.save('project', mockProject)
 
             const testToken = await generateMockToken({
-                type: PrincipalType.USER,   
+                type: PrincipalType.USER,
                 id: mockUser.id,
-                
+
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -378,7 +368,7 @@ describe('Project API', () => {
             }
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/projects/' + mockProject.id,
+                url: '/api/v1/projects/' + mockProject.id,
                 body: request,
                 headers: {
                     authorization: `Bearer ${testToken}`,
@@ -401,12 +391,12 @@ describe('Project API', () => {
             const { mockOwner, mockPlatform, mockProject } = await mockAndSaveBasicSetup()
 
             const mockProjectToDelete = createMockProject({ ownerId: mockOwner.id, platformId: mockPlatform.id })
-            await databaseConnection().getRepository('project').save([mockProjectToDelete])
+            await db.save('project', mockProjectToDelete)
 
             const mockToken = await generateMockToken({
                 id: mockOwner.id,
                 type: PrincipalType.USER,
-                
+
                 platform: {
                     id: mockProject.platformId,
                 },
@@ -415,7 +405,7 @@ describe('Project API', () => {
             // act
             const response = await app?.inject({
                 method: 'DELETE',
-                url: `/v1/projects/${mockProjectToDelete.id}`,
+                url: `/api/v1/projects/${mockProjectToDelete.id}`,
                 headers: {
                     authorization: `Bearer ${mockToken}`,
                 },
@@ -423,8 +413,8 @@ describe('Project API', () => {
 
             // assert
             expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
-            const deletedProject = await databaseConnection().getRepository('project').findOneBy({ id: mockProjectToDelete.id })
-            expect(deletedProject?.deleted).not.toBeNull()
+            const deletedProject = await databaseConnection().getRepository('project').findOne({ where: { id: mockProjectToDelete.id }, withDeleted: true })
+            expect(deletedProject!.deleted).not.toBeNull()
         })
 
         it('Succeeds if project has enabled flows', async () => {
@@ -432,10 +422,10 @@ describe('Project API', () => {
             const { mockOwner, mockPlatform, mockProject } = await mockAndSaveBasicSetup()
 
             const mockProjectToDelete = createMockProject({ ownerId: mockOwner.id, platformId: mockPlatform.id })
-            await databaseConnection().getRepository('project').save([mockProjectToDelete])
+            await db.save('project', mockProjectToDelete)
 
             const enabledFlow = createMockFlow({ projectId: mockProjectToDelete.id, status: FlowStatus.ENABLED })
-            await databaseConnection().getRepository('flow').save([enabledFlow])
+            await db.save('flow', enabledFlow)
 
             const mockToken = await generateMockToken({
                 id: mockOwner.id,
@@ -449,7 +439,7 @@ describe('Project API', () => {
             // act
             const response = await app?.inject({
                 method: 'DELETE',
-                url: `/v1/projects/${mockProjectToDelete.id}`,
+                url: `/api/v1/projects/${mockProjectToDelete.id}`,
                 headers: {
                     authorization: `Bearer ${mockToken}`,
                 },
@@ -463,7 +453,7 @@ describe('Project API', () => {
             // arrange
             const { mockOwner, mockProject } = await mockAndSaveBasicSetup()
 
-            await databaseConnection().getRepository('user').update(mockOwner.id, {
+            await db.update('user', mockOwner.id, {
                 platformRole: PlatformRole.MEMBER,
             })
             const mockToken = await generateMockToken({
@@ -478,7 +468,7 @@ describe('Project API', () => {
             // act
             const response = await app?.inject({
                 method: 'DELETE',
-                url: `/v1/projects/${mockProject.id}`,
+                url: `/api/v1/projects/${mockProject.id}`,
                 headers: {
                     authorization: `Bearer ${mockToken}`,
                 },
@@ -517,7 +507,7 @@ describe('Project API', () => {
                 displayName: 'Project 2',
             })
             
-            await databaseConnection().getRepository('project').save([project1, project2])
+            await db.save('project', [project1, project2])
             
             const operatorToken = await generateMockToken({
                 type: PrincipalType.USER,
@@ -528,7 +518,7 @@ describe('Project API', () => {
             // act - list projects
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/projects',
+                url: '/api/v1/projects',
                 headers: {
                     authorization: `Bearer ${operatorToken}`,
                 },
@@ -565,7 +555,7 @@ describe('Project API', () => {
             // act - try to update platform
             const response = await app?.inject({
                 method: 'POST',
-                url: `/v1/platforms/${mockPlatform.id}`,
+                url: `/api/v1/platforms/${mockPlatform.id}`,
                 headers: {
                     authorization: `Bearer ${operatorToken}`,
                 },
@@ -597,7 +587,7 @@ describe('Project API', () => {
                 displayName: 'Restricted Project',
             })
             
-            await databaseConnection().getRepository('project').save(project)
+            await db.save('project', project)
             
             const memberToken = await generateMockToken({
                 type: PrincipalType.USER,
@@ -608,7 +598,7 @@ describe('Project API', () => {
             // act - list projects
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/projects',
+                url: '/api/v1/projects',
                 headers: {
                     authorization: `Bearer ${memberToken}`,
                 },
@@ -634,18 +624,18 @@ async function createProjectAndPlatformAndApiKey(): Promise<{
 
     mockUser.platformId = mockPlatform.id
     mockUser.platformRole = PlatformRole.ADMIN
-    await databaseConnection().getRepository('user').save(mockUser)
+    await db.save('user', mockUser)
 
     const mockProject = createMockProject({
         ownerId: mockUser.id,
         platformId: mockPlatform.id,
     })
-    await databaseConnection().getRepository('project').save(mockProject)
+    await db.save('project', mockProject)
 
     const mockApiKey = createMockApiKey({
         platformId: mockPlatform.id,
     })
-    await databaseConnection().getRepository('api_key').save(mockApiKey)
+    await db.save('api_key', mockApiKey)
 
     return {
         mockApiKey,

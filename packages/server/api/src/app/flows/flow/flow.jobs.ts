@@ -11,10 +11,17 @@ import { flowService } from './flow.service'
 
 export const flowBackgroundJobs = (log: FastifyBaseLogger) => ({
 
-    deleteHandler: async (data: SystemJobData<SystemJobName.DELETE_FLOW>) => {
-        const { flow, preDeleteDone, dbDeleteDone } = data
+    deleteFlowHandler: async (data: SystemJobData<SystemJobName.DELETE_FLOW>) => {
+        const { flow, preDeleteDone } = data
         const job = await systemJobsSchedule(log).getJob(`delete-flow-${flow.id}`)
         assertNotNullOrUndefined(job, 'job is required')
+
+        const flowExists = await flowRepo().existsBy({ id: flow.id })
+        if (!flowExists) {
+            log.info({ flowId: flow.id }, '[deleteFlowHandler] Flow already deleted, skipping')
+            return
+        }
+
         if (!preDeleteDone) {
             await flowSideEffects(log).preDelete({
                 flowToDelete: flow,
@@ -24,14 +31,7 @@ export const flowBackgroundJobs = (log: FastifyBaseLogger) => ({
                 preDeleteDone: true,
             })
         }
-        if (!dbDeleteDone) {
-            await flowRepo().delete({ id: flow.id })
-            await job.updateData({
-                ...data,
-                preDeleteDone: true,
-                dbDeleteDone: true,
-            })
-        }
+        await flowRepo().delete({ id: flow.id })
         await flowExecutionCache(log).invalidate(flow.id)
     },
 
