@@ -40,7 +40,9 @@ export const airtable = createPiece({
     'khaledmashaly',
     'abuaboud',
     'Pranith124',
-    'onyedikachi-david'
+    'onyedikachi-david',
+    'bst1n',
+    'sanket-a11y',
   ],
   categories: [PieceCategory.PRODUCTIVITY],
   auth: airtableAuth,

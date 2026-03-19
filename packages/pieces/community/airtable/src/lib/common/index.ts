@@ -796,7 +796,7 @@ export const airtableCommon = {
         } else {
           if (allowEmpty) {
             newFields[key] = (fields[key] === '' || fields[key] === undefined) ? null : fields[key];
-          } else if (fields[key] !== undefined) {
+          } else if (fields[key] !== undefined && fields[key] !== '' && fields[key] !== null) {
             newFields[key] = fields[key];
           }
         }
