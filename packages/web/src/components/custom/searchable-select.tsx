@@ -247,25 +247,26 @@ export const SearchableSelect = <T,>({
                           setOpen(false);
                           onSelect(currentValue);
                         }}
-                        className="flex gap-2 flex-col items-start"
+                        className={cn(
+                          'flex gap-2 flex-col items-start',
+                          onOptionDelete && 'group/option',
+                        )}
                       >
                         <div className="flex gap-2 items-center justify-between w-full">
-                          <span className="truncate">
-                            {option.label === '' ? (
-                              <span className="">&nbsp;</span>
-                            ) : valuesRendering ? (
-                              valuesRendering(option.value)
-                            ) : (
-                              option.label
-                            )}
-                          </span>
-                          <div className="flex items-center gap-1 shrink-0">
+                          {option.label === '' ? (
+                            <span className="">&nbsp;</span>
+                          ) : valuesRendering ? (
+                            valuesRendering(option.value)
+                          ) : (
+                            <span className="truncate">{option.label}</span>
+                          )}
+                          <div className="relative shrink-0 w-4 h-4">
                             {onOptionDelete && (
                               <button
                                 type="button"
                                 className={cn(
-                                  'size-5 flex items-center justify-center rounded-sm',
-                                  'text-muted-foreground hover:text-destructive hover:bg-destructive/10',
+                                  'absolute inset-0 flex items-center justify-center text-muted-foreground hover:text-destructive',
+                                  'opacity-0 group-hover/option:opacity-100',
                                 )}
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -277,9 +278,12 @@ export const SearchableSelect = <T,>({
                               </button>
                             )}
                             <Check
-                              className={cn('shrink-0 w-4 h-4', {
-                                hidden: selectedOption?.value !== option.value,
-                              })}
+                              className={cn(
+                                'absolute inset-0 w-4 h-4',
+                                selectedOption?.value !== option.value
+                                  ? 'opacity-0'
+                                  : cn('opacity-100', onOptionDelete && 'group-hover/option:opacity-0'),
+                              )}
                             />
                           </div>
                         </div>
