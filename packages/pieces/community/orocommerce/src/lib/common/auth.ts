@@ -48,7 +48,7 @@ Authenticate to OroCommerce APIs using OAuth 2.0 Client Credentials.
     try {
       await oroApiCall({
         method: HttpMethod.GET,
-        resourceUri: '/regions/US-CA',
+        resourceUri: 'regions/US-CA',
         auth: {
           type: AppConnectionType.CUSTOM_AUTH,
           props: auth,

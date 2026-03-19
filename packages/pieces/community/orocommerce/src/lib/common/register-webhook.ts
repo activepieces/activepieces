@@ -32,7 +32,7 @@ export const createOroWebhookTrigger = ({
     async onEnable(context) {
       const response = await oroApiCall({
         method: HttpMethod.POST,
-        resourceUri: '/webhooks',
+        resourceUri: 'webhooks',
         auth: context.auth,
         body: {
           data: {
@@ -76,7 +76,7 @@ export const createOroWebhookTrigger = ({
       if (webhookInfo !== null && webhookInfo !== undefined) {
         await oroApiCall({
           method: HttpMethod.DELETE,
-          resourceUri: `/webhooks/${webhookInfo.webhookId}`,
+          resourceUri: `webhooks/${webhookInfo.webhookId}`,
           auth: context.auth,
         });
       }

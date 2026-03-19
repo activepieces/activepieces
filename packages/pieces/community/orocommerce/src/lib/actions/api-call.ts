@@ -24,7 +24,7 @@ export const apiCallAction = createAction({
     resourceUri: Property.ShortText({
       displayName: 'Resource URI',
       description:
-        'Path relative to the API base, e.g. /orders, /orders/42, /invoices?filter[status]=open',
+        'Path relative to the API base, e.g. orders, orders/42, invoices?filter[status]=open',
       required: true,
     }),
     headers: Property.Json({
