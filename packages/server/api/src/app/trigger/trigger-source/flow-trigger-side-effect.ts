@@ -206,14 +206,14 @@ async function handlePollingTrigger({ engineHelperResponse, flowId, flowVersionI
 }
 
 function assertEngineResponseIsOk(engineHelperResponse: EngineResponse<ExecuteTriggerResponse<TriggerHookType.ON_ENABLE | TriggerHookType.ON_DISABLE>>, flowId: FlowId, flowVersionId: FlowVersionId) {
-    if (engineHelperResponse.status !== EngineResponseStatus.OK) {
+    if (isNil(engineHelperResponse) || engineHelperResponse.status !== EngineResponseStatus.OK) {
         throw new ActivepiecesError({
             code: ErrorCode.TRIGGER_UPDATE_STATUS,
             params: {
                 flowId,
                 flowVersionId,
                 standardOutput: '',
-                standardError: engineHelperResponse.error ?? '',
+                standardError: engineHelperResponse?.error ?? 'Engine response is undefined',
             },
         })
     }
