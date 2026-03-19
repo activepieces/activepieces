@@ -64,7 +64,7 @@ jobs:
           fi
 
       - name: Lint core projects
-        run: npx turbo run lint --filter=@activepieces/shared --filter=@activepieces/engine --filter=api --filter=web --filter=@activepieces/server-common --filter=worker --filter=ee-embed-sdk
+        run: npx turbo run lint --filter=@activepieces/shared --filter=@activepieces/engine --filter=api --filter=web --filter=@activepieces/server-utils --filter=worker --filter=ee-embed-sdk
 
 
       - name: Lint all pieces projects

@@ -1,4 +1,3 @@
-import { AppSystemProp, networkUtils, securityAccess } from '@activepieces/server-common'
 import {
     ApplicationEventName,
 
@@ -6,8 +5,11 @@ import {
     ThirdPartyAuthnProviderEnum } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { z } from 'zod'
+import { securityAccess } from '../../../core/security/authorization/fastify-security'
 import { applicationEvents } from '../../../helper/application-events'
+import { networkUtils } from '../../../helper/network-utils'
 import { system } from '../../../helper/system/system'
+import { AppSystemProp } from '../../../helper/system/system-props'
 import { platformUtils } from '../../../platform/platform.utils'
 import { federatedAuthnService } from './federated-authn-service'
 

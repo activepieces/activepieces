@@ -4,7 +4,12 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 vi.mock('i18next', () => ({
   default: { language: 'en' },
-  t: (key: string) => key,
+  t: (key: string, opts?: Record<string, unknown>) => {
+    if (!opts) return key;
+    return key.replace(/\{(\w+)\}/g, (_, k: string) =>
+      String(opts[k] ?? `{${k}}`),
+    );
+  },
 }));
 
 import { formatUtils } from '../format-utils';
@@ -168,9 +173,9 @@ describe('formatUtils.formatDate', () => {
     vi.setSystemTime(new Date('2025-06-15T12:00:00Z'));
   });
 
-  it('returns Today for today', () => {
+  it('returns relative time for today', () => {
     const date = new Date('2025-06-15T08:00:00Z');
-    expect(formatUtils.formatDate(date)).toBe('Today');
+    expect(formatUtils.formatDate(date)).toBe('4 hours ago');
   });
 
   it('returns Yesterday for yesterday', () => {

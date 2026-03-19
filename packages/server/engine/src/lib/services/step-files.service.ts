@@ -2,21 +2,22 @@ import { FilesService } from '@activepieces/pieces-framework'
 import { FileLocation, FileSizeError, FileStoreError, isNil, StepFileUpsertResponse } from '@activepieces/shared'
 import fetchRetry from 'fetch-retry'
 
-const MAX_FILE_SIZE_MB = Number(process.env.AP_MAX_FILE_SIZE_MB)
-const FILE_STORAGE_LOCATION = process.env.AP_FILE_STORAGE_LOCATION as FileLocation
-const USE_SIGNED_URL = (process.env.AP_S3_USE_SIGNED_URLS === 'true') && FILE_STORAGE_LOCATION === FileLocation.S3
-
-export type DefaultFileSystem = 'db' | 'local'
-
-type CreateFilesServiceParams = { apiUrl: string, stepName: string, flowId: string, engineToken: string }
+const RETRY_CONFIG = {
+    retries: 3,
+    retryDelay: 3000,
+} as const
 
 export function createFilesService({ stepName, flowId, engineToken, apiUrl }: CreateFilesServiceParams): FilesService {
+    const maxFileSizeMb = Number(process.env.AP_MAX_FILE_SIZE_MB)
+    const fileStorageLocation = process.env.AP_FILE_STORAGE_LOCATION as FileLocation
+    const useSignedUrl = (process.env.AP_S3_USE_SIGNED_URLS === 'true') && fileStorageLocation === FileLocation.S3
+
     return {
         write: async ({ fileName, data }: { fileName: string, data: Buffer }): Promise<string> => {
-            validateFileSize(data)
-            const formData = createFormData({ fileName, data, stepName, flowId })
+            validateFileSize(data, maxFileSizeMb)
+            const formData = createFormData({ fileName, data, stepName, flowId, useSignedUrl })
             const result = await uploadFileMetadata({ formData, engineToken, apiUrl })
-            if (USE_SIGNED_URL) {
+            if (useSignedUrl) {
                 if (isNil(result.uploadUrl)) {
                     throw new FileStoreError({
                         status: 500,
@@ -31,21 +32,21 @@ export function createFilesService({ stepName, flowId, engineToken, apiUrl }: Cr
     }
 }
 
-function validateFileSize(data: Buffer): void {
-    const maximumFileSizeInBytes = MAX_FILE_SIZE_MB * 1024 * 1024
+function validateFileSize(data: Buffer, maxFileSizeMb: number): void {
+    const maximumFileSizeInBytes = maxFileSizeMb * 1024 * 1024
     if (data.length > maximumFileSizeInBytes) {
-        throw new FileSizeError(data.length / 1024 / 1024, MAX_FILE_SIZE_MB)
+        throw new FileSizeError(data.length / 1024 / 1024, maxFileSizeMb)
     }
 }
 
-function createFormData({ fileName, data, stepName, flowId }: { fileName: string, data: Buffer, stepName: string, flowId: string }): FormData {
+function createFormData({ fileName, data, stepName, flowId, useSignedUrl }: { fileName: string, data: Buffer, stepName: string, flowId: string, useSignedUrl: boolean }): FormData {
     const formData = new FormData()
     formData.append('stepName', stepName)
     formData.append('flowId', flowId)
     formData.append('contentLength', data.length.toString())
     formData.append('fileName', fileName)
 
-    if (!USE_SIGNED_URL) {
+    if (!useSignedUrl) {
         formData.append('file', new Blob([data], { type: 'application/octet-stream' }), fileName)
     }
 
@@ -59,8 +60,7 @@ async function uploadFileMetadata({ formData, engineToken, apiUrl }: { formData:
         headers: {
             Authorization: 'Bearer ' + engineToken,
         },
-        retryDelay: 3000,
-        retries: 3,
+        ...RETRY_CONFIG,
         body: formData,
     })
 
@@ -83,8 +83,7 @@ async function uploadFileContent({ url, data }: { url: string, data: Buffer }): 
         headers: {
             'Content-Type': 'application/octet-stream',
         },
-        retries: 3,
-        retryDelay: 3000,
+        ...RETRY_CONFIG,
     })
 
     if (!uploadResponse.ok) {
@@ -94,3 +93,5 @@ async function uploadFileContent({ url, data }: { url: string, data: Buffer }): 
         })
     }
 }
+
+type CreateFilesServiceParams = { apiUrl: string, stepName: string, flowId: string, engineToken: string }

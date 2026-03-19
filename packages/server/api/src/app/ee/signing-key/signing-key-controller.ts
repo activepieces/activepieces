@@ -1,4 +1,3 @@
-import { securityAccess } from '@activepieces/server-common'
 import { ActivepiecesError, AddSigningKeyRequestBody,
     ApId,
     ApplicationEventName,
@@ -10,6 +9,7 @@ import { ActivepiecesError, AddSigningKeyRequestBody,
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
+import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { applicationEvents } from '../../helper/application-events'
 import { signingKeyService } from './signing-key-service'
 

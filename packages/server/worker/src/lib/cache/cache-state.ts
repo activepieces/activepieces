@@ -1,8 +1,7 @@
 import { readFile } from 'node:fs/promises'
 import { join } from 'path'
-import { fileSystemUtils, memoryLock } from '@activepieces/server-common'
+import { fileSystemUtils, memoryLock } from '@activepieces/server-utils'
 import { isNil } from '@activepieces/shared'
-import { FastifyBaseLogger } from 'fastify'
 import writeFileAtomic from 'write-file-atomic'
 
 type CacheMap = Record<string, string>
@@ -12,7 +11,7 @@ const cachePath = (folderPath: string): string =>
 const cached: Record<string, CacheMap | null> = {}
 export const NO_SAVE_GUARD = (_: string): boolean => false
 
-export const cacheState = (folderPath: string, log: FastifyBaseLogger) => {
+export const cacheState = (folderPath: string) => {
     return {
         async getOrSetCache({
             cacheMiss,
@@ -44,7 +43,7 @@ export const cacheState = (folderPath: string, log: FastifyBaseLogger) => {
                             state: value,
                         }
                     }
-                    const freshCache = await cacheState(folderPath, log).saveCache(
+                    const freshCache = await cacheState(folderPath).saveCache(
                         key,
                         value,
                     )

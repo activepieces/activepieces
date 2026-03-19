@@ -1,6 +1,7 @@
-import { OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
+import { Property } from '@activepieces/pieces-framework';
 import { UsersListResponse, WebClient } from '@slack/web-api';
 import { slackAuth } from '../auth';
+import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
 const slackChannelBotInstruction = `
 	Please make sure add the bot to the channel by following these steps:
 	  1. Type /invite in the channel's chat.
@@ -37,8 +38,7 @@ export const slackChannel = <R extends boolean>(required: R) =>
           options: [],
         };
       }
-      const authentication = auth as OAuth2PropertyValue;
-      const accessToken = authentication['access_token'];
+      const accessToken = getBotToken(auth as SlackAuthValue);
 
       const channels = await getChannels(accessToken);
 
@@ -90,45 +90,46 @@ export const blocks = Property.Json({
   defaultValue: []
 });
 
-export const userId = Property.Dropdown<string,true,typeof slackAuth>({
-  auth: slackAuth,
-  displayName: 'User',
-  required: true,
-  refreshers: [],
-  async options({ auth }) {
-    if (!auth) {
-      return {
-        disabled: true,
-        placeholder: 'connect slack account',
-        options: [],
-      };
-    }
-
-    const accessToken = (auth as OAuth2PropertyValue).access_token;
-
-    const client = new WebClient(accessToken);
-    const users: { label: string; value: string }[] = [];
-    for await (const page of client.paginate('users.list', {
-      limit: 1000, // Only limits page size, not total number of results
-    })) {
-      const response = page as UsersListResponse;
-      if (response.members) {
-        users.push(
-          ...response.members
-            .filter((member) => !member.deleted)
-            .map((member) => {
-              return { label: member.name || '', value: member.id || '' };
-            })
-        );
+export const userId = <R extends boolean>(required: R) =>
+  Property.Dropdown<string, R, typeof slackAuth>({
+    auth: slackAuth,
+    displayName: 'User',
+    required,
+    refreshers: [],
+    async options({ auth }) {
+      if (!auth) {
+        return {
+          disabled: true,
+          placeholder: 'connect slack account',
+          options: [],
+        };
       }
-    }
-    return {
-      disabled: false,
-      placeholder: 'Select User',
-      options: users,
-    };
-  },
-});
+
+    const accessToken = getBotToken(auth as SlackAuthValue);
+
+      const client = new WebClient(accessToken);
+      const users: { label: string; value: string }[] = [];
+      for await (const page of client.paginate('users.list', {
+        limit: 1000, // Only limits page size, not total number of results
+      })) {
+        const response = page as UsersListResponse;
+        if (response.members) {
+          users.push(
+            ...response.members
+              .filter((member) => !member.deleted)
+              .map((member) => {
+                return { label: member.name || '', value: member.id || '' };
+              })
+          );
+        }
+      }
+      return {
+        disabled: false,
+        placeholder: 'Select User',
+        options: users,
+      };
+    },
+  });
 
 export const text = Property.LongText({
   displayName: 'Message',

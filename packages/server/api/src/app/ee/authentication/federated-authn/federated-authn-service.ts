@@ -1,4 +1,3 @@
-import { AppSystemProp } from '@activepieces/server-common'
 import { assertNotNullOrUndefined, AuthenticationResponse,
     FederatedAuthnLoginResponse,
     isNil,
@@ -7,6 +6,7 @@ import { assertNotNullOrUndefined, AuthenticationResponse,
 import { FastifyBaseLogger } from 'fastify'
 import { authenticationService } from '../../../authentication/authentication.service'
 import { system } from '../../../helper/system/system'
+import { AppSystemProp } from '../../../helper/system/system-props'
 import { platformService } from '../../../platform/platform.service'
 import { domainHelper } from '../../custom-domains/domain-helper'
 import { googleAuthnProvider } from './google-authn-provider'

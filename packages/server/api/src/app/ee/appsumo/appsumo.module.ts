@@ -1,9 +1,10 @@
-import { AppSystemProp, securityAccess } from '@activepieces/server-common'
 import { FastifyInstance, FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
+import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-props'
 import { appsumoService } from './appsumo.service'
 
 export const appSumoModule: FastifyPluginAsyncZod = async (app) => {

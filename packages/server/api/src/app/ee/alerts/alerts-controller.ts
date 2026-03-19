@@ -1,7 +1,8 @@
-import { ProjectResourceType, securityAccess } from '@activepieces/server-common'
 import { ApId, CreateAlertParams, ListAlertsParams, Permission, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { z } from 'zod'
+import { ProjectResourceType } from '../../core/security/authorization/common'
+import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { AlertEntity } from './alerts-entity'
 import { alertsService } from './alerts-service'
 

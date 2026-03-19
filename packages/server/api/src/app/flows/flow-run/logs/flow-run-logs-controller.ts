@@ -1,8 +1,8 @@
-import { securityAccess } from '@activepieces/server-common'
-import { ActivepiecesError, ALL_PRINCIPAL_TYPES, assertNotNullOrUndefined, ErrorCode, FileType, isNil, UploadLogsBehavior, UploadLogsQueryParams } from '@activepieces/shared'
+import { ALL_PRINCIPAL_TYPES, assertNotNullOrUndefined, CONTENT_ENCODING_ZSTD, FileCompression, FileLocation, FileType, isZstdCompressed, UploadLogsBehavior, UploadLogsQueryParams } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
+import { securityAccess } from '../../../core/security/authorization/fastify-security'
 import { fileService } from '../../../file/file.service'
 import { s3Helper } from '../../../file/s3-helper'
 import { flowRunLogsService } from './flow-run-logs-service'
@@ -21,7 +21,7 @@ export const flowRunLogsController: FastifyPluginAsyncZod = async (app) => {
             const decodedToken = await flowRunLogsService(request.log).verifyToken(token)
             if (decodedToken.behavior === UploadLogsBehavior.REDIRECT_TO_S3) {
                 const fileMetadata = await flowRunLogsService(request.log).upsertMetadata(decodedToken)
-                const s3SignedUrl = await s3Helper(request.log).putS3SignedUrl(fileMetadata.s3Key!)
+                const s3SignedUrl = await s3Helper(request.log).putS3SignedUrl({ s3Key: fileMetadata.s3Key!, contentEncoding: CONTENT_ENCODING_ZSTD })
                 request.log.info({
                     s3Key: fileMetadata.s3Key,
                 }, 'Redirecting to S3 signed URL')
@@ -59,17 +59,11 @@ export const flowRunLogsController: FastifyPluginAsyncZod = async (app) => {
             const s3SignedUrl = await s3Helper(request.log).getS3SignedUrl(file.s3Key, file.fileName ?? file.id)
             return reply.redirect(s3SignedUrl)
         }
-        const logs = await flowRunLogsService(request.log).getLogs(decodedToken)
-        if (isNil(logs)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.ENTITY_NOT_FOUND,
-                params: {
-                    entityType: 'file',
-                    entityId: decodedToken.logsFileId,
-                    message: 'Logs file not found',
-                },
-            })
+        const data = file.location === FileLocation.DB ? file.data : await s3Helper(request.log).getFile(file.s3Key!)
+        const isCompressed = file.compression === FileCompression.ZSTD || isZstdCompressed(data)
+        if (isCompressed) {
+            void reply.header('Content-Encoding', CONTENT_ENCODING_ZSTD)
         }
-        return reply.send(logs)
+        return reply.type('application/octet-stream').send(data)
     })
 }

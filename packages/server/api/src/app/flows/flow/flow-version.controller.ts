@@ -1,12 +1,13 @@
-import { ProjectResourceType, securityAccess } from '@activepieces/server-common'
 import { FlowVersionMetadata, ListFlowVersionRequest, MigrateFlowsModelRequest, PrincipalType, SeekPage } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
-import { flowVersionMigrationService } from '../flow-version/flow-version-migration.service'
+import { ProjectResourceType } from '../../core/security/authorization/common'
+import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { flowVersionService } from '../flow-version/flow-version.service'
 import { FlowEntity } from './flow.entity'
 import { flowService } from './flow.service'
+import { flowVersionMigrationService } from '../flow-version/flow-version-migration.service'
 
 const DEFAULT_PAGE_SIZE = 10
 

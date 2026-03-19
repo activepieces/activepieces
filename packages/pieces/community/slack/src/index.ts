@@ -1,9 +1,7 @@
 import { createCustomApiCallAction, httpClient, HttpMethod } from '@activepieces/pieces-common';
 import {
-    createPiece,
-    OAuth2PropertyValue,
-    PieceAuth,
-    Property,
+  createPiece,
+  Property,
 } from '@activepieces/pieces-framework';
 
 import { PieceCategory } from '@activepieces/shared';
@@ -45,184 +43,189 @@ import { newTeamCustomEmojiTrigger } from './lib/triggers/new-team-custom-emoji'
 import { inviteUserToChannelAction } from './lib/actions/invite-user-to-channel';
 import { listUsers } from './lib/actions/list-users';
 import { deleteMessageAction } from './lib/actions/delete-message';
-import { slackAuth } from './lib/auth';
 import { newModalInteractionTrigger } from './lib/triggers/new-modal-interaction';
+import { slackAuth } from './lib/auth';
+import { getBotToken, getUserToken } from './lib/common/auth-helpers';
+import type { SlackAuthValue } from './lib/common/auth-helpers';
+
+export { slackAuth, slackOAuth2Auth } from './lib/auth';
 
 export const slack = createPiece({
-    displayName: 'Slack',
-    description: 'Channel-based messaging platform',
-    minimumSupportedRelease: '0.66.7',
-    logoUrl: 'https://cdn.activepieces.com/pieces/slack.png',
-    categories: [PieceCategory.COMMUNICATION],
-    auth: slackAuth,
-    events: {
-        parseAndReply: ({ payload, server }) => {
-            if (payload.headers['content-type'] === 'application/x-www-form-urlencoded') {
-                if (payload.body && typeof payload.body == 'object' && 'payload' in payload.body) {
-                    const interactionPayloadBody = JSON.parse(
-                        (payload.body as { payload: string }).payload,
-                    ) as InteractionPayloadBody;
-                    if (interactionPayloadBody.type === 'block_actions') {
-                        const action = interactionPayloadBody.actions?.[0];
-                        if (
-                            action &&
-                            action.type === 'button' &&
-                            action.value?.startsWith(server.publicUrl)
-                        ) {
-                            // We don't await the promise as we don't handle the response anyway
-                            httpClient.sendRequest({
-                                url: action.value,
-                                method: HttpMethod.POST,
-                                body: interactionPayloadBody,
-                            });
-                        }
-                    } else if (
-                        interactionPayloadBody.type === 'view_submission' ||
-                        interactionPayloadBody.type === 'view_closed'
-                    ) {
-                        const viewModalPayload = interactionPayloadBody as unknown as {
-                            type: string;
-                            team: {
-                                id: string;
-                                token: string;
-                                api_app_id: string;
-                            };
-                        };
-
-                        return {
-                            event: viewModalPayload.type,
-                            identifierValue: viewModalPayload.team.id,
-                        };
-                    }
-                }
-                return {
-                    reply: {
-                        headers: {},
-                        body: {},
-                    },
-                };
-            } else {
-                const eventPayloadBody = payload.body as EventPayloadBody;
-                if (eventPayloadBody.challenge) {
-                    return {
-                        reply: {
-                            body: eventPayloadBody['challenge'],
-                            headers: {},
-                        },
-                    };
-                }
-
-                return {
-                    event: eventPayloadBody?.event?.type,
-                    identifierValue: eventPayloadBody.team_id,
-                };
+  displayName: 'Slack',
+  description: 'Channel-based messaging platform',
+  minimumSupportedRelease: '0.79.0',
+  logoUrl: 'https://cdn.activepieces.com/pieces/slack.png',
+  categories: [PieceCategory.COMMUNICATION],
+  auth: slackAuth,
+  events: {
+    parseAndReply: ({ payload, server }) => {
+      if (payload.headers['content-type'] === 'application/x-www-form-urlencoded') {
+        if (payload.body && typeof payload.body == 'object' && 'payload' in payload.body) {
+          const interactionPayloadBody = JSON.parse(
+            (payload.body as { payload: string }).payload,
+          ) as InteractionPayloadBody;
+          if (interactionPayloadBody.type === 'block_actions') {
+            const action = interactionPayloadBody.actions?.[0];
+            if (
+              action &&
+              action.type === 'button' &&
+              action.value?.startsWith(server.publicUrl)
+            ) {
+              // We don't await the promise as we don't handle the response anyway
+              httpClient.sendRequest({
+                url: action.value,
+                method: HttpMethod.POST,
+                body: interactionPayloadBody,
+              });
             }
-        },
-        verify: ({ webhookSecret, payload }) => {
-            // Construct the signature base string
-            const timestamp = payload.headers['x-slack-request-timestamp'];
-            const signature = payload.headers['x-slack-signature'];
-            const signatureBaseString = `v0:${timestamp}:${payload.rawBody}`;
-            const hmac = crypto.createHmac('sha256', webhookSecret as string);
-            hmac.update(signatureBaseString);
-            const computedSignature = `v0=${hmac.digest('hex')}`;
-            return signature === computedSignature;
-        },
+          } else if (
+            interactionPayloadBody.type === 'view_submission' ||
+            interactionPayloadBody.type === 'view_closed'
+          ) {
+            const viewModalPayload = interactionPayloadBody as unknown as {
+              type: string;
+              team: {
+                id: string;
+                token: string;
+                api_app_id: string;
+              };
+            };
+
+            return {
+              event: viewModalPayload.type,
+              identifierValue: viewModalPayload.team.id,
+            };
+          }
+        }
+        return {
+          reply: {
+            headers: {},
+            body: {},
+          },
+        };
+      } else {
+        const eventPayloadBody = payload.body as EventPayloadBody;
+        if (eventPayloadBody.challenge) {
+          return {
+            reply: {
+              body: eventPayloadBody['challenge'],
+              headers: {},
+            },
+          };
+        }
+
+        return {
+          event: eventPayloadBody?.event?.type,
+          identifierValue: eventPayloadBody.team_id,
+        };
+      }
     },
-    authors: [
-        'rita-gorokhod',
-        'AdamSelene',
-        'Abdallah-Alwarawreh',
-        'kishanprmr',
-        'MoShizzle',
-        'AbdulTheActivePiecer',
-        'khaledmashaly',
-        'abuaboud',
-    ],
-    actions: [
-        addRectionToMessageAction,
-        slackSendDirectMessageAction,
-        slackSendMessageAction,
-        requestApprovalDirectMessageAction,
-        requestSendApprovalMessageAction,
-        requestActionDirectMessageAction,
-        requestActionMessageAction,
-        uploadFile,
-        getFileAction,
-        searchMessages,
-        findUserByEmailAction,
-        findUserByHandleAction,
-        findUserByIdAction,
-        listUsers,
-        updateMessage,
-        deleteMessageAction,
-        createChannelAction,
-        updateProfileAction,
-        getChannelHistory,
-        setUserStatusAction,
-        markdownToSlackFormat,
-        retrieveThreadMessages,
-        setChannelTopicAction,
-        getMessageAction,
-        inviteUserToChannelAction,
-        createCustomApiCallAction({
-            baseUrl: () => {
-                return 'https://slack.com/api';
-            },
-            auth: slackAuth,
-            authMapping: async (auth, propsValue) => {
-                if (propsValue.useUserToken) {
-                    return {
-                        Authorization: `Bearer ${
-                            (auth as OAuth2PropertyValue).data['authed_user']?.access_token
-                        }`,
-                    };
-                } else {
-                    return {
-                        Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
-                    };
-                }
-            },
-            extraProps: {
-                useUserToken: Property.Checkbox({
-                    displayName: 'Use user token',
-                    description: 'Use user token instead of bot token',
-                    required: true,
-                    defaultValue: false,
-                }),
-            },
+    verify: ({ webhookSecret, payload }) => {
+      // Construct the signature base string
+      const timestamp = payload.headers['x-slack-request-timestamp'];
+      const signature = payload.headers['x-slack-signature'];
+      const signatureBaseString = `v0:${timestamp}:${payload.rawBody}`;
+      const hmac = crypto.createHmac('sha256', webhookSecret as string);
+      hmac.update(signatureBaseString);
+      const computedSignature = `v0=${hmac.digest('hex')}`;
+      return signature === computedSignature;
+    },
+  },
+  authors: [
+    'rita-gorokhod',
+    'AdamSelene',
+    'Abdallah-Alwarawreh',
+    'kishanprmr',
+    'MoShizzle',
+    'AbdulTheActivePiecer',
+    'khaledmashaly',
+    'abuaboud',
+  ],
+  actions: [
+    addRectionToMessageAction,
+    slackSendDirectMessageAction,
+    slackSendMessageAction,
+    requestApprovalDirectMessageAction,
+    requestSendApprovalMessageAction,
+    requestActionDirectMessageAction,
+    requestActionMessageAction,
+    uploadFile,
+    getFileAction,
+    searchMessages,
+    findUserByEmailAction,
+    findUserByHandleAction,
+    findUserByIdAction,
+    listUsers,
+    updateMessage,
+    deleteMessageAction,
+    createChannelAction,
+    updateProfileAction,
+    getChannelHistory,
+    setUserStatusAction,
+    markdownToSlackFormat,
+    retrieveThreadMessages,
+    setChannelTopicAction,
+    getMessageAction,
+    inviteUserToChannelAction,
+    createCustomApiCallAction({
+      baseUrl: () => {
+        return 'https://slack.com/api';
+      },
+      auth: slackAuth,
+      authMapping: async (auth, propsValue) => {
+        const typedAuth = auth as SlackAuthValue;
+        if (propsValue.useUserToken) {
+          const userToken = getUserToken(typedAuth);
+          if (userToken) {
+            return {
+              Authorization: `Bearer ${userToken}`,
+            };
+          }
+        }
+        return {
+          Authorization: `Bearer ${getBotToken(typedAuth)}`,
+        };
+      },
+      extraProps: {
+        useUserToken: Property.Checkbox({
+          displayName: 'Use user token',
+          description: 'Use user token instead of bot token',
+          required: true,
+          defaultValue: false,
         }),
-    ],
-    triggers: [
-        newMessageTrigger,
-        newMessageInChannelTrigger,
-        newDirectMessageTrigger,
-        newMention,
-        newMentionInDirectMessageTrigger,
-        newReactionAdded,
-        channelCreated,
-        newCommand,
-        newCommandInDirectMessageTrigger,
-        newUserTrigger,
-        newSavedMessageTrigger,
-        newTeamCustomEmojiTrigger,
-        newModalInteractionTrigger,
-    ],
+      },
+    }),
+  ],
+  triggers: [
+    newMessageTrigger,
+    newMessageInChannelTrigger,
+    newDirectMessageTrigger,
+    newMention,
+    newMentionInDirectMessageTrigger,
+    newReactionAdded,
+    channelCreated,
+    newCommand,
+    newCommandInDirectMessageTrigger,
+    newUserTrigger,
+    newSavedMessageTrigger,
+    newTeamCustomEmojiTrigger,
+    newModalInteractionTrigger,
+  ],
 });
 
 type EventPayloadBody = {
-    // Event payload
-    challenge: string;
-    event: {
-        type: string;
-    };
-    team_id: string;
+  // Event payload
+  challenge: string;
+  event: {
+    type: string;
+  };
+  team_id: string;
 };
 type InteractionPayloadBody = {
-    // Interaction payload
-    type?: string;
-    actions?: {
-        type: string;
-        value: string;
-    }[];
+  // Interaction payload
+  type?: string;
+  actions?: {
+    type: string;
+    value: string;
+  }[];
 };

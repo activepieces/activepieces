@@ -1,4 +1,3 @@
-import { AppSystemProp, securityAccess } from '@activepieces/server-common'
 import {
     ActivepiecesError,
     ErrorCode,
@@ -11,8 +10,10 @@ import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
+import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { jwtUtils } from '../../helper/jwt-utils'
 import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-props'
 import { projectService } from '../../project/project-service'
 import { fileService } from '../file.service'
 import { s3Helper } from '../s3-helper'

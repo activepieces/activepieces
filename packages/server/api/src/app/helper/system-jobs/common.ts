@@ -1,4 +1,4 @@
-import { Flow, FlowId, FlowStatus, MigrateFlowsModelRequest, PlatformId, ProjectId } from '@activepieces/shared'
+import { Flow, FlowId, FlowStatus, MigrateFlowsModelRequest, PlatformId, ProjectId, UserId } from '@activepieces/shared'
 import { Job, JobsOptions } from 'bullmq'
 import { Dayjs } from 'dayjs'
 
@@ -13,7 +13,7 @@ export enum SystemJobName {
     AI_CREDIT_UPDATE_CHECK = 'ai-credit-update-check',
     HARD_DELETE_PROJECT = 'hard-delete-project',
     MIGRATE_FLOWS_MODEL = 'migrate-flows-model',
-    RESET_STUCK_FLOWS = 'reset-stuck-flows',
+    HARD_DELETE_PLATFORM = 'hard-delete-platform',
 }
 
 type DeleteFlowDurableSystemJobData =  {
@@ -46,6 +46,12 @@ type MigrateFlowsModelSystemJobData = {
     updatedFlows?: number
 }
 
+type HardDeletePlatformSystemJobData = {
+    platformId: PlatformId
+    userId: UserId
+    identityId: string
+}
+
 type SystemJobDataMap = {
     [SystemJobName.PIECES_ANALYTICS]: Record<string, never>
     [SystemJobName.PIECES_SYNC]: Record<string, never>
@@ -57,7 +63,7 @@ type SystemJobDataMap = {
     [SystemJobName.AI_CREDIT_UPDATE_CHECK]: AiCreditUpdateCheckSystemJobData
     [SystemJobName.HARD_DELETE_PROJECT]: HardDeleteProjectSystemJobData
     [SystemJobName.MIGRATE_FLOWS_MODEL]: MigrateFlowsModelSystemJobData
-    [SystemJobName.RESET_STUCK_FLOWS]: Record<string, never>
+    [SystemJobName.HARD_DELETE_PLATFORM]: HardDeletePlatformSystemJobData
 }
 
 export type SystemJobData<T extends SystemJobName = SystemJobName> = T extends SystemJobName ? SystemJobDataMap[T] : never
@@ -90,6 +96,7 @@ type UpsertJobParams<T extends SystemJobName> = {
 
 export type SystemJobSchedule = {
     init(): Promise<void>
+    startWorker(): Promise<void>
     upsertJob<T extends SystemJobName>(params: UpsertJobParams<T>): Promise<void>
     getJob<T extends SystemJobName>(jobId: string): Promise<Job<SystemJobData<T>> | undefined>
     close(): Promise<void>

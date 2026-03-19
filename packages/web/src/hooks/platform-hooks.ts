@@ -24,6 +24,9 @@ export const platformHooks = {
         toast.success(t('Account deleted successfully'));
         navigate('/sign-in');
       },
+      onError: () => {
+        toast.error(t('Failed to delete account. Please try again.'));
+      },
     });
   },
   useCurrentPlatform: () => {

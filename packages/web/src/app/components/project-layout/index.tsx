@@ -15,6 +15,10 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn } from '@/lib/utils';
 
 import { authenticationSession } from '../../../lib/authentication-session';
+import {
+  GlobalSearchProvider,
+  useGlobalSearch,
+} from '../global-search/global-search-context';
 import { ProjectDashboardSidebar } from '../sidebar/dashboard';
 
 import { ProjectDashboardLayoutHeader } from './project-dashboard-layout-header';
@@ -83,36 +87,52 @@ export function ProjectDashboardLayout({
 
   return (
     <ProjectChangedRedirector currentProjectId={currentProjectId}>
-      <SidebarProvider hoverMode={true}>
-        {!isEmbedded && <ProjectDashboardSidebar />}
-        <SidebarInset className="flex flex-col h-full overflow-hidden bg-sidebar">
-          <div
-            className={cn(
-              'flex-1 flex flex-col overflow-hidden',
-              !isEmbedded && 'p-1.5',
+      <GlobalSearchProvider>
+        <ProjectDashboardLayoutInner
+          hideHeader={hideHeader}
+          isEmbedded={isEmbedded}
+          currentProjectId={currentProjectId}
+        >
+          {children}
+        </ProjectDashboardLayoutInner>
+        {edition === ApEdition.CLOUD && <PurchaseExtraFlowsDialog />}
+      </GlobalSearchProvider>
+    </ProjectChangedRedirector>
+  );
+}
+
+function ProjectDashboardLayoutInner({
+  hideHeader,
+  isEmbedded,
+  currentProjectId,
+  children,
+}: {
+  hideHeader: boolean;
+  isEmbedded: boolean;
+  currentProjectId: string;
+  children: React.ReactNode;
+}) {
+  const { open: searchOpen } = useGlobalSearch();
+
+  return (
+    <SidebarProvider hoverMode={!searchOpen}>
+      {!isEmbedded && <ProjectDashboardSidebar />}
+      <SidebarInset className="flex flex-col h-full overflow-hidden bg-sidebar">
+        <div className="flex-1 flex flex-col p-2 pt-3 pb-3 overflow-hidden">
+          <div className="flex flex-col h-full bg-background rounded-xl shadow-[2px_0px_4px_-2px_rgba(0,0,0,0.05),0px_2px_4px_-2px_rgba(0,0,0,0.05)] border">
+            {!hideHeader && (
+              <>
+                <ProjectDashboardLayoutHeader key={currentProjectId} />
+                <Separator className="mb-5" />
+              </>
             )}
-          >
-            <div
-              className={cn(
-                'flex flex-col h-full bg-background overflow-hidden',
-                isEmbedded
-                  ? 'border-l'
-                  : 'rounded-xl shadow-[2px_0px_4px_-2px_rgba(0,0,0,0.05),0px_2px_4px_-2px_rgba(0,0,0,0.05)] border',
-              )}
-            >
-              {!hideHeader && (
-                <>
-                  <ProjectDashboardLayoutHeader key={currentProjectId} />
-                  <Separator className="mb-5" />
-                </>
-              )}
-              <div className="flex-1 overflow-auto"> {children} </div>
+            <div className="flex-1 overflow-auto scrollbar-none px-4">
+              {' '}
+              {children}{' '}
             </div>
           </div>
-        </SidebarInset>
-      </SidebarProvider>
-
-      {edition === ApEdition.CLOUD && <PurchaseExtraFlowsDialog />}
-    </ProjectChangedRedirector>
+        </div>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }

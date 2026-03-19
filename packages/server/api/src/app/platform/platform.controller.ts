@@ -1,4 +1,4 @@
-import { securityAccess } from '@activepieces/server-common'
+import { apDayjs } from '@activepieces/server-utils'
 import {
     ActivepiecesError,
     ApEdition,
@@ -10,21 +10,23 @@ import {
     PrincipalType,
     SERVICE_KEY_SECURITY_OPENAPI,
     UpdatePlatformRequestBody,
+    UserStatus,
 } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
-import { userIdentityRepository } from '../authentication/user-identity/user-identity-service'
-import { transaction } from '../core/db/transaction'
+import { securityAccess } from '../core/security/authorization/fastify-security'
 import { platformToEditMustBeOwnedByCurrentUser } from '../ee/authentication/ee-authorization'
 import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
 import { stripeHelper } from '../ee/platform/platform-plan/stripe-helper'
+import { platformProjectService } from '../ee/projects/platform-project-service'
 import { fileService } from '../file/file.service'
-import { flowService } from '../flows/flow/flow.service'
 import { system } from '../helper/system/system'
-import { projectRepo } from '../project/project-service'
+import { SystemJobName } from '../helper/system-jobs/common'
+import { systemJobsSchedule } from '../helper/system-jobs/system-job'
+import { projectService } from '../project/project-service'
 import { userRepo, userService } from '../user/user-service'
-import { platformRepo, platformService } from './platform.service'
+import { platformService } from './platform.service'
 
 const edition = system.getEdition()
 export const platformController: FastifyPluginAsyncZod = async (app) => {
@@ -106,31 +108,49 @@ export const platformController: FastifyPluginAsyncZod = async (app) => {
             if (platformPlan.stripeSubscriptionId) {
                 await stripeHelper(req.log).deleteCustomer(platformPlan.stripeSubscriptionId)
             }
-            await flowService(req.log).deleteAllByPlatformId(req.params.id)
-            await transaction(async (entityManager) => {
-                await projectRepo(entityManager).delete({
-                    platformId: req.params.id,
-                })
-                await platformRepo(entityManager).delete({
-                    id: req.params.id,
-                })
-                const user = await userService(req.log).getOneOrFail({
-                    id: req.principal.id,
-                })
-                await userRepo(entityManager).delete({
-                    id: user.id,
-                    platformId: req.params.id,
-                })
-                const usersUsingIdentity = await userRepo(entityManager).find({
-                    where: {
+
+            const platformId = req.params.id
+
+            const user = await userService(req.log).getOneOrFail({
+                id: req.principal.id,
+            })
+
+            await userRepo().update(
+                { id: user.id, platformId },
+                { status: UserStatus.INACTIVE },
+            )
+
+            const projectIds = await projectService(req.log).getProjectIdsByPlatform(platformId)
+            await Promise.all(
+                projectIds.map((projectId) =>
+                    platformProjectService(req.log).markForDeletion({
+                        id: projectId,
+                        platformId,
+                    }),
+                ),
+            )
+
+            await systemJobsSchedule(req.log).upsertJob({
+                job: {
+                    name: SystemJobName.HARD_DELETE_PLATFORM,
+                    data: {
+                        platformId,
+                        userId: user.id,
                         identityId: user.identityId,
                     },
-                })
-                if (usersUsingIdentity.length === 0) {
-                    await userIdentityRepository(entityManager).delete({
-                        id: user.identityId,
-                    })
-                }
+                    jobId: `hard-delete-platform-${platformId}`,
+                },
+                schedule: {
+                    type: 'one-time',
+                    date: apDayjs(),
+                },
+                customConfig: {
+                    attempts: 25,
+                    backoff: {
+                        type: 'fixed',
+                        delay: 60000,
+                    },
+                },
             })
 
             return res.status(StatusCodes.NO_CONTENT).send()

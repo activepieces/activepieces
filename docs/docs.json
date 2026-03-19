@@ -144,7 +144,7 @@
                      "install/options/docker",
                      "install/options/docker-compose",
                      {
-                        "group": "Others Options",
+                        "group": "Other Options",
                         "pages": [
                            "install/options/helm",
                            "install/options/easypanel",
@@ -191,7 +191,7 @@
                      "install/architecture/overview",
                      "install/architecture/workers",
                      "install/architecture/engine",
-                     "install/architecture/performance"
+                     "install/architecture/benchmark"
                   ]
                }
             ]
@@ -436,10 +436,10 @@
                         ]
                      },
                      {
-                        "group": "Queue Metrics",
-                        "icon": "gauge-high",
+                        "group": "Worker Machines",
+                        "icon": "server",
                         "pages": [
-                           "endpoints/queue-metrics/metrics"
+                           "endpoints/worker-machines/queue-metrics"
                         ]
                      }
                   ]
@@ -501,6 +501,14 @@
                      "handbook/engineering/playbooks/product-announcement",
                      "handbook/engineering/playbooks/frontend-best-practices",
                      "handbook/engineering/playbooks/e2e-tests"
+                  ]
+               },
+               {
+                  "group": "Postmortems",
+                  "icon": "triangle-exclamation",
+                  "pages": [
+                     "handbook/engineering/postmortems/2026-03-19-delay-step-infinite-loop",
+                     "handbook/engineering/postmortems/2026-03-16-infrastructure-upgrade"
                   ]
                },
                {
