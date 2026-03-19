@@ -1,10 +1,10 @@
-import { FastifyBaseLogger } from 'fastify'
 import { ActivepiecesError, apId, ErrorCode, KnowledgeBaseFile } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../core/db/repo-factory'
-import { KnowledgeBaseFileEntity } from './knowledge-base-file.entity'
-import { KnowledgeBaseChunkEntity } from './knowledge-base-chunk.entity'
-import { fileService } from '../file/file.service'
 import { databaseConnection } from '../database/database-connection'
+import { fileService } from '../file/file.service'
+import { KnowledgeBaseChunkEntity } from './knowledge-base-chunk.entity'
+import { KnowledgeBaseFileEntity } from './knowledge-base-file.entity'
 
 const kbFileRepo = repoFactory(KnowledgeBaseFileEntity)
 const kbChunkRepo = repoFactory(KnowledgeBaseChunkEntity)

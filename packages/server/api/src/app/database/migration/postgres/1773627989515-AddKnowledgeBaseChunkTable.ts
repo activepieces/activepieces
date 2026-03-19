@@ -61,7 +61,7 @@ export class AddKnowledgeBaseChunkTable1773627989515 implements MigrationInterfa
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`DROP TABLE IF EXISTS "knowledge_base_chunk"`)
-        await queryRunner.query(`DROP TABLE IF EXISTS "knowledge_base_file"`)
+        await queryRunner.query('DROP TABLE IF EXISTS "knowledge_base_chunk"')
+        await queryRunner.query('DROP TABLE IF EXISTS "knowledge_base_file"')
     }
 }

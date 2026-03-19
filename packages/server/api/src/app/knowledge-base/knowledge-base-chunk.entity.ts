@@ -1,6 +1,6 @@
-import { EntitySchema } from 'typeorm'
-import { BaseColumnSchemaPart, ApIdSchema } from '../database/database-common'
 import { KnowledgeBaseFile } from '@activepieces/shared'
+import { EntitySchema } from 'typeorm'
+import { ApIdSchema, BaseColumnSchemaPart } from '../database/database-common'
 
 type KnowledgeBaseChunkSchema = {
     id: string

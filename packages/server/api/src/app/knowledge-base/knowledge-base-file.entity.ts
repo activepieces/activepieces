@@ -1,5 +1,5 @@
-import { EntitySchema } from 'typeorm'
 import { File, KnowledgeBaseFile, Project } from '@activepieces/shared'
+import { EntitySchema } from 'typeorm'
 import { ApIdSchema, BaseColumnSchemaPart } from '../database/database-common'
 
 type KnowledgeBaseFileSchema = KnowledgeBaseFile & {
