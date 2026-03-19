@@ -109,6 +109,75 @@ describe('System Jobs', () => {
         expect(result).toBeUndefined()
     })
 
+    it('should remove legacy schedulers with :: in key on init', async () => {
+        // Simulate a legacy scheduler by creating one with a key containing '::'
+        // This mimics what older BullMQ versions produced when no jobId was set.
+        const legacyKey = `${SystemJobName.FILE_CLEANUP_TRIGGER}::0:UTC:0 3 * * *`
+        await systemJobsQueue.upsertJobScheduler(legacyKey, {
+            pattern: '0 3 * * *',
+            tz: 'UTC',
+        }, {
+            name: SystemJobName.FILE_CLEANUP_TRIGGER,
+            data: {} as never,
+        })
+
+        const before = await systemJobsQueue.getJobSchedulers()
+        const legacyBefore = before.filter(
+            s => s.name === SystemJobName.FILE_CLEANUP_TRIGGER && s.key.includes('::'),
+        )
+        expect(legacyBefore.length).toBeGreaterThanOrEqual(1)
+
+        // Re-init triggers removeDeprecatedJobs which should clean up legacy schedulers
+        await schedule.init()
+
+        const after = await systemJobsQueue.getJobSchedulers()
+        const legacyAfter = after.filter(
+            s => s.name === SystemJobName.FILE_CLEANUP_TRIGGER && s.key.includes('::'),
+        )
+        expect(legacyAfter).toHaveLength(0)
+    })
+
+    it('should keep new-format schedulers while removing legacy ones', async () => {
+        // Create a legacy scheduler (key contains ::)
+        const legacyKey = `${SystemJobName.PIECES_ANALYTICS}::0:UTC:0 12 * * *`
+        await systemJobsQueue.upsertJobScheduler(legacyKey, {
+            pattern: '0 12 * * *',
+            tz: 'UTC',
+        }, {
+            name: SystemJobName.PIECES_ANALYTICS,
+            data: {} as never,
+        })
+
+        // Create a new-format scheduler (key is just the jobId, no ::)
+        await schedule.upsertJob({
+            job: {
+                name: SystemJobName.PIECES_ANALYTICS,
+                data: {},
+                jobId: 'pieces-analytics',
+            },
+            schedule: {
+                type: 'repeated',
+                cron: '0 12 * * *',
+            },
+        })
+
+        const before = await systemJobsQueue.getJobSchedulers()
+        const analyticsBefore = before.filter(s => s.name === SystemJobName.PIECES_ANALYTICS)
+        expect(analyticsBefore.length).toBeGreaterThanOrEqual(2)
+
+        await schedule.init()
+
+        const after = await systemJobsQueue.getJobSchedulers()
+        const legacyAfter = after.filter(
+            s => s.name === SystemJobName.PIECES_ANALYTICS && s.key.includes('::'),
+        )
+        const newAfter = after.filter(
+            s => s.name === SystemJobName.PIECES_ANALYTICS && !s.key.includes('::'),
+        )
+        expect(legacyAfter).toHaveLength(0)
+        expect(newAfter.length).toBeGreaterThanOrEqual(1)
+    })
+
     it('should return undefined when jobId exists but name does not match', async () => {
         const jobId = 'test-name-guard'
 
