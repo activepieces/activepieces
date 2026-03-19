@@ -9,6 +9,10 @@ On March 19, 2026, Activepieces experienced a service disruption when Redis beca
 
 Service was restored by deleting the duplicate scheduled runs from the runaway subflow and deploying servers incrementally (one at a time). A single app server processed the entire runs metadata queue backlog in approximately 2 minutes. No customer data was permanently lost.
 
+## Impact
+
+Cloud customers experienced failed and delayed flow executions during the incident window. The runs metadata queue backed up significantly, and system jobs failed with handler errors. All affected executions were replayed from the failed step once service was restored. No customer data was permanently lost.
+
 ## Timeline
 
 All times are in UTC.
