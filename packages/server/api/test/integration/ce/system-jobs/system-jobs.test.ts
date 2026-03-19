@@ -4,6 +4,8 @@ import { systemJobsQueue, systemJobsSchedule } from '../../../../src/app/helper/
 import { SystemJobName } from '../../../../src/app/helper/system-jobs/common'
 import { apDayjs } from '@activepieces/server-utils'
 
+const TEST_PREFIX = 'test-'
+
 let app: FastifyInstance
 let schedule: ReturnType<typeof systemJobsSchedule>
 
@@ -21,13 +23,16 @@ afterAll(async () => {
 afterEach(async () => {
     const jobs = await systemJobsQueue.getJobs()
     for (const job of jobs) {
-        if (job.id) {
+        if (job.id?.startsWith(TEST_PREFIX)) {
             await job.remove().catch(() => { /* already removed */ })
         }
     }
     const schedulers = await systemJobsQueue.getJobSchedulers()
     for (const s of schedulers) {
-        await systemJobsQueue.removeJobScheduler(s.id ?? s.key).catch(() => { /* already removed */ })
+        const key = s.id ?? s.key
+        if (key.startsWith(TEST_PREFIX) || key.includes('::') || key === 'pieces-analytics') {
+            await systemJobsQueue.removeJobScheduler(key).catch(() => { /* already removed */ })
+        }
     }
 })
 
