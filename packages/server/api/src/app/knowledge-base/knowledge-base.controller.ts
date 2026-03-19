@@ -1,12 +1,14 @@
-import { Permission, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
+import { ActivepiecesError, ApMultipartFile, ErrorCode, FileCompression, FileType, Permission, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { ProjectResourceType } from '../core/security/authorization/common'
 import { securityAccess } from '../core/security/authorization/fastify-security'
+import { fileService } from '../file/file.service'
 import { knowledgeBaseService } from './knowledge-base.service'
 
 const KB_PRINCIPALS = [PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE] as const
+const KB_ALLOWED_MIME_TYPES = ['application/pdf', 'text/plain', 'text/csv']
 
 export const knowledgeBaseController: FastifyPluginAsyncZod = async (fastify) => {
 
@@ -17,6 +19,35 @@ export const knowledgeBaseController: FastifyPluginAsyncZod = async (fastify) =>
             displayName: request.body.displayName,
         })
         return reply.status(StatusCodes.CREATED).send(result)
+    })
+
+    fastify.post('/upload', UploadKnowledgeBaseFileRequest, async (request, reply) => {
+        const file = request.body.file as ApMultipartFile
+        if (!KB_ALLOWED_MIME_TYPES.includes(file.mimetype ?? '')) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: {
+                    message: `Invalid file type. Allowed types: ${KB_ALLOWED_MIME_TYPES.join(', ')}`,
+                },
+            })
+        }
+
+        const savedFile = await fileService(request.log).save({
+            projectId: request.projectId,
+            data: file.data,
+            size: file.data.length,
+            type: FileType.KNOWLEDGE_BASE,
+            compression: FileCompression.NONE,
+            fileName: file.filename,
+        })
+
+        const kbFile = await knowledgeBaseService(request.log).createFile({
+            projectId: request.projectId,
+            fileId: savedFile.id,
+            displayName: request.body.displayName,
+        })
+
+        return reply.status(StatusCodes.CREATED).send(kbFile)
     })
 
     fastify.get('/', ListKnowledgeBaseFilesRequest, async (request) => {
@@ -31,6 +62,30 @@ export const knowledgeBaseController: FastifyPluginAsyncZod = async (fastify) =>
             id: request.params.id,
         })
         return reply.status(StatusCodes.NO_CONTENT).send()
+    })
+
+    fastify.get('/:id/chunks/count', GetChunkCountRequest, async (request) => {
+        const count = await knowledgeBaseService(request.log).getChunkCount({
+            knowledgeBaseFileId: request.params.id,
+        })
+        return { count }
+    })
+
+    fastify.post('/:id/extract-chunks', ExtractChunksRequest, async (request) => {
+        const chunks = await knowledgeBaseService(request.log).extractChunks({
+            projectId: request.projectId,
+            knowledgeBaseFileId: request.params.id,
+        })
+        return { chunks }
+    })
+
+    fastify.post('/:id/store-embeddings', StoreEmbeddingsRequest, async (request) => {
+        await knowledgeBaseService(request.log).storeEmbeddings({
+            projectId: request.projectId,
+            knowledgeBaseFileId: request.params.id,
+            chunks: request.body.chunks,
+        })
+        return { success: true }
     })
 
     fastify.post('/search', SearchKnowledgeBaseRequest, async (request) => {
@@ -65,6 +120,27 @@ const CreateKnowledgeBaseFileRequest = {
     },
 }
 
+const UploadKnowledgeBaseFileRequest = {
+    config: {
+        security: securityAccess.project(KB_PRINCIPALS, Permission.WRITE_KNOWLEDGE_BASE, {
+            type: ProjectResourceType.QUERY,
+        }),
+    },
+    schema: {
+        tags: ['knowledge-base'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        consumes: ['multipart/form-data'],
+        description: 'Upload a file and create a knowledge base file record',
+        querystring: z.object({
+            projectId: z.string(),
+        }),
+        body: z.object({
+            file: ApMultipartFile,
+            displayName: z.string(),
+        }),
+    },
+}
+
 const ListKnowledgeBaseFilesRequest = {
     config: {
         security: securityAccess.project(KB_PRINCIPALS, Permission.READ_KNOWLEDGE_BASE, {
@@ -75,6 +151,9 @@ const ListKnowledgeBaseFilesRequest = {
         tags: ['knowledge-base'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         description: 'List knowledge base files for the project',
+        querystring: z.object({
+            projectId: z.string(),
+        }),
     },
 }
 
@@ -90,6 +169,62 @@ const DeleteKnowledgeBaseFileRequest = {
         description: 'Delete a knowledge base file and all its chunks',
         params: z.object({
             id: z.string(),
+        }),
+    },
+}
+
+const GetChunkCountRequest = {
+    config: {
+        security: securityAccess.project(KB_PRINCIPALS, Permission.READ_KNOWLEDGE_BASE, {
+            type: ProjectResourceType.PARAM,
+        }),
+    },
+    schema: {
+        tags: ['knowledge-base'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'Get the number of chunks for a knowledge base file',
+        params: z.object({
+            id: z.string(),
+        }),
+    },
+}
+
+const ExtractChunksRequest = {
+    config: {
+        security: securityAccess.project(KB_PRINCIPALS, Permission.WRITE_KNOWLEDGE_BASE, {
+            type: ProjectResourceType.PARAM,
+        }),
+    },
+    schema: {
+        tags: ['knowledge-base'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'Extract text chunks from a knowledge base file',
+        params: z.object({
+            id: z.string(),
+        }),
+    },
+}
+
+const StoreEmbeddingsRequest = {
+    config: {
+        security: securityAccess.project(KB_PRINCIPALS, Permission.WRITE_KNOWLEDGE_BASE, {
+            type: ProjectResourceType.PARAM,
+        }),
+    },
+    schema: {
+        tags: ['knowledge-base'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'Store pre-embedded chunks for a knowledge base file',
+        params: z.object({
+            id: z.string(),
+        }),
+        body: z.object({
+            chunks: z.array(z.object({
+                content: z.string(),
+                embedding: z.array(z.number()),
+                chunkIndex: z.number(),
+                metadata: z.record(z.string(), z.unknown()).optional(),
+            })),
         }),
     },
 }

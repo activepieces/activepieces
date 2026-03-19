@@ -1,5 +1,5 @@
 import { EntitySchema } from 'typeorm'
-import { File, KnowledgeBaseFile, KnowledgeBaseFileStatus, Project } from '@activepieces/shared'
+import { File, KnowledgeBaseFile, Project } from '@activepieces/shared'
 import { ApIdSchema, BaseColumnSchemaPart } from '../database/database-common'
 
 type KnowledgeBaseFileSchema = KnowledgeBaseFile & {
@@ -21,20 +21,6 @@ export const KnowledgeBaseFileEntity = new EntitySchema<KnowledgeBaseFileSchema>
         },
         displayName: {
             type: String,
-            nullable: false,
-        },
-        status: {
-            type: String,
-            default: KnowledgeBaseFileStatus.PENDING,
-            nullable: false,
-        },
-        error: {
-            type: String,
-            nullable: true,
-        },
-        chunkCount: {
-            type: Number,
-            default: 0,
             nullable: false,
         },
     },

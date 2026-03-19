@@ -1,4 +1,4 @@
-import { dynamicTool, embed, EmbeddingModel, LanguageModel, Tool } from "ai";
+import { dynamicTool, embed, embedMany, EmbeddingModel, LanguageModel, Tool } from "ai";
 import z from "zod";
 import { agentUtils } from "./utils";
 import { agentOutputBuilder } from "./agent-output-builder";
@@ -143,6 +143,34 @@ async function constructKnowledgeBaseTools(
     if (fileTools.length > 0 && embeddingModel) {
         const fileIds = fileTools.map(t => t.sourceId)
         const sourceNames = fileTools.map(t => t.sourceName).join(', ')
+
+        // Auto-ingest files that haven't been ingested yet
+        for (const fileTool of fileTools) {
+            try {
+                const countRes = await api.get<{ count: number }>(`v1/knowledge-base/files/${fileTool.sourceId}/chunks/count`)
+                if (countRes.body.count === 0) {
+                    const extractRes = await api.post<{ chunks: string[] }>(`v1/knowledge-base/files/${fileTool.sourceId}/extract-chunks`, {})
+                    const textChunks = extractRes.body.chunks
+                    if (textChunks.length > 0) {
+                        const EMBED_BATCH_SIZE = 50
+                        for (let i = 0; i < textChunks.length; i += EMBED_BATCH_SIZE) {
+                            const batch = textChunks.slice(i, i + EMBED_BATCH_SIZE)
+                            const { embeddings } = await embedMany({ model: embeddingModel, values: batch })
+                            const chunks = batch.map((content, j) => ({
+                                content,
+                                embedding: Array.from(embeddings[j]),
+                                chunkIndex: i + j,
+                                metadata: { fileName: fileTool.sourceName, chunkIndex: i + j, totalChunks: textChunks.length },
+                            }))
+                            await api.post(`v1/knowledge-base/files/${fileTool.sourceId}/store-embeddings`, { chunks })
+                        }
+                    }
+                }
+            }
+            catch (error) {
+                console.error(`Failed to auto-ingest KB file '${fileTool.sourceName}':`, error)
+            }
+        }
 
         tools[SEARCH_KNOWLEDGE_BASE_TOOL_NAME] = dynamicTool({
             description: `Search uploaded documents for relevant information. Available documents: ${sourceNames}. Use when you need facts, policies, or content from these knowledge base files.`,

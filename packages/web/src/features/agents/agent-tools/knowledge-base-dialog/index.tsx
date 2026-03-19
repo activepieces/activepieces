@@ -4,10 +4,13 @@ import {
   AgentToolType,
   KnowledgeBaseSourceType,
 } from '@activepieces/shared';
+import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { useState } from 'react';
+import { Upload } from 'lucide-react';
+import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 
+import { SearchableSelect } from '@/components/custom/searchable-select';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -25,15 +28,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { tablesApi } from '@/features/tables/api/tables-api';
+import { authenticationSession } from '@/lib/authentication-session';
 
 import { useKnowledgeBaseToolDialogStore } from '../stores/knowledge-base-tools';
 
-type AgentKnowledgeBaseDialogProps = {
-  tools: AgentTool[];
-  onToolsUpdate: (tools: AgentTool[]) => void;
-};
+import {
+  useKnowledgeBaseFiles,
+  useUploadKnowledgeBaseFile,
+} from './knowledge-base-hooks';
 
-export function AgentKnowledgeBaseDialog({
+function AgentKnowledgeBaseDialog({
   tools,
   onToolsUpdate,
 }: AgentKnowledgeBaseDialogProps) {
@@ -73,9 +78,63 @@ function KnowledgeBaseDialogContent({
     editingKbTool?.sourceName ?? '',
   );
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const uploadMutation = useUploadKnowledgeBaseFile();
+  const { data: kbFiles, isLoading: kbFilesLoading } =
+    useKnowledgeBaseFiles();
+
+  const projectId = authenticationSession.getProjectId()!;
+  const { data: tablesData, isLoading: tablesLoading } = useQuery({
+    queryKey: ['tables-for-kb', projectId],
+    queryFn: () => tablesApi.list({ projectId, limit: 1000 }),
+    enabled: sourceType === KnowledgeBaseSourceType.TABLE,
+  });
+
+  const fileOptions = (kbFiles ?? []).map((f) => ({
+    value: f.id,
+    label: f.displayName,
+  }));
+
+  const tableOptions = (tablesData?.data ?? []).map((table) => ({
+    value: table.id,
+    label: table.name,
+  }));
+
+  const handleSourceSelect = (id: string | null, name: string) => {
+    if (!id) return;
+    setSourceId(id);
+    setSourceName(name);
+    if (!editingKbTool) {
+      setToolName(slugify(name));
+    }
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('displayName', file.name);
+
+    uploadMutation.mutate(formData, {
+      onSuccess: (kbFile) => {
+        handleSourceSelect(kbFile.id, kbFile.displayName);
+        toast(t('File uploaded successfully'));
+      },
+      onError: () => {
+        toast.error(t('Failed to upload file'));
+      },
+    });
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   const handleAdd = () => {
-    if (!toolName.trim() || !sourceId.trim() || !sourceName.trim()) {
-      toast.error(t('Please fill in all fields'));
+    if (!toolName.trim() || !sourceId.trim()) {
+      toast.error(t('Please select a source and ensure tool name is filled'));
       return;
     }
 
@@ -129,9 +188,14 @@ function KnowledgeBaseDialogContent({
           <Label>{t('Source Type')}</Label>
           <Select
             value={sourceType}
-            onValueChange={(val) =>
-              setSourceType(val as KnowledgeBaseSourceType)
-            }
+            onValueChange={(val) => {
+              setSourceType(val as KnowledgeBaseSourceType);
+              setSourceId('');
+              setSourceName('');
+              if (!editingKbTool) {
+                setToolName('');
+              }
+            }}
           >
             <SelectTrigger>
               <SelectValue />
@@ -145,6 +209,58 @@ function KnowledgeBaseDialogContent({
               </SelectItem>
             </SelectContent>
           </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label>
+            {sourceType === KnowledgeBaseSourceType.FILE
+              ? t('Knowledge Base File')
+              : t('Table')}
+          </Label>
+          {sourceType === KnowledgeBaseSourceType.FILE ? (
+            <>
+              <SearchableSelect
+                options={fileOptions}
+                value={sourceId || undefined}
+                onChange={(id) => {
+                  const file = kbFiles?.find((f) => f.id === id);
+                  handleSourceSelect(id, file?.displayName ?? '');
+                }}
+                placeholder={t('Select a knowledge base file')}
+                loading={kbFilesLoading}
+              />
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf,.txt,.csv"
+                className="hidden"
+                onChange={handleFileUpload}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploadMutation.isPending}
+              >
+                <Upload className="mr-2 h-4 w-4" />
+                {uploadMutation.isPending
+                  ? t('Uploading...')
+                  : t('Upload new file')}
+              </Button>
+            </>
+          ) : (
+            <SearchableSelect
+              options={tableOptions}
+              value={sourceId || undefined}
+              onChange={(id) => {
+                const selected = tablesData?.data?.find((item) => item.id === id);
+                handleSourceSelect(id, selected?.name ?? '');
+              }}
+              placeholder={t('Select a table')}
+              loading={tablesLoading}
+            />
+          )}
         </div>
 
         <div className="space-y-2">
@@ -164,45 +280,6 @@ function KnowledgeBaseDialogContent({
             )}
           </p>
         </div>
-
-        <div className="space-y-2">
-          <Label>{t('Display Name')}</Label>
-          <Input
-            value={sourceName}
-            onChange={(e) => setSourceName(e.target.value)}
-            placeholder={
-              sourceType === KnowledgeBaseSourceType.FILE
-                ? t('e.g., Company Policy Documents')
-                : t('e.g., Products Catalog')
-            }
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label>
-            {sourceType === KnowledgeBaseSourceType.FILE
-              ? t('Knowledge Base File ID')
-              : t('Table External ID')}
-          </Label>
-          <Input
-            value={sourceId}
-            onChange={(e) => setSourceId(e.target.value)}
-            placeholder={
-              sourceType === KnowledgeBaseSourceType.FILE
-                ? t('ID of the ingested knowledge base file')
-                : t('External ID of the table')
-            }
-          />
-          <p className="text-xs text-muted-foreground">
-            {sourceType === KnowledgeBaseSourceType.FILE
-              ? t(
-                  'Upload and ingest a file first via the Knowledge Base API, then paste the file ID here',
-                )
-              : t(
-                  'The external ID of an Activepieces table (found in table settings)',
-                )}
-          </p>
-        </div>
       </div>
 
       <DialogFooter>
@@ -216,3 +293,17 @@ function KnowledgeBaseDialogContent({
     </DialogContent>
   );
 }
+
+function slugify(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_|_$/g, '');
+}
+
+type AgentKnowledgeBaseDialogProps = {
+  tools: AgentTool[];
+  onToolsUpdate: (tools: AgentTool[]) => void;
+};
+
+export { AgentKnowledgeBaseDialog };

@@ -16,6 +16,7 @@ import {
   AgentProviderModel,
   ExecutionToolStatus,
   AgentToolType,
+  AgentKnowledgeBaseTool,
   KnowledgeBaseSourceType,
   normalizeToolOutputToExecuteResponse,
   spreadIfDefined,
@@ -166,9 +167,10 @@ export const runAgent = createAction({
 
     // Check knowledge base tool presence (used for embedding model + system prompt)
     const hasKnowledgeBaseTools = agentTools.some(t => t.type === AgentToolType.KNOWLEDGE_BASE);
-    const hasKbFileTools = hasKnowledgeBaseTools && agentTools.some(
-      t => t.type === AgentToolType.KNOWLEDGE_BASE && t.sourceType === KnowledgeBaseSourceType.FILE,
+    const kbFileTools = agentTools.filter(
+      (t): t is AgentKnowledgeBaseTool => t.type === AgentToolType.KNOWLEDGE_BASE && t.sourceType === KnowledgeBaseSourceType.FILE,
     );
+    const hasKbFileTools = kbFileTools.length > 0;
     let embeddingModel;
     if (hasKbFileTools) {
       try {

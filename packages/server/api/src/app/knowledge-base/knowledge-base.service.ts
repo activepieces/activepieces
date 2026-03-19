@@ -1,5 +1,5 @@
 import { FastifyBaseLogger } from 'fastify'
-import { ActivepiecesError, apId, ErrorCode, KnowledgeBaseFile, KnowledgeBaseFileStatus } from '@activepieces/shared'
+import { ActivepiecesError, apId, ErrorCode, KnowledgeBaseFile } from '@activepieces/shared'
 import { repoFactory } from '../core/db/repo-factory'
 import { KnowledgeBaseFileEntity } from './knowledge-base-file.entity'
 import { KnowledgeBaseChunkEntity } from './knowledge-base-chunk.entity'
@@ -39,74 +39,33 @@ async function extractTextFromFile(data: Buffer, fileName: string): Promise<stri
 
 export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
     async ingestFile(params: IngestFileParams): Promise<void> {
-        const { projectId, knowledgeBaseFileId, fileId, embedFn } = params
+        const { projectId, knowledgeBaseFileId, embedFn } = params
 
-        try {
-            await kbFileRepo().update(
-                { id: knowledgeBaseFileId },
-                { status: KnowledgeBaseFileStatus.PROCESSING },
-            )
-
-            const fileData = await fileService(log).getDataOrThrow({
-                projectId,
-                fileId,
-            })
-
-            // Delete existing chunks for idempotent re-ingestion
-            await kbChunkRepo().delete({ knowledgeBaseFileId })
-
-            const text = await extractTextFromFile(fileData.data, fileData.fileName ?? '')
-            const chunks = chunkText(text)
-
-            if (chunks.length === 0) {
-                await kbFileRepo().update(
-                    { id: knowledgeBaseFileId },
-                    { status: KnowledgeBaseFileStatus.COMPLETED, chunkCount: 0 },
-                )
-                return
-            }
-
-            // Process in batches to respect API limits and cap memory
-            const EMBED_BATCH_SIZE = 50
-            for (let i = 0; i < chunks.length; i += EMBED_BATCH_SIZE) {
-                const batch = chunks.slice(i, i + EMBED_BATCH_SIZE)
-                const embeddings = await embedFn(batch)
-                if (embeddings.length !== batch.length) {
-                    throw new Error(`Embedding count mismatch: expected ${batch.length}, got ${embeddings.length}`)
-                }
-
-                const chunkEntities = batch.map((content, batchIndex) => ({
-                    id: apId(),
-                    projectId,
-                    knowledgeBaseFileId,
-                    content,
-                    chunkIndex: i + batchIndex,
-                    embedding: `[${embeddings[batchIndex].join(',')}]`,
-                    metadata: {
-                        fileName: fileData.fileName,
-                        chunkIndex: i + batchIndex,
-                        totalChunks: chunks.length,
-                    },
-                }))
-
-                await kbChunkRepo().insert(chunkEntities)
-            }
-
-            await kbFileRepo().update(
-                { id: knowledgeBaseFileId },
-                { status: KnowledgeBaseFileStatus.COMPLETED, chunkCount: chunks.length },
-            )
+        const textChunks = await this.extractChunks({ projectId, knowledgeBaseFileId })
+        if (textChunks.length === 0) {
+            return
         }
-        catch (error) {
-            log.error({ error, knowledgeBaseFileId }, '[KnowledgeBaseService#ingestFile] error')
-            await kbFileRepo().update(
-                { id: knowledgeBaseFileId },
-                {
-                    status: KnowledgeBaseFileStatus.FAILED,
-                    error: error instanceof Error ? error.message : 'Unknown error',
-                },
-            )
+
+        // Embed in batches to respect API limits
+        const EMBED_BATCH_SIZE = 50
+        const allChunks: StoreEmbeddingsParams['chunks'] = []
+        for (let i = 0; i < textChunks.length; i += EMBED_BATCH_SIZE) {
+            const batch = textChunks.slice(i, i + EMBED_BATCH_SIZE)
+            const embeddings = await embedFn(batch)
+            if (embeddings.length !== batch.length) {
+                throw new Error(`Embedding count mismatch: expected ${batch.length}, got ${embeddings.length}`)
+            }
+            for (let j = 0; j < batch.length; j++) {
+                allChunks.push({
+                    content: batch[j],
+                    embedding: embeddings[j],
+                    chunkIndex: i + j,
+                    metadata: { chunkIndex: i + j, totalChunks: textChunks.length },
+                })
+            }
         }
+
+        await this.storeEmbeddings({ projectId, knowledgeBaseFileId, chunks: allChunks })
     },
 
     async search(params: SearchParams): Promise<SearchResult[]> {
@@ -120,7 +79,7 @@ export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
              FROM knowledge_base_chunk kbc
              WHERE kbc."projectId" = $2
                AND kbc."knowledgeBaseFileId" = ANY($3)
-             ORDER BY kbc.embedding <=> $1::vector
+             ORDER BY distance
              LIMIT $4`,
             [embeddingStr, projectId, knowledgeBaseFileIds, limit],
         )
@@ -141,18 +100,14 @@ export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
         })
     },
 
-    async createFile(params: CreateFileParams): Promise<{ id: string }> {
+    async createFile(params: CreateFileParams): Promise<KnowledgeBaseFile> {
         const kbFile = {
             id: apId(),
             projectId: params.projectId,
             fileId: params.fileId,
             displayName: params.displayName,
-            status: KnowledgeBaseFileStatus.PENDING,
-            error: null,
-            chunkCount: 0,
         }
-        await kbFileRepo().save(kbFile)
-        return { id: kbFile.id }
+        return kbFileRepo().save(kbFile)
     },
 
     async deleteFile(params: { projectId: string, id: string }): Promise<void> {
@@ -179,6 +134,61 @@ export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
         return file
     },
 
+    async getChunkCount(params: { knowledgeBaseFileId: string }): Promise<number> {
+        return kbChunkRepo().count({ where: { knowledgeBaseFileId: params.knowledgeBaseFileId } })
+    },
+
+    async extractChunks(params: { projectId: string, knowledgeBaseFileId: string }): Promise<string[]> {
+        const kbFile = await kbFileRepo().findOneBy({
+            id: params.knowledgeBaseFileId,
+            projectId: params.projectId,
+        })
+        if (!kbFile) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: {
+                    entityType: 'KnowledgeBaseFile',
+                    entityId: params.knowledgeBaseFileId,
+                },
+            })
+        }
+
+        const fileData = await fileService(log).getDataOrThrow({
+            projectId: params.projectId,
+            fileId: kbFile.fileId,
+        })
+
+        const text = await extractTextFromFile(fileData.data, fileData.fileName ?? '')
+        return chunkText(text)
+    },
+
+    async storeEmbeddings(params: StoreEmbeddingsParams): Promise<void> {
+        const { projectId, knowledgeBaseFileId, chunks } = params
+
+        // Delete existing chunks for idempotent re-ingestion
+        await kbChunkRepo().delete({ knowledgeBaseFileId })
+
+        if (chunks.length === 0) {
+            return
+        }
+
+        const chunkEntities = chunks.map((chunk) => ({
+            id: apId(),
+            projectId,
+            knowledgeBaseFileId,
+            content: chunk.content,
+            chunkIndex: chunk.chunkIndex,
+            embedding: `[${chunk.embedding.join(',')}]`,
+            metadata: chunk.metadata ?? {},
+        }))
+
+        // Insert in batches to avoid oversized queries
+        const BATCH_SIZE = 100
+        for (let i = 0; i < chunkEntities.length; i += BATCH_SIZE) {
+            await kbChunkRepo().insert(chunkEntities.slice(i, i + BATCH_SIZE))
+        }
+    },
+
     async getFilesByIds(params: { projectId: string, ids: string[] }): Promise<KnowledgeBaseFile[]> {
         if (params.ids.length === 0) return []
         return kbFileRepo().find({
@@ -193,7 +203,6 @@ export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
 type IngestFileParams = {
     projectId: string
     knowledgeBaseFileId: string
-    fileId: string
     embedFn: (texts: string[]) => Promise<number[][]>
 }
 
@@ -216,4 +225,15 @@ type CreateFileParams = {
     projectId: string
     fileId: string
     displayName: string
+}
+
+type StoreEmbeddingsParams = {
+    projectId: string
+    knowledgeBaseFileId: string
+    chunks: {
+        content: string
+        embedding: number[]
+        chunkIndex: number
+        metadata?: Record<string, unknown>
+    }[]
 }

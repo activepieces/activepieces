@@ -12,9 +12,6 @@ export class AddKnowledgeBaseChunkTable1773627989515 implements MigrationInterfa
                 "projectId" character varying(21) NOT NULL,
                 "fileId" character varying(21) NOT NULL,
                 "displayName" character varying NOT NULL,
-                "status" character varying NOT NULL DEFAULT 'PENDING',
-                "error" character varying,
-                "chunkCount" integer NOT NULL DEFAULT 0,
                 CONSTRAINT "pk_knowledge_base_file" PRIMARY KEY ("id"),
                 CONSTRAINT "fk_kb_file_project_id" FOREIGN KEY ("projectId") REFERENCES "project"("id") ON DELETE CASCADE,
                 CONSTRAINT "fk_kb_file_file_id" FOREIGN KEY ("fileId") REFERENCES "file"("id") ON DELETE CASCADE

@@ -87,7 +87,7 @@ export const agentUtils = {
         - Do not call the completion tool prematurely—ensure all reasonable steps are taken.
         ${options?.hasKnowledgeBaseTools ? `
         **Knowledge Base Guidelines**:
-        - When the user's question may require information from documents or data tables, search them before answering.
+        - ALWAYS search the knowledge base before answering any question. Do not answer from your own knowledge — use the search tool first.
         - You can refine your search query if initial results aren't relevant enough.
         - Cite the source document or table when presenting information from the knowledge base.
         ` : ''}
