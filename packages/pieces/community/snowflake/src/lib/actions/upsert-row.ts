@@ -62,6 +62,13 @@ export const upsertRowAction = createAction({
       throw new Error('At least one column value must be provided.');
     }
 
+    if (!columns.includes(match_column)) {
+      throw new Error(
+        `Match column "${match_column}" must be included in the column values. ` +
+          `Please add a value for "${match_column}" in the columns to upsert.`
+      );
+    }
+
     // Build MERGE INTO statement
     // source: SELECT ? AS col1, ? AS col2, ...
     const sourceSelects = columns.map((col) => `? AS ${col}`).join(', ');

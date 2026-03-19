@@ -47,7 +47,7 @@ export const searchRowsAction = createAction({
     let sql = `SELECT * FROM ${table}`;
     if (where_clause) sql += ` WHERE ${where_clause}`;
     if (order_by) sql += ` ORDER BY ${order_by}`;
-    sql += ` LIMIT ${limit ?? 100}`;
+    sql += ` LIMIT ${Math.trunc(limit ?? 100)}`;
 
     const connection = configureConnection(context.auth as SnowflakeAuthValue);
     await connect(connection);
