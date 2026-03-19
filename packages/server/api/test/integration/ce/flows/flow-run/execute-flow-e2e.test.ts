@@ -55,6 +55,194 @@ afterAll(async () => {
     await app.close()
 }, 15_000)
 
+async function setupSubflowFixtures() {
+    const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
+
+    const webhookPiece = createMockPieceMetadata({
+        name: '@activepieces/piece-webhook',
+        version: '0.1.29',
+        platformId: undefined,
+        packageType: PackageType.REGISTRY,
+        pieceType: PieceType.OFFICIAL,
+    })
+    const subflowsPiece = createMockPieceMetadata({
+        name: '@activepieces/piece-subflows',
+        version: '0.4.11',
+        platformId: undefined,
+        packageType: PackageType.REGISTRY,
+        pieceType: PieceType.OFFICIAL,
+    })
+    await databaseConnection().getRepository('piece_metadata').save([webhookPiece, subflowsPiece])
+
+    // Child Flow: callableFlow trigger → code action → returnResponse action
+    const childReturnResponseAction = {
+        type: FlowActionType.PIECE as const,
+        name: 'step_2',
+        displayName: 'Return Response',
+        valid: true,
+        settings: {
+            pieceName: '@activepieces/piece-subflows',
+            pieceVersion: '0.4.11',
+            actionName: 'returnResponse',
+            input: {
+                mode: 'simple',
+                response: {
+                    response: {
+                        greeting: '{{step_1.greeting}}',
+                        processed: '{{step_1.processed}}',
+                    },
+                },
+            },
+            propertySettings: {},
+            errorHandlingOptions: {},
+        },
+    }
+
+    const childCodeAction = {
+        type: FlowActionType.CODE as const,
+        name: 'step_1',
+        displayName: 'Transform Data',
+        valid: true,
+        settings: {
+            sourceCode: {
+                code: `export const code = async (inputs) => {
+                    return {
+                        greeting: 'Hello ' + inputs.name,
+                        processed: true,
+                    };
+                }`,
+                packageJson: '{}',
+            },
+            input: {
+                name: '{{trigger.data.name}}',
+            },
+            errorHandlingOptions: {},
+        },
+        nextAction: childReturnResponseAction,
+    }
+
+    const childFlow = createMockFlow({
+        projectId: mockProject.id,
+        status: FlowStatus.ENABLED,
+    })
+
+    const childFlowVersion = createMockFlowVersion({
+        flowId: childFlow.id,
+        state: FlowVersionState.LOCKED,
+        trigger: {
+            type: FlowTriggerType.PIECE,
+            name: 'trigger',
+            displayName: 'Callable Flow',
+            valid: true,
+            settings: {
+                pieceName: '@activepieces/piece-subflows',
+                pieceVersion: '0.4.11',
+                triggerName: 'callableFlow',
+                input: {
+                    mode: 'simple',
+                    exampleData: {
+                        sampleData: {
+                            name: '',
+                            greeting: '',
+                        },
+                    },
+                },
+                propertySettings: {},
+            },
+            nextAction: childCodeAction,
+        },
+    })
+
+    await db.save('flow', childFlow)
+    await db.save('flow_version', childFlowVersion)
+    await db.update('flow', childFlow.id, { publishedVersionId: childFlowVersion.id })
+
+    // Parent Flow: webhook trigger → callFlow action
+    const parentCallFlowAction = {
+        type: FlowActionType.PIECE as const,
+        name: 'step_1',
+        displayName: 'Call Flow',
+        valid: true,
+        settings: {
+            pieceName: '@activepieces/piece-subflows',
+            pieceVersion: '0.4.11',
+            actionName: 'callFlow',
+            input: {
+                flow: {
+                    externalId: childFlow.externalId,
+                    exampleData: {
+                        sampleData: {
+                            name: '',
+                            greeting: '',
+                        },
+                    },
+                },
+                mode: 'simple',
+                flowProps: {
+                    payload: {
+                        name: '{{trigger.body.name}}',
+                    },
+                },
+                waitForResponse: true,
+            },
+            propertySettings: {},
+            errorHandlingOptions: {},
+        },
+    }
+
+    const parentFlow = createMockFlow({
+        projectId: mockProject.id,
+    })
+    await db.save('flow', parentFlow)
+
+    const parentFlowVersion = createMockFlowVersion({
+        flowId: parentFlow.id,
+        state: FlowVersionState.DRAFT,
+        trigger: {
+            type: FlowTriggerType.PIECE,
+            name: 'trigger',
+            displayName: 'Catch Webhook',
+            valid: true,
+            settings: {
+                pieceName: '@activepieces/piece-webhook',
+                pieceVersion: '0.1.29',
+                triggerName: 'catch_webhook',
+                input: { authType: 'none' },
+                propertySettings: {},
+            },
+            nextAction: parentCallFlowAction,
+        },
+    })
+    await db.save('flow_version', parentFlowVersion)
+
+    return { parentFlow, parentFlowVersion, mockPlatform, mockProject }
+}
+
+async function pollFlowRunToCompletion(flowRunId: string, projectId: string) {
+    const maxWaitMs = 120_000
+    const pollIntervalMs = 500
+    const start = Date.now()
+    let result = await flowRunService(app.log).getOnePopulatedOrThrow({
+        id: flowRunId,
+        projectId,
+    })
+
+    while (
+        (result.status === FlowRunStatus.QUEUED ||
+            result.status === FlowRunStatus.RUNNING ||
+            result.status === FlowRunStatus.PAUSED) &&
+        Date.now() - start < maxWaitMs
+    ) {
+        await new Promise((resolve) => setTimeout(resolve, pollIntervalMs))
+        result = await flowRunService(app.log).getOnePopulatedOrThrow({
+            id: flowRunId,
+            projectId,
+        })
+    }
+
+    return result
+}
+
 describe('Execute Flow E2E', () => {
     it('executes a webhook → data mapper → code flow end-to-end', async () => {
         const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
@@ -313,167 +501,8 @@ describe('Execute Flow E2E', () => {
     }, 30_000)
 
     it('executes parent → child subflow with wait-for-response', async () => {
-        const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
+        const { parentFlow, parentFlowVersion, mockPlatform, mockProject } = await setupSubflowFixtures()
 
-        // Register piece metadata
-        const webhookPiece = createMockPieceMetadata({
-            name: '@activepieces/piece-webhook',
-            version: '0.1.29',
-            platformId: undefined,
-            packageType: PackageType.REGISTRY,
-            pieceType: PieceType.OFFICIAL,
-        })
-        const subflowsPiece = createMockPieceMetadata({
-            name: '@activepieces/piece-subflows',
-            version: '0.4.11',
-            platformId: undefined,
-            packageType: PackageType.REGISTRY,
-            pieceType: PieceType.OFFICIAL,
-        })
-        await databaseConnection().getRepository('piece_metadata').save([webhookPiece, subflowsPiece])
-
-        // Build Child Flow: callableFlow trigger → code action → returnResponse action
-        const childReturnResponseAction = {
-            type: FlowActionType.PIECE as const,
-            name: 'step_2',
-            displayName: 'Return Response',
-            valid: true,
-            settings: {
-                pieceName: '@activepieces/piece-subflows',
-                pieceVersion: '0.4.11',
-                actionName: 'returnResponse',
-                input: {
-                    mode: 'simple',
-                    response: {
-                        response: {
-                            greeting: '{{step_1.greeting}}',
-                            processed: '{{step_1.processed}}',
-                        },
-                    },
-                },
-                propertySettings: {},
-                errorHandlingOptions: {},
-            },
-        }
-
-        const childCodeAction = {
-            type: FlowActionType.CODE as const,
-            name: 'step_1',
-            displayName: 'Transform Data',
-            valid: true,
-            settings: {
-                sourceCode: {
-                    code: `export const code = async (inputs) => {
-                        return {
-                            greeting: 'Hello ' + inputs.name,
-                            processed: true,
-                        };
-                    }`,
-                    packageJson: '{}',
-                },
-                input: {
-                    name: '{{trigger.data.name}}',
-                },
-                errorHandlingOptions: {},
-            },
-            nextAction: childReturnResponseAction,
-        }
-
-        const childFlow = createMockFlow({
-            projectId: mockProject.id,
-            status: FlowStatus.ENABLED,
-        })
-
-        const childFlowVersion = createMockFlowVersion({
-            flowId: childFlow.id,
-            state: FlowVersionState.LOCKED,
-            trigger: {
-                type: FlowTriggerType.PIECE,
-                name: 'trigger',
-                displayName: 'Callable Flow',
-                valid: true,
-                settings: {
-                    pieceName: '@activepieces/piece-subflows',
-                    pieceVersion: '0.4.11',
-                    triggerName: 'callableFlow',
-                    input: {
-                        mode: 'simple',
-                        exampleData: {
-                            sampleData: {
-                                name: '',
-                                greeting: '',
-                            },
-                        },
-                    },
-                    propertySettings: {},
-                },
-                nextAction: childCodeAction,
-            },
-        })
-
-        await db.save('flow', childFlow)
-        await db.save('flow_version', childFlowVersion)
-        await db.update('flow', childFlow.id, { publishedVersionId: childFlowVersion.id })
-
-        // Build Parent Flow: webhook trigger → callFlow action
-        const parentCallFlowAction = {
-            type: FlowActionType.PIECE as const,
-            name: 'step_1',
-            displayName: 'Call Flow',
-            valid: true,
-            settings: {
-                pieceName: '@activepieces/piece-subflows',
-                pieceVersion: '0.4.11',
-                actionName: 'callFlow',
-                input: {
-                    flow: {
-                        externalId: childFlow.externalId,
-                        exampleData: {
-                            sampleData: {
-                                name: '',
-                                greeting: '',
-                            },
-                        },
-                    },
-                    mode: 'simple',
-                    flowProps: {
-                        payload: {
-                            name: '{{trigger.body.name}}',
-                        },
-                    },
-                    waitForResponse: true,
-                },
-                propertySettings: {},
-                errorHandlingOptions: {},
-            },
-        }
-
-        const parentFlow = createMockFlow({
-            projectId: mockProject.id,
-        })
-        await db.save('flow', parentFlow)
-
-        const parentFlowVersion = createMockFlowVersion({
-            flowId: parentFlow.id,
-            state: FlowVersionState.DRAFT,
-            trigger: {
-                type: FlowTriggerType.PIECE,
-                name: 'trigger',
-                displayName: 'Catch Webhook',
-                valid: true,
-                settings: {
-                    pieceName: '@activepieces/piece-webhook',
-                    pieceVersion: '0.1.29',
-                    triggerName: 'catch_webhook',
-                    input: { authType: 'none' },
-                    propertySettings: {},
-                },
-                nextAction: parentCallFlowAction,
-            },
-        })
-        await db.save('flow_version', parentFlowVersion)
-
-        // Start the parent flow
         const flowRun = await flowRunService(app.log).start({
             flowId: parentFlow.id,
             payload: { body: { name: 'Alice' } },
@@ -489,29 +518,41 @@ describe('Execute Flow E2E', () => {
             failParentOnFailure: undefined,
         })
 
-        // Poll until parent flow run completes (120s — subflow involves two flow runs + pause/resume)
-        const maxWaitMs = 120_000
-        const pollIntervalMs = 500
-        const start = Date.now()
-        let result = await flowRunService(app.log).getOnePopulatedOrThrow({
-            id: flowRun.id,
+        const result = await pollFlowRunToCompletion(flowRun.id, mockProject.id)
+
+        expect(result.status).toBe(FlowRunStatus.SUCCEEDED)
+        expect(result.steps.step_1.output).toEqual(
+            expect.objectContaining({
+                status: 'success',
+                data: {
+                    greeting: 'Hello Alice',
+                    processed: true,
+                },
+            }),
+        )
+    }, 180_000)
+
+    it('executes parent → child subflow with wait-for-response in test step mode', async () => {
+        const { parentFlow, parentFlowVersion, mockPlatform, mockProject } = await setupSubflowFixtures()
+
+        const flowRun = await flowRunService(app.log).start({
+            flowId: parentFlow.id,
+            payload: { body: { name: 'Alice' } },
+            platformId: mockPlatform.id,
+            executionType: ExecutionType.BEGIN,
+            environment: RunEnvironment.TESTING,
+            progressUpdateType: ProgressUpdateType.TEST_FLOW,
+            executeTrigger: false,
+            flowVersionId: parentFlowVersion.id,
             projectId: mockProject.id,
+            synchronousHandlerId: undefined,
+            httpRequestId: undefined,
+            failParentOnFailure: undefined,
+            stepNameToTest: 'step_1',
         })
 
-        while (
-            (result.status === FlowRunStatus.QUEUED ||
-                result.status === FlowRunStatus.RUNNING ||
-                result.status === FlowRunStatus.PAUSED) &&
-            Date.now() - start < maxWaitMs
-        ) {
-            await new Promise((resolve) => setTimeout(resolve, pollIntervalMs))
-            result = await flowRunService(app.log).getOnePopulatedOrThrow({
-                id: flowRun.id,
-                projectId: mockProject.id,
-            })
-        }
+        const result = await pollFlowRunToCompletion(flowRun.id, mockProject.id)
 
-        // Assertions
         expect(result.status).toBe(FlowRunStatus.SUCCEEDED)
         expect(result.steps.step_1.output).toEqual(
             expect.objectContaining({

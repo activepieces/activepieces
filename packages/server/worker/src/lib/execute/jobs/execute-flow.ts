@@ -16,10 +16,9 @@ import {
     WorkerToApiContract,
 } from '@activepieces/shared'
 import { flowCache } from '../../cache/flow/flow-cache'
-import { provisioner } from '../../cache/provisioner'
 import { workerSettings } from '../../config/worker-settings'
 import { JobContext, JobHandler, JobResult } from '../types'
-import { extractCodeArtifacts, extractPiecePackages } from '../utils/flow-helpers'
+import { provisionFlowPieces } from '../utils/flow-helpers'
 import { resolvePayload } from '../utils/resolve-payload'
 
 export const executeFlowJob: JobHandler<ExecuteFlowJobData> = {
@@ -34,9 +33,11 @@ export const executeFlowJob: JobHandler<ExecuteFlowJobData> = {
             return {}
         }
 
-        const pieces = await extractPiecePackages(flowVersion, data.platformId, ctx.log, ctx.apiClient)
-        const codeSteps = extractCodeArtifacts(flowVersion)
-        await provisioner(ctx.log, ctx.apiClient).provision({ pieces, codeSteps })
+        const provisioned = await provisionFlowPieces({ flowVersion, platformId: data.platformId, flowId: data.flowId, projectId: data.projectId, log: ctx.log, apiClient: ctx.apiClient })
+        if (!provisioned) {
+            await reportFlowStatus(ctx, data, FlowRunStatus.FAILED)
+            return {}
+        }
 
         const sandbox = ctx.sandboxManager.acquire({ log: ctx.log, apiClient: ctx.apiClient })
         try {

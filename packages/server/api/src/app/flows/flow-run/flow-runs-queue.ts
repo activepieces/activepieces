@@ -43,7 +43,6 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                     timeoutInSeconds: 30,
                     fn: async () => {
                         try {
-
                             await runsMetadataQueue(log).get().removeDeduplicationKey(job.data.runId)
                             const runMetadata = await distributedStore.hgetJson<RunsMetadataUpsertData>(key)
                             if (isNil(runMetadata) || Object.keys(runMetadata).length === 0) {
