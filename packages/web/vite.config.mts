@@ -1,5 +1,6 @@
 /// <reference types='vitest' />
 import path from 'path';
+import { createRequire } from 'module';
 
 import tsconfigPaths from 'vite-tsconfig-paths';
 import react from '@vitejs/plugin-react';
@@ -7,6 +8,10 @@ import { defineConfig } from 'vite';
 import checker from 'vite-plugin-checker';
 import tailwindcss from '@tailwindcss/vite';
 import customHtmlPlugin from './vite-plugins/html-plugin';
+
+const cmRequire = createRequire(
+  createRequire(import.meta.url).resolve('@uiw/react-codemirror'),
+);
 
 export default defineConfig(({ command, mode }) => {
   const isDev = command === 'serve' || mode === 'development';
@@ -39,7 +44,16 @@ export default defineConfig(({ command, mode }) => {
       host: 'localhost',
     },
     resolve: {
+      dedupe: ['@codemirror/state', '@codemirror/view'],
       alias: {
+        '@codemirror/state': path.resolve(
+          cmRequire.resolve('@codemirror/state'),
+          '../..',
+        ),
+        '@codemirror/view': path.resolve(
+          cmRequire.resolve('@codemirror/view'),
+          '../..',
+        ),
         '@': path.resolve(__dirname, './src'),
         '@activepieces/shared': path.resolve(
           __dirname,
