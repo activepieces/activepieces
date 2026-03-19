@@ -22,7 +22,7 @@ export const baserow = createPiece({
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/baserow.png',
   categories: [PieceCategory.PRODUCTIVITY],
-  authors: ["kishanprmr","MoShizzle","abuaboud"],
+  authors: ["kishanprmr","MoShizzle","abuaboud", "onyedikachi-david"],
   actions: [
     createRowAction,
     deleteRowAction,
