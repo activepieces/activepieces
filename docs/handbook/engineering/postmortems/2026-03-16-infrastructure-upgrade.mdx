@@ -8,13 +8,8 @@ On March 16–17, 2026, Activepieces experienced a service disruption lasting ap
 
 ## Impact
 
-### Cloud customers (Issue 1)
-
-Most cloud customers experienced failed or delayed flow executions over a ~12–24 hour period, with the first ~6 hours having the most severe impact. Some executions were lost during this window, but all affected executions were replayed from the failed step once service was restored.
-
-### Enterprise customer (Issue 2)
-
-One enterprise customer with a dedicated worker had flows fail because npm was blocked after a trust level misconfiguration during pre incident migration. All affected executions were replayed from the failed step once the issue was resolved.
+- Most cloud customers experienced failed or delayed flow executions over a ~12–24 hour period, with the first ~6 hours being the most severe. All affected executions were replayed from the failed step once service was restored.
+- One enterprise customer with a dedicated worker had flows fail because npm was blocked after a trust level misconfiguration during pre-incident migration. All affected executions were replayed from the failed step once resolved.
 
 ## Timeline
 
