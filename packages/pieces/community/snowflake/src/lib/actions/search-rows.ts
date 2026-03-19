@@ -6,12 +6,14 @@ import {
   destroy,
   execute,
   snowflakeCommonProps,
+  SnowflakeAuthValue,
 } from '../common';
 
 export const searchRowsAction = createAction({
   name: 'search_rows',
   displayName: 'Search Rows',
-  description: 'Search for rows in a Snowflake table using an optional WHERE condition, ordering, and row limit.',
+  description:
+    'Search for rows in a Snowflake table using an optional WHERE condition, ordering, and row limit.',
   auth: snowflakeAuth,
   props: {
     database: snowflakeCommonProps.database,
@@ -20,7 +22,7 @@ export const searchRowsAction = createAction({
     where_clause: Property.ShortText({
       displayName: 'WHERE Condition',
       description:
-        'Optional SQL condition to filter results (e.g. `status = \'active\' AND age > 18`). ' +
+        "Optional SQL condition to filter results (e.g. `status = 'active' AND age > 18`). " +
         'Leave empty to return all rows (subject to the row limit).',
       required: false,
     }),
@@ -45,7 +47,7 @@ export const searchRowsAction = createAction({
     if (order_by) sql += ` ORDER BY ${order_by}`;
     sql += ` LIMIT ${limit ?? 100}`;
 
-    const connection = configureConnection(context.auth.props);
+    const connection = configureConnection(context.auth as SnowflakeAuthValue);
     await connect(connection);
     try {
       const result = await execute(connection, sql, []);

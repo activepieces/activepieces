@@ -6,6 +6,7 @@ import {
   destroy,
   execute,
   snowflakeCommonProps,
+  SnowflakeAuthValue,
 } from '../common';
 
 export const loadDataFromStageAction = createAction({
@@ -85,7 +86,7 @@ export const loadDataFromStageAction = createAction({
     if (file_pattern) sql += ` PATTERN = '${file_pattern}'`;
     sql += ` ON_ERROR = '${on_error ?? 'ABORT_STATEMENT'}'`;
 
-    const connection = configureConnection(context.auth.props);
+    const connection = configureConnection(context.auth as SnowflakeAuthValue);
     await connect(connection);
     try {
       const result = await execute(connection, sql, []);

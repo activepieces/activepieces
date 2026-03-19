@@ -6,12 +6,14 @@ import {
   destroy,
   execute,
   snowflakeCommonProps,
+  SnowflakeAuthValue,
 } from '../common';
 
 export const getTableSchemaAction = createAction({
   name: 'get_table_schema',
   displayName: 'Get Table Schema',
-  description: 'Retrieve the column definitions (name, data type, nullability, default) for a Snowflake table.',
+  description:
+    'Retrieve the column definitions (name, data type, nullability, default) for a Snowflake table.',
   auth: snowflakeAuth,
   props: {
     database: snowflakeCommonProps.database,
@@ -21,7 +23,7 @@ export const getTableSchemaAction = createAction({
   async run(context) {
     const { table } = context.propsValue;
 
-    const connection = configureConnection(context.auth.props);
+    const connection = configureConnection(context.auth as SnowflakeAuthValue);
     await connect(connection);
     try {
       const result = await execute(connection, `DESCRIBE TABLE ${table}`, []);

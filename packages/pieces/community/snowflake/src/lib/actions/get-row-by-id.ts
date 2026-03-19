@@ -7,12 +7,14 @@ import {
   execute,
   getTableColumnOptions,
   snowflakeCommonProps,
+  SnowflakeAuthValue,
 } from '../common';
 
 export const getRowByIdAction = createAction({
   name: 'get_row_by_id',
   displayName: 'Get Row by ID',
-  description: 'Retrieve a single row from a Snowflake table by matching a column value.',
+  description:
+    'Retrieve a single row from a Snowflake table by matching a column value.',
   auth: snowflakeAuth,
   props: {
     database: snowflakeCommonProps.database,
@@ -21,7 +23,8 @@ export const getRowByIdAction = createAction({
     id_column: Property.Dropdown({
       auth: snowflakeAuth,
       displayName: 'ID Column',
-      description: 'The column to search in (e.g. the primary key or unique identifier column).',
+      description:
+        'The column to search in (e.g. the primary key or unique identifier column).',
       refreshers: ['table'],
       required: true,
       options: async ({ auth, table }) => {
@@ -39,8 +42,10 @@ export const getRowByIdAction = createAction({
             placeholder: 'Please select a table first',
           };
         }
-        const authValue = auth as typeof auth;
-        return getTableColumnOptions(authValue.props, table as string);
+        return getTableColumnOptions(
+          auth as SnowflakeAuthValue,
+          table as string
+        );
       },
     }),
     id_value: Property.ShortText({
@@ -54,7 +59,7 @@ export const getRowByIdAction = createAction({
 
     const sql = `SELECT * FROM ${table} WHERE ${id_column} = ? LIMIT 1`;
 
-    const connection = configureConnection(context.auth.props);
+    const connection = configureConnection(context.auth as SnowflakeAuthValue);
     await connect(connection);
     try {
       const result = await execute(connection, sql, [id_value]);

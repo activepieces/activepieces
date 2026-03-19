@@ -6,12 +6,14 @@ import {
   destroy,
   execute,
   snowflakeCommonProps,
+  SnowflakeAuthValue,
 } from '../common';
 
 export const updateRowAction = createAction({
   name: 'update_row',
   displayName: 'Update Row',
-  description: 'Update one or more rows in a Snowflake table that match a WHERE condition.',
+  description:
+    'Update one or more rows in a Snowflake table that match a WHERE condition.',
   auth: snowflakeAuth,
   props: {
     database: snowflakeCommonProps.database,
@@ -21,13 +23,17 @@ export const updateRowAction = createAction({
     where_clause: Property.ShortText({
       displayName: 'WHERE Condition',
       description:
-        'A SQL condition to filter which rows to update (e.g. `id = 42` or `status = \'active\'`). ' +
+        "A SQL condition to filter which rows to update (e.g. `id = 42` or `status = 'active'`). " +
         'Leave empty to update ALL rows in the table (use with caution).',
       required: false,
     }),
   },
   async run(context) {
-    const { table, table_update_values: columnValues, where_clause } = context.propsValue;
+    const {
+      table,
+      table_update_values: columnValues,
+      where_clause,
+    } = context.propsValue;
 
     const setEntries = Object.entries(columnValues).filter(
       ([, v]) => v !== null && v !== undefined && v !== ''
@@ -44,7 +50,7 @@ export const updateRowAction = createAction({
       ? `UPDATE ${table} SET ${setClauses} WHERE ${where_clause}`
       : `UPDATE ${table} SET ${setClauses}`;
 
-    const connection = configureConnection(context.auth.props);
+    const connection = configureConnection(context.auth as SnowflakeAuthValue);
     await connect(connection);
     try {
       const result = await execute(connection, sql, binds);

@@ -6,6 +6,7 @@ import {
   destroy,
   execute,
   snowflakeCommonProps,
+  SnowflakeAuthValue,
 } from '../common';
 
 export const executeStoredProcedureAction = createAction({
@@ -37,8 +38,7 @@ export const executeStoredProcedureAction = createAction({
             placeholder: 'Please select a database and schema first',
           };
         }
-        const authValue = auth as typeof auth;
-        const connection = configureConnection(authValue.props);
+        const connection = configureConnection(auth as SnowflakeAuthValue);
         await connect(connection);
         const result = await execute(
           connection,
@@ -50,8 +50,8 @@ export const executeStoredProcedureAction = createAction({
           disabled: false,
           options: result
             ? (result as Record<string, unknown>[]).map((proc) => ({
-                label: String(proc['name'] ?? proc['arguments'] ?? ''),
-                value: String(proc['name'] ?? ''),
+                label: String(proc['arguments'] ?? proc['name'] ?? ''),
+                value: String(proc['arguments'] ?? proc['name'] ?? ''),
               }))
             : [],
         };
@@ -66,16 +66,28 @@ export const executeStoredProcedureAction = createAction({
     }),
   },
   async run(context) {
-    const { database, schema, procedure_name, arguments: args } = context.propsValue;
+    const {
+      database,
+      schema,
+      procedure_name,
+      arguments: args,
+    } = context.propsValue;
 
-    const argPlaceholders = args && args.length > 0
-      ? (args as string[]).map(() => '?').join(', ')
-      : '';
+    // procedure_name is the full signature string (e.g. "MY_PROC(NUMBER) RETURN VARCHAR")
+    // Extract just the bare name before the first '('
+    const bareName = procedure_name.includes('(')
+      ? procedure_name.substring(0, procedure_name.indexOf('(')).trim()
+      : procedure_name.trim();
 
-    const sql = `CALL ${database}.${schema}.${procedure_name}(${argPlaceholders})`;
+    const argPlaceholders =
+      args && args.length > 0
+        ? (args as string[]).map(() => '?').join(', ')
+        : '';
+
+    const sql = `CALL ${database}.${schema}.${bareName}(${argPlaceholders})`;
     const binds = args && args.length > 0 ? (args as string[]) : [];
 
-    const connection = configureConnection(context.auth.props);
+    const connection = configureConnection(context.auth as SnowflakeAuthValue);
     await connect(connection);
     try {
       const result = await execute(connection, sql, binds);

@@ -6,6 +6,7 @@ import {
   destroy,
   execute,
   snowflakeCommonProps,
+  SnowflakeAuthValue,
 } from '../common';
 
 export const listTablesAction = createAction({
@@ -20,7 +21,7 @@ export const listTablesAction = createAction({
   async run(context) {
     const { database, schema } = context.propsValue;
 
-    const connection = configureConnection(context.auth.props);
+    const connection = configureConnection(context.auth as SnowflakeAuthValue);
     await connect(connection);
     try {
       const result = await execute(

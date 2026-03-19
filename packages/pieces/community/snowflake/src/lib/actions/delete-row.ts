@@ -6,6 +6,7 @@ import {
   destroy,
   execute,
   snowflakeCommonProps,
+  SnowflakeAuthValue,
 } from '../common';
 
 export const deleteRowAction = createAction({
@@ -31,7 +32,7 @@ export const deleteRowAction = createAction({
 
     const sql = `DELETE FROM ${table} WHERE ${where_clause}`;
 
-    const connection = configureConnection(context.auth.props);
+    const connection = configureConnection(context.auth as SnowflakeAuthValue);
     await connect(connection);
     try {
       const result = await execute(connection, sql, []);

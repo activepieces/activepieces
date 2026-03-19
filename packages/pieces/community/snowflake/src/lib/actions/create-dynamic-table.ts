@@ -6,6 +6,7 @@ import {
   destroy,
   execute,
   snowflakeCommonProps,
+  SnowflakeAuthValue,
 } from '../common';
 
 export const createDynamicTableAction = createAction({
@@ -49,7 +50,8 @@ export const createDynamicTableAction = createAction({
     const { database, schema, table_name, target_lag, warehouse, query } =
       context.propsValue;
 
-    const effectiveWarehouse = warehouse || context.auth.props.warehouse;
+    const effectiveWarehouse =
+      warehouse || (context.auth as SnowflakeAuthValue).props?.warehouse;
     if (!effectiveWarehouse) {
       throw new Error(
         'A warehouse is required. Provide it in the action props or set a default in your connection.'
@@ -63,7 +65,7 @@ CREATE OR REPLACE DYNAMIC TABLE ${database}.${schema}.${table_name}
   AS ${query}
     `.trim();
 
-    const connection = configureConnection(context.auth.props);
+    const connection = configureConnection(context.auth as SnowflakeAuthValue);
     await connect(connection);
     try {
       await execute(connection, sql, []);

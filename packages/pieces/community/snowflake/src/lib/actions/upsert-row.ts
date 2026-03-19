@@ -7,6 +7,7 @@ import {
   execute,
   getTableColumnOptions,
   snowflakeCommonProps,
+  SnowflakeAuthValue,
 } from '../common';
 
 export const upsertRowAction = createAction({
@@ -41,14 +42,20 @@ export const upsertRowAction = createAction({
             placeholder: 'Please select a table first',
           };
         }
-        const authValue = auth as typeof auth;
-        return getTableColumnOptions(authValue.props, table as string);
+        return getTableColumnOptions(
+          auth as SnowflakeAuthValue,
+          table as string
+        );
       },
     }),
     table_column_values: snowflakeCommonProps.table_column_values,
   },
   async run(context) {
-    const { table, match_column, table_column_values: columnValues } = context.propsValue;
+    const {
+      table,
+      match_column,
+      table_column_values: columnValues,
+    } = context.propsValue;
 
     const columns = Object.keys(columnValues);
     if (columns.length === 0) {
@@ -77,7 +84,7 @@ WHEN NOT MATCHED THEN
 
     const binds = Object.values(columnValues) as string[];
 
-    const connection = configureConnection(context.auth.props);
+    const connection = configureConnection(context.auth as SnowflakeAuthValue);
     await connect(connection);
     try {
       const result = await execute(connection, sql, binds);
