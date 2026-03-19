@@ -1,4 +1,4 @@
-# pieces-wealthbox
+# pieces-webex
 
 ## Building
 
