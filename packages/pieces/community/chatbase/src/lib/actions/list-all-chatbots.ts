@@ -1,6 +1,6 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction } from '@activepieces/pieces-framework';
-import { chatbaseAuth } from '../../index';
+import { chatbaseAuth } from '../auth';
 import { makeRequest } from '../common';
 
 export const listChatbotsAction = createAction({
@@ -11,7 +11,7 @@ export const listChatbotsAction = createAction({
 	props: {},
 
 	async run(context) {
-		const apiKey = context.auth as string;
+		const apiKey = context.auth.secret_text;
 
 		const response = await makeRequest(apiKey, HttpMethod.GET, '/get-chatbots');
 

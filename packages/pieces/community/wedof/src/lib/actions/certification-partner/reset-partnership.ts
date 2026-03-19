@@ -1,5 +1,5 @@
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { wedofAuth } from '../../..';
+import { wedofAuth } from '../../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { wedofCommon } from '../../common/wedof';
 
@@ -29,7 +29,7 @@ export const resetPartnership = createAction({
         url: wedofCommon.baseUrl + '/certifications/'+ context.propsValue.certifInfo +'/partners/'+ context.propsValue.siret +'/reinitialize',
         headers: {
           'Content-Type': 'application/json',
-          'X-Api-Key': context.auth as string,
+          'X-Api-Key': context.auth.secret_text,
         },
       })
     ).body;

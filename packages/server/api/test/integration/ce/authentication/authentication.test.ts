@@ -1,8 +1,8 @@
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { initializeDatabase } from '../../../../src/app/database'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
-import { setupServer } from '../../../../src/app/server'
+import { db } from '../../../helpers/db'
 import {
     createMockSignInRequest,
     createMockSignUpRequest,
@@ -11,22 +11,19 @@ import {
 let app: FastifyInstance | null = null
 
 beforeAll(async () => {
-    await initializeDatabase({ runMigrations: false })
-    app = await setupServer()
-})
-
-beforeEach(async () => {
-    await databaseConnection().getRepository('flag').delete({})
-    await databaseConnection().getRepository('project').delete({})
-    await databaseConnection().getRepository('platform').delete({})
-    await databaseConnection().getRepository('user').delete({})
+    app = await setupTestEnvironment()
 })
 
 afterAll(async () => {
-    await databaseConnection().destroy()
-    await app?.close()
+    await teardownTestEnvironment()
 })
 
+beforeEach(async () => {
+    await databaseConnection().getRepository('flag').createQueryBuilder().delete().execute()
+    await databaseConnection().getRepository('project').createQueryBuilder().delete().execute()
+    await databaseConnection().getRepository('platform').createQueryBuilder().delete().execute()
+    await databaseConnection().getRepository('user').createQueryBuilder().delete().execute()
+})
 describe('Authentication API', () => {
     describe('Sign up Endpoint', () => {
         it('Adds new user', async () => {
@@ -36,7 +33,7 @@ describe('Authentication API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/authentication/sign-up',
+                url: '/api/v1/authentication/sign-up',
                 body: mockSignUpRequest,
             })
 
@@ -67,7 +64,7 @@ describe('Authentication API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/authentication/sign-up',
+                url: '/api/v1/authentication/sign-up',
                 body: mockSignUpRequest,
             })
 
@@ -75,11 +72,9 @@ describe('Authentication API', () => {
             // assert
             expect(response?.statusCode).toBe(StatusCodes.OK)
 
-            const project = await databaseConnection()
-                .getRepository('project')
-                .findOneBy({
-                    id: responseBody.projectId,
-                })
+            const project = await db.findOneBy('project', {
+                id: responseBody.projectId,
+            })
 
             expect(project?.ownerId).toBe(responseBody.id)
             expect(project?.displayName).toBeDefined()
@@ -95,7 +90,7 @@ describe('Authentication API', () => {
             // First sign up the user
             const signUpResponse = await app?.inject({
                 method: 'POST',
-                url: '/v1/authentication/sign-up',
+                url: '/api/v1/authentication/sign-up',
                 body: mockSignUpRequest,
             })
 
@@ -110,7 +105,7 @@ describe('Authentication API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/authentication/sign-in',
+                url: '/api/v1/authentication/sign-in',
                 body: mockSignInRequest,
             })
 
@@ -140,7 +135,7 @@ describe('Authentication API', () => {
             // First sign up the user
             await app?.inject({
                 method: 'POST',
-                url: '/v1/authentication/sign-up',
+                url: '/api/v1/authentication/sign-up',
                 body: mockSignUpRequest,
             })
 
@@ -152,7 +147,7 @@ describe('Authentication API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/authentication/sign-in',
+                url: '/api/v1/authentication/sign-in',
                 body: mockSignInRequest,
             })
 

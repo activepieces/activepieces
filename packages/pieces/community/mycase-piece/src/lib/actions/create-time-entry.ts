@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { mycaseAuth } from '../../index';
+import { mycaseAuth } from '../auth';
 import { createMyCaseApi } from '../common/mycase-api';
 
 export const createTimeEntry = createAction({
@@ -14,6 +14,7 @@ export const createTimeEntry = createAction({
       required: true,
     }),
     case: Property.Dropdown({
+  auth: mycaseAuth,
       displayName: 'Case',
       description: 'The case to associate with this time entry',
       required: true,
@@ -50,6 +51,7 @@ export const createTimeEntry = createAction({
       },
     }),
     staff: Property.Dropdown({
+  auth: mycaseAuth,
       displayName: 'Staff',
       description: 'The staff member associated with this time entry',
       required: true,

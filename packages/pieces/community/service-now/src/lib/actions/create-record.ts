@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { z } from 'zod';
 import { ServiceNowRecordSchema } from '../common/types';
-import { tableDropdown, createServiceNowClient } from '../common/props';
+import { tableDropdown, createServiceNowClient, servicenowAuth } from '../common/props';
 
 const CreateRecordInputSchema = z.object({
   table: z.string().min(1),
@@ -13,6 +13,7 @@ const CreateRecordInputSchema = z.object({
 });
 
 export const createRecordAction = createAction({
+  auth: servicenowAuth,
   name: 'create_record',
   displayName: 'Create Record',
   description: 'Create a new record in a specified table',

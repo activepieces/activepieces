@@ -1,6 +1,6 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { memAuth } from '../../index';
+import { memAuth } from '../auth';
 import { makeRequest } from '../common';
 
 export const createNoteAction = createAction({
@@ -32,7 +32,7 @@ export const createNoteAction = createAction({
       add_to_collections,
     } = context.propsValue;
 
-    const apiKey = context.auth as string;
+    const apiKey = context.auth.secret_text;
 
     const body: Record<string, unknown> = {
       content,

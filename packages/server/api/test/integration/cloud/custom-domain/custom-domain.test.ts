@@ -1,38 +1,34 @@
-import { AddDomainRequest, CustomDomainStatus } from '@activepieces/ee-shared'
-import { PlatformRole, PrincipalType } from '@activepieces/shared'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
+import { AddDomainRequest, ApEdition, CustomDomainStatus, PlatformRole, PrincipalType } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { initializeDatabase } from '../../../../src/app/database'
-import { databaseConnection } from '../../../../src/app/database/database-connection'
-import { setupServer } from '../../../../src/app/server'
+import { system } from '../../../../src/app/helper/system/system'
+import { db } from '../../../helpers/db'
 import { generateMockToken } from '../../../helpers/auth'
 import {
     createMockCustomDomain,
-    mockAndSaveBasicSetup, 
+    mockAndSaveBasicSetup,
     mockBasicUser } from '../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
 
 beforeAll(async () => {
-    await initializeDatabase({ runMigrations: false })
-    app = await setupServer()
+    app = await setupTestEnvironment()
 })
 
 afterAll(async () => {
-    await databaseConnection().destroy()
-    await app?.close()
+    await teardownTestEnvironment()
 })
-
 describe('Custom Domain API', () => {
     describe('Add Custom Domain API', () => {
         it('should create a new custom domain', async () => {
             // arrange
-            const { mockOwner, mockPlatform, mockProject } = await mockAndSaveBasicSetup()
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockOwner.id,
-                projectId: mockProject.id,
+                
                 platform: { id: mockPlatform.id },
             })
 
@@ -41,7 +37,7 @@ describe('Custom Domain API', () => {
             }
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/custom-domains',
+                url: '/api/v1/custom-domains',
                 body: request,
                 headers: {
                     authorization: `Bearer ${testToken}`,
@@ -53,12 +49,13 @@ describe('Custom Domain API', () => {
             const responseBody = response?.json()
 
             expect(responseBody.domain).toBe(request.domain)
-            expect(responseBody.status).toBe(CustomDomainStatus.PENDING)
+            const expectedStatus = system.getEdition() === ApEdition.CLOUD ? CustomDomainStatus.PENDING : CustomDomainStatus.ACTIVE
+            expect(responseBody.status).toBe(expectedStatus)
         })
 
         it('should fail if user is not platform owner', async () => {
             // arrange
-            const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
+            const { mockPlatform } = await mockAndSaveBasicSetup()
 
             const { mockUser: nonOwnerUser } = await mockBasicUser({
                 user: {
@@ -70,7 +67,7 @@ describe('Custom Domain API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: nonOwnerUser.id,
-                projectId: mockProject.id,
+                
                 platform: { id: mockPlatform.id },
             })
 
@@ -79,7 +76,7 @@ describe('Custom Domain API', () => {
             }
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/custom-domains',
+                url: '/api/v1/custom-domains',
                 body: request,
                 headers: {
                     authorization: `Bearer ${testToken}`,
@@ -94,13 +91,12 @@ describe('Custom Domain API', () => {
     describe('List Custom Domain API', () => {
         it('should list custom domains', async () => {
             // arrange
-            const { mockOwner: mockUserOne, mockPlatform: mockPlatformOne, mockProject: mockProjectOne } = await mockAndSaveBasicSetup()
+            const { mockOwner: mockUserOne, mockPlatform: mockPlatformOne } = await mockAndSaveBasicSetup()
             const {  mockPlatform: mockPlatformTwo } = await mockAndSaveBasicSetup()
 
             const testToken1 = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockUserOne.id,
-                projectId: mockProjectOne.id,
                 platform: { id: mockPlatformOne.id },
             })
 
@@ -114,9 +110,7 @@ describe('Custom Domain API', () => {
                     domain: faker.internet.domainName(),
                 }),
             ]
-            await databaseConnection()
-                .getRepository('custom_domain')
-                .save(mockCustomDomains1)
+            await db.save('custom_domain', mockCustomDomains1)
 
             const mockCustomDomains2 = [
                 createMockCustomDomain({
@@ -124,14 +118,12 @@ describe('Custom Domain API', () => {
                     domain: faker.internet.domainName(),
                 }),
             ]
-            await databaseConnection()
-                .getRepository('custom_domain')
-                .save(mockCustomDomains2)
+            await db.save('custom_domain', mockCustomDomains2)
 
             // act
             const response1 = await app?.inject({
                 method: 'GET',
-                url: '/v1/custom-domains',
+                url: '/api/v1/custom-domains',
                 headers: {
                     authorization: `Bearer ${testToken1}`,
                 },
@@ -154,11 +146,10 @@ describe('Custom Domain API', () => {
     describe('Delete Custom Domain API', () => {
         it('should delete a custom domain', async () => {
             // arrange
-            const { mockOwner: mockUserOne, mockPlatform: mockPlatformOne, mockProject: mockProjectOne } = await mockAndSaveBasicSetup()
+            const { mockOwner: mockUserOne, mockPlatform: mockPlatformOne } = await mockAndSaveBasicSetup()
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockUserOne.id,
-                projectId: mockProjectOne.id,
                 platform: { id: mockPlatformOne.id },
             })
 
@@ -166,14 +157,12 @@ describe('Custom Domain API', () => {
                 platformId: mockPlatformOne.id,
                 domain: faker.internet.domainName(),
             })
-            await databaseConnection()
-                .getRepository('custom_domain')
-                .save(customDomain)
+            await db.save('custom_domain', customDomain)
 
             // act
             const response = await app?.inject({
                 method: 'DELETE',
-                url: `/v1/custom-domains/${customDomain.id}`,
+                url: `/api/v1/custom-domains/${customDomain.id}`,
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -184,7 +173,7 @@ describe('Custom Domain API', () => {
         })
 
         it('should fail to delete a custom domain if user is not platform owner', async () => {
-            const { mockPlatform: mockPlatformOne, mockProject: mockProjectOne   } = await mockAndSaveBasicSetup()
+            const { mockPlatform: mockPlatformOne } = await mockAndSaveBasicSetup()
 
             const { mockUser: nonOwnerUser } = await mockBasicUser({
                 user: {
@@ -192,11 +181,10 @@ describe('Custom Domain API', () => {
                     platformRole: PlatformRole.MEMBER,
                 },
             })
-  
+
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: nonOwnerUser.id,
-                projectId: mockProjectOne.id,
                 platform: { id: mockPlatformOne.id },
             })
 
@@ -204,14 +192,12 @@ describe('Custom Domain API', () => {
                 platformId: mockPlatformOne.id,
                 domain: faker.internet.domainName(),
             })
-            await databaseConnection()
-                .getRepository('custom_domain')
-                .save(customDomain)
+            await db.save('custom_domain', customDomain)
 
             // act
             const response = await app?.inject({
                 method: 'DELETE',
-                url: `/v1/custom-domains/${customDomain.id}`,
+                url: `/api/v1/custom-domains/${customDomain.id}`,
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },

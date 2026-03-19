@@ -1,4 +1,4 @@
-import { workableAuth } from '../../index';
+import { workableAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { getAccountSubdomain } from '../common/get-subdomain';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
@@ -43,7 +43,7 @@ export const getMembers = createAction({
     const email = context.propsValue['email'];
     const name = context.propsValue['name'];
 
-    const accessToken = context.auth;
+    const accessToken = context.auth.secret_text;
 
     const queryParams: Record<string, any> = {};
 

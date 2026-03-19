@@ -2,7 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest } from '../common';
 import { formIdDropdown, submissionIdDropdown } from '../common/props';
-import { filloutFormsAuth } from '../../index';
+import { filloutFormsAuth } from '../auth';
 
 export const getSingleResponse = createAction({
 	auth: filloutFormsAuth,
@@ -19,7 +19,7 @@ export const getSingleResponse = createAction({
 		}),
 	},
 	async run(context) {
-		const apiKey = context.auth as string;
+		const apiKey = context.auth.secret_text;
 
 		const { formId, submissionId } = context.propsValue;
 

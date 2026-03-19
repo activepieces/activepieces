@@ -16,12 +16,20 @@ export const pauseCampaign = createAction({
   description: 'Pause a selected campaign.',
   props: {
     campaignId: Property.Dropdown({
+  auth: ReachinboxAuth,
       displayName: 'Select Campaign',
       description: 'Choose a campaign to pause.',
       required: true,
       refreshers: ['auth'],
       options: async ({ auth }) => {
-        const campaigns = await fetchCampaigns(auth as string);
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please connect your account first',
+          };
+        }
+        const campaigns = await fetchCampaigns(auth.secret_text);
 
         return {
           options: campaigns.map((campaign) => ({
@@ -46,7 +54,7 @@ export const pauseCampaign = createAction({
         url: url,
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${context.auth as string}`,
+          Authorization: `Bearer ${context.auth.secret_text}`,
         },
         body: {
           campaignId, // Pass the selected campaign ID in the request body

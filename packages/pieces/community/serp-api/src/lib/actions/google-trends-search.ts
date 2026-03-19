@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { serpApiAuth } from '../../index';
+import { serpApiAuth } from '../auth';
 import { SerpApiClient } from '../services/serp-api-client';
 import { GoogleTrendsSearchConfig, SerpApiEngine } from '../types';
 
@@ -538,7 +538,7 @@ export const googleTrendsSearch = createAction({
       });
 
       const searchConfig: GoogleTrendsSearchConfig = {
-        api_key: auth,
+        api_key: auth.secret_text,
         engine: SerpApiEngine.GOOGLE_TRENDS,
         q: propsValue.query,
         hl: propsValue.hl,

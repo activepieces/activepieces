@@ -31,7 +31,7 @@ export const enrichEmailsBulk = createAction({
     const encodedIdentifiers = encodeURIComponent(identifiersString);
     
     const headers: Record<string, string> = {
-      'secret-key': context.auth,
+      'secret-key': context.auth.secret_text,
     };
     
     if (user_identifier) {

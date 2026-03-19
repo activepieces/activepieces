@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import snowflake, { Statement, SnowflakeError } from 'snowflake-sdk';
-import { snowflakeAuth } from '../../index';
+import snowflake, { RowStatement, SnowflakeError } from 'snowflake-sdk';
+import { snowflakeAuth } from '../auth';
 import { configureConnection } from '../common';
 
 type QueryResult = unknown[] | undefined;
@@ -56,7 +56,7 @@ export const runMultipleQueries = createAction({
 
   async run(context) {
     const connection = configureConnection(
-      context.auth,
+      context.auth.props,
       context.propsValue.application,
       context.propsValue.timeout
     );
@@ -109,7 +109,7 @@ export const runMultipleQueries = createAction({
                     binds: binds as snowflake.Binds,
                     complete: (
                       err: SnowflakeError | undefined,
-                      stmt: Statement,
+                      stmt: RowStatement,
                       rows: QueryResult
                     ) => {
                       if (err) {

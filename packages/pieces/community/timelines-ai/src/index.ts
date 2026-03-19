@@ -45,7 +45,7 @@ export const timelinesAi = createPiece({
       baseUrl: () => timelinesAiCommon.baseUrl,
       auth: timelinesAiAuth,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${auth as string}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       }),
     }),
   ],

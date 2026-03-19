@@ -1,10 +1,9 @@
 import {
-  PiecePropValueSchema,
   Property,
   createAction,
 } from '@activepieces/pieces-framework';
 import { BikaCommon, makeClient } from '../common';
-import { BikaAuth } from '../../index';
+import { BikaAuth } from '../auth';
 
 export const deleteRecordAction = createAction({
   auth: BikaAuth,
@@ -26,7 +25,7 @@ export const deleteRecordAction = createAction({
     const recordId = context.propsValue.recordId;
 
     const client = makeClient(
-      context.auth as PiecePropValueSchema<typeof BikaAuth>
+      context.auth.props,
     );
 
     const response: any = await client.deleteRecord(

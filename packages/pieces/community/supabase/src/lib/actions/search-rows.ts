@@ -1,5 +1,5 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
-import { supabaseAuth } from "../../index";
+import { supabaseAuth } from '../auth';
 import { createClient } from "@supabase/supabase-js";
 import { supabaseCommon } from "../common/props";
 
@@ -88,7 +88,7 @@ export const searchRows = createAction({
     },
     async run(context) {
         const { table_name, columns, filters, page, pageSize, countOption } = context.propsValue;
-        const { url, apiKey } = context.auth;
+        const { url, apiKey } = context.auth.props;
 
         const currentPage = Math.max(1, page || 1);
         const currentPageSize = Math.min(1000, Math.max(1, pageSize || 20));

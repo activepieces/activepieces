@@ -90,7 +90,7 @@ export const createOrUpdateContact = createAction({
       url: `https://api.sendinblue.com/v3/contacts`,
       body,
       headers: {
-        'api-key': context.auth,
+        'api-key': context.auth.secret_text,
       },
     });
     console.debug('Contact update response', updateResponse);
@@ -99,7 +99,7 @@ export const createOrUpdateContact = createAction({
       method: HttpMethod.GET,
       url: `https://api.sendinblue.com/v3/contacts/${encodeURI(identifier)}`,
       headers: {
-        'api-key': context.auth,
+        'api-key': context.auth.secret_text,
       },
     });
     return contactREsponse.body;

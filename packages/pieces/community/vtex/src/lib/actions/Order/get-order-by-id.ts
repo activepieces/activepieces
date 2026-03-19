@@ -15,7 +15,7 @@ export const getOrderById = createAction({
     }),
   },
   async run(context) {
-    const { hostUrl, appKey, appToken } = context.auth;
+    const { hostUrl, appKey, appToken } = context.auth.props;
     const { OrderId } = context.propsValue;
 
     const order = new Order(hostUrl, appKey, appToken);

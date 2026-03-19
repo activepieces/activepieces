@@ -1,6 +1,6 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { mauticCommon, searchEntity } from '../common';
-import { mauticAuth } from '../..';
+import { mauticAuth } from '../auth';
 
 export const searchContact = createAction({
   auth: mauticAuth,
@@ -11,7 +11,7 @@ export const searchContact = createAction({
     fields: mauticCommon.contactFields,
   },
   run: async function (context) {
-    const { base_url, username, password } = context.auth;
+    const { base_url, username, password } = context.auth.props;
     const url =
       (base_url.endsWith('/') ? base_url : base_url + '/') + 'api/contacts';
     const fields = context.propsValue.fields;

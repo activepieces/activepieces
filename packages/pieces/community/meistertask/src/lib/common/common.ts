@@ -2,7 +2,7 @@ import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { Property } from '@activepieces/pieces-framework';
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { AuthenticationType } from '@activepieces/pieces-common';
-import { meistertaskAuth } from '../../index';
+import { meistertaskAuth } from '../auth';
 
 export const MEISTERTASK_API_URL = 'https://www.meistertask.com/api';
 
@@ -10,6 +10,7 @@ export const meisterTaskCommon = {
   baseUrl: MEISTERTASK_API_URL,
 
   project: Property.Dropdown({
+    auth: meistertaskAuth,
     displayName: 'Project',
     required: true,
     refreshers: [],
@@ -23,7 +24,7 @@ export const meisterTaskCommon = {
       }
 
       try {
-        const token = typeof auth === 'string' ? auth : (auth as any).access_token;
+        const token = typeof auth === 'string' ? auth : (auth).access_token;
 
         const response = await httpClient.sendRequest({
           method: HttpMethod.GET,
@@ -53,6 +54,7 @@ export const meisterTaskCommon = {
   }),
 
   section: Property.Dropdown({
+    auth: meistertaskAuth,
     displayName: 'Section',
     required: true,
     refreshers: ['project'],
@@ -93,7 +95,8 @@ export const meisterTaskCommon = {
       }
     },
   }),
-  task_id: Property.Dropdown({
+  task_id: Property.Dropdown<{ name: string; id: string },true,typeof meistertaskAuth>({
+    auth: meistertaskAuth,
     displayName: 'Task',
     required: true,
     refreshers: [],
@@ -136,7 +139,8 @@ export const meisterTaskCommon = {
     },
   }),
 
-  label: Property.Dropdown({
+  label: Property.Dropdown<{ name: string; id: string },true,typeof meistertaskAuth>({
+    auth: meistertaskAuth,
     displayName: 'Label',
     required: true,
     refreshers: ['project'],
@@ -180,6 +184,7 @@ export const meisterTaskCommon = {
   }),
 
   person: Property.Dropdown({
+    auth: meistertaskAuth,
     displayName: 'Person',
     required: false,
     refreshers: ['project'],

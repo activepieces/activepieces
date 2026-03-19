@@ -2,8 +2,9 @@ import {
   DynamicPropsValue,
   PiecePropValueSchema,
   Property,
+  DropdownState,
 } from '@activepieces/pieces-framework';
-import { baserowAuth } from '../../';
+import { baserowAuth } from '../auth';
 import { BaserowClient } from './client';
 import { BaserowFieldType } from './constants';
 
@@ -14,8 +15,56 @@ export function makeClient(
   return client;
 }
 export const baserowCommon = {
+  tableId: (required = true) =>
+    Property.Dropdown({
+      displayName: 'Table',
+      description: 'Select the table to watch.',
+      required,
+      auth: baserowAuth,
+      refreshers: ['auth'],
+      options: async ({ auth }): Promise<DropdownState<number>> => {
+        if (!auth) {
+          return { disabled: true, placeholder: 'Connect your account first.', options: [] };
+        }
+        const client = makeClient(
+          auth.props
+        );
+        const tables = await client.listTables();
+        return {
+          disabled: false,
+          options: tables.map((t) => ({ label: t.name, value: t.id })),
+        };
+      },
+    }),
+  rowId: (required = true) =>
+    Property.Dropdown({
+      displayName: 'Row',
+      description: 'Select the row.',
+      required,
+      auth: baserowAuth,
+      refreshers: ['auth', 'table_id'],
+      options: async ({ auth, table_id }): Promise<DropdownState<number>> => {
+        if (!auth || !table_id) {
+          return { disabled: true, placeholder: 'Select a table first.', options: [] };
+        }
+        const client = makeClient(auth.props);
+        const response = await client.listRows(table_id as unknown as number) as { results: Record<string, unknown>[] };
+        return {
+          disabled: false,
+          options: response.results.map((row) => {
+            const primaryValue = Object.entries(row)
+              .filter(([k]) => k !== 'id' && k !== 'order')
+              .map(([, v]) => (typeof v === 'string' && v ? v : null))
+              .find(Boolean);
+            const label = primaryValue ? `#${row['id']} ${primaryValue}` : `Row #${row['id']}`;
+            return { label, value: row['id'] as number };
+          }),
+        };
+      },
+    }),
   tableFields: (required = true) =>
     Property.DynamicProperties({
+      auth: baserowAuth,
       displayName: 'Table Fields',
       required,
       refreshers: ['table_id'],
@@ -25,7 +74,7 @@ export const baserowCommon = {
         const fields: DynamicPropsValue = {};
         try {
           const client = makeClient(
-            auth as PiecePropValueSchema<typeof baserowAuth>
+            auth.props
           );
           const tableFields = await client.listTableFields(
             table_id as unknown as number

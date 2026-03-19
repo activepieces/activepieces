@@ -3,7 +3,7 @@ import {
   HttpRequest,
   httpClient,
 } from '@activepieces/pieces-common';
-import { discordAuth } from '../../index';
+import { discordAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { discordCommon } from '../common';
 
@@ -46,7 +46,7 @@ export const discordCreateGuildRole = createAction({
       url: `https://discord.com/api/v9/guilds/${configValue.propsValue.guild_id}/roles`,
       method: HttpMethod.POST,
       headers: {
-        authorization: `Bot ${configValue.auth}`,
+        authorization: `Bot ${configValue.auth.secret_text}`,
         'Content-Type': 'application/json',
         'X-Audit-Log-Reason': `${configValue.propsValue.creation_reason}`,
       },

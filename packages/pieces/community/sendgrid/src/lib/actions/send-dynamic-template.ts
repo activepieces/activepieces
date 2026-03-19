@@ -63,7 +63,7 @@ export const sendDynamicTemplate = createAction({
       body: message,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth,
+        token: context.auth.secret_text,
       },
       queryParams: {},
     });

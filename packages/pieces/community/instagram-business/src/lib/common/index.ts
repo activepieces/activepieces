@@ -17,18 +17,20 @@ To Obtain the following credentials:
 4. Copy App Id and App Secret from Basic Settings.
 `;
 
+const instagramBusinessAuth =  PieceAuth.OAuth2({
+  description: markdown,
+  authUrl: 'https://graph.facebook.com/oauth/authorize',
+  tokenUrl: 'https://graph.facebook.com/oauth/access_token',
+  required: true,
+  scope: ['instagram_basic', 'instagram_content_publish', 'business_management', 'pages_show_list'],
+})
 export const instagramCommon = {
   baseUrl: 'https://graph.facebook.com/v17.0',
 
-  authentication: PieceAuth.OAuth2({
-    description: markdown,
-    authUrl: 'https://graph.facebook.com/oauth/authorize',
-    tokenUrl: 'https://graph.facebook.com/oauth/access_token',
-    required: true,
-    scope: ['instagram_basic', 'instagram_content_publish', 'business_management', 'pages_show_list'],
-  }),
+  authentication: instagramBusinessAuth,
 
-  page: Property.Dropdown<FacebookPageDropdown>({
+  page: Property.Dropdown<FacebookPageDropdown,true,typeof instagramBusinessAuth>({
+    auth: instagramBusinessAuth,
     displayName: 'Page',
     required: true,
     refreshers: [],
@@ -42,7 +44,7 @@ export const instagramCommon = {
       }
 
       const accessToken: string = getAccessTokenOrThrow(
-        auth as OAuth2PropertyValue
+        auth
       );
       const pages: any[] = (await instagramCommon.getPages(accessToken))
         .map((page: FacebookPage) => {

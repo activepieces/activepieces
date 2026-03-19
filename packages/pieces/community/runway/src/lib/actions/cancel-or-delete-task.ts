@@ -21,7 +21,7 @@ export const cancelOrDeleteTask = createAction({
 			taskId: z.string().uuid('Task ID must be a valid UUID format'),
 		});
 
-		const apiKey = auth as string;
+		const apiKey = auth.secret_text;
 		const client = new RunwayML({ apiKey });
 
 		// First get task details to determine what action will be taken

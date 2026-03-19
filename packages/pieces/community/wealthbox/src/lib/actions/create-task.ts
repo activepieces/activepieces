@@ -1,8 +1,10 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { fetchContacts, fetchUsers, fetchUserGroups, fetchTaskCategories, fetchProjects, fetchOpportunities, fetchCustomFields, WEALTHBOX_API_BASE, handleApiError, DOCUMENT_TYPES, TASK_PRIORITIES, LINK_TYPES } from '../common';
+import { wealthboxAuth } from '../..';
 
 export const createTask = createAction({
+  auth: wealthboxAuth,
   name: 'create_task',
   displayName: 'Create Task',
   description: 'Creates tasks tied to contacts with due dates and assignment types. Assign follow-up actions when opportunities are created.',
@@ -19,6 +21,7 @@ export const createTask = createAction({
     }),
 
     assigned_to: Property.Dropdown({
+      auth: wealthboxAuth,
       displayName: 'Assigned To',
       description: 'Select the user who the task is assigned to',
       required: false,
@@ -27,7 +30,7 @@ export const createTask = createAction({
         if (!auth) return { options: [] };
 
         try {
-          const users = await fetchUsers(auth as unknown as string);
+          const users = await fetchUsers(auth.secret_text);
           const assignableUsers = users.filter((user: any) => !user.excluded_from_assignments);
           return {
             options: assignableUsers.map((user: any) => ({
@@ -83,6 +86,7 @@ export const createTask = createAction({
     }),
 
     linked_record: Property.DynamicProperties({
+      auth: wealthboxAuth,
       displayName: 'Linked Record',
       description: 'Select the record to link this task to',
       required: false,
@@ -101,7 +105,7 @@ export const createTask = createAction({
         try {
           const linkTypeStr = link_type as unknown as string;
           if (linkTypeStr === LINK_TYPES.CONTACT) {
-            const contacts = await fetchContacts(auth as unknown as string, { active: true, order: 'recent' });
+            const contacts = await fetchContacts(auth.secret_text, { active: true, order: 'recent' });
             return {
               linked_id: Property.StaticDropdown({
                 displayName: 'Contact',
@@ -116,7 +120,7 @@ export const createTask = createAction({
               })
             };
           } else if (linkTypeStr === LINK_TYPES.PROJECT) {
-            const projects = await fetchProjects(auth as unknown as string);
+            const projects = await fetchProjects(auth.secret_text);
             return {
               linked_id: Property.StaticDropdown({
                 displayName: 'Project',
@@ -131,7 +135,7 @@ export const createTask = createAction({
               })
             };
           } else if (linkTypeStr === LINK_TYPES.OPPORTUNITY) {
-            const opportunities = await fetchOpportunities(auth as unknown as string);
+            const opportunities = await fetchOpportunities(auth.secret_text);
             return {
               linked_id: Property.StaticDropdown({
                 displayName: 'Opportunity',
@@ -167,6 +171,7 @@ export const createTask = createAction({
     }),
 
     category: Property.Dropdown({
+      auth: wealthboxAuth,
       displayName: 'Category',
       description: 'Select the category this task belongs to',
       required: false,
@@ -175,7 +180,7 @@ export const createTask = createAction({
         if (!auth) return { options: [] };
 
         try {
-          const categories = await fetchTaskCategories(auth as unknown as string);
+          const categories = await fetchTaskCategories(auth.secret_text);
           return {
             options: categories.map((category: any) => ({
               label: category.name,
@@ -192,6 +197,7 @@ export const createTask = createAction({
     }),
 
     visible_to: Property.Dropdown({
+      auth: wealthboxAuth,
       displayName: 'Visible To',
       description: 'Select who can view this task',
       required: false,
@@ -200,7 +206,7 @@ export const createTask = createAction({
         if (!auth) return { options: [] };
 
         try {
-          const userGroups = await fetchUserGroups(auth as unknown as string);
+          const userGroups = await fetchUserGroups(auth.secret_text);
           return {
             options: userGroups.map((group: any) => ({
               label: group.name,
@@ -223,6 +229,7 @@ export const createTask = createAction({
     }),
 
     custom_fields: Property.DynamicProperties({
+      auth: wealthboxAuth,
       displayName: 'Custom Fields',
       description: 'Add custom fields to this task',
       required: false,
@@ -251,7 +258,7 @@ export const createTask = createAction({
         }
 
         try {
-          const customFields = await fetchCustomFields(auth as unknown as string, DOCUMENT_TYPES.TASK);
+          const customFields = await fetchCustomFields(auth.secret_text, DOCUMENT_TYPES.TASK);
           const customFieldOptions = customFields.map((field: any) => ({
             label: field.name,
             value: field.name
@@ -351,19 +358,19 @@ export const createTask = createAction({
 
         const linkTypeStr = propsValue.link_type as string;
         if (linkTypeStr === LINK_TYPES.CONTACT) {
-          const contacts = await fetchContacts(auth as unknown as string, { active: true });
+          const contacts = await fetchContacts(auth.secret_text, { active: true });
           const contact = contacts.find((c: any) => c.id === linkedRecord.linked_id);
           if (contact) {
             recordName = contact.name || `${contact.first_name} ${contact.last_name}`.trim();
           }
         } else if (linkTypeStr === LINK_TYPES.PROJECT) {
-          const projects = await fetchProjects(auth as unknown as string);
+          const projects = await fetchProjects(auth.secret_text);
           const project = projects.find((p: any) => p.id === linkedRecord.linked_id);
           if (project) {
             recordName = project.name;
           }
         } else if (linkTypeStr === LINK_TYPES.OPPORTUNITY) {
-          const opportunities = await fetchOpportunities(auth as unknown as string);
+          const opportunities = await fetchOpportunities(auth.secret_text);
           const opportunity = opportunities.find((o: any) => o.id === linkedRecord.linked_id);
           if (opportunity) {
             recordName = opportunity.name;
@@ -387,7 +394,7 @@ export const createTask = createAction({
     const customFieldsArray = (propsValue as any).custom_fields_array;
     if (customFieldsArray && Array.isArray(customFieldsArray) && customFieldsArray.length > 0) {
       try {
-        const customFields = await fetchCustomFields(auth as unknown as string, DOCUMENT_TYPES.TASK);
+        const customFields = await fetchCustomFields(auth.secret_text, DOCUMENT_TYPES.TASK);
         const customFieldMap = new Map(customFields.map((field: any) => [field.name, field.id]));
 
         requestBody.custom_fields = customFieldsArray.map((field: any) => {
@@ -417,7 +424,7 @@ export const createTask = createAction({
         method: HttpMethod.POST,
         url: `${WEALTHBOX_API_BASE}/tasks`,
         headers: {
-          'ACCESS_TOKEN': auth as unknown as string,
+          'ACCESS_TOKEN': auth.secret_text,
           'Content-Type': 'application/json'
         },
         body: requestBody

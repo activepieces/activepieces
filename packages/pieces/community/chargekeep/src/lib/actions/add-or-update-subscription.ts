@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { chargekeepAuth } from '../..';
+import { chargekeepAuth } from '../auth';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const addOrUpdateSubscription = createAction({
@@ -90,11 +90,11 @@ export const addOrUpdateSubscription = createAction({
       hasRecurringBilling: context.propsValue.hasRecurringBilling,
     };
 
-    const res = await httpClient.sendRequest({
+    const res = await httpClient.sendRequest({  
       method: HttpMethod.PUT,
-      url: `${context.auth.base_url}/api/services/CRM/OrderSubscription/Update`,
+      url: `${context.auth.props.base_url}/api/services/CRM/OrderSubscription/Update`,
       headers: {
-        'api-key': context.auth.api_key, // Pass API key in headers
+        'api-key': context.auth.props.api_key, // Pass API key in headers
         'Content-Type': 'application/json',
       },
       body: {

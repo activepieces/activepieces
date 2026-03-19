@@ -11,7 +11,7 @@ export const systemeIoAuth = PieceAuth.SecretText({
       await systemeIoCommon.apiCall({
         method: HttpMethod.GET,
         url: '/tags',
-        auth: { apiKey: auth as string },
+        auth: { apiKey: auth },
       });
       
       return {

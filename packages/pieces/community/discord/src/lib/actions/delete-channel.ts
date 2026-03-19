@@ -4,7 +4,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { createAction } from '@activepieces/pieces-framework';
-import { discordAuth } from '../../index';
+import { discordAuth } from '../auth';
 import { discordCommon } from '../common';
 
 export const discordDeleteChannel = createAction({
@@ -21,7 +21,7 @@ export const discordDeleteChannel = createAction({
       method: HttpMethod.DELETE,
       url: `https://discord.com/api/v9/channels/${configValue.propsValue.channel_id}`,
       headers: {
-        authorization: `Bot ${configValue.auth}`,
+        authorization: `Bot ${configValue.auth.secret_text}`,
         'Content-Type': 'application/json',
       },
     };

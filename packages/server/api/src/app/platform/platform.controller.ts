@@ -1,47 +1,67 @@
+import { apDayjs } from '@activepieces/server-utils'
 import {
     ActivepiecesError,
     ApEdition,
     ApId,
     assertNotNullOrUndefined,
-    EndpointScope,
     ErrorCode,
+    FileType,
     PlatformWithoutSensitiveData,
     PrincipalType,
     SERVICE_KEY_SECURITY_OPENAPI,
     UpdatePlatformRequestBody,
+    UserStatus,
 } from '@activepieces/shared'
-import {
-    FastifyPluginAsyncTypebox,
-    Type,
-} from '@fastify/type-provider-typebox'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
-import { userIdentityRepository } from '../authentication/user-identity/user-identity-service'
-import { transaction } from '../core/db/transaction'
-import { platformMustBeOwnedByCurrentUser, platformToEditMustBeOwnedByCurrentUser } from '../ee/authentication/ee-authorization'
-import { smtpEmailSender } from '../ee/helper/email/email-sender/smtp-email-sender'
+import { z } from 'zod'
+import { securityAccess } from '../core/security/authorization/fastify-security'
+import { platformToEditMustBeOwnedByCurrentUser } from '../ee/authentication/ee-authorization'
 import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
 import { stripeHelper } from '../ee/platform/platform-plan/stripe-helper'
-import { flowService } from '../flows/flow/flow.service'
+import { platformProjectService } from '../ee/projects/platform-project-service'
+import { fileService } from '../file/file.service'
 import { system } from '../helper/system/system'
-import { projectRepo } from '../project/project-service'
+import { SystemJobName } from '../helper/system-jobs/common'
+import { systemJobsSchedule } from '../helper/system-jobs/system-job'
+import { projectService } from '../project/project-service'
 import { userRepo, userService } from '../user/user-service'
-import { platformRepo, platformService } from './platform.service'
+import { platformService } from './platform.service'
 
 const edition = system.getEdition()
-export const platformController: FastifyPluginAsyncTypebox = async (app) => {
-    app.post('/:id', UpdatePlatformRequest, async (req, res) => {
-        await platformMustBeOwnedByCurrentUser.call(app, req, res)
-        await platformToEditMustBeOwnedByCurrentUser.call(app, req, res)
-        const { smtp } = req.body
-        if (smtp) {
-            await smtpEmailSender(req.log).validateOrThrow(smtp)
-        }
+export const platformController: FastifyPluginAsyncZod = async (app) => {
+    app.post('/:id', UpdatePlatformRequest, async (req, _res) => {
+        const platformId = req.principal.platform.id
 
-        await platformService.update({
+        const [logoIconUrl, fullLogoUrl, favIconUrl] = await Promise.all([
+            fileService(app.log).uploadPublicAsset({
+                file: req.body.logoIcon,
+                type: FileType.PLATFORM_ASSET,
+                platformId,
+                metadata: { platformId },
+            }),
+            fileService(app.log).uploadPublicAsset({
+                file: req.body.fullLogo,
+                type: FileType.PLATFORM_ASSET,
+                platformId,
+                metadata: { platformId },
+            }),
+            fileService(app.log).uploadPublicAsset({
+                file: req.body.favIcon,
+                type: FileType.PLATFORM_ASSET,
+                platformId,
+                metadata: { platformId },
+            }),
+        ])
+
+        await platformService(req.log).update({
             id: req.params.id,
             ...req.body,
+            logoIconUrl,
+            fullLogoUrl,
+            favIconUrl,
         })
-        return platformService.getOneWithPlanAndUsageOrThrow(req.params.id)
+        return platformService(req.log).getOneWithPlanAndUsageOrThrow(req.params.id)
     })
 
     app.get('/:id', GetPlatformRequest, async (req) => {
@@ -53,12 +73,26 @@ export const platformController: FastifyPluginAsyncTypebox = async (app) => {
                 },
             })
         }
-        return platformService.getOneWithPlanAndUsageOrThrow(req.principal.platform.id)
+        return platformService(req.log).getOneWithPlanAndUsageOrThrow(req.principal.platform.id)
+    })
+
+    app.get('/assets/:id', GetAssetRequest, async (req, reply) => {
+        const [file, data] = await Promise.all([
+            fileService(app.log).getFileOrThrow({ fileId: req.params.id }),
+            fileService(app.log).getDataOrThrow({ fileId: req.params.id })])
+
+        return reply
+            .header(
+                'Content-Disposition',
+                `attachment; filename="${encodeURI(file.fileName ?? '')}"`,
+            )
+            .type(file.metadata?.mimetype ?? 'application/octet-stream')
+            .status(StatusCodes.OK)
+            .send(data.data)
     })
 
     if (edition === ApEdition.CLOUD) {
         app.delete('/:id', DeletePlatformRequest, async (req, res) => {
-            await platformMustBeOwnedByCurrentUser.call(app, req, res)
             await platformToEditMustBeOwnedByCurrentUser.call(app, req, res)
             assertNotNullOrUndefined(req.principal.platform.id, 'platformId')
             const isCloudNonEnterprisePlan = await platformPlanService(req.log).isCloudNonEnterprisePlan(req.params.id)
@@ -74,31 +108,49 @@ export const platformController: FastifyPluginAsyncTypebox = async (app) => {
             if (platformPlan.stripeSubscriptionId) {
                 await stripeHelper(req.log).deleteCustomer(platformPlan.stripeSubscriptionId)
             }
-            await flowService(req.log).deleteAllByPlatformId(req.params.id)
-            await transaction(async (entityManager) => {
-                await projectRepo(entityManager).delete({
-                    platformId: req.params.id,
-                })
-                await platformRepo(entityManager).delete({
-                    id: req.params.id,
-                })
-                const user = await userService.getOneOrFail({
-                    id: req.principal.id,
-                })
-                await userRepo(entityManager).delete({
-                    id: user.id,
-                    platformId: req.params.id,
-                })
-                const usersUsingIdentity = await userRepo(entityManager).find({
-                    where: {
+
+            const platformId = req.params.id
+
+            const user = await userService(req.log).getOneOrFail({
+                id: req.principal.id,
+            })
+
+            await userRepo().update(
+                { id: user.id, platformId },
+                { status: UserStatus.INACTIVE },
+            )
+
+            const projectIds = await projectService(req.log).getProjectIdsByPlatform(platformId)
+            await Promise.all(
+                projectIds.map((projectId) =>
+                    platformProjectService(req.log).markForDeletion({
+                        id: projectId,
+                        platformId,
+                    }),
+                ),
+            )
+
+            await systemJobsSchedule(req.log).upsertJob({
+                job: {
+                    name: SystemJobName.HARD_DELETE_PLATFORM,
+                    data: {
+                        platformId,
+                        userId: user.id,
                         identityId: user.identityId,
                     },
-                })
-                if (usersUsingIdentity.length === 0) {
-                    await userIdentityRepository(entityManager).delete({
-                        id: user.identityId,
-                    })
-                }
+                    jobId: `hard-delete-platform-${platformId}`,
+                },
+                schedule: {
+                    type: 'one-time',
+                    date: apDayjs(),
+                },
+                customConfig: {
+                    attempts: 25,
+                    backoff: {
+                        type: 'fixed',
+                        delay: 60000,
+                    },
+                },
             })
 
             return res.status(StatusCodes.NO_CONTENT).send()
@@ -108,12 +160,11 @@ export const platformController: FastifyPluginAsyncTypebox = async (app) => {
 
 const UpdatePlatformRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
-        scope: EndpointScope.PLATFORM,
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
     },
     schema: {
         body: UpdatePlatformRequestBody,
-        params: Type.Object({
+        params: z.object({
             id: ApId,
         }),
         response: {
@@ -125,14 +176,13 @@ const UpdatePlatformRequest = {
 
 const GetPlatformRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        scope: EndpointScope.PLATFORM,
+        security: securityAccess.publicPlatform([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     schema: {
         tags: ['platforms'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         description: 'Get a platform by id',
-        params: Type.Object({
+        params: z.object({
             id: ApId,
         }),
         response: {
@@ -143,12 +193,22 @@ const GetPlatformRequest = {
 
 const DeletePlatformRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
-        scope: EndpointScope.PLATFORM,
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
     },
     schema: {
-        params: Type.Object({
+        params: z.object({
             id: ApId,
+        }),
+    },
+}
+
+const GetAssetRequest = {
+    config: {
+        security: securityAccess.public(),
+    },
+    schema: {
+        params: z.object({
+            id: z.string(),
         }),
     },
 }

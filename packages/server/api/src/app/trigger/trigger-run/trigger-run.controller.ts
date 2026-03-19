@@ -1,9 +1,10 @@
-import { triggerRunStats } from '@activepieces/server-shared'
 import { PrincipalType } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { redisConnections } from '../../database/redis-connections'
+import { triggerRunStats } from './trigger-run-stats'
 
-export const triggerRunController: FastifyPluginAsyncTypebox = async (app) => {
+export const triggerRunController: FastifyPluginAsyncZod = async (app) => {
     app.get('/status', GetStatusReportSchema, async (request) => {
         const platformId = request.principal.platform.id
         return triggerRunStats(app.log, await redisConnections.useExisting()).getStatusReport({ platformId })
@@ -12,6 +13,6 @@ export const triggerRunController: FastifyPluginAsyncTypebox = async (app) => {
 
 const GetStatusReportSchema = {
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
+        security: securityAccess.publicPlatform([PrincipalType.USER]),
     },
 }

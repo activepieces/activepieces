@@ -28,7 +28,7 @@ src="https://github.com/activepieces/activepieces/assets/1812998/76c97441-c285-4
     target="_blank"
   ><b>Documentation</b></a>&nbsp;&nbsp;&nbsp;🌪️&nbsp;&nbsp;&nbsp;
    <a
-    href="https://www.activepieces.com/docs/developers/building-pieces/overview"
+    href="https://www.activepieces.com/docs/build-pieces/building-pieces/overview"
     target="_blank"
   ><b>Create a Piece</b></a>&nbsp;&nbsp;&nbsp;🖉&nbsp;&nbsp;&nbsp;
   <a
@@ -102,7 +102,7 @@ Activepieces supports integrations with Google Sheets, OpenAI, Discord, RSS, and
 
 As an **open ecosystem**, all integration source code is accessible in our repository. These integrations are versioned and [published](https://www.npmjs.com/search?q=%40activepieces) directly to npmjs.com upon contribution.
 
-You can easily create your own integration using our TypeScript framework. For detailed instructions, please refer to our [Contributor's Guide](https://www.activepieces.com/docs/developers/building-pieces/overview).
+You can easily create your own integration using our TypeScript framework. For detailed instructions, please refer to our [Contributor's Guide](https://www.activepieces.com/docs/build-pieces/building-pieces/overview).
 
 <br>
 <br>
@@ -115,7 +115,7 @@ You can easily create your own integration using our TypeScript framework. For d
 Activepieces' Community Edition is released as open source under the [MIT license](https://github.com/activepieces/activepieces/blob/main/LICENSE) and enterprise features are released under [Commercial License](https://github.com/activepieces/activepieces/blob/main/packages/ee/LICENSE)
 
 
-Read more about the feature comparison here https://www.activepieces.com/docs/about/editions
+Read more about the feature comparison here https://www.activepieces.com/pricing
 <br>
 <br>
 
@@ -131,7 +131,7 @@ Read more about the feature comparison here https://www.activepieces.com/docs/ab
 
 # 🌐 Contributions
 
-We welcome contributions big or small and in different directions. The best way to do this is to check this [document](https://www.activepieces.com/docs/developers/building-pieces/create-action) and we are always up to talk on [our Discord Server](https://discord.gg/2jUXBKDdP8).
+We welcome contributions big or small and in different directions. The best way to do this is to check this [document](https://www.activepieces.com/docs/build-pieces/building-pieces/create-action) and we are always up to talk on [our Discord Server](https://discord.gg/2jUXBKDdP8).
 
 ## 📚 Translations
 
@@ -451,6 +451,12 @@ Not into coding but still interested in contributing? Come join our [Discord](ht
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/srimalleswari205"><img src="https://avatars.githubusercontent.com/u/235991945?v=4?s=100" width="100px;" alt="Sri malleswari"/><br /><sub><b>Sri malleswari</b></sub></a><br /><a href="#plugin-srimalleswari205" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/SinghaAnirban005"><img src="https://avatars.githubusercontent.com/u/143536290?v=4?s=100" width="100px;" alt="Anirban Singha"/><br /><sub><b>Anirban Singha</b></sub></a><br /><a href="#plugin-SinghaAnirban005" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="http://dania.es"><img src="https://avatars.githubusercontent.com/u/11240307?v=4?s=100" width="100px;" alt="Dania Es"/><br /><sub><b>Dania Es</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=Dania02525" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/meloncafe"><img src="https://avatars.githubusercontent.com/u/6157093?v=4?s=100" width="100px;" alt="M.Cafe"/><br /><sub><b>M.Cafe</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=meloncafe" title="Code">💻</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/vishakha1411"><img src="https://avatars.githubusercontent.com/u/119448495?v=4?s=100" width="100px;" alt="vishakha1411"/><br /><sub><b>vishakha1411</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=vishakha1411" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/murex971"><img src="https://avatars.githubusercontent.com/u/46920259?v=4?s=100" width="100px;" alt="Nupur Agrawal"/><br /><sub><b>Nupur Agrawal</b></sub></a><br /><a href="#plugin-murex971" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://www.shreepandeydev.com"><img src="https://avatars.githubusercontent.com/u/56151022?v=4?s=100" width="100px;" alt="Shreedhar Pandey"/><br /><sub><b>Shreedhar Pandey</b></sub></a><br /><a href="#plugin-Shree-git" title="Plugin/utility libraries">🔌</a></td>
     </tr>
   </tbody>
 </table>

@@ -37,7 +37,7 @@ export const addFaqItem = createAction({
     const { auth: apiKey, propsValue } = context;
     const { faq_id, question, answer, source_url, categories } = propsValue;
 
-    return await aidbaseClient.addFaqItem(apiKey, faq_id, {
+    return await aidbaseClient.addFaqItem(apiKey.secret_text, faq_id, {
       question,
       answer,
       source_url,

@@ -1,13 +1,13 @@
-import { createTrigger, PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
+import { AppConnectionValueForAuthProperty, createTrigger, PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
 import { TriggerStrategy } from '@activepieces/pieces-framework';
 import { googleCalendarCommon } from '../common';
 import { getEvents } from '../common/helper';
 import { GoogleCalendarEvent } from '../common/types';
-import { googleCalendarAuth } from '../../';
+import { googleCalendarAuth } from '../common';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 
 const polling: Polling<
-	PiecePropValueSchema<typeof googleCalendarAuth>,
+    AppConnectionValueForAuthProperty<typeof googleCalendarAuth>,
 	{ calendarId?: string; expandRecurringEvent: boolean }
 > = {
 	strategy: DedupeStrategy.TIMEBASED,

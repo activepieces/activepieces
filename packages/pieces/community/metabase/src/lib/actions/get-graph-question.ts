@@ -31,7 +31,7 @@ export const getGraphQuestion = createAction({
     }),
   },
   async run({ auth, propsValue, files }) {
-    if ('embeddingKey' in auth && !auth.embeddingKey)
+    if ('embeddingKey' in auth.props && !auth.props.embeddingKey)
       return 'An embedding key is needed.';
 
     if (propsValue.waitTime <= 0)
@@ -47,13 +47,16 @@ export const getGraphQuestion = createAction({
     };
 
     // @ts-expect-error we expect an embedding key if the user can use this action.
-    const token = jwt.sign(payload, auth.embeddingKey);
+    const token = jwt.sign(payload, auth.props.embeddingKey);
     const graphName = propsValue.graphName
       ? propsValue.graphName + '.png'
       : `metabase_question_${questionId}.png`;
 
     const iframeUrl =
-      auth.baseUrl + '/embed/question/' + token + '#bordered=true&titled=true';
+      auth.props.baseUrl +
+      '/embed/question/' +
+      token +
+      '#bordered=true&titled=true';
 
     const browser = await chromium.launch({
       headless: true,

@@ -1,10 +1,11 @@
 import { Property } from '@activepieces/pieces-framework';
-import { FolkAuthType } from './auth';
+import { folkAuth } from './auth';
 import { folkClient } from './client';
 
 export const folkProps = {
   group_id: (required = false, displayName = 'Group ID') =>
     Property.Dropdown({
+      auth: folkAuth,
       displayName,
       description:
         'Enter a Folk group ID (e.g., grp_abc123). Groups help you organize your contacts.',
@@ -21,7 +22,7 @@ export const folkProps = {
 
         try {
           const response = await folkClient.getGroups({
-            apiKey: auth as FolkAuthType,
+            apiKey: auth,
           });
           const groups = response.data?.items || [];
 
@@ -46,6 +47,7 @@ export const folkProps = {
 
   company_id: (required = false) =>
     Property.Dropdown({
+      auth: folkAuth,
       displayName: 'Company',
       description: 'Select a company from your Folk workspace.',
       required,
@@ -62,7 +64,7 @@ export const folkProps = {
         try {
           const limit = 100;
           const response = await folkClient.getCompaniesWithFilters({
-            apiKey: auth as FolkAuthType,
+            apiKey: auth,
             limit,
           });
           const companies = response.data?.items || [];
@@ -98,6 +100,7 @@ export const folkProps = {
     }),
   companyIds: (required = false) =>
     Property.MultiSelectDropdown({
+      auth: folkAuth,
       displayName: 'Companies',
       description: 'Select companies to associate with the person.',
       required,
@@ -114,7 +117,7 @@ export const folkProps = {
         try {
           const limit = 100;
           const response = await folkClient.getCompaniesWithFilters({
-            apiKey: auth as FolkAuthType,
+            apiKey: auth,
             limit,
           });
           const companies = response.data?.items || [];
@@ -142,6 +145,7 @@ export const folkProps = {
 
   person_id: (required = false) =>
     Property.Dropdown({
+      auth: folkAuth,
       displayName: 'Person',
       description: 'Select a person from your Folk workspace.',
       required,
@@ -158,7 +162,7 @@ export const folkProps = {
         try {
           const limit = 100;
           const response = await folkClient.getPeopleWithFilters({
-            apiKey: auth as FolkAuthType,
+            apiKey: auth,
             limit,
           });
           const people = response.data?.items || [];

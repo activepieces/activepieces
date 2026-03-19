@@ -1,6 +1,5 @@
 import {
   createAction,
-  PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
 import slackifyMarkdown from 'slackify-markdown';

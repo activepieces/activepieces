@@ -5,7 +5,7 @@ import {
 	createAction,
 } from '@activepieces/pieces-framework';
 import { APITableCommon, createNewFields, makeClient } from '../common';
-import { APITableAuth } from '../../index';
+import { APITableAuth } from '../auth';
 
 export const updateRecordAction = createAction({
 	auth: APITableAuth,
@@ -39,12 +39,12 @@ export const updateRecordAction = createAction({
 		}
 		
 		const newFields: Record<string, unknown> = await createNewFields(
-			auth as PiecePropValueSchema<typeof APITableAuth>,
+			auth.props,
 			datasheetId,
 			fields,
 		);
 
-		const client = makeClient(context.auth as PiecePropValueSchema<typeof APITableAuth>);
+		const client = makeClient(context.auth.props);
 
 		const response: any = await client.updateRecord(datasheetId, {
 			records: [

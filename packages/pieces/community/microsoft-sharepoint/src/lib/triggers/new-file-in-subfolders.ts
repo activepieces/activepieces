@@ -1,4 +1,4 @@
-import { microsoftSharePointAuth } from '../../';
+import { microsoftSharePointAuth } from '../auth';
 import {
   createTrigger,
   TriggerStrategy,
@@ -20,7 +20,8 @@ export const newFileInSubfoldersTrigger = createTrigger({
   props: {
     siteId: microsoftSharePointCommon.siteId,
     driveId: microsoftSharePointCommon.driveId,
-    parentFolderId: Property.Dropdown({
+    parentFolderId: Property.Dropdown({   
+      auth: microsoftSharePointAuth,
       displayName: 'Parent Folder',
       description: 'The parent folder whose subfolders you want to monitor.',
       required: true,

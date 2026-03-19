@@ -22,7 +22,7 @@ export const findTeamMember = createAction({
   },
   async run({ auth, propsValue }) {
     const fathom = new Fathom({
-      security: { apiKeyAuth: auth }
+      security: { apiKeyAuth: auth.secret_text }
     });
 
     const params: Partial<ListTeamMembersRequest> = {};

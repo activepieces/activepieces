@@ -1,4 +1,4 @@
-import { githubAuth } from '../../index';
+import { githubAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { githubApiCall, githubCommon } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
@@ -16,8 +16,11 @@ export const githubLockIssueAction = createAction({
       required: true,
     }),
     lock_reason: Property.Dropdown<
-      'off-topic' | 'too heated' | 'resolved' | 'spam' | undefined
+      'off-topic' | 'too heated' | 'resolved' | 'spam' | undefined,
+      false,
+      typeof githubAuth
     >({
+      auth: githubAuth,
       displayName: 'Lock Reason',
       description: 'The reason for locking the issue',
       required: false,

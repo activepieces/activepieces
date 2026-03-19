@@ -185,10 +185,12 @@
   "Method": "方法",
   "Headers": "ヘッダー",
   "Query Parameters": "クエリパラメータ",
+  "Body Type": "ボディタイプ",
   "Body": "本文",
   "Response is Binary ?": "応答はバイナリですか?",
   "No Error on Failure": "失敗時にエラーはありません",
   "Timeout (in seconds)": "タイムアウト（秒）",
+  "Follow redirects": "リダイレクトをフォローする",
   "At least one of: First Name, Last Name, Email, Mobile Number, Home Number, Work Number is required.": "少なくとも1つは: 氏名、姓、電子メール、携帯電話番号、ホーム番号、作業番号が必要です。",
   "Will the customer receive notifications": "お客様が通知を受信しますか？",
   "Array of tags to assign to the customer": "顧客に割り当てるタグの配列",
@@ -311,7 +313,7 @@
   "Filter leads by a list of tags": "タグのリストでリードをフィルター",
   "The type to convert the lead to. Must be either 'estimate' or 'job'": "リードを変換するタイプ。'estimate' または 'job' のいずれかでなければなりません。",
   "Authorization headers are injected automatically from your connection.": "認証ヘッダは接続から自動的に注入されます。",
-  "Enable for files like PDFs, images, etc..": "PDF、画像などのファイルを有効にします。",
+  "Enable for files like PDFs, images, etc.": "PDF、画像などのファイルを有効にする",
   "Attachments": "添付ファイル",
   "Do Not Service": "サービスではない",
   "Created At": "作成日時",
@@ -344,5 +346,9 @@
   "PATCH": "PATCH",
   "PUT": "PUT",
   "DELETE": "削除",
-  "HEAD": "頭"
+  "HEAD": "頭",
+  "None": "なし",
+  "JSON": "JSON",
+  "Form Data": "フォームデータ",
+  "Raw": "Raw"
 }

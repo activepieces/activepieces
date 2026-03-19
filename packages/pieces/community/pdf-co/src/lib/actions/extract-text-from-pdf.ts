@@ -1,6 +1,6 @@
 import { Property, createAction } from "@activepieces/pieces-framework";
 import { httpClient, HttpMethod, HttpError } from "@activepieces/pieces-common";
-import { pdfCoAuth } from "../../index";
+import { pdfCoAuth } from '../auth';
 import { BASE_URL, commonProps } from "../common/props";
 
 interface PdfCoExtractTextSuccessResponse {
@@ -83,7 +83,7 @@ export const extractTextFromPdf = createAction({
                 method: HttpMethod.POST,
                 url: `${BASE_URL}/pdf/convert/to/text-simple`,
                 headers: {
-                    'x-api-key': auth as string,
+                    'x-api-key': auth.secret_text,
                     'Content-Type': 'application/json',
                 },
                 body: requestBody,

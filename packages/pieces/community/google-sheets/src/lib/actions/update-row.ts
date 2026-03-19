@@ -1,16 +1,15 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { areSheetIdsValid, Dimension, objectToArray, ValueInputOption } from '../common/common';
-import { googleSheetsAuth } from '../..';
+import { areSheetIdsValid, createGoogleClient, Dimension, objectToArray, ValueInputOption } from '../common/common';
+import { googleSheetsAuth } from '../common/common';
 import { getWorkSheetName } from '../triggers/helpers';
 import { google } from 'googleapis';
-import { OAuth2Client } from 'googleapis-common';
 import {  isString } from '@activepieces/shared';
-import { commonProps, rowValuesProp } from '../common/props';
+import { commonProps, isFirstRowHeaderProp, rowValuesProp } from '../common/props';
 
 export const updateRowAction = createAction({
   auth: googleSheetsAuth,
   name: 'update_row',
-  description: 'Overwrite values in an existing row',
+  description: 'Update the data in an existing row.',
   displayName: 'Update Row',
   props: {
     ...commonProps,
@@ -19,12 +18,7 @@ export const updateRowAction = createAction({
       description: 'The row number to update',
       required: true,
     }),
-    first_row_headers: Property.Checkbox({
-      displayName: 'Does the first row contain headers?',
-      description: 'If the first row is headers',
-      required: true,
-      defaultValue: false,
-    }),
+    first_row_headers: isFirstRowHeaderProp(),
     values: rowValuesProp(),
   },
   async run(context) {
@@ -41,8 +35,7 @@ export const updateRowAction = createAction({
     const sheetId = Number(inputSheetId);
 		const spreadsheetId = inputSpreadsheetId as string;
 
-    const authClient = new OAuth2Client();
-    authClient.setCredentials(context.auth);
+    const authClient = await createGoogleClient(context.auth);
 
     const sheets = google.sheets({ version: 'v4', auth: authClient });
 

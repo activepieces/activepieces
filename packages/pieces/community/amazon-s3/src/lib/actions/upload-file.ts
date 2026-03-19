@@ -1,5 +1,5 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { amazonS3Auth } from '../..';
+import { amazonS3Auth } from '../auth';
 import { createS3 } from '../common';
 import { ObjectCannedACL } from '@aws-sdk/client-s3';
 import mime from 'mime-types';
@@ -62,10 +62,10 @@ export const amazons3UploadFile = createAction({
     })
   },
   async run(context) {
-    const { bucket } = context.auth;
+    const { bucket } = context.auth.props;
     const { file, fileName, acl, type } = context.propsValue;
 
-    const s3 = createS3(context.auth);
+    const s3 = createS3(context.auth.props);
 
     let contentType, extension = null
 

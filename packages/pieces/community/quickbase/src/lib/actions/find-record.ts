@@ -1,5 +1,5 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { quickbaseAuth } from '../../index';
+import { quickbaseAuth } from '../auth';
 import { appIdProp, tableIdProp, filtersProp, maxRecordsProp, sortFieldProp, sortOrderProp } from '../common/props';
 import { QuickbaseClient } from '../common/client';
 import { QuickbaseRecordResponse, QuickbaseField } from '../common/types';
@@ -20,7 +20,7 @@ export const findRecord = createAction({
   },
   async run(context) {
     const { appId, tableId, filters, sortField, sortOrder, maxRecords } = context.propsValue;
-    const client = new QuickbaseClient(context.auth.realmHostname, context.auth.userToken);
+    const client = new QuickbaseClient(context.auth.props.realmHostname, context.auth.props.userToken);
 
     const tableFields = await client.get<QuickbaseField[]>(`/fields?tableId=${tableId}`);
     const whereClause = filters ? buildWhereClause(filters) : '';

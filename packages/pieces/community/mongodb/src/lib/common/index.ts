@@ -1,11 +1,12 @@
-import { PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
+import { AppConnectionValueForAuthProperty, PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
 import { MongoClient, Db, ServerApiVersion } from 'mongodb';
 import { mongodbAuth } from '../..';
 
 export async function mongodbConnect(
-  auth: PiecePropValueSchema<typeof mongodbAuth>
+  authWithProps: AppConnectionValueForAuthProperty<typeof mongodbAuth>
 ): Promise<MongoClient> {
   try {
+    const auth = authWithProps.props;
     if (!auth.host || !auth.username || !auth.password) {
       throw new Error('Host, username, and password are required');
     }
@@ -83,6 +84,7 @@ export const mongodbCommon = {
   }),
   collection: (required = true) =>
     Property.Dropdown({
+      auth: mongodbAuth,
       displayName: 'Collection',
       required,
       refreshers: ['database'],
@@ -95,8 +97,8 @@ export const mongodbCommon = {
           };
         }
 
-        const typedAuth = auth as PiecePropValueSchema<typeof mongodbAuth>;
-        const databaseName = database as string || typedAuth.database;
+        const typedAuth = auth
+        const databaseName = database as string || typedAuth.props.database;
 
         if (!databaseName) {
           return {

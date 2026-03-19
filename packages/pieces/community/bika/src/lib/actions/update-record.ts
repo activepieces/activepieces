@@ -5,7 +5,7 @@ import {
 	createAction,
 } from '@activepieces/pieces-framework';
 import { BikaCommon, createNewFields, makeClient } from '../common';
-import { BikaAuth } from '../../index';
+import { BikaAuth } from '../auth';
 
 export const updateRecordAction = createAction({
 	auth: BikaAuth,
@@ -40,13 +40,13 @@ export const updateRecordAction = createAction({
 		}
 
 		const newFields: Record<string, unknown> = await createNewFields(
-			auth as PiecePropValueSchema<typeof BikaAuth>,
+			auth,
 			spaceId,
 			databaseId,
 			fields,
 		);
 
-		const client = makeClient(context.auth as PiecePropValueSchema<typeof BikaAuth>);
+		const client = makeClient(context.auth.props);
 
 		const response: any = await client.updateRecord(spaceId, databaseId, recordId, {
 					fields: {

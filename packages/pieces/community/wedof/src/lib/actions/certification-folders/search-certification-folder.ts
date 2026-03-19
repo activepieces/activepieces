@@ -1,5 +1,5 @@
 import { HttpMethod, QueryParams, httpClient } from '@activepieces/pieces-common';
-import { wedofAuth } from '../../..';
+import { wedofAuth } from '../../auth';
 import { createAction, DynamicPropsValue, Property } from '@activepieces/pieces-framework';
 import { wedofCommon } from '../../common/wedof';
 import dayjs from 'dayjs';
@@ -17,6 +17,7 @@ export const searchCertificationFolder = createAction({
         }),
         period: wedofCommon.period,
         periodForm: Property.DynamicProperties({      
+            auth: wedofAuth,
             description: '',      
             displayName: 'ez',      
             required: true,      
@@ -351,7 +352,7 @@ export const searchCertificationFolder = createAction({
                 url: wedofCommon.baseUrl + '/certificationFolders',
                 headers: {
                      'Content-Type': 'application/json',
-                     'X-Api-Key': context.auth as string,
+                     'X-Api-Key': context.auth.secret_text,
                 },
             })
         ).body;

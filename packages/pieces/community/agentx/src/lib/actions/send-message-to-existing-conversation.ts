@@ -41,7 +41,7 @@ export const sendMessageToExistingConversation = createAction({
     const { conversationId, agentMode, message, context } = propsValue;
 
     const response = await makeRequest(
-      auth as string,
+      auth.secret_text,
       HttpMethod.POST,
       `/conversations/${conversationId}/message`,
       {

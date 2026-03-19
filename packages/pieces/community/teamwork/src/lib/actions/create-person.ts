@@ -37,6 +37,7 @@ export const createPerson = createAction({
 			},
 		}),
 		'company-id': Property.Dropdown({
+auth: teamworkAuth,
 			displayName: 'Company',
 			description: 'The company to associate the user with.',
 			required: false,
@@ -49,7 +50,7 @@ export const createPerson = createAction({
 						options: [],
 					};
 				}
-				const res = await teamworkRequest(auth as PiecePropValueSchema<typeof teamworkAuth>, {
+				const res = await teamworkRequest(auth, {
 					method: HttpMethod.GET,
 					path: '/companies.json',
 				});

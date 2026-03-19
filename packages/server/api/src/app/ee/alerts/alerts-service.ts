@@ -1,7 +1,8 @@
-import { Alert, AlertChannel, ListAlertsParams } from '@activepieces/ee-shared'
-import { apDayjsDuration } from '@activepieces/server-shared'
-import { ActivepiecesError, ApEdition, apId, ApId, ErrorCode, SeekPage } from '@activepieces/shared'
+import { apDayjsDuration } from '@activepieces/server-utils'
+import { ActivepiecesError, Alert, AlertChannel, ApEdition, ApId, apId, ErrorCode, ListAlertsParams, SeekPage } from '@activepieces/shared'
+
 import dayjs from 'dayjs'
+import timezone from 'dayjs/plugin/timezone'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
 import { redisConnections } from '../../database/redis-connections'
@@ -9,12 +10,12 @@ import { flowVersionService } from '../../flows/flow-version/flow-version.servic
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { system } from '../../helper/system/system'
-import { SystemJobData, SystemJobName } from '../../helper/system-jobs/common'
-import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
 import { projectService } from '../../project/project-service'
 import { domainHelper } from '../custom-domains/domain-helper'
 import { emailService } from '../helper/email/email-service'
 import { AlertEntity } from './alerts-entity'
+
+dayjs.extend(timezone)
 
 const repo = repoFactory(AlertEntity)
 const DAY_IN_SECONDS = apDayjsDuration(1, 'day').asSeconds()
@@ -42,7 +43,7 @@ export const alertsService = (log: FastifyBaseLogger) => ({
             return
         }
 
-        const project = await projectService.getOneOrThrow(issueToAlert.projectId)
+        const project = await projectService(log).getOneOrThrow(issueToAlert.projectId)
         const flowVersion = await flowVersionService(log).getLatestLockedVersionOrThrow(issueToAlert.flowId)
 
         const alertsInfo = {
@@ -58,12 +59,7 @@ export const alertsService = (log: FastifyBaseLogger) => ({
                 .format('DD MMM YYYY, HH:mm [PT]'),
         }
 
-        const globalAlertsKey = `alerts:flowFailures:${project.platformId}:${issueToAlert.projectId}`
-        await redisConnection.rpush(globalAlertsKey, JSON.stringify(alertsInfo))
-        await redisConnection.expire(globalAlertsKey, DAY_IN_SECONDS)
-
         await sendAlertOnFlowFailure(log, alertsInfo)
-        await scheduleIssuesSummary(log, alertsInfo)
     },
     async add({ projectId, channel, receiver }: AddPrams): Promise<void> {
         const alertId = apId()
@@ -110,7 +106,6 @@ export const alertsService = (log: FastifyBaseLogger) => ({
         })
 
         const { data, cursor: newCursor } = await paginator.paginate(query)
-
         return paginationHelper.createPage<Alert>(data, newCursor)
     },
     async delete({ alertId }: { alertId: ApId }): Promise<void> {
@@ -118,46 +113,20 @@ export const alertsService = (log: FastifyBaseLogger) => ({
             id: alertId,
         })
     },
-    async runScheduledReminderJob(data: SystemJobData<SystemJobName.ISSUES_SUMMARY>): Promise<void> {
-        await emailService(log).sendIssuesSummary({
-            projectId: data.projectId,
-            projectName: data.projectName,
-            platformId: data.platformId,
-        })
-    },
 })
 
 async function sendAlertOnFlowFailure(log: FastifyBaseLogger, params: IssueParams): Promise<void> {
-    const { platformId } = params
+    const { platformId, flowRunId, projectId } = params
 
-    const issueUrl = await domainHelper.getPublicUrl({
+    const issueUrl = await domainHelper.getInternalUrl({
         platformId,
-        path: 'runs?limit=10#Issues',
+        path: `projects/${projectId}/runs/${flowRunId}`,
     })
 
     await emailService(log).sendIssueCreatedNotification({
         ...params,
         issueOrRunsPath: issueUrl,
         isIssue: true,
-    })
-}
-
-async function scheduleIssuesSummary(log: FastifyBaseLogger, params: IssueParams): Promise<void> {
-    const endOfDay = dayjs().endOf('day')
-    await systemJobsSchedule(log).upsertJob({
-        job: {
-            name: SystemJobName.ISSUES_SUMMARY,
-            data: {
-                projectId: params.projectId,
-                platformId: params.platformId,
-                projectName: params.projectName,
-            },
-            jobId: `issues-reminder-${params.projectId}`,
-        },
-        schedule: {
-            type: 'one-time',
-            date: endOfDay,
-        },
     })
 }
 
@@ -177,7 +146,6 @@ type IssueParams = {
     flowName: string
     createdAt: string
 }
-
 
 type IssueToAlert = {
     flowVersionId: string

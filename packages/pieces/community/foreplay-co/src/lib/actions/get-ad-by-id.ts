@@ -3,12 +3,14 @@ import { foreplayCoApiCall } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { getAdById as getAdByIdProperties } from '../properties';
 import { getAdByIdSchema } from '../schemas';
+import { foreplayCoAuth } from '../..';
 
 export const getAdById = createAction({
   name: 'getAdById',
   displayName: 'Get Ad by ID',
   description: 'Get detailed information about a specific ad by its ID.',
   props: getAdByIdProperties(),
+  auth: foreplayCoAuth,
   async run({ auth, propsValue }) {
     // Validate props using Zod schema
     const validation = getAdByIdSchema.safeParse(propsValue);
@@ -19,7 +21,7 @@ export const getAdById = createAction({
     const adId = propsValue.ad_id;
 
     const response = await foreplayCoApiCall({
-      apiKey: auth as string,
+      apiKey: auth,
       method: HttpMethod.GET,
       resourceUri: `/api/ad/${adId}`,
     });

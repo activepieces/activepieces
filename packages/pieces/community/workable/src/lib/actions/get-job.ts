@@ -1,4 +1,4 @@
-import { workableAuth } from '../../index';
+import { workableAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { getAccountSubdomain } from '../common/get-subdomain';
@@ -18,7 +18,7 @@ export const getJob = createAction({
   async run(context) {
     // Action logic here
     const shortcode = context.propsValue?.shortcode;
-    const accessToken = context.auth;
+    const accessToken = context.auth.secret_text;
 
     // get account subdomain
     const account = await getAccountSubdomain(accessToken);

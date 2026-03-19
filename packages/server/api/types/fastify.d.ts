@@ -1,10 +1,13 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { EndpointScope, Permission, Principal, PrincipalForTypes, PrincipalType } from '@activepieces/shared'
-import fastify, { 
-    RouteShorthandOptions as BaseRouteShorthandOptions, 
-    FastifyBaseLogger, 
-    RouteOptions as FastifyRouteOptions, 
-    FastifySchema, 
+import { AuthorizationType } from '../src/app/core/security/authorization/common'
+import { FastifyRouteSecurity } from '../src/app/core/security/authorization/fastify-security'
+import { ApId, EndpointScope, MaybeProjectExtra, Permission, Principal, Principal, PrincipalForTypes, PrincipalForTypes, PrincipalType } from '@activepieces/shared'
+import fastify, {
+    RouteShorthandOptions as BaseRouteShorthandOptions,
+    FastifyBaseLogger,
+    FastifyRequest,
+    RouteOptions as FastifyRouteOptions,
+    FastifySchema,
     FastifyTypeProvider,
     FastifyTypeProviderDefault,
     RawReplyDefaultExpression,
@@ -27,9 +30,12 @@ declare module 'fastify' {
         Logger = unknown,
         RequestType = unknown,
     > {
-        principal: ContextConfig extends { allowedPrincipals: infer P extends readonly PrincipalType[] }
-            ? PrincipalForTypes<P>
-            : Principal
+        principal:
+        ContextConfig['security'] extends { authorization: { allowedPrincipals: infer Q extends readonly PrincipalType[] } }
+            ? PrincipalForTypes<Q>
+            : typeof ContextConfig['security'] extends undefined ? Principal : Principal
+        
+        projectId: ContextConfig['security'] extends { authorization: { type: AuthorizationType.PROJECT } } ? string : undefined
         rawBody?: string | Buffer
         isMultipart(): boolean
     }
@@ -39,14 +45,13 @@ declare module 'fastify' {
         io: Server
     }
     // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+    // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
     export interface FastifyContextConfig {
         rawBody?: boolean
-        skipAuth?: boolean
-        scope?: EndpointScope
-        permission?: Permission
-        allowedPrincipals: readonly PrincipalType[]
+        security: FastifyRouteSecurity
         otel?: boolean
     }
+    
 
     export type RouteShorthandOptions<
         RawServer extends RawServerBase = RawServerDefault,
@@ -58,6 +63,6 @@ declare module 'fastify' {
         TypeProvider extends FastifyTypeProvider = FastifyTypeProviderDefault,
         Logger extends FastifyBaseLogger = FastifyBaseLogger,
     > = {
-        config?: ContextConfig
+        config: ContextConfig
     }
 }

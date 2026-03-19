@@ -1,4 +1,5 @@
 import { Property } from '@activepieces/pieces-framework';
+import { blueskyAuth } from './auth';
 
 export const languageOptions = [
   { label: 'English', value: 'en' },
@@ -137,12 +138,13 @@ export const authorSelectionProperty = Property.Dropdown({
   displayName: 'Select Author',
   description: 'Choose from accounts you follow',
   required: false,
+  auth: blueskyAuth,
   refreshers: ['auth'],
   options: async ({ auth }) => {
     try {
       const { createBlueskyAgent } = await import('./client');
-      
-      const agent = await createBlueskyAgent(auth as any);
+      if (!auth) return { options: [] };
+      const agent = await createBlueskyAgent(auth.props);
       const session = agent.session;
       
       if (!session?.did) {

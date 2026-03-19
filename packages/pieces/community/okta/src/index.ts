@@ -31,10 +31,10 @@ export const okta = createPiece({
     findUserByEmailAction,
     findGroupByNameAction,
     createCustomApiCallAction({
-      baseUrl: (auth) => `${(auth as any).domain}/api/v1`,
+      baseUrl: (auth) => `${(auth)?.props.domain}/api/v1`,
       auth: oktaAuth,
       authMapping: async (auth) => ({
-        Authorization: `SSWS ${(auth as any).apiToken}`,
+        Authorization: `SSWS ${(auth).props.apiToken}`,
       }),
     }),
   ],

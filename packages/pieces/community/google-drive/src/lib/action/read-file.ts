@@ -1,11 +1,11 @@
-import { googleDriveAuth } from '../..';
+import { googleDriveAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { downloadFileFromDrive } from '../common/get-file-content';
 
 export const readFile = createAction({
   auth: googleDriveAuth,
   name: 'read-file',
-  displayName: 'Read file',
+  displayName: 'Read File Content',
   description: 'Read a selected file from google drive file',
   props: {
     fileId: Property.ShortText({

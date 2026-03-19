@@ -44,7 +44,7 @@ export const askQuestions = createAction({
     }
 
     const submitResponse = await makeRequest(
-      context.auth as string,
+      context.auth.secret_text,
       HttpMethod.POST,
       '/chat/completions/custom',
       requestBody
@@ -68,7 +68,7 @@ export const askQuestions = createAction({
         method: HttpMethod.GET,
         url: pollEndpoint,
         headers: {
-          Authorization: context.auth as string,
+          Authorization: context.auth.secret_text,
         },
       });
 

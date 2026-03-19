@@ -70,7 +70,7 @@ export const stripeCreatePaymentLink = createAction({
     }),
   },
   async run(context) {
-    const client = getClient(context.auth);
+    const client = getClient(context.auth.secret_text);
     const props = context.propsValue;
 
     const params: Stripe.PaymentLinkCreateParams = {

@@ -1,5 +1,5 @@
 import { Property } from '@activepieces/pieces-framework';
-import z from 'zod';
+import z, { ZodTypeAny } from 'zod';
 
 export const listProjectsProps = {
   teamId: Property.Number({ 
@@ -113,20 +113,20 @@ export const runPromptProps = {
   }),
 };
 
-export const listProjectsSchema = {
+export const listProjectsSchema: Record<string, ZodTypeAny> = {
   teamId: z.number().int().positive(),
   group: z.string().optional(),
   
 };
 
-export const getProjectHeadSchema = {
+export const getProjectHeadSchema: Record<string, ZodTypeAny> = {
   projectId: z.number().int().positive(),
   branch: z.string().optional(),
   variables: z.record(z.any()).optional(),
   fallback: z.boolean().optional(),
 };
 
-export const runPromptSchema = {
+export const runPromptSchema: Record<string, ZodTypeAny> = {
   projectId: z.number().int().positive(),
   branch: z.string().optional(),
   hash: z.string().optional(),

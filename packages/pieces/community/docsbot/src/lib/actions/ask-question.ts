@@ -13,14 +13,13 @@ export const askQuestion = createAction({
 
     const { image_urls, ...restProps } = propsValue;
     const conversationId = crypto.randomUUID();
-
     return await docsbotCommon.askQuestion({
       apiKey,
       image_urls: Array.isArray(image_urls)
       ? (image_urls as string[] | undefined)
       : undefined,
       conversationId,
-      ...restProps,
+      ...(restProps),
     });
   },
 });

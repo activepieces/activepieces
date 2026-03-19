@@ -1,5 +1,5 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { amazonS3Auth } from '../../index';
+import { amazonS3Auth } from '../auth';
 import { createS3 } from '../common';
 import { ListObjectsV2CommandInput } from '@aws-sdk/client-s3';
 
@@ -37,10 +37,10 @@ export const listFiles = createAction({
 
   },
   async run(context) {
-    const s3 = createS3(context.auth);
+    const s3 = createS3(context.auth.props);
 
     const params: ListObjectsV2CommandInput = {
-      Bucket: context.auth.bucket,
+      Bucket: context.auth.props.bucket,
       MaxKeys: Math.min(Math.max(context.propsValue.maxKeys || 1000, 1), 1000),
     };
 

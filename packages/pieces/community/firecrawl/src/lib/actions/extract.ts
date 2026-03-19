@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod, pollingHelper } from '@activepieces/pieces-common';
-import { firecrawlAuth } from '../../index';
+import { firecrawlAuth } from '../auth';
 import { forJsonOutputFormat, polling, FIRECRAWL_API_BASE_URL } from '../common/common';
 
 export const extract = createAction({
@@ -53,7 +53,8 @@ export const extract = createAction({
       },
     }),
     schema: Property.DynamicProperties({
-      displayName: 'Data Definition',
+      displayName: 'Data Definition',   
+      auth: firecrawlAuth,
       required: true,
       refreshers: ['mode'],
       props: async (propsValue) => {
@@ -151,7 +152,7 @@ export const extract = createAction({
       url: `${FIRECRAWL_API_BASE_URL}/extract`,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${auth}`,
+        'Authorization': `Bearer ${auth.secret_text}`,
       },
       body: body,
     });
@@ -160,7 +161,7 @@ export const extract = createAction({
 
     // polling
     const timeoutSeconds = propsValue.timeout || 300;
-    const result = await polling(jobId, auth, timeoutSeconds, 'extract')
+    const result = await polling(jobId, auth.secret_text, timeoutSeconds, 'extract')
     return result;
   },
 });

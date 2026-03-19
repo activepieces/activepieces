@@ -54,7 +54,7 @@ export const getSummary = createAction({
         method: HttpMethod.GET,
         url: url,
         headers: {
-          Authorization: `Bearer ${context.auth as string}`,
+          Authorization: `Bearer ${context.auth.secret_text}`,
         },
       });
 

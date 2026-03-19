@@ -1,0 +1,345 @@
+import {
+  AppConnectionStatus,
+  AppConnectionWithoutSensitiveData,
+  Permission,
+} from '@activepieces/shared';
+import { ColumnDef } from '@tanstack/react-table';
+import { t } from 'i18next';
+import {
+  CheckIcon,
+  Trash,
+  Globe,
+  Search,
+  Activity,
+  Clock,
+  FolderOpen,
+  Puzzle,
+} from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { useLocation } from 'react-router-dom';
+
+import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
+import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
+import { NewConnectionDialog } from '@/app/connections/new-connection-dialog';
+import { ReconnectButtonDialog } from '@/app/connections/reconnect-button-dialog';
+import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
+import { CopyTextTooltip } from '@/components/custom/clipboard/copy-text-tooltip';
+import {
+  BulkAction,
+  CURSOR_QUERY_PARAM,
+  DataTable,
+  DataTableFilters,
+  LIMIT_QUERY_PARAM,
+  RowDataWithActions,
+} from '@/components/custom/data-table';
+import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
+import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { FormattedDate } from '@/components/custom/formatted-date';
+import {
+  DefaultTag,
+  DeleteConnectionWarning,
+} from '@/components/custom/global-connection-utils';
+import { StatusIconWithText } from '@/components/custom/status-icon-with-text';
+import { PlusIcon } from '@/components/icons/plus';
+import { Button } from '@/components/ui/button';
+import {
+  EditGlobalConnectionDialog,
+  globalConnectionsMutations,
+  globalConnectionsQueries,
+  appConnectionUtils,
+} from '@/features/connections';
+import { PieceIconWithPieceName } from '@/features/pieces';
+import { useAuthorization } from '@/hooks/authorization-hooks';
+import { platformHooks } from '@/hooks/platform-hooks';
+import { formatUtils } from '@/lib/format-utils';
+
+const STATUS_QUERY_PARAM = 'status';
+const filters: DataTableFilters<keyof AppConnectionWithoutSensitiveData>[] = [
+  {
+    type: 'input',
+    title: t('Search'),
+    accessorKey: 'displayName',
+    icon: Search,
+  },
+  {
+    type: 'select',
+    title: t('Status'),
+    accessorKey: STATUS_QUERY_PARAM,
+    options: Object.values(AppConnectionStatus).map((status) => {
+      return {
+        label: formatUtils.convertEnumToReadable(status),
+        value: status,
+      };
+    }),
+    icon: CheckIcon,
+  },
+];
+
+const GlobalConnectionsTable = () => {
+  const [refresh, setRefresh] = useState(0);
+  const [selectedRows, setSelectedRows] = useState<
+    Array<AppConnectionWithoutSensitiveData>
+  >([]);
+  const { checkAccess } = useAuthorization();
+  const location = useLocation();
+  const { platform } = platformHooks.useCurrentPlatform();
+
+  const columns: ColumnDef<
+    RowDataWithActions<AppConnectionWithoutSensitiveData>,
+    unknown
+  >[] = [
+    {
+      accessorKey: 'displayName',
+      size: 260,
+      header: ({ column }) => (
+        <DataTableColumnHeader
+          column={column}
+          title={t('Name')}
+          icon={Puzzle}
+        />
+      ),
+      cell: ({ row }) => {
+        return (
+          <CopyTextTooltip
+            title={t('External ID')}
+            text={row.original.externalId || ''}
+          >
+            <div className="flex items-center gap-2 w-fit">
+              <PieceIconWithPieceName
+                pieceName={row.original.pieceName}
+                showTooltip={false}
+                size="sm"
+              />
+              <span>{row.original.displayName}</span>
+            </div>
+          </CopyTextTooltip>
+        );
+      },
+    },
+    {
+      accessorKey: 'status',
+      size: 120,
+      header: ({ column }) => (
+        <DataTableColumnHeader
+          column={column}
+          title={t('Status')}
+          icon={Activity}
+        />
+      ),
+      cell: ({ row }) => {
+        const status = row.original.status;
+        const { variant, icon: Icon } =
+          appConnectionUtils.getStatusIcon(status);
+        return (
+          <div className="text-left">
+            <StatusIconWithText
+              icon={Icon}
+              text={formatUtils.convertEnumToReadable(status)}
+              variant={variant}
+            />
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: 'updated',
+      size: 150,
+      header: ({ column }) => (
+        <DataTableColumnHeader
+          column={column}
+          title={t('Connected At')}
+          icon={Clock}
+        />
+      ),
+      cell: ({ row }) => {
+        return (
+          <FormattedDate
+            date={new Date(row.original.updated)}
+            className="text-left"
+          />
+        );
+      },
+    },
+    {
+      accessorKey: 'projectsCount',
+      size: 100,
+      header: ({ column }) => (
+        <DataTableColumnHeader
+          column={column}
+          title={t('Projects')}
+          icon={FolderOpen}
+        />
+      ),
+      cell: ({ row }) => {
+        return (
+          <div className="text-left">{row.original.projectIds.length}</div>
+        );
+      },
+    },
+    {
+      id: 'actions',
+      cell: ({ row }) => {
+        return (
+          <div className="flex items-center gap-2 justify-end">
+            {row.original.preSelectForNewProjects && <DefaultTag />}
+            <EditGlobalConnectionDialog
+              connectionId={row.original.id}
+              currentName={row.original.displayName}
+              projectIds={row.original.projectIds}
+              preSelectForNewProjects={
+                row.original.preSelectForNewProjects ?? false
+              }
+              userHasPermissionToEdit={true}
+              onEdit={() => {
+                refetchGlobalConnections();
+              }}
+            />
+            <ReconnectButtonDialog
+              connection={row.original}
+              onConnectionCreated={() => {
+                refetchGlobalConnections();
+              }}
+              hasPermission={true}
+            />
+          </div>
+        );
+      },
+    },
+  ];
+
+  const searchParams = new URLSearchParams(location.search);
+  const {
+    data: globalConnections,
+    isLoading: isLoadingGlobalConnections,
+    refetch: refetchGlobalConnections,
+  } = globalConnectionsQueries.useGlobalConnections({
+    request: {
+      displayName: searchParams.get('displayName') ?? undefined,
+      cursor: searchParams.get(CURSOR_QUERY_PARAM) ?? undefined,
+      limit: searchParams.get(LIMIT_QUERY_PARAM)
+        ? parseInt(searchParams.get(LIMIT_QUERY_PARAM)!)
+        : 10,
+      status:
+        (searchParams.getAll(STATUS_QUERY_PARAM) as
+          | AppConnectionStatus[]
+          | undefined) ?? [],
+    },
+    extraKeys: [location.search],
+    staleTime: 0,
+    gcTime: 0,
+  });
+
+  const userHasPermissionToWriteAppConnection = checkAccess(
+    Permission.WRITE_APP_CONNECTION,
+  );
+
+  const bulkDeleteGlobalConnections =
+    globalConnectionsMutations.useBulkDeleteGlobalConnections(
+      refetchGlobalConnections,
+    );
+
+  const bulkActions: BulkAction<AppConnectionWithoutSensitiveData>[] = useMemo(
+    () => [
+      {
+        render: (
+          _selectedRows: RowDataWithActions<AppConnectionWithoutSensitiveData>[],
+          resetSelection: () => void,
+        ) => {
+          return (
+            <div onClick={(e) => e.stopPropagation()}>
+              <ConfirmationDeleteDialog
+                title={t('Delete Connections')}
+                message={t(
+                  'The selected connections will be permanently deleted.',
+                )}
+                warning={<DeleteConnectionWarning />}
+                entityName="connections"
+                buttonText={t('Delete')}
+                mutationFn={async () => {
+                  try {
+                    await bulkDeleteGlobalConnections.mutateAsync(
+                      selectedRows.map((row) => row.id),
+                    );
+                    resetSelection();
+                    setSelectedRows([]);
+                  } catch (error) {
+                    console.error('Error deleting connections:', error);
+                  }
+                }}
+              >
+                {selectedRows.length > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-destructive hover:text-destructive"
+                    disabled={!userHasPermissionToWriteAppConnection}
+                  >
+                    <Trash className="mr-1 w-4" />
+                    {`${t('Delete')} (${selectedRows.length})`}
+                  </Button>
+                )}
+              </ConfirmationDeleteDialog>
+            </div>
+          );
+        },
+      },
+    ],
+    [bulkDeleteGlobalConnections, selectedRows],
+  );
+
+  const toolbarButtons = useMemo(
+    () => [
+      <NewConnectionDialog
+        key="new-connection"
+        isGlobalConnection={true}
+        onConnectionCreated={() => {
+          setRefresh(refresh + 1);
+          refetchGlobalConnections();
+        }}
+      >
+        <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm">
+          {t('New Connection')}
+        </AnimatedIconButton>
+      </NewConnectionDialog>,
+    ],
+    [refresh],
+  );
+
+  return (
+    <div className="flex-col w-full">
+      <LockedFeatureGuard
+        featureKey="GLOBAL_CONNECTIONS"
+        locked={!platform.plan.globalConnectionsEnabled}
+        lockTitle={t('Enable Global Connections')}
+        lockDescription={t(
+          'Manage platform-wide connections to external systems.',
+        )}
+        lockVideoUrl="https://cdn.activepieces.com/videos/showcase/global-connections.mp4"
+      >
+        <DashboardPageHeader
+          description={t(
+            'Manage platform-wide connections to external systems.',
+          )}
+          title={t('Global Connections')}
+        />
+        <DataTable
+          emptyStateTextTitle={t('No global connections found')}
+          emptyStateTextDescription={t(
+            'Create a global connection that can be shared to multiple projects',
+          )}
+          emptyStateIcon={<Globe className="size-14" />}
+          columns={columns}
+          page={globalConnections}
+          isLoading={isLoadingGlobalConnections}
+          filters={filters}
+          selectColumn={true}
+          onSelectedRowsChange={setSelectedRows}
+          bulkActions={bulkActions}
+          toolbarButtons={toolbarButtons}
+        />
+      </LockedFeatureGuard>
+    </div>
+  );
+};
+
+export { GlobalConnectionsTable };

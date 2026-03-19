@@ -6,12 +6,12 @@ import {
 import {
   createTrigger,
   TriggerStrategy,
-  OAuth2PropertyValue,
+  AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
-import { notionCommon } from '../common';
+import { getNotionToken, NotionAuthValue, notionCommon } from '../common';
 import { Client } from '@notionhq/client';
-import { notionAuth } from '../..';
+import { notionAuth } from '../auth';
 
 export const newComment = createTrigger({
   auth: notionAuth,
@@ -93,7 +93,10 @@ export const newComment = createTrigger({
   },
 });
 
-const polling: Polling<OAuth2PropertyValue, { page_id: string | undefined }> = {
+const polling: Polling<
+  AppConnectionValueForAuthProperty<typeof notionAuth>,
+  { page_id: string | undefined }
+> = {
   strategy: DedupeStrategy.LAST_ITEM,
   items: async ({ auth, propsValue, lastItemId }) => {
     const lastItem = lastItemId as string;
@@ -122,12 +125,12 @@ const polling: Polling<OAuth2PropertyValue, { page_id: string | undefined }> = {
 };
 
 const getComments = async (
-  authentication: OAuth2PropertyValue,
+  authentication: NotionAuthValue,
   page_id: string,
   startDate: string | null
 ) => {
   const notion = new Client({
-    auth: authentication.access_token,
+    auth: getNotionToken(authentication),
     notionVersion: '2022-02-22',
   });
 

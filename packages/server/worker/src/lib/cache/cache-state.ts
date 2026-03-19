@@ -1,11 +1,8 @@
 import { readFile } from 'node:fs/promises'
 import { join } from 'path'
-import { fileSystemUtils } from '@activepieces/server-shared'
+import { fileSystemUtils, memoryLock } from '@activepieces/server-utils'
 import { isNil } from '@activepieces/shared'
-import { FastifyBaseLogger } from 'fastify'
 import writeFileAtomic from 'write-file-atomic'
-import { workerDistributedLock } from '../utils/worker-redis'
-import { workerCache } from './worker-cache'
 
 type CacheMap = Record<string, string>
 
@@ -14,7 +11,7 @@ const cachePath = (folderPath: string): string =>
 const cached: Record<string, CacheMap | null> = {}
 export const NO_SAVE_GUARD = (_: string): boolean => false
 
-export const cacheState = (folderPath: string, log: FastifyBaseLogger) => {
+export const cacheState = (folderPath: string) => {
     return {
         async getOrSetCache({
             cacheMiss,
@@ -30,10 +27,8 @@ export const cacheState = (folderPath: string, log: FastifyBaseLogger) => {
                     state: value,
                 }
             }
-            const cacheId = await workerCache(log).getCacheId()
-            return workerDistributedLock(log).runExclusive({
-                key: `cache-save-${folderPath}-${cacheId}`,
-                timeoutInSeconds: 30 * 60,
+            return memoryLock.runExclusive({
+                key: `cache-save-${folderPath}`,
                 fn: async () => {
                     const cacheFromDisk = await readCacheFromFile(folderPath)
                     const valueFromDisk = cacheFromDisk[key]
@@ -48,7 +43,7 @@ export const cacheState = (folderPath: string, log: FastifyBaseLogger) => {
                             state: value,
                         }
                     }
-                    const freshCache = await cacheState(folderPath, log).saveCache(
+                    const freshCache = await cacheState(folderPath).saveCache(
                         key,
                         value,
                     )

@@ -1,5 +1,5 @@
 import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
-import { firefliesAiAuth } from '../../index';
+import { firefliesAiAuth } from '../auth';
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { getTranscript } from '../common/queries';
 import { BASE_URL } from '../common';
@@ -116,7 +116,7 @@ export const newTranscriptionCompletedTrigger = createTrigger({
 				method: HttpMethod.POST,
 				authentication: {
 					type: AuthenticationType.BEARER_TOKEN,
-					token: context.auth,
+					token: context.auth.secret_text,
 				},
 				body: {
 					query,
@@ -140,7 +140,7 @@ export const newTranscriptionCompletedTrigger = createTrigger({
 			method: HttpMethod.POST,
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
-				token: context.auth,
+				token: context.auth.secret_text,
 			},
 			body: {
 				query: getTranscript,

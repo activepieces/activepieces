@@ -13,6 +13,7 @@ export const deletePartialFormSubmission = createAction({
   props: {
     formId: paperformCommonProps.formId,
     partialSubmissionId: Property.Dropdown({
+      auth: paperformAuth,
       displayName: 'Partial Submission ID',
       required: true,
       refreshers: ['auth', 'formId'],
@@ -28,7 +29,7 @@ export const deletePartialFormSubmission = createAction({
         try {
           const partialSubmissions = await paperformCommon.getPartialSubmissions({
             formSlugOrId: formId as string,
-            auth: auth as string,
+            auth: auth.secret_text,
             limit: 100,
           });
           
@@ -56,7 +57,7 @@ export const deletePartialFormSubmission = createAction({
       await paperformCommon.apiCall({
         method: HttpMethod.DELETE,
         url: `/partial-submissions/${partialSubmissionId}`,
-        auth: auth as string,
+        auth: auth.secret_text,
       });
       
       return {

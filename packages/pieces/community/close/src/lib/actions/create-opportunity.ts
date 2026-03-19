@@ -1,6 +1,6 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { closeAuth } from '../../';
+import { closeAuth } from '../auth';
 import { customFields, leadId, statusId, userId } from '../common/props';
 import { closeApiCall } from '../common/client';
 
@@ -79,7 +79,7 @@ export const createOpportunity = createAction({
 
 		try {
 			const response = await closeApiCall({
-				accessToken: context.auth,
+				accessToken: context.auth.secret_text,
 				method: HttpMethod.POST,
 				resourceUri: '/opportunity/',
 				body: opportunityData,

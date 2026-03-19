@@ -4,7 +4,7 @@ import {
   HttpMethod,
   httpClient,
 } from '@activepieces/pieces-common';
-import { discordAuth } from '../../index';
+import { discordAuth } from '../auth';
 import { ExecutionType, PauseType } from '@activepieces/shared';
 import { discordCommon } from '../common';
 
@@ -65,7 +65,7 @@ export const discordSendApprovalMessage = createAction({
           ],
         },
         headers: {
-          authorization: `Bot ${ctx.auth}`,
+          authorization: `Bot ${ctx.auth.secret_text}`,
           'Content-Type': 'application/json',
         },
       };

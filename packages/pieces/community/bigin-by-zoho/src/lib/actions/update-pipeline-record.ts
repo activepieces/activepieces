@@ -1,4 +1,4 @@
-import { biginAuth } from '../../index';
+import { biginAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { companyDropdown, contactsDropdown, layoutsDropdown, multiContactsDropdown, pipelineRecordsDropdown, productsDropdown, SubPipelineorStageDropdown, tagsDropdown, usersDropdown } from '../common/props';
 import { biginApiService } from '../common/request';
@@ -12,6 +12,7 @@ export const updatePipelineRecord = createAction({
   props: {
     pipelineRecordId: pipelineRecordsDropdown,
     pipelineDetails: Property.DynamicProperties({
+      auth: biginAuth,
       displayName: 'Pipeline Details',
       description: 'These fields will be prepopulated with pipeline data',
       refreshers: ['pipelineRecordId', 'auth'],

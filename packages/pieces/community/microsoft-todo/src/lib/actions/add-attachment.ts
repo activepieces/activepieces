@@ -1,7 +1,7 @@
 import { Property, createAction, OAuth2PropertyValue } from '@activepieces/pieces-framework';
 import { getTaskListsDropdown, getTasksInListDropdown } from '../common';
 import { TaskFileAttachment } from '@microsoft/microsoft-graph-types';
-import { microsoftToDoAuth } from '../../index';
+import { microsoftToDoAuth } from '../auth';
 import { Client } from '@microsoft/microsoft-graph-client';
 
 export const addAttachmentAction = createAction({
@@ -11,6 +11,7 @@ export const addAttachmentAction = createAction({
     description: 'Adds an attachment to a task.',
     props: {
         task_list_id: Property.Dropdown({
+   auth: microsoftToDoAuth,
             displayName: 'Task List',
             description: 'The task list that contains the task.',
             required: true,
@@ -27,6 +28,7 @@ export const addAttachmentAction = createAction({
             },
         }),
         task_id: Property.Dropdown({
+   auth: microsoftToDoAuth,
             displayName: 'Task',
             description: 'The task to which you are adding the attachment.',
             required: true,

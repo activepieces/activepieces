@@ -27,7 +27,7 @@ export const deleteContactAction = createAction({
     try {
       const result = await sendpulseApiCall<{ result: boolean }>({
         method: HttpMethod.DELETE,
-        auth: context.auth,
+        auth: context.auth.props,
         resourceUri: `/emails/${encodeURIComponent(email)}`,
       });
 

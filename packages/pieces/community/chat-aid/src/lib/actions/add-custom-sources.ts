@@ -18,7 +18,7 @@ export const addCustomSources = createAction({
       displayName: 'Files',
       description:
         'One or more files to upload (PDF, Word, Text, Markdown, HTML, Excel, CSV, PowerPoint, PNG, JPEG, GIF)',
-      properties: {
+      properties: { 
         file: Property.File({
           displayName: 'File',
           description: 'File to upload',
@@ -58,7 +58,7 @@ export const addCustomSources = createAction({
       method: HttpMethod.POST,
       url: `${BASE_URL}${path}`,
       headers: {
-        Authorization: context.auth as string,
+        Authorization: context.auth.secret_text,
         'Content-Type': 'multipart/form-data',
       },
       body: formData,

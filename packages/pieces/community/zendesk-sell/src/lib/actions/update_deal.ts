@@ -76,7 +76,7 @@ export const updateDeal = createAction({
         const response = await callZendeskApi(
             HttpMethod.PUT,
             `v2/deals/${deal_id}`, 
-            auth as ZendeskSellAuth,
+            auth,
             { data: cleanedBody } 
         );
 

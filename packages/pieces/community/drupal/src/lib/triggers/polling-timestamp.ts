@@ -11,17 +11,17 @@ import {
   Polling,
   pollingHelper,
 } from '@activepieces/pieces-common';
-import { drupalAuth } from '../../';
-type DrupalAuthType = PiecePropValueSchema<typeof drupalAuth>;
+import { drupalAuth } from '../auth';
+import { DrupalAuthType } from '../common/jsonapi';
 
-const polling: Polling<PiecePropValueSchema<typeof drupalAuth>, { name: string }> = {
+const polling: Polling<DrupalAuthType, { name: string }> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue, lastFetchEpochMS }) => {
     if (lastFetchEpochMS === undefined || lastFetchEpochMS === null) {
       lastFetchEpochMS = 0;
     }
     console.debug('Polling by timestamp', propsValue['name'], lastFetchEpochMS);
-    const { website_url, username, password } = (auth as DrupalAuthType);
+    const { website_url, username, password } = auth.props;
     const body: any = {
       name: propsValue['name'],
       timestamp: lastFetchEpochMS / 1000,

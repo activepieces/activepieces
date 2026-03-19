@@ -58,7 +58,8 @@ interface RespondIoUserListResponse {
 }
 
 // --- Contact Dropdown ---
-export const contactIdentifierDropdown = Property.Dropdown({
+export const contactIdentifierDropdown =  Property.Dropdown({
+  auth: respondIoAuth,
   displayName: 'Contact',
   description: 'Select the contact.',
   required: true,
@@ -73,7 +74,7 @@ export const contactIdentifierDropdown = Property.Dropdown({
     }
     try {
       const response = await respondIoApiCall<RespondIoContactListResponse>({
-        auth: auth as PiecePropValueSchema<typeof respondIoAuth>,
+        auth,
         method: HttpMethod.POST,
         url: '/contact/list',
         body: {
@@ -118,7 +119,8 @@ export const contactIdentifierDropdown = Property.Dropdown({
 });
 
 // --- Assignee (User) Dropdown ---
-export const assigneeDropdown = Property.Dropdown({
+export const assigneeDropdown =  Property.Dropdown({
+  auth: respondIoAuth,
   displayName: 'Assignee',
   description: 'Select the user to assign the conversation to.',
   required: true,
@@ -134,7 +136,7 @@ export const assigneeDropdown = Property.Dropdown({
 
     try {
       const response = await respondIoApiCall<RespondIoUserListResponse>({
-        auth: auth as PiecePropValueSchema<typeof respondIoAuth>,
+        auth,
         method: HttpMethod.GET,
         url: '/space/user',
       });
