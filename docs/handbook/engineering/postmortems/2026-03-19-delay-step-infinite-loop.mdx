@@ -10,7 +10,7 @@ On March 19, 2026, a bug in the job execution system caused any flow with a **De
 
 ### Cloud customers
 
-Any cloud customer with a flow using the Delay step saw their flow get stuck. The flow would show as "Paused" but never finish. Behind the scenes, it kept restarting over and over without making progress. Customers' delayed actions (like sending a follow-up email after 20 seconds) never executed.
+Any cloud customer with a flow using the Delay step saw their flow get stuck in a "Paused" state, restarting repeatedly without making progress. Delayed actions (like sending a follow-up email after 20 seconds) never executed.
 
 ## Timeline
 
@@ -38,7 +38,7 @@ The fix was to update the job data to `executionType: RESUME` before putting it 
 
 ## What Went Wrong
 
-1. **Job data was not updated before delaying.** BullMQ's `moveToDelayed()` keeps the original job data as-is. The code assumed the job would somehow know to resume, but it still had the "begin" instruction.
+1. **Job data was not updated before delaying.** BullMQ's `moveToDelayed()` keeps the original job data as-is, so the job still had the "begin" instruction.
 2. **No test coverage for the delay-then-resume path.** There was no test that verified a delayed job actually resumes instead of restarting.
 3. **No monitoring for repeated pauses.** There was no alert for flows that kept entering PAUSED state without making progress, so the loop went unnoticed until customers reported it.
 
@@ -47,9 +47,5 @@ The fix was to update the job data to `executionType: RESUME` before putting it 
 | Action Item | Status |
 |---|---|
 | Update job data to `RESUME` before calling `moveToDelayed()` | Done |
-| Add test coverage for delay step resume behavior | To do |
-| Add monitoring for flows that pause repeatedly without progressing | To do |
-
----
-
-We take the reliability of our platform seriously and sincerely apologize for the disruption this caused. If you have any questions or concerns, please reach out to our support team.
+| Add test coverage for delay step resume behavior | Done |
+| Strong durability to never repeat it self| To do |

@@ -1,13 +1,12 @@
 ---
-title: "Redis Overload Incident — March 19, 2026"
-hidden: true
+title: "(Cloud) Redis Overload Causing Piece Timeouts — March 19, 2026"
 ---
 
 ## Summary
 
 On March 19, 2026, Activepieces experienced a service disruption when Redis became overloaded. A runaway subflow that kept rescheduling itself flooded Redis with jobs, and when all app servers were redeployed simultaneously on top of that, the combined load caused cascading failures including backed-up queues and "No handler for job" errors from a startup race condition.
 
-Service was restored by deleting the duplicate scheduled runs from the runaway subflow and deploying servers incrementally (one at a time). A single app server processed the entire runs metadata queue backlog in approximately 2 minutes. No customer data was permanently lost.
+Service was restored by deleting the duplicate scheduled runs from the runaway subflow and deploying servers incrementally (one at a time). A single app server processed the entire runs metadata queue backlog in approximately 2 minutes.
 
 ## Impact
 
@@ -37,15 +36,9 @@ Redis became overloaded due to multiple compounding factors:
 |---|---|
 | Register system job handlers before worker initialization to prevent race condition | Done |
 | Investigate and fix the bug causing the subflow to recursively reschedule itself | To do |
-| Optimize rate limiter Redis usage to reduce load under high concurrency | To do |
-| Lower concurrency for runs metadata processing to reduce Redis pressure | To do |
-| Add monitoring/alerts for Redis resource utilization | To do |
-| Implement staggered/rolling server deployments to avoid thundering herd on Redis | To do |
+| Optimize rate limiter Redis usage to reduce load under high concurrency ([ENG-319](https://linear.app/activepieces/issue/ENG-319)) | To do |
+| Lower concurrency for runs metadata processing to reduce Redis pressure ([ENG-318](https://linear.app/activepieces/issue/ENG-318)) | To do |
 
 ## Improvements Done
 
 - **System job handler registration fix** — split `systemJobsSchedule.init()` into two phases: `init()` (creates the queue) and `startWorker()` (starts consuming jobs). `init()` runs early so modules can call `upsertJob` during registration, while `startWorker()` runs after all handlers are registered. This ensures no jobs are consumed before their handler exists ([PR #12048](https://github.com/activepieces/activepieces/pull/12048)).
-
----
-
-We take the reliability of our platform seriously and sincerely apologize for the disruption this caused. If you have any questions or concerns, please reach out to our support team.
