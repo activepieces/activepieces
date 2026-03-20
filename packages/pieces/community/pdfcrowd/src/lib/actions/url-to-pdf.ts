@@ -602,7 +602,7 @@ export const urlToPdfAction = createAction({
       description: 'Auto trim whitespace around each template command block.',
       required: false,
     }),
-    data_options: Property.ShortText({
+    data_options: Property.LongText({
       displayName: 'Data Options',
       description: 'Set the advanced data options: csv_delimiter - The CSV data delimiter, the default is ,. xml_remove_root - Remove the root XML element from the input data. data_root - The name of the root element inserted into the input data without a root node (e.g. CSV), the default is data.',
       required: false,
