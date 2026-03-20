@@ -1,4 +1,4 @@
-import { apId, flowPieceUtil, FlowVersionTemplate, Metadata, sanitizeObjectForPostgresql, spreadIfDefined, Template, TemplateCategory, TemplateStatus, TemplateTag, TemplateType, UpdateTemplateRequestBody } from '@activepieces/shared'
+import { apId, flowPieceUtil, FlowVersionTemplate, Metadata, sanitizeObjectForPostgresql, spreadIfDefined, Template, TemplateStatus, TemplateTag, TemplateType, UpdateTemplateRequestBody } from '@activepieces/shared'
 import { repoFactory } from '../../core/db/repo-factory'
 import { TemplateEntity } from '../../template/template.entity'
 
@@ -19,7 +19,6 @@ export const platformTemplateService = () => ({
             blogUrl,
             metadata,
             author,
-            usageCount: 0,
             categories,
             pieces,
             flows,
@@ -56,7 +55,7 @@ type CreateParams = {
     blogUrl: string | undefined
     metadata: Metadata | null | undefined
     author: string
-    categories: TemplateCategory[]
+    categories: string[]
     flows: FlowVersionTemplate[]
     pieces: string[]
 }

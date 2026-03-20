@@ -9,32 +9,7 @@ import { findUserByNameAction } from './lib/actions/find-user-by-name';
 import { PieceCategory } from '@activepieces/shared';
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { BASE_URL } from './lib/common/props';
-
-export const manychatAuth = PieceAuth.SecretText({
-	displayName: 'API Key',
-	required: true,
-	description: `You can create an API key by navigating to **Setting -> Extensions -> API**.`,
-	validate: async ({ auth }) => {
-		try {
-			await httpClient.sendRequest({
-				method: HttpMethod.GET,
-				url: `${BASE_URL}/page/getInfo`,
-				authentication: {
-					type: AuthenticationType.BEARER_TOKEN,
-					token: auth
-				},
-			});
-			return {
-				valid: true,
-			};
-		} catch (e) {
-			return {
-				valid: false,
-				error: 'Invalid API Key',
-			};
-		}
-	},
-});
+import { manychatAuth } from './lib/auth';
 
 export const manychat = createPiece({
 	displayName: 'Manychat',

@@ -1,5 +1,5 @@
 {
-  "LLiveSession is the analytics platform that helps businesses scale up based on data.": "LLiveSession is the analytics platform that helps businesses scale up based on data.",
+  "LiveSession is the analytics platform that helps businesses scale up based on data.": "LiveSession is the analytics platform that helps businesses scale up based on data.",
   "r LiveSession API authentication.\n\n**How to get your API Key:**\n1. Go to [LiveSession settings](https://app.livesession.io/app/settings/api?tab=api_tokens)\n2. Click **API Tokens** from the left menu\n3. Click the creation button in the upper-right corner\n4. Give your token a descriptive name\n5. Select the website you want to access through the REST API\n6. Select the scopes you'd like to grant this token e.g webhooks:read, webhooks:write, sessions:read, recordings:read etc.\n7. Click confirm ": "r LiveSession API authentication.\n\n**How to get your API Key:**\n1. Go to [LiveSession settings](https://app.livesession.io/app/settings/api?tab=api_tokens)\n2. Click **API Tokens** from the left menu\n3. Click the creation button in the upper-right corner\n4. Give your token a descriptive name\n5. Select the website you want to access through the REST API\n6. Select the scopes you'd like to grant this token e.g webhooks:read, webhooks:write, sessions:read, recordings:read etc.\n7. Click confirm ",
   "Custom API Call": "Custom API Call",
   "Make a custom API call to a specific endpoint": "Make a custom API call to a specific endpoint",
@@ -11,6 +11,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "Authorization headers are injected automatically from your connection.": "Authorization headers are injected automatically from your connection.",
   "Enable for files like PDFs, images, etc.": "Enable for files like PDFs, images, etc.",
   "GET": "GET",

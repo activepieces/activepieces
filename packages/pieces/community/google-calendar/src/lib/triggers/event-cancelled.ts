@@ -5,9 +5,9 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 import { TriggerStrategy } from '@activepieces/pieces-framework';
-import { googleCalendarCommon } from '../common';
+import { googleCalendarCommon, getAccessToken } from '../common';
 import { GoogleCalendarEvent } from '../common/types';
-import { googleCalendarAuth } from '../../';
+import { googleCalendarAuth } from '../common';
 import {
   DedupeStrategy,
   Polling,
@@ -64,7 +64,7 @@ const polling: Polling<
         url: `${googleCalendarCommon.baseUrl}/calendars/${calendarId}/events/${event_id}`,
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,
-          token: auth.access_token,
+          token: await getAccessToken(auth),
         },
       };
 

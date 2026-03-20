@@ -1,4 +1,4 @@
-import { googleSlidesAuth } from '../../index';
+import { googleSlidesAuth } from '../auth';
 import { createAction, Property } from "@activepieces/pieces-framework";
 import { getSlide } from "../commons/common";
 

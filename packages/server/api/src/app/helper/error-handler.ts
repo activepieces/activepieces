@@ -1,7 +1,7 @@
-import { exceptionHandler } from '@activepieces/server-shared'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { FastifyError, FastifyReply, FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { exceptionHandler } from './exception-handler'
 
 
 export const errorHandler = async (
@@ -14,13 +14,12 @@ export const errorHandler = async (
             [ErrorCode.INVALID_API_KEY]: StatusCodes.UNAUTHORIZED,
             [ErrorCode.INVALID_BEARER_TOKEN]: StatusCodes.UNAUTHORIZED,
             [ErrorCode.QUOTA_EXCEEDED]: StatusCodes.PAYMENT_REQUIRED,
+            [ErrorCode.PIECE_SYNC_NOT_SUPPORTED]: StatusCodes.BAD_REQUEST,
             [ErrorCode.FEATURE_DISABLED]: StatusCodes.PAYMENT_REQUIRED,
             [ErrorCode.AI_CREDIT_LIMIT_EXCEEDED]: StatusCodes.PAYMENT_REQUIRED,
             [ErrorCode.PERMISSION_DENIED]: StatusCodes.FORBIDDEN,
-            [ErrorCode.FILE_NOT_FOUND]: StatusCodes.NOT_FOUND,
             [ErrorCode.ENTITY_NOT_FOUND]: StatusCodes.NOT_FOUND,
             [ErrorCode.EXISTING_USER]: StatusCodes.CONFLICT,
-            [ErrorCode.PROVIDER_PROXY_CONFIG_NOT_FOUND_FOR_PROVIDER]: StatusCodes.NOT_IMPLEMENTED,
             [ErrorCode.EXISTING_ALERT_CHANNEL]: StatusCodes.CONFLICT,
             [ErrorCode.FLOW_IN_USE]: StatusCodes.CONFLICT,
             [ErrorCode.FLOW_OPERATION_IN_PROGRESS]: StatusCodes.CONFLICT,
@@ -44,6 +43,7 @@ export const errorHandler = async (
             [ErrorCode.MCP_PIECE_REQUIRES_CONNECTION]: StatusCodes.BAD_REQUEST,
             [ErrorCode.MCP_PIECE_CONNECTION_MISMATCH]: StatusCodes.BAD_REQUEST,
             [ErrorCode.DOES_NOT_MEET_BUSINESS_REQUIREMENTS]: StatusCodes.UNPROCESSABLE_ENTITY,
+            [ErrorCode.FLOW_RUN_RETRY_OUTSIDE_RETENTION]: StatusCodes.GONE,
         }
         const statusCode =
       statusCodeMap[error.error.code] ?? StatusCodes.BAD_REQUEST
@@ -54,7 +54,7 @@ export const errorHandler = async (
         })
     }
     else {
-        request.log.error('[errorHandler]: ' + JSON.stringify(error))
+        request.log.error({ err: error }, '[errorHandler]')
         if (
             !error.statusCode ||
       error.statusCode === StatusCodes.INTERNAL_SERVER_ERROR.valueOf()

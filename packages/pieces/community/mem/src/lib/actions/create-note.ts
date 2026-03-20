@@ -1,6 +1,6 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { memAuth } from '../../index';
+import { memAuth } from '../auth';
 import { makeRequest } from '../common';
 
 export const createNoteAction = createAction({

@@ -63,6 +63,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "Whether the coupon is enabled or not.": "Whether the coupon is enabled or not.",
   "The target of the coupon.": "The target of the coupon.",
   "Choose between amount or percentage discount.": "Choose between amount or percentage discount.",

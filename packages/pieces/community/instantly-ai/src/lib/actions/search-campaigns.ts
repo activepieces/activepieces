@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, QueryParams } from '@activepieces/pieces-common';
 import { makeRequest } from '../common/client';
-import { instantlyAiAuth } from '../../index';
+import { instantlyAiAuth } from '../auth';
 
 export const searchCampaignsAction = createAction({
   auth: instantlyAiAuth,

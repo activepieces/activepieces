@@ -50,6 +50,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "The name of the lead/company.": "The name of the lead/company.",
   "Array of contact details for this lead": "Array of contact details for this lead",
   "A descriptive name for the opportunity.": "A descriptive name for the opportunity.",

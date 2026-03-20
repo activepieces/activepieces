@@ -5,7 +5,7 @@ const fs = require('fs');
 
 // Check Node.js version
 const nodeVersion = execSync('node --version').toString().trim();
-const requiredVersions = ['v18','v20'];
+const requiredVersions = ['v18','v22','v24'];
 
 // Check operating system
 const os = process.platform;
@@ -37,7 +37,19 @@ try {
 
 execSync('bun install', { stdio: 'inherit' });
 
-execSync('npx pnpm store add \
-  @tsconfig/node18@1.0.0 \
-  @types/node@18.17.1 \
-  typescript@4.8.4', { stdio: 'inherit' });
+// Pre-build dev pieces so dist/ exists before the server starts
+const dotenv = require('dotenv');
+let envConfig = {};
+try {
+  envConfig = dotenv.parse(fs.readFileSync('.env.dev', 'utf-8'));
+} catch {}
+const devPieces = process.env.AP_DEV_PIECES || envConfig.AP_DEV_PIECES;
+
+if (devPieces) {
+  const pieceNames = [...new Set(devPieces.split(',').map(n => n.trim()))];
+  const pieceFilters = pieceNames
+    .map(name => `--filter=@activepieces/piece-${name}`)
+    .join(' ');
+  console.log(`Building dev pieces: ${devPieces}`);
+  execSync(`npx turbo run build ${pieceFilters}`, { stdio: 'inherit' });
+}

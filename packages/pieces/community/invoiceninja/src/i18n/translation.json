@@ -72,6 +72,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "A unique task or ticket number that has not been used before in Invoice Ninja": "A unique task or ticket number that has not been used before in Invoice Ninja",
   "Client ID from Invoice Ninja (optional)": "Client ID from Invoice Ninja (optional)",
   "Project ID from Invoice Ninja (optional)": "Project ID from Invoice Ninja (optional)",

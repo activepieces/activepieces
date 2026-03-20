@@ -1,5 +1,5 @@
 import { createAction, Property, DynamicPropsValue } from "@activepieces/pieces-framework";
-import { supabaseAuth } from "../../index";
+import { supabaseAuth } from '../auth';
 import { createClient } from "@supabase/supabase-js";
 import { supabaseCommon } from "../common/props";
 
