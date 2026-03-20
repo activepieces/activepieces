@@ -36,9 +36,9 @@ export const updatePersonAction = createAction({
       context.auth,
       updatePerson({
         personId: context.propsValue.person_id,
-        firstName: context.propsValue.first_name ?? undefined,
-        lastName: context.propsValue.last_name ?? undefined,
-        city: context.propsValue.city ?? undefined,
+        firstName: context.propsValue.first_name || undefined,
+        lastName: context.propsValue.last_name || undefined,
+        city: context.propsValue.city || undefined,
       })
     );
     return {

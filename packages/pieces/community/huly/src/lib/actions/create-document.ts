@@ -29,7 +29,7 @@ export const createDocumentAction = createAction({
       createDocument({
         teamspace: context.propsValue.teamspace,
         title: context.propsValue.title,
-        content: context.propsValue.content ?? undefined,
+        content: context.propsValue.content || undefined,
       })
     );
     return {

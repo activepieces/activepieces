@@ -15,8 +15,8 @@ export const updateChannelAction = createAction({
   async run(context) {
     const result = await withHulyClient(context.auth, updateChannel({
       channel: context.propsValue.channel,
-      name: context.propsValue.name ?? undefined,
-      topic: context.propsValue.topic ?? undefined,
+      name: context.propsValue.name || undefined,
+      topic: context.propsValue.topic || undefined,
     }));
     return { id: result.id, updated: result.updated };
   },

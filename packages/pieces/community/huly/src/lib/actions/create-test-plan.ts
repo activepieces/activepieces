@@ -15,7 +15,7 @@ export const createTestPlanAction = createAction({
     const result = await withHulyClient(context.auth, createTestPlan({
       project: context.propsValue.project,
       name: context.propsValue.name,
-      description: context.propsValue.description ?? undefined,
+      description: context.propsValue.description || undefined,
     }));
     return { id: result.id, name: result.name, created: result.created };
   },

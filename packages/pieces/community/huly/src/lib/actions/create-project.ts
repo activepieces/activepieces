@@ -42,7 +42,7 @@ export const createProjectAction = createAction({
       createProject({
         name: context.propsValue.name,
         identifier: context.propsValue.identifier,
-        description: context.propsValue.description ?? undefined,
+        description: context.propsValue.description || undefined,
         private: context.propsValue.is_private ?? false,
       })
     );

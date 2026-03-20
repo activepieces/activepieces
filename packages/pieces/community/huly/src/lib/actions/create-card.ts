@@ -37,7 +37,7 @@ export const createCardAction = createAction({
         cardSpace: context.propsValue.card_space,
         type: context.propsValue.type,
         title: context.propsValue.title,
-        content: context.propsValue.content ?? undefined,
+        content: context.propsValue.content || undefined,
       })
     );
     return { id: result.id, title: result.title };

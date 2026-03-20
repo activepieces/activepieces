@@ -37,8 +37,8 @@ export const createPersonAction = createAction({
       createPerson({
         firstName: context.propsValue.first_name,
         lastName: context.propsValue.last_name,
-        email: context.propsValue.email ?? undefined,
-        city: context.propsValue.city ?? undefined,
+        email: context.propsValue.email || undefined,
+        city: context.propsValue.city || undefined,
       })
     );
     return {

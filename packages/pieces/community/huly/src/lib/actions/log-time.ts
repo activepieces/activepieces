@@ -34,7 +34,7 @@ export const logTimeAction = createAction({
         project: context.propsValue.project,
         identifier: context.propsValue.identifier,
         value: context.propsValue.value,
-        description: context.propsValue.description ?? undefined,
+        description: context.propsValue.description || undefined,
       })
     );
     return { report_id: result.reportId, identifier: result.identifier };

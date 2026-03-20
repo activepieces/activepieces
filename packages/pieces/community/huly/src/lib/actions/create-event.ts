@@ -62,10 +62,10 @@ export const createEventAction = createAction({
         dueDate: context.propsValue.due_date
           ? new Date(context.propsValue.due_date).getTime()
           : undefined,
-        description: context.propsValue.description ?? undefined,
-        location: context.propsValue.location ?? undefined,
+        description: context.propsValue.description || undefined,
+        location: context.propsValue.location || undefined,
         allDay: context.propsValue.all_day ?? false,
-        visibility: context.propsValue.visibility ?? undefined,
+        visibility: context.propsValue.visibility || undefined,
       })
     );
     return { event_id: result.eventId };

@@ -33,7 +33,7 @@ export const updateProjectAction = createAction({
       context.auth,
       updateProject({
         project: context.propsValue.project,
-        name: context.propsValue.name ?? undefined,
+        name: context.propsValue.name || undefined,
         description:
           descValue === undefined || descValue === null
             ? undefined

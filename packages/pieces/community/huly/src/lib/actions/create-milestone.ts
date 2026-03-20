@@ -34,7 +34,7 @@ export const createMilestoneAction = createAction({
       createMilestone({
         project: context.propsValue.project,
         label: context.propsValue.label,
-        description: context.propsValue.description ?? undefined,
+        description: context.propsValue.description || undefined,
         targetDate: new Date(context.propsValue.target_date).getTime(),
       })
     );

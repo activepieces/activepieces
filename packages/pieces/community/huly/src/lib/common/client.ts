@@ -20,10 +20,23 @@ export interface HulyAuth {
 }
 
 /**
+ * Extract flat auth props from AP connection value or pass through if already flat.
+ * In action run() and dropdown options(), auth arrives as { type: "CUSTOM_AUTH", props: { url, ... } }.
+ * In validate(), AP unwraps it to just the props object { url, ... }.
+ */
+function extractAuth(auth: unknown): HulyAuth {
+  if (typeof auth === "object" && auth !== null && "props" in auth) {
+    return (auth as { props: HulyAuth }).props;
+  }
+  return auth as HulyAuth;
+}
+
+/**
  * Run an Effect operation that requires HulyClient.
  * Builds layers from auth fields, executes, tears down.
  *
- * Supports both token auth (preferred) and email+password.
+ * Accepts both the raw props object ({ url, workspace, ... }) and
+ * the AP connection wrapper ({ type: "CUSTOM_AUTH", props: { ... } }).
  *
  * Effect.scoped manages the scope — when the operation completes,
  * the scope closes and HulyClient finalizers (connection teardown) run.
@@ -32,9 +45,10 @@ export interface HulyAuth {
  * so Activepieces gets clean error messages instead of fiber failure traces.
  */
 export async function withHulyClient<T>(
-  auth: HulyAuth,
+  rawAuth: unknown,
   operation: Effect.Effect<T, unknown, HulyClient>
 ): Promise<T> {
+  const auth = extractAuth(rawAuth);
   if (!auth.token && (!auth.email || !auth.password)) {
     throw new Error("Provide either an API token, or both email and password.");
   }

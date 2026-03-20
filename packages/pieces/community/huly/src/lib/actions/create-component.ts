@@ -29,7 +29,7 @@ export const createComponentAction = createAction({
       createComponent({
         project: context.propsValue.project,
         label: context.propsValue.label,
-        description: context.propsValue.description ?? undefined,
+        description: context.propsValue.description || undefined,
       })
     );
     return {

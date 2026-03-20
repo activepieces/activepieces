@@ -50,13 +50,13 @@ export const updateIssueAction = createAction({
       updateIssue({
         project: context.propsValue.project,
         identifier: context.propsValue.identifier,
-        title: context.propsValue.title ?? undefined,
-        description: context.propsValue.description ?? undefined,
-        status: context.propsValue.status ?? undefined,
-        priority: context.propsValue.priority ?? undefined,
-        assignee: context.propsValue.assignee ?? undefined,
-        component: context.propsValue.component ?? undefined,
-        milestone: context.propsValue.milestone ?? undefined,
+        title: context.propsValue.title || undefined,
+        description: context.propsValue.description || undefined,
+        status: context.propsValue.status || undefined,
+        priority: context.propsValue.priority || undefined,
+        assignee: context.propsValue.assignee || undefined,
+        component: context.propsValue.component || undefined,
+        milestone: context.propsValue.milestone || undefined,
       })
     );
     return {

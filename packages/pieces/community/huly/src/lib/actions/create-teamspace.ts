@@ -32,7 +32,7 @@ export const createTeamspaceAction = createAction({
       context.auth,
       createTeamspace({
         name: context.propsValue.name,
-        description: context.propsValue.description ?? undefined,
+        description: context.propsValue.description || undefined,
         private: context.propsValue.is_private ?? false,
       })
     );

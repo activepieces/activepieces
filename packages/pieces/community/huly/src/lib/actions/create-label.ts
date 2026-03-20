@@ -37,8 +37,8 @@ export const createLabelAction = createAction({
       context.auth,
       createLabel({
         title: context.propsValue.title,
-        color: context.propsValue.color ?? undefined,
-        description: context.propsValue.description ?? undefined,
+        color: context.propsValue.color || undefined,
+        description: context.propsValue.description || undefined,
       })
     );
     return {

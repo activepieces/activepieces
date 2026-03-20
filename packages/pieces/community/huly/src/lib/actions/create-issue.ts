@@ -44,12 +44,12 @@ export const createIssueAction = createAction({
       createIssue({
         project: context.propsValue.project,
         title: context.propsValue.title,
-        description: context.propsValue.description ?? undefined,
-        status: context.propsValue.status ?? undefined,
-        priority: context.propsValue.priority ?? undefined,
-        assignee: context.propsValue.assignee ?? undefined,
-        component: context.propsValue.component ?? undefined,
-        milestone: context.propsValue.milestone ?? undefined,
+        description: context.propsValue.description || undefined,
+        status: context.propsValue.status || undefined,
+        priority: context.propsValue.priority || undefined,
+        assignee: context.propsValue.assignee || undefined,
+        component: context.propsValue.component || undefined,
+        milestone: context.propsValue.milestone || undefined,
       })
     );
     return {

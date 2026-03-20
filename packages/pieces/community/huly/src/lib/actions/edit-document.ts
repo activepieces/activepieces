@@ -52,11 +52,11 @@ export const editDocumentAction = createAction({
       editDocument({
         teamspace: context.propsValue.teamspace,
         document: context.propsValue.document,
-        title: context.propsValue.title ?? undefined,
-        content: context.propsValue.content ?? undefined,
-        old_text: context.propsValue.old_text ?? undefined,
-        new_text: context.propsValue.new_text ?? undefined,
-        replace_all: context.propsValue.replace_all ?? undefined,
+        title: context.propsValue.title || undefined,
+        content: context.propsValue.content || undefined,
+        old_text: context.propsValue.old_text || undefined,
+        new_text: context.propsValue.new_text || undefined,
+        replace_all: context.propsValue.replace_all || undefined,
       })
     );
     return {

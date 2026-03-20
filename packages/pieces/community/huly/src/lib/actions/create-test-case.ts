@@ -31,10 +31,10 @@ export const createTestCaseAction = createAction({
     const result = await withHulyClient(context.auth, createTestCase({
       project: context.propsValue.project,
       name: context.propsValue.name,
-      suite: context.propsValue.suite ?? undefined,
-      type: context.propsValue.type ?? undefined,
-      priority: context.propsValue.priority ?? undefined,
-      description: context.propsValue.description ?? undefined,
+      suite: context.propsValue.suite || undefined,
+      type: context.propsValue.type || undefined,
+      priority: context.propsValue.priority || undefined,
+      description: context.propsValue.description || undefined,
     }));
     return { id: result.id, name: result.name, created: result.created };
   },

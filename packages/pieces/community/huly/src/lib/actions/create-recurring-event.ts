@@ -84,9 +84,9 @@ export const createRecurringEventAction = createAction({
           ? new Date(context.propsValue.due_date).getTime()
           : undefined,
         rules: [rule],
-        description: context.propsValue.description ?? undefined,
-        location: context.propsValue.location ?? undefined,
-        timeZone: context.propsValue.time_zone ?? undefined,
+        description: context.propsValue.description || undefined,
+        location: context.propsValue.location || undefined,
+        timeZone: context.propsValue.time_zone || undefined,
       })
     );
     return { event_id: result.eventId };

@@ -45,15 +45,15 @@ export const updateEventAction = createAction({
       context.auth,
       updateEvent({
         eventId: context.propsValue.event_id,
-        title: context.propsValue.title ?? undefined,
+        title: context.propsValue.title || undefined,
         date: context.propsValue.date
           ? new Date(context.propsValue.date).getTime()
           : undefined,
         dueDate: context.propsValue.due_date
           ? new Date(context.propsValue.due_date).getTime()
           : undefined,
-        description: context.propsValue.description ?? undefined,
-        location: context.propsValue.location ?? undefined,
+        description: context.propsValue.description || undefined,
+        location: context.propsValue.location || undefined,
       })
     );
     return { event_id: result.eventId, updated: result.updated };
