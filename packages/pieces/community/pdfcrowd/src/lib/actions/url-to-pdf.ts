@@ -43,13 +43,11 @@ export const urlToPdfAction = createAction({
       displayName: 'Page Width',
       description: 'Set custom page dimensions when standard sizes don\'t fit your needs. Useful for banners, receipts, custom forms, or when matching specific printing equipment. The safe maximum is 200in - larger sizes may fail to open in some PDF viewers. For standard sizes like A4 or Letter, use the predefined page size option instead.',
       required: false,
-      defaultValue: '8.27in',
     }),
     page_height: Property.ShortText({
       displayName: 'Page Height',
       description: 'Set custom page height for specific formats like receipts, banners, or legal documents. Set to "-1" for a single-page PDF that expands to fit all content vertically - ideal for web pages, infographics, or documents where page breaks are undesirable. The safe maximum is 200in otherwise some viewers cannot open the PDF. For standard sizes, use the predefined page size option instead.',
       required: false,
-      defaultValue: '11.7in',
     }),
     orientation: Property.StaticDropdown({
       displayName: 'Orientation',
@@ -67,25 +65,21 @@ export const urlToPdfAction = createAction({
       displayName: 'Margin Top',
       description: 'Control white space at the top of the page. Increase for header space, formal documents, or annotation room (e.g., 1in or more). Decrease to maximize content area or fit more content (e.g., 5mm to 10mm). Default 0.4in balances readability with space efficiency. Set to 0 for full-bleed designs. Affects where content starts and where headers appear.',
       required: false,
-      defaultValue: '0.4in',
     }),
     margin_right: Property.ShortText({
       displayName: 'Margin Right',
       description: 'Control white space on the right edge of the page. Increase for binding/hole-punch clearance or note-taking space (e.g., 1in or more). Decrease to fit wider content (e.g., 5mm to 10mm). Default 0.4in balances readability with space efficiency. Set to 0 for full-bleed designs. Affects where content wraps and text line length.',
       required: false,
-      defaultValue: '0.4in',
     }),
     margin_bottom: Property.ShortText({
       displayName: 'Margin Bottom',
       description: 'Control white space at the bottom of the page. Increase for footer space, page numbers, or formal documents (e.g., 1in or more). Decrease to fit more content per page (e.g., 5mm to 10mm). Default 0.4in balances readability with space efficiency. Set to 0 for full-bleed designs. Affects where content ends and where footers appear.',
       required: false,
-      defaultValue: '0.4in',
     }),
     margin_left: Property.ShortText({
       displayName: 'Margin Left',
       description: 'Control white space on the left edge of the page. Increase for binding/hole-punch clearance or note-taking space (e.g., 1in or more). Decrease to fit wider content (e.g., 5mm to 10mm). Default 0.4in balances readability with space efficiency. Set to 0 for full-bleed designs. Affects where content starts horizontally and text line length.',
       required: false,
-      defaultValue: '0.4in',
     }),
     no_margins: Property.Checkbox({
       displayName: 'No Margins',
@@ -168,7 +162,6 @@ export const urlToPdfAction = createAction({
       displayName: 'Header Height',
       description: 'Set the header height to allocate space for header content and prevent overlap with main content. Increase this if your header text is getting cut off or overlapping with page content. Must be large enough to accommodate your header HTML including any multi-line text or images.',
       required: false,
-      defaultValue: '0.5in',
     }),
     footer_url: Property.LongText({
       displayName: 'Footer URL',
@@ -184,7 +177,6 @@ export const urlToPdfAction = createAction({
       displayName: 'Footer Height',
       description: 'Set the footer height to allocate space for footer content and prevent overlap with main content. Increase this if your footer text is getting cut off or overlapping with page content. Must be large enough to accommodate your footer HTML including any multi-line text or images.',
       required: false,
-      defaultValue: '0.5in',
     }),
     no_header_footer_horizontal_margins: Property.Checkbox({
       displayName: 'No Header Footer Horizontal Margins',
@@ -205,7 +197,6 @@ export const urlToPdfAction = createAction({
       displayName: 'Header Footer Scale Factor',
       description: 'Set the scaling factor (zoom) for the header and footer.',
       required: false,
-      defaultValue: 100,
     }),
     page_numbering_offset: Property.Number({
       displayName: 'Page Numbering Offset',
@@ -284,13 +275,11 @@ export const urlToPdfAction = createAction({
       displayName: 'Default Encoding',
       description: 'Specify the character encoding when the HTML lacks proper charset declaration or has incorrect encoding. Prevents garbled text for non-English content, especially legacy pages without UTF-8 encoding. Set to "utf-8" for modern content, "iso-8859-1" for Western European legacy pages, or other encodings for specific regional content. Only needed when auto-detection fails and you see corrupted characters in the output.',
       required: false,
-      defaultValue: 'auto detect',
     }),
     locale: Property.ShortText({
       displayName: 'Locale',
       description: 'Set the locale for the conversion to control regional formatting of dates, times, and numbers. Use this when converting content for specific regions - for example, set to "en-US" for MM/DD/YYYY dates and comma thousand separators, or "de-DE" for DD.MM.YYYY dates and period thousand separators. Essential for financial reports, invoices, or localized content.',
       required: false,
-      defaultValue: 'en-US',
     }),
     http_auth_user_name: Property.ShortText({
       displayName: 'HTTP Auth User Name',
@@ -359,7 +348,6 @@ export const urlToPdfAction = createAction({
       displayName: 'JavaScript Delay',
       description: 'Wait the specified number of milliseconds to finish all JavaScript after the document is loaded. Use this to ensure lazy-loaded images, AJAX content, or animations complete before conversion. Your license defines the maximum wait time by "Max Delay" parameter.',
       required: false,
-      defaultValue: 200,
     }),
     element_to_convert: Property.ShortText({
       displayName: 'Element To Convert',
@@ -408,13 +396,11 @@ export const urlToPdfAction = createAction({
       displayName: 'Scale Factor',
       description: 'Set the scaling factor (zoom) for the main page area to fit content better. Use values below 100% to shrink oversized content that is getting cut off at page edges. Use values above 100% to enlarge small content for better readability. Common use cases include shrinking wide tables to fit (70-80%), or enlarging mobile-optimized layouts for desktop PDFs (120-150%).',
       required: false,
-      defaultValue: 100,
     }),
     jpeg_quality: Property.Number({
       displayName: 'JPEG Quality',
       description: 'Set the quality of embedded JPEG images to balance file size and visual quality. Use 100% for archival documents or when image quality is critical. Use 70-85% for web distribution to significantly reduce file size with minimal visible quality loss. Use lower values (50-60%) only when file size is more important than image clarity. Common artifacts below 60% include blockiness and color banding.',
       required: false,
-      defaultValue: 100,
     }),
     convert_images_to_jpeg: Property.StaticDropdown({
       displayName: 'Convert Images To JPEG',
@@ -645,7 +631,6 @@ export const urlToPdfAction = createAction({
       displayName: 'Layout DPI',
       description: 'Set the internal DPI resolution used for positioning of PDF contents. It can help in situations where there are small inaccuracies in the PDF. It is recommended to use values that are a multiple of 72, such as 288 or 360.',
       required: false,
-      defaultValue: 300,
     }),
     main_document_css_annotation: Property.Checkbox({
       displayName: 'Main Document CSS Annotation',
