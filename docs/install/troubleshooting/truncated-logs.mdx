@@ -1,0 +1,35 @@
+---
+title: "Truncated Logs"
+description: "Understanding and resolving truncated flow run logs"
+icon: "file-lines"
+---
+
+## Overview
+
+If you see `(truncated)` in the flow run logs, it means the logs have exceeded the maximum allowed file size.
+
+## How It Works
+
+There is a current limitation where the log file of a run cannot grow past a certain size. When this limit is reached, the engine automatically removes the largest keys in the JSON output until it fits within the allowed size.
+
+<Note>
+**This does not affect flow execution.** Your flow will continue to run normally even when logs are truncated.
+</Note>
+
+## Known Limitation
+
+There is one known issue with truncated logs:
+
+If you **pause** a flow, then **resume** it, and the resumed step references data from a truncated step, the flow will fail because the referenced data is no longer available in the logs.
+
+## Solution
+
+You can increase the `AP_MAX_FILE_SIZE_MB` environment variable to a higher value to allow larger log files:
+
+```bash
+AP_MAX_FILE_SIZE_MB=50
+```
+
+<Info>
+**Future Improvement:** There is a planned enhancement to change this limit from per-log-file to per-step, which will provide more granular control over log sizes. This feature is currently in the planning phase.
+</Info>

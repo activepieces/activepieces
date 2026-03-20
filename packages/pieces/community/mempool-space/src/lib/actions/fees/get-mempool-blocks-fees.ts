@@ -1,8 +1,9 @@
-import { createAction } from '@activepieces/pieces-framework';
+import { createAction, PieceAuth } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { MEMPOOL_API_BASE_URL } from '../../common';
 
 export const getMempoolBlocksFees = createAction({
+ auth:PieceAuth.None(),
     name: 'get_mempool_blocks_fees',
     displayName: 'Get Mempool Blocks Fees',
     description: 'Returns current mempool as projected blocks with fee rates and sizes',

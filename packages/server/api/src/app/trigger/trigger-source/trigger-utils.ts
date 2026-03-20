@@ -8,7 +8,7 @@ import {
     ProjectId,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { pieceMetadataService } from '../../pieces/piece-metadata-service'
+import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
 import { projectService } from '../../project/project-service'
 
 export const triggerUtils = (log: FastifyBaseLogger) => ({
@@ -21,11 +21,16 @@ export const triggerUtils = (log: FastifyBaseLogger) => ({
         })
         if (isNil(pieceTrigger)) {
             throw new ActivepiecesError({
-                code: ErrorCode.PIECE_TRIGGER_NOT_FOUND,
+                code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {
-                    pieceName: flowVersion.trigger.settings.pieceName,
-                    pieceVersion: flowVersion.trigger.settings.pieceVersion,
-                    triggerName: flowVersion.trigger.settings.triggerName,
+                    entityType: 'piece_trigger',
+                    entityId: flowVersion.trigger.settings.triggerName,
+                    message: `Trigger not found for piece ${flowVersion.trigger.settings.pieceName}@${flowVersion.trigger.settings.pieceVersion}`,
+                    extra: {
+                        pieceName: flowVersion.trigger.settings.pieceName,
+                        pieceVersion: flowVersion.trigger.settings.pieceVersion,
+                        triggerName: flowVersion.trigger.settings.triggerName,
+                    },
                 },
             })
         }
@@ -35,20 +40,38 @@ export const triggerUtils = (log: FastifyBaseLogger) => ({
         if (flowVersion.trigger.type !== FlowTriggerType.PIECE) {
             return null
         }
-        const platformId = await projectService.getPlatformId(projectId)
-        const piece = await pieceMetadataService(log).get({
-            projectId,
-            platformId,
-            name: flowVersion.trigger.settings.pieceName,
-            version: flowVersion.trigger.settings.pieceVersion,
-        })
-        if (isNil(piece) || isNil(flowVersion.trigger.settings.triggerName)) {
+        const { pieceName, pieceVersion, triggerName } = flowVersion.trigger.settings
+        if (isNil(triggerName)) {
             return null
         }
-        const pieceTrigger = piece.triggers[flowVersion.trigger.settings.triggerName]
+        return this.getPieceTriggerByName({
+            pieceName,
+            pieceVersion,
+            triggerName,
+            projectId,
+        })
+    },
+    async getPieceTriggerByName({ pieceName, pieceVersion, triggerName, projectId }: GetPieceTriggerByNameParams): Promise<TriggerBase | null> {
+        const platformId = await projectService(log).getPlatformId(projectId)
+        const piece = await pieceMetadataService(log).get({
+            platformId,
+            name: pieceName,
+            version: pieceVersion,
+        })
+        if (isNil(piece) || isNil(triggerName)) {
+            return null
+        }
+        const pieceTrigger = piece.triggers[triggerName]
         return pieceTrigger
     },
 })
+
+type GetPieceTriggerByNameParams = {
+    pieceName: string
+    pieceVersion: string
+    triggerName: string
+    projectId: ProjectId
+}
 
 type GetPieceTriggerOrThrowParams = {
     flowVersion: FlowVersion

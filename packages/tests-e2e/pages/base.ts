@@ -1,35 +1,29 @@
 import { Page, Locator } from '@playwright/test';
 
 export interface IPageElement {
-  (page: Page, ...args: unknown[]): Locator;
+  (...args: unknown[]): Locator;
 }
 
 export interface IPageAction {
-  (page: Page, ...args: unknown[]): Promise<void>;
+  (...args: unknown[]): Promise<void>;
 }
 
 export interface IPageGetter {
-  (page: Page, ...args: unknown[]): Locator;
+  (...args: unknown[]): Locator;
 }
 
 export interface IPageObject {
-  url?: string;
-  getters: Record<string, IPageGetter>;
-  actions: Record<string, IPageAction>;
+  url: string;
+  page: Page;
+  visit(): Promise<void>;
 }
 
 export abstract class BasePage implements IPageObject {
-  abstract url?: string;
-  abstract getters: Record<string, IPageGetter>;
-  abstract actions: Record<string, IPageAction>;
+  abstract url: string;
 
-  async visit(page: Page): Promise<void> {
-    if (this.url) {
-      await page.goto(this.url);
-    }
-  }
+  constructor(public readonly page: Page) {}
 
-  async waitFor(page: Page): Promise<void> {
-    // Override in child classes for specific wait conditions
+  async visit(): Promise<void> {
+    await this.page.goto(this.url);
   }
 } 

@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { fireberryAuth } from '../../index';
+import { fireberryAuth } from '../auth';
 import { objectTypeDropdown } from '../common/props';
 import { FireberryClient } from '../common/client';
 
@@ -8,12 +8,12 @@ const fieldsToReturn = Property.DynamicProperties({
   displayName: 'Fields to Return',
   refreshers: ['objectType'],
   required: false,
+  auth: fireberryAuth,
   props: async ({ auth, objectType }) => {
     if (!auth || !objectType) return {};
     
-    const authStr = typeof auth === 'string' ? auth : (auth as { value: string })?.value;
     const objectTypeStr = typeof objectType === 'string' ? objectType : (objectType as { value: string })?.value;
-    const client = new FireberryClient(authStr);
+    const client = new FireberryClient(auth);
     
     try {
       const metadata = await client.getObjectFieldsMetadata(objectTypeStr);
@@ -87,7 +87,7 @@ export const findRecordAction = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const client = new FireberryClient(auth as string);
+    const client = new FireberryClient(auth);
     const { objectType, searchQuery, fieldsToReturn, sortBy, sortOrder, pageSize, pageNumber } = propsValue;
     
     const selectedFields: string[] = [];

@@ -1,27 +1,30 @@
 import { CreateStepRunRequestBody, GetSampleDataRequest, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import { ProjectResourceType } from '../../core/security/authorization/common'
+import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { flowService } from '../flow/flow.service'
 import { flowRunService } from '../flow-run/flow-run-service'
 import { sampleDataService } from './sample-data.service'
 
-export const sampleDataController: FastifyPluginAsyncTypebox = async (fastify) => {
+export const sampleDataController: FastifyPluginAsyncZod = async (fastify) => {
 
     fastify.post('/test-step', TestSampleDataRequestBody, async (request) => {
         return flowRunService(request.log).test({
-            projectId: request.principal.projectId,
+            projectId: request.projectId,
             flowVersionId: request.body.flowVersionId,
             stepNameToTest: request.body.stepName,
+            triggeredBy: request.principal.id,
         })
     })
 
     fastify.get('/', GetSampleDataRequestParams, async (request) => {
         const flow = await flowService(request.log).getOnePopulatedOrThrow({
             id: request.query.flowId,
-            projectId: request.principal.projectId,
+            projectId: request.projectId,
             versionId: request.query.flowVersionId,
         })
         const sampleData = await sampleDataService(request.log).getOrReturnEmpty({
-            projectId: request.principal.projectId,
+            projectId: request.projectId,
             flowVersion: flow.version,
             stepName: request.query.stepName,
             type: request.query.type,
@@ -32,7 +35,11 @@ export const sampleDataController: FastifyPluginAsyncTypebox = async (fastify) =
 
 const GetSampleDataRequestParams = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        security: securityAccess.project(
+            [PrincipalType.USER, PrincipalType.SERVICE], 
+            undefined, {
+                type: ProjectResourceType.QUERY,
+            }),
     },
     schema: {
         tags: ['sample-data'],
@@ -43,7 +50,11 @@ const GetSampleDataRequestParams = {
 
 const TestSampleDataRequestBody = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        security: securityAccess.project(
+            [PrincipalType.USER, PrincipalType.SERVICE], 
+            undefined, {
+                type: ProjectResourceType.BODY,
+            }),
     },
     schema: {
         tags: ['sample-data'],

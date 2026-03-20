@@ -1,0 +1,14 @@
+{
+  "Upload, process, and manage documents programmatically with FlowParser's REST API.": "Télécharger, traiter et gérer les documents de manière programmatique avec l'API REST de FlowParser.",
+  "\nTo get your API Key:\n\n1. Go to your FlowParser account\n2. Navigate to API settings\n3. Copy your API key\n4. Paste it here\n": "\nTo get your API Key:\n\n1. Go to your FlowParser account\n2. Navigate to API settings\n3. Copy your API key\n4. Paste it here\n",
+  "Upload Document": "Télécharger le document",
+  "Upload a new document to FlowParser for processing": "Télécharger un nouveau document sur FlowParser pour traitement",
+  "File": "Ficher",
+  "The document file to upload": "Le fichier de document à télécharger",
+  "New Parsed Document by Template": "Nouveau document analysé par modèle",
+  "New Parsed Document Found": "Nouveau document analysé trouvé",
+  "Triggers when a new document is parsed using a specific template": "Déclenche lorsqu'un nouveau document est analysé à l'aide d'un modèle spécifique",
+  "Triggers when a document has been successfully parsed": "Déclenche lorsqu'un document a été analysé avec succès",
+  "Template": "Gabarit",
+  "Select a template to monitor for new parsed documents": "Sélectionnez un modèle à surveiller pour les nouveaux documents analysés"
+}

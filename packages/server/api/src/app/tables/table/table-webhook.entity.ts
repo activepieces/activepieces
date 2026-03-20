@@ -1,6 +1,6 @@
 import { Flow, Project, Table, TableWebhook } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
-import { ApIdSchema, ARRAY_COLUMN_TYPE, BaseColumnSchemaPart, isPostgres } from '../../database/database-common'
+import { ApIdSchema, BaseColumnSchemaPart } from '../../database/database-common'
 
 type TableWebhookSchema = TableWebhook & {
     project: Project
@@ -21,8 +21,8 @@ export const TableWebhookEntity = new EntitySchema<TableWebhookSchema>({
             nullable: false,
         },
         events: {
-            type: ARRAY_COLUMN_TYPE,
-            array: isPostgres(),
+            type: String,
+            array: true,
         },
         flowId: {
             ...ApIdSchema,

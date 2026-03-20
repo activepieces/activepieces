@@ -1,11 +1,10 @@
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 import { PlatformRole, PrincipalType } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { initializeDatabase } from '../../../../src/app/database'
-import { databaseConnection } from '../../../../src/app/database/database-connection'
-import { setupServer } from '../../../../src/app/server'
 import { generateMockToken } from '../../../helpers/auth'
+import { db } from '../../../helpers/db'
 import {
     createMockSigningKey,
     mockAndSaveBasicSetup,
@@ -15,15 +14,12 @@ import {
 let app: FastifyInstance | null = null
 
 beforeAll(async () => {
-    await initializeDatabase({ runMigrations: false })
-    app = await setupServer()
+    app = await setupTestEnvironment()
 })
 
 afterAll(async () => {
-    await databaseConnection().destroy()
-    await app?.close()
+    await teardownTestEnvironment()
 })
-
 const setupEnabledPlatform = () => mockAndSaveBasicSetup({ plan: { embeddingEnabled: true } })
 
 describe('Signing Key API', () => {
@@ -35,13 +31,16 @@ describe('Signing Key API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockOwner.id,
-                platform: { id: mockPlatform.id },
+                
+                platform: {
+                    id: mockPlatform.id,
+                },
             })
 
             const mockSigningKeyName = faker.lorem.word()
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/signing-keys',
+                url: '/api/v1/signing-keys',
                 body: {
                     displayName: mockSigningKeyName,
                 },
@@ -76,20 +75,19 @@ describe('Signing Key API', () => {
                 platformId: mockPlatform.id,
             })
 
-            await databaseConnection()
-                .getRepository('signing_key')
-                .save(mockSigningKey)
+            await db.save('signing_key', mockSigningKey)
 
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockUser.id,
+
                 platform: { id: mockPlatform.id },
             })
 
             const mockSigningKeyName = faker.lorem.word()
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/signing-keys',
+                url: '/api/v1/signing-keys',
                 body: {
                     displayName: mockSigningKeyName,
                 },
@@ -112,20 +110,19 @@ describe('Signing Key API', () => {
                 platformId: mockPlatform.id,
             })
 
-            await databaseConnection()
-                .getRepository('signing_key')
-                .save(mockSigningKey)
+            await db.save('signing_key', mockSigningKey)
 
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockOwner.id,
+
                 platform: { id: mockPlatform.id },
             })
 
             // act
             const response = await app?.inject({
                 method: 'GET',
-                url: `/v1/signing-keys/${mockSigningKey.id}`,
+                url: `/api/v1/signing-keys/${mockSigningKey.id}`,
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -158,20 +155,20 @@ describe('Signing Key API', () => {
                 platformId: mockPlatformOne.id,
             })
 
-            await databaseConnection()
-                .getRepository('signing_key')
-                .save(mockSigningKey)
+            await db.save('signing_key', mockSigningKey)
 
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: nonOwnerUser.id,
-                platform: { id: mockPlatformOne.id },
+                platform: {
+                    id: mockPlatformOne.id,
+                },
             })
 
             // act
             const response = await app?.inject({
                 method: 'DELETE',
-                url: `/v1/signing-keys/${mockSigningKey.id}`,
+                url: `/api/v1/signing-keys/${mockSigningKey.id}`,
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -195,19 +192,19 @@ describe('Signing Key API', () => {
                 platformId: mockPlatformTwo.id,
             })
 
-            await databaseConnection()
-                .getRepository('signing_key')
-                .save([mockSigningKeyOne, mockSigningKeyTwo])
+            await db.save('signing_key', [mockSigningKeyOne, mockSigningKeyTwo])
 
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockUserOne.id,
-                platform: { id: mockPlatformOne.id },
+                platform: {
+                    id: mockPlatformOne.id,
+                },
             })
             // act
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/signing-keys',
+                url: '/api/v1/signing-keys',
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },

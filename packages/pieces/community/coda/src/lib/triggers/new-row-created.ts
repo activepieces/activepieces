@@ -1,10 +1,10 @@
 import {
-	PiecePropValueSchema,
+	AppConnectionValueForAuthProperty,
 	TriggerStrategy,
 	createTrigger,
 } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
-import { codaAuth } from '../..';
+import { codaAuth } from '../auth';
 import { CodaRow, codaClient } from '../common/types';
 import dayjs from 'dayjs';
 import { docIdDropdown, tableIdDropdown } from '../common/props';
@@ -14,7 +14,7 @@ type Props = {
 	docId: string;
 };
 
-const polling: Polling<PiecePropValueSchema<typeof codaAuth>, Props> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof codaAuth>, Props> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	items: async ({ auth, propsValue, lastFetchEpochMS }) => {
 		const { tableId, docId } = propsValue;

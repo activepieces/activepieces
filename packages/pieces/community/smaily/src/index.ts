@@ -13,49 +13,7 @@ import {
 } from '@activepieces/pieces-common';
 import { createOrUpdateSubscriberAction } from './lib/actions/create-or-update-subscriber.action';
 import { getSubscriberAction } from './lib/actions/get-subscriber.action';
-
-export const smailyAuth = PieceAuth.CustomAuth({
-  description: `
-  1. Click on profile pic (top right corner), navigate to **Preferences**.
-  2. Go to **Integrations** tab and click on **Create a New User**.
-  3. Copy generated domain, user and password.`,
-  required: true,
-  props: {
-    domain: Property.ShortText({
-      displayName: 'Domain',
-      required: true,
-    }),
-    username: Property.ShortText({
-      displayName: 'User Name',
-      required: true,
-    }),
-    password: Property.ShortText({
-      displayName: 'Password',
-      required: true,
-    }),
-  },
-  validate: async ({ auth }) => {
-    try {
-      await httpClient.sendRequest({
-        method: HttpMethod.GET,
-        url: `https://${auth.domain}.sendsmaily.net/api/organizations/users.php`,
-        authentication: {
-          type: AuthenticationType.BASIC,
-          username: auth.username,
-          password: auth.password,
-        },
-      });
-      return {
-        valid: true,
-      };
-    } catch {
-      return {
-        valid: false,
-        error: 'Please provide correct credentials.',
-      };
-    }
-  },
-});
+import { smailyAuth } from './lib/auth';
 
 export const smaily = createPiece({
   displayName: 'Smaily',
@@ -68,12 +26,15 @@ export const smaily = createPiece({
     createCustomApiCallAction({
       auth:smailyAuth,
       baseUrl: (auth)=>{
-        return `https://${(auth as PiecePropValueSchema<typeof smailyAuth>).domain}.sendsmaily.net/api`
+        if (!auth) {
+          return '';
+        }
+        return `https://${auth.props.domain}.sendsmaily.net/api`
       },
       authMapping: async (auth) => ({
         Authorization: `Basic ${Buffer.from(
-          `${(auth as { username: string }).username}:${
-            (auth as { password: string }).password
+          `${auth.props.username}:${
+            auth.props.password
           }`
         ).toString('base64')}`,
       }),

@@ -11,7 +11,7 @@ export const getTeams = createAction({
   description: 'Gets many existing team',
   props: {},
   async run(context) {
-    const onfleetApi = new Onfleet(context.auth);
+    const onfleetApi = new Onfleet(context.auth.secret_text);
 
     return await onfleetApi.teams.get();
   },

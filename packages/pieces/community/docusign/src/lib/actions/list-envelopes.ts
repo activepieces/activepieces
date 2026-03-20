@@ -1,5 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { docusignAuth, DocusignAuthType } from '../..';
+import { docusignAuth } from '../auth';
+import { DocusignAuthType } from '../..';
 import { createApiClient } from '../common';
 import { Envelope, EnvelopesApi, EnvelopesInformation } from 'docusign-esign';
 
@@ -36,7 +37,7 @@ export const listEnvelopes = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const apiClient = await createApiClient(auth as DocusignAuthType);
+    const apiClient = await createApiClient(auth);
     const envelopeApiClient = new EnvelopesApi(apiClient);
 
     const getPage = async (startPosition: number) => {

@@ -14,6 +14,6 @@ export const findDocumentAction = createAction({
 	},
 	async run({ auth, propsValue }) {
 		const { document_id } = propsValue;
-		return await makeRequest(auth as string, HttpMethod.GET, `/documents/${document_id}`);
+		return await makeRequest(auth, HttpMethod.GET, `/documents/${document_id}`);
 	},
 });

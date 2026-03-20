@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { dimoAuth } from '../../../index';
+import { dimoAuth } from '../../auth';
 import { DimoClient } from '../../common/helpers';
 import { HttpError } from '@activepieces/pieces-common';
 
@@ -16,7 +16,7 @@ const createVinVcAction = createAction({
 		}),
 	},
 	async run(context) {
-		const { clientId, apiKey, redirectUri } = context.auth;
+		const { clientId, apiKey, redirectUri } = context.auth.props;
 		const { vehicleTokenId } = context.propsValue;
 
 		const dimo = new DimoClient({

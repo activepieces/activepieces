@@ -1,6 +1,6 @@
 import { Property, createAction, OAuth2PropertyValue } from '@activepieces/pieces-framework';
 import { getNotebooksDropdown } from '../common';
-import { oneNoteAuth } from '../../index';
+import { oneNoteAuth } from '../auth';
 import { Client } from '@microsoft/microsoft-graph-client';
 
 export const createSection = createAction({
@@ -10,6 +10,7 @@ export const createSection = createAction({
 	description: 'Creates a new section in notebook.',
 	props: {
 		notebook_id: Property.Dropdown({
+			auth: oneNoteAuth,
 			displayName: 'Notebook',
 			description: 'The notebook to create the section in.',
 			required: true,

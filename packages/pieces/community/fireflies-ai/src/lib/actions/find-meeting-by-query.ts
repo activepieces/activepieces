@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { firefliesAiAuth } from '../../index';
+import { firefliesAiAuth } from '../auth';
 import { BASE_URL } from '../common';
 
 export const findMeetingByQueryAction = createAction({
@@ -146,7 +146,7 @@ export const findMeetingByQueryAction = createAction({
 				method: HttpMethod.POST,
 				authentication: {
 					type: AuthenticationType.BEARER_TOKEN,
-					token: auth,
+					token: auth.secret_text,
 				},
 				body: {
 					query: query,

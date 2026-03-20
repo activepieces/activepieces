@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import OpenAI from 'openai';
-import { openaiAuth } from '../..';
+import { openaiAuth } from '../auth';
 import { streamToBuffer } from '../common/common';
 
 type Voice = 'alloy' | 'echo' | 'fable' | 'onyx' | 'nova' | 'shimmer';
@@ -84,7 +84,7 @@ export const textToSpeech = createAction({
 	},
 	async run({ auth, propsValue, files }) {
 		const openai = new OpenAI({
-			apiKey: auth,
+			apiKey: auth.secret_text,
 		});
 
 		const { voice, format, model, text, speed, fileName } = propsValue;

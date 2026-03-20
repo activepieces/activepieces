@@ -1,11 +1,15 @@
-import { apId } from '@activepieces/shared'
+import { ApEdition, apId } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 import { system } from '../../../helper/system/system'
+import { isNotOneOfTheseEditions } from '../../database-common'
 
 export class AddPlatformToPostgres1709052740378 implements MigrationInterface {
     name = 'AddPlatformToPostgres1709052740378'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
+        if (isNotOneOfTheseEditions([ApEdition.COMMUNITY])) {
+            return
+        }
         await queryRunner.query(`
             CREATE TABLE "platform" (
                 "id" character varying(21) NOT NULL,
@@ -54,6 +58,9 @@ export class AddPlatformToPostgres1709052740378 implements MigrationInterface {
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+        if (isNotOneOfTheseEditions([ApEdition.COMMUNITY])) {
+            return
+        }
         await queryRunner.query(`
             ALTER TABLE "platform" DROP CONSTRAINT "fk_platform_user"
         `)
@@ -72,7 +79,7 @@ async function migrateProjects(queryRunner: QueryRunner) {
     const log = system.globalLogger()
     log.info('CreateDefaultPlatform1705967115116 up')
     const standaloneProjects = await queryRunner.query('select * from project where "platformId" is null;')
-    log.info(`Found ${standaloneProjects.length} standalone projects`)
+    log.info({ count: standaloneProjects.length }, '[migrateProjects] Found standalone projects')
     for (const project of standaloneProjects) {
         const ownerId = project.ownerId
         const platformId = apId()

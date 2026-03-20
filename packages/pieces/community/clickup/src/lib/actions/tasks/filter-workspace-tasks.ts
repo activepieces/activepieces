@@ -5,7 +5,7 @@ import {
   createAction,
 } from '@activepieces/pieces-framework';
 import qs from 'qs';
-import { clickupAuth } from '../../..';
+import { clickupAuth } from '../../auth';
 import { callClickUpApi, clickupCommon, listTags } from '../../common';
 import { ClickupTask } from '../../common/models';
 
@@ -27,6 +27,7 @@ export const filterClickupWorkspaceTasks = createAction({
       'ID of assignee for Clickup Task'
     ),
     tags: Property.MultiSelectDropdown({
+      auth: clickupAuth,
       displayName: 'Tags',
       description: 'The tags to filter for',
       refreshers: ['space_id', 'workspace_id'],

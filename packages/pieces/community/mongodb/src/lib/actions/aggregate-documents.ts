@@ -17,6 +17,7 @@ export default createAction({
     }),
   },
   async run(context) {
+ 
     const client = await mongodbConnect(context.auth);
 
     try {
@@ -30,7 +31,7 @@ export default createAction({
 
       // Use the database from auth
       // Use the database from props or auth
-      const databaseName = context.propsValue.database || context.auth.database;
+      const databaseName = context.propsValue.database || context.auth.props.database;
       if (!databaseName) {
         throw new Error('Database is required. Please specify it in the connection settings or in this action.');
       }

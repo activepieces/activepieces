@@ -1,8 +1,9 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, PieceAuth, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { MEMPOOL_API_BASE_URL } from '../../common';
 
 export const getBlockStatus = createAction({
+ auth:PieceAuth.None(),
     name: 'get_block_status',
     displayName: 'Get Block Status',
     description: 'Returns the confirmation status of a block',

@@ -94,7 +94,7 @@ export const downloadDocument = createAction({
       method: HttpMethod.GET,
       url: endpoint,
       headers: {
-        Authorization: `API-Key ${(auth as string)}`,
+        Authorization: `API-Key ${(auth.secret_text)}`,
       },
       responseType:'arraybuffer'
     });

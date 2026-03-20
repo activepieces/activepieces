@@ -164,7 +164,7 @@ export const transformResource = createAction({
       throw new Error('Please select an asset from dropdown or enter a public ID manually.');
     }
 
-    const cloud_name = auth.cloud_name.trim();
+    const cloud_name = auth.props.cloud_name.trim();
     
     const transformations: string[] = [];
     

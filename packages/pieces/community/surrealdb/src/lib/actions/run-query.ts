@@ -47,7 +47,7 @@ export const runQuery = createAction({
     try {
       const { query, args } = context.propsValue;
       const response = await surrealClient.query(
-        context.auth,
+        context.auth.props,
         query,
         args as Record<string, string>
       );

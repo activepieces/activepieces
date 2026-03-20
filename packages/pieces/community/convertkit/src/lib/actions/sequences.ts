@@ -20,7 +20,7 @@ export const listSequences = createAction({
   description: 'Returns a list of all sequences',
   props: {},
   run(context) {
-    return fetchSequences(context.auth);
+    return fetchSequences(context.auth.secret_text);
   },
 });
 

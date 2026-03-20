@@ -1,13 +1,12 @@
 import {
   createAction,
   DynamicPropsValue,
-  OAuth2PropertyValue,
 } from '@activepieces/pieces-framework';
 import { Client } from '@notionhq/client';
 import { NotionFieldMapping } from '../common/models';
 
-import { notionAuth } from '../..';
-import { notionCommon } from '../common';
+import { notionAuth } from '../auth';
+import { getNotionToken, notionCommon } from '../common';
 export const updateDatabaseItem = createAction({
   auth: notionAuth,
   name: 'update_database_item',
@@ -28,7 +27,7 @@ export const updateDatabaseItem = createAction({
     const notionFields: DynamicPropsValue = {};
 
     const notion = new Client({
-      auth: (context.auth as OAuth2PropertyValue).access_token,
+      auth: getNotionToken(context.auth),
       notionVersion: '2022-02-22',
     });
     const { properties } = await notion.databases.retrieve({
@@ -36,11 +35,16 @@ export const updateDatabaseItem = createAction({
     });
 
     Object.keys(databaseFields).forEach((key) => {
-      if (databaseFields[key] !== '') {
+      const value = databaseFields[key];
+      if (
+        value !== '' &&
+        value !== undefined &&
+        value !== null &&
+        !(Array.isArray(value) && value.length === 0)
+      ) {
         const fieldType: string = properties[key].type;
-        notionFields[key] = NotionFieldMapping[fieldType].buildNotionType(
-          databaseFields[key]
-        );
+        notionFields[key] =
+          NotionFieldMapping[fieldType].buildNotionType(value);
       }
     });
     return await notion.pages.update({

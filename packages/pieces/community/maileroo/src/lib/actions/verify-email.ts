@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { checkEmail } from '../common/send-utils';
-import { mailerooAuth } from '../..';
+import { mailerooAuth } from '../auth';
 
 export const verifyEmail = createAction({
   auth: mailerooAuth,
@@ -17,7 +17,7 @@ export const verifyEmail = createAction({
   async run(context) {
     const result = await checkEmail(
       context.propsValue.content,
-      context.auth.apiKey
+      context.auth.props.apiKey
     );
 
     return result.body;

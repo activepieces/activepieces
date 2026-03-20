@@ -2,19 +2,20 @@ import {
   createTrigger,
   TriggerStrategy,
   PiecePropValueSchema,
+  AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import {
   DedupeStrategy,
   Polling,
   pollingHelper,
 } from '@activepieces/pieces-common';
-import { weblingAuth } from '../../index';
+import { weblingAuth } from '../auth';
 import { weblingCommon } from '../common';
 import { WeblingCalendarEvent } from '../common/types';
 import { getUpdatedOrNewEvents } from '../common/helpers';
 
 const polling: Polling<
-  PiecePropValueSchema<typeof weblingAuth>,
+  AppConnectionValueForAuthProperty<typeof weblingAuth>,
   { calendarId?: string }
 > = {
   strategy: DedupeStrategy.TIMEBASED,

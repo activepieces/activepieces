@@ -66,6 +66,7 @@ export const takeScreenshotAction = createAction({
 			defaultValue: false,
 		}),
 		visualAnalysisConfig: Property.DynamicProperties({
+			auth: airtopAuth,
 			displayName: 'Visual Analysis Settings',
 			refreshers: ['enableVisualAnalysis'],
 			required: false,
@@ -258,7 +259,7 @@ export const takeScreenshotAction = createAction({
 		}
 
 		const response = await airtopApiCall({
-			apiKey: context.auth,
+			apiKey: context.auth.secret_text,
 			method: HttpMethod.POST,
 			resourceUri: `/sessions/${sessionId}/windows/${windowId}/screenshot`,
 			body,

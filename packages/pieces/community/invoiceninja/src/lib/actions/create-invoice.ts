@@ -87,7 +87,7 @@ export const createInvoice = createAction({
       due_date: z.string().datetime().optional(),
     });
 
-    const INapiToken = context.auth.access_token;
+    const INapiToken = context.auth.props.access_token;
     const headers = {
       'X-Api-Token': INapiToken,
       'Content-Type': 'application/json',
@@ -114,7 +114,7 @@ export const createInvoice = createAction({
       throw new Error('Each item in the line_items array must be an object with "quantity" (number), "product_key" (string), and "discount" (string).');
     }
 
-    const baseUrl = context.auth.base_url.replace(/\/$/, '');
+    const baseUrl = context.auth.props.base_url.replace(/\/$/, '');
     let errorMessages = '';
 
     try {

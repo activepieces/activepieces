@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest } from '../common';
-import { exaAuth } from '../../index';
+import { exaAuth } from '../auth';
 
 export const performSearchAction = createAction({
   name: 'perform_search',
@@ -93,7 +93,7 @@ export const performSearchAction = createAction({
     }),
   },
   async run(context) {
-    const apiKey = context.auth as string;
+    const apiKey = context.auth.secret_text;
 
     const body: Record<string, unknown> = {
       query: context.propsValue.query,

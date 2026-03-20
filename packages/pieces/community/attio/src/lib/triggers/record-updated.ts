@@ -1,7 +1,7 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { attioApiCall, verifyWebhookSignature } from '../common/client';
-import { attioAuth } from '../../index';
+import { attioAuth } from '../auth';
 import { objectTypeIdDropdown } from '../common/props';
 import { ObjectWebhookPayload, WebhookResponse } from '../common/types';
 import { isNil } from '@activepieces/shared';
@@ -24,7 +24,7 @@ export const recordUpdatedTrigger = createTrigger({
 	sampleData:{},
 	async onEnable(context) {
 		const response = await attioApiCall<{ data: WebhookResponse }>({
-			accessToken: context.auth,
+			accessToken: context.auth.secret_text,
 			method: HttpMethod.POST,
 			resourceUri: '/webhooks',
 			body: {
@@ -59,7 +59,7 @@ export const recordUpdatedTrigger = createTrigger({
 		);
 		if (!isNil(webhookData) && webhookData.webhookId) {
 			await attioApiCall({
-				accessToken: context.auth,
+				accessToken: context.auth.secret_text,
 				method: HttpMethod.DELETE,
 				resourceUri: `/webhooks/${webhookData.webhookId}`,
 			});
@@ -67,7 +67,7 @@ export const recordUpdatedTrigger = createTrigger({
 	},
 	async test(context) {
 		const response = await attioApiCall<{ data: Array<Record<string, any>> }>({
-			accessToken: context.auth,
+			accessToken: context.auth.secret_text,
 			method: HttpMethod.POST,
 			resourceUri: `/objects/${context.propsValue.objectTypeId}/records/query`,
 			body: {
@@ -95,7 +95,7 @@ export const recordUpdatedTrigger = createTrigger({
 		const recordId = payload.events[0].id.record_id;
 
 		const response = await attioApiCall<{ data: Record<string, any> }>({
-			accessToken: context.auth,
+			accessToken: context.auth.secret_text,
 			method: HttpMethod.GET,
 			resourceUri: `/objects/${context.propsValue.objectTypeId}/records/${recordId}`,
 		});

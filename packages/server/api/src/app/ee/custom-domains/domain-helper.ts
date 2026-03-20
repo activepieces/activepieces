@@ -1,6 +1,7 @@
-import { AppSystemProp, networkUtils, WorkerSystemProp } from '@activepieces/server-shared'
 import { ApEdition, isNil } from '@activepieces/shared'
+import { networkUtils } from '../../helper/network-utils'
 import { system } from '../../helper/system/system'
+import { AppSystemProp, WorkerSystemProp } from '../../helper/system/system-props'
 import { customDomainService } from './custom-domain.service'
 
 export const domainHelper = {
@@ -28,6 +29,14 @@ export const domainHelper = {
     },
     async getInternalApiUrl({ path, platformId }: InternalUrlParams): Promise<string> {
         return this.getInternalUrl({ path: `/api/${cleanLeadingSlash(path ?? '')}`, platformId })
+    },
+    async getApiUrlForWorker({ path, platformId }: PublicUrlParams): Promise<string> {
+        const hasWorkerModule = system.isWorker()
+        if (hasWorkerModule) {
+            const port = system.get(WorkerSystemProp.PORT)
+            return networkUtils.combineUrl(`http://127.0.0.1:${port}/api`, path ?? '')
+        }
+        return this.getInternalApiUrl({ path: path ?? '', platformId })
     },
 }
 

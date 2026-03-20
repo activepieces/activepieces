@@ -1,4 +1,4 @@
-import { zagomailAuth } from '../../';
+import { zagomailAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { zagoMailApiService } from '../common/request';
 import { listUId } from '../common/props';
@@ -21,7 +21,7 @@ export const unsubscribeSubscriber = createAction({
     const subsriberUid = propsValue.subscriberUid;
 
     return await zagoMailApiService.unsubscribeSubscriber(
-      auth,
+      auth.secret_text,
       listUId,
       subsriberUid
     );

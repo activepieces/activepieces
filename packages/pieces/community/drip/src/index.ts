@@ -6,12 +6,7 @@ import { dripApplyTagToSubscriber } from './lib/actions/apply-tag-to-subscriber.
 import { dripUpsertSubscriberAction } from './lib/actions/upsert-subscriber.action';
 import { dripNewSubscriberEvent } from './lib/trigger/new-subscriber.trigger';
 import { dripTagAppliedEvent } from './lib/trigger/new-tag.trigger';
-
-export const dripAuth = PieceAuth.SecretText({
-  displayName: 'API Key',
-  required: true,
-  description: 'Get it from https://www.getdrip.com/user/edit',
-});
+import { dripAuth } from './lib/auth';
 
 export const drip = createPiece({
   displayName: 'Drip',
@@ -29,7 +24,7 @@ export const drip = createPiece({
       baseUrl: () => `https://api.getdrip.com/v2/`,
       auth: dripAuth,
       authMapping: async (auth) => ({
-        Authorization: `Basic ${Buffer.from(auth as string).toString(
+        Authorization: `Basic ${Buffer.from(auth.secret_text).toString(
           'base64'
         )}`,
       }),

@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { podioAuth } from '../../index';
+import { podioAuth } from '../auth';
 import { podioApiCall, getAccessToken, silentProperty, hookProperty, dynamicAppProperty, dynamicItemProperty, formatFieldValues } from '../common';
 
 export const updateItemAction = createAction({
@@ -12,6 +12,7 @@ export const updateItemAction = createAction({
     appId: dynamicAppProperty,
     itemId: dynamicItemProperty,
     appFields: Property.DynamicProperties({
+      auth: podioAuth,
       displayName: 'App Fields',
       description: 'Configure values for the fields you want to update in the selected app',
       required: false,

@@ -4,7 +4,7 @@ import {
   createAction,
 } from '@activepieces/pieces-framework';
 import { limitField, makeClient, pageField } from '../common';
-import { PredictLeadsAuth } from '../../index';
+import { PredictLeadsAuth } from '../auth';
 import { prepareQuery } from '../common/client';
 
 export const findCompaniesAction = createAction({
@@ -33,7 +33,7 @@ export const findCompaniesAction = createAction({
     const min_max_sizes = context.propsValue.minMaxSizes;
 
     const client = makeClient(
-      context.auth as PiecePropValueSchema<typeof PredictLeadsAuth>
+      context.auth
     );
 
     try {
@@ -68,7 +68,7 @@ export const findCompanyByDomainAction = createAction({
     const domain = context.propsValue.domain;
 
     const client = makeClient(
-      context.auth as PiecePropValueSchema<typeof PredictLeadsAuth>
+      context.auth
     );
 
     try {

@@ -4,7 +4,7 @@ import {
 	OAuth2PropertyValue,
 } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { quickbooksAuth } from '../index';
+import { quickbooksAuth } from '../lib/auth';
 import { QuickbooksEntityResponse, quickbooksCommon } from '../lib/common';
 import { QuickbooksCustomer, QuickbooksInvoice, QuickbooksRef } from '../lib/types';
 
@@ -15,6 +15,8 @@ export const createInvoiceAction = createAction({
 	description: 'Creates an invoice in QuickBooks.',
 	props: {
 		customerRef: Property.Dropdown({
+			auth: quickbooksAuth,
+
 			displayName: 'Customer',
 			required: true,
 			refreshers: [],
@@ -155,7 +157,7 @@ export const createInvoiceAction = createAction({
 		const { access_token } = context.auth;
 		const companyId = context.auth.props?.['companyId'];
 
-		const apiUrl = quickbooksCommon.getApiUrl(companyId);
+		const apiUrl = quickbooksCommon.getApiUrl(companyId as string);
 		const props = context.propsValue;
 
 		if (props['emailStatus'] === 'NeedToSend' && !props['billEmail']) {

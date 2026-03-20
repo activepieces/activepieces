@@ -1,6 +1,5 @@
-import { OtpType } from '@activepieces/ee-shared'
-import { cryptoUtils } from '@activepieces/server-shared'
-import { ActivepiecesError, ApEdition, ApFlagId, assertNotNullOrUndefined, AuthenticationResponse, ErrorCode, isNil, PlatformRole, PlatformWithoutSensitiveData, User, UserIdentity, UserIdentityProvider } from '@activepieces/shared'
+import { cryptoUtils } from '@activepieces/server-utils'
+import { ActivepiecesError, ApEdition, ApFlagId, assertNotNullOrUndefined, AuthenticationResponse, ErrorCode, isNil, OtpType, PlatformRole, PlatformWithoutSensitiveData, ProjectType, User, UserIdentity, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { otpService } from '../ee/authentication/otp/otp-service'
 import { flagService } from '../flags/flag.service'
@@ -16,11 +15,11 @@ import { userIdentityService } from './user-identity/user-identity-service'
 export const authenticationService = (log: FastifyBaseLogger) => ({
     async signUp(params: SignUpParams): Promise<AuthenticationResponse> {
         if (!isNil(params.platformId)) {
-            await authenticationUtils.assertEmailAuthIsEnabled({
+            await authenticationUtils(log).assertEmailAuthIsEnabled({
                 platformId: params.platformId,
                 provider: params.provider,
             })
-            await authenticationUtils.assertDomainIsAllowed({
+            await authenticationUtils(log).assertDomainIsAllowed({
                 email: params.email,
                 platformId: params.platformId,
             })
@@ -30,10 +29,12 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
                 ...params,
                 verified: params.provider === UserIdentityProvider.GOOGLE || params.provider === UserIdentityProvider.JWT || params.provider === UserIdentityProvider.SAML,
             })
-            return createUserAndPlatform(userIdentity, log)
+            const response = await createUserAndPlatform(userIdentity, log)
+            log.info({ email: params.email, provider: params.provider }, 'User signed up and platform created')
+            return response
         }
 
-        await authenticationUtils.assertUserIsInvitedToPlatformOrProject(log, {
+        await authenticationUtils(log).assertUserIsInvitedToPlatformOrProject({
             email: params.email,
             platformId: params.platformId,
         })
@@ -41,16 +42,17 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
             ...params,
             verified: true,
         })
-        const user = await userService.create({
-            identityId: userIdentity.id,
-            platformRole: PlatformRole.MEMBER,
+        const user = await userService(log).getOrCreateWithProject({
+            identity: userIdentity,
             platformId: params.platformId,
         })
         await userInvitationsService(log).provisionUserInvitation({
             email: params.email,
+            user,
         })
 
-        return authenticationUtils.getProjectAndToken({
+        log.info({ email: params.email, platformId: params.platformId }, 'User signed up to existing platform')
+        return authenticationUtils(log).getProjectAndToken({
             userId: user.id,
             platformId: params.platformId,
             projectId: null,
@@ -58,7 +60,7 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
     },
     async signInWithPassword(params: SignInWithPasswordParams): Promise<AuthenticationResponse> {
         const identity = await userIdentityService(log).verifyIdentityPassword(params)
-        const platformId = isNil(params.predefinedPlatformId) ? await getPersonalPlatformIdForIdentity(identity.id) : params.predefinedPlatformId
+        const platformId = isNil(params.predefinedPlatformId) ? await getPersonalPlatformIdForIdentity(identity.id, log) : params.predefinedPlatformId
         if (isNil(platformId)) {
             throw new ActivepiecesError({
                 code: ErrorCode.AUTHENTICATION,
@@ -67,20 +69,21 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
                 },
             })
         }
-        await authenticationUtils.assertEmailAuthIsEnabled({
+        await authenticationUtils(log).assertEmailAuthIsEnabled({
             platformId,
             provider: UserIdentityProvider.EMAIL,
         })
-        await authenticationUtils.assertDomainIsAllowed({
+        await authenticationUtils(log).assertDomainIsAllowed({
             email: params.email,
             platformId,
         })
-        const user = await userService.getOneByIdentityAndPlatform({
+        const user = await userService(log).getOneByIdentityAndPlatform({
             identityId: identity.id,
             platformId,
         })
         assertNotNullOrUndefined(user, 'User not found')
-        return authenticationUtils.getProjectAndToken({
+        log.info({ email: params.email, platformId }, 'User signed in with password')
+        return authenticationUtils(log).getProjectAndToken({
             userId: user.id,
             platformId,
             projectId: null,
@@ -105,6 +108,7 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
                 provider: params.provider,
                 platformId: null,
                 password: await cryptoUtils.generateRandomPassword(),
+                imageUrl: params.imageUrl,
             })
         }
         if (isNil(userIdentity)) {
@@ -117,44 +121,35 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
                 provider: params.provider,
                 platformId,
                 password: await cryptoUtils.generateRandomPassword(),
+                imageUrl: params.imageUrl,
             })
         }
-        await userInvitationsService(log).provisionUserInvitation({
-            email: params.email,
-        })
-        const user = await userService.getOneByIdentityAndPlatform({
-            identityId: userIdentity.id,
+        const user = await userService(log).getOrCreateWithProject({
+            identity: userIdentity,
             platformId,
         })
-        assertNotNullOrUndefined(user, 'User Identity is found but not the user')
-        return authenticationUtils.getProjectAndToken({
+        await userInvitationsService(log).provisionUserInvitation({
+            email: params.email,
+            user,
+        })
+        return authenticationUtils(log).getProjectAndToken({
             userId: user.id,
             platformId,
             projectId: null,
         })
     },
     async switchPlatform(params: SwitchPlatformParams): Promise<AuthenticationResponse> {
-        const platforms = await platformService.listPlatformsForIdentityWithAtleastProject({ identityId: params.identityId })
+        const platforms = await platformService(log).listPlatformsForIdentityWithAtleastProject({ identityId: params.identityId })
         const platform = platforms.find((platform) => platform.id === params.platformId)
         await assertUserCanSwitchToPlatform(null, platform)
 
         assertNotNullOrUndefined(platform, 'Platform not found')
-        const user = await getUserForPlatform(params.identityId, platform)
-        return authenticationUtils.getProjectAndToken({
+        const user = await getUserForPlatform(params.identityId, platform, log)
+        log.info({ userId: user.id, platformId: platform.id }, 'User switched platform')
+        return authenticationUtils(log).getProjectAndToken({
             userId: user.id,
             platformId: platform.id,
             projectId: null,
-        })
-    },
-    async switchProject(params: SwitchProjectParams): Promise<AuthenticationResponse> {
-        const project = await projectService.getOneOrThrow(params.projectId)
-        const projectPlatform = await platformService.getOneWithPlanOrThrow(project.platformId)
-        await assertUserCanSwitchToPlatform(params.currentPlatformId, projectPlatform)
-        const user = await getUserForPlatform(params.identityId, projectPlatform)
-        return authenticationUtils.getProjectAndToken({
-            userId: user.id,
-            platformId: project.platformId,
-            projectId: params.projectId,
         })
     },
 })
@@ -180,8 +175,8 @@ async function assertUserCanSwitchToPlatform(currentPlatformId: string | null, p
     }
 }
 
-async function getUserForPlatform(identityId: string, platform: PlatformWithoutSensitiveData): Promise<User> {
-    const user = await userService.getOneByIdentityAndPlatform({
+async function getUserForPlatform(identityId: string, platform: PlatformWithoutSensitiveData, log: FastifyBaseLogger): Promise<User> {
+    const user = await userService(log).getOneByIdentityAndPlatform({
         identityId,
         platformId: platform.id,
     })
@@ -197,26 +192,28 @@ async function getUserForPlatform(identityId: string, platform: PlatformWithoutS
 }
 
 async function createUserAndPlatform(userIdentity: UserIdentity, log: FastifyBaseLogger): Promise<AuthenticationResponse> {
-    const user = await userService.create({
+    const user = await userService(log).create({
         identityId: userIdentity.id,
         platformRole: PlatformRole.ADMIN,
         platformId: null,
     })
-    const platform = await platformService.create({
+    const platform = await platformService(log).create({
         ownerId: user.id,
         name: userIdentity.firstName + '\'s Platform',
     })
-    await userService.addOwnerToPlatform({
+    await userService(log).addOwnerToPlatform({
         platformId: platform.id,
         id: user.id,
     })
-    const defaultProject = await projectService.create({
+    const defaultProject = await projectService(log).create({
         displayName: userIdentity.firstName + '\'s Project',
         ownerId: user.id,
         platformId: platform.id,
+        type: ProjectType.PERSONAL,
     })
 
     const cloudEdition = system.getEdition()
+
     switch (cloudEdition) {
         case ApEdition.CLOUD:
             await otpService(log).createAndSend({
@@ -231,19 +228,18 @@ async function createUserAndPlatform(userIdentity: UserIdentity, log: FastifyBas
             break
     }
 
-    await flagService.save({
+    await flagService(log).save({
         id: ApFlagId.USER_CREATED,
         value: true,
     })
-    await authenticationUtils.sendTelemetry({
+    await authenticationUtils(log).sendTelemetry({
         identity: userIdentity,
         user,
         project: defaultProject,
-        log,
     })
-    await authenticationUtils.saveNewsLetterSubscriber(user, platform.id, userIdentity, log)
+    await authenticationUtils(log).saveNewsLetterSubscriber(user, platform.id, userIdentity)
 
-    return authenticationUtils.getProjectAndToken({
+    return authenticationUtils(log).getProjectAndToken({
         userId: user.id,
         platformId: platform.id,
         projectId: defaultProject.id,
@@ -255,13 +251,13 @@ async function getPersonalPlatformIdForFederatedAuthn(email: string, log: Fastif
     if (isNil(identity)) {
         return null
     }
-    return getPersonalPlatformIdForIdentity(identity.id)
+    return getPersonalPlatformIdForIdentity(identity.id, log)
 }
 
-async function getPersonalPlatformIdForIdentity(identityId: string): Promise<string | null> {
+async function getPersonalPlatformIdForIdentity(identityId: string, log: FastifyBaseLogger): Promise<string | null> {
     const edition = system.getEdition()
     if (edition === ApEdition.CLOUD) {
-        const platforms = await platformService.listPlatformsForIdentityWithAtleastProject({ identityId })
+        const platforms = await platformService(log).listPlatformsForIdentityWithAtleastProject({ identityId })
         const platform = platforms.find((platform) => !platformUtils.isCustomerOnDedicatedDomain(platform))
         return platform?.id ?? null
     }
@@ -278,6 +274,7 @@ type FederatedAuthnParams = {
     trackEvents: boolean
     provider: UserIdentityProvider
     predefinedPlatformId: string | null
+    imageUrl?: string
 }
 
 type SignUpParams = {
@@ -289,6 +286,7 @@ type SignUpParams = {
     trackEvents: boolean
     newsLetter: boolean
     provider: UserIdentityProvider
+    imageUrl?: string
 }
 
 type SignInWithPasswordParams = {
@@ -300,10 +298,4 @@ type SignInWithPasswordParams = {
 type SwitchPlatformParams = {
     identityId: string
     platformId: string
-}
-
-type SwitchProjectParams = {
-    identityId: string
-    currentPlatformId: string
-    projectId: string
 }

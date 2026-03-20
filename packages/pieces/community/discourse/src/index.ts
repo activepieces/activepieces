@@ -10,31 +10,7 @@ import { changeUserTrustLevel } from './lib/actions/change-trust-level.action';
 import { createPost } from './lib/actions/create-post.action';
 import { createTopic } from './lib/actions/create-topic.action';
 import { sendPrivateMessage } from './lib/actions/send-private-message.action';
-
-const markdownPropertyDescription = `
-*Get your api Key: https://discourse.yourinstance.com/admin/api/keys
-`;
-
-export const discourseAuth = PieceAuth.CustomAuth({
-  description: markdownPropertyDescription,
-  required: true,
-  props: {
-    api_key: PieceAuth.SecretText({
-      displayName: 'API Key',
-      required: true,
-    }),
-    api_username: Property.ShortText({
-      displayName: 'API Username',
-      required: true,
-    }),
-    website_url: Property.ShortText({
-      displayName: 'Website URL',
-      required: true,
-      description:
-        'URL of the discourse url i.e https://discourse.yourinstance.com',
-    }),
-  },
-});
+import { discourseAuth } from './lib/auth';
 
 export const discourse = createPiece({
   displayName: 'Discourse',
@@ -51,11 +27,11 @@ export const discourse = createPiece({
     addUsersToGroup,
     sendPrivateMessage,
     createCustomApiCallAction({
-      baseUrl: (auth) => (auth as { website_url: string }).website_url.trim(), // Replace with the actual base URL
+      baseUrl: (auth) => auth ? (auth.props.website_url.trim()) : '',
       auth: discourseAuth,
       authMapping: async (auth) => ({
-        'Api-Key': (auth as { api_key: string }).api_key,
-        'Api-Username': (auth as { api_username: string }).api_username,
+        'Api-Key': auth.props.api_key,
+        'Api-Username': auth.props.api_username,
       }),
     }),
   ],

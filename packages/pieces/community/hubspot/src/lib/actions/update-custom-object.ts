@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { MarkdownVariant } from '@activepieces/shared';
-import { hubspotAuth } from '../..';
+import { hubspotAuth } from '../auth';
 import {
 	customObjectDropdown,
 	customObjectDynamicProperties,
@@ -55,6 +55,9 @@ export const updateCustomObjectAction = createAction({
 
 		// Add additional properties to the customObjectProperties object
 		Object.entries(objectProperties).forEach(([key, value]) => {
+			if ((Array.isArray(value) && value.length === 0)) {
+        return;  
+			}
 			// Format values if they are arrays
 			customObjectProperties[key] = Array.isArray(value) ? value.join(';') : value;
 		});

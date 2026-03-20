@@ -1,20 +1,43 @@
-import { ALL_PRINCIPAL_TYPES } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { GetSystemHealthChecksResponse, PrincipalType } from '@activepieces/shared'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import { StatusCodes } from 'http-status-codes'
+import { securityAccess } from '../core/security/authorization/fastify-security'
+import { healthStatusService } from './health.service'
 
-export const healthModule: FastifyPluginAsyncTypebox = async (app) => {
+export const healthModule: FastifyPluginAsyncZod = async (app) => {
     await app.register(healthController, { prefix: '/v1/health' })
 }
 
-const healthController: FastifyPluginAsyncTypebox = async (app) => {
+const healthController: FastifyPluginAsyncZod = async (app) => {
     app.get(
         '/',
         {
             config: {
-                allowedPrincipals: ALL_PRINCIPAL_TYPES,
+                security: securityAccess.public(),
             },
         },
-        async () => {
-            return { status: 'OK' }
+        async (_request, reply) => {
+            const isHealthy = await healthStatusService(app.log).isHealthy()
+            if (!isHealthy) {
+                await reply.status(StatusCodes.SERVICE_UNAVAILABLE).send({ status: 'Unhealthy' })
+                return
+            }
+            await reply.status(StatusCodes.OK).send({ status: 'Healthy' })
         },
-    )
+    ),
+    app.get('/system', GetSystemHealthChecks, async (request, reply) => {
+        await reply.status(StatusCodes.OK).send(await healthStatusService(app.log).getSystemHealthChecks(request.principal.platform.id))
+    })
+}
+
+const GetSystemHealthChecks = {
+    config: {
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+    },
+    response: {
+        200: {
+            description: 'System health checks',
+            type: GetSystemHealthChecksResponse,
+        },
+    },
 }

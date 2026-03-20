@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { rabbitmqAuth } from '../..';
+import { rabbitmqAuth } from '../auth';
 import { rabbitmqConnect } from '../common';
 
 export const sendMessageToExchange = createAction({
@@ -37,7 +37,7 @@ export const sendMessageToExchange = createAction({
       const exchange = context.propsValue.exchange;
       const routingKey = context.propsValue.routingKey || '';
 
-      connection = await rabbitmqConnect(context.auth);
+      connection = await rabbitmqConnect(context.auth.props);
       channel = await connection.createChannel();
 
       await channel.checkExchange(exchange);

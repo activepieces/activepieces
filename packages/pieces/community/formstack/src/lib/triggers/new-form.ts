@@ -3,7 +3,8 @@ import {
   createTrigger, 
   TriggerStrategy, 
   PiecePropValueSchema, 
-  OAuth2PropertyValue 
+  OAuth2PropertyValue, 
+  AppConnectionValueForAuthProperty
 } from '@activepieces/pieces-framework';
 import { 
   DedupeStrategy, 
@@ -15,7 +16,7 @@ import dayjs from 'dayjs';
 import { formStackAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
 
-const polling: Polling<PiecePropValueSchema<typeof formStackAuth>, any> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof formStackAuth>, any> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue, lastFetchEpochMS }) => {
     const authentication = auth as OAuth2PropertyValue;

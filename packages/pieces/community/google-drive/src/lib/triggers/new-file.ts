@@ -1,4 +1,5 @@
 import {
+  AppConnectionValueForAuthProperty,
   PiecePropValueSchema,
   Property,
   createTrigger,
@@ -11,12 +12,12 @@ import {
 } from '@activepieces/pieces-common';
 
 import dayjs from 'dayjs';
-import { googleDriveAuth } from '../..';
+import { googleDriveAuth } from '../auth';
 import { common } from '../common';
 import { downloadFileFromDrive } from '../common/get-file-content';
 
 const polling: Polling<
-  PiecePropValueSchema<typeof googleDriveAuth>,
+  AppConnectionValueForAuthProperty<typeof googleDriveAuth>,
   { parentFolder?: any; include_team_drives?: boolean }
 > = {
   strategy: DedupeStrategy.TIMEBASED,

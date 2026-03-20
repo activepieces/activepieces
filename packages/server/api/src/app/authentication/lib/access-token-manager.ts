@@ -1,11 +1,11 @@
 import { ActivepiecesError, apId, assertNotNullOrUndefined, EnginePrincipal, ErrorCode, PlatformId, Principal, PrincipalType, ProjectId, UserStatus, WorkerPrincipal } from '@activepieces/shared'
 import dayjs from 'dayjs'
+import { FastifyBaseLogger } from 'fastify'
 import { jwtUtils } from '../../helper/jwt-utils'
-import { system } from '../../helper/system/system'
 import { userService } from '../../user/user-service'
 import { userIdentityService } from '../user-identity/user-identity-service'
 
-export const accessTokenManager = {
+export const accessTokenManager = (log: FastifyBaseLogger) => ({
     async generateToken(principal: Principal, expiresInSeconds: number = dayjs.duration(7, 'day').asSeconds()): Promise<string> {
         const secret = await jwtUtils.getJwtSecret()
         return jwtUtils.sign({
@@ -30,7 +30,7 @@ export const accessTokenManager = {
         return jwtUtils.sign({
             payload: enginePrincipal,
             key: secret,
-            expiresInSeconds: dayjs.duration(2, 'days').asSeconds(),
+            expiresInSeconds: dayjs.duration(100, 'year').asSeconds(),
         })
     },
 
@@ -59,7 +59,7 @@ export const accessTokenManager = {
                 key: secret,
             })
             assertNotNullOrUndefined(decoded.type, 'decoded.type')
-            await assertUserSession(decoded)
+            await assertUserSession(log, decoded)
             return decoded
         }
         catch (e) {
@@ -74,13 +74,13 @@ export const accessTokenManager = {
             })
         }
     },
-}
+})
 
-async function assertUserSession(decoded: Principal): Promise<void> {
+async function assertUserSession(log: FastifyBaseLogger, decoded: Principal | Principal): Promise<void> {
     if (decoded.type !== PrincipalType.USER) return
-    
-    const user = await userService.getOneOrFail({ id: decoded.id })
-    const identity = await userIdentityService(system.globalLogger()).getOneOrFail({ id: user.identityId })
+
+    const user = await userService(log).getOneOrFail({ id: decoded.id })
+    const identity = await userIdentityService(log).getOneOrFail({ id: user.identityId })
     const isExpired = (identity.tokenVersion ?? null) !== (decoded.tokenVersion ?? null)
     if (isExpired || user.status === UserStatus.INACTIVE || !identity.verified) {
         throw new ActivepiecesError({

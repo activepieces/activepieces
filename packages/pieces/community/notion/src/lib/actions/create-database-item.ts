@@ -1,13 +1,12 @@
 import {
   createAction,
   DynamicPropsValue,
-  OAuth2PropertyValue,
   Property,
 } from '@activepieces/pieces-framework';
 import { Client } from '@notionhq/client';
 import { NotionFieldMapping } from '../common/models';
-import { notionAuth } from '../..';
-import { notionCommon } from '../common';
+import { notionAuth } from '../auth';
+import { getNotionToken, notionCommon } from '../common';
 
 export const createDatabaseItem = createAction({
   auth: notionAuth,
@@ -25,12 +24,12 @@ export const createDatabaseItem = createAction({
     }),
   },
   async run(context) {
-    const database_id = context.propsValue.database_id!;
-    const databaseFields = context.propsValue.databaseFields!;
+    const database_id = context.propsValue.database_id;
+    const databaseFields = context.propsValue.databaseFields;
     const content = context.propsValue.content;
     const notionFields: DynamicPropsValue = {};
     const notion = new Client({
-      auth: (context.auth as OAuth2PropertyValue).access_token,
+      auth: getNotionToken(context.auth),
       notionVersion: '2022-02-22',
     });
     const { properties } = await notion.databases.retrieve({
@@ -38,12 +37,17 @@ export const createDatabaseItem = createAction({
     });
 
     Object.keys(databaseFields).forEach((key) => {
-      if (databaseFields[key] !== '') {
+      const value = databaseFields[key];
+      if (
+        value !== '' &&
+        value !== undefined &&
+        value !== null &&
+        !(Array.isArray(value) && value.length === 0)
+      ) {
         const fieldType: string = properties[key]?.type;
         if (fieldType) {
-          notionFields[key] = NotionFieldMapping[fieldType].buildNotionType(
-            databaseFields[key]
-          );
+          notionFields[key] =
+            NotionFieldMapping[fieldType].buildNotionType(value);
         }
       }
     });
@@ -69,7 +73,7 @@ export const createDatabaseItem = createAction({
     return await notion.pages.create({
       parent: {
         type: 'database_id',
-        database_id: database_id,
+        database_id: database_id as string,
       },
       properties: notionFields,
       children: children,

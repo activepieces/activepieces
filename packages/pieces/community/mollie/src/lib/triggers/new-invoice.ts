@@ -1,7 +1,7 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { mollieCommon } from '../common';
-import { mollieAuth } from '../../index';
+import { mollieAuth } from '../auth';
 
 const TRIGGER_KEY = 'mollie_new_invoice_webhook';
 
@@ -58,7 +58,7 @@ export const mollieNewInvoice = createTrigger({
     };
 
     const response = await mollieCommon.makeRequest(
-      context.auth as string,
+      context.auth,
       HttpMethod.POST,
       '/webhooks',
       webhookData
@@ -74,7 +74,7 @@ export const mollieNewInvoice = createTrigger({
     if (webhookId) {
       try {
         await mollieCommon.makeRequest(
-          context.auth as string,
+          context.auth,
           HttpMethod.DELETE,
           `/webhooks/${webhookId}`
         );
@@ -94,7 +94,7 @@ export const mollieNewInvoice = createTrigger({
     if (payload.id) {
       try {
         const invoice = await mollieCommon.makeRequest(
-          context.auth as string,
+          context.auth,
           HttpMethod.GET,
           `/invoices/${payload.id}`
         );
@@ -111,7 +111,7 @@ export const mollieNewInvoice = createTrigger({
   async test(context) {
     try {
       const response = await mollieCommon.makeRequest(
-        context.auth as string,
+        context.auth,
         HttpMethod.GET,
         '/invoices?limit=1'
       );

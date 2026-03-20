@@ -1,6 +1,6 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { ZOHO_WEBHOOK_TOKEN } from '../common/constants';
-import { biginAuth } from '../../index';
+import { biginAuth } from '../auth';
 import { biginApiService } from '../common/request';
 
 const CACHE_KEY = 'bigin_pipeline_record_updated_trigger';
@@ -16,7 +16,7 @@ export const pipelineRecordUpdated = createTrigger({
   async onEnable(context) {
     try {
       const channel_id = Date.now().toString();
-      const { api_domain } = context.auth as any;
+      const { api_domain } = context.auth.data;
 
       const webhookData = {
         watch: [
@@ -44,7 +44,7 @@ export const pipelineRecordUpdated = createTrigger({
     const channel_id = (await context.store.get(CACHE_KEY)) as string;
     if (!channel_id) return;
 
-    const { api_domain } = context.auth as any;
+    const { api_domain } = context.auth.data;
 
     await biginApiService.deleteWebhook(
       context.auth.access_token,

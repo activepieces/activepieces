@@ -7,7 +7,7 @@ import {
 	sendJiraRequest,
 } from '.';
 import { DropdownOption, Property } from '@activepieces/pieces-framework';
-import { JiraAuth } from '../../auth';
+import { JiraAuth, jiraCloudAuth } from '../../auth';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { IssueFieldMetaData, IssueTypeMetadata } from './types';
 import { isNil } from '@activepieces/shared';
@@ -15,6 +15,7 @@ import dayjs from 'dayjs';
 
 export function getProjectIdDropdown(data?: DropdownParams) {
 	return Property.Dropdown({
+		auth: jiraCloudAuth,
 		displayName: data?.displayName ?? 'Project ID or Key',
 		description: data?.description,
 		required: data?.required ?? true,
@@ -41,6 +42,7 @@ export function getProjectIdDropdown(data?: DropdownParams) {
 
 export function getIssueIdDropdown(data?: DropdownParams) {
 	return Property.Dropdown({
+		auth: jiraCloudAuth,
 		displayName: data?.displayName ?? 'Issue ID or Key',
 		description: data?.description,
 		required: data?.required ?? true,
@@ -52,19 +54,19 @@ export function getIssueIdDropdown(data?: DropdownParams) {
 					options: [],
 				};
 			}
-			let total = 0,
-				startAt = 0;
+			let hasMore = true
+			let nextPageToken:string|undefined;
 			const options: DropdownOption<string>[] = [];
 			do {
 				const response = await sendJiraRequest({
 					method: HttpMethod.POST,
-					url: 'search',
+					url: 'search/jql',
 					auth: auth as JiraAuth,
 					body: {
 						fields: ['summary'],
 						jql: `project=${projectId}`,
-						startAt: startAt,
-						maxResults: 1,
+						nextPageToken,
+						maxResults: 100,
 					},
 				});
 				const issueList = response.body as SearchIssuesResponse;
@@ -76,9 +78,10 @@ export function getIssueIdDropdown(data?: DropdownParams) {
 						};
 					}),
 				);
-				startAt = issueList.startAt + issueList.maxResults;
-				total = issueList.total;
-			} while (startAt < total);
+
+				nextPageToken = issueList.nextPageToken;
+				hasMore = !issueList.isLast
+			} while (hasMore);
 
 			return {
 				disabled: false,
@@ -90,6 +93,7 @@ export function getIssueIdDropdown(data?: DropdownParams) {
 
 export function getIssueTypeIdDropdown(data?: DropdownParams) {
 	return Property.Dropdown({
+		auth: jiraCloudAuth,
 		displayName: data?.displayName ?? 'Issue Type',
 		description: data?.description,
 		required: data?.required ?? true,
@@ -119,6 +123,7 @@ export function getIssueTypeIdDropdown(data?: DropdownParams) {
 
 export function getUsersDropdown(data?: DropdownParams) {
 	return Property.Dropdown({
+		auth: jiraCloudAuth,
 		displayName: data?.displayName ?? 'User',
 		description: data?.description,
 		required: data?.required ?? true,
@@ -153,9 +158,8 @@ export interface DropdownParams {
 }
 
 export interface SearchIssuesResponse {
-	startAt: number;
-	maxResults: number;
-	total: number;
+	nextPageToken?:string,
+	isLast: boolean;
 	issues: Array<{
 		id: string;
 		key: string;
@@ -227,6 +231,7 @@ async function fetchUsersOptions(auth: JiraAuth): Promise<DropdownOption<string>
 
 export const issueTypeIdProp = (displayName: string, required = true) =>
 	Property.Dropdown({
+		auth: jiraCloudAuth,
 		displayName,
 		refreshers: ['projectId'],
 		required,
@@ -265,6 +270,7 @@ export const issueTypeIdProp = (displayName: string, required = true) =>
 
 export const issueLinkTypeIdProp = (displayName: string, required = true) =>
 	Property.Dropdown({
+		auth: jiraCloudAuth,
 		displayName,
 		refreshers: [],
 		required,
@@ -302,6 +308,7 @@ export const issueLinkTypeIdProp = (displayName: string, required = true) =>
 
 export const issueIdOrKeyProp = (displayName: string, required = true) =>
 	Property.Dropdown({
+		auth: jiraCloudAuth,
 		displayName,
 		refreshers: [],
 		required,
@@ -340,6 +347,7 @@ export const issueIdOrKeyProp = (displayName: string, required = true) =>
 
 export const issueStatusIdProp = (displayName: string, required = true) =>
 	Property.Dropdown({
+		auth: jiraCloudAuth,
 		displayName,
 		refreshers: ['issueId'],
 		required,
@@ -534,6 +542,16 @@ export async function createPropertyDefinition(
 	}
 }
 
+// Only certain fields support ADF in issues
+// https://developer.atlassian.com/cloud/jira/platform/rest/v3/intro/#version
+// - description and environment fields in issues.
+// - textarea type custom fields (multi-line text fields) in issues. Single line custom fields (textfield) accept a string and don't handle Atlassian Document Format content.
+export function isFieldAdfCompatible(field: IssueFieldMetaData) {
+	const standardFields = ['description', 'environment'];
+
+	return field.schema.custom?.includes('textarea') || standardFields.includes(field.key);
+}
+
 function parseArray(value: Array<string> | string): Array<string> {
 	try {
 		if (Array.isArray(value)) {
@@ -557,6 +575,7 @@ function parseArray(value: Array<string> | string): Array<string> {
 export function formatIssueFields(
 	fieldsMetadata: IssueFieldMetaData[],
 	fieldsInput: Record<string, any>,
+  adfFields: string[],
 ) {
 	const fieldsOutput: Record<string, any> = {};
 
@@ -617,20 +636,21 @@ export function formatIssueFields(
 				break;
 
 			case 'string': {
-				const isCustomTextArea =
-					field.schema.custom?.includes('textarea') || ['description', 'environment'].includes(key);
-
-				if (isCustomTextArea) {
-					fieldsOutput[key] = {
-						type: 'doc',
-						version: 1,
-						content: [
-							{
-								type: 'paragraph',
-								content: [{ text: fieldInputValue, type: 'text' }],
-							},
-						],
-					};
+				if (isFieldAdfCompatible(field)) {
+					if (adfFields.includes(key)) {
+						fieldsOutput[key] = JSON.parse(fieldInputValue);
+					} else {
+						fieldsOutput[key] = {
+							type: 'doc',
+							version: 1,
+							content: [
+								{
+									type: 'paragraph',
+									content: [{ text: fieldInputValue, type: 'text' }],
+								},
+							],
+						};
+					}
 				} else {
 					fieldsOutput[key] = fieldInputValue;
 				}

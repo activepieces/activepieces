@@ -1,7 +1,9 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { avomaCommon } from '../common';
 
 export const createCall = createAction({
+  auth: avomaCommon.avomaAuth,
   name: 'create_call',
   displayName: 'Create Call',
   description: 'Creates a new call in Avoma',
@@ -188,7 +190,7 @@ export const createCall = createAction({
         method: HttpMethod.POST,
         url: 'https://api.avoma.com/v1/calls/',
         headers: {
-          'Authorization': `Bearer ${auth}`,
+          'Authorization': `Bearer ${auth.secret_text}`,
           'Content-Type': 'application/json'
         },
         body: requestBody

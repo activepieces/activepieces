@@ -4,7 +4,7 @@ import {
   HttpMethod,
   httpClient,
 } from '@activepieces/pieces-common';
-import { discordAuth } from '../../index';
+import { discordAuth } from '../auth';
 import { discordCommon } from '../common';
 import FormData from 'form-data';
 
@@ -57,7 +57,7 @@ export const sendMessageWithBot = createAction({
       method: HttpMethod.POST,
       url: `https://discord.com/api/v10/channels/${channelId}/messages`,
       headers: {
-        authorization: `Bot ${configValue.auth}`,
+        authorization: `Bot ${configValue.auth.secret_text}`,
         'Content-Type': 'multipart/form-data',
       },
       body: formData,

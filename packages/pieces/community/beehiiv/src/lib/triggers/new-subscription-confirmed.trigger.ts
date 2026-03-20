@@ -20,7 +20,7 @@ export const newSubscriptionConfirmedTrigger = createTrigger({
 		const { publicationId } = context.propsValue;
 
 		const response = await beehiivApiCall<{ data: { id: string } }>({
-			apiKey: context.auth,
+			apiKey: context.auth.secret_text,
 			method: HttpMethod.POST,
 			resourceUri: `/publications/${publicationId}/webhooks`,
 			body: {
@@ -37,7 +37,7 @@ export const newSubscriptionConfirmedTrigger = createTrigger({
 		const webhookId = await context.store.get<string>(TRIGGER_KEY);
 		if (!isNil(webhookId)) {
 			await beehiivApiCall({
-				apiKey: context.auth,
+				apiKey: context.auth.secret_text,
 				method: HttpMethod.DELETE,
 				resourceUri: `/publications/${publicationId}/webhooks/${webhookId}`,
 			});
@@ -47,7 +47,7 @@ export const newSubscriptionConfirmedTrigger = createTrigger({
 		const { publicationId } = context.propsValue;
 
 		const response = await beehiivApiCall<{ data: Record<string, any>[] }>({
-			apiKey: context.auth,
+			apiKey: context.auth.secret_text,
 			method: HttpMethod.GET,
 			resourceUri: `/publications/${publicationId}/subscriptions`,
 			query: {
@@ -65,7 +65,7 @@ export const newSubscriptionConfirmedTrigger = createTrigger({
 	},
 	async run(context) {
 		const payload = context.payload.body as WebhookPayload;
-		return [payload];
+		return [payload.data];
 	},
 	sampleData: {
 		created: 1666800076,

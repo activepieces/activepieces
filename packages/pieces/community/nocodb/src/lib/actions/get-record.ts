@@ -1,4 +1,4 @@
-import { nocodbAuth } from '../../';
+import { nocodbAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { makeClient, nocodbCommon } from '../common';
 
@@ -17,9 +17,9 @@ export const getRecordAction = createAction({
 		}),
 	},
 	async run(context) {
-		const { tableId, recordId } = context.propsValue;
+		const { baseId, tableId, recordId } = context.propsValue;
 
 		const client = makeClient(context.auth);
-		return await client.getRecord(tableId, recordId, context.auth.version || 3);
+		return await client.getRecord(baseId, tableId, recordId, context.auth.props.version || 3);
 	},
 });

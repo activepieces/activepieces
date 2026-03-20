@@ -1,19 +1,16 @@
-import { ListAuditEventsRequest } from '@activepieces/ee-shared'
-import {
-    EndpointScope,
-    PrincipalType,
-} from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
+import { ListAuditEventsRequest, PrincipalType } from '@activepieces/shared'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import { securityAccess } from '../../core/security/authorization/fastify-security'
+import { platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
 import { auditLogService } from './audit-event-service'
 
-export const auditEventModule: FastifyPluginAsyncTypebox = async (app) => {
+export const auditEventModule: FastifyPluginAsyncZod = async (app) => {
+    auditLogService(app.log).setup()
     app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.plan.auditLogEnabled))
-    app.addHook('preHandler', platformMustBeOwnedByCurrentUser)
     await app.register(auditEventController, { prefix: '/v1/audit-events' })
 }
 
-const auditEventController: FastifyPluginAsyncTypebox = async (app) => {
+const auditEventController: FastifyPluginAsyncZod = async (app) => {
 
     app.get('/', ListAuditEventsRequestEndpoint, async (request) => {
         return auditLogService(request.log).list({
@@ -31,9 +28,10 @@ const auditEventController: FastifyPluginAsyncTypebox = async (app) => {
 
 
 const ListAuditEventsRequestEndpoint = {
+    config: {
+        security: securityAccess.platformAdminOnly([PrincipalType.SERVICE, PrincipalType.USER]),
+    },
     schema: {
         querystring: ListAuditEventsRequest,
-        allowedPrincipals: [PrincipalType.UNKNOWN],
-        scope: EndpointScope.PLATFORM,
     },
 }

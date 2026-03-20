@@ -1,10 +1,7 @@
-import {
-  createAction,
-  OAuth2PropertyValue,
-} from '@activepieces/pieces-framework';
+import { createAction } from '@activepieces/pieces-framework';
 import { Client } from '@notionhq/client';
-import { notionAuth } from '../..';
-import { notionCommon } from '../common';
+import { notionAuth } from '../auth';
+import { getNotionToken, notionCommon } from '../common';
 
 export const restoreDatabaseItem = createAction({
   auth: notionAuth,
@@ -28,7 +25,7 @@ export const restoreDatabaseItem = createAction({
     }
 
     const notion = new Client({
-      auth: (context.auth as OAuth2PropertyValue).access_token,
+      auth: getNotionToken(context.auth),
       notionVersion: '2022-02-22',
     });
 
@@ -43,7 +40,12 @@ export const restoreDatabaseItem = createAction({
 
       if ('properties' in response && response.properties) {
         const firstProperty = Object.values(response.properties)[0];
-        if (firstProperty && 'title' in firstProperty && firstProperty.title) {
+        if (
+          firstProperty &&
+          typeof firstProperty === 'object' &&
+          'title' in firstProperty &&
+          firstProperty.title
+        ) {
           itemTitle =
             (firstProperty.title as any)[0]?.plain_text || 'Untitled item';
         }

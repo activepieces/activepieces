@@ -2,6 +2,8 @@
   "Convert JSON to text and vice versa": "Converter JSON em texto e vice-versa",
   "Convert Json to Text": "Converter Json para texto",
   "Convert Text to Json": "Converter texto para Json",
+  "Stringifies JSON.": "Stringifica JSON.",
+  "Parses text into JSON.": "Analisa texto em JSON.",
   "JSON": "JSON",
   "Text": "texto"
 }

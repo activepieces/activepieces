@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest } from '../common';
-import { filloutFormsAuth } from '../../index';
+import { filloutFormsAuth } from '../auth';
 
 export const findFormByTitle = createAction({
   auth: filloutFormsAuth,
@@ -16,7 +16,7 @@ export const findFormByTitle = createAction({
     })
   },
   async run(context) {
-    const apiKey = context.auth as string;
+    const apiKey = context.auth.secret_text;
     const response = await makeRequest(apiKey, HttpMethod.GET, `/forms`, undefined);
    
     const forms = response as Array<{ name: string; formId: string }>;

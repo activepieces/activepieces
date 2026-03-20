@@ -6,10 +6,13 @@ import {
 	HttpRequest,
 } from '@activepieces/pieces-common';
 import { isNil } from '@activepieces/shared';
+import { excelAuth } from '../auth';
+import { getDrivePath } from './helpers';
 
 export const excelCommon = {
 	baseUrl: 'https://graph.microsoft.com/v1.0/me/drive',
 	workbook_id: Property.Dropdown({
+		auth: excelAuth,
 		displayName: 'Workbook',
 		required: true,
 		options: async ({ auth }) => {
@@ -25,10 +28,6 @@ export const excelCommon = {
 				await httpClient.sendRequest<{ value: { id: string; name: string }[] }>({
 					method: HttpMethod.GET,
 					url: `${excelCommon.baseUrl}/items/root/search(q='.xlsx')?$select=id,name`,
-					// queryParams: {
-					//   filter:
-					//     "file ne null and file/mimeType eq 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'",
-					// },
 					authentication: {
 						type: AuthenticationType.BEARER_TOKEN,
 						token: authProp['access_token'],
@@ -48,6 +47,7 @@ export const excelCommon = {
 		refreshers: [],
 	}),
 	worksheet_id: Property.Dropdown({
+		auth: excelAuth,
 		displayName: 'Worksheet',
 		required: true,
 		refreshers: ['workbook_id'],
@@ -83,6 +83,7 @@ export const excelCommon = {
 		},
 	}),
 	table_id: Property.Dropdown({
+		auth: excelAuth,
 		displayName: 'Table',
 		required: true,
 		refreshers: ['workbook_id', 'worksheet_id'],
@@ -118,6 +119,7 @@ export const excelCommon = {
 		},
 	}),
 	values: Property.DynamicProperties({
+		auth: excelAuth,
 		displayName: 'Values',
 		description: 'The values to insert',
 		required: true,
@@ -144,7 +146,7 @@ export const excelCommon = {
 			const firstRow = await excelCommon.getHeaders(
 				workbook_id as unknown as string,
 				authProp['access_token'],
-				worksheet_id as unknown as string,
+				worksheet_id as unknown as string
 			);
 
 			const properties: {
@@ -161,28 +163,33 @@ export const excelCommon = {
 			return properties;
 		},
 	}),
-	table_values: Property.DynamicProperties({
+	tableValues: Property.DynamicProperties({
+		auth: excelAuth,
 		displayName: 'Values',
 		description: 'The values to insert',
 		required: true,
-		refreshers: ['workbook_id', 'worksheet_id', 'table_id'],
-		props: async ({ auth, workbook_id, worksheet_id, table_id }) => {
+		refreshers: ['storageSource','siteId','documentId','workbook_id', 'worksheet_id', 'tableId'],
+		props: async ({ auth, storageSource, siteId, documentId, workbook_id, worksheet_id, tableId }) => {
 			if (
 				!auth ||
 				(workbook_id ?? '').toString().length === 0 ||
 				(worksheet_id ?? '').toString().length === 0 ||
-				(worksheet_id ?? '').toString().length === 0
+				(tableId ?? '').toString().length === 0
 			) {
 				return {};
 			}
 
+			if (storageSource === 'sharepoint' && (!siteId || !documentId)) return {};
+
 			const authProp: OAuth2PropertyValue = auth as OAuth2PropertyValue;
+			const drivePath = getDrivePath(storageSource as string, siteId as string, documentId as string);
 
 			const headers = await excelCommon.getTableHeaders(
+				drivePath,
 				workbook_id as unknown as string,
 				authProp['access_token'],
 				worksheet_id as unknown as string,
-				table_id as unknown as string,
+				tableId as unknown as string
 			);
 
 			const properties: {
@@ -200,8 +207,9 @@ export const excelCommon = {
 		},
 	}),
 	parent_folder: Property.Dropdown({
-		displayName: "Parent Folder",
-		description: "The parent folder to use",
+		auth: excelAuth,
+		displayName: 'Parent Folder',
+		description: 'The parent folder to use',
 		required: true,
 		refreshers: [],
 		options: async ({ auth }) => {
@@ -215,11 +223,12 @@ export const excelCommon = {
 
 			const authProp: OAuth2PropertyValue = auth as OAuth2PropertyValue;
 
-			// Fetch all folders, starting from the root folder
 			const rootFolderId = 'root';
-			const allFolders: { id: string, name: string }[] = await excelCommon.getAllFolders(rootFolderId, authProp['access_token'], '');
-
-			// Include the root folder explicitly
+			const allFolders: { id: string; name: string }[] = await excelCommon.getAllFolders(
+				rootFolderId,
+				authProp['access_token'],
+				''
+			);
 			allFolders.unshift({
 				id: rootFolderId,
 				name: '/',
@@ -234,10 +243,12 @@ export const excelCommon = {
 					};
 				}),
 			};
-		}
+		},
 	}),
 	getHeaders: async function (workbookId: string, accessToken: string, worksheetId: string) {
-		const response = await httpClient.sendRequest<{ values: string[][] }>({
+		const response = await httpClient.sendRequest<{
+			values: (string | number | boolean)[][];
+		}>({
 			method: HttpMethod.GET,
 			url: `${excelCommon.baseUrl}/items/${workbookId}/workbook/worksheets/${worksheetId}/usedRange(valuesOnly=true)`,
 			authentication: {
@@ -246,17 +257,18 @@ export const excelCommon = {
 			},
 		});
 
-		return response.body.values[0];
+		return response.body.values?.[0] ?? [];
 	},
 	getTableHeaders: async function (
+		drivePath: string,
 		workbookId: string,
 		accessToken: string,
 		worksheetId: string,
-		tableId: string,
+		tableId: string
 	) {
 		const response = await httpClient.sendRequest({
 			method: HttpMethod.GET,
-			url: `${excelCommon.baseUrl}/items/${workbookId}/workbook/worksheets/${worksheetId}/tables/${tableId}/columns`,
+			url: `${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/tables/${tableId}/columns`,
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
 				token: accessToken,
@@ -269,7 +281,7 @@ export const excelCommon = {
 	getLastUsedRow: async function (
 		workbookId: string,
 		worksheetId: string,
-		accessToken: string,
+		accessToken: string
 	): Promise<number> {
 		const url = `${excelCommon.baseUrl}/items/${workbookId}/workbook/worksheets/${worksheetId}/usedRange`;
 
@@ -284,7 +296,7 @@ export const excelCommon = {
 
 		const response = await httpClient.sendRequest(request);
 		const usedRange = response.body['address'].split('!')[1];
-		const [, lastCell] = usedRange.split(':');
+		const lastCell = usedRange.indexOf(':') != -1 ? usedRange.split(':')[1] : usedRange;
 		const lastRow = parseInt(lastCell.match(/\d+/)[0], 10);
 
 		return lastRow;
@@ -292,8 +304,8 @@ export const excelCommon = {
 	getLastUsedColumn: async function (
 		workbookId: string,
 		worksheetId: string,
-		accessToken: string,
-	): Promise<number> {
+		accessToken: string
+	): Promise<string> {
 		const url = `${excelCommon.baseUrl}/items/${workbookId}/workbook/worksheets/${worksheetId}/usedRange`;
 
 		const request: HttpRequest = {
@@ -312,18 +324,25 @@ export const excelCommon = {
 
 		return lastColumnLetter;
 	},
-	getAllRows: async function (workbookId: string, worksheetId: string, accessToken: string) {
-		const response = await httpClient.sendRequest({
+	getAllRows: async function (
+		workbookId: string,
+		worksheetId: string,
+		accessToken: string,
+		drivePath?: string
+	): Promise<(string | number | boolean)[][]> {
+		const basePath = drivePath || excelCommon.baseUrl;
+		const response = await httpClient.sendRequest<{
+			values: (string | number | boolean)[][];
+		}>({
 			method: HttpMethod.GET,
-			url: `${excelCommon.baseUrl}/items/${workbookId}/workbook/worksheets/${worksheetId}/usedRange(valuesOnly=true)`,
+			url: `${basePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/usedRange(valuesOnly=true)`,
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
 				token: accessToken,
 			},
 		});
 
-		const rows = response.body['values'];
-		return rows;
+		return response.body['values'] ?? [];
 	},
 	numberToColumnName: function (num: number): string {
 		let columnName = '';
@@ -334,46 +353,39 @@ export const excelCommon = {
 		}
 		return columnName;
 	},
-	getAllFolders: async function (folderId: string, authToken: string, currentPath: string): Promise<{ id: string, name: string }[]> {
-		let apiUrl: string;
-	
-		// Check if we're fetching from the root folder or a specific subfolder
-		if (folderId === 'root') {
-			apiUrl = `${excelCommon.baseUrl}/root/children`;
-		} else {
-			apiUrl = `${excelCommon.baseUrl}/items/${folderId}/children`;
+	getAllFolders: async function (
+		folderId: string,
+		authToken: string,
+		currentPath: string
+	): Promise<{ id: string; name: string }[]> {
+		const apiUrl = `${excelCommon.baseUrl}/items/${folderId}/children?$filter=folder ne null`;
+		const response = await httpClient.sendRequest<{
+			value: { id: string; name: string; folder?: unknown }[];
+		}>({
+			url: apiUrl,
+			method: HttpMethod.GET,
+			authentication: {
+				type: AuthenticationType.BEARER_TOKEN,
+				token: authToken,
+			},
+		});
+
+		if (!response.body || !response.body.value) {
+			return [];
 		}
-	
-		// Fetch the folder contents
-		const folders: { id: string, name: string }[] = (
-			await httpClient.sendRequest<{ value: { id: string, name: string,folder?: unknown }[] }>({
-				url: apiUrl,
-				method: HttpMethod.GET,
-				authentication: {
-					type: AuthenticationType.BEARER_TOKEN,
-					token: authToken
-				}
-			})
-		).body.value
-		.filter(object => !isNil(object.folder)) // Filter only folder objects
-		.map(folder => ({
+
+		const folders = response.body.value.map((folder) => ({
 			id: `${folder.id}`,
 			name: `${currentPath}/${folder.name}`,
 		}));
-	
-		// Base case: if no subfolders, return an empty array
-		if (folders.length === 0) {
-			return [];
-		}
-	
-		// Recursively fetch subfolders
+		let allSubFolders: { id: string; name: string }[] = [...folders];
+
 		for (const folder of folders) {
 			const subFolders = await excelCommon.getAllFolders(folder.id, authToken, folder.name);
-			folders.push(...subFolders);
+			allSubFolders = allSubFolders.concat(subFolders);
 		}
-	
-		return folders;
-	}
+		return allSubFolders;
+	},
 };
 
 export function objectToArray(obj: { [x: string]: any }) {

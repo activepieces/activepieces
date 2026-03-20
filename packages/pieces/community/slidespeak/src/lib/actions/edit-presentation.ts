@@ -1,4 +1,4 @@
-import { slidespeakAuth } from '../../index';
+import { slidespeakAuth } from '../auth';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { BASE_URL } from '../common/constants';
@@ -40,7 +40,7 @@ export const editPresentationAction = createAction({
       method: HttpMethod.POST,
       url: BASE_URL + '/presentation/edit',
       headers: {
-        'X-API-key': apiKey,
+        'X-API-key': apiKey.secret_text,
         ...formData.getHeaders()
       },
       body: formData,

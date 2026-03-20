@@ -1,33 +1,41 @@
 import {
-  OAuth2PropertyValue,
+  AppConnectionValueForAuthProperty,
   Property,
   createTrigger,
 } from '@activepieces/pieces-framework';
 import { TriggerStrategy } from '@activepieces/pieces-framework';
 import { excelCommon } from '../common/common';
+import { commonProps } from '../common/props';
+import { getDrivePath } from '../common/helpers';
 import {
   DedupeStrategy,
   Polling,
   pollingHelper,
 } from '@activepieces/pieces-common';
 import { isNil } from '@activepieces/shared';
-import { excelAuth } from '../..';
+import { excelAuth } from '../auth';
 
 const polling: Polling<
-  OAuth2PropertyValue,
+  AppConnectionValueForAuthProperty<typeof excelAuth>,
   {
-    workbook_id: string;
-    worksheet_id: string;
+    storageSource: string;
+    siteId?: string;
+    documentId?: string;
+    workbookId: string;
+    worksheetId: string;
     max_rows_to_poll: number | undefined;
   }
 > = {
   strategy: DedupeStrategy.LAST_ITEM,
   items: async ({ auth, propsValue, lastItemId }) => {
+    const { storageSource, siteId, documentId, workbookId, worksheetId } = propsValue;
+    const drivePath = getDrivePath(storageSource, siteId, documentId);
     const fetchedValues =
       (await excelCommon.getAllRows(
-        propsValue.workbook_id,
-        propsValue.worksheet_id,
-        auth.access_token
+        workbookId,
+        worksheetId,
+        auth.access_token,
+        drivePath
       )) ?? [];
 
     const currentValues = fetchedValues.map((row: any[], rowIndex: number) => {
@@ -63,8 +71,11 @@ export const readNewRows = createTrigger({
   description:
     'Trigger when a new row is added, and it can include existing rows as well.',
   props: {
-    workbook_id: excelCommon.workbook_id,
-    worksheet_id: excelCommon.worksheet_id,
+    storageSource: commonProps.storageSource,
+    siteId: commonProps.siteId,
+    documentId: commonProps.documentId,
+    workbookId: commonProps.workbookId,
+    worksheetId: commonProps.worksheetId,
     max_rows_to_poll: Property.Number({
       displayName: 'Max Rows to Poll',
       description:
@@ -76,6 +87,10 @@ export const readNewRows = createTrigger({
   type: TriggerStrategy.POLLING,
   sampleData: {},
   onEnable: async (context) => {
+    const { storageSource, siteId, documentId } = context.propsValue as any;
+    if (storageSource === 'sharepoint' && (!siteId || !documentId)) {
+      throw new Error('please select SharePoint site and document library.');
+    }
     await pollingHelper.onEnable(polling, {
       auth: context.auth,
       store: context.store,

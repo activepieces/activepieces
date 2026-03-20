@@ -18,7 +18,7 @@ export class AddJobIdToTriggerRun1754510611628 implements MigrationInterface {
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            DROP INDEX "public"."idx_trigger_run_job_id"
+            DROP INDEX "idx_trigger_run_job_id"
         `)
         await queryRunner.query(`
             ALTER TABLE "trigger_run" DROP COLUMN "jobId"

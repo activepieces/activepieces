@@ -1,4 +1,5 @@
 
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 import {
     PlatformRole,
     PrincipalType,
@@ -6,9 +7,6 @@ import {
 } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { initializeDatabase } from '../../../../src/app/database'
-import { databaseConnection } from '../../../../src/app/database/database-connection'
-import { setupServer } from '../../../../src/app/server'
 import { generateMockToken } from '../../../helpers/auth'
 import {
     mockAndSaveBasicSetup,
@@ -19,15 +17,12 @@ import {
 let app: FastifyInstance | null = null
 
 beforeAll(async () => {
-    await initializeDatabase({ runMigrations: false })
-    app = await setupServer()
+    app = await setupTestEnvironment()
 })
 
 afterAll(async () => {
-    await databaseConnection().destroy()
-    await app?.close()
+    await teardownTestEnvironment()
 })
-
 describe('Enterprise User API', () => {
     describe('List users endpoint', () => {
 
@@ -38,7 +33,7 @@ describe('Enterprise User API', () => {
             // act
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/users',
+                url: '/api/v1/users',
                 query: {
                     platformId: mockPlatform.id,
                 },
@@ -75,6 +70,7 @@ describe('Enterprise User API', () => {
             const mockUserToken = await generateMockToken({
                 id: mockOwner2.id,
                 type: PrincipalType.USER,
+                
                 platform: {
                     id: mockPlatform2.id,
                 },
@@ -82,7 +78,7 @@ describe('Enterprise User API', () => {
 
             const response = await app?.inject({
                 method: 'POST',
-                url: `/v1/users/${mockUser.id}`,
+                url: `/api/v1/users/${mockUser.id}`,
                 headers: {
                     authorization: `Bearer ${mockUserToken}`,
                 },
@@ -109,6 +105,7 @@ describe('Enterprise User API', () => {
             const mockUserToken = await generateMockToken({
                 id: mockUser.id,
                 type: PrincipalType.USER,
+                
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -116,7 +113,7 @@ describe('Enterprise User API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: `/v1/users/${mockUser.id}`,
+                url: `/api/v1/users/${mockUser.id}`,
                 headers: {
                     authorization: `Bearer ${mockUserToken}`,
                 },
@@ -142,7 +139,7 @@ describe('Enterprise User API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: `/v1/users/${mockUser.id}`,
+                url: `/api/v1/users/${mockUser.id}`,
                 headers: {
                     authorization: `Bearer ${mockApiKey.value}`,
                 },
@@ -178,6 +175,7 @@ describe('Enterprise User API', () => {
             const mockUserToken = await generateMockToken({
                 id: mockUser.id,
                 type: PrincipalType.USER,
+                
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -186,7 +184,7 @@ describe('Enterprise User API', () => {
             // act
             const response = await app?.inject({
                 method: 'DELETE',
-                url: `/v1/users/${mockUser.id}`,
+                url: `/api/v1/users/${mockUser.id}`,
                 headers: {
                     authorization: `Bearer ${mockUserToken}`,
                 },
@@ -209,6 +207,7 @@ describe('Enterprise User API', () => {
             const mockOwnerToken = await generateMockToken({
                 id: mockOwner.id,
                 type: PrincipalType.USER,
+                
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -217,7 +216,7 @@ describe('Enterprise User API', () => {
             // act
             const response = await app?.inject({
                 method: 'DELETE',
-                url: `/v1/users/${mockUser.id}`,
+                url: `/api/v1/users/${mockUser.id}`,
                 headers: {
                     authorization: `Bearer ${mockOwnerToken}`,
                 },

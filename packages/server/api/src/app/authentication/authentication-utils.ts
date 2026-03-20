@@ -1,7 +1,7 @@
-import { AppSystemProp } from '@activepieces/server-shared'
-import { ActivepiecesError, ApEdition, ApEnvironment, AuthenticationResponse, ErrorCode, isNil, Principal, PrincipalType, Project, TelemetryEventName, User, UserIdentity, UserIdentityProvider, UserStatus } from '@activepieces/shared'
-import { FastifyBaseLogger } from 'fastify'
+import { ActivepiecesError, ApEdition, ApEnvironment, assertNotNullOrUndefined, AuthenticationResponse, EndpointScope, ErrorCode, isNil, PrincipalType, Project, ProjectType, TelemetryEventName, User, UserIdentity, UserIdentityProvider, UserStatus } from '@activepieces/shared'
+import { FastifyBaseLogger, FastifyRequest } from 'fastify'
 import { system } from '../helper/system/system'
+import { AppSystemProp } from '../helper/system/system-props'
 import { telemetry } from '../helper/telemetry.utils'
 import { platformService } from '../platform/platform.service'
 import { projectService } from '../project/project-service'
@@ -10,14 +10,15 @@ import { userInvitationsService } from '../user-invitations/user-invitation.serv
 import { accessTokenManager } from './lib/access-token-manager'
 import { userIdentityService } from './user-identity/user-identity-service'
 
-export const authenticationUtils = {
-    async assertUserIsInvitedToPlatformOrProject(log: FastifyBaseLogger, {
+export const authenticationUtils = (log: FastifyBaseLogger) => ({
+    async assertUserIsInvitedToPlatformOrProject({
         email,
         platformId,
     }: AssertUserIsInvitedToPlatformOrProjectParams): Promise<void> {
         const isInvited = await userInvitationsService(log).hasAnyAcceptedInvitations({
             platformId,
             email,
+            
         })
         if (!isInvited) {
             throw new ActivepiecesError({
@@ -30,12 +31,15 @@ export const authenticationUtils = {
     },
 
     async getProjectAndToken(params: GetProjectAndTokenParams): Promise<AuthenticationResponse> {
-        const user = await userService.getOneOrFail({ id: params.userId })
-        const projects = await projectService.getAllForUser({
+        const user = await userService(log).getOneOrFail({ id: params.userId })
+        const projects = await projectService(log).getAllForUser({
             platformId: params.platformId,
             userId: params.userId,
+            isPrivileged: userService(log).isUserPrivileged(user),
         })
-        const project = isNil(params.projectId) ? projects?.[0] : projects.find((project) => project.id === params.projectId)
+        const project = isNil(params.projectId)
+            ? findPersonalProject(projects, params.userId) ?? projects?.[0]
+            : projects.find((project) => project.id === params.projectId)
         if (isNil(project)) {
             throw new ActivepiecesError({
                 code: ErrorCode.INVITATION_ONLY_SIGN_UP,
@@ -44,7 +48,7 @@ export const authenticationUtils = {
                 },
             })
         }
-        const identity = await userIdentityService(system.globalLogger()).getOneOrFail({ id: user.identityId })
+        const identity = await userIdentityService(log).getOneOrFail({ id: user.identityId })
         if (!identity.verified) {
             throw new ActivepiecesError({
                 code: ErrorCode.EMAIL_IS_NOT_VERIFIED,
@@ -61,10 +65,9 @@ export const authenticationUtils = {
                 },
             })
         }
-        const token = await accessTokenManager.generateToken({
+        const token = await accessTokenManager(log).generateToken({
             id: user.id,
             type: PrincipalType.USER,
-            projectId: project.id,
             platform: {
                 id: params.platformId,
             },
@@ -91,7 +94,7 @@ export const authenticationUtils = {
         if (edition === ApEdition.COMMUNITY) {
             return
         }
-        const platform = await platformService.getOneWithPlanOrThrow(platformId)
+        const platform = await platformService(log).getOneWithPlanOrThrow(platformId)
         if (!platform.plan.ssoEnabled) {
             return
         }
@@ -118,7 +121,7 @@ export const authenticationUtils = {
         if (edition === ApEdition.COMMUNITY) {
             return
         }
-        const platform = await platformService.getOneWithPlanOrThrow(platformId)
+        const platform = await platformService(log).getOneWithPlanOrThrow(platformId)
         if (!platform.plan.ssoEnabled) {
             return
         }
@@ -137,7 +140,6 @@ export const authenticationUtils = {
         user,
         identity,
         project,
-        log,
     }: SendTelemetryParams): Promise<void> {
         try {
             await telemetry(log).identify(user, identity, project.id)
@@ -154,12 +156,12 @@ export const authenticationUtils = {
             })
         }
         catch (e) {
-            log.warn({ name: 'AuthenticationService#sendTelemetry', error: e })
+            log.warn({ err: e }, '[authenticationUtils#sendTelemetry] Failed to send telemetry')
         }
     },
 
-    async saveNewsLetterSubscriber(user: User, platformId: string, identity: UserIdentity, log: FastifyBaseLogger): Promise<void> {
-        const platform = await platformService.getOneWithPlanOrThrow(platformId)
+    async saveNewsLetterSubscriber(user: User, platformId: string, identity: UserIdentity): Promise<void> {
+        const platform = await platformService(log).getOneWithPlanOrThrow(platformId)
         const environment = system.get(AppSystemProp.ENVIRONMENT)
         if (environment !== ApEnvironment.PRODUCTION) {
             return
@@ -178,29 +180,32 @@ export const authenticationUtils = {
                     body: JSON.stringify({ email: identity.email }),
                 },
             )
-            return await response.json()
+            await response.json()
         }
         catch (error) {
-            log.warn(error)
+            log.warn({ err: error }, '[authenticationUtils#saveNewsLetterSubscriber] Failed to save newsletter subscriber')
         }
     },
-    async extractUserIdFromPrincipal(
-        principal: Principal,
-    ): Promise<string> {
-        if (principal.type === PrincipalType.USER) {
-            return principal.id
+    async extractUserIdFromRequest(request: FastifyRequest): Promise<string> {
+        if (request.principal.type === PrincipalType.USER) {
+            return request.principal.id
         }
         // TODO currently it's same as api service, but it's better to get it from api key service, in case we introduced more admin users
-        const project = await projectService.getOneOrThrow(principal.projectId)
+        const projectId = request.principal.type === PrincipalType.ENGINE ? request.principal.projectId : request.projectId
+        assertNotNullOrUndefined(projectId, 'projectId')
+        const project = await projectService(log).getOneOrThrow(projectId)
         return project.ownerId
     },
+})
+
+function findPersonalProject(projects: Project[], userId: string): Project | undefined {
+    return projects.find((project) => project.ownerId === userId && project.type === ProjectType.PERSONAL)
 }
 
 type SendTelemetryParams = {
     identity: UserIdentity
     user: User
     project: Project
-    log: FastifyBaseLogger
 }
 
 type AssertDomainIsAllowedParams = {
@@ -222,4 +227,5 @@ type GetProjectAndTokenParams = {
     userId: string
     platformId: string
     projectId: string | null
+    scope?: EndpointScope
 }

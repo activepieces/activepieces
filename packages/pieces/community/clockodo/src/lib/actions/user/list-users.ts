@@ -1,5 +1,5 @@
 import { makeClient } from '../../common';
-import { clockodoAuth } from '../../../';
+import { clockodoAuth } from '../../auth';
 import { createAction } from '@activepieces/pieces-framework';
 
 export default createAction({
@@ -9,7 +9,7 @@ export default createAction({
   description: 'Fetches users from clockodo',
   props: {},
   async run({ auth }) {
-    const client = makeClient(auth);
+    const client = makeClient(auth.props);
     const res = await client.listUsers();
     return {
       users: res.users,

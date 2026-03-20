@@ -2,8 +2,12 @@ import { createCustomApiCallAction, httpClient, HttpMethod } from '@activepieces
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { scrape } from './lib/actions/scrape';
-import { startCrawl } from './lib/actions/start-crawl';
+import { extract } from './lib/actions/extract';
+import { crawl } from './lib/actions/crawl';
 import { crawlResults } from './lib/actions/crawl-results';
+import { map } from './lib/actions/map';
+import { FIRECRAWL_API_BASE_URL } from './lib/common/common';
+import { firecrawlAuth } from './lib/auth';
 
 const markdownDescription = `
 Follow these steps to obtain your Firecrawl API Key:
@@ -13,56 +17,26 @@ Follow these steps to obtain your Firecrawl API Key:
 3. Locate and copy your API key from the API settings section.
 `;
 
-export const firecrawlAuth = PieceAuth.SecretText({
-  description: markdownDescription,
-  displayName: 'API Key',
-  required: true,
-  validate: async ({ auth }) => {
-    try {
-      await httpClient.sendRequest({
-        method: HttpMethod.POST,
-        url: 'https://api.firecrawl.dev/v1/scrape',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${auth}`,
-        },
-        body: {
-          url: 'https://www.example.com',
-          formats: ['json'],
-          jsonOptions: {
-            prompt: 'test'
-          }
-        },
-      });
-      return {
-        valid: true,
-      };
-    } catch (e) {
-      return {
-        valid: false,
-        error: 'Invalid API Key',
-      };
-    }
-  },
-});
-
 export const firecrawl = createPiece({
   displayName: 'Firecrawl',
   description: 'Extract structured data from websites using AI with natural language prompts',
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/firecrawl.png',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
-  authors: ["geekyme-fsmk", "geekyme"],
+  authors: ["geekyme-fsmk", "geekyme", "arinmakk"],
   auth: firecrawlAuth,
   actions: [
     scrape,
-    startCrawl,
+    extract,
+    crawl,
     crawlResults,
+    map,
+
     createCustomApiCallAction({
-      baseUrl: () => 'https://api.firecrawl.dev/v1',
+      baseUrl: () => FIRECRAWL_API_BASE_URL,
       auth: firecrawlAuth,
       authMapping: async (auth) => ({
-        'Authorization': `Bearer ${auth}`,
+        'Authorization': `Bearer ${auth.secret_text}`,
       }),
     }),
   ],

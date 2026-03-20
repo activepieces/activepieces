@@ -15,13 +15,15 @@
   "Method": "Method",
   "Headers": "Headers",
   "Query Parameters": "Query Parameters",
+  "Body Type": "Body Type",
   "Body": "Body",
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "Go to **Subscribers Tab-> All Subscribers -> Manage Fields** to get custom field names.": "Go to **Subscribers Tab-> All Subscribers -> Manage Fields** to get custom field names.",
   "Authorization headers are injected automatically from your connection.": "Authorization headers are injected automatically from your connection.",
-  "Enable for files like PDFs, images, etc..": "Enable for files like PDFs, images, etc..",
+  "Enable for files like PDFs, images, etc.": "Enable for files like PDFs, images, etc.",
   "Unsubscribed": "Unsubscribed",
   "Subscribed": "Subscribed",
   "GET": "GET",
@@ -29,5 +31,9 @@
   "PATCH": "PATCH",
   "PUT": "PUT",
   "DELETE": "DELETE",
-  "HEAD": "HEAD"
+  "HEAD": "HEAD",
+  "None": "None",
+  "JSON": "JSON",
+  "Form Data": "Form Data",
+  "Raw": "Raw"
 }

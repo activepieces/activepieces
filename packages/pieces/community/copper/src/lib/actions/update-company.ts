@@ -15,6 +15,7 @@ export const updateCompany = createAction({
   props: {
     companyId: companyDropdown({ refreshers: ['auth'], required: true }),
     fields: Property.DynamicProperties({
+      auth: CopperAuth,
       displayName: '',
       description: '',
       refreshers: ['auth', 'companyId'],

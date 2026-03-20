@@ -15,6 +15,7 @@ import {
   updateContact,
 } from './lib/actions';
 import { triggers } from './lib/triggers';
+import { mauticAuth } from './lib/auth';
 
 const markdownDescription = `
 Follow these steps:
@@ -24,25 +25,6 @@ Follow these steps:
 2. **Enable Basic Authentication:** Log in to Mautic, go to **Settings** > **Configuration** > **API Settings**, and ensure that Basic Authentication is enabled.
 
 `;
-
-export const mauticAuth = PieceAuth.CustomAuth({
-  description: markdownDescription,
-  props: {
-    base_url: Property.ShortText({
-      displayName: 'Base URL',
-      required: true,
-    }),
-    username: Property.ShortText({
-      displayName: 'Username',
-      required: true,
-    }),
-    password: PieceAuth.SecretText({
-      displayName: 'Password',
-      required: true,
-    }),
-  },
-  required: true,
-});
 
 export const mautic = createPiece({
   displayName: 'Mautic',
@@ -63,13 +45,14 @@ export const mautic = createPiece({
     createCustomApiCallAction({
       auth: mauticAuth,
       baseUrl: (auth) => {
-        const { base_url } = auth as PiecePropValueSchema<typeof mauticAuth>;
+        if (!auth) {
+          return '';
+        }
+        const { base_url } = auth.props;
         return `${base_url.endsWith('/') ? base_url : base_url + '/'}api/`;
       },
       authMapping: async (auth) => {
-        const { username, password } = auth as PiecePropValueSchema<
-          typeof mauticAuth
-        >;
+        const { username, password } = auth.props;
         return {
           Authorization:
             'Basic ' +

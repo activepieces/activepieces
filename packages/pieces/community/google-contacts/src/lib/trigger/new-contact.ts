@@ -1,4 +1,5 @@
 import {
+  AppConnectionValueForAuthProperty,
   createTrigger,
   OAuth2PropertyValue,
   TriggerStrategy,
@@ -8,12 +9,12 @@ import {
   DedupeStrategy,
   pollingHelper,
 } from '@activepieces/pieces-common';
-import { googleContactsAuth } from '../../';
+import { googleContactsAuth } from '../auth';
 import { google } from 'googleapis';
 import { OAuth2Client } from 'googleapis-common';
 import dayjs from 'dayjs';
 
-const polling: Polling<OAuth2PropertyValue, Record<string, never>> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof googleContactsAuth>, Record<string, never>> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ store, auth }) => {
     const authClient = new OAuth2Client();

@@ -1,6 +1,6 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { fliqrAuth } from '../../index';
+import { fliqrAuth } from '../auth';
 import { fliqrConfig } from '../common/models';
 
 
@@ -16,7 +16,7 @@ export const getFliqrAccountDetails = createAction({
       method: HttpMethod.GET,
       url: `${fliqrConfig.baseUrl}/accounts/me`,
       headers: {
-        [fliqrConfig.accessTokenHeaderKey]: context.auth,
+        [fliqrConfig.accessTokenHeaderKey]: context.auth.secret_text,
         },
     });
     return res.body;

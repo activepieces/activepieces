@@ -31,7 +31,7 @@ export const linkedin = createPiece({
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/linkedin.png',
   categories: [PieceCategory.MARKETING],
-  authors: ["aasimsani","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
+  authors: ["aasimsani","kishanprmr","MoShizzle","khaledmashaly","abuaboud", "izdrail"],
   auth: linkedinAuth,
   actions: [
     createShareUpdate,

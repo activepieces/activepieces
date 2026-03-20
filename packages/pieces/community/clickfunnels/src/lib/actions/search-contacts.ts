@@ -19,7 +19,7 @@ export const searchContacts = createAction({
   },
   async run({ auth, propsValue }) {
     const response = await clickfunnelsApiService.fetchContactByEmailSearch(
-      auth,
+      auth.props,
       propsValue.workspaceId as string,
       propsValue.searchTerm as string
     );

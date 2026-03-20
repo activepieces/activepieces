@@ -32,7 +32,7 @@ export const box = createPiece({
       baseUrl: () => common.baseUrl,
       auth: boxAuth,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+        Authorization: `Bearer ${auth.access_token}`,
       }),
     }),
   ],

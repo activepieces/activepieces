@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { mollieCommon, MollieOrder } from '../common';
-import { mollieAuth } from '../../index';
+import { mollieAuth } from '../auth';
 
 export const mollieCreateOrder = createAction({
   auth: mollieAuth,
@@ -380,7 +380,7 @@ export const mollieCreateOrder = createAction({
   },
 
   async run({ auth, propsValue }) {
-    const apiKey = auth as string;
+    const apiKey = auth;
 
     const billingAddress = {
       givenName: propsValue.billingGivenName,

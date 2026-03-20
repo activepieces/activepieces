@@ -1,7 +1,7 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod, HttpError } from '@activepieces/pieces-common';
 import { PdfCoSuccessResponse, PdfCoErrorResponse } from '../common/types';
-import { pdfCoAuth } from '../../index';
+import { pdfCoAuth } from '../auth';
 import { BASE_URL, commonProps } from '../common/props';
 
 // Interface for a single text annotation object based on PDF.co docs
@@ -175,7 +175,7 @@ export const addTextToPdf = createAction({
 				method: HttpMethod.POST,
 				url: `${BASE_URL}/pdf/edit/add`,
 				headers: {
-					'x-api-key': auth,
+					'x-api-key': auth.secret_text,
 					'Content-Type': 'application/json',
 				},
 				body: requestBody,

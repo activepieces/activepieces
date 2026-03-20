@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { scrapelessApiAuth } from '../../index';
+import { scrapelessApiAuth } from '../auth';
 import { proxyCountryOptions } from '../constants';
 import { createScrapelessClient } from '../services/scrapeless-api-client';
 
@@ -45,7 +45,7 @@ export const universalScrapingApi = createAction({
 
   async run({ propsValue, auth }) {
     try {
-      const client = createScrapelessClient(auth);
+      const client = createScrapelessClient(auth.secret_text);
 
       const input = {
         url: propsValue.url,

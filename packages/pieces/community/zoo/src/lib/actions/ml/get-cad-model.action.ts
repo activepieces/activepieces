@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { zooAuth } from '../../../index'
+import { zooAuth } from '../../auth'
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const getCadModelAction = createAction({
@@ -20,7 +20,7 @@ export const getCadModelAction = createAction({
       method: HttpMethod.GET,
       url: `https://api.zoo.dev/user/text-to-cad/${propsValue.modelId}`,
       headers: {
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       },
     });
     return response.body;

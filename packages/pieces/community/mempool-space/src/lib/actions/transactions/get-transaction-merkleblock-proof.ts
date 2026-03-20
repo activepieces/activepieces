@@ -1,8 +1,9 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, PieceAuth, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { MEMPOOL_API_BASE_URL } from '../../common';
 
 export const getTransactionMerkleblockProof = createAction({
+ auth:PieceAuth.None(),
   name: 'get_transaction_merkleblock_proof',
   displayName: 'Get Transaction Merkleblock Proof',
   description: 'Get the merkle block proof for a transaction',

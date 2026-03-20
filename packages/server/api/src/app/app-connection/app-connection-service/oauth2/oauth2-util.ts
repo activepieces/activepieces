@@ -1,3 +1,4 @@
+import { createHash, randomBytes } from 'crypto'
 import { PropertyType } from '@activepieces/pieces-framework'
 import { ActivepiecesError,
     AppConnection,
@@ -6,13 +7,16 @@ import { ActivepiecesError,
     BaseOAuth2ConnectionValue,
     deleteProps,
     ErrorCode,
+    GetOAuth2AuthorizationUrlResponse,
     OAuth2GrantType,
     PlatformId,
     resolveValueFromProps,
 } from '@activepieces/shared'
 import { isAxiosError } from 'axios'
 import { FastifyBaseLogger } from 'fastify'
-import { pieceMetadataService } from '../../../pieces/piece-metadata-service'
+import { nanoid } from 'nanoid'
+import { secretManagersService } from '../../../ee/secret-managers/secret-managers.service'
+import { pieceMetadataService } from '../../../pieces/metadata/piece-metadata-service'
 
 export const oauth2Util = (log: FastifyBaseLogger) => ({
     formatOAuth2Response: (response: Omit<BaseOAuth2ConnectionValue, 'claimed_at'>): BaseOAuth2ConnectionValue => {
@@ -65,22 +69,20 @@ export const oauth2Util = (log: FastifyBaseLogger) => ({
         return false
     },
     getOAuth2TokenUrl: async ({
-        projectId,
         platformId,
         pieceName,
         props,
     }: OAuth2TokenUrlParams): Promise<string> => {
         const pieceMetadata = await pieceMetadataService(log).getOrThrow({
             name: pieceName,
-            projectId,
             platformId,
             version: undefined,
         })
-        const auth = pieceMetadata.auth
-        assertNotNullOrUndefined(auth, 'auth')
-        switch (auth.type) {
+        const pieceAuth = Array.isArray(pieceMetadata.auth) ? pieceMetadata.auth.find(auth => auth.type === PropertyType.OAUTH2) : pieceMetadata.auth
+        assertNotNullOrUndefined(pieceAuth, 'auth')
+        switch (pieceAuth.type) {
             case PropertyType.OAUTH2:
-                return resolveValueFromProps(props, auth.tokenUrl)
+                return resolveValueFromProps(props, pieceAuth.tokenUrl)
             default:
                 throw new ActivepiecesError({
                     code: ErrorCode.INVALID_APP_CONNECTION,
@@ -88,6 +90,85 @@ export const oauth2Util = (log: FastifyBaseLogger) => ({
                         error: 'invalid auth type',
                     },
                 })
+        }
+    },
+    buildAuthorizationUrl: async ({
+        platformId,
+        pieceName,
+        pieceVersion,
+        clientId,
+        redirectUrl,
+        projectId,
+        props,
+    }: BuildAuthorizationUrlParams): Promise<GetOAuth2AuthorizationUrlResponse> => {
+        const pieceMetadata = await pieceMetadataService(log).getOrThrow({
+            name: pieceName,
+            platformId,
+            version: pieceVersion,
+        })
+        const pieceAuth = Array.isArray(pieceMetadata.auth)
+            ? pieceMetadata.auth.find(auth => auth.type === PropertyType.OAUTH2)
+            : pieceMetadata.auth
+        assertNotNullOrUndefined(pieceAuth, 'auth')
+        if (pieceAuth.type !== PropertyType.OAUTH2) {
+            throw new ActivepiecesError({
+                code: ErrorCode.INVALID_APP_CONNECTION,
+                params: { error: 'invalid auth type' },
+            })
+        }
+
+        const resolvedClientId = await secretManagersService(log).resolveString({
+            key: clientId,
+            platformId,
+            throwOnFailure: true,
+            projectIds: projectId ? [projectId] : undefined,
+        })
+        const authUrl = resolveValueFromProps(props, pieceAuth.authUrl)
+        const scope = resolveValueFromProps(props, pieceAuth.scope.join(' '))
+
+        const queryParams: Record<string, string> = {
+            response_type: 'code',
+            client_id: resolvedClientId,
+            redirect_uri: redirectUrl,
+            access_type: 'offline',
+            state: nanoid(),
+            prompt: 'consent',
+            scope,
+            ...(pieceAuth.extra ?? {}),
+        }
+
+        const prompt = pieceAuth.prompt
+        if (prompt === 'omit') {
+            delete queryParams['prompt']
+        }
+        else if (prompt !== undefined && prompt !== null) {
+            queryParams['prompt'] = prompt
+        }
+
+        let codeVerifier: string | undefined
+        if (pieceAuth.pkce) {
+            codeVerifier = randomBytes(32).toString('base64url').slice(0, 43)
+            const method = pieceAuth.pkceMethod ?? 'plain'
+            queryParams['code_challenge_method'] = method
+            if (method === 'S256') {
+                const hash = createHash('sha256').update(codeVerifier).digest()
+                queryParams['code_challenge'] = Buffer.from(hash).toString('base64url')
+            }
+            else {
+                queryParams['code_challenge'] = codeVerifier
+            }
+        }
+
+        const url = new URL(authUrl)
+        Object.entries(queryParams).forEach(([key, value]) => {
+            if (value !== '') {
+                url.searchParams.append(key, value)
+            }
+        })
+
+        return {
+            authorizationUrl: url.toString(),
+            codeVerifier,
         }
     },
     removeRefreshTokenAndClientSecret: (connection: AppConnection): AppConnection => {
@@ -107,8 +188,17 @@ export const oauth2Util = (log: FastifyBaseLogger) => ({
 })
 
 type OAuth2TokenUrlParams = {
-    projectId: string | undefined
     platformId: PlatformId
     pieceName: string
-    props?: Record<string, string>
+    props?: Record<string, unknown>
+}
+
+type BuildAuthorizationUrlParams = {
+    platformId: PlatformId
+    pieceName: string
+    pieceVersion?: string
+    clientId: string
+    redirectUrl: string
+    props?: Record<string, unknown>
+    projectId?: string
 }

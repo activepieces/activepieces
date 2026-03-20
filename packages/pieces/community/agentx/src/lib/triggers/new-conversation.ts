@@ -1,7 +1,7 @@
 import {
   createTrigger,
   TriggerStrategy,
-  PiecePropValueSchema,
+  AppConnectionValueForAuthProperty,
 } from "@activepieces/pieces-framework";
 import {
   DedupeStrategy,
@@ -22,7 +22,7 @@ type Conversation = {
 };
 
 const polling: Polling<
-  PiecePropValueSchema<typeof AgentXAuth>,
+  AppConnectionValueForAuthProperty<typeof AgentXAuth>,
   { agentId?: string }
 > = {
   strategy: DedupeStrategy.TIMEBASED,
@@ -35,7 +35,7 @@ const polling: Polling<
 
     try {
       const conversations = (await makeRequest(
-        auth,
+        auth.secret_text,
         HttpMethod.GET,
         `/agents/${agentId}/conversations`
       )) as Conversation[];

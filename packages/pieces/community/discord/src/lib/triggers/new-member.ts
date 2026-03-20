@@ -7,12 +7,13 @@ import {
   pollingHelper,
 } from '@activepieces/pieces-common';
 import {
+  AppConnectionValueForAuthProperty,
   createTrigger,
   Property,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
-import { discordAuth } from '../..';
+import { discordAuth } from '../auth';
 import { discordCommon } from '../common';
 
 interface Member {
@@ -25,7 +26,7 @@ interface Member {
   joined_at: string;
 }
 
-const polling: Polling<string, { guildId: string | undefined; limit: number }> =
+const polling: Polling<AppConnectionValueForAuthProperty<typeof discordAuth>, { guildId: string | undefined; limit: number }> =
   {
     strategy: DedupeStrategy.TIMEBASED,
     items: async ({ auth, propsValue: { guildId, limit } }) => {
@@ -35,7 +36,7 @@ const polling: Polling<string, { guildId: string | undefined; limit: number }> =
         method: HttpMethod.GET,
         url: `https://discord.com/api/v9/guilds/${guildId}/members?limit=${limit}`,
         headers: {
-          Authorization: 'Bot ' + auth,
+           Authorization: 'Bot ' + auth.secret_text,
         },
       };
 
