@@ -5,6 +5,8 @@ import { createStaticDropdown } from '../common/providers';
 import { z } from 'zod';
 import { edenAiAuth } from '../..';
 
+import FormData from 'form-data';
+
 const FINANCIAL_PARSER_PROVIDERS = [
   { label: 'Affinda', value: 'affinda' },
   { label: 'Amazon', value: 'amazon' },
@@ -264,7 +266,7 @@ export const invoiceParserAction = createAction({
 
     const formData = new FormData();
       formData.append('providers', provider);
-      formData.append('file', new Blob([new Uint8Array(file.data)]), file.filename);
+      formData.append('file', Buffer.from(file.data), file.filename);
 
     if (document_type && document_type !== 'auto-detect') {
       formData.append('document_type', document_type);
@@ -280,7 +282,7 @@ export const invoiceParserAction = createAction({
     if (fallback_providers && fallback_providers.length > 0) {
       formData.append('fallback_providers', fallback_providers.slice(0, 5).join(','));
     }
-    if (model) formData.append('model', model);      
+    if (model) formData.append('settings', JSON.stringify({ [provider]: model }));
 
     try {
       const response = await edenAiApiCall({
@@ -289,7 +291,7 @@ export const invoiceParserAction = createAction({
         resourceUri: '/ocr/financial_parser',
         body: formData,
         headers: {
-          'Content-Type': 'multipart/form-data',
+          ...formData.getHeaders()
         },
       });
 
