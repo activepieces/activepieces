@@ -2,9 +2,8 @@
   "name": "@activepieces/piece-huly",
   "version": "0.0.1",
   "description": "Activepieces piece for Huly project management platform",
-  "main": "./dist/index.cjs",
-  "type": "module",
-  "scripts": {
+  "main": "./dist/src/index.js",
+    "scripts": {
     "build": "node esbuild.config.mjs",
     "test": "vitest run",
     "test:watch": "vitest",

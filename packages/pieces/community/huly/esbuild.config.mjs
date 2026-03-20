@@ -3,14 +3,16 @@ import path from "path";
 import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const hulymcpRoot = path.resolve(__dirname, "..");
+// hulymcp is a sibling project — resolve relative to the activepieces monorepo root
+const monorepoRoot = path.resolve(__dirname, "../../../..");
+const hulymcpRoot = process.env.HULYMCP_ROOT || path.resolve(monorepoRoot, "..", "hulymcp");
 
 await build({
   entryPoints: ["src/index.ts"],
   bundle: true,
   platform: "node",
   format: "cjs",
-  outfile: "dist/index.cjs",
+  outfile: "dist/src/index.js",
   external: [
     "ws",
     "@activepieces/pieces-framework",
