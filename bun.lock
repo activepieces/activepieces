@@ -2768,7 +2768,7 @@
     },
     "packages/pieces/community/gmail": {
       "name": "@activepieces/piece-gmail",
-      "version": "0.11.4",
+      "version": "0.11.5",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -3773,6 +3773,16 @@
     "packages/pieces/community/llmrails": {
       "name": "@activepieces/piece-llmrails",
       "version": "0.1.4",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
+      },
+    },
+    "packages/pieces/community/lobstermail": {
+      "name": "@activepieces/piece-lobstermail",
+      "version": "0.1.0",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -5924,7 +5934,7 @@
     },
     "packages/pieces/community/snowflake": {
       "name": "@activepieces/piece-snowflake",
-      "version": "0.1.4",
+      "version": "0.2.0",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -8476,6 +8486,8 @@
     "@activepieces/piece-livesession": ["@activepieces/piece-livesession@workspace:packages/pieces/community/livesession"],
 
     "@activepieces/piece-llmrails": ["@activepieces/piece-llmrails@workspace:packages/pieces/community/llmrails"],
+
+    "@activepieces/piece-lobstermail": ["@activepieces/piece-lobstermail@workspace:packages/pieces/community/lobstermail"],
 
     "@activepieces/piece-localai": ["@activepieces/piece-localai@workspace:packages/pieces/community/localai"],
 
