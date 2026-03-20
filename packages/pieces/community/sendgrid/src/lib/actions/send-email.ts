@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { ApFile, createAction, Property } from '@activepieces/pieces-framework';
 import {
   HttpMethod,
   AuthenticationType,
@@ -7,6 +7,8 @@ import {
 } from '@activepieces/pieces-common';
 import { sendgridCommon } from '../common';
 import { sendgridAuth } from '../..';
+import { Attachment } from 'nodemailer/lib/mailer';
+import mime from 'mime-types';
 
 export const sendEmail = createAction({
   auth: sendgridAuth,
@@ -59,13 +61,42 @@ export const sendEmail = createAction({
       description: 'HTML is only allowed if you selected HTML as type',
       required: true,
     }),
+    attachments: Property.Array({
+      displayName: 'Attachments',
+      required: false,
+      properties: {
+        file: Property.File({
+          displayName: 'File',
+          description: 'File to attach to the email you want to send',
+          required: true,
+        }),
+        name: Property.ShortText({
+          displayName: 'Attachment Name',
+          description: 'In case you want to change the name of the attachment',
+          required: false,
+        }),
+      }
+    }),
   },
   async run(context) {
-    const { to, from, from_name, reply_to, subject, content_type, content } =
+    const { to, from, from_name, reply_to, subject, content_type, content, attachments = [] } =
       context.propsValue;
+
+    const attachment_data: Attachment[] = (attachments as { file: ApFile; name?: string }[])
+      .map(({file, name}) => {
+        const lookupResult = mime.lookup(
+          file.extension ? file.extension : ''
+        );
+        return {
+          filename: name ?? file.filename,
+          content: file?.base64,
+          type: lookupResult ? lookupResult : undefined,
+        };
+      });
+
     const request: HttpRequest = {
       method: HttpMethod.POST,
-      url: `${sendgridCommon.baseUrl}/mail/send`,
+      url: `${sendgridCommon.baseUrl(context.auth.props?.dataResidency)}/mail/send`,
       body: {
         personalizations: to.map((x) => {
           return {
@@ -90,10 +121,11 @@ export const sendEmail = createAction({
             value: content,
           },
         ],
+        ...(attachment_data && attachment_data.length > 0 && { attachments: attachment_data }),
       },
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth.secret_text,
+        token: context.auth.props?.apiKey,
       },
       queryParams: {},
     };

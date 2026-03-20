@@ -38,6 +38,27 @@ describe('codeExecutor', () => {
         expect(result.steps.runtime.errorMessage).toContain('Custom Runtime Error')
     })
 
+    it('should execute code that throws a system error and mark as FAILED', async () => {
+        const result = await codeExecutor.handle({
+            action: buildCodeAction({
+                name: 'system_error',
+                input: {},
+            }),
+            executionState: FlowExecutorContext.empty(),
+            constants: generateMockEngineConstants(),
+        })
+        expect(result.verdict).toStrictEqual({
+            status: FlowRunStatus.FAILED,
+            failedStep: {
+                name: 'system_error',
+                displayName: 'Your Action Name',
+                message: expect.stringContaining('uv_os_homedir'),
+            },
+        })
+        expect(result.steps.system_error.status).toEqual('FAILED')
+        expect(result.steps.system_error.errorMessage).toContain('uv_os_homedir')
+    })
+
     it('should skip code action', async () => {
         const result = await flowExecutor.execute({
             action: buildCodeAction({

@@ -18,11 +18,11 @@ import { openRouterApi } from '../ee/platform/platform-plan/openrouter/openroute
 import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
 import { flagService } from '../flags/flag.service'
 import { encryptUtils } from '../helper/encryption'
+import { rejectedPromiseHandler } from '../helper/promise-handler'
 import { SystemJobName } from '../helper/system-jobs/common'
 import { systemJobsSchedule } from '../helper/system-jobs/system-job'
 import { AIProviderEntity, AIProviderSchema } from './ai-provider-entity'
 import { aiProviders } from './providers'
-import { rejectedPromiseHandler } from '../helper/promise-handler'
 
 const aiProviderRepo = repoFactory<AIProviderSchema>(AIProviderEntity)
 
