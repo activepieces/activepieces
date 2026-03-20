@@ -3,24 +3,47 @@ import { createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { outsetaAuth } from './auth';
 
-// Actions
+// Actions — Retrieve
 import { getAccountAction } from './action/get-account';
 import { getPersonAction } from './action/get-person';
-import { getAccountPlanAction } from './action/get-account-plan';
-import { changeAccountPlanAction } from './action/change-account-plan';
-import { cancelSubscriptionAction } from './action/cancel-subscription';
-import { addAddonUsageAction } from './action/add-addon-usage';
+import { getDealAction } from './action/get-deal';
+
+// Actions — Find or Add
+import { findOrAddPersonAction } from './action/find-or-add-person';
+import { findOrAddDealAction } from './action/find-or-add-deal';
+
+// Actions — Update
 import { updateAccountAction } from './action/update-account';
 import { updatePersonAction } from './action/update-person';
-import { findOrAddPersonAction } from './action/find-or-add-person';
-import { findOrAddAccountAction } from './action/find-or-add-account';
-import { addPersonToAccountAction } from './action/add-person-to-account';
-import { addDealAction } from './action/add-deal';
-import { getDealAction } from './action/get-deal';
 import { updateDealAction } from './action/update-deal';
+
+// Actions — List
+import { listPersonsAction } from './action/list-persons';
+import { listAccountsAction } from './action/list-accounts';
+
+// Actions — Billing
+import { changeAccountPlanAction } from './action/change-account-plan';
+import { cancelSubscriptionAction } from './action/cancel-subscription';
+import { removeCancellationAction } from './action/remove-cancellation';
+import { addAddonUsageAction } from './action/add-addon-usage';
+import { addDiscountToSubscriptionAction } from './action/add-discount-to-subscription';
+import { addInvoiceAction } from './action/add-invoice';
+import { addInvoicePaymentAction } from './action/add-invoice-payment';
+
+// Actions — CRM
+import { addPersonToAccountAction } from './action/add-person-to-account';
+import { removePersonFromAccountAction } from './action/remove-person-from-account';
 import { deleteDealAction } from './action/delete-deal';
-import { subscribeToEmailListAction } from './action/subscribe-to-email-list';
 import { addCustomActivityAction } from './action/add-custom-activity';
+
+// Actions — Email
+import { subscribeToEmailListAction } from './action/subscribe-to-email-list';
+import { removeSubscriberFromListAction } from './action/remove-subscriber-from-list';
+import { sendConfirmationEmailAction } from './action/send-confirmation-email';
+
+// Actions — Support
+import { addCaseAction } from './action/add-case';
+import { addReplyAction } from './action/add-reply';
 
 // Triggers
 import { accountAddedTrigger } from './triggers/account-added';
@@ -73,23 +96,41 @@ export const outseta = createPiece({
     dealUpdatedTrigger,
   ],
   actions: [
-    findOrAddAccountAction,
-    findOrAddPersonAction,
+    // Retrieve
     getAccountAction,
     getPersonAction,
     getDealAction,
-    getAccountPlanAction,
+    // Find or Add
+    findOrAddPersonAction,
+    findOrAddDealAction,
+    // Update
     updateAccountAction,
     updatePersonAction,
     updateDealAction,
-    addDealAction,
-    addPersonToAccountAction,
-    addCustomActivityAction,
+    // List
+    listPersonsAction,
+    listAccountsAction,
+    // Billing
     changeAccountPlanAction,
     cancelSubscriptionAction,
+    removeCancellationAction,
     addAddonUsageAction,
-    subscribeToEmailListAction,
+    addDiscountToSubscriptionAction,
+    addInvoiceAction,
+    addInvoicePaymentAction,
+    // CRM
+    addPersonToAccountAction,
+    removePersonFromAccountAction,
     deleteDealAction,
+    addCustomActivityAction,
+    // Email
+    subscribeToEmailListAction,
+    removeSubscriberFromListAction,
+    sendConfirmationEmailAction,
+    // Support
+    addCaseAction,
+    addReplyAction,
+    // Custom API call
     createCustomApiCallAction({
       auth: outsetaAuth,
       baseUrl: (auth) => `${auth.props.domain}/api/v1`,

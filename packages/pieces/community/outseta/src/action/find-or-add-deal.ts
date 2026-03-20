@@ -1,0 +1,113 @@
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { outsetaAuth } from '../auth';
+import { OutsetaClient } from '../common/client';
+import { pipelineDropdown, pipelineStageDropdown } from '../common/dropdowns';
+
+export const findOrAddDealAction = createAction({
+  name: 'find_or_add_deal',
+  auth: outsetaAuth,
+  displayName: 'Find or Add Deal',
+  description:
+    'Search for a deal by contact email and pipeline. If not found, create a new one.',
+  props: {
+    contactEmail: Property.ShortText({
+      displayName: 'Contact Email',
+      required: true,
+      description:
+        'Email of the contact associated with the deal. Used to search for existing deals.',
+    }),
+    pipelineUid: pipelineDropdown(),
+    pipelineStageUid: pipelineStageDropdown({
+      description: 'Pipeline stage for the deal (required when creating).',
+    }),
+    name: Property.ShortText({
+      displayName: 'Deal Name',
+      required: true,
+      description: 'Name of the deal (used when creating a new deal).',
+    }),
+    amount: Property.Number({
+      displayName: 'Amount',
+      required: false,
+      description: 'Deal amount.',
+    }),
+    accountUid: Property.ShortText({
+      displayName: 'Account UID',
+      required: false,
+      description: 'UID of the account to associate with the deal.',
+    }),
+    assignedToPersonClientIdentifier: Property.ShortText({
+      displayName: 'Assigned To (Person Client Identifier)',
+      required: false,
+      description: 'Client identifier of the person to assign the deal to.',
+    }),
+  },
+  async run(context) {
+    const client = new OutsetaClient({
+      domain: context.auth.props.domain,
+      apiKey: context.auth.props.apiKey,
+      apiSecret: context.auth.props.apiSecret,
+    });
+
+    // Search for the person by email
+    const searchResult = await client.get<any>(
+      `/api/v1/crm/people?Email=${encodeURIComponent(context.propsValue.contactEmail)}&$top=100`
+    );
+
+    const people = searchResult?.items ?? searchResult?.Items ?? [];
+    const person = people.find(
+      (item: any) =>
+        item.Email?.toLowerCase() ===
+        context.propsValue.contactEmail.toLowerCase()
+    );
+
+    // If person found, search for deals in the pipeline
+    if (person) {
+      const dealsResult = await client.get<any>(
+        `/api/v1/crm/deals?$top=100`
+      );
+      const deals = dealsResult?.items ?? dealsResult?.Items ?? [];
+      const existingDeal = deals.find(
+        (deal: any) =>
+          deal.DealPipelineStage?.DealPipeline?.Uid ===
+            context.propsValue.pipelineUid &&
+          (deal.DealPeople?.items ?? deal.DealPeople?.Items ?? deal.DealPeople ?? []).some(
+            (dp: any) => dp.Person?.Uid === person.Uid
+          )
+      );
+
+      if (existingDeal) {
+        return { created: false, deal: existingDeal };
+      }
+    }
+
+    // Create a new deal
+    const body: Record<string, unknown> = {
+      Name: context.propsValue.name,
+      DealPipelineStage: { Uid: context.propsValue.pipelineStageUid },
+    };
+
+    if (context.propsValue.amount !== undefined && context.propsValue.amount !== null) {
+      body['Amount'] = context.propsValue.amount;
+    }
+    if (context.propsValue.accountUid) {
+      body['Account'] = { Uid: context.propsValue.accountUid };
+    }
+    if (context.propsValue.assignedToPersonClientIdentifier) {
+      body['AssignedToPersonClientIdentifier'] =
+        context.propsValue.assignedToPersonClientIdentifier;
+    }
+
+    // Associate the person with the deal
+    if (person) {
+      body['DealPeople'] = [{ Person: { Uid: person.Uid } }];
+    } else {
+      // Create person association with email
+      body['DealPeople'] = [
+        { Person: { Email: context.propsValue.contactEmail } },
+      ];
+    }
+
+    const newDeal = await client.post<any>('/api/v1/crm/deals', body);
+    return { created: true, deal: newDeal };
+  },
+});

@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { outsetaAuth } from '../auth';
 import { OutsetaClient } from '../common/client';
-import { accountUidDropdown, dealUidDropdown, personUidDropdown } from '../common/dropdowns';
+import { pipelineDropdown, pipelineStageDropdown } from '../common/dropdowns';
 
 export const updateDealAction = createAction({
   name: 'update_deal',
@@ -9,16 +9,17 @@ export const updateDealAction = createAction({
   displayName: 'Update Deal',
   description: 'Update an existing deal.',
   props: {
-    dealUid: dealUidDropdown(),
+    dealUid: Property.ShortText({
+      displayName: 'Deal UID',
+      description: 'The UID of the deal to update.',
+      required: true,
+    }),
     name: Property.ShortText({
       displayName: 'Name',
       required: false,
     }),
-    dealPipelineStageUid: Property.ShortText({
-      displayName: 'Pipeline Stage UID',
-      required: false,
-      description: 'The UID of the pipeline stage for this deal.',
-    }),
+    pipelineUid: pipelineDropdown({ required: false }),
+    dealPipelineStageUid: pipelineStageDropdown({ required: false }),
     amount: Property.Number({
       displayName: 'Amount',
       required: false,
@@ -33,8 +34,16 @@ export const updateDealAction = createAction({
       displayName: 'Due Date',
       required: false,
     }),
-    accountUid: accountUidDropdown({ required: false, displayName: 'Account' }),
-    personUid: personUidDropdown({ required: false, displayName: 'Person' }),
+    accountUid: Property.ShortText({
+      displayName: 'Account UID',
+      description: 'The UID of the account to associate with this deal.',
+      required: false,
+    }),
+    personUid: Property.ShortText({
+      displayName: 'Person UID',
+      description: 'The UID of the person to associate with this deal.',
+      required: false,
+    }),
   },
   async run(context) {
     const client = new OutsetaClient({
@@ -43,10 +52,10 @@ export const updateDealAction = createAction({
       apiSecret: context.auth.props.apiSecret,
     });
 
-    // const deal = await client.get<any>(
-    //   `/api/v1/crm/deals/${context.propsValue.dealUid}`
-    // );
-    const deal: any = {};
+    // Fetch full deal first to avoid wiping fields with a partial PUT
+    const deal = await client.get<any>(
+      `/api/v1/crm/deals/${context.propsValue.dealUid}`
+    );
 
     if (context.propsValue.name) {
       deal.Name = context.propsValue.name;

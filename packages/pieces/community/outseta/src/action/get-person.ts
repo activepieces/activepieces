@@ -1,15 +1,18 @@
-import { createAction } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { outsetaAuth } from '../auth';
 import { OutsetaClient } from '../common/client';
-import { personUidDropdown } from '../common/dropdowns';
 
 export const getPersonAction = createAction({
   name: 'get_person',
   auth: outsetaAuth,
-  displayName: 'Get Person',
-  description: 'Retrieve an Outseta person by selecting them from the dropdown.',
+  displayName: 'Retrieve Person',
+  description: 'Retrieve a person by email address.',
   props: {
-    personUid: personUidDropdown(),
+    email: Property.ShortText({
+      displayName: 'Email',
+      description: 'The email address of the person to retrieve.',
+      required: true,
+    }),
   },
   async run(context) {
     const client = new OutsetaClient({
@@ -18,9 +21,19 @@ export const getPersonAction = createAction({
       apiSecret: context.auth.props.apiSecret,
     });
 
-    const person = await client.get<any>(
-      `/api/v1/crm/people/${context.propsValue.personUid}`
+    const email = context.propsValue.email;
+    const res = await client.get<any>(
+      `/api/v1/crm/people?Email=${encodeURIComponent(email)}&$top=1`
     );
+
+    const items: any[] = res?.items ?? res?.Items ?? [];
+    const person = items.find(
+      (p: any) => p.Email?.toLowerCase() === email.toLowerCase()
+    );
+
+    if (!person) {
+      throw new Error(`No person found with email "${email}".`);
+    }
 
     return {
       uid: person.Uid ?? null,

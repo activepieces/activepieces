@@ -1,7 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { outsetaAuth } from '../auth';
 import { OutsetaClient } from '../common/client';
-import { accountUidDropdown, personUidDropdown } from '../common/dropdowns';
 
 export const addPersonToAccountAction = createAction({
   name: 'add_person_to_account',
@@ -9,8 +8,16 @@ export const addPersonToAccountAction = createAction({
   displayName: 'Add Person to Account',
   description: 'Add an existing person to an existing account.',
   props: {
-    accountUid: accountUidDropdown(),
-    personUid: personUidDropdown(),
+    accountUid: Property.ShortText({
+      displayName: 'Account UID',
+      description: 'The UID of the account to add the person to.',
+      required: true,
+    }),
+    personUid: Property.ShortText({
+      displayName: 'Person UID',
+      description: 'The UID of the person to add to the account.',
+      required: true,
+    }),
     isPrimary: Property.Checkbox({
       displayName: 'Is Primary Contact',
       required: false,

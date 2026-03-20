@@ -1,17 +1,21 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { outsetaAuth } from '../auth';
 import { OutsetaClient } from '../common/client';
-import { accountUidDropdown, planUidDropdown } from '../common/dropdowns';
+import { planUidDropdown } from '../common/dropdowns';
 
 export const changeAccountPlanAction = createAction({
-  name: 'change_account_plan',
+  name: 'change_subscription',
   auth: outsetaAuth,
   displayName: 'Change Account Plan',
   description:
     "Change an account's current subscription plan (upgrade, downgrade, or switch to free).",
   props: {
-    accountUid: accountUidDropdown(),
-    planUid: planUidDropdown({ displayName: 'New Plan' }),
+    accountUid: Property.ShortText({
+      displayName: 'Account UID',
+      description: 'The UID of the account whose plan to change.',
+      required: true,
+    }),
+    planUid: planUidDropdown({ displayName: 'New Plan', refreshers: ['accountUid'] }),
     billingRenewalTerm: Property.StaticDropdown({
       displayName: 'Billing Renewal Term',
       required: true,
