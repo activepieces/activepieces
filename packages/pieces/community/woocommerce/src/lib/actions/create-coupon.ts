@@ -11,7 +11,7 @@ import {
 } from '@activepieces/pieces-common';
 import { z } from 'zod';
 
-import { wooAuth } from '../..';
+import { wooAuth } from '../auth';
 
 export const wooCreateCoupon = createAction({
   name: 'Create Coupon',

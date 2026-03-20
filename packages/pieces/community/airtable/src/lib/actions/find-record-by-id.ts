@@ -1,5 +1,5 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { airtableAuth } from '../../index';
+import { airtableAuth } from '../auth';
 import { airtableCommon } from '../common';
 
 export const airtableGetRecordByIdAction = createAction({

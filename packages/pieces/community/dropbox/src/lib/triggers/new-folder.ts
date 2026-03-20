@@ -14,9 +14,8 @@ import {
   httpClient,
   pollingHelper,
 } from '@activepieces/pieces-common';
+import { dropboxAuth } from '../auth';
 
-import dayjs from 'dayjs';
-import { dropboxAuth } from '../..';
 
 type DropboxListFolderEntry = {
   id: string;

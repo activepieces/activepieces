@@ -4,7 +4,7 @@ import {
   HttpMethod,
   AuthenticationType,
 } from '@activepieces/pieces-common';
-import { oneDriveAuth } from '../../';
+import { oneDriveAuth } from '../auth';
 import mime from 'mime-types';
 import { oneDriveCommon } from '../common/common';
 

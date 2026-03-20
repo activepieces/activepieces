@@ -12,28 +12,7 @@ import { newContactAdded } from './lib/triggers/new-contact-added';
 import { findContact } from './lib/actions/find-contact';
 import { CLOSE_API_URL, closeApiCall } from './lib/common/client';
 import { newOpportunityAdded } from './lib/triggers/new-opportunity';
-
-export const closeAuth = PieceAuth.SecretText({
-  displayName: 'API Key',
-  description: 'Your Close CRM API key for authentication.',
-  required: true,
-  validate: async ({ auth }) => {
-    try {
-      await closeApiCall({
-        accessToken: auth,
-        method: HttpMethod.GET,
-        resourceUri: '/me/',
-      });
-
-      return { valid: true };
-    } catch {
-      return {
-        valid: false,
-        error: 'Invalid API key.',
-      };
-    }
-  },
-});
+import { closeAuth } from './lib/auth';
 
 export const close = createPiece({
   displayName: 'Close',

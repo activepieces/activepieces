@@ -1,6 +1,7 @@
-import { AppSystemProp, DatabaseType } from '@activepieces/server-shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 import { system } from '../../../helper/system/system'
+import { AppSystemProp } from '../../../helper/system/system-props'
+import { DatabaseType } from '../../database-type'
 
 const log = system.globalLogger()
 const databaseType = system.get(AppSystemProp.DB_TYPE)
@@ -25,7 +26,7 @@ export class AddLogsFileIdIndex1725699690971 implements MigrationInterface {
                 CREATE INDEX "idx_file_project_id" ON "file" ("projectId")
             `)
         }
-        log.info({ name: this.name }, 'idx_file_project_id is up')
+        log.info('[addLogsFileIdIndex1725699690971#up] idx_file_project_id is up')
 
         if (concurrent) {
             await queryRunner.query(`
@@ -37,7 +38,7 @@ export class AddLogsFileIdIndex1725699690971 implements MigrationInterface {
                 CREATE INDEX "idx_file_type_created_desc" ON "file" ("type", "created")
             `)
         }
-        log.info({ name: this.name }, 'idx_file_type_created_desc is up')
+        log.info('[addLogsFileIdIndex1725699690971#up] idx_file_type_created_desc is up')
 
         if (concurrent) {
             await queryRunner.query(`
@@ -49,7 +50,7 @@ export class AddLogsFileIdIndex1725699690971 implements MigrationInterface {
                 CREATE INDEX "idx_run_logs_file_id" ON "flow_run" ("logsFileId")
             `)
         }
-        log.info({ name: this.name }, 'idx_run_logs_file_id is up')
+        log.info('[addLogsFileIdIndex1725699690971#up] idx_run_logs_file_id is up')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -77,9 +78,7 @@ export class AddLogsFileIdIndex1725699690971 implements MigrationInterface {
                 DROP INDEX "idx_file_project_id"
             `)
         }
-        log.info({
-            name: this.name,
-        }, 'is down')
+        log.info('[addLogsFileIdIndex1725699690971#down]')
     }
 
 }

@@ -2,6 +2,7 @@ import { PieceMetadata, PieceMetadataModel } from '@activepieces/pieces-framewor
 import {
     ActivepiecesError,
     AddPieceRequestBody,
+    EngineResponse,
     EngineResponseStatus,
     ErrorCode,
     ExecuteExtractPieceMetadata,
@@ -17,11 +18,8 @@ import {
     WorkerJobType,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { OperationResponse } from 'server-worker'
 import { fileService } from '../file/file.service'
-import { pubsub } from '../helper/pubsub'
 import { userInteractionWatcher } from '../workers/user-interaction-watcher'
-import { REDIS_REFRESH_LOCAL_PIECES_CHANNEL } from './metadata/local-piece-cache'
 import { pieceMetadataService } from './metadata/piece-metadata-service'
 
 export const pieceInstallService = (log: FastifyBaseLogger) => ({
@@ -52,11 +50,10 @@ export const pieceInstallService = (log: FastifyBaseLogger) => ({
                 pieceType: PieceType.CUSTOM,
                 archiveId,
             })
-            await pubsub.publish(REDIS_REFRESH_LOCAL_PIECES_CHANNEL, '')
             return savedPiece
         }
         catch (error) {
-            log.error(error, '[PieceService#add]')
+            log.error({ err: error }, '[pieceInstallService#add] Failed to add piece')
 
             if ((error as ActivepiecesError).error.code === ErrorCode.VALIDATION) {
                 throw error
@@ -101,7 +98,7 @@ async function savePiecePackage(platformId: string | undefined, params: AddPiece
 }
 
 const extractPieceInformation = async (request: ExecuteExtractPieceMetadata, log: FastifyBaseLogger): Promise<PieceMetadata> => {
-    const engineResponse = await userInteractionWatcher(log).submitAndWaitForResponse<OperationResponse<PieceMetadata>>({
+    const engineResponse = await userInteractionWatcher(log).submitAndWaitForResponse<EngineResponse<PieceMetadata>>({
         jobType: WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
         platformId: request.platformId,
         piece: request,
@@ -109,9 +106,9 @@ const extractPieceInformation = async (request: ExecuteExtractPieceMetadata, log
     })
 
     if (engineResponse.status !== EngineResponseStatus.OK) {
-        throw new Error(engineResponse.standardError)
+        throw new Error(engineResponse.error)
     }
-    return engineResponse.result
+    return engineResponse.response
 }
 
 const saveArchive = async (

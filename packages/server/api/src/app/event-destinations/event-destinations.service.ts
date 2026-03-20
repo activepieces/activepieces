@@ -1,14 +1,12 @@
 import {
+    ActivepiecesError,
+    apId,
     ApplicationEvent,
     ApplicationEventName,
+    assertNotNullOrUndefined,
     CreatePlatformEventDestinationRequestBody,
-    EventDestination,
-    EventDestinationScope,
-    FlowCreatedEvent,
-    UpdatePlatformEventDestinationRequestBody,
-} from '@activepieces/ee-shared'
-import { WorkerSystemProp } from '@activepieces/server-shared'
-import { ActivepiecesError, apId, assertNotNullOrUndefined, Cursor, ErrorCode, isNil, LATEST_JOB_DATA_SCHEMA_VERSION, PlatformId, ProjectId, SeekPage, WorkerJobType } from '@activepieces/shared'
+    Cursor,
+    ErrorCode, EventDestination, EventDestinationScope, FlowCreatedEvent, isNil, LATEST_JOB_DATA_SCHEMA_VERSION, PlatformId, ProjectId, SeekPage, UpdatePlatformEventDestinationRequestBody, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { ArrayContains, FindOptionsWhere } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
@@ -16,8 +14,8 @@ import { applicationEvents } from '../helper/application-events'
 import { buildPaginator } from '../helper/pagination/build-paginator'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { system } from '../helper/system/system'
-import { jobQueue } from '../workers/queue/job-queue'
-import { JobType } from '../workers/queue/queue-manager'
+import { WorkerSystemProp } from '../helper/system/system-props'
+import { jobQueue, JobType } from '../workers/job-queue/job-queue'
 import {
     EventDestinationEntity,
     EventDestinationSchema,

@@ -1,0 +1,111 @@
+services:
+  nginx:
+    image: nginx:1.25
+    ports:
+      - '8080:80'
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - app
+    networks:
+      - bench
+
+  app:
+    image: activepieces-benchmark:local
+    build: .
+    depends_on:
+      postgres:
+        condition: service_started
+      redis:
+        condition: service_started
+    environment:
+      AP_CONTAINER_TYPE: APP
+      AP_POSTGRES_DATABASE: activepieces
+      AP_POSTGRES_PASSWORD: password
+      AP_POSTGRES_USERNAME: postgres
+      AP_POSTGRES_HOST: postgres
+      AP_POSTGRES_PORT: 5432
+      AP_JWT_SECRET: benchmark-secret-key-for-testing
+      AP_ENCRYPTION_KEY: 11020ebf480a9b1648ceec6400beaf26
+      AP_FRONTEND_URL: http://nginx:80
+      AP_EXECUTION_MODE: ${AP_EXECUTION_MODE:-SANDBOX_CODE_ONLY}
+      AP_REDIS_HOST: redis
+      AP_REDIS_PORT: 6379
+      AP_ENVIRONMENT: prod
+      AP_LOG_LEVEL: error
+      AP_TELEMETRY_ENABLED: false
+      AP_PROJECT_RATE_LIMITER_ENABLED: false
+      AP_MAX_CONCURRENT_JOBS_PER_PROJECT: 1000
+      AP_FILE_STORAGE_LOCATION: ${AP_FILE_STORAGE_LOCATION:-DB}
+      AP_S3_BUCKET: ${AP_S3_BUCKET:-}
+      AP_S3_ACCESS_KEY_ID: ${AP_S3_ACCESS_KEY_ID:-}
+      AP_S3_SECRET_ACCESS_KEY: ${AP_S3_SECRET_ACCESS_KEY:-}
+      AP_S3_ENDPOINT: ${AP_S3_ENDPOINT:-}
+      AP_S3_REGION: ${AP_S3_REGION:-}
+      AP_S3_USE_SIGNED_URLS: ${AP_S3_USE_SIGNED_URLS:-false}
+    deploy:
+      replicas: ${APP_REPLICAS:-1}
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+    networks:
+      - bench
+
+  worker:
+    image: activepieces-benchmark:local
+    depends_on:
+      - app
+    environment:
+      AP_CONTAINER_TYPE: WORKER
+      AP_FRONTEND_URL: http://nginx:80
+      AP_JWT_SECRET: benchmark-secret-key-for-testing
+      AP_ENCRYPTION_KEY: 11020ebf480a9b1648ceec6400beaf26
+      AP_EXECUTION_MODE: ${AP_EXECUTION_MODE:-SANDBOX_CODE_ONLY}
+      AP_REDIS_HOST: redis
+      AP_REDIS_PORT: 6379
+      AP_POSTGRES_DATABASE: activepieces
+      AP_POSTGRES_PASSWORD: password
+      AP_POSTGRES_USERNAME: postgres
+      AP_POSTGRES_HOST: postgres
+      AP_POSTGRES_PORT: 5432
+      AP_LOG_LEVEL: error
+      AP_TELEMETRY_ENABLED: false
+      AP_FILE_STORAGE_LOCATION: ${AP_FILE_STORAGE_LOCATION:-DB}
+      AP_S3_BUCKET: ${AP_S3_BUCKET:-}
+      AP_S3_ACCESS_KEY_ID: ${AP_S3_ACCESS_KEY_ID:-}
+      AP_S3_SECRET_ACCESS_KEY: ${AP_S3_SECRET_ACCESS_KEY:-}
+      AP_S3_ENDPOINT: ${AP_S3_ENDPOINT:-}
+      AP_S3_REGION: ${AP_S3_REGION:-}
+      AP_S3_USE_SIGNED_URLS: ${AP_S3_USE_SIGNED_URLS:-false}
+    privileged: true
+    deploy:
+      replicas: ${WORKER_REPLICAS:-2}
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 1G
+    networks:
+      - bench
+
+  postgres:
+    image: postgres:14.4
+    environment:
+      POSTGRES_DB: activepieces
+      POSTGRES_PASSWORD: password
+      POSTGRES_USER: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - bench
+
+  redis:
+    image: redis:7.0.7
+    networks:
+      - bench
+
+volumes:
+  postgres_data:
+
+networks:
+  bench:

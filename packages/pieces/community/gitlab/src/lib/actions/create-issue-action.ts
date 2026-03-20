@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { gitlabAuth } from '../../';
+import { gitlabAuth } from '../auth';
 import { gitlabCommon, makeClient } from '../common';
 
 export const createIssueAction = createAction({
