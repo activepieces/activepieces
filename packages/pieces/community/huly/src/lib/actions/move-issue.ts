@@ -34,7 +34,7 @@ export const moveIssueAction = createAction({
       moveIssue({
         project: context.propsValue.project,
         identifier: context.propsValue.identifier,
-        newParent: context.propsValue.new_parent ?? null,
+        newParent: context.propsValue.new_parent || null,
       })
     );
     return {

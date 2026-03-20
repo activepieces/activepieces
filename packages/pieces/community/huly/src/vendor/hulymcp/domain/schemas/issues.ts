@@ -69,7 +69,7 @@ export type PersonRef = Schema.Schema.Type<typeof PersonRefSchema>
 
 export const IssueSummarySchema = Schema.Struct({
   identifier: IssueIdentifier,
-  title: NonEmptyString,
+  title: Schema.String,
   status: StatusName,
   priority: Schema.optional(IssuePrioritySchema),
   assignee: Schema.optional(PersonName),
