@@ -5,8 +5,6 @@ import { intruderAuth } from './lib/common/auth';
 import { searchForATarget } from './lib/actions/search-for-a-target';
 import { searchForAnIssue } from './lib/actions/search-for-an-issue';
 import { searchForAnIssueOccurrence } from './lib/actions/search-for-an-issue-occurrence';
-// import { newIssue } from './lib/triggers/new-issue';
-import { scanComplete } from './lib/triggers/scan-complete';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { PieceCategory } from '@activepieces/shared';
 
@@ -33,5 +31,5 @@ export const intruder = createPiece({
       }),
     }),
   ],
-  triggers: [scanComplete],
+  triggers: [],
 });

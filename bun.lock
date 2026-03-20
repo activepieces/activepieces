@@ -2768,7 +2768,7 @@
     },
     "packages/pieces/community/gmail": {
       "name": "@activepieces/piece-gmail",
-      "version": "0.11.5",
+      "version": "0.11.6",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -3394,6 +3394,19 @@
     "packages/pieces/community/intercom": {
       "name": "@activepieces/piece-intercom",
       "version": "0.7.0",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "dayjs": "1.11.9",
+        "intercom-client": "6.2.0",
+        "string-strip-html": "8.5.0",
+        "tslib": "2.6.2",
+      },
+    },
+    "packages/pieces/community/intruder": {
+      "name": "@activepieces/piece-intruder",
+      "version": "0.0.1",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -5899,7 +5912,7 @@
     },
     "packages/pieces/community/smartsheet": {
       "name": "@activepieces/piece-smartsheet",
-      "version": "0.1.3",
+      "version": "0.1.4",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -8424,6 +8437,8 @@
     "@activepieces/piece-instasent": ["@activepieces/piece-instasent@workspace:packages/pieces/community/instasent"],
 
     "@activepieces/piece-intercom": ["@activepieces/piece-intercom@workspace:packages/pieces/community/intercom"],
+
+    "@activepieces/piece-intruder": ["@activepieces/piece-intruder@workspace:packages/pieces/community/intruder"],
 
     "@activepieces/piece-invoiceninja": ["@activepieces/piece-invoiceninja@workspace:packages/pieces/community/invoiceninja"],
 
