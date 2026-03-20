@@ -1,11 +1,18 @@
 import { build } from "esbuild";
+import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-// hulymcp is a sibling project — resolve relative to the activepieces monorepo root
-const monorepoRoot = path.resolve(__dirname, "../../../..");
-const hulymcpRoot = process.env.HULYMCP_ROOT || path.resolve(monorepoRoot, "..", "hulymcp");
+
+// Huly SDK deps (effect, @hcengineering/*) must be resolvable by esbuild.
+// In AP CI they come from devDependencies in package.json.
+// For local dev, fall back to the hulymcp sibling project's node_modules.
+const extraNodePaths = [];
+const hulymcpNodeModules = path.resolve(__dirname, "../../../../..", "hulymcp", "node_modules");
+if (fs.existsSync(hulymcpNodeModules)) {
+  extraNodePaths.push(hulymcpNodeModules);
+}
 
 await build({
   entryPoints: ["src/index.ts"],
@@ -20,12 +27,12 @@ await build({
     "@activepieces/shared",
   ],
   minify: true,
-  // Resolve @hulymcp/* path aliases to the hulymcp source tree
-  // and resolve hcengineering/effect/etc packages from hulymcp's node_modules
-  nodePaths: [path.join(hulymcpRoot, "node_modules")],
+  // Resolve @hulymcp/* path aliases to vendored hulymcp source
   alias: {
-    "@hulymcp": path.join(hulymcpRoot, "src"),
+    "@hulymcp": path.join(__dirname, "src", "vendor", "hulymcp"),
   },
+  // Huly SDK deps from devDependencies or hulymcp sibling
+  nodePaths: extraNodePaths,
   // The hulymcp source uses .js extensions in imports (rewriteRelativeImportExtensions)
   // but the actual files are .ts — resolve .js to .ts
   resolveExtensions: [".ts", ".tsx", ".js", ".jsx", ".json"],

@@ -23,9 +23,32 @@
     "@activepieces/shared": "^0.42.0"
   },
   "devDependencies": {
+    "@effect/platform": "^0.94.2",
+    "@hcengineering/account-client": "^0.7",
+    "@hcengineering/activity": "^0.7.0",
+    "@hcengineering/api-client": "^0.7.3",
+    "@hcengineering/attachment": "^0.7",
+    "@hcengineering/calendar": "^0.7.0",
+    "@hcengineering/card": "^0.7.0",
+    "@hcengineering/chunter": "^0.7.0",
+    "@hcengineering/collaborator-client": "^0.7.17",
+    "@hcengineering/contact": "^0.7.0",
+    "@hcengineering/core": "^0.7.4",
+    "@hcengineering/document": "^0.7.0",
+    "@hcengineering/notification": "^0.7",
+    "@hcengineering/platform": "0.7.19",
+    "@hcengineering/rank": "^0.7.3",
+    "@hcengineering/tags": "^0.7.0",
+    "@hcengineering/task": "^0.7.0",
+    "@hcengineering/text": "^0.7.18",
+    "@hcengineering/text-markdown": "^0.7.20",
+    "@hcengineering/time": "^0.7.0",
+    "@hcengineering/tracker": "^0.7.0",
+    "@types/node": "^25.1.0",
+    "effect": "^3.19.15",
     "esbuild": "^0.27.2",
+
     "typescript": "^5.9.3",
-    "vitest": "^3.1.1",
-    "@types/node": "^25.1.0"
+    "vitest": "^3.1.1"
   }
 }
