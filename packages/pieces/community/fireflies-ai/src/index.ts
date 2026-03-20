@@ -7,6 +7,7 @@ import { findMeetingByQueryAction } from './lib/actions/find-meeting-by-query';
 import { uploadAudioAction } from './lib/actions/upload-audio';
 import { getUserDetailsAction } from './lib/actions/get-user-details';
 import { newTranscriptionCompletedTrigger } from './lib/triggers/new-transcription-complete';
+import { firefliesAiAuth } from './lib/auth';
 
 const markdownDescription = `
 To use Fireflies.ai, you need to get an API key:
@@ -14,12 +15,6 @@ To use Fireflies.ai, you need to get an API key:
 2. Navigate to Settings > Developer Settings in the left sidebar.
 3. Copy the API key from the API Key section.
 `;
-
-export const firefliesAiAuth = PieceAuth.SecretText({
-	displayName: 'API Key',
-	description: markdownDescription,
-	required: true,
-});
 
 export const firefliesAi = createPiece({
 	displayName: 'Fireflies.ai',

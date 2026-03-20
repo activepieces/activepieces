@@ -1,10 +1,10 @@
-import { ApplicationEventName } from '@activepieces/ee-shared'
-import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
-import {
-    ApId,
+import { ApId,
     AppConnectionOwners,
     AppConnectionScope,
     AppConnectionWithoutSensitiveData,
+    ApplicationEventName,
+    GetOAuth2AuthorizationUrlRequestBody,
+    GetOAuth2AuthorizationUrlResponse,
     ListAppConnectionOwnersRequestQuery,
     ListAppConnectionsRequestQuery,
     Permission,
@@ -15,17 +15,18 @@ import {
     UpdateConnectionValueRequestBody,
     UpsertAppConnectionRequestBody,
 } from '@activepieces/shared'
-import {
-    FastifyPluginCallbackTypebox,
-    Type,
-} from '@fastify/type-provider-typebox'
+import { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
+import { z } from 'zod'
+import { ProjectResourceType } from '../core/security/authorization/common'
+import { securityAccess } from '../core/security/authorization/fastify-security'
 import { applicationEvents } from '../helper/application-events'
 import { securityHelper } from '../helper/security-helper'
 import { appConnectionService } from './app-connection-service/app-connection-service'
+import { oauth2Util } from './app-connection-service/oauth2/oauth2-util'
 import { AppConnectionEntity } from './app-connection.entity'
 
-export const appConnectionController: FastifyPluginCallbackTypebox = (app, _opts, done) => {
+export const appConnectionController: FastifyPluginCallbackZod = (app, _opts, done) => {
     app.post('/', UpsertAppConnectionRequest, async (request, reply) => {
         const appConnection = await appConnectionService(request.log).upsert({
             platformId: request.principal.platform.id,
@@ -40,7 +41,7 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (app, _opts
             metadata: request.body.metadata,
             pieceVersion: request.body.pieceVersion,
         })
-        applicationEvents.sendUserEvent(request, {
+        applicationEvents(request.log).sendUserEvent(request, {
             action: ApplicationEventName.CONNECTION_UPSERTED,
             data: {
                 connection: appConnection,
@@ -110,7 +111,7 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (app, _opts
             platformId: request.principal.platform.id,
             userId: request.principal.id,
         })
-        await reply.status(StatusCodes.OK).send()
+        await reply.status(StatusCodes.NO_CONTENT).send()
     })
 
     app.delete('/:id', DeleteAppConnectionRequest, async (request, reply): Promise<void> => {
@@ -119,7 +120,7 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (app, _opts
             platformId: request.principal.platform.id,
             projectId: request.projectId,
         })
-        applicationEvents.sendUserEvent(request, {
+        applicationEvents(request.log).sendUserEvent(request, {
             action: ApplicationEventName.CONNECTION_DELETED,
             data: {
                 connection,
@@ -133,7 +134,17 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (app, _opts
         })
         await reply.status(StatusCodes.NO_CONTENT).send()
     })
-
+    app.post('/oauth2/authorization-url', GetOAuth2AuthorizationUrlRequest, async (request) => {
+        return oauth2Util(request.log).buildAuthorizationUrl({
+            platformId: request.principal.platform.id,
+            pieceName: request.body.pieceName,
+            pieceVersion: request.body.pieceVersion,
+            clientId: request.body.clientId,
+            redirectUrl: request.body.redirectUrl,
+            props: request.body.props,
+            projectId: request.projectId,
+        })
+    })
     done()
 }
 
@@ -177,7 +188,7 @@ const UpdateConnectionValueRequest = {
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         description: 'Update an app connection value',
         body: UpdateConnectionValueRequestBody,
-        params: Type.Object({
+        params: z.object({
             id: ApId,
         }),
     },
@@ -189,8 +200,7 @@ const ReplaceAppConnectionsRequest = {
             [PrincipalType.USER, PrincipalType.SERVICE],
             Permission.WRITE_APP_CONNECTION,
             {
-                type: ProjectResourceType.TABLE,
-                tableName: AppConnectionEntity,
+                type: ProjectResourceType.BODY,
             },
         ),
     },
@@ -200,7 +210,7 @@ const ReplaceAppConnectionsRequest = {
         description: 'Replace app connections',
         body: ReplaceAppConnectionsRequestBody,
         response: {
-            [StatusCodes.NO_CONTENT]: Type.Never(),
+            [StatusCodes.NO_CONTENT]: z.never(),
         },
     },
 }
@@ -261,11 +271,28 @@ const DeleteAppConnectionRequest = {
         tags: ['app-connections'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         description: 'Delete an app connection',
-        params: Type.Object({
+        params: z.object({
             id: ApId,
         }),
         response: {
-            [StatusCodes.NO_CONTENT]: Type.Never(),
+            [StatusCodes.NO_CONTENT]: z.never(),
+        },
+    },
+}
+
+const GetOAuth2AuthorizationUrlRequest = {
+    config: {
+        security: securityAccess.publicPlatform(
+            [PrincipalType.USER],
+        ),
+    },
+    schema: {
+        tags: ['app-connections'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'Get OAuth2 authorization URL',
+        body: GetOAuth2AuthorizationUrlRequestBody,
+        response: {
+            [StatusCodes.OK]: GetOAuth2AuthorizationUrlResponse,
         },
     },
 }

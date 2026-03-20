@@ -4,7 +4,7 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 import { TriggerStrategy } from '@activepieces/pieces-framework';
-import { googleCalendarAuth } from '../../';
+import { googleCalendarAuth } from '../common';
 import {
   DedupeStrategy,
   Polling,

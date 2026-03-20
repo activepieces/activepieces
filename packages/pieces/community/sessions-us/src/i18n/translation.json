@@ -22,6 +22,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "The name of the session": "The name of the session",
   "Select a date and time": "Select a date and time",
   "The timezone which the session will take place.": "The timezone which the session will take place.",

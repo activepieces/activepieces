@@ -1,6 +1,5 @@
 import { TlsOptions } from 'node:tls'
 import 'pg'
-import { AppSystemProp } from '@activepieces/server-shared'
 import { isNil, spreadIfDefined } from '@activepieces/shared'
 import { DataSource, MigrationInterface } from 'typeorm'
 import { MakeStripeSubscriptionNullable1685053959806 } from '../ee/database/migrations/postgres/1685053959806-MakeStripeSubscriptionNullable'
@@ -24,6 +23,7 @@ import { AddPlatform1697717995884 } from '../ee/database/migrations/postgres/169
 import { AddCustomDomain1698077078271 } from '../ee/database/migrations/postgres/1698077078271-AddCustomDomain'
 import { AddMetadataFieldToFlowTemplates1744780800000 } from '../ee/database/migrations/postgres/1744780800000-AddMetadataFieldToFlowTemplates'
 import { system } from '../helper/system/system'
+import { AppSystemProp } from '../helper/system/system-props'
 import { commonProperties } from './database-connection'
 import { AddPieceTypeAndPackageTypeToFlowVersion1696245170061 } from './migration/common/1696245170061-add-piece-type-and-package-type-to-flow-version'
 import { AddPieceTypeAndPackageTypeToFlowTemplate1696245170062 } from './migration/common/1696245170062-add-piece-type-and-package-type-to-flow-template'
@@ -323,7 +323,27 @@ import { AddMaxAutoTopUpCreditsMonthlyToPlatformPlan1767016169819 } from './migr
 import { AnalyticsAndOwnerToFlowId1767127482383 } from './migration/postgres/1767127482383-AnalyticsAndOwnerToFlowId'
 import { AddBadges1767141831647 } from './migration/postgres/1767141831647-AddBadges'
 import { AddFlowOwnerIndex1767610587266 } from './migration/postgres/1767610587266-AddFlowOwnerIndex'
+import { MigrateOldTemplateCategoriesToDynamicOne1767624311536 } from './migration/postgres/1767624311536-MigrateOldTemplateCategoriesToDynamicOne'
 import { AddTriggeredBy1767697998391 } from './migration/postgres/1767697998391-AddTriggeredBy'
+import { UpdateCacheStructure1767904545112 } from './migration/postgres/1767904545112-UpdateCacheStructure'
+import { AddOutdatedToReport1767994436597 } from './migration/postgres/1767994436597-AddOutdatedToReport'
+import { AddNotesToFlowVersion1768130030028 } from './migration/postgres/1768130030028-AddNotesToFlowVersion'
+import { AddTablesIntoTemplateEntity1768306510367 } from './migration/postgres/1768306510367-AddTablesIntoTemplateEntity'
+import { AddImageToUser1768502658760 } from './migration/postgres/1768502658760-ADDIMAGETOUSER'
+import { RemoveUsageCountFromTemplates1768738475196 } from './migration/postgres/1768738475196-RemoveUsageCountFromTemplates'
+import { AddTemplateIdToFlowEntity1768829135202 } from './migration/postgres/1768829135202-AddTemplateIdToFlowEntity'
+import { AddEventStreaming1769084311004 } from './migration/postgres/1769084311004-AddEventStreaming'
+import { RemoveOperatorRole1769613456917 } from './migration/postgres/1769613456917-RemoveOperatorRole'
+import { AddFolderColumnToTable1769638834372 } from './migration/postgres/1769638834372-add-folder-column-to-table'
+import { AddTableFolderForeignKey1769638834373 } from './migration/postgres/1769638834373-AddTableFolderForeignKey'
+import { AddScimEnabled1769720000000 } from './migration/postgres/1769720000000-AddScimEnabled'
+import { AddSecretManagersEntity1770717998442 } from './migration/postgres/1770717998442-AddSecretManagersEntity'
+import { AddSecretManagersFlag1771167183104 } from './migration/postgres/1771167183104-AddSecretManagersFlag'
+import { AddSecretManagerConnectionEntity1772000000000 } from './migration/postgres/1772000000000-AddSecretManagerConnectionEntity'
+import { AddPreSelectForNewProjectsToAppConnection1772027509095 } from './migration/postgres/1772027509095-AddPreSelectForNewProjectsToAppConnection'
+import { AddEnabledToolsToMcpServer1772027509096 } from './migration/postgres/1772027509096-AddEnabledToolsToMcpServer'
+import { AddFlowProjectIdStatusIndex1772027509097 } from './migration/postgres/1772027509097-AddFlowProjectIdStatusIndex'
+import { AddProjectPlatformIdIndex1773930744000 } from './migration/postgres/1773930744000-AddProjectPlatformIdIndex'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -664,30 +684,41 @@ export const getMigrations = (): (new () => MigrationInterface)[] => {
         AddBadges1767141831647,
         AddFlowOwnerIndex1767610587266,
         AddTriggeredBy1767697998391,
+        UpdateCacheStructure1767904545112,
+        AddOutdatedToReport1767994436597,
+        AddNotesToFlowVersion1768130030028,
+        MigrateOldTemplateCategoriesToDynamicOne1767624311536,
+        AddEventStreaming1769084311004,
+        AddImageToUser1768502658760,
+        RemoveUsageCountFromTemplates1768738475196,
+        AddTablesIntoTemplateEntity1768306510367,
+        AddTemplateIdToFlowEntity1768829135202,
+        RemoveOperatorRole1769613456917,
+        AddFolderColumnToTable1769638834372,
+        AddTableFolderForeignKey1769638834373,
+        AddScimEnabled1769720000000,
+        AddSecretManagersEntity1770717998442,
+        AddSecretManagersFlag1771167183104,
+        AddSecretManagerConnectionEntity1772000000000,
+        AddPreSelectForNewProjectsToAppConnection1772027509095,
+        AddEnabledToolsToMcpServer1772027509096,
+        AddFlowProjectIdStatusIndex1772027509097,
+        AddProjectPlatformIdIndex1773930744000,
     ]
     return migrations
 }
 
 
-export const createPostgresDataSource = (params?: { forMigration?: boolean }): DataSource => {
-    const forMigration = params?.forMigration ?? false
-    
-    const migrationConfig: MigrationConfig =  {
-        migrationsRun: false,
+export const createPostgresDataSource = (): DataSource => {
+    const migrationConfig: MigrationConfig = {
+        migrationsRun: true,
         migrationsTransactionMode: 'each',
         migrations: getMigrations(),
         synchronize: false,
     }
 
-    const idleTimeoutMillis = system.getNumberOrThrow(AppSystemProp.POSTGRES_IDLE_TIMEOUT_MS)
-    const statementTimeout = forMigration ? undefined : system.getNumberOrThrow(AppSystemProp.POSTGRES_STATEMENT_TIMEOUT_MS)
-
-    const extra = {
-        idleTimeoutMillis,
-        ...spreadIfDefined('statement_timeout', statementTimeout),
-    }
-
     const url = system.get(AppSystemProp.POSTGRES_URL)
+
     if (!isNil(url)) {
         return new DataSource({
             type: 'postgres',
@@ -696,7 +727,6 @@ export const createPostgresDataSource = (params?: { forMigration?: boolean }): D
             ...spreadIfDefined('poolSize', system.get(AppSystemProp.POSTGRES_POOL_SIZE)),
             ...migrationConfig,
             ...commonProperties,
-            extra,
         })
     }
 
@@ -705,6 +735,7 @@ export const createPostgresDataSource = (params?: { forMigration?: boolean }): D
     const password = system.getOrThrow(AppSystemProp.POSTGRES_PASSWORD)
     const serializedPort = system.getOrThrow(AppSystemProp.POSTGRES_PORT)
     const port = Number.parseInt(serializedPort, 10)
+    const idleTimeoutMillis = system.getNumberOrThrow(AppSystemProp.POSTGRES_IDLE_TIMEOUT_MS)
     const username = system.getOrThrow(AppSystemProp.POSTGRES_USERNAME)
 
     return new DataSource({
@@ -718,7 +749,9 @@ export const createPostgresDataSource = (params?: { forMigration?: boolean }): D
         ...spreadIfDefined('poolSize', system.get(AppSystemProp.POSTGRES_POOL_SIZE)),
         ...commonProperties,
         ...migrationConfig,
-        extra,
+        extra: {
+            idleTimeoutMillis,
+        },
     })
 }
 

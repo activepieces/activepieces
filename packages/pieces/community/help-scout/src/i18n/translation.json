@@ -61,6 +61,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "Customer’s age (string, e.g. \"30-35\")": "Customer’s age (string, e.g. \"30-35\")",
   "URLs for social profiles (type will be set to \"other\")": "URLs for social profiles (type will be set to \"other\")",
   "Authorization headers are injected automatically from your connection.": "Authorization headers are injected automatically from your connection.",

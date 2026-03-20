@@ -1,15 +1,12 @@
-import { getProjectMaxConcurrentJobsKey } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ApId,
     apId,
     assertNotNullOrUndefined,
     ColorName,
-    EndpointScope,
     ErrorCode,
     isNil,
     Metadata,
-    PlatformRole,
     Project,
     ProjectIcon,
     ProjectId,
@@ -17,34 +14,30 @@ import {
     spreadIfDefined,
     UserId,
 } from '@activepieces/shared'
-import { FindOptionsWhere, ILike, In, IsNull, Not } from 'typeorm'
+import { FastifyBaseLogger } from 'fastify'
+import { Brackets, EntityManager, IsNull, Not, ObjectLiteral, SelectQueryBuilder } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
+import { getProjectMaxConcurrentJobsKey } from '../database/redis/keys'
 import { distributedStore } from '../database/redis-connections'
-import { projectMemberService } from '../ee/projects/project-members/project-member.service'
-import { system } from '../helper/system/system'
 import { userService } from '../user/user-service'
 import { ProjectEntity } from './project-entity'
 import { projectHooks } from './project-hooks'
 
 export const projectRepo = repoFactory(ProjectEntity)
 
-export const projectService = {
+export const projectService = (log: FastifyBaseLogger) => ({
     async create(params: CreateParams): Promise<Project> {
-        const colors = Object.values(ColorName)
-        const icon: ProjectIcon = {
-            color: colors[Math.floor(Math.random() * colors.length)],
-        }
+        const { callPostCreateHooks = true, entityManager, ...rest } = params
+        const icon = this.createProjectIcon()
         const newProject: NewProject = {
             id: apId(),
-            ...params,
+            ...rest,
             icon,
-            maxConcurrentJobs: params.maxConcurrentJobs,
             releasesEnabled: false,
         }
-        const savedProject = await projectRepo().save(newProject)
-        await projectHooks.get(system.globalLogger()).postCreate(savedProject)
-        if (!isNil(params.maxConcurrentJobs)) {
-            await distributedStore.put(getProjectMaxConcurrentJobsKey(savedProject.id), params.maxConcurrentJobs)
+        const savedProject = await projectRepo(entityManager).save(newProject)
+        if (callPostCreateHooks) {
+            await this.callProjectPostCreateHooks(savedProject)
         }
         return savedProject
     },
@@ -85,7 +78,7 @@ export const projectService = {
         })
     },
 
-    async update(projectId: ProjectId, request: UpdateParams): Promise<Project> {
+    async update(projectId: ProjectId, request: UpdateParams, entityManager?: EntityManager): Promise<Project> {
         const externalId = request.externalId?.trim() !== '' ? request.externalId : undefined
         await assertExternalIdIsUnique(externalId, projectId)
 
@@ -101,12 +94,12 @@ export const projectService = {
             ...spreadIfDefined('icon', request.icon),
         } : {}
 
-        await projectRepo().update({ id: projectId }, { ...baseUpdate, ...teamUpdate })
+        await projectRepo(entityManager).update({ id: projectId }, { ...baseUpdate, ...teamUpdate })
         return this.getOneOrThrow(projectId)
     },
 
     async getPlatformId(projectId: ProjectId): Promise<string> {
-        const result = await projectRepo().createQueryBuilder('project').select('"platformId"').where({
+        const result = await projectRepo().createQueryBuilder('project').withDeleted().select('"platformId"').where({
             id: projectId,
         }).getRawOne()
         const platformId = result?.platformId
@@ -141,11 +134,12 @@ export const projectService = {
         return !isNil(project)
     },
     async getUserProjectOrThrow(userId: UserId): Promise<Project> {
-        const user = await userService.getOneOrFail({ id: userId })
+        const user = await userService(log).getOneOrFail({ id: userId })
         assertNotNullOrUndefined(user.platformId, 'platformId is undefined')
         const projects = await this.getAllForUser({
             platformId: user.platformId,
             userId,
+            isPrivileged: userService(log).isUserPrivileged(user),
         })
         if (isNil(projects) || projects.length === 0) {
             throw new ActivepiecesError({
@@ -156,23 +150,38 @@ export const projectService = {
                 },
             })
         }
-        return projects[0]
+        return projects.find((p) => p.ownerId === userId && p.type === ProjectType.PERSONAL) ?? projects[0]
     },
 
     async getAllForUser(params: GetAllForUserParams): Promise<Project[]> {
         assertNotNullOrUndefined(params.platformId, 'platformId is undefined')
-        const filters = await getUsersFilters(params)
-        return projectRepo()
+        
+        const queryBuilder = projectRepo()
             .createQueryBuilder('project')
-            .where(filters)
+            .where('project."platformId" = :platformId', { platformId: params.platformId })
+            .andWhere('project.deleted IS NULL')
             .orderBy('project.type', 'ASC')
             .addOrderBy('project.displayName', 'ASC')
             .addOrderBy('project.id', 'ASC')
-            .getMany()
+
+        if (params.displayName) {
+            queryBuilder.andWhere('project."displayName" ILIKE :displayName', { displayName: `%${params.displayName}%` })
+        }
+
+        await applyProjectsAccessFilters(queryBuilder, params)
+
+        return queryBuilder.getMany()
     },
     async userHasProjects(params: GetAllForUserParams): Promise<boolean> {
-        const filters = await getUsersFilters(params)
-        return projectRepo().existsBy(filters)
+        assertNotNullOrUndefined(params.platformId, 'platformId is undefined')
+        
+        const queryBuilder = projectRepo()
+            .createQueryBuilder('project')
+            .where('project."platformId" = :platformId', { platformId: params.platformId })
+
+        await applyProjectsAccessFilters(queryBuilder, params)
+
+        return queryBuilder.getExists()
     },
     async addProjectToPlatform({ projectId, platformId }: AddProjectToPlatformParams): Promise<void> {
         const query = {
@@ -195,60 +204,40 @@ export const projectService = {
             externalId,
         })
     },
-}
+    createProjectIcon: ()=>{
+        const colors = Object.values(ColorName)
+        const icon: ProjectIcon = {
+            color: colors[Math.floor(Math.random() * colors.length)],
+        }
+        return icon
+    },
+    callProjectPostCreateHooks: async (savedProject: Project)=>{
+        await projectHooks.get(log).postCreate(savedProject)
+        if (!isNil(savedProject.maxConcurrentJobs)) {
+            await distributedStore.put(getProjectMaxConcurrentJobsKey(savedProject.id), savedProject.maxConcurrentJobs)
+        }
+    },
+})
 
 
-async function getUsersFilters(params: GetAllForUserParams): Promise<FindOptionsWhere<Project>[]> {
-    const user = await userService.getOneOrFail({ id: params.userId })
-    const isPrivilegedUser = user.platformRole === PlatformRole.ADMIN || user.platformRole === PlatformRole.OPERATOR
-    const displayNameFilter = params.displayName ? { displayName: ILike(`%${params.displayName}%`) } : {}
-
-    if (!isPrivilegedUser) {
-        // Regular members can only see projects they're members of and their own personal project
-        const projectIds = await projectMemberService(system.globalLogger()).getIdsOfProjects({
-            platformId: params.platformId,
-            userId: params.userId,
-        })
-
-        const personalProjects = await projectRepo().findBy({
-            platformId: params.platformId,
-            ownerId: params.userId,
-            type: ProjectType.PERSONAL,
-        })
-
-        return [{
-            platformId: params.platformId,
-            id: In([...projectIds, ...personalProjects.map((project) => project.id)]),
-            ...displayNameFilter,
-        }]
+export async function applyProjectsAccessFilters<T extends ObjectLiteral>(
+    queryBuilder: SelectQueryBuilder<T>,
+    params: ApplyProjectsAccessFiltersParams,
+): Promise<void> {
+    const { platformId, userId, isPrivileged } = params
+    if (isPrivileged) {
+        return
     }
 
-
-    if (params.scope === EndpointScope.PLATFORM) {
-        // Platform admins and operators can see all projects inside platform
-        return [{
-            platformId: params.platformId,
-            ...displayNameFilter,
-        }]
-    }
-
-    const teamProjects = await projectRepo().findBy({
-        platformId: params.platformId,
-        type: ProjectType.TEAM,
-    })
-
-    const myPersonalProject = await projectRepo().findOneBy({
-        platformId: params.platformId,
-        ownerId: params.userId,
-        type: ProjectType.PERSONAL,
-    })
-
-    // Platform admin but in his dashboard he can see all projects inside platform & his own personal project only
-    return [{
-        platformId: params.platformId,
-        id: In([...teamProjects.map((project) => project.id), ...(myPersonalProject?.id ? [myPersonalProject.id] : [])]),
-        ...displayNameFilter,
-    }]
+    queryBuilder.andWhere(new Brackets(qb => {
+        qb.where(
+            'project."ownerId" = :userId AND project.type = :personalType',
+            { userId, personalType: ProjectType.PERSONAL },
+        ).orWhere(
+            'project.id IN (SELECT "projectId" FROM project_member WHERE "userId" = :userId AND "platformId" = :platformId)',
+            { userId, platformId },
+        )
+    }))
 }
 async function assertExternalIdIsUnique(externalId: string | undefined | null, projectId: ProjectId): Promise<void> {
     if (!isNil(externalId)) {
@@ -271,8 +260,8 @@ async function assertExternalIdIsUnique(externalId: string | undefined | null, p
 type GetAllForUserParams = {
     platformId: string
     userId: string
+    isPrivileged: boolean
     displayName?: string
-    scope?: EndpointScope
 }
 
 type GetOneByOwnerAndPlatformParams = {
@@ -313,6 +302,8 @@ type CreateParams = {
     externalId?: string
     metadata?: Metadata
     maxConcurrentJobs?: number
+    callPostCreateHooks?: boolean
+    entityManager?: EntityManager
 }
 
 type GetByPlatformIdAndExternalIdParams = {
@@ -327,3 +318,8 @@ type AddProjectToPlatformParams = {
 
 type NewProject = Omit<Project, 'created' | 'updated' | 'deleted'>
 
+type ApplyProjectsAccessFiltersParams = {
+    platformId: string
+    userId: string
+    isPrivileged: boolean
+}

@@ -42,7 +42,7 @@ export class MigrateWebhookTemplate1709581196564 implements MigrationInterface {
                 )
             }
         }
-        log.info('MigrateWebhookTemplate1709581196564, finished flows ' + count)
+        log.info({ count }, '[MigrateWebhookTemplate1709581196564#up] finished flows')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -76,8 +76,6 @@ export class MigrateWebhookTemplate1709581196564 implements MigrationInterface {
                 }
             }
         }
-        log.info(
-            'rolling back  MigrateWebhookTemplate1709581196564, finished flows ' + count,
-        )
+        log.info({ count }, '[MigrateWebhookTemplate1709581196564#down] finished flows')
     }
 }

@@ -54,6 +54,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "Select the chat to send the message to": "Select the chat to send the message to",
   "The text content of the message to be sent.": "The text content of the message to be sent.",
   "Optional file to send with the message.": "Optional file to send with the message.",

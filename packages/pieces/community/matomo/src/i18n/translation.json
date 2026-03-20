@@ -22,6 +22,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "The note to add": "The note to add",
   "The date to add the note to. Format: YYYY-MM-DD": "The date to add the note to. Format: YYYY-MM-DD",
   "Whether or not the note should be starred": "Whether or not the note should be starred",

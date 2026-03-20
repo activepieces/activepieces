@@ -35,6 +35,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "Search text in name, email, or phone number": "Search text in name, email, or phone number",
   "Filter by lead source (e.g., \"API\", \"Import\")": "Filter by lead source (e.g., \"API\", \"Import\")",
   "Filter by exact email address": "Filter by exact email address",

@@ -15,6 +15,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "The UUID of the chatbot to send the message to": "The UUID of the chatbot to send the message to",
   "The message to send to the chatbot": "The message to send to the chatbot",
   "The UUID of the session to send the message to": "The UUID of the session to send the message to",
