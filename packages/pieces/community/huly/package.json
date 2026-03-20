@@ -1,0 +1,32 @@
+{
+  "name": "@activepieces/piece-huly",
+  "version": "0.0.1",
+  "description": "Activepieces piece for Huly project management platform",
+  "main": "./dist/index.cjs",
+  "type": "module",
+  "scripts": {
+    "build": "node esbuild.config.mjs",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "echo 'No lint config yet'"
+  },
+  "keywords": [
+    "activepieces",
+    "huly",
+    "project-management",
+    "automation"
+  ],
+  "author": "dearlordylord",
+  "license": "MIT",
+  "dependencies": {
+    "@activepieces/pieces-common": "^0.12.0",
+    "@activepieces/pieces-framework": "^0.26.0",
+    "@activepieces/shared": "^0.42.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.27.2",
+    "typescript": "^5.9.3",
+    "vitest": "^3.1.1",
+    "@types/node": "^25.1.0"
+  }
+}
