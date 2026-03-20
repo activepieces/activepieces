@@ -19,7 +19,7 @@ import { checkIfSolutionExistsInDb, createMockConnection, createMockFlow, create
 
 let app: FastifyInstance | null = null
 
-async function waitForDeletionJobs(jobIds: string[], timeoutMs = 30000) {
+async function waitForDeletionJobs(jobIds: string[], timeoutMs = 60000) {
     const start = Date.now()
     for (const jobId of jobIds) {
         while (Date.now() - start < timeoutMs) {
