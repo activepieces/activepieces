@@ -1,5 +1,6 @@
 {
   "lockfileVersion": 1,
+  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "activepieces",
@@ -549,7 +550,7 @@
     },
     "packages/pieces/community/airtable": {
       "name": "@activepieces/piece-airtable",
-      "version": "0.6.5",
+      "version": "0.6.6",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -4148,6 +4149,18 @@
         "tslib": "^2.3.0",
       },
     },
+    "packages/pieces/community/microsoft-copilot": {
+      "name": "@activepieces/piece-microsoft-copilot",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "@microsoft/microsoft-graph-client": "3.0.7",
+        "@microsoft/microsoft-graph-types": "2.40.0",
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/microsoft-dynamics-365-business-central": {
       "name": "@activepieces/piece-microsoft-dynamics-365-business-central",
       "version": "0.1.6",
@@ -4795,7 +4808,7 @@
     },
     "packages/pieces/community/outseta": {
       "name": "@activepieces/piece-outseta",
-      "version": "0.0.3",
+      "version": "0.1.0",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -6660,6 +6673,16 @@
         "tslib": "^2.3.0",
       },
     },
+    "packages/pieces/community/webex": {
+      "name": "@activepieces/piece-webex",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/webflow": {
       "name": "@activepieces/piece-webflow",
       "version": "0.2.4",
@@ -7616,6 +7639,7 @@
         "@activepieces/shared": "workspace:*",
         "async-mutex": "0.4.0",
         "dayjs": "1.11.9",
+        "systeminformation": "5.25.11",
       },
       "devDependencies": {
         "@types/node": "24.11.0",
@@ -7750,6 +7774,7 @@
         "pako": "2.1.0",
         "papaparse": "5.5.3",
         "posthog-js": "1.195.0",
+        "pretty-bytes": "7.1.0",
         "qs": "6.14.2",
         "radix-ui": "1.4.3",
         "react": "19",
@@ -8524,6 +8549,8 @@
 
     "@activepieces/piece-microsoft-365-planner": ["@activepieces/piece-microsoft-365-planner@workspace:packages/pieces/community/microsoft-365-planner"],
 
+    "@activepieces/piece-microsoft-copilot": ["@activepieces/piece-microsoft-copilot@workspace:packages/pieces/community/microsoft-copilot"],
+
     "@activepieces/piece-microsoft-dynamics-365-business-central": ["@activepieces/piece-microsoft-dynamics-365-business-central@workspace:packages/pieces/community/microsoft-dynamics-365-business-central"],
 
     "@activepieces/piece-microsoft-dynamics-crm": ["@activepieces/piece-microsoft-dynamics-crm@workspace:packages/pieces/community/microsoft-dynamics-crm"],
@@ -9011,6 +9038,8 @@
     "@activepieces/piece-waitwhile": ["@activepieces/piece-waitwhile@workspace:packages/pieces/community/waitwhile"],
 
     "@activepieces/piece-wealthbox": ["@activepieces/piece-wealthbox@workspace:packages/pieces/community/wealthbox"],
+
+    "@activepieces/piece-webex": ["@activepieces/piece-webex@workspace:packages/pieces/community/webex"],
 
     "@activepieces/piece-webflow": ["@activepieces/piece-webflow@workspace:packages/pieces/community/webflow"],
 
@@ -13536,6 +13565,8 @@
 
     "prettier-linter-helpers": ["prettier-linter-helpers@1.0.1", "", { "dependencies": { "fast-diff": "^1.1.2" } }, "sha512-SxToR7P8Y2lWmv/kTzVLC1t/GDI2WGjMwNhLLE9qtH8Q13C+aEmuRlzDst4Up4s0Wc8sF2M+J57iB3cMLqftfg=="],
 
+    "pretty-bytes": ["pretty-bytes@7.1.0", "", {}, "sha512-nODzvTiYVRGRqAOvE84Vk5JDPyyxsVk0/fbA/bq7RqlnhksGpset09XTxbpvLTIjoaF7K8Z8DG8yHtKGTPSYRw=="],
+
     "pretty-ms": ["pretty-ms@9.3.0", "", { "dependencies": { "parse-ms": "^4.0.0" } }, "sha512-gjVS5hOP+M3wMm5nmNOucbIrqudzs9v/57bWRHQWLYklXqoXKrVfYW2W9+glfGsqtPgpiz5WwyEEB+ksXIx3gQ=="],
 
     "priority-queue-typescript": ["priority-queue-typescript@1.0.1", "", {}, "sha512-Apycf6CgjdPRNfpZ8qgQeHVRe4B6R51QAd94k6fE13tGUpW1RLv8+ZeJipl2f0j/No3nt2Gk7dF2f+i1Au/I2w=="],
@@ -14143,6 +14174,8 @@
     "symbol-tree": ["symbol-tree@3.2.4", "", {}, "sha512-9QNk5KwDF+Bvz+PyObkmSYjI5ksVUYtjW7AU22r2NKcfLJcXp96hkDWU3+XndOsUb+AQ9QhfzfCT2O+CNWT5Tw=="],
 
     "symlink-or-copy": ["symlink-or-copy@1.3.1", "", {}, "sha512-0K91MEXFpBUaywiwSSkmKjnGcasG/rVBXFLJz5DrgGabpYD6N+3yZrfD6uUIfpuTu65DZLHi7N8CizHc07BPZA=="],
+
+    "systeminformation": ["systeminformation@5.25.11", "", { "os": "!aix", "bin": { "systeminformation": "lib/cli.js" } }, "sha512-jI01fn/t47rrLTQB0FTlMCC+5dYx8o0RRF+R4BPiUNsvg5OdY0s9DKMFmJGrx5SwMZQ4cag0Gl6v8oycso9b/g=="],
 
     "tailwind-merge": ["tailwind-merge@2.4.0", "", {}, "sha512-49AwoOQNKdqKPd9CViyH5wJoSKsCDjUlzL8DxuGp3P1FsGY36NJDAa18jLZcaHAUUuTj+JB8IAo8zWgBNvBF7A=="],
 
