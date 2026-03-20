@@ -22,7 +22,6 @@ export const sendgridAuth = PieceAuth.CustomAuth({
         options: [
           {
             label: 'Global (US)',
-
             value: 'US',
           },
           {
@@ -42,7 +41,7 @@ export const sendgrid = createPiece({
 
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/sendgrid.png',
-  authors: ["ashrafsamhouri","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
+  authors: ["ashrafsamhouri","kishanprmr","MoShizzle","khaledmashaly","abuaboud",'Thijs-Attenza'],
   categories: [PieceCategory.COMMUNICATION, PieceCategory.MARKETING],
   auth: sendgridAuth,
   actions: [
