@@ -1,103 +1,109 @@
-import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import {
   HttpMethod,
   AuthenticationType,
   httpClient,
 } from '@activepieces/pieces-common';
-import { lobstermailCommon } from '../common';
+import { lobstermailCommon, inboxIdDropdownOptional } from '../common';
 import { lobstermailAuth } from '../..';
 
 export const newEmailTrigger = createTrigger({
   auth: lobstermailAuth,
   name: 'new_email',
   displayName: 'New Email Received',
-  description: 'Triggers when a new email is received in an inbox',
-  type: TriggerStrategy.POLLING,
+  description: 'Triggers instantly when a new email is received in an inbox.',
+  type: TriggerStrategy.WEBHOOK,
   props: {
-    inbox_id: Property.ShortText({
-      displayName: 'Inbox ID',
-      description: 'The inbox to monitor for new emails (e.g. ibx_...)',
-      required: true,
-    }),
+    inbox_id: inboxIdDropdownOptional,
   },
   sampleData: {
-    id: 'eml_sample123',
-    inboxId: 'ibx_sample456',
+    event: 'email.received',
+    email_id: 'eml_sample123',
+    inbox_id: 'ibx_sample456',
     from: 'sender@example.com',
-    to: ['you@lobstermail.ai'],
+    to: 'you@lobstermail.ai',
     subject: 'Hello from LobsterMail',
-    body: { text: 'This is a sample email body.', html: '<p>This is a sample email body.</p>' },
-    createdAt: '2026-01-01T00:00:00.000Z',
+    preview: 'This is a sample email body.',
+    thread_id: null,
+    injection_risk_score: 0,
+    received_at: '2026-01-01T00:00:00.000Z',
   },
+
   async onEnable(context) {
-    // Store the current timestamp so we only fetch new emails after enabling
-    await context.store.put('lastPollTime', new Date().toISOString());
-    await context.store.put('lastSeenIds', [] as string[]);
-  },
-  async onDisable(context) {
-    await context.store.delete('lastPollTime');
-    await context.store.delete('lastSeenIds');
-  },
-  async test(context) {
-    // Fetch the latest emails as sample data for the user
-    const params = new URLSearchParams();
-    params.set('limit', '5');
-
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.GET,
-      url: `${lobstermailCommon.baseUrl}/v1/inboxes/${context.propsValue.inbox_id}/emails?${params.toString()}`,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth,
-      },
-    });
-
-    const emails = response.body?.data ?? [];
-    return emails.map((email: Record<string, unknown>) => email);
-  },
-  async run(context) {
-    const lastPollTime =
-      (await context.store.get<string>('lastPollTime')) ??
-      new Date(0).toISOString();
-    const lastSeenIds =
-      (await context.store.get<string[]>('lastSeenIds')) ?? [];
-
-    // Add 1ms to avoid re-fetching the last email (inclusive filter)
-    const sinceDate = new Date(new Date(lastPollTime).getTime() + 1);
-    const params = new URLSearchParams();
-    params.set('since', sinceDate.toISOString());
-    params.set('limit', '50');
-
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.GET,
-      url: `${lobstermailCommon.baseUrl}/v1/inboxes/${context.propsValue.inbox_id}/emails?${params.toString()}`,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth,
-      },
-    });
-
-    const emails: Record<string, unknown>[] = response.body?.data ?? [];
-
-    // Deduplicate against previously seen IDs
-    const newEmails = emails.filter(
-      (email) => !lastSeenIds.includes(email['id'] as string),
-    );
-
-    if (newEmails.length > 0) {
-      // Find the maximum createdAt across all returned emails
-      const maxCreatedAt = newEmails.reduce((max, email) => {
-        const ts = email['createdAt'] as string;
-        return ts > max ? ts : max;
-      }, lastPollTime);
-
-      await context.store.put('lastPollTime', maxCreatedAt);
-      await context.store.put(
-        'lastSeenIds',
-        newEmails.map((e) => e['id'] as string),
-      );
+    const body: Record<string, unknown> = {
+      url: context.webhookUrl,
+      events: ['email.received'],
+    };
+    if (context.propsValue.inbox_id) {
+      body['inboxId'] = context.propsValue.inbox_id;
     }
 
-    return newEmails;
+    const response = await httpClient.sendRequest<{
+      id: string;
+      secret: string;
+    }>({
+      method: HttpMethod.POST,
+      url: `${lobstermailCommon.baseUrl}/v1/webhooks`,
+      body,
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token: context.auth.secret_text,
+      },
+    });
+
+    await context.store.put('webhookId', response.body.id);
+  },
+
+  async onDisable(context) {
+    const webhookId = await context.store.get<string>('webhookId');
+    if (webhookId) {
+      await httpClient.sendRequest({
+        method: HttpMethod.DELETE,
+        url: `${lobstermailCommon.baseUrl}/v1/webhooks/${webhookId}`,
+        authentication: {
+          type: AuthenticationType.BEARER_TOKEN,
+          token: context.auth.secret_text,
+        },
+      });
+    }
+  },
+
+  async run(context) {
+    const payload = context.payload.body as {
+      event: string;
+      timestamp: string;
+      data: {
+        id?: string;
+        inboxId?: string;
+        sender?: string;
+        recipients?: string[];
+        subject?: string;
+        preview?: string;
+        threadId?: string;
+        injectionRiskScore?: number;
+        receivedAt?: string;
+      };
+    };
+
+    const data = payload.data ?? {};
+    if (payload.event !== 'email.received') {
+      return [];
+    }
+    return [
+      {
+        event: payload.event,
+        email_id: data.id ?? null,
+        inbox_id: data.inboxId ?? null,
+        from: data.sender ?? null,
+        to: Array.isArray(data.recipients)
+          ? data.recipients.join(', ')
+          : data.recipients ?? null,
+        subject: data.subject ?? null,
+        preview: data.preview ?? null,
+        thread_id: data.threadId ?? null,
+        injection_risk_score: data.injectionRiskScore ?? null,
+        received_at: data.receivedAt ?? payload.timestamp ?? null,
+      },
+    ];
   },
 });
