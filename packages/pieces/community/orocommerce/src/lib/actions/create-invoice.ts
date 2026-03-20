@@ -104,11 +104,6 @@ export const createInvoiceAction = createAction({
     }),
 
     organization: organizationDropdown,
-    organizationId: Property.ShortText({
-      displayName: 'Organization: Raw ID',
-      description: 'Overrides the Organization dropdown.',
-      required: false,
-    }),
     owner: userDropdown,
     website: websiteDropdown,
     internalStatus: invoiceInternalStatusDropdown,
