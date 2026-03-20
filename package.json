@@ -10,7 +10,7 @@
     "serve:engine": "turbo run serve --filter=@activepieces/engine",
     "serve:worker": "turbo run serve --filter=worker",
     "push": "turbo run lint && git push",
-    "dev": "node tools/scripts/install-bun.js && turbo run serve --filter=web --filter=api --filter=@activepieces/engine --ui stream",
+    "dev": "node tools/scripts/install-bun.js && turbo run serve --filter=web --filter=api --filter=@activepieces/engine --filter=worker --ui stream",
     "dev:backend": "turbo run serve --filter=api --filter=@activepieces/engine --ui stream",
     "dev:frontend": "turbo run serve --filter=web --filter=api --filter=@activepieces/engine --ui stream",
     "start": "node tools/setup-dev.js && npm run dev",

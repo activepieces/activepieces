@@ -66,8 +66,14 @@ function parseMemoryLimit(memoryLimit: string): number {
 
 function buildSandboxEnv(settings: ReturnType<typeof workerSettings.getSettings>): Record<string, string> {
     const env: Record<string, string> = {
+        HOME: '/tmp/',
         AP_EXECUTION_MODE: settings.EXECUTION_MODE,
+        AP_MAX_FLOW_RUN_LOG_SIZE_MB: String(settings.MAX_FLOW_RUN_LOG_SIZE_MB),
+        AP_MAX_FILE_SIZE_MB: String(settings.MAX_FILE_SIZE_MB),
         NODE_PATH: '/usr/src/node_modules',
+    }
+    if (settings.DEV_PIECES.length > 0) {
+        env['AP_DEV_PIECES'] = settings.DEV_PIECES.join(',')
     }
     for (const key of settings.SANDBOX_PROPAGATED_ENV_VARS) {
         if (process.env[key]) {

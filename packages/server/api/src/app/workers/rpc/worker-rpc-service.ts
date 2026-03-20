@@ -5,8 +5,10 @@ import {
     FlowStatus,
     isFlowRunStateTerminal,
     isNil,
+    PauseMetadata,
     PiecePackage,
     ProgressUpdateType,
+    spreadIfDefined,
     WebsocketClientEvent,
     WorkerToApiContract,
 } from '@activepieces/shared'
@@ -15,7 +17,7 @@ import { websocketService } from '../../core/websockets.service'
 import { distributedStore } from '../../database/redis-connections'
 import { fileService } from '../../file/file.service'
 import { flowService } from '../../flows/flow/flow.service'
-import { flowRunService } from '../../flows/flow-run/flow-run-service'
+import { flowRunRepo, flowRunService } from '../../flows/flow-run/flow-run-service'
 import { runsMetadataQueue } from '../../flows/flow-run/flow-runs-queue'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { rejectedPromiseHandler } from '../../helper/promise-handler'
@@ -54,6 +56,12 @@ export function createHandlers(log: FastifyBaseLogger, platformIdForDedicatedWor
         },
 
         async uploadRunLog(input) {
+            if (input.pauseMetadata) {
+                await flowRunRepo().update(input.runId, {
+                    status: input.status,
+                    ...spreadIfDefined('pauseMetadata', input.pauseMetadata as PauseMetadata),
+                })
+            }
             const logData: RunsMetadataUpsertData = {
                 id: input.runId,
                 projectId: input.projectId,
