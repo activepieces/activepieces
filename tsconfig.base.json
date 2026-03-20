@@ -1234,6 +1234,9 @@
       "@activepieces/piece-whatsapp": [
         "packages/pieces/community/whatsapp/src/index.ts"
       ],
+      "@activepieces/piece-whatsscale": [
+        "packages/pieces/community/whatsscale/src/index.ts"
+      ],
       "@activepieces/piece-wonderchat": [
         "packages/pieces/community/wonderchat/src/index.ts"
       ],
@@ -1346,6 +1349,9 @@
       ],
       "@activepieces/piece-formspark": [
         "packages/pieces/community/formspark/src/index.ts"
+      ],
+      "@activepieces/piece-webex": [
+        "packages/pieces/community/webex/src/index.ts"
       ],
       "@activepieces/piece-tableau": [
         "packages/pieces/community/tableau/src/index.ts"
@@ -1681,6 +1687,9 @@
       "@activepieces/piece-barcode-lookup": [
         "packages/pieces/community/barcode-lookup/src/index.ts"
       ],
+      "@activepieces/piece-intruder": [
+        "packages/pieces/community/intruder/src/index.ts"
+      ],
       "@activepieces/piece-tidely": [
         "packages/pieces/community/tidely/src/index.ts"
       ],
@@ -1800,6 +1809,9 @@
       ],
       "@activepieces/piece-google-search": [
         "packages/pieces/community/google-search/src/index.ts"
+      ],
+      "@activepieces/piece-microsoft-copilot": [
+        "packages/pieces/community/microsoft-copilot/src/index.ts"
       ],
       "@activepieces/piece-asknews": [
         "packages/pieces/community/asknews/src/index.ts"

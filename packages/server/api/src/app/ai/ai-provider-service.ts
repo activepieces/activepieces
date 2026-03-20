@@ -18,6 +18,7 @@ import { openRouterApi } from '../ee/platform/platform-plan/openrouter/openroute
 import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
 import { flagService } from '../flags/flag.service'
 import { encryptUtils } from '../helper/encryption'
+import { rejectedPromiseHandler } from '../helper/promise-handler'
 import { SystemJobName } from '../helper/system-jobs/common'
 import { systemJobsSchedule } from '../helper/system-jobs/system-job'
 import { AIProviderEntity, AIProviderSchema } from './ai-provider-entity'
@@ -174,7 +175,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
                 auth = activePiecesAuth
             }
 
-            await systemJobsSchedule(log).upsertJob({
+            rejectedPromiseHandler(systemJobsSchedule(log).upsertJob({
                 job: {
                     name: SystemJobName.AI_CREDIT_UPDATE_CHECK,
                     data: { apiKeyHash: (auth as ActivePiecesProviderAuthConfig).apiKeyHash, platformId },
@@ -183,7 +184,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
                     type: 'one-time',
                     date: dayjs(),
                 },
-            })
+            }), log)
         }
         
         
