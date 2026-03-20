@@ -253,14 +253,15 @@ function handleProcessExit(log: SandboxLogger, params: ProcessExitParams): void 
         }))
     }
     else {
+        const reason = 'Worker exited with code ' + code + ' and signal ' + signal
         reject(new ActivepiecesError({
             code: ErrorCode.SANDBOX_INTERNAL_ERROR,
             params: {
-                reason: 'Worker exited with code ' + code + ' and signal ' + signal,
+                reason,
                 standardOutput: stdOut,
                 standardError: stdError,
             },
-        }))
+        }, `${reason} standardOutput=${stdOut} standardError=${stdError}`))
     }
 }
 

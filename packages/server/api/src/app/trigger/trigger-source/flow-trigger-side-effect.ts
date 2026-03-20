@@ -215,7 +215,7 @@ function assertEngineResponseIsOk(engineHelperResponse: EngineResponse<ExecuteTr
                 standardOutput: '',
                 standardError: engineHelperResponse?.error ?? 'Engine response is undefined',
             },
-        })
+        }, `flowId=${flowId} standardError=${standardError}`)
     }
 }
 
