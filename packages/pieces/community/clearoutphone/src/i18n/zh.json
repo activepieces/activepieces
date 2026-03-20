@@ -1,12 +1,12 @@
 {
-  "ClearoutPhone is a phone number validation and verification service that helps businesses ensure the accuracy and validity of their phone number data.": "ClearoutPhone是一个电话号码验证和验证服务，帮助企业确保其电话号码数据的准确性和有效性。",
+  "ClearoutPhone is a phone number validation and verification service that helps businesses ensure the accuracy and validity of their phone number data.": "ClearoutPhone is a phone number validation and verification service that helps businesses ensure the accuracy and validity of their phone number data.",
   "ClearoutPhone API Key\n\n## Generating an API Token\n\nOnce signed up and logged in, click on **Dashboard -> API** tab available on left sidebar and then click on **\"Generate API Token\"**. \n.": "ClearoutPhone API Key\n\n## Generating an API Token\n\nOnce signed up and logged in, click on **Dashboard -> API** tab available on left sidebar and then click on **\"Generate API Token\"**. \n.",
-  "Find Phone Number Carrier": "查找电话号码运营商",
-  "Find Phone Number Is Mobile": "查找手机号码为手机号码",
-  "Validate Phone Number": "验证电话号码",
-  "Find the carrier of a phone number using ClearoutPhone API": "使用 ClearoutPhone API 查找电话号码的运营商",
-  "Determine if a phone number is a mobile number using ClearoutPhone API": "确定电话号码是否是使用 ClearoutPhone API 的手机号码",
-  "Validate a phone number and retrieve comprehensive information using ClearoutPhone API": "使用 ClearoutPhone API 验证电话号码并检索全面信息",
-  "Phone Number": "电话号码",
-  "The phone number to validate (e.g., +447766733573 )": "要验证的电话号码(例如，+44776737373)"
+  "Find Phone Number Carrier": "Find Phone Number Carrier",
+  "Find Phone Number Is Mobile": "Find Phone Number Is Mobile",
+  "Validate Phone Number": "Validate Phone Number",
+  "Find the carrier of a phone number using ClearoutPhone API": "Find the carrier of a phone number using ClearoutPhone API",
+  "Determine if a phone number is a mobile number using ClearoutPhone API": "Determine if a phone number is a mobile number using ClearoutPhone API",
+  "Validate a phone number and retrieve comprehensive information using ClearoutPhone API": "Validate a phone number and retrieve comprehensive information using ClearoutPhone API",
+  "Phone Number": "Phone Number",
+  "The phone number to validate (e.g., +447766733573 )": "The phone number to validate (e.g., +447766733573 )"
 }
