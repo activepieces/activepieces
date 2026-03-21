@@ -12,11 +12,13 @@ import { rateLimiterInterceptor } from './interceptors/rate-limiter-interceptor'
 import { InterceptorVerdict, JobInterceptor } from './job-interceptor'
 
 const WAITER_TIMEOUT_MS = 50_000
+const WAITER_WAIT_MS = 5_000
 
 const interceptors: JobInterceptor[] = [rateLimiterInterceptor]
 const workerPromises = new Map<string, Promise<BullMQWorker>>()
 const waitersMap = new Map<string, Waiter[]>()
 const activeJobs = new Map<string, ActiveJob>()
+const waiterSignals = new Map<string, Array<() => void>>()
 
 function getWaiters(queueName: string): Waiter[] {
     let list = waitersMap.get(queueName)
@@ -29,6 +31,12 @@ function getWaiters(queueName: string): Waiter[] {
 
 function addWaiter(queueName: string, waiter: Waiter): void {
     getWaiters(queueName).push(waiter)
+    // Wake up any processor waiting for a waiter
+    const signals = waiterSignals.get(queueName)
+    if (signals && signals.length > 0) {
+        const signal = signals.shift()!
+        signal()
+    }
 }
 
 function removeWaiter(queueName: string, resolve: Waiter['resolve']): void {
@@ -46,6 +54,34 @@ function takeWaiter(queueName: string): Waiter | undefined {
         clearTimeout(waiter.timer)
     }
     return waiter
+}
+
+async function waitForWaiter(queueName: string): Promise<Waiter | undefined> {
+    const immediate = takeWaiter(queueName)
+    if (immediate) return immediate
+
+    return new Promise<Waiter | undefined>((resolve) => {
+        const timer = setTimeout(() => {
+            const signals = waiterSignals.get(queueName)
+            if (signals) {
+                const idx = signals.indexOf(onSignal)
+                if (idx !== -1) signals.splice(idx, 1)
+            }
+            resolve(undefined)
+        }, WAITER_WAIT_MS)
+
+        function onSignal(): void {
+            clearTimeout(timer)
+            resolve(takeWaiter(queueName))
+        }
+
+        let signals = waiterSignals.get(queueName)
+        if (!signals) {
+            signals = []
+            waiterSignals.set(queueName, signals)
+        }
+        signals.push(onSignal)
+    })
 }
 
 function ensureBullMQWorker(queueName: string, log: FastifyBaseLogger): Promise<BullMQWorker> {
@@ -75,9 +111,8 @@ async function createBullMQWorker(queueName: string, log: FastifyBaseLogger): Pr
                 throw new DelayedError()
             }
 
-            // Take a waiter — if none available, return job to queue
-            // Use 2s delay to avoid tight retry loops when no workers are polling
-            const waiter = takeWaiter(queueName)
+            // Wait up to 5s for a waiter — if none arrives, return job to queue
+            const waiter = await waitForWaiter(queueName)
             if (!waiter) {
                 await job.moveToDelayed(Date.now() + 2000, token)
                 throw new DelayedError()
