@@ -1,7 +1,8 @@
-import { InterceptorVerdict } from '../../../../../src/app/workers/job-queue/job-interceptor'
-import { Job, Worker as BullMQWorker } from 'bullmq'
+import { ConsumeJobResponseStatus, ExecutionType } from '@activepieces/shared'
+import { DelayedError, Job, Worker as BullMQWorker } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { InterceptorVerdict } from '../../../../../src/app/workers/job-queue/job-interceptor'
 
 const mockGenerateEngineToken = vi.fn().mockResolvedValue('engine-token')
 
@@ -27,7 +28,44 @@ vi.mock('../../../../../src/app/workers/job-queue/interceptors/rate-limiter-inte
     },
 }))
 
-import { tryDequeue } from '../../../../../src/app/workers/job-queue/job-broker'
+vi.mock('../../../../../src/app/database/redis-connections', () => ({
+    redisConnections: {
+        create: vi.fn().mockResolvedValue({}),
+    },
+}))
+
+vi.mock('../../../../../src/app/helper/system/system', () => ({
+    system: {
+        getBoolean: vi.fn().mockReturnValue(false),
+    },
+}))
+
+// Capture the processor callback passed to BullMQ Worker constructor
+let capturedProcessor: ((job: Job, token?: string) => Promise<unknown>) | undefined
+let capturedOptions: Record<string, unknown> | undefined
+const mockWorkerInstance = {
+    waitUntilReady: vi.fn().mockResolvedValue(undefined),
+    startStalledCheckTimer: vi.fn().mockResolvedValue(undefined),
+    close: vi.fn().mockResolvedValue(undefined),
+}
+
+vi.mock('bullmq', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('bullmq')>()
+    return {
+        ...actual,
+        Worker: vi.fn().mockImplementation((_name: string, processor: unknown, opts: unknown) => {
+            capturedProcessor = processor as typeof capturedProcessor
+            capturedOptions = opts as typeof capturedOptions
+            return mockWorkerInstance
+        }),
+    }
+})
+
+vi.mock('bullmq-otel', () => ({
+    BullMQOtel: vi.fn(),
+}))
+
+import { jobBroker } from '../../../../../src/app/workers/job-queue/job-broker'
 
 const mockLog: FastifyBaseLogger = {
     debug: vi.fn(),
@@ -49,116 +87,191 @@ function createMockJob(id: string, data?: Record<string, unknown>): Job {
         attemptsMade: 0,
         moveToDelayed: vi.fn().mockResolvedValue(undefined),
         changePriority: vi.fn().mockResolvedValue(undefined),
+        updateData: vi.fn().mockResolvedValue(undefined),
+        extendLock: vi.fn().mockResolvedValue(undefined),
     } as unknown as Job
 }
 
-describe('tryDequeue', () => {
-    let mockWorker: BullMQWorker
+describe('jobBroker', () => {
+    const broker = jobBroker(mockLog)
 
-    beforeEach(() => {
+    beforeEach(async () => {
         vi.clearAllMocks()
-        mockWorker = {
-            getNextJob: vi.fn(),
-        } as unknown as BullMQWorker
+        capturedProcessor = undefined
+        await broker.init()
     })
 
-    it('should return job when interceptor allows', async () => {
-        const job = createMockJob('job-1')
-        vi.mocked(mockWorker.getNextJob).mockResolvedValueOnce(job)
-        mockPreDispatch.mockResolvedValueOnce({ verdict: InterceptorVerdict.ALLOW })
-
-        const result = await tryDequeue(mockWorker, 'test-queue', mockLog)
-
-        expect(result).not.toBeNull()
-        expect(result!.jobId).toBe('job-1')
-        expect(result!.engineToken).toBe('engine-token')
-        expect(result!.timeoutInSeconds).toBe(600)
-        expect(mockWorker.getNextJob).toHaveBeenCalledTimes(1)
+    afterEach(async () => {
+        await broker.close()
     })
 
-    it('should retry when interceptor rejects then return next allowed job', async () => {
-        const jobA = createMockJob('job-a')
-        const jobB = createMockJob('job-b')
+    describe('processor — interceptor rejection', () => {
+        it('should throw DelayedError and move job to delayed when interceptor rejects', async () => {
+            const job = createMockJob('job-1')
+            mockPreDispatch.mockResolvedValueOnce({ verdict: InterceptorVerdict.REJECT, delayInMs: 5000 })
 
-        vi.mocked(mockWorker.getNextJob)
-            .mockResolvedValueOnce(jobA)
-            .mockResolvedValueOnce(jobB)
+            await expect(capturedProcessor!(job, 'token-1')).rejects.toThrow(DelayedError)
 
-        mockPreDispatch
-            .mockResolvedValueOnce({ verdict: InterceptorVerdict.REJECT, delayInMs: 5000 })
-            .mockResolvedValueOnce({ verdict: InterceptorVerdict.ALLOW })
+            expect(job.moveToDelayed).toHaveBeenCalledTimes(1)
+            expect(job.moveToDelayed).toHaveBeenCalledWith(expect.any(Number), 'token-1')
+        })
 
-        const result = await tryDequeue(mockWorker, 'test-queue', mockLog)
+        it('should set priority on delayed job when interceptor specifies it', async () => {
+            const job = createMockJob('job-1')
+            mockPreDispatch.mockResolvedValueOnce({ verdict: InterceptorVerdict.REJECT, delayInMs: 3000, priority: 10 })
 
-        expect(result).not.toBeNull()
-        expect(result!.jobId).toBe('job-b')
-        expect(mockWorker.getNextJob).toHaveBeenCalledTimes(2)
-        expect(jobA.moveToDelayed).toHaveBeenCalledTimes(1)
-        expect(jobB.moveToDelayed).not.toHaveBeenCalled()
+            await expect(capturedProcessor!(job, 'token-1')).rejects.toThrow(DelayedError)
+
+            expect(job.changePriority).toHaveBeenCalledWith({ priority: 10 })
+        })
     })
 
-    it('should return null when no jobs remain after rejection', async () => {
-        const job = createMockJob('job-1')
+    describe('processor — no waiter available', () => {
+        it('should throw DelayedError and return job to queue when no waiters', async () => {
+            const job = createMockJob('job-1')
+            mockPreDispatch.mockResolvedValueOnce({ verdict: InterceptorVerdict.ALLOW })
 
-        vi.mocked(mockWorker.getNextJob)
-            .mockResolvedValueOnce(job)
-            .mockResolvedValueOnce(undefined as unknown as Job)
+            // No poll() called, so no waiters exist
+            await expect(capturedProcessor!(job, 'token-1')).rejects.toThrow(DelayedError)
 
-        mockPreDispatch
-            .mockResolvedValueOnce({ verdict: InterceptorVerdict.REJECT, delayInMs: 5000 })
-
-        const result = await tryDequeue(mockWorker, 'test-queue', mockLog)
-
-        expect(result).toBeNull()
-        expect(mockWorker.getNextJob).toHaveBeenCalledTimes(2)
-        expect(job.moveToDelayed).toHaveBeenCalledTimes(1)
+            expect(job.moveToDelayed).toHaveBeenCalledWith(expect.any(Number), 'token-1')
+        })
     })
 
-    it('should handle multiple consecutive rejections then return null', async () => {
-        const jobs = [createMockJob('j1'), createMockJob('j2'), createMockJob('j3')]
+    describe('processor — waiter handoff', () => {
+        it('should hand off job data and engine token to waiter, then complete on completeJob', async () => {
+            mockPreDispatch.mockResolvedValueOnce({ verdict: InterceptorVerdict.ALLOW })
 
-        const getNextJobMock = vi.mocked(mockWorker.getNextJob)
-        for (const j of jobs) {
-            getNextJobMock.mockResolvedValueOnce(j)
-        }
-        getNextJobMock.mockResolvedValueOnce(undefined as unknown as Job)
+            const job = createMockJob('job-1')
+            const pollPromise = broker.poll()
 
-        mockPreDispatch
-            .mockResolvedValue({ verdict: InterceptorVerdict.REJECT, delayInMs: 5000 })
+            // Run the processor in parallel — it will hand off to the waiter then block
+            const processorPromise = capturedProcessor!(job, 'token-1')
 
-        const result = await tryDequeue(mockWorker, 'test-queue', mockLog)
+            // Wait for microtasks so the waiter gets resolved
+            await new Promise(r => setTimeout(r, 10))
 
-        expect(result).toBeNull()
-        expect(mockWorker.getNextJob).toHaveBeenCalledTimes(4)
-        for (const j of jobs) {
-            expect(j.moveToDelayed).toHaveBeenCalledTimes(1)
-        }
+            const pollResult = await pollPromise
+            expect(pollResult).not.toBeNull()
+            expect(pollResult!.jobId).toBe('job-1')
+            expect(pollResult!.engineToken).toBe('engine-token')
+            expect(pollResult!.timeoutInSeconds).toBe(600)
+
+            // Complete the job
+            await broker.completeJob({
+                jobId: 'job-1',
+                status: ConsumeJobResponseStatus.OK,
+            })
+
+            const result = await processorPromise
+            expect(result).toEqual({ response: undefined })
+        })
+
+        it('should handle delayed completion (resume)', async () => {
+            mockPreDispatch.mockResolvedValueOnce({ verdict: InterceptorVerdict.ALLOW })
+
+            const job = createMockJob('job-1')
+            const pollPromise = broker.poll()
+            const processorPromise = capturedProcessor!(job, 'token-1')
+
+            await new Promise(r => setTimeout(r, 10))
+            await pollPromise
+
+            await broker.completeJob({
+                jobId: 'job-1',
+                status: ConsumeJobResponseStatus.OK,
+                delayInSeconds: 30,
+            })
+
+            await expect(processorPromise).rejects.toThrow(DelayedError)
+            expect(job.updateData).toHaveBeenCalledWith(expect.objectContaining({
+                executionType: ExecutionType.RESUME,
+            }))
+            expect(job.moveToDelayed).toHaveBeenCalled()
+        })
+
+        it('should throw error on internal error completion', async () => {
+            mockPreDispatch.mockResolvedValueOnce({ verdict: InterceptorVerdict.ALLOW })
+
+            const job = createMockJob('job-1')
+            const pollPromise = broker.poll()
+            const processorPromise = capturedProcessor!(job, 'token-1')
+
+            await new Promise(r => setTimeout(r, 10))
+            await pollPromise
+
+            await broker.completeJob({
+                jobId: 'job-1',
+                status: ConsumeJobResponseStatus.INTERNAL_ERROR,
+                errorMessage: 'Something went wrong',
+            })
+
+            await expect(processorPromise).rejects.toThrow('Something went wrong')
+        })
     })
 
-    it('should set priority on delayed job when interceptor specifies it', async () => {
-        const jobA = createMockJob('job-a')
-        const jobB = createMockJob('job-b')
+    describe('completeJob — unknown job', () => {
+        it('should warn and return when completing an unknown job', async () => {
+            await broker.completeJob({
+                jobId: 'unknown-job',
+                status: ConsumeJobResponseStatus.OK,
+            })
 
-        vi.mocked(mockWorker.getNextJob)
-            .mockResolvedValueOnce(jobA)
-            .mockResolvedValueOnce(jobB)
-
-        mockPreDispatch
-            .mockResolvedValueOnce({ verdict: InterceptorVerdict.REJECT, delayInMs: 3000, priority: 10 })
-            .mockResolvedValueOnce({ verdict: InterceptorVerdict.ALLOW })
-
-        const result = await tryDequeue(mockWorker, 'test-queue', mockLog)
-
-        expect(result!.jobId).toBe('job-b')
-        expect(jobA.changePriority).toHaveBeenCalledWith({ priority: 10 })
+            expect(mockLog.warn).toHaveBeenCalledWith(
+                { jobId: 'unknown-job' },
+                '[jobBroker] completeJob called for unknown job',
+            )
+        })
     })
 
-    it('should return null when queue is empty (no jobs at all)', async () => {
-        vi.mocked(mockWorker.getNextJob).mockResolvedValueOnce(undefined as unknown as Job)
+    describe('extendLock', () => {
+        it('should extend lock on active job', async () => {
+            mockPreDispatch.mockResolvedValueOnce({ verdict: InterceptorVerdict.ALLOW })
 
-        const result = await tryDequeue(mockWorker, 'test-queue', mockLog)
+            const job = createMockJob('job-1')
+            const pollPromise = broker.poll()
+            capturedProcessor!(job, 'token-1')
 
-        expect(result).toBeNull()
-        expect(mockWorker.getNextJob).toHaveBeenCalledTimes(1)
+            await new Promise(r => setTimeout(r, 10))
+            await pollPromise
+
+            await broker.extendLock({ jobId: 'job-1' })
+
+            expect(job.extendLock).toHaveBeenCalledWith('token-1', 120_000)
+        })
+
+        it('should warn when extending lock on unknown job', async () => {
+            await broker.extendLock({ jobId: 'unknown-job' })
+
+            expect(mockLog.warn).toHaveBeenCalledWith(
+                { jobId: 'unknown-job' },
+                '[jobBroker] extendLock called for unknown job',
+            )
+        })
+    })
+
+    describe('close', () => {
+        it('should resolve pending waiters with null on close', async () => {
+            const pollPromise = broker.poll()
+
+            await broker.close()
+
+            const result = await pollPromise
+            expect(result).toBeNull()
+        })
+    })
+
+    describe('worker config', () => {
+        it('should use concurrency 10', () => {
+            expect(capturedOptions?.concurrency).toBe(10)
+        })
+
+        it('should use drainDelay 15', () => {
+            expect(capturedOptions?.drainDelay).toBe(15)
+        })
+
+        it('should use autorun true', () => {
+            expect(capturedOptions?.autorun).toBe(true)
+        })
     })
 })
