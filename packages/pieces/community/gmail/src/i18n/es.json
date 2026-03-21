@@ -12,7 +12,7 @@
   "Reply to an existing email.": "Responder a un correo electrónico existente.",
   "Creates a draft reply to an existing email.": "Crea un borrador de respuesta a un correo electrónico existente.",
   "Get an email via Id.": "Obtener un correo electrónico a través de Id.",
-  "Find emails using advanced search criteria.": "Encuentre correos electrónicos con criterios de búsqueda avanzados.",
+  "Find emails using advanced search criteria. At least one search filter (from, to, subject, label, category, date, content, or attachment) is required.": "Encontrar correos electrónicos usando criterios de búsqueda avanzados. Se requiere al menos un filtro de búsqueda (de, a, tema, etiqueta, categoría, fecha, contenido o adjunto).",
   "Make a custom API call to a specific endpoint": "Hacer una llamada API personalizada a un extremo específico",
   "Receiver Email (To)": "Email del receptor (Para)",
   "CC Email": "Email CC",
