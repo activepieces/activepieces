@@ -6,10 +6,12 @@ import { accessTokenManager } from '../../authentication/lib/access-token-manage
 import { redisConnections } from '../../database/redis-connections'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
+import { engineResponseWatcher } from '../engine-response-watcher'
 import { getPlatformQueueName, QueueName } from '../job'
 import { jobMigrations } from '../migrations/job-data-migrations'
 import { rateLimiterInterceptor } from './interceptors/rate-limiter-interceptor'
 import { InterceptorVerdict, JobInterceptor } from './job-interceptor'
+import { isUserInteractionJobData } from './job-queue'
 import { createQueueDispatcher, QueueDispatcher } from './queue-dispatcher'
 
 const DRAIN_DELAY_SECONDS = 15
@@ -36,7 +38,7 @@ async function createBullMQWorker(queueName: string, log: FastifyBaseLogger): Pr
         {
             connection: await redisConnections.create(),
             telemetry: isOtelEnabled ? new BullMQOtel(queueName) : undefined,
-            concurrency: 10000,
+            concurrency: 500,
             autorun: false,
             lockDuration: 120_000,
             stalledInterval: 30_000,
@@ -70,7 +72,7 @@ async function tryDequeue(worker: BullMQWorker, queueName: string, log: FastifyB
     const token = `token-${Date.now()}-${Math.random().toString(36).slice(2)}`
     const job = await worker.getNextJob(token)
     if (isNil(job)) {
-        return null
+        return null  // waiting list empty — drainDelay provided backpressure
     }
     log.info({ queueName, jobId: job.id, jobName: job.name }, '[jobBroker#tryDequeue] Dequeued job')
 
@@ -86,7 +88,7 @@ async function tryDequeue(worker: BullMQWorker, queueName: string, log: FastifyB
             await job.changePriority({ priority: interceptorResult.priority })
         }
         activeJobs.delete(jobId)
-        return null
+        return tryDequeue(worker, queueName, log)  // retry getNextJob instead of returning null
     }
 
     const engineToken = await accessTokenManager(log).generateEngineToken({
@@ -140,6 +142,8 @@ async function runInterceptors({ jobId, jobData, job, log }: { jobId: string, jo
     return null
 }
 
+export { tryDequeue }
+
 export const jobBroker = (log: FastifyBaseLogger) => ({
     async init(): Promise<void> {
         await ensureBullMQWorker(QueueName.WORKER_JOBS, log)
@@ -162,6 +166,8 @@ export const jobBroker = (log: FastifyBaseLogger) => ({
 
         const { job, token, jobData } = entry
 
+        const userJobData = isUserInteractionJobData(jobData) ? jobData : null
+
         const { error } = await tryCatch(async () => {
             if (input.delayInSeconds && input.delayInSeconds > 0) {
                 await job.updateData({ ...job.data, executionType: ExecutionType.RESUME })
@@ -171,13 +177,22 @@ export const jobBroker = (log: FastifyBaseLogger) => ({
 
             if (input.status === ConsumeJobResponseStatus.INTERNAL_ERROR) {
                 await job.moveToFailed(new Error(input.errorMessage ?? 'Internal error'), token)
+                if (userJobData) {
+                    await engineResponseWatcher(log).publish(userJobData.webserverId, userJobData.requestId, undefined)
+                }
                 return
             }
 
             await job.moveToCompleted({ response: input.response ?? undefined }, token, false)
+            if (userJobData) {
+                await engineResponseWatcher(log).publish(userJobData.webserverId, userJobData.requestId, input.response ?? undefined)
+            }
         })
         if (error) {
             log.error({ jobId: input.jobId, error: String(error) }, '[jobBroker] Failed to move job to final state')
+            if (userJobData) {
+                await engineResponseWatcher(log).publish(userJobData.webserverId, userJobData.requestId, undefined)
+            }
         }
 
         activeJobs.delete(input.jobId)
