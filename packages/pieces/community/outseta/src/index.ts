@@ -46,25 +46,7 @@ import { addCaseAction } from './action/add-case';
 import { addReplyAction } from './action/add-reply';
 
 // Triggers
-import { accountAddedTrigger } from './triggers/account-added';
-import { accountUpdatedTrigger } from './triggers/account-updated';
-import { accountDeletedTrigger } from './triggers/account-deleted';
-import { accountStageUpdatedTrigger } from './triggers/account-stage-updated';
-import { accountBillingInvoiceCreatedTrigger } from './triggers/account-billing-invoice-created';
-import { accountBillingInvoiceDeletedTrigger } from './triggers/account-billing-invoice-deleted';
-import { accountPaidSubscriptionCreatedTrigger } from './triggers/account-paid-subscription-created';
-import { accountSubscriptionStartedTrigger } from './triggers/account-subscription-started';
-import { accountSubscriptionAddOnsChangedTrigger } from './triggers/account-subscription-addons-changed';
-import { accountSubscriptionCancellationRequestedTrigger } from './triggers/account-subscription-cancellation-requested';
-import { accountSubscriptionPlanUpdatedTrigger } from './triggers/account-subscription-plan-updated';
-import { accountSubscriptionPaymentCollectedTrigger } from './triggers/account-subscription-payment-collected';
-import { accountSubscriptionPaymentDeclinedTrigger } from './triggers/account-subscription-payment-declined';
-import { accountSubscriptionRenewalExtendedTrigger } from './triggers/account-subscription-renewal-extended';
-import { personAddedTrigger } from './triggers/person-added';
-import { personUpdatedTrigger } from './triggers/person-updated';
-import { personDeletedTrigger } from './triggers/person-deleted';
-import { dealCreatedTrigger } from './triggers/deal-created';
-import { dealUpdatedTrigger } from './triggers/deal-updated';
+import { newEventTrigger } from './triggers/new-event';
 
 export const outseta = createPiece({
   displayName: 'Outseta',
@@ -74,27 +56,7 @@ export const outseta = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/outseta.png',
   authors: ['bst1n', 'sanket-a11y'],
   categories: [PieceCategory.SALES_AND_CRM],
-  triggers: [
-    accountAddedTrigger,
-    accountUpdatedTrigger,
-    accountDeletedTrigger,
-    accountStageUpdatedTrigger,
-    accountBillingInvoiceCreatedTrigger,
-    accountBillingInvoiceDeletedTrigger,
-    accountPaidSubscriptionCreatedTrigger,
-    accountSubscriptionStartedTrigger,
-    accountSubscriptionAddOnsChangedTrigger,
-    accountSubscriptionCancellationRequestedTrigger,
-    accountSubscriptionPlanUpdatedTrigger,
-    accountSubscriptionPaymentCollectedTrigger,
-    accountSubscriptionPaymentDeclinedTrigger,
-    accountSubscriptionRenewalExtendedTrigger,
-    personAddedTrigger,
-    personUpdatedTrigger,
-    personDeletedTrigger,
-    dealCreatedTrigger,
-    dealUpdatedTrigger,
-  ],
+  triggers: [newEventTrigger],
   actions: [
     // Retrieve
     getAccountAction,
