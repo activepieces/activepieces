@@ -39,6 +39,7 @@
   "For complex schema, you can use advanced mode.": "Para esquemas complexos, você pode usar o modo avançado.",
   "Describe what you want the assistant to do.": "Descreva o que você quer que o assistente faça.",
   "The numbder of interations the agent can do": "O número de interações que o agente pode fazer",
+  "Whether to use web search to find information for the AI to use.": "Se você usa pesquisa na web para encontrar informações para a IA de usar.",
   "Simple": "Simples",
   "Advanced": "Avançado"
 }
