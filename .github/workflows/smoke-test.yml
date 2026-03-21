@@ -7,16 +7,9 @@ on:
 jobs:
   smoke-test:
     concurrency:
-      group: smoke-test-${{ matrix.arch }}
+      group: smoke-test
       cancel-in-progress: true
-    strategy:
-      matrix:
-        include:
-          - runner: depot-ubuntu-24.04
-            arch: amd64
-          - runner: depot-ubuntu-24.04-arm
-            arch: arm64
-    runs-on: ${{ matrix.runner }}
+    runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
       AP_EXECUTION_MODE: SANDBOX_CODE_ONLY
