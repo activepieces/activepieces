@@ -6,12 +6,12 @@ import { accessTokenManager } from '../../authentication/lib/access-token-manage
 import { redisConnections } from '../../database/redis-connections'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
+import { engineResponseWatcher } from '../engine-response-watcher'
 import { getPlatformQueueName, QueueName } from '../job'
 import { jobMigrations } from '../migrations/job-data-migrations'
-import { engineResponseWatcher } from '../engine-response-watcher'
 import { rateLimiterInterceptor } from './interceptors/rate-limiter-interceptor'
 import { InterceptorVerdict, JobInterceptor } from './job-interceptor'
-import { isUserInteractionJob, isUserInteractionJobData } from './job-queue'
+import { isUserInteractionJobData } from './job-queue'
 import { createQueueDispatcher, QueueDispatcher } from './queue-dispatcher'
 
 const DRAIN_DELAY_SECONDS = 15
