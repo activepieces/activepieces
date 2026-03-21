@@ -1,4 +1,4 @@
-import { ConsumeJobRequest, ConsumeJobResponse, ConsumeJobResponseStatus, ExecutionType, isNil, JobData, tryCatch } from '@activepieces/shared'
+import { ConsumeJobRequest, ConsumeJobResponse, ConsumeJobResponseStatus, EngineResponseStatus, ExecutionType, isNil, JobData, tryCatch } from '@activepieces/shared'
 import { Worker as BullMQWorker, Job } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
 import { FastifyBaseLogger } from 'fastify'
@@ -178,7 +178,11 @@ export const jobBroker = (log: FastifyBaseLogger) => ({
             if (input.status === ConsumeJobResponseStatus.INTERNAL_ERROR) {
                 await job.moveToFailed(new Error(input.errorMessage ?? 'Internal error'), token)
                 if (userJobData) {
-                    await engineResponseWatcher(log).publish(userJobData.webserverId, userJobData.requestId, undefined)
+                    await engineResponseWatcher(log).publish(userJobData.webserverId, userJobData.requestId, {
+                        status: EngineResponseStatus.INTERNAL_ERROR,
+                        response: undefined,
+                        error: input.errorMessage ?? 'Internal error',
+                    })
                 }
                 return
             }
@@ -191,7 +195,11 @@ export const jobBroker = (log: FastifyBaseLogger) => ({
         if (error) {
             log.error({ jobId: input.jobId, error: String(error) }, '[jobBroker] Failed to move job to final state')
             if (userJobData) {
-                await engineResponseWatcher(log).publish(userJobData.webserverId, userJobData.requestId, undefined)
+                await engineResponseWatcher(log).publish(userJobData.webserverId, userJobData.requestId, {
+                    status: EngineResponseStatus.INTERNAL_ERROR,
+                    response: undefined,
+                    error: String(error),
+                })
             }
         }
 
