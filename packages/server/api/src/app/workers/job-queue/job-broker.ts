@@ -36,7 +36,7 @@ async function createBullMQWorker(queueName: string, log: FastifyBaseLogger): Pr
         {
             connection: await redisConnections.create(),
             telemetry: isOtelEnabled ? new BullMQOtel(queueName) : undefined,
-            concurrency: 10000,
+            concurrency: 500,
             autorun: false,
             lockDuration: 120_000,
             stalledInterval: 30_000,
@@ -70,7 +70,7 @@ async function tryDequeue(worker: BullMQWorker, queueName: string, log: FastifyB
     const token = `token-${Date.now()}-${Math.random().toString(36).slice(2)}`
     const job = await worker.getNextJob(token)
     if (isNil(job)) {
-        return null
+        return null  // waiting list empty — drainDelay provided backpressure
     }
     log.info({ queueName, jobId: job.id, jobName: job.name }, '[jobBroker#tryDequeue] Dequeued job')
 
@@ -86,7 +86,7 @@ async function tryDequeue(worker: BullMQWorker, queueName: string, log: FastifyB
             await job.changePriority({ priority: interceptorResult.priority })
         }
         activeJobs.delete(jobId)
-        return null
+        return tryDequeue(worker, queueName, log)  // retry getNextJob instead of returning null
     }
 
     const engineToken = await accessTokenManager(log).generateEngineToken({
@@ -139,6 +139,8 @@ async function runInterceptors({ jobId, jobData, job, log }: { jobId: string, jo
     }
     return null
 }
+
+export { tryDequeue }
 
 export const jobBroker = (log: FastifyBaseLogger) => ({
     async init(): Promise<void> {

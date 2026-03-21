@@ -147,12 +147,12 @@ describe('QueueDispatcher', () => {
         expect(result).toEqual(job)
     })
 
-    it('should loop back and retry when dequeue returns null (interceptor rejection)', async () => {
+    it('should loop back and retry when dequeue returns null (empty queue after drainDelay)', async () => {
         const pollPromise = dispatcher.poll()
 
         await vi.advanceTimersByTimeAsync(0)
 
-        // First dequeue returns null (e.g., interceptor rejected)
+        // First dequeue returns null (queue empty, drainDelay expired)
         pendingDequeues[0].resolve(null)
         await vi.advanceTimersByTimeAsync(0)
 
