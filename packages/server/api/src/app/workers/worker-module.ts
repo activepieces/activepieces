@@ -8,8 +8,6 @@ import { jobBroker } from './job-queue/job-broker'
 import { jobQueue } from './job-queue/job-queue'
 import { workerMachineController } from './machine/machine-controller'
 import { queueMigration } from './migrations/queue-migration-runner'
-import { userInteractionWatcher } from './user-interaction-watcher'
-
 export const workerModule: FastifyPluginAsyncZod = async (app) => {
     await app.register(flowEngineWorker, {
         prefix: '/v1/engine',
@@ -22,7 +20,6 @@ export const workerModule: FastifyPluginAsyncZod = async (app) => {
     await setupBullMQBoard(app)
 
     app.addHook('onClose', async () => {
-        userInteractionWatcher.shutdown()
         await jobBroker(app.log).close()
         await runsMetadataQueue(app.log).close()
         await jobQueue(app.log).close()

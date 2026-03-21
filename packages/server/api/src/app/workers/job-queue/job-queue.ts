@@ -15,21 +15,10 @@ const REDIS_FAILED_JOB_RETRY_COUNT = system.getNumberOrThrow(AppSystemProp.REDIS
 const CHILD_RUNS_KEY = (parentRunId: ApId) => `child_runs:${parentRunId}`
 
 const dedicatedWorkersQueues = new Map<string, Queue>()
-let queueCreatedCallback: ((queueName: string) => Promise<void>) | null = null
 
 export const jobQueue = (log: FastifyBaseLogger) => ({
     async init(): Promise<void> {
-        const platformIdsWithDedicatedWorkers = await dedicatedWorkers(log).getPlatformIds()
-
-        await Promise.all([
-            ...platformIdsWithDedicatedWorkers.map(async (platformId) => {
-                const queueName = await getQueueName(platformId, log)
-                const queue = await ensureQueueExists({ log, queueName })
-                dedicatedWorkersQueues.set(queueName, queue)
-            }),
-            ensureQueueExists({ log, queueName: QueueName.WORKER_JOBS }),
-        ])
-
+        await ensureQueueExists({ log, queueName: QueueName.WORKER_JOBS })
         log.info('[jobQueue#init] Dynamic queue system initialized')
     },
     async promoteChildRuns(jobId: string): Promise<void> {
@@ -136,10 +125,6 @@ export const jobQueue = (log: FastifyBaseLogger) => ({
         }
         return queue
     },
-    onQueueCreated(callback: (queueName: string) => Promise<void>): void {
-        queueCreatedCallback = callback
-    },
-
     async close(): Promise<void> {
         log.info('[jobQueue#close] Closing job queue')
         const allQueues = [...dedicatedWorkersQueues.values()].filter(queue => !isNil(queue))
@@ -188,11 +173,6 @@ async function ensureQueueExists({ log, queueName }: { log: FastifyBaseLogger, q
             log.info({
                 queueName,
             }, '[jobQueue#ensureQueueExists] Queue created')
-
-            if (queueCreatedCallback) {
-                await queueCreatedCallback(queueName)
-            }
-
             return queue
         },
     })
@@ -207,6 +187,10 @@ const USER_INTERACTION_JOB_TYPES = new Set([
 
 export function isUserInteractionJob(jobType: WorkerJobType): boolean {
     return USER_INTERACTION_JOB_TYPES.has(jobType)
+}
+
+export function isUserInteractionJobData(jobData: JobData): jobData is UserInteractionJobData {
+    return USER_INTERACTION_JOB_TYPES.has(jobData.jobType)
 }
 
 async function getQueueName(platformId: string | null, log: FastifyBaseLogger): Promise<string> {
