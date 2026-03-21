@@ -76,9 +76,10 @@ async function createBullMQWorker(queueName: string, log: FastifyBaseLogger): Pr
             }
 
             // Take a waiter — if none available, return job to queue
+            // Use 2s delay to avoid tight retry loops when no workers are polling
             const waiter = takeWaiter(queueName)
             if (!waiter) {
-                await job.moveToDelayed(Date.now() + 100, token)
+                await job.moveToDelayed(Date.now() + 2000, token)
                 throw new DelayedError()
             }
 
