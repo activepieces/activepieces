@@ -6,10 +6,12 @@ import { accessTokenManager } from '../../authentication/lib/access-token-manage
 import { redisConnections } from '../../database/redis-connections'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
+import { engineResponseWatcher } from '../engine-response-watcher'
 import { getPlatformQueueName, QueueName } from '../job'
 import { jobMigrations } from '../migrations/job-data-migrations'
 import { rateLimiterInterceptor } from './interceptors/rate-limiter-interceptor'
 import { InterceptorVerdict, JobInterceptor } from './job-interceptor'
+import { isUserInteractionJobData } from './job-queue'
 import { createQueueDispatcher, QueueDispatcher } from './queue-dispatcher'
 
 const DRAIN_DELAY_SECONDS = 15
@@ -164,6 +166,8 @@ export const jobBroker = (log: FastifyBaseLogger) => ({
 
         const { job, token, jobData } = entry
 
+        const userJobData = isUserInteractionJobData(jobData) ? jobData : null
+
         const { error } = await tryCatch(async () => {
             if (input.delayInSeconds && input.delayInSeconds > 0) {
                 await job.updateData({ ...job.data, executionType: ExecutionType.RESUME })
@@ -173,13 +177,22 @@ export const jobBroker = (log: FastifyBaseLogger) => ({
 
             if (input.status === ConsumeJobResponseStatus.INTERNAL_ERROR) {
                 await job.moveToFailed(new Error(input.errorMessage ?? 'Internal error'), token)
+                if (userJobData) {
+                    await engineResponseWatcher(log).publish(userJobData.webserverId, userJobData.requestId, undefined)
+                }
                 return
             }
 
             await job.moveToCompleted({ response: input.response ?? undefined }, token, false)
+            if (userJobData) {
+                await engineResponseWatcher(log).publish(userJobData.webserverId, userJobData.requestId, input.response ?? undefined)
+            }
         })
         if (error) {
             log.error({ jobId: input.jobId, error: String(error) }, '[jobBroker] Failed to move job to final state')
+            if (userJobData) {
+                await engineResponseWatcher(log).publish(userJobData.webserverId, userJobData.requestId, undefined)
+            }
         }
 
         activeJobs.delete(input.jobId)

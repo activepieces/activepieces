@@ -41,7 +41,7 @@ export const flowTriggerSideEffect = (log: FastifyBaseLogger) => {
             const { flowId, flowVersionId, projectId, simulate, pieceTrigger } = params
 
             const platformId = await projectService(log).getPlatformId(projectId)
-            const engineHelperResponse = await userInteractionWatcher(log).submitAndWaitForResponse<EngineResponse<ExecuteTriggerResponse<TriggerHookType.ON_ENABLE>>>({
+            const engineHelperResponse = await userInteractionWatcher.submitAndWaitForResponse<EngineResponse<ExecuteTriggerResponse<TriggerHookType.ON_ENABLE>>>({
                 jobType: WorkerJobType.EXECUTE_TRIGGER_HOOK,
                 hookType: TriggerHookType.ON_ENABLE,
                 flowId,
@@ -49,7 +49,7 @@ export const flowTriggerSideEffect = (log: FastifyBaseLogger) => {
                 platformId,
                 projectId,
                 test: simulate,
-            })
+            }, log)
 
             assertEngineResponseIsOk(engineHelperResponse, flowId, flowVersionId)
 
@@ -88,7 +88,7 @@ export const flowTriggerSideEffect = (log: FastifyBaseLogger) => {
             }
             const { flowId, flowVersionId, projectId, simulate, pieceTrigger } = params
             const platformId = await projectService(log).getPlatformId(projectId)
-            const engineHelperResponse = await userInteractionWatcher(log).submitAndWaitForResponse<EngineResponse<ExecuteTriggerResponse<TriggerHookType.ON_DISABLE>>>({
+            const engineHelperResponse = await userInteractionWatcher.submitAndWaitForResponse<EngineResponse<ExecuteTriggerResponse<TriggerHookType.ON_DISABLE>>>({
                 jobType: WorkerJobType.EXECUTE_TRIGGER_HOOK,
                 hookType: TriggerHookType.ON_DISABLE,
                 flowId,
@@ -96,7 +96,7 @@ export const flowTriggerSideEffect = (log: FastifyBaseLogger) => {
                 test: simulate,
                 projectId,
                 platformId,
-            })
+            }, log)
             if (!params.ignoreError) {
                 assertEngineResponseIsOk(engineHelperResponse, flowId, flowVersionId)
             }
