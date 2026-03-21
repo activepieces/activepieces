@@ -1,5 +1,5 @@
 import { ConsumeJobRequest, ConsumeJobResponse, ConsumeJobResponseStatus, ExecutionType, JobData, tryCatch } from '@activepieces/shared'
-import { DelayedError, Job, Worker as BullMQWorker } from 'bullmq'
+import { Worker as BullMQWorker, DelayedError, Job } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
 import { FastifyBaseLogger } from 'fastify'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
