@@ -8,8 +8,10 @@ import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { getPlatformQueueName, QueueName } from '../job'
 import { jobMigrations } from '../migrations/job-data-migrations'
+import { userInteractionWatcher } from '../user-interaction-watcher'
 import { rateLimiterInterceptor } from './interceptors/rate-limiter-interceptor'
 import { InterceptorVerdict, JobInterceptor } from './job-interceptor'
+import { isUserInteractionJob } from './job-queue'
 import { createQueueDispatcher, QueueDispatcher } from './queue-dispatcher'
 
 const DRAIN_DELAY_SECONDS = 15
@@ -164,6 +166,8 @@ export const jobBroker = (log: FastifyBaseLogger) => ({
 
         const { job, token, jobData } = entry
 
+        const isUserJob = isUserInteractionJob(jobData.jobType)
+
         const { error } = await tryCatch(async () => {
             if (input.delayInSeconds && input.delayInSeconds > 0) {
                 await job.updateData({ ...job.data, executionType: ExecutionType.RESUME })
@@ -173,13 +177,22 @@ export const jobBroker = (log: FastifyBaseLogger) => ({
 
             if (input.status === ConsumeJobResponseStatus.INTERNAL_ERROR) {
                 await job.moveToFailed(new Error(input.errorMessage ?? 'Internal error'), token)
+                if (isUserJob) {
+                    userInteractionWatcher.rejectJob(input.jobId, new Error(input.errorMessage ?? 'Internal error'), log)
+                }
                 return
             }
 
             await job.moveToCompleted({ response: input.response ?? undefined }, token, false)
+            if (isUserJob) {
+                userInteractionWatcher.resolveJob(input.jobId, { response: input.response ?? undefined }, log)
+            }
         })
         if (error) {
             log.error({ jobId: input.jobId, error: String(error) }, '[jobBroker] Failed to move job to final state')
+            if (isUserJob) {
+                userInteractionWatcher.rejectJob(input.jobId, error, log)
+            }
         }
 
         activeJobs.delete(input.jobId)

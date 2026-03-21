@@ -1,6 +1,6 @@
 import { apDayjsDuration, memoryLock } from '@activepieces/server-utils'
 import { ApId, EventDestinationJobData, ExecuteFlowJobData, getDefaultJobPriority, isNil, JOB_PRIORITY, JobData, PollingJobData, RenewWebhookJobData, ScheduleOptions, UserInteractionJobData, WebhookJobData, WorkerJobType } from '@activepieces/shared'
-import { Job, Queue, QueueEvents } from 'bullmq'
+import { Job, Queue } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
 import { FastifyBaseLogger } from 'fastify'
 import { redisConnections } from '../../database/redis-connections'
@@ -15,7 +15,6 @@ const REDIS_FAILED_JOB_RETRY_COUNT = system.getNumberOrThrow(AppSystemProp.REDIS
 const CHILD_RUNS_KEY = (parentRunId: ApId) => `child_runs:${parentRunId}`
 
 const dedicatedWorkersQueues = new Map<string, Queue>()
-const dedicatedWorkersQueueEvents = new Map<string, QueueEvents>()
 let queueCreatedCallback: ((queueName: string) => Promise<void>) | null = null
 
 export const jobQueue = (log: FastifyBaseLogger) => ({
@@ -137,19 +136,6 @@ export const jobQueue = (log: FastifyBaseLogger) => ({
         }
         return queue
     },
-    async getQueueEvents(platformId: string | null): Promise<QueueEvents> {
-        const queueName = await getQueueName(platformId, log)
-        const existing = dedicatedWorkersQueueEvents.get(queueName)
-        if (!isNil(existing)) {
-            return existing
-        }
-        const queueEvents = new QueueEvents(queueName, {
-            connection: await redisConnections.create(),
-        })
-        await queueEvents.waitUntilReady()
-        dedicatedWorkersQueueEvents.set(queueName, queueEvents)
-        return queueEvents
-    },
     onQueueCreated(callback: (queueName: string) => Promise<void>): void {
         queueCreatedCallback = callback
     },
@@ -157,11 +143,9 @@ export const jobQueue = (log: FastifyBaseLogger) => ({
     async close(): Promise<void> {
         log.info('[jobQueue#close] Closing job queue')
         const allQueues = [...dedicatedWorkersQueues.values()].filter(queue => !isNil(queue))
-        const allQueueEvents = [...dedicatedWorkersQueueEvents.values()].filter(qe => !isNil(qe))
-        await Promise.allSettled([
-            ...allQueues.map(queue => queue.close()),
-            ...allQueueEvents.map(qe => qe.close()),
-        ])
+        await Promise.allSettled(
+            allQueues.map(queue => queue.close()),
+        )
     },
 })
 
@@ -221,7 +205,7 @@ const USER_INTERACTION_JOB_TYPES = new Set([
     WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
 ])
 
-function isUserInteractionJob(jobType: WorkerJobType): boolean {
+export function isUserInteractionJob(jobType: WorkerJobType): boolean {
     return USER_INTERACTION_JOB_TYPES.has(jobType)
 }
 
