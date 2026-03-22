@@ -57,13 +57,13 @@ export const createCheckout = createAction({
   async run(context) {
     const { auth, propsValue } = context;
 
-    // Build checkout_data — only include fields when both are present or individually provided
     const checkoutData: Record<string, unknown> = {};
     if (propsValue.customerEmail) checkoutData['email'] = propsValue.customerEmail;
     if (propsValue.customerName) checkoutData['name'] = propsValue.customerName;
+    if (propsValue.discountCode) checkoutData['discount_code'] = propsValue.discountCode;
+    if (propsValue.customData) checkoutData['custom'] = propsValue.customData;
 
     const checkoutOptions: Record<string, unknown> = {};
-    if (propsValue.discountCode) checkoutOptions['discount'] = propsValue.discountCode;
     if (propsValue.redirectUrl) checkoutOptions['redirect_url'] = propsValue.redirectUrl;
 
     const attributes: Record<string, unknown> = {};
@@ -76,7 +76,7 @@ export const createCheckout = createAction({
       attributes['checkout_options'] = checkoutOptions;
     }
 
-    if (propsValue.customPrice) {
+    if (propsValue.customPrice != null) {
       attributes['custom_price'] = propsValue.customPrice;
     }
 
@@ -84,12 +84,6 @@ export const createCheckout = createAction({
       attributes['expires_at'] = propsValue.expiresAt;
     }
 
-    if (propsValue.customData) {
-      attributes['custom_data'] = propsValue.customData;
-    }
-
-    // NOTE: store_id and variant_id belong ONLY in relationships (not attributes)
-    // per the Lemon Squeezy JSON:API spec. Relationship IDs must be strings.
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
       url: `${LEMON_SQUEEZY_API_BASE}/checkouts`,
