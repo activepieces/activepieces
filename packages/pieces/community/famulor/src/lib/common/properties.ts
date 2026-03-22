@@ -306,7 +306,7 @@ const customerIdentifierProperty = (displayName: string, description: string, re
     displayName,
     description,
     required,
-    defaultValue: '+49155551234',
+    defaultValue: '+1234567890',
   });
 
 export const getCurrentUser = () => ({});
