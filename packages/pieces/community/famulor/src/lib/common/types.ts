@@ -577,3 +577,8 @@ export interface ListAssistantPhoneNumbersParams {
   auth: string;
   type?: 'inbound' | 'outbound';
 }
+
+export interface AssistantWebhookMutationResponse {
+  message: string;
+  data: unknown[];
+}

@@ -50,9 +50,19 @@ import {
   PurchasePhoneNumberResponse,
   AssistantAssignablePhoneNumber,
   ListAssistantPhoneNumbersParams,
+  AssistantWebhookMutationResponse,
 } from './types';
 
 export const baseApiUrl = 'https://app.famulor.de/';
+
+function firstValidationErrorMessage(errors: Record<string, unknown>): string | undefined {
+  for (const val of Object.values(errors)) {
+    if (Array.isArray(val) && val.length > 0 && typeof val[0] === 'string') {
+      return val[0];
+    }
+  }
+  return undefined;
+}
 
 function errorDetailFromBody(body: unknown): string {
   if (body === null || body === undefined) {
@@ -64,7 +74,15 @@ function errorDetailFromBody(body: unknown): string {
       return o['error'];
     }
     if (typeof o['message'] === 'string') {
-      return o['message'];
+      const msg = o['message'];
+      const errObj = o['errors'];
+      if (errObj && typeof errObj === 'object' && errObj !== null) {
+        const first = firstValidationErrorMessage(errObj as Record<string, unknown>);
+        if (first) {
+          return `${msg} ${first}`;
+        }
+      }
+      return msg;
     }
   }
   return 'Unknown error';
@@ -454,8 +472,16 @@ export const famulorCommon = {
     return response.body;
   },
 
-  enableInboundWebhook: async ({ auth, assistant_id, webhook_url }: { auth: string; assistant_id: number; webhook_url: string }) => {
-    const response = await httpClient.sendRequest({
+  enableInboundWebhook: async ({
+    auth,
+    assistant_id,
+    webhook_url,
+  }: {
+    auth: string;
+    assistant_id: number;
+    webhook_url: string;
+  }): Promise<AssistantWebhookMutationResponse> => {
+    const response = await httpClient.sendRequest<AssistantWebhookMutationResponse>({
       method: HttpMethod.POST,
       url: `${baseApiUrl}api/user/assistants/enable-inbound-webhook`,
       headers: famulorCommon.baseHeaders(auth),
@@ -465,15 +491,19 @@ export const famulorCommon = {
       },
     });
 
-    if (response.status !== 200) {
-      throw new Error(`Failed to enable inbound webhook: ${response.status}`);
-    }
+    throwIfFamulorNotOk(response, 'Failed to enable inbound webhook');
 
     return response.body;
   },
 
-  disableInboundWebhook: async ({ auth, assistant_id }: { auth: string; assistant_id: number }) => {
-    const response = await httpClient.sendRequest({
+  disableInboundWebhook: async ({
+    auth,
+    assistant_id,
+  }: {
+    auth: string;
+    assistant_id: number;
+  }): Promise<AssistantWebhookMutationResponse> => {
+    const response = await httpClient.sendRequest<AssistantWebhookMutationResponse>({
       method: HttpMethod.POST,
       url: `${baseApiUrl}api/user/assistants/disable-inbound-webhook`,
       headers: famulorCommon.baseHeaders(auth),
@@ -482,15 +512,21 @@ export const famulorCommon = {
       },
     });
 
-    if (response.status !== 200) {
-      throw new Error(`Failed to disable inbound webhook: ${response.status}`);
-    }
+    throwIfFamulorNotOk(response, 'Failed to disable inbound webhook');
 
     return response.body;
   },
 
-  enablePostCallWebhook: async ({ auth, assistant_id, webhook_url }: { auth: string; assistant_id: number; webhook_url: string }) => {
-    const response = await httpClient.sendRequest({
+  enablePostCallWebhook: async ({
+    auth,
+    assistant_id,
+    webhook_url,
+  }: {
+    auth: string;
+    assistant_id: number;
+    webhook_url: string;
+  }): Promise<AssistantWebhookMutationResponse> => {
+    const response = await httpClient.sendRequest<AssistantWebhookMutationResponse>({
       method: HttpMethod.POST,
       url: `${baseApiUrl}api/user/assistants/enable-webhook`,
       headers: famulorCommon.baseHeaders(auth),
@@ -500,15 +536,19 @@ export const famulorCommon = {
       },
     });
 
-    if (response.status !== 200) {
-      throw new Error(`Failed to enable post-call webhook: ${response.status}`);
-    }
+    throwIfFamulorNotOk(response, 'Failed to enable post-call webhook');
 
     return response.body;
   },
 
-  disablePostCallWebhook: async ({ auth, assistant_id }: { auth: string; assistant_id: number }) => {
-    const response = await httpClient.sendRequest({
+  disablePostCallWebhook: async ({
+    auth,
+    assistant_id,
+  }: {
+    auth: string;
+    assistant_id: number;
+  }): Promise<AssistantWebhookMutationResponse> => {
+    const response = await httpClient.sendRequest<AssistantWebhookMutationResponse>({
       method: HttpMethod.POST,
       url: `${baseApiUrl}api/user/assistants/disable-webhook`,
       headers: famulorCommon.baseHeaders(auth),
@@ -517,9 +557,7 @@ export const famulorCommon = {
       },
     });
 
-    if (response.status !== 200) {
-      throw new Error(`Failed to disable post-call webhook: ${response.status}`);
-    }
+    throwIfFamulorNotOk(response, 'Failed to disable post-call webhook');
 
     return response.body;
   },
@@ -532,8 +570,8 @@ export const famulorCommon = {
     auth: string;
     assistant_id: number;
     webhook_url: string;
-  }) => {
-    const response = await httpClient.sendRequest({
+  }): Promise<AssistantWebhookMutationResponse> => {
+    const response = await httpClient.sendRequest<AssistantWebhookMutationResponse>({
       method: HttpMethod.POST,
       url: `${baseApiUrl}api/user/assistants/enable-conversation-ended-webhook`,
       headers: famulorCommon.baseHeaders(auth),
@@ -543,11 +581,7 @@ export const famulorCommon = {
       },
     });
 
-    if (response.status !== 200) {
-      throw new Error(
-        `Failed to enable conversation ended webhook: ${response.status}`,
-      );
-    }
+    throwIfFamulorNotOk(response, 'Failed to enable conversation ended webhook');
 
     return response.body;
   },
@@ -558,8 +592,8 @@ export const famulorCommon = {
   }: {
     auth: string;
     assistant_id: number;
-  }) => {
-    const response = await httpClient.sendRequest({
+  }): Promise<AssistantWebhookMutationResponse> => {
+    const response = await httpClient.sendRequest<AssistantWebhookMutationResponse>({
       method: HttpMethod.POST,
       url: `${baseApiUrl}api/user/assistants/disable-conversation-ended-webhook`,
       headers: famulorCommon.baseHeaders(auth),
@@ -568,11 +602,7 @@ export const famulorCommon = {
       },
     });
 
-    if (response.status !== 200) {
-      throw new Error(
-        `Failed to disable conversation ended webhook: ${response.status}`,
-      );
-    }
+    throwIfFamulorNotOk(response, 'Failed to disable conversation ended webhook');
 
     return response.body;
   },
