@@ -48,6 +48,8 @@ import {
   SearchAvailablePhoneNumbersResponse,
   PurchasePhoneNumberParams,
   PurchasePhoneNumberResponse,
+  AssistantAssignablePhoneNumber,
+  ListAssistantPhoneNumbersParams,
 } from './types';
 
 export const baseApiUrl = 'https://app.famulor.de/';
@@ -185,18 +187,35 @@ export const famulorCommon = {
     return response.body;
   },
 
-  listPhoneNumbers: async ({ auth }: { auth: string }) => {
-    const response = await httpClient.sendRequest({
+  listPhoneNumbers: async (
+    params: ListAssistantPhoneNumbersParams,
+  ): Promise<AssistantAssignablePhoneNumber[]> => {
+    const { auth, type } = params;
+
+    const response = await httpClient.sendRequest<
+      AssistantAssignablePhoneNumber[] | { data: AssistantAssignablePhoneNumber[] }
+    >({
       method: HttpMethod.GET,
       url: `${baseApiUrl}api/user/assistants/phone-numbers`,
       headers: famulorCommon.baseHeaders(auth),
+      queryParams: type ? { type } : undefined,
     });
 
-    if (response.status !== 200) {
-      throw new Error(`Failed to fetch phone numbers: ${response.status}`);
+    throwIfFamulorNotOk(response, 'Failed to fetch assistant-assignable phone numbers');
+
+    const body = response.body;
+    if (Array.isArray(body)) {
+      return body;
+    }
+    if (
+      body &&
+      typeof body === 'object' &&
+      Array.isArray((body as { data?: unknown }).data)
+    ) {
+      return (body as { data: AssistantAssignablePhoneNumber[] }).data;
     }
 
-    return response.body || [];
+    return [];
   },
 
   listAssistants: async ({ auth }: { auth: string }) => {

@@ -137,8 +137,10 @@ const phoneNumberDropdown = () =>
       }
 
       try {
-        const phoneNumbers = await famulorCommon.listPhoneNumbers({ auth: auth.secret_text });
-        
+        const phoneNumbers = await famulorCommon.listPhoneNumbers({
+          auth: auth.secret_text,
+        });
+
         if (!phoneNumbers || phoneNumbers.length === 0) {
           return {
             disabled: true,
@@ -148,8 +150,8 @@ const phoneNumberDropdown = () =>
         }
 
         return {
-          options: phoneNumbers.map((phoneNumber: any) => ({
-            label: `${phoneNumber.phone_number} (${phoneNumber.country_code})`,
+          options: phoneNumbers.map((phoneNumber) => ({
+            label: `${phoneNumber.phone_number} (${phoneNumber.type_label})`,
             value: phoneNumber.id,
           })),
         };
@@ -236,19 +238,20 @@ const campaignPhoneNumbersMultiSelect = () =>
       try {
         const phoneNumbers = await famulorCommon.listPhoneNumbers({
           auth: auth.secret_text,
+          type: 'outbound',
         });
 
         if (!phoneNumbers || phoneNumbers.length === 0) {
           return {
             disabled: true,
-            placeholder: 'No phone numbers found.',
+            placeholder: 'No outbound-assignable phone numbers found.',
             options: [],
           };
         }
 
         return {
-          options: phoneNumbers.map((phoneNumber: any) => ({
-            label: `${phoneNumber.phone_number} (${phoneNumber.country_code})`,
+          options: phoneNumbers.map((phoneNumber) => ({
+            label: `${phoneNumber.phone_number} (${phoneNumber.type_label}, ${phoneNumber.country_code})`,
             value: phoneNumber.id,
           })),
         };

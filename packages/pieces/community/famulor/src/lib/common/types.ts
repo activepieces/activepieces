@@ -564,3 +564,16 @@ export interface ConversationEndedWebhookPayload {
   created_at: string;
   ended_at: string;
 }
+
+export interface AssistantAssignablePhoneNumber {
+  id: number;
+  phone_number: string;
+  country_code: string;
+  type_label: string;
+  is_available: boolean;
+}
+
+export interface ListAssistantPhoneNumbersParams {
+  auth: string;
+  type?: 'inbound' | 'outbound';
+}
