@@ -100,6 +100,30 @@ function throwIfFamulorNotOk<T>(
   }
 }
 
+function famulorAppErrorDetail(record: Record<string, unknown>): string {
+  if (typeof record['error'] === 'string' && record['error'].length > 0) {
+    return record['error'];
+  }
+  if (typeof record['error_code'] === 'string' && record['error_code'].length > 0) {
+    return record['error_code'];
+  }
+  return 'Unknown error';
+}
+
+function throwIfFamulorAppFlagNotTrue(
+  body: unknown,
+  actionPrefix: string,
+  flag: 'success' | 'status',
+): void {
+  if (body === null || body === undefined || typeof body !== 'object') {
+    throw new Error(`${actionPrefix}: empty or invalid response body`);
+  }
+  const record = body as Record<string, unknown>;
+  if (record[flag] !== true) {
+    throw new Error(`${actionPrefix}: ${famulorAppErrorDetail(record)}`);
+  }
+}
+
 function stripEmptyOptionalFields(
   obj: Record<string, unknown>,
 ): Record<string, unknown> {
@@ -630,6 +654,7 @@ export const famulorCommon = {
     });
 
     throwIfFamulorNotOk(response, 'Failed to generate AI reply');
+    throwIfFamulorAppFlagNotTrue(response.body, 'Failed to generate AI reply', 'success');
 
     return response.body;
   },
@@ -645,6 +670,7 @@ export const famulorCommon = {
     });
 
     throwIfFamulorNotOk(response, 'Failed to create conversation');
+    throwIfFamulorAppFlagNotTrue(response.body, 'Failed to create conversation', 'status');
 
     return response.body;
   },
@@ -659,6 +685,7 @@ export const famulorCommon = {
     });
 
     throwIfFamulorNotOk(response, 'Failed to get conversation');
+    throwIfFamulorAppFlagNotTrue(response.body, 'Failed to get conversation', 'status');
 
     return response.body;
   },
@@ -674,6 +701,7 @@ export const famulorCommon = {
     });
 
     throwIfFamulorNotOk(response, 'Failed to send message');
+    throwIfFamulorAppFlagNotTrue(response.body, 'Failed to send message', 'status');
 
     return response.body;
   },
@@ -881,6 +909,11 @@ export const famulorCommon = {
     });
 
     throwIfFamulorNotOk(response, 'Failed to send WhatsApp template message');
+    throwIfFamulorAppFlagNotTrue(
+      response.body,
+      'Failed to send WhatsApp template message',
+      'success',
+    );
 
     return response.body;
   },
@@ -902,6 +935,11 @@ export const famulorCommon = {
     });
 
     throwIfFamulorNotOk(response, 'Failed to send WhatsApp freeform message');
+    throwIfFamulorAppFlagNotTrue(
+      response.body,
+      'Failed to send WhatsApp freeform message',
+      'success',
+    );
 
     return response.body;
   },
@@ -922,6 +960,11 @@ export const famulorCommon = {
     });
 
     throwIfFamulorNotOk(response, 'Failed to get WhatsApp session status');
+    throwIfFamulorAppFlagNotTrue(
+      response.body,
+      'Failed to get WhatsApp session status',
+      'success',
+    );
 
     return response.body;
   },
