@@ -357,9 +357,9 @@ export interface GetCallResponse {
   assistant_phone_number: string;
   client_phone_number: string;
   status: string;
-  transcript: string | unknown;
+  transcript: CallTranscriptSegment[] | string;
   variables: Record<string, unknown>;
-  evaluation: Record<string, unknown>;
+  evaluation: CallEvaluationRow[] | Record<string, unknown>;
   webhook_response: Record<string, unknown> | null;
   carrier_cost: number;
   total_cost: number;

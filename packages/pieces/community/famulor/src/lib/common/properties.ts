@@ -474,28 +474,9 @@ const assistantIdDropdown = (displayName: string, description: string, required 
       }
 
       try {
-        const allAssistants: any[] = [];
-        let page = 1;
-
-        while (true) {
-          const result = await famulorCommon.listAllAssistants({
-            auth: auth.secret_text,
-            per_page: 100,
-            page,
-          });
-
-          if (!result.data || result.data.length === 0) {
-            break;
-          }
-
-          allAssistants.push(...result.data);
-
-          if (page >= result.last_page) {
-            break;
-          }
-
-          page++;
-        }
+        const allAssistants = await famulorCommon.fetchAllAssistantPages({
+          auth: auth.secret_text,
+        });
 
         if (allAssistants.length === 0) {
           return {

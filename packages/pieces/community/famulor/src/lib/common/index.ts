@@ -205,6 +205,41 @@ export const famulorCommon = {
   getWhatsAppSessionStatusSchema: schemas.getWhatsAppSessionStatus,
 
   // Methods
+
+  fetchAllAssistantPages: async ({
+    auth,
+    type,
+  }: {
+    auth: string;
+    type?: string;
+  }): Promise<any[]> => {
+    const allAssistants: any[] = [];
+    let page = 1;
+
+    while (true) {
+      const result = await famulorCommon.listAllAssistants({
+        auth,
+        per_page: 100,
+        page,
+        type,
+      });
+
+      if (!result.data || result.data.length === 0) {
+        break;
+      }
+
+      allAssistants.push(...result.data);
+
+      if (page >= result.last_page) {
+        break;
+      }
+
+      page++;
+    }
+
+    return allAssistants;
+  },
+
   listAllAssistants: async ({ auth, per_page = 10, page = 1, type }: { auth: string; per_page?: number; page?: number; type?: string }) => {
     const queryParams: Record<string, string> = {
       per_page: per_page.toString(),
