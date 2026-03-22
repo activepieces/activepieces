@@ -4,7 +4,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod, HttpRequest } from '@activepieces/pieces-common';
 import { dubAuth, DUB_API_BASE } from '../auth';
-import crypto from 'crypto';
+import { verifyDubSignature } from '../common';
 
 interface DubWebhookCreateResponse {
   id: string;
@@ -12,21 +12,6 @@ interface DubWebhookCreateResponse {
   url: string;
   secret: string;
   triggers: string[];
-}
-
-function verifyDubSignature(secret: string, rawBody: string, signatureHeader: string): boolean {
-  try {
-    const expected = crypto
-      .createHmac('sha256', secret)
-      .update(rawBody, 'utf8')
-      .digest('hex');
-    const provided = signatureHeader.startsWith('sha256=')
-      ? signatureHeader.slice(7)
-      : signatureHeader;
-    return crypto.timingSafeEqual(Buffer.from(expected, 'hex'), Buffer.from(provided, 'hex'));
-  } catch {
-    return false;
-  }
 }
 
 export const linkCreated = createTrigger({
@@ -71,7 +56,6 @@ export const linkCreated = createTrigger({
 
     const response = await httpClient.sendRequest<DubWebhookCreateResponse>(request);
 
-    // Store both the webhook ID (for deletion) and the signing secret (for verification)
     await context.store.put<{ id: string; secret: string }>('dub_webhook_link_created', {
       id: response.body.id,
       secret: response.body.secret,
@@ -95,15 +79,19 @@ export const linkCreated = createTrigger({
     const stored = await context.store.get<{ id: string; secret: string }>('dub_webhook_link_created');
     const secret = stored?.secret;
 
-    if (secret) {
-      const signatureHeader =
-        (context.payload.headers['x-dub-signature'] as string) ||
-        (context.payload.headers['dub-signature'] as string) ||
-        '';
-      const rawBody = context.payload.rawBody as string;
-      if (signatureHeader && !verifyDubSignature(secret, rawBody, signatureHeader)) {
-        return [];
-      }
+    const signatureHeader =
+      (context.payload.headers['x-dub-signature'] as string) ||
+      (context.payload.headers['dub-signature'] as string) ||
+      '';
+
+    // Reject requests missing a signature header when we have a secret
+    if (secret && !signatureHeader) {
+      return [];
+    }
+
+    // Reject requests with an invalid signature
+    if (secret && !verifyDubSignature(secret, context.payload.rawBody as string, signatureHeader)) {
+      return [];
     }
 
     return [context.payload.body];
