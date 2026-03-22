@@ -1,12 +1,40 @@
 import z from 'zod';
 
+const e164Phone = z
+  .string()
+  .regex(/^\+[1-9]\d{1,14}$/, 'Phone number must be in E.164 format (e.g. +1234567890)');
+
 export const addLead = {
   campaign: z.number().int().positive(),
-  phone_number: z.string().regex(/^\+[1-9]\d{1,14}$/, 'Phone number must be in E.164 format (e.g. +1234567890)'),
+  phone_number: e164Phone,
   variables: z.record(z.string(), z.any()).optional(),
   allow_dupplicate: z.boolean().optional(),
-  num_secondary_contacts: z.number().optional(),
-  secondary_contacts: z.record(z.string(), z.any()).optional(),
+  num_secondary_contacts: z.number().int().min(0).max(10).optional(),
+  secondary_contacts: z
+    .record(z.string(), z.any())
+    .optional()
+    .superRefine((data: Record<string, unknown> | undefined, ctx: z.RefinementCtx) => {
+      if (data === undefined) {
+        return;
+      }
+      for (const [key, value] of Object.entries(data)) {
+        if (!/^contact_\d+_phone$/.test(key)) {
+          continue;
+        }
+        if (typeof value !== 'string' || value.trim() === '') {
+          continue;
+        }
+        const trimmed = value.trim();
+        const result = e164Phone.safeParse(trimmed);
+        if (!result.success) {
+          ctx.addIssue({
+            code: 'custom',
+            message: result.error.issues[0]?.message ?? 'Invalid phone number',
+            path: [key],
+          });
+        }
+      }
+    }),
 };
 
 export const sendSms = {
@@ -219,8 +247,8 @@ export const sendWhatsAppFreeform = {
     .regex(/^\+[1-9]\d{1,14}$/, 'Phone number must be in E.164 format (e.g. +1234567890)'),
   message: z
     .string()
-    .min(1, 'Message is required')
-    .max(4096, 'Message must be 4096 characters or less'),
+    .max(4096, 'Message must be 4096 characters or less')
+    .refine((s: string) => s.trim().length > 0, 'Message is required'),
 };
 
 export const getWhatsAppSessionStatus = {

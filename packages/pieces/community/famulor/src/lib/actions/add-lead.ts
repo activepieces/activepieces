@@ -26,7 +26,7 @@ export const addLead = createAction({
         
         if (phoneNumber && phoneNumber.trim() !== '') {
           contacts.push({
-            phone_number: phoneNumber,
+            phone_number: phoneNumber.trim(),
             variables: variables || { customer_name: '' }
           });
         }

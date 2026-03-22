@@ -827,15 +827,15 @@ export const famulorCommon = {
   deleteCall: async (params: DeleteCallParams): Promise<DeleteCallResponse> => {
     const { auth, call_id } = params;
 
-    const response = await httpClient.sendRequest<DeleteCallResponse>({
+    const response = await httpClient.sendRequest<DeleteCallResponse | null | undefined>({
       method: HttpMethod.DELETE,
       url: `${baseApiUrl}api/user/calls/${call_id}`,
       headers: famulorCommon.baseHeaders(auth),
     });
 
-    throwIfFamulorNotOk(response, 'Failed to delete call');
+    throwIfFamulorNotOk(response, 'Failed to delete call', [200, 204]);
 
-    return response.body;
+    return response.body ?? { message: 'Call deleted' };
   },
 
   getWhatsAppSenders: async (
@@ -923,6 +923,8 @@ export const famulorCommon = {
   ): Promise<SendWhatsAppFreeformResponse> => {
     const { auth, sender_id, recipient_phone, message } = params;
 
+    const messageTrimmed = message.trim();
+
     const response = await httpClient.sendRequest<SendWhatsAppFreeformResponse>({
       method: HttpMethod.POST,
       url: `${baseApiUrl}api/user/whatsapp/send-freeform`,
@@ -930,7 +932,7 @@ export const famulorCommon = {
       body: {
         sender_id,
         recipient_phone: recipient_phone.trim(),
-        message: message.trim(),
+        message: messageTrimmed,
       },
     });
 

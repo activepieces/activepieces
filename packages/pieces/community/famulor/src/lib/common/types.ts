@@ -372,7 +372,7 @@ export interface GetCallResponse {
 export type DeleteCallParams = GetCallParams;
 
 export interface DeleteCallResponse {
-  message: string;
+  message?: string;
 }
 
 export interface WhatsAppSender {
