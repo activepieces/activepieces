@@ -499,3 +499,68 @@ export interface ListAccountPhoneNumbersResponse {
 export interface ListAccountPhoneNumbersParams {
   auth: string;
 }
+
+export interface AvailablePhoneNumberSearchItem {
+  phone_number: string;
+  phone_number_formatted: string;
+  country_code: string;
+  price: number;
+  stripe_price_id: string;
+  address_requirements: string;
+  sms_capable: boolean;
+}
+
+export interface SearchAvailablePhoneNumbersResponse {
+  data: AvailablePhoneNumberSearchItem[];
+}
+
+export interface SearchAvailablePhoneNumbersParams {
+  auth: string;
+  country_code: string;
+  contains?: string;
+}
+
+export interface PurchasedPhoneNumberData {
+  id: number;
+  phone_number: string;
+  country_code: string;
+  type: string;
+  sms_capable: boolean;
+}
+
+export interface PurchasePhoneNumberResponse {
+  message: string;
+  data: PurchasedPhoneNumberData;
+}
+
+export interface PurchasePhoneNumberParams {
+  auth: string;
+  phone_number: string;
+}
+
+export interface ConversationEndedTranscriptMessage {
+  role: 'assistant' | 'user';
+  content: string;
+}
+
+export interface ConversationEndedWhatsAppSender {
+  phone_number: string;
+  display_name: string;
+}
+
+export interface ConversationEndedWebhookPayload {
+  conversation_id: string;
+  assistant_id: string;
+  type: 'widget' | 'whatsapp';
+  message_count: number;
+  status: 'ended';
+  extracted_variables: Record<string, unknown>;
+  input_variables: Record<string, unknown>;
+  transcript: ConversationEndedTranscriptMessage[];
+  formatted_transcript: string;
+  customer_phone: string | null;
+  customer_name: string | null;
+  sender: ConversationEndedWhatsAppSender | null;
+  created_at: string;
+  ended_at: string;
+}

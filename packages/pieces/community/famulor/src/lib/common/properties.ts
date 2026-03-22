@@ -489,6 +489,44 @@ export const listLeads = () => ({});
 
 export const listAccountPhoneNumbers = () => ({});
 
+export const searchAvailablePhoneNumbers = () => ({
+  country_code: Property.StaticDropdown({
+    displayName: 'Country code',
+    description:
+      'ISO 3166-1 alpha-2 country code to search in (supported regions per Famulor docs).',
+    required: true,
+    defaultValue: 'DE',
+    options: {
+      options: [
+        { label: 'Germany (DE)', value: 'DE' },
+        { label: 'United States (US)', value: 'US' },
+        { label: 'Canada (CA)', value: 'CA' },
+        { label: 'United Kingdom (GB)', value: 'GB' },
+        { label: 'Australia (AU)', value: 'AU' },
+        { label: 'Israel (IL)', value: 'IL' },
+        { label: 'Poland (PL)', value: 'PL' },
+        { label: 'Finland (FI)', value: 'FI' },
+        { label: 'Netherlands (NL)', value: 'NL' },
+        { label: 'Denmark (DK)', value: 'DK' },
+        { label: 'Italy (IT)', value: 'IT' },
+      ],
+    },
+  }),
+  contains: Property.ShortText({
+    displayName: 'Contains (digits)',
+    description:
+      'Optional. Only return numbers that contain these digits (numeric only, max 10 digits).',
+    required: false,
+  }),
+});
+
+export const purchasePhoneNumber = () => ({
+  phone_number: phoneNumberProperty(
+    'Phone number',
+    'Exact E.164 value from Search Available Phone Numbers. Requires a payment method on file; creates a monthly subscription.',
+  ),
+});
+
 export const generateAiReply = () => ({
   assistant_id: assistantIdProperty(
     'Assistant ID',

@@ -89,6 +89,39 @@ export const listLeads = {};
 
 export const listAccountPhoneNumbers = {};
 
+const supportedPurchaseCountryCodes = z.enum([
+  'DE',
+  'US',
+  'CA',
+  'GB',
+  'AU',
+  'IL',
+  'PL',
+  'FI',
+  'NL',
+  'DK',
+  'IT',
+]);
+
+export const searchAvailablePhoneNumbers = {
+  country_code: supportedPurchaseCountryCodes,
+  contains: z
+    .union([
+      z.literal(''),
+      z.string().regex(/^\d{1,10}$/, 'Use at most 10 numeric digits'),
+    ])
+    .optional(),
+};
+
+export const purchasePhoneNumber = {
+  phone_number: z
+    .string()
+    .regex(
+      /^\+[1-9]\d{1,14}$/,
+      'Phone number must be in E.164 format (e.g. +1234567890)',
+    ),
+};
+
 export const generateAiReply = {
   assistant_id: z.number().int().positive('Assistant ID must be a positive integer'),
   customer_identifier: z.string().max(255, 'Customer identifier must be 255 characters or less'),

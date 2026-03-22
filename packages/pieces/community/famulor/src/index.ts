@@ -2,6 +2,7 @@ import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
 import { PieceCategory } from '@activepieces/shared';
 import { makePhoneCall } from "./lib/actions/make-phone-call";
 import { phoneCallEnded } from "./lib/triggers/phone-call-ended";
+import { conversationEnded } from "./lib/triggers/conversation-ended";
 import { addLead } from "./lib/actions/add-lead";
 import { sendSms } from "./lib/actions/send-sms";
 import { inboundCall } from "./lib/triggers/inbound-call";
@@ -15,6 +16,8 @@ import { updateLead } from "./lib/actions/update-lead";
 import { getCurrentUser } from "./lib/actions/get-current-user";
 import { listLeads } from "./lib/actions/list-leads";
 import { listPhoneNumbers } from "./lib/actions/list-phone-numbers";
+import { searchAvailablePhoneNumbers } from "./lib/actions/search-available-phone-numbers";
+import { purchasePhoneNumber } from "./lib/actions/purchase-phone-number";
 import { generateAiReply } from "./lib/actions/generate-ai-reply";
 import { createConversation } from "./lib/actions/create-conversation";
 import { getConversation } from "./lib/actions/get-conversation";
@@ -77,6 +80,8 @@ export const famulor = createPiece({
     addLead,
     listLeads,
     listPhoneNumbers,
+    searchAvailablePhoneNumbers,
+    purchasePhoneNumber,
     sendSms,
     createCampaign,
     campaignControl,
@@ -98,5 +103,5 @@ export const famulor = createPiece({
     getCall,
     deleteCall,
   ],
-  triggers: [phoneCallEnded,getAssistants,inboundCall],
+  triggers: [phoneCallEnded, conversationEnded, getAssistants, inboundCall],
 });

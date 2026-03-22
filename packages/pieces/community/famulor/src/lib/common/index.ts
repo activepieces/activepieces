@@ -44,6 +44,10 @@ import {
   GetWhatsAppSessionStatusResponse,
   ListAccountPhoneNumbersParams,
   ListAccountPhoneNumbersResponse,
+  SearchAvailablePhoneNumbersParams,
+  SearchAvailablePhoneNumbersResponse,
+  PurchasePhoneNumberParams,
+  PurchasePhoneNumberResponse,
 } from './types';
 
 export const baseApiUrl = 'https://app.famulor.de/';
@@ -113,6 +117,8 @@ export const famulorCommon = {
   getCurrentUserProperties: properties.getCurrentUser,
   listLeadsProperties: properties.listLeads,
   listAccountPhoneNumbersProperties: properties.listAccountPhoneNumbers,
+  searchAvailablePhoneNumbersProperties: properties.searchAvailablePhoneNumbers,
+  purchasePhoneNumberProperties: properties.purchasePhoneNumber,
   generateAiReplyProperties: properties.generateAiReply,
   createConversationProperties: properties.createConversation,
   getConversationProperties: properties.getConversation,
@@ -138,6 +144,8 @@ export const famulorCommon = {
   getCurrentUserSchema: schemas.getCurrentUser,
   listLeadsSchema: schemas.listLeads,
   listAccountPhoneNumbersSchema: schemas.listAccountPhoneNumbers,
+  searchAvailablePhoneNumbersSchema: schemas.searchAvailablePhoneNumbers,
+  purchasePhoneNumberSchema: schemas.purchasePhoneNumber,
   generateAiReplySchema: schemas.generateAiReply,
   createConversationSchema: schemas.createConversation,
   getConversationSchema: schemas.getConversation,
@@ -215,6 +223,51 @@ export const famulorCommon = {
     });
 
     throwIfFamulorNotOk(response, 'Failed to list phone numbers');
+
+    return response.body;
+  },
+
+  searchAvailablePhoneNumbers: async (
+    params: SearchAvailablePhoneNumbersParams,
+  ): Promise<SearchAvailablePhoneNumbersResponse> => {
+    const { auth, country_code, contains } = params;
+
+    const queryParams: Record<string, string> = {
+      country_code,
+    };
+
+    const trimmedContains = contains?.trim();
+    if (trimmedContains && /^\d{1,10}$/.test(trimmedContains)) {
+      queryParams['contains'] = trimmedContains;
+    }
+
+    const response = await httpClient.sendRequest<SearchAvailablePhoneNumbersResponse>({
+      method: HttpMethod.GET,
+      url: `${baseApiUrl}api/user/phone-numbers/search`,
+      headers: famulorCommon.baseHeaders(auth),
+      queryParams,
+    });
+
+    throwIfFamulorNotOk(response, 'Failed to search available phone numbers');
+
+    return response.body;
+  },
+
+  purchasePhoneNumber: async (
+    params: PurchasePhoneNumberParams,
+  ): Promise<PurchasePhoneNumberResponse> => {
+    const { auth, phone_number } = params;
+
+    const response = await httpClient.sendRequest<PurchasePhoneNumberResponse>({
+      method: HttpMethod.POST,
+      url: `${baseApiUrl}api/user/phone-numbers/purchase`,
+      headers: famulorCommon.baseHeaders(auth),
+      body: {
+        phone_number: phone_number.trim(),
+      },
+    });
+
+    throwIfFamulorNotOk(response, 'Failed to purchase phone number', [200, 201]);
 
     return response.body;
   },
@@ -452,6 +505,59 @@ export const famulorCommon = {
     return response.body;
   },
 
+  enableConversationEndedWebhook: async ({
+    auth,
+    assistant_id,
+    webhook_url,
+  }: {
+    auth: string;
+    assistant_id: number;
+    webhook_url: string;
+  }) => {
+    const response = await httpClient.sendRequest({
+      method: HttpMethod.POST,
+      url: `${baseApiUrl}api/user/assistants/enable-conversation-ended-webhook`,
+      headers: famulorCommon.baseHeaders(auth),
+      body: {
+        assistant_id,
+        webhook_url,
+      },
+    });
+
+    if (response.status !== 200) {
+      throw new Error(
+        `Failed to enable conversation ended webhook: ${response.status}`,
+      );
+    }
+
+    return response.body;
+  },
+
+  disableConversationEndedWebhook: async ({
+    auth,
+    assistant_id,
+  }: {
+    auth: string;
+    assistant_id: number;
+  }) => {
+    const response = await httpClient.sendRequest({
+      method: HttpMethod.POST,
+      url: `${baseApiUrl}api/user/assistants/disable-conversation-ended-webhook`,
+      headers: famulorCommon.baseHeaders(auth),
+      body: {
+        assistant_id,
+      },
+    });
+
+    if (response.status !== 200) {
+      throw new Error(
+        `Failed to disable conversation ended webhook: ${response.status}`,
+      );
+    }
+
+    return response.body;
+  },
+
   getCurrentUser: async ({ auth }: { auth: string }): Promise<GetCurrentUserResponse> => {
     const response = await httpClient.sendRequest<GetCurrentUserResponse>({
       method: HttpMethod.GET,
@@ -459,9 +565,7 @@ export const famulorCommon = {
       headers: famulorCommon.baseHeaders(auth),
     });
 
-    if (response.status !== 200) {
-      throw new Error(`Failed to get current user: ${response.status}`);
-    }
+    throwIfFamulorNotOk(response, 'Failed to get user information');
 
     return response.body;
   },
