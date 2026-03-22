@@ -37,6 +37,12 @@ export const dubAuth = PieceAuth.SecretText({
           error: 'Invalid API key. Please check your Dub API credentials.',
         };
       }
+      if (err?.response?.status === 403) {
+        return {
+          valid: false,
+          error: 'Insufficient scopes. Ensure your API key has links.read, links.write, and webhooks.write permissions.',
+        };
+      }
       return {
         valid: false,
         error: 'Unable to validate API key. Please try again.',

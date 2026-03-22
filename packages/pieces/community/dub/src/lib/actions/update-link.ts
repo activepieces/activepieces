@@ -53,7 +53,6 @@ export const updateLink = createAction({
       displayName: 'Archived',
       description: 'Archive or unarchive the link.',
       required: false,
-      defaultValue: false,
     }),
     password: Property.ShortText({
       displayName: 'Password',
@@ -64,7 +63,6 @@ export const updateLink = createAction({
       displayName: 'Cloaked URL (URL Rewriting)',
       description: 'Toggle URL cloaking.',
       required: false,
-      defaultValue: false,
     }),
     ios: Property.ShortText({
       displayName: 'iOS Redirect URL',

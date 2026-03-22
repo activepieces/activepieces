@@ -70,7 +70,7 @@ export const listLinks = createAction({
     if (propsValue.domain) params.set('domain', propsValue.domain);
     if (propsValue.search) params.set('search', propsValue.search);
     if (propsValue.userId) params.set('userId', propsValue.userId);
-    if (propsValue.showArchived) params.set('showArchived', '1');
+    if (propsValue.showArchived) params.set('showArchived', 'true');
     if (propsValue.page) params.set('page', String(propsValue.page));
     if (propsValue.pageSize) params.set('pageSize', String(propsValue.pageSize));
     if (propsValue.sort) params.set('sort', propsValue.sort);

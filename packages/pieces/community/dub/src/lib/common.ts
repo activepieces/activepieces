@@ -13,10 +13,12 @@ export function verifyDubSignature(
     const provided = signatureHeader.startsWith('sha256=')
       ? signatureHeader.slice(7)
       : signatureHeader;
-    return crypto.timingSafeEqual(
-      Buffer.from(expected, 'hex'),
-      Buffer.from(provided, 'hex')
-    );
+    const expectedBuf = Buffer.from(expected, 'hex');
+    const providedBuf = Buffer.from(provided, 'hex');
+    if (expectedBuf.length !== providedBuf.length) {
+      return false;
+    }
+    return crypto.timingSafeEqual(expectedBuf, providedBuf);
   } catch {
     return false;
   }
