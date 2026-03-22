@@ -213,10 +213,11 @@ export const famulorCommon = {
     auth: string;
     type?: string;
   }): Promise<any[]> => {
+    const MAX_PAGES = 50;
     const allAssistants: any[] = [];
     let page = 1;
 
-    while (true) {
+    while (page <= MAX_PAGES) {
       const result = await famulorCommon.listAllAssistants({
         auth,
         per_page: 100,
@@ -230,7 +231,7 @@ export const famulorCommon = {
 
       allAssistants.push(...result.data);
 
-      if (page >= result.last_page) {
+      if (!result.last_page || page >= result.last_page) {
         break;
       }
 
