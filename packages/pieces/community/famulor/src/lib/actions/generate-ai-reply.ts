@@ -13,7 +13,7 @@ export const generateAiReply = createAction({
     await propsValidation.validateZod(propsValue, famulorCommon.generateAiReplySchema);
 
     return await famulorCommon.generateAiReply({
-      auth: auth as string,
+      auth: auth.secret_text,
       assistant_id: propsValue.assistant_id as number,
       customer_identifier: propsValue.customer_identifier as string,
       message: propsValue.message as string,
