@@ -1,8 +1,9 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { loopsAuth, LOOPS_BASE_URL, loopsAuthHeaders } from '../auth';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { loopsAuth, LOOPS_BASE_URL } from '../auth';
 
-export const listContacts = createAction({
-  name: 'list_contacts',
+export const findContact = createAction({
+  name: 'find_contact',
   displayName: 'Find Contact',
   description:
     'Finds a contact in Loops by their email address or user ID.',
@@ -30,23 +31,17 @@ export const listContacts = createAction({
     if (email) params.set('email', email);
     if (userId) params.set('userId', userId);
 
-    const response = await fetch(
-      `${LOOPS_BASE_URL}/contacts/find?${params.toString()}`,
-      {
-        method: 'GET',
-        headers: loopsAuthHeaders(context.auth as string),
-      }
-    );
+    const response = await httpClient.sendRequest<unknown[]>({
+      method: HttpMethod.GET,
+      url: `${LOOPS_BASE_URL}/contacts/find?${params.toString()}`,
+      headers: {
+        Authorization: `Bearer ${context.auth as string}`,
+        Accept: 'application/json',
+      },
+    });
 
-    const data = await response.json();
+    const data = response.body;
 
-    if (!response.ok) {
-      throw new Error(
-        `Loops API error ${response.status}: ${JSON.stringify(data)}`
-      );
-    }
-
-    // The API returns an array of matching contacts
     return {
       contacts: data,
       count: Array.isArray(data) ? data.length : 0,

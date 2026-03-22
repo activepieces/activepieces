@@ -1,30 +1,4 @@
 {
   "name": "@activepieces/piece-loops",
-  "version": "0.1.0",
-  "description": "Activepieces piece for Loops — send transactional and marketing emails, manage contacts and trigger automations via events.",
-  "keywords": [
-    "activepieces",
-    "loops",
-    "email",
-    "transactional",
-    "marketing",
-    "automation"
-  ],
-  "homepage": "https://loops.so",
-  "license": "MIT",
-  "main": "src/index.ts",
-  "files": [
-    "src"
-  ],
-  "scripts": {
-    "build": "tsc"
-  },
-  "dependencies": {
-    "@activepieces/pieces-common": "workspace:*",
-    "@activepieces/pieces-framework": "workspace:*",
-    "@activepieces/shared": "workspace:*"
-  },
-  "publishConfig": {
-    "access": "public"
-  }
+  "version": "0.1.0"
 }

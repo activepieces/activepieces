@@ -1,5 +1,9 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { loopsAuth, LOOPS_BASE_URL, loopsAuthHeaders } from '../auth';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { loopsAuth, LOOPS_BASE_URL } from '../auth';
+
+// Reserved top-level fields that must not be overwritten by custom properties
+const RESERVED_FIELDS = new Set(['email', 'firstName', 'lastName', 'userId', 'subscribed', 'userGroup', 'source']);
 
 export const createContact = createAction({
   name: 'create_contact',
@@ -46,7 +50,7 @@ export const createContact = createAction({
     }),
     customProperties: Property.Object({
       displayName: 'Custom Properties',
-      description: 'Additional custom contact properties as key-value pairs.',
+      description: 'Additional custom contact properties as key-value pairs. Reserved fields (email, firstName, lastName, userId, subscribed, userGroup, source) are ignored here.',
       required: false,
     }),
   },
@@ -64,28 +68,26 @@ export const createContact = createAction({
     if (source) body['source'] = source;
 
     // Merge custom properties at the top level (Loops expects flat properties)
+    // Skip any key that is a reserved field to prevent silent overwrites
     if (customProperties && typeof customProperties === 'object') {
       for (const [key, value] of Object.entries(customProperties)) {
-        if (key !== 'email') {
+        if (!RESERVED_FIELDS.has(key)) {
           body[key] = value;
         }
       }
     }
 
-    const response = await fetch(`${LOOPS_BASE_URL}/contacts/create`, {
-      method: 'POST',
-      headers: loopsAuthHeaders(context.auth as string),
-      body: JSON.stringify(body),
+    const response = await httpClient.sendRequest<Record<string, unknown>>({
+      method: HttpMethod.POST,
+      url: `${LOOPS_BASE_URL}/contacts/create`,
+      headers: {
+        Authorization: `Bearer ${context.auth as string}`,
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+      body,
     });
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(
-        `Loops API error ${response.status}: ${JSON.stringify(data)}`
-      );
-    }
-
-    return data;
+    return response.body;
   },
 });

@@ -6,7 +6,7 @@ import { loopsAuth, LOOPS_BASE_URL } from './lib/auth';
 import { createContact } from './lib/actions/create-contact';
 import { sendEvent } from './lib/actions/send-event';
 import { sendTransactionalEmail } from './lib/actions/send-transactional-email';
-import { listContacts } from './lib/actions/list-contacts';
+import { findContact } from './lib/actions/list-contacts';
 import { deleteContact } from './lib/actions/delete-contact';
 
 export const loops = createPiece({
@@ -22,7 +22,7 @@ export const loops = createPiece({
     createContact,
     sendEvent,
     sendTransactionalEmail,
-    listContacts,
+    findContact,
     deleteContact,
     createCustomApiCallAction({
       baseUrl: () => LOOPS_BASE_URL,

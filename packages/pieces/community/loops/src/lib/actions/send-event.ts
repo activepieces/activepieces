@@ -1,5 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { loopsAuth, LOOPS_BASE_URL, loopsAuthHeaders } from '../auth';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { loopsAuth, LOOPS_BASE_URL } from '../auth';
 
 export const sendEvent = createAction({
   name: 'send_event',
@@ -56,20 +57,17 @@ export const sendEvent = createAction({
       body['contactProperties'] = contactProperties;
     }
 
-    const response = await fetch(`${LOOPS_BASE_URL}/events/send`, {
-      method: 'POST',
-      headers: loopsAuthHeaders(context.auth as string),
-      body: JSON.stringify(body),
+    const response = await httpClient.sendRequest<Record<string, unknown>>({
+      method: HttpMethod.POST,
+      url: `${LOOPS_BASE_URL}/events/send`,
+      headers: {
+        Authorization: `Bearer ${context.auth as string}`,
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+      body,
     });
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(
-        `Loops API error ${response.status}: ${JSON.stringify(data)}`
-      );
-    }
-
-    return data;
+    return response.body;
   },
 });
