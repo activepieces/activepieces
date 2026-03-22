@@ -57,27 +57,16 @@ export const createCheckout = createAction({
   async run(context) {
     const { auth, propsValue } = context;
 
-    // Build checkout data attributes
+    // Build checkout_data — only include fields when both are present or individually provided
     const checkoutData: Record<string, unknown> = {};
+    if (propsValue.customerEmail) checkoutData['email'] = propsValue.customerEmail;
+    if (propsValue.customerName) checkoutData['name'] = propsValue.customerName;
+
     const checkoutOptions: Record<string, unknown> = {};
+    if (propsValue.discountCode) checkoutOptions['discount'] = propsValue.discountCode;
+    if (propsValue.redirectUrl) checkoutOptions['redirect_url'] = propsValue.redirectUrl;
 
-    if (propsValue.customerEmail || propsValue.customerName) {
-      checkoutData['email'] = propsValue.customerEmail;
-      checkoutData['name'] = propsValue.customerName;
-    }
-
-    if (propsValue.discountCode) {
-      checkoutOptions['discount'] = propsValue.discountCode;
-    }
-
-    if (propsValue.redirectUrl) {
-      checkoutOptions['redirect_url'] = propsValue.redirectUrl;
-    }
-
-    const attributes: Record<string, unknown> = {
-      store_id: parseInt(propsValue.storeId, 10),
-      variant_id: parseInt(propsValue.variantId, 10),
-    };
+    const attributes: Record<string, unknown> = {};
 
     if (Object.keys(checkoutData).length > 0) {
       attributes['checkout_data'] = checkoutData;
@@ -99,6 +88,8 @@ export const createCheckout = createAction({
       attributes['custom_data'] = propsValue.customData;
     }
 
+    // NOTE: store_id and variant_id belong ONLY in relationships (not attributes)
+    // per the Lemon Squeezy JSON:API spec. Relationship IDs must be strings.
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
       url: `${LEMON_SQUEEZY_API_BASE}/checkouts`,
@@ -111,13 +102,13 @@ export const createCheckout = createAction({
             store: {
               data: {
                 type: 'stores',
-                id: propsValue.storeId,
+                id: String(propsValue.storeId),
               },
             },
             variant: {
               data: {
                 type: 'variants',
-                id: propsValue.variantId,
+                id: String(propsValue.variantId),
               },
             },
           },

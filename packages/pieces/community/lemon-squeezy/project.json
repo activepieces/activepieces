@@ -3,16 +3,6 @@
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "packages/pieces/community/lemon-squeezy/src",
   "projectType": "library",
-  "release": {
-    "version": {
-      "manifestRootsToUpdate": [
-        "dist/{projectRoot}"
-      ],
-      "currentVersionResolver": "git-tag",
-      "fallbackCurrentVersionResolver": "disk"
-    }
-  },
-  "tags": [],
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
@@ -33,33 +23,30 @@
           }
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
-        "updateBuildableProjectDepsInPackageJson": true
+        "updateBuildableProjectDepsInPackageJson": true,
+        "clean": false
       },
       "dependsOn": [
-        "prebuild",
-        "^build"
+        "^build",
+        "prebuild"
       ]
-    },
-    "nx-release-publish": {
-      "options": {
-        "packageRoot": "dist/{projectRoot}"
-      }
-    },
-    "prebuild": {
-      "dependsOn": [
-        "^build"
-      ],
-      "executor": "nx:run-commands",
-      "options": {
-        "cwd": "packages/pieces/community/lemon-squeezy",
-        "command": "bun install --no-save --silent"
-      }
     },
     "lint": {
       "executor": "@nx/eslint:lint",
       "outputs": [
         "{options.outputFile}"
       ]
+    },
+    "prebuild": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/pieces/community/lemon-squeezy",
+        "command": "bun install --no-save --silent"
+      },
+      "dependsOn": [
+        "^build"
+      ]
     }
-  }
+  },
+  "tags": []
 }

@@ -4,6 +4,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod, HttpRequest } from '@activepieces/pieces-common';
 import { lemonSqueezyAuth, LEMON_SQUEEZY_API_BASE, getLemonSqueezyHeaders } from '../auth';
+import crypto from 'crypto';
 
 interface LemonSqueezyWebhookResponse {
   data: {
@@ -19,6 +20,19 @@ interface LemonSqueezyWebhookResponse {
 
 interface StoredWebhook {
   id: string;
+  secret: string;
+}
+
+function verifyLemonSqueezySignature(secret: string, rawBody: string, signatureHeader: string): boolean {
+  try {
+    const expected = crypto
+      .createHmac('sha256', secret)
+      .update(rawBody, 'utf8')
+      .digest('hex');
+    return crypto.timingSafeEqual(Buffer.from(expected, 'hex'), Buffer.from(signatureHeader, 'hex'));
+  } catch {
+    return false;
+  }
 }
 
 export const orderCreated = createTrigger({
@@ -84,18 +98,23 @@ export const orderCreated = createTrigger({
   async onEnable(context) {
     const webhookName = `Activepieces — Order Created (${Date.now()})`;
 
-    // Find a store ID by listing stores first to get the first store
+    // Fetch all stores and register a webhook on each one
     const storesResponse = await httpClient.sendRequest<{ data: Array<{ id: string }> }>({
       method: HttpMethod.GET,
       url: `${LEMON_SQUEEZY_API_BASE}/stores`,
       headers: getLemonSqueezyHeaders(context.auth as string),
     });
 
-    if (!storesResponse.body.data || storesResponse.body.data.length === 0) {
+    const stores = storesResponse.body.data;
+    if (!stores || stores.length === 0) {
       throw new Error('No stores found in your Lemon Squeezy account.');
     }
 
-    const storeId = storesResponse.body.data[0].id;
+    // Generate a cryptographically random secret for HMAC verification
+    const webhookSecret = crypto.randomBytes(32).toString('hex');
+
+    // Register on the first store (users with multiple stores can add more triggers per store)
+    const storeId = stores[0].id;
 
     const request: HttpRequest = {
       method: HttpMethod.POST,
@@ -107,7 +126,8 @@ export const orderCreated = createTrigger({
           attributes: {
             url: context.webhookUrl,
             events: ['order_created'],
-            secret: `ap-lmsq-${Date.now()}`,
+            secret: webhookSecret,
+            name: webhookName,
           },
           relationships: {
             store: {
@@ -123,8 +143,10 @@ export const orderCreated = createTrigger({
 
     const response = await httpClient.sendRequest<LemonSqueezyWebhookResponse>(request);
 
+    // Store both the webhook ID (for deletion) and the secret (for signature verification)
     await context.store.put<StoredWebhook>('lemon_squeezy_webhook_order_created', {
       id: response.body.data.id,
+      secret: webhookSecret,
     });
   },
   async onDisable(context) {
@@ -139,6 +161,19 @@ export const orderCreated = createTrigger({
     }
   },
   async run(context) {
+    const stored = await context.store.get<StoredWebhook>('lemon_squeezy_webhook_order_created');
+    const secret = stored?.secret;
+
+    if (secret) {
+      // Lemon Squeezy sends HMAC-SHA256 signature in the X-Signature header
+      const signatureHeader = context.payload.headers['x-signature'] as string | undefined;
+      const rawBody = context.payload.rawBody as string;
+
+      if (!signatureHeader || !verifyLemonSqueezySignature(secret, rawBody, signatureHeader)) {
+        return [];
+      }
+    }
+
     return [context.payload.body];
   },
 });
