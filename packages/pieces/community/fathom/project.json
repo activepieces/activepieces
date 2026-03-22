@@ -3,16 +3,6 @@
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "packages/pieces/community/fathom/src",
   "projectType": "library",
-  "release": {
-    "version": {
-      "manifestRootsToUpdate": [
-        "dist/{projectRoot}"
-      ],
-      "currentVersionResolver": "git-tag",
-      "fallbackCurrentVersionResolver": "disk"
-    }
-  },
-  "tags": [],
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
@@ -25,12 +15,7 @@
         "packageJson": "packages/pieces/community/fathom/package.json",
         "main": "packages/pieces/community/fathom/src/index.ts",
         "assets": [
-          "packages/pieces/community/fathom/*.md",
-          {
-            "input": "packages/pieces/community/fathom/src/i18n",
-            "output": "./src/i18n",
-            "glob": "**/!(i18n.json)"
-          }
+          "packages/pieces/community/fathom/*.md"
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true,
@@ -40,11 +25,6 @@
         "^build",
         "prebuild"
       ]
-    },
-    "nx-release-publish": {
-      "options": {
-        "packageRoot": "dist/{projectRoot}"
-      }
     },
     "lint": {
       "executor": "@nx/eslint:lint",
@@ -62,5 +42,6 @@
         "^build"
       ]
     }
-  }
+  },
+  "tags": []
 }
