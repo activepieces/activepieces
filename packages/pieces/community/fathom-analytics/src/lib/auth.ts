@@ -1,6 +1,8 @@
 import { PieceAuth } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
+export const FATHOM_API_BASE = 'https://api.usefathom.com/v1';
+
 export const fathomAuth = PieceAuth.SecretText({
   displayName: 'API Token',
   description: `
@@ -16,7 +18,7 @@ To create an API token:
     try {
       await httpClient.sendRequest({
         method: HttpMethod.GET,
-        url: 'https://api.usefathom.com/v1/account',
+        url: `${FATHOM_API_BASE}/account`,
         headers: {
           Authorization: `Bearer ${auth}`,
         },
@@ -30,5 +32,3 @@ To create an API token:
     }
   },
 });
-
-export const FATHOM_API_BASE = 'https://api.usefathom.com/v1';

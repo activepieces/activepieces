@@ -90,20 +90,32 @@ export const getAggregation = createAction({
   async run(context) {
     const { auth, propsValue } = context;
 
-    const body: Record<string, unknown> = {
+    const queryParams: Record<string, string> = {
       entity_id: propsValue.entity_id,
       entity: propsValue.entity,
       aggregates: Array.isArray(propsValue.aggregates)
         ? propsValue.aggregates.join(',')
-        : propsValue.aggregates,
+        : String(propsValue.aggregates),
     };
 
-    if (propsValue.date_grouping) body['date_grouping'] = propsValue.date_grouping;
-    if (propsValue.date_from) body['date_from'] = propsValue.date_from;
-    if (propsValue.date_to) body['date_to'] = propsValue.date_to;
-    if (propsValue.sort_by) body['sort_by'] = propsValue.sort_by;
-    if (propsValue.limit) body['limit'] = propsValue.limit;
-    if (propsValue.filters) body['filters'] = propsValue.filters;
+    if (propsValue.date_grouping) {
+      queryParams['date_grouping'] = propsValue.date_grouping;
+    }
+    if (propsValue.date_from) {
+      queryParams['date_from'] = propsValue.date_from;
+    }
+    if (propsValue.date_to) {
+      queryParams['date_to'] = propsValue.date_to;
+    }
+    if (propsValue.sort_by) {
+      queryParams['sort_by'] = propsValue.sort_by;
+    }
+    if (propsValue.limit != null) {
+      queryParams['limit'] = String(propsValue.limit);
+    }
+    if (propsValue.filters) {
+      queryParams['filters'] = JSON.stringify(propsValue.filters);
+    }
 
     const response = await httpClient.sendRequest<{
       data: Array<Record<string, unknown>>;
@@ -112,9 +124,8 @@ export const getAggregation = createAction({
       url: `${FATHOM_API_BASE}/aggregations`,
       headers: {
         Authorization: `Bearer ${auth}`,
-        'Content-Type': 'application/json',
       },
-      queryParams: body as Record<string, string>,
+      queryParams,
     });
 
     return response.body;

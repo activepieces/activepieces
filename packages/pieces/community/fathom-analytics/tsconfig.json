@@ -1,26 +1,20 @@
 {
+  "extends": "../../../../tsconfig.base.json",
   "compilerOptions": {
-    "target": "ES2020",
     "module": "commonjs",
-    "lib": ["ES2020"],
-    "declaration": true,
+    "forceConsistentCasingInFileNames": true,
     "strict": true,
-    "noImplicitAny": true,
-    "strictNullChecks": true,
-    "noImplicitThis": true,
-    "alwaysStrict": true,
-    "outDir": "dist",
-    "rootDir": ".",
-    "esModuleInterop": true,
-    "resolveJsonModule": true,
-    "moduleResolution": "node",
-    "baseUrl": ".",
-    "paths": {
-      "@activepieces/pieces-framework": ["../../node_modules/@activepieces/pieces-framework/src/index.ts"],
-      "@activepieces/pieces-common": ["../../node_modules/@activepieces/pieces-common/src/index.ts"],
-      "@activepieces/shared": ["../../node_modules/@activepieces/shared/src/index.ts"]
-    }
+    "importHelpers": true,
+    "noImplicitOverride": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noPropertyAccessFromIndexSignature": true
   },
-  "include": ["src/**/*.ts"],
-  "exclude": ["node_modules", "dist"]
+  "files": [],
+  "include": [],
+  "references": [
+    {
+      "path": "./tsconfig.lib.json"
+    }
+  ]
 }
