@@ -32,10 +32,18 @@ export const createContact = createAction({
       description: 'Your internal user ID for this contact.',
       required: false,
     }),
-    subscribed: Property.Checkbox({
+    subscribed: Property.StaticDropdown({
       displayName: 'Subscribed to Marketing',
-      description: 'Whether this contact should receive marketing emails. Leave unchecked to preserve existing subscription status on update.',
+      description: 'Set subscription status. Leave as "No Change" to preserve existing status on update.',
       required: false,
+      options: {
+        disabled: false,
+        options: [
+          { label: 'No Change', value: 'no_change' },
+          { label: 'Subscribe', value: 'true' },
+          { label: 'Unsubscribe', value: 'false' },
+        ],
+      },
     }),
     userGroup: Property.ShortText({
       displayName: 'User Group',
@@ -62,7 +70,8 @@ export const createContact = createAction({
     if (firstName) body['firstName'] = firstName;
     if (lastName) body['lastName'] = lastName;
     if (userId) body['userId'] = userId;
-    if (typeof subscribed === 'boolean') body['subscribed'] = subscribed;
+    if (subscribed === 'true') body['subscribed'] = true;
+    if (subscribed === 'false') body['subscribed'] = false;
     if (userGroup) body['userGroup'] = userGroup;
     if (source) body['source'] = source;
 
