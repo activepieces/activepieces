@@ -1,94 +1,144 @@
-import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
-import { lemonSqueezyAuth } from '../common/auth';
-import { subscribeWebhook, unsubscribeWebhook, createStoreDropdownProperty, generateWebhookSecret, createWebhookTriggerKey } from '../common/webhook';
+import {
+  createTrigger,
+  TriggerStrategy,
+} from '@activepieces/pieces-framework';
+import { httpClient, HttpMethod, HttpRequest } from '@activepieces/pieces-common';
+import { lemonSqueezyAuth, LEMON_SQUEEZY_API_BASE, getLemonSqueezyHeaders } from '../auth';
 
-export const orderCreatedTrigger = createTrigger({
+interface LemonSqueezyWebhookResponse {
+  data: {
+    id: string;
+    type: string;
+    attributes: {
+      url: string;
+      signing_secret: string;
+      events: string[];
+    };
+  };
+}
+
+interface StoredWebhook {
+  id: string;
+}
+
+export const orderCreated = createTrigger({
   auth: lemonSqueezyAuth,
   name: 'order_created',
   displayName: 'Order Created',
-  description: 'Triggers when a new order is successfully placed',
+  description: 'Triggers in real time whenever a new order is placed in your Lemon Squeezy store.',
   type: TriggerStrategy.WEBHOOK,
-  props: {
-    store_id: createStoreDropdownProperty()
+  props: {},
+  sampleData: {
+    meta: {
+      test_mode: false,
+      event_name: 'order_created',
+      webhook_id: 'abc123',
+    },
+    data: {
+      type: 'orders',
+      id: '12345',
+      attributes: {
+        store_id: 1,
+        identifier: 'f7e2d-abc123',
+        order_number: 1001,
+        user_name: 'John Doe',
+        user_email: 'john@example.com',
+        currency: 'USD',
+        currency_rate: '1.00000',
+        subtotal: 999,
+        discount_total: 0,
+        tax: 0,
+        total: 999,
+        subtotal_usd: 999,
+        discount_total_usd: 0,
+        tax_usd: 0,
+        total_usd: 999,
+        tax_name: '',
+        tax_rate: '0.00',
+        status: 'paid',
+        status_formatted: 'Paid',
+        refunded: false,
+        refunded_at: null,
+        subtotal_formatted: '$9.99',
+        discount_total_formatted: '$0.00',
+        tax_formatted: '$0.00',
+        total_formatted: '$9.99',
+        first_order_item: {
+          id: 67890,
+          order_id: 12345,
+          product_id: 111,
+          variant_id: 222,
+          product_name: 'My Digital Product',
+          variant_name: 'Default',
+          price: 999,
+          created_at: '2024-01-15T10:30:00.000000Z',
+          updated_at: '2024-01-15T10:30:00.000000Z',
+          deleted_at: null,
+          test_mode: false,
+        },
+        created_at: '2024-01-15T10:30:00.000000Z',
+        updated_at: '2024-01-15T10:30:00.000000Z',
+      },
+    },
   },
   async onEnable(context) {
-    const webhookSecret = generateWebhookSecret();
+    const webhookName = `Activepieces — Order Created (${Date.now()})`;
 
-    const webhookData = await subscribeWebhook(
-      context.auth.secret_text,
-      context.propsValue.store_id as unknown as string,
-      ['order_created'],
-      context.webhookUrl,
-      webhookSecret
-    );
+    // Find a store ID by listing stores first to get the first store
+    const storesResponse = await httpClient.sendRequest<{ data: Array<{ id: string }> }>({
+      method: HttpMethod.GET,
+      url: `${LEMON_SQUEEZY_API_BASE}/stores`,
+      headers: getLemonSqueezyHeaders(context.auth as string),
+    });
 
-    await context.store?.put(createWebhookTriggerKey('order_created'), {
-      webhookId: webhookData.data.id,
-      secret: webhookSecret,
-      storeId: context.propsValue.store_id
+    if (!storesResponse.body.data || storesResponse.body.data.length === 0) {
+      throw new Error('No stores found in your Lemon Squeezy account.');
+    }
+
+    const storeId = storesResponse.body.data[0].id;
+
+    const request: HttpRequest = {
+      method: HttpMethod.POST,
+      url: `${LEMON_SQUEEZY_API_BASE}/webhooks`,
+      headers: getLemonSqueezyHeaders(context.auth as string),
+      body: {
+        data: {
+          type: 'webhooks',
+          attributes: {
+            url: context.webhookUrl,
+            events: ['order_created'],
+            secret: `ap-lmsq-${Date.now()}`,
+          },
+          relationships: {
+            store: {
+              data: {
+                type: 'stores',
+                id: storeId,
+              },
+            },
+          },
+        },
+      },
+    };
+
+    const response = await httpClient.sendRequest<LemonSqueezyWebhookResponse>(request);
+
+    await context.store.put<StoredWebhook>('lemon_squeezy_webhook_order_created', {
+      id: response.body.data.id,
     });
   },
   async onDisable(context) {
-    const response: { webhookId: string } | null = await context.store?.get(createWebhookTriggerKey('order_created'));
+    const stored = await context.store.get<StoredWebhook>('lemon_squeezy_webhook_order_created');
 
-    if (response !== null && response !== undefined) {
-      await unsubscribeWebhook(context.auth.secret_text, response.webhookId);
+    if (stored?.id) {
+      await httpClient.sendRequest({
+        method: HttpMethod.DELETE,
+        url: `${LEMON_SQUEEZY_API_BASE}/webhooks/${stored.id}`,
+        headers: getLemonSqueezyHeaders(context.auth as string),
+      });
     }
   },
   async run(context) {
     return [context.payload.body];
   },
-  sampleData: {
-    meta: {
-      event_name: 'order_created',
-      custom_data: {
-        user_id: 123
-      }
-    },
-    data: {
-      type: 'orders',
-      id: '1',
-      attributes: {
-        store_id: 1,
-        customer_id: 1,
-        product_id: 1,
-        variant_id: 1,
-        user_name: 'John Doe',
-        user_email: 'johndoe@example.com',
-        currency: 'USD',
-        currency_rate: '1.0000',
-        subtotal: 999,
-        discount_total: 0,
-        tax: 200,
-        total: 1199,
-        subtotal_usd: 999,
-        discount_total_usd: 0,
-        tax_usd: 200,
-        total_usd: 1199,
-        subtotal_formatted: '$9.99',
-        discount_total_formatted: '$0.00',
-        tax_formatted: '$2.00',
-        total_formatted: '$11.99',
-        status: 'pending',
-        status_formatted: 'Pending',
-        created_at: '2021-08-17T09:45:53.000000Z',
-        updated_at: '2021-08-17T09:45:53.000000Z',
-        test_mode: false,
-        order_number: 1,
-        first_order_item: {
-          id: 1,
-          order_id: 1,
-          product_id: 1,
-          variant_id: 1,
-          quantity: 1,
-          price: 999,
-          total: 999,
-          subtotal: 999,
-          tax: 0,
-          created_at: '2021-08-17T09:45:53.000000Z',
-          updated_at: '2021-08-17T09:45:53.000000Z'
-        }
-      }
-    }
-  }
 });

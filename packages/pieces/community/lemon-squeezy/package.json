@@ -1,10 +1,27 @@
 {
   "name": "@activepieces/piece-lemon-squeezy",
-  "version": "0.1.3",
-  "type": "commonjs",
-  "main": "./src/index.js",
-  "types": "./src/index.d.ts",
+  "version": "0.1.0",
+  "description": "Activepieces piece for Lemon Squeezy — the payments and subscriptions platform for digital products and SaaS.",
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json && cp package.json dist/",
+    "lint": "eslint 'src/**/*.ts'"
+  },
   "dependencies": {
-    "tslib": "^2.3.0"
-  }
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
+    "tslib": "2.6.2"
+  },
+  "keywords": [
+    "activepieces",
+    "piece",
+    "lemon-squeezy",
+    "payments",
+    "subscriptions",
+    "ecommerce",
+    "digital-products"
+  ],
+  "license": "MIT"
 }
