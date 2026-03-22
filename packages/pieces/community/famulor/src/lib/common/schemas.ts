@@ -53,7 +53,7 @@ export const makePhoneCall = {
 };
 
 export const campaignControl = {
-  campaign_id: z.number().int().positive(),
+  campaign: z.number().int().positive(),
   action: z.enum(['start', 'stop']),
 };
 
