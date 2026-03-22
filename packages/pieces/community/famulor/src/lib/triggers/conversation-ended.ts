@@ -21,12 +21,30 @@ const assistantDropdownForConversationWebhook = () =>
       }
 
       try {
-        const assistants = await famulorCommon.listAllAssistants({
-          auth: auth.secret_text,
-          per_page: 100,
-        });
+        const allAssistants: any[] = [];
+        let page = 1;
 
-        if (!assistants.data || assistants.data.length === 0) {
+        while (true) {
+          const result = await famulorCommon.listAllAssistants({
+            auth: auth.secret_text,
+            per_page: 100,
+            page,
+          });
+
+          if (!result.data || result.data.length === 0) {
+            break;
+          }
+
+          allAssistants.push(...result.data);
+
+          if (page >= result.last_page) {
+            break;
+          }
+
+          page++;
+        }
+
+        if (allAssistants.length === 0) {
           return {
             disabled: true,
             placeholder: 'No assistants found. Create one first.',
@@ -35,7 +53,7 @@ const assistantDropdownForConversationWebhook = () =>
         }
 
         return {
-          options: assistants.data.map((assistant: any) => ({
+          options: allAssistants.map((assistant: any) => ({
             label: `${assistant.name} (${assistant.type} - ${assistant.status})`,
             value: assistant.id,
           })),

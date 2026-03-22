@@ -457,11 +457,68 @@ export const updateLead = () => ({
   }),
 });
 
-const assistantIdProperty = (displayName: string, description: string, required = true) =>
-  Property.Number({
+const assistantIdDropdown = (displayName: string, description: string, required = true) =>
+  Property.Dropdown<number, false, typeof famulorAuth>({
+    auth: famulorAuth,
     displayName,
     description,
     required,
+    refreshers: ['auth'],
+    options: async ({ auth }) => {
+      if (!auth) {
+        return {
+          disabled: true,
+          placeholder: 'Please authenticate first',
+          options: [],
+        };
+      }
+
+      try {
+        const allAssistants: any[] = [];
+        let page = 1;
+
+        while (true) {
+          const result = await famulorCommon.listAllAssistants({
+            auth: auth.secret_text,
+            per_page: 100,
+            page,
+          });
+
+          if (!result.data || result.data.length === 0) {
+            break;
+          }
+
+          allAssistants.push(...result.data);
+
+          if (page >= result.last_page) {
+            break;
+          }
+
+          page++;
+        }
+
+        if (allAssistants.length === 0) {
+          return {
+            disabled: true,
+            placeholder: 'No assistants found. Create one first.',
+            options: [],
+          };
+        }
+
+        return {
+          options: allAssistants.map((a: any) => ({
+            label: `${a.name} (${a.type} - ${a.status})`,
+            value: a.id,
+          })),
+        };
+      } catch {
+        return {
+          disabled: true,
+          placeholder: 'Failed to fetch assistants',
+          options: [],
+        };
+      }
+    },
   });
 
 const assistantUuidProperty = (displayName: string, description: string, required = true) =>
@@ -531,9 +588,9 @@ export const purchasePhoneNumber = () => ({
 });
 
 export const generateAiReply = () => ({
-  assistant_id: assistantIdProperty(
-    'Assistant ID',
-    'The ID of the assistant to use for generating the response'
+  assistant_id: assistantIdDropdown(
+    'Assistant',
+    'Select the assistant to generate a response with'
   ),
   customer_identifier: customerIdentifierProperty(
     'Customer Identifier',

@@ -152,7 +152,7 @@ export const purchasePhoneNumber = {
 
 export const generateAiReply = {
   assistant_id: z.number().int().positive('Assistant ID must be a positive integer'),
-  customer_identifier: z.string().max(255, 'Customer identifier must be 255 characters or less'),
+  customer_identifier: z.string().min(1, 'Customer identifier is required').max(255, 'Customer identifier must be 255 characters or less'),
   message: z.string().min(1, 'Message is required'),
   variables: z.record(z.string(), z.any()).optional(),
 };
