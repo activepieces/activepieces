@@ -64,23 +64,25 @@ export const listLinks = createAction({
   async run(context) {
     const { auth, propsValue } = context;
 
-    const queryParams: Record<string, string> = {};
+    // Use URLSearchParams so we can append multiple tagName values
+    const params = new URLSearchParams();
 
-    if (propsValue.domain) queryParams['domain'] = propsValue.domain;
-    if (propsValue.search) queryParams['search'] = propsValue.search;
-    if (propsValue.userId) queryParams['userId'] = propsValue.userId;
-    if (propsValue.showArchived) queryParams['showArchived'] = '1';
-    if (propsValue.page) queryParams['page'] = String(propsValue.page);
-    if (propsValue.pageSize) queryParams['pageSize'] = String(propsValue.pageSize);
-    if (propsValue.sort) queryParams['sort'] = propsValue.sort;
+    if (propsValue.domain) params.set('domain', propsValue.domain);
+    if (propsValue.search) params.set('search', propsValue.search);
+    if (propsValue.userId) params.set('userId', propsValue.userId);
+    if (propsValue.showArchived) params.set('showArchived', '1');
+    if (propsValue.page) params.set('page', String(propsValue.page));
+    if (propsValue.pageSize) params.set('pageSize', String(propsValue.pageSize));
+    if (propsValue.sort) params.set('sort', propsValue.sort);
+
+    // Append each tag as a separate tagName param so all survive serialisation
     if (propsValue.tagNames && (propsValue.tagNames as string[]).length > 0) {
-      (propsValue.tagNames as string[]).forEach((tag) => {
-        // Dub accepts repeated tagName params
-        queryParams['tagName'] = tag;
-      });
+      for (const tag of propsValue.tagNames as string[]) {
+        params.append('tagName', tag);
+      }
     }
 
-    const queryString = new URLSearchParams(queryParams).toString();
+    const queryString = params.toString();
     const url = `${DUB_API_BASE}/links${queryString ? `?${queryString}` : ''}`;
 
     const response = await httpClient.sendRequest<DubLink[]>({

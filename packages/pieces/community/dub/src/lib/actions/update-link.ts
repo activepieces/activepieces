@@ -126,11 +126,11 @@ export const updateLink = createAction({
     if (rest.ios !== undefined && rest.ios !== null) body['ios'] = rest.ios;
     if (rest.android !== undefined && rest.android !== null) body['android'] = rest.android;
     if (rest.comments !== undefined && rest.comments !== null) body['comments'] = rest.comments;
-    if (rest.utmSource !== undefined && rest.utmSource !== null) body['utm_source'] = rest.utmSource;
-    if (rest.utmMedium !== undefined && rest.utmMedium !== null) body['utm_medium'] = rest.utmMedium;
-    if (rest.utmCampaign !== undefined && rest.utmCampaign !== null) body['utm_campaign'] = rest.utmCampaign;
-    if (rest.utmTerm !== undefined && rest.utmTerm !== null) body['utm_term'] = rest.utmTerm;
-    if (rest.utmContent !== undefined && rest.utmContent !== null) body['utm_content'] = rest.utmContent;
+    if (rest.utmSource !== undefined && rest.utmSource !== null) body['utmSource'] = rest.utmSource;
+    if (rest.utmMedium !== undefined && rest.utmMedium !== null) body['utmMedium'] = rest.utmMedium;
+    if (rest.utmCampaign !== undefined && rest.utmCampaign !== null) body['utmCampaign'] = rest.utmCampaign;
+    if (rest.utmTerm !== undefined && rest.utmTerm !== null) body['utmTerm'] = rest.utmTerm;
+    if (rest.utmContent !== undefined && rest.utmContent !== null) body['utmContent'] = rest.utmContent;
 
     if (Object.keys(body).length === 0) {
       throw new Error('At least one field must be provided to update.');

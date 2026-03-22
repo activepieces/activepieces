@@ -1,6 +1,8 @@
 import { PieceAuth } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
+export const DUB_API_BASE = 'https://api.dub.co';
+
 const authDescription = `
 To obtain your Dub API key:
 1. Go to [https://app.dub.co/settings/tokens](https://app.dub.co/settings/tokens)
@@ -42,5 +44,3 @@ export const dubAuth = PieceAuth.SecretText({
     }
   },
 });
-
-export const DUB_API_BASE = 'https://api.dub.co';

@@ -167,11 +167,11 @@ export const createLink = createAction({
     if (propsValue.android) body['android'] = propsValue.android;
     if (propsValue.geo) body['geo'] = propsValue.geo;
     if (propsValue.comments) body['comments'] = propsValue.comments;
-    if (propsValue.utmSource) body['utm_source'] = propsValue.utmSource;
-    if (propsValue.utmMedium) body['utm_medium'] = propsValue.utmMedium;
-    if (propsValue.utmCampaign) body['utm_campaign'] = propsValue.utmCampaign;
-    if (propsValue.utmTerm) body['utm_term'] = propsValue.utmTerm;
-    if (propsValue.utmContent) body['utm_content'] = propsValue.utmContent;
+    if (propsValue.utmSource) body['utmSource'] = propsValue.utmSource;
+    if (propsValue.utmMedium) body['utmMedium'] = propsValue.utmMedium;
+    if (propsValue.utmCampaign) body['utmCampaign'] = propsValue.utmCampaign;
+    if (propsValue.utmTerm) body['utmTerm'] = propsValue.utmTerm;
+    if (propsValue.utmContent) body['utmContent'] = propsValue.utmContent;
 
     const response = await httpClient.sendRequest<DubLink>({
       method: HttpMethod.POST,

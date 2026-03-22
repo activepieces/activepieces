@@ -5,15 +5,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod, HttpRequest } from '@activepieces/pieces-common';
 import { dubAuth, DUB_API_BASE } from '../auth';
-
-interface DubWebhook {
-  id: string;
-  name: string;
-  url: string;
-  secret: string;
-  triggers: string[];
-  linkIds: string[] | null;
-}
+import crypto from 'crypto';
 
 interface DubWebhookCreateResponse {
   id: string;
@@ -21,6 +13,21 @@ interface DubWebhookCreateResponse {
   url: string;
   secret: string;
   triggers: string[];
+}
+
+function verifyDubSignature(secret: string, rawBody: string, signatureHeader: string): boolean {
+  try {
+    const expected = crypto
+      .createHmac('sha256', secret)
+      .update(rawBody, 'utf8')
+      .digest('hex');
+    const provided = signatureHeader.startsWith('sha256=')
+      ? signatureHeader.slice(7)
+      : signatureHeader;
+    return crypto.timingSafeEqual(Buffer.from(expected, 'hex'), Buffer.from(provided, 'hex'));
+  } catch {
+    return false;
+  }
 }
 
 export const linkClicked = createTrigger({
@@ -77,7 +84,6 @@ export const linkClicked = createTrigger({
       triggers: ['link.clicked'],
     };
 
-    // Optional: restrict to a specific link
     if (context.propsValue.linkId) {
       body['linkIds'] = [context.propsValue.linkId];
     }
@@ -94,13 +100,14 @@ export const linkClicked = createTrigger({
 
     const response = await httpClient.sendRequest<DubWebhookCreateResponse>(request);
 
-    // Persist webhook ID so we can delete it on disable
-    await context.store.put<{ id: string }>('dub_webhook_link_clicked', {
+    // Store both the webhook ID (for deletion) and the signing secret (for verification)
+    await context.store.put<{ id: string; secret: string }>('dub_webhook_link_clicked', {
       id: response.body.id,
+      secret: response.body.secret,
     });
   },
   async onDisable(context) {
-    const stored = await context.store.get<{ id: string }>('dub_webhook_link_clicked');
+    const stored = await context.store.get<{ id: string; secret: string }>('dub_webhook_link_clicked');
 
     if (stored?.id) {
       const request: HttpRequest = {
@@ -116,7 +123,20 @@ export const linkClicked = createTrigger({
     }
   },
   async run(context) {
-    // Dub sends the full event payload in the request body
+    const stored = await context.store.get<{ id: string; secret: string }>('dub_webhook_link_clicked');
+    const secret = stored?.secret;
+
+    if (secret) {
+      const signatureHeader =
+        (context.payload.headers['x-dub-signature'] as string) ||
+        (context.payload.headers['dub-signature'] as string) ||
+        '';
+      const rawBody = context.payload.rawBody as string;
+      if (signatureHeader && !verifyDubSignature(secret, rawBody, signatureHeader)) {
+        return [];
+      }
+    }
+
     return [context.payload.body];
   },
 });
