@@ -1,0 +1,7 @@
+{
+  "Formsite is an online form builder that allows you to create forms and surveys easily.": "Formsite is an online form builder that allows you to create forms and surveys easily.",
+  "New Form Result": "New Form Result",
+  "Trigger when a new form result is submitted": "Trigger when a new form result is submitted",
+  "Markdown": "Markdown",
+  "\n  **Enable Basic Authentication:**\n  1. Login to your Formbricks account\n  2. Open the form you want to connect\n  3. Change tab to *From Settings* -> *Integrations* -> *Server Post*\n  4. Enable *Server Post* and set the URL to the webhook URL generated after you save the trigger.\n  ```text\n\t\t\t{{webhookUrl}}\n\t\t\t```\n5. Select Message format as *JSON*\n6. Save the settings\n": "\n  **Enable Basic Authentication:**\n  1. Login to your Formbricks account\n  2. Open the form you want to connect\n  3. Change tab to *From Settings* -> *Integrations* -> *Server Post*\n  4. Enable *Server Post* and set the URL to the webhook URL generated after you save the trigger.\n  ```text\n\t\t\t{{webhookUrl}}\n\t\t\t```\n5. Select Message format as *JSON*\n6. Save the settings\n"
+}

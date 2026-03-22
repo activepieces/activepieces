@@ -1,4 +1,4 @@
-import { pipedriveAuth } from '../../index';
+import { pipedriveAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {  pipedrivePaginatedV1ApiCall } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';

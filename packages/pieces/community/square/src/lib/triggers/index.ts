@@ -1,4 +1,4 @@
-import { squareAuth } from '../../';
+import { squareAuth } from '../auth';
 import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 
 const triggerData = [

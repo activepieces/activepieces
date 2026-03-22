@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { whatsappAuth } from '../..';
+import { whatsappAuth } from '../auth';
 import { commonProps } from '../common/utils';
 
 export const sendMessage = createAction({

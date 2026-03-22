@@ -1,7 +1,5 @@
 # pieces-telegram-bot
 
-This library was generated with [Nx](https://nx.dev).
+## Building
 
-## Running lint
-
-Run `nx lint pieces-telegram-bot` to execute the lint via [ESLint](https://eslint.org/).
+Run `turbo run build --filter=@activepieces/piece-telegram-bot` to build the library.

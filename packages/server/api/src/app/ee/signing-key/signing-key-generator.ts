@@ -3,7 +3,7 @@ import {
     RSAKeyPairOptions,
 } from 'node:crypto'
 import { promisify } from 'node:util'
-import { KeyAlgorithm } from '@activepieces/ee-shared'
+import { KeyAlgorithm } from '@activepieces/shared'
 
 const generateKeyPair = promisify(generateKeyPairCallback)
 

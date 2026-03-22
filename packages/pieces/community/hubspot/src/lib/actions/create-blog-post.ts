@@ -1,5 +1,5 @@
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { hubspotAuth } from '../../';
+import { hubspotAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { blogAuthorDropdown, blogUrlDropdown } from '../common/props';
 

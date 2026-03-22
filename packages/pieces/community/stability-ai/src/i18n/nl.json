@@ -19,10 +19,12 @@
   "Method": "Methode",
   "Headers": "Kopteksten",
   "Query Parameters": "Query parameters",
+  "Body Type": "Type lichaam",
   "Body": "Lichaam",
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "The text to transform in image.": "De tekst om te zetten in afbeelding.",
   "How strictly the diffusion process adheres to the prompt text (higher values keep your image closer to your prompt) (MIN:0; MAX:35)": "Hoe strikt het diffusieproces zich houdt aan de prompte tekst (hogere waarden houden uw afbeelding dichter bij uw prompt) (MIN:0; MAX:35)",
   "Height of the image in pixels. Must be in increments of 64 and >= 128": "Hoogte van de afbeelding in pixels. Moet in stappen van 64 en > = 128 zijn.",
@@ -31,7 +33,7 @@
   "Number of diffusion steps to run (MIN:10; MAX:150)": "Aantal diffusie stappen uit te voeren (MIN: 10; MAX: 150)",
   "Pass in a style preset to guide the image model towards a particular style.": "Geef een voorinstelling in de stijl om het afbeeldingsmodel naar een bepaalde stijl te leiden.",
   "Authorization headers are injected automatically from your connection.": "Autorisatie headers worden automatisch geïnjecteerd vanuit uw verbinding.",
-  "Enable for files like PDFs, images, etc..": "Inschakelen voor bestanden zoals PDF's, afbeeldingen etc..",
+  "Enable for files like PDFs, images, etc.": "Inschakelen voor bestanden zoals PDF's, afbeeldingen etc.",
   "NONE": "GEEN",
   "FAST_BLUE": "FAST_BLUUW",
   "FAST_GREEN": "VIP_FRIEND_POPUP_BODY",
@@ -68,5 +70,9 @@
   "PATCH": "BEKIJK",
   "PUT": "PUT",
   "DELETE": "VERWIJDEREN",
-  "HEAD": "HOOFD"
+  "HEAD": "HOOFD",
+  "None": "geen",
+  "JSON": "JSON",
+  "Form Data": "Formulieren gegevens",
+  "Raw": "Onbewerkte"
 }
