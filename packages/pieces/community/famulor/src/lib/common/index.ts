@@ -257,7 +257,9 @@ export const famulorCommon = {
       queryParams,
     });
 
-    throwIfFamulorNotOk(response, 'Failed to fetch assistants');
+    if (response.status !== 200) {
+      throw new Error(`Failed to fetch assistants: ${response.status}`);
+    }
 
     return response.body;
   },
@@ -300,7 +302,9 @@ export const famulorCommon = {
       headers: famulorCommon.baseHeaders(auth),
     });
 
-    throwIfFamulorNotOk(response, 'Failed to fetch assistants');
+    if (response.status !== 200) {
+      throw new Error(`Failed to fetch assistants: ${response.status}`);
+    }
 
     return response.body || [];
   },
@@ -390,9 +394,11 @@ export const famulorCommon = {
       headers: famulorCommon.baseHeaders(auth),
     });
 
-    throwIfFamulorNotOk(response, 'Failed to fetch campaigns');
+    if (response.status !== 200) {
+      throw new Error(`Failed to fetch campaigns: ${response.status}`);
+    }
 
-    return (response.body as ListCampaignsResponse).campaigns || response.body;
+    return response.body.campaigns || response.body;
   },
 
   createCampaign: async (
@@ -438,7 +444,9 @@ export const famulorCommon = {
       body,
     });
 
-    throwIfFamulorNotOk(response, 'Failed to send SMS');
+    if (response.status !== 200) {
+      throw new Error(`Failed to send SMS: ${response.status}`);
+    }
 
     return response.body;
   },
@@ -453,7 +461,9 @@ export const famulorCommon = {
       body,
     });
 
-    throwIfFamulorNotOk(response, 'Failed to make phone call');
+    if (response.status !== 200) {
+      throw new Error(`Failed to make phone call: ${response.status}`);
+    }
 
     return response.body;
   },
@@ -468,7 +478,9 @@ export const famulorCommon = {
       body,
     });
 
-    throwIfFamulorNotOk(response, 'Failed to control campaign');
+    if (response.status !== 200) {
+      throw new Error(`Failed to control campaign: ${response.status}`);
+    }
 
     return response.body;
   },
@@ -482,7 +494,9 @@ export const famulorCommon = {
       headers: famulorCommon.baseHeaders(auth),
     });
 
-    throwIfFamulorNotOk(response, 'Failed to delete lead', [200, 204]);
+    if (response.status !== 200) {
+      throw new Error(`Failed to delete lead: ${response.status}`);
+    }
 
     return response.body;
   },
