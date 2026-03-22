@@ -34,9 +34,8 @@ export const createContact = createAction({
     }),
     subscribed: Property.Checkbox({
       displayName: 'Subscribed to Marketing',
-      description: 'Whether this contact should receive marketing emails.',
+      description: 'Whether this contact should receive marketing emails. Leave unchecked to preserve existing subscription status on update.',
       required: false,
-      defaultValue: true,
     }),
     userGroup: Property.ShortText({
       displayName: 'User Group',
