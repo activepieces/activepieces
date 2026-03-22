@@ -17,10 +17,83 @@ import {
   GetConversationParams,
   GetConversationResponse,
   SendMessageParams,
-  SendMessageResponse
+  SendMessageResponse,
+  ListLeadsResponse,
+  LeadListItem,
+  UpdateLeadParams,
+  UpdateLeadResponse,
+  CreateCampaignParams,
+  CreateCampaignResponse,
+  ListConversationsParams,
+  ListConversationsResponse,
+  ListCallsParams,
+  ListCallsResponse,
+  GetCallParams,
+  GetCallResponse,
+  DeleteCallParams,
+  DeleteCallResponse,
+  GetWhatsAppSendersParams,
+  GetWhatsAppSendersResponse,
+  GetWhatsAppTemplatesParams,
+  GetWhatsAppTemplatesResponse,
+  SendWhatsAppTemplateParams,
+  SendWhatsAppTemplateResponse,
+  SendWhatsAppFreeformParams,
+  SendWhatsAppFreeformResponse,
+  GetWhatsAppSessionStatusParams,
+  GetWhatsAppSessionStatusResponse,
+  ListAccountPhoneNumbersParams,
+  ListAccountPhoneNumbersResponse,
 } from './types';
 
 export const baseApiUrl = 'https://app.famulor.de/';
+
+function errorDetailFromBody(body: unknown): string {
+  if (body === null || body === undefined) {
+    return 'Unknown error';
+  }
+  if (typeof body === 'object') {
+    const o = body as Record<string, unknown>;
+    if (typeof o['error'] === 'string') {
+      return o['error'];
+    }
+    if (typeof o['message'] === 'string') {
+      return o['message'];
+    }
+  }
+  return 'Unknown error';
+}
+
+function throwIfFamulorNotOk<T>(
+  response: { status: number; body: T },
+  action: string,
+  successStatuses: number[] = [200],
+): void {
+  if (!successStatuses.includes(response.status)) {
+    throw new Error(
+      `${action} (${response.status}): ${errorDetailFromBody(response.body)}`,
+    );
+  }
+}
+
+function stripEmptyOptionalFields(
+  obj: Record<string, unknown>,
+): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(obj).filter(([, value]) => {
+      if (value === undefined || value === null) {
+        return false;
+      }
+      if (value === '') {
+        return false;
+      }
+      if (Array.isArray(value) && value.length === 0) {
+        return false;
+      }
+      return true;
+    }),
+  );
+}
 
 export const famulorCommon = {
   baseHeaders: (auth: string) => ({
@@ -34,24 +107,50 @@ export const famulorCommon = {
   sendSmsProperties: properties.sendSms,
   makePhoneCallProperties: properties.makePhoneCall,
   campaignControlProperties: properties.campaignControl,
+  createCampaignProperties: properties.createCampaign,
   deleteLeadProperties: properties.deleteLead,
+  updateLeadProperties: properties.updateLead,
   getCurrentUserProperties: properties.getCurrentUser,
+  listLeadsProperties: properties.listLeads,
+  listAccountPhoneNumbersProperties: properties.listAccountPhoneNumbers,
   generateAiReplyProperties: properties.generateAiReply,
   createConversationProperties: properties.createConversation,
   getConversationProperties: properties.getConversation,
   sendMessageProperties: properties.sendMessage,
+  listConversationsProperties: properties.listConversations,
+  listCallsProperties: properties.listCalls,
+  getCallProperties: properties.getCall,
+  deleteCallProperties: properties.deleteCall,
+  getWhatsAppSendersProperties: properties.getWhatsAppSenders,
+  getWhatsAppTemplatesProperties: properties.getWhatsAppTemplates,
+  sendWhatsAppTemplateProperties: properties.sendWhatsAppTemplate,
+  sendWhatsAppFreeformProperties: properties.sendWhatsAppFreeform,
+  getWhatsAppSessionStatusProperties: properties.getWhatsAppSessionStatus,
 
   // Schemas
   addLeadSchema: schemas.addLead,
   sendSmsSchema: schemas.sendSms,
   makePhoneCallSchema: schemas.makePhoneCall,
   campaignControlSchema: schemas.campaignControl,
+  createCampaignSchema: schemas.createCampaign,
   deleteLeadSchema: schemas.deleteLead,
+  updateLeadSchema: schemas.updateLead,
   getCurrentUserSchema: schemas.getCurrentUser,
+  listLeadsSchema: schemas.listLeads,
+  listAccountPhoneNumbersSchema: schemas.listAccountPhoneNumbers,
   generateAiReplySchema: schemas.generateAiReply,
   createConversationSchema: schemas.createConversation,
   getConversationSchema: schemas.getConversation,
   sendMessageSchema: schemas.sendMessage,
+  listConversationsSchema: schemas.listConversations,
+  listCallsSchema: schemas.listCalls,
+  getCallSchema: schemas.getCall,
+  deleteCallSchema: schemas.deleteCall,
+  getWhatsAppSendersSchema: schemas.getWhatsAppSenders,
+  getWhatsAppTemplatesSchema: schemas.getWhatsAppTemplates,
+  sendWhatsAppTemplateSchema: schemas.sendWhatsAppTemplate,
+  sendWhatsAppFreeformSchema: schemas.sendWhatsAppFreeform,
+  getWhatsAppSessionStatusSchema: schemas.getWhatsAppSessionStatus,
 
   // Methods
   listAllAssistants: async ({ auth, per_page = 10, page = 1, type }: { auth: string; per_page?: number; page?: number; type?: string }) => {
@@ -106,18 +205,37 @@ export const famulorCommon = {
     return response.body || [];
   },
 
-  listLeads: async ({ auth }: { auth: string }) => {
-    const response = await httpClient.sendRequest({
+  listAccountPhoneNumbers: async ({
+    auth,
+  }: ListAccountPhoneNumbersParams): Promise<ListAccountPhoneNumbersResponse> => {
+    const response = await httpClient.sendRequest<ListAccountPhoneNumbersResponse>({
+      method: HttpMethod.GET,
+      url: `${baseApiUrl}api/user/phone-numbers/all`,
+      headers: famulorCommon.baseHeaders(auth),
+    });
+
+    throwIfFamulorNotOk(response, 'Failed to list phone numbers');
+
+    return response.body;
+  },
+
+  listLeads: async ({ auth }: { auth: string }): Promise<ListLeadsResponse> => {
+    const response = await httpClient.sendRequest<ListLeadsResponse | LeadListItem[]>({
       method: HttpMethod.GET,
       url: `${baseApiUrl}api/user/leads`,
       headers: famulorCommon.baseHeaders(auth),
     });
 
-    if (response.status !== 200) {
-      throw new Error(`Failed to fetch leads: ${response.status}`);
-    }
+    throwIfFamulorNotOk(response, 'Failed to fetch leads');
 
-    return response.body.leads || response.body;
+    const body = response.body;
+    if (Array.isArray(body)) {
+      return { leads: body };
+    }
+    if (body && typeof body === 'object' && Array.isArray(body.leads)) {
+      return { leads: body.leads };
+    }
+    return { leads: [] };
   },
 
   listCampaigns: async ({ auth }: { auth: string }) => {
@@ -134,6 +252,24 @@ export const famulorCommon = {
     return response.body.campaigns || response.body;
   },
 
+  createCampaign: async (
+    params: CreateCampaignParams,
+  ): Promise<CreateCampaignResponse> => {
+    const { auth, ...rest } = params;
+    const body = stripEmptyOptionalFields(rest as Record<string, unknown>);
+
+    const response = await httpClient.sendRequest<CreateCampaignResponse>({
+      method: HttpMethod.POST,
+      url: `${baseApiUrl}api/user/campaigns`,
+      headers: famulorCommon.baseHeaders(auth),
+      body,
+    });
+
+    throwIfFamulorNotOk(response, 'Failed to create campaign', [200, 201]);
+
+    return response.body;
+  },
+
   addLead: async (params: AddLeadParams): Promise<LeadResponse> => {
     const { auth, ...body } = params;
     
@@ -144,9 +280,7 @@ export const famulorCommon = {
       body,
     });
 
-    if (response.status !== 200) {
-      throw new Error(`Failed to add lead: ${response.status}`);
-    }
+    throwIfFamulorNotOk(response, 'Failed to add lead');
 
     return response.body;
   },
@@ -214,6 +348,36 @@ export const famulorCommon = {
     if (response.status !== 200) {
       throw new Error(`Failed to delete lead: ${response.status}`);
     }
+
+    return response.body;
+  },
+
+  updateLead: async (params: UpdateLeadParams): Promise<UpdateLeadResponse> => {
+    const { auth, lead_id, campaign_id, phone_number, status, variables } = params;
+
+    const body: Record<string, unknown> = {};
+    if (campaign_id !== undefined && campaign_id !== null) {
+      body['campaign_id'] = campaign_id;
+    }
+    const trimmedPhone = phone_number?.trim();
+    if (trimmedPhone) {
+      body['phone_number'] = trimmedPhone;
+    }
+    if (status !== undefined && status !== null) {
+      body['status'] = status;
+    }
+    if (variables !== undefined && variables !== null && Object.keys(variables).length > 0) {
+      body['variables'] = variables;
+    }
+
+    const response = await httpClient.sendRequest<UpdateLeadResponse>({
+      method: HttpMethod.PATCH,
+      url: `${baseApiUrl}api/user/leads/${lead_id}`,
+      headers: famulorCommon.baseHeaders(auth),
+      body,
+    });
+
+    throwIfFamulorNotOk(response, 'Failed to update lead');
 
     return response.body;
   },
@@ -312,9 +476,7 @@ export const famulorCommon = {
       body,
     });
 
-    if (response.status !== 200 && response.status !== 404 && response.status !== 402 && response.status !== 422 && response.status !== 429) {
-      throw new Error(`Failed to generate AI reply: ${response.status}`);
-    }
+    throwIfFamulorNotOk(response, 'Failed to generate AI reply');
 
     return response.body;
   },
@@ -329,9 +491,7 @@ export const famulorCommon = {
       body,
     });
 
-    if (response.status !== 200 && response.status !== 404 && response.status !== 400) {
-      throw new Error(`Failed to create conversation: ${response.status}`);
-    }
+    throwIfFamulorNotOk(response, 'Failed to create conversation');
 
     return response.body;
   },
@@ -345,9 +505,7 @@ export const famulorCommon = {
       headers: famulorCommon.baseHeaders(auth),
     });
 
-    if (response.status !== 200 && response.status !== 404) {
-      throw new Error(`Failed to get conversation: ${response.status}`);
-    }
+    throwIfFamulorNotOk(response, 'Failed to get conversation');
 
     return response.body;
   },
@@ -362,9 +520,255 @@ export const famulorCommon = {
       body: { message },
     });
 
-    if (response.status !== 200 && response.status !== 404 && response.status !== 400 && response.status !== 422) {
-      throw new Error(`Failed to send message: ${response.status}`);
+    throwIfFamulorNotOk(response, 'Failed to send message');
+
+    return response.body;
+  },
+
+  listConversations: async (
+    params: ListConversationsParams,
+  ): Promise<ListConversationsResponse> => {
+    const {
+      auth,
+      type,
+      assistant_id,
+      customer_phone,
+      whatsapp_sender_phone,
+      external_identifier,
+      per_page,
+      cursor,
+    } = params;
+
+    const queryParams: Record<string, string> = {};
+    if (type !== undefined) {
+      queryParams['type'] = type;
     }
+    if (assistant_id !== undefined) {
+      queryParams['assistant_id'] = String(assistant_id);
+    }
+    if (customer_phone !== undefined && customer_phone.trim() !== '') {
+      queryParams['customer_phone'] = customer_phone.trim();
+    }
+    if (whatsapp_sender_phone !== undefined && whatsapp_sender_phone.trim() !== '') {
+      queryParams['whatsapp_sender_phone'] = whatsapp_sender_phone.trim();
+    }
+    if (external_identifier !== undefined && external_identifier.trim() !== '') {
+      queryParams['external_identifier'] = external_identifier.trim();
+    }
+    if (per_page !== undefined) {
+      queryParams['per_page'] = String(per_page);
+    }
+    if (cursor !== undefined && cursor.trim() !== '') {
+      queryParams['cursor'] = cursor.trim();
+    }
+
+    const response = await httpClient.sendRequest<ListConversationsResponse>({
+      method: HttpMethod.GET,
+      url: `${baseApiUrl}api/user/conversations`,
+      headers: famulorCommon.baseHeaders(auth),
+      queryParams,
+    });
+
+    throwIfFamulorNotOk(response, 'Failed to list conversations');
+
+    return response.body;
+  },
+
+  listCalls: async (params: ListCallsParams): Promise<ListCallsResponse> => {
+    const {
+      auth,
+      status,
+      type,
+      phone_number,
+      assistant_id,
+      campaign_id,
+      date_from,
+      date_to,
+      per_page,
+      page,
+    } = params;
+
+    const queryParams: Record<string, string> = {};
+    if (status !== undefined) {
+      queryParams['status'] = status;
+    }
+    if (type !== undefined) {
+      queryParams['type'] = type;
+    }
+    if (phone_number !== undefined && phone_number.trim() !== '') {
+      queryParams['phone_number'] = phone_number.trim();
+    }
+    if (assistant_id !== undefined) {
+      queryParams['assistant_id'] = String(assistant_id);
+    }
+    if (campaign_id !== undefined) {
+      queryParams['campaign_id'] = String(campaign_id);
+    }
+    if (date_from !== undefined && date_from.trim() !== '') {
+      queryParams['date_from'] = date_from.trim();
+    }
+    if (date_to !== undefined && date_to.trim() !== '') {
+      queryParams['date_to'] = date_to.trim();
+    }
+    if (per_page !== undefined) {
+      queryParams['per_page'] = String(per_page);
+    }
+    if (page !== undefined) {
+      queryParams['page'] = String(page);
+    }
+
+    const response = await httpClient.sendRequest<ListCallsResponse>({
+      method: HttpMethod.GET,
+      url: `${baseApiUrl}api/user/calls`,
+      headers: famulorCommon.baseHeaders(auth),
+      queryParams,
+    });
+
+    throwIfFamulorNotOk(response, 'Failed to list calls');
+
+    return response.body;
+  },
+
+  getCall: async (params: GetCallParams): Promise<GetCallResponse> => {
+    const { auth, call_id } = params;
+
+    const response = await httpClient.sendRequest<GetCallResponse>({
+      method: HttpMethod.GET,
+      url: `${baseApiUrl}api/user/calls/${call_id}`,
+      headers: famulorCommon.baseHeaders(auth),
+    });
+
+    throwIfFamulorNotOk(response, 'Failed to get call');
+
+    return response.body;
+  },
+
+  deleteCall: async (params: DeleteCallParams): Promise<DeleteCallResponse> => {
+    const { auth, call_id } = params;
+
+    const response = await httpClient.sendRequest<DeleteCallResponse>({
+      method: HttpMethod.DELETE,
+      url: `${baseApiUrl}api/user/calls/${call_id}`,
+      headers: famulorCommon.baseHeaders(auth),
+    });
+
+    throwIfFamulorNotOk(response, 'Failed to delete call');
+
+    return response.body;
+  },
+
+  getWhatsAppSenders: async (
+    params: GetWhatsAppSendersParams,
+  ): Promise<GetWhatsAppSendersResponse> => {
+    const { auth, status } = params;
+
+    const queryParams: Record<string, string> = {};
+    if (status !== undefined) {
+      queryParams['status'] = status;
+    }
+
+    const response = await httpClient.sendRequest<GetWhatsAppSendersResponse>({
+      method: HttpMethod.GET,
+      url: `${baseApiUrl}api/user/whatsapp/senders`,
+      headers: famulorCommon.baseHeaders(auth),
+      queryParams,
+    });
+
+    throwIfFamulorNotOk(response, 'Failed to fetch WhatsApp senders');
+
+    return response.body;
+  },
+
+  getWhatsAppTemplates: async (
+    params: GetWhatsAppTemplatesParams,
+  ): Promise<GetWhatsAppTemplatesResponse> => {
+    const { auth, sender_id, status } = params;
+
+    const queryParams: Record<string, string> = {};
+    if (status !== undefined) {
+      queryParams['status'] = status;
+    }
+
+    const response = await httpClient.sendRequest<GetWhatsAppTemplatesResponse>({
+      method: HttpMethod.GET,
+      url: `${baseApiUrl}api/user/whatsapp/senders/${sender_id}/templates`,
+      headers: famulorCommon.baseHeaders(auth),
+      queryParams,
+    });
+
+    throwIfFamulorNotOk(response, 'Failed to fetch WhatsApp templates');
+
+    return response.body;
+  },
+
+  sendWhatsAppTemplate: async (
+    params: SendWhatsAppTemplateParams,
+  ): Promise<SendWhatsAppTemplateResponse> => {
+    const { auth, sender_id, template_id, recipient_phone, recipient_name, variables } =
+      params;
+
+    const body: Record<string, unknown> = {
+      sender_id,
+      template_id,
+      recipient_phone: recipient_phone.trim(),
+    };
+    const name = recipient_name?.trim();
+    if (name) {
+      body['recipient_name'] = name;
+    }
+    if (variables !== undefined && Object.keys(variables).length > 0) {
+      body['variables'] = variables;
+    }
+
+    const response = await httpClient.sendRequest<SendWhatsAppTemplateResponse>({
+      method: HttpMethod.POST,
+      url: `${baseApiUrl}api/user/whatsapp/send`,
+      headers: famulorCommon.baseHeaders(auth),
+      body,
+    });
+
+    throwIfFamulorNotOk(response, 'Failed to send WhatsApp template message');
+
+    return response.body;
+  },
+
+  sendWhatsAppFreeform: async (
+    params: SendWhatsAppFreeformParams,
+  ): Promise<SendWhatsAppFreeformResponse> => {
+    const { auth, sender_id, recipient_phone, message } = params;
+
+    const response = await httpClient.sendRequest<SendWhatsAppFreeformResponse>({
+      method: HttpMethod.POST,
+      url: `${baseApiUrl}api/user/whatsapp/send-freeform`,
+      headers: famulorCommon.baseHeaders(auth),
+      body: {
+        sender_id,
+        recipient_phone: recipient_phone.trim(),
+        message: message.trim(),
+      },
+    });
+
+    throwIfFamulorNotOk(response, 'Failed to send WhatsApp freeform message');
+
+    return response.body;
+  },
+
+  getWhatsAppSessionStatus: async (
+    params: GetWhatsAppSessionStatusParams,
+  ): Promise<GetWhatsAppSessionStatusResponse> => {
+    const { auth, sender_id, recipient_phone } = params;
+
+    const response = await httpClient.sendRequest<GetWhatsAppSessionStatusResponse>({
+      method: HttpMethod.GET,
+      url: `${baseApiUrl}api/user/whatsapp/session-status`,
+      headers: famulorCommon.baseHeaders(auth),
+      queryParams: {
+        sender_id: String(sender_id),
+        recipient_phone: recipient_phone.trim(),
+      },
+    });
+
+    throwIfFamulorNotOk(response, 'Failed to get WhatsApp session status');
 
     return response.body;
   },
