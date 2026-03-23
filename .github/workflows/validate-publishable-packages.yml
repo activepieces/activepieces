@@ -17,6 +17,10 @@ jobs:
         with:
           fetch-depth: 0
 
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 24
+
       - name: Cache dependencies
         id: cache-npm
         uses: actions/cache@v3
@@ -34,4 +38,4 @@ jobs:
         run: npm install -g bun && bun install
 
       - name: validate publishable packages
-        run: npx ts-node -r tsconfig-paths/register -P packages/engine/tsconfig.lib.json tools/scripts/validate-publishable-packages.ts
+        run: npx ts-node -r tsconfig-paths/register -P packages/server/engine/tsconfig.lib.json tools/scripts/validate-publishable-packages.ts

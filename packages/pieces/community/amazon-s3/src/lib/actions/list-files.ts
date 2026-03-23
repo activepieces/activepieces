@@ -1,5 +1,5 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { amazonS3Auth } from '../../index';
+import { amazonS3Auth } from '../auth';
 import { createS3 } from '../common';
 import { ListObjectsV2CommandInput } from '@aws-sdk/client-s3';
 

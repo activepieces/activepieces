@@ -4,8 +4,10 @@ import {
 	DynamicPropsValue,
 	Property,
 } from '@activepieces/pieces-framework';
-import { excelCommon } from '../common/common';
-import { excelAuth } from '../../index';
+import { commonProps } from '../common/props';
+import { getDrivePath } from '../common/helpers';
+import { excelAuth } from '../auth';
+import { getHeaders } from '../common/helpers';
 import { FilterOperator, filterOperatorLabels } from '../common/constants';
 import { Client } from '@microsoft/microsoft-graph-client';
 import { WorkbookRange } from '@microsoft/microsoft-graph-types';
@@ -16,14 +18,17 @@ import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
 dayjs.extend(isSameOrAfter);
 dayjs.extend(isSameOrBefore);
 
-export const getWorksheetRowsAction = createAction({
-	auth: excelAuth,
-	name: 'get_worksheet_rows',
-	description: 'Retrieve rows from a worksheet',
-	displayName: 'Get Worksheet Rows',
-	props: {
-		workbook_id: excelCommon.workbook_id,
-		worksheet_id: excelCommon.worksheet_id,
+	export const getWorksheetRowsAction = createAction({
+		auth: excelAuth,
+		name: 'get_worksheet_rows',
+		description: 'Retrieve rows from a worksheet',
+		displayName: 'Get Worksheet Rows',
+		props: {
+			storageSource: commonProps.storageSource,
+			siteId: commonProps.siteId,
+			documentId: commonProps.documentId,
+			workbookId: commonProps.workbookId,
+			worksheetId: commonProps.worksheetId,
 		range: Property.ShortText({
 			displayName: 'Range',
 			description: 'Range of the rows to retrieve (e.g., A2:B2)',
@@ -47,22 +52,27 @@ export const getWorksheetRowsAction = createAction({
 		}),
 		filterList: Property.DynamicProperties({
 			displayName: 'Filter',
-			refreshers: ['workbook_id', 'worksheet_id', 'useFilter'],
+			refreshers: ['workbookId', 'worksheetId', 'useFilter', 'storageSource', 'siteId', 'documentId'],
 			required: false,
 			auth: excelAuth,
-			props: async ({ auth, useFilter, worksheet_id, workbook_id }) => {
-				if (!auth || !useFilter || !workbook_id || !worksheet_id) return {};
+			props: async ({ auth, useFilter, worksheetId, workbookId, storageSource, siteId, documentId }) => {
+				if (!auth || !useFilter || !workbookId || !worksheetId) return {};
+
+				if (storageSource === 'sharepoint' && (!siteId || !documentId)) return {};
+
+				const drivePath = getDrivePath(storageSource as string, siteId as string, documentId as string);
 
 				const fields: DynamicPropsValue = {};
 
-				const firstRow = await excelCommon.getHeaders(
-					workbook_id as unknown as string,
+				const firstRow = await getHeaders(
 					auth['access_token'],
-					worksheet_id as unknown as string
+					drivePath,
+					workbookId as unknown as string,
+					worksheetId as unknown as string
 				);
 
 				const filterColumnOptions: DropdownOption<number>[] = firstRow.map(
-					(header, index) => ({
+					(header:string, index:number) => ({
 						label: header as string,
 						value: index,
 					})
@@ -107,15 +117,19 @@ export const getWorksheetRowsAction = createAction({
 		}),
 	},
 	async run({ propsValue, auth }) {
-		const workbookId = propsValue['workbook_id'];
-		const worksheetId = propsValue['worksheet_id'];
+		const { storageSource, siteId, documentId, workbookId, worksheetId } = propsValue;
 		const range = propsValue['range'];
 		const headerRow = propsValue['headerRow'];
 		const firstDataRow = propsValue['firstDataRow'];
 		const shouldApplyFilter = propsValue['useFilter'];
 		const filterConfig = propsValue['filterList'] ?? {};
 
-		let url = `/me/drive/items/${workbookId}/workbook/worksheets/${worksheetId}/`;
+		if (storageSource === 'sharepoint' && (!siteId || !documentId)) {
+			throw new Error('please select SharePoint site and document library.');
+		}
+		const drivePath = getDrivePath(storageSource, siteId as string, documentId as string);
+
+		let url = `${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/`;
 
 		if (!range) {
 			url += 'usedRange(valuesOnly=true)';
@@ -155,8 +169,7 @@ export const getWorksheetRowsAction = createAction({
 					obj[String(headers[j])] = row[j];
 				}
 				result.push(obj);
-			}
-			else{
+			} else {
 				result.push(row);
 			}
 		}
@@ -173,17 +186,25 @@ type ColumnFilter = {
 
 function evaluateFilters(filters: ColumnFilter[], row: any[]): boolean {
 	return filters.every((filter) => {
-		const {
-			filterColumn: columnIndex,
-			filterOperator: operator,
-			filterValue: value,
-		} = filter;
+		const { filterColumn: columnIndex, filterOperator: operator, filterValue: value } = filter;
 
-		if (columnIndex === undefined || !operator || value === undefined) {
+		if (columnIndex === undefined || !operator) {
 			return true;
 		}
 
 		const cellValue = row[columnIndex];
+
+		if (operator === FilterOperator.EXISTS) {
+			return cellValue !== undefined && cellValue !== null && cellValue !== '';
+		}
+
+		if (operator === FilterOperator.DOES_NOT_EXIST) {
+			return cellValue === undefined || cellValue === null || cellValue === '';
+		}
+
+		if (value === undefined) {
+			return true;
+		}
 
 		switch (operator) {
 			case FilterOperator.TEXT_CONTAINS:
@@ -197,6 +218,19 @@ function evaluateFilters(filters: ColumnFilter[], row: any[]): boolean {
 
 			case FilterOperator.TEXT_DOES_NOT_EXACTLY_MATCH:
 				return !equalsText(cellValue, value);
+
+			case FilterOperator.TEXT_IN_LIST: {
+				const list = parseAndCoerceListAsArray(value)
+				return list.some((item) =>
+					toLowercaseIfCaseInsensitive(item, false) === toLowercaseIfCaseInsensitive(cellValue, false))
+			}
+
+			case FilterOperator.TEXT_NOT_IN_LIST: {
+				const list = parseAndCoerceListAsArray(value)
+				return !list.some((item) =>
+					toLowercaseIfCaseInsensitive(item, false) === toLowercaseIfCaseInsensitive(cellValue, false),
+				)
+			}
 
 			case FilterOperator.NUMBER_IS_GREATER_THAN:
 				return toNumber(cellValue) > toNumber(value);
@@ -241,11 +275,7 @@ function toNumber(value: string): number | string {
 }
 
 function isValidDate(date: unknown): boolean {
-	if (
-		typeof date === 'string' ||
-		typeof date === 'number' ||
-		date instanceof Date
-	) {
+	if (typeof date === 'string' || typeof date === 'number' || date instanceof Date) {
 		return dayjs(date).isValid();
 	}
 	return false;
@@ -269,4 +299,25 @@ function isSameOrAfterDate(a: any, b: any): boolean {
 
 function isSameOrBeforeDate(a: any, b: any): boolean {
 	return isValidDate(a) && isValidDate(b) && dayjs(a).isSameOrBefore(dayjs(b));
+}
+
+function parseAndCoerceListAsArray(input: unknown): unknown[] {
+	if (typeof input === 'string') {
+		try {
+			const parsed = JSON.parse(input)
+			return Array.isArray(parsed) ? parsed : [parsed]
+		}
+		catch (e) {
+			return [input]
+		}
+	}
+	return Array.isArray(input) ? input : [input]
+}
+
+function toLowercaseIfCaseInsensitive(text: unknown, caseSensitive: boolean | undefined): string {
+	if (typeof text === 'string') {
+		return caseSensitive ? text : text.toLowerCase()
+	}
+	const textAsString = JSON.stringify(text)
+	return caseSensitive ? textAsString : textAsString.toLowerCase()
 }

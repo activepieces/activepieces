@@ -8,27 +8,7 @@ import { createBatchAction } from './lib/actions/create-batch';
 import { listDatasourcesAction } from './lib/actions/list-datasources';
 import { createCustomApiCallAction, HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest } from './lib/common';
-
-const markdownDescription = `Obtain your API key from [Valyu Platform](https://platform.valyu.ai/user/account/apikeys).`;
-
-export const valyuAuth = PieceAuth.SecretText({
-  displayName: 'API Key',
-  description: markdownDescription,
-  required: true,
-  validate: async ({ auth }) => {
-    try {
-      await makeRequest(auth, HttpMethod.GET, '/v1/datasources');
-      return {
-        valid: true,
-      };
-    } catch (e) {
-      return {
-        valid: false,
-        error: 'Invalid API Key.',
-      };
-    }
-  },
-});
+import { valyuAuth } from './lib/auth';
 
 export const valyu = createPiece({
   displayName: 'Valyu',

@@ -4,7 +4,7 @@ import {
   HttpMethod,
   httpClient,
 } from '@activepieces/pieces-common';
-import { discordAuth } from '../../index';
+import { discordAuth } from '../auth';
 import { ExecutionType, PauseType } from '@activepieces/shared';
 import { discordCommon } from '../common';
 

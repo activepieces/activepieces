@@ -1,5 +1,6 @@
 import { OracleDbAuth } from './types';
 import oracledb from 'oracledb';
+import { ensureOracleClient } from './thick-mode';
 
 interface ExecuteManyResult {
   rowsAffected?: number;
@@ -14,6 +15,8 @@ export class OracleDbClient {
   }
 
   private async connect(): Promise<void> {
+    await ensureOracleClient(this.auth.thickMode ?? false);
+
     const connectString =
       this.auth.connectionType === 'serviceName'
         ? `${this.auth.host}:${this.auth.port}/${this.auth.serviceName}`
