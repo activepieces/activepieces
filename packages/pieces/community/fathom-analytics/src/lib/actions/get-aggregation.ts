@@ -22,6 +22,23 @@ const DATE_GROUPING_OPTIONS = [
   { label: 'Year', value: 'year' },
 ];
 
+
+const FIELD_GROUPING_OPTIONS = [
+  { label: 'Pathname', value: 'pathname' },
+  { label: 'Hostname', value: 'hostname' },
+  { label: 'Referrer Hostname', value: 'referrer_hostname' },
+  { label: 'Referrer Pathname', value: 'referrer_pathname' },
+  { label: 'Browser', value: 'browser' },
+  { label: 'Browser Version', value: 'browser_version' },
+  { label: 'Device Type', value: 'device_type' },
+  { label: 'Country Code', value: 'country_code' },
+  { label: 'UTM Source', value: 'utm_source' },
+  { label: 'UTM Medium', value: 'utm_medium' },
+  { label: 'UTM Campaign', value: 'utm_campaign' },
+  { label: 'UTM Term', value: 'utm_term' },
+  { label: 'UTM Content', value: 'utm_content' },
+];
+
 export const getAggregation = createAction({
   name: 'get_aggregation',
   displayName: 'Get Aggregation',
@@ -31,8 +48,8 @@ export const getAggregation = createAction({
   props: {
     entity_id: Property.ShortText({
       displayName: 'Site ID',
-      description: 'The Fathom site ID to query (e.g., CDBUGS).',
-      required: true,
+      description: 'The Fathom site ID to query (e.g., CDBUGS). Required for pageview entity. Do not include when entity is set to event.',
+      required: false,
     }),
     entity: Property.StaticDropdown({
       displayName: 'Entity Type',
@@ -57,6 +74,14 @@ export const getAggregation = createAction({
       required: false,
       options: {
         options: DATE_GROUPING_OPTIONS,
+      },
+    }),
+    field_grouping: Property.StaticDropdown({
+      displayName: 'Field Grouping',
+      description: 'Group results by this field (e.g., pathname, browser). Makes the report actionable by breaking down totals.',
+      required: false,
+      options: {
+        options: FIELD_GROUPING_OPTIONS,
       },
     }),
     date_from: Property.ShortText({
@@ -91,15 +116,21 @@ export const getAggregation = createAction({
     const { auth, propsValue } = context;
 
     const queryParams: Record<string, string> = {
-      entity_id: propsValue.entity_id,
       entity: propsValue.entity,
       aggregates: Array.isArray(propsValue.aggregates)
         ? propsValue.aggregates.join(',')
         : String(propsValue.aggregates),
     };
 
+    if (propsValue.entity !== 'event' && propsValue.entity_id) {
+      queryParams['entity_id'] = propsValue.entity_id;
+    }
+
     if (propsValue.date_grouping) {
       queryParams['date_grouping'] = propsValue.date_grouping;
+    }
+    if (propsValue.field_grouping) {
+      queryParams['field_grouping'] = propsValue.field_grouping;
     }
     if (propsValue.date_from) {
       queryParams['date_from'] = propsValue.date_from;
@@ -117,9 +148,7 @@ export const getAggregation = createAction({
       queryParams['filters'] = JSON.stringify(propsValue.filters);
     }
 
-    const response = await httpClient.sendRequest<{
-      data: Array<Record<string, unknown>>;
-    }>({
+    const response = await httpClient.sendRequest<Array<Record<string, unknown>>>({
       method: HttpMethod.GET,
       url: `${FATHOM_API_BASE}/aggregations`,
       headers: {
