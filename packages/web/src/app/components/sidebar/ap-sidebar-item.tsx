@@ -50,7 +50,10 @@ export const ApSidebarItem = (item: SidebarItemType) => {
           { 'bg-sidebar-accent hover:bg-sidebar-accent!': isLinkActive },
           '',
         )}
-        onClick={() => navigate(item.to)}
+        onClick={() => {
+          item.onClick?.();
+          navigate(item.to);
+        }}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >

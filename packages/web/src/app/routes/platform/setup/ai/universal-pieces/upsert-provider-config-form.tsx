@@ -16,6 +16,7 @@ import {
 import { useState } from 'react';
 import { UseFormReturn, useFieldArray } from 'react-hook-form';
 
+import { DictionaryInput } from '@/components/custom/dictionary-input';
 import { Button } from '@/components/ui/button';
 import {
   FormControl,
@@ -247,6 +248,25 @@ export const UpsertProviderConfigForm = ({
                 </FormControl>
                 <FormMessage />
               </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="config.defaultHeaders"
+            render={({ field }) => (
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">
+                  {t('Custom Headers')}
+                </Label>
+                <DictionaryInput
+                  values={field.value}
+                  onChange={field.onChange}
+                  disabled={isLoading}
+                  keyPlaceholder={t('Header name')}
+                  valuePlaceholder={t('Header value')}
+                />
+              </div>
             )}
           />
         </>

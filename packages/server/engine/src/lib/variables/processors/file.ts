@@ -1,6 +1,5 @@
 import { ApFile } from '@activepieces/pieces-framework'
 import { isBase64, isNil, isString } from '@activepieces/shared'
-import axios from 'axios'
 import mime from 'mime-types'
 import { ProcessorFn } from './types'
 
@@ -39,17 +38,14 @@ function handleBase64File(propertyValue: string): ApFile | null {
 }
 
 async function handleUrlFile(path: string): Promise<ApFile | null> {
-    const fileResponse = await axios.get(path, {
-        responseType: 'arraybuffer',
-    })
+    const fileResponse = await fetch(path)
 
-
-    const filename = getFileName(path, fileResponse.headers['content-disposition'], fileResponse.headers['content-type']) ?? 'unknown'
+    const filename = getFileName(path, fileResponse.headers.get('content-disposition'), fileResponse.headers.get('content-type') ?? undefined) ?? 'unknown'
     const extension = filename.split('.').length > 1 ? filename.split('.').pop() : undefined
 
     return new ApFile(
         filename,
-        Buffer.from(fileResponse.data, 'binary'),
+        Buffer.from(await fileResponse.arrayBuffer()),
         extension,
     )
 }

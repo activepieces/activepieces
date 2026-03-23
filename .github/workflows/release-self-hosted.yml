@@ -10,7 +10,7 @@ on:
 
 jobs:
   release:
-    runs-on: depot-ubuntu-24.04
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
 

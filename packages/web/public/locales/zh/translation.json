@@ -1175,6 +1175,8 @@
   "Retry": "重试",
   "on latest version": "最新版本",
   "Only failed runs can be retried from failed step": "只有失败的运行才能从失败的步骤中重试",
+  "Retry is only available for {failedJobRetentionDays} after a run fails.": "运行失败后 {failedJobRetentionDays, plural, =0 {0 天} =1 {1 天} other {# 天}} 内可重试。",
+  "Retry failed": "重试失败",
   "from failed step": "从失败步骤",
   "Viewing retried runs": "",
   "No flow runs found": "找不到流流",

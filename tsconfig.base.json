@@ -222,6 +222,9 @@
       "@activepieces/piece-chatbase": [
         "packages/pieces/community/chatbase/src/index.ts"
       ],
+      "@activepieces/piece-chatwoot": [
+      "packages/pieces/community/chatwoot/src/index.ts"
+      ],
       "@activepieces/piece-checkout": [
         "packages/pieces/community/checkout/src/index.ts"
       ],
@@ -254,6 +257,9 @@
       ],
       "@activepieces/piece-close": [
         "packages/pieces/community/close/src/index.ts"
+      ],
+      "@activepieces/piece-cohere": [
+      "packages/pieces/community/cohere/src/index.ts"
       ],
       "@activepieces/piece-cloudconvert": [
         "packages/pieces/community/cloudconvert/src/index.ts"
@@ -601,6 +607,9 @@
       ],
       "@activepieces/piece-kizeo-forms": [
         "packages/pieces/community/kizeo-forms/src/index.ts"
+      ],
+      "@activepieces/piece-klaviyo": [
+        "packages/pieces/community/klaviyo/src/index.ts"
       ],
       "@activepieces/piece-knack": [
         "packages/pieces/community/knack/src/index.ts"
@@ -1162,6 +1171,9 @@
       "@activepieces/piece-twitter": [
         "packages/pieces/community/twitter/src/index.ts"
       ],
+      "@activepieces/piece-twenty": [
+        "packages/pieces/community/twenty/src/index.ts"
+      ],
       "@activepieces/piece-typeform": [
         "packages/pieces/community/typeform/src/index.ts"
       ],
@@ -1221,6 +1233,9 @@
       ],
       "@activepieces/piece-whatsapp": [
         "packages/pieces/community/whatsapp/src/index.ts"
+      ],
+      "@activepieces/piece-whatsscale": [
+        "packages/pieces/community/whatsscale/src/index.ts"
       ],
       "@activepieces/piece-wonderchat": [
         "packages/pieces/community/wonderchat/src/index.ts"
@@ -1293,8 +1308,7 @@
       "@activepieces/piece-meistertask": [
         "packages/pieces/community/meistertask/src/index.ts"
       ],
-      "@activepieces/sandbox": ["packages/server/sandbox/src/index.ts"],
-      "@activepieces/server-common": ["packages/server/common/src/index.ts"],
+      "@activepieces/server-utils": ["packages/server/utils/src/index.ts"],
       "@activepieces/shared": ["packages/shared/src/index.ts"],
       "@ee/*": ["packages/ee/*"],
       "Aminos": ["packages/pieces/community/Aminos/src/index.ts"],
@@ -1317,7 +1331,6 @@
         "packages/pieces/community/cashfree-payments/src/index.ts"
       ],
       "ee-embed-sdk": ["packages/ee/embed-sdk/src/index.ts"],
-      "worker": ["packages/server/worker/src/index.ts"],
       "ui-feature-forms": ["packages/ui/features-forms/src/index.ts"],
       "@activepieces/piece-kissflow": [
         "packages/pieces/community/kissflow/src/index.ts"
@@ -1336,6 +1349,9 @@
       ],
       "@activepieces/piece-formspark": [
         "packages/pieces/community/formspark/src/index.ts"
+      ],
+      "@activepieces/piece-webex": [
+        "packages/pieces/community/webex/src/index.ts"
       ],
       "@activepieces/piece-tableau": [
         "packages/pieces/community/tableau/src/index.ts"
@@ -1560,6 +1576,9 @@
       "@activepieces/piece-lofty": [
         "packages/pieces/community/lofty/src/index.ts"
       ],
+      "@activepieces/piece-loops": [
+        "packages/pieces/community/loops/src/index.ts"
+      ],
       "@activepieces/piece-youcanbookme": [
         "packages/pieces/community/youcanbookme/src/index.ts"
       ],
@@ -1670,6 +1689,9 @@
       ],
       "@activepieces/piece-barcode-lookup": [
         "packages/pieces/community/barcode-lookup/src/index.ts"
+      ],
+      "@activepieces/piece-intruder": [
+        "packages/pieces/community/intruder/src/index.ts"
       ],
       "@activepieces/piece-tidely": [
         "packages/pieces/community/tidely/src/index.ts"
@@ -1791,6 +1813,9 @@
       "@activepieces/piece-google-search": [
         "packages/pieces/community/google-search/src/index.ts"
       ],
+      "@activepieces/piece-microsoft-copilot": [
+        "packages/pieces/community/microsoft-copilot/src/index.ts"
+      ],
       "@activepieces/piece-asknews": [
         "packages/pieces/community/asknews/src/index.ts"
       ],
@@ -1820,6 +1845,12 @@
       ],
       "@activepieces/piece-coralogix": [
         "packages/pieces/community/coralogix/src/index.ts"
+      ],
+      "@activepieces/piece-pocketbase": [
+        "packages/pieces/community/pocketbase/src/index.ts"
+      ],
+      "@activepieces/piece-carbone": [
+        "packages/pieces/community/carbone/src/index.ts"
       ]
     },
     "resolveJsonModule": true

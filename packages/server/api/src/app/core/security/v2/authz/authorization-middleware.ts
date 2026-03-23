@@ -1,6 +1,7 @@
-import { AuthorizationRouteSecurity, AuthorizationType, ProjectResourceType, RouteKind } from '@activepieces/server-common'
 import { isNil, PrincipalType } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
+import { AuthorizationRouteSecurity } from '../../authorization/authorization'
+import { AuthorizationType, ProjectResourceType, RouteKind } from '../../authorization/common'
 import { authorizeOrThrow } from './authorize'
 import { projectIdExtractor } from './projectIdExtractor'
 
@@ -11,11 +12,11 @@ export const authorizationMiddleware = async (request: FastifyRequest): Promise<
     await authorizeOrThrow(request.principal, securityAccessRequest, request.log)
 
     const requestPath = request.routeOptions.config.url
-    const bullmqRoute = requestPath.startsWith('/ui')
+    const bullmqRoute = requestPath.startsWith('/ui') || requestPath.startsWith('/api/ui')
     if (bullmqRoute) {
         return
     }
-    if (security.kind === RouteKind.AUTHENTICATED && security.authorization.type === AuthorizationType.PROJECT) {
+    if (!isNil(security) && security.kind === RouteKind.AUTHENTICATED && security.authorization.type === AuthorizationType.PROJECT) {
         // @ts-expect-error: explicit override for Fastify typing assignment
         request.projectId = securityAccessRequest.authorization.projectId
     }

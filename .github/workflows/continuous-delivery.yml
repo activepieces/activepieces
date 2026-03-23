@@ -15,6 +15,7 @@ on:
           - deploy-staging         # Re-deploy to staging (e.g., after infra change)
           - deploy-staging-skip-freeze  # Deploy to staging, ignoring the freeze window
           - promote-to-production  # Hotfix: promote staging to prod immediately
+          - cloud-hotfix           # Build, deploy to staging, then promote to prod in one go
           - weekly-release         # Trigger official release manually
 
 # --- STAGING JOBS (run on push to main OR manual "deploy-staging") ---
@@ -42,8 +43,8 @@ jobs:
     if: |
       always() &&
       ((github.event_name == 'push' && needs.check-freeze.outputs.frozen == 'false') ||
-       (github.event_name == 'workflow_dispatch' && (github.event.inputs.action == 'deploy-staging' || github.event.inputs.action == 'deploy-staging-skip-freeze')))
-    runs-on: depot-ubuntu-24.04
+       (github.event_name == 'workflow_dispatch' && (github.event.inputs.action == 'deploy-staging' || github.event.inputs.action == 'deploy-staging-skip-freeze' || github.event.inputs.action == 'cloud-hotfix')))
+    runs-on: ubuntu-24.04
     concurrency:
       group: deploy-staging
       cancel-in-progress: true  # Latest merge wins
@@ -103,7 +104,12 @@ jobs:
   # --- PROMOTION JOBS (run on schedule OR manual "promote-to-production") ---
 
   promote-to-production:
-    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'promote-to-production')
+    needs: [deploy-staging]
+    if: |
+      always() &&
+      (github.event_name == 'schedule' ||
+       (github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'promote-to-production') ||
+       (github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'cloud-hotfix' && needs.deploy-staging.result == 'success'))
     runs-on: ubuntu-latest
     environment:
       name: production         # GitHub Environment gate — requires reviewer approval
@@ -148,7 +154,7 @@ jobs:
   weekly-release:
     needs: promote-to-production
     if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'weekly-release')
-    runs-on: depot-ubuntu-24.04
+    runs-on: ubuntu-24.04
     steps:
       - name: Check if Sunday (skip on other days for scheduled runs)
         id: day-check
@@ -230,6 +236,13 @@ jobs:
             activepieces/activepieces:latest
             ghcr.io/activepieces/activepieces:${{ steps.version.outputs.release }}
             ghcr.io/activepieces/activepieces:latest
+
+  # Run smoke test after daily promotion to production
+  smoke-test:
+    needs: promote-to-production
+    if: github.event_name == 'schedule'
+    uses: ./.github/workflows/smoke-test.yml
+    secrets: inherit
 
   # After promotion, deploy latest main to staging (catch-up for merges during freeze)
   catch-up-staging:

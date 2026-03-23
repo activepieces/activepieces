@@ -74,7 +74,6 @@ export const isFlowRunStateTerminal = ({ status, ignoreInternalError }: { status
             return !ignoreInternalError
         case FlowRunStatus.QUEUED:
         case FlowRunStatus.RUNNING:
-            return false
         case FlowRunStatus.PAUSED:
             return false
     }

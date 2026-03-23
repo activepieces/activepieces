@@ -1,4 +1,3 @@
-import { securityAccess } from '@activepieces/server-common'
 import {
     ApId,
     ApiKeyResponseWithoutValue,
@@ -6,6 +5,7 @@ import {
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
+import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
 import { apiKeyService } from './api-key-service'
 

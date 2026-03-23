@@ -1,7 +1,8 @@
-import { securityAccess, triggerRunStats } from '@activepieces/server-common'
 import { PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { redisConnections } from '../../database/redis-connections'
+import { triggerRunStats } from './trigger-run-stats'
 
 export const triggerRunController: FastifyPluginAsyncZod = async (app) => {
     app.get('/status', GetStatusReportSchema, async (request) => {

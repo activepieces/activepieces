@@ -1,5 +1,6 @@
 import {
     BeginExecuteFlowOperation,
+    EngineGenericError,
     EngineResponse,
     EngineResponseStatus,
     ExecuteFlowOperation,
@@ -27,12 +28,10 @@ export const flowOperation = {
         const input = operation as ExecuteFlowOperation
         const constants = EngineConstants.fromExecuteFlowInput(input)
         const output: FlowExecutorContext = (await executieSingleStepOrFlowOperation(input)).finishExecution()
-        console.log('[FlowOperation] Flow execution finished, calling explicit final backup')
         await progressService.backup({
             engineConstants: constants,
             flowExecutorContext: output,
         })
-        console.log('[FlowOperation] Explicit final backup completed')
         return {
             status: EngineResponseStatus.OK,
             response: undefined,
@@ -71,6 +70,9 @@ const executieSingleStepOrFlowOperation = async (input: ExecuteFlowOperation): P
 async function getFlowExecutionState(input: ExecuteFlowOperation, flowContext: FlowExecutorContext): Promise<FlowExecutorContext> {
     switch (input.executionType) {
         case ExecutionType.BEGIN: {
+            if (Object.keys(input.executionState.steps).length > 0) {
+                throw new EngineGenericError('InvalidBeginStateError', 'BEGIN operation received with non-empty execution state')
+            }
             const newPayload = await runOrReturnPayload(input)
             flowContext = flowContext.upsertStep(input.flowVersion.trigger.name, GenericStepOutput.create({
                 type: input.flowVersion.trigger.type,

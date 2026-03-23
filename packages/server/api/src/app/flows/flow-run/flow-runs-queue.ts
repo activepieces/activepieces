@@ -1,13 +1,16 @@
-import { apAxios, AppSystemProp, exceptionHandler, QueueName, redisMetadataKey, RunsMetadataJobData, RunsMetadataQueueConfig, runsMetadataQueueFactory, RunsMetadataUpsertData } from '@activepieces/server-common'
 import { assertNotNullOrUndefined, FlowRun, FlowRunStatus, isNil, PauseMetadata, PauseType, spreadIfDefined } from '@activepieces/shared'
 import { Queue, Worker } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
 import { FastifyBaseLogger } from 'fastify'
 import { distributedLock, distributedStore, redisConnections } from '../../database/redis-connections'
 import { domainHelper } from '../../ee/custom-domains/domain-helper'
+import { apAxios } from '../../helper/ap-axios'
+import { exceptionHandler } from '../../helper/exception-handler'
 import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-props'
 import { projectService } from '../../project/project-service'
-import { jobQueue } from '../../workers/queue/job-queue'
+import { QueueName, redisMetadataKey, RunsMetadataJobData, RunsMetadataQueueConfig, runsMetadataQueueFactory, RunsMetadataUpsertData } from '../../workers/job'
+import { jobQueue } from '../../workers/job-queue/job-queue'
 import { flowService } from '../flow/flow.service'
 import { flowRunRepo } from './flow-run-service'
 import { flowRunSideEffects } from './flow-run-side-effects'
@@ -40,7 +43,6 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                     timeoutInSeconds: 30,
                     fn: async () => {
                         try {
-
                             await runsMetadataQueue(log).get().removeDeduplicationKey(job.data.runId)
                             const runMetadata = await distributedStore.hgetJson<RunsMetadataUpsertData>(key)
                             if (isNil(runMetadata) || Object.keys(runMetadata).length === 0) {
