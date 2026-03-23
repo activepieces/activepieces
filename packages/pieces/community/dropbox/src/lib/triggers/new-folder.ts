@@ -7,7 +7,6 @@ import {
 import {
   AuthenticationType,
   HttpMethod,
-  HttpRequest,
   httpClient,
 } from '@activepieces/pieces-common';
 import { dropboxAuth } from '../auth';
@@ -26,16 +25,16 @@ type DropboxListFolderResponse = {
   has_more: boolean;
 };
 
-// Calls list_folder and paginates to the end, returning only the final cursor.
-// Used on enable to bookmark the current state without surfacing existing folders.
-const getFinalCursor = async (
+// Returns the latest cursor for a folder without fetching any entries.
+// Designed for apps that only need to know about new changes going forward.
+const getLatestCursor = async (
   accessToken: string,
   path: string,
   recursive: boolean,
 ): Promise<string> => {
-  const res = await httpClient.sendRequest<DropboxListFolderResponse>({
+  const res = await httpClient.sendRequest<{ cursor: string }>({
     method: HttpMethod.POST,
-    url: 'https://api.dropboxapi.com/2/files/list_folder',
+    url: 'https://api.dropboxapi.com/2/files/list_folder/get_latest_cursor',
     headers: { 'Content-Type': 'application/json' },
     body: { path, recursive, include_deleted: false },
     authentication: {
@@ -43,28 +42,7 @@ const getFinalCursor = async (
       token: accessToken,
     },
   });
-
-  let cursor = res.body.cursor;
-  let hasMore = res.body.has_more;
-
-  while (hasMore) {
-    const continueRes = await httpClient.sendRequest<DropboxListFolderResponse>(
-      {
-        method: HttpMethod.POST,
-        url: 'https://api.dropboxapi.com/2/files/list_folder/continue',
-        headers: { 'Content-Type': 'application/json' },
-        body: { cursor },
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: accessToken,
-        },
-      },
-    );
-    cursor = continueRes.body.cursor;
-    hasMore = continueRes.body.has_more;
-  }
-
-  return cursor;
+  return res.body.cursor;
 };
 
 // Calls list_folder/continue with a stored cursor and returns all new folder entries,
@@ -152,7 +130,7 @@ export const dropboxNewFolder = createTrigger({
   },
 
   onEnable: async (context) => {
-    const cursor = await getFinalCursor(
+    const cursor = await getLatestCursor(
       context.auth.access_token,
       context.propsValue.path || '',
       context.propsValue.recursive ?? false,
