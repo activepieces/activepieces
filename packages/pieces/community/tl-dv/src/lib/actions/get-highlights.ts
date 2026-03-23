@@ -1,5 +1,5 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { tldvAuth } from '../../index';
+import { tldvAuth } from '../..';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { tldvCommon } from '../common/client';
 import { meetingIdProperty } from '../common/props';

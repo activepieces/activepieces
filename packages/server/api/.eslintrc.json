@@ -18,7 +18,7 @@
       ],
       "parserOptions": {
         "project": [
-          "packages/server/api/tsconfig.*?.json"
+          "tsconfig.*?.json"
         ]
       },
       "rules": {

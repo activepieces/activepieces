@@ -6,7 +6,7 @@ import {
   httpClient,
   AuthenticationType,
 } from '@activepieces/pieces-common';
-import { sendfoxAuth } from '..';
+import { sendfoxAuth } from '../lib/auth';
 
 export async function getLists(accessToken: string) {
   const list_of_lists = [];

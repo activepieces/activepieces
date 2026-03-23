@@ -1,11 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  httpClient,
-  HttpMethod,
-  AuthenticationType
-} from '@activepieces/pieces-common';
-import { excelAuth } from '../../index';
-import { excelCommon } from '../common/common';
+import { excelAuth } from '../auth';
+import { commonProps } from '../common/props';
+import { getDrivePath, createMSGraphClient } from '../common/helpers';
 
 export const clearRangeAction = createAction({
   auth: excelAuth,
@@ -13,8 +9,11 @@ export const clearRangeAction = createAction({
   displayName: 'Clear Cells by Range',
   description: 'Clear a block of cells (range) content or formatting.',
   props: {
-    workbook_id: excelCommon.workbook_id,
-    worksheet_id: excelCommon.worksheet_id,
+    storageSource: commonProps.storageSource,
+    siteId: commonProps.siteId,
+    documentId: commonProps.documentId,
+    workbookId: commonProps.workbookId,
+    worksheetId: commonProps.worksheetId,
     range: Property.ShortText({
       displayName: 'Range',
       description:
@@ -45,26 +44,24 @@ export const clearRangeAction = createAction({
     })
   },
   async run(context) {
-    const { workbook_id, worksheet_id, range, applyTo } = context.propsValue;
+    const { storageSource, siteId, documentId, workbookId, worksheetId, range, applyTo } = context.propsValue;
     const { access_token } = context.auth;
+
+    if (storageSource === 'sharepoint' && (!siteId || !documentId)) {
+      throw new Error('please select SharePoint site and document library.');
+    }
+    const drivePath = getDrivePath(storageSource, siteId as string, documentId as string);
     
     if (!/^[A-Z]+[1-9][0-9]*(:[A-Z]+[1-9][0-9]*)?$/.test(range as string)) {
         throw new Error('Invalid range format. Please use A1 notation (e.g., "A1" or "A1:C5").');
     }
 
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: `${excelCommon.baseUrl}/items/${workbook_id}/workbook/worksheets/${worksheet_id}/range(address='${range}')/clear`,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: access_token
-      },
-      body: {
-        applyTo: applyTo
-      }
-    });
+    const client = createMSGraphClient(access_token);
+    await client
+      .api(`${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/range(address='${range}')/clear`)
+      .post({ applyTo: applyTo });
 
     // A successful request returns a 200 OK with no body.
-    return response.body;
+    return {};
   }
 });

@@ -1,4 +1,4 @@
-import { afforaiAuth } from '../../';
+import { afforaiAuth } from '../auth';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import {
   HttpMethod,

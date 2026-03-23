@@ -1,6 +1,4 @@
-import { ApplicationEventName } from '@activepieces/ee-shared'
-import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
-import {
+import { ApplicationEventName,
     CreateFolderRequest,
     DeleteFolderRequest,
     ListFolderRequest,
@@ -9,20 +7,22 @@ import {
     SERVICE_KEY_SECURITY_OPENAPI,
     UpdateFolderRequest,
 } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { Type } from '@sinclair/typebox'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
+import { z } from 'zod'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
+import { ProjectResourceType } from '../../core/security/authorization/common'
+import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { applicationEvents } from '../../helper/application-events'
 import { FolderEntity } from './folder.entity'
 import { flowFolderService as folderService } from './folder.service'
 
 const DEFAULT_PAGE_SIZE = 10
-export const folderModule: FastifyPluginAsyncTypebox = async (app) => {
+export const folderModule: FastifyPluginAsyncZod = async (app) => {
     await app.register(folderController, { prefix: '/v1/folders' })
 }
 
-const folderController: FastifyPluginAsyncTypebox = async (fastify) => {
+const folderController: FastifyPluginAsyncZod = async (fastify) => {
     fastify.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
 
     fastify.post('/', CreateFolderParams, async (request) => {
@@ -139,8 +139,8 @@ const UpdateFolderParams = {
         tags: ['folders'],
         description: 'Update an existing folder',
         security: [SERVICE_KEY_SECURITY_OPENAPI],
-        params: Type.Object({
-            id: Type.String(),
+        params: z.object({
+            id: z.string(),
         }),
         body: UpdateFolderRequest,
     },
@@ -157,8 +157,8 @@ const GetFolderParams = {
     },
     schema: {
         tags: ['folders'],
-        params: Type.Object({
-            id: Type.String(),
+        params: z.object({
+            id: z.string(),
         }),
         description: 'Get a folder by id',
         security: [SERVICE_KEY_SECURITY_OPENAPI],

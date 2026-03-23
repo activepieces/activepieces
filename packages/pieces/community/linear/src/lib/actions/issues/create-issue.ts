@@ -33,7 +33,7 @@ export const linearCreateIssue = createAction({
       assigneeId: propsValue.assignee_id,
       stateId: propsValue.state_id,
       priority: propsValue.priority_id,
-      labelIds: propsValue.labels,
+      labelIds: propsValue.labels?.length ? propsValue.labels : undefined,
       templateId: propsValue.template_id
     };
     const client = makeClient(auth);

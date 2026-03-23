@@ -1,7 +1,5 @@
 # pieces-twilio
 
-This library was generated with [Nx](https://nx.dev).
+## Building
 
-## Running lint
-
-Run `nx lint pieces-twilio` to execute the lint via [ESLint](https://eslint.org/).
+Run `turbo run build --filter=@activepieces/piece-twilio` to build the library.

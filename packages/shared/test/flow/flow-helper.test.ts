@@ -14,7 +14,7 @@ import {
     RouterExecutionType,
     StepLocationRelativeToParent,
 } from '../../src'
-import { _getImportOperations } from '../../src/lib/flows/operations/import-flow'
+import { _getImportOperations } from '../../src/lib/automation/flows/operations/import-flow'
 
 const flowVersionWithBranching: FlowVersion = {
     id: 'pj0KQ7Aypoa9OQGHzmKDl',
@@ -317,11 +317,13 @@ describe('Flow Helper', () => {
                 settings: {
                     items: 'items',
                 },
+                lastUpdatedDate: expect.any(String),
                 firstLoopAction: {
                     displayName: 'Code',
                     name: 'step_3',
                     valid: true,
                     type: FlowActionType.CODE,
+                    lastUpdatedDate: expect.any(String),
                     settings: {
                         input: {},
                         sourceCode: {
@@ -335,6 +337,7 @@ describe('Flow Helper', () => {
                     name: 'step_4',
                     valid: true,
                     type: FlowActionType.CODE,
+                    lastUpdatedDate: expect.any(String),
                     settings: {
                         input: {},
                         sourceCode: {

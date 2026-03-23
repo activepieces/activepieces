@@ -1,4 +1,4 @@
-import { microsoftTeamsAuth } from '../../index';
+import { microsoftTeamsAuth } from '../auth';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import {
 	createTrigger,

@@ -1,36 +1,27 @@
-import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
-import { PrincipalType, Project, UpdateProjectRequestInCommunity } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
+import { ApId, PrincipalType, Project, SeekPage, SERVICE_KEY_SECURITY_OPENAPI, UpdateProjectRequestInCommunity } from '@activepieces/shared'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
+import { z } from 'zod'
+import { ProjectResourceType } from '../core/security/authorization/common'
+import { securityAccess } from '../core/security/authorization/fastify-security'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { projectService } from './project-service'
 
-export const projectController: FastifyPluginAsyncTypebox = async (fastify) => {
+export const projectController: FastifyPluginAsyncZod = async (fastify) => {
     fastify.post('/:id', UpdateProjectRequest, async (request) => {
-        const project = await projectService.getOneOrThrow(request.params.id)
-        return projectService.update(request.params.id, {
+        const project = await projectService(request.log).getOneOrThrow(request.params.id)
+        return projectService(request.log).update(request.params.id, {
             type: project.type,
             ...request.body,
         })
     })
 
-    fastify.get('/:id', {
-        config: {
-            security: securityAccess.project([PrincipalType.USER], undefined, {
-                type: ProjectResourceType.PARAM,
-                paramKey: 'id',
-            }),
-        },
-    }, async (request) => {
-        return projectService.getOneOrThrow(request.projectId)
+    fastify.get('/:id', GetProjectRequest, async (request) => {
+        return projectService(request.log).getOneOrThrow(request.projectId)
     })
 
-    fastify.get('/', {
-        config: {
-            security: securityAccess.publicPlatform([PrincipalType.USER]),
-        },
-    }, async (request) => {
-        return paginationHelper.createPage([await projectService.getUserProjectOrThrow(request.principal.id)], null)
+    fastify.get('/', ListProjectsRequest, async (request) => {
+        return paginationHelper.createPage([await projectService(request.log).getUserProjectOrThrow(request.principal.id)], null)
     })
 }
 
@@ -40,8 +31,8 @@ const UpdateProjectRequest = {
     },
     schema: {
         tags: ['projects'],
-        params: Type.Object({
-            id: Type.String(),
+        params: z.object({
+            id: z.string(),
         }),
         response: {
             [StatusCodes.OK]: Project,
@@ -49,3 +40,35 @@ const UpdateProjectRequest = {
         body: UpdateProjectRequestInCommunity,
     },
 }
+
+
+const GetProjectRequest = {
+    config: {
+        security: securityAccess.project([PrincipalType.USER], undefined, {
+            type: ProjectResourceType.PARAM,
+            paramKey: 'id',
+        }),
+    },
+    schema: {
+        tags: ['projects'],
+        params: z.object({
+            id: ApId,
+        }),
+        response: {
+            [StatusCodes.OK]: Project,
+        },
+    },
+}   
+
+const ListProjectsRequest = {
+    config: {
+        security: securityAccess.publicPlatform([PrincipalType.USER]),
+    },
+    schema: {
+        tags: ['projects'],
+        response: {
+            [StatusCodes.OK]: SeekPage(Project),
+        },
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+    },
+}   

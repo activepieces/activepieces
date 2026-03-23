@@ -1,12 +1,12 @@
 import fs from 'fs/promises'
 import path from 'path'
-import { ConfigureRepoRequest, GitRepo } from '@activepieces/ee-shared'
-import { AppSystemProp } from '@activepieces/server-shared'
-import { ActivepiecesError, ApEnvironment, ErrorCode } from '@activepieces/shared'
+import { ActivepiecesError, ApEnvironment, ConfigureRepoRequest, ErrorCode, GitRepo } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
 import simpleGit, { SimpleGit } from 'simple-git'
 import { userIdentityService } from '../../../../authentication/user-identity/user-identity-service'
 import { system } from '../../../../helper/system/system'
+import { AppSystemProp } from '../../../../helper/system/system-props'
 import { userService } from '../../../../user/user-service'
 
 
@@ -27,6 +27,7 @@ async function commitAndPush(
 }
 
 async function createGitRepoAndReturnPaths(
+    log: FastifyBaseLogger,
     gitRepo: GitRepo,
     userId: string,
 ): Promise<{ flowFolderPath: string, git: SimpleGit, stateFolderPath: string, connectionsFolderPath: string, tablesFolderPath: string }> {
@@ -66,14 +67,14 @@ async function createGitRepoAndReturnPaths(
     )
     await fs.mkdir(stateFolderPath, { recursive: true })
     const keyPath = path.resolve(path.join('tmp', 'keys', gitRepo.id))
-    await createOrGetSshKeyPath({ keyPath, sshPrivateKey: gitRepo.sshPrivateKey })
+    await createOrGetSshKeyPath({ keyPath, sshPrivateKey: gitRepo.sshPrivateKey ?? '' })
     const git = await initGitRepo(keyPath, gitRepo.remoteUrl, tmpFolder, gitRepo.branch)
     await git.pull('origin', gitRepo.branch)
 
-    const user = await userService.getOneOrFail({
+    const user = await userService(log).getOneOrFail({
         id: userId,
     })
-    const identity = await userIdentityService(system.globalLogger()).getBasicInformation(user.identityId)
+    const identity = await userIdentityService(log).getBasicInformation(user.identityId)
     const { email, firstName, lastName } = identity
     await git.addConfig('user.email', email)
     await git.addConfig('user.name', `${firstName} ${lastName}`)

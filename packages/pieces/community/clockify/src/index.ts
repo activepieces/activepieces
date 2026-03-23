@@ -11,30 +11,7 @@ import { BASE_URL, clockifyApiCall } from './lib/common/client';
 import { newTaskTrigger } from './lib/triggers/new-task';
 import { newTimeEntryTrigger } from './lib/triggers/new-time-entry';
 import { newTimerStartedTrigger } from './lib/triggers/new-timer-started';
-
-export const clockifyAuth = PieceAuth.SecretText({
-	displayName:'API Key',
-	description: `You can obtain your API key by navigating to **Preferences->Advanced**.`,
-	required: true,
-	validate: async ({ auth }) => {
-		try {
-			await clockifyApiCall({
-				apiKey: auth,
-				method: HttpMethod.GET,
-				resourceUri: '/user',
-			});
-
-			return {
-				valid: true,
-			};
-		} catch {
-			return {
-				valid: false,
-				error: 'Invalid API Key.',
-			};
-		}
-	},
-});
+import { clockifyAuth } from './lib/auth';
 
 export const clockify = createPiece({
 	displayName: 'Clockify',

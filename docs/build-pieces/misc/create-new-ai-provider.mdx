@@ -12,7 +12,7 @@ To create a new AI provider, you need to follow these steps:
 
 ## Implement the AI Interface
 
-Create a new factory that returns an instance of the `AI` interface in the `packages/pieces/community/common/src/lib/ai/providers/your-ai-provider.ts` file.
+Create a new factory that returns an instance of the `AI` interface in the `packages/pieces/common/src/lib/ai/providers/your-ai-provider.ts` file.
 
 ```typescript
 export const yourAiProvider = ({
@@ -41,7 +41,7 @@ export const yourAiProvider = ({
 
 ## Register the AI Provider
 
-Add the new AI provider to the `AiProviders` enum in `packages/pieces/community/common/src/lib/ai/providers/index.ts` file.
+Add the new AI provider to the `AiProviders` enum in `packages/pieces/common/src/lib/ai/providers/index.ts` file.
 
 ```diff
 export const AiProviders = [

@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { googleSearchConsoleAuth } from '../../';
+import { googleSearchConsoleAuth } from '../auth';
 import {
   AuthenticationType,
   httpClient,

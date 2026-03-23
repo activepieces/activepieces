@@ -1,5 +1,5 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { digitalPilotAuth } from '../../index';
+import { digitalPilotAuth } from '../auth';
 import { makeClient, tagIdProp } from '../common';
 
 export const newHighIntentVisitTrigger = createTrigger({

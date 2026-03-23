@@ -1,11 +1,9 @@
 import {
   createTrigger,
   TriggerStrategy,
-  OAuth2PropertyValue,
   Property,
 } from '@activepieces/pieces-framework';
-import { googleCalendarAuth } from '../../';
-import { googleCalendarCommon } from '../common';
+import { googleCalendarCommon, googleCalendarAuth, GoogleCalendarAuthValue } from '../common';
 import { stopWatchEvent, watchEvent, getLatestEvent } from '../common/helper';
 import { GoogleWatchResponse, GoogleCalendarEvent } from '../common/types';
 
@@ -77,7 +75,7 @@ export const newEvent = createTrigger({
 
   async onEnable(context) {
     const calendarId = context.propsValue.calendar_id!;
-    const auth = context.auth as OAuth2PropertyValue;
+    const auth = context.auth as GoogleCalendarAuthValue;
 
     const response = await watchEvent(calendarId, context.webhookUrl, auth);
 
@@ -88,7 +86,7 @@ export const newEvent = createTrigger({
   },
 
   async onDisable(context) {
-    const auth = context.auth as OAuth2PropertyValue;
+    const auth = context.auth as GoogleCalendarAuthValue;
     const watch = await context.store.get<GoogleWatchResponse>(
       'google_calendar_watch'
     );
@@ -143,7 +141,7 @@ export const newEvent = createTrigger({
   },
 
   async test(context) {
-    const auth = context.auth as OAuth2PropertyValue;
+    const auth = context.auth as GoogleCalendarAuthValue;
     const { event_types, search_filter, exclude_all_day } = context.propsValue;
 
     const latestEvent = await getLatestEvent(
