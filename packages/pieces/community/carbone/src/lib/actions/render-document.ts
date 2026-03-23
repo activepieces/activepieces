@@ -91,7 +91,6 @@ export const renderDocumentAction = createAction({
   async run(context) {
     const { templateId, data, convertTo, converter, lang, timezone, reportName, complement, currencySource, currencyTarget, currencyRates } = context.propsValue;
 
-    // Build request body
     const body: Record<string, unknown> = {
       data: data as Record<string, unknown>,
       convertTo: convertTo || undefined,
@@ -105,7 +104,6 @@ export const renderDocumentAction = createAction({
       currencyRates: currencyRates || undefined,
     };
 
-    // Remove undefined fields
     Object.keys(body).forEach((key) => {
       if (body[key] === undefined) {
         delete body[key];
