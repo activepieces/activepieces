@@ -1576,6 +1576,9 @@
       "@activepieces/piece-lofty": [
         "packages/pieces/community/lofty/src/index.ts"
       ],
+      "@activepieces/piece-loops": [
+        "packages/pieces/community/loops/src/index.ts"
+      ],
       "@activepieces/piece-youcanbookme": [
         "packages/pieces/community/youcanbookme/src/index.ts"
       ],
@@ -1686,6 +1689,9 @@
       ],
       "@activepieces/piece-barcode-lookup": [
         "packages/pieces/community/barcode-lookup/src/index.ts"
+      ],
+      "@activepieces/piece-intruder": [
+        "packages/pieces/community/intruder/src/index.ts"
       ],
       "@activepieces/piece-tidely": [
         "packages/pieces/community/tidely/src/index.ts"
@@ -1842,6 +1848,9 @@
       ],
       "@activepieces/piece-pocketbase": [
         "packages/pieces/community/pocketbase/src/index.ts"
+      ],
+      "@activepieces/piece-carbone": [
+        "packages/pieces/community/carbone/src/index.ts"
       ]
     },
     "resolveJsonModule": true
