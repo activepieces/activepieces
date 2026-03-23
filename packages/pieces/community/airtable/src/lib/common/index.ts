@@ -753,7 +753,8 @@ export const airtableCommon = {
     auth: string,
     base: string,
     tableId: string,
-    fields: Record<string, unknown>
+    fields: Record<string, unknown>,
+    allowEmpty = false
   ) => {
     if (!auth) return fields;
     if (!base) return fields;
@@ -771,20 +772,33 @@ export const airtableCommon = {
       if (!AirtableEnterpriseFields.includes(field.type)) {
         const key = field.id;
 
-        if (field.type === 'multipleAttachments' && fields[key]) {
-          newFields[key] = [
-            {
-              url: fields[key] as string,
-            },
-          ];
+        if (!(key in fields)) {
+          return;
+        }
+        if (field.type === 'multipleAttachments') {
+          if (allowEmpty && (!fields[key] || (Array.isArray(fields[key]) && (fields[key] as any[]).length === 0))) {
+            newFields[key] = [];
+          } else if (fields[key] && !(Array.isArray(fields[key]) && (fields[key] as any[]).length === 0)) {
+            newFields[key] = [
+              {
+                url: fields[key] as string,
+              },
+            ];
+          }
         } else if (
           ['multipleRecordLinks', 'multipleSelects'].includes(field.type)
         ) {
-          if (Array.isArray(fields[key]) && (fields[key] as any[]).length > 0) {
+          if (allowEmpty) {
+            newFields[key] = Array.isArray(fields[key]) ? fields[key] : [];
+          } else if (Array.isArray(fields[key]) && (fields[key] as any[]).length > 0) {
             newFields[key] = fields[key];
           }
         } else {
-          newFields[key] = fields[key];
+          if (allowEmpty) {
+            newFields[key] = (fields[key] === '' || fields[key] === undefined) ? null : fields[key];
+          } else if (fields[key] !== undefined && fields[key] !== '' && fields[key] !== null) {
+            newFields[key] = fields[key];
+          }
         }
       }
     });

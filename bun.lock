@@ -1,6 +1,6 @@
 {
   "lockfileVersion": 1,
-  "configVersion": 1,
+  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "activepieces",
@@ -140,7 +140,6 @@
         "bullmq-otel": "1.0.1",
         "canvas-confetti": "^1.9.4",
         "checkly": "6.9.10",
-        "chokidar": "4.0.3",
         "class-variance-authority": "0.7.0",
         "clear-module": "4.1.2",
         "cli-table3": "0.6.3",
@@ -551,7 +550,7 @@
     },
     "packages/pieces/community/airtable": {
       "name": "@activepieces/piece-airtable",
-      "version": "0.6.5",
+      "version": "0.6.6",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -2245,7 +2244,7 @@
     },
     "packages/pieces/community/eden-ai": {
       "name": "@activepieces/piece-eden-ai",
-      "version": "0.1.3",
+      "version": "0.2.0",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -2769,7 +2768,7 @@
     },
     "packages/pieces/community/gmail": {
       "name": "@activepieces/piece-gmail",
-      "version": "0.11.4",
+      "version": "0.11.6",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -3405,6 +3404,16 @@
         "tslib": "2.6.2",
       },
     },
+    "packages/pieces/community/intruder": {
+      "name": "@activepieces/piece-intruder",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/invoiceninja": {
       "name": "@activepieces/piece-invoiceninja",
       "version": "0.3.4",
@@ -3781,6 +3790,16 @@
         "tslib": "2.6.2",
       },
     },
+    "packages/pieces/community/lobstermail": {
+      "name": "@activepieces/piece-lobstermail",
+      "version": "0.1.0",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/localai": {
       "name": "@activepieces/piece-localai",
       "version": "0.1.5",
@@ -4150,6 +4169,18 @@
         "tslib": "^2.3.0",
       },
     },
+    "packages/pieces/community/microsoft-copilot": {
+      "name": "@activepieces/piece-microsoft-copilot",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "@microsoft/microsoft-graph-client": "3.0.7",
+        "@microsoft/microsoft-graph-types": "2.40.0",
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/microsoft-dynamics-365-business-central": {
       "name": "@activepieces/piece-microsoft-dynamics-365-business-central",
       "version": "0.1.6",
@@ -4173,7 +4204,7 @@
     },
     "packages/pieces/community/microsoft-excel-365": {
       "name": "@activepieces/piece-microsoft-excel-365",
-      "version": "0.5.1",
+      "version": "0.5.2",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -4797,7 +4828,7 @@
     },
     "packages/pieces/community/outseta": {
       "name": "@activepieces/piece-outseta",
-      "version": "0.0.3",
+      "version": "0.1.0",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -4894,7 +4925,7 @@
     },
     "packages/pieces/community/pdfcrowd": {
       "name": "@activepieces/piece-pdfcrowd",
-      "version": "0.0.4",
+      "version": "0.1.0",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -5421,7 +5452,7 @@
     },
     "packages/pieces/community/returning-ai": {
       "name": "@activepieces/piece-returning-ai",
-      "version": "0.1.3",
+      "version": "0.2.0",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -5629,12 +5660,18 @@
     },
     "packages/pieces/community/sendgrid": {
       "name": "@activepieces/piece-sendgrid",
-      "version": "0.4.4",
+      "version": "0.5.0",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
+        "mime-types": "2.1.35",
+        "nodemailer": "7.0.11",
         "tslib": "2.6.2",
+      },
+      "devDependencies": {
+        "@types/mime-types": "2.1.1",
+        "@types/nodemailer": "7.0.11",
       },
     },
     "packages/pieces/community/sendinblue": {
@@ -5872,7 +5909,7 @@
     },
     "packages/pieces/community/smartsheet": {
       "name": "@activepieces/piece-smartsheet",
-      "version": "0.1.3",
+      "version": "0.1.4",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -5913,7 +5950,7 @@
     },
     "packages/pieces/community/snowflake": {
       "name": "@activepieces/piece-snowflake",
-      "version": "0.1.4",
+      "version": "0.2.0",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -6660,6 +6697,16 @@
         "@activepieces/shared": "workspace:*",
         "dayjs": "1.11.9",
         "tslib": "^2.3.0",
+      },
+    },
+    "packages/pieces/community/webex": {
+      "name": "@activepieces/piece-webex",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
       },
     },
     "packages/pieces/community/webflow": {
@@ -7515,6 +7562,7 @@
         "bcrypt": "6.0.0",
         "bullmq": "5.61.0",
         "bullmq-otel": "1.0.1",
+        "chokidar": "4.0.3",
         "clear-module": "4.1.2",
         "content-disposition": "0.5.4",
         "dayjs": "1.11.9",
@@ -7617,6 +7665,7 @@
         "@activepieces/shared": "workspace:*",
         "async-mutex": "0.4.0",
         "dayjs": "1.11.9",
+        "systeminformation": "5.25.11",
       },
       "devDependencies": {
         "@types/node": "24.11.0",
@@ -7638,8 +7687,6 @@
         "@opentelemetry/sdk-trace-base": "2.1.0",
         "@opentelemetry/semantic-conventions": "1.37.0",
         "async-mutex": "0.4.0",
-        "chalk": "4.1.2",
-        "clear-module": "4.1.2",
         "dayjs": "1.11.9",
         "dotenv": "16.4.7",
         "env-var": "7.5.0",
@@ -7660,7 +7707,7 @@
     },
     "packages/shared": {
       "name": "@activepieces/shared",
-      "version": "0.45.0",
+      "version": "0.46.0",
       "dependencies": {
         "deepmerge-ts": "7.1.0",
         "nanoid": "3.3.8",
@@ -7753,6 +7800,7 @@
         "pako": "2.1.0",
         "papaparse": "5.5.3",
         "posthog-js": "1.195.0",
+        "pretty-bytes": "7.1.0",
         "qs": "6.14.2",
         "radix-ui": "1.4.3",
         "react": "19",
@@ -8387,6 +8435,8 @@
 
     "@activepieces/piece-intercom": ["@activepieces/piece-intercom@workspace:packages/pieces/community/intercom"],
 
+    "@activepieces/piece-intruder": ["@activepieces/piece-intruder@workspace:packages/pieces/community/intruder"],
+
     "@activepieces/piece-invoiceninja": ["@activepieces/piece-invoiceninja@workspace:packages/pieces/community/invoiceninja"],
 
     "@activepieces/piece-jina-ai": ["@activepieces/piece-jina-ai@workspace:packages/pieces/community/jina-ai"],
@@ -8454,6 +8504,8 @@
     "@activepieces/piece-livesession": ["@activepieces/piece-livesession@workspace:packages/pieces/community/livesession"],
 
     "@activepieces/piece-llmrails": ["@activepieces/piece-llmrails@workspace:packages/pieces/community/llmrails"],
+
+    "@activepieces/piece-lobstermail": ["@activepieces/piece-lobstermail@workspace:packages/pieces/community/lobstermail"],
 
     "@activepieces/piece-localai": ["@activepieces/piece-localai@workspace:packages/pieces/community/localai"],
 
@@ -8526,6 +8578,8 @@
     "@activepieces/piece-microsoft-365-people": ["@activepieces/piece-microsoft-365-people@workspace:packages/pieces/community/microsoft-365-people"],
 
     "@activepieces/piece-microsoft-365-planner": ["@activepieces/piece-microsoft-365-planner@workspace:packages/pieces/community/microsoft-365-planner"],
+
+    "@activepieces/piece-microsoft-copilot": ["@activepieces/piece-microsoft-copilot@workspace:packages/pieces/community/microsoft-copilot"],
 
     "@activepieces/piece-microsoft-dynamics-365-business-central": ["@activepieces/piece-microsoft-dynamics-365-business-central@workspace:packages/pieces/community/microsoft-dynamics-365-business-central"],
 
@@ -9014,6 +9068,8 @@
     "@activepieces/piece-waitwhile": ["@activepieces/piece-waitwhile@workspace:packages/pieces/community/waitwhile"],
 
     "@activepieces/piece-wealthbox": ["@activepieces/piece-wealthbox@workspace:packages/pieces/community/wealthbox"],
+
+    "@activepieces/piece-webex": ["@activepieces/piece-webex@workspace:packages/pieces/community/webex"],
 
     "@activepieces/piece-webflow": ["@activepieces/piece-webflow@workspace:packages/pieces/community/webflow"],
 
@@ -13539,6 +13595,8 @@
 
     "prettier-linter-helpers": ["prettier-linter-helpers@1.0.1", "", { "dependencies": { "fast-diff": "^1.1.2" } }, "sha512-SxToR7P8Y2lWmv/kTzVLC1t/GDI2WGjMwNhLLE9qtH8Q13C+aEmuRlzDst4Up4s0Wc8sF2M+J57iB3cMLqftfg=="],
 
+    "pretty-bytes": ["pretty-bytes@7.1.0", "", {}, "sha512-nODzvTiYVRGRqAOvE84Vk5JDPyyxsVk0/fbA/bq7RqlnhksGpset09XTxbpvLTIjoaF7K8Z8DG8yHtKGTPSYRw=="],
+
     "pretty-ms": ["pretty-ms@9.3.0", "", { "dependencies": { "parse-ms": "^4.0.0" } }, "sha512-gjVS5hOP+M3wMm5nmNOucbIrqudzs9v/57bWRHQWLYklXqoXKrVfYW2W9+glfGsqtPgpiz5WwyEEB+ksXIx3gQ=="],
 
     "priority-queue-typescript": ["priority-queue-typescript@1.0.1", "", {}, "sha512-Apycf6CgjdPRNfpZ8qgQeHVRe4B6R51QAd94k6fE13tGUpW1RLv8+ZeJipl2f0j/No3nt2Gk7dF2f+i1Au/I2w=="],
@@ -14146,6 +14204,8 @@
     "symbol-tree": ["symbol-tree@3.2.4", "", {}, "sha512-9QNk5KwDF+Bvz+PyObkmSYjI5ksVUYtjW7AU22r2NKcfLJcXp96hkDWU3+XndOsUb+AQ9QhfzfCT2O+CNWT5Tw=="],
 
     "symlink-or-copy": ["symlink-or-copy@1.3.1", "", {}, "sha512-0K91MEXFpBUaywiwSSkmKjnGcasG/rVBXFLJz5DrgGabpYD6N+3yZrfD6uUIfpuTu65DZLHi7N8CizHc07BPZA=="],
+
+    "systeminformation": ["systeminformation@5.25.11", "", { "os": "!aix", "bin": { "systeminformation": "lib/cli.js" } }, "sha512-jI01fn/t47rrLTQB0FTlMCC+5dYx8o0RRF+R4BPiUNsvg5OdY0s9DKMFmJGrx5SwMZQ4cag0Gl6v8oycso9b/g=="],
 
     "tailwind-merge": ["tailwind-merge@2.4.0", "", {}, "sha512-49AwoOQNKdqKPd9CViyH5wJoSKsCDjUlzL8DxuGp3P1FsGY36NJDAa18jLZcaHAUUuTj+JB8IAo8zWgBNvBF7A=="],
 

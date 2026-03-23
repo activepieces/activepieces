@@ -2,7 +2,7 @@ name: Continuous Delivery
 
 on:
   push:
-    branches: []
+    branches: [main]
   schedule:
     - cron: '0 9 * * *'  # Daily at 9 AM UTC — promote staging to prod (+ official release on Sundays)
   workflow_dispatch:

@@ -63,6 +63,7 @@
     "bcrypt": "6.0.0",
     "bullmq": "5.61.0",
     "bullmq-otel": "1.0.1",
+    "chokidar": "4.0.3",
     "clear-module": "4.1.2",
     "content-disposition": "0.5.4",
     "dayjs": "1.11.9",

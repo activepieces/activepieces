@@ -1178,6 +1178,8 @@
   "Retry": "",
   "on latest version": "",
   "Only failed runs can be retried from failed step": "",
+  "Retry is only available for {failedJobRetentionDays} after a run fails.": "執行失敗後 {failedJobRetentionDays, plural, =0 {0 天} =1 {1 天} other {# 天}} 內可重試。",
+  "Retry failed": "重試失敗",
   "from failed step": "",
   "Viewing retried runs": "",
   "No flow runs found": "",
