@@ -21,7 +21,7 @@ const campaignDropdown = (options: { required: boolean; description: string }) =
 
       try {
         const campaigns = await famulorCommon.listCampaigns({ auth: auth.secret_text });
-        
+
         if (!campaigns || campaigns.length === 0) {
           return {
             disabled: true,
@@ -101,20 +101,20 @@ export const addLead = () => ({
       props: async ({ num_secondary_contacts }) => {
       const contacts: any = {};
       const numContacts = Math.min(Number(num_secondary_contacts) || 0, 10);
-      
+
       for (let i = 1; i <= numContacts; i++) {
         contacts[`contact_${i}_phone`] = phoneNumberProperty(
           `Contact ${i} - Phone Number`,
           `Phone number for secondary contact ${i}`
         );
-        
+
         contacts[`contact_${i}_variables`] = variablesProperty(
           `Contact ${i} - Variables`,
           `Variables for secondary contact ${i} as key-value pairs`,
           false
         );
       }
-      
+
       return contacts;
     },
   }),
@@ -193,7 +193,7 @@ const assistantDropdown = () =>
 
       try {
         const assistants = await famulorCommon.listAssistants({ auth: auth.secret_text });
-        
+
         if (!assistants || assistants.length === 0) {
           return {
             disabled: true,
@@ -587,8 +587,8 @@ export const generateAiReply = () => ({
     description: 'Optional context variables to pass to the assistant',
     required: false,
     defaultValue: {
-      customer_name: 'John Smith',
-      source: 'whatsapp',
+      customer_name: '',
+      source: '',
     },
   }),
 });
@@ -615,9 +615,9 @@ export const createConversation = () => ({
     description: 'Custom variables to pass to the assistant',
     required: false,
     defaultValue: {
-      customer_name: 'John Smith',
-      company: 'Acme Corp',
-      source: 'pricing_page',
+      customer_name: '',
+      company: '',
+      source: '',
     },
   }),
 });
