@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { ibmCognoseAuth } from '../../index';
+import { ibmCognoseAuth } from '../auth';
 import { CognosClient } from '../common/cognos-client';
 import { contentObjectDropdown } from '../common/content-object-dropdown';
 
@@ -36,7 +36,7 @@ export const updateContentObjectAction = createAction({
     const { objectId, defaultName, defaultDescriptions, type, version } = propsValue;
 
     try {
-      const client = new CognosClient(auth);
+      const client = new CognosClient(auth.props);
 
       const updateDefinition: any = { type };
       

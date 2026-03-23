@@ -127,7 +127,7 @@ export const createTask = createAction({
       headers: {
         'accept': 'application/json',
         'content-type': 'application/json',
-        'API_KEY': context.auth,
+        'API_KEY': context.auth.secret_text,
       },
       body,
     });

@@ -1,11 +1,10 @@
-import { googleDocsAuth } from '../..';
+import { googleDocsAuth, createGoogleClient } from '../auth';
 import {
 	createAction,
 	DynamicPropsValue,
 	Property,
 } from '@activepieces/pieces-framework';
 import { google } from 'googleapis';
-import { OAuth2Client } from 'googleapis-common';
 import { folderIdProp } from '../common/props';
 
 export const findDocumentAction = createAction({
@@ -25,6 +24,7 @@ export const findDocumentAction = createAction({
 			required: false,
 		}),
 		newDocumentProps: Property.DynamicProperties({
+			auth: googleDocsAuth,
 			displayName: 'New Document Properties',
 			required: false,
 			refreshers: ['createIfNotFound'],
@@ -49,8 +49,7 @@ export const findDocumentAction = createAction({
 		const { name: documentName, folderId, createIfNotFound, newDocumentProps } = context.propsValue;
 		const newDocumentContent = newDocumentProps?.['content'] as string;
 
-		const authClient = new OAuth2Client();
-		authClient.setCredentials(context.auth);
+		const authClient = await createGoogleClient(context.auth);
 
 		const drive = google.drive({ version: 'v3', auth: authClient });
 		const docs = google.docs({ version: 'v1', auth: authClient });

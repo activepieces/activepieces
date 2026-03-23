@@ -44,7 +44,7 @@ export const crawlWebsiteAction = createAction({
 			url: BASE_URL + '/crawl',
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
-				token: context.auth,
+				token: context.auth.secret_text,
 			},
 			body: {
 				url,
@@ -67,7 +67,7 @@ export const crawlWebsiteAction = createAction({
 				url: BASE_URL + '/list_scrapes',
 				authentication: {
 					type: AuthenticationType.BEARER_TOKEN,
-					token: context.auth,
+					token: context.auth.secret_text,
 				},
 				queryParams: {
 					job_id: jobId,

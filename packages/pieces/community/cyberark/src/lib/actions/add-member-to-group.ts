@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { cyberarkAuth } from '../../index';
+import { cyberarkAuth } from '../auth';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { groupIdDropdown } from '../common/group-dropdown';
 import { memberIdDropdown } from '../common/member-dropdown';
@@ -32,7 +32,7 @@ export const addMemberToGroup = createAction({
     }),
   },
   async run(context) {
-    const authData = await getAuthToken(context.auth as CyberArkAuth);
+    const authData = await getAuthToken(context.auth);
 
     if (!context.propsValue.memberId) {
       return {

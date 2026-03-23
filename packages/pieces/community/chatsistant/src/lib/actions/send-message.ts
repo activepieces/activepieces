@@ -30,14 +30,14 @@ export const sendMessage = createAction({
 
     if (!session_uuid) {
       const response = await makeRequest(
-        auth,
+        auth.secret_text,
         HttpMethod.POST,
         `/chatbot/${chatbot_uuid}/session/create`,
         {}
       );
       const session_id = response.uuid;
       const messageResponse = await makeRequest(
-        auth,
+        auth.secret_text,
         HttpMethod.POST,
         `/session/${session_id}/message/stream`,
         {
@@ -47,7 +47,7 @@ export const sendMessage = createAction({
       return messageResponse;
     } else {
       const response = await makeRequest(
-        auth,
+        auth.secret_text,
         HttpMethod.POST,
         `/session/${session_uuid}/message/stream`,
         {

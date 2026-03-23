@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { airtableAuth } from '../../index';
+import { airtableAuth } from '../auth';
 import { airtableCommon } from '../common';
 import { AirtableFieldConfig } from '../common/models';
 
@@ -43,7 +43,7 @@ export const airtableCreateTableAction = createAction({
     const { base: baseId, name, description, fields } = propsValue;
 
     return await airtableCommon.createTable({
-      personalToken,
+      personalToken: personalToken.secret_text,
       baseId: baseId as string,
       name: name as string,
       description: description as string | undefined,

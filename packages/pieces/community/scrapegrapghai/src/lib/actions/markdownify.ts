@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { scrapegraphaiAuth } from '../../index';
+import { scrapegraphaiAuth } from '../auth';
 
 export const markdownify = createAction({
   name: 'markdownify',
@@ -20,7 +20,7 @@ export const markdownify = createAction({
       url: 'https://api.scrapegraphai.com/v1/markdownify',
       headers: {
         'Content-Type': 'application/json',
-        'SGAI-APIKEY': auth,
+        'SGAI-APIKEY': auth.secret_text,
       },
       body: {
         website_url: propsValue.website_url,

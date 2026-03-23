@@ -38,7 +38,7 @@ export const objectUpdated = createTrigger({
   },
   onEnable: async (context) => {
     const { projectId, bucket, prefix } = context.propsValue;
-    const auth = context.auth as any;
+    const auth = context.auth;
 
     // Generate unique names for this trigger instance
     const triggerId = `ap-gcs-update-${bucket}-${Date.now()}`;
@@ -121,7 +121,7 @@ export const objectUpdated = createTrigger({
 
     const { projectId } = context.propsValue;
     const { bucket } = context.propsValue;
-    const auth = context.auth as any;
+    const auth = context.auth;
 
     // Clean up in reverse order
     try {

@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { autocallsAuth, baseApiUrl } from '../..';
+import { autocallsAuth } from '../..';
+import { baseApiUrl } from '../..';
 
 export const campaignControl = createAction({
   auth:autocallsAuth,
@@ -9,6 +10,7 @@ export const campaignControl = createAction({
   description: "Start or stop an outbound campaign from our platform.",
   props: {
     campaign: Property.Dropdown({
+      auth: autocallsAuth,
       displayName: 'Campaign',
       description: 'Select a campaign',
       required: true,
@@ -19,7 +21,7 @@ export const campaignControl = createAction({
           method: HttpMethod.GET,
           url: baseApiUrl + 'api/user/campaigns',
           headers: {
-            Authorization: "Bearer " + auth,
+            Authorization: "Bearer " + auth?.secret_text,
             'Content-Type': 'application/json',
             'Accept': 'application/json'
           },
@@ -68,7 +70,7 @@ export const campaignControl = createAction({
         action: context.propsValue['action'],
       },
       headers: {
-        Authorization: "Bearer " + context.auth,
+        Authorization: "Bearer " + context.auth.secret_text,
         'Content-Type': 'application/json',
         'Accept': 'application/json'
       },

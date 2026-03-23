@@ -26,6 +26,7 @@ export const searchDeals = createAction({
             }
         }),
         customer_id: Property.Dropdown({
+          auth:teamleaderAuth,
             displayName: 'Customer',
             description: 'Filter deals by specific customer',
             required: false,
@@ -46,7 +47,7 @@ export const searchDeals = createAction({
                 try {
                     if (customer_type === 'company') {
                         const response = await teamleaderCommon.apiCall({
-                            auth: auth as any,
+                            auth,
                             method: HttpMethod.POST,
                             resourceUri: '/companies.list',
                             body: {}
@@ -61,7 +62,7 @@ export const searchDeals = createAction({
                         };
                     } else {
                         const response = await teamleaderCommon.apiCall({
-                            auth: auth as any,
+                            auth,
                             method: HttpMethod.POST,
                             resourceUri: '/contacts.list',
                             body: {}
@@ -85,6 +86,7 @@ export const searchDeals = createAction({
             }
         }),
         phase_id: Property.Dropdown({
+          auth:teamleaderAuth,
             displayName: 'Deal Phase',
             description: 'Filter by deal phase or stage',
             required: false,
@@ -98,7 +100,7 @@ export const searchDeals = createAction({
 
                 try {
                     const response = await teamleaderCommon.apiCall({
-                        auth: auth as any,
+                        auth,
                         method: HttpMethod.POST,
                         resourceUri: '/dealPhases.list',
                         body: {}
@@ -133,6 +135,7 @@ export const searchDeals = createAction({
             }
         }),
         responsible_user_id: Property.Dropdown({
+          auth:teamleaderAuth,
             displayName: 'Responsible User',
             description: 'Filter by user responsible for deals',
             required: false,
@@ -146,7 +149,7 @@ export const searchDeals = createAction({
 
                 try {
                     const response = await teamleaderCommon.apiCall({
-                        auth: auth as any,
+                        auth,
                         method: HttpMethod.POST,
                         resourceUri: '/users.list',
                         body: {

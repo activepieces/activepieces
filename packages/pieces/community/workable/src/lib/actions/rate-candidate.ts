@@ -1,4 +1,4 @@
-import { workableAuth } from '../../index';
+import { workableAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { getAccountSubdomain } from '../common/get-subdomain';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
@@ -50,7 +50,7 @@ export const rateCandidate = createAction({
     const scale = context.propsValue.scale;
     const grade = context.propsValue.grade;
 
-    const accessToken = context.auth;
+    const accessToken = context.auth.secret_text;
     const subdomain = await getAccountSubdomain(accessToken);
 
     const body: Record<string, any> = {

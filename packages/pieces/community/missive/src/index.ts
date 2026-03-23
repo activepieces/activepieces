@@ -30,7 +30,7 @@ export const missive = createPiece({
             baseUrl: () => 'https://public.missiveapp.com/v1',
             auth: missiveAuth,
             authMapping: async (auth) => ({
-                Authorization: `Bearer ${auth}`,
+                Authorization: `Bearer ${auth.secret_text}`,
             }),
         }),
     ],

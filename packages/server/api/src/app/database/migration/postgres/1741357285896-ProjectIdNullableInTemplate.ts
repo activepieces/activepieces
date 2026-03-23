@@ -1,9 +1,14 @@
+import { ApEdition } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { isNotOneOfTheseEditions } from '../../database-common'
 
 export class ProjectIdNullableInTemplate1741357285896 implements MigrationInterface {
     name = 'ProjectIdNullableInTemplate1741357285896'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
+        if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
+            return
+        }
         await queryRunner.query(`
             ALTER TABLE "flow_template" DROP CONSTRAINT "fk_flow_template_project_id"
         `)
@@ -23,6 +28,9 @@ export class ProjectIdNullableInTemplate1741357285896 implements MigrationInterf
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+        if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
+            return
+        }
         await queryRunner.query(`
             ALTER TABLE "flow_template" DROP CONSTRAINT "fk_flow_template_project_id"
         `)

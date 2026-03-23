@@ -1,4 +1,6 @@
 import { httpClient, HttpMethod, HttpMessageBody } from '@activepieces/pieces-common';
+import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
+import { fragmentAuth } from './auth';
 
 export const BASE_URL = 'https://api.onfragment.com/api/v1';
 
@@ -21,7 +23,7 @@ export const fragmentClient = {
   async makeRequest<T extends HttpMessageBody = any>(
     method: HttpMethod,
     path: string,
-    apiKey: string,
+    apiKey: AppConnectionValueForAuthProperty<typeof fragmentAuth>,
     body?: any,
     queryParams?: Record<string, string>
   ): Promise<T> {
@@ -32,7 +34,7 @@ export const fragmentClient = {
         method,
         url,
         headers: {
-          'Authorization': `Bearer ${apiKey}`,
+          'Authorization': `Bearer ${apiKey.secret_text}`,
           'Content-Type': 'application/json',
         },
         body,

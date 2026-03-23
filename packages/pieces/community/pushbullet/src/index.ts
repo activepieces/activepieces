@@ -26,7 +26,7 @@ export const pushbullet = createPiece({
       authMapping: async (auth) => {
         const access_token = auth;
         return {
-          Authorization: `Bearer ${access_token as string}`,
+          Authorization: `Bearer ${access_token.secret_text}`,
           'Content-Type': 'application/json',
         };
       },

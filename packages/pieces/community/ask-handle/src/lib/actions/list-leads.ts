@@ -46,7 +46,7 @@ export const listLeads = createAction({
       : '/leads/';
 
     return await askHandleApiCall(
-      context.auth as string,
+      context.auth.secret_text,
       HttpMethod.GET,
       path
     );

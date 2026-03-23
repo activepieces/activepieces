@@ -28,7 +28,7 @@ export const addUser = createAction({
   async run(context) {
     const { name, email, role } = context.propsValue;
     const response = await makeRequest(
-      context.auth,
+      context.auth.secret_text,
       HttpMethod.POST,
       `/users/add`,
       {

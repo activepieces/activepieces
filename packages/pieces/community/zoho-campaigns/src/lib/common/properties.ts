@@ -5,6 +5,7 @@ import { Tag } from './types';
 // Custom Properties
 const campaignDropdown = () =>
   Property.Dropdown({
+    auth: zohoCampaignsAuth,
     displayName: 'Campaign',
     description: 'Select the campaign',
     required: true,
@@ -42,6 +43,7 @@ const campaignDropdown = () =>
 
 const tagDropdown = ({ required = true }: { required?: boolean }) =>
   Property.Dropdown({
+    auth: zohoCampaignsAuth,
     displayName: 'Tag',
     description: 'Select the tag to associate with the contact',
     required: required,
@@ -89,6 +91,7 @@ const tagDropdown = ({ required = true }: { required?: boolean }) =>
 
 const mailingListDropdown = ({ required = true }) =>
   Property.Dropdown({
+    auth: zohoCampaignsAuth,
     displayName: 'Mailing List',
     description: 'Select the mailing list',
     required: required,
@@ -126,6 +129,7 @@ const mailingListDropdown = ({ required = true }) =>
 
 const mailingListMultiSelectDropdown = ({ required = true }) =>
   Property.MultiSelectDropdown({
+    auth: zohoCampaignsAuth,
     displayName: 'Mailing Lists',
     description: 'Select the mailing lists',
     required: required,
@@ -162,6 +166,7 @@ const mailingListMultiSelectDropdown = ({ required = true }) =>
 
 const topicDropdown = ({ required = true }) =>
   Property.Dropdown({
+    auth: zohoCampaignsAuth,
     displayName: 'Topic',
     description: 'Select the topic',
     required: required,
@@ -200,6 +205,7 @@ const contactInformation = Property.DynamicProperties({
   displayName: 'Contact Information',
   description: 'Information about the contact',
   required: true,
+  auth: zohoCampaignsAuth,
   refreshers: ['auth'],
   props: async () => ({
     'Contact Email': Property.ShortText({

@@ -2,6 +2,7 @@ import {
   createTrigger,
   TriggerStrategy,
   PiecePropValueSchema,
+  AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import {
   DedupeStrategy,
@@ -10,7 +11,7 @@ import {
   HttpMethod,
 } from '@activepieces/pieces-common';
 import dayjs from 'dayjs';
-import { meistertaskAuth } from '../../index';
+import { meistertaskAuth } from '../auth';
 import { makeRequest, meisterTaskCommon } from '../common/common';
 
 const getToken = (auth: any): string => {
@@ -18,7 +19,7 @@ const getToken = (auth: any): string => {
 };
 
 const newCommentPolling: Polling<
-  PiecePropValueSchema<typeof meistertaskAuth>,
+  AppConnectionValueForAuthProperty<typeof meistertaskAuth>,
   { task_id: unknown }
 > = {
   strategy: DedupeStrategy.TIMEBASED,

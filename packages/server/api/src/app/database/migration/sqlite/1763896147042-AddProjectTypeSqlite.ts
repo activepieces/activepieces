@@ -1,6 +1,5 @@
-import { ApEdition, apId } from '@activepieces/shared'
+import { apId } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
-import { isNotOneOfTheseEditions } from '../../database-common'
 
 enum ProjectType {
     TEAM = 'TEAM',
@@ -104,17 +103,16 @@ export class AddProjectTypeSqlite1763896147042 implements MigrationInterface {
             FROM "user" u
             INNER JOIN "user_identity" ui ON u."identityId" = ui."id"
         `)
-   
+
         let excludedUsers: string[] = []
-        if (isNotOneOfTheseEditions([ApEdition.COMMUNITY])) {
-            const rows = await queryRunner.query('SELECT "ownerId" FROM "project"')
-            await queryRunner.query(`
+        const rows = await queryRunner.query('SELECT "ownerId" FROM "project"')
+        await queryRunner.query(`
                 UPDATE "project"
                 SET "type" = '${ProjectType.PERSONAL}'
             `)
-            excludedUsers = rows.map((row: { ownerId: string }) => row.ownerId) as string[]
-        }
-        
+        excludedUsers = rows.map((row: { ownerId: string }) => row.ownerId) as string[]
+
+
         if (users.length > 0) {
             const values: string[] = []
             const params: (string | boolean)[] = []
@@ -142,12 +140,14 @@ export class AddProjectTypeSqlite1763896147042 implements MigrationInterface {
                 params.push(id, created, updated, ownerId, displayName, type, platformId, icon, releasesEnabled)
                 paramIndex += 9
             }
-            
-            await queryRunner.query(
-                `INSERT INTO "project" ("id", "created", "updated", "ownerId", "displayName", "type", "platformId", "icon", "releasesEnabled") 
-                VALUES ${values.join(', ')}`,
-                params,
-            )
+
+            if (values.length > 0) {
+                await queryRunner.query(
+                    `INSERT INTO "project" ("id", "created", "updated", "ownerId", "displayName", "type", "platformId", "icon", "releasesEnabled") 
+                    VALUES ${values.join(', ')}`,
+                    params,
+                )
+            }
         }
     }
 
@@ -155,7 +155,7 @@ export class AddProjectTypeSqlite1763896147042 implements MigrationInterface {
         await queryRunner.query(`
             DELETE FROM "project" WHERE "type" = '${ProjectType.PERSONAL}'
         `)
-        
+
         await queryRunner.query(`
             DROP INDEX "idx_project_platform_id_external_id"
         `)

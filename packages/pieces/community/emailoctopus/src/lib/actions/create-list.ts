@@ -18,7 +18,7 @@ export const createList = createAction({
 
     async run(context) {
         const { name } = context.propsValue;
-        const client = new EmailOctopusClient(context.auth);
+        const client = new EmailOctopusClient(context.auth.secret_text);
 
         const body = {
             name,

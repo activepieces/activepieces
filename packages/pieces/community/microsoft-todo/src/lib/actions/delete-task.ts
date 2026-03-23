@@ -1,6 +1,6 @@
 import { Property, createAction, OAuth2PropertyValue } from '@activepieces/pieces-framework';
 import { getTaskListsDropdown, getTasksInListDropdown } from '../common';
-import { microsoftToDoAuth } from '../../index';
+import { microsoftToDoAuth } from '../auth';
 import { Client } from '@microsoft/microsoft-graph-client';
 
 export const deleteTaskAction = createAction({
@@ -10,6 +10,7 @@ export const deleteTaskAction = createAction({
     description: 'Deletes an existing task.',
     props: {
         task_list_id: Property.Dropdown({
+   auth: microsoftToDoAuth,
             displayName: 'Task List',
             description: 'The list containing the task you want to delete.',
             required: true,
@@ -27,6 +28,7 @@ export const deleteTaskAction = createAction({
             },
         }),
         task_id: Property.Dropdown({
+   auth: microsoftToDoAuth,
             displayName: 'Task',
             description: 'The specific task to delete.',
             required: true,

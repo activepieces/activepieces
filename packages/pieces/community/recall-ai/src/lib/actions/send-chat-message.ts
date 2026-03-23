@@ -47,9 +47,9 @@ export const sendChatMessage = createAction({
       body['pin'] = pin;
     }
 
-    const response = await makeRequest(
-      context.auth.server as string,
-      context.auth.api_key as string,
+    const response =  await makeRequest(
+      context.auth.props.server,
+      context.auth.props.api_key,
       HttpMethod.POST,
       `/bot/${bot_id}/send_chat_message/`,
       body

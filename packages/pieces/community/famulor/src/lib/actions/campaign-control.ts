@@ -7,13 +7,13 @@ export const campaignControl = createAction({
   auth: famulorAuth,
   name: 'campaignControl',
   displayName: 'Start/Stop Campaign',
-  description: 'Start or stop an outbound calling campaign. Starting requires sufficient leads; stopping cancels ongoing calls.',
+  description: 'Start or stop an outbound calling campaign.',
   props: famulorCommon.campaignControlProperties(),
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, famulorCommon.campaignControlSchema);
 
     return await famulorCommon.campaignControl({
-      auth: auth as string,
+      auth: auth.secret_text,
       campaign_id: propsValue.campaign,
       action: propsValue.action as 'start' | 'stop',
     });

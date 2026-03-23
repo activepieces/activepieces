@@ -17,7 +17,7 @@ export const getStructureRun = createAction({
     const { structure_run_id } = context.propsValue;
 
     const response = await makeRequest(
-      context.auth as string,
+      context.auth.secret_text,
       HttpMethod.GET,
       `/structure-runs/${structure_run_id}`
     );

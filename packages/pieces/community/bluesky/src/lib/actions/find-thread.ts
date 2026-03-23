@@ -17,9 +17,9 @@ export const findThread = createAction({
     const { postUrl, depth = 6, parentHeight = 80 } = propsValue;
 
     try {
-      const agent = await createBlueskyAgent(auth);
+      const agent = await createBlueskyAgent(auth.props);
       
-      const postInfo = extractPostInfoFromUrl(postUrl);
+      const postInfo = extractPostInfoFromUrl(postUrl); 
       let atUri = postInfo.uri;
 
       if (!atUri && postInfo.handle && postInfo.postId) {

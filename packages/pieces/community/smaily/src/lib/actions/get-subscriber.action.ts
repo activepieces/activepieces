@@ -3,7 +3,7 @@ import {
   httpClient,
   HttpMethod,
 } from '@activepieces/pieces-common';
-import { smailyAuth } from '../../';
+import { smailyAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 
 export const getSubscriberAction = createAction({
@@ -21,7 +21,7 @@ export const getSubscriberAction = createAction({
   async run(context) {
     const response = await httpClient.sendRequest({
       method: HttpMethod.GET,
-      url: `https://${context.auth.domain}.sendsmaily.net/api/contact.php`,
+      url: `https://${context.auth.props.domain}.sendsmaily.net/api/contact.php`,
       queryParams: {
         email: context.propsValue.email,
       },
@@ -30,8 +30,8 @@ export const getSubscriberAction = createAction({
       },
       authentication: {
         type: AuthenticationType.BASIC,
-        username: context.auth.username,
-        password: context.auth.password,
+            username: context.auth.props.username,
+        password: context.auth.props.password,
       },
     });
 

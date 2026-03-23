@@ -1,7 +1,7 @@
 import { BettermodeAuthType } from './auth';
 import { listMemberSpaces, listBadges } from './api';
 
-export async function buildMemberSpacesDropdown(auth: BettermodeAuthType) {
+export async function buildMemberSpacesDropdown(auth?: BettermodeAuthType) {
   if (!auth) {
     return {
       options: [],
@@ -18,7 +18,7 @@ export async function buildMemberSpacesDropdown(auth: BettermodeAuthType) {
   };
 }
 
-export async function buildBadgesDropdown(auth: BettermodeAuthType) {
+export async function buildBadgesDropdown(auth?: BettermodeAuthType) {
   if (!auth) {
     return {
       options: [],

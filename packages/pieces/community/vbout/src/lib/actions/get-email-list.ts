@@ -1,5 +1,5 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { vboutAuth } from '../..';
+import { vboutAuth } from '../auth';
 import { makeClient, vboutCommon } from '../common';
 
 export const getEmailListAction = createAction({
@@ -11,7 +11,7 @@ export const getEmailListAction = createAction({
     listid: vboutCommon.listid(true),
   },
   async run({ auth, propsValue }) {
-    const client = makeClient(auth as string);
+    const client = makeClient(auth.secret_text);
     const listId = propsValue.listid!;
 
     return await client.getEmailList(listId);

@@ -16,6 +16,7 @@ export const updateContactAction = createAction({
   props: {
     contact_id: capsuleCrmProps.contact_id(),
     contactFields: Property.DynamicProperties({
+      auth: capsuleCrmAuth,
       displayName: 'Details',
       required: true,
       refreshers: ['contact_id'],
@@ -24,7 +25,7 @@ export const updateContactAction = createAction({
         if (!auth || !contact_id) return fields;
 
         const contact = await capsuleCrmClient.getContact(
-          auth as CapsuleCrmAuthType,
+          auth,
           contact_id as unknown as number
         );
 
@@ -62,6 +63,7 @@ export const updateContactAction = createAction({
       required: false,
     }),
     addresses: Property.DynamicProperties({
+      auth: capsuleCrmAuth,
       displayName: 'Addresses',
       required: false,
       refreshers: ['contact_id'],
@@ -70,7 +72,7 @@ export const updateContactAction = createAction({
         if (!auth || !contact_id) return fields;
 
         const contact = await capsuleCrmClient.getContact(
-          auth as CapsuleCrmAuthType,
+          auth,
           contact_id as unknown as number
         );
         const addressOptions =
@@ -134,6 +136,7 @@ export const updateContactAction = createAction({
       },
     }),
     websites: Property.DynamicProperties({
+      auth: capsuleCrmAuth,
       displayName: 'Websites',
       required: false,
       refreshers: ['contact_id'],
@@ -142,7 +145,7 @@ export const updateContactAction = createAction({
         if (!auth || !contact_id) return fields;
 
         const contact = await capsuleCrmClient.getContact(
-          auth as CapsuleCrmAuthType,
+          auth,
           contact_id as unknown as number
         );
         const websiteOptions =
@@ -208,6 +211,7 @@ export const updateContactAction = createAction({
       },
     }),
     emailAddresses: Property.DynamicProperties({
+      auth: capsuleCrmAuth,
       displayName: 'Email Addresses',
       required: false,
       refreshers: ['contact_id'],
@@ -216,7 +220,7 @@ export const updateContactAction = createAction({
         if (!auth || !contact_id) return fields;
 
         const contact = await capsuleCrmClient.getContact(
-          auth as CapsuleCrmAuthType,
+          auth,
           contact_id as unknown as number
         );
         const emailOptions =
@@ -261,6 +265,7 @@ export const updateContactAction = createAction({
       },
     }),
     phoneNumbers: Property.DynamicProperties({
+      auth: capsuleCrmAuth,
       displayName: 'Phone Numbers',
       required: false,
       refreshers: ['contact_id'],
@@ -269,7 +274,7 @@ export const updateContactAction = createAction({
         if (!auth || !contact_id) return fields;
 
         const contact = await capsuleCrmClient.getContact(
-          auth as CapsuleCrmAuthType,
+          auth,
           contact_id as unknown as number
         );
         const phoneOptions =

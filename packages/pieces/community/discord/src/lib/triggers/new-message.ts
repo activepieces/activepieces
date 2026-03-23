@@ -7,17 +7,18 @@ import {
   pollingHelper,
 } from '@activepieces/pieces-common';
 import {
+  AppConnectionValueForAuthProperty,
   createTrigger,
   Property,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
-import { discordAuth } from '../..';
+import { discordAuth } from '../auth';
 import { discordCommon } from '../common';
 
 import { Message } from '../common/models';
 
-const polling: Polling<string, { channel: string | undefined; limit: number }> =
+const polling: Polling<AppConnectionValueForAuthProperty<typeof discordAuth>, { channel: string | undefined; limit: number }> =
   {
     strategy: DedupeStrategy.TIMEBASED,
     items: async ({ auth, propsValue: { channel, limit } }) => {
@@ -31,7 +32,7 @@ const polling: Polling<string, { channel: string | undefined; limit: number }> =
           '/messages?limit=' +
           limit,
         headers: {
-          Authorization: 'Bot ' + auth,
+           Authorization: 'Bot ' + auth.secret_text,
         },
       };
 

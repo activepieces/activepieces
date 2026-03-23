@@ -33,9 +33,9 @@ export const linearUpdateIssue = createAction({
       assigneeId: propsValue.assignee_id,
       stateId: propsValue.state_id,
       priority: propsValue.priority_id,
-      labelIds: propsValue.labels,
+      labelIds: propsValue.labels?.length ? propsValue.labels : undefined,
     };
-    const client = makeClient(auth as string);
+    const client = makeClient(auth);
     const result = await client.updateIssue(issueId, issue);
     if (result.success) {
       const updatedIssue = await result.issue;

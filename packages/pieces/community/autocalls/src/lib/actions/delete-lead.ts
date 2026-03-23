@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { autocallsAuth, baseApiUrl } from '../..';
+import { autocallsAuth } from '../..';
+import { baseApiUrl } from '../..';
 
 export const deleteLead = createAction({
   auth:autocallsAuth,
@@ -9,6 +10,7 @@ export const deleteLead = createAction({
   description: "Delete a lead from a campaign.",
   props: {
     lead: Property.Dropdown({
+      auth: autocallsAuth,
       displayName: 'Lead',
       description: 'Select a lead to delete',
       required: true,
@@ -55,7 +57,7 @@ export const deleteLead = createAction({
       method: HttpMethod.DELETE,
       url: baseApiUrl + 'api/user/leads/' + leadId,
       headers: {
-        Authorization: "Bearer " + context.auth,
+        Authorization: "Bearer " + context.auth.secret_text,
         'Content-Type': 'application/json',
         'Accept': 'application/json'
       },

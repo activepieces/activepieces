@@ -20,7 +20,7 @@ export const createDocumentFromFile = createAction({
       throw new Error('Parser is required');
     }
     return await parseurCommon.createDocumentFromFile({
-      apiKey,
+      apiKey: apiKey.secret_text,
       parserId,
       file,
     });

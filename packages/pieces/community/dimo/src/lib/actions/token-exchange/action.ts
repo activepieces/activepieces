@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpError } from '@activepieces/pieces-common';
-import { dimoAuth } from '../../../index';
+import { dimoAuth } from '../../auth';
 import { DimoClient } from '../../common/helpers';
 
 const tokenExchangeApiAction = createAction({
@@ -16,7 +16,7 @@ const tokenExchangeApiAction = createAction({
 		}),
 	},
 	async run(context) {
-		const { clientId, apiKey, redirectUri } = context.auth;
+		const { clientId, apiKey, redirectUri } = context.auth.props;
 		const { vehicleTokenId } = context.propsValue;
 
 		const dimo = new DimoClient({

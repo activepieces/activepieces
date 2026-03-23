@@ -1,0 +1,15 @@
+{
+  "Extract data and insights from the Tenzo platform for sales, forecasting, and analytics.": "Extract data and insights from the Tenzo platform for sales, forecasting, and analytics.",
+  "New Daily Forecast": "New Daily Forecast",
+  "New Summary Payments": "New Summary Payments",
+  "New Summary Sales": "New Summary Sales",
+  "Triggers when there is a new daily forecast for a selected location.": "Triggers when there is a new daily forecast for a selected location.",
+  "Triggers when there is new daily sales and payments data.": "Triggers when there is new daily sales and payments data.",
+  "Triggers when there is new daily sales data.": "Triggers when there is new daily sales data.",
+  "Location": "Location",
+  "Area": "Area",
+  "Include Deleted": "Include Deleted",
+  "Select the location to filter data": "Select the location to filter data",
+  "Select the area to filter data": "Select the area to filter data",
+  "Include data that has been deleted": "Include data that has been deleted"
+}

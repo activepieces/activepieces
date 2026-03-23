@@ -20,7 +20,7 @@ export const listSessions = createAction({
     before: commonProps.beforeCursor,
   },
   async run(context) {
-    const client = new HedyApiClient(context.auth as string);
+    const client = new HedyApiClient(context.auth.secret_text);
     const { returnAll, limit, format, topicId, after, before } = context.propsValue as {
       returnAll?: boolean;
       limit?: number;

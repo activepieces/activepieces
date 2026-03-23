@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { mycaseAuth } from '../../index';
+import { mycaseAuth } from '../auth';
 import { createMyCaseApi } from '../common/mycase-api';
 
 export const createCompany = createAction({
@@ -69,7 +69,7 @@ export const createCompany = createAction({
       required: false,
     }),
     cases: Property.MultiSelectDropdown({
-      displayName: 'Cases',
+  auth: mycaseAuth,      displayName: 'Cases',
       description: 'Cases to associate with the company',
       required: false,
       refreshers: [],
@@ -105,7 +105,7 @@ export const createCompany = createAction({
       },
     }),
     clients: Property.MultiSelectDropdown({
-      displayName: 'Clients',
+  auth: mycaseAuth,      displayName: 'Clients',
       description: 'Clients to associate with the company',
       required: false,
       refreshers: [],

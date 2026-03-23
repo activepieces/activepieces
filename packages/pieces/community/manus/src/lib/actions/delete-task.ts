@@ -35,13 +35,14 @@ export const deleteTask = createAction({
   description: 'Permanently delete a task by its ID. This action cannot be undone.',
   props: {
     taskId: Property.Dropdown({
+      auth: manusAuth,
       displayName: 'Task',
       description: 'Select the task to delete',
       required: true,
       refreshers: ['auth'],
       options: async ({ auth }) => {
         if (!auth) return { disabled: true, options: [], placeholder: 'Connect account first' };
-        return { disabled: false, options: await getTasksDropdown(auth as string) };
+        return { disabled: false, options: await getTasksDropdown(auth.secret_text) };
       },
     }),
   },
@@ -51,7 +52,7 @@ export const deleteTask = createAction({
       url: `https://api.manus.ai/v1/tasks/${context.propsValue['taskId']}`,
       headers: {
         'accept': 'application/json',
-        'API_KEY': context.auth,
+        'API_KEY': context.auth.secret_text,
       },
     });
 

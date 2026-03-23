@@ -1,5 +1,5 @@
 
-import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
+import { createPiece, PieceAuth, Property } from "@activepieces/pieces-framework";
 import { fountainCreateApplicant } from './lib/actions/create-applicant';
 import { fountainDeleteApplicant } from './lib/actions/delete-applicant';
 import { fountainGetApplicantDetails } from './lib/actions/get-applicant-details';
@@ -13,12 +13,9 @@ import { fountainUpdateApplicant } from './lib/actions/update-applicant';
 import { fountainApplicantWebhook, fountainWorkerWebhook } from './lib/triggers';
 import { fountainCustomAttributeWebhook } from './lib/triggers/custom-attribute-webhook';
 import { fountainUniversalTasksWebhook } from './lib/triggers/universal-tasks-webhook';
+import { fountainAuth } from './lib/auth';
 
-export const fountainAuth = PieceAuth.SecretText({
-  displayName: 'API Key',
-  description: 'Enter your Fountain API key from Profile > Manage API Keys or Settings > Integrations & API Keys',
-  required: true,
-});
+export const API_BASE_URL_DEFAULT = 'https://api.fountain.com';
 
 export const fountain = createPiece({
   displayName: "Fountain",

@@ -66,7 +66,7 @@ export const mindeePredictDocumentAction = createAction({
       method: HttpMethod.POST,
       url: `https://api.mindee.net/v1/products/${account_name}/${api_name}/predict`,
       headers: {
-        Authorization: `Token ${auth as string}`,
+        Authorization: `Token ${auth.secret_text}`,
         ...headers,
       },
       body: body,

@@ -1,22 +1,42 @@
 import { getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { IntercomClient } from 'intercom-client';
 import {
-  OAuth2PropertyValue,
-  OAuth2Props,
+  AppConnectionValueForAuthProperty,
   Property,
 } from '@activepieces/pieces-framework';
+import { AppConnectionType } from '@activepieces/shared';
+import { intercomAuth } from '../auth';
 
-export const intercomClient = (auth: OAuth2PropertyValue<OAuth2Props>) => {
+export type IntercomAuthValue = AppConnectionValueForAuthProperty<
+  typeof intercomAuth
+>;
+
+export function getIntercomToken(auth: IntercomAuthValue): string {
+  if (auth.type === AppConnectionType.CUSTOM_AUTH) {
+    return auth.props.accessToken;
+  }
+  return getAccessTokenOrThrow(auth);
+}
+
+export function getIntercomRegion(auth: IntercomAuthValue): string {
+  if (auth.type === AppConnectionType.CUSTOM_AUTH) {
+    return auth.props.region;
+  }
+  return (auth.props?.['region'] as string) ?? 'intercom';
+}
+
+export const intercomClient = (auth: IntercomAuthValue) => {
   const client = new IntercomClient({
-    token: getAccessTokenOrThrow(auth),
-    environment: `https://api.${auth.props?.['region']}.io`,
+    token: getIntercomToken(auth),
+    environment: `https://api.${getIntercomRegion(auth)}.io`,
   });
   return client;
 };
 
 export const commonProps = {
   admins: <R extends boolean>(options: { displayName: string; required: R }) =>
-    Property.Dropdown<string, R>({
+    Property.Dropdown<string, R, typeof intercomAuth>({
+      auth: intercomAuth,
       displayName: options.displayName,
       required: options.required,
       options: async ({ auth }) => {
@@ -27,7 +47,7 @@ export const commonProps = {
             placeholder: 'Please connect your account first',
           };
         }
-        const client = intercomClient(auth as OAuth2PropertyValue);
+        const client = intercomClient(auth as IntercomAuthValue);
         const adminsResponse = await client.admins.list();
 
         return {
@@ -50,7 +70,8 @@ export const commonProps = {
     displayName: string;
     required: R;
   }) =>
-    Property.Dropdown<string, R>({
+    Property.Dropdown<string, R, typeof intercomAuth>({
+      auth: intercomAuth,
       displayName: options.displayName,
       required: options.required,
       options: async ({ auth }) => {
@@ -61,7 +82,7 @@ export const commonProps = {
             placeholder: 'Please connect your account first',
           };
         }
-        const client = intercomClient(auth as OAuth2PropertyValue);
+        const client = intercomClient(auth);
         const contactsResponse = await client.contacts.list({});
 
         return {

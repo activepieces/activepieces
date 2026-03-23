@@ -1,9 +1,12 @@
-import { CreateAlertParams, ListAlertsParams } from '@activepieces/ee-shared'
-import { ApId, Permission, PrincipalType } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
+import { ApId, CreateAlertParams, ListAlertsParams, Permission, PrincipalType } from '@activepieces/shared'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import { z } from 'zod'
+import { ProjectResourceType } from '../../core/security/authorization/common'
+import { securityAccess } from '../../core/security/authorization/fastify-security'
+import { AlertEntity } from './alerts-entity'
 import { alertsService } from './alerts-service'
 
-export const alertsController: FastifyPluginAsyncTypebox = async (app) => {
+export const alertsController: FastifyPluginAsyncZod = async (app) => {
     app.get('/', ListAlertsRequest, async (req) => {
         return alertsService(req.log).list({
             projectId: req.query.projectId,
@@ -29,10 +32,13 @@ export const alertsController: FastifyPluginAsyncTypebox = async (app) => {
 
 const ListAlertsRequest = {
     config: {
-        permission: Permission.READ_ALERT,
-        allowedPrincipals: [
-            PrincipalType.USER,
-        ],
+        security: securityAccess.project(
+            [PrincipalType.USER],
+            Permission.READ_ALERT,
+            {
+                type: ProjectResourceType.QUERY,
+            },
+        ),
     },
     schema: {
         querystring: ListAlertsParams,
@@ -41,10 +47,13 @@ const ListAlertsRequest = {
 
 const CreateAlertRequest = {
     config: {
-        permission: Permission.WRITE_ALERT,
-        allowedPrincipals: [
-            PrincipalType.USER,
-        ],
+        security: securityAccess.project(
+            [PrincipalType.USER],
+            Permission.WRITE_ALERT,
+            {
+                type: ProjectResourceType.BODY,
+            },
+        ),
     },
     schema: {
         body: CreateAlertParams,
@@ -53,13 +62,17 @@ const CreateAlertRequest = {
 
 const DeleteAlertRequest = {
     config: {
-        permission: Permission.WRITE_ALERT,
-        allowedPrincipals: [
-            PrincipalType.USER,
-        ],
+        security: securityAccess.project(
+            [PrincipalType.USER],
+            Permission.WRITE_ALERT,
+            {
+                type: ProjectResourceType.TABLE,
+                tableName: AlertEntity,
+            },
+        ),
     },
     schema: {
-        params: Type.Object({
+        params: z.object({
             id: ApId,
         }),
     },

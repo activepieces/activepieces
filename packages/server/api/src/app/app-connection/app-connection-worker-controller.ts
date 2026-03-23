@@ -6,14 +6,13 @@ import {
     ErrorCode,
     GetAppConnectionForWorkerRequestQuery,
     isNil,
-    PrincipalType,
 } from '@activepieces/shared'
-import {
-    FastifyPluginAsyncTypebox,
-} from '@fastify/type-provider-typebox'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import { securityAccess } from '../core/security/authorization/fastify-security'
+import { secretManagersService } from '../ee/secret-managers/secret-managers.service'
 import { appConnectionService } from './app-connection-service/app-connection-service'
 
-export const appConnectionWorkerController: FastifyPluginAsyncTypebox = async (app) => {
+export const appConnectionWorkerController: FastifyPluginAsyncZod = async (app) => {
 
     app.get('/:externalId', GetAppConnectionRequest, async (request): Promise<AppConnection> => {
         const enginePrincipal = (request.principal as EnginePrincipal)
@@ -34,7 +33,10 @@ export const appConnectionWorkerController: FastifyPluginAsyncTypebox = async (a
             })
         }
 
-        return appConnection
+        return {
+            ...appConnection,
+            value: await secretManagersService(request.log).resolveObject({ value: appConnection.value, projectIds: [enginePrincipal.projectId], platformId: enginePrincipal.platform.id, throwOnFailure: false }),
+        }
     },
     )
 
@@ -42,7 +44,7 @@ export const appConnectionWorkerController: FastifyPluginAsyncTypebox = async (a
 
 const GetAppConnectionRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE],
+        security: securityAccess.engine(),
     },
     schema: {
         params: GetAppConnectionForWorkerRequestQuery,

@@ -2,6 +2,7 @@ import {
   createTrigger,
   TriggerStrategy,
   StaticPropsValue,
+  AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import {
   DedupeStrategy,
@@ -18,7 +19,7 @@ const props = {
   assistantId: assistantIdDropdown,
 };
 
-const polling: Polling<string, StaticPropsValue<typeof props>> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof guideliteAuth>, StaticPropsValue<typeof props>> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ propsValue, auth, lastFetchEpochMS }) => {
     const { assistantId } = propsValue;
@@ -27,7 +28,7 @@ const polling: Polling<string, StaticPropsValue<typeof props>> = {
     const toDate = dayjs(Date.now()).format('YYYY-MM-DD HH:mm:ss.SSS');
 
     const leads = await makeRequest(
-      auth as string,
+      auth,
       HttpMethod.POST,
       '/manage-assistant/lead',
       {

@@ -1,13 +1,13 @@
-import { createTrigger, TriggerStrategy, PiecePropValueSchema } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy, PiecePropValueSchema, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import { HumeClient } from 'hume';
 import { humeAiAuth } from '../common/auth';
 
-const polling: Polling<PiecePropValueSchema<typeof humeAiAuth>, Record<string, never>> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof humeAiAuth>, Record<string, never>> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, lastFetchEpochMS }) => {
     const client = new HumeClient({
-      apiKey: auth as string,
+      apiKey: auth.secret_text,
     });
 
     const allVoices: any[] = [];

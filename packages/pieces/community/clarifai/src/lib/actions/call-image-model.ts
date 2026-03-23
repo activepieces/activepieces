@@ -1,4 +1,4 @@
-import { clarifaiAuth } from '../../';
+import { clarifaiAuth } from '../auth';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import {
   CommonClarifaiProps,
@@ -28,7 +28,7 @@ export const visualClassifierModelPredictAction = createAction({
     const input = fileToInput(file);
 
     const outputs = await callClarifaiModel({
-      auth,
+      auth: auth.secret_text,
       modelUrl,
       input,
     });
@@ -56,7 +56,7 @@ export const imageToTextModelPredictAction = createAction({
     const input = fileToInput(file);
 
     const outputs = await callClarifaiModel({
-      auth,
+      auth: auth.secret_text  ,
       modelUrl,
       input,
     });

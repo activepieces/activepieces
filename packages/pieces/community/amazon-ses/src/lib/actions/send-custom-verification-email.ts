@@ -3,7 +3,7 @@ import {
   SESClient,
   SendCustomVerificationEmailCommand,
 } from '@aws-sdk/client-ses';
-import { amazonSesAuth } from '../../index';
+import { amazonSesAuth } from '../auth';
 import {
   getConfigurationSets,
   getCustomVerificationTemplates,
@@ -28,6 +28,7 @@ export const sendCustomVerificationEmail = createAction({
       required: true,
     }),
     templateName: Property.Dropdown({
+      auth: amazonSesAuth,
       displayName: 'Verification Template',
       description: 'Select custom verification email template',
       required: true,
@@ -54,6 +55,7 @@ export const sendCustomVerificationEmail = createAction({
       },
     }),
     configurationSetName: Property.Dropdown({
+      auth: amazonSesAuth,
       displayName: 'Configuration Set',
       description: 'SES configuration set for tracking (optional)',
       required: false,
@@ -85,7 +87,7 @@ export const sendCustomVerificationEmail = createAction({
       checkExistingIdentity,
     } = context.propsValue;
 
-    const { accessKeyId, secretAccessKey, region } = context.auth;
+    const { accessKeyId, secretAccessKey, region } = context.auth.props;
 
     if (validateEmailFormat) {
       const validatedEmails = validateEmailAddresses(

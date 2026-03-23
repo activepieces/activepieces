@@ -27,7 +27,7 @@ export const newUnsubscriberFromGroupTrigger = createTrigger({
     };
 
     const response = await makeSenderRequest(
-      context.auth,
+      context.auth.secret_text,
       '/account/webhooks',
       HttpMethod.POST,
       webhookData
@@ -40,7 +40,7 @@ export const newUnsubscriberFromGroupTrigger = createTrigger({
     
     if (webhookId) {
       await makeSenderRequest(
-        context.auth,
+        context.auth.secret_text,
         `/account/webhooks/${webhookId}`,
         HttpMethod.DELETE
       );

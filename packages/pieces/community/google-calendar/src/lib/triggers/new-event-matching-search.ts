@@ -1,12 +1,11 @@
 import {
   createTrigger,
-  PiecePropValueSchema,
+  AppConnectionValueForAuthProperty,
   Property,
 } from '@activepieces/pieces-framework';
 import { TriggerStrategy } from '@activepieces/pieces-framework';
-import { googleCalendarCommon } from '../common';
+import { googleCalendarCommon, googleCalendarAuth, getAccessToken } from '../common';
 import { GoogleCalendarEvent } from '../common/types';
-import { googleCalendarAuth } from '../../';
 import {
   DedupeStrategy,
   Polling,
@@ -24,7 +23,7 @@ interface GoogleCalendarEventList {
 }
 
 const polling: Polling<
-  PiecePropValueSchema<typeof googleCalendarAuth>,
+  AppConnectionValueForAuthProperty<typeof googleCalendarAuth>,
   {
     calendar_id: string | undefined;
     search_term: string | undefined;
@@ -70,7 +69,7 @@ const polling: Polling<
       url: `${googleCalendarCommon.baseUrl}/calendars/${calendar_id}/events`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: auth.access_token,
+        token: await getAccessToken(auth),
       },
       queryParams: queryParams,
     };

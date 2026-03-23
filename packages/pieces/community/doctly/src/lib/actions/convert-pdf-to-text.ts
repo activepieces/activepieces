@@ -27,7 +27,7 @@ export const convertPdfToTextAction = createAction({
 			url: BASE_URL + '/documents/',
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
-				token: context.auth,
+				token: context.auth.secret_text,
 			},
 			headers: {
 				...formData.getHeaders(),
@@ -47,7 +47,7 @@ export const convertPdfToTextAction = createAction({
 				url: BASE_URL + `/documents/${docId}`,
 				authentication: {
 					type: AuthenticationType.BEARER_TOKEN,
-					token: context.auth,
+					token: context.auth.secret_text,
 				},
 			});
 

@@ -41,7 +41,6 @@ export const updateContact = createAction({
     if (last_name) requestBody['last_name'] = last_name;
     if (company_name) requestBody['company_name'] = company_name;
     if (information) requestBody['information'] = information;
-
     const response = await makeRequest(
        context.auth,
       HttpMethod.POST,

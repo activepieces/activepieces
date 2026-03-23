@@ -22,7 +22,7 @@ export const guidelite = createPiece({
       baseUrl: () => BASE_URL,
       authMapping: async (auth) => {
         return {
-          authorization: `Bearer ${auth}`,
+          authorization: `Bearer ${auth.secret_text}`,
         };
       },
     }),

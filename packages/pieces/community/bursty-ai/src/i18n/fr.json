@@ -1,0 +1,10 @@
+{
+  "Automate content creation, SEO optimization, email outreach, and influencer partnerships with BurstyAI's no-code AI workflows.": "Automatisez la création de contenu, l'optimisation du référencement, la diffusion de courriels et les partenariats d'influence avec les flux de travail sans code AI de BurstyIA.",
+  "API Key for Bursty-ai": "Clé API pour Bursty-ai",
+  "Run Workflow": "Exécuter le flux de travail",
+  "Run a Bursty AI workflow and optionally wait for and return the results": "Exécutez un workflow IA éclatant et attendez éventuellement et retournez les résultats",
+  "Workflow ID": "ID du flux de travail",
+  "Wait for Result": "Attendre le résultat",
+  "The ID of the Bursty AI workflow to run": "L'ID du workflow de l'IA en rafale à exécuter",
+  "Wait for the workflow to complete and return the results (default: false)": "Attendez que le workflow soit terminé et retournez les résultats (par défaut: false)"
+}

@@ -1,5 +1,5 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { codaAuth } from '../..';
+import { codaAuth } from '../auth';
 import { codaClient } from '../common/types';
 import { docIdDropdown, tableIdDropdown, tableRowsDynamicProps } from '../common/props';
 import { isNil } from '@activepieces/shared';
@@ -20,7 +20,7 @@ export const updateRowAction = createAction({
 	},
 	async run(context) {
 		const { docId, tableId, rowIdOrName, rowData } = context.propsValue;
-		const client = codaClient(context.auth as string);
+		const client = codaClient(context.auth);
 
 		const cells = Object.entries(rowData as Record<string, any>)
 			.filter(([, value]) => value !== undefined && value !== null && value !== '')

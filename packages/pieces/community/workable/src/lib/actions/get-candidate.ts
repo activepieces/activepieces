@@ -1,4 +1,4 @@
-import { workableAuth } from '../../index';
+import { workableAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { getAccountSubdomain } from '../common/get-subdomain';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
@@ -17,7 +17,7 @@ export const getCandidate = createAction({
   async run(context) {
     // Action logic here
     const candidateId = context.propsValue.id;
-    const accessToken = context.auth;
+    const accessToken = context.auth.secret_text;
     const account = await getAccountSubdomain(accessToken);
 
     //get candidate information

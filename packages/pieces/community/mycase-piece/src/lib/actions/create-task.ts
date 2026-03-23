@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { mycaseAuth } from '../../index';
+import { mycaseAuth } from '../auth';
 import { createMyCaseApi } from '../common/mycase-api';
 
 export const createTask = createAction({
@@ -32,7 +32,7 @@ export const createTask = createAction({
       required: true,
     }),
     staff: Property.MultiSelectDropdown({
-      displayName: 'Staff',
+  auth: mycaseAuth,      displayName: 'Staff',
       description: 'Staff members to assign this task to',
       required: true,
       refreshers: [],
@@ -79,6 +79,7 @@ export const createTask = createAction({
       defaultValue: false,
     }),
     case: Property.Dropdown({
+  auth: mycaseAuth,
       displayName: 'Case',
       description: 'The case to associate with this task',
       required: false,

@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { podioAuth } from '../../index';
+import { podioAuth } from '../auth';
 import { podioApiCall, getAccessToken, dynamicAppProperty, dynamicItemProperty, limitProperty, offsetProperty, dynamicOrgProperty, dynamicSpaceProperty } from '../common';
 
 export const findItemAction = createAction({
@@ -10,6 +10,7 @@ export const findItemAction = createAction({
   description: 'Retrieve a single item by ID or field value.',
   props: {
     searchType: Property.Dropdown({
+      auth: podioAuth,
       displayName: 'Search Method',
       description: 'How to find the item',
       required: true,

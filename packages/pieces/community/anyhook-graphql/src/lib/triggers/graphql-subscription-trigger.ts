@@ -33,7 +33,7 @@ export const graphqlSubscriptionTrigger = createTrigger({
       context.propsValue.headers,
       context.propsValue.query,
       context.webhookUrl,
-      context.auth.proxyBaseUrl
+      context.auth.props.proxyBaseUrl
     );
 
     // Store subscription info
@@ -42,7 +42,7 @@ export const graphqlSubscriptionTrigger = createTrigger({
   async onDisable(context) {
     const subscriptionId: string = (await context.store.get('graphql_subscription_trigger')) as string;
     if (subscriptionId) {
-      await deleteGraphQLSubscription(subscriptionId, context.auth.proxyBaseUrl);
+      await deleteGraphQLSubscription(subscriptionId, context.auth.props.proxyBaseUrl);
       await context.store.delete('graphql_subscription_trigger');
     }
   },

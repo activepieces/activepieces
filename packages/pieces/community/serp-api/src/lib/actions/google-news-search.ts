@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { serpApiAuth } from '../../index';
+import { serpApiAuth } from '../auth';
 import { COUNTRY_OPTIONS } from '../constants/countries';
 import { LANGUAGE_OPTIONS } from '../constants/languages';
 import { SerpApiClient } from '../services/serp-api-client';
@@ -87,7 +87,7 @@ export const googleNewsSearch = createAction({
       });
 
       const searchConfig: GoogleNewsSearchConfig = {
-        api_key: auth,
+        api_key: auth.secret_text,
         engine: SerpApiEngine.GOOGLE_NEWS,
         q: propsValue.query,
         hl: propsValue.hl,

@@ -1,4 +1,4 @@
-import { medullarAuth } from '../../index';
+import { medullarAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { getUser, medullarCommon, medullarPropsCommon } from '../common';
@@ -77,7 +77,7 @@ export const addSpaceRecord = createAction({
         },
       },
       headers: {
-        Authorization: `Bearer ${context.auth}`,
+        Authorization: `Bearer ${context.auth.secret_text}`,
       },
     });
 

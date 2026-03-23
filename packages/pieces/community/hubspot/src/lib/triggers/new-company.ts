@@ -6,7 +6,7 @@ import { getDefaultPropertiesForObject, standardObjectPropertiesDropdown } from 
 import dayjs from 'dayjs';
 import { MarkdownVariant, isNil } from '@activepieces/shared';
 import { OBJECT_TYPE, MAX_SEARCH_PAGE_SIZE, MAX_SEARCH_TOTAL_RESULTS } from '../common/constants';
-import { hubspotAuth } from '../..';
+import { hubspotAuth } from '../auth';
 import { Client } from '@hubspot/api-client';
 import { FilterOperatorEnum } from '../common/types';
 
@@ -14,7 +14,8 @@ type Props = {
 	additionalPropertiesToRetrieve?: string | string[];
 };
 
-const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
+import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
+const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Props> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, propsValue, lastFetchEpochMS }) {
 		const client = new Client({ accessToken: auth.access_token, numberOfApiCallRetries: 3 });

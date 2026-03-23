@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { ibmCognoseAuth } from '../../index';
+import { ibmCognoseAuth } from '../auth';
 import { CognosClient } from '../common/cognos-client';
 import { dataSourceDropdown } from '../common/data-source-dropdown';
 
@@ -21,7 +21,7 @@ export const getDataSourceAction = createAction({
     const { datasourceId, fields } = propsValue;
 
     try {
-      const client = new CognosClient(auth);
+      const client = new CognosClient(auth.props);
 
       const queryParams = [];
       if (fields && fields.trim()) {

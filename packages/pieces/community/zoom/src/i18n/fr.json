@@ -38,10 +38,12 @@
   "Method": "Méthode",
   "Headers": "En-têtes",
   "Query Parameters": "Paramètres de requête",
+  "Body Type": "Body Type",
   "Body": "Corps",
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'expiration (en secondes)",
+  "Follow redirects": "Suivre les redirections",
   "The meeting's topic": "Le sujet de la réunion",
   "Meeting start date-time": "Date de début de la réunion",
   "Duration of the meeting": "Durée de la réunion",
@@ -68,7 +70,7 @@
   "The registrant's purchasing time frame.": "La période de temps d'achat de l'inscrit.",
   "The registrant's role in the purchase process.": "Le rôle de l’inscrit dans le processus d’achat.",
   "Authorization headers are injected automatically from your connection.": "Les en-têtes d'autorisation sont injectés automatiquement à partir de votre connexion.",
-  "Enable for files like PDFs, images, etc..": "Activer pour les fichiers comme les PDFs, les images, etc.",
+  "Enable for files like PDFs, images, etc.": "Activer pour les fichiers comme les PDFs, les images, etc.",
   "Local": "Locale",
   "Cloud": "Nuage",
   "None": "Aucun",
@@ -98,5 +100,8 @@
   "PATCH": "PATCH",
   "PUT": "PUT",
   "DELETE": "DELETE",
-  "HEAD": "HEAD"
+  "HEAD": "HEAD",
+  "JSON": "JSON",
+  "Form Data": "Données du formulaire",
+  "Raw": "Brut"
 }

@@ -59,7 +59,7 @@ export const updateSubscriberAction = createAction({
     }
 
     const response = await makeSenderRequest(
-      context.auth,
+      context.auth.secret_text,
       `/subscribers/${subscriberId}`,
       HttpMethod.PATCH,
       updateData

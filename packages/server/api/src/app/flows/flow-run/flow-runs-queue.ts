@@ -1,13 +1,16 @@
-import { apAxios, AppSystemProp, exceptionHandler, QueueName, redisMetadataKey, RunsMetadataJobData, RunsMetadataQueueConfig, runsMetadataQueueFactory, RunsMetadataUpsertData } from '@activepieces/server-shared'
-import { assertNotNullOrUndefined, FlowRun, FlowRunStatus, isNil, PauseMetadata, PauseType, spreadIfDefined, WebsocketClientEvent } from '@activepieces/shared'
+import { assertNotNullOrUndefined, FlowRun, FlowRunStatus, isNil, PauseMetadata, PauseType, spreadIfDefined } from '@activepieces/shared'
 import { Queue, Worker } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
 import { FastifyBaseLogger } from 'fastify'
-import { websocketService } from '../../core/websockets.service'
 import { distributedLock, distributedStore, redisConnections } from '../../database/redis-connections'
 import { domainHelper } from '../../ee/custom-domains/domain-helper'
+import { apAxios } from '../../helper/ap-axios'
+import { exceptionHandler } from '../../helper/exception-handler'
 import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-props'
 import { projectService } from '../../project/project-service'
+import { QueueName, redisMetadataKey, RunsMetadataJobData, RunsMetadataQueueConfig, runsMetadataQueueFactory, RunsMetadataUpsertData } from '../../workers/job'
+import { jobQueue } from '../../workers/job-queue/job-queue'
 import { flowService } from '../flow/flow.service'
 import { flowRunRepo } from './flow-run-service'
 import { flowRunSideEffects } from './flow-run-side-effects'
@@ -40,7 +43,6 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                     timeoutInSeconds: 30,
                     fn: async () => {
                         try {
-                      
                             await runsMetadataQueue(log).get().removeDeduplicationKey(job.data.runId)
                             const runMetadata = await distributedStore.hgetJson<RunsMetadataUpsertData>(key)
                             if (isNil(runMetadata) || Object.keys(runMetadata).length === 0) {
@@ -70,11 +72,13 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                                     ...spreadIfDefined('failParentOnFailure', runMetadata.failParentOnFailure),
                                     ...spreadIfDefined('logsFileId', runMetadata.logsFileId),
                                     ...spreadIfDefined('updated', runMetadata.updated),
+                                    ...spreadIfDefined('stepsCount', runMetadata.stepsCount),
                                 })
                                 savedFlowRun = await flowRunRepo().findOneByOrFail({ id: job.data.runId })
                             }
                             else {
-                                const flowExists = !isNil(runMetadata.flowId) && await flowService(log).exists(runMetadata.flowId!)
+                                const flowId = runMetadata.flowId
+                                const flowExists = !isNil(flowId) && await flowService(log).exists(flowId)
                                 if (!flowExists) {
                                     log.info({
                                         jobId: job.id,
@@ -85,11 +89,12 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                                 savedFlowRun = await flowRunRepo().save(runMetadata)
                             }
 
-                            const shouldMarkParentAsFailed = savedFlowRun.failParentOnFailure && !isNil(savedFlowRun.parentRunId) && ![FlowRunStatus.SUCCEEDED, FlowRunStatus.RUNNING, FlowRunStatus.PAUSED, FlowRunStatus.QUEUED].includes(savedFlowRun.status)
+                            const parentRunId = savedFlowRun.parentRunId
+                            const shouldMarkParentAsFailed = savedFlowRun.failParentOnFailure && !isNil(parentRunId) && ![FlowRunStatus.SUCCEEDED, FlowRunStatus.RUNNING, FlowRunStatus.PAUSED, FlowRunStatus.QUEUED].includes(savedFlowRun.status)
                             if (shouldMarkParentAsFailed) {
-                                const platformId = await projectService.getPlatformId(savedFlowRun.projectId)
+                                const platformId = await projectService(log).getPlatformId(savedFlowRun.projectId)
                                 await markParentRunAsFailed({
-                                    parentRunId: savedFlowRun.parentRunId!,
+                                    parentRunId,
                                     childRunId: savedFlowRun.id,
                                     projectId: savedFlowRun.projectId,
                                     platformId,
@@ -102,10 +107,9 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                             if (!isNil(runMetadata.finishTime)) {
                                 await flowRunSideEffects(log).onFinish(savedFlowRun)
                             }
-
-                            websocketService.to(savedFlowRun.projectId).emit(WebsocketClientEvent.FLOW_RUN_PROGRESS, {
-                                runId: savedFlowRun.id,
-                            })
+                            if (runMetadata.status === FlowRunStatus.PAUSED) {
+                                await jobQueue(log).promoteChildRuns(savedFlowRun.id)
+                            }
                         }
                         catch (error) {
                             log.error({

@@ -16,6 +16,7 @@ import { listEntryCreatedTrigger } from './lib/triggers/list-entry-created';
 import { listEntryUpdatedTrigger } from './lib/triggers/list-entry-updated';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { BASE_URL } from './lib/common/client';
+import { attioAuth } from './lib/auth';
 
 const markdownDescription = `
 To use Attio, you need to generate an Access Token:
@@ -26,12 +27,6 @@ To use Attio, you need to generate an Access Token:
 5. Set the appropriate Scopes for the integration.
 6. Copy the generated Access Token.
 `;
-
-export const attioAuth = PieceAuth.SecretText({
-	displayName: 'Access Token',
-	description: markdownDescription,
-	required: true,
-});
 
 export const attio = createPiece({
 	displayName: 'Attio',

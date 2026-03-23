@@ -1,6 +1,6 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { attioAuth } from '../../index';
+import { attioAuth } from '../auth';
 import { formatInputFields, objectFields, objectTypeIdDropdown } from '../common/props';
 import { attioPaginatedApiCall } from '../common/client';
 
@@ -17,7 +17,7 @@ export const findRecordAction = createAction({
 		attributes: objectFields(true),
 	},
 	async run(context) {
-		const accessToken = context.auth;
+		const accessToken = context.auth.secret_text;
 		const objectTypeId = context.propsValue.objectTypeId;
 		const inputFields = context.propsValue.attributes ?? {};
 

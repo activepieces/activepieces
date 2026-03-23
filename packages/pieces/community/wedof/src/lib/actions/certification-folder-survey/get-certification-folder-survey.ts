@@ -1,5 +1,5 @@
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-  import { wedofAuth } from '../../..';
+  import { wedofAuth } from '../../auth';
   import {
     createAction,
     Property,
@@ -26,7 +26,7 @@ import { HttpMethod, httpClient } from '@activepieces/pieces-common';
           url: wedofCommon.baseUrl + '/surveys/'+ context.propsValue.certificationFolderExternalId,
           headers: {
             'Content-Type': 'application/json',
-            'X-Api-Key': context.auth as string,
+            'X-Api-Key': context.auth.secret_text,
           },
         })
       ).body;

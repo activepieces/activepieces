@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { kommoAuth } from '../../index';
+import { kommoAuth } from '../auth';
 import { makeRequest } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 
@@ -17,7 +17,7 @@ export const findContactAction = createAction({
   },
   async run(context) {
     const { query } = context.propsValue;
-    const { subdomain, apiToken } = context.auth
+    const { subdomain, apiToken } = context.auth.props
 
     const result = await makeRequest(
       { apiToken, subdomain },

@@ -1,11 +1,13 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { WidgetItemSchema, WidgetItem } from '../schemas';
+import { insightoAuth } from '../..';
 
 export const createCampaignAction = createAction({
   name: 'create_campaign',
   displayName: 'Create Campaign',
   description: 'Create a new outbound call campaign',
+  auth: insightoAuth,
   props: {
     name: Property.ShortText({
       displayName: 'Campaign Name',
@@ -31,6 +33,7 @@ export const createCampaignAction = createAction({
       required: true,
     }),
     widget_id: Property.Dropdown({
+      auth: insightoAuth,
       displayName: 'Widget',
       description: 'Widget to associate with this campaign',
       required: false,
@@ -45,7 +48,7 @@ export const createCampaignAction = createAction({
         }
 
         try {
-          const apiKey = auth as string;
+          const apiKey = auth.secret_text;
           const url = `https://api.insighto.ai/api/v1/widget`;
 
           const queryParams: Record<string, string> = {
@@ -178,7 +181,7 @@ export const createCampaignAction = createAction({
         throw new Error('Interval must be a positive number');
       }
 
-      const apiKey = context.auth as string;
+      const apiKey = context.auth.secret_text;
       const url = `https://api.insighto.ai/api/v1/campaign/create`;
 
       const queryParams: Record<string, string> = {

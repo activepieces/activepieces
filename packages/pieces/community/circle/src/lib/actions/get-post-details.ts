@@ -24,7 +24,7 @@ export const getPostDetailsAction = createAction({
 			method: HttpMethod.GET,
 			url: `${BASE_URL}/posts/${post_id}`,
 			headers: {
-				Authorization: `Bearer ${context.auth}`,
+				Authorization: `Bearer ${context.auth.secret_text}`,
 				'Content-Type': 'application/json',
 			},
 		});

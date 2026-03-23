@@ -1,18 +1,19 @@
-import { AppSystemProp, apVersionUtil, webhookSecretsUtils } from '@activepieces/server-shared'
 import { ApEdition, ApFlagId, ExecutionMode, Flag, isNil } from '@activepieces/shared'
+import dayjs from 'dayjs'
+import { FastifyBaseLogger } from 'fastify'
 import { In } from 'typeorm'
-import { aiProviderService } from '../ai/ai-provider-service'
 import { repoFactory } from '../core/db/repo-factory'
 import { federatedAuthnService } from '../ee/authentication/federated-authn/federated-authn-service'
 import { domainHelper } from '../ee/custom-domains/domain-helper'
 import { system } from '../helper/system/system'
+import { AppSystemProp, apVersionUtil } from '../helper/system/system-props'
 import { FlagEntity } from './flag.entity'
 import { defaultTheme } from './theme'
+import { webhookSecretsUtils } from './webhook-secrets-util'
 
 const flagRepo = repoFactory(FlagEntity)
 
-
-export const flagService = {
+export const flagService = (log: FastifyBaseLogger) => ({
     save: async (flag: FlagType): Promise<Flag> => {
         return flagRepo().save({
             id: flag.id,
@@ -53,9 +54,10 @@ export const flagService = {
                 ApFlagId.MAX_FIELDS_PER_TABLE,
                 ApFlagId.MAX_RECORDS_PER_TABLE,
                 ApFlagId.MAX_FILE_SIZE_MB,
+                ApFlagId.TEMPLATES_CATEGORIES,
             ]),
         })
-        const now = new Date().toISOString()
+        const now = dayjs().toISOString()
         const created = now
         const updated = now
         const currentVersion = await apVersionUtil.getCurrentRelease()
@@ -69,7 +71,8 @@ export const flagService = {
             },
             {
                 id: ApFlagId.AGENTS_CONFIGURED,
-                value: await aiProviderService.isAgentConfigured(),
+                // TODO (@abuaboud): add new check
+                value: true,
                 created,
                 updated,
             },
@@ -88,6 +91,36 @@ export const flagService = {
             {
                 id: ApFlagId.CAN_CONFIGURE_AI_PROVIDER,
                 value: true,
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.SHOW_BADGES,
+                value: true,
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.CAN_BUY_ACTIVE_FLOWS,
+                value: system.getEdition() === ApEdition.CLOUD,
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.CAN_BUY_AI_CREDITS,
+                value: !isNil(system.get(AppSystemProp.OPENROUTER_PROVISION_KEY)),
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.SHOW_BILLING_LIMITS_ON_SIDEBAR,
+                value: system.getEdition() === ApEdition.CLOUD,
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.SHOW_BILLING_PAGE,
+                value: system.getEdition() === ApEdition.CLOUD,
                 created,
                 updated,
             },
@@ -127,13 +160,6 @@ export const flagService = {
                 created,
                 updated,
             },
-     
-            {
-                id: ApFlagId.SHOW_BILLING,
-                value: system.getEdition() === ApEdition.CLOUD,
-                created,
-                updated,
-            },
             {
                 id: ApFlagId.THIRD_PARTY_AUTH_PROVIDERS_TO_SHOW_MAP,
                 value: {},
@@ -142,7 +168,7 @@ export const flagService = {
             },
             {
                 id: ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL,
-                value: await federatedAuthnService(system.globalLogger()).getThirdPartyRedirectUrl(undefined),
+                value: await federatedAuthnService(log).getThirdPartyRedirectUrl(undefined),
                 created,
                 updated,
             },
@@ -279,7 +305,10 @@ export const flagService = {
         return flags
     },
 
-}
+    aiCreditsEnabled(): boolean {
+        return !isNil(system.get(AppSystemProp.OPENROUTER_PROVISION_KEY))
+    },
+})
 
 
 
@@ -297,6 +326,7 @@ export type FlagType =
     | BaseFlagStructure<ApFlagId.TELEMETRY_ENABLED, boolean>
     | BaseFlagStructure<ApFlagId.USER_CREATED, boolean>
     | BaseFlagStructure<ApFlagId.WEBHOOK_URL_PREFIX, string>
+    | BaseFlagStructure<ApFlagId.TEMPLATES_CATEGORIES, string[]>
 
 type BaseFlagStructure<K extends ApFlagId, V> = {
     id: K

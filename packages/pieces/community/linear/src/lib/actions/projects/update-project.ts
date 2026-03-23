@@ -48,7 +48,7 @@ export const linearUpdateProject = createAction({
       targetDate: propsValue.targetDate,
     };
 
-    const client = makeClient(auth as string);
+    const client = makeClient(auth);
     const result = await client.updateProject(propsValue.project_id!, project);
     if (result.success) {
       const updatedProject = await result.project;

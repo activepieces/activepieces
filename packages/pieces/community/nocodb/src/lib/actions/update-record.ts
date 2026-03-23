@@ -1,4 +1,4 @@
-import { nocodbAuth } from '../../';
+import { nocodbAuth } from '../auth';
 import {
   createAction,
   DynamicPropsValue,
@@ -24,7 +24,7 @@ export const updateRecordAction = createAction({
   async run(context) {
     const { baseId, tableId, recordId, tableColumns } = context.propsValue;
 
-    const authVersion = context.auth.version || 3;
+    const authVersion = context.auth.props.version || 3;
     let recordInput: DynamicPropsValue = {};
     if (authVersion === 4) {
       recordInput['id'] = recordId;

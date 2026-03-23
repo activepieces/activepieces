@@ -1,17 +1,15 @@
-import {
-    ApiKey,
-    ApiKeyResponseWithValue,
-} from '@activepieces/ee-shared'
-import { cryptoUtils } from '@activepieces/server-shared'
+import { cryptoUtils } from '@activepieces/server-utils'
 import {
     ActivepiecesError,
     apId,
+
+    ApiKey,
+    ApiKeyResponseWithValue,
     assertNotNullOrUndefined,
     ErrorCode,
     isNil,
     secureApId,
-    SeekPage,
-} from '@activepieces/shared'
+    SeekPage } from '@activepieces/shared'
 import { repoFactory } from '../../core/db/repo-factory'
 import { ApiKeyEntity } from './api-key-entity'
 
@@ -36,14 +34,16 @@ export const apiKeyService = {
             value: generatedApiKey.secret,
         }
     },
-    async getByValueOrThrow(key: string): Promise<ApiKey> {
+    async getByValue(key: string): Promise<ApiKey | null> {
         assertNotNullOrUndefined(key, 'key')
-        const apiKey = await repo().findOneByOrFail({
+        const apiKey = await repo().findOneBy({
             hashedValue: cryptoUtils.hashSHA256(key),
         })
-        await repo().update(apiKey.id, {
-            lastUsedAt: new Date().toISOString(),
-        })
+        if (apiKey) {
+            await repo().update(apiKey.id, {
+                lastUsedAt: new Date().toISOString(),
+            })
+        }
         return apiKey
     },
     async list({ platformId }: ListParams): Promise<SeekPage<ApiKey>> {

@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { JinaAICommon } from '../common';
-import { jinaAiAuth } from '../../index';
+import { jinaAiAuth } from '../auth';
 
 export const webSearchSummarizationAction = createAction({
   auth:jinaAiAuth,
@@ -198,7 +198,7 @@ export const webSearchSummarizationAction = createAction({
     const responseBody = await JinaAICommon.makeRequest({
       url: finalUrl,
       method: HttpMethod.GET,
-      auth: apiKey as string,
+      auth: apiKey.secret_text,
       headers,
     });
 

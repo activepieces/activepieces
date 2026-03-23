@@ -75,7 +75,7 @@ export const createAssistantRun = createAction({
     }
 
     const response = await makeRequest(
-      context.auth as string,
+      context.auth.secret_text,
       HttpMethod.POST,
       `/assistants/${assistant_id}/runs`,
       requestBody
@@ -90,7 +90,7 @@ export const createAssistantRun = createAction({
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
       runData = await makeRequest(
-        context.auth as string,
+        context.auth.secret_text,
         HttpMethod.GET,
         `/assistant-runs/${assistantRunId}`
       );

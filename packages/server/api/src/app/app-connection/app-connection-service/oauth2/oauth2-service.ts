@@ -20,7 +20,7 @@ export type RefreshOAuth2Request<T extends BaseOAuth2ConnectionValue> = {
 }
 
 export type OAuth2RequestBody = {
-    props?: Record<string, string>
+    props?: Record<string, unknown>
     code: string
     clientId: string
     tokenUrl: string

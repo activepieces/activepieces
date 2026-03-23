@@ -1,4 +1,4 @@
-import { microsoftSharePointAuth } from '../../';
+import { microsoftSharePointAuth } from '../auth';
 import {
   createAction,
   Property,
@@ -26,6 +26,7 @@ export const copyItemWithinSiteAction = createAction({
     driveId: microsoftSharePointCommon.driveId,
     itemId: microsoftSharePointCommon.itemId,
     destinationFolderId: Property.Dropdown({
+      auth: microsoftSharePointAuth,
       displayName: 'Destination Folder',
       description: 'The folder to copy the item into. Select "Root" to copy to the top level of the drive.',
       required: true,

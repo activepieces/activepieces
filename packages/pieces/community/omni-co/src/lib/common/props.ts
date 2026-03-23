@@ -1,8 +1,11 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest } from './client';
 import { Property } from '@activepieces/pieces-framework';
+import { omniAuth } from './auth';
 
-export const modelIdDropdown = Property.Dropdown({
+export const modelIdDropdown = Property.Dropdown({ 
+ auth: omniAuth,
+
   displayName: 'Model ID',
   description: 'Select the model containing the database',
   required: true,
@@ -18,7 +21,7 @@ export const modelIdDropdown = Property.Dropdown({
 
     try {
       const models = await makeRequest(
-        auth as string,
+        auth.secret_text,
         HttpMethod.GET,
         '/models',
         {}
@@ -41,7 +44,9 @@ export const modelIdDropdown = Property.Dropdown({
   },
 });
 
-export const documentIdDropdown = Property.Dropdown({
+export const documentIdDropdown = Property.Dropdown({ 
+ auth: omniAuth,
+
   displayName: 'Document',
   description: 'Select the document',
   required: true,
@@ -57,7 +62,7 @@ export const documentIdDropdown = Property.Dropdown({
 
     try {
       const documents = await makeRequest(
-        auth as string,
+        auth.secret_text,
         HttpMethod.GET,
         `/documents`,
         {}
@@ -80,7 +85,9 @@ export const documentIdDropdown = Property.Dropdown({
   },
 });
 
-export const scheduleIdDropdown = Property.Dropdown({
+export const scheduleIdDropdown = Property.Dropdown({ 
+ auth: omniAuth,
+
   displayName: 'Schedule',
   description: 'Select the schedule',
   required: true,
@@ -96,7 +103,7 @@ export const scheduleIdDropdown = Property.Dropdown({
 
     try {
       const schedules = await makeRequest(
-        auth as string,
+        auth.secret_text,
         HttpMethod.GET,
         `/schedules`,
         {}

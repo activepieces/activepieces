@@ -3,6 +3,7 @@ import { HttpMethod, propsValidation } from '@activepieces/pieces-common';
 import { edenAiApiCall } from '../common/client';
 import { createStaticDropdown } from '../common/providers';
 import { z } from 'zod';
+import { edenAiAuth } from '../..';
 
 const MODERATION_PROVIDERS = [
   { label: 'Microsoft', value: 'microsoft' },
@@ -143,11 +144,13 @@ function normalizeModerationResponse(provider: string, response: any) {
 }
 
 export const moderateTextAction = createAction({
+  auth: edenAiAuth,
   name: 'moderate_text',
   displayName: 'Moderate Text',
   description: 'Detect explicit or policy-violating text using Eden AI. Supports multiple providers, languages, and models.',
   props: {
     provider: Property.Dropdown({
+      auth: edenAiAuth,
       displayName: 'Provider',
       description: 'The AI provider to use for text moderation.',
       required: true,
@@ -160,6 +163,7 @@ export const moderateTextAction = createAction({
       required: true,
     }),
     language: Property.Dropdown({
+      auth: edenAiAuth,
       displayName: 'Text Language',
       description: 'The language of the input text. Choose "Auto Detection" if unsure.',
       required: false,
@@ -173,6 +177,7 @@ export const moderateTextAction = createAction({
       required: false,
     }),
     fallback_providers: Property.MultiSelectDropdown({
+      auth: edenAiAuth,
       displayName: 'Fallback Providers',
       description: 'Alternative providers to try if the main provider fails (up to 5).',
       required: false,
@@ -223,7 +228,7 @@ export const moderateTextAction = createAction({
 
     try {
       const response = await edenAiApiCall({
-        apiKey: auth as string,
+        apiKey: auth.secret_text,
         method: HttpMethod.POST,
         resourceUri: '/text/moderation',
         body,

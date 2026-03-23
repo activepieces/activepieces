@@ -10,7 +10,7 @@ export const addTagToContact = createAction({
     "Apply a tag to a contact by email. Creates the tag if it doesn't exist.",
   props: zohoCampaignsCommon.addTagToContactProperties,
   async run({ auth, propsValue }) {
-    const location = auth.props?.['location'] || 'zoho.com';
+    const location = auth.props?.['location'] as string || 'zoho.com';
     const accessToken = auth.access_token;
     await propsValidation.validateZod(
       propsValue,

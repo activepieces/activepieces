@@ -10,6 +10,7 @@ export const createStage = createAction({
 	auth: teamworkAuth,
 	props: {
 		workflowId: Property.Dropdown({
+auth: teamworkAuth,
 			displayName: 'Workflow',
 			description: 'The workflow to add the stage to.',
 			required: true,
@@ -22,7 +23,7 @@ export const createStage = createAction({
 						options: [],
 					};
 				}
-				const res = await teamworkRequest(auth as PiecePropValueSchema<typeof teamworkAuth>, {
+				const res = await teamworkRequest(auth, {
 					method: HttpMethod.GET,
 					path: '/projects/api/v3/workflows.json',
 				});

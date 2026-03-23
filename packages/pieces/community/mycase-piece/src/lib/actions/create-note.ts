@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { mycaseAuth } from '../../index';
+import { mycaseAuth } from '../auth';
 import { createMyCaseApi } from '../common/mycase-api';
 
 export const createNote = createAction({
@@ -22,6 +22,7 @@ export const createNote = createAction({
       defaultValue: 'case',
     }),
     entity: Property.Dropdown({
+  auth: mycaseAuth,
       displayName: 'Entity',
       description: 'Select the entity to create the note for',
       required: true,

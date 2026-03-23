@@ -1,6 +1,6 @@
 import { createAction, Property, PieceAuth } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { ibmCognoseAuth } from '../../index';
+import { ibmCognoseAuth } from '../auth';
 import { CognosClient } from '../common/cognos-client';
 
 export const createDataSourceAction = createAction({
@@ -46,7 +46,7 @@ export const createDataSourceAction = createAction({
     const { defaultName, connectionString, driverName, username, password, signonDefaultName } = propsValue;
 
     try {
-      const client = new CognosClient(auth);
+      const client = new CognosClient(auth.props);
 
       const dataSourceDefinition: any = {
         defaultName,

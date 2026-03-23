@@ -14,8 +14,15 @@ export const getLastResults = createAction({
       description: 'Select the app to get last results for',
       required: true,
       refreshers: [],
+      auth: promptmateAuth,
       options: async ({ auth }) => {
-        return await getAppDropdownOptions(auth as string);
+        if (!auth) {
+          return {
+            options: [],
+            disabled: true,
+          };
+        }
+        return await getAppDropdownOptions(auth.secret_text);
       },
     }),
     onlyDefaultResultFields: Property.Checkbox({
@@ -50,7 +57,7 @@ export const getLastResults = createAction({
       method: HttpMethod.GET,
       url: 'https://api.promptmate.io/v1/app-results',
       headers: {
-        'x-api-key': auth,
+        'x-api-key': auth.secret_text,
       },
       queryParams,
     });

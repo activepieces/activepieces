@@ -25,7 +25,7 @@ export const appfollow = createPiece({
       auth: appfollowAuth,
       baseUrl: () => BASE_URL,
       authMapping: async (auth) => ({
-        'X-AppFollow-API-Token': auth as string,
+        'X-AppFollow-API-Token': auth.secret_text,
       }),
     }),
   ],

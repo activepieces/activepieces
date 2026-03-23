@@ -1,8 +1,8 @@
-import { microsoftTeamsAuth } from '../../index';
+import { microsoftTeamsAuth } from '../auth';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import {
 	createTrigger,
-	PiecePropValueSchema,
+	AppConnectionValueForAuthProperty,
 	TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import { microsoftTeamsCommon } from '../common';
@@ -88,7 +88,7 @@ export const newChannelMessageTrigger = createTrigger({
 	},
 });
 
-const polling: Polling<PiecePropValueSchema<typeof microsoftTeamsAuth>, Props> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof microsoftTeamsAuth>, Props> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, propsValue, lastFetchEpochMS, store }) {
 		const { teamId, channelId } = propsValue;

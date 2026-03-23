@@ -10,12 +10,19 @@ export const runApp = createAction({
   description: 'Runs a PromptMate app with the specified data',
   props: {
     appId: Property.Dropdown({
+      auth: promptmateAuth,
       displayName: 'App',
       description: 'Select the PromptMate app to run',
       required: true,
       refreshers: [],
       options: async ({ auth }) => {
-        return await getAppDropdownOptions(auth as string);
+        if (!auth) {
+          return {
+            options: [],
+            disabled: true,
+          };
+        }
+        return await getAppDropdownOptions(auth.secret_text);
       },
     }),
     data: Property.Array({
@@ -64,7 +71,7 @@ export const runApp = createAction({
       method: HttpMethod.POST,
       url: 'https://api.promptmate.io/v1/app-jobs',
       headers: {
-        'x-api-key': auth,
+        'x-api-key': auth.secret_text,
         'Content-Type': 'application/json',
       },
       body: requestBody,

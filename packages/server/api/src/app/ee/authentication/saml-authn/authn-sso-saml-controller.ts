@@ -1,30 +1,32 @@
-import { ApplicationEventName } from '@activepieces/ee-shared'
-import { AppSystemProp, networkUtils } from '@activepieces/server-shared'
-import { ALL_PRINCIPAL_TYPES, assertNotNullOrUndefined, SAMLAuthnProviderConfig } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
-import { FastifyRequest } from 'fastify'
-import { eventsHooks } from '../../../helper/application-events'
+import { ApplicationEventName, assertNotNullOrUndefined, SAMLAuthnProviderConfig } from '@activepieces/shared'
+import { FastifyBaseLogger, FastifyRequest } from 'fastify'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import { z } from 'zod'
+import { securityAccess } from '../../../core/security/authorization/fastify-security'
+import { applicationEvents } from '../../../helper/application-events'
+import { networkUtils } from '../../../helper/network-utils'
 import { system } from '../../../helper/system/system'
+import { AppSystemProp } from '../../../helper/system/system-props'
 import { platformService } from '../../../platform/platform.service'
 import { platformUtils } from '../../../platform/platform.utils'
 import { authnSsoSamlService } from './authn-sso-saml-service'
 
-export const authnSsoSamlController: FastifyPluginAsyncTypebox = async (app) => {
+export const authnSsoSamlController: FastifyPluginAsyncZod = async (app) => {
     app.get('/login', LoginRequest, async (req, res) => {
-        const { saml, platformId } = await getSamlConfigOrThrow(req)
+        const { saml, platformId } = await getSamlConfigOrThrow(req, req.log)
         const loginResponse = await authnSsoSamlService(req.log).login(platformId, saml)
         return res.redirect(loginResponse.redirectUrl)
     })
 
     app.post('/acs', AcsRequest, async (req, res) => {
-        const { saml, platformId } = await getSamlConfigOrThrow(req)
+        const { saml, platformId } = await getSamlConfigOrThrow(req, req.log)
         const response = await authnSsoSamlService(req.log).acs(platformId, saml, {
             body: req.body,
             query: req.query,
         })
         const url = new URL('/authenticate', `${req.protocol}://${req.hostname}`)
         url.searchParams.append('response', JSON.stringify(response))
-        eventsHooks.get(req.log).sendUserEvent({
+        applicationEvents(req.log).sendUserEvent({
             platformId,
             userId: response.id,
             projectId: response.projectId,
@@ -39,10 +41,10 @@ export const authnSsoSamlController: FastifyPluginAsyncTypebox = async (app) => 
     })
 }
 
-async function getSamlConfigOrThrow(req: FastifyRequest): Promise<{ saml: SAMLAuthnProviderConfig, platformId: string }> {
+async function getSamlConfigOrThrow(req: FastifyRequest, log: FastifyBaseLogger): Promise<{ saml: SAMLAuthnProviderConfig, platformId: string }> {
     const platformId = await platformUtils.getPlatformIdForRequest(req)
     assertNotNullOrUndefined(platformId, 'Platform ID is required for SAML authentication')
-    const platform = await platformService.getOneOrThrow(platformId)
+    const platform = await platformService(log).getOneOrThrow(platformId)
     const saml = platform.federatedAuthProviders.saml
     assertNotNullOrUndefined(saml, 'SAML IDP metadata is not configured for this platform')
     return {
@@ -53,16 +55,16 @@ async function getSamlConfigOrThrow(req: FastifyRequest): Promise<{ saml: SAMLAu
 
 const AcsRequest = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        security: securityAccess.public(),
     },
     schema: {
-        body: Type.Record(Type.String(), Type.Unknown()),
-        querystring: Type.Record(Type.String(), Type.Unknown()),
+        body: z.record(z.string(), z.unknown()),
+        querystring: z.record(z.string(), z.unknown()),
     },
 }
 
 const LoginRequest = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        security: securityAccess.public(),
     },
 }

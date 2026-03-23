@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { medullarAuth } from '../../index';
+import { medullarAuth } from '../auth';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { getUser, medullarCommon, medullarPropsCommon } from '../common';
 
@@ -73,7 +73,7 @@ export const askSpace = createAction({
           },
         },
         headers: {
-          Authorization: `Bearer ${context.auth}`,
+          Authorization: `Bearer ${context.auth.secret_text}`,
         },
       });
       chatId = chatResponse.body.uuid;
@@ -93,7 +93,7 @@ export const askSpace = createAction({
         source: 'external_api',
       },
       headers: {
-        Authorization: `Bearer ${context.auth}`,
+        Authorization: `Bearer ${context.auth.secret_text}`,
       },
     });
 

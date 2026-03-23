@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { respaidAuth } from '../..';
+import { respaidAuth } from '../auth';
 import { respaidCommon } from '../common';
 
 
@@ -66,7 +66,7 @@ export const createNewCampaign = createAction({
     const res = await httpClient.sendRequest<string[]>({
       method: HttpMethod.POST,
       url: `${respaidCommon.baseUrl}/actions/import_campaign`,
-      headers: respaidCommon.getHeadersStructure(auth),
+      headers: respaidCommon.getHeadersStructure(auth.secret_text),
       body: ({ type: 'active_pieces', import: JSON.stringify(requestBody) }),
     });
     return res.body;

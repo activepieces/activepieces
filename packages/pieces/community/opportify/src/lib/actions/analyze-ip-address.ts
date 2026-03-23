@@ -24,7 +24,7 @@ export const analyzeIpAddressAction = createAction({
       method: HttpMethod.POST,
       url: 'https://api.opportify.ai/insights/v1/ip/analyze',
       headers: {
-        'x-opportify-token': context.auth,
+        'x-opportify-token': context.auth.secret_text,
       },
       body: {
         ip,

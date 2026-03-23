@@ -6,7 +6,7 @@ import {
 import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest, transformCustomFields } from '../common/client';
 import { isNil } from '@activepieces/shared';
-import { campaignMonitorAuth } from '../../index';
+import { campaignMonitorAuth } from '../auth';
 import { clientId, listId } from '../common/props';
 
 export const subscriberUnsubscribedTrigger = createTrigger({
@@ -30,7 +30,7 @@ export const subscriberUnsubscribedTrigger = createTrigger({
     const { listId } = context.propsValue;
 
     const response = await makeRequest(
-      { apiKey: context.auth as string },
+        { apiKey: context.auth.secret_text },
       HttpMethod.POST,
       `/lists/${listId}/webhooks.json`,
       {
@@ -51,7 +51,7 @@ export const subscriberUnsubscribedTrigger = createTrigger({
 
     if (!isNil(storedData)) {
       await makeRequest(
-        { apiKey: context.auth as string },
+        { apiKey: context.auth.secret_text },
         HttpMethod.DELETE,
         `/lists/${listId}/webhooks/${storedData}.json`
       );
@@ -72,7 +72,7 @@ export const subscriberUnsubscribedTrigger = createTrigger({
     for (const event of payload.Events) {
       if (event.Type === 'Deactivate' && event.State==='Unsubscribed') {
         const response = await makeRequest(
-          { apiKey: context.auth as string },
+          { apiKey: context.auth.secret_text },
           HttpMethod.GET,
           `/subscribers/${context.propsValue.listId}.json?email=${encodeURIComponent(
             event.EmailAddress

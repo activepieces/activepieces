@@ -3,7 +3,7 @@ import {
   createAction,
 } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
-import { flowluAuth } from '../../../';
+import { flowluAuth } from '../../auth';
 import { flowluCommon, makeClient } from '../../common';
 import { flowluProps } from '../../common/props';
 
@@ -22,7 +22,7 @@ export const updateTaskAction = createAction({
   },
   async run(context) {
     const client = makeClient(
-      context.auth as PiecePropValueSchema<typeof flowluAuth>
+      context.auth
     );
     return await client.updateTask(context.propsValue.task_id!, {
       name: context.propsValue.name,

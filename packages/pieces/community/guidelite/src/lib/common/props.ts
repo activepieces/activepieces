@@ -1,11 +1,13 @@
 import { Property } from '@activepieces/pieces-framework';
 import { makeRequest } from './client';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { guideliteAuth } from './auth';
 
 export const assistantIdDropdown = Property.Dropdown({
   displayName: 'Assistant',
   description: 'Please select assistant',
   refreshers: [],
+  auth: guideliteAuth,
   required: true,
   options: async ({ auth }) => {
     if (!auth) {
@@ -17,7 +19,7 @@ export const assistantIdDropdown = Property.Dropdown({
     }
     try {
       const response = await makeRequest(
-        auth as string,
+        auth,
         HttpMethod.GET,
         '/assistant/list'
       );

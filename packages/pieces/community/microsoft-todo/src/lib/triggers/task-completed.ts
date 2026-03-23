@@ -1,6 +1,6 @@
 import { OAuth2PropertyValue, Property, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { getTaskListsDropdown } from '../common';
-import { microsoftToDoAuth } from '../../index';
+import { microsoftToDoAuth } from '../auth';
 import { Client } from '@microsoft/microsoft-graph-client';
 import dayjs from 'dayjs';
 import { TodoTask } from '@microsoft/microsoft-graph-types';
@@ -22,6 +22,7 @@ export const taskCompletedTrigger = createTrigger({
     description: 'Triggers when a task is completed in a specific list.',
     props: {
         task_list_id: Property.Dropdown({
+   auth: microsoftToDoAuth,
             displayName: 'Task List',
             description: 'The list to watch for completed tasks.',
             required: true,

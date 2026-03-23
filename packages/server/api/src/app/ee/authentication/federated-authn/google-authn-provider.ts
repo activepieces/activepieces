@@ -65,7 +65,7 @@ const exchangeCodeForIdToken = async (
         }),
     })
 
-    const { id_token: idToken } = await response.json()
+    const { id_token: idToken } = await response.json() as { id_token: string }
     return idToken
 }
 
@@ -90,6 +90,7 @@ const verifyIdToken = async (
         email: payload.email,
         firstName: payload.given_name,
         lastName: payload.family_name,
+        imageUrl: payload.picture,
     }
 }
 
@@ -98,6 +99,7 @@ type IdTokenPayloadRaw = {
     email_verified: boolean
     given_name: string
     family_name: string
+    picture?: string
     sub: string
     aud: string
     iss: string
@@ -119,4 +121,5 @@ export type FebderatedAuthnIdToken = {
     email: string
     firstName: string
     lastName: string
+    imageUrl?: string
 }

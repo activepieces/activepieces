@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { cyberarkAuth } from '../../index';
+import { cyberarkAuth } from '../auth';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { userIdDropdown } from '../common/user-dropdown';
 import { getAuthToken, CyberArkAuth } from '../common/auth-helper';
@@ -13,7 +13,7 @@ export const disableUser = createAction({
     userId: userIdDropdown
   },
   async run(context) {
-    const authData = await getAuthToken(context.auth as CyberArkAuth);
+    const authData = await getAuthToken(context.auth);
 
     try {
       const response = await httpClient.sendRequest({

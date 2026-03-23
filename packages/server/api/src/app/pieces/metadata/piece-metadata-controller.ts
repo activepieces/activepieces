@@ -1,48 +1,37 @@
 import { PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
-import { apVersionUtil } from '@activepieces/server-shared'
 import {
+    ActivepiecesError,
     ALL_PRINCIPAL_TYPES,
-    ApEdition,
-    EndpointScope,
+    EngineResponse,
+    ErrorCode,
     GetPieceRequestParams,
     GetPieceRequestQuery,
     GetPieceRequestWithScopeParams,
+    isNil,
     ListPiecesRequestQuery,
-    ListVersionRequestQuery,
-    ListVersionsResponse,
     LocalesEnum,
     PieceCategory,
     PieceOptionRequest,
+    Principal,
     PrincipalType,
     RegistryPiecesRequestQuery,
     SampleDataFileType,
     WorkerJobType,
 } from '@activepieces/shared'
-import {
-    FastifyPluginAsyncTypebox,
-} from '@fastify/type-provider-typebox'
-import { EngineHelperPropResult, EngineHelperResponse } from 'server-worker'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import { ProjectResourceType } from '../../core/security/authorization/common'
+import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { flowService } from '../../flows/flow/flow.service'
 import { sampleDataService } from '../../flows/step-run/sample-data.service'
 import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
 import { pieceSyncService } from '../piece-sync-service'
 import { getPiecePackageWithoutArchive, pieceMetadataService } from './piece-metadata-service'
 
-export const pieceModule: FastifyPluginAsyncTypebox = async (app) => {
+export const pieceModule: FastifyPluginAsyncZod = async (app) => {
     await app.register(basePiecesController, { prefix: '/v1/pieces' })
 }
 
-const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
-
-    app.get('/versions', ListVersionsRequest, async (req): Promise<ListVersionsResponse> => {
-        return pieceMetadataService(req.log).getVersions({
-            name: req.query.name,
-            projectId: req.principal.type === PrincipalType.UNKNOWN || req.principal.type === PrincipalType.WORKER ? undefined : req.principal.projectId,
-            release: req.query.release,
-            edition: req.query.edition ?? ApEdition.COMMUNITY,
-            platformId: req.principal.type === PrincipalType.UNKNOWN || req.principal.type === PrincipalType.WORKER ? undefined : req.principal.platform.id,
-        })
-    })
+const basePiecesController: FastifyPluginAsyncZod = async (app) => {
 
     app.get(
         '/categories',
@@ -53,19 +42,25 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
     )
 
     app.get('/', ListPiecesRequest, async (req): Promise<PieceMetadataModelSummary[]> => {
-        const latestRelease = await apVersionUtil.getCurrentRelease()
         const query = req.query
+
+        const oldSyncCall = !isNil(query.release)
+        if (oldSyncCall) {
+            throw new ActivepiecesError({
+                code: ErrorCode.PIECE_SYNC_NOT_SUPPORTED,
+                params: {
+                    message: 'This endpoint is deprecated. Please use it without release parameter.',
+                    release: query.release ?? '',
+                },
+            })
+        }
         const includeTags = query.includeTags ?? false
-        const release = query.release ?? latestRelease
-        const edition = query.edition ?? ApEdition.COMMUNITY
-        const platformId = req.principal.type === PrincipalType.UNKNOWN || req.principal.type === PrincipalType.WORKER ? undefined : req.principal.platform.id
-        const projectId = req.principal.type === PrincipalType.UNKNOWN || req.principal.type === PrincipalType.WORKER || req.principal.type === PrincipalType.SERVICE ? undefined : req.principal.projectId
+        const platformId = getPlatformId(req.principal)
+        const projectId = req.query.projectId
         const pieceMetadataSummary = await pieceMetadataService(req.log).list({
-            release,
             includeHidden: query.includeHidden ?? false,
             projectId,
             platformId,
-            edition,
             includeTags,
             categories: query.categories,
             searchQuery: query.searchQuery,
@@ -91,10 +86,8 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
 
             const decodeScope = decodeURIComponent(scope)
             const decodedName = decodeURIComponent(name)
-            const projectId = req.principal.type === PrincipalType.UNKNOWN || req.principal.type === PrincipalType.WORKER ? undefined : req.principal.projectId
-            const platformId = req.principal.type === PrincipalType.UNKNOWN || req.principal.type === PrincipalType.WORKER ? undefined : req.principal.platform.id
+            const platformId = getPlatformId(req.principal)
             return pieceMetadataService(req.log).getOrThrow({
-                projectId,
                 platformId,
                 name: `${decodeScope}/${decodedName}`,
                 version,
@@ -110,10 +103,8 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
             const { name } = req.params
             const { version } = req.query
             const decodedName = decodeURIComponent(name)
-            const projectId = req.principal.type === PrincipalType.UNKNOWN || req.principal.type === PrincipalType.WORKER ? undefined : req.principal.projectId
-            const platformId = req.principal.type === PrincipalType.UNKNOWN || req.principal.type === PrincipalType.WORKER ? undefined : req.principal.platform.id
+            const platformId = getPlatformId(req.principal)
             return pieceMetadataService(req.log).getOrThrow({
-                projectId,
                 platformId,
                 name: decodedName,
                 version,
@@ -125,27 +116,25 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/registry', RegistryPiecesRequest, async (req) => {
         const pieces = await pieceMetadataService(req.log).registry({
             release: req.query.release,
-            edition: req.query.edition,
-            platformId: req.principal.type === PrincipalType.UNKNOWN 
-            || req.principal.type === PrincipalType.WORKER ? undefined : req.principal.platform.id,
         })
         return pieces
     })
 
-    app.post('/sync', SyncPiecesRequest, async (req) => pieceSyncService(req.log).sync())
+    app.post('/sync', SyncPiecesRequest, async (req) => pieceSyncService(req.log).sync({ publishCacheRefresh: true }))
 
     app.post(
         '/options',
         OptionsPieceRequest,
         async (req) => {
-            const { projectId, platform } = req.principal
+            const projectId = req.projectId
+            const platform = req.principal.platform
             const flow = await flowService(req.log).getOnePopulatedOrThrow({
                 projectId,
                 id: req.body.flowId,
                 versionId: req.body.flowVersionId,
             })
             const sampleData = await sampleDataService(req.log).getSampleDataForFlow(projectId, flow.version, SampleDataFileType.OUTPUT)
-            const { result } = await userInteractionWatcher(req.log).submitAndWaitForResponse<EngineHelperResponse<EngineHelperPropResult>>({
+            const { response } = await userInteractionWatcher.submitAndWaitForResponse<EngineResponse<unknown>>({
                 jobType: WorkerJobType.EXECUTE_PROPERTY,
                 platformId: platform.id,
                 projectId,
@@ -155,17 +144,21 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
                 input: req.body.input,
                 sampleData,
                 searchValue: req.body.searchValue,
-                piece: await getPiecePackageWithoutArchive(req.log, projectId, platform.id, req.body),
-            })
-            return result
+                piece: await getPiecePackageWithoutArchive(req.log, platform.id, req.body),
+            }, req.log)
+            return response
         },
     )
 
 }
 
+function getPlatformId(principal: Principal): string | undefined {
+    return principal.type === PrincipalType.WORKER || principal.type === PrincipalType.UNKNOWN ? undefined : principal.platform?.id
+}
+
 const RegistryPiecesRequest = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        security: securityAccess.unscoped(ALL_PRINCIPAL_TYPES),
     },
     schema: {
         querystring: RegistryPiecesRequestQuery,
@@ -174,8 +167,7 @@ const RegistryPiecesRequest = {
 
 const ListPiecesRequest = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
-        scope: EndpointScope.PLATFORM,
+        security: securityAccess.unscoped(ALL_PRINCIPAL_TYPES),
     },
     schema: {
         querystring: ListPiecesRequestQuery,
@@ -185,19 +177,17 @@ const ListPiecesRequest = {
 }
 const GetPieceParamsRequest = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        security: securityAccess.unscoped(ALL_PRINCIPAL_TYPES),
     },
     schema: {
         params: GetPieceRequestParams,
         querystring: GetPieceRequestQuery,
-
     },
-
 }
 
 const GetPieceParamsWithScopeRequest = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        security: securityAccess.unscoped(ALL_PRINCIPAL_TYPES),
     },
     schema: {
         params: GetPieceRequestWithScopeParams,
@@ -207,7 +197,7 @@ const GetPieceParamsWithScopeRequest = {
 
 const ListCategoriesRequest = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        security: securityAccess.public(),
     },
     schema: {
         querystring: ListPiecesRequestQuery,
@@ -219,22 +209,14 @@ const OptionsPieceRequest = {
         body: PieceOptionRequest,
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
-    },
-}
-
-
-const ListVersionsRequest = {
-    config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
-    },
-    schema: {
-        querystring: ListVersionRequestQuery,
+        security: securityAccess.project([PrincipalType.USER], undefined, {
+            type: ProjectResourceType.BODY,
+        }),
     },
 }
 
 const SyncPiecesRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        security: securityAccess.publicPlatform([PrincipalType.USER]),
     },
 }

@@ -1,9 +1,11 @@
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
+import { guideliteAuth } from '../common/auth';
 
 export const BASE_URL = `https://api.guidelite.ai/external-api/v1`;
 
 export async function makeRequest(
-  api_key: string,
+  {secret_text}: AppConnectionValueForAuthProperty<typeof guideliteAuth>,
   method: HttpMethod,
   path: string,
   body?: unknown
@@ -13,7 +15,7 @@ export async function makeRequest(
       method,
       url: `${BASE_URL}${path}`,
       headers: {
-        authorization: `Bearer ${api_key}`,
+        authorization: `Bearer ${secret_text}`,
         'Content-Type': 'application/json',
       },
       body,

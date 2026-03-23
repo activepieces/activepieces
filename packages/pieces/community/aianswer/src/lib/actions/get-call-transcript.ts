@@ -1,6 +1,6 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { aiAnswerAuth } from '../..';
+import { aiAnswerAuth } from '../auth';
 import { aiAnswerConfig } from '../common/models';
 
 export const getCallTranscript = createAction({
@@ -21,7 +21,7 @@ export const getCallTranscript = createAction({
       method: HttpMethod.GET,
       url: `${aiAnswerConfig.baseUrl}/v2/get_transcript/${callID}`,
       headers: {
-        [aiAnswerConfig.accessTokenHeaderKey]: context.auth,
+        [aiAnswerConfig.accessTokenHeaderKey]: context.auth.secret_text,
       },
     });
 

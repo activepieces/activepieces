@@ -92,9 +92,9 @@ export const addOrUpdateSubscription = createAction({
 
     const res = await httpClient.sendRequest({
       method: HttpMethod.PUT,
-      url: `${context.auth.base_url}/api/services/CRM/OrderSubscription/Update`,
+      url: `${context.auth.props.base_url}/api/services/CRM/OrderSubscription/Update`,
       headers: {
-        'api-key': context.auth.api_key, // Pass API key in headers
+        'api-key': context.auth.props.api_key, // Pass API key in headers
         'Content-Type': 'application/json',
       },
       body: {

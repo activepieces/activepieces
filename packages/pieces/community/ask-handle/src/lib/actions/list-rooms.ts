@@ -11,7 +11,7 @@ export const listRooms = createAction({
   props: {},
   async run(context) {
     return await askHandleApiCall(
-      context.auth as string,
+      context.auth.secret_text,
       HttpMethod.GET,
       '/rooms/'
     );

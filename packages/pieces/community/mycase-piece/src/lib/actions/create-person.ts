@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { mycaseAuth } from '../../index';
+import { mycaseAuth } from '../auth';
 import { createMyCaseApi } from '../common/mycase-api';
 
 export const createPerson = createAction({
@@ -89,6 +89,7 @@ export const createPerson = createAction({
       required: false,
     }),
     people_group: Property.Dropdown({
+  auth: mycaseAuth,
       displayName: 'People Group',
       description: 'The people group to associate with this client',
       required: false,
@@ -125,7 +126,7 @@ export const createPerson = createAction({
       },
     }),
     cases: Property.MultiSelectDropdown({
-      displayName: 'Cases',
+  auth: mycaseAuth,      displayName: 'Cases',
       description: 'Cases to associate with this client',
       required: false,
       refreshers: [],

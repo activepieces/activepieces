@@ -1,6 +1,6 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { ibmCognoseAuth } from '../../index';
+import { ibmCognoseAuth } from '../auth';
 import { CognosClient } from '../common/cognos-client';
 import { contentObjectDropdown } from '../common/content-object-dropdown';
 
@@ -25,7 +25,7 @@ export const moveContentObjectAction = createAction({
     }
 
     try {
-      const client = new CognosClient(auth);
+      const client = new CognosClient(auth.props);
 
       const moveRequest = {
         source_id: sourceId,

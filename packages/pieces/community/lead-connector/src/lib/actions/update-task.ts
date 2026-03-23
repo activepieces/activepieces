@@ -19,6 +19,7 @@ export const updateTaskAction = createAction({
   description: 'Update a task.',
   props: {
     contact: Property.Dropdown({
+  auth: leadConnectorAuth,
       displayName: 'Contact',
       description: 'The contact to use.',
       required: true,
@@ -43,6 +44,7 @@ export const updateTaskAction = createAction({
       },
     }),
     task: Property.Dropdown({
+  auth: leadConnectorAuth,
       displayName: 'Task',
       required: true,
       refreshers: ['contact'],
@@ -80,6 +82,7 @@ export const updateTaskAction = createAction({
       required: false,
     }),
     assignedTo: Property.Dropdown({
+  auth: leadConnectorAuth,
       displayName: 'Assigned To',
       required: false,
       refreshers: [],

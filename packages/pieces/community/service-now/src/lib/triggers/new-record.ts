@@ -3,6 +3,7 @@ import {
   TriggerStrategy,
   Property,
   PiecePropValueSchema,
+  AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import {
   DedupeStrategy,
@@ -14,7 +15,7 @@ import { servicenowAuth } from '../common/props';
 import { tableDropdown, createServiceNowClient } from '../common/props';
 
 const polling: Polling<
-  PiecePropValueSchema<typeof servicenowAuth>,
+  AppConnectionValueForAuthProperty<typeof servicenowAuth>,
   { table: string; filter?: string }
 > = {
   strategy: DedupeStrategy.TIMEBASED,

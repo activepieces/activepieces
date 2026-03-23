@@ -1,6 +1,6 @@
 import { Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { SimplybookAuth, makeJsonRpcCall, getAccessToken } from './auth';
+import { SimplybookAuth, makeJsonRpcCall, getAccessToken, simplybookAuth } from './auth';
 
 interface Client {
   id: number;
@@ -35,6 +35,7 @@ interface NoteType {
 }
 
 export const clientDropdown = Property.Dropdown({
+  auth: simplybookAuth,
   displayName: 'Client',
   description: 'Select a client',
   required: true,
@@ -50,7 +51,8 @@ export const clientDropdown = Property.Dropdown({
 
     try {
       const clients = await makeJsonRpcCall<Client[]>(
-        auth as SimplybookAuth,
+        auth.props,
+
         'getClientList',
         ['', null]
       );
@@ -73,6 +75,7 @@ export const clientDropdown = Property.Dropdown({
 });
 
 export const serviceDropdown = Property.Dropdown({
+  auth: simplybookAuth,
   displayName: 'Service',
   description: 'Select a service',
   required: true,
@@ -88,7 +91,8 @@ export const serviceDropdown = Property.Dropdown({
 
     try {
       const response = await Promise.race([
-        makeJsonRpcCall<any>(auth as SimplybookAuth, 'getEventList', []),
+        makeJsonRpcCall<any>( auth.props
+, 'getEventList', []),
         new Promise((_, reject) =>
           setTimeout(() => reject(new Error('Request timeout after 20s')), 20000)
         )
@@ -135,6 +139,7 @@ export const serviceDropdown = Property.Dropdown({
 });
 
 export const providerDropdown = Property.Dropdown({
+  auth: simplybookAuth,
   displayName: 'Provider',
   description: 'Select a service provider',
   required: true,
@@ -150,7 +155,8 @@ export const providerDropdown = Property.Dropdown({
 
     try {
       const response = await Promise.race([
-        makeJsonRpcCall<any>(auth as SimplybookAuth, 'getUnitList', []),
+        makeJsonRpcCall<any>( auth.props
+, 'getUnitList', []),
         new Promise((_, reject) =>
           setTimeout(() => reject(new Error('Request timeout after 20s')), 20000)
         )
@@ -197,6 +203,7 @@ export const providerDropdown = Property.Dropdown({
 });
 
 export const noteTypeDropdown = Property.Dropdown({
+  auth: simplybookAuth,
   displayName: 'Note Type',
   description: 'Select a note type',
   required: true,
@@ -211,7 +218,8 @@ export const noteTypeDropdown = Property.Dropdown({
     }
 
     try {
-      const authData = auth as SimplybookAuth;
+      const authData =  auth.props
+;
       const token = await getAccessToken(authData);
 
       const response = await Promise.race([
@@ -272,6 +280,7 @@ export const noteTypeDropdown = Property.Dropdown({
 });
 
 export const bookingDropdown = Property.Dropdown({
+  auth: simplybookAuth,
   displayName: 'Booking',
   description: 'Select a booking',
   required: true,
@@ -295,7 +304,8 @@ export const bookingDropdown = Property.Dropdown({
       const dateTo = today.toISOString().split('T')[0];
 
       const bookings = await makeJsonRpcCall<Booking[]>(
-        auth as SimplybookAuth,
+        auth.props,
+
         'getBookings',
         [{ date_from: dateFrom, date_to: dateTo, booking_type: 'non_cancelled' }]
       );

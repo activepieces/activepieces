@@ -1,4 +1,4 @@
-import { confluenceAuth } from "../../index";
+import { confluenceAuth } from '../auth';
 import { createAction, Property } from "@activepieces/pieces-framework";
 import { folderIdProp, spaceIdProp, templateIdProp, templateVariablesProp } from "../common/props";
 import { confluenceApiCall } from "../common";
@@ -42,9 +42,9 @@ export const createPageFromTemplateAction = createAction({
         const variables = context.propsValue.templateVariables ??{};
 
         const template = await confluenceApiCall<{ body: { storage: { value: string } } }>({
-                    domain: context.auth.confluenceDomain,
-                    username: context.auth.username,
-                    password: context.auth.password,
+                    domain: context.auth.props.confluenceDomain,
+                    username: context.auth.props.username,
+                    password: context.auth.props.password,
                     method: HttpMethod.GET,
                     version: 'v1',
                     resourceUri: `/template/${templateId}`,
@@ -59,9 +59,9 @@ export const createPageFromTemplateAction = createAction({
           });
 
         const response = await confluenceApiCall({
-            domain: context.auth.confluenceDomain,
-            username: context.auth.username,
-            password: context.auth.password,
+            domain: context.auth.props.confluenceDomain,
+            username: context.auth.props.username,
+            password: context.auth.props.password,
             method: HttpMethod.POST,
             version: 'v2',
             resourceUri: '/pages',

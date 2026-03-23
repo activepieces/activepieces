@@ -1,7 +1,5 @@
 # pieces-instantly-ai
 
-This library was generated with [Nx](https://nx.dev).
+## Building
 
-## Running lint
-
-Run `nx build pieces-instantly-ai` to build the library.
+Run `turbo run build --filter=@activepieces/piece-instantly-ai` to build the library.

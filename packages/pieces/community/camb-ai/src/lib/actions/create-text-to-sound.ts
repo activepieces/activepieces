@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { cambaiAuth } from '../../index';
+import { cambaiAuth } from '../auth';
 import { API_BASE_URL, MAX_POLLING_ATTEMPTS, POLLING_INTERVAL_MS } from '../common';
 import { listFoldersDropdown } from '../common';
 
@@ -47,7 +47,7 @@ export const createTextToSound = createAction({
             method: HttpMethod.POST,
             url: `${API_BASE_URL}/text-to-sound`,
             headers: {
-                'x-api-key': auth,
+                'x-api-key': auth.secret_text,
                 'Content-Type': 'application/json'
             },
             body: payload,
@@ -63,7 +63,7 @@ export const createTextToSound = createAction({
                 method: HttpMethod.GET,
                 url: `${API_BASE_URL}/text-to-sound/${taskId}`,
                 headers: {
-                    'x-api-key': auth,
+                    'x-api-key': auth.secret_text,
                 },
             });
 
@@ -92,7 +92,7 @@ export const createTextToSound = createAction({
         const audioResponse = await httpClient.sendRequest({
             method: HttpMethod.GET,
             url: `${API_BASE_URL}/text-to-sound-result/${run_id}`,
-            headers: { 'x-api-key': auth },
+            headers: { 'x-api-key': auth.secret_text },
             responseType: 'arraybuffer',
         });
 

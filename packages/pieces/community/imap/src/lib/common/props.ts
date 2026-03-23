@@ -1,6 +1,6 @@
 import { Property } from '@activepieces/pieces-framework';
 import { fetchMailboxes } from './imap';
-import { type ImapAuth } from './auth';
+import { imapAuth, type ImapAuth } from './auth';
 
 interface DropdownParams {
   description?: string;
@@ -9,7 +9,8 @@ interface DropdownParams {
 }
 
 export const mailboxDropdown = (params: DropdownParams) =>
-  Property.Dropdown<string>({
+  Property.Dropdown<string,boolean,typeof imapAuth>({
+    auth: imapAuth,
     displayName: params.displayName,
     description: params.description,
     required: params.required,
@@ -24,7 +25,7 @@ export const mailboxDropdown = (params: DropdownParams) =>
       }
 
       try {
-        const mailboxes = await fetchMailboxes(auth as ImapAuth);
+        const mailboxes = await fetchMailboxes(auth);
         const options = mailboxes.map(
           ({ name, path }: { name: string; path: string }) => ({
             label: name,

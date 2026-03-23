@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { tableauAuth } from '../../index';
+import { tableauAuth } from '../auth';
 import { getAuthToken, buildTableauUrl, getTableauHeaders, queryWorkbooks } from '../common';
 
 function ensureString(body: any): string {
@@ -16,7 +16,7 @@ export const refreshWorkbook = createAction({
   auth: tableauAuth,
   props: {
     workbookId: Property.Dropdown({
-      displayName: 'Workbook',
+ auth: tableauAuth,     displayName: 'Workbook',
       description: 'Select the workbook to refresh',
       required: true,
       refreshers: ['auth'],

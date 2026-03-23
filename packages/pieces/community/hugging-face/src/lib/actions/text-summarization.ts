@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { SummarizationArgs, InferenceClient } from '@huggingface/inference';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { huggingFaceAuth } from '../../index';
+import { huggingFaceAuth } from '../auth';
 
 export const textSummarization = createAction({
   name: 'text_summarization',
@@ -50,6 +50,7 @@ export const textSummarization = createAction({
       defaultValue: 'news',
     }),
     model: Property.Dropdown({
+      auth: huggingFaceAuth,
       displayName: 'Summarization Model',
       description: 'Select the best model for your content type',
       required: true,
@@ -351,7 +352,7 @@ export const textSummarization = createAction({
         maxLength = 150;
     }
 
-    const hf = new InferenceClient(context.auth as string);
+    const hf = new InferenceClient(context.auth.secret_text);
 
     const args: SummarizationArgs = {
       model: model,

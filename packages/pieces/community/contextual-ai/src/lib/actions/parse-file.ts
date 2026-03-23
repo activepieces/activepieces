@@ -1,5 +1,5 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
-import { contextualAiAuth } from "../../index";
+import { contextualAiAuth } from '../auth';
 import { ContextualAI } from 'contextual-client';
 
 export const parseFileAction = createAction({
@@ -61,7 +61,7 @@ export const parseFileAction = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const { apiKey, baseUrl } = auth;
+    const { apiKey, baseUrl } = auth.props;
     const {
       file,
       parseMode,

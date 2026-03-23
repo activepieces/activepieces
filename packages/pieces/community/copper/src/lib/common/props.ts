@@ -1,6 +1,6 @@
 import { Property } from '@activepieces/pieces-framework';
 import { CopperApiService } from './requests';
-import { CopperAuthType } from './constants';
+import { CopperAuth } from './constants';
 
 export const peopleDropdown = (refreshers: string[]) =>
   Property.Dropdown({
@@ -8,7 +8,8 @@ export const peopleDropdown = (refreshers: string[]) =>
     description: 'select a person',
     required: true,
     refreshers,
-    async options({ auth }: any) {
+    auth: CopperAuth,
+    async options({ auth }) {
       if (!auth) {
         return {
           disabled: true,
@@ -38,11 +39,12 @@ export const peopleDropdown = (refreshers: string[]) =>
 
 export const leadDropdown = (refreshers: string[]) =>
   Property.Dropdown({
+    auth: CopperAuth,
     displayName: 'Lead',
     description: 'select a Lead',
     required: true,
     refreshers,
-    async options({ auth }: any) {
+    async options({ auth }) {
       if (!auth) {
         return {
           disabled: true,
@@ -78,6 +80,7 @@ export const companyDropdown = ({
   required?: boolean;
 }) =>
   Property.Dropdown({
+    auth: CopperAuth,
     displayName: 'Company',
     description: 'select a Company',
     required,
@@ -118,11 +121,12 @@ export const multiCompanyDropdown = ({
   required?: boolean;
 }) =>
   Property.MultiSelectDropdown({
+    auth: CopperAuth,
     displayName: 'Company',
     description: 'select Companies',
     required,
     refreshers,
-    async options({ auth }: any) {
+    async options({ auth }) {
       if (!auth) {
         return {
           disabled: true,
@@ -158,11 +162,12 @@ export const primaryContactsDropdown = ({
   required?: boolean;
 }) =>
   Property.Dropdown({
+    auth: CopperAuth,
     displayName: 'Primary Contact',
     description: 'select a primary contact',
     required,
     refreshers,
-    async options({ auth }: any) {
+    async options({ auth }) {
       if (!auth) {
         return {
           disabled: true,
@@ -198,11 +203,12 @@ export const multiPrimaryContactsDropdown = ({
   required?: boolean;
 }) =>
   Property.MultiSelectDropdown({
+    auth: CopperAuth,
     displayName: 'Primary Contacts',
     description: 'select primary contacts',
     required,
     refreshers,
-    async options({ auth }: any) {
+    async options({ auth }) {
       if (!auth) {
         return {
           disabled: true,
@@ -238,11 +244,12 @@ export const usersDropdown = ({
   required?: boolean;
 }) =>
   Property.Dropdown({
+    auth: CopperAuth,
     displayName: 'Assignee',
     description: 'select a user to assign to',
     required,
     refreshers,
-    async options({ auth }: any) {
+    async options({ auth }) {
       if (!auth) {
         return {
           disabled: true,
@@ -278,11 +285,12 @@ export const multiUsersDropdown = ({
   required?: boolean;
 }) =>
   Property.MultiSelectDropdown({
+    auth: CopperAuth,
     displayName: 'Assignee',
     description: 'select assignees',
     required,
     refreshers,
-    async options({ auth }: any) {
+    async options({ auth }) {
       if (!auth) {
         return {
           disabled: true,
@@ -318,11 +326,12 @@ export const opportunityDropdown = ({
   required?: boolean;
 }) =>
   Property.Dropdown({
+    auth: CopperAuth,
     displayName: 'Opportunity',
     description: 'select an Opportunity',
     required,
     refreshers,
-    async options({ auth }: any) {
+    async options({ auth }) {
       if (!auth) {
         return {
           disabled: true,
@@ -358,11 +367,12 @@ export const multiOpportunityDropdown = ({
   required?: boolean;
 }) =>
   Property.MultiSelectDropdown({
+    auth: CopperAuth,
     displayName: 'Opportunity',
     description: 'select Opportunities',
     required,
     refreshers,
-    async options({ auth }: any) {
+    async options({ auth }) {
       if (!auth) {
         return {
           disabled: true,
@@ -398,11 +408,12 @@ export const pipelinesDropdown = ({
   required?: boolean;
 }) =>
   Property.Dropdown({
+    auth: CopperAuth,
     displayName: 'Pipeline',
     description: 'select a Pipeline',
     required,
     refreshers,
-    async options({ auth }: any) {
+    async options({ auth }) {
       if (!auth) {
         return {
           disabled: true,
@@ -438,11 +449,12 @@ export const multiPipelinesDropdown = ({
   required?: boolean;
 }) =>
   Property.MultiSelectDropdown({
+    auth: CopperAuth,
     displayName: 'Pipeline',
     description: 'select a Pipeline',
     required,
     refreshers,
-    async options({ auth }: any) {
+    async options({ auth }) {
       if (!auth) {
         return {
           disabled: true,
@@ -478,11 +490,12 @@ export const projectsDropdown = ({
   required?: boolean;
 }) =>
   Property.Dropdown({
+    auth: CopperAuth,
     displayName: 'Project',
     description: 'select a Project',
     required,
     refreshers,
-    async options({ auth }: any) {
+    async options({ auth }) {
       if (!auth) {
         return {
           disabled: true,
@@ -512,12 +525,12 @@ export const projectsDropdown = ({
 
 export const ActivityTypesDropdown = (entity?: 'user' | 'system') =>
   Property.Dropdown({
+    auth: CopperAuth,
     displayName: 'Activity Type',
     description: 'Select activity Type',
     required: true,
     refreshers: ['auth'],
-    async options(propsValue: Record<string, unknown>) {
-      const auth = propsValue['auth'] as CopperAuthType | undefined;
+    async options({ auth }) {
       if (!auth) {
         return {
           disabled: true,
@@ -558,12 +571,12 @@ export const MultiActivityTypesDropdown = ({
   required?: boolean;
 }) =>
   Property.MultiSelectDropdown({
-    displayName: 'Activity Type',
+    auth: CopperAuth,
+      displayName: 'Activity Type',
     description: 'Select activity Type',
     required,
     refreshers: ['auth'],
-    async options(propsValue: Record<string, unknown>) {
-      const auth = propsValue['auth'] as CopperAuthType | undefined;
+    async options({ auth }) {
       if (!auth) {
         return {
           disabled: true,
@@ -602,12 +615,12 @@ export const MultiContactTypesDropdown = ({
   required?: boolean;
 }) =>
   Property.MultiSelectDropdown({
+    auth: CopperAuth,
     displayName: 'Contact Type',
     description: 'Select contact Type',
     required,
     refreshers: ['auth'],
-    async options(propsValue: Record<string, unknown>) {
-      const auth = propsValue['auth'] as CopperAuthType | undefined;
+    async options({ auth }) {
       if (!auth) {
         return {
           disabled: true,
@@ -641,12 +654,12 @@ export const MultiLeadStatusDropdown = ({
   required?: boolean;
 }) =>
   Property.MultiSelectDropdown({
+    auth: CopperAuth,
     displayName: 'Lead Status',
     description: 'Select lead status',
     required,
     refreshers: ['auth'],
-    async options(propsValue: Record<string, unknown>) {
-      const auth = propsValue['auth'] as CopperAuthType | undefined;
+    async options({ auth }) {
       if (!auth) {
         return {
           disabled: true,
@@ -680,12 +693,12 @@ export const MultiCustomerSourceDropdown = ({
   required?: boolean;
 }) =>
   Property.MultiSelectDropdown({
+    auth: CopperAuth,
     displayName: 'Customer Source',
     description: 'Select customer source.',
     required,
     refreshers: ['auth'],
-    async options(propsValue: Record<string, unknown>) {
-      const auth = propsValue['auth'] as CopperAuthType | undefined;
+    async options({ auth }) {
       if (!auth) {
         return {
           disabled: true,
@@ -719,12 +732,12 @@ export const MultiLossReasonsDropdown = ({
   required?: boolean;
 }) =>
   Property.MultiSelectDropdown({
+    auth: CopperAuth,
     displayName: 'Loss Reason',
     description: 'Select loss reason.',
     required,
     refreshers: ['auth'],
-    async options(propsValue: Record<string, unknown>) {
-      const auth = propsValue['auth'] as CopperAuthType | undefined;
+    async options({ auth }) {
       if (!auth) {
         return {
           disabled: true,

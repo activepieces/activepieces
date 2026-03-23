@@ -1,7 +1,9 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { cashfreePaymentsAuth } from '../auth/cashgram-auth';
 
 export const cancelPaymentLink = createAction({
+  auth: cashfreePaymentsAuth,
   name: 'cancel-payment-link',
   displayName: 'Cancel Payment Link',
   description: 'Cancel a payment link in Cashfree Payment Gateway. Only links in ACTIVE status can be cancelled.',
@@ -49,11 +51,7 @@ export const cancelPaymentLink = createAction({
   
   async run(context) {
     // Get authentication values from piece-level auth
-    const {  clientId, clientSecret } = context.auth as {
-     
-      clientId?: string;
-      clientSecret?: string;
-    };
+    const {  clientId, clientSecret } = context.auth.props
     
     if (!clientId || !clientSecret) {
       return {

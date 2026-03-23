@@ -23,7 +23,7 @@ export const generateArticleAction = createAction({
       method: HttpMethod.POST,
       url: 'https://app.rapidtextai.com/openai/v1/chat/completionsarticle',
       queryParams: {
-        gigsixkey: context.auth,
+        gigsixkey: context.auth.secret_text,
       },
       body: {
         model,

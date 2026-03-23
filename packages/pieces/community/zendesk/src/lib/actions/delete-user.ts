@@ -30,7 +30,7 @@ export const deleteUserAction = createAction({
     }),
   },
   async run({ propsValue, auth }) {
-    const authentication = auth as AuthProps;
+    const authentication = auth;
     const {
       user_id,
       confirmation,
@@ -42,12 +42,12 @@ export const deleteUserAction = createAction({
 
     try {
       const response = await httpClient.sendRequest({
-        url: `https://${authentication.subdomain}.zendesk.com/api/v2/users/${user_id}.json`,
+        url: `https://${authentication.props.subdomain}.zendesk.com/api/v2/users/${user_id}.json`,
         method: HttpMethod.DELETE,
         authentication: {
           type: AuthenticationType.BASIC,
-          username: authentication.email + '/token',
-          password: authentication.token,
+          username: authentication.props.email + '/token',
+          password: authentication.props.token,
         },
       });
 
