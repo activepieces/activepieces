@@ -1,4 +1,4 @@
-import { carboneAuth } from '../../index';
+import { carboneAuth } from '../auth';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import {
   HttpMethod,
@@ -6,8 +6,8 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 
-const CARBONE_API_URL = 'https://api.carbone.io';
-const CARBONE_VERSION = '5';
+import { CARBONE_API_URL, CARBONE_VERSION } from '../common/constants';
+
 
 export const listTemplatesAction = createAction({
   auth: carboneAuth,

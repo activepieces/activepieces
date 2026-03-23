@@ -1,4 +1,4 @@
-import { carboneAuth } from '../../index';
+import { carboneAuth } from '../auth';
 import { createAction } from '@activepieces/pieces-framework';
 import {
   HttpMethod,
@@ -6,15 +6,14 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 
-const CARBONE_API_URL = 'https://api.carbone.io';
-const CARBONE_VERSION = '5';
+import { CARBONE_API_URL, CARBONE_VERSION } from '../common/constants';
+
 
 export const listCategoriesAction = createAction({
   auth: carboneAuth,
   name: 'carbone_list_categories',
   displayName: 'List Categories',
-  description:
-    'Retrieve all categories used by Carbone templates. Categories function like folders for organizing templates.',
+  description: 'List all categories used to organize your Carbone templates.',
   props: {},
   async run(context) {
     const request: HttpRequest = {

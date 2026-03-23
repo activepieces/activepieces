@@ -1,4 +1,4 @@
-import { carboneAuth } from '../../index';
+import { carboneAuth } from '../auth';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import {
   HttpMethod,
@@ -6,71 +6,19 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 
-const CARBONE_API_URL = 'https://api.carbone.io';
-const CARBONE_VERSION = '5';
+import { CARBONE_API_URL, CARBONE_VERSION } from '../common/constants';
+import { carboneProps } from '../common/props';
 
 export const renderDocumentAction = createAction({
   auth: carboneAuth,
   name: 'carbone_render_document',
   displayName: 'Render Document',
-  description:
-    'Render a Carbone template with JSON data. Uses direct file download for faster processing.',
+  description: 'Render a Carbone template with JSON data and download the generated document.',
   props: {
-    templateId: Property.Dropdown({
-      auth: carboneAuth,
+    templateId: carboneProps.templateDropdown({
       displayName: 'Template ID',
-      required: true,
-      description:
-        'Select a template to render. Lists deployed templates from your Carbone account.',
-      refreshers: [],
-      options: async ({ auth }) => {
-        if (!auth) {
-          return {
-            disabled: true,
-            placeholder: 'Connect your account first',
-            options: [],
-          };
-        }
-        try {
-          const response = await httpClient.sendRequest<{
-            success: boolean;
-            data: Array<{
-              id: string;
-              versionId: string;
-              name: string;
-              category: string;
-            }>;
-          }>({
-            method: HttpMethod.GET,
-            url: `${CARBONE_API_URL}/templates`,
-            headers: {
-              Authorization: `Bearer ${auth}`,
-              'carbone-version': CARBONE_VERSION,
-            },
-            queryParams: { limit: '100' },
-          });
-          if (!response.body.success) {
-            return {
-              disabled: false,
-              placeholder: 'Failed to fetch templates',
-              options: [],
-            };
-          }
-          return {
-            disabled: false,
-            options: response.body.data.map((template) => ({
-              label: template.name || template.id,
-              value: template.id,
-            })),
-          };
-        } catch (e) {
-          return {
-            disabled: false,
-            placeholder: 'Error loading templates',
-            options: [],
-          };
-        }
-      },
+      description: 'Select a template to render.',
+      showIdInLabel: false,
     }),
     data: Property.Json({
       displayName: 'Data (JSON)',

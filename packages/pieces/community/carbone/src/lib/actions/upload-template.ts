@@ -1,26 +1,21 @@
-import { carboneAuth } from '../../index';
+import FormData from 'form-data';
+import { carboneAuth } from '../auth';
 import { Property, createAction } from '@activepieces/pieces-framework';
-import {
-  HttpMethod,
-  HttpRequest,
-  httpClient,
-} from '@activepieces/pieces-common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { CARBONE_API_URL, CARBONE_VERSION } from '../common/constants';
 
-const CARBONE_API_URL = 'https://api.carbone.io';
-const CARBONE_VERSION = '5';
 
 export const uploadTemplateAction = createAction({
   auth: carboneAuth,
   name: 'carbone_upload_template',
   displayName: 'Upload Template',
-  description:
-    'Upload a template file (DOCX, XLSX, ODS, ODT, PPTX, etc.) to Carbone and receive a template ID for later rendering.',
+  description: 'Upload a template file to Carbone and get a template ID for rendering.',
   props: {
-    fileBase64: Property.LongText({
-      displayName: 'Template File (Base64)',
+    file: Property.File({
+      displayName: 'Template File',
       required: true,
       description:
-        'The template file encoded as a base64 string. Supported formats: DOCX, XLSX, ODS, ODT, PPTX, CSV, HTML.',
+        'Supported formats: DOCX, XLSX, ODS, ODT, PPTX, CSV, HTML.',
     }),
     filename: Property.ShortText({
       displayName: 'Filename',
@@ -72,96 +67,41 @@ export const uploadTemplateAction = createAction({
     }),
   },
   async run(context) {
-    const { fileBase64, filename, versioning, existingTemplateId, name, comment, category, tags } = context.propsValue;
+    const { file, filename, versioning, existingTemplateId, name, comment, category, tags } = context.propsValue;
 
-    // Convert base64 to binary buffer
-    const fileBuffer = Buffer.from(fileBase64, 'base64');
+    // Metadata fields must come before the template file in Carbone v5
+    const form = new FormData();
+    if (versioning !== undefined) form.append('versioning', String(versioning));
+    if (existingTemplateId) form.append('id', existingTemplateId);
+    if (name) form.append('name', name);
+    if (comment) form.append('comment', comment);
+    if (category) form.append('category', category);
+    if (tags && tags.length > 0) form.append('tags', JSON.stringify(tags));
 
-    // Build multipart form data
-    const boundary = `----Carbone${Date.now()}`;
-    const CRLF = '\r\n';
-
-    const parts: Buffer[] = [];
-
-    // Add metadata fields (must come before template file in v5)
-    if (versioning !== undefined) {
-      const field = `--${boundary}${CRLF}` +
-        `Content-Disposition: form-data; name="versioning"${CRLF}${CRLF}` +
-        `${versioning}${CRLF}`;
-      parts.push(Buffer.from(field, 'utf-8'));
-    }
-
-    if (existingTemplateId) {
-      const field = `--${boundary}${CRLF}` +
-        `Content-Disposition: form-data; name="id"${CRLF}${CRLF}` +
-        `${existingTemplateId}${CRLF}`;
-      parts.push(Buffer.from(field, 'utf-8'));
-    }
-
-    if (name) {
-      const field = `--${boundary}${CRLF}` +
-        `Content-Disposition: form-data; name="name"${CRLF}${CRLF}` +
-        `${name}${CRLF}`;
-      parts.push(Buffer.from(field, 'utf-8'));
-    }
-
-    if (comment) {
-      const field = `--${boundary}${CRLF}` +
-        `Content-Disposition: form-data; name="comment"${CRLF}${CRLF}` +
-        `${comment}${CRLF}`;
-      parts.push(Buffer.from(field, 'utf-8'));
-    }
-
-    if (category) {
-      const field = `--${boundary}${CRLF}` +
-        `Content-Disposition: form-data; name="category"${CRLF}${CRLF}` +
-        `${category}${CRLF}`;
-      parts.push(Buffer.from(field, 'utf-8'));
-    }
-
-    if (tags && tags.length > 0) {
-      const field = `--${boundary}${CRLF}` +
-        `Content-Disposition: form-data; name="tags"${CRLF}${CRLF}` +
-        `${JSON.stringify(tags)}${CRLF}`;
-      parts.push(Buffer.from(field, 'utf-8'));
-    }
-
-    // Add template file (must be last in v5)
-    const fileHeader =
-      `--${boundary}${CRLF}` +
-      `Content-Disposition: form-data; name="template"; filename="${filename}"${CRLF}` +
-      `Content-Type: application/octet-stream${CRLF}${CRLF}`;
-
-    parts.push(Buffer.from(fileHeader, 'utf-8'));
-    parts.push(fileBuffer);
-    parts.push(Buffer.from(`${CRLF}--${boundary}--${CRLF}`, 'utf-8'));
-
-    const body = Buffer.concat(parts);
-
-    const request: HttpRequest = {
-      method: HttpMethod.POST,
-      url: `${CARBONE_API_URL}/template`,
-      headers: {
-        Authorization: `Bearer ${context.auth.secret_text}`,
-        'carbone-version': CARBONE_VERSION,
-        'Content-Type': `multipart/form-data; boundary=${boundary}`,
-        'Content-Length': String(body.length),
-      },
-      body: body as unknown as Record<string, unknown>,
-    };
+    // Template file must be last in Carbone v5
+    form.append('template', Buffer.from(file.base64, 'base64'), filename);
 
     const response = await httpClient.sendRequest<{
       success: boolean;
       data: {
         id?: string;
         versionId?: string;
-        templateId?: string; // legacy backward compatibility
+        templateId?: string;
         type: string;
         size: number;
         createdAt: number;
       };
       error?: string;
-    }>(request);
+    }>({
+      method: HttpMethod.POST,
+      url: `${CARBONE_API_URL}/template`,
+      headers: {
+        Authorization: `Bearer ${context.auth.secret_text}`,
+        'carbone-version': CARBONE_VERSION,
+        ...form.getHeaders(),
+      },
+      body: form as unknown as Record<string, unknown>,
+    });
 
     if (!response.body.success) {
       throw new Error(

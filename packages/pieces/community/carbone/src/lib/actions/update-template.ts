@@ -1,4 +1,4 @@
-import { carboneAuth } from '../../index';
+import { carboneAuth } from '../auth';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import {
   HttpMethod,
@@ -6,71 +6,19 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 
-const CARBONE_API_URL = 'https://api.carbone.io';
-const CARBONE_VERSION = '5';
+import { CARBONE_API_URL, CARBONE_VERSION } from '../common/constants';
+import { carboneProps } from '../common/props';
+
 
 export const updateTemplateAction = createAction({
   auth: carboneAuth,
   name: 'carbone_update_template',
   displayName: 'Update Template Metadata',
-  description:
-    'Update metadata of an existing Carbone template. Modify name, comment, tags, category, deployedAt, or expireAt.',
+  description: 'Update the metadata of an existing Carbone template.',
   props: {
-    templateId: Property.Dropdown({
-      auth: carboneAuth,
+    templateId: carboneProps.templateDropdown({
       displayName: 'Template ID or Version ID',
-      required: true,
-      description:
-        'Select a template to update.',
-      refreshers: [],
-      options: async ({ auth }) => {
-        if (!auth) {
-          return {
-            disabled: true,
-            placeholder: 'Connect your account first',
-            options: [],
-          };
-        }
-        try {
-          const response = await httpClient.sendRequest<{
-            success: boolean;
-            data: Array<{
-              id: string;
-              versionId: string;
-              name: string;
-              category: string;
-            }>;
-          }>({
-            method: HttpMethod.GET,
-            url: `${CARBONE_API_URL}/templates`,
-            headers: {
-              Authorization: `Bearer ${auth}`,
-              'carbone-version': CARBONE_VERSION,
-            },
-            queryParams: { limit: '100' },
-          });
-          if (!response.body.success) {
-            return {
-              disabled: false,
-              placeholder: 'Failed to fetch templates',
-              options: [],
-            };
-          }
-          return {
-            disabled: false,
-            options: response.body.data.map((template) => ({
-              label: `${template.name || template.id} (${template.id})`,
-              value: template.id,
-            })),
-          };
-        } catch (e) {
-          return {
-            disabled: false,
-            placeholder: 'Error loading templates',
-            options: [],
-          };
-        }
-      },
+      description: 'Select a template to update.',
     }),
     name: Property.ShortText({
       displayName: 'Template Name (optional)',
