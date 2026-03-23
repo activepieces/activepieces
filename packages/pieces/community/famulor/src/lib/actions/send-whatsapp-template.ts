@@ -7,8 +7,7 @@ export const sendWhatsAppTemplate = createAction({
   auth: famulorAuth,
   name: 'sendWhatsAppTemplate',
   displayName: 'Send WhatsApp Template Message',
-  description:
-    'Send an approved Meta template via a Famulor WhatsApp sender (first message or outside the 24h window). Rate limit: 5 requests per second per user.',
+  description: 'Send an approved WhatsApp template message via a Famulor sender.',
   props: famulorCommon.sendWhatsAppTemplateProperties(),
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, famulorCommon.sendWhatsAppTemplateSchema);

@@ -7,8 +7,7 @@ export const getWhatsAppTemplates = createAction({
   auth: famulorAuth,
   name: 'getWhatsAppTemplates',
   displayName: 'Get WhatsApp Templates',
-  description:
-    'List WhatsApp message templates for a sender (from Get WhatsApp Senders). Use template `id` and variable names when sending approved templates outside the 24h window.',
+  description: 'List approved WhatsApp message templates for a sender.',
   props: famulorCommon.getWhatsAppTemplatesProperties(),
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, famulorCommon.getWhatsAppTemplatesSchema);

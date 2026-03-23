@@ -7,8 +7,7 @@ export const sendMessage = createAction({
   auth: famulorAuth,
   name: 'sendMessage',
   displayName: 'Send Message',
-  description:
-    'Send a user message to an existing conversation. The response includes the assistant\'s reply in `message` and optional `function_calls`. Widget conversations are billed per user message; test conversations are free. Use Get Conversation for full history.',
+  description: 'Send a message to an existing conversation and receive the assistant\'s reply.',
   props: famulorCommon.sendMessageProperties(),
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, famulorCommon.sendMessageSchema);

@@ -53,8 +53,7 @@ export const conversationEnded = createTrigger({
   auth: famulorAuth,
   name: 'conversationEnded',
   displayName: 'Conversation Ended',
-  description:
-    'Runs when a chat conversation ends (WhatsApp or web widget). Receives transcript, extracted variables, input variables, and customer fields. Enable the webhook URL in Famulor via this trigger.',
+  description: 'Triggers when a chat conversation ends.',
   props: {
     assistant_id: assistantDropdownForConversationWebhook(),
   },

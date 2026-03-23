@@ -8,8 +8,7 @@ export const createCampaign = createAction({
   auth: famulorAuth,
   name: 'createCampaign',
   displayName: 'Create Campaign',
-  description:
-    'Create a new outbound calling campaign with scheduling, retries, and optional caller phone numbers.',
+  description: 'Create a new outbound calling campaign.',
   props: famulorCommon.createCampaignProperties(),
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, famulorCommon.createCampaignSchema);

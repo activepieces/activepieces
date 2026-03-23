@@ -7,8 +7,7 @@ export const listLeads = createAction({
   auth: famulorAuth,
   name: 'listLeads',
   displayName: 'List Leads',
-  description:
-    'List all leads for the authenticated user, including campaign info and secondary contacts.',
+  description: 'List all leads in your account.',
   props: famulorCommon.listLeadsProperties(),
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, famulorCommon.listLeadsSchema);

@@ -17,8 +17,7 @@ export const createConversation = createAction({
   auth: famulorAuth,
   name: 'createConversation',
   displayName: 'Create Conversation',
-  description:
-    'Start a new chat with an AI assistant (widget = billed, test = free for development). Returns conversation_id and initial history; use Send Message and Get Conversation to continue.',
+  description: 'Start a new chat conversation with an AI assistant.',
   props: famulorCommon.createConversationProperties(),
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, famulorCommon.createConversationSchema);

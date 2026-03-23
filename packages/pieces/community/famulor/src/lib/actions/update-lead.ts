@@ -7,8 +7,7 @@ export const updateLead = createAction({
   auth: famulorAuth,
   name: 'updateLead',
   displayName: 'Update Lead',
-  description:
-    'Update an existing lead. Only fields you set are sent; variables are merged with existing values.',
+  description: 'Update an existing lead\'s details.',
   props: famulorCommon.updateLeadProperties(),
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, famulorCommon.updateLeadSchema);

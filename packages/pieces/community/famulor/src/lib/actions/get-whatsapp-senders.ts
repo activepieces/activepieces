@@ -7,8 +7,7 @@ export const getWhatsAppSenders = createAction({
   auth: famulorAuth,
   name: 'getWhatsAppSenders',
   displayName: 'Get WhatsApp Senders',
-  description:
-    'List WhatsApp Business senders (phone numbers) in your account. Use each sender `id` as `sender_id` when sending WhatsApp messages via the API.',
+  description: 'List WhatsApp Business senders linked to your account.',
   props: famulorCommon.getWhatsAppSendersProperties(),
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, famulorCommon.getWhatsAppSendersSchema);

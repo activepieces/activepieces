@@ -8,8 +8,7 @@ export const listConversations = createAction({
   auth: famulorAuth,
   name: 'listConversations',
   displayName: 'List Conversations',
-  description:
-    'List conversations with optional filters and cursor pagination (next_cursor / prev_cursor).',
+  description: 'List conversations with optional filters.',
   props: famulorCommon.listConversationsProperties(),
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, famulorCommon.listConversationsSchema);

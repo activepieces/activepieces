@@ -17,7 +17,7 @@ export const generateAiReply = createAction({
   auth: famulorAuth,
   name: 'generateAiReply',
   displayName: 'Generate AI Reply',
-  description: 'Generate an AI response using an assistant, identified by an external customer identifier. Rate limited to 5 requests per minute per API token.',
+  description: 'Generate an AI reply from an assistant for a given customer.',
   props: famulorCommon.generateAiReplyProperties(),
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, famulorCommon.generateAiReplySchema);

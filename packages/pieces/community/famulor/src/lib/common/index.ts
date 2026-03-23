@@ -521,7 +521,7 @@ export const famulorCommon = {
     }
 
     const response = await httpClient.sendRequest<UpdateLeadResponse>({
-      method: HttpMethod.PATCH,
+      method: HttpMethod.PUT,
       url: `${baseApiUrl}api/user/leads/${lead_id}`,
       headers: famulorCommon.baseHeaders(auth),
       body,

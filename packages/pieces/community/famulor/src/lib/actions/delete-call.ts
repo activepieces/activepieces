@@ -7,8 +7,7 @@ export const deleteCall = createAction({
   auth: famulorAuth,
   name: 'deleteCall',
   displayName: 'Delete Call',
-  description:
-    '⚠️ Permanently delete a call record, including transcript, recording, and metadata. This cannot be undone.',
+  description: 'Permanently delete a call record including its transcript and recording.',
   props: famulorCommon.deleteCallProperties(),
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, famulorCommon.deleteCallSchema);

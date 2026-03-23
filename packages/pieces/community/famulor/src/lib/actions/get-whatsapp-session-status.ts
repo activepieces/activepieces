@@ -7,8 +7,7 @@ export const getWhatsAppSessionStatus = createAction({
   auth: famulorAuth,
   name: 'getWhatsAppSessionStatus',
   displayName: 'Get WhatsApp Session Status',
-  description:
-    'Check the 24-hour messaging window for a sender and recipient. Use `session_status.can_send_freeform` to choose freeform vs template messages. Does not consume balance.',
+  description: 'Check if a 24-hour WhatsApp messaging session is active for a sender and recipient.',
   props: famulorCommon.getWhatsAppSessionStatusProperties(),
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(

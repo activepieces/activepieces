@@ -8,8 +8,7 @@ export const listCalls = createAction({
   auth: famulorAuth,
   name: 'listCalls',
   displayName: 'List Calls',
-  description:
-    'List calls with optional filters (status, type, phone, assistant, campaign, date range) and page-based pagination.',
+  description: 'List calls with optional filters.',
   props: famulorCommon.listCallsProperties(),
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, famulorCommon.listCallsSchema);

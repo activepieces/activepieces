@@ -458,7 +458,7 @@ export const updateLead = () => ({
 });
 
 const assistantIdDropdown = (displayName: string, description: string, required = true) =>
-  Property.Dropdown<number, false, typeof famulorAuth>({
+  Property.Dropdown<number, boolean, typeof famulorAuth>({
     auth: famulorAuth,
     displayName,
     description,

@@ -7,8 +7,7 @@ export const listPhoneNumbers = createAction({
   auth: famulorAuth,
   name: 'listPhoneNumbers',
   displayName: 'List Phone Numbers',
-  description:
-    'Lists all phone numbers linked to your account (E.164, type, SMS capability, subscription status, region). Uses the documented /all endpoint, not the legacy SMS-only list.',
+  description: 'List all phone numbers linked to your account.',
   props: famulorCommon.listAccountPhoneNumbersProperties(),
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(

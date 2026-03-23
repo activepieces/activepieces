@@ -7,8 +7,7 @@ export const getCall = createAction({
   auth: famulorAuth,
   name: 'getCall',
   displayName: 'Get Call',
-  description:
-    'Retrieve full details for a single call by ID (transcript, variables, costs, recording URL, etc.).',
+  description: 'Retrieve details for a call by ID, including transcript and recording.',
   props: famulorCommon.getCallProperties(),
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, famulorCommon.getCallSchema);

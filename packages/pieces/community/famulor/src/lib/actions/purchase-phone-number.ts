@@ -7,8 +7,7 @@ export const purchasePhoneNumber = createAction({
   auth: famulorAuth,
   name: 'purchasePhoneNumber',
   displayName: 'Purchase Phone Number',
-  description:
-    'Buy a dedicated number returned by Search Available Phone Numbers. Charges your payment method and starts a monthly subscription; purchases are non-refundable until you release the number.',
+  description: 'Purchase a phone number from the available search results.',
   props: famulorCommon.purchasePhoneNumberProperties(),
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(

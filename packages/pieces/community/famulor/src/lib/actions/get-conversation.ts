@@ -7,8 +7,7 @@ export const getConversation = createAction({
   auth: famulorAuth,
   name: 'getConversation',
   displayName: 'Get Conversation',
-  description:
-    'Retrieve full message history for a conversation (oldest first). Pair with Create Conversation and Send Message for the full chat flow.',
+  description: 'Retrieve the full message history for a conversation.',
   props: famulorCommon.getConversationProperties(),
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, famulorCommon.getConversationSchema);

@@ -7,8 +7,7 @@ export const searchAvailablePhoneNumbers = createAction({
   auth: famulorAuth,
   name: 'searchAvailablePhoneNumbers',
   displayName: 'Search Available Phone Numbers',
-  description:
-    'Search numbers available for purchase from Famulor’s provider (price, SMS, address requirements). Use the result with Purchase Phone Number when you add that action.',
+  description: 'Search for phone numbers available to purchase.',
   props: famulorCommon.searchAvailablePhoneNumbersProperties(),
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(
