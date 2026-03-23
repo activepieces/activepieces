@@ -21,7 +21,7 @@ export const deleteLink = createAction({
       method: HttpMethod.DELETE,
       url: `${DUB_API_BASE}/links/${propsValue.linkId}`,
       headers: {
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
         'Content-Type': 'application/json',
       },
     });

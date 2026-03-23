@@ -2,26 +2,6 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { dubAuth, DUB_API_BASE } from '../auth';
 
-export interface DubLink {
-  id: string;
-  domain: string;
-  key: string;
-  url: string;
-  shortLink: string;
-  qrCode: string;
-  clicks: number;
-  leads: number;
-  sales: number;
-  createdAt: string;
-  updatedAt: string;
-  expiresAt: string | null;
-  title: string | null;
-  description: string | null;
-  image: string | null;
-  tags: Array<{ id: string; name: string; color: string }>;
-  archived: boolean;
-}
-
 export const createLink = createAction({
   name: 'create_link',
   displayName: 'Create Link',
@@ -61,9 +41,24 @@ export const createLink = createAction({
       description: 'A short description of what the link points to.',
       required: false,
     }),
+    image: Property.ShortText({
+      displayName: 'OG Image URL',
+      description: 'Custom link preview image (og:image). Used when Custom Link Previews (`proxy`) is enabled.',
+      required: false,
+    }),
+    video: Property.ShortText({
+      displayName: 'OG Video URL',
+      description: 'Custom link preview video (og:video). Used when Custom Link Previews (`proxy`) is enabled.',
+      required: false,
+    }),
     tags: Property.Array({
       displayName: 'Tag Names',
       description: 'List of tag names to attach to this link.',
+      required: false,
+    }),
+    folderId: Property.ShortText({
+      displayName: 'Folder ID',
+      description: 'The unique ID of an existing folder to assign this link to.',
       required: false,
     }),
     expiresAt: Property.ShortText({
@@ -82,15 +77,33 @@ export const createLink = createAction({
       description: 'Password-protect the link. Visitors must enter this password before being redirected.',
       required: false,
     }),
-    archived: Property.Checkbox({
-      displayName: 'Archived',
-      description: 'Archive this link immediately after creation.',
+    trackConversion: Property.Checkbox({
+      displayName: 'Track Conversions',
+      description: 'Whether to track conversions for this link.',
+      required: false,
+      defaultValue: false,
+    }),
+    proxy: Property.Checkbox({
+      displayName: 'Custom Link Previews',
+      description: 'Enable Custom Link Previews (og:title, og:description, og:image) for this link.',
       required: false,
       defaultValue: false,
     }),
     rewrite: Property.Checkbox({
       displayName: 'Cloaked URL (URL Rewriting)',
       description: 'Cloak the destination URL — visitors see the short link URL in the browser.',
+      required: false,
+      defaultValue: false,
+    }),
+    doIndex: Property.Checkbox({
+      displayName: 'Allow Search Engine Indexing',
+      description: 'Allow search engines to index this short link.',
+      required: false,
+      defaultValue: false,
+    }),
+    archived: Property.Checkbox({
+      displayName: 'Archived',
+      description: 'Archive this link immediately after creation.',
       required: false,
       defaultValue: false,
     }),
@@ -116,27 +129,27 @@ export const createLink = createAction({
       required: false,
     }),
     // UTM parameters
-    utmSource: Property.ShortText({
+    utm_source: Property.ShortText({
       displayName: 'UTM Source',
       description: 'UTM source parameter (e.g. `newsletter`, `twitter`).',
       required: false,
     }),
-    utmMedium: Property.ShortText({
+    utm_medium: Property.ShortText({
       displayName: 'UTM Medium',
       description: 'UTM medium parameter (e.g. `email`, `social`).',
       required: false,
     }),
-    utmCampaign: Property.ShortText({
+    utm_campaign: Property.ShortText({
       displayName: 'UTM Campaign',
       description: 'UTM campaign parameter (e.g. `spring-sale`).',
       required: false,
     }),
-    utmTerm: Property.ShortText({
+    utm_term: Property.ShortText({
       displayName: 'UTM Term',
       description: 'UTM term parameter for paid search keywords.',
       required: false,
     }),
-    utmContent: Property.ShortText({
+    utm_content: Property.ShortText({
       displayName: 'UTM Content',
       description: 'UTM content parameter for A/B testing.',
       required: false,
@@ -145,7 +158,7 @@ export const createLink = createAction({
   async run(context) {
     const { auth, propsValue } = context;
 
-    // Build body, omitting undefined/null values
+    // Build body, omitting undefined/null/empty values
     const body: Record<string, unknown> = {
       url: propsValue.url,
     };
@@ -155,29 +168,35 @@ export const createLink = createAction({
     if (propsValue.externalId) body['externalId'] = propsValue.externalId;
     if (propsValue.title) body['title'] = propsValue.title;
     if (propsValue.description) body['description'] = propsValue.description;
+    if (propsValue.image) body['image'] = propsValue.image;
+    if (propsValue.video) body['video'] = propsValue.video;
     if (propsValue.tags && (propsValue.tags as string[]).length > 0) {
       body['tagNames'] = propsValue.tags;
     }
+    if (propsValue.folderId) body['folderId'] = propsValue.folderId;
     if (propsValue.expiresAt) body['expiresAt'] = propsValue.expiresAt;
     if (propsValue.expiredUrl) body['expiredUrl'] = propsValue.expiredUrl;
     if (propsValue.password) body['password'] = propsValue.password;
-    if (propsValue.archived) body['archived'] = propsValue.archived;
+    if (propsValue.trackConversion) body['trackConversion'] = propsValue.trackConversion;
+    if (propsValue.proxy) body['proxy'] = propsValue.proxy;
     if (propsValue.rewrite) body['rewrite'] = propsValue.rewrite;
+    if (propsValue.doIndex) body['doIndex'] = propsValue.doIndex;
+    if (propsValue.archived) body['archived'] = propsValue.archived;
     if (propsValue.ios) body['ios'] = propsValue.ios;
     if (propsValue.android) body['android'] = propsValue.android;
     if (propsValue.geo) body['geo'] = propsValue.geo;
     if (propsValue.comments) body['comments'] = propsValue.comments;
-    if (propsValue.utmSource) body['utmSource'] = propsValue.utmSource;
-    if (propsValue.utmMedium) body['utmMedium'] = propsValue.utmMedium;
-    if (propsValue.utmCampaign) body['utmCampaign'] = propsValue.utmCampaign;
-    if (propsValue.utmTerm) body['utmTerm'] = propsValue.utmTerm;
-    if (propsValue.utmContent) body['utmContent'] = propsValue.utmContent;
+    if (propsValue.utm_source) body['utm_source'] = propsValue.utm_source;
+    if (propsValue.utm_medium) body['utm_medium'] = propsValue.utm_medium;
+    if (propsValue.utm_campaign) body['utm_campaign'] = propsValue.utm_campaign;
+    if (propsValue.utm_term) body['utm_term'] = propsValue.utm_term;
+    if (propsValue.utm_content) body['utm_content'] = propsValue.utm_content;
 
     const response = await httpClient.sendRequest<DubLink>({
       method: HttpMethod.POST,
       url: `${DUB_API_BASE}/links`,
       headers: {
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
         'Content-Type': 'application/json',
       },
       body,
@@ -186,3 +205,52 @@ export const createLink = createAction({
     return response.body;
   },
 });
+
+export interface DubLink {
+  id: string;
+  domain: string;
+  key: string;
+  url: string;
+  shortLink: string;
+  qrCode: string;
+  trackConversion: boolean;
+  externalId: string | null;
+  tenantId: string | null;
+  programId: string | null;
+  partnerId: string | null;
+  archived: boolean;
+  expiresAt: string | null;
+  expiredUrl: string | null;
+  disabledAt: string | null;
+  password: string | null;
+  proxy: boolean;
+  title: string | null;
+  description: string | null;
+  image: string | null;
+  video: string | null;
+  rewrite: boolean;
+  doIndex: boolean;
+  ios: string | null;
+  android: string | null;
+  geo: Record<string, string> | null;
+  publicStats: boolean;
+  tags: Array<{ id: string; name: string; color: string }> | null;
+  folderId: string | null;
+  webhookIds: string[];
+  comments: string | null;
+  utm_source: string | null;
+  utm_medium: string | null;
+  utm_campaign: string | null;
+  utm_term: string | null;
+  utm_content: string | null;
+  userId: string | null;
+  workspaceId: string;
+  clicks: number;
+  leads: number;
+  conversions: number;
+  sales: number;
+  saleAmount: number;
+  lastClicked: string | null;
+  createdAt: string;
+  updatedAt: string;
+}

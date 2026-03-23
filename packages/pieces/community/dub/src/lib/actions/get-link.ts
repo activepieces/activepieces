@@ -72,7 +72,7 @@ export const getLink = createAction({
       method: HttpMethod.GET,
       url,
       headers: {
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
         'Content-Type': 'application/json',
       },
     });
