@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { dubAuth, DUB_API_BASE } from '../auth';
+import { DubLink } from '../common/common';
 
 export const createLink = createAction({
   name: 'create_link',
@@ -117,12 +118,6 @@ export const createLink = createAction({
       description: 'Redirect Android device visitors to this URL instead.',
       required: false,
     }),
-    geo: Property.Json({
-      displayName: 'Geo Targeting',
-      description:
-        'Country-code to URL map for geo-based redirects, e.g. `{"US": "https://us.example.com", "GB": "https://uk.example.com"}`.',
-      required: false,
-    }),
     comments: Property.LongText({
       displayName: 'Comments',
       description: 'Internal notes about this link (not shown to visitors).',
@@ -184,7 +179,6 @@ export const createLink = createAction({
     if (propsValue.archived) body['archived'] = propsValue.archived;
     if (propsValue.ios) body['ios'] = propsValue.ios;
     if (propsValue.android) body['android'] = propsValue.android;
-    if (propsValue.geo) body['geo'] = propsValue.geo;
     if (propsValue.comments) body['comments'] = propsValue.comments;
     if (propsValue.utm_source) body['utm_source'] = propsValue.utm_source;
     if (propsValue.utm_medium) body['utm_medium'] = propsValue.utm_medium;
@@ -206,51 +200,3 @@ export const createLink = createAction({
   },
 });
 
-export interface DubLink {
-  id: string;
-  domain: string;
-  key: string;
-  url: string;
-  shortLink: string;
-  qrCode: string;
-  trackConversion: boolean;
-  externalId: string | null;
-  tenantId: string | null;
-  programId: string | null;
-  partnerId: string | null;
-  archived: boolean;
-  expiresAt: string | null;
-  expiredUrl: string | null;
-  disabledAt: string | null;
-  password: string | null;
-  proxy: boolean;
-  title: string | null;
-  description: string | null;
-  image: string | null;
-  video: string | null;
-  rewrite: boolean;
-  doIndex: boolean;
-  ios: string | null;
-  android: string | null;
-  geo: Record<string, string> | null;
-  publicStats: boolean;
-  tags: Array<{ id: string; name: string; color: string }> | null;
-  folderId: string | null;
-  webhookIds: string[];
-  comments: string | null;
-  utm_source: string | null;
-  utm_medium: string | null;
-  utm_campaign: string | null;
-  utm_term: string | null;
-  utm_content: string | null;
-  userId: string | null;
-  workspaceId: string;
-  clicks: number;
-  leads: number;
-  conversions: number;
-  sales: number;
-  saleAmount: number;
-  lastClicked: string | null;
-  createdAt: string;
-  updatedAt: string;
-}

@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { dubAuth, DUB_API_BASE } from '../auth';
-import type { DubLink } from './create-link';
+import { DubLink } from '../common/common';
 
 export const updateLink = createAction({
   name: 'update_link',

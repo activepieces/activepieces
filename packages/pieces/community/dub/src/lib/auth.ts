@@ -22,9 +22,9 @@ export const dubAuth = PieceAuth.SecretText({
     try {
       await httpClient.sendRequest({
         method: HttpMethod.GET,
-        url: `${DUB_API_BASE}/workspaces`,
+        url: `${DUB_API_BASE}/folders`,
         headers: {
-          Authorization: `Bearer ${auth}`,
+          Authorization: `Bearer ${auth.trim()}`,
           'Content-Type': 'application/json',
         },
       });
