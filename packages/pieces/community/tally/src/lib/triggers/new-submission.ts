@@ -1,25 +1,9 @@
 import {
   createTrigger,
-  PieceAuth,
-  Property,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
-
-const markdown = `
-To set up the trigger for new form submissions, follow these steps:
-
-1. Go to the "Dashboard" section.
-2. Select the form where you want the trigger to occur.
-3. Click on the "Integrations" section.
-4. Find the "Webhooks" integration and click on "Connect" to activate it.
-5. In the webhook settings, paste the following URL:
-  \`\`\`text
-  {{webhookUrl}}
-  \`\`\`
-
-
-6. Click on "Submit".
-`;
+import { tallyAuth } from '../..';
+import { formsDropdown, tallyApiClient } from '../common';
 
 type TallyOption = { id: string; text: string };
 
@@ -66,12 +50,10 @@ function resolveFieldValue(field: TallyField): unknown {
 export const tallyFormsNewSubmission = createTrigger({
   name: 'new-submission',
   displayName: 'New Submission',
-  auth: PieceAuth.None(),
-  description: 'Triggers when form receives a new submission',
+  auth: tallyAuth,
+  description: 'Triggers when a form receives a new submission',
   props: {
-    md: Property.MarkDown({
-      value: markdown,
-    }),
+    formId: formsDropdown,
   },
   type: TriggerStrategy.WEBHOOK,
   sampleData: {
@@ -93,10 +75,18 @@ export const tallyFormsNewSubmission = createTrigger({
     },
   },
   async onEnable(context) {
-    // Empty
+    const webhookId = await tallyApiClient.createWebhook(
+      context.auth as string,
+      context.propsValue.formId,
+      context.webhookUrl
+    );
+    await context.store.put('_tally_webhook_id', webhookId);
   },
   async onDisable(context) {
-    // Empty
+    const webhookId = await context.store.get<string>('_tally_webhook_id');
+    if (webhookId) {
+      await tallyApiClient.deleteWebhook(context.auth as string, webhookId);
+    }
   },
   async run(context) {
     const body = context.payload.body as TallyWebhookPayload;
