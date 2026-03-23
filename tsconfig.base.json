@@ -376,6 +376,9 @@
       "@activepieces/piece-drupal": [
         "packages/pieces/community/drupal/src/index.ts"
       ],
+      "@activepieces/piece-dub": [
+        "packages/pieces/community/dub/src/index.ts"
+      ],
       "@activepieces/piece-dumpling-ai": [
         "packages/pieces/community/dumpling-ai/src/index.ts"
       ],
