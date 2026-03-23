@@ -1,10 +1,10 @@
-# EmailIt Piece for Activepieces
+# Emailit Piece for Activepieces
 
-This piece integrates EmailIt's transactional email service (API v2) with Activepieces.
+This piece integrates Emailit's transactional email service (API v2) with Activepieces.
 
 ## Features
 
-- Send HTML or plain text emails through EmailIt API v2
+- Send HTML or plain text emails through Emailit API v2
 - Simple API key authentication
 - Customizable sender information
 - Support for multiple recipients (TO, CC, BCC)
@@ -14,10 +14,10 @@ This piece integrates EmailIt's transactional email service (API v2) with Active
 
 ## Configuration
 
-1. Get your API key from [EmailIt App](https://app.emailit.com/)
-2. Add the EmailIt piece to your flow
+1. Get your API key from [Emailit App](https://app.emailit.com/)
+2. Add the Emailit piece to your flow
 3. Configure the required fields:
-   - **API Key**: Your EmailIt API key
+   - **API Key**: Your Emailit API key
    - **Sender Name**: Display name for the sender
    - **Sender Email**: Sender email address
    - **To**: Recipient email addresses (array, up to 50 total)
@@ -34,4 +34,4 @@ This piece integrates EmailIt's transactional email service (API v2) with Active
 
 ## API Documentation
 
-For more information about EmailIt's API, visit [EmailIt Documentation](https://emailit.com/docs/api-reference)
+For more information about Emailit's API, visit [Emailit Documentation](https://emailit.com/docs/api-reference)

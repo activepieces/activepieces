@@ -2173,7 +2173,7 @@
     },
     "packages/pieces/community/dropbox": {
       "name": "@activepieces/piece-dropbox",
-      "version": "0.6.4",
+      "version": "0.7.0",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -2267,6 +2267,17 @@
     "packages/pieces/community/elevenlabs": {
       "name": "@activepieces/piece-elevenlabs",
       "version": "0.2.4",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "@elevenlabs/elevenlabs-js": "2.4.1",
+        "tslib": "2.6.2",
+      },
+    },
+    "packages/pieces/community/emailit": {
+      "name": "@activepieces/piece-emailit",
+      "version": "0.0.1",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -8251,6 +8262,8 @@
     "@activepieces/piece-eden-ai": ["@activepieces/piece-eden-ai@workspace:packages/pieces/community/eden-ai"],
 
     "@activepieces/piece-elevenlabs": ["@activepieces/piece-elevenlabs@workspace:packages/pieces/community/elevenlabs"],
+
+    "@activepieces/piece-emailit": ["@activepieces/piece-emailit@workspace:packages/pieces/community/emailit"],
 
     "@activepieces/piece-emailoctopus": ["@activepieces/piece-emailoctopus@workspace:packages/pieces/community/emailoctopus"],
 
