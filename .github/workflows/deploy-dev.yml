@@ -17,12 +17,11 @@ jobs:
 
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v5.1.1
+        id: aws-credentials
         with:
           role-to-assume: ${{ secrets.AWS_ECR_DEPLOY_ROLE }}
-          aws-region: sa-east-1
-          aws-access-key-id: ${{ needs.set-variables.outputs.aws_access_key_id }}
-          aws-secret-access-key: ${{ needs.set-variables.outputs.aws_secret_access_key }}
-          aws-session-token: ${{ needs.set-variables.outputs.aws_session_token }}
+          aws-region: "us-east-1"
+          role-session-name: ActivePiecesActionsDeploySession
 
       - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@v3
