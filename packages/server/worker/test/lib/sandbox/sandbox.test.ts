@@ -2,7 +2,7 @@ import { ChildProcess } from 'child_process'
 import { EventEmitter } from 'node:events'
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import { io as ioClient, type Socket as ClientSocket } from 'socket.io-client'
-import { ActivepiecesError, ErrorCode, WorkerContract } from '@activepieces/shared'
+import { ActivepiecesError, EngineResponseStatus, ErrorCode, WorkerContract } from '@activepieces/shared'
 import { createSandbox } from '../../../src/lib/sandbox/sandbox'
 import { Sandbox, SandboxLogger, SandboxProcessMaker } from '../../../src/lib/sandbox/types'
 
@@ -12,6 +12,10 @@ const { treeKillMock } = vi.hoisted(() => ({
 
 vi.mock('tree-kill', () => ({
     default: treeKillMock,
+}))
+
+vi.mock('../../../src/lib/cache/cache-paths', () => ({
+    getGlobalCachePathLatestVersion: vi.fn(() => '/tmp/test-cache'),
 }))
 
 function createMockLogger(): SandboxLogger {
@@ -102,10 +106,15 @@ describe('createSandbox', () => {
                 expect.objectContaining({
                     sandboxId: 'sb-1',
                     command: [],
-                    mounts: [],
+                    mounts: expect.arrayContaining([
+                        expect.objectContaining({
+                            sandboxPath: '/root/custom_pieces',
+                        }),
+                    ]),
                     env: expect.objectContaining({
                         MY_VAR: 'value',
                         AP_SANDBOX_WS_PORT: expect.any(String),
+                        AP_CUSTOM_PIECES_PATHS: '/root/custom_pieces',
                     }),
                     resourceLimits: {
                         memoryBytes: 256 * 1024 * 1024,
@@ -114,6 +123,19 @@ describe('createSandbox', () => {
                     },
                 }),
             )
+        })
+
+        it('does not add custom piece mount when platformId is empty', async () => {
+            const log = createMockLogger()
+            const workerHandlers = createMockWorkerHandlers()
+            testPM = createTestProcessMaker()
+            sandbox = createSandbox(log, 'sb-no-mount', defaultOptions, testPM.maker, workerHandlers)
+
+            await sandbox.start({ flowVersionId: 'fv-1', platformId: '', mounts: [] })
+
+            const createCall = (testPM.maker.create as ReturnType<typeof vi.fn>).mock.calls[0][0]
+            expect(createCall.mounts).toEqual([])
+            expect(createCall.env.AP_CUSTOM_PIECES_PATHS).toBeUndefined()
         })
 
         it('is idempotent when already connected', async () => {
@@ -159,6 +181,44 @@ describe('createSandbox', () => {
             expect(result.engine).toEqual(engineResponse)
             expect(result.stdOut).toBe('')
             expect(result.stdError).toBe('')
+        })
+
+        it('recovers after engine returns INTERNAL_ERROR and handles next job', async () => {
+            const { sandbox } = await startSandbox()
+            const client = testPM.getClient()
+
+            let callCount = 0
+            client.on('rpc', (msg: { method: string, payload: unknown }, ack: (result: unknown) => void) => {
+                if (msg.method === 'executeOperation') {
+                    callCount++
+                    if (callCount === 1) {
+                        ack({
+                            response: undefined,
+                            status: EngineResponseStatus.INTERNAL_ERROR,
+                            error: 'Engine error: AppWebhookUrlNotAvailableError',
+                        })
+                    }
+                    else {
+                        ack({ response: { success: true }, status: EngineResponseStatus.OK })
+                    }
+                }
+            })
+
+            const firstResult = await sandbox.execute(
+                'EXECUTE_FLOW' as any,
+                {} as any,
+                { timeoutInSeconds: 10 },
+            )
+            expect(firstResult.engine.status).toBe(EngineResponseStatus.INTERNAL_ERROR)
+            expect(firstResult.engine.error).toBe('Engine error: AppWebhookUrlNotAvailableError')
+
+            const secondResult = await sandbox.execute(
+                'EXECUTE_FLOW' as any,
+                {} as any,
+                { timeoutInSeconds: 10 },
+            )
+            expect(secondResult.engine.status).toBe(EngineResponseStatus.OK)
+            expect(secondResult.engine.response).toEqual({ success: true })
         })
 
         it('accumulates stdout and stderr from rpc-notify', async () => {

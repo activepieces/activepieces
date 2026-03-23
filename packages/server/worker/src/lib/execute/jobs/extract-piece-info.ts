@@ -5,7 +5,6 @@ import {
 } from '@activepieces/shared'
 import { provisioner } from '../../cache/provisioner'
 import { workerSettings } from '../../config/worker-settings'
-import { sandboxManager } from '../sandbox-manager'
 import { JobContext, JobHandler, JobResult } from '../types'
 
 export const extractPieceInfoJob: JobHandler<ExecuteExtractPieceMetadataJobData> = {
@@ -19,7 +18,7 @@ export const extractPieceInfoJob: JobHandler<ExecuteExtractPieceMetadataJobData>
             codeSteps: [],
         })
 
-        const sandbox = sandboxManager.acquire({ log: ctx.log, apiClient: ctx.apiClient })
+        const sandbox = ctx.sandboxManager.acquire({ log: ctx.log, apiClient: ctx.apiClient })
         try {
             await sandbox.start({
                 flowVersionId: undefined,
@@ -45,11 +44,11 @@ export const extractPieceInfoJob: JobHandler<ExecuteExtractPieceMetadataJobData>
             }
         }
         catch (e) {
-            await sandboxManager.invalidate(ctx.log)
+            await ctx.sandboxManager.invalidate(ctx.log)
             throw e
         }
         finally {
-            await sandboxManager.release(ctx.log)
+            await ctx.sandboxManager.release(ctx.log)
         }
     },
 }

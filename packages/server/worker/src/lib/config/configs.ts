@@ -32,6 +32,7 @@ export enum WorkerSystemProp {
     OTEL_ENABLED = 'AP_OTEL_ENABLED',
     LOAD_TRANSLATIONS_FOR_DEV_PIECES = 'AP_LOAD_TRANSLATIONS_FOR_DEV_PIECES',
     PLATFORM_ID_FOR_DEDICATED_WORKER = 'AP_PLATFORM_ID_FOR_DEDICATED_WORKER',
+    WORKER_CONCURRENCY = 'AP_WORKER_CONCURRENCY',
 }
 
 const defaultValues: Partial<Record<WorkerSystemProp, string>> = {
@@ -39,6 +40,7 @@ const defaultValues: Partial<Record<WorkerSystemProp, string>> = {
     [WorkerSystemProp.LOG_LEVEL]: 'info',
     [WorkerSystemProp.LOG_PRETTY]: 'false',
     [WorkerSystemProp.OTEL_ENABLED]: 'false',
+    [WorkerSystemProp.WORKER_CONCURRENCY]: '1',
 }
 
 export const system = {

@@ -75,7 +75,6 @@ export const WorkerMachineHealthcheckRequest = MachineInformation
 export type WorkerMachineHealthcheckRequest = z.infer<typeof WorkerMachineHealthcheckRequest>
 
 export const WorkerSettingsResponse = z.object({
-    WORKER_CACHE_ID: z.number(),
     PUBLIC_URL: z.string(),
     TRIGGER_TIMEOUT_SECONDS: z.number(),
     TRIGGER_HOOKS_TIMEOUT_SECONDS: z.number(),

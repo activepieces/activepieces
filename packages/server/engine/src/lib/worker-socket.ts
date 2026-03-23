@@ -7,13 +7,13 @@ import {
     EngineResponse,
     EngineResponseStatus,
     ERROR_MESSAGES_TO_REDACT,
+    tryCatch,
     WorkerContract,
     WorkerNotifyContract,
 } from '@activepieces/shared'
 import { io, type Socket } from 'socket.io-client'
 import { execute } from './operations'
 import { progressService } from './services/progress.service'
-import { utils } from './utils'
 
 let socket: Socket | undefined
 let workerClient: WorkerContract | undefined
@@ -29,7 +29,7 @@ export const workerSocket = {
             reconnection: true,
         })
 
-        workerClient = createRpcClient<WorkerContract>(socket)
+        workerClient = createRpcClient<WorkerContract>(socket, 60_000)
         notifyClient = createNotifyClient<WorkerNotifyContract>(socket)
 
         const originalLog = console.log
@@ -56,7 +56,7 @@ export const workerSocket = {
 
         createRpcServer<EngineContract>(socket, {
             executeOperation: async ({ operationType, operation }): Promise<EngineResponse<unknown>> => {
-                const result = await utils.tryCatchAndThrowOnEngineError(async () => {
+                const result = await tryCatch(async () => {
                     progressService.init()
                     const response = await execute(operationType, operation)
                     await progressService.shutdown()
@@ -64,11 +64,11 @@ export const workerSocket = {
                 })
 
                 if (result.error) {
-                    console.error(utils.formatExecutionError(result.error))
+                    console.error(result.error)
                     return {
                         response: undefined,
                         status: EngineResponseStatus.INTERNAL_ERROR,
-                        error: utils.formatExecutionError(result.error),
+                        error: inspect(result.error),
                     }
                 }
 

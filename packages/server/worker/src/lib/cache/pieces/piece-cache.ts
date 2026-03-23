@@ -57,7 +57,12 @@ async function getPiecePackage(query: PieceCacheKey, apiClient: WorkerToApiContr
     const pieceMetadata = await apiClient.getPiece({
         name: query.pieceName,
         version: query.pieceVersion,
-    }) as { packageType: PackageType, name: string, version: string, pieceType: PieceType, archiveId?: string }
+        platformId: query.platformId,
+    }) as { packageType: PackageType, name: string, version: string, pieceType: PieceType, archiveId?: string } | null
+
+    if (!pieceMetadata) {
+        throw new PieceNotFoundError(query.pieceName, query.pieceVersion)
+    }
 
     const baseProps = {
         packageType: pieceMetadata.packageType,
@@ -82,6 +87,13 @@ async function getPiecePackage(query: PieceCacheKey, apiClient: WorkerToApiContr
     }
 
     return baseProps as PiecePackage
+}
+
+export class PieceNotFoundError extends Error {
+    constructor(pieceName: string, pieceVersion: string) {
+        super(`Piece metadata not found for ${pieceName}@${pieceVersion}`)
+        this.name = 'PieceNotFoundError'
+    }
 }
 
 type PieceCacheKey = {

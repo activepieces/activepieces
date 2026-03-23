@@ -50,7 +50,7 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.SANDBOX_MEMORY_LIMIT]: '1048576',
     [AppSystemProp.FLOW_TIMEOUT_SECONDS]: '600',
     [AppSystemProp.TRIGGER_TIMEOUT_SECONDS]: '60',
-    [AppSystemProp.RUNS_METADATA_UPDATE_CONCURRENCY]: '10',
+    [AppSystemProp.RUNS_METADATA_UPDATE_CONCURRENCY]: '2',
     [AppSystemProp.TRIGGER_HOOKS_TIMEOUT_SECONDS]: '180',
     [AppSystemProp.EVENT_DESTINATION_TIMEOUT_SECONDS]: '10',
     [AppSystemProp.REDIS_FAILED_JOB_RETENTION_DAYS]: '30',

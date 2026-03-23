@@ -11,8 +11,9 @@ import { Sandbox, SandboxMount } from '../sandbox/types'
 export function createSandboxForJob(params: {
     log: Logger
     apiClient: WorkerToApiContract
+    boxId: number
 }): Sandbox {
-    const { log, apiClient } = params
+    const { log, apiClient, boxId } = params
     const settings = workerSettings.getSettings()
     const sandboxId = nanoid()
 
@@ -24,7 +25,7 @@ export function createSandboxForJob(params: {
     }
 
     const memoryLimitMb = parseMemoryLimit(settings.SANDBOX_MEMORY_LIMIT)
-    const processMaker = getProcessMaker(settings.EXECUTION_MODE, log)
+    const processMaker = getProcessMaker(settings.EXECUTION_MODE, log, boxId)
 
     const baseMounts: SandboxMount[] = [
         { hostPath: getGlobalCacheCommonPath(), sandboxPath: '/root/common' },
@@ -46,11 +47,11 @@ export function createSandboxForJob(params: {
     )
 }
 
-function getProcessMaker(executionMode: string, log: Logger) {
+function getProcessMaker(executionMode: string, log: Logger, boxId: number) {
     switch (executionMode) {
         case ExecutionMode.SANDBOX_PROCESS:
         case ExecutionMode.SANDBOX_CODE_AND_PROCESS:
-            return isolateProcess(log, getEnginePath(), getGlobalCodeCachePath())
+            return isolateProcess(log, getEnginePath(), getGlobalCodeCachePath(), boxId)
         case ExecutionMode.UNSANDBOXED:
         case ExecutionMode.SANDBOX_CODE_ONLY:
         default:
@@ -65,8 +66,14 @@ function parseMemoryLimit(memoryLimit: string): number {
 
 function buildSandboxEnv(settings: ReturnType<typeof workerSettings.getSettings>): Record<string, string> {
     const env: Record<string, string> = {
+        HOME: '/tmp/',
         AP_EXECUTION_MODE: settings.EXECUTION_MODE,
+        AP_MAX_FLOW_RUN_LOG_SIZE_MB: String(settings.MAX_FLOW_RUN_LOG_SIZE_MB),
+        AP_MAX_FILE_SIZE_MB: String(settings.MAX_FILE_SIZE_MB),
         NODE_PATH: '/usr/src/node_modules',
+    }
+    if (settings.DEV_PIECES.length > 0) {
+        env['AP_DEV_PIECES'] = settings.DEV_PIECES.join(',')
     }
     for (const key of settings.SANDBOX_PROPAGATED_ENV_VARS) {
         if (process.env[key]) {

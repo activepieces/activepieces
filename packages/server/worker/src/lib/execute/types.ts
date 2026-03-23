@@ -1,5 +1,6 @@
 import { JobData, WorkerJobType, WorkerToApiContract } from '@activepieces/shared'
 import { Logger } from 'pino'
+import { SandboxManager } from './sandbox-manager'
 
 export type JobResult = {
     delayInSeconds?: number
@@ -13,6 +14,7 @@ export type JobHandler<T extends JobData = JobData> = {
 
 export type JobContext = {
     apiClient: WorkerToApiContract
+    sandboxManager: SandboxManager
     jobId: string
     engineToken: string
     internalApiUrl: string

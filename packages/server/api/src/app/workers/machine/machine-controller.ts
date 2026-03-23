@@ -27,8 +27,8 @@ export const workerMachineController: FastifyPluginAsyncZod = async (app) => {
         }
     })
 
-    app.get('/', ListWorkersParams, async () => {
-        return machineService(app.log).list()
+    app.get('/', ListWorkersParams, async (request) => {
+        return machineService(app.log).list(request.principal.platform.id)
     })
 
     app.get('/queue-metrics', QueueMetricsParams, async () => {
