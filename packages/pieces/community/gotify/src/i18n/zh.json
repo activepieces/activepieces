@@ -1,16 +1,16 @@
 {
-  "Self-hosted push notification service": "自托管推送通知服务",
+  "Self-hosted push notification service": "Self-hosted push notification service",
   "Server URL": "服务器 URL",
-  "App Token": "应用令牌",
-  "Gotify Instance URL": "Gotify 实例URL",
-  "Gotify App Token": "Gotify 应用程序令牌",
+  "App Token": "App Token",
+  "Gotify Instance URL": "Gotify Instance URL",
+  "Gotify App Token": "Gotify App Token",
   "\n    To obtain a token:\n\n    1. Log in to your Gotify instance.\n    2. Click on Apps\n    3. Select the Eye icon in the same row as your App to copy your token, or CREATE APPLICATION if you do not have one app yet.\n    4. Copy your access token & and paste them into the fields below.\n    ": "\n    To obtain a token:\n\n    1. Log in to your Gotify instance.\n    2. Click on Apps\n    3. Select the Eye icon in the same row as your App to copy your token, or CREATE APPLICATION if you do not have one app yet.\n    4. Copy your access token & and paste them into the fields below.\n    ",
-  "Send Notification": "发送通知",
-  "Send a notification to gotify": "发送通知进行谈判",
+  "Send Notification": "Send Notification",
+  "Send a notification to gotify": "Send a notification to gotify",
   "Title": "标题",
-  "Message": "留言",
-  "Priority": "优先权",
-  "The title of the notification": "通知的标题",
-  "The message to send": "要发送的消息",
-  "The priority of the notification (0-10). 0 is lowest priority.": "通知的优先级 (0-10). 0 为最低优先级。"
+  "Message": "Message",
+  "Priority": "Priority",
+  "The title of the notification": "The title of the notification",
+  "The message to send": "The message to send",
+  "The priority of the notification (0-10). 0 is lowest priority.": "The priority of the notification (0-10). 0 is lowest priority."
 }
