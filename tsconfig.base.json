@@ -1848,6 +1848,9 @@
       ],
       "@activepieces/piece-pocketbase": [
         "packages/pieces/community/pocketbase/src/index.ts"
+      ],
+      "@activepieces/piece-carbone": [
+        "packages/pieces/community/carbone/src/index.ts"
       ]
     },
     "resolveJsonModule": true
