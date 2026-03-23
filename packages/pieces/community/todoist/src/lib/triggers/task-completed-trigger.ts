@@ -5,69 +5,38 @@ import {
 	TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
-import { TodoistCompletedListResponse, TodoistCompletedTask } from '../common/models';
 import { todoistProjectIdDropdown } from '../common/props';
 import { todoistAuth } from '../..';
 import {
-	AuthenticationType,
 	DedupeStrategy,
-	httpClient,
-	HttpMethod,
 	Polling,
 	pollingHelper,
-	QueryParams,
 } from '@activepieces/pieces-common';
+import { todoistRestClient } from '../common/client/rest-client';
+import { TodoistCompletedTask } from '../common/models';
 
 const ISO_FORMAT = 'YYYY-MM-DDTHH:mm:ss';
 
 const polling: Polling<AppConnectionValueForAuthProperty<typeof todoistAuth>, { project_id?: string }> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, propsValue, lastFetchEpochMS }) {
-		const lastUpdatedTime =
+		const since =
 			lastFetchEpochMS === 0
 				? dayjs().subtract(5, 'minutes').format(ISO_FORMAT)
 				: dayjs(lastFetchEpochMS).format(ISO_FORMAT);
+		const until = dayjs().format(ISO_FORMAT);
 
-		const tasks: TodoistCompletedTask[] = [];
-
-		let hasMore = true;
-		let offset = 0;
-		const limit = 200;
-
-		do {
-			const qs: QueryParams = {
-				limit: limit.toString(),
-				offset: offset.toString(),
-				since: lastUpdatedTime,
-			};
-
-			if (propsValue.project_id) {
-				qs.project_id = propsValue.project_id;
-			}
-
-			const response = await httpClient.sendRequest<TodoistCompletedListResponse>({
-				method: HttpMethod.GET,
-				url: 'https://api.todoist.com/sync/v9/completed/get_all',
-				queryParams: qs,
-				authentication: {
-					type: AuthenticationType.BEARER_TOKEN,
-					token: auth.access_token,
-				},
-			});
-			if (response.body.items.length > 0) {
-				tasks.push(...response.body.items);
-				offset += limit;
-			} else {
-				hasMore = false;
-			}
-		} while (hasMore);
-
-		return tasks.map((task) => {
-			return {
-				epochMilliSeconds: dayjs(task.completed_at).valueOf(),
-				data: task,
-			};
+		const tasks = await todoistRestClient.tasks.listCompleted({
+			token: auth.access_token,
+			since,
+			until,
+			project_id: propsValue.project_id,
 		});
+
+		return tasks.map((task: TodoistCompletedTask) => ({
+			epochMilliSeconds: dayjs(task.completed_at).valueOf(),
+			data: task,
+		}));
 	},
 };
 
@@ -106,14 +75,25 @@ export const todoistTaskCompletedTrigger = createTrigger({
 		return await pollingHelper.poll(polling, context);
 	},
 	sampleData: {
-		content: 'Buy Milk',
-		meta_data: null,
+		id: '1899066186',
 		user_id: '2671355',
-		task_id: '2995104339',
-		note_count: 0,
 		project_id: '2203306141',
 		section_id: '7025',
+		parent_id: null,
+		added_by_uid: '2671355',
+		assigned_by_uid: null,
+		responsible_uid: null,
+		completed_by_uid: '2671355',
+		labels: [],
+		checked: true,
+		is_deleted: false,
+		content: 'Buy Milk',
+		description: '',
+		priority: 1,
+		note_count: 0,
+		due: null,
+		added_at: '2015-02-17T15:35:00.000000Z',
 		completed_at: '2015-02-17T15:40:41.000000Z',
-		id: '1899066186',
+		updated_at: '2015-02-17T15:40:41.000000Z',
 	},
 });

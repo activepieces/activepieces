@@ -4,11 +4,15 @@ import {
   PiecePropValueSchema,
   FilesService,
 } from '@activepieces/pieces-framework';
-import dayjs from 'dayjs';
 import { GmailLabel } from '../common/models';
 import { GmailProps } from '../common/props';
-import { gmailAuth } from '../../';
-import { GmailRequests, parseStream, convertAttachment } from '../common/data';
+import { gmailAuth } from '../auth';
+import {
+  GmailRequests,
+  parseStream,
+  convertAttachment,
+  getFirstFiveOrAll,
+} from '../common/data';
 import { google } from 'googleapis';
 import { OAuth2Client } from 'googleapis-common';
 
@@ -96,7 +100,7 @@ async function pollRecentMessages({
 
   // construct query
   const query = [];
-  const maxResults = lastFetchEpochMS === 0 ? 5 : 100;
+  const maxResults = lastFetchEpochMS === 0 ? 5 : 20;
   const afterUnixSeconds = Math.floor(lastFetchEpochMS / 1000);
 
   if (props.from) query.push(`from:(${props.from})`);
@@ -114,48 +118,54 @@ async function pollRecentMessages({
     maxResults,
   });
 
+  // Reverse to process oldest-first so partial progress doesn't skip messages
+  const messages = (messagesResponse.data.messages || []).slice().reverse();
+
   const pollingResponse = [];
-  for (const message of messagesResponse.data.messages || []) {
-    const rawMailResponse = await gmail.users.messages.get({
-      userId: 'me',
-      id: message.id!,
-      format: 'raw',
-    });
-    const threadResponse = await gmail.users.threads.get({
-      userId: 'me',
-      id: message.threadId!,
-    });
+  for (const message of messages) {
+    try {
+      const rawMailResponse = await gmail.users.messages.get({
+        userId: 'me',
+        id: message.id!,
+        format: 'raw',
+      });
+      const threadResponse = await gmail.users.threads.get({
+        userId: 'me',
+        id: message.threadId!,
+      });
 
-    const parsedMailResponse = await parseStream(
-      Buffer.from(rawMailResponse.data.raw as string, 'base64').toString(
-        'utf-8'
-      )
-    );
+      const parsedMailResponse = await parseStream(
+        Buffer.from(rawMailResponse.data.raw as string, 'base64').toString(
+          'utf-8'
+        )
+      );
 
-    pollingResponse.push({
-      epochMilliSeconds: dayjs(parsedMailResponse.date).valueOf(),
-      data: {
-        message: {
-          ...parsedMailResponse,
-          attachments: await convertAttachment(
-            parsedMailResponse.attachments,
-            files
-          ),
+      pollingResponse.push({
+        epochMilliSeconds: Number(rawMailResponse.data.internalDate),
+        data: {
+          message: {
+            ...parsedMailResponse,
+            attachments: await convertAttachment(
+              parsedMailResponse.attachments,
+              files
+            ),
+          },
+          thread: {
+            ...threadResponse,
+          },
         },
-        thread: {
-          ...threadResponse,
-        },
-      },
-    });
+      });
+    } catch (error: any) {
+      const isRateLimit =
+        error.status === 429 ||
+        (error.status === 403 &&
+          /quota|rate.?limit/i.test(error.message ?? ''));
+      if (isRateLimit) {
+        break;
+      }
+      throw error;
+    }
   }
 
   return pollingResponse;
-}
-
-function getFirstFiveOrAll(array: unknown[]) {
-  if (array.length <= 5) {
-    return array;
-  } else {
-    return array.slice(0, 5);
-  }
 }

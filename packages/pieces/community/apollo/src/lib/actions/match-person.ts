@@ -1,4 +1,4 @@
-import { apolloAuth } from '../../';
+import { apolloAuth } from '../auth';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import {
   Property,

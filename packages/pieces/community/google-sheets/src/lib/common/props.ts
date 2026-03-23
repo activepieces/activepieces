@@ -1,12 +1,27 @@
 import { DropdownOption, Property } from '@activepieces/pieces-framework';
 import { google, drive_v3 } from 'googleapis';
-import { columnToLabel, createGoogleClient, getHeaderRow, googleSheetsAuth, GoogleSheetsAuthValue, googleSheetsCommon } from './common';
+import {
+	columnToLabel,
+	createGoogleClient,
+	getHeaderRow,
+	googleSheetsAuth,
+	GoogleSheetsAuthValue,
+	googleSheetsCommon,
+} from './common';
 import { isNil } from '@activepieces/shared';
+
+const createEmptyOptionList = (message: string) => {
+	return {
+		disabled: true,
+		placeholder: message,
+		options: [],
+	};
+};
 
 export const includeTeamDrivesProp = () =>
 	Property.Checkbox({
-		displayName: 'Include Team Drive Sheets ?',
-		description: 'Determines if sheets from Team Drives should be included in the results.',
+		displayName: 'Include Shared Drive Sheets ?',
+		description: 'Turn this on to also see spreadsheets from Shared Drives.',
 		defaultValue: false,
 		required: false,
 	});
@@ -20,12 +35,9 @@ export const spreadsheetIdProp = (displayName: string, description: string, requ
 		refreshers: ['includeTeamDrives'],
 		options: async ({ auth, includeTeamDrives }, { searchValue }) => {
 			if (!auth) {
-				return {
-					disabled: true,
-					options: [],
-					placeholder: 'Please authenticate first',
-				};
+				return createEmptyOptionList('please connect your account first.');
 			}
+
 			const authValue = auth;
 
 			const authClient = await createGoogleClient(authValue);
@@ -77,12 +89,12 @@ export const sheetIdProp = (displayName: string, description: string, required =
 		required,
 		refreshers: ['spreadsheetId'],
 		options: async ({ auth, spreadsheetId }) => {
-			if (!auth || (spreadsheetId ?? '').toString().length === 0) {
-				return {
-					disabled: true,
-					options: [],
-					placeholder: 'Please select a spreadsheet first.',
-				};
+			if (!auth) {
+				return createEmptyOptionList('please connect your account first.');
+			}
+
+			if ((spreadsheetId ?? '').toString().length === 0) {
+				return createEmptyOptionList('please select a spreadsheet first.');
 			}
 
 			const authValue = auth as GoogleSheetsAuthValue;
@@ -102,7 +114,7 @@ export const sheetIdProp = (displayName: string, description: string, required =
 			for (const sheet of sheetsData) {
 				const title = sheet.properties?.title;
 				const sheetId = sheet.properties?.sheetId;
-				if(isNil(title) || isNil(sheetId)){
+				if (isNil(title) || isNil(sheetId)) {
 					continue;
 				}
 				options.push({
@@ -121,13 +133,13 @@ export const sheetIdProp = (displayName: string, description: string, required =
 export const commonProps = {
 	includeTeamDrives: includeTeamDrivesProp(),
 	spreadsheetId: spreadsheetIdProp('Spreadsheet', 'The ID of the spreadsheet to use.'),
-	sheetId: sheetIdProp('Sheet', 'The ID of the sheet to use.'),
+	sheetId: sheetIdProp('Worksheet', 'The ID of the worksheet to use.'),
 };
 
 export const rowValuesProp = () =>
 	Property.DynamicProperties({
 		displayName: 'Values',
-		description: 'The values to insert',
+		description: 'The values to add',
 		required: true,
 		auth: googleSheetsAuth,
 		refreshers: ['sheetId', 'spreadsheetId', 'first_row_headers'],
@@ -151,7 +163,7 @@ export const rowValuesProp = () =>
 			if (!first_row_headers) {
 				return {
 					values: Property.Array({
-						displayName: 'Values',
+						displayName: 'Row Values',
 						required: true,
 					}),
 				};
@@ -165,7 +177,7 @@ export const rowValuesProp = () =>
 				const label = columnToLabel(i);
 				properties[label] = Property.ShortText({
 					displayName: firstRow[i].toString(),
-					description: firstRow[i].toString(),
+					// description: firstRow[i].toString(),
 					required: false,
 					defaultValue: '',
 				});
@@ -175,9 +187,9 @@ export const rowValuesProp = () =>
 	});
 
 export const columnNameProp = () =>
-	Property.Dropdown<string,true,typeof googleSheetsAuth>({
-		description: 'Column Name',
-		displayName: 'The name of the column to search in',
+	Property.Dropdown<string, true, typeof googleSheetsAuth>({
+		displayName: 'Column Name',
+		description: 'The name of the column to search in',
 		required: true,
 		auth: googleSheetsAuth,
 		refreshers: ['sheetId', 'spreadsheetId'],
@@ -196,11 +208,7 @@ export const columnNameProp = () =>
 				};
 			}
 
-			const sheetName = await googleSheetsCommon.findSheetName(
-				auth,
-				spreadsheet_id,
-				sheet_id,
-			);
+			const sheetName = await googleSheetsCommon.findSheetName(auth, spreadsheet_id, sheet_id);
 
 			if (!sheetName) {
 				throw Error('Sheet not found in spreadsheet');
@@ -256,4 +264,11 @@ export const columnNameProp = () =>
 				disabled: false,
 			};
 		},
+	});
+
+export const isFirstRowHeaderProp = () =>
+	Property.Checkbox({
+		displayName: 'First Row Contains Headers ?',
+		required: true,
+		defaultValue: false,
 	});

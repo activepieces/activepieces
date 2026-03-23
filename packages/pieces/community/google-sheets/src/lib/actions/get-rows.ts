@@ -105,7 +105,7 @@ const notes = `
 export const getRowsAction = createAction({
   auth: googleSheetsAuth,
   name: 'get_next_rows',
-  description: 'Get next group of rows from a Google Sheet',
+  description: 'Get next group of rows from a specifiec workheet',
   displayName: 'Get next row(s)',
   props: {
     ...commonProps,

@@ -57,6 +57,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "Select the contact book where the contact will be created": "Select the contact book where the contact will be created",
   "First name of the contact": "First name of the contact",
   "Last name of the contact": "Last name of the contact",

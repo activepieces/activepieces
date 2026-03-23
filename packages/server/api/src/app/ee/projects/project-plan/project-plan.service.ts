@@ -1,13 +1,12 @@
-import { ProjectPlanLimits } from '@activepieces/ee-shared'
-import {
-    apId,
+import { apId,
     isNil,
     PiecesFilterType,
     ProjectPlan,
+    ProjectPlanLimits,
     spreadIfDefined,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { In } from 'typeorm'
+import { EntityManager, In } from 'typeorm'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { ProjectPlanEntity } from './project-plan.entity'
 
@@ -17,9 +16,10 @@ export const projectLimitsService = (_log: FastifyBaseLogger) => ({
     async upsert(
         planLimits: ProjectPlanLimits,
         projectId: string,
+        entityManager?: EntityManager,
     ): Promise<ProjectPlan> {
         const projectPlan = await this.getOrCreateDefaultPlan(projectId)
-        await projectPlanRepo().update(projectPlan.id, {
+        await projectPlanRepo(entityManager).update(projectPlan.id, {
             ...spreadIfDefined('name', planLimits.nickname),
             ...spreadIfDefined('locked', planLimits.locked),
             ...spreadIfDefined('pieces', planLimits.pieces),

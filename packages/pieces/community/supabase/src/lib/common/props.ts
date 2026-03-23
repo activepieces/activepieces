@@ -1,6 +1,6 @@
 import { Property, DynamicPropsValue } from "@activepieces/pieces-framework";
 import { createClient } from "@supabase/supabase-js";
-import { supabaseAuth } from "../..";
+import { supabaseAuth } from '../auth';
 
 async function getColumnOptions(auth: any, table_name: string) {
   try {

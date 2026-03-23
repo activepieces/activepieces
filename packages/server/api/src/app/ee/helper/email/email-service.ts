@@ -1,6 +1,6 @@
-import { AlertChannel, OtpType } from '@activepieces/ee-shared'
-import { ApEdition, assertNotNullOrUndefined, BADGES, InvitationType, isNil, UserIdentity, UserInvitation } from '@activepieces/shared'
+import { AlertChannel, ApEdition, assertNotNullOrUndefined, BADGES, InvitationType, isNil, OtpType, UserIdentity, UserInvitation } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { z } from 'zod'
 import { system } from '../../../helper/system/system'
 import { platformService } from '../../../platform/platform.service'
 import { projectService } from '../../../project/project-service'
@@ -26,7 +26,7 @@ export const emailService = (log: FastifyBaseLogger) => ({
             platformRole: userInvitation.platformRole,
         })
         const { email, platformId } = userInvitation
-        const { name: projectOrPlatformName, role } = await getEntityNameForInvitation(userInvitation)
+        const { name: projectName, role } = await getEntityNameForInvitation(userInvitation, log)
         await emailSender(log).send({
             emails: [email],
             platformId,
@@ -34,8 +34,67 @@ export const emailService = (log: FastifyBaseLogger) => ({
                 name: 'invitation-email',
                 vars: {
                     setupLink: invitationLink,
-                    projectOrPlatformName,
+                    projectName,
                     role,
+                },
+            },
+        })
+    },
+
+    async sendProjectMemberAdded({ userInvitation }: SendProjectMemberAddedArgs): Promise<void> {
+        log.info({
+            message: '[emailService#sendProjectMemberAdded] sending project member added email',
+            email: userInvitation.email,
+            platformId: userInvitation.platformId,
+            projectId: userInvitation.projectId,
+            type: userInvitation.type,
+            projectRole: userInvitation.projectRole,
+            platformRole: userInvitation.platformRole,
+        })
+        const { email, platformId, projectId } = userInvitation
+        const { name: projectName, role } = await getEntityNameForInvitation(userInvitation, log)
+        const redirectPath = projectId ? `/projects/${projectId}/flows` : '/flows'
+        const loginLink = await domainHelper.getPublicUrl({
+            platformId,
+            path: `sign-in?from=${encodeURIComponent(redirectPath)}`,
+        })
+        await emailSender(log).send({
+            emails: [email],
+            platformId,
+            templateData: {
+                name: 'project-member-added',
+                vars: {
+                    projectName,
+                    role,
+                    loginLink,
+                },
+            },
+        })
+    },
+
+    async sendScimUserWelcome({ email, platformId }: SendScimUserWelcomeArgs): Promise<void> {
+        if (EDITION_IS_NOT_PAID) {
+            return
+        }
+
+        log.info({
+            message: '[emailService#sendScimUserWelcome] sending welcome email',
+            email,
+            platformId,
+        })
+
+        const loginLink = await domainHelper.getPublicUrl({
+            platformId,
+            path: 'sign-in',
+        })
+
+        await emailSender(log).send({
+            emails: [email],
+            platformId,
+            templateData: {
+                name: 'scim-user-welcome',
+                vars: {
+                    loginLink,
                 },
             },
         })
@@ -103,7 +162,7 @@ export const emailService = (log: FastifyBaseLogger) => ({
             [OtpType.PASSWORD_RESET]: 'reset-password',
         }
 
-        const setupLink = await domainHelper.getPublicUrl({
+        const setupLink = await domainHelper.getInternalUrl({
             platformId,
             path: frontendPath[type] + `?otpcode=${otp}&identityId=${userIdentity.id}`,
         })
@@ -130,32 +189,11 @@ export const emailService = (log: FastifyBaseLogger) => ({
         })
     },
 
-    async sendExceedFailureThresholdAlert(projectId: string, flowName: string): Promise<void> {
-        const alerts = await alertsService(log) .list({ projectId, cursor: undefined, limit: 50 })
-        const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
-        const project = await projectService.getOneOrThrow(projectId)
-
-        if (emails.length === 0) {
-            return
-        }
-
-        await emailSender(log).send({
-            emails,
-            platformId: project.platformId,
-            templateData: {
-                name: 'trigger-failure',
-                vars: {
-                    flowName,
-                    projectName: project.displayName,
-                },
-            },
-        })
-    },
-
     async sendBadgeAwardedEmail(userId: string, badgeName: string): Promise<void> {
-        const user = await userService.getMetaInformation({ id: userId })
+        const user = await userService(log).getMetaInformation({ id: userId })
 
-        if (isNil(user)) {
+        if (isNil(user) || !isValidEmail(user.email)) {
+            log.info({ userId, email: user?.email }, '[emailService#sendBadgeAwardedEmail] Skipping: external user has no valid email')
             return
         }
         const badge = BADGES[badgeName as keyof typeof BADGES]
@@ -175,10 +213,10 @@ export const emailService = (log: FastifyBaseLogger) => ({
     },
 })
 
-async function getEntityNameForInvitation(userInvitation: UserInvitation): Promise<{ name: string, role: string }> {
+async function getEntityNameForInvitation(userInvitation: UserInvitation, log: FastifyBaseLogger): Promise<{ name: string, role: string }> {
     switch (userInvitation.type) {
         case InvitationType.PLATFORM: {
-            const platform = await platformService.getOneOrThrow(userInvitation.platformId)
+            const platform = await platformService(log).getOneOrThrow(userInvitation.platformId)
             assertNotNullOrUndefined(userInvitation.platformRole, 'platformRole')
             return {
                 name: platform.name,
@@ -191,7 +229,7 @@ async function getEntityNameForInvitation(userInvitation: UserInvitation): Promi
             const projectRole = await projectRoleService.getOneOrThrowById({
                 id: userInvitation.projectRoleId,
             })
-            const project = await projectService.getOneOrThrow(userInvitation.projectId)
+            const project = await projectService(log).getOneOrThrow(userInvitation.projectId)
             return {
                 name: project.displayName,
                 role: capitalizeFirstLetter(projectRole.name),
@@ -204,9 +242,17 @@ function capitalizeFirstLetter(str: string): string {
     return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase()
 }
 
+function isValidEmail(email: string): boolean {
+    return z.email().safeParse(email).success
+}
+
 type SendInvitationArgs = {
     userInvitation: UserInvitation
     invitationLink: string
+}
+
+type SendProjectMemberAddedArgs = {
+    userInvitation: UserInvitation
 }
 
 type SendOtpArgs = {
@@ -214,6 +260,11 @@ type SendOtpArgs = {
     platformId: string | null
     otp: string
     userIdentity: UserIdentity
+}
+
+type SendScimUserWelcomeArgs = {
+    email: string
+    platformId: string
 }
 
 type IssueCreatedArgs = {

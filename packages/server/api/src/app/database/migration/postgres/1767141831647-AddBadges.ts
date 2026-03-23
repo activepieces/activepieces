@@ -29,7 +29,7 @@ export class AddBadges1767141831647 implements MigrationInterface {
             ALTER TABLE "user_badge" DROP CONSTRAINT "FK_dc6bb11dce7a0a591b5cae0af25"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."idx_user_badge_user_id"
+            DROP INDEX "idx_user_badge_user_id"
         `)
         await queryRunner.query(`
             DROP TABLE "user_badge"

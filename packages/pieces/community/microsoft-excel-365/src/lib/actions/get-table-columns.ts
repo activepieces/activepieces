@@ -1,11 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { excelCommon } from '../common/common';
-import { excelAuth } from '../..';
-import {
-  httpClient,
-  HttpMethod,
-  AuthenticationType,
-} from '@activepieces/pieces-common';
+import { commonProps } from '../common/props';
+import { excelAuth } from '../auth';
+import { getDrivePath, createMSGraphClient } from '../common/helpers';
 
 export const getTableColumnsAction = createAction({
   auth: excelAuth,
@@ -13,9 +9,12 @@ export const getTableColumnsAction = createAction({
   description: 'List columns of a table in a worksheet',
   displayName: 'Get Table Columns',
   props: {
-    workbook_id: excelCommon.workbook_id,
-    worksheet_id: excelCommon.worksheet_id,
-    table: excelCommon.table_id,
+    storageSource: commonProps.storageSource,
+    siteId: commonProps.siteId,
+    documentId: commonProps.documentId,
+    workbookId: commonProps.workbookId,
+    worksheetId: commonProps.worksheetId,
+    tableId: commonProps.tableId,
     limit: Property.Number({
       displayName: 'Limit',
       description: 'Limit the number of columns retrieved',
@@ -23,27 +22,24 @@ export const getTableColumnsAction = createAction({
     }),
   },
   async run({ propsValue, auth }) {
-    const workbookId = propsValue['workbook_id'];
-    const worksheetId = propsValue['worksheet_id'];
-    const tableId = propsValue['table'];
+    const { storageSource, siteId, documentId, workbookId, worksheetId, tableId } = propsValue;
     const limit = propsValue['limit'];
 
-    let url = `${excelCommon.baseUrl}/items/${workbookId}/workbook/worksheets/${worksheetId}/tables/${tableId}/columns`;
+    if (storageSource === 'sharepoint' && (!siteId || !documentId)) {
+      throw new Error('please select SharePoint site and document library.');
+    }
+    const drivePath = getDrivePath(storageSource, siteId as string, documentId as string);
+
+    const client = createMSGraphClient(auth['access_token']);
+    let apiCall = client.api(`${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/tables/${tableId}/columns`);
 
     if (limit) {
-      url += `?$top=${limit}`;
+      apiCall = apiCall.top(limit);
     }
 
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.GET,
-      url: url,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: auth['access_token'],
-      },
-    });
+    const response = await apiCall.get();
 
-    const columnNames = response.body['value'].map(
+    const columnNames = response.value.map(
       (column: { name: any }) => column.name
     );
 

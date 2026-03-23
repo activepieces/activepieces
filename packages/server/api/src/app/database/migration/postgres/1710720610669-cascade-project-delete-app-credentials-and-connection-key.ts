@@ -32,7 +32,7 @@ export class CascadeProjectDeleteAppCredentialsAndConnectionKey1710720610669 imp
         `)
 
 
-        log.info({ name: this.name }, 'up')
+        log.info('[cascadeProjectDeleteAppCredentialsAndConnectionKey1710720610669#up]')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -53,6 +53,6 @@ export class CascadeProjectDeleteAppCredentialsAndConnectionKey1710720610669 imp
             ALTER TABLE "connection_key" DROP CONSTRAINT "FK_03177dc6779e6e147866d43c050"
         `)
 
-        log.info({ name: this.name }, 'down')
+        log.info('[cascadeProjectDeleteAppCredentialsAndConnectionKey1710720610669#down]')
     }
 }

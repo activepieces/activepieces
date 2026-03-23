@@ -44,6 +44,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "The name of the secrets engine (mount path)": "The name of the secrets engine (mount path)",
   "The path to the secret (e.g., myapp/database)": "The path to the secret (e.g., myapp/database)",
   "Version of the secret to read (0 for latest, KV v2 only)": "Version of the secret to read (0 for latest, KV v2 only)",

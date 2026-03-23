@@ -1,12 +1,13 @@
 import { inspect } from 'util'
-import { AppSystemProp, ContainerType, DatabaseType, RedisType, SystemProp, WorkerSystemProp } from '@activepieces/server-shared'
-import { ApEdition, ApEnvironment, ExecutionMode, FileLocation, isNil, PieceSyncMode } from '@activepieces/shared'
+import { ApEdition, ApEnvironment, DefaultProjectRole, ExecutionMode, FileLocation, isNil, PieceSyncMode } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { packageManager, registryPieceManager } from 'server-worker'
+import { DatabaseType } from '../database/database-type'
+import { RedisType } from '../database/redis/types'
 import { s3Helper } from '../file/s3-helper'
 import { encryptUtils } from './encryption'
 import { jwtUtils } from './jwt-utils'
 import { system } from './system/system'
+import { AppSystemProp, ContainerType, SystemProp, WorkerSystemProp } from './system/system-props'
 
 
 function enumValidator<T extends string>(enumValues: T[]) {
@@ -53,6 +54,7 @@ const systemPropValidators: {
     [AppSystemProp.TRIGGER_TIMEOUT_SECONDS]: numberValidator,
     [AppSystemProp.TRIGGER_HOOKS_TIMEOUT_SECONDS]: numberValidator,
     [AppSystemProp.FLOW_TIMEOUT_SECONDS]: numberValidator,
+    [AppSystemProp.EVENT_DESTINATION_TIMEOUT_SECONDS]: numberValidator,
     [AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS]: numberValidator,
     [AppSystemProp.APP_WEBHOOK_SECRETS]: stringValidator,
     [AppSystemProp.MAX_FILE_SIZE_MB]: numberValidator,
@@ -65,16 +67,20 @@ const systemPropValidators: {
     [AppSystemProp.LOKI_URL]: urlValidator,
     [AppSystemProp.LOKI_USERNAME]: stringValidator,
 
+    [AppSystemProp.BETTERSTACK_TOKEN]: stringValidator,
+    [AppSystemProp.BETTERSTACK_HOST]: stringValidator,
     [AppSystemProp.OTEL_ENABLED]: booleanValidator,
     [AppSystemProp.HYPERDX_TOKEN]: stringValidator,
     [WorkerSystemProp.FRONTEND_URL]: urlValidator,
     [WorkerSystemProp.CONTAINER_TYPE]: enumValidator(Object.values(ContainerType)),
     [WorkerSystemProp.WORKER_TOKEN]: stringValidator,
+    [WorkerSystemProp.PORT]: numberValidator,
     [WorkerSystemProp.PLATFORM_ID_FOR_DEDICATED_WORKER]: stringValidator,
     [WorkerSystemProp.PRE_WARM_CACHE]: booleanValidator,
     // AppSystemProp
     [AppSystemProp.API_KEY]: stringValidator,
     [AppSystemProp.TEMPLATES_API_KEY]: stringValidator,
+    [AppSystemProp.TEMPLATE_MANAGER_API_KEY]: stringValidator,
     [AppSystemProp.API_RATE_LIMIT_AUTHN_ENABLED]: booleanValidator,
     [AppSystemProp.API_RATE_LIMIT_AUTHN_MAX]: numberValidator,
     [AppSystemProp.API_RATE_LIMIT_AUTHN_WINDOW]: stringValidator,
@@ -87,6 +93,7 @@ const systemPropValidators: {
     [AppSystemProp.EXECUTION_DATA_RETENTION_DAYS]: numberValidator,
     [AppSystemProp.JWT_SECRET]: stringValidator,
     [AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT]: numberValidator,
+    [AppSystemProp.PIECES_CACHE_MAX_ENTRIES]: numberValidator,
     [AppSystemProp.PIECES_SYNC_MODE]: enumValidator(Object.values(PieceSyncMode)),
     [AppSystemProp.POSTGRES_DATABASE]: stringValidator,
     [AppSystemProp.POSTGRES_HOST]: stringValidator,
@@ -140,14 +147,13 @@ const systemPropValidators: {
     [AppSystemProp.STRIPE_SECRET_KEY]: stringValidator,
     [AppSystemProp.STRIPE_WEBHOOK_SECRET]: stringValidator,
     [AppSystemProp.INTERNAL_URL]: stringValidator,
-    [AppSystemProp.PM2_ENABLED]: booleanValidator,
+    [AppSystemProp.WORKERS]: numberValidator,
     [AppSystemProp.EDITION]: enumValidator(Object.values(ApEdition)),
     [AppSystemProp.FEATUREBASE_API_KEY]: stringValidator,
     [AppSystemProp.OPENROUTER_PROVISION_KEY]: stringValidator,
+    [AppSystemProp.SCIM_DEFAULT_PROJECT_ROLE]: enumValidator(Object.values(DefaultProjectRole)),
 
     // AppSystemProp
-    [WorkerSystemProp.WORKER_CONCURRENCY]: numberValidator,
-
     // Cloud
     [AppSystemProp.GOOGLE_CLIENT_ID]: stringValidator,
     [AppSystemProp.GOOGLE_CLIENT_SECRET]: stringValidator,
@@ -173,6 +179,10 @@ const systemPropValidators: {
         }
         return true
     },
+
+    // Webhook payload limits
+    [AppSystemProp.MAX_WEBHOOK_PAYLOAD_SIZE_MB]: numberValidator,
+    [AppSystemProp.WEBHOOK_PAYLOAD_INLINE_THRESHOLD_KB]: numberValidator,
 }
 
 
@@ -266,6 +276,4 @@ export const validateEnvPropsOnStartup = async (log: FastifyBaseLogger): Promise
         }
     }
 
-    await packageManager(log).validate()
-    await registryPieceManager(log).validate()
 }

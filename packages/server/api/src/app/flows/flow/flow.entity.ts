@@ -71,6 +71,10 @@ export const FlowEntity = new EntitySchema<FlowSchema>({
             type: String,
             nullable: true,
         },
+        templateId: {
+            type: String,
+            nullable: true,
+        },
     },
     indices: [
         {
@@ -86,6 +90,11 @@ export const FlowEntity = new EntitySchema<FlowSchema>({
         {
             name: 'idx_flow_folder_id',
             columns: ['folderId'],
+            unique: false,
+        },
+        {
+            name: 'idx_flow_project_id_status',
+            columns: ['projectId', 'status'],
             unique: false,
         },
     ],

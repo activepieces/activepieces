@@ -6,7 +6,7 @@ import {
   TriggerStrategy,
   createTrigger,
 } from '@activepieces/pieces-framework';
-import { googleTasksAuth } from '../..';
+import { googleTasksAuth } from '../auth';
 import {
   DedupeStrategy,
   Polling,

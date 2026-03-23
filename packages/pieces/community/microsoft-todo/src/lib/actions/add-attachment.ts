@@ -1,7 +1,7 @@
 import { Property, createAction, OAuth2PropertyValue } from '@activepieces/pieces-framework';
 import { getTaskListsDropdown, getTasksInListDropdown } from '../common';
 import { TaskFileAttachment } from '@microsoft/microsoft-graph-types';
-import { microsoftToDoAuth } from '../../index';
+import { microsoftToDoAuth } from '../auth';
 import { Client } from '@microsoft/microsoft-graph-client';
 
 export const addAttachmentAction = createAction({

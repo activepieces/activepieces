@@ -190,6 +190,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "At least one of: First Name, Last Name, Email, Mobile Number, Home Number, Work Number is required.": "At least one of: First Name, Last Name, Email, Mobile Number, Home Number, Work Number is required.",
   "Will the customer receive notifications": "Will the customer receive notifications",
   "Array of tags to assign to the customer": "Array of tags to assign to the customer",
