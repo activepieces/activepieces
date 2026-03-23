@@ -1576,6 +1576,9 @@
       "@activepieces/piece-lofty": [
         "packages/pieces/community/lofty/src/index.ts"
       ],
+      "@activepieces/piece-loops": [
+        "packages/pieces/community/loops/src/index.ts"
+      ],
       "@activepieces/piece-youcanbookme": [
         "packages/pieces/community/youcanbookme/src/index.ts"
       ],
