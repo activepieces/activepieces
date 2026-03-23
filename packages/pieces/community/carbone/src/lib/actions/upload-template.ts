@@ -76,7 +76,7 @@ export const uploadTemplateAction = createAction({
     if (name) form.append('name', name);
     if (comment) form.append('comment', comment);
     if (category) form.append('category', category);
-    if (tags && tags.length > 0) form.append('tags', JSON.stringify(tags));
+    if (tags && tags.length > 0) form.append('tags', JSON.stringify(tags.map((t) => (t as { tag: string }).tag)));
 
     // Template file must be last in Carbone v5
     form.append('template', Buffer.from(file.base64, 'base64'), filename);

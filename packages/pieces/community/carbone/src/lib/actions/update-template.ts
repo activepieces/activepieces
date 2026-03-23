@@ -71,7 +71,7 @@ export const updateTemplateAction = createAction({
     if (name !== undefined) body['name'] = name;
     if (comment !== undefined) body['comment'] = comment;
     if (category !== undefined) body['category'] = category;
-    if (tags !== undefined) body['tags'] = tags;
+    if (tags !== undefined) body['tags'] = tags.map((t) => (t as { tag: string }).tag);
     if (deployedAt !== undefined) body['deployedAt'] = Number(deployedAt);
     if (expireAt !== undefined) body['expireAt'] = Number(expireAt);
 
