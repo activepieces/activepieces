@@ -1,4 +1,4 @@
-import { OAuth2PropertyValue, PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { createPiece } from '@activepieces/pieces-framework';
 
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { PieceCategory } from '@activepieces/shared';
@@ -8,7 +8,9 @@ import { readDocument } from './lib/actions/read-document.action';
 import { appendText } from './lib/actions/append-text';
 import { findDocumentAction } from './lib/actions/find-document';
 import { newDocumentTrigger } from './lib/triggers/new-document';
-import { googleDocsAuth } from './lib/auth';
+import { googleDocsAuth, getAccessToken, GoogleDocsAuthValue } from './lib/auth';
+
+export { googleDocsAuth, getAccessToken, GoogleDocsAuthValue } from './lib/auth';
 
 export const googleDocs = createPiece({
 	displayName: 'Google Docs',
@@ -35,7 +37,7 @@ export const googleDocs = createPiece({
 			baseUrl: () => 'https://docs.googleapis.com/v1',
 			auth: googleDocsAuth,
 			authMapping: async (auth) => ({
-				Authorization: `Bearer ${(auth).access_token}`,
+				Authorization: `Bearer ${await getAccessToken(auth as GoogleDocsAuthValue)}`,
 			}),
 		}),
 		appendText,

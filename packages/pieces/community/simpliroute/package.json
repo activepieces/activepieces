@@ -3,8 +3,8 @@
   "version": "0.1.4",
   "description": "SimpliRoute piece for Activepieces - Last mile delivery optimization platform integration",
   "type": "commonjs",
-  "main": "./src/index.js",
-  "types": "./src/index.d.ts",
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
   "dependencies": {
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
@@ -12,7 +12,7 @@
     "tslib": "^2.3.0"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.lib.json",
+    "build": "tsc -p tsconfig.lib.json && cp package.json dist/",
     "lint": "eslint 'src/**/*.ts'"
   }
 }

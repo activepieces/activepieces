@@ -27,7 +27,7 @@ jobs:
       - name: Setup nodejs
         uses: actions/setup-node@v3
         with:
-          node-version: 20
+          node-version: 24
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -110,6 +110,12 @@ jobs:
               repo: context.repo.repo,
               pull_number: pullRequest.number,
               merge_method: 'squash'
+            });
+
+            await github.rest.git.deleteRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: `heads/${branchName}`
             });
 
 

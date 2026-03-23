@@ -38,10 +38,12 @@
   "Method": "方法",
   "Headers": "ヘッダー",
   "Query Parameters": "クエリパラメータ",
+  "Body Type": "ボディタイプ",
   "Body": "本文",
   "Response is Binary ?": "応答はバイナリですか?",
   "No Error on Failure": "失敗時にエラーはありません",
   "Timeout (in seconds)": "タイムアウト（秒）",
+  "Follow redirects": "リダイレクトをフォローする",
   "The meeting's topic": "ミーティングのトピック",
   "Meeting start date-time": "ミーティングの開始日時",
   "Duration of the meeting": "会議期間",
@@ -68,7 +70,7 @@
   "The registrant's purchasing time frame.": "登録者の購入期間。",
   "The registrant's role in the purchase process.": "購入プロセスにおける登録者の役割。",
   "Authorization headers are injected automatically from your connection.": "認証ヘッダは接続から自動的に注入されます。",
-  "Enable for files like PDFs, images, etc..": "PDF、画像などのファイルを有効にします。",
+  "Enable for files like PDFs, images, etc.": "PDF、画像などのファイルを有効にする",
   "Local": "ローカル",
   "Cloud": "クラウド",
   "None": "なし",
@@ -98,5 +100,8 @@
   "PATCH": "PATCH",
   "PUT": "PUT",
   "DELETE": "削除",
-  "HEAD": "頭"
+  "HEAD": "頭",
+  "JSON": "JSON",
+  "Form Data": "フォームデータ",
+  "Raw": "Raw"
 }

@@ -1,5 +1,6 @@
 import { Property, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { slackAuth } from '../auth';
+import { getTeamId, getUserId, SlackAuthValue } from '../common/auth-helpers';
 
 
 
@@ -24,7 +25,7 @@ export const newDirectMessageTrigger = createTrigger({
 	sampleData: undefined,
 	onEnable: async (context) => {
 		// Older OAuth2 has team_id, newer has team.id
-		const teamId = context.auth.data['team_id'] ?? context.auth.data['team']['id'];
+		const teamId = await getTeamId(context.auth as SlackAuthValue);
 		context.app.createListeners({
 			events: ['message'],
 			identifierValue: teamId,
@@ -36,12 +37,11 @@ export const newDirectMessageTrigger = createTrigger({
 
 	async run(context) {
 		const payloadBody = context.payload.body as PayloadBody;
-		const userId = context.auth.data['authed_user']?.id;
+		const userId = await getUserId(context.auth as SlackAuthValue)
 
 		if (payloadBody.event.channel_type !== 'im') {
 			return [];
 		}
-
 		// check for bot messages
 		if (
 			(context.propsValue.ignoreBots && payloadBody.event.bot_id) ||
@@ -49,6 +49,7 @@ export const newDirectMessageTrigger = createTrigger({
 		) {
 			return [];
 		}
+
 		return [payloadBody.event];
 	},
 });

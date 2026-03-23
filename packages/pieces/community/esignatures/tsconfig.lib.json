@@ -4,8 +4,9 @@
     "rootDir": ".",
     "baseUrl": ".",
     "paths": {},
-    "outDir": "../../../../dist/packages/pieces/community/esignatures",
+    "outDir": "./dist",
     "declaration": true,
+    "declarationMap": true,
     "types": ["node"]
   },
   "include": ["src/**/*.ts"]

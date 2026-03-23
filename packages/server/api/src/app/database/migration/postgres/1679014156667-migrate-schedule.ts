@@ -29,7 +29,7 @@ export class migrateSchedule1679014156667 implements MigrationInterface {
                 )
             }
         }
-        log.info('migrateSchedule1679014156667, finished flows ' + count)
+        log.info({ count }, '[migrateSchedule1679014156667#up] finished flows')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -54,8 +54,6 @@ export class migrateSchedule1679014156667 implements MigrationInterface {
                 }
             }
         }
-        log.info(
-            'rolling back  migrateSchedule1679014156667, finished flows ' + count,
-        )
+        log.info({ count }, '[migrateSchedule1679014156667#down] finished flows')
     }
 }

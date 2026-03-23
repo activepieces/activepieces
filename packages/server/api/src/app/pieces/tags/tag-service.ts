@@ -3,6 +3,7 @@ import { In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
+import { pieceTagService } from './pieces/piece-tag.service'
 import { TagEntity } from './tag-entity'
 
 
@@ -10,6 +11,10 @@ const repo = repoFactory(TagEntity)
 
 
 export const tagService = {
+    async delete(platformId: string, id: string): Promise<void> {
+        await pieceTagService.deleteByTagId(id)
+        await repo().delete({ id, platformId })
+    },
     async convertIdsToNames(platformId: string, names: string[]): Promise<string[]> {
         const tagEntities = await repo().findBy({
             platformId,

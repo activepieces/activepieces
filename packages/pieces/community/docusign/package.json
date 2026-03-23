@@ -1,14 +1,21 @@
 {
   "name": "@activepieces/piece-docusign",
   "version": "0.1.4",
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
   "dependencies": {
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
-    "docusign-esign": "8.1.0"
+    "axios": "1.13.5",
+    "docusign-esign": "8.1.0",
+    "tslib": "2.6.2"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.lib.json",
+    "build": "tsc -p tsconfig.lib.json && cp package.json dist/",
     "lint": "eslint 'src/**/*.ts'"
+  },
+  "devDependencies": {
+    "@types/docusign-esign": "5.19.9"
   }
 }
