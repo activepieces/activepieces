@@ -3,13 +3,21 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { loopsAuth, LOOPS_BASE_URL } from '../auth';
 
 // Reserved top-level fields that must not be overwritten by custom properties
-const RESERVED_FIELDS = new Set(['email', 'firstName', 'lastName', 'userId', 'subscribed', 'userGroup', 'source']);
+const RESERVED_FIELDS = new Set([
+  'email',
+  'firstName',
+  'lastName',
+  'userId',
+  'subscribed',
+  'userGroup',
+  'source',
+]);
 
 export const createContact = createAction({
   name: 'create_contact',
-  displayName: 'Create or Update Contact',
+  displayName: 'Create Contact',
   description:
-    'Creates a new contact in Loops, or updates them if a contact with the given email already exists.',
+    'Creates a new contact in Loops. Returns an error if a contact with the given email already exists.',
   auth: loopsAuth,
   props: {
     email: Property.ShortText({
@@ -19,12 +27,12 @@ export const createContact = createAction({
     }),
     firstName: Property.ShortText({
       displayName: 'First Name',
-      description: 'The contact\'s first name.',
+      description: "The contact's first name.",
       required: false,
     }),
     lastName: Property.ShortText({
       displayName: 'Last Name',
-      description: 'The contact\'s last name.',
+      description: "The contact's last name.",
       required: false,
     }),
     userId: Property.ShortText({
@@ -34,7 +42,8 @@ export const createContact = createAction({
     }),
     subscribed: Property.StaticDropdown({
       displayName: 'Subscribed to Marketing',
-      description: 'Set subscription status. Leave as "No Change" to preserve existing status on update.',
+      description:
+        'Set subscription status. Leave as "No Change" to preserve existing status on update.',
       required: false,
       options: {
         disabled: false,
@@ -52,18 +61,35 @@ export const createContact = createAction({
     }),
     source: Property.ShortText({
       displayName: 'Source',
-      description: 'Where this contact came from (e.g. "signup-form", "import").',
+      description:
+        'Where this contact came from (e.g. "signup-form", "import").',
+      required: false,
+    }),
+    mailingLists: Property.Object({
+      displayName: 'Mailing Lists',
+      description:
+        'Subscribe or unsubscribe this contact from mailing lists. Provide list IDs as keys with `true` (subscribe) or `false` (unsubscribe) as values.',
       required: false,
     }),
     customProperties: Property.Object({
       displayName: 'Custom Properties',
-      description: 'Additional custom contact properties as key-value pairs. Reserved fields (email, firstName, lastName, userId, subscribed, userGroup, source) are ignored here.',
+      description:
+        'Additional custom contact properties as key-value pairs. Reserved fields (email, firstName, lastName, userId, subscribed, userGroup, source) are ignored here.',
       required: false,
     }),
   },
   async run(context) {
-    const { email, firstName, lastName, userId, subscribed, userGroup, source, customProperties } =
-      context.propsValue;
+    const {
+      email,
+      firstName,
+      lastName,
+      userId,
+      subscribed,
+      userGroup,
+      source,
+      mailingLists,
+      customProperties,
+    } = context.propsValue;
 
     const body: Record<string, unknown> = { email };
 
@@ -74,6 +100,9 @@ export const createContact = createAction({
     if (subscribed === 'false') body['subscribed'] = false;
     if (userGroup) body['userGroup'] = userGroup;
     if (source) body['source'] = source;
+    if (mailingLists && typeof mailingLists === 'object') {
+      body['mailingLists'] = mailingLists;
+    }
 
     // Merge custom properties at the top level (Loops expects flat properties)
     // Skip any key that is a reserved field to prevent silent overwrites
@@ -89,7 +118,7 @@ export const createContact = createAction({
       method: HttpMethod.POST,
       url: `${LOOPS_BASE_URL}/contacts/create`,
       headers: {
-        Authorization: `Bearer ${context.auth as string}`,
+        Authorization: `Bearer ${context.auth.secret_text}`,
         'Content-Type': 'application/json',
         Accept: 'application/json',
       },

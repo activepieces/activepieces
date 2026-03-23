@@ -5,7 +5,8 @@ import { loopsAuth, LOOPS_BASE_URL } from '../auth';
 export const deleteContact = createAction({
   name: 'delete_contact',
   displayName: 'Delete Contact',
-  description: 'Permanently deletes a contact from Loops by their email address or user ID.',
+  description:
+    'Permanently deletes a contact from Loops by their email address or user ID.',
   auth: loopsAuth,
   props: {
     email: Property.ShortText({
@@ -34,7 +35,7 @@ export const deleteContact = createAction({
       method: HttpMethod.DELETE,
       url: `${LOOPS_BASE_URL}/contacts/delete`,
       headers: {
-        Authorization: `Bearer ${context.auth as string}`,
+        Authorization: `Bearer ${context.auth.secret_text}`,
         'Content-Type': 'application/json',
         Accept: 'application/json',
       },

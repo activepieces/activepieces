@@ -11,7 +11,7 @@ export const sendTransactionalEmail = createAction({
   props: {
     email: Property.ShortText({
       displayName: 'To Email',
-      description: 'The recipient\'s email address.',
+      description: "The recipient's email address.",
       required: true,
     }),
     transactionalId: Property.ShortText({
@@ -35,7 +35,8 @@ export const sendTransactionalEmail = createAction({
     }),
   },
   async run(context) {
-    const { email, transactionalId, addToAudience, dataVariables } = context.propsValue;
+    const { email, transactionalId, addToAudience, dataVariables } =
+      context.propsValue;
 
     const body: Record<string, unknown> = {
       email,
@@ -54,7 +55,7 @@ export const sendTransactionalEmail = createAction({
       method: HttpMethod.POST,
       url: `${LOOPS_BASE_URL}/transactional`,
       headers: {
-        Authorization: `Bearer ${context.auth as string}`,
+        Authorization: `Bearer ${context.auth.secret_text}`,
         'Content-Type': 'application/json',
         Accept: 'application/json',
       },

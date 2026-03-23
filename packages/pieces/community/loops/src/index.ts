@@ -28,7 +28,7 @@ export const loops = createPiece({
       baseUrl: () => LOOPS_BASE_URL,
       auth: loopsAuth,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${auth as string}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       }),
     }),
   ],

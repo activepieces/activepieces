@@ -16,7 +16,8 @@ export const sendEvent = createAction({
     }),
     userId: Property.ShortText({
       displayName: 'User ID',
-      description: 'Your internal user ID of the contact (used if email is not provided).',
+      description:
+        'Your internal user ID of the contact (used if email is not provided).',
       required: false,
     }),
     eventName: Property.ShortText({
@@ -27,7 +28,14 @@ export const sendEvent = createAction({
     }),
     eventProperties: Property.Object({
       displayName: 'Event Properties',
-      description: 'Optional key-value pairs to attach to the event (used in email templates).',
+      description:
+        'Optional key-value pairs to attach to the event (used in email templates).',
+      required: false,
+    }),
+    mailingLists: Property.Object({
+      displayName: 'Mailing Lists',
+      description:
+        'Subscribe or unsubscribe this contact from mailing lists. Provide list IDs as keys with `true` (subscribe) or `false` (unsubscribe) as values.',
       required: false,
     }),
     contactProperties: Property.Object({
@@ -38,7 +46,8 @@ export const sendEvent = createAction({
     }),
   },
   async run(context) {
-    const { email, userId, eventName, eventProperties, contactProperties } = context.propsValue;
+    const { email, userId, eventName, eventProperties, mailingLists, contactProperties } =
+      context.propsValue;
 
     if (!email && !userId) {
       throw new Error('Either "Email" or "User ID" must be provided.');
@@ -53,15 +62,19 @@ export const sendEvent = createAction({
       body['eventProperties'] = eventProperties;
     }
 
+    if (mailingLists && typeof mailingLists === 'object') {
+      body['mailingLists'] = mailingLists;
+    }
+
     if (contactProperties && typeof contactProperties === 'object') {
-      body['contactProperties'] = contactProperties;
+      Object.assign(body, contactProperties);
     }
 
     const response = await httpClient.sendRequest<Record<string, unknown>>({
       method: HttpMethod.POST,
       url: `${LOOPS_BASE_URL}/events/send`,
       headers: {
-        Authorization: `Bearer ${context.auth as string}`,
+        Authorization: `Bearer ${context.auth.secret_text}`,
         'Content-Type': 'application/json',
         Accept: 'application/json',
       },
