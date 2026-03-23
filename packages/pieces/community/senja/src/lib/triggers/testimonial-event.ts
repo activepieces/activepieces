@@ -13,10 +13,9 @@ export const testimonialEventTrigger = createTrigger({
       value: `### Setup Instructions
 
 1. After activating this flow, copy the **Webhook URL** shown below.
-2. In Senja, go to **Automate** (or **Settings > Webhooks**).
-3. Create a new webhook and paste the URL.
-4. Select which events you want Senja to send (created, updated, deleted).
-5. Save — your flow will now trigger automatically.`,
+2. In Senja, go to **Automate** in the left sidebar and scroll down to the Webhooks section.
+3. Create a new webhook, paste the URL, and select which events to send.
+4. Save — your flow will now trigger automatically.`,
     }),
     events: Property.StaticMultiSelectDropdown({
       displayName: 'Filter Events',
@@ -25,44 +24,46 @@ export const testimonialEventTrigger = createTrigger({
       required: false,
       options: {
         options: [
-          { label: 'Testimonial Created', value: 'created' },
-          { label: 'Testimonial Updated', value: 'updated' },
-          { label: 'Testimonial Deleted', value: 'deleted' },
+          { label: 'Testimonial Created', value: 'testimonial_created' },
+          { label: 'Testimonial Updated', value: 'testimonial_updated' },
+          { label: 'Testimonial Deleted', value: 'testimonial_deleted' },
         ],
       },
     }),
   },
   sampleData: {
-    event: 'created',
-    id: 'abc123',
+    event_type: 'testimonial_created',
+    id: 'rev_1234567890abcdef',
     type: 'text',
-    title: 'Great product!',
-    text: 'I love using this tool every day.',
+    title: 'Amazing product experience!',
+    text: 'This product has completely transformed how we handle our workflow.',
     rating: 5,
     approved: true,
-    date: '2024-01-15T10:00:00Z',
+    date: '2024-01-15T10:30:00Z',
+    url: 'https://google.com/reviews/123',
     integration: 'google',
-    tags: 'happy-customer, enterprise',
-    lang: 'en',
+    tags: 'featured, enterprise',
+    lang: null,
     video_url: null,
-    thumbnail_url: null,
-    form_id: null,
-    customer_name: 'Jane Doe',
-    customer_email: 'jane@example.com',
-    customer_company: 'Acme Inc',
-    customer_tagline: 'CEO at Acme',
+    thumbnail_url: 'https://cdn.senja.io/optimized/thumbnail.jpg',
+    form_id: '3b5d354-6556-4f88-b29a-99e9552ca906',
+    project_id: '7db5d354-6556-4f88-b29a-99e9552ca906',
+    customer_name: 'Sarah Johnson',
+    customer_email: 'sarah.johnson@example.com',
+    customer_company: 'Tech Solutions Inc',
+    customer_tagline: 'Senior Product Manager',
     customer_username: null,
     customer_url: null,
-    customer_avatar: null,
-    customer_company_logo: null,
-    created_at: '2024-01-15T10:00:00Z',
-    updated_at: '2024-01-15T10:00:00Z',
+    customer_avatar: 'https://cdn.senja.io/optimized/avatar1.jpg',
+    customer_company_logo: 'https://cdn.senja.io/optimized/company-logo1.png',
+    created_at: '2024-01-15T10:30:00Z',
+    updated_at: '2024-01-15T10:30:00Z',
   },
   type: TriggerStrategy.WEBHOOK,
 
   async onEnable(_context) {
     // Senja does not provide a programmatic webhook registration API.
-    // The user must manually add the webhook URL in the Senja dashboard.
+    // The user must manually add the webhook URL in the Senja dashboard (Automate tab).
   },
 
   async onDisable(_context) {
@@ -70,21 +71,30 @@ export const testimonialEventTrigger = createTrigger({
   },
 
   async run(context) {
+    // Senja payload shape:
+    //   { type: "testimonial_created", data: { new: { ...testimonial } } }
+    //   { type: "testimonial_updated", data: { old: { ... }, new: { ...testimonial } } }
+    //   { type: "testimonial_deleted", data: { old: { ...testimonial } } }
     const payload = context.payload.body as Record<string, unknown>;
+    const eventType = payload['type'] as string | undefined;
 
     const selectedEvents = context.propsValue.events as string[] | undefined;
     if (selectedEvents && selectedEvents.length > 0) {
-      const eventType = (payload['event'] as string) ?? null;
       if (!eventType || !selectedEvents.includes(eventType)) {
         return [];
       }
     }
 
-    const t = (payload['testimonial'] as Record<string, unknown>) ?? payload;
+    const data = payload['data'] as Record<string, unknown> | undefined;
+    const t = (
+      eventType === 'testimonial_deleted'
+        ? (data?.['old'] as Record<string, unknown>)
+        : (data?.['new'] as Record<string, unknown>)
+    ) ?? data ?? payload;
 
     return [
       {
-        event: payload['event'] ?? null,
+        event_type: eventType ?? null,
         id: t['id'] ?? null,
         type: t['type'] ?? null,
         title: t['title'] ?? null,
@@ -101,15 +111,15 @@ export const testimonialEventTrigger = createTrigger({
         video_url: t['video_url'] ?? null,
         thumbnail_url: t['thumbnail_url'] ?? null,
         form_id: t['form_id'] ?? null,
-        customer_name: (t['customer'] as Record<string, unknown>)?.['name'] ?? null,
-        customer_email: (t['customer'] as Record<string, unknown>)?.['email'] ?? null,
-        customer_company: (t['customer'] as Record<string, unknown>)?.['company'] ?? null,
-        customer_tagline: (t['customer'] as Record<string, unknown>)?.['tagline'] ?? null,
-        customer_username: (t['customer'] as Record<string, unknown>)?.['username'] ?? null,
-        customer_url: (t['customer'] as Record<string, unknown>)?.['url'] ?? null,
-        customer_avatar: (t['customer'] as Record<string, unknown>)?.['avatar'] ?? null,
-        customer_company_logo:
-          (t['customer'] as Record<string, unknown>)?.['company_logo'] ?? null,
+        project_id: t['project_id'] ?? null,
+        customer_name: t['customer_name'] ?? null,
+        customer_email: t['customer_email'] ?? null,
+        customer_company: t['customer_company'] ?? null,
+        customer_tagline: t['customer_tagline'] ?? null,
+        customer_username: t['customer_username'] ?? null,
+        customer_url: t['customer_url'] ?? null,
+        customer_avatar: t['customer_avatar'] ?? null,
+        customer_company_logo: t['customer_company_logo'] ?? null,
         created_at: t['created_at'] ?? null,
         updated_at: t['updated_at'] ?? null,
       },
@@ -129,7 +139,7 @@ export const testimonialEventTrigger = createTrigger({
       : ((response.body as { data?: Record<string, unknown>[] })?.['data'] ?? []);
 
     return items.map((t) => ({
-      event: 'created',
+      event_type: 'testimonial_created',
       id: t['id'] ?? null,
       type: t['type'] ?? null,
       title: t['title'] ?? null,
@@ -146,15 +156,15 @@ export const testimonialEventTrigger = createTrigger({
       video_url: t['video_url'] ?? null,
       thumbnail_url: t['thumbnail_url'] ?? null,
       form_id: t['form_id'] ?? null,
-      customer_name: (t['customer'] as Record<string, unknown>)?.['name'] ?? null,
-      customer_email: (t['customer'] as Record<string, unknown>)?.['email'] ?? null,
-      customer_company: (t['customer'] as Record<string, unknown>)?.['company'] ?? null,
-      customer_tagline: (t['customer'] as Record<string, unknown>)?.['tagline'] ?? null,
-      customer_username: (t['customer'] as Record<string, unknown>)?.['username'] ?? null,
-      customer_url: (t['customer'] as Record<string, unknown>)?.['url'] ?? null,
-      customer_avatar: (t['customer'] as Record<string, unknown>)?.['avatar'] ?? null,
-      customer_company_logo:
-        (t['customer'] as Record<string, unknown>)?.['company_logo'] ?? null,
+      project_id: t['project_id'] ?? null,
+      customer_name: t['customer_name'] ?? null,
+      customer_email: t['customer_email'] ?? null,
+      customer_company: t['customer_company'] ?? null,
+      customer_tagline: t['customer_tagline'] ?? null,
+      customer_username: t['customer_username'] ?? null,
+      customer_url: t['customer_url'] ?? null,
+      customer_avatar: t['customer_avatar'] ?? null,
+      customer_company_logo: t['customer_company_logo'] ?? null,
       created_at: t['created_at'] ?? null,
       updated_at: t['updated_at'] ?? null,
     }));
