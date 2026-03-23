@@ -1,19 +1,16 @@
 
 import { ActivepiecesError, ErrorCode, SAMLAuthnProviderConfig } from '@activepieces/shared'
 import * as validator from '@authenio/samlify-node-xmllint'
-import { Type } from '@sinclair/typebox'
-import { TypeCompiler } from '@sinclair/typebox/compiler'
 import * as saml from 'samlify'
+import { z } from 'zod'
 import { domainHelper } from '../../custom-domains/domain-helper'
 
 
-const samlResponseValidator = TypeCompiler.Compile(
-    Type.Object({
-        email: Type.String(),
-        firstName: Type.String(),
-        lastName: Type.String(),
-    }),
-)
+const samlResponseValidator = z.object({
+    email: z.string(),
+    firstName: z.string(),
+    lastName: z.string(),
+})
 
 class SamlClient {
     private static readonly LOGIN_REQUEST_BINDING = 'redirect'
@@ -41,7 +38,7 @@ class SamlClient {
         )
 
         const atts = loginResult.extract.attributes
-        if (!samlResponseValidator.Check(atts)) {
+        if (!samlResponseValidator.safeParse(atts).success) {
             throw new ActivepiecesError({
                 code: ErrorCode.INVALID_SAML_RESPONSE,
                 params: {

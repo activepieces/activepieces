@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { hashiCorpVaultAuth } from '../../index';
+import { hashiCorpVaultAuth } from '../auth';
 import { getVaultToken, buildVaultHeaders, buildSecretUrl } from '../common';
 
 export const readSecret = createAction({

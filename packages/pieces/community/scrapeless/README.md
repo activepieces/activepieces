@@ -1,7 +1,5 @@
 # pieces-scrapeless
 
-This library was generated with [Nx](https://nx.dev).
-
 ## Building
 
-Run `nx build pieces-scrapeless` to build the library.
+Run `turbo run build --filter=@activepieces/piece-scrapeless` to build the library.

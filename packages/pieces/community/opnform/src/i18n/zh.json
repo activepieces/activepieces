@@ -1,7 +1,8 @@
 {
   "Create beautiful online forms and surveys with unlimited fields and submissions": "Create beautiful online forms and surveys with unlimited fields and submissions",
-  "Base URL (Default: https://api.opnform.com)": "Base URL (Default: https://api.opnform.com)",
+  "Base URL": "基本网址",
   "API Key": "API 密钥",
+  "Default value is 'https://api.opnform.com'.": "Default value is 'https://api.opnform.com'.",
   "Please use your Opnform API Key. [Click here for create API Key](https://opnform.com/home?user-settings=access-tokens)": "Please use your Opnform API Key. [Click here for create API Key](https://opnform.com/home?user-settings=access-tokens)",
   "Custom API Call": "自定义 API 呼叫",
   "Make a custom API call to a specific endpoint": "将一个自定义 API 调用到一个特定的终点",

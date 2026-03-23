@@ -1,6 +1,6 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { makeClient } from '../common';
-import { moxieCRMAuth } from '../..';
+import { moxieCRMAuth } from '../auth';
 
 export const moxieCreateClientAction = createAction({
   auth: moxieCRMAuth,

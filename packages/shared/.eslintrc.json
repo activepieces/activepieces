@@ -10,7 +10,7 @@
       ],
       "parserOptions": {
         "project": [
-          "packages/shared/tsconfig.*?.json"
+          "tsconfig.*?.json"
         ]
       }
     }

@@ -1,5 +1,4 @@
-import { rolePermissions } from '@activepieces/ee-shared'
-import { DefaultProjectRole, ProjectRole, RoleType } from '@activepieces/shared'
+import { DefaultProjectRole, rolePermissions, RoleType } from '@activepieces/shared'
 import { repoFactory } from '../../core/db/repo-factory'
 import { ProjectRoleEntity } from '../../ee/projects/project-role/project-role.entity'
 import { system } from '../../helper/system/system'
@@ -19,13 +18,12 @@ export const rolesSeed: DataSeed = {
         system.globalLogger().info({ name: 'rolesSeed' }, 'Seeding roles')
         for (const role of Object.values(DefaultProjectRole)) {
             const permissions = rolePermissions[role]
-            const projectRole: Omit<ProjectRole, 'created' | 'updated'> = {
+            await projectMemberRoleRepo().upsert({
                 name: role,
                 permissions,
                 type: RoleType.DEFAULT,
                 id: roleIds[role],
-            }
-            await projectMemberRoleRepo().upsert(projectRole, ['id'])
+            }, ['id'])
         }
     },
 }

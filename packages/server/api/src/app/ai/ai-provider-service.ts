@@ -1,5 +1,5 @@
 import {
-    ActivepiecesError, ActivePiecesProviderAuthConfig, AIProviderAuthConfig, AIProviderModel, AIProviderName, AIProviderWithoutSensitiveData,
+    ActivepiecesError, ActivePiecesProviderAuthConfig, AIProviderAuthConfig, AIProviderConfig, AIProviderModel, AIProviderName, AIProviderWithoutSensitiveData,
     apId,
     CreateAIProviderRequest,
     ErrorCode,
@@ -18,6 +18,7 @@ import { openRouterApi } from '../ee/platform/platform-plan/openrouter/openroute
 import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
 import { flagService } from '../flags/flag.service'
 import { encryptUtils } from '../helper/encryption'
+import { rejectedPromiseHandler } from '../helper/promise-handler'
 import { SystemJobName } from '../helper/system-jobs/common'
 import { systemJobsSchedule } from '../helper/system-jobs/system-job'
 import { AIProviderEntity, AIProviderSchema } from './ai-provider-entity'
@@ -41,7 +42,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
             provider: AIProviderName.ACTIVEPIECES,
         })
 
-        if (flagService.aiCreditsEnabled() && !activepiecesExists) {
+        if (flagService(log).aiCreditsEnabled() && !activepiecesExists) {
             await aiProviderRepo().save({
                 id: apId(),
                 auth: await encryptUtils.encryptObject({}),
@@ -84,6 +85,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
     },
 
     async create(platformId: PlatformId, request: CreateAIProviderRequest): Promise<void> {
+        await this.validateProviderCredentials(request.provider, request.auth, request.config)
         await aiProviderRepo().save({
             id: apId(),
             auth: await encryptUtils.encryptObject(request.auth),
@@ -104,6 +106,14 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
                 params: { entityId: providerId, entityType: 'AIProvider' },
             })
         }
+        const config = request.config ?? aiProvider.config
+        if (!isNil(request.auth)) {
+            await this.validateProviderCredentials(aiProvider.provider, request.auth, config)
+        }
+        else {
+            const { auth } = await this.getConfigOrThrow({ platformId, provider: aiProvider.provider })
+            await this.validateProviderCredentials(aiProvider.provider, auth, config)
+        }
 
         const encryptedAuth = !isNil(request.auth) ? await encryptUtils.encryptObject(request.auth) : undefined
         await aiProviderRepo().update(providerId, {
@@ -118,6 +128,27 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
             platformId,
             id: providerId,
         })
+    },
+    async validateProviderCredentials(provider: AIProviderName, auth: AIProviderAuthConfig, config: AIProviderConfig): Promise<void> {
+        const providerStrategy = aiProviders[provider]
+        try {
+            await providerStrategy.validateConnection(auth, config, log)
+        }
+        catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+            const includeHttpErrorInMessage = provider === AIProviderName.CLOUDFLARE_GATEWAY
+            log.error({ err: error }, '[aiProviderService#validateProviderCredentials] Failed to validate provider credentials')
+            throw new ActivepiecesError({
+                code: ErrorCode.INVALID_AI_PROVIDER_CREDENTIALS,
+                params: {
+                    provider,
+                    message: includeHttpErrorInMessage
+                        ? `Failed to validate credentials for ${providerStrategy.name}, ${errorMessage}`
+                        : `Failed to validate credentials for ${providerStrategy.name}`,
+                    httpErrorResponse: errorMessage,
+                },
+            })
+        }
     },
     async getConfigOrThrow({ platformId, provider }: GetOrCreateActivepiecesConfigResponse): Promise<GetProviderConfigResponse> {
         const aiProvider = await aiProviderRepo().findOneBy({
@@ -144,20 +175,10 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
                 auth = activePiecesAuth
             }
 
-            await systemJobsSchedule(log).upsertJob({
-                job: {
-                    name: SystemJobName.AI_CREDIT_UPDATE_CHECK,
-                    data: { apiKeyHash: (auth as ActivePiecesProviderAuthConfig).apiKeyHash, platformId },
-                },
-                schedule: {
-                    type: 'one-time',
-                    date: dayjs(),
-                },
-            })
         }
-        
-        
-        return { provider: aiProvider.provider, auth, config: aiProvider.config }
+
+
+        return { provider: aiProvider.provider, auth, config: aiProvider.config, platformId }
     },
     async getActivepiecesProviderIfEnriched(platformId: PlatformId): Promise<ActivePiecesProviderAuthConfig | null> {
         const aiProvider = await aiProviderRepo().findOneBy({
@@ -193,7 +214,19 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         }
 
         const { auth } = await this.getConfigOrThrow({ platformId, provider: AIProviderName.ACTIVEPIECES })
-        return auth as ActivePiecesProviderAuthConfig
+        const activePiecesAuth = auth as ActivePiecesProviderAuthConfig
+        rejectedPromiseHandler(systemJobsSchedule(log).upsertJob({
+            job: {
+                name: SystemJobName.AI_CREDIT_UPDATE_CHECK,
+                data: { apiKeyHash: activePiecesAuth.apiKeyHash, platformId },
+                jobId: `ai-credit-update-check-${platformId}`,
+            },
+            schedule: {
+                type: 'one-time',
+                date: dayjs(),
+            },
+        }), log)
+        return activePiecesAuth
     },
 
     async getAllActivePiecesProvidersConfigs(platformIds?: string[]): Promise<{ [platformId: string]: ActivePiecesProviderAuthConfig }> {
@@ -241,7 +274,7 @@ async function enrichWithKeysIfNeeded(aiProvider: AIProviderSchema, platformId: 
         platformId,
         lastFreeAiCreditsRenewalDate: new Date().toISOString(),
     })
-    return { provider: savedAiProvider.provider, auth: rawAuth, config: savedAiProvider.config }
+    return { provider: savedAiProvider.provider, auth: rawAuth, config: savedAiProvider.config, platformId }
 }
 
 

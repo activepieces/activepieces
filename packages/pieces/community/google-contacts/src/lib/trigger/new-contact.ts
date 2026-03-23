@@ -9,7 +9,7 @@ import {
   DedupeStrategy,
   pollingHelper,
 } from '@activepieces/pieces-common';
-import { googleContactsAuth } from '../../';
+import { googleContactsAuth } from '../auth';
 import { google } from 'googleapis';
 import { OAuth2Client } from 'googleapis-common';
 import dayjs from 'dayjs';

@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpError, HttpMethod, QueryParams } from '@activepieces/pieces-common';
 import { hunterApiCall } from '../common';
-import { hunterAuth } from '../../index';
+import { hunterAuth } from '../auth';
 import { domainProp, companyProp, emailTypeProp } from '../common/props';
 
 export const countEmailsAction = createAction({

@@ -51,7 +51,7 @@
   "Finds records in an object using a SOQL WHERE clause.": "SOQL WHERE句を使用してオブジェクト内のレコードを検索します。",
   "Get all attachments (both classic and modern Files) for a record.": "すべての添付ファイル(クラシックファイルとモダンファイルの両方)をレコードに取得します。",
   "Run a salesforce query": "salesforceクエリを実行",
-  "Execute a Salesforce analytics report.": "Salesforce 分析レポートを実行します。",
+  "Execute a Salesforce analytics report and return the results as easy-to-use rows.": "Salesforce 分析レポートを実行し、結果を使いやすい行として返します。",
   "Sends an email to a Contact or Lead by creating an EmailMessage record.": "EmailMessage レコードを作成して連絡先またはリードに電子メールを送信します。",
   "Update an existing contact.": "既存の連絡先を更新します。",
   "Update an existing lead.": "既存のリードを更新します",
@@ -133,7 +133,7 @@
   "The value to search for in the selected field.": "選択したフィールドで検索する値。",
   "Enter the WHERE clause for your SOQL query. For example: `Name = 'Acme' AND Industry = 'Technology'`. Do not include the 'WHERE' keyword.": "SOQL クエリの WHERE 節を入力します。例: `Name = 'Acme' AND Industry = 'Technology'` 。'WHERE' キーワードは含まないでください。",
   "Enter the query": "クエリを入力してください",
-  "Apply dynamic filters to the report run.": "レポートの実行に動的フィルタを適用します。",
+  "Apply dynamic filters to the report run. Leave empty to use the report's saved filters.": "レポートの実行に動的フィルタを適用します。レポートの保存されたフィルタを使用する場合は空のままにします。",
   "The content of the email. Can be plain text or HTML.": "メールの内容。プレーンテキストまたはHTMLを使用できます。",
   "The ID of a record to relate the email to (e.g., an Account, Opportunity, or Case ID).": "電子メールを関連付けるレコードの ID (例えば、アカウント、商談、または ケース ID )。",
   "Enter any additional fields to update as a JSON object.": "JSON オブジェクトとして更新する追加のフィールドを入力します。",
@@ -161,6 +161,7 @@
   "New Outbound Message": "新しい送信メッセージ",
   "New Record": "新しいレコード",
   "New or Updated File": "新規または更新されたファイル",
+  "New Case in Queue": "キュー内の新しいケース",
   "Fires when a new Attachment or File is added to any Case record.": "症例レコードに新しい添付ファイルまたはファイルが追加されたときに発生します。",
   "Fires when a new Contact record is created in Salesforce.": "Salesforce に新しい連絡先レコードが作成されたときに発行されます。",
   "Fires when a tracked field is updated on a specified object.": "トラッキングフィールドが指定されたオブジェクトで更新されたときに発生します。",
@@ -169,6 +170,9 @@
   "Fires when a new outbound message is received from Salesforce.": "Salesforce から新しい送信メッセージを受信したときに発生します。",
   "Triggers when there is new record": "新しいレコードがあるときにトリガーします",
   "Fires when a file (ContentDocument) is created or updated. Does not fire for classic Attachments or Notes.": "ファイル(ContentDocument)が作成または更新されたときに発行されます。",
+  "Triggers when a new Case record is assigned to a specified queue.": "新しいケースレコードが指定されたキューに割り当てられたときにトリガーされます。",
   "Conditions (Advanced)": "条件 (高度)",
-  "Enter a SOQL query where clause i. e. IsDeleted = TRUE": "SOQL クエリを入力します。e. IsDeleted = TRUE"
+  "Case Queue": "案件キュー",
+  "Enter a SOQL query where clause i. e. IsDeleted = TRUE": "SOQL クエリを入力します。e. IsDeleted = TRUE",
+  "The queue to monitor for new cases.": "新しい案件を監視するためのキュー。"
 }

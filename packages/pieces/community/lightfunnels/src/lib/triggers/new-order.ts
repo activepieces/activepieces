@@ -1,4 +1,4 @@
-import { lightfunnelsAuth } from '../../index';
+import { lightfunnelsAuth } from '../auth';
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { lightfunnelsCommon } from '../common/index';
 import { OrderWebhookPayload } from '../common/types';

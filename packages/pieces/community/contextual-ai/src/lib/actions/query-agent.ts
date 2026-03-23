@@ -1,5 +1,5 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
-import { contextualAiAuth } from "../../index";
+import { contextualAiAuth } from '../auth';
 import { ContextualAI } from 'contextual-client';
 import type { Agent } from 'contextual-client/resources/agents';
 
