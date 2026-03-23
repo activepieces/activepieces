@@ -31,13 +31,8 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         libcap-dev && \
     yarn config set python /usr/bin/python3
 
-RUN export ARCH=$(uname -m) && \
-    if [ "$ARCH" = "x86_64" ]; then \
-      curl -fSL https://github.com/oven-sh/bun/releases/download/bun-v1.3.1/bun-linux-x64-baseline.zip -o bun.zip; \
-    elif [ "$ARCH" = "aarch64" ]; then \
-      curl -fSL https://github.com/oven-sh/bun/releases/download/bun-v1.3.1/bun-linux-aarch64.zip -o bun.zip; \
-    fi
-    
+RUN curl -fSL https://github.com/oven-sh/bun/releases/download/bun-v1.3.1/bun-linux-x64-baseline.zip -o bun.zip;
+
 RUN unzip bun.zip \
     && mv bun-*/bun /usr/local/bin/bun \
     && chmod +x /usr/local/bin/bun \
@@ -67,7 +62,7 @@ COPY .npmrc package.json bun.lock ./
 
 # Install all dependencies with frozen lockfile
 RUN --mount=type=cache,target=/root/.bun/install/cache \
-    bun install 
+    bun install
 
 # Copy source code after dependency installation
 COPY . .
@@ -78,14 +73,14 @@ RUN npx nx run-many --target=build --projects=react-ui,server-api --configuratio
 RUN for project in pieces-b2c2 pieces-bitgo pieces-circle-pay pieces-mural-pay pieces-zroarb pieces-zroswiss; do \
       npx nx build $project --skip-nx-cache; \
     done
-# RUN NODE_OPTIONS="--max-old-space-size=4096" npx nx run-many --target=build --projects=pieces-b2c2 --parallel=1 --skip-nx-cache 
+# RUN NODE_OPTIONS="--max-old-space-size=4096" npx nx run-many --target=build --projects=pieces-b2c2 --parallel=1 --skip-nx-cache
     # NODE_OPTIONS="--max-old-space-size=4096" npx nx run-many --target=build --projects=pieces-circle-pay,pieces-mural-pay --parallel=1 --skip-nx-cache && \
     # NODE_OPTIONS="--max-old-space-size=4096" npx nx run-many --target=build --projects=pieces-zroarb,pieces-zroswiss --parallel=1 --skip-nx-cache
 
 # Install production dependencies only for the backend API
 RUN --mount=type=cache,target=/root/.bun/install/cache \
     cd dist/packages/server/api && \
-    bun install --production 
+    bun install --production
 
 ### STAGE 2: Run ###
 FROM base AS run
@@ -109,7 +104,7 @@ RUN mkdir -p \
     /usr/src/app/dist/packages/engine \
     /usr/src/app/dist/packages/pieces/custom \
     /usr/src/app/dist/packages/shared && \
-    chmod +x docker-entrypoint.sh 
+    chmod +x docker-entrypoint.sh
 
 # Copy built artifacts from build stage
 COPY --from=build /usr/src/app/LICENSE .

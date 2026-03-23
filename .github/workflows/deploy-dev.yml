@@ -1,0 +1,67 @@
+name: Deploy dev ☢️
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version 0.12'
+        required: true
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    env:
+      IMAGE: ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_BASE_REPOSITORY }}:activepieces-v${{ inputs.version }}
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v5.1.1
+        with:
+          role-to-assume: ${{ secrets.AWS_ECR_DEPLOY_ROLE }}
+          aws-region: sa-east-1
+          aws-access-key-id: ${{ needs.set-variables.outputs.aws_access_key_id }}
+          aws-secret-access-key: ${{ needs.set-variables.outputs.aws_secret_access_key }}
+          aws-session-token: ${{ needs.set-variables.outputs.aws_session_token }}
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - uses: actions/create-github-app-token@v1
+        id: app-token
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          repositories: "kubernetes-resources,outro-repo"
+
+      - name: Login to Amazon ECR (Docker)
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and Push Docker Image
+        shell: bash
+        run: |
+          git config --global url."https://x-access-token:${{ steps.app-token.outputs.token }}@github.com/".insteadOf "https://github.com/"
+          cd ./packages/pieces/custom && git pull origin develop && cd -
+          echo "Building: $IMAGE"
+          docker buildx build \
+            --file "./Dockerfile" \
+            --tag "$IMAGE" \
+            --push \
+            --cache-from "type=gha" \
+            --cache-to "type=gha,mode=max"
+      - name: Update image tag in kubernetes-resources
+        run: |
+          git clone https://x-access-token:${{ steps.app-token.outputs.token }}@github.com/coinwise-io/kubernetes-resources.git /tmp/kubernetes-resources
+          cd /tmp/kubernetes-resources
+
+          wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+          chmod +x /usr/local/bin/yq
+
+          yq e -i \
+            '.spec.template.spec.containers[0].image = strenv(IMAGE)' \
+            zro-dev/infra/activepieces/activepieces.yaml
+
+          git config user.email "ci@github-actions"
+          git config user.name "GitHub Actions"
+          git add zro-dev/infra/activepieces/activepieces.yaml
+          git commit -m "chore: bump activepieces to v${{ inputs.version }}"
+          git push origin develop
