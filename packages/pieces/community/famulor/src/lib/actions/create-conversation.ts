@@ -3,6 +3,16 @@ import { propsValidation } from '@activepieces/pieces-common';
 import { famulorAuth } from '../..';
 import { famulorCommon } from '../common';
 
+function filterEmptyVariables(
+  vars: Record<string, any> | undefined,
+): Record<string, any> | undefined {
+  if (!vars) return undefined;
+  const filtered = Object.fromEntries(
+    Object.entries(vars).filter(([, v]) => v !== '' && v !== null && v !== undefined),
+  );
+  return Object.keys(filtered).length > 0 ? filtered : undefined;
+}
+
 export const createConversation = createAction({
   auth: famulorAuth,
   name: 'createConversation',
@@ -17,7 +27,7 @@ export const createConversation = createAction({
       auth: auth.secret_text,
       assistant_id: propsValue.assistant_id as string,
       type: propsValue.type as 'widget' | 'test' | undefined,
-      variables: propsValue.variables as Record<string, any> | undefined,
+      variables: filterEmptyVariables(propsValue.variables as Record<string, any> | undefined),
     });
   },
 });

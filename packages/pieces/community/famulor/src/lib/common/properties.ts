@@ -586,10 +586,7 @@ export const generateAiReply = () => ({
     displayName: 'Variables',
     description: 'Optional context variables to pass to the assistant',
     required: false,
-    defaultValue: {
-      customer_name: '',
-      source: '',
-    },
+    defaultValue: {},
   }),
 });
 
@@ -614,11 +611,7 @@ export const createConversation = () => ({
     displayName: 'Variables',
     description: 'Custom variables to pass to the assistant',
     required: false,
-    defaultValue: {
-      customer_name: '',
-      company: '',
-      source: '',
-    },
+    defaultValue: {},
   }),
 });
 
