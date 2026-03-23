@@ -12,14 +12,56 @@ To set up the trigger for new form submissions, follow these steps:
 2. Select the form where you want the trigger to occur.
 3. Click on the "Integrations" section.
 4. Find the "Webhooks" integration and click on "Connect" to activate it.
-5. In the webhook settings, paste the following URL: 
+5. In the webhook settings, paste the following URL:
   \`\`\`text
   {{webhookUrl}}
   \`\`\`
 
-  
+
 6. Click on "Submit".
 `;
+
+type TallyOption = { id: string; text: string };
+
+type TallyField = {
+  key: string;
+  label: string;
+  type: string;
+  value: unknown;
+  options?: TallyOption[];
+};
+
+type TallyWebhookPayload = {
+  eventId: string;
+  eventType: string;
+  createdAt: string;
+  data: {
+    responseId: string;
+    submissionId: string;
+    respondentId: string;
+    formId: string;
+    formName: string;
+    createdAt: string;
+    fields: TallyField[];
+  };
+};
+
+function resolveFieldValue(field: TallyField): unknown {
+  if (
+    Array.isArray(field.value) &&
+    field.options &&
+    field.options.length > 0
+  ) {
+    const optionMap = Object.fromEntries(
+      field.options.map((o) => [o.id, o.text])
+    );
+    const resolved = (field.value as string[]).map(
+      (id) => optionMap[id] ?? id
+    );
+    return resolved.length === 1 ? resolved[0] : resolved;
+  }
+  return field.value;
+}
 
 export const tallyFormsNewSubmission = createTrigger({
   name: 'new-submission',
@@ -32,7 +74,24 @@ export const tallyFormsNewSubmission = createTrigger({
     }),
   },
   type: TriggerStrategy.WEBHOOK,
-  sampleData: undefined,
+  sampleData: {
+    eventId: 'abc123',
+    eventType: 'FORM_RESPONSE',
+    createdAt: '2024-01-01T00:00:00.000Z',
+    data: {
+      responseId: 'resp_001',
+      submissionId: 'sub_001',
+      respondentId: 'resp_001',
+      formId: 'form_001',
+      formName: 'Contact Form',
+      createdAt: '2024-01-01T00:00:00.000Z',
+      fields: {
+        'Your Name': 'John Doe',
+        'Your Email': 'john@example.com',
+        'Which plan?': 'Professional',
+      },
+    },
+  },
   async onEnable(context) {
     // Empty
   },
@@ -40,6 +99,27 @@ export const tallyFormsNewSubmission = createTrigger({
     // Empty
   },
   async run(context) {
-    return [context.payload.body];
+    const body = context.payload.body as TallyWebhookPayload;
+    const rawFields: TallyField[] = body?.data?.fields ?? [];
+
+    const fields: Record<string, unknown> = {};
+    const labelCount: Record<string, number> = {};
+    for (const field of rawFields) {
+      const base = field.label;
+      const count = labelCount[base] ?? 0;
+      const key = count === 0 ? base : `${base} (${count + 1})`;
+      labelCount[base] = count + 1;
+      fields[key] = resolveFieldValue(field);
+    }
+
+    return [
+      {
+        ...body,
+        data: {
+          ...body.data,
+          fields,
+        },
+      },
+    ];
   },
 });
