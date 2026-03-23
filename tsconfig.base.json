@@ -418,9 +418,15 @@
       "@zroswiss/piece-circle-pay": [
         "packages/pieces/custom/circle-pay/src/index.ts"
       ],
-      "@zroswiss/piece-b2c2": ["packages/pieces/custom/b2c2/src/index.ts"],      
-      "@activepieces/piece-chainalysis": [
+      "@zroswiss/piece-b2c2": ["packages/pieces/custom/b2c2/src/index.ts"],
+      "@zroswiss/piece-chainalysis": [
         "packages/pieces/custom/chainalysis/src/index.ts"
+      ],
+      "@zroswiss/piece-notabene": [
+        "packages/pieces/custom/notabene/src/index.ts"
+      ],
+      "@zroswiss/piece-one-money": [
+        "packages/pieces/custom/one-money/src/index.ts"
       ]
     },
     "resolveJsonModule": true
