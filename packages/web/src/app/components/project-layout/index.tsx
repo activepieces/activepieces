@@ -12,7 +12,6 @@ import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar-shadcn';
 import { PurchaseExtraFlowsDialog } from '@/features/billing';
 import { projectHooks } from '@/features/projects';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { cn } from '@/lib/utils';
 
 import { authenticationSession } from '../../../lib/authentication-session';
 import {
