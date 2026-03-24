@@ -19,7 +19,7 @@ const polling: Polling<
 	strategy: DedupeStrategy.TIMEBASED,
 	items: async ({ auth, lastFetchEpochMS, propsValue }) => {
 		const { jql } = propsValue;
-		const searchQuery = `${jql ? jql + ' AND ' : ''}updated > '${dayjs(
+		const searchQuery = `${jql ? jql + ' AND ' : ''}status CHANGED AFTER '${dayjs(
 			lastFetchEpochMS,
 		).format('YYYY-MM-DD HH:mm')}'`;
 		const issues = await searchIssuesByJql({
@@ -28,9 +28,7 @@ const polling: Polling<
 			maxResults: 50,
 		});
 		return issues.map((issue) => ({
-			epochMilliSeconds: Date.parse(
-				issue.fields.statuscategorychangedate ?? issue.fields.updated,
-			),
+			epochMilliSeconds: Date.parse(issue.fields.updated),
 			data: issue,
 		}));
 	},

@@ -194,7 +194,7 @@ export async function jiraPaginatedApiCall<T extends HttpMessageBody, K extends 
 	body,
 	propertyName,
 }: JiraApiCallParams & { propertyName: K }): Promise<T[]> {
-	const qs = query ? query : {};
+	const qs = query ? { ...query } : {};
 
 	qs['startAt'] = 0;
 	qs['maxResults'] = 100;

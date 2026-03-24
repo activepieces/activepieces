@@ -39,7 +39,7 @@ export const updateIssueCommentAction = createAction({
 					options: (response.body as { comments: Array<{ id: string; body: string }> }).comments.map(
 						(comment) => {
 							return {
-								label: comment.body,
+								label: comment.body?.substring(0, 100) ?? comment.id,
 								value: comment.id,
 							};
 						},
