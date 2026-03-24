@@ -41,10 +41,8 @@ export const amplitude = createPiece({
     createCustomApiCallAction({
       auth: amplitudeAuth,
       baseUrl: () => AMPLITUDE_BASE_URL,
-      authLocation: 'queryParams',
-      authMapping: async (auth) => ({
-        api_key: String(auth),
-      }),
+      description:
+        'Amplitude analytics endpoints require api_key in the request body, not as a header or query parameter. Include your API key in the JSON body when making custom calls.',
     }),
   ],
   triggers: [],

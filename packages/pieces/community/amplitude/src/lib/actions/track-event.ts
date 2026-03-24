@@ -15,12 +15,12 @@ export const trackEventAction = createAction({
     }),
     user_id: Property.ShortText({
       displayName: 'User ID',
-      description: 'A unique identifier for the user.',
+      description: 'A unique identifier for the user. At least one of User ID or Device ID is required.',
       required: false,
     }),
     device_id: Property.ShortText({
       displayName: 'Device ID',
-      description: 'A unique identifier for the device.',
+      description: 'A unique identifier for the device. At least one of User ID or Device ID is required.',
       required: false,
     }),
     event_properties: Property.Object({
