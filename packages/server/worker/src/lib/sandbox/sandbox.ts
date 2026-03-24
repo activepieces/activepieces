@@ -176,7 +176,7 @@ export function createSandbox(
                     })
                 })
 
-                log.info({ sandboxId, operationType }, '[Sandbox] Executing operation via RPC')
+                log.debug({ sandboxId, operationType }, '[Sandbox] Executing operation via RPC')
                 const operationTimeoutMs = (executeOptions.timeoutInSeconds + 5) * 1000
                 const client = createRpcClient<EngineContract>(connectedSocket!, operationTimeoutMs)
                 client.executeOperation({ operationType, operation }).then((engineResponse: EngineResponse<unknown>) => {
@@ -191,7 +191,7 @@ export function createSandbox(
                 return await operationPromise
             }
             finally {
-                log.info({
+                log.debug({
                     sandboxId,
                     operationType,
                     killedByTimeout: String(killedByTimeout),
