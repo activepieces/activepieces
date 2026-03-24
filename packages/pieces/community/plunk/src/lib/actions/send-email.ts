@@ -11,7 +11,7 @@ export const plunkSendEmailAction = createAction({
     to: Property.ShortText({
       displayName: 'To',
       description:
-        'Recipient email address. For multiple recipients, use a comma-separated list.',
+        'Recipient email address, or multiple addresses separated by commas.',
       required: true,
     }),
     subject: Property.ShortText({
@@ -35,11 +35,10 @@ export const plunkSendEmailAction = createAction({
       required: false,
     }),
     subscribed: Property.Checkbox({
-      displayName: 'Subscribed',
+      displayName: 'Subscribe Contact',
       description:
-        'Whether the contact should be subscribed to marketing emails.',
+        'Subscribe the contact to marketing emails. Leave unchecked to preserve the contact\'s current subscription status.',
       required: false,
-      defaultValue: true,
     }),
     name: Property.ShortText({
       displayName: 'Contact Name',
@@ -49,14 +48,21 @@ export const plunkSendEmailAction = createAction({
     }),
   },
   run: async ({ auth, propsValue }) => {
+    const recipients = propsValue.to
+      .split(',')
+      .map((email: string) => email.trim())
+      .filter((email: string) => email.length > 0);
+
+    const to = recipients.length === 1 ? recipients[0] : recipients;
+
     const body: Record<string, unknown> = {
-      to: propsValue.to,
+      to,
       subject: propsValue.subject,
       body: propsValue.body,
     };
 
-    if (propsValue.subscribed !== undefined) {
-      body['subscribed'] = propsValue.subscribed;
+    if (propsValue.subscribed === true) {
+      body['subscribed'] = true;
     }
     if (propsValue.from) body['from'] = propsValue.from;
     if (propsValue.reply) body['reply'] = propsValue.reply;
