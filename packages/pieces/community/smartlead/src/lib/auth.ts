@@ -1,4 +1,6 @@
 import { PieceAuth } from '@activepieces/pieces-framework';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { BASE_URL } from './common/client';
 
 const markdownDescription = `
 To obtain your API key:
@@ -13,4 +15,22 @@ export const smartleadAuth = PieceAuth.SecretText({
   displayName: 'API Key',
   description: markdownDescription,
   required: true,
+  validate: async ({ auth }) => {
+    try {
+      await httpClient.sendRequest({
+        method: HttpMethod.GET,
+        url: `${BASE_URL}/campaigns`,
+        queryParams: {
+          api_key: auth,
+          limit: '1',
+        },
+      });
+      return { valid: true };
+    } catch {
+      return {
+        valid: false,
+        error: 'Invalid API key. Please check your Smartlead API credentials.',
+      };
+    }
+  },
 });

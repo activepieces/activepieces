@@ -85,6 +85,14 @@ Example:
       );
     }
 
+    for (let i = 0; i < leads.length; i++) {
+      if (!leads[i].email || typeof leads[i].email !== 'string') {
+        throw new Error(
+          `Lead at index ${i} is missing a required "email" field.`
+        );
+      }
+    }
+
     const body: Record<string, unknown> = {
       lead_list: leads,
     };
