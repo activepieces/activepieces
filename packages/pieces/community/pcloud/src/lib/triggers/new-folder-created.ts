@@ -22,7 +22,7 @@ const polling: Polling<any, { folder_id: string }> = {
     return folders.map((f) => ({
       epochMilliSeconds: f.created * 1000,
       data: {
-        folderid: f.fileid,
+        folderid: f.folderid,
         name: f.name,
         created: new Date(f.created * 1000).toISOString(),
         modified: new Date(f.modified * 1000).toISOString(),

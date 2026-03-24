@@ -7,14 +7,15 @@ import { OAuth2PropertyValue } from '@activepieces/pieces-framework';
 
 const API_BASE = 'https://api.pcloud.com';
 
-export interface PCloudFile {
-  fileid: number;
+export interface PCloudItem {
   name: string;
-  size: number;
   created: number;
   modified: number;
   isfolder: boolean;
   parentfolderid: number;
+  fileid?: number;
+  folderid?: number;
+  size?: number;
   hash?: string;
   contenttype?: string;
 }
@@ -25,7 +26,7 @@ export interface PCloudFolder {
   created: number;
   modified: number;
   parentfolderid: number;
-  contents: PCloudFile[];
+  contents: PCloudItem[];
 }
 
 export class PCloudClient {
@@ -80,7 +81,7 @@ export class PCloudClient {
     folderId: number,
     fileName: string,
     fileContent: Buffer,
-  ): Promise<PCloudFile> {
+  ): Promise<PCloudItem> {
     const formData = new FormData();
     formData.append('file', new Blob([fileContent]), fileName);
 
@@ -125,7 +126,7 @@ export class PCloudClient {
     fileId: number,
     toFolderId: number,
     newName?: string,
-  ): Promise<PCloudFile> {
+  ): Promise<PCloudItem> {
     const params: Record<string, string> = {
       fileid: fileId.toString(),
       tofolderid: toFolderId.toString(),
@@ -149,7 +150,7 @@ export class PCloudClient {
     return response.body.metadata;
   }
 
-  async getFileMetadata(fileId: number): Promise<PCloudFile> {
+  async getFileMetadata(fileId: number): Promise<PCloudItem> {
     const response = await httpClient.sendRequest({
       method: HttpMethod.GET,
       url: `${API_BASE}/stat`,
