@@ -169,11 +169,15 @@ export const platformService = (log: FastifyBaseLogger) => ({
     },
     async getOneWithPlanAndUsageOrThrow(id: PlatformId): Promise<PlatformWithoutSensitiveData> {
         const platform = await this.getOneOrThrow(id)
+        const [usage, plan] = await Promise.all([
+            getUsage(log, platform),
+            getPlan(log, platform),
+        ])
         return {
             ...platform,
             federatedAuthProviders: stripSensitiveData(platform.federatedAuthProviders),
-            usage: await getUsage(log, platform),
-            plan: await getPlan(log, platform),
+            usage,
+            plan,
         }
     },
     async getOne(id: PlatformId): Promise<Platform | null> {
