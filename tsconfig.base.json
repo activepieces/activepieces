@@ -1730,6 +1730,9 @@
       "@activepieces/piece-plausible": [
         "packages/pieces/community/plausible/src/index.ts"
       ],
+      "@activepieces/piece-plunk": [
+        "packages/pieces/community/plunk/src/index.ts"
+      ],
       "@activepieces/piece-woodpecker": [
         "packages/pieces/community/woodpecker/src/index.ts"
       ],
