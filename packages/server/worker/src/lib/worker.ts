@@ -3,8 +3,8 @@ import os from 'os'
 import { systemUsage } from '@activepieces/server-utils'
 import {
     ConsumeJobRequest,
-    ConsumeJobResponseStatus,
     createRpcClient,
+    EngineResponseStatus,
     JobData,
     tryCatch,
     WebsocketServerEvent,
@@ -21,7 +21,7 @@ import { logger } from './config/logger'
 import { workerSettings } from './config/worker-settings'
 import { getHandler } from './execute/job-registry'
 import { createSandboxManager, SandboxManager } from './execute/sandbox-manager'
-import { JobContext, JobResult } from './execute/types'
+import { JobContext, JobResult, JobResultKind } from './execute/types'
 
 
 const tracer = trace.getTracer('worker')
@@ -150,10 +150,12 @@ async function pollAndExecute(apiClient: WorkerToApiContract, sbManager: Sandbox
         const { error: completeError } = await tryCatch(() =>
             apiClient.completeJob({
                 jobId: job.jobId,
-                status: execError ? ConsumeJobResponseStatus.INTERNAL_ERROR : ConsumeJobResponseStatus.OK,
+                status: execError
+                    ? EngineResponseStatus.INTERNAL_ERROR
+                    : result?.kind === JobResultKind.SYNCHRONOUS ? result.status : EngineResponseStatus.OK,
                 errorMessage: execError?.message,
-                delayInSeconds: result?.delayInSeconds,
-                response: result?.response,
+                delayInSeconds: result?.kind === JobResultKind.FIRE_AND_FORGET ? result.delayInSeconds : undefined,
+                response: result?.kind === JobResultKind.SYNCHRONOUS ? result.response : undefined,
             }),
         )
 

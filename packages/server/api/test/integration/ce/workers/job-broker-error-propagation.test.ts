@@ -6,7 +6,6 @@ import { jobQueue, JobType } from '../../../../src/app/workers/job-queue/job-que
 import { engineResponseWatcher } from '../../../../src/app/workers/engine-response-watcher'
 import {
     apId,
-    ConsumeJobResponseStatus,
     EngineResponseStatus,
     LATEST_JOB_DATA_SCHEMA_VERSION,
     TriggerHookType,
@@ -62,7 +61,7 @@ describe('Job broker error propagation', () => {
 
         await jobBroker(app.log).completeJob({
             jobId,
-            status: ConsumeJobResponseStatus.INTERNAL_ERROR,
+            status: EngineResponseStatus.INTERNAL_ERROR,
             errorMessage: 'Sandbox timeout',
         })
 
@@ -110,7 +109,7 @@ describe('Job broker error propagation', () => {
 
         await jobBroker(app.log).completeJob({
             jobId,
-            status: ConsumeJobResponseStatus.INTERNAL_ERROR,
+            status: EngineResponseStatus.INTERNAL_ERROR,
         })
 
         const result = await listenerPromise
@@ -148,11 +147,6 @@ describe('Job broker error propagation', () => {
 
         await jobBroker(app.log).poll()
 
-        const expectedResponse = {
-            status: EngineResponseStatus.OK,
-            response: { message: 'trigger enabled' },
-        }
-
         const listenerPromise = engineResponseWatcher(app.log).oneTimeListener(
             requestId,
             true,
@@ -162,11 +156,14 @@ describe('Job broker error propagation', () => {
 
         await jobBroker(app.log).completeJob({
             jobId,
-            status: ConsumeJobResponseStatus.OK,
-            response: expectedResponse,
+            status: EngineResponseStatus.OK,
+            response: { message: 'trigger enabled' },
         })
 
         const result = await listenerPromise
-        expect(result).toEqual(expectedResponse)
+        expect(result).toEqual({
+            status: EngineResponseStatus.OK,
+            response: { message: 'trigger enabled' },
+        })
     })
 })
