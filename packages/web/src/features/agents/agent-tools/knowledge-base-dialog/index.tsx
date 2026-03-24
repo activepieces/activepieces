@@ -75,15 +75,12 @@ function KnowledgeBaseDialogContent({
   );
   const [toolName, setToolName] = useState(editingKbTool?.toolName ?? '');
   const [sourceId, setSourceId] = useState(editingKbTool?.sourceId ?? '');
-  const [sourceName, setSourceName] = useState(
-    editingKbTool?.sourceName ?? '',
-  );
+  const [sourceName, setSourceName] = useState(editingKbTool?.sourceName ?? '');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const uploadMutation = useUploadKnowledgeBaseFile();
   const deleteMutation = useDeleteKnowledgeBaseFile();
-  const { data: kbFiles, isLoading: kbFilesLoading } =
-    useKnowledgeBaseFiles();
+  const { data: kbFiles, isLoading: kbFilesLoading } = useKnowledgeBaseFiles();
 
   const projectId = authenticationSession.getProjectId()!;
   const { data: tablesData, isLoading: tablesLoading } = useQuery({
@@ -274,7 +271,9 @@ function KnowledgeBaseDialogContent({
               options={tableOptions}
               value={sourceId || undefined}
               onChange={(id) => {
-                const selected = tablesData?.data?.find((item) => item.id === id);
+                const selected = tablesData?.data?.find(
+                  (item) => item.id === id,
+                );
                 handleSourceSelect(id, selected?.name ?? '');
               }}
               placeholder={t('Select a table')}

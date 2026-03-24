@@ -1,9 +1,13 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
+
+const log = system.globalLogger()
 
 export class AddKnowledgeBaseChunkTable1773627989515 implements MigrationInterface {
     name = 'AddKnowledgeBaseChunkTable1773627989515'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
+        log.info('[AddKnowledgeBaseChunkTable1773627989515] up')
         await queryRunner.query(`
             CREATE TABLE IF NOT EXISTS "knowledge_base_file" (
                 "id" character varying(21) NOT NULL,
@@ -30,11 +34,12 @@ export class AddKnowledgeBaseChunkTable1773627989515 implements MigrationInterfa
         const vectorAvailable = await queryRunner.query(`
             SELECT EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'vector') AS available
         `)
+        log.info('[AddKnowledgeBaseChunkTable1773627989515] vectorAvailable', vectorAvailable)
         if (!vectorAvailable[0]?.available) {
-            console.warn('[Migration] Skipping knowledge_base_chunk table creation — pgvector extension is not installed.')
+            log.warn('[Migration] Skipping knowledge_base_chunk table creation — pgvector extension is not installed.')
             return
         }
-
+        log.info('[AddKnowledgeBaseChunkTable1773627989515] pgvector is available')
         await queryRunner.query(`
             CREATE TABLE IF NOT EXISTS "knowledge_base_chunk" (
                 "id" character varying(21) NOT NULL,
@@ -58,10 +63,13 @@ export class AddKnowledgeBaseChunkTable1773627989515 implements MigrationInterfa
         await queryRunner.query(`
             CREATE INDEX IF NOT EXISTS "idx_kb_chunk_embedding" ON "knowledge_base_chunk" USING hnsw ("embedding" vector_cosine_ops)
         `)
+        log.info('[AddKnowledgeBaseChunkTable1773627989515] done')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+        log.info('[AddKnowledgeBaseChunkTable1773627989515] down')
         await queryRunner.query('DROP TABLE IF EXISTS "knowledge_base_chunk"')
         await queryRunner.query('DROP TABLE IF EXISTS "knowledge_base_file"')
+        log.info('[AddKnowledgeBaseChunkTable1773627989515] done')
     }
 }

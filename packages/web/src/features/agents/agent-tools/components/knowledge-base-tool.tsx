@@ -1,8 +1,10 @@
-import { AgentKnowledgeBaseTool, KnowledgeBaseSourceType } from '@activepieces/shared';
+import {
+  AgentKnowledgeBaseTool,
+  KnowledgeBaseSourceType,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import { BookOpen, Plus, X } from 'lucide-react';
 
-import { cn } from '@/lib/utils';
 import {
   AccordionContent,
   AccordionItem,
@@ -14,6 +16,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
 
 import { useKnowledgeBaseToolDialogStore } from '../stores/knowledge-base-tools';
 

@@ -13,7 +13,9 @@ export const knowledgeBaseApi = {
   upload(formData: FormData): Promise<KnowledgeBaseFile> {
     const projectId = authenticationSession.getProjectId()!;
     return api.any<KnowledgeBaseFile>(
-      `/v1/knowledge-base/files/upload?projectId=${encodeURIComponent(projectId)}`,
+      `/v1/knowledge-base/files/upload?projectId=${encodeURIComponent(
+        projectId,
+      )}`,
       {
         method: 'POST',
         data: formData,

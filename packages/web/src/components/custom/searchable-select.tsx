@@ -282,7 +282,11 @@ export const SearchableSelect = <T,>({
                                 'absolute inset-0 w-4 h-4',
                                 selectedOption?.value !== option.value
                                   ? 'opacity-0'
-                                  : cn('opacity-100', onOptionDelete && 'group-hover/option:opacity-0'),
+                                  : cn(
+                                      'opacity-100',
+                                      onOptionDelete &&
+                                        'group-hover/option:opacity-0',
+                                    ),
                               )}
                             />
                           </div>
