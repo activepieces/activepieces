@@ -6,7 +6,7 @@ import {
     PackageType,
     PieceType,
     WorkerJobType,
-    ConsumeJobResponseStatus,
+    EngineResponseStatus,
     WebsocketServerEvent,
 } from '@activepieces/shared'
 import type {
@@ -182,7 +182,7 @@ describe('worker integration', () => {
 
         expect(completeJobCalls.length).toBe(1)
         expect(completeJobCalls[0].jobId).toBe('job-1')
-        expect(completeJobCalls[0].status).toBe(ConsumeJobResponseStatus.OK)
+        expect(completeJobCalls[0].status).toBe(EngineResponseStatus.OK)
         expect(completeJobCalls[0].delayInSeconds).toBe(10)
         expect(mockGetHandler).toHaveBeenCalledWith(WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION)
     }, 15_000)
@@ -198,22 +198,23 @@ describe('worker integration', () => {
 
         expect(completeJobCalls.length).toBe(1)
         expect(completeJobCalls[0].jobId).toBe('job-fail')
-        expect(completeJobCalls[0].status).toBe(ConsumeJobResponseStatus.INTERNAL_ERROR)
+        expect(completeJobCalls[0].status).toBe(EngineResponseStatus.INTERNAL_ERROR)
         expect(completeJobCalls[0].errorMessage).toBe('boom')
     }, 15_000)
 
     it('forwards response from job handler to completeJob', async () => {
-        const expectedResponse = { status: 'OK', response: { foo: 'bar' } }
+        const handlerPayload = { foo: 'bar' }
         mockGetHandler.mockReturnValue({
             jobType: WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
-            execute: vi.fn().mockResolvedValue({ response: expectedResponse }),
+            execute: vi.fn().mockResolvedValue({ status: EngineResponseStatus.OK, response: handlerPayload }),
         })
 
         const job = buildConsumeJobRequest()
         const { completeJobCalls } = await connectWorkerWithPoll([job, null])
 
         expect(completeJobCalls.length).toBe(1)
-        expect(completeJobCalls[0].response).toEqual(expectedResponse)
+        expect(completeJobCalls[0].status).toBe(EngineResponseStatus.OK)
+        expect(completeJobCalls[0].response).toEqual(handlerPayload)
     }, 15_000)
 
     it('skips null poll responses and re-polls', async () => {
@@ -227,7 +228,7 @@ describe('worker integration', () => {
 
         expect(completeJobCalls.length).toBe(1)
         expect(completeJobCalls[0].jobId).toBe('job-after-null')
-        expect(completeJobCalls[0].status).toBe(ConsumeJobResponseStatus.OK)
+        expect(completeJobCalls[0].status).toBe(EngineResponseStatus.OK)
     }, 15_000)
 
     describe('resilience to invalid job data', () => {
@@ -248,9 +249,9 @@ describe('worker integration', () => {
 
             expect(completeJobCalls.length).toBe(2)
             expect(completeJobCalls[0].jobId).toBe('job-invalid-fields')
-            expect(completeJobCalls[0].status).toBe(ConsumeJobResponseStatus.INTERNAL_ERROR)
+            expect(completeJobCalls[0].status).toBe(EngineResponseStatus.INTERNAL_ERROR)
             expect(completeJobCalls[1].jobId).toBe('job-valid')
-            expect(completeJobCalls[1].status).toBe(ConsumeJobResponseStatus.OK)
+            expect(completeJobCalls[1].status).toBe(EngineResponseStatus.OK)
             expect(mockGetHandler).toHaveBeenCalledTimes(1)
         }, 15_000)
 
@@ -271,9 +272,9 @@ describe('worker integration', () => {
 
             expect(completeJobCalls.length).toBe(2)
             expect(completeJobCalls[0].jobId).toBe('job-bad-type')
-            expect(completeJobCalls[0].status).toBe(ConsumeJobResponseStatus.INTERNAL_ERROR)
+            expect(completeJobCalls[0].status).toBe(EngineResponseStatus.INTERNAL_ERROR)
             expect(completeJobCalls[1].jobId).toBe('job-valid')
-            expect(completeJobCalls[1].status).toBe(ConsumeJobResponseStatus.OK)
+            expect(completeJobCalls[1].status).toBe(EngineResponseStatus.OK)
         }, 15_000)
 
         it('survives a job with empty object as jobData and continues polling', async () => {
@@ -292,9 +293,9 @@ describe('worker integration', () => {
 
             expect(completeJobCalls.length).toBe(2)
             expect(completeJobCalls[0].jobId).toBe('job-empty-data')
-            expect(completeJobCalls[0].status).toBe(ConsumeJobResponseStatus.INTERNAL_ERROR)
+            expect(completeJobCalls[0].status).toBe(EngineResponseStatus.INTERNAL_ERROR)
             expect(completeJobCalls[1].jobId).toBe('job-valid')
-            expect(completeJobCalls[1].status).toBe(ConsumeJobResponseStatus.OK)
+            expect(completeJobCalls[1].status).toBe(EngineResponseStatus.OK)
         }, 15_000)
 
         it('survives a job with non-object primitive jobData and continues polling', async () => {
@@ -313,9 +314,9 @@ describe('worker integration', () => {
 
             expect(completeJobCalls.length).toBe(2)
             expect(completeJobCalls[0].jobId).toBe('job-primitive-data')
-            expect(completeJobCalls[0].status).toBe(ConsumeJobResponseStatus.INTERNAL_ERROR)
+            expect(completeJobCalls[0].status).toBe(EngineResponseStatus.INTERNAL_ERROR)
             expect(completeJobCalls[1].jobId).toBe('job-valid')
-            expect(completeJobCalls[1].status).toBe(ConsumeJobResponseStatus.OK)
+            expect(completeJobCalls[1].status).toBe(EngineResponseStatus.OK)
         }, 15_000)
 
         it('survives multiple consecutive invalid jobs and still processes a valid one', async () => {
@@ -336,11 +337,11 @@ describe('worker integration', () => {
             const { completeJobCalls } = await connectWorkerWithPoll([invalid1, invalid2, invalid3, validJob, null])
 
             expect(completeJobCalls.length).toBe(4)
-            expect(completeJobCalls[0].status).toBe(ConsumeJobResponseStatus.INTERNAL_ERROR)
-            expect(completeJobCalls[1].status).toBe(ConsumeJobResponseStatus.INTERNAL_ERROR)
-            expect(completeJobCalls[2].status).toBe(ConsumeJobResponseStatus.INTERNAL_ERROR)
+            expect(completeJobCalls[0].status).toBe(EngineResponseStatus.INTERNAL_ERROR)
+            expect(completeJobCalls[1].status).toBe(EngineResponseStatus.INTERNAL_ERROR)
+            expect(completeJobCalls[2].status).toBe(EngineResponseStatus.INTERNAL_ERROR)
             expect(completeJobCalls[3].jobId).toBe('job-valid')
-            expect(completeJobCalls[3].status).toBe(ConsumeJobResponseStatus.OK)
+            expect(completeJobCalls[3].status).toBe(EngineResponseStatus.OK)
             expect(completeJobCalls[3].delayInSeconds).toBe(7)
             expect(mockGetHandler).toHaveBeenCalledTimes(1)
         }, 15_000)
@@ -363,10 +364,10 @@ describe('worker integration', () => {
 
             expect(completeJobCalls.length).toBe(2)
             expect(completeJobCalls[0].jobId).toBe('job-crash')
-            expect(completeJobCalls[0].status).toBe(ConsumeJobResponseStatus.INTERNAL_ERROR)
+            expect(completeJobCalls[0].status).toBe(EngineResponseStatus.INTERNAL_ERROR)
             expect(completeJobCalls[0].errorMessage).toBe('handler crashed')
             expect(completeJobCalls[1].jobId).toBe('job-ok')
-            expect(completeJobCalls[1].status).toBe(ConsumeJobResponseStatus.OK)
+            expect(completeJobCalls[1].status).toBe(EngineResponseStatus.OK)
             expect(completeJobCalls[1].delayInSeconds).toBe(5)
         }, 15_000)
 
@@ -386,11 +387,11 @@ describe('worker integration', () => {
 
             expect(completeJobCalls.length).toBe(3)
             expect(completeJobCalls[0].jobId).toBe('valid-1')
-            expect(completeJobCalls[0].status).toBe(ConsumeJobResponseStatus.OK)
+            expect(completeJobCalls[0].status).toBe(EngineResponseStatus.OK)
             expect(completeJobCalls[1].jobId).toBe('bad-1')
-            expect(completeJobCalls[1].status).toBe(ConsumeJobResponseStatus.INTERNAL_ERROR)
+            expect(completeJobCalls[1].status).toBe(EngineResponseStatus.INTERNAL_ERROR)
             expect(completeJobCalls[2].jobId).toBe('valid-2')
-            expect(completeJobCalls[2].status).toBe(ConsumeJobResponseStatus.OK)
+            expect(completeJobCalls[2].status).toBe(EngineResponseStatus.OK)
             expect(mockGetHandler).toHaveBeenCalledTimes(2)
         }, 15_000)
     })

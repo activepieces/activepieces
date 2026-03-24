@@ -14,7 +14,7 @@ import {
 } from '@activepieces/shared'
 import { flowCache } from '../../cache/flow/flow-cache'
 import { workerSettings } from '../../config/worker-settings'
-import { JobContext, JobHandler, JobResult } from '../types'
+import { FireAndForgetJobResult, JobContext, JobHandler } from '../types'
 import { provisionFlowPieces } from '../utils/flow-helpers'
 import { resolvePayload } from '../utils/resolve-payload'
 import { getAppWebhookUrl, getWebhookUrl } from '../utils/webhook-url'
@@ -34,9 +34,9 @@ function getAppWebhookDetails(flowVersion: FlowVersion, publicApiUrl: string, ap
     }
 }
 
-export const executeWebhookJob: JobHandler<WebhookJobData> = {
+export const executeWebhookJob: JobHandler<WebhookJobData, FireAndForgetJobResult> = {
     jobType: WorkerJobType.EXECUTE_WEBHOOK,
-    async execute(ctx: JobContext, data: WebhookJobData): Promise<JobResult> {
+    async execute(ctx: JobContext, data: WebhookJobData): Promise<FireAndForgetJobResult> {
         const settings = workerSettings.getSettings()
         const timeoutInSeconds = settings.TRIGGER_TIMEOUT_SECONDS
         const resolvedPayload = await resolvePayload(data.payload, data.projectId, ctx.apiClient)

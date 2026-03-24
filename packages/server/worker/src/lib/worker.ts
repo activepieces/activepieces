@@ -3,8 +3,8 @@ import os from 'os'
 import { systemUsage } from '@activepieces/server-utils'
 import {
     ConsumeJobRequest,
-    ConsumeJobResponseStatus,
     createRpcClient,
+    EngineResponseStatus,
     JobData,
     tryCatch,
     WebsocketServerEvent,
@@ -150,10 +150,12 @@ async function pollAndExecute(apiClient: WorkerToApiContract, sbManager: Sandbox
         const { error: completeError } = await tryCatch(() =>
             apiClient.completeJob({
                 jobId: job.jobId,
-                status: execError ? ConsumeJobResponseStatus.INTERNAL_ERROR : ConsumeJobResponseStatus.OK,
+                status: execError
+                    ? EngineResponseStatus.INTERNAL_ERROR
+                    : result && 'status' in result ? result.status : EngineResponseStatus.OK,
                 errorMessage: execError?.message,
-                delayInSeconds: result?.delayInSeconds,
-                response: result?.response,
+                delayInSeconds: result && 'delayInSeconds' in result ? result.delayInSeconds : undefined,
+                response: result && 'status' in result ? result.response : undefined,
             }),
         )
 

@@ -5,11 +5,11 @@ import {
 } from '@activepieces/shared'
 import { provisioner } from '../../cache/provisioner'
 import { workerSettings } from '../../config/worker-settings'
-import { JobContext, JobHandler, JobResult } from '../types'
+import { JobContext, JobHandler, SynchronousJobResult } from '../types'
 
-export const extractPieceInfoJob: JobHandler<ExecuteExtractPieceMetadataJobData> = {
+export const extractPieceInfoJob: JobHandler<ExecuteExtractPieceMetadataJobData, SynchronousJobResult> = {
     jobType: WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
-    async execute(ctx: JobContext, data: ExecuteExtractPieceMetadataJobData): Promise<JobResult> {
+    async execute(ctx: JobContext, data: ExecuteExtractPieceMetadataJobData): Promise<SynchronousJobResult> {
         const settings = workerSettings.getSettings()
         const timeoutInSeconds = settings.TRIGGER_TIMEOUT_SECONDS
 
@@ -37,10 +37,8 @@ export const extractPieceInfoJob: JobHandler<ExecuteExtractPieceMetadataJobData>
             )
 
             return {
-                response: {
-                    status: result.engine.status,
-                    response: result.engine.response,
-                },
+                status: result.engine.status,
+                response: result.engine.response,
             }
         }
         catch (e) {

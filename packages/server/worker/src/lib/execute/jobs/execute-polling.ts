@@ -11,13 +11,13 @@ import {
 } from '@activepieces/shared'
 import { flowCache } from '../../cache/flow/flow-cache'
 import { workerSettings } from '../../config/worker-settings'
-import { JobContext, JobHandler, JobResult } from '../types'
+import { FireAndForgetJobResult, JobContext, JobHandler } from '../types'
 import { provisionFlowPieces } from '../utils/flow-helpers'
 import { getWebhookUrl } from '../utils/webhook-url'
 
-export const executePollingJob: JobHandler<PollingJobData> = {
+export const executePollingJob: JobHandler<PollingJobData, FireAndForgetJobResult> = {
     jobType: WorkerJobType.EXECUTE_POLLING,
-    async execute(ctx: JobContext, data: PollingJobData): Promise<JobResult> {
+    async execute(ctx: JobContext, data: PollingJobData): Promise<FireAndForgetJobResult> {
         const settings = workerSettings.getSettings()
         const timeoutInSeconds = settings.TRIGGER_TIMEOUT_SECONDS
 

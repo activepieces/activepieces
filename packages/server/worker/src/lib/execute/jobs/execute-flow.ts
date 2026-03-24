@@ -17,13 +17,13 @@ import {
 } from '@activepieces/shared'
 import { flowCache } from '../../cache/flow/flow-cache'
 import { workerSettings } from '../../config/worker-settings'
-import { JobContext, JobHandler, JobResult } from '../types'
+import { FireAndForgetJobResult, JobContext, JobHandler } from '../types'
 import { provisionFlowPieces } from '../utils/flow-helpers'
 import { resolvePayload } from '../utils/resolve-payload'
 
-export const executeFlowJob: JobHandler<ExecuteFlowJobData> = {
+export const executeFlowJob: JobHandler<ExecuteFlowJobData, FireAndForgetJobResult> = {
     jobType: WorkerJobType.EXECUTE_FLOW,
-    async execute(ctx: JobContext, data: ExecuteFlowJobData): Promise<JobResult> {
+    async execute(ctx: JobContext, data: ExecuteFlowJobData): Promise<FireAndForgetJobResult> {
         const settings = workerSettings.getSettings()
         const timeoutInSeconds = settings.FLOW_TIMEOUT_SECONDS
 
