@@ -217,7 +217,7 @@ export const createApTableStore = (
       },
       setRecords: (records: PopulatedRecord[]) => {
         serverState.setRecords(records);
-        return set((state) => {
+        return set(() => {
           return {
             records: mapRecorddToClientRecordsData(records, serverState.fields),
           };
