@@ -92,7 +92,6 @@ export const createOrUpdateContactAction = createAction({
           channels: {
             email: {
               status: emailStatus,
-              statusDate: new Date().toISOString(),
             },
           },
           sendWelcomeMessage: sendWelcomeMessage ?? false,
