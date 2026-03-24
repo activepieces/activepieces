@@ -50,7 +50,8 @@ describe('Job broker error propagation', () => {
             data: jobData,
         })
 
-        await jobBroker(app.log).poll()
+        const polledJob = await jobBroker(app.log).poll()
+        expect(polledJob).not.toBeNull()
 
         const listenerPromise = engineResponseWatcher(app.log).oneTimeListener(
             requestId,
@@ -61,6 +62,8 @@ describe('Job broker error propagation', () => {
 
         await jobBroker(app.log).completeJob({
             jobId,
+            token: polledJob!.token,
+            queueName: polledJob!.queueName,
             status: EngineResponseStatus.INTERNAL_ERROR,
             errorMessage: 'Sandbox timeout',
         })
@@ -98,7 +101,8 @@ describe('Job broker error propagation', () => {
             data: jobData,
         })
 
-        await jobBroker(app.log).poll()
+        const polledJob = await jobBroker(app.log).poll()
+        expect(polledJob).not.toBeNull()
 
         const listenerPromise = engineResponseWatcher(app.log).oneTimeListener(
             requestId,
@@ -109,6 +113,8 @@ describe('Job broker error propagation', () => {
 
         await jobBroker(app.log).completeJob({
             jobId,
+            token: polledJob!.token,
+            queueName: polledJob!.queueName,
             status: EngineResponseStatus.INTERNAL_ERROR,
         })
 
@@ -145,7 +151,8 @@ describe('Job broker error propagation', () => {
             data: jobData,
         })
 
-        await jobBroker(app.log).poll()
+        const polledJob = await jobBroker(app.log).poll()
+        expect(polledJob).not.toBeNull()
 
         const listenerPromise = engineResponseWatcher(app.log).oneTimeListener(
             requestId,
@@ -156,6 +163,8 @@ describe('Job broker error propagation', () => {
 
         await jobBroker(app.log).completeJob({
             jobId,
+            token: polledJob!.token,
+            queueName: polledJob!.queueName,
             status: EngineResponseStatus.OK,
             response: { message: 'trigger enabled' },
         })
