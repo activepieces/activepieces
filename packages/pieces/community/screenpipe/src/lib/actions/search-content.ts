@@ -57,9 +57,13 @@ export const searchContent = createAction({
   },
   async run({ auth, propsValue }) {
     const baseUrl = auth.props.base_url.replace(/\/$/, '');
+    const query = propsValue.query?.trim();
 
-    const queryParams: Record<string, string> = {};
-    if (propsValue.query) queryParams['q'] = propsValue.query;
+    if (!query) {
+      throw new Error('Search Query is required.');
+    }
+
+    const queryParams: Record<string, string> = { q: query };
     if (propsValue.content_type && propsValue.content_type !== 'all') {
       queryParams['content_type'] = propsValue.content_type;
     }

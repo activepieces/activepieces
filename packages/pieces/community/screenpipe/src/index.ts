@@ -43,7 +43,7 @@ export const screenpipe = createPiece({
     getAudioTranscription,
     checkHealth,
     createCustomApiCallAction({
-      baseUrl: (auth) => (auth as { props: { base_url: string } }).props.base_url.replace(/\/$/, ''),
+      baseUrl: (auth) => ((auth as { props?: { base_url?: string } } | undefined)?.props?.base_url ?? '').replace(/\/$/, ''),
       auth: screenpipeAuth,
       authMapping: async () => ({}),
     }),
