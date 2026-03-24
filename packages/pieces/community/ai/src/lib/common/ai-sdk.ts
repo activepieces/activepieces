@@ -185,11 +185,8 @@ export const anthropicSearchTool = anthropic.tools.webSearch_20250305;
 export const openaiSearchTool = openai.tools.webSearchPreview;
 export const googleSearchTool = google.tools.googleSearch;
 
-const EMBEDDING_DIMENSIONS = 768
-
 const DEFAULT_EMBEDDING_MODELS: Partial<Record<AIProviderName, string>> = {
     [AIProviderName.OPENAI]: 'text-embedding-3-small',
-    [AIProviderName.GOOGLE]: 'text-embedding-004',
     [AIProviderName.AZURE]: 'text-embedding-3-small',
     [AIProviderName.ACTIVEPIECES]: 'text-embedding-3-small',
     [AIProviderName.OPENROUTER]: 'openai/text-embedding-3-small',
@@ -216,16 +213,12 @@ export async function createEmbeddingModel({
     switch (provider) {
         case AIProviderName.OPENAI: {
             const p = createOpenAI({ apiKey: auth.apiKey })
-            return { model: p.textEmbeddingModel(embeddingModelId, { dimensions: EMBEDDING_DIMENSIONS }), embeddingModelId }
-        }
-        case AIProviderName.GOOGLE: {
-            const p = createGoogleGenerativeAI({ apiKey: auth.apiKey })
             return { model: p.textEmbeddingModel(embeddingModelId), embeddingModelId }
         }
         case AIProviderName.AZURE: {
             const { resourceName } = config as AzureProviderConfig
             const p = createAzure({ resourceName, apiKey: auth.apiKey })
-            return { model: p.textEmbeddingModel(embeddingModelId, { dimensions: EMBEDDING_DIMENSIONS }), embeddingModelId }
+            return { model: p.textEmbeddingModel(embeddingModelId), embeddingModelId }
         }
         case AIProviderName.ACTIVEPIECES:
         case AIProviderName.OPENROUTER: {
