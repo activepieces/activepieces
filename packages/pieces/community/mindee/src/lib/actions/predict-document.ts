@@ -1,82 +1,233 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { createReadStream } from 'fs';
+import { createReadStream, existsSync } from 'fs';
 import FormData from 'form-data';
 import { mindeeAuth } from '../..';
+
+const MINDEE_API_V2_BASE_URL = 'https://api-v2.mindee.net';
+const POLL_INTERVAL_MS = 2000;
+const MAX_POLL_ATTEMPTS = 45;
 
 export const mindeePredictDocumentAction = createAction({
   auth: mindeeAuth,
   name: 'mindee_predict_document',
   displayName: 'Extract Document',
-  description: 'Parse details of a document using OCR.',
+  description:
+    'Send a document to Mindee v2, wait for processing, and return the inference result.',
   props: {
-    account_name: Property.ShortText({
-      displayName: 'Account Name',
+    model_id: Property.ShortText({
+      displayName: 'Model ID',
       description:
-        'Refers to your username or organization name with which you signed up with.',
+        'The Mindee v2 model UUID to use for extraction. Find it in your Mindee model settings.',
       required: true,
-      defaultValue: 'mindee',
-    }),
-    api_name: Property.StaticDropdown({
-      displayName: 'API Name',
-      description: 'Refers to the name of the API your are using.',
-      required: true,
-      defaultValue: 'full',
-      options: {
-        disabled: false,
-        options: [
-          {
-            value: 'bank_account_details/v1',
-            label: 'Bank Account Details OCR',
-          },
-          { value: 'expense_reports/v4', label: 'Receipt OCR' },
-          { value: 'passport/v1', label: 'Passport OCR' },
-          { value: 'invoices/v3', label: 'Invoice OCR' },
-          { value: 'proof_of_address/v1', label: 'Proof of Address OCR' },
-          { value: 'financial_document/v1', label: 'Financial Documents OCR' },
-        ],
-      },
     }),
     file: Property.LongText({
-      displayName: 'File URL',
+      displayName: 'File URL, Path, or Base64',
       description:
-        'Remote file URL or Base64 string. We currently support .pdf (slower), .jpg, .png, .webp, .tiff and .heic formats',
+        'A public HTTPS URL, a local file path, or a Base64 string. Supports PDF, JPG, PNG, WEBP, TIFF, and HEIC.',
       required: true,
     }),
+    alias: Property.ShortText({
+      displayName: 'Alias',
+      description: 'Optional alias to link this file to your own records.',
+      required: false,
+    }),
+    confidence: Property.Checkbox({
+      displayName: 'Include Confidence Scores',
+      description: 'Include confidence scores for extracted values when available.',
+      required: false,
+      defaultValue: true,
+    }),
+    polygon: Property.Checkbox({
+      displayName: 'Include Polygons',
+      description: 'Include bounding box polygons in extracted field locations.',
+      required: false,
+      defaultValue: false,
+    }),
+    raw_text: Property.Checkbox({
+      displayName: 'Include Raw Text',
+      description: 'Include raw OCR text in the response.',
+      required: false,
+      defaultValue: false,
+    }),
+    text_context: Property.LongText({
+      displayName: 'Text Context',
+      description: 'Optional extra context to help the model with this inference.',
+      required: false,
+    }),
   },
-  run: async ({ auth, propsValue: { api_name, account_name, file } }) => {
-    let headers,
-      body = {};
+  run: async ({ auth, propsValue }) => {
+    const {
+      model_id,
+      file,
+      alias,
+      confidence,
+      polygon,
+      raw_text,
+      text_context,
+    } = propsValue;
 
-    try {
-      const form = new FormData();
-
-      if (['https:', 'http:'].includes(new URL(file).protocol))
-        form.append('document', await getRemoteFile(file));
-      else form.append('document', createReadStream(file));
-
-      body = form;
-      headers = { ...form.getHeaders() };
-    } catch (_) {
-      body = { document: file };
-      headers = { 'Content-Type': 'application/json' };
-    }
-
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: `https://api.mindee.net/v1/products/${account_name}/${api_name}/predict`,
-      headers: {
-        Authorization: `Token ${auth.secret_text}`,
-        ...headers,
-      },
-      body: body,
+    const form = await buildEnqueueForm({
+      model_id,
+      file,
+      alias,
+      confidence,
+      polygon,
+      raw_text,
+      text_context,
     });
 
-    return response.body;
+    const enqueueResponse = await httpClient.sendRequest<{ job: MindeeJob }>({
+      method: HttpMethod.POST,
+      url: `${MINDEE_API_V2_BASE_URL}/v2/inferences/enqueue`,
+      headers: {
+        Authorization: buildAuthorizationHeader(auth.secret_text),
+        ...form.getHeaders(),
+      },
+      body: form,
+    });
+
+    const job = enqueueResponse.body?.job;
+    if (!job?.polling_url) {
+      return enqueueResponse.body;
+    }
+
+    const finalJob = await pollInferenceJob(job.polling_url, auth.secret_text);
+
+    if (finalJob.status === 'Failed') {
+      throw new Error(
+        finalJob.error?.detail ||
+          finalJob.error?.title ||
+          'Mindee inference failed during processing.'
+      );
+    }
+
+    if (!finalJob.result_url) {
+      return { job: finalJob };
+    }
+
+    const resultResponse = await httpClient.sendRequest({
+      method: HttpMethod.GET,
+      url: finalJob.result_url,
+      headers: {
+        Authorization: buildAuthorizationHeader(auth.secret_text),
+      },
+    });
+
+    return {
+      job: finalJob,
+      result: resultResponse.body,
+    };
   },
 });
 
-async function getRemoteFile(url: string): Promise<ArrayBuffer> {
-  const response = await fetch(url);
-  return await response.arrayBuffer();
+async function buildEnqueueForm(input: BuildFormInput): Promise<FormData> {
+  const form = new FormData();
+  form.append('model_id', input.model_id);
+
+  if (input.alias) {
+    form.append('alias', input.alias);
+  }
+  if (input.confidence !== undefined) {
+    form.append('confidence', String(input.confidence));
+  }
+  if (input.polygon !== undefined) {
+    form.append('polygon', String(input.polygon));
+  }
+  if (input.raw_text !== undefined) {
+    form.append('raw_text', String(input.raw_text));
+  }
+  if (input.text_context) {
+    form.append('text_context', input.text_context);
+  }
+
+  if (isHttpUrl(input.file)) {
+    form.append('url', input.file);
+  } else if (existsSync(input.file)) {
+    form.append('file', createReadStream(input.file));
+  } else {
+    form.append('file_base64', input.file);
+  }
+
+  return form;
 }
+
+async function pollInferenceJob(
+  pollingUrl: string,
+  apiKey: string
+): Promise<MindeeJob> {
+  let latestJob: MindeeJob | undefined;
+
+  for (let attempt = 0; attempt < MAX_POLL_ATTEMPTS; attempt += 1) {
+    const pollResponse = await httpClient.sendRequest<{ job: MindeeJob }>({
+      method: HttpMethod.GET,
+      url: pollingUrl,
+      headers: {
+        Authorization: buildAuthorizationHeader(apiKey),
+      },
+    });
+
+    latestJob = pollResponse.body?.job;
+    if (!latestJob) {
+      throw new Error('Mindee polling response did not include a job object.');
+    }
+
+    if (latestJob.status === 'Processed' || latestJob.status === 'Failed') {
+      return latestJob;
+    }
+
+    await sleep(POLL_INTERVAL_MS);
+  }
+
+  throw new Error(
+    `Mindee inference did not finish after ${MAX_POLL_ATTEMPTS} polling attempts.`
+  );
+}
+
+function buildAuthorizationHeader(apiKey: string): string {
+  return `Token ${apiKey}`;
+}
+
+function isHttpUrl(value: string): boolean {
+  try {
+    const parsed = new URL(value);
+    return parsed.protocol === 'https:' || parsed.protocol === 'http:';
+  } catch {
+    return false;
+  }
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+type BuildFormInput = {
+  model_id: string;
+  file: string;
+  alias?: string;
+  confidence?: boolean;
+  polygon?: boolean;
+  raw_text?: boolean;
+  text_context?: string;
+};
+
+type MindeeJobStatus =
+  | 'Pending'
+  | 'Processing'
+  | 'Processed'
+  | 'Failed'
+  | 'Queued'
+  | string;
+
+type MindeeJob = {
+  id: string;
+  model_id?: string;
+  status: MindeeJobStatus;
+  polling_url?: string;
+  result_url?: string | null;
+  error?: {
+    detail?: string;
+    title?: string;
+    code?: string;
+  } | null;
+};

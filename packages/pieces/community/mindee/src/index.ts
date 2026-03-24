@@ -21,12 +21,12 @@ export const mindee = createPiece({
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/mindee.png',
   categories: [PieceCategory.COMMUNICATION],
-  authors: ["kanarelo","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
+  authors: ["Harmatta","kanarelo","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   auth: mindeeAuth,
   actions: [
     mindeePredictDocumentAction,
     createCustomApiCallAction({
-      baseUrl: () => 'https://api.mindee.net/v1',
+      baseUrl: () => 'https://api-v2.mindee.net',
       auth: mindeeAuth,
       authMapping: async (auth) => ({
         Authorization: `Token ${auth.secret_text}`,
