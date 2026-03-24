@@ -344,30 +344,32 @@ export const AutomationsFilters = ({
                     {t('Start from Template')}
                   </DropdownMenuItem>
                 </PermissionNeededTooltip>
-                <PermissionNeededTooltip
-                  hasPermission={userHasPermissionToWriteTable}
-                >
-                  <DropdownMenuItem
-                    disabled={
-                      !userHasPermissionToWriteTable ||
-                      isCreatingFlow ||
-                      isCreatingTable
-                    }
-                    onSelect={(e) => {
-                      e.preventDefault();
-                      onCreateTable();
-                    }}
-                    className="cursor-pointer"
+                {!embedState.isEmbedded && (
+                  <PermissionNeededTooltip
+                    hasPermission={userHasPermissionToWriteTable}
                   >
-                    {isCreatingTable ? (
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    ) : (
-                      <Table2 className="h-4 w-4 mr-2" />
-                    )}
-                    {isCreatingTable ? t('Creating...') : t('New Table')}
-                  </DropdownMenuItem>
-                </PermissionNeededTooltip>
-                {!embedState.hideFolders && (
+                    <DropdownMenuItem
+                      disabled={
+                        !userHasPermissionToWriteTable ||
+                        isCreatingFlow ||
+                        isCreatingTable
+                      }
+                      onSelect={(e) => {
+                        e.preventDefault();
+                        onCreateTable();
+                      }}
+                      className="cursor-pointer"
+                    >
+                      {isCreatingTable ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <Table2 className="h-4 w-4 mr-2" />
+                      )}
+                      {isCreatingTable ? t('Creating...') : t('New Table')}
+                    </DropdownMenuItem>
+                  </PermissionNeededTooltip>
+                )}
+                {!embedState.hideFolders && !embedState.isEmbedded && (
                   <>
                     <DropdownMenuSeparator />
                     <PermissionNeededTooltip
