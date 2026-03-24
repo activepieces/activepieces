@@ -1,6 +1,6 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { savvyCalApiCall, flattenEvent, SavvyCalEvent, savvyCalPaginatedCall } from '../common';
+import { savvyCalApiCall, flattenEvent, SavvyCalEvent } from '../common';
 import { savvyCalAuth } from '../../';
 
 export const newEventTrigger = createTrigger({
@@ -68,15 +68,17 @@ export const newEventTrigger = createTrigger({
 
   async run(context) {
     const body = context.payload.body as { type: string; payload: SavvyCalEvent };
+    if (!body?.payload) return [];
     return [{ event_type: body.type, ...flattenEvent(body.payload) }];
   },
 
   async test(context) {
-    const events = await savvyCalPaginatedCall<SavvyCalEvent>({
+    const response = await savvyCalApiCall<{ entries: SavvyCalEvent[] }>({
       token: context.auth as unknown as string,
+      method: HttpMethod.GET,
       path: '/events',
       queryParams: { limit: '5' },
     });
-    return events.slice(0, 5).map((e) => ({ event_type: 'event.created', ...flattenEvent(e) }));
+    return response.body.entries.map((e) => ({ event_type: 'event.created', ...flattenEvent(e) }));
   },
 });

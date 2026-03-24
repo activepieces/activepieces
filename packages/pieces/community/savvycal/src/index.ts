@@ -46,7 +46,7 @@ export const savvyCal = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/savvycal.png',
   categories: [PieceCategory.PRODUCTIVITY],
   auth: savvyCalAuth,
-  authors: ['activepieces'],
+  authors: ['bst1n'],
   actions: [
     getCurrentUserAction,
     listEventsAction,

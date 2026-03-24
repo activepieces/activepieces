@@ -1,5 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { savvyCalPaginatedCall, flattenEvent, SavvyCalEvent } from '../common';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { savvyCalApiCall, savvyCalPaginatedCall, flattenEvent, SavvyCalEvent } from '../common';
 import { savvyCalAuth } from '../../';
 
 export const listEventsAction = createAction({
@@ -12,16 +13,23 @@ export const listEventsAction = createAction({
       displayName: 'Maximum Results',
       description: 'Maximum number of events to return. Leave empty to return all events.',
       required: false,
-      defaultValue: 100,
     }),
   },
   async run(context) {
-    const events = await savvyCalPaginatedCall<SavvyCalEvent>({
-      token: context.auth as unknown as string,
-      path: '/events',
-    });
+    const token = context.auth as unknown as string;
+    const maxResults = context.propsValue.limit;
 
-    const maxResults = context.propsValue.limit ?? 100;
-    return events.slice(0, maxResults).map(flattenEvent);
+    if (maxResults) {
+      const response = await savvyCalApiCall<{ entries: SavvyCalEvent[] }>({
+        token,
+        method: HttpMethod.GET,
+        path: '/events',
+        queryParams: { limit: String(maxResults) },
+      });
+      return response.body.entries.map(flattenEvent);
+    }
+
+    const events = await savvyCalPaginatedCall<SavvyCalEvent>({ token, path: '/events' });
+    return events.map(flattenEvent);
   },
 });
