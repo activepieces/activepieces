@@ -59,7 +59,14 @@ export async function chargebeeRequest<TResponse>({
         Authorization: getChargebeeAuthHeader(apiKey),
         'Content-Type': contentType,
       },
-      body,
+      body: contentType === 'application/x-www-form-urlencoded' && body
+        ? Object.entries(body).reduce((params, [key, value]) => {
+            if (value !== undefined && value !== null) {
+              params.append(key, String(value));
+            }
+            return params;
+          }, new URLSearchParams()).toString()
+        : body,
     });
 
     return response.body;

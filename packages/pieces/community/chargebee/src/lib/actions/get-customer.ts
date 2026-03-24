@@ -26,7 +26,7 @@ export const getCustomer = createAction({
       site: context.auth.props.site,
       apiKey: context.auth.props.api_key,
       method: HttpMethod.GET,
-      path: `/customers/${customer_id}`,
+      path: `/customers/${encodeURIComponent(customer_id)}`,
     });
   },
 });

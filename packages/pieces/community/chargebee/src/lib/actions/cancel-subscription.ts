@@ -36,7 +36,7 @@ export const cancelSubscription = createAction({
       site: context.auth.props.site,
       apiKey: context.auth.props.api_key,
       method: HttpMethod.POST,
-      path: `/subscriptions/${subscription_id}/cancel`,
+      path: `/subscriptions/${encodeURIComponent(subscription_id)}/cancel`,
       contentType: 'application/x-www-form-urlencoded',
       body: {
         end_of_term: end_of_term ? 'true' : 'false',
