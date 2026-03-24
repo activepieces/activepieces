@@ -10,6 +10,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
+import { useEmbedding } from '@/components/providers/embed-provider';
 import { flowsApi } from '@/features/flows/api/flows-api';
 import { foldersApi } from '@/features/folders/api/folders-api';
 import { tablesApi } from '@/features/tables/api/tables-api';
@@ -31,6 +32,7 @@ export function useAutomationsData(
   const { projectId: projectIdFromUrl } = useParams<{ projectId: string }>();
   const projectId = projectIdFromUrl ?? authenticationSession.getProjectId()!;
   const queryClient = useQueryClient();
+  const { embedState } = useEmbedding();
   const isFiltered = hasNonFolderFilters(filters);
 
   const [rootPage, setRootPage] = useState(0);
@@ -112,7 +114,8 @@ export function useAutomationsData(
   const skipFlows =
     filters.typeFilter.length > 0 && !filters.typeFilter.includes('flow');
   const skipTables =
-    filters.typeFilter.length > 0 && !filters.typeFilter.includes('table');
+    embedState.isEmbedded ||
+    (filters.typeFilter.length > 0 && !filters.typeFilter.includes('table'));
 
   const rootFlowsQuery = useQuery({
     queryKey: ['root-flows', projectId, filters],
