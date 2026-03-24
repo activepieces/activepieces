@@ -38,7 +38,7 @@ export const mindee = createPiece({
       baseUrl: () => 'https://api.mindee.net/v1',
       auth: mindeeAuth,
       authMapping: async (auth) => ({
-        Authorization: `Token ${auth}`,
+        Authorization: `Token ${auth.secret_text}`,
       }),
     }),
   ],
