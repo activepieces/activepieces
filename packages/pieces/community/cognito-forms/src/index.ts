@@ -1,5 +1,5 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { AppConnectionType, PieceCategory } from '@activepieces/shared';
+import { createPiece } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { createEntryAction } from './lib/actions/create-entry';
 import { updateEntryAction } from './lib/actions/update-entry';
 import { deleteEntryAction } from './lib/actions/delete-entry';
@@ -8,9 +8,7 @@ import { newEntryTrigger } from './lib/triggers/new-entry-submitted';
 import { entryUpdatedTrigger } from './lib/triggers/entry-updated';
 import {
   createCustomApiCallAction,
-  HttpMethod,
 } from '@activepieces/pieces-common';
-import { makeRequest } from './lib/common';
 import { cognitoFormsAuth } from './lib/auth';
 
 export const cognitoForms = createPiece({

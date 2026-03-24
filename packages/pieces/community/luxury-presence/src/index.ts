@@ -1,4 +1,4 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { createPiece } from '@activepieces/pieces-framework';
 import { newLead } from './lib/triggers/new-lead';
 import { luxuryPresenceAuth } from './lib/common/auth';
 import { PieceCategory } from '@activepieces/shared';

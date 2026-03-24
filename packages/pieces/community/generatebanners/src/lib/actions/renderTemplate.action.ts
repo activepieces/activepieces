@@ -1,7 +1,6 @@
 import {
   createAction,
   Property,
-  BasicAuthPropertyValue,
 } from '@activepieces/pieces-framework';
 import {
   AuthenticationType,

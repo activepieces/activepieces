@@ -24,7 +24,7 @@ export const formIdDropdown = Property.Dropdown({
     const apiKey = auth;
     const forms = await makeRequest(apiKey, HttpMethod.GET, '/forms');
 
-    const options: DropdownOption<string>[] = forms.map((form: any) => ({
+    const options: DropdownOption<string>[] = forms.map((form: { Name: string; Id: string }) => ({
       label: form.Name,
       value: form.Id,
     }));
