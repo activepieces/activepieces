@@ -24,7 +24,7 @@ export const createCampaignAction = createAction({
   },
   async run(context) {
     const { name, client_id } = context.propsValue;
-    const apiKey = context.auth;
+    const apiKey = context.auth.secret_text;
 
     const body: Record<string, unknown> = { name };
     if (client_id !== undefined && client_id !== null) {

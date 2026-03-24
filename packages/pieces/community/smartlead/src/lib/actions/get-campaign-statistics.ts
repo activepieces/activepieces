@@ -18,7 +18,7 @@ export const getCampaignStatisticsAction = createAction({
   },
   async run(context) {
     const { campaign_id } = context.propsValue;
-    const apiKey = context.auth;
+    const apiKey = context.auth.secret_text;
 
     return await smartleadRequest({
       endpoint: `campaigns/${campaign_id}/analytics`,

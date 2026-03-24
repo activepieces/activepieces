@@ -67,7 +67,7 @@ Example:
       ignore_duplicate_leads_in_other_campaign,
       ignore_community_bounce_list,
     } = context.propsValue;
-    const apiKey = context.auth;
+    const apiKey = context.auth.secret_text;
 
     const leads = typeof lead_list === 'string'
       ? JSON.parse(lead_list)

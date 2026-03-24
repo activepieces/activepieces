@@ -78,7 +78,7 @@ export const updateCampaignSettingsAction = createAction({
       send_as_plain_text,
       follow_up_percentage,
     } = context.propsValue;
-    const apiKey = context.auth;
+    const apiKey = context.auth.secret_text;
 
     const body: Record<string, unknown> = {};
 
