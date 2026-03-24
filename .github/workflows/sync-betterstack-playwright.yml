@@ -3,7 +3,7 @@ name: Sync Playwright test to BetterStack
 on:
   push:
     branches:
-      - feat/betterstack
+      - main
 
 jobs:
   sync:
