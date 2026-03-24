@@ -42,6 +42,21 @@ export function cleanObject(
   );
 }
 
+/**
+ * Serialize a plain object to an application/x-www-form-urlencoded string.
+ * Keys are passed through as-is (so bracket notation like
+ * `subscription_items[item_price_id][0]` is preserved), while values are
+ * percent-encoded by URLSearchParams.
+ */
+function toFormEncoded(body: Record<string, unknown>): string {
+  return Object.entries(body)
+    .map(
+      ([key, value]) =>
+        `${encodeURIComponent(key)}=${encodeURIComponent(String(value))}`
+    )
+    .join('&');
+}
+
 export async function chargebeeRequest<TResponse>({
   site,
   apiKey,
@@ -51,6 +66,10 @@ export async function chargebeeRequest<TResponse>({
   contentType = 'application/json',
 }: ChargebeeRequestParams): Promise<TResponse> {
   try {
+    const isFormEncoded = contentType === 'application/x-www-form-urlencoded';
+    const serializedBody =
+      body && isFormEncoded ? toFormEncoded(body) : body;
+
     const response = await httpClient.sendRequest<TResponse>({
       method,
       url: `${getChargebeeBaseUrl(site)}${path}`,
@@ -59,7 +78,7 @@ export async function chargebeeRequest<TResponse>({
         Authorization: getChargebeeAuthHeader(apiKey),
         'Content-Type': contentType,
       },
-      body: body,
+      body: serializedBody,
     });
 
     return response.body;
