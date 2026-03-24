@@ -1,5 +1,4 @@
 import {
-  InvitationType,
   UserInvitation,
   UserStatus,
   UserWithMetaInformation,
