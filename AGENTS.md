@@ -34,6 +34,10 @@
 - **File order**: Imports → Exported functions/constants → Helper functions → Types
 - **Comments** — Only comment to explain *why* something is done, never *what* the code is doing. Code should be self-explanatory; comments that restate the code add noise and rot.
 
+## Git Push
+
+- Always prefix `git push` with `CLAUDE_PUSH=yes` to auto-approve the pre-push lint/test gate, e.g. `CLAUDE_PUSH=yes git push -u origin HEAD`.
+
 ## Verification
 
 - Always run `npm run lint-dev` as part of any verification step before considering a task complete.
