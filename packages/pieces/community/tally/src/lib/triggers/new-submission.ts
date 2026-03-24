@@ -76,7 +76,7 @@ export const tallyFormsNewSubmission = createTrigger({
   },
   async onEnable(context) {
     const webhookId = await tallyApiClient.createWebhook(
-      context.auth as string,
+      context.auth.secret_text,
       context.propsValue.formId,
       context.webhookUrl
     );
@@ -85,7 +85,7 @@ export const tallyFormsNewSubmission = createTrigger({
   async onDisable(context) {
     const webhookId = await context.store.get<string>('_tally_webhook_id');
     if (webhookId) {
-      await tallyApiClient.deleteWebhook(context.auth as string, webhookId);
+      await tallyApiClient.deleteWebhook(context.auth.secret_text, webhookId);
     }
   },
   async run(context) {
@@ -101,7 +101,7 @@ export const tallyFormsNewSubmission = createTrigger({
       labelCount[base] = count + 1;
       fields[key] = resolveFieldValue(field);
     }
-
+    console.log("form sub webhook payload",JSON.stringify(fields))
     return [
       {
         ...body,

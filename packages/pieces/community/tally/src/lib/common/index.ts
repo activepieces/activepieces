@@ -40,7 +40,7 @@ export const formsDropdown = Property.Dropdown<string, true, typeof tallyAuth>({
         url: `${TALLY_API_BASE}/forms`,
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,
-          token: auth as string,
+          token: auth.secret_text,
         },
         queryParams: { page: page.toString(), limit: '100' },
       });
