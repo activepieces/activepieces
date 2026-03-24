@@ -401,6 +401,9 @@
       "@activepieces/piece-facebook-pages": [
         "packages/pieces/community/facebook-pages/src/index.ts"
       ],
+      "@activepieces/piece-fathom-analytics": [
+        "packages/pieces/community/fathom-analytics/src/index.ts"
+      ],
       "@activepieces/piece-figma": [
         "packages/pieces/community/figma/src/index.ts"
       ],
