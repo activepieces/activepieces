@@ -302,8 +302,7 @@ export async function formatInputFields(
 			case 'domain':
 				if (isSearch) {
 					// Attio filter API expects a plain string for domain attributes, not an array
-					const domainValues = Array.isArray(value) ? value : [value];
-					formattedFields[key] = domainValues[0];
+					formattedFields[key] = Array.isArray(value) ? value[0] : value;
 				} else {
 					formattedFields[key] = typeof value === 'string' ? [value] : value;
 				}
