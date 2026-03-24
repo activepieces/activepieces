@@ -860,7 +860,7 @@
     },
     "packages/pieces/community/attio": {
       "name": "@activepieces/piece-attio",
-      "version": "0.1.4",
+      "version": "0.1.5",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -4738,6 +4738,16 @@
         "tslib": "2.6.2",
       },
     },
+    "packages/pieces/community/omnisend": {
+      "name": "@activepieces/piece-omnisend",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/oncehub": {
       "name": "@activepieces/piece-oncehub",
       "version": "0.1.4",
@@ -7148,7 +7158,7 @@
     },
     "packages/pieces/community/zoom": {
       "name": "@activepieces/piece-zoom",
-      "version": "0.5.4",
+      "version": "0.6.0",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -7518,11 +7528,12 @@
     },
     "packages/pieces/core/webhook": {
       "name": "@activepieces/piece-webhook",
-      "version": "0.1.31",
+      "version": "0.1.32",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
+        "dayjs": "1.11.9",
         "http-status-codes": "2.2.0",
         "tslib": "2.6.2",
       },
@@ -7768,8 +7779,9 @@
     },
     "packages/shared": {
       "name": "@activepieces/shared",
-      "version": "0.46.0",
+      "version": "0.46.1",
       "dependencies": {
+        "dayjs": "1.11.9",
         "deepmerge-ts": "7.1.0",
         "nanoid": "3.3.8",
         "semver": "7.6.0",
@@ -8741,6 +8753,8 @@
     "@activepieces/piece-omni-co": ["@activepieces/piece-omni-co@workspace:packages/pieces/community/omni-co"],
 
     "@activepieces/piece-omnihr": ["@activepieces/piece-omnihr@workspace:packages/pieces/community/omnihr"],
+
+    "@activepieces/piece-omnisend": ["@activepieces/piece-omnisend@workspace:packages/pieces/community/omnisend"],
 
     "@activepieces/piece-oncehub": ["@activepieces/piece-oncehub@workspace:packages/pieces/community/oncehub"],
 
