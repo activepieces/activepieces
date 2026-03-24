@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { lemonSqueezyAuth } from '../common/auth';
-import { LEMON_SQUEEZY_API_BASE, getLemonSqueezyHeaders } from '../common/api';
+import { LEMON_SQUEEZY_API_BASE, getLemonSqueezyHeaders, buildQueryString } from '../common/api';
 
 export const listProducts = createAction({
   name: 'list_products',
@@ -36,8 +36,7 @@ export const listProducts = createAction({
     if (propsValue.page) queryParams['page[number]'] = String(propsValue.page);
     if (propsValue.perPage) queryParams['page[size]'] = String(propsValue.perPage);
 
-    const queryString = new URLSearchParams(queryParams).toString();
-    const url = `${LEMON_SQUEEZY_API_BASE}/products${queryString ? `?${queryString}` : ''}`;
+    const url = `${LEMON_SQUEEZY_API_BASE}/products${buildQueryString(queryParams)}`;
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.GET,
