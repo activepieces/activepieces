@@ -1,39 +1,7 @@
-import { ActivepiecesError, AWSProviderConfig, ErrorCode, isNil, isObject, isString, SecretManagerProviderId, SecretManagerProviderMetaData } from '@activepieces/shared'
+import { ActivepiecesError, AWSProviderConfig, ErrorCode, isNil, isObject, isString, SecretManagerProviderId } from '@activepieces/shared'
 import { GetSecretValueCommand, ListSecretsCommand, SecretsManagerClient } from '@aws-sdk/client-secrets-manager'
 import { FastifyBaseLogger } from 'fastify'
-import { SecretManagerProvider } from './secret-manager-providers'
-
-export const AWS_PROVIDER_METADATA: SecretManagerProviderMetaData = {
-    id: SecretManagerProviderId.AWS,
-    name: 'AWS Secrets Manager',
-    logo: 'https://cdn.activepieces.com/pieces/amazon-secrets-manager.png',
-    fields: {
-        accessKeyId: {
-            displayName: 'Access Key ID',
-            placeholder: 'access-key',
-            type: 'text',
-        },
-        secretAccessKey: {
-            displayName: 'Secret Access Key',
-            placeholder: 'secret-key',
-            type: 'password',
-        },
-        region: {
-            displayName: 'Region',
-            placeholder: 'us-east-1',
-            type: 'text',
-        },
-    },
-    secretParams: [
-        {
-            name: 'path',
-            displayName: 'Secret Path',
-            placeholder: 'secret-name:secret-json-key',
-            type: 'text',
-        },
-    ],
-}
-
+import { SecretManagerProvider, throwConnectionError, throwGetSecretError } from './secret-manager-providers'
 
 function getSecretsManagerClient(config: AWSProviderConfig): SecretsManagerClient {
     return new SecretsManagerClient({
@@ -53,18 +21,7 @@ export const awsProvider = (log: FastifyBaseLogger): SecretManagerProvider<Secre
             return true
         }
         catch (error: unknown) {
-            const message = error instanceof Error ? error.message : 'Unknown error'
-            log.error({
-                message,
-                provider: SecretManagerProviderId.AWS,
-            }, '[awsProvider#checkConnection]')
-            throw new ActivepiecesError({
-                code: ErrorCode.SECRET_MANAGER_CONNECTION_FAILED,
-                params: {
-                    message,
-                    provider: SecretManagerProviderId.AWS,
-                },
-            })
+            throwConnectionError({ error, provider: SecretManagerProviderId.AWS, log })
         }
     },
     connect: async (config) => {
@@ -100,23 +57,8 @@ export const awsProvider = (log: FastifyBaseLogger): SecretManagerProvider<Secre
             return value
         }
         catch (error: unknown) {
-            if (error instanceof ActivepiecesError) {
-                throw error
-            }
-            const message = error instanceof Error ? error.message : 'Unknown error'
-            log.error({
-                message,
-                provider: SecretManagerProviderId.AWS,
-                request: { secretName },
-            }, '[awsProvider#getSecret]')
-            throw new ActivepiecesError({
-                code: ErrorCode.SECRET_MANAGER_GET_SECRET_FAILED,
-                params: {
-                    message,
-                    provider: SecretManagerProviderId.AWS,
-                    request,
-                },
-            })
+            if (error instanceof ActivepiecesError) throw error
+            throwGetSecretError({ error, path: request.path, provider: SecretManagerProviderId.AWS, request, log })
         }
     },
 

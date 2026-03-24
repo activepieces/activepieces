@@ -57,6 +57,9 @@ const LICENSE_PROPS_MAP = {
   secretManagersEnabled: {
     label: 'Secret Managers',
   },
+  agentsEnabled: {
+    label: 'AI & Agents',
+  },
 };
 
 export const FeatureStatus = ({

@@ -21,3 +21,8 @@
   export type MyType = { ... };
   function doSomething() { ... }
   ```
+
+## Useful Links
+
+- [Database Migrations Playbook](https://www.activepieces.com/docs/handbook/engineering/playbooks/database-migration)
+- [TypeORM Migrations Docs](https://orkhan.gitbook.io/typeorm/docs/migrations)

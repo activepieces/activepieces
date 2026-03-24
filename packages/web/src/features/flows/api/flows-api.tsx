@@ -45,6 +45,7 @@ export const flowsApi = {
               ),
               duration: Infinity,
               dismissible: true,
+              closeButton: true,
               action: {
                 label: t('Refresh'),
                 onClick: () => window.location.reload(),

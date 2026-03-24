@@ -207,7 +207,7 @@ const StepSettingsContainer = () => {
           <ResizablePanelGroup orientation="vertical">
             <ResizablePanel className="min-h-[80px]">
               <ScrollArea className="h-full">
-                <div className="w-full my-2 px-3">
+                <div className="w-full my-3 px-3">
                   {stepMetadata && <StepInfo step={selectedStep} />}
                 </div>
                 <div

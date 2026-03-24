@@ -1175,6 +1175,8 @@
   "Retry": "Opnieuw",
   "on latest version": "op de laatste versie",
   "Only failed runs can be retried from failed step": "Alleen mislukte uitvoeringen kunnen opnieuw worden geprobeerd vanaf de mislukte stap",
+  "Retry is only available for {failedJobRetentionDays} after a run fails.": "Opnieuw proberen is alleen beschikbaar {failedJobRetentionDays, plural, =0 {0 dagen} =1 {1 dag} other {# dagen}} nadat een uitvoering is mislukt.",
+  "Retry failed": "Opnieuw proberen mislukt",
   "from failed step": "van mislukte stap",
   "Viewing retried runs": "",
   "No flow runs found": "Geen stroom uitvoeringen gevonden",

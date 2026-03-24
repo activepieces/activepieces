@@ -50,6 +50,11 @@ jobs:
           chmod +x smoke-test/verify.sh
           smoke-test/verify.sh "${{ steps.setup.outputs.flow_id }}"
 
+      - name: Run delay flow smoke test
+        run: |
+          chmod +x smoke-test/verify-delay.sh
+          smoke-test/verify-delay.sh
+
       - name: Show app logs on failure
         if: failure()
         run: docker compose -f benchmark/docker-compose.yml logs --tail=200 app

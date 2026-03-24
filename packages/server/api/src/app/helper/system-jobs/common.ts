@@ -62,7 +62,7 @@ export type SystemJobData<T extends SystemJobName = SystemJobName> = T extends S
 export type SystemJobDefinition<T extends SystemJobName> = {
     name: T
     data: SystemJobData<T>
-    jobId?: string
+    jobId: string
 }
 
 export type SystemJobHandler<T extends SystemJobName = SystemJobName> = (data: SystemJobData<T>) => Promise<void>
@@ -87,6 +87,7 @@ type UpsertJobParams<T extends SystemJobName> = {
 
 export type SystemJobSchedule = {
     init(): Promise<void>
+    startWorker(): Promise<void>
     upsertJob<T extends SystemJobName>(params: UpsertJobParams<T>): Promise<void>
     getJob<T extends SystemJobName>(jobId: string): Promise<Job<SystemJobData<T>> | undefined>
     close(): Promise<void>

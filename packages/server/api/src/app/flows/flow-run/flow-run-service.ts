@@ -1,3 +1,4 @@
+import { apDayjs } from '@activepieces/server-utils'
 import {
     ActivepiecesError,
     apId,
@@ -11,7 +12,9 @@ import {
     FlowRun,
     FlowRunId,
     FlowRunStatus,
+    FlowRunWithRetryError,
     FlowVersionId,
+    isFlowRunStateTerminal,
     isNil,
     JobPayload,
     LATEST_JOB_DATA_SCHEMA_VERSION,
@@ -32,7 +35,6 @@ import { StatusCodes } from 'http-status-codes'
 import pLimit from 'p-limit'
 import { ArrayContains, In, IsNull, Not, Repository, SelectQueryBuilder } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
-import { distributedStore } from '../../database/redis-connections'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
@@ -41,7 +43,6 @@ import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { projectService } from '../../project/project-service'
 import { engineResponseWatcher } from '../../workers/engine-response-watcher'
-import { redisMetadataKey, RunsMetadataUpsertData } from '../../workers/job'
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
 import { payloadOffloader } from '../../workers/payload-offloader'
 import { sampleDataService } from '../step-run/sample-data.service'
@@ -129,12 +130,26 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         const { data, cursor: newCursor } = await paginator.paginate(query)
         return paginationHelper.createPage<FlowRun>(data, newCursor)
     },
-    async retry({ flowRunId, strategy, projectId }: RetryParams): Promise<FlowRun | null> {
+    async retry({ flowRunId, strategy, projectId }: RetryParams): Promise<FlowRun> {
         const oldFlowRun = await flowRunService(log).getOnePopulatedOrThrow({
             id: flowRunId,
             projectId,
         })
         log.info({ runId: flowRunId, flowId: oldFlowRun.flowId, strategy }, 'Flow run retry initiated')
+        
+        const retentionDays = system.getNumberOrThrow(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS)
+        if (
+            isFlowRunStateTerminal({ status: oldFlowRun.status, ignoreInternalError: false }) &&
+            isOutsideRetentionWindow(oldFlowRun.created, retentionDays)
+        ) {
+            throw new ActivepiecesError({
+                code: ErrorCode.FLOW_RUN_RETRY_OUTSIDE_RETENTION,
+                params: {
+                    flowRunId: oldFlowRun.id,
+                    failedJobRetentionDays: retentionDays,
+                },
+            })
+        }
 
         switch (strategy) {
             case FlowRetryStrategy.FROM_FAILED_STEP:
@@ -211,14 +226,27 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             archivedAt: new Date().toISOString(),
         })
     },
-    async bulkRetry(params: BulkRetryParams): Promise<(FlowRun | null)[]> {
+    async bulkRetry(params: BulkRetryParams): Promise<FlowRunWithRetryError[]> {
         const filteredFlowRuns = await filterFlowRunsAndApplyFilters(params)
         const limit = pLimit(10)
-        return Promise.all(
+        const results = await Promise.allSettled(
             filteredFlowRuns.map(flowRun =>
                 limit(() => this.retry({ flowRunId: flowRun.id, strategy: params.strategy, projectId: params.projectId })),
             ),
         )
+        return results.map((result, i) => {
+            if (result.status === 'fulfilled') {
+                return result.value
+            }
+            const error = result.reason instanceof ActivepiecesError ? result.reason : undefined
+            return {
+                ...filteredFlowRuns[i],
+                error: {
+                    errorCode: error?.error.code ?? ErrorCode.INTERNAL_SERVER_ERROR,
+                    errorMessage: error?.message ?? 'Internal server error',
+                },
+            }
+        })
     },
     async resume({
         flowRunId,
@@ -227,13 +255,13 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         progressUpdateType,
         executionType,
         checkRequestId,
-    }: ResumeWebhookParams): Promise<FlowRun | null> {
+    }: ResumeWebhookParams): Promise<FlowRun> {
         log.info({
             runId: flowRunId,
         }, 'Resuming flow run')
 
         const flowRun = await findFlowRunOrThrow(flowRunId)
-        const resolvedRun = await resolveFlowRunForResume({ flowRun, requestId, checkRequestId }, log)
+        const resolvedRun = resolveFlowRunForResume({ flowRun, requestId, checkRequestId })
 
         if (isNil(resolvedRun)) {
             return flowRun
@@ -420,7 +448,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         })
         const synchronousHandlerId = engineResponseWatcher(log).getServerId()
         assertNotNullOrUndefined(synchronousHandlerId, 'synchronousHandlerId is required for sync resume request')
-        const resolvedRun = await resolveFlowRunForResume({ flowRun, requestId, checkRequestId: true }, log)
+        const resolvedRun = resolveFlowRunForResume({ flowRun, requestId, checkRequestId: true })
         if (isNil(resolvedRun)) {
             return {
                 status: StatusCodes.NOT_FOUND,
@@ -643,46 +671,12 @@ function matchesPauseRequestId(pauseMetadata: PauseMetadata | undefined, request
     return isNil(pauseMetadata) || (pauseMetadata.type === PauseType.WEBHOOK && requestId === pauseMetadata.requestId)
 }
 
-/**
- * Pause metadata is persisted asynchronously (engine → Redis hash → DB).
- * When a subflow completes before the worker flushes to DB, the DB is stale.
- * 3-tier lookup: DB → Redis hash → DB re-read (worker updates DB before deleting Redis).
- * Returns null on genuine requestId mismatch.
- */
-async function resolveFlowRunForResume(
+function resolveFlowRunForResume(
     { flowRun, requestId, checkRequestId }: { flowRun: FlowRun, requestId: string | undefined, checkRequestId: boolean },
-    log: FastifyBaseLogger,
-): Promise<FlowRun | null> {
+): FlowRun | null {
     if (!checkRequestId || matchesPauseRequestId(flowRun.pauseMetadata, requestId)) {
         return flowRun
     }
-
-    if (isNil(requestId)) {
-        return null
-    }
-
-    const redisMetadata = await distributedStore.hgetJson<RunsMetadataUpsertData>(redisMetadataKey(flowRun.id))
-    const redisPauseMetadata = redisMetadata?.pauseMetadata
-
-    if (redisPauseMetadata?.type === PauseType.WEBHOOK && requestId === redisPauseMetadata.requestId) {
-        log.info({ runId: flowRun.id, requestId }, '[resume] requestId matched Redis (DB not yet persisted)')
-        return { ...flowRun, pauseMetadata: redisPauseMetadata }
-    }
-
-    if (isNil(redisMetadata)) {
-        const freshFlowRun = await findFlowRunOrThrow(flowRun.id)
-        if (matchesPauseRequestId(freshFlowRun.pauseMetadata, requestId)) {
-            log.info({ runId: flowRun.id, requestId }, '[resume] requestId matched DB on re-read (worker consumed Redis between reads)')
-            return freshFlowRun
-        }
-    }
-
-    log.error({
-        runId: flowRun.id,
-        requestId,
-        dbPauseRequestId: flowRun.pauseMetadata?.type === PauseType.WEBHOOK ? flowRun.pauseMetadata.requestId : undefined,
-        redisPauseRequestId: redisPauseMetadata?.type === PauseType.WEBHOOK ? redisPauseMetadata.requestId : undefined,
-    }, '[resume] requestId mismatch in both DB and Redis — dropping resume')
     return null
 }
 
@@ -719,7 +713,10 @@ async function queueOrCreateInstantly(params: CreateParams, log: FastifyBaseLogg
     }
 }
 
-
+function isOutsideRetentionWindow(createdTime: string, retentionDays: number): boolean {
+    if (!createdTime) return false
+    return apDayjs(createdTime).add(retentionDays, 'day').isBefore(apDayjs())
+}
 
 type CreateParams = {
     projectId: ProjectId
