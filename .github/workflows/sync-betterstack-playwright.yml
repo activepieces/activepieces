@@ -6,7 +6,7 @@ on:
       - main
       - feat/betterstack
     paths:
-      - 'packages/tests-e2e/scenarios/ce/flows/webhook-should-return-response.flat.spec.js'
+      - 'packages/tests-e2e/scenarios/betterstack/webhook-should-return-response.flat.spec.js'
 
 jobs:
   sync:
