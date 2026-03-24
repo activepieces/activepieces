@@ -101,7 +101,6 @@ export const tallyFormsNewSubmission = createTrigger({
       labelCount[base] = count + 1;
       fields[key] = resolveFieldValue(field);
     }
-    console.log("form sub webhook payload",JSON.stringify(fields))
     return [
       {
         ...body,
