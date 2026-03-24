@@ -30,10 +30,11 @@ case "$RUN_CHECKS" in
     ;;
   *)
     echo "Running lint..."
-    npx run lint
+    npm run lint
 
     echo "Running tests..."
     npx turbo run test --filter=@activepieces/engine --filter=@activepieces/shared
     npx turbo run test-ce test-ee test-cloud --filter=api
     ;;
+
 esac
