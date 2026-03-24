@@ -1334,6 +1334,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
+        "form-data": "4.0.4",
         "tslib": "2.6.2",
       },
     },
@@ -2172,7 +2173,7 @@
     },
     "packages/pieces/community/dropbox": {
       "name": "@activepieces/piece-dropbox",
-      "version": "0.6.4",
+      "version": "0.7.0",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -2193,6 +2194,16 @@
         "@activepieces/pieces-common": "*",
         "@activepieces/pieces-framework": "*",
         "@activepieces/shared": "*",
+      },
+    },
+    "packages/pieces/community/dub": {
+      "name": "@activepieces/piece-dub",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
       },
     },
     "packages/pieces/community/duckdb": {
@@ -2271,6 +2282,16 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "@elevenlabs/elevenlabs-js": "2.4.1",
+        "tslib": "2.6.2",
+      },
+    },
+    "packages/pieces/community/emailit": {
+      "name": "@activepieces/piece-emailit",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
         "tslib": "2.6.2",
       },
     },
@@ -2375,6 +2396,16 @@
         "@activepieces/shared": "workspace:*",
         "fathom-typescript": "^0.0.36",
         "tslib": "^2.3.0",
+      },
+    },
+    "packages/pieces/community/fathom-analytics": {
+      "name": "@activepieces/piece-fathom-analytics",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
       },
     },
     "packages/pieces/community/feathery": {
@@ -4813,7 +4844,7 @@
     },
     "packages/pieces/community/oracle-database": {
       "name": "@activepieces/piece-oracle-database",
-      "version": "0.1.4",
+      "version": "0.1.5",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -6129,6 +6160,16 @@
     "packages/pieces/community/surveymonkey": {
       "name": "@activepieces/piece-surveymonkey",
       "version": "0.1.5",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
+      },
+    },
+    "packages/pieces/community/surveytale": {
+      "name": "@activepieces/piece-surveytale",
+      "version": "0.0.1",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -8227,6 +8268,8 @@
 
     "@activepieces/piece-drupal": ["@activepieces/piece-drupal@workspace:packages/pieces/community/drupal"],
 
+    "@activepieces/piece-dub": ["@activepieces/piece-dub@workspace:packages/pieces/community/dub"],
+
     "@activepieces/piece-duckdb": ["@activepieces/piece-duckdb@workspace:packages/pieces/community/duckdb"],
 
     "@activepieces/piece-dumpling-ai": ["@activepieces/piece-dumpling-ai@workspace:packages/pieces/community/dumpling-ai"],
@@ -8240,6 +8283,8 @@
     "@activepieces/piece-eden-ai": ["@activepieces/piece-eden-ai@workspace:packages/pieces/community/eden-ai"],
 
     "@activepieces/piece-elevenlabs": ["@activepieces/piece-elevenlabs@workspace:packages/pieces/community/elevenlabs"],
+
+    "@activepieces/piece-emailit": ["@activepieces/piece-emailit@workspace:packages/pieces/community/emailit"],
 
     "@activepieces/piece-emailoctopus": ["@activepieces/piece-emailoctopus@workspace:packages/pieces/community/emailoctopus"],
 
@@ -8260,6 +8305,8 @@
     "@activepieces/piece-famulor": ["@activepieces/piece-famulor@workspace:packages/pieces/community/famulor"],
 
     "@activepieces/piece-fathom": ["@activepieces/piece-fathom@workspace:packages/pieces/community/fathom"],
+
+    "@activepieces/piece-fathom-analytics": ["@activepieces/piece-fathom-analytics@workspace:packages/pieces/community/fathom-analytics"],
 
     "@activepieces/piece-feathery": ["@activepieces/piece-feathery@workspace:packages/pieces/community/feathery"],
 
@@ -8976,6 +9023,8 @@
     "@activepieces/piece-surrealdb": ["@activepieces/piece-surrealdb@workspace:packages/pieces/community/surrealdb"],
 
     "@activepieces/piece-surveymonkey": ["@activepieces/piece-surveymonkey@workspace:packages/pieces/community/surveymonkey"],
+
+    "@activepieces/piece-surveytale": ["@activepieces/piece-surveytale@workspace:packages/pieces/community/surveytale"],
 
     "@activepieces/piece-swarmnode": ["@activepieces/piece-swarmnode@workspace:packages/pieces/community/swarmnode"],
 
@@ -14730,6 +14779,8 @@
     "@activepieces/piece-google-vertexai/@google/genai": ["@google/genai@1.43.0", "", { "dependencies": { "google-auth-library": "^10.3.0", "p-retry": "^4.6.2", "protobufjs": "^7.5.4", "ws": "^8.18.0" }, "peerDependencies": { "@modelcontextprotocol/sdk": "^1.25.2" }, "optionalPeers": ["@modelcontextprotocol/sdk"] }, "sha512-hklCsJNdMlDM1IwcCVcGQFBg2izY0+t5BIGbRsxi2UnKi6AGKL7pqJqmBDNRbw0bYCs4y3NA7TB+fkKfP/Nrdw=="],
 
     "@activepieces/piece-google-vertexai/google-auth-library": ["google-auth-library@10.6.1", "", { "dependencies": { "base64-js": "^1.3.0", "ecdsa-sig-formatter": "^1.0.11", "gaxios": "7.1.3", "gcp-metadata": "8.1.2", "google-logging-utils": "1.1.3", "jws": "^4.0.0" } }, "sha512-5awwuLrzNol+pFDmKJd0dKtZ0fPLAtoA5p7YO4ODsDu6ONJUVqbYwvv8y2ZBO5MBNp9TJXigB19710kYpBPdtA=="],
+
+    "@activepieces/piece-oracle-database/tslib": ["tslib@2.8.1", "", {}, "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="],
 
     "@activepieces/piece-prompthub/zod": ["zod@3.25.76", "", {}, "sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ=="],
 
