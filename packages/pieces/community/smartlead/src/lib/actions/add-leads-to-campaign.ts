@@ -79,6 +79,12 @@ Example:
       );
     }
 
+    if (leads.length === 0) {
+      throw new Error(
+        'lead_list must contain at least one lead.'
+      );
+    }
+
     if (leads.length > 400) {
       throw new Error(
         `Maximum 400 leads per request. Got ${leads.length}. Split into multiple requests.`

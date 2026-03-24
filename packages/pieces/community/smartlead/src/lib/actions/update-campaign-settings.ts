@@ -98,8 +98,20 @@ export const updateCampaignSettingsAction = createAction({
       body['enable_ai_esp_matching'] = enable_ai_esp_matching;
     if (send_as_plain_text !== undefined)
       body['send_as_plain_text'] = send_as_plain_text;
-    if (follow_up_percentage !== undefined)
+    if (follow_up_percentage !== undefined) {
+      if (follow_up_percentage < 0 || follow_up_percentage > 100) {
+        throw new Error(
+          `follow_up_percentage must be between 0 and 100. Got ${follow_up_percentage}.`
+        );
+      }
       body['follow_up_percentage'] = follow_up_percentage;
+    }
+
+    if (Object.keys(body).length === 0) {
+      throw new Error(
+        'At least one setting must be provided to update.'
+      );
+    }
 
     return await smartleadRequest({
       endpoint: `campaigns/${campaign_id}/settings`,
