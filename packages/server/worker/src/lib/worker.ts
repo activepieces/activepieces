@@ -1,9 +1,10 @@
+import { createServer } from 'http'
 import os from 'os'
 import { systemUsage } from '@activepieces/server-utils'
 import {
     ConsumeJobRequest,
-    ConsumeJobResponseStatus,
     createRpcClient,
+    EngineResponseStatus,
     JobData,
     tryCatch,
     WebsocketServerEvent,
@@ -20,7 +21,7 @@ import { logger } from './config/logger'
 import { workerSettings } from './config/worker-settings'
 import { getHandler } from './execute/job-registry'
 import { createSandboxManager, SandboxManager } from './execute/sandbox-manager'
-import { JobContext, JobResult } from './execute/types'
+import { JobContext, JobResult, JobResultKind } from './execute/types'
 
 
 const tracer = trace.getTracer('worker')
@@ -33,10 +34,12 @@ const workerId = `worker-${nanoid()}`
 
 const workerHostname = os.hostname()
 
+let healthServerInstance: ReturnType<typeof createServer> | null = null
+
 let sandboxManagers: SandboxManager[] = []
 
 export const worker = {
-    async start({ apiUrl, socketUrl, workerToken }: WorkerStartParams): Promise<void> {
+    async start({ apiUrl, socketUrl, workerToken, withHealthServer = false }: WorkerStartParams): Promise<void> {
         const platformIdForDedicatedWorker = system.get(WorkerSystemProp.PLATFORM_ID_FOR_DEDICATED_WORKER)
         socket = io(socketUrl.url, {
             auth: { token: workerToken, workerId, platformIdForDedicatedWorker },
@@ -66,6 +69,9 @@ export const worker = {
             logger.error({ error: error.message }, 'Socket.IO connection error')
         })
 
+        if (withHealthServer) {
+            healthServerInstance = startHealthServer()
+        }
         logger.info({ apiUrl, socketUrl }, 'Worker started, polling for jobs...')
     },
 
@@ -75,6 +81,8 @@ export const worker = {
         sandboxManagers = []
         socket?.disconnect()
         socket = null
+        healthServerInstance?.close()
+        healthServerInstance = null
         logger.info('Worker stopped')
     },
 }
@@ -142,10 +150,12 @@ async function pollAndExecute(apiClient: WorkerToApiContract, sbManager: Sandbox
         const { error: completeError } = await tryCatch(() =>
             apiClient.completeJob({
                 jobId: job.jobId,
-                status: execError ? ConsumeJobResponseStatus.INTERNAL_ERROR : ConsumeJobResponseStatus.OK,
+                status: execError
+                    ? EngineResponseStatus.INTERNAL_ERROR
+                    : result?.kind === JobResultKind.SYNCHRONOUS ? result.status : EngineResponseStatus.OK,
                 errorMessage: execError?.message,
-                delayInSeconds: result?.delayInSeconds,
-                response: result?.response,
+                delayInSeconds: result?.kind === JobResultKind.FIRE_AND_FORGET ? result.delayInSeconds : undefined,
+                response: result?.kind === JobResultKind.SYNCHRONOUS ? result.response : undefined,
             }),
         )
 
@@ -274,8 +284,28 @@ function sleep(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
+
+function startHealthServer(): ReturnType<typeof createServer> {
+    const port = Number(system.get(WorkerSystemProp.PORT))
+    const server = createServer((req, res) => {
+        if (req.method === 'GET' && req.url === '/worker/health') {
+            res.writeHead(200, { 'Content-Type': 'application/json' })
+            res.end(JSON.stringify({ status: 'ok' }))
+        }
+        else {
+            res.writeHead(404)
+            res.end()
+        }
+    })
+    server.listen(port, () => {
+        logger.info({ port }, 'Health server listening')
+    })
+    return server
+}
+
 type WorkerStartParams = {
     apiUrl: string
     socketUrl: { url: string, path: string }
     workerToken: string
+    withHealthServer?: boolean
 }

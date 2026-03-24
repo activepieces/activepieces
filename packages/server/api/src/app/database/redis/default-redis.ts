@@ -7,6 +7,7 @@ import { RedisConnectionSettings } from './types'
 export async function createDefaultRedisConnection(settings: RedisConnectionSettings): Promise<Redis> {
     const config: Partial<RedisOptions> = {
         maxRetriesPerRequest: null,
+        keepAlive: 5000,
     }
 
     const url = settings.REDIS_URL

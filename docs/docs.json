@@ -500,7 +500,15 @@
                      "handbook/engineering/playbooks/database-migration",
                      "handbook/engineering/playbooks/product-announcement",
                      "handbook/engineering/playbooks/frontend-best-practices",
-                     "handbook/engineering/playbooks/e2e-tests"
+                     "handbook/engineering/playbooks/e2e-tests",
+                     {
+                        "group": "Postmortems",
+                        "icon": "triangle-exclamation",
+                        "pages": [
+                           "handbook/engineering/postmortems/2026-03-19-redis-and-delay-overload",
+                           "handbook/engineering/postmortems/2026-03-16-infrastructure-upgrade"
+                        ]
+                     }
                   ]
                },
                {

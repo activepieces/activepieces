@@ -71,11 +71,14 @@ export function createSandbox(
         })
     }
 
+    function isReady(): boolean {
+        return !isNil(connectedSocket) && connectedSocket.connected && !isNil(childProcess) && childProcess.exitCode === null
+    }
+
     return {
         id: sandboxId,
         start: async ({ flowVersionId, platformId, mounts }) => {
-            const ready = !isNil(connectedSocket) && connectedSocket.connected && !isNil(childProcess)
-            if (ready) {
+            if (isReady()) {
                 return
             }
             log.debug({
@@ -201,9 +204,7 @@ export function createSandbox(
                 childProcess?.removeAllListeners('error')
             }
         },
-        isReady: () => {
-            return !isNil(connectedSocket) && connectedSocket.connected && !isNil(childProcess)
-        },
+        isReady,
         shutdown: async () => {
             if (!isNil(childProcess)) {
                 log.debug({ sandboxId }, 'Shutting down sandbox')
@@ -253,14 +254,15 @@ function handleProcessExit(log: SandboxLogger, params: ProcessExitParams): void 
         }))
     }
     else {
+        const reason = 'Worker exited with code ' + code + ' and signal ' + signal
         reject(new ActivepiecesError({
             code: ErrorCode.SANDBOX_INTERNAL_ERROR,
             params: {
-                reason: 'Worker exited with code ' + code + ' and signal ' + signal,
+                reason,
                 standardOutput: stdOut,
                 standardError: stdError,
             },
-        }))
+        }, `${reason} standardOutput=${stdOut} standardError=${stdError}`))
     }
 }
 
