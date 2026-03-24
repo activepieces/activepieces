@@ -1,11 +1,11 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
-  HttpRequest,
   HttpMethod,
   AuthenticationType,
   httpClient,
 } from '@activepieces/pieces-common';
 import { MeetingMessageBody } from '../common/models';
+import { zoomMeetingDropdown } from '../common/props';
 import { zoomAuth } from '../..';
 
 export const zoomUpdateMeeting = createAction({
@@ -14,11 +14,7 @@ export const zoomUpdateMeeting = createAction({
   displayName: 'Update Zoom Meeting',
   description: 'Update the details of an existing meeting.',
   props: {
-    meeting_id: Property.ShortText({
-      displayName: 'Meeting ID',
-      description: 'The meeting ID to update (numeric ID without spaces, e.g., 89434225642). You can find this in the Zoom meeting URL or meeting invitation.',
-      required: true,
-    }),
+    meeting_id: zoomMeetingDropdown,
     topic: Property.ShortText({
       displayName: "Meeting's topic",
       description: "The meeting's topic",
@@ -26,7 +22,8 @@ export const zoomUpdateMeeting = createAction({
     }),
     start_time: Property.ShortText({
       displayName: 'Start Time',
-      description: 'Meeting start date-time (ISO 8601 format, e.g., 2023-05-01T12:00:00Z)',
+      description:
+        'Meeting start date-time (ISO 8601 format, e.g., 2023-05-01T12:00:00Z)',
       required: false,
     }),
     duration: Property.Number({
@@ -87,7 +84,8 @@ export const zoomUpdateMeeting = createAction({
     }),
     join_before_host: Property.Checkbox({
       displayName: 'Join Before Host',
-      description: 'Whether participants can join the meeting before the host starts the meeting.',
+      description:
+        'Whether participants can join the meeting before the host starts the meeting.',
       required: false,
     }),
     mute_upon_entry: Property.Checkbox({
@@ -102,20 +100,21 @@ export const zoomUpdateMeeting = createAction({
     }),
   },
   async run(context) {
-    // Clean the meeting ID by removing spaces and special characters
-    const cleanMeetingId = context.propsValue.meeting_id.replace(/\s+/g, '').replace(/[^\d]/g, '');
-    
-    // Build the request body with only the provided values
-    const body: Partial<MeetingMessageBody> = {};
-    
-    if (context.propsValue.topic) body.topic = context.propsValue.topic;
-    if (context.propsValue.start_time) body.start_time = context.propsValue.start_time;
-    if (context.propsValue.duration) body.duration = context.propsValue.duration;
-    if (context.propsValue.timezone) body.timezone = context.propsValue.timezone;
-    if (context.propsValue.agenda) body.agenda = context.propsValue.agenda;
-    if (context.propsValue.password) body.password = context.propsValue.password;
+    const cleanMeetingId = context.propsValue.meeting_id;
 
-    // Build settings object only if there are settings to update
+    const body: Partial<MeetingMessageBody> = {};
+
+    if (context.propsValue.topic) body.topic = context.propsValue.topic;
+    if (context.propsValue.start_time)
+      body.start_time = context.propsValue.start_time;
+    if (context.propsValue.duration)
+      body.duration = context.propsValue.duration;
+    if (context.propsValue.timezone)
+      body.timezone = context.propsValue.timezone;
+    if (context.propsValue.agenda) body.agenda = context.propsValue.agenda;
+    if (context.propsValue.password)
+      body.password = context.propsValue.password;
+
     const settings: Partial<MeetingMessageBody['settings']> = {};
     let hasSettings = false;
 
@@ -152,33 +151,16 @@ export const zoomUpdateMeeting = createAction({
       body.settings = settings as MeetingMessageBody['settings'];
     }
 
-    const request: HttpRequest<Partial<MeetingMessageBody>> = {
+    await httpClient.sendRequest({
       method: HttpMethod.PATCH,
       url: `https://api.zoom.us/v2/meetings/${cleanMeetingId}`,
-      body: body,
+      body,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token: context.auth.access_token,
       },
-    };
+    });
 
-    const result = await httpClient.sendRequest(request);
-    
-    if (result.status === 204) {
-      // Zoom API returns 204 No Content for successful updates
-      return { success: true, message: 'Meeting updated successfully' };
-    } else if (result.status === 404) {
-      return {
-        error: 'Meeting not found',
-        message: `No meeting found with ID: ${cleanMeetingId}. Please verify the meeting ID is correct and that you have permission to update this meeting.`,
-        originalResponse: result
-      };
-    } else {
-      return {
-        error: 'API Error',
-        message: 'An error occurred while updating the meeting.',
-        response: result
-      };
-    }
+    return { success: true, message: 'Meeting updated successfully' };
   },
 });
