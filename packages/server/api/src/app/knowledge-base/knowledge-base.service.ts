@@ -29,7 +29,7 @@ async function extractTextFromFile(data: Buffer, fileName: string): Promise<stri
 
     if (lowerName.endsWith('.pdf')) {
         const pdfParse = (await import('pdf-parse')).default
-        const result = await pdfParse(data)
+        const result = await pdfParse(new Uint8Array(data), { version: 'v2.0.550' })
         return result.text
     }
 
