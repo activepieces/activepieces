@@ -3492,6 +3492,19 @@
         "zod": "4.3.6",
       },
     },
+    "packages/pieces/community/jira-data-center": {
+      "name": "@activepieces/piece-jira-data-center",
+      "version": "0.1.0",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "dayjs": "1.11.9",
+        "form-data": "4.0.4",
+        "tslib": "2.6.2",
+        "zod": "4.3.6",
+      },
+    },
     "packages/pieces/community/jogg-ai": {
       "name": "@activepieces/piece-jogg-ai",
       "version": "0.1.3",
@@ -8511,6 +8524,8 @@
     "@activepieces/piece-jina-ai": ["@activepieces/piece-jina-ai@workspace:packages/pieces/community/jina-ai"],
 
     "@activepieces/piece-jira-cloud": ["@activepieces/piece-jira-cloud@workspace:packages/pieces/community/jira-cloud"],
+
+    "@activepieces/piece-jira-data-center": ["@activepieces/piece-jira-data-center@workspace:packages/pieces/community/jira-data-center"],
 
     "@activepieces/piece-jogg-ai": ["@activepieces/piece-jogg-ai@workspace:packages/pieces/community/jogg-ai"],
 

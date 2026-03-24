@@ -599,6 +599,9 @@
       "@activepieces/piece-jira-cloud": [
         "packages/pieces/community/jira-cloud/src/index.ts"
       ],
+      "@activepieces/piece-jira-data-center": [
+        "packages/pieces/community/jira-data-center/src/index.ts"
+      ],
       "@activepieces/piece-jotform": [
         "packages/pieces/community/jotform/src/index.ts"
       ],
