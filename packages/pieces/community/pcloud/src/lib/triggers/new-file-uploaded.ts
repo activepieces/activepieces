@@ -2,6 +2,7 @@ import {
   Property,
   createTrigger,
   TriggerStrategy,
+  OAuth2PropertyValue,
 } from '@activepieces/pieces-framework';
 import {
   DedupeStrategy,
@@ -9,24 +10,27 @@ import {
   pollingHelper,
 } from '@activepieces/pieces-common';
 import { pcloudAuth } from '../auth';
-import { PCloudClient } from '../common/client';
+import { PCloudClient, PCloudItem } from '../common/client';
 
-const polling: Polling<any, { folder_id: string }> = {
+const polling: Polling<OAuth2PropertyValue, { folder_id: string }> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue }) => {
     const client = new PCloudClient(auth);
     const folderId = parseInt(propsValue.folder_id, 10);
     const folder = await client.listFolder(folderId);
-    const files = folder.contents.filter((f) => !f.isfolder);
+    const files = folder.contents.filter(
+      (f): f is PCloudItem & { fileid: number } =>
+        !f.isfolder && f.fileid !== undefined,
+    );
 
     return files.map((file) => ({
-      epochMilliSeconds: file.created * 1000,
+      epochMilliSeconds: new Date(file.created).getTime(),
       data: {
         fileid: file.fileid,
         name: file.name,
         size: file.size,
-        created: new Date(file.created * 1000).toISOString(),
-        modified: new Date(file.modified * 1000).toISOString(),
+        created: new Date(file.created).toISOString(),
+        modified: new Date(file.modified).toISOString(),
         parentfolderid: file.parentfolderid,
         contenttype: file.contenttype,
       },

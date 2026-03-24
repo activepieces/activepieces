@@ -2,6 +2,7 @@ import {
   Property,
   createTrigger,
   TriggerStrategy,
+  OAuth2PropertyValue,
 } from '@activepieces/pieces-framework';
 import {
   DedupeStrategy,
@@ -9,23 +10,26 @@ import {
   pollingHelper,
 } from '@activepieces/pieces-common';
 import { pcloudAuth } from '../auth';
-import { PCloudClient } from '../common/client';
+import { PCloudClient, PCloudItem } from '../common/client';
 
-const polling: Polling<any, { folder_id: string }> = {
+const polling: Polling<OAuth2PropertyValue, { folder_id: string }> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue }) => {
     const client = new PCloudClient(auth);
     const folderId = parseInt(propsValue.folder_id, 10);
     const folder = await client.listFolder(folderId);
-    const folders = folder.contents.filter((f) => f.isfolder);
+    const folders = folder.contents.filter(
+      (f): f is PCloudItem & { folderid: number } =>
+        f.isfolder && f.folderid !== undefined,
+    );
 
     return folders.map((f) => ({
-      epochMilliSeconds: f.created * 1000,
+      epochMilliSeconds: new Date(f.created).getTime(),
       data: {
         folderid: f.folderid,
         name: f.name,
-        created: new Date(f.created * 1000).toISOString(),
-        modified: new Date(f.modified * 1000).toISOString(),
+        created: new Date(f.created).toISOString(),
+        modified: new Date(f.modified).toISOString(),
         parentfolderid: f.parentfolderid,
       },
     }));

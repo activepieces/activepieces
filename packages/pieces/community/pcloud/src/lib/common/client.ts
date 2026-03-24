@@ -9,8 +9,8 @@ const API_BASE = 'https://api.pcloud.com';
 
 export interface PCloudItem {
   name: string;
-  created: number;
-  modified: number;
+  created: string;
+  modified: string;
   isfolder: boolean;
   parentfolderid: number;
   fileid?: number;
@@ -23,8 +23,8 @@ export interface PCloudItem {
 export interface PCloudFolder {
   folderid: number;
   name: string;
-  created: number;
-  modified: number;
+  created: string;
+  modified: string;
   parentfolderid: number;
   contents: PCloudItem[];
 }
@@ -100,7 +100,11 @@ export class PCloudClient {
       throw new Error(`Failed to upload file: ${response.body.error}`);
     }
 
-    return response.body.metadata[0];
+    const item = response.body.metadata?.[0];
+    if (!item) {
+      throw new Error('pCloud upload returned no file metadata');
+    }
+    return item;
   }
 
   async downloadFileLink(fileId: number): Promise<string> {
