@@ -262,7 +262,13 @@ async function constructKnowledgeBaseTools(
                     limit: String(limit ?? 10),
                 }
                 if (resolvedFilters && resolvedFilters.length > 0) {
-                    queryParams['filters'] = JSON.stringify(resolvedFilters)
+                    for (let i = 0; i < resolvedFilters.length; i++) {
+                        queryParams[`filters[${i}][fieldId]`] = resolvedFilters[i].fieldId
+                        queryParams[`filters[${i}][operator]`] = resolvedFilters[i].operator
+                        if (resolvedFilters[i].value !== undefined) {
+                            queryParams[`filters[${i}][value]`] = resolvedFilters[i].value!
+                        }
+                    }
                 }
 
                 const response = await api.get<{ data: unknown[] }>('v1/records', queryParams)

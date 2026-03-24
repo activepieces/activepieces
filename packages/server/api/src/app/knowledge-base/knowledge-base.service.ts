@@ -1,4 +1,4 @@
-import { ActivepiecesError, apId, ErrorCode, KnowledgeBaseFile } from '@activepieces/shared'
+import { ActivepiecesError, apId, ErrorCode, FileType, KnowledgeBaseFile } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../core/db/repo-factory'
 import { databaseConnection } from '../database/database-connection'
@@ -26,7 +26,6 @@ function chunkText(text: string): string[] {
 
 async function extractTextFromFile(data: Buffer, fileName: string): Promise<string> {
     const lowerName = (fileName ?? '').toLowerCase()
-
     if (lowerName.endsWith('.pdf')) {
         const pdfParse = (await import('pdf-parse')).default
         const result = await pdfParse(new Uint8Array(data), { version: 'v2.0.550' })
@@ -156,6 +155,7 @@ export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
         const fileData = await fileService(log).getDataOrThrow({
             projectId: params.projectId,
             fileId: kbFile.fileId,
+            type: FileType.KNOWLEDGE_BASE,
         })
 
         const text = await extractTextFromFile(fileData.data, fileData.fileName ?? '')
