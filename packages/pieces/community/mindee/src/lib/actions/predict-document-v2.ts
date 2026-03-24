@@ -88,7 +88,7 @@ export const mindeePredictDocumentV2Action = createAction({
       method: HttpMethod.POST,
       url: `${MINDEE_API_V2_BASE_URL}/v2/inferences/enqueue`,
       headers: {
-        Authorization: `Token ${auth.secret_text}`,
+        Authorization: `Token ${String(auth)}`,
         'Content-Type': 'application/json',
       },
       body,
@@ -96,10 +96,12 @@ export const mindeePredictDocumentV2Action = createAction({
 
     const job = enqueueResponse.body?.job;
     if (!job?.polling_url) {
-      return enqueueResponse.body;
+      throw new Error(
+        `Mindee enqueue did not return a polling URL. Response: ${JSON.stringify(enqueueResponse.body)}`
+      );
     }
 
-    const finalJob = await pollInferenceJob(job.polling_url, auth.secret_text);
+    const finalJob = await pollInferenceJob(job.polling_url, String(auth));
 
     if (finalJob.status === 'Failed') {
       throw new Error(
@@ -117,7 +119,7 @@ export const mindeePredictDocumentV2Action = createAction({
       method: HttpMethod.GET,
       url: finalJob.result_url,
       headers: {
-        Authorization: `Token ${auth.secret_text}`,
+        Authorization: `Token ${String(auth)}`,
       },
     });
 
@@ -165,7 +167,7 @@ async function pollInferenceJob(
 function isHttpUrl(value: string): boolean {
   try {
     const parsed = new URL(value);
-    return parsed.protocol === 'https:' || parsed.protocol === 'http:';
+    return parsed.protocol === 'https:';
   } catch {
     return false;
   }
