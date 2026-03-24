@@ -21,7 +21,7 @@ import { logger } from './config/logger'
 import { workerSettings } from './config/worker-settings'
 import { getHandler } from './execute/job-registry'
 import { createSandboxManager, SandboxManager } from './execute/sandbox-manager'
-import { JobContext, JobResult } from './execute/types'
+import { JobContext, JobResult, JobResultKind } from './execute/types'
 
 
 const tracer = trace.getTracer('worker')
@@ -152,10 +152,10 @@ async function pollAndExecute(apiClient: WorkerToApiContract, sbManager: Sandbox
                 jobId: job.jobId,
                 status: execError
                     ? EngineResponseStatus.INTERNAL_ERROR
-                    : result && 'status' in result ? result.status : EngineResponseStatus.OK,
+                    : result?.kind === JobResultKind.SYNCHRONOUS ? result.status : EngineResponseStatus.OK,
                 errorMessage: execError?.message,
-                delayInSeconds: result && 'delayInSeconds' in result ? result.delayInSeconds : undefined,
-                response: result && 'status' in result ? result.response : undefined,
+                delayInSeconds: result?.kind === JobResultKind.FIRE_AND_FORGET ? result.delayInSeconds : undefined,
+                response: result?.kind === JobResultKind.SYNCHRONOUS ? result.response : undefined,
             }),
         )
 

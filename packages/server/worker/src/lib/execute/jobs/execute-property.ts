@@ -5,7 +5,7 @@ import {
 } from '@activepieces/shared'
 import { provisioner } from '../../cache/provisioner'
 import { workerSettings } from '../../config/worker-settings'
-import { JobContext, JobHandler, SynchronousJobResult } from '../types'
+import { JobContext, JobHandler, JobResultKind, SynchronousJobResult } from '../types'
 
 export const executePropertyJob: JobHandler<ExecutePropertyJobData, SynchronousJobResult> = {
     jobType: WorkerJobType.EXECUTE_PROPERTY,
@@ -47,6 +47,7 @@ export const executePropertyJob: JobHandler<ExecutePropertyJobData, SynchronousJ
             )
 
             return {
+                kind: JobResultKind.SYNCHRONOUS,
                 status: result.engine.status,
                 response: result.engine.response,
             }

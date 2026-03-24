@@ -3,7 +3,7 @@ import {
     WorkerJobType,
 } from '@activepieces/shared'
 import { workerSettings } from '../../config/worker-settings'
-import { FireAndForgetJobResult, JobContext, JobHandler } from '../types'
+import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../types'
 
 export const eventDestinationJob: JobHandler<EventDestinationJobData, FireAndForgetJobResult> = {
     jobType: WorkerJobType.EVENT_DESTINATION,
@@ -22,6 +22,6 @@ export const eventDestinationJob: JobHandler<EventDestinationJobData, FireAndFor
 
         ctx.log.info({ webhookUrl: data.webhookUrl, status: response.status }, 'Event destination sent')
 
-        return {}
+        return { kind: JobResultKind.FIRE_AND_FORGET }
     },
 }

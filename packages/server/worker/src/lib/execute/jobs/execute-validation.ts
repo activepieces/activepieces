@@ -9,7 +9,7 @@ import {
 } from '@activepieces/shared'
 import { provisioner } from '../../cache/provisioner'
 import { workerSettings } from '../../config/worker-settings'
-import { JobContext, JobHandler, SynchronousJobResult } from '../types'
+import { JobContext, JobHandler, JobResultKind, SynchronousJobResult } from '../types'
 
 export const executeValidationJob: JobHandler<ExecuteValidateAuthJobData, SynchronousJobResult> = {
     jobType: WorkerJobType.EXECUTE_VALIDATION,
@@ -45,6 +45,7 @@ export const executeValidationJob: JobHandler<ExecuteValidateAuthJobData, Synchr
             )
 
             return {
+                kind: JobResultKind.SYNCHRONOUS,
                 status: result.engine.status,
                 response: result.engine.response,
             }
@@ -53,6 +54,7 @@ export const executeValidationJob: JobHandler<ExecuteValidateAuthJobData, Synchr
             await ctx.sandboxManager.invalidate(ctx.log)
             if (e instanceof ActivepiecesError && e.error.code === ErrorCode.SANDBOX_EXECUTION_TIMEOUT) {
                 return {
+                    kind: JobResultKind.SYNCHRONOUS,
                     status: EngineResponseStatus.TIMEOUT,
                     response: { valid: false, error: 'Validation timed out' },
                 }

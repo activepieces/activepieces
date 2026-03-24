@@ -2,6 +2,11 @@ import { EngineResponseStatus, JobData, WorkerJobType, WorkerToApiContract } fro
 import { Logger } from 'pino'
 import { SandboxManager } from './sandbox-manager'
 
+export enum JobResultKind {
+    FIRE_AND_FORGET = 'FIRE_AND_FORGET',
+    SYNCHRONOUS = 'SYNCHRONOUS',
+}
+
 export type JobContext = {
     apiClient: WorkerToApiContract
     sandboxManager: SandboxManager
@@ -13,10 +18,12 @@ export type JobContext = {
 }
 
 export type FireAndForgetJobResult = {
+    kind: JobResultKind.FIRE_AND_FORGET
     delayInSeconds?: number
 }
 
 export type SynchronousJobResult = {
+    kind: JobResultKind.SYNCHRONOUS
     status: EngineResponseStatus
     response: unknown
 }

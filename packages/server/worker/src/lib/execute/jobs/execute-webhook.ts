@@ -14,7 +14,7 @@ import {
 } from '@activepieces/shared'
 import { flowCache } from '../../cache/flow/flow-cache'
 import { workerSettings } from '../../config/worker-settings'
-import { FireAndForgetJobResult, JobContext, JobHandler } from '../types'
+import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../types'
 import { provisionFlowPieces } from '../utils/flow-helpers'
 import { resolvePayload } from '../utils/resolve-payload'
 import { getAppWebhookUrl, getWebhookUrl } from '../utils/webhook-url'
@@ -44,14 +44,14 @@ export const executeWebhookJob: JobHandler<WebhookJobData, FireAndForgetJobResul
         const flowVersion = await flowCache(ctx.log, ctx.apiClient).getVersion({ flowVersionId: data.flowVersionIdToRun })
         if (isNil(flowVersion)) {
             ctx.log.info({ flowVersionId: data.flowVersionIdToRun }, 'Flow version not found for webhook, skipping')
-            return {}
+            return { kind: JobResultKind.FIRE_AND_FORGET }
         }
 
         const { appWebhookUrl, webhookSecret } = getAppWebhookDetails(flowVersion, ctx.publicApiUrl, settings.APP_WEBHOOK_SECRETS)
 
         const provisioned = await provisionFlowPieces({ flowVersion, platformId: data.platformId, flowId: data.flowId, projectId: data.projectId, log: ctx.log, apiClient: ctx.apiClient })
         if (!provisioned) {
-            return {}
+            return { kind: JobResultKind.FIRE_AND_FORGET }
         }
 
         const sandbox = ctx.sandboxManager.acquire({ log: ctx.log, apiClient: ctx.apiClient })
@@ -97,7 +97,7 @@ export const executeWebhookJob: JobHandler<WebhookJobData, FireAndForgetJobResul
             }
 
             if (!data.execute) {
-                return {}
+                return { kind: JobResultKind.FIRE_AND_FORGET }
             }
 
             const result = await sandbox.execute(
@@ -136,7 +136,7 @@ export const executeWebhookJob: JobHandler<WebhookJobData, FireAndForgetJobResul
                 }
             }
 
-            return {}
+            return { kind: JobResultKind.FIRE_AND_FORGET }
         }
         catch (e) {
             await ctx.sandboxManager.invalidate(ctx.log)

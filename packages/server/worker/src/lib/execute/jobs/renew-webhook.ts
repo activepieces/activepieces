@@ -7,7 +7,7 @@ import {
 } from '@activepieces/shared'
 import { flowCache } from '../../cache/flow/flow-cache'
 import { workerSettings } from '../../config/worker-settings'
-import { FireAndForgetJobResult, JobContext, JobHandler } from '../types'
+import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../types'
 import { provisionFlowPieces } from '../utils/flow-helpers'
 import { getWebhookUrl } from '../utils/webhook-url'
 
@@ -20,12 +20,12 @@ export const renewWebhookJob: JobHandler<RenewWebhookJobData, FireAndForgetJobRe
         const flowVersion = await flowCache(ctx.log, ctx.apiClient).getVersion({ flowVersionId: data.flowVersionId })
         if (isNil(flowVersion)) {
             ctx.log.info({ flowVersionId: data.flowVersionId }, 'Flow version not found for renew webhook, skipping')
-            return {}
+            return { kind: JobResultKind.FIRE_AND_FORGET }
         }
 
         const provisioned = await provisionFlowPieces({ flowVersion, platformId: data.platformId, flowId: data.flowId, projectId: data.projectId, log: ctx.log, apiClient: ctx.apiClient })
         if (!provisioned) {
-            return {}
+            return { kind: JobResultKind.FIRE_AND_FORGET }
         }
 
         const sandbox = ctx.sandboxManager.acquire({ log: ctx.log, apiClient: ctx.apiClient })
@@ -53,7 +53,7 @@ export const renewWebhookJob: JobHandler<RenewWebhookJobData, FireAndForgetJobRe
                 { timeoutInSeconds },
             )
 
-            return {}
+            return { kind: JobResultKind.FIRE_AND_FORGET }
         }
         catch (e) {
             await ctx.sandboxManager.invalidate(ctx.log)
