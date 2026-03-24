@@ -62,7 +62,7 @@ export async function chargebeeRequest<TResponse>({
   method,
   path,
   body,
-  contentType = 'application/json',
+  contentType = 'application/x-www-form-urlencoded',
 }: ChargebeeRequestParams): Promise<TResponse> {
   try {
     const isFormEncoded = contentType === 'application/x-www-form-urlencoded';

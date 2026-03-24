@@ -30,7 +30,7 @@ export const chargebee = createPiece({
       auth: chargebeeAuth,
       baseUrl: (auth) => getChargebeeBaseUrl(auth?.props.site ?? ''),
       authMapping: async (auth) => ({
-        Authorization: getChargebeeAuthHeader(auth.props.api_key),
+        Authorization: getChargebeeAuthHeader(auth?.props?.api_key ?? ''),
       }),
     }),
   ],
