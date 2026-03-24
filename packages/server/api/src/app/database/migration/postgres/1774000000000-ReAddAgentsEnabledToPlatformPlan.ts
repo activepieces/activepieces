@@ -6,7 +6,7 @@ export class ReAddAgentsEnabledToPlatformPlan1774000000000 implements MigrationI
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
             ALTER TABLE "platform_plan"
-            ADD "agentsEnabled" boolean
+            ADD COLUMN IF NOT EXISTS "agentsEnabled" boolean
         `)
         await queryRunner.query(`
             UPDATE "platform_plan"
