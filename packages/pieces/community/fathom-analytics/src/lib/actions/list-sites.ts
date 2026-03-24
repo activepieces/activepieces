@@ -46,7 +46,7 @@ export const listSites = createAction({
       method: HttpMethod.GET,
       url: `${FATHOM_API_BASE}/sites`,
       headers: {
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       },
       queryParams: params,
     });

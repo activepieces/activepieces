@@ -51,7 +51,7 @@ export const listEvents = createAction({
       method: HttpMethod.GET,
       url: `${FATHOM_API_BASE}/sites/${propsValue.site_id}/events`,
       headers: {
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       },
       queryParams: params,
     });

@@ -32,7 +32,7 @@ export const createEvent = createAction({
       method: HttpMethod.POST,
       url: `${FATHOM_API_BASE}/sites/${propsValue.site_id}/events`,
       headers: {
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
         'Content-Type': 'application/json',
       },
       body: {

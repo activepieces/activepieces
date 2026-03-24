@@ -14,7 +14,7 @@ export const fathomAnalytics = createPiece({
     'Privacy-focused website analytics. Query your site traffic, manage sites and events, and generate custom reports.',
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/fathom-analytics.png',
-  categories: [PieceCategory.ANALYTICS],
+  categories: [PieceCategory.MARKETING, PieceCategory.BUSINESS_INTELLIGENCE],
   auth: fathomAuth,
   actions: [
     listSites,
@@ -26,10 +26,10 @@ export const fathomAnalytics = createPiece({
       auth: fathomAuth,
       baseUrl: () => FATHOM_API_BASE,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       }),
     }),
   ],
-  authors: ['Harmatta'],
+  authors: ['Harmatta','sanket-a11y'],
   triggers: [],
 });

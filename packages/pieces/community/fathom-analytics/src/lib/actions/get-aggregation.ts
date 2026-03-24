@@ -1,43 +1,12 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { fathomAuth, FATHOM_API_BASE } from '../auth';
-
-const ENTITY_OPTIONS = [
-  { label: 'Pageview', value: 'pageview' },
-  { label: 'Event', value: 'event' },
-];
-
-const AGGREGATION_OPTIONS = [
-  { label: 'Pageviews', value: 'pageviews' },
-  { label: 'Visits', value: 'visits' },
-  { label: 'Uniques', value: 'uniques' },
-  { label: 'Avg Duration', value: 'avg_duration' },
-  { label: 'Bounce Rate', value: 'bounce_rate' },
-];
-
-const DATE_GROUPING_OPTIONS = [
-  { label: 'Hour', value: 'hour' },
-  { label: 'Day', value: 'day' },
-  { label: 'Month', value: 'month' },
-  { label: 'Year', value: 'year' },
-];
-
-
-const FIELD_GROUPING_OPTIONS = [
-  { label: 'Pathname', value: 'pathname' },
-  { label: 'Hostname', value: 'hostname' },
-  { label: 'Referrer Hostname', value: 'referrer_hostname' },
-  { label: 'Referrer Pathname', value: 'referrer_pathname' },
-  { label: 'Browser', value: 'browser' },
-  { label: 'Browser Version', value: 'browser_version' },
-  { label: 'Device Type', value: 'device_type' },
-  { label: 'Country Code', value: 'country_code' },
-  { label: 'UTM Source', value: 'utm_source' },
-  { label: 'UTM Medium', value: 'utm_medium' },
-  { label: 'UTM Campaign', value: 'utm_campaign' },
-  { label: 'UTM Term', value: 'utm_term' },
-  { label: 'UTM Content', value: 'utm_content' },
-];
+import {
+  AGGREGATION_OPTIONS,
+  DATE_GROUPING_OPTIONS,
+  ENTITY_OPTIONS,
+  FIELD_GROUPING_OPTIONS,
+} from '../common';
 
 export const getAggregation = createAction({
   name: 'get_aggregation',
@@ -46,11 +15,6 @@ export const getAggregation = createAction({
     'Generate a custom analytics aggregation report. Supports flexible grouping, filtering, and date ranges.',
   auth: fathomAuth,
   props: {
-    entity_id: Property.ShortText({
-      displayName: 'Site ID',
-      description: 'The Fathom site ID to query (e.g., CDBUGS). Required for pageview entity. Do not include when entity is set to event.',
-      required: false,
-    }),
     entity: Property.StaticDropdown({
       displayName: 'Entity Type',
       description: 'Whether to aggregate pageviews or events.',
@@ -59,6 +23,24 @@ export const getAggregation = createAction({
         options: ENTITY_OPTIONS,
       },
       defaultValue: 'pageview',
+    }),
+    entity_id: Property.ShortText({
+      displayName: 'Site ID (for Pageviews)',
+      description:
+        'The Fathom site ID to query (e.g., CDBUGS). Required when Entity Type is "Pageview".',
+      required: false,
+    }),
+    site_id: Property.ShortText({
+      displayName: 'Site ID (for Events)',
+      description:
+        'The Fathom site ID that owns the event. Required when Entity Type is "Event".',
+      required: false,
+    }),
+    entity_name: Property.ShortText({
+      displayName: 'Event ID',
+      description:
+        'The ID of the specific event to aggregate. Required when Entity Type is "Event". Find event IDs via the List Events action.',
+      required: false,
     }),
     aggregates: Property.StaticMultiSelectDropdown({
       displayName: 'Aggregates',
@@ -78,7 +60,8 @@ export const getAggregation = createAction({
     }),
     field_grouping: Property.StaticDropdown({
       displayName: 'Field Grouping',
-      description: 'Group results by this field (e.g., pathname, browser). Makes the report actionable by breaking down totals.',
+      description:
+        'Group results by this field (e.g., pathname, browser). Makes the report actionable by breaking down totals.',
       required: false,
       options: {
         options: FIELD_GROUPING_OPTIONS,
@@ -86,17 +69,26 @@ export const getAggregation = createAction({
     }),
     date_from: Property.ShortText({
       displayName: 'Date From',
-      description: 'Start date for the report in ISO 8601 format (e.g., 2024-01-01T00:00:00.000000Z).',
+      description:
+        'Start date for the report in ISO 8601 format (e.g., 2024-01-01T00:00:00.000000Z).',
       required: false,
     }),
     date_to: Property.ShortText({
       displayName: 'Date To',
-      description: 'End date for the report in ISO 8601 format (e.g., 2024-12-31T23:59:59.999999Z).',
+      description:
+        'End date for the report in ISO 8601 format (e.g., 2024-12-31T23:59:59.999999Z).',
+      required: false,
+    }),
+    timezone: Property.ShortText({
+      displayName: 'Timezone',
+      description:
+        'Timezone for the report (e.g., "America/New_York", "Europe/London"). Defaults to UTC.',
       required: false,
     }),
     sort_by: Property.ShortText({
       displayName: 'Sort By',
-      description: 'Field to sort by (e.g., "pageviews:desc").',
+      description:
+        'Field and direction to sort by (e.g., "pageviews:desc" or "uniques:asc").',
       required: false,
     }),
     limit: Property.Number({
@@ -122,37 +114,34 @@ export const getAggregation = createAction({
         : String(propsValue.aggregates),
     };
 
-    if (propsValue.entity !== 'event' && propsValue.entity_id) {
-      queryParams['entity_id'] = propsValue.entity_id;
+    if (propsValue.entity === 'event') {
+      if (propsValue.site_id) queryParams['site_id'] = propsValue.site_id;
+      if (propsValue.entity_name)
+        queryParams['entity_name'] = propsValue.entity_name;
+    } else {
+      if (propsValue.entity_id) queryParams['entity_id'] = propsValue.entity_id;
     }
 
-    if (propsValue.date_grouping) {
+    if (propsValue.date_grouping)
       queryParams['date_grouping'] = propsValue.date_grouping;
-    }
-    if (propsValue.field_grouping) {
+    if (propsValue.field_grouping)
       queryParams['field_grouping'] = propsValue.field_grouping;
-    }
-    if (propsValue.date_from) {
-      queryParams['date_from'] = propsValue.date_from;
-    }
-    if (propsValue.date_to) {
-      queryParams['date_to'] = propsValue.date_to;
-    }
-    if (propsValue.sort_by) {
-      queryParams['sort_by'] = propsValue.sort_by;
-    }
-    if (propsValue.limit != null) {
+    if (propsValue.date_from) queryParams['date_from'] = propsValue.date_from;
+    if (propsValue.date_to) queryParams['date_to'] = propsValue.date_to;
+    if (propsValue.timezone) queryParams['timezone'] = propsValue.timezone;
+    if (propsValue.sort_by) queryParams['sort_by'] = propsValue.sort_by;
+    if (propsValue.limit != null)
       queryParams['limit'] = String(propsValue.limit);
-    }
-    if (propsValue.filters) {
+    if (propsValue.filters)
       queryParams['filters'] = JSON.stringify(propsValue.filters);
-    }
 
-    const response = await httpClient.sendRequest<Array<Record<string, unknown>>>({
+    const response = await httpClient.sendRequest<
+      Array<Record<string, unknown>>
+    >({
       method: HttpMethod.GET,
       url: `${FATHOM_API_BASE}/aggregations`,
       headers: {
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       },
       queryParams,
     });
