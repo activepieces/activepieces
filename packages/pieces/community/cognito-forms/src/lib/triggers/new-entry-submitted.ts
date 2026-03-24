@@ -27,10 +27,10 @@ export const newEntryTrigger = createTrigger({
   },
   type: TriggerStrategy.WEBHOOK,
   sampleData: undefined,
-  async onEnable(_context) {
+  async onEnable(context) {
     // No need to register webhooks programmatically as user will do it manually
   },
-  async onDisable(_context) {
+  async onDisable(context) {
     // No need to unregister webhooks as user will do it manually
   },
 

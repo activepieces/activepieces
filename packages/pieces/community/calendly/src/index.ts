@@ -1,5 +1,5 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { createPiece } from '@activepieces/pieces-framework';
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { calendlyCommon } from './lib/common';
 import { calendlyInviteeCanceled } from './lib/trigger/invitee-canceled.trigger';
