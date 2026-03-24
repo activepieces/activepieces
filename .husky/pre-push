@@ -1,7 +1,6 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
-# Allow skipping this hook by setting SKIP_CHECK env variable
 if [ ! -z "$SKIP_CHECK" ]; then
   exit 0
 fi
@@ -14,14 +13,14 @@ do
     fi
 done
 
-# Auto-approve when CLAUDE_PUSH=yes (injected by Claude Code hook)
 if [ "$CLAUDE_PUSH" = "yes" ]; then
   RUN_CHECKS="y"
 elif [ -e /dev/tty ]; then
   printf "Run lint and tests before pushing? [Y/n] "
   read RUN_CHECKS < /dev/tty
 else
-  RUN_CHECKS="y"
+  # No TTY and not Claude — skip checks (CI runs its own pipeline)
+  RUN_CHECKS="n"
 fi
 
 case "$RUN_CHECKS" in
@@ -30,11 +29,10 @@ case "$RUN_CHECKS" in
     ;;
   *)
     echo "Running lint..."
-    npm run lint
+    npm run lint || exit 1
 
     echo "Running tests..."
-    npx turbo run test --filter=@activepieces/engine --filter=@activepieces/shared
-    npx turbo run test-ce test-ee test-cloud --filter=api
+    npx turbo run test --filter=@activepieces/engine --filter=@activepieces/shared || exit 1
+    npx turbo run test-ce test-ee test-cloud --filter=api || exit 1
     ;;
-
 esac
