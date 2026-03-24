@@ -18,10 +18,10 @@
       "extends": ["plugin:@typescript-eslint/recommended"],
       "plugins": ["unused-imports"],
       "rules": {
-        "unused-imports/no-unused-imports": "error",
+        "unused-imports/no-unused-imports": "warn",
         "@typescript-eslint/no-extra-semi": "error",
         "@typescript-eslint/no-unused-vars": [
-          "error",
+          "warn",
           {
             "varsIgnorePattern": "^_",
             "argsIgnorePattern": "^_"

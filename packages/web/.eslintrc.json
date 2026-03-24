@@ -114,6 +114,7 @@
         "import/no-named-as-default": "off",
         "react/react-in-jsx-scope": "off",
         "jsx-a11y/anchor-is-valid": "off",
+        "unused-imports/no-unused-imports": "error",
         "@typescript-eslint/no-unused-vars": [
           "error",
           {
