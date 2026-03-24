@@ -26,7 +26,7 @@ export const findListEntryAction = createAction({
 			throw new Error('Provided list type is invalid.');
 		}
 
-		const formattedFields = await formatInputFields(accessToken, 'lists', listId, inputFields);
+		const formattedFields = await formatInputFields(accessToken, 'lists', listId, inputFields, true);
 
 		// https://docs.attio.com/rest-api/endpoint-reference/entries/create-an-entry-add-record-to-list
 		const response = await attioPaginatedApiCall({
