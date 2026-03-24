@@ -134,12 +134,12 @@ async function pollAndExecute(apiClient: WorkerToApiContract, sbManager: Sandbox
         workerLog.info({ jobId: job.jobId, jobType: job.jobData.jobType }, 'Job received from poll')
 
         const lockExtensionInterval = setInterval(() => {
-            void tryCatch(() => apiClient.extendLock({ jobId: job.jobId })).then(({ error }) => {
+            void tryCatch(() => apiClient.extendLock({ jobId: job.jobId, token: job.token, queueName: job.queueName })).then(({ error }) => {
                 if (error) {
                     workerLog.warn({ error, jobId: job.jobId }, 'Failed to extend lock')
                 }
             })
-        }, 90_000)
+        }, 30_000)
 
         const { data: result, error: execError } = await tryCatch(() =>
             executeJob(apiClient, job, sbManager),
@@ -150,6 +150,8 @@ async function pollAndExecute(apiClient: WorkerToApiContract, sbManager: Sandbox
         const { error: completeError } = await tryCatch(() =>
             apiClient.completeJob({
                 jobId: job.jobId,
+                token: job.token,
+                queueName: job.queueName,
                 status: execError
                     ? EngineResponseStatus.INTERNAL_ERROR
                     : result?.kind === JobResultKind.SYNCHRONOUS ? result.status : EngineResponseStatus.OK,
