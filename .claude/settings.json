@@ -12,5 +12,19 @@
     "deny": [
       "Read(**/.env*)"
     ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh .claude/hooks/inject-claude-push.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
   }
 }

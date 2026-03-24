@@ -13,3 +13,27 @@ do
         exit 1
     fi
 done
+
+# Auto-approve when CLAUDE_PUSH=yes (injected by Claude Code hook)
+if [ "$CLAUDE_PUSH" = "yes" ]; then
+  RUN_CHECKS="y"
+elif [ -e /dev/tty ]; then
+  printf "Run lint and tests before pushing? [Y/n] "
+  read RUN_CHECKS < /dev/tty
+else
+  RUN_CHECKS="y"
+fi
+
+case "$RUN_CHECKS" in
+  [nN][oO]|[nN])
+    echo "Skipping lint and tests."
+    ;;
+  *)
+    echo "Running lint..."
+    npx run lint
+
+    echo "Running tests..."
+    npx turbo run test --filter=@activepieces/engine --filter=@activepieces/shared
+    npx turbo run test-ce test-ee test-cloud --filter=api
+    ;;
+esac
