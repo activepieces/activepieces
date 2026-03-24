@@ -1,4 +1,8 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import {
+  createCustomApiCallAction,
+  httpClient,
+  HttpMethod,
+} from '@activepieces/pieces-common';
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { triggerEvent } from './lib/actions/trigger-event';
@@ -13,26 +17,21 @@ export const novuAuth = PieceAuth.SecretText({
   required: true,
   validate: async ({ auth }) => {
     try {
-      const response = await fetch(
-        'https://api.novu.co/v1/subscribers?limit=1',
-        {
-          method: 'GET',
-          headers: {
-            Authorization: `ApiKey ${auth}`,
-          },
-        }
-      );
-      if (response.ok) {
-        return { valid: true };
-      }
+      await httpClient.sendRequest({
+        method: HttpMethod.GET,
+        url: 'https://api.novu.co/v1/subscribers?limit=1',
+        headers: {
+          Authorization: `ApiKey ${auth}`,
+        },
+      });
+      return { valid: true };
+    } catch (e: unknown) {
+      const status = (e as { response?: { status?: number } }).response?.status;
       return {
         valid: false,
-        error: `Authentication failed (HTTP ${response.status}). Check your API key.`,
-      };
-    } catch (e) {
-      return {
-        valid: false,
-        error: 'Could not reach the Novu API. Please try again later.',
+        error: status
+          ? `Authentication failed (HTTP ${status}). Check your API key.`
+          : 'Could not reach the Novu API. Please try again later.',
       };
     }
   },

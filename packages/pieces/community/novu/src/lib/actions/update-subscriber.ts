@@ -43,11 +43,22 @@ export const updateSubscriber = createAction({
       context.propsValue;
 
     const body: Record<string, unknown> = {};
-    if (email) body['email'] = email;
-    if (first_name) body['firstName'] = first_name;
-    if (last_name) body['lastName'] = last_name;
-    if (phone) body['phone'] = phone;
-    if (avatar) body['avatar'] = avatar;
+    if (email !== undefined && email !== null && email !== '')
+      body['email'] = email;
+    if (first_name !== undefined && first_name !== null && first_name !== '')
+      body['firstName'] = first_name;
+    if (last_name !== undefined && last_name !== null && last_name !== '')
+      body['lastName'] = last_name;
+    if (phone !== undefined && phone !== null && phone !== '')
+      body['phone'] = phone;
+    if (avatar !== undefined && avatar !== null && avatar !== '')
+      body['avatar'] = avatar;
+
+    if (Object.keys(body).length === 0) {
+      throw new Error(
+        'At least one field (email, first name, last name, phone, or avatar) must be provided to update a subscriber.'
+      );
+    }
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.PUT,
