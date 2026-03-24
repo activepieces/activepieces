@@ -75,6 +75,9 @@
       "@activepieces/piece-aminos": [
         "packages/pieces/community/aminos/src/index.ts"
       ],
+      "@activepieces/piece-amplitude": [
+        "packages/pieces/community/amplitude/src/index.ts"
+      ],
       "@activepieces/piece-anyhook-graphql": [
         "packages/pieces/community/anyhook-graphql/src/index.ts"
       ],
