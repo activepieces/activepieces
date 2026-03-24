@@ -18,6 +18,13 @@ async function main(): Promise<void> {
     }
     process.on('SIGINT', () => void shutdown())
     process.on('SIGTERM', () => void shutdown())
+
+    process.on('uncaughtException', (err) => {
+        logger.error({ error: err }, 'Uncaught exception in worker process — staying alive')
+    })
+    process.on('unhandledRejection', (reason) => {
+        logger.error({ error: reason }, 'Unhandled rejection in worker process — staying alive')
+    })
 }
 
 main().catch((err) => {
