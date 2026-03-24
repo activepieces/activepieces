@@ -3,8 +3,6 @@ name: Sync Playwright test to BetterStack
 on:
   push:
     branches: [main, feat/betterstack]
-    paths:
-      - 'packages/tests-e2e/scenarios/betterstack/webhook-should-return-response.flat.spec.js'
 
 jobs:
   sync:
