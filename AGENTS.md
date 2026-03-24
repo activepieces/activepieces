@@ -37,3 +37,8 @@
 ## Verification
 
 - Always run `npm run lint-dev` as part of any verification step before considering a task complete.
+
+## Useful Links
+
+- [Database Migrations Playbook](https://www.activepieces.com/docs/handbook/engineering/playbooks/database-migration)
+- [TypeORM Migrations Docs](https://orkhan.gitbook.io/typeorm/docs/migrations)
