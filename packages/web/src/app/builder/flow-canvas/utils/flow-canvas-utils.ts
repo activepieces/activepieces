@@ -483,7 +483,6 @@ const getStepStatus = (
   stepName: string | undefined,
   run: FlowRun | null,
   loopIndexes: Record<string, number>,
-  flowVersion: FlowVersion,
 ) => {
   if (isNil(run) || isNil(stepName) || isNil(run.steps)) {
     return undefined;

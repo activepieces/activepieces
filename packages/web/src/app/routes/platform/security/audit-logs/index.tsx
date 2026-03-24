@@ -21,7 +21,7 @@ import {
   Clock,
 } from 'lucide-react';
 import { Fragment, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
@@ -45,7 +45,6 @@ import { formatUtils } from '@/lib/format-utils';
 
 export default function AuditLogsPage() {
   const { platform } = platformHooks.useCurrentPlatform();
-  const [searchParams] = useSearchParams();
   const [selectedEvent, setSelectedEvent] = useState<ApplicationEvent | null>(
     null,
   );

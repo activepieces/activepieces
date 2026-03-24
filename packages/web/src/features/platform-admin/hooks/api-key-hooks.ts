@@ -34,7 +34,3 @@ export const apiKeyMutations = {
     });
   },
 };
-
-type CreateApiKeyRequest = {
-  displayName: string;
-};
