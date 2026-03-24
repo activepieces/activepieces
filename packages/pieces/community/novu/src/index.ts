@@ -52,7 +52,7 @@ export const novu = createPiece({
     updateSubscriber,
     deleteSubscriber,
     createCustomApiCallAction({
-      baseUrl: () => 'https://api.novu.co',
+      baseUrl: () => 'https://api.novu.co/v1',
       auth: novuAuth,
       authMapping: async (auth) => ({
         Authorization: `ApiKey ${auth}`,

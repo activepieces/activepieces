@@ -767,6 +767,9 @@
       "@activepieces/piece-notion": [
         "packages/pieces/community/notion/src/index.ts"
       ],
+      "@activepieces/piece-novu": [
+        "packages/pieces/community/novu/src/index.ts"
+      ],
       "@activepieces/piece-ntfy": [
         "packages/pieces/community/ntfy/src/index.ts"
       ],
