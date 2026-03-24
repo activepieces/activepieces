@@ -70,11 +70,11 @@ test('should handle webhook with return response', async ({ page }) => {
   const body = await response.json();
   expect(body.targetRunVersion).toBe(runVersion.toString());
 
-  // Go back to automations and delete the created flow
+  // Go back to automations and bulk delete all flows
   await page.goto(`${baseUrl}/automations`);
   await page.waitForLoadState('networkidle');
-  await page.locator('button:has(svg.lucide-ellipsis)').first().click();
-  await page.getByRole('menuitem', { name: 'Delete' }).click();
+  await page.getByRole('checkbox').first().click();
+  await page.locator('button:has(svg.lucide-trash-2)').click();
   await page.getByRole('button', { name: 'Delete' }).click();
-  await page.waitForSelector('button:has-text("Delete")', { state: 'hidden' });
+  await page.waitForSelector('[role="dialog"]', { state: 'hidden' });
 });
