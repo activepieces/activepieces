@@ -49,7 +49,7 @@ export class AddKnowledgeBaseChunkTable1773627989515 implements MigrationInterfa
                 "knowledgeBaseFileId" character varying(21) NOT NULL,
                 "content" text NOT NULL,
                 "chunkIndex" integer NOT NULL,
-                "embedding" vector(1536) NOT NULL,
+                "embedding" vector(768) NOT NULL,
                 "metadata" jsonb,
                 CONSTRAINT "pk_knowledge_base_chunk" PRIMARY KEY ("id"),
                 CONSTRAINT "fk_kb_chunk_kb_file_id" FOREIGN KEY ("knowledgeBaseFileId") REFERENCES "knowledge_base_file"("id") ON DELETE CASCADE

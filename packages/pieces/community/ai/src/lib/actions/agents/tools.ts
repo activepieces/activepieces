@@ -205,6 +205,7 @@ async function constructKnowledgeBaseTools(
                 }
             },
         })
+        // Single combined search tool covers all files; use first file as representative for tool attribution
         keyToAgentTool[SEARCH_KNOWLEDGE_BASE_TOOL_NAME] = fileTools[0]
     }
 
