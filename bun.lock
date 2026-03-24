@@ -860,7 +860,7 @@
     },
     "packages/pieces/community/attio": {
       "name": "@activepieces/piece-attio",
-      "version": "0.1.4",
+      "version": "0.1.5",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -3486,6 +3486,19 @@
         "@atlaskit/adf-schema": "50.4.0",
         "@atlaskit/editor-json-transformer": "8.27.2",
         "@atlaskit/editor-markdown-transformer": "5.16.6",
+        "dayjs": "1.11.9",
+        "form-data": "4.0.4",
+        "tslib": "2.6.2",
+        "zod": "4.3.6",
+      },
+    },
+    "packages/pieces/community/jira-data-center": {
+      "name": "@activepieces/piece-jira-data-center",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
         "dayjs": "1.11.9",
         "form-data": "4.0.4",
         "tslib": "2.6.2",
@@ -7148,7 +7161,7 @@
     },
     "packages/pieces/community/zoom": {
       "name": "@activepieces/piece-zoom",
-      "version": "0.5.4",
+      "version": "0.6.0",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -7518,11 +7531,12 @@
     },
     "packages/pieces/core/webhook": {
       "name": "@activepieces/piece-webhook",
-      "version": "0.1.31",
+      "version": "0.1.32",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
+        "dayjs": "1.11.9",
         "http-status-codes": "2.2.0",
         "tslib": "2.6.2",
       },
@@ -7768,8 +7782,9 @@
     },
     "packages/shared": {
       "name": "@activepieces/shared",
-      "version": "0.46.0",
+      "version": "0.46.1",
       "dependencies": {
+        "dayjs": "1.11.9",
         "deepmerge-ts": "7.1.0",
         "nanoid": "3.3.8",
         "semver": "7.6.0",
@@ -8511,6 +8526,8 @@
     "@activepieces/piece-jina-ai": ["@activepieces/piece-jina-ai@workspace:packages/pieces/community/jina-ai"],
 
     "@activepieces/piece-jira-cloud": ["@activepieces/piece-jira-cloud@workspace:packages/pieces/community/jira-cloud"],
+
+    "@activepieces/piece-jira-data-center": ["@activepieces/piece-jira-data-center@workspace:packages/pieces/community/jira-data-center"],
 
     "@activepieces/piece-jogg-ai": ["@activepieces/piece-jogg-ai@workspace:packages/pieces/community/jogg-ai"],
 
