@@ -11,7 +11,7 @@ type KnowledgeBaseChunkSchema = {
     content: string
     chunkIndex: number
     embedding: string
-    metadata: Record<string, unknown>
+    metadata: object
     knowledgeBaseFile: KnowledgeBaseFile
 }
 

@@ -324,6 +324,7 @@
     "@commitlint/config-conventional": "17.7.0",
     "@playwright/test": "1.54.1",
     "@types/node": "24.11.0",
+    "@types/pdf-parse": "1.1.5",
     "@types/semver": "7.5.6",
     "@typescript-eslint/eslint-plugin": "7.18.0",
     "@typescript-eslint/parser": "7.18.0",
