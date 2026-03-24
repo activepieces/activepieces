@@ -76,8 +76,12 @@ export const PieceAuth = {
 export type ExtractPieceAuthPropertyTypeForMethods<T extends PieceAuthProperty | PieceAuthProperty[] | undefined> = T extends PieceAuthProperty[] ? T[number] : T extends undefined ? undefined : T;
 
 export function getAuthPropertyForValue({ authValueType, pieceAuth }: GetAuthPropertyForValue) {
-  if (!Array.isArray(pieceAuth) || isNil(pieceAuth)) {
-    return pieceAuth;
+  if (isNil(pieceAuth)) {
+    return undefined;
+  }
+
+  if (!Array.isArray(pieceAuth)) {
+    return authConnectionTypeToPropertyType[authValueType] === pieceAuth.type ? pieceAuth : undefined;
   }
 
   return pieceAuth.find(auth => authConnectionTypeToPropertyType[authValueType] === auth.type) ?? pieceAuth.at(0);
