@@ -4,7 +4,6 @@ import {
   PieceAuth,
   ArraySubProps,
 } from '@activepieces/pieces-framework';
-
 import {
   AgentOutputField,
   AgentPieceProps,
@@ -171,7 +170,7 @@ export const runAgent = createAction({
       (t): t is AgentKnowledgeBaseTool => t.type === AgentToolType.KNOWLEDGE_BASE && t.sourceType === KnowledgeBaseSourceType.FILE,
     );
     const hasKbFileTools = kbFileTools.length > 0;
-    let embeddingModel;
+    let embeddingConfig;
     if (hasKbFileTools) {
       try {
         const result = await createEmbeddingModel({
@@ -179,7 +178,7 @@ export const runAgent = createAction({
           engineToken: context.server.token,
           apiUrl: context.server.apiUrl,
         });
-        embeddingModel = result.model;
+        embeddingConfig = { model: result.model, providerOptions: result.providerOptions };
       }
       catch (err) {
         outputBuilder.addMarkdown(`\n\n**Warning:** Could not create embedding model for knowledge base search: ${err instanceof Error ? err.message : 'Unknown error'}\n\n`);
@@ -192,7 +191,7 @@ export const runAgent = createAction({
       model,
       outputBuilder,
       structuredOutput,
-      embeddingModel,
+      embeddingConfig,
     });
     outputBuilder.setToolMap(toolKeyToAgentTool);
 

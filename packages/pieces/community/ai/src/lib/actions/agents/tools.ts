@@ -5,6 +5,7 @@ import { agentOutputBuilder } from "./agent-output-builder";
 import { AgentKnowledgeBaseTool, AgentMcpTool, AgentOutputField, AgentTaskStatus, AgentTool, AgentToolType, buildAuthHeaders, isNil, isString, KnowledgeBaseSourceType, McpProtocol, mcpToolNameUtils, TASK_COMPLETION_TOOL_NAME } from "@activepieces/shared";
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js'
 import { ActionContext } from "@activepieces/pieces-framework";
+import { ProviderOptions } from "@ai-sdk/provider-utils";
 import { experimental_createMCPClient as createMCPClient, MCPClient, MCPTransport } from '@ai-sdk/mcp';
 import { AuthenticationType, httpClient, HttpMethod } from "@activepieces/pieces-common";
 
@@ -131,7 +132,7 @@ function createServerApiClient(context: ActionContext) {
 async function constructKnowledgeBaseTools(
     kbTools: AgentKnowledgeBaseTool[],
     context: ActionContext,
-    embeddingModel: EmbeddingModel | undefined,
+    embeddingConfig: EmbeddingConfig | undefined,
 ): Promise<{ tools: Record<string, Tool>, keyToAgentTool: Record<string, AgentKnowledgeBaseTool> }> {
     const tools: Record<string, Tool> = {}
     const keyToAgentTool: Record<string, AgentKnowledgeBaseTool> = {}
@@ -140,7 +141,7 @@ async function constructKnowledgeBaseTools(
     const fileTools = kbTools.filter(t => t.sourceType === KnowledgeBaseSourceType.FILE)
     const tableTools = kbTools.filter(t => t.sourceType === KnowledgeBaseSourceType.TABLE)
 
-    if (fileTools.length > 0 && embeddingModel) {
+    if (fileTools.length > 0 && embeddingConfig) {
         const fileIds = fileTools.map(t => t.sourceId)
         const sourceNames = fileTools.map(t => t.sourceName).join(', ')
 
@@ -155,7 +156,7 @@ async function constructKnowledgeBaseTools(
                         const EMBED_BATCH_SIZE = 50
                         for (let i = 0; i < textChunks.length; i += EMBED_BATCH_SIZE) {
                             const batch = textChunks.slice(i, i + EMBED_BATCH_SIZE)
-                            const { embeddings } = await embedMany({ model: embeddingModel, values: batch })
+                            const { embeddings } = await embedMany({ model: embeddingConfig.model, values: batch, providerOptions: embeddingConfig.providerOptions })
                             const chunks = batch.map((content, j) => ({
                                 content,
                                 embedding: Array.from(embeddings[j]),
@@ -180,8 +181,9 @@ async function constructKnowledgeBaseTools(
             execute: async (input) => {
                 const { query } = input as { query: string }
                 const { embedding } = await embed({
-                    model: embeddingModel,
+                    model: embeddingConfig.model,
                     value: query,
+                    providerOptions: embeddingConfig.providerOptions,
                 })
 
                 const response = await api.post<SearchResultItem[]>('v1/knowledge-base/files/search', {
@@ -205,7 +207,6 @@ async function constructKnowledgeBaseTools(
                 }
             },
         })
-        // Single combined search tool covers all files; use first file as representative for tool attribution
         keyToAgentTool[SEARCH_KNOWLEDGE_BASE_TOOL_NAME] = fileTools[0]
     }
 
@@ -217,11 +218,9 @@ async function constructKnowledgeBaseTools(
         let cachedFields: FieldInfo[] = []
         let fieldDescriptions = ''
         try {
-            const tableQuery = `externalIds[]=${encodeURIComponent(tableTool.sourceId)}&projectId=${encodeURIComponent(context.project.id)}`
-            const tableResponse = await api.get<TableListResponse>(`v1/tables?${tableQuery}`)
-            const tables = tableResponse.body.data
-            if (tables.length > 0) {
-                cachedTableId = tables[0].id
+            const tableResponse = await api.get<{ id: string, name: string }>(`v1/tables/${encodeURIComponent(tableTool.sourceId)}`)
+            if (tableResponse.body.id) {
+                cachedTableId = tableResponse.body.id
                 const fieldsResponse = await api.get<FieldInfo[]>(`v1/fields?tableId=${cachedTableId}`)
                 cachedFields = fieldsResponse.body
                 fieldDescriptions = cachedFields.map(f => `${f.name} (${f.type})`).join(', ')
@@ -287,7 +286,7 @@ export async function constructAgentTools(
   params: ConstructAgentToolParams
 ): Promise<{ tools: Record<string, Tool>, mcpClients: MCPClient[], toolKeyToAgentTool: Record<string, AgentTool> }> {
 
-    const { outputBuilder, structuredOutput, agentTools, context, model, embeddingModel } = params;
+    const { outputBuilder, structuredOutput, agentTools, context, model, embeddingConfig } = params;
     const agentPieceTools = await context.agent.tools({
       tools: agentTools.filter(tool => tool.type === AgentToolType.PIECE),
       model: model,
@@ -303,7 +302,7 @@ export async function constructAgentTools(
     const { mcpClients, tools: mcpTools, keyToAgentTool: mcpKeyToAgentTool } = flattenMcpServers(mcpServerTools, agentMcpTools)
 
     const agentKbTools = agentTools.filter((tool): tool is AgentKnowledgeBaseTool => tool.type === AgentToolType.KNOWLEDGE_BASE);
-    const { tools: kbTools, keyToAgentTool: kbKeyToAgentTool } = await constructKnowledgeBaseTools(agentKbTools, context, embeddingModel)
+    const { tools: kbTools, keyToAgentTool: kbKeyToAgentTool } = await constructKnowledgeBaseTools(agentKbTools, context, embeddingConfig)
 
     const combinedTools = {
       ...agentPieceTools,
@@ -383,7 +382,7 @@ type ConstructAgentToolParams = {
   agentTools: AgentTool[];
   context: ActionContext
   model: LanguageModel
-  embeddingModel?: EmbeddingModel
+  embeddingConfig?: EmbeddingConfig
 };
 
 type FlattenedMcpResult = {
@@ -392,8 +391,12 @@ type FlattenedMcpResult = {
   keyToAgentTool: Record<string, AgentMcpTool>;
 };
 
-type TableListResponse = { data: { id: string, name: string }[] }
 type FieldInfo = { id: string, name: string, type: string }
+type EmbeddingConfig = {
+    model: EmbeddingModel
+    providerOptions: ProviderOptions
+}
+
 type SearchResultItem = { content: string, metadata: Record<string, unknown>, score: number }
 
 export type McpServerTools = {

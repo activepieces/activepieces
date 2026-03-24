@@ -5,6 +5,7 @@ import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
 import { createAzure } from '@ai-sdk/azure'
 import { createOpenRouter } from '@openrouter/ai-sdk-provider'
 import { EmbeddingModel, ImageModel, LanguageModel } from 'ai'
+import { ProviderOptions } from '@ai-sdk/provider-utils'
 import { httpClient, HttpMethod } from '@activepieces/pieces-common'
 import { AIProviderName, AzureProviderConfig, CloudflareGatewayProviderConfig, GetProviderConfigResponse, OpenAICompatibleProviderConfig, splitCloudflareGatewayModelId } from '@activepieces/shared'
 import { createAiGateway } from 'ai-gateway-provider';
@@ -185,11 +186,18 @@ export const anthropicSearchTool = anthropic.tools.webSearch_20250305;
 export const openaiSearchTool = openai.tools.webSearchPreview;
 export const googleSearchTool = google.tools.googleSearch;
 
+const EMBEDDING_DIMENSIONS = 768
+
 const DEFAULT_EMBEDDING_MODELS: Partial<Record<AIProviderName, string>> = {
     [AIProviderName.OPENAI]: 'text-embedding-3-small',
+    [AIProviderName.GOOGLE]: 'text-embedding-004',
     [AIProviderName.AZURE]: 'text-embedding-3-small',
     [AIProviderName.ACTIVEPIECES]: 'text-embedding-3-small',
     [AIProviderName.OPENROUTER]: 'openai/text-embedding-3-small',
+}
+
+const OPENAI_EMBEDDING_PROVIDER_OPTIONS = {
+    openai: { dimensions: EMBEDDING_DIMENSIONS },
 }
 
 type CreateEmbeddingModelParams = {
@@ -202,7 +210,7 @@ export async function createEmbeddingModel({
     provider,
     engineToken,
     apiUrl,
-}: CreateEmbeddingModelParams): Promise<{ model: EmbeddingModel, embeddingModelId: string }> {
+}: CreateEmbeddingModelParams): Promise<CreateEmbeddingModelResult> {
     const { config, auth } = await fetchProviderConfig({ provider, engineToken, apiUrl })
 
     const embeddingModelId = DEFAULT_EMBEDDING_MODELS[provider]
@@ -213,21 +221,31 @@ export async function createEmbeddingModel({
     switch (provider) {
         case AIProviderName.OPENAI: {
             const p = createOpenAI({ apiKey: auth.apiKey })
-            return { model: p.textEmbeddingModel(embeddingModelId), embeddingModelId }
+            return { model: p.embeddingModel(embeddingModelId), embeddingModelId, providerOptions: OPENAI_EMBEDDING_PROVIDER_OPTIONS }
+        }
+        case AIProviderName.GOOGLE: {
+            const p = createGoogleGenerativeAI({ apiKey: auth.apiKey })
+            return { model: p.textEmbeddingModel(embeddingModelId), embeddingModelId, providerOptions: {} }
         }
         case AIProviderName.AZURE: {
             const { resourceName } = config as AzureProviderConfig
             const p = createAzure({ resourceName, apiKey: auth.apiKey })
-            return { model: p.textEmbeddingModel(embeddingModelId), embeddingModelId }
+            return { model: p.embeddingModel(embeddingModelId), embeddingModelId, providerOptions: OPENAI_EMBEDDING_PROVIDER_OPTIONS }
         }
         case AIProviderName.ACTIVEPIECES:
         case AIProviderName.OPENROUTER: {
             const openRouterProvider = createOpenRouter({ apiKey: auth.apiKey })
-            return { model: openRouterProvider.textEmbeddingModel(embeddingModelId), embeddingModelId }
+            return { model: openRouterProvider.textEmbeddingModel(embeddingModelId), embeddingModelId, providerOptions: OPENAI_EMBEDDING_PROVIDER_OPTIONS }
         }
         default:
             throw new Error(`Provider ${provider} does not support embedding models`)
     }
+}
+
+type CreateEmbeddingModelResult = {
+    model: EmbeddingModel
+    embeddingModelId: string
+    providerOptions: ProviderOptions
 }
 
 const handleDefaultAiGatewayProvider = ({accountId, gatewayId, headers, isImage, modelId}: {

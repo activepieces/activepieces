@@ -88,7 +88,8 @@ export const agentUtils = {
         ${options?.hasKnowledgeBaseTools ? `
         **Knowledge Base Guidelines**:
         - ALWAYS search the knowledge base before answering any question. Do not answer from your own knowledge — use the search tool first.
-        - You can refine your search query if initial results aren't relevant enough.
+        - You may refine your search query ONCE if initial results aren't relevant. If the second search returns similar results, stop searching — the information is not in the knowledge base. Do not keep retrying with different phrasings.
+        - If the knowledge base does not contain the answer, say so clearly and move on.
         - Cite the source document or table when presenting information from the knowledge base.
         ` : ''}
       `.trim(),
