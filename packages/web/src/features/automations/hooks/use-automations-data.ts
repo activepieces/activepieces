@@ -395,7 +395,6 @@ export function useAutomationsData(
     pageSize,
     changePageSize,
     totalPages,
-    totalPageItems,
     nextRootPage,
     prevRootPage,
     resetPagination,
