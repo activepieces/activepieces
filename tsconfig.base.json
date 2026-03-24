@@ -234,6 +234,9 @@
       "@activepieces/piece-clarifai": [
         "packages/pieces/community/clarifai/src/index.ts"
       ],
+      "@activepieces/piece-clay": [
+        "packages/pieces/community/clay/src/index.ts"
+      ],
       "@activepieces/piece-claude": [
         "packages/pieces/community/claude/src/index.ts"
       ],
