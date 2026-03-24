@@ -59,6 +59,8 @@ function buildExtractPieceJob(): ExecuteExtractPieceMetadataJobData {
             packageType: PackageType.REGISTRY,
             pieceType: PieceType.OFFICIAL,
         },
+        requestId: 'req-1',
+        webserverId: 'ws-1',
     }
 }
 
@@ -69,6 +71,8 @@ function buildConsumeJobRequest(overrides?: Partial<ConsumeJobRequest>): Consume
         timeoutInSeconds: 600,
         attempsStarted: 0,
         engineToken: 'tok-1',
+        token: 'token-123',
+        queueName: 'workerJobs',
         ...overrides,
     }
 }
@@ -100,9 +104,9 @@ describe('worker integration', () => {
     })
 
     async function connectWorkerWithPoll(pollResponses: (ConsumeJobRequest | null)[]): Promise<{
-        completeJobCalls: Array<{ jobId: string, status: string, errorMessage?: string, delayInSeconds?: number, response?: unknown }>
+        completeJobCalls: CompleteJobCall[]
     }> {
-        const completeJobCalls: Array<{ jobId: string, status: string, errorMessage?: string, delayInSeconds?: number, response?: unknown }> = []
+        const completeJobCalls: CompleteJobCall[] = []
         let pollIndex = 0
 
         return new Promise((resolve) => {
@@ -158,8 +162,10 @@ describe('worker integration', () => {
                     getPiece: vi.fn(),
                     getPieceArchive: vi.fn(),
                     extendLock: vi.fn(),
+                    getPayloadFile: vi.fn(),
                     getUsedPieces: vi.fn().mockResolvedValue([]),
                     markPieceAsUsed: vi.fn(),
+                    disableFlow: vi.fn(),
                 }
                 createRpcServer<WorkerToApiContract>(serverSocket, handlers)
             })
@@ -183,6 +189,8 @@ describe('worker integration', () => {
 
         expect(completeJobCalls.length).toBe(1)
         expect(completeJobCalls[0].jobId).toBe('job-1')
+        expect(completeJobCalls[0].token).toBe('token-123')
+        expect(completeJobCalls[0].queueName).toBe('workerJobs')
         expect(completeJobCalls[0].status).toBe(EngineResponseStatus.OK)
         expect(completeJobCalls[0].delayInSeconds).toBe(10)
         expect(mockGetHandler).toHaveBeenCalledWith(WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION)
@@ -397,3 +405,13 @@ describe('worker integration', () => {
         }, 15_000)
     })
 })
+
+type CompleteJobCall = {
+    jobId: string
+    token: string
+    queueName: string
+    status: string
+    errorMessage?: string
+    delayInSeconds?: number
+    response?: unknown
+}

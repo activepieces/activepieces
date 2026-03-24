@@ -3781,7 +3781,7 @@
     },
     "packages/pieces/community/linear": {
       "name": "@activepieces/piece-linear",
-      "version": "0.2.3",
+      "version": "0.3.0",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -7783,7 +7783,7 @@
     },
     "packages/shared": {
       "name": "@activepieces/shared",
-      "version": "0.46.1",
+      "version": "0.47.0",
       "dependencies": {
         "dayjs": "1.11.9",
         "deepmerge-ts": "7.1.0",
