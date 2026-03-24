@@ -27,9 +27,9 @@ export const listSites = createAction({
   },
   async run(context) {
     const { auth, propsValue } = context;
-    const params: Record<string, string | number> = {};
+    const params: Record<string, string> = {};
 
-    if (propsValue.limit) params['limit'] = propsValue.limit;
+    if (propsValue.limit != null) params['limit'] = String(propsValue.limit);
     if (propsValue.starting_after) params['starting_after'] = propsValue.starting_after;
     if (propsValue.ending_before) params['ending_before'] = propsValue.ending_before;
 
@@ -48,7 +48,7 @@ export const listSites = createAction({
       headers: {
         Authorization: `Bearer ${auth}`,
       },
-      queryParams: params as Record<string, string>,
+      queryParams: params,
     });
 
     return response.body;
