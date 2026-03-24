@@ -35,7 +35,7 @@ export const mindee = createPiece({
     mindeePredictDocumentAction,
     mindeePredictDocumentV2Action,
     createCustomApiCallAction({
-      baseUrl: () => 'https://api-v2.mindee.net',
+      baseUrl: () => 'https://api.mindee.net/v1',
       auth: mindeeAuth,
       authMapping: async (auth) => ({
         Authorization: `Token ${auth}`,

@@ -88,7 +88,7 @@ export const mindeePredictDocumentV2Action = createAction({
       method: HttpMethod.POST,
       url: `${MINDEE_API_V2_BASE_URL}/v2/inferences/enqueue`,
       headers: {
-        Authorization: `Token ${auth}`,
+        Authorization: `Token ${auth.secret_text}`,
         'Content-Type': 'application/json',
       },
       body,
@@ -99,7 +99,7 @@ export const mindeePredictDocumentV2Action = createAction({
       return enqueueResponse.body;
     }
 
-    const finalJob = await pollInferenceJob(job.polling_url, auth as string);
+    const finalJob = await pollInferenceJob(job.polling_url, auth.secret_text);
 
     if (finalJob.status === 'Failed') {
       throw new Error(
@@ -117,7 +117,7 @@ export const mindeePredictDocumentV2Action = createAction({
       method: HttpMethod.GET,
       url: finalJob.result_url,
       headers: {
-        Authorization: `Token ${auth}`,
+        Authorization: `Token ${auth.secret_text}`,
       },
     });
 
@@ -152,7 +152,9 @@ async function pollInferenceJob(
       return latestJob;
     }
 
-    await sleep(POLL_INTERVAL_MS);
+    if (attempt < MAX_POLL_ATTEMPTS - 1) {
+      await sleep(POLL_INTERVAL_MS);
+    }
   }
 
   throw new Error(
