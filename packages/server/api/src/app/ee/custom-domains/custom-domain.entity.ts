@@ -34,6 +34,11 @@ export const CustomDomainEntity = new EntitySchema<CustomDomainSchema>({
             unique: true,
             columns: ['domain'],
         },
+        {
+            name: 'idx_custom_domain_platform_id',
+            columns: ['platformId'],
+            unique: false,
+        },
     ],
     relations: {
         platform: {
