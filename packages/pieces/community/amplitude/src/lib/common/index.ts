@@ -1,14 +1,16 @@
-import { HttpMethod, httpClient, HttpRequest } from '@activepieces/pieces-common';
+import {
+  HttpMethod,
+  httpClient,
+  HttpRequest,
+} from '@activepieces/pieces-common';
 
 export const AMPLITUDE_BASE_URL = 'https://api2.amplitude.com';
 
 export async function amplitudeTrackEvents({
   apiKey,
-  secretKey,
   events,
 }: {
   apiKey: string;
-  secretKey: string;
   events: Array<{
     event_type: string;
     user_id?: string;
@@ -24,7 +26,6 @@ export async function amplitudeTrackEvents({
     },
     body: {
       api_key: apiKey,
-      secret_key: secretKey,
       events,
     },
   };
@@ -35,11 +36,9 @@ export async function amplitudeTrackEvents({
 
 export async function amplitudeIdentify({
   apiKey,
-  secretKey,
   identification,
 }: {
   apiKey: string;
-  secretKey: string;
   identification: Array<{
     user_id?: string;
     device_id?: string;
@@ -48,7 +47,6 @@ export async function amplitudeIdentify({
 }) {
   const form = new URLSearchParams();
   form.set('api_key', apiKey);
-  form.set('secret_key', secretKey);
   form.set('identification', JSON.stringify(identification));
 
   const request: HttpRequest = {

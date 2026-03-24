@@ -5,31 +5,22 @@ import { identifyUserAction } from './lib/actions/identify-user';
 import { trackEventAction } from './lib/actions/track-event';
 import { AMPLITUDE_BASE_URL } from './lib/common';
 
-export const amplitudeAuth = PieceAuth.CustomAuth({
-  displayName: 'Amplitude',
-  description: 'Authenticate with your Amplitude API key and secret key.',
+export const amplitudeAuth = PieceAuth.SecretText({
+  displayName: 'API Key',
+  description: `
+  #### To obtain your API Key
+  1. Log in to [Amplitude](https://app.amplitude.com)
+  2. Go to **Settings** → **Projects** → select your project
+  3. Copy the **API Key** and paste it below.
+
+  Note: The API Key (not the Secret Key) is used for the HTTP V2 and Identify APIs.
+  `,
   required: true,
-  props: {
-    api_key: PieceAuth.SecretText({
-      displayName: 'API Key',
-      description: 'Your Amplitude project API key.',
-      required: true,
-    }),
-    secret_key: PieceAuth.SecretText({
-      displayName: 'Secret Key',
-      description: 'Your Amplitude project secret key.',
-      required: true,
-    }),
-  },
   validate: async ({ auth }) => {
-    const props = ((auth as { props?: { api_key?: string; secret_key?: string }; api_key?: string; secret_key?: string } | undefined)?.props ?? auth) as {
-      api_key?: string;
-      secret_key?: string;
-    } | undefined;
-    if (!props?.api_key?.trim() || !props?.secret_key?.trim()) {
+    if (!auth || !String(auth).trim()) {
       return {
         valid: false,
-        error: 'API key and secret key are required.',
+        error: 'API key is required.',
       };
     }
     return { valid: true };
@@ -52,8 +43,7 @@ export const amplitude = createPiece({
       baseUrl: () => AMPLITUDE_BASE_URL,
       authLocation: 'queryParams',
       authMapping: async (auth) => ({
-        api_key: auth.props.api_key,
-        secret_key: auth.props.secret_key,
+        api_key: String(auth),
       }),
     }),
   ],

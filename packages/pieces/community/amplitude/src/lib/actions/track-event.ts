@@ -30,7 +30,8 @@ export const trackEventAction = createAction({
     }),
   },
   async run(context) {
-    const { event_type, user_id, device_id, event_properties } = context.propsValue;
+    const { event_type, user_id, device_id, event_properties } =
+      context.propsValue;
 
     if (!user_id && !device_id) {
       throw new Error('At least one of User ID or Device ID is required.');
@@ -56,8 +57,7 @@ export const trackEventAction = createAction({
     }
 
     return await amplitudeTrackEvents({
-      apiKey: context.auth.props.api_key,
-      secretKey: context.auth.props.secret_key,
+      apiKey: String(context.auth),
       events: [event],
     });
   },

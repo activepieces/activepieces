@@ -20,7 +20,8 @@ export const identifyUserAction = createAction({
     }),
     user_properties: Property.Object({
       displayName: 'User Properties',
-      description: 'Properties to set on the user profile, for example name or plan.',
+      description:
+        'Properties to set on the user profile, for example name or plan.',
       required: true,
     }),
   },
@@ -47,8 +48,7 @@ export const identifyUserAction = createAction({
     }
 
     return await amplitudeIdentify({
-      apiKey: context.auth.props.api_key,
-      secretKey: context.auth.props.secret_key,
+      apiKey: String(context.auth),
       identification: [identification],
     });
   },
