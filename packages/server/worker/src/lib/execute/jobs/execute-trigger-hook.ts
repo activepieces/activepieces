@@ -1,5 +1,6 @@
 import {
     EngineOperationType,
+    EngineResponseStatus,
     ExecuteTriggerHookJobData,
     WorkerJobType,
 } from '@activepieces/shared'
@@ -17,12 +18,14 @@ export const executeTriggerHookJob: JobHandler<ExecuteTriggerHookJobData, Synchr
 
         const flowVersion = await flowCache(ctx.log, ctx.apiClient).getVersion({ flowVersionId: data.flowVersionId })
         if (!flowVersion) {
-            throw new Error(`Flow version ${data.flowVersionId} not found for trigger hook`)
+            ctx.log.info({ flowVersionId: data.flowVersionId }, 'Flow version not found for trigger hook, skipping')
+            return { status: EngineResponseStatus.OK, response: undefined }
         }
 
         const provisioned = await provisionFlowPieces({ flowVersion, platformId: data.platformId, flowId: data.flowId, projectId: data.projectId, log: ctx.log, apiClient: ctx.apiClient })
         if (!provisioned) {
-            throw new Error(`Failed to provision pieces for flow ${data.flowId}`)
+            ctx.log.info({ flowId: data.flowId }, 'Failed to provision pieces for trigger hook, skipping')
+            return { status: EngineResponseStatus.OK, response: undefined }
         }
 
         const sandbox = ctx.sandboxManager.acquire({ log: ctx.log, apiClient: ctx.apiClient })
