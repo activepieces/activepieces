@@ -19,7 +19,7 @@ jobs:
         env:
           BETTERSTACK_API_TOKEN: ${{ secrets.BETTERSTACK_API_TOKEN }}
         run: |
-          SCRIPT=$(cat packages/tests-e2e/scenarios/ce/flows/webhook-should-return-response.flat.spec.js)
+          SCRIPT=$(cat packages/tests-e2e/scenarios/betterstack/webhook-should-return-response.flat.spec.js)
           curl --fail --request PATCH \
             --url https://uptime.betterstack.com/api/v2/monitors/4211060 \
             --header "Authorization: Bearer $BETTERSTACK_API_TOKEN" \
