@@ -26,11 +26,15 @@ export const smartleadAuth = PieceAuth.SecretText({
         },
       });
       return { valid: true };
-    } catch {
-      return {
-        valid: false,
-        error: 'Invalid API key. Please check your Smartlead API credentials.',
-      };
+    } catch (error: unknown) {
+      const status = (error as { response?: { status?: number } })?.response?.status;
+      if (status === 401 || status === 403) {
+        return {
+          valid: false,
+          error: 'Invalid API key. Please check your Smartlead API credentials.',
+        };
+      }
+      throw error;
     }
   },
 });
