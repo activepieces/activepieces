@@ -51,6 +51,7 @@ export class LinearClientWrapper {
   async createWebhook(input: LinearDocument.WebhookCreateInput) {
     return this.client.createWebhook(input);
   }
+
   async listWebhooks(variables: LinearDocument.WebhooksQueryVariables = {}) {
     return this.client.webhooks(variables);
   }
@@ -63,6 +64,29 @@ export class LinearClientWrapper {
   ) {
     const team = await this.client.team(teamId);
     return team.templates(variables);
+  }
+  async listProjectStatuses() {
+    const query = `query {
+      projectStatuses(first: 100) {
+        nodes {
+          id
+          name
+          type
+        }
+      }
+    }`;
+    const result = await this.client.client.rawRequest(query) as {
+      data: {
+        projectStatuses: {
+          nodes: Array<{
+            id: string;
+            name: string;
+            type: string;
+          }>;
+        };
+      };
+    };
+    return result.data.projectStatuses.nodes;
   }
   async rawRequest(query: string, variables?: Record<string, unknown>) {
     return this.client.client.rawRequest(query, variables);
