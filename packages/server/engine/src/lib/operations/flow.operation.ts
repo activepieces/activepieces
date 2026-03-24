@@ -6,6 +6,7 @@ import {
     ExecuteTriggerResponse,
     ExecutionType,
     FlowActionType,
+    FlowRunStatus,
     flowStructureUtil,
     GenericStepOutput,
     isNil,
@@ -31,8 +32,11 @@ export const flowOperation = {
             engineConstants: constants,
             flowExecutorContext: output,
         })
+        const status = output.verdict.status === FlowRunStatus.LOG_SIZE_EXCEEDED
+            ? EngineResponseStatus.LOG_SIZE_EXCEEDED
+            : EngineResponseStatus.OK
         return {
-            status: EngineResponseStatus.OK,
+            status,
             response: undefined,
             delayInSeconds: output.getDelayedInSeconds(),
         }

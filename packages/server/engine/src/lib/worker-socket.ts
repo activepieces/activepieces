@@ -1,14 +1,10 @@
-import { inspect } from 'util'
 import {
     createNotifyClient,
     createRpcClient,
     createRpcServer,
     EngineContract,
     EngineResponse,
-    EngineResponseStatus,
     ERROR_MESSAGES_TO_REDACT,
-    LogSizeExceededError,
-    tryCatch,
     WorkerContract,
     WorkerNotifyContract,
 } from '@activepieces/shared'
@@ -57,33 +53,14 @@ export const workerSocket = {
 
         createRpcServer<EngineContract>(socket, {
             executeOperation: async ({ operationType, operation }): Promise<EngineResponse<unknown>> => {
-                const result = await tryCatch(async () => {
-                    progressService.init()
-                    try {
-                        const response = await execute(operationType, operation)
-                        return JSON.parse(JSON.stringify(response)) as EngineResponse<unknown>
-                    }
-                    finally {
-                        await progressService.shutdown()
-                    }
-                })
-
-                if (result.error) {
-                    const isLogSizeExceeded = result.error instanceof LogSizeExceededError
-                    if (!isLogSizeExceeded) {
-                        console.error(result.error)
-                    }
-                    const status = isLogSizeExceeded
-                        ? EngineResponseStatus.LOG_SIZE_EXCEEDED
-                        : EngineResponseStatus.INTERNAL_ERROR
-                    return {
-                        response: undefined,
-                        status,
-                        error: inspect(result.error),
-                    }
+                progressService.init()
+                try {
+                    const response = await execute(operationType, operation)
+                    return JSON.parse(JSON.stringify(response)) as EngineResponse<unknown>
                 }
-
-                return result.data
+                finally {
+                    await progressService.shutdown()
+                }
             },
         })
 
