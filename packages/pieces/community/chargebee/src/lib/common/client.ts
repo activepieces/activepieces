@@ -46,13 +46,12 @@ export function cleanObject(
  * Serialize a plain object to an application/x-www-form-urlencoded string.
  * Keys are passed through as-is (so bracket notation like
  * `subscription_items[item_price_id][0]` is preserved), while values are
- * percent-encoded by URLSearchParams.
+ * percent-encoded manually with encodeURIComponent.
  */
 function toFormEncoded(body: Record<string, unknown>): string {
   return Object.entries(body)
     .map(
-      ([key, value]) =>
-        `${encodeURIComponent(key)}=${encodeURIComponent(String(value))}`
+      ([key, value]) => `${key}=${encodeURIComponent(String(value))}`
     )
     .join('&');
 }
