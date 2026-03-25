@@ -3926,6 +3926,16 @@
         "tslib": "^2.3.0",
       },
     },
+    "packages/pieces/community/luma": {
+      "name": "@activepieces/piece-luma",
+      "version": "0.1.0",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/lusha": {
       "name": "@activepieces/piece-lusha",
       "version": "0.1.4",
@@ -8607,6 +8617,8 @@
     "@activepieces/piece-loops": ["@activepieces/piece-loops@workspace:packages/pieces/community/loops"],
 
     "@activepieces/piece-lucidya": ["@activepieces/piece-lucidya@workspace:packages/pieces/community/lucidya"],
+
+    "@activepieces/piece-luma": ["@activepieces/piece-luma@workspace:packages/pieces/community/luma"],
 
     "@activepieces/piece-lusha": ["@activepieces/piece-lusha@workspace:packages/pieces/community/lusha"],
 

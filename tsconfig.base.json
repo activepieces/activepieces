@@ -656,6 +656,9 @@
       "@activepieces/piece-lusha": [
         "packages/pieces/community/lusha/src/index.ts"
       ],
+      "@activepieces/piece-luma": [
+        "packages/pieces/community/luma/src/index.ts"
+      ],
       "@activepieces/piece-magical-api": [
         "packages/pieces/community/magical-api/src/index.ts"
       ],
