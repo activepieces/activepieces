@@ -1,7 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { pendoAuth } from '../auth';
-import { pendoRequest } from '../common/client';
 
 export const trackEvent = createAction({
   auth: pendoAuth,
@@ -44,16 +43,21 @@ export const trackEvent = createAction({
       type: 'track',
       event: type,
       visitorId,
-      accountId: accountId ?? undefined,
+      ...(accountId ? { accountId } : {}),
       timestamp: timestamp ?? Date.now(),
       properties: properties ?? {},
     };
 
-    return await pendoRequest(
-      String(context.auth),
-      HttpMethod.POST,
-      '/track',
+    const response = await httpClient.sendRequest({
+      method: HttpMethod.POST,
+      url: 'https://app.pendo.io/data/track',
+      headers: {
+        'x-pendo-integration-key': String(context.auth),
+        'Content-Type': 'application/json',
+      },
       body,
-    );
+    });
+
+    return response.body;
   },
 });
