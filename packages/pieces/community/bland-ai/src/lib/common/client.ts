@@ -6,7 +6,7 @@ export async function blandApiCall<T>(params: {
   method: HttpMethod;
   path: string;
   body?: unknown;
-  query?: Record<string, string | undefined>;
+  query?: Record<string, string>;
 }): Promise<T> {
   const response = await httpClient.sendRequest<T>({
     method: params.method,

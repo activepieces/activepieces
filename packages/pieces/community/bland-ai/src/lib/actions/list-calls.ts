@@ -29,15 +29,17 @@ export const listCalls = createAction({
   async run(context) {
     const { limit, fromNumber, toNumber } = context.propsValue;
     const safeLimit = Math.max(1, Math.min(100, limit ?? 10));
+    const query: Record<string, string> = {
+      limit: String(safeLimit),
+      ...(fromNumber ? { from: fromNumber } : {}),
+      ...(toNumber ? { to: toNumber } : {}),
+    };
+
     return blandApiCall({
       apiKey: context.auth.secret_text,
       method: HttpMethod.GET,
       path: '/calls',
-      query: {
-        limit: String(safeLimit),
-        from: fromNumber || undefined,
-        to: toNumber || undefined,
-      },
+      query,
     });
   },
 });
