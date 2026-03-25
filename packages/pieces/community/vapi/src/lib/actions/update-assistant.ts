@@ -28,7 +28,18 @@ export const updateAssistant = createAction({
     }),
     instructions: Property.LongText({
       displayName: 'System Prompt / Instructions',
-      description: 'The system prompt that guides the assistant behavior.',
+      description:
+        'Optional system prompt. This is only applied when you also provide explicit model fields below to avoid overwriting the existing model config.',
+      required: false,
+    }),
+    model: Property.ShortText({
+      displayName: 'Model',
+      description: 'Optional model name (e.g. gpt-4o). Required if updating model config.',
+      required: false,
+    }),
+    provider: Property.ShortText({
+      displayName: 'Provider',
+      description: 'Optional model provider (e.g. openai). Required if updating model config.',
       required: false,
     }),
     endCallMessage: Property.LongText({
@@ -45,21 +56,29 @@ export const updateAssistant = createAction({
   },
   async run(context) {
     const client = createVapiClient(context.auth.secret_text);
-    const { assistantId, name, firstMessage, instructions, endCallMessage, overrides } =
-      context.propsValue;
+    const {
+      assistantId,
+      name,
+      firstMessage,
+      instructions,
+      model,
+      provider,
+      endCallMessage,
+      overrides,
+    } = context.propsValue;
 
-    const request: Vapi.UpdateAssistantDto = {
-      id: assistantId,
-    };
+    const request: Vapi.UpdateAssistantDto = {};
 
     if (name) request.name = name;
     if (firstMessage) request.firstMessage = firstMessage;
     if (endCallMessage) request.endCallMessage = endCallMessage;
-    if (instructions) {
+    if (model || provider) {
       request.model = {
-        provider: 'openai',
-        model: 'gpt-4o',
-        messages: [{ role: 'system', content: instructions }],
+        ...(provider ? { provider } : {}),
+        ...(model ? { model } : {}),
+        ...(instructions
+          ? { messages: [{ role: 'system', content: instructions }] }
+          : {}),
       } as Vapi.UpdateAssistantDtoModel;
     }
 
@@ -73,7 +92,7 @@ export const updateAssistant = createAction({
       }
     }
 
-    const assistant = await client.assistants.update(request);
+    const assistant = await client.assistants.update(assistantId, request);
     return assistant;
   },
 });
