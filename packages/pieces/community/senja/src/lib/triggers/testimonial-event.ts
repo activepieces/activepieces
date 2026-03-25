@@ -3,6 +3,7 @@ import {
   Property,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
+import { MarkdownVariant } from '@activepieces/shared';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { senjaAuth } from '../../';
 import { senjaApiCall } from '../common';
@@ -15,12 +16,16 @@ export const testimonialEventTrigger = createTrigger({
     'Triggers when a testimonial is created, updated, or deleted in Senja.',
   props: {
     instructions: Property.MarkDown({
-      value: `### Setup Instructions
+      value: `## Setup Instructions
 
-1. After activating this flow, copy the **Webhook URL** shown below.
-2. In Senja, go to **Automate** in the left sidebar and scroll down to the Webhooks section.
-3. Create a new webhook, paste the URL, and select which events to send.
-4. Save — your flow will now trigger automatically.`,
+1. In Senja, go to **Automate** in the left sidebar and scroll down to the Webhooks section.
+2. Click **Create webhook**.
+3. Paste the following URL into the webhook URL field:
+\`\`\`text
+{{webhookUrl}}
+\`\`\`
+4. Select the events you want to receive and click **Save**.`,
+      variant: MarkdownVariant.INFO,
     }),
     events: Property.StaticMultiSelectDropdown({
       displayName: 'Filter Events',
