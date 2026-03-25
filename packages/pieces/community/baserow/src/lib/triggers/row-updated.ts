@@ -44,13 +44,20 @@ export const rowUpdatedTrigger = createTrigger({
     // Manual cleanup — user deletes the webhook in Baserow UI.
   },
   async run(context) {
-    const body = context.payload.body as {
-      items?: unknown[];
-      old_items?: unknown[];
-    };
-    return (body.items ?? []).map((item, i) => ({
+  const body = context.payload.body as {
+    items?: Record<string, unknown>[];
+    old_items?: Record<string, unknown>[];
+  };
+
+  return (body.items ?? [])
+    .map((item, i) => ({
       row: item,
-      previous: body.old_items?.[i] ?? null,
-    }));
-  },
+      previous: (body.old_items ?? [])[i] ?? null,
+    }))
+    .filter(({ row, previous }) => {
+      if (!previous) return true;
+      return JSON.stringify(row) !== JSON.stringify(previous);
+    });
+},
+
 });
