@@ -16,18 +16,12 @@ export const getCustomerAction = createAction({
     }),
     email: Property.ShortText({
       displayName: 'Email',
-      description: 'If Customer ID is not provided, search customers by email client-side across paginated results.',
+      description: 'If Customer ID is not provided, search customers by email using Gorgias server-side filtering.',
       required: false,
-    }),
-    maxPages: Property.Number({
-      displayName: 'Max Pages to Search',
-      description: 'Only used for email search. Prevents unbounded pagination. Defaults to 20 pages.',
-      required: false,
-      defaultValue: 20,
     }),
   },
   async run(context) {
-    const { customerId, email, maxPages } = context.propsValue;
+    const { customerId, email } = context.propsValue;
 
     if (customerId) {
       return await gorgiasApiCall({
@@ -44,7 +38,6 @@ export const getCustomerAction = createAction({
     const customer = await findCustomerByEmail(
       context.auth.props,
       email,
-      maxPages ?? 20,
     );
 
     if (!customer) {
