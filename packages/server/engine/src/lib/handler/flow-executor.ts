@@ -1,5 +1,6 @@
 import { performance } from 'node:perf_hooks'
 import { EngineGenericError, ExecuteFlowOperation, ExecutionType, FlowAction, FlowActionType, FlowRunStatus, FlowTrigger, GenericStepOutput, isNil, StepOutputStatus } from '@activepieces/shared'
+import dayjs from 'dayjs'
 import { loggingUtils } from '../helper/logging-utils'
 import { triggerHelper } from '../helper/trigger-helper'
 import { progressService } from '../services/progress.service'
@@ -39,6 +40,12 @@ export const flowExecutor = {
         const trigger = input.flowVersion.trigger
         if (input.executionType === ExecutionType.BEGIN) {
             await triggerHelper.executeOnStart(trigger, constants, input.triggerPayload)
+            await progressService.sendUpdate({
+                engineConstants: constants,
+                flowExecutorContext: executionState,
+                stepNameToUpdate: trigger.name,
+                startTime: dayjs().toISOString(),
+            })
             executionState = applyLogSizeLimitIfExceeded(executionState, trigger)
             if (executionState.verdict.status !== FlowRunStatus.RUNNING) {
                 return executionState
