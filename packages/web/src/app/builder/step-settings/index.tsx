@@ -89,6 +89,8 @@ const StepSettingsContainer = () => {
       const cleanedCurrentValues = formUtils.removeUndefinedFromInput(
         currentValuesRef.current,
       );
+      const valid = Object.keys(result.errors).length === 0;
+      cleanedNewValues.valid = valid;
       if (
         cleanedNewValues.type === FlowTriggerType.EMPTY ||
         (isNil(pieceModel) &&
@@ -105,7 +107,6 @@ const StepSettingsContainer = () => {
       ) {
         return result;
       }
-      const valid = Object.keys(result.errors).length === 0;
       //We need to copy the object because the form is using the same object reference
       currentValuesRef.current = JSON.parse(JSON.stringify(cleanedNewValues));
       if (cleanedNewValues.type === FlowTriggerType.PIECE) {

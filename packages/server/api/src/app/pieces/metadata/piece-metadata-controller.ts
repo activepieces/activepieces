@@ -9,6 +9,8 @@ import {
     GetPieceRequestWithScopeParams,
     isNil,
     ListPiecesRequestQuery,
+    ListPieceVersionsRequestParams,
+    ListPieceVersionsResponse,
     LocalesEnum,
     PieceCategory,
     PieceOptionRequest,
@@ -16,6 +18,7 @@ import {
     PrincipalType,
     RegistryPiecesRequestQuery,
     SampleDataFileType,
+    SeekPage,
     WorkerJobType,
 } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
@@ -76,6 +79,36 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
             }
         })
     })
+
+    app.get(
+        '/:scope/:name/versions',
+        ListPieceVersionsWithScopeRequest,
+        async (req): Promise<SeekPage<ListPieceVersionsResponse>> => {
+            const { name, scope } = req.params
+            const decodeScope = decodeURIComponent(scope)
+            const decodedName = decodeURIComponent(name)
+            const platformId = getPlatformId(req.principal)
+            return pieceMetadataService(req.log).listVersions({
+                name: `${decodeScope}/${decodedName}`,
+                platformId,
+            })
+           
+        },
+    )
+
+    app.get(
+        '/:name/versions',
+        ListPieceVersionsRequest,
+        async (req): Promise<SeekPage<ListPieceVersionsResponse>> => {
+            const { name } = req.params
+            const decodedName = decodeURIComponent(name)
+            const platformId = getPlatformId(req.principal)
+            return pieceMetadataService(req.log).listVersions({
+                name: decodedName,
+                platformId,
+            })
+        },
+    )
 
     app.get(
         '/:scope/:name',
@@ -212,6 +245,24 @@ const OptionsPieceRequest = {
         security: securityAccess.project([PrincipalType.USER], undefined, {
             type: ProjectResourceType.BODY,
         }),
+    },
+}
+
+const ListPieceVersionsRequest = {
+    config: {
+        security: securityAccess.unscoped(ALL_PRINCIPAL_TYPES),
+    },
+    schema: {
+        params: ListPieceVersionsRequestParams,
+    },
+}
+
+const ListPieceVersionsWithScopeRequest = {
+    config: {
+        security: securityAccess.unscoped(ALL_PRINCIPAL_TYPES),
+    },
+    schema: {
+        params: GetPieceRequestWithScopeParams,
     },
 }
 

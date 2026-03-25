@@ -31,8 +31,10 @@
 - **No deprecated APIs** — Before using any library method or export, check its JSDoc. If it carries a `@deprecated` tag, use the recommended replacement instead. Examples: prefer `z.enum` over `z.nativeEnum`.
 - **Go-style error handling** — Use `tryCatch` / `tryCatchSync` from `@activepieces/shared`
 - **Helper functions** — Define non-exported helpers outside of const declarations
+- **Named parameters** — Always use a single destructured object parameter instead of positional arguments. This applies to every function with more than one parameter, regardless of type. It prevents mix-ups at the call site and makes future additions non-breaking.
 - **File order**: Imports → Exported functions/constants → Helper functions → Types
 - **Comments** — Only comment to explain *why* something is done, never *what* the code is doing. Code should be self-explanatory; comments that restate the code add noise and rot.
+- **Util file exports** — When a util file exposes multiple functions or constants, do not export them individually. Instead, group them into a single named `const` and export that one object (e.g. `export const myUtils = { fn1, fn2 }`). Callers use `myUtils.fn1()` at the call site.
 
 ## Git Push
 

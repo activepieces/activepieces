@@ -110,3 +110,12 @@ export const AddPieceRequestBody = z.union([
 ])
 
 export type AddPieceRequestBody = z.infer<typeof AddPieceRequestBody>
+
+export const ListPieceVersionsRequestParams = z.object({
+    name: z.string(),
+})
+
+export type ListPieceVersionsRequestParams = z.infer<typeof ListPieceVersionsRequestParams>
+
+export const ListPieceVersionsResponse = z.object({ version: z.string() })
+export type ListPieceVersionsResponse = z.infer<typeof ListPieceVersionsResponse>

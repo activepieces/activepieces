@@ -340,6 +340,13 @@ export const createFlowState = (
             request: defaultValues,
           });
           selectStepByName('trigger');
+          applyOperation({
+            type: FlowOperationType.UPDATE_SAMPLE_DATA_INFO,
+            request: {
+              stepName: 'trigger',
+              sampleDataSettings: undefined,
+            },
+          });
           break;
         }
         case FlowOperationType.ADD_ACTION: {
@@ -388,6 +395,13 @@ export const createFlowState = (
                 customLogoUrl,
               },
               valid: defaultValues.valid,
+            },
+          });
+          applyOperation({
+            type: FlowOperationType.UPDATE_SAMPLE_DATA_INFO,
+            request: {
+              stepName: operation.stepName,
+              sampleDataSettings: undefined,
             },
           });
           removeStepTestListener(operation.stepName);

@@ -29,6 +29,7 @@ import {
   PropertyExecutionType,
   PropertySettings,
   PieceTriggerSettings,
+  AUTHENTICATION_PROPERTY_NAME,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { z, ZodType } from 'zod';
@@ -153,7 +154,7 @@ function getDefaultValueForProperties({
   existingInput: Record<string, unknown>;
   propertySettings?: Record<string, PropertySettings>;
 }): Record<string, unknown> {
-  return Object.entries(props).reduce<Record<string, unknown>>(
+  const defaultValues = Object.entries(props).reduce<Record<string, unknown>>(
     (defaultValues, [propertyName, property]) => {
       defaultValues[propertyName] =
         //we specifically check for undefined because null is a valid value
@@ -169,6 +170,10 @@ function getDefaultValueForProperties({
     },
     {},
   );
+  if(existingInput[AUTHENTICATION_PROPERTY_NAME]) {
+    defaultValues[AUTHENTICATION_PROPERTY_NAME] = existingInput[AUTHENTICATION_PROPERTY_NAME];
+  }
+  return defaultValues;
 }
 
 function buildConnectionSchema(auth: PieceAuthProperty) {

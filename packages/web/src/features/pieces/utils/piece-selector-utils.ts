@@ -1,4 +1,8 @@
-import { piecePropertiesUtils } from '@activepieces/pieces-framework';
+import {
+  PieceAuthProperty,
+  PiecePropertyMap,
+  piecePropertiesUtils,
+} from '@activepieces/pieces-framework';
 import {
   FlowAction,
   FlowActionType,
@@ -20,6 +24,7 @@ import {
   FlowVersion,
   FlowOperationType,
   isManualPieceTrigger,
+  AUTHENTICATION_PROPERTY_NAME,
 } from '@activepieces/shared';
 import { useRef } from 'react';
 
@@ -52,6 +57,24 @@ const isPieceActionOrTrigger = (
   );
 };
 
+const isPieceStepInputValid = ({
+  props,
+  auth,
+  input,
+  requireAuth,
+}: {
+  props: PiecePropertyMap;
+  auth: PieceAuthProperty | PieceAuthProperty[] | undefined;
+  input: Record<string, unknown>;
+  requireAuth: boolean;
+}): boolean => {
+  const schema = piecePropertiesUtils.buildSchema(props, auth);
+  const hasAuth = !isNil(auth);
+  const authValid =
+    !requireAuth || !hasAuth || !isNil(input[AUTHENTICATION_PROPERTY_NAME]);
+  return schema.safeParse(input).success && authValid;
+};
+
 const isStepInitiallyValid = (
   pieceSelectorItem: PieceSelectorItem,
   overrideDefaultSettings?: StepSettings,
@@ -66,14 +89,12 @@ const isStepInitiallyValid = (
           ? overrideDefaultSettings.input
           : undefined;
       const input = overridingInput ?? getInitalStepInput(pieceSelectorItem);
-      const schema = piecePropertiesUtils.buildSchema(
-        pieceSelectorItem.actionOrTrigger.props,
-        pieceSelectorItem.pieceMetadata.auth,
-      );
-      const isValid = schema.safeParse(input).success;
-      const needsAuth = pieceSelectorItem.actionOrTrigger.requireAuth;
-      const hasAuth = !isNil(pieceSelectorItem.pieceMetadata.auth);
-      return isValid && (!needsAuth || !hasAuth);
+      return isPieceStepInputValid({
+        props: pieceSelectorItem.actionOrTrigger.props,
+        auth: pieceSelectorItem.pieceMetadata.auth,
+        input,
+        requireAuth: pieceSelectorItem.actionOrTrigger.requireAuth,
+      });
     }
     case FlowActionType.LOOP_ON_ITEMS: {
       if (
@@ -349,6 +370,7 @@ const getStepNameFromOperationType = (
 export const pieceSelectorUtils = {
   getDefaultStepValues,
   useAdjustPieceListHeightToAvailableSpace,
+  isPieceStepInputValid,
   isMcpToolTrigger,
   isChatTrigger,
   removeHiddenActions,

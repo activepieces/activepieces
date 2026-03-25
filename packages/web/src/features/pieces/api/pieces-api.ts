@@ -10,8 +10,10 @@ import {
   GetPieceRequestParams,
   GetPieceRequestQuery,
   ListPiecesRequestQuery,
+  ListPieceVersionsResponse,
   PackageType,
   PieceOptionRequest,
+  SeekPage,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 
@@ -87,6 +89,11 @@ export const piecesApi = {
     return api.post<PieceMetadataModel>('/v1/pieces', formData, undefined, {
       'Content-Type': 'multipart/form-data',
     });
+  },
+  listVersions(name: string): Promise<SeekPage<ListPieceVersionsResponse>> {
+    return api.get<SeekPage<ListPieceVersionsResponse>>(
+      `/v1/pieces/${encodeURIComponent(name)}/versions`,
+    );
   },
   delete(id: string) {
     return api.delete(`/v1/pieces/${id}`);

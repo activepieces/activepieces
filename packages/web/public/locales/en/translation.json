@@ -1410,5 +1410,10 @@
   "Activation failed, invalid license key": "Activation failed, invalid license key",
   "Today": "Today",
   "Yesterday": "Yesterday",
-  "Configure credentials for {managerName} secret manager.": "Configure credentials for {managerName} secret manager."
+  "Configure credentials for {managerName} secret manager.": "Configure credentials for {managerName} secret manager.",
+  "Change Version": "Change Version",
+  "Search versions...": "Search versions...",
+  "The selected version does not include the current action or trigger. Please choose a different version.": "The selected version does not include the current action or trigger. Please choose a different version.",
+  "The step input will be reset and the step will need to be retested.": "The step input will be reset and the step will need to be retested.",
+  "Apply": "Apply"
 }

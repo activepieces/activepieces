@@ -9,6 +9,7 @@ const _updateSampleDataInfo = (flowVersion: FlowVersion, request: UpdateSampleDa
         if (step.name !== request.stepName) {
             return step
         }
+        
         return {
             ...step,
             settings: {

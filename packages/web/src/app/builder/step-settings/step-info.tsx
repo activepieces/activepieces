@@ -5,10 +5,16 @@ import {
   FlowTrigger,
   FlowTriggerType,
   flowStructureUtil,
+  flowPieceUtil,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { ChevronLeftIcon, ChevronRightIcon, Info } from 'lucide-react';
-import React from 'react';
+import {
+  ArrowUpDown,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  Info,
+} from 'lucide-react';
+import React, { useState } from 'react';
 
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Button } from '@/components/ui/button';
@@ -27,6 +33,8 @@ import {
 
 import { useBuilderStateContext } from '../builder-hooks';
 
+import { ChangeVersionDialog } from './change-piece-version-dialog.tsx/change-version-dialog';
+
 type StepInfoProps = {
   step: FlowAction | FlowTrigger;
 };
@@ -36,11 +44,18 @@ const StepInfo: React.FC<StepInfoProps> = ({ step }) => {
     step,
   });
 
+  const readonly = useBuilderStateContext((state) => state.readonly);
+  const [versionDialogOpen, setVersionDialogOpen] = useState(false);
+
   const isPiece =
     stepMetadata?.type === FlowActionType.PIECE ||
     stepMetadata?.type === FlowTriggerType.PIECE;
   const pieceVersion = isPiece
     ? (stepMetadata as PieceStepMetadata)?.pieceVersion
+    : undefined;
+
+  const exactVersion = pieceVersion
+    ? flowPieceUtil.getExactVersion(pieceVersion)
     : undefined;
 
   return (
@@ -66,14 +81,44 @@ const StepInfo: React.FC<StepInfoProps> = ({ step }) => {
               </Tooltip>
             )}
         </div>
-        {pieceVersion && (
-          <div className="text-xs text-muted-foreground shrink-0">
-            v{pieceVersion}
+        {exactVersion && (
+          <div className="flex items-center gap-1 shrink-0">
+            <span className="text-xs text-muted-foreground">
+              v{exactVersion}
+            </span>
+            {!readonly && isPiece && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-6"
+                    onClick={() => setVersionDialogOpen(true)}
+                  >
+                    <ArrowUpDown className="size-3.5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  {t('Change Version')}
+                </TooltipContent>
+              </Tooltip>
+            )}
           </div>
         )}
       </div>
       <PreviousOrNextButton isNext={false} />
       <PreviousOrNextButton isNext={true} />
+
+      {(step.type === FlowActionType.PIECE ||
+        step.type === FlowTriggerType.PIECE) &&
+        exactVersion && (
+          <ChangeVersionDialog
+            open={versionDialogOpen}
+            onOpenChange={setVersionDialogOpen}
+            step={step}
+            currentVersion={exactVersion}
+          />
+        )}
     </div>
   );
 };

@@ -16,7 +16,7 @@ export enum SampleDataDataType {
 export const SaveSampleDataRequest = z.object({
     stepName: z.string(),
     payload: z.unknown(),
-    type: z.nativeEnum(SampleDataFileType),
+    type: z.enum(SampleDataFileType),
 })
 export type SaveSampleDataRequest = z.infer<typeof SaveSampleDataRequest>
 
@@ -25,7 +25,7 @@ export const GetSampleDataRequest = z.object({
     flowVersionId: z.string(),
     stepName: z.string(),
     projectId: z.string(),
-    type: z.nativeEnum(SampleDataFileType),
+    type: z.enum(SampleDataFileType),
 })
 export type GetSampleDataRequest = z.infer<typeof GetSampleDataRequest>
 
@@ -58,7 +58,7 @@ export const SampleDataSetting = z.object(
         sampleDataInputFileId: z.string().optional(),
         lastTestDate: z.string().optional(),
     },
-).passthrough()
+)
 
 export type SampleDataSettings = z.infer<typeof SampleDataSetting>
 
