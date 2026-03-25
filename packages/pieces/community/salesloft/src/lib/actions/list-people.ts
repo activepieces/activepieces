@@ -11,9 +11,9 @@ export const listPeopleAction = createAction({
   auth: salesloftAuth,
   props: {
     email_addresses: Property.ShortText({
-      displayName: 'Filter by Email Addresses',
+      displayName: 'Filter by Email Address',
       description:
-        'Comma-separated list of email addresses to filter results.',
+        'An email address to filter results by. Returns only people matching this email.',
       required: false,
     }),
     per_page: Property.Number({
@@ -39,7 +39,7 @@ export const listPeopleAction = createAction({
       queryParams['page'] = String(propsValue.page);
     }
     if (propsValue.email_addresses) {
-      queryParams['email_addresses'] = propsValue.email_addresses;
+      queryParams['email_addresses[]'] = propsValue.email_addresses.trim();
     }
 
     return salesloftRequest({

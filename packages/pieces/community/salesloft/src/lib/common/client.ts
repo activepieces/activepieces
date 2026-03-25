@@ -1,5 +1,4 @@
 import {
-  AuthenticationType,
   HttpMethod,
   QueryParams,
   httpClient,
