@@ -1,4 +1,4 @@
-import { Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
 import { BaseModelSchema } from '../../core/common/base-model'
 import { ApId } from '../../core/common/id-generator'
 import { UserWithMetaInformation } from '../../core/user/user'
@@ -7,22 +7,20 @@ import { ProjectRole } from '../../management/project-role/project-role'
 
 export type ProjectMemberId = string
 
-export const ProjectMember = Type.Object({
+export const ProjectMember = z.object({
     ...BaseModelSchema,
     platformId: ApId,
     userId: ApId,
-    projectId: Type.String(),
+    projectId: z.string(),
     projectRoleId: ApId,
-}, {
-    description: 'Project member is which user is assigned to a project.',
-})
+}).describe('Project member is which user is assigned to a project.')
 
-export type ProjectMember = Static<typeof ProjectMember>
+export type ProjectMember = z.infer<typeof ProjectMember>
 
-export const ProjectMemberWithUser = Type.Composite([ProjectMember, Type.Object({
+export const ProjectMemberWithUser = ProjectMember.extend({
     user: UserWithMetaInformation,
     projectRole: ProjectRole,
     project: ProjectMetaData,
-})])
+})
 
-export type ProjectMemberWithUser = Static<typeof ProjectMemberWithUser>
+export type ProjectMemberWithUser = z.infer<typeof ProjectMemberWithUser>

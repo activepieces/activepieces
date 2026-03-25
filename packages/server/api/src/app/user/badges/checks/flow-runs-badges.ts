@@ -16,7 +16,7 @@ export const flowRunsBadgesCheck: BadgeCheck = {
         if (isNil(triggeredBy)) {
             return { userId: null, badges }
         }
-        const status = flowRunEvent.data.flowRun.status
+        const status = flowRunEvent.data.flowRun.status as FlowRunStatus
 
         if (isFailedState(status)) {
             badges.push('back-again')

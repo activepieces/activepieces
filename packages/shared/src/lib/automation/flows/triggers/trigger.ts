@@ -1,4 +1,4 @@
-import { Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
 import { VersionType } from '../../pieces'
 import { CodeActionSettings, LoopOnItemsActionSettings, PieceActionSettings, RouterActionSettings } from '../actions/action'
 import { PropertySettings } from '../properties'
@@ -7,17 +7,17 @@ import { SampleDataSetting } from '../sample-data'
 export const AUTHENTICATION_PROPERTY_NAME = 'auth'
 
 
-export const PieceTriggerSettings = Type.Object({
-    sampleData: Type.Optional(SampleDataSetting),
-    propertySettings: Type.Record(Type.String(), PropertySettings),
-    customLogoUrl: Type.Optional(Type.String()),
-    pieceName: Type.String({}),
+export const PieceTriggerSettings = z.object({
+    sampleData: SampleDataSetting.optional(),
+    propertySettings: z.record(z.string(), PropertySettings),
+    customLogoUrl: z.string().optional(),
+    pieceName: z.string(),
     pieceVersion: VersionType,
-    triggerName: Type.Optional(Type.String({})),
-    input: Type.Record(Type.String({}), Type.Any()),
+    triggerName: z.string().optional(),
+    input: z.record(z.string(), z.any()),
 })
 
-export type PieceTriggerSettings = Static<typeof PieceTriggerSettings>
+export type PieceTriggerSettings = z.infer<typeof PieceTriggerSettings>
 
 
 export enum FlowTriggerType {
@@ -26,36 +26,37 @@ export enum FlowTriggerType {
 }
 
 const commonProps = {
-    name: Type.String({}),
-    valid: Type.Boolean({}),
-    displayName: Type.String({}),
-    nextAction: Type.Optional(Type.Any()),
+    name: z.string(),
+    valid: z.boolean(),
+    displayName: z.string(),
+    nextAction: z.any().optional(),
+    lastUpdatedDate: z.string(),
 }
 
 
-export const EmptyTrigger = Type.Object({
+export const EmptyTrigger = z.object({
     ...commonProps,
-    type: Type.Literal(FlowTriggerType.EMPTY),
-    settings: Type.Any(),
+    type: z.literal(FlowTriggerType.EMPTY),
+    settings: z.any(),
 })
 
-export type EmptyTrigger = Static<typeof EmptyTrigger>
+export type EmptyTrigger = z.infer<typeof EmptyTrigger>
 
 
-export const PieceTrigger = Type.Object({
+export const PieceTrigger = z.object({
     ...commonProps,
-    type: Type.Literal(FlowTriggerType.PIECE),
+    type: z.literal(FlowTriggerType.PIECE),
     settings: PieceTriggerSettings,
 })
 
-export type PieceTrigger = Static<typeof PieceTrigger>
+export type PieceTrigger = z.infer<typeof PieceTrigger>
 
-export const FlowTrigger = Type.Union([
+export const FlowTrigger = z.union([
     PieceTrigger,
     EmptyTrigger,
 ])
 
-export type FlowTrigger = Static<typeof FlowTrigger>
+export type FlowTrigger = z.infer<typeof FlowTrigger>
 
 
 export type StepSettings =

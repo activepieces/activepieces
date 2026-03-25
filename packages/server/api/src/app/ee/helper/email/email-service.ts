@@ -26,7 +26,7 @@ export const emailService = (log: FastifyBaseLogger) => ({
             platformRole: userInvitation.platformRole,
         })
         const { email, platformId } = userInvitation
-        const { name: projectName, role } = await getEntityNameForInvitation(userInvitation)
+        const { name: projectName, role } = await getEntityNameForInvitation(userInvitation, log)
         await emailSender(log).send({
             emails: [email],
             platformId,
@@ -52,7 +52,7 @@ export const emailService = (log: FastifyBaseLogger) => ({
             platformRole: userInvitation.platformRole,
         })
         const { email, platformId, projectId } = userInvitation
-        const { name: projectName, role } = await getEntityNameForInvitation(userInvitation)
+        const { name: projectName, role } = await getEntityNameForInvitation(userInvitation, log)
         const redirectPath = projectId ? `/projects/${projectId}/flows` : '/flows'
         const loginLink = await domainHelper.getPublicUrl({
             platformId,
@@ -66,6 +66,34 @@ export const emailService = (log: FastifyBaseLogger) => ({
                 vars: {
                     projectName,
                     role,
+                    loginLink,
+                },
+            },
+        })
+    },
+
+    async sendScimUserWelcome({ email, platformId }: SendScimUserWelcomeArgs): Promise<void> {
+        if (EDITION_IS_NOT_PAID) {
+            return
+        }
+
+        log.info({
+            message: '[emailService#sendScimUserWelcome] sending welcome email',
+            email,
+            platformId,
+        })
+
+        const loginLink = await domainHelper.getPublicUrl({
+            platformId,
+            path: 'sign-in',
+        })
+
+        await emailSender(log).send({
+            emails: [email],
+            platformId,
+            templateData: {
+                name: 'scim-user-welcome',
+                vars: {
                     loginLink,
                 },
             },
@@ -162,7 +190,7 @@ export const emailService = (log: FastifyBaseLogger) => ({
     },
 
     async sendBadgeAwardedEmail(userId: string, badgeName: string): Promise<void> {
-        const user = await userService.getMetaInformation({ id: userId })
+        const user = await userService(log).getMetaInformation({ id: userId })
 
         if (isNil(user) || !isValidEmail(user.email)) {
             log.info({ userId, email: user?.email }, '[emailService#sendBadgeAwardedEmail] Skipping: external user has no valid email')
@@ -185,10 +213,10 @@ export const emailService = (log: FastifyBaseLogger) => ({
     },
 })
 
-async function getEntityNameForInvitation(userInvitation: UserInvitation): Promise<{ name: string, role: string }> {
+async function getEntityNameForInvitation(userInvitation: UserInvitation, log: FastifyBaseLogger): Promise<{ name: string, role: string }> {
     switch (userInvitation.type) {
         case InvitationType.PLATFORM: {
-            const platform = await platformService.getOneOrThrow(userInvitation.platformId)
+            const platform = await platformService(log).getOneOrThrow(userInvitation.platformId)
             assertNotNullOrUndefined(userInvitation.platformRole, 'platformRole')
             return {
                 name: platform.name,
@@ -201,7 +229,7 @@ async function getEntityNameForInvitation(userInvitation: UserInvitation): Promi
             const projectRole = await projectRoleService.getOneOrThrowById({
                 id: userInvitation.projectRoleId,
             })
-            const project = await projectService.getOneOrThrow(userInvitation.projectId)
+            const project = await projectService(log).getOneOrThrow(userInvitation.projectId)
             return {
                 name: project.displayName,
                 role: capitalizeFirstLetter(projectRole.name),
@@ -232,6 +260,11 @@ type SendOtpArgs = {
     platformId: string | null
     otp: string
     userIdentity: UserIdentity
+}
+
+type SendScimUserWelcomeArgs = {
+    email: string
+    platformId: string
 }
 
 type IssueCreatedArgs = {

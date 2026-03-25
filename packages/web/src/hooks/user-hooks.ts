@@ -1,8 +1,13 @@
 import { isNil, UserWithBadges } from '@activepieces/shared';
-import { QueryClient, useQuery, useSuspenseQuery } from '@tanstack/react-query';
+import {
+  QueryClient,
+  useMutation,
+  useQuery,
+  useSuspenseQuery,
+} from '@tanstack/react-query';
 
+import { userApi } from '@/api/user-api';
 import { authenticationSession } from '@/lib/authentication-session';
-import { userApi } from '@/lib/user-api';
 
 export const userHooks = {
   useCurrentUser: () => {
@@ -52,5 +57,21 @@ export const userHooks = {
   getCurrentUserPlatformRole: () => {
     const { data: user } = userHooks.useCurrentUser();
     return user?.platformRole;
+  },
+};
+
+export const userMutations = {
+  useUploadProfilePicture: ({
+    onSuccess,
+    onError,
+  }: {
+    onSuccess: () => void;
+    onError: (error: Error) => void;
+  }) => {
+    return useMutation({
+      mutationFn: (file: File) => userApi.updateMe(file),
+      onSuccess,
+      onError,
+    });
   },
 };

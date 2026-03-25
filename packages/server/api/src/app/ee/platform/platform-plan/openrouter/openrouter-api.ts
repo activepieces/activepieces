@@ -1,5 +1,5 @@
-import { AppSystemProp } from '@activepieces/server-common'
 import { system } from '../../../../helper/system/system'
+import { AppSystemProp } from '../../../../helper/system/system-props'
 
 const OPENROUTER_BASE_URL = 'https://openrouter.ai/api/v1'
 

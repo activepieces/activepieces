@@ -1,15 +1,15 @@
-import { assertNotNullOrUndefined } from '@activepieces/shared';
-import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { toast } from 'sonner';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
+import { LoadingSpinner } from '@/components/custom/spinner';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { LoadingSpinner } from '@/components/ui/spinner';
-import { ConnectGitDialog } from '@/features/project-releases/components/connect-git-dialog';
-import { gitSyncApi } from '@/features/project-releases/lib/git-sync-api';
-import { gitSyncHooks } from '@/features/project-releases/lib/git-sync-hooks';
+import {
+  ConnectGitDialog,
+  gitSyncHooks,
+  gitSyncMutations,
+} from '@/features/project-releases';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 
@@ -23,11 +23,7 @@ const EnvironmentSettings = () => {
     platform.plan.environmentsEnabled,
   );
 
-  const { mutate } = useMutation({
-    mutationFn: () => {
-      assertNotNullOrUndefined(gitSync, 'gitSync');
-      return gitSyncApi.disconnect(gitSync.id);
-    },
+  const { mutate } = gitSyncMutations.useDisconnectGitSync({
     onSuccess: () => {
       refetch();
       toast.success(t('Git Connection Removed'), {
@@ -70,7 +66,7 @@ const EnvironmentSettings = () => {
                     <div className="flex flex-col gap-2">
                       <Button
                         size={'sm'}
-                        onClick={() => mutate()}
+                        onClick={() => gitSync && mutate(gitSync.id)}
                         className="w-32 text-destructive"
                         variant={'basic'}
                       >

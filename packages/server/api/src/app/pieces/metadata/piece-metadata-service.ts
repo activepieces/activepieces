@@ -43,7 +43,7 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
                 locale: params.locale,
             })
             const piecesWithTags = await enrichTags(params.platformId, translatedPieces, params.includeTags)
-            const filteredPieces = await pieceListUtils.filterPieces({
+            const filteredPieces = await pieceListUtils(log).filterPieces({
                 ...params,
                 pieces: piecesWithTags,
                 suggestionType: params.suggestionType,
@@ -73,7 +73,7 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
                 return undefined
             }
 
-            const isFiltered = await enterpriseFilteringUtils.isFiltered({
+            const isFiltered = await enterpriseFilteringUtils(log).isFiltered({
                 piece,
                 projectId,
                 platformId,
@@ -420,3 +420,4 @@ type GetExactPieceVersionParams = {
 type RegistryParams = {
     release: string
 }
+

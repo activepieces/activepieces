@@ -1,13 +1,12 @@
 import {
   createAction,
   DynamicPropsValue,
-  OAuth2PropertyValue,
 } from '@activepieces/pieces-framework';
 import { Client } from '@notionhq/client';
 import { NotionFieldMapping } from '../common/models';
 
 import { notionAuth } from '../auth';
-import { notionCommon } from '../common';
+import { getNotionToken, notionCommon } from '../common';
 export const updateDatabaseItem = createAction({
   auth: notionAuth,
   name: 'update_database_item',
@@ -28,7 +27,7 @@ export const updateDatabaseItem = createAction({
     const notionFields: DynamicPropsValue = {};
 
     const notion = new Client({
-      auth: (context.auth as OAuth2PropertyValue).access_token,
+      auth: getNotionToken(context.auth),
       notionVersion: '2022-02-22',
     });
     const { properties } = await notion.databases.retrieve({

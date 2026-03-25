@@ -1,4 +1,4 @@
-import { piecesHooks } from '../lib/pieces-hooks';
+import { piecesHooks } from '../hooks/pieces-hooks';
 
 type PieceDisplayNameProps = {
   pieceName: string;
@@ -13,4 +13,4 @@ const PieceDisplayName = ({ pieceName, fallback }: PieceDisplayNameProps) => {
   return <span>{pieceModel?.displayName || fallback || pieceName}</span>;
 };
 
-export default PieceDisplayName;
+export { PieceDisplayName };

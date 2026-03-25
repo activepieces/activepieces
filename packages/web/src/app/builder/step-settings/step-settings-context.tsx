@@ -9,7 +9,6 @@ import {
   FlowTrigger,
   PropertyExecutionType,
 } from '@activepieces/shared';
-import { TObject, Type } from '@sinclair/typebox';
 import {
   createContext,
   ReactNode,
@@ -19,10 +18,11 @@ import {
   useState,
 } from 'react';
 import { UseFormReturn } from 'react-hook-form';
+import { z, ZodObject } from 'zod';
 
-import { formUtils } from '../../../features/pieces/lib/form-utils';
-const numberReplacement = 'anyOf[0]items';
-const stringReplacement = 'properties.';
+import { formUtils } from '@/features/pieces';
+const numberReplacement = 'def.options.0.element';
+const stringReplacement = 'shape.';
 const createUpdatedSchemaKey = (propertyKey: string) => {
   return propertyKey
     .split('.')
@@ -41,7 +41,7 @@ const createUpdatedSchemaKey = (propertyKey: string) => {
 export type StepSettingsContextState = {
   selectedStep: FlowAction | FlowTrigger;
   pieceModel: PieceMetadataModel | undefined;
-  formSchema: TObject<any>;
+  formSchema: ZodObject<any>;
   updateFormSchema: (key: string, newFieldSchema: PiecePropertyMap) => void;
   updatePropertySettingsSchema: (
     schema: PiecePropertyMap,
@@ -65,8 +65,8 @@ export const StepSettingsProvider = ({
   pieceModel,
   children,
 }: StepSettingsProviderProps) => {
-  const [formSchema, setFormSchema] = useState<TObject<any>>(
-    Type.Object(Type.Unknown()),
+  const [formSchema, setFormSchema] = useState<ZodObject<any>>(
+    z.object({}) as ZodObject<any>,
   );
   const formSchemaInitializedRef = useRef<boolean>(false);
 
@@ -77,7 +77,7 @@ export const StepSettingsProvider = ({
       pieceModel ?? null,
     );
     formSchemaInitializedRef.current = true;
-    setFormSchema(schema as TObject<any>);
+    setFormSchema(schema as ZodObject<any>);
   }
 
   const updateFormSchema = useCallback(
@@ -87,7 +87,10 @@ export const StepSettingsProvider = ({
           newFieldPropertyMap,
           undefined,
         );
-        const currentSchema = { ...prevSchema };
+        const currentSchema = Object.create(
+          Object.getPrototypeOf(prevSchema),
+          Object.getOwnPropertyDescriptors(prevSchema),
+        );
         const keyUpdated = createUpdatedSchemaKey(key);
         setAtPath(currentSchema, keyUpdated, newFieldSchema);
         return currentSchema;
@@ -113,8 +116,6 @@ export const StepSettingsProvider = ({
   };
   return (
     <StepSettingsContext.Provider
-      //need to re-render the form because sample data is changed outside of it, this will be fixed once we refactor the state
-      key={selectedStep.settings.sampleData?.lastTestDate}
       value={{
         selectedStep,
         pieceModel,

@@ -1,3 +1,4 @@
+import dayjs from 'dayjs'
 import { applyFunctionToValuesSync, isString } from '../../../core/common'
 import { FlowAction } from '../actions/action'
 import { FlowVersion } from '../flow-version'
@@ -68,6 +69,7 @@ function clone(step: FlowAction, oldNameToNewName: Record<string, string>): Flow
             sampleData: {},
         }
     }
+    step.lastUpdatedDate = dayjs().toISOString()
     return step
 }
 

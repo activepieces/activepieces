@@ -1,8 +1,6 @@
 import { Tag } from '@activepieces/shared';
-import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
-import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -15,7 +13,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { piecesTagsApi } from '@/features/platform-admin/lib/pieces-tags';
+import { piecesTagMutations } from '@/features/platform-admin';
 
 type CreateTagDialogProps = {
   onTagCreated: (tag: Tag) => void;
@@ -32,15 +30,9 @@ export function CreateTagDialog({
 }: CreateTagDialogProps) {
   const [tagName, setTagName] = useState('');
 
-  const { mutate, isPending } = useMutation({
-    mutationFn: (name: string) => piecesTagsApi.upsert({ name }),
-    onSuccess: (data) => {
-      toast.success(t('Tag created'), {
-        description: t(`Tag "${data.name}" has been created successfully.`),
-      });
-      onTagCreated(data);
-      setIsOpen(false);
-    },
+  const { mutate, isPending } = piecesTagMutations.useCreateTag({
+    onTagCreated,
+    setIsOpen,
   });
 
   const handleSubmit = (e: React.FormEvent) => {

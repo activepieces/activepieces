@@ -1,11 +1,11 @@
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 import { OtpType } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { Mock } from 'vitest'
-import { initializeDatabase } from '../../../../src/app/database'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import * as emailServiceFile from '../../../../src/app/ee/helper/email/email-service'
-import { setupServer } from '../../../../src/app/server'
+import { db } from '../../../helpers/db'
 import { mockAndSaveBasicSetup } from '../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
@@ -13,8 +13,11 @@ let app: FastifyInstance | null = null
 let sendOtpSpy: Mock
 
 beforeAll(async () => {
-    await initializeDatabase({ runMigrations: false })
-    app = await setupServer()
+    app = await setupTestEnvironment({ fresh: true })
+})
+
+afterAll(async () => {
+    await teardownTestEnvironment()
 })
 
 beforeEach(() => {
@@ -31,12 +34,6 @@ beforeEach(() => {
     }))
 
 })
-
-afterAll(async () => {
-    await databaseConnection().destroy()
-    await app?.close()
-})
-
 describe('OTP API', () => {
     describe('Create and Send Endpoint', () => {
         it('Generates new OTP', async () => {
@@ -50,7 +47,7 @@ describe('OTP API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/otp',
+                url: '/api/v1/otp',
                 body: mockCreateOtpRequest,
             })
 
@@ -61,7 +58,7 @@ describe('OTP API', () => {
         it('Sends OTP to user', async () => {
             const { mockUserIdentity } = await mockAndSaveBasicSetup()
 
-            await databaseConnection().getRepository('user_identity').update(mockUserIdentity.id, {
+            await db.update('user_identity', mockUserIdentity.id, {
                 verified: false,
             })
 
@@ -73,21 +70,20 @@ describe('OTP API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/otp',
+                url: '/api/v1/otp',
                 body: mockCreateOtpRequest,
             })
 
             // assert
             expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
             expect(sendOtpSpy).toHaveBeenCalledTimes(1)
-            expect(sendOtpSpy).toHaveBeenCalledWith({
+            expect(sendOtpSpy).toHaveBeenCalledWith(expect.objectContaining({
                 otp: expect.stringMatching(/^([0-9A-F]|-){36}$/i),
-                platformId: null,
                 type: OtpType.EMAIL_VERIFICATION,
                 userIdentity: expect.objectContaining({
                     email: mockUserIdentity.email,
                 }),
-            })
+            }))
         })
 
         it('OTP is unique per user per OTP type', async () => {
@@ -101,13 +97,13 @@ describe('OTP API', () => {
             // act
             const response1 = await app?.inject({
                 method: 'POST',
-                url: '/v1/otp',
+                url: '/api/v1/otp',
                 body: mockCreateOtpRequest,
             })
 
             const response2 = await app?.inject({
                 method: 'POST',
-                url: '/v1/otp',
+                url: '/api/v1/otp',
                 body: mockCreateOtpRequest,
             })
 

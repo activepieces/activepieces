@@ -8,9 +8,9 @@ import {
   BuilderStore,
   createBuilderStore,
 } from '@/app/builder/builder-hooks';
-import { useSocket } from '@/components/socket-provider';
+import { useSocket } from '@/components/providers/socket-provider';
+import { projectHooks } from '@/features/projects';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { projectHooks } from '@/hooks/project-collection';
 
 type BuilderStateProviderProps = Omit<
   React.PropsWithChildren<BuilderInitialState>,
@@ -23,7 +23,7 @@ export function BuilderStateProvider({
   inputSampleData: sampleDataInput,
   ...props
 }: BuilderStateProviderProps) {
-  const storeRef = useRef<BuilderStore>();
+  const storeRef = useRef<BuilderStore>(undefined);
   const { checkAccess } = useAuthorization();
   const readonly = !checkAccess(Permission.WRITE_FLOW) || props.readonly;
   projectHooks.useReloadPageIfProjectIdChanged(props.flow.projectId);

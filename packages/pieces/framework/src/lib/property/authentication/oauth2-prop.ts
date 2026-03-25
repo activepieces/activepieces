@@ -1,5 +1,5 @@
 import { BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE, OAuth2GrantType } from '@activepieces/shared';
-import { Type } from '@sinclair/typebox';
+import { z } from 'zod';
 import { ShortTextProperty } from '../input/text-property';
 import { SecretTextProperty } from './secret-text-property';
 import { BasePieceAuthSchema } from './common';
@@ -13,19 +13,20 @@ export enum OAuth2AuthorizationMethod {
   BODY = 'BODY',
 }
 
-const OAuthProp = Type.Union([
+const OAuthProp = z.union([
   ShortTextProperty,
   SecretTextProperty,
   StaticDropdownProperty,
 ])
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type OAuthProp =
   | ShortTextProperty<boolean>
   | SecretTextProperty<boolean>
   | StaticDropdownProperty<any, boolean>;
 
 
-export const OAuth2Props = Type.Record(Type.String(), OAuthProp);
+export const OAuth2Props = z.record(z.string(), OAuthProp);
 
 export type OAuth2Props = {
   [key: string]: OAuthProp;
@@ -34,17 +35,17 @@ export type OAuth2Props = {
 type OAuthPropsValue<T extends OAuth2Props> = StaticPropsValue<T>;
 
 
-const OAuth2ExtraProps = Type.Object({
-  props: Type.Optional(Type.Record(Type.String(), OAuthProp)),
-  authUrl: Type.String(),
-  tokenUrl: Type.String(),
-  scope: Type.Array(Type.String()),
-  prompt: Type.Optional(Type.Union([Type.Literal('none'), Type.Literal('consent'), Type.Literal('login'), Type.Literal('omit')])),
-  pkce: Type.Optional(Type.Boolean()),
-  pkceMethod: Type.Optional(Type.Union([Type.Literal('plain'), Type.Literal('S256')])),
-  authorizationMethod: Type.Optional(Type.Enum(OAuth2AuthorizationMethod)),
-  grantType: Type.Optional(Type.Union([Type.Enum(OAuth2GrantType), Type.Literal(BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE)])),
-  extra: Type.Optional(Type.Record(Type.String(), Type.String())),
+const OAuth2ExtraProps = z.object({
+  props: z.record(z.string(), OAuthProp).optional(),
+  authUrl: z.string(),
+  tokenUrl: z.string(),
+  scope: z.array(z.string()),
+  prompt: z.union([z.literal('none'), z.literal('consent'), z.literal('login'), z.literal('omit')]).optional(),
+  pkce: z.boolean().optional(),
+  pkceMethod: z.union([z.literal('plain'), z.literal('S256')]).optional(),
+  authorizationMethod: z.nativeEnum(OAuth2AuthorizationMethod).optional(),
+  grantType: z.union([z.nativeEnum(OAuth2GrantType), z.literal(BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE)]).optional(),
+  extra: z.record(z.string(), z.string()).optional(),
 })
 
 type OAuth2ExtraProps = {
@@ -52,7 +53,7 @@ type OAuth2ExtraProps = {
   authUrl: string
   tokenUrl: string
   scope: string[]
-  prompt?: 'none' |  'consent' | 'login' | 'omit' 
+  prompt?: 'none' |  'consent' | 'login' | 'omit'
   pkce?: boolean
   pkceMethod?: 'plain' | 'S256'
   authorizationMethod?: OAuth2AuthorizationMethod
@@ -60,23 +61,25 @@ type OAuth2ExtraProps = {
   extra?: Record<string, string>,
 }
 
-export const OAuth2PropertyValue = Type.Object({
-  access_token: Type.String(),
-  props: Type.Optional(OAuth2Props),
-  data: Type.Record(Type.String(), Type.Any())
+export const OAuth2PropertyValue = z.object({
+  access_token: z.string(),
+  props: OAuth2Props.optional(),
+  data: z.record(z.string(), z.any())
 })
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type OAuth2PropertyValue<T extends OAuth2Props = any> = {
   access_token: string;
   props?: OAuthPropsValue<T>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data: Record<string, any>;
 };
 
-export const OAuth2Property = Type.Composite([
-  BasePieceAuthSchema,
-  OAuth2ExtraProps,
-  TPropertyValue(OAuth2PropertyValue, PropertyType.OAUTH2)
-])
+export const OAuth2Property = z.object({
+  ...BasePieceAuthSchema.shape,
+  ...OAuth2ExtraProps.shape,
+  ...TPropertyValue(OAuth2PropertyValue, PropertyType.OAUTH2).shape,
+})
 
 export type OAuth2Property<
   T extends OAuth2Props
@@ -87,4 +90,3 @@ export type OAuth2Property<
     PropertyType.OAUTH2,
     true
   >;
-

@@ -1,17 +1,17 @@
-import { useMutation } from '@tanstack/react-query';
 import { HttpStatusCode } from 'axios';
 import { t } from 'i18next';
 import { MailCheck, MailX } from 'lucide-react';
 import { useEffect, useState, useRef } from 'react';
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 
+import { FullLogo } from '@/components/custom/full-logo';
+import { LoadingSpinner } from '@/components/custom/spinner';
 import { Card } from '@/components/ui/card';
-import { FullLogo } from '@/components/ui/full-logo';
 import { internalErrorToast } from '@/components/ui/sonner';
-import { LoadingSpinner } from '@/components/ui/spinner';
 import { usePartnerStack } from '@/hooks/use-partner-stack';
 import { api } from '@/lib/api';
-import { authenticationApi } from '@/lib/authentication-api';
+
+import { authMutations } from '../hooks/auth-hooks';
 
 const VerifyEmail = () => {
   const [isExpired, setIsExpired] = useState(false);
@@ -22,13 +22,7 @@ const VerifyEmail = () => {
   const hasMutated = useRef(false);
   const { reportSignup } = usePartnerStack();
 
-  const { mutate, isPending } = useMutation({
-    mutationFn: async () => {
-      return await authenticationApi.verifyEmail({
-        otp: otp!,
-        identityId: identityId!,
-      });
-    },
+  const { mutate, isPending } = authMutations.useVerifyEmail({
     onSuccess: ({ email, firstName }) => {
       reportSignup(email, firstName);
       setTimeout(() => navigate('/sign-in'), 5000);
@@ -50,7 +44,7 @@ const VerifyEmail = () => {
 
   useEffect(() => {
     if (otp && identityId && !hasMutated.current) {
-      mutate();
+      mutate({ otp, identityId });
       hasMutated.current = true;
     }
   }, [otp, identityId, mutate]);

@@ -4,7 +4,6 @@ import {
   AgentToolType,
   AgentFlowTool,
 } from '@activepieces/shared';
-import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
@@ -21,9 +20,8 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { flowsApi } from '@/features/flows/lib/flows-api';
-import { authenticationSession } from '@/lib/authentication-session';
 
+import { agentQueries } from '../../hooks/agent-hooks';
 import { useFlowToolDialogStore } from '../stores/flows-tools';
 
 import { CreateMcpFlowButton } from './create-mcp-flow-button';
@@ -49,18 +47,7 @@ export function AgentFlowToolDialog({
     setSearchQuery,
   } = useFlowToolDialogStore();
 
-  const projectId = authenticationSession.getProjectId();
-
-  const { data } = useQuery({
-    queryKey: ['flows', projectId],
-    queryFn: async () => {
-      return await flowsApi.list({
-        cursor: undefined,
-        limit: 1000,
-        projectId: projectId!,
-      });
-    },
-  });
+  const { data } = agentQueries.useFlowsForAgent();
 
   const flows = useMemo(() => {
     return data?.data.filter(

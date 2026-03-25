@@ -1,4 +1,4 @@
-import { Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
 
 
 export enum TriggerRunStatus {
@@ -8,14 +8,14 @@ export enum TriggerRunStatus {
     TIMED_OUT = 'TIMED_OUT',
 }
 
-export const TriggerStatusReport = Type.Object({
-    pieces: Type.Record(Type.String(), Type.Object({
-        dailyStats: Type.Record(Type.String(), Type.Object({
-            success: Type.Number(),
-            failure: Type.Number(),
+export const TriggerStatusReport = z.object({
+    pieces: z.record(z.string(), z.object({
+        dailyStats: z.record(z.string(), z.object({
+            success: z.number(),
+            failure: z.number(),
         })),
-        totalRuns: Type.Number(),
+        totalRuns: z.number(),
     })),
 })
 
-export type TriggerStatusReport = Static<typeof TriggerStatusReport>
+export type TriggerStatusReport = z.infer<typeof TriggerStatusReport>

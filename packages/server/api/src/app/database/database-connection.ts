@@ -1,4 +1,3 @@
-import { AppSystemProp, DatabaseType } from '@activepieces/server-common'
 import { isNil } from '@activepieces/shared'
 import {
     DataSource,
@@ -33,6 +32,7 @@ import { FlowRunEntity } from '../flows/flow-run/flow-run-entity'
 import { FlowVersionEntity } from '../flows/flow-version/flow-version-entity'
 import { FolderEntity } from '../flows/folder/folder.entity'
 import { system } from '../helper/system/system'
+import { AppSystemProp } from '../helper/system/system-props'
 import { McpServerEntity } from '../mcp/mcp-entity'
 import { PieceMetadataEntity } from '../pieces/metadata/piece-metadata-entity'
 import { PieceTagEntity } from '../pieces/tags/pieces/piece-tag.entity'
@@ -52,6 +52,7 @@ import { TriggerSourceEntity } from '../trigger/trigger-source/trigger-source-en
 import { UserBadgeEntity } from '../user/badges/badge-entity'
 import { UserEntity } from '../user/user-entity'
 import { UserInvitationEntity } from '../user-invitations/user-invitation.entity'
+import { DatabaseType } from './database-type'
 import { createPGliteDataSource } from './pglite-connection'
 import { createPostgresDataSource } from './postgres-connection'
 
@@ -117,7 +118,15 @@ export const commonProperties = {
     entities: getEntities(),
 }
 
-let _databaseConnection: DataSource | null = null
+const DB_GLOBAL_KEY = '__AP_DB_CONNECTION__'
+
+function getPersistedConnection(): DataSource | null {
+    return ((globalThis as Record<string, unknown>)[DB_GLOBAL_KEY] as DataSource) ?? null
+}
+
+function setPersistedConnection(ds: DataSource | null): void {
+    (globalThis as Record<string, unknown>)[DB_GLOBAL_KEY] = ds
+}
 
 const createDataSource = (): DataSource => {
     switch (databaseType) {
@@ -130,8 +139,15 @@ const createDataSource = (): DataSource => {
 }
 
 export const databaseConnection = (): DataSource => {
-    if (isNil(_databaseConnection)) {
-        _databaseConnection = createDataSource()
+    const existing = getPersistedConnection()
+    if (!isNil(existing)) {
+        return existing
     }
-    return _databaseConnection
+    const ds = createDataSource()
+    setPersistedConnection(ds)
+    return ds
+}
+
+export function resetDatabaseConnection(): void {
+    setPersistedConnection(null)
 }

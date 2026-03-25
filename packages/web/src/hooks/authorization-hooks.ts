@@ -7,11 +7,11 @@ import {
 } from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
 
+import { authenticationApi } from '@/api/authentication-api';
+import { platformApi } from '@/api/platforms-api';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { userHooks } from '@/hooks/user-hooks';
-import { authenticationApi } from '@/lib/authentication-api';
 import { authenticationSession } from '@/lib/authentication-session';
-import { platformApi } from '@/lib/platforms-api';
 
 export const useAuthorization = () => {
   const { data: edition } = flagsHooks.useFlag(ApFlagId.EDITION);

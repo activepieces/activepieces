@@ -24,9 +24,11 @@ function getActionOrThrow(name: string, flowRoot: Step): FlowAction {
     const step = getStepOrThrow(name, flowRoot)
     if (!isAction(step.type)) {
         throw new ActivepiecesError({
-            code: ErrorCode.STEP_NOT_FOUND,
+            code: ErrorCode.ENTITY_NOT_FOUND,
             params: {
-                stepName: name,
+                entityType: 'step',
+                entityId: name,
+                message: 'Step is not an action',
             },
         })
     }
@@ -37,9 +39,11 @@ function getTriggerOrThrow(name: string, flowRoot: Step): FlowTrigger {
     const step = getStepOrThrow(name, flowRoot)
     if (!isTrigger(step.type)) {
         throw new ActivepiecesError({
-            code: ErrorCode.STEP_NOT_FOUND,
+            code: ErrorCode.ENTITY_NOT_FOUND,
             params: {
-                stepName: name,
+                entityType: 'step',
+                entityId: name,
+                message: 'Step is not a trigger',
             },
         })
     }
@@ -54,9 +58,11 @@ function getStepOrThrow(name: string, flowRoot: Step): Step {
     const step = getStep(name, flowRoot)
     if (isNil(step)) {
         throw new ActivepiecesError({
-            code: ErrorCode.STEP_NOT_FOUND,
+            code: ErrorCode.ENTITY_NOT_FOUND,
             params: {
-                stepName: name,
+                entityType: 'step',
+                entityId: name,
+                message: 'Step not found',
             },
         })
     }

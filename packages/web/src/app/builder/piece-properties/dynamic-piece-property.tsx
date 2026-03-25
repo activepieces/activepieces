@@ -11,8 +11,7 @@ import { useDeepCompareEffectNoCheck } from 'use-deep-compare-effect';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { SkeletonList } from '@/components/ui/skeleton';
-import { formUtils } from '@/features/pieces/lib/form-utils';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
+import { piecesHooks, formUtils } from '@/features/pieces';
 import { authenticationSession } from '@/lib/authentication-session';
 
 import { DynamicPropertiesErrorBoundary } from './dynamic-piece-properties-error-boundary';
@@ -191,6 +190,9 @@ const DynamicPropertiesImplementation = React.memo(
             disabled={props.disabled}
             propertySettings={props.propertySettings}
             dynamicPropsInfo={null}
+            onValueChange={() => {
+              form.trigger();
+            }}
           ></GenericPropertiesForm>
         )}
       </>

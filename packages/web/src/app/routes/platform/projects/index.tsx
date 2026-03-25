@@ -5,31 +5,33 @@ import {
 } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { CheckIcon, Package, Pencil, Plus, Trash } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { CheckIcon, Package, Pencil, Trash } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
-import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
+import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import {
   DataTable,
   RowDataWithActions,
   BulkAction,
-} from '@/components/ui/data-table';
+} from '@/components/custom/data-table';
+import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { PlusIcon } from '@/components/icons/plus';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { EditProjectDialog } from '@/features/projects/components/edit-project-dialog';
+import { globalConnectionsQueries } from '@/features/connections';
+import { EditProjectDialog, projectCollectionUtils } from '@/features/projects';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { projectCollectionUtils } from '@/hooks/project-collection';
-import { userHooks } from '@/hooks/user-hooks';
-import { formatUtils, validationUtils } from '@/lib/utils';
+import { formatUtils } from '@/lib/format-utils';
+import { validationUtils } from '@/lib/validation-utils';
 
 import { projectsTableColumns } from './columns';
 import { NewProjectDialog } from './new-project-dialog';
@@ -37,11 +39,23 @@ import { NewProjectDialog } from './new-project-dialog';
 export default function ProjectsPage() {
   const { platform } = platformHooks.useCurrentPlatform();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const isEnabled = platform.plan.teamProjectsLimit !== TeamProjectsLimit.NONE;
   const { project: currentProject } =
     projectCollectionUtils.useCurrentProject();
-  const { data: currentUser } = userHooks.useCurrentUser();
+
+  useEffect(() => {
+    if (!searchParams.has('type')) {
+      setSearchParams(
+        (prev) => {
+          const newParams = new URLSearchParams(prev);
+          newParams.set('type', ProjectType.TEAM);
+          return newParams;
+        },
+        { replace: true },
+      );
+    }
+  }, []);
 
   const displayNameFilter = searchParams.get('displayName') || undefined;
   const typeFilter = searchParams.getAll('type');
@@ -65,14 +79,30 @@ export default function ProjectsPage() {
   const [editDialogInitialValues, setEditDialogInitialValues] =
     useState<any>(null);
   const [editDialogProjectId, setEditDialogProjectId] = useState<string>('');
-
+  const { data: allGlobalConnectionsPage } =
+    globalConnectionsQueries.useGlobalConnections({
+      request: { limit: 9999 },
+      extraKeys: [],
+    });
+  const allProjectsWithGlobalConnectionsCount = useMemo(() => {
+    return allProjects.map((project) => ({
+      ...project,
+      globalConnectionsCount:
+        allGlobalConnectionsPage?.data?.filter((connection) =>
+          connection.projectIds.includes(project.id),
+        ).length ?? 0,
+    }));
+  }, [allProjects, allGlobalConnectionsPage?.data]);
   const columns = useMemo(
-    () => projectsTableColumns({ platform, currentUserId: currentUser?.id }),
-    [platform, currentUser?.id],
+    () =>
+      projectsTableColumns({
+        platform,
+      }),
+    [platform],
   );
 
   const columnsWithCheckbox: ColumnDef<
-    RowDataWithActions<ProjectWithLimits>
+    RowDataWithActions<ProjectWithLimits & { globalConnectionsCount: number }>
   >[] = [
     {
       id: 'select',
@@ -184,7 +214,10 @@ export default function ProjectsPage() {
   const bulkActions: BulkAction<ProjectWithLimits>[] = useMemo(
     () => [
       {
-        render: (_, resetSelection) => {
+        render: (
+          _: RowDataWithActions<ProjectWithLimits>[],
+          resetSelection: () => void,
+        ) => {
           const canDeleteAny = selectedRows.some(
             (row) =>
               row.id !== currentProject?.id &&
@@ -195,9 +228,10 @@ export default function ProjectsPage() {
               <ConfirmationDeleteDialog
                 title={t('Delete Projects')}
                 message={t(
-                  'Are you sure you want to delete the selected projects?',
+                  'The selected projects and all their data will be permanently deleted.',
                 )}
                 entityName={t('Projects')}
+                buttonText={t('Delete')}
                 mutationFn={async () => {
                   const deletableProjects = selectedRows.filter(
                     (row) =>
@@ -219,12 +253,12 @@ export default function ProjectsPage() {
               >
                 {selectedRows.length > 0 && (
                   <Button
-                    className="w-full mr-2"
+                    variant="ghost"
                     size="sm"
-                    variant="destructive"
+                    className="text-destructive hover:text-destructive"
                     disabled={!canDeleteAny}
                   >
-                    <Trash className="mr-2 w-4" />
+                    <Trash className="mr-1 w-4" />
                     {`${t('Delete')} (${selectedRows.length})`}
                   </Button>
                 )}
@@ -235,6 +269,17 @@ export default function ProjectsPage() {
       },
     ],
     [selectedRows, currentProject],
+  );
+
+  const toolbarButtons = useMemo(
+    () => [
+      <NewProjectDialog key="new-project">
+        <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm">
+          {t('New Project')}
+        </AnimatedIconButton>
+      </NewProjectDialog>,
+    ],
+    [],
   );
 
   const errorToastMessage = (error: unknown): string | undefined => {
@@ -295,17 +340,7 @@ export default function ProjectsPage() {
         <DashboardPageHeader
           title={t('Projects')}
           description={t('Manage your automation projects')}
-        >
-          <NewProjectDialog>
-            <Button
-              size="sm"
-              className="flex items-center justify-center gap-2"
-            >
-              <Plus className="size-4" />
-              {t('New Project')}
-            </Button>
-          </NewProjectDialog>
-        </DashboardPageHeader>
+        />
         <DataTable
           emptyStateTextTitle={t('No projects found')}
           emptyStateTextDescription={t(
@@ -338,10 +373,15 @@ export default function ProjectsPage() {
             },
           ]}
           columns={columnsWithCheckbox}
-          page={{ data: allProjects, next: null, previous: null }}
+          page={{
+            data: allProjectsWithGlobalConnectionsCount,
+            next: null,
+            previous: null,
+          }}
           isLoading={false}
           clientPagination={true}
           bulkActions={bulkActions}
+          toolbarButtons={toolbarButtons}
           actions={actions}
         />
         <EditProjectDialog

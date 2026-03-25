@@ -8,9 +8,8 @@ import { t } from 'i18next';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
+import { platformApi } from '@/api/platforms-api';
 import { authenticationSession } from '@/lib/authentication-session';
-
-import { platformApi } from '../lib/platforms-api';
 
 import { flagsHooks } from './flags-hooks';
 
@@ -24,6 +23,9 @@ export const platformHooks = {
       onSuccess: () => {
         toast.success(t('Account deleted successfully'));
         navigate('/sign-in');
+      },
+      onError: () => {
+        toast.error(t('Failed to delete account. Please try again.'));
       },
     });
   },

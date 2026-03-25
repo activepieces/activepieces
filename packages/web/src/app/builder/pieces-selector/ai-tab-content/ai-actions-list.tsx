@@ -8,15 +8,15 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
-import { useTelemetry } from '@/components/telemetry-provider';
+import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { flagsHooks } from '@/hooks/flags-hooks';
 import {
   PieceSelectorOperation,
   StepMetadataWithSuggestions,
-} from '@/lib/types';
+  usePieceSearchContext,
+} from '@/features/pieces';
+import { flagsHooks } from '@/hooks/flags-hooks';
 
-import { usePieceSearchContext } from '../../../../features/pieces/lib/piece-search-context';
 import { useBuilderStateContext } from '../../builder-hooks';
 import { convertStepMetadataToPieceSelectorItems } from '../piece-actions-or-triggers-list';
 

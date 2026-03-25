@@ -2,31 +2,17 @@ import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
 import { PieceType } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import {
-  CheckIcon,
-  Package,
-  Trash,
-  Puzzle,
-  Tag,
-  Hash,
-  GitBranch,
-} from 'lucide-react';
-import { useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Package, Trash, Puzzle, Tag, Hash, GitBranch } from 'lucide-react';
+import { useMemo, useState } from 'react';
 
 import { RequestTrial } from '@/app/components/request-trial';
-import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
+import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
+import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
+import { DataTableInputPopover } from '@/components/custom/data-table/data-table-input-popover';
+import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { LockedAlert } from '@/components/custom/locked-alert';
 import { Button } from '@/components/ui/button';
-import {
-  BulkAction,
-  DataTable,
-  RowDataWithActions,
-} from '@/components/ui/data-table';
-import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
-import { LockedAlert } from '@/components/ui/locked-alert';
-import { PieceIcon } from '@/features/pieces/components/piece-icon';
-import { piecesApi } from '@/features/pieces/lib/pieces-api';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
+import { piecesApi, PieceIcon, piecesHooks } from '@/features/pieces';
 import { platformHooks } from '@/hooks/platform-hooks';
 
 import { ManagePiecesDialog } from './manage-pieces-dialog';
@@ -41,8 +27,7 @@ const columns: ColumnDef<RowDataWithActions<PieceMetadataModelSummary>>[] = [
       return (
         <div className="text-left">
           <PieceIcon
-            circle={true}
-            size={'md'}
+            size={'sm'}
             border={true}
             displayName={row.original.displayName}
             logoUrl={row.original.logoUrl}
@@ -123,21 +108,26 @@ const columns: ColumnDef<RowDataWithActions<PieceMetadataModelSummary>>[] = [
 
 const PiecesSettings = () => {
   const { platform } = platformHooks.useCurrentPlatform();
-  const [searchParams] = useSearchParams();
-  const searchQuery = searchParams.get('name') ?? '';
+  const [searchQuery, setSearchQuery] = useState('');
   const { pieces, isLoading, refetch } = piecesHooks.usePieces({
     searchQuery,
   });
 
-  const bulkActions: BulkAction<PieceMetadataModelSummary>[] = useMemo(
-    () => [
-      {
-        render: () => {
-          return <ManagePiecesDialog onSuccess={() => refetch()} />;
-        },
-      },
-    ],
+  const toolbarButtons = useMemo(
+    () => [<ManagePiecesDialog key="manage" onSuccess={() => refetch()} />],
     [refetch],
+  );
+
+  const customFilters = useMemo(
+    () => [
+      <DataTableInputPopover
+        key="search"
+        title={t('Piece Name')}
+        filterValue={searchQuery}
+        handleFilterChange={setSearchQuery}
+      />,
+    ],
+    [searchQuery],
   );
 
   return (
@@ -151,7 +141,7 @@ const PiecesSettings = () => {
           button={
             <RequestTrial
               featureKey="ENTERPRISE_PIECES"
-              buttonVariant="outline-primary"
+              buttonVariant="basic"
             />
           }
         />
@@ -163,14 +153,7 @@ const PiecesSettings = () => {
         )}
         emptyStateIcon={<Package className="size-14" />}
         columns={columns}
-        filters={[
-          {
-            type: 'input',
-            title: t('Piece Name'),
-            accessorKey: 'name',
-            icon: CheckIcon,
-          },
-        ]}
+        customFilters={customFilters}
         page={{
           data: pieces ?? [],
           next: null,
@@ -178,7 +161,7 @@ const PiecesSettings = () => {
         }}
         isLoading={isLoading}
         hidePagination={true}
-        bulkActions={platform.plan.managePiecesEnabled ? bulkActions : []}
+        toolbarButtons={platform.plan.managePiecesEnabled ? toolbarButtons : []}
       />
     </div>
   );

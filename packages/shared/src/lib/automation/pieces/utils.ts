@@ -49,11 +49,12 @@ export const extractPieceFromModule = <T>(params: ExtractPieceFromModuleParams):
     }
 
     throw new ActivepiecesError({
-        code: ErrorCode.PIECE_NOT_FOUND,
+        code: ErrorCode.ENTITY_NOT_FOUND,
         params: {
-            pieceName,
-            pieceVersion,
-            message: `Failed to extract piece from module, found constructors: ${constructors.join(', ')}`,
+            entityType: 'piece',
+            entityId: pieceName,
+            message: `Failed to extract piece from module (version: ${pieceVersion}), found constructors: ${constructors.join(', ')}`,
+            extra: { pieceName, pieceVersion },
         },
     })
 }

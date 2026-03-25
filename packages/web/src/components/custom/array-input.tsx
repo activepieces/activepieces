@@ -1,10 +1,10 @@
-import { DragHandleDots2Icon } from '@radix-ui/react-icons';
 import { t } from 'i18next';
-import { Plus, TrashIcon } from 'lucide-react';
+import { GripVertical, Plus, TrashIcon } from 'lucide-react';
 import { nanoid } from 'nanoid';
 import React, { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
+import { TextWithIcon } from '@/components/custom/text-with-icon';
 import { Button } from '@/components/ui/button';
 import { FormControl, FormField, FormItem } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -13,7 +13,6 @@ import {
   SortableDragHandle,
   SortableItem,
 } from '@/components/ui/sortable';
-import { TextWithIcon } from '@/components/ui/text-with-icon';
 import { cn } from '@/lib/utils';
 
 type ArrayInputProps = {
@@ -123,10 +122,7 @@ const ArrayInput = React.memo(
                     disabled={disabled}
                     className={cn('shrink-0 size-8', thinInputs && 'size-7')}
                   >
-                    <DragHandleDots2Icon
-                      className="size-4"
-                      aria-hidden="true"
-                    />
+                    <GripVertical className="size-4" aria-hidden="true" />
                   </SortableDragHandle>
 
                   <FormField

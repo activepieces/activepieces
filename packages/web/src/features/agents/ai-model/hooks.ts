@@ -1,8 +1,7 @@
 import { AIProviderModel, AIProviderName, isNil } from '@activepieces/shared';
-import { Provider } from '@radix-ui/react-tooltip';
 import { useQuery } from '@tanstack/react-query';
 
-import { aiProviderApi } from '@/features/platform-admin/lib/ai-provider-api';
+import { aiProviderApi } from '@/features/platform-admin/api/ai-provider-api';
 
 type Provider =
   | 'activepieces'
@@ -12,27 +11,35 @@ type Provider =
   | 'openrouter'
   | 'cloudflare-gateway'
   | 'custom'
-  | 'azure';
+  | 'azure'
+  | 'x-ai';
 
 type AIModelType = 'text' | 'image';
 
 const OPENAI_MODELS = ['gpt-5.2', 'gpt-5.1', 'gpt-5-mini'] as const;
 
 const ANTHROPIC_MODELS = [
-  'claude-sonnet-4.5',
-  'claude-opus-4-5-20251101',
-  'claude-opus-4.5',
-  'claude-sonnet-4-5-20250929',
-  'claude-haiku-4.5',
   'claude-haiku-4-5-20251001',
+  'claude-haiku-4-5',
+  'claude-sonnet-4-6',
+  'claude-opus-4-6',
+] as const;
+
+const ANTHROPIC_OPENROUTER_MODELS = [
+  'claude-haiku-4-5-20251001',
+  'claude-haiku-4.5',
+  'claude-sonnet-4.6',
+  'claude-opus-4.6',
 ] as const;
 
 const GOOGLE_MODELS = [
-  'gemini-3-pro-preview',
-  'gemini-3-flash-preview',
-  'gemini-2.5-flash-preview-09-2025',
   'gemini-2.5-flash-lite-preview-09-2025',
+  'gemini-2.5-flash-preview-09-2025',
+  'gemini-3-flash-preview',
+  'gemini-3.1-pro-preview',
 ] as const;
+
+const X_AI_OPENROUTER_MODELS = ['grok-4.1-fast'] as const;
 
 const ALLOWED_MODELS_BY_PROVIDER: Partial<Record<Provider, readonly string[]>> =
   {
@@ -41,10 +48,11 @@ const ALLOWED_MODELS_BY_PROVIDER: Partial<Record<Provider, readonly string[]>> =
     google: GOOGLE_MODELS,
     activepieces: [
       ...OPENAI_MODELS.map((model) => `${AIProviderName.OPENAI}/${model}`),
-      ...ANTHROPIC_MODELS.map(
+      ...ANTHROPIC_OPENROUTER_MODELS.map(
         (model) => `${AIProviderName.ANTHROPIC}/${model}`,
       ),
       ...GOOGLE_MODELS.map((model) => `${AIProviderName.GOOGLE}/${model}`),
+      ...X_AI_OPENROUTER_MODELS.map((model) => `${'x-ai'}/${model}`),
     ],
   };
 

@@ -1,43 +1,7 @@
-import { apAxios } from '@activepieces/server-common'
-import { ActivepiecesError, ErrorCode, SecretManagerProviderId, SecretManagerProviderMetaData } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, SecretManagerProviderId } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { SecretManagerProvider } from './secret-manager-providers'
-
-export const HASHICORP_PROVIDER_METADATA: SecretManagerProviderMetaData = {
-    id: SecretManagerProviderId.HASHICORP,
-    name: 'Hashicorp Vault',
-    logo: 'https://cdn.activepieces.com/pieces/hashi-corp-vault.png',
-    fields: {
-        url: {
-            displayName: 'URL',
-            placeholder: 'http://localhost:8200',
-            type: 'text',
-        },
-        namespace: {
-            displayName: 'Namespace',
-            placeholder: 'namespace',
-            optional: true,
-            type: 'text',
-        },
-        roleId: {
-            displayName: 'Role ID',
-            placeholder: 'role-id',
-            type: 'password',
-        },
-        secretId: {
-            displayName: 'Secret ID',
-            placeholder: 'secret-id',
-            type: 'password',
-        },
-    },
-    secretParams: {
-        path: {
-            displayName: 'Secret Path',
-            placeholder: 'eg: secret/data/keys/my-key',
-            type: 'text',
-        },
-    },
-}
+import { apAxios } from '../../../helper/ap-axios'
+import { SecretManagerProvider, throwConnectionError, throwGetSecretError } from './secret-manager-providers'
 
 export const hashicorpProvider = (log: FastifyBaseLogger): SecretManagerProvider<SecretManagerProviderId.HASHICORP> => ({
     checkConnection: async (config) => {
@@ -51,23 +15,11 @@ export const hashicorpProvider = (log: FastifyBaseLogger): SecretManagerProvider
             },
             namespace: config.namespace,
         }).catch((error) => {
-            throw new ActivepiecesError({
-                code: ErrorCode.SECRET_MANAGER_CONNECTION_FAILED,
-                params: {
-                    message: error.message,
-                    provider: SecretManagerProviderId.HASHICORP,
-                },
-            })
+            throwConnectionError({ error, provider: SecretManagerProviderId.HASHICORP, log })
         })
         const token = response.data?.auth?.client_token
         if (!token) {
-            throw new ActivepiecesError({
-                code: ErrorCode.SECRET_MANAGER_CONNECTION_FAILED,
-                params: {
-                    message: 'No token received',
-                    provider: SecretManagerProviderId.HASHICORP,
-                },
-            })
+            throwConnectionError({ error: 'No token received', provider: SecretManagerProviderId.HASHICORP, log })
         }
         await vaultApi({
             url: `${url}/v1/sys/mounts`,
@@ -75,13 +27,8 @@ export const hashicorpProvider = (log: FastifyBaseLogger): SecretManagerProvider
             method: 'GET',
             namespace: config.namespace,
         }).catch((error) => {
-            throw new ActivepiecesError({
-                code: ErrorCode.SECRET_MANAGER_CONNECTION_FAILED,
-                params: {
-                    message: 'Permission denied. make sure the app role policies has the necessary permissions ' + error.message,
-                    provider: SecretManagerProviderId.HASHICORP,
-                },
-            })
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+            throwConnectionError({ error: `Permission denied. make sure the app role policies has the necessary permissions ${errorMessage}`, provider: SecretManagerProviderId.HASHICORP, log })
         })
         return token
     },
@@ -92,7 +39,7 @@ export const hashicorpProvider = (log: FastifyBaseLogger): SecretManagerProvider
         return Promise.resolve()
     },
     getSecret: async (request, config) => {
-        await hashicorpProvider(log).validatePathFormat(request.path)
+        await validatePathFormat(request.path)
         const pathParts = request.path.split('/')
         const mountPath = pathParts.slice(0, -1).join('/')
         const secretKey = pathParts.slice(-1)[0]
@@ -105,51 +52,28 @@ export const hashicorpProvider = (log: FastifyBaseLogger): SecretManagerProvider
             method: 'GET',
             namespace: config.namespace,
         }).catch((error) => {
-            log.error({
-                message: error.message,
-                provider: SecretManagerProviderId.HASHICORP,
-                request,
-            }, '[hashicorpProvider#getSecret]')
-            throw new ActivepiecesError({
-                code: ErrorCode.SECRET_MANAGER_GET_SECRET_FAILED,
-                params: {
-                    message: error.message,
-                    provider: SecretManagerProviderId.HASHICORP,
-                    request: { ...request, url: requestUrl },
-                },
-            })
+            throwGetSecretError({ error, path: request.path, provider: SecretManagerProviderId.HASHICORP, request: { ...request, url: requestUrl }, log })
         })
         const data = response.data?.data?.data
         if (!data || !data[secretKey]) {
-            log.error({
-                message: 'No secret found at requested path',
-                provider: SecretManagerProviderId.HASHICORP,
-                request,
-            }, '[hashicorpProvider#getSecret]')
-            throw new ActivepiecesError({
-                code: ErrorCode.SECRET_MANAGER_GET_SECRET_FAILED,
-                params: {
-                    message: 'No secret found at requested path',
-                    provider: SecretManagerProviderId.HASHICORP,
-                    request,
-                },
-            })
+            throwGetSecretError({ error: 'No secret found at requested path', path: request.path, provider: SecretManagerProviderId.HASHICORP, request, log })
         }
         return data[secretKey]
     },
-    validatePathFormat: async (key: string) => {
-        const path = removeEndingSlash(key)
-        const pathParts = path.split('/')
-        if (pathParts.length < 3 ) {
-            throw new ActivepiecesError({
-                code: ErrorCode.VALIDATION,
-                params: {
-                    message: 'Wrong path format . should be mount/data/path/key. got ' + key,
-                },
-            })
-        }
-    },
 })
+
+export async function validatePathFormat(key: string) {
+    const path = removeEndingSlash(key)
+    const pathParts = path.split('/')
+    if (pathParts.length < 3 ) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: {
+                message: 'Wrong path format . should be mount/data/path/key. got ' + key,
+            },
+        })
+    }
+}
 
 const removeEndingSlash = (path: string) => {
     return path.endsWith('/') ? path.slice(0, -1) : path

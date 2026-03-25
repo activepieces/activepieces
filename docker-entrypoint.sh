@@ -1,26 +1,67 @@
 #!/bin/sh
 
-# Set default values if not provided
-export AP_APP_TITLE="${AP_APP_TITLE:-Activepieces}"
-export AP_FAVICON_URL="${AP_FAVICON_URL:-https://cdn.activepieces.com/brand/favicon.ico}"
+export AP_CONTAINER_TYPE="${AP_CONTAINER_TYPE:-WORKER_AND_APP}"
+export AP_PORT="${AP_PORT:-80}"
+export AP_PM2_INSTANCES="${AP_PM2_INSTANCES:-1}"
 
-# Debug: Print environment variables
-echo "AP_APP_TITLE: $AP_APP_TITLE"
-echo "AP_FAVICON_URL: $AP_FAVICON_URL"
+echo "AP_CONTAINER_TYPE: $AP_CONTAINER_TYPE"
+echo "AP_PORT: $AP_PORT"
+echo "AP_PM2_INSTANCES: $AP_PM2_INSTANCES"
 
-# Process environment variables in index.html BEFORE starting services
-envsubst '${AP_APP_TITLE} ${AP_FAVICON_URL}' < /usr/share/nginx/html/index.html > /usr/share/nginx/html/index.html.tmp && \
-mv /usr/share/nginx/html/index.html.tmp /usr/share/nginx/html/index.html
-
-
-# Start Nginx server
-nginx -g "daemon off;" &
-
-# Start backend server
-if [ "$AP_CONTAINER_TYPE" = "APP" ] && [ "$AP_PM2_ENABLED" = "true" ]; then
-    echo "Starting backend server with PM2 (APP mode)"
-    pm2-runtime start packages/server/api/dist/src/bootstrap.js --name "activepieces-app" --node-args="--enable-source-maps" -i 0
-else
-    echo "Starting backend server with Node.js (WORKER mode or default)"
-    node --enable-source-maps packages/server/api/dist/src/bootstrap.js
+# Auto-generate worker token if not set and JWT secret is available
+if [ -z "$AP_WORKER_TOKEN" ] && [ -n "$AP_JWT_SECRET" ]; then
+    echo "Auto-generating AP_WORKER_TOKEN..."
+    export AP_WORKER_TOKEN=$(node -e "
+        const jwt = require('jsonwebtoken');
+        const crypto = require('crypto');
+        const token = jwt.sign(
+            { id: crypto.randomUUID(), type: 'WORKER' },
+            process.env.AP_JWT_SECRET,
+            { expiresIn: '100y', keyid: '1', algorithm: 'HS256', issuer: 'activepieces' }
+        );
+        process.stdout.write(token);
+    ")
 fi
+
+# Build PM2 ecosystem config
+APPS=""
+
+if [ "$AP_CONTAINER_TYPE" = "APP" ] || [ "$AP_CONTAINER_TYPE" = "WORKER_AND_APP" ]; then
+    if [ "$AP_PM2_INSTANCES" -gt 1 ] 2>/dev/null; then
+        APP_INSTANCES=$AP_PM2_INSTANCES
+        APP_EXEC_MODE="cluster"
+    else
+        APP_INSTANCES=1
+        APP_EXEC_MODE="fork"
+    fi
+    APPS="${APPS}
+    {
+        name: 'activepieces-app',
+        script: 'packages/server/api/dist/src/bootstrap.js',
+        node_args: '--enable-source-maps',
+        instances: ${APP_INSTANCES},
+        exec_mode: '${APP_EXEC_MODE}',
+        env: { AP_CONTAINER_TYPE: 'APP' }
+    },"
+fi
+
+if [ "$AP_CONTAINER_TYPE" = "WORKER" ] || [ "$AP_CONTAINER_TYPE" = "WORKER_AND_APP" ]; then
+    APPS="${APPS}
+    {
+        name: 'activepieces-worker',
+        script: 'packages/server/worker/dist/src/bootstrap.js',
+        node_args: '--enable-source-maps',
+        instances: 1,
+        exec_mode: 'fork'
+    },"
+fi
+
+cat > /tmp/ecosystem.config.js << ENDOFFILE
+module.exports = {
+    apps: [${APPS}
+    ]
+};
+ENDOFFILE
+
+echo "Starting Activepieces with PM2 (${AP_CONTAINER_TYPE} mode)"
+pm2-runtime start /tmp/ecosystem.config.js

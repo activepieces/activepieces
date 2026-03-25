@@ -4,6 +4,7 @@
     "rootDir": ".",
     "outDir": "../../../dist/packages/ee/embed-sdk",
     "declaration": true,
+    "declarationMap": true,
     "types": ["node"],
     "baseUrl": ".",
     "paths": {}

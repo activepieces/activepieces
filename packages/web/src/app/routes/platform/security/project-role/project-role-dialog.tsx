@@ -1,19 +1,19 @@
 import { Permission, ProjectRole, RoleType } from '@activepieces/shared';
-import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState, ReactNode } from 'react';
-import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { projectRoleApi } from '@/features/platform-admin/lib/project-role-api';
+import { projectRoleMutations } from '@/features/platform-admin';
 
 const initialPermissions = [
   {
@@ -123,31 +123,10 @@ export const ProjectRoleDialog = ({
     }
     return projectRole.permissions;
   });
-  console.log();
-
-  const { mutate } = useMutation({
-    mutationFn: async () => {
-      if (mode === 'create') {
-        await projectRoleApi.create({
-          name: roleName,
-          permissions,
-          type: RoleType.CUSTOM,
-        });
-      } else if (mode === 'edit' && projectRole) {
-        await projectRoleApi.update(projectRole.id, {
-          name: roleName,
-          permissions,
-        });
-      }
-    },
-    onSuccess: () => {
+  const { mutate } = projectRoleMutations.useUpsertProjectRole({
+    onSave: () => {
       setIsOpen(false);
       onSave();
-    },
-    onError: (error) => {
-      toast.error(t('Role name already exists'), {
-        duration: 3000,
-      });
     },
   });
 
@@ -212,7 +191,13 @@ export const ProjectRoleDialog = ({
   };
   const handleSubmit = () => {
     if (!disabled) {
-      mutate();
+      mutate({
+        mode,
+        roleId: projectRole?.id,
+        name: roleName,
+        permissions,
+        type: RoleType.CUSTOM,
+      });
     }
   };
 
@@ -220,13 +205,22 @@ export const ProjectRoleDialog = ({
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="w-full max-w-3xl">
-        <DialogTitle>
-          {mode === 'create'
-            ? t('Create New Role')
-            : (projectRole?.type === RoleType.DEFAULT
-                ? t('View ')
-                : t('Edit ')) + projectRole?.name}
-        </DialogTitle>
+        <DialogHeader>
+          <DialogTitle>
+            {mode === 'create'
+              ? t('Create Role')
+              : projectRole?.type === RoleType.DEFAULT
+              ? t('View Role: {name}', { name: projectRole?.name })
+              : t('Edit Role: {name}', { name: projectRole?.name })}
+          </DialogTitle>
+          <DialogDescription>
+            {mode === 'create'
+              ? t(
+                  'Define a custom role with specific permissions for project members.',
+                )
+              : t('Review and manage permissions for this role.')}
+          </DialogDescription>
+        </DialogHeader>
         <div className="grid space-y-4 mt-4">
           <div>
             <span className="text-sm font-medium text-foreground">
@@ -248,60 +242,66 @@ export const ProjectRoleDialog = ({
               {t('Permissions')}
             </span>
             <div className="overflow-y-auto p-2 rounded-md">
-              <ScrollArea className="h-[70vh] pr-4">
-                {initialPermissions.map((permission, index) => (
-                  <div
-                    key={permission.name}
-                    className={`w-full flex flex-col justify-between py-2 ${
-                      index !== initialPermissions.length - 1 ? 'border-b' : ''
-                    }`}
-                  >
-                    <div className="w-full flex flex-row justify-between">
-                      <span className="font-bold text-foreground">
-                        {permission.name}
-                      </span>
-                      <div className="flex bg-accent rounded-sm space-x-2">
-                        {!permission.disableNone && (
+              <ScrollArea className="h-[55vh] pr-4">
+                <div className="grid grid-cols-2 gap-x-6">
+                  {initialPermissions.map((permission) => (
+                    <div
+                      key={permission.name}
+                      className="flex flex-col justify-between py-3 border-b last:border-b-0"
+                    >
+                      <div className="flex flex-row items-center justify-between gap-2">
+                        <span className="font-semibold text-sm text-foreground">
+                          {permission.name}
+                        </span>
+                        <div className="flex bg-accent rounded-sm">
+                          {!permission.disableNone && (
+                            <Button
+                              className="h-9 px-4"
+                              variant={getButtonVariant(
+                                permission.name,
+                                'None',
+                              )}
+                              onClick={() =>
+                                handlePermissionChange(permission.name, 'None')
+                              }
+                              disabled={disabled}
+                            >
+                              {t('None')}
+                            </Button>
+                          )}
+                          {!permission.disableRead && (
+                            <Button
+                              className="h-9 px-4"
+                              variant={getButtonVariant(
+                                permission.name,
+                                'Read',
+                              )}
+                              onClick={() =>
+                                handlePermissionChange(permission.name, 'Read')
+                              }
+                              disabled={disabled}
+                            >
+                              {t('Read')}
+                            </Button>
+                          )}
                           <Button
                             className="h-9 px-4"
-                            variant={getButtonVariant(permission.name, 'None')}
+                            variant={getButtonVariant(permission.name, 'Write')}
                             onClick={() =>
-                              handlePermissionChange(permission.name, 'None')
+                              handlePermissionChange(permission.name, 'Write')
                             }
                             disabled={disabled}
                           >
-                            {t('None')}
+                            {t('Write')}
                           </Button>
-                        )}
-                        {!permission.disableRead && (
-                          <Button
-                            className="h-9 px-4"
-                            variant={getButtonVariant(permission.name, 'Read')}
-                            onClick={() =>
-                              handlePermissionChange(permission.name, 'Read')
-                            }
-                            disabled={disabled}
-                          >
-                            {t('Read')}
-                          </Button>
-                        )}
-                        <Button
-                          className="h-9 px-4"
-                          variant={getButtonVariant(permission.name, 'Write')}
-                          onClick={() =>
-                            handlePermissionChange(permission.name, 'Write')
-                          }
-                          disabled={disabled}
-                        >
-                          {t('Write')}
-                        </Button>
+                        </div>
                       </div>
+                      <span className="text-xs text-muted-foreground mt-1">
+                        {permission.description}
+                      </span>
                     </div>
-                    <span className="text-sm text-accent-foreground">
-                      {permission.description}
-                    </span>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </ScrollArea>
             </div>
           </div>

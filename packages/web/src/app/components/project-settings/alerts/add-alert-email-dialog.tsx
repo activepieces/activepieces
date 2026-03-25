@@ -1,10 +1,10 @@
 import { Permission } from '@activepieces/shared';
-import { typeboxResolver } from '@hookform/resolvers/typebox';
-import { Static, Type } from '@sinclair/typebox';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { t } from 'i18next';
 import { Plus } from 'lucide-react';
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { z } from 'zod';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -24,24 +24,23 @@ import {
   TooltipTrigger,
   TooltipContent,
 } from '@/components/ui/tooltip';
-import { alertMutations } from '@/features/alerts/lib/alert-hooks';
+import { alertMutations } from '@/features/alerts';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { formatUtils } from '@/lib/utils';
+import { formatUtils } from '@/lib/format-utils';
 
-const FormSchema = Type.Object({
-  email: Type.String({
-    errorMessage: t('Please enter a valid email address'),
-    pattern: formatUtils.emailRegex.source,
-  }),
+const FormSchema = z.object({
+  email: z
+    .string()
+    .regex(formatUtils.emailRegex, t('Please enter a valid email address')),
 });
 
-type FormSchema = Static<typeof FormSchema>;
+type FormSchema = z.infer<typeof FormSchema>;
 
 const AddAlertEmailDialog = React.memo(() => {
   const [open, setOpen] = useState(false);
 
   const form = useForm<FormSchema>({
-    resolver: typeboxResolver(FormSchema),
+    resolver: zodResolver(FormSchema),
     defaultValues: {},
   });
   const { checkAccess } = useAuthorization();
@@ -59,7 +58,7 @@ const AddAlertEmailDialog = React.memo(() => {
           <DialogTrigger asChild>
             <Button
               variant="outline"
-              className="mt-4 w-full flex items-center space-x-2"
+              className="w-full flex items-center space-x-2"
               disabled={writeAlertPermission === false}
             >
               <Plus className="size-4" />
@@ -87,7 +86,7 @@ const AddAlertEmailDialog = React.memo(() => {
                   setOpen(true);
                 },
               )}
-              className="gap- grid"
+              className="gap-3 grid"
             >
               <FormField
                 control={form.control}

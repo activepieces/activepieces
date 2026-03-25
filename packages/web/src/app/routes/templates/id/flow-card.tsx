@@ -2,7 +2,7 @@ import { FlowVersionTemplate } from '@activepieces/shared';
 import { Workflow } from 'lucide-react';
 
 import { Card, CardContent } from '@/components/ui/card';
-import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
+import { PieceIconList } from '@/features/pieces';
 
 type FlowCardProps = {
   flow: FlowVersionTemplate;
@@ -45,7 +45,6 @@ export const FlowCard = ({
               maxNumberOfIconsToShow={3}
               size="md"
               className="flex gap-1.5"
-              circle={false}
               background="white"
               excludeCore={true}
             />

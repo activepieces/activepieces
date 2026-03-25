@@ -17,21 +17,18 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
-import { PiecesSearchInput } from '@/features/pieces/components/piece-selector-search';
-import { PieceSelectorTabs } from '@/features/pieces/components/piece-selector-tabs';
 import {
+  PiecesSearchInput,
+  PieceSelectorTabs,
   PieceSelectorTabsProvider,
   PieceSelectorTabType,
-} from '@/features/pieces/lib/piece-selector-tabs-provider';
-import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
-import { platformHooks } from '@/hooks/platform-hooks';
-import { useIsMobile } from '@/hooks/use-mobile';
-import { PieceSelectorOperation } from '@/lib/types';
-
-import {
+  PieceSelectorOperation,
+  pieceSelectorUtils,
   PieceSearchProvider,
   usePieceSearchContext,
-} from '../../../features/pieces/lib/piece-search-context';
+} from '@/features/pieces';
+import { platformHooks } from '@/hooks/platform-hooks';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 import { AITabContent } from './ai-tab-content';
 import { ApprovalsTabContent } from './approvals-tab-content';
@@ -40,7 +37,7 @@ import { PiecesCardList } from './pieces-card-list';
 
 const getTabsList = (
   operationType: FlowOperationType,
-  isEmbeddingEnabled: boolean,
+  agentsEnabled: boolean,
 ) => {
   const baseTabs = [
     {
@@ -65,7 +62,7 @@ const getTabsList = (
     FlowOperationType.UPDATE_ACTION,
   ].includes(operationType);
 
-  if (replaceOrAddAction && !isEmbeddingEnabled) {
+  if (replaceOrAddAction && agentsEnabled) {
     baseTabs.splice(1, 0, {
       value: PieceSelectorTabType.AI_AND_AGENTS,
       name: t('AI & Agents'),
@@ -144,8 +141,8 @@ const PieceSelectorContent = ({
 
   const { platform } = platformHooks.useCurrentPlatform();
   const tabsList = useMemo(
-    () => getTabsList(operation.type, platform?.plan.embeddingEnabled ?? false),
-    [operation.type, platform?.plan.embeddingEnabled],
+    () => getTabsList(operation.type, platform?.plan.agentsEnabled ?? true),
+    [operation.type, platform?.plan.agentsEnabled],
   );
 
   return (

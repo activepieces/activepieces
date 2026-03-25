@@ -1,31 +1,32 @@
-import { Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
+import { OptionalArrayFromQuery } from '../../../core/common/base-model'
 import { AppConnectionScope, AppConnectionStatus } from '../app-connection'
 
-export const ListAppConnectionsRequestQuery = Type.Object({
-    cursor: Type.Optional(Type.String({})),
-    projectId: Type.String(),
-    scope: Type.Optional(Type.Enum(AppConnectionScope)),
-    pieceName: Type.Optional(Type.String({})),
-    displayName: Type.Optional(Type.String({})),
-    status: Type.Optional(Type.Array(Type.Enum(AppConnectionStatus))),
-    limit: Type.Optional(Type.Number({})),
+export const ListAppConnectionsRequestQuery = z.object({
+    cursor: z.string().optional(),
+    projectId: z.string(),
+    scope: z.nativeEnum(AppConnectionScope).optional(),
+    pieceName: z.string().optional(),
+    displayName: z.string().optional(),
+    status: OptionalArrayFromQuery(z.nativeEnum(AppConnectionStatus)),
+    limit: z.coerce.number().optional(),
 })
 
-export type ListAppConnectionsRequestQuery = Static<
+export type ListAppConnectionsRequestQuery = z.infer<
   typeof ListAppConnectionsRequestQuery
 >
 
-export const GetAppConnectionForWorkerRequestQuery = Type.Object({
-    externalId: Type.String(),
+export const GetAppConnectionForWorkerRequestQuery = z.object({
+    externalId: z.string(),
 })
-export type GetAppConnectionForWorkerRequestQuery = Static<
+export type GetAppConnectionForWorkerRequestQuery = z.infer<
     typeof GetAppConnectionForWorkerRequestQuery
 >
 
-export const ListGlobalConnectionsRequestQuery = Type.Omit(ListAppConnectionsRequestQuery, ['projectId'])
-export type ListGlobalConnectionsRequestQuery = Static<typeof ListGlobalConnectionsRequestQuery>
+export const ListGlobalConnectionsRequestQuery = ListAppConnectionsRequestQuery.omit({ projectId: true })
+export type ListGlobalConnectionsRequestQuery = z.infer<typeof ListGlobalConnectionsRequestQuery>
 
-export const ListAppConnectionOwnersRequestQuery = Type.Object({
-    projectId: Type.String(),
+export const ListAppConnectionOwnersRequestQuery = z.object({
+    projectId: z.string(),
 })
-export type ListAppConnectionOwnersRequestQuery = Static<typeof ListAppConnectionOwnersRequestQuery>
+export type ListAppConnectionOwnersRequestQuery = z.infer<typeof ListAppConnectionOwnersRequestQuery>

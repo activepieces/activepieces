@@ -78,6 +78,14 @@
                     "admin-guide/guides/structure-projects",
                     "admin-guide/guides/manage-pieces",
                     "admin-guide/guides/sso",
+                  {
+                     "group": "SCIM",
+                     "icon": "users",
+                     "pages": [
+                        "admin-guide/guides/scim/overview",
+                        "admin-guide/guides/scim/providers/okta"
+                     ]
+                  },
                     "admin-guide/guides/manage-oauth2",
                     "admin-guide/guides/setup-ai-providers",
                     {
@@ -85,8 +93,10 @@
                       "icon": "key",
                       "pages": [
                         "admin-guide/guides/secret-managers/overview",
+                        "admin-guide/guides/secret-managers/aws",
                         "admin-guide/guides/secret-managers/hashicorp",
-                        "admin-guide/guides/secret-managers/cyberark-conjur"
+                        "admin-guide/guides/secret-managers/cyberark-conjur",
+                        "admin-guide/guides/secret-managers/onepassword"
                       ]
                     },
                     "admin-guide/guides/permissions",
@@ -134,7 +144,7 @@
                      "install/options/docker",
                      "install/options/docker-compose",
                      {
-                        "group": "Others Options",
+                        "group": "Other Options",
                         "pages": [
                            "install/options/helm",
                            "install/options/easypanel",
@@ -181,7 +191,7 @@
                      "install/architecture/overview",
                      "install/architecture/workers",
                      "install/architecture/engine",
-                     "install/architecture/performance"
+                     "install/architecture/benchmark"
                   ]
                }
             ]
@@ -426,10 +436,10 @@
                         ]
                      },
                      {
-                        "group": "Queue Metrics",
-                        "icon": "gauge-high",
+                        "group": "Worker Machines",
+                        "icon": "server",
                         "pages": [
-                           "endpoints/queue-metrics/metrics"
+                           "endpoints/worker-machines/queue-metrics"
                         ]
                      }
                   ]
@@ -475,7 +485,8 @@
                      "handbook/engineering/onboarding/how-we-work",
                      "handbook/engineering/onboarding/on-call",
                      "handbook/engineering/onboarding/downtime-incident",
-                     "handbook/engineering/onboarding/stack"
+                     "handbook/engineering/onboarding/stack",
+                     "handbook/engineering/onboarding/release-cycle"
                   ]
                },
                {
@@ -489,7 +500,16 @@
                      "handbook/engineering/playbooks/database-migration",
                      "handbook/engineering/playbooks/product-announcement",
                      "handbook/engineering/playbooks/frontend-best-practices",
-                     "handbook/engineering/playbooks/e2e-tests"
+                     "handbook/engineering/playbooks/e2e-tests",
+                     {
+                        "group": "Postmortems",
+                        "icon": "triangle-exclamation",
+                        "pages": [
+                           "handbook/engineering/postmortems/2026-03-19-redis-and-delay-overload",
+                           "handbook/engineering/postmortems/2026-03-redis-queue-events-overload",
+                           "handbook/engineering/postmortems/2026-03-16-infrastructure-upgrade"
+                        ]
+                     }
                   ]
                },
                {

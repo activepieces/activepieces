@@ -1,51 +1,51 @@
-import { Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
 import { ConnectionKeyType } from './connection-key'
 
-export const GetOrDeleteConnectionFromTokenRequest = Type.Object({
-    projectId: Type.String(),
-    token: Type.String(),
-    appName: Type.String(),
+export const GetOrDeleteConnectionFromTokenRequest = z.object({
+    projectId: z.string(),
+    token: z.string(),
+    appName: z.string(),
 })
 
-export type GetOrDeleteConnectionFromTokenRequest = Static<typeof GetOrDeleteConnectionFromTokenRequest>
+export type GetOrDeleteConnectionFromTokenRequest = z.infer<typeof GetOrDeleteConnectionFromTokenRequest>
 
 
-export const ListConnectionKeysRequest = Type.Object({
-    limit: Type.Optional(Type.Number()),
-    cursor: Type.Optional(Type.String({})),
-    projectId: Type.String(),
+export const ListConnectionKeysRequest = z.object({
+    limit: z.coerce.number().optional(),
+    cursor: z.string().optional(),
+    projectId: z.string(),
 })
 
 
-export type ListConnectionKeysRequest = Static<typeof ListConnectionKeysRequest>
+export type ListConnectionKeysRequest = z.infer<typeof ListConnectionKeysRequest>
 
-export const UpsertApiKeyConnectionFromToken = Type.Object({
-    appCredentialId: Type.String(),
-    apiKey: Type.String(),
-    token: Type.String(),
+export const UpsertApiKeyConnectionFromToken = z.object({
+    appCredentialId: z.string(),
+    apiKey: z.string(),
+    token: z.string(),
 })
 
-export type UpsertApiKeyConnectionFromToken = Static<typeof UpsertApiKeyConnectionFromToken>
+export type UpsertApiKeyConnectionFromToken = z.infer<typeof UpsertApiKeyConnectionFromToken>
 
-export const UpsertOAuth2ConnectionFromToken = Type.Object({
-    appCredentialId: Type.String(),
-    props: Type.Record(Type.String(), Type.Any()),
-    token: Type.String(),
-    code: Type.String(),
-    redirectUrl: Type.String(),
+export const UpsertOAuth2ConnectionFromToken = z.object({
+    appCredentialId: z.string(),
+    props: z.record(z.string(), z.any()),
+    token: z.string(),
+    code: z.string(),
+    redirectUrl: z.string(),
 })
 
-export type UpsertOAuth2ConnectionFromToken = Static<typeof UpsertOAuth2ConnectionFromToken>
+export type UpsertOAuth2ConnectionFromToken = z.infer<typeof UpsertOAuth2ConnectionFromToken>
 
-export const UpsertConnectionFromToken = Type.Union([UpsertApiKeyConnectionFromToken, UpsertOAuth2ConnectionFromToken])
+export const UpsertConnectionFromToken = z.union([UpsertApiKeyConnectionFromToken, UpsertOAuth2ConnectionFromToken])
 
-export type UpsertConnectionFromToken = Static<typeof UpsertConnectionFromToken>
+export type UpsertConnectionFromToken = z.infer<typeof UpsertConnectionFromToken>
 
-export const UpsertSigningKeyConnection = Type.Object({
-    projectId: Type.String(),
-    settings: Type.Object({
-        type: Type.Literal(ConnectionKeyType.SIGNING_KEY),
+export const UpsertSigningKeyConnection = z.object({
+    projectId: z.string(),
+    settings: z.object({
+        type: z.literal(ConnectionKeyType.SIGNING_KEY),
     }),
 })
 
-export type UpsertSigningKeyConnection = Static<typeof UpsertSigningKeyConnection>
+export type UpsertSigningKeyConnection = z.infer<typeof UpsertSigningKeyConnection>

@@ -10,17 +10,16 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { useReactFlow } from '@xyflow/react';
 import { t } from 'i18next';
 import { useEffect, useRef } from 'react';
-import { ImperativePanelHandle } from 'react-resizable-panels';
+import { PanelImperativeHandle } from 'react-resizable-panels';
 import { useLocation, usePrevious } from 'react-use';
 import { useDebouncedCallback } from 'use-debounce';
 
-import { useEmbedding } from '@/components/embed-provider';
-import { useSocket } from '@/components/socket-provider';
-import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
-import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
-import { flowsApi } from '@/features/flows/lib/flows-api';
+import { RightSideBarType } from '@/app/builder/types';
+import { useEmbedding } from '@/components/providers/embed-provider';
+import { useSocket } from '@/components/providers/socket-provider';
+import { flowRunsApi, flowRunUtils } from '@/features/flow-runs';
+import { flowsApi } from '@/features/flows';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { RightSideBarType } from '@/lib/types';
 
 import { useBuilderStateContext } from '../builder-hooks';
 import { textMentionUtils } from '../piece-properties/text-input-with-mentions/text-input-utils';
@@ -28,14 +27,14 @@ import { textMentionUtils } from '../piece-properties/text-input-with-mentions/t
 import { flowCanvasUtils } from './utils/flow-canvas-utils';
 
 export const useAnimateSidebar = (sidebarValue: RightSideBarType) => {
-  const handleRef = useRef<ImperativePanelHandle>(null);
+  const handleRef = useRef<PanelImperativeHandle>(null);
   const sidebarClosed = sidebarValue === RightSideBarType.NONE;
   useEffect(() => {
-    const sidebarSize = handleRef.current?.getSize() ?? 0;
+    const sidebarSize = handleRef.current?.getSize()?.asPercentage ?? 0;
     if (sidebarClosed) {
-      handleRef.current?.resize(0);
+      handleRef.current?.collapse();
     } else if (sidebarSize === 0) {
-      handleRef.current?.resize(25);
+      handleRef.current?.resize('25%');
     }
   }, [handleRef, sidebarValue, sidebarClosed]);
   return handleRef;
@@ -150,7 +149,7 @@ const useIsFocusInsideListMapperModeInput = ({
   setIsFocusInsideListMapperModeInput,
   isFocusInsideListMapperModeInput,
 }: {
-  containerRef: React.RefObject<HTMLDivElement>;
+  containerRef: React.RefObject<HTMLDivElement | null>;
   setIsFocusInsideListMapperModeInput: (
     isFocusInsideListMapperModeInput: boolean,
   ) => void;
@@ -203,7 +202,7 @@ export const useFocusOnStep = () => {
 };
 
 export const useResizeCanvas = (
-  containerRef: React.RefObject<HTMLDivElement>,
+  containerRef: React.RefObject<HTMLDivElement | null>,
   setHasCanvasBeenInitialised: (hasCanvasBeenInitialised: boolean) => void,
 ) => {
   const containerSizeRef = useRef({

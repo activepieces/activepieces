@@ -1,6 +1,6 @@
-import { TooltipContentProps } from '@radix-ui/react-tooltip';
 import { t } from 'i18next';
 import { Download } from 'lucide-react';
+import React from 'react';
 
 import { Button, ButtonProps } from '@/components/ui/button';
 
@@ -9,7 +9,7 @@ import { Tooltip, TooltipTrigger, TooltipContent } from '../ui/tooltip';
 interface DownloadButtonProps extends ButtonProps {
   fileName: string;
   textToDownload: string;
-  tooltipSide?: TooltipContentProps['side'];
+  tooltipSide?: React.ComponentProps<typeof TooltipContent>['side'];
 }
 
 export const DownloadButton = ({

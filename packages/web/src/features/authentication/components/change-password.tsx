@@ -1,6 +1,4 @@
 import { ResetPasswordRequestBody } from '@activepieces/shared';
-import { Popover } from '@radix-ui/react-popover';
-import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useRef, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
@@ -18,11 +16,15 @@ import {
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { PasswordValidator } from '@/features/authentication/components/password-validator';
-import { passwordValidation } from '@/features/authentication/lib/password-validation-utils';
-import { HttpError } from '@/lib/api';
-import { authenticationApi } from '@/lib/authentication-api';
+import { passwordValidation } from '@/features/authentication/utils/password-validation-utils';
+
+import { authMutations } from '../hooks/auth-hooks';
 
 const ChangePasswordForm = () => {
   const navigate = useNavigate();
@@ -42,12 +44,7 @@ const ChangePasswordForm = () => {
     },
   });
 
-  const { mutate, isPending } = useMutation<
-    void,
-    HttpError,
-    ResetPasswordRequestBody
-  >({
-    mutationFn: authenticationApi.resetPassword,
+  const { mutate, isPending } = authMutations.useResetPassword({
     onSuccess: () => {
       toast.success(t('Your password was changed successfully'), {
         duration: 3000,

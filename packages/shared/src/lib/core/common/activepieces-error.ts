@@ -4,7 +4,6 @@ import type { FlowVersionId } from '../../automation/flows/flow-version'
 import type { PlatformUsageMetric } from '../../management/platform'
 import type { ProjectId } from '../../management/project'
 import type { ProjectRole } from '../../management/project-role/project-role'
-import type { FileId } from '../file'
 import type { UserId } from '../user'
 import type { ApId } from './id-generator'
 import type { Permission } from './security'
@@ -26,18 +25,14 @@ export class ActivepiecesError extends Error {
 export type ApErrorParams =
     | AuthenticationParams
     | AuthorizationErrorParams
-    | ConfigNotFoundErrorParams
     | EmailIsNotVerifiedErrorParams
     | EngineOperationFailureParams
     | EntityNotFoundErrorParams
     | ExistingUserErrorParams
-    | FileNotFoundErrorParams
-    | FlowFormNotFoundError
-    | FlowNotFoundErrorParams
     | FlowIsLockedErrorParams
     | FlowOperationErrorParams
     | FlowOperationInProgressErrorParams
-    | FlowRunNotFoundErrorParams
+    | FlowRunRetryOutsideRetentionErrorParams
     | InvalidApiKeyParams
     | InvalidAppConnectionParams
     | InvalidBearerTokenParams
@@ -52,12 +47,9 @@ export type ApErrorParams =
     | OpenAiFailedErrorParams
     | PauseMetadataMissingErrorParams
     | PermissionDeniedErrorParams
-    | PieceNotFoundErrorParams
-    | PieceTriggerNotFoundErrorParams
     | QuotaExceededParams
     | FeatureDisabledErrorParams
     | SignUpDisabledParams
-    | StepNotFoundErrorParams
     | SystemInvalidErrorParams
     | SystemPropNotDefinedErrorParams
     | TestTriggerFailedErrorParams
@@ -70,7 +62,6 @@ export type ApErrorParams =
     | EmailAuthIsDisabledParams
     | ExistingAlertChannelErrorParams
     | EmailAlreadyHasActivationKey
-    | ProviderProxyConfigNotFoundParams
     | AIProviderModelNotSupportedParams
     | AIProviderNotSupportedParams
     | AIRequestNotSupportedParams
@@ -95,6 +86,7 @@ export type ApErrorParams =
     | MachineNotConnectedParams
     | DoesNotMeetBusinessRequirementsParams
     | PieceSyncNotSupportedErrorParams
+    | SandboxLogSizeExceededParams
     | SecretManagerConnectionFailedParams
     | SecretManagerGetSecretFailedParams
     | SecretManagerKeyNotSecretParams
@@ -148,8 +140,6 @@ export type SessionExpiredParams = BaseErrorParams<ErrorCode.SESSION_EXPIRED, {
 
 export type NoChatResponseParams = BaseErrorParams<ErrorCode.NO_CHAT_RESPONSE, Record<string, never>>
 
-export type FileNotFoundErrorParams = BaseErrorParams<ErrorCode.FILE_NOT_FOUND, { id: FileId }>
-
 export type EmailAuthIsDisabledParams = BaseErrorParams<ErrorCode.EMAIL_AUTH_DISABLED, Record<string, never>>
 
 export type AuthorizationErrorParams = BaseErrorParams<
@@ -182,17 +172,11 @@ ErrorCode.SYSTEM_PROP_INVALID,
 }
 >
 
-export type FlowNotFoundErrorParams = BaseErrorParams<
-ErrorCode.FLOW_NOT_FOUND,
+export type FlowRunRetryOutsideRetentionErrorParams = BaseErrorParams<
+ErrorCode.FLOW_RUN_RETRY_OUTSIDE_RETENTION,
 {
-    id: FlowId
-}
->
-
-export type FlowRunNotFoundErrorParams = BaseErrorParams<
-ErrorCode.FLOW_RUN_NOT_FOUND,
-{
-    id: FlowRunId
+    flowRunId: FlowRunId
+    failedJobRetentionDays: number
 }
 >
 
@@ -230,33 +214,6 @@ ErrorCode.EXISTING_USER,
 }
 >
 
-export type StepNotFoundErrorParams = BaseErrorParams<
-ErrorCode.STEP_NOT_FOUND,
-{
-    pieceName?: string
-    pieceVersion?: string
-    stepName: string
-}
->
-
-export type PieceNotFoundErrorParams = BaseErrorParams<
-ErrorCode.PIECE_NOT_FOUND,
-{
-    pieceName: string
-    pieceVersion: string | undefined
-    message: string
-}
->
-
-export type PieceTriggerNotFoundErrorParams = BaseErrorParams<
-ErrorCode.PIECE_TRIGGER_NOT_FOUND,
-{
-    pieceName: string
-    pieceVersion: string
-    triggerName: string | undefined
-}
->
-
 export type TriggerFailedErrorParams = BaseErrorParams<
 ErrorCode.TRIGGER_FAILED,
 {
@@ -267,16 +224,6 @@ ErrorCode.TRIGGER_FAILED,
 }
 >
 
-
-export type ConfigNotFoundErrorParams = BaseErrorParams<
-ErrorCode.CONFIG_NOT_FOUND,
-{
-    pieceName: string
-    pieceVersion: string
-    stepName: string
-    configName: string
-}
->
 
 export type JobRemovalFailureErrorParams = BaseErrorParams<
 ErrorCode.JOB_REMOVAL_FAILURE,
@@ -309,13 +256,6 @@ ErrorCode.FLOW_OPERATION_IN_PROGRESS, {
     message: string
 }>
 
-export type FlowFormNotFoundError = BaseErrorParams<
-ErrorCode.FLOW_FORM_NOT_FOUND,
-{
-    flowId: FlowVersionId
-    message: string
-}>
-
 export type FlowIsLockedErrorParams = BaseErrorParams<
 ErrorCode.FLOW_IN_USE,
 {
@@ -343,6 +283,7 @@ ErrorCode.ENTITY_NOT_FOUND,
     message?: string
     entityType?: string
     entityId?: string
+    extra?: Record<string, unknown>
 }
 >
 
@@ -412,12 +353,6 @@ export type ErrorUpdatingSubscriptionParams = BaseErrorParams<
 ErrorCode.ERROR_UPDATING_SUBSCRIPTION,
 {
     message: string
-}>
-
-export type ProviderProxyConfigNotFoundParams = BaseErrorParams<
-ErrorCode.PROVIDER_PROXY_CONFIG_NOT_FOUND_FOR_PROVIDER,
-{
-    provider: string
 }>
 
 export type AIProviderModelNotSupportedParams = BaseErrorParams<ErrorCode.AI_MODEL_NOT_SUPPORTED, {
@@ -513,6 +448,11 @@ export type DoesNotMeetBusinessRequirementsParams = BaseErrorParams<ErrorCode.DO
     message: string
 }>
 
+export type SandboxLogSizeExceededParams = BaseErrorParams<ErrorCode.SANDBOX_LOG_SIZE_EXCEEDED, {
+    standardOutput: string
+    standardError: string
+}>
+
 export type SecretManagerConnectionFailedParams = BaseErrorParams<ErrorCode.SECRET_MANAGER_CONNECTION_FAILED, {
     message: string
     provider: string
@@ -535,6 +475,7 @@ export type InvalidAIProviderCredentialsParams = BaseErrorParams<ErrorCode.INVAL
 }>
 
 export enum ErrorCode {
+    INTERNAL_SERVER_ERROR = 'INTERNAL_SERVER_ERROR',
     MACHINE_NOT_CONNECTED = 'MACHINE_NOT_CONNECTED',
     MACHINE_NOT_AVAILABLE = 'MACHINE_NOT_AVAILABLE',
     INVALID_CUSTOM_DOMAIN = 'INVALID_CUSTOM_DOMAIN',
@@ -542,11 +483,9 @@ export enum ErrorCode {
     ERROR_UPDATING_SUBSCRIPTION = 'ERROR_UPDATING_SUBSCRIPTION',
     AUTHENTICATION = 'AUTHENTICATION',
     AUTHORIZATION = 'AUTHORIZATION',
-    PROVIDER_PROXY_CONFIG_NOT_FOUND_FOR_PROVIDER = 'PROVIDER_PROXY_CONFIG_NOT_FOUND_FOR_PROVIDER',
     AI_MODEL_NOT_SUPPORTED = 'AI_MODEL_NOT_SUPPORTED',
     AI_PROVIDER_NOT_SUPPORTED = 'AI_PROVIDER_NOT_SUPPORTED',
     AI_REQUEST_NOT_SUPPORTED = 'AI_REQUEST_NOT_SUPPORTED',
-    CONFIG_NOT_FOUND = 'CONFIG_NOT_FOUND',
     DOMAIN_NOT_ALLOWED = 'DOMAIN_NOT_ALLOWED',
     EMAIL_IS_NOT_VERIFIED = 'EMAIL_IS_NOT_VERIFIED',
     ENGINE_OPERATION_FAILURE = 'ENGINE_OPERATION_FAILURE',
@@ -559,14 +498,10 @@ export enum ErrorCode {
     EXISTING_USER = 'EXISTING_USER',
     EXISTING_ALERT_CHANNEL = 'EXISTING_ALERT_CHANNEL',
     PROJECT_EXTERNAL_ID_ALREADY_EXISTS = 'PROJECT_EXTERNAL_ID_ALREADY_EXISTS',
-    FLOW_FORM_NOT_FOUND = 'FLOW_FORM_NOT_FOUND',
-    FILE_NOT_FOUND = 'FILE_NOT_FOUND',
-    FLOW_INSTANCE_NOT_FOUND = 'INSTANCE_NOT_FOUND',
-    FLOW_NOT_FOUND = 'FLOW_NOT_FOUND',
     FLOW_OPERATION_INVALID = 'FLOW_OPERATION_INVALID',
     FLOW_OPERATION_IN_PROGRESS = 'FLOW_OPERATION_IN_PROGRESS',
     FLOW_IN_USE = 'FLOW_IN_USE',
-    FLOW_RUN_NOT_FOUND = 'FLOW_RUN_NOT_FOUND',
+    FLOW_RUN_RETRY_OUTSIDE_RETENTION = 'FLOW_RUN_RETRY_OUTSIDE_RETENTION',
     INVALID_API_KEY = 'INVALID_API_KEY',
     INVALID_APP_CONNECTION = 'INVALID_APP_CONNECTION',
     INVALID_BEARER_TOKEN = 'INVALID_BEARER_TOKEN',
@@ -582,13 +517,10 @@ export enum ErrorCode {
     OPEN_AI_FAILED = 'OPEN_AI_FAILED',
     PAUSE_METADATA_MISSING = 'PAUSE_METADATA_MISSING',
     PERMISSION_DENIED = 'PERMISSION_DENIED',
-    PIECE_NOT_FOUND = 'PIECE_NOT_FOUND',
-    PIECE_TRIGGER_NOT_FOUND = 'PIECE_TRIGGER_NOT_FOUND',
     QUOTA_EXCEEDED = 'QUOTA_EXCEEDED',
     FEATURE_DISABLED = 'FEATURE_DISABLED',
     AI_CREDIT_LIMIT_EXCEEDED = 'AI_CREDIT_LIMIT_EXCEEDED',
     SIGN_UP_DISABLED = 'SIGN_UP_DISABLED',
-    STEP_NOT_FOUND = 'STEP_NOT_FOUND',
     SYSTEM_PROP_INVALID = 'SYSTEM_PROP_INVALID',
     SYSTEM_PROP_NOT_DEFINED = 'SYSTEM_PROP_NOT_DEFINED',
     TEST_TRIGGER_FAILED = 'TEST_TRIGGER_FAILED',
@@ -606,6 +538,7 @@ export enum ErrorCode {
     SUBFLOW_FAILED = 'SUBFLOW_FAILED',
     DOES_NOT_MEET_BUSINESS_REQUIREMENTS = 'DOES_NOT_MEET_BUSINESS_REQUIREMENTS',
     PIECE_SYNC_NOT_SUPPORTED = 'PIECE_SYNC_NOT_SUPPORTED',
+    SANDBOX_LOG_SIZE_EXCEEDED = 'SANDBOX_LOG_SIZE_EXCEEDED',
     SECRET_MANAGER_CONNECTION_FAILED = 'SECRET_MANAGER_CONNECTION_FAILED',
     SECRET_MANAGER_GET_SECRET_FAILED = 'SECRET_MANAGER_GET_SECRET_FAILED',
     SECRET_MANAGER_KEY_NOT_SECRET = 'SECRET_MANAGER_KEY_NOT_SECRET',

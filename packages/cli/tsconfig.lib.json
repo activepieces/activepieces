@@ -5,6 +5,7 @@
     "rootDir": ".",
     "outDir": "../../dist/packages/cli",
     "declaration": true,
+    "declarationMap": true,
     "types": ["node"],
     "baseUrl": ".",
     "paths": {}

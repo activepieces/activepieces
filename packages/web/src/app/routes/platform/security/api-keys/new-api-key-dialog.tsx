@@ -1,16 +1,17 @@
 import { ApiKeyResponseWithValue } from '@activepieces/shared';
-import { typeboxResolver } from '@hookform/resolvers/typebox';
-import { Type, Static } from '@sinclair/typebox';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { z } from 'zod';
 
 import { CopyToClipboardInput } from '@/components/custom/clipboard/copy-to-clipboard';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -24,20 +25,17 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { apiKeyApi } from '@/features/platform-admin/lib/api-key-api';
+import { apiKeyApi } from '@/features/platform-admin';
 
 type NewApiKeyDialogProps = {
   children: React.ReactNode;
   onCreate: () => void;
 };
-const FormSchema = Type.Object({
-  displayName: Type.String({
-    minLength: 1,
-    errorMessage: t('Name is required'),
-  }),
+const FormSchema = z.object({
+  displayName: z.string().min(1, t('Name is required')),
 });
 
-type FormSchema = Static<typeof FormSchema>;
+type FormSchema = z.infer<typeof FormSchema>;
 
 export const NewApiKeyDialog = ({
   children,
@@ -48,7 +46,7 @@ export const NewApiKeyDialog = ({
     undefined,
   );
   const form = useForm<FormSchema>({
-    resolver: typeboxResolver(FormSchema),
+    resolver: zodResolver(FormSchema),
   });
 
   const { mutate, isPending } = useMutation({
@@ -73,6 +71,13 @@ export const NewApiKeyDialog = ({
           <DialogTitle>
             {apiKey ? t('API Key Created') : t('Create API Key')}
           </DialogTitle>
+          {!apiKey && (
+            <DialogDescription>
+              {t(
+                'Create a new API key for programmatic access to the platform.',
+              )}
+            </DialogDescription>
+          )}
         </DialogHeader>
         {apiKey && (
           <>
@@ -140,7 +145,7 @@ export const NewApiKeyDialog = ({
                   {t('Cancel')}
                 </Button>
                 <Button disabled={isPending} loading={isPending}>
-                  {t('Save')}
+                  {t('Create')}
                 </Button>
               </DialogFooter>
             </form>

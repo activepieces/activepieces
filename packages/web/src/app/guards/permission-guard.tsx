@@ -5,14 +5,16 @@ import { Navigate } from 'react-router-dom';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 
 export const RoutePermissionGuard = ({
-  permission,
+  requiredPermissions: permission,
   children,
 }: {
   children: ReactNode;
-  permission: Permission;
+  requiredPermissions: Permission | Permission[];
 }) => {
   const { checkAccess } = useAuthorization();
-  if (!checkAccess(permission)) {
+  const permissions = Array.isArray(permission) ? permission : [permission];
+  const hasAccess = permissions.some((p) => checkAccess(p));
+  if (!hasAccess) {
     return <Navigate replace={true} to="/404"></Navigate>;
   }
   return children;

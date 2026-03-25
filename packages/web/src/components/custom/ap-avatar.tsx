@@ -10,7 +10,7 @@ import {
 import { userHooks } from '@/hooks/user-hooks';
 import { cn } from '@/lib/utils';
 
-import { UserAvatar } from '../ui/user-avatar';
+import { UserAvatar } from './user-avatar';
 
 interface ApAvatarProps {
   id: string | null;
@@ -52,7 +52,9 @@ export const ApAvatar = ({
           className={cn('text-xs truncate', {
             'text-xss opacity-75': size === 'xsmall',
           })}
-        >{`${user.firstName}`}</span>
+        >
+          {`${user.firstName} ${user.lastName}`.trim()}
+        </span>
       )}
     </div>
   );

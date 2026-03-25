@@ -1,5 +1,5 @@
-import { securityAccess } from '@activepieces/server-common'
 import { FastifyInstance } from 'fastify'
+import { securityAccess } from '../../core/security/authorization/fastify-security'
 
 export const openapiController = async (fastify: FastifyInstance) => {
     fastify.get('/', GetOpenApiParams, async () => {

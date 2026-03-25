@@ -6,12 +6,12 @@ import {
   McpProtocol,
   ValidateAgentMcpToolResponse,
 } from '@activepieces/shared';
-import { Type, Static } from '@sinclair/typebox';
 import { t } from 'i18next';
 import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
+import { z } from 'zod';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -26,25 +26,25 @@ import { useMcpToolDialogStore } from '../stores/mcp-tools';
 
 import { AddMcpToolForm } from './add-mcp-tool-form';
 
-const McpToolFormSchema = Type.Object({
-  toolName: Type.String({ minLength: 1 }),
-  serverUrl: Type.String({ format: 'uri' }),
-  protocol: Type.Enum(McpProtocol),
-  authType: Type.Enum(McpAuthType),
-  accessToken: Type.Optional(Type.String()),
-  apiKeyHeader: Type.Optional(Type.String()),
-  apiKey: Type.Optional(Type.String()),
-  headers: Type.Optional(
-    Type.Array(
-      Type.Object({
-        key: Type.String(),
-        value: Type.String(),
+const McpToolFormSchema = z.object({
+  toolName: z.string().min(1),
+  serverUrl: z.string().url(),
+  protocol: z.nativeEnum(McpProtocol),
+  authType: z.nativeEnum(McpAuthType),
+  accessToken: z.string().optional(),
+  apiKeyHeader: z.string().optional(),
+  apiKey: z.string().optional(),
+  headers: z
+    .array(
+      z.object({
+        key: z.string(),
+        value: z.string(),
       }),
-    ),
-  ),
+    )
+    .optional(),
 });
 
-export type McpToolFormData = Static<typeof McpToolFormSchema>;
+export type McpToolFormData = z.infer<typeof McpToolFormSchema>;
 
 type AgentToolsDialogProps = {
   tools: AgentTool[];
@@ -211,7 +211,7 @@ export function AgentMcpDialog({
                           key={index}
                           className="flex items-center gap-2 p-2 rounded bg-muted/50"
                         >
-                          <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
+                          <CheckCircle2 className="w-4 h-4 text-success shrink-0" />
                           <span className="text-sm font-medium">{tool}</span>
                         </div>
                       ))}

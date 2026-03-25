@@ -33,9 +33,9 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 
-import { recordsApi } from '../lib/records-api';
-import { tableHooks } from '../lib/table-hooks';
-import { FieldsMapping, fileUtils, SupportedFileType } from '../lib/utils';
+import { recordsApi } from '../api/records-api';
+import { tableHooks } from '../hooks/table-hooks';
+import { FieldsMapping, fileUtils, SupportedFileType } from '../utils/utils';
 
 import { useOptionalTableStore } from './ap-table-state-provider';
 import { FieldsMappingControl } from './fields-mapping';
@@ -433,7 +433,7 @@ const ImportTableDialog = ({
 
             {serverError && (
               <div className=" flex items-center justify-between">
-                <div className="text-red-500">
+                <div className="text-destructive">
                   {t(
                     'An unexpected error occurred while importing the file, please hit the copy error and send it to support',
                   )}

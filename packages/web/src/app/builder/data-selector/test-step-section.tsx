@@ -1,6 +1,7 @@
 import { t } from 'i18next';
 
-import { Button } from '../../../components/ui/button';
+import { Button } from '@/components/ui/button';
+
 import { useBuilderStateContext } from '../builder-hooks';
 
 export const TestStepSection = ({ stepName }: { stepName: string }) => {

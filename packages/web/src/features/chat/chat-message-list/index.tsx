@@ -4,9 +4,9 @@ import {
   FileResponseInterface,
   isNil,
 } from '@activepieces/shared';
-import { Static, Type } from '@sinclair/typebox';
 import { BotIcon } from 'lucide-react';
 import React from 'react';
+import { z } from 'zod';
 
 import { cn } from '@/lib/utils';
 
@@ -20,17 +20,17 @@ import { MultiMediaMessage } from '../chat-message';
 
 import { ErrorBubble } from './error-bubble';
 
-export const Messages = Type.Array(
-  Type.Object({
-    role: Type.Union([Type.Literal('user'), Type.Literal('bot')]),
-    textContent: Type.Optional(Type.String()),
-    files: Type.Optional(Type.Array(FileResponseInterface)),
+export const Messages = z.array(
+  z.object({
+    role: z.union([z.literal('user'), z.literal('bot')]),
+    textContent: z.string().optional(),
+    files: z.array(FileResponseInterface).optional(),
   }),
 );
-export type Messages = Static<typeof Messages>;
+export type Messages = z.infer<typeof Messages>;
 
 interface ChatMessageListProps extends React.HTMLAttributes<HTMLDivElement> {
-  messagesRef?: React.RefObject<HTMLDivElement>;
+  messagesRef?: React.RefObject<HTMLDivElement | null>;
   messages?: Messages;
   chatUI?: ChatUIResponse | null | undefined;
   sendingError?: ApErrorParams | null;

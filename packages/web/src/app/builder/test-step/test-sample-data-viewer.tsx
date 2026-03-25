@@ -9,12 +9,12 @@ import { t } from 'i18next';
 import React, { useContext } from 'react';
 
 import { StepOutputSkeleton } from '@/app/components/step-output-skeleton';
-import { JsonViewer } from '@/components/json-viewer';
+import { JsonViewer } from '@/components/custom/json-viewer';
+import { LoadingSpinner } from '@/components/custom/spinner';
 import { Button } from '@/components/ui/button';
-import { LoadingSpinner } from '@/components/ui/spinner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { StepStatusIcon } from '@/features/flow-runs/components/step-status-icon';
-import { formatUtils } from '@/lib/utils';
+import { StepStatusIcon } from '@/features/flow-runs';
+import { formatUtils } from '@/lib/format-utils';
 
 import { DynamicPropertiesContext } from '../piece-properties/dynamic-properties-context';
 
@@ -55,7 +55,7 @@ const RetestButton = React.forwardRef<HTMLButtonElement, RetestButtonProps>(
   ({ isValid, isSaving, isTesting, onRetest }, ref) => {
     const { isLoadingDynamicProperties } = useContext(DynamicPropertiesContext);
     return (
-      <TestButtonTooltip invalid={!isValid}>
+      <TestButtonTooltip saving={isSaving} invalid={!isValid}>
         <Button
           ref={ref}
           variant="outline"
@@ -64,7 +64,7 @@ const RetestButton = React.forwardRef<HTMLButtonElement, RetestButtonProps>(
           keyboardShortcut="G"
           onKeyboardShortcut={onRetest}
           onClick={onRetest}
-          loading={isTesting}
+          loading={isTesting || isSaving}
         >
           {t('Test')}
         </Button>
@@ -96,8 +96,9 @@ export const TestSampleDataViewer = React.memo(
     } = props;
     const isFailed =
       isRunAgent(currentStep) &&
-      (sampleData as AgentResult | undefined)?.status ===
-        AgentTaskStatus.FAILED;
+      ((sampleData as AgentResult | undefined)?.status ===
+        AgentTaskStatus.FAILED ||
+        !isNil(errorMessage));
 
     return (
       <>
@@ -133,7 +134,7 @@ export const TestSampleDataViewer = React.memo(
                   </>
                 )}
 
-                {errorMessage && !isTesting && (
+                {errorMessage && !isTesting && !isRunAgent(currentStep) && (
                   <>
                     <StepStatusIcon status={StepOutputStatus.FAILED} size="5" />
                     <span>{t('Testing Failed')}</span>
@@ -154,7 +155,7 @@ export const TestSampleDataViewer = React.memo(
                 {lastTestDate &&
                   !errorMessage &&
                   !isTesting &&
-                  formatUtils.formatDate(new Date(lastTestDate))}
+                  formatUtils.formatDateWithTime(new Date(lastTestDate), false)}
                 {errorMessage && !isTesting && (
                   <span>{t('Errors are not saved on refresh')}</span>
                 )}
@@ -162,7 +163,7 @@ export const TestSampleDataViewer = React.memo(
             </div>
 
             {!isTesting && (
-              <TestButtonTooltip invalid={!isValid}>
+              <TestButtonTooltip saving={isSaving} invalid={!isValid}>
                 <RetestButton
                   isValid={isValid}
                   isSaving={isSaving}
@@ -197,7 +198,7 @@ const TestSampleDataViewerContent = ({
   if (isTesting && !isRunAgent(currentStep)) {
     return <StepOutputSkeleton className="px-1 " />;
   }
-  if (isRunAgent(currentStep)) {
+  if (isRunAgent(currentStep) && !errorMessage) {
     return (
       <AgentTestStep
         agentResult={getAgentResult(sampleData)}

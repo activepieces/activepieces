@@ -9,9 +9,10 @@ import {
   FileJson,
 } from 'lucide-react';
 import React, { useState } from 'react';
+import { toast } from 'sonner';
 
+import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
-import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,15 +20,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { RenameDialog } from '@/features/automations/components/rename-dialog';
 import { PushToGitDialog } from '@/features/project-releases/components/push-to-git-dialog';
-import { gitSyncHooks } from '@/features/project-releases/lib/git-sync-hooks';
+import { gitSyncHooks } from '@/features/project-releases/hooks/git-sync-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 
-import { tablesApi } from '../lib/tables-api';
-import { tablesUtils } from '../lib/utils';
+import { tablesApi } from '../api/tables-api';
+import { tableMutations } from '../hooks/table-hooks';
+import { tablesUtils } from '../utils/utils';
 
 import { ImportTableDialog } from './import-table-dialog';
-import RenameTableDialog from './rename-table-dialog';
 
 const ApTableActionsMenu = ({
   table,
@@ -41,6 +43,20 @@ const ApTableActionsMenu = ({
   children: React.ReactNode;
 }) => {
   const [isImportTableDialogOpen, setIsImportTableDialogOpen] = useState(false);
+  const [isRenameOpen, setIsRenameOpen] = useState(false);
+  const [renameValue, setRenameValue] = useState(table.name);
+
+  const { mutate: renameTableMutate, isPending: isRenamePending } =
+    tableMutations.useRenameTable({
+      onSuccess: () => {
+        setIsRenameOpen(false);
+        refetch?.();
+        toast.success(t('Table renamed'));
+      },
+    });
+  const renameTable = () =>
+    renameTableMutate({ tableId: table.id, name: renameValue });
+
   const userHasPermissionToUpdateTable = useAuthorization().checkAccess(
     Permission.WRITE_TABLE,
   );
@@ -51,7 +67,7 @@ const ApTableActionsMenu = ({
 
   const exportTemplate = async () => {
     const tableTemplate = await tablesApi.getTemplate(table.id);
-    const { downloadFile } = await import('@/lib/utils');
+    const { downloadFile } = await import('@/lib/dom-utils');
     downloadFile({
       obj: JSON.stringify(tableTemplate, null, 2),
       fileName: tableTemplate.name,
@@ -71,28 +87,20 @@ const ApTableActionsMenu = ({
           <PermissionNeededTooltip
             hasPermission={userHasPermissionToUpdateTable}
           >
-            <RenameTableDialog
-              tableName={table.name}
-              tableId={table.id}
-              onRename={() => {
-                refetch?.();
+            <DropdownMenuItem
+              disabled={!userHasPermissionToUpdateTable}
+              onSelect={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setRenameValue(table.name);
+                setIsRenameOpen(true);
               }}
             >
-              <DropdownMenuItem
-                disabled={!userHasPermissionToUpdateTable}
-                onSelect={(e) => e.preventDefault()}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <PermissionNeededTooltip
-                  hasPermission={userHasPermissionToUpdateTable}
-                >
-                  <div className="flex items-center gap-2">
-                    <PencilIcon className="h-4 w-4" />
-                    {t('Rename')}
-                  </div>
-                </PermissionNeededTooltip>
-              </DropdownMenuItem>
-            </RenameTableDialog>
+              <div className="flex items-center gap-2">
+                <PencilIcon className="h-4 w-4" />
+                {t('Rename')}
+              </div>
+            </DropdownMenuItem>
           </PermissionNeededTooltip>
 
           <DropdownMenuSeparator />
@@ -143,11 +151,12 @@ const ApTableActionsMenu = ({
               onClick={(e) => e.stopPropagation()}
             >
               <ConfirmationDeleteDialog
-                title={`${t('Delete')} ${table.name}`}
+                title={t('Delete Table')}
                 message={t(
-                  'Are you sure you want to delete the selected tables? This action cannot be undone.',
+                  'This table and all its data will be permanently deleted.',
                 )}
                 entityName={table.name}
+                buttonText={t('Delete')}
                 mutationFn={async () => {
                   await tablesApi.delete(table.id);
                   onDelete?.();
@@ -172,6 +181,14 @@ const ApTableActionsMenu = ({
         onImportSuccess={() => {
           refetch?.();
         }}
+      />
+      <RenameDialog
+        open={isRenameOpen}
+        onOpenChange={setIsRenameOpen}
+        value={renameValue}
+        onChange={setRenameValue}
+        onConfirm={() => renameTable()}
+        isRenaming={isRenamePending}
       />
     </>
   );

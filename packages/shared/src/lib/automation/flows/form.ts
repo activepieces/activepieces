@@ -1,4 +1,4 @@
-import { Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
 
 export enum FormInputType {
     TEXT = 'text',
@@ -7,48 +7,48 @@ export enum FormInputType {
     TOGGLE = 'toggle',
 }
 
-export const FormInput = Type.Object({
-    displayName: Type.String(),
-    required: Type.Boolean(),
-    description: Type.String(),
-    type: Type.Enum(FormInputType),
+export const FormInput = z.object({
+    displayName: z.string(),
+    required: z.boolean(),
+    description: z.string(),
+    type: z.nativeEnum(FormInputType),
 })
 
-export type FormInput = Static<typeof FormInput>
+export type FormInput = z.infer<typeof FormInput>
 
 
-export const FormProps = Type.Object({
-    inputs: Type.Array(FormInput),
-    waitForResponse: Type.Boolean(),
+export const FormProps = z.object({
+    inputs: z.array(FormInput),
+    waitForResponse: z.boolean(),
 })
 
-export type FormProps = Static<typeof FormProps>
+export type FormProps = z.infer<typeof FormProps>
 
-export const FormResponse = Type.Object({
-    id: Type.String(),
-    title: Type.String(),
+export const FormResponse = z.object({
+    id: z.string(),
+    title: z.string(),
     props: FormProps,
-    projectId: Type.String(),
-    version: Type.String(),
+    projectId: z.string(),
+    version: z.string(),
 })
 
-export type FormResponse = Static<typeof FormResponse>
+export type FormResponse = z.infer<typeof FormResponse>
 
-export const ChatUIProps = Type.Object({
-    botName: Type.String(),
+export const ChatUIProps = z.object({
+    botName: z.string(),
 })
 
-export type ChatUIProps = Static<typeof ChatUIProps>
+export type ChatUIProps = z.infer<typeof ChatUIProps>
 
-export const ChatUIResponse = Type.Object({
-    id: Type.String(),
-    title: Type.String(),
+export const ChatUIResponse = z.object({
+    id: z.string(),
+    title: z.string(),
     props: ChatUIProps,
-    projectId: Type.String(),
-    platformLogoUrl: Type.String(),
-    platformName: Type.String(),
+    projectId: z.string(),
+    platformLogoUrl: z.string(),
+    platformName: z.string(),
 })
 
-export type ChatUIResponse = Static<typeof ChatUIResponse>
+export type ChatUIResponse = z.infer<typeof ChatUIResponse>
 
 export const USE_DRAFT_QUERY_PARAM_NAME = 'useDraft'

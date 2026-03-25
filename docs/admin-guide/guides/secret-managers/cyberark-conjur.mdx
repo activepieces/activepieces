@@ -125,10 +125,14 @@ Store the **api_key** securely; you will enter it in Activepieces as the **API K
 When configuring a connection that uses a secret:
 
 1. Click the **key icon** (🔑) next to the credential field.
-2. Select **CyberArk Conjur** as the secret manager.
+2. Select a **CyberArk Conjur** connection from the list.
 3. Enter the **Secret key**: the Conjur variable path in the form `policy_id/variable_id`.  
    For the example policy above, use:
    - `activepieces/key-1`
    - `activepieces/key-2`  
 
 Activepieces will authenticate as the configured host and retrieve the secret from Conjur when the flow runs.
+
+<Warning>
+  If you update existing secrets and you can't see the update reflected . refer to [caching](/admin-guide/guides/secret-managers/overview#caching)
+</Warning>

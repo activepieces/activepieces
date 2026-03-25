@@ -28,8 +28,8 @@ import {
   OAuth2App,
   PiecesOAuth2AppsMap,
   oauth2Utils,
-} from '@/lib/oauth2-utils';
-import { formatUtils } from '@/lib/utils';
+} from '@/features/connections';
+import { formatUtils } from '@/lib/format-utils';
 
 export function MutliAuthList({
   pieceAuth,

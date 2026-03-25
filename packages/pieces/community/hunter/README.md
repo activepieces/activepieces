@@ -1,7 +1,5 @@
 # pieces-hunter
 
-This library was generated with [Nx](https://nx.dev).
-
 ## Building
 
-Run `nx build pieces-hunter` to build the library.
+Run `turbo run build --filter=@activepieces/piece-hunter` to build the library.

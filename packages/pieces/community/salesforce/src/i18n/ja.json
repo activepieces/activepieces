@@ -161,6 +161,7 @@
   "New Outbound Message": "新しい送信メッセージ",
   "New Record": "新しいレコード",
   "New or Updated File": "新規または更新されたファイル",
+  "New Case in Queue": "キュー内の新しいケース",
   "Fires when a new Attachment or File is added to any Case record.": "症例レコードに新しい添付ファイルまたはファイルが追加されたときに発生します。",
   "Fires when a new Contact record is created in Salesforce.": "Salesforce に新しい連絡先レコードが作成されたときに発行されます。",
   "Fires when a tracked field is updated on a specified object.": "トラッキングフィールドが指定されたオブジェクトで更新されたときに発生します。",
@@ -169,6 +170,9 @@
   "Fires when a new outbound message is received from Salesforce.": "Salesforce から新しい送信メッセージを受信したときに発生します。",
   "Triggers when there is new record": "新しいレコードがあるときにトリガーします",
   "Fires when a file (ContentDocument) is created or updated. Does not fire for classic Attachments or Notes.": "ファイル(ContentDocument)が作成または更新されたときに発行されます。",
+  "Triggers when a new Case record is assigned to a specified queue.": "新しいケースレコードが指定されたキューに割り当てられたときにトリガーされます。",
   "Conditions (Advanced)": "条件 (高度)",
-  "Enter a SOQL query where clause i. e. IsDeleted = TRUE": "SOQL クエリを入力します。e. IsDeleted = TRUE"
+  "Case Queue": "案件キュー",
+  "Enter a SOQL query where clause i. e. IsDeleted = TRUE": "SOQL クエリを入力します。e. IsDeleted = TRUE",
+  "The queue to monitor for new cases.": "新しい案件を監視するためのキュー。"
 }

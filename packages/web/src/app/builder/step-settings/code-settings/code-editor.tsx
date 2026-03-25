@@ -7,7 +7,7 @@ import { t } from 'i18next';
 import { Code, Package } from 'lucide-react';
 import { useRef, useState } from 'react';
 
-import { useTheme } from '@/components/theme-provider';
+import { useTheme } from '@/components/providers/theme-provider';
 import { Button } from '@/components/ui/button';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { flagsHooks } from '@/hooks/flags-hooks';

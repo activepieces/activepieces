@@ -1,26 +1,22 @@
-import { Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
 import { SignUpRequest } from '../../../core/authentication/dto/sign-up-request'
 import { ApId } from '../../../core/common/id-generator'
 
-export const VerifyEmailRequestBody = Type.Object({
+export const VerifyEmailRequestBody = z.object({
     identityId: ApId,
-    otp: Type.String(),
+    otp: z.string(),
 })
-export type VerifyEmailRequestBody = Static<typeof VerifyEmailRequestBody>
+export type VerifyEmailRequestBody = z.infer<typeof VerifyEmailRequestBody>
 
-export const ResetPasswordRequestBody = Type.Object({
+export const ResetPasswordRequestBody = z.object({
     identityId: ApId,
-    otp: Type.String(),
-    newPassword: Type.String(),
+    otp: z.string(),
+    newPassword: z.string(),
 })
-export type ResetPasswordRequestBody = Static<typeof ResetPasswordRequestBody>
+export type ResetPasswordRequestBody = z.infer<typeof ResetPasswordRequestBody>
 
-export const SignUpAndAcceptRequestBody = Type.Composite([
-    Type.Omit(SignUpRequest, ['referringUserId', 'email']),
-    Type.Object({
-        invitationToken: Type.String(),
-    }),
-])
+export const SignUpAndAcceptRequestBody = SignUpRequest.omit({ email: true }).extend({
+    invitationToken: z.string(),
+})
 
-export type SignUpAndAcceptRequestBody = Static<typeof SignUpAndAcceptRequestBody>
-
+export type SignUpAndAcceptRequestBody = z.infer<typeof SignUpAndAcceptRequestBody>

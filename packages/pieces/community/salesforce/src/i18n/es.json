@@ -161,6 +161,7 @@
   "New Outbound Message": "Nuevo mensaje saliente",
   "New Record": "Nuevo registro",
   "New or Updated File": "Archivo nuevo o actualizado",
+  "New Case in Queue": "Nuevo caso en cola",
   "Fires when a new Attachment or File is added to any Case record.": "Dispara cuando se añade un nuevo archivo o adjunto a cualquier registro del caso.",
   "Fires when a new Contact record is created in Salesforce.": "Dispara cuando se crea un nuevo registro de contacto en Salesforce.",
   "Fires when a tracked field is updated on a specified object.": "Dispara cuando un campo rastreado se actualiza en un objeto especificado.",
@@ -169,6 +170,9 @@
   "Fires when a new outbound message is received from Salesforce.": "Dispara cuando se recibe un nuevo mensaje saliente de Salesforce.",
   "Triggers when there is new record": "Dispara cuando hay un nuevo registro",
   "Fires when a file (ContentDocument) is created or updated. Does not fire for classic Attachments or Notes.": "Dispara cuando un archivo (ContentDocument) es creado o actualizado. No se dispara para archivos adjuntos o notas clásicos.",
+  "Triggers when a new Case record is assigned to a specified queue.": "Se activa cuando se asigna un nuevo registro de Caso a una cola especificada.",
   "Conditions (Advanced)": "Condiciones (Avanzado)",
-  "Enter a SOQL query where clause i. e. IsDeleted = TRUE": "Introduzca una consulta SOQL donde la cláusula i. e. IsDeleted = TRUE"
+  "Case Queue": "Cola de Casos",
+  "Enter a SOQL query where clause i. e. IsDeleted = TRUE": "Introduzca una consulta SOQL donde la cláusula i. e. IsDeleted = TRUE",
+  "The queue to monitor for new cases.": "La cola para monitorizar nuevos casos."
 }

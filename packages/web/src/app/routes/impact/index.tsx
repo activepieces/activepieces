@@ -1,13 +1,13 @@
 import { AnalyticsTimePeriod } from '@activepieces/shared';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
-import { Calendar, Folder, RefreshCcwIcon } from 'lucide-react';
+import { Calendar, Info, LineChart, List, RefreshCcw } from 'lucide-react';
 import { useContext } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useEffectOnce } from 'react-use';
+import { toast } from 'sonner';
 
-import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
-import { ApSidebarToggle } from '@/components/custom/ap-sidebar-toggle';
+import { PageHeader } from '@/components/custom/page-header';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -16,29 +16,36 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { platformAnalyticsHooks } from '@/features/platform-admin/lib/analytics-hooks';
-import { RefreshAnalyticsContext } from '@/features/platform-admin/lib/refresh-analytics-context';
-import { projectCollectionUtils } from '@/hooks/project-collection';
+import {
+  platformAnalyticsHooks,
+  RefreshAnalyticsContext,
+} from '@/features/platform-admin';
+import { projectCollectionUtils } from '@/features/projects';
+import { cn, DASHBOARD_CONTENT_PADDING_X } from '@/lib/utils';
 
+import { ProjectSelect } from './components/project-select';
 import { FlowsDetails } from './details';
 import { Summary } from './summary';
-import { TimeSavedEncouragementBanner } from './time-saved-encouragement-banner';
 import { Trends } from './trends';
 
 const REPORT_TTL_MS = 1000 * 60 * 60 * 24;
 
-export default function AnalyticsPage() {
+type TabValue = 'analytics' | 'details';
+
+export default function ImpactPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const selectedProjectId = searchParams.get('projectId') || undefined;
   const selectedTimePeriod =
     (searchParams.get('timePeriod') as AnalyticsTimePeriod) ||
-    AnalyticsTimePeriod.ALL_TIME;
+    AnalyticsTimePeriod.LAST_MONTH;
+  const activeTab = (searchParams.get('tab') as TabValue) || 'analytics';
+
   const { data: projects } = projectCollectionUtils.useAll();
   const { data, isLoading } = platformAnalyticsHooks.useAnalyticsTimeBased(
     selectedTimePeriod,
@@ -61,10 +68,16 @@ export default function AnalyticsPage() {
 
   const handleTimePeriodChange = (timePeriod: string) => {
     const newParams = new URLSearchParams(searchParams);
-    if (timePeriod === AnalyticsTimePeriod.ALL_TIME) {
-      newParams.delete('timePeriod');
+    newParams.set('timePeriod', timePeriod);
+    setSearchParams(newParams, { replace: true });
+  };
+
+  const handleTabChange = (tab: string) => {
+    const newParams = new URLSearchParams(searchParams);
+    if (tab === 'analytics') {
+      newParams.delete('tab');
     } else {
-      newParams.set('timePeriod', timePeriod);
+      newParams.set('tab', tab);
     }
     setSearchParams(newParams, { replace: true });
   };
@@ -78,88 +91,130 @@ export default function AnalyticsPage() {
     }
   });
 
+  const report = isLoading ? undefined : data ?? undefined;
+
   return (
-    <div className="flex flex-col gap-2 w-full">
-      <DashboardPageHeader
+    <div className="flex flex-col gap-4 w-full">
+      <PageHeader
+        showSidebarToggle={true}
         title={
-          <div className="flex items-center gap-3">
-            <ApSidebarToggle />
-            <Separator orientation="vertical" className="h-5 mr-2" />
-            <span>{t('Analytics')}</span>
+          <div className="flex items-center gap-1.5">
+            <span className="text-sm font-medium">{t('Impact')}</span>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() => refreshAnalytics()}
-                  disabled={isRefreshing}
-                >
-                  <RefreshCcwIcon
-                    className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`}
-                  />
-                </Button>
+                <Info className="h-4 w-4 text-muted-foreground cursor-help" />
               </TooltipTrigger>
-              <TooltipContent>{t('Refresh analytics')}</TooltipContent>
+              <TooltipContent>
+                {t('View impact analytics and metrics for the active flows.')}
+              </TooltipContent>
             </Tooltip>
           </div>
         }
-        description={
-          <span className="text-muted-foreground">
-            {t('Updated')} {dayjs(data?.updated).format('MMM DD, hh:mm A')} —{' '}
-            {t('Refreshes daily')}
-          </span>
-        }
-      >
-        <div className="flex items-center gap-2">
-          <Select
-            value={selectedTimePeriod}
-            onValueChange={handleTimePeriodChange}
-          >
-            <SelectTrigger>
-              <Calendar className="w-4 h-4 mr-2" />
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={AnalyticsTimePeriod.LAST_WEEK}>
-                {t('Last 7 days')}
-              </SelectItem>
-              <SelectItem value={AnalyticsTimePeriod.LAST_MONTH}>
-                {t('Last 30 days')}
-              </SelectItem>
-              <SelectItem value={AnalyticsTimePeriod.ALL_TIME}>
-                {t('All Time')}
-              </SelectItem>
-            </SelectContent>
-          </Select>
-          <Select
-            value={selectedProjectId || 'all'}
-            onValueChange={handleProjectChange}
-          >
-            <SelectTrigger>
-              <Folder className="w-4 h-4 mr-2" />
-              <SelectValue placeholder={t('All Projects')} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t('All Projects')}</SelectItem>
-              {projects?.map((project) => (
-                <SelectItem key={project.id} value={project.id}>
-                  {project.displayName}
+        rightContent={
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 px-3 py-1.5 border border-dashed rounded-md text-sm text-muted-foreground">
+              <span>
+                {t('Updated')} {dayjs(data?.updated).format('MMM DD, hh:mm A')}{' '}
+                — {t('Refreshes daily')}
+              </span>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6"
+                    onClick={() =>
+                      refreshAnalytics(undefined, {
+                        onSuccess: () =>
+                          toast.success(t('Data refreshed successfully')),
+                      })
+                    }
+                    disabled={isRefreshing}
+                  >
+                    <RefreshCcw
+                      className={`h-3.5 w-3.5 ${
+                        isRefreshing ? 'animate-spin' : ''
+                      }`}
+                    />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>{t('Refresh analytics')}</TooltipContent>
+              </Tooltip>
+            </div>
+
+            <Select
+              value={selectedTimePeriod}
+              onValueChange={handleTimePeriodChange}
+            >
+              <SelectTrigger className="w-auto gap-2 h-8">
+                <Calendar className="h-4 w-4" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent side="bottom" align="end">
+                <SelectItem value={AnalyticsTimePeriod.LAST_WEEK}>
+                  {t('Last 7 days')}
                 </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </DashboardPageHeader>
-      <Summary report={isLoading ? undefined : data ?? undefined} />
-      <TimeSavedEncouragementBanner
-        report={isLoading ? undefined : data ?? undefined}
+                <SelectItem value={AnalyticsTimePeriod.LAST_MONTH}>
+                  {t('Last 30 days')}
+                </SelectItem>
+                <SelectItem value={AnalyticsTimePeriod.LAST_THREE_MONTHS}>
+                  {t('Last 3 months')}
+                </SelectItem>
+                <SelectItem value={AnalyticsTimePeriod.LAST_SIX_MONTHS}>
+                  {t('Last 6 months')}
+                </SelectItem>
+                <SelectItem value={AnalyticsTimePeriod.LAST_YEAR}>
+                  {t('Last year')}
+                </SelectItem>
+              </SelectContent>
+            </Select>
+
+            <ProjectSelect
+              projects={projects ?? []}
+              selectedProjectId={selectedProjectId}
+              onProjectChange={handleProjectChange}
+            />
+          </div>
+        }
+        className="min-w-full"
       />
-      <Trends report={isLoading ? undefined : data ?? undefined} />
-      <FlowsDetails
-        report={isLoading ? undefined : data ?? undefined}
-        isLoading={isLoading}
-      />
+
+      <Tabs
+        value={activeTab}
+        onValueChange={handleTabChange}
+        className="w-full "
+      >
+        <TabsList
+          variant="outline"
+          className={cn('border-b w-full', DASHBOARD_CONTENT_PADDING_X)}
+        >
+          <TabsTrigger variant="outline" value="analytics">
+            <LineChart className="w-4 h-4 mr-2" />
+            {t('Analytics')}
+          </TabsTrigger>
+          <TabsTrigger variant="outline" value="details">
+            <List className="w-4 h-4 mr-2" />
+            {t('Details')}
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="analytics">
+          <div
+            className={cn('flex flex-col gap-6', DASHBOARD_CONTENT_PADDING_X)}
+          >
+            <Summary report={report ?? undefined} />
+            <Trends report={report ?? undefined} />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="details">
+          <FlowsDetails
+            report={report}
+            isLoading={isLoading}
+            projects={projects}
+          />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
