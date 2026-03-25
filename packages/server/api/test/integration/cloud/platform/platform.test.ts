@@ -28,7 +28,7 @@ async function waitForDeletionJobs(jobIds: string[], timeoutMs = 60000) {
             const state = await job.getState()
             if (state === 'completed') break
             if (state === 'failed' && (job.attemptsMade ?? 0) >= (job.opts?.attempts ?? 2)) {
-                throw new Error(`Job ${jobId} failed`)
+                throw new Error(`Job ${jobId} failed: ${job.failedReason}`)
             }
             if (state === 'delayed') {
                 await job.promote()
