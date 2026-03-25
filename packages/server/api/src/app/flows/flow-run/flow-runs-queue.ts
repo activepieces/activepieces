@@ -74,14 +74,15 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                                     ...spreadIfDefined('updated', runMetadata.updated),
                                     ...spreadIfDefined('stepsCount', runMetadata.stepsCount),
                                 })
-                                savedFlowRun = await flowRunRepo().findOneBy({ id: job.data.runId })
-                                if (isNil(savedFlowRun)) {
+                                const updatedFlowRun = await flowRunRepo().findOneBy({ id: job.data.runId })
+                                if (isNil(updatedFlowRun)) {
                                     log.info({
                                         jobId: job.id,
                                         runId: job.data.runId,
                                     }, '[runsMetadataQueue#worker] Flow run was deleted during update, skipping job')
                                     return
                                 }
+                                savedFlowRun = updatedFlowRun
                             }
                             else {
                                 const flowId = runMetadata.flowId
