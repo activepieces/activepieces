@@ -23,6 +23,8 @@ export async function batchDeleteByFlowId(flowId: string): Promise<void> {
         deleted = result.affected ?? 0
     } while (deleted > 0)
 
+    await flowRepo().update({ id: flowId }, { publishedVersionId: null })
+
     await flowVersionRepo()
         .createQueryBuilder()
         .delete()
