@@ -5,6 +5,7 @@ import {
   AuthenticationType,
 } from '@activepieces/pieces-common';
 import { pcloudAuth } from '../auth';
+import { pcloudCommon } from '../common';
 
 export const pcloudDownloadFile = createAction({
   auth: pcloudAuth,
@@ -20,25 +21,23 @@ export const pcloudDownloadFile = createAction({
     }),
   },
   async run(context) {
-    const params = new URLSearchParams({
-      fileid: context.propsValue.fileId.toString(),
-    });
-
+    // Get download link first
     const result = await httpClient.sendRequest({
       method: HttpMethod.GET,
-      url: `https://api.pcloud.com/getfilelink?${params.toString()}`,
+      url: `${pcloudCommon.baseUrl}/getfilelink`,
+      queryParams: {
+        fileid: context.propsValue.fileId.toString(),
+      },
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token: context.auth.access_token,
       },
     });
 
-    // The response contains aHosts with download links
-    const response = result.body as { hosts: string[]; path: string; name: string };
-    
-    if (response.hosts && response.hosts.length > 0) {
+    const response = result.body as { hosts?: string[]; path?: string; name?: string };
+    if (response.hosts && response.hosts.length > 0 && response.path) {
       const downloadUrl = `https://${response.hosts[0]}${response.path}`;
-      
+
       // Fetch the actual file content
       const fileResult = await httpClient.sendRequest({
         method: HttpMethod.GET,
@@ -48,8 +47,8 @@ export const pcloudDownloadFile = createAction({
 
       return {
         file: await context.files.write({
-          fileName: response.name,
-          data: Buffer.from(fileResult.body),
+          fileName: response.name ?? 'downloaded_file',
+          data: Buffer.from(fileResult.body as ArrayBuffer),
         }),
         metadata: {
           fileId: context.propsValue.fileId,

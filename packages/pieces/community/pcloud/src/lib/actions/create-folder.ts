@@ -5,6 +5,7 @@ import {
   AuthenticationType,
 } from '@activepieces/pieces-common';
 import { pcloudAuth } from '../auth';
+import { pcloudCommon } from '../common';
 
 export const pcloudCreateFolder = createAction({
   auth: pcloudAuth,
@@ -27,14 +28,13 @@ export const pcloudCreateFolder = createAction({
     }),
   },
   async run(context) {
-    const params = new URLSearchParams({
-      folderid: context.propsValue.folderId.toString(),
-      name: context.propsValue.name,
-    });
-
     const result = await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: `https://api.pcloud.com/createfolder?${params.toString()}`,
+      method: HttpMethod.GET,
+      url: `${pcloudCommon.baseUrl}/createfolder`,
+      queryParams: {
+        folderid: context.propsValue.folderId.toString(),
+        name: context.propsValue.name,
+      },
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token: context.auth.access_token,

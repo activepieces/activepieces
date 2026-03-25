@@ -5,6 +5,7 @@ import {
   AuthenticationType,
 } from '@activepieces/pieces-common';
 import { pcloudAuth } from '../auth';
+import { pcloudCommon } from '../common';
 
 export const pcloudListFolder = createAction({
   auth: pcloudAuth,
@@ -28,14 +29,13 @@ export const pcloudListFolder = createAction({
     }),
   },
   async run(context) {
-    const params = new URLSearchParams({
-      folderid: context.propsValue.folderId.toString(),
-      recursive: context.propsValue.recursive ? '1' : '0',
-    });
-
     const result = await httpClient.sendRequest({
       method: HttpMethod.GET,
-      url: `https://api.pcloud.com/listfolder?${params.toString()}`,
+      url: `${pcloudCommon.baseUrl}/listfolder`,
+      queryParams: {
+        folderid: context.propsValue.folderId.toString(),
+        recursive: context.propsValue.recursive ? '1' : '0',
+      },
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token: context.auth.access_token,

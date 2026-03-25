@@ -1,38 +1,38 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import {
-  createPiece,
-} from '@activepieces/pieces-framework';
+import { createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
-import { pcloudListFolder } from './lib/actions/list-folder';
-import { pcloudUploadFile } from './lib/actions/upload-file';
-import { pcloudDownloadFile } from './lib/actions/download-file';
-import { pcloudCreateFolder } from './lib/actions/create-folder';
-import { pcloudDeleteFile } from './lib/actions/delete-file';
-import { pcloudGetFileInfo } from './lib/actions/get-file-info';
 import { pcloudAuth } from './lib/auth';
+import { pcloudUploadFile } from './lib/actions/upload-file';
+import { pcloudCreateFolder } from './lib/actions/create-folder';
+import { pcloudDownloadFile } from './lib/actions/download-file';
+import { pcloudCopyFile } from './lib/actions/copy-file';
+import { pcloudFindFile } from './lib/actions/find-file';
+import { pcloudFindFolder } from './lib/actions/find-folder';
+import { pcloudNewFile } from './lib/triggers/new-file';
+import { pcloudNewFolder } from './lib/triggers/new-folder';
 
 export const pcloud = createPiece({
+  displayName: 'pCloud',
+  description: 'Secure cloud storage and file management',
+  auth: pcloudAuth,
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/brand/logo.svg',
+  logoUrl: 'https://cdn.activepieces.com/pieces/pcloud.png',
+  categories: [PieceCategory.CONTENT_AND_FILES],
+  authors: ['arkitek-dev'],
   actions: [
-    pcloudListFolder,
     pcloudUploadFile,
-    pcloudDownloadFile,
     pcloudCreateFolder,
-    pcloudDeleteFile,
-    pcloudGetFileInfo,
+    pcloudDownloadFile,
+    pcloudCopyFile,
+    pcloudFindFile,
+    pcloudFindFolder,
     createCustomApiCallAction({
       baseUrl: () => 'https://api.pcloud.com',
       auth: pcloudAuth,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${auth.access_token}`,
+        Authorization: `Bearer ${(auth as { access_token: string }).access_token}`,
       }),
     }),
   ],
-  displayName: 'pCloud',
-  description: 'Cloud storage and file synchronization',
-  authors: ['your-username'],
-  categories: [PieceCategory.CONTENT_AND_FILES],
-  triggers: [],
-  auth: pcloudAuth,
+  triggers: [pcloudNewFile, pcloudNewFolder],
 });

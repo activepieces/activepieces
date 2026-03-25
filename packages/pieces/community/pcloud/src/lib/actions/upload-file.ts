@@ -5,6 +5,7 @@ import {
   AuthenticationType,
 } from '@activepieces/pieces-common';
 import { pcloudAuth } from '../auth';
+import { pcloudCommon } from '../common';
 
 export const pcloudUploadFile = createAction({
   auth: pcloudAuth,
@@ -42,18 +43,17 @@ export const pcloudUploadFile = createAction({
     const fileData = context.propsValue.file;
     const fileBuffer = Buffer.from(fileData.base64, 'base64');
 
-    const params = new URLSearchParams({
-      folderid: context.propsValue.folderId.toString(),
-      filename: context.propsValue.fileName,
-      overwrite: context.propsValue.overwrite ? '1' : '0',
-    });
-
     const result = await httpClient.sendRequest({
       method: HttpMethod.POST,
-      url: `https://api.pcloud.com/uploadfile?${params.toString()}`,
+      url: `${pcloudCommon.baseUrl}/uploadfile`,
       body: fileBuffer,
       headers: {
         'Content-Type': 'application/octet-stream',
+      },
+      queryParams: {
+        folderid: context.propsValue.folderId.toString(),
+        filename: context.propsValue.fileName,
+        overwrite: context.propsValue.overwrite ? '1' : '0',
       },
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
