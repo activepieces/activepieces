@@ -49,11 +49,9 @@ export const findOrAddDealAction = createAction({
     });
 
     // Search for the person by email
-    const searchResult = await client.get<any>(
-      `/api/v1/crm/people?Email=${encodeURIComponent(context.propsValue.contactEmail)}&$top=100`
+    const people = await client.getAllPages<any>(
+      `/api/v1/crm/people?Email=${encodeURIComponent(context.propsValue.contactEmail)}`
     );
-
-    const people = searchResult?.items ?? searchResult?.Items ?? [];
     const person = people.find(
       (item: any) =>
         item.Email?.toLowerCase() ===
@@ -62,10 +60,7 @@ export const findOrAddDealAction = createAction({
 
     // If person found, search for deals in the pipeline
     if (person) {
-      const dealsResult = await client.get<any>(
-        `/api/v1/crm/deals?$top=100`
-      );
-      const deals = dealsResult?.items ?? dealsResult?.Items ?? [];
+      const deals = await client.getAllPages<any>('/api/v1/crm/deals');
       const existingDeal = deals.find(
         (deal: any) =>
           deal.DealPipelineStage?.DealPipeline?.Uid ===

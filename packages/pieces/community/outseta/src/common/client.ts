@@ -56,4 +56,23 @@ export class OutsetaClient {
   async delete<T>(path: string): Promise<T> {
     return this.request<T>(HttpMethod.DELETE, path);
   }
+
+  async getAllPages<T>(basePath: string, pageSize = 100): Promise<T[]> {
+    const allItems: T[] = [];
+    let offset = 0;
+
+    while (true) {
+      const separator = basePath.includes('?') ? '&' : '?';
+      const res = await this.get<any>(
+        `${basePath}${separator}$top=${pageSize}&$skip=${offset}`
+      );
+      const items: T[] = res?.items ?? res?.Items ?? [];
+      allItems.push(...items);
+
+      if (items.length < pageSize) break;
+      offset += pageSize;
+    }
+
+    return allItems;
+  }
 }

@@ -26,8 +26,7 @@ export const getDealAction = createAction({
     const contactEmail = context.propsValue.contactEmail.toLowerCase();
     const pipelineUid = context.propsValue.pipelineUid;
 
-    const res = await client.get<any>(`/api/v1/crm/deals?$top=100`);
-    const items: any[] = res?.items ?? res?.Items ?? [];
+    const items = await client.getAllPages<any>('/api/v1/crm/deals');
 
     const match = items.find((deal: any) => {
       const dealPeople: any[] = deal.DealPeople?.items
