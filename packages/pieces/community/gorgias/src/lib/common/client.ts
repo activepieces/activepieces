@@ -76,41 +76,24 @@ export async function gorgiasApiCall<T extends HttpMessageBody>({
 export async function findCustomerByEmail(
   auth: GorgiasAuth,
   email: string,
-  maxPages = 20,
 ): Promise<GorgiasCustomer | null> {
-  let cursor: string | undefined;
-  let page = 0;
   const lowerEmail = email.trim().toLowerCase();
 
-  while (page < maxPages) {
-    const response = await gorgiasApiCall<GorgiasListResponse<GorgiasCustomer>>({
-      auth,
-      method: HttpMethod.GET,
-      resourceUri: '/customers',
-      query: {
-        cursor,
-        limit: 100,
-      },
-    });
+  const response = await gorgiasApiCall<GorgiasListResponse<GorgiasCustomer>>({
+    auth,
+    method: HttpMethod.GET,
+    resourceUri: '/customers',
+    query: {
+      email: lowerEmail,
+      limit: 100,
+    },
+  });
 
-    const match = response.data.find((customer) => {
-      const primaryEmail = typeof customer.email === 'string' ? customer.email.toLowerCase() : undefined;
-      const channelMatch = Array.isArray(customer.channels)
-        ? customer.channels.some((channel) => channel.address?.toLowerCase() === lowerEmail)
-        : false;
-      return primaryEmail === lowerEmail || channelMatch;
-    });
-
-    if (match) {
-      return match;
-    }
-
-    cursor = response.meta?.next_cursor ?? undefined;
-    if (!cursor) {
-      return null;
-    }
-    page += 1;
-  }
-
-  return null;
+  return response.data.find((customer) => {
+    const primaryEmail = typeof customer.email === 'string' ? customer.email.toLowerCase() : undefined;
+    const channelMatch = Array.isArray(customer.channels)
+      ? customer.channels.some((channel) => channel.address?.toLowerCase() === lowerEmail)
+      : false;
+    return primaryEmail === lowerEmail || channelMatch;
+  }) ?? null;
 }
