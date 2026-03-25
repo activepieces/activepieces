@@ -54,7 +54,7 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                             }
 
                             const existingFlowRun = await flowRunRepo().findOneBy({ id: job.data.runId })
-                            let savedFlowRun: FlowRun | null = null
+                            let savedFlowRun: FlowRun
                             if (!isNil(existingFlowRun)) {
                                 await flowRunRepo().update(job.data.runId, {
                                     ...spreadIfDefined('projectId', runMetadata.projectId),
@@ -94,10 +94,6 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                                     return
                                 }
                                 savedFlowRun = await flowRunRepo().save(runMetadata)
-                            }
-
-                            if (isNil(savedFlowRun)) {
-                                return
                             }
 
                             const parentRunId = savedFlowRun.parentRunId
