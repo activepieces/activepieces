@@ -25,11 +25,14 @@ export async function batchDeleteByFlowId(flowId: string): Promise<void> {
 
     await flowRepo().update({ id: flowId }, { publishedVersionId: null })
 
-    await flowVersionRepo()
-        .createQueryBuilder()
-        .delete()
-        .where('"flowId" = :flowId', { flowId })
-        .execute()
+    do {
+        const result = await flowVersionRepo()
+            .createQueryBuilder()
+            .delete()
+            .where('id IN (SELECT id FROM flow_version WHERE "flowId" = :flowId LIMIT :limit)', { flowId, limit: BATCH_SIZE })
+            .execute()
+        deleted = result.affected ?? 0
+    } while (deleted > 0)
 }
 
 export const flowBackgroundJobs = (log: FastifyBaseLogger) => ({
