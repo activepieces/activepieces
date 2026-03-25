@@ -29,10 +29,10 @@ case "$RUN_CHECKS" in
     ;;
   *)
     echo "Running lint..."
-    sudo npm run lint-dev || exit 1
+    npm run lint || { echo "Lint failed. Try running 'npm run lint-dev' to auto-fix issues."; exit 1; }
 
     echo "Running tests..."
-    sudo npm run test-unit || exit 1
-    sudo npm run test-api || exit 1
+     npm run test-unit || exit 1
+     npm run test-api || exit 1
     ;;
 esac

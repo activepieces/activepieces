@@ -74,7 +74,7 @@ const flowVersionWithBranching: FlowVersion = {
                         key: '1',
                     },
                     pieceName: 'store',
-                    pieceVersion: '~0.2.6',
+                    pieceVersion: '0.2.6',
                     actionName: 'get',
                     propertySettings: {
                         'key': {
@@ -217,7 +217,7 @@ describe('Flow Helper', () => {
                         cronExpression: '25 10 * * 0,1,2,3,4',
                     },
                     pieceName: 'schedule',
-                    pieceVersion: '~0.0.2',
+                    pieceVersion: '0.0.2',
                     propertySettings: {
                         'cronExpression': {
                             type: PropertyExecutionType.MANUAL,
@@ -235,7 +235,7 @@ describe('Flow Helper', () => {
                             key: '1',
                         },
                         pieceName: 'store',
-                        pieceVersion: '~0.2.6',
+                        pieceVersion: '0.2.6',
                         actionName: 'get',
                         propertySettings: {
                             'key': {
@@ -300,7 +300,7 @@ describe('Flow Helper', () => {
                     cronExpression: '25 10 * * 0,1,2,3,4',
                 },
                 pieceName: 'schedule',
-                pieceVersion: '~0.0.2',
+                pieceVersion: '0.0.2',
                 propertySettings: {
                     'cronExpression': {
                         type: PropertyExecutionType.MANUAL,
