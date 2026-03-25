@@ -158,7 +158,7 @@ export async function getVertexAIImageModelOptions(
       
       const geminiImageModels = geminiModels.filter((model) => {
         const name = model.value.toLowerCase();
-        return name.includes('image') || name.includes('vision');
+        return name.includes('image');
       });
 
       options.push(...geminiImageModels);
