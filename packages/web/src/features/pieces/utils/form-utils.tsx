@@ -170,8 +170,9 @@ function getDefaultValueForProperties({
     },
     {},
   );
-  if(existingInput[AUTHENTICATION_PROPERTY_NAME]) {
-    defaultValues[AUTHENTICATION_PROPERTY_NAME] = existingInput[AUTHENTICATION_PROPERTY_NAME];
+  if (existingInput[AUTHENTICATION_PROPERTY_NAME]) {
+    defaultValues[AUTHENTICATION_PROPERTY_NAME] =
+      existingInput[AUTHENTICATION_PROPERTY_NAME];
   }
   return defaultValues;
 }

@@ -19,6 +19,8 @@
     "check-migrations": "npx turbo run check-migrations --filter=api",
     "lint": "turbo run lint",
     "lint-dev": "turbo run lint --filter='!@activepieces/piece-*' --force -- --fix",
+    "test-unit": "turbo run test --filter=@activepieces/engine --filter=@activepieces/shared",
+    "test-api": "turbo run test-ce test-ee test-cloud --filter=api",
     "cli": "npx ts-node -r tsconfig-paths/register --project packages/cli/tsconfig.json  packages/cli/src/index.ts",
     "create-piece": "npx ts-node -r tsconfig-paths/register --project packages/cli/tsconfig.json  packages/cli/src/index.ts pieces create",
     "create-action": "npx ts-node -r tsconfig-paths/register --project packages/cli/tsconfig.json  packages/cli/src/index.ts actions create",

@@ -29,10 +29,10 @@ case "$RUN_CHECKS" in
     ;;
   *)
     echo "Running lint..."
-    npm run lint || exit 1
+    sudo npm run lint-dev || exit 1
 
     echo "Running tests..."
-    npx turbo run test --filter=@activepieces/engine --filter=@activepieces/shared || exit 1
-    npx turbo run test-ce test-ee test-cloud --filter=api || exit 1
+    sudo npm run test-unit || exit 1
+    sudo npm run test-api || exit 1
     ;;
 esac

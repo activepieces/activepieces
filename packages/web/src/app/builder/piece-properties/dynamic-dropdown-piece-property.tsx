@@ -15,7 +15,6 @@ import { MultiSelectPieceProperty } from '../../../components/custom/multi-selec
 import { DynamicPropertiesErrorBoundary } from './dynamic-piece-properties-error-boundary';
 import { DynamicPropertiesContext } from './dynamic-properties-context';
 
-
 const DynamicDropdownPiecePropertyImplementation = React.memo(
   (props: DynamicDropdownProps) => {
     const [flowVersion, readonly] = useBuilderStateContext((state) => [
@@ -104,7 +103,6 @@ const DynamicDropdownPiecePropertyImplementation = React.memo(
         !isFirstRender.current &&
         !deepEqual(previousValues.current, refresherValues)
       ) {
-        debugger;
         props.onChange(null);
       }
 
