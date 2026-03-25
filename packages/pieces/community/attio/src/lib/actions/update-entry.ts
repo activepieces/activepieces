@@ -19,7 +19,7 @@ export const updateEntryAction = createAction({
 			description: 'The unique identifier of the entry to update.',
 			required: true,
 		}),
-		attributes: listFields(true),
+		attributes: listFields(false, true),
 	},
 	async run(context) {
 		const accessToken = context.auth.secret_text;
