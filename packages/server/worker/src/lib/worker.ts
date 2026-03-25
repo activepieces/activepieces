@@ -1,8 +1,10 @@
+import { createServer } from 'http'
+import os from 'os'
 import { systemUsage } from '@activepieces/server-utils'
 import {
     ConsumeJobRequest,
-    ConsumeJobResponseStatus,
     createRpcClient,
+    EngineResponseStatus,
     JobData,
     tryCatch,
     WebsocketServerEvent,
@@ -13,25 +15,31 @@ import {
 import { trace } from '@opentelemetry/api'
 import { nanoid } from 'nanoid'
 import { io, Socket } from 'socket.io-client'
-import { initCachePaths } from './cache/cache-paths'
 import { pieceInstaller } from './cache/pieces/piece-installer'
 import { getApiUrl, system, WorkerSystemProp } from './config/configs'
 import { logger } from './config/logger'
 import { workerSettings } from './config/worker-settings'
 import { getHandler } from './execute/job-registry'
-import { sandboxManager } from './execute/sandbox-manager'
-import { JobContext, JobResult } from './execute/types'
+import { createSandboxManager, SandboxManager } from './execute/sandbox-manager'
+import { JobContext, JobResult, JobResultKind } from './execute/types'
 
 
 const tracer = trace.getTracer('worker')
 
 let socket: Socket | null = null
 let polling = false
+let connectionGeneration = 0
 
 const workerId = `worker-${nanoid()}`
 
+const workerHostname = os.hostname()
+
+let healthServerInstance: ReturnType<typeof createServer> | null = null
+
+let sandboxManagers: SandboxManager[] = []
+
 export const worker = {
-    async start({ apiUrl, socketUrl, workerToken }: WorkerStartParams): Promise<void> {
+    async start({ apiUrl, socketUrl, workerToken, withHealthServer = false }: WorkerStartParams): Promise<void> {
         const platformIdForDedicatedWorker = system.get(WorkerSystemProp.PLATFORM_ID_FOR_DEDICATED_WORKER)
         socket = io(socketUrl.url, {
             auth: { token: workerToken, workerId, platformIdForDedicatedWorker },
@@ -46,10 +54,13 @@ export const worker = {
             logger.info('Connected to API server via Socket.IO')
             await fetchAndStoreSettings(socket!)
             void warmupPiecesOnStartup(apiClient)
-            void startPollingLoop(apiClient)
+            void startPollingWorkers(apiClient).catch((err) => {
+                logger.error({ error: err }, 'Polling workers crashed unexpectedly')
+            })
         })
 
         socket.on('disconnect', (reason) => {
+            connectionGeneration++
             polling = false
             logger.warn({ reason }, 'Disconnected from API server')
         })
@@ -58,55 +69,80 @@ export const worker = {
             logger.error({ error: error.message }, 'Socket.IO connection error')
         })
 
+        if (withHealthServer) {
+            healthServerInstance = startHealthServer()
+        }
         logger.info({ apiUrl, socketUrl }, 'Worker started, polling for jobs...')
     },
 
     async stop(): Promise<void> {
         polling = false
-        await sandboxManager.shutdown(logger)
+        await Promise.all(sandboxManagers.map((sm) => sm.shutdown(logger)))
+        sandboxManagers = []
         socket?.disconnect()
         socket = null
+        healthServerInstance?.close()
+        healthServerInstance = null
         logger.info('Worker stopped')
     },
 }
 
-async function startPollingLoop(apiClient: WorkerToApiContract): Promise<void> {
+async function startPollingWorkers(apiClient: WorkerToApiContract): Promise<void> {
     if (polling) return
     polling = true
-    logger.info('Starting job polling loop')
 
-    while (polling) {
+    const generation = connectionGeneration
+    const rawConcurrency = Number(system.get(WorkerSystemProp.WORKER_CONCURRENCY) ?? '1')
+    const concurrency = Number.isInteger(rawConcurrency) && rawConcurrency > 0 ? rawConcurrency : 1
+    if (!Number.isInteger(rawConcurrency) || rawConcurrency < 1) {
+        logger.warn({ rawConcurrency }, 'Invalid AP_WORKER_CONCURRENCY value, falling back to 1')
+    }
+    sandboxManagers = Array.from({ length: concurrency }, (_, i) => createSandboxManager(i + 1))
+
+    logger.info({ concurrency }, 'Starting polling workers')
+
+    const workers = sandboxManagers.map((sbManager, index) =>
+        pollAndExecute(apiClient, sbManager, index, generation),
+    )
+    await Promise.all(workers)
+}
+
+async function pollAndExecute(apiClient: WorkerToApiContract, sbManager: SandboxManager, workerIndex: number, generation: number): Promise<void> {
+    const workerLog = logger.child({ workerIndex })
+    workerLog.info('Polling worker started')
+
+    while (polling && connectionGeneration === generation) {
         const { data: machineInfo, error: machineError } = await tryCatch(buildMachineInfo)
         if (machineError) {
-            logger.error({ error: machineError }, 'Failed to build machine info')
+            workerLog.error({ error: machineError }, 'Failed to build machine info')
             await sleep(20000)
             continue
         }
 
         const { data: job, error: pollError } = await tryCatch(() => apiClient.poll(machineInfo))
         if (pollError) {
-            logger.error({ error: pollError }, 'Poll failed')
+            workerLog.error({ error: pollError }, 'Poll failed')
             await sleep(25000)
             continue
         }
 
         if (!job) {
-            logger.debug('Poll returned null, re-polling')
+            workerLog.debug('Poll returned null, re-polling')
             continue
         }
 
-        logger.info({ jobId: job.jobId, jobType: job.jobData.jobType }, 'Job received from poll')
+        workerLog.debug({ jobId: job.jobId, jobType: job.jobData.jobType }, 'Job received from poll')
 
         const lockExtensionInterval = setInterval(() => {
-            void tryCatch(() => apiClient.extendLock({ jobId: job.jobId })).then(({ error }) => {
+            void tryCatch(() => apiClient.extendLock({ jobId: job.jobId, token: job.token, queueName: job.queueName })).then(({ error }) => {
                 if (error) {
-                    logger.warn({ error, jobId: job.jobId }, 'Failed to extend lock')
+                    workerLog.warn({ error, jobId: job.jobId }, 'Failed to extend lock')
                 }
             })
-        }, 90_000)
+        }, 30_000)
 
         const { data: result, error: execError } = await tryCatch(() =>
-            executeJob(apiClient, job),
+            executeJob(apiClient, job, sbManager),
         )
 
         clearInterval(lockExtensionInterval)
@@ -114,20 +150,24 @@ async function startPollingLoop(apiClient: WorkerToApiContract): Promise<void> {
         const { error: completeError } = await tryCatch(() =>
             apiClient.completeJob({
                 jobId: job.jobId,
-                status: execError ? ConsumeJobResponseStatus.INTERNAL_ERROR : ConsumeJobResponseStatus.OK,
+                token: job.token,
+                queueName: job.queueName,
+                status: execError
+                    ? EngineResponseStatus.INTERNAL_ERROR
+                    : result?.kind === JobResultKind.SYNCHRONOUS ? result.status : EngineResponseStatus.OK,
                 errorMessage: execError?.message,
-                delayInSeconds: result?.delayInSeconds,
-                response: result?.response,
+                delayInSeconds: result?.kind === JobResultKind.FIRE_AND_FORGET ? result.delayInSeconds : undefined,
+                response: result?.kind === JobResultKind.SYNCHRONOUS ? result.response : undefined,
             }),
         )
 
         if (completeError) {
-            logger.error({ error: completeError, jobId: job.jobId }, 'Failed to complete job')
+            workerLog.error({ error: completeError, jobId: job.jobId }, 'Failed to complete job')
         }
     }
 }
 
-async function executeJob(apiClient: WorkerToApiContract, job: ConsumeJobRequest): Promise<JobResult> {
+async function executeJob(apiClient: WorkerToApiContract, job: ConsumeJobRequest, sbManager: SandboxManager): Promise<JobResult> {
     const rawData = job.jobData
     const jobData = JobData.parse(rawData)
     return tracer.startActiveSpan('worker.executeJob', {
@@ -139,9 +179,10 @@ async function executeJob(apiClient: WorkerToApiContract, job: ConsumeJobRequest
         const log = logger.child({ jobId: job.jobId, jobType: jobData.jobType })
         const apiUrl = getApiUrl()
         const { PUBLIC_URL: publicUrl } = await workerSettings.waitForSettings()
-        log.info({ apiUrl, publicUrl }, 'Worker settings resolved')
+        log.debug({ apiUrl, publicUrl }, 'Worker settings resolved')
         const ctx: JobContext = {
             apiClient,
+            sandboxManager: sbManager,
             jobId: job.jobId,
             engineToken: job.engineToken,
             internalApiUrl: apiUrl,
@@ -150,14 +191,14 @@ async function executeJob(apiClient: WorkerToApiContract, job: ConsumeJobRequest
         }
         try {
             const handler = getHandler(jobData.jobType)
-            log.info({ handlerType: handler.jobType }, 'Executing job with handler')
+            log.debug({ handlerType: handler.jobType }, 'Executing job with handler')
             const { data: result, error } = await tryCatch(() => handler.execute(ctx, jobData))
             if (error) {
                 log.error({ error }, 'Job execution failed')
                 span.recordException(error)
                 throw error
             }
-            log.info('Job completed')
+            log.debug('Job completed')
             return result
         }
         finally {
@@ -166,7 +207,7 @@ async function executeJob(apiClient: WorkerToApiContract, job: ConsumeJobRequest
     })
 }
 
-function ensurePublicApiUrl(publicUrl: string): string {
+export function ensurePublicApiUrl(publicUrl: string): string {
     if (publicUrl.endsWith('/api/')) return publicUrl
     if (publicUrl.endsWith('/api')) return publicUrl + '/'
     if (publicUrl.endsWith('/')) return publicUrl + 'api/'
@@ -181,12 +222,25 @@ async function fetchAndStoreSettings(sock: Socket): Promise<void> {
     }
     return new Promise<void>((resolve) => {
         sock.emit(WebsocketServerEvent.FETCH_WORKER_SETTINGS, request, (response: WorkerSettingsResponse) => {
-            initCachePaths(response.WORKER_CACHE_ID)
             workerSettings.set(response)
-            logger.info({ environment: response.ENVIRONMENT, executionMode: response.EXECUTION_MODE, workerCacheId: response.WORKER_CACHE_ID }, 'Worker settings loaded')
+            logger.info({ environment: response.ENVIRONMENT, executionMode: response.EXECUTION_MODE }, 'Worker settings loaded')
             resolve()
         })
     })
+}
+
+function getWorkerProps(): Record<string, string> {
+    try {
+        const settings = workerSettings.getSettings()
+        return {
+            EXECUTION_MODE: settings.EXECUTION_MODE,
+            WORKER_CONCURRENCY: system.get(WorkerSystemProp.WORKER_CONCURRENCY)!,
+            SANDBOX_MEMORY_LIMIT: settings.SANDBOX_MEMORY_LIMIT,
+        }
+    }
+    catch {
+        return {}
+    }
 }
 
 async function buildMachineInfo(): Promise<WorkerMachineHealthcheckRequest> {
@@ -197,11 +251,11 @@ async function buildMachineInfo(): Promise<WorkerMachineHealthcheckRequest> {
         workerId,
         cpuUsagePercentage: systemUsage.getCpuUsage(),
         diskInfo,
-        workerProps: {},
+        workerProps: getWorkerProps(),
         ramUsagePercentage: memInfo.ramUsage,
         totalAvailableRamInBytes: memInfo.totalRamInBytes,
         totalCpuCores: cpuCores,
-        ip: '127.0.0.1',
+        ip: workerHostname,
     }
 }
 
@@ -232,8 +286,28 @@ function sleep(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
+
+function startHealthServer(): ReturnType<typeof createServer> {
+    const port = Number(system.get(WorkerSystemProp.PORT))
+    const server = createServer((req, res) => {
+        if (req.method === 'GET' && req.url === '/worker/health') {
+            res.writeHead(200, { 'Content-Type': 'application/json' })
+            res.end(JSON.stringify({ status: 'ok' }))
+        }
+        else {
+            res.writeHead(404)
+            res.end()
+        }
+    })
+    server.listen(port, () => {
+        logger.info({ port }, 'Health server listening')
+    })
+    return server
+}
+
 type WorkerStartParams = {
     apiUrl: string
     socketUrl: { url: string, path: string }
     workerToken: string
+    withHealthServer?: boolean
 }

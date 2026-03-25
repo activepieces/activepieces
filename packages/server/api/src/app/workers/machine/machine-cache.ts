@@ -7,7 +7,6 @@ export type WorkerMachine = {
     updated: string
     created: string
     information: MachineInformation
-    cacheId?: number
     type?: 'SHARED' | 'DEDICATED'
     platformId?: string
 }

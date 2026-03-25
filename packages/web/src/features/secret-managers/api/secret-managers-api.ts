@@ -1,25 +1,37 @@
 import {
   ConnectSecretManagerRequest,
-  DisconnectSecretManagerRequest,
-  SecretManagerProviderMetaData,
   SeekPage,
+  SecretManagerConnectionWithStatus,
 } from '@activepieces/shared';
 
 import { api } from '@/lib/api';
 
 export const secretManagersApi = {
-  list() {
-    return api.get<SeekPage<SecretManagerProviderMetaData>>(
+  list(params?: { projectId?: string }) {
+    return api.get<SeekPage<SecretManagerConnectionWithStatus>>(
       '/v1/secret-managers',
+      params,
     );
   },
-  connect(config: ConnectSecretManagerRequest) {
-    return api.post<void>('/v1/secret-managers', config);
+  create(config: ConnectSecretManagerRequest) {
+    return api.post<SecretManagerConnectionWithStatus>(
+      '/v1/secret-managers',
+      config,
+    );
   },
-  disconnect(request: DisconnectSecretManagerRequest) {
-    return api.delete<void>('/v1/secret-managers', request);
+  update(id: string, config: ConnectSecretManagerRequest) {
+    return api.post<SecretManagerConnectionWithStatus>(
+      `/v1/secret-managers/${id}`,
+      config,
+    );
   },
-  clearCache() {
-    return api.delete<void>('/v1/secret-managers/cache');
+  delete(id: string) {
+    return api.delete<void>(`/v1/secret-managers/${id}`);
+  },
+  clearCache(connectionId?: string) {
+    return api.delete<void>(
+      '/v1/secret-managers/cache',
+      connectionId ? { connectionId } : undefined,
+    );
   },
 };

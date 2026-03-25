@@ -1,4 +1,4 @@
-import { AppConnectionScope, AppConnectionStatus, AppConnectionType, ConnectionOperationType, ConnectionState, DiffState, FieldState, FieldType, FileCompression, FileId, FileType, FlowAction, FlowProjectOperationType, FlowState, FlowStatus, FlowSyncError, isNil, PopulatedFlow, PopulatedTable, ProjectId, ProjectState, TableOperationType, TableState } from '@activepieces/shared'
+import { AppConnectionScope, AppConnectionStatus, AppConnectionType, ConnectionOperationType, ConnectionState, DiffState, FieldState, FieldType, FileCompression, FileId, FileType, FlowAction, FlowOperationStatus, FlowProjectOperationType, FlowState, FlowStatus, FlowSyncError, isNil, PopulatedFlow, PopulatedTable, ProjectId, ProjectState, TableOperationType, TableState } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { appConnectionService } from '../../../../app-connection/app-connection-service/app-connection-service'
 import { fileService } from '../../../../file/file.service'
@@ -211,6 +211,7 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
     async getFlowState(flow: PopulatedFlow): Promise<FlowState> {
         const flowState: FlowState = {
             ...flow,
+            operationStatus: flow.operationStatus ?? FlowOperationStatus.NONE,
             externalId: flow.externalId ?? flow.id,
             version: await flowMigrations.apply(flow.version),
         }

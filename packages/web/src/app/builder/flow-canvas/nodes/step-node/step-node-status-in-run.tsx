@@ -7,19 +7,13 @@ import { useBuilderStateContext } from '../../../builder-hooks';
 import { flowCanvasUtils } from '../../utils/flow-canvas-utils';
 
 const ApStepNodeStatusInRun = ({ stepName }: { stepName: string }) => {
-  const [run, loopIndexes, flowVersion] = useBuilderStateContext((state) => [
+  const [run, loopIndexes] = useBuilderStateContext((state) => [
     state.run,
     state.loopsIndexes,
-    state.flowVersion,
   ]);
   const stepStatusInRun = useMemo(() => {
-    return flowCanvasUtils.getStepStatus(
-      stepName,
-      run,
-      loopIndexes,
-      flowVersion,
-    );
-  }, [stepName, run, loopIndexes, flowVersion]);
+    return flowCanvasUtils.getStepStatus(stepName, run, loopIndexes);
+  }, [stepName, run, loopIndexes]);
   if (!stepStatusInRun) {
     return null;
   }

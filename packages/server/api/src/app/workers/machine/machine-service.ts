@@ -17,13 +17,12 @@ import { dedicatedWorkers } from '../../ee/platform/platform-plan/platform-dedic
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { workerMachineCache } from './machine-cache'
-import { workerIdGenerator } from './worker-id-generator'
 
 dayjs.extend(utc)
 
-const settingsCache = new Map<string, Omit<WorkerSettingsResponse, 'WORKER_CACHE_ID'>>()
+const settingsCache = new Map<string, WorkerSettingsResponse>()
 
-async function buildSettingsResponse(log: FastifyBaseLogger, platformIdForDedicatedWorker?: string): Promise<Omit<WorkerSettingsResponse, 'WORKER_CACHE_ID'>> {
+async function buildSettingsResponse(log: FastifyBaseLogger, platformIdForDedicatedWorker?: string): Promise<WorkerSettingsResponse> {
     const cacheKey = platformIdForDedicatedWorker ?? '__shared__'
     const cached = settingsCache.get(cacheKey)
     if (cached) {
@@ -71,37 +70,19 @@ export const machineService = (log: FastifyBaseLogger) => {
                 message: 'Worker disconnected',
                 workerId: request.workerId,
             })
-            const worker = await workerMachineCache().findOne(request.workerId)
-            if (worker && !isNil(worker.cacheId)) {
-                await workerIdGenerator.release(worker.cacheId)
-            }
             await workerMachineCache().delete([request.workerId])
         },
         async onConnection(request: WorkerMachineHealthcheckRequest, platformIdForDedicatedWorker?: string | undefined): Promise<WorkerSettingsResponse> {
             const existingWorker = await workerMachineCache().findOne(request.workerId)
 
-            let cacheId: number
-            if (existingWorker && !isNil(existingWorker.cacheId)) {
-                cacheId = existingWorker.cacheId
-                await workerIdGenerator.renew(cacheId)
-            }
-            else {
-                cacheId = await workerIdGenerator.allocate()
-            }
-
             const type = isNil(platformIdForDedicatedWorker) ? 'SHARED' : 'DEDICATED'
             await workerMachineCache().upsert({
                 id: request.workerId,
                 information: request,
-                cacheId,
                 type,
                 platformId: platformIdForDedicatedWorker,
             }, existingWorker)
-            const settings = await buildSettingsResponse(log, platformIdForDedicatedWorker)
-            return {
-                ...settings,
-                WORKER_CACHE_ID: cacheId,
-            }
+            return buildSettingsResponse(log, platformIdForDedicatedWorker)
         },
         async list(platformId: string): Promise<WorkerMachineWithStatus[]> {
             const allWorkers = await workerMachineCache().find()
@@ -112,8 +93,11 @@ export const machineService = (log: FastifyBaseLogger) => {
 
             await workerMachineCache().delete(offLineWorkers.map(worker => worker.id))
 
+            const hasDedicated = onlineWorkers.some(w => w.type === WorkerMachineType.DEDICATED && w.platformId === platformId)
             return onlineWorkers
-                .filter(worker => worker.type !== 'DEDICATED' || worker.platformId === platformId)
+                .filter(worker => hasDedicated
+                    ? (worker.type === WorkerMachineType.DEDICATED && worker.platformId === platformId)
+                    : worker.type !== WorkerMachineType.DEDICATED)
                 .map(worker => ({
                     ...worker,
                     status: WorkerMachineStatus.ONLINE,
@@ -135,7 +119,7 @@ async function getExecutionMode(log: FastifyBaseLogger, platformIdForDedicatedWo
         return executionMode
     }
     if (dedicatedWorkerConfig.trustedEnvironment) {
-        return ExecutionMode.SANDBOX_CODE_ONLY
+        return ExecutionMode.SANDBOX_PROCESS
     }
     return ExecutionMode.SANDBOX_CODE_AND_PROCESS
 }

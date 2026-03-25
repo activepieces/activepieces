@@ -2,25 +2,12 @@ import { readdir, rm } from 'fs/promises'
 import path from 'path'
 import { logger } from '../config/logger'
 
-export const LATEST_CACHE_VERSION = 'v7'
-
-let workerCacheId: number | null = null
-
-export function initCachePaths(cacheId: number): void {
-    workerCacheId = cacheId
-}
-
-function requireCacheId(): number {
-    if (workerCacheId === null) {
-        throw new Error('Cache paths not initialized. Call initCachePaths() first.')
-    }
-    return workerCacheId
-}
+export const LATEST_CACHE_VERSION = 'v8'
 
 export const GLOBAL_CACHE_ALL_VERSIONS_PATH = path.resolve('cache')
 
 export function getGlobalCachePathLatestVersion(): string {
-    return path.resolve('cache', LATEST_CACHE_VERSION, String(requireCacheId()))
+    return path.resolve('cache', LATEST_CACHE_VERSION)
 }
 
 export function getGlobalCacheCommonPath(): string {

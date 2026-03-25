@@ -2,10 +2,15 @@ import { z } from 'zod'
 import { OptionalArrayFromQuery } from '../../../core/common/base-model'
 import { Cursor } from '../../../core/common/seek-page'
 
+const coerceToString = z.preprocess(
+    (v) => (v === null || v === undefined ? v : String(v)),
+    z.string().nullable(),
+)
+
 export const CreateRecordsRequest = z.object({
     records: z.array(z.array(z.object({
         fieldId: z.string(),
-        value: z.string(),
+        value: coerceToString,
     }))),
     tableId: z.string(),
 })
@@ -15,7 +20,7 @@ export type CreateRecordsRequest = z.infer<typeof CreateRecordsRequest>
 export const UpdateRecordRequest = z.object({
     cells: z.array(z.object({
         fieldId: z.string(),
-        value: z.string(),
+        value: coerceToString,
     })).optional(),
     tableId: z.string(),
     agentUpdate: z.boolean().optional(),

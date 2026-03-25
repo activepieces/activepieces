@@ -1,17 +1,19 @@
 import {
+    ActivepiecesError,
     AppConnectionValue,
     EngineOperationType,
+    EngineResponseStatus,
+    ErrorCode,
     ExecuteValidateAuthJobData,
     WorkerJobType,
 } from '@activepieces/shared'
 import { provisioner } from '../../cache/provisioner'
 import { workerSettings } from '../../config/worker-settings'
-import { sandboxManager } from '../sandbox-manager'
-import { JobContext, JobHandler, JobResult } from '../types'
+import { JobContext, JobHandler, JobResultKind, SynchronousJobResult } from '../types'
 
-export const executeValidationJob: JobHandler<ExecuteValidateAuthJobData> = {
+export const executeValidationJob: JobHandler<ExecuteValidateAuthJobData, SynchronousJobResult> = {
     jobType: WorkerJobType.EXECUTE_VALIDATION,
-    async execute(ctx: JobContext, data: ExecuteValidateAuthJobData): Promise<JobResult> {
+    async execute(ctx: JobContext, data: ExecuteValidateAuthJobData): Promise<SynchronousJobResult> {
         const settings = workerSettings.getSettings()
         const timeoutInSeconds = settings.TRIGGER_TIMEOUT_SECONDS
 
@@ -20,7 +22,7 @@ export const executeValidationJob: JobHandler<ExecuteValidateAuthJobData> = {
             codeSteps: [],
         })
 
-        const sandbox = sandboxManager.acquire({ log: ctx.log, apiClient: ctx.apiClient })
+        const sandbox = ctx.sandboxManager.acquire({ log: ctx.log, apiClient: ctx.apiClient })
         try {
             await sandbox.start({
                 flowVersionId: undefined,
@@ -43,18 +45,24 @@ export const executeValidationJob: JobHandler<ExecuteValidateAuthJobData> = {
             )
 
             return {
-                response: {
-                    status: result.engine.status,
-                    response: result.engine.response,
-                },
+                kind: JobResultKind.SYNCHRONOUS,
+                status: result.engine.status,
+                response: result.engine.response,
             }
         }
         catch (e) {
-            await sandboxManager.invalidate(ctx.log)
+            await ctx.sandboxManager.invalidate(ctx.log)
+            if (e instanceof ActivepiecesError && e.error.code === ErrorCode.SANDBOX_EXECUTION_TIMEOUT) {
+                return {
+                    kind: JobResultKind.SYNCHRONOUS,
+                    status: EngineResponseStatus.TIMEOUT,
+                    response: { valid: false, error: 'Validation timed out' },
+                }
+            }
             throw e
         }
         finally {
-            await sandboxManager.release(ctx.log)
+            await ctx.sandboxManager.release(ctx.log)
         }
     },
 }

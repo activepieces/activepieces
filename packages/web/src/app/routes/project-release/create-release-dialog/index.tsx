@@ -26,11 +26,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  projectReleaseMutations,
-  gitSyncHooks,
-} from '@/features/project-releases';
-import { platformHooks } from '@/hooks/platform-hooks';
+import { projectReleaseMutations } from '@/features/project-releases';
 import { authenticationSession } from '@/lib/authentication-session';
 
 import { OperationChange } from './operation-change';
@@ -72,11 +68,6 @@ const CreateReleaseDialogContent = ({
   const isThereAnyChanges =
     (plan?.flows && plan?.flows.length > 0) ||
     (plan?.tables && plan?.tables.length > 0);
-  const { platform } = platformHooks.useCurrentPlatform();
-  const { gitSync } = gitSyncHooks.useGitSync(
-    authenticationSession.getProjectId()!,
-    platform.plan.environmentsEnabled,
-  );
 
   const { mutate: applyChanges, isPending } =
     projectReleaseMutations.useApplyRelease({
@@ -194,7 +185,7 @@ const CreateReleaseDialogContent = ({
                   </div>
                 </div>
                 <ScrollArea viewPortClassName="max-h-[10vh]">
-                  {plan?.connections.map((connection, index) => (
+                  {plan?.connections.map((connection) => (
                     <div
                       key={connection.connectionState.externalId}
                       className="flex items-center gap-2 text-sm py-1"
@@ -239,7 +230,7 @@ const CreateReleaseDialogContent = ({
                   </Label>
                 </div>
                 <ScrollArea viewPortClassName="max-h-[10vh]">
-                  {plan?.tables.map((table, index) => (
+                  {plan?.tables.map((table) => (
                     <div
                       key={table.tableState.externalId}
                       className="flex items-center gap-2 text-sm py-1"

@@ -37,7 +37,7 @@ describe('machineService.list — platform filtering', () => {
         await workerMachineCache().upsert({
             id: 'shared-1',
             information: fakeMachineInfo('shared-1'),
-            cacheId: 0,
+
             type: 'SHARED',
         })
 
@@ -53,7 +53,7 @@ describe('machineService.list — platform filtering', () => {
         await workerMachineCache().upsert({
             id: 'dedicated-A',
             information: fakeMachineInfo('dedicated-A'),
-            cacheId: 1,
+
             type: 'DEDICATED',
             platformId: 'platform-A',
         })
@@ -61,7 +61,7 @@ describe('machineService.list — platform filtering', () => {
         await workerMachineCache().upsert({
             id: 'dedicated-B',
             information: fakeMachineInfo('dedicated-B'),
-            cacheId: 2,
+
             type: 'DEDICATED',
             platformId: 'platform-B',
         })
@@ -80,7 +80,7 @@ describe('machineService.list — platform filtering', () => {
         await workerMachineCache().upsert({
             id: 'dedicated-other',
             information: fakeMachineInfo('dedicated-other'),
-            cacheId: 3,
+
             type: 'DEDICATED',
             platformId: 'platform-other',
         })
@@ -93,14 +93,14 @@ describe('machineService.list — platform filtering', () => {
         await workerMachineCache().upsert({
             id: 'shared-1',
             information: fakeMachineInfo('shared-1'),
-            cacheId: 10,
+
             type: 'SHARED',
         })
 
         await workerMachineCache().upsert({
             id: 'dedicated-mine',
             information: fakeMachineInfo('dedicated-mine'),
-            cacheId: 11,
+
             type: 'DEDICATED',
             platformId: 'platform-X',
         })
@@ -108,7 +108,7 @@ describe('machineService.list — platform filtering', () => {
         await workerMachineCache().upsert({
             id: 'dedicated-other',
             information: fakeMachineInfo('dedicated-other'),
-            cacheId: 12,
+
             type: 'DEDICATED',
             platformId: 'platform-Y',
         })
@@ -124,7 +124,7 @@ describe('machineService.list — platform filtering', () => {
         await workerMachineCache().upsert({
             id: 'legacy-worker',
             information: fakeMachineInfo('legacy-worker'),
-            cacheId: 20,
+
         })
 
         const result = await machineService(mockLogger).list('any-platform')

@@ -18,8 +18,6 @@ export function createSandbox(
     let httpServer: HttpServer | null = null
     let io: SocketIOServer | null = null
     let connectedSocket: Socket | null = null
-    let engineClient: EngineContract | null = null
-
     let connectionResolve: (() => void) | null = null
 
     function createSocketServer(): number {
@@ -35,12 +33,10 @@ export function createSandbox(
             log.info({ sandboxId, socketId: socket.id }, '[WebSocket] Sandbox connected')
 
             createRpcServer<WorkerContract>(socket, workerHandlers)
-            engineClient = createRpcClient<EngineContract>(socket)
 
             socket.on('disconnect', (reason) => {
                 log.info({ sandboxId, reason, socketId: socket.id }, '[WebSocket] Sandbox disconnected')
                 connectedSocket = null
-                engineClient = null
             })
 
             if (connectionResolve) {
@@ -75,11 +71,14 @@ export function createSandbox(
         })
     }
 
+    function isReady(): boolean {
+        return !isNil(connectedSocket) && connectedSocket.connected && !isNil(childProcess) && childProcess.exitCode === null
+    }
+
     return {
         id: sandboxId,
         start: async ({ flowVersionId, platformId, mounts }) => {
-            const ready = !isNil(connectedSocket) && connectedSocket.connected && !isNil(childProcess)
-            if (ready) {
+            if (isReady()) {
                 return
             }
             log.debug({
@@ -96,6 +95,7 @@ export function createSandbox(
                 customPieceMounts.push({
                     hostPath: customPiecesHostPath,
                     sandboxPath: '/root/custom_pieces',
+                    optional: true,
                 })
             }
 
@@ -137,7 +137,7 @@ export function createSandbox(
             let timeout: NodeJS.Timeout | null = null
             const operationPromise = new Promise<SandboxResult>((resolve, reject) => {
                 assertNotNullOrUndefined(childProcess, 'Sandbox process should not be null')
-                assertNotNullOrUndefined(engineClient, 'Engine client should not be null')
+                assertNotNullOrUndefined(connectedSocket, 'Connected socket should not be null')
 
                 let stdError = ''
                 let stdOut = ''
@@ -176,8 +176,10 @@ export function createSandbox(
                     })
                 })
 
-                log.info({ sandboxId, operationType }, '[Sandbox] Executing operation via RPC')
-                engineClient!.executeOperation({ operationType, operation }).then((engineResponse: EngineResponse<unknown>) => {
+                log.debug({ sandboxId, operationType }, '[Sandbox] Executing operation via RPC')
+                const operationTimeoutMs = (executeOptions.timeoutInSeconds + 5) * 1000
+                const client = createRpcClient<EngineContract>(connectedSocket!, operationTimeoutMs)
+                client.executeOperation({ operationType, operation }).then((engineResponse: EngineResponse<unknown>) => {
                     resolve({ engine: engineResponse, stdOut, stdError })
                 }).catch((error: unknown) => {
                     log.error({ sandboxId, error: String(error) }, '[Sandbox] RPC call failed')
@@ -189,7 +191,7 @@ export function createSandbox(
                 return await operationPromise
             }
             finally {
-                log.info({
+                log.debug({
                     sandboxId,
                     operationType,
                     killedByTimeout: String(killedByTimeout),
@@ -202,9 +204,7 @@ export function createSandbox(
                 childProcess?.removeAllListeners('error')
             }
         },
-        isReady: () => {
-            return !isNil(connectedSocket) && connectedSocket.connected && !isNil(childProcess)
-        },
+        isReady,
         shutdown: async () => {
             if (!isNil(childProcess)) {
                 log.debug({ sandboxId }, 'Shutting down sandbox')
@@ -213,7 +213,6 @@ export function createSandbox(
             }
             connectedSocket?.disconnect()
             connectedSocket = null
-            engineClient = null
             if (io) {
                 // eslint-disable-next-line @typescript-eslint/await-thenable
                 await io.close()
@@ -255,14 +254,15 @@ function handleProcessExit(log: SandboxLogger, params: ProcessExitParams): void 
         }))
     }
     else {
+        const reason = 'Worker exited with code ' + code + ' and signal ' + signal
         reject(new ActivepiecesError({
             code: ErrorCode.SANDBOX_INTERNAL_ERROR,
             params: {
-                reason: 'Worker exited with code ' + code + ' and signal ' + signal,
+                reason,
                 standardOutput: stdOut,
                 standardError: stdError,
             },
-        }))
+        }, `${reason} standardOutput=${stdOut} standardError=${stdError}`))
     }
 }
 

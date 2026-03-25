@@ -14,7 +14,6 @@ import { PAGE_SIZE_OPTIONS } from '../lib/utils';
 
 type AutomationsPaginationProps = {
   currentPage: number;
-  totalItems: number;
   totalPages: number;
   pageSize: number;
   onPageSizeChange: (size: number) => void;
@@ -24,7 +23,6 @@ type AutomationsPaginationProps = {
 
 export const AutomationsPagination = ({
   currentPage,
-  totalItems,
   totalPages,
   pageSize,
   onPageSizeChange,

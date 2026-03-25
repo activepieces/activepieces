@@ -18,19 +18,24 @@ export const airtableCreateRecordAction = createAction({
   async run(context) {
     const personalToken = context.auth;
     const { base: baseId, tableId, fields } = context.propsValue;
-    const fieldsWithoutEmptyStrings: DynamicPropsValue = {};
+    const fieldsWithoutEmptyValues: DynamicPropsValue = {};
 
     Object.keys(fields).forEach((k) => {
-      if (fields[k] !== '') {
-        fieldsWithoutEmptyStrings[k] = fields[k];
+      const value = fields[k];
+      if (value === null || value === undefined || value === '') {
+        return;
       }
+      if (Array.isArray(value) && value.length === 0) {
+        return;
+      }
+      fieldsWithoutEmptyValues[k] = value;
     });
     const newFields: Record<string, unknown> =
       await airtableCommon.createNewFields(
         personalToken.secret_text,
         baseId,
         tableId as string,
-        fieldsWithoutEmptyStrings
+        fieldsWithoutEmptyValues
       );
 
     return airtableCommon.createRecord({
