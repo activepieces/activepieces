@@ -401,6 +401,9 @@
       "@activepieces/piece-facebook-pages": [
         "packages/pieces/community/facebook-pages/src/index.ts"
       ],
+      "@activepieces/piece-fathom-analytics": [
+        "packages/pieces/community/fathom-analytics/src/index.ts"
+      ],
       "@activepieces/piece-figma": [
         "packages/pieces/community/figma/src/index.ts"
       ],
@@ -595,6 +598,9 @@
       ],
       "@activepieces/piece-jira-cloud": [
         "packages/pieces/community/jira-cloud/src/index.ts"
+      ],
+      "@activepieces/piece-jira-data-center": [
+        "packages/pieces/community/jira-data-center/src/index.ts"
       ],
       "@activepieces/piece-jotform": [
         "packages/pieces/community/jotform/src/index.ts"

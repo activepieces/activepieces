@@ -71,7 +71,7 @@ const ConnectGitDialog = ({ open, setOpen, showButton }: ConnectGitProps) => {
     mutationFn: (request: ConfigureRepoRequest): Promise<GitRepo> => {
       return gitSyncApi.configure(request);
     },
-    onSuccess: (repo) => {
+    onSuccess: () => {
       refetch();
       toast.success(t('Connected successfully'), {
         duration: 3000,

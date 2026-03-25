@@ -165,6 +165,7 @@
         "dotenv": "17.2.3",
         "drip-nodejs": "3.1.2",
         "embla-carousel-react": "8.1.8",
+        "eslint-plugin-unused-imports": "4.4.1",
         "eventsource-parser": "3.0.2",
         "fast-average-color": "9.5.0",
         "fast-glob": "3.3.3",
@@ -860,7 +861,7 @@
     },
     "packages/pieces/community/attio": {
       "name": "@activepieces/piece-attio",
-      "version": "0.1.4",
+      "version": "0.1.5",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -2398,6 +2399,16 @@
         "tslib": "^2.3.0",
       },
     },
+    "packages/pieces/community/fathom-analytics": {
+      "name": "@activepieces/piece-fathom-analytics",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/feathery": {
       "name": "@activepieces/piece-feathery",
       "version": "0.1.4",
@@ -3482,6 +3493,19 @@
         "zod": "4.3.6",
       },
     },
+    "packages/pieces/community/jira-data-center": {
+      "name": "@activepieces/piece-jira-data-center",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "dayjs": "1.11.9",
+        "form-data": "4.0.4",
+        "tslib": "2.6.2",
+        "zod": "4.3.6",
+      },
+    },
     "packages/pieces/community/jogg-ai": {
       "name": "@activepieces/piece-jogg-ai",
       "version": "0.1.3",
@@ -3757,7 +3781,7 @@
     },
     "packages/pieces/community/linear": {
       "name": "@activepieces/piece-linear",
-      "version": "0.2.3",
+      "version": "0.3.0",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -5082,7 +5106,7 @@
     },
     "packages/pieces/community/pipedrive": {
       "name": "@activepieces/piece-pipedrive",
-      "version": "0.8.4",
+      "version": "0.8.5",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -5701,7 +5725,7 @@
     },
     "packages/pieces/community/sendgrid": {
       "name": "@activepieces/piece-sendgrid",
-      "version": "0.5.0",
+      "version": "0.5.1",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -6229,7 +6253,7 @@
     },
     "packages/pieces/community/tally": {
       "name": "@activepieces/piece-tally",
-      "version": "0.2.4",
+      "version": "0.3.0",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -7016,7 +7040,7 @@
     },
     "packages/pieces/community/zendesk": {
       "name": "@activepieces/piece-zendesk",
-      "version": "0.2.5",
+      "version": "0.2.6",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -7148,7 +7172,7 @@
     },
     "packages/pieces/community/zoom": {
       "name": "@activepieces/piece-zoom",
-      "version": "0.5.4",
+      "version": "0.6.0",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -7518,11 +7542,12 @@
     },
     "packages/pieces/core/webhook": {
       "name": "@activepieces/piece-webhook",
-      "version": "0.1.31",
+      "version": "0.1.32",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
+        "dayjs": "1.11.9",
         "http-status-codes": "2.2.0",
         "tslib": "2.6.2",
       },
@@ -7768,8 +7793,9 @@
     },
     "packages/shared": {
       "name": "@activepieces/shared",
-      "version": "0.46.0",
+      "version": "0.47.0",
       "dependencies": {
+        "dayjs": "1.11.9",
         "deepmerge-ts": "7.1.0",
         "nanoid": "3.3.8",
         "semver": "7.6.0",
@@ -8306,6 +8332,8 @@
 
     "@activepieces/piece-fathom": ["@activepieces/piece-fathom@workspace:packages/pieces/community/fathom"],
 
+    "@activepieces/piece-fathom-analytics": ["@activepieces/piece-fathom-analytics@workspace:packages/pieces/community/fathom-analytics"],
+
     "@activepieces/piece-feathery": ["@activepieces/piece-feathery@workspace:packages/pieces/community/feathery"],
 
     "@activepieces/piece-fellow": ["@activepieces/piece-fellow@workspace:packages/pieces/community/fellow"],
@@ -8509,6 +8537,8 @@
     "@activepieces/piece-jina-ai": ["@activepieces/piece-jina-ai@workspace:packages/pieces/community/jina-ai"],
 
     "@activepieces/piece-jira-cloud": ["@activepieces/piece-jira-cloud@workspace:packages/pieces/community/jira-cloud"],
+
+    "@activepieces/piece-jira-data-center": ["@activepieces/piece-jira-data-center@workspace:packages/pieces/community/jira-data-center"],
 
     "@activepieces/piece-jogg-ai": ["@activepieces/piece-jogg-ai@workspace:packages/pieces/community/jogg-ai"],
 
@@ -12165,6 +12195,8 @@
     "eslint-plugin-tailwindcss": ["eslint-plugin-tailwindcss@3.17.4", "", { "dependencies": { "fast-glob": "^3.2.5", "postcss": "^8.4.4" }, "peerDependencies": { "tailwindcss": "^3.4.0" } }, "sha512-gJAEHmCq2XFfUP/+vwEfEJ9igrPeZFg+skeMtsxquSQdxba9XRk5bn0Bp9jxG1VV9/wwPKi1g3ZjItu6MIjhNg=="],
 
     "eslint-plugin-testing-library": ["eslint-plugin-testing-library@6.2.2", "", { "dependencies": { "@typescript-eslint/utils": "^5.58.0" }, "peerDependencies": { "eslint": "^7.5.0 || ^8.0.0" } }, "sha512-1E94YOTUDnOjSLyvOwmbVDzQi/WkKm3WVrMXu6SmBr6DN95xTGZmI6HJ/eOkSXh/DlheRsxaPsJvZByDBhWLVQ=="],
+
+    "eslint-plugin-unused-imports": ["eslint-plugin-unused-imports@4.4.1", "", { "peerDependencies": { "@typescript-eslint/eslint-plugin": "^8.0.0-0 || ^7.0.0 || ^6.0.0 || ^5.0.0", "eslint": "^10.0.0 || ^9.0.0 || ^8.0.0" }, "optionalPeers": ["@typescript-eslint/eslint-plugin"] }, "sha512-oZGYUz1X3sRMGUB+0cZyK2VcvRX5lm/vB56PgNNcU+7ficUCKm66oZWKUubXWnOuPjQ8PvmXtCViXBMONPe7tQ=="],
 
     "eslint-plugin-vitest": ["eslint-plugin-vitest@0.5.4", "", { "dependencies": { "@typescript-eslint/utils": "^7.7.1" }, "peerDependencies": { "eslint": "^8.57.0 || ^9.0.0", "vitest": "*" }, "optionalPeers": ["vitest"] }, "sha512-um+odCkccAHU53WdKAw39MY61+1x990uXjSPguUCq3VcEHdqJrOb8OTMrbYlY6f9jAKx7x98kLVlIe3RJeJqoQ=="],
 
