@@ -1,7 +1,7 @@
 import { createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { blandAiAuth, BLAND_AI_BASE_URL, blandHeaders } from './lib/auth';
+import { blandAiAuth, BLAND_AI_BASE_URL } from './lib/auth';
 import { sendCall } from './lib/actions/send-call';
 import { getCallDetails } from './lib/actions/get-call-details';
 import { listCalls } from './lib/actions/list-calls';
@@ -26,7 +26,7 @@ export const blandAi = createPiece({
     createCustomApiCallAction({
       baseUrl: () => BLAND_AI_BASE_URL,
       auth: blandAiAuth,
-      authMapping: async (auth) => blandHeaders(auth.secret_text),
+      authMapping: async (auth) => ({ authorization: auth.secret_text }),
     }),
   ],
   triggers: [],
