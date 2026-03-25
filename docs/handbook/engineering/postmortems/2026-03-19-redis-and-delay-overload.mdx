@@ -17,11 +17,8 @@ On March 19, 2026, a bug in the Delay step caused flows to restart from the begi
 All times are in UTC.
 
 1. **Mar 18, ~9:00 PM** — A code change to the Delay step is deployed, introducing the infinite loop bug.
-2. **Mar 19, ~12:59 AM** — Customer reports arrive indicating flows with Delay steps are not completing. Investigation begins.
-3. **Mar 19, ~1:00 AM** — Root cause identified as the Delay step restarting flows instead of resuming. Duplicate scheduled runs from the runaway loop are deleted. System job concurrency set to zero to stop the bleeding.
-4. **Mar 19, ~1:24 AM** — A single app server brought up. It processes the entire runs metadata backlog in ~2 minutes. Redis load returns to normal.
-5. **Mar 19, ~1:28 AM** — Remaining servers deployed incrementally. Service fully restored.
-6. **Mar 19, ~10:45 AM** — Fix for the Delay step bug deployed.
+2. **Mar 19, ~8:45 AM** — Customer reports arrive indicating flows with Delay steps are not completing. Investigation begins.
+4. **Mar 19, ~10:45 AM** — Fix for the Delay step bug deployed.
 
 ## Root Cause
 
