@@ -36,6 +36,7 @@ export const sendCustomerEventAction = createAction({
         email,
       },
       eventName,
+      origin: 'api',
     };
 
     if (
