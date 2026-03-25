@@ -23,7 +23,7 @@ export const vapi = createPiece({
       baseUrl: () => VAPI_BASE_URL,
       auth: vapiAuth,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       }),
     }),
   ],

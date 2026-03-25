@@ -40,7 +40,7 @@ export const createCall = createAction({
     }),
   },
   async run(context) {
-    const client = createVapiClient(context.auth);
+    const client = createVapiClient(context.auth.secret_text);
     const { assistantId, phoneNumberId, customerNumber, name, assistantOverrides } =
       context.propsValue;
 

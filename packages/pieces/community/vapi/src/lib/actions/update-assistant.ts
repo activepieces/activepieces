@@ -44,7 +44,7 @@ export const updateAssistant = createAction({
     }),
   },
   async run(context) {
-    const client = createVapiClient(context.auth);
+    const client = createVapiClient(context.auth.secret_text);
     const { assistantId, name, firstMessage, instructions, endCallMessage, overrides } =
       context.propsValue;
 
