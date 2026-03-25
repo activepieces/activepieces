@@ -30,7 +30,7 @@ export const googleBigQuery = createPiece({
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/google-bigquery.png',
   categories: [PieceCategory.BUSINESS_INTELLIGENCE],
-  authors: [],
+  authors: ['AhmadTash'],
   auth: bigQueryAuth,
   actions: [
     runQueryAction,
