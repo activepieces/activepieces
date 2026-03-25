@@ -6,22 +6,22 @@ import { proxycurlApiCall } from '../common/client';
 export const searchPeopleAction = createAction({
   name: 'search_people',
   displayName: 'Search People',
-  description: 'Search for people in Proxycurl using a lightweight set of filters.',
+  description: 'Search for people in Proxycurl using lightweight keyword filters.',
   auth: proxycurlAuth,
   props: {
     country: Property.ShortText({
       displayName: 'Country',
-      description: 'Country filter (for example us, gb, sg).',
-      required: true,
+      description: 'Optional country filter, for example us, gb, or sg.',
+      required: false,
     }),
     headline: Property.ShortText({
       displayName: 'Headline Keywords',
-      description: 'Keywords expected in the person headline.',
-      required: true,
+      description: 'Optional keywords expected in the person headline.',
+      required: false,
     }),
     summary_keywords: Property.ShortText({
       displayName: 'Summary Keywords',
-      description: 'Keywords expected in the summary/about section.',
+      description: 'Optional keywords expected in the summary/about section.',
       required: false,
     }),
   },
@@ -29,11 +29,11 @@ export const searchPeopleAction = createAction({
     return proxycurlApiCall({
       apiKey: context.auth.secret_text,
       method: HttpMethod.GET,
-      resourceUri: '/search/person',
+      resourceUri: '/v2/search/person',
       query: {
         country: context.propsValue.country,
         headline: context.propsValue.headline,
-        summary: context.propsValue.summary_keywords,
+        summary_keywords: context.propsValue.summary_keywords,
       },
     });
   },
