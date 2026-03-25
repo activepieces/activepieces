@@ -31,7 +31,9 @@ export const resolveIncident = createAction({
         incident: {
           type: 'incident',
           status: 'resolved',
-          resolution: resolution || undefined,
+          ...(resolution
+            ? { body: { type: 'incident_body', details: resolution } }
+            : {}),
         },
       },
     });

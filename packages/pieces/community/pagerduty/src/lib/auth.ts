@@ -28,10 +28,17 @@ export const pagerDutyAuth = PieceAuth.SecretText({
       return {
         valid: true,
       };
-    } catch {
+    } catch (e: unknown) {
+      const err = e as { response?: { status?: number } };
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        return {
+          valid: false,
+          error: 'Invalid PagerDuty API key or insufficient permissions.',
+        };
+      }
       return {
         valid: false,
-        error: 'Invalid PagerDuty API key or authentication failed.',
+        error: `Connection failed: ${String(e).slice(0, 100)}`,
       };
     }
   },

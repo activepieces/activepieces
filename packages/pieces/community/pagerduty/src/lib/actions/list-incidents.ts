@@ -8,7 +8,7 @@ export const listIncidents = createAction({
   auth: pagerDutyAuth,
   name: 'list_incidents',
   displayName: 'List Incidents',
-  description: 'List PagerDuty incidents with optional filters.',
+  description: 'List PagerDuty incidents with optional filters and pagination.',
   props: {
     statuses: statusesProp,
     urgency: optionalUrgencyProp,
@@ -22,13 +22,28 @@ export const listIncidents = createAction({
       description: 'Optional end of the search window.',
       required: false,
     }),
+    limit: Property.Number({
+      displayName: 'Limit',
+      description: 'Maximum number of incidents to return (1–100).',
+      required: false,
+      defaultValue: 25,
+    }),
+    offset: Property.Number({
+      displayName: 'Offset',
+      description: 'Pagination offset (number of records to skip).',
+      required: false,
+      defaultValue: 0,
+    }),
   },
   async run(context) {
-    const { statuses, urgency, since, until } = context.propsValue;
+    const { statuses, urgency, since, until, limit, offset } =
+      context.propsValue;
 
     const query: Record<string, string | string[] | undefined> = {
       since: since || undefined,
       until: until || undefined,
+      limit: String(limit ?? 25),
+      offset: String(offset ?? 0),
     };
 
     if (statuses && statuses.length > 0) {
@@ -36,7 +51,7 @@ export const listIncidents = createAction({
     }
 
     if (urgency) {
-      query['urgencies[]'] = [String(urgency)];
+      query['urgencies[]'] = [urgency];
     }
 
     const response = await pagerDutyApiCall({
@@ -46,6 +61,6 @@ export const listIncidents = createAction({
       query,
     });
 
-    return (response as { incidents?: unknown }).incidents ?? response;
+    return response;
   },
 });

@@ -20,33 +20,36 @@ export const createIncident = createAction({
     urgency: urgencyProp,
     details: Property.LongText({
       displayName: 'Details',
-      description: 'Detailed incident body text.',
-      required: true,
+      description: 'Optional detailed incident body text.',
+      required: false,
     }),
   },
   async run(context) {
     const { fromEmail, serviceId, title, urgency, details } = context.propsValue;
+
+    const incident: Record<string, unknown> = {
+      type: 'incident',
+      title,
+      service: {
+        id: serviceId,
+        type: 'service_reference',
+      },
+      urgency,
+    };
+
+    if (details) {
+      incident['body'] = {
+        type: 'incident_body',
+        details,
+      };
+    }
 
     const response = await pagerDutyApiCall({
       apiKey: context.auth.secret_text,
       method: HttpMethod.POST,
       path: '/incidents',
       fromEmail,
-      body: {
-        incident: {
-          type: 'incident',
-          title,
-          service: {
-            id: serviceId,
-            type: 'service_reference',
-          },
-          urgency,
-          body: {
-            type: 'incident_body',
-            details,
-          },
-        },
-      },
+      body: { incident },
     });
 
     return (response as { incident?: unknown }).incident ?? response;
