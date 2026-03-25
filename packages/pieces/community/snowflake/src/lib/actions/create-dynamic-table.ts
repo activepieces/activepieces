@@ -57,7 +57,9 @@ export const createDynamicTableAction = createAction({
       );
     }
     if (target_lag.includes("'")) {
-      throw new Error("Invalid target_lag value: single quotes are not allowed.");
+      throw new Error(
+        'Invalid target_lag value: single quotes are not allowed.'
+      );
     }
 
     const effectiveWarehouse =

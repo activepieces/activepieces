@@ -17,26 +17,26 @@ import {
 } from '@activepieces/shared'
 import { flowCache } from '../../cache/flow/flow-cache'
 import { workerSettings } from '../../config/worker-settings'
-import { JobContext, JobHandler, JobResult } from '../types'
+import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../types'
 import { provisionFlowPieces } from '../utils/flow-helpers'
 import { resolvePayload } from '../utils/resolve-payload'
 
-export const executeFlowJob: JobHandler<ExecuteFlowJobData> = {
+export const executeFlowJob: JobHandler<ExecuteFlowJobData, FireAndForgetJobResult> = {
     jobType: WorkerJobType.EXECUTE_FLOW,
-    async execute(ctx: JobContext, data: ExecuteFlowJobData): Promise<JobResult> {
+    async execute(ctx: JobContext, data: ExecuteFlowJobData): Promise<FireAndForgetJobResult> {
         const settings = workerSettings.getSettings()
         const timeoutInSeconds = settings.FLOW_TIMEOUT_SECONDS
 
         const flowVersion = await flowCache(ctx.log, ctx.apiClient).getVersion({ flowVersionId: data.flowVersionId })
         if (isNil(flowVersion)) {
             ctx.log.info({ flowVersionId: data.flowVersionId }, 'Flow version not found, skipping')
-            return {}
+            return { kind: JobResultKind.FIRE_AND_FORGET }
         }
 
         const provisioned = await provisionFlowPieces({ flowVersion, platformId: data.platformId, flowId: data.flowId, projectId: data.projectId, log: ctx.log, apiClient: ctx.apiClient })
         if (!provisioned) {
             await reportFlowStatus(ctx, data, FlowRunStatus.FAILED)
-            return {}
+            return { kind: JobResultKind.FIRE_AND_FORGET }
         }
 
         const sandbox = ctx.sandboxManager.acquire({ log: ctx.log, apiClient: ctx.apiClient })
@@ -57,30 +57,30 @@ export const executeFlowJob: JobHandler<ExecuteFlowJobData> = {
 
             if (result.engine.status === EngineResponseStatus.INTERNAL_ERROR) {
                 await reportFlowStatus(ctx, data, FlowRunStatus.INTERNAL_ERROR)
-                return {}
+                return { kind: JobResultKind.FIRE_AND_FORGET }
             }
 
             const delayInSeconds = result.engine.delayInSeconds
             if (delayInSeconds && delayInSeconds > 0) {
-                return { delayInSeconds }
+                return { kind: JobResultKind.FIRE_AND_FORGET, delayInSeconds }
             }
 
-            return {}
+            return { kind: JobResultKind.FIRE_AND_FORGET }
         }
         catch (e) {
             await ctx.sandboxManager.invalidate(ctx.log)
             if (e instanceof ActivepiecesError) {
                 if (e.error.code === ErrorCode.SANDBOX_EXECUTION_TIMEOUT) {
                     await reportFlowStatus(ctx, data, FlowRunStatus.TIMEOUT)
-                    return {}
+                    return { kind: JobResultKind.FIRE_AND_FORGET }
                 }
                 if (e.error.code === ErrorCode.SANDBOX_MEMORY_ISSUE) {
                     await reportFlowStatus(ctx, data, FlowRunStatus.MEMORY_LIMIT_EXCEEDED)
-                    return {}
+                    return { kind: JobResultKind.FIRE_AND_FORGET }
                 }
                 if (e.error.code === ErrorCode.SANDBOX_LOG_SIZE_EXCEEDED) {
                     await reportFlowStatus(ctx, data, FlowRunStatus.LOG_SIZE_EXCEEDED)
-                    return {}
+                    return { kind: JobResultKind.FIRE_AND_FORGET }
                 }
             }
             await reportFlowStatus(ctx, data, FlowRunStatus.INTERNAL_ERROR)
@@ -119,6 +119,15 @@ async function buildFlowOperation(
 
     if (data.executionType === ExecutionType.RESUME) {
         const executionState = await fetchExecutionState(ctx.apiClient, data)
+        if (Object.keys(executionState.steps).length === 0) {
+            ctx.log.error({ runId: data.runId, executionType: data.executionType }, 'RESUME operation has empty execution state — this is a bug that would cause an infinite loop')
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: {
+                    message: 'RESUME operation received with empty execution state',
+                },
+            })
+        }
         return {
             ...base,
             executionType: ExecutionType.RESUME,
