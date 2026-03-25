@@ -25,7 +25,7 @@ export const createAffiliateAction = createAction({
       displayName: 'Email',
       required: true,
     }),
-    password: Property.ShortText({
+    password: Property.SecretText({
       displayName: 'Password',
       description: 'Password for the new affiliate account.',
       required: true,

@@ -19,6 +19,7 @@ import { NumberProperty } from './number-property';
 import { ObjectProperty } from './object-property';
 import { PropertyType } from './property-type';
 import { LongTextProperty, ShortTextProperty } from './text-property';
+import { SecretTextProperty } from '../authentication/secret-text-property';
 import { CustomProperty, CustomPropertyCodeFunctionParams } from './custom-property';
 import { ColorProperty } from './color-property';
 import { PieceAuthProperty } from '../authentication';
@@ -40,6 +41,7 @@ export const InputProperty = z.union([
   DateTimeProperty,
   FileProperty,
   ColorProperty,
+  SecretTextProperty,
 ]);
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -60,7 +62,8 @@ export type InputProperty =
   | DateTimeProperty<boolean>
   | FileProperty<boolean>
   | CustomProperty<boolean>
-  | ColorProperty<boolean>;
+  | ColorProperty<boolean>
+  | SecretTextProperty<boolean>;
 
 
 type Properties<T> = Omit<
@@ -79,6 +82,17 @@ export const Property = {
     } as unknown as R extends true
       ? ShortTextProperty<true>
       : ShortTextProperty<false>;
+  },
+  SecretText<R extends boolean>(
+    request: Properties<SecretTextProperty<R>>
+  ): R extends true ? SecretTextProperty<true> : SecretTextProperty<false> {
+    return {
+      ...request,
+      valueSchema: undefined,
+      type: PropertyType.SECRET_TEXT,
+    } as unknown as R extends true
+      ? SecretTextProperty<true>
+      : SecretTextProperty<false>;
   },
   Checkbox<R extends boolean>(
     request: Properties<CheckboxProperty<R>>

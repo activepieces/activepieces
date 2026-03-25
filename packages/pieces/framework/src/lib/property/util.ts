@@ -15,6 +15,7 @@ function buildSchema(props: PiecePropertyMap, auth: PieceAuthProperty | PieceAut
         case PropertyType.DATE_TIME:
         case PropertyType.SHORT_TEXT:
         case PropertyType.LONG_TEXT:
+        case PropertyType.SECRET_TEXT:
         case PropertyType.COLOR:
         case PropertyType.FILE:
           propsSchema[name] = property.required
