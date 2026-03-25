@@ -176,14 +176,20 @@ async function execute(operation: ExecuteToolOperationWithModel): Promise<Execut
             constants: EngineConstants.fromExecuteActionInput(operation),
         })
         const { output: stepOutput, errorMessage, status } = output.steps[operation.actionName]
-        
+        const redactedInput = Object.fromEntries(
+            Object.entries(resolvedInput).map(([key, value]) => {
+                const propertyType = pieceAction.props[key]?.type
+                if (key === 'auth' || propertyType === PropertyType.SECRET_TEXT) {
+                    return [key, 'Redacted']
+                }
+                return [key, value]
+            }),
+        )
+
         return {
             status: status === StepOutputStatus.FAILED ? ExecutionToolStatus.FAILED : ExecutionToolStatus.SUCCESS,
             output: stepOutput,
-            resolvedInput: {
-                ...resolvedInput,
-                auth: 'Redacted',
-            },
+            resolvedInput: redactedInput,
             errorMessage,
         }
     }

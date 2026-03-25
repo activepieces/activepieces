@@ -111,7 +111,7 @@ describe('agentTools secret text support', () => {
     })
   })
 
-  it('does not fail when a tool action contains a SECRET_TEXT input property', async () => {
+  it('does not fail when a tool action contains a SECRET_TEXT input property and redacts it from resolvedInput', async () => {
     const tools = await agentTools.tools({
       engineConstants: {
         projectId: 'project-id',
@@ -138,7 +138,7 @@ describe('agentTools secret text support', () => {
     expect(result.errorMessage).toBeUndefined()
     expect(result.resolvedInput).toMatchObject({
       email: 'user@example.com',
-      password: 'super-secret-password',
+      password: 'Redacted',
     })
     expect(mockHandle).toHaveBeenCalledWith(expect.objectContaining({
       action: expect.objectContaining({
