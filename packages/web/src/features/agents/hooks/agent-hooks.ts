@@ -1,6 +1,5 @@
 import {
   AgentMcpTool,
-  FlowTriggerType,
   ValidateAgentMcpToolResponse,
 } from '@activepieces/shared';
 import { useMutation, useQuery } from '@tanstack/react-query';

@@ -157,6 +157,8 @@ export const ExecuteValidateAuthJobData = z.object({
     piece: PiecePackage,
     schemaVersion: z.number(),
     connectionValue: z.unknown(),
+    requestId: z.string(),
+    webserverId: z.string(),
 })
 export type ExecuteValidateAuthJobData = z.infer<typeof ExecuteValidateAuthJobData>
 
@@ -171,6 +173,8 @@ export const ExecuteTriggerHookJobData = z.object({
     test: z.boolean(),
     hookType: z.nativeEnum(TriggerHookType),
     triggerPayload: TriggerPayload.optional(),
+    requestId: z.string(),
+    webserverId: z.string(),
 })
 export type ExecuteTriggerHookJobData = z.infer<typeof ExecuteTriggerHookJobData>
 
@@ -186,6 +190,8 @@ export const ExecutePropertyJobData = z.object({
     input: z.record(z.string(), z.unknown()),
     sampleData: z.record(z.string(), z.unknown()),
     searchValue: z.string().optional(),
+    requestId: z.string(),
+    webserverId: z.string(),
 })
 export type ExecutePropertyJobData = z.infer<typeof ExecutePropertyJobData>
 
@@ -195,6 +201,8 @@ export const ExecuteExtractPieceMetadataJobData = z.object({
     projectId: z.undefined(),
     platformId: z.string(),
     piece: PiecePackage,
+    requestId: z.string(),
+    webserverId: z.string(),
 })
 export type ExecuteExtractPieceMetadataJobData = z.infer<typeof ExecuteExtractPieceMetadataJobData>
 
@@ -207,10 +215,10 @@ export const UserInteractionJobData = z.union([
 export type UserInteractionJobData = z.infer<typeof UserInteractionJobData>
 
 export const UserInteractionJobDataWithoutWatchingInformation = z.union([
-    ExecuteValidateAuthJobData.omit({ schemaVersion: true }),
-    ExecuteTriggerHookJobData.omit({ schemaVersion: true }),
-    ExecutePropertyJobData.omit({ schemaVersion: true }),
-    ExecuteExtractPieceMetadataJobData.omit({ schemaVersion: true }),
+    ExecuteValidateAuthJobData.omit({ schemaVersion: true, requestId: true, webserverId: true }),
+    ExecuteTriggerHookJobData.omit({ schemaVersion: true, requestId: true, webserverId: true }),
+    ExecutePropertyJobData.omit({ schemaVersion: true, requestId: true, webserverId: true }),
+    ExecuteExtractPieceMetadataJobData.omit({ schemaVersion: true, requestId: true, webserverId: true }),
 ])
 export type UserInteractionJobDataWithoutWatchingInformation = z.infer<typeof UserInteractionJobDataWithoutWatchingInformation>
 

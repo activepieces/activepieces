@@ -101,16 +101,7 @@ jobs:
           npx turbo run test --filter=@activepieces/engine --filter=@activepieces/shared &
           pids+=($!)
 
-          npx turbo run test-ce --filter=api &
-          pids+=($!)
-
-          npx turbo run test-ee --filter=api &
-          pids+=($!)
-
-          npx turbo run test-cloud --filter=api &
-          pids+=($!)
-
-          npx turbo run check-migrations --filter=api &
+          npx turbo run test-ce test-ee test-cloud check-migrations --filter=api &
           pids+=($!)
 
           status=0
