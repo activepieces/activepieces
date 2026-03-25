@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { BookOpen, Hammer, Workflow } from 'lucide-react';
+import { Hammer, Workflow } from 'lucide-react';
 import { useState } from 'react';
 
 import { McpSvg } from '@/assets/img/custom/mcp';
@@ -11,7 +11,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 import { useFlowToolDialogStore } from './stores/flows-tools';
-import { useKnowledgeBaseToolDialogStore } from './stores/knowledge-base-tools';
 import { useMcpToolDialogStore } from './stores/mcp-tools';
 import { usePieceToolsDialogStore } from './stores/pieces-tools';
 
@@ -31,7 +30,6 @@ export const AddToolDropdown = ({
   const { setShowAddFlowDialog } = useFlowToolDialogStore();
   const { openAddPieceToolDialog } = usePieceToolsDialogStore();
   const { setShowAddMcpDialog } = useMcpToolDialogStore();
-  const { setShowAddKbDialog } = useKnowledgeBaseToolDialogStore();
 
   return (
     <DropdownMenu
@@ -59,11 +57,6 @@ export const AddToolDropdown = ({
         <DropdownMenuItem onSelect={() => setShowAddMcpDialog(true)}>
           <McpSvg className="size-3.5 me-2" />
           <span>{t('Mcp server')}</span>
-        </DropdownMenuItem>
-
-        <DropdownMenuItem onSelect={() => setShowAddKbDialog(true)}>
-          <BookOpen className="size-3.5 me-2" />
-          <span>{t('Knowledge base')}</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

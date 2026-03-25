@@ -21,13 +21,6 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { tablesApi } from '@/features/tables/api/tables-api';
 import { authenticationSession } from '@/lib/authentication-session';
 
@@ -43,7 +36,7 @@ function AgentKnowledgeBaseDialog({
   tools,
   onToolsUpdate,
 }: AgentKnowledgeBaseDialogProps) {
-  const { showAddKbDialog, editingKbTool, closeKbDialog } =
+  const { showAddKbDialog, editingKbTool, initialSourceType, closeKbDialog } =
     useKnowledgeBaseToolDialogStore();
 
   return (
@@ -53,6 +46,7 @@ function AgentKnowledgeBaseDialog({
         tools={tools}
         onToolsUpdate={onToolsUpdate}
         editingKbTool={editingKbTool}
+        initialSourceType={initialSourceType}
         closeKbDialog={closeKbDialog}
       />
     </Dialog>
@@ -63,16 +57,20 @@ function KnowledgeBaseDialogContent({
   tools,
   onToolsUpdate,
   editingKbTool,
+  initialSourceType,
   closeKbDialog,
 }: {
   tools: AgentTool[];
   onToolsUpdate: (tools: AgentTool[]) => void;
   editingKbTool: AgentKnowledgeBaseTool | null;
+  initialSourceType: KnowledgeBaseSourceType | null;
   closeKbDialog: () => void;
 }) {
-  const [sourceType, setSourceType] = useState<KnowledgeBaseSourceType>(
-    editingKbTool?.sourceType ?? KnowledgeBaseSourceType.FILE,
-  );
+  const sourceType =
+    editingKbTool?.sourceType ??
+    initialSourceType ??
+    KnowledgeBaseSourceType.FILE;
+
   const [toolName, setToolName] = useState(editingKbTool?.toolName ?? '');
   const [sourceId, setSourceId] = useState(editingKbTool?.sourceId ?? '');
   const [sourceName, setSourceName] = useState(editingKbTool?.sourceName ?? '');
@@ -172,52 +170,27 @@ function KnowledgeBaseDialogContent({
     closeKbDialog();
   };
 
+  const dialogTitle = editingKbTool
+    ? t('Edit Knowledge Source')
+    : sourceType === KnowledgeBaseSourceType.FILE
+    ? t('Add File Source')
+    : t('Add Table Source');
+
   return (
-    <DialogContent className="sm:max-w-md">
+    <DialogContent className="sm:max-w-md gap-3">
       <DialogHeader>
-        <DialogTitle>
-          {editingKbTool
-            ? t('Edit Knowledge Source')
-            : t('Add Knowledge Source')}
-        </DialogTitle>
+        <DialogTitle>{dialogTitle}</DialogTitle>
       </DialogHeader>
 
-      <div className="space-y-4 py-2">
-        <div className="space-y-2">
-          <Label>{t('Source Type')}</Label>
-          <Select
-            value={sourceType}
-            onValueChange={(val) => {
-              setSourceType(val as KnowledgeBaseSourceType);
-              setSourceId('');
-              setSourceName('');
-              if (!editingKbTool) {
-                setToolName('');
-              }
-            }}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={KnowledgeBaseSourceType.FILE}>
-                {t('File (PDF, TXT, CSV, DOCX)')}
-              </SelectItem>
-              <SelectItem value={KnowledgeBaseSourceType.TABLE}>
-                {t('Table')}
-              </SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-2">
+      <div className="space-y-4">
+        <div className="space-y-1.5">
           <Label>
             {sourceType === KnowledgeBaseSourceType.FILE
               ? t('Knowledge Base File')
               : t('Table')}
           </Label>
           {sourceType === KnowledgeBaseSourceType.FILE ? (
-            <>
+            <div className="flex flex-col gap-2">
               <SearchableSelect
                 options={fileOptions}
                 value={sourceId || undefined}
@@ -257,6 +230,7 @@ function KnowledgeBaseDialogContent({
                 type="button"
                 variant="outline"
                 size="sm"
+                className="self-start"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploadMutation.isPending}
               >
@@ -265,7 +239,7 @@ function KnowledgeBaseDialogContent({
                   ? t('Uploading...')
                   : t('Upload new file')}
               </Button>
-            </>
+            </div>
           ) : (
             <SearchableSelect
               options={tableOptions}
@@ -282,8 +256,12 @@ function KnowledgeBaseDialogContent({
           )}
         </div>
 
-        <div className="space-y-2">
-          <Label>{t('Tool Name')}</Label>
+        <div className="space-y-1.5">
+          <Label>
+            {sourceType === KnowledgeBaseSourceType.FILE
+              ? t('File Name')
+              : t('Table Name')}
+          </Label>
           <Input
             value={toolName}
             onChange={(e) => setToolName(e.target.value)}

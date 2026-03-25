@@ -13,12 +13,11 @@ import { Button } from '@/components/ui/button';
 import {
   AddToolDropdown,
   AgentFlowToolComponent,
-  AgentKnowledgeBaseToolComponent,
   AgentMcpToolComponent,
   AgentPieceToolComponent,
   AgentFlowToolDialog,
-  AgentKnowledgeBaseDialog,
   AgentMcpDialog,
+  KnowledgeBaseSection,
 } from '@/features/agents';
 
 import { AgentPieceDialog } from './piece-tool-dialog';
@@ -71,7 +70,10 @@ export const AgentTools = ({
       <h2 className="text-sm font-medium">{t('Agent Tools')}</h2>
 
       <div className="mt-2">
-        {tools.length > 0 ? (
+        {flowTools.length +
+          mcpTools.length +
+          Object.keys(pieceToToolMap).length >
+        0 ? (
           <>
             <Accordion
               type="single"
@@ -97,13 +99,6 @@ export const AgentTools = ({
                 <AgentMcpToolComponent
                   disabled={disabled}
                   tools={mcpTools}
-                  removeTool={removeTool}
-                />
-              )}
-              {kbTools.length > 0 && (
-                <AgentKnowledgeBaseToolComponent
-                  disabled={disabled}
-                  tools={kbTools}
                   removeTool={removeTool}
                 />
               )}
@@ -153,10 +148,17 @@ export const AgentTools = ({
         )}
       </div>
 
+      <KnowledgeBaseSection
+        disabled={disabled}
+        tools={kbTools}
+        allTools={tools}
+        removeTool={removeTool}
+        onToolsUpdate={onToolsUpdate}
+      />
+
       <AgentFlowToolDialog onToolsUpdate={onToolsUpdate} tools={tools} />
       <AgentPieceDialog tools={tools} onToolsUpdate={onToolsUpdate} />
       <AgentMcpDialog tools={tools} onToolsUpdate={onToolsUpdate} />
-      <AgentKnowledgeBaseDialog tools={tools} onToolsUpdate={onToolsUpdate} />
     </div>
   );
 };

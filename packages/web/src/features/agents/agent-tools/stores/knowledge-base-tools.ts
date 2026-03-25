@@ -1,35 +1,48 @@
-import { AgentKnowledgeBaseTool } from '@activepieces/shared';
+import {
+  AgentKnowledgeBaseTool,
+  KnowledgeBaseSourceType,
+} from '@activepieces/shared';
 import { create } from 'zustand';
 
 interface KnowledgeBaseToolDialogState {
   showAddKbDialog: boolean;
   editingKbTool: AgentKnowledgeBaseTool | null;
+  initialSourceType: KnowledgeBaseSourceType | null;
 
-  resetDialogState: () => void;
   closeKbDialog: () => void;
-  setShowAddKbDialog: (show: boolean, tool?: AgentKnowledgeBaseTool) => void;
+  setShowAddKbDialog: (
+    show: boolean,
+    tool?: AgentKnowledgeBaseTool,
+    sourceType?: KnowledgeBaseSourceType,
+  ) => void;
 }
 
-const initialState = {
+const initialState: Pick<
+  KnowledgeBaseToolDialogState,
+  'showAddKbDialog' | 'editingKbTool' | 'initialSourceType'
+> = {
   showAddKbDialog: false,
   editingKbTool: null,
+  initialSourceType: null,
 };
 
 export const useKnowledgeBaseToolDialogStore =
-  create<KnowledgeBaseToolDialogState>((set, get) => ({
+  create<KnowledgeBaseToolDialogState>((set) => ({
     ...initialState,
 
-    setShowAddKbDialog: (show, tool) =>
-      set({ showAddKbDialog: show, editingKbTool: tool ?? null }),
-
-    resetDialogState: () => {
+    setShowAddKbDialog: (show, tool, sourceType) =>
       set({
-        editingKbTool: null,
-      });
-    },
+        showAddKbDialog: show,
+        editingKbTool: tool ?? null,
+        initialSourceType:
+          tool?.sourceType ?? sourceType ?? KnowledgeBaseSourceType.FILE,
+      }),
 
     closeKbDialog: () => {
-      get().resetDialogState();
-      set({ showAddKbDialog: false });
+      set({
+        showAddKbDialog: false,
+        editingKbTool: null,
+        initialSourceType: null,
+      });
     },
   }));

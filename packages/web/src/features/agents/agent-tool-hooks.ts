@@ -6,6 +6,7 @@ import { piecesApi } from '../pieces/api/pieces-api';
 type ToolMetadata = {
   displayName?: string | null;
   logoUrl?: string | null;
+  iconType?: 'knowledge-base' | null;
 };
 
 export const agentToolHooks = {
@@ -36,6 +37,11 @@ export const agentToolHooks = {
               logoUrl: null,
             };
           case ToolCallType.KNOWLEDGE_BASE:
+            return {
+              displayName: contentBlock.displayName ?? contentBlock.toolName,
+              logoUrl: null,
+              iconType: 'knowledge-base',
+            };
           case ToolCallType.MCP:
           case ToolCallType.UNKNOWN:
             return {
