@@ -1,5 +1,5 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { pipedriveAuth } from '../../index';
+import { pipedriveAuth } from '../auth';
 import {
 	pipedriveApiCall,
 	pipedrivePaginatedV1ApiCall,

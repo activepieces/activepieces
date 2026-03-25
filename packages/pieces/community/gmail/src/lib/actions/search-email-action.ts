@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { gmailAuth } from '../../';
+import { gmailAuth } from '../auth';
 import { google } from 'googleapis';
 import { OAuth2Client } from 'googleapis-common';
 import { convertAttachment, parseStream } from '../common/data';
@@ -10,7 +10,8 @@ export const gmailSearchMailAction = createAction({
   auth: gmailAuth,
   name: 'gmail_search_mail',
   displayName: 'Find Email',
-  description: 'Find emails using advanced search criteria.',
+  description:
+    'Find emails using advanced search criteria. At least one search filter (from, to, subject, label, category, date, content, or attachment) is required.',
   props: {
     from: GmailProps.from,
     to: GmailProps.to,

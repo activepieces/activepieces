@@ -5,7 +5,8 @@ import {
   HttpRequest,
 } from '@activepieces/pieces-common';
 import { DUST_BASE_URL } from '../common';
-import { dustAuth, DustAuthType } from '../..';
+import { dustAuth } from '../..';
+import { DustAuthType } from '../..';
 import mimeTypes from 'mime-types';
 
 export const upsertDocument = createAction({

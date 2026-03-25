@@ -3,7 +3,7 @@ import { attioApiCall, attioPaginatedApiCall } from './client';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { AttributeResponse, ListResponse, ObjectResponse, SelectOptionResponse } from './types';
 import { isNil } from '@activepieces/shared';
-import { attioAuth } from '../..';
+import { attioAuth } from '../auth';
 
 interface DropdownParams {
 	displayName: string;
@@ -274,6 +274,7 @@ export async function formatInputFields(
 	objectType:'lists'|'objects',
 	objectId: string,
 	inputValues: Record<string, any>,
+	isSearch = false,
 ) {
 	const attributes = await attioPaginatedApiCall<AttributeResponse>({
 		method: HttpMethod.GET,
@@ -296,11 +297,23 @@ export async function formatInputFields(
 
 		switch (fieldType) {
 			case 'phone-number':
-				formattedFields[key] = [value];
+				formattedFields[key] = isSearch ? value : [value];
 				break;
 			case 'domain':
+				if (isSearch) {
+					// Attio filter API expects a plain string for domain attributes, not an array
+					formattedFields[key] = Array.isArray(value) ? value[0] : value;
+				} else {
+					formattedFields[key] = typeof value === 'string' ? [value] : value;
+				}
+				break;
 			case 'select':
-				formattedFields[key] = typeof value === 'string' ? [value] : value;
+				if (isSearch) {
+					// Attio filter API expects a plain string for select attributes, not an array
+					formattedFields[key] = Array.isArray(value) ? value[0] : value;
+				} else {
+					formattedFields[key] = typeof value === 'string' ? [value] : value;
+				}
 				break;
 			default:
 				formattedFields[key] = value;

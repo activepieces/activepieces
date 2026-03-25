@@ -1,6 +1,6 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { attioAuth } from '../../index';
+import { attioAuth } from '../auth';
 import { formatInputFields, objectFields, objectTypeIdDropdown } from '../common/props';
 import { attioPaginatedApiCall } from '../common/client';
 
@@ -29,6 +29,7 @@ export const findRecordAction = createAction({
 			'objects',
 			objectTypeId,
 			inputFields,
+			true,
 		);
 
 		// https://docs.attio.com/rest-api/endpoint-reference/records/list-records

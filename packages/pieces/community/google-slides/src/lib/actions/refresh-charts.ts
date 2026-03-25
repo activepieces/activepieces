@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { batchUpdate, getSlide, PageElement } from '../commons/common';
-import { googleSlidesAuth } from '../..';
+import { googleSlidesAuth } from '../auth';
 
 export const refreshSheetsCharts = createAction({
   name: 'refresh_sheets_charts',

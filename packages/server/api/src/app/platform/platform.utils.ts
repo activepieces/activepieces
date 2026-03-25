@@ -16,7 +16,7 @@ export const platformUtils = {
         if (system.getEdition() === ApEdition.CLOUD) {
             return null
         }
-        const oldestPlatform = await platformService.getOldestPlatform()
+        const oldestPlatform = await platformService(req.log).getOldestPlatform()
         return oldestPlatform?.id ?? null
     },
     isCustomerOnDedicatedDomain(platform: PlatformWithoutSensitiveData): boolean {

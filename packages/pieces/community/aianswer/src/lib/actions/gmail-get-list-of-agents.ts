@@ -1,7 +1,7 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { createAction } from '@activepieces/pieces-framework';
 import { aiAnswerConfig } from '../common/models';
-import { aiAnswerAuth } from '../../index';
+import { aiAnswerAuth } from '../auth';
 
 export const gmailGetListOfAgents = createAction({
   name: 'gmailGetListOfAgents',
