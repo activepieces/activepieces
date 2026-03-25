@@ -49,6 +49,45 @@ export async function proxycurlApiCall<T>({
     body,
   };
 
-  const response = await httpClient.sendRequest<T>(request);
-  return response.body;
+  try {
+    const response = await httpClient.sendRequest<T>(request);
+
+    if (response.status >= 400) {
+      const bodyMessage =
+        typeof response.body === 'string'
+          ? response.body
+          : JSON.stringify(response.body);
+      throw new Error(
+        `Proxycurl API error ${response.status}: ${bodyMessage}`
+      );
+    }
+
+    return response.body;
+  } catch (error: unknown) {
+    const proxycurlError = error as {
+      response?: { status?: number; body?: unknown };
+      statusCode?: number;
+      status?: number;
+      body?: unknown;
+      message?: string;
+    };
+
+    const statusCode =
+      proxycurlError.response?.status ??
+      proxycurlError.statusCode ??
+      proxycurlError.status;
+    const errorBody = proxycurlError.response?.body ?? proxycurlError.body;
+
+    if (statusCode) {
+      const bodyMessage =
+        typeof errorBody === 'string' ? errorBody : JSON.stringify(errorBody);
+      throw new Error(
+        `Proxycurl API error ${statusCode}: ${bodyMessage || proxycurlError.message || 'Unknown error'}`
+      );
+    }
+
+    throw new Error(
+      `Proxycurl request failed: ${proxycurlError.message || 'Unknown error'}`
+    );
+  }
 }

@@ -26,14 +26,22 @@ export const searchPeopleAction = createAction({
     }),
   },
   async run(context) {
+    const { country, headline, summary_keywords } = context.propsValue;
+
+    if (!country && !headline && !summary_keywords) {
+      throw new Error(
+        'At least one search filter must be provided: Country, Headline Keywords, or Summary Keywords.'
+      );
+    }
+
     return proxycurlApiCall({
       apiKey: context.auth.secret_text,
       method: HttpMethod.GET,
       resourceUri: '/v2/search/person',
       query: {
-        country: context.propsValue.country,
-        headline: context.propsValue.headline,
-        summary_keywords: context.propsValue.summary_keywords,
+        country,
+        headline,
+        summary_keywords,
       },
     });
   },
