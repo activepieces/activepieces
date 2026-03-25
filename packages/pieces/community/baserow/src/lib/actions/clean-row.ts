@@ -2,17 +2,22 @@ import { createAction } from '@activepieces/pieces-framework';
 import { baserowAuth } from '../auth';
 import { baserowCommon, formatFieldValues, makeClient } from '../common';
 
-export const createRowAction = createAction({
-  name: 'baserow_create_row',
-  displayName: 'Create Row',
-  description: 'Creates a new row.',
+export const cleanRowAction = createAction({
+  name: 'baserow_clean_row',
+  displayName: 'Clean Row',
+  description:
+    'Clears fields in a row. Empty values will clear the corresponding fields.',
   auth: baserowAuth,
   props: {
     table_id: baserowCommon.tableId(),
+    row_id: baserowCommon.rowId(),
     table_fields: baserowCommon.tableFields(true),
   },
   async run(context) {
-    const table_id = context.propsValue.table_id!;
+    const { table_id, row_id } = context.propsValue as {
+      table_id: number;
+      row_id: number;
+    };
     const tableFieldsInput = context.propsValue.table_fields!;
 
     const client = makeClient(context.auth.props);
@@ -24,8 +29,8 @@ export const createRowAction = createAction({
     }
 
     const formattedFields = formatFieldValues(tableFieldsInput, fieldTypeMap, {
-      skipEmpty: true,
+      skipEmpty: false,
     });
-    return await client.createRow(table_id, formattedFields);
+    return await client.updateRow(table_id, row_id, formattedFields);
   },
 });
