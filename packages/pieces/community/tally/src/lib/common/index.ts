@@ -16,6 +16,27 @@ type TallyFormsResponse = {
 };
 type TallyWebhookResponse = { id: string };
 
+type TallySubmissionResponse = {
+  id: string;
+  formId: string;
+  isCompleted: boolean;
+  submittedAt: string;
+  responses: {
+    questionId: string;
+    respondentId: string;
+    submissionId: string;
+    answer: string;
+    formattedAnswer: string;
+  }[];
+};
+
+type TallyQuestion = { id: string; title: string };
+
+export type TallySubmissionsApiResponse = {
+  questions: TallyQuestion[];
+  submissions: TallySubmissionResponse[];
+};
+
 export const formsDropdown = Property.Dropdown<string, true, typeof tallyAuth>({
   auth: tallyAuth,
   displayName: 'Form',
@@ -90,5 +111,21 @@ export const tallyApiClient = {
         token: apiKey,
       },
     });
+  },
+
+  fetchRecentSubmissions: async (
+    apiKey: string,
+    formId: string
+  ): Promise<TallySubmissionsApiResponse> => {
+    const response = await httpClient.sendRequest<TallySubmissionsApiResponse>({
+      method: HttpMethod.GET,
+      url: `${TALLY_API_BASE}/forms/${formId}/submissions`,
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token: apiKey,
+      },
+      queryParams: { limit: '5', status: 'completed' },
+    });
+    return response.body;
   },
 };

@@ -74,6 +74,44 @@ export const tallyFormsNewSubmission = createTrigger({
       },
     },
   },
+  async test(context) {
+    const { questions, submissions } = await tallyApiClient.fetchRecentSubmissions(
+      context.auth.secret_text,
+      context.propsValue.formId
+    );
+
+    const questionTitleById = Object.fromEntries(
+      questions.map((q) => [q.id, q.title])
+    );
+
+    return submissions.map((submission) => {
+      const fields: Record<string, unknown> = {};
+      const labelCount: Record<string, number> = {};
+
+      for (const response of submission.responses) {
+        const label = questionTitleById[response.questionId] ?? response.questionId;
+        const count = labelCount[label] ?? 0;
+        const key = count === 0 ? label : `${label} (${count + 1})`;
+        labelCount[label] = count + 1;
+        fields[key] = response.formattedAnswer ?? response.answer;
+      }
+
+      return {
+        eventId: submission.id,
+        eventType: 'FORM_RESPONSE',
+        createdAt: submission.submittedAt,
+        data: {
+          responseId: submission.id,
+          submissionId: submission.id,
+          respondentId: submission.responses[0]?.respondentId ?? '',
+          formId: submission.formId,
+          formName: '',
+          createdAt: submission.submittedAt,
+          fields,
+        },
+      };
+    });
+  },
   async onEnable(context) {
     const webhookId = await tallyApiClient.createWebhook(
       context.auth.secret_text,
