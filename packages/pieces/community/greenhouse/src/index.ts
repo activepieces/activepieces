@@ -6,7 +6,7 @@ import { addAttachmentToCandidateAction } from './lib/actions/add-attachment-to-
 import { createCandidateAction } from './lib/actions/create-candidate';
 import { createProspectAction } from './lib/actions/create-prospect';
 import { greenhouseAuth } from './lib/auth';
-import { GREENHOUSE_BASE_URL } from './lib/common/client';
+import { GREENHOUSE_BASE_URL } from './lib/common';
 
 export const greenhouse = createPiece({
   displayName: 'Greenhouse',

@@ -2,7 +2,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { Property } from '@activepieces/pieces-framework';
 
 import { greenhouseAuth } from '../auth';
-import { compactObject, makeRequest } from './client';
+import { compactObject, makeRequest } from './index';
 
 type GreenhouseUser = {
   id: number;
@@ -45,6 +45,22 @@ type EmploymentInput = {
   end_date?: string;
 };
 
+function getUserLabel(user: GreenhouseUser): string {
+  const fullName = [user.first_name, user.last_name].filter(Boolean).join(' ');
+  return user.name || fullName || user.email || `User ${user.id}`;
+}
+
+function getCandidateLabel(candidate: GreenhouseCandidate): string {
+  const fullName = [candidate.first_name, candidate.last_name]
+    .filter(Boolean)
+    .join(' ');
+  return fullName || candidate.company || `Candidate ${candidate.id}`;
+}
+
+function getJobLabel(job: GreenhouseJob): string {
+  return `${job.name ?? `Job ${job.id}`}${job.requisition_id ? ` · ${job.requisition_id}` : ''}`;
+}
+
 export const userIdProp = Property.Dropdown({
   displayName: 'User',
   description:
@@ -72,11 +88,7 @@ export const userIdProp = Property.Dropdown({
     return {
       disabled: false,
       options: (users ?? []).map((user) => ({
-        label:
-          user.name ??
-          [user.first_name, user.last_name].filter(Boolean).join(' ') ??
-          user.email ??
-          `User ${user.id}`,
+        label: getUserLabel(user),
         value: user.id,
       })),
     };
@@ -110,11 +122,42 @@ export const candidateIdProp = Property.Dropdown({
     return {
       disabled: false,
       options: (candidates ?? []).map((candidate) => ({
-        label:
-          [candidate.first_name, candidate.last_name].filter(Boolean).join(' ') ||
-          candidate.company ||
-          `Candidate ${candidate.id}`,
+        label: getCandidateLabel(candidate),
         value: candidate.id,
+      })),
+    };
+  },
+});
+
+export const jobIdProp = Property.Dropdown({
+  displayName: 'Job',
+  description: 'Greenhouse job to attach to the new candidate application.',
+  required: true,
+  auth: greenhouseAuth,
+  refreshers: [],
+  options: async ({ auth }) => {
+    if (!auth) {
+      return {
+        disabled: true,
+        placeholder: 'Connect your Greenhouse account first.',
+        options: [],
+      };
+    }
+
+    const jobs = await makeRequest<GreenhouseJob[]>(auth, {
+      method: HttpMethod.GET,
+      path: '/jobs',
+      queryParams: {
+        per_page: '100',
+        skip_count: 'true',
+      },
+    });
+
+    return {
+      disabled: false,
+      options: (jobs ?? []).map((job) => ({
+        label: getJobLabel(job),
+        value: job.id,
       })),
     };
   },
@@ -122,7 +165,8 @@ export const candidateIdProp = Property.Dropdown({
 
 export const jobIdsProp = Property.MultiSelectDropdown({
   displayName: 'Jobs',
-  description: 'Optional Greenhouse jobs to attach as applications.',
+  description:
+    'Optional Greenhouse jobs to attach to the new prospect. Greenhouse prospects can be created jobless.',
   required: false,
   auth: greenhouseAuth,
   refreshers: [],
@@ -147,14 +191,37 @@ export const jobIdsProp = Property.MultiSelectDropdown({
     return {
       disabled: false,
       options: (jobs ?? []).map((job) => ({
-        label: `${job.name ?? `Job ${job.id}`}${job.requisition_id ? ` · ${job.requisition_id}` : ''}`,
+        label: getJobLabel(job),
         value: job.id,
       })),
     };
   },
 });
 
-export const baseCreateProps = {
+export const emailAddressesProp = Property.Array({
+  displayName: 'Email Addresses',
+  description: 'At least one email address is required.',
+  required: true,
+  properties: {
+    value: Property.ShortText({
+      displayName: 'Email Address',
+      required: true,
+    }),
+    type: Property.StaticDropdown({
+      displayName: 'Type',
+      required: false,
+      options: {
+        options: [
+          { label: 'Personal', value: 'personal' },
+          { label: 'Work', value: 'work' },
+          { label: 'Other', value: 'other' },
+        ],
+      },
+    }),
+  },
+});
+
+export const commonPersonProps = {
   userId: userIdProp,
   firstName: Property.ShortText({
     displayName: 'First Name',
@@ -164,28 +231,7 @@ export const baseCreateProps = {
     displayName: 'Last Name',
     required: true,
   }),
-  emailAddresses: Property.Array({
-    displayName: 'Email Addresses',
-    description: 'At least one email address is required.',
-    required: true,
-    properties: {
-      value: Property.ShortText({
-        displayName: 'Email Address',
-        required: true,
-      }),
-      type: Property.StaticDropdown({
-        displayName: 'Type',
-        required: false,
-        options: {
-          options: [
-            { label: 'Personal', value: 'personal' },
-            { label: 'Work', value: 'work' },
-            { label: 'Other', value: 'other' },
-          ],
-        },
-      }),
-    },
-  }),
+  emailAddresses: emailAddressesProp,
   company: Property.ShortText({
     displayName: 'Company',
     required: false,
@@ -196,7 +242,7 @@ export const baseCreateProps = {
   }),
   phoneNumbers: Property.Array({
     displayName: 'Phone Numbers',
-    description: 'Phone number values should preferably be in E.164 format.',
+    description: 'Phone numbers, preferably in E.164 format.',
     required: false,
     properties: {
       value: Property.ShortText({
@@ -241,7 +287,6 @@ export const baseCreateProps = {
     displayName: 'Tags',
     required: false,
   }),
-  jobIds: jobIdsProp,
   educations: Property.Array({
     displayName: 'Educations',
     required: false,
@@ -296,7 +341,7 @@ export const baseCreateProps = {
   }),
 };
 
-export function buildCreatePersonBody(propsValue: {
+export function buildCommonPersonBody(propsValue: {
   firstName: string;
   lastName: string;
   emailAddresses?: unknown;
@@ -306,7 +351,6 @@ export function buildCreatePersonBody(propsValue: {
   websiteAddresses?: unknown;
   socialMediaAddresses?: unknown;
   tags?: unknown;
-  jobIds?: unknown;
   educations?: unknown;
   employments?: unknown;
 }): Record<string, unknown> {
@@ -315,7 +359,6 @@ export function buildCreatePersonBody(propsValue: {
   const websites = (propsValue.websiteAddresses ?? []) as ValueAndType[];
   const socials = (propsValue.socialMediaAddresses ?? []) as ValueAndType[];
   const tags = (propsValue.tags ?? []) as Array<string | { value?: string }>;
-  const jobIds = (propsValue.jobIds ?? []) as Array<string | number>;
   const educations = (propsValue.educations ?? []) as EducationInput[];
   const employments = (propsValue.employments ?? []) as EmploymentInput[];
 
@@ -351,9 +394,6 @@ export function buildCreatePersonBody(propsValue: {
     tags: tags
       .map((tag) => (typeof tag === 'string' ? tag : tag.value))
       .filter((tag): tag is string => Boolean(tag)),
-    applications: jobIds.map((jobId) => ({
-      job_id: Number(jobId),
-    })),
     educations: educations.map((education) => compactObject(education)),
     employments: employments.map((employment) => compactObject(employment)),
   });

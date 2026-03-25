@@ -1,7 +1,7 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { PieceAuth } from '@activepieces/pieces-framework';
 
-import { makeRequest } from './common/client';
+import { makeRequest } from './common';
 
 export const greenhouseAuth = PieceAuth.BasicAuth({
   description:
@@ -9,11 +9,11 @@ export const greenhouseAuth = PieceAuth.BasicAuth({
   required: true,
   username: {
     displayName: 'API Key',
-    description: 'Your Greenhouse Harvest API key (leave password blank).',
+    description: 'Your Greenhouse Harvest API key.',
   },
   password: {
     displayName: 'Password',
-    description: 'Leave blank — Greenhouse uses the API key as the username only.',
+    description: 'Leave blank — Greenhouse uses the API key as the username and an empty password.',
   },
   validate: async ({ auth }) => {
     try {
@@ -24,7 +24,6 @@ export const greenhouseAuth = PieceAuth.BasicAuth({
           per_page: '1',
         },
       });
-
       return { valid: true };
     } catch {
       return {

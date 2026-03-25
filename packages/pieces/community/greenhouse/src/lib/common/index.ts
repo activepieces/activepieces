@@ -22,7 +22,7 @@ type GreenhouseRequestParams = {
   headers?: HttpHeaders;
 };
 
-export async function makeRequest<T>(
+export async function makeRequest<T = unknown>(
   auth: GreenhouseBasicAuth,
   params: GreenhouseRequestParams,
 ): Promise<T> {
@@ -36,14 +36,14 @@ export async function makeRequest<T>(
     },
     queryParams: params.queryParams,
     body: params.body,
-    headers: compactHeaders({
+    headers: compactObject({
       Accept: 'application/json',
       ...(params.body ? { 'Content-Type': 'application/json' } : {}),
       ...(params.onBehalfOfUserId
         ? { 'On-Behalf-Of': String(params.onBehalfOfUserId) }
         : {}),
-      ...params.headers,
-    }),
+      ...(params.headers ?? {}),
+    }) as HttpHeaders,
   });
 
   return response.body;
@@ -64,11 +64,5 @@ export function compactObject<T extends Record<string, unknown>>(
 
       return true;
     }),
-  );
-}
-
-function compactHeaders(headers: HttpHeaders): HttpHeaders {
-  return Object.fromEntries(
-    Object.entries(headers).filter(([, value]) => value !== undefined && value !== ''),
   );
 }
