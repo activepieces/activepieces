@@ -1,0 +1,90 @@
+name: Continuous Delivery — Cloud
+
+on:
+  schedule:
+    - cron: '0 9 * * *'  # Daily at 9 AM UTC — promote staging to prod
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'Image tag to deploy (leave blank to use current staging tag)'
+        required: false
+        default: ''
+  workflow_call:
+    inputs:
+      image_tag:
+        description: 'Image tag to deploy (leave blank to use current staging tag)'
+        type: string
+        required: false
+        default: ''
+
+jobs:
+  promote-to-production:
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://cloud.activepieces.com
+    concurrency:
+      group: promote-production
+      cancel-in-progress: false
+    steps:
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh/
+          echo "$SSH_KEY" > ~/.ssh/ops.key
+          chmod 600 ~/.ssh/ops.key
+          cat >>~/.ssh/config <<END
+          Host ops
+            HostName $SSH_HOST
+            User $SSH_USER
+            IdentityFile ~/.ssh/ops.key
+            StrictHostKeyChecking no
+          END
+        env:
+          SSH_USER: ${{ secrets.DEV_OPS_USERNAME }}
+          SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_HOST: ${{ secrets.DEV_OPS_HOST }}
+
+      - name: Resolve image tag
+        id: image
+        run: |
+          TAG="${{ inputs.image_tag }}"
+          if [ -z "$TAG" ]; then
+            TAG=$(ssh ops -t -t 'bash -ic "cd mrsk/stg && kamal app version 2>&1 | grep -oE \"[0-9]+\.[0-9]+\.[0-9]+\.[a-f0-9]+\.beta\" | head -1 | tr -d \"[:space:]\"; exit"' | tr -d '\r' | grep -oE '[0-9]+\.[0-9]+\.[0-9]+\.[a-f0-9]+\.beta' | head -1)
+            echo "No tag provided — resolved staging tag: $TAG"
+          else
+            echo "Using provided image tag: $TAG"
+          fi
+          if [ -z "$TAG" ]; then
+            echo "ERROR: Could not resolve an image tag to deploy."
+            exit 1
+          fi
+          echo "image_tag=$TAG" >> $GITHUB_OUTPUT
+
+      - name: Deploy App to production
+        run: |
+          ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal deploy --version ${{ steps.image.outputs.image_tag }} --config-file=config/app.yml --skip-push; exit"'
+
+      - name: Deploy Workers to production
+        run: |
+          ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal deploy --version ${{ steps.image.outputs.image_tag }} --config-file=config/worker.yml --skip-push; exit"'
+
+  # Run smoke test after scheduled promotion
+  smoke-test:
+    needs: promote-to-production
+    if: github.event_name == 'schedule'
+    uses: ./.github/workflows/smoke-test.yml
+    secrets: inherit
+
+  # After scheduled promotion, re-deploy latest main to staging (catch-up for merges during freeze)
+  catch-up-staging:
+    needs: promote-to-production
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger staging catch-up deploy
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh workflow run continuous-delivery-stg.yml \
+            --repo ${{ github.repository }} \
+            -f action=deploy-staging
