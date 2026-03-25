@@ -26,7 +26,8 @@ export async function brevoRequest<T = unknown>(params: {
 export function compactObject<T extends Record<string, unknown>>(value: T) {
   return Object.fromEntries(
     Object.entries(value).filter(([, v]) => {
-      if (v === undefined || v === null || v === '') return false;
+      if (v === undefined || v === null) return false;
+      if (typeof v === 'string' && v === '') return false;
       if (Array.isArray(v) && v.length === 0) return false;
       return true;
     }),
