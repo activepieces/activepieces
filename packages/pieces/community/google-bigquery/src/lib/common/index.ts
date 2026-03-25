@@ -15,7 +15,7 @@ export const bigQueryScopes = ['https://www.googleapis.com/auth/bigquery'];
 export const bigQueryAuth = [
   PieceAuth.OAuth2({
     description:
-      'Sign in with your Google account. You will be asked to grant Activepieces access to BigQuery so it can run queries and manage data on your behalf.',
+      'Sign in with your Google account. If you are using your own OAuth2 credentials, make sure to include the following scope: `https://www.googleapis.com/auth/bigquery`',
     authUrl: 'https://accounts.google.com/o/oauth2/auth',
     tokenUrl: 'https://oauth2.googleapis.com/token',
     required: true,
