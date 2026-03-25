@@ -260,15 +260,7 @@ async function constructKnowledgeBaseTools(
                 const queryParams: Record<string, string> = {
                     tableId: cachedTableId,
                     limit: String(limit ?? 10),
-                }
-                if (resolvedFilters && resolvedFilters.length > 0) {
-                    for (let i = 0; i < resolvedFilters.length; i++) {
-                        queryParams[`filters[${i}][fieldId]`] = resolvedFilters[i].fieldId
-                        queryParams[`filters[${i}][operator]`] = resolvedFilters[i].operator
-                        if (resolvedFilters[i].value !== undefined) {
-                            queryParams[`filters[${i}][value]`] = resolvedFilters[i].value!
-                        }
-                    }
+                    ...serializeArrayQuery('filters', resolvedFilters ?? []),
                 }
 
                 const response = await api.get<{ data: unknown[] }>('v1/records', queryParams)
@@ -396,6 +388,16 @@ type FlattenedMcpResult = {
   tools: Record<string, Tool>;
   keyToAgentTool: Record<string, AgentMcpTool>;
 };
+
+function serializeArrayQuery(key: string, items: Record<string, string | undefined>[]): Record<string, string> {
+    const params: Record<string, string> = {}
+    items.forEach((item, i) => {
+        for (const [field, value] of Object.entries(item)) {
+            if (value !== undefined) params[`${key}[${i}][${field}]`] = value
+        }
+    })
+    return params
+}
 
 type FieldInfo = { id: string, name: string, type: string }
 type EmbeddingConfig = {
