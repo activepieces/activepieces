@@ -6,7 +6,7 @@ import {
   HttpResponse,
 } from '@activepieces/pieces-common';
 
-export const SENJA_BASE_URL = 'https://api.senja.io/v1';
+const BASE_URL = 'https://api.senja.io/v1';
 
 export async function senjaApiCall<T extends HttpMessageBody>({
   token,
@@ -23,7 +23,7 @@ export async function senjaApiCall<T extends HttpMessageBody>({
 }): Promise<HttpResponse<T>> {
   return httpClient.sendRequest<T>({
     method,
-    url: `${SENJA_BASE_URL}${path}`,
+    url: `${BASE_URL}${path}`,
     authentication: {
       type: AuthenticationType.BEARER_TOKEN,
       token,
@@ -32,6 +32,8 @@ export async function senjaApiCall<T extends HttpMessageBody>({
     body,
   });
 }
+
+export const SENJA_BASE_URL = BASE_URL;
 
 export const INTEGRATION_OPTIONS = [
   { label: 'Twitter', value: 'twitter' },
@@ -44,19 +46,19 @@ export const INTEGRATION_OPTIONS = [
   { label: 'Apple Podcasts', value: 'apple_podcasts' },
   { label: 'AppSumo', value: 'appsumo' },
   { label: 'Capterra', value: 'capterra' },
-  { label: 'Chrome Web Store', value: 'chrome_web_store' },
+  { label: 'Chrome Web Store', value: 'chrome-web-store' },
   { label: 'EmbedSocial', value: 'embedsocial' },
   { label: 'Fiverr', value: 'fiverr' },
   { label: 'G2', value: 'g2' },
   { label: 'HomeStars', value: 'homestars' },
   { label: 'Instagram', value: 'instagram' },
-  { label: 'Play Store', value: 'play_store' },
-  { label: 'Product Hunt', value: 'product_hunt' },
+  { label: 'Play Store', value: 'play-store' },
+  { label: 'Product Hunt', value: 'product-hunt' },
   { label: 'Realtor', value: 'realtor' },
   { label: 'Reddit', value: 'reddit' },
   { label: 'Skillshare', value: 'skillshare' },
   { label: 'SourceForge', value: 'sourceforge' },
-  { label: 'Testimonial.to', value: 'testimonial_to' },
+  { label: 'Testimonial.to', value: 'testimonial-to' },
   { label: 'TikTok', value: 'tiktok' },
   { label: 'Trustpilot', value: 'trustpilot' },
   { label: 'Udemy', value: 'udemy' },

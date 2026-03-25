@@ -1,4 +1,9 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import {
+  createCustomApiCallAction,
+  httpClient,
+  HttpMethod,
+  AuthenticationType,
+} from '@activepieces/pieces-common';
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 
@@ -17,9 +22,6 @@ export const senjaAuth = PieceAuth.SecretText({
   required: true,
   validate: async ({ auth }) => {
     try {
-      const { httpClient, HttpMethod, AuthenticationType } = await import(
-        '@activepieces/pieces-common'
-      );
       await httpClient.sendRequest({
         method: HttpMethod.GET,
         url: `${SENJA_BASE_URL}/testimonials`,
@@ -43,7 +45,7 @@ export const senja = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/senja.png',
   categories: [PieceCategory.MARKETING],
   auth: senjaAuth,
-  authors: ['bst1n'],
+  authors: ['bst1n', 'onyedikachi-david'],
   actions: [
     listTestimonialsAction,
     getTestimonialAction,

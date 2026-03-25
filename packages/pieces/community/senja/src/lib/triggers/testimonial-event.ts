@@ -1,4 +1,8 @@
-import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
+import {
+  createTrigger,
+  Property,
+  TriggerStrategy,
+} from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { senjaAuth } from '../../';
 import { senjaApiCall } from '../common';
@@ -7,7 +11,8 @@ export const testimonialEventTrigger = createTrigger({
   auth: senjaAuth,
   name: 'testimonial_event',
   displayName: 'Testimonial Event',
-  description: 'Triggers when a testimonial is created, updated, or deleted in Senja.',
+  description:
+    'Triggers when a testimonial is created, updated, or deleted in Senja.',
   props: {
     instructions: Property.MarkDown({
       value: `### Setup Instructions
@@ -42,7 +47,7 @@ export const testimonialEventTrigger = createTrigger({
     date: '2024-01-15T10:30:00Z',
     url: 'https://google.com/reviews/123',
     integration: 'google',
-    tags: 'featured, enterprise',
+    tags: ['featured', 'enterprise'],
     lang: null,
     video_url: null,
     thumbnail_url: 'https://cdn.senja.io/optimized/thumbnail.jpg',
@@ -86,11 +91,12 @@ export const testimonialEventTrigger = createTrigger({
     }
 
     const data = payload['data'] as Record<string, unknown> | undefined;
-    const t = (
-      eventType === 'testimonial_deleted'
+    const t =
+      (eventType === 'testimonial_deleted'
         ? (data?.['old'] as Record<string, unknown>)
-        : (data?.['new'] as Record<string, unknown>)
-    ) ?? data ?? payload;
+        : (data?.['new'] as Record<string, unknown>)) ??
+      data ??
+      payload;
 
     return [
       {
@@ -104,9 +110,7 @@ export const testimonialEventTrigger = createTrigger({
         date: t['date'] ?? null,
         approved: t['approved'] ?? null,
         integration: t['integration'] ?? null,
-        tags: Array.isArray(t['tags'])
-          ? (t['tags'] as string[]).join(', ')
-          : (t['tags'] ?? null),
+        tags: (t['tags'] as string[]) ?? [],
         lang: t['lang'] ?? null,
         video_url: t['video_url'] ?? null,
         thumbnail_url: t['thumbnail_url'] ?? null,
@@ -128,15 +132,13 @@ export const testimonialEventTrigger = createTrigger({
 
   async test(context) {
     const response = await senjaApiCall<unknown>({
-      token: context.auth as string,
+      token: context.auth.secret_text,
       method: HttpMethod.GET,
       path: '/testimonials',
       queryParams: { limit: '5', sort: 'date', order: 'desc' },
     });
 
-    const items = Array.isArray(response.body)
-      ? (response.body as Record<string, unknown>[])
-      : ((response.body as { data?: Record<string, unknown>[] })?.['data'] ?? []);
+    const items = (response.body as { testimonials?: Record<string, unknown>[] }).testimonials ?? [];
 
     return items.map((t) => ({
       event_type: 'testimonial_created',
@@ -149,9 +151,7 @@ export const testimonialEventTrigger = createTrigger({
       date: t['date'] ?? null,
       approved: t['approved'] ?? null,
       integration: t['integration'] ?? null,
-      tags: Array.isArray(t['tags'])
-        ? (t['tags'] as string[]).join(', ')
-        : (t['tags'] ?? null),
+      tags: (t['tags'] as string[]) ?? [],
       lang: t['lang'] ?? null,
       video_url: t['video_url'] ?? null,
       thumbnail_url: t['thumbnail_url'] ?? null,

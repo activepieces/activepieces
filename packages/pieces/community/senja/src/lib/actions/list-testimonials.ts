@@ -35,7 +35,8 @@ export const listTestimonialsAction = createAction({
     }),
     approved: Property.StaticDropdown({
       displayName: 'Approval Status',
-      description: 'Filter by approval status. Leave empty to return all testimonials.',
+      description:
+        'Filter by approval status. Leave empty to return all testimonials.',
       required: false,
       options: {
         options: [
@@ -46,7 +47,8 @@ export const listTestimonialsAction = createAction({
     }),
     type: Property.StaticDropdown({
       displayName: 'Testimonial Type',
-      description: 'Filter by testimonial type. Leave empty to return all types.',
+      description:
+        'Filter by testimonial type. Leave empty to return all types.',
       required: false,
       options: {
         options: [
@@ -62,7 +64,8 @@ export const listTestimonialsAction = createAction({
     }),
     integration: Property.StaticDropdown({
       displayName: 'Source / Integration',
-      description: 'Filter testimonials by their source platform (e.g. Google, Twitter).',
+      description:
+        'Filter testimonials by their source platform (e.g. Google, Twitter).',
       required: false,
       options: {
         options: INTEGRATION_OPTIONS,
@@ -75,7 +78,8 @@ export const listTestimonialsAction = createAction({
     }),
     lang: Property.ShortText({
       displayName: 'Language',
-      description: 'Filter by language using an ISO 639 code (e.g. "en", "fr", "de").',
+      description:
+        'Filter by language using an ISO 639 code (e.g. "en", "fr", "de").',
       required: false,
     }),
     limit: Property.Number({
@@ -107,12 +111,15 @@ export const listTestimonialsAction = createAction({
     const queryParams: Record<string, string> = {};
     if (sort) queryParams['sort'] = sort;
     if (order) queryParams['order'] = order;
-    if (approved !== undefined && approved !== null) queryParams['approved'] = approved;
+    if (approved !== undefined && approved !== null)
+      queryParams['approved'] = approved;
     if (type) queryParams['type'] = type;
-    if (rating !== undefined && rating !== null) queryParams['rating'] = String(rating);
+    if (rating !== undefined && rating !== null)
+      queryParams['rating'] = String(rating);
     if (integration) queryParams['integration'] = integration;
     if (lang) queryParams['lang'] = lang;
-    if (limit !== undefined && limit !== null) queryParams['limit'] = String(limit);
+    if (limit !== undefined && limit !== null)
+      queryParams['limit'] = String(limit);
     if (page !== undefined && page !== null) queryParams['page'] = String(page);
 
     if (tags && Array.isArray(tags) && tags.length > 0) {
@@ -121,16 +128,16 @@ export const listTestimonialsAction = createAction({
       });
     }
 
-    const response = await senjaApiCall<{ data: Record<string, unknown>[] }>({
-      token: context.auth as string,
+    const response = await senjaApiCall<{
+      testimonials: Record<string, unknown>[];
+    }>({
+      token: context.auth.secret_text,
       method: HttpMethod.GET,
       path: '/testimonials',
       queryParams,
     });
 
-    const testimonials = Array.isArray(response.body)
-      ? (response.body as Record<string, unknown>[])
-      : (response.body as { data: Record<string, unknown>[] }).data ?? [];
+    const testimonials = response.body.testimonials ?? [];
 
     return testimonials.map((t) => ({
       id: t['id'] ?? null,
@@ -142,19 +149,19 @@ export const listTestimonialsAction = createAction({
       date: t['date'] ?? null,
       approved: t['approved'] ?? null,
       integration: t['integration'] ?? null,
-      tags: Array.isArray(t['tags']) ? (t['tags'] as string[]).join(', ') : (t['tags'] ?? null),
+      tags: (t['tags'] as string[]) ?? [],
       lang: t['lang'] ?? null,
       video_url: t['video_url'] ?? null,
       thumbnail_url: t['thumbnail_url'] ?? null,
       form_id: t['form_id'] ?? null,
-      customer_name: (t['customer'] as Record<string, unknown>)?.['name'] ?? null,
-      customer_email: (t['customer'] as Record<string, unknown>)?.['email'] ?? null,
-      customer_company: (t['customer'] as Record<string, unknown>)?.['company'] ?? null,
-      customer_tagline: (t['customer'] as Record<string, unknown>)?.['tagline'] ?? null,
-      customer_username: (t['customer'] as Record<string, unknown>)?.['username'] ?? null,
-      customer_url: (t['customer'] as Record<string, unknown>)?.['url'] ?? null,
-      customer_avatar: (t['customer'] as Record<string, unknown>)?.['avatar'] ?? null,
-      customer_company_logo: (t['customer'] as Record<string, unknown>)?.['company_logo'] ?? null,
+      customer_name: t['customer_name'] ?? null,
+      customer_email: t['customer_email'] ?? null,
+      customer_company: t['customer_company'] ?? null,
+      customer_tagline: t['customer_tagline'] ?? null,
+      customer_username: t['customer_username'] ?? null,
+      customer_url: t['customer_url'] ?? null,
+      customer_avatar: t['customer_avatar'] ?? null,
+      customer_company_logo: t['customer_company_logo'] ?? null,
       created_at: t['created_at'] ?? null,
       updated_at: t['updated_at'] ?? null,
     }));

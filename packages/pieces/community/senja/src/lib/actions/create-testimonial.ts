@@ -11,7 +11,8 @@ export const createTestimonialAction = createAction({
   props: {
     type: Property.StaticDropdown({
       displayName: 'Testimonial Type',
-      description: 'Choose "Text" for a written testimonial or "Video" for a video testimonial.',
+      description:
+        'Choose "Text" for a written testimonial or "Video" for a video testimonial.',
       required: true,
       options: {
         options: [
@@ -32,7 +33,8 @@ export const createTestimonialAction = createAction({
     }),
     text: Property.LongText({
       displayName: 'Testimonial Text',
-      description: 'The body of the testimonial. Required for text testimonials.',
+      description:
+        'The body of the testimonial. Required for text testimonials.',
       required: false,
     }),
     rating: Property.Number({
@@ -42,23 +44,27 @@ export const createTestimonialAction = createAction({
     }),
     approved: Property.Checkbox({
       displayName: 'Approved',
-      description: 'Check to mark the testimonial as approved immediately. Leave unchecked to keep it pending.',
+      description:
+        'Check to mark the testimonial as approved immediately. Leave unchecked to keep it pending.',
       required: false,
       defaultValue: false,
     }),
     date: Property.DateTime({
       displayName: 'Date',
-      description: 'Date the testimonial was given. Leave empty to use today\'s date.',
+      description:
+        "Date the testimonial was given. Leave empty to use today's date.",
       required: false,
     }),
     url: Property.ShortText({
       displayName: 'Source URL',
-      description: 'Link to the original testimonial (e.g. a tweet URL, Google review link).',
+      description:
+        'Link to the original testimonial (e.g. a tweet URL, Google review link).',
       required: false,
     }),
     video_url: Property.ShortText({
       displayName: 'Video URL',
-      description: 'URL of the video testimonial. Required when Testimonial Type is "Video".',
+      description:
+        'URL of the video testimonial. Required when Testimonial Type is "Video".',
       required: false,
     }),
     customer_email: Property.ShortText({
@@ -73,27 +79,29 @@ export const createTestimonialAction = createAction({
     }),
     customer_tagline: Property.ShortText({
       displayName: 'Customer Tagline',
-      description: 'Short role or tagline for the customer (e.g. "CEO at Acme").',
+      description:
+        'Short role or tagline for the customer (e.g. "CEO at Acme").',
       required: false,
     }),
     customer_username: Property.ShortText({
       displayName: 'Customer Username',
-      description: 'Social media handle or username of the customer (e.g. "@johndoe").',
+      description:
+        'Social media handle or username of the customer (e.g. "@johndoe").',
       required: false,
     }),
     customer_url: Property.ShortText({
       displayName: 'Customer Profile URL',
-      description: 'Link to the customer\'s social profile or website.',
+      description: "Link to the customer's social profile or website.",
       required: false,
     }),
     customer_avatar: Property.ShortText({
       displayName: 'Customer Avatar URL',
-      description: 'Direct URL to the customer\'s profile picture.',
+      description: "Direct URL to the customer's profile picture.",
       required: false,
     }),
     customer_company_logo: Property.ShortText({
       displayName: 'Company Logo URL',
-      description: 'Direct URL to the customer\'s company logo.',
+      description: "Direct URL to the customer's company logo.",
       required: false,
     }),
     integration: Property.StaticDropdown({
@@ -106,7 +114,13 @@ export const createTestimonialAction = createAction({
     }),
     tags: Property.Array({
       displayName: 'Tags',
-      description: 'Tags to attach to this testimonial for organisation and filtering.',
+      description:
+        'Tags to attach to this testimonial for organisation and filtering.',
+      required: false,
+    }),
+    thumbnail_url: Property.ShortText({
+      displayName: 'Thumbnail URL',
+      description: 'URL of the thumbnail image for this testimonial.',
       required: false,
     }),
     form_id: Property.ShortText({
@@ -135,6 +149,7 @@ export const createTestimonialAction = createAction({
       customer_company_logo,
       integration,
       tags,
+      thumbnail_url,
       form_id,
     } = context.propsValue;
 
@@ -146,7 +161,8 @@ export const createTestimonialAction = createAction({
     if (title) body['title'] = title;
     if (text) body['text'] = text;
     if (rating !== undefined && rating !== null) body['rating'] = rating;
-    if (approved !== undefined && approved !== null) body['approved'] = approved;
+    if (approved !== undefined && approved !== null)
+      body['approved'] = approved;
     if (date) body['date'] = date;
     if (url) body['url'] = url;
     if (video_url) body['video_url'] = video_url;
@@ -156,13 +172,15 @@ export const createTestimonialAction = createAction({
     if (customer_username) body['customer_username'] = customer_username;
     if (customer_url) body['customer_url'] = customer_url;
     if (customer_avatar) body['customer_avatar'] = customer_avatar;
-    if (customer_company_logo) body['customer_company_logo'] = customer_company_logo;
+    if (customer_company_logo)
+      body['customer_company_logo'] = customer_company_logo;
     if (integration) body['integration'] = integration;
     if (tags && Array.isArray(tags) && tags.length > 0) body['tags'] = tags;
+    if (thumbnail_url) body['thumbnail_url'] = thumbnail_url;
     if (form_id) body['form_id'] = form_id;
 
     const response = await senjaApiCall<Record<string, unknown>>({
-      token: context.auth as string,
+      token: context.auth.secret_text,
       method: HttpMethod.POST,
       path: '/testimonials',
       body,
@@ -179,20 +197,19 @@ export const createTestimonialAction = createAction({
       date: t['date'] ?? null,
       approved: t['approved'] ?? null,
       integration: t['integration'] ?? null,
-      tags: Array.isArray(t['tags']) ? (t['tags'] as string[]).join(', ') : (t['tags'] ?? null),
+      tags: (t['tags'] as string[]) ?? [],
       lang: t['lang'] ?? null,
       video_url: t['video_url'] ?? null,
       thumbnail_url: t['thumbnail_url'] ?? null,
       form_id: t['form_id'] ?? null,
-      customer_name: (t['customer'] as Record<string, unknown>)?.['name'] ?? null,
-      customer_email: (t['customer'] as Record<string, unknown>)?.['email'] ?? null,
-      customer_company: (t['customer'] as Record<string, unknown>)?.['company'] ?? null,
-      customer_tagline: (t['customer'] as Record<string, unknown>)?.['tagline'] ?? null,
-      customer_username: (t['customer'] as Record<string, unknown>)?.['username'] ?? null,
-      customer_url: (t['customer'] as Record<string, unknown>)?.['url'] ?? null,
-      customer_avatar: (t['customer'] as Record<string, unknown>)?.['avatar'] ?? null,
-      customer_company_logo:
-        (t['customer'] as Record<string, unknown>)?.['company_logo'] ?? null,
+      customer_name: t['customer_name'] ?? null,
+      customer_email: t['customer_email'] ?? null,
+      customer_company: t['customer_company'] ?? null,
+      customer_tagline: t['customer_tagline'] ?? null,
+      customer_username: t['customer_username'] ?? null,
+      customer_url: t['customer_url'] ?? null,
+      customer_avatar: t['customer_avatar'] ?? null,
+      customer_company_logo: t['customer_company_logo'] ?? null,
       created_at: t['created_at'] ?? null,
       updated_at: t['updated_at'] ?? null,
     };
