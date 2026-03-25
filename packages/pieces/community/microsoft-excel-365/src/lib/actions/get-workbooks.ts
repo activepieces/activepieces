@@ -1,11 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  httpClient,
-  HttpMethod,
-  AuthenticationType,
-} from '@activepieces/pieces-common';
-import { excelAuth } from '../../index';
-import { excelCommon } from '../common/common';
+import { excelAuth } from '../auth';
+import { commonProps } from '../common/props';
+import { getDrivePath, createMSGraphClient } from '../common/helpers';
 
 export const getWorkbooksAction = createAction({
   auth: excelAuth,
@@ -13,6 +9,9 @@ export const getWorkbooksAction = createAction({
   description: 'Retrieve a list of workbooks',
   displayName: 'Get Workbooks',
   props: {
+    storageSource: commonProps.storageSource,
+    siteId: commonProps.siteId,
+    documentId: commonProps.documentId,
     limit: Property.Number({
       displayName: 'Limit',
       description:
@@ -21,29 +20,24 @@ export const getWorkbooksAction = createAction({
     }),
   },
   async run({ propsValue, auth }) {
+    const { storageSource, siteId, documentId } = propsValue;
     const limit = propsValue['limit'];
 
-    const queryParams: any = {
-      $filter:
-        "file ne null and file/mimeType eq 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'",
-    };
-
-    if (limit !== null && limit !== undefined) {
-      queryParams.$top = limit.toString();
+    if (storageSource === 'sharepoint' && (!siteId || !documentId)) {
+      throw new Error('please select SharePoint site and document library.');
     }
 
-    const request = {
-      method: HttpMethod.GET,
-      url: `${excelCommon.baseUrl}/root/search(q='.xlsx')`,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN as const,
-        token: auth['access_token'],
-      },
-      queryParams: queryParams,
-    };
+    const drivePath = getDrivePath(storageSource, siteId as string, documentId as string);
 
-    const response = await httpClient.sendRequest(request);
-    const workbooks = response.body['value'].map(
+    const client = createMSGraphClient(auth['access_token']);
+    let apiCall = client.api(`${drivePath}/root/search(q='.xlsx')`);
+
+    if (limit !== null && limit !== undefined) {
+      apiCall = apiCall.top(limit);
+    }
+
+    const response = await apiCall.get();
+    const workbooks = response.value.map(
       (item: { id: any; name: any; webUrl: any }) => ({
         id: item.id,
         name: item.name,

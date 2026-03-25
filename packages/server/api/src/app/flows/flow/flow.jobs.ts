@@ -3,18 +3,46 @@ import { FastifyBaseLogger } from 'fastify'
 import { websocketService } from '../../core/websockets.service'
 import { SystemJobData, SystemJobName } from '../../helper/system-jobs/common'
 import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
-import { flowVersionService } from '../flow-version/flow-version.service'
+import { flowRunRepo } from '../flow-run/flow-run-service'
+import { flowVersionRepo, flowVersionService } from '../flow-version/flow-version.service'
 import { flowExecutionCache } from './flow-execution-cache'
 import { flowSideEffects } from './flow-service-side-effects'
 import { flowRepo } from './flow.repo'
 import { flowService } from './flow.service'
 
+const BATCH_SIZE = 1000
+
+export async function batchDeleteByFlowId(flowId: string): Promise<void> {
+    let deleted: number
+    do {
+        const result = await flowRunRepo()
+            .createQueryBuilder()
+            .delete()
+            .where('id IN (SELECT id FROM flow_run WHERE "flowId" = :flowId LIMIT :limit)', { flowId, limit: BATCH_SIZE })
+            .execute()
+        deleted = result.affected ?? 0
+    } while (deleted > 0)
+
+    await flowVersionRepo()
+        .createQueryBuilder()
+        .delete()
+        .where('"flowId" = :flowId', { flowId })
+        .execute()
+}
+
 export const flowBackgroundJobs = (log: FastifyBaseLogger) => ({
 
-    deleteHandler: async (data: SystemJobData<SystemJobName.DELETE_FLOW>) => {
-        const { flow, preDeleteDone, dbDeleteDone } = data
+    deleteFlowHandler: async (data: SystemJobData<SystemJobName.DELETE_FLOW>) => {
+        const { flow, preDeleteDone } = data
         const job = await systemJobsSchedule(log).getJob(`delete-flow-${flow.id}`)
         assertNotNullOrUndefined(job, 'job is required')
+
+        const flowExists = await flowRepo().existsBy({ id: flow.id })
+        if (!flowExists) {
+            log.info({ flowId: flow.id }, '[deleteFlowHandler] Flow already deleted, skipping')
+            return
+        }
+
         if (!preDeleteDone) {
             await flowSideEffects(log).preDelete({
                 flowToDelete: flow,
@@ -24,14 +52,8 @@ export const flowBackgroundJobs = (log: FastifyBaseLogger) => ({
                 preDeleteDone: true,
             })
         }
-        if (!dbDeleteDone) {
-            await flowRepo().delete({ id: flow.id })
-            await job.updateData({
-                ...data,
-                preDeleteDone: true,
-                dbDeleteDone: true,
-            })
-        }
+        await batchDeleteByFlowId(flow.id)
+        await flowRepo().delete({ id: flow.id })
         await flowExecutionCache(log).invalidate(flow.id)
     },
 
@@ -93,7 +115,7 @@ export const flowBackgroundJobs = (log: FastifyBaseLogger) => ({
         })
         const response: FlowStatusUpdatedResponse = {
             flow,
-            error: isNil(error) || error?.error.code !== ErrorCode.TRIGGER_UPDATE_STATUS ? undefined : error?.error,
+            error: isNil(error) || error?.error?.code !== ErrorCode.TRIGGER_UPDATE_STATUS ? undefined : error?.error,
         }
         websocketService.to(projectId).emit(WebsocketClientEvent.FLOW_STATUS_UPDATED, response)
 

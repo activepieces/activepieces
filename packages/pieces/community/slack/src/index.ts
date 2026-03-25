@@ -1,12 +1,6 @@
-import {
-  createCustomApiCallAction,
-  httpClient,
-  HttpMethod,
-} from '@activepieces/pieces-common';
+import { createCustomApiCallAction, httpClient, HttpMethod } from '@activepieces/pieces-common';
 import {
   createPiece,
-  OAuth2PropertyValue,
-  PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
 
@@ -49,63 +43,26 @@ import { newTeamCustomEmojiTrigger } from './lib/triggers/new-team-custom-emoji'
 import { inviteUserToChannelAction } from './lib/actions/invite-user-to-channel';
 import { listUsers } from './lib/actions/list-users';
 import { deleteMessageAction } from './lib/actions/delete-message';
+import { newModalInteractionTrigger } from './lib/triggers/new-modal-interaction';
+import { slackAuth } from './lib/auth';
+import { getBotToken, getUserToken } from './lib/common/auth-helpers';
+import type { SlackAuthValue } from './lib/common/auth-helpers';
 
-export const slackAuth = PieceAuth.OAuth2({
-  description: '',
-  authUrl:
-    'https://slack.com/oauth/v2/authorize?user_scope=search:read,users.profile:write,reactions:read,im:history,stars:read,channels:write,groups:write,im:write,mpim:write,channels:write.invites,groups:write.invites,channels:history,groups:history,chat:write,users:read',
-  tokenUrl: 'https://slack.com/api/oauth.v2.access',
-  required: true,
-  scope: [
-    'channels:read',
-    'channels:manage',
-    'channels:history',
-    'chat:write',
-    'groups:read',
-    'groups:write',
-    'groups:history',
-    'reactions:read',
-    'mpim:read',
-    'mpim:write',
-    'mpim:history',
-    'im:write',
-    'im:read',
-    'im:history',
-    'users:read',
-    'files:write',
-    'files:read',
-    'users:read.email',
-    'reactions:write',
-    'usergroups:read',
-    'chat:write.customize',
-    'links:read',
-    'links:write',
-    'emoji:read',
-    'users.profile:read',
-    'channels:write.invites',
-    'groups:write.invites',
-  ],
-});
+export { slackAuth, slackOAuth2Auth } from './lib/auth';
 
 export const slack = createPiece({
   displayName: 'Slack',
   description: 'Channel-based messaging platform',
-  minimumSupportedRelease: '0.66.7',
+  minimumSupportedRelease: '0.79.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/slack.png',
   categories: [PieceCategory.COMMUNICATION],
   auth: slackAuth,
   events: {
     parseAndReply: ({ payload, server }) => {
-      if (
-        payload.headers['content-type'] === 'application/x-www-form-urlencoded'
-      ) {
-        if (
-          payload.body &&
-          typeof payload.body == 'object' &&
-          'payload' in payload.body
-        ) {
+      if (payload.headers['content-type'] === 'application/x-www-form-urlencoded') {
+        if (payload.body && typeof payload.body == 'object' && 'payload' in payload.body) {
           const interactionPayloadBody = JSON.parse(
-            (payload.body as { payload: string }).payload
+            (payload.body as { payload: string }).payload,
           ) as InteractionPayloadBody;
           if (interactionPayloadBody.type === 'block_actions') {
             const action = interactionPayloadBody.actions?.[0];
@@ -121,6 +78,23 @@ export const slack = createPiece({
                 body: interactionPayloadBody,
               });
             }
+          } else if (
+            interactionPayloadBody.type === 'view_submission' ||
+            interactionPayloadBody.type === 'view_closed'
+          ) {
+            const viewModalPayload = interactionPayloadBody as unknown as {
+              type: string;
+              team: {
+                id: string;
+                token: string;
+                api_app_id: string;
+              };
+            };
+
+            return {
+              event: viewModalPayload.type,
+              identifierValue: viewModalPayload.team.id,
+            };
           }
         }
         return {
@@ -199,19 +173,18 @@ export const slack = createPiece({
       },
       auth: slackAuth,
       authMapping: async (auth, propsValue) => {
+        const typedAuth = auth as SlackAuthValue;
         if (propsValue.useUserToken) {
-          return {
-            Authorization: `Bearer ${
-              (auth as OAuth2PropertyValue).data['authed_user']?.access_token
-            }`,
-          };
-        } else {
-          return {
-            Authorization: `Bearer ${
-              (auth as OAuth2PropertyValue).access_token
-            }`,
-          };
+          const userToken = getUserToken(typedAuth);
+          if (userToken) {
+            return {
+              Authorization: `Bearer ${userToken}`,
+            };
+          }
         }
+        return {
+          Authorization: `Bearer ${getBotToken(typedAuth)}`,
+        };
       },
       extraProps: {
         useUserToken: Property.Checkbox({
@@ -236,6 +209,7 @@ export const slack = createPiece({
     newUserTrigger,
     newSavedMessageTrigger,
     newTeamCustomEmojiTrigger,
+    newModalInteractionTrigger,
   ],
 });
 

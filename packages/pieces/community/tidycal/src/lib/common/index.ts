@@ -5,7 +5,7 @@ import {
   HttpResponse,
   httpClient,
 } from '@activepieces/pieces-common';
-import { tidyCalAuth } from '../..';
+import { tidyCalAuth } from '../auth';
 import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 
 export async function calltidycalapi<T extends HttpMessageBody>(

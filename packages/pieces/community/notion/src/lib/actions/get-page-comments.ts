@@ -1,10 +1,7 @@
-import {
-  createAction,
-  OAuth2PropertyValue,
-} from '@activepieces/pieces-framework';
+import { createAction } from '@activepieces/pieces-framework';
 import { Client } from '@notionhq/client';
-import { notionAuth } from '../..';
-import { notionCommon } from '../common';
+import { notionAuth } from '../auth';
+import { getNotionToken, notionCommon } from '../common';
 
 export const getPageComments = createAction({
   auth: notionAuth,
@@ -23,7 +20,7 @@ export const getPageComments = createAction({
     }
 
     const notion = new Client({
-      auth: (context.auth as OAuth2PropertyValue).access_token,
+      auth: getNotionToken(context.auth),
       notionVersion: '2022-02-22',
     });
 

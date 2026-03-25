@@ -38,6 +38,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "失败时没有错误",
   "Timeout (in seconds)": "超时(秒)",
+  "Follow redirects": "Follow redirects",
   "Customer first name": "Customer first name",
   "Customer last name": "Customer last name",
   "Customer phone number": "Customer phone number",

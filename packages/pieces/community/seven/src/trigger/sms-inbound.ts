@@ -1,6 +1,6 @@
 import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
 import { callSevenApi } from '../common';
-import { sevenAuth } from '../index';
+import { sevenAuth } from '../lib/auth';
 import { HttpMethod } from '@activepieces/pieces-common';
 
 interface SubscribeHookResponse {

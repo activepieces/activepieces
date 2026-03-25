@@ -67,6 +67,9 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
         embeddingEnabled: {
             type: Boolean,
         },
+        agentsEnabled: {
+            type: Boolean,
+        },
         managePiecesEnabled: {
             type: Boolean,
         },
@@ -95,6 +98,9 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
             type: Boolean,
         },
         ssoEnabled: {
+            type: Boolean,
+        },
+        scimEnabled: {
             type: Boolean,
         },
         licenseKey: {
@@ -130,6 +136,9 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
         dedicatedWorkers: {
             type: 'jsonb',
             nullable: true,
+        },
+        secretManagersEnabled: {
+            type: Boolean,
         },
     },
     indices: [
