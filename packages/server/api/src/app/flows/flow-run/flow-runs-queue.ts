@@ -54,7 +54,7 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                             }
 
                             const existingFlowRun = await flowRunRepo().findOneBy({ id: job.data.runId })
-                            let savedFlowRun: FlowRun
+                            let savedFlowRun: FlowRun | null = null
                             if (!isNil(existingFlowRun)) {
                                 await flowRunRepo().update(job.data.runId, {
                                     ...spreadIfDefined('projectId', runMetadata.projectId),
@@ -74,7 +74,14 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                                     ...spreadIfDefined('updated', runMetadata.updated),
                                     ...spreadIfDefined('stepsCount', runMetadata.stepsCount),
                                 })
-                                savedFlowRun = await flowRunRepo().findOneByOrFail({ id: job.data.runId })
+                                savedFlowRun = await flowRunRepo().findOneBy({ id: job.data.runId })
+                                if (isNil(savedFlowRun)) {
+                                    log.info({
+                                        jobId: job.id,
+                                        runId: job.data.runId,
+                                    }, '[runsMetadataQueue#worker] Flow run was deleted during update, skipping job')
+                                    return
+                                }
                             }
                             else {
                                 const flowId = runMetadata.flowId
@@ -87,6 +94,10 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                                     return
                                 }
                                 savedFlowRun = await flowRunRepo().save(runMetadata)
+                            }
+
+                            if (isNil(savedFlowRun)) {
+                                return
                             }
 
                             const parentRunId = savedFlowRun.parentRunId
@@ -163,11 +174,11 @@ async function markParentRunAsFailed({
     projectId,
     platformId,
 }: MarkParentRunAsFailedParams): Promise<void> {
-    const flowRun = await flowRunRepo().findOneByOrFail({
+    const flowRun = await flowRunRepo().findOneBy({
         id: parentRunId,
     })
 
-    if (flowRun.status === FlowRunStatus.CANCELED) {
+    if (isNil(flowRun) || flowRun.status === FlowRunStatus.CANCELED) {
         return
     }
 
