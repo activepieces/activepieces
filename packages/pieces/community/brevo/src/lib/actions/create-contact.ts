@@ -27,7 +27,10 @@ export const createContactAction = createAction({
           FIRSTNAME: context.propsValue.firstName,
           LASTNAME: context.propsValue.lastName,
         }),
-        emailBlacklisted: context.propsValue.emailBlacklisted,
+        emailBlacklisted:
+          context.propsValue.emailBlacklisted === true
+            ? true
+            : undefined,
         listIds: context.propsValue.listIds
           ?.map((listId) => Number.parseInt(String(listId), 10))
           .filter((id) => !Number.isNaN(id)),
