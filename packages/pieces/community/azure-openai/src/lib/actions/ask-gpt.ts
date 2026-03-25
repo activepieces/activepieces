@@ -1,14 +1,16 @@
-import { AzureOpenAIAuth } from '../../';
+import { azureOpenaiAuth } from '../auth';
 import {
     Property,
     StoreScope,
-    Validators,
     createAction,
 } from '@activepieces/pieces-framework';
 import { OpenAIClient, AzureKeyCredential } from '@azure/openai';
 import { calculateMessagesTokenSize, exceedsHistoryLimit, reduceContextSize } from '../common';
+import { z } from 'zod';
+import { propsValidation } from '@activepieces/pieces-common';
 
 export const askGpt = createAction({
+    auth: azureOpenaiAuth,
     name: 'ask_gpt',
     displayName: 'Ask GPT',
     description: 'Ask ChatGPT anything you want!',
@@ -27,7 +29,6 @@ export const askGpt = createAction({
             required: false,
             description:
                 'Controls randomness: Lowering results in less random completions. As the temperature approaches zero, the model will become deterministic and repetitive.',
-            validators: [Validators.minValue(0), Validators.maxValue(1.0)],
             defaultValue: 0.9,
         }),
         maxTokens: Property.Number({
@@ -76,11 +77,20 @@ export const askGpt = createAction({
 
     async run(context) {
         const { propsValue, store } = context;
-        const auth: AzureOpenAIAuth = context.auth as AzureOpenAIAuth;
+        const auth = context.auth.props;
+
+        await propsValidation.validateZod(propsValue, {
+            temperature: z.number().min(0).max(1.0).optional(),
+            frequencyPenalty: z.number().min(-2.0).max(2.0).optional(),
+            presencePenalty: z.number().min(-2.0).max(2.0).optional(),
+        });
 
         const openai = new OpenAIClient(
             auth.endpoint,
-            new AzureKeyCredential(auth.apiKey)
+            new AzureKeyCredential(auth.apiKey),
+            {
+                apiVersion: '2024-12-01-preview',
+            }
         );
 
         let messageHistory: any[] | null = [];
@@ -111,13 +121,15 @@ export const askGpt = createAction({
             };
         });
 
-        const completion = await openai.getChatCompletions(propsValue.deploymentId, [...roles, ...messageHistory], {
-            maxTokens: propsValue.maxTokens,
+        const completionOptions = {
+            maxCompletionTokens: propsValue.maxTokens,
             temperature: propsValue.temperature,
             frequencyPenalty: propsValue.frequencyPenalty,
             presencePenalty: propsValue.presencePenalty,
             topP: propsValue.topP,
-        });
+        };
+
+        const completion = await openai.getChatCompletions(propsValue.deploymentId, [...roles, ...messageHistory], completionOptions);
 
         const responseText = completion.choices[0].message?.content;
 

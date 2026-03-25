@@ -1,28 +1,12 @@
-import { EntitySchemaColumnOptions } from 'typeorm'
-import { getEdition } from '../helper/secret-helper'
-import { DatabaseType, system, SystemProp } from '@activepieces/server-shared'
 import { ApEdition } from '@activepieces/shared'
+import { EntitySchemaColumnOptions } from 'typeorm'
+import { system } from '../helper/system/system'
+import { AppSystemProp } from '../helper/system/system-props'
+import { DatabaseType } from './database-type'
 
-const databaseType = system.get(SystemProp.DB_TYPE)
+const databaseType = system.get(AppSystemProp.DB_TYPE)
 
-export const JSON_COLUMN_TYPE =
-  databaseType === DatabaseType.SQLITE3 ? 'simple-json' : 'json'
-export const JSONB_COLUMN_TYPE =
-  databaseType === DatabaseType.SQLITE3 ? 'simple-json' : 'jsonb'
-export const BLOB_COLUMN_TYPE =
-  databaseType === DatabaseType.SQLITE3 ? 'blob' : 'bytea'
-export const ARRAY_COLUMN_TYPE =
-  databaseType === DatabaseType.SQLITE3 ? 'simple-array' : String
-export const TIMESTAMP_COLUMN_TYPE =
-  databaseType === DatabaseType.SQLITE3
-      ? 'datetime'
-      : 'timestamp with time zone'
-export const COLLATION =
-  databaseType === DatabaseType.SQLITE3 ? undefined : 'en_natural'
-
-export function isPostgres(): boolean {
-    return databaseType === DatabaseType.POSTGRES
-}
+export const COLLATION = databaseType === DatabaseType.PGLITE ? undefined : 'en_natural'
 
 export const ApIdSchema = {
     type: String,
@@ -36,16 +20,16 @@ export const BaseColumnSchemaPart = {
     } as EntitySchemaColumnOptions,
     created: {
         name: 'created',
-        type: TIMESTAMP_COLUMN_TYPE,
+        type: 'timestamp with time zone',
         createDate: true,
     } as EntitySchemaColumnOptions,
     updated: {
         name: 'updated',
-        type: TIMESTAMP_COLUMN_TYPE,
+        type: 'timestamp with time zone',
         updateDate: true,
     } as EntitySchemaColumnOptions,
 }
 
 export function isNotOneOfTheseEditions(editions: ApEdition[]): boolean {
-    return !editions.includes(getEdition())
+    return !editions.includes(system.getEdition())
 }

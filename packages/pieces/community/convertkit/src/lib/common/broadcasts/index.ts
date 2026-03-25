@@ -1,4 +1,4 @@
-import { Property, Validators } from '@activepieces/pieces-framework';
+import { Property } from '@activepieces/pieces-framework';
 
 export const broadcastId = Property.ShortText({
   displayName: 'Broadcast Id',
@@ -12,7 +12,6 @@ export const broadcastPageNumber = Property.Number({
     'Page number. Each page of results will contain up to 50 broadcasts.',
   required: false,
   defaultValue: 1,
-  validators: [Validators.number, Validators.nonZero],
 });
 
 export const broadcastContent = Property.ShortText({
@@ -31,7 +30,6 @@ export const broadcastEmailAddress = Property.ShortText({
   description:
     "Sending email address; leave blank to use your account's default sending email address",
   required: false,
-  validators: [Validators.email],
 });
 export const emailLayoutTemplate = Property.ShortText({
   displayName: 'Email Layout Template',
@@ -50,14 +48,12 @@ export const publishedAt = Property.DateTime({
   description:
     'Specifies the time that this post was published (applicable only to public posts)',
   required: false,
-  validators: [Validators.datetimeIso],
 });
 export const sendAt = Property.DateTime({
   displayName: 'Send At',
   description:
     'Time that this broadcast should be sent; leave blank to create a draft broadcast. If set to a future time, this is the time that the broadcast will be scheduled to send.',
   required: false,
-  validators: [Validators.datetimeIso],
 });
 export const subject = Property.ShortText({
   displayName: 'Subject',
@@ -69,12 +65,10 @@ export const thumbnailAlt = Property.ShortText({
   description:
     'Specify the ALT attribute of the public thumbnail image (applicable only to public posts)',
   required: false,
-  validators: [Validators.url],
 });
 export const thumbnailUrl = Property.ShortText({
   displayName: 'Thumbnail Url',
   description:
     'Specify the URL of the thumbnail image to accompany the broadcast post (applicable only to public posts)',
   required: false,
-  validators: [Validators.url],
 });

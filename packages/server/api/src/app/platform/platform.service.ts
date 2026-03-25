@@ -1,27 +1,51 @@
-import { databaseConnection } from '../database/database-connection'
-import { defaultTheme } from '../flags/theme'
-import { userService } from '../user/user-service'
-import { PlatformEntity } from './platform.entity'
-import {
-    ActivepiecesError,
+import { ActivepiecesError,
+    ApEdition,
     apId,
     ErrorCode,
+    FederatedAuthnProviderConfig,
+    FederatedAuthnProviderConfigWithoutSensitiveData,
     FilteredPieceBehavior,
-
     isNil,
-    LocalesEnum,
+    OPEN_SOURCE_PLAN,
     Platform,
     PlatformId,
+    PlatformPlanLimits,
+    PlatformUsage,
+    PlatformWithoutSensitiveData,
     spreadIfDefined,
     UpdatePlatformRequestBody,
-    UserId } from '@activepieces/shared'
+    UserId,
+    UserStatus,
+} from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
+import { repoFactory } from '../core/db/repo-factory'
+import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
+import { defaultTheme } from '../flags/theme'
+import { system } from '../helper/system/system'
+import { projectService } from '../project/project-service'
+import { userService } from '../user/user-service'
+import { PlatformEntity } from './platform.entity'
 
-const repo = databaseConnection.getRepository<Platform>(PlatformEntity)
+export const platformRepo = repoFactory<Platform>(PlatformEntity)
 
-export const platformService = {
-    async hasAnyPlatforms(): Promise<boolean> {
-        const count = await repo.count()
-        return count > 0
+export const platformService = (log: FastifyBaseLogger) => ({
+    async listPlatformsForIdentityWithAtleastProject(params: ListPlatformsForIdentityParams): Promise<PlatformWithoutSensitiveData[]> {
+        const users = await userService(log).getByIdentityId({ identityId: params.identityId })
+
+        const platformsWithProjects = await Promise.all(users.map(async (user) => {
+            if (isNil(user.platformId) || user.status === UserStatus.INACTIVE) {
+                return null
+            }
+            const hasProjects = await projectService(log).userHasProjects({
+                platformId: user.platformId,
+                userId: user.id,
+                isPrivileged: userService(log).isUserPrivileged(user),
+            })
+            return hasProjects ? user.platformId : null
+        }))
+
+        const platforms = await Promise.all(platformsWithProjects.filter((platformId) => !isNil(platformId)).map((platformId) => this.getOneWithPlanOrThrow(platformId)))
+        return platforms
     },
     async create(params: AddParams): Promise<Platform> {
         const {
@@ -41,44 +65,30 @@ export const platformService = {
             logoIconUrl: logoIconUrl ?? defaultTheme.logos.logoIconUrl,
             fullLogoUrl: fullLogoUrl ?? defaultTheme.logos.fullLogoUrl,
             favIconUrl: favIconUrl ?? defaultTheme.logos.favIconUrl,
-            embeddingEnabled: false,
-            defaultLocale: LocalesEnum.ENGLISH,
             emailAuthEnabled: true,
-            auditLogEnabled: false,
             filteredPieceNames: [],
             enforceAllowedAuthDomains: false,
             allowedAuthDomains: [],
             filteredPieceBehavior: FilteredPieceBehavior.BLOCKED,
-            showPoweredBy: false,
-            ssoEnabled: false,
             federatedAuthProviders: {},
             cloudAuthEnabled: true,
-            flowIssuesEnabled: false,
-            gitSyncEnabled: false,
-            managePiecesEnabled: false,
-            manageTemplatesEnabled: false,
-            manageProjectsEnabled: false,
-            projectRolesEnabled: false,
-            customDomainsEnabled: false,
-            apiKeysEnabled: false,
-            customAppearanceEnabled: false,
-            alertsEnabled: false,
-            premiumPieces: [],
+            pinnedPieces: [],
         }
 
-        const savedPlatform = await repo.save(newPlatform)
-
-        await userService.addOwnerToPlatform({
+        const savedPlatform = await platformRepo().save(newPlatform)
+        await userService(log).addOwnerToPlatform({
             id: ownerId,
             platformId: savedPlatform.id,
         })
 
-
+        log.info({ platformId: savedPlatform.id, ownerId }, 'Platform created')
         return savedPlatform
     },
-
+    async getAll(): Promise<Platform[]> {
+        return platformRepo().find()
+    },
     async getOldestPlatform(): Promise<Platform | null> {
-        return repo.findOne({
+        return platformRepo().findOne({
             where: {},
             order: {
                 created: 'ASC',
@@ -87,56 +97,40 @@ export const platformService = {
     },
     async update(params: UpdateParams): Promise<Platform> {
         const platform = await this.getOneOrThrow(params.id)
+        const federatedAuthProviders = {
+            ...platform.federatedAuthProviders,
+            ...(params.federatedAuthProviders ?? {}),
+        }
         const updatedPlatform: Platform = {
             ...platform,
+            federatedAuthProviders,
             ...spreadIfDefined('name', params.name),
-            ...spreadIfDefined('auditLogEnabled', params.auditLogEnabled),
             ...spreadIfDefined('primaryColor', params.primaryColor),
             ...spreadIfDefined('logoIconUrl', params.logoIconUrl),
             ...spreadIfDefined('fullLogoUrl', params.fullLogoUrl),
             ...spreadIfDefined('favIconUrl', params.favIconUrl),
             ...spreadIfDefined('filteredPieceNames', params.filteredPieceNames),
             ...spreadIfDefined('filteredPieceBehavior', params.filteredPieceBehavior),
-            ...spreadIfDefined('smtpHost', params.smtpHost),
-            ...spreadIfDefined('smtpPort', params.smtpPort),
-            ...spreadIfDefined(
-                'federatedAuthProviders',
-                params.federatedAuthProviders,
-            ),
-            ...spreadIfDefined('smtpUser', params.smtpUser),
-            ...spreadIfDefined('smtpPassword', params.smtpPassword),
-            ...spreadIfDefined('smtpSenderEmail', params.smtpSenderEmail),
-            ...spreadIfDefined('smtpUseSSL', params.smtpUseSSL),
             ...spreadIfDefined('cloudAuthEnabled', params.cloudAuthEnabled),
-            ...spreadIfDefined('defaultLocale', params.defaultLocale),
-            ...spreadIfDefined('showPoweredBy', params.showPoweredBy),
-            ...spreadIfDefined('gitSyncEnabled', params.gitSyncEnabled),
-            ...spreadIfDefined('embeddingEnabled', params.embeddingEnabled),
-            ...spreadIfDefined('ssoEnabled', params.ssoEnabled),
             ...spreadIfDefined('emailAuthEnabled', params.emailAuthEnabled),
             ...spreadIfDefined(
                 'enforceAllowedAuthDomains',
                 params.enforceAllowedAuthDomains,
             ),
-            ...spreadIfDefined('flowIssuesEnabled', params.flowIssuesEnabled),
             ...spreadIfDefined('allowedAuthDomains', params.allowedAuthDomains),
-            ...spreadIfDefined('manageProjectsEnabled', params.manageProjectsEnabled),
-            ...spreadIfDefined('managePiecesEnabled', params.managePiecesEnabled),
-            ...spreadIfDefined('manageTemplatesEnabled', params.manageTemplatesEnabled),
-            ...spreadIfDefined('apiKeysEnabled', params.apiKeysEnabled),
-            ...spreadIfDefined('projectRolesEnabled', params.projectRolesEnabled),
-            ...spreadIfDefined('customDomainsEnabled', params.customDomainsEnabled),
-            ...spreadIfDefined('customAppearanceEnabled', params.customAppearanceEnabled),
-            ...spreadIfDefined('alertsEnabled', params.alertsEnabled),
-            ...spreadIfDefined('premiumPieces', params.premiumPieces),
-            
+            ...spreadIfDefined('pinnedPieces', params.pinnedPieces),
         }
-
-        return repo.save(updatedPlatform)
+        if (!isNil(params.plan)) {
+            await platformPlanService(log).update({
+                platformId: params.id,
+                ...params.plan,
+            })
+        }
+        log.info({ platformId: params.id }, 'Platform updated')
+        return platformRepo().save(updatedPlatform)
     },
-
     async getOneOrThrow(id: PlatformId): Promise<Platform> {
-        const platform = await repo.findOneBy({
+        const platform = await platformRepo().findOneBy({
             id,
         })
 
@@ -150,15 +144,75 @@ export const platformService = {
                 },
             })
         }
-        
+
         return platform
     },
-
+    async getOneWithPlan(id: PlatformId): Promise<PlatformWithoutSensitiveData | null> {
+        const platform = await this.getOne(id)
+        if (isNil(platform)) {
+            return null
+        }
+        return {
+            ...platform,
+            federatedAuthProviders: stripSensitiveData(platform.federatedAuthProviders),
+            usage: await getUsage(log, platform),
+            plan: await getPlan(log, platform),
+        }
+    },
+    async getOneWithPlanOrThrow(id: PlatformId): Promise<Omit<PlatformWithoutSensitiveData, 'usage'>> {
+        const platform = await this.getOneOrThrow(id)
+        return {
+            ...platform,
+            federatedAuthProviders: stripSensitiveData(platform.federatedAuthProviders),
+            plan: await getPlan(log, platform),
+        }
+    },
+    async getOneWithPlanAndUsageOrThrow(id: PlatformId): Promise<PlatformWithoutSensitiveData> {
+        const platform = await this.getOneOrThrow(id)
+        const [usage, plan] = await Promise.all([
+            getUsage(log, platform),
+            getPlan(log, platform),
+        ])
+        return {
+            ...platform,
+            federatedAuthProviders: stripSensitiveData(platform.federatedAuthProviders),
+            usage,
+            plan,
+        }
+    },
     async getOne(id: PlatformId): Promise<Platform | null> {
-        return repo.findOneBy({
+        return platformRepo().findOneBy({
             id,
         })
     },
+})
+
+async function getUsage(log: FastifyBaseLogger, platform: Platform): Promise<PlatformUsage | undefined> {
+    const edition = system.getEdition()
+    if (edition === ApEdition.COMMUNITY) {
+        return undefined
+    }
+    return platformPlanService(log).getUsage(platform.id)
+}
+
+async function getPlan(log: FastifyBaseLogger, platform: Platform): Promise<PlatformPlanLimits> {
+    const edition = system.getEdition()
+    if (edition === ApEdition.COMMUNITY) {
+        return {
+            ...OPEN_SOURCE_PLAN,
+            stripeSubscriptionStartDate: 0,
+            stripeSubscriptionEndDate: 0,
+        }
+    }
+    return platformPlanService(log).getOrCreateForPlatform(platform.id)
+}
+
+function stripSensitiveData(providers: FederatedAuthnProviderConfig): FederatedAuthnProviderConfigWithoutSensitiveData {
+    return {
+        google: providers.google ? { clientId: providers.google.clientId } : null,
+        github: providers.github ? { clientId: providers.github.clientId } : null,
+        saml: providers.saml ? {} : null,
+    }
 }
 
 type AddParams = {
@@ -174,19 +228,12 @@ type NewPlatform = Omit<Platform, 'created' | 'updated'>
 
 type UpdateParams = UpdatePlatformRequestBody & {
     id: PlatformId
-    auditLogEnabled?: boolean
-    showPoweredBy?: boolean
-    ssoEnabled?: boolean
-    gitSyncEnabled?: boolean
-    embeddingEnabled?: boolean
-    customDomainsEnabled?: boolean
-    customAppearanceEnabled?: boolean
-    manageProjectsEnabled?: boolean
-    flowIssuesEnabled?: boolean
-    managePiecesEnabled?: boolean
-    manageTemplatesEnabled?: boolean
-    apiKeysEnabled?: boolean
-    projectRolesEnabled?: boolean
-    alertsEnabled?: boolean   
-    premiumPieces?: string[]
+    plan?: Partial<PlatformPlanLimits>
+    logoIconUrl?: string
+    fullLogoUrl?: string
+    favIconUrl?: string
+}
+
+type ListPlatformsForIdentityParams = {
+    identityId: string
 }

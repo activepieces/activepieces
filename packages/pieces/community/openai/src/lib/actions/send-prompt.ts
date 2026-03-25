@@ -2,16 +2,17 @@ import {
   createAction,
   Property,
   StoreScope,
-  Validators,
 } from '@activepieces/pieces-framework';
 import OpenAI from 'openai';
-import { openaiAuth } from '../..';
+import { openaiAuth } from '../auth';
 import {
   calculateMessagesTokenSize,
   exceedsHistoryLimit,
   notLLMs,
   reduceContextSize,
 } from '../common/common';
+import { z } from 'zod';
+import { propsValidation } from '@activepieces/pieces-common';
 
 export const askOpenAI = createAction({
   auth: openaiAuth,
@@ -20,6 +21,7 @@ export const askOpenAI = createAction({
   description: 'Ask ChatGPT anything you want!',
   props: {
     model: Property.Dropdown({
+  auth: openaiAuth,
       displayName: 'Model',
       required: true,
       description:
@@ -36,7 +38,7 @@ export const askOpenAI = createAction({
         }
         try {
           const openai = new OpenAI({
-            apiKey: auth as string,
+            apiKey: auth.secret_text,
           });
           const response = await openai.models.list();
           // We need to get only LLM models
@@ -70,8 +72,7 @@ export const askOpenAI = createAction({
       required: false,
       description:
         'Controls randomness: Lowering results in less random completions. As the temperature approaches zero, the model will become deterministic and repetitive.',
-      validators: [Validators.minValue(0), Validators.maxValue(1.0)],
-      defaultValue: 0.9,
+      defaultValue: 1,
     }),
     maxTokens: Property.Number({
       displayName: 'Maximum Tokens',
@@ -99,11 +100,9 @@ export const askOpenAI = createAction({
       required: false,
       description:
         "Number between -2.0 and 2.0. Positive values penalize new tokens based on whether they appear in the text so far, increasing the mode's likelihood to talk about new topics.",
-      defaultValue: 0.6,
     }),
     memoryKey: Property.ShortText({
       displayName: 'Memory Key',
-      validators: [Validators.maxLength(128)],
       description:
         'A memory key that will keep the chat history shared across runs and flows. Keep it empty to leave ChatGPT without memory of previous messages.',
       required: false,
@@ -118,8 +117,12 @@ export const askOpenAI = createAction({
     }),
   },
   async run({ auth, propsValue, store }) {
+    await propsValidation.validateZod(propsValue, {
+      temperature: z.number().min(0).max(1).optional(),
+      memoryKey: z.string().max(128).optional(),
+    });
     const openai = new OpenAI({
-      apiKey: auth,
+      apiKey: auth.secret_text,
     });
     const {
       model,
@@ -165,10 +168,10 @@ export const askOpenAI = createAction({
       model: model,
       messages: [...roles, ...messageHistory],
       temperature: temperature,
-      max_tokens: maxTokens,
       top_p: topP,
       frequency_penalty: frequencyPenalty,
-      presence_penalty: presencePenalty,
+      presence_penalty: presencePenalty ?? undefined,
+      max_completion_tokens: maxTokens,
     });
 
     // Add response to message history

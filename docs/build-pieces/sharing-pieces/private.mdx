@@ -1,0 +1,34 @@
+---
+title: "Private"
+description: "Learn how to share your pieces privately."
+---
+
+<Snippet file="enterprise-feature.mdx" />
+
+This guide assumes you have already created a piece and created a private fork of our repository, and you would like to package it as a file and upload it.
+
+<Tip>
+Friendly Tip: There is a CLI to easily upload it to your platform. Please check out [Publish Custom Pieces](../misc/publish-piece).
+</Tip>
+
+
+
+<Steps>
+    <Step title="Build Piece">
+        Build the piece using the following command. Make sure to replace `${name}` with your piece name.
+
+        ```bash
+        npm run pieces -- build --name=${name}
+        ```
+
+        <Info>
+        More information about building pieces can be found [here](../misc/build-piece).
+        </Info>
+    </Step>
+    <Step title="Upload Tarball">
+        Upload the generated tarball inside `dist/packages/pieces/${name}`from Activepieces Platform Admin -> Pieces
+    
+        ![Manage Pieces](/resources/screenshots/install-piece.png)
+
+    </Step>
+</Steps>

@@ -1,23 +1,24 @@
+import { ApEnvironment } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
+import { system } from '../../../../helper/system/system'
+import { AppSystemProp } from '../../../../helper/system/system-props'
 import { logEmailSender } from './log-email-sender'
 import { smtpEmailSender } from './smtp-email-sender'
-import { system, SystemProp } from '@activepieces/server-shared'
-import { ApEnvironment } from '@activepieces/shared'
 
 export type EmailSender = {
     send: (args: SendArgs) => Promise<void>
 }
 
-const getEmailSenderInstance = (): EmailSender => {
-    const env = system.get(SystemProp.ENVIRONMENT)
+const getEmailSenderInstance = (log: FastifyBaseLogger): EmailSender => {
+    const env = system.get(AppSystemProp.ENVIRONMENT)
 
     if (env === ApEnvironment.PRODUCTION) {
-        return smtpEmailSender
+        return smtpEmailSender(log)
     }
 
-    return logEmailSender
+    return logEmailSender(log)
 }
-
-export const emailSender = getEmailSenderInstance()
+export const emailSender = (log: FastifyBaseLogger) => getEmailSenderInstance(log)
 
 type BaseEmailTemplateData<Name extends string, Vars extends Record<string, string>> = {
     name: Name
@@ -25,13 +26,15 @@ type BaseEmailTemplateData<Name extends string, Vars extends Record<string, stri
 }
 
 type InvitationEmailTemplateData = BaseEmailTemplateData<'invitation-email', {
-    projectOrPlatformName: string
+    projectName: string
     role: string
     setupLink: string
 }>
 
-type QuotaEmailTemplateData = BaseEmailTemplateData<'quota-50' | 'quota-90' | 'quota-100', {
-    resetDate: string
+type ProjectMemberAddedEmailTemplateData = BaseEmailTemplateData<'project-member-added', {
+    projectName: string
+    role: string
+    loginLink: string
 }>
 
 type ResetPasswordEmailTemplateData = BaseEmailTemplateData<'reset-password', {
@@ -45,15 +48,35 @@ type VerifyEmailTemplateData = BaseEmailTemplateData<'verify-email', {
 type IssueCreatedTemplateData = BaseEmailTemplateData<'issue-created', {
     issueUrl: string
     flowName: string
+    isIssue: string
     createdAt: string
+}>
+
+type TriggerFailureThresholdTemplateData = BaseEmailTemplateData<'trigger-failure', {
+    flowName: string
+    projectName: string
+}>
+
+type BadgeAwardedTemplateData = BaseEmailTemplateData<'badge-awarded', {
+    badgeTitle: string
+    badgeDescription: string
+    badgeImageUrl: string
+    firstName: string
+}>
+
+type ScimUserWelcomeTemplateData = BaseEmailTemplateData<'scim-user-welcome', {
+    loginLink: string
 }>
 
 export type EmailTemplateData =
   | InvitationEmailTemplateData
-  | QuotaEmailTemplateData
+  | ProjectMemberAddedEmailTemplateData
   | ResetPasswordEmailTemplateData
   | VerifyEmailTemplateData
   | IssueCreatedTemplateData
+  | TriggerFailureThresholdTemplateData
+  | BadgeAwardedTemplateData
+  | ScimUserWelcomeTemplateData
 
 type SendArgs = {
     emails: string[]

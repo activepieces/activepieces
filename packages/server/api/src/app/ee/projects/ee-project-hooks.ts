@@ -1,17 +1,26 @@
+import { AlertChannel, UserIdentityProvider } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
+import { userIdentityService } from '../../authentication/user-identity/user-identity-service'
 import { ProjectHooks } from '../../project/project-hooks'
 import { userService } from '../../user/user-service'
 import { alertsService } from '../alerts/alerts-service'
-import { AlertChannel } from '@activepieces/ee-shared'
 
-export const projectEnterpriseHooks: ProjectHooks = {
+export const projectEnterpriseHooks = (log: FastifyBaseLogger): ProjectHooks => ({
     async postCreate(project) {
-        const owner = await userService.getOneOrFail({
+        const owner = await userService(log).getOneOrFail({
             id: project.ownerId,
         })
-        await alertsService.add({
+        const identity = await userIdentityService(log).getOneOrFail({
+            id: owner.identityId,
+        })
+        const hasEmail = identity.provider !== UserIdentityProvider.JWT
+        if (!hasEmail) {
+            return
+        }
+        await alertsService(log).add({
             channel: AlertChannel.EMAIL,
             projectId: project.id,
-            receiver: owner.email,
+            receiver: identity.email,
         })
     },
-}
+})

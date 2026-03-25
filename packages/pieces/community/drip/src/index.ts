@@ -6,17 +6,12 @@ import { dripApplyTagToSubscriber } from './lib/actions/apply-tag-to-subscriber.
 import { dripUpsertSubscriberAction } from './lib/actions/upsert-subscriber.action';
 import { dripNewSubscriberEvent } from './lib/trigger/new-subscriber.trigger';
 import { dripTagAppliedEvent } from './lib/trigger/new-tag.trigger';
-
-export const dripAuth = PieceAuth.SecretText({
-  displayName: 'API Key',
-  required: true,
-  description: 'Get it from https://www.getdrip.com/user/edit',
-});
+import { dripAuth } from './lib/auth';
 
 export const drip = createPiece({
   displayName: 'Drip',
   description: 'E-commerce CRM for B2B marketers',
-  minimumSupportedRelease: '0.5.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/drip.png',
   authors: ["kishanprmr","MoShizzle","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
   categories: [PieceCategory.MARKETING],
@@ -28,8 +23,8 @@ export const drip = createPiece({
     createCustomApiCallAction({
       baseUrl: () => `https://api.getdrip.com/v2/`,
       auth: dripAuth,
-      authMapping: (auth) => ({
-        Authorization: `Basic ${Buffer.from(auth as string).toString(
+      authMapping: async (auth) => ({
+        Authorization: `Basic ${Buffer.from(auth.secret_text).toString(
           'base64'
         )}`,
       }),

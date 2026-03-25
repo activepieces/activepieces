@@ -5,6 +5,9 @@ import {
 import { TwitterApi } from 'twitter-api-v2';
 import { twitterAuth } from '../..';
 import { twitterCommon } from '../common';
+import { z } from 'zod';
+import { propsValidation } from '@activepieces/pieces-common';
+import mime from 'mime-types';
 
 export const createTweet = createAction({
   auth: twitterAuth,
@@ -19,8 +22,12 @@ export const createTweet = createAction({
     image_3: twitterCommon.image_3,
   },
   async run(context) {
+    await propsValidation.validateZod(context.propsValue, {
+      text: z.string().min(1),
+    });
+
     const { consumerKey, consumerSecret, accessToken, accessTokenSecret } =
-      context.auth;
+      context.auth.props;
     const userClient = new TwitterApi({
       appKey: consumerKey,
       appSecret: consumerSecret,
@@ -38,7 +45,7 @@ export const createTweet = createAction({
       media.forEach((m) => {
         uploadedMedia.push(
           userClient.v1.uploadMedia(Buffer.from(m.base64, 'base64'), {
-            mimeType: 'image/png',
+           mimeType: m.extension ?mime.lookup(m.extension)|| 'image/png':'image/png',
             target: 'tweet',
           })
         );

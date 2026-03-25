@@ -1,18 +1,23 @@
-import { Property } from '@activepieces/pieces-framework';
+import { AppConnectionValueForAuthProperty, Property } from '@activepieces/pieces-framework';
 import {
   HttpRequest,
   HttpMethod,
   httpClient,
 } from '@activepieces/pieces-common';
+import { jotformAuth } from '../..';
 
 export const jotformCommon = {
   baseUrl: (region: string) => {
     if (region === 'eu') {
       return 'https://eu-api.jotform.com';
     }
+    if (region === 'hipaa') {
+      return 'https://hipaa-api.jotform.com';
+    }
     return 'https://api.jotform.com';
   },
   form: Property.Dropdown({
+    auth: jotformAuth,
     displayName: 'Form',
     required: true,
     refreshers: [],
@@ -24,7 +29,7 @@ export const jotformCommon = {
           placeholder: 'Enter API Key',
         };
       }
-      const authProp = auth as { apiKey: string; region: string };
+      const authProp = auth.props;
       const options: any[] = await jotformCommon.getUserForms(
         authProp.apiKey,
         authProp.region
@@ -57,15 +62,15 @@ export const jotformCommon = {
   subscribeWebhook: async (
     formId: any,
     webhookUrl: string,
-    authentication: { apiKey: string; region: string }
+    authentication: AppConnectionValueForAuthProperty<typeof jotformAuth>
   ) => {
     const request: HttpRequest = {
       method: HttpMethod.POST,
       url: `${jotformCommon.baseUrl(
-        authentication.region
+        authentication.props.region
       )}/form/${formId}/webhooks`,
       headers: {
-        APIKEY: authentication.apiKey,
+        APIKEY: authentication.props.apiKey,
         'Content-Type': 'multipart/form-data',
       },
       body: {
@@ -79,15 +84,15 @@ export const jotformCommon = {
   unsubscribeWebhook: async (
     formId: any,
     webhookUrl: string,
-    authentication: { apiKey: string; region: string }
+    authentication: AppConnectionValueForAuthProperty<typeof jotformAuth>
   ) => {
     const getWebhooksRequest: HttpRequest = {
       method: HttpMethod.GET,
       url: `${jotformCommon.baseUrl(
-        authentication.region
+        authentication.props.region
       )}/form/${formId}/webhooks`,
       headers: {
-        APIKEY: authentication.apiKey,
+        APIKEY: authentication.props.apiKey,
       },
     };
 
@@ -103,10 +108,10 @@ export const jotformCommon = {
     const request: HttpRequest = {
       method: HttpMethod.DELETE,
       url: `${jotformCommon.baseUrl(
-        authentication.region
+        authentication.props.region
       )}/form/${formId}/webhooks/${webhookId}`,
       headers: {
-        APIKEY: authentication.apiKey,
+        APIKEY: authentication.props. apiKey,
       },
     };
 

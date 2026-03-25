@@ -81,7 +81,7 @@ export const convertkit = createPiece({
   description: 'Email marketing for creators',
 
   auth: convertkitAuth,
-  minimumSupportedRelease: '0.5.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/convertkit.png',
   categories: [PieceCategory.MARKETING],
   authors: ["Gunther-Schulz","kishanprmr","abuaboud"],

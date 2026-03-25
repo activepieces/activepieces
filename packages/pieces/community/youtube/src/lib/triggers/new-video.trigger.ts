@@ -11,7 +11,7 @@ export const youtubeNewVideoTrigger = createTrigger({
   displayName: 'New Video In Channel',
   description: 'Runs when a new video is added to a YouTube channel',
   type: TriggerStrategy.POLLING,
-
+  requireAuth: false,
   props: {
     channel_identifier: channelIdentifier,
   },
@@ -333,7 +333,7 @@ function getRssItems(channelId: string): Promise<any[]> {
         });
 
         feedparser.on('end', () => {
-          resolve(items);
+          resolve(items.reverse());
         });
 
         feedparser.on('error', (error: any) => {

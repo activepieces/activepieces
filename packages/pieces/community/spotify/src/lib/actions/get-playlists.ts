@@ -8,7 +8,7 @@ export default createAction({
   auth: spotifyCommon.authentication,
   props: {
     offset: Property.Number({
-      displayName: 'Limit',
+      displayName: 'Offset',
       required: false,
     }),
     limit: Property.Number({

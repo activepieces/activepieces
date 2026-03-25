@@ -58,10 +58,10 @@ export class AddIssueEntityPostgres1714904516114 implements MigrationInterface {
             ALTER TABLE "platform" DROP COLUMN "flowIssuesEnabled"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."idx_issue_project_id_flow_id"
+            DROP INDEX "idx_issue_project_id_flow_id"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."idx_issue_flow_id"
+            DROP INDEX "idx_issue_flow_id"
         `)
         await queryRunner.query(`
             DROP TABLE "issue"

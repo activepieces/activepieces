@@ -4,6 +4,7 @@ export interface AirtableBase {
   id: string;
   name: string;
   permissionLevel: AirtablePermissionLevel;
+  workspaceId?: string;
 }
 
 export interface AirtableRecord {
@@ -90,7 +91,58 @@ export type AirtableFieldType =
 export const AirtableEnterpriseFields = [
   'singleCollaborator',
   'multipleCollaborators',
+  'aiText',
 ];
+
+export interface AirtableComment {
+  id: string;
+  createdTime: string;
+  lastUpdatedTime: string | null;
+  text: string;
+  parentCommentId?: string;
+  author: {
+    id: string;
+    email: string;
+    name?: string;
+  };
+  mentioned?: Record<
+    string,
+    {
+      id: string;
+      type: 'user' | 'userGroup';
+      displayName: string;
+      email?: string;
+    }
+  >;
+  reactions?: Array<{
+    emoji: {
+      unicodeCharacter: string;
+    };
+    reactingUser: {
+      userId: string;
+      email: string;
+      name?: string;
+    };
+  }>;
+}
+
+export interface AirtableFieldConfig {
+  name: string;
+  description?: string;
+  type: AirtableFieldType;
+  options?: any;
+}
+
+export interface AirtableTableConfig {
+  name: string;
+  description?: string;
+  fields: AirtableFieldConfig[];
+}
+
+export interface AirtableCreateBaseResponse {
+  id: string;
+  tables: AirtableTable[];
+}
 
 export const AirtableFieldMapping = {
   singleLineText: Property.ShortText,

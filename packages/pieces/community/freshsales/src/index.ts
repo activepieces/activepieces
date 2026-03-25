@@ -6,6 +6,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { freshSalesCreateContact } from './lib/actions/create-contact';
+import { freshsalesAuth } from './lib/auth';
 
 const markdownDescription = `
 To obtain your API key and bundle alias, follow these steps:
@@ -17,27 +18,11 @@ To obtain your API key and bundle alias, follow these steps:
 5. Copy the alias e.g **https://<alias>.myfreshworks.com**
 `;
 
-export const freshsalesAuth = PieceAuth.BasicAuth({
-  description: markdownDescription,
-  username: Property.ShortText({
-    displayName: 'Bundle alias',
-    description:
-      'Your Freshsales bundle alias (e.g. https://<alias>.myfreshworks.com)',
-    required: true,
-  }),
-  password: Property.ShortText({
-    displayName: 'API Key',
-    description: 'The API Key supplied by Freshsales',
-    required: true,
-  }),
-  required: true,
-});
-
 export const freshsales = createPiece({
   displayName: 'Freshsales',
   description: 'Sales CRM software',
 
-  minimumSupportedRelease: '0.5.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/freshsales.png',
   categories: [PieceCategory.SALES_AND_CRM],
   authors: ["kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
@@ -50,8 +35,8 @@ export const freshsales = createPiece({
           (auth as { username: string }).username
         }.myfreshworks.com/crm/sales/api`,
       auth: freshsalesAuth,
-      authMapping: (auth) => ({
-        Authorization: `Token token=${(auth as { password: string }).password}`,
+      authMapping: async (auth) => ({
+        Authorization: `Token token=${(auth.password)}`,
       }),
     }),
   ],

@@ -1,8 +1,9 @@
 import {
   createAction,
   Property,
-  Validators,
 } from '@activepieces/pieces-framework';
+import { z } from 'zod';
+import { propsValidation } from '@activepieces/pieces-common';
 import { deleteSubscriber } from '../api';
 import { buildListDropdown } from '../props';
 import { sendyAuth, SendyAuthType } from '../auth';
@@ -14,6 +15,7 @@ export const deleteAction = createAction({
   description: 'Delete a subscriber from a list',
   props: {
     list: Property.Dropdown({
+      auth: sendyAuth,
       displayName: 'List',
       description: 'Select the list to delete from',
       required: true,
@@ -25,10 +27,13 @@ export const deleteAction = createAction({
       displayName: 'Email',
       description: "The user's email",
       required: true,
-      validators: [Validators.email],
     }),
   },
   async run(context) {
+    await propsValidation.validateZod(context.propsValue, {
+      email: z.string().email(),
+    });
+
     return await deleteSubscriber(context.auth, {
       list_id: context.propsValue.list,
       email: context.propsValue.email,

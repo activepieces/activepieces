@@ -4,7 +4,7 @@ import {
   createAction,
 } from '@activepieces/pieces-framework';
 import { APITableCommon, makeClient } from '../common';
-import { APITableAuth } from '../../index';
+import { APITableAuth } from '../auth';
 import { prepareQuery } from '../common/client';
 
 export const findRecordAction = createAction({
@@ -50,15 +50,15 @@ export const findRecordAction = createAction({
   },
   async run(context) {
     const datasheetId = context.propsValue.datasheet_id;
-    const recordIds = context.propsValue.recordIds as string[];
-    const fieldNames = context.propsValue.fieldNames as string[];
+    const recordIds = context.propsValue.recordIds ?? []
+    const fieldNames = context.propsValue.fieldNames ?? []
     const maxRecords = context.propsValue.maxRecords;
     const pageSize = context.propsValue.pageSize ?? 100;
     const pageNum = context.propsValue.pageNum ?? 1;
     const filter = context.propsValue.filter;
 
     const client = makeClient(
-      context.auth as PiecePropValueSchema<typeof APITableAuth>
+      context.auth.props
     );
     const response: any = await client.listRecords(
       datasheetId as string,

@@ -2,7 +2,6 @@ import {
   createAction,
   OAuth2PropertyValue,
   Property,
-  Validators,
 } from '@activepieces/pieces-framework';
 import {
   createOpportunity,
@@ -13,6 +12,8 @@ import {
   LeadConnectorOpportunityStatus,
 } from '../common';
 import { leadConnectorAuth } from '../..';
+import { z } from 'zod';
+import { propsValidation } from '@activepieces/pieces-common';
 
 export const createOpportunityAction = createAction({
   auth: leadConnectorAuth,
@@ -21,6 +22,7 @@ export const createOpportunityAction = createAction({
   description: 'Create a new opportunity.',
   props: {
     pipeline: Property.Dropdown({
+  auth: leadConnectorAuth,
       displayName: 'Pipeline',
       description: 'The ID of the pipeline to use.',
       required: true,
@@ -45,6 +47,7 @@ export const createOpportunityAction = createAction({
       },
     }),
     stage: Property.Dropdown({
+  auth: leadConnectorAuth,
       displayName: 'Stage',
       description: 'The stage of the pipeline to use.',
       required: true,
@@ -78,6 +81,7 @@ export const createOpportunityAction = createAction({
       required: true,
     }),
     contact: Property.Dropdown({
+  auth: leadConnectorAuth,
       displayName: 'Contact',
       description: 'The contact to use.',
       required: true,
@@ -101,6 +105,7 @@ export const createOpportunityAction = createAction({
       },
     }),
     status: Property.Dropdown({
+  auth: leadConnectorAuth,
       displayName: 'Status',
       required: true,
       refreshers: [],
@@ -118,6 +123,7 @@ export const createOpportunityAction = createAction({
       },
     }),
     assignedTo: Property.Dropdown({
+  auth: leadConnectorAuth,
       displayName: 'Assigned To',
       required: false,
       refreshers: [],
@@ -142,11 +148,14 @@ export const createOpportunityAction = createAction({
     monetaryValue: Property.Number({
       displayName: 'Monetary Value',
       required: false,
-      validators: [Validators.number],
     }),
   },
 
   async run({ auth, propsValue }) {
+    await propsValidation.validateZod(propsValue, {
+      monetaryValue: z.number().optional(),
+    });
+
     const {
       pipeline,
       stage,

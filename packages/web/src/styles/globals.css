@@ -1,0 +1,17 @@
+.welcome-gradient {
+    background: linear-gradient(
+        to bottom right,
+        rgba(255, 255, 255, 1) 0%,
+        rgba(249, 250, 251, 0.9) 100%
+    );
+}
+
+@media (prefers-color-scheme: dark) {
+    .welcome-gradient {
+        background: linear-gradient(
+            to bottom right,
+            rgba(31, 41, 55, 1) 0%,
+            rgba(17, 24, 39, 0.9) 100%
+        );
+    }
+} 

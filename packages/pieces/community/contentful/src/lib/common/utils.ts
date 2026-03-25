@@ -1,6 +1,5 @@
+import { camelCase, startCase } from '@activepieces/shared';
 import { ContentFields } from 'contentful-management';
-import camelCase from 'lodash/camelCase';
-import startCase from 'lodash/startCase';
 
 export const getLinkHelperText = (
   validations: ContentFields['validations']

@@ -27,15 +27,16 @@ export const getQuestion = createAction({
     }),
   },
   async run({ auth, propsValue }) {
+    const questionId = propsValue.questionId.split('-')[0];
     const card = await queryMetabaseApi(
-      { endpoint: `card/${propsValue.questionId}`, method: HttpMethod.GET },
+      { endpoint: `card/${questionId}`, method: HttpMethod.GET },
       auth
     );
     const parameters = card['parameters'] as MetabaseParam[];
 
-    return queryMetabaseApi(
+    const response = await queryMetabaseApi(
       {
-        endpoint: `card/${propsValue.questionId}/query`,
+        endpoint: `card/${questionId}/query`,
         method: HttpMethod.POST,
         body: {
           collection_preview: false,
@@ -59,5 +60,10 @@ export const getQuestion = createAction({
       },
       auth
     );
+    if (response.error) {
+      throw new Error(response.error);
+    } else {
+      return response;
+    }
   },
 });

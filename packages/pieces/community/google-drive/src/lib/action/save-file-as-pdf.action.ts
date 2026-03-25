@@ -1,17 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { googleDriveAuth } from '../../index';
+import { googleDriveAuth, createGoogleClient } from '../auth';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { google } from 'googleapis';
-import { OAuth2Client } from 'googleapis-common';
 import { Stream } from 'stream';
 import { common } from '../common';
 
 export const saveFileAsPdf = createAction({
-  displayName: 'Save file as PDF',
+  displayName: 'Save Document as PDF',
   auth: googleDriveAuth,
   name: 'save_file_as_pdf',
-  description: 'Save a file as PDF in a Google Drive folder',
+  description: 'Save a document as PDF in a Google Drive folder',
   props: {
     documentId: Property.ShortText({
       displayName: 'Document ID',
@@ -31,8 +30,7 @@ export const saveFileAsPdf = createAction({
     include_team_drives: common.properties.include_team_drives,
   },
   async run(context) {
-    const authClient = new OAuth2Client();
-    authClient.setCredentials(context.auth);
+    const authClient = await createGoogleClient(context.auth);
 
     const documentId = context.propsValue.documentId;
     const folderId = context.propsValue.folderId;

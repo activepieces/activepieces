@@ -1,7 +1,11 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import {
+  createAction,
+  DynamicPropsValue,
+  Property,
+} from '@activepieces/pieces-framework';
 
 import { airtableCommon } from '../common';
-import { airtableAuth } from '../../index';
+import { airtableAuth } from '../auth';
 
 export const airtableUpdateRecordAction = createAction({
   auth: airtableAuth,
@@ -18,12 +22,32 @@ export const airtableUpdateRecordAction = createAction({
     const personalToken = context.auth;
     const { base: baseId, tableId, recordId, fields } = context.propsValue;
 
+    const fieldsWithoutEmptyValues: DynamicPropsValue = {};
+
+    Object.keys(fields).forEach((k) => {
+      const value = fields[k];
+      if (value === null || value === undefined || value === '') {
+        return;
+      }
+      if (Array.isArray(value) && value.length === 0) {
+        return;
+      }
+      fieldsWithoutEmptyValues[k] = value;
+    });
+    const updatedFields: Record<string, unknown> =
+      await airtableCommon.createNewFields(
+        personalToken.secret_text,
+        baseId,
+        tableId as string,
+        fieldsWithoutEmptyValues
+      );
+
     return await airtableCommon.updateRecord({
-      personalToken,
+      personalToken: personalToken.secret_text,
       baseId: baseId as string,
       tableId: tableId as string,
       recordId: recordId as string,
-      fields: fields as Record<string, unknown>,
+      fields: updatedFields as Record<string, unknown>,
     });
   },
 });

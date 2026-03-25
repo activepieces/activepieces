@@ -1,25 +1,34 @@
-import { Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import {
+  Property,
+  OAuth2PropertyValue,
+  DropdownOption,
+  AppConnectionValueForAuthProperty,
+} from '@activepieces/pieces-framework';
 import {
   HttpRequest,
   HttpMethod,
   AuthenticationType,
   httpClient,
 } from '@activepieces/pieces-common';
+import { typeformAuth } from '../..';
 
 type FormListResponse = {
+  page_count: number;
+  total_items: number;
   items: {
     id: string;
     title: string;
   }[];
 };
 
-export const formsDropdown = Property.Dropdown<string>({
+export const formsDropdown = Property.Dropdown<string, true, typeof typeformAuth>({
+  auth: typeformAuth,
   displayName: 'Form',
   description: 'Form Name',
   required: true,
   refreshers: [],
   async options({ auth: authentication }) {
-    const auth = authentication as OAuth2PropertyValue;
+    const auth = authentication;
 
     if (!auth) {
       return {
@@ -31,20 +40,36 @@ export const formsDropdown = Property.Dropdown<string>({
 
     const accessToken = auth.access_token;
 
-    const request: HttpRequest = {
-      method: HttpMethod.GET,
-      url: 'https://api.typeform.com/forms',
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: accessToken,
-      },
-    };
+    const options: DropdownOption<string>[] = [];
+    let hasMore = true;
+    let page = 1;
 
-    const response = await httpClient.sendRequest<FormListResponse>(request);
-    const options = response.body.items.map((item) => ({
-      label: item.title,
-      value: item.id,
-    }));
+    do {
+      const request: HttpRequest = {
+        method: HttpMethod.GET,
+        url: 'https://api.typeform.com/forms',
+        authentication: {
+          type: AuthenticationType.BEARER_TOKEN,
+          token: accessToken,
+        },
+        queryParams: {
+          page: page.toString(),
+          page_size: '200',
+        },
+      };
+
+      const response = await httpClient.sendRequest<FormListResponse>(request);
+
+      for (const form of response.body.items) {
+        options.push({ label: form.title, value: form.id });
+      }
+
+      hasMore =
+        response.body.page_count != undefined &&
+        page < response.body.page_count;
+
+      page++;
+    } while (hasMore);
 
     return {
       disabled: false,

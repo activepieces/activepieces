@@ -6,6 +6,8 @@ export const enum BaserowFieldType {
   NUMBER = 'number',
   RATING = 'rating',
   DATE = 'date',
+  EMAIL='email',
+  DURATION = 'duration',
   LAST_MODIFIED = 'last_modified',
   LAST_MODIFIED_BY = 'last_modified_by',
   CREATED_ON = 'created_on',

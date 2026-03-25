@@ -1,72 +1,111 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
-  Dimension,
-  googleSheetsCommon,
-  objectToArray,
-  stringifyArray,
-  ValueInputOption,
+	areSheetIdsValid,
+	Dimension,
+	getAccessToken,
+	GoogleSheetsAuthValue,
+	googleSheetsCommon,
+	objectToArray,
+	stringifyArray,
+	ValueInputOption,
 } from '../common/common';
-import { googleSheetsAuth } from '../..';
+import { googleSheetsAuth } from '../common/common';
 import { isNil } from '@activepieces/shared';
+import {
+	AuthenticationType,
+	httpClient,
+	HttpMethod,
+	HttpRequest,
+} from '@activepieces/pieces-common';
+import { commonProps, isFirstRowHeaderProp, rowValuesProp } from '../common/props';
 
 export const insertRowAction = createAction({
-  auth: googleSheetsAuth,
-  name: 'insert_row',
-  description: 'Append a row of values to an existing sheet',
-  displayName: 'Insert Row',
-  props: {
-    spreadsheet_id: googleSheetsCommon.spreadsheet_id,
-    include_team_drives: googleSheetsCommon.include_team_drives,
-    sheet_id: googleSheetsCommon.sheet_id,
-    as_string: Property.Checkbox({
-      displayName: 'As String',
-      description:
-        'Inserted values that are dates and formulas will be entered strings and have no effect',
-      required: false,
-    }),
-    first_row_headers: Property.Checkbox({
-      displayName: 'Does the first row contain headers?',
-      description: 'If the first row is headers',
-      required: true,
-      defaultValue: false,
-    }),
-    values: googleSheetsCommon.values,
-  },
-  async run({ propsValue, auth }) {
-    const values = propsValue['values'];
-    const sheetName = await googleSheetsCommon.findSheetName(
-      auth['access_token'],
-      propsValue['spreadsheet_id'],
-      propsValue['sheet_id']
-    );
-    let formattedValues;
-    if (propsValue.first_row_headers) {
-      formattedValues = objectToArray(values);
-      for (let i = 0; i < formattedValues.length; i++) {
-        if (isNil(formattedValues[i])) formattedValues[i] = '';
-      }
-    } else {
-      formattedValues = values['values'];
-    }
-    const res = await googleSheetsCommon.appendGoogleSheetValues({
-      accessToken: auth['access_token'],
-      majorDimension: Dimension.COLUMNS,
-      range: sheetName,
-      spreadSheetId: propsValue['spreadsheet_id'],
-      valueInputOption: propsValue['as_string']
-        ? ValueInputOption.RAW
-        : ValueInputOption.USER_ENTERED,
-      values: stringifyArray(formattedValues),
-    });
+	auth: googleSheetsAuth,
+	name: 'insert_row',
+	description: 'Add a new row of data to a specific spreadsheet.',
+	displayName: 'Add Row',
+	props: {
+		...commonProps,
+		first_row_headers: isFirstRowHeaderProp(),
+		as_string: Property.Checkbox({
+			displayName: 'As String',
+			description:
+				'Inserted values that are dates and formulas will be entered strings and have no effect',
+			required: false,
+		}),
+		values: rowValuesProp(),
+	},
+	async run({ propsValue, auth }) {
+		const {
+			values,
+			spreadsheetId: inputSpreadsheetId,
+			sheetId: inputSheetId,
+			as_string,
+			first_row_headers,
+		} = propsValue;
 
-    //Split the updatedRange string to extract the row number
-    const updatedRangeParts = res.body.updates.updatedRange.split('!');
-    const updatedRowRange = updatedRangeParts[1];
-    const updatedRowNumber = parseInt(
-      updatedRowRange.split(':')[0].substring(1),
-      10
-    );
+		if (!areSheetIdsValid(inputSpreadsheetId, inputSheetId)) {
+			throw new Error('Please select a spreadsheet and sheet first.');
+		}
 
-    return { ...res.body, row: updatedRowNumber };
-  },
+		const sheetId = Number(inputSheetId);
+		const spreadsheetId = inputSpreadsheetId as string;
+
+		const sheetName = await googleSheetsCommon.findSheetName(auth, spreadsheetId, sheetId);
+
+		const formattedValues = first_row_headers
+			? objectToArray(values).map((val) => (isNil(val) ? '' : val))
+			: values.values;
+
+		const res = await appendGoogleSheetValues({
+			auth,
+			majorDimension: Dimension.COLUMNS,
+			range: sheetName,
+			spreadSheetId: spreadsheetId,
+			valueInputOption: as_string ? ValueInputOption.RAW : ValueInputOption.USER_ENTERED,
+			values: stringifyArray(formattedValues),
+		});
+
+		const updatedRowNumber = extractRowNumber(res.body.updates.updatedRange);
+		return { ...res.body, row: updatedRowNumber };
+	},
 });
+
+function extractRowNumber(updatedRange: string): number {
+	const rowRange = updatedRange.split('!')[1];
+	return parseInt(rowRange.split(':')[0].substring(1), 10);
+}
+
+async function appendGoogleSheetValues(params: AppendGoogleSheetValuesParams) {
+	const { auth, majorDimension, range, spreadSheetId, valueInputOption, values } = params;
+	const accessToken = await getAccessToken(auth);
+	const request: HttpRequest = {
+		method: HttpMethod.POST,
+		url: `https://sheets.googleapis.com/v4/spreadsheets/${spreadSheetId}/values/${encodeURIComponent(
+			`${range}!A:A`,
+		)}:append`,
+		body: {
+			majorDimension,
+			range: `${range}!A:A`,
+			values: values.map((val) => ({ values: val })),
+		},
+		authentication: {
+			type: AuthenticationType.BEARER_TOKEN,
+			token: accessToken,
+		},
+		queryParams: {
+			valueInputOption,
+		},
+	};
+
+	return httpClient.sendRequest(request);
+}
+
+type AppendGoogleSheetValuesParams = {
+	values: string[];
+	spreadSheetId: string;
+	range: string;
+	valueInputOption: ValueInputOption;
+	majorDimension: Dimension;
+	auth: GoogleSheetsAuthValue;
+};

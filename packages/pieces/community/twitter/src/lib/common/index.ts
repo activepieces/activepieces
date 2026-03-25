@@ -1,11 +1,10 @@
-import { Property, Validators } from '@activepieces/pieces-framework';
+import { Property } from '@activepieces/pieces-framework';
 
 export const twitterCommon = {
     text: Property.LongText({
         displayName: 'Text',
         description: 'The text of the tweet',
         required: true,
-        validators: [Validators.minLength(1)],
       }),
       image_1: Property.File({
         displayName: 'Media (1)',

@@ -1,7 +1,7 @@
 import { asanaCommon, callAsanaApi, getTags } from '../common';
 import { getAccessTokenOrThrow, HttpMethod } from '@activepieces/pieces-common';
 import dayjs from 'dayjs';
-import { asanaAuth } from '../../';
+import { asanaAuth } from '../auth';
 import { Property, createAction } from '@activepieces/pieces-framework';
 
 export const asanaCreateTaskAction = createAction({
@@ -23,6 +23,7 @@ export const asanaCreateTaskAction = createAction({
       displayName: 'Task Description',
       required: true,
     }),
+    //Should be due_at in future minor version bump
     due_on: Property.ShortText({
       description: 'The date on which this task is due in any format.',
       displayName: 'Due Date',
@@ -36,7 +37,7 @@ export const asanaCreateTaskAction = createAction({
     const { project, name, notes, tags, workspace, due_on, assignee } =
       configValue.propsValue;
 
-    const convertDueOne = due_on ? dayjs(due_on).toISOString() : undefined;
+    const convertedDueAt = due_on ? dayjs(due_on).toISOString() : undefined;
 
     // User can provide tags name as dynamic value, we need to convert them to tags gids
     const userTags = tags ?? [];
@@ -71,7 +72,7 @@ export const asanaCreateTaskAction = createAction({
             projects: [project],
             notes,
             assignee,
-            due_on: convertDueOne,
+            due_at: convertedDueAt,
             tags: tagsGids,
           },
         }

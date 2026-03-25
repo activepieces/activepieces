@@ -1,42 +1,25 @@
+import { Project, User, UserBadge, UserIdentity } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import { BaseColumnSchemaPart } from '../database/database-common'
-import { Project, User } from '@activepieces/shared'
 
 export type UserSchema = User & {
     projects: Project[]
+    identity: UserIdentity
+    badges: UserBadge[]
 }
 
 export const UserEntity = new EntitySchema<UserSchema>({
     name: 'user',
     columns: {
         ...BaseColumnSchemaPart,
-        email: {
-            type: String,
-        },
-        firstName: {
-            type: String,
-        },
-        lastName: {
-            type: String,
-        },
-        password: {
-            type: String,
-        },
-        verified: {
-            type: Boolean,
-        },
         status: {
             type: String,
         },
-        trackEvents: {
-            type: Boolean,
-            nullable: true,
-        },
-        newsLetter: {
-            type: Boolean,
-            nullable: true,
-        },
         platformRole: {
+            type: String,
+            nullable: false,
+        },
+        identityId: {
             type: String,
             nullable: false,
         },
@@ -48,11 +31,15 @@ export const UserEntity = new EntitySchema<UserSchema>({
             type: String,
             nullable: true,
         },
+        lastActiveDate: {
+            type: 'timestamp with time zone',
+            nullable: true,
+        },
     },
     indices: [
         {
             name: 'idx_user_platform_id_email',
-            columns: ['platformId', 'email'],
+            columns: ['platformId', 'identityId'],
             unique: true,
         },
         {
@@ -60,12 +47,29 @@ export const UserEntity = new EntitySchema<UserSchema>({
             columns: ['platformId', 'externalId'],
             unique: true,
         },
+        {
+            name: 'idx_user_identity_id',
+            columns: ['identityId'],
+        },
     ],
     relations: {
         projects: {
             type: 'one-to-many',
-            target: 'user',
+            target: 'project',
             inverseSide: 'owner',
+        },
+        identity: {
+            type: 'many-to-one',
+            target: 'user_identity',
+            joinColumn: {
+                name: 'identityId',
+                referencedColumnName: 'id',
+            },
+        },
+        badges: {
+            type: 'one-to-many',
+            target: 'user_badge',
+            inverseSide: 'user',
         },
     },
 })

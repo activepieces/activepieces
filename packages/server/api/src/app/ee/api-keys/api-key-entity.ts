@@ -1,10 +1,9 @@
+import { ApiKey, Platform } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,
     BaseColumnSchemaPart,
 } from '../../database/database-common'
-import { ApiKey } from '@activepieces/ee-shared'
-import { Platform } from '@activepieces/shared'
 
 type ApiKeySchema = ApiKey & {
     platform: Platform
@@ -29,6 +28,10 @@ export const ApiKeyEntity = new EntitySchema<ApiKeySchema>({
         truncatedValue: {
             type: String,
             nullable: false,
+        },
+        lastUsedAt: {
+            type: String,
+            nullable: true,
         },
     },
     indices: [],

@@ -1,8 +1,94 @@
 import { Property } from '@activepieces/pieces-framework';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 
 export const wedofCommon = {
   baseUrl: 'https://www.wedof.fr/api',
   host: 'https://www.wedof.fr/api',
+
+  subscribeWebhook: async (
+    events: string[],
+    webhookUrl: string,
+    apiKey: string,
+    name: string
+  ) => {
+    const request = {
+      method: HttpMethod.POST,
+      url: `${wedofCommon.baseUrl}/webhooks`,
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Api-Key': apiKey,
+        'User-Agent': 'activepieces',
+      },
+      body: {
+        url: webhookUrl,
+        events: events,
+        name: name,
+        secret: null,
+        enabled: true,
+        ignoreSsl: false,
+      },
+    };
+    const response = await httpClient.sendRequest(request);
+    if (response.status !== 201) {
+      let errorMessage = `Échec de la création du webhook. Code de statut reçu: ${response.status}`;
+      if (response.body && typeof response.body === 'object') {
+        const errorBody = response.body as any;
+        if (errorBody.detail) {
+          errorMessage += `. Erreur: ${errorBody.detail}`;
+        }
+        if (errorBody.violations && Array.isArray(errorBody.violations)) {
+          const violations = errorBody.violations
+            .map((v: any) => `${v.propertyPath}: ${v.title}`)
+            .join(', ');
+          errorMessage += `. Détails: ${violations}`;
+        }
+        if (!errorBody.detail && !errorBody.violations) {
+          errorMessage += `. Réponse: ${JSON.stringify(response.body)}`;
+        }
+      }
+      throw new Error(errorMessage);
+    }
+    return response.body.id;
+  },
+
+  handleWebhookSubscription: async (
+    events: string[],
+    context: any,
+    name: string
+  ) => {
+    const id = await context.store.get('_webhookId');
+    if (id === null) {
+      try {
+        const webhookId = await wedofCommon.subscribeWebhook(
+          events,
+          context.webhookUrl,
+          context.auth.secret_text,
+          name
+        );
+        await context.store.put('_webhookId', webhookId);
+      } catch (error) {
+        console.error('Erreur lors de la création du webhook:', error);
+        const errorMessage =
+          error instanceof Error ? error.message : 'Erreur inconnue';
+        throw new Error(`Échec de la création du webhook: ${errorMessage}`);
+      }
+    } else {
+      console.log('/////////// webhook already exist ////');
+    }
+  },
+
+  unsubscribeWebhook: async (webhookId: string, apiKey: string) => {
+    const request = {
+      method: HttpMethod.DELETE,
+      url: `${wedofCommon.baseUrl}/webhooks/${webhookId}`,
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Api-Key': apiKey,
+        'User-Agent': 'activepieces',
+      },
+    };
+    return await httpClient.sendRequest(request);
+  },
 
   state: Property.StaticMultiSelectDropdown({
     displayName: 'Etat du dossier de formation',
@@ -75,6 +161,74 @@ export const wedofCommon = {
         },
       ],
       disabled: false,
+    },
+  }),
+
+  partnershipState: Property.StaticDropdown({
+    displayName: 'État du partenariat de certification',
+    required: false,
+    options: {
+      disabled: false,
+      options: [
+        {
+          value: 'processing',
+          label: 'Demande en traitement',
+        },
+        {
+          value: 'active',
+          label: 'Partenariat actif',
+        },
+        {
+          value: 'aborted',
+          label: 'Demande abondonnée',
+        },
+        {
+          value: 'refused',
+          label: 'Demande refusée',
+        },
+        {
+          value: 'suspended',
+          label: 'Partenariat suspendu',
+        },
+        {
+          value: 'revoked',
+          label: 'Partenariat révoqué',
+        },
+      ],
+    },
+  }),
+
+  habilitation: Property.StaticDropdown({
+    displayName: 'Habilitation du partenaire',
+    required: false,
+    options: {
+      disabled: false,
+      options: [
+        {
+          value: 'evaluate',
+          label: 'Habilitation pour organiser l’évaluation',
+        },
+        {
+          value: 'train',
+          label: 'Habilitation pour former',
+        },
+        {
+          value: 'train_evaluate',
+          label: 'Habilitation pour former et organiser l’évaluation',
+        },
+      ],
+    },
+  }),
+
+  compliance: Property.StaticDropdown({
+    displayName: 'Conformité',
+    required: false,
+    options: {
+      options: [
+        { label: 'Conforme', value: 'compliant' },
+        { label: 'Partiellement Conforme', value: 'partiallyCompliant' },
+        { label: 'Non Conforme', value: 'nonCompliant' },
+      ],
     },
   }),
 
@@ -239,7 +393,7 @@ export const wedofCommon = {
         },
         {
           value: 'certificationFolder.registered',
-          label: "Enregistré",
+          label: 'Enregistré',
         },
         {
           value: 'certificationFolder.toTake',
@@ -265,14 +419,22 @@ export const wedofCommon = {
           value: 'certificationFolder.aborted',
           label: 'Abandonné',
         },
+        {
+          value: 'certificationFolder.inTrainingStarted',
+          label: 'Formation démarrée',
+        },
+        {
+          value: 'certificationFolder.inTrainingEnded',
+          label: 'Formation terminée',
+        },
       ],
       disabled: false,
     },
   }),
 
-  forceMajeurAbsence: Property.StaticDropdown({
-    displayName: 'absence pour raison de force majeure',
-    description: "si absence pour raison de force majeure, 'Oui', sinon 'Non'",
+  forceMajeureAbsence: Property.StaticDropdown({
+    displayName: 'Absence pour raison de force majeure',
+    description: "Si absence pour raison de force majeure, 'Oui', sinon 'Non'",
     required: false,
     defaultValue: false,
     options: {
@@ -293,16 +455,16 @@ export const wedofCommon = {
   europeanLanguageLevel: Property.StaticDropdown({
     displayName: 'Nomenclature européeenne pour les certifications de langues',
     required: false,
-    defaultValue: false,
+    defaultValue: null,
     options: {
       options: [
-        {label: "C2", value: "C2"},
-			  {label: "C1", value: "C1"},
-			  {label: "B2", value: "B2"},
-			  {label: "B1", value: "B1"},
-			  {label: "A2", value: "A2"},
-			  {label: "A1", value: "A1"},
-			  {label: "INSUFFISANT", value: "INSUFFISANT"}
+        { label: 'C2', value: 'C2' },
+        { label: 'C1', value: 'C1' },
+        { label: 'B2', value: 'B2' },
+        { label: 'B1', value: 'B1' },
+        { label: 'A2', value: 'A2' },
+        { label: 'A1', value: 'A1' },
+        { label: 'INSUFFISANT', value: 'INSUFFISANT' },
       ],
       disabled: false,
     },
@@ -311,14 +473,17 @@ export const wedofCommon = {
   gradePass: Property.StaticDropdown({
     displayName: 'Ajoute une mention au dossier de certification',
     required: false,
-    defaultValue: false,
+    defaultValue: null,
     options: {
       options: [
-        {label: "SANS MENTION", value: "SANS_MENTION"},
-			  {label: "MENTION ASSEZ BIEN", value: "MENTION_ASSEZ_BIEN"},
-			  {label: "MENTION BIEN", value: "MENTION_BIEN"},
-			  {label: "MENTION TRES BIEN", value: "MENTION_TRES_BIEN"},
-			  {label: "MENTION TRES BIEN AVEC FELICITATIONS", value: "MENTION_TRES_BIEN_AVEC_FELICITATIONS_DU_JURY"},
+        { label: 'SANS MENTION', value: 'SANS_MENTION' },
+        { label: 'MENTION ASSEZ BIEN', value: 'MENTION_ASSEZ_BIEN' },
+        { label: 'MENTION BIEN', value: 'MENTION_BIEN' },
+        { label: 'MENTION TRES BIEN', value: 'MENTION_TRES_BIEN' },
+        {
+          label: 'MENTION TRES BIEN AVEC FELICITATIONS',
+          value: 'MENTION_TRES_BIEN_AVEC_FELICITATIONS_DU_JURY',
+        },
       ],
       disabled: false,
     },
@@ -327,19 +492,19 @@ export const wedofCommon = {
   examinationType: Property.StaticDropdown({
     displayName: "Type de passage de l'examen",
     required: false,
-    defaultValue: false,
+    defaultValue: null,
     options: {
       options: [
         {
-          value: "A_DISTANCE",
+          value: 'A_DISTANCE',
           label: 'À distance',
         },
         {
-          value: "EN_PRESENTIEL",
+          value: 'EN_PRESENTIEL',
           label: 'En présentiel',
         },
         {
-          value: "MIXTE",
+          value: 'MIXTE',
           label: 'Mixte',
         },
       ],
@@ -371,10 +536,8 @@ export const wedofCommon = {
     },
   }),
 
-
-
   certificationFolderState: Property.StaticMultiSelectDropdown({
-    displayName: 'Etat du dossier de certification',
+    displayName: 'État du dossier de certification',
     required: false,
     options: {
       options: [
@@ -417,6 +580,10 @@ export const wedofCommon = {
         {
           label: 'Abandonné',
           value: 'aborted',
+        },
+        {
+          label: 'À enregistrer',
+          value: 'toRegister',
         },
       ],
       disabled: false,
@@ -505,10 +672,6 @@ export const wedofCommon = {
     defaultValue: null,
     options: {
       options: [
-        {
-          label: 'Aucune période',
-          value: null,
-        },
         {
           label: 'Personnalisée',
           value: 'custom',
@@ -605,6 +768,9 @@ export const wedofCommon = {
           label: 'Date de mise à jour',
           value: 'lastUpdate',
         },
+        { 
+          label: 'Dernière mise à jour', 
+          value: 'updatedOn' },
         {
           label: 'Date de Création',
           value: 'createdOn',
@@ -691,6 +857,144 @@ export const wedofCommon = {
           label: 'Date de fin de session',
           value: 'sessionEndDate',
         },
+        {
+          label: 'Date prévisionnelle de paiment',
+          value: 'paymentScheduledDate',
+        },
+      ],
+    },
+  }),
+
+  filterOnStateDateCf: Property.StaticDropdown({
+    displayName: '(Période) Basé sur la date de',
+    required: true,
+    defaultValue: 'stateLastUpdate',
+    options: {
+      disabled: false,
+      options: [
+        { 
+          label: 'Dernièr changement d’état', 
+          value: 'stateLastUpdate' },
+        { 
+          label: 'Dernière mise à jour', 
+          value: 'updatedOn' },
+        { 
+          label: 'Passage à À prendre en charge', 
+          value: 'toTakeDate' },
+        { 
+          label: 'Passage à À reprogrammer', 
+          value: 'toRetakeDate' },
+        { 
+          label: 'Passage à À contrôler', 
+          value: 'toControlDate' },
+        { 
+          label: 'Passage à Échec', 
+          value: 'failedDate' },
+        { 
+          label: 'Passage à Succès', 
+          value: 'successDate' },
+        { 
+          label: 'Passage à À inscrire', 
+          value: 'toRegisterDate' },
+        { 
+          label: 'Passage à Enregistrer', 
+          value: 'registeredDate' },
+        { 
+          label: 'Passage à Refusé', 
+          value: 'refusedDate' },
+        { 
+          label: 'Passage à Abandonné', 
+          value: 'abortedDate' },
+        {
+          label: 'Passage à Non traité',
+          value: 'notProcessedRegistrationFolderStateDate',
+        },
+        {
+          label: 'Passage à Validé',
+          value: 'validatedRegistrationFolderStateDate',
+        },
+        {
+          label: 'Passage à Accepté',
+          value: 'acceptedRegistrationFolderStateDate',
+        },
+        {
+          label: 'Passage à En formation',
+          value: 'inTrainingRegistrationFolderStateDate',
+        },
+        {
+          label: 'Passage à Sortie de formation',
+          value: 'terminatedRegistrationFolderStateDate',
+        },
+        {
+          label: 'Passage à Service fait déclaré',
+          value: 'serviceDoneDeclaredRegistrationFolderStateDate',
+        },
+        {
+          label: 'Passage à Service fait validé',
+          value: 'serviceDoneValidatedRegistrationFolderStateDate',
+        },
+        {
+          label: 'Passage à À facturer',
+          value: 'billedRegistrationFolderStateDate',
+        },
+        {
+          label: 'Passage à Refusé par le titulaire',
+          value: 'refusedByAttendeeRegistrationFolderStateDate',
+        },
+        {
+          label: 'Passage à Refusé par l’organisme',
+          value: 'refusedByOrganismRegistrationFolderStateDate',
+        },
+        {
+          label: 'Passage à Annulé par le titulaire',
+          value: 'canceledByAttendeeRegistrationFolderStateDate',
+        },
+        {
+          label: 'Passage à Annulé par l’organisme',
+          value: 'canceledByOrganismRegistrationFolderStateDate',
+        },
+        {
+          label: 'Passage à Annulation non réalisée (titulaire)',
+          value: 'canceledByAttendeeNotRealizedRegistrationFolderStateDate',
+        },
+        {
+          label: 'Passage à Annulé sans suite',
+          value: 'rejectedWithoutTitulaireSuiteRegistrationFolderStateDate',
+        },
+        {
+          label: 'Date de début de session',
+          value: 'sessionStartDateRegistrationFolderDate',
+        },
+        {
+          label: 'Date de fin de session',
+          value: 'sessionEndDateRegistrationFolderDate',
+        },
+        { label: 'Facturable par WEDOF', value: 'wedofInvoice' },
+        { label: "Date d'inscription", value: 'enrollmentDate' },
+        { label: "Date début de l'examen", value: 'examinationDate' },
+        { label: "Date fin de l'examen", value: 'examinationEndDate' },
+      ],
+    },
+  }),
+
+  filterOnStateDateFutureCf: Property.StaticDropdown({
+    displayName: '(Période) Basé sur la date de',
+    required: true,
+    options: {
+      disabled: false,
+      options: [
+        {
+          label: "Date d'inscription",
+          value: 'enrollmentDate',
+        },
+        {
+          label: "Date début de l'examen",
+          value: 'examinationDate',
+        },
+        {
+          label: "Date fin de l'examen",
+          value: 'examinationEndDate',
+        },
       ],
     },
   }),
@@ -698,6 +1002,7 @@ export const wedofCommon = {
   sort: Property.StaticDropdown({
     displayName: 'Tri sur critère',
     required: true,
+    defaultValue: 'stateLastUpdate',
     options: {
       disabled: false,
       options: [
@@ -709,19 +1014,24 @@ export const wedofCommon = {
           label: 'Date du dernier dossier mis à réussi',
           value: 'successDate',
         },
+        {
+          label: 'ID de base de donnée',
+          value: 'id',
+        },
       ],
     },
   }),
 
   order: Property.StaticDropdown({
     displayName: 'Ordre',
-    description:'Tri les résultats par ordre ascendant ou descendant - par défaut descendant',
+    description:
+      'Tri les résultats par ordre ascendant ou descendant - par défaut descendant',
     required: false,
     options: {
       disabled: false,
       options: [
         {
-          label: "Descendant",
+          label: 'Descendant',
           value: 'desc',
         },
         {
@@ -739,7 +1049,7 @@ export const wedofCommon = {
       disabled: false,
       options: [
         {
-          label: "Téléphone",
+          label: 'Téléphone',
           value: 'phone',
         },
         {
@@ -759,168 +1069,169 @@ export const wedofCommon = {
           value: 'sms',
         },
         {
-          label: "Formation", 
-          value: "training"
+          label: 'Formation',
+          value: 'training',
         },
-			  {
-          label: "Remarque", 
-          value: "remark"
+        {
+          label: 'Remarque',
+          value: 'remark',
         },
-			  {
-          label: "Document", 
-          value: "file"
+        {
+          label: 'Document',
+          value: 'file',
         },
       ],
     },
   }),
 
   qualiopiIndicators: Property.StaticDropdown({
-    displayName: 'Associée à Qualiop',
+    displayName: 'Associée à Qualiopi',
     required: false,
     options: {
       disabled: false,
       options: [
         {
-          label: "Ind. 1 : Informations du public",
-          value: 1
-      },
-      {
-          label: "Ind. 2 : Indicateurs de résultats",
-          value: 2
-      },
-      {
-          label: "Ind. 3 : Obtentions des certifications",
-          value: 3
-      },
-      {
-          label: "Ind. 4 : Analyse du besoin",
-          value: 4
-      },
-      {
-          label: "Ind. 5 : Objectifs de la prestation",
-          value: 5
-      },
-      {
-          label: "Ind. 6 : Mise en oeuvre de la prestation",
-          value: 6
-      },
-      {
-          label: "Ind. 7 : Adéquation contenus / exigences",
-          value: 7
-      },
-      {
+          label: 'Ind. 1 : Informations du public',
+          value: 1,
+        },
+        {
+          label: 'Ind. 2 : Indicateurs de résultats',
+          value: 2,
+        },
+        {
+          label: 'Ind. 3 : Obtentions des certifications',
+          value: 3,
+        },
+        {
+          label: 'Ind. 4 : Analyse du besoin',
+          value: 4,
+        },
+        {
+          label: 'Ind. 5 : Objectifs de la prestation',
+          value: 5,
+        },
+        {
+          label: 'Ind. 6 : Mise en oeuvre de la prestation',
+          value: 6,
+        },
+        {
+          label: 'Ind. 7 : Adéquation contenus / exigences',
+          value: 7,
+        },
+        {
           label: "Ind. 8 : Positionnement à l'entrée",
-          value: 8
-      },
-      {
-          label: "Ind. 9 : Condition de déroulement",
-          value: 9
-      },
-      {
-          label: "Ind. 10 : Adaptation de la prestation",
-          value: 10
-      },
-      {
-          label: "Ind. 11 : Atteinte des objectifs",
-          value: 11
-      },
-      {
-          label: "Ind. 12 : Engagement des bénéficiaires",
-          value: 12
-      },
-      {
-          label: "Ind. 13 : Coordination des apprentis",
-          value: 13
-      },
-      {
-          label: "Ind. 14 : Exercice de la citoyenneté",
-          value: 14
-      },
-      {
+          value: 8,
+        },
+        {
+          label: 'Ind. 9 : Condition de déroulement',
+          value: 9,
+        },
+        {
+          label: 'Ind. 10 : Adaptation de la prestation',
+          value: 10,
+        },
+        {
+          label: 'Ind. 11 : Atteinte des objectifs',
+          value: 11,
+        },
+        {
+          label: 'Ind. 12 : Engagement des bénéficiaires',
+          value: 12,
+        },
+        {
+          label: 'Ind. 13 : Coordination des apprentis',
+          value: 13,
+        },
+        {
+          label: 'Ind. 14 : Exercice de la citoyenneté',
+          value: 14,
+        },
+        {
           label: "Ind. 15 : Droits à devoirs de l'apprenti",
-          value: 15
-      },
-      {
-          label: "Ind. 16 : Présentation à la certification",
-          value: 16
-      },
-      {
-          label: "Ind. 17 : Moyens humains et techniques",
-          value: 17
-      },
-      {
-          label: "Ind. 18 : Coordination des acteurs",
-          value: 18
-      },
-      {
-          label: "Ind. 19 : Ressources pédagogiques",
-          value: 19
-      },
-      {
-          label: "Ind. 20 : Personnels dédiés",
-          value: 20
-      },
-      {
-          label: "Ind. 21 : Compétences des acteurs",
-          value: 21
-      },
-      {
-          label: "Ind. 22 : Gestion des compétences",
-          value: 22
-      },
-      {
-          label: "Ind. 23 : Veille légale et réglementaire",
-          value: 23
-      },
-      {
-          label: "Ind. 24 : Veille emplois et métiers",
-          value: 24
-      },
-      {
-          label: "Ind. 25 : Veille technologique",
-          value: 25
-      },
-      {
-          label: "Ind. 26 : Public en situation de handicap",
-          value: 26
-      },
-      {
-          label: "Ind. 27 : Sous-traitance et portage salarial",
-          value: 27
-      },
-      {
-          label: "Ind. 28 : Formation Situation de travail",
-          value: 28
-      },
-      {
-          label: "Ind. 29 : Insertion professionnelle",
-          value: 29
-      },
-      {
-          label: "Ind. 30 : Recueil des appréciations",
-          value: 30
-      },
-      {
-          label: "Ind. 31 : Traitement des réclamations",
-          value: 31
-      },
-      {
+          value: 15,
+        },
+        {
+          label: 'Ind. 16 : Présentation à la certification',
+          value: 16,
+        },
+        {
+          label: 'Ind. 17 : Moyens humains et techniques',
+          value: 17,
+        },
+        {
+          label: 'Ind. 18 : Coordination des acteurs',
+          value: 18,
+        },
+        {
+          label: 'Ind. 19 : Ressources pédagogiques',
+          value: 19,
+        },
+        {
+          label: 'Ind. 20 : Personnels dédiés',
+          value: 20,
+        },
+        {
+          label: 'Ind. 21 : Compétences des acteurs',
+          value: 21,
+        },
+        {
+          label: 'Ind. 22 : Gestion des compétences',
+          value: 22,
+        },
+        {
+          label: 'Ind. 23 : Veille légale et réglementaire',
+          value: 23,
+        },
+        {
+          label: 'Ind. 24 : Veille emplois et métiers',
+          value: 24,
+        },
+        {
+          label: 'Ind. 25 : Veille technologique',
+          value: 25,
+        },
+        {
+          label: 'Ind. 26 : Public en situation de handicap',
+          value: 26,
+        },
+        {
+          label: 'Ind. 27 : Sous-traitance et portage salarial',
+          value: 27,
+        },
+        {
+          label: 'Ind. 28 : Formation Situation de travail',
+          value: 28,
+        },
+        {
+          label: 'Ind. 29 : Insertion professionnelle',
+          value: 29,
+        },
+        {
+          label: 'Ind. 30 : Recueil des appréciations',
+          value: 30,
+        },
+        {
+          label: 'Ind. 31 : Traitement des réclamations',
+          value: 31,
+        },
+        {
           label: "Ind. 32 : Mesures d'amélioration continue",
-          value: 32
-      }
+          value: 32,
+        },
       ],
     },
   }),
 
   cdcState: Property.StaticDropdown({
     displayName: "État de l'accrochage",
-    description:"Permet d'indiquer où en est le dossier de certification dans le processus d'accrochage auprès de la CDC",
+    description:
+      "Permet de n'obtenir que les dossiers dans l'état considéré lié à l'export des dossiers - par défaut tous les dossiers sont retournés",
     required: false,
     options: {
       disabled: false,
       options: [
         {
-          label: "Tous",
+          label: 'Tous',
           value: 'all',
         },
         {
@@ -932,11 +1243,11 @@ export const wedofCommon = {
           value: 'exported',
         },
         {
-          label: "Accrochage réussi",
+          label: 'Accrochage réussi',
           value: 'processedOk',
         },
         {
-          label: "Accrochage en erreur",
+          label: 'Accrochage en erreur',
           value: 'processedKo',
         },
       ],

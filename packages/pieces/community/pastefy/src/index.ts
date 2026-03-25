@@ -30,7 +30,7 @@ export const pastefyAuth = PieceAuth.CustomAuth({
 export const pastefy = createPiece({
   displayName: 'Pastefy',
   description: 'Sharing code snippets platform',
-  minimumSupportedRelease: '0.5.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/pastefy.png',
   categories: [],
   authors: ["JanHolger","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
@@ -39,11 +39,14 @@ export const pastefy = createPiece({
     ...actions,
     createCustomApiCallAction({
       baseUrl: (auth) => {
-        const typedAuth = auth as { instance_url: string };
+        if (!auth) {
+          return '';
+        }
+        const typedAuth = auth.props as { instance_url: string };
         return typedAuth.instance_url + '/api/v2';
       },
       auth: pastefyAuth,
-      authMapping: (auth) => {
+      authMapping: async (auth) => {
         const typedAuth = auth as { token?: string };
         return {
           Authorization: typedAuth.token

@@ -2,7 +2,6 @@ import {
   createAction,
   OAuth2PropertyValue,
   Property,
-  Validators,
 } from '@activepieces/pieces-framework';
 import {
   getContacts,
@@ -15,6 +14,8 @@ import {
   updateOpportunity,
 } from '../common';
 import { leadConnectorAuth } from '../..';
+import { z } from 'zod';
+import { propsValidation } from '@activepieces/pieces-common';
 
 export const updateOpportunityAction = createAction({
   auth: leadConnectorAuth,
@@ -23,6 +24,7 @@ export const updateOpportunityAction = createAction({
   description: 'Updates an existing opportunity.',
   props: {
     pipeline: Property.Dropdown({
+  auth: leadConnectorAuth,
       displayName: 'Pipeline',
       description: 'The ID of the pipeline to use.',
       required: true,
@@ -47,6 +49,7 @@ export const updateOpportunityAction = createAction({
       },
     }),
     opportunity: Property.Dropdown({
+  auth: leadConnectorAuth,
       displayName: 'Opportunity',
       required: true,
       refreshers: ['pipeline'],
@@ -73,6 +76,7 @@ export const updateOpportunityAction = createAction({
       },
     }),
     stage: Property.Dropdown({
+  auth: leadConnectorAuth,
       displayName: 'Stage',
       description: 'The stage of the pipeline to use.',
       required: false,
@@ -106,6 +110,7 @@ export const updateOpportunityAction = createAction({
       required: false,
     }),
     contact: Property.Dropdown({
+  auth: leadConnectorAuth,
       displayName: 'Contact',
       description: 'The contact to use.',
       required: false,
@@ -129,6 +134,7 @@ export const updateOpportunityAction = createAction({
       },
     }),
     status: Property.Dropdown({
+  auth: leadConnectorAuth,
       displayName: 'Status',
       required: false,
       refreshers: [],
@@ -146,6 +152,7 @@ export const updateOpportunityAction = createAction({
       },
     }),
     assignedTo: Property.Dropdown({
+  auth: leadConnectorAuth,
       displayName: 'Assigned To',
       required: false,
       refreshers: [],
@@ -170,11 +177,14 @@ export const updateOpportunityAction = createAction({
     monetaryValue: Property.Number({
       displayName: 'Monetary Value',
       required: false,
-      validators: [Validators.number],
     }),
   },
 
   async run({ auth, propsValue }) {
+    await propsValidation.validateZod(propsValue, {
+      monetaryValue: z.number().optional(),
+    });
+
     const {
       pipeline,
       opportunity,

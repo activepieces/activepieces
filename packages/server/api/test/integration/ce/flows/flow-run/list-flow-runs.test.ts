@@ -1,38 +1,28 @@
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../../helpers/test-setup'
 import { FastifyInstance } from 'fastify'
-import { setupApp } from '../../../../../src/app/app'
-import { databaseConnection } from '../../../../../src/app/database/database-connection'
-import { generateMockToken } from '../../../../helpers/auth'
-import { PrincipalType } from '@activepieces/shared'
+import { describeWithAuth } from '../../../../helpers/describe-with-auth'
 
 let app: FastifyInstance | null = null
 
 beforeAll(async () => {
-    await databaseConnection.initialize()
-    app = await setupApp()
+    app = await setupTestEnvironment()
 })
 
 afterAll(async () => {
-    await databaseConnection.destroy()
-    await app?.close()
+    await teardownTestEnvironment()
 })
 
-describe('List flow runs endpoint', () => {
-    it('should return 200', async () => {
-    // arrange
-        const testToken = await generateMockToken({
-            type: PrincipalType.USER,
+describeWithAuth('List flow runs endpoint', () => app!, (setup) => {
+    it('should return empty list with correct structure', async () => {
+        const ctx = await setup()
+
+        const response = await ctx.get('/v1/flow-runs', {
+            projectId: ctx.project.id,
         })
 
-        // act
-        const response = await app?.inject({
-            method: 'GET',
-            url: '/v1/flow-runs',
-            headers: {
-                authorization: `Bearer ${testToken}`,
-            },
-        })
-
-        // assert
         expect(response?.statusCode).toBe(200)
+        const body = response?.json()
+        expect(body.data).toEqual([])
+        expect(body.cursor).toBeUndefined()
     })
 })

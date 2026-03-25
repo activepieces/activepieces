@@ -6,7 +6,7 @@ import teamActions from './team';
 import userActions from './user';
 import absenceActions from './absence';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { clockodoAuth } from '../../index';
+import { clockodoAuth } from '../auth';
 
 export default [
   ...entryActions,
@@ -19,11 +19,10 @@ export default [
   createCustomApiCallAction({
     baseUrl: () => 'https://my.clockodo.com/api', // Replace with the actual base URL
     auth: clockodoAuth,
-    authMapping: (auth) => ({
-      'X-ClockodoApiUser': (auth as { email: string }).email,
-      'X-ClockodoApiKey': (auth as { token: string }).token,
-      'X-Clockodo-External-Application': (auth as { company_name: string })
-        .company_name,
+    authMapping: async (auth) => ({
+      'X-ClockodoApiUser': auth?.props?.email || '',
+      'X-ClockodoApiKey': auth?.props?.token || '',
+      'X-Clockodo-External-Application': auth?.props?.company_name || '',
       'Accept-Language': 'en',
     }),
   }),

@@ -1,6 +1,6 @@
+import { ApEdition } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 import { isNotOneOfTheseEditions } from '../../../../database/database-common'
-import { ApEdition } from '@activepieces/shared'
 
 export class AddBillingParameters1688739844617 implements MigrationInterface {
     name = 'AddBillingParameters1688739844617'

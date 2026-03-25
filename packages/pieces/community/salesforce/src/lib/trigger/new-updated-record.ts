@@ -5,7 +5,7 @@ import {
   pollingHelper,
 } from '@activepieces/pieces-common';
 import {
-  OAuth2PropertyValue,
+  AppConnectionValueForAuthProperty,
   Property,
   TriggerStrategy,
   createTrigger,
@@ -35,6 +35,7 @@ export const newOrUpdatedRecord = createTrigger({
       auth: ctx.auth,
       store: ctx.store,
       propsValue: ctx.propsValue,
+      files: ctx.files,
     });
   },
   async onEnable(ctx) {
@@ -52,16 +53,12 @@ export const newOrUpdatedRecord = createTrigger({
     });
   },
   async run(ctx) {
-    return await pollingHelper.poll(polling, {
-      auth: ctx.auth,
-      store: ctx.store,
-      propsValue: ctx.propsValue,
-    });
+    return await pollingHelper.poll(polling, ctx);
   },
 });
 
 const polling: Polling<
-  OAuth2PropertyValue,
+  AppConnectionValueForAuthProperty<typeof salesforceAuth>,
   { object: string | undefined; conditions: string | undefined }
 > = {
   strategy: DedupeStrategy.TIMEBASED,
@@ -80,7 +77,7 @@ const polling: Polling<
 };
 
 const getRecords = async (
-  authentication: OAuth2PropertyValue,
+  authentication: AppConnectionValueForAuthProperty<typeof salesforceAuth>,
   object: string,
   startDate: string,
   conditions: string | undefined

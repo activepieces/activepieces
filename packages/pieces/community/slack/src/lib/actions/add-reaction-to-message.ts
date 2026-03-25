@@ -1,9 +1,15 @@
-import { slackAuth } from '../../';
+import { slackAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { slackChannel, slackInfo } from '../common/props';
+import { singleSelectChannelInfo, slackChannel } from '../common/props';
 
 import { WebClient } from '@slack/web-api';
 import { processMessageTimestamp } from '../common/utils';
+import {
+  getBotToken,
+  getUserToken,
+  requireUserToken,
+  SlackAuthValue,
+} from '../common/auth-helpers';
 
 export const addRectionToMessageAction = createAction({
   auth: slackAuth,
@@ -12,8 +18,8 @@ export const addRectionToMessageAction = createAction({
   description: 'Add an emoji reaction to a message.',
 
   props: {
-    info: slackInfo,
-    channel: slackChannel,
+    info: singleSelectChannelInfo,
+    channel: slackChannel(true),
     ts: Property.ShortText({
       displayName: 'Message Timestamp',
       description:
@@ -25,12 +31,23 @@ export const addRectionToMessageAction = createAction({
       required: true,
       description: 'e.g.`thumbsup`',
     }),
+    reactAsUser: Property.Checkbox({
+      displayName: 'React as user?',
+      description:
+        'If enabled, the reaction will be added as the authenticated user instead of the bot.',
+      required: true,
+      defaultValue: false,
+    }),
   },
 
   async run(context) {
-    const { channel, ts, reaction } = context.propsValue;
+    const { channel, ts, reaction, reactAsUser } = context.propsValue;
 
-    const slack = new WebClient(context.auth.access_token);
+    const token = reactAsUser
+      ? requireUserToken(context.auth as SlackAuthValue)
+      : getBotToken(context.auth as SlackAuthValue);
+
+    const slack = new WebClient(token);
 
     const messageTimestamp = processMessageTimestamp(ts);
 

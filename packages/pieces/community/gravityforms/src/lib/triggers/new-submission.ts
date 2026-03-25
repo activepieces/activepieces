@@ -11,12 +11,6 @@ const markdown = `
 - Now, locate the form where you want the trigger to occur.
 - Add a webhook to that form.
 - In the webhook settings, paste this URL: 
-  **Test URL (only generate sample data)**:
-  \`\`\`text
-  {{webhookUrl}}/test
-  \`\`\`
-
-  **Trigger Flow URL**:
   \`\`\`text
   {{webhookUrl}}
   \`\`\`
@@ -43,9 +37,6 @@ export const gravityFormsNewSubmission = createTrigger({
     // Empty
   },
   async run(context) {
-    return [context.payload];
-  },
-  async test(context) {
     return [context.payload];
   },
 });

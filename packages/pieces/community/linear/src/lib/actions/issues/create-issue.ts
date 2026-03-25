@@ -29,13 +29,14 @@ export const linearCreateIssue = createAction({
     const issue: LinearDocument.IssueCreateInput = {
       teamId: propsValue.team_id!,
       title: propsValue.title,
+      description: propsValue.description,
       assigneeId: propsValue.assignee_id,
       stateId: propsValue.state_id,
       priority: propsValue.priority_id,
-      labelIds: propsValue.labels,
+      labelIds: propsValue.labels?.length ? propsValue.labels : undefined,
       templateId: propsValue.template_id
     };
-    const client = makeClient(auth as string);
+    const client = makeClient(auth);
     const result = await client.createIssue(issue);
     if (result.success) {
       const createdIssue = await result.issue;

@@ -1,5 +1,5 @@
-import { faker } from '@faker-js/faker'
 import { SignInRequest, SignUpRequest } from '@activepieces/shared'
+import { faker } from '@faker-js/faker'
 
 export const createMockSignUpRequest = (
     signUpRequest?: Partial<SignUpRequest>,
@@ -11,7 +11,6 @@ export const createMockSignUpRequest = (
         lastName: signUpRequest?.lastName ?? faker.person.lastName(),
         trackEvents: signUpRequest?.trackEvents ?? faker.datatype.boolean(),
         newsLetter: signUpRequest?.newsLetter ?? faker.datatype.boolean(),
-        referringUserId: signUpRequest?.referringUserId,
     }
 }
 

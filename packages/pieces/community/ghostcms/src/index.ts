@@ -50,7 +50,7 @@ export const ghostcms = createPiece({
   description: 'Publishing platform for professional bloggers',
 
   auth: ghostAuth,
-  minimumSupportedRelease: '0.5.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/ghostcms.png',
   categories: [PieceCategory.MARKETING],
   authors: ["kishanprmr","MoShizzle","abuaboud"],
@@ -61,12 +61,12 @@ export const ghostcms = createPiece({
     findMember,
     findUser,
     createCustomApiCallAction({
-      baseUrl: (auth) =>
-        `${(auth as { baseUrl: string }).baseUrl}/ghost/api/admin`,
+      baseUrl: (auth) =>auth ?
+        `${auth.props.baseUrl}/ghost/api/admin` : '',
       auth: ghostAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Ghost ${common.jwtFromApiKey(
-          (auth as { apiKey: string }).apiKey
+          auth.props.apiKey
         )}`,
       }),
     }),

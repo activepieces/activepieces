@@ -1,20 +1,21 @@
 import { DropdownOption, Property } from '@activepieces/pieces-framework';
-import _ from 'lodash';
 import { ContentfulAuth, makeClient } from '../common';
+import { isEmpty } from '@activepieces/shared';
 
 const Locale = Property.Dropdown({
+  auth: ContentfulAuth,
   displayName: 'Content Locale',
   required: true,
   refreshers: [],
   options: async ({ auth }) => {
-    if (_.isEmpty(auth)) {
+    if (isEmpty(auth) || !auth) {
       return {
         disabled: true,
         options: [],
         placeholder: 'Please connect your account',
       };
     }
-    const { client } = makeClient(auth as ContentfulAuth);
+    const { client } = makeClient(auth);
     try {
       const response = await client.locale.getMany({});
       const options: DropdownOption<string>[] = response.items.map(

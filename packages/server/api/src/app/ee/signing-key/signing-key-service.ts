@@ -1,17 +1,16 @@
-import { databaseConnection } from '../../database/database-connection'
-import { SigningKeyEntity } from './signing-key-entity'
-import { signingKeyGenerator } from './signing-key-generator'
-import { AddSigningKeyResponse, SigningKey, SigningKeyId } from '@activepieces/ee-shared'
-import {
-    ActivepiecesError,
-    apId,
+import { ActivepiecesError, AddSigningKeyResponse, apId,
     ErrorCode,
     isNil,
     PlatformId,
     SeekPage,
+    SigningKey,
+    SigningKeyId,
 } from '@activepieces/shared'
+import { repoFactory } from '../../core/db/repo-factory'
+import { SigningKeyEntity } from './signing-key-entity'
+import { signingKeyGenerator } from './signing-key-generator'
 
-const repo = databaseConnection.getRepository<SigningKey>(SigningKeyEntity)
+const repo = repoFactory<SigningKey>(SigningKeyEntity)
 
 export const signingKeyService = {
     async add({ platformId, displayName }: AddParams): Promise<AddSigningKeyResponse> {
@@ -25,7 +24,7 @@ export const signingKeyService = {
             displayName,
         }
 
-        const savedKeyPair = await repo.save(newSigningKey)
+        const savedKeyPair = await repo().save(newSigningKey)
 
         return {
             ...savedKeyPair,
@@ -34,7 +33,7 @@ export const signingKeyService = {
     },
 
     async list({ platformId }: ListParams): Promise<SeekPage<SigningKey>> {
-        const data = await repo.findBy({
+        const data = await repo().findBy({
             platformId,
         })
 
@@ -46,13 +45,13 @@ export const signingKeyService = {
     },
 
     async get({ id }: GetParams): Promise<SigningKey | null> {
-        return repo.findOneBy({
+        return repo().findOneBy({
             id,
         })
     },
 
     async delete({ platformId, id }: DeleteParams): Promise<void> {
-        const entity = await repo.findOneBy({
+        const entity = await repo().findOneBy({
             platformId,
             id,
         })
@@ -64,7 +63,7 @@ export const signingKeyService = {
                 },
             })
         }
-        await repo.delete({
+        await repo().delete({
             platformId,
             id,
         })

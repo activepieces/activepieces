@@ -1,39 +1,37 @@
-import {
-    FastifyPluginAsyncTypebox,
-    Type,
-} from '@fastify/type-provider-typebox'
-import { StatusCodes } from 'http-status-codes'
-import { eventsHooks } from '../../helper/application-events'
-import { signingKeyService } from './signing-key-service'
-import { AddSigningKeyRequestBody, ApplicationEventName } from '@activepieces/ee-shared'
-import {
-    ActivepiecesError,
+import { ActivepiecesError, AddSigningKeyRequestBody,
     ApId,
+    ApplicationEventName,
     assertNotNullOrUndefined,
     ErrorCode,
     isNil,
+    PrincipalType,
 } from '@activepieces/shared'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import { StatusCodes } from 'http-status-codes'
+import { z } from 'zod'
+import { securityAccess } from '../../core/security/authorization/fastify-security'
+import { applicationEvents } from '../../helper/application-events'
+import { signingKeyService } from './signing-key-service'
 
-export const signingKeyController: FastifyPluginAsyncTypebox = async (app) => {
+export const signingKeyController: FastifyPluginAsyncZod = async (app) => {
     app.post('/', AddSigningKeyRequest, async (req, res) => {
         const platformId = req.principal.platform.id
-        assertNotNullOrUndefined(platformId, 'platformId')
-
         const newSigningKey = await signingKeyService.add({
             platformId,
             displayName: req.body.displayName,
         })
 
-        eventsHooks.get().send(req, {
-            action: ApplicationEventName.CREATED_SIGNING_KEY,
-            userId: req.principal.id,
-            signingKey: newSigningKey,
+        applicationEvents(req.log).sendUserEvent(req, {
+            action: ApplicationEventName.SIGNING_KEY_CREATED,
+            data: {
+                signingKey: newSigningKey,
+            },
         })
 
         return res.status(StatusCodes.CREATED).send(newSigningKey)
     })
 
-    app.get('/', {}, async (req) => {
+    app.get('/', ListSigningKeysRequest, async (req) => {
         const platformId = req.principal.platform.id
         assertNotNullOrUndefined(platformId, 'platformId')
         return signingKeyService.list({
@@ -69,23 +67,37 @@ export const signingKeyController: FastifyPluginAsyncTypebox = async (app) => {
     })
 }
 
+const ListSigningKeysRequest = {
+    config: {
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+    },
+}
 const AddSigningKeyRequest = {
+    config: {
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+    },
     schema: {
         body: AddSigningKeyRequestBody,
     },
 }
 
 const GetSigningKeyRequest = {
+    config: {
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+    },
     schema: {
-        params: Type.Object({
+        params: z.object({
             id: ApId,
         }),
     },
 }
 
 const DeleteSigningKeyRequest = {
+    config: {
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+    },
     schema: {
-        params: Type.Object({
+        params: z.object({
             id: ApId,
         }),
     },

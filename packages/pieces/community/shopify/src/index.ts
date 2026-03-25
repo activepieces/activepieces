@@ -7,7 +7,7 @@ import {
   Property,
   createPiece,
 } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { AppConnectionType, PieceCategory } from '@activepieces/shared';
 import { adjustInventoryLevelAction } from './lib/actions/adjust-inventory-level';
 import { cancelOrderAction } from './lib/actions/cancel-order';
 import { closeOrderAction } from './lib/actions/close-order';
@@ -20,6 +20,7 @@ import { createProductAction } from './lib/actions/create-product';
 import { createTransactionAction } from './lib/actions/create-transaction';
 import { getAssetAction } from './lib/actions/get-asset';
 import { getCustomerAction } from './lib/actions/get-customer';
+import { getCustomersAction } from './lib/actions/get-customers';
 import { getCustomerOrdersAction } from './lib/actions/get-customer-orders';
 import { getFulfillmentAction } from './lib/actions/get-fulfillment';
 import { getFulfillmentsAction } from './lib/actions/get-fulfillments';
@@ -74,7 +75,10 @@ export const shopifyAuth = PieceAuth.CustomAuth({
   validate: async ({ auth }) => {
     try {
       await sendShopifyRequest({
-        auth,
+        auth: { 
+          type: AppConnectionType.CUSTOM_AUTH,
+          props: auth,
+        },
         method: HttpMethod.GET,
         url: '/shop.json',
       });
@@ -94,9 +98,9 @@ export const shopify = createPiece({
   displayName: 'Shopify',
   description: 'Ecommerce platform for online stores',
   logoUrl: 'https://cdn.activepieces.com/pieces/shopify.png',
-  authors: ["kishanprmr","MoShizzle","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
+  authors: ["kishanprmr","MoShizzle","AbdulTheActivePiecer","khaledmashaly","abuaboud","ikus060"],
   categories: [PieceCategory.COMMERCE],
-  minimumSupportedRelease: '0.5.0',
+  minimumSupportedRelease: '0.30.0',
   auth: shopifyAuth,
   actions: [
     adjustInventoryLevelAction,
@@ -111,6 +115,7 @@ export const shopify = createPiece({
     createTransactionAction,
     getAssetAction,
     getCustomerAction,
+    getCustomersAction,
     getCustomerOrdersAction,
     getFulfillmentAction,
     getFulfillmentsAction,
@@ -126,13 +131,13 @@ export const shopify = createPiece({
     uploadProductImageAction,
     createCustomApiCallAction({
       baseUrl: (auth) => {
-        return getBaseUrl((auth as { shopName: string }).shopName);
+        return auth ? getBaseUrl(auth.props.shopName) : '';
       },
       auth: shopifyAuth,
-      authMapping: (auth) => {
-        const typedAuth = auth as { adminToken: string };
+      authMapping: async (auth) => {
+        const typedAuth = auth.props.adminToken;
         return {
-          'X-Shopify-Access-Token': typedAuth.adminToken,
+          'X-Shopify-Access-Token': typedAuth,
         };
       },
     }),

@@ -1,0 +1,55 @@
+import {
+  createAction,
+  DynamicPropsValue,
+} from '@activepieces/pieces-framework';
+import { Client } from '@notionhq/client';
+import { NotionFieldMapping } from '../common/models';
+
+import { notionAuth } from '../auth';
+import { getNotionToken, notionCommon } from '../common';
+export const updateDatabaseItem = createAction({
+  auth: notionAuth,
+  name: 'update_database_item',
+  displayName: 'Update Database Item',
+  description:
+    'Update specific fields in a Notion database item. Perfect for maintaining data, tracking changes, or syncing information across systems.',
+  props: {
+    database_id: notionCommon.database_id,
+    database_item_id: notionCommon.database_item_id,
+    databaseFields: notionCommon.databaseFields,
+  },
+  async run(context) {
+    const { database_id, database_item_id, databaseFields } =
+      context.propsValue;
+
+    if (!database_item_id) throw new Error('Item ID is required');
+
+    const notionFields: DynamicPropsValue = {};
+
+    const notion = new Client({
+      auth: getNotionToken(context.auth),
+      notionVersion: '2022-02-22',
+    });
+    const { properties } = await notion.databases.retrieve({
+      database_id: database_id as unknown as string,
+    });
+
+    Object.keys(databaseFields).forEach((key) => {
+      const value = databaseFields[key];
+      if (
+        value !== '' &&
+        value !== undefined &&
+        value !== null &&
+        !(Array.isArray(value) && value.length === 0)
+      ) {
+        const fieldType: string = properties[key].type;
+        notionFields[key] =
+          NotionFieldMapping[fieldType].buildNotionType(value);
+      }
+    });
+    return await notion.pages.update({
+      page_id: database_item_id,
+      properties: notionFields,
+    });
+  },
+});

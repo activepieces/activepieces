@@ -11,6 +11,8 @@ import {
   httpClient,
   HttpMethod,
 } from '@activepieces/pieces-common';
+import { Attachment, ParsedMail, simpleParser } from 'mailparser';
+import { FilesService } from '@activepieces/pieces-framework';
 
 interface SearchMailProps {
   access_token: string;
@@ -178,8 +180,92 @@ export const GmailRequests = {
 
     return response.body;
   },
+  getRecentMessages: async (
+    authentication: OAuth2PropertyValue,
+    maxResults = 20
+  ) => {
+    return await httpClient.sendRequest<GmailMessageList>({
+      method: HttpMethod.GET,
+      url: 'https://gmail.googleapis.com/gmail/v1/users/me/messages',
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token: authentication.access_token,
+      },
+      queryParams: {
+        maxResults: maxResults.toString(),
+        q: 'in:inbox OR in:sent', // Get recent messages from inbox and sent
+      },
+    });
+  },
+  getRecentThreads: async (
+    authentication: OAuth2PropertyValue,
+    maxResults = 15
+  ) => {
+    return await httpClient.sendRequest<{
+      threads: { id: string; snippet?: string }[];
+    }>({
+      method: HttpMethod.GET,
+      url: 'https://gmail.googleapis.com/gmail/v1/users/me/threads',
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token: authentication.access_token,
+      },
+      queryParams: {
+        maxResults: maxResults.toString(),
+        q: 'in:inbox OR in:sent', // Get recent threads from inbox and sent
+      },
+    });
+  },
 };
 
 function decodeBase64(data: any) {
   return Buffer.from(data, 'base64').toString();
+}
+
+export async function parseStream(stream: any) {
+  return new Promise<ParsedMail>((resolve, reject) => {
+    simpleParser(stream, (err, parsed) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(parsed);
+      }
+    });
+  });
+}
+
+export async function convertAttachment(
+  attachments: Attachment[],
+  files: FilesService
+) {
+  const promises = attachments.map(async (attachment) => {
+    try {
+      const fileName = attachment.filename ?? `attachment-${Date.now()}`;
+      return {
+        fileName,
+        mimeType: attachment.contentType,
+        size: attachment.size,
+        data: await files.write({
+          fileName: fileName,
+          data: attachment.content,
+        }),
+      };
+    } catch (error) {
+      console.error(
+        `Failed to process attachment: ${attachment.filename}`,
+        error
+      );
+      return null;
+    }
+  });
+  const results = await Promise.all(promises);
+  return results.filter((result) => result !== null);
+}
+
+export function getFirstFiveOrAll(array: unknown[]) {
+  if (array.length <= 5) {
+    return array;
+  } else {
+    return array.slice(0, 5);
+  }
 }

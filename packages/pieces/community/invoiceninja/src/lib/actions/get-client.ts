@@ -1,10 +1,11 @@
 import {
   createAction,
   Property,
-  Validators,
 } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { httpClient, HttpMethod, propsValidation } from '@activepieces/pieces-common';
+import { z } from 'zod';
 import { invoiceninjaAuth } from '../..';
+
 export const getClient = createAction({
   auth: invoiceninjaAuth,
   name: 'getclient_task',
@@ -13,16 +14,18 @@ export const getClient = createAction({
 
   props: {
     email: Property.LongText({
-      displayName: 'Client e-mail address',
+      displayName: 'Client e-mail address', 
       description: 'A valid e-mail address to get client details for',
       required: true,
-      processors: [],
-      validators: [Validators.email],
     }),
   },
 
   async run(context) {
-    const INapiToken = context.auth.access_token;
+    await propsValidation.validateZod(context.propsValue, {
+      email: z.string().email(),
+    });
+
+    const INapiToken = context.auth.props.access_token;
 
     const headers = {
       'X-Api-Token': INapiToken,
@@ -31,7 +34,7 @@ export const getClient = createAction({
     queryParams.append('email', context.propsValue.email || '');
 
     // Remove trailing slash from base_url
-    const baseUrl = context.auth.base_url.replace(/\/$/, '');
+    const baseUrl = context.auth.props.base_url.replace(/\/$/, '');
     const url = `${baseUrl}/api/v1/clients/?${queryParams.toString()}`;
     const httprequestdata = {
       method: HttpMethod.GET,

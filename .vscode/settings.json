@@ -8,6 +8,9 @@
     "editor.codeActionsOnSave": {
         "source.fixAll.eslint": "explicit"
     },
+    "typescript.tsserver.maxTsServerMemory": 4096,
+    "editor.formatOnSave": false,
     "typescript.tsdk": "node_modules/typescript/lib",
-    "javascript.preferences.importModuleSpecifier": "project-relative"
+    "javascript.preferences.importModuleSpecifier": "relative",
+    "nxConsole.generateAiAgentRules": true,
 }

@@ -1,82 +1,62 @@
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
+import { PlatformRole, PrincipalType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { setupApp } from '../../../../src/app/app'
-import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { generateMockToken } from '../../../helpers/auth'
+import { db } from '../../../helpers/db'
 import {
     createAuditEvent,
-    createMockPlatform,
-    createMockProject,
-    createMockUser,
-    mockBasicSetup,
+    mockBasicUser,
 } from '../../../helpers/mocks'
-import { PlatformRole, PrincipalType } from '@activepieces/shared'
+import { createTestContext } from '../../../helpers/test-context'
 
 let app: FastifyInstance | null = null
 
 beforeAll(async () => {
-    await databaseConnection.initialize()
-    app = await setupApp()
+    app = await setupTestEnvironment()
 })
 
 afterAll(async () => {
-    await databaseConnection.destroy()
-    await app?.close()
+    await teardownTestEnvironment()
 })
-
 describe('Audit Event API', () => {
     describe('List Audit event API', () => {
         it('should list audit events', async () => {
             // arrange
-            const { mockOwner: mockUserOne, mockPlatform: mockPlatformOne } = await mockBasicSetup()
-            const { mockOwner: mockUserTwo, mockPlatform: mockPlatformTwo } = await mockBasicSetup()
-
-
-            await databaseConnection.getRepository('platform').update(mockPlatformOne.id, {
-                auditLogEnabled: true,
+            const ctxOne = await createTestContext(app!, {
+                plan: {
+                    auditLogEnabled: true,
+                },
             })
-            const testToken1 = await generateMockToken({
-                type: PrincipalType.USER,
-                id: mockUserOne.id,
-                platform: { id: mockPlatformOne.id },
-            })
+            const ctxTwo = await createTestContext(app!)
+
 
             const mockAuditEvents1 = [
                 createAuditEvent({
-                    platformId: mockPlatformOne.id,
-                    userId: mockUserOne.id,
+                    platformId: ctxOne.platform.id,
+                    userId: ctxOne.user.id,
                 }),
                 createAuditEvent({
-                    platformId: mockPlatformOne.id,
-                    userId: mockUserOne.id,
+                    platformId: ctxOne.platform.id,
+                    userId: ctxOne.user.id,
                 }),
             ]
-            await databaseConnection
-                .getRepository('audit_event')
-                .save(mockAuditEvents1)
+            await db.save('audit_event', mockAuditEvents1)
 
             const mockAuditEvents2 = [
                 createAuditEvent({
-                    platformId: mockPlatformTwo.id,
-                    userId: mockUserTwo.id,
+                    platformId: ctxTwo.platform.id,
+                    userId: ctxTwo.user.id,
                 }),
                 createAuditEvent({
-                    platformId: mockPlatformTwo.id,
-                    userId: mockUserTwo.id,
+                    platformId: ctxTwo.platform.id,
+                    userId: ctxTwo.user.id,
                 }),
             ]
-            await databaseConnection
-                .getRepository('audit_event')
-                .save(mockAuditEvents2)
+            await db.save('audit_event', mockAuditEvents2)
 
             // act
-            const response1 = await app?.inject({
-                method: 'GET',
-                url: '/v1/audit-events',
-                headers: {
-                    authorization: `Bearer ${testToken1}`,
-                },
-            })
+            const response1 = await ctxOne.get('/v1/audit-events')
 
             // assert
             expect(response1?.statusCode).toBe(StatusCodes.OK)
@@ -93,35 +73,32 @@ describe('Audit Event API', () => {
 
         it('should return forbidden if the user is not the owner', async () => {
             // arrange
-            const mockUser1 = createMockUser({ platformRole: PlatformRole.ADMIN })
-            await databaseConnection.getRepository('user').save(mockUser1)
+            const ctx = await createTestContext(app!)
 
-            const mockPlatform1 = createMockPlatform({ ownerId: mockUser1.id, auditLogEnabled: true })
-            await databaseConnection.getRepository('platform').save(mockPlatform1)
-
-            const mockProject1 = createMockProject({
-                platformId: mockPlatform1.id,
-                ownerId: mockUser1.id,
+            const { mockUser } = await mockBasicUser({
+                user: {
+                    platformId: ctx.platform.id,
+                    platformRole: PlatformRole.MEMBER,
+                },
             })
-            await databaseConnection.getRepository('project').save(mockProject1)
-
-            const testToken1 = await generateMockToken({
+            const testToken = await generateMockToken({
                 type: PrincipalType.USER,
-                id: mockUser1.id,
-                platform: { id: mockPlatform1.id },
+                id: mockUser.id,
+
+                platform: { id: ctx.platform.id },
             })
 
             // act
-            const response1 = await app?.inject({
+            const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/audit-events',
+                url: '/api/v1/audit-events',
                 headers: {
-                    authorization: `Bearer ${testToken1}`,
+                    authorization: `Bearer ${testToken}`,
                 },
             })
 
             // assert
-            expect(response1?.statusCode).toBe(StatusCodes.FORBIDDEN)
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
         })
     })
 })

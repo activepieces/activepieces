@@ -1,5 +1,5 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { mondayAuth } from '../..';
+import { mondayAuth } from '../auth';
 import { makeClient, mondayCommon } from '../common';
 import { COLUMN_TYPE_OPTIONS } from '../common/constants';
 
@@ -27,7 +27,7 @@ export const createColumnAction = createAction({
   async run(context) {
     const { board_id, column_title, column_type } = context.propsValue;
 
-    const client = makeClient(context.auth as string);
+    const client = makeClient(context.auth);
     return await client.createColumn({
       boardId: board_id as string,
       columnTitle: column_title as string,

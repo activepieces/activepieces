@@ -1,23 +1,11 @@
-import { onRequestHookHandler, preSerializationHookHandler } from 'fastify'
-import { logger } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ErrorCode,
+    isNil,
     isObject,
     PrincipalType,
 } from '@activepieces/shared'
-
-// TODO REMOVE
-export const allowWorkersOnly: onRequestHookHandler = (request, _res, done) => {
-    if (request.principal.type !== PrincipalType.WORKER) {
-        throw new ActivepiecesError({
-            code: ErrorCode.AUTHORIZATION,
-            params: {},
-        })
-    }
-
-    done()
-}
+import { preSerializationHookHandler } from 'fastify'
 
 export function extractResourceName(url: string): string | undefined {
     const urlPath = url.split('?')[0]
@@ -32,16 +20,14 @@ export function extractResourceName(url: string): string | undefined {
  * the `projectId` property value does not match the principal's `projectId`.
  * Otherwise, does nothing.
  */
-export const entitiesMustBeOwnedByCurrentProject: preSerializationHookHandler<
-Payload | null
-> = (request, _response, payload, done) => {
-    logger.trace(
-        { payload, principal: request.principal, route: request.routeConfig },
+export const entitiesMustBeOwnedByCurrentProject: preSerializationHookHandler<Payload | null> = (request, _response, payload, done) => {
+    request.log.trace(
+        { payload, principal: request.principal, route: request.routeOptions.config },
         'entitiesMustBeOwnedByCurrentProject',
     )
+    const principalProjectId = request.principal.type === PrincipalType.ENGINE ? request.principal.projectId : (request.projectId ?? undefined)
 
-    if (isObject(payload)) {
-        const principalProjectId = request.principal.projectId
+    if (isObject(payload) && !isNil(principalProjectId)) {
         let verdict: AuthzVerdict = 'ALLOW'
 
         if ('projectId' in payload) {
@@ -60,6 +46,10 @@ Payload | null
         }
 
         if (verdict === 'DENY') {
+            request.log.warn({
+                principalProjectId,
+                route: request.routeOptions.config,
+            }, 'Authorization denied: entity not owned by current project')
             throw new ActivepiecesError({
                 code: ErrorCode.AUTHORIZATION,
                 params: {

@@ -1,0 +1,16 @@
+{
+  "Queue": "Очередь",
+  "A piece that allows you to push items into a queue, providing a way to throttle requests or process data in a First-In-First-Out (FIFO) manner.": "Фишка, которая позволяет переносить элементы в очередь, предоставляя способ сортировать запросы или обрабатывать данные методом First-In-First-Out (FIFO).",
+  "Push to Queue": "Передать в очередь",
+  "Pull items from queue": "Потянуть элементы из очереди",
+  "Clear queue": "Очистить очередь",
+  "Push item to queue": "Отправить в очередь",
+  "Clears all items inside a queue": "Очищает все элементы внутри очереди",
+  "Markdown": "Markdown",
+  "Queue Name": "Имя очереди",
+  "Items": "Items",
+  "Number of items": "Количество элементов",
+  "**Note:**\n- You can push items from other flows. The queue name should be unique across all flows.\n- The testing step work in isolation and doesn't affect the actual queue after publishing.\n": "**Примечание:**\n- Вы можете отправлять вещи из других потоков. Имя очереди должно быть уникальным для всех потоков.\n- этап тестирования работает изолированно и не влияет на актуальную очередь после публикации.\n",
+  "**Note:**\n- You can pull items from other flows. The queue name should be unique across all flows.\n- The testing step work in isolation and doesn't affect the actual queue after publishing.\n": "**Примечание:**\n- Вы можете взять предметы из других потоков. Имя очереди должно быть уникальным во всех потоках.\n- этап тестирования работает изолированно и не влияет на актуальную очередь после публикации.\n",
+  "**Note:**\n- This deletes all items inside the queue permanently.\n- The testing step work in isolation and doesn't affect the actual queue after publishing.\n": "**Примечание:**\n- Это удалит все элементы в очереди навсегда.\n- этап тестирования работает изолированно и не влияет на актуальную очередь после публикации.\n"
+}

@@ -15,6 +15,7 @@ import {
   updateContact,
 } from './lib/actions';
 import { triggers } from './lib/triggers';
+import { mauticAuth } from './lib/auth';
 
 const markdownDescription = `
 Follow these steps:
@@ -25,30 +26,11 @@ Follow these steps:
 
 `;
 
-export const mauticAuth = PieceAuth.CustomAuth({
-  description: markdownDescription,
-  props: {
-    base_url: Property.ShortText({
-      displayName: 'Base URL',
-      required: true,
-    }),
-    username: Property.ShortText({
-      displayName: 'Username',
-      required: true,
-    }),
-    password: PieceAuth.SecretText({
-      displayName: 'Password',
-      required: true,
-    }),
-  },
-  required: true,
-});
-
 export const mautic = createPiece({
   displayName: 'Mautic',
   description: 'Open-source marketing automation software',
 
-  minimumSupportedRelease: '0.5.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/mautic.png',
   authors: ["bibhuty-did-this","kanarelo","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   categories: [PieceCategory.MARKETING],
@@ -63,13 +45,14 @@ export const mautic = createPiece({
     createCustomApiCallAction({
       auth: mauticAuth,
       baseUrl: (auth) => {
-        const { base_url } = auth as PiecePropValueSchema<typeof mauticAuth>;
+        if (!auth) {
+          return '';
+        }
+        const { base_url } = auth.props;
         return `${base_url.endsWith('/') ? base_url : base_url + '/'}api/`;
       },
-      authMapping: (auth) => {
-        const { username, password } = auth as PiecePropValueSchema<
-          typeof mauticAuth
-        >;
+      authMapping: async (auth) => {
+        const { username, password } = auth.props;
         return {
           Authorization:
             'Basic ' +

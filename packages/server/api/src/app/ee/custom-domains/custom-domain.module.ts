@@ -1,35 +1,34 @@
 import {
-    FastifyPluginAsyncTypebox,
-    Static,
-    Type,
-} from '@fastify/type-provider-typebox'
-import { HttpStatusCode } from 'axios'
-import { StatusCodes } from 'http-status-codes'
-import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
-import { customDomainService } from './custom-domain.service'
-import {
     AddDomainRequest,
-    ListCustomDomainsRequest,
-} from '@activepieces/ee-shared'
-import { assertNotNullOrUndefined } from '@activepieces/shared'
+    assertNotNullOrUndefined,
+    ListCustomDomainsRequest, PrincipalType } from '@activepieces/shared'
+import { HttpStatusCode } from 'axios'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import { StatusCodes } from 'http-status-codes'
+import { z } from 'zod'
+import { securityAccess } from '../../core/security/authorization/fastify-security'
+import { platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
+import { customDomainService } from './custom-domain.service'
 
-const GetOneRequest = Type.Object({
-    id: Type.String(),
+const GetOneRequest = z.object({
+    id: z.string(),
 })
-type GetOneRequest = Static<typeof GetOneRequest>
+type GetOneRequest = z.infer<typeof GetOneRequest>
 
-export const customDomainModule: FastifyPluginAsyncTypebox = async (app) => {
-    app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.customDomainsEnabled))
-    app.addHook('preHandler', platformMustBeOwnedByCurrentUser)
+export const customDomainModule: FastifyPluginAsyncZod = async (app) => {
+    app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.plan.customDomainsEnabled))
     await app.register(customDomainController, { prefix: '/v1/custom-domains' })
 }
 
-const customDomainController: FastifyPluginAsyncTypebox = async (app) => {
+const customDomainController: FastifyPluginAsyncZod = async (app) => {
     app.post(
         '/',
         {
             schema: {
                 body: AddDomainRequest,
+            },
+            config: {
+                security: securityAccess.platformAdminOnly([PrincipalType.USER]),
             },
         },
         async (request, reply) => {
@@ -61,6 +60,9 @@ const customDomainController: FastifyPluginAsyncTypebox = async (app) => {
             schema: {
                 querystring: ListCustomDomainsRequest,
             },
+            config: {
+                security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+            },
         },
         async (request) => {
             const platformId = request.principal.platform.id
@@ -73,45 +75,14 @@ const customDomainController: FastifyPluginAsyncTypebox = async (app) => {
         },
     )
 
-    app.get(
-        '/validation/:id',
-        {
-            schema: {
-                params: GetOneRequest,
-            },
-        },
-        async (request) => {
-            const platformId = request.principal.platform.id
-            assertNotNullOrUndefined(platformId, 'platformId')
-
-            return customDomainService.getDomainValidationData({
-                id: request.params.id,
-            })
-        },
-    )
-
-    app.patch(
-        '/verify/:id',
-        {
-            schema: {
-                params: GetOneRequest,
-            },
-        },
-        async (request) => {
-            const platformId = request.principal.platform.id
-            assertNotNullOrUndefined(platformId, 'platformId')
-            return customDomainService.verifyDomain({
-                id: request.params.id,
-                platformId,
-            })
-        },
-    )
-
     app.delete(
         '/:id',
         {
             schema: {
                 params: GetOneRequest,
+            },
+            config: {
+                security: securityAccess.platformAdminOnly([PrincipalType.USER]),
             },
         },
         async (request) => {

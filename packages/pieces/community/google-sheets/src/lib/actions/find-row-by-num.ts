@@ -1,36 +1,42 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { googleSheetsCommon, getGoogleSheetRows } from '../common/common';
-import { googleSheetsAuth } from '../..';
+import { areSheetIdsValid, googleSheetsCommon } from '../common/common';
+import { googleSheetsAuth } from '../common/common';
+import { commonProps } from '../common/props';
 
 export const findRowByNumAction = createAction({
-  auth: googleSheetsAuth,
-  name: 'find_row_by_num',
-  description: 'Get a row in a Google Sheet by row number',
-  displayName: 'Get Row',
-  props: {
-    spreadsheet_id: googleSheetsCommon.spreadsheet_id,
-    include_team_drives: googleSheetsCommon.include_team_drives,
-    sheet_id: googleSheetsCommon.sheet_id,
-    rowNumber: Property.Number({
-      displayName: 'Row Number',
-      description: 'The row number to get from the sheet',
-      required: true,
-    }),
-  },
-  async run({ propsValue, auth }) {
-    const sheetName = await googleSheetsCommon.findSheetName(
-      auth['access_token'],
-      propsValue['spreadsheet_id'],
-      propsValue['sheet_id']
-    );
+	auth: googleSheetsAuth,
+	name: 'find_row_by_num',
+	displayName: 'Get Single Row by ID',
+	description: 'Retrieve a specific row using its unique ID.',
+	props: {
+		...commonProps,
+		rowNumber: Property.Number({
+			displayName: 'Row Number',
+			description: 'Enter the row number you want to retrieve',
+			required: true,
+		}),
+		headerRow: Property.Number({
+			displayName: 'Header Row Number',
+			description: 'Enter the row number where your column headers are located (usually row 1).',
+			required: true,
+			defaultValue: 1,
+		}),
+	},
+	async run(context) {
+		const { spreadsheetId, sheetId, rowNumber, headerRow } = context.propsValue;
 
-    const row = await getGoogleSheetRows({
-      accessToken: auth['access_token'],
-      sheetName: sheetName,
-      spreadSheetId: propsValue['spreadsheet_id'],
-      rowIndex_s: propsValue['rowNumber'],
-      rowIndex_e: propsValue['rowNumber'],
-    });
-    return row[0];
-  },
+		if (!areSheetIdsValid(spreadsheetId, sheetId)) {
+			throw new Error('Please select a spreadsheet and sheet first.');
+		}
+
+		const row = await googleSheetsCommon.getGoogleSheetRows({
+			auth: context.auth,
+			sheetId: sheetId as number,
+			spreadsheetId: spreadsheetId as string,
+			rowIndex_s: rowNumber,
+			rowIndex_e: rowNumber,
+			headerRow: headerRow,
+		});
+		return row[0];
+	},
 });

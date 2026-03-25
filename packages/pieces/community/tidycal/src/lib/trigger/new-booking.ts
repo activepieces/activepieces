@@ -1,4 +1,4 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { AppConnectionValueForAuthProperty, createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import {
   DedupeStrategy,
   HttpMethod,
@@ -6,7 +6,7 @@ import {
   pollingHelper,
 } from '@activepieces/pieces-common';
 import { calltidycalapi } from '../common';
-import { tidyCalAuth } from '../../';
+import { tidyCalAuth } from '../auth';
 import dayjs from 'dayjs';
 
 export const tidycalnewbooking = createTrigger({
@@ -60,6 +60,7 @@ export const tidycalnewbooking = createTrigger({
       auth: context.auth,
       store: context.store,
       propsValue: context.propsValue,
+      files: context.files,
     });
   },
   test: async (context) => {
@@ -67,11 +68,12 @@ export const tidycalnewbooking = createTrigger({
       auth: context.auth,
       store: context.store,
       propsValue: context.propsValue,
+      files: context.files,
     });
   },
 });
 
-const polling: Polling<string, Record<string, never>> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof tidyCalAuth>, Record<string, never>> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, lastFetchEpochMS }) => {
     const currentValues = await calltidycalapi<{

@@ -1,4 +1,4 @@
-import { OAuth2PropertyValue, createTrigger } from '@activepieces/pieces-framework';
+import { AppConnectionValueForAuthProperty, OAuth2PropertyValue, createTrigger } from '@activepieces/pieces-framework';
 import { TriggerStrategy } from '@activepieces/pieces-framework';
 import {
   DedupeStrategy,
@@ -8,7 +8,7 @@ import {
 import { leadConnectorAuth } from '../..';
 import { getContacts } from '../common';
 
-const polling: Polling<OAuth2PropertyValue, unknown> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof leadConnectorAuth>, unknown> = {
   strategy: DedupeStrategy.LAST_ITEM,
   items: async ({ auth, lastItemId }) => {
     const currentValues =
@@ -50,17 +50,9 @@ export const newContact = createTrigger({
     });
   },
   run: async (context) => {
-    return await pollingHelper.poll(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-    });
+    return await pollingHelper.poll(polling, context);
   },
   test: async (context) => {
-    return await pollingHelper.test(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-    });
+    return await pollingHelper.test(polling, context);
   },
 });

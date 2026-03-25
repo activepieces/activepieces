@@ -1,13 +1,13 @@
-import { createTrigger, PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
+import { AppConnectionValueForAuthProperty, createTrigger, PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
 import { TriggerStrategy } from '@activepieces/pieces-framework';
 import { googleCalendarCommon } from '../common';
 import { getEvents } from '../common/helper';
 import { GoogleCalendarEvent } from '../common/types';
-import { googleCalendarAuth } from '../../';
+import { googleCalendarAuth } from '../common';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 
 const polling: Polling<
-	PiecePropValueSchema<typeof googleCalendarAuth>,
+    AppConnectionValueForAuthProperty<typeof googleCalendarAuth>,
 	{ calendarId?: string; expandRecurringEvent: boolean }
 > = {
 	strategy: DedupeStrategy.TIMEBASED,
@@ -94,7 +94,7 @@ export const calendarEventChanged = createTrigger({
 		eventType: 'default',
 	},
 	type: TriggerStrategy.POLLING,
-	async test({ store, auth, propsValue }) {
+	async test({ store, auth, propsValue, files }) {
 		return await pollingHelper.test(polling, {
 			store,
 			auth,
@@ -102,6 +102,7 @@ export const calendarEventChanged = createTrigger({
 				calendarId: propsValue.calendar_id,
 				expandRecurringEvent: propsValue.expandRecurringEvent,
 			},
+			files,
 		});
 	},
 	async onEnable({ store, auth, propsValue }) {
@@ -124,7 +125,7 @@ export const calendarEventChanged = createTrigger({
 			},
 		});
 	},
-	async run({ store, auth, propsValue }) {
+	async run({ store, auth, propsValue, files }) {
 		return await pollingHelper.poll(polling, {
 			store,
 			auth,
@@ -132,6 +133,7 @@ export const calendarEventChanged = createTrigger({
 				calendarId: propsValue.calendar_id,
 				expandRecurringEvent: propsValue.expandRecurringEvent,
 			},
+			files,
 		});
 	},
 });

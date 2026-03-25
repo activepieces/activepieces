@@ -2,18 +2,13 @@ import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { bannerbearCreateImageAction } from './lib/actions/create-image';
-
-export const bannerbearAuth = PieceAuth.SecretText({
-  displayName: 'API Key',
-  description: 'Bannerbear API Key',
-  required: true,
-});
+import { bannerbearAuth } from './lib/auth';
 
 export const bannerbear = createPiece({
   displayName: 'Bannerbear',
   description: 'Automate image generation',
 
-  minimumSupportedRelease: '0.5.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/bannerbear.png',
   categories: [PieceCategory.MARKETING],
   authors: ["kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
@@ -23,8 +18,8 @@ export const bannerbear = createPiece({
     createCustomApiCallAction({
       baseUrl: () => 'https://sync.api.bannerbear.com/v2',
       auth: bannerbearAuth,
-      authMapping: (auth) => ({
-        Authorization: `Bearer ${auth}`,
+      authMapping: async (auth) => ({
+        Authorization: `Bearer ${auth.secret_text}`,
       }),
     }),
   ],

@@ -1,13 +1,13 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { randomBytes } from 'node:crypto';
-import { kebabCase } from 'lodash';
-
 import {
   httpClient,
   HttpMethod,
   HttpRequest,
 } from '@activepieces/pieces-common';
-import { stableDiffusionAuth, StableDiffusionAuthType } from '../../index';
+import { stableDiffusionAuth } from '../auth';
+import { StableDiffusionAuthType } from '../../index';
+import { kebabCase } from '@activepieces/shared';
 
 export const textToImage = createAction({
   name: 'textToImage',
@@ -21,6 +21,7 @@ export const textToImage = createAction({
     }),
     model: Property.Dropdown({
       displayName: 'Model',
+      auth: stableDiffusionAuth,
       required: true,
       refreshers: ['auth'],
       options: async ({ auth }) => {
@@ -31,7 +32,7 @@ export const textToImage = createAction({
             placeholder: 'Please authenticate first',
           };
         }
-        const { baseUrl } = auth as StableDiffusionAuthType;
+        const { baseUrl } = auth.props;
         const request: HttpRequest = {
           method: HttpMethod.GET,
           url: `${baseUrl}/sdapi/v1/sd-models`,
@@ -64,7 +65,7 @@ export const textToImage = createAction({
   async run({ auth, propsValue, files }) {
     const request: HttpRequest = {
       method: HttpMethod.POST,
-      url: `${auth.baseUrl}/sdapi/v1/txt2img`,
+      url: `${auth.props.baseUrl}/sdapi/v1/txt2img`,
       headers: {
         'Content-Type': 'application/json',
       },

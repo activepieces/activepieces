@@ -9,12 +9,11 @@ import {
   DedupeStrategy,
   pollingHelper,
 } from '@activepieces/pieces-common';
-import { jiraCloudAuth } from '../../auth';
+import { JiraAuth, jiraCloudAuth } from '../../auth';
 import { searchIssuesByJql } from '../common';
 import dayjs from 'dayjs';
 
-const polling: Polling<
-  PiecePropValueSchema<typeof jiraCloudAuth>,
+const polling: Polling<   JiraAuth,
   { jql?: string; sanitizeJql?: boolean }
 > = {
   strategy: DedupeStrategy.TIMEBASED,
@@ -51,7 +50,7 @@ export const updatedIssue = createTrigger({
     sanitizeJql: Property.Checkbox({
       displayName: 'Sanitize JQL',
       required: false,
-      defaultValue: true,
+      defaultValue: false,
     }),
   },
   sampleData: {},

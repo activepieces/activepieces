@@ -1,11 +1,15 @@
+import { ApEdition, apId } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
-import { logger } from '@activepieces/server-shared'
-import { apId } from '@activepieces/shared'
+import { system } from '../../../helper/system/system'
+import { isNotOneOfTheseEditions } from '../../database-common'
 
 export class AddPlatformToPostgres1709052740378 implements MigrationInterface {
     name = 'AddPlatformToPostgres1709052740378'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
+        if (isNotOneOfTheseEditions([ApEdition.COMMUNITY])) {
+            return
+        }
         await queryRunner.query(`
             CREATE TABLE "platform" (
                 "id" character varying(21) NOT NULL,
@@ -54,6 +58,9 @@ export class AddPlatformToPostgres1709052740378 implements MigrationInterface {
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+        if (isNotOneOfTheseEditions([ApEdition.COMMUNITY])) {
+            return
+        }
         await queryRunner.query(`
             ALTER TABLE "platform" DROP CONSTRAINT "fk_platform_user"
         `)
@@ -69,9 +76,10 @@ export class AddPlatformToPostgres1709052740378 implements MigrationInterface {
 }
 
 async function migrateProjects(queryRunner: QueryRunner) {
-    logger.info('CreateDefaultPlatform1705967115116 up')
+    const log = system.globalLogger()
+    log.info('CreateDefaultPlatform1705967115116 up')
     const standaloneProjects = await queryRunner.query('select * from project where "platformId" is null;')
-    logger.info(`Found ${standaloneProjects.length} standalone projects`)
+    log.info({ count: standaloneProjects.length }, '[migrateProjects] Found standalone projects')
     for (const project of standaloneProjects) {
         const ownerId = project.ownerId
         const platformId = apId()
@@ -98,5 +106,5 @@ async function migrateProjects(queryRunner: QueryRunner) {
         await queryRunner.query(`update "project" set "platformId" = '${platformId}' where "id" = '${project.id}'`)
         await queryRunner.query(`update "user" set "platformId" = '${platformId}' where "id" = '${ownerId}'`)
     }
-    logger.info('CreateDefaultPlatform1705967115116 up done')
+    log.info('CreateDefaultPlatform1705967115116 up done')
 }

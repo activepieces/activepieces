@@ -37,21 +37,19 @@ export const ntfy = createPiece({
   description: 'Notification management made easy',
 
   logoUrl: 'https://cdn.activepieces.com/pieces/ntfy.png',
-  minimumSupportedRelease: '0.5.0',
+  minimumSupportedRelease: '0.30.0',
   categories: [PieceCategory.COMMUNICATION],
   auth: ntfyAuth,
   authors: ["MyWay","facferreira","la3rence","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   actions: [
     sendNotification,
     createCustomApiCallAction({
-      baseUrl: (auth) => (auth as { base_url: string }).base_url,
+     baseUrl: (auth) => (auth?.props.base_url ?? ''),
       auth: ntfyAuth,
-      authMapping: (auth) => ({
-        Authorization: `Bearer ${
-          (auth as { access_token: string }).access_token
-        }`,
+      authMapping: async (auth) => ({
+        Authorization: `Bearer ${auth.props.access_token}`,
       }),
     }),
   ],
-  triggers: [],
+  triggers: [],  
 });

@@ -1,7 +1,6 @@
-import { Property, Validators, createAction } from "@activepieces/pieces-framework";
-import { googleDriveAuth } from "../../";
+import { Property, createAction } from "@activepieces/pieces-framework";
+import { googleDriveAuth, createGoogleClient } from '../auth';
 import { google } from 'googleapis';
-import { OAuth2Client } from 'googleapis-common';
 
 export const deletePermission = createAction({
     auth: googleDriveAuth,
@@ -16,7 +15,6 @@ export const deletePermission = createAction({
         }),
         user_email: Property.ShortText({
             displayName: 'User email',
-            validators: [Validators.email],
             description: 'The email address of the user to update permissions for',
             required: true,
         }),  
@@ -53,8 +51,7 @@ export const deletePermission = createAction({
     },
     async run (context) {
         const [fileId, user_email] = [context.propsValue.fileId, context.propsValue.user_email];
-        const authClient = new OAuth2Client();
-        authClient.setCredentials(context.auth)
+        const authClient = await createGoogleClient(context.auth);
 
         const drive = google.drive({ version: 'v3', auth: authClient });
         

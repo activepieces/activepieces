@@ -1,0 +1,17 @@
+{
+  "Mailchain": "Mailchain",
+  "Mailchain is a simple, secure, and decentralized communications protocol that enables blockchain-based email.": "Mailchain - это простой, безопасный и децентрализованный протокол коммуникаций, который позволяет использовать электронную почту в блокчейне.",
+  "The secret recovery phrase (25-word mnemonic phrase) to authenticate with the Mailchain Protocol. You can obtain this phrase when setting up your Mailchain account.": "Секретная фраза восстановления (mnemonic фраза) для аутентификации с помощью протокола Mailchain. Вы можете получить эту фразу при настройке вашего аккаунта Mailchain.",
+  "Get Authenticated User": "Получить пользователя с аутентификацией",
+  "Send Email": "Отправить письмо",
+  "Get the authenticated user to the Mailchain Protocol": "Получить пользователя с аутентификацией в Mailchain Protocol",
+  "Send an email to blockchain or mailchain addresses": "Отправить письмо блокчейну или почтовому ящику",
+  "Markdown": "Markdown",
+  "To": "Кому",
+  "Subject": "Тема",
+  "Content": "Содержание",
+  "**Getting Started with Mailchain:**\n\nTo send emails using the Mailchain Protocol, you need to first create an account on [Mailchain](https://app.mailchain.com/). Once your account is set up, you will receive a Mailchain address. You can also connect your wallet to associate a blockchain address with your Mailchain account.\n\n**Recipients:**\n\nWhen sending an email, you can use either a Mailchain address or a blockchain address as the recipient. For blockchain addresses, you can leverage supported web3 domain ": "**Начало работы с Mailchain:**\n\nДля отправки писем с помощью протокола Mailchain вам необходимо сначала создать учетную запись на [Mailchain](https://app.mailchain.com/). Как только ваш аккаунт будет создан, вы получите Mailchain адрес. Вы также можете подключить ваш кошелек, чтобы связать блокчейн адрес с вашим аккаунтом Mailchain.\n\n**Получатели:**\n\nПри отправке письма вы можете использовать либо адрес Mailchain или адрес блокчейна в качестве получателя. Для блокчейн адресов вы можете использовать поддерживаемые сервисы доменов Web3, включая ENS, Unstoppable Domains, Lens, Coinbase и многие другие.\n\n**Пример использования:**\n- **Mailchain Address:** 'yourname@mailchain. om'\n- **Blockchain Address:** 'yourname.eth' (ENS), 'yourname.crypto' (Неостановимые домены) и т.д.\n\nДля управления папкой \"Входящие\" и отправки электронных писем перейдите в [Веб-приложение Mailchain](https://app.mailchain.com/).\n",
+  "The blockchain or mailchain addresses to send the email to": "Адреса блокчейна или почтовой цепочки для отправки письма",
+  "The subject of the email": "Тема письма",
+  "The content of the email": "Содержание письма"
+}

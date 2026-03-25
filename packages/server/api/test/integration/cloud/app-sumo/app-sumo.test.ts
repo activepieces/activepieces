@@ -1,23 +1,25 @@
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
+import { ApEdition } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { setupApp } from '../../../../src/app/app'
-import { databaseConnection } from '../../../../src/app/database/database-connection'
+import { system } from '../../../../src/app/helper/system/system'
 
 let app: FastifyInstance | null = null
 
 beforeAll(async () => {
-    await databaseConnection.initialize()
-    app = await setupApp()
+    app = await setupTestEnvironment()
 })
 
 afterAll(async () => {
-    await databaseConnection.destroy()
-    await app?.close()
+    await teardownTestEnvironment()
 })
-
 describe('AppSumo API', () => {
     describe('Action endpoint', () => {
         it('Activates new accounts', async () => {
+            const edition = system.getEdition()
+            if (edition !== ApEdition.CLOUD) {
+                return
+            }
             // arrange
             const mockEmail = 'mock-email'
 
@@ -33,7 +35,7 @@ describe('AppSumo API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/appsumo/action',
+                url: '/api/v1/appsumo/action',
                 headers: {
                     authorization: `Bearer ${appSumoToken}`,
                 },
@@ -41,9 +43,8 @@ describe('AppSumo API', () => {
             })
 
             // assert
-            expect(response?.statusCode).toBe(StatusCodes.CREATED)
             const responseBody = response?.json()
-
+            expect(response?.statusCode).toBe(StatusCodes.CREATED)
             expect(responseBody?.message).toBe('success')
             expect(responseBody?.redirect_url).toBe(
                 `https://cloud.activepieces.com/sign-up?email=${mockEmail}`,

@@ -1,11 +1,12 @@
 import {
   createAction,
   Property,
-  Validators,
 } from '@activepieces/pieces-framework';
 import { subscribe } from '../api';
 import { buildListDropdown } from '../props';
 import { sendyAuth, SendyAuthType } from '../auth';
+import { z } from 'zod';
+import { propsValidation } from '@activepieces/pieces-common';
 
 export const subscribeMultipleAction = createAction({
   name: 'subscribe_multiple_lists',
@@ -14,6 +15,7 @@ export const subscribeMultipleAction = createAction({
   description: 'Add a new subscriber to a multiple lists',
   props: {
     lists: Property.MultiSelectDropdown({
+      auth: sendyAuth,
       displayName: 'Lists',
       description: 'Select the lists to subscribe to',
       required: true,
@@ -25,7 +27,6 @@ export const subscribeMultipleAction = createAction({
       displayName: 'Email',
       description: "The user's email",
       required: true,
-      validators: [Validators.email],
     }),
     name: Property.ShortText({
       displayName: 'Name',
@@ -46,7 +47,6 @@ export const subscribeMultipleAction = createAction({
       displayName: 'Referrer',
       description: 'The URL where the user signed up from',
       required: false,
-      validators: [Validators.url],
     }),
     gdpr: Property.Checkbox({
       displayName: 'GDPR compliant',
@@ -64,6 +64,11 @@ export const subscribeMultipleAction = createAction({
     }),
   },
   async run(context) {
+    await propsValidation.validateZod(context.propsValue, {
+      email: z.string().email(),
+      referrer: z.string().url().optional(),
+    });
+
     const returnValues: any[] = [];
 
     for (const list of context.propsValue.lists) {

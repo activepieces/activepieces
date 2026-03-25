@@ -1,6 +1,6 @@
+import { ApEdition } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 import { isNotOneOfTheseEditions } from '../../database-common'
-import { ApEdition } from '@activepieces/shared'
 
 export class AddProjectBilling1708811745694 implements MigrationInterface {
     name = 'AddProjectBilling1708811745694'
@@ -34,14 +34,14 @@ export class AddProjectBilling1708811745694 implements MigrationInterface {
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        if (isNotOneOfTheseEditions([ApEdition.CLOUD])) {
+        if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
             return
         }
         await queryRunner.query(`
             ALTER TABLE "project_billing" DROP CONSTRAINT "fk_project_stripe_project_id"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."idx_stripe_project_id"
+            DROP INDEX "idx_stripe_project_id"
         `)
         await queryRunner.query(`
             DROP TABLE "project_billing"

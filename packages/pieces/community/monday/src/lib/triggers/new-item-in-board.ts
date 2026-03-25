@@ -1,14 +1,13 @@
 import {
   TriggerStrategy,
-  WebhookHandshakeStrategy,
   createTrigger,
 } from '@activepieces/pieces-framework';
-import { mondayAuth } from '../..';
+import { mondayAuth } from '../auth';
 import { makeClient, mondayCommon } from '../common';
 import { MondayWebhookEventType } from '../common/constants';
 import { parseMondayColumnValue } from '../common/helper';
 import { WebhookInformation } from '../common/models';
-
+import { WebhookHandshakeStrategy } from '@activepieces/shared';
 export const newItemInBoardTrigger = createTrigger({
   auth: mondayAuth,
   name: 'monday_new_item_in_board',
@@ -41,7 +40,7 @@ export const newItemInBoardTrigger = createTrigger({
   async onEnable(context) {
     const { board_id } = context.propsValue;
 
-    const client = makeClient(context.auth as string);
+    const client = makeClient(context.auth);
     const res = await client.createWebhook({
       boardId: board_id,
       url: context.webhookUrl,
@@ -57,7 +56,7 @@ export const newItemInBoardTrigger = createTrigger({
       'monday_new_item_trigger'
     );
     if (webhook != null) {
-      const client = makeClient(context.auth as string);
+      const client = makeClient(context.auth);
       await client.deleteWebhook({ webhookId: webhook.id });
     }
   },
@@ -65,7 +64,7 @@ export const newItemInBoardTrigger = createTrigger({
     const payload = context.payload.body as MondayWebhookPayload;
     const transformedValues: Record<string, any> = {};
     try {
-      const client = makeClient(context.auth as string);
+      const client = makeClient(context.auth);
       const res = await client.getItemColumnValues({
         boardId: payload.event.boardId,
         itemId: payload.event.pulseId,

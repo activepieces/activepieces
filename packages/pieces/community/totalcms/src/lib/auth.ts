@@ -1,11 +1,10 @@
-import {
-  PieceAuth,
-  Property,
-  Validators,
-} from '@activepieces/pieces-framework';
+import { AppConnectionValueForAuthProperty, PieceAuth, Property } from '@activepieces/pieces-framework';
+import { z } from 'zod';
+import { propsValidation } from '@activepieces/pieces-common';
 import { saveContent } from './api';
+import { AppConnectionType } from '@activepieces/shared';
 
-export type TotalCMSAuthType = { license: string; domain: string };
+export type TotalCMSAuthType = AppConnectionValueForAuthProperty<typeof cmsAuth>;
 
 export const cmsAuth = PieceAuth.CustomAuth({
   description: 'Setup your Total CMS connection',
@@ -14,7 +13,6 @@ export const cmsAuth = PieceAuth.CustomAuth({
       displayName: 'Total CMS Domain',
       description: 'The domain of your Total CMS website',
       required: true,
-      validators: [Validators.url],
     }),
     license: PieceAuth.SecretText({
       displayName: 'License Key',
@@ -22,29 +20,26 @@ export const cmsAuth = PieceAuth.CustomAuth({
       required: true,
     }),
   },
-  validate: async ({ auth }) => {
-    try {
-      await validateAuth(auth);
-      return {
-        valid: true,
-      };
-    } catch (e) {
-      return {
-        valid: false,
-        error: (e as Error)?.message,
-      };
-    }
-  },
   required: true,
-});
+  async validate({ auth }) {
+    await propsValidation.validateZod(auth, {
+      domain: z.string().url(),
+      license: z.string(),
+    });
 
-const validateAuth = async (auth: TotalCMSAuthType) => {
-  const response = await saveContent(auth, 'text', 'activepieces', {
-    text: 'verified',
-  });
-  if (response.success !== true) {
-    throw new Error(
-      'Authentication failed. Please check your domain and license key and try again.'
-    );
-  }
-};
+    const response = await saveContent({
+      type: AppConnectionType.CUSTOM_AUTH,
+      props: auth,
+    }, 'text', 'activepieces', {
+      text: 'verified',
+    });
+    if (response.success !== true) {
+      throw new Error(
+        'Authentication failed. Please check your domain and license key and try again.'
+      );
+    }
+    return {
+      valid: true,
+    };
+  },
+});

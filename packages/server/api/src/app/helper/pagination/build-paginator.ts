@@ -1,11 +1,12 @@
 import { EntitySchema, ObjectLiteral } from 'typeorm'
-import Paginator, { Order } from './paginator'
+import Paginator, { Order, OrderByConfig } from './paginator'
 
 export type PagingQuery = {
     afterCursor?: string
     beforeCursor?: string
     limit?: number
     order?: Order | 'ASC' | 'DESC'
+    orderBy?: string | OrderByConfig[]
 }
 
 export type PaginationOptions<Entity> = {
@@ -39,7 +40,18 @@ export function buildPaginator<Entity extends ObjectLiteral>(
         paginator.setLimit(query.limit)
     }
 
-    if (query.order) {
+    if (query.orderBy) {
+        if (Array.isArray(query.orderBy)) {
+            paginator.setCompositeOrderBy(query.orderBy)
+        }
+        else {
+            paginator.setOrderBy(query.orderBy)
+            if (query.order) {
+                paginator.setOrder(query.order as Order)
+            }
+        }
+    }
+    else if (query.order) {
         paginator.setOrder(query.order as Order)
     }
 

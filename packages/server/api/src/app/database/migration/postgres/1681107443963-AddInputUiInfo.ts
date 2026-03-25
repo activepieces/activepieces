@@ -1,6 +1,8 @@
-import { MigrationInterface, QueryRunner } from 'typeorm'
-import { logger } from '@activepieces/server-shared'
 import { FlowVersion } from '@activepieces/shared'
+import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
+
+const log = system.globalLogger()
 
 type Step = {
     type: string
@@ -17,7 +19,7 @@ const FLOW_VERSION_TABLE = 'flow_version'
 // Legacy flow versions have no inputUiInfo, so we should add it
 export class AddInputUiInfo1681107443963 implements MigrationInterface {
     public async up(queryRunner: QueryRunner): Promise<void> {
-        logger.info('AddInputUiInfo1681107443963, started')
+        log.info('AddInputUiInfo1681107443963, started')
 
         let count = 0
         const flowVersions = await queryRunner.query(
@@ -43,11 +45,11 @@ export class AddInputUiInfo1681107443963 implements MigrationInterface {
                 )
             }
         }
-        logger.info('AddInputUiInfo1681107443963, finished flows ' + count)
+        log.info({ count }, '[AddInputUiInfo1681107443963#up] finished flows')
     }
 
     public async down(): Promise<void> {
-        logger.info('no rolling back AddInputUiInfo1681107443963')
+        log.info('no rolling back AddInputUiInfo1681107443963')
     }
 }
 
@@ -65,5 +67,5 @@ function traverseFlowInternal(step: Step | undefined): Step[] {
 }
 
 function getAllSteps(flowVersion: FlowVersion): Step[] {
-    return traverseFlowInternal(flowVersion.trigger)
+    return traverseFlowInternal(flowVersion.trigger as Step)
 }

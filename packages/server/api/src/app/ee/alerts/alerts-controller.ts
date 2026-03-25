@@ -1,11 +1,14 @@
-import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
+import { ApId, CreateAlertParams, ListAlertsParams, Permission, PrincipalType } from '@activepieces/shared'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import { z } from 'zod'
+import { ProjectResourceType } from '../../core/security/authorization/common'
+import { securityAccess } from '../../core/security/authorization/fastify-security'
+import { AlertEntity } from './alerts-entity'
 import { alertsService } from './alerts-service'
-import { CreateAlertParams, ListAlertsParams } from '@activepieces/ee-shared'
-import { ApId, PrincipalType } from '@activepieces/shared'
 
-export const alertsController: FastifyPluginAsyncTypebox = async (app) => {
+export const alertsController: FastifyPluginAsyncZod = async (app) => {
     app.get('/', ListAlertsRequest, async (req) => {
-        return alertsService.list({
+        return alertsService(req.log).list({
             projectId: req.query.projectId,
             cursor: req.query.cursor,
             limit: req.query.limit ?? 10,
@@ -13,7 +16,7 @@ export const alertsController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.post('/', CreateAlertRequest, async (req) => {
-        return alertsService.add({
+        return alertsService(req.log).add({
             projectId: req.body.projectId,
             channel: req.body.channel,
             receiver: req.body.receiver,
@@ -21,7 +24,7 @@ export const alertsController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.delete('/:id', DeleteAlertRequest, async (req) => {
-        return alertsService.delete({
+        return alertsService(req.log).delete({
             alertId: req.params.id,
         })
     })
@@ -29,9 +32,13 @@ export const alertsController: FastifyPluginAsyncTypebox = async (app) => {
 
 const ListAlertsRequest = {
     config: {
-        allowedPrincipals: [
-            PrincipalType.USER,
-        ],
+        security: securityAccess.project(
+            [PrincipalType.USER],
+            Permission.READ_ALERT,
+            {
+                type: ProjectResourceType.QUERY,
+            },
+        ),
     },
     schema: {
         querystring: ListAlertsParams,
@@ -40,9 +47,13 @@ const ListAlertsRequest = {
 
 const CreateAlertRequest = {
     config: {
-        allowedPrincipals: [
-            PrincipalType.USER,
-        ],
+        security: securityAccess.project(
+            [PrincipalType.USER],
+            Permission.WRITE_ALERT,
+            {
+                type: ProjectResourceType.BODY,
+            },
+        ),
     },
     schema: {
         body: CreateAlertParams,
@@ -51,12 +62,17 @@ const CreateAlertRequest = {
 
 const DeleteAlertRequest = {
     config: {
-        allowedPrincipals: [
-            PrincipalType.USER,
-        ],
+        security: securityAccess.project(
+            [PrincipalType.USER],
+            Permission.WRITE_ALERT,
+            {
+                type: ProjectResourceType.TABLE,
+                tableName: AlertEntity,
+            },
+        ),
     },
     schema: {
-        params: Type.Object({
+        params: z.object({
             id: ApId,
         }),
     },

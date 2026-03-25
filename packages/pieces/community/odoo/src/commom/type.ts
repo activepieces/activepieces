@@ -55,6 +55,17 @@ export type GetRecordsParams = {
     limit?: number;
 };
 
+export type CreateRecordParams = {
+    model: string;
+    fields: Record<string, any>;
+};
+
+export type UpdateRecordParams = {
+    model: string;
+    recordId: number;
+    fields: Record<string, any>;
+};
+
 export type SaveContactParams = {
     name: string;
     phone: string;

@@ -1,0 +1,50 @@
+---
+title: "How to use Pylon"
+description: "Guide for using Pylon to manage customer support tickets"
+icon: "hexagon"
+---
+
+At Activepieces, we use Pylon to manage Slack-based customer support requests through a Kanban board.
+
+Learn more about Pylon's features: https://docs.usepylon.com/pylon-docs
+
+![Pylon board showing different columns for ticket management](/resources/pylon-board.png)
+
+### New Column
+Contains new support requests that haven't been reviewed yet
+- Action Items:
+  - Respond fast even if you don't have an answer, the important thing here is to reply that you will take a look into it, the key to winning the customer's heart.
+
+
+### On You Column
+Contains active tickets that require your attention and response. These tickets need immediate review and action.
+
+- Action items:
+  - Set ticket fields (status and priority) according to the guide below
+  - Check the [handle request page](./handle-requests) on how to handle tickets
+
+<Tip>
+The goal as a support engineer is to keep the "New" and "On You" columns empty.
+</Tip>
+
+
+### On Hold
+
+Contains only tickets that have a linked Linear issue.
+
+- Place tickets here after:
+  - You have identified the customer's issue
+  - You have created a Linear issue (if one doesn't exist - avoid duplicates!)
+  - You have linked the issue in Pylon
+  - You have assigned it to a team member (for urgent cases only)
+
+<Warning>
+Please do not place tickets on hold without a ticket.
+</Warning>
+
+<Note>
+Tickets will automatically move back to the "On You" column when the linked GitHub issue is closed.
+</Note>
+
+### Closed Column
+This means you did awesome job and the ticket reached it's Final destination for resolved tickets and no further attention required.

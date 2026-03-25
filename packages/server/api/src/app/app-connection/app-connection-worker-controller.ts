@@ -1,53 +1,52 @@
 import {
-    FastifyPluginCallbackTypebox,
-    Type,
-} from '@fastify/type-provider-typebox'
-import { allowWorkersOnly } from '../authentication/authorization'
-import { appConnectionService } from './app-connection-service/app-connection-service'
-import {
     ActivepiecesError,
     AppConnection,
+    assertNotNullOrUndefined,
+    EnginePrincipal,
     ErrorCode,
+    GetAppConnectionForWorkerRequestQuery,
     isNil,
 } from '@activepieces/shared'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import { securityAccess } from '../core/security/authorization/fastify-security'
+import { secretManagersService } from '../ee/secret-managers/secret-managers.service'
+import { appConnectionService } from './app-connection-service/app-connection-service'
 
-export const appConnectionWorkerController: FastifyPluginCallbackTypebox = (
-    app,
-    _opts,
-    done,
-) => {
-    app.addHook('preHandler', allowWorkersOnly)
+export const appConnectionWorkerController: FastifyPluginAsyncZod = async (app) => {
 
-    app.get(
-        '/:connectionName',
-        GetAppConnectionRequest,
-        async (request): Promise<AppConnection> => {
-            const appConnection = await appConnectionService.getOne({
-                projectId: request.principal.projectId,
-                name: request.params.connectionName,
+    app.get('/:externalId', GetAppConnectionRequest, async (request): Promise<AppConnection> => {
+        const enginePrincipal = (request.principal as EnginePrincipal)
+        assertNotNullOrUndefined(enginePrincipal.projectId, 'projectId')
+        const appConnection = await appConnectionService(request.log).getOne({
+            projectId: enginePrincipal.projectId,
+            platformId: enginePrincipal.platform.id,
+            externalId: request.params.externalId,
+        })
+
+        if (isNil(appConnection)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: {
+                    entityId: `externalId=${request.params.externalId}`,
+                    entityType: 'AppConnection',
+                },
             })
+        }
 
-            if (isNil(appConnection)) {
-                throw new ActivepiecesError({
-                    code: ErrorCode.ENTITY_NOT_FOUND,
-                    params: {
-                        entityId: `connectionName=${request.params.connectionName}`,
-                        entityType: 'AppConnection',
-                    },
-                })
-            }
-
-            return appConnection
-        },
+        return {
+            ...appConnection,
+            value: await secretManagersService(request.log).resolveObject({ value: appConnection.value, projectIds: [enginePrincipal.projectId], platformId: enginePrincipal.platform.id, throwOnFailure: false }),
+        }
+    },
     )
 
-    done()
 }
 
 const GetAppConnectionRequest = {
+    config: {
+        security: securityAccess.engine(),
+    },
     schema: {
-        params: Type.Object({
-            connectionName: Type.String(),
-        }),
+        params: GetAppConnectionForWorkerRequestQuery,
     },
 }

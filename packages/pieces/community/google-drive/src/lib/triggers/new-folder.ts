@@ -1,4 +1,5 @@
 import {
+  AppConnectionValueForAuthProperty,
   PiecePropValueSchema,
   createTrigger,
 } from '@activepieces/pieces-framework';
@@ -10,12 +11,12 @@ import {
 } from '@activepieces/pieces-common';
 
 import dayjs from 'dayjs';
-import { googleDriveAuth } from '../..';
+import { googleDriveAuth } from '../auth';
 import { common } from '../common';
 
 const polling: Polling<
-  PiecePropValueSchema<typeof googleDriveAuth>,
-  { parentFolder?: any }
+  AppConnectionValueForAuthProperty<typeof googleDriveAuth>,
+  { parentFolder?: any,include_team_drives?:boolean }
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue, lastFetchEpochMS }) => {
@@ -23,6 +24,7 @@ const polling: Polling<
       (await common.getFolders(auth, {
         parent: propsValue.parentFolder,
         createdTime: lastFetchEpochMS,
+        includeTeamDrive:propsValue.include_team_drives
       })) ?? [];
     const items = currentValues.map((item: any) => ({
       epochMilliSeconds: dayjs(item.createdTime).valueOf(),
@@ -57,18 +59,10 @@ export const newFolder = createTrigger({
     });
   },
   run: async (context) => {
-    return await pollingHelper.poll(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-    });
+    return await pollingHelper.poll(polling, context);
   },
   test: async (context) => {
-    return await pollingHelper.test(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-    });
+    return await pollingHelper.test(polling, context);
   },
 
   sampleData: {

@@ -3,36 +3,10 @@ import {
   TriggerStrategy,
   createTrigger,
 } from '@activepieces/pieces-framework';
-import { slackAuth } from '../../';
+import { slackAuth } from '../auth';
+import { getChannels, multiSelectChannelInfo, userId } from '../common/props';
+import { getBotToken, getTeamId, SlackAuthValue } from '../common/auth-helpers';
 
-const sampleData = {
-  client_msg_id: '2767cf34-0651-44e0-b9c8-1b167ce9b7a9',
-  type: 'message',
-  text: 'f',
-  user: 'U037UG6FKPU',
-  ts: '1678231735.586539',
-  blocks: [
-    {
-      type: 'rich_text',
-      block_id: '4CM',
-      elements: [
-        {
-          type: 'rich_text_section',
-          elements: [
-            {
-              type: 'text',
-              text: 'f',
-            },
-          ],
-        },
-      ],
-    },
-  ],
-  team: 'T037MS4FGDC',
-  channel: 'C037RTX2ZDM',
-  event_ts: '1678231735.586539',
-  channel_type: 'channel',
-};
 
 export const newReactionAdded = createTrigger({
   auth: slackAuth,
@@ -40,18 +14,43 @@ export const newReactionAdded = createTrigger({
   displayName: 'New Reaction',
   description: 'Triggers when a new reaction is added to a message',
   props: {
-    emoj: Property.Array({
+    info: multiSelectChannelInfo,
+    emojis: Property.Array({
       displayName: 'Emojis (E.g fire, smile)',
-      description: 'Select emojs to trigger on',
+      description: 'Select emojis to trigger on',
       required: false,
+    }),
+    user: userId(false),
+    channels: Property.MultiSelectDropdown({
+      auth: slackAuth,
+      displayName: 'Channels',
+      description:
+        'If no channel is selected, the flow will be triggered for reactions in all channels the app has access to',
+      required: false,
+      refreshers: [],
+      async options({ auth }) {
+        if (!auth) {
+          return {
+            disabled: true,
+            placeholder: 'connect slack account',
+            options: [],
+          };
+        }
+        const accessToken = getBotToken(auth as SlackAuthValue);
+        const channels = await getChannels(accessToken);
+        return {
+          disabled: false,
+          placeholder: 'Select channels',
+          options: channels,
+        };
+      },
     }),
   },
   type: TriggerStrategy.APP_WEBHOOK,
-  sampleData: sampleData,
+  sampleData: undefined,
   onEnable: async (context) => {
-    // Older OAuth2 has team_id, newer has team.id
-    const teamId = context.auth.data['team_id'] ?? context.auth.data['team']['id']
-    await context.app.createListeners({
+    const teamId = await getTeamId(context.auth as SlackAuthValue);
+    context.app.createListeners({
       events: ['reaction_added'],
       identifierValue: teamId,
     });
@@ -59,16 +58,41 @@ export const newReactionAdded = createTrigger({
   onDisable: async (context) => {
     // Ignored
   },
-  test: async (context) => {
-    return [sampleData];
-  },
+
+
+
   run: async (context) => {
-    const payloadBody = context.payload.body as Record<string, unknown>;
-    if (context.propsValue.emoj) {
-      if (context.propsValue.emoj.includes(payloadBody.reaction)) {
+    const payloadBody = context.payload.body as PayloadBody;
+    const channels = (context.propsValue.channels as string[]) ?? [];
+
+    // Filter by user if specified
+    if (context.propsValue.user && payloadBody.event.user !== context.propsValue.user) {
+      return [];
+    }
+
+    // Filter by emoji if specified
+    if (context.propsValue.emojis) {
+      if (!context.propsValue.emojis.includes(payloadBody.event.reaction)) {
         return [];
       }
     }
+
+    // Filter by channels - if no channels selected, trigger for all
+    if (channels.length > 0 && !channels.includes(payloadBody.event.item.channel)) {
+      return [];
+    }
+
     return [payloadBody.event];
   },
 });
+
+type PayloadBody = {
+  event: {
+    user: string;
+    reaction: string;
+    item: {
+      channel: string;
+    };
+  };
+};
+

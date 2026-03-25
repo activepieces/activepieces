@@ -16,13 +16,13 @@ export const sendMessage = createAction({
     }),
     message: Property.LongText({
       displayName: 'Message',
-      description: 'The message to send',
+      description: 'The message to send (markdown)',
       required: true,
     }),
   },
   async run({ auth, propsValue }) {
-    const baseUrl = auth.base_url.replace(/\/$/, '');
-    const accessToken = auth.access_token;
+    const baseUrl = auth.props.base_url.replace(/\/$/, '');
+    const accessToken = auth.props.access_token;
     const roomId = (
       await getRoomId(baseUrl, propsValue.room_alias, accessToken)
     ).body.room_id;

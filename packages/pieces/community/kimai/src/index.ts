@@ -6,11 +6,12 @@ import {
   createPiece,
   PieceAuth,
   Property,
-  Validators,
 } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { AppConnectionType, PieceCategory } from '@activepieces/shared';
 import { kimaiCreateTimesheetAction } from './lib/actions/create-timesheet';
 import { makeClient } from './lib/common';
+import { z } from 'zod';
+import { propsValidation } from '@activepieces/pieces-common';
 
 export const kimaiAuth = PieceAuth.CustomAuth({
   description: `
@@ -24,7 +25,6 @@ export const kimaiAuth = PieceAuth.CustomAuth({
     base_url: Property.ShortText({
       displayName: 'Server URL',
       description: 'Kimai Instance URL (e.g. https://demo.kimai.org)',
-      validators: [Validators.url],
       required: true,
     }),
     user: Property.ShortText({
@@ -39,6 +39,12 @@ export const kimaiAuth = PieceAuth.CustomAuth({
     }),
   },
   validate: async ({ auth }) => {
+    if (auth) {
+      await propsValidation.validateZod(auth, {
+        base_url: z.string().url(),
+      });
+    }
+
     if (!auth) {
       return {
         valid: false,
@@ -46,7 +52,10 @@ export const kimaiAuth = PieceAuth.CustomAuth({
       };
     }
 
-    const client = await makeClient(auth);
+    const client = await makeClient({
+      type: AppConnectionType.CUSTOM_AUTH,
+      props: auth,
+    });
 
     try {
       const pingResponse = await client.ping();
@@ -84,18 +93,18 @@ export const kimai = createPiece({
   description: 'Open-source time tracking software',
 
   auth: kimaiAuth,
-  minimumSupportedRelease: '0.6.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/kimai.png',
   categories: [PieceCategory.PRODUCTIVITY],
   authors: ["facferreira","kishanprmr","MoShizzle","abuaboud"],
   actions: [
     kimaiCreateTimesheetAction,
     createCustomApiCallAction({
-      baseUrl: (auth) => (auth as { base_url: string }).base_url,
+     baseUrl: (auth) => (auth?.props.base_url ?? ''),
       auth: kimaiAuth,
-      authMapping: (auth) => ({
-        'X-AUTH-USER': (auth as { user: string }).user,
-        'X-AUTH-TOKEN': (auth as { api_password: string }).api_password,
+      authMapping: async (auth) => ({
+        'X-AUTH-USER': auth.props.user,
+        'X-AUTH-TOKEN': auth.props.api_password,
       }),
     }),
   ],

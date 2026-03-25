@@ -1,6 +1,4 @@
 import {
-  OAuth2PropertyValue,
-  PieceAuth,
   createPiece,
 } from '@activepieces/pieces-framework';
 
@@ -21,14 +19,11 @@ import { newFile } from './lib/triggers/new-file';
 import { newFolder } from './lib/triggers/new-folder';
 import { setPublicAccess } from './lib/action/set-public-access';
 import { moveFileAction } from './lib/action/move-file';
+import { googleDriveDeleteFile } from './lib/action/delete-file';
+import { googleDriveTrashFile } from './lib/action/send-to-trash';
+import { googleDriveAuth, getAccessToken, GoogleDriveAuthValue } from './lib/auth';
 
-export const googleDriveAuth = PieceAuth.OAuth2({
-  description: '',
-  authUrl: 'https://accounts.google.com/o/oauth2/auth',
-  tokenUrl: 'https://oauth2.googleapis.com/token',
-  required: true,
-  scope: ['https://www.googleapis.com/auth/drive'],
-});
+export { googleDriveAuth, getAccessToken, GoogleDriveAuthValue, createGoogleClient } from './lib/auth';
 
 export const googleDrive = createPiece({
   minimumSupportedRelease: '0.5.6',
@@ -48,6 +43,7 @@ export const googleDrive = createPiece({
     'AbdulTheActivePiecer',
     'khaledmashaly',
     'abuaboud',
+    'geekyme'
   ],
   triggers: [newFile, newFolder],
   actions: [
@@ -64,11 +60,13 @@ export const googleDrive = createPiece({
     deletePermission,
     setPublicAccess,
     moveFileAction,
+    googleDriveDeleteFile,
+    googleDriveTrashFile,
     createCustomApiCallAction({
       baseUrl: () => 'https://www.googleapis.com/drive/v3',
       auth: googleDriveAuth,
-      authMapping: (auth) => ({
-        Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+      authMapping: async (auth) => ({
+        Authorization: `Bearer ${await getAccessToken(auth as GoogleDriveAuthValue)}`,
       }),
     }),
   ],

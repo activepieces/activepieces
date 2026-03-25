@@ -1,37 +1,24 @@
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { setupApp } from '../../../../src/app/app'
-import { databaseConnection } from '../../../../src/app/database/database-connection'
-import { stripeHelper } from '../../../../src/app/ee/billing/project-billing/stripe-helper'
-import { emailService } from '../../../../src/app/ee/helper/email/email-service'
 import {
     createMockCustomDomain,
-    createMockPlatform,
-    createMockUser,
+    mockAndSaveBasicSetup,
 } from '../../../../test/helpers/mocks'
+import { db } from '../../../helpers/db'
 import { createMockSignUpRequest } from '../../../helpers/mocks/authn'
+
 
 let app: FastifyInstance | null = null
 
 beforeAll(async () => {
-    await databaseConnection.initialize()
-    app = await setupApp()
-})
-
-beforeEach(async () => {
-    emailService.sendOtp = jest.fn()
-    stripeHelper.getOrCreateCustomer = jest
-        .fn()
-        .mockResolvedValue(faker.string.alphanumeric())
-    await databaseConnection.getRepository('flag').delete({})
+    app = await setupTestEnvironment()
 })
 
 afterAll(async () => {
-    await databaseConnection.destroy()
-    await app?.close()
+    await teardownTestEnvironment()
 })
-
 describe('Authentication API', () => {
     describe('Sign up Endpoint', () => {
         it('Adds new user', async () => {
@@ -41,7 +28,7 @@ describe('Authentication API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/authentication/sign-up',
+                url: '/api/v1/authentication/sign-up',
                 body: mockSignUpRequest,
             })
 
@@ -52,7 +39,7 @@ describe('Authentication API', () => {
             expect(responseBody?.id).toHaveLength(21)
             expect(responseBody?.created).toBeDefined()
             expect(responseBody?.updated).toBeDefined()
-            expect(responseBody?.email).toBe(mockSignUpRequest.email)
+            expect(responseBody?.email).toBe(mockSignUpRequest.email.toLocaleLowerCase().trim())
             expect(responseBody?.firstName).toBe(mockSignUpRequest.firstName)
             expect(responseBody?.lastName).toBe(mockSignUpRequest.lastName)
             expect(responseBody?.trackEvents).toBe(mockSignUpRequest.trackEvents)
@@ -67,25 +54,22 @@ describe('Authentication API', () => {
         })
     })
 
-    it('fails to sign up invited user platform if no project exist', async () => {
+    it('should fail signup on custom domain when no project exists', async () => {
     // arrange
-        const mockPlatformId = faker.string.nanoid(21)
 
-        const mockPlatformOwner = createMockUser({ platformId: mockPlatformId })
-        await databaseConnection.getRepository('user').save([mockPlatformOwner])
-
-        const mockPlatform = createMockPlatform({
-            id: mockPlatformId,
-            ownerId: mockPlatformOwner.id,
+        const { mockPlatform } = await mockAndSaveBasicSetup({
+            platform: {
+                emailAuthEnabled: true,
+                enforceAllowedAuthDomains: false,
+            },
+            plan: {
+                ssoEnabled: false,
+            },
         })
-        await databaseConnection.getRepository('platform').save(mockPlatform)
-
         const mockCustomDomain = createMockCustomDomain({
             platformId: mockPlatform.id,
         })
-        await databaseConnection
-            .getRepository('custom_domain')
-            .save(mockCustomDomain)
+        await db.save('custom_domain', mockCustomDomain)
 
         const mockedUpEmail = faker.internet.email()
         const mockSignUpRequest = createMockSignUpRequest({ email: mockedUpEmail })
@@ -93,7 +77,7 @@ describe('Authentication API', () => {
         // act
         const response = await app?.inject({
             method: 'POST',
-            url: '/v1/authentication/sign-up',
+            url: '/api/v1/authentication/sign-up',
             headers: {
                 Host: mockCustomDomain.domain,
             },

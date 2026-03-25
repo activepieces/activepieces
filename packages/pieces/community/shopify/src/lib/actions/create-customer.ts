@@ -1,6 +1,5 @@
 import {
   Property,
-  Validators,
   createAction,
 } from '@activepieces/pieces-framework';
 import { shopifyAuth } from '../..';
@@ -15,7 +14,6 @@ export const createCustomerAction = createAction({
     email: Property.ShortText({
       displayName: 'Email',
       required: false,
-      validators: [Validators.email],
     }),
     verifiedEmail: Property.Checkbox({
       displayName: 'Verified Email',
@@ -39,13 +37,16 @@ export const createCustomerAction = createAction({
     phoneNumber: Property.ShortText({
       displayName: 'Phone Number',
       required: false,
-      validators: [Validators.phoneNumber],
     }),
     tags: Property.ShortText({
       displayName: 'Tags',
       description: 'A string of comma-separated tags for filtering and search',
       required: false,
     }),
+    acceptsMarketing:Property.Checkbox({
+      displayName:'Accepts Marketing ?',
+      required:false
+    })
   },
   async run({ auth, propsValue }) {
     const {
@@ -56,6 +57,7 @@ export const createCustomerAction = createAction({
       lastName,
       phoneNumber,
       tags,
+      acceptsMarketing
     } = propsValue;
 
     return await createCustomer(
@@ -67,6 +69,10 @@ export const createCustomerAction = createAction({
         last_name: lastName,
         phone: phoneNumber,
         tags,
+        email_marketing_consent:{
+          state:acceptsMarketing?'subscribed':'not_subscribed',
+          opt_in_level:"unknown"
+        }
       },
       auth
     );

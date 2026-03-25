@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { discordCommon } from '../common';
-import { discordAuth } from '../../index';
+import { discordAuth } from '../auth';
 import {
   httpClient,
   HttpMethod,
@@ -26,7 +26,7 @@ export const discordDeleteGuildRole = createAction({
       url: `https://discord.com/api/v9/guilds/${configValue.propsValue.guild_id}/roles/${configValue.propsValue.role_id}`,
       method: HttpMethod.DELETE,
       headers: {
-        Authorization: `Bot ${configValue.auth}`,
+        Authorization: `Bot ${configValue.auth.secret_text}`,
         'Content-Type': 'application/json',
         'X-Audit-Log-Reason': `${configValue.propsValue.deletion_reason}`,
       },

@@ -1,10 +1,11 @@
 import { DynamicPropsValue, Property } from '@activepieces/pieces-framework';
 import { ContentfulAuth, PropertyKeys, makeClient } from '../common';
-import _ from 'lodash';
 import { FieldTransformers } from './transformers';
 import { FieldType } from 'contentful-management';
+import { isEmpty, isNil } from '@activepieces/shared';
 
 const DynamicFields = Property.DynamicProperties({
+  auth: ContentfulAuth,
   displayName: 'Fields',
   description: 'Fields for Content Model',
   required: true,
@@ -14,9 +15,9 @@ const DynamicFields = Property.DynamicProperties({
     [PropertyKeys.CONTENT_MODEL]: model,
     [PropertyKeys.LOCALE]: locale,
   }) => {
-    if (_.isEmpty(auth) || _.isNil(model)) return {};
+    if (isEmpty(auth) || !auth || isNil(model)) return {};
     const dynamicFields: DynamicPropsValue = {};
-    const { client } = makeClient(auth as ContentfulAuth);
+    const { client } = makeClient(auth);
     try {
       const contentModel = await client.contentType.get({
         contentTypeId: model as unknown as string,

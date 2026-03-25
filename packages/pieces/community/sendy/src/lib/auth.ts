@@ -1,11 +1,14 @@
 import {
+  AppConnectionValueForAuthProperty,
   PieceAuth,
   Property,
-  Validators,
 } from '@activepieces/pieces-framework';
 import { getLists } from './api';
+import { z } from 'zod';
+import { propsValidation } from '@activepieces/pieces-common';
+import { AppConnectionType } from '@activepieces/shared';
 
-export type SendyAuthType = { apiKey: string; domain: string; brandId: string };
+export type SendyAuthType = AppConnectionValueForAuthProperty<typeof sendyAuth>;
 
 const markdownDescription = `
 Your sendy domain should be the base URL of your Sendy installation. Example: https://sendy.example.com
@@ -25,25 +28,30 @@ export const sendyAuth = PieceAuth.CustomAuth({
       displayName: 'Sendy Domain',
       description: 'The domain of your Sendy account',
       required: true,
-      validators: [Validators.url],
     }),
     apiKey: PieceAuth.SecretText({
       displayName: 'API Key',
       description: 'The API key for your Sendy account',
       required: true,
-      validators: [Validators.pattern(/^\S+$/)],
     }),
     brandId: Property.ShortText({
       displayName: 'Brand ID',
       description:
         'The brand ID that will be associated to this connection. Brand IDs can be found on the main Brands page.',
       required: true,
-      validators: [Validators.pattern(/^[0-9]+$/)],
     }),
   },
   validate: async ({ auth }) => {
     try {
-      await validateAuth(auth);
+      await propsValidation.validateZod(auth, {
+        domain: z.string().url(),
+        apiKey: z.string().min(1).regex(/^\S+$/),
+        brandId: z.string().regex(/^[0-9]+$/),
+      });
+      await validateAuth({
+        type: AppConnectionType.CUSTOM_AUTH,
+        props: auth,
+      });
       return {
         valid: true,
       };

@@ -46,14 +46,10 @@ export const findPerson = createAction({
         ],
       },
     }),
-    failsafe: Property.Checkbox({
-      displayName: 'No Error On Failure',
-      required: false,
-    }),
   },
   async run(context) {
     const TALKABLE_API_URL = 'https://www.talkable.com/api/v2';
-    const { site, api_key } = context.auth;
+    const { site, api_key } = context.auth.props;
     const personInfoResponse = await httpClient
       .sendRequest<string[]>({
         method: HttpMethod.GET,
@@ -65,12 +61,6 @@ export const findPerson = createAction({
         body: {
           site_slug: site,
         },
-      })
-      .catch((error) => {
-        if (context.propsValue.failsafe) {
-          return error.errorMessage();
-        }
-        throw error;
       });
     return personInfoResponse.body;
   },

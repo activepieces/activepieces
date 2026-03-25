@@ -3,11 +3,13 @@ import {
     Property,
     createAction,
   } from '@activepieces/pieces-framework';
-  import { TwitterApi } from 'twitter-api-v2';
-  import { twitterAuth } from '../..';
-  import { twitterCommon } from '../common';
-  
-  export const createReply = createAction({
+import { TwitterApi } from 'twitter-api-v2';
+import { twitterAuth } from '../..';
+import { twitterCommon } from '../common';
+import { z } from 'zod';
+import { propsValidation } from '@activepieces/pieces-common';
+
+export const createReply = createAction({
     auth: twitterAuth,
   
     name: 'create-reply',
@@ -25,8 +27,12 @@ import {
       image_3: twitterCommon.image_3,
     },
     async run(context) {
+      await propsValidation.validateZod(context.propsValue, {
+        text: z.string().min(1),
+      });
+
       const { consumerKey, consumerSecret, accessToken, accessTokenSecret } =
-        context.auth;
+        context.auth.props;
       const userClient = new TwitterApi({
         appKey: consumerKey,
         appSecret: consumerSecret,
@@ -70,4 +76,3 @@ import {
       }
     },
   });
-  

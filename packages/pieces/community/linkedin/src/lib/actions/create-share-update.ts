@@ -5,7 +5,7 @@ import {
   HttpMethod,
   HttpRequest,
 } from '@activepieces/pieces-common';
-import { Image, linkedinCommon } from '../common';
+import { Image, linkedinCommon, santizeText } from '../common';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import { linkedinAuth } from '../..';
 
@@ -24,6 +24,7 @@ export const createShareUpdate = createAction({
   },
 
   run: async (context) => {
+    
     const token = context.auth.data.id_token;
     const decoded: JwtPayload = jwt.decode(token) as JwtPayload;
     const imageUrl = context.propsValue.imageUrl;
@@ -40,7 +41,7 @@ export const createShareUpdate = createAction({
 
     const requestBody = linkedinCommon.generatePostRequestBody({
       urn: `person:${decoded.sub}`,
-      text,
+      text: santizeText(text),
       link,
       linkDescription,
       linkTitle,
@@ -48,7 +49,6 @@ export const createShareUpdate = createAction({
       image,
     });
     const createPostHeaders: any = linkedinCommon.linkedinHeaders;
-    createPostHeaders['LinkedIn-Version'] = '202312';
 
     const request: HttpRequest = {
       method: HttpMethod.POST,

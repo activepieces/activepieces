@@ -375,8 +375,13 @@
                                           <ul>
                                             <li>First seen at: {{createdAt}}<br /></li>
                                           </ul>
+                                          {{#checkIssuesEnabled}}
                                           Please review the issue, fix it, and mark it as resolved <br />in Runs →
                                           Issues in your dashboard.
+                                          {{/checkIssuesEnabled}}
+                                          {{^checkIssuesEnabled}}
+                                          Please review the flow and fix it.
+                                          {{/checkIssuesEnabled}}
                                         </td>
                                       </tr>
                                       <tr>
@@ -411,8 +416,15 @@
                                                               padding: 16px 20px;
                                                               display: block;
                                                               color: #ffffff;
-                                                            "><span class="link-button" style="color: #ffffff">View
-                                                      Issues</span></a>
+                                                            ">
+                                                    <span class="link-button" style="color: #ffffff">
+                                                      {{#checkIssuesEnabled}}
+                                                      View Issues
+                                                      {{/checkIssuesEnabled}}
+                                                      {{^checkIssuesEnabled}}
+                                                      View Run
+                                                      {{/checkIssuesEnabled}}
+                                                    </span></a>
                                                 </td>
                                               </tr>
                                             </tbody>
@@ -454,38 +466,6 @@
                               margin: 0;
                               font-weight: normal;
                             ">
-                  <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
-                    <tbody>
-                      <tr>
-                        <td style="padding: 0px 60px" class="p30-20" bgcolor="#ffffff">
-                          <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
-                            <tbody>
-                              <tr>
-                                <td style="
-                                              padding-bottom: 30px;
-                                              font-family: 'Graphik',
-                                                '-apple-system',
-                                                'BlinkMacSystemFont', 'Segoe UI',
-                                                'Roboto', 'Oxygen', 'Ubuntu',
-                                                'Cantarell', 'Fira Sans',
-                                                'Droid Sans', 'Helvetica',
-                                                sans-serif !important;
-                                              font-size: 14px;
-                                              line-height: 24px;
-                                              min-width: auto !important;
-                                              color: #000001;
-                                              text-align: center;
-                                            " class="text-footer black center">
-                                  Activepieces, Inc. 398 11th Street,
-                                  2nd floor, San Francisco, CA 94103
-                                </td>
-                              </tr>
-                            </tbody>
-                          </table>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
                 </td>
               </tr>
             </tbody>
@@ -494,6 +474,7 @@
       </tr>
     </tbody>
   </table>
+   {{> footer}}
   <!-- END Footer 1 White -->
   </td>
   </tr>

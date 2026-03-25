@@ -1,5 +1,5 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { wedofAuth } from '../../..';
+import { wedofAuth } from '../../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { wedofCommon } from '../../common/wedof';
 
@@ -24,7 +24,7 @@ export const validateRegistrationFolder = createAction({
     weeklyDuration: Property.Number({
       displayName: 'Intensité hebdomadaire',
       description:
-        'Intensité hebdomadaire de la formation, en heures par semaine.',
+        'Intensité hebdomadaire de la formation, en heures par semaine',
       required: false,
     }),
   },
@@ -45,7 +45,7 @@ export const validateRegistrationFolder = createAction({
         body: message,
         headers: {
           'Content-Type': 'application/json',
-          'X-Api-Key': context.auth as string,
+          'X-Api-Key': context.auth.secret_text,
         },
       })
     ).body;

@@ -6,6 +6,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { createTask } from './lib/actions/create-task';
+import { niftyAuth } from './lib/auth';
 
 const mddescription = `
 # How to add a new connection
@@ -19,20 +20,12 @@ const mddescription = `
 8. copy the client id and client secret and paste them in the piece
 `;
 
-export const niftyAuth = PieceAuth.OAuth2({
-  authUrl: 'https://nifty.pm/authorize',
-  tokenUrl: 'https://openapi.niftypm.com/oauth/token',
-  required: true,
-  description: mddescription,
-  scope: ['task', 'project', 'subtask', 'milestone', 'subteam'],
-});
-
 export const nifty = createPiece({
   displayName: 'Nifty',
   description: 'Project management made simple',
 
   auth: niftyAuth,
-  minimumSupportedRelease: '0.7.1',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/nifty.png',
   categories: [PieceCategory.PRODUCTIVITY],
   authors: ["kishanprmr","MoShizzle","abuaboud"],
@@ -41,7 +34,7 @@ export const nifty = createPiece({
     createCustomApiCallAction({
       baseUrl: () => 'https://openapi.niftypm.com/api/v1.0',
       auth: niftyAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
       }),
     }),

@@ -1,7 +1,7 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { makeClient } from '../../common';
 import { ProjectListFilter } from '../../common/models/project';
-import { clockodoAuth } from '../../../';
+import { clockodoAuth } from '../../auth';
 
 export default createAction({
   auth: clockodoAuth,
@@ -27,7 +27,7 @@ export default createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const client = makeClient(auth);
+    const client = makeClient(auth.props);
     const filter: ProjectListFilter = {
       customers_id: propsValue.customer_id_filter,
       active: propsValue.active_filter,

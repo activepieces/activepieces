@@ -1,11 +1,12 @@
 import {
   createAction,
   Property,
-  Validators,
 } from '@activepieces/pieces-framework';
 import { unsubscribe } from '../api';
 import { buildListDropdown } from '../props';
 import { sendyAuth, SendyAuthType } from '../auth';
+import { z } from 'zod';
+import { propsValidation } from '@activepieces/pieces-common';
 
 export const unsubscribeAction = createAction({
   name: 'unsubscribe',
@@ -14,6 +15,7 @@ export const unsubscribeAction = createAction({
   description: 'Unsubscribe a subscriber from a list',
   props: {
     list: Property.Dropdown({
+      auth: sendyAuth,
       displayName: 'List',
       description: 'Select the list to unsubscribe from',
       required: true,
@@ -25,10 +27,13 @@ export const unsubscribeAction = createAction({
       displayName: 'Email',
       description: "The user's email",
       required: true,
-      validators: [Validators.email],
     }),
   },
   async run(context) {
+    await propsValidation.validateZod(context.propsValue, {
+      email: z.string().email(),
+    });
+
     return await unsubscribe(context.auth, {
       list: context.propsValue.list,
       email: context.propsValue.email,

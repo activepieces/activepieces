@@ -1,100 +1,64 @@
 import {
-    FastifyPluginCallbackTypebox,
-    Type,
-} from '@fastify/type-provider-typebox'
-import { StatusCodes } from 'http-status-codes'
-import { accessTokenManager } from '../../authentication/lib/access-token-manager'
-import { platformService } from '../../platform/platform.service'
-import { platformProjectService } from './platform-project-service'
-import {
-    ActivepiecesError,
-    ErrorCode,
-    ListProjectRequestForUserQueryParams,
+    assertNotNullOrUndefined,
     PrincipalType,
-    ProjectWithLimits,
-    SeekPage,
+    ProjectWithLimitsWithPlatform,
 } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import { StatusCodes } from 'http-status-codes'
+import { z } from 'zod'
+import { securityAccess } from '../../core/security/authorization/fastify-security'
+import Paginator from '../../helper/pagination/paginator'
+import { platformService } from '../../platform/platform.service'
+import { platformUtils } from '../../platform/platform.utils'
+import { userService } from '../../user/user-service'
+import { platformProjectService } from './platform-project-service'
 
-export const usersProjectController: FastifyPluginCallbackTypebox = (
+export const usersProjectController: FastifyPluginAsyncZod = async (
     fastify,
-    _opts,
-    done,
 ) => {
 
-    fastify.get('/:id', async (request) => {
-        return platformProjectService.getWithPlanAndUsageOrThrow(request.principal.projectId)
-    })
 
-    fastify.get('/', ListProjectRequestForUser, async (request) => {
-        return platformProjectService.getAll({
-            principalType: request.principal.type,
-            principalId: request.principal.id,
-            platformId: request.principal.platform.id,
-            cursorRequest: request.query.cursor ?? null,
-            limit: request.query.limit ?? 10,
-        })
-    })
-
-    fastify.post(
-        '/:projectId/token',
-        SwitchTokenRequestForUser,
-        async (request) => {
-            const allProjects = await platformProjectService.getAll({
-                principalType: request.principal.type,
-                principalId: request.principal.id,
-                platformId: request.principal.platform.id,
+    fastify.get('/platforms', ListProjectsForPlatforms, async (request) => {
+        const loggedInUser = await userService(request.log).getOneOrFail({ id: request.principal.id })
+        const platforms = await getPlatformsForUser(loggedInUser.identityId, request.principal.platform.id, request.log)
+        const projects = await Promise.all(platforms.map(async (platform) => {
+            const platformUser = await userService(request.log).getOneByIdentityAndPlatform({ identityId: loggedInUser.identityId, platformId: platform.id })
+            assertNotNullOrUndefined(platformUser, `Platform user not found for platform ${platform.id}`)
+            const projects = await platformProjectService(request.log).getForPlatform({
+                platformId: platform.id,
+                userId: platformUser.id,
                 cursorRequest: null,
-                limit: 1000000,
-            })
-            const project = allProjects.data.find(
-                (project) => project.id === request.params.projectId,
-            )
-
-            if (!project) {
-                throw new ActivepiecesError({
-                    code: ErrorCode.ENTITY_NOT_FOUND,
-                    params: {
-                        entityId: request.params.projectId,
-                        entityType: 'project',
-                    },
-                })
-            }
-            const platform = await platformService.getOneOrThrow(project.platformId)
+                displayName: undefined,
+                limit: Paginator.NO_LIMIT,
+                isPrivileged: userService(request.log).isUserPrivileged(platformUser),
+            }).then((projects) => projects.data)
             return {
-                token: await accessTokenManager.generateToken({
-                    id: request.principal.id,
-                    type: request.principal.type,
-                    projectId: request.params.projectId,
-                    platform: {
-                        id: platform.id,
-                    },
-                }),
+                platformName: platform.name,
+                projects,
             }
-        },
-    )
+        }))
+        return projects.flat()
+    })
 
-    done()
 }
 
-const SwitchTokenRequestForUser = {
-    config: {
-        allowedPrincipals: [PrincipalType.USER],
-    },
-    schema: {
-        params: Type.Object({
-            projectId: Type.String(),
-        }),
-    },
+async function getPlatformsForUser(identityId: string, platformId: string, log: FastifyBaseLogger) {
+    const platform = await platformService(log).getOneWithPlanOrThrow(platformId)
+    if (platformUtils.isCustomerOnDedicatedDomain(platform)) {
+        return [platform]
+    }
+    const platforms = await platformService(log).listPlatformsForIdentityWithAtleastProject({ identityId })
+    return platforms.filter((platform) => !platformUtils.isCustomerOnDedicatedDomain(platform))
 }
 
-const ListProjectRequestForUser = {
+const ListProjectsForPlatforms = {
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        security: securityAccess.publicPlatform([PrincipalType.USER]),
     },
     schema: {
         response: {
-            [StatusCodes.OK]: SeekPage(ProjectWithLimits),
+            [StatusCodes.OK]: z.array(ProjectWithLimitsWithPlatform),
         },
-        querystring: ListProjectRequestForUserQueryParams,
     },
 }

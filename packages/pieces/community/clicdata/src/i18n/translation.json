@@ -1,0 +1,20 @@
+{
+  "ClicData enables True Performance with an end-to-end data analytics platform: connect, transform, automate, visualize and share data from 300+ sources.": "ClicData enables True Performance with an end-to-end data analytics platform: connect, transform, automate, visualize and share data from 300+ sources.",
+  "Insert Row": "Insert Row",
+  "Refresh Table": "Refresh Table",
+  "Insert rows into a ClicData table (maximum 500 rows)": "Insert rows into a ClicData table (maximum 500 rows)",
+  "Refresh the selected table depending on the refresh mode": "Refresh the selected table depending on the refresh mode",
+  "Table": "Table",
+  "Row Data": "Row Data",
+  "API Version": "API Version",
+  "Refresh Mode": "Refresh Mode",
+  "Select the table to insert data into": "Select the table to insert data into",
+  "Array of objects representing rows to insert. Each object should have column names as keys. Maximum 500 rows.": "Array of objects representing rows to insert. Each object should have column names as keys. Maximum 500 rows.",
+  "Defaults to 2022.01": "Defaults to 2022.01",
+  "Select the refresh mode for the table": "Select the refresh mode for the table",
+  "Reload": "Reload",
+  "Rebuild": "Rebuild",
+  "Update": "Update",
+  "Append": "Append",
+  "Update + Append": "Update + Append"
+}

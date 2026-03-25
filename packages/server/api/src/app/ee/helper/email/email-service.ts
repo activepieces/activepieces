@@ -1,21 +1,22 @@
-import { getEdition } from '../../../helper/secret-helper'
+import { AlertChannel, ApEdition, assertNotNullOrUndefined, BADGES, InvitationType, isNil, OtpType, UserIdentity, UserInvitation } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
+import { z } from 'zod'
+import { system } from '../../../helper/system/system'
 import { platformService } from '../../../platform/platform.service'
 import { projectService } from '../../../project/project-service'
+import { userService } from '../../../user/user-service'
 import { alertsService } from '../../alerts/alerts-service'
-import { platformDomainHelper } from '../platform-domain-helper'
+import { domainHelper } from '../../custom-domains/domain-helper'
+import { projectRoleService } from '../../projects/project-role/project-role.service'
 import { emailSender, EmailTemplateData } from './email-sender/email-sender'
-import { AlertChannel, OtpType } from '@activepieces/ee-shared'
-import { logger } from '@activepieces/server-shared'
-import { ApEdition, assertNotNullOrUndefined, InvitationType, User, UserInvitation } from '@activepieces/shared'
 
-const EDITION = getEdition()
+const EDITION = system.getEdition()
 const EDITION_IS_NOT_PAID = ![ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(EDITION)
+const MAX_ISSUES_EMAIL_LIMT = 50
 
-const EDITION_IS_NOT_CLOUD = EDITION !== ApEdition.CLOUD
-
-export const emailService = {
+export const emailService = (log: FastifyBaseLogger) => ({
     async sendInvitation({ userInvitation, invitationLink }: SendInvitationArgs): Promise<void> {
-        logger.info({
+        log.info({
             message: '[emailService#sendInvitation] sending invitation email',
             email: userInvitation.email,
             platformId: userInvitation.platformId,
@@ -25,17 +26,75 @@ export const emailService = {
             platformRole: userInvitation.platformRole,
         })
         const { email, platformId } = userInvitation
-        const { name: projectOrPlatformName, role } = await getEntityNameForInvitation(userInvitation)
-
-        await emailSender.send({
+        const { name: projectName, role } = await getEntityNameForInvitation(userInvitation, log)
+        await emailSender(log).send({
             emails: [email],
             platformId,
             templateData: {
                 name: 'invitation-email',
                 vars: {
                     setupLink: invitationLink,
-                    projectOrPlatformName,
+                    projectName,
                     role,
+                },
+            },
+        })
+    },
+
+    async sendProjectMemberAdded({ userInvitation }: SendProjectMemberAddedArgs): Promise<void> {
+        log.info({
+            message: '[emailService#sendProjectMemberAdded] sending project member added email',
+            email: userInvitation.email,
+            platformId: userInvitation.platformId,
+            projectId: userInvitation.projectId,
+            type: userInvitation.type,
+            projectRole: userInvitation.projectRole,
+            platformRole: userInvitation.platformRole,
+        })
+        const { email, platformId, projectId } = userInvitation
+        const { name: projectName, role } = await getEntityNameForInvitation(userInvitation, log)
+        const redirectPath = projectId ? `/projects/${projectId}/flows` : '/flows'
+        const loginLink = await domainHelper.getPublicUrl({
+            platformId,
+            path: `sign-in?from=${encodeURIComponent(redirectPath)}`,
+        })
+        await emailSender(log).send({
+            emails: [email],
+            platformId,
+            templateData: {
+                name: 'project-member-added',
+                vars: {
+                    projectName,
+                    role,
+                    loginLink,
+                },
+            },
+        })
+    },
+
+    async sendScimUserWelcome({ email, platformId }: SendScimUserWelcomeArgs): Promise<void> {
+        if (EDITION_IS_NOT_PAID) {
+            return
+        }
+
+        log.info({
+            message: '[emailService#sendScimUserWelcome] sending welcome email',
+            email,
+            platformId,
+        })
+
+        const loginLink = await domainHelper.getPublicUrl({
+            platformId,
+            path: 'sign-in',
+        })
+
+        await emailSender(log).send({
+            emails: [email],
+            platformId,
+            templateData: {
+                name: 'scim-user-welcome',
+                vars: {
+                    loginLink,
                 },
             },
         })
@@ -44,97 +103,68 @@ export const emailService = {
     async sendIssueCreatedNotification({
         projectId,
         flowName,
+        platformId,
+        issueOrRunsPath,
+        isIssue,
         createdAt,
     }: IssueCreatedArgs): Promise<void> {
         if (EDITION_IS_NOT_PAID) {
             return
         }
-        logger.info({
+
+        log.info({
             name: '[emailService#sendIssueCreatedNotification]',
             projectId,
             flowName,
             createdAt,
         })
-        const project = await projectService.getOneOrThrow(projectId)
 
-        const platform = await platformService.getOneOrThrow(project.platformId)
-        if (!platform.alertsEnabled) {
+        const alerts = await alertsService(log).list({ projectId, cursor: undefined, limit: MAX_ISSUES_EMAIL_LIMT })
+        const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
+
+        if (emails.length === 0) {
             return
         }
-        // TODO remove the hardcoded limit
-        const alerts = await alertsService.list({ projectId, cursor: undefined, limit: 50 })
-        const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
-        const issueUrl = await platformDomainHelper.constructUrlFrom({
-            platformId: project.platformId,
-            path: 'runs?limit=10#Issues',
-        })
-        await emailSender.send({
+
+        await emailSender(log).send({
             emails,
-            platformId: project.platformId,
+            platformId,
             templateData: {
                 name: 'issue-created',
                 vars: {
-                    issueUrl,
                     flowName,
                     createdAt,
+                    isIssue: isIssue.toString(),
+                    issueUrl: issueOrRunsPath,
                 },
             },
         })
     },
 
-    async sendQuotaAlert({ projectId, resetDate, templateName }: SendQuotaAlertArgs): Promise<void> {
-        if (EDITION_IS_NOT_CLOUD) {
-            return
-        }
-
-        const project = await projectService.getOne(projectId)
-        assertNotNullOrUndefined(project, 'project')
-
-        const platform = await platformService.getOneOrThrow(project.platformId)
-        if (!platform.alertsEnabled) {
-            return
-        }
-
-        // TODO remove the hardcoded limit
-        const alerts = await alertsService.list({ projectId, cursor: undefined, limit: 50 })
-        const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
-
-        await emailSender.send({
-            emails,
-            platformId: project.platformId,
-            templateData: {
-                name: templateName,
-                vars: {
-                    resetDate,
-                },
-            },
-        })
-    },
-
-    async sendOtp({ platformId, user, otp, type }: SendOtpArgs): Promise<void> {
+    async sendOtp({ platformId, userIdentity, otp, type }: SendOtpArgs): Promise<void> {
         if (EDITION_IS_NOT_PAID) {
             return
         }
 
-        if (user.verified && type === OtpType.EMAIL_VERIFICATION) {
+        if (userIdentity.verified && type === OtpType.EMAIL_VERIFICATION) {
             return
         }
 
-        logger.info('Sending OTP email', {
-            email: user.email,
+        log.info({
+            email: userIdentity.email,
             otp,
-            userId: user.id,
+            identityId: userIdentity.id,
             type,
-        })
+        }, 'Sending OTP email')
 
         const frontendPath = {
             [OtpType.EMAIL_VERIFICATION]: 'verify-email',
             [OtpType.PASSWORD_RESET]: 'reset-password',
         }
 
-        const setupLink = await platformDomainHelper.constructUrlFrom({
+        const setupLink = await domainHelper.getInternalUrl({
             platformId,
-            path: frontendPath[type] + `?otpcode=${otp}&userId=${user.id}`,
+            path: frontendPath[type] + `?otpcode=${otp}&identityId=${userIdentity.id}`,
         })
 
         const otpToTemplate: Record<string, EmailTemplateData> = {
@@ -152,18 +182,41 @@ export const emailService = {
             },
         }
 
-        await emailSender.send({
-            emails: [user.email],
+        await emailSender(log).send({
+            emails: [userIdentity.email],
             platformId: platformId ?? undefined,
             templateData: otpToTemplate[type],
         })
     },
-}
 
-async function getEntityNameForInvitation(userInvitation: UserInvitation): Promise<{ name: string, role: string }> {
+    async sendBadgeAwardedEmail(userId: string, badgeName: string): Promise<void> {
+        const user = await userService(log).getMetaInformation({ id: userId })
+
+        if (isNil(user) || !isValidEmail(user.email)) {
+            log.info({ userId, email: user?.email }, '[emailService#sendBadgeAwardedEmail] Skipping: external user has no valid email')
+            return
+        }
+        const badge = BADGES[badgeName as keyof typeof BADGES]
+        await emailSender(log).send({
+            emails: [user.email],
+            platformId: user.platformId!,
+            templateData: {
+                name: 'badge-awarded',
+                vars: {
+                    firstName: user.firstName,
+                    badgeTitle: badge.title,
+                    badgeDescription: badge.description,
+                    badgeImageUrl: badge.imageUrl,
+                },
+            },
+        })
+    },
+})
+
+async function getEntityNameForInvitation(userInvitation: UserInvitation, log: FastifyBaseLogger): Promise<{ name: string, role: string }> {
     switch (userInvitation.type) {
         case InvitationType.PLATFORM: {
-            const platform = await platformService.getOneOrThrow(userInvitation.platformId)
+            const platform = await platformService(log).getOneOrThrow(userInvitation.platformId)
             assertNotNullOrUndefined(userInvitation.platformRole, 'platformRole')
             return {
                 name: platform.name,
@@ -172,11 +225,14 @@ async function getEntityNameForInvitation(userInvitation: UserInvitation): Promi
         }
         case InvitationType.PROJECT: {
             assertNotNullOrUndefined(userInvitation.projectId, 'projectId')
-            assertNotNullOrUndefined(userInvitation.projectRole, 'projectRole')
-            const project = await projectService.getOneOrThrow(userInvitation.projectId)
+            assertNotNullOrUndefined(userInvitation.projectRoleId, 'projectRoleId')
+            const projectRole = await projectRoleService.getOneOrThrowById({
+                id: userInvitation.projectRoleId,
+            })
+            const project = await projectService(log).getOneOrThrow(userInvitation.projectId)
             return {
                 name: project.displayName,
-                role: capitalizeFirstLetter(userInvitation.projectRole),
+                role: capitalizeFirstLetter(projectRole.name),
             }
         }
     }
@@ -186,26 +242,36 @@ function capitalizeFirstLetter(str: string): string {
     return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase()
 }
 
+function isValidEmail(email: string): boolean {
+    return z.email().safeParse(email).success
+}
+
 type SendInvitationArgs = {
     userInvitation: UserInvitation
     invitationLink: string
 }
 
-type SendQuotaAlertArgs = {
-    projectId: string
-    resetDate: string
-    templateName: 'quota-50' | 'quota-90' | 'quota-100'
+type SendProjectMemberAddedArgs = {
+    userInvitation: UserInvitation
 }
 
 type SendOtpArgs = {
     type: OtpType
     platformId: string | null
     otp: string
-    user: User
+    userIdentity: UserIdentity
+}
+
+type SendScimUserWelcomeArgs = {
+    email: string
+    platformId: string
 }
 
 type IssueCreatedArgs = {
     projectId: string
     flowName: string
+    platformId: string
+    isIssue: boolean
+    issueOrRunsPath: string
     createdAt: string
 }

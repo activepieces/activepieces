@@ -1,150 +1,79 @@
-import { EntityManager } from 'typeorm'
-import { flowVersionService } from '../flow-version/flow-version.service'
-import { triggerHooks } from '../trigger'
 import {
-    assertNotNullOrUndefined,
+    FileType,
     Flow,
-    FlowScheduleOptions,
     FlowStatus,
     FlowVersion,
     isNil,
-    ScheduleOptions,
-    ScheduleType,
 } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
+import { triggerSourceService } from '../../trigger/trigger-source/trigger-source-service'
+import { sampleDataService } from '../step-run/sample-data.service'
 
-export const flowSideEffects = {
+export const flowSideEffects = (log: FastifyBaseLogger) => ({
     async preUpdateStatus({
-        flowToUpdate,
         newStatus,
-        entityManager,
-    }: PreUpdateStatusParams): Promise<PreUpdateReturn> {
-        assertNotNullOrUndefined(
-            flowToUpdate.publishedVersionId,
-            'publishedVersionId',
-        )
-
-        const publishedFlowVersion = await flowVersionService.getFlowVersionOrThrow(
-            {
-                flowId: flowToUpdate.id,
-                versionId: flowToUpdate.publishedVersionId,
-                entityManager,
-            },
-        )
-
-        let scheduleOptions: ScheduleOptions | undefined
-
+        flowToUpdate,
+        publishedFlowVersion,
+        templateId,
+    }: PreUpdateStatusParams): Promise<void> {
         switch (newStatus) {
             case FlowStatus.ENABLED: {
-                const response = await triggerHooks.enable({
+                await triggerSourceService(log).enable({
                     flowVersion: publishedFlowVersion,
                     projectId: flowToUpdate.projectId,
                     simulate: false,
+                    templateId,
                 })
-                scheduleOptions = response?.result.scheduleOptions
                 break
             }
             case FlowStatus.DISABLED: {
-                await triggerHooks.disable({
-                    flowVersion: publishedFlowVersion,
+                await triggerSourceService(log).disable({
+                    flowId: publishedFlowVersion.flowId,
                     projectId: flowToUpdate.projectId,
                     simulate: false,
+                    ignoreError: false,
+                    templateId,
                 })
                 break
             }
-        }
-
-        if (isNil(scheduleOptions)) {
-            return {
-                scheduleOptions: null,
-            }
-        }
-
-        return {
-            scheduleOptions: {
-                ...scheduleOptions,
-                type: ScheduleType.CRON_EXPRESSION,
-            },
-        }
-    },
-
-    async preUpdatePublishedVersionId({
-        flowToUpdate,
-        flowVersionToPublish,
-    }: PreUpdatePublishedVersionIdParams): Promise<PreUpdateReturn> {
-        if (
-            flowToUpdate.status === FlowStatus.ENABLED &&
-      flowToUpdate.publishedVersionId
-        ) {
-            await triggerHooks.disable({
-                flowVersion: await flowVersionService.getOneOrThrow(
-                    flowToUpdate.publishedVersionId,
-                ),
-                projectId: flowToUpdate.projectId,
-                simulate: false,
-            })
-        }
-
-        const enableResult = await triggerHooks.enable({
-            flowVersion: flowVersionToPublish,
-            projectId: flowToUpdate.projectId,
-            simulate: false,
-        })
-
-        const scheduleOptions = enableResult?.result.scheduleOptions
-
-        if (isNil(scheduleOptions)) {
-            return {
-                scheduleOptions: null,
-            }
-        }
-
-        return {
-            scheduleOptions: {
-                ...scheduleOptions,
-                type: ScheduleType.CRON_EXPRESSION,
-            },
         }
     },
 
     async preDelete({ flowToDelete }: PreDeleteParams): Promise<void> {
         if (
             flowToDelete.status === FlowStatus.DISABLED ||
-      isNil(flowToDelete.publishedVersionId)
+            isNil(flowToDelete.publishedVersionId)
         ) {
             return
         }
-
-        const publishedFlowVersion = await flowVersionService.getFlowVersionOrThrow(
-            {
-                flowId: flowToDelete.id,
-                versionId: flowToDelete.publishedVersionId,
-            },
-        )
-
-        await triggerHooks.disable({
-            flowVersion: publishedFlowVersion,
+        await triggerSourceService(log).disable({
+            flowId: flowToDelete.id,
             projectId: flowToDelete.projectId,
             simulate: false,
+            ignoreError: true,
+        })
+
+        await sampleDataService(log).deleteForFlow({
+            projectId: flowToDelete.projectId,
+            flowId: flowToDelete.id,
+            fileType: FileType.SAMPLE_DATA,
+        })
+
+        await sampleDataService(log).deleteForFlow({
+            projectId: flowToDelete.projectId,
+            flowId: flowToDelete.id,
+            fileType: FileType.SAMPLE_DATA_INPUT,
         })
     },
-}
+})
 
-type PreUpdateParams = {
+type PreUpdateStatusParams = {
     flowToUpdate: Flow
-}
-
-type PreUpdateStatusParams = PreUpdateParams & {
+    publishedFlowVersion: FlowVersion
     newStatus: FlowStatus
-    entityManager: EntityManager | undefined
+    templateId?: string 
 }
 
-type PreUpdatePublishedVersionIdParams = PreUpdateParams & {
-    flowVersionToPublish: FlowVersion
-}
-
-type PreUpdateReturn = {
-    scheduleOptions: FlowScheduleOptions | null
-}
 
 type PreDeleteParams = {
     flowToDelete: Flow

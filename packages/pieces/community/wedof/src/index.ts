@@ -38,56 +38,63 @@ import { declareCertificationFolderFailed } from './lib/actions/certification-fo
 import { refuseCertificationFolder } from './lib/actions/certification-folders/refuse-certification-folder';
 import { abortCertificationFolder } from './lib/actions/certification-folders/abort-certification-folder';
 import { getCertificationFolder } from './lib/actions/certification-folders/get-certification-folder';
-import { listCertificationFolders } from './lib/actions/certification-folders/list-certification-folders';
-import { listRegistrationFolders } from './lib/actions/registration-folders/list-registration-folders';
 import { searchCertificationFolder } from './lib/actions/certification-folders/search-certification-folder';
 import { getCertificationFolderDocuments } from './lib/actions/certification-folders/list-certification-folder-documents';
 import { listActivitiesAndTasks } from './lib/actions/list-activities-and-tasks';
 import { createTask } from './lib/actions/create-task';
 import { createActivitie } from './lib/actions/create-activitie';
 import { sendFile } from './lib/actions/send-file';
-
-export const wedofAuth = PieceAuth.SecretText({
-  displayName: 'Clé API',
-  required: true,
-  description: 'Veuillez saisir votre clé API fournie par wedof',
-  validate: async ({ auth }) => {
-    try {
-      await httpClient.sendRequest({
-        method: HttpMethod.GET,
-        url: wedofCommon.baseUrl + '/users/me',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Api-Key': auth,
-        },
-      });
-      return { valid: true };
-    } catch (error) {
-      return {
-        valid: false,
-        error: 'Clé Api invalide',
-      };
-    }
-  },
-});
+import {me} from "./lib/actions/me";
+import {myOrganism} from "./lib/actions/my-organism";
+import { getRegistrationFolderDocuments } from './lib/actions/registration-folders/list-registration-folder-documents';
+import {updateCertificationFolder} from "./lib/actions/certification-folders/update-certification-folder";
+import { updateCompletionRate } from './lib/actions/registration-folders/update-completion-rate';
+import { certificationFolderSurveyInitialExperienceAvailable } from './lib/triggers/certification-folder-survey/certification-folder-survey-initial-experience-available';
+import { certificationFolderSurveyInitialExperienceAnswered } from './lib/triggers/certification-folder-survey/certification-folder-survey-initial-experience-answered';
+import { certificationFolderSurveyLongTermExperienceAnswered } from './lib/triggers/certification-folder-survey/certification-folder-survey-long-experience-answered';
+import { certificationFolderSurveyLongTermExperienceAvailable } from './lib/triggers/certification-folder-survey/certification-folder-survey-long-experience-available';
+import { certificationFolderSurveySixMonthExperienceAnswered } from './lib/triggers/certification-folder-survey/certification-folder-survey-six-month-experience-answered';
+import { certificationFolderSurveySixMonthExperienceAvailable } from './lib/triggers/certification-folder-survey/certification-folder-survey-six-month-experience-available';
+import { getCertificationFolderSurvey } from './lib/actions/certification-folder-survey/get-certification-folder-survey';
+import { listCertificationFolderSurveys } from './lib/actions/certification-folder-survey/list-certification-folder-surveys';
+import { createCertificationPartnerAudit } from './lib/actions/certification-partner-audit/create-certification-partner-audit';
+import { createGeneralAudit } from './lib/actions/certification-partner-audit/create-general-audit';
+import { getPartnership } from './lib/actions/certification-partner/get-partnership';
+import { updatePartnership } from './lib/actions/certification-partner/update-partnership';
+import { deletePartnership } from './lib/actions/certification-partner/delete-partnership';
+import { listPartnerships } from './lib/actions/certification-partner/list-partnership';
+import { createPartnership } from './lib/actions/certification-partner/create-partnership';
+import { resetPartnership } from './lib/actions/certification-partner/reset-partnership';
+import { certificationPartnerProcessing } from './lib/triggers/certification-partner/certificationPartner-processing';
+import { certificationPartnerAborted } from './lib/triggers/certification-partner/certificationPartner-aborted';
+import { certificationPartnerActive } from './lib/triggers/certification-partner/certificationPartner-active';
+import { certificationPartnerRefused } from './lib/triggers/certification-partner/certificationPartner-refused';
+import { certificationPartnerRevoked } from './lib/triggers/certification-partner/certificationPartner-revoked';
+import { certificationPartnerSuspended } from './lib/triggers/certification-partner/certificationPartner-suspended';
+import { addExecutionTag } from './lib/actions/add-execution-tag';
+import { listPartnerStats } from './lib/actions/certification/certification-partner-stats';
+import { createCertificationFolder } from './lib/actions/certification-folders/create-certification-folder';
+import { createRegistrationFolder } from './lib/actions/registration-folders/create-registration-folder';
+import { wedofAuth } from './lib/auth';
 
 export const wedof = createPiece({
   displayName: 'Wedof',
   auth: wedofAuth,
   description:
     'Automatisez la gestion de vos dossiers de formations (CPF, EDOF, Kairos, AIF, OPCO et autres)',
-  minimumSupportedRelease: '0.20.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/wedof.svg',
   categories: [
     PieceCategory.SALES_AND_CRM,
     PieceCategory.CONTENT_AND_FILES,
     PieceCategory.PRODUCTIVITY,
   ],
-  authors: ['vbarrier', 'obenazouz'],
+  authors: ['vbarrier','obenazouz'],
   actions: [
+    /////////////// certification /////////////////
+    listPartnerStats,
     ////////////// registrationFolders ////////////
     getRegistrationFolder,
-    listRegistrationFolders,
     searchRegistrationFolder,
     updateRegistrationFolder,
     validateRegistrationFolder,
@@ -98,9 +105,11 @@ export const wedof = createPiece({
     cancelRegistrationFolder,
     refuseRegistrationFolder,
     getMinimalSessionDates,
+    getRegistrationFolderDocuments,
+    updateCompletionRate,
+    createRegistrationFolder,
     ////////////// certificationFolders ////////////
     getCertificationFolder,
-    listCertificationFolders,
     searchCertificationFolder,
     declareCertificationFolderRegistred,
     declareCertificationFolderToTake,
@@ -111,10 +120,29 @@ export const wedof = createPiece({
     refuseCertificationFolder,
     abortCertificationFolder,
     getCertificationFolderDocuments,
+    updateCertificationFolder,
+    createCertificationFolder,
+    ////////////// general ////////////
     listActivitiesAndTasks,
     createTask,
     createActivitie,
-    sendFile
+    sendFile,
+    me,
+    myOrganism,
+    addExecutionTag,
+    ///////////// certificationFoldersSurvey ///////
+    getCertificationFolderSurvey,
+    listCertificationFolderSurveys,
+    ///////////// certificationPartnerAudit ////////
+    createCertificationPartnerAudit,
+    createGeneralAudit,
+    //////////// certificationPartner //////////////
+    getPartnership,
+    updatePartnership,
+    deletePartnership,
+    listPartnerships,
+    createPartnership,
+    resetPartnership
   ],
   triggers: [
     ////////////// registrationFolders ////////////
@@ -134,6 +162,20 @@ export const wedof = createPiece({
     certificationFolderToControl,
     certificationFolderSuccess,
     certificationFolderToretake,
-    certificationFolderSelected
+    certificationFolderSelected,
+    ///////////// certificationFoldersSurvey ///////
+    certificationFolderSurveyInitialExperienceAvailable,
+    certificationFolderSurveyInitialExperienceAnswered,
+    certificationFolderSurveyLongTermExperienceAnswered,
+    certificationFolderSurveyLongTermExperienceAvailable,
+    certificationFolderSurveySixMonthExperienceAnswered,
+    certificationFolderSurveySixMonthExperienceAvailable,
+    //////////// certificationPartner /////////////////
+    certificationPartnerAborted,
+    certificationPartnerProcessing,
+    certificationPartnerActive,
+    certificationPartnerRefused,
+    certificationPartnerRevoked,
+    certificationPartnerSuspended
   ],
 });

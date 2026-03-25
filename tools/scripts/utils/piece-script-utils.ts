@@ -1,12 +1,14 @@
 
+import { existsSync } from 'node:fs'
 import { readdir, stat } from 'node:fs/promises'
-import { resolve, join } from 'node:path'
+import { resolve, join, relative } from 'node:path'
 import { cwd } from 'node:process'
-import { PieceMetadata } from '../../../packages/pieces/community/framework/src'
-import { PieceCategory, extractPieceFromModule } from '../../../packages/shared/src'
+import { extractPieceFromModule } from '@activepieces/shared'
 import * as semver from 'semver'
 import { readPackageJson } from './files'
-type Piece = {
+import { StatusCodes } from 'http-status-codes'
+import { pieceTranslation,PieceMetadata } from '@activepieces/pieces-framework'
+type SubPiece = {
     name: string;
     displayName: string;
     version: string;
@@ -15,8 +17,10 @@ type Piece = {
     metadata(): Omit<PieceMetadata, 'name' | 'version'>;
 };
 
+export const AP_CLOUD_API_BASE = 'https://cloud.activepieces.com/api/v1';
 export const PIECES_FOLDER = 'packages/pieces'
 export const COMMUNITY_PIECE_FOLDER = 'packages/pieces/community'
+export const NON_PIECES_PACKAGES = ['@activepieces/pieces-framework', '@activepieces/pieces-common']
 
 const validateSupportedRelease = (minRelease: string | undefined, maxRelease: string | undefined) => {
     if (minRelease !== undefined && !semver.valid(minRelease)) {
@@ -38,19 +42,8 @@ const validateMetadata = (pieceMetadata: PieceMetadata): void => {
         pieceMetadata.minimumSupportedRelease,
         pieceMetadata.maximumSupportedRelease,
     )
-    validatePremiumPiece(pieceMetadata)
 }
 
-const validatePremiumPiece = (piece: PieceMetadata): void => {
-    const categories = piece.categories ?? []
-
-    if (piece.directoryPath?.includes("/ee/") && !categories.includes(PieceCategory.PREMIUM)) {
-        throw Error(`[validatePremiumPiece] Premium pieces must be in the 'premium' category`)
-    }
-    if (categories.includes(PieceCategory.PREMIUM) && (!piece.minimumSupportedRelease || semver.lt(piece.minimumSupportedRelease, '0.27.1'))) {
-        throw Error(`[validatePremiumPiece] Premium pieces must have a minimum supported release of 0.27.1 or higher`)
-    }
-}
 
 const byDisplayNameIgnoreCase = (a: PieceMetadata, b: PieceMetadata) => {
     const aName = a.displayName.toUpperCase();
@@ -62,35 +55,105 @@ export function getCommunityPieceFolder(pieceName: string): string {
     return join(COMMUNITY_PIECE_FOLDER, pieceName)
 }
 
-export async function findPiece(pieceName: string): Promise<PieceMetadata | null> {
-    const pieces = await findAllPieces()
-    return pieces.find((p) => p.name === pieceName) ?? null
-}
 
 export async function findAllPiecesDirectoryInSource(): Promise<string[]> {
     const piecesPath = resolve(cwd(), 'packages', 'pieces')
     const paths = await traverseFolder(piecesPath)
-    const enterprisePiecesPath = resolve(cwd(), 'packages', 'ee', 'pieces')
-    const enterprisePiecesPaths = await traverseFolder(enterprisePiecesPath)
-    return [...paths, ...enterprisePiecesPaths]
+    return paths.map(p => relative(cwd(), p))
 }
 
-export async function findPieceDirectoryInSource(pieceName: string): Promise<string | null> {
-    const piecesPath = await findAllPiecesDirectoryInSource();
-    const piecePath = piecesPath.find((p) => p.includes(pieceName))
-    return piecePath ?? null
+export const pieceMetadataExists = async (
+    pieceName: string,
+    pieceVersion: string
+): Promise<boolean> => {
+    const cloudResponse = await fetch(
+        `${AP_CLOUD_API_BASE}/pieces/${pieceName}?version=${pieceVersion}`
+    );
+
+    const pieceExist: Record<number, boolean> = {
+        [StatusCodes.OK]: true,
+        [StatusCodes.NOT_FOUND]: false
+    };
+
+    if (
+        pieceExist[cloudResponse.status] === null ||
+        pieceExist[cloudResponse.status] === undefined
+    ) {
+        throw new Error(await cloudResponse.text());
+    }
+
+    return pieceExist[cloudResponse.status];
+};
+
+export async function findNewPieces(): Promise<PieceMetadata[]> {
+    const changedDistPaths = getChangedPiecesDistPaths()
+    const paths = changedDistPaths ?? await findAllDistPaths()
+
+    console.info(`[findNewPieces] scanning ${paths.length} dist paths${changedDistPaths ? ' (scoped to changed)' : ' (all)'}`)
+
+    const changedPieces: PieceMetadata[] = []
+
+    // Adding batches because of memory limit when we have a lot of pieces
+    const batchSize = 75
+    for (let i = 0; i < paths.length; i += batchSize) {
+        const batch = paths.slice(i, i + batchSize)
+        const batchResults = await Promise.all(batch.map(async (folderPath) => {
+            const packageJson = await readPackageJson(folderPath);
+            if (NON_PIECES_PACKAGES.includes(packageJson.name)) {
+                return null;
+            }
+            const exists = await pieceMetadataExists(packageJson.name, packageJson.version)
+            if (!exists) {
+                try {
+                    return loadPieceFromFolder(folderPath);
+                } catch (ex) {
+                    return null;
+                }
+            }
+            return null;
+        }))
+
+        const validResults = batchResults.filter((piece): piece is PieceMetadata => piece !== null)
+        changedPieces.push(...validResults)
+    }
+
+    return changedPieces;
+}
+
+function getChangedPiecesDistPaths(): string[] | null {
+    const changedPieces = process.env['CHANGED_PIECES']
+    if (!changedPieces || changedPieces.trim() === '') {
+        return null
+    }
+    return changedPieces.split('\n').filter(Boolean).map(p => {
+        return resolve(cwd(), p, 'dist')
+    }).filter(p => {
+        const exists = existsSync(join(p, 'package.json'))
+        if (!exists) {
+            console.info(`[getChangedPiecesDistPaths] skipping, no build output at ${p}`)
+        }
+        return exists
+    })
 }
 
 export async function findAllPieces(): Promise<PieceMetadata[]> {
-    const baseDir = resolve(cwd(), 'dist', 'packages')
-    const standardPiecesPath = resolve(baseDir, 'pieces')
-    const enterprisePiecesPath = resolve(baseDir, 'ee', 'pieces')
-    const paths = [
-        ...await traverseFolder(standardPiecesPath),
-        ...await traverseFolder(enterprisePiecesPath)
-    ]
+    const paths = await findAllDistPaths()
     const pieces = await Promise.all(paths.map((p) => loadPieceFromFolder(p)))
     return pieces.filter((p): p is PieceMetadata => p !== null).sort(byDisplayNameIgnoreCase)
+}
+
+async function findAllDistPaths(): Promise<string[]> {
+    const sourcePiecesPath = resolve(cwd(), 'packages', 'pieces')
+    const sourceFolders = await traverseFolder(sourcePiecesPath)
+    const distPaths: string[] = []
+    for (const folder of sourceFolders) {
+        const distPath = join(folder, 'dist')
+        const distPackageJson = join(distPath, 'package.json')
+        if (existsSync(distPackageJson)) {
+            distPaths.push(distPath)
+        }
+    }
+    return distPaths
 }
 
 async function traverseFolder(folderPath: string): Promise<string[]> {
@@ -123,16 +186,18 @@ async function loadPieceFromFolder(folderPath: string): Promise<PieceMetadata | 
         )
 
         const { name: pieceName, version: pieceVersion } = packageJson
-        const piece = extractPieceFromModule<Piece>({
+        const piece = extractPieceFromModule<SubPiece>({
             module,
             pieceName,
             pieceVersion
         });
-
+        const originalMetadata = piece.metadata()
+        const i18n = await pieceTranslation.initializeI18n(folderPath)
         const metadata = {
-            ...piece.metadata(),
+            ...originalMetadata,
             name: packageJson.name,
-            version: packageJson.version
+            version: packageJson.version,
+            i18n
         };
         metadata.directoryPath = folderPath;
         metadata.name = packageJson.name;

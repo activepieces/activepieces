@@ -4,7 +4,7 @@ import {
   HttpMethod,
   AuthenticationType,
 } from '@activepieces/pieces-common';
-import { oneDriveAuth } from '../../';
+import { oneDriveAuth } from '../auth';
 import { oneDriveCommon } from '../common/common';
 
 export const listFolders = createAction({
@@ -13,6 +13,7 @@ export const listFolders = createAction({
   description: 'List folders in a OneDrive folder',
   displayName: 'List Folders',
   props: {
+    markdown:oneDriveCommon.parentFolderInfo,
     parentFolder: oneDriveCommon.parentFolder,
   },
   async run(context) {

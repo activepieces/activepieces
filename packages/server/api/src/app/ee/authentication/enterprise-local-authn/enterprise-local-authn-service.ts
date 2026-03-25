@@ -1,62 +1,85 @@
-import { userService } from '../../../user/user-service'
-import { otpService } from '../../otp/otp-service'
 import {
-    OtpType,
-    ResetPasswordRequestBody,
-    VerifyEmailRequestBody,
-} from '@activepieces/ee-shared'
-import { ActivepiecesError, ErrorCode, UserId } from '@activepieces/shared'
+    ActivepiecesError,
+    ApplicationEvent,
+    ApplicationEventName,
+    ErrorCode,
+    isNil,
+    OtpType, ResetPasswordRequestBody, UserId, UserIdentity, VerifyEmailRequestBody } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
+import { userIdentityService } from '../../../authentication/user-identity/user-identity-service'
+import { applicationEvents } from '../../../helper/application-events'
+import { userService } from '../../../user/user-service'
+import { otpService } from '../otp/otp-service'
 
-export const enterpriseLocalAuthnService = {
-    async verifyEmail({ userId, otp }: VerifyEmailRequestBody): Promise<void> {
-        await confirmOtp({
-            userId,
-            otp,
-            otpType: OtpType.EMAIL_VERIFICATION,
+export const enterpriseLocalAuthnService = (log: FastifyBaseLogger) => ({
+    async verifyEmail({ identityId, otp }: VerifyEmailRequestBody): Promise<UserIdentity> {
+        const isOtpValid = await otpService(log).confirm({
+            identityId,
+            type: OtpType.EMAIL_VERIFICATION,
+            value: otp,
         })
 
-        await userService.verify({ id: userId })
+        if (!isOtpValid) {
+            throw new ActivepiecesError({
+                code: ErrorCode.INVALID_OTP,
+                params: {},
+            })
+        }
+
+        await sendAuditLogForIdentity(identityId, {
+            action: ApplicationEventName.USER_EMAIL_VERIFIED,
+            data: {},
+        }, log)
+
+        return userIdentityService(log).verify(identityId)
     },
 
     async resetPassword({
-        userId,
+        identityId,
         otp,
         newPassword,
     }: ResetPasswordRequestBody): Promise<void> {
-        await confirmOtp({
-            userId,
-            otp,
-            otpType: OtpType.PASSWORD_RESET,
+        const isOtpValid = await otpService(log).confirm({
+            identityId,
+            type: OtpType.PASSWORD_RESET,
+            value: otp,
         })
 
-        await userService.updatePassword({
-            id: userId,
+        if (!isOtpValid) {
+            throw new ActivepiecesError({
+                code: ErrorCode.INVALID_OTP,
+                params: {},
+            })
+        }
+
+        await sendAuditLogForIdentity(identityId, {
+            action: ApplicationEventName.USER_PASSWORD_RESET,
+            data: {},
+        }, log)
+
+        await userIdentityService(log).updatePassword({
+            id: identityId,
             newPassword,
         })
     },
-}
+})
 
-const confirmOtp = async ({
-    userId,
-    otp,
-    otpType,
-}: ConfirmOtpParams): Promise<void> => {
-    const isOtpValid = await otpService.confirm({
-        userId,
-        type: otpType,
-        value: otp,
-    })
-
-    if (!isOtpValid) {
-        throw new ActivepiecesError({
-            code: ErrorCode.INVALID_OTP,
-            params: {},
-        })
+const sendAuditLogForIdentity = async (
+    identityId: UserId,
+    event: Pick<ApplicationEvent, 'action' | 'data'>,
+    log: FastifyBaseLogger,
+): Promise<void> => {
+    const users = await userService(log).getUsersByIdentityId({ identityId })
+    for (const { id, platformId } of users) {
+        if (isNil(platformId)) {
+            continue
+        }
+        applicationEvents(log).sendUserEvent(
+            {
+                platformId,
+                userId: id,
+            },
+            event as ApplicationEvent,
+        )
     }
-}
-
-type ConfirmOtpParams = {
-    userId: UserId
-    otp: string
-    otpType: OtpType
 }

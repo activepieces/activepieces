@@ -1,4 +1,74 @@
-import { Property } from '@activepieces/pieces-framework';
+import { OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
+import {
+  AuthenticationType,
+  HttpMethod,
+  httpClient,
+} from '@activepieces/pieces-common';
+import { zoomAuth } from '../..';
+
+export const zoomMeetingDropdown = Property.Dropdown({
+  displayName: 'Meeting',
+  description: 'Select a meeting from your Zoom account.',
+  required: true,
+  auth: zoomAuth,
+  refreshers: ['auth'],
+  options: async ({ auth }) => {
+    if (!auth) {
+      return {
+        disabled: true,
+        placeholder: 'Connect your Zoom account first.',
+        options: [],
+      };
+    }
+
+    const accessToken = (auth as OAuth2PropertyValue).access_token;
+    const options: { label: string; value: string }[] = [];
+    let nextPageToken = '';
+
+    try {
+      do {
+        const queryParams: Record<string, string> = {
+          type: 'scheduled',
+          page_size: '300',
+        };
+        if (nextPageToken) {
+          queryParams['next_page_token'] = nextPageToken;
+        }
+
+        const res = await httpClient.sendRequest<{
+          meetings: { id: number; topic: string }[];
+          next_page_token: string;
+        }>({
+          method: HttpMethod.GET,
+          url: 'https://api.zoom.us/v2/users/me/meetings',
+          authentication: {
+            type: AuthenticationType.BEARER_TOKEN,
+            token: accessToken,
+          },
+          queryParams,
+        });
+
+        options.push(
+          ...res.body.meetings.map((m) => ({
+            label: m.topic || `Meeting ${m.id}`,
+            value: String(m.id),
+          })),
+        );
+
+        nextPageToken = res.body.next_page_token;
+      } while (nextPageToken);
+    } catch {
+      return {
+        disabled: true,
+        placeholder:
+          'Could not load meetings. Ensure your Zoom app has the meeting:read:list_meetings scope.',
+        options: [],
+      };
+    }
+
+    return { options };
+  },
+});
 
 export const getRegistarantProps = () => ({
   meeting_id: Property.ShortText({
@@ -71,24 +141,56 @@ export const getRegistarantProps = () => ({
     description: "The registrant's job title.",
     required: false,
   }),
-  no_of_employees: Property.ShortText({
+  no_of_employees: Property.StaticDropdown({
     displayName: 'No of employees',
     description: "The registrant's number of employees.",
     required: false,
+    options: {
+      disabled: false,
+      options: [
+        { label: '1-20', value: '1-20' },
+        { label: '21-50', value: '21-50' },
+        { label: '51-100', value: '51-100' },
+        { label: '101-500', value: '101-500' },
+        { label: '500-1,000', value: '500-1,000' },
+        { label: '1,001-5,000', value: '1,001-5,000' },
+        { label: '5,001-10,000', value: '5,001-10,000' },
+        { label: 'More than 10,000', value: 'More than 10,000' },
+      ],
+    },
   }),
   org: Property.ShortText({
     displayName: 'Organization',
     description: "The registrant's organization.",
     required: false,
   }),
-  purchasing_time_frame: Property.ShortText({
+  purchasing_time_frame: Property.StaticDropdown({
     displayName: 'Purchasing time frame',
     description: "The registrant's purchasing time frame.",
     required: false,
+    options: {
+      disabled: false,
+      options: [
+        { label: 'Within a month', value: 'Within a month' },
+        { label: '1-3 months', value: '1-3 months' },
+        { label: '4-6 months', value: '4-6 months' },
+        { label: 'More than 6 months', value: 'More than 6 months' },
+        { label: 'No timeframe', value: 'No timeframe' },
+      ],
+    },
   }),
-  role_in_purchase_process: Property.ShortText({
+  role_in_purchase_process: Property.StaticDropdown({
     displayName: 'Role in purchase process',
     description: "The registrant's role in the purchase process.",
     required: false,
+    options: {
+      disabled: false,
+      options: [
+        { label: 'Decision Maker', value: 'Decision Maker' },
+        { label: 'Evaluator/Recommender', value: 'Evaluator/Recommender' },
+        { label: 'Influencer', value: 'Influencer' },
+        { label: 'Not involved', value: 'Not involved' },
+      ],
+    },
   }),
 });

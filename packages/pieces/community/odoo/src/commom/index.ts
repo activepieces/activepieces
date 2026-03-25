@@ -8,6 +8,8 @@ import {
     GetCompanyParams,
     GetContactParams,
     GetRecordsParams,
+    CreateRecordParams,
+    UpdateRecordParams,
     OdooConfig,
     RenderReportParams,
     SaveCompanyParams,
@@ -211,6 +213,29 @@ class Odoo {
         })
     }
 
+    async createRecord<T = any>({
+        model,
+        fields,
+    }: CreateRecordParams): Promise<T> {
+        return this.execute_kw<T>({
+            model,
+            method: 'create',
+            params: [[fields]],
+        });
+    }
+
+    async updateRecord<T = any>({
+        model,
+        recordId,
+        fields,
+    }: UpdateRecordParams): Promise<T> {
+        return this.execute_kw<T>({
+            model,
+            method: 'write',
+            params: [[[recordId], fields]],
+        });
+    }
+    
     async saveContact<T = any>({
         name,
         phone,

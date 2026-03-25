@@ -1,0 +1,5 @@
+# Ignore downloaded Helm chart dependencies
+charts/*.tgz
+
+# Ignore Chart.lock file variations
+Chart.lock

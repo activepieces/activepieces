@@ -4,7 +4,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { openaiAuth } from '../..';
+import { openaiAuth } from '../auth';
 import FormData from 'form-data';
 import mime from 'mime-types';
 import { Languages, baseUrl } from '../common/common';
@@ -48,7 +48,7 @@ export const transcribeAction = createAction({
     form.append('language', language);
 
     const headers = {
-      Authorization: `Bearer ${context.auth}`,
+      Authorization: `Bearer ${context.auth.secret_text}`,
     };
 
     const request: HttpRequest = {

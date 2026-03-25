@@ -1,5 +1,5 @@
 import { createAction, DynamicPropsValue, Property } from '@activepieces/pieces-framework';
-import { customerIOAuth } from '../../index';
+import { customerIOAuth } from '../auth';
 import { customerIOCommon } from '../common';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
@@ -9,14 +9,14 @@ export const createEvent = createAction({
   displayName: 'Create Event',
   description: 'Create an event in Customer.io',
   props: {
-    customer_email: Property.ShortText({
-      displayName: 'Customer Email',
-      description: 'Customer Email',
+    customer_identifier: Property.ShortText({
+      displayName: 'Customer identifier',
+      description: 'The unique value representing a person. You may identify a person by id, email address, or the cio_id (when updating people), depending on your workspace settings',
       required: true,
     }),
     event_name: Property.ShortText({
       displayName: 'Event Name',
-      description: 'Event Name',
+      description: 'The name of the event. This is how you\'ll reference the event in campaigns or segments',
       required: true,
     }),
     body_type: Property.StaticDropdown({
@@ -39,6 +39,7 @@ export const createEvent = createAction({
       },
     }),
     body: Property.DynamicProperties({
+      auth: customerIOAuth,
       displayName: 'Body',
       refreshers: ['body_type'],
       required: false,
@@ -75,7 +76,7 @@ export const createEvent = createAction({
 
     const basic_track_api = `${
       Buffer.from(
-        `${context.auth.track_site_id}:${context.auth.track_api_key}`,
+        `${context.auth.props.track_site_id}:${context.auth.props.track_api_key}`,
         'utf8'
       ).toString('base64')
     }`
@@ -84,8 +85,8 @@ export const createEvent = createAction({
       Authorization: `Basic ${basic_track_api}`,
       'Content-Type': 'application/json',
     }
-    const encoded_email = encodeURIComponent(context.propsValue.customer_email);
-    const url = customerIOCommon.trackUrl + 'customers/' + encoded_email + '/events';
+    const encoded_email = encodeURIComponent(context.propsValue.customer_identifier);
+    const url = customerIOCommon[context.auth.props.region || 'us'].trackUrl + 'customers/' + encoded_email + '/events';
 
     const httprequestdata = {
       method: HttpMethod.POST,
@@ -93,7 +94,6 @@ export const createEvent = createAction({
       headers,
       body: {
         name: context.propsValue.event_name,
-        id: context.propsValue.customer_email,
         data: body ? body['data'] : {},
       },
     }

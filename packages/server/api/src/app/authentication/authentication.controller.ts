@@ -1,40 +1,43 @@
-import { RateLimitOptions } from '@fastify/rate-limit'
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { eventsHooks } from '../helper/application-events'
-import { getEdition } from '../helper/secret-helper'
-import { resolvePlatformIdForAuthnRequest } from '../platform/platform-utils'
-import { authenticationService } from './authentication-service'
-import { Provider } from './authentication-service/hooks/authentication-service-hooks'
-import { ApplicationEventName } from '@activepieces/ee-shared'
-import { system, SystemProp } from '@activepieces/server-shared'
-import {
-    ALL_PRINCIPAL_TYPES,
-    ApEdition,
+import { ApplicationEventName,
+    assertNotNullOrUndefined,
+    PrincipalType,
     SignInRequest,
     SignUpRequest,
+    SwitchPlatformRequest,
+    UserIdentityProvider,
 } from '@activepieces/shared'
+import { RateLimitOptions } from '@fastify/rate-limit'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import { securityAccess } from '../core/security/authorization/fastify-security'
+import { applicationEvents } from '../helper/application-events'
+import { networkUtils } from '../helper/network-utils'
+import { system } from '../helper/system/system'
+import { AppSystemProp } from '../helper/system/system-props'
+import { platformUtils } from '../platform/platform.utils'
+import { userService } from '../user/user-service'
+import { authenticationService } from './authentication.service'
 
-const edition = getEdition()
-
-export const authenticationController: FastifyPluginAsyncTypebox = async (
+export const authenticationController: FastifyPluginAsyncZod = async (
     app,
 ) => {
     app.post('/sign-up', SignUpRequestOptions, async (request) => {
-        const platformId = await resolvePlatformIdForAuthnRequest(request.body.email, request)
 
-        const signUpResponse = await authenticationService.signUp({
+        const platformId = await platformUtils.getPlatformIdForRequest(request)
+        const signUpResponse = await authenticationService(request.log).signUp({
             ...request.body,
-            verified: edition === ApEdition.COMMUNITY,
-            platformId,
-            provider: Provider.EMAIL,
+            provider: UserIdentityProvider.EMAIL,
+            platformId: platformId ?? null,
         })
 
-        eventsHooks.get().send(request, {
-            action: ApplicationEventName.SIGNED_UP_USING_EMAIL,
-            userId: request.principal.id,
-            createdUser: {
-                id: signUpResponse.id,
-                email: signUpResponse.email,
+        applicationEvents(request.log).sendUserEvent({
+            platformId: signUpResponse.platformId!,
+            userId: signUpResponse.id,
+            projectId: signUpResponse.projectId,
+            ip: networkUtils.extractClientRealIp(request, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
+        }, {
+            action: ApplicationEventName.USER_SIGNED_UP,
+            data: {
+                source: 'credentials',
             },
         })
 
@@ -42,31 +45,62 @@ export const authenticationController: FastifyPluginAsyncTypebox = async (
     })
 
     app.post('/sign-in', SignInRequestOptions, async (request) => {
-        const platformId = await resolvePlatformIdForAuthnRequest(request.body.email, request)
-        eventsHooks.get().send(request, {
-            action: ApplicationEventName.SIGNED_IN,
-            userId: request.principal.id,
-        })
-        return authenticationService.signIn({
+
+        const predefinedPlatformId = await platformUtils.getPlatformIdForRequest(request)
+        const response = await authenticationService(request.log).signInWithPassword({
             email: request.body.email,
             password: request.body.password,
-            platformId,
-            provider: Provider.EMAIL,
+            predefinedPlatformId,
+        })
+
+        const responsePlatformId = response.platformId
+        assertNotNullOrUndefined(responsePlatformId, 'Platform ID is required')
+        applicationEvents(request.log).sendUserEvent({
+            platformId: responsePlatformId,
+            userId: response.id,
+            projectId: response.projectId,
+            ip: networkUtils.extractClientRealIp(request, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
+        }, {
+            action: ApplicationEventName.USER_SIGNED_IN,
+            data: {},
+        })
+
+        return response
+    })
+
+    app.post('/switch-platform', SwitchPlatformRequestOptions, async (request) => {
+        const user = await userService(request.log).getOneOrFail({ id: request.principal.id })
+        return authenticationService(request.log).switchPlatform({
+            identityId: user.identityId,
+            platformId: request.body.platformId,
         })
     })
+
 }
 
 const rateLimitOptions: RateLimitOptions = {
     max: Number.parseInt(
-        system.getOrThrow(SystemProp.API_RATE_LIMIT_AUTHN_MAX),
+        system.getOrThrow(AppSystemProp.API_RATE_LIMIT_AUTHN_MAX),
         10,
     ),
-    timeWindow: system.getOrThrow(SystemProp.API_RATE_LIMIT_AUTHN_WINDOW),
+    timeWindow: system.getOrThrow(AppSystemProp.API_RATE_LIMIT_AUTHN_WINDOW),
+}
+
+
+
+const SwitchPlatformRequestOptions = {
+    config: {
+        security: securityAccess.publicPlatform([PrincipalType.USER]),
+        rateLimit: rateLimitOptions,
+    },
+    schema: {
+        body: SwitchPlatformRequest,
+    },
 }
 
 const SignUpRequestOptions = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        security: securityAccess.public(),
         rateLimit: rateLimitOptions,
     },
     schema: {
@@ -76,7 +110,7 @@ const SignUpRequestOptions = {
 
 const SignInRequestOptions = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        security: securityAccess.public(),
         rateLimit: rateLimitOptions,
     },
     schema: {

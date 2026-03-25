@@ -1,6 +1,6 @@
+import { ApEdition } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 import { isNotOneOfTheseEditions } from '../../../../database/database-common'
-import { ApEdition } from '@activepieces/shared'
 
 export class AddProjectMembers1689177797092 implements MigrationInterface {
     name = 'AddProjectMembers1689177797092'
@@ -22,7 +22,7 @@ export class AddProjectMembers1689177797092 implements MigrationInterface {
             return
         }
         await queryRunner.query(
-            'DROP INDEX "public"."idx_project_member_project_id_user_id"',
+            'DROP INDEX "idx_project_member_project_id_user_id"',
         )
         await queryRunner.query('DROP TABLE "project_member"')
     }

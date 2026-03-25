@@ -15,24 +15,19 @@ import { deleteProductAction } from './lib/actions/products/delete-product';
 import { listProductsAction } from './lib/actions/products/list-products';
 import { updateProductAction } from './lib/actions/products/update-product';
 import { orderCreatedTrigger } from './lib/triggers/order-created';
+import { quickzuAuth } from './lib/auth';
 
 const authHelpDescription = `
 1. Login to your Quickzu Dashboard.
 2. Go to **https://app.quickzu.com/dash/settings/api-webhooks**.
 3. Copy **API Token** to the clipboard and paste it.`;
 
-export const quickzuAuth = PieceAuth.SecretText({
-  displayName: 'API Token',
-  description: authHelpDescription,
-  required: true,
-});
-
 export const quickzu = createPiece({
   displayName: 'Quickzu',
   description: 'Streamline ordering from whatsapp',
 
   auth: quickzuAuth,
-  minimumSupportedRelease: '0.20.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/quickzu.png',
   authors: ["kishanprmr","abuaboud"],
   actions: [

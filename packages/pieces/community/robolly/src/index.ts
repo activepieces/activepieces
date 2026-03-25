@@ -27,7 +27,7 @@ export const robolly = createPiece({
     'Robolly is the all‑in‑one service for personalized image, video & PDF generation with API',
 
   auth: robollyAuth,
-  minimumSupportedRelease: '0.9.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/robolly.png',
   categories: [PieceCategory.MARKETING],
   authors: ["pfernandez98","kishanprmr","MoShizzle","abuaboud"],
@@ -36,7 +36,7 @@ export const robolly = createPiece({
     createCustomApiCallAction({
       baseUrl: () => 'https://api.robolly.com',
       auth: robollyAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Bearer ${auth}`,
       }),
     }),

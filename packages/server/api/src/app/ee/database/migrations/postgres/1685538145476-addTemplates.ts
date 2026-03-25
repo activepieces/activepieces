@@ -1,6 +1,6 @@
+import { ApEdition } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 import { isNotOneOfTheseEditions } from '../../../../database/database-common'
-import { ApEdition } from '@activepieces/shared'
 
 export class AddTemplates1685538145476 implements MigrationInterface {
     name = 'AddTemplates1685538145476'
@@ -24,8 +24,8 @@ export class AddTemplates1685538145476 implements MigrationInterface {
         if (isNotOneOfTheseEditions([ApEdition.ENTERPRISE, ApEdition.CLOUD])) {
             return
         }
-        await queryRunner.query('DROP INDEX "public"."idx_flow_template_pieces"')
-        await queryRunner.query('DROP INDEX "public"."idx_flow_template_tags"')
+        await queryRunner.query('DROP INDEX "idx_flow_template_pieces"')
+        await queryRunner.query('DROP INDEX "idx_flow_template_tags"')
         await queryRunner.query('DROP TABLE "flow_template"')
     }
 }

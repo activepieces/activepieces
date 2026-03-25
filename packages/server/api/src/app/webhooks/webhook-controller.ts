@@ -1,37 +1,114 @@
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { FastifyRequest } from 'fastify'
-import { StatusCodes } from 'http-status-codes'
-import { tasksLimit } from '../ee/project-plan/tasks-limit'
-import { flowRepo } from '../flows/flow/flow.repo'
-import { flowService } from '../flows/flow/flow.service'
-import { getEdition } from '../helper/secret-helper'
-import { flowQueue } from '../workers/flow-worker/flow-queue'
-import { JobType } from '../workers/flow-worker/queues/queue'
-import { EngineHttpResponse, webhookResponseWatcher } from '../workers/flow-worker/webhook-response-watcher'
-import { logger } from '@activepieces/server-shared'
+
 import {
-    ActivepiecesError,
-    ALL_PRINCIPAL_TYPES,
-    ApEdition,
-    apId,
-    ErrorCode,
-    EventPayload,
-    Flow,
-    FlowId,
-    FlowStatus,
-    isNil,
+    RAW_PAYLOAD_HEADER,
     WebhookUrlParams,
+    WebsocketClientEvent,
 } from '@activepieces/shared'
-import { LATEST_JOB_DATA_SCHEMA_VERSION } from 'server-worker'
+import { trace } from '@opentelemetry/api'
+import { FastifyRequest } from 'fastify'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import { securityAccess } from '../core/security/authorization/fastify-security'
+import { triggerSourceService } from '../trigger/trigger-source/trigger-source-service'
+import { convertRequest, extractHeaderFromRequest } from './webhook-request-converter'
+import { WebhookFlowVersionToRun, webhookService } from './webhook.service'
 
-export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
+const tracer = trace.getTracer('webhook-controller')
 
-    app.all('/:flowId/sync', WEBHOOK_PARAMS, async (request: FastifyRequest<{ Params: WebhookUrlParams }>, reply) => {
-        const response = await handleWebhook({
-            request,
+export const webhookController: FastifyPluginAsyncZod = async (app) => {
+
+    app.all(
+        '/:flowId/sync',
+        WEBHOOK_PARAMS,
+        async (request: FastifyRequest<{ Params: WebhookUrlParams }>, reply) => {
+            return tracer.startActiveSpan('webhook.receive.sync', {
+                attributes: {
+                    'webhook.flowId': request.params.flowId,
+                    'webhook.method': request.method,
+                    'webhook.type': 'sync',
+                },
+            }, async (span) => {
+                try {
+                    const response = await webhookService.handleWebhook({
+                        data: (projectId: string) => convertRequest(request, projectId, request.params.flowId),
+                        logger: request.log,
+                        flowId: request.params.flowId,
+                        async: false,
+                        flowVersionToRun: WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST,
+                        saveSampleData: await triggerSourceService(request.log).existsByFlowId({
+                            flowId: request.params.flowId,
+                            simulate: true,
+                        },
+                        ),
+                        execute: true,
+                        ...extractRawPayload(request),
+                        ...extractHeaderFromRequest(request),
+                    })
+                    span.setAttribute('webhook.response.status', response.status)
+                    await reply
+                        .status(response.status)
+                        .headers(response.headers)
+                        .send(response.body)
+                }
+                finally {
+                    span.end()
+                }
+            })
+        },
+    )
+
+    app.all(
+        '/:flowId',
+        WEBHOOK_PARAMS,
+        async (request: FastifyRequest<{ Params: WebhookUrlParams }>, reply) => {
+            return tracer.startActiveSpan('webhook.receive.async', {
+                attributes: {
+                    'webhook.flowId': request.params.flowId,
+                    'webhook.method': request.method,
+                    'webhook.type': 'async',
+                },
+            }, async (span) => {
+                try {
+                    const response = await webhookService.handleWebhook({
+                        data: (projectId: string) => convertRequest(request, projectId, request.params.flowId),
+                        logger: request.log,
+                        flowId: request.params.flowId,
+                        async: true,
+                        saveSampleData: await triggerSourceService(request.log).existsByFlowId({
+                            flowId: request.params.flowId,
+                            simulate: true,
+                        },
+                        ),
+                        flowVersionToRun: WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST,
+                        execute: true,
+                        ...extractRawPayload(request),
+                        ...extractHeaderFromRequest(request),
+                    })
+                    span.setAttribute('webhook.response.status', response.status)
+                    await reply
+                        .status(response.status)
+                        .headers(response.headers)
+                        .send(response.body)
+                }
+                finally {
+                    span.end()
+                }
+            })
+        },
+    )
+
+    app.all('/:flowId/draft/sync', WEBHOOK_PARAMS, async (request, reply) => {
+        const response = await webhookService.handleWebhook({
+            data: (projectId: string) => convertRequest(request, projectId, request.params.flowId),
+            logger: request.log,
             flowId: request.params.flowId,
             async: false,
-            simulate: false,
+            saveSampleData: true,
+            flowVersionToRun: WebhookFlowVersionToRun.LATEST,
+            execute: true,
+            onRunCreated: (run) => {
+                app.io.to(run.projectId).emit(WebsocketClientEvent.TEST_FLOW_RUN_STARTED, run)
+            },
+            ...extractHeaderFromRequest(request),
         })
         await reply
             .status(response.status)
@@ -39,25 +116,16 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
             .send(response.body)
     })
 
-    app.all('/:flowId', WEBHOOK_PARAMS, async (request: FastifyRequest<{ Params: WebhookUrlParams }>, reply) => {
-        const response = await handleWebhook({
-            request,
+    app.all('/:flowId/draft', WEBHOOK_PARAMS, async (request, reply) => {
+        const response = await webhookService.handleWebhook({
+            data: (projectId: string) => convertRequest(request, projectId, request.params.flowId),
+            logger: request.log,
             flowId: request.params.flowId,
             async: true,
-            simulate: false,
-        })
-        await reply
-            .status(response.status)
-            .headers(response.headers)
-            .send(response.body)
-    })
-
-    app.all('/', WEBHOOK_QUERY_PARAMS, async (request, reply) => {
-        const response = await handleWebhook({
-            request,
-            flowId: request.query.flowId,
-            async: true,
-            simulate: false,
+            saveSampleData: true,
+            flowVersionToRun: WebhookFlowVersionToRun.LATEST,
+            execute: true,
+            ...extractHeaderFromRequest(request),
         })
         await reply
             .status(response.status)
@@ -66,149 +134,44 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.all('/:flowId/test', WEBHOOK_PARAMS, async (request, reply) => {
-        const response = await handleWebhook({
-            request,
+        const response = await webhookService.handleWebhook({
+            data: (projectId: string) => convertRequest(request, projectId, request.params.flowId),
+            logger: request.log,
             flowId: request.params.flowId,
             async: true,
-            simulate: true,
+            saveSampleData: true,
+            flowVersionToRun: WebhookFlowVersionToRun.LATEST,
+            execute: false,
+            ...extractHeaderFromRequest(request),
         })
         await reply
             .status(response.status)
             .headers(response.headers)
             .send(response.body)
-    },
-    )
-}
-
-async function handleWebhook({ request, flowId, async, simulate }: { request: FastifyRequest, flowId: string, async: boolean, simulate: boolean }): Promise<EngineHttpResponse> {
-    const flow = await getFlowOrThrow(flowId)
-    const payload = await convertRequest(request)
-    const requestId = apId()
-    await flowQueue.add({
-        id: requestId,
-        type: JobType.WEBHOOK,
-        data: {
-            schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
-            requestId,
-            synchronousHandlerId: async ? null : webhookResponseWatcher.getHandlerId(),
-            payload,
-            flowId: flow.id,
-            simulate,
-        },
-        priority: async ? 'medium' : 'high',
     })
-    if (async) {
-        return {
-            status: StatusCodes.OK,
-            body: {},
-            headers: {},
-        }
-    }
-    return webhookResponseWatcher.oneTimeListener(requestId, true)
+
 }
 
-async function convertRequest(request: FastifyRequest): Promise<EventPayload> {
-    const payload: EventPayload = {
-        method: request.method,
-        headers: request.headers as Record<string, string>,
-        body: await convertBody(request),
-        queryParams: request.query as Record<string, string>,
-    }
-    return payload
-}
-
-const convertBody = async (request: FastifyRequest): Promise<unknown> => {
-    if (request.isMultipart()) {
-        const jsonResult: Record<string, unknown> = {}
-        const requestBodyEntries = Object.entries(
-            request.body as Record<string, unknown>,
-        )
-
-        for (const [key, value] of requestBodyEntries) {
-            jsonResult[key] =
-                value instanceof Buffer ? value.toString('base64') : value
-        }
-
-        logger.debug({ name: 'WebhookController#convertBody', jsonResult })
-
-        return jsonResult
-    }
-    return request.body
-}
-
-const getFlowOrThrow = async (flowId: FlowId): Promise<Flow> => {
-    if (isNil(flowId)) {
-        logger.error('[WebhookService#getFlowOrThrow] error=flow_id_is_undefined')
-        throw new ActivepiecesError({
-            code: ErrorCode.VALIDATION,
-            params: {
-                message: 'flowId is undefined',
-            },
-        })
-    }
-
-    const flow = await flowRepo().findOneBy({ id: flowId })
-
-    if (isNil(flow)) {
-        logger.error(
-            `[WebhookService#getFlowOrThrow] error=flow_not_found flowId=${flowId}`,
-        )
-
-        throw new ActivepiecesError({
-            code: ErrorCode.FLOW_NOT_FOUND,
-            params: {
-                id: flowId,
-            },
-        })
-    }
-
-    // TODO FIX AND REFACTOR
-    // BEGIN EE
-    const edition = getEdition()
-    if ([ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(edition)) {
-        try {
-            await tasksLimit.limit({
-                projectId: flow.projectId,
-            })
-        }
-        catch (e) {
-            if (
-                e instanceof ActivepiecesError &&
-                e.error.code === ErrorCode.QUOTA_EXCEEDED
-            ) {
-                logger.info(
-                    `[webhookController] removing flow.id=${flow.id} run out of flow quota`,
-                )
-                await flowService.updateStatus({
-                    id: flow.id,
-                    projectId: flow.projectId,
-                    newStatus: FlowStatus.DISABLED,
-                })
-            }
-            throw e
-        }
-    }
-    // END EE
-
-    return flow
-}
 
 const WEBHOOK_PARAMS = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
-        skipAuth: true,
+        security: securityAccess.public(),
+        rawBody: true,
     },
     schema: {
         params: WebhookUrlParams,
     },
 }
 
-const WEBHOOK_QUERY_PARAMS = {
-    config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
-        skipAuth: true,
-    },
-    schema: {
-        querystring: WebhookUrlParams,
-    },
+
+function extractRawPayload(request: FastifyRequest): { payload?: Record<string, unknown> } {
+    const isRawPayload = request.headers[RAW_PAYLOAD_HEADER] === 'true'
+        && request.headers.authorization
+        && request.body != null
+        && !Array.isArray(request.body)
+        && !Buffer.isBuffer(request.body)
+    if (isRawPayload) {
+        return { payload: request.body as Record<string, unknown> }
+    }
+    return {}
 }

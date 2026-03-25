@@ -192,6 +192,14 @@ export const modelTokenLimit = (model: string) => {
       return 32768;
     case 'text-moderation-stable':
       return 32768;
+    case 'gpt-5':
+      return 400000;
+    case 'gpt-5-chat-latest':
+      return 400000;
+    case 'gpt-5-mini':
+      return 400000;
+    case 'gpt-5-nano':
+      return 400000;
     default:
       return 2048;
   }
@@ -199,6 +207,11 @@ export const modelTokenLimit = (model: string) => {
 
 // List of non-text models to filter out in Ask GPT action
 export const notLLMs = [
+  'gpt-4o-realtime-preview-2024-10-01',
+  'gpt-4o-realtime-preview',
+  'babbage-002',
+  'davinci-002',
+  'tts-1-hd-1106',
   'whisper-1',
   'canary-whisper',
   'canary-tts',

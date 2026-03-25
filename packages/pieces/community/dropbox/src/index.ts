@@ -1,7 +1,5 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import {
-  OAuth2PropertyValue,
-  PieceAuth,
   createPiece,
 } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
@@ -17,27 +15,18 @@ import { dropboxMoveFile } from './lib/actions/move-file';
 import { dropboxMoveFolder } from './lib/actions/move-folder';
 import { dropboxSearch } from './lib/actions/search';
 import { dropboxUploadFile } from './lib/actions/upload-file';
-
-export const dropboxAuth = PieceAuth.OAuth2({
-  description: '',
-  authUrl: 'https://www.dropbox.com/oauth2/authorize',
-  tokenUrl: 'https://api.dropboxapi.com/oauth2/token',
-  required: true,
-  scope: [
-    'files.metadata.write',
-    'files.metadata.read',
-    'files.content.write',
-    'files.content.read',
-  ],
-});
+import { dropboxDownloadFile } from './lib/actions/download-file';
+import { dropboxAuth } from './lib/auth';
+import { dropboxNewFolder } from './lib/triggers/new-folder';
 
 export const dropbox = createPiece({
-  minimumSupportedRelease: '0.5.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/dropbox.png',
   actions: [
     dropboxSearch,
     dropboxCreateNewTextFile,
     dropboxUploadFile,
+    dropboxDownloadFile,
     dropboxGetFileLink,
     dropboxDeleteFile,
     dropboxMoveFile,
@@ -50,15 +39,21 @@ export const dropbox = createPiece({
     createCustomApiCallAction({
       baseUrl: () => 'https://api.dropboxapi.com/2',
       auth: dropboxAuth,
-      authMapping: (auth) => ({
-        Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+      authMapping: async (auth) => ({
+        Authorization: `Bearer ${auth.access_token}`,
       }),
     }),
   ],
   displayName: 'Dropbox',
   description: 'Cloud storage and file synchronization',
-  authors: ["BastienMe","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
+  authors: [
+    'BastienMe',
+    'kishanprmr',
+    'MoShizzle',
+    'khaledmashaly',
+    'abuaboud',
+  ],
   categories: [PieceCategory.CONTENT_AND_FILES],
-  triggers: [],
+  triggers: [dropboxNewFolder],
   auth: dropboxAuth,
 });

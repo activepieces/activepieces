@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 
 import { airtableCommon } from '../common';
-import { airtableAuth } from '../../index';
+import { airtableAuth } from '../auth';
 
 export const airtableFindRecordAction = createAction({
   auth: airtableAuth,
@@ -29,7 +29,7 @@ export const airtableFindRecordAction = createAction({
     } = context.propsValue;
 
     return await airtableCommon.findRecord({
-      personalToken,
+      personalToken: personalToken.secret_text,
       baseId: baseId as string,
       tableId: tableId as string,
       searchField: searchField as string,

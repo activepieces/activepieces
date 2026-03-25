@@ -1,13 +1,12 @@
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { eventsHooks } from '../../helper/application-events'
-import { managedAuthnService } from './managed-authn-service'
-import { ApplicationEventName, ManagedAuthnRequestBody } from '@activepieces/ee-shared'
-import {
-    ALL_PRINCIPAL_TYPES,
-    AuthenticationResponse,
+import { ApplicationEventName, AuthenticationResponse,
+    ManagedAuthnRequestBody,
 } from '@activepieces/shared'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import { securityAccess } from '../../core/security/authorization/fastify-security'
+import { applicationEvents } from '../../helper/application-events'
+import { managedAuthnService } from './managed-authn-service'
 
-export const managedAuthnController: FastifyPluginAsyncTypebox = async (
+export const managedAuthnController: FastifyPluginAsyncZod = async (
     app,
 ) => {
     app.post(
@@ -16,15 +15,13 @@ export const managedAuthnController: FastifyPluginAsyncTypebox = async (
         async (req): Promise<AuthenticationResponse> => {
             const { externalAccessToken } = req.body
 
-            const response = await managedAuthnService.externalToken({
+            const response = await managedAuthnService(req.log).externalToken({
                 externalAccessToken,
             })
-            eventsHooks.get().send(req, {
-                action: ApplicationEventName.SIGNED_UP_USING_MANAGED_AUTH,
-                userId: req.principal.id,
-                createdUser: {
-                    id: response.id,
-                    email: response.email,
+            applicationEvents(req.log).sendUserEvent(req, {
+                action: ApplicationEventName.USER_SIGNED_UP,
+                data: {
+                    source: 'managed',
                 },
             })
             return response
@@ -34,7 +31,7 @@ export const managedAuthnController: FastifyPluginAsyncTypebox = async (
 
 const ManagedAuthnRequest = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        security: securityAccess.public(),
     },
     schema: {
         body: ManagedAuthnRequestBody,

@@ -1,0 +1,1 @@
+export const BASE_URL = 'https://api.slidespeak.co/api/v1'

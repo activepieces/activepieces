@@ -5,6 +5,7 @@ import {
   AuthenticationType,
   httpClient,
 } from '@activepieces/pieces-common';
+import { googleTasksAuth } from '../auth';
 
 export enum TaskStatus {
   NEEDS_ACTION = 'needsAction',
@@ -60,8 +61,9 @@ export const googleTasksCommon = {
   /**
    * @property Target task list ID where the new task will be created
    */
-  tasksList: Property.Dropdown<string>({
+  tasksList: Property.Dropdown<string,true,typeof googleTasksAuth>({
     displayName: 'Tasks List',
+    auth: googleTasksAuth,
     refreshers: [],
     required: true,
     options: async ({ auth }) => {
@@ -93,6 +95,11 @@ export const googleTasksCommon = {
   }),
   notes: Property.LongText({
     displayName: 'Notes',
+    required: false,
+  }),
+  due: Property.DateTime({
+    displayName: 'Due Date',
+    description: 'Due date of the task (YYYY-MM-DD)',
     required: false,
   }),
   completed: Property.Checkbox({

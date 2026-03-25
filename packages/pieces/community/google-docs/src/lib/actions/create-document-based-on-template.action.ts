@@ -1,8 +1,18 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { googleDocsAuth } from '../../index';
+import { googleDocsAuth, createGoogleClient } from '../auth';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { google } from 'googleapis';
-import { OAuth2Client } from 'googleapis-common';
+
+const PLACEHOLDER_FORMATS: Record<string, string> = {
+  'curly_braces': '{{KEY}}',
+  'square_brackets': '[[KEY]]',
+  'single_curly': '{KEY}',
+  'single_square': '[KEY]',
+  '{{KEY}}': '{{KEY}}',
+  '[[KEY]]': '[[KEY]]',
+  '{KEY}': '{KEY}',
+  '[KEY]': '[KEY]',
+};
 
 export const createDocumentBasedOnTemplate = createAction({
   auth: googleDocsAuth,
@@ -18,7 +28,7 @@ export const createDocumentBasedOnTemplate = createAction({
     }),
     values: Property.Object({
       displayName: 'Variables',
-      description: 'Dont include the "[[]]", only the key name and its value',
+      description: 'Dont include the placeholder format "[[]]" or "{{}}", only the key name and its value',
       required: true,
     }),
     images: Property.Object({
@@ -27,23 +37,41 @@ export const createDocumentBasedOnTemplate = createAction({
         'Key: Image ID (get it manually from the Read File Action), Value: Image URL',
       required: true,
     }),
+    placeholder_format: Property.StaticDropdown({
+      displayName: 'Placeholder Format',
+      description: 'Choose the format of placeholders in your template',
+      required: true,
+      defaultValue: 'square_brackets',
+      options: {
+          disabled: false,
+          options: [
+              { label: 'Curly Braces {{}}', value: 'curly_braces' },
+              { label: 'Square Brackets [[]]', value: 'square_brackets' },
+              { label: 'Single Curly Braces {}', value: 'single_curly' },
+              { label: 'Single Square Brackets []', value: 'single_square' }
+          ],
+        },
+  }),
   },
   async run(context) {
     const documentId: string = context.propsValue.template;
     const values = context.propsValue.values;
+    const placeholderType = context.propsValue.placeholder_format;
+    const placeholder_format = PLACEHOLDER_FORMATS[placeholderType] || '[[KEY]]';
 
-    const authClient = new OAuth2Client();
-    authClient.setCredentials(context.auth);
+    const authClient = await createGoogleClient(context.auth);
     const docs = google.docs('v1');
 
     const requests = [];
 
     for (const key in values) {
       const value = values[key];
+      const new_key = placeholder_format.replace('KEY', key);
+
       requests.push({
         replaceAllText: {
           containsText: {
-            text: '[[' + key + ']]',
+            text: new_key,
             matchCase: true,
           },
           replaceText: String(value),

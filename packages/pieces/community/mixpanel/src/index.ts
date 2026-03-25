@@ -2,19 +2,12 @@ import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { trackEvent } from './lib/actions/track-event';
-
-export const mixpanelAuth = PieceAuth.SecretText({
-  displayName: 'Mixpanel token',
-  required: true,
-  description: `
-      The Mixpanel token associated with your project. You can find your Mixpanel token in the project settings dialog in the Mixpanel app.
-    `,
-});
+import { mixpanelAuth } from './lib/auth';
 
 export const mixpanel = createPiece({
   displayName: 'Mixpanel',
   description: 'Simple and powerful product analytics that helps everyone make better decisions',
-  minimumSupportedRelease: '0.9.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/mixpanel.png',
   authors: ["yann120","kishanprmr","MoShizzle","abuaboud"],
   auth: mixpanelAuth,
@@ -24,8 +17,8 @@ export const mixpanel = createPiece({
     createCustomApiCallAction({
       baseUrl: () => 'https://api.mixpanel.com',
       auth: mixpanelAuth,
-      authMapping: (auth) => ({
-        Authorization: `Basic ${Buffer.from(auth as string).toString(
+      authMapping: async (auth) => ({
+        Authorization: `Basic ${Buffer.from(auth.secret_text).toString(
           'base64'
         )}`,
       }),

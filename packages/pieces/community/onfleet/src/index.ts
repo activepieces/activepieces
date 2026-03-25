@@ -72,7 +72,7 @@ export const onfleet = createPiece({
   description: 'Last mile delivery software',
 
   auth: onfleetAuth,
-  minimumSupportedRelease: '0.5.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/onfleet.png',
   categories: [],
   authors: ["kishanprmr","MoShizzle","abuaboud"],
@@ -112,7 +112,7 @@ export const onfleet = createPiece({
     createCustomApiCallAction({
       baseUrl: () => 'https://onfleet.com/api/v2',
       auth: onfleetAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Bearer ${auth}`,
       }),
     }),

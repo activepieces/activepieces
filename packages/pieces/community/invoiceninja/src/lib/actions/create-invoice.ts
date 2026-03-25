@@ -1,8 +1,9 @@
 import {
   createAction,
   Property,
-  Validators,
 } from '@activepieces/pieces-framework';
+import { z } from 'zod';
+import { propsValidation } from '@activepieces/pieces-common';
 
 import { invoiceninjaAuth } from '../..';
 
@@ -19,7 +20,7 @@ export const createInvoice = createAction({
       required: true,
     }),
     purchase_order_no: Property.LongText({
-      displayName: 'Purchase Order Number (alphanumeric)',
+      displayName: 'Purchase Order Number (alphanumeric)', 
       description: 'Descriptive text or arbitrary number (optional)',
       required: false,
     }),
@@ -31,7 +32,7 @@ export const createInvoice = createAction({
     }),
     discount_type: Property.StaticDropdown({
       displayName: 'Type of discount',
-      description: 'Select either amount or percentage for invoice discount. Applies to line items and invoice.', 
+      description: 'Select either amount or percentage for invoice discount. Applies to line items and invoice.',
       defaultValue: true,
       required: true,
       options: {
@@ -78,13 +79,15 @@ export const createInvoice = createAction({
       displayName: 'Invoice due date',
       description: 'e.g., 2024-01-20',
       required: false,
-      processors: [],
-      validators: [Validators.datetimeIso],
     }),
   },
 
   async run(context) {
-    const INapiToken = context.auth.access_token;
+    await propsValidation.validateZod(context.propsValue, {
+      due_date: z.string().datetime().optional(),
+    });
+
+    const INapiToken = context.auth.props.access_token;
     const headers = {
       'X-Api-Token': INapiToken,
       'Content-Type': 'application/json',
@@ -111,7 +114,7 @@ export const createInvoice = createAction({
       throw new Error('Each item in the line_items array must be an object with "quantity" (number), "product_key" (string), and "discount" (string).');
     }
 
-    const baseUrl = context.auth.base_url.replace(/\/$/, '');
+    const baseUrl = context.auth.props.base_url.replace(/\/$/, '');
     let errorMessages = '';
 
     try {

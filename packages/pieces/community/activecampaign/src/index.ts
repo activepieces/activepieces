@@ -21,6 +21,7 @@ import { newOrUpdatedAccountTrigger } from './lib/triggers/new-or-updated-accoun
 import { newContactNoteTrigger } from './lib/triggers/new-contact-note';
 import { newContactTaskTrigger } from './lib/triggers/new-contact-task';
 import { updatedContactTrigger } from './lib/triggers/updated-contact';
+import { activeCampaignAuth } from './lib/auth';
 
 const authGuide = `
 To obtain your ActiveCampaign API URL and Key, follow these steps:
@@ -30,39 +31,12 @@ To obtain your ActiveCampaign API URL and Key, follow these steps:
 3. Under **API Access** ,you'll find your API URL and Key.
 `;
 
-export const activeCampaignAuth = PieceAuth.CustomAuth({
-  required: true,
-  description: authGuide,
-  props: {
-    apiUrl: Property.ShortText({
-      displayName: 'API URL',
-      required: true,
-    }),
-    apiKey: Property.ShortText({
-      displayName: 'API Key',
-      required: true,
-    }),
-  },
-  validate: async ({ auth }) => {
-    try {
-      const client = makeClient(auth);
-      await client.authenticate();
-      return { valid: true };
-    } catch (error) {
-      return {
-        valid: false,
-        error: 'Invalid API credentials',
-      };
-    }
-  },
-});
-
 export const activecampaign = createPiece({
   displayName: 'ActiveCampaign',
   description:
     'Email marketing, marketing automation, and CRM tools you need to create incredible customer experiences.',
   auth: activeCampaignAuth,
-  minimumSupportedRelease: '0.20.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/activecampaign.png',
   categories: [PieceCategory.MARKETING, PieceCategory.SALES_AND_CRM],
   authors: ["kishanprmr","abuaboud"],

@@ -32,6 +32,7 @@ export const createPurchasesBatch = createAction({
             eye_color: 'brown',
             person_occupation: 'marketing',
           },
+          custom_field: '',
           phone_number: '+12025551111',
           campaign_tags: 'post-purchase',
           sharing_channels: ['facebook', 'custom'],
@@ -54,14 +55,10 @@ export const createPurchasesBatch = createAction({
         },
       ],
     }),
-    failsafe: Property.Checkbox({
-      displayName: 'No Error On Failure',
-      required: false,
-    }),
   },
   async run(context) {
     const TALKABLE_API_URL = 'https://www.talkable.com/api/v2';
-    const { site, api_key } = context.auth;
+    const { site, api_key } = context.auth.props;
     const createPurchasesBatch = await httpClient
       .sendRequest<string[]>({
         method: HttpMethod.POST,
@@ -75,12 +72,6 @@ export const createPurchasesBatch = createAction({
           data: context.propsValue.purchases,
           create_offers: context.propsValue.create_offers,
         },
-      })
-      .catch((error) => {
-        if (context.propsValue.failsafe) {
-          return error.errorMessage();
-        }
-        throw error;
       });
     return createPurchasesBatch.body;
   },

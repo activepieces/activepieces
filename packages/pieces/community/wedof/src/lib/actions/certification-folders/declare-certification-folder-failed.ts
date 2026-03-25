@@ -1,31 +1,30 @@
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { wedofAuth } from '../../..';
+import { wedofAuth } from '../../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { wedofCommon } from '../../common/wedof';
 
 export const declareCertificationFolderFailed = createAction({
   auth: wedofAuth,
   name: 'declareCertificationFolderFailed',
-  displayName: "Passer un dossier de certification à l’état : Échoué",
-  description:
-    "Change l'état d'un dossier de crtification vers : Échoué",
-    props: {
-        Id: Property.ShortText({
-          displayName: 'N° du dossier de certification',
-          description:
-            'Sélectionner la propriété {Id} du dossier de certification',
-          required: true,
-        }),
-        detailedResult: Property.ShortText({
-            displayName: "Détail du résultat de l'examen",
-            required: false,
-          }),
-        europeanLanguageLevel: wedofCommon.europeanLanguageLevel,
-        comment: Property.LongText({
-          displayName: "Commentaire",
-          required: false,
-        }),
-    },
+  displayName: 'Passer un dossier de certification à l’état : Échoué',
+  description: "Change l'état d'un dossier de certification vers : Échoué",
+  props: {
+    externalId: Property.ShortText({
+      displayName: 'N° du dossier de certification',
+      description:
+        'Sélectionner la propriété {externalId} du dossier de certification',
+      required: true,
+    }),
+    detailedResult: Property.ShortText({
+      displayName: "Détail du résultat de l'examen",
+      required: false,
+    }),
+    europeanLanguageLevel: wedofCommon.europeanLanguageLevel,
+    comment: Property.LongText({
+      displayName: 'Commentaire',
+      required: false,
+    }),
+  },
 
   async run(context) {
     const message = {
@@ -40,12 +39,12 @@ export const declareCertificationFolderFailed = createAction({
         url:
           wedofCommon.baseUrl +
           '/certificationFolders/' +
-          context.propsValue.Id +
+          context.propsValue.externalId +
           '/fail',
         body: message,
         headers: {
           'Content-Type': 'application/json',
-          'X-Api-Key': context.auth as string,
+          'X-Api-Key': context.auth.secret_text,
         },
       })
     ).body;

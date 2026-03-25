@@ -2,7 +2,6 @@ import {
   createAction,
   OAuth2PropertyValue,
   Property,
-  Validators,
 } from '@activepieces/pieces-framework';
 import {
   addContact,
@@ -13,6 +12,8 @@ import {
   LeadConnectorContactDto,
 } from '../common';
 import { leadConnectorAuth } from '../..';
+import { z } from 'zod';
+import { propsValidation } from '@activepieces/pieces-common';
 
 export const createContact = createAction({
   auth: leadConnectorAuth,
@@ -31,12 +32,10 @@ export const createContact = createAction({
     email: Property.ShortText({
       displayName: 'Email',
       required: false,
-      validators: [Validators.email],
     }),
     phone: Property.ShortText({
       displayName: 'Phone',
       required: false,
-      validators: [Validators.phoneNumber],
     }),
     companyName: Property.ShortText({
       displayName: 'Company Name',
@@ -45,9 +44,9 @@ export const createContact = createAction({
     website: Property.ShortText({
       displayName: 'Website',
       required: false,
-      validators: [Validators.url],
     }),
     tags: Property.MultiSelectDropdown({
+  auth: leadConnectorAuth,
       displayName: 'Tags',
       required: false,
       refreshers: [],
@@ -74,6 +73,7 @@ export const createContact = createAction({
       required: false,
     }),
     country: Property.Dropdown({
+  auth: leadConnectorAuth,
       displayName: 'Country',
       description:
         'When using a dynamic value, make sure to use the ISO-2 country code, and not the country name.',
@@ -108,6 +108,7 @@ export const createContact = createAction({
       required: false,
     }),
     timezone: Property.Dropdown({
+  auth: leadConnectorAuth,
       displayName: 'Time Zone',
       required: false,
       refreshers: [],
@@ -132,6 +133,12 @@ export const createContact = createAction({
   },
 
   async run({ auth, propsValue }) {
+    await propsValidation.validateZod(propsValue, {
+      email: z.string().email().optional(),
+      phone: z.string().regex(/^\+?[1-9]\d{1,14}$/).optional(),
+      website: z.string().url().optional(),
+    });
+
     const {
       firstName,
       lastName,

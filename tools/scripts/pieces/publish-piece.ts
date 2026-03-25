@@ -1,34 +1,29 @@
 import assert from 'node:assert'
 import { argv } from 'node:process'
 import { exec } from '../utils/exec'
-import { readPackageJson, readProjectJson } from '../utils/files'
-import { findPiece } from '../utils/piece-script-utils'
+import { readPackageJson } from '../utils/files'
+import { findAllPiecesDirectoryInSource } from '../utils/piece-script-utils'
+import { isNil } from '@activepieces/shared'
+import chalk from 'chalk'
+import path from 'node:path'
+import { publishNpmPackage } from '../utils/publish-npm-package'
 
 export const publishPiece = async (name: string): Promise<void> => {
   assert(name, '[publishPiece] parameter "name" is required')
 
-  const piece = await findPiece(name);
-  if (!piece) {
-    throw new Error(`[publishPiece] piece not found, name=${name}`)
+  const distPaths = await findAllPiecesDirectoryInSource()
+  const directory = distPaths.find(p => path.basename(p) === name)
+  if (isNil(directory)) {
+    console.error(chalk.red(`[publishPiece] can't find the directory with name ${name}`))
+    return
   }
-  const directory = piece.directoryPath!
+
+  await exec(`turbo run build --filter=@activepieces/piece-${name}`)
+
+  await publishNpmPackage(directory)
+
   const { version } = await readPackageJson(directory)
-  const { name: nxProjectName } = await readProjectJson(directory)
-
-  await exec(`npx nx build ${nxProjectName}`)
-
-  const nxPublishProjectCommand = `
-    node tools/scripts/publish.mjs \
-      ${nxProjectName} \
-      ${version} \
-      latest
-  `
-
-
-  await exec(nxPublishProjectCommand)
-
-  console.info(`[publishPiece] success, name=${name}, version=${version}`)
-
+  console.info(chalk.green.bold(`[publishPiece] success, name=${name}, version=${version}`))
 }
 
 const main = async (): Promise<void> => {

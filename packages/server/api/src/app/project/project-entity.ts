@@ -1,14 +1,23 @@
-import { EntitySchema } from 'typeorm'
-import { ApIdSchema, BaseColumnSchemaPart, TIMESTAMP_COLUMN_TYPE } from '../database/database-common'
 import {
     AppConnection,
+    Cell,
+    Field,
+    File,
     Flow,
     Folder,
     Platform,
     Project,
+    Record,
+    Table,
+    TableWebhook,
     TriggerEvent,
     User,
 } from '@activepieces/shared'
+import { EntitySchema } from 'typeorm'
+import {
+    ApIdSchema,
+    BaseColumnSchemaPart,
+} from '../database/database-common'
 
 type ProjectSchema = Project & {
     owner: User
@@ -18,6 +27,11 @@ type ProjectSchema = Project & {
     events: TriggerEvent[]
     appConnections: AppConnection[]
     platform: Platform
+    tables: Table[]
+    fields: Field[]
+    records: Record[]
+    cells: Cell[]
+    tableWebhooks: TableWebhook[]
 }
 
 export const ProjectEntity = new EntitySchema<ProjectSchema>({
@@ -25,7 +39,7 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
     columns: {
         ...BaseColumnSchemaPart,
         deleted: {
-            type: TIMESTAMP_COLUMN_TYPE,
+            type: 'timestamp with time zone',
             deleteDate: true,
             nullable: true,
         },
@@ -33,14 +47,32 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
         displayName: {
             type: String,
         },
-        notifyStatus: {
+        type: {
             type: String,
+            nullable: false,
         },
         platformId: {
             ...ApIdSchema,
         },
         externalId: {
             type: String,
+            nullable: true,
+        },
+        maxConcurrentJobs: {
+            type: Number,
+            nullable: true,
+        },
+        icon: {
+            type: 'jsonb',
+            nullable: false,
+        },
+        releasesEnabled: {
+            type: Boolean,
+            nullable: false,
+            default: false,
+        },
+        metadata: {
+            type: 'jsonb',
             nullable: true,
         },
     },
@@ -53,7 +85,13 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
         {
             name: 'idx_project_platform_id_external_id',
             columns: ['platformId', 'externalId'],
+            where: 'deleted IS NULL',
             unique: true,
+        },
+        {
+            name: 'idx_project_platform_id',
+            columns: ['platformId'],
+            unique: false,
         },
     ],
     relations: {
@@ -99,6 +137,31 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
         flows: {
             type: 'one-to-many',
             target: 'flow',
+            inverseSide: 'project',
+        },
+        tables: {
+            type: 'one-to-many',
+            target: 'table',
+            inverseSide: 'project',
+        },
+        fields: {
+            type: 'one-to-many',
+            target: 'field',
+            inverseSide: 'project',
+        },
+        records: {
+            type: 'one-to-many',
+            target: 'record',
+            inverseSide: 'project',
+        },
+        cells: {
+            type: 'one-to-many',
+            target: 'cell',
+            inverseSide: 'project',
+        },
+        tableWebhooks: {
+            type: 'one-to-many',
+            target: 'table_webhook',
             inverseSide: 'project',
         },
     },

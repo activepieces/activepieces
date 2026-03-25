@@ -6,12 +6,13 @@ import { createDiscussionAction } from './lib/actions/create-discussion';
 import { createQuestionAction } from './lib/actions/create-question';
 import { revokeBadgeAction } from './lib/actions/revoke-badge';
 import { bettermodeAuth } from './lib/auth';
+import { getAuthToken } from './lib/api';
 
 export const bettermode = createPiece({
   displayName: 'Bettermode',
   description: 'Feature-rich engagement platform. Browse beautifully designed templates, each flexible for precise customization to your needs.',
   auth: bettermodeAuth,
-  minimumSupportedRelease: '0.9.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/bettermode.png',
   categories: [PieceCategory.MARKETING],
   authors: ["joeworkman","kishanprmr","MoShizzle","abuaboud"],
@@ -21,10 +22,10 @@ export const bettermode = createPiece({
     assignBadgeAction,
     revokeBadgeAction,
     createCustomApiCallAction({
-      baseUrl: (auth) => (auth as { region: string }).region, // replace with the actual base URL
+      baseUrl: (auth) => auth ? auth.props.region : '', // replace with the actual base URL
       auth: bettermodeAuth,
-      authMapping: (auth) => ({
-        Authorization: `Bearer ${auth}`,
+      authMapping: async (auth) => ({
+        Authorization: `Bearer ${(await getAuthToken(auth.props)).token}`,
       }),
     }),
   ],

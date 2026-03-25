@@ -7,12 +7,13 @@ import {
   pollingHelper,
 } from '@activepieces/pieces-common';
 import {
+  AppConnectionValueForAuthProperty,
   createTrigger,
   OAuth2PropertyValue,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
-import { zohoCrmAuth } from '../..';
+import { zohoCrmAuth } from '../auth';
 
 export const newContact = createTrigger({
   auth: zohoCrmAuth,
@@ -95,13 +96,15 @@ export const newContact = createTrigger({
       auth: context.auth,
       store: context.store,
       propsValue: context.propsValue,
+      files: context.files,
     });
   },
-  async test({ auth, propsValue, store }): Promise<unknown[]> {
+  async test({ auth, propsValue, store, files }): Promise<unknown[]> {
     return await pollingHelper.test(polling, {
       auth,
       store: store,
       propsValue: propsValue,
+      files: files,
     });
   },
   async onEnable({ auth, propsValue, store }): Promise<void> {
@@ -120,7 +123,7 @@ export const newContact = createTrigger({
   },
 });
 
-const polling: Polling<OAuth2PropertyValue, unknown> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof zohoCrmAuth>, unknown> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth }) => {
     const response = await httpClient.sendRequest<{

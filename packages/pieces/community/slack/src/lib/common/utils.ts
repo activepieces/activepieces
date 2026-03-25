@@ -1,90 +1,101 @@
-import {
-  AuthenticationType,
-  httpClient,
-  HttpMethod,
-  HttpRequest,
-  HttpResponse,
-} from '@activepieces/pieces-common';
 import { ApFile } from '@activepieces/pieces-framework';
+import { Block, KnownBlock, WebClient } from '@slack/web-api';
+
+const SLACK_SECTION_TEXT_MAX_LENGTH = 3000;
+
+export function textToSectionBlocks(text: string): (KnownBlock | Block)[] {
+  if (text.length <= SLACK_SECTION_TEXT_MAX_LENGTH) {
+    return [{ type: 'section', text: { type: 'mrkdwn', text } }];
+  }
+
+  const blocks: (KnownBlock | Block)[] = [];
+  let remaining = text;
+
+  while (remaining.length > 0) {
+    if (remaining.length <= SLACK_SECTION_TEXT_MAX_LENGTH) {
+      blocks.push({ type: 'section', text: { type: 'mrkdwn', text: remaining } });
+      break;
+    }
+
+    let splitIndex = remaining.lastIndexOf('\n', SLACK_SECTION_TEXT_MAX_LENGTH);
+    if (splitIndex <= 0) {
+      splitIndex = remaining.lastIndexOf(' ', SLACK_SECTION_TEXT_MAX_LENGTH);
+    }
+    if (splitIndex <= 0) {
+      splitIndex = SLACK_SECTION_TEXT_MAX_LENGTH;
+    }
+
+    blocks.push({ type: 'section', text: { type: 'mrkdwn', text: remaining.substring(0, splitIndex) } });
+    remaining = remaining.substring(splitIndex).trimStart();
+  }
+
+  return blocks;
+}
+
+export function buildFlowOriginContextBlock(context: {
+  server: { publicUrl: string };
+  project: { id: string };
+  flows: { current: { id: string } };
+}): KnownBlock {
+  return {
+    type: 'context',
+    elements: [
+      {
+        type: 'mrkdwn',
+        text: `Message sent by <${new URL(context.server.publicUrl).origin}/projects/${context.project.id}/flows/${context.flows.current.id}|this flow>.`
+      }
+    ]
+  };
+}
 
 export const slackSendMessage = async ({
   text,
   conversationId,
   username,
   profilePicture,
+  iconEmoji,
   blocks,
   threadTs,
   token,
   file,
+  replyBroadcast,
+  unfurlLinks,
 }: SlackSendMessageParams) => {
-  let response: HttpResponse;
-  let request: HttpRequest;
+  const client = new WebClient(token);
 
   if (file) {
-    const formData = new FormData();
-    formData.append('file', new Blob([file.data]));
-    formData.append('channels', conversationId);
-    formData.append('initial_comment', text);
-    if (threadTs) formData.append('thread_ts', threadTs);
-
-    request = {
-      url: `https://slack.com/api/files.upload`,
-      method: HttpMethod.POST,
-      body: formData,
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token,
-      },
-    };
-    response = await httpClient.sendRequest(request);
+    return await client.files.uploadV2({
+      channel_id: conversationId,
+      initial_comment: text,
+      thread_ts: threadTs,
+      file_uploads: [
+        {
+          file: file.data,
+          filename: file.filename,
+        },
+      ],
+    });
   } else {
-    const body: any = {
+    const messageParams: any = {
       text,
       channel: conversationId,
+      username,
+      icon_url: profilePicture,
+      icon_emoji: iconEmoji,
+      blocks: blocks as Block[],
+      thread_ts: threadTs,
     };
 
-    if (username) body['username'] = username;
-    if (profilePicture) body['icon_url'] = profilePicture;
-    if (blocks) body['blocks'] = blocks;
-    if (threadTs) body['thread_ts'] = threadTs;
-
-    request = {
-      method: HttpMethod.POST,
-      url: 'https://slack.com/api/chat.postMessage',
-      body,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token,
-      },
-    };
-
-    response = await httpClient.sendRequest(request);
-  }
-
-  if (!response.body.ok) {
-    switch (response.body.error) {
-      case 'not_in_channel':
-        throw new Error(
-          JSON.stringify({
-            message: 'The bot is not in the channel',
-            code: 'not_in_channel',
-            action: 'Invite the bot from the channel settings',
-          })
-        );
-      default: {
-        throw new Error(response.body.error);
-      }
+    if (replyBroadcast) {
+      messageParams.reply_broadcast = replyBroadcast;
     }
-  }
 
-  return {
-    success: true,
-    request_body: request.body,
-    response_body: response.body,
-  };
+    if (unfurlLinks === false) {
+      messageParams.unfurl_links = false;
+    }
+
+    return await client.chat.postMessage(messageParams);
+  }
 };
 
 type SlackSendMessageParams = {
@@ -92,10 +103,13 @@ type SlackSendMessageParams = {
   conversationId: string;
   username?: string;
   profilePicture?: string;
+  iconEmoji?: string;
   blocks?: unknown[] | Record<string, any>;
-  text: string;
+  text?: string;
   file?: ApFile;
   threadTs?: string;
+  replyBroadcast?: boolean;
+  unfurlLinks?: boolean;
 };
 
 export function processMessageTimestamp(input: string) {
@@ -116,4 +130,51 @@ export function processMessageTimestamp(input: string) {
   }
 
   return undefined;
+}
+
+export function getFirstFiveOrAll(array: unknown[]) {
+  if (array.length <= 5) {
+    return array;
+  } else {
+    return array.slice(0, 5);
+  }
+}
+
+/**
+* Parse a message text to extract command and arguments
+*/
+export function parseCommand(
+ text: string,
+ botUserId: string,
+ validCommands: string[]
+): { command: string; args: string[] } | null {
+ if (!botUserId) {
+   return null;
+ }
+
+ // Check if the message mentions the bot
+ const mentionRegex = new RegExp(`<@${botUserId}>\\s+(.+)`, 's');
+ const mentionMatch = text.match(mentionRegex);
+
+ if (!mentionMatch) {
+   return null;
+ }
+
+ // Extract the text after the mention
+ const commandText = mentionMatch[1].trim();
+
+ // Split into command and arguments (first word is command, rest are args)
+ const parts = commandText.split(/\s+/);
+ const command = parts[0].toLowerCase();
+ const args = parts.slice(1);
+
+ // Check if it's a valid command
+ if (!validCommands.includes(command)) {
+   return null;
+ }
+
+ return {
+   command,
+   args,
+ };
 }

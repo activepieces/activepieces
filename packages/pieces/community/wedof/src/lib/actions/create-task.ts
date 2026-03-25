@@ -1,4 +1,4 @@
-import { wedofAuth } from '../../index';
+import { wedofAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { wedofCommon } from '../common/wedof';
@@ -10,29 +10,24 @@ export const createTask = createAction({
   displayName: "Créer une tâche",
   description: "Permet de créer une tâche d'un dossier (Dossier de formation / Dossier de certification)",
   props: {
-    Id: Property.ShortText({
-      displayName: 'N° du dossier',
-      description:
-        'Sélectionner la propriété {Id} du dossier',
-      required: true,
-    }),
     entityClass: Property.StaticDropdown({
       displayName: "Choisir le type de dossier",
       description: "Permet de n'obtenir que les dossiers dans le type considéré - par défaut tous les types sont retournés",
       required: true,
       options: {
         options: [
-          {
-            value: "CertificationFolder",
-            label: 'Dossier de certification',
-          },
-          {
-            value: "RegistrationFolder",
-            label: 'Dossier de formation',
-          },
+          {label: "Dossier de certification", value: "CertificationFolder"},
+          {label: "Dossier de formation", value: "RegistrationFolder"},
+          {label: "Proposition commerciale", value: "Proposal"}
         ],
         disabled: false,
       },
+    }),
+    externalId: Property.ShortText({
+      displayName: 'N° du dossier',
+      description:
+        'Sélectionner la propriété {externalId} du dossier',
+      required: true,
     }),
     title: Property.ShortText({
         displayName: 'Titre de la tâche',
@@ -40,7 +35,7 @@ export const createTask = createAction({
     }),
     dueDate: Property.DateTime({
         displayName: "Date d'échéance",
-        description: 'Date au format YYYY-MM-DD.',
+        description: 'Date au format YYYY-MM-DDTHH:mm:ssZ.',
         required: false,
     }),
     type:wedofCommon.tasks,
@@ -62,9 +57,7 @@ export const createTask = createAction({
   async run(context) {
     const message = {
         title: context.propsValue.title ?? null,
-        dueDate: context.propsValue.dueDate
-        ? dayjs(context.propsValue.dueDate).format('YYYY-MM-DD')
-        : null,
+        dueDate: context.propsValue.dueDate ? dayjs(context.propsValue.dueDate) : null,
         eventEndTime: null,
         type: context.propsValue.type,
         qualiopiIndicators: context.propsValue.qualiopiIndicators,
@@ -81,11 +74,11 @@ export const createTask = createAction({
             wedofCommon.baseUrl +
             '/activities/' +
             context.propsValue.entityClass +
-            '/'+ context.propsValue.Id,
+            '/'+ context.propsValue.externalId,
           body: message,
           headers: {
             'Content-Type': 'application/json',
-            'X-Api-Key': context.auth as string,
+            'X-Api-Key': context.auth.secret_text,
           },
         })
       ).body;

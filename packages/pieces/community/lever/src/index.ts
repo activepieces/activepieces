@@ -1,4 +1,8 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import {
+  AppConnectionValueForAuthProperty,
+  createPiece,
+  PieceAuth,
+} from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { getOpportunity } from './lib/actions/get-opportunity';
 import { updateOpportunityStage } from './lib/actions/update-opportunity-stage';
@@ -19,16 +23,14 @@ export const leverAuth = PieceAuth.CustomAuth({
   required: true,
 });
 
-export type LeverAuth = {
-  apiKey: string;
-};
+export type LeverAuth = AppConnectionValueForAuthProperty<typeof leverAuth>;
 export const lever = createPiece({
   displayName: 'Lever',
   auth: leverAuth,
   description:
     'Lever is a modern, collaborative recruiting platform that powers a more human approach to hiring.',
   categories: [PieceCategory.HUMAN_RESOURCES],
-  minimumSupportedRelease: '0.20.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/lever.png',
   authors: ['AdamSelene'],
   actions: [
@@ -42,8 +44,8 @@ export const lever = createPiece({
         return LEVER_BASE_URL;
       },
       auth: leverAuth,
-      authMapping: (auth) => {
-        const { apiKey } = auth as LeverAuth;
+      authMapping: async (auth) => {
+        const { apiKey } = auth.props;
         return {
           Authorization:
             'Basic ' + Buffer.from(`${apiKey}:`).toString('base64'),

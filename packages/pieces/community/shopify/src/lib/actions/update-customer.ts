@@ -1,10 +1,8 @@
-import {
-  Property,
-  Validators,
-  createAction,
-} from '@activepieces/pieces-framework';
+import { Property, createAction } from '@activepieces/pieces-framework';
 import { shopifyAuth } from '../..';
 import { updateCustomer } from '../common';
+import { z } from 'zod';
+import { propsValidation } from '@activepieces/pieces-common';
 
 export const updateCustomerAction = createAction({
   auth: shopifyAuth,
@@ -19,7 +17,6 @@ export const updateCustomerAction = createAction({
     email: Property.ShortText({
       displayName: 'Email',
       required: false,
-      validators: [Validators.email],
     }),
     verifiedEmail: Property.Checkbox({
       displayName: 'Verified Email',
@@ -43,11 +40,14 @@ export const updateCustomerAction = createAction({
     phoneNumber: Property.ShortText({
       displayName: 'Phone Number',
       required: false,
-      validators: [Validators.phoneNumber],
     }),
     tags: Property.ShortText({
       displayName: 'Tags',
       description: 'A string of comma-separated tags for filtering and search',
+      required: false,
+    }),
+    acceptsMarketing: Property.Checkbox({
+      displayName: 'Accepts Marketing ?',
       required: false,
     }),
   },
@@ -61,7 +61,12 @@ export const updateCustomerAction = createAction({
       lastName,
       phoneNumber,
       tags,
+      acceptsMarketing
     } = propsValue;
+
+    await propsValidation.validateZod(propsValue, {
+      email: z.string().email().optional(),
+    });
 
     return await updateCustomer(
       customerId,
@@ -73,6 +78,10 @@ export const updateCustomerAction = createAction({
         last_name: lastName,
         phone: phoneNumber,
         tags,
+           email_marketing_consent:{
+          state:acceptsMarketing?'subscribed':'unsubscribed',
+          opt_in_level:"unknown"
+        }
       },
       auth
     );

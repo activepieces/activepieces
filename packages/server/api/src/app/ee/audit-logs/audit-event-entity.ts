@@ -1,7 +1,6 @@
+import { ApplicationEvent, Platform } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
-import { BaseColumnSchemaPart, JSONB_COLUMN_TYPE } from '../../database/database-common'
-import { ApplicationEvent } from '@activepieces/ee-shared'
-import { Platform } from '@activepieces/shared'
+import { BaseColumnSchemaPart } from '../../database/database-common'
 
 type AuditEventSchema = ApplicationEvent & {
     platform: Platform
@@ -23,13 +22,14 @@ export const AuditEventEntity = new EntitySchema<AuditEventSchema>({
         },
         userEmail: {
             type: String,
+            nullable: true,
         },
         projectDisplayName: {
             type: String,
             nullable: true,
         },
         data: {
-            type: JSONB_COLUMN_TYPE,
+            type: 'jsonb',
         },
         ip: {
             type: String,
@@ -37,12 +37,21 @@ export const AuditEventEntity = new EntitySchema<AuditEventSchema>({
         },
         userId: {
             type: String,
+            nullable: true,
         },
     },
     indices: [
         {
-            name: 'audit_event_platform_id_project_id_user_id_idx',
-            columns: ['platformId', 'projectId', 'userId'],
+            name: 'audit_event_platform_id_project_id_user_id_action_idx',
+            columns: ['platformId', 'projectId', 'userId', 'action'],
+        },
+        {
+            name: 'audit_event_platform_id_user_id_action_idx',
+            columns: ['platformId', 'userId', 'action'],
+        },
+        {
+            name: 'audit_event_platform_id_action_idx',
+            columns: ['platformId', 'action'],
         },
     ],
     relations: {

@@ -32,12 +32,12 @@ export function sendShopifyRequest(data: {
   auth: ShopifyAuth;
 }): Promise<HttpResponse<HttpMessageBody>> {
   return httpClient.sendRequest({
-    url: `${getBaseUrl(data.auth.shopName)}${data.url}`,
+    url: `${getBaseUrl(data.auth.props.shopName)}${data.url}`,
     method: data.method,
     body: data.body,
     queryParams: data.queryParams,
     headers: {
-      'X-Shopify-Access-Token': data.auth.adminToken,
+      'X-Shopify-Access-Token': data.auth.props.adminToken,
     },
   });
 }
@@ -69,6 +69,47 @@ export async function getCustomer(
   });
 
   return (response.body as { customer: ShopifyCustomer }).customer;
+}
+
+export async function getCustomers(
+  auth: ShopifyAuth,
+): Promise<ShopifyCustomer[]> {
+  const queryParams: QueryParams = {};
+
+  let customers:ShopifyCustomer[] = [];
+  let hasNextPage = true;
+
+  while (hasNextPage) {
+
+    const response = await sendShopifyRequest({
+      auth: auth,
+      url: `/customers.json`,
+      method: HttpMethod.GET,
+      queryParams,
+    });
+
+    customers = customers.concat((response.body as { customers: ShopifyCustomer[] }).customers);
+
+    const linkHeader = response.headers?.['link'];
+    if (linkHeader && typeof linkHeader === 'string' && linkHeader.includes('rel="next"')) {
+      // Extract the URL for the next page from the Link header
+      const nextLink = linkHeader
+        .split(',')
+        .find((s) => s.includes('rel="next"'))
+        ?.match(/<(.*?)>/)?.[1];
+      
+      if (nextLink) {
+        queryParams.page_info = new URL(nextLink).searchParams.get('page_info') || '';
+      } else {
+        hasNextPage = false;
+      }
+    } else {
+      hasNextPage = false;
+    }
+  }
+
+  return customers;
+
 }
 
 export async function updateCustomer(
@@ -121,14 +162,39 @@ export async function getProducts(
     queryParams.updated_at_min = updatedAtMin;
   }
 
-  const response = await sendShopifyRequest({
-    auth: auth,
-    url: `/products.json`,
-    method: HttpMethod.GET,
-    queryParams,
-  });
+  let products:ShopifyProduct[] = [];
+  let hasNextPage = true;
 
-  return (response.body as { products: ShopifyProduct[] }).products;
+  while (hasNextPage) {
+
+    const response = await sendShopifyRequest({
+      auth: auth,
+      url: `/products.json`,
+      method: HttpMethod.GET,
+      queryParams,
+    });
+
+    products = products.concat((response.body as { products: ShopifyProduct[] }).products);
+
+    const linkHeader = response.headers?.['link'];
+    if (linkHeader && typeof linkHeader === 'string' && linkHeader.includes('rel="next"')) {
+      // Extract the URL for the next page from the Link header
+      const nextLink = linkHeader
+        .split(',')
+        .find((s) => s.includes('rel="next"'))
+        ?.match(/<(.*?)>/)?.[1];
+      
+      if (nextLink) {
+        queryParams.page_info = new URL(nextLink).searchParams.get('page_info') || '';
+      } else {
+        hasNextPage = false;
+      }
+    } else {
+      hasNextPage = false;
+    }
+  }
+
+  return products;
 }
 
 export async function createProduct(

@@ -9,17 +9,17 @@ export const matomo = createPiece({
   description: 'Open source alternative to Google Analytics',
 
   auth: matomoAuth,
-  minimumSupportedRelease: '0.9.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/matomo.png',
   categories: [PieceCategory.BUSINESS_INTELLIGENCE],
   authors: ["joeworkman","kishanprmr","MoShizzle","abuaboud"],
   actions: [
     addAnnotationAction,
     createCustomApiCallAction({
-      baseUrl: (auth) => (auth as { domain: string }).domain,
+      baseUrl: (auth) => (auth?.props .domain ?? ''),
       auth: matomoAuth,
-      authMapping: (auth) => ({
-        Authorization: `Bearer ${(auth as { tokenAuth: string }).tokenAuth}`,
+      authMapping: async (auth) => ({
+        Authorization: `Bearer ${(auth ).props .tokenAuth}`,
       }),
     }),
   ],

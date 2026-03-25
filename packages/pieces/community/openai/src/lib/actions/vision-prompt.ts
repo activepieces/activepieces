@@ -1,10 +1,11 @@
 import {
   createAction,
   Property,
-  Validators,
 } from '@activepieces/pieces-framework';
 import OpenAI from 'openai';
-import { openaiAuth } from '../..';
+import { openaiAuth } from '../auth';
+import { z } from 'zod';
+import { propsValidation } from '@activepieces/pieces-common';
 
 export const visionPrompt = createAction({
   auth: openaiAuth,
@@ -23,6 +24,7 @@ export const visionPrompt = createAction({
       required: true,
     }),
     detail: Property.Dropdown({
+      auth: openaiAuth,
       displayName: 'Detail',
       required: false,
       description:
@@ -53,7 +55,6 @@ export const visionPrompt = createAction({
       required: false,
       description:
         'Controls randomness: Lowering results in less random completions. As the temperature approaches zero, the model will become deterministic and repetitive.',
-      validators: [Validators.minValue(0), Validators.maxValue(1.0)],
       defaultValue: 0.9,
     }),
     maxTokens: Property.Number({
@@ -94,8 +95,12 @@ export const visionPrompt = createAction({
     }),
   },
   async run({ auth, propsValue }) {
+    await propsValidation.validateZod(propsValue, {
+      temperature: z.number().min(0).max(1),
+    });
+
     const openai = new OpenAI({
-      apiKey: auth,
+      apiKey: auth.secret_text,
     });
     const { temperature, maxTokens, topP, frequencyPenalty, presencePenalty } =
       propsValue;
@@ -116,7 +121,7 @@ export const visionPrompt = createAction({
     });
 
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4-vision-preview',
+      model: 'gpt-4o',
       messages: [
         ...roles,
         {

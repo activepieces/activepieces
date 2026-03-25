@@ -1,6 +1,8 @@
-import { createAction, Property, Validators } from "@activepieces/pieces-framework";
+import { createAction, Property } from "@activepieces/pieces-framework";
 import Odoo from "../../commom/index";
-import { odooAuth } from "../..";
+import { odooAuth } from '../auth';
+import { z } from 'zod';
+import { propsValidation } from '@activepieces/pieces-common';
 
 export default createAction({
     name: 'get_records',
@@ -31,21 +33,23 @@ export default createAction({
         offset: Property.Number({
             displayName: 'Offset',
             required: false,
-            validators: [Validators.integer],
         }),
         limit: Property.Number({
             displayName: 'Limit',
             required: false,
-            validators: [Validators.integer, Validators.minValue(1)],
         })
     },
     async run(context) {
+        await propsValidation.validateZod(context.propsValue, {
+            limit: z.number().min(1).optional(),
+        });
+
         const odoo = new Odoo({
-            url: context.auth.base_url,
+            url: context.auth.props.base_url,
             port: 443,
-            db: context.auth.database,
-            username: context.auth.username,
-            password: context.auth.api_key,
+            db: context.auth.props.database,
+            username: context.auth.props.username,
+            password: context.auth.props.api_key,
         })
 
         try {
@@ -59,4 +63,3 @@ export default createAction({
         }
     }
 });
-

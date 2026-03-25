@@ -36,17 +36,17 @@ export const brilliantDirectories = createPiece({
   description: 'All-in-one membership software',
 
   auth: brilliantDirectoriesAuth,
-  minimumSupportedRelease: '0.9.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/brilliant-directories.png',
   categories: [],
   authors: ["ShayPunter","dennisrongo","kishanprmr","MoShizzle","abuaboud"],
   actions: [
     createNewUser,
     createCustomApiCallAction({
-      baseUrl: (auth) => (auth as { site_url: string }).site_url,
+      baseUrl: (auth) => auth?.props?.site_url || '',
       auth: brilliantDirectoriesAuth,
-      authMapping: (auth) => ({
-        'X-Api-Key': `${(auth as { api_key: string }).api_key}`,
+      authMapping: async (auth) => ({
+        'X-Api-Key': `${auth.props.api_key}`,
       }),
     }),
   ],

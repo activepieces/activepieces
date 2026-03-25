@@ -17,16 +17,19 @@ export type TodoistCreateTaskRequest = {
 	labels?: Array<string> | undefined;
 	priority?: number | undefined;
 	due_date?: string | undefined;
+    due_string?: string | undefined;
+    due_datetime?: string | undefined;
 	section_id?: string | undefined;
 };
 
 export type TodoistUpdateTaskRequest = {
-	task_id: string;
 	content?: string;
 	description?: string;
 	labels?: Array<string>;
 	priority?: number;
-	due_date?: string;
+	due_date?: string | undefined;
+    due_string?: string | undefined;
+    due_datetime?: string | undefined;
 };
 
 type TodoistTaskDue = {
@@ -39,8 +42,8 @@ type TodoistTaskDue = {
 
 export type TodoistTask = {
 	id: string;
-	projectId: string | null;
-	sectionId: string | null;
+	project_id: string | null;
+	section_id: string | null;
 	content: string;
 	description?: string | undefined;
 	is_completed: boolean;
@@ -59,15 +62,23 @@ export type TodoistTask = {
 
 export type TodoistCompletedTask = {
 	id: string;
-	task_id: string;
 	user_id: string;
 	project_id: string;
-	section_id: string;
+	section_id: string | null;
+	parent_id: string | null;
+	added_by_uid: string;
+	assigned_by_uid: string | null;
+	responsible_uid: string | null;
+	completed_by_uid: string | null;
+	labels: string[];
+	checked: boolean;
+	is_deleted: boolean;
 	content: string;
-	completed_at: string;
+	description: string;
+	priority: number;
 	note_count: number;
-};
-
-export type TodoistCompletedListResponse = {
-	items: TodoistCompletedTask[];
+	due: TodoistTaskDue | null;
+	added_at: string;
+	completed_at: string;
+	updated_at: string;
 };

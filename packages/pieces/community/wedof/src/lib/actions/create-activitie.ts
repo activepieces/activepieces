@@ -1,4 +1,4 @@
-import { wedofAuth } from '../../index';
+import { wedofAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { wedofCommon } from '../common/wedof';
@@ -10,29 +10,24 @@ export const createActivitie = createAction({
   displayName: "Créer une activité",
   description: "Permet de créer une activité d'un dossier (Dossier de formation / Dossier de certification)",
   props: {
-    Id: Property.ShortText({
-      displayName: 'N° du dossier',
-      description:
-        'Sélectionner la propriété {Id} du dossier',
-      required: true,
-    }),
     entityClass: Property.StaticDropdown({
       displayName: "Choisir le type de dossier",
       description: "Permet de n'obtenir que les dossiers dans le type considéré - par défaut tous les types sont retournés",
       required: true,
       options: {
         options: [
-          {
-            value: "CertificationFolder",
-            label: 'Dossier de certification',
-          },
-          {
-            value: "RegistrationFolder",
-            label: 'Dossier de formation',
-          },
+          {label: "Dossier de certification", value: "CertificationFolder"},
+          {label: "Dossier de formation", value: "RegistrationFolder"},
+          {label: "Proposition commerciale", value: "Proposal"}
         ],
         disabled: false,
       },
+    }),
+    externalId: Property.ShortText({
+      displayName: 'N° du dossier',
+      description:
+        'Sélectionner la propriété {externalId} du dossier',
+      required: true,
     }),
     title: Property.ShortText({
         displayName: "Titre de l'activité",
@@ -50,12 +45,12 @@ export const createActivitie = createAction({
     }),
     eventTime: Property.DateTime({
       displayName: "Date de début",
-      description: 'Date au format YYYY-MM-DD.',
+      description: 'Date au format YYYY-MM-DDTHH:mm:ssZ.',
       required: true,
     }),
     eventEndTime: Property.DateTime({
      displayName: "Date d'échéance",
-     description: 'Date au format YYYY-MM-DD.',
+     description: 'Date au format YYYY-MM-DDTHH:mm:ssZ.',
      required: false,
     }),
     link: Property.ShortText({
@@ -67,17 +62,13 @@ export const createActivitie = createAction({
   async run(context) {
     const message = {
         title: context.propsValue.title ?? null,
-        eventEndTime: context.propsValue.eventEndTime
-        ? dayjs(context.propsValue.eventEndTime).format('YYYY-MM-DD')
-        : null,
+        eventEndTime: context.propsValue.eventEndTime ? dayjs(context.propsValue.eventEndTime) : null,
         type: context.propsValue.type,
         qualiopiIndicators: context.propsValue.qualiopiIndicators,
         description: context.propsValue.description ?? null,
         userEmail: context.propsValue.userEmail ?? null,
         link: context.propsValue.link ?? null,
-        eventTime: context.propsValue.eventTime
-        ? dayjs(context.propsValue.eventTime).format('YYYY-MM-DD')
-        : null,
+        eventTime: context.propsValue.eventTime ? dayjs(context.propsValue.eventTime) : null,
         origin: "manual",
       };
       return (
@@ -87,11 +78,11 @@ export const createActivitie = createAction({
             wedofCommon.baseUrl +
             '/activities/' +
             context.propsValue.entityClass +
-            '/'+ context.propsValue.Id,
+            '/'+ context.propsValue.externalId,
           body: message,
           headers: {
             'Content-Type': 'application/json',
-            'X-Api-Key': context.auth as string,
+            'X-Api-Key': context.auth.secret_text,
           },
         })
       ).body;

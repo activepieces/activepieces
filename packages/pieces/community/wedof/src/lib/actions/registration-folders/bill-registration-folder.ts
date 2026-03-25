@@ -1,5 +1,5 @@
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { wedofAuth } from '../../..';
+import { wedofAuth } from '../../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { wedofCommon } from '../../common/wedof';
 
@@ -8,7 +8,7 @@ export const billRegistrationFolder = createAction({
   name: 'billRegistrationFolder',
   displayName: 'Facturer le dossier de formation',
   description:
-    'Associe le dossier de formation a un n° de facture et transmet les informations de facturation au financeur (EDOF par exemple)',
+    'Associe le dossier de formation à un n° de facture et transmets les informations de facturation au financeur (EDOF par exemple)',
   props: {
     externalId: Property.ShortText({
       displayName: 'N° du dossier de formation',
@@ -24,7 +24,7 @@ export const billRegistrationFolder = createAction({
     vatRate: Property.Number({
       displayName: 'TVA',
       description:
-        'Permet de forcer un Taux de TVA en %. Par défaut la TVA est calculé à partir des données du dossier de formation',
+        'Permet de forcer un Taux de TVA en %. Par défaut la TVA est calculée à partir des données du dossier de formation',
       required: false,
     }),
   },
@@ -45,7 +45,7 @@ export const billRegistrationFolder = createAction({
         body: message,
         headers: {
           'Content-Type': 'application/json',
-          'X-Api-Key': context.auth as string,
+          'X-Api-Key': context.auth.secret_text,
         },
       })
     ).body;

@@ -1,13 +1,9 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  AuthenticationType,
-  httpClient,
-  HttpMethod,
-  HttpRequest,
-} from '@activepieces/pieces-common';
-import { slackAuth } from '../..';
-import { blocks, slackChannel, slackInfo } from '../common/props';
-import { processMessageTimestamp } from '../common/utils';
+import { slackAuth } from '../auth';
+import { blocks, singleSelectChannelInfo, slackChannel, mentionOriginFlow } from '../common/props';
+import { buildFlowOriginContextBlock, processMessageTimestamp, textToSectionBlocks } from '../common/utils';
+import { Block,KnownBlock, WebClient } from '@slack/web-api';
+import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
 
 export const updateMessage = createAction({
   // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
@@ -16,8 +12,8 @@ export const updateMessage = createAction({
   description: 'Update an existing message',
   auth: slackAuth,
   props: {
-    info: slackInfo,
-    channel: slackChannel,
+    info: singleSelectChannelInfo,
+    channel: slackChannel(true),
     ts: Property.ShortText({
       displayName: 'Message Timestamp',
       description:
@@ -29,35 +25,32 @@ export const updateMessage = createAction({
       description: 'The updated text of your message',
       required: true,
     }),
+    mentionOriginFlow,
     blocks,
   },
-  async run({ auth, propsValue }) {
+  async run(context) {
+    const { auth, propsValue } = context;
     const messageTimestamp = processMessageTimestamp(propsValue.ts);
     if (!messageTimestamp) {
       throw new Error('Invalid Timestamp Value.');
     }
+    const client = new WebClient(getBotToken(auth as SlackAuthValue));
 
-    const request: HttpRequest = {
-      method: HttpMethod.POST,
-      url: 'https://slack.com/api/chat.update',
-      body: {
-        channel: propsValue.channel,
-        ts: messageTimestamp,
-        text: propsValue.text,
-        blocks: propsValue.blocks,
-      },
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: auth.access_token,
-      },
-    };
+    const blockList: (KnownBlock | Block)[] = [...textToSectionBlocks(propsValue.text)];
 
-    const response = await httpClient.sendRequest(request);
-
-    if (!response.body.ok) {
-      throw new Error(response.body.error);
+    if (propsValue.blocks && Array.isArray(propsValue.blocks) && propsValue.blocks.length > 0) {
+      blockList.push(...(propsValue.blocks as unknown as (KnownBlock | Block)[]));
     }
 
-    return response.body;
+    if (propsValue.mentionOriginFlow) {
+      blockList.push(buildFlowOriginContextBlock(context));
+    }
+
+    return await client.chat.update({
+      channel: propsValue.channel,
+      ts: messageTimestamp,
+      text: propsValue.text,
+      blocks: blockList,
+    });
   },
 });

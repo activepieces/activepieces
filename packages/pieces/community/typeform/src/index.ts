@@ -18,15 +18,15 @@ export const typeform = createPiece({
   displayName: 'Typeform',
   description: 'Create beautiful online forms and surveys',
 
-  minimumSupportedRelease: '0.5.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/typeform.png',
   categories: [PieceCategory.FORMS_AND_SURVEYS],
   actions: [
     createCustomApiCallAction({
       baseUrl: () => 'https://api.typeform.com',
       auth: typeformAuth,
-      authMapping: (auth) => ({
-        Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+      authMapping: async (auth) => ({
+        Authorization: `Bearer ${auth.access_token}`,
       }),
     }),
   ],
