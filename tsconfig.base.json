@@ -926,6 +926,9 @@
       "@activepieces/piece-resend": [
         "packages/pieces/community/resend/src/index.ts"
       ],
+      "@activepieces/piece-rewardful": [
+        "packages/pieces/community/rewardful/src/index.ts"
+      ],
       "@activepieces/piece-respaid": [
         "packages/pieces/community/respaid/src/index.ts"
       ],
