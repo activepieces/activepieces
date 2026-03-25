@@ -150,6 +150,14 @@ export async function getVertexAIImageModelOptions(
   }
   try {
     const options = await fetchVertexAIModels(auth, location ?? 'us-central1', 'imagen');
+
+    if (location === 'global' || location === 'us-central1') {
+      options.push({
+        label: 'gemini-2.5-flash-image (Nano Banana)',
+        value: 'gemini-2.5-flash-image',
+      });
+    }
+
     return { disabled: false, options };
   } catch {
     return {
