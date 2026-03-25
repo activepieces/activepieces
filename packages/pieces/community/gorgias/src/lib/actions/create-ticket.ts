@@ -43,7 +43,7 @@ export const createTicketAction = createAction({
       description: 'How the message reached Gorgias.',
       required: true,
       options: GORGIAS_VIA_OPTIONS,
-      defaultValue: 'help-center',
+      defaultValue: 'api',
     }),
   },
   async run(context) {

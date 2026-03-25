@@ -62,7 +62,7 @@ export const createMessageAction = createAction({
       displayName: 'Via',
       required: true,
       options: GORGIAS_VIA_OPTIONS,
-      defaultValue: 'help-center',
+      defaultValue: 'api',
     }),
     sentDatetime: Property.ShortText({
       displayName: 'Sent Datetime',

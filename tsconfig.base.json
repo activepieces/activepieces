@@ -507,6 +507,9 @@
       "@activepieces/piece-gotify": [
         "packages/pieces/community/gotify/src/index.ts"
       ],
+      "@activepieces/piece-gorgias": [
+        "packages/pieces/community/gorgias/src/index.ts"
+      ],
       "@activepieces/piece-graphql": [
         "packages/pieces/community/graphql/src/index.ts"
       ],
