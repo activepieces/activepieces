@@ -347,6 +347,7 @@ import { AddPgVectorExtension1773627989514 } from './migration/postgres/17736279
 import { AddKnowledgeBaseChunkTable1773627989515 } from './migration/postgres/1773627989515-AddKnowledgeBaseChunkTable'
 import { AddProjectPlatformIdIndex1773930744000 } from './migration/postgres/1773930744000-AddProjectPlatformIdIndex'
 import { ReAddAgentsEnabledToPlatformPlan1774000000000 } from './migration/postgres/1774000000000-ReAddAgentsEnabledToPlatformPlan'
+import { AddMissingCascadeDeleteIndices1774100000000 } from './migration/postgres/1774100000000-AddMissingCascadeDeleteIndices'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -708,6 +709,7 @@ export const getMigrations = (): (new () => MigrationInterface)[] => {
         AddFlowProjectIdStatusIndex1772027509097,
         AddProjectPlatformIdIndex1773930744000,
         ReAddAgentsEnabledToPlatformPlan1774000000000,
+        AddMissingCascadeDeleteIndices1774100000000,
         AddPgVectorExtension1773627989514,
         AddKnowledgeBaseChunkTable1773627989515,
     ]

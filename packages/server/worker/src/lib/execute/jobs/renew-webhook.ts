@@ -7,25 +7,25 @@ import {
 } from '@activepieces/shared'
 import { flowCache } from '../../cache/flow/flow-cache'
 import { workerSettings } from '../../config/worker-settings'
-import { JobContext, JobHandler, JobResult } from '../types'
+import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../types'
 import { provisionFlowPieces } from '../utils/flow-helpers'
 import { getWebhookUrl } from '../utils/webhook-url'
 
-export const renewWebhookJob: JobHandler<RenewWebhookJobData> = {
+export const renewWebhookJob: JobHandler<RenewWebhookJobData, FireAndForgetJobResult> = {
     jobType: WorkerJobType.RENEW_WEBHOOK,
-    async execute(ctx: JobContext, data: RenewWebhookJobData): Promise<JobResult> {
+    async execute(ctx: JobContext, data: RenewWebhookJobData): Promise<FireAndForgetJobResult> {
         const settings = workerSettings.getSettings()
         const timeoutInSeconds = settings.TRIGGER_HOOKS_TIMEOUT_SECONDS
 
         const flowVersion = await flowCache(ctx.log, ctx.apiClient).getVersion({ flowVersionId: data.flowVersionId })
         if (isNil(flowVersion)) {
             ctx.log.info({ flowVersionId: data.flowVersionId }, 'Flow version not found for renew webhook, skipping')
-            return {}
+            return { kind: JobResultKind.FIRE_AND_FORGET }
         }
 
         const provisioned = await provisionFlowPieces({ flowVersion, platformId: data.platformId, flowId: data.flowId, projectId: data.projectId, log: ctx.log, apiClient: ctx.apiClient })
         if (!provisioned) {
-            return {}
+            return { kind: JobResultKind.FIRE_AND_FORGET }
         }
 
         const sandbox = ctx.sandboxManager.acquire({ log: ctx.log, apiClient: ctx.apiClient })
@@ -53,7 +53,7 @@ export const renewWebhookJob: JobHandler<RenewWebhookJobData> = {
                 { timeoutInSeconds },
             )
 
-            return {}
+            return { kind: JobResultKind.FIRE_AND_FORGET }
         }
         catch (e) {
             await ctx.sandboxManager.invalidate(ctx.log)
