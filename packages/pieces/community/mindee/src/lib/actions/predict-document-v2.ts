@@ -70,7 +70,7 @@ export const mindeePredictDocumentV2Action = createAction({
 
     const body: Record<string, unknown> = { model_id };
 
-    if (isHttpUrl(file)) {
+    if (isHttpsUrl(file)) {
       body['url'] = file;
     } else {
       body['file_base64'] = file;
@@ -97,7 +97,7 @@ export const mindeePredictDocumentV2Action = createAction({
     const job = enqueueResponse.body?.job;
     if (!job?.polling_url) {
       throw new Error(
-        `Mindee enqueue did not return a polling URL. Response: ${JSON.stringify(enqueueResponse.body)}`
+        `Mindee enqueue did not return a polling URL. Response: ${JSON.stringify(enqueueResponse.body)}`,
       );
     }
 
@@ -107,7 +107,7 @@ export const mindeePredictDocumentV2Action = createAction({
       throw new Error(
         finalJob.error?.detail ||
           finalJob.error?.title ||
-          'Mindee inference failed during processing.'
+          'Mindee inference failed during processing.',
       );
     }
 
@@ -130,9 +130,15 @@ export const mindeePredictDocumentV2Action = createAction({
   },
 });
 
+const KNOWN_PENDING_STATUSES: MindeeJobStatus[] = [
+  'Pending',
+  'Processing',
+  'Queued',
+];
+
 async function pollInferenceJob(
   pollingUrl: string,
-  apiKey: string
+  apiKey: string,
 ): Promise<MindeeJob> {
   for (let attempt = 0; attempt < MAX_POLL_ATTEMPTS; attempt += 1) {
     const pollResponse = await httpClient.sendRequest<{ job: MindeeJob }>({
@@ -146,12 +152,19 @@ async function pollInferenceJob(
     const latestJob = pollResponse.body?.job;
     if (!latestJob) {
       throw new Error(
-        'Mindee polling response did not include a job object.'
+        'Mindee polling response did not include a job object.',
       );
     }
 
     if (latestJob.status === 'Processed' || latestJob.status === 'Failed') {
       return latestJob;
+    }
+
+    // Guard against unknown terminal statuses to avoid a full 90-second wait
+    if (!KNOWN_PENDING_STATUSES.includes(latestJob.status)) {
+      throw new Error(
+        `Mindee inference returned unexpected status: ${latestJob.status}`,
+      );
     }
 
     if (attempt < MAX_POLL_ATTEMPTS - 1) {
@@ -160,15 +173,26 @@ async function pollInferenceJob(
   }
 
   throw new Error(
-    `Mindee inference did not finish after ${MAX_POLL_ATTEMPTS} polling attempts.`
+    `Mindee inference did not finish after ${MAX_POLL_ATTEMPTS} polling attempts.`,
   );
 }
 
-function isHttpUrl(value: string): boolean {
+/**
+ * Check if a value is a valid HTTPS URL.
+ * Plain HTTP is rejected — document data (passports, invoices) must not
+ * transit over unencrypted connections.
+ */
+function isHttpsUrl(value: string): boolean {
   try {
     const parsed = new URL(value);
+    if (parsed.protocol === 'http:') {
+      throw new Error(
+        'Plain HTTP URLs are not supported. Please provide a public HTTPS URL or a Base64-encoded string.',
+      );
+    }
     return parsed.protocol === 'https:';
-  } catch {
+  } catch (e) {
+    if (e instanceof Error && e.message.includes('HTTP URLs')) throw e;
     return false;
   }
 }
@@ -177,10 +201,17 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+type MindeeJobStatus =
+  | 'Pending'
+  | 'Processing'
+  | 'Processed'
+  | 'Failed'
+  | 'Queued';
+
 type MindeeJob = {
   id: string;
   model_id?: string;
-  status: 'Pending' | 'Processing' | 'Processed' | 'Failed' | 'Queued';
+  status: MindeeJobStatus;
   polling_url?: string;
   result_url?: string | null;
   error?: {
