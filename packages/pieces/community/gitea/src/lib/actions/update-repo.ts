@@ -35,9 +35,9 @@ export const updateRepoSync = createAction({
     const isPrivate = context.propsValue.private;
 
     const body: Record<string, unknown> = {};
-    if (name) body['name'] = name;
-    if (description) body['description'] = description;
-    if (website) body['website'] = website;
+    if (name !== undefined && name !== null) body['name'] = name;
+    if (description !== undefined && description !== null) body['description'] = description;
+    if (website !== undefined && website !== null) body['website'] = website;
     if (isPrivate !== undefined) body['private'] = isPrivate;
 
     const response = await giteaApiCall({
