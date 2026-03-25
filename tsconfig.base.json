@@ -960,8 +960,13 @@
       "@activepieces/piece-salesforce": [
         "packages/pieces/community/salesforce/src/index.ts"
       ],
+<<<<<<< HEAD
       "@activepieces/piece-savvycal": [
         "packages/pieces/community/savvycal/src/index.ts"
+=======
+      "@activepieces/piece-salesloft": [
+        "packages/pieces/community/salesloft/src/index.ts"
+>>>>>>> db6e3091ca (feat(pieces): add Salesloft piece)
       ],
       "@activepieces/piece-scenario": [
         "packages/pieces/community/scenario/src/index.ts"
