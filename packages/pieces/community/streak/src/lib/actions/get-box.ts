@@ -18,7 +18,7 @@ export const getBoxAction = createAction({
     const response = await streakRequest({
       apiKey: auth.props.api_key,
       method: HttpMethod.GET,
-      path: `/v1/boxes/${propsValue.boxKey}`,
+      path: `/v1/boxes/${encodeURIComponent(propsValue.boxKey)}`,
     });
 
     return response.body;

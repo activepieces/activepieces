@@ -19,6 +19,7 @@ export const createTaskAction = createAction({
     }),
     dueDate: Property.DateTime({
       displayName: 'Due Date',
+      description: 'Due date for the task.',
       required: false,
     }),
     assignedToSharingEntryKey: Property.ShortText({
@@ -31,10 +32,12 @@ export const createTaskAction = createAction({
     const response = await streakRequest({
       apiKey: auth.props.api_key,
       method: HttpMethod.POST,
-      path: `/v2/boxes/${propsValue.boxKey}/tasks`,
+      path: `/v2/boxes/${encodeURIComponent(propsValue.boxKey)}/tasks`,
       body: cleanPayload({
         text: propsValue.text,
-        dueDate: propsValue.dueDate,
+        dueDate: propsValue.dueDate
+          ? new Date(propsValue.dueDate).getTime()
+          : undefined,
         assignedToSharingEntryKey: propsValue.assignedToSharingEntryKey,
       }),
     });

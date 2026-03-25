@@ -1,7 +1,6 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
-import { Buffer } from 'buffer';
 
 import { streakAuth } from './lib/auth';
 import { createBoxAction } from './lib/actions/create-box';

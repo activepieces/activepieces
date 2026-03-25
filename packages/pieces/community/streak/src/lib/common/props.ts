@@ -24,7 +24,9 @@ export const pipelineKeyProp = Property.Dropdown({
       path: '/v1/pipelines',
     });
 
-    const pipelines = extractCollection<{ key?: string; name?: string }>(response.body);
+    const pipelines = extractCollection<{ key?: string; name?: string }>(
+      response.body,
+    );
 
     return {
       disabled: false,
@@ -55,10 +57,12 @@ export const stageKeyProp = Property.Dropdown({
     const response = await streakRequest({
       apiKey: auth.props.api_key,
       method: HttpMethod.GET,
-      path: `/v1/pipelines/${pipelineKey}/stages`,
+      path: `/v1/pipelines/${encodeURIComponent(String(pipelineKey))}/stages`,
     });
 
-    const stages = extractCollection<{ key?: string; name?: string }>(response.body);
+    const stages = extractCollection<{ key?: string; name?: string }>(
+      response.body,
+    );
 
     return {
       disabled: false,
@@ -89,13 +93,15 @@ export const boxKeyProp = Property.Dropdown({
     const response = await streakRequest({
       apiKey: auth.props.api_key,
       method: HttpMethod.GET,
-      path: `/v1/pipelines/${pipelineKey}/boxes`,
+      path: `/v1/pipelines/${encodeURIComponent(String(pipelineKey))}/boxes`,
       queryParams: {
-        limit: '100',
+        limit: '500',
       },
     });
 
-    const boxes = extractCollection<{ key?: string; name?: string }>(response.body);
+    const boxes = extractCollection<{ key?: string; name?: string }>(
+      response.body,
+    );
 
     return {
       disabled: false,

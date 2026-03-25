@@ -50,7 +50,7 @@ export const createBoxAction = createAction({
     const response = await streakRequest({
       apiKey: auth.props.api_key,
       method: HttpMethod.POST,
-      path: `/v2/pipelines/${propsValue.pipelineKey}/boxes`,
+      path: `/v2/pipelines/${encodeURIComponent(propsValue.pipelineKey)}/boxes`,
       body: payload,
     });
 

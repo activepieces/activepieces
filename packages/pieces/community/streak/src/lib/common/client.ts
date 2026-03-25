@@ -21,7 +21,10 @@ export function streakAuthentication(apiKey: string) {
 
 function removeUndefined<T extends Record<string, unknown>>(value: T): T {
   return Object.fromEntries(
-    Object.entries(value).filter(([, current]) => current !== undefined && current !== null && current !== '')
+    Object.entries(value).filter(
+      ([, current]) =>
+        current !== undefined && current !== null && current !== '',
+    ),
   ) as T;
 }
 
@@ -48,27 +51,65 @@ export async function streakRequest({
   });
 }
 
-export function extractCollection<T = Record<string, unknown>>(body: unknown): T[] {
+/**
+ * Normalise a Streak API collection response into an array.
+ *
+ * The Streak API is inconsistent:
+ *  - /v1/pipelines returns a plain JSON array
+ *  - /v1/pipelines/{key}/boxes returns { results: [...] }
+ *  - /v1/pipelines/{key}/stages may return a **map** keyed by stage key
+ *    (e.g. { "5001": { key: "5001", name: "Lead" }, ... })
+ *
+ * This helper handles all three shapes.
+ */
+export function extractCollection<T = Record<string, unknown>>(
+  body: unknown,
+): T[] {
+  // Already an array — return directly
   if (Array.isArray(body)) {
     return body as T[];
   }
+
   if (!body || typeof body !== 'object') {
     return [];
   }
+
   const record = body as Record<string, unknown>;
-  const candidates = [
-    record['results'],
-    record['items'],
-    record['boxes'],
-    record['pipelines'],
-    record['stages'],
-    record['tasks'],
+
+  // Check known wrapper keys first
+  const wrapperKeys = [
+    'results',
+    'items',
+    'boxes',
+    'pipelines',
+    'stages',
+    'tasks',
   ];
-  for (const candidate of candidates) {
+  for (const key of wrapperKeys) {
+    const candidate = record[key];
     if (Array.isArray(candidate)) {
       return candidate as T[];
     }
+    // Handle map/object shape (e.g. stages keyed by stage key)
+    if (
+      candidate &&
+      typeof candidate === 'object' &&
+      !Array.isArray(candidate)
+    ) {
+      return Object.values(candidate) as T[];
+    }
   }
+
+  // Fallback: if body itself is a plain object with no known wrapper,
+  // treat its values as the collection (covers the stages-as-root-map case)
+  const values = Object.values(record);
+  if (
+    values.length > 0 &&
+    values.every((v) => v && typeof v === 'object' && !Array.isArray(v))
+  ) {
+    return values as T[];
+  }
+
   return [];
 }
 
