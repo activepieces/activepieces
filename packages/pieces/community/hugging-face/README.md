@@ -1,7 +1,5 @@
 # pieces-hugging-face
 
-This library was generated with [Nx](https://nx.dev).
-
 ## Building
 
-Run `nx build pieces-hugging-face` to build the library.
+Run `turbo run build --filter=@activepieces/piece-hugging-face` to build the library.

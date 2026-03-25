@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { tavilyAuth } from '../../index';
+import { tavilyAuth } from '../auth';
 
 export const extractAction = createAction({
   name: 'extract',

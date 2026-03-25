@@ -1,77 +1,102 @@
-import { securityAccess } from '@activepieces/server-shared'
-import { FlowOperationType, PrincipalType, UpdatePlatformReportRequest, UpdateTimeSavedPerRunRequest } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { ActivepiecesError, AnalyticsReportRequest, ErrorCode, LeaderboardRequest, PrincipalType, UserIdentityProvider } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import { userIdentityService } from '../authentication/user-identity/user-identity-service'
+import { securityAccess } from '../core/security/authorization/fastify-security'
 import { platformMustHaveFeatureEnabled } from '../ee/authentication/ee-authorization'
-import { flowService } from '../flows/flow/flow.service'
-import { projectService } from '../project/project-service'
+import { userService } from '../user/user-service'
 import { piecesAnalyticsService } from './pieces-analytics.service'
 import { platformAnalyticsReportService } from './platform-analytics-report.service'
 
-export const platformAnalyticsModule: FastifyPluginAsyncTypebox = async (app) => {
+export const platformAnalyticsModule: FastifyPluginAsyncZod = async (app) => {
     app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.plan.analyticsEnabled))
     await piecesAnalyticsService(app.log).init()
     await app.register(platformAnalyticsController, { prefix: '/v1/analytics' })
 }
 
-const platformAnalyticsController: FastifyPluginAsyncTypebox = async (app) => {
+const platformAnalyticsController: FastifyPluginAsyncZod = async (app) => {
 
     app.get('/', PlatformAnalyticsRequest, async (request) => {
-        const { platform } = request.principal
-        return platformAnalyticsReportService(request.log).getOrGenerateReport(platform.id)
+        const { platform, id } = request.principal
+        await assertUserIsNotEmbedded(id, request.log)
+        const { timePeriod } = request.query
+        return platformAnalyticsReportService(request.log).getOrGenerateReport(platform.id, timePeriod)
     })
 
-    app.post('/', UpdatePlatformReportRequestSchema, async (request) => {
-        const { platform } = request.principal
-        return platformAnalyticsReportService(request.log).update(platform.id, request.body)
-    })
-
-    app.post('/refresh', PlatformAnalyticsRequest, async (request) => {
-        const { platform } = request.principal
+    app.post('/refresh', RefreshPlatformAnalyticsRequest, async (request) => {
+        const { platform, id } = request.principal
+        await assertUserIsNotEmbedded(id, request.log)
         return platformAnalyticsReportService(request.log).refreshReport(platform.id)
     })
 
-    // TODO(@chaker): remove this endpoint after solving the issue with removing project id from the principal
-    app.post('/time-saved-per-run', UpdateTimeSavedPerRunRequestSchema, async (request) => {
-        const flow = await flowService(request.log).getOneById(request.body.flowId)
-        if (!flow) {
-            throw new Error('Flow not found')
-        }
-        const platformId = await projectService.getPlatformId(flow.projectId)
-        if (platformId !== request.principal.platform.id) {
-            throw new Error('Unauthorized')
-        }
-        return flowService(request.log).update({
-            id: flow.id,
-            projectId: flow.projectId,
-            userId: request.principal.id,
-            platformId: request.principal.platform.id,
-            operation: {
-                type: FlowOperationType.UPDATE_MINUTES_SAVED,
-                request: { timeSavedPerRun: request.body.timeSavedPerRun ?? null },
-            },
-        })
+    app.get('/project-leaderboard', ProjectLeaderboardRequest, async (request) => {
+        const { platform, id } = request.principal
+        await assertUserIsNotEmbedded(id, request.log)
+        const { timePeriod } = request.query
+        return platformAnalyticsReportService(request.log).getProjectLeaderboard(platform.id, timePeriod)
     })
+
+    app.get('/user-leaderboard', UserLeaderboardRequest, async (request) => {
+        const { platform, id } = request.principal
+        await assertUserIsNotEmbedded(id, request.log)
+        const { timePeriod } = request.query
+        return platformAnalyticsReportService(request.log).getUserLeaderboard(platform.id, timePeriod)
+    })
+
+    app.post('/mark-outdated', MarkAsOutdatedRequest, async (request) => {
+        const { platform, id } = request.principal
+        await assertUserIsNotEmbedded(id, request.log)
+        await platformAnalyticsReportService(request.log).markAsOutdated(platform.id)
+    })
+
 }
 
-const UpdateTimeSavedPerRunRequestSchema = {
-    config: {
-        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+async function assertUserIsNotEmbedded(userId: string, log: FastifyBaseLogger): Promise<void> {
+    const user = await userService(log).getOneOrFail({ id: userId })
+    const userIdentity = await userIdentityService(log).getOneOrFail({ id: user.identityId })
+    if (userIdentity.provider === UserIdentityProvider.JWT) {
+        throw new ActivepiecesError({
+            code: ErrorCode.AUTHORIZATION,
+            params: { message: 'User is not allowed to access this resource' },
+        })
+    }
+}
 
-    },
-    schema: {
-        body: UpdateTimeSavedPerRunRequest,
-    },
-}
-const UpdatePlatformReportRequestSchema = {
+const RefreshPlatformAnalyticsRequest = {
     config: {
-        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
-    },
-    schema: {
-        body: UpdatePlatformReportRequest,
+        security: securityAccess.publicPlatform([PrincipalType.USER]),
     },
 }
+
 const PlatformAnalyticsRequest = {
+    schema: {
+        querystring: AnalyticsReportRequest,
+    },
     config: {
-        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+        security: securityAccess.publicPlatform([PrincipalType.USER]),
+    },
+}
+
+const ProjectLeaderboardRequest = {
+    schema: {
+        querystring: LeaderboardRequest,
+    },
+    config: {
+        security: securityAccess.publicPlatform([PrincipalType.USER]),
+    },
+}
+
+const UserLeaderboardRequest = {
+    schema: {
+        querystring: LeaderboardRequest,
+    },
+    config: {
+        security: securityAccess.publicPlatform([PrincipalType.USER]),
+    },
+}
+
+const MarkAsOutdatedRequest = {
+    config: {
+        security: securityAccess.publicPlatform([PrincipalType.USER]),
     },
 }

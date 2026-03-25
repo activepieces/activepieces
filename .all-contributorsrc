@@ -2093,6 +2093,51 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "meloncafe",
+      "name": "M.Cafe",
+      "avatar_url": "https://avatars.githubusercontent.com/u/6157093?v=4",
+      "profile": "https://github.com/meloncafe",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "vishakha1411",
+      "name": "vishakha1411",
+      "avatar_url": "https://avatars.githubusercontent.com/u/119448495?v=4",
+      "profile": "https://github.com/vishakha1411",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "murex971",
+      "name": "Nupur Agrawal",
+      "avatar_url": "https://avatars.githubusercontent.com/u/46920259?v=4",
+      "profile": "https://github.com/murex971",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "Shree-git",
+      "name": "Shreedhar Pandey",
+      "avatar_url": "https://avatars.githubusercontent.com/u/56151022?v=4",
+      "profile": "https://www.shreepandeydev.com",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "Harmatta",
+      "name": "Harmatta",
+      "avatar_url": "https://avatars.githubusercontent.com/u/136149988?v=4",
+      "profile": "https://github.com/Harmatta",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"

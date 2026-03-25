@@ -21,13 +21,24 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
         includedAiCredits: {
             type: Number,
         },
-        aiCreditsOverageLimit: {
+        aiCreditsAutoTopUpCreditsToAdd: {
             type: Number,
             nullable: true,
         },
-        aiCreditsOverageState: {
-            type: String,
+        lastFreeAiCreditsRenewalDate: {
+            type: 'timestamp with time zone',
             nullable: true,
+        },
+        maxAutoTopUpCreditsMonthly: {
+            type: Number,
+            nullable: true,
+        },
+        aiCreditsAutoTopUpThreshold: {
+            type: Number,
+            nullable: true,
+        },
+        aiCreditsAutoTopUpState: {
+            type: String,
         },
         stripeSubscriptionStartDate: {
             type: Number,
@@ -54,6 +65,9 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
             type: Boolean,
         },
         embeddingEnabled: {
+            type: Boolean,
+        },
+        agentsEnabled: {
             type: Boolean,
         },
         managePiecesEnabled: {
@@ -86,6 +100,9 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
         ssoEnabled: {
             type: Boolean,
         },
+        scimEnabled: {
+            type: Boolean,
+        },
         licenseKey: {
             type: String,
             nullable: true,
@@ -102,29 +119,26 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
             type: String,
             nullable: true,
         },
-        tablesEnabled: {
-            type: Boolean,
-        },
-        todosEnabled: {
-            type: Boolean,
-        },
         projectsLimit: {
             type: Number,
             nullable: true,
         },
-        agentsEnabled: {
+        tablesEnabled: {
             type: Boolean,
         },
         activeFlowsLimit: {
             type: Number,
             nullable: true,
         },
-        mcpsEnabled: {
+        eventStreamingEnabled: {
             type: Boolean,
         },
         dedicatedWorkers: {
             type: 'jsonb',
             nullable: true,
+        },
+        secretManagersEnabled: {
+            type: Boolean,
         },
     },
     indices: [

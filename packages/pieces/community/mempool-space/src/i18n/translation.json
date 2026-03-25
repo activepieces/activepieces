@@ -87,10 +87,12 @@
   "Method": "Method",
   "Headers": "Headers",
   "Query Parameters": "Query Parameters",
+  "Body Type": "Body Type",
   "Body": "Body",
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "Select the currency for historical price": "Select the currency for historical price",
   "Provide YYYY-MM-DD format.": "Provide YYYY-MM-DD format.",
   "The Bitcoin address to look up": "The Bitcoin address to look up",
@@ -122,7 +124,7 @@
   "The transaction ID to get timing information for": "The transaction ID to get timing information for",
   "The raw transaction in hex format to broadcast": "The raw transaction in hex format to broadcast",
   "Authorization headers are injected automatically from your connection.": "Authorization headers are injected automatically from your connection.",
-  "Enable for files like PDFs, images, etc..": "Enable for files like PDFs, images, etc..",
+  "Enable for files like PDFs, images, etc.": "Enable for files like PDFs, images, etc.",
   "US Dollar": "US Dollar",
   "Euro": "Euro",
   "British Pound": "British Pound",
@@ -135,5 +137,9 @@
   "PATCH": "PATCH",
   "PUT": "PUT",
   "DELETE": "DELETE",
-  "HEAD": "HEAD"
+  "HEAD": "HEAD",
+  "None": "None",
+  "JSON": "JSON",
+  "Form Data": "Form Data",
+  "Raw": "Raw"
 }

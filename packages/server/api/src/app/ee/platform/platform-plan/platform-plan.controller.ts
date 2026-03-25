@@ -1,16 +1,17 @@
-import { CreateCheckoutSessionParamsSchema, SetAiCreditsOverageLimitParamsSchema, STANDARD_CLOUD_PLAN, ToggleAiCreditsOverageEnabledParamsSchema, UpdateActiveFlowsAddonParamsSchema } from '@activepieces/ee-shared'
-import { securityAccess } from '@activepieces/server-shared'
-import { ActivepiecesError, AiOverageState, assertNotNullOrUndefined, ErrorCode, PlatformBillingInformation, PrincipalType } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { assertNotNullOrUndefined, CreateAICreditCheckoutSessionParamsSchema, CreateCheckoutSessionParamsSchema, PlatformBillingInformation, PrincipalType, STANDARD_CLOUD_PLAN, UpdateActiveFlowsAddonParamsSchema, UpdateAICreditsAutoTopUpParamsSchema } from '@activepieces/shared'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
+import { z } from 'zod'
+import { securityAccess } from '../../../core/security/authorization/fastify-security'
 import { platformService } from '../../../platform/platform.service'
+import { platformAiCreditsService } from './platform-ai-credits.service'
 import { platformPlanService } from './platform-plan.service'
 import { stripeHelper } from './stripe-helper'
 
-export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify) => {
+export const platformPlanController: FastifyPluginAsyncZod = async (fastify) => {
 
     fastify.get('/info', InfoRequest, async (request) => {
-        const platform = await platformService.getOneOrThrow(request.principal.platform.id)
+        const platform = await platformService(request.log).getOneOrThrow(request.principal.platform.id)
         const [platformPlan, usage] = await Promise.all([
             platformPlanService(request.log).getOrCreateForPlatform(platform.id),
             platformPlanService(request.log).getUsage(platform.id),
@@ -37,105 +38,6 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
         },
     }, async (request) => {
         return stripeHelper(request.log).createPortalSessionUrl(request.principal.platform.id)
-    })
-
-    fastify.post('/update-ai-overage-state', EnableAiCreditsOverageRequest, async (request) => {
-        const platformId = request.principal.platform.id
-        const { state } = request.body
-        
-        const [usage, platformPlan] = await Promise.all([
-            platformPlanService(request.log).getUsage(platformId),
-            platformPlanService(request.log).getOrCreateForPlatform(platformId),
-        ])
-
-        if (platformPlan.aiCreditsOverageState === AiOverageState.NOT_ALLOWED) {
-            throw new ActivepiecesError({
-                code: ErrorCode.VALIDATION,
-                params: {
-                    message: 'AI credit overage isn\'t available for your plan',
-                },
-            })
-        }
-        
-        const totalCreditsUsed = usage.aiCredits
-        const planIncludedCredits = platformPlan.includedAiCredits || 0
-        const overageCreditsUsed = Math.max(0, totalCreditsUsed - planIncludedCredits)
-        
-        if (state === AiOverageState.ALLOWED_BUT_OFF && overageCreditsUsed > 0) {
-            throw new ActivepiecesError({
-                code: ErrorCode.VALIDATION,
-                params: {
-                    message: `Cannot disable usage-based billing while you have ${overageCreditsUsed.toLocaleString()} overage credits used.`,
-                },
-            })
-        }
-        
-        request.log.info({
-            platformId,
-            currentUsage: {
-                total: totalCreditsUsed,
-                planCredits: Math.min(totalCreditsUsed, planIncludedCredits),
-                overageCredits: overageCreditsUsed,
-            },
-        }, 'Updating AI credits overage state')
-        
-        const newOverageLimit = state === AiOverageState.ALLOWED_AND_ON 
-            ? (platformPlan.aiCreditsOverageLimit || 500)
-            : platformPlan.aiCreditsOverageLimit
-        
-        return platformPlanService(request.log).update({
-            platformId,
-            aiCreditsOverageState: state,
-            aiCreditsOverageLimit: newOverageLimit,
-        })
-    })
-
-    fastify.post('/set-ai-credits-overage-limit', SetAiCreditsOverageLimitRequest, async (request) => {
-        const platformId = request.principal.platform.id
-        const { limit } = request.body
-        
-        const [usage, platformPlan] = await Promise.all([
-            platformPlanService(request.log).getUsage(platformId),
-            platformPlanService(request.log).getOrCreateForPlatform(platformId),
-        ])
-        
-        if (platformPlan.aiCreditsOverageState !== AiOverageState.ALLOWED_AND_ON) {
-            throw new ActivepiecesError({
-                code: ErrorCode.VALIDATION,
-                params: {
-                    message: 'Setting AI credits overage limit is not allowed while overage is not enabled',
-                },
-            })
-        }
-        
-        const totalCreditsUsed = usage.aiCredits
-        const planIncludedCredits = platformPlan.includedAiCredits || 0
-        const overageCreditsUsed = Math.max(0, totalCreditsUsed - planIncludedCredits)
-        
-        if (overageCreditsUsed > limit) {
-            throw new ActivepiecesError({
-                code: ErrorCode.VALIDATION,
-                params: {
-                    message: `Cannot set usage limit to ${limit.toLocaleString()} credits as you have already used ${overageCreditsUsed.toLocaleString()} overage credits this billing period.`,
-                },
-            })
-        }
-        
-        request.log.info({
-            platformId,
-            previousLimit: platformPlan.aiCreditsOverageLimit,
-            newLimit: limit,
-            currentUsage: {
-                total: totalCreditsUsed,
-                planCredits: Math.min(totalCreditsUsed, planIncludedCredits),
-                overageCredits: overageCreditsUsed,
-            },
-        }, 'Updating AI credit usage limit')
-        
-        return platformPlanService(request.log).update({
-            platformId,
-            aiCreditsOverageLimit: limit,
-        })
     })
 
     fastify.post('/create-checkout-session', CreateCheckoutSessionRequest, async (request) => {
@@ -176,6 +78,13 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
         })
     })
 
+    // AI Credits
+    fastify.post('/ai-credits/create-checkout-session', CreateAICreditCheckoutSessionRequest, async (request) => {
+        return platformAiCreditsService(request.log).initializeStripeAiCreditsPayment(request.principal.platform.id, request.body)
+    })
+    fastify.post('/ai-credits/auto-topup', UpdateAICreditsAutoTopUpRequest, async (request) => {
+        return platformAiCreditsService(request.log).updateAutoTopUp(request.principal.platform.id, request.body)
+    })
 }
 
 const InfoRequest = {
@@ -184,24 +93,6 @@ const InfoRequest = {
     },
     response: {
         [StatusCodes.OK]: PlatformBillingInformation,
-    },
-}
-
-const SetAiCreditsOverageLimitRequest = {
-    schema: {
-        body: SetAiCreditsOverageLimitParamsSchema,
-    },
-    config: {
-        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
-    },
-}
-
-const EnableAiCreditsOverageRequest = {
-    schema: {
-        body: ToggleAiCreditsOverageEnabledParamsSchema,
-    },
-    config: {
-        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
     },
 }
 
@@ -217,6 +108,32 @@ const UpdateActiveFlowsAddonRequest = {
 const CreateCheckoutSessionRequest = {
     schema: {
         body: CreateCheckoutSessionParamsSchema,
+    },
+    config: {
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+    },
+}
+
+const CreateAICreditCheckoutSessionRequest = {
+    schema: {
+        body: CreateAICreditCheckoutSessionParamsSchema,
+        response: {
+            [StatusCodes.OK]: z.object({
+                stripeCheckoutUrl: z.string(),
+            }),
+        },
+    },
+    config: {
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+    },
+}
+
+const UpdateAICreditsAutoTopUpRequest = {
+    schema: {
+        body: UpdateAICreditsAutoTopUpParamsSchema,
+        [StatusCodes.OK]: z.object({
+            stripeCheckoutUrl: z.string().optional(),
+        }),
     },
     config: {
         security: securityAccess.platformAdminOnly([PrincipalType.USER]),

@@ -65,7 +65,7 @@ export const stripeNewPaymentLink = createTrigger({
   async test(context) {
     const response = await httpClient.sendRequest<{ data: { id: string }[] }>({
       method: HttpMethod.GET,
-      url: 'https://api.stripe.com/v1/checkout/payment_links',
+      url: 'https://api.stripe.com/v1/payment_links',
       headers: {
         Authorization: 'Bearer ' + context.auth.secret_text,
         'Content-Type': 'application/x-www-form-urlencoded',

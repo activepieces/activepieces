@@ -1,7 +1,7 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { getApiEndpoint } from '../common';
-import { returningAiAuth } from '../../index';
+import { returningAiAuth } from '../auth';
 
 /**
  * This action allows you to react to a specific message as a chosen user in a channel.

@@ -2,7 +2,9 @@ import {
   createAction,
   Property,
   PieceAuth,
+  ArraySubProps,
 } from '@activepieces/pieces-framework';
+
 import {
   AgentOutputField,
   AgentPieceProps,
@@ -11,14 +13,53 @@ import {
   AgentTool,
   TASK_COMPLETION_TOOL_NAME,
   AIProviderName,
+  AgentProviderModel,
+  ExecutionToolStatus,
+  normalizeToolOutputToExecuteResponse,
+  spreadIfDefined,
 } from '@activepieces/shared';
-import { dynamicTool, hasToolCall, stepCountIs, streamText } from 'ai';
-import { z } from 'zod';
+import { hasToolCall, stepCountIs, streamText } from 'ai';
 import { agentOutputBuilder } from './agent-output-builder';
 import { createAIModel } from '../../common/ai-sdk';
-import { aiProps } from '../../common/props';
 import { inspect } from 'util';
 import { agentUtils } from './utils';
+import { constructAgentTools } from './tools';
+import { buildWebSearchOptionsProperty, buildWebSearchConfig, WebSearchOptions } from '../../common/web-search';
+
+const agentToolArrayItems: ArraySubProps<boolean> = {
+  type: Property.ShortText({
+    displayName: 'Tool Type',
+    required: true,
+  }),
+
+  toolName: Property.ShortText({
+    displayName: 'Tool Name',
+    required: true,
+  }),
+
+  pieceMetadata: Property.Json({
+    displayName: 'Piece Metadata',
+    required: false,
+  }),
+
+  externalFlowId: Property.ShortText({
+    displayName: 'Flow External ID',
+    required: false,
+  }),
+
+  serverUrl: Property.ShortText({
+    displayName: 'MCP Server URL',
+    required: false,
+  }),
+  protocol: Property.ShortText({
+    displayName: 'Protocol',
+    required: false,
+  }),
+  auth: Property.Json({
+    displayName: 'Auth Configuration',
+    required: false,
+  }),
+}
 
 export const runAgent = createAction({
   name: 'run_agent',
@@ -31,29 +72,14 @@ export const runAgent = createAction({
       description: 'Describe what you want the assistant to do.',
       required: true,
     }),
-    [AgentPieceProps.AI_PROVIDER]: aiProps({ modelType: 'text' }).provider,
-    [AgentPieceProps.AI_MODEL]: aiProps({ modelType: 'text' }).model,
+    [AgentPieceProps.AI_PROVIDER_MODEL]: Property.Object({
+      displayName: 'AI Model',
+      required: true,
+    }),
     [AgentPieceProps.AGENT_TOOLS]: Property.Array({
       displayName: 'Agent Tools',
       required: false,
-      properties: {
-        type: Property.ShortText({
-          displayName: 'Tool Type',
-          required: true,
-        }),
-        toolName: Property.ShortText({
-          displayName: 'Tool Name',
-          required: true,
-        }),
-        pieceMetadata: Property.Json({
-          displayName: 'Piece Metadata',
-          required: false,
-        }),
-        flowExternalId: Property.ShortText({
-          displayName: 'Flow External Id',
-          required: false,
-        }),
-      },
+      properties: agentToolArrayItems,
     }),
     [AgentPieceProps.STRUCTURED_OUTPUT]: Property.Array({
       displayName: 'Structured Output',
@@ -80,152 +106,207 @@ export const runAgent = createAction({
       required: true,
       defaultValue: 20,
     }),
+    [AgentPieceProps.WEB_SEARCH]: Property.Checkbox({
+      displayName: 'Web Search',
+      required: false,
+      defaultValue: false,
+      description:
+        'Whether to use web search to find information for the AI to use.',
+    }),
+    [AgentPieceProps.WEB_SEARCH_OPTIONS]: buildWebSearchOptionsProperty(
+      (propsValue) => (propsValue['aiProviderModel'] as unknown as AgentProviderModel)?.provider,
+      ['webSearch', 'aiProviderModel'],
+      { showIncludeSources: false },
+    ),
   },
   async run(context) {
-    const { prompt, maxSteps, model: modelId, provider } = context.propsValue;
+    const { prompt, maxSteps, aiProviderModel } = context.propsValue;
+    const agentProviderModel = aiProviderModel as AgentProviderModel
+    const provider = agentProviderModel.provider as AIProviderName;
+    const webSearchEnabled = !!(context.propsValue.webSearch);
+    const webSearchOptions = (context.propsValue.webSearchOptions ?? {}) as WebSearchOptions;
+
+    const { tools: webSearchTools, providerOptions } = buildWebSearchConfig({
+      provider,
+      webSearchEnabled,
+      webSearchOptions,
+    });
 
     const model = await createAIModel({
-      modelId,
-      provider: provider as AIProviderName,
+      modelId: agentProviderModel.model,
+      provider,
       engineToken: context.server.token,
       apiUrl: context.server.apiUrl,
       projectId: context.project.id,
       flowId: context.flows.current.id,
       runId: context.run.id,
+      ...spreadIfDefined('openaiResponsesModel', webSearchEnabled && provider === AIProviderName.OPENAI ? true : undefined),
     });
-
     const outputBuilder = agentOutputBuilder(prompt);
     const hasStructuredOutput =
       !isNil(context.propsValue.structuredOutput) &&
       context.propsValue.structuredOutput.length > 0;
-    const agentToolsMetadata = context.propsValue.agentTools as AgentTool[];
-    const agentTools = await context.agent.tools({
-      tools: agentToolsMetadata,
-      model: model,
+    const structuredOutput = hasStructuredOutput ? context.propsValue.structuredOutput as AgentOutputField[] : undefined;
+    const agentTools = context.propsValue.agentTools as AgentTool[];
+    const { mcpClients, tools, toolKeyToAgentTool } = await constructAgentTools({
+      context,
+      agentTools,
+      model,
+      outputBuilder,
+      structuredOutput
     });
+    outputBuilder.setToolMap(toolKeyToAgentTool);
 
-    const flowsTools = await agentUtils.constructFlowsTools({
-      agentToolsMetadata,
-      fetchFlows: context.flows.list,
-      publicUrl: context.server.publicUrl,
-      token: context.server.token
-    })
+    const allTools = webSearchTools
+      ? { ...webSearchTools, ...tools }
+      : tools;
 
+    const errors: { type: string; message: string; details?: unknown }[] = [];
 
-    const stream = streamText({
-      model: model,
-      prompt: `
-${prompt}
+    try {
+      const stream = streamText({
+        model: model,
+        system: agentUtils.getPrompts(prompt).system,
+        prompt: agentUtils.getPrompts(prompt).prompt,
+        tools: allTools,
+        stopWhen: [stepCountIs(maxSteps), hasToolCall(TASK_COMPLETION_TOOL_NAME)],
+        providerOptions,
+        onFinish: async () => {
+          await Promise.all(mcpClients.map(async (client) => client.close()));
+        },
+      });
 
-<important_note>
-As your FINAL ACTION, you must call the \`${TASK_COMPLETION_TOOL_NAME}\` tool to indicate if the task is complete or not. 
-Call this tool only once you have done everything you can to achieve the user's goal, or if you are unable to continue. 
-If you do not make this final call, your work will be considered unsuccessful.
-</important_note>
-`,
-      system: `
-You are a helpful, proactive AI assistant.
-Today's date is ${new Date().toISOString().split('T')[0]}.
-
-Help the user finish their goal quickly and accurately.
-        `.trim(),
-      stopWhen: [stepCountIs(maxSteps), hasToolCall(TASK_COMPLETION_TOOL_NAME)],
-      tools: {
-        ...{...agentTools, ...flowsTools},
-        [TASK_COMPLETION_TOOL_NAME]: dynamicTool({
-          description:
-            "This tool must be called as your FINAL ACTION to indicate whether the assigned goal was accomplished. Call it only when you have completed the user's task, or if you are unable to continue. Once you call this tool, you should not take any further actions.",
-          inputSchema: z.object({
-            success: z
-              .boolean()
-              .describe(
-                'Set to true if the assigned goal was achieved, or false if the task was abandoned or failed.'
-              ),
-            ...(hasStructuredOutput
-              ? {
-                  output: z
-                    .object(
-                      agentUtils.structuredOutputSchema(
-                        context.propsValue
-                          .structuredOutput as AgentOutputField[]
-                      )?.shape ?? {}
-                    )
-                    .nullable()
-                    .describe(
-                      'The structured output of your task. This is optional and can be omitted if you have not achieved the goal.'
-                    ),
-                }
-              : {
-                  output: z
-                    .string()
-                    .nullable()
-                    .describe(
-                      'The message to the user with the result of your task. This is optional and can be omitted if you have not achieved the goal.'
-                    ),
-                }),
-          }),
-          execute: async (params) => {
-            const { success, output } = params as {
-              success: boolean;
-              output?: Record<string, unknown>;
-            };
-            outputBuilder.setStatus(
-              success ? AgentTaskStatus.COMPLETED : AgentTaskStatus.FAILED
-            );
-            if (hasStructuredOutput && !isNil(output)) {
-              outputBuilder.setStructuredOutput(output);
+      for await (const chunk of stream.fullStream) {
+        try {
+          switch (chunk.type) {
+            case 'text-delta': {
+              outputBuilder.addMarkdown(chunk.text);
+              break;
             }
-            if (!hasStructuredOutput && !isNil(output)) {
-              outputBuilder.addMarkdown(output as unknown as string);
+            case 'reasoning-delta': {
+              if ('text' in chunk && typeof chunk.text === 'string') {
+                outputBuilder.addMarkdown(chunk.text);
+              } else if ('delta' in chunk && typeof chunk.delta === 'string') {
+                outputBuilder.addMarkdown(chunk.delta);
+              }
+              break;
             }
-            return {};
-          },
-        }),
-      },
-    });
-
-    for await (const chuck of stream.fullStream) {
-      switch (chuck.type) {
-        case 'text-delta': {
-          outputBuilder.addMarkdown(chuck.text);
-          break;
-        }
-        case 'tool-call': {
-          if (agentUtils.isTaskCompletionToolCall(chuck.toolName)) {
-            continue;
+            case 'tool-call': {
+              if (agentUtils.isTaskCompletionToolCall(chunk.toolName)) {
+                continue;
+              }
+              outputBuilder.startToolCall({
+                toolName: chunk.toolName,
+                toolCallId: chunk.toolCallId,
+                input: chunk.input as Record<string, unknown>,
+              });
+              break;
+            }
+            case 'tool-result': {
+              if (agentUtils.isTaskCompletionToolCall(chunk.toolName)) {
+                continue;
+              }
+              const rawOutput = chunk.output;
+              const toolOutput = normalizeToolOutputToExecuteResponse(rawOutput);
+              
+              if (toolOutput['status'] === ExecutionToolStatus.FAILED && toolOutput['errorMessage']) {
+                outputBuilder.addMarkdown(
+                  `\n\n**Error:** ${JSON.stringify(toolOutput['errorMessage'])}\n\n`
+                );
+              }
+              
+              outputBuilder.finishToolCall({
+                toolCallId: chunk.toolCallId,
+                output: toolOutput,
+              });
+              break;
+            }
+            case 'tool-error': {
+              errors.push({
+                type: 'tool-error',
+                message: `Tool ${chunk.toolName} failed`,
+                details: chunk.error,
+              });
+              outputBuilder.failToolCall({
+                toolCallId: chunk.toolCallId,
+              });
+              break;
+            }
+            case 'error': {
+              errors.push({
+                type: 'stream-error',
+                message: 'Error during streaming',
+                details: inspect(chunk.error),
+              });
+              break;
+            }
+            case 'start':
+            case 'start-step':
+            case 'tool-input-start':
+            case 'tool-input-delta':
+            case 'tool-input-end':
+            case 'finish-step':
+            case 'finish':
+              break;
+            default:
+              break;
           }
-          outputBuilder.startToolCall({
-            toolName: chuck.toolName,
-            toolCallId: chuck.toolCallId,
-            input: chuck.input as Record<string, unknown>,
-            agentTools: agentToolsMetadata,
-          });
-          break;
-        }
-        case 'tool-result': {
-          if (agentUtils.isTaskCompletionToolCall(chuck.toolName)) {
-            continue;
+          await context.output.update({ data: outputBuilder.build() });
+        } catch (innerError) {
+          let detailsStr: string;
+          try {
+            detailsStr = typeof innerError === 'object' && innerError !== null && 'message' in innerError
+              ? `${(innerError as Error).message}${(innerError as Error).stack ? `\n${(innerError as Error).stack}` : ''}`
+              : inspect(innerError);
+          } catch {
+            detailsStr = String(innerError);
           }
-          outputBuilder.finishToolCall({
-            toolCallId: chuck.toolCallId,
-            output: chuck.output as Record<string, unknown>,
+          errors.push({
+            type: 'chunk-processing-error',
+            message: `Error processing chunk (type=${chunk.type})`,
+            details: detailsStr,
           });
-          break;
-        }
-        case 'error': {
-          outputBuilder.fail({
-            message: 'Error running agent: ' + inspect(chuck.error),
-          });
-          break;
         }
       }
+
+      if (!outputBuilder.hasTextContent()) {
+        try {
+          const accumulatedText = await stream.text;
+          if (accumulatedText?.trim()) {
+            outputBuilder.addMarkdown(accumulatedText);
+            await context.output.update({ data: outputBuilder.build() });
+          }
+        } catch {
+          // ignore
+        }
+      }
+
+      if (errors.length > 0) {
+        const errorSummary = errors.map(e => {
+          const detail = e.details != null ? `\n  ${String(e.details)}` : '';
+          return `${e.type}: ${e.message}${detail}`;
+        }).join('\n');
+        outputBuilder.addMarkdown(`\n\n**Errors encountered:**\n${errorSummary}`);
+        outputBuilder.fail({ message: 'Agent completed with errors' });
+        await context.output.update({ data: outputBuilder.build() });
+      } else {
+        outputBuilder.setStatus(AgentTaskStatus.COMPLETED)
+      }
+
+    } catch (error) {
+      let errorMessage = `Agent failed unexpectedly: ${inspect(error)}`;
+      if (errors.length > 0) {
+        const collectedErrors = errors.map(e => {
+          const detail = e.details != null ? `\n  ${String(e.details)}` : '';
+          return `${e.type}: ${e.message}${detail}`;
+        }).join('\n');
+        errorMessage += `\n\nCollected stream errors:\n${collectedErrors}`;
+      }
+      outputBuilder.fail({ message: errorMessage });
       await context.output.update({ data: outputBuilder.build() });
-    }
-    const { status } = outputBuilder.build();
-    if (status == AgentTaskStatus.IN_PROGRESS) {
-      outputBuilder.fail({});
+      await Promise.all(mcpClients.map(async (client) => client.close()));
     }
 
     return outputBuilder.build();
-  },
+  }
 });

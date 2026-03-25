@@ -1,33 +1,23 @@
+import { LATEST_CONTEXT_VERSION, PieceMetadata } from '@activepieces/pieces-framework'
+import { apDayjs } from '@activepieces/server-utils'
 import {
-    ApiKey,
-    ApplicationEvent,
-    ApplicationEventName,
-    CustomDomain,
-    CustomDomainStatus,
-    GitBranchType,
-    GitRepo,
-    KeyAlgorithm,
-    OAuthApp,
-    OtpModel,
-    OtpState,
-    OtpType,
-    ProjectMember,
-    SigningKey,
-} from '@activepieces/ee-shared'
-import { LATEST_CONTEXT_VERSION } from '@activepieces/pieces-framework'
-import { apDayjs } from '@activepieces/server-shared'
-import {
-    AiOverageState,
+    AiCreditsAutoTopUpState,
     AIProvider,
     AIProviderName,
     apId,
+    ApiKey,
     AppConnection,
     AppConnectionScope,
     AppConnectionStatus,
     AppConnectionType,
+    ApplicationEvent,
+    ApplicationEventName,
     assertNotNullOrUndefined,
     Cell,
     ColorName,
+    CustomDomain,
+    CustomDomainStatus,
+    EventDestinationScope,
     Field,
     FieldType,
     File,
@@ -43,8 +33,16 @@ import {
     FlowTriggerType,
     FlowVersion,
     FlowVersionState,
+    Folder,
+    GitBranchType,
+    GitRepo,
     InvitationStatus,
     InvitationType,
+    KeyAlgorithm,
+    OAuthApp,
+    OtpModel,
+    OtpState,
+    OtpType,
     PackageType,
     PiecesFilterType,
     PieceType,
@@ -53,6 +51,7 @@ import {
     PlatformRole,
     Project,
     ProjectIcon,
+    ProjectMember,
     ProjectPlan,
     ProjectRelease,
     ProjectReleaseType,
@@ -61,6 +60,7 @@ import {
     Record,
     RoleType,
     RunEnvironment,
+    SigningKey,
     Table,
     TeamProjectsLimit,
     Template,
@@ -70,11 +70,11 @@ import {
     UserIdentity,
     UserIdentityProvider,
     UserInvitation,
-    UserStatus,
-} from '@activepieces/shared'
+    UserStatus } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import bcrypt from 'bcrypt'
 import dayjs from 'dayjs'
+import { FastifyBaseLogger } from 'fastify'
 import { AIProviderSchema } from '../../../src/app/ai/ai-provider-entity'
 import { databaseConnection } from '../../../src/app/database/database-connection'
 import { generateApiKey } from '../../../src/app/ee/api-keys/api-key-service'
@@ -82,6 +82,7 @@ import { OAuthAppWithEncryptedSecret } from '../../../src/app/ee/oauth-apps/oaut
 import { PlatformPlanEntity } from '../../../src/app/ee/platform/platform-plan/platform-plan.entity'
 import { encryptUtils } from '../../../src/app/helper/encryption'
 import { PieceMetadataSchema } from '../../../src/app/pieces/metadata/piece-metadata-entity'
+import { pieceMetadataService } from '../../../src/app/pieces/metadata/piece-metadata-service'
 import { PieceTagSchema } from '../../../src/app/pieces/tags/pieces/piece-tag.entity'
 import { TagEntitySchema } from '../../../src/app/pieces/tags/tag-entity'
 
@@ -150,7 +151,6 @@ export const createMockTemplate = (
         tags: template?.tags ?? [],
         blogUrl: template?.blogUrl ?? faker.internet.url(),
         metadata: template?.metadata ?? null,
-        usageCount: template?.usageCount ?? 0,
         author: template?.author ?? faker.person.fullName(),
         categories: template?.categories ?? [],
         status: template?.status ?? TemplateStatus.PUBLISHED,
@@ -225,15 +225,14 @@ export const createMockPlatformPlan = (platformPlan?: Partial<PlatformPlan>): Pl
         created: platformPlan?.created ?? faker.date.recent().toISOString(),
         updated: platformPlan?.updated ?? faker.date.recent().toISOString(),
         platformId: platformPlan?.platformId ?? apId(),
+        tablesEnabled: platformPlan?.tablesEnabled ?? false,
         includedAiCredits: platformPlan?.includedAiCredits ?? 0,
         licenseKey: platformPlan?.licenseKey ?? faker.lorem.word(),
         stripeCustomerId: undefined,
-        mcpsEnabled: platformPlan?.mcpsEnabled ?? false,
         stripeSubscriptionId: undefined,
         ssoEnabled: platformPlan?.ssoEnabled ?? false,
-        agentsEnabled: platformPlan?.agentsEnabled ?? false,
-        aiCreditsOverageLimit: platformPlan?.aiCreditsOverageLimit ?? 0,
-        aiCreditsOverageState: platformPlan?.aiCreditsOverageState ?? AiOverageState.ALLOWED_BUT_OFF,
+        eventStreamingEnabled: platformPlan?.eventStreamingEnabled ?? false,
+        aiCreditsAutoTopUpState: AiCreditsAutoTopUpState.DISABLED,
         environmentsEnabled: platformPlan?.environmentsEnabled ?? false,
         analyticsEnabled: platformPlan?.analyticsEnabled ?? false,
         auditLogEnabled: platformPlan?.auditLogEnabled ?? false,
@@ -246,14 +245,16 @@ export const createMockPlatformPlan = (platformPlan?: Partial<PlatformPlan>): Pl
         stripeSubscriptionStatus: undefined,
         showPoweredBy: platformPlan?.showPoweredBy ?? false,
         embeddingEnabled: platformPlan?.embeddingEnabled ?? false,
+        agentsEnabled: platformPlan?.agentsEnabled ?? false,
         teamProjectsLimit: platformPlan?.teamProjectsLimit ?? TeamProjectsLimit.NONE,
         projectRolesEnabled: platformPlan?.projectRolesEnabled ?? false,
         customDomainsEnabled: platformPlan?.customDomainsEnabled ?? false,
-        tablesEnabled: platformPlan?.tablesEnabled ?? false,
-        todosEnabled: platformPlan?.todosEnabled ?? false,
         stripeSubscriptionEndDate: apDayjs().endOf('month').unix(),
         stripeSubscriptionStartDate: apDayjs().startOf('month').unix(),
         plan: platformPlan?.plan,
+        secretManagersEnabled: platformPlan?.secretManagersEnabled ?? false,
+        scimEnabled: platformPlan?.scimEnabled ?? false,
+        agentsEnabled: platformPlan?.agentsEnabled ?? false,
     }
 }
 export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
@@ -406,7 +407,6 @@ export const createMockPieceMetadata = (
         displayName: pieceMetadata?.displayName ?? faker.lorem.word(),
         logoUrl: pieceMetadata?.logoUrl ?? faker.image.urlPlaceholder(),
         description: pieceMetadata?.description ?? faker.lorem.sentence(),
-        projectId: pieceMetadata?.projectId,
         directoryPath: pieceMetadata?.directoryPath,
         auth: pieceMetadata?.auth,
         authors: pieceMetadata?.authors ?? [],
@@ -517,6 +517,7 @@ export const createMockFlowVersion = (
         settings: {},
         valid: false,
         displayName: 'Select Trigger',
+        lastUpdatedDate: dayjs().toISOString(),
     } as const
 
     return {
@@ -531,6 +532,7 @@ export const createMockFlowVersion = (
         state: flowVersion?.state ?? faker.helpers.enumValue(FlowVersionState),
         updatedBy: flowVersion?.updatedBy,
         valid: flowVersion?.valid ?? faker.datatype.boolean(),
+        notes: flowVersion?.notes ?? [],
     }
 }
 
@@ -555,10 +557,11 @@ export const createMockConnection = (connection: Partial<AppConnection>, ownerId
         externalId: connection?.externalId ?? apId(),
         owner: null,
         pieceVersion: connection?.pieceVersion ?? '0.0.0',
+        preSelectForNewProjects: connection?.preSelectForNewProjects ?? false,
     }
 }
 
-const createMockTable = ({ projectId }: { projectId: string }): Table => {
+export const createMockTable = ({ projectId }: { projectId: string }): Table => {
     return {
         id: apId(),
         created: faker.date.recent().toISOString(),
@@ -569,7 +572,7 @@ const createMockTable = ({ projectId }: { projectId: string }): Table => {
     }
 }
 
-const createMockField = ({ tableId, projectId }: { tableId: string, projectId: string }): Field => {
+export const createMockField = ({ tableId, projectId }: { tableId: string, projectId: string }): Field => {
     return {
         id: apId(),
         created: faker.date.recent().toISOString(),
@@ -584,7 +587,7 @@ const createMockField = ({ tableId, projectId }: { tableId: string, projectId: s
         type: FieldType.STATIC_DROPDOWN,
     }
 }
-const createMockRecord = ({ tableId, projectId }: { tableId: string, projectId: string }): Record => {
+export const createMockRecord = ({ tableId, projectId }: { tableId: string, projectId: string }): Record => {
     return {
         id: apId(),
         created: faker.date.recent().toISOString(),
@@ -594,7 +597,7 @@ const createMockRecord = ({ tableId, projectId }: { tableId: string, projectId: 
     }
 }
 
-const createMockCell = ({ recordId, fieldId, projectId }: { recordId: string, fieldId: string, projectId: string }): Cell => {
+export const createMockCell = ({ recordId, fieldId, projectId }: { recordId: string, fieldId: string, projectId: string }): Cell => {
     return {
         id: apId(),
         created: faker.date.recent().toISOString(),
@@ -781,7 +784,7 @@ export const createMockAIProvider = async (aiProvider?: Partial<AIProvider>): Pr
         auth: await encryptUtils.encryptObject({
             apiKey: process.env.OPENAI_API_KEY ?? faker.string.uuid(),
         }),
-        config: {},
+        config: aiProvider?.config ?? {},
     }
     
 }
@@ -790,6 +793,56 @@ export const mockAndSaveAIProvider = async (params?: Partial<AIProvider>): Promi
     const mockAIProvider = await createMockAIProvider(params)
     await databaseConnection().getRepository('ai_provider').upsert(mockAIProvider, ['platformId', 'provider'])
     return mockAIProvider
+}
+
+export const mockPieceMetadata = async (mockLog: FastifyBaseLogger): Promise<PieceMetadata> => {
+    const { mockPlatform } = await mockAndSaveBasicSetup()
+    const mockPieceMetadata = createMockPieceMetadata({
+        platformId: mockPlatform.id,
+        packageType: PackageType.REGISTRY,
+    })
+    await databaseConnection().getRepository('piece_metadata').save([mockPieceMetadata])
+    pieceMetadataService(mockLog).getOrThrow = vi.fn().mockResolvedValue(mockPieceMetadata)
+    return mockPieceMetadata
+}
+
+export const createMockFolder = (folder?: Partial<Folder>): Folder => {
+    return {
+        id: folder?.id ?? apId(),
+        created: folder?.created ?? faker.date.recent().toISOString(),
+        updated: folder?.updated ?? faker.date.recent().toISOString(),
+        projectId: folder?.projectId ?? apId(),
+        displayName: folder?.displayName ?? faker.lorem.word(),
+        displayOrder: folder?.displayOrder ?? faker.number.int({ min: 0, max: 100 }),
+    }
+}
+
+export const createMockEventDestination = (eventDestination?: Partial<{
+    id: string
+    created: string
+    updated: string
+    platformId: string
+    events: ApplicationEventName[]
+    url: string
+    scope: EventDestinationScope
+}>): {
+    id: string
+    created: string
+    updated: string
+    platformId: string
+    events: ApplicationEventName[]
+    url: string
+    scope: EventDestinationScope
+} => {
+    return {
+        id: eventDestination?.id ?? apId(),
+        created: eventDestination?.created ?? faker.date.recent().toISOString(),
+        updated: eventDestination?.updated ?? faker.date.recent().toISOString(),
+        platformId: eventDestination?.platformId ?? apId(),
+        events: eventDestination?.events ?? [faker.helpers.enumValue(ApplicationEventName)],
+        url: eventDestination?.url ?? faker.internet.url(),
+        scope: eventDestination?.scope ?? EventDestinationScope.PLATFORM,
+    }
 }
 
 type CreateMockPlatformWithOwnerParams = {

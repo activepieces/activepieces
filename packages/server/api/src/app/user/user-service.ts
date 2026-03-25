@@ -16,11 +16,15 @@ import {
     UserId,
     UserIdentity,
     UserStatus,
-    UserWithMetaInformation } from '@activepieces/shared'
+    UserWithBadges,
+    UserWithMetaInformation,
+} from '@activepieces/shared'
 import dayjs from 'dayjs'
+import { FastifyBaseLogger } from 'fastify'
 import { In } from 'typeorm'
 import { userIdentityService } from '../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../core/db/repo-factory'
+import { platformProjectService } from '../ee/projects/platform-project-service'
 import { projectMemberRepo } from '../ee/projects/project-role/project-role.service'
 import { buildPaginator } from '../helper/pagination/build-paginator'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
@@ -32,13 +36,14 @@ import { UserEntity, UserSchema } from './user-entity'
 
 export const userRepo = repoFactory(UserEntity)
 
-export const userService = {
+export const userService = (log: FastifyBaseLogger) => ({
     async create(params: CreateParams): Promise<User> {
+        const isActive = params.isActive ?? true
         const user: NewUser = {
             id: apId(),
             identityId: params.identityId,
             platformRole: params.platformRole,
-            status: UserStatus.ACTIVE,
+            status: isActive ? UserStatus.ACTIVE : UserStatus.INACTIVE,
             externalId: params.externalId,
             platformId: params.platformId,
         }
@@ -55,8 +60,8 @@ export const userService = {
                 platformId,
                 platformRole: PlatformRole.MEMBER,
             })
-    
-            await projectService.create({
+
+            await projectService(log).create({
                 displayName: identity.firstName + '\'s Project',
                 ownerId: newUser.id,
                 platformId,
@@ -83,7 +88,7 @@ export const userService = {
             })
         }
 
-        const platform = await platformService.getOneOrThrow(user.platformId)
+        const platform = await platformService(log).getOneOrThrow(user.platformId)
         if (platform.ownerId === user.id && status === UserStatus.INACTIVE) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
@@ -103,6 +108,9 @@ export const userService = {
         })
 
         return this.getMetaInformation({ id })
+    },
+    async getUsersByIdentityId({ identityId }: GetUsersByIdentityIdParams): Promise<Pick<User, 'id' | 'platformId'>[]> {
+        return userRepo().find({ where: { identityId } }).then((users) => users.map((user) => ({ id: user.id, platformId: user.platformId })))
     },
     async list({ platformId, externalId, cursorRequest, limit }: ListParams): Promise<SeekPage<UserWithMetaInformation>> {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
@@ -147,7 +155,29 @@ export const userService = {
     async getOneOrFail({ id }: IdParams): Promise<User> {
         return userRepo().findOneOrFail({ where: { id } })
     },
+    async getOneByIdAndPlatformIdOrThrow({ id, platformId }: GetOneByIdAndPlatformIdParams): Promise<UserWithBadges> {
+        const user = await userRepo().findOne({ where: { id, platformId }, relations: { badges: true } })
+        if (isNil(user)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: { entityType: 'user', entityId: id },
+            })
+        }
+        const meta = await this.getMetaInformation({ id })
+        return {
+            ...meta,
+            badges: user.badges.map((badge) => ({
+                name: badge.name,
+                created: badge.created,
+            })),
+        }
+    },
     async delete({ id, platformId }: DeleteParams): Promise<void> {
+
+        await platformProjectService(log).deletePersonalProjectForUser({
+            userId: id,
+            platformId,
+        })
         await userRepo().delete({
             id,
             platformId,
@@ -173,7 +203,7 @@ export const userService = {
     },
     async getMetaInformation({ id }: IdParams): Promise<UserWithMetaInformation> {
         const user = await userRepo().findOneByOrFail({ id })
-        const identity = await userIdentityService(system.globalLogger()).getBasicInformation(user.identityId)
+        const identity = await userIdentityService(log).getBasicInformation(user.identityId)
         return {
             id: user.id,
             email: identity.email,
@@ -186,6 +216,7 @@ export const userService = {
             created: user.created,
             updated: user.updated,
             lastActiveDate: user.lastActiveDate,
+            imageUrl: identity.imageUrl,
         }
     },
 
@@ -199,7 +230,11 @@ export const userService = {
             platformId,
         })
     },
-}
+
+    isUserPrivileged(user: User): boolean {
+        return user.platformRole === PlatformRole.ADMIN || user.platformRole === PlatformRole.OPERATOR
+    },
+})
 
 
 async function getUsersForProject(platformId: PlatformId, projectId: string): Promise<UserId[]> {
@@ -216,6 +251,10 @@ type UpdateLastActiveDateParams = {
     id: UserId
 }
 
+type GetOneByIdAndPlatformIdParams = {
+    id: UserId
+    platformId: PlatformId
+}
 type ListUsersForProjectParams = {
     projectId: ProjectId
     platformId: PlatformId
@@ -261,6 +300,10 @@ type CreateParams = {
     platformId: string | null
     externalId?: string
     platformRole: PlatformRole
+    isActive?: boolean
+}
+type GetUsersByIdentityIdParams = {
+    identityId: string
 }
 
 type NewUser = Omit<User, 'created' | 'updated'>

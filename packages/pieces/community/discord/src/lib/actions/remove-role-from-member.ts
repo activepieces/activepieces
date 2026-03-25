@@ -4,7 +4,7 @@ import {
   HttpMethod,
   httpClient,
 } from '@activepieces/pieces-common';
-import { discordAuth } from '../../index';
+import { discordAuth } from '../auth';
 import { discordCommon } from '../common';
 
 export const discordRemoveRoleFromMember = createAction({

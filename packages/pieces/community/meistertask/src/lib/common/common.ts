@@ -2,7 +2,7 @@ import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { Property } from '@activepieces/pieces-framework';
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { AuthenticationType } from '@activepieces/pieces-common';
-import { meistertaskAuth } from '../../index';
+import { meistertaskAuth } from '../auth';
 
 export const MEISTERTASK_API_URL = 'https://www.meistertask.com/api';
 
