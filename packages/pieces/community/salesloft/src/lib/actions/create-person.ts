@@ -9,7 +9,7 @@ export const createPersonAction = createAction({
   name: 'create_person',
   displayName: 'Create Person',
   description:
-    'Create a new person in Salesloft. Either email_address or phone/last_name must be provided.',
+    'Create a new person in Salesloft. Either email_address or phone + last_name must be provided.',
   auth: salesloftAuth,
   props: {
     email_address: Property.ShortText({
@@ -29,7 +29,7 @@ export const createPersonAction = createAction({
     phone: Property.ShortText({
       displayName: 'Phone',
       description:
-        'Phone number. Required along with last_name when email_address is not provided.',
+        'Phone number. Required along with Last Name when Email Address is not provided.',
       required: false,
     }),
     title: Property.ShortText({
@@ -60,6 +60,16 @@ export const createPersonAction = createAction({
     owner_id: userIdProp,
   },
   async run({ auth, propsValue }) {
+    const hasEmail = propsValue.email_address?.trim();
+    const hasPhoneAndLastName =
+      propsValue.phone?.trim() && propsValue.last_name?.trim();
+
+    if (!hasEmail && !hasPhoneAndLastName) {
+      throw new Error(
+        'Either email_address or both phone and last_name must be provided to create a person.',
+      );
+    }
+
     const body = cleanPayload({
       email_address: propsValue.email_address,
       first_name: propsValue.first_name,
