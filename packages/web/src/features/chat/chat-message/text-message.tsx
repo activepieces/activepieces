@@ -11,7 +11,7 @@ import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
 import { CopyButton } from '@/components/custom/clipboard/copy-button';
-import { useTheme } from '@/components/theme-provider';
+import { useTheme } from '@/components/providers/theme-provider';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -37,7 +37,7 @@ export const TextMessage: React.FC<TextMessageProps> = React.memo(
           remarkPlugins={[remarkGfm]}
           className="bg-inherit"
           components={{
-            code({ node, inline, className, children, ...props }: any) {
+            code({ node: _node, inline, className, children, ...props }: any) {
               if (role === 'user') {
                 return <div className="font-mono text-sm">{children}</div>;
               }

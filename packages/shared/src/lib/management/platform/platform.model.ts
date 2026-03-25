@@ -1,5 +1,5 @@
-import { Static, Type } from '@sinclair/typebox'
-import { BaseModelSchema, Nullable } from '../../core/common/base-model'
+import { z } from 'zod'
+import { BaseModelSchema, DateOrString, Nullable } from '../../core/common/base-model'
 import { ApId } from '../../core/common/id-generator'
 import { FederatedAuthnProviderConfig, FederatedAuthnProviderConfigWithoutSensitiveData } from '../../core/federated-authn'
 
@@ -15,15 +15,15 @@ export enum PlatformUsageMetric {
     ACTIVE_FLOWS = 'active-flows',
 }
 
-export const PlatformUsage = Type.Object({
-    totalAiCreditsUsed: Type.Number(),
-    totalAiCreditsUsedThisMonth: Type.Number(),
-    aiCreditsRemaining: Type.Number(),
-    aiCreditsLimit: Type.Number(),
-    activeFlows: Type.Number(),
+export const PlatformUsage = z.object({
+    totalAiCreditsUsed: z.number(),
+    totalAiCreditsUsedThisMonth: z.number(),
+    aiCreditsRemaining: z.number(),
+    aiCreditsLimit: z.number(),
+    activeFlows: z.number(),
 })
 
-export type PlatformUsage = Static<typeof PlatformUsage>
+export type PlatformUsage = z.infer<typeof PlatformUsage>
 
 export enum PlanName {
     STANDARD = 'standard',
@@ -47,116 +47,114 @@ export enum AiCreditsAutoTopUpState {
     DISABLED = 'disabled',
 }
 
-export const PlatformPlan = Type.Object({
+export const PlatformPlan = z.object({
     ...BaseModelSchema,
     // TODO: We have to use the enum when we finalize the plan names
-    plan: Type.Optional(Type.String()),
-    platformId: Type.String(),
-    includedAiCredits: Type.Number(),
-    lastFreeAiCreditsRenewalDate: Type.Optional(Type.String()),
-    
-    tablesEnabled: Type.Boolean(),
-    eventStreamingEnabled: Type.Boolean(),
-    aiCreditsAutoTopUpState: Type.Enum(AiCreditsAutoTopUpState),
-    aiCreditsAutoTopUpThreshold: Type.Optional(Type.Number()),
-    aiCreditsAutoTopUpCreditsToAdd: Type.Optional(Type.Number()),
-    maxAutoTopUpCreditsMonthly: Nullable(Type.Number()),
+    plan: Nullable(z.string()),
+    platformId: z.string(),
+    includedAiCredits: z.number(),
+    lastFreeAiCreditsRenewalDate: Nullable(DateOrString),
 
-    environmentsEnabled: Type.Boolean(),
-    analyticsEnabled: Type.Boolean(),
-    showPoweredBy: Type.Boolean(),
-    auditLogEnabled: Type.Boolean(),
-    embeddingEnabled: Type.Boolean(),
-    managePiecesEnabled: Type.Boolean(),
-    manageTemplatesEnabled: Type.Boolean(),
-    customAppearanceEnabled: Type.Boolean(),
-    teamProjectsLimit: Type.Enum(TeamProjectsLimit),
-    projectRolesEnabled: Type.Boolean(),
-    customDomainsEnabled: Type.Boolean(),
-    globalConnectionsEnabled: Type.Boolean(),
-    customRolesEnabled: Type.Boolean(),
-    apiKeysEnabled: Type.Boolean(),
-    ssoEnabled: Type.Boolean(),
-    secretManagersEnabled: Type.Boolean(),
-    scimEnabled: Type.Boolean(),
-    licenseKey: Type.Optional(Type.String()),
-    licenseExpiresAt: Type.Optional(Type.String()),
-    stripeCustomerId: Type.Optional(Type.String()),
-    stripeSubscriptionId: Type.Optional(Type.String()),
-    stripeSubscriptionStatus: Type.Optional(Type.String()),
-    stripeSubscriptionStartDate: Type.Optional(Type.Number()),
-    stripeSubscriptionEndDate: Type.Optional(Type.Number()),
-    stripeSubscriptionCancelDate: Type.Optional(Type.Number()),
+    tablesEnabled: z.boolean(),
+    eventStreamingEnabled: z.boolean(),
+    aiCreditsAutoTopUpState: z.nativeEnum(AiCreditsAutoTopUpState),
+    aiCreditsAutoTopUpThreshold: Nullable(z.number()),
+    aiCreditsAutoTopUpCreditsToAdd: Nullable(z.number()),
+    maxAutoTopUpCreditsMonthly: Nullable(z.number()),
 
-    projectsLimit: Nullable(Type.Number()),
-    activeFlowsLimit: Nullable(Type.Number()),
+    environmentsEnabled: z.boolean(),
+    analyticsEnabled: z.boolean(),
+    showPoweredBy: z.boolean(),
+    auditLogEnabled: z.boolean(),
+    embeddingEnabled: z.boolean(),
+    agentsEnabled: z.boolean(),
+    managePiecesEnabled: z.boolean(),
+    manageTemplatesEnabled: z.boolean(),
+    customAppearanceEnabled: z.boolean(),
+    teamProjectsLimit: z.nativeEnum(TeamProjectsLimit),
+    projectRolesEnabled: z.boolean(),
+    customDomainsEnabled: z.boolean(),
+    globalConnectionsEnabled: z.boolean(),
+    customRolesEnabled: z.boolean(),
+    apiKeysEnabled: z.boolean(),
+    ssoEnabled: z.boolean(),
+    secretManagersEnabled: z.boolean(),
+    scimEnabled: z.boolean(),
+    licenseKey: Nullable(z.string()),
+    licenseExpiresAt: Nullable(DateOrString),
+    stripeCustomerId: Nullable(z.string()),
+    stripeSubscriptionId: Nullable(z.string()),
+    stripeSubscriptionStatus: Nullable(z.string()),
+    stripeSubscriptionStartDate: Nullable(z.number()),
+    stripeSubscriptionEndDate: Nullable(z.number()),
+    stripeSubscriptionCancelDate: Nullable(z.number()),
 
-    dedicatedWorkers: Nullable(Type.Object({
-        trustedEnvironment: Type.Boolean(),
+    projectsLimit: Nullable(z.number()),
+    activeFlowsLimit: Nullable(z.number()),
+
+    dedicatedWorkers: Nullable(z.object({
+        trustedEnvironment: z.boolean(),
     })),
 })
-export type PlatformPlan = Static<typeof PlatformPlan>
+export type PlatformPlan = z.infer<typeof PlatformPlan>
 
-export const PlatformPlanLimits = Type.Omit(PlatformPlan, ['id', 'platformId', 'created', 'updated'])
-export type PlatformPlanLimits = Static<typeof PlatformPlanLimits>
+export const PlatformPlanLimits = PlatformPlan.omit({ id: true, platformId: true, created: true, updated: true })
+export type PlatformPlanLimits = z.infer<typeof PlatformPlanLimits>
 export type PlatformPlanWithOnlyLimits = Omit<PlatformPlanLimits, 'stripeSubscriptionStartDate' | 'stripeSubscriptionEndDate' | 'stripeBillingCycle'>
 
-export const Platform = Type.Object({
+export const Platform = z.object({
     ...BaseModelSchema,
     ownerId: ApId,
-    name: Type.String(),
-    primaryColor: Type.String(),
-    logoIconUrl: Type.String(),
-    fullLogoUrl: Type.String(),
-    favIconUrl: Type.String(),
+    name: z.string(),
+    primaryColor: z.string(),
+    logoIconUrl: z.string(),
+    fullLogoUrl: z.string(),
+    favIconUrl: z.string(),
     /**
     * @deprecated Use projects filter instead.
     */
-    filteredPieceNames: Type.Array(Type.String()),
+    filteredPieceNames: z.array(z.string()),
     /**
     * @deprecated Use projects filter instead.
     */
-    filteredPieceBehavior: Type.Enum(FilteredPieceBehavior),
-    cloudAuthEnabled: Type.Boolean(),
-    enforceAllowedAuthDomains: Type.Boolean(),
-    allowedAuthDomains: Type.Array(Type.String()),
+    filteredPieceBehavior: z.nativeEnum(FilteredPieceBehavior),
+    cloudAuthEnabled: z.boolean(),
+    enforceAllowedAuthDomains: z.boolean(),
+    allowedAuthDomains: z.array(z.string()),
     federatedAuthProviders: FederatedAuthnProviderConfig,
-    emailAuthEnabled: Type.Boolean(),
-    pinnedPieces: Type.Array(Type.String()),
+    emailAuthEnabled: z.boolean(),
+    pinnedPieces: z.array(z.string()),
 })
-export type Platform = Static<typeof Platform>
+export type Platform = z.infer<typeof Platform>
 
-export const PlatformWithoutSensitiveData = Type.Composite([Type.Object({
+export const PlatformWithoutSensitiveData = z.object({
     federatedAuthProviders: Nullable(FederatedAuthnProviderConfigWithoutSensitiveData),
     plan: PlatformPlanLimits,
-    usage: Type.Optional(PlatformUsage),
-}), Type.Pick(Platform, [
-    'id',
-    'created',
-    'updated',
-    'ownerId',
-    'name',
-    'plan',
-    'primaryColor',
-    'logoIconUrl',
-    'fullLogoUrl',
-    'favIconUrl',
-    'filteredPieceNames',
-    'filteredPieceBehavior',
-    'cloudAuthEnabled',
-    'enforceAllowedAuthDomains',
-    'allowedAuthDomains',
-    'emailAuthEnabled',
-    'pinnedPieces',
-])])
-export type PlatformWithoutSensitiveData = Static<typeof PlatformWithoutSensitiveData>
+    usage: PlatformUsage.optional(),
+    id: z.string(),
+    created: DateOrString,
+    updated: DateOrString,
+    ownerId: ApId,
+    name: z.string(),
+    primaryColor: z.string(),
+    logoIconUrl: z.string(),
+    fullLogoUrl: z.string(),
+    favIconUrl: z.string(),
+    filteredPieceNames: z.array(z.string()),
+    filteredPieceBehavior: z.nativeEnum(FilteredPieceBehavior),
+    cloudAuthEnabled: z.boolean(),
+    enforceAllowedAuthDomains: z.boolean(),
+    allowedAuthDomains: z.array(z.string()),
+    emailAuthEnabled: z.boolean(),
+    pinnedPieces: z.array(z.string()),
+})
+export type PlatformWithoutSensitiveData = z.infer<typeof PlatformWithoutSensitiveData>
 
-export const PlatformBillingInformation = Type.Object({
+export const PlatformBillingInformation = z.object({
     plan: PlatformPlan,
     usage: PlatformUsage,
-    nextBillingDate: Type.Number(),
-    nextBillingAmount: Type.Number(),
-    cancelAt: Type.Optional(Type.Number()),
+    nextBillingDate: z.number(),
+    nextBillingAmount: z.number(),
+    cancelAt: Nullable(z.number()),
 })
-export type PlatformBillingInformation = Static<typeof PlatformBillingInformation>
-
+export type PlatformBillingInformation = z.infer<typeof PlatformBillingInformation>

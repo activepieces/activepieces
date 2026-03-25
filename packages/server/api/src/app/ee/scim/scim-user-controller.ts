@@ -1,4 +1,3 @@
-import { securityAccess } from '@activepieces/server-common'
 import {
     CreateScimUserRequest,
     PrincipalType,
@@ -7,11 +6,12 @@ import {
     ScimPatchRequest,
     ScimResourceId,
 } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
+import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { scimUserService } from './scim-user-service'
 
-export const scimUserController: FastifyPluginAsyncTypebox = async (app) => {
+export const scimUserController: FastifyPluginAsyncZod = async (app) => {
     app.get('/', ListUsersRequest, async (request, reply) => {
         const platformId = request.principal.platform.id
         const result = await scimUserService(request.log).list({

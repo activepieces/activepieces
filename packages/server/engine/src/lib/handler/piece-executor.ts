@@ -1,7 +1,7 @@
 import { URL } from 'url'
 import { ActionContext, backwardCompatabilityContextUtils, ConstructToolParams, InputPropertyMap, PauseHook, PauseHookParams, PieceAuthProperty, PiecePropertyMap, RespondHook, RespondHookParams, StaticPropsValue, StopHook, StopHookParams, TagsManager } from '@activepieces/pieces-framework'
-import { AUTHENTICATION_PROPERTY_NAME, EngineGenericError, EngineSocketEvent, ExecutionType, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, PausedFlowTimeoutError, PauseType, PieceAction, RespondResponse, StepOutputStatus } from '@activepieces/shared'
-import { ToolSet } from 'ai'
+import { AUTHENTICATION_PROPERTY_NAME, EngineGenericError, ExecutionType, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, PausedFlowTimeoutError, PauseType, PieceAction, RespondResponse, StepOutputStatus } from '@activepieces/shared'
+import type { ToolSet } from 'ai'
 import dayjs from 'dayjs'
 import { continueIfFailureHandler, runWithExponentialBackoff } from '../helper/error-handling'
 import { pieceLoader } from '../helper/piece-loader'
@@ -163,7 +163,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
         const webhookResponse = getResponse(params.hookResponse)
         const isSamePiece = constants.triggerPieceName === action.settings.pieceName
         if (!isNil(webhookResponse) && !isNil(constants.serverHandlerId) && !isNil(constants.httpRequestId) && isSamePiece) {
-            await workerSocket.sendToWorkerWithAck(EngineSocketEvent.SEND_FLOW_RESPONSE, {
+            await workerSocket.getWorkerClient().sendFlowResponse({
                 workerHandlerId: constants.serverHandlerId,
                 httpRequestId: constants.httpRequestId,
                 runResponse: {

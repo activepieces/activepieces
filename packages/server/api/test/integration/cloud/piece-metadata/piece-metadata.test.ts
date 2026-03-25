@@ -84,7 +84,7 @@ describe('Piece Metadata API', () => {
             // act
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/pieces/@activepieces/a',
+                url: '/api/v1/pieces/@activepieces/a',
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -183,7 +183,7 @@ describe('Piece Metadata API', () => {
             // act
             const response = await app?.inject({
                 method: 'GET',
-                url: `/v1/pieces?projectId=${mockProject.id}`,
+                url: `/api/v1/pieces?projectId=${mockProject.id}`,
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -255,7 +255,7 @@ describe('Piece Metadata API', () => {
 
             const responseA = await app?.inject({
                 method: 'GET',
-                url: `/v1/pieces?projectId=${projectA.id}`,
+                url: `/api/v1/pieces?projectId=${projectA.id}`,
                 headers: {
                     authorization: `Bearer ${tokenA}`,
                 },
@@ -263,7 +263,7 @@ describe('Piece Metadata API', () => {
 
             const responseB = await app?.inject({
                 method: 'GET',
-                url: `/v1/pieces?projectId=${projectB.id}`,
+                url: `/api/v1/pieces?projectId=${projectB.id}`,
                 headers: {
                     authorization: `Bearer ${tokenB}`,
                 },
@@ -321,7 +321,7 @@ describe('Piece Metadata API', () => {
             // act
             const exactVersionResponse = await app?.inject({
                 method: 'GET',
-                url: '/v1/pieces/a?version=0.0.1',
+                url: '/api/v1/pieces/a?version=0.0.1',
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -332,7 +332,7 @@ describe('Piece Metadata API', () => {
 
             const telda2VersionResponse = await app?.inject({
                 method: 'GET',
-                url: '/v1/pieces/a?version=~0.0.2',
+                url: '/api/v1/pieces/a?version=~0.0.2',
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -343,7 +343,7 @@ describe('Piece Metadata API', () => {
 
             const teldaVersionResponse = await app?.inject({
                 method: 'GET',
-                url: '/v1/pieces/a?version=~0.0.1',
+                url: '/api/v1/pieces/a?version=~0.0.1',
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -354,7 +354,7 @@ describe('Piece Metadata API', () => {
 
             const notFoundVersionResponse = await app?.inject({
                 method: 'GET',
-                url: '/v1/pieces/a?version=~0.1.2',
+                url: '/api/v1/pieces/a?version=~0.1.2',
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -388,7 +388,7 @@ describe('Piece Metadata API', () => {
             // act
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/pieces',
+                url: '/api/v1/pieces',
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -427,7 +427,7 @@ describe('Piece Metadata API', () => {
             // act
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/pieces',
+                url: '/api/v1/pieces',
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -491,7 +491,7 @@ describe('Piece Metadata API', () => {
             // act
             const response = await app?.inject({
                 method: 'GET',
-                url: `/v1/pieces?projectId=${mockProject.id}`,
+                url: `/api/v1/pieces?projectId=${mockProject.id}`,
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -552,7 +552,7 @@ describe('Piece Metadata API', () => {
             // act
             const response = await app?.inject({
                 method: 'GET',
-                url: `/v1/pieces?projectId=${mockProject.id}`,
+                url: `/api/v1/pieces?projectId=${mockProject.id}`,
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -613,7 +613,7 @@ describe('Piece Metadata API', () => {
             // act
             const response = await app?.inject({
                 method: 'GET',
-                url: `/v1/pieces?projectId=${mockProject.id}`,
+                url: `/api/v1/pieces?projectId=${mockProject.id}`,
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },

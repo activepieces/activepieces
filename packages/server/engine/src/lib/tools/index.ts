@@ -1,6 +1,7 @@
 import { Action, DropdownOption, ExecutePropsResult, PieceProperty, PropertyType } from '@activepieces/pieces-framework'
 import { AgentPieceTool, ExecuteToolOperation, ExecuteToolResponse, ExecutionToolStatus, FieldControlMode, FlowActionType, isNil, PieceAction, PropertyExecutionType, StepOutputStatus } from '@activepieces/shared'
 import { generateText, JSONParseError, LanguageModel, NoObjectGeneratedError, Output, Tool, zodSchema } from 'ai'
+import dayjs from 'dayjs'
 import { z } from 'zod'
 import { EngineConstants } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
@@ -156,6 +157,7 @@ async function execute(operation: ExecuteToolOperationWithModel): Promise<Execut
             name: operation.actionName,
             displayName: operation.actionName,
             type: FlowActionType.PIECE,
+            lastUpdatedDate: dayjs().toISOString(),
             settings: {
                 input: resolvedInput,
                 actionName: operation.actionName,
@@ -269,13 +271,20 @@ async function propertyToSchema(propertyName: string, property: PieceProperty, o
         case PropertyType.NUMBER:
             schema = z.number()
             break
-        case PropertyType.ARRAY:
-            return z.array(z.string())
+        case PropertyType.ARRAY: {
+            if (property.properties) {
+                schema = z.array(await buildObjectSchemaFromProperties(property.properties, operation, resolvedInput))
+            }
+            else {
+                schema = z.array(z.union([z.string(), z.number(), z.boolean(), z.object({}).loose()]))
+            }
+            break
+        }
         case PropertyType.OBJECT:
             schema = z.object({}).loose()
             break
         case PropertyType.JSON:
-            schema = z.object({}).loose()
+            schema = z.union([z.object({}).loose(), z.array(z.unknown())])
             break
         case PropertyType.DYNAMIC: {
             schema = await buildDynamicSchema(propertyName, operation, resolvedInput)
@@ -299,6 +308,18 @@ async function propertyToSchema(propertyName: string, property: PieceProperty, o
     return property.required ? schema : schema.nullable()
 }
 
+async function buildObjectSchemaFromProperties(properties: Record<string, PieceProperty>, operation: ExecuteToolOperation, resolvedInput: Record<string, unknown>): Promise<z.ZodTypeAny> {
+    const entries = Object.entries(properties)
+    const schemas = await Promise.all(entries.map(([key, value]) =>
+        propertyToSchema(key, value, operation, resolvedInput),
+    ))
+    const schemaMap: Record<string, z.ZodTypeAny> = {}
+    for (let i = 0; i < entries.length; i++) {
+        schemaMap[entries[i][0]] = schemas[i]
+    }
+    return z.object(schemaMap).loose()
+}
+
 async function buildDynamicSchema(propertyName: string, operation: ExecuteToolOperation, resolvedInput: Record<string, unknown>): Promise<z.ZodTypeAny> {
     const response = await pieceHelper.executeProps({
         ...operation,
@@ -308,12 +329,7 @@ async function buildDynamicSchema(propertyName: string, operation: ExecuteToolOp
         sampleData: {},
         searchValue: undefined,
     }) as unknown as ExecutePropsResult<PropertyType.DYNAMIC>
-    const dynamicProperties = response.options
-    const dynamicSchema: Record<string, z.ZodTypeAny> = {}
-    for (const [key, value] of Object.entries(dynamicProperties)) {
-        dynamicSchema[key] = await propertyToSchema(key, value, operation, resolvedInput)
-    }
-    return z.object(dynamicSchema)
+    return buildObjectSchemaFromProperties(response.options, operation, resolvedInput)
 }
 
 type PropertyDetail = {

@@ -1,34 +1,35 @@
 import { Template } from '@activepieces/shared';
-import { typeboxResolver } from '@hookform/resolvers/typebox';
-import { DialogDescription, DialogTrigger } from '@radix-ui/react-dialog';
-import { Static, Type } from '@sinclair/typebox';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import React, { useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
+import { z } from 'zod';
 
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from '@/components/ui/dialog';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { flowsApi } from '@/features/flows/lib/flows-api';
-import { templatesApi } from '@/features/templates/lib/templates-api';
+import { flowsApi } from '@/features/flows/api/flows-api';
+import { templatesApi } from '@/features/templates/api/templates-api';
 import { userHooks } from '@/hooks/user-hooks';
 import { useNewWindow } from '@/lib/navigation-utils';
 
-const ShareTemplateSchema = Type.Object({
-  description: Type.String(),
-  blogUrl: Type.Optional(Type.String()),
-  tags: Type.Optional(Type.Array(Type.String())),
+const ShareTemplateSchema = z.object({
+  description: z.string(),
+  blogUrl: z.string().optional(),
+  tags: z.array(z.string()).optional(),
 });
 
-type ShareTemplateSchema = Static<typeof ShareTemplateSchema>;
+type ShareTemplateSchema = z.infer<typeof ShareTemplateSchema>;
 
 const ShareTemplateDialog: React.FC<{
   children: React.ReactNode;
@@ -37,7 +38,7 @@ const ShareTemplateDialog: React.FC<{
 }> = ({ children, flowId, flowVersionId }) => {
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   const shareTemplateForm = useForm<ShareTemplateSchema>({
-    resolver: typeboxResolver(ShareTemplateSchema),
+    resolver: zodResolver(ShareTemplateSchema),
   });
   const openNewIndow = useNewWindow();
   const { data: currentUser } = userHooks.useCurrentUser();
@@ -134,7 +135,7 @@ const ShareTemplateDialog: React.FC<{
                 {shareTemplateForm.formState.errors.root.serverError.message}
               </FormMessage>
             )}
-            <Button loading={isPending}>{t('Confirm')}</Button>
+            <Button loading={isPending}>{t('Share')}</Button>
           </form>
         </Form>
       </DialogContent>

@@ -12,18 +12,18 @@ import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { DataSelector } from '@/app/builder/data-selector';
 import { CanvasControls } from '@/app/builder/flow-canvas/canvas-controls';
 import { StepSettingsProvider } from '@/app/builder/step-settings/step-settings-context';
+import { RightSideBarType } from '@/app/builder/types';
 import { ChatDrawer } from '@/app/routes/chat/chat-drawer';
-import { ShowPoweredBy } from '@/components/show-powered-by';
+import { ShowPoweredBy } from '@/components/custom/show-powered-by';
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
 } from '@/components/ui/resizable-panel';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
+import { piecesHooks } from '@/features/pieces';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { RightSideBarType } from '@/lib/types';
-
-import { cn, useElementSize } from '../../lib/utils';
+import { useElementSize } from '@/hooks/use-element-size';
+import { cn } from '@/lib/utils';
 
 import { BuilderHeader } from './builder-header/builder-header';
 import { FlowCanvas } from './flow-canvas';
@@ -37,7 +37,6 @@ import { RunsList } from './run-list';
 import { CursorPositionProvider } from './state/cursor-position-context';
 import { StepSettingsContainer } from './step-settings';
 import { ResizableVerticalPanelsProvider } from './step-settings/resizable-vertical-panels-context';
-const minWidthOfSidebar = 'min-w-[max(20vw,400px)]';
 const animateResizeClassName = `transition-all `;
 
 const BuilderPage = () => {
@@ -67,6 +66,11 @@ const BuilderPage = () => {
   const middlePanelRef = useRef<HTMLDivElement>(null);
   const middlePanelSize = useElementSize(middlePanelRef);
   const [isDraggingHandle, setIsDraggingHandle] = useState(false);
+  useEffect(() => {
+    const handlePointerUp = () => setIsDraggingHandle(false);
+    window.addEventListener('pointerup', handlePointerUp);
+    return () => window.removeEventListener('pointerup', handlePointerUp);
+  }, []);
   const rightHandleRef = flowCanvasHooks.useAnimateSidebar(rightSidebar);
   const rightSidePanelRef = useRef<HTMLDivElement>(null);
   const { pieceModel, refetch: refetchPiece } =
@@ -89,8 +93,8 @@ const BuilderPage = () => {
       <div className="z-40">
         <BuilderHeader />
       </div>
-      <ResizablePanelGroup direction="horizontal">
-        <ResizablePanel defaultSize={100} order={2} id="flow-canvas">
+      <ResizablePanelGroup orientation="horizontal">
+        <ResizablePanel defaultSize="100%" id="flow-canvas">
           <div ref={middlePanelRef} className="relative h-full w-full">
             <CursorPositionProvider>
               <FlowCanvas
@@ -125,21 +129,20 @@ const BuilderPage = () => {
         <ResizableHandle
           disabled={rightSidebar === RightSideBarType.NONE}
           withHandle={rightSidebar !== RightSideBarType.NONE}
-          onDragging={setIsDraggingHandle}
+          onPointerDown={() => setIsDraggingHandle(true)}
           className={
             rightSidebar === RightSideBarType.NONE ? 'bg-transparent' : ''
           }
         />
 
         <ResizablePanel
-          ref={rightHandleRef}
+          panelRef={rightHandleRef}
           id="right-sidebar"
-          defaultSize={0}
-          minSize={0}
-          maxSize={60}
-          order={3}
+          collapsedSize="0%"
+          defaultSize="0%"
+          minSize={rightSidebar === RightSideBarType.NONE ? '0%' : '400px'}
+          maxSize={rightSidebar === RightSideBarType.NONE ? '0%' : '60%'}
           className={cn('min-w-0 bg-background z-30', {
-            [minWidthOfSidebar]: rightSidebar !== RightSideBarType.NONE,
             [animateResizeClassName]: !isDraggingHandle,
           })}
           style={{

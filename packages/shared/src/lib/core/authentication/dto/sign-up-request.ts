@@ -1,25 +1,21 @@
-import { Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
 import { SAFE_STRING_PATTERN } from '../../common'
 import { ApId } from '../../common/id-generator'
 import { EmailType, PasswordType } from '../../user/user'
 
-export const SignUpRequest = Type.Object({
+export const SignUpRequest = z.object({
     email: EmailType,
     password: PasswordType,
-    firstName: Type.String({
-        pattern: SAFE_STRING_PATTERN,
-    }),
-    lastName: Type.String({
-        pattern: SAFE_STRING_PATTERN,
-    }),
-    trackEvents: Type.Boolean(),
-    newsLetter: Type.Boolean(),
+    firstName: z.string().regex(new RegExp(SAFE_STRING_PATTERN)),
+    lastName: z.string().regex(new RegExp(SAFE_STRING_PATTERN)),
+    trackEvents: z.boolean(),
+    newsLetter: z.boolean(),
 })
 
-export type SignUpRequest = Static<typeof SignUpRequest>
+export type SignUpRequest = z.infer<typeof SignUpRequest>
 
-export const SwitchPlatformRequest = Type.Object({
+export const SwitchPlatformRequest = z.object({
     platformId: ApId,
 })
 
-export type SwitchPlatformRequest = Static<typeof SwitchPlatformRequest>
+export type SwitchPlatformRequest = z.infer<typeof SwitchPlatformRequest>

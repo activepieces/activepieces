@@ -1,8 +1,8 @@
-import { Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
 
-export const CountFlowsRequest = Type.Object({
-    projectId: Type.String(),
-    folderId: Type.Optional(Type.String()),
+export const CountFlowsRequest = z.object({
+    projectId: z.string(),
+    folderId: z.string().optional(),
 })
 
-export type CountFlowsRequest = Static<typeof CountFlowsRequest>
+export type CountFlowsRequest = z.infer<typeof CountFlowsRequest>

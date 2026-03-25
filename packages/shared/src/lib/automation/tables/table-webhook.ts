@@ -1,4 +1,4 @@
-import { Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
 import { BaseModelSchema } from '../../core/common'
 
 export enum TableWebhookEventType {
@@ -7,12 +7,12 @@ export enum TableWebhookEventType {
     RECORD_DELETED = 'RECORD_DELETED',
 }
 
-export const TableWebhook = Type.Object({
+export const TableWebhook = z.object({
     ...BaseModelSchema,
-    projectId: Type.String(),
-    tableId: Type.String(),
-    events: Type.Array(Type.Enum(TableWebhookEventType)),
-    flowId: Type.String(),
+    projectId: z.string(),
+    tableId: z.string(),
+    events: z.array(z.nativeEnum(TableWebhookEventType)),
+    flowId: z.string(),
 })
 
-export type TableWebhook = Static<typeof TableWebhook>
+export type TableWebhook = z.infer<typeof TableWebhook>

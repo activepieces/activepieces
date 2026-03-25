@@ -1,4 +1,4 @@
-import { AuthFormTemplate } from '@/features/authentication/components/auth-form-template';
+import { AuthFormTemplate } from '@/features/authentication';
 
 const SignUpPage: React.FC = () => {
   return (

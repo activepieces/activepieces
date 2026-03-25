@@ -1,7 +1,5 @@
 # pieces-cashfree-payments
 
-This library was generated with [Nx](https://nx.dev).
-
 ## Building
 
-Run `nx build pieces-cashfree-payments` to build the library.
+Run `turbo run build --filter=@activepieces/piece-cashfree-payments` to build the library.

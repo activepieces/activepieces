@@ -1,4 +1,3 @@
-import { securityAccess } from '@activepieces/server-common'
 import { ApId,
     apId,
     AppConnectionScope,
@@ -11,19 +10,21 @@ import { ApId,
     UpdateGlobalConnectionValueRequestBody,
     UpsertGlobalConnectionRequestBody,
 } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
+import { z } from 'zod'
 import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
+import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { applicationEvents } from '../../helper/application-events'
 import { securityHelper } from '../../helper/security-helper'
 import { platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
 
-export const globalConnectionModule: FastifyPluginAsyncTypebox = async (app) => {
+export const globalConnectionModule: FastifyPluginAsyncZod = async (app) => {
     app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.plan.globalConnectionsEnabled))
     await app.register(globalConnectionController, { prefix: '/v1/global-connections' })
 }
 
-const globalConnectionController: FastifyPluginAsyncTypebox = async (app) => {
+const globalConnectionController: FastifyPluginAsyncZod = async (app) => {
     app.post('/', UpsertGlobalConnectionRequest, async (request, reply) => {
         const appConnection = await appConnectionService(request.log).upsert({
             platformId: request.principal.platform.id,
@@ -130,7 +131,7 @@ const UpdateGlobalConnectionRequest = {
     schema: {
         tags: ['global-connections'],
         body: UpdateGlobalConnectionValueRequestBody,
-        params: Type.Object({
+        params: z.object({
             id: ApId,
         }),
         security: [SERVICE_KEY_SECURITY_OPENAPI],
@@ -157,12 +158,12 @@ const DeleteGlobalConnectionRequest = {
     },
     schema: {
         tags: ['global-connections'],
-        params: Type.Object({
+        params: z.object({
             id: ApId,
         }),
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         response: {
-            [StatusCodes.NO_CONTENT]: Type.Never(),
+            [StatusCodes.NO_CONTENT]: z.never(),
         },
     },
 }

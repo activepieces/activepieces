@@ -1,9 +1,9 @@
-import { Type } from "@sinclair/typebox";
+import { z } from "zod";
 
 
-export const DropdownOption = Type.Object({
-    label: Type.String(),
-    value: Type.Unknown(),
+export const DropdownOption = z.object({
+    label: z.string(),
+    value: z.unknown(),
 })
 
 export type DropdownOption<T> = {
@@ -11,10 +11,10 @@ export type DropdownOption<T> = {
     value: T;
 }
 
-export const DropdownState = Type.Object({
-    disabled: Type.Optional(Type.Boolean()),
-    placeholder: Type.Optional(Type.String()),
-    options: Type.Array(DropdownOption)
+export const DropdownState = z.object({
+    disabled: z.boolean().optional(),
+    placeholder: z.string().optional(),
+    options: z.array(DropdownOption)
 })
 
 export type DropdownState<T> = {
@@ -22,5 +22,4 @@ export type DropdownState<T> = {
     placeholder?: string;
     options: DropdownOption<T>[];
 }
-
 

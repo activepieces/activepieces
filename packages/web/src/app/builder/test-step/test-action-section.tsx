@@ -8,8 +8,8 @@ import {
 import { t } from 'i18next';
 import React, { useContext, useState } from 'react';
 
+import { Dot } from '@/components/custom/dot';
 import { Button } from '@/components/ui/button';
-import { Dot } from '@/components/ui/dot';
 
 import { useBuilderStateContext } from '../builder-hooks';
 import { DynamicPropertiesContext } from '../piece-properties/dynamic-properties-context';
@@ -100,7 +100,7 @@ const TestStepSectionImplementation = React.memo(
       <>
         {!sampleDataExists && !isTesting && (
           <div className="grow flex justify-center items-center w-full h-full">
-            <TestButtonTooltip invalid={!currentStep.valid}>
+            <TestButtonTooltip saving={isSaving} invalid={!currentStep.valid}>
               <Button
                 variant="outline"
                 size="sm"

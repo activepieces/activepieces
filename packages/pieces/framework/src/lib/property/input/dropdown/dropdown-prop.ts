@@ -1,7 +1,7 @@
 import { BasePropertySchema, TPropertyValue } from "../common";
 import { DropdownState } from "./common";
 import { AppConnectionValueForAuthProperty, PropertyContext } from "../../../context";
-import { Type } from "@sinclair/typebox";
+import { z } from "zod";
 import { PropertyType } from "../property-type";
 import { PieceAuthProperty } from "../../authentication";
 
@@ -12,13 +12,11 @@ type DynamicDropdownOptions<T, PieceAuth extends PieceAuthProperty | PieceAuthPr
   ctx: PropertyContext,
 ) => Promise<DropdownState<T>>;
 
-export const DropdownProperty = Type.Composite([
-  BasePropertySchema,
-  TPropertyValue(Type.Unknown(), PropertyType.DROPDOWN),
-  Type.Object({
-    refreshers: Type.Array(Type.String()),
-  }),
-]);
+export const DropdownProperty = z.object({
+  ...BasePropertySchema.shape,
+  ...TPropertyValue(z.unknown(), PropertyType.DROPDOWN).shape,
+  refreshers: z.array(z.string()),
+});
 
 export type DropdownProperty<T, R extends boolean, PieceAuth extends PieceAuthProperty | PieceAuthProperty[] |  undefined = undefined> = BasePropertySchema & {
   /**
@@ -31,13 +29,11 @@ export type DropdownProperty<T, R extends boolean, PieceAuth extends PieceAuthPr
 } & TPropertyValue<T, PropertyType.DROPDOWN, R>;
 
 
-export const MultiSelectDropdownProperty = Type.Composite([
-  BasePropertySchema,
-  TPropertyValue(Type.Array(Type.Unknown()), PropertyType.MULTI_SELECT_DROPDOWN),
-  Type.Object({
-    refreshers: Type.Array(Type.String()),
-  }),
-]);
+export const MultiSelectDropdownProperty = z.object({
+  ...BasePropertySchema.shape,
+  ...TPropertyValue(z.array(z.unknown()), PropertyType.MULTI_SELECT_DROPDOWN).shape,
+  refreshers: z.array(z.string()),
+});
 
 export type MultiSelectDropdownProperty<
   T,

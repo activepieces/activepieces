@@ -7,11 +7,11 @@ import {
   PopulatedFlow,
   Table,
 } from '@activepieces/shared';
-import { typeboxResolver } from '@hookform/resolvers/typebox';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import React from 'react';
-import { useForm } from 'react-hook-form';
+import { Resolver, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -34,8 +34,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 
-import { gitSyncApi } from '../lib/git-sync-api';
-import { gitSyncHooks } from '../lib/git-sync-hooks';
+import { gitSyncApi } from '../api/git-sync-api';
+import { gitSyncHooks } from '../hooks/git-sync-hooks';
 
 type PushToGitDialogProps =
   | {
@@ -72,11 +72,11 @@ const PushToGitDialog = (props: PushToGitDialogProps) => {
           ? props.tables.map((item) => item.externalId)
           : [],
     },
-    resolver: typeboxResolver(
+    resolver: zodResolver(
       props.type === 'flow'
         ? PushFlowsGitRepoRequest
         : PushTablesGitRepoRequest,
-    ),
+    ) as Resolver<PushGitRepoRequest>,
   });
 
   const { mutate, isPending } = useMutation({

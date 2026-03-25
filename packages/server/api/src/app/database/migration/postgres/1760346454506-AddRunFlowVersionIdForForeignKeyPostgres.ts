@@ -1,6 +1,7 @@
-import { AppSystemProp, DatabaseType } from '@activepieces/server-common'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 import { system } from '../../../helper/system/system'
+import { AppSystemProp } from '../../../helper/system/system-props'
+import { DatabaseType } from '../../database-type'
 
 const databaseType = system.get(AppSystemProp.DB_TYPE)
 const isPGlite = databaseType === DatabaseType.PGLITE

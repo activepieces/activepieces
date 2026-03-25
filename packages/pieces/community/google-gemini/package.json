@@ -12,7 +12,7 @@
     "mime-types": "2.1.35",
     "nanoid": "3.3.8",
     "wav": "^1.0.2",
-    "zod": "4.1.13",
+    "zod": "4.3.6",
     "tslib": "2.6.2"
   },
   "devDependencies": {

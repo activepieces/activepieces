@@ -103,7 +103,7 @@ function buildContext(app: FastifyInstance, data: ContextData): TestContext {
         return (url: string, bodyOrQuery?: Record<string, unknown>, opts?: RequestOptions) => {
             const inject: InjectOptions = {
                 method: method as InjectOptions['method'],
-                url,
+                url: `/api${url}`,
                 headers: {
                     authorization: `Bearer ${data.token}`,
                 },

@@ -12,7 +12,7 @@ import {
   isNil,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Plus, Globe } from 'lucide-react';
+import { Plus, Globe, Key } from 'lucide-react';
 import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
@@ -30,8 +30,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { appConnectionsQueries } from '@/features/connections/lib/app-connections-hooks';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
+import { appConnectionsQueries } from '@/features/connections';
+import { piecesHooks } from '@/features/pieces';
 import {
   useAuthorization,
   useIsPlatformAdmin,
@@ -252,6 +252,9 @@ function ConnectionSelect(params: ConnectionSelectProps) {
                             key={connection.externalId}
                           >
                             <div className="flex items-center gap-2">
+                              {connection.usingSecretManager && (
+                                <Key size={16} className="shrink-0" />
+                              )}
                               {connection.scope ===
                                 AppConnectionScope.PLATFORM && (
                                 <Globe size={16} className="shrink-0" />

@@ -6,13 +6,13 @@ import {
   TableOperationType,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { PencilIcon, Plus, TrashIcon } from 'lucide-react';
 import { useState } from 'react';
-import { useForm, UseFormReturn } from 'react-hook-form';
+import { Resolver, useForm, UseFormReturn } from 'react-hook-form';
 import * as z from 'zod';
 
+import { LoadingSpinner } from '@/components/custom/spinner';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -25,11 +25,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { LoadingSpinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
-import { gitSyncHooks } from '@/features/project-releases/lib/git-sync-hooks';
-import { projectReleaseApi } from '@/features/project-releases/lib/project-release-api';
-import { platformHooks } from '@/hooks/platform-hooks';
+import { projectReleaseMutations } from '@/features/project-releases';
 import { authenticationSession } from '@/lib/authentication-session';
 
 import { OperationChange } from './operation-change';
@@ -71,57 +68,14 @@ const CreateReleaseDialogContent = ({
   const isThereAnyChanges =
     (plan?.flows && plan?.flows.length > 0) ||
     (plan?.tables && plan?.tables.length > 0);
-  const { platform } = platformHooks.useCurrentPlatform();
-  const { gitSync } = gitSyncHooks.useGitSync(
-    authenticationSession.getProjectId()!,
-    platform.plan.environmentsEnabled,
-  );
 
-  const { mutate: applyChanges, isPending } = useMutation({
-    mutationFn: async () => {
-      switch (diffRequest.type) {
-        case ProjectReleaseType.GIT:
-          if (!gitSync) {
-            throw new Error('Git sync is not connected');
-          }
-          await projectReleaseApi.create({
-            name: form.getValues('name'),
-            description: form.getValues('description'),
-            selectedFlowsIds: Array.from(selectedChanges),
-            type: diffRequest.type,
-            projectId: authenticationSession.getProjectId()!,
-          });
-          break;
-        case ProjectReleaseType.PROJECT:
-          if (!diffRequest.targetProjectId) {
-            throw new Error('Project ID is required');
-          }
-          await projectReleaseApi.create({
-            name: form.getValues('name'),
-            description: form.getValues('description'),
-            selectedFlowsIds: Array.from(selectedChanges),
-            targetProjectId: diffRequest.targetProjectId,
-            type: diffRequest.type,
-            projectId: authenticationSession.getProjectId()!,
-          });
-          break;
-        case ProjectReleaseType.ROLLBACK:
-          await projectReleaseApi.create({
-            name: form.getValues('name'),
-            description: form.getValues('description'),
-            selectedFlowsIds: Array.from(selectedChanges),
-            projectReleaseId: diffRequest.projectReleaseId,
-            type: diffRequest.type,
-            projectId: authenticationSession.getProjectId()!,
-          });
-          break;
-      }
-    },
-    onSuccess: () => {
-      refetch();
-      setOpen(false);
-    },
-  });
+  const { mutate: applyChanges, isPending } =
+    projectReleaseMutations.useApplyRelease({
+      onSuccess: () => {
+        refetch();
+        setOpen(false);
+      },
+    });
   const [selectedChanges, setSelectedChanges] = useState<Set<string>>(
     new Set(plan?.flows.map((op) => op.flow.id) || []),
   );
@@ -231,7 +185,7 @@ const CreateReleaseDialogContent = ({
                   </div>
                 </div>
                 <ScrollArea viewPortClassName="max-h-[10vh]">
-                  {plan?.connections.map((connection, index) => (
+                  {plan?.connections.map((connection) => (
                     <div
                       key={connection.connectionState.externalId}
                       className="flex items-center gap-2 text-sm py-1"
@@ -276,7 +230,7 @@ const CreateReleaseDialogContent = ({
                   </Label>
                 </div>
                 <ScrollArea viewPortClassName="max-h-[10vh]">
-                  {plan?.tables.map((table, index) => (
+                  {plan?.tables.map((table) => (
                     <div
                       key={table.tableState.externalId}
                       className="flex items-center gap-2 text-sm py-1"
@@ -350,7 +304,31 @@ const CreateReleaseDialogContent = ({
               if (error) {
                 return;
               }
-              applyChanges();
+              const baseRequest = {
+                name: form.getValues('name'),
+                description: form.getValues('description'),
+                selectedFlowsIds: Array.from(selectedChanges),
+                projectId: authenticationSession.getProjectId()!,
+              };
+              switch (diffRequest.type) {
+                case ProjectReleaseType.GIT:
+                  applyChanges({ ...baseRequest, type: diffRequest.type });
+                  break;
+                case ProjectReleaseType.PROJECT:
+                  applyChanges({
+                    ...baseRequest,
+                    targetProjectId: diffRequest.targetProjectId,
+                    type: diffRequest.type,
+                  });
+                  break;
+                case ProjectReleaseType.ROLLBACK:
+                  applyChanges({
+                    ...baseRequest,
+                    projectReleaseId: diffRequest.projectReleaseId,
+                    type: diffRequest.type,
+                  });
+                  break;
+              }
             }}
           >
             {t('Apply Changes')}
@@ -371,7 +349,7 @@ const CreateReleaseDialog = ({
   diffRequest,
 }: CreateReleaseDialogProps) => {
   const form = useForm<FormData>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(formSchema as never) as Resolver<FormData>,
     defaultValues: {
       name: defaultName,
       description: '',

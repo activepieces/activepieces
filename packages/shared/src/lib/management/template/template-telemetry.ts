@@ -1,5 +1,4 @@
-import { Static, Type } from '@sinclair/typebox'
-import { DiscriminatedUnion } from '../../core/common'
+import { z } from 'zod'
 
 export enum TemplateTelemetryEventType {
     VIEW = 'VIEW',
@@ -9,40 +8,39 @@ export enum TemplateTelemetryEventType {
     EXPLORE_VIEW = 'EXPLORE_VIEW',
 }
 
-const ViewEvent = Type.Object({
-    eventType: Type.Literal(TemplateTelemetryEventType.VIEW),
-    templateId: Type.String(),
+const ViewEvent = z.object({
+    eventType: z.literal(TemplateTelemetryEventType.VIEW),
+    templateId: z.string(),
 })
 
-const InstallEvent = Type.Object({
-    eventType: Type.Literal(TemplateTelemetryEventType.INSTALL),
-    templateId: Type.String(),
-    userId: Type.String(),
+const InstallEvent = z.object({
+    eventType: z.literal(TemplateTelemetryEventType.INSTALL),
+    templateId: z.string(),
+    userId: z.string(),
 })
 
-const ActivateEvent = Type.Object({
-    eventType: Type.Literal(TemplateTelemetryEventType.ACTIVATE),
-    templateId: Type.String(),
-    flowId: Type.String(),
+const ActivateEvent = z.object({
+    eventType: z.literal(TemplateTelemetryEventType.ACTIVATE),
+    templateId: z.string(),
+    flowId: z.string(),
 })
 
-const DeactivateEvent = Type.Object({
-    eventType: Type.Literal(TemplateTelemetryEventType.DEACTIVATE),
-    templateId: Type.String(),
-    flowId: Type.String(),
+const DeactivateEvent = z.object({
+    eventType: z.literal(TemplateTelemetryEventType.DEACTIVATE),
+    templateId: z.string(),
+    flowId: z.string(),
 })
 
-const ExploreViewEvent = Type.Object({
-    eventType: Type.Literal(TemplateTelemetryEventType.EXPLORE_VIEW),
-    userId: Type.Optional(Type.String()),
+const ExploreViewEvent = z.object({
+    eventType: z.literal(TemplateTelemetryEventType.EXPLORE_VIEW),
+    userId: z.string().optional(),
 })
 
-export const TemplateTelemetryEvent = DiscriminatedUnion('eventType', [
+export const TemplateTelemetryEvent = z.discriminatedUnion('eventType', [
     InstallEvent,
     ActivateEvent,
     DeactivateEvent,
     ViewEvent,
     ExploreViewEvent,
 ])
-export type TemplateTelemetryEvent = Static<typeof TemplateTelemetryEvent>
-
+export type TemplateTelemetryEvent = z.infer<typeof TemplateTelemetryEvent>

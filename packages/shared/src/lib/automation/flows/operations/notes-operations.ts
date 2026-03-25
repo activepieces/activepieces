@@ -1,3 +1,4 @@
+import dayjs from 'dayjs'
 import { FlowVersion } from '../flow-version'
 import { Note } from '../note'
 import { AddNoteRequest, DeleteNoteRequest, UpdateNoteRequest } from '.'
@@ -6,7 +7,7 @@ const _updateNote = (flowVersion: FlowVersion, request: UpdateNoteRequest): Flow
     const newFlowVersion = JSON.parse(JSON.stringify(flowVersion))
     newFlowVersion.notes = newFlowVersion.notes.map((note: Note) => {
         if (note.id === request.id) {
-            return { ...note, ...request, updatedAt: new Date().toISOString() }
+            return { ...note, ...request, updatedAt: dayjs().toISOString() }
         }
         return note
     })
@@ -21,7 +22,7 @@ const _deleteNote = (flowVersion: FlowVersion, request: DeleteNoteRequest): Flow
 
 const _addNote = (flowVersion: FlowVersion, request: AddNoteRequest): FlowVersion => {
     const newFlowVersion = JSON.parse(JSON.stringify(flowVersion))
-    newFlowVersion.notes.push({ ...request, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
+    newFlowVersion.notes.push({ ...request, createdAt: dayjs().toISOString(), updatedAt: dayjs().toISOString() })
     return newFlowVersion
 }
 

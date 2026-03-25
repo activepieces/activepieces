@@ -6,6 +6,7 @@ import { t } from 'i18next';
 import React, { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 
+import { FullLogo } from '@/components/custom/full-logo';
 import {
   Card,
   CardContent,
@@ -13,7 +14,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { FullLogo } from '@/components/ui/full-logo';
 import { authenticationSession } from '@/lib/authentication-session';
 import { useRedirectAfterLogin } from '@/lib/navigation-utils';
 

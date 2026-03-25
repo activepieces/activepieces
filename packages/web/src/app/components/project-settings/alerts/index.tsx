@@ -2,25 +2,23 @@ import { Permission } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Bell, Trash } from 'lucide-react';
 
+import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemGroup,
+  ItemMedia,
+  ItemTitle,
+} from '@/components/custom/item';
+import { LoadingSpinner } from '@/components/custom/spinner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { LoadingSpinner } from '@/components/ui/spinner';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import {
-  alertQueries,
-  alertMutations,
-} from '@/features/alerts/lib/alert-hooks';
+import { alertQueries, alertMutations } from '@/features/alerts';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 
 import { AddAlertEmailDialog } from './add-alert-email-dialog';
@@ -52,74 +50,58 @@ export const AlertsSettings = () => {
           </AlertDescription>
         </div>
       </Alert>
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-base">
-            {t('Alert Emails')}
-          </CardTitle>
-          <CardDescription className="text-sm">
-            {t('Add email addresses to receive alerts.')}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="min-h-[100px]">
-            {alertsLoading && (
-              <div className="flex items-center justify-center py-8">
-                <LoadingSpinner className="w-6 h-6" />
-              </div>
-            )}
-            {alertsError && (
-              <div className="text-center text-destructive py-8 text-sm">
-                {t('Error, please try again.')}
-              </div>
-            )}
-            {alertsData && alertsData.length === 0 && (
-              <div className="text-center text-muted-foreground py-8 text-sm">
-                {t('No emails added yet.')}
-              </div>
-            )}
-            <div className="space-y-2">
-              {Array.isArray(alertsData) &&
-                alertsData.map((alert) => (
-                  <div
-                    className="flex items-center justify-between p-3 border rounded-lg hover:shadow-xs transition-all"
-                    key={alert.id}
-                  >
-                    <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 bg-accent rounded-md flex items-center justify-center">
-                        <Bell className="w-4 h-4 text-red-600" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">
-                          {alert.receiver}
-                        </p>
-                      </div>
-                    </div>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0 hover:bg-red-50"
-                          onClick={() => deleteAlert(alert)}
-                          disabled={writeAlertPermission === false}
-                        >
-                          <Trash className="w-4 h-4 text-red-500" />
-                        </Button>
-                      </TooltipTrigger>
-                      {writeAlertPermission === false && (
-                        <TooltipContent side="bottom">
-                          {t('Only project admins can do this')}
-                        </TooltipContent>
-                      )}
-                    </Tooltip>
-                  </div>
-                ))}
-            </div>
+      <div>
+        {alertsLoading && (
+          <div className="flex items-center justify-center py-8">
+            <LoadingSpinner className="w-6 h-6" />
           </div>
-          <AddAlertEmailDialog />
-        </CardContent>
-      </Card>
+        )}
+        {alertsError && (
+          <div className="text-center text-destructive py-8 text-sm">
+            {t('Error, please try again.')}
+          </div>
+        )}
+        {alertsData && alertsData.length === 0 && (
+          <div className="text-center text-muted-foreground py-8 text-sm">
+            {t('No emails added yet.')}
+          </div>
+        )}
+        {Array.isArray(alertsData) && alertsData.length > 0 && (
+          <ItemGroup className="gap-2">
+            {alertsData.map((alert) => (
+              <Item key={alert.id} variant="outline" size="sm">
+                <ItemMedia variant="icon">
+                  <Bell />
+                </ItemMedia>
+                <ItemContent>
+                  <ItemTitle>{alert.receiver}</ItemTitle>
+                </ItemContent>
+                <ItemActions>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="size-8 p-0 hover:bg-destructive-50"
+                        onClick={() => deleteAlert(alert)}
+                        disabled={writeAlertPermission === false}
+                      >
+                        <Trash className="size-4 text-destructive" />
+                      </Button>
+                    </TooltipTrigger>
+                    {writeAlertPermission === false && (
+                      <TooltipContent side="bottom">
+                        {t('Only project admins can do this')}
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
+                </ItemActions>
+              </Item>
+            ))}
+          </ItemGroup>
+        )}
+      </div>
+      <AddAlertEmailDialog />
     </>
   );
 };

@@ -12,9 +12,10 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
+import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import EditableText from '@/components/custom/editable-text';
 import { PageHeader } from '@/components/custom/page-header';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
-import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -31,18 +32,17 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import EditableText from '@/components/ui/editable-text';
 import { PushToGitDialog } from '@/features/project-releases/components/push-to-git-dialog';
-import { gitSyncHooks } from '@/features/project-releases/lib/git-sync-hooks';
-import { useAuthorization } from '@/hooks/authorization-hooks';
+import { gitSyncHooks } from '@/features/project-releases/hooks/git-sync-hooks';
 import {
   getProjectName,
   projectCollectionUtils,
-} from '@/hooks/project-collection';
-import { downloadFile } from '@/lib/utils';
+} from '@/features/projects/stores/project-collection';
+import { useAuthorization } from '@/hooks/authorization-hooks';
+import { downloadFile } from '@/lib/dom-utils';
 
-import { tablesApi } from '../lib/tables-api';
-import { tablesUtils } from '../lib/utils';
+import { tablesApi } from '../api/tables-api';
+import { tablesUtils } from '../utils/utils';
 
 import { useTableState } from './ap-table-state-provider';
 import { ImportTableDialog } from './import-table-dialog';
@@ -180,9 +180,10 @@ export function ApTableHeader({ onBack }: ApTableHeaderProps) {
                     <ConfirmationDeleteDialog
                       title={t('Delete Table')}
                       message={t(
-                        'Are you sure you want to delete this table? This action cannot be undone.',
+                        'This will permanently delete the table and all its data.',
                       )}
                       entityName={t('table')}
+                      buttonText={t('Delete')}
                       mutationFn={async () => {
                         await tablesApi.delete(table.id);
                         onBack();
@@ -220,10 +221,9 @@ export function ApTableHeader({ onBack }: ApTableHeaderProps) {
         <PermissionNeededTooltip hasPermission={userHasTableWritePermission}>
           <ConfirmationDeleteDialog
             title={t('Delete Records')}
-            message={t(
-              'Are you sure you want to delete the selected records? This action cannot be undone.',
-            )}
+            message={t('The selected records will be permanently deleted.')}
             entityName={selectedRecords.size === 1 ? t('record') : t('records')}
+            buttonText={t('Delete')}
             mutationFn={async () => {
               const indices = Array.from(selectedRecords).map((row) =>
                 records.findIndex((r) => r.uuid === row),

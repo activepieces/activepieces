@@ -18,7 +18,7 @@ export class AddPlatformForeignKeyToProjectPostgres1709566642531 implements Migr
             ON DELETE RESTRICT ON UPDATE RESTRICT
         `)
 
-        log.info({ name: this.name }, 'up')
+        log.info('[addPlatformForeignKeyToProjectPostgres1709566642531#up]')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -29,7 +29,7 @@ export class AddPlatformForeignKeyToProjectPostgres1709566642531 implements Migr
             ALTER TABLE "project" DROP CONSTRAINT "fk_project_platform_id"
         `)
 
-        log.info({ name: this.name }, 'down')
+        log.info('[addPlatformForeignKeyToProjectPostgres1709566642531#down]')
     }
 
 }

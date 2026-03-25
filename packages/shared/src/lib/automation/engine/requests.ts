@@ -1,4 +1,4 @@
-import { Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
 import { Nullable } from '../../core/common'
 import { FlowRunStatus, PauseMetadata } from '../flow-run/execution/flow-execution'
 import { StepOutput } from '../flow-run/execution/step-output'
@@ -8,67 +8,67 @@ import { ProgressUpdateType } from './engine-operation'
 
 
 
-export const UploadRunLogsRequest = Type.Object({
-    runId: Type.String(),
-    tags: Type.Optional(Type.Array(Type.String())),
-    status: Type.Enum(FlowRunStatus),
-    projectId: Type.String(),
-    progressUpdateType: Type.Optional(Type.Enum(ProgressUpdateType)),
-    workerHandlerId: Nullable(Type.String()),
-    httpRequestId: Nullable(Type.String()),
-    logsFileId: Type.Optional(Type.String()),
-    stepNameToTest: Type.Optional(Type.String()),
-    failedStep: Type.Optional(FailedStep),
-    startTime: Type.Optional(Type.String()),
-    finishTime: Type.Optional(Type.String()),
-    stepResponse: Type.Optional(StepRunResponse),
-    pauseMetadata: Type.Optional(PauseMetadata),
-    stepsCount: Type.Optional(Type.Number()),
+export const UploadRunLogsRequest = z.object({
+    runId: z.string(),
+    tags: z.array(z.string()).optional(),
+    status: z.nativeEnum(FlowRunStatus),
+    projectId: z.string(),
+    progressUpdateType: z.nativeEnum(ProgressUpdateType).optional(),
+    workerHandlerId: Nullable(z.string()),
+    httpRequestId: Nullable(z.string()),
+    logsFileId: z.string().optional(),
+    stepNameToTest: z.string().optional(),
+    failedStep: FailedStep.optional(),
+    startTime: z.string().optional(),
+    finishTime: z.string().optional(),
+    stepResponse: StepRunResponse.optional(),
+    pauseMetadata: PauseMetadata.optional(),
+    stepsCount: z.number().optional(),
 })
 
-export type UploadRunLogsRequest = Static<typeof UploadRunLogsRequest>
+export type UploadRunLogsRequest = z.infer<typeof UploadRunLogsRequest>
 
 
-export const UpdateStepProgressRequest = Type.Object({
-    projectId: Type.String(),
+export const UpdateStepProgressRequest = z.object({
+    projectId: z.string(),
     stepResponse: StepRunResponse,
 })
-export type UpdateStepProgressRequest = Static<typeof UpdateStepProgressRequest>
+export type UpdateStepProgressRequest = z.infer<typeof UpdateStepProgressRequest>
 
-export const UploadLogsQueryParams = Type.Object({
-    token: Type.String(),
+export const UploadLogsQueryParams = z.object({
+    token: z.string(),
 })
-export type UploadLogsQueryParams = Static<typeof UploadLogsQueryParams>
+export type UploadLogsQueryParams = z.infer<typeof UploadLogsQueryParams>
 
 export enum UploadLogsBehavior {
     UPLOAD_DIRECTLY = 'UPLOAD_DIRECTLY',
     REDIRECT_TO_S3 = 'REDIRECT_TO_S3',
 }
 
-export const UploadLogsToken = Type.Object({
-    logsFileId: Type.String(),
-    projectId: Type.String(),
-    flowRunId: Type.String(),
-    behavior: Type.Enum(UploadLogsBehavior),
+export const UploadLogsToken = z.object({
+    logsFileId: z.string(),
+    projectId: z.string(),
+    flowRunId: z.string(),
+    behavior: z.nativeEnum(UploadLogsBehavior),
 })
 
-export type UploadLogsToken = Static<typeof UploadLogsToken>
+export type UploadLogsToken = z.infer<typeof UploadLogsToken>
 
-export const SendFlowResponseRequest = Type.Object({
-    workerHandlerId: Type.String(),
-    httpRequestId: Type.String(),
-    runResponse: Type.Object({
-        status: Type.Number(),
-        body: Type.Any(),
-        headers: Type.Record(Type.String(), Type.String()),
+export const SendFlowResponseRequest = z.object({
+    workerHandlerId: z.string(),
+    httpRequestId: z.string(),
+    runResponse: z.object({
+        status: z.number(),
+        body: z.any(),
+        headers: z.record(z.string(), z.string()),
     }),
 })
-export type SendFlowResponseRequest = Static<typeof SendFlowResponseRequest>
-export const GetFlowVersionForWorkerRequest = Type.Object({
-    versionId: Type.String(),
+export type SendFlowResponseRequest = z.infer<typeof SendFlowResponseRequest>
+export const GetFlowVersionForWorkerRequest = z.object({
+    versionId: z.string(),
 })
 
-export type GetFlowVersionForWorkerRequest = Static<typeof GetFlowVersionForWorkerRequest>
+export type GetFlowVersionForWorkerRequest = z.infer<typeof GetFlowVersionForWorkerRequest>
 
 export type UpdateRunProgressRequest = {
     flowRun: Omit<FlowRun, 'steps'>

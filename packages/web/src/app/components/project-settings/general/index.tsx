@@ -25,8 +25,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import { projectCollectionUtils } from '@/features/projects';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { projectCollectionUtils } from '@/hooks/project-collection';
 import { userHooks } from '@/hooks/user-hooks';
 import { cn } from '@/lib/utils';
 
@@ -38,10 +38,9 @@ export type FormValues = {
 
 type GeneralSettingsProps = {
   form: UseFormReturn<FormValues>;
-  isSaving: boolean;
 };
 
-export const GeneralSettings = ({ form, isSaving }: GeneralSettingsProps) => {
+export const GeneralSettings = ({ form }: GeneralSettingsProps) => {
   const { platform } = platformHooks.useCurrentPlatform();
   const platformRole = userHooks.getCurrentUserPlatformRole();
   const [colorPickerOpen, setColorPickerOpen] = useState(false);
@@ -75,7 +74,7 @@ export const GeneralSettings = ({ form, isSaving }: GeneralSettingsProps) => {
                             type="button"
                             variant="outline"
                             className="h-10 px-3 rounded-r-none border-r flex items-center gap-1"
-                            disabled={isSaving}
+                            disabled={form.formState.disabled}
                           >
                             <div
                               className="h-3 w-3 rounded-none shrink-0"
@@ -108,7 +107,7 @@ export const GeneralSettings = ({ form, isSaving }: GeneralSettingsProps) => {
                                   field.onChange({ color: colorName });
                                   setColorPickerOpen(false);
                                 }}
-                                disabled={isSaving}
+                                disabled={form.formState.disabled}
                               />
                             ))}
                           </div>
@@ -128,7 +127,7 @@ export const GeneralSettings = ({ form, isSaving }: GeneralSettingsProps) => {
                       id="projectName"
                       placeholder={t('Project Name')}
                       className="h-10 rounded-l-none border-l-0"
-                      disabled={isSaving}
+                      disabled={form.formState.disabled}
                     />
                     <FormMessage />
                   </FormItem>
@@ -151,7 +150,7 @@ export const GeneralSettings = ({ form, isSaving }: GeneralSettingsProps) => {
                   id="externalId"
                   placeholder={t('org-3412321')}
                   className="h-10 font-mono"
-                  disabled={isSaving}
+                  disabled={form.formState.disabled}
                 />
                 <FormDescription className="text-xs text-muted-foreground">
                   {t('Used to identify the project based on your SaaS ID')}

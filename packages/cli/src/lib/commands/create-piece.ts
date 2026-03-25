@@ -112,6 +112,7 @@ const scaffoldPiece = async (
       paths: {},
       outDir: './dist',
       declaration: true,
+      declarationMap: true,
       types: ['node'],
     },
     include: ['src/**/*.ts'],

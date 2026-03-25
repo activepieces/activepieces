@@ -3,11 +3,11 @@ import { AUTHENTICATION_PROPERTY_NAME, isNil } from '@activepieces/shared';
 import deepEqual from 'deep-equal';
 import { t } from 'i18next';
 import React, { useContext, useEffect, useRef, useState } from 'react';
-import { FieldValues, UseFormReturn, useWatch } from 'react-hook-form';
+import { UseFormReturn, useWatch } from 'react-hook-form';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { SearchableSelect } from '@/components/custom/searchable-select';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
+import { piecesHooks } from '@/features/pieces';
 import { authenticationSession } from '@/lib/authentication-session';
 
 import { MultiSelectPieceProperty } from '../../../components/custom/multi-select-piece-property';
@@ -27,7 +27,7 @@ type DynamicDropdownProps = {
   actionOrTriggerName: string;
   pieceName: string;
   pieceVersion: string;
-  form: UseFormReturn<FieldValues, any, undefined>;
+  form: UseFormReturn;
   placedInside: 'stepSettings' | 'predefinedAgentInputs';
 };
 const DynamicDropdownPiecePropertyImplementation = React.memo(

@@ -8,7 +8,9 @@ type LockedFeatureGuardProps = {
   lockTitle: string;
   lockDescription: string;
   lockVideoUrl?: string;
+  lockDocumentationUrl?: string;
   featureKey: FeatureKey;
+  showContactSales?: boolean;
 };
 
 export const LockedFeatureGuard = ({
@@ -17,7 +19,9 @@ export const LockedFeatureGuard = ({
   lockTitle,
   lockDescription,
   lockVideoUrl,
+  lockDocumentationUrl,
   featureKey,
+  showContactSales = true,
 }: LockedFeatureGuardProps) => {
   if (!locked) {
     return children;
@@ -30,11 +34,26 @@ export const LockedFeatureGuard = ({
         <div className="text-center w-[485px] my-4 flex flex-col gap-2 justify-center items-center">
           <p className="text-md leading-relaxed text-muted-foreground">
             {lockDescription}
+            {lockDocumentationUrl && (
+              <>
+                {' '}
+                <a
+                  href={lockDocumentationUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary underline"
+                >
+                  Learn more
+                </a>
+              </>
+            )}
           </p>
 
-          <div className="my-4">
-            <RequestTrial featureKey={featureKey} />
-          </div>
+          {showContactSales && (
+            <div className="my-4">
+              <RequestTrial featureKey={featureKey} />
+            </div>
+          )}
         </div>
 
         {lockVideoUrl && (

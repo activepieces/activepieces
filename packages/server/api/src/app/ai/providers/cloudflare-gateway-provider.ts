@@ -50,7 +50,7 @@ export const cloudflareGatewayProvider: AIProviderStrategy<CloudflareGatewayProv
                 }
             }
             catch (error: unknown) {
-                log.error(error)
+                log.error({ err: error }, '[cloudflareGatewayProvider#validateConnection] Failed to validate model')
                 invalidModels.push(model.modelId)
             }
         }

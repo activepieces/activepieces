@@ -7,7 +7,6 @@ import {
   StaticPropsValue,
   InputPropertyMap,
   FilesService,
-  DynamicPropsValue,
   AppConnectionValueForAuthProperty,
   ExtractPieceAuthPropertyTypeForMethods,
   ApFile,
@@ -204,7 +203,7 @@ i.e ${getBaseUrlForDescription(baseUrl, auth)}/resource or /resource`,
 
           const bodyTypeInput = body_type as unknown as string;
 
-          const fields: DynamicPropsValue = {};
+          const fields: InputPropertyMap = {};
 
           switch (bodyTypeInput) {
             case 'none':

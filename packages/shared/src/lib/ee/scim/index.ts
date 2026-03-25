@@ -1,4 +1,4 @@
-import { Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
 import { isNil } from '../../core/common'
 import { PlatformRole } from '../../core/user'
 
@@ -13,159 +13,159 @@ export const SCIM_SCHEMA_SCHEMA = 'urn:ietf:params:scim:schemas:core:2.0:Schema'
 
 export const SCIM_CUSTOM_USER_ATTRIBUTES_SCHEMA = 'urn:ietf:params:scim:schemas:activepieces:1.0:CustomUserAttributes'
 
-export const ScimName = Type.Object({
-    givenName: Type.Optional(Type.String()),
-    familyName: Type.Optional(Type.String()),
-    formatted: Type.Optional(Type.String()),
+export const ScimName = z.object({
+    givenName: z.string().optional(),
+    familyName: z.string().optional(),
+    formatted: z.string().optional(),
 })
 
-export const ScimEmail = Type.Object({
-    value: Type.String(),
-    type: Type.Optional(Type.String()),
-    primary: Type.Optional(Type.Boolean()),
+export const ScimEmail = z.object({
+    value: z.string(),
+    type: z.string().optional(),
+    primary: z.boolean().optional(),
 })
 
-export const ScimMeta = Type.Object({
-    resourceType: Type.String(),
-    created: Type.Optional(Type.String()),
-    lastModified: Type.Optional(Type.String()),
-    location: Type.Optional(Type.String()),
+export const ScimMeta = z.object({
+    resourceType: z.string(),
+    created: z.string().optional(),
+    lastModified: z.string().optional(),
+    location: z.string().optional(),
 })
 
-export const ScimCustomAttributesSchema = {
-    [SCIM_CUSTOM_USER_ATTRIBUTES_SCHEMA]: Type.Optional(Type.Object({
-        platformRole: Type.Enum(PlatformRole),
-    })),
+const ScimCustomAttributesSchema = {
+    [SCIM_CUSTOM_USER_ATTRIBUTES_SCHEMA]: z.object({
+        platformRole: z.nativeEnum(PlatformRole),
+    }).optional(),
 }
 
-export const ScimUserResource = Type.Object({
-    schemas: Type.Array(Type.String()),
-    id: Type.String(),
-    externalId: Type.Optional(Type.String()),
-    userName: Type.String(),
-    name: Type.Optional(ScimName),
-    emails: Type.Optional(Type.Array(ScimEmail)),
-    active: Type.Boolean(),
+export const ScimUserResource = z.object({
+    schemas: z.array(z.string()),
+    id: z.string(),
+    externalId: z.string().optional(),
+    userName: z.string(),
+    name: ScimName.optional(),
+    emails: z.array(ScimEmail).optional(),
+    active: z.boolean(),
     meta: ScimMeta,
 })
 
-export type ScimUserResource = Static<typeof ScimUserResource>
+export type ScimUserResource = z.infer<typeof ScimUserResource>
 
-export const CreateScimUserRequest = Type.Object({
-    schemas: Type.Array(Type.String()),
-    externalId: Type.Optional(Type.String()),
-    userName: Type.String(),
-    name: Type.Optional(ScimName),
-    emails: Type.Optional(Type.Array(ScimEmail)),
-    active: Type.Optional(Type.Boolean()),
+export const CreateScimUserRequest = z.object({
+    schemas: z.array(z.string()),
+    externalId: z.string().optional(),
+    userName: z.string(),
+    name: ScimName.optional(),
+    emails: z.array(ScimEmail).optional(),
+    active: z.boolean().optional(),
     ...ScimCustomAttributesSchema,
 })
 
-export type CreateScimUserRequest = Static<typeof CreateScimUserRequest>
+export type CreateScimUserRequest = z.infer<typeof CreateScimUserRequest>
 
-export const ReplaceScimUserRequest = Type.Object({
-    schemas: Type.Array(Type.String()),
-    externalId: Type.Optional(Type.String()),
-    userName: Type.String(),
-    name: Type.Optional(ScimName),
-    emails: Type.Optional(Type.Array(ScimEmail)),
-    active: Type.Optional(Type.Boolean()),
+export const ReplaceScimUserRequest = z.object({
+    schemas: z.array(z.string()),
+    externalId: z.string().optional(),
+    userName: z.string(),
+    name: ScimName.optional(),
+    emails: z.array(ScimEmail).optional(),
+    active: z.boolean().optional(),
     ...ScimCustomAttributesSchema,
 })
 
-export type ReplaceScimUserRequest = Static<typeof ReplaceScimUserRequest>
+export type ReplaceScimUserRequest = z.infer<typeof ReplaceScimUserRequest>
 
-export const ScimGroupMember = Type.Object({
-    value: Type.String(),
-    display: Type.Optional(Type.String()),
-    $ref: Type.Optional(Type.String()),
+export const ScimGroupMember = z.object({
+    value: z.string(),
+    display: z.string().optional(),
+    $ref: z.string().optional(),
 })
 
-export type ScimGroupMember = Static<typeof ScimGroupMember>
+export type ScimGroupMember = z.infer<typeof ScimGroupMember>
 
-export const ScimGroupResource = Type.Object({
-    schemas: Type.Array(Type.String()),
-    id: Type.String(),
-    externalId: Type.Optional(Type.String()),
-    displayName: Type.String(),
-    members: Type.Array(ScimGroupMember),
+export const ScimGroupResource = z.object({
+    schemas: z.array(z.string()),
+    id: z.string(),
+    externalId: z.string().optional(),
+    displayName: z.string(),
+    members: z.array(ScimGroupMember),
     meta: ScimMeta,
 })
 
-export type ScimGroupResource = Static<typeof ScimGroupResource>
+export type ScimGroupResource = z.infer<typeof ScimGroupResource>
 
-export const CreateScimGroupRequest = Type.Object({
-    schemas: Type.Array(Type.String()),
-    externalId: Type.Optional(Type.String()),
-    displayName: Type.String(),
-    members: Type.Optional(Type.Array(ScimGroupMember)),
+export const CreateScimGroupRequest = z.object({
+    schemas: z.array(z.string()),
+    externalId: z.string().optional(),
+    displayName: z.string(),
+    members: z.array(ScimGroupMember).optional(),
 })
 
-export type CreateScimGroupRequest = Static<typeof CreateScimGroupRequest>
+export type CreateScimGroupRequest = z.infer<typeof CreateScimGroupRequest>
 
-export const ReplaceScimGroupRequest = Type.Object({
-    schemas: Type.Array(Type.String()),
-    externalId: Type.Optional(Type.String()),
-    displayName: Type.String(),
-    members: Type.Optional(Type.Array(ScimGroupMember)),
+export const ReplaceScimGroupRequest = z.object({
+    schemas: z.array(z.string()),
+    externalId: z.string().optional(),
+    displayName: z.string(),
+    members: z.array(ScimGroupMember).optional(),
 })
 
-export type ReplaceScimGroupRequest = Static<typeof ReplaceScimGroupRequest>
+export type ReplaceScimGroupRequest = z.infer<typeof ReplaceScimGroupRequest>
 
-export const ScimPatchOperation = Type.Object({
-    op: Type.Union([
-        Type.Literal('add'),
-        Type.Literal('remove'),
-        Type.Literal('replace'),
-        Type.Literal('Add'),
-        Type.Literal('Remove'),
-        Type.Literal('Replace'),
+export const ScimPatchOperation = z.object({
+    op: z.union([
+        z.literal('add'),
+        z.literal('remove'),
+        z.literal('replace'),
+        z.literal('Add'),
+        z.literal('Remove'),
+        z.literal('Replace'),
     ]),
-    path: Type.Optional(Type.String()),
-    value: Type.Optional(Type.Unknown()),
+    path: z.string().optional(),
+    value: z.unknown().optional(),
 })
 
-export type ScimPatchOperation = Static<typeof ScimPatchOperation>
+export type ScimPatchOperation = z.infer<typeof ScimPatchOperation>
 
-export const ScimPatchRequest = Type.Object({
-    schemas: Type.Array(Type.String()),
-    Operations: Type.Array(ScimPatchOperation),
+export const ScimPatchRequest = z.object({
+    schemas: z.array(z.string()),
+    Operations: z.array(ScimPatchOperation),
 })
 
-export type ScimPatchRequest = Static<typeof ScimPatchRequest>
+export type ScimPatchRequest = z.infer<typeof ScimPatchRequest>
 
-export const ScimListResponse = Type.Object({
-    schemas: Type.Array(Type.String()),
-    totalResults: Type.Number(),
-    startIndex: Type.Number(),
-    itemsPerPage: Type.Number(),
-    Resources: Type.Array(Type.Unknown()),
+export const ScimListResponse = z.object({
+    schemas: z.array(z.string()),
+    totalResults: z.number(),
+    startIndex: z.number(),
+    itemsPerPage: z.number(),
+    Resources: z.array(z.unknown()),
 })
 
-export type ScimListResponse = Static<typeof ScimListResponse>
+export type ScimListResponse = z.infer<typeof ScimListResponse>
 
-export const ScimErrorResponse = Type.Object({
-    schemas: Type.Array(Type.String()),
-    status: Type.String(),
-    detail: Type.Optional(Type.String()),
-    scimType: Type.Optional(Type.String()),
+export const ScimErrorResponse = z.object({
+    schemas: z.array(z.string()),
+    status: z.string(),
+    detail: z.string().optional(),
+    scimType: z.string().optional(),
 })
 
-export type ScimErrorResponse = Static<typeof ScimErrorResponse>
+export type ScimErrorResponse = z.infer<typeof ScimErrorResponse>
 
-export const ScimListQueryParams = Type.Object({
-    filter: Type.Optional(Type.String()),
-    startIndex: Type.Optional(Type.Number({ default: 1 })),
-    count: Type.Optional(Type.Number({ default: 100 })),
+export const ScimListQueryParams = z.object({
+    filter: z.string().optional(),
+    startIndex: z.coerce.number().default(1).optional(),
+    count: z.coerce.number().default(100).optional(),
 })
 
-export type ScimListQueryParams = Static<typeof ScimListQueryParams>
+export type ScimListQueryParams = z.infer<typeof ScimListQueryParams>
 
-export const ScimResourceId = Type.Object({
-    id: Type.String(),
+export const ScimResourceId = z.object({
+    id: z.string(),
 })
 
-export type ScimResourceId = Static<typeof ScimResourceId>
+export type ScimResourceId = z.infer<typeof ScimResourceId>
 
 export class ScimError extends Error {
     constructor(public status: number, public detail: string) {

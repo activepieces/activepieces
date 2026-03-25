@@ -1,34 +1,34 @@
-import { Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
 import { FieldType } from '../field'
 
 
-const StaticDropdownData = Type.Object({
-    options: Type.Array(Type.Object({
-        value: Type.String(),
+const StaticDropdownData = z.object({
+    options: z.array(z.object({
+        value: z.string(),
     })),
 })
 
-export const CreateFieldRequest = Type.Union([Type.Object({
-    name: Type.String(),
-    type: Type.Literal(FieldType.STATIC_DROPDOWN),
-    tableId: Type.String(),
+export const CreateFieldRequest = z.union([z.object({
+    name: z.string(),
+    type: z.literal(FieldType.STATIC_DROPDOWN),
+    tableId: z.string(),
     data: StaticDropdownData,
-    externalId: Type.Optional(Type.String()),
-}), Type.Object({
-    name: Type.String(),
-    type: Type.Union([Type.Literal(FieldType.TEXT), Type.Literal(FieldType.NUMBER), Type.Literal(FieldType.DATE)]),
-    tableId: Type.String(),
-    externalId: Type.Optional(Type.String()),
+    externalId: z.string().optional(),
+}), z.object({
+    name: z.string(),
+    type: z.union([z.literal(FieldType.TEXT), z.literal(FieldType.NUMBER), z.literal(FieldType.DATE)]),
+    tableId: z.string(),
+    externalId: z.string().optional(),
 })])
 
-export const UpdateFieldRequest = Type.Object({
-    name: Type.String(),
+export const UpdateFieldRequest = z.object({
+    name: z.string(),
 })
 
-export const ListFieldsRequestQuery = Type.Object({
-    tableId: Type.String(),
+export const ListFieldsRequestQuery = z.object({
+    tableId: z.string(),
 })
 
-export type CreateFieldRequest = Static<typeof CreateFieldRequest>
-export type UpdateFieldRequest = Static<typeof UpdateFieldRequest>
-export type ListFieldsRequestQuery = Static<typeof ListFieldsRequestQuery>
+export type CreateFieldRequest = z.infer<typeof CreateFieldRequest>
+export type UpdateFieldRequest = z.infer<typeof UpdateFieldRequest>
+export type ListFieldsRequestQuery = z.infer<typeof ListFieldsRequestQuery>

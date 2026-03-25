@@ -1,4 +1,4 @@
-import { piecesHooks } from '../lib/pieces-hooks';
+import { piecesHooks } from '../hooks/pieces-hooks';
 
 import { PieceIcon } from './piece-icon';
 
@@ -6,7 +6,6 @@ type PieceIconWithPieceNameProps = {
   pieceName: string;
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   border?: boolean;
-  circle?: boolean;
   showTooltip?: boolean;
 };
 
@@ -14,7 +13,6 @@ const PieceIconWithPieceName = ({
   pieceName,
   size = 'md',
   border = true,
-  circle = true,
   showTooltip = true,
 }: PieceIconWithPieceNameProps) => {
   const { pieceModel } = piecesHooks.usePiece({
@@ -23,7 +21,6 @@ const PieceIconWithPieceName = ({
 
   return (
     <PieceIcon
-      circle={circle}
       size={size}
       border={border}
       displayName={pieceModel?.displayName}
@@ -33,4 +30,4 @@ const PieceIconWithPieceName = ({
   );
 };
 
-export default PieceIconWithPieceName;
+export { PieceIconWithPieceName };

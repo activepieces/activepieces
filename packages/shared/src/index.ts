@@ -53,6 +53,7 @@ export * from './lib/automation/flows/folders/folder'
 export * from './lib/automation/flows/folders/folder-requests'
 export * from './lib/automation/flows/util/flow-structure-util'
 export * from './lib/automation/flows/util/flow-piece-util'
+export * from './lib/automation/flows/util/flow-canvas-util'
 export * from './lib/automation/flows'
 export * from './lib/automation/flow-run/dto/list-flow-runs-request'
 export * from './lib/automation/flow-run/execution/execution-journal'
@@ -70,7 +71,8 @@ export * from './lib/automation/pieces'
 export * from './lib/automation/webhook'
 export * from './lib/automation/trigger'
 export * from './lib/automation/workers/job-data'
-export * from './lib/automation/workers/queue-metrics'
+
+export * from './lib/automation/workers/worker-contract'
 export * from './lib/automation/workers'
 export * from './lib/automation/forms'
 export * from './lib/automation/mcp'
@@ -101,8 +103,3 @@ export * from './lib/ee/event-destinations'
 export * from './lib/ee/secret-managers'
 export * from './lib/ee/scim'
 export * from './lib/management/project/project-requests'
-
-// Sets TypeSystemPolicy for TypeBox
-// Look at https://github.com/sinclairzx81/typebox/issues/350
-import { TypeSystemPolicy } from '@sinclair/typebox/system'
-TypeSystemPolicy.ExactOptionalPropertyTypes = false

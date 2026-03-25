@@ -1,17 +1,17 @@
-import { Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
 import { User } from '../../user/user'
 import { UserIdentity } from '../user-identity'
 
 
-export const UserWithoutPassword = Type.Pick(User, ['id', 'platformRole', 'status', 'externalId', 'platformId'])
-export type UserWithoutPassword = Static<typeof UserWithoutPassword>
+export const UserWithoutPassword = User.pick({ id: true, platformRole: true, status: true, externalId: true, platformId: true })
+export type UserWithoutPassword = z.infer<typeof UserWithoutPassword>
 
-export const AuthenticationResponse = Type.Composite([
-    UserWithoutPassword,
-    Type.Pick(UserIdentity, ['verified', 'firstName', 'lastName', 'email', 'trackEvents', 'newsLetter']),
-    Type.Object({
-        token: Type.String(),
-        projectId: Type.String(),
+export const AuthenticationResponse = UserWithoutPassword.merge(
+    UserIdentity.pick({ verified: true, firstName: true, lastName: true, email: true, trackEvents: true, newsLetter: true }),
+).merge(
+    z.object({
+        token: z.string(),
+        projectId: z.string(),
     }),
-])
-export type AuthenticationResponse = Static<typeof AuthenticationResponse>
+)
+export type AuthenticationResponse = z.infer<typeof AuthenticationResponse>

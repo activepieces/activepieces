@@ -17,7 +17,7 @@ import {
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useTableState } from '@/features/tables/components/ap-table-state-provider';
-import { tablesUtils } from '@/features/tables/lib/utils';
+import { tablesUtils } from '@/features/tables/utils/utils';
 import { cn } from '@/lib/utils';
 
 type NewFieldDialogProps = {
@@ -196,7 +196,7 @@ export function NewFieldPopup({ children }: NewFieldDialogProps) {
                 <FormField
                   control={form.control}
                   name="data.options"
-                  render={({ field }) => (
+                  render={(_) => (
                     //needs to be wrapped in form field to show the error message
                     <FormItem className="grid space-y-3">
                       <Label>{t('Options')}</Label>

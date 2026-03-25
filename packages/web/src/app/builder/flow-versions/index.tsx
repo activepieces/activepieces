@@ -1,10 +1,10 @@
 import { t } from 'i18next';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
+import { RightSideBarType } from '@/app/builder/types';
 import { CardList, CardListItemSkeleton } from '@/components/custom/card-list';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { flowHooks } from '@/features/flows/lib/flow-hooks';
-import { RightSideBarType } from '@/lib/types';
+import { flowHooks } from '@/features/flows';
 
 import { SidebarHeader } from '../sidebar-header';
 

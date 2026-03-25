@@ -22,25 +22,25 @@ import {
 import { useMemo } from 'react';
 
 import { ApAvatar } from '@/components/custom/ap-avatar';
+import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
+import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
-import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { Input } from '@/components/ui/input';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { Switch } from '@/components/ui/switch';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { userHooks } from '@/hooks/user-hooks';
-import { formatUtils } from '@/lib/utils';
+import { formatUtils } from '@/lib/format-utils';
+import { cn, DASHBOARD_CONTENT_PADDING_X } from '@/lib/utils';
 
 import { TimeSavedFilterContent } from '../components/time-saved-filter-content';
 import { exportFlowDetailsCsv } from '../lib/impact-utils';
@@ -139,11 +139,12 @@ export function FlowsDetails({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div className="flex items-center gap-1.5 text-muted-foreground cursor-not-allowed">
-                    <span>{displayValue ?? t('Not set')}</span>
+                    <Plus className="h-3.5 w-3.5" />
+                    <span>{t('Add Estimated Time')}</span>
                   </div>
                 </TooltipTrigger>
                 <TooltipContent side="top">
-                  {t("You don't have permission to edit this flow")}
+                  {t("You don't have permission to add")}
                 </TooltipContent>
               </Tooltip>
             );
@@ -158,10 +159,10 @@ export function FlowsDetails({
                     flowId={row.original.flowId}
                     currentValue={timeSavedPerRun}
                   >
-                    <button className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs text-primary hover:bg-primary/10">
-                      <Pencil className="h-3 w-3" />
+                    <Button variant="link" size="xs">
+                      <Pencil className="size-3! mr-1" />
                       <span>{t('Edit')}</span>
-                    </button>
+                    </Button>
                   </EditTimeSavedPopover>
                 </span>
               </div>
@@ -231,12 +232,7 @@ export function FlowsDetails({
 
           if (userHasAccess) {
             return (
-              <div
-                className="flex items-center gap-1.5 text-foreground hover:underline cursor-pointer"
-                onClick={() =>
-                  window.open(`/projects/${row.original.projectId}`, '_blank')
-                }
-              >
+              <div className="flex items-center gap-1.5 text-foreground">
                 {projectAvatar}
                 {projectName}
               </div>
@@ -261,7 +257,12 @@ export function FlowsDetails({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center gap-3 flex-wrap">
+      <div
+        className={cn(
+          'flex items-center gap-3 flex-wrap',
+          DASHBOARD_CONTENT_PADDING_X,
+        )}
+      >
         <div className="relative w-[200px]">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -283,16 +284,6 @@ export function FlowsDetails({
         <TimeSavedFilter filters={filters} />
         <OwnerFilter filters={filters} />
 
-        {filters.hasActiveFilters && (
-          <button
-            onClick={filters.clearAllFilters}
-            className="flex items-center gap-1 text-sm text-primary hover:underline"
-          >
-            <X className="h-3.5 w-3.5" />
-            {t('Clear')}
-          </button>
-        )}
-
         <div className="flex-1" />
 
         <Tooltip>
@@ -312,7 +303,7 @@ export function FlowsDetails({
       </div>
 
       {flowsMissingTimeSaved > 0 && (
-        <div className="flex items-start justify-between gap-3 p-4 rounded-lg border border-warning/50 bg-warning/10">
+        <div className="flex mx-3 items-start justify-between gap-3 p-4 rounded-lg border border-warning/50 bg-warning/10">
           <div className="flex items-start gap-3">
             <AlertCircle className="h-5 w-5 text-warning shrink-0 mt-0.5" />
             <div className="flex flex-col gap-1">
@@ -385,7 +376,6 @@ function TimeSavedFilter({ filters }: { filters: FiltersReturn }) {
           unitMax={filters.draftTimeSaved.unitMax}
           onCycleUnitMax={filters.cycleDraftTimeUnitMax}
           onApply={filters.applyTimeSavedFilter}
-          onClear={filters.clearTimeSavedFilter}
         />
       </PopoverContent>
     </Popover>

@@ -87,7 +87,10 @@ export const askGpt = createAction({
 
         const openai = new OpenAIClient(
             auth.endpoint,
-            new AzureKeyCredential(auth.apiKey)
+            new AzureKeyCredential(auth.apiKey),
+            {
+                apiVersion: '2024-12-01-preview',
+            }
         );
 
         let messageHistory: any[] | null = [];
@@ -118,13 +121,15 @@ export const askGpt = createAction({
             };
         });
 
-        const completion = await openai.getChatCompletions(propsValue.deploymentId, [...roles, ...messageHistory], {
-            maxTokens: propsValue.maxTokens,
+        const completionOptions = {
+            maxCompletionTokens: propsValue.maxTokens,
             temperature: propsValue.temperature,
             frequencyPenalty: propsValue.frequencyPenalty,
             presencePenalty: propsValue.presencePenalty,
             topP: propsValue.topP,
-        });
+        };
+
+        const completion = await openai.getChatCompletions(propsValue.deploymentId, [...roles, ...messageHistory], completionOptions);
 
         const responseText = completion.choices[0].message?.content;
 

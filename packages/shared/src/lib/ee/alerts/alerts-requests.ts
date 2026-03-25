@@ -1,18 +1,18 @@
-import { Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
 import { ApId } from '../../core/common/id-generator'
 import { AlertChannel } from './alerts-dto'
 
-export const ListAlertsParams = Type.Object({
+export const ListAlertsParams = z.object({
     projectId: ApId,
-    cursor: Type.Optional(Type.String()),
-    limit: Type.Optional(Type.Integer({ minimum: 1, maximum: 100 })),
+    cursor: z.string().optional(),
+    limit: z.coerce.number().int().min(1).max(100).optional(),
 })
-export type ListAlertsParams = Static<typeof ListAlertsParams>
+export type ListAlertsParams = z.infer<typeof ListAlertsParams>
 
-export const CreateAlertParams = Type.Object({
+export const CreateAlertParams = z.object({
     projectId: ApId,
-    channel: Type.Enum(AlertChannel),
-    receiver: Type.String({}),
+    channel: z.nativeEnum(AlertChannel),
+    receiver: z.string(),
 })
 
-export type CreateAlertParams = Static<typeof CreateAlertParams>
+export type CreateAlertParams = z.infer<typeof CreateAlertParams>

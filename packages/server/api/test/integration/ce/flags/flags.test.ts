@@ -1,6 +1,6 @@
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
 
@@ -14,10 +14,10 @@ afterAll(async () => {
 
 describe('Flags API', () => {
     describe('GET /v1/flags', () => {
-        it('should return flags with expected keys and value types', async () => {
+        it('should return flags without authentication', async () => {
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/flags',
+                url: '/api/v1/flags',
             })
 
             expect(response?.statusCode).toBe(StatusCodes.OK)

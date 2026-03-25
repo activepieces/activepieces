@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 
+import { LoadingSpinner } from '@/components/custom/spinner';
 import { Button } from '@/components/ui/button';
 import {
   Command,
@@ -22,9 +23,9 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { LoadingSpinner } from '@/components/ui/spinner';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { cn, localesMap } from '@/lib/utils';
+import { localesMap } from '@/lib/locale-utils';
+import { cn } from '@/lib/utils';
 
 export const LanguageToggle = () => {
   const { i18n } = useTranslation();

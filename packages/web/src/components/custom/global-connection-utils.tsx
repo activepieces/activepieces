@@ -22,3 +22,12 @@ export const GlobalConnectionWarning = () => {
     </Alert>
   );
 };
+
+export const DeleteConnectionWarning = () => {
+  return (
+    <div>
+      {t('Any flows currently using these connections')}{' '}
+      <strong>{t('will break immediately')}</strong>. <br />
+    </div>
+  );
+};

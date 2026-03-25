@@ -2,7 +2,7 @@ import { PlatformAnalyticsReport } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Clock } from 'lucide-react';
 
-import { formatUtils } from '@/lib/utils';
+import { formatUtils } from '@/lib/format-utils';
 
 import { MetricCard, MetricCardSkeleton } from './metric-card';
 
@@ -68,8 +68,8 @@ export const TimeSavedMetric = ({
       subtitle={t('{days} workdays saved', {
         days: equivalentWorkdays.toLocaleString(),
       })}
-      iconColor="text-emerald-500"
-      iconBgColor="bg-emerald-500/10"
+      iconColor="text-success"
+      iconBgColor="bg-success/10"
     />
   );
 };

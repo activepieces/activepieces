@@ -11,11 +11,8 @@ import customHtmlPlugin from './vite-plugins/html-plugin';
 export default defineConfig(({ command, mode }) => {
   const isDev = command === 'serve' || mode === 'development';
 
-  const AP_TITLE = isDev ? 'Activepieces' : '${AP_APP_TITLE}';
-
-  const AP_FAVICON = isDev
-    ? 'https://activepieces.com/favicon.ico'
-    : '${AP_FAVICON_URL}';
+  const AP_TITLE = 'Activepieces';
+  const AP_FAVICON = 'https://activepieces.com/favicon.ico';
 
   return {
     root: __dirname,
@@ -27,7 +24,6 @@ export default defineConfig(({ command, mode }) => {
           target: 'http://127.0.0.1:3000',
           secure: false,
           changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/api/, ''),
           headers: {
             Host: '127.0.0.1:4200',
           },
@@ -67,13 +63,17 @@ export default defineConfig(({ command, mode }) => {
         title: AP_TITLE,
         icon: AP_FAVICON,
       }),
-      checker({
-        typescript: {
-          buildMode: true,
-          tsconfigPath: './tsconfig.json',
-          root: __dirname,
-        },
-      }),
+      ...(isDev
+        ? [
+            checker({
+              typescript: {
+                buildMode: true,
+                tsconfigPath: './tsconfig.json',
+                root: __dirname,
+              },
+            }),
+          ]
+        : []),
     ],
 
     build: {

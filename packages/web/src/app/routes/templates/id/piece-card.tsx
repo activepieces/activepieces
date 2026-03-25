@@ -1,7 +1,6 @@
 import { Card, CardContent } from '@/components/ui/card';
-import PieceIconWithPieceName from '@/features/pieces/components/piece-icon-from-name';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
-import { formatUtils } from '@/lib/utils';
+import { PieceIconWithPieceName, piecesHooks } from '@/features/pieces';
+import { formatUtils } from '@/lib/format-utils';
 
 type PieceCardProps = {
   pieceName: string;

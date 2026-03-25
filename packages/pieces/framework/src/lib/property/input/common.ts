@@ -1,20 +1,24 @@
-import { Static, TObject, TSchema, Type } from "@sinclair/typebox";
+import { z } from "zod";
 import { ApFile } from "./file-property";
 import { PropertyType } from "./property-type";
 
 
 
-export const BasePropertySchema = Type.Object({
-    displayName: Type.String(),
-    description: Type.Optional(Type.String())
+export const BasePropertySchema = z.object({
+    displayName: z.string(),
+    description: z.string().optional()
 })
 
-export type BasePropertySchema = Static<typeof BasePropertySchema>
+export type BasePropertySchema = z.infer<typeof BasePropertySchema>
 
-export const TPropertyValue = <T extends TSchema, U extends PropertyType>(T: T, propertyType: U): TObject => Type.Object({
-    type: Type.Literal(propertyType),
-    required: Type.Boolean(),
-    defaultValue: Type.Optional(Type.Any()),
+export const TPropertyValue = <T extends z.ZodType, U extends PropertyType>(_T: T, propertyType: U): z.ZodObject<{
+    type: z.ZodLiteral<U>,
+    required: z.ZodBoolean,
+    defaultValue: z.ZodOptional<z.ZodAny>,
+}> => z.object({
+    type: z.literal(propertyType),
+    required: z.boolean(),
+    defaultValue: z.any().optional(),
 })
 
 export type TPropertyValue<
@@ -54,4 +58,3 @@ export type TPropertyValue<
     ? string
     : unknown;
 };
-

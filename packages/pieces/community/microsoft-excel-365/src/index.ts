@@ -26,6 +26,7 @@ import { updateRowAction } from './lib/actions/update-row';
 import { clearRangeAction } from './lib/actions/clear-cells-by-range';
 import { clearColumnAction } from './lib/actions/clear-column-by-index';
 import { clearRowAction } from './lib/actions/clear-row-by-id';
+import { deleteRowAction } from './lib/actions/delete-row';
 import { createWorksheetAction } from './lib/actions/create-worksheet';
 import { findRowAction } from './lib/actions/find-row';
 import { getRangeAction } from './lib/actions/get-cells-in-range';
@@ -43,68 +44,64 @@ import { appendMultipleRowsAction } from './lib/actions/append-multiple-rows';
 import { findWorkbookAction } from './lib/actions/find-workbooks';
 import { findWorksheetAction } from './lib/actions/find-worksheets';
 import { getWorksheetColumnsAction } from './lib/actions/get-wroksheet-columns';
-import { excelAuth } from './lib/auth';
 import { excelCommon } from './lib/common/common';
+import { excelAuth } from './lib/auth';
 
 export const microsoftExcel = createPiece({
-  displayName: 'Microsoft Excel 365',
-  description: 'Spreadsheet software by Microsoft',
+	displayName: 'Microsoft Excel 365',
+	description: 'Spreadsheet software by Microsoft',
 
-  auth: excelAuth,
-  minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/microsoft-excel-365.png',
-  categories: [PieceCategory.PRODUCTIVITY],
-  authors: [
-    'BastienMe',
-    'kishanprmr',
-    'MoShizzle',
-    'abuaboud',
-    'Pranith124',
-    'onyedikachi-david',
-  ],
-  actions: [
-    appendRowAction,
-    appendMultipleRowsAction,
-    getWorksheetsAction,
-    getWorksheetRowsAction,
-    updateRowAction,
-    clearWorksheetAction,
-    deleteWorksheetAction,
-    getWorkbooksAction,
-    getWorksheetColumnsAction,
-    deleteWorkbookAction,
-    addWorksheetAction,
-    getTableRowsAction,
-    getTableColumnsAction,
-    createTableAction,
-    deleteTableAction,
-    lookupTableColumnAction,
-    appendTableRowsAction,
-    convertToRangeAction,
-    createWorkbook,
-    clearColumnAction,
-    clearRangeAction,
-    clearRowAction,
-    createWorksheetAction,
-    findRowAction,
-    findWorkbookAction,
-    findWorksheetAction,
-    getRangeAction,
-    getRowAction,
-    getWorksheetAction,
-    renameWorksheetAction,
-    createCustomApiCallAction({
-      baseUrl: () => excelCommon.baseUrl,
-      auth: excelAuth,
-      authMapping: async (auth) => ({
-        Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
-      }),
-    }),
-  ],
-  triggers: [
-    readNewRows,
-    newRowInTableTrigger,
-    newWorksheetTrigger,
-    updatedRowTrigger,
-  ],
+	auth: excelAuth,
+	minimumSupportedRelease: '0.30.0',
+	logoUrl: 'https://cdn.activepieces.com/pieces/microsoft-excel-365.png',
+	categories: [PieceCategory.PRODUCTIVITY],
+	authors: [
+		'BastienMe',
+		'kishanprmr',
+		'MoShizzle',
+		'abuaboud',
+		'Pranith124',
+		'onyedikachi-david',
+	],
+	actions: [
+		appendRowAction,
+		appendMultipleRowsAction,
+		getWorksheetsAction,
+		getWorksheetRowsAction,
+		updateRowAction,
+		clearWorksheetAction,
+		deleteWorksheetAction,
+		getWorkbooksAction,
+		getWorksheetColumnsAction,
+		deleteWorkbookAction,
+		addWorksheetAction,
+		getTableRowsAction,
+		getTableColumnsAction,
+		createTableAction,
+		deleteTableAction,
+		lookupTableColumnAction,
+		appendTableRowsAction,
+		convertToRangeAction,
+		createWorkbook,
+		clearColumnAction,
+		clearRangeAction,
+		clearRowAction,
+		deleteRowAction,
+		createWorksheetAction,
+		findRowAction,
+		findWorkbookAction,
+		findWorksheetAction,
+		getRangeAction,
+		getRowAction,
+		getWorksheetAction,
+		renameWorksheetAction,
+		createCustomApiCallAction({
+			baseUrl: () => excelCommon.baseUrl,
+			auth: excelAuth,
+			authMapping: async (auth) => ({
+				Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+			}),
+		}),
+	],
+	triggers: [readNewRows, newRowInTableTrigger, newWorksheetTrigger, updatedRowTrigger],
 });

@@ -1,14 +1,14 @@
-import { Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
 import { Metadata } from '../../../core/common/metadata'
 
-export const CreateFlowRequest = Type.Object({
-    displayName: Type.String({}),
+export const CreateFlowRequest = z.object({
+    displayName: z.string(),
     /**If folderId is provided, folderName is ignored */
-    folderId: Type.Optional(Type.String({})),
-    folderName: Type.Optional(Type.String({})),
-    projectId: Type.String({}),
-    templateId: Type.Optional(Type.String({})),
-    metadata: Type.Optional(Metadata),
+    folderId: z.string().optional(),
+    folderName: z.string().optional(),
+    projectId: z.string(),
+    templateId: z.string().optional(),
+    metadata: Metadata.optional(),
 })
 
-export type CreateFlowRequest = Static<typeof CreateFlowRequest>
+export type CreateFlowRequest = z.infer<typeof CreateFlowRequest>

@@ -19,7 +19,7 @@ import {
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 
-import { billingMutations } from '../../lib/billing-hooks';
+import { billingMutations } from '../../hooks/billing-hooks';
 
 interface AutoTopUpConfigDialogProps {
   isOpen: boolean;

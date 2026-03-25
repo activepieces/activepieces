@@ -1,6 +1,6 @@
 import { FlowActionType, flowStructureUtil, isNil } from '@activepieces/shared';
-import { CaretDownIcon, CaretUpIcon } from '@radix-ui/react-icons';
 import { t } from 'i18next';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -10,8 +10,8 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { flowRunUtils } from '@/features/flow-runs';
 
-import { flowRunUtils } from '../../../features/flow-runs/lib/flow-run-utils';
 import { useBuilderStateContext } from '../builder-hooks';
 
 const LoopIterationInput = ({ stepName }: { stepName: string }) => {
@@ -141,9 +141,9 @@ const LoopIterationInputButton = ({
       size="icon"
     >
       {isIncreasing ? (
-        <CaretUpIcon className="w-2 h-2"></CaretUpIcon>
+        <ChevronUp className="w-2 h-2"></ChevronUp>
       ) : (
-        <CaretDownIcon className="w-2 h-2"></CaretDownIcon>
+        <ChevronDown className="w-2 h-2"></ChevronDown>
       )}
     </Button>
   );

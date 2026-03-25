@@ -1,4 +1,4 @@
-import { Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
 import { BaseModelSchema } from '../../core/common/base-model'
 import { ApId } from '../../core/common/id-generator'
 import { OtpType } from './otp-type'
@@ -10,12 +10,12 @@ export enum OtpState {
     CONFIRMED = 'CONFIRMED',
 }
 
-export const OtpModel = Type.Object({
+export const OtpModel = z.object({
     ...BaseModelSchema,
-    type: Type.Enum(OtpType),
+    type: z.nativeEnum(OtpType),
     identityId: ApId,
-    value: Type.String(),
-    state: Type.Enum(OtpState),
+    value: z.string(),
+    state: z.nativeEnum(OtpState),
 })
 
-export type OtpModel = Static<typeof OtpModel>
+export type OtpModel = z.infer<typeof OtpModel>

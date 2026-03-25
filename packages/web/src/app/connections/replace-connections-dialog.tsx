@@ -1,5 +1,4 @@
 import { AppConnectionScope, PopulatedFlow } from '@activepieces/shared';
-import { DialogTrigger } from '@radix-ui/react-dialog';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { GlobeIcon, WorkflowIcon } from 'lucide-react';
@@ -14,10 +13,11 @@ import {
   Dialog,
   DialogClose,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
+  DialogTrigger,
 } from '@/components/ui/dialog';
 import { Form, FormField, FormMessage } from '@/components/ui/form';
 import { Label } from '@/components/ui/label';
@@ -25,10 +25,9 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   appConnectionsMutations,
   appConnectionsQueries,
-} from '@/features/connections/lib/app-connections-hooks';
-import { flowsApi } from '@/features/flows/lib/flows-api';
-import PieceIconWithPieceName from '@/features/pieces/components/piece-icon-from-name';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
+} from '@/features/connections';
+import { flowsApi } from '@/features/flows';
+import { PieceIconWithPieceName, piecesHooks } from '@/features/pieces';
 import { cn } from '@/lib/utils';
 
 type ReplaceConnectionsDialogProps = {
@@ -319,7 +318,6 @@ const ReplaceConnectionsDialog = ({
                                   pieceName={conn!.pieceName}
                                   size="xs"
                                   border={false}
-                                  circle={false}
                                 />
                                 <span>{conn!.displayName}</span>
                               </div>
@@ -362,7 +360,6 @@ const ReplaceConnectionsDialog = ({
                                     pieceName={conn!.pieceName}
                                     size="xs"
                                     border={false}
-                                    circle={false}
                                   />
                                   {conn?.scope ===
                                     AppConnectionScope.PLATFORM && (

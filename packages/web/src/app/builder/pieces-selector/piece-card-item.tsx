@@ -1,14 +1,15 @@
 import { useRef } from 'react';
 
 import { CardListItem } from '@/components/custom/card-list';
-import { PieceIcon } from '@/features/pieces/components/piece-icon';
-import { PIECE_SELECTOR_ELEMENTS_HEIGHTS } from '@/features/pieces/lib/piece-selector-utils';
-import { useIsMobile } from '@/hooks/use-mobile';
 import {
+  PieceIcon,
   PieceSelectorOperation,
   StepMetadataWithSuggestions,
-} from '@/lib/types';
-import { cn, wait } from '@/lib/utils';
+  PIECE_SELECTOR_ELEMENTS_HEIGHTS,
+} from '@/features/pieces';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { wait } from '@/lib/dom-utils';
+import { cn } from '@/lib/utils';
 
 import { useBuilderStateContext } from '../builder-hooks';
 

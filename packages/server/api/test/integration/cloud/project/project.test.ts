@@ -13,6 +13,7 @@ import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { generateMockToken } from '../../../helpers/auth'
+import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { db } from '../../../helpers/db'
 import {
     createMockApiKey,
@@ -47,7 +48,7 @@ describe('Project API', () => {
             const metadata = { foo: 'bar' }
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/projects',
+                url: '/api/v1/projects',
                 body: {
                     displayName,
                     metadata,
@@ -78,7 +79,7 @@ describe('Project API', () => {
             const displayName = faker.animal.bird()
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/projects',
+                url: '/api/v1/projects',
                 body: {
                     displayName,
                 },
@@ -108,7 +109,7 @@ describe('Project API', () => {
 
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/projects',
+                url: '/api/v1/projects',
                 headers: {
                     authorization: `Bearer ${apiKey.value}`,
                 },
@@ -137,7 +138,7 @@ describe('Project API', () => {
 
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/projects',
+                url: '/api/v1/projects',
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -182,7 +183,7 @@ describe('Project API', () => {
             }
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/projects/' + mockProject.id,
+                url: '/api/v1/projects/' + mockProject.id,
                 body: request,
                 headers: {
                     authorization: `Bearer ${testToken}`,
@@ -208,7 +209,7 @@ describe('Project API', () => {
             }
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/projects/' + mockProject.id,
+                url: '/api/v1/projects/' + mockProject.id,
                 body: request,
                 headers: {
                     authorization: `Bearer ${mockApiKey.value}`,
@@ -241,7 +242,7 @@ describe('Project API', () => {
 
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/projects/' + mockProjectTwo.id,
+                url: '/api/v1/projects/' + mockProjectTwo.id,
                 body: request,
                 headers: {
                     authorization: `Bearer ${testToken}`,
@@ -286,7 +287,7 @@ describe('Project API', () => {
             }
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/projects/' + mockProjectTwo.id,
+                url: '/api/v1/projects/' + mockProjectTwo.id,
                 body: request,
                 headers: {
                     authorization: `Bearer ${testToken}`,
@@ -319,7 +320,7 @@ describe('Project API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: `/v1/projects/${mockProject.id}`,
+                url: `/api/v1/projects/${mockProject.id}`,
                 body: request,
                 headers: {
                     authorization: `Bearer ${mockToken}`,
@@ -367,7 +368,7 @@ describe('Project API', () => {
             }
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/projects/' + mockProject.id,
+                url: '/api/v1/projects/' + mockProject.id,
                 body: request,
                 headers: {
                     authorization: `Bearer ${testToken}`,
@@ -404,7 +405,7 @@ describe('Project API', () => {
             // act
             const response = await app?.inject({
                 method: 'DELETE',
-                url: `/v1/projects/${mockProjectToDelete.id}`,
+                url: `/api/v1/projects/${mockProjectToDelete.id}`,
                 headers: {
                     authorization: `Bearer ${mockToken}`,
                 },
@@ -412,8 +413,8 @@ describe('Project API', () => {
 
             // assert
             expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
-            const deletedProject = await db.findOneBy<Project>('project', { id: mockProjectToDelete.id })
-            expect(deletedProject?.deleted).not.toBeNull()
+            const deletedProject = await databaseConnection().getRepository('project').findOne({ where: { id: mockProjectToDelete.id }, withDeleted: true })
+            expect(deletedProject!.deleted).not.toBeNull()
         })
 
         it('Succeeds if project has enabled flows', async () => {
@@ -438,7 +439,7 @@ describe('Project API', () => {
             // act
             const response = await app?.inject({
                 method: 'DELETE',
-                url: `/v1/projects/${mockProjectToDelete.id}`,
+                url: `/api/v1/projects/${mockProjectToDelete.id}`,
                 headers: {
                     authorization: `Bearer ${mockToken}`,
                 },
@@ -467,7 +468,7 @@ describe('Project API', () => {
             // act
             const response = await app?.inject({
                 method: 'DELETE',
-                url: `/v1/projects/${mockProject.id}`,
+                url: `/api/v1/projects/${mockProject.id}`,
                 headers: {
                     authorization: `Bearer ${mockToken}`,
                 },
@@ -517,7 +518,7 @@ describe('Project API', () => {
             // act - list projects
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/projects',
+                url: '/api/v1/projects',
                 headers: {
                     authorization: `Bearer ${operatorToken}`,
                 },
@@ -554,7 +555,7 @@ describe('Project API', () => {
             // act - try to update platform
             const response = await app?.inject({
                 method: 'POST',
-                url: `/v1/platforms/${mockPlatform.id}`,
+                url: `/api/v1/platforms/${mockPlatform.id}`,
                 headers: {
                     authorization: `Bearer ${operatorToken}`,
                 },
@@ -597,7 +598,7 @@ describe('Project API', () => {
             // act - list projects
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/projects',
+                url: '/api/v1/projects',
                 headers: {
                     authorization: `Bearer ${memberToken}`,
                 },

@@ -20,14 +20,15 @@ import {
 import { useContext, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
-import { ApSidebarToggle } from '@/components/custom/ap-sidebar-toggle';
+import { userApi } from '@/api/user-api';
+import { PageHeader } from '@/components/custom/page-header';
+import { SearchInput } from '@/components/custom/search-input';
 import { Button } from '@/components/ui/button';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { SearchInput } from '@/components/ui/search-input';
 import {
   Select,
   SelectContent,
@@ -35,21 +36,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { platformAnalyticsHooks } from '@/features/platform-admin/lib/analytics-hooks';
 import {
+  platformAnalyticsHooks,
   RefreshAnalyticsContext,
   RefreshAnalyticsProvider,
-} from '@/features/platform-admin/lib/refresh-analytics-context';
-import { projectCollectionUtils } from '@/hooks/project-collection';
-import { userApi } from '@/lib/user-api';
-import { downloadFile, formatUtils } from '@/lib/utils';
+} from '@/features/platform-admin';
+import { projectCollectionUtils } from '@/features/projects';
+import { downloadFile } from '@/lib/dom-utils';
+import { formatUtils } from '@/lib/format-utils';
+import { cn, DASHBOARD_CONTENT_PADDING_X } from '@/lib/utils';
 
 import { TimeSavedFilterContent } from '../impact/components/time-saved-filter-content';
 import {
@@ -195,9 +196,12 @@ export default function LeaderboardPage() {
     setTimeSavedPopoverOpen(false);
   };
 
-  const clearTimeSavedFilter = () => {
+  const hasActiveFilters =
+    searchQuery !== '' || appliedFilter.min !== '' || appliedFilter.max !== '';
+
+  const clearAllFilters = () => {
+    setSearchQuery('');
     setAppliedFilter(emptyFilter);
-    setTimeSavedPopoverOpen(false);
   };
 
   const timeSavedLabel = useMemo(() => {
@@ -218,21 +222,24 @@ export default function LeaderboardPage() {
 
     const userMap = new Map(analyticsData.users.map((user) => [user.id, user]));
 
-    return usersLeaderboardData.reduce<UserStats[]>((acc, item) => {
-      const user = userMap.get(item.userId);
-      if (!user) return acc;
+    return usersLeaderboardData
+      .reduce<Omit<UserStats, 'rank'>[]>((acc, item) => {
+        const user = userMap.get(item.userId);
+        if (!user) return acc;
 
-      acc.push({
-        id: item.userId,
-        visibleId: item.userId,
-        userName: `${user.firstName} ${user.lastName}`.trim() || user.email,
-        userEmail: user.email,
-        flowCount: item.flowCount ?? 0,
-        minutesSaved: item.minutesSaved ?? 0,
-        badges: badgesMap.get(item.userId),
-      });
-      return acc;
-    }, []);
+        acc.push({
+          id: item.userId,
+          visibleId: item.userId,
+          userName: `${user.firstName} ${user.lastName}`.trim() || user.email,
+          userEmail: user.email,
+          flowCount: item.flowCount ?? 0,
+          minutesSaved: item.minutesSaved ?? 0,
+          badges: badgesMap.get(item.userId),
+        });
+        return acc;
+      }, [])
+      .sort((a, b) => b.minutesSaved - a.minutesSaved)
+      .map((item, index) => ({ ...item, rank: index + 1 }));
   }, [analyticsData?.users, usersLeaderboardData, isLoading, badgesMap]);
 
   const projectsData = useMemo((): ProjectStats[] => {
@@ -240,14 +247,17 @@ export default function LeaderboardPage() {
       return [];
     }
 
-    return projectsLeaderboardData.map((item) => ({
-      id: item.projectId,
-      projectId: item.projectId,
-      projectName: item.projectName,
-      flowCount: item.flowCount ?? 0,
-      minutesSaved: item.minutesSaved ?? 0,
-      iconColor: projectIconMap.get(item.projectId),
-    }));
+    return projectsLeaderboardData
+      .map((item) => ({
+        id: item.projectId,
+        projectId: item.projectId,
+        projectName: item.projectName,
+        flowCount: item.flowCount ?? 0,
+        minutesSaved: item.minutesSaved ?? 0,
+        iconColor: projectIconMap.get(item.projectId),
+      }))
+      .sort((a, b) => b.minutesSaved - a.minutesSaved)
+      .map((item, index) => ({ ...item, rank: index + 1 }));
   }, [projectsLeaderboardData, isLoading, projectIconMap]);
 
   const filteredPeopleData = useMemo(() => {
@@ -260,9 +270,7 @@ export default function LeaderboardPage() {
           p.userEmail.toLowerCase().includes(q),
       );
     }
-    return applyTimeSavedFilter(data, peopleTimeSaved).sort(
-      (a, b) => b.minutesSaved - a.minutesSaved,
-    );
+    return applyTimeSavedFilter(data, peopleTimeSaved);
   }, [peopleData, searchQuery, peopleTimeSaved]);
 
   const filteredProjectsData = useMemo(() => {
@@ -331,12 +339,11 @@ export default function LeaderboardPage() {
   return (
     <RefreshAnalyticsProvider>
       <div className="flex flex-col gap-2 w-full">
-        <div className="flex items-center justify-between py-2">
-          <div className="flex items-center gap-3">
-            <ApSidebarToggle />
-            <Separator orientation="vertical" className="h-5" />
+        <PageHeader
+          showSidebarToggle={true}
+          title={
             <div className="flex items-center gap-1.5">
-              <span className="text-lg font-medium">{t('Leaderboard')}</span>
+              <span className="text-sm font-medium">{t('Leaderboard')}</span>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Info className="h-4 w-4 text-muted-foreground cursor-help" />
@@ -346,78 +353,83 @@ export default function LeaderboardPage() {
                 </TooltipContent>
               </Tooltip>
             </div>
-          </div>
+          }
+          rightContent={
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 px-3 py-1.5 border border-dashed rounded-md text-sm text-muted-foreground">
+                <span>
+                  {t('Updated')}{' '}
+                  {dayjs(analyticsData?.cachedAt).format('MMM DD, hh:mm A')}
+                  {' — '}
+                  {t('Refreshes daily')}
+                </span>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6"
+                      onClick={() =>
+                        refreshAnalytics(undefined, {
+                          onSuccess: () =>
+                            toast.success(t('Data refreshed successfully')),
+                        })
+                      }
+                      disabled={isRefreshing}
+                    >
+                      <RefreshCcw
+                        className={`h-3.5 w-3.5 ${
+                          isRefreshing ? 'animate-spin' : ''
+                        }`}
+                      />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>{t('Refresh analytics')}</TooltipContent>
+                </Tooltip>
+              </div>
 
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 px-3 py-1.5 border border-dashed rounded-md text-sm text-muted-foreground">
-              <span>
-                {t('Updated')}{' '}
-                {dayjs(analyticsData?.cachedAt).format('MMM DD, hh:mm A')}
-                {' — '}
-                {t('Refreshes daily')}
-              </span>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6"
-                    onClick={() =>
-                      refreshAnalytics(undefined, {
-                        onSuccess: () =>
-                          toast.success(t('Data refreshed successfully')),
-                      })
-                    }
-                    disabled={isRefreshing}
-                  >
-                    <RefreshCcw
-                      className={`h-3.5 w-3.5 ${
-                        isRefreshing ? 'animate-spin' : ''
-                      }`}
-                    />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>{t('Refresh analytics')}</TooltipContent>
-              </Tooltip>
+              <Select
+                value={timePeriod}
+                onValueChange={(value) =>
+                  setTimePeriod(value as AnalyticsTimePeriod)
+                }
+              >
+                <SelectTrigger className="w-auto gap-2 h-8">
+                  <Calendar className="h-4 w-4" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent side="bottom" align="end">
+                  <SelectItem value={AnalyticsTimePeriod.LAST_WEEK}>
+                    {t('Last 7 days')}
+                  </SelectItem>
+                  <SelectItem value={AnalyticsTimePeriod.LAST_MONTH}>
+                    {t('Last 30 days')}
+                  </SelectItem>
+                  <SelectItem value={AnalyticsTimePeriod.LAST_THREE_MONTHS}>
+                    {t('Last 3 months')}
+                  </SelectItem>
+                  <SelectItem value={AnalyticsTimePeriod.LAST_SIX_MONTHS}>
+                    {t('Last 6 months')}
+                  </SelectItem>
+                  <SelectItem value={AnalyticsTimePeriod.LAST_YEAR}>
+                    {t('Last year')}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-
-            <Select
-              value={timePeriod}
-              onValueChange={(value) =>
-                setTimePeriod(value as AnalyticsTimePeriod)
-              }
-            >
-              <SelectTrigger className="w-auto gap-2">
-                <Calendar className="h-4 w-4" />
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent side="bottom" align="end">
-                <SelectItem value={AnalyticsTimePeriod.LAST_WEEK}>
-                  {t('Last 7 days')}
-                </SelectItem>
-                <SelectItem value={AnalyticsTimePeriod.LAST_MONTH}>
-                  {t('Last 30 days')}
-                </SelectItem>
-                <SelectItem value={AnalyticsTimePeriod.LAST_THREE_MONTHS}>
-                  {t('Last 3 months')}
-                </SelectItem>
-                <SelectItem value={AnalyticsTimePeriod.LAST_SIX_MONTHS}>
-                  {t('Last 6 months')}
-                </SelectItem>
-                <SelectItem value={AnalyticsTimePeriod.LAST_YEAR}>
-                  {t('Last year')}
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+          }
+          className="min-w-full"
+        />
 
         <Tabs
           defaultValue="creators"
           className="w-full mt-2"
           onValueChange={handleTabChange}
         >
-          <TabsList variant="outline" className="border-b w-full">
+          <TabsList
+            variant="outline"
+            className={cn('border-b w-full', DASHBOARD_CONTENT_PADDING_X)}
+          >
             <TabsTrigger variant="outline" value="creators">
               <Users className="w-4 h-4 mr-1.5" />
               {t('People')}
@@ -428,7 +440,12 @@ export default function LeaderboardPage() {
             </TabsTrigger>
           </TabsList>
 
-          <div className="flex items-center justify-between mt-4 mb-4">
+          <div
+            className={cn(
+              'flex items-center justify-between mt-4 mb-4',
+              DASHBOARD_CONTENT_PADDING_X,
+            )}
+          >
             <div className="flex items-center gap-2">
               <SearchInput
                 value={searchQuery}
@@ -473,14 +490,11 @@ export default function LeaderboardPage() {
                   />
                 </PopoverContent>
               </Popover>
-              {timeSavedLabel && (
-                <button
-                  onClick={clearTimeSavedFilter}
-                  className="flex items-center gap-1 text-sm text-primary hover:underline"
-                >
-                  <X className="h-3.5 w-3.5" />
+              {hasActiveFilters && (
+                <Button variant="ghost" size="sm" onClick={clearAllFilters}>
+                  <X className="h-4 w-4" />
                   {t('Clear')}
-                </button>
+                </Button>
               )}
             </div>
             <Tooltip>

@@ -4,10 +4,10 @@ import { t } from 'i18next';
 import { Rocket } from 'lucide-react';
 import { useMemo } from 'react';
 
+import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
+import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { Avatar } from '@/components/ui/avatar';
-import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
-import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
-import { formatUtils } from '@/lib/utils';
+import { formatUtils } from '@/lib/format-utils';
 
 import { FirstIcon } from './icons/1st-icon';
 import { SecondIcon } from './icons/2nd-icon';
@@ -20,6 +20,7 @@ export type ProjectStats = {
   flowCount: number;
   minutesSaved: number;
   iconColor?: ColorName;
+  rank: number;
 };
 
 type ProjectsLeaderboardProps = {
@@ -27,23 +28,23 @@ type ProjectsLeaderboardProps = {
   isLoading?: boolean;
 };
 
-export const getRankIcon = (index: number) => {
-  if (index === 0) return <FirstIcon className="size-6" />;
-  if (index === 1) return <SecondIcon className="size-6" />;
-  if (index === 2) return <ThirdIcon className="size-6" />;
+export const getRankIcon = (rank: number) => {
+  if (rank === 1) return <FirstIcon className="size-6" />;
+  if (rank === 2) return <SecondIcon className="size-6" />;
+  if (rank === 3) return <ThirdIcon className="size-6" />;
   return null;
 };
 
-export const getRankText = (index: number) => {
-  return [0, 1, 2].includes(index) ? null : `#${index + 1}`;
+export const getRankText = (rank: number) => {
+  return rank <= 3 ? null : `#${rank}`;
 };
 
-export function RankCell({ sortIndex }: { sortIndex: number }) {
-  const icon = getRankIcon(sortIndex);
+export function RankCell({ rank }: { rank: number }) {
+  const icon = getRankIcon(rank);
   return (
     <div className="flex items-center gap-2 shrink-0">
       {icon && <div>{icon}</div>}
-      <span className="text-sm text-foreground">{getRankText(sortIndex)}</span>
+      <span className="text-sm text-foreground">{getRankText(rank)}</span>
     </div>
   );
 }
@@ -54,11 +55,7 @@ const createColumns = (): ColumnDef<RowDataWithActions<ProjectStats>>[] => [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title={t('Rank')} />
     ),
-    cell: ({ row, table }) => {
-      const sortedRows = table.getSortedRowModel().rows;
-      const index = sortedRows.findIndex((r) => r.id === row.id);
-      return <RankCell sortIndex={index} />;
-    },
+    cell: ({ row }) => <RankCell rank={row.original.rank} />,
     enableSorting: false,
     size: 20,
   },
@@ -113,10 +110,10 @@ const createColumns = (): ColumnDef<RowDataWithActions<ProjectStats>>[] => [
 ];
 
 const getRowClassName = (
-  _row: RowDataWithActions<ProjectStats>,
-  index: number,
+  row: RowDataWithActions<ProjectStats>,
+  _index: number,
 ) => {
-  if (index < 3) return 'bg-primary/5 hover:bg-primary/10';
+  if (row.rank <= 3) return 'bg-primary/5 hover:bg-primary/10';
   return 'hover:bg-accent';
 };
 

@@ -3,7 +3,7 @@ import { Package } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { projectCollectionUtils } from '@/hooks/project-collection';
+import { projectCollectionUtils } from '@/features/projects';
 import { cn } from '@/lib/utils';
 
 const ReleaseCard = () => {

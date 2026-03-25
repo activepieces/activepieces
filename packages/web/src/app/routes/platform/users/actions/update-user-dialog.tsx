@@ -3,12 +3,13 @@ import {
   UpdateUserRequestBody,
   User,
 } from '@activepieces/shared';
-import { typeboxResolver } from '@hookform/resolvers/typebox';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { Resolver, useForm } from 'react-hook-form';
 
+import { platformUserApi } from '@/api/platform-user-api';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -21,8 +22,7 @@ import {
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { RoleSelector } from '@/features/members/component/role-selector';
-import { platformUserApi } from '@/lib/platform-user-api';
+import { RoleSelector } from '@/features/members';
 
 export const UpdateUserDialog = ({
   children,
@@ -43,7 +43,10 @@ export const UpdateUserDialog = ({
       role,
       externalId,
     },
-    resolver: typeboxResolver(UpdateUserRequestBody),
+    resolver: zodResolver(UpdateUserRequestBody) as unknown as Resolver<{
+      role: PlatformRole;
+      externalId?: string;
+    }>,
   });
   const { mutate, isPending } = useMutation<User, Error, UpdateUserRequestBody>(
     {
@@ -80,7 +83,6 @@ export const UpdateUserDialog = ({
                     type="platform"
                     value={field.value}
                     onValueChange={field.onChange}
-                    showDescriptionInTrigger={true}
                   />
                   <FormMessage />
                 </FormItem>

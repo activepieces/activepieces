@@ -7,7 +7,6 @@ import {
   McpProtocol,
   ValidateAgentMcpToolResponse,
 } from '@activepieces/shared';
-import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { X } from 'lucide-react';
 import { UseFormReturn } from 'react-hook-form';
@@ -32,9 +31,8 @@ import {
 } from '@/components/ui/select';
 import { authenticationSession } from '@/lib/authentication-session';
 
+import { agentMutations } from '../../hooks/agent-hooks';
 import { useMcpToolDialogStore } from '../stores/mcp-tools';
-
-import { mcpToolApi } from './api';
 
 import { McpToolFormData, ValidationStep } from '.';
 
@@ -58,13 +56,7 @@ export const AddMcpToolForm = ({
   const projectId = authenticationSession.getProjectId();
   const { editingMcpTool } = useMcpToolDialogStore();
 
-  const { mutate: validateTool } = useMutation<
-    ValidateAgentMcpToolResponse,
-    Error,
-    { projectId: string; tool: AgentMcpTool }
-  >({
-    mutationFn: ({ projectId, tool }) =>
-      mcpToolApi.validateAgentMcpTool(projectId, tool),
+  const { mutate: validateTool } = agentMutations.useValidateMcpTool({
     onSuccess: (data) => {
       setValidationResult(data);
       setStep('validated');

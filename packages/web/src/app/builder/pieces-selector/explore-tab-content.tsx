@@ -5,13 +5,13 @@ import {
   CardListItemSkeleton,
 } from '@/components/custom/card-list';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import {
+  PieceIcon,
+  piecesHooks,
   PieceSelectorTabType,
   usePieceSelectorTabs,
-} from '@/features/pieces/lib/piece-selector-tabs-provider';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
-import { PieceSelectorOperation } from '@/lib/types';
+  PieceSelectorOperation,
+} from '@/features/pieces';
 
 import { PieceActionsOrTriggersList } from './piece-actions-or-triggers-list';
 

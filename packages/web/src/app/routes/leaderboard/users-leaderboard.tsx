@@ -5,14 +5,15 @@ import { Trophy } from 'lucide-react';
 import { useMemo } from 'react';
 
 import { ApAvatar } from '@/components/custom/ap-avatar';
-import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
-import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
+import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
+import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { cn, formatUtils } from '@/lib/utils';
+import { formatUtils } from '@/lib/format-utils';
+import { cn } from '@/lib/utils';
 
 import { RankCell } from './projects-leaderboard';
 
@@ -24,6 +25,7 @@ export type UserStats = {
   flowCount: number;
   minutesSaved: number;
   badges?: UserWithBadges['badges'];
+  rank: number;
 };
 
 type UsersLeaderboardProps = {
@@ -53,7 +55,7 @@ const BadgesCell = ({
                 src={badgeInfo.imageUrl}
                 alt={badgeInfo.title}
                 className={cn(
-                  'h-8 w-8 object-cover rounded-md transition-opacity',
+                  'h-7 w-7 object-cover rounded-md transition-opacity',
                   !isTopRank && 'opacity-30 group-hover/leaderrow:opacity-100',
                 )}
               />
@@ -75,11 +77,7 @@ const createColumns = (): ColumnDef<RowDataWithActions<UserStats>>[] => [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title={t('Rank')} />
     ),
-    cell: ({ row, table }) => {
-      const sortedRows = table.getSortedRowModel().rows;
-      const index = sortedRows.findIndex((r) => r.id === row.id);
-      return <RankCell sortIndex={index} />;
-    },
+    cell: ({ row }) => <RankCell rank={row.original.rank} />,
     enableSorting: false,
     size: 25,
   },
@@ -109,6 +107,7 @@ const createColumns = (): ColumnDef<RowDataWithActions<UserStats>>[] => [
       <div className="text-left">{row.original.flowCount}</div>
     ),
     enableSorting: false,
+    size: 120,
   },
   {
     accessorKey: 'minutesSaved',
@@ -121,26 +120,28 @@ const createColumns = (): ColumnDef<RowDataWithActions<UserStats>>[] => [
       </div>
     ),
     enableSorting: false,
+    size: 120,
   },
   {
     accessorKey: 'badges',
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title={t('Badges')} />
     ),
-    cell: ({ row, table }) => {
-      const sortedRows = table.getSortedRowModel().rows;
-      const index = sortedRows.findIndex((r) => r.id === row.id);
-      return <BadgesCell badges={row.original.badges} isTopRank={index < 3} />;
-    },
+    cell: ({ row }) => (
+      <BadgesCell
+        badges={row.original.badges}
+        isTopRank={row.original.rank <= 3}
+      />
+    ),
     enableSorting: false,
   },
 ];
 
 const getRowClassName = (
-  _row: RowDataWithActions<UserStats>,
-  index: number,
+  row: RowDataWithActions<UserStats>,
+  _index: number,
 ) => {
-  if (index < 3) return 'group/leaderrow bg-primary/5 hover:bg-primary/10';
+  if (row.rank <= 3) return 'group/leaderrow bg-primary/5 hover:bg-primary/10';
   return 'group/leaderrow hover:bg-accent';
 };
 

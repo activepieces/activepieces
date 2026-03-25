@@ -1,45 +1,45 @@
-import { Static, Type } from '@sinclair/typebox'
-import { Metadata, Nullable } from '../../core/common'
+import { z } from 'zod'
+import { Metadata, Nullable, OptionalArrayFromQuery } from '../../core/common'
 import { FlowVersionTemplate, TemplateStatus, TemplateTag, TemplateType } from './template'
 
-export const CreateTemplateRequestBody = Type.Object({
-    name: Type.String(),
-    summary: Type.String(),
-    description: Type.String(),
-    tags: Type.Optional(Type.Array(TemplateTag)),
-    blogUrl: Type.Optional(Type.String()),
+export const CreateTemplateRequestBody = z.object({
+    name: z.string(),
+    summary: z.string(),
+    description: z.string(),
+    tags: z.array(TemplateTag).optional(),
+    blogUrl: z.string().optional(),
     metadata: Nullable(Metadata),
-    author: Type.String(),
-    categories: Type.Array(Type.String()),
-    type: Type.Enum(TemplateType),
-    flows: Type.Optional(Type.Array(FlowVersionTemplate)),
+    author: z.string(),
+    categories: z.array(z.string()),
+    type: z.nativeEnum(TemplateType),
+    flows: z.array(FlowVersionTemplate).optional(),
 })
-export type CreateTemplateRequestBody = Static<typeof CreateTemplateRequestBody>
+export type CreateTemplateRequestBody = z.infer<typeof CreateTemplateRequestBody>
 
-export const UpdateFlowTemplateRequestBody = Type.Object({
-    name: Type.Optional(Type.String()),
-    summary: Type.Optional(Type.String()),
-    description: Type.Optional(Type.String()),
-    tags: Type.Optional(Type.Array(TemplateTag)),
-    blogUrl: Type.Optional(Type.String()),
+export const UpdateFlowTemplateRequestBody = z.object({
+    name: z.string().optional(),
+    summary: z.string().optional(),
+    description: z.string().optional(),
+    tags: z.array(TemplateTag).optional(),
+    blogUrl: z.string().optional(),
     metadata: Nullable(Metadata),
-    status: Type.Optional(Type.Enum(TemplateStatus)),
-    categories: Type.Optional(Type.Array(Type.String())),
-    flows: Type.Optional(Type.Array(FlowVersionTemplate)),
+    status: z.nativeEnum(TemplateStatus).optional(),
+    categories: z.array(z.string()).optional(),
+    flows: z.array(FlowVersionTemplate).optional(),
 })
-export type UpdateFlowTemplateRequestBody = Static<typeof UpdateFlowTemplateRequestBody>
+export type UpdateFlowTemplateRequestBody = z.infer<typeof UpdateFlowTemplateRequestBody>
 
 export const UpdateTemplateRequestBody = UpdateFlowTemplateRequestBody
-export type UpdateTemplateRequestBody = Static<typeof UpdateTemplateRequestBody>
+export type UpdateTemplateRequestBody = z.infer<typeof UpdateTemplateRequestBody>
 
-export const ListFlowTemplatesRequestQuery = Type.Object({
-    type: Type.Optional(Type.Enum(TemplateType)),
-    pieces: Type.Optional(Type.Array(Type.String())),
-    tags: Type.Optional(Type.Array(Type.String())),
-    search: Type.Optional(Type.String()),
-    category: Type.Optional(Type.String()),
+export const ListFlowTemplatesRequestQuery = z.object({
+    type: z.nativeEnum(TemplateType).optional(),
+    pieces: OptionalArrayFromQuery(z.string()),
+    tags: OptionalArrayFromQuery(z.string()),
+    search: z.string().optional(),
+    category: z.string().optional(),
 })
-export type ListFlowTemplatesRequestQuery = Static<typeof ListFlowTemplatesRequestQuery>
+export type ListFlowTemplatesRequestQuery = z.infer<typeof ListFlowTemplatesRequestQuery>
 
 export const ListTemplatesRequestQuery = ListFlowTemplatesRequestQuery
-export type ListTemplatesRequestQuery = Static<typeof ListTemplatesRequestQuery>
+export type ListTemplatesRequestQuery = z.infer<typeof ListTemplatesRequestQuery>

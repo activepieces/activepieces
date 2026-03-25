@@ -4,7 +4,7 @@ import { SearchXIcon } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { textMentionUtils } from '@/app/builder/piece-properties/text-input-with-mentions/text-input-utils';
-import { SearchInput } from '@/components/ui/search-input';
+import { SearchInput } from '@/components/custom/search-input';
 import { cn } from '@/lib/utils';
 
 import { ScrollArea } from '../../../components/ui/scroll-area';

@@ -1,9 +1,8 @@
-import { Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
 
 
-export const GetFlowTemplateRequestQuery = Type.Object({
-    versionId: Type.Optional(Type.String()),
+export const GetFlowTemplateRequestQuery = z.object({
+    versionId: z.string().optional(),
 })
 
-export type GetFlowTemplateRequestQuery = Static<typeof GetFlowTemplateRequestQuery>
-
+export type GetFlowTemplateRequestQuery = z.infer<typeof GetFlowTemplateRequestQuery>

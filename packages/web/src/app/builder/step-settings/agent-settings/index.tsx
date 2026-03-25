@@ -10,8 +10,7 @@ import { useFormContext } from 'react-hook-form';
 import { AgentTools } from '@/app/builder/step-settings/agent-settings/agent-tools';
 import { FormField } from '@/components/ui/form';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AIModelSelector } from '@/features/agents/ai-model';
-import { AgentStructuredOutput } from '@/features/agents/structured-output';
+import { AIModelSelector, AgentStructuredOutput } from '@/features/agents';
 
 import {
   selectGenericFormComponentForProperty,
@@ -49,7 +48,7 @@ export const AgentSettings = (props: AgentSettingsProps) => {
   const actionName = (props.step.settings as PieceActionSettings)
     .actionName as string;
   const selectedAction = pieceModel.actions[actionName];
-  const properties = (({ auth, ...rest }) => rest)(selectedAction.props);
+  const properties = (({ auth: _auth, ...rest }) => rest)(selectedAction.props);
 
   return (
     <div className="w-full">

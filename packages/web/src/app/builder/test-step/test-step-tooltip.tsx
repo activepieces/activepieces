@@ -13,9 +13,14 @@ import { DynamicPropertiesContext } from '../piece-properties/dynamic-properties
 type TestButtonTooltipProps = {
   children: React.ReactNode;
   invalid: boolean;
+  saving: boolean;
 };
 
-const TestButtonTooltip = ({ children, invalid }: TestButtonTooltipProps) => {
+const TestButtonTooltip = ({
+  children,
+  invalid,
+  saving,
+}: TestButtonTooltipProps) => {
   const { isLoadingDynamicProperties } = useContext(DynamicPropertiesContext);
   return (
     <TooltipProvider>
@@ -23,14 +28,13 @@ const TestButtonTooltip = ({ children, invalid }: TestButtonTooltipProps) => {
         <TooltipTrigger asChild className="disabled:pointer-events-auto">
           {children}
         </TooltipTrigger>
-        {invalid && (
+        {(invalid || isLoadingDynamicProperties || saving) && (
           <TooltipContent side="bottom">
-            {t('Please fix inputs first')}
-          </TooltipContent>
-        )}
-        {isLoadingDynamicProperties && (
-          <TooltipContent side="bottom">
-            {t('Please wait until all inputs are loaded')}
+            {invalid
+              ? t('Please fix inputs first')
+              : isLoadingDynamicProperties
+              ? t('Please wait until all inputs are loaded')
+              : t('Saving...')}
           </TooltipContent>
         )}
       </Tooltip>

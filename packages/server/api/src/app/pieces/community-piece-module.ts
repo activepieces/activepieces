@@ -1,15 +1,15 @@
 import { PieceMetadataModel } from '@activepieces/pieces-framework'
-import { securityAccess } from '@activepieces/server-common'
 import { AddPieceRequestBody, PrincipalType } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
+import { securityAccess } from '../core/security/authorization/fastify-security'
 import { pieceInstallService } from './piece-install-service'
 
-export const communityPiecesModule: FastifyPluginAsyncTypebox = async (app) => {
+export const communityPiecesModule: FastifyPluginAsyncZod = async (app) => {
     await app.register(communityPiecesController, { prefix: '/v1/pieces' })
 }
 
-const communityPiecesController: FastifyPluginAsyncTypebox = async (app) => {
+const communityPiecesController: FastifyPluginAsyncZod = async (app) => {
     app.post(
         '/',
         {

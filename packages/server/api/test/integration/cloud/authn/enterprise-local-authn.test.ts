@@ -41,7 +41,7 @@ describe('Enterprise Local Authn API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/authn/local/verify-email',
+                url: '/api/v1/authn/local/verify-email',
                 body: mockVerifyEmailRequest,
             })
 
@@ -82,7 +82,7 @@ describe('Enterprise Local Authn API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/authn/local/verify-email',
+                url: '/api/v1/authn/local/verify-email',
                 body: mockVerifyEmailRequest,
             })
 
@@ -121,7 +121,7 @@ describe('Enterprise Local Authn API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/authn/local/verify-email',
+                url: '/api/v1/authn/local/verify-email',
                 body: mockVerifyEmailRequest,
             })
 
@@ -159,7 +159,7 @@ describe('Enterprise Local Authn API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/authn/local/verify-email',
+                url: '/api/v1/authn/local/verify-email',
                 body: mockVerifyEmailRequest,
             })
 
@@ -195,7 +195,7 @@ describe('Enterprise Local Authn API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/authn/local/reset-password',
+                url: '/api/v1/authn/local/reset-password',
                 body: mockResetPasswordRequest,
             })
 
@@ -230,7 +230,7 @@ describe('Enterprise Local Authn API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/authn/local/reset-password',
+                url: '/api/v1/authn/local/reset-password',
                 body: mockResetPasswordRequest,
             })
 

@@ -1,8 +1,8 @@
-import { CollapsibleContent } from '@radix-ui/react-collapsible';
 import { useEffect, useState } from 'react';
 
 import {
   Collapsible,
+  CollapsibleContent,
   CollapsibleTrigger,
 } from '../../../components/ui/collapsible';
 

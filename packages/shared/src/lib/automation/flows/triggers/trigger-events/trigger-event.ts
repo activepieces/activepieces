@@ -1,23 +1,20 @@
-import { Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
 import { BaseModel } from '../../../../core/common'
 
 export type TriggerEventId = string
 
-export const TriggerEvent = Type.Object({
-    id: Type.String(),
-    projectId: Type.String(),
-    flowId: Type.String(),
-    sourceName: Type.String(),
-    fileId: Type.String(),
+export const TriggerEvent = z.object({
+    id: z.string(),
+    projectId: z.string(),
+    flowId: z.string(),
+    sourceName: z.string(),
+    fileId: z.string(),
 })
-export type TriggerEvent = Static<typeof TriggerEvent> & BaseModel<TriggerEventId>
+export type TriggerEvent = z.infer<typeof TriggerEvent> & BaseModel<TriggerEventId>
 
 
-export const TriggerEventWithPayload = Type.Composite([
-    TriggerEvent,
-    Type.Object({
-        payload: Type.Unknown(),
-    }),
-])
+export const TriggerEventWithPayload = TriggerEvent.extend({
+    payload: z.unknown(),
+})
 
-export type TriggerEventWithPayload = Static<typeof TriggerEventWithPayload>
+export type TriggerEventWithPayload = z.infer<typeof TriggerEventWithPayload>
