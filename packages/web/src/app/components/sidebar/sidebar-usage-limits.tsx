@@ -1,6 +1,6 @@
 import { ApEdition, ApFlagId, isNil, PlatformRole } from '@activepieces/shared';
 import { t } from 'i18next';
-import { ChevronRight, Info, Play, Sparkles, Workflow } from 'lucide-react';
+import { ChevronRight, Info } from 'lucide-react';
 import React, { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -23,8 +23,8 @@ const SidebarUsageLimits = React.memo(() => {
   const isPlatformAdmin = currentUser.data?.platformRole === PlatformRole.ADMIN;
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
 
-  if (edition !== ApEdition.CLOUD) {
-    return null;
+  if (true || edition !== ApEdition.CLOUD) {
+    // TODO: remove dummy condition
   }
 
   if (isNil(project)) {
@@ -50,12 +50,10 @@ const SidebarUsageLimits = React.memo(() => {
       <div className="flex flex-col gap-1.5">
         <UsageRow
           name={t('Runs')}
-          icon={<Play className="size-4 text-foreground" />}
           isUnlimited={true}
         />
         <UsageRow
           name={t('AI Credits')}
-          icon={<Sparkles className="size-4 text-foreground" />}
           value={Math.round(platform.usage?.aiCreditsRemaining ?? 0)}
           suffix={t('remaining')}
           tooltip={t(
@@ -64,14 +62,13 @@ const SidebarUsageLimits = React.memo(() => {
         />
         <UsageRow
           name={t('Active Flows')}
-          icon={<Workflow className="size-4 text-foreground" />}
           value={platform.usage?.activeFlows ?? 0}
           max={platform?.plan.activeFlowsLimit}
         />
         {isPlatformAdmin && (
           <Link
             to="/platform/setup/billing"
-            className="flex items-center gap-1 text-xs text-foreground/80 hover:text-foreground mt-1 w-fit"
+            className="flex items-center gap-1 text-xs text-foreground/80 hover:text-foreground mt-3 w-fit"
           >
             <span>{t('Manage Plan')}</span>
             <ChevronRight className="size-4" />
@@ -84,7 +81,6 @@ const SidebarUsageLimits = React.memo(() => {
 
 type UsageRowProps = {
   name: string;
-  icon: ReactNode;
   value?: number | null;
   max?: number | null;
   isUnlimited?: boolean;
@@ -94,7 +90,6 @@ type UsageRowProps = {
 
 const UsageRow = ({
   name,
-  icon,
   value,
   max,
   isUnlimited,
@@ -106,8 +101,8 @@ const UsageRow = ({
   return (
     <div className="flex items-center justify-between gap-2 w-full text-xs">
       <div className="flex items-center gap-2">
-        <span className="text-muted-foreground">{icon}</span>
-        <span className="truncate">{name}</span>
+        <span className="text-muted-foreground">•</span>
+        <span className="truncate font-medium">{name}</span>
         {tooltip && (
           <Tooltip>
             <TooltipTrigger asChild>
