@@ -145,31 +145,32 @@ async function constructKnowledgeBaseTools(
         const fileIds = fileTools.map(t => t.sourceId)
         const sourceNames = fileTools.map(t => t.sourceName).join(', ')
 
-        // Auto-ingest files that haven't been ingested yet
         for (const fileTool of fileTools) {
             try {
-                const countRes = await api.get<{ count: number }>(`v1/knowledge-base/files/${fileTool.sourceId}/chunks/count`)
-                if (countRes.body.count === 0) {
-                    const extractRes = await api.post<{ chunks: string[] }>(`v1/knowledge-base/files/${fileTool.sourceId}/extract-chunks`, {})
-                    const textChunks = extractRes.body.chunks
-                    if (textChunks.length > 0) {
-                        const EMBED_BATCH_SIZE = 50
-                        for (let i = 0; i < textChunks.length; i += EMBED_BATCH_SIZE) {
-                            const batch = textChunks.slice(i, i + EMBED_BATCH_SIZE)
-                            const { embeddings } = await embedMany({ model: embeddingConfig.model, values: batch, providerOptions: embeddingConfig.providerOptions })
-                            const chunks = batch.map((content, j) => ({
-                                content,
+                const unembeddedRes = await api.get<{ id: string, content: string, chunkIndex: number }[]>(
+                    `v1/knowledge-base/files/${fileTool.sourceId}/chunks?embedded=false`,
+                )
+                const unembedded = unembeddedRes.body
+                if (unembedded.length > 0) {
+                    const EMBED_BATCH_SIZE = 50
+                    for (let i = 0; i < unembedded.length; i += EMBED_BATCH_SIZE) {
+                        const batch = unembedded.slice(i, i + EMBED_BATCH_SIZE)
+                        const { embeddings } = await embedMany({
+                            model: embeddingConfig.model,
+                            values: batch.map(c => c.content),
+                            providerOptions: embeddingConfig.providerOptions,
+                        })
+                        await api.post(`v1/knowledge-base/files/${fileTool.sourceId}/store-chunks`, {
+                            chunks: batch.map((c, j) => ({
+                                id: c.id,
                                 embedding: Array.from(embeddings[j]),
-                                chunkIndex: i + j,
-                                metadata: { fileName: fileTool.sourceName, chunkIndex: i + j, totalChunks: textChunks.length },
-                            }))
-                            await api.post(`v1/knowledge-base/files/${fileTool.sourceId}/store-embeddings`, { chunks })
-                        }
+                            })),
+                        })
                     }
                 }
             }
             catch (error) {
-                console.error(`Failed to auto-ingest KB file '${fileTool.sourceName}':`, error)
+                console.error(`Failed to embed KB file '${fileTool.sourceName}':`, error)
             }
         }
 
@@ -190,6 +191,7 @@ async function constructKnowledgeBaseTools(
                     knowledgeBaseFileIds: fileIds,
                     queryEmbedding: Array.from(embedding),
                     limit: 5,
+                    similarityThreshold: 0.5,
                 })
 
                 const results = response.body

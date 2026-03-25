@@ -201,7 +201,7 @@ function KnowledgeBaseDialogContent({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value={KnowledgeBaseSourceType.FILE}>
-                {t('File (PDF, TXT, CSV)')}
+                {t('File (PDF, TXT, CSV, DOCX)')}
               </SelectItem>
               <SelectItem value={KnowledgeBaseSourceType.TABLE}>
                 {t('Table')}
@@ -249,7 +249,7 @@ function KnowledgeBaseDialogContent({
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".pdf,.txt,.csv"
+                accept=".pdf,.txt,.csv,.docx"
                 className="hidden"
                 onChange={handleFileUpload}
               />

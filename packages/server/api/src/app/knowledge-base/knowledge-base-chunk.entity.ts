@@ -10,7 +10,7 @@ type KnowledgeBaseChunkSchema = {
     knowledgeBaseFileId: string
     content: string
     chunkIndex: number
-    embedding: string
+    embedding: string | null
     metadata: object
     knowledgeBaseFile: KnowledgeBaseFile
 }
@@ -38,7 +38,7 @@ export const KnowledgeBaseChunkEntity = new EntitySchema<KnowledgeBaseChunkSchem
         embedding: {
             type: 'vector',
             length: '768',
-            nullable: false,
+            nullable: true,
         },
         metadata: {
             type: 'jsonb',

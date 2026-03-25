@@ -1,5 +1,7 @@
-import { ActivepiecesError, apId, ErrorCode, KnowledgeBaseFile } from '@activepieces/shared'
+import { ActivepiecesError, apId, ErrorCode, isNil, KnowledgeBaseFile, spreadIfDefined } from '@activepieces/shared'
+import { parse as parseCsv } from 'csv-parse/sync'
 import { FastifyBaseLogger } from 'fastify'
+import { IsNull, Not } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { databaseConnection } from '../database/database-connection'
 import { fileService } from '../file/file.service'
@@ -24,17 +26,47 @@ function chunkText(text: string): string[] {
     return chunks
 }
 
-async function extractTextFromFile(data: Buffer, fileName: string): Promise<string> {
+function chunkCsvText(csvText: string): string[] {
+    const records: string[][] = parseCsv(csvText, { relax_column_count: true })
+    if (records.length === 0) return []
+
+    const headerLine = records[0].join(',')
+    const chunks: string[] = []
+    let currentRows: string[] = []
+    let currentLength = headerLine.length + 1
+
+    for (let i = 1; i < records.length; i++) {
+        const rowLine = records[i].join(',')
+        if (currentLength + rowLine.length + 1 > CHUNK_SIZE_CHARS && currentRows.length > 0) {
+            chunks.push(headerLine + '\n' + currentRows.join('\n'))
+            currentRows = []
+            currentLength = headerLine.length + 1
+        }
+        currentRows.push(rowLine)
+        currentLength += rowLine.length + 1
+    }
+    if (currentRows.length > 0) {
+        chunks.push(headerLine + '\n' + currentRows.join('\n'))
+    }
+    return chunks
+}
+
+async function extractTextFromFile(fileBuffer: Buffer, fileName: string): Promise<string> {
     const lowerName = (fileName ?? '').toLowerCase()
     if (lowerName.endsWith('.pdf')) {
         const { extractText, getDocumentProxy } = await import('unpdf')
-        const pdf = await getDocumentProxy(new Uint8Array(data))
+        const pdf = await getDocumentProxy(new Uint8Array(fileBuffer))
         const { text } = await extractText(pdf, { mergePages: true })
         return text
     }
 
-    // TXT, CSV, and other text-based formats
-    return data.toString('utf-8')
+    if (lowerName.endsWith('.docx')) {
+        const mammoth = await import('mammoth')
+        const result = await mammoth.extractRawText({ buffer: fileBuffer })
+        return result.value
+    }
+
+    return fileBuffer.toString('utf-8')
 }
 
 export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
@@ -46,9 +78,8 @@ export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
             return
         }
 
-        // Embed in batches to respect API limits
         const EMBED_BATCH_SIZE = 50
-        const allChunks: StoreEmbeddingsParams['chunks'] = []
+        const allChunks: StoreChunksParams['chunks'] = []
         for (let i = 0; i < textChunks.length; i += EMBED_BATCH_SIZE) {
             const batch = textChunks.slice(i, i + EMBED_BATCH_SIZE)
             const embeddings = await embedFn(batch)
@@ -65,11 +96,11 @@ export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
             }
         }
 
-        await this.storeEmbeddings({ projectId, knowledgeBaseFileId, chunks: allChunks })
+        await this.storeChunks({ projectId, knowledgeBaseFileId, chunks: allChunks })
     },
 
     async search(params: SearchParams): Promise<SearchResult[]> {
-        const { projectId, knowledgeBaseFileIds, queryEmbedding, limit } = params
+        const { projectId, knowledgeBaseFileIds, queryEmbedding, limit, similarityThreshold } = params
         const embeddingStr = `[${queryEmbedding.join(',')}]`
 
         const results = await databaseConnection().query(
@@ -78,18 +109,21 @@ export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
              FROM knowledge_base_chunk kbc
              WHERE kbc."projectId" = $2
                AND kbc."knowledgeBaseFileId" = ANY($3)
+               AND kbc.embedding IS NOT NULL
              ORDER BY distance
              LIMIT $4`,
             [embeddingStr, projectId, knowledgeBaseFileIds, limit],
         )
 
-        return results.map((row: { id: string, content: string, metadata: Record<string, unknown>, chunkIndex: number, distance: number }) => ({
-            id: row.id,
-            content: row.content,
-            metadata: row.metadata,
-            chunkIndex: row.chunkIndex,
-            score: Math.max(0, 1 - row.distance),
-        }))
+        return results
+            .map((row: SearchRow) => ({
+                id: row.id,
+                content: row.content,
+                metadata: row.metadata,
+                chunkIndex: row.chunkIndex,
+                score: Math.max(0, 1 - row.distance),
+            }))
+            .filter((row: SearchResult) => similarityThreshold === undefined || row.score >= similarityThreshold)
     },
 
     async listFiles(params: { projectId: string }): Promise<KnowledgeBaseFile[]> {
@@ -168,33 +202,63 @@ export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
             fileId: kbFile.fileId,
         })
 
-        const text = await extractTextFromFile(fileData.data, fileData.fileName ?? kbFile.displayName)
+        const fileName = fileData.fileName || kbFile.displayName
+        if (fileName.toLowerCase().endsWith('.csv')) {
+            return chunkCsvText(fileData.data.toString('utf-8'))
+        }
+
+        const text = await extractTextFromFile(fileData.data, fileName)
         return chunkText(text)
     },
 
-    async storeEmbeddings(params: StoreEmbeddingsParams): Promise<void> {
+    async storeChunks(params: StoreChunksParams): Promise<void> {
         const { projectId, knowledgeBaseFileId, chunks } = params
+        if (chunks.length === 0) return
 
-        await kbChunkRepo().delete({ knowledgeBaseFileId, projectId })
+        const newChunks = chunks.filter((c) => isNil(c.id))
+        const existingChunks = chunks.filter((c) => !isNil(c.id))
 
-        if (chunks.length === 0) {
-            return
+        if (newChunks.length > 0) {
+            const entities = newChunks.map((chunk) => ({
+                id: apId(),
+                projectId,
+                knowledgeBaseFileId,
+                content: chunk.content ?? '',
+                chunkIndex: chunk.chunkIndex ?? 0,
+                ...spreadIfDefined('embedding', chunk.embedding ? `[${chunk.embedding.join(',')}]` : undefined),
+                metadata: chunk.metadata ?? {},
+            }))
+
+            const BATCH_SIZE = 100
+            for (let i = 0; i < entities.length; i += BATCH_SIZE) {
+                await kbChunkRepo().insert(entities.slice(i, i + BATCH_SIZE))
+            }
         }
 
-        const chunkEntities = chunks.map((chunk) => ({
-            id: apId(),
-            projectId,
-            knowledgeBaseFileId,
-            content: chunk.content,
-            chunkIndex: chunk.chunkIndex,
-            embedding: `[${chunk.embedding.join(',')}]`,
-            metadata: chunk.metadata ?? {},
-        }))
-
-        const BATCH_SIZE = 100
-        for (let i = 0; i < chunkEntities.length; i += BATCH_SIZE) {
-            await kbChunkRepo().insert(chunkEntities.slice(i, i + BATCH_SIZE))
+        for (const chunk of existingChunks) {
+            await kbChunkRepo().update(
+                { id: chunk.id, projectId },
+                {
+                    ...spreadIfDefined('content', chunk.content),
+                    ...spreadIfDefined('embedding', chunk.embedding ? `[${chunk.embedding.join(',')}]` : undefined),
+                    ...spreadIfDefined('chunkIndex', chunk.chunkIndex),
+                    ...spreadIfDefined('metadata', chunk.metadata),
+                },
+            )
         }
+    },
+
+    async listChunks(params: ListChunksParams): Promise<ChunkListItem[]> {
+        return kbChunkRepo().find({
+            where: {
+                projectId: params.projectId,
+                knowledgeBaseFileId: params.knowledgeBaseFileId,
+                ...params.embedded === false ? { embedding: IsNull() } : {},
+                ...params.embedded === true ? { embedding: Not(IsNull()) } : {},
+            },
+            select: ['id', 'content', 'chunkIndex'],
+            order: { chunkIndex: 'ASC' },
+        })
     },
 
     async getFilesByIds(params: { projectId: string, ids: string[] }): Promise<KnowledgeBaseFile[]> {
@@ -219,6 +283,15 @@ type SearchParams = {
     knowledgeBaseFileIds: string[]
     queryEmbedding: number[]
     limit: number
+    similarityThreshold?: number
+}
+
+type SearchRow = {
+    id: string
+    content: string
+    metadata: Record<string, unknown>
+    chunkIndex: number
+    distance: number
 }
 
 type SearchResult = {
@@ -235,13 +308,26 @@ type CreateFileParams = {
     displayName: string
 }
 
-type StoreEmbeddingsParams = {
+type StoreChunksParams = {
     projectId: string
     knowledgeBaseFileId: string
     chunks: {
-        content: string
-        embedding: number[]
-        chunkIndex: number
+        id?: string
+        content?: string
+        embedding?: number[]
+        chunkIndex?: number
         metadata?: Record<string, unknown>
     }[]
+}
+
+type ListChunksParams = {
+    projectId: string
+    knowledgeBaseFileId: string
+    embedded?: boolean
+}
+
+type ChunkListItem = {
+    id: string
+    content: string
+    chunkIndex: number
 }

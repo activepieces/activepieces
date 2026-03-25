@@ -6,6 +6,7 @@ const mockCount = vi.fn()
 const mockSave = vi.fn()
 const mockFind = vi.fn()
 const mockInsert = vi.fn()
+const mockUpdate = vi.fn()
 
 vi.mock('../../../../src/app/core/db/repo-factory', () => ({
     repoFactory: vi.fn(() => () => ({
@@ -15,6 +16,7 @@ vi.mock('../../../../src/app/core/db/repo-factory', () => ({
         save: mockSave,
         find: mockFind,
         insert: mockInsert,
+        update: mockUpdate,
     })),
 }))
 
@@ -127,26 +129,114 @@ describe('knowledgeBaseService', () => {
 
             expect(results[0].score).toBe(1)
         })
+
+        it('should filter results below similarity threshold', async () => {
+            mockDbQuery.mockResolvedValue([
+                { id: '1', content: 'good match', metadata: {}, chunkIndex: 0, distance: 0.2 },
+                { id: '2', content: 'bad match', metadata: {}, chunkIndex: 1, distance: 0.8 },
+            ])
+
+            const results = await knowledgeBaseService(mockLog).search({
+                projectId: 'proj-1',
+                knowledgeBaseFileIds: ['kb-file-1'],
+                queryEmbedding: [0.1, 0.2],
+                limit: 5,
+                similarityThreshold: 0.5,
+            })
+
+            expect(results).toHaveLength(1)
+            expect(results[0].score).toBe(0.8)
+        })
+
+        it('should return all results when no threshold is provided', async () => {
+            mockDbQuery.mockResolvedValue([
+                { id: '1', content: 'good', metadata: {}, chunkIndex: 0, distance: 0.2 },
+                { id: '2', content: 'bad', metadata: {}, chunkIndex: 1, distance: 0.9 },
+            ])
+
+            const results = await knowledgeBaseService(mockLog).search({
+                projectId: 'proj-1',
+                knowledgeBaseFileIds: ['kb-file-1'],
+                queryEmbedding: [0.1, 0.2],
+                limit: 5,
+            })
+
+            expect(results).toHaveLength(2)
+        })
+
+        it('should include results when threshold is 0', async () => {
+            mockDbQuery.mockResolvedValue([
+                { id: '1', content: 'match', metadata: {}, chunkIndex: 0, distance: 0.5 },
+            ])
+
+            const results = await knowledgeBaseService(mockLog).search({
+                projectId: 'proj-1',
+                knowledgeBaseFileIds: ['kb-file-1'],
+                queryEmbedding: [0.1, 0.2],
+                limit: 5,
+                similarityThreshold: 0,
+            })
+
+            expect(results).toHaveLength(1)
+        })
     })
 
-    describe('storeEmbeddings', () => {
-        it('should delete existing chunks with projectId scope before inserting', async () => {
-            mockDelete.mockResolvedValue({ affected: 0 })
-
-            await knowledgeBaseService(mockLog).storeEmbeddings({
+    describe('storeChunks', () => {
+        it('should insert new chunks when no id is provided', async () => {
+            await knowledgeBaseService(mockLog).storeChunks({
                 projectId: 'proj-1',
                 knowledgeBaseFileId: 'kb-file-1',
                 chunks: [{
-                    content: 'test',
-                    embedding: [0.1, 0.2],
+                    content: 'test content',
                     chunkIndex: 0,
                 }],
             })
 
-            expect(mockDelete).toHaveBeenCalledWith({
-                knowledgeBaseFileId: 'kb-file-1',
+            expect(mockInsert).toHaveBeenCalledTimes(1)
+            expect(mockUpdate).not.toHaveBeenCalled()
+        })
+
+        it('should update existing chunks when id is provided', async () => {
+            await knowledgeBaseService(mockLog).storeChunks({
                 projectId: 'proj-1',
+                knowledgeBaseFileId: 'kb-file-1',
+                chunks: [{
+                    id: 'chunk-1',
+                    embedding: [0.1, 0.2, 0.3],
+                }],
             })
+
+            expect(mockInsert).not.toHaveBeenCalled()
+            expect(mockUpdate).toHaveBeenCalledTimes(1)
+            expect(mockUpdate).toHaveBeenCalledWith(
+                { id: 'chunk-1', projectId: 'proj-1' },
+                expect.objectContaining({ embedding: '[0.1,0.2,0.3]' }),
+            )
+        })
+
+        it('should handle mixed insert and update chunks', async () => {
+            await knowledgeBaseService(mockLog).storeChunks({
+                projectId: 'proj-1',
+                knowledgeBaseFileId: 'kb-file-1',
+                chunks: [
+                    { content: 'new chunk', chunkIndex: 0 },
+                    { id: 'existing-1', embedding: [0.5] },
+                ],
+            })
+
+            expect(mockInsert).toHaveBeenCalledTimes(1)
+            expect(mockUpdate).toHaveBeenCalledTimes(1)
+        })
+
+        it('should not call insert or update for empty chunks array', async () => {
+            await knowledgeBaseService(mockLog).storeChunks({
+                projectId: 'proj-1',
+                knowledgeBaseFileId: 'kb-file-1',
+                chunks: [],
+            })
+
+            expect(mockInsert).not.toHaveBeenCalled()
+            expect(mockUpdate).not.toHaveBeenCalled()
         })
     })
 })

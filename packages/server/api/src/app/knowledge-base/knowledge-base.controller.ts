@@ -1,4 +1,4 @@
-import { ActivepiecesError, ApMultipartFile, ErrorCode, FileCompression, FileType, Permission, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
+import { ActivepiecesError, ApMultipartFile, ErrorCode, FileCompression, FileType, Permission, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, tryCatch } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
@@ -8,7 +8,8 @@ import { fileService } from '../file/file.service'
 import { knowledgeBaseService } from './knowledge-base.service'
 
 const KB_PRINCIPALS = [PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE] as const
-const KB_ALLOWED_MIME_TYPES = ['application/pdf', 'text/plain', 'text/csv']
+const KB_ALLOWED_MIME_TYPES = ['application/pdf', 'text/plain', 'text/csv', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
+const EMBEDDING_DIMENSIONS = 768
 
 export const knowledgeBaseController: FastifyPluginAsyncZod = async (fastify) => {
 
@@ -47,6 +48,24 @@ export const knowledgeBaseController: FastifyPluginAsyncZod = async (fastify) =>
             displayName: request.body.displayName,
         })
 
+        const { data: chunks, error } = await tryCatch(
+            () => knowledgeBaseService(request.log).extractChunks({
+                projectId: request.projectId,
+                knowledgeBaseFileId: kbFile.id,
+            }),
+        )
+        if (!error && chunks.length > 0) {
+            await knowledgeBaseService(request.log).storeChunks({
+                projectId: request.projectId,
+                knowledgeBaseFileId: kbFile.id,
+                chunks: chunks.map((content, i) => ({
+                    content,
+                    chunkIndex: i,
+                    metadata: { chunkIndex: i, totalChunks: chunks.length },
+                })),
+            })
+        }
+
         return reply.status(StatusCodes.CREATED).send(kbFile)
     })
 
@@ -80,13 +99,21 @@ export const knowledgeBaseController: FastifyPluginAsyncZod = async (fastify) =>
         return { chunks }
     })
 
-    fastify.post('/:id/store-embeddings', StoreEmbeddingsRequest, async (request) => {
-        await knowledgeBaseService(request.log).storeEmbeddings({
+    fastify.post('/:id/store-chunks', StoreChunksRequest, async (request) => {
+        await knowledgeBaseService(request.log).storeChunks({
             projectId: request.projectId,
             knowledgeBaseFileId: request.params.id,
             chunks: request.body.chunks,
         })
         return { success: true }
+    })
+
+    fastify.get('/:id/chunks', ListChunksRequest, async (request) => {
+        return knowledgeBaseService(request.log).listChunks({
+            projectId: request.projectId,
+            knowledgeBaseFileId: request.params.id,
+            embedded: request.query.embedded !== undefined ? request.query.embedded === 'true' : undefined,
+        })
     })
 
     fastify.post('/search', SearchKnowledgeBaseRequest, async (request) => {
@@ -95,6 +122,7 @@ export const knowledgeBaseController: FastifyPluginAsyncZod = async (fastify) =>
             knowledgeBaseFileIds: request.body.knowledgeBaseFileIds,
             queryEmbedding: request.body.queryEmbedding,
             limit: request.body.limit ?? 5,
+            similarityThreshold: request.body.similarityThreshold,
         })
     })
 }
@@ -209,7 +237,7 @@ const ExtractChunksRequest = {
     },
 }
 
-const StoreEmbeddingsRequest = {
+const StoreChunksRequest = {
     config: {
         security: securityAccess.project(KB_PRINCIPALS, Permission.WRITE_KNOWLEDGE_BASE, {
             type: ProjectResourceType.PARAM,
@@ -218,17 +246,37 @@ const StoreEmbeddingsRequest = {
     schema: {
         tags: ['knowledge-base'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
-        description: 'Store pre-embedded chunks for a knowledge base file',
+        description: 'Store or update chunks for a knowledge base file. Provide id to update existing chunks, or content to create new ones.',
         params: z.object({
             id: z.string(),
         }),
         body: z.object({
             chunks: z.array(z.object({
-                content: z.string(),
-                embedding: z.array(z.number()).length(768),
-                chunkIndex: z.number(),
+                id: z.string().optional(),
+                content: z.string().optional(),
+                embedding: z.array(z.number()).length(EMBEDDING_DIMENSIONS).optional(),
+                chunkIndex: z.number().optional(),
                 metadata: z.record(z.string(), z.unknown()).optional(),
             })),
+        }),
+    },
+}
+
+const ListChunksRequest = {
+    config: {
+        security: securityAccess.project(KB_PRINCIPALS, Permission.READ_KNOWLEDGE_BASE, {
+            type: ProjectResourceType.PARAM,
+        }),
+    },
+    schema: {
+        tags: ['knowledge-base'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'List chunks for a knowledge base file, optionally filtered by embedding status',
+        params: z.object({
+            id: z.string(),
+        }),
+        querystring: z.object({
+            embedded: z.enum(['true', 'false']).optional(),
         }),
     },
 }
@@ -245,8 +293,9 @@ const SearchKnowledgeBaseRequest = {
         description: 'Search knowledge base using vector similarity',
         body: z.object({
             knowledgeBaseFileIds: z.array(z.string()),
-            queryEmbedding: z.array(z.number()).length(768),
+            queryEmbedding: z.array(z.number()).length(EMBEDDING_DIMENSIONS),
             limit: z.number().int().min(1).max(100).optional().default(5),
+            similarityThreshold: z.number().min(0).max(1).optional(),
         }),
     },
 }
