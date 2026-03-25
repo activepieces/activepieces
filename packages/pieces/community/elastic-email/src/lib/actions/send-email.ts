@@ -106,10 +106,10 @@ export const sendEmailAction = createAction({
           From: propsValue.from,
           Subject: propsValue.subject ?? undefined,
           Body:
-            propsValue.bodyContentType && propsValue.bodyContent
+            (propsValue.bodyContentType || propsValue.bodyContent)
               ? [
                   {
-                    ContentType: propsValue.bodyContentType,
+                    ContentType: propsValue.bodyContentType || 'HTML',
                     Body: propsValue.bodyContent,
                   },
                 ]

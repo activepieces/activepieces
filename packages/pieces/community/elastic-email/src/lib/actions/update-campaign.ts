@@ -80,11 +80,11 @@ export const updateCampaignAction = createAction({
       body: {
         Name: propsValue.name || current.Name,
         Recipients: {
-          ListNames: propsValue.recipientListNames
-            ? [String(propsValue.recipientListNames)]
+          ListNames: propsValue.recipientListNames && propsValue.recipientListNames.length > 0
+            ? propsValue.recipientListNames
             : (current.Recipients?.ListNames ?? undefined),
-          SegmentNames: propsValue.recipientSegmentNames
-            ? [String(propsValue.recipientSegmentNames)]
+          SegmentNames: propsValue.recipientSegmentNames && propsValue.recipientSegmentNames.length > 0
+            ? propsValue.recipientSegmentNames
             : (current.Recipients?.SegmentNames ?? undefined),
         },
         Content: [

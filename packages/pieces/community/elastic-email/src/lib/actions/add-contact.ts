@@ -68,7 +68,9 @@ export const addContactAction = createAction({
   async run({ auth, propsValue }) {
     const queryParams: Record<string, string> = {};
     if (propsValue.listNames) {
-      queryParams['listnames'] = String(propsValue.listNames);
+      queryParams['listnames'] = Array.isArray(propsValue.listNames)
+        ? propsValue.listNames.join(',')
+        : String(propsValue.listNames);
     }
 
     return elasticEmailRequest({

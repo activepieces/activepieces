@@ -31,10 +31,28 @@ To obtain your Elastic Email API key:
         valid: false,
         error: 'Invalid API key — could not authenticate with Elastic Email.',
       };
-    } catch {
+    } catch (error: unknown) {
+      const statusCode =
+        error != null &&
+        typeof error === 'object' &&
+        'response' in error &&
+        error.response != null &&
+        typeof error.response === 'object' &&
+        'status' in error.response
+          ? (error.response as { status: number }).status
+          : undefined;
+
+      if (statusCode === 401 || statusCode === 403) {
+        return {
+          valid: false,
+          error: 'Invalid API key — could not authenticate with Elastic Email.',
+        };
+      }
+
       return {
         valid: false,
-        error: 'Invalid API key — could not authenticate with Elastic Email.',
+        error:
+          'Could not reach the Elastic Email API. Check your network connection and try again.',
       };
     }
   },

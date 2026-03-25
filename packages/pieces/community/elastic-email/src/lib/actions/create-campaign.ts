@@ -56,11 +56,11 @@ export const createCampaignAction = createAction({
       body: {
         Name: propsValue.name,
         Recipients: {
-          ListNames: propsValue.recipientListNames
-            ? [String(propsValue.recipientListNames)]
+          ListNames: propsValue.recipientListNames && propsValue.recipientListNames.length > 0
+            ? propsValue.recipientListNames
             : undefined,
-          SegmentNames: propsValue.recipientSegmentNames
-            ? [String(propsValue.recipientSegmentNames)]
+          SegmentNames: propsValue.recipientSegmentNames && propsValue.recipientSegmentNames.length > 0
+            ? propsValue.recipientSegmentNames
             : undefined,
         },
         Content: [

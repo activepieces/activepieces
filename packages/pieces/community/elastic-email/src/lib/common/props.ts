@@ -91,7 +91,7 @@ export const campaignNameProp = Property.Dropdown({
   },
 });
 
-export const listNamesProp = Property.Dropdown({
+export const listNamesProp = Property.MultiSelectDropdown({
   displayName: 'Mailing Lists',
   description: 'Select mailing lists.',
   required: false,
@@ -123,7 +123,7 @@ export const listNamesProp = Property.Dropdown({
   },
 });
 
-export const segmentNamesProp = Property.Dropdown({
+export const segmentNamesProp = Property.MultiSelectDropdown({
   displayName: 'Segments',
   description: 'Select segments.',
   required: false,
