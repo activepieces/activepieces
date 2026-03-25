@@ -842,6 +842,9 @@
       "@activepieces/piece-peekshot": [
         "packages/pieces/community/peekshot/src/index.ts"
       ],
+      "@activepieces/piece-pendo": [
+        "packages/pieces/community/pendo/src/index.ts"
+      ],
       "@activepieces/piece-perplexity-ai": [
         "packages/pieces/community/perplexity-ai/src/index.ts"
       ],
@@ -1557,6 +1560,9 @@
       ],
       "@activepieces/piece-greenpt": [
         "packages/pieces/community/greenpt/src/index.ts"
+      ],
+      "@activepieces/piece-greenhouse": [
+        "packages/pieces/community/greenhouse/src/index.ts"
       ],
       "@activepieces/piece-oncehub": [
         "packages/pieces/community/oncehub/src/index.ts"
