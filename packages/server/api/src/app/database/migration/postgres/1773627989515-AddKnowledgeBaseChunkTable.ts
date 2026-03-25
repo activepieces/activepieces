@@ -60,9 +60,6 @@ export class AddKnowledgeBaseChunkTable1773627989515 implements MigrationInterfa
             CREATE INDEX IF NOT EXISTS "idx_kb_chunk_project_file" ON "knowledge_base_chunk" ("projectId", "knowledgeBaseFileId")
         `)
 
-        await queryRunner.query(`
-            CREATE INDEX IF NOT EXISTS "idx_kb_chunk_embedding" ON "knowledge_base_chunk" USING hnsw ("embedding" vector_cosine_ops)
-        `)
         log.info('[AddKnowledgeBaseChunkTable1773627989515] done')
     }
 
