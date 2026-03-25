@@ -43,7 +43,7 @@ import { findPersonAction } from './lib/actions/find-person';
 import { findDealAction } from './lib/actions/find-deal';
 import { findActivityAction } from './lib/actions/find-activity';
 import { updateProductAction } from './lib/actions/update-product';
-import { searchLeads } from './lib/actions/search-leads';
+import { findLeadAction } from './lib/actions/find-leads';
 
 export const pipedriveAuth = PieceAuth.OAuth2({
 	description: '',
@@ -100,7 +100,7 @@ export const pipedrive = createPiece({
 		findDealAction,
 		findActivityAction,
 		findUserAction,
-		searchLeads,
+		findLeadAction,
 		createCustomApiCallAction({
 			baseUrl: () => 'https://api.pipedrive.com/api/v2',
 			auth: pipedriveAuth,
