@@ -92,7 +92,6 @@ const polling: Polling<
     });
 
     let result = response.body;
-    const schema: BQField[] = result.schema?.fields ?? [];
 
     if (!result.jobComplete) {
       for (let i = 0; i < 30 && !result.jobComplete; i++) {
@@ -106,6 +105,7 @@ const polling: Polling<
       }
     }
 
+    const schema: BQField[] = result.schema?.fields ?? [];
     const rows = bigQueryRowsToFlat(schema, result.rows ?? []);
 
     return rows.map((row) => {
