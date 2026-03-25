@@ -294,12 +294,12 @@ async function propertyToSchema(propertyName: string, property: PieceProperty, o
             schema = z.boolean()
             break
         case PropertyType.CUSTOM:
+        case PropertyType.SECRET_TEXT:
             schema = z.string()
             break
         case PropertyType.OAUTH2:
         case PropertyType.BASIC_AUTH:
         case PropertyType.CUSTOM_AUTH:
-        case PropertyType.SECRET_TEXT:
             throw new Error(`Unsupported property type: ${property.type}`)
     }
     if (property.description) {
