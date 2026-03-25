@@ -131,15 +131,15 @@ async function pollAndExecute(apiClient: WorkerToApiContract, sbManager: Sandbox
             continue
         }
 
-        workerLog.info({ jobId: job.jobId, jobType: job.jobData.jobType }, 'Job received from poll')
+        workerLog.debug({ jobId: job.jobId, jobType: job.jobData.jobType }, 'Job received from poll')
 
         const lockExtensionInterval = setInterval(() => {
-            void tryCatch(() => apiClient.extendLock({ jobId: job.jobId })).then(({ error }) => {
+            void tryCatch(() => apiClient.extendLock({ jobId: job.jobId, token: job.token, queueName: job.queueName })).then(({ error }) => {
                 if (error) {
                     workerLog.warn({ error, jobId: job.jobId }, 'Failed to extend lock')
                 }
             })
-        }, 90_000)
+        }, 30_000)
 
         const { data: result, error: execError } = await tryCatch(() =>
             executeJob(apiClient, job, sbManager),
@@ -150,6 +150,8 @@ async function pollAndExecute(apiClient: WorkerToApiContract, sbManager: Sandbox
         const { error: completeError } = await tryCatch(() =>
             apiClient.completeJob({
                 jobId: job.jobId,
+                token: job.token,
+                queueName: job.queueName,
                 status: execError
                     ? EngineResponseStatus.INTERNAL_ERROR
                     : result?.kind === JobResultKind.SYNCHRONOUS ? result.status : EngineResponseStatus.OK,
@@ -177,7 +179,7 @@ async function executeJob(apiClient: WorkerToApiContract, job: ConsumeJobRequest
         const log = logger.child({ jobId: job.jobId, jobType: jobData.jobType })
         const apiUrl = getApiUrl()
         const { PUBLIC_URL: publicUrl } = await workerSettings.waitForSettings()
-        log.info({ apiUrl, publicUrl }, 'Worker settings resolved')
+        log.debug({ apiUrl, publicUrl }, 'Worker settings resolved')
         const ctx: JobContext = {
             apiClient,
             sandboxManager: sbManager,
@@ -189,14 +191,14 @@ async function executeJob(apiClient: WorkerToApiContract, job: ConsumeJobRequest
         }
         try {
             const handler = getHandler(jobData.jobType)
-            log.info({ handlerType: handler.jobType }, 'Executing job with handler')
+            log.debug({ handlerType: handler.jobType }, 'Executing job with handler')
             const { data: result, error } = await tryCatch(() => handler.execute(ctx, jobData))
             if (error) {
                 log.error({ error }, 'Job execution failed')
                 span.recordException(error)
                 throw error
             }
-            log.info('Job completed')
+            log.debug('Job completed')
             return result
         }
         finally {

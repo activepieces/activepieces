@@ -52,6 +52,8 @@ export const ConsumeJobRequest = z.object({
     timeoutInSeconds: z.number(),
     attempsStarted: z.number(),
     engineToken: z.string(),
+    token: z.string(),
+    queueName: z.string(),
 })
 
 export type ConsumeJobRequest = z.infer<typeof ConsumeJobRequest>
