@@ -4,11 +4,11 @@
     "module": "commonjs",
     "forceConsistentCasingInFileNames": true,
     "strict": true,
+    "importHelpers": true,
     "noImplicitOverride": true,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
-    "noPropertyAccessFromIndexSignature": true,
-    "strictNullChecks": true
+    "noPropertyAccessFromIndexSignature": true
   },
   "files": [],
   "include": [],

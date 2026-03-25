@@ -5,10 +5,10 @@ import { greenhouseAuth } from '../auth';
 import { makeRequest } from '../common/client';
 import { baseCreateProps, buildCreatePersonBody } from '../common/props';
 
-export const createCandidateAction = createAction({
-  name: 'create_candidate',
-  displayName: 'Create Candidate',
-  description: 'Create a candidate in Greenhouse.',
+export const createProspectAction = createAction({
+  name: 'create_prospect',
+  displayName: 'Create Prospect',
+  description: 'Create a prospect in Greenhouse.',
   auth: greenhouseAuth,
   props: {
     ...baseCreateProps,
@@ -16,7 +16,7 @@ export const createCandidateAction = createAction({
   async run({ auth, propsValue }) {
     return makeRequest(auth, {
       method: HttpMethod.POST,
-      path: '/candidates',
+      path: '/prospects',
       onBehalfOfUserId: propsValue.userId,
       body: buildCreatePersonBody(propsValue),
     });

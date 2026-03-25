@@ -1,46 +1,49 @@
-import { HttpMethod, QueryParams, httpClient } from '@activepieces/pieces-common';
-import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
-
-import { greenhouseAuth } from '../auth';
+import {
+  AuthenticationType,
+  HttpHeaders,
+  HttpMethod,
+  QueryParams,
+  httpClient,
+} from '@activepieces/pieces-common';
 
 export const GREENHOUSE_BASE_URL = 'https://harvest.greenhouse.io/v1';
 
-export type GreenhouseAuthValue = AppConnectionValueForAuthProperty<typeof greenhouseAuth>;
+export type GreenhouseBasicAuth = {
+  username: string;
+  password?: string;
+};
 
 type GreenhouseRequestParams = {
-  auth: GreenhouseAuthValue;
   method: HttpMethod;
   path: string;
   queryParams?: QueryParams;
   body?: unknown;
-  onBehalfOf?: number | string;
+  onBehalfOfUserId?: string | number;
+  headers?: HttpHeaders;
 };
 
-export function greenhouseBasicAuthHeader(apiKey: string): string {
-  return `Basic ${Buffer.from(`${apiKey}:`).toString('base64')}`;
-}
-
-export async function greenhouseRequest<T = unknown>({
-  auth,
-  method,
-  path,
-  queryParams,
-  body,
-  onBehalfOf,
-}: GreenhouseRequestParams): Promise<T> {
+export async function makeRequest<T>(
+  auth: GreenhouseBasicAuth,
+  params: GreenhouseRequestParams,
+): Promise<T> {
   const response = await httpClient.sendRequest<T>({
-    method,
-    url: `${GREENHOUSE_BASE_URL}${path}`,
-    queryParams,
-    body,
-    headers: {
-      Authorization: greenhouseBasicAuthHeader(auth.secret_text),
-      Accept: 'application/json',
-      ...(body ? { 'Content-Type': 'application/json' } : {}),
-      ...(onBehalfOf !== undefined && onBehalfOf !== ''
-        ? { 'On-Behalf-Of': String(onBehalfOf) }
-        : {}),
+    method: params.method,
+    url: `${GREENHOUSE_BASE_URL}${params.path}`,
+    authentication: {
+      type: AuthenticationType.BASIC,
+      username: auth.username,
+      password: auth.password ?? '',
     },
+    queryParams: params.queryParams,
+    body: params.body,
+    headers: compactHeaders({
+      Accept: 'application/json',
+      ...(params.body ? { 'Content-Type': 'application/json' } : {}),
+      ...(params.onBehalfOfUserId
+        ? { 'On-Behalf-Of': String(params.onBehalfOfUserId) }
+        : {}),
+      ...params.headers,
+    }),
   });
 
   return response.body;
@@ -61,5 +64,11 @@ export function compactObject<T extends Record<string, unknown>>(
 
       return true;
     }),
+  );
+}
+
+function compactHeaders(headers: HttpHeaders): HttpHeaders {
+  return Object.fromEntries(
+    Object.entries(headers).filter(([, value]) => value !== undefined && value !== ''),
   );
 }
