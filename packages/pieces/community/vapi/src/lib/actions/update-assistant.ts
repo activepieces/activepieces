@@ -29,7 +29,7 @@ export const updateAssistant = createAction({
     instructions: Property.LongText({
       displayName: 'System Prompt / Instructions',
       description:
-        'Optional system prompt. This is only applied when you also provide explicit model fields below to avoid overwriting the existing model config.',
+        'Optional system prompt. Vapi does not expose a standalone top-level instructions field on UpdateAssistantDto, so if you provide this you must also provide both Model and Provider so the system prompt can be applied via model.messages without discarding your input silently.',
       required: false,
     }),
     model: Property.ShortText({
@@ -72,10 +72,27 @@ export const updateAssistant = createAction({
     if (name) request.name = name;
     if (firstMessage) request.firstMessage = firstMessage;
     if (endCallMessage) request.endCallMessage = endCallMessage;
-    if (model || provider) {
+
+    const hasModel = Boolean(model);
+    const hasProvider = Boolean(provider);
+    const hasInstructions = Boolean(instructions);
+
+    if (hasModel !== hasProvider) {
+      throw new Error(
+        'Model and Provider must be supplied together when updating the assistant model configuration.'
+      );
+    }
+
+    if (hasInstructions && !(hasModel && hasProvider)) {
+      throw new Error(
+        'System Prompt / Instructions requires both Model and Provider because the Vapi SDK does not expose a standalone instructions field on UpdateAssistantDto.'
+      );
+    }
+
+    if (hasModel && hasProvider) {
       request.model = {
-        ...(provider ? { provider } : {}),
-        ...(model ? { model } : {}),
+        provider,
+        model,
         ...(instructions
           ? { messages: [{ role: 'system', content: instructions }] }
           : {}),
