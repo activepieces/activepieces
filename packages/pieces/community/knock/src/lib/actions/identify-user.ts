@@ -46,13 +46,15 @@ export const identifyUser = createAction({
 
     const body: Record<string, unknown> = {};
 
+    // Spread custom properties first so explicit fields always win
+    if (customProperties && Object.keys(customProperties).length > 0) {
+      Object.assign(body, customProperties);
+    }
+
     if (name) body['name'] = name;
     if (email) body['email'] = email;
     if (phoneNumber) body['phone_number'] = phoneNumber;
     if (avatar) body['avatar'] = avatar;
-    if (customProperties && Object.keys(customProperties).length > 0) {
-      Object.assign(body, customProperties);
-    }
 
     return knockApiCall({
       apiKey: context.auth.secret_text,
