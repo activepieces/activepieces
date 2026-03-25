@@ -826,6 +826,9 @@
       "@activepieces/piece-parseur": [
         "packages/pieces/community/parseur/src/index.ts"
       ],
+      "@activepieces/piece-partnerstack": [
+        "packages/pieces/community/partnerstack/src/index.ts"
+      ],
       "@activepieces/piece-pastebin": [
         "packages/pieces/community/pastebin/src/index.ts"
       ],
