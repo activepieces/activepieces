@@ -187,11 +187,12 @@ export default class Paginator<Entity extends ObjectLiteral> {
         const operator = this.getOperator()
         const paginationKeyParam = { [PAGINATION_KEY]: cursors[PAGINATION_KEY] }
 
+        where.orWhere(
+            `DATE_TRUNC('second', ${this.alias}.${PAGINATION_KEY}) ${operator} DATE_TRUNC('second', :${PAGINATION_KEY}::timestamp)`,
+            paginationKeyParam,
+        )
+
         if (cursors['id'] !== undefined) {
-            where.orWhere(
-                `DATE_TRUNC('second', ${this.alias}.${PAGINATION_KEY}) ${operator} DATE_TRUNC('second', :${PAGINATION_KEY}::timestamp)`,
-                paginationKeyParam,
-            )
             where.orWhere(new Brackets((qb) => {
                 qb.andWhere(
                     `DATE_TRUNC('second', ${this.alias}.${PAGINATION_KEY}) = DATE_TRUNC('second', :cursor_eq_${PAGINATION_KEY}::timestamp)`,
@@ -202,12 +203,6 @@ export default class Paginator<Entity extends ObjectLiteral> {
                     { cursor_id: cursors['id'] },
                 )
             }))
-        }
-        else {
-            where.orWhere(
-                `DATE_TRUNC('second', ${this.alias}.${PAGINATION_KEY}) ${operator} DATE_TRUNC('second', :${PAGINATION_KEY}::timestamp)`,
-                paginationKeyParam,
-            )
         }
     }
 
