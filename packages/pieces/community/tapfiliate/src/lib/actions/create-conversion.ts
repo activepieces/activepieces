@@ -80,6 +80,10 @@ export const createConversionAction = createAction({
       ? context.propsValue.metaData
       : undefined;
 
+    if (Boolean(context.propsValue.assetId) !== Boolean(context.propsValue.sourceId)) {
+      throw new Error('Asset ID and Source ID must be provided together.');
+    }
+
     const hasAttribution =
       !!context.propsValue.customerId ||
       !!context.propsValue.referralCode ||
@@ -92,10 +96,6 @@ export const createConversionAction = createAction({
       throw new Error(
         'Tapfiliate requires at least one attribution key: Customer ID, Referral Code, Tracking ID, Click ID, Coupon, or Asset ID + Source ID.'
       );
-    }
-
-    if (Boolean(context.propsValue.assetId) !== Boolean(context.propsValue.sourceId)) {
-      throw new Error('Asset ID and Source ID must be provided together.');
     }
 
     return await tapfiliateApiCall({
