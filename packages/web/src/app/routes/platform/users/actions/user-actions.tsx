@@ -24,7 +24,6 @@ import { UpdateUserDialog } from './update-user-dialog';
 
 type UserActionsProps = {
   row: UserRowData;
-  isDeleting: boolean;
   isUpdatingStatus: boolean;
   onDelete: (id: string, isInvitation: boolean) => void;
   onToggleStatus: (userId: string, currentStatus: UserStatus) => void;
@@ -33,7 +32,6 @@ type UserActionsProps = {
 
 export const UserActions = ({
   row,
-  isDeleting,
   isUpdatingStatus,
   onDelete,
   onToggleStatus,
