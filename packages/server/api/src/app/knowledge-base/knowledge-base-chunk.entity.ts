@@ -35,10 +35,9 @@ export const KnowledgeBaseChunkEntity = new EntitySchema<KnowledgeBaseChunkSchem
             type: Number,
             nullable: false,
         },
-        // pgvector vectors are serialized as text strings through TypeORM;
-        // the actual column type is vector(768) defined in the migration.
         embedding: {
-            type: String,
+            type: 'vector',
+            length: '768',
             nullable: false,
         },
         metadata: {

@@ -72,8 +72,7 @@ export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
         const { projectId, knowledgeBaseFileIds, queryEmbedding, limit } = params
         const embeddingStr = `[${queryEmbedding.join(',')}]`
 
-        const queryRunner = databaseConnection()
-        const results = await queryRunner.query(
+        const results = await databaseConnection().query(
             `SELECT kbc.id, kbc.content, kbc.metadata, kbc."chunkIndex",
                     kbc.embedding <=> $1::vector AS distance
              FROM knowledge_base_chunk kbc
@@ -176,8 +175,7 @@ export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
     async storeEmbeddings(params: StoreEmbeddingsParams): Promise<void> {
         const { projectId, knowledgeBaseFileId, chunks } = params
 
-        // Delete existing chunks for idempotent re-ingestion
-        await kbChunkRepo().delete({ knowledgeBaseFileId })
+        await kbChunkRepo().delete({ knowledgeBaseFileId, projectId })
 
         if (chunks.length === 0) {
             return
@@ -193,7 +191,6 @@ export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
             metadata: chunk.metadata ?? {},
         }))
 
-        // Insert in batches to avoid oversized queries
         const BATCH_SIZE = 100
         for (let i = 0; i < chunkEntities.length; i += BATCH_SIZE) {
             await kbChunkRepo().insert(chunkEntities.slice(i, i + BATCH_SIZE))

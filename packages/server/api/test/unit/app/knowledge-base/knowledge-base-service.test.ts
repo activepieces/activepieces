@@ -18,9 +18,11 @@ vi.mock('../../../../src/app/core/db/repo-factory', () => ({
     })),
 }))
 
+const mockDbQuery = vi.fn().mockResolvedValue([])
+
 vi.mock('../../../../src/app/database/database-connection', () => ({
     databaseConnection: vi.fn(() => ({
-        query: vi.fn().mockResolvedValue([]),
+        query: mockDbQuery,
     })),
 }))
 
@@ -35,7 +37,6 @@ vi.mock('../../../../src/app/file/file.service', () => ({
 }))
 
 import { knowledgeBaseService } from '../../../../src/app/knowledge-base/knowledge-base.service'
-import { databaseConnection } from '../../../../src/app/database/database-connection'
 
 const mockLog = {
     info: vi.fn(),
@@ -52,6 +53,7 @@ const mockLog = {
 describe('knowledgeBaseService', () => {
     beforeEach(() => {
         vi.clearAllMocks()
+        mockDbQuery.mockResolvedValue([])
     })
 
     describe('deleteFile', () => {
@@ -95,11 +97,10 @@ describe('knowledgeBaseService', () => {
 
     describe('search', () => {
         it('should clamp negative scores to zero', async () => {
-            const mockQuery = vi.fn().mockResolvedValue([
+            mockDbQuery.mockResolvedValue([
                 { id: '1', content: 'close match', metadata: {}, chunkIndex: 0, distance: 0.3 },
                 { id: '2', content: 'far match', metadata: {}, chunkIndex: 1, distance: 1.5 },
             ])
-            vi.mocked(databaseConnection).mockReturnValue({ query: mockQuery } as any)
 
             const results = await knowledgeBaseService(mockLog).search({
                 projectId: 'proj-1',
@@ -113,10 +114,9 @@ describe('knowledgeBaseService', () => {
         })
 
         it('should return exact score for normal distances', async () => {
-            const mockQuery = vi.fn().mockResolvedValue([
+            mockDbQuery.mockResolvedValue([
                 { id: '1', content: 'match', metadata: {}, chunkIndex: 0, distance: 0 },
             ])
-            vi.mocked(databaseConnection).mockReturnValue({ query: mockQuery } as any)
 
             const results = await knowledgeBaseService(mockLog).search({
                 projectId: 'proj-1',
@@ -126,6 +126,27 @@ describe('knowledgeBaseService', () => {
             })
 
             expect(results[0].score).toBe(1)
+        })
+    })
+
+    describe('storeEmbeddings', () => {
+        it('should delete existing chunks with projectId scope before inserting', async () => {
+            mockDelete.mockResolvedValue({ affected: 0 })
+
+            await knowledgeBaseService(mockLog).storeEmbeddings({
+                projectId: 'proj-1',
+                knowledgeBaseFileId: 'kb-file-1',
+                chunks: [{
+                    content: 'test',
+                    embedding: [0.1, 0.2],
+                    chunkIndex: 0,
+                }],
+            })
+
+            expect(mockDelete).toHaveBeenCalledWith({
+                knowledgeBaseFileId: 'kb-file-1',
+                projectId: 'proj-1',
+            })
         })
     })
 })
