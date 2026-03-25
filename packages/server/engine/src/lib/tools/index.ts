@@ -109,11 +109,12 @@ async function resolveProperties(
         if (Object.keys(propertyToFill).length === 0) continue
 
         const schemaObject = zodSchema(z.object(propertyToFill).strict())
+        const sanitizedExistingValues = sanitizeExistingValuesForPrompt(result, action.props)
         const extractionPrompt = constructExtractionPrompt(
             instruction,
             propertyToFill,
             propertyDetails,
-            result,
+            sanitizedExistingValues,
         )
 
         const { output } = await generateText({
@@ -386,6 +387,18 @@ async function loadOptions(propertyName: string, property: PieceProperty, operat
     }) as unknown as ExecutePropsResult<PropertyType.DROPDOWN | PropertyType.MULTI_SELECT_DROPDOWN>
     const options = response.options
     return options.options
+}
+
+function sanitizeExistingValuesForPrompt(existingValues: Record<string, unknown>, props: Record<string, PieceProperty>): Record<string, unknown> {
+    return Object.fromEntries(
+        Object.entries(existingValues).map(([key, value]) => {
+            const propertyType = props[key]?.type
+            if (key === 'auth' || propertyType === PropertyType.SECRET_TEXT) {
+                return [key, 'Redacted']
+            }
+            return [key, value]
+        }),
+    )
 }
 
 function buildExistingValuesSection(existingValues: Record<string, unknown>): string {

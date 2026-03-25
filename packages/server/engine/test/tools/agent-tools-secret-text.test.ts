@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { Property } from '@activepieces/pieces-framework'
-import { ExecutionToolStatus, FlowActionType, StepOutputStatus } from '@activepieces/shared'
+import { ExecutionToolStatus, FieldControlMode, FlowActionType, StepOutputStatus } from '@activepieces/shared'
 
 const {
   mockGenerateText,
@@ -150,5 +150,66 @@ describe('agentTools secret text support', () => {
         }),
       }),
     }))
+  })
+
+  it('redacts auth and predefined SECRET_TEXT values from the extraction prompt context', async () => {
+    mockSortPropertiesByDependencies.mockReturnValue({
+      0: ['email'],
+    })
+
+    mockGetPieceAndActionOrThrow.mockResolvedValue({
+      pieceAction: {
+        description: 'Create an affiliate in Tapfiliate',
+        props: {
+          email: Property.ShortText({
+            displayName: 'Email',
+            required: true,
+          }),
+          apiSecret: Property.SecretText({
+            displayName: 'API Secret',
+            required: false,
+          }),
+        },
+      },
+    })
+
+    const tools = await agentTools.tools({
+      engineConstants: {
+        projectId: 'project-id',
+      } as never,
+      tools: [
+        {
+          toolName: 'tapfiliate_create_affiliate',
+          pieceMetadata: {
+            pieceName: 'tapfiliate',
+            pieceVersion: '0.1.0',
+            actionName: 'create_affiliate',
+            predefinedInput: {
+              auth: {
+                type: 'SECRET_TEXT',
+                secret_text: 'auth-super-secret',
+              },
+              fields: {
+                apiSecret: {
+                  mode: FieldControlMode.CHOOSE_YOURSELF,
+                  value: 'field-super-secret',
+                },
+              },
+            },
+          },
+        },
+      ],
+      model: {} as never,
+    })
+
+    await tools.tapfiliate_create_affiliate.execute({
+      instruction: 'Create an affiliate with email user@example.com',
+    })
+
+    expect(mockGenerateText).toHaveBeenCalledTimes(1)
+    const prompt = mockGenerateText.mock.calls[0][0].prompt as string
+    expect(prompt).toContain('Redacted')
+    expect(prompt).not.toContain('auth-super-secret')
+    expect(prompt).not.toContain('field-super-secret')
   })
 })
