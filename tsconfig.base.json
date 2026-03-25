@@ -376,6 +376,9 @@
       "@activepieces/piece-drupal": [
         "packages/pieces/community/drupal/src/index.ts"
       ],
+      "@activepieces/piece-dub": [
+        "packages/pieces/community/dub/src/index.ts"
+      ],
       "@activepieces/piece-dumpling-ai": [
         "packages/pieces/community/dumpling-ai/src/index.ts"
       ],
@@ -397,6 +400,9 @@
       ],
       "@activepieces/piece-facebook-pages": [
         "packages/pieces/community/facebook-pages/src/index.ts"
+      ],
+      "@activepieces/piece-fathom-analytics": [
+        "packages/pieces/community/fathom-analytics/src/index.ts"
       ],
       "@activepieces/piece-figma": [
         "packages/pieces/community/figma/src/index.ts"
@@ -592,6 +598,9 @@
       ],
       "@activepieces/piece-jira-cloud": [
         "packages/pieces/community/jira-cloud/src/index.ts"
+      ],
+      "@activepieces/piece-jira-data-center": [
+        "packages/pieces/community/jira-data-center/src/index.ts"
       ],
       "@activepieces/piece-jotform": [
         "packages/pieces/community/jotform/src/index.ts"
@@ -1576,6 +1585,9 @@
       "@activepieces/piece-lofty": [
         "packages/pieces/community/lofty/src/index.ts"
       ],
+      "@activepieces/piece-loops": [
+        "packages/pieces/community/loops/src/index.ts"
+      ],
       "@activepieces/piece-youcanbookme": [
         "packages/pieces/community/youcanbookme/src/index.ts"
       ],
@@ -1845,6 +1857,12 @@
       ],
       "@activepieces/piece-pocketbase": [
         "packages/pieces/community/pocketbase/src/index.ts"
+      ],
+      "@activepieces/piece-carbone": [
+        "packages/pieces/community/carbone/src/index.ts"
+      ],
+      "@activepieces/piece-emailit": [
+        "packages/pieces/community/emailit/src/index.ts"
       ]
     },
     "resolveJsonModule": true
