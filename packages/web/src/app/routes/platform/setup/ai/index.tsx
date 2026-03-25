@@ -2,7 +2,6 @@ import { PlatformRole, ApFlagId } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ArrowLeftRight } from 'lucide-react';
 
-import { CenteredPage } from '@/app/components/centered-page';
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import { Button } from '@/components/ui/button';
 import { SUPPORTED_AI_PROVIDERS } from '@/features/agents';
