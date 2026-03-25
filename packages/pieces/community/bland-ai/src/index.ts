@@ -7,6 +7,7 @@ import { getCallDetails } from './lib/actions/get-call-details';
 import { listCalls } from './lib/actions/list-calls';
 import { stopCall } from './lib/actions/stop-call';
 import { analyzeCall } from './lib/actions/analyze-call';
+import { createPathway } from './lib/actions/create-pathway';
 import { updatePathway } from './lib/actions/update-pathway';
 
 export const blandAi = createPiece({
@@ -24,6 +25,7 @@ export const blandAi = createPiece({
     listCalls,
     stopCall,
     analyzeCall,
+    createPathway,
     updatePathway,
     createCustomApiCallAction({
       baseUrl: () => BLAND_AI_BASE_URL,
