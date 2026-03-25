@@ -28,7 +28,7 @@ export const createContactAction = createAction({
           LASTNAME: context.propsValue.lastName,
         }),
         emailBlacklisted: context.propsValue.emailBlacklisted,
-        listIds: context.propsValue.listIds,
+        listIds: context.propsValue.listIds?.map((listId) => Number(listId)),
       }),
     });
   },
