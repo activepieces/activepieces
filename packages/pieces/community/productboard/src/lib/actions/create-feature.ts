@@ -1,4 +1,4 @@
-import { createAction, Property, StaticPropsValue } from '@activepieces/pieces-framework';
+import { createAction, Property, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { HttpMethod, HttpResponse } from '@activepieces/pieces-common';
 import { productboardAuth } from '../common/auth';
 import { productboardCommon } from '../common/client';
@@ -38,9 +38,10 @@ export const createFeature = createAction({
         parent_type: Property.DynamicProperties({
             displayName: 'Parent Type',
             required: true,
+            auth:productboardAuth,
             refreshers: ['type'],
             props: async (props) => {
-                const typeValue = props['type'] as string;
+                const typeValue = props['type'] as unknown as string;
                 const fields: Record<string, any> = {};
                 if (typeValue === 'subfeature') {
                     fields['parent_type'] = Property.StaticDropdown({
@@ -70,9 +71,10 @@ export const createFeature = createAction({
         parent_id: Property.Dropdown({
             displayName: 'Parent',
             required: true,
+            auth:productboardAuth,
             refreshers: ['parent_type'],
             options: async (props) => {
-                const auth = props['auth'] as StaticPropsValue<typeof productboardAuth>;
+                const auth = props['auth'] as AppConnectionValueForAuthProperty<typeof productboardAuth>;
                 const parent_type = props['parent_type'] as { parent_type: string };
 
                 if (!auth) return { disabled: true, options: [], placeholder: 'Please authenticate first' };

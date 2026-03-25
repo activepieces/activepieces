@@ -1,4 +1,4 @@
-import { Property, StaticPropsValue } from '@activepieces/pieces-framework';
+import { Property } from '@activepieces/pieces-framework';
 import { HttpMethod, HttpResponse } from '@activepieces/pieces-common';
 import { productboardCommon } from './client';
 import { productboardAuth } from './auth';
@@ -15,6 +15,7 @@ export const productboardProps = {
         displayName: 'Feature',
         description: 'The feature to select.',
         required,
+        auth:productboardAuth,
         refreshers: [],
         options: async ({ auth }) => {
             if (!auth) {
@@ -24,9 +25,9 @@ export const productboardProps = {
                     placeholder: 'Please authenticate first'
                 };
             }
-            const typedAuth = auth as StaticPropsValue<typeof productboardAuth>;
+            
             const response: HttpResponse<{ data: { id: string; name: string }[] }> = await productboardCommon.apiCall({
-                auth: typedAuth,
+                auth,
                 method: HttpMethod.GET,
                 resourceUri: '/features'
             });
@@ -48,6 +49,7 @@ export const productboardProps = {
         displayName: 'Status',
         description: 'Current status of the feature',
         required,
+        auth:productboardAuth,
         refreshers: [],
         options: async ({ auth }) => {
             if (!auth) {
@@ -57,9 +59,8 @@ export const productboardProps = {
                     placeholder: 'Please authenticate first'
                 };
             }
-            const typedAuth = auth as StaticPropsValue<typeof productboardAuth>;
             const response: HttpResponse<{ data: { id: string; name: string }[] }> = await productboardCommon.apiCall({
-                auth: typedAuth,
+                auth: auth,
                 method: HttpMethod.GET,
                 resourceUri: '/feature-statuses'
             });

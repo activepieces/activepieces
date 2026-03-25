@@ -1,5 +1,5 @@
-import { createAction, Property, StaticPropsValue } from '@activepieces/pieces-framework';
-import { HttpMethod, HttpResponse } from '@activepieces/pieces-common';
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { productboardAuth } from '../common/auth';
 import { productboardCommon } from '../common/client';
 import { productboardProps } from '../common/props';
@@ -37,19 +37,19 @@ export const updateFeature = createAction({
         const data: Record<string, any> = {};
 
         if (name) {
-            data.name = name;
+            data['name'] = name;
         }
 
         if (description) {
-            data.description = description;
+            data['description'] = description;
         }
 
         if (status) {
-            data.status = { id: status };
+            data['status'] = { id: status };
         }
 
         if (archived !== undefined) {
-            data.archived = archived;
+            data['archived'] = archived;
         }
 
         if (Object.keys(data).length === 0) {
