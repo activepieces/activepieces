@@ -55,7 +55,7 @@ export const createAndPushToCampaignAction = createAction({
       method: HttpMethod.POST,
       path: '/v1/actions/addandpushtocampaign',
       body: cleanPayload({
-        campaignId: propsValue.campaignId,
+        campaignId: Number(propsValue.campaignId),
         email: propsValue.email,
         firstName: propsValue.firstName,
         lastName: propsValue.lastName,

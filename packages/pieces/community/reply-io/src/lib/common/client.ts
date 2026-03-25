@@ -2,9 +2,6 @@ import { HttpMethod, QueryParams, httpClient } from '@activepieces/pieces-common
 
 export const REPLY_IO_API_ROOT = 'https://api.reply.io';
 
-export type ReplyIoAuthValue = {
-  api_key: string;
-};
 
 export function buildReplyIoHeaders(apiKey: string, includeJsonContentType = false) {
   return {

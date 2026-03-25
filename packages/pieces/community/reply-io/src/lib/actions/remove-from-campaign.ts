@@ -23,7 +23,7 @@ export const removeFromCampaignAction = createAction({
       method: HttpMethod.POST,
       path: '/v1/actions/removepersonfromcampaignbyid',
       body: {
-        campaignId: propsValue.campaignId,
+        campaignId: Number(propsValue.campaignId),
         email: propsValue.email,
       },
     });
