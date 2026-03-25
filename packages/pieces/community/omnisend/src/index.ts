@@ -29,7 +29,7 @@ export const omnisend = createPiece({
       auth: omnisendAuth,
       baseUrl: () => OMNISEND_API_BASE,
       authMapping: async (auth) => ({
-        'X-API-KEY': auth as unknown as string,
+        'X-API-KEY': (auth as { secret_text: string }).secret_text,
       }),
     }),
   ],

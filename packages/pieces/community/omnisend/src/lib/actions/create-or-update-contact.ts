@@ -94,9 +94,9 @@ export const createOrUpdateContactAction = createAction({
               status: emailStatus,
             },
           },
-          sendWelcomeMessage: sendWelcomeMessage ?? false,
         },
       ],
+      sendWelcomeMessage: sendWelcomeMessage ?? false,
     };
 
     if (firstName) body['firstName'] = firstName;

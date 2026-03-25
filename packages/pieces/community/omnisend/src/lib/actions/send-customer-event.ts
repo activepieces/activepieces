@@ -21,26 +21,28 @@ export const sendCustomerEventAction = createAction({
         'The name of the event. Use predefined names (e.g. "added product to cart", "placed order") or a custom event name.',
       required: true,
     }),
-    fields: Property.Object({
-      displayName: 'Event Fields',
+    properties: Property.Object({
+      displayName: 'Event Properties',
       description:
-        'Custom key-value fields to include with the event (e.g. {"orderId": "12345", "totalPrice": 99.99}).',
+        'Custom key-value properties to include with the event (e.g. {"orderId": "12345", "totalPrice": 99.99}).',
       required: false,
     }),
   },
   async run(context) {
-    const { email, eventName, fields } = context.propsValue;
+    const { email, eventName, properties } = context.propsValue;
 
     const body: Record<string, unknown> = {
-      email,
+      contact: {
+        email,
+      },
       eventName,
     };
 
     if (
-      fields &&
-      Object.keys(fields as Record<string, unknown>).length > 0
+      properties &&
+      Object.keys(properties as Record<string, unknown>).length > 0
     ) {
-      body['fields'] = fields;
+      body['properties'] = properties;
     }
 
     return omnisendRequest(
