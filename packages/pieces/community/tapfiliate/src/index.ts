@@ -65,7 +65,7 @@ export const tapfiliate = createPiece({
   displayName: 'Tapfiliate',
   description: 'Affiliate tracking and conversion management platform.',
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://tapfiliate.com/img/logo-square-social.png',
+  logoUrl: 'https://cdn.activepieces.com/pieces/tapfiliate.png',
   categories: [PieceCategory.MARKETING, PieceCategory.SALES_AND_CRM],
   authors: ['Harmatta'],
   auth: tapfiliateAuth,
