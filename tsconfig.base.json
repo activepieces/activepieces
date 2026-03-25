@@ -1558,6 +1558,9 @@
       "@activepieces/piece-greenpt": [
         "packages/pieces/community/greenpt/src/index.ts"
       ],
+      "@activepieces/piece-greenhouse": [
+        "packages/pieces/community/greenhouse/src/index.ts"
+      ],
       "@activepieces/piece-oncehub": [
         "packages/pieces/community/oncehub/src/index.ts"
       ],
