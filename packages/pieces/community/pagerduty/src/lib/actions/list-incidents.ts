@@ -39,11 +39,14 @@ export const listIncidents = createAction({
     const { statuses, urgency, since, until, limit, offset } =
       context.propsValue;
 
+    const rawLimit = limit ?? 25;
+    const clampedLimit = Math.max(1, Math.min(100, rawLimit));
+
     const query: Record<string, string | string[] | undefined> = {
       since: since || undefined,
       until: until || undefined,
-      limit: String(limit ?? 25),
-      offset: String(offset ?? 0),
+      limit: String(clampedLimit),
+      offset: String(Math.max(0, offset ?? 0)),
     };
 
     if (statuses && statuses.length > 0) {
