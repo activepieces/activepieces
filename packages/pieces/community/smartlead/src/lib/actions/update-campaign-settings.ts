@@ -89,9 +89,18 @@ export const updateCampaignSettingsAction = createAction({
       };
     }
 
-    if (sending_limit !== undefined) body['sending_limit'] = sending_limit;
-    if (min_time_btwn_emails !== undefined)
+    if (sending_limit !== undefined) {
+      if (sending_limit < 1) {
+        throw new Error('sending_limit must be a positive integer.');
+      }
+      body['sending_limit'] = sending_limit;
+    }
+    if (min_time_btwn_emails !== undefined) {
+      if (min_time_btwn_emails < 0) {
+        throw new Error('min_time_btwn_emails must be 0 or greater.');
+      }
       body['min_time_btwn_emails'] = min_time_btwn_emails;
+    }
     if (stop_lead_settings !== undefined)
       body['stop_lead_settings'] = stop_lead_settings;
     if (enable_ai_esp_matching !== undefined)

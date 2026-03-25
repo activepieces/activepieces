@@ -27,13 +27,9 @@ export const smartlead = createPiece({
       auth: smartleadAuth,
       baseUrl: () => BASE_URL,
       authLocation: 'queryParams',
-      authMapping: async (auth) => {
-        const key =
-          typeof auth === 'string'
-            ? auth
-            : (auth as { secret_text: string }).secret_text;
-        return { api_key: key };
-      },
+      authMapping: async (auth) => ({
+        api_key: (auth as { secret_text: string }).secret_text,
+      }),
     }),
   ],
   triggers: [],
