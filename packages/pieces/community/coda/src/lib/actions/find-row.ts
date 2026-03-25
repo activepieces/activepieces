@@ -1,5 +1,5 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { codaAuth } from '../..';
+import { codaAuth } from '../auth';
 import { CodaRow, codaClient } from '../common/types';
 import { columnIdsDropdown, docIdDropdown, tableIdDropdown } from '../common/props';
 

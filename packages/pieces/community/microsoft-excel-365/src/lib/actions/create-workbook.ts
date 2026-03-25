@@ -1,11 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { excelAuth } from '../../index';
-import { excelCommon } from '../common/common';
-import { 
-  httpClient, 
-  HttpMethod,
-  AuthenticationType,
-} from '@activepieces/pieces-common';
+import { excelAuth } from '../auth';
+import { commonProps } from '../common/props';
+import { getDrivePath, createMSGraphClient } from '../common/helpers';
 
 export const createWorkbook = createAction({
   auth: excelAuth,
@@ -13,33 +9,32 @@ export const createWorkbook = createAction({
   displayName: 'Create Workbook',
   description: 'Create a new workbook at the specified location',
   props: {
+    storageSource: commonProps.storageSource,
+    siteId: commonProps.siteId,
+    documentId: commonProps.documentId,
     name: Property.ShortText({
       displayName: "Name",
       description: "The name of the new workbook",
       required: true
     }),
-    parentFolder: excelCommon.parent_folder
   },
   async run(context) {
-    const { name, parentFolder } = context.propsValue
+    const { storageSource, siteId, documentId, name } = context.propsValue;
 
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: `${excelCommon.baseUrl}/${parentFolder === 'root' ? '' : 'items/'}${parentFolder}/children`,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth['access_token'],
-      },
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: {
+    if (storageSource === 'sharepoint' && (!siteId || !documentId)) {
+      throw new Error('please select SharePoint site and document library.');
+    }
+    const drivePath = getDrivePath(storageSource, siteId as string, documentId as string);
+
+    const client = createMSGraphClient(context.auth['access_token']);
+    const response = await client
+      .api(`${drivePath}/root/children`)
+      .post({
         file: {},
         name: name.endsWith('.xlsx') ? name : `${name}.xlsx`,
-        '@microsoft.graph.conflictBehavior': 'rename'
-      }
-    })
+        '@microsoft.graph.conflictBehavior': 'rename',
+      });
 
-    return response
+    return response;
   }
 });

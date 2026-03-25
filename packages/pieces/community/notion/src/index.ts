@@ -1,11 +1,8 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import {
-  OAuth2AuthorizationMethod,
-  OAuth2PropertyValue,
-  PieceAuth,
-  createPiece,
-} from '@activepieces/pieces-framework';
+import { createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
+import { notionAuth } from './lib/auth';
+import { getNotionToken, NotionAuthValue } from './lib/common';
 import { appendToPage } from './lib/actions/append-to-page';
 import { createDatabaseItem } from './lib/actions/create-database-item';
 import { createPage } from './lib/actions/create-page';
@@ -22,17 +19,6 @@ import { addComment } from './lib/actions/add-comment';
 import { retrieveDatabase } from './lib/actions/retrieve-database';
 import { getPageComments } from './lib/actions/get-page-comments';
 import { findPage } from './lib/actions/find-page';
-
-export const notionAuth = PieceAuth.OAuth2({
-  authUrl: 'https://api.notion.com/v1/oauth/authorize',
-  tokenUrl: 'https://api.notion.com/v1/oauth/token',
-  scope: [],
-  extra: {
-    owner: 'user',
-  },
-  authorizationMethod: OAuth2AuthorizationMethod.HEADER,
-  required: true,
-});
 
 export const notion = createPiece({
   displayName: 'Notion',
@@ -68,7 +54,7 @@ export const notion = createPiece({
       baseUrl: () => 'https://api.notion.com/v1',
       auth: notionAuth,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+        Authorization: `Bearer ${getNotionToken(auth as NotionAuthValue)}`,
       }),
     }),
   ],

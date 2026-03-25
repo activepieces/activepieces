@@ -8,7 +8,7 @@ import {
   ConversationRole,
   Message,
 } from '@aws-sdk/client-bedrock-runtime';
-import { awsBedrockAuth } from '../../index';
+import { awsBedrockAuth } from '../auth';
 import {
   createBedrockRuntimeClient,
   getBedrockModelOptions,

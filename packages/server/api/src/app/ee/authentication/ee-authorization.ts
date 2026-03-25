@@ -26,7 +26,7 @@ export const platformMustHaveFeatureEnabled = (handler: (platform: PlatformWitho
             })
         }
 
-        const platform = await platformService.getOneWithPlanOrThrow(platformId)
+        const platform = await platformService(request.log).getOneWithPlanOrThrow(platformId)
         const enabled = handler(platform)
 
         if (!enabled) {
@@ -55,7 +55,7 @@ const checkIfPlatformIsOwnedByUser = async (platformId: string, request: Fastify
         return
     }
 
-    const user = await userService.getOneOrFail({
+    const user = await userService(request.log).getOneOrFail({
         id: request.principal.id,
     })
 
@@ -94,7 +94,7 @@ export const projectMustBeTeamType: onRequestAsyncHookHandler =
                 },
             })
         }
-        const project = await projectService.getOneOrThrow(projectId)
+        const project = await projectService(request.log).getOneOrThrow(projectId)
         if (project.type !== ProjectType.TEAM) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,

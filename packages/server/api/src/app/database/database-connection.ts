@@ -1,4 +1,3 @@
-import { AppSystemProp, DatabaseType } from '@activepieces/server-shared'
 import { isNil } from '@activepieces/shared'
 import {
     DataSource,
@@ -23,6 +22,7 @@ import { ProjectPlanEntity } from '../ee/projects/project-plan/project-plan.enti
 import { GitRepoEntity } from '../ee/projects/project-release/git-sync/git-sync.entity'
 import { ProjectReleaseEntity } from '../ee/projects/project-release/project-release.entity'
 import { ProjectRoleEntity } from '../ee/projects/project-role/project-role.entity'
+import { SecretManagerEntity } from '../ee/secret-managers/secret-manager.entity'
 import { SigningKeyEntity } from '../ee/signing-key/signing-key-entity'
 import { EventDestinationEntity } from '../event-destinations/event-destinations.entity'
 import { FileEntity } from '../file/file.entity'
@@ -32,6 +32,7 @@ import { FlowRunEntity } from '../flows/flow-run/flow-run-entity'
 import { FlowVersionEntity } from '../flows/flow-version/flow-version-entity'
 import { FolderEntity } from '../flows/folder/folder.entity'
 import { system } from '../helper/system/system'
+import { AppSystemProp } from '../helper/system/system-props'
 import { McpServerEntity } from '../mcp/mcp-entity'
 import { PieceMetadataEntity } from '../pieces/metadata/piece-metadata-entity'
 import { PieceTagEntity } from '../pieces/tags/pieces/piece-tag.entity'
@@ -45,14 +46,13 @@ import { RecordEntity } from '../tables/record/record.entity'
 import { TableWebhookEntity } from '../tables/table/table-webhook.entity'
 import { TableEntity } from '../tables/table/table.entity'
 import { TemplateEntity } from '../template/template.entity'
-import { TodoActivityEntity } from '../todos/activity/todos-activity.entity'
-import { TodoEntity } from '../todos/todo.entity'
 import { AppEventRoutingEntity } from '../trigger/app-event-routing/app-event-routing.entity'
 import { TriggerEventEntity } from '../trigger/trigger-events/trigger-event.entity'
 import { TriggerSourceEntity } from '../trigger/trigger-source/trigger-source-entity'
 import { UserBadgeEntity } from '../user/badges/badge-entity'
 import { UserEntity } from '../user/user-entity'
 import { UserInvitationEntity } from '../user-invitations/user-invitation.entity'
+import { DatabaseType } from './database-type'
 import { createPGliteDataSource } from './pglite-connection'
 import { createPostgresDataSource } from './postgres-connection'
 
@@ -74,6 +74,7 @@ function getEntities(): EntitySchema<unknown>[] {
         FolderEntity,
         PieceMetadataEntity,
         PlatformEntity,
+        SecretManagerEntity,
         TagEntity,
         PieceTagEntity,
         AlertEntity,
@@ -86,9 +87,7 @@ function getEntities(): EntitySchema<unknown>[] {
         CellEntity,
         TableWebhookEntity,
         UserIdentityEntity,
-        TodoEntity,
         McpServerEntity,
-        TodoActivityEntity,
         TriggerSourceEntity,
         UserBadgeEntity,
         // Enterprise
@@ -119,7 +118,15 @@ export const commonProperties = {
     entities: getEntities(),
 }
 
-let _databaseConnection: DataSource | null = null
+const DB_GLOBAL_KEY = '__AP_DB_CONNECTION__'
+
+function getPersistedConnection(): DataSource | null {
+    return ((globalThis as Record<string, unknown>)[DB_GLOBAL_KEY] as DataSource) ?? null
+}
+
+function setPersistedConnection(ds: DataSource | null): void {
+    (globalThis as Record<string, unknown>)[DB_GLOBAL_KEY] = ds
+}
 
 const createDataSource = (): DataSource => {
     switch (databaseType) {
@@ -132,8 +139,15 @@ const createDataSource = (): DataSource => {
 }
 
 export const databaseConnection = (): DataSource => {
-    if (isNil(_databaseConnection)) {
-        _databaseConnection = createDataSource()
+    const existing = getPersistedConnection()
+    if (!isNil(existing)) {
+        return existing
     }
-    return _databaseConnection
+    const ds = createDataSource()
+    setPersistedConnection(ds)
+    return ds
+}
+
+export function resetDatabaseConnection(): void {
+    setPersistedConnection(null)
 }

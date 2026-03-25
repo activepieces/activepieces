@@ -6,7 +6,7 @@ import {
   httpClient,
   AuthenticationType,
 } from '@activepieces/pieces-common';
-import { niftyAuth } from '../..';
+import { niftyAuth } from '../auth';
 
 export const nitfyCommon = {
   portfolio: Property.Dropdown({

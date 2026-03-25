@@ -38,7 +38,7 @@ export class AddAlertsEntityPostgres1716989780835 implements MigrationInterface 
         `)
 
         const countAlerts = await insertAlertsInBatches(projects, queryRunner)
-        log.info(`CreateAlerts1716989780835 Migrated ${countAlerts} alerts`)
+        log.info({ countAlerts }, '[AddAlertsEntityPostgres1716989780835#up] Migrated alerts')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {

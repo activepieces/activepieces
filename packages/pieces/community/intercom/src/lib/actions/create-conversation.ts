@@ -1,11 +1,10 @@
-import { intercomAuth } from '../../index';
+import { intercomAuth } from '../auth';
 import {
 	createAction,
 	DropdownOption,
-	PiecePropValueSchema,
 	Property,
 } from '@activepieces/pieces-framework';
-import { intercomClient } from '../common';
+import { intercomClient, IntercomAuthValue } from '../common';
 
 export const createConversationAction = createAction({
 	auth: intercomAuth,
@@ -40,7 +39,7 @@ export const createConversationAction = createAction({
 				}
 
 				const type = contactType as 'user' | 'lead';
-				const authValue = auth as PiecePropValueSchema<typeof intercomAuth>;
+				const authValue = auth as IntercomAuthValue;
 				const client = intercomClient(authValue);
 
 				const response = await client.contacts.list();

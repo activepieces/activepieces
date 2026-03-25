@@ -9,7 +9,7 @@ import {
 } from '@activepieces/pieces-common';
 import { Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
 import { isNil } from '@activepieces/shared';
-import { githubAuth } from '../..';
+import { githubAuth } from '../auth';
 
 export const githubCommon = {
   baseUrl: 'https://api.github.com',

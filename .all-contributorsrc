@@ -2120,6 +2120,24 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "Shree-git",
+      "name": "Shreedhar Pandey",
+      "avatar_url": "https://avatars.githubusercontent.com/u/56151022?v=4",
+      "profile": "https://www.shreepandeydev.com",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "Harmatta",
+      "name": "Harmatta",
+      "avatar_url": "https://avatars.githubusercontent.com/u/136149988?v=4",
+      "profile": "https://github.com/Harmatta",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"

@@ -23,6 +23,9 @@ export const pieceTagService = {
             return acc
         }, {} as Record<string, string[]>)
     },
+    async deleteByTagId(tagId: string): Promise<void> {
+        await pieceTagsRepo().delete({ tagId })
+    },
     async findByPlatformAndTags(platformId: string, pieceTags: string[]): Promise<string[]> {
         const tagIds = await tagService.convertIdsToNames(platformId, pieceTags)
         const pieceTagEntities = await pieceTagsRepo().findBy({

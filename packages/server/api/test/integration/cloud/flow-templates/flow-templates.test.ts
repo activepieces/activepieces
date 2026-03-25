@@ -1,3 +1,4 @@
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 import {
     apId,
     CreateTemplateRequestBody,
@@ -8,29 +9,25 @@ import {
 } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { initializeDatabase } from '../../../../src/app/database'
-import { databaseConnection } from '../../../../src/app/database/database-connection'
-import { setupServer } from '../../../../src/app/server'
 import { generateMockToken } from '../../../helpers/auth'
+import { db } from '../../../helpers/db'
 import {
     CLOUD_PLATFORM_ID,
     createMockTemplate,
     mockAndSaveBasicSetup,
     mockBasicUser,
 } from '../../../helpers/mocks'
+import { createTestContext } from '../../../helpers/test-context'
 
 let app: FastifyInstance | null = null
 
 beforeAll(async () => {
-    await initializeDatabase({ runMigrations: false })
-    app = await setupServer()
+    app = await setupTestEnvironment()
 })
 
 afterAll(async () => {
-    await databaseConnection().destroy()
-    await app?.close()
+    await teardownTestEnvironment()
 })
-
 describe('Templates', () => {
     describe('List Templates', () => {
         it('should list platform templates only', async () => {
@@ -46,7 +43,7 @@ describe('Templates', () => {
 
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/templates',
+                url: '/api/v1/templates',
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -66,7 +63,7 @@ describe('Templates', () => {
         it('should list cloud platform template for anonymous users', async () => {
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/templates',
+                url: '/api/v1/templates',
                 query: {
                     type: TemplateType.OFFICIAL,
                 },
@@ -79,22 +76,14 @@ describe('Templates', () => {
     describe('Create Template', () => {
         it('should create a flow template', async () => {
             // arrange
-            const { mockPlatform, mockOwner } = await mockAndSaveBasicSetup({
-                platform: {
-                },
+            const ctx = await createTestContext(app!, {
                 plan: {
                     manageTemplatesEnabled: true,
                 },
             })
 
-            const testToken = await generateMockToken({
-                type: PrincipalType.USER,
-                id: mockOwner.id,
-                platform: { id: mockPlatform.id },
-            })
-
             const mockTemplate = createMockTemplate({
-                platformId: mockPlatform.id,
+                platformId: ctx.platform.id,
                 type: TemplateType.CUSTOM,
             })
 
@@ -114,14 +103,7 @@ describe('Templates', () => {
             }
 
             // act
-            const response = await app?.inject({
-                method: 'POST',
-                url: '/v1/templates',
-                headers: {
-                    authorization: `Bearer ${testToken}`,
-                },
-                body: createTemplateRequest,
-            })
+            const response = await ctx.post('/v1/templates', createTemplateRequest)
 
             // assert
             expect(response?.statusCode).toBe(StatusCodes.CREATED)
@@ -143,7 +125,7 @@ describe('Templates', () => {
 
             const response = await app?.inject({
                 method: 'DELETE',
-                url: `/v1/templates/${mockPlatformTemplate.id}`,
+                url: `/api/v1/templates/${mockPlatformTemplate.id}`,
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -166,7 +148,7 @@ describe('Templates', () => {
 
             const response = await app?.inject({
                 method: 'DELETE',
-                url: `/v1/templates/${mockPlatformTemplate.id}`,
+                url: `/api/v1/templates/${mockPlatformTemplate.id}`,
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -184,7 +166,7 @@ describe('Templates', () => {
 
             const response = await app?.inject({
                 method: 'DELETE',
-                url: `/v1/templates/${mockPlatformTemplate.id}`,
+                url: `/api/v1/templates/${mockPlatformTemplate.id}`,
             })
 
             // assert
@@ -208,9 +190,7 @@ async function createMockPlatformTemplate({ platformId, plan, type }: { platform
         platformId: mockPlatform.id,
         type: type ?? TemplateType.CUSTOM,
     })
-    await databaseConnection()
-        .getRepository('template')
-        .save(mockPlatformTemplate)
+    await db.save('template', mockPlatformTemplate)
 
     const { mockUser } = await mockBasicUser({
         user: {

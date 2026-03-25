@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient, HttpRequest } from '@activepieces/pieces-common';
-import { awsBedrockAuth } from '../../index';
+import { awsBedrockAuth } from '../auth';
 import { SignatureV4 } from '@smithy/signature-v4';
 import { HttpRequest as AwsHttpRequest } from '@smithy/protocol-http';
 import { Sha256 } from '@aws-crypto/sha256-js';
