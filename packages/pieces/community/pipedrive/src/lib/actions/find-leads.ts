@@ -2,7 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { isNil } from '@activepieces/shared';
 import { pipedriveApiCall } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { pipedriveAuth } from '../../index';
+import { pipedriveAuth } from '../auth';
 
 export const findLeadAction = createAction({
 	auth: pipedriveAuth,
