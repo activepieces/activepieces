@@ -66,6 +66,7 @@ export const knowledgeBaseController: FastifyPluginAsyncZod = async (fastify) =>
 
     fastify.get('/:id/chunks/count', GetChunkCountRequest, async (request) => {
         const count = await knowledgeBaseService(request.log).getChunkCount({
+            projectId: request.projectId,
             knowledgeBaseFileId: request.params.id,
         })
         return { count }
@@ -224,7 +225,7 @@ const StoreEmbeddingsRequest = {
         body: z.object({
             chunks: z.array(z.object({
                 content: z.string(),
-                embedding: z.array(z.number()),
+                embedding: z.array(z.number()).length(768),
                 chunkIndex: z.number(),
                 metadata: z.record(z.string(), z.unknown()).optional(),
             })),
@@ -244,7 +245,7 @@ const SearchKnowledgeBaseRequest = {
         description: 'Search knowledge base using vector similarity',
         body: z.object({
             knowledgeBaseFileIds: z.array(z.string()),
-            queryEmbedding: z.array(z.number()).min(1),
+            queryEmbedding: z.array(z.number()).length(768),
             limit: z.number().int().min(1).max(100).optional().default(5),
         }),
     },

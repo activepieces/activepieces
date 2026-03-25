@@ -89,7 +89,7 @@ export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
             content: row.content,
             metadata: row.metadata,
             chunkIndex: row.chunkIndex,
-            score: 1 - row.distance,
+            score: Math.max(0, 1 - row.distance),
         }))
     },
 
@@ -111,9 +111,20 @@ export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
     },
 
     async deleteFile(params: { projectId: string, id: string }): Promise<void> {
+        const kbFile = await kbFileRepo().findOneBy({
+            id: params.id,
+            projectId: params.projectId,
+        })
+        if (!kbFile) {
+            return
+        }
         await kbFileRepo().delete({
             id: params.id,
             projectId: params.projectId,
+        })
+        await fileService(log).delete({
+            projectId: params.projectId,
+            fileId: kbFile.fileId,
         })
     },
 
@@ -134,8 +145,8 @@ export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
         return file
     },
 
-    async getChunkCount(params: { knowledgeBaseFileId: string }): Promise<number> {
-        return kbChunkRepo().count({ where: { knowledgeBaseFileId: params.knowledgeBaseFileId } })
+    async getChunkCount(params: { projectId: string, knowledgeBaseFileId: string }): Promise<number> {
+        return kbChunkRepo().count({ where: { projectId: params.projectId, knowledgeBaseFileId: params.knowledgeBaseFileId } })
     },
 
     async extractChunks(params: { projectId: string, knowledgeBaseFileId: string }): Promise<string[]> {
