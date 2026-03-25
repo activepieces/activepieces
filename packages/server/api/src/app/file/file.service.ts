@@ -145,7 +145,7 @@ export const fileService = (log: FastifyBaseLogger) => ({
             fileName: file.fileName ?? undefined,
         }
     },
-    async delete(params: { projectId?: ProjectId, fileId: FileId }): Promise<void> {
+    async delete(params: { projectId: ProjectId, fileId: FileId }): Promise<void> {
         const file = await fileRepo().findOneBy({
             id: params.fileId,
             projectId: params.projectId,
