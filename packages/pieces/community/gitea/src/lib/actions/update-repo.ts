@@ -1,7 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { giteaAuth } from '../auth';
-import { giteaApiCall, giteaCommon } from '../common';
+import { giteaApiCall } from '../common/client';
+import { giteaCommon } from '../common/props';
 
 export const updateRepoSync = createAction({
   auth: giteaAuth,
@@ -33,7 +34,7 @@ export const updateRepoSync = createAction({
     const { name, description, website } = context.propsValue;
     const isPrivate = context.propsValue.private;
 
-    const body: Record<string, any> = {};
+    const body: Record<string, unknown> = {};
     if (name) body['name'] = name;
     if (description) body['description'] = description;
     if (website) body['website'] = website;

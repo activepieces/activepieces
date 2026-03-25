@@ -1,7 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { giteaAuth } from '../auth';
-import { giteaApiCall, giteaCommon } from '../common';
+import { giteaCommon } from '../common/props';
+import { giteaApiCall } from '../common/client';
 
 export const createIssue = createAction({
   auth: giteaAuth,

@@ -1,13 +1,8 @@
-import { createTrigger, TriggerStrategy, OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { giteaAuth } from '../auth';
-import { giteaApiCall, giteaCommon } from '../common';
-
-interface WebhookInformation {
-  webhookId: number;
-  repo: string;
-  owner: string;
-}
+import { giteaCommon } from '../common/props';
+import { giteaApiCall, WebhookInformation } from '../common/client';
 
 export const workflowRunCompleted = createTrigger({
   auth: giteaAuth,
@@ -45,7 +40,7 @@ export const workflowRunCompleted = createTrigger({
     const { repo, owner } = context.propsValue.repository!;
 
     const response = await giteaApiCall<{ id: number }>({
-      auth: context.auth as OAuth2PropertyValue,
+      auth: context.auth,
       method: HttpMethod.POST,
       resourceUri: `/repos/${owner}/${repo}/hooks`,
       body: {
@@ -72,7 +67,7 @@ export const workflowRunCompleted = createTrigger({
 
     if (webhook) {
       await giteaApiCall({
-        auth: context.auth as OAuth2PropertyValue,
+        auth: context.auth,
         method: HttpMethod.DELETE,
         resourceUri: `/repos/${webhook.owner}/${webhook.repo}/hooks/${webhook.webhookId}`,
       });

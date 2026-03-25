@@ -20,7 +20,7 @@ export const gitea = createPiece({
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/gitea.png',
   categories: [PieceCategory.DEVELOPER_TOOLS],
-  authors: [],
+  authors: ['Anmol202005'],
   actions: [
     createIssue,
     createComment,
@@ -35,7 +35,7 @@ export const gitea = createPiece({
       },
       auth: giteaAuth,
       authMapping: async (auth) => {
-        const authValue = auth as OAuth2PropertyValue;
+        const authValue = auth;
         return {
           Authorization: `Bearer ${authValue.access_token}`,
         };
