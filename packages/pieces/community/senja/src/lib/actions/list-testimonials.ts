@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { senjaAuth } from '../../';
-import { senjaApiCall, INTEGRATION_OPTIONS } from '../common';
+import { senjaApiCall, INTEGRATION_OPTIONS, mapTestimonial } from '../common';
 
 export const listTestimonialsAction = createAction({
   auth: senjaAuth,
@@ -139,31 +139,6 @@ export const listTestimonialsAction = createAction({
 
     const testimonials = response.body.testimonials ?? [];
 
-    return testimonials.map((t) => ({
-      id: t['id'] ?? null,
-      type: t['type'] ?? null,
-      title: t['title'] ?? null,
-      text: t['text'] ?? null,
-      rating: t['rating'] ?? null,
-      url: t['url'] ?? null,
-      date: t['date'] ?? null,
-      approved: t['approved'] ?? null,
-      integration: t['integration'] ?? null,
-      tags: (t['tags'] as string[]) ?? [],
-      lang: t['lang'] ?? null,
-      video_url: t['video_url'] ?? null,
-      thumbnail_url: t['thumbnail_url'] ?? null,
-      form_id: t['form_id'] ?? null,
-      customer_name: t['customer_name'] ?? null,
-      customer_email: t['customer_email'] ?? null,
-      customer_company: t['customer_company'] ?? null,
-      customer_tagline: t['customer_tagline'] ?? null,
-      customer_username: t['customer_username'] ?? null,
-      customer_url: t['customer_url'] ?? null,
-      customer_avatar: t['customer_avatar'] ?? null,
-      customer_company_logo: t['customer_company_logo'] ?? null,
-      created_at: t['created_at'] ?? null,
-      updated_at: t['updated_at'] ?? null,
-    }));
+    return testimonials.map((t) => mapTestimonial(t));
   },
 });

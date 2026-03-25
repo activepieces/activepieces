@@ -35,6 +35,53 @@ export async function senjaApiCall<T extends HttpMessageBody>({
 
 export const SENJA_BASE_URL = BASE_URL;
 
+export function mapTestimonial(t: Record<string, unknown>, eventType?: string | null) {
+  const video = t['video'] as Record<string, unknown> | null | undefined;
+  const mp4Urls = video?.['mp4_urls'] as Record<string, unknown> | undefined;
+  const mediaArr = t['media'] as unknown[] | null | undefined;
+  const custData = t['customer_custom_data'];
+  const translations = t['translations'];
+
+  return {
+    ...(eventType !== undefined ? { event_type: eventType ?? null } : {}),
+    id: t['id'] ?? null,
+    type: t['type'] ?? null,
+    title: t['title'] ?? null,
+    text: t['text'] ?? null,
+    rating: t['rating'] ?? null,
+    url: t['url'] ?? null,
+    date: t['date'] ?? null,
+    approved: t['approved'] ?? null,
+    integration: t['integration'] ?? null,
+    tags: (t['tags'] as string[]) ?? [],
+    lang: t['lang'] ?? null,
+    video_url: t['video_url'] ?? null,
+    thumbnail_url: t['thumbnail_url'] ?? null,
+    form_id: t['form_id'] ?? null,
+    project_id: t['project_id'] ?? null,
+    customer_name: t['customer_name'] ?? null,
+    customer_email: t['customer_email'] ?? null,
+    customer_company: t['customer_company'] ?? null,
+    customer_tagline: t['customer_tagline'] ?? null,
+    customer_username: t['customer_username'] ?? null,
+    customer_url: t['customer_url'] ?? null,
+    customer_avatar: t['customer_avatar'] ?? null,
+    customer_company_logo: t['customer_company_logo'] ?? null,
+    customer_custom_data: custData != null ? JSON.stringify(custData) : null,
+    media: mediaArr != null && mediaArr.length > 0 ? JSON.stringify(mediaArr) : null,
+    video_duration: video?.['duration'] ?? null,
+    video_aspect_ratio: video?.['aspect_ratio'] ?? null,
+    video_hls_url: video?.['hls_url'] ?? null,
+    video_mp4_low: mp4Urls?.['low'] ?? null,
+    video_mp4_medium: mp4Urls?.['medium'] ?? null,
+    video_mp4_high: mp4Urls?.['high'] ?? null,
+    video_transcript: video?.['transcript'] ?? null,
+    translations: translations != null ? JSON.stringify(translations) : null,
+    created_at: t['created_at'] ?? null,
+    updated_at: t['updated_at'] ?? null,
+  };
+}
+
 export const INTEGRATION_OPTIONS = [
   { label: 'Twitter', value: 'twitter' },
   { label: 'LinkedIn', value: 'linkedin' },
