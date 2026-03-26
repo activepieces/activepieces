@@ -38,9 +38,10 @@ function _updateAction(flowVersion: FlowVersion, request: UpdateActionRequest): 
             }
             case FlowActionType.PIECE: {
                 const existingSampleData = stepToUpdate.type === FlowActionType.PIECE ? stepToUpdate.settings.sampleData : undefined
+                const existingVersionUpdateBackup = stepToUpdate.type === FlowActionType.PIECE ? stepToUpdate.settings.versionUpdateBackup : undefined
                 updatedAction = {
                     ...baseProps,
-                    settings: { ...request.settings, sampleData: existingSampleData },
+                    settings: { ...request.settings, sampleData: existingSampleData, versionUpdateBackup: existingVersionUpdateBackup },
                     type: FlowActionType.PIECE,
                     nextAction: stepToUpdate.nextAction,
                 }

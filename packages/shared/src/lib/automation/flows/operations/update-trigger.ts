@@ -3,12 +3,12 @@ import { isNil } from '../../../core/common'
 import { FlowAction } from '../actions/action'
 import { FlowVersion } from '../flow-version'
 import { SampleDataSettings } from '../sample-data'
-import { FlowTrigger, FlowTriggerType } from '../triggers/trigger'
+import { FlowTrigger, FlowTriggerType, PieceTriggerSettings } from '../triggers/trigger'
 import { flowStructureUtil } from '../util/flow-structure-util'
 import { UpdateTriggerRequest } from '.'
 
 
-function createTrigger(name: string, request: UpdateTriggerRequest, nextAction: FlowAction | undefined, existingSampleData: SampleDataSettings | undefined): FlowTrigger {
+function createTrigger(name: string, request: UpdateTriggerRequest, nextAction: FlowAction | undefined, existingSampleData: SampleDataSettings | undefined, existingVersionUpdateBackup: PieceTriggerSettings['versionUpdateBackup']): FlowTrigger {
     const baseProperties = {
         displayName: request.displayName,
         name,
@@ -29,7 +29,7 @@ function createTrigger(name: string, request: UpdateTriggerRequest, nextAction: 
             trigger = {
                 ...baseProperties,
                 type: FlowTriggerType.PIECE,
-                settings: { ...request.settings, sampleData: existingSampleData },
+                settings: { ...request.settings, sampleData: existingSampleData, versionUpdateBackup: existingVersionUpdateBackup },
             }
             break
     }
@@ -44,7 +44,8 @@ function createTrigger(name: string, request: UpdateTriggerRequest, nextAction: 
 function _updateTrigger(flowVersion: FlowVersion, request: UpdateTriggerRequest): FlowVersion {
     const trigger = flowStructureUtil.getStepOrThrow(request.name, flowVersion.trigger)
     const existingSampleData = trigger.type === FlowTriggerType.PIECE ? trigger.settings.sampleData : undefined
-    const updatedTrigger = createTrigger(request.name, request, trigger.nextAction, existingSampleData)
+    const existingVersionUpdateBackup = trigger.type === FlowTriggerType.PIECE ? trigger.settings.versionUpdateBackup : undefined
+    const updatedTrigger = createTrigger(request.name, request, trigger.nextAction, existingSampleData, existingVersionUpdateBackup)
     return flowStructureUtil.transferFlow(flowVersion, (parentStep) => {
         if (parentStep.name === request.name) {
             return updatedTrigger

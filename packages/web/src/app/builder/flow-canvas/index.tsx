@@ -291,7 +291,7 @@ const createGraphKey = (
       }-${
         step.type === FlowActionType.PIECE ||
         step.type === FlowTriggerType.PIECE
-          ? step.settings.pieceName
+          ? `${step.settings.pieceName}-${step.settings.pieceVersion}`
           : ''
       }-${branchesNames}-${childrenKey}}`;
     }, '');

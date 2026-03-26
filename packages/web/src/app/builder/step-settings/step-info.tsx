@@ -8,13 +8,8 @@ import {
   flowPieceUtil,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import {
-  ArrowUpDown,
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  Info,
-} from 'lucide-react';
-import React, { useState } from 'react';
+import { ChevronLeftIcon, ChevronRightIcon, Info } from 'lucide-react';
+import React from 'react';
 
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Button } from '@/components/ui/button';
@@ -45,7 +40,6 @@ const StepInfo: React.FC<StepInfoProps> = ({ step }) => {
   });
 
   const readonly = useBuilderStateContext((state) => state.readonly);
-  const [versionDialogOpen, setVersionDialogOpen] = useState(false);
 
   const isPiece =
     stepMetadata?.type === FlowActionType.PIECE ||
@@ -86,39 +80,20 @@ const StepInfo: React.FC<StepInfoProps> = ({ step }) => {
             <span className="text-xs text-muted-foreground">
               v{exactVersion}
             </span>
-            {!readonly && isPiece && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="size-6"
-                    onClick={() => setVersionDialogOpen(true)}
-                  >
-                    <ArrowUpDown className="size-3.5" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom">
-                  {t('Change Version')}
-                </TooltipContent>
-              </Tooltip>
-            )}
+            {!readonly &&
+              isPiece &&
+              (step.type === FlowActionType.PIECE ||
+                step.type === FlowTriggerType.PIECE) && (
+                <UpdatePieceVersionDialog
+                  step={step}
+                  currentVersion={exactVersion}
+                />
+              )}
           </div>
         )}
       </div>
       <PreviousOrNextButton isNext={false} />
       <PreviousOrNextButton isNext={true} />
-
-      {(step.type === FlowActionType.PIECE ||
-        step.type === FlowTriggerType.PIECE) &&
-        exactVersion && (
-          <UpdatePieceVersionDialog
-            open={versionDialogOpen}
-            onOpenChange={setVersionDialogOpen}
-            step={step}
-            currentVersion={exactVersion}
-          />
-        )}
     </div>
   );
 };
