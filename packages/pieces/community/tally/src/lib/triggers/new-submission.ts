@@ -30,6 +30,16 @@ type TallyWebhookPayload = {
   };
 };
 
+function resolveAnswerWithOptions(
+  answer: unknown,
+  options?: { id: string; text: string }[]
+): unknown {
+  if (!options || options.length === 0 || !Array.isArray(answer)) return answer;
+  const optionMap = Object.fromEntries(options.map((o) => [o.id, o.text]));
+  const resolved = (answer as string[]).map((id) => optionMap[id] ?? id);
+  return resolved.length === 1 ? resolved[0] : resolved;
+}
+
 function resolveFieldValue(field: TallyField): unknown {
   if (
     Array.isArray(field.value) &&
@@ -80,20 +90,19 @@ export const tallyFormsNewSubmission = createTrigger({
       context.propsValue.formId
     );
 
-    const questionTitleById = Object.fromEntries(
-      questions.map((q) => [q.id, q.title])
-    );
+    const questionById = Object.fromEntries(questions.map((q) => [q.id, q]));
 
     return submissions.map((submission) => {
       const fields: Record<string, unknown> = {};
       const labelCount: Record<string, number> = {};
 
       for (const response of submission.responses) {
-        const label = questionTitleById[response.questionId] ?? response.questionId;
+        const question = questionById[response.questionId];
+        const label = question?.title ?? response.questionId;
         const count = labelCount[label] ?? 0;
         const key = count === 0 ? label : `${label} (${count + 1})`;
         labelCount[label] = count + 1;
-        fields[key] = response.answer;
+        fields[key] = resolveAnswerWithOptions(response.answer, question?.options);
       }
 
       return {

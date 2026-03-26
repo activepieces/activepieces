@@ -28,7 +28,8 @@ type TallySubmissionResponse = {
   }[];
 };
 
-type TallyQuestion = { id: string; title: string };
+type TallyQuestionOption = { id: string; text: string };
+type TallyQuestion = { id: string; title: string; options?: TallyQuestionOption[] };
 
 export type TallySubmissionsApiResponse = {
   questions: TallyQuestion[];
