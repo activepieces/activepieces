@@ -13,7 +13,7 @@ import { Migration } from '.'
 const fieldRepo = repoFactory<Field>(FieldEntity)
 
 const TABLES_PIECE_NAME = '@activepieces/piece-tables'
-const TABLES_PIECE_VERSION = '~0.3.0'
+const TABLES_PIECE_VERSION = '0.3.0'
 const FIND_RECORDS_ACTION = 'tables-find-records'
 
 function collectFieldIdsFromFilters(flowVersion: FlowVersion): string[] {
