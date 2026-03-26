@@ -10,7 +10,7 @@ export type EverhourApiCallParams = {
     apiKey: string;
     method: HttpMethod;
     resourceUri: string;
-    query?: Record<string, string | number | string[] | undefined>;
+    query?: Record<string, string | number | undefined>;
     body?: unknown;
 };
 
