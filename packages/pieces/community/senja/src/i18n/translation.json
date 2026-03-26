@@ -1,6 +1,8 @@
 {
   "Collect, manage, and share testimonials with Senja.": "Collect, manage, and share testimonials with Senja.",
+  "API Key": "API Key",
   "To get your Senja API key:\n1. Log in to your Senja account.\n2. Go to **Automate** in the left sidebar.\n3. Click **REST API** and copy your API key.": "To get your Senja API key:\n1. Log in to your Senja account.\n2. Go to **Automate** in the left sidebar.\n3. Click **REST API** and copy your API key.",
+  "Invalid API Key. Please check and try again.": "Invalid API Key. Please check and try again.",
   "List Testimonials": "List Testimonials",
   "Get Testimonial": "Get Testimonial",
   "Create Testimonial": "Create Testimonial",
@@ -134,5 +136,7 @@
   "Only trigger for the selected event types. Leave empty to trigger on all events. Make sure the matching events are enabled in Senja.": "Only trigger for the selected event types. Leave empty to trigger on all events. Make sure the matching events are enabled in Senja.",
   "Testimonial Created": "Testimonial Created",
   "Testimonial Updated": "Testimonial Updated",
-  "Testimonial Deleted": "Testimonial Deleted"
+  "Testimonial Deleted": "Testimonial Deleted",
+  "Media (Images)": "Media (Images)",
+  "List of image URLs to attach to this testimonial. Each entry must be a JSON object with a \"url\" field and optionally \"alt\" text, e.g. {\"url\": \"https://...\", \"alt\": \"description\"}.": "List of image URLs to attach to this testimonial. Each entry must be a JSON object with a \"url\" field and optionally \"alt\" text, e.g. {\"url\": \"https://...\", \"alt\": \"description\"}."
 }
