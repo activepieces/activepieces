@@ -53,6 +53,7 @@ export const loggingUtils = {
 
         return steps
     },
+    maxLogSizeMb: MAX_LOG_SIZE / (1024 * 1024),
     isWithinSizeLimit(steps: Record<string, StepOutput>, maxSize: number = MAX_SIZE_FOR_ALL_ENTRIES): boolean {
         const totalJsonSize = getTotalStepsSize(steps)
         return totalJsonSize <= maxSize
