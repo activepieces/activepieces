@@ -19,14 +19,12 @@ type TallyWebhookResponse = { id: string };
 type TallySubmissionResponse = {
   id: string;
   formId: string;
+  respondentId: string;
   isCompleted: boolean;
   submittedAt: string;
   responses: {
     questionId: string;
-    respondentId: string;
-    submissionId: string;
     answer: string;
-    formattedAnswer: string;
   }[];
 };
 

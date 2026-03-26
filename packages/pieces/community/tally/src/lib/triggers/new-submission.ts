@@ -93,7 +93,7 @@ export const tallyFormsNewSubmission = createTrigger({
         const count = labelCount[label] ?? 0;
         const key = count === 0 ? label : `${label} (${count + 1})`;
         labelCount[label] = count + 1;
-        fields[key] = response.formattedAnswer ?? response.answer;
+        fields[key] = response.answer;
       }
 
       return {
@@ -103,7 +103,7 @@ export const tallyFormsNewSubmission = createTrigger({
         data: {
           responseId: submission.id,
           submissionId: submission.id,
-          respondentId: submission.responses[0]?.respondentId ?? '',
+          respondentId: submission.respondentId,
           formId: submission.formId,
           formName: '',
           createdAt: submission.submittedAt,
