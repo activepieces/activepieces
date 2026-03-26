@@ -12,6 +12,7 @@ import { listRowsAction } from './lib/actions/list-rows';
 import { updateRowAction } from './lib/actions/update-row';
 import { findRowAction } from './lib/actions/find-row';
 import { cleanRowAction } from './lib/actions/clean-row';
+import { aggregateFieldAction } from './lib/actions/aggregate-field';
 import { rowCreatedTrigger } from './lib/triggers/row-created';
 import { rowUpdatedTrigger } from './lib/triggers/row-updated';
 import { rowDeletedTrigger } from './lib/triggers/row-deleted';
@@ -33,6 +34,7 @@ export const baserow = createPiece({
     updateRowAction,
     findRowAction,
     cleanRowAction,
+    aggregateFieldAction,
     createCustomApiCallAction({
       baseUrl: (auth) => {
         if (!auth) {

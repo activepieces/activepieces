@@ -119,4 +119,15 @@ export class BaserowClient {
       })
     );
   }
+  async aggregateField(
+    table_id: number,
+    field_id: number,
+    aggregation_type: string
+  ) {
+    return await this.makeRequest(
+      HttpMethod.GET,
+      `/database/rows/table/${table_id}/aggregation/`,
+      { [`field_${field_id}`]: aggregation_type }
+    );
+  }
 }
