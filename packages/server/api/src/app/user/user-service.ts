@@ -173,6 +173,15 @@ export const userService = (log: FastifyBaseLogger) => ({
         }
     },
     async delete({ id, platformId }: DeleteParams): Promise<void> {
+        const platform = await platformService(log).getOneOrThrow(platformId)
+        if (platform.ownerId === id) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: {
+                    message: 'Platform owner cannot be deleted',
+                },
+            })
+        }
 
         await platformProjectService(log).deletePersonalProjectForUser({
             userId: id,

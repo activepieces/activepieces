@@ -38,6 +38,10 @@
 
 - Always prefix `git push` with `CLAUDE_PUSH=yes` to auto-approve the pre-push lint/test gate, e.g. `CLAUDE_PUSH=yes git push -u origin HEAD`.
 
+## Database Migrations
+
+- Before creating or modifying a database migration, **always read the [Database Migrations Playbook](https://www.activepieces.com/docs/handbook/engineering/playbooks/database-migration#database-migrations)** first. Follow its instructions for generating and structuring migrations.
+
 ## Verification
 
 - Always run `npm run lint-dev` as part of any verification step before considering a task complete.
