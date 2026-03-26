@@ -45,7 +45,7 @@ export const hmacSignature = createAction({
     outputEncoding: Property.StaticDropdown<'hex' | 'base64'>({
       displayName: 'Output Encoding',
       description: 'The encoding of the output signature',
-      required: true,
+      required: false,
       defaultValue: 'hex',
       options: {
         options: [
