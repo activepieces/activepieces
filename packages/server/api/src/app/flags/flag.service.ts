@@ -235,6 +235,12 @@ export const flagService = (log: FastifyBaseLogger) => ({
                 updated,
             },
             {
+                id: ApFlagId.FLOW_RUN_LOG_SIZE_LIMIT_MB,
+                value: system.getNumber(AppSystemProp.MAX_FLOW_RUN_LOG_SIZE_MB),
+                created,
+                updated,
+            },
+            {
                 id: ApFlagId.PAUSED_FLOW_TIMEOUT_DAYS,
                 value: system.getNumber(AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS),
                 created,
