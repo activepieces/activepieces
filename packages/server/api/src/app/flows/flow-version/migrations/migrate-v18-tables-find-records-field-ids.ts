@@ -13,6 +13,7 @@ import { Migration } from '.'
 const fieldRepo = repoFactory<Field>(FieldEntity)
 
 const TABLES_PIECE_NAME = '@activepieces/piece-tables'
+const TABLES_PIECE_VERSION = '~0.3.0'
 const FIND_RECORDS_ACTION = 'tables-find-records'
 
 function collectFieldIdsFromFilters(flowVersion: FlowVersion): string[] {
@@ -67,15 +68,28 @@ export const migrateV18TablesFieldIds: Migration = {
             if (step.type !== FlowActionType.PIECE || step.settings.pieceName !== TABLES_PIECE_NAME) {
                 return step
             }
+
             if (step.settings.actionName !== FIND_RECORDS_ACTION) {
-                return step
+                return {
+                    ...step,
+                    settings: {
+                        ...step.settings,
+                        pieceVersion: TABLES_PIECE_VERSION,
+                    },
+                }
             }
 
             const input = step.settings?.input as Record<string, unknown> | undefined
             const filters = input?.filters as Record<string, unknown> | undefined
             const filtersArray = filters?.filters as { field?: { id?: string, type?: string, name?: string } }[] | undefined
             if (!filtersArray) {
-                return step
+                return {
+                    ...step,
+                    settings: {
+                        ...step.settings,
+                        pieceVersion: TABLES_PIECE_VERSION,
+                    },
+                }
             }
 
             const migratedFilters = filtersArray.map((filter) => {
@@ -95,6 +109,7 @@ export const migrateV18TablesFieldIds: Migration = {
                 ...step,
                 settings: {
                     ...step.settings,
+                    pieceVersion: TABLES_PIECE_VERSION,
                     input: {
                         ...input,
                         filters: {
