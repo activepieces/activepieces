@@ -8,6 +8,15 @@ import { getAccountAction } from './action/get-account';
 import { getPersonAction } from './action/get-person';
 import { getDealAction } from './action/get-deal';
 
+// Actions — Create
+import { createPersonAction } from './action/create-person';
+import { createAccountAction } from './action/create-account';
+import { createDealAction } from './action/create-deal';
+
+// Actions — Delete
+import { deletePersonAction } from './action/delete-person';
+import { deleteAccountAction } from './action/delete-account';
+
 // Actions — Find or Add
 import { findOrAddPersonAction } from './action/find-or-add-person';
 import { findOrAddDealAction } from './action/find-or-add-deal';
@@ -20,6 +29,7 @@ import { updateDealAction } from './action/update-deal';
 // Actions — List
 import { listPersonsAction } from './action/list-persons';
 import { listAccountsAction } from './action/list-accounts';
+import { listDealsAction } from './action/list-deals';
 
 // Actions — Billing
 import { changeAccountPlanAction } from './action/change-account-plan';
@@ -62,6 +72,14 @@ export const outseta = createPiece({
     getAccountAction,
     getPersonAction,
     getDealAction,
+    // Create
+    createPersonAction,
+    createAccountAction,
+    createDealAction,
+    // Delete
+    deletePersonAction,
+    deleteAccountAction,
+    deleteDealAction,
     // Find or Add
     findOrAddPersonAction,
     findOrAddDealAction,
@@ -72,6 +90,7 @@ export const outseta = createPiece({
     // List
     listPersonsAction,
     listAccountsAction,
+    listDealsAction,
     // Billing
     changeAccountPlanAction,
     cancelSubscriptionAction,
@@ -83,7 +102,6 @@ export const outseta = createPiece({
     // CRM
     addPersonToAccountAction,
     removePersonFromAccountAction,
-    deleteDealAction,
     addCustomActivityAction,
     // Email
     subscribeToEmailListAction,
