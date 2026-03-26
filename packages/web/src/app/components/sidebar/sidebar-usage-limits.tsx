@@ -23,8 +23,8 @@ const SidebarUsageLimits = React.memo(() => {
   const isPlatformAdmin = currentUser.data?.platformRole === PlatformRole.ADMIN;
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
 
-  if (true || edition !== ApEdition.CLOUD) {
-    // TODO: remove dummy condition
+  if (edition !== ApEdition.CLOUD) {
+    return null;
   }
 
   if (isNil(project)) {
@@ -116,9 +116,7 @@ const UsageRow = ({
       </div>
       <div className="flex items-center gap-2 text-foreground">
         {isUnlimited ? (
-          <span className="text-foreground bg-muted px-2 py-1 rounded-md">
-            ∞ {t('Unlimited')}
-          </span>
+          <span className="text-muted-foreground">{t('Unlimited')}</span>
         ) : suffix ? (
           <span>
             {formatUtils.formatNumber(value ?? 0)} {suffix}

@@ -125,7 +125,7 @@ const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
   const { pieces } = piecesHooks.usePieces({});
 
   const handleRowClick = useCallback(
-    (item: TreeItem) => {
+    (item: TreeItem, ctrlKey?: boolean) => {
       if (item.type === 'folder') {
         toggleFolder(item.id);
       } else if (item.type === 'flow') {
@@ -147,7 +147,11 @@ const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
           folderName,
           projectName: currentProjectName,
         });
-        navigate(href);
+        if (ctrlKey) {
+          window.open(href, '_blank');
+        } else {
+          navigate(href);
+        }
       } else if (item.type === 'table') {
         const href = authenticationSession.appendProjectRoutePrefix(
           `/tables/${item.id}`,
@@ -163,7 +167,11 @@ const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
           folderName,
           projectName: currentProjectName,
         });
-        navigate(href);
+        if (ctrlKey) {
+          window.open(href, '_blank');
+        } else {
+          navigate(href);
+        }
       }
     },
     [navigate, toggleFolder, folders, currentProjectName],
