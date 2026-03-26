@@ -38,11 +38,42 @@ import { useBuilderStateContext } from '../../builder-hooks';
 
 import { changeVersionUtils, VersionChangeType } from './change-version-utils';
 
-const ChangeVersionDialog: React.FC<ChangeVersionDialogProps> = ({
+const UpdatePieceVersionDialog: React.FC<UpdatePieceVersionDialogProps> = ({
   open,
   onOpenChange,
   step,
   currentVersion,
+}) => {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{t('Update Piece Version')}</DialogTitle>
+        </DialogHeader>
+        <UpdatePieceVersionForm
+          key={open ? 'open' : 'closed'}
+          step={step}
+          currentVersion={currentVersion}
+          onOpenChange={onOpenChange}
+        />
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+export { UpdatePieceVersionDialog };
+
+type UpdatePieceVersionDialogProps = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  step: PieceAction | PieceTrigger;
+  currentVersion: string;
+};
+
+const UpdatePieceVersionForm: React.FC<UpdatePieceVersionFormProps> = ({
+  step,
+  currentVersion,
+  onOpenChange,
 }) => {
   const pieceName = step.settings.pieceName;
   const actionOrTriggerName =
@@ -159,82 +190,71 @@ const ChangeVersionDialog: React.FC<ChangeVersionDialogProps> = ({
   });
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{t('Change Version')}</DialogTitle>
-        </DialogHeader>
+    <Form {...form}>
+      <form
+        className="flex flex-col gap-4"
+        onSubmit={form.handleSubmit((data) => applyVersionChange(data))}
+      >
+        <FormField
+          control={form.control}
+          name="version"
+          render={({ field }) => (
+            <FormItem className="flex flex-col gap-2">
+              <FormLabel>{t('Version')}</FormLabel>
+              <SearchableSelect
+                options={versionOptions}
+                value={field.value}
+                loading={isLoading}
+                onChange={(v) => {
+                  if (v) {
+                    field.onChange(v);
+                  }
+                }}
+                placeholder={t('Search versions...')}
+              />
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-        <Form {...form}>
-          <form
-            className="flex flex-col gap-4"
-            onSubmit={form.handleSubmit((data) => applyVersionChange(data))}
-          >
-            <FormField
-              control={form.control}
-              name="version"
-              render={({ field }) => (
-                <FormItem className="flex flex-col gap-2">
-                  <FormLabel>{t('Version')}</FormLabel>
-                  <SearchableSelect
-                    options={versionOptions}
-                    value={field.value}
-                    loading={isLoading}
-                    onChange={(v) => {
-                      if (v) {
-                        field.onChange(v);
-                      }
-                    }}
-                    placeholder={t('Search versions...')}
-                  />
-                  <FormMessage />
-                </FormItem>
+        {isAlertfulChange && (
+          <Alert variant="warning">
+            <AlertTriangle className="size-4" />
+            <AlertDescription>
+              {t(
+                'The step input will be reset and the step will need to be retested.',
               )}
-            />
+            </AlertDescription>
+          </Alert>
+        )}
 
-            {isAlertfulChange && (
-              <Alert variant="warning">
-                <AlertTriangle className="size-4" />
-                <AlertDescription>
-                  {t(
-                    'The step input will be reset and the step will need to be retested.',
-                  )}
-                </AlertDescription>
-              </Alert>
-            )}
+        {form.formState.errors.root?.serverError && (
+          <p className="text-sm font-medium text-destructive">
+            {form.formState.errors.root.serverError.message}
+          </p>
+        )}
 
-            {form.formState.errors.root?.serverError && (
-              <p className="text-sm font-medium text-destructive">
-                {form.formState.errors.root.serverError.message}
-              </p>
-            )}
-
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-              >
-                {t('Cancel')}
-              </Button>
-              <Button type="submit" loading={isPending}>
-                {t('Apply')}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+        <DialogFooter>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+          >
+            {t('Cancel')}
+          </Button>
+          <Button type="submit" loading={isPending}>
+            {t('Apply')}
+          </Button>
+        </DialogFooter>
+      </form>
+    </Form>
   );
 };
 
-export { ChangeVersionDialog };
-
-type ChangeVersionDialogProps = {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+type UpdatePieceVersionFormProps = {
   step: PieceAction | PieceTrigger;
   currentVersion: string;
+  onOpenChange: (open: boolean) => void;
 };
 
 const FormSchema = z.object({

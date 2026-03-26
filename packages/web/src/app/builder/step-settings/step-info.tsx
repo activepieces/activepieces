@@ -33,7 +33,7 @@ import {
 
 import { useBuilderStateContext } from '../builder-hooks';
 
-import { ChangeVersionDialog } from './change-piece-version-dialog.tsx/change-version-dialog';
+import { UpdatePieceVersionDialog } from './update-piece-version-dialog/update-piece-version-dialog';
 
 type StepInfoProps = {
   step: FlowAction | FlowTrigger;
@@ -112,7 +112,7 @@ const StepInfo: React.FC<StepInfoProps> = ({ step }) => {
       {(step.type === FlowActionType.PIECE ||
         step.type === FlowTriggerType.PIECE) &&
         exactVersion && (
-          <ChangeVersionDialog
+          <UpdatePieceVersionDialog
             open={versionDialogOpen}
             onOpenChange={setVersionDialogOpen}
             step={step}
