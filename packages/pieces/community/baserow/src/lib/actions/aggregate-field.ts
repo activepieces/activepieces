@@ -72,6 +72,6 @@ export const aggregateFieldAction = createAction({
       field_id,
       aggregation_type
     )) as Record<string, unknown>;
-    return { result: raw[`field_${field_id}`] };
+    return { result: raw[`field_${field_id}_${aggregation_type}`] };
   },
 });
