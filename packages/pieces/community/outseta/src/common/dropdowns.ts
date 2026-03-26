@@ -100,7 +100,7 @@ export function planUidDropdown(options?: {
     auth: outsetaAuth,
     displayName: options?.displayName ?? 'Plan',
     description: options?.description ?? 'Select the subscription plan.',
-    refreshers: options?.refreshers ?? [],
+    refreshers: options?.refreshers ?? ['accountUid'],
     required: options?.required ?? true,
     options: async ({ auth, accountUid }) => {
       const client = makeClient(auth);
@@ -146,7 +146,7 @@ export function addOnUidDropdown(options?: {
     auth: outsetaAuth,
     displayName: 'Add-On',
     description: 'Select the metered add-on.',
-    refreshers: options?.refreshers ?? [],
+    refreshers: options?.refreshers ?? ['accountUid'],
     required: options?.required ?? true,
     options: async ({ auth, accountUid }) => {
       const client = makeClient(auth);

@@ -22,7 +22,7 @@ export const addInvoicePaymentAction = createAction({
     amount: Property.Number({
       displayName: 'Amount',
       required: true,
-      description: 'Payment amount (use negative value).',
+      description: 'Payment amount as a negative number (e.g. -49.00), as required by the Outseta API.',
     }),
   },
   async run(context) {

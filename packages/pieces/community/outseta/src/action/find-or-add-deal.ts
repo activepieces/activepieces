@@ -60,7 +60,9 @@ export const findOrAddDealAction = createAction({
 
     // If person found, search for deals in the pipeline
     if (person) {
-      const deals = await client.getAllPages<any>('/api/v1/crm/deals');
+      const deals = await client.getAllPages<any>(
+        `/api/v1/crm/deals?$filter=DealPipelineStage/DealPipeline/Uid eq '${encodeURIComponent(context.propsValue.pipelineUid)}'`
+      );
       const existingDeal = deals.find(
         (deal: any) =>
           deal.DealPipelineStage?.DealPipeline?.Uid ===
