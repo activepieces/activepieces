@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "es2020",
+    "outDir": "./dist",
+    "rootDir": ".",
+    "declaration": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "strict": false,
+    "moduleResolution": "node",
+    "baseUrl": "../../../..",
+    "paths": {
+      "@activepieces/pieces-framework": ["packages/pieces/community/framework/src/index.ts"],
+      "@activepieces/pieces-common": ["packages/pieces/community/common/src/index.ts"],
+      "@activepieces/shared": ["packages/shared/src/index.ts"]
+    }
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["src/index.full.ts", "dist"]
+}

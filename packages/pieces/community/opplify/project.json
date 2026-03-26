@@ -1,0 +1,19 @@
+{
+  "name": "pieces-opplify",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/opplify/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/opplify",
+        "tsConfig": "packages/pieces/community/opplify/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/opplify/package.json",
+        "main": "packages/pieces/community/opplify/src/index.ts",
+        "assets": ["packages/pieces/community/opplify/*.md"]
+      }
+    }
+  }
+}
