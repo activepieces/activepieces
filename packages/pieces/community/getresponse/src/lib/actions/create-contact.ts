@@ -6,6 +6,7 @@ import {
   flattenGetResponseContact,
 } from '../common/client';
 import { getresponseProps } from '../common/props';
+import { requireString } from '../common/utils';
 
 export const createContactAction = createAction({
   auth: getresponseAuth,
@@ -46,10 +47,3 @@ export const createContactAction = createAction({
     return flattenGetResponseContact(contact);
   },
 });
-
-function requireString(value: string | undefined, fieldName: string): string {
-  if (!value) {
-    throw new Error(`${fieldName} is required.`);
-  }
-  return value;
-}

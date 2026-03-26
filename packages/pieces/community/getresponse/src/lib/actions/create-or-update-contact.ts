@@ -8,6 +8,7 @@ import {
   updateGetResponseContact,
 } from '../common/client';
 import { getresponseProps } from '../common/props';
+import { requireString } from '../common/utils';
 
 export const createOrUpdateContactAction = createAction({
   auth: getresponseAuth,
@@ -96,11 +97,4 @@ async function findExactContact({
   return contacts.find(
     (contact) => contact.email.toLowerCase() === email.toLowerCase(),
   );
-}
-
-function requireString(value: string | undefined, fieldName: string): string {
-  if (!value) {
-    throw new Error(`${fieldName} is required.`);
-  }
-  return value;
 }

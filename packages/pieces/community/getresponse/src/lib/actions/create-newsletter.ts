@@ -6,6 +6,7 @@ import {
   flattenGetResponseNewsletter,
 } from '../common/client';
 import { getresponseProps } from '../common/props';
+import { requireString } from '../common/utils';
 
 export const createNewsletterAction = createAction({
   auth: getresponseAuth,
@@ -92,10 +93,3 @@ export const createNewsletterAction = createAction({
     return flattenGetResponseNewsletter(newsletter);
   },
 });
-
-function requireString(value: string | undefined, fieldName: string): string {
-  if (!value) {
-    throw new Error(`${fieldName} is required.`);
-  }
-  return value;
-}
