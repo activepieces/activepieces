@@ -1,5 +1,5 @@
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { BLAND_AI_BASE_URL, blandHeaders } from '../auth';
+import { BLAND_AI_BASE_URL } from '../auth';
 
 export async function blandApiCall<T>(params: {
   apiKey: string;
@@ -11,7 +11,10 @@ export async function blandApiCall<T>(params: {
   const response = await httpClient.sendRequest<T>({
     method: params.method,
     url: `${BLAND_AI_BASE_URL}${params.path}`,
-    headers: blandHeaders(params.apiKey),
+    headers: {
+      authorization: params.apiKey,
+      'Content-Type': 'application/json',
+    },
     body: params.body,
     queryParams: params.query,
   });

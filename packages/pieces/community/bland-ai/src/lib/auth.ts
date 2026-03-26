@@ -5,7 +5,10 @@ export const BLAND_AI_BASE_URL = 'https://api.bland.ai/v1';
 
 export const blandAiAuth = PieceAuth.SecretText({
   displayName: 'API Key',
-  description: 'Your Bland AI API key.',
+  description: `To get your API key:
+1. Log in to your [Bland AI dashboard](https://app.bland.ai)
+2. Go to **Profile** (bottom-left menu) -> **Settings**
+3. Click **API Keys** and copy your key`,
   required: true,
   validate: async ({ auth }) => {
     try {
@@ -43,9 +46,3 @@ export const blandAiAuth = PieceAuth.SecretText({
   },
 });
 
-export function blandHeaders(apiKey: string): Record<string, string> {
-  return {
-    authorization: apiKey,
-    'Content-Type': 'application/json',
-  };
-}

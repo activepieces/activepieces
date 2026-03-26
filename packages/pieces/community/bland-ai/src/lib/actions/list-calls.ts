@@ -31,8 +31,8 @@ export const listCalls = createAction({
     const safeLimit = Math.max(1, Math.min(100, limit ?? 10));
     const query: Record<string, string> = {
       limit: String(safeLimit),
-      ...(fromNumber ? { from: fromNumber } : {}),
-      ...(toNumber ? { to: toNumber } : {}),
+      ...(fromNumber ? { from_number: fromNumber } : {}),
+      ...(toNumber ? { to_number: toNumber } : {}),
     };
 
     return blandApiCall({
