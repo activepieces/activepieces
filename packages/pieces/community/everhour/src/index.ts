@@ -6,10 +6,15 @@ import { stopTimerAction } from './lib/actions/stop-timer';
 
 export const everhour = createPiece({
     displayName: 'Everhour',
-    auth: everhourAuth,
-    minimumSupportedRelease: '0.20.0',
-    logoUrl: 'https://cdn.activepieces.com/pieces/everhour.png',
+    logoUrl: 'add/everhour.png', // add the real logo here 
     authors: ['Slim-Hady'],
-    actions: [createTaskAction, startTimerAction, stopTimerAction],
+    auth: everhourAuth,
+    actions: [
+        createTaskAction,
+        startTimerAction,
+        stopTimerAction,
+    ],
     triggers: [],
 });
+
+export { everhourAuth };
