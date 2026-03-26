@@ -2,6 +2,7 @@ import { Readable } from 'stream'
 import { apId, FileType, isNil, ProjectId } from '@activepieces/shared'
 import { DeleteObjectsCommand, GetObjectCommand, PutObjectCommand, S3, S3ClientConfig } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
+import { NodeHttpHandler } from '@smithy/node-http-handler'
 import contentDisposition from 'content-disposition'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
@@ -137,7 +138,12 @@ export const s3Helper = (log: FastifyBaseLogger) => ({
 
 const chunkArray = (array: string[], chunkSize: number) => Array.from({ length: Math.ceil(array.length / chunkSize) }, (_, i) => array.slice(i * chunkSize, (i + 1) * chunkSize))
 
-const getS3Client = () => {
+let cachedS3Client: S3 | null = null
+
+const getS3Client = (): S3 => {
+    if (cachedS3Client) {
+        return cachedS3Client
+    }
     const useIRSA = system.getBoolean(AppSystemProp.S3_USE_IRSA)
     const region = system.get<string>(AppSystemProp.S3_REGION)
     const endpoint = system.get<string>(AppSystemProp.S3_ENDPOINT)
@@ -145,6 +151,11 @@ const getS3Client = () => {
         region,
         forcePathStyle: endpoint ? true : undefined,
         endpoint,
+        requestHandler: new NodeHttpHandler({
+            connectionTimeout: 5_000,
+            requestTimeout: 120_000,
+        }),
+        maxAttempts: 3,
     }
     if (!useIRSA) {
         const accessKeyId = system.getOrThrow<string>(AppSystemProp.S3_ACCESS_KEY_ID)
@@ -154,7 +165,8 @@ const getS3Client = () => {
             secretAccessKey,
         }
     }
-    return new S3(options)
+    cachedS3Client = new S3(options)
+    return cachedS3Client
 }
 
 const getS3BucketName = () => {

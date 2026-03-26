@@ -1,18 +1,16 @@
-import { Platform, SecretManager } from '@activepieces/shared'
+import { Platform, SecretManagerConnection } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
-import {
-    ApIdSchema,
-    BaseColumnSchemaPart,
-} from '../../database/database-common'
+import { ApIdSchema, BaseColumnSchemaPart } from '../../database/database-common'
 import { EncryptedObject } from '../../helper/encryption'
 
-export type SecretManagerEntitySchema = Omit<SecretManager, 'auth'> & {
+export type SecretManagerEntitySchema = Omit<SecretManagerConnection, 'auth'> & {
     platform?: Platform
     auth?: EncryptedObject
+    projectIds?: string[]
 }
 
 export const SecretManagerEntity = new EntitySchema<SecretManagerEntitySchema>({
-    name: 'secret_manager',
+    name: 'secret_manager_connection',
     columns: {
         ...BaseColumnSchemaPart,
         platformId: {
@@ -23,6 +21,19 @@ export const SecretManagerEntity = new EntitySchema<SecretManagerEntitySchema>({
             type: String,
             nullable: false,
         },
+        name: {
+            type: String,
+            nullable: false,
+        },
+        scope: {
+            type: String,
+            nullable: false,
+            default: 'PLATFORM',
+        },
+        projectIds: {
+            type: 'jsonb',
+            nullable: true,
+        },
         auth: {
             type: 'jsonb',
             nullable: true,
@@ -30,14 +41,8 @@ export const SecretManagerEntity = new EntitySchema<SecretManagerEntitySchema>({
     },
     indices: [
         {
-            name: 'idx_secret_manager_platform_id',
+            name: 'idx_secret_manager_connection_platform_id',
             columns: ['platformId'],
-        },
-    ],
-    uniques: [
-        {
-            name: 'idx_secret_manager_platform_id_provider_id',
-            columns: ['platformId', 'providerId'],
         },
     ],
     relations: {
@@ -48,7 +53,7 @@ export const SecretManagerEntity = new EntitySchema<SecretManagerEntitySchema>({
             onDelete: 'CASCADE',
             joinColumn: {
                 name: 'platformId',
-                foreignKeyConstraintName: 'fk_secret_manager_platform_id',
+                foreignKeyConstraintName: 'fk_secret_manager_connection_platform_id',
             },
         },
     },

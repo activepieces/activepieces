@@ -1,11 +1,9 @@
-import { inspect } from 'util'
 import {
     createNotifyClient,
     createRpcClient,
     createRpcServer,
     EngineContract,
     EngineResponse,
-    EngineResponseStatus,
     ERROR_MESSAGES_TO_REDACT,
     WorkerContract,
     WorkerNotifyContract,
@@ -13,7 +11,6 @@ import {
 import { io, type Socket } from 'socket.io-client'
 import { execute } from './operations'
 import { progressService } from './services/progress.service'
-import { utils } from './utils'
 
 let socket: Socket | undefined
 let workerClient: WorkerContract | undefined
@@ -29,7 +26,7 @@ export const workerSocket = {
             reconnection: true,
         })
 
-        workerClient = createRpcClient<WorkerContract>(socket)
+        workerClient = createRpcClient<WorkerContract>(socket, 60_000)
         notifyClient = createNotifyClient<WorkerNotifyContract>(socket)
 
         const originalLog = console.log
@@ -56,23 +53,14 @@ export const workerSocket = {
 
         createRpcServer<EngineContract>(socket, {
             executeOperation: async ({ operationType, operation }): Promise<EngineResponse<unknown>> => {
-                const result = await utils.tryCatchAndThrowOnEngineError(async () => {
-                    progressService.init()
+                progressService.init()
+                try {
                     const response = await execute(operationType, operation)
-                    await progressService.shutdown()
                     return JSON.parse(JSON.stringify(response)) as EngineResponse<unknown>
-                })
-
-                if (result.error) {
-                    console.error(utils.formatExecutionError(result.error))
-                    return {
-                        response: undefined,
-                        status: EngineResponseStatus.INTERNAL_ERROR,
-                        error: utils.formatExecutionError(result.error),
-                    }
                 }
-
-                return result.data
+                finally {
+                    await progressService.shutdown()
+                }
             },
         })
 

@@ -1,12 +1,11 @@
 import {
-  ApEdition,
-  ApFlagId,
   WorkerMachineStatus,
   WorkerMachineType,
   WorkerMachineWithStatus,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Server, Clock, Cpu, MemoryStick, HardDrive, Zap } from 'lucide-react';
+import prettyBytes from 'pretty-bytes';
 import React from 'react';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
@@ -30,14 +29,12 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { workersQueries } from '@/features/platform-admin';
-import { flagsHooks } from '@/hooks/flags-hooks';
 import { useTimeAgo } from '@/hooks/use-time-ago';
 import { cn } from '@/lib/utils';
 
 import { WorkerConfigsModal } from './worker-configs-dialog';
 
 export default function WorkersPage() {
-  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const isCloud = true;
   const { data: workersData, isLoading } = workersQueries.useWorkerMachines();
 
@@ -175,11 +172,8 @@ function WorkerCard({ worker, index, isCloud }: WorkerCardProps) {
     totalCpuCores,
   } = worker.information;
 
-  const usedRamGb =
-    (totalAvailableRamInBytes * (ramUsagePercentage / 100)) / 1024 ** 3;
-  const totalRamGb = totalAvailableRamInBytes / 1024 ** 3;
-  const usedDiskGb = diskInfo.used / 1024 ** 3;
-  const totalDiskGb = diskInfo.total / 1024 ** 3;
+  const usedRamBytes = totalAvailableRamInBytes * (ramUsagePercentage / 100);
+  const usedDiskBytes = diskInfo.used;
 
   const version = workerProps.version ?? 'v0.39.4';
 
@@ -257,7 +251,9 @@ function WorkerCard({ worker, index, isCloud }: WorkerCardProps) {
             </>
           }
           value={ramUsagePercentage}
-          detail={`${usedRamGb.toFixed(1)} / ${totalRamGb.toFixed(1)} GB`}
+          detail={`${prettyBytes(usedRamBytes, {
+            binary: true,
+          })} / ${prettyBytes(totalAvailableRamInBytes, { binary: true })}`}
         />
         <StatBar
           label={
@@ -267,7 +263,9 @@ function WorkerCard({ worker, index, isCloud }: WorkerCardProps) {
             </>
           }
           value={diskInfo.percentage}
-          detail={`${usedDiskGb.toFixed(1)} / ${totalDiskGb.toFixed(1)} GB`}
+          detail={`${prettyBytes(usedDiskBytes, {
+            binary: true,
+          })} / ${prettyBytes(diskInfo.total, { binary: true })}`}
         />
       </CardContent>
 

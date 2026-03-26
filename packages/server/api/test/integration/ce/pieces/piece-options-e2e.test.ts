@@ -5,7 +5,7 @@
  *   API endpoint → BullMQ queue → worker poll (Socket.IO RPC) → piece install → sandbox execution → response back via BullMQ
  *
  * Prerequisites:
- *   - Engine must be built (cache/v7/common/main.js)
+ *   - Engine must be built (cache/v8/common/main.js)
  *   - bun must be available for piece installation
  *   - Redis (in-memory via AP_REDIS_TYPE=MEMORY) is started automatically
  */

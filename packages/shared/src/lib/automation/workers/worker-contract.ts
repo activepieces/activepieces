@@ -27,11 +27,12 @@ export type GetPieceRequest = {
     name: string
     version?: string
     projectId?: string
+    platformId?: string
 }
 
 export type WorkerToApiContract = {
     poll(input: WorkerMachineHealthcheckRequest): Promise<ConsumeJobRequest | null>
-    completeJob(input: ConsumeJobResponse & { jobId: string }): Promise<void>
+    completeJob(input: ConsumeJobResponse & { jobId: string, token: string, queueName: string }): Promise<void>
     updateRunProgress(input: UpdateRunProgressRequest): Promise<void>
     uploadRunLog(input: UploadRunLogsRequest): Promise<void>
     sendFlowResponse(input: SendFlowResponseRequest): Promise<void>
@@ -41,8 +42,14 @@ export type WorkerToApiContract = {
     getFlowVersion(input: GetFlowVersionForWorkerRequest): Promise<FlowVersion | null>
     getPiece(input: GetPieceRequest): Promise<unknown>
     getPieceArchive(input: { archiveId: string }): Promise<Buffer>
-    extendLock(input: { jobId: string }): Promise<void>
+    extendLock(input: { jobId: string, token: string, queueName: string }): Promise<void>
     getPayloadFile(input: { fileId: string, projectId: string }): Promise<Buffer>
     getUsedPieces(input: Record<string, never>): Promise<PiecePackage[]>
     markPieceAsUsed(input: { pieces: PiecePackage[] }): Promise<void>
+    disableFlow(input: DisableFlowRequest): Promise<void>
+}
+
+export type DisableFlowRequest = {
+    flowId: string
+    projectId: string
 }

@@ -112,15 +112,22 @@ export const listParentObjectIdDropdown = (params: DropdownParams) =>
 		},
 	});
 
+function toSingular(title: string): string {
+	if (title.endsWith('es')) return title.slice(0, -2);
+	if (title.endsWith('s')) return title.slice(0, -1);
+	return title;
+}
+
 async function createPropertyDefinition(
 	property: AttributeResponse,
 	objectType:'lists'|'objects',
 	objectTypeId: string,
 	accessToken: string,
-	isSearch=false
+	isSearch=false,
+	allOptional=false,
 ) {
 	const { api_slug, title, is_required, type, is_multiselect } = property;
-	const required = isSearch ? false : is_required
+	const required = isSearch || allOptional ? false : is_required
 
 	switch (type) {
 		case 'text':
@@ -153,12 +160,20 @@ async function createPropertyDefinition(
 				displayName: title,
 				required,
 			});
-		case 'actor-reference':
-		case 'email-address':
-		case 'domain': {
+		case 'actor-reference': {
 			const basicField = is_multiselect ? Property.Array : Property.ShortText;
 			return basicField({
 				displayName: title,
+				required,
+			});
+		}
+		case 'email-address':
+		case 'domain': {
+			// Filter API only accepts a single plain string; force ShortText in search mode
+			const basicField = isSearch || !is_multiselect ? Property.ShortText : Property.Array;
+			const singularTitle = isSearch ? toSingular(title) : title;
+			return basicField({
+				displayName: singularTitle,
 				required,
 			});
 		}
@@ -209,7 +224,7 @@ async function createPropertyDefinition(
 	}
 }
 
-export const objectFields =(isSearch=false)=> Property.DynamicProperties({
+export const objectFields =(isSearch=false, allOptional=false)=> Property.DynamicProperties({
 	auth: attioAuth,
 	displayName: 'Object Attributes',
 	refreshers: ['objectTypeId'],
@@ -232,14 +247,14 @@ export const objectFields =(isSearch=false)=> Property.DynamicProperties({
 
 			const { api_slug } = attribute;
 
-			props[api_slug] =await createPropertyDefinition(attribute,'objects', objectId, accessToken,isSearch);
+			props[api_slug] =await createPropertyDefinition(attribute,'objects', objectId, accessToken, isSearch, allOptional);
 		}
 
 		return Object.fromEntries(Object.entries(props).filter(([_, prop]) => prop !== null));
 	},
 });
 
-export const listFields =(isSearch=false)=> Property.DynamicProperties({
+export const listFields =(isSearch=false, allOptional=false)=> Property.DynamicProperties({
 	auth: attioAuth,
 	displayName: 'List Attributes',
 	refreshers: ['listId'],
@@ -262,7 +277,7 @@ export const listFields =(isSearch=false)=> Property.DynamicProperties({
 
 			const { api_slug } = attribute;
 
-			props[api_slug] =await createPropertyDefinition(attribute,'lists', list_id, accessToken,isSearch);
+			props[api_slug] =await createPropertyDefinition(attribute,'lists', list_id, accessToken, isSearch, allOptional);
 		}
 
 		return Object.fromEntries(Object.entries(props).filter(([_, prop]) => prop !== null));
@@ -274,6 +289,7 @@ export async function formatInputFields(
 	objectType:'lists'|'objects',
 	objectId: string,
 	inputValues: Record<string, any>,
+	isSearch = false,
 ) {
 	const attributes = await attioPaginatedApiCall<AttributeResponse>({
 		method: HttpMethod.GET,
@@ -296,11 +312,24 @@ export async function formatInputFields(
 
 		switch (fieldType) {
 			case 'phone-number':
-				formattedFields[key] = [value];
+				formattedFields[key] = isSearch ? value : [value];
 				break;
+			case 'email-address':
 			case 'domain':
+				if (isSearch) {
+					// Attio filter API expects a plain string for email/domain attributes, not an array
+					formattedFields[key] = Array.isArray(value) ? value[0] : value;
+				} else {
+					formattedFields[key] = typeof value === 'string' ? [value] : value;
+				}
+				break;
 			case 'select':
-				formattedFields[key] = typeof value === 'string' ? [value] : value;
+				if (isSearch) {
+					// Attio filter API expects a plain string for select attributes, not an array
+					formattedFields[key] = Array.isArray(value) ? value[0] : value;
+				} else {
+					formattedFields[key] = typeof value === 'string' ? [value] : value;
+				}
 				break;
 			default:
 				formattedFields[key] = value;

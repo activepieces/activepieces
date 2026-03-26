@@ -5,12 +5,11 @@ import {
 } from '@activepieces/shared'
 import { provisioner } from '../../cache/provisioner'
 import { workerSettings } from '../../config/worker-settings'
-import { sandboxManager } from '../sandbox-manager'
-import { JobContext, JobHandler, JobResult } from '../types'
+import { JobContext, JobHandler, JobResultKind, SynchronousJobResult } from '../types'
 
-export const executePropertyJob: JobHandler<ExecutePropertyJobData> = {
+export const executePropertyJob: JobHandler<ExecutePropertyJobData, SynchronousJobResult> = {
     jobType: WorkerJobType.EXECUTE_PROPERTY,
-    async execute(ctx: JobContext, data: ExecutePropertyJobData): Promise<JobResult> {
+    async execute(ctx: JobContext, data: ExecutePropertyJobData): Promise<SynchronousJobResult> {
         const settings = workerSettings.getSettings()
         const timeoutInSeconds = settings.TRIGGER_TIMEOUT_SECONDS
 
@@ -19,7 +18,7 @@ export const executePropertyJob: JobHandler<ExecutePropertyJobData> = {
             codeSteps: [],
         })
 
-        const sandbox = sandboxManager.acquire({ log: ctx.log, apiClient: ctx.apiClient })
+        const sandbox = ctx.sandboxManager.acquire({ log: ctx.log, apiClient: ctx.apiClient })
         try {
             await sandbox.start({
                 flowVersionId: undefined,
@@ -48,18 +47,20 @@ export const executePropertyJob: JobHandler<ExecutePropertyJobData> = {
             )
 
             return {
-                response: {
-                    status: result.engine.status,
-                    response: result.engine.response,
-                },
+                kind: JobResultKind.SYNCHRONOUS,
+                status: result.status,
+                response: result.response,
+                errorMessage: result.error,
+                stdOut: result.stdOut,
+                stdError: result.stdError,
             }
         }
         catch (e) {
-            await sandboxManager.invalidate(ctx.log)
+            await ctx.sandboxManager.invalidate(ctx.log)
             throw e
         }
         finally {
-            await sandboxManager.release(ctx.log)
+            await ctx.sandboxManager.release(ctx.log)
         }
     },
 }

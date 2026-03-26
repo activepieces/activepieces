@@ -16,18 +16,17 @@ const getIsolateExecutableName = (): string => {
 
 const isolateBinaryPath = path.resolve(process.cwd(), 'packages/server/api/src/assets', getIsolateExecutableName())
 const etcDir = path.resolve(process.cwd(), 'packages/server/api/src/assets/etc')
-const SANDBOX_NUMBER = 1
 
-export function isolateProcess(log: SandboxLogger, enginePath: string, _codeDirectory: string): SandboxProcessMaker {
+export function isolateProcess(log: SandboxLogger, enginePath: string, _codeDirectory: string, boxId: number): SandboxProcessMaker {
     return {
         create: async (params: CreateSandboxProcessParams) => {
             const { sandboxId, mounts, env } = params
 
-            await execPromise(`${isolateBinaryPath} --box-id=${SANDBOX_NUMBER} --cleanup`)
-            await execPromise(`${isolateBinaryPath} --box-id=${SANDBOX_NUMBER} --init`)
+            await execPromise(`${isolateBinaryPath} --box-id=${boxId} --cleanup`)
+            await execPromise(`${isolateBinaryPath} --box-id=${boxId} --init`)
 
             // Pre-create /root and mount subdirs in the sandbox rootfs (isolate doesn't create /root by default)
-            const sandboxRootfs = `/var/local/lib/isolate/${SANDBOX_NUMBER}/root`
+            const sandboxRootfs = `/var/local/lib/isolate/${boxId}/root`
             await mkdir(`${sandboxRootfs}/root/common`, { recursive: true })
             await mkdir(`${sandboxRootfs}/root/codes`, { recursive: true })
 
@@ -54,7 +53,7 @@ export function isolateProcess(log: SandboxLogger, enginePath: string, _codeDire
                 '--dir=/usr/src/node_modules/',
                 ...dirArgs,
                 '--share-net',
-                `--box-id=${SANDBOX_NUMBER}`,
+                `--box-id=${boxId}`,
                 '--processes',
                 '--chdir=/root',
                 ...envArgs,
