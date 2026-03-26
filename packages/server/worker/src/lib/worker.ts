@@ -2,6 +2,7 @@ import { createServer } from 'http'
 import os from 'os'
 import { systemUsage } from '@activepieces/server-utils'
 import {
+    ActivepiecesError,
     ConsumeJobRequest,
     createRpcClient,
     EngineResponseStatus,
@@ -155,7 +156,7 @@ async function pollAndExecute(apiClient: WorkerToApiContract, sbManager: Sandbox
                 status: execError
                     ? EngineResponseStatus.INTERNAL_ERROR
                     : result?.kind === JobResultKind.SYNCHRONOUS ? result.status : EngineResponseStatus.OK,
-                errorMessage: execError?.message,
+                errorMessage: buildErrorMessage(execError, result),
                 delayInSeconds: result?.kind === JobResultKind.FIRE_AND_FORGET ? result.delayInSeconds : undefined,
                 response: result?.kind === JobResultKind.SYNCHRONOUS ? result.response : undefined,
             }),
@@ -280,6 +281,39 @@ async function warmupPiecesOnStartup(apiClient: WorkerToApiContract): Promise<vo
         void tryCatch(() => apiClient.markPieceAsUsed({ pieces }))
     }
     logger.info({ count: pieces.length }, 'Piece cache warmup complete')
+}
+
+function buildErrorMessage(execError: Error | undefined, result: JobResult | undefined): string | undefined {
+    if (execError) {
+        const parts: string[] = [execError.message]
+        if (execError instanceof ActivepiecesError) {
+            const params = execError.error.params as Record<string, unknown>
+            if (params?.['standardOutput']) {
+                parts.push(`stdOut=${params['standardOutput']}`)
+            }
+            if (params?.['standardError']) {
+                parts.push(`stdError=${params['standardError']}`)
+            }
+        }
+        return parts.join(' ')
+    }
+    const baseMessage = result?.kind === JobResultKind.SYNCHRONOUS ? result.errorMessage : undefined
+    const stdOut = result?.stdOut
+    const stdError = result?.stdError
+    if (!baseMessage && !stdOut && !stdError) {
+        return undefined
+    }
+    const parts: string[] = []
+    if (baseMessage) {
+        parts.push(baseMessage)
+    }
+    if (stdOut) {
+        parts.push(`stdOut=${stdOut}`)
+    }
+    if (stdError) {
+        parts.push(`stdError=${stdError}`)
+    }
+    return parts.join(' ')
 }
 
 function sleep(ms: number): Promise<void> {
