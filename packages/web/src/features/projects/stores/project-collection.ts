@@ -219,7 +219,7 @@ export const projectHooks = {
       queryKey: ['projects-for-platforms'],
       queryFn: async () => {
         return api.get<ProjectWithLimitsWithPlatform[]>(
-          '/v1/users/projects/platforms'
+          '/v1/users/projects/platforms',
         );
       },
     });
