@@ -1,4 +1,5 @@
 import { httpClient, HttpMethod, AuthenticationType, HttpMessageBody, HttpResponse } from '@activepieces/pieces-common';
+import { DropdownOption } from '@activepieces/pieces-framework';
 
 export const SAVVYCAL_BASE_URL = 'https://api.savvycal.com/v1';
 
@@ -15,7 +16,6 @@ export async function savvyCalApiCall<T extends HttpMessageBody>({
   body?: unknown;
   queryParams?: Record<string, string>;
 }): Promise<HttpResponse<T>> {
-  console.log("sdfsd",token)
   return httpClient.sendRequest<T>({
     method,
     url: `${SAVVYCAL_BASE_URL}${path}`,
@@ -59,6 +59,29 @@ export async function savvyCalPaginatedCall<T>({
   } while (after);
 
   return results;
+}
+
+export async function buildTeamOptions(token: string): Promise<DropdownOption<string>[]> {
+  const links = await savvyCalPaginatedCall<SavvyCalSchedulingLink>({ token, path: '/links' });
+  const seenIds = new Set<string>();
+  const options: DropdownOption<string>[] = [{ label: 'Personal', value: 'personal' }];
+  for (const link of links) {
+    if (link.scope && !seenIds.has(link.scope.id)) {
+      seenIds.add(link.scope.id);
+      options.push({ label: link.scope.name, value: link.scope.id });
+    }
+  }
+  return options;
+}
+
+export async function buildLinkOptions(token: string, teamId?: string | null): Promise<DropdownOption<string>[]> {
+  const links = await savvyCalPaginatedCall<SavvyCalSchedulingLink>({ token, path: '/links' });
+  const filtered = teamId
+    ? teamId === 'personal'
+      ? links.filter((l) => l.scope === null)
+      : links.filter((l) => l.scope?.id === teamId)
+    : links;
+  return filtered.map((l) => ({ label: `${l.name} (${l.slug})`, value: l.id }));
 }
 
 export function flattenEvent(event: SavvyCalEvent): Record<string, unknown> {
@@ -145,6 +168,12 @@ export interface SavvyCalEvent {
   } | null;
 }
 
+export interface SavvyCalScope {
+  id: string;
+  name: string;
+  slug: string;
+}
+
 export interface SavvyCalSchedulingLink {
   id: string;
   name: string;
@@ -154,4 +183,5 @@ export interface SavvyCalSchedulingLink {
   duration: number | null;
   created_at: string;
   updated_at: string;
+  scope: SavvyCalScope | null;
 }

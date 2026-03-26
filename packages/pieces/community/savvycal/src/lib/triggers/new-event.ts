@@ -1,6 +1,6 @@
 import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { savvyCalApiCall, flattenEvent, SavvyCalEvent } from '../common';
+import { savvyCalApiCall, flattenEvent, buildTeamOptions, buildLinkOptions, SavvyCalEvent } from '../common';
 import { savvyCalAuth } from '../../';
 
 const EVENT_TYPES = [
@@ -26,7 +26,7 @@ export const newEventTrigger = createTrigger({
   auth: savvyCalAuth,
   name: 'new_event',
   displayName: 'New Event',
-  description: 'Triggers on any SavvyCal event type, including checkout, attendee, and poll events. For the most common cases (new booking, cancellation, reschedule) use the dedicated triggers instead.',
+  description: 'Triggers when a SavvyCal event occurs. Select one or more event types to filter, or leave empty to trigger on all types.',
   props: {
     event_types: Property.StaticMultiSelectDropdown({
       displayName: 'Event Types',
@@ -35,6 +35,38 @@ export const newEventTrigger = createTrigger({
       required: false,
       options: {
         options: EVENT_TYPES,
+      },
+    }),
+    team_id: Property.Dropdown({
+      auth: savvyCalAuth,
+      displayName: 'Team',
+      description: 'Filter scheduling links by team. Leave empty to show all teams.',
+      refreshers: [],
+      required: false,
+      options: async ({ auth }) => {
+        if (!auth) return { disabled: true, options: [], placeholder: 'Please connect your account first' };
+        try {
+          const options = await buildTeamOptions(auth.secret_text);
+          return { disabled: false, options };
+        } catch {
+          return { disabled: true, options: [], placeholder: 'Failed to load teams.' };
+        }
+      },
+    }),
+    link_ids: Property.MultiSelectDropdown({
+      auth: savvyCalAuth,
+      displayName: 'Scheduling Links',
+      description: 'Only trigger for events on the selected scheduling links. Leave empty to trigger for all links.',
+      refreshers: ['team_id'],
+      required: false,
+      options: async ({ auth, team_id }) => {
+        if (!auth) return { disabled: true, options: [], placeholder: 'Please connect your account first' };
+        try {
+          const options = await buildLinkOptions(auth.secret_text, team_id as string | null);
+          return { disabled: false, options };
+        } catch {
+          return { disabled: true, options: [], placeholder: 'Failed to load scheduling links.' };
+        }
       },
     }),
   },
@@ -102,6 +134,9 @@ export const newEventTrigger = createTrigger({
 
     const selectedTypes = context.propsValue.event_types as string[] | undefined;
     if (selectedTypes && selectedTypes.length > 0 && !selectedTypes.includes(body.type)) return [];
+
+    const selectedLinkIds = context.propsValue.link_ids as string[] | undefined;
+    if (selectedLinkIds && selectedLinkIds.length > 0 && !selectedLinkIds.includes(body.payload?.link?.id ?? '')) return [];
 
     return [{ event_type: body.type, ...flattenEvent(body.payload) }];
   },

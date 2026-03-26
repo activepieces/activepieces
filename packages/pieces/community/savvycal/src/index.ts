@@ -10,20 +10,18 @@ import { createEventAction } from './lib/actions/create-event';
 import { findEventsByEmailAction } from './lib/actions/find-events-by-email';
 import { listSchedulingLinksAction } from './lib/actions/list-scheduling-links';
 
-import { newBookingTrigger } from './lib/triggers/new-booking';
-import { bookingCanceledTrigger } from './lib/triggers/booking-canceled';
-import { bookingRescheduledTrigger } from './lib/triggers/booking-rescheduled';
 import { newEventTrigger } from './lib/triggers/new-event';
 
 import { SAVVYCAL_BASE_URL } from './lib/common';
 
 export const savvyCalAuth = PieceAuth.SecretText({
-  displayName: 'Personal Access Token',
+  displayName: 'Personal Access Token (Private Key)',
   description: `To get your SavvyCal API token:
 1. Log in to your SavvyCal account at https://savvycal.com
-2. Go to **Settings > Developer**
-3. Click **Create Token**
-4. Give it a name and copy the token (it starts with \`pt_secret_\`)
+2. Go to **Settings > Developers**
+3. Under **Personal Tokens**, click **Create a token**
+4. Give it a name, then click the **...** menu next to it to view the token
+5. Copy the **Private Key** (starts with \`pt_secret_\`) — not the Public Key
 
 **Note:** Keep this token secret — it gives full access to your SavvyCal account.`,
   required: true,
@@ -68,5 +66,5 @@ export const savvyCal = createPiece({
       }),
     }),
   ],
-  triggers: [newBookingTrigger, bookingCanceledTrigger, bookingRescheduledTrigger, newEventTrigger],
+  triggers: [newEventTrigger],
 });

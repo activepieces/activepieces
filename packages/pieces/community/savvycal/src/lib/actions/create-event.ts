@@ -2,10 +2,10 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import {
   savvyCalApiCall,
-  savvyCalPaginatedCall,
   flattenEvent,
+  buildTeamOptions,
+  buildLinkOptions,
   SavvyCalEvent,
-  SavvyCalSchedulingLink,
 } from '../common';
 import { savvyCalAuth } from '../../';
 
@@ -15,13 +15,29 @@ export const createEventAction = createAction({
   displayName: 'Create Event',
   description: 'Books a meeting on a scheduling link at a specific time slot.',
   props: {
+    team_id: Property.Dropdown({
+      auth: savvyCalAuth,
+      displayName: 'Team',
+      description: 'Filter scheduling links by team. Leave empty to show all teams.',
+      refreshers: [],
+      required: false,
+      options: async ({ auth }) => {
+        if (!auth) return { disabled: true, options: [], placeholder: 'Please connect your account first' };
+        try {
+          const options = await buildTeamOptions(auth.secret_text);
+          return { disabled: false, options };
+        } catch {
+          return { disabled: true, options: [], placeholder: 'Failed to load teams.' };
+        }
+      },
+    }),
     link_id: Property.Dropdown({
       auth: savvyCalAuth,
       displayName: 'Scheduling Link',
       description: 'Select the scheduling link to book a meeting on.',
-      refreshers: [],
+      refreshers: ['team_id'],
       required: true,
-      options: async ({ auth }) => {
+      options: async ({ auth, team_id }) => {
         if (!auth)
           return {
             disabled: true,
@@ -29,23 +45,13 @@ export const createEventAction = createAction({
             placeholder: 'Please connect your account first',
           };
         try {
-          const links = await savvyCalPaginatedCall<SavvyCalSchedulingLink>({
-            token: auth.secret_text,
-            path: '/links',
-          });
-          return {
-            disabled: false,
-            options: links.map((l) => ({
-              label: `${l.name} (${l.slug})`,
-              value: l.id,
-            })),
-          };
+          const options = await buildLinkOptions(auth.secret_text, team_id as string | null);
+          return { disabled: false, options };
         } catch {
           return {
             disabled: true,
             options: [],
-            placeholder:
-              'Failed to load scheduling links. Check your connection.',
+            placeholder: 'Failed to load scheduling links. Check your connection.',
           };
         }
       },
