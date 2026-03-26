@@ -7,7 +7,7 @@ export const stopTimerAction = createAction({
     auth: everhourAuth,
     name: 'stop-timer',
     displayName: 'Stop Timer',
-    description: 'Stops the currently running timer.',
+    description: 'Stops the currently running timer. Fails if no timer is currently active.',
     props: {},
     async run(context) {
         const response = await everhourApiCall({
