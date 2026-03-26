@@ -13,12 +13,12 @@ import {
   ListPieceVersionsResponse,
   PackageType,
   PieceOptionRequest,
-  SeekPage,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 
 import { internalErrorToast } from '@/components/ui/sonner';
 import { api } from '@/lib/api';
+import { authenticationSession } from '@/lib/authentication-session';
 
 export const piecesApi = {
   list(request: ListPiecesRequestQuery): Promise<PieceMetadataModelSummary[]> {
@@ -90,9 +90,13 @@ export const piecesApi = {
       'Content-Type': 'multipart/form-data',
     });
   },
-  listVersions(name: string): Promise<SeekPage<ListPieceVersionsResponse>> {
-    return api.get<SeekPage<ListPieceVersionsResponse>>(
+  listVersions(name: string): Promise<ListPieceVersionsResponse> {
+    const projectId = authenticationSession.getProjectId()!;
+    return api.get<ListPieceVersionsResponse>(
       `/v1/pieces/${encodeURIComponent(name)}/versions`,
+      {
+        projectId,
+      },
     );
   },
   delete(id: string) {

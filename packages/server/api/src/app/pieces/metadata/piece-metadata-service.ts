@@ -17,7 +17,6 @@ import {
     PlatformId,
     PrivatePiecePackage,
     PublicPiecePackage,
-    SeekPage,
     SuggestionType,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
@@ -60,7 +59,15 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
                 version: piece.version,
             }))
         },
-        async listVersions({ name, platformId }: ListVersionsParams): Promise<SeekPage<ListPieceVersionsResponse>> {
+        async listVersions({ name, platformId, projectId }: ListVersionsParams): Promise<ListPieceVersionsResponse> {
+            const piece = await this.get({ name, platformId, projectId })
+            if (isNil(piece)) {
+                return {
+                    data: [],
+                    next: null,
+                    previous: null,
+                }
+            }
             const registry = await pieceCache(log).getRegistry({ release: undefined, platformId })
             const versions = registry
                 .filter((entry) => entry.name === name)
@@ -436,6 +443,7 @@ type RegistryParams = {
 
 type ListVersionsParams = {
     name: string
-    platformId: string | undefined
+    platformId: string 
+    projectId: string
 }
 
