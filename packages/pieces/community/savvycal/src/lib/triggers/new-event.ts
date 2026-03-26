@@ -142,12 +142,20 @@ export const newEventTrigger = createTrigger({
   },
 
   async test(context) {
+    const selectedLinkIds = context.propsValue.link_ids as string[] | undefined;
+    const queryParams: Record<string, string> = { limit: '10' };
+    if (selectedLinkIds && selectedLinkIds.length === 1) {
+      queryParams['link_id'] = selectedLinkIds[0];
+    }
     const response = await savvyCalApiCall<{ entries: SavvyCalEvent[] }>({
       token: context.auth.secret_text,
       method: HttpMethod.GET,
       path: '/events',
-      queryParams: { limit: '5' },
+      queryParams,
     });
-    return response.body.entries.map((e) => ({ event_type: 'event.created', ...flattenEvent(e) }));
+    const events = selectedLinkIds && selectedLinkIds.length > 1
+      ? response.body.entries.filter((e) => selectedLinkIds.includes(e.link?.id ?? ''))
+      : response.body.entries;
+    return events.slice(0, 5).map((e) => ({ event_type: 'event.created', ...flattenEvent(e) }));
   },
 });

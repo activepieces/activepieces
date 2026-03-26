@@ -84,7 +84,7 @@ export const listEventsAction = createAction({
     if (selectedStates && selectedStates.length === 1) {
       queryParams['state'] = selectedStates[0];
     }
-    if (hasLinkFilter && selectedLinkIds.length === 1 && !(selectedStates && selectedStates.length > 1)) {
+    if (hasLinkFilter && selectedLinkIds.length === 1) {
       queryParams['link_id'] = selectedLinkIds[0];
     }
 
