@@ -11,7 +11,7 @@ export type EverhourApiCallParams = {
     method: HttpMethod;
     resourceUri: string;
     query?: Record<string, string | number | string[] | undefined>;
-    body?: any;
+    body?: unknown;
 };
 
 export const BASE_URL = 'https://api.everhour.com';

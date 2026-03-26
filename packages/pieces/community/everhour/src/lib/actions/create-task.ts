@@ -24,7 +24,7 @@ export const createTaskAction = createAction({
         const { projectId, name } = context.propsValue;
 
         const response = await everhourApiCall({
-            apiKey: context.auth,
+            apiKey: context.auth.secret_text,
             method: HttpMethod.POST,
             resourceUri: `/projects/${projectId}/tasks`,
             body: {

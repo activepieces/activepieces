@@ -11,7 +11,7 @@ export const stopTimerAction = createAction({
     props: {},
     async run(context) {
         const response = await everhourApiCall({
-            apiKey: context.auth,
+            apiKey: context.auth.secret_text,
             method: HttpMethod.DELETE,
             resourceUri: `/timers/current`,
         });

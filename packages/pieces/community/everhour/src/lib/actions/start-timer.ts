@@ -19,11 +19,11 @@ export const startTimerAction = createAction({
         const { taskId } = context.propsValue;
 
         const response = await everhourApiCall({
-            apiKey: context.auth,
+            apiKey: context.auth.secret_text,
             method: HttpMethod.POST,
             resourceUri: `/timers`,
             body: {
-                task: { id: taskId },
+                task: taskId,
             },
         });
 

@@ -1,4 +1,4 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { createPiece } from '@activepieces/pieces-framework';
 import { everhourAuth } from './lib/auth';
 import { createTaskAction } from './lib/actions/create-task';
 import { startTimerAction } from './lib/actions/start-timer';
