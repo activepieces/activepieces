@@ -56,6 +56,8 @@ export const flowBackgroundJobs = (log: FastifyBaseLogger) => ({
                     ...data,
                     preDeleteDone: true,
                 })
+            } else {
+                log.warn({ flowId: flow.id }, '[deleteFlowHandler] Job not found, preDeleteDone flag could not be persisted')
             }
         }
         await batchDeleteByFlowId(flow.id)
