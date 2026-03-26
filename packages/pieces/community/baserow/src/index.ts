@@ -16,6 +16,9 @@ import { aggregateFieldAction } from './lib/actions/aggregate-field';
 import { rowCreatedTrigger } from './lib/triggers/row-created';
 import { rowUpdatedTrigger } from './lib/triggers/row-updated';
 import { rowDeletedTrigger } from './lib/triggers/row-deleted';
+import { rowsCreatedTrigger } from './lib/triggers/rows-created';
+import { rowsUpdatedTrigger } from './lib/triggers/rows-updated';
+import { rowsDeletedTrigger } from './lib/triggers/rows-deleted';
 import { baserowAuth } from './lib/auth';
 
 export const baserow = createPiece({
@@ -48,5 +51,12 @@ export const baserow = createPiece({
       }),
     }),
   ],
-  triggers: [rowCreatedTrigger, rowUpdatedTrigger, rowDeletedTrigger],
+  triggers: [
+    rowCreatedTrigger,
+    rowUpdatedTrigger,
+    rowDeletedTrigger,
+    rowsCreatedTrigger,
+    rowsUpdatedTrigger,
+    rowsDeletedTrigger,
+  ],
 });

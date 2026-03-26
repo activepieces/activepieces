@@ -89,4 +89,11 @@
   "Median": "Median",
   "Standard deviation": "Standard deviation",
   "Variance": "Variance"
+,
+  "Rows Created (Batch)": "Rows Created (Batch)",
+  "Rows Updated (Batch)": "Rows Updated (Batch)",
+  "Rows Deleted (Batch)": "Rows Deleted (Batch)",
+  "Triggers when new rows are created in a Baserow table. Returns all rows from the event as a single batch.": "Triggers when new rows are created in a Baserow table. Returns all rows from the event as a single batch.",
+  "Triggers when existing rows are updated in a Baserow table. Returns all rows from the event as a single batch.": "Triggers when existing rows are updated in a Baserow table. Returns all rows from the event as a single batch.",
+  "Triggers when rows are deleted from a Baserow table. Returns all deleted row IDs from the event as a single batch.": "Triggers when rows are deleted from a Baserow table. Returns all deleted row IDs from the event as a single batch."
 }
