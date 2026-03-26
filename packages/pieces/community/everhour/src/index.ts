@@ -6,7 +6,7 @@ import { stopTimerAction } from './lib/actions/stop-timer';
 
 export const everhour = createPiece({
     displayName: 'Everhour',
-    logoUrl: 'add/everhour.png', // add the real logo here 
+    logoUrl: 'https://cdn.activepieces.com/pieces/everhour.png', 
     authors: ['Slim-Hady'],
     auth: everhourAuth,
     actions: [
