@@ -3,7 +3,7 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import { tapfiliateAuth } from '../..';
 import {
   buildTapfiliateQuery,
-  tapfiliateApiCall,
+  tapfiliatePaginatedApiCall,
 } from '../common/tapfiliate.client';
 
 export const listAffiliatesAction = createAction({
@@ -38,7 +38,7 @@ export const listAffiliatesAction = createAction({
     }),
   },
   async run(context) {
-    return await tapfiliateApiCall({
+    return await tapfiliatePaginatedApiCall({
       method: HttpMethod.GET,
       path: '/affiliates/',
       apiKey: context.auth.props.apiKey,
