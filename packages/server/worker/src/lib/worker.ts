@@ -297,23 +297,22 @@ function buildErrorMessage(execError: Error | undefined, result: JobResult | und
         }
         return parts.join(' ')
     }
-    const baseMessage = result?.kind === JobResultKind.SYNCHRONOUS ? result.errorMessage : undefined
-    const stdOut = result?.stdOut
-    const stdError = result?.stdError
-    if (!baseMessage && !stdOut && !stdError) {
+    const isFailure = result?.kind === JobResultKind.SYNCHRONOUS && result.status !== EngineResponseStatus.OK
+    const baseMessage = isFailure ? result.errorMessage : undefined
+    if (!isFailure) {
         return undefined
     }
     const parts: string[] = []
     if (baseMessage) {
         parts.push(baseMessage)
     }
-    if (stdOut) {
-        parts.push(`stdOut=${stdOut}`)
+    if (result.stdOut) {
+        parts.push(`stdOut=${result.stdOut}`)
     }
-    if (stdError) {
-        parts.push(`stdError=${stdError}`)
+    if (result.stdError) {
+        parts.push(`stdError=${result.stdError}`)
     }
-    return parts.join(' ')
+    return parts.length > 0 ? parts.join(' ') : undefined
 }
 
 function sleep(ms: number): Promise<void> {

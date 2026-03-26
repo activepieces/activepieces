@@ -40,6 +40,7 @@ export const extractPieceInfoJob: JobHandler<ExecuteExtractPieceMetadataJobData,
                 kind: JobResultKind.SYNCHRONOUS,
                 status: result.status,
                 response: result.response,
+                errorMessage: result.error,
                 stdOut: result.stdOut,
                 stdError: result.stdError,
             }
