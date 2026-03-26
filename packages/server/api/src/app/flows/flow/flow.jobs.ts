@@ -64,10 +64,10 @@ export const flowBackgroundJobs = (log: FastifyBaseLogger) => ({
 
     updateStatusHandler: async (data: SystemJobData<SystemJobName.UPDATE_FLOW_STATUS>) => {
         const { id, projectId, newStatus, preUpdateDone } = data
-        const job = await systemJobsSchedule(log).getJob(`update-flow-status-${id}`)
-        assertNotNullOrUndefined(job, 'job')
-
         const { error } = await tryCatch<unknown, ActivepiecesError>(async () => {
+            const job = await systemJobsSchedule(log).getJob(`update-flow-status-${id}`)
+            assertNotNullOrUndefined(job, 'job')
+
             const flowToUpdate = await flowService(log).getOneOrThrow({
                 id,
                 projectId,

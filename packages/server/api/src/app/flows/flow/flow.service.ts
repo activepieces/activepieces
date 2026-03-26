@@ -671,8 +671,9 @@ export const flowService = (log: FastifyBaseLogger) => ({
                 date: apDayjs(),
             },
             customConfig: {
+                attempts: 5,
                 backoff: {
-                    type: 'exponential',
+                    type: 'fixed',
                     delay: apDayjsDuration(5, 'second').asMilliseconds(),
                 },
             },
