@@ -1,7 +1,7 @@
 import { ApEdition, ApFlagId, isNil, PlatformRole } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ChevronRight, Info } from 'lucide-react';
-import React, { ReactNode } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 
 import { Skeleton } from '@/components/ui/skeleton';
@@ -48,10 +48,7 @@ const SidebarUsageLimits = React.memo(() => {
   return (
     <div className="flex flex-col w-full p-2.5 bg-background rounded-md border">
       <div className="flex flex-col gap-1.5">
-        <UsageRow
-          name={t('Runs')}
-          isUnlimited={true}
-        />
+        <UsageRow name={t('Runs')} isUnlimited={true} />
         <UsageRow
           name={t('AI Credits')}
           value={Math.round(platform.usage?.aiCreditsRemaining ?? 0)}
