@@ -15,11 +15,11 @@ done
 
 if [ "$CLAUDE_PUSH" = "yes" ]; then
   RUN_CHECKS="y"
-elif [ -e /dev/tty ]; then
-  printf "Run lint and tests before pushing? [Y/n] "
+elif { true > /dev/tty; } 2>/dev/null; then
+  printf "Run lint and tests before pushing? [Y/n] " > /dev/tty
   read RUN_CHECKS < /dev/tty
 else
-  # No TTY and not Claude — skip checks (CI runs its own pipeline)
+  # No controlling terminal (GUI clients, CI) — skip checks
   RUN_CHECKS="n"
 fi
 
@@ -29,10 +29,10 @@ case "$RUN_CHECKS" in
     ;;
   *)
     echo "Running lint..."
-    npm run lint || exit 1
-
+    npm run lint-core || { echo ""; echo "Lint failed. To auto-fix issues, run:"; echo "  npm run lint-dev"; echo "Or target a specific package:"; echo "  npx turbo run lint --filter=\"<packageName>\" --force -- --fix"; exit 1; }
+    npm run lint-affected || { echo ""; echo "Lint failed. To auto-fix issues, run:"; echo "  npm run lint-dev"; echo "Or target a specific package:"; echo "  npx turbo run lint --filter=\"<packageName>\" --force -- --fix"; exit 1; }
     echo "Running tests..."
-    npx turbo run test --filter=@activepieces/engine --filter=@activepieces/shared || exit 1
-    npx turbo run test-ce test-ee test-cloud --filter=api || exit 1
+    npm run test-unit || { echo ""; echo "Unit tests failed. Check the output above for details."; exit 1; }
+    npm run test-api || { echo ""; echo "API tests failed. Check the output above for details."; exit 1; }
     ;;
 esac
