@@ -1,14 +1,43 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { savvyCalApiCall, flattenEvent, SavvyCalEvent } from '../common';
 import { savvyCalAuth } from '../../';
+
+const EVENT_TYPES = [
+  { label: 'Event Created', value: 'event.created' },
+  { label: 'Event Requested', value: 'event.requested' },
+  { label: 'Event Approved', value: 'event.approved' },
+  { label: 'Event Declined', value: 'event.declined' },
+  { label: 'Event Rescheduled', value: 'event.rescheduled' },
+  { label: 'Event Changed', value: 'event.changed' },
+  { label: 'Event Canceled', value: 'event.canceled' },
+  { label: 'Checkout Pending', value: 'checkout.pending' },
+  { label: 'Checkout Expired', value: 'checkout.expired' },
+  { label: 'Checkout Completed', value: 'checkout.completed' },
+  { label: 'Attendee Added', value: 'attendee.added' },
+  { label: 'Attendee Canceled', value: 'attendee.canceled' },
+  { label: 'Attendee Rescheduled', value: 'attendee.rescheduled' },
+  { label: 'Poll Response Created', value: 'poll_response.created' },
+  { label: 'Poll Response Updated', value: 'poll_response.updated' },
+  { label: 'Workflow Action Triggered', value: 'action.triggered' },
+];
 
 export const newEventTrigger = createTrigger({
   auth: savvyCalAuth,
   name: 'new_event',
   displayName: 'New Event',
-  description: 'Triggers on any event change (booked, cancelled, rescheduled, etc.). Use a Filter step to act only on a specific event type via the `event_type` field (e.g. `event.created`, `event.canceled`).',
-  props: {},
+  description: 'Triggers on any SavvyCal event type, including checkout, attendee, and poll events. For the most common cases (new booking, cancellation, reschedule) use the dedicated triggers instead.',
+  props: {
+    event_types: Property.StaticMultiSelectDropdown({
+      displayName: 'Event Types',
+      description:
+        'Select which event types to trigger on. Leave empty to trigger on all event types.',
+      required: false,
+      options: {
+        options: EVENT_TYPES,
+      },
+    }),
+  },
   sampleData: {
     event_type: 'event.created',
     id: 'evt_abc123',
@@ -46,8 +75,8 @@ export const newEventTrigger = createTrigger({
   type: TriggerStrategy.WEBHOOK,
 
   async onEnable(context) {
-    const response = await savvyCalApiCall<{ id: string }>({
-      token: context.auth as unknown as string,
+    const response = await savvyCalApiCall<{ id: string; secret: string }>({
+      token: context.auth.secret_text,
       method: HttpMethod.POST,
       path: '/webhooks',
       body: { url: context.webhookUrl },
@@ -59,7 +88,7 @@ export const newEventTrigger = createTrigger({
     const webhookId = await context.store.get<string>('webhookId');
     if (webhookId) {
       await savvyCalApiCall({
-        token: context.auth as unknown as string,
+        token: context.auth.secret_text,
         method: HttpMethod.DELETE,
         path: `/webhooks/${webhookId}`,
       });
@@ -67,14 +96,19 @@ export const newEventTrigger = createTrigger({
   },
 
   async run(context) {
+
     const body = context.payload.body as { type: string; payload: SavvyCalEvent };
     if (!body?.payload) return [];
+
+    const selectedTypes = context.propsValue.event_types as string[] | undefined;
+    if (selectedTypes && selectedTypes.length > 0 && !selectedTypes.includes(body.type)) return [];
+
     return [{ event_type: body.type, ...flattenEvent(body.payload) }];
   },
 
   async test(context) {
     const response = await savvyCalApiCall<{ entries: SavvyCalEvent[] }>({
-      token: context.auth as unknown as string,
+      token: context.auth.secret_text,
       method: HttpMethod.GET,
       path: '/events',
       queryParams: { limit: '5' },

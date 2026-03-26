@@ -6,8 +6,13 @@ import { getCurrentUserAction } from './lib/actions/get-current-user';
 import { listEventsAction } from './lib/actions/list-events';
 import { getEventAction } from './lib/actions/get-event';
 import { cancelEventAction } from './lib/actions/cancel-event';
+import { createEventAction } from './lib/actions/create-event';
+import { findEventsByEmailAction } from './lib/actions/find-events-by-email';
 import { listSchedulingLinksAction } from './lib/actions/list-scheduling-links';
 
+import { newBookingTrigger } from './lib/triggers/new-booking';
+import { bookingCanceledTrigger } from './lib/triggers/booking-canceled';
+import { bookingRescheduledTrigger } from './lib/triggers/booking-rescheduled';
 import { newEventTrigger } from './lib/triggers/new-event';
 
 import { SAVVYCAL_BASE_URL } from './lib/common';
@@ -46,12 +51,14 @@ export const savvyCal = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/savvycal.png',
   categories: [PieceCategory.PRODUCTIVITY],
   auth: savvyCalAuth,
-  authors: ['bst1n'],
+  authors: ['bst1n','sanket-a11y'],
   actions: [
     getCurrentUserAction,
     listEventsAction,
     getEventAction,
     cancelEventAction,
+    createEventAction,
+    findEventsByEmailAction,
     listSchedulingLinksAction,
     createCustomApiCallAction({
       baseUrl: () => SAVVYCAL_BASE_URL,
@@ -61,5 +68,5 @@ export const savvyCal = createPiece({
       }),
     }),
   ],
-  triggers: [newEventTrigger],
+  triggers: [newBookingTrigger, bookingCanceledTrigger, bookingRescheduledTrigger, newEventTrigger],
 });

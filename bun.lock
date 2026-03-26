@@ -1,5 +1,6 @@
 {
   "lockfileVersion": 1,
+  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "activepieces",
@@ -5640,6 +5641,16 @@
         "tslib": "2.6.2",
       },
     },
+    "packages/pieces/community/savvycal": {
+      "name": "@activepieces/piece-savvycal",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/scenario": {
       "name": "@activepieces/piece-scenario",
       "version": "0.1.4",
@@ -5772,7 +5783,7 @@
     },
     "packages/pieces/community/senja": {
       "name": "@activepieces/piece-senja",
-      "version": "0.0.1",
+      "version": "0.0.2",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -8939,6 +8950,8 @@
     "@activepieces/piece-sap-ariba": ["@activepieces/piece-sap-ariba@workspace:packages/pieces/community/sap-ariba"],
 
     "@activepieces/piece-sardis": ["@activepieces/piece-sardis@workspace:packages/pieces/community/sardis"],
+
+    "@activepieces/piece-savvycal": ["@activepieces/piece-savvycal@workspace:packages/pieces/community/savvycal"],
 
     "@activepieces/piece-scenario": ["@activepieces/piece-scenario@workspace:packages/pieces/community/scenario"],
 

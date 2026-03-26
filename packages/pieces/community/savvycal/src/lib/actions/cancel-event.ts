@@ -17,9 +17,9 @@ export const cancelEventAction = createAction({
   },
   async run(context) {
     await savvyCalApiCall({
-      token: context.auth as unknown as string,
-      method: HttpMethod.DELETE,
-      path: `/events/${context.propsValue.event_id}`,
+      token: context.auth.secret_text,
+      method: HttpMethod.POST,
+      path: `/events/${context.propsValue.event_id}/cancel`,
     });
 
     return {

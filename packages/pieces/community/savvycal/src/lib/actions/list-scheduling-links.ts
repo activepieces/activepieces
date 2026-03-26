@@ -10,8 +10,8 @@ export const listSchedulingLinksAction = createAction({
   props: {},
   async run(context) {
     const links = await savvyCalPaginatedCall<SavvyCalSchedulingLink>({
-      token: context.auth as unknown as string,
-      path: '/scheduling_links',
+      token: context.auth.secret_text,
+      path: '/links',
     });
 
     return links.map((link) => ({

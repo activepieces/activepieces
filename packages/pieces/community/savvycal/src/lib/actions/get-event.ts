@@ -17,7 +17,7 @@ export const getEventAction = createAction({
   },
   async run(context) {
     const response = await savvyCalApiCall<SavvyCalEvent>({
-      token: context.auth as unknown as string,
+      token: context.auth.secret_text,
       method: HttpMethod.GET,
       path: `/events/${context.propsValue.event_id}`,
     });
