@@ -960,6 +960,9 @@
       "@activepieces/piece-salesforce": [
         "packages/pieces/community/salesforce/src/index.ts"
       ],
+      "@activepieces/piece-savvycal": [
+        "packages/pieces/community/savvycal/src/index.ts"
+      ],
       "@activepieces/piece-scenario": [
         "packages/pieces/community/scenario/src/index.ts"
       ],
