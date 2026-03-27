@@ -24,7 +24,7 @@ type TallySubmissionResponse = {
   submittedAt: string;
   responses: {
     questionId: string;
-    answer: string;
+    answer: string | string[] | unknown;
   }[];
 };
 
