@@ -473,6 +473,9 @@
       "@activepieces/piece-generatebanners": [
         "packages/pieces/community/generatebanners/src/index.ts"
       ],
+      "@activepieces/piece-getresponse": [
+        "packages/pieces/community/getresponse/src/index.ts"
+      ],
       "@activepieces/piece-ghostcms": [
         "packages/pieces/community/ghostcms/src/index.ts"
       ],
