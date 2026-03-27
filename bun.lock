@@ -1,6 +1,5 @@
 {
   "lockfileVersion": 1,
-  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "activepieces",
@@ -5023,6 +5022,16 @@
         "zod": "4.3.6",
       },
     },
+    "packages/pieces/community/pcloud": {
+      "name": "@activepieces/piece-pcloud",
+      "version": "0.1.0",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/pdf-co": {
       "name": "@activepieces/piece-pdf-co",
       "version": "0.1.3",
@@ -8880,6 +8889,8 @@
     "@activepieces/piece-pastefy": ["@activepieces/piece-pastefy@workspace:packages/pieces/community/pastefy"],
 
     "@activepieces/piece-paywhirl": ["@activepieces/piece-paywhirl@workspace:packages/pieces/community/paywhirl"],
+
+    "@activepieces/piece-pcloud": ["@activepieces/piece-pcloud@workspace:packages/pieces/community/pcloud"],
 
     "@activepieces/piece-pdf": ["@activepieces/piece-pdf@workspace:packages/pieces/core/pdf"],
 
