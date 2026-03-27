@@ -1,14 +1,13 @@
 {
-  "extends": "../../../../tsconfig.base.json",
+  "extends": "./tsconfig.json",
   "compilerOptions": {
-    "outDir": "./dist",
     "rootDir": ".",
     "baseUrl": ".",
     "paths": {},
+    "outDir": "./dist",
     "declaration": true,
     "declarationMap": true,
-    "ignoreDeprecations": "6.0"
+    "types": ["node"]
   },
-  "include": ["src/**/*.ts"],
-  "exclude": ["node_modules", "dist", "**/*.spec.ts"]
+  "include": ["src/**/*.ts"]
 }
