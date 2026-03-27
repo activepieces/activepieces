@@ -1,7 +1,5 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import {
-  OAuth2PropertyValue,
-  PieceAuth,
   createPiece,
 } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
@@ -19,6 +17,7 @@ import { dropboxSearch } from './lib/actions/search';
 import { dropboxUploadFile } from './lib/actions/upload-file';
 import { dropboxDownloadFile } from './lib/actions/download-file';
 import { dropboxAuth } from './lib/auth';
+import { dropboxNewFolder } from './lib/triggers/new-folder';
 
 export const dropbox = createPiece({
   minimumSupportedRelease: '0.30.0',
@@ -55,6 +54,6 @@ export const dropbox = createPiece({
     'abuaboud',
   ],
   categories: [PieceCategory.CONTENT_AND_FILES],
-  triggers: [],
+  triggers: [dropboxNewFolder],
   auth: dropboxAuth,
 });

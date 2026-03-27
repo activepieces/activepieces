@@ -1,7 +1,10 @@
 import { apId, FlowRunStatus, FlowVersionState, PauseType, RunEnvironment } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
+import { distributedStore } from '../../../../../src/app/database/redis-connections'
 import { pubsub } from '../../../../../src/app/helper/pubsub'
 import { engineResponseWatcher } from '../../../../../src/app/workers/engine-response-watcher'
+import { redisMetadataKey, RunsMetadataUpsertData } from '../../../../../src/app/workers/job'
+import { createHandlers } from '../../../../../src/app/workers/rpc/worker-rpc-service'
 import { createTestContext, TestContext } from '../../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../../helpers/test-setup'
 import { createMockFlow, createMockFlowRun, createMockFlowVersion } from '../../../../helpers/mocks'
@@ -149,6 +152,66 @@ describe('Resume flow run', () => {
         })
 
         expect(response.statusCode).toBe(404)
+    })
+
+    it('should persist pauseMetadata to DB when run only exists in Redis (race condition)', async () => {
+        const flow = createMockFlow({ projectId: ctx.project.id })
+        await db.save('flow', flow)
+
+        const flowVersion = createMockFlowVersion({
+            flowId: flow.id,
+            state: FlowVersionState.LOCKED,
+        })
+        await db.save('flow_version', flowVersion)
+
+        const runId = apId()
+        const requestId = apId()
+
+        // Simulate queueOrCreateInstantly: run metadata is in Redis but NOT in DB
+        const runMetadata: RunsMetadataUpsertData = {
+            id: runId,
+            projectId: ctx.project.id,
+            flowId: flow.id,
+            flowVersionId: flowVersion.id,
+            environment: RunEnvironment.PRODUCTION,
+            status: FlowRunStatus.RUNNING,
+        }
+        await distributedStore.merge(redisMetadataKey(runId), runMetadata)
+
+        // Call uploadRunLog with pauseMetadata — run does NOT exist in DB yet
+        const handlers = createHandlers(app.log)
+        await handlers.uploadRunLog({
+            runId,
+            projectId: ctx.project.id,
+            status: FlowRunStatus.PAUSED,
+            workerHandlerId: null,
+            httpRequestId: null,
+            pauseMetadata: {
+                type: PauseType.WEBHOOK,
+                requestId,
+                response: {},
+            },
+        })
+
+        // Verify the run was force-flushed to DB with pauseMetadata
+        const dbRun = await db.findOneBy<{ id: string, status: string, pauseMetadata: unknown }>('flow_run', { id: runId })
+        expect(dbRun).not.toBeNull()
+        expect(dbRun!.status).toBe(FlowRunStatus.PAUSED)
+        expect(dbRun!.pauseMetadata).toEqual(expect.objectContaining({
+            type: PauseType.WEBHOOK,
+            requestId,
+        }))
+
+        // Verify resume endpoint works with the persisted pauseMetadata
+        const response = await app.inject({
+            method: 'POST',
+            url: `/api/v1/flow-runs/${runId}/requests/${requestId}`,
+            body: {
+                status: 'success',
+                data: { greeting: 'Hello' },
+            },
+        })
+        expect(response.statusCode).toBe(200)
     })
 
     it('sync: should accept request when DB has matching requestId', async () => {

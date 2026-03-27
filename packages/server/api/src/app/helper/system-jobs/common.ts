@@ -62,7 +62,7 @@ export type SystemJobData<T extends SystemJobName = SystemJobName> = T extends S
 export type SystemJobDefinition<T extends SystemJobName> = {
     name: T
     data: SystemJobData<T>
-    jobId?: string
+    jobId: string
 }
 
 export type SystemJobHandler<T extends SystemJobName = SystemJobName> = (data: SystemJobData<T>) => Promise<void>

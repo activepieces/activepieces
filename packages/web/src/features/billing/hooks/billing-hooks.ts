@@ -91,7 +91,7 @@ export const billingMutations = {
           window.open(stripeCheckoutUrl, '_blank');
         }
       },
-      onSuccess: (_, variables) => {
+      onSuccess: () => {
         queryClient.invalidateQueries({
           queryKey: ['platform-billing-subscription'],
         });

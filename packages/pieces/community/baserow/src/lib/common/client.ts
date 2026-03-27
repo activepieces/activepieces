@@ -103,7 +103,8 @@ export class BaserowClient {
     page?: number,
     limit?: number,
     search?: string,
-    order_by?: string
+    order_by?: string,
+    filters?: Record<string, string>
   ) {
     return await this.makeRequest(
       HttpMethod.GET,
@@ -114,6 +115,7 @@ export class BaserowClient {
         size: limit,
         search: search,
         order_by: order_by,
+        ...filters,
       })
     );
   }

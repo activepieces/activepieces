@@ -27,7 +27,7 @@ import { projectService } from '../../project/project-service'
 import { dedupeService } from '../../trigger/dedupe-service'
 import { triggerEventService } from '../../trigger/trigger-events/trigger-event.service'
 import { triggerSourceService } from '../../trigger/trigger-source/trigger-source-service'
-import { RunsMetadataUpsertData } from '../job'
+import { redisMetadataKey, RunsMetadataUpsertData } from '../job'
 import { jobBroker } from '../job-queue/job-broker'
 import { machineService } from '../machine/machine-service'
 
@@ -57,10 +57,23 @@ export function createHandlers(log: FastifyBaseLogger, platformIdForDedicatedWor
 
         async uploadRunLog(input) {
             if (input.pauseMetadata) {
-                await flowRunRepo().update(input.runId, {
+                const result = await flowRunRepo().update(input.runId, {
                     status: input.status,
                     ...spreadIfDefined('pauseMetadata', input.pauseMetadata as PauseMetadata),
                 })
+                if (!result.affected) {
+                    // Run not yet in DB (PRODUCTION runs are created async via queue).
+                    // Force-flush the run metadata from Redis to DB so resume works immediately.
+                    const key = redisMetadataKey(input.runId)
+                    const runMetadata = await distributedStore.hgetJson<RunsMetadataUpsertData>(key)
+                    if (!isNil(runMetadata) && Object.keys(runMetadata).length > 0) {
+                        await flowRunRepo().save({
+                            ...runMetadata,
+                            status: input.status,
+                            pauseMetadata: input.pauseMetadata as PauseMetadata,
+                        })
+                    }
+                }
             }
             const logData: RunsMetadataUpsertData = {
                 id: input.runId,

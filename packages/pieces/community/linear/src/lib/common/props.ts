@@ -340,6 +340,23 @@ auth: linearAuth,
         };
       },
     }),
+  project_status: (required = false) =>
+    Property.StaticDropdown({
+      displayName: 'Project Status',
+      description: 'The status of the project',
+      required,
+      options: {
+        disabled: false,
+        options: [
+          { label: 'Backlog', value: 'backlog' },
+          { label: 'Planned', value: 'planned' },
+          { label: 'In Progress', value: 'started' },
+          { label: 'Paused', value: 'paused' },
+          { label: 'Completed', value: 'completed' },
+          { label: 'Canceled', value: 'canceled' },
+        ],
+      },
+    }),
   template_id: (required = false) =>
     Property.Dropdown({
 auth: linearAuth,

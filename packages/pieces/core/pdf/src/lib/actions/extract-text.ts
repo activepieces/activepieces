@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import pdfParse from 'pdf-parse';
+import { extractText as pdfExtractText, getDocumentProxy } from 'unpdf';
 
 export const extractText = createAction({
   name: 'extractText',
@@ -21,8 +21,8 @@ export const extractText = createAction({
   },
   async run(context) {
     const file = context.propsValue.file;
-    const dataBuffer = Buffer.from(file.data.buffer);
-    const pdfData = await pdfParse(dataBuffer);
-    return pdfData.text;
+    const pdf = await getDocumentProxy(new Uint8Array(file.data.buffer));
+    const { text } = await pdfExtractText(pdf, { mergePages: true });
+    return text;
   },
 });

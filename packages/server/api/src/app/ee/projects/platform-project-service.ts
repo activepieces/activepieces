@@ -228,6 +228,13 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
                 type: 'one-time',
                 date: apDayjs(),
             },
+            customConfig: {
+                attempts: 25,
+                backoff: {
+                    type: 'fixed',
+                    delay: 60000,
+                },
+            },
         })
     },
 })

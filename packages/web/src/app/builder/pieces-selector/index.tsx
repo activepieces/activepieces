@@ -37,7 +37,7 @@ import { PiecesCardList } from './pieces-card-list';
 
 const getTabsList = (
   operationType: FlowOperationType,
-  isEmbeddingEnabled: boolean,
+  agentsEnabled: boolean,
 ) => {
   const baseTabs = [
     {
@@ -62,7 +62,7 @@ const getTabsList = (
     FlowOperationType.UPDATE_ACTION,
   ].includes(operationType);
 
-  if (replaceOrAddAction && !isEmbeddingEnabled) {
+  if (replaceOrAddAction && agentsEnabled) {
     baseTabs.splice(1, 0, {
       value: PieceSelectorTabType.AI_AND_AGENTS,
       name: t('AI & Agents'),
@@ -141,8 +141,8 @@ const PieceSelectorContent = ({
 
   const { platform } = platformHooks.useCurrentPlatform();
   const tabsList = useMemo(
-    () => getTabsList(operation.type, platform?.plan.embeddingEnabled ?? false),
-    [operation.type, platform?.plan.embeddingEnabled],
+    () => getTabsList(operation.type, platform?.plan.agentsEnabled ?? true),
+    [operation.type, platform?.plan.agentsEnabled],
   );
 
   return (

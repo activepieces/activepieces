@@ -29,6 +29,7 @@ export const findRecordAction = createAction({
 			'objects',
 			objectTypeId,
 			inputFields,
+			true,
 		);
 
 		// https://docs.attio.com/rest-api/endpoint-reference/records/list-records

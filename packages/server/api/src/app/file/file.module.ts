@@ -14,6 +14,7 @@ export const fileModule: FastifyPluginAsyncZod = async (app) => {
         job: {
             name: SystemJobName.FILE_CLEANUP_TRIGGER,
             data: {},
+            jobId: SystemJobName.FILE_CLEANUP_TRIGGER,
         },
         schedule: {
             type: 'repeated',

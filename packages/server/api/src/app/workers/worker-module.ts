@@ -8,7 +8,6 @@ import { jobBroker } from './job-queue/job-broker'
 import { jobQueue } from './job-queue/job-queue'
 import { workerMachineController } from './machine/machine-controller'
 import { queueMigration } from './migrations/queue-migration-runner'
-
 export const workerModule: FastifyPluginAsyncZod = async (app) => {
     await app.register(flowEngineWorker, {
         prefix: '/v1/engine',

@@ -10,13 +10,11 @@ type SelectionButtonProps = ButtonProps & {
   ReleaseType: ProjectReleaseType;
   children: ReactNode;
   onSuccess: () => void;
-  defaultName?: string;
 };
 export function SelectionButton({
   ReleaseType,
   children,
   onSuccess,
-  defaultName,
   ...props
 }: SelectionButtonProps) {
   const { project } = projectCollectionUtils.useCurrentProject();

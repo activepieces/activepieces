@@ -1,35 +1,28 @@
 ---
-title: "Infinite Delay Execution — Mar 19, 2026"
+title: "Delay Step Infinite Loop — Mar 19, 2026"
 ---
 
 ## Summary
 
-On March 19, 2026, a Delay step bug caused flows to loop forever instead of resuming, flooding Redis with jobs. A simultaneous redeployment of all app servers made things worse — queues backed up and workers threw "No handler for job" errors.
-
-We fixed it by deleting the duplicate runs, patching the Delay step, and redeploying servers one at a time.
+On March 19, 2026, a bug in the Delay step caused flows to restart from the beginning instead of resuming after the delay, creating an infinite loop that flooded Redis with jobs. Affected flows never completed, and the growing job backlog degraded queue processing for all users.
 
 ## Impact
 
 - Flows with a Delay step looped forever without completing.
-- Other flows failed or were delayed due to the Redis overload.
+- The runaway job creation overloaded Redis, causing delays for other flows.
 - All affected executions were replayed once service was restored — no data was lost.
 
 ## Timeline
 
 All times are in UTC.
 
-**Mar 18** — A code change to the Delay step is deployed, introducing the infinite loop bug.                                                 
-
-1. **Mar 19, ~12:59 AM** — Jobs become stuck in queues. All app servers had been redeployed simultaneously, overloading an already-stressed Redis. Investigation begins.
-2. **Mar 19, ~1:00 AM** — "No handler for job" errors identified — workers consuming jobs before handlers are registered. System job concurrency set to zero. Duplicate scheduled runs from the runaway Delay loop deleted. Decision made to deploy one app server at a time.
-3. **Mar 19, ~1:24 AM** — A single app server brought up successfully. Processes the entire runs metadata backlog in ~2 minutes. Redis load returns to normal.
-4. **Mar 19, ~1:28 AM** — Remaining servers deployed incrementally. Service fully restored.
-
-5. **Mar 19, ~10:45 AM** — Root cause identified and fixed (Delay step bug & Redis overload).
+1. **Mar 18, ~9:00 PM** — A code change to the Delay step is deployed, introducing the infinite loop bug.
+2. **Mar 19, ~8:45 AM** — Customer reports arrive indicating flows with Delay steps are not completing. Investigation begins.
+4. **Mar 19, ~10:45 AM** — Fix for the Delay step bug deployed.
 
 ## Root Cause
 
-**Delay step infinite loop (primary cause):** When a flow hits a Delay step, the system puts the job on hold via BullMQ's `moveToDelayed()`. The bug was that the job still carried `executionType: BEGIN` instead of `RESUME`. When the delay expired, the worker re-ran the entire flow from the first step, hit the Delay again, paused again, and looped forever — flooding Redis with jobs.
+When a flow hits a Delay step, the system puts the job on hold via BullMQ's `moveToDelayed()`. The bug was that the job still carried `executionType: BEGIN` instead of `RESUME`. When the delay expired, the worker re-ran the entire flow from the first step, hit the Delay again, paused again, and looped forever — flooding Redis with new jobs on every iteration.
 
 ```
 Trigger -> Step 1 -> Delay(20s) -> PAUSE
@@ -39,26 +32,25 @@ Trigger -> Step 1 -> Delay(20s) -> PAUSE
     ... forever
 ```
 
-**Compounding factors:**
+The platform does enforce per-execution time limits, but because the job was marked as `BEGIN` instead of `RESUME`, each loop iteration was treated as a brand-new execution rather than a continuation. Each fresh execution only ran from the trigger to the Delay step — well within the time limit — before spawning another delayed job and repeating.
 
-- **Simultaneous server startup:** All app servers redeployed at once, creating a thundering herd on an already-overloaded Redis.
-- **Heavy rate limiter Redis usage:** The rate limiter added further load.
-- **System job handler race condition:** Workers consumed jobs before handlers were registered, producing "No handler for job" errors.
+## Detection & Monitoring Gaps
+
+- **Detected by customers, not automated alerting.** There was no monitoring on repeated execution patterns or runaway job creation for a single flow.
+- No alerting on Redis queue depth growth rate or sudden spikes in scheduled job volume.
 
 ## Action Items
 
 | Action Item | Status |
 |---|---|
-| Update job data to `RESUME` before calling `moveToDelayed()` | Done |
-| Register system job handlers before worker initialization | Done |
-| Add test coverage for delay step resume behavior | Done |
-| Optimize rate limiter Redis usage ([ENG-319](https://linear.app/activepieces/issue/ENG-319)) | To do |
-| Lower concurrency for runs metadata processing ([ENG-318](https://linear.app/activepieces/issue/ENG-318)) | To do |
-| Prevent a flow from entering infinite state in any way ([ENG-320](https://linear.app/activepieces/issue/ENG-320)) | Done |
+| Update job data to `executionType: RESUME` before calling `moveToDelayed()` so the worker continues from the correct step | Done |
+| Add test coverage for Delay step resume behavior to catch regressions where a delayed job restarts instead of resuming | Done |
+| Prevent a flow from entering an infinite state by detecting and halting repeated re-executions of the same run ([ENG-320](https://linear.app/activepieces/issue/ENG-320)) | Done |
+| Add alerting on abnormal queue depth growth to detect runaway job creation before customers are impacted | To do |
+| Add monitoring for repeated execution patterns on a single flow (e.g., same flow re-triggered N times within a short window) | To do |
 
 ## Improvements Done
 
 - **Delay step fix** — Updated job data to `executionType: RESUME` before calling `moveToDelayed()`, so the worker continues from where the flow left off instead of restarting.
-- **System job handler registration fix** — Split `systemJobsSchedule.init()` into two phases: `init()` (creates the queue) and `startWorker()` (starts consuming jobs). `init()` runs early so modules can call `upsertJob` during registration, while `startWorker()` runs after all handlers are registered ([PR #12048](https://github.com/activepieces/activepieces/pull/12048)).
-- **Defense-in-depth: RESUME empty state guard** — Worker validates that RESUME operations have non-empty execution state. An empty state with RESUME is the exact signature of the original bug and is rejected with `VALIDATION` error.
+- **Defense-in-depth: RESUME empty state guard** — Worker validates that RESUME operations have non-empty execution state. An empty state with RESUME is the exact signature of the original bug and is rejected with a `VALIDATION` error.
 - **Defense-in-depth: BEGIN non-empty state assertion** — Engine asserts that BEGIN operations have empty execution state. A BEGIN with pre-existing steps would indicate a code regression.

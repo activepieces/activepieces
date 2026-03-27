@@ -38,25 +38,6 @@ function SidebarLogoCollapsed({ linkTo }: { linkTo?: string }) {
   );
 }
 
-function SidebarLogoFull({ linkTo }: { linkTo?: string }) {
-  const branding = flagsHooks.useWebsiteBranding();
-  const navigate = useNavigate();
-
-  return (
-    <SidebarMenuButton
-      onClick={() => navigate(linkTo || '/')}
-      className="h-10! group-data-[collapsible=icon]:h-10! justify-start items-center"
-    >
-      <img
-        src={branding.logos.fullLogoUrl}
-        alt={t('home')}
-        className="h-8 object-contain animate-in fade-in duration-100 delay-[100ms] fill-mode-backwards"
-        draggable={false}
-      />
-    </SidebarMenuButton>
-  );
-}
-
 export const AppSidebarHeader = () => {
   const { embedState } = useEmbedding();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);

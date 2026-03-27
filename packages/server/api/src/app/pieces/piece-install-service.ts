@@ -98,12 +98,12 @@ async function savePiecePackage(platformId: string | undefined, params: AddPiece
 }
 
 const extractPieceInformation = async (request: ExecuteExtractPieceMetadata, log: FastifyBaseLogger): Promise<PieceMetadata> => {
-    const engineResponse = await userInteractionWatcher(log).submitAndWaitForResponse<EngineResponse<PieceMetadata>>({
+    const engineResponse = await userInteractionWatcher.submitAndWaitForResponse<EngineResponse<PieceMetadata>>({
         jobType: WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
         platformId: request.platformId,
         piece: request,
         projectId: undefined,
-    })
+    }, log)
 
     if (engineResponse.status !== EngineResponseStatus.OK) {
         throw new Error(engineResponse.error)

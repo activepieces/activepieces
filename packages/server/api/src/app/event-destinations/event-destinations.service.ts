@@ -101,14 +101,14 @@ export const eventDestinationService = (log: FastifyBaseLogger) => ({
     trigger: async ({ platformId, projectId, event }: TriggerParams): Promise<void> => {
         const conditions: FindOptionsWhere<EventDestinationSchema>[] = [{
             platformId,
-            events: ArrayContains([event]),
+            events: ArrayContains([event.action]),
             scope: EventDestinationScope.PLATFORM,
         }]
         const broadcastToProject = !isNil(projectId) && PROJECT_SCOPE_EVENTS.includes(event.action)
         if (broadcastToProject) {
             conditions.push({
                 projectId,
-                events: ArrayContains([event]),
+                events: ArrayContains([event.action]),
                 scope: EventDestinationScope.PROJECT,
             })
         }

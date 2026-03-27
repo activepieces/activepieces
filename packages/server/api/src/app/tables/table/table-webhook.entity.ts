@@ -29,6 +29,13 @@ export const TableWebhookEntity = new EntitySchema<TableWebhookSchema>({
             nullable: false,
         },
     },
+    indices: [
+        {
+            name: 'idx_table_webhook_flow_id',
+            columns: ['flowId'],
+            unique: false,
+        },
+    ],
     relations: {
         project: {
             type: 'many-to-one',

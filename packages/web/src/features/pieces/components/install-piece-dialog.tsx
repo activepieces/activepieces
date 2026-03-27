@@ -280,7 +280,9 @@ const InstallPieceDialog = ({
               <FormField
                 name="pieceArchive"
                 control={form.control}
-                render={({ field: { value, onChange, ...fieldProps } }) => (
+                render={({
+                  field: { value: _value, onChange, ...fieldProps },
+                }) => (
                   <FormItem>
                     <FormLabel htmlFor="pieceArchive">
                       {t('Package Archive')}

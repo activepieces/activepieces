@@ -4,8 +4,7 @@ import {
   AuthenticationType,
   httpClient,
 } from '@activepieces/pieces-common';
-import { sendgridCommon } from '../common';
-import { sendgridAuth } from '../..';
+import { getApiKey, getBaseUrl, sendgridAuth } from '../common';
 import { Attachment } from 'nodemailer/lib/mailer';
 import mime from 'mime-types';
 
@@ -91,11 +90,11 @@ export const sendDynamicTemplate = createAction({
 
     await httpClient.sendRequest({
       method: HttpMethod.POST,
-      url: `${sendgridCommon.baseUrl(context.auth.props?.dataResidency)}/mail/send`,
+      url: `${getBaseUrl(context.auth)}/mail/send`,
       body: message,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth.props?.apiKey,
+        token: getApiKey(context.auth),
       },
       queryParams: {},
     });

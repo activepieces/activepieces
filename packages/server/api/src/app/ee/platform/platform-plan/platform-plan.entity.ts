@@ -67,6 +67,9 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
         embeddingEnabled: {
             type: Boolean,
         },
+        agentsEnabled: {
+            type: Boolean,
+        },
         managePiecesEnabled: {
             type: Boolean,
         },

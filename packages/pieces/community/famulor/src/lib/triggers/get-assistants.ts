@@ -17,7 +17,7 @@ const polling: Polling<PiecePropValueSchema<any>, { type?: string; per_page?: nu
 
     while (hasMorePages) {
       const assistants = await famulorCommon.listAllAssistants({ 
-        auth: auth as string, 
+        auth: auth.secret_text, 
         per_page: perPage,
         page: currentPage,
         type

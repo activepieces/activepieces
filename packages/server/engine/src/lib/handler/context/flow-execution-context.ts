@@ -1,4 +1,4 @@
-import { assertEqual, EngineGenericError, executionJournal, FailedStep, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, LoopStepOutput, LoopStepResult, PauseMetadata, PauseType, RespondResponse, StepOutput, StepOutputStatus } from '@activepieces/shared'
+import { assertEqual, BaseStepOutput, EngineGenericError, executionJournal, FailedStep, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, LoopStepOutput, LoopStepResult, PauseMetadata, PauseType, RespondResponse, StepOutput, StepOutputStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { nanoid } from 'nanoid'
 import { loggingUtils } from '../../helper/logging-utils'
@@ -118,7 +118,7 @@ export class FlowExecutorContext {
         })
     }
 
-    public upsertStep(stepName: string, stepOutput: StepOutput): FlowExecutorContext {
+    public upsertStep(stepName: string, stepOutput: BaseStepOutput): FlowExecutorContext {
         const steps = executionJournal.upsertStep({ stepName, stepOutput, path: this.currentPath.path, steps: this.steps })
         const trimmedSteps = this.currentPath.path.length === 0 ? loggingUtils.trimExecutionInput(steps) : steps
         return new FlowExecutorContext({

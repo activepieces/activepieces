@@ -88,7 +88,6 @@ const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
     pageSize,
     changePageSize,
     totalPages,
-    totalPageItems,
     nextRootPage,
     prevRootPage,
     resetPagination,
@@ -260,7 +259,6 @@ const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
 
           <AutomationsPagination
             currentPage={rootPage}
-            totalItems={totalPageItems}
             totalPages={totalPages}
             pageSize={pageSize}
             onPageSizeChange={changePageSize}

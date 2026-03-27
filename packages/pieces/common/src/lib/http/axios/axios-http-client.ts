@@ -1,4 +1,4 @@
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosError } from 'axios';
+import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 import axiosRetry from 'axios-retry';
 import { DelegatingAuthenticationConverter } from '../core/delegating-authentication-converter';
 import { BaseHttpClient } from '../core/base-http-client';

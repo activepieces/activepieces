@@ -506,6 +506,7 @@
                         "icon": "triangle-exclamation",
                         "pages": [
                            "handbook/engineering/postmortems/2026-03-19-redis-and-delay-overload",
+                           "handbook/engineering/postmortems/2026-03-redis-queue-events-overload",
                            "handbook/engineering/postmortems/2026-03-16-infrastructure-upgrade"
                         ]
                      }

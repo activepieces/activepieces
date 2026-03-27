@@ -12,7 +12,6 @@ import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import { DataTable } from '@/components/custom/data-table';
 import { DataTableInputPopover } from '@/components/custom/data-table/data-table-input-popover';
 import { UserRoundPlusIcon } from '@/components/icons/user-round-plus';
-import { Button } from '@/components/ui/button';
 import {
   InviteUserDialog,
   projectMembersHooks,

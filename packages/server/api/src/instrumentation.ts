@@ -1,14 +1,40 @@
 import { FastifyOtelInstrumentation } from '@fastify/otel'
+import { Context } from '@opentelemetry/api'
 import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node'
 import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-http'
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http'
 import { resourceFromAttributes } from '@opentelemetry/resources'
 import { PeriodicExportingMetricReader } from '@opentelemetry/sdk-metrics'
 import { NodeSDK } from '@opentelemetry/sdk-node'
-import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-base'
+import { BatchSpanProcessor, ReadableSpan, Span, SpanProcessor } from '@opentelemetry/sdk-trace-base'
 import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions'
 import { system } from './app/helper/system/system'
 import { AppSystemProp } from './app/helper/system/system-props'
+
+const ATTRIBUTES_TO_DROP = ['db.statement']
+
+class FilteringSpanProcessor implements SpanProcessor {
+    constructor(private readonly delegate: BatchSpanProcessor) {}
+
+    onStart(span: Span, parentContext: Context): void {
+        this.delegate.onStart(span, parentContext)
+    }
+
+    onEnd(span: ReadableSpan): void {
+        for (const attr of ATTRIBUTES_TO_DROP) {
+            Reflect.deleteProperty(span.attributes, attr)
+        }
+        this.delegate.onEnd(span)
+    }
+
+    shutdown(): Promise<void> {
+        return this.delegate.shutdown()
+    }
+
+    forceFlush(): Promise<void> {
+        return this.delegate.forceFlush()
+    }
+}
 
 function getServiceName(): string {
     const isApp = system.isApp()
@@ -29,14 +55,16 @@ if (system.get(AppSystemProp.OTEL_ENABLED)) {
         exportIntervalMillis: 60_000,
     })
 
-    // Configuring the OpenTelemetry Node SDK
     const sdk = new NodeSDK({
-        spanProcessors: [new BatchSpanProcessor(traceExporter)],
+        spanProcessors: [new FilteringSpanProcessor(new BatchSpanProcessor(traceExporter))],
         metricReader,
         resource,
-        // Adding auto-instrumentations to automatically collect trace data
         instrumentations: [
-            getNodeAutoInstrumentations(),
+            getNodeAutoInstrumentations({
+                '@opentelemetry/instrumentation-fs': { enabled: false },
+                '@opentelemetry/instrumentation-dns': { enabled: false },
+                '@opentelemetry/instrumentation-net': { enabled: false },
+            }),
             new FastifyOtelInstrumentation({
                 servername: getServiceName(),
                 registerOnInitialization: true,
@@ -44,6 +72,5 @@ if (system.get(AppSystemProp.OTEL_ENABLED)) {
         ],
     })
 
-    // Starting the OpenTelemetry SDK to begin collecting telemetry data
     sdk.start()
 }

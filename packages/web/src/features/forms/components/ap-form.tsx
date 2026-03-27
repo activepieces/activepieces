@@ -58,11 +58,6 @@ const putBackQuotesForInputNames = (
   }, {} as Record<string, unknown>);
 };
 
-const requiredPropertySettings = {
-  minLength: 1,
-  errorMessage: t('This field is required'),
-};
-
 const createPropertySchema = (input: FormInputWithName): ZodType => {
   switch (input.type) {
     case FormInputType.TOGGLE:

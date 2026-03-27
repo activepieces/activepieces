@@ -55,8 +55,8 @@ export const urlToPdfAction = createAction({
       required: false,
       options: {
         options: [
-          { label: 'Portrait', value: 'portrait' },
-          { label: 'Landscape', value: 'landscape' },
+          { label: 'landscape', value: 'landscape' },
+          { label: 'portrait', value: 'portrait' },
         ],
       },
       defaultValue: 'portrait',
@@ -65,25 +65,21 @@ export const urlToPdfAction = createAction({
       displayName: 'Margin Top',
       description: 'Control white space at the top of the page. Increase for header space, formal documents, or annotation room (e.g., 1in or more). Decrease to maximize content area or fit more content (e.g., 5mm to 10mm). Default 0.4in balances readability with space efficiency. Set to 0 for full-bleed designs. Affects where content starts and where headers appear.',
       required: false,
-      defaultValue: '0.4in',
     }),
     margin_right: Property.ShortText({
       displayName: 'Margin Right',
       description: 'Control white space on the right edge of the page. Increase for binding/hole-punch clearance or note-taking space (e.g., 1in or more). Decrease to fit wider content (e.g., 5mm to 10mm). Default 0.4in balances readability with space efficiency. Set to 0 for full-bleed designs. Affects where content wraps and text line length.',
       required: false,
-      defaultValue: '0.4in',
     }),
     margin_bottom: Property.ShortText({
       displayName: 'Margin Bottom',
       description: 'Control white space at the bottom of the page. Increase for footer space, page numbers, or formal documents (e.g., 1in or more). Decrease to fit more content per page (e.g., 5mm to 10mm). Default 0.4in balances readability with space efficiency. Set to 0 for full-bleed designs. Affects where content ends and where footers appear.',
       required: false,
-      defaultValue: '0.4in',
     }),
     margin_left: Property.ShortText({
       displayName: 'Margin Left',
       description: 'Control white space on the left edge of the page. Increase for binding/hole-punch clearance or note-taking space (e.g., 1in or more). Decrease to fit wider content (e.g., 5mm to 10mm). Default 0.4in balances readability with space efficiency. Set to 0 for full-bleed designs. Affects where content starts horizontally and text line length.',
       required: false,
-      defaultValue: '0.4in',
     }),
     no_margins: Property.Checkbox({
       displayName: 'No Margins',
@@ -101,11 +97,11 @@ export const urlToPdfAction = createAction({
       required: false,
       options: {
         options: [
-          { label: 'Balanced', value: 'balanced' },
-          { label: 'Small', value: 'small' },
-          { label: 'Medium', value: 'medium' },
-          { label: 'Large', value: 'large' },
-          { label: 'Extra Large', value: 'extra-large' },
+          { label: 'balanced', value: 'balanced' },
+          { label: 'small', value: 'small' },
+          { label: 'medium', value: 'medium' },
+          { label: 'large', value: 'large' },
+          { label: 'extra-large', value: 'extra-large' },
         ],
       },
       defaultValue: 'medium',
@@ -116,8 +112,8 @@ export const urlToPdfAction = createAction({
       required: false,
       options: {
         options: [
-          { label: 'Auto', value: 'auto' },
-          { label: 'Large', value: 'large' },
+          { label: 'auto', value: 'auto' },
+          { label: 'large', value: 'large' },
         ],
       },
       defaultValue: 'auto',
@@ -128,13 +124,13 @@ export const urlToPdfAction = createAction({
       required: false,
       options: {
         options: [
-          { label: 'Auto', value: 'auto' },
-          { label: 'Smart Scaling', value: 'smart-scaling' },
-          { label: 'No Scaling', value: 'no-scaling' },
-          { label: 'Viewport Width', value: 'viewport-width' },
-          { label: 'Content Width', value: 'content-width' },
-          { label: 'Single Page', value: 'single-page' },
-          { label: 'Single Page Ratio', value: 'single-page-ratio' },
+          { label: 'auto', value: 'auto' },
+          { label: 'smart-scaling', value: 'smart-scaling' },
+          { label: 'no-scaling', value: 'no-scaling' },
+          { label: 'viewport-width', value: 'viewport-width' },
+          { label: 'content-width', value: 'content-width' },
+          { label: 'single-page', value: 'single-page' },
+          { label: 'single-page-ratio', value: 'single-page-ratio' },
         ],
       },
       defaultValue: 'auto',
@@ -145,9 +141,9 @@ export const urlToPdfAction = createAction({
       required: false,
       options: {
         options: [
-          { label: 'Trailing', value: 'trailing' },
-          { label: 'All', value: 'all' },
-          { label: 'None', value: 'none' },
+          { label: 'trailing', value: 'trailing' },
+          { label: 'all', value: 'all' },
+          { label: 'none', value: 'none' },
         ],
       },
       defaultValue: 'trailing',
@@ -166,7 +162,6 @@ export const urlToPdfAction = createAction({
       displayName: 'Header Height',
       description: 'Set the header height to allocate space for header content and prevent overlap with main content. Increase this if your header text is getting cut off or overlapping with page content. Must be large enough to accommodate your header HTML including any multi-line text or images.',
       required: false,
-      defaultValue: '0.5in',
     }),
     footer_url: Property.LongText({
       displayName: 'Footer URL',
@@ -182,7 +177,6 @@ export const urlToPdfAction = createAction({
       displayName: 'Footer Height',
       description: 'Set the footer height to allocate space for footer content and prevent overlap with main content. Increase this if your footer text is getting cut off or overlapping with page content. Must be large enough to accommodate your footer HTML including any multi-line text or images.',
       required: false,
-      defaultValue: '0.5in',
     }),
     no_header_footer_horizontal_margins: Property.Checkbox({
       displayName: 'No Header Footer Horizontal Margins',
@@ -203,7 +197,6 @@ export const urlToPdfAction = createAction({
       displayName: 'Header Footer Scale Factor',
       description: 'Set the scaling factor (zoom) for the header and footer.',
       required: false,
-      defaultValue: 100,
     }),
     page_numbering_offset: Property.Number({
       displayName: 'Page Numbering Offset',
@@ -266,9 +259,9 @@ export const urlToPdfAction = createAction({
       required: false,
       options: {
         options: [
-          { label: 'All', value: 'all' },
-          { label: 'Same Origin', value: 'same-origin' },
-          { label: 'None', value: 'none' },
+          { label: 'all', value: 'all' },
+          { label: 'same-origin', value: 'same-origin' },
+          { label: 'none', value: 'none' },
         ],
       },
       defaultValue: 'all',
@@ -282,13 +275,11 @@ export const urlToPdfAction = createAction({
       displayName: 'Default Encoding',
       description: 'Specify the character encoding when the HTML lacks proper charset declaration or has incorrect encoding. Prevents garbled text for non-English content, especially legacy pages without UTF-8 encoding. Set to "utf-8" for modern content, "iso-8859-1" for Western European legacy pages, or other encodings for specific regional content. Only needed when auto-detection fails and you see corrupted characters in the output.',
       required: false,
-      defaultValue: 'auto detect',
     }),
     locale: Property.ShortText({
       displayName: 'Locale',
       description: 'Set the locale for the conversion to control regional formatting of dates, times, and numbers. Use this when converting content for specific regions - for example, set to "en-US" for MM/DD/YYYY dates and comma thousand separators, or "de-DE" for DD.MM.YYYY dates and period thousand separators. Essential for financial reports, invoices, or localized content.',
       required: false,
-      defaultValue: 'en-US',
     }),
     http_auth_user_name: Property.ShortText({
       displayName: 'HTTP Auth User Name',
@@ -326,9 +317,9 @@ export const urlToPdfAction = createAction({
       required: false,
       options: {
         options: [
-          { label: 'Default', value: 'default' },
-          { label: 'Mode 1', value: 'mode1' },
-          { label: 'Mode 2', value: 'mode2' },
+          { label: 'default', value: 'default' },
+          { label: 'mode1', value: 'mode1' },
+          { label: 'mode2', value: 'mode2' },
         ],
       },
       defaultValue: 'default',
@@ -357,7 +348,6 @@ export const urlToPdfAction = createAction({
       displayName: 'JavaScript Delay',
       description: 'Wait the specified number of milliseconds to finish all JavaScript after the document is loaded. Use this to ensure lazy-loaded images, AJAX content, or animations complete before conversion. Your license defines the maximum wait time by "Max Delay" parameter.',
       required: false,
-      defaultValue: 200,
     }),
     element_to_convert: Property.ShortText({
       displayName: 'Element To Convert',
@@ -370,9 +360,9 @@ export const urlToPdfAction = createAction({
       required: false,
       options: {
         options: [
-          { label: 'Cut Out', value: 'cut-out' },
-          { label: 'Remove Siblings', value: 'remove-siblings' },
-          { label: 'Hide Siblings', value: 'hide-siblings' },
+          { label: 'cut-out', value: 'cut-out' },
+          { label: 'remove-siblings', value: 'remove-siblings' },
+          { label: 'hide-siblings', value: 'hide-siblings' },
         ],
       },
       defaultValue: 'cut-out',
@@ -393,11 +383,11 @@ export const urlToPdfAction = createAction({
       required: false,
       options: {
         options: [
-          { label: 'None', value: 'none' },
-          { label: 'Readability V1', value: 'readability-v1' },
-          { label: 'Readability V2', value: 'readability-v2' },
-          { label: 'Readability V3', value: 'readability-v3' },
-          { label: 'Readability V4', value: 'readability-v4' },
+          { label: 'none', value: 'none' },
+          { label: 'readability-v1', value: 'readability-v1' },
+          { label: 'readability-v2', value: 'readability-v2' },
+          { label: 'readability-v3', value: 'readability-v3' },
+          { label: 'readability-v4', value: 'readability-v4' },
         ],
       },
       defaultValue: 'none',
@@ -406,13 +396,11 @@ export const urlToPdfAction = createAction({
       displayName: 'Scale Factor',
       description: 'Set the scaling factor (zoom) for the main page area to fit content better. Use values below 100% to shrink oversized content that is getting cut off at page edges. Use values above 100% to enlarge small content for better readability. Common use cases include shrinking wide tables to fit (70-80%), or enlarging mobile-optimized layouts for desktop PDFs (120-150%).',
       required: false,
-      defaultValue: 100,
     }),
     jpeg_quality: Property.Number({
       displayName: 'JPEG Quality',
       description: 'Set the quality of embedded JPEG images to balance file size and visual quality. Use 100% for archival documents or when image quality is critical. Use 70-85% for web distribution to significantly reduce file size with minimal visible quality loss. Use lower values (50-60%) only when file size is more important than image clarity. Common artifacts below 60% include blockiness and color banding.',
       required: false,
-      defaultValue: 100,
     }),
     convert_images_to_jpeg: Property.StaticDropdown({
       displayName: 'Convert Images To JPEG',
@@ -420,9 +408,9 @@ export const urlToPdfAction = createAction({
       required: false,
       options: {
         options: [
-          { label: 'None', value: 'none' },
-          { label: 'Opaque', value: 'opaque' },
-          { label: 'All', value: 'all' },
+          { label: 'none', value: 'none' },
+          { label: 'opaque', value: 'opaque' },
+          { label: 'all', value: 'all' },
         ],
       },
       defaultValue: 'none',
@@ -503,10 +491,10 @@ export const urlToPdfAction = createAction({
       required: false,
       options: {
         options: [
-          { label: 'Single Page', value: 'single-page' },
-          { label: 'One Column', value: 'one-column' },
-          { label: 'Two Column Left', value: 'two-column-left' },
-          { label: 'Two Column Right', value: 'two-column-right' },
+          { label: 'single-page', value: 'single-page' },
+          { label: 'one-column', value: 'one-column' },
+          { label: 'two-column-left', value: 'two-column-left' },
+          { label: 'two-column-right', value: 'two-column-right' },
         ],
       },
     }),
@@ -516,9 +504,9 @@ export const urlToPdfAction = createAction({
       required: false,
       options: {
         options: [
-          { label: 'Full Screen', value: 'full-screen' },
-          { label: 'Thumbnails', value: 'thumbnails' },
-          { label: 'Outlines', value: 'outlines' },
+          { label: 'full-screen', value: 'full-screen' },
+          { label: 'thumbnails', value: 'thumbnails' },
+          { label: 'outlines', value: 'outlines' },
         ],
       },
     }),
@@ -528,9 +516,9 @@ export const urlToPdfAction = createAction({
       required: false,
       options: {
         options: [
-          { label: 'Fit Width', value: 'fit-width' },
-          { label: 'Fit Height', value: 'fit-height' },
-          { label: 'Fit Page', value: 'fit-page' },
+          { label: 'fit-width', value: 'fit-width' },
+          { label: 'fit-height', value: 'fit-height' },
+          { label: 'fit-page', value: 'fit-page' },
         ],
       },
     }),
@@ -579,6 +567,46 @@ export const urlToPdfAction = createAction({
       description: 'Set the predominant reading order for text to right-to-left. This option has no direct effect on the document\'s contents or page numbering but can be used to determine the relative positioning of pages when displayed side by side or printed n-up.',
       required: false,
     }),
+    data_string: Property.LongText({
+      displayName: 'Data String',
+      description: 'Set the input data for template rendering. The data format can be JSON, XML, YAML or CSV.',
+      required: false,
+    }),
+    data_format: Property.StaticDropdown({
+      displayName: 'Data Format',
+      description: 'Specify the input data format. Use "auto" for automatic detection or explicitly set to JSON, XML, YAML, or CSV when format is known.',
+      required: false,
+      options: {
+        options: [
+          { label: 'auto', value: 'auto' },
+          { label: 'json', value: 'json' },
+          { label: 'xml', value: 'xml' },
+          { label: 'yaml', value: 'yaml' },
+          { label: 'csv', value: 'csv' },
+        ],
+      },
+      defaultValue: 'auto',
+    }),
+    data_ignore_undefined: Property.Checkbox({
+      displayName: 'Data Ignore Undefined',
+      description: 'Ignore undefined variables in the HTML template. The default mode is strict so any undefined variable causes the conversion to fail. You can use {% if variable is defined %} to check if the variable is defined.',
+      required: false,
+    }),
+    data_auto_escape: Property.Checkbox({
+      displayName: 'Data Auto Escape',
+      description: 'Auto escape HTML symbols in the input data before placing them into the output.',
+      required: false,
+    }),
+    data_trim_blocks: Property.Checkbox({
+      displayName: 'Data Trim Blocks',
+      description: 'Auto trim whitespace around each template command block.',
+      required: false,
+    }),
+    data_options: Property.LongText({
+      displayName: 'Data Options',
+      description: 'Set the advanced data options as comma separated key=value pairs: csv_delimiter - The CSV data delimiter, the default is ,. xml_remove_root - Remove the root XML element from the input data. data_root - The name of the root element inserted into the input data without a root node (e.g. CSV), the default is data.',
+      required: false,
+    }),
     debug_log: Property.Checkbox({
       displayName: 'Debug Log',
       description: 'Turn on debug logging to troubleshoot conversion issues. Details about the conversion process, including resource loading, rendering steps, and error messages are stored in the debug log. Use this when conversions fail or produce unexpected results.',
@@ -603,7 +631,6 @@ export const urlToPdfAction = createAction({
       displayName: 'Layout DPI',
       description: 'Set the internal DPI resolution used for positioning of PDF contents. It can help in situations where there are small inaccuracies in the PDF. It is recommended to use values that are a multiple of 72, such as 288 or 360.',
       required: false,
-      defaultValue: 300,
     }),
     main_document_css_annotation: Property.Checkbox({
       displayName: 'Main Document CSS Annotation',
@@ -760,8 +787,26 @@ export const urlToPdfAction = createAction({
 
     for (const opt of basicOptions) {
       const value = propsValue[opt as keyof typeof propsValue];
-      if (value !== undefined && value !== null && value !== '') {
+      if (value !== undefined && value !== null && value !== '' && value !== false) {
         formData.append(opt, String(value));
+      }
+    }
+
+    // Data template options - only sent when data_string is provided
+    if (propsValue.data_string) {
+      formData.append('data_string', String(propsValue.data_string));
+      const dataOptions = [
+        'data_format',
+        'data_ignore_undefined',
+        'data_auto_escape',
+        'data_trim_blocks',
+        'data_options',
+      ];
+      for (const opt of dataOptions) {
+        const value = propsValue[opt as keyof typeof propsValue];
+        if (value !== undefined && value !== null && value !== '' && value !== false) {
+          formData.append(opt, String(value));
+        }
       }
     }
 
@@ -787,7 +832,7 @@ export const urlToPdfAction = createAction({
       url: getConvertUrl(converterVersion),
       headers: {
         Authorization: getAuthHeader(auth),
-        'User-Agent': 'pdfcrowd-activepieces/0.0.5',
+        'User-Agent': 'pdfcrowd-activepieces/1.1.0',
         ...formData.getHeaders(),
       },
       body: formBuffer,

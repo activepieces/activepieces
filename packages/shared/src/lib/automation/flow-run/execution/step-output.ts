@@ -84,6 +84,8 @@ export class GenericStepOutput<T extends FlowActionType | FlowTriggerType, OUTPU
     }
 }
 
+export type BaseStepOutput = GenericStepOutput<FlowActionType | FlowTriggerType, unknown>
+
 export type StepOutput =
   | GenericStepOutput<FlowActionType.LOOP_ON_ITEMS, LoopStepResult>
   | GenericStepOutput<FlowActionType.ROUTER, unknown>

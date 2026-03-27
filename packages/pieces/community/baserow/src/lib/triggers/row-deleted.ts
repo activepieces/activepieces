@@ -28,12 +28,7 @@ export const rowDeletedTrigger = createTrigger({
     }),
   },
   sampleData: {
-    table_id: 1,
-    database_id: 1,
-    workspace_id: 1,
-    event_id: 'event_123',
-    event_type: 'rows.deleted',
-    row_ids: [1],
+    id: 1,
   },
   async onEnable() {
     // Manual setup required — user registers the webhook URL in Baserow UI.
@@ -42,6 +37,7 @@ export const rowDeletedTrigger = createTrigger({
     // Manual cleanup — user deletes the webhook in Baserow UI.
   },
   async run(context) {
-    return [context.payload.body];
+    const body = context.payload.body as { row_ids?: number[] };
+    return (body.row_ids ?? []).map((id) => ({ id }));
   },
 });
