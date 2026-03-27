@@ -8,7 +8,7 @@ export const updateCampaignSettingsAction = createAction({
   name: 'update_campaign_settings',
   displayName: 'Update Campaign Settings',
   description:
-    'Update campaign settings including tracking, sending limits, and stop conditions.',
+    'Update campaign settings including tracking, stop conditions, and deliverability options.',
   props: {
     campaign_id: Property.Number({
       displayName: 'Campaign ID',
@@ -25,16 +25,6 @@ export const updateCampaignSettingsAction = createAction({
       description: 'Enable link click tracking',
       required: false,
     }),
-    sending_limit: Property.Number({
-      displayName: 'Daily Sending Limit',
-      description: 'Maximum leads to contact per day',
-      required: false,
-    }),
-    min_time_btwn_emails: Property.Number({
-      displayName: 'Minimum Time Between Emails (minutes)',
-      description: 'Minimum minutes between consecutive emails',
-      required: false,
-    }),
     stop_lead_settings: Property.StaticDropdown({
       displayName: 'Stop Lead Condition',
       description: 'When to stop emailing a lead',
@@ -46,6 +36,11 @@ export const updateCampaignSettingsAction = createAction({
           { label: 'Clicked link', value: 'CLICKED_LINK' },
         ],
       },
+    }),
+    unsubscribe_text: Property.LongText({
+      displayName: 'Unsubscribe Text',
+      description: 'Custom unsubscribe text added to campaign emails',
+      required: false,
     }),
     enable_ai_esp_matching: Property.Checkbox({
       displayName: 'Enable AI ESP Matching',
@@ -71,9 +66,8 @@ export const updateCampaignSettingsAction = createAction({
       campaign_id,
       track_open,
       track_click,
-      sending_limit,
-      min_time_btwn_emails,
       stop_lead_settings,
+      unsubscribe_text,
       enable_ai_esp_matching,
       send_as_plain_text,
       follow_up_percentage,
@@ -89,20 +83,10 @@ export const updateCampaignSettingsAction = createAction({
       };
     }
 
-    if (sending_limit !== undefined) {
-      if (sending_limit < 1) {
-        throw new Error('sending_limit must be a positive integer.');
-      }
-      body['sending_limit'] = sending_limit;
-    }
-    if (min_time_btwn_emails !== undefined) {
-      if (min_time_btwn_emails < 0) {
-        throw new Error('min_time_btwn_emails must be 0 or greater.');
-      }
-      body['min_time_btwn_emails'] = min_time_btwn_emails;
-    }
     if (stop_lead_settings !== undefined)
       body['stop_lead_settings'] = stop_lead_settings;
+    if (unsubscribe_text !== undefined && unsubscribe_text !== '')
+      body['unsubscribe_text'] = unsubscribe_text;
     if (enable_ai_esp_matching !== undefined)
       body['enable_ai_esp_matching'] = enable_ai_esp_matching;
     if (send_as_plain_text !== undefined)

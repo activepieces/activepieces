@@ -28,7 +28,7 @@ export const smartlead = createPiece({
       baseUrl: () => BASE_URL,
       authLocation: 'queryParams',
       authMapping: async (auth) => ({
-        api_key: (auth as { secret_text: string }).secret_text,
+        api_key: auth.secret_text,
       }),
     }),
   ],

@@ -5,7 +5,7 @@ import { BASE_URL } from './common/client';
 const markdownDescription = `
 To obtain your API key:
 1. Log in to your SmartLead account
-2. Go to **Settings → General Settings → API**
+2. Go to **Profile -> Settings → API Key **
 3. Copy your API key
 
 The API key is passed as a query parameter to all API requests.
@@ -22,7 +22,6 @@ export const smartleadAuth = PieceAuth.SecretText({
         url: `${BASE_URL}/campaigns`,
         queryParams: {
           api_key: auth,
-          limit: '1',
         },
       });
       return { valid: true };
