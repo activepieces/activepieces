@@ -6017,6 +6017,16 @@
         "tslib": "2.6.2",
       },
     },
+    "packages/pieces/community/smartlead": {
+      "name": "@activepieces/piece-smartlead",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/smartsheet": {
       "name": "@activepieces/piece-smartsheet",
       "version": "0.1.4",
@@ -7827,7 +7837,11 @@
     },
     "packages/shared": {
       "name": "@activepieces/shared",
+<<<<<<< HEAD
+      "version": "0.46.1",
+=======
       "version": "0.47.0",
+>>>>>>> upstream/main
       "dependencies": {
         "dayjs": "1.11.9",
         "deepmerge-ts": "7.1.0",
@@ -9047,6 +9061,8 @@
     "@activepieces/piece-slidespeak": ["@activepieces/piece-slidespeak@workspace:packages/pieces/community/slidespeak"],
 
     "@activepieces/piece-smaily": ["@activepieces/piece-smaily@workspace:packages/pieces/community/smaily"],
+
+    "@activepieces/piece-smartlead": ["@activepieces/piece-smartlead@workspace:packages/pieces/community/smartlead"],
 
     "@activepieces/piece-smartsheet": ["@activepieces/piece-smartsheet@workspace:packages/pieces/community/smartsheet"],
 
