@@ -33,17 +33,13 @@ export const kodeProAuth = PieceAuth.CustomAuth({
   validate: async ({ auth }) => {
     try {
       const response = await httpClient.sendRequest({
-        url: `${auth.apiUrl}/api/v1/monitor/events`,
-        method: HttpMethod.POST,
+        url: `${auth.apiUrl}/api/v1/contacts/lookup`,
+        method: HttpMethod.GET,
         headers: {
           Authorization: `Bearer ${auth.apiKey}`,
-          "Content-Type": "application/json",
+          "X-Client-Id": auth.clientId,
         },
-        body: {
-          event_type: "kodepro_piece_auth_check",
-          message: "Auth validation ping",
-          severity: "info",
-        },
+        queryParams: { phone: "validation-check" },
       });
       if (response.status === 200) {
         return { valid: true };
@@ -73,6 +69,7 @@ export async function makeKodeProRequest(
     method,
     headers: {
       Authorization: `Bearer ${auth.apiKey}`,
+      "X-Client-Id": auth.clientId,
       "Content-Type": "application/json",
     },
     body,

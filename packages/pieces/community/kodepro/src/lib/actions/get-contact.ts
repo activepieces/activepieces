@@ -31,6 +31,11 @@ export const getContact = createAction({
   },
 
   async run({ auth, propsValue }) {
+    const hasLookupField = propsValue["phone"] || propsValue["email"] || propsValue["external_id"];
+    if (!hasLookupField) {
+      throw new Error("At least one lookup field (phone, email, or external_id) is required");
+    }
+
     const queryParams: Record<string, string> = {};
 
     if (propsValue["phone"]) queryParams["phone"] = propsValue["phone"] as string;

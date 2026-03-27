@@ -16,7 +16,7 @@ export const kodePro = createPiece({
   description: "Connect to your Kode Pro dashboard for contacts, messaging, and monitoring",
   auth: kodeProAuth,
   minimumSupportedRelease: "0.36.1",
-  logoUrl: "https://cdn.activepieces.com/pieces/custom.png",
+  logoUrl: "https://cdn.activepieces.com/pieces/kodepro.png",
   categories: [PieceCategory.BUSINESS_INTELLIGENCE],
   authors: ["kodeprollc"],
   actions: [
