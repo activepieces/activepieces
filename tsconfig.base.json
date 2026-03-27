@@ -1213,6 +1213,9 @@
       "@activepieces/piece-typeform": [
         "packages/pieces/community/typeform/src/index.ts"
       ],
+      "@activepieces/piece-umami": [
+        "packages/pieces/community/umami/src/index.ts"
+      ],
       "@activepieces/piece-upgradechat": [
         "packages/pieces/community/upgradechat/src/index.ts"
       ],
