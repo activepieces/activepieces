@@ -1,13 +1,12 @@
-import { rejectedPromiseHandler } from '@activepieces/server-common'
 import { apId, FlowStatus, FlowTriggerType, FlowVersionState, isNil, MCP_TRIGGER_PIECE_NAME, McpProperty, McpPropertyType, McpServer as McpServerSchema, McpServerStatus, mcpToolNameUtils, McpTrigger, PopulatedFlow, PopulatedMcpServer, spreadIfNotUndefined, TelemetryEventName } from '@activepieces/shared'
 import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { repoFactory } from '../core/db/repo-factory'
 import { flowService } from '../flows/flow/flow.service'
+import { rejectedPromiseHandler } from '../helper/promise-handler'
 import { telemetry } from '../helper/telemetry.utils'
-import { WebhookFlowVersionToRun } from '../webhooks/webhook-handler'
-import { webhookService } from '../webhooks/webhook.service'
+import { WebhookFlowVersionToRun, webhookService } from '../webhooks/webhook.service'
 import { McpServerEntity } from './mcp-entity'
 import { activepiecesTools, ALL_CONTROLLABLE_TOOL_NAMES, LOCKED_TOOL_NAMES } from './tools'
 
@@ -136,7 +135,7 @@ export const mcpServerService = (log: FastifyBaseLogger) => {
             const enabledControllable = new Set(mcp.enabledTools ?? ALL_CONTROLLABLE_TOOL_NAMES)
             const tools = allTools.filter(t => LOCKED_TOOL_NAMES.includes(t.title) || enabledControllable.has(t.title))
             tools.forEach((tool) => {
-                server.registerTool(tool.title, { title: tool.title, description: tool.description, inputSchema: tool.inputSchema }, (args: Record<string, unknown>) => tool.execute(args))
+                server.registerTool(tool.title, { title: tool.title, description: tool.description, inputSchema: tool.inputSchema, annotations: tool.annotations }, (args: Record<string, unknown>) => tool.execute(args))
             })
 
             registerEmptyResourcesAndPrompts(server)

@@ -41,4 +41,3 @@ export enum WebsocketServerEvent {
     MANUAL_TRIGGER_RUN_STARTED = 'MANUAL_TRIGGER_RUN_STARTED',
 }
 
-export * from './socket-utils'

@@ -42,7 +42,7 @@ describe('Managed Authentication API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/managed-authn/external-token',
+                url: '/api/v1/managed-authn/external-token',
                 body: {
                     externalAccessToken: mockExternalToken,
                 },
@@ -86,7 +86,7 @@ describe('Managed Authentication API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/managed-authn/external-token',
+                url: '/api/v1/managed-authn/external-token',
                 body: {
                     externalAccessToken: mockExternalToken,
                 },
@@ -157,7 +157,7 @@ describe('Managed Authentication API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/managed-authn/external-token',
+                url: '/api/v1/managed-authn/external-token',
                 body: {
                     externalAccessToken: mockExternalToken,
                 },
@@ -195,7 +195,7 @@ describe('Managed Authentication API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/managed-authn/external-token',
+                url: '/api/v1/managed-authn/external-token',
                 body: {
                     externalAccessToken: mockExternalToken,
                 },
@@ -244,7 +244,7 @@ describe('Managed Authentication API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/managed-authn/external-token',
+                url: '/api/v1/managed-authn/external-token',
                 body: {
                     externalAccessToken: mockExternalToken,
                 },
@@ -288,7 +288,7 @@ describe('Managed Authentication API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/managed-authn/external-token',
+                url: '/api/v1/managed-authn/external-token',
                 body: {
                     externalAccessToken: mockExternalToken,
                 },
@@ -315,7 +315,7 @@ describe('Managed Authentication API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/managed-authn/external-token',
+                url: '/api/v1/managed-authn/external-token',
                 body: {
                     externalAccessToken: mockExternalToken,
                 },

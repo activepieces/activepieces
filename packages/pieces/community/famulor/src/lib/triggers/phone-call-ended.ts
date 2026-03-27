@@ -53,7 +53,7 @@ export const phoneCallEnded = createTrigger({
     auth: famulorAuth,
     name: 'phoneCallEnded',
     displayName: 'Phone Call Completed',
-    description: 'Triggers when a phone call is completed, providing full call transcript, extracted variables, and call metadata.',
+    description: 'Triggers when a phone call completes.',
     props: {
         assistant_id: assistantDropdownForWebhook(),
     },

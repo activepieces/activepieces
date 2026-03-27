@@ -27,6 +27,7 @@ export const apDeleteBranchTool = (mcp: McpServer, log: FastifyBaseLogger): McpT
             routerStepName: z.string().describe('The name of the ROUTER step. Use ap_flow_structure to get valid values.'),
             branchIndex: z.number().describe('The index of the branch to delete (0-based). Cannot delete the fallback/last branch.'),
         },
+        annotations: { destructiveHint: true, openWorldHint: false },
         execute: async (args) => {
             const { flowId, routerStepName, branchIndex } = deleteBranchInput.parse(args)
 

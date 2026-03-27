@@ -1,4 +1,3 @@
-import { getProjectMaxConcurrentJobsKey } from '@activepieces/server-common'
 import {
     ActivepiecesError,
     ApId,
@@ -18,6 +17,7 @@ import {
 import { FastifyBaseLogger } from 'fastify'
 import { Brackets, EntityManager, IsNull, Not, ObjectLiteral, SelectQueryBuilder } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
+import { getProjectMaxConcurrentJobsKey } from '../database/redis/keys'
 import { distributedStore } from '../database/redis-connections'
 import { userService } from '../user/user-service'
 import { ProjectEntity } from './project-entity'

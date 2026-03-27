@@ -1,8 +1,8 @@
-import { securityAccess } from '@activepieces/server-common'
 import { CreatePlatformEventDestinationRequestBody, EventDestination, ListPlatformEventDestinationsRequestBody, PrincipalType, SeekPage, TestPlatformEventDestinationRequestBody, UpdatePlatformEventDestinationRequestBody } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
+import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { eventDestinationService } from '../../event-destinations/event-destinations.service'
 
 export const platformWebhooksController: FastifyPluginAsyncZod = async (app) => {

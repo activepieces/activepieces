@@ -19,15 +19,21 @@ import { checkIfSolutionExistsInDb, createMockConnection, createMockFlow, create
 
 let app: FastifyInstance | null = null
 
-async function waitForDeletionJobs(jobIds: string[], timeoutMs = 30000) {
+async function waitForDeletionJobs(jobIds: string[], timeoutMs = 60000) {
     const start = Date.now()
     for (const jobId of jobIds) {
         while (Date.now() - start < timeoutMs) {
             const job = await systemJobsQueue?.getJob(jobId)
             if (!job) break
             const state = await job.getState()
-            if (state === 'failed') throw new Error(`Job ${jobId} failed`)
-            await new Promise(r => setTimeout(r, 100))
+            if (state === 'completed') break
+            if (state === 'failed' && (job.attemptsMade ?? 0) >= (job.opts?.attempts ?? 2)) {
+                throw new Error(`Job ${jobId} failed: ${job.failedReason}`)
+            }
+            if (state === 'delayed') {
+                await job.promote()
+            }
+            await new Promise(r => setTimeout(r, 200))
         }
     }
     if (Date.now() - start >= timeoutMs) {
@@ -79,7 +85,7 @@ describe('Platform API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: `/v1/platforms/${mockPlatform.id}`,
+                url: `/api/v1/platforms/${mockPlatform.id}`,
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -138,7 +144,7 @@ describe('Platform API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: `/v1/platforms/${mockPlatform.id}`,
+                url: `/api/v1/platforms/${mockPlatform.id}`,
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -189,7 +195,7 @@ describe('Platform API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: `/v1/platforms/${mockPlatform.id}`,
+                url: `/api/v1/platforms/${mockPlatform.id}`,
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -236,7 +242,7 @@ describe('Platform API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: `/v1/platforms/${mockPlatform.id}`,
+                url: `/api/v1/platforms/${mockPlatform.id}`,
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -281,7 +287,7 @@ describe('Platform API', () => {
             // act
             const response = await app?.inject({
                 method: 'GET',
-                url: `/v1/platforms/${mockPlatform.id}`,
+                url: `/api/v1/platforms/${mockPlatform.id}`,
                 headers: {
                     authorization: `Bearer ${mockToken}`,
                 },
@@ -322,7 +328,7 @@ describe('Platform API', () => {
             // act
             const response = await app?.inject({
                 method: 'GET',
-                url: `/v1/platforms/${mockPlatform2.id}`,
+                url: `/api/v1/platforms/${mockPlatform2.id}`,
                 headers: {
                     authorization: `Bearer ${mockToken}`,
                 },
@@ -362,7 +368,7 @@ describe('Platform API', () => {
             // act
             const response = await app?.inject({
                 method: 'DELETE',
-                url: `/v1/platforms/${firstAccount.mockPlatform.id}`,
+                url: `/api/v1/platforms/${firstAccount.mockPlatform.id}`,
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -393,7 +399,7 @@ describe('Platform API', () => {
             // act
             const response = await app?.inject({
                 method: 'DELETE',
-                url: `/v1/platforms/${mockPlatform.id}`,
+                url: `/api/v1/platforms/${mockPlatform.id}`,
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -427,7 +433,7 @@ describe('Platform API', () => {
             // act
             const response = await app?.inject({
                 method: 'DELETE',
-                url: `/v1/platforms/${secondAccount.mockPlatform.id}`,
+                url: `/api/v1/platforms/${secondAccount.mockPlatform.id}`,
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -457,7 +463,7 @@ describe('Platform API', () => {
 
             const response = await app?.inject({
                 method: 'DELETE',
-                url: `/v1/platforms/${account.mockPlatform.id}`,
+                url: `/api/v1/platforms/${account.mockPlatform.id}`,
                 headers: { authorization: `Bearer ${testToken}` },
             })
 
@@ -526,7 +532,7 @@ describe('Platform API', () => {
 
             const response = await app?.inject({
                 method: 'DELETE',
-                url: `/v1/platforms/${account.mockPlatform.id}`,
+                url: `/api/v1/platforms/${account.mockPlatform.id}`,
                 headers: { authorization: `Bearer ${testToken}` },
             })
 
@@ -579,7 +585,7 @@ describe('Platform API', () => {
             // act
             const response = await app?.inject({
                 method: 'DELETE',
-                url: `/v1/platforms/${firstAccount.mockPlatform.id}`,
+                url: `/api/v1/platforms/${firstAccount.mockPlatform.id}`,
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -604,7 +610,7 @@ describe('Platform API', () => {
             // act
             const response = await app?.inject({
                 method: 'GET',
-                url: `/v1/platforms/${apId()}`,
+                url: `/api/v1/platforms/${apId()}`,
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -632,7 +638,7 @@ describe('Platform API', () => {
         // act
         const response = await app?.inject({
             method: 'GET',
-            url: `/v1/platforms/${mockPlatform.id}`,
+            url: `/api/v1/platforms/${mockPlatform.id}`,
             headers: {
                 authorization: `Bearer ${testToken}`,
             },

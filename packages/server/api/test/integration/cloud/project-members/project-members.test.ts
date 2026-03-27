@@ -105,7 +105,7 @@ describe('Project Member API', () => {
 
             const response = await app?.inject({
                 method: 'POST',
-                url: `/v1/project-members/${mockProjectMember.id}`,
+                url: `/api/v1/project-members/${mockProjectMember.id}`,
                 body: request,
                 headers: { authorization: `Bearer ${testToken}` },
             })
@@ -162,7 +162,7 @@ describe('Project Member API', () => {
 
             const response = await app?.inject({
                 method: 'POST',
-                url: `/v1/project-members/${projectMember.id}`,
+                url: `/api/v1/project-members/${projectMember.id}`,
                 body: request,
                 headers: { authorization: `Bearer ${testToken}` },
             })
@@ -187,7 +187,7 @@ describe('Project Member API', () => {
 
                 const response = await app?.inject({
                     method: 'GET',
-                    url: `/v1/project-members?projectId=${mockProject.id}`,
+                    url: `/api/v1/project-members?projectId=${mockProject.id}`,
                     headers: { authorization: `Bearer ${mockApiKey.value}` },
                 })
                 expect(response?.statusCode).toBe(StatusCodes.OK)
@@ -213,7 +213,7 @@ describe('Project Member API', () => {
 
                 const response = await app?.inject({
                     method: 'GET',
-                    url: `/v1/project-members?projectId=${mockProject2.id}`,
+                    url: `/api/v1/project-members?projectId=${mockProject2.id}`,
                     headers: { authorization: `Bearer ${mockApiKey.value}` },
                 })
                 expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
@@ -281,7 +281,7 @@ describe('Project Member API', () => {
 
             const response = await app?.inject({
                 method: 'DELETE',
-                url: `/v1/project-members/${mockProjectMember.id}`,
+                url: `/api/v1/project-members/${mockProjectMember.id}`,
                 headers: { authorization: `Bearer ${mockToken}` },
             })
 
@@ -306,7 +306,7 @@ describe('Project Member API', () => {
 
             const response = await app?.inject({
                 method: 'DELETE',
-                url: `/v1/project-members/${mockProjectMember.id}`,
+                url: `/api/v1/project-members/${mockProjectMember.id}`,
                 headers: { authorization: `Bearer ${mockApiKey.value}` },
             })
             expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
@@ -330,7 +330,7 @@ describe('Project Member API', () => {
 
             const response = await app?.inject({
                 method: 'DELETE',
-                url: `/v1/project-members/${mockProjectMember.id}`,
+                url: `/api/v1/project-members/${mockProjectMember.id}`,
                 headers: { authorization: `Bearer ${mockApiKey.value}` },
             })
             expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)

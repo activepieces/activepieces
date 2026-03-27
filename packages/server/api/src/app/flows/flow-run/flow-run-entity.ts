@@ -120,6 +120,10 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
             name: 'idx_run_flow_version_id',
             columns: ['flowVersionId'],
         },
+        {
+            name: 'idx_run_triggered_by',
+            columns: ['triggeredBy'],
+        },
     ],
     relations: {
         triggeredByUser: {
