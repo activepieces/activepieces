@@ -22,6 +22,111 @@ You are working in the Activepieces web application (`packages/web`).
 - `src/lib/` — Shared utilities and helpers
 - `src/app/` — App-level routing and layout
 
+## Feature Folder Structure
+
+```
+src/features/{feature}/
+├── api/
+│   └── {feature}-api.ts       # API client functions
+├── hooks/
+│   └── {feature}-hooks.ts     # React Query hooks (queries + mutations)
+├── components/
+│   └── {feature}-list.tsx     # UI components
+├── stores/
+│   └── {feature}-store.ts     # Zustand store (if needed)
+└── index.ts                   # Barrel export
+```
+
+## API Client Pattern
+
+Use `api` from `@/lib/api`. Updates use `api.post()` (not put/patch) to match server convention:
+
+```typescript
+export const myFeatureApi = {
+    list(request: ListMyFeaturesRequest) {
+        return api.get<SeekPage<MyFeature>>('/v1/my-features', request)
+    },
+    create(request: CreateMyFeatureRequest) {
+        return api.post<MyFeature>('/v1/my-features', request)
+    },
+    update(id: string, request: UpdateMyFeatureRequest) {
+        return api.post<MyFeature>(`/v1/my-features/${id}`, request)
+    },
+    delete(id: string) {
+        return api.delete<void>(`/v1/my-features/${id}`)
+    },
+}
+```
+
+## Hook Patterns
+
+Separate queries and mutations. Use `authenticationSession.getProjectId()`:
+
+```typescript
+export const myFeatureHooks = {
+    useList: () => {
+        const projectId = authenticationSession.getProjectId() ?? ''
+        return useQuery({
+            queryKey: ['my-features', projectId],
+            queryFn: () => myFeatureApi.list({ projectId }),
+        })
+    },
+}
+
+export const myFeatureMutations = {
+    useCreate: () => {
+        const queryClient = useQueryClient()
+        return useMutation({
+            mutationFn: myFeatureApi.create,
+            onSuccess: () => queryClient.invalidateQueries({ queryKey: ['my-features'] }),
+        })
+    },
+}
+```
+
+## Route Registration
+
+React Router v6 with `createBrowserRouter()`, lazy-loaded pages:
+
+```tsx
+const MyPage = React.lazy(() => import('./my-page').then(m => ({ default: m.MyPage })))
+
+// In projectRoutes array (src/app/routes/project-routes.tsx):
+ProjectRouterWrapper({
+    path: '/projects/:projectId/my-feature',
+    element: (
+        <RoutePermissionGuard requiredPermissions={[Permission.READ_MY_FEATURE]}>
+            <PageTitle title="My Feature">
+                <SuspenseWrapper><MyPage /></SuspenseWrapper>
+            </PageTitle>
+        </RoutePermissionGuard>
+    ),
+})
+```
+
+## Feature Flags
+
+```tsx
+// Check flag in component
+const { data: isEnabled } = flagsHooks.useFlag<boolean>(ApFlagId.MY_FEATURE_ENABLED)
+
+// Guard entire section
+<FlagGuard flag={ApFlagId.MY_FEATURE_ENABLED}>
+    <MyFeatureComponent />
+</FlagGuard>
+```
+
+Flags fetched once with `staleTime: Infinity` (no refetch). Platform plan flags are populated by EE hooks.
+
+## Embedding Awareness
+
+`EmbeddingState` context from `src/components/providers/embed-provider.tsx`:
+
+- Check `isEmbedded`, `hideSideNav`, `disableNavigationInBuilder`, `hidePageHeader`, `hideFolders`
+- Connection dialog embedding via SDK `connect()` method
+- PostMessage protocol for iframe ↔ parent communication
+- Respect embed config when showing/hiding UI elements
+
 ## Tailwind / Styling
 
 - **Always use `cn()` from `@/lib/utils` for className composition.** It uses `clsx` + `tailwind-merge` and handles conflicts and conditionals correctly. Never use template literals (`` `class-a ${someVar}` ``) or string concatenation for `className` props.
@@ -49,7 +154,6 @@ You are working in the Activepieces web application (`packages/web`).
 - **Server errors go to `root.serverError`** — Set API errors with `form.setError('root.serverError', { type: 'manual', message: '...' })`. Clear it at the top of `handleSubmit` with `form.clearErrors('root.serverError')`. Render it below the fields, outside `<ScrollArea>`.
 - **Wrap the `<form>` element in `<Form {...form}>`** — Always spread the form instance onto the Shadcn `<Form>` wrapper, and use `form.handleSubmit(handleSubmit)` on the native `<form>`. The submit button must be inside the `<form>` with `type="submit"`. Cancel buttons must always have `type="button"` to prevent accidental form submission.
 
-
 ## React Patterns
 
 ### `useEffect`
@@ -68,6 +172,17 @@ You are working in the Activepieces web application (`packages/web`).
 - **Listening to value changes to trigger other state updates** — Derive the value directly during render or handle it in the event handler that caused the change. A chain of `useEffect` → `setState` → `useEffect` is always a sign of a design problem.
 - **Transforming data for rendering** — Calculate it inline during render instead.
 - **Passing data upward to a parent** — Lift state up or use a shared store.
+
+## i18n
+
+- All user-facing strings through `t()` from `react-i18next`
+- Translations in `packages/web/public/locales/en/translation.json` — flat key structure (no nesting)
+- Only update `en/translation.json` — other locales handled by translators
+- Missing keys render as the key string itself (fallback behavior)
+
+## OpenAPI
+
+Auto-generated from route `schema.tags` + `schema.description`. No manual registration needed for new endpoints.
 
 ## Guidelines
 
