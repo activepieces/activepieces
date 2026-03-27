@@ -18,7 +18,7 @@ export const sendCall = createAction({
       displayName: 'Task',
       description:
         'Instructions for the AI agent — what it should say, ask, or accomplish during the call. Not required if using a Pathway ID.',
-      required: true,
+      required: false,
     }),
     pathwayId: Property.ShortText({
       displayName: 'Pathway ID',
