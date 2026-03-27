@@ -32,20 +32,23 @@ export const kodeProAuth = PieceAuth.CustomAuth({
   },
   validate: async ({ auth }) => {
     try {
-      const response = await httpClient.sendRequest({
+      // The lookup endpoint returns 200 with { contact: null } for unmatched queries.
+      // A 401 response (invalid API key) causes httpClient to throw.
+      await httpClient.sendRequest({
         url: `${auth.apiUrl}/api/v1/contacts/lookup`,
         method: HttpMethod.GET,
         headers: {
           Authorization: `Bearer ${auth.apiKey}`,
           "X-Client-Id": auth.clientId,
         },
-        queryParams: { phone: "validation-check" },
+        queryParams: { phone: "+10000000000" },
       });
-      if (response.status === 200) {
-        return { valid: true };
+      return { valid: true };
+    } catch (e: unknown) {
+      const status = (e as { response?: { status?: number } })?.response?.status;
+      if (status === 401) {
+        return { valid: false, error: "Invalid API key" };
       }
-      return { valid: false, error: `Unexpected status ${response.status}` };
-    } catch {
       return { valid: false, error: "Unable to connect to Kode Pro dashboard" };
     }
   },
