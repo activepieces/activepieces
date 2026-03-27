@@ -7846,11 +7846,7 @@
     },
     "packages/shared": {
       "name": "@activepieces/shared",
-<<<<<<< HEAD
-      "version": "0.46.1",
-=======
       "version": "0.47.0",
->>>>>>> upstream/main
       "dependencies": {
         "dayjs": "1.11.9",
         "deepmerge-ts": "7.1.0",
