@@ -22,7 +22,7 @@ export const createVoteAction = createAction({
   },
   async run({ auth, propsValue }) {
     return await cannyRequest({
-      apiKey: auth,
+      apiKey: auth.secret_text,
       path: '/votes/create',
       body: {
         postID: propsValue.postID,

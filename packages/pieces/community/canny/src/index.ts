@@ -18,7 +18,7 @@ export const canny = createPiece({
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/canny.png',
   authors: ['Harmatta'],
-  categories: [PieceCategory.PRODUCT_AND_PROJECT_MANAGEMENT],
+  categories: [PieceCategory.PRODUCTIVITY],
   actions: [
     createPostAction,
     retrievePostAction,
@@ -28,7 +28,7 @@ export const canny = createPiece({
     createCustomApiCallAction({
       baseUrl: () => CANNY_API_BASE,
       auth: cannyAuth,
-      authMapping: async (auth) => ({
+      authMapping: async (_auth) => ({
         'Content-Type': 'application/json',
       }),
       description:

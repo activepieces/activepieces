@@ -22,7 +22,7 @@ export const deleteVoteAction = createAction({
   },
   async run({ auth, propsValue }) {
     return await cannyRequest({
-      apiKey: auth,
+      apiKey: auth.secret_text,
       path: '/votes/delete',
       body: {
         postID: propsValue.postID,

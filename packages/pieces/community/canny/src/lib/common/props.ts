@@ -4,6 +4,7 @@ import { cannyAuth } from '../auth';
 import { cannyRequest } from './client';
 
 export const boardIdProp = Property.Dropdown({
+  auth: cannyAuth,
   displayName: 'Board',
   description: 'The board to use.',
   required: true,
@@ -20,7 +21,7 @@ export const boardIdProp = Property.Dropdown({
     const response = await cannyRequest<{
       boards: Array<{ id: string; name: string }>;
     }>({
-      apiKey: (auth as { secret_text: string }).secret_text,
+      apiKey: auth.secret_text,
       path: '/boards/list',
     });
 

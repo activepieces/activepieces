@@ -17,7 +17,7 @@ export const retrievePostAction = createAction({
   },
   async run({ auth, propsValue }) {
     return await cannyRequest({
-      apiKey: auth,
+      apiKey: auth.secret_text,
       path: '/posts/retrieve',
       body: { id: propsValue.id },
     });

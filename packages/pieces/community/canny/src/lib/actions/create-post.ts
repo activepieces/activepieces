@@ -39,7 +39,7 @@ export const createPostAction = createAction({
   },
   async run({ auth, propsValue }) {
     return await cannyRequest({
-      apiKey: auth,
+      apiKey: auth.secret_text,
       path: '/posts/create',
       body: cleanBody({
         authorID: propsValue.authorID,

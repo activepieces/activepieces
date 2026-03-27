@@ -1,7 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 
 import { cannyAuth } from '../auth';
-import { boardIdProp } from '../common/props';
 import { cannyRequest, cleanBody } from '../common/client';
 
 export const listPostsAction = createAction({
@@ -11,6 +10,7 @@ export const listPostsAction = createAction({
   description: 'Returns a list of posts for a board, with optional filtering and sorting.',
   props: {
     boardID: Property.Dropdown({
+      auth: cannyAuth,
       displayName: 'Board',
       description: 'The board to list posts for (optional — omit to list across all boards).',
       required: false,
@@ -27,7 +27,7 @@ export const listPostsAction = createAction({
         const response = await cannyRequest<{
           boards: Array<{ id: string; name: string }>;
         }>({
-          apiKey: (auth as { secret_text: string }).secret_text,
+          apiKey: auth.secret_text,
           path: '/boards/list',
         });
 
@@ -78,7 +78,7 @@ export const listPostsAction = createAction({
   },
   async run({ auth, propsValue }) {
     return await cannyRequest({
-      apiKey: auth,
+      apiKey: auth.secret_text,
       path: '/posts/list',
       body: cleanBody({
         boardID: propsValue.boardID,
