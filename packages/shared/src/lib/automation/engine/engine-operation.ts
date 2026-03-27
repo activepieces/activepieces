@@ -292,4 +292,5 @@ export enum EngineResponseStatus {
     INTERNAL_ERROR = 'INTERNAL_ERROR',
     TIMEOUT = 'TIMEOUT',
     MEMORY_ISSUE = 'MEMORY_ISSUE',
+    LOG_SIZE_EXCEEDED = 'LOG_SIZE_EXCEEDED',
 }
