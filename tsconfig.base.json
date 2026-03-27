@@ -252,6 +252,9 @@
       "@activepieces/piece-clockify": [
         "packages/pieces/community/clockify/src/index.ts"
       ],
+      "@activepieces/piece-everhour": [
+        "packages/pieces/community/everhour/src/index.ts"
+      ],
       "@activepieces/piece-clockodo": [
         "packages/pieces/community/clockodo/src/index.ts"
       ],
@@ -1872,6 +1875,9 @@
       ],
       "@activepieces/piece-emailit": [
         "packages/pieces/community/emailit/src/index.ts"
+      ],
+      "@activepieces/piece-bland-ai": [
+        "packages/pieces/community/bland-ai/src/index.ts"
       ]
     },
     "resolveJsonModule": true
