@@ -1,11 +1,5 @@
 {
   "Email delivery service for sending transactional and marketing emails": "E-mailbezorging service voor het verzenden van transactionele en marketing e-mails",
-  "API Key": "API Sleutel",
-  "Data Residency": "Data residentie",
-  "API key acquired from your SendGrid settings": "API-sleutel verkregen via SendGrid instellingen",
-  "Select the Data Residency for this API key": "Selecteer de Data Residency voor deze API key",
-  "Global (US)": "Globaal (US)",
-  "EU": "EU",
   "Send Email": "E-mail verzenden",
   "Send Dynamic Template": "Verstuur dynamisch sjabloon",
   "Custom API Call": "Custom API Call",
