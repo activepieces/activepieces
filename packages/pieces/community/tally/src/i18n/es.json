@@ -1,7 +1,7 @@
 {
   "Receive form submissions from Tally forms": "Recibir envíos de formularios de Tally",
+  "Your Tally API key. Go to **Settings > API keys** in your Tally dashboard to create one.": "Tu clave API de Tally. Ve a **Ajustes > claves API** en tu panel de control de Tally para crear una.",
   "New Submission": "Nuevo envío",
-  "Triggers when form receives a new submission": "Dispara cuando el formulario recibe un nuevo envío",
-  "Markdown": "Markdown",
-  "\nTo set up the trigger for new form submissions, follow these steps:\n\n1. Go to the \"Dashboard\" section.\n2. Select the form where you want the trigger to occur.\n3. Click on the \"Integrations\" section.\n4. Find the \"Webhooks\" integration and click on \"Connect\" to activate it.\n5. In the webhook settings, paste the following URL: \n  ```text\n  {{webhookUrl}}\n  ```\n\n  \n6. Click on \"Submit\".\n": "\nTo set up the trigger for new form submissions, follow these steps:\n\n1. Go to the \"Dashboard\" section.\n2. Select the form where you want the trigger to occur.\n3. Click on the \"Integrations\" section.\n4. Find the \"Webhooks\" integration and click on \"Connect\" to activate it.\n5. In the webhook settings, paste the following URL: \n  ```text\n  {{webhookUrl}}\n  ```\n\n  \n6. Click on \"Submit\".\n"
+  "Triggers when a form receives a new submission": "Dispara cuando un formulario recibe un nuevo envío",
+  "Form": "Forma"
 }
