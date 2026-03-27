@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 
-import { getresponseAuth } from '../common/auth';
+import { getresponseAuth, GetResponseAuthValue } from '../common/auth';
 import {
   createGetResponseContact,
   flattenGetResponseContact,
@@ -37,14 +37,14 @@ export const createOrUpdateContactAction = createAction({
     const email = requireString(context.propsValue.email, 'Email Address');
 
     const existingContact = await findExactContact({
-      apiKey: context.auth.secret_text,
+      auth: context.auth,
       email,
       campaignId,
     });
 
     if (!existingContact) {
       const createdContact = await createGetResponseContact({
-        apiKey: context.auth.secret_text,
+        auth: context.auth,
         request: {
           email,
           campaign: {
@@ -61,7 +61,7 @@ export const createOrUpdateContactAction = createAction({
     }
 
     const updatedContact = await updateGetResponseContact({
-      apiKey: context.auth.secret_text,
+      auth: context.auth,
       contactId: existingContact.contactId,
       request: {
         email,
@@ -80,16 +80,16 @@ export const createOrUpdateContactAction = createAction({
 });
 
 async function findExactContact({
-  apiKey,
+  auth,
   email,
   campaignId,
 }: {
-  apiKey: string;
+  auth: GetResponseAuthValue;
   email: string;
   campaignId: string;
 }) {
   const contacts = await listGetResponseContacts({
-    apiKey,
+    auth,
     email,
     campaignId,
   });

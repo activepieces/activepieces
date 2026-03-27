@@ -22,7 +22,7 @@ export const findContactAction = createAction({
   },
   async run(context) {
     const contacts = await listGetResponseContacts({
-      apiKey: context.auth.secret_text,
+      auth: context.auth,
       email: context.propsValue.email,
       campaignId: context.propsValue.campaignId,
     });

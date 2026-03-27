@@ -1,10 +1,10 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 
+import { getresponseAuth } from '../common/auth';
 import {
   flattenGetResponseCampaign,
   listGetResponseCampaigns,
 } from '../common/client';
-import { getresponseAuth } from '../common/auth';
 
 export const findCampaignListAction = createAction({
   auth: getresponseAuth,
@@ -27,7 +27,7 @@ export const findCampaignListAction = createAction({
   },
   async run(context) {
     const campaigns = await listGetResponseCampaigns({
-      apiKey: context.auth.secret_text,
+      auth: context.auth,
       limit: context.propsValue.limit ?? 100,
       ...(context.propsValue.name ? { name: context.propsValue.name } : {}),
     });

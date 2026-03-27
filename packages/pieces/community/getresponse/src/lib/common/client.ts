@@ -1,8 +1,11 @@
 import { httpClient, HttpMethod, HttpRequest } from '@activepieces/pieces-common';
+import { AppConnectionType } from '@activepieces/shared';
 
-export async function validateGetResponseApiKey(apiKey: string): Promise<void> {
+import { GetResponseAuthValue } from './auth';
+
+export async function validateGetResponseAuth(auth: GetResponseAuthValue): Promise<void> {
   await sendGetRequest<GetResponseCampaign[]>({
-    apiKey,
+    auth,
     path: '/campaigns',
     queryParams: {
       perPage: '1',
@@ -12,16 +15,16 @@ export async function validateGetResponseApiKey(apiKey: string): Promise<void> {
 }
 
 export async function listGetResponseCampaigns({
-  apiKey,
+  auth,
   limit = 1000,
   name,
 }: {
-  apiKey: string;
+  auth: GetResponseAuthValue;
   limit?: number;
   name?: string;
 }): Promise<GetResponseCampaign[]> {
   return sendGetRequest<GetResponseCampaign[]>({
-    apiKey,
+    auth,
     path: '/campaigns',
     queryParams: {
       perPage: String(Math.min(limit, 1000)),
@@ -32,10 +35,10 @@ export async function listGetResponseCampaigns({
 }
 
 export async function listGetResponseFromFields(
-  apiKey: string,
+  auth: GetResponseAuthValue,
 ): Promise<GetResponseFromField[]> {
   return sendGetRequest<GetResponseFromField[]>({
-    apiKey,
+    auth,
     path: '/from-fields',
     queryParams: {
       perPage: '1000',
@@ -46,16 +49,16 @@ export async function listGetResponseFromFields(
 }
 
 export async function listGetResponseContacts({
-  apiKey,
+  auth,
   email,
   campaignId,
 }: {
-  apiKey: string;
+  auth: GetResponseAuthValue;
   email: string;
   campaignId?: string;
 }): Promise<GetResponseContact[]> {
   return sendGetRequest<GetResponseContact[]>({
-    apiKey,
+    auth,
     path: '/contacts',
     queryParams: {
       perPage: '1000',
@@ -67,49 +70,47 @@ export async function listGetResponseContacts({
 }
 
 export async function createGetResponseContact({
-  apiKey,
+  auth,
   request,
 }: {
-  apiKey: string;
+  auth: GetResponseAuthValue;
   request: GetResponseNewContactRequest;
 }): Promise<GetResponseContact> {
   return sendPostRequest<GetResponseNewContactRequest, GetResponseContact>({
-    apiKey,
+    auth,
     path: '/contacts',
     body: request,
   });
 }
 
 export async function updateGetResponseContact({
-  apiKey,
+  auth,
   contactId,
   request,
 }: {
-  apiKey: string;
+  auth: GetResponseAuthValue;
   contactId: string;
   request: GetResponseUpdateContactRequest;
 }): Promise<GetResponseContact> {
   return sendPostRequest<GetResponseUpdateContactRequest, GetResponseContact>({
-    apiKey,
+    auth,
     path: `/contacts/${contactId}`,
     body: request,
   });
 }
 
 export async function createGetResponseNewsletter({
-  apiKey,
+  auth,
   request,
 }: {
-  apiKey: string;
+  auth: GetResponseAuthValue;
   request: GetResponseNewNewsletterRequest;
 }): Promise<GetResponseNewsletter> {
-  return sendPostRequest<GetResponseNewNewsletterRequest, GetResponseNewsletter>(
-    {
-      apiKey,
-      path: '/newsletters',
-      body: request,
-    },
-  );
+  return sendPostRequest<GetResponseNewNewsletterRequest, GetResponseNewsletter>({
+    auth,
+    path: '/newsletters',
+    body: request,
+  });
 }
 
 export function flattenGetResponseCampaign(
@@ -174,16 +175,16 @@ export function flattenGetResponseNewsletter(
 }
 
 function sendGetRequest<TResponse>({
-  apiKey,
+  auth,
   path,
   queryParams,
 }: {
-  apiKey: string;
+  auth: GetResponseAuthValue;
   path: string;
   queryParams?: GetResponseQueryParams;
 }): Promise<TResponse> {
   return sendRequest<TResponse>({
-    apiKey,
+    auth,
     method: HttpMethod.GET,
     path,
     queryParams,
@@ -191,16 +192,16 @@ function sendGetRequest<TResponse>({
 }
 
 function sendPostRequest<TRequest extends Record<string, unknown>, TResponse>({
-  apiKey,
+  auth,
   path,
   body,
 }: {
-  apiKey: string;
+  auth: GetResponseAuthValue;
   path: string;
   body: TRequest;
 }): Promise<TResponse> {
   return sendRequest<TResponse>({
-    apiKey,
+    auth,
     method: HttpMethod.POST,
     path,
     body,
@@ -208,13 +209,13 @@ function sendPostRequest<TRequest extends Record<string, unknown>, TResponse>({
 }
 
 async function sendRequest<TResponse>({
-  apiKey,
+  auth,
   method,
   path,
   body,
   queryParams,
 }: {
-  apiKey: string;
+  auth: GetResponseAuthValue;
   method: HttpMethod;
   path: string;
   body?: Record<string, unknown>;
@@ -223,7 +224,7 @@ async function sendRequest<TResponse>({
   const request: HttpRequest<Record<string, unknown> | string> = {
     method,
     url: `${GETRESPONSE_API_URL}${path}`,
-    headers: createHeaders(apiKey),
+    headers: createHeaders(auth),
     queryParams,
     body,
   };
@@ -231,12 +232,19 @@ async function sendRequest<TResponse>({
   return response.body;
 }
 
-function createHeaders(apiKey: string): Record<string, string> {
-  return {
+function createHeaders(auth: GetResponseAuthValue): Record<string, string> {
+  const headers: Record<string, string> = {
     Accept: 'application/json',
     'Content-Type': 'application/json',
-    'X-Auth-Token': `api-key ${apiKey}`,
   };
+
+  if (auth.type === AppConnectionType.OAUTH2) {
+    headers['Authorization'] = `Bearer ${auth.access_token}`;
+  } else {
+    headers['X-Auth-Token'] = `api-key ${auth.props.apiKey}`;
+  }
+
+  return headers;
 }
 
 function formatContactTags(

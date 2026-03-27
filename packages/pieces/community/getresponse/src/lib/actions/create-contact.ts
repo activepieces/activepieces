@@ -34,7 +34,7 @@ export const createContactAction = createAction({
     const email = requireString(context.propsValue.email, 'Email Address');
 
     const contact = await createGetResponseContact({
-      apiKey: context.auth.secret_text,
+      auth: context.auth,
       request: {
         email,
         campaign: {

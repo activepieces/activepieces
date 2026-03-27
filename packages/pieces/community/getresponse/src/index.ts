@@ -1,6 +1,6 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { AppConnectionType, PieceCategory } from '@activepieces/shared';
 
 import { createContactAction } from './lib/actions/create-contact';
 import { createNewsletterAction } from './lib/actions/create-newsletter';
@@ -27,9 +27,12 @@ export const getresponse = createPiece({
     createCustomApiCallAction({
       auth: getresponseAuth,
       baseUrl: () => 'https://api.getresponse.com/v3',
-      authMapping: async (auth) => ({
-        'X-Auth-Token': `api-key ${auth.secret_text}`,
-      }),
+      authMapping: async (auth) => {
+        if (auth.type === AppConnectionType.OAUTH2) {
+          return { Authorization: `Bearer ${auth.access_token}` };
+        }
+        return { 'X-Auth-Token': `api-key ${auth.props.apiKey}` };
+      },
     }),
   ],
   triggers: [],

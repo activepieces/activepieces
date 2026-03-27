@@ -57,7 +57,7 @@ export const createNewsletterAction = createAction({
     }
 
     const newsletter = await createGetResponseNewsletter({
-      apiKey: context.auth.secret_text,
+      auth: context.auth,
       request: {
         subject,
         fromField: {

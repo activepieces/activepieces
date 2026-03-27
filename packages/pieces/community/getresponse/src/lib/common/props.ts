@@ -1,6 +1,6 @@
 import { Property } from '@activepieces/pieces-framework';
 
-import { getresponseAuth } from './auth';
+import { getresponseAuth, GetResponseAuthValue } from './auth';
 import { listGetResponseCampaigns, listGetResponseFromFields } from './client';
 
 export const getresponseProps = {
@@ -21,7 +21,7 @@ export const getresponseProps = {
         }
 
         const campaigns = await listGetResponseCampaigns({
-          apiKey: auth.secret_text,
+          auth: auth as GetResponseAuthValue,
         });
 
         if (campaigns.length === 0) {
@@ -57,7 +57,7 @@ export const getresponseProps = {
           };
         }
 
-        const fromFields = await listGetResponseFromFields(auth.secret_text);
+        const fromFields = await listGetResponseFromFields(auth as GetResponseAuthValue);
 
         if (fromFields.length === 0) {
           return {
