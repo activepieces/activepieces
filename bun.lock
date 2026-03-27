@@ -1103,6 +1103,16 @@
         "tslib": "^2.3.0",
       },
     },
+    "packages/pieces/community/bland-ai": {
+      "name": "@activepieces/piece-bland-ai",
+      "version": "0.1.0",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/blockscout": {
       "name": "@activepieces/piece-blockscout",
       "version": "0.1.3",
@@ -3036,13 +3046,17 @@
     },
     "packages/pieces/community/google-vertexai": {
       "name": "@activepieces/piece-google-vertexai",
-      "version": "0.0.2",
+      "version": "0.1.0",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "@google/genai": "1.43.0",
         "google-auth-library": "10.6.1",
+        "mime-types": "2.1.35",
+      },
+      "devDependencies": {
+        "@types/mime-types": "2.1.1",
       },
     },
     "packages/pieces/community/googlechat": {
@@ -5661,6 +5675,16 @@
         "tslib": "2.6.2",
       },
     },
+    "packages/pieces/community/savvycal": {
+      "name": "@activepieces/piece-savvycal",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/scenario": {
       "name": "@activepieces/piece-scenario",
       "version": "0.1.4",
@@ -5996,6 +6020,16 @@
     "packages/pieces/community/smaily": {
       "name": "@activepieces/piece-smaily",
       "version": "0.1.4",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
+      },
+    },
+    "packages/pieces/community/smartlead": {
+      "name": "@activepieces/piece-smartlead",
+      "version": "0.0.1",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -7233,7 +7267,7 @@
     },
     "packages/pieces/core/crypto": {
       "name": "@activepieces/piece-crypto",
-      "version": "0.0.19",
+      "version": "0.0.20",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -7813,7 +7847,11 @@
     },
     "packages/shared": {
       "name": "@activepieces/shared",
+<<<<<<< HEAD
+      "version": "0.46.1",
+=======
       "version": "0.47.0",
+>>>>>>> upstream/main
       "dependencies": {
         "dayjs": "1.11.9",
         "deepmerge-ts": "7.1.0",
@@ -8097,6 +8135,8 @@
     "@activepieces/piece-binance": ["@activepieces/piece-binance@workspace:packages/pieces/community/binance"],
 
     "@activepieces/piece-bitly": ["@activepieces/piece-bitly@workspace:packages/pieces/community/bitly"],
+
+    "@activepieces/piece-bland-ai": ["@activepieces/piece-bland-ai@workspace:packages/pieces/community/bland-ai"],
 
     "@activepieces/piece-blockscout": ["@activepieces/piece-blockscout@workspace:packages/pieces/community/blockscout"],
 
@@ -8964,6 +9004,8 @@
 
     "@activepieces/piece-sardis": ["@activepieces/piece-sardis@workspace:packages/pieces/community/sardis"],
 
+    "@activepieces/piece-savvycal": ["@activepieces/piece-savvycal@workspace:packages/pieces/community/savvycal"],
+
     "@activepieces/piece-scenario": ["@activepieces/piece-scenario@workspace:packages/pieces/community/scenario"],
 
     "@activepieces/piece-schedule": ["@activepieces/piece-schedule@workspace:packages/pieces/core/schedule"],
@@ -9031,6 +9073,8 @@
     "@activepieces/piece-slidespeak": ["@activepieces/piece-slidespeak@workspace:packages/pieces/community/slidespeak"],
 
     "@activepieces/piece-smaily": ["@activepieces/piece-smaily@workspace:packages/pieces/community/smaily"],
+
+    "@activepieces/piece-smartlead": ["@activepieces/piece-smartlead@workspace:packages/pieces/community/smartlead"],
 
     "@activepieces/piece-smartsheet": ["@activepieces/piece-smartsheet@workspace:packages/pieces/community/smartsheet"],
 

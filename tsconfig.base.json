@@ -963,6 +963,9 @@
       "@activepieces/piece-salesforce": [
         "packages/pieces/community/salesforce/src/index.ts"
       ],
+      "@activepieces/piece-savvycal": [
+        "packages/pieces/community/savvycal/src/index.ts"
+      ],
       "@activepieces/piece-scenario": [
         "packages/pieces/community/scenario/src/index.ts"
       ],
@@ -1869,6 +1872,9 @@
       ],
       "@activepieces/piece-emailit": [
         "packages/pieces/community/emailit/src/index.ts"
+      ],
+      "@activepieces/piece-bland-ai": [
+        "packages/pieces/community/bland-ai/src/index.ts"
       ]
     },
     "resolveJsonModule": true
