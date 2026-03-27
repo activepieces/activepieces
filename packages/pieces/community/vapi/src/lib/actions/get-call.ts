@@ -16,7 +16,7 @@ export const getCall = createAction({
   },
   async run(context) {
     const client = createVapiClient(context.auth.secret_text);
-    const call = await client.calls.get(context.propsValue.callId);
+    const call = await client.calls.get({ id: context.propsValue.callId });
     return call;
   },
 });

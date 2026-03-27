@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
+import { Vapi } from '@vapi-ai/server-sdk';
 import { vapiAuth } from '../auth';
 import { createVapiClient } from '../common/client';
-import type Vapi from '@vapi-ai/server-sdk';
 
 export const createCall = createAction({
   auth: vapiAuth,

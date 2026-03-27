@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
+import { Vapi } from '@vapi-ai/server-sdk';
 import { vapiAuth } from '../auth';
 import { createVapiClient } from '../common/client';
-import type Vapi from '@vapi-ai/server-sdk';
 
 export const updateAssistant = createAction({
   auth: vapiAuth,
@@ -67,7 +67,7 @@ export const updateAssistant = createAction({
       overrides,
     } = context.propsValue;
 
-    const request: Vapi.UpdateAssistantDto = {};
+    const request: Vapi.UpdateAssistantDto = { id: assistantId };
 
     if (name) request.name = name;
     if (firstMessage) request.firstMessage = firstMessage;
@@ -102,14 +102,15 @@ export const updateAssistant = createAction({
     // Merge additional overrides (explicit fields take priority)
     if (overrides && typeof overrides === 'object' && !Array.isArray(overrides)) {
       const base = overrides as Record<string, unknown>;
+      const requestRecord = request as unknown as Record<string, unknown>;
       for (const [key, value] of Object.entries(base)) {
         if (!(key in request) && key !== 'id') {
-          (request as Record<string, unknown>)[key] = value;
+          requestRecord[key] = value;
         }
       }
     }
 
-    const assistant = await client.assistants.update(assistantId, request);
+    const assistant = await client.assistants.update(request);
     return assistant;
   },
 });
