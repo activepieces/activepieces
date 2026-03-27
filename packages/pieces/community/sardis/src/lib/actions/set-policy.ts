@@ -1,15 +1,19 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { sardisAuth } from '../..';
-import { sardisCommon, makeSardisClient } from '../common';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { sardisAuth } from '../auth';
+import { sardisApiCall } from '../common';
 
-export const sardisSetPolicy = createAction({
+export const setSpendingPolicyAction = createAction({
   name: 'set_policy',
   auth: sardisAuth,
   displayName: 'Set Spending Policy',
-  description:
-    'Set or update the spending policy on a wallet using natural language. Examples: "Max $50 per transaction", "Daily limit $500", "Only allow payments to openai.com and anthropic.com".',
+  description: 'Set or update spending policies on a Sardis agent using natural language.',
   props: {
-    walletId: sardisCommon.walletId,
+    agentId: Property.ShortText({
+      displayName: 'Agent ID',
+      description: 'Your Sardis agent ID',
+      required: true,
+    }),
     policyText: Property.LongText({
       displayName: 'Policy (Natural Language)',
       description:
@@ -18,9 +22,12 @@ export const sardisSetPolicy = createAction({
     }),
   },
   async run(context) {
-    const { walletId, policyText } = context.propsValue;
-    const client = makeSardisClient(context.auth.secret_text);
-
-    return await client.policies.apply(policyText, walletId);
+    const { agentId, policyText } = context.propsValue;
+    return sardisApiCall(
+      context.auth.secret_text,
+      HttpMethod.POST,
+      '/api/v2/policies/apply',
+      { natural_language: policyText, agent_id: agentId, confirm: true },
+    );
   },
 });
