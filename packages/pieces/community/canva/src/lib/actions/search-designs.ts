@@ -41,15 +41,22 @@ export const searchDesignsAction = createAction({
         continuation: Property.ShortText({
             displayName: "Continuation Token",
             required: false,
+        }),
+        limit: Property.Number({
+            displayName: "Limit",
+            description: "Number of items to return (1-100)",
+            required: false,
+            defaultValue: 10
         })
     },
     async run(context) {
-        const { query, ownership, sort_by, continuation } = context.propsValue;
+        const { query, ownership, sort_by, continuation, limit } = context.propsValue;
         const queryParams: Record<string, string> = {};
         queryParams['query'] = query;
         if (ownership) queryParams['ownership'] = ownership;
         if (sort_by) queryParams['sort_by'] = sort_by;
         if (continuation) queryParams['continuation'] = continuation;
+        if (limit) queryParams['limit'] = limit.toString();
 
         const response = await httpClient.sendRequest({
             method: HttpMethod.GET,
