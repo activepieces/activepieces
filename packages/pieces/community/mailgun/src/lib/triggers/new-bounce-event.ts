@@ -4,8 +4,9 @@ export const newBounceEvent = createMailgunWebhookTrigger({
   name: 'new_bounce_event',
   displayName: 'New Bounce Event',
   description:
-    'Triggers when an email permanently or temporarily fails to deliver in Mailgun',
+    'Triggers when an email permanently fails to deliver (hard bounce) in Mailgun',
   eventType: 'permanent_fail',
+  testEventFilter: { event: 'failed', severity: 'permanent' },
   sampleData: {
     event: 'failed',
     id: 'abc123',

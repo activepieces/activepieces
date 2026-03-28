@@ -57,6 +57,12 @@ export const sendEmail = createAction({
       context.propsValue;
     const auth = context.auth;
 
+    if (!text && !html) {
+      throw new Error(
+        'Please provide either a plain text or HTML body for the email.',
+      );
+    }
+
     const body: Record<string, string> = {
       from,
       to,

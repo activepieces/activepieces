@@ -1,10 +1,11 @@
-import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { mailgunAuth } from '../..';
 import {
   mailgunCommon,
   mailgunApiCall,
   subscribeWebhook,
   unsubscribeWebhook,
+  verifyMailgunSignature,
 } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 
@@ -35,12 +36,14 @@ export function createMailgunWebhookTrigger({
   displayName,
   description,
   eventType,
+  testEventFilter,
   sampleData,
 }: {
   name: string;
   displayName: string;
   description: string;
   eventType: string;
+  testEventFilter: Record<string, string>;
   sampleData: Record<string, unknown>;
 }) {
   return createTrigger({
@@ -77,8 +80,26 @@ export function createMailgunWebhookTrigger({
 
     async run(context) {
       const payload = context.payload.body as {
+        signature?: {
+          timestamp: string;
+          token: string;
+          signature: string;
+        };
         'event-data'?: Record<string, unknown>;
       };
+
+      if (payload.signature) {
+        const isValid = verifyMailgunSignature(
+          context.auth.props.api_key,
+          payload.signature.timestamp,
+          payload.signature.token,
+          payload.signature.signature,
+        );
+        if (!isValid) {
+          return [];
+        }
+      }
+
       const eventData = payload['event-data'];
       if (!eventData) {
         return [payload];
@@ -96,7 +117,7 @@ export function createMailgunWebhookTrigger({
         method: HttpMethod.GET,
         path: `/v3/${context.propsValue.domain}/events`,
         queryParams: {
-          event: eventType.replace('permanent_', '').replace('temporary_', ''),
+          ...testEventFilter,
           limit: '5',
         },
       });

@@ -6,6 +6,7 @@ export const newUnsubscribeEvent = createMailgunWebhookTrigger({
   description:
     'Triggers when a recipient unsubscribes from emails in Mailgun',
   eventType: 'unsubscribed',
+  testEventFilter: { event: 'unsubscribed' },
   sampleData: {
     event: 'unsubscribed',
     id: 'jkl123',

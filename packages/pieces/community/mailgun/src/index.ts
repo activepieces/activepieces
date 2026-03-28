@@ -13,7 +13,8 @@ import { newBounceEvent } from './lib/triggers/new-bounce-event';
 import { newComplaintEvent } from './lib/triggers/new-complaint-event';
 import { newDeliveryEvent } from './lib/triggers/new-delivery-event';
 import { newFailedDeliveryEvent } from './lib/triggers/new-failed-delivery-event';
-import { newOpenClickEvent } from './lib/triggers/new-open-click-event';
+import { newOpenEvent } from './lib/triggers/new-open-event';
+import { newClickEvent } from './lib/triggers/new-click-event';
 import { newUnsubscribeEvent } from './lib/triggers/new-unsubscribe-event';
 
 export const mailgunAuth = PieceAuth.CustomAuth({
@@ -78,7 +79,7 @@ export const mailgun = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/mailgun.png',
   categories: [PieceCategory.MARKETING, PieceCategory.COMMUNICATION],
   auth: mailgunAuth,
-  authors: [],
+  authors: ['bst1n'],
   actions: [
     sendEmail,
     validateEmail,
@@ -104,7 +105,8 @@ export const mailgun = createPiece({
     newComplaintEvent,
     newDeliveryEvent,
     newFailedDeliveryEvent,
-    newOpenClickEvent,
+    newOpenEvent,
+    newClickEvent,
     newUnsubscribeEvent,
   ],
 });

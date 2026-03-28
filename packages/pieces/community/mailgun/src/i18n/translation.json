@@ -73,12 +73,14 @@
   "New Complaint Event": "New Complaint Event",
   "New Delivery Event": "New Delivery Event",
   "New Failed Delivery Event": "New Failed Delivery Event",
-  "New Open/Click Event": "New Open/Click Event",
+  "New Open Event": "New Open Event",
+  "New Click Event": "New Click Event",
   "New Unsubscribe Event": "New Unsubscribe Event",
-  "Triggers when an email permanently or temporarily fails to deliver in Mailgun": "Triggers when an email permanently or temporarily fails to deliver in Mailgun",
+  "Triggers when an email permanently fails to deliver (hard bounce) in Mailgun": "Triggers when an email permanently fails to deliver (hard bounce) in Mailgun",
   "Triggers when a recipient reports an email as spam in Mailgun": "Triggers when a recipient reports an email as spam in Mailgun",
   "Triggers when an email is successfully delivered in Mailgun": "Triggers when an email is successfully delivered in Mailgun",
   "Triggers when an email temporarily fails to deliver in Mailgun (will be retried)": "Triggers when an email temporarily fails to deliver in Mailgun (will be retried)",
-  "Triggers when a recipient opens an email or clicks a tracked link in Mailgun. Note: this registers for both \"opened\" and \"clicked\" events (uses the \"clicked\" webhook type). Use the \"event\" field in the output to distinguish between opens and clicks.": "Triggers when a recipient opens an email or clicks a tracked link in Mailgun. Note: this registers for both \"opened\" and \"clicked\" events (uses the \"clicked\" webhook type). Use the \"event\" field in the output to distinguish between opens and clicks.",
+  "Triggers when a recipient opens an email in Mailgun": "Triggers when a recipient opens an email in Mailgun",
+  "Triggers when a recipient clicks a tracked link in an email in Mailgun": "Triggers when a recipient clicks a tracked link in an email in Mailgun",
   "Triggers when a recipient unsubscribes from emails in Mailgun": "Triggers when a recipient unsubscribes from emails in Mailgun"
 }

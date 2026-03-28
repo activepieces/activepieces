@@ -6,6 +6,7 @@ export const newComplaintEvent = createMailgunWebhookTrigger({
   description:
     'Triggers when a recipient reports an email as spam in Mailgun',
   eventType: 'complained',
+  testEventFilter: { event: 'complained' },
   sampleData: {
     event: 'complained',
     id: 'abc456',

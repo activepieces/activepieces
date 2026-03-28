@@ -73,12 +73,14 @@
   "New Complaint Event": "Nouvelle plainte pour spam",
   "New Delivery Event": "Nouvel événement de livraison",
   "New Failed Delivery Event": "Nouvel échec de livraison",
-  "New Open/Click Event": "Nouvel événement d'ouverture/clic",
+  "New Open Event": "Nouvel événement d'ouverture",
+  "New Click Event": "Nouvel événement de clic",
   "New Unsubscribe Event": "Nouveau désabonnement",
-  "Triggers when an email permanently or temporarily fails to deliver in Mailgun": "Se déclenche lorsqu'un email échoue définitivement ou temporairement lors de la livraison dans Mailgun",
+  "Triggers when an email permanently fails to deliver (hard bounce) in Mailgun": "Se déclenche lorsqu'un email échoue définitivement lors de la livraison dans Mailgun (rebond dur)",
   "Triggers when a recipient reports an email as spam in Mailgun": "Se déclenche lorsqu'un destinataire signale un email comme spam dans Mailgun",
   "Triggers when an email is successfully delivered in Mailgun": "Se déclenche lorsqu'un email est livré avec succès dans Mailgun",
   "Triggers when an email temporarily fails to deliver in Mailgun (will be retried)": "Se déclenche lorsqu'un email échoue temporairement lors de la livraison dans Mailgun (sera réessayé)",
-  "Triggers when a recipient opens an email or clicks a tracked link in Mailgun. Note: this registers for both \"opened\" and \"clicked\" events (uses the \"clicked\" webhook type). Use the \"event\" field in the output to distinguish between opens and clicks.": "Se déclenche lorsqu'un destinataire ouvre un email ou clique sur un lien suivi dans Mailgun. Note : ceci enregistre à la fois les événements \"ouvert\" et \"cliqué\" (utilise le type de webhook \"clicked\"). Utilisez le champ \"event\" dans la sortie pour distinguer les ouvertures des clics.",
+  "Triggers when a recipient opens an email in Mailgun": "Se déclenche lorsqu'un destinataire ouvre un email dans Mailgun",
+  "Triggers when a recipient clicks a tracked link in an email in Mailgun": "Se déclenche lorsqu'un destinataire clique sur un lien suivi dans un email dans Mailgun",
   "Triggers when a recipient unsubscribes from emails in Mailgun": "Se déclenche lorsqu'un destinataire se désabonne des emails dans Mailgun"
 }

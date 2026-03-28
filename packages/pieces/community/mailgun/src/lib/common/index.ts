@@ -1,3 +1,4 @@
+import { createHmac } from 'crypto';
 import {
   httpClient,
   HttpMethod,
@@ -7,6 +8,18 @@ import {
 } from '@activepieces/pieces-common';
 import { Property } from '@activepieces/pieces-framework';
 import { mailgunAuth } from '../..';
+
+export function verifyMailgunSignature(
+  apiKey: string,
+  timestamp: string,
+  token: string,
+  signature: string,
+): boolean {
+  const expected = createHmac('sha256', apiKey)
+    .update(timestamp + token)
+    .digest('hex');
+  return expected === signature;
+}
 
 function getBaseUrl(region: string): string {
   return region === 'eu'

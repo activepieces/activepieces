@@ -1,19 +1,19 @@
 import { createMailgunWebhookTrigger } from './common';
 
-export const newOpenClickEvent = createMailgunWebhookTrigger({
-  name: 'new_open_click_event',
-  displayName: 'New Open/Click Event',
+export const newOpenEvent = createMailgunWebhookTrigger({
+  name: 'new_open_event',
+  displayName: 'New Open Event',
   description:
-    'Triggers when a recipient opens an email or clicks a tracked link in Mailgun. Note: this registers for both "opened" and "clicked" events (uses the "clicked" webhook type). Use the "event" field in the output to distinguish between opens and clicks.',
-  eventType: 'clicked',
+    'Triggers when a recipient opens an email in Mailgun',
+  eventType: 'opened',
+  testEventFilter: { event: 'opened' },
   sampleData: {
-    event: 'clicked',
+    event: 'opened',
     id: 'ghi123',
     timestamp: 1710000000,
     recipient: 'user@example.com',
     domain: 'example.com',
     log_level: 'info',
-    url: 'https://example.com/landing',
     ip: '192.168.1.1',
     client_info_client_name: 'Chrome',
     client_info_client_os: 'macOS',
