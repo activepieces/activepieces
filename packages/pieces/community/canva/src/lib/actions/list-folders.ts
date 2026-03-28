@@ -14,7 +14,7 @@ export const listFoldersAction = createAction({
             required: true,
             defaultValue: "root",
         }),
-        item_types: Property.MultiSelectDropdown({
+        item_types: Property.StaticMultiSelectDropdown({
             displayName: "Item Types",
             required: false,
             options: {

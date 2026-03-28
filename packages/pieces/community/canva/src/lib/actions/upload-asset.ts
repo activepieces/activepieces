@@ -20,21 +20,50 @@ export const uploadAssetAction = createAction({
     async run(context) {
         const { name, file } = context.propsValue;
 
-        const response = await httpClient.sendRequest({
+        const uploadResponse = await httpClient.sendRequest({
             method: HttpMethod.POST,
-            url: "https://api.canva.com/rest/v1/assets",
+            url: "https://api.canva.com/rest/v1/asset-uploads",
             authentication: {
                 type: "bearer",
                 token: context.auth.access_token,
             },
-            body: {
-                name,
-                file: file.base64,
-            },
+            body: Buffer.from(file.base64, "base64"),
             headers: {
-                'Content-Type': 'application/json'
-            }
+                "Content-Type": "application/octet-stream",
+                "Asset-Upload-Metadata": JSON.stringify({
+                    name_base64: Buffer.from(name).toString("base64"),
+                }),
+            },
         });
-        return response.body;
+
+        let job = uploadResponse.body.job;
+        const maxRetries = 10;
+        let retries = 0;
+
+        while (job.status === "in_progress" && retries < maxRetries) {
+            await new Promise((resolve) => setTimeout(resolve, 2000));
+            const pollResponse = await httpClient.sendRequest({
+                method: HttpMethod.GET,
+                url: `https://api.canva.com/rest/v1/asset-uploads/${job.id}`,
+                authentication: {
+                    type: "bearer",
+                    token: context.auth.access_token,
+                },
+            });
+            job = pollResponse.body.job;
+            retries++;
+        }
+
+        if (job.status === "failed") {
+            throw new Error(
+                `Canva asset upload failed: ${job.error?.message || "Unknown error"}`
+            );
+        }
+
+        if (job.status === "in_progress") {
+            throw new Error("Canva asset upload timed out");
+        }
+
+        return job.asset;
     },
 });
