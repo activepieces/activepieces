@@ -102,6 +102,24 @@ export async function unsubscribeWebhook({
   });
 }
 
+export async function mailgunApiCallAbsoluteUrl<T extends HttpMessageBody>({
+  apiKey,
+  url,
+}: {
+  apiKey: string;
+  url: string;
+}): Promise<HttpResponse<T>> {
+  return await httpClient.sendRequest<T>({
+    method: HttpMethod.GET,
+    url,
+    authentication: {
+      type: AuthenticationType.BASIC,
+      username: 'api',
+      password: apiKey,
+    },
+  });
+}
+
 export const mailgunCommon = {
   domainDropdown: Property.Dropdown({
     displayName: 'Domain',

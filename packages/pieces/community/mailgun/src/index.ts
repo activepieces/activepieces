@@ -9,6 +9,9 @@ import { PieceCategory } from '@activepieces/shared';
 import { sendEmail } from './lib/actions/send-email';
 import { validateEmail } from './lib/actions/validate-email';
 import { addMailingListMember } from './lib/actions/add-mailing-list-member';
+import { getEvents } from './lib/actions/get-events';
+import { getDomainStats } from './lib/actions/get-domain-stats';
+import { listBounces } from './lib/actions/list-bounces';
 import { newBounceEvent } from './lib/triggers/new-bounce-event';
 import { newComplaintEvent } from './lib/triggers/new-complaint-event';
 import { newDeliveryEvent } from './lib/triggers/new-delivery-event';
@@ -84,6 +87,9 @@ export const mailgun = createPiece({
     sendEmail,
     validateEmail,
     addMailingListMember,
+    getEvents,
+    getDomainStats,
+    listBounces,
     createCustomApiCallAction({
       baseUrl: (auth) => {
         const { props } = auth as unknown as { props: { api_key: string; region: string } };
