@@ -10,18 +10,13 @@ import {
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { ArrowUp, ArrowUpDown, ChevronDown } from 'lucide-react';
+import { ArrowUp, ArrowUpDown } from 'lucide-react';
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
 import { SearchableSelect } from '@/components/custom/searchable-select';
 import { Button } from '@/components/ui/button';
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible';
 import {
   Dialog,
   DialogContent,
@@ -41,26 +36,38 @@ import { useBuilderStateContext } from '../../builder-hooks';
 
 import {
   changeVersionUtils,
-  LatestVersionAvailableAlert,
   MinorOrMajorSelectionAlert,
   PatchDowngradeInfoAlert,
   PatchUpgradeInfoAlert,
-  RevertVersionBackupAlert,
+  RevertVersionCollapsible,
   VersionChangeType,
-} from './change-version-utils';
+} from './update-piece-version-utils';
+import { UpgradePieceVersionContent } from './upgrade-piece-version-dialog';
+
+type DialogView = 'upgrade' | 'advanced';
 
 const UpdatePieceVersionDialog: React.FC<UpdatePieceVersionDialogProps> = ({
   step,
   currentVersion,
 }) => {
-  const [open, setOpen] = useState(false);
+  const [view, setView] = useState<DialogView | null>(null);
   const pieceName = step.settings.pieceName;
   const { pieceVersions } = piecesHooks.usePieceVersions(pieceName);
-  const hasNewerVersion =
-    changeVersionUtils.getLatestVersion({
+  const latestVersion = changeVersionUtils.getLatestVersion({
+    currentVersion,
+    versions: pieceVersions ?? [],
+  });
+  const hasNewerVersion = latestVersion !== undefined;
+  const isLatestMinorOrMajor =
+    latestVersion !== undefined &&
+    changeVersionUtils.getVersionChangeType({
       currentVersion,
-      versions: pieceVersions ?? [],
-    }) !== undefined;
+      selectedVersion: latestVersion,
+    }) === VersionChangeType.MINOR_OR_MAJOR;
+
+  const handleOpen = () => {
+    setView(hasNewerVersion ? 'upgrade' : 'advanced');
+  };
 
   return (
     <>
@@ -71,7 +78,7 @@ const UpdatePieceVersionDialog: React.FC<UpdatePieceVersionDialogProps> = ({
             variant="ghost"
             size="icon"
             className="size-6"
-            onClick={() => setOpen(true)}
+            onClick={handleOpen}
           >
             {hasNewerVersion ? (
               <ArrowUp className="size-3.5 text-green-500" />
@@ -84,17 +91,39 @@ const UpdatePieceVersionDialog: React.FC<UpdatePieceVersionDialogProps> = ({
           {hasNewerVersion ? t('New version available') : t('Switch version')}
         </TooltipContent>
       </Tooltip>
-      <Dialog open={open} onOpenChange={setOpen}>
+
+      <Dialog
+        open={view !== null}
+        onOpenChange={(open) => !open && setView(null)}
+      >
         <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t('Update Piece Version')}</DialogTitle>
+          <DialogHeader className="mb-0">
+            <DialogTitle>
+              {view === 'upgrade'
+                ? t('New Version Available')
+                : t('Update Piece Version')}
+            </DialogTitle>
           </DialogHeader>
-          <UpdatePieceVersionForm
-            key={open ? 'open' : 'closed'}
-            step={step}
-            currentVersion={currentVersion}
-            onOpenChange={setOpen}
-          />
+          {view === 'upgrade' && latestVersion && (
+            <UpgradePieceVersionContent
+              key="upgrade"
+              step={step}
+              currentVersion={currentVersion}
+              latestVersion={latestVersion}
+              isLatestMinorOrMajor={isLatestMinorOrMajor}
+              onClose={() => setView(null)}
+              onOpenAdvanced={() => setView('advanced')}
+            />
+          )}
+          {view === 'advanced' && (
+            <AdvancedForm
+              key="advanced"
+              step={step}
+              currentVersion={currentVersion}
+              onClose={() => setView(null)}
+              onBack={hasNewerVersion ? () => setView('upgrade') : undefined}
+            />
+          )}
         </DialogContent>
       </Dialog>
     </>
@@ -108,10 +137,11 @@ type UpdatePieceVersionDialogProps = {
   currentVersion: string;
 };
 
-const UpdatePieceVersionForm: React.FC<UpdatePieceVersionFormProps> = ({
+const AdvancedForm: React.FC<AdvancedFormProps> = ({
   step,
   currentVersion,
-  onOpenChange,
+  onClose,
+  onBack,
 }) => {
   const pieceName = step.settings.pieceName;
   const actionOrTriggerName =
@@ -127,18 +157,6 @@ const UpdatePieceVersionForm: React.FC<UpdatePieceVersionFormProps> = ({
   const [versionSelectOpen, setVersionSelectOpen] = useState(false);
 
   const versionUpdateBackup = step.settings.versionUpdateBackup;
-  const latestVersion = changeVersionUtils.getLatestVersion({
-    currentVersion,
-    versions: pieceVersions ?? [],
-  });
-  const latestVersionChangeType = latestVersion
-    ? changeVersionUtils.getVersionChangeType({
-        currentVersion,
-        selectedVersion: latestVersion,
-      })
-    : undefined;
-  const isLatestMinorOrMajor =
-    latestVersionChangeType === VersionChangeType.MINOR_OR_MAJOR;
 
   const patchVersions = (pieceVersions ?? []).filter((p) => {
     const changeType = changeVersionUtils.getVersionChangeType({
@@ -150,6 +168,10 @@ const UpdatePieceVersionForm: React.FC<UpdatePieceVersionFormProps> = ({
 
   const visibleVersions = showAllVersions ? pieceVersions ?? [] : patchVersions;
 
+  const latestVersion = changeVersionUtils.getLatestVersion({
+    currentVersion,
+    versions: pieceVersions ?? [],
+  });
   const latestPatchVersion = patchVersions[0]?.version;
 
   const versionOptions = visibleVersions.map((p) => {
@@ -276,7 +298,7 @@ const UpdatePieceVersionForm: React.FC<UpdatePieceVersionFormProps> = ({
         }
       },
       onSuccess: () => {
-        onOpenChange(false);
+        onClose();
       },
       onError: (error) => {
         form.setError('root.serverError', {
@@ -307,7 +329,7 @@ const UpdatePieceVersionForm: React.FC<UpdatePieceVersionFormProps> = ({
         });
       },
       onSuccess: () => {
-        onOpenChange(false);
+        onClose();
       },
       onError: (error) => {
         form.setError('root.serverError', {
@@ -323,15 +345,6 @@ const UpdatePieceVersionForm: React.FC<UpdatePieceVersionFormProps> = ({
         className="flex flex-col gap-4"
         onSubmit={form.handleSubmit((data) => applyVersionChange(data))}
       >
-        {latestVersion && (
-          <LatestVersionAvailableAlert
-            isLatestMinorOrMajor={isLatestMinorOrMajor}
-            latestVersion={latestVersion}
-            onApplyLatestVersion={applyVersionChange}
-            isApplyPending={isApplyPending}
-          />
-        )}
-
         <FormField
           control={form.control}
           name="version"
@@ -373,26 +386,13 @@ const UpdatePieceVersionForm: React.FC<UpdatePieceVersionFormProps> = ({
             </FormItem>
           )}
         />
+
         {versionUpdateBackup && (
-          <Collapsible className="w-full">
-            <CollapsibleTrigger asChild>
-              <Button
-                type="button"
-                variant="ghost"
-                className="group flex h-auto w-full items-center justify-between gap-2 !px-0 py-2 text-sm font-medium  hover:bg-transparent hover:text-foreground"
-              >
-                {t('Restore previous version')}
-                <ChevronDown className="size-4 shrink-0 transition-transform group-data-[state=open]:rotate-180" />
-              </Button>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="pt-2">
-              <RevertVersionBackupAlert
-                backupPieceVersion={versionUpdateBackup.pieceVersion}
-                onRevert={revertVersionUpdate}
-                isRevertPending={isRevertPending}
-              />
-            </CollapsibleContent>
-          </Collapsible>
+          <RevertVersionCollapsible
+            backupPieceVersion={versionUpdateBackup.pieceVersion}
+            onRevert={revertVersionUpdate}
+            isRevertPending={isRevertPending}
+          />
         )}
 
         {isMinorOrMajor && <MinorOrMajorSelectionAlert />}
@@ -408,11 +408,17 @@ const UpdatePieceVersionForm: React.FC<UpdatePieceVersionFormProps> = ({
         )}
 
         <DialogFooter>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-          >
+          {onBack && (
+            <Button
+              type="button"
+              variant="outline"
+              className="mr-auto"
+              onClick={onBack}
+            >
+              {t('Back')}
+            </Button>
+          )}
+          <Button type="button" variant="outline" onClick={onClose}>
             {t('Cancel')}
           </Button>
           <Button type="submit" loading={isApplyPending}>
@@ -424,10 +430,11 @@ const UpdatePieceVersionForm: React.FC<UpdatePieceVersionFormProps> = ({
   );
 };
 
-type UpdatePieceVersionFormProps = {
+type AdvancedFormProps = {
   step: PieceAction | PieceTrigger;
   currentVersion: string;
-  onOpenChange: (open: boolean) => void;
+  onClose: () => void;
+  onBack?: () => void;
 };
 
 const FormSchema = z.object({

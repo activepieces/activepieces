@@ -130,7 +130,6 @@ function CreateOrEditConnectionSection({
                 })}
           </div>
         </DialogTitle>
-        <DialogDescription></DialogDescription>
       </DialogHeader>
 
       <Form {...form}>

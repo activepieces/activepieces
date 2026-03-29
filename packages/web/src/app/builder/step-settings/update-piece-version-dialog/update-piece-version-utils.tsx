@@ -1,6 +1,12 @@
 import { OAuth2Props, PiecePropertyMap } from '@activepieces/pieces-framework';
 import { t } from 'i18next';
-import { AlertTriangle, ArrowUp, Info, RotateCcw } from 'lucide-react';
+import {
+  AlertTriangle,
+  ArrowUp,
+  ChevronDown,
+  Info,
+  RotateCcw,
+} from 'lucide-react';
 import semver from 'semver';
 
 import {
@@ -10,6 +16,11 @@ import {
   AlertTitle,
 } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 import { formUtils } from '@/features/pieces';
 
 function getVersionChangeType({
@@ -95,9 +106,6 @@ function getLatestVersion({
 
 export function LatestVersionAvailableAlert({
   isLatestMinorOrMajor,
-  latestVersion,
-  onApplyLatestVersion,
-  isApplyPending,
 }: LatestVersionAvailableAlertProps) {
   return (
     <Alert
@@ -123,19 +131,6 @@ export function LatestVersionAvailableAlert({
               'Settings will carry over. Retest the step as the output may have changed.',
             )}
       </AlertDescription>
-      <AlertAction>
-        <Button
-          type="button"
-          variant="default"
-          size="sm"
-          loading={isApplyPending}
-          onClick={() => onApplyLatestVersion({ version: latestVersion })}
-        >
-          {isLatestMinorOrMajor
-            ? t('Upgrade to v{version}', { version: latestVersion })
-            : t('Update to v{version}', { version: latestVersion })}
-        </Button>
-      </AlertAction>
     </Alert>
   );
 }
@@ -165,6 +160,34 @@ export function RevertVersionBackupAlert({
         </Button>
       </AlertAction>
     </Alert>
+  );
+}
+
+export function RevertVersionCollapsible({
+  backupPieceVersion,
+  onRevert,
+  isRevertPending,
+}: RevertVersionBackupAlertProps) {
+  return (
+    <Collapsible className="w-full">
+      <CollapsibleTrigger asChild>
+        <Button
+          type="button"
+          variant="ghost"
+          className="group flex h-auto w-full items-center justify-between gap-2 !px-0 py-2 text-sm font-medium hover:bg-transparent hover:text-foreground"
+        >
+          {t('Restore previous version')}
+          <ChevronDown className="size-4 shrink-0 transition-transform group-data-[state=open]:rotate-180" />
+        </Button>
+      </CollapsibleTrigger>
+      <CollapsibleContent className="pt-2">
+        <RevertVersionBackupAlert
+          backupPieceVersion={backupPieceVersion}
+          onRevert={onRevert}
+          isRevertPending={isRevertPending}
+        />
+      </CollapsibleContent>
+    </Collapsible>
   );
 }
 
@@ -220,9 +243,6 @@ export enum VersionChangeType {
 
 type LatestVersionAvailableAlertProps = {
   isLatestMinorOrMajor: boolean;
-  latestVersion: string;
-  onApplyLatestVersion: (params: { version: string }) => void;
-  isApplyPending: boolean;
 };
 
 type RevertVersionBackupAlertProps = {
