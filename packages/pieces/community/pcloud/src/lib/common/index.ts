@@ -54,7 +54,12 @@ async function uploadFileToPcloud(
       token: auth.access_token,
     },
   });
-  return response.body;
+  const body = response.body;
+  if (body.result !== 0) {
+    const error = (body as unknown as Record<string, unknown>).error;
+    throw new Error(`pCloud upload error ${body.result}: ${error}`);
+  }
+  return body;
 }
 
 async function listFolder(
