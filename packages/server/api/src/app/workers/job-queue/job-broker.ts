@@ -163,6 +163,11 @@ function isStalledJobError(error: unknown): boolean {
     return msg.includes('Missing lock') || msg.includes('job stalled')
 }
 
+function buildFailedReason(errorMessage: string, logs?: string): string {
+    if (!logs) return errorMessage
+    return `${errorMessage}\n${logs}`
+}
+
 export { tryDequeue }
 
 export const jobBroker = (log: FastifyBaseLogger) => ({
@@ -195,12 +200,13 @@ export const jobBroker = (log: FastifyBaseLogger) => ({
             }
 
             if (input.status === EngineResponseStatus.INTERNAL_ERROR) {
-                await job.moveToFailed(new Error(input.errorMessage ?? 'Internal error'), input.token)
+                await job.moveToFailed(new Error(buildFailedReason(input.errorMessage ?? 'Internal error', input.logs)), input.token)
                 if (userJobData) {
                     await engineResponseWatcher(log).publish(userJobData.webserverId, userJobData.requestId, {
                         status: EngineResponseStatus.INTERNAL_ERROR,
                         response: undefined,
                         error: input.errorMessage ?? 'Internal error',
+                        logs: input.logs,
                     })
                 }
                 return
@@ -211,6 +217,8 @@ export const jobBroker = (log: FastifyBaseLogger) => ({
                 await engineResponseWatcher(log).publish(userJobData.webserverId, userJobData.requestId, {
                     status: input.status,
                     response: input.response,
+                    error: input.errorMessage,
+                    logs: input.logs,
                 })
             }
         })
