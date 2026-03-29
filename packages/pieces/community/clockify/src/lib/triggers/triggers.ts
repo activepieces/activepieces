@@ -2,14 +2,16 @@ import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-f
 import { httpClient } from '@activepieces/pieces-common';
 import { clockifyAuth, workspaceId, projectId } from '../auth';
 
+const CLOCKIFY_API_BASE = 'https://api.clockify.me/api/v1';
+
 async function getTimeEntries(context: any) {
   const { workspace_id, user_id } = context.propsValue;
-  const lastCheck = await context.store?.get(`${workspace_id}_last_check`) ?? Date.now() - 86400000;
+  const lastCheck = await context.store?.get(`clockify_time_${workspace_id}_last_check`) ?? Date.now() - 86400000;
 
   const start = new Date(lastCheck).toISOString();
   const end = new Date().toISOString();
 
-  const url = `https://api.clockify.me/api/v1/workspaces/${workspace_id}/user/${user_id || 'me'}/time-entries?start=${start}&end=${end}`;
+  const url = `${CLOCKIFY_API_BASE}/workspaces/${workspace_id}/user/${user_id || 'me'}/time-entries?start=${start}&end=${end}`;
 
   const response = await httpClient.sendRequest({
     method: 'GET',
@@ -17,17 +19,17 @@ async function getTimeEntries(context: any) {
     headers: { 'X-Api-Key': context.auth as string },
   });
 
-  await context.store?.put(`${workspace_id}_last_check`, Date.now());
+  await context.store?.put(`clockify_time_${workspace_id}_last_check`, Date.now());
   return response.body || [];
 }
 
 async function getNewTasks(context: any) {
   const { workspace_id, project_id } = context.propsValue;
-  const lastCheck = await context.store?.get(`${project_id}_last_check`) ?? Date.now() - 86400000;
+  const lastCheck = await context.store?.get(`clockify_task_${project_id}_last_check`) ?? Date.now() - 86400000;
 
   const response = await httpClient.sendRequest({
     method: 'GET',
-    url: `https://api.clockify.me/api/v1/workspaces/${workspace_id}/projects/${project_id}/tasks`,
+    url: `${CLOCKIFY_API_BASE}/workspaces/${workspace_id}/projects/${project_id}/tasks`,
     headers: { 'X-Api-Key': context.auth as string },
   });
 
@@ -37,15 +39,15 @@ async function getNewTasks(context: any) {
     return taskTime > lastCheck;
   });
 
-  await context.store?.put(`${project_id}_last_check`, Date.now());
+  await context.store?.put(`clockify_task_${project_id}_last_check`, Date.now());
   return newTasks;
 }
 
 async function getRunningTimers(context: any) {
   const { workspace_id, user_id } = context.propsValue;
-  const knownTimerIds = await context.store?.get(`${workspace_id}_timers`) ?? [];
+  const knownTimerIds = await context.store?.get(`clockify_timer_${workspace_id}_timers`) ?? [];
 
-  const url = `https://api.clockify.me/api/v1/workspaces/${workspace_id}/user/${user_id || 'me'}/time-entries?in-progress=true`;
+  const url = `${CLOCKIFY_API_BASE}/workspaces/${workspace_id}/user/${user_id || 'me'}/time-entries?in-progress=true`;
 
   const response = await httpClient.sendRequest({
     method: 'GET',
@@ -56,7 +58,7 @@ async function getRunningTimers(context: any) {
   const timers = response.body || [];
   const newTimers = timers.filter((t: any) => !knownTimerIds.includes(t.id));
 
-  await context.store?.put(`${workspace_id}_timers`, timers.map((t: any) => t.id));
+  await context.store?.put(`clockify_timer_${workspace_id}_timers`, timers.map((t: any) => t.id));
   return newTimers;
 }
 
@@ -67,33 +69,34 @@ export const newTimeEntryTrigger = createTrigger({
   description: 'Triggers when a new time entry is created',
   type: TriggerStrategy.POLLING,
   props: {
-    workspace_id: workspaceId({
-      displayName: 'Workspace',
-      required: true,
-    }),
+    workspace_id: workspaceId,
     user_id: Property.ShortText({
-      displayName: 'User ID (Optional)',
+      displayName: 'User ID',
+      description: 'Leave empty to use current user',
       required: false,
-      description: 'Filter by specific user',
     }),
   },
   sampleData: {
-    id: '642f1234567890abcdef12345',
-    description: 'Work on project',
-    start: '2026-03-29T05:00:00Z',
-    end: '2026-03-29T07:00:00Z',
+    id: '624d94fb8b3c8c4e9a123456',
+    description: 'Time entry description',
+    start: '2026-03-29T12:00:00Z',
+    end: '2026-03-29T13:00:00Z',
     billable: true,
-    duration: 'PT2H',
   },
+
   async test(context) {
     return await getTimeEntries(context);
   },
+
   async onEnable(context) {
-    await context.store?.put(`${context.propsValue.workspace_id}_last_check`, Date.now());
+    await getTimeEntries(context);
   },
+
   async onDisable(context) {
-    await context.store?.delete(`${context.propsValue.workspace_id}_last_check`);
+    const { workspace_id } = context.propsValue;
+    await context.store?.delete(`clockify_time_${workspace_id}_last_check`);
   },
+
   async run(context) {
     return await getTimeEntries(context);
   },
@@ -103,33 +106,31 @@ export const newTaskTrigger = createTrigger({
   auth: clockifyAuth,
   name: 'new_task',
   displayName: 'New Task',
-  description: 'Triggers when a new task is created in a project',
+  description: 'Triggers when a new task is created',
   type: TriggerStrategy.POLLING,
   props: {
-    workspace_id: workspaceId({
-      displayName: 'Workspace',
-      required: true,
-    }),
-    project_id: projectId({
-      displayName: 'Project',
-      required: true,
-    }),
+    workspace_id: workspaceId,
+    project_id: projectId,
   },
   sampleData: {
-    id: '642f1234567890abcdef12345',
-    name: 'Complete implementation',
+    id: '624d94fb8b3c8c4e9a123456',
+    name: 'Task name',
     status: 'ACTIVE',
-    projectId: '642f9876543210fedcba9876',
   },
+
   async test(context) {
     return await getNewTasks(context);
   },
+
   async onEnable(context) {
-    await context.store?.put(`${context.propsValue.project_id}_last_check`, Date.now());
+    await getNewTasks(context);
   },
+
   async onDisable(context) {
-    await context.store?.delete(`${context.propsValue.project_id}_last_check`);
+    const { project_id } = context.propsValue;
+    await context.store?.delete(`clockify_task_${project_id}_last_check`);
   },
+
   async run(context) {
     return await getNewTasks(context);
   },
@@ -142,30 +143,32 @@ export const newTimerStartedTrigger = createTrigger({
   description: 'Triggers when a new timer is started',
   type: TriggerStrategy.POLLING,
   props: {
-    workspace_id: workspaceId({
-      displayName: 'Workspace',
-      required: true,
-    }),
+    workspace_id: workspaceId,
     user_id: Property.ShortText({
-      displayName: 'User ID (Optional)',
+      displayName: 'User ID',
+      description: 'Leave empty to use current user',
       required: false,
-      description: 'Filter by specific user',
     }),
   },
   sampleData: {
-    id: '642f1234567890abcdef12345',
-    description: 'Working on feature',
-    start: '2026-03-29T05:00:00Z',
+    id: '624d94fb8b3c8c4e9a123456',
+    description: 'Timer description',
+    start: '2026-03-29T12:00:00Z',
   },
+
   async test(context) {
     return await getRunningTimers(context);
   },
+
   async onEnable(context) {
-    await context.store?.put(`${context.propsValue.workspace_id}_timers`, []);
+    await getRunningTimers(context);
   },
+
   async onDisable(context) {
-    await context.store?.delete(`${context.propsValue.workspace_id}_timers`);
+    const { workspace_id } = context.propsValue;
+    await context.store?.delete(`clockify_timer_${workspace_id}_timers`);
   },
+
   async run(context) {
     return await getRunningTimers(context);
   },
