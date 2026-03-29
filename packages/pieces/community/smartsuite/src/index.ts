@@ -1,51 +1,36 @@
-import {
-  createPiece,
-  PiecePropValueSchema,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { createPiece, PieceCategory } from '@activepieces/pieces-framework';
 import { smartsuiteAuth } from './lib/auth';
-
-// Actions
-import { createRecord } from './lib/actions/create-record';
-import { updateRecord } from './lib/actions/update-record';
-import { deleteRecord } from './lib/actions/delete-record';
-import { uploadFile } from './lib/actions/upload-file';
-import { findRecords } from './lib/actions/find-records';
-import { getRecord } from './lib/actions/get-record';
-
-// Triggers
-import { newRecord } from './lib/triggers/new-record';
-import { updatedRecord } from './lib/triggers/updated-record';
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { SMARTSUITE_API_URL } from './lib/common/constants';
+import {
+  listRecords,
+  getRecord,
+  createRecord,
+  updateRecord,
+  deleteRecord,
+  searchRecords,
+} from './lib/actions';
+import {
+  newRecordTrigger,
+  updatedRecordTrigger,
+} from './lib/triggers';
 
 export const smartsuite = createPiece({
   displayName: 'SmartSuite',
-  description:
-    'Collaborative work management platform combining databases with spreadsheets.',
-  logoUrl: 'https://cdn.activepieces.com/pieces/smartsuite.png',
-  categories: [PieceCategory.PRODUCTIVITY],
+  description: 'Collaborative work management platform - Manage projects, workflows, and data',
+  logoUrl: 'https://cdn.smartsuite.com/static/brand/logo.svg',
+  categories: [PieceCategory.PROJECT_MANAGEMENT],
+  authors: ['ktwo'],
   auth: smartsuiteAuth,
-  minimumSupportedRelease: '0.30.0',
-  authors: ['Kunal-Darekar', 'kishanprmr'],
+  minimumSupportedRelease: '1.0.0',
   actions: [
+    listRecords,
+    getRecord,
     createRecord,
     updateRecord,
     deleteRecord,
-    uploadFile,
-    findRecords,
-    getRecord,
-    createCustomApiCallAction({
-      auth: smartsuiteAuth,
-      baseUrl: () => SMARTSUITE_API_URL,
-      authMapping: async (auth) => {
-        const authValue = auth
-        return {
-          Authorization: `Token ${auth.props.apiKey}`,
-          'ACCOUNT-ID': auth.props.accountId,
-        };
-      },
-    }),
+    searchRecords,
   ],
-  triggers: [newRecord, updatedRecord],
+  triggers: [
+    newRecordTrigger,
+    updatedRecordTrigger,
+  ],
 });
