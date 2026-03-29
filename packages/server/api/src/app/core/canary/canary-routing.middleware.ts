@@ -91,10 +91,6 @@ function buildProxyBody(request: FastifyRequest): BodyInit | null {
     return JSON.stringify(body)
 }
 
-function getCanaryPlatformKey(platformId: string): string {
-    return `platform:${platformId}:canary`
-}
-
 const HOP_BY_HOP_HEADERS = new Set([
     'host',
     'connection',
