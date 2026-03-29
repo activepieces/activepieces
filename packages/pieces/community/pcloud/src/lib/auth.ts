@@ -1,4 +1,4 @@
-import { PieceAuth, PieceProperty, Validators } from '@activepieces/pieces-framework';
+import { PieceAuth, Property, Validators } from '@activepieces/pieces-framework';
 import { httpClient } from '@activepieces/pieces-common';
 
 /**
@@ -23,7 +23,7 @@ export const API_BASE_URL = 'https://api.pcloud.com';
 /**
  * Folder ID Dropdown with dynamic loading
  */
-export const folderId = PieceProperty.Dropdown<'text' | 'number'>({
+export const folderId = Property.Dropdown<'text' | 'number'>({
   displayName: 'Folder',
   required: true,
   refreshers: ['auth'],
