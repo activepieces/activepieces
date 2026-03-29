@@ -1,7 +1,7 @@
 {
-  "Receive form submissions from Tally forms": "Receive form submissions from Tally forms",
-  "Your Tally API key. Go to **Settings > API keys** in your Tally dashboard to create one.": "Your Tally API key. Go to **Settings > API keys** in your Tally dashboard to create one.",
-  "New Submission": "New Submission",
-  "Triggers when a form receives a new submission": "Triggers when a form receives a new submission",
-  "Form": "Form"
+  "Receive form submissions from Tally forms": "从Tally forms 接收表单提交",
+  "Your Tally API key. Go to **Settings > API keys** in your Tally dashboard to create one.": "您的 Tally API 密钥。转到Tally 仪表盘中的 **设置 > API 密钥** 创建一个密钥。",
+  "New Submission": "新建提交",
+  "Triggers when a form receives a new submission": "当一个表单收到一个新的提交书时触发",
+  "Form": "形式"
 }
