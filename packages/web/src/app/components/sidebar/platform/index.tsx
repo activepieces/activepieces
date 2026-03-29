@@ -51,7 +51,6 @@ export function PlatformSidebar() {
   const { checkAccess } = useAuthorization();
   const defaultRoute = determineDefaultRoute(checkAccess);
   const chevronRef = useRef<ChevronLeftIconHandle>(null);
-  const isEmbeddingEnabled = platform.plan.embeddingEnabled;
 
   const setupItems = [
     {
@@ -95,7 +94,7 @@ export function PlatformSidebar() {
       icon: FrameIcon,
       locked: !platform.plan.embeddingEnabled,
     },
-  ].filter((item) => !(item.label === t('AI Providers') && isEmbeddingEnabled));
+  ];
 
   const groups: {
     label: string;
