@@ -108,6 +108,7 @@ export type PcloudListFolderResponse = {
 };
 
 export type PcloudUploadResponse = {
+  error?: string;
   result: number;
   metadata: PcloudMetadata[];
   checksums: unknown[];
