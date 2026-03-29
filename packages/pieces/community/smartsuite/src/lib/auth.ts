@@ -1,4 +1,4 @@
-import { PieceAuth, PieceProperty, Validators } from '@activepieces/pieces-framework';
+import { PieceAuth, Property, Validators } from '@activepieces/pieces-framework';
 import { httpClient } from '@activepieces/pieces-common';
 
 /**
@@ -18,7 +18,7 @@ export const smartsuiteAuth = PieceAuth.SecretText({
  * Workspace ID for SmartSuite
  * Required in ACCOUNT-ID header
  */
-export const workspaceId = PieceProperty.ShortText({
+export const workspaceId = Property.ShortText({
   displayName: 'Workspace ID',
   description: 'Your SmartSuite Workspace ID (found in Account Settings)',
   required: true,
@@ -32,7 +32,7 @@ export const API_BASE_URL = 'https://app.smartsuite.com';
 /**
  * Table ID Dropdown with dynamic loading
  */
-export const tableId = PieceProperty.Dropdown<'text'>({
+export const tableId = Property.Dropdown<'text'>({
   displayName: 'Table',
   required: true,
   refreshers: ['auth', 'workspace_id'],
