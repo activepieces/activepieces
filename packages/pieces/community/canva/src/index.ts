@@ -8,7 +8,7 @@ import { createFolderAction } from "./lib/actions/create-folder";
 import { canvaAuth } from "./lib/auth";
 
 export const canva = createPiece({
-  displayName: "Canva [MCP]",
+  displayName: "Canva",
   auth: canvaAuth,
   minimumSupportedRelease: '0.50.2',
   logoUrl: "https://cdn.activepieces.com/pieces/canva.png",
