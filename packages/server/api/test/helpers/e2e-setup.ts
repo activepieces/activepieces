@@ -20,6 +20,7 @@ export async function setupE2eEnvironment(): Promise<E2eContext> {
 
     process.env.AP_FRONTEND_URL = apiUrl
     process.env.AP_API_URL = apiUrl
+    process.env.AP_PORT = String(port)
 
     await migrateQueuesAndRunConsumers(app)
 
