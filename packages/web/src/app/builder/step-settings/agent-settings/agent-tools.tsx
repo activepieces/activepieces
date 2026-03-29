@@ -1,4 +1,4 @@
-import { AgentToolType } from '@activepieces/shared';
+import { AgentToolType, AIProviderName } from '@activepieces/shared';
 import type {
   AgentKnowledgeBaseTool,
   AgentPieceTool,
@@ -32,11 +32,13 @@ const icons = [
 interface AgentToolsProps {
   toolsField: ControllerRenderProps;
   disabled?: boolean;
+  selectedProvider?: AIProviderName;
 }
 
 export const AgentTools = ({
   disabled,
   toolsField: agentToolsField,
+  selectedProvider,
 }: AgentToolsProps) => {
   const tools = Array.isArray(agentToolsField.value)
     ? (agentToolsField.value as AgentTool[])
@@ -154,6 +156,7 @@ export const AgentTools = ({
         allTools={tools}
         removeTool={removeTool}
         onToolsUpdate={onToolsUpdate}
+        selectedProvider={selectedProvider}
       />
 
       <AgentFlowToolDialog onToolsUpdate={onToolsUpdate} tools={tools} />
