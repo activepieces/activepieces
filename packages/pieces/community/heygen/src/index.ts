@@ -19,7 +19,7 @@ export const heygen = createPiece({
   auth: heygenAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/heygen.jpg',
-  authors: ['krushnarout'],
+  authors: ['krushnarout', 'Angelebeats'],
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   actions: [
     createVideoFromTemplateAction,
