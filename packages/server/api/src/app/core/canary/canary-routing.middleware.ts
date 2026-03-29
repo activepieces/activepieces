@@ -18,7 +18,11 @@ export const canaryRoutingMiddleware = async (request: FastifyRequest, reply: Fa
     const isCanary = canaryPlatformIds.includes(platformId)
     if (!isCanary) return
 
-    await proxyToCanary(request, reply, canaryAppUrl)
+    request.log.info({ platformId }, '[canaryRoutingMiddleware] Proxying to canary app')
+    const { error: proxyError } = await tryCatch(() => proxyToCanary(request, reply, canaryAppUrl))
+    if (proxyError) {
+        request.log.error({ err: proxyError }, '[canaryRoutingMiddleware] Canary proxy failed, falling back to primary handler')
+    }
 }
 
 async function proxyToCanary(request: FastifyRequest, reply: FastifyReply, canaryAppUrl: string): Promise<void> {
@@ -35,6 +39,8 @@ async function proxyToCanary(request: FastifyRequest, reply: FastifyReply, canar
         }
     }
 
+    request.log.info({ targetUrl, headers, body }, '[canaryRoutingMiddleware] Fetching from canary app')
+
     const response = await fetch(targetUrl, {
         method: request.method,
         headers,
@@ -42,6 +48,8 @@ async function proxyToCanary(request: FastifyRequest, reply: FastifyReply, canar
         // @ts-expect-error: duplex is required for non-null bodies in Node.js fetch
         duplex: 'half',
     })
+    
+    request.log.info({ response }, '[canaryRoutingMiddleware] Response from canary app')
 
     const responseHeaders: Record<string, string> = {}
     for (const [key, value] of Object.entries(response.headers)) {

@@ -2,8 +2,6 @@ import { FastifyInstance } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { runsMetadataQueue } from '../flows/flow-run/flow-runs-queue'
 import { pubsub } from '../helper/pubsub'
-import { system } from '../helper/system/system'
-import { AppSystemProp } from '../helper/system/system-props'
 import { flowEngineWorker } from './engine-controller'
 import { setupBullMQBoard } from './job-queue/bullboard'
 import { jobBroker } from './job-queue/job-broker'
@@ -19,18 +17,13 @@ export const workerModule: FastifyPluginAsyncZod = async (app) => {
     })
     await jobQueue(app.log).init()
 
-    const skipQueueConsumers = system.getBoolean(AppSystemProp.CANARY_SKIP_QUEUE_CONSUMERS) ?? false
-    if (!skipQueueConsumers) {
-        await runsMetadataQueue(app.log).init()
-    }
+    await runsMetadataQueue(app.log).init()
 
     await setupBullMQBoard(app)
 
     app.addHook('onClose', async () => {
         await jobBroker(app.log).close()
-        if (!skipQueueConsumers) {
-            await runsMetadataQueue(app.log).close()
-        }
+        await runsMetadataQueue(app.log).close()
         await jobQueue(app.log).close()
         await pubsub.close()
     })

@@ -22,7 +22,6 @@ export type FireAndForgetJobResult = {
     delayInSeconds?: number
     stdOut?: string
     stdError?: string
-    canary?: string
 }
 
 export type SynchronousJobResult = {

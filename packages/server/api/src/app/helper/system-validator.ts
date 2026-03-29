@@ -187,7 +187,6 @@ const systemPropValidators: {
     // Canary
     [AppSystemProp.CANARY_APP_URL]: urlValidator,
     [AppSystemProp.CANARY_PLATFORM_IDS]: stringValidator,
-    [AppSystemProp.CANARY_SKIP_QUEUE_CONSUMERS]: booleanValidator,
 }
 
 

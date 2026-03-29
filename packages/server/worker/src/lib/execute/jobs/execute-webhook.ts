@@ -136,7 +136,7 @@ export const executeWebhookJob: JobHandler<WebhookJobData, FireAndForgetJobResul
                 }
             }
 
-            return { kind: JobResultKind.FIRE_AND_FORGET, stdOut: result.stdOut, stdError: result.stdError, canary: data.canary }
+            return { kind: JobResultKind.FIRE_AND_FORGET, stdOut: result.stdOut, stdError: result.stdError }
         }
         catch (e) {
             await ctx.sandboxManager.invalidate(ctx.log)
