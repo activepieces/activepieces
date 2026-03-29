@@ -34,7 +34,14 @@ export const folderId = Property.Dropdown<'text' | 'number'>({
 
     try {
       const response = await httpClient.sendRequest<{
-        metadata: { folderid: number; name: string; path: string; isfolder: boolean }[];
+        metadata: {
+          contents?: {
+            folderid: number;
+            name: string;
+            path: string;
+            isfolder: boolean;
+          }[];
+        };
       }>({
         method: 'GET',
         url: `${API_BASE_URL}/listfolder`,
@@ -45,7 +52,7 @@ export const folderId = Property.Dropdown<'text' | 'number'>({
         },
       });
 
-      const folders = response.body.metadata.filter((m) => m.isfolder);
+      const folders = response.body.metadata.contents?.filter((m) => m.isfolder) || [];
 
       return {
         options: [
