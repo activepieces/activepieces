@@ -1,7 +1,11 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 import { system } from '../../../helper/system/system'
+import { AppSystemProp } from '../../../helper/system/system-props'
+import { DatabaseType } from '../../database-type'
 
 const log = system.globalLogger()
+const databaseType = system.get(AppSystemProp.DB_TYPE)
+const isPGlite = databaseType === DatabaseType.PGLITE
 
 export class AddKnowledgeBaseChunkTable1773627989515 implements MigrationInterface {
     name = 'AddKnowledgeBaseChunkTable1773627989515'
@@ -59,6 +63,12 @@ export class AddKnowledgeBaseChunkTable1773627989515 implements MigrationInterfa
         await queryRunner.query(`
             CREATE INDEX IF NOT EXISTS "idx_kb_chunk_project_file" ON "knowledge_base_chunk" ("projectId", "knowledgeBaseFileId")
         `)
+
+        if (!isPGlite) {
+            await queryRunner.query(`
+                CREATE INDEX IF NOT EXISTS "idx_kb_chunk_embedding" ON "knowledge_base_chunk" USING hnsw ("embedding" vector_cosine_ops)
+            `)
+        }
 
         log.info('[AddKnowledgeBaseChunkTable1773627989515] done')
     }
