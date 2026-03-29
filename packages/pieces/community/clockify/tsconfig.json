@@ -4,6 +4,7 @@
     "module": "commonjs",
     "forceConsistentCasingInFileNames": true,
     "strict": true,
+    "importHelpers": true,
     "noImplicitOverride": true,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
@@ -11,9 +12,5 @@
   },
   "files": [],
   "include": [],
-  "references": [
-    {
-      "path": "./tsconfig.lib.json"
-    }
-  ]
+  "references": [{ "path": "./tsconfig.lib.json" }]
 }

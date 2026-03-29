@@ -1,27 +1,62 @@
-import { PieceAuth } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { clockifyApiCall } from './common/client';
+import { PieceAuth, PieceProperty, Validators } from '@activepieces/pieces-framework';
+import { httpClient } from '@activepieces/pieces-common';
+import { isNil } from '@activepieces/shared';
 
 export const clockifyAuth = PieceAuth.SecretText({
-	displayName:'API Key',
-	description: `You can obtain your API key by navigating to **Preferences->Advanced**.`,
-	required: true,
-	validate: async ({ auth }) => {
-		try {
-			await clockifyApiCall({
-				apiKey: auth,
-				method: HttpMethod.GET,
-				resourceUri: '/user',
-			});
+  description: 'API Key from Clockify Profile Settings',
+  required: true,
+  displayName: 'API Key',
+  validators: [Validators.pattern(/\w+/)],
+});
 
-			return {
-				valid: true,
-			};
-		} catch {
-			return {
-				valid: false,
-				error: 'Invalid API Key.',
-			};
-		}
-	},
+export const workspaceId = PieceProperty.Dropdown({
+  displayName: 'Workspace',
+  required: true,
+  refreshers: ['auth'],
+  options: async ({ auth }) => {
+    if (!auth) return { disabled: true, options: [], placeholder: 'Enter API key' };
+
+    try {
+      const response = await httpClient.sendRequest<any[]>({
+        method: 'GET',
+        url: 'https://api.clockify.me/api/v1/workspaces',
+        headers: { 'X-Api-Key': auth as string },
+      });
+
+      return {
+        options: response.body.map((ws: any) => ({
+          label: ws.name,
+          value: ws.id,
+        })),
+      };
+    } catch {
+      return { disabled: true, options: [], placeholder: 'Error loading workspaces' };
+    }
+  },
+});
+
+export const projectId = PieceProperty.Dropdown({
+  displayName: 'Project (Optional)',
+  required: false,
+  refreshers: ['auth', 'workspace_id'],
+  options: async ({ auth, workspace_id }) => {
+    if (isNil(auth) || isNil(workspace_id)) return { disabled: true, options: [] };
+
+    try {
+      const response = await httpClient.sendRequest<any[]>({
+        method: 'GET',
+        url: `https://api.clockify.me/api/v1/workspaces/${workspace_id}/projects`,
+        headers: { 'X-Api-Key': auth as string },
+      });
+
+      return {
+        options: response.body.map((p: any) => ({
+          label: p.name,
+          value: p.id,
+        })),
+      };
+    } catch {
+      return { disabled: true, options: [] };
+    }
+  },
 });

@@ -1,41 +1,36 @@
-import { createCustomApiCallAction, HttpMethod } from '@activepieces/pieces-common';
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { createTaskAction } from './lib/actions/create-task';
-import { createTimeEntryAction } from './lib/actions/create-time-entry';
-import { findRunningTimerAction } from './lib/actions/find-running-timer';
-import { findTaskAction } from './lib/actions/find-task';
-import { findTimeEntryAction } from './lib/actions/find-time-entry';
-import { startTimerAction } from './lib/actions/start-timer';
-import { stopTimerAction } from './lib/actions/stop-timer';
-import { BASE_URL, clockifyApiCall } from './lib/common/client';
-import { newTaskTrigger } from './lib/triggers/new-task';
-import { newTimeEntryTrigger } from './lib/triggers/new-time-entry';
-import { newTimerStartedTrigger } from './lib/triggers/new-timer-started';
+import { createPiece, PieceCategory } from '@activepieces/pieces-framework';
 import { clockifyAuth } from './lib/auth';
+import {
+  createTimeEntry,
+  startTimeEntry,
+  stopTimer,
+  findTask,
+  getTimeEntries,
+} from './lib/actions';
+import {
+  newTimeEntryTrigger,
+  newTaskTrigger,
+  newTimerStartedTrigger,
+} from './lib/triggers';
 
 export const clockify = createPiece({
-	displayName: 'Clockify',
-	auth: clockifyAuth,
-	minimumSupportedRelease: '0.36.1',
-	logoUrl: 'https://cdn.activepieces.com/pieces/clockify.png',
-	authors: ['rimjhimyadav', 'kishanprmr'],
-	actions: [
-		createTaskAction,
-		createTimeEntryAction,
-		startTimerAction,
-		stopTimerAction,
-		findTaskAction,
-		findTimeEntryAction,
-		findRunningTimerAction,
-		createCustomApiCallAction({
-			auth: clockifyAuth,
-			baseUrl: () => BASE_URL,
-			authMapping: async (auth) => {
-				return {
-					'X-Api-Key': auth.secret_text,
-				};
-			},
-		}),
-	],
-	triggers: [newTaskTrigger, newTimeEntryTrigger, newTimerStartedTrigger],
+  displayName: 'Clockify',
+  description: 'Time tracking and productivity platform - Track time, manage tasks, and generate detailed reports',
+  logoUrl: 'https://cdn.clockify.me/assets/logo/clockify-logo.svg',
+  categories: [PieceCategory.PRODUCTIVITY],
+  authors: ['ktwo'],
+  auth: clockifyAuth,
+  minimumSupportedRelease: '1.0.0',
+  actions: [
+    createTimeEntry,
+    startTimeEntry,
+    stopTimer,
+    findTask,
+    getTimeEntries,
+  ],
+  triggers: [
+    newTimeEntryTrigger,
+    newTaskTrigger,
+    newTimerStartedTrigger,
+  ],
 });
