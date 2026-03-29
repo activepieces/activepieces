@@ -36,9 +36,9 @@ export const listFoldersAction = createAction({
     },
     async run(context) {
         const { folderId, item_types, limit, continuation } = context.propsValue;
-        const queryParams: Record<string, string | string[]> = {};
+        const queryParams: Record<string, string> = {};
         if (item_types && item_types.length > 0) {
-            queryParams['item_types'] = item_types;
+            queryParams['item_types'] = item_types.join(',');
         }
         if (limit !== undefined && limit !== null) {
             queryParams['limit'] = limit.toString();
