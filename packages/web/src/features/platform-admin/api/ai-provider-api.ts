@@ -20,7 +20,7 @@ export const aiProviderApi = {
   update(providerId: string, request: UpdateAIProviderRequest): Promise<void> {
     return api.post(`/v1/ai-providers/${providerId}`, request);
   },
-  delete(provider: string) {
+  delete(provider: string): Promise<void> {
     return api.delete(`/v1/ai-providers/${provider}`);
   },
 };
