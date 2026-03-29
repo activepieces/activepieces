@@ -6,6 +6,8 @@ import {
   stopTimer,
   findTask,
   getTimeEntries,
+  createTask,
+  findRunningTimer,
 } from './lib/actions';
 import {
   newTimeEntryTrigger,
@@ -27,6 +29,8 @@ export const clockify = createPiece({
     stopTimer,
     findTask,
     getTimeEntries,
+    createTask,
+    findRunningTimer,
   ],
   triggers: [
     newTimeEntryTrigger,
