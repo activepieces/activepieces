@@ -5291,6 +5291,10 @@
         "tslib": "^2.3.0",
       },
     },
+    "packages/pieces/community/promotekit": {
+      "name": "@activepieces/piece-promotekit",
+      "version": "0.0.1",
+    },
     "packages/pieces/community/prompthub": {
       "name": "@activepieces/piece-prompthub",
       "version": "0.1.4",
@@ -8932,6 +8936,8 @@
     "@activepieces/piece-presentation": ["@activepieces/piece-presentation@workspace:packages/pieces/community/presenton"],
 
     "@activepieces/piece-productboard": ["@activepieces/piece-productboard@workspace:packages/pieces/community/productboard"],
+
+    "@activepieces/piece-promotekit": ["@activepieces/piece-promotekit@workspace:packages/pieces/community/promotekit"],
 
     "@activepieces/piece-prompthub": ["@activepieces/piece-prompthub@workspace:packages/pieces/community/prompthub"],
 
