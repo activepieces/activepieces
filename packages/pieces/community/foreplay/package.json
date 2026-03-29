@@ -1,0 +1,19 @@
+{
+  "name": "@activepieces/piece-foreplay",
+  "version": "0.0.1",
+  "description": "Foreplay.co integration for Activepieces",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*"
+  },
+  "keywords": [
+    "activepieces",
+    "foreplay",
+    "advertising",
+    "mcp"
+  ],
+  "author": "zkk536",
+  "license": "MIT"
+}
