@@ -91,7 +91,7 @@ export const triggerEventService = (log: FastifyBaseLogger) => ({
                     projectId,
                     flowId: flow.id,
                 })
-                if (engineResponse.status === EngineResponseStatus.USER_FAILURE) {
+                if (engineResponse.status !== EngineResponseStatus.OK) {
                     throw new ActivepiecesError({
                         code: ErrorCode.TEST_TRIGGER_FAILED,
                         params: {
