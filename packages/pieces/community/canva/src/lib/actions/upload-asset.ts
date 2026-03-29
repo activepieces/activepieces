@@ -36,7 +36,14 @@ export const uploadAssetAction = createAction({
             },
         });
 
-        let job = uploadResponse.body.job;
+        let job = uploadResponse.body?.job;
+        if (!job) {
+            throw new Error(
+                `Canva asset upload returned an unexpected response: ${JSON.stringify(
+                    uploadResponse.body
+                )}`
+            );
+        }
         const maxRetries = 10;
         let retries = 0;
 

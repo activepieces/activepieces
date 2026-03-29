@@ -56,7 +56,9 @@ export const searchDesignsAction = createAction({
         if (ownership) queryParams['ownership'] = ownership;
         if (sort_by) queryParams['sort_by'] = sort_by;
         if (continuation) queryParams['continuation'] = continuation;
-        if (limit !== undefined && limit !== null) queryParams['limit'] = limit.toString();
+        if (limit !== undefined && limit !== null) {
+            queryParams['limit'] = limit.toString();
+        }
 
         const response = await httpClient.sendRequest({
             method: HttpMethod.GET,
