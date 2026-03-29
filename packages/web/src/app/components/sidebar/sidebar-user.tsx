@@ -74,10 +74,10 @@ export function SidebarUser() {
 
               {!isCollapsed && (
                 <>
-                  <span className="truncate">
+                  <span className="truncate font-normal">
                     {user.firstName + ' ' + user.lastName}
                   </span>
-                  <ChevronsUpDown className="ml-auto size-4" />
+                  <ChevronsUpDown className="ml-auto size-3.5" />
                 </>
               )}
             </SidebarMenuButton>
