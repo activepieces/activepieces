@@ -1,6 +1,5 @@
 import {
   createTrigger,
-  PieceAuth,
   TriggerStrategy,
   Property,
 } from '@activepieces/pieces-framework';
@@ -15,6 +14,34 @@ interface TrackingData {
   lastChecked: number;
   knownFileIds: string[];
 }
+
+const getNewFiles = async (context: any) => {
+  let tracking = await context.store?.get<TrackingData>(`pcloud_file_${context.propsValue.folder_id}`);
+  if (!tracking) {
+    tracking = { lastChecked: 0, knownFileIds: [] };
+  }
+
+  const response = await httpClient.sendRequest<any>({
+    method: 'GET',
+    url: `${API_BASE_URL}/listfolder`,
+    queryParams: {
+      access_token: context.auth as string,
+      folderid: context.propsValue.folder_id,
+    },
+  });
+
+  const files = response.body.metadata?.contents?.filter((m: any) => !m.isfolder && !m.isdeleted) || [];
+  const newFiles = files.filter((f: any) => !tracking.knownFileIds.includes(String(f.fileid)));
+
+  // Update tracking data
+  const allFileIds = files.map((f: any) => String(f.fileid));
+  await context.store?.put<TrackingData>(`pcloud_file_${context.propsValue.folder_id}`, {
+    lastChecked: Date.now(),
+    knownFileIds: allFileIds,
+  });
+
+  return newFiles;
+};
 
 export const newFileTrigger = createTrigger({
   auth: pcloudAuth,
@@ -40,66 +67,33 @@ export const newFileTrigger = createTrigger({
   },
 
   async test(context) {
-    return await this.getNewFiles(context);
+    return await getNewFiles(context);
   },
 
   async onEnable(context) {
-    // Initialize tracking data
     const response = await httpClient.sendRequest<any>({
       method: 'GET',
       url: `${API_BASE_URL}/listfolder`,
       queryParams: {
-        access_token: context.auth,
+        access_token: context.auth as string,
         folderid: context.propsValue.folder_id,
       },
     });
 
-    const files = response.body.metadata?.filter((m: any) => !m.isfolder && !m.isdeleted) || [];
+    const files = response.body.metadata?.contents?.filter((m: any) => !m.isfolder && !m.isdeleted) || [];
     const fileIds = files.map((f: any) => String(f.fileid));
 
-    await context.store?.put<TrackingData>(`${context.propsValue.folder_id}`, {
+    await context.store?.put<TrackingData>(`pcloud_file_${context.propsValue.folder_id}`, {
       lastChecked: Date.now(),
       knownFileIds: fileIds,
     });
   },
 
   async onDisable(context) {
-    // Clean up tracking data
-    await context.store?.put(`${context.propsValue.folder_id}`, {
-      lastChecked: 0,
-      knownFileIds: [],
-    });
+    await context.store?.delete(`pcloud_file_${context.propsValue.folder_id}`);
   },
 
   async run(context) {
-    return await this.getNewFiles(context);
-  },
-
-  async getNewFiles(context: any) {
-    let tracking = await context.store?.get<TrackingData>(`${context.propsValue.folder_id}`);
-    if (!tracking) {
-      tracking = { lastChecked: 0, knownFileIds: [] };
-    }
-
-    const response = await httpClient.sendRequest<any>({
-      method: 'GET',
-      url: `${API_BASE_URL}/listfolder`,
-      queryParams: {
-        access_token: context.auth,
-        folderid: context.propsValue.folder_id,
-      },
-    });
-
-    const files = response.body.metadata?.filter((m: any) => !m.isfolder && !m.isdeleted) || [];
-    const newFiles = files.filter((f: any) => !tracking.knownFileIds.includes(String(f.fileid)));
-
-    // Update tracking data
-    const allFileIds = files.map((f: any) => String(f.fileid));
-    await context.store?.put<TrackingData>(`${context.propsValue.folder_id}`, {
-      lastChecked: Date.now(),
-      knownFileIds: allFileIds,
-    });
-
-    return newFiles;
+    return await getNewFiles(context);
   },
 });

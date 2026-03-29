@@ -1,7 +1,5 @@
 import {
   createAction,
-  PieceAuth,
-  PieceProperty,
   Property,
 } from '@activepieces/pieces-framework';
 import { httpClient } from '@activepieces/pieces-common';
@@ -21,7 +19,14 @@ export const fileId = Property.Dropdown<'text' | 'number'>({
 
     try {
       const response = await httpClient.sendRequest<{
-        metadata: { fileid: number; name: string; path: string; isfolder: boolean }[];
+        metadata: {
+          contents?: {
+            fileid: number;
+            name: string;
+            path: string;
+            isfolder: boolean;
+          }[];
+        };
       }>({
         method: 'GET',
         url: `${API_BASE_URL}/listfolder`,
@@ -31,7 +36,7 @@ export const fileId = Property.Dropdown<'text' | 'number'>({
         },
       });
 
-      const files = response.body.metadata.filter((m) => !m.isfolder);
+      const files = response.body.metadata?.contents?.filter((m) => !m.isfolder) || [];
 
       return {
         options: files.map((f) => ({
@@ -68,7 +73,7 @@ export const downloadFile = createAction({
       method: 'GET',
       url: `${API_BASE_URL}/getfilelink`,
       queryParams: {
-        access_token: context.auth,
+        access_token: context.auth as string,
         fileid: file_id,
         ...(force_download ? { forcedownload: '1' } : {}),
       },

@@ -4,7 +4,6 @@ import {
 } from '@activepieces/pieces-framework';
 import { httpClient } from '@activepieces/pieces-common';
 import { pcloudAuth, folderId, API_BASE_URL } from '../auth';
-import { PCloudClient } from '../common/client';
 
 /**
  * List Folder Action
@@ -23,18 +22,24 @@ export const listFolder = createAction({
     }),
   },
   async run(context) {
-    const client = new PCloudClient(context.auth);
-    const result = await client.listFolder(context.propsValue.folder_id);
+    const response = await httpClient.sendRequest<any>({
+      method: 'GET',
+      url: `${API_BASE_URL}/listfolder`,
+      queryParams: {
+        access_token: context.auth as string,
+        folderid: context.propsValue.folder_id,
+      },
+    });
 
     if (context.propsValue.include_deleted) {
-      return result;
+      return response.body;
     }
 
-    // Filter out deleted items
-    if (result.metadata) {
-      result.metadata = result.metadata.filter((item: any) => !item.isdeleted);
+    // Filter out deleted items from contents
+    if (response.body.metadata?.contents) {
+      response.body.metadata.contents = response.body.metadata.contents.filter((item: any) => !item.isdeleted);
     }
 
-    return result;
+    return response.body;
   },
 });
