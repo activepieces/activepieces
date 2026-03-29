@@ -80,7 +80,7 @@ export const pcloudNewFolder = createTrigger({
       (f) => f.folderid && !knownSet.has(f.folderid),
     );
     const updatedIds = allFolders.map((f) => f.folderid).filter(Boolean) as number[];
-    context.store.put('knownFolderIds', updatedIds);
+    await context.store.put('knownFolderIds', updatedIds);
     return newFolders;
   },
   test: async (context) => {
