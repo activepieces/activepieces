@@ -1,5 +1,6 @@
 import {
   createPiece,
+  OAuth2PropertyValue,
   PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
@@ -51,7 +52,7 @@ export const pcloud = createPiece({
     pcloudFindFile,
     pcloudFindFolder,
     createCustomApiCallAction({
-      baseUrl: () => pcloudCommon.defaultBaseUrl,
+      baseUrl: (auth) => pcloudCommon.getBaseUrl(auth as OAuth2PropertyValue),
       auth: pcloudAuth,
       authMapping: async (auth) => ({
         Authorization: `Bearer ${auth.access_token}`,
