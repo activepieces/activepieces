@@ -1,4 +1,8 @@
-import { FlowOperationType, FlowTriggerType } from '@activepieces/shared';
+import {
+  FlowOperationType,
+  FlowTriggerType,
+  isNil,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import {
   CheckCircle2Icon,
@@ -27,6 +31,7 @@ import {
   PieceSearchProvider,
   usePieceSearchContext,
 } from '@/features/pieces';
+import { aiProviderQueries } from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -63,18 +68,17 @@ const getTabsList = (
   ].includes(operationType);
 
   if (replaceOrAddAction && agentsEnabled) {
-    baseTabs.splice(1, 0, {
+    baseTabs.push({
       value: PieceSelectorTabType.AI_AND_AGENTS,
       name: t('AI & Agents'),
       icon: <SparklesIcon className="size-5" />,
     });
-    baseTabs.push({
-      value: PieceSelectorTabType.APPROVALS,
-      name: t('Approvals'),
-      icon: <CheckCircle2Icon className="size-5" />,
-    });
   }
-
+  baseTabs.push({
+    value: PieceSelectorTabType.APPROVALS,
+    name: t('Approvals'),
+    icon: <CheckCircle2Icon className="size-5" />,
+  });
   return baseTabs;
 };
 
@@ -133,7 +137,7 @@ const PieceSelectorContent = ({
       });
     }
   }, [isOpen]);
-
+  const { data: aiProviders } = aiProviderQueries.useAiProviders();
   const clearSearch = () => {
     setSearchQuery('');
     setSelectedPieceMetadataInPieceSelector(null);
@@ -141,7 +145,13 @@ const PieceSelectorContent = ({
 
   const { platform } = platformHooks.useCurrentPlatform();
   const tabsList = useMemo(
-    () => getTabsList(operation.type, platform?.plan.agentsEnabled ?? true),
+    () =>
+      getTabsList(
+        operation.type,
+        platform.plan.agentsEnabled &&
+          !isNil(aiProviders) &&
+          aiProviders.length > 0,
+      ),
     [operation.type, platform?.plan.agentsEnabled],
   );
 
