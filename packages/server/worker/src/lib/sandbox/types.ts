@@ -25,6 +25,11 @@ export type SandboxProcessMaker = {
     create: (params: CreateSandboxProcessParams) => Promise<ChildProcess>
 }
 
+export type SandboxResult = EngineResponse<unknown> & {
+    stdOut: string
+    stdError: string
+}
+
 export type Sandbox = {
     id: string
     start: (options: SandboxStartOptions) => Promise<void>
@@ -46,12 +51,6 @@ export type SandboxInitOptions = {
     timeLimitSeconds: number
     command?: string[]
     baseMounts?: SandboxMount[]
-}
-
-export type SandboxResult = {
-    engine: EngineResponse<unknown>
-    stdOut: string
-    stdError: string
 }
 
 export type SandboxOptions = {
