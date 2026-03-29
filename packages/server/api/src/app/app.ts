@@ -318,7 +318,10 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             break
     }
 
-    await systemJobsSchedule(app.log).startWorker()
+    const skipQueueConsumers = system.getBoolean(AppSystemProp.CANARY_SKIP_QUEUE_CONSUMERS) ?? false
+    if (!skipQueueConsumers) {
+        await systemJobsSchedule(app.log).startWorker()
+    }
 
     app.addHook('onClose', async () => {
         app.log.info('Shutting down')
