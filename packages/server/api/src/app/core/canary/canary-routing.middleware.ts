@@ -52,11 +52,11 @@ async function proxyToCanary(request: FastifyRequest, reply: FastifyReply, canar
     request.log.info({ response }, '[canaryRoutingMiddleware] Response from canary app')
 
     const responseHeaders: Record<string, string> = {}
-    for (const [key, value] of Object.entries(response.headers)) {
+    response.headers.forEach((value, key) => {
         if (!HOP_BY_HOP_HEADERS.has(key)) {
             responseHeaders[key] = value
         }
-    }
+    })
 
     const responseBody = response.body
         ? Readable.fromWeb(response.body as Parameters<typeof Readable.fromWeb>[0])
