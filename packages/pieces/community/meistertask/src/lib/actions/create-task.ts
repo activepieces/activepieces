@@ -1,50 +1,43 @@
-import { meistertaskAuth } from '../auth';
-import {  makeRequest, meisterTaskCommon } from '../common/common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { meistertaskAuth } from '../auth';
 
 export const createTask = createAction({
   auth: meistertaskAuth,
   name: 'create_task',
   displayName: 'Create Task',
-  description: 'Creates a new task',
+  description: 'Create a new task in MeisterTask',
   props: {
-    project: meisterTaskCommon.project,
-    section: meisterTaskCommon.section,
+    project_id: Property.ShortText({
+      displayName: 'Project ID',
+      required: true,
+    }),
+    section_id: Property.ShortText({
+      displayName: 'Section ID',
+      required: true,
+    }),
     name: Property.ShortText({
       displayName: 'Task Name',
       required: true,
     }),
-    notes: Property.LongText({
-      displayName: 'Notes',
-      required: false,
-    }),
-    assigned_to: meisterTaskCommon.person,
-    due_date: Property.DateTime({
-      displayName: 'Due Date',
+    description: Property.LongText({
+      displayName: 'Description',
       required: false,
     }),
   },
   async run(context) {
-    const token = context.auth.access_token;
-    const { section, name, notes, assigned_to, due_date } = context.propsValue;
-
-    const body: any = {
-      name,
-      section_id: section,
-    };
-
-    if (notes) body.notes = notes;
-    if (assigned_to) body.assigned_to_id = assigned_to;
-    if (due_date) body.due = due_date;
-
-    const response = await makeRequest(
-      HttpMethod.POST,
-      '/tasks',
-      token,
-      body
-    );
-
-    return response.body;
+    const response = await fetch('https://www.meistertask.com/api/tasks', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${context.auth}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        name: context.propsValue.name,
+        description: context.propsValue.description,
+        project_id: context.propsValue.project_id,
+        section_id: context.propsValue.section_id,
+      }),
+    });
+    return await response.json();
   },
 });

@@ -1,11 +1,11 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { meistertaskAuth } from '../auth';
 
-export const newTask = createTrigger({
+export const updatedTask = createTrigger({
   auth: meistertaskAuth,
-  name: 'new_task',
-  displayName: 'New Task',
-  description: 'Triggers when a new task is created',
+  name: 'updated_task',
+  displayName: 'Updated Task',
+  description: 'Triggers when a task is updated',
   type: TriggerStrategy.WEBHOOK,
   props: {},
   async onEnable(context) {
@@ -17,7 +17,7 @@ export const newTask = createTrigger({
       },
       body: JSON.stringify({
         url: context.webhookUrl,
-        events: ['task.created'],
+        events: ['task.updated'],
       }),
     });
     const webhook = await response.json();

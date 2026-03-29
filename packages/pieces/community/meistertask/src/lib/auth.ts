@@ -1,32 +1,28 @@
-import { PieceAuth, OAuth2PropertyValue } from '@activepieces/pieces-framework';
-import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { MEISTERTASK_API_URL } from './common/common';
+import { PieceAuth, Property } from '@activepieces/pieces-framework';
 
-export const meistertaskAuth = PieceAuth.OAuth2({
-  description: 'Authentication for MeisterTask (uses MindMeister OAuth2)',
-  authUrl: 'https://www.mindmeister.com/oauth2/authorize',
-  tokenUrl: 'https://www.mindmeister.com/oauth2/token',
+export const meistertaskAuth = PieceAuth.SecretText({
+  description: 'API Key from MeisterToken',
   required: true,
-  scope: ['userinfo.profile', 'userinfo.email', 'meistertask'],
-  validate: async ({ auth }) => {
-    const accessToken = (auth as OAuth2PropertyValue).access_token;
+  displayName: 'API Key',
+});
+
+export const projectId = Property.Dropdown({
+  displayName: 'Project',
+  required: true,
+  refreshers: ['auth'],
+  options: async ({ auth }) => {
+    if (!auth) return { disabled: true, options: [], placeholder: 'Enter API key' };
+
     try {
-      await httpClient.sendRequest({
-        method: HttpMethod.GET,
-        url: `${MEISTERTASK_API_URL}/projects`,
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: accessToken,
-        },
+      const response = await fetch('https://www.meistertask.com/api/projects', {
+        headers: { 'Authorization': `Bearer ${auth}` },
       });
+      const data = await response.json();
       return {
-        valid: true,
+        options: data.map((p: any) => ({ label: p.name, value: p.id })),
       };
-    } catch (e) {
-      return {
-        valid: false,
-        error: 'Invalid token or insufficient scopes.',
-      };
+    } catch {
+      return { disabled: true, options: [], placeholder: 'Error loading projects' };
     }
   },
 });
