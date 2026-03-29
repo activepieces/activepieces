@@ -5,7 +5,13 @@ import {
 } from '@activepieces/pieces-common';
 import { OAuth2PropertyValue } from '@activepieces/pieces-framework';
 
-const BASE_URL = 'https://api.pcloud.com';
+const DEFAULT_BASE_URL = 'https://api.pcloud.com';
+
+function getBaseUrl(auth: OAuth2PropertyValue): string {
+  const hostname =
+    auth.data?.['hostname'] ?? auth.props?.['region'] ?? 'api.pcloud.com';
+  return `https://${hostname}`;
+}
 
 async function sendPcloudRequest<T>(
   auth: OAuth2PropertyValue,
@@ -13,7 +19,8 @@ async function sendPcloudRequest<T>(
   endpoint: string,
   queryParams?: Record<string, string | number | boolean>,
 ): Promise<T> {
-  const url = new URL(`${BASE_URL}${endpoint}`);
+  const baseUrl = getBaseUrl(auth);
+  const url = new URL(`${baseUrl}${endpoint}`);
   if (queryParams) {
     for (const [key, value] of Object.entries(queryParams)) {
       if (value !== undefined && value !== null) {
@@ -47,7 +54,7 @@ async function uploadFileToPcloud(
 
   const response = await httpClient.sendRequest<PcloudUploadResponse>({
     method: HttpMethod.POST,
-    url: `${BASE_URL}/uploadfile?folderid=${folderId}&filename=${encodeURIComponent(fileName)}`,
+    url: `${getBaseUrl(auth)}/uploadfile?folderid=${folderId}&filename=${encodeURIComponent(fileName)}`,
     body: formData,
     authentication: {
       type: AuthenticationType.BEARER_TOKEN,
@@ -76,7 +83,8 @@ async function listFolder(
 }
 
 export const pcloudCommon = {
-  baseUrl: BASE_URL,
+  defaultBaseUrl: DEFAULT_BASE_URL,
+  getBaseUrl,
   sendPcloudRequest,
   uploadFileToPcloud,
   listFolder,

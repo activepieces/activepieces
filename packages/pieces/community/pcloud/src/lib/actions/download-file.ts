@@ -30,6 +30,9 @@ export const pcloudDownloadFile = createAction({
         },
       );
 
+    if (!linkResponse.hosts || linkResponse.hosts.length === 0) {
+      throw new Error('pCloud returned no download hosts');
+    }
     const downloadUrl = `https://${linkResponse.hosts[0]}${linkResponse.path}`;
 
     const fileResponse = await httpClient.sendRequest({

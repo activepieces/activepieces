@@ -1,6 +1,7 @@
 import {
   createPiece,
   PieceAuth,
+  Property,
 } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { PieceCategory } from '@activepieces/shared';
@@ -16,8 +17,21 @@ import { pcloudNewFolder } from './lib/triggers/new-folder';
 
 export const pcloudAuth = PieceAuth.OAuth2({
   required: true,
+  props: {
+    region: Property.StaticDropdown({
+      displayName: 'Data Center Region',
+      description: 'Select the region where your pCloud account is hosted.',
+      required: true,
+      options: {
+        options: [
+          { label: 'United States (api.pcloud.com)', value: 'api.pcloud.com' },
+          { label: 'Europe (eapi.pcloud.com)', value: 'eapi.pcloud.com' },
+        ],
+      },
+    }),
+  },
   authUrl: 'https://my.pcloud.com/oauth2/authorize',
-  tokenUrl: 'https://api.pcloud.com/oauth2_token',
+  tokenUrl: 'https://{region}/oauth2_token',
   scope: [],
 });
 
@@ -37,7 +51,7 @@ export const pcloud = createPiece({
     pcloudFindFile,
     pcloudFindFolder,
     createCustomApiCallAction({
-      baseUrl: () => pcloudCommon.baseUrl,
+      baseUrl: () => pcloudCommon.defaultBaseUrl,
       auth: pcloudAuth,
       authMapping: async (auth) => ({
         Authorization: `Bearer ${auth.access_token}`,
