@@ -2,10 +2,10 @@
   "name": "@activepieces/piece-clockify",
   "version": "0.0.1",
   "description": "Clockify piece for Activepieces - Time tracking and productivity",
-  "main": "src/index.ts",
+  "main": "./dist/src/index.js",
   "dependencies": {
-    "@activepieces/pieces-common": "^1.0.0",
-    "@activepieces/pieces-framework": "^0.0.1"
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*"
   },
   "keywords": [
     "activepieces",
