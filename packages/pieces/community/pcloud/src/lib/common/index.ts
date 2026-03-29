@@ -5,7 +5,6 @@ import {
 } from '@activepieces/pieces-common';
 import { OAuth2PropertyValue } from '@activepieces/pieces-framework';
 
-const DEFAULT_BASE_URL = 'https://api.pcloud.com';
 
 function getBaseUrl(auth: OAuth2PropertyValue): string {
   const hostname =
@@ -83,7 +82,6 @@ async function listFolder(
 }
 
 export const pcloudCommon = {
-  defaultBaseUrl: DEFAULT_BASE_URL,
   getBaseUrl,
   sendPcloudRequest,
   uploadFileToPcloud,
