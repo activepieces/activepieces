@@ -32,7 +32,7 @@ function BuilderLayoutInner({ children }: { children: React.ReactNode }) {
         <div
           className={cn(
             'flex-1 flex flex-col overflow-hidden',
-            !embedState.isEmbedded && 'p-1.5',
+            !embedState.isEmbedded && 'pr-2 py-2 pl-0',
           )}
         >
           <div

@@ -277,7 +277,7 @@ export function ProjectDashboardSidebar({
                           size="icon"
                           className="h-6 w-6 hover:bg-sidebar-accent"
                         >
-                          <Plus />
+                          <Plus className="size-4" />
                         </Button>
                       </NewProjectDialog>
                     ) : (
@@ -290,7 +290,7 @@ export function ProjectDashboardSidebar({
                               disabled
                               className="h-6 w-6"
                             >
-                              <Plus />
+                              <Plus className="size-4" />
                             </Button>
                           </div>
                         </TooltipTrigger>
@@ -324,7 +324,7 @@ export function ProjectDashboardSidebar({
                         size="icon"
                         className="h-6 w-6 hover:bg-sidebar-accent"
                       >
-                        <Search />
+                        <Search className="size-4" />
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent
