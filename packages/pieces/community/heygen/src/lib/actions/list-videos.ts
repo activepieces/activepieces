@@ -21,7 +21,7 @@ export const listVideosAction = createAction({
       apiKey: auth.secret_text,
       method: HttpMethod.GET,
       resourceUri: '/video.list',
-      query: { limit: propsValue.limit },
+      query: { limit: propsValue.limit ?? 20 },
       apiVersion: 'v1',
     });
   },
