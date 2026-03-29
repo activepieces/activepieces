@@ -5,16 +5,18 @@
  *  - "Canary app"  — a real Fastify server bound to an OS-assigned port.
  *                    It records every request it receives and can return a
  *                    per-test response via `canaryResponseOverride`.
- *  - "Primary app" — a minimal Fastify app that only registers the middleware
- *                    as a preHandler hook plus fallback routes. Requests are
- *                    sent via app.inject() — no real TCP listener needed on
- *                    the primary side.
+ *  - "Primary app" — a minimal Fastify app that registers @fastify/reply-from
+ *                    (pointed at the canary server) and the middleware as a
+ *                    preHandler hook plus fallback routes. Requests are sent
+ *                    via app.inject() — no real TCP listener needed on the
+ *                    primary side.
  *
- * The middleware's internal fetch() call goes to the real canary server over
- * localhost TCP, so the full proxy path is exercised without mocking fetch.
+ * The middleware's reply.from() call goes to the real canary server over
+ * localhost TCP, so the full proxy path is exercised.
  */
 
 import { PrincipalType } from '@activepieces/shared'
+import replyFrom from '@fastify/reply-from'
 import fastify, { FastifyInstance, FastifyRequest } from 'fastify'
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -36,8 +38,7 @@ vi.mock('../../../../../src/app/flows/flow/flow-execution-cache', () => ({
     }),
 }))
 
-import { canaryProxy } from '../../../../../src/app/core/canary/canary-routing.middleware'
-import { AppSystemProp } from '../../../../../src/app/helper/system/system-props'
+import { canaryRoutingMiddleware } from '../../../../../src/app/core/canary/canary-routing.middleware'
 
 // --- canary server ---
 
@@ -85,21 +86,11 @@ afterAll(async () => {
 
 let primaryApp: FastifyInstance
 
-function buildPrimaryApp(platformId = 'canary-platform'): FastifyInstance {
+async function buildPrimaryApp(platformId = 'canary-platform'): Promise<FastifyInstance> {
     const app = fastify()
 
-    // isMultipart is normally added by @fastify/multipart; add a stub so
-    // buildProxyBody can call it without the plugin being registered.
-    app.decorateRequest('isMultipart', function (this: FastifyRequest) {
-        const ct = this.headers['content-type'] ?? ''
-        return ct.startsWith('multipart/form-data')
-    })
+    await app.register(replyFrom, { base: canaryUrl })
 
-    // Allow text/plain bodies so tests can send raw strings without Fastify
-    // re-parsing them into objects (avoids JSON object → [object Object] issue)
-    app.addContentTypeParser('text/plain', { parseAs: 'string' }, (_req, body, done) => done(null, body))
-
-    // Simulate JWT authentication
     app.addHook('onRequest', async (request: FastifyRequest) => {
         request.principal = {
             type: PrincipalType.USER,
@@ -107,7 +98,7 @@ function buildPrimaryApp(platformId = 'canary-platform'): FastifyInstance {
         } as never
     })
 
-    app.addHook('preHandler', (request, reply) => canaryProxy(request, reply).canaryRoutingMiddleware())
+    app.addHook('preHandler', canaryRoutingMiddleware)
 
     app.get('/v1/test', async () => ({ source: 'primary' }))
     app.post('/v1/test', async () => ({ source: 'primary' }))
@@ -120,12 +111,12 @@ beforeEach(async () => {
     canaryRequests.length = 0
     canaryResponseOverride = null
 
-    mockSystemGet.mockImplementation((prop: AppSystemProp) =>
-        prop === AppSystemProp.CANARY_APP_URL ? canaryUrl : undefined,
+    mockSystemGet.mockImplementation((prop: string) =>
+        prop === 'CANARY_APP_URL' ? canaryUrl : undefined,
     )
     mockSystemGetList.mockReturnValue(['canary-platform'])
 
-    primaryApp = buildPrimaryApp()
+    primaryApp = await buildPrimaryApp()
     await primaryApp.ready()
 })
 
@@ -150,15 +141,13 @@ describe('canary proxy — actual HTTP forwarding', () => {
         const response = await primaryApp.inject({
             method: 'POST',
             url: '/v1/test',
-            // Pass body as plain text to avoid Fastify re-parsing the JSON into an
-            // object — the middleware receives whatever Fastify's body parser gives it
-            headers: { 'content-type': 'text/plain' },
-            body: 'raw-payload',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ key: 'value' }),
         })
 
         expect(response.statusCode).toBe(200)
         expect(canaryRequests).toHaveLength(1)
-        expect(canaryRequests[0].body).toBe('raw-payload')
+        expect(canaryRequests[0].body).toEqual({ key: 'value' })
     })
 
     it('forwards custom headers to canary', async () => {
@@ -183,7 +172,7 @@ describe('canary proxy — actual HTTP forwarding', () => {
             headers: { host: 'prod.example.com', 'x-real-ip': '1.2.3.4' },
         })
 
-        // host is hop-by-hop; fetch sets its own
+        // host is rewritten by reply.from to point at canary
         expect(canaryRequests[0].headers['host']).not.toBe('prod.example.com')
         // non-hop-by-hop header is forwarded
         expect(canaryRequests[0].headers['x-real-ip']).toBe('1.2.3.4')
