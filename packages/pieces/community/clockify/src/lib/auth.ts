@@ -1,6 +1,5 @@
-import { PieceAuth, PieceProperty, Validators } from '@activepieces/pieces-framework';
+import { PieceAuth, Property, Validators } from '@activepieces/pieces-framework';
 import { httpClient } from '@activepieces/pieces-common';
-import { isNil } from '@activepieces/shared';
 
 export const clockifyAuth = PieceAuth.SecretText({
   description: 'API Key from Clockify Profile Settings',
@@ -9,7 +8,7 @@ export const clockifyAuth = PieceAuth.SecretText({
   validators: [Validators.pattern(/\w+/)],
 });
 
-export const workspaceId = PieceProperty.Dropdown({
+export const workspaceId = Property.Dropdown({
   displayName: 'Workspace',
   required: true,
   refreshers: ['auth'],
@@ -35,12 +34,12 @@ export const workspaceId = PieceProperty.Dropdown({
   },
 });
 
-export const projectId = PieceProperty.Dropdown({
+export const projectId = Property.Dropdown({
   displayName: 'Project (Optional)',
   required: false,
   refreshers: ['auth', 'workspace_id'],
   options: async ({ auth, workspace_id }) => {
-    if (isNil(auth) || isNil(workspace_id)) return { disabled: true, options: [] };
+    if (!auth || !workspace_id) return { disabled: true, options: [] };
 
     try {
       const response = await httpClient.sendRequest<any[]>({
