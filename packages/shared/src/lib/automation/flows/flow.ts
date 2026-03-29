@@ -14,7 +14,9 @@ export enum FlowStatus {
 export enum FlowOperationStatus {
     NONE = 'NONE',
     DELETING = 'DELETING',
+    /** @deprecated No longer set — status changes are now synchronous via distributed lock */
     ENABLING = 'ENABLING',
+    /** @deprecated No longer set — status changes are now synchronous via distributed lock */
     DISABLING = 'DISABLING',
 }
 
