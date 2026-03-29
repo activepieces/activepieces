@@ -48,8 +48,11 @@ export const executePropertyJob: JobHandler<ExecutePropertyJobData, SynchronousJ
 
             return {
                 kind: JobResultKind.SYNCHRONOUS,
-                status: result.engine.status,
-                response: result.engine.response,
+                status: result.status,
+                response: result.response,
+                errorMessage: result.error,
+                stdOut: result.stdOut,
+                stdError: result.stdError,
             }
         }
         catch (e) {
