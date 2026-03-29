@@ -117,7 +117,7 @@ function ProjectDashboardLayoutInner({
     <SidebarProvider hoverMode={!searchOpen}>
       {!isEmbedded && <ProjectDashboardSidebar />}
       <SidebarInset className="flex flex-col h-full overflow-hidden bg-sidebar">
-        <div className="flex-1 flex flex-col p-2 pt-3 pb-3 overflow-hidden">
+        <div className="flex-1 flex flex-col pr-2 py-2 pl-0 overflow-hidden">
           <div className="flex flex-col h-full bg-background rounded-xl shadow-[2px_0px_4px_-2px_rgba(0,0,0,0.05),0px_2px_4px_-2px_rgba(0,0,0,0.05)] border">
             {!hideHeader && (
               <>

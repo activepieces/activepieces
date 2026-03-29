@@ -72,7 +72,7 @@ export const AppSidebarHeader = () => {
             <div className="flex-1 min-w-0">
               <PlatformSwitcher>
                 <SidebarMenuButton className="h-8! w-full">
-                  <span className="truncate font-medium flex-1 text-left text-sm">
+                  <span className="truncate font-semibold flex-1 text-left text-sm">
                     {currentPlatform?.name ?? t('platform')}
                   </span>
                   <ChevronsUpDown className="ml-auto size-3.5! shrink-0" />

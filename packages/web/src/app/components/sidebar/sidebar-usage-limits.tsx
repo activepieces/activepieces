@@ -25,7 +25,7 @@ const SidebarUsageLimits = React.memo(() => {
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const { state } = useSidebar();
   const [showValues, setShowValues] = useState(state === 'expanded');
-  const timerRef = useRef<ReturnType<typeof setTimeout>>();
+  const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   useEffect(() => {
     clearTimeout(timerRef.current);

@@ -263,7 +263,7 @@ export function ProjectDashboardSidebar({
           <SidebarGroup className="flex-1 overflow-hidden w-full py-0">
             <div className="flex items-center justify-between group-data-[collapsible=icon]:hidden px-2">
               <SidebarGroupLabel className="font-normal">{t('Projects')}</SidebarGroupLabel>
-              <div className="flex items-center justify-center gap-2">
+              <div className="flex items-center justify-center gap-1">
                 {shouldShowNewProjectButton && (
                   <>
                     {!shouldDisableNewProjectButton ? (
@@ -275,7 +275,7 @@ export function ProjectDashboardSidebar({
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-6 w-6 hover:bg-accent"
+                          className="h-6 w-6 hover:bg-sidebar-accent"
                         >
                           <Plus />
                         </Button>
@@ -322,7 +322,7 @@ export function ProjectDashboardSidebar({
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-6 w-6 hover:bg-accent"
+                        className="h-6 w-6 hover:bg-sidebar-accent"
                       >
                         <Search />
                       </Button>

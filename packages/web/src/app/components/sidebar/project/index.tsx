@@ -56,7 +56,7 @@ const ProjectSideBarItem = ({
       })}
     >
       {projectAvatar}
-      {!isCollapsed && <span className={cn('truncate', isCurrentProject ? 'font-semibold' : 'font-normal')}>{displayText}</span>}
+      {!isCollapsed && <span className={cn('truncate', isCurrentProject ? 'font-semibold text-foreground' : 'font-normal text-sidebar-accent-foreground')}>{displayText}</span>}
     </SidebarMenuButton>
   );
 };

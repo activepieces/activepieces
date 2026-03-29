@@ -474,7 +474,7 @@
   --sidebar-primary: 210 85% 65%;
   --sidebar-primary-foreground: 210 90% 98%;
   --sidebar-accent: theme('colors.neutral.700');
-  --sidebar-accent-foreground: theme('colors.neutral.50');
+  --sidebar-accent-foreground: theme('colors.neutral.300');
   --sidebar-border: hsla(0, 0%, 100%, 0.1);
   --sidebar-ring: theme('colors.neutral.600');
   --sidebar-progress: 210 15% 40%;
