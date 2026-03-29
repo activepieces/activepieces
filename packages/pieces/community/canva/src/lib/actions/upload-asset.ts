@@ -44,7 +44,7 @@ export const uploadAssetAction = createAction({
                 )}`
             );
         }
-        const maxRetries = 10;
+        const maxRetries = 30;
         let retries = 0;
 
         while (job.status === "in_progress" && retries < maxRetries) {
