@@ -61,7 +61,7 @@ export const pcloudNewFile = createTrigger({
       context.propsValue.recursive ?? false,
     );
     const files = collectAllFiles(response.metadata);
-    const knownFileIds = files.map((f) => f.fileid);
+    const knownFileIds = files.map((f) => f.fileid).filter(Boolean) as number[];
     await context.store.put('knownFileIds', knownFileIds);
   },
   onDisable: async (context) => {
@@ -79,7 +79,7 @@ export const pcloudNewFile = createTrigger({
     const knownSet = new Set(knownFileIds);
 
     const newFiles = allFiles.filter((f) => f.fileid && !knownSet.has(f.fileid));
-    const updatedIds = allFiles.map((f) => f.fileid);
+    const updatedIds = allFiles.map((f) => f.fileid).filter(Boolean) as number[];
     await context.store.put('knownFileIds', updatedIds);
 
     return newFiles;

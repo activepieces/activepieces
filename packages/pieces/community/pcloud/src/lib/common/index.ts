@@ -29,6 +29,10 @@ async function sendPcloudRequest<T>(
       token: auth.access_token,
     },
   });
+  const body = response.body as Record<string, unknown>;
+  if (body && typeof body === 'object' && 'result' in body && body.result !== 0) {
+    throw new Error(`pCloud API error ${body.result}: ${body.error}`);
+  }
   return response.body;
 }
 

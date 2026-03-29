@@ -59,7 +59,7 @@ export const pcloudNewFolder = createTrigger({
       context.propsValue.recursive ?? false,
     );
     const folders = collectAllFolders(response.metadata);
-    const knownFolderIds = folders.map((f) => f.folderid);
+    const knownFolderIds = folders.map((f) => f.folderid).filter(Boolean) as number[];
     await context.store.put('knownFolderIds', knownFolderIds);
   },
   onDisable: async (context) => {
@@ -79,7 +79,7 @@ export const pcloudNewFolder = createTrigger({
     const newFolders = allFolders.filter(
       (f) => f.folderid && !knownSet.has(f.folderid),
     );
-    const updatedIds = allFolders.map((f) => f.folderid);
+    const updatedIds = allFolders.map((f) => f.folderid).filter(Boolean) as number[];
     await context.store.put('knownFolderIds', updatedIds);
 
     return newFolders;
