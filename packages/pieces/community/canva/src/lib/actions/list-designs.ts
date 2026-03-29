@@ -6,7 +6,7 @@ export const listDesignsAction = createAction({
     auth: canvaAuth,
     name: "list_designs",
     displayName: "List Designs",
-    description: "Lists metadata for all the designs in a Canva user's projects",
+    description: "Lists metadata for all the designs in a Canva user's projects. Note: This uses the same endpoint as Search Designs but without a search query.",
     props: {
         ownership: Property.StaticDropdown({
             displayName: "Ownership",

@@ -6,7 +6,7 @@ export const searchDesignsAction = createAction({
     auth: canvaAuth,
     name: "search_designs",
     displayName: "Search Designs",
-    description: "Search the metadata of all the designs in a Canva user's projects",
+    description: "Search the metadata of all the designs in a Canva user's projects. Note: This uses the same endpoint as List Designs but filters by a search query.",
     props: {
         query: Property.ShortText({
             displayName: "Search Query",
