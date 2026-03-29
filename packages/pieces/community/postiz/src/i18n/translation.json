@@ -69,6 +69,6 @@
   "JSON": "JSON",
   "Form Data": "Form Data",
   "Raw": "Raw",
-  "New Post": "New Post",
-  "Triggers when a new post is created or scheduled in Postiz": "Triggers when a new post is created or scheduled in Postiz"
+  "New Published Post": "New Published Post",
+  "Triggers when a post is published in Postiz": "Triggers when a post is published in Postiz"
 }

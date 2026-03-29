@@ -69,6 +69,6 @@
   "JSON": "JSON",
   "Form Data": "Données de formulaire",
   "Raw": "Brut",
-  "New Post": "Nouvelle publication",
-  "Triggers when a new post is created or scheduled in Postiz": "Se déclenche lorsqu'une nouvelle publication est créée ou planifiée dans Postiz"
+  "New Published Post": "Nouvelle publication publiée",
+  "Triggers when a post is published in Postiz": "Se déclenche lorsqu'une publication est publiée dans Postiz"
 }

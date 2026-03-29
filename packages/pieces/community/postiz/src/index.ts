@@ -67,7 +67,7 @@ export const postiz = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/postiz.png',
   categories: [PieceCategory.MARKETING],
   auth: postizAuth,
-  authors: ['abuaboud'],
+  authors: ['bst1n'],
   actions: [
     createPost,
     listPosts,

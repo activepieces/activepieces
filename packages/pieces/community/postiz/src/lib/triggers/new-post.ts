@@ -64,8 +64,8 @@ const polling: Polling<
 export const newPost = createTrigger({
   auth: postizAuth,
   name: 'new_post',
-  displayName: 'New Post',
-  description: 'Triggers when a new post is created or scheduled in Postiz',
+  displayName: 'New Published Post',
+  description: 'Triggers when a post is published in Postiz',
   props: {},
   sampleData: {
     id: 'abc123',

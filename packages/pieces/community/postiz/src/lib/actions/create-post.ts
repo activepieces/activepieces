@@ -66,7 +66,12 @@ export const createPost = createAction({
       posts: [postItem],
     };
 
-    if (type === 'schedule' && date) {
+    if (type === 'schedule') {
+      if (!date) {
+        throw new Error(
+          'A Publish Date is required when Post Type is "Schedule for later".',
+        );
+      }
       body['date'] = date;
     }
 
