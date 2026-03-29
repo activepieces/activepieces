@@ -1,5 +1,5 @@
 import { Readable } from 'stream'
-import { isNil, PrincipalType, tryCatch } from '@activepieces/shared'
+import { isMultipartFile, isNil, PrincipalType, tryCatch } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyReply, FastifyRequest } from 'fastify'
 import { flowExecutionCache } from '../../flows/flow/flow-execution-cache'
 import { system } from '../../helper/system/system'
@@ -10,8 +10,6 @@ export const canaryRoutingMiddleware = async (request: FastifyRequest, reply: Fa
     if (isNil(canaryAppUrl)) return
 
     if (request.headers.upgrade === 'websocket') return
-
-    if (request.isMultipart()) return
 
     const { data: platformId, error } = await tryCatch(() => resolvePlatformId(request, request.log))
     if (error || isNil(platformId)) return
@@ -25,15 +23,17 @@ export const canaryRoutingMiddleware = async (request: FastifyRequest, reply: Fa
 
 async function proxyToCanary(request: FastifyRequest, reply: FastifyReply, canaryAppUrl: string): Promise<void> {
     const targetUrl = `${canaryAppUrl.replace(/\/$/, '')}${request.url}`
+    const body = buildProxyBody(request)
+    const isFormData = body instanceof FormData
 
     const headers: Record<string, string> = {}
     for (const [key, value] of Object.entries(request.headers)) {
+        // Let fetch set content-type automatically for FormData (includes correct boundary)
+        if (isFormData && key === 'content-type') continue
         if (!HOP_BY_HOP_HEADERS.has(key) && !isNil(value)) {
             headers[key] = Array.isArray(value) ? value.join(', ') : value
         }
     }
-
-    const body = buildProxyBody(request)
 
     const response = await fetch(targetUrl, {
         method: request.method,
@@ -86,6 +86,18 @@ function buildProxyBody(request: FastifyRequest): BodyInit | null {
     const { method, body } = request
     if (method === 'GET' || method === 'HEAD') return null
     if (isNil(body)) return null
+    if (request.isMultipart()) {
+        const formData = new FormData()
+        for (const [key, value] of Object.entries(body as Record<string, unknown>)) {
+            if (isMultipartFile(value)) {
+                formData.append(key, new Blob([new Uint8Array(value.data)], { type: value.mimetype }), value.filename)
+            }
+            else {
+                formData.append(key, String(value))
+            }
+        }
+        return formData
+    }
     if (Buffer.isBuffer(body)) return body as BodyInit
     if (typeof body === 'string') return body
     return JSON.stringify(body)
