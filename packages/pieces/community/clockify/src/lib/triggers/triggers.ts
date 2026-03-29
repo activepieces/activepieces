@@ -16,7 +16,7 @@ async function getTimeEntries(context: any) {
   const response = await httpClient.sendRequest({
     method: 'GET',
     url,
-    headers: { 'X-Api-Key': context.auth as string },
+    headers: { 'X-Api-Key': context.auth.secret_text as string },
   });
 
   await context.store?.put(`clockify_time_${workspace_id}_last_check`, Date.now());
@@ -30,7 +30,7 @@ async function getNewTasks(context: any) {
   const response = await httpClient.sendRequest({
     method: 'GET',
     url: `${CLOCKIFY_API_BASE}/workspaces/${workspace_id}/projects/${project_id}/tasks`,
-    headers: { 'X-Api-Key': context.auth as string },
+    headers: { 'X-Api-Key': context.auth.secret_text as string },
   });
 
   const tasks = response.body || [];
@@ -52,7 +52,7 @@ async function getRunningTimers(context: any) {
   const response = await httpClient.sendRequest({
     method: 'GET',
     url,
-    headers: { 'X-Api-Key': context.auth as string },
+    headers: { 'X-Api-Key': context.auth.secret_text as string },
   });
 
   const timers = response.body || [];
