@@ -80,8 +80,8 @@ export const pcloudNewFile = createTrigger({
 
     const newFiles = allFiles.filter((f) => f.fileid && !knownSet.has(f.fileid));
     const updatedIds = allFiles.map((f) => f.fileid).filter(Boolean) as number[];
-    await context.store.put('knownFileIds', updatedIds);
 
+    context.store.put('knownFileIds', updatedIds);
     return newFiles;
   },
   test: async (context) => {

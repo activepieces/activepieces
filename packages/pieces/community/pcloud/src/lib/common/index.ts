@@ -54,7 +54,7 @@ async function uploadFileToPcloud(
 
   const response = await httpClient.sendRequest<PcloudUploadResponse>({
     method: HttpMethod.POST,
-    url: `${getBaseUrl(auth)}/uploadfile?folderid=${folderId}&filename=${encodeURIComponent(fileName)}`,
+    url: `${getBaseUrl(auth)}/uploadfile?folderid=${folderId}`,
     body: formData,
     authentication: {
       type: AuthenticationType.BEARER_TOKEN,

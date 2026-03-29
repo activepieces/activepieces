@@ -848,6 +848,9 @@
       "@activepieces/piece-peekshot": [
         "packages/pieces/community/peekshot/src/index.ts"
       ],
+      "@activepieces/piece-pcloud": [
+        "packages/pieces/community/pcloud/src/index.ts"
+      ],
       "@activepieces/piece-perplexity-ai": [
         "packages/pieces/community/perplexity-ai/src/index.ts"
       ],
