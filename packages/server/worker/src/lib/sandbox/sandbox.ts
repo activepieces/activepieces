@@ -180,7 +180,7 @@ export function createSandbox(
                 const operationTimeoutMs = (executeOptions.timeoutInSeconds + 5) * 1000
                 const client = createRpcClient<EngineContract>(connectedSocket!, operationTimeoutMs)
                 client.executeOperation({ operationType, operation }).then((engineResponse: EngineResponse<unknown>) => {
-                    resolve({ engine: engineResponse, stdOut, stdError })
+                    resolve({ ...engineResponse, stdOut, stdError })
                 }).catch((error: unknown) => {
                     log.error({ sandboxId, error: String(error) }, '[Sandbox] RPC call failed')
                     reject(error)
