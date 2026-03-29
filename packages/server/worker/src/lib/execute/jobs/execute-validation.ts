@@ -49,8 +49,7 @@ export const executeValidationJob: JobHandler<ExecuteValidateAuthJobData, Synchr
                 status: result.status,
                 response: result.response,
                 errorMessage: result.error,
-                stdOut: result.stdOut,
-                stdError: result.stdError,
+                logs: result.logs,
             }
         }
         catch (e) {

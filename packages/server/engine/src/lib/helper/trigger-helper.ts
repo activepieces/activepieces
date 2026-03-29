@@ -1,4 +1,3 @@
-import { inspect } from 'node:util'
 import { PiecePropertyMap, StaticPropsValue, TriggerStrategy } from '@activepieces/pieces-framework'
 import { assertEqual, AUTHENTICATION_PROPERTY_NAME, EngineGenericError, EventPayload, ExecuteTriggerOperation, ExecuteTriggerResponse, FlowTrigger, InvalidCronExpressionError, isNil, PieceTrigger, PropertySettings, ScheduleOptions, TriggerHookType, TriggerSourceScheduleType } from '@activepieces/shared'
 import { isValidCron } from 'cron-validator'
@@ -163,22 +162,15 @@ export const triggerHelper = {
             case TriggerHookType.RENEW: {
                 assertEqual(pieceTrigger.type, TriggerStrategy.WEBHOOK, 'triggerType', 'WEBHOOK')
                 await pieceTrigger.onRenew(context)
-                return {
-                    success: true,
-                }
+                return {}
             }
             case TriggerHookType.HANDSHAKE: {
                 const { data: handshakeResponse, error: handshakeResponseError } = await utils.tryCatchAndThrowOnEngineError(() => pieceTrigger.onHandshake(context))
 
                 if (handshakeResponseError) {
-                    console.error(handshakeResponseError)
-                    return {
-                        success: false,
-                        message: `Error while testing trigger: ${inspect(handshakeResponseError)}`,
-                    }
+                    throw handshakeResponseError
                 }
                 return {
-                    success: true,
                     response: handshakeResponse,
                 }
             }
@@ -194,15 +186,9 @@ export const triggerHelper = {
                 }))
 
                 if (testResponseError) {
-                    console.error(testResponseError)
-                    return {
-                        success: false,
-                        message: `Error while testing trigger: ${inspect(testResponseError)}`,
-                        output: [],
-                    }
+                    throw testResponseError
                 }
                 return {
-                    success: true,
                     output: testResponse,
                 }
             }
@@ -225,18 +211,10 @@ export const triggerHelper = {
                     })
 
                     if (verifiedError) {
-                        return {
-                            success: false,
-                            message: `Error while verifying webhook: ${inspect(verifiedError)}`,
-                            output: [],
-                        }
+                        throw verifiedError
                     }
                     if (isNil(verified)) {
-                        return {
-                            success: false,
-                            message: 'Webhook is not verified',
-                            output: [],
-                        }
+                        throw new Error('Webhook is not verified')
                     }
                 }
 
@@ -251,17 +229,12 @@ export const triggerHelper = {
                         }),
                     })
                     return {
-                        success: true,
                         output: items,
                     }
                 })
 
                 if (triggerRunError) {
-                    return {
-                        success: false,
-                        message: triggerRunError.message,
-                        output: [],
-                    }
+                    throw triggerRunError
                 }
                 return triggerRunResult
             }

@@ -240,6 +240,39 @@ describe('worker integration', () => {
         expect(completeJobCalls[0].status).toBe(EngineResponseStatus.OK)
     }, 15_000)
 
+    it('forwards USER_FAILURE status from synchronous job handler', async () => {
+        mockGetHandler.mockReturnValue({
+            jobType: WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
+            execute: vi.fn().mockResolvedValue({
+                kind: JobResultKind.SYNCHRONOUS,
+                status: EngineResponseStatus.USER_FAILURE,
+                response: { message: 'Invalid API key' },
+                errorMessage: 'Connection auth failed',
+            }),
+        })
+
+        const job = buildConsumeJobRequest()
+        const { completeJobCalls } = await connectWorkerWithPoll([job, null])
+
+        expect(completeJobCalls.length).toBe(1)
+        expect(completeJobCalls[0].status).toBe(EngineResponseStatus.USER_FAILURE)
+        expect(completeJobCalls[0].response).toEqual({ message: 'Invalid API key' })
+        expect(completeJobCalls[0].errorMessage).toBe('Connection auth failed')
+    }, 15_000)
+
+    it('treats USER_FAILURE differently from INTERNAL_ERROR in fire-and-forget', async () => {
+        mockGetHandler.mockReturnValue({
+            jobType: WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
+            execute: vi.fn().mockResolvedValue({ kind: JobResultKind.FIRE_AND_FORGET }),
+        })
+
+        const job = buildConsumeJobRequest()
+        const { completeJobCalls } = await connectWorkerWithPoll([job, null])
+
+        expect(completeJobCalls.length).toBe(1)
+        expect(completeJobCalls[0].status).toBe(EngineResponseStatus.OK)
+    }, 15_000)
+
     describe('resilience to invalid job data', () => {
         it('survives a job with invalid jobData fields and continues processing', async () => {
             const expectedResult = { kind: JobResultKind.FIRE_AND_FORGET, delayInSeconds: 5 }
@@ -412,6 +445,7 @@ type CompleteJobCall = {
     queueName: string
     status: string
     errorMessage?: string
+    logs?: string
     delayInSeconds?: number
     response?: unknown
 }

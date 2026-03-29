@@ -85,7 +85,7 @@ export const executeWebhookJob: JobHandler<WebhookJobData, FireAndForgetJobResul
 
                 if (sampleResult.status === EngineResponseStatus.OK) {
                     const sampleTriggerResult = sampleResult.response as ExecuteTriggerResponse<TriggerHookType.RUN>
-                    if (sampleTriggerResult.success && sampleTriggerResult.output.length > 0) {
+                    if (sampleTriggerResult.output.length > 0) {
                         await ctx.apiClient.savePayloads({
                             flowId: data.flowId,
                             flowVersionId: flowVersion.id,
@@ -122,7 +122,7 @@ export const executeWebhookJob: JobHandler<WebhookJobData, FireAndForgetJobResul
 
             if (result.status === EngineResponseStatus.OK) {
                 const triggerResult = result.response as ExecuteTriggerResponse<TriggerHookType.RUN>
-                if (triggerResult.success && triggerResult.output.length > 0) {
+                if (triggerResult.output.length > 0) {
                     await ctx.apiClient.submitPayloads({
                         flowVersionId: flowVersion.id,
                         projectId: data.projectId,
@@ -136,7 +136,7 @@ export const executeWebhookJob: JobHandler<WebhookJobData, FireAndForgetJobResul
                 }
             }
 
-            return { kind: JobResultKind.FIRE_AND_FORGET, stdOut: result.stdOut, stdError: result.stdError }
+            return { kind: JobResultKind.FIRE_AND_FORGET, logs: result.logs }
         }
         catch (e) {
             await ctx.sandboxManager.invalidate(ctx.log)

@@ -56,7 +56,7 @@ export const executePollingJob: JobHandler<PollingJobData, FireAndForgetJobResul
 
             if (result.status === EngineResponseStatus.OK) {
                 const triggerResult = result.response as ExecuteTriggerResponse<TriggerHookType.RUN>
-                if (triggerResult.success && triggerResult.output.length > 0) {
+                if (triggerResult.output.length > 0) {
                     await ctx.apiClient.submitPayloads({
                         flowVersionId: data.flowVersionId,
                         projectId: data.projectId,
@@ -67,7 +67,7 @@ export const executePollingJob: JobHandler<PollingJobData, FireAndForgetJobResul
                 }
             }
 
-            return { kind: JobResultKind.FIRE_AND_FORGET, stdOut: result.stdOut, stdError: result.stdError }
+            return { kind: JobResultKind.FIRE_AND_FORGET, logs: result.logs }
         }
         catch (e) {
             ctx.log.error({ error: String(e) }, 'Polling trigger failed, will retry on next scheduled cycle')
