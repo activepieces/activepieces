@@ -1186,6 +1186,9 @@
       "@activepieces/piece-twilio": [
         "packages/pieces/community/twilio/src/index.ts"
       ],
+      "@activepieces/piece-typefully": [
+        "packages/pieces/community/typefully/src/index.ts"
+      ],
       "@activepieces/piece-twin-labs": [
         "packages/pieces/community/twin-labs/src/index.ts"
       ],

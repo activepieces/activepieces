@@ -6624,6 +6624,16 @@
         "tslib": "2.6.2",
       },
     },
+    "packages/pieces/community/typefully": {
+      "name": "@activepieces/piece-typefully",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/upgradechat": {
       "name": "@activepieces/piece-upgradechat",
       "version": "0.1.3",
@@ -9204,6 +9214,8 @@
     "@activepieces/piece-twitter": ["@activepieces/piece-twitter@workspace:packages/pieces/community/twitter"],
 
     "@activepieces/piece-typeform": ["@activepieces/piece-typeform@workspace:packages/pieces/community/typeform"],
+
+    "@activepieces/piece-typefully": ["@activepieces/piece-typefully@workspace:packages/pieces/community/typefully"],
 
     "@activepieces/piece-upgradechat": ["@activepieces/piece-upgradechat@workspace:packages/pieces/community/upgradechat"],
 
