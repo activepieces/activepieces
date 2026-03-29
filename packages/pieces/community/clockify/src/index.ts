@@ -20,7 +20,7 @@ export const clockify = createPiece({
   categories: [PieceCategory.PRODUCTIVITY],
   authors: ['ktwo'],
   auth: clockifyAuth,
-  minimumSupportedRelease: '1.0.0',
+  minimumSupportedRelease: '0.36.1',
   actions: [
     createTimeEntry,
     startTimeEntry,
