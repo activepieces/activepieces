@@ -57,7 +57,14 @@ export const uploadAssetAction = createAction({
                     token: context.auth.access_token,
                 },
             });
-            job = pollResponse.body.job;
+            job = pollResponse.body?.job;
+            if (!job) {
+                throw new Error(
+                    `Canva asset upload polling returned an unexpected response: ${JSON.stringify(
+                        pollResponse.body
+                    )}`
+                );
+            }
             retries++;
         }
 
