@@ -17,7 +17,7 @@ export const smartsuite = createPiece({
   displayName: 'SmartSuite',
   description: 'Collaborative work management platform - Manage projects, workflows, and data',
   logoUrl: 'https://cdn.smartsuite.com/static/brand/logo.svg',
-  categories: [PieceCategory.PROJECT_MANAGEMENT],
+  categories: [PieceCategory.PRODUCTIVITY],
   authors: ['ktwo'],
   auth: smartsuiteAuth,
   minimumSupportedRelease: '1.0.0',

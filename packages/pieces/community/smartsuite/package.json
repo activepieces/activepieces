@@ -9,9 +9,9 @@
     "lint": "eslint src --ext .ts"
   },
   "dependencies": {
-    "@activepieces/pieces-framework": "latest",
-    "@activepieces/pieces-common": "latest",
-    "@activepieces/shared": "latest"
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/shared": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
