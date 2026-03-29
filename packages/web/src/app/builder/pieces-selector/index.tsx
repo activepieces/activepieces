@@ -11,7 +11,7 @@ import {
   SparklesIcon,
   WrenchIcon,
 } from 'lucide-react';
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useDebounce } from 'use-debounce';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
@@ -144,15 +144,11 @@ const PieceSelectorContent = ({
   };
 
   const { platform } = platformHooks.useCurrentPlatform();
-  const tabsList = useMemo(
-    () =>
-      getTabsList(
-        operation.type,
-        platform.plan.agentsEnabled &&
-          !isNil(aiProviders) &&
-          aiProviders.length > 0,
-      ),
-    [operation.type, platform?.plan.agentsEnabled],
+  const tabsList = getTabsList(
+    operation.type,
+    platform.plan.agentsEnabled &&
+      !isNil(aiProviders) &&
+      aiProviders.length > 0,
   );
 
   return (
