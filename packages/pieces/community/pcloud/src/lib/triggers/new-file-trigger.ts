@@ -76,7 +76,7 @@ export const newFileTrigger = createTrigger({
   },
 
   async getNewFiles(context: any) {
-    const tracking = await context.store?.get<TrackingData>(`${context.propsValue.folder_id}`);
+    let tracking = await context.store?.get<TrackingData>(`${context.propsValue.folder_id}`);
     if (!tracking) {
       tracking = { lastChecked: 0, knownFileIds: [] };
     }

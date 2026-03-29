@@ -1,13 +1,10 @@
 import {
-  PieceAuth,
-  createPiece,
-  PieceCategory,
-  PieceProperty,
+  createAction,
   Property,
 } from '@activepieces/pieces-framework';
 import { httpClient } from '@activepieces/pieces-common';
 import { pcloudAuth, folderId, API_BASE_URL } from '../auth';
-import { PCloudClient } from '../lib/common/client';
+import { PCloudClient } from '../common/client';
 
 /**
  * List Folder Action

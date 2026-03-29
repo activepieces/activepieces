@@ -4,7 +4,7 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 import { pcloudAuth, API_BASE_URL } from '../auth';
-import { PCloudClient } from '../lib/common/client';
+import { PCloudClient } from '../common/client';
 import { fileId } from './download-file';
 
 /**

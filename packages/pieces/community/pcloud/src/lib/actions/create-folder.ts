@@ -5,7 +5,7 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 import { pcloudAuth, folderId } from '../auth';
-import { PCloudClient } from '../lib/common/client';
+import { PCloudClient } from '../common/client';
 
 /**
  * Create Folder Action

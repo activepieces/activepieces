@@ -67,7 +67,7 @@ export const newFolderTrigger = createTrigger({
   },
 
   async getNewFolders(context: any) {
-    const tracking = await context.store?.get<FolderTrackingData>(`${context.propsValue.folder_id}`);
+    let tracking = await context.store?.get<FolderTrackingData>(`${context.propsValue.folder_id}`);
     if (!tracking) {
       tracking = { lastChecked: 0, knownFolderIds: [] };
     }
