@@ -1,14 +1,13 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import type { Chain, Token } from '@sardis/sdk';
-import { sardisAuth } from '../..';
-import { sardisCommon, makeSardisClient } from '../common';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { sardisAuth } from '../auth';
+import { sardisCommon, sardisApiCall } from '../common';
 
-export const sardisSendPayment = createAction({
+export const sendPaymentAction = createAction({
   name: 'send_payment',
   auth: sardisAuth,
   displayName: 'Send Payment',
-  description:
-    'Execute a policy-controlled payment from a Sardis wallet. The payment is automatically validated against the wallet spending policy before execution.',
+  description: 'Execute a policy-controlled payment from a Sardis wallet.',
   props: {
     walletId: sardisCommon.walletId,
     to: Property.ShortText({
@@ -32,14 +31,17 @@ export const sardisSendPayment = createAction({
   },
   async run(context) {
     const { walletId, to, amount, token, chain, memo } = context.propsValue;
-    const client = makeSardisClient(context.auth.secret_text);
-
-    return await client.wallets.transfer(walletId, {
-      destination: to,
-      amount: amount.toString(),
-      token: (token ?? 'USDC') as Token,
-      chain: (chain ?? 'base') as Chain,
-      memo: memo ?? undefined,
-    });
+    return sardisApiCall(
+      context.auth.secret_text,
+      HttpMethod.POST,
+      `/api/v2/wallets/${walletId}/transfer`,
+      {
+        destination: to,
+        amount: amount.toString(),
+        token: token ?? 'USDC',
+        chain: chain ?? 'base',
+        ...(memo && { memo }),
+      },
+    );
   },
 });
