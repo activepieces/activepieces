@@ -1,29 +1,22 @@
-import { createAction } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { productboardAuth } from '../common/auth';
-import { productboardCommon } from '../common/client';
-import { productboardProps } from '../common/props';
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { productboardAuth, featureId } from '../auth';
 
-/**
- * Action to get an existing feature from Productboard.
- */
 export const getFeature = createAction({
-    name: 'get_feature',
-    displayName: 'Get Feature',
-    description: 'Get an existing feature in Productboard',
-    auth: productboardAuth,
-    props: {
-        feature_id: productboardProps.feature_id(),
-    },
-    async run(context) {
-        const { feature_id } = context.propsValue;
+  auth: productboardAuth,
+  name: 'get_feature',
+  displayName: 'Get Feature',
+  description: 'Get an existing feature',
+  props: {
+    feature_id: featureId,
+  },
+  async run(context) {
+    const response = await fetch(`https://api.productboard.com/v1/features/${context.propsValue.feature_id}`, {
+      headers: {
+        'Authorization': `Bearer ${context.auth}`,
+        'Accept': 'application/json',
+      },
+    });
 
-        const response = await productboardCommon.apiCall({
-            auth: context.auth,
-            method: HttpMethod.GET,
-            resourceUri: `/features/${feature_id}`,
-        });
-
-        return response.body;
-    },
+    return await response.json();
+  },
 });
