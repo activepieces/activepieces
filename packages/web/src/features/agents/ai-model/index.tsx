@@ -301,9 +301,7 @@ export function AIModelSelector({
             ? t('Embedding model for knowledge base: {model}', {
                 model: PROVIDER_EMBEDDING_MODELS[selectedProvider],
               })
-            : t(
-                'This provider does not support knowledge base embeddings.',
-              )}
+            : t('This provider does not support knowledge base embeddings.')}
         </p>
       )}
     </div>
