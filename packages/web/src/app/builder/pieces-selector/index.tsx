@@ -68,17 +68,19 @@ const getTabsList = (
   ].includes(operationType);
 
   if (replaceOrAddAction && agentsEnabled) {
-    baseTabs.push({
+    baseTabs.splice(1, 0, {
       value: PieceSelectorTabType.AI_AND_AGENTS,
       name: t('AI & Agents'),
       icon: <SparklesIcon className="size-5" />,
     });
   }
-  baseTabs.push({
-    value: PieceSelectorTabType.APPROVALS,
-    name: t('Approvals'),
-    icon: <CheckCircle2Icon className="size-5" />,
-  });
+  if (replaceOrAddAction) {
+    baseTabs.push({
+      value: PieceSelectorTabType.APPROVALS,
+      name: t('Approvals'),
+      icon: <CheckCircle2Icon className="size-5" />,
+    });
+  }
   return baseTabs;
 };
 
