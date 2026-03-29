@@ -1,0 +1,21 @@
+{
+  "name": "@activepieces/piece-pcloud",
+  "version": "0.0.1",
+  "description": "pCloud integration for Activepieces",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "lint": "eslint src --ext .ts"
+  },
+  "dependencies": {
+    "@activepieces/pieces-framework": "latest",
+    "@activepieces/pieces-common": "latest",
+    "@activepieces/shared": "latest"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0",
+    "eslint": "^8.0.0"
+  }
+}
