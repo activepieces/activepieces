@@ -3,7 +3,7 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 import { smartsuiteAuth, workspaceId, tableId } from '../auth';
-import { SmartSuiteClient } from '../lib/common/client';
+import { SmartSuiteClient } from '../common/client';
 
 /**
  * Update Record Action

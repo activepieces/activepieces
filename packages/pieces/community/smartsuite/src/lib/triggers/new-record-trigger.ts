@@ -69,7 +69,7 @@ export const newRecordTrigger = createTrigger({
   },
 
   async getNewRecords(context: any) {
-    const tracking = await context.store?.get<TriggerData>(`${context.propsValue.table_id}`);
+    let tracking = await context.store?.get<TriggerData>(`${context.propsValue.table_id}`);
     if (!tracking) {
       tracking = { lastChecked: 0, knownRecordIds: [] };
     }

@@ -75,7 +75,7 @@ export const updatedRecordTrigger = createTrigger({
   },
 
   async getUpdatedRecords(context: any) {
-    const tracking = await context.store?.get<UpdateTriggerData>(`${context.propsValue.table_id}`);
+    let tracking = await context.store?.get<UpdateTriggerData>(`${context.propsValue.table_id}`);
     if (!tracking) {
       tracking = { lastChecked: 0, recordHashes: {} };
     }
