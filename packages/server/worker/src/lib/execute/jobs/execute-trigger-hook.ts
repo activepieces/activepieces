@@ -59,8 +59,7 @@ export const executeTriggerHookJob: JobHandler<ExecuteTriggerHookJobData, Synchr
                 status: result.status,
                 response: result.response,
                 errorMessage: result.error,
-                stdOut: result.stdOut,
-                stdError: result.stdError,
+                logs: result.logs,
             }
         }
         catch (e) {
