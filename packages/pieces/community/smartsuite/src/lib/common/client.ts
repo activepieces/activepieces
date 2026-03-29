@@ -71,27 +71,27 @@ export class SmartSuiteClient {
   }
 
   /**
-   * Create a record
+   * Create a record - fields at top level, not wrapped
    */
   async createRecord(tableId: string, fields: Record<string, any>) {
     const response = await httpClient.sendRequest<any>({
       method: HttpMethod.POST,
       url: `${API_BASE_URL}/api/v1/applications/${tableId}/records/`,
       headers: this.getHeaders(),
-      body: { fields },
+      body: fields,
     });
     return response.body;
   }
 
   /**
-   * Update a record
+   * Update a record - fields at top level, not wrapped
    */
   async updateRecord(tableId: string, recordId: string, fields: Record<string, any>) {
     const response = await httpClient.sendRequest<any>({
       method: HttpMethod.PATCH,
       url: `${API_BASE_URL}/api/v1/applications/${tableId}/records/${recordId}/`,
       headers: this.getHeaders(),
-      body: { fields },
+      body: fields,
     });
     return response.body;
   }
