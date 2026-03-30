@@ -26,7 +26,7 @@ const findRecordsInput = z.object({
         operator: operatorSchema.describe('Filter operator'),
         value: z.string().optional().describe('Filter value (required for all operators except exists/not_exists)'),
     })).optional().describe('Optional filters. All filters are combined with AND logic.'),
-    limit: z.number().optional().describe('Max records to return (default 50, max 500)'),
+    limit: z.number().min(1).max(500).optional().describe('Max records to return (default 50, max 500)'),
 })
 
 export const apFindRecordsTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
@@ -38,7 +38,7 @@ export const apFindRecordsTool = (mcp: McpServer, log: FastifyBaseLogger): McpTo
         execute: async (args) => {
             try {
                 const { tableId, filters, limit } = findRecordsInput.parse(args)
-                const effectiveLimit = Math.min(limit ?? 50, 500)
+                const effectiveLimit = limit ?? 50
 
                 let resolvedFilters = null
                 let fields = undefined

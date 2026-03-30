@@ -53,6 +53,10 @@ export const apManageFieldsTool = (mcp: McpServer, log: FastifyBaseLogger): McpT
                         if (isNil(name)) {
                             return { content: [{ type: 'text', text: '❌ name is required for UPDATE operation' }] }
                         }
+                        const existing = await fieldService.getById({ id: fieldId, projectId: mcp.projectId })
+                        if (existing.tableId !== tableId) {
+                            return { content: [{ type: 'text', text: `❌ Field (id: ${fieldId}) does not belong to table (id: ${tableId})` }] }
+                        }
                         const field = await fieldService.update({
                             id: fieldId,
                             projectId: mcp.projectId,
@@ -64,11 +68,15 @@ export const apManageFieldsTool = (mcp: McpServer, log: FastifyBaseLogger): McpT
                         if (isNil(fieldId)) {
                             return { content: [{ type: 'text', text: '❌ fieldId is required for DELETE operation' }] }
                         }
+                        const toDelete = await fieldService.getById({ id: fieldId, projectId: mcp.projectId })
+                        if (toDelete.tableId !== tableId) {
+                            return { content: [{ type: 'text', text: `❌ Field (id: ${fieldId}) does not belong to table (id: ${tableId})` }] }
+                        }
                         await fieldService.delete({
                             id: fieldId,
                             projectId: mcp.projectId,
                         })
-                        return { content: [{ type: 'text', text: `✅ Field (id: ${fieldId}) deleted successfully.` }] }
+                        return { content: [{ type: 'text', text: `✅ Field "${toDelete.name}" deleted successfully.` }] }
                     }
                 }
             }

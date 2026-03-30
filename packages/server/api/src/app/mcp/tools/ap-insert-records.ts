@@ -7,7 +7,7 @@ import { resolveFieldNamesForTable } from './table-utils'
 
 const insertRecordsInput = z.object({
     tableId: z.string().describe('The table ID'),
-    records: z.array(z.record(z.string(), z.string())).describe('Array of records. Each record maps field names to values. Example: [{"Name": "Alice", "Age": "30"}]'),
+    records: z.array(z.record(z.string(), z.string())).min(1).max(50).describe('Array of records (1–50). Each record maps field names to values. Example: [{"Name": "Alice", "Age": "30"}]'),
 })
 
 export const apInsertRecordsTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
@@ -19,13 +19,6 @@ export const apInsertRecordsTool = (mcp: McpServer, log: FastifyBaseLogger): Mcp
         execute: async (args) => {
             try {
                 const { tableId, records } = insertRecordsInput.parse(args)
-
-                if (records.length === 0) {
-                    return { content: [{ type: 'text', text: '❌ No records provided.' }] }
-                }
-                if (records.length > 50) {
-                    return { content: [{ type: 'text', text: '❌ Max 50 records per call. Split into multiple calls.' }] }
-                }
 
                 const allFieldNames = [...new Set(records.flatMap(r => Object.keys(r)))]
                 const { fields, fieldMap, errors } = await resolveFieldNamesForTable(mcp.projectId, tableId, allFieldNames)
