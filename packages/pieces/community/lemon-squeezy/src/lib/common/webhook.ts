@@ -1,13 +1,12 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { Property } from '@activepieces/pieces-framework';
 import { lemonSqueezyAuth } from './auth';
-
-const BASE_URL = 'https://api.lemonsqueezy.com/v1';
+import { LEMON_SQUEEZY_API_BASE } from './api';
 
 export const subscribeWebhook = async (auth: string, storeId: string, events: string[], targetUrl: string, secret: string) => {
   const response = await httpClient.sendRequest({
     method: HttpMethod.POST,
-    url: `${BASE_URL}/webhooks`,
+    url: `${LEMON_SQUEEZY_API_BASE}/webhooks`,
     headers: {
       'Authorization': `Bearer ${auth}`,
       'Accept': 'application/vnd.api+json',
@@ -39,7 +38,7 @@ export const subscribeWebhook = async (auth: string, storeId: string, events: st
 export const unsubscribeWebhook = async (auth: string, webhookId: string) => {
   await httpClient.sendRequest({
     method: HttpMethod.DELETE,
-    url: `${BASE_URL}/webhooks/${webhookId}`,
+    url: `${LEMON_SQUEEZY_API_BASE}/webhooks/${webhookId}`,
     headers: {
       'Authorization': `Bearer ${auth}`,
       'Accept': 'application/vnd.api+json',
@@ -51,7 +50,7 @@ export const unsubscribeWebhook = async (auth: string, webhookId: string) => {
 export const getStores = async (auth: string) => {
   const response = await httpClient.sendRequest({
     method: HttpMethod.GET,
-    url: `${BASE_URL}/stores`,
+    url: `${LEMON_SQUEEZY_API_BASE}/stores`,
     headers: {
       'Authorization': `Bearer ${auth}`,
       'Accept': 'application/vnd.api+json',
