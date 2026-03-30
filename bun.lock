@@ -2889,6 +2889,18 @@
         "tslib": "2.6.2",
       },
     },
+    "packages/pieces/community/google-bigquery": {
+      "name": "@activepieces/piece-google-bigquery",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "googleapis": "129.0.0",
+        "googleapis-common": "7.2.0",
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/google-calendar": {
       "name": "@activepieces/piece-google-calendar",
       "version": "0.9.0",
@@ -8499,6 +8511,8 @@
     "@activepieces/piece-gmail": ["@activepieces/piece-gmail@workspace:packages/pieces/community/gmail"],
 
     "@activepieces/piece-goodmem": ["@activepieces/piece-goodmem@workspace:packages/pieces/community/goodmem"],
+
+    "@activepieces/piece-google-bigquery": ["@activepieces/piece-google-bigquery@workspace:packages/pieces/community/google-bigquery"],
 
     "@activepieces/piece-google-calendar": ["@activepieces/piece-google-calendar@workspace:packages/pieces/community/google-calendar"],
 
