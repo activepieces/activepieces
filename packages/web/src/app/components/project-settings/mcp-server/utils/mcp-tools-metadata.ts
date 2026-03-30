@@ -34,8 +34,7 @@ export const TOOL_CATEGORIES: ToolCategory[] = [
       },
       {
         name: 'ap_list_ai_models',
-        description:
-          'List configured AI providers and their available models',
+        description: 'List configured AI providers and their available models',
       },
       {
         name: 'ap_list_tables',
