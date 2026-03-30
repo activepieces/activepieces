@@ -488,6 +488,9 @@
       "@activepieces/piece-gmail": [
         "packages/pieces/community/gmail/src/index.ts"
       ],
+      "@activepieces/piece-google-bigquery": [
+        "packages/pieces/community/google-bigquery/src/index.ts"
+      ],
       "@activepieces/piece-google-calendar": [
         "packages/pieces/community/google-calendar/src/index.ts"
       ],
@@ -1845,6 +1848,9 @@
       ],
       "@activepieces/piece-alai": [
         "packages/pieces/community/alai/src/index.ts"
+      ],
+      "@activepieces/piece-algolia": [
+        "packages/pieces/community/algolia/src/index.ts"
       ],
       "@activepieces/piece-kapso": [
         "packages/pieces/community/kapso/src/index.ts"

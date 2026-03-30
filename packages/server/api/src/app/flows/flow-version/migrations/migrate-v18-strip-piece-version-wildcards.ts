@@ -13,8 +13,8 @@ import { projectService } from '../../../project/project-service'
 import { flowService } from '../../flow/flow.service'
 import { Migration } from '.'
 
-export const migrateV18StripPieceVersionWildcards: Migration = {
-    targetSchemaVersion: '18',
+export const migrateV19StripPieceVersionWildcards: Migration = {
+    targetSchemaVersion: '19',
     migrate: async (flowVersion: FlowVersion): Promise<FlowVersion> => {
         const log = system.globalLogger()
         const flow = await flowService(log).getOneById(flowVersion.flowId)
@@ -61,7 +61,7 @@ export const migrateV18StripPieceVersionWildcards: Migration = {
 
         return {
             ...newFlowVersion,
-            schemaVersion: '19',
+            schemaVersion: '20',
         }
     },
 }
