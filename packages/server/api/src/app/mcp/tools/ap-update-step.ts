@@ -12,6 +12,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
 import { projectService } from '../../project/project-service'
+import { mcpToolError } from './mcp-utils'
 
 const updateStepInput = z.object({
     flowId: z.string(),
@@ -144,10 +145,7 @@ export const apUpdateStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
                 }
             }
             catch (err) {
-                const message = err instanceof Error ? err.message : String(err)
-                return {
-                    content: [{ type: 'text', text: `❌ Step update failed: ${message}` }],
-                }
+                return mcpToolError('Step update failed', err)
             }
         },
     }
