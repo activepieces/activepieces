@@ -8,6 +8,7 @@ import { findRecordAction } from './lib/actions/find-record';
 import { createEntryAction } from './lib/actions/create-entry';
 import { updateEntryAction } from './lib/actions/update-entry';
 import { findListEntryAction } from './lib/actions/find-list-entry';
+import { createNoteAction } from './lib/actions/create-note';
 
 // Import triggers
 import { recordCreatedTrigger } from './lib/triggers/record-created';
@@ -17,16 +18,6 @@ import { listEntryUpdatedTrigger } from './lib/triggers/list-entry-updated';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { BASE_URL } from './lib/common/client';
 import { attioAuth } from './lib/auth';
-
-const markdownDescription = `
-To use Attio, you need to generate an Access Token:
-1. Login to your Attio account at https://app.attio.com.
-2. From the dropdown beside your workspace name, click Workspace settings.
-3. Click the Developers tab.
-4. Click on the "New Access Token" button.
-5. Set the appropriate Scopes for the integration.
-6. Copy the generated Access Token.
-`;
 
 export const attio = createPiece({
 	displayName: 'Attio',
@@ -43,12 +34,13 @@ export const attio = createPiece({
 		createEntryAction,
 		updateEntryAction,
 		findListEntryAction,
+		createNoteAction,
 		createCustomApiCallAction({
 			auth: attioAuth,
 			baseUrl: () => BASE_URL,
 			authMapping: async (auth) => {
 				return {
-					Authorization: `Bearer ${auth}`,
+					Authorization: `Bearer ${auth.secret_text}`,
 				};
 			},
 		}),

@@ -20,8 +20,7 @@ export type JobContext = {
 export type FireAndForgetJobResult = {
     kind: JobResultKind.FIRE_AND_FORGET
     delayInSeconds?: number
-    stdOut?: string
-    stdError?: string
+    logs?: string
 }
 
 export type SynchronousJobResult = {
@@ -29,8 +28,7 @@ export type SynchronousJobResult = {
     status: EngineResponseStatus
     response: unknown
     errorMessage?: string
-    stdOut?: string
-    stdError?: string
+    logs?: string
 }
 
 export type JobResult = FireAndForgetJobResult | SynchronousJobResult
