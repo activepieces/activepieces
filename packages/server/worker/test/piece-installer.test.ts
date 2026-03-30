@@ -12,8 +12,8 @@ let testWorkspace = ''
 
 const mockInstall = vi.fn()
 
-vi.mock('../src/lib/cache/code/bun-runner', () => ({
-    bunRunner: () => ({
+vi.mock('../src/lib/cache/code/package-runner', () => ({
+    packageRunner: () => ({
         install: mockInstall,
     }),
 }))
@@ -147,7 +147,7 @@ describe('pieceInstaller', () => {
         expect(await pathExists(pieceDirPath(piece))).toBe(false)
     })
 
-    it('piece already installed — bun install never called', async () => {
+    it('piece already installed — pnpm install never called', async () => {
         const piece = makePiece('@activepieces/piece-cached')
         const pieceDir = pieceDirPath(piece)
 

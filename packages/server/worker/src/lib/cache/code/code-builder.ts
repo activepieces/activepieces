@@ -6,7 +6,7 @@ import { trace } from '@opentelemetry/api'
 import { Logger } from 'pino'
 import { workerSettings } from '../../config/worker-settings'
 import { cacheState, NO_SAVE_GUARD } from '../cache-state'
-import { bunRunner } from './bun-runner'
+import { packageRunner } from './package-runner'
 
 const tracer = trace.getTracer('code-builder')
 
@@ -114,7 +114,7 @@ export const codeBuilder = (log: Logger) => ({
                     }
                 })
 
-                // node_modules is no longer needed after bun build bundles everything into index.js
+                // node_modules is no longer needed after esbuild bundles everything into index.js
                 await tryCatch(() => rm(path.join(codePath, 'node_modules'), { recursive: true }))
                 return currentHash
             },
@@ -156,7 +156,7 @@ async function installDependencies({ path, packageJson }: InstallDependenciesPar
     await fs.writeFile(`${path}/package.json`, packageJson, 'utf8')
     const deps = Object.entries(JSON.parse(packageJson).dependencies ?? {})
     if (deps.length > 0) {
-        await bunRunner(log).install({ path, filtersPath: [] })
+        await packageRunner(log).install({ path, filtersPath: [] })
     }
 }
 
@@ -167,7 +167,7 @@ async function compileCode({ path, code }: CompileCodeParams, log: Logger): Prom
     })
     await fs.writeFile(`${path}/index.ts`, code, { encoding: 'utf8', flag: 'w' })
 
-    await bunRunner(log).build({
+    await packageRunner(log).build({
         path,
         entryFile: `${path}/index.ts`,
         outputFile: `${path}/index.js`,

@@ -3,18 +3,19 @@ import { tryCatch } from '@activepieces/shared'
 import { Logger } from 'pino'
 import { CommandOutput, execPromise, spawnWithKill } from '../../utils/exec'
 
-export const bunRunner = (log: Logger) => ({
+export const packageRunner = (log: Logger) => ({
     async install({ path, filtersPath }: InstallParams): Promise<CommandOutput> {
         const args = [
+            '--prefer-offline',
             '--ignore-scripts',
         ]
         const filters: string[] = filtersPath
             .map(sanitizeFilterPath)
             .map((path) => `--filter ./${path}`)
         await fileSystemUtils.threadSafeMkdir(path)
-        log.debug({ path, args, filters }, '[bunRunner#install]')
+        log.debug({ path, args, filters }, '[packageRunner#install]')
         const { error, data } = await tryCatch(async () => spawnWithKill({
-            cmd: `bun install ${args.join(' ')} ${filters.join(' ')}`,
+            cmd: `pnpm install ${args.join(' ')} ${filters.join(' ')}`,
             options: {
                 cwd: path,
             },
@@ -22,7 +23,7 @@ export const bunRunner = (log: Logger) => ({
             timeoutMs: apDayjsDuration(10, 'minutes').asMilliseconds(),
         }))
         if (error) {
-            log.error({ error }, '[bunRunner#install] Failed to install dependencies')
+            log.error({ error }, '[packageRunner#install] Failed to install dependencies')
             throw error
         }
         return data
@@ -30,13 +31,13 @@ export const bunRunner = (log: Logger) => ({
     async build({ path, entryFile, outputFile }: BuildParams): Promise<CommandOutput> {
         const config = [
             `${entryFile}`,
-            '--target node',
-            '--production',
-            '--format cjs',
-            `--outfile ${outputFile}`,
+            '--bundle',
+            '--platform=node',
+            '--format=cjs',
+            `--outfile=${outputFile}`,
         ]
-        log.debug({ path, entryFile, outputFile, config }, '[bunRunner#build]')
-        return execPromise(`bun build ${config.join(' ')}`, { cwd: path })
+        log.debug({ path, entryFile, outputFile, config }, '[packageRunner#build]')
+        return execPromise(`esbuild ${config.join(' ')}`, { cwd: path })
     },
 })
 

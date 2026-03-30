@@ -19,7 +19,7 @@ import { Logger } from 'pino'
 import writeFileAtomic from 'write-file-atomic'
 import { workerSettings } from '../../config/worker-settings'
 import { getGlobalCacheCommonPath, getGlobalCachePathLatestVersion } from '../cache-paths'
-import { bunRunner } from '../code/bun-runner'
+import { packageRunner } from '../code/package-runner'
 
 const tracer = trace.getTracer('piece-installer')
 
@@ -82,6 +82,9 @@ async function installPieces(rootWorkspace: string, pieces: PiecePackage[], incl
             await createRootPackageJson({
                 path: rootWorkspace,
             })
+            await createPnpmWorkspaceYaml({
+                path: rootWorkspace,
+            })
 
             await savePackageArchivesToDiskIfNotCached(rootWorkspace, piecesToInstall, apiClient)
 
@@ -95,7 +98,7 @@ async function installPieces(rootWorkspace: string, pieces: PiecePackage[], incl
                     span.setAttribute('pieces.count', piecesToInstall.length)
                     span.setAttribute('pieces.rootWorkspace', rootWorkspace)
 
-                    const { error: installError } = await tryCatch(async () => bunRunner(log).install({
+                    const { error: installError } = await tryCatch(async () => packageRunner(log).install({
                         path: rootWorkspace,
                         filtersPath: includeFilters ? piecesToInstall.map(relativePiecePath) : [],
                     }))
@@ -133,7 +136,7 @@ async function installPieces(rootWorkspace: string, pieces: PiecePackage[], incl
                     log.info({
                         rootWorkspace,
                         piecesCount: piecesToInstall.length,
-                    }, '[pieceInstaller] Installed registry pieces using bun')
+                    }, '[pieceInstaller] Installed registry pieces using pnpm')
                 }
                 finally {
                     span.end()
@@ -159,7 +162,7 @@ async function tryInstallPiecesIndividually(
     const failures: PiecePackage[] = []
     for (const piece of pieces) {
         const { error } = await tryCatch(async () =>
-            bunRunner(log).install({
+            packageRunner(log).install({
                 path: rootWorkspace,
                 filtersPath: [relativePiecePath(piece)],
             }),
@@ -226,6 +229,11 @@ async function createRootPackageJson({ path }: { path: string }): Promise<void> 
             'pieces/**',
         ],
     }, null, 2), 'utf8')
+}
+
+async function createPnpmWorkspaceYaml({ path }: { path: string }): Promise<void> {
+    const workspacePath = join(path, 'pnpm-workspace.yaml')
+    await writeFileAtomic(workspacePath, 'packages:\n  - \'pieces/**\'\n', 'utf8')
 }
 
 async function createPiecePackageJson({ rootWorkspace, piecePackage }: {

@@ -27,34 +27,31 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen && \
     locale-gen en_US.UTF-8
 
-RUN export ARCH=$(uname -m) && \
-    if [ "$ARCH" = "x86_64" ]; then \
-      curl -fSL https://github.com/oven-sh/bun/releases/download/bun-v1.3.1/bun-linux-x64-baseline.zip -o bun.zip; \
-    elif [ "$ARCH" = "aarch64" ]; then \
-      curl -fSL https://github.com/oven-sh/bun/releases/download/bun-v1.3.1/bun-linux-aarch64.zip -o bun.zip; \
-    fi
-
-RUN unzip bun.zip \
-    && mv bun-*/bun /usr/local/bin/bun \
-    && chmod +x /usr/local/bin/bun \
-    && rm -rf bun.zip bun-*
-
-RUN bun --version
-
 # Install global npm packages in a single layer
 RUN --mount=type=cache,target=/root/.npm \
     npm install -g --no-fund --no-audit \
     node-gyp \
     npm@11.11.0 \
     pm2@6.0.10 \
-    typescript@4.9.4
+    typescript@4.9.4 \
+    pnpm@10.33.0 \
+    esbuild
 
 # Install isolated-vm globally (needed for sandboxes)
-RUN --mount=type=cache,target=/root/.bun/install/cache \
-    cd /usr/src && bun install isolated-vm@6.0.2
+RUN --mount=type=cache,target=/root/.npm \
+    cd /usr/src && npm install --no-fund --no-audit isolated-vm@6.0.2
 
 ### STAGE 1: Build ###
 FROM base AS build
+
+# Install bun for monorepo build (build-time only, not needed at runtime)
+RUN export ARCH=$(uname -m) && \
+    if [ "$ARCH" = "x86_64" ]; then \
+      curl -fSL https://github.com/oven-sh/bun/releases/download/bun-v1.3.1/bun-linux-x64-baseline.zip -o bun.zip; \
+    elif [ "$ARCH" = "aarch64" ]; then \
+      curl -fSL https://github.com/oven-sh/bun/releases/download/bun-v1.3.1/bun-linux-aarch64.zip -o bun.zip; \
+    fi
+RUN unzip bun.zip && mv bun-*/bun /usr/local/bin/bun && chmod +x /usr/local/bin/bun && rm -rf bun.zip bun-*
 
 WORKDIR /usr/src/app
 
@@ -100,19 +97,17 @@ RUN mkdir -p \
 # Copy root config files needed for dependency resolution
 COPY --from=build /usr/src/app/package.json ./
 COPY --from=build /usr/src/app/.npmrc ./
-COPY --from=build /usr/src/app/bun.lock ./
-COPY --from=build /usr/src/app/bunfig.toml ./
 COPY --from=build /usr/src/app/LICENSE .
 
-# Copy workspace package.json files (needed for bun workspace resolution)
+# Copy workspace package.json files (needed for workspace resolution)
 COPY --from=build /usr/src/app/packages ./packages
 
 # Copy built engine
 COPY --from=build /usr/src/app/dist/packages/engine/ ./dist/packages/engine/
 
-# Regenerate lockfile and install production dependencies (pieces were trimmed from workspace)
-RUN --mount=type=cache,target=/root/.bun/install/cache \
-    bun install --production
+# Install production dependencies
+RUN --mount=type=cache,target=/root/.npm \
+    npm install --omit=dev
 
 # Copy frontend files
 COPY --from=build /usr/src/app/dist/packages/web ./dist/packages/web/
