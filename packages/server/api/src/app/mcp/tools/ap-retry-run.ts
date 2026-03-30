@@ -1,6 +1,7 @@
-import { FlowRetryStrategy, FlowRunStatus, isFlowRunStateTerminal, McpServer, McpToolDefinition } from '@activepieces/shared'
+import { FlowRetryStrategy, FlowRunStatus, isFlowRunStateTerminal, isNil, McpServer, McpToolDefinition } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
+import { flowService } from '../../flows/flow/flow.service'
 import { flowRunService } from '../../flows/flow-run/flow-run-service'
 import { formatRunResult, pollForRunCompletion } from './flow-run-utils'
 import { mcpToolError } from './mcp-utils'
@@ -30,6 +31,13 @@ export const apRetryRunTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolD
 
                 if (existingRun.status === FlowRunStatus.SUCCEEDED) {
                     return { content: [{ type: 'text', text: '⚠️ Run already succeeded. Use ap_test_flow to run a new test instead.' }] }
+                }
+
+                if (strategy === FlowRetryStrategy.ON_LATEST_VERSION) {
+                    const flow = await flowService(log).getOneOrThrow({ id: existingRun.flowId, projectId: mcp.projectId })
+                    if (isNil(flow.publishedVersionId)) {
+                        return { content: [{ type: 'text', text: '❌ Cannot retry with ON_LATEST_VERSION — this flow has not been published yet. Use ap_lock_and_publish first.' }] }
+                    }
                 }
 
                 const retriedRun = await flowRunService(log).retry({

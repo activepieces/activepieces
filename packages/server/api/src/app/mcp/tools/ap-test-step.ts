@@ -18,7 +18,7 @@ export const apTestStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolD
         execute: async (args) => {
             try {
                 const { flowId, stepName } = testStepInput.parse(args)
-                return executeFlowTest({ flowId, projectId: mcp.projectId, stepName, log })
+                return await executeFlowTest({ flowId, projectId: mcp.projectId, stepName, log })
             }
             catch (err) {
                 log.error({ err, projectId: mcp.projectId }, 'ap_test_step failed')
