@@ -160,6 +160,18 @@ async function createPropertyDefinition(
 				displayName: title,
 				required,
 			});
+		case 'record-reference': {
+			const targetSlug = property.relationship?.object_slug;
+			const label = targetSlug ?? 'record';
+			const field = is_multiselect ? Property.Array : Property.ShortText;
+			return field({
+				displayName: title,
+				required,
+				description: is_multiselect
+					? `Enter ${label} IDs (one per item).`
+					: `Enter the ${label} ID.`,
+			});
+		}
 		case 'actor-reference': {
 			const basicField = is_multiselect ? Property.Array : Property.ShortText;
 			return basicField({
@@ -297,20 +309,34 @@ export async function formatInputFields(
 		resourceUri: `/${objectType}/${objectId}/attributes`,
 	});
 
-	const typeMapping = attributes.reduce((acc, { api_slug, type }) => {
-		acc[api_slug] = type;
+	const typeMapping = attributes.reduce((acc, attr) => {
+		acc[attr.api_slug] = {
+			type: attr.type,
+			is_multiselect: attr.is_multiselect,
+			object_slug: attr.relationship?.object_slug ?? null,
+		};
 		return acc;
-	}, {} as Record<string, string>);
+	}, {} as Record<string, { type: string; is_multiselect: boolean; object_slug: string | null }>);
 
-	const formattedFields: Record<string, any> = {};
+	const formattedFields: Record<string, unknown> = {};
 
 	for (const [key, value] of Object.entries(inputValues)) {
 		if (isNil(value) || value === '') continue;
 		if(Array.isArray(value) && value.length === 0) continue;
 
-		const fieldType = typeMapping[key];
+		const fieldType = typeMapping[key]?.type;
 
 		switch (fieldType) {
+			case 'record-reference': {
+				const targetSlug = typeMapping[key]?.object_slug;
+				const ids: string[] = Array.isArray(value) ? value : [value];
+				formattedFields[key] = ids.map((id) =>
+					targetSlug
+						? { target_record_id: id, target_object: targetSlug }
+						: { target_record_id: id },
+				);
+				break;
+			}
 			case 'phone-number':
 				formattedFields[key] = isSearch ? value : [value];
 				break;
