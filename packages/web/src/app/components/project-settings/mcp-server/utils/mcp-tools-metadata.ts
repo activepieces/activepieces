@@ -53,6 +53,11 @@ export const TOOL_CATEGORIES: ToolCategory[] = [
         description:
           'Get detailed results of a flow run including step outputs and errors',
       },
+      {
+        name: 'ap_setup_guide',
+        description:
+          'Get instructions for setting up connections or AI providers',
+      },
     ],
   },
   {

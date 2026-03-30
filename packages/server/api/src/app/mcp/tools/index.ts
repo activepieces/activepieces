@@ -24,6 +24,7 @@ import { apManageFieldsTool } from './ap-manage-fields'
 import { apManageNotesTool } from './ap-manage-notes'
 import { apRenameFlowTool } from './ap-rename-flow'
 import { apRetryRunTool } from './ap-retry-run'
+import { apSetupGuideTool } from './ap-setup-guide'
 import { apTestFlowTool } from './ap-test-flow'
 import { apTestStepTool } from './ap-test-step'
 import { apUpdateRecordTool } from './ap-update-record'
@@ -40,6 +41,7 @@ export const LOCKED_TOOL_NAMES: string[] = [
     'ap_find_records',
     'ap_list_runs',
     'ap_get_run',
+    'ap_setup_guide',
 ]
 
 // NOTE: Keep this list in sync with TOOL_CATEGORIES in
@@ -98,4 +100,5 @@ export const activepiecesTools = (mcp: McpServer, log: FastifyBaseLogger): McpTo
     apTestFlowTool(mcp, log),
     apTestStepTool(mcp, log),
     apRetryRunTool(mcp, log),
+    apSetupGuideTool(mcp, log),
 ]
