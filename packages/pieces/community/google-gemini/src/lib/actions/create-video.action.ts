@@ -173,7 +173,12 @@ export const createVideoAction = createAction({
       },
     });
 
+    const maxWaitMs = 10 * 60 * 1000; // 10 minutes
+    const startTime = Date.now();
     while (!operation.done) {
+      if (Date.now() - startTime > maxWaitMs) {
+        throw new Error('Video generation timed out after 10 minutes.');
+      }
       await new Promise((resolve) => setTimeout(resolve, 5000));
       operation = await ai.operations.getVideosOperation({ operation });
     }
