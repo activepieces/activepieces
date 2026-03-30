@@ -63,6 +63,8 @@ const css = `
   .conv-sidebar { background: transparent !important; opacity: 0.4; transition: opacity 0.2s; }
   .conv-sidebar:hover { opacity: 1; }
   .dark .conv-sidebar { background: transparent !important; }
+  .group-label { transition: color 0.15s; }
+  .group-label:hover { color: hsl(var(--foreground)) !important; }
 `;
 
 export function ConversationList({ onSelect }: { onSelect?: (id: string) => void }) {
@@ -88,6 +90,7 @@ export function ConversationList({ onSelect }: { onSelect?: (id: string) => void
     return (
       <div style={{ marginBottom: '8px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
         <button
+          className="group-label"
           onClick={() => toggleGroup(label)}
           style={{
             fontSize: '11px', fontWeight: 600, color: 'hsl(var(--muted-foreground))',
