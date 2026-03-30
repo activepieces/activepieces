@@ -2,6 +2,7 @@ import { createServer } from 'http'
 import os from 'os'
 import { systemUsage } from '@activepieces/server-utils'
 import {
+    ActivepiecesError,
     ConsumeJobRequest,
     createRpcClient,
     EngineResponseStatus,
@@ -155,7 +156,8 @@ async function pollAndExecute(apiClient: WorkerToApiContract, sbManager: Sandbox
                 status: execError
                     ? EngineResponseStatus.INTERNAL_ERROR
                     : result?.kind === JobResultKind.SYNCHRONOUS ? result.status : EngineResponseStatus.OK,
-                errorMessage: execError?.message,
+                errorMessage: buildErrorMessage(execError ?? undefined, result ?? undefined),
+                logs: extractLogs(execError ?? undefined, result ?? undefined),
                 delayInSeconds: result?.kind === JobResultKind.FIRE_AND_FORGET ? result.delayInSeconds : undefined,
                 response: result?.kind === JobResultKind.SYNCHRONOUS ? result.response : undefined,
             }),
@@ -280,6 +282,31 @@ async function warmupPiecesOnStartup(apiClient: WorkerToApiContract): Promise<vo
         void tryCatch(() => apiClient.markPieceAsUsed({ pieces }))
     }
     logger.info({ count: pieces.length }, 'Piece cache warmup complete')
+}
+
+function buildErrorMessage(execError: Error | undefined, result: JobResult | undefined): string | undefined {
+    if (execError) {
+        return execError.message
+    }
+    const isFailure = result?.kind === JobResultKind.SYNCHRONOUS && result.status !== EngineResponseStatus.OK
+    if (!isFailure) {
+        return undefined
+    }
+    return result.errorMessage
+}
+
+function extractLogs(execError: Error | undefined, result: JobResult | undefined): string | undefined {
+    if (execError instanceof ActivepiecesError) {
+        const params = execError.error.params as Record<string, unknown>
+        const parts: string[] = []
+        if (params?.['standardOutput']) parts.push(`stdout:\n${params['standardOutput']}`)
+        if (params?.['standardError']) parts.push(`stderr:\n${params['standardError']}`)
+        return parts.length > 0 ? parts.join('\n') : undefined
+    }
+    if (result && 'logs' in result) {
+        return result.logs
+    }
+    return undefined
 }
 
 function sleep(ms: number): Promise<void> {
