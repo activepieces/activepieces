@@ -1,5 +1,5 @@
 import { ContextVersion } from '@activepieces/pieces-framework'
-import { applyFunctionToValues, isNil, isString } from '@activepieces/shared'
+import { AP_FUNCTIONS, applyFunctionToValues, evaluateExpression, isNil, isString } from '@activepieces/shared'
 import { initCodeSandbox } from '../core/code/code-sandbox'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { createConnectionService } from '../services/connections.service'
@@ -98,6 +98,16 @@ function extractReferencedStepNames(input: unknown, stepNames: string[]): Set<st
  */
 async function resolveInputAsync(params: ResolveInputInternalParams): Promise<unknown> {
     const { input, currentState, engineToken, projectId, apiUrl, censoredInput } = params
+
+    if (isFormulaExpression(input)) {
+        const { result, error } = evaluateExpression(input, currentState)
+        if (error) {
+            console.warn('[resolveInputAsync] Formula evaluation error:', error)
+            return ''
+        }
+        return result ?? ''
+    }
+
     const tokensThatNeedResolving = input.match(VARIABLE_PATTERN)
     const inputContainsOnlyOneTokenToResolve = tokensThatNeedResolving !== null && tokensThatNeedResolving.length === 1 && tokensThatNeedResolving[0] === input
     const resolveOptions = {
@@ -226,6 +236,13 @@ function flattenNestedKeys(data: unknown, pathToMatch: string[]): unknown[] {
         return [data]
     }
     return []
+}
+
+function isFormulaExpression(input: string): boolean {
+    const trimmed = input.trim()
+    return AP_FUNCTIONS.some(
+        (fn) => trimmed.startsWith(`${fn.name}(`) && trimmed.endsWith(')'),
+    )
 }
 
 type ResolveSingleTokenParams = {
