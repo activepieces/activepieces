@@ -136,7 +136,8 @@ export const newEventTrigger = createTrigger({
     if (selectedTypes && selectedTypes.length > 0 && !selectedTypes.includes(body.type)) return [];
 
     const selectedLinkIds = context.propsValue.link_ids as string[] | undefined;
-    if (selectedLinkIds && selectedLinkIds.length > 0 && !selectedLinkIds.includes(body.payload?.link?.id ?? '')) return [];
+    const linkId = body.payload?.link?.id;
+    if (selectedLinkIds && selectedLinkIds.length > 0 && linkId !== undefined && !selectedLinkIds.includes(linkId)) return [];
 
     return [{ event_type: body.type, ...flattenEvent(body.payload) }];
   },
