@@ -162,7 +162,7 @@ export function AIChatBox() {
         <textarea
           ref={textareaRef}
           rows={2}
-          placeholder="Message AI Builder..."
+          placeholder="Message AI Piecer..."
           value={input}
           onChange={handleInput}
           onKeyDown={handleKey}
