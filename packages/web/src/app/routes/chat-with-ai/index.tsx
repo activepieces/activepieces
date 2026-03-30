@@ -10,9 +10,9 @@ export function ChatWithAIPage() {
     <div className="flex flex-col h-full -mx-4">
       <div style={{ padding: '8px' }}>
         <PageHeader
-          title={t('AI Builder')}
+          title={t('AI Piecer')}
           showSidebarToggle={true}
-          className="min-w-full"
+          className="min-w-full !p-0"
         />
       </div>
       <Separator />
