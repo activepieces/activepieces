@@ -11,6 +11,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
 import { projectService } from '../../project/project-service'
+import { mcpToolError } from './mcp-utils'
 
 const deleteBranchInput = z.object({
     flowId: z.string(),
@@ -88,10 +89,7 @@ export const apDeleteBranchTool = (mcp: McpServer, log: FastifyBaseLogger): McpT
                 }
             }
             catch (err) {
-                const message = err instanceof Error ? err.message : String(err)
-                return {
-                    content: [{ type: 'text', text: `❌ Delete branch failed: ${message}` }],
-                }
+                return mcpToolError('Delete branch failed', err)
             }
         },
     }
