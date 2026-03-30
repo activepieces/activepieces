@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { JSDOM } from 'jsdom';
+import { JSDOM, VirtualConsole } from 'jsdom';  
 
 export const extractFromHtml = createAction({
   name: 'extract_from_html',
@@ -79,42 +79,55 @@ export const extractFromHtml = createAction({
       finalSelector = predefinedSelectors[target as string];
     }
 
-    const dom = new JSDOM(html);
-    const document = dom.window.document;
+    // Create an empty virtual console to swallow spam/errors from malicious HTML
+    const virtualConsole = new VirtualConsole(); 
+    
+    const dom = new JSDOM(html, {
+      includeNodeLocations: false, // Performance: We don't need line numbers
+      runScripts: undefined,       // Security: Explicitly disable JS execution (Default, but good to be explicit)
+      virtualConsole,              // Security: Prevent log spoofing
+    });
 
-    let elements: NodeListOf<Element>;
     try {
-      elements = document.querySelectorAll(finalSelector);
-    } catch (error) {
-      throw new Error(`Invalid CSS selector: "${finalSelector}". Error: ${(error as Error).message}`);
-    }
-
-    if (elements.length === 0) {
-      return returnMultiple ? [] : null;
-    }
-
-    const extractValue = (el: Element) => {
-      switch (extractionType) {
-        case 'textContent':
-          return el.textContent?.trim() || '';
-        case 'innerHtml':
-          return el.innerHTML;
-        case 'outerHtml':
-          return el.outerHTML;
-        case 'attribute':
-          if (!attributeName) {
-            throw new Error('You must provide an "Attribute Name" when the extraction type is Attribute.');
-          }
-          return el.getAttribute(attributeName);
-        default:
-          return '';
+      const document = dom.window.document;
+      let elements: NodeListOf<Element>;
+      
+      try {
+        elements = document.querySelectorAll(finalSelector);
+      } catch (error) {
+        throw new Error(`Invalid CSS selector: "${finalSelector}". Error: ${(error as Error).message}`);
       }
-    };
 
-    if (returnMultiple) {
-      return Array.from(elements).map((el) => extractValue(el));
-    } else {
-      return extractValue(elements[0]);
+      if (elements.length === 0) {
+        return returnMultiple ? [] : null;
+      }
+
+      const extractValue = (el: Element) => {
+        switch (extractionType) {
+          case 'textContent':
+            return el.textContent?.trim() || '';
+          case 'innerHtml':
+            return el.innerHTML;
+          case 'outerHtml':
+            return el.outerHTML;
+          case 'attribute':
+            if (!attributeName) {
+              throw new Error('You must provide an "Attribute Name" when the extraction type is Attribute.');
+            }
+            return el.getAttribute(attributeName);
+          default:
+            return '';
+        }
+      };
+
+      if (returnMultiple) {
+        return Array.from(elements).map((el) => extractValue(el));
+      } else {
+        return extractValue(elements[0]);
+      }
+    } finally {
+      // Always close the virtual window to prevent memory leaks in the Node environment,
+      dom.window.close();
     }
   },
 });
