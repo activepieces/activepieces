@@ -1,6 +1,7 @@
 import {
 	createTrigger,
 	TriggerStrategy,
+	AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import {
 	DedupeStrategy,
@@ -14,7 +15,7 @@ import { socialSetDropdown } from '../common/props';
 import { TypefullyDraft, TypefullyPaginatedResponse } from '../common/types';
 
 const polling: Polling<
-	{ secret_text: string },
+	AppConnectionValueForAuthProperty<typeof typefullyAuth>,
 	{ social_set_id: string }
 > = {
 	strategy: DedupeStrategy.TIMEBASED,

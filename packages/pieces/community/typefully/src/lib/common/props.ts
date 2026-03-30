@@ -8,6 +8,31 @@ import {
 	TypefullyTag,
 } from './types';
 
+async function fetchAllPages<T>(
+	apiKey: string,
+	resourceUri: string,
+): Promise<T[]> {
+	const allResults: T[] = [];
+	let offset = 0;
+	const limit = 50;
+
+	while (true) {
+		const response = await typefullyApiCall<TypefullyPaginatedResponse<T>>({
+			apiKey,
+			method: HttpMethod.GET,
+			resourceUri,
+			query: { limit, offset },
+		});
+
+		allResults.push(...response.results);
+
+		if (response.results.length < limit || response.next === null) break;
+		offset += limit;
+	}
+
+	return allResults;
+}
+
 export const socialSetDropdown = Property.Dropdown({
 	auth: typefullyAuth,
 	displayName: 'Social Set',
@@ -23,18 +48,14 @@ export const socialSetDropdown = Property.Dropdown({
 			};
 		}
 
-		const response = await typefullyApiCall<
-			TypefullyPaginatedResponse<TypefullySocialSet>
-		>({
-			apiKey: auth.secret_text,
-			method: HttpMethod.GET,
-			resourceUri: '/social-sets',
-			query: { limit: 50 },
-		});
+		const socialSets = await fetchAllPages<TypefullySocialSet>(
+			auth.secret_text,
+			'/social-sets',
+		);
 
 		return {
 			disabled: false,
-			options: response.results.map((socialSet) => ({
+			options: socialSets.map((socialSet) => ({
 				label: socialSet.name,
 				value: socialSet.id,
 			})),
@@ -57,18 +78,14 @@ export const tagsMultiSelectDropdown = Property.MultiSelectDropdown({
 			};
 		}
 
-		const response = await typefullyApiCall<
-			TypefullyPaginatedResponse<TypefullyTag>
-		>({
-			apiKey: auth.secret_text,
-			method: HttpMethod.GET,
-			resourceUri: `/social-sets/${social_set_id}/tags`,
-			query: { limit: 50 },
-		});
+		const tags = await fetchAllPages<TypefullyTag>(
+			auth.secret_text,
+			`/social-sets/${social_set_id}/tags`,
+		);
 
 		return {
 			disabled: false,
-			options: response.results.map((tag) => ({
+			options: tags.map((tag) => ({
 				label: tag.name,
 				value: tag.id,
 			})),
