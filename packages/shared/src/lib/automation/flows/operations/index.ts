@@ -90,7 +90,7 @@ export type SkipActionRequest = z.infer<typeof SkipActionRequest>
 
 export const UpdateSampleDataInfoRequest = z.object({
     stepName: z.string(),
-    sampleDataSettings: SampleDataSetting.omit({ lastTestDate: true }).optional(),
+    sampleDataSettings: Nullable(SampleDataSetting.omit({ lastTestDate: true })),
 })
 export type UpdateSampleDataInfoRequest = z.infer<typeof UpdateSampleDataInfoRequest>
 

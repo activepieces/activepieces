@@ -114,10 +114,7 @@ export function LatestVersionAvailableAlert({
   isLatestMinorOrMajor,
 }: LatestVersionAvailableAlertProps) {
   return (
-    <Alert
-      layout="inlineAction"
-      variant={isLatestMinorOrMajor ? 'warning' : 'default'}
-    >
+    <Alert variant={isLatestMinorOrMajor ? 'warning' : 'default'}>
       {isLatestMinorOrMajor ? (
         <AlertTriangle className="size-4" />
       ) : (
@@ -148,7 +145,7 @@ export function RevertVersionBackupAlert({
   revertDisabled,
 }: RevertVersionBackupAlertProps) {
   return (
-    <Alert layout="inlineAction" variant="primary">
+    <Alert variant="primary">
       <RotateCcw className="size-4" />
       <AlertDescription>
         {t('Revert to restore your previous settings.')}
@@ -203,7 +200,7 @@ export function RevertVersionCollapsible({
 
 export function MinorOrMajorSelectionAlert() {
   return (
-    <Alert layout="inlineAction" variant="warning">
+    <Alert variant="warning">
       <AlertTriangle className="size-4" />
       <AlertDescription>
         {t(
@@ -216,7 +213,7 @@ export function MinorOrMajorSelectionAlert() {
 
 export function PatchUpgradeInfoAlert() {
   return (
-    <Alert layout="inlineAction">
+    <Alert>
       <Info className="size-4" />
       <AlertDescription>
         {t('Settings will carry over. Retest as the output may have changed.')}
@@ -227,7 +224,7 @@ export function PatchUpgradeInfoAlert() {
 
 export function PatchDowngradeInfoAlert() {
   return (
-    <Alert layout="inlineAction">
+    <Alert>
       <Info className="size-4" />
       <AlertDescription>
         {t(
