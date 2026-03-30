@@ -5,13 +5,19 @@ const fs = require('fs');
 
 // Check Node.js version
 const nodeVersion = execSync('node --version').toString().trim();
-const requiredVersions = ['v18','v22','v24'];
+const requiredVersions = ['v22.15+', 'v24'];
 
 // Check operating system
 const os = process.platform;
 console.log(`Running on ${os} operating system.`)
 
-if (requiredVersions.some(version=>nodeVersion.startsWith(version))) {
+const [major, minor = 0] = nodeVersion.replace(/^v/, '').split('.').map(Number);
+const isCompatibleNodeVersion = requiredVersions.some((version) => {
+  const [requiredMajor, requiredMinor = 0] = version.match(/\d+/g).map(Number);
+  return major === requiredMajor && (minor >= requiredMinor);
+});
+
+if (isCompatibleNodeVersion) {
   console.log(`Node.js version is compatible ${nodeVersion}.`);
 } else {
   console.log(`Node.js version is not compatible. Required version: ${requiredVersions.toString()}`);
