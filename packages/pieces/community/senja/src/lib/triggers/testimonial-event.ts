@@ -113,7 +113,7 @@ export const testimonialEventTrigger = createTrigger({
       data ??
       payload;
 
-    return [mapTestimonial(t, eventType)];
+    return [mapTestimonial(t, eventType ?? null)];
   },
 
   async test(context) {

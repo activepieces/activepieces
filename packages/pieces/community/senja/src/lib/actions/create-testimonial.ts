@@ -188,7 +188,7 @@ export const createTestimonialAction = createAction({
     if (media && Array.isArray(media) && media.length > 0) {
       body['media'] = media.map((item) => {
         if (typeof item === 'string') {
-          try { return JSON.parse(item); } catch { return { url: item, type: 'image' }; }
+          try { return JSON.parse(item); } catch { return { url: item }; }
         }
         return item;
       });
