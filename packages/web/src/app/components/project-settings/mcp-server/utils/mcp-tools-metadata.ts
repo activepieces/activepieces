@@ -44,6 +44,15 @@ export const TOOL_CATEGORIES: ToolCategory[] = [
         name: 'ap_find_records',
         description: 'Query records from a table with optional filtering',
       },
+      {
+        name: 'ap_list_runs',
+        description: 'List recent flow runs with optional filters',
+      },
+      {
+        name: 'ap_get_run',
+        description:
+          'Get detailed results of a flow run including step outputs and errors',
+      },
     ],
   },
   {
@@ -136,6 +145,23 @@ export const TOOL_CATEGORIES: ToolCategory[] = [
       {
         name: 'ap_delete_records',
         description: 'Delete records by their IDs',
+      },
+    ],
+  },
+  {
+    label: 'Testing & Runs',
+    tools: [
+      {
+        name: 'ap_test_flow',
+        description: 'Test a flow end-to-end and get step-by-step results',
+      },
+      {
+        name: 'ap_test_step',
+        description: 'Test a single step within a flow',
+      },
+      {
+        name: 'ap_retry_run',
+        description: 'Retry a failed flow run',
       },
     ],
   },
