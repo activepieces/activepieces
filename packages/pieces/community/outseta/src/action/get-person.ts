@@ -22,11 +22,10 @@ export const getPersonAction = createAction({
     });
 
     const email = context.propsValue.email;
-    const res = await client.get<any>(
-      `/api/v1/crm/people?Email=${encodeURIComponent(email)}&$top=1`
+    const items = await client.getAllPages<any>(
+      `/api/v1/crm/people?$filter=Email eq '${encodeURIComponent(email)}'`
     );
 
-    const items: any[] = res?.items ?? res?.Items ?? [];
     const person = items.find(
       (p: any) => p.Email?.toLowerCase() === email.toLowerCase()
     );
