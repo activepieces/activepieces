@@ -74,9 +74,13 @@ async function connectionGuide(mcp: McpServer, log: FastifyBaseLogger, pieceName
         return { content: [{ type: 'text', text: `✅ "${piece.displayName}" does not require authentication. No connection setup needed.` }] }
     }
 
-    const auth = Array.isArray(rawAuth) ? rawAuth[0] : rawAuth
+    const authOptions = Array.isArray(rawAuth) ? rawAuth : [rawAuth]
+    const auth = authOptions[0]
     const authType = auth.type
     const lines: string[] = [`How to connect "${piece.displayName}":`, '']
+    if (authOptions.length > 1) {
+        lines.push(`Note: This piece supports ${authOptions.length} authentication methods. Showing the primary one.`, '')
+    }
 
     switch (authType) {
         case PropertyType.OAUTH2:
@@ -94,7 +98,7 @@ async function connectionGuide(mcp: McpServer, log: FastifyBaseLogger, pieceName
                 '1. Open your Activepieces dashboard',
                 '2. Go to Settings → Connections → "+ New Connection"',
                 `3. Select "${piece.displayName}"`,
-                `4. Enter your API key or token${auth.description ? ` (${auth.description})` : ''}`,
+                `4. Enter your API key or token${'description' in auth && auth.description ? ` (${auth.description})` : ''}`,
                 '5. Click Save',
             )
             break
