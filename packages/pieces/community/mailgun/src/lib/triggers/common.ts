@@ -88,16 +88,17 @@ export function createMailgunWebhookTrigger({
         'event-data'?: Record<string, unknown>;
       };
 
-      if (payload.signature) {
-        const isValid = verifyMailgunSignature(
-          context.auth.props.api_key,
-          payload.signature.timestamp,
-          payload.signature.token,
-          payload.signature.signature,
-        );
-        if (!isValid) {
-          return [];
-        }
+      if (!payload.signature) {
+        return [];
+      }
+      const isValid = verifyMailgunSignature(
+        context.auth.props.api_key,
+        payload.signature.timestamp,
+        payload.signature.token,
+        payload.signature.signature,
+      );
+      if (!isValid) {
+        return [];
       }
 
       const eventData = payload['event-data'];
