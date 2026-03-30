@@ -34,6 +34,9 @@ export interface AttributeResponse {
 	is_default_value_enabled: boolean;
 	is_archived: boolean;
 	created_at: string;
+	relationship: {
+		object_slug: string;
+	} | null;
 }
 
 export interface SelectOptionResponse {
