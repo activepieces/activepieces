@@ -197,7 +197,10 @@ async function getQueueName(platformId: string | null, log: FastifyBaseLogger): 
     if (!platformId) {
         return QueueName.WORKER_JOBS
     }
-
+    const canaryPlatformIds = system.getList(AppSystemProp.CANARY_PLATFORM_IDS)
+    if (canaryPlatformIds.includes(platformId)) {
+        return QueueName.CANARY_JOBS
+    }
     const isDedicatedWorkersEnabled = await dedicatedWorkers(log).isEnabledForPlatform(platformId)
     return isDedicatedWorkersEnabled ? getPlatformQueueName(platformId) : QueueName.WORKER_JOBS
 }
