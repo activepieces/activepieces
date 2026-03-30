@@ -154,6 +154,8 @@ async function tryInstallPiecesIndividually(
     pieces: PiecePackage[],
     log: Logger,
 ): Promise<PiecePackage[]> {
+    // Sequential (not Promise.all) so each piece gets its own isolated bun run.
+    // Parallel runs share the same workspace and would hit the same batch error.
     const failures: PiecePackage[] = []
     for (const piece of pieces) {
         const { error } = await tryCatch(async () =>
