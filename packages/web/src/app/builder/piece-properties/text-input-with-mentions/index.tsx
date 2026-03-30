@@ -153,6 +153,9 @@ export const TextInputWithMentions = ({
   // Preview mode state
   const [previewMode, setPreviewMode] = useState(false);
   const [previewValue, setPreviewValue] = useState<string>('');
+  const [previewError, setPreviewError] = useState(false);
+  const previewModeRef = useRef(previewMode);
+  previewModeRef.current = previewMode;
 
   const editorRef = useRef<ReturnType<typeof useEditor> | null>(null);
   const editorWrapperRef = useRef<HTMLDivElement>(null);
@@ -204,6 +207,12 @@ export const TextInputWithMentions = ({
         ),
       },
     },
+    onCreate: ({ editor: e }) => {
+      const editorContent = e.getJSON();
+      requestAnimationFrame(() => {
+        applyTypeErrors(editorContent, editorWrapperRef.current);
+      });
+    },
     onUpdate: ({ editor: e }) => {
       const editorContent = e.getJSON();
       const textResult =
@@ -211,7 +220,7 @@ export const TextInputWithMentions = ({
       if (onChange) {
         onChange(textResult);
       }
-      if (previewMode) {
+      if (previewModeRef.current) {
         updatePreview(textResult);
       }
       requestAnimationFrame(() => {
@@ -243,8 +252,9 @@ export const TextInputWithMentions = ({
   const updatePreview = useCallback(
     (expression: string) => {
       const flatData = flattenSampleData(sampleData ?? {});
-      const result = evaluateExpression(expression, flatData);
-      setPreviewValue(result != null ? String(result) : '');
+      const { result, error } = evaluateExpression(expression, flatData);
+      setPreviewValue(error ?? (result != null ? String(result) : ''));
+      setPreviewError(error !== null);
     },
     [sampleData],
   );
@@ -279,9 +289,15 @@ export const TextInputWithMentions = ({
           className={cn(
             className ?? cn(inputClass, 'py-2 h-[unset] block min-h-9'),
             'whitespace-pre-wrap break-all text-sm',
+            previewError && 'border-red-400',
           )}
         >
-          {previewValue || (
+          {previewValue ? (
+            <span className={previewError ? 'text-red-500' : undefined}>
+              {previewError && '⚠ '}
+              {previewValue}
+            </span>
+          ) : (
             <span className="text-muted-foreground opacity-50">
               {placeholder}
             </span>
