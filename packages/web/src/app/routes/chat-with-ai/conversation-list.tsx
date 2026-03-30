@@ -122,7 +122,7 @@ export function ConversationList({ onSelect }: { onSelect?: (id: string) => void
     <>
       <style>{css}</style>
       <div className="conv-sidebar" style={{ width: '200px', flexShrink: 0, display: 'flex', flexDirection: 'column', height: '100%', background: 'transparent' }}>
-        <div className="conv-list" style={{ flex: 1, overflowY: 'auto', padding: '12px 8px 12px' }}>
+        <div className="conv-list" style={{ flex: 1, overflowY: 'scroll', padding: '12px 8px 12px' }}>
           {renderGroup('Today', today)}
           {renderGroup('Yesterday', yesterdayList)}
           {renderGroup('Older', olderList)}
