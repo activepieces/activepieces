@@ -1,10 +1,17 @@
 import { AP_FUNCTIONS } from '@activepieces/shared';
 import {
   autocompletion,
+  Completion,
   CompletionContext,
   CompletionResult,
 } from '@codemirror/autocomplete';
-import { EditorView } from '@codemirror/view';
+
+type ApplyView = {
+  dispatch: (tr: {
+    changes: { from: number; to: number; insert: string };
+    selection: { anchor: number };
+  }) => void;
+};
 
 function formulaCompletions(
   context: CompletionContext,
@@ -17,22 +24,24 @@ function formulaCompletions(
   const prefix = before.text.toLowerCase();
   const options = AP_FUNCTIONS.filter((fn) =>
     fn.name.toLowerCase().startsWith(prefix),
-  ).map((fn) => ({
-    label: fn.name,
-    type: 'function',
-    detail: fn.description,
-    apply: (
-      view: EditorView,
-      _completion: { label: string },
-      from: number,
-      to: number,
-    ) => {
-      view.dispatch({
-        changes: { from, to, insert: fn.name + '(' },
-        selection: { anchor: from + fn.name.length + 1 },
-      });
-    },
-  }));
+  ).map(
+    (fn): Completion => ({
+      label: fn.name,
+      type: 'function',
+      detail: fn.description,
+      apply: (
+        view: ApplyView,
+        _completion: Completion,
+        from: number,
+        to: number,
+      ) => {
+        view.dispatch({
+          changes: { from, to, insert: fn.name + '(' },
+          selection: { anchor: from + fn.name.length + 1 },
+        });
+      },
+    }),
+  );
 
   return {
     from: before.from,
