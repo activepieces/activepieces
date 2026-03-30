@@ -54,8 +54,9 @@ const css = `
   .dark .conv-item.active { background: rgba(255,255,255,0.1); }
   .conv-list::-webkit-scrollbar { width: 4px; }
   .conv-list::-webkit-scrollbar-track { background: transparent; }
-  .conv-list::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 4px; }
-  .dark .conv-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); }
+  .conv-list::-webkit-scrollbar-thumb { background: transparent; border-radius: 4px; }
+  .conv-list:hover::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); }
+  .dark .conv-list:hover::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); }
   .conv-sidebar { background: transparent !important; }
   .dark .conv-sidebar { background: transparent !important; }
 `;
