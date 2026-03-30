@@ -18,8 +18,8 @@ class VariablePillWidget extends WidgetType {
   toDOM(): HTMLElement {
     const span = document.createElement('span');
     span.className = 'ap-variable-pill';
-    span.textContent = this.label;
-    span.setAttribute('title', this.path);
+    span.textContent = this.label || this.path;
+    span.setAttribute('title', `{{${this.path}}}`);
     return span;
   }
 
@@ -42,7 +42,10 @@ export function variablePillExtension(getLabel: (path: string) => string) {
       add(
         from,
         to,
-        Decoration.replace({ widget: new VariablePillWidget(path, label) }),
+        Decoration.replace({
+          widget: new VariablePillWidget(path, label),
+          inclusive: false,
+        }),
       );
     },
   });

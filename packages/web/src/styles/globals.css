@@ -57,4 +57,13 @@
 .formula-editor .cm-editor { outline: none; }
 .formula-editor .cm-focused { outline: none !important; }
 .formula-editor .cm-scroller { overflow: hidden; }
-.formula-editor .cm-content { padding: 0; white-space: pre-wrap; word-break: break-all; }
+.formula-editor .cm-content {
+    padding: 4px 8px;
+    white-space: pre-wrap;
+    word-break: break-all;
+    font-family: inherit;
+    font-size: 0.875rem;
+    line-height: 1.5rem;
+    caret-color: currentColor;
+}
+.formula-editor .cm-line { padding: 0; }
