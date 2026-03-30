@@ -33,49 +33,23 @@ beforeEach(() => {
 })
 
 describe('packageRunner.install', () => {
-    it('no filters — cmd includes pnpm install with no --filter', async () => {
+    it('runs pnpm install with --prefer-offline and --ignore-scripts in the given path', async () => {
         mockSpawnWithKill.mockResolvedValueOnce({ stdout: '', stderr: '' })
 
-        await packageRunner(fakeLog).install({ path: '/workspace', filtersPath: [] })
+        await packageRunner(fakeLog).install({ path: '/workspace/pieces/my-piece-1.0.0' })
 
         expect(mockSpawnWithKill).toHaveBeenCalledOnce()
-        const { cmd } = mockSpawnWithKill.mock.calls[0][0]
-        expect(cmd).toContain('pnpm install')
-        expect(cmd).toContain('--prefer-offline')
-        expect(cmd).toContain('--ignore-scripts')
-        expect(cmd).not.toContain('--filter')
+        const { cmd, options } = mockSpawnWithKill.mock.calls[0][0]
+        expect(cmd).toBe('pnpm install --prefer-offline --ignore-scripts')
+        expect(options.cwd).toBe('/workspace/pieces/my-piece-1.0.0')
     })
 
-    it('filter paths — cmd includes --filter for each path', async () => {
-        mockSpawnWithKill.mockResolvedValueOnce({ stdout: '', stderr: '' })
-
-        await packageRunner(fakeLog).install({
-            path: '/workspace',
-            filtersPath: ['pieces/name-1.0.0', 'pieces/other-2.0.0'],
-        })
-
-        const { cmd } = mockSpawnWithKill.mock.calls[0][0]
-        expect(cmd).toContain('--filter ./pieces/name-1.0.0')
-        expect(cmd).toContain('--filter ./pieces/other-2.0.0')
-    })
-
-    it('invalid filter path — throws before spawning', async () => {
-        await expect(
-            packageRunner(fakeLog).install({
-                path: '/workspace',
-                filtersPath: ['../evil/../path'],
-            }),
-        ).rejects.toThrow('Invalid filter path')
-
-        expect(mockSpawnWithKill).not.toHaveBeenCalled()
-    })
-
-    it('spawnWithKill rejects — error is re-thrown', async () => {
+    it('spawnWithKill rejects — error propagates to caller', async () => {
         const boom = new Error('spawn error')
         mockSpawnWithKill.mockRejectedValueOnce(boom)
 
         await expect(
-            packageRunner(fakeLog).install({ path: '/workspace', filtersPath: [] }),
+            packageRunner(fakeLog).install({ path: '/workspace' }),
         ).rejects.toThrow('spawn error')
     })
 })

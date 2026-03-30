@@ -31,8 +31,8 @@ ENV LC_ALL en_US.UTF-8
 
 COPY default.cf /usr/local/etc/isolate
 
-RUN npm i -g cross-env@7.0.3 pnpm@10.33.0 esbuild
+RUN npm i -g bun@1.3.1 cross-env@7.0.3 pnpm@10.33.0 esbuild
 
 
 # install isolated-vm in a parent directory to avoid linking the package in every sandbox
-RUN cd /usr/src && npm install isolated-vm@6.0.2
+RUN cd /usr/src && bun i isolated-vm@6.0.2

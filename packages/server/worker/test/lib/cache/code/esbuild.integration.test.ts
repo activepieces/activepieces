@@ -83,7 +83,7 @@ describe('packageRunner.build (integration)', () => {
         const outputFile = join(tempDir, 'index.js')
 
         await writeFile(packageJsonFile, JSON.stringify({ dependencies: { lodash: '4.17.21' } }))
-        await packageRunner(fakeLog).install({ path: tempDir, filtersPath: [] })
+        await packageRunner(fakeLog).install({ path: tempDir })
 
         await writeFile(entryFile, [
             `import _ from 'lodash';`,
@@ -104,7 +104,7 @@ describe('packageRunner.build (integration)', () => {
         const outputFile = join(tempDir, 'index.js')
 
         await writeFile(packageJsonFile, JSON.stringify({ dependencies: { dayjs: '1.11.0' } }))
-        await packageRunner(fakeLog).install({ path: tempDir, filtersPath: [] })
+        await packageRunner(fakeLog).install({ path: tempDir })
 
         await writeFile(entryFile, [
             `import dayjs from 'dayjs';`,

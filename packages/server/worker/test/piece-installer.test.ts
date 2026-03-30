@@ -79,69 +79,80 @@ afterEach(async () => {
 })
 
 describe('pieceInstaller', () => {
-    it('batch install succeeds — all pieces marked ready', async () => {
+    it('two pieces succeed — both marked ready, install called once per piece', async () => {
         const piece1 = makePiece('@activepieces/piece-a')
         const piece2 = makePiece('@activepieces/piece-b')
         const installer = pieceInstaller(fakeLog, fakeApiClient)
 
-        mockInstall.mockResolvedValueOnce({ output: '' })
+        mockInstall.mockResolvedValue({ output: '' })
 
-        await installer.install({ pieces: [piece1, piece2], includeFilters: true })
+        await installer.install({ pieces: [piece1, piece2] })
 
-        expect(mockInstall).toHaveBeenCalledOnce()
+        expect(mockInstall).toHaveBeenCalledTimes(2)
         expect(await pathExists(readyFilePath(piece1))).toBe(true)
         expect(await pathExists(readyFilePath(piece2))).toBe(true)
     })
 
-    it('batch fails with good and bad piece — good piece marked ready, bad piece rolled back', async () => {
+    it('each piece is installed in its own directory', async () => {
+        const piece1 = makePiece('@activepieces/piece-a')
+        const piece2 = makePiece('@activepieces/piece-b')
+        const installer = pieceInstaller(fakeLog, fakeApiClient)
+
+        mockInstall.mockResolvedValue({ output: '' })
+
+        await installer.install({ pieces: [piece1, piece2] })
+
+        const paths = mockInstall.mock.calls.map((call: [{ path: string }]) => call[0].path)
+        expect(paths).toContain(pieceDirPath(piece1))
+        expect(paths).toContain(pieceDirPath(piece2))
+    })
+
+    it('good piece succeeds, bad piece fails — good marked ready, bad rolled back, error names bad', async () => {
         const good = makePiece('@activepieces/piece-good')
         const bad = makePiece('@activepieces/piece-bad')
         const installer = pieceInstaller(fakeLog, fakeApiClient)
 
-        mockInstall
-            .mockRejectedValueOnce(new Error('workspace:* resolve error'))  // batch attempt
-            .mockResolvedValueOnce({ output: '' })                           // good individual
-            .mockRejectedValueOnce(new Error('workspace:* resolve error'))  // bad individual
+        mockInstall.mockImplementation(({ path }: { path: string }) => {
+            if (path.includes('piece-bad')) {
+                return Promise.reject(new Error('install failure'))
+            }
+            return Promise.resolve({ output: '' })
+        })
 
-        const error = await installer.install({ pieces: [good, bad], includeFilters: false }).catch(e => e as Error)
+        const error = await installer.install({ pieces: [good, bad] }).catch(e => e as Error)
 
         expect(error).toBeInstanceOf(Error)
         expect(error.message).toContain('@activepieces/piece-bad@1.0.0')
         expect(error.message).not.toContain('@activepieces/piece-good@1.0.0')
-        expect(mockInstall).toHaveBeenCalledTimes(3)
 
         expect(await pathExists(readyFilePath(good))).toBe(true)
         expect(await pathExists(pieceDirPath(bad))).toBe(false)
     })
 
-    it('batch fails with both pieces bad — both rolled back, error names both', async () => {
+    it('both pieces fail — both rolled back, error names both', async () => {
         const piece1 = makePiece('@activepieces/piece-x')
         const piece2 = makePiece('@activepieces/piece-y')
         const installer = pieceInstaller(fakeLog, fakeApiClient)
 
-        mockInstall
-            .mockRejectedValueOnce(new Error('workspace:* resolve error'))  // batch
-            .mockRejectedValueOnce(new Error('workspace:* resolve error'))  // piece-x individual
-            .mockRejectedValueOnce(new Error('workspace:* resolve error'))  // piece-y individual
+        mockInstall.mockRejectedValue(new Error('install failure'))
 
-        const error = await installer.install({ pieces: [piece1, piece2], includeFilters: false }).catch(e => e as Error)
+        const error = await installer.install({ pieces: [piece1, piece2] }).catch(e => e as Error)
 
         expect(error).toBeInstanceOf(Error)
         expect(error.message).toContain('@activepieces/piece-x@1.0.0')
         expect(error.message).toContain('@activepieces/piece-y@1.0.0')
-        expect(mockInstall).toHaveBeenCalledTimes(3)
 
         expect(await pathExists(pieceDirPath(piece1))).toBe(false)
         expect(await pathExists(pieceDirPath(piece2))).toBe(false)
     })
 
-    it('single piece fails — rolled back immediately, no individual retry', async () => {
+    it('single piece fails — rolled back, error thrown', async () => {
         const piece = makePiece('@activepieces/piece-solo')
         const installer = pieceInstaller(fakeLog, fakeApiClient)
 
         mockInstall.mockRejectedValueOnce(new Error('install failure'))
 
-        await expect(installer.install({ pieces: [piece], includeFilters: true })).rejects.toThrow('install failure')
+        await expect(installer.install({ pieces: [piece] })).rejects.toThrow('@activepieces/piece-solo@1.0.0')
 
         expect(mockInstall).toHaveBeenCalledOnce()
         expect(await pathExists(pieceDirPath(piece))).toBe(false)
@@ -155,35 +166,8 @@ describe('pieceInstaller', () => {
         await writeFile(join(pieceDir, 'ready'), 'true')
 
         const installer = pieceInstaller(fakeLog, fakeApiClient)
-        await installer.install({ pieces: [piece], includeFilters: true })
+        await installer.install({ pieces: [piece] })
 
         expect(mockInstall).not.toHaveBeenCalled()
-    })
-
-    it('individual fallback always passes --filter path regardless of includeFilters', async () => {
-        const piece1 = makePiece('@activepieces/piece-filter-a')
-        const piece2 = makePiece('@activepieces/piece-filter-b')
-        const installer = pieceInstaller(fakeLog, fakeApiClient)
-
-        mockInstall
-            .mockRejectedValueOnce(new Error('batch error'))  // batch (includeFilters: false → no filter)
-            .mockResolvedValueOnce({ output: '' })             // piece-filter-a individual
-            .mockResolvedValueOnce({ output: '' })             // piece-filter-b individual
-
-        // Use includeFilters: false so the batch call has no filters
-        await installer.install({ pieces: [piece1, piece2], includeFilters: false })
-
-        expect(mockInstall).toHaveBeenCalledTimes(3)
-
-        // Batch call uses empty filtersPath because includeFilters is false
-        expect(mockInstall.mock.calls[0]?.[0]).toMatchObject({ filtersPath: [] })
-
-        // Individual calls must always include the --filter path
-        expect(mockInstall.mock.calls[1]?.[0]).toMatchObject({
-            filtersPath: [expect.stringContaining(`${piece1.pieceName}-${piece1.pieceVersion}`)],
-        })
-        expect(mockInstall.mock.calls[2]?.[0]).toMatchObject({
-            filtersPath: [expect.stringContaining(`${piece2.pieceName}-${piece2.pieceVersion}`)],
-        })
     })
 })

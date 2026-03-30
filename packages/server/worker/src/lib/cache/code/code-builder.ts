@@ -156,7 +156,7 @@ async function installDependencies({ path, packageJson }: InstallDependenciesPar
     await fs.writeFile(`${path}/package.json`, packageJson, 'utf8')
     const deps = Object.entries(JSON.parse(packageJson).dependencies ?? {})
     if (deps.length > 0) {
-        await packageRunner(log).install({ path, filtersPath: [] })
+        await packageRunner(log).install({ path })
     }
 }
 
