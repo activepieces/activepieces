@@ -75,12 +75,12 @@ export function ConversationList({ onSelect }: { onSelect?: (id: string) => void
             fontSize: '11px', fontWeight: 600, color: 'hsl(var(--muted-foreground))',
             padding: '4px 12px', margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px',
             background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex',
-            alignItems: 'center', gap: '4px', fontFamily: 'inherit', width: '100%', justifyContent: 'space-between',
+            alignItems: 'center', gap: '2px', fontFamily: 'inherit',
           }}
         >
           {label}
           <svg
-            width="12" height="12" viewBox="0 0 24 24" fill="none"
+            width="10" height="10" viewBox="0 0 24 24" fill="none"
             style={{ transition: 'transform 0.15s', transform: isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)', flexShrink: 0 }}
           >
             <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
