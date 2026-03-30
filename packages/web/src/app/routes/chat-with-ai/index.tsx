@@ -4,6 +4,7 @@ import { PageHeader } from '@/components/custom/page-header';
 import { Separator } from '@/components/ui/separator';
 
 import { AIChatBox } from './ai-chat-box';
+import { ConversationList } from './conversation-list';
 
 export function ChatWithAIPage() {
   return (
@@ -16,7 +17,10 @@ export function ChatWithAIPage() {
         />
       </div>
       <Separator />
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 overflow-hidden" style={{ position: 'relative' }}>
+        <div style={{ position: 'absolute', top: 0, left: 0, bottom: 0, zIndex: 10 }}>
+          <ConversationList />
+        </div>
         <AIChatBox />
       </div>
     </div>
