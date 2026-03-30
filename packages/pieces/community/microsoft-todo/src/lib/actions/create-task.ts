@@ -11,7 +11,7 @@ export const createTask = createAction({
 	description: 'Creates a new task.',
 	props: {
 		task_list_id: Property.Dropdown({
-   auth: microsoftToDoAuth,
+			auth: microsoftToDoAuth,
 			displayName: 'Task List',
 			description: 'The task list to create the task in.',
 			required: true,
@@ -103,9 +103,11 @@ export const createTask = createAction({
 			},
 		});
 
-		const taskBody: TodoTask = {
-			title,
-		};
+		const taskBody: TodoTask = {};
+
+		if (title) {
+			taskBody.title = title;
+		}
 
 		if (body_content) {
 			taskBody.body = {
