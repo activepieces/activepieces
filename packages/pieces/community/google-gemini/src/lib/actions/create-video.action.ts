@@ -196,7 +196,8 @@ export const createVideoAction = createAction({
     } else if (video.uri) {
       const response = await httpClient.sendRequest<ArrayBuffer>({
         method: HttpMethod.GET,
-        url: `${video.uri}&key=${context.auth.secret_text}`,
+        url: video.uri,
+        queryParams: { key: context.auth.secret_text },
         responseType: 'arraybuffer',
       });
       videoBuffer = Buffer.from(response.body);
