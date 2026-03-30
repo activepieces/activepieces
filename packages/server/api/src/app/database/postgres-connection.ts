@@ -1,7 +1,7 @@
 import { TlsOptions } from 'node:tls'
 import 'pg'
 import { isNil, spreadIfDefined } from '@activepieces/shared'
-import { DataSource, MigrationInterface } from 'typeorm'
+import { DataSource } from 'typeorm'
 import { MakeStripeSubscriptionNullable1685053959806 } from '../ee/database/migrations/postgres/1685053959806-MakeStripeSubscriptionNullable'
 import { AddTemplates1685538145476 } from '../ee/database/migrations/postgres/1685538145476-addTemplates'
 import { ChangeToJsonToKeepKeysOrder1685991260335 } from '../ee/database/migrations/postgres/1685991260335-ChangeToJsonToPeserveKeys'
@@ -25,6 +25,7 @@ import { AddMetadataFieldToFlowTemplates1744780800000 } from '../ee/database/mig
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
 import { commonProperties } from './database-connection'
+import { Migration } from './migration'
 import { AddPieceTypeAndPackageTypeToFlowVersion1696245170061 } from './migration/common/1696245170061-add-piece-type-and-package-type-to-flow-version'
 import { AddPieceTypeAndPackageTypeToFlowTemplate1696245170062 } from './migration/common/1696245170062-add-piece-type-and-package-type-to-flow-template'
 import { StoreCodeInsideFlow1697969398200 } from './migration/common/1697969398200-store-code-inside-flow'
@@ -359,7 +360,7 @@ const getSslConfig = (): boolean | TlsOptions => {
     return false
 }
 
-export const getMigrations = (): (new () => MigrationInterface)[] => {
+export const getMigrations = (): (new () => Migration)[] => {
     const migrations = [
         FlowAndFileProjectId1674788714498,
         initializeSchema1676238396411,
@@ -766,6 +767,6 @@ export const createPostgresDataSource = (): DataSource => {
 type MigrationConfig = {
     migrationsRun?: boolean
     migrationsTransactionMode?: 'all' | 'none' | 'each'
-    migrations?: (new () => MigrationInterface)[]
+    migrations?: (new () => Migration)[]
     synchronize: false
 }

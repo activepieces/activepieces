@@ -237,6 +237,29 @@ jobs:
             ghcr.io/activepieces/activepieces:${{ steps.version.outputs.release }}
             ghcr.io/activepieces/activepieces:latest
 
+      - name: Check for breaking migrations
+        if: steps.day-check.outputs.skip == 'false'
+        id: migration-check
+        run: npx tsx tools/scripts/check-release-migrations.ts ${{ steps.version.outputs.release }}
+
+      - name: Add breaking migration note to release
+        if: steps.day-check.outputs.skip == 'false' && steps.migration-check.outputs.has_breaking == 'true'
+        run: |
+          VERSION=${{ steps.version.outputs.release }}
+          BODY=$(gh release view "$VERSION" --json body -q .body)
+
+          NOTE=$(cat <<EOF
+
+          ---
+
+          > **Note:** This release includes database changes that can't be automatically rolled back (${{ steps.migration-check.outputs.breaking_names }}). See the [rollback guide](https://www.activepieces.com/docs/install/guides/rollback) for details.
+          EOF
+          )
+
+          gh release edit "$VERSION" --notes "${BODY}${NOTE}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   # Run smoke test after daily promotion to production
   smoke-test:
     needs: promote-to-production
