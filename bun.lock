@@ -1,6 +1,5 @@
 {
   "lockfileVersion": 1,
-  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "activepieces",
@@ -862,7 +861,7 @@
     },
     "packages/pieces/community/attio": {
       "name": "@activepieces/piece-attio",
-      "version": "0.1.6",
+      "version": "0.1.7",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -3260,7 +3259,7 @@
     },
     "packages/pieces/community/heygen": {
       "name": "@activepieces/piece-heygen",
-      "version": "0.1.4",
+      "version": "0.1.5",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -7560,7 +7559,7 @@
     },
     "packages/pieces/core/tables": {
       "name": "@activepieces/piece-tables",
-      "version": "0.2.17",
+      "version": "0.3.0",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -7856,7 +7855,7 @@
     },
     "packages/shared": {
       "name": "@activepieces/shared",
-      "version": "0.47.0",
+      "version": "0.50.0",
       "dependencies": {
         "dayjs": "1.11.9",
         "deepmerge-ts": "7.1.0",

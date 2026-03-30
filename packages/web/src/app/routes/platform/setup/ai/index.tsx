@@ -20,7 +20,7 @@ export default function AIProvidersPage() {
   const { data: flags } = flagsHooks.useFlags();
   const allowWrite = flags?.[ApFlagId.CAN_CONFIGURE_AI_PROVIDER] === true;
 
-  const { mutate: deleteProvider, isPending: isDeleting } =
+  const { mutateAsync: deleteProvider } =
     aiProviderMutations.useDeleteAiProvider({
       onSuccess: () => refetch(),
     });
@@ -57,7 +57,6 @@ export default function AIProvidersPage() {
                 key={providerDef.provider}
                 providerInfo={providerDef}
                 providerConfig={config}
-                isDeleting={isDeleting}
                 onDelete={(id) => deleteProvider(id)}
                 onSave={() => refetch()}
                 allowWrite={allowWrite}
