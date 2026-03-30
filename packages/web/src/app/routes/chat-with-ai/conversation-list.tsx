@@ -95,7 +95,7 @@ export function ConversationList({ onSelect }: { onSelect?: (id: string) => void
           onClick={() => toggleGroup(label)}
           style={{
             fontSize: '11px', fontWeight: 600,
-            padding: '4px 12px', margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px',
+            padding: '4px 8px', margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px',
             background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex',
             alignItems: 'center', gap: '2px', fontFamily: 'inherit',
           }}
