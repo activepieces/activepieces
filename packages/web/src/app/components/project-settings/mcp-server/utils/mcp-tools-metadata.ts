@@ -33,6 +33,11 @@ export const TOOL_CATEGORIES: ToolCategory[] = [
           'List OAuth/app connections in the project — required before adding steps that need auth',
       },
       {
+        name: 'ap_list_ai_models',
+        description:
+          'List configured AI providers and their available models',
+      },
+      {
         name: 'ap_list_tables',
         description: 'List all tables and their fields in the current project',
       },
