@@ -63,8 +63,9 @@ const css = `
   .conv-sidebar { background: transparent !important; opacity: 0.4; transition: opacity 0.2s; }
   .conv-sidebar:hover { opacity: 1; }
   .dark .conv-sidebar { background: transparent !important; }
-  .group-label { transition: color 0.15s; }
-  .group-label:hover { color: hsl(var(--foreground)) !important; }
+  .group-label { transition: color 0.15s, background 0.15s; border-radius: 6px; }
+  .group-label:hover { color: hsl(var(--foreground)) !important; background: rgba(0,0,0,0.05); }
+  .dark .group-label:hover { background: rgba(255,255,255,0.07); }
 `;
 
 export function ConversationList({ onSelect }: { onSelect?: (id: string) => void }) {
