@@ -37,7 +37,7 @@ export const TextMessage: React.FC<TextMessageProps> = React.memo(
           remarkPlugins={[remarkGfm]}
           className="bg-inherit"
           components={{
-            code({ node, inline, className, children, ...props }: any) {
+            code({ node: _node, inline, className, children, ...props }: any) {
               if (role === 'user') {
                 return <div className="font-mono text-sm">{children}</div>;
               }

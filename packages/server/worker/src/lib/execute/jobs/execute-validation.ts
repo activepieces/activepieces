@@ -9,11 +9,11 @@ import {
 } from '@activepieces/shared'
 import { provisioner } from '../../cache/provisioner'
 import { workerSettings } from '../../config/worker-settings'
-import { JobContext, JobHandler, JobResult } from '../types'
+import { JobContext, JobHandler, JobResultKind, SynchronousJobResult } from '../types'
 
-export const executeValidationJob: JobHandler<ExecuteValidateAuthJobData> = {
+export const executeValidationJob: JobHandler<ExecuteValidateAuthJobData, SynchronousJobResult> = {
     jobType: WorkerJobType.EXECUTE_VALIDATION,
-    async execute(ctx: JobContext, data: ExecuteValidateAuthJobData): Promise<JobResult> {
+    async execute(ctx: JobContext, data: ExecuteValidateAuthJobData): Promise<SynchronousJobResult> {
         const settings = workerSettings.getSettings()
         const timeoutInSeconds = settings.TRIGGER_TIMEOUT_SECONDS
 
@@ -45,20 +45,20 @@ export const executeValidationJob: JobHandler<ExecuteValidateAuthJobData> = {
             )
 
             return {
-                response: {
-                    status: result.engine.status,
-                    response: result.engine.response,
-                },
+                kind: JobResultKind.SYNCHRONOUS,
+                status: result.status,
+                response: result.response,
+                errorMessage: result.error,
+                logs: result.logs,
             }
         }
         catch (e) {
             await ctx.sandboxManager.invalidate(ctx.log)
             if (e instanceof ActivepiecesError && e.error.code === ErrorCode.SANDBOX_EXECUTION_TIMEOUT) {
                 return {
-                    response: {
-                        status: EngineResponseStatus.TIMEOUT,
-                        response: { valid: false, error: 'Validation timed out' },
-                    },
+                    kind: JobResultKind.SYNCHRONOUS,
+                    status: EngineResponseStatus.TIMEOUT,
+                    response: { valid: false, error: 'Validation timed out' },
                 }
             }
             throw e

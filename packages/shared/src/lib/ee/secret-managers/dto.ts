@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { formErrors } from '../../form-errors'
 
 export enum SecretManagerProviderId {
     HASHICORP = 'hashicorp',
@@ -15,19 +16,19 @@ export enum SecretManagerConnectionScope {
 
 
 export const HashicorpProviderConfigSchema = z.object({
-    url: z.string().min(1, 'required'),
+    url: z.string().min(1, formErrors.required),
     namespace: z.string().optional(),
-    roleId: z.string().min(1, 'required'),
-    secretId: z.string().min(1, 'required'),
+    roleId: z.string().min(1, formErrors.required),
+    secretId: z.string().min(1, formErrors.required),
 })
 export type HashicorpProviderConfig = z.infer<typeof HashicorpProviderConfigSchema>
 
 
 
 export const AWSProviderConfigSchema = z.object({
-    accessKeyId: z.string().min(1, 'required'),
-    secretAccessKey: z.string().min(1, 'required'),
-    region: z.string().min(1, 'required'),
+    accessKeyId: z.string().min(1, formErrors.required),
+    secretAccessKey: z.string().min(1, formErrors.required),
+    region: z.string().min(1, formErrors.required),
 })
 export type AWSProviderConfig = z.infer<typeof AWSProviderConfigSchema>
 
@@ -35,21 +36,21 @@ export type AWSProviderConfig = z.infer<typeof AWSProviderConfigSchema>
 
 
 export const CyberarkConjurProviderConfigSchema = z.object({
-    organizationAccountName: z.string().min(1, 'required'),
-    loginId: z.string().min(1, 'required'),
-    url: z.string().min(1, 'required'),
-    apiKey: z.string().min(1, 'required'),
+    organizationAccountName: z.string().min(1, formErrors.required),
+    loginId: z.string().min(1, formErrors.required),
+    url: z.string().min(1, formErrors.required),
+    apiKey: z.string().min(1, formErrors.required),
 })
 export type CyberarkConjurProviderConfig = z.infer<typeof CyberarkConjurProviderConfigSchema>
 
 
 export const OnePasswordProviderConfigSchema = z.object({
-    serviceAccountToken: z.string().min(1, 'required'),
+    serviceAccountToken: z.string().min(1, formErrors.required),
 })
 export type OnePasswordProviderConfig = z.infer<typeof OnePasswordProviderConfigSchema>
 
 const SecretManagerConnectionScopeFields = {
-    name: z.string().min(1, 'required'),
+    name: z.string().min(1, formErrors.required),
     scope: z.enum(SecretManagerConnectionScope),
     projectIds: z.array(z.string()).optional(),
 }

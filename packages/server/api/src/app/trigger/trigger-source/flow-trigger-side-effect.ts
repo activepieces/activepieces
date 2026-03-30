@@ -130,7 +130,7 @@ export const flowTriggerSideEffect = (log: FastifyBaseLogger) => {
 }
 
 async function handleAppWebhookTrigger({ engineHelperResponse, flowId, projectId, pieceName }: ActiveTriggerParams): Promise<ActiveTriggerReturn> {
-    for (const listener of engineHelperResponse.response.listeners) {
+    for (const listener of engineHelperResponse.response?.listeners ?? []) {
         await appEventRoutingService.createListeners({
             projectId,
             flowId,
@@ -178,13 +178,12 @@ async function handleWebhookTrigger({ flowId, flowVersionId, projectId, pieceTri
 
 async function handlePollingTrigger({ engineHelperResponse, flowId, flowVersionId, projectId, log }: ActiveTriggerParams): Promise<ActiveTriggerReturn> {
     const pollingFrequencyCronExpression = `*/${system.getNumber(AppSystemProp.TRIGGER_DEFAULT_POLL_INTERVAL) ?? 5} * * * *`
-    if (isNil(engineHelperResponse.response.scheduleOptions)) {
-        engineHelperResponse.response.scheduleOptions = {
-            cronExpression: pollingFrequencyCronExpression,
-            timezone: 'UTC',
-            type: TriggerSourceScheduleType.CRON_EXPRESSION,
-        }
+    const defaultScheduleOptions: ScheduleOptions = {
+        cronExpression: pollingFrequencyCronExpression,
+        timezone: 'UTC',
+        type: TriggerSourceScheduleType.CRON_EXPRESSION,
     }
+    const scheduleOptions = engineHelperResponse.response?.scheduleOptions ?? defaultScheduleOptions
     const platformId = await projectService(log).getPlatformId(projectId)
     await jobQueue(log).add({
         id: flowVersionId,
@@ -198,10 +197,10 @@ async function handlePollingTrigger({ engineHelperResponse, flowId, flowVersionI
             jobType: WorkerJobType.EXECUTE_POLLING,
             platformId,
         },
-        scheduleOptions: engineHelperResponse.response.scheduleOptions,
+        scheduleOptions,
     })
     return {
-        scheduleOptions: engineHelperResponse.response.scheduleOptions,
+        scheduleOptions,
     }
 }
 

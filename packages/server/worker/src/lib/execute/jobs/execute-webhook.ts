@@ -14,7 +14,7 @@ import {
 } from '@activepieces/shared'
 import { flowCache } from '../../cache/flow/flow-cache'
 import { workerSettings } from '../../config/worker-settings'
-import { JobContext, JobHandler, JobResult } from '../types'
+import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../types'
 import { provisionFlowPieces } from '../utils/flow-helpers'
 import { resolvePayload } from '../utils/resolve-payload'
 import { getAppWebhookUrl, getWebhookUrl } from '../utils/webhook-url'
@@ -34,9 +34,9 @@ function getAppWebhookDetails(flowVersion: FlowVersion, publicApiUrl: string, ap
     }
 }
 
-export const executeWebhookJob: JobHandler<WebhookJobData> = {
+export const executeWebhookJob: JobHandler<WebhookJobData, FireAndForgetJobResult> = {
     jobType: WorkerJobType.EXECUTE_WEBHOOK,
-    async execute(ctx: JobContext, data: WebhookJobData): Promise<JobResult> {
+    async execute(ctx: JobContext, data: WebhookJobData): Promise<FireAndForgetJobResult> {
         const settings = workerSettings.getSettings()
         const timeoutInSeconds = settings.TRIGGER_TIMEOUT_SECONDS
         const resolvedPayload = await resolvePayload(data.payload, data.projectId, ctx.apiClient)
@@ -44,14 +44,14 @@ export const executeWebhookJob: JobHandler<WebhookJobData> = {
         const flowVersion = await flowCache(ctx.log, ctx.apiClient).getVersion({ flowVersionId: data.flowVersionIdToRun })
         if (isNil(flowVersion)) {
             ctx.log.info({ flowVersionId: data.flowVersionIdToRun }, 'Flow version not found for webhook, skipping')
-            return {}
+            return { kind: JobResultKind.FIRE_AND_FORGET }
         }
 
         const { appWebhookUrl, webhookSecret } = getAppWebhookDetails(flowVersion, ctx.publicApiUrl, settings.APP_WEBHOOK_SECRETS)
 
         const provisioned = await provisionFlowPieces({ flowVersion, platformId: data.platformId, flowId: data.flowId, projectId: data.projectId, log: ctx.log, apiClient: ctx.apiClient })
         if (!provisioned) {
-            return {}
+            return { kind: JobResultKind.FIRE_AND_FORGET }
         }
 
         const sandbox = ctx.sandboxManager.acquire({ log: ctx.log, apiClient: ctx.apiClient })
@@ -83,9 +83,9 @@ export const executeWebhookJob: JobHandler<WebhookJobData> = {
                     { timeoutInSeconds },
                 )
 
-                if (sampleResult.engine.status === EngineResponseStatus.OK) {
-                    const sampleTriggerResult = sampleResult.engine.response as ExecuteTriggerResponse<TriggerHookType.RUN>
-                    if (sampleTriggerResult.success && sampleTriggerResult.output.length > 0) {
+                if (sampleResult.status === EngineResponseStatus.OK) {
+                    const sampleTriggerResult = sampleResult.response as ExecuteTriggerResponse<TriggerHookType.RUN>
+                    if (sampleTriggerResult.output.length > 0) {
                         await ctx.apiClient.savePayloads({
                             flowId: data.flowId,
                             flowVersionId: flowVersion.id,
@@ -97,7 +97,7 @@ export const executeWebhookJob: JobHandler<WebhookJobData> = {
             }
 
             if (!data.execute) {
-                return {}
+                return { kind: JobResultKind.FIRE_AND_FORGET }
             }
 
             const result = await sandbox.execute(
@@ -120,9 +120,9 @@ export const executeWebhookJob: JobHandler<WebhookJobData> = {
                 { timeoutInSeconds },
             )
 
-            if (result.engine.status === EngineResponseStatus.OK) {
-                const triggerResult = result.engine.response as ExecuteTriggerResponse<TriggerHookType.RUN>
-                if (triggerResult.success && triggerResult.output.length > 0) {
+            if (result.status === EngineResponseStatus.OK) {
+                const triggerResult = result.response as ExecuteTriggerResponse<TriggerHookType.RUN>
+                if (triggerResult.output.length > 0) {
                     await ctx.apiClient.submitPayloads({
                         flowVersionId: flowVersion.id,
                         projectId: data.projectId,
@@ -136,7 +136,7 @@ export const executeWebhookJob: JobHandler<WebhookJobData> = {
                 }
             }
 
-            return {}
+            return { kind: JobResultKind.FIRE_AND_FORGET, logs: result.logs }
         }
         catch (e) {
             await ctx.sandboxManager.invalidate(ctx.log)

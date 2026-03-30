@@ -196,11 +196,6 @@ export default function LeaderboardPage() {
     setTimeSavedPopoverOpen(false);
   };
 
-  const clearTimeSavedFilter = () => {
-    setAppliedFilter(emptyFilter);
-    setTimeSavedPopoverOpen(false);
-  };
-
   const hasActiveFilters =
     searchQuery !== '' || appliedFilter.min !== '' || appliedFilter.max !== '';
 

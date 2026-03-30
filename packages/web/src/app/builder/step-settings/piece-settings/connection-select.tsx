@@ -20,7 +20,6 @@ import { AutoFormFieldWrapper } from '@/app/builder/piece-properties/auto-form-f
 import { CreateOrEditConnectionDialog } from '@/app/connections/create-edit-connection-dialog';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { SearchableSelect } from '@/components/custom/searchable-select';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { FormField, FormLabel } from '@/components/ui/form';
 import {

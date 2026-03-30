@@ -1,5 +1,8 @@
 import {
+    ActivepiecesError,
     assertNotEqual,
+    ErrorCode,
+    isNil,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import jwksClient from 'jwks-rsa'
@@ -65,8 +68,14 @@ const exchangeCodeForIdToken = async (
         }),
     })
 
-    const { id_token: idToken } = await response.json() as { id_token: string }
-    return idToken
+    const responseBody = await response.json() as { id_token?: string }
+    if (isNil(responseBody.id_token)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.INVALID_CREDENTIALS,
+            params: null,
+        }, 'Google OAuth token exchange failed: no id_token returned')
+    }
+    return responseBody.id_token
 }
 
 const verifyIdToken = async (

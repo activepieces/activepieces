@@ -4,19 +4,14 @@ import {
   SECRET_MANAGER_PROVIDERS_METADATA,
   SecretManagerConnectionScope,
   SecretManagerConnectionWithStatus,
-  SecretManagerProviderId,
   SecretManagerProviderMetaData,
   ApErrorParams,
   ErrorCode,
-  HashicorpProviderConfig,
-  AWSProviderConfig,
-  CyberarkConjurProviderConfig,
-  OnePasswordProviderConfig,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { t } from 'i18next';
 import { useState } from 'react';
-import { useForm, type FieldPath } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
 import {

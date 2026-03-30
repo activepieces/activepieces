@@ -1,9 +1,11 @@
+import { createServer } from 'http'
 import os from 'os'
 import { systemUsage } from '@activepieces/server-utils'
 import {
+    ActivepiecesError,
     ConsumeJobRequest,
-    ConsumeJobResponseStatus,
     createRpcClient,
+    EngineResponseStatus,
     JobData,
     tryCatch,
     WebsocketServerEvent,
@@ -20,7 +22,7 @@ import { logger } from './config/logger'
 import { workerSettings } from './config/worker-settings'
 import { getHandler } from './execute/job-registry'
 import { createSandboxManager, SandboxManager } from './execute/sandbox-manager'
-import { JobContext, JobResult } from './execute/types'
+import { JobContext, JobResult, JobResultKind } from './execute/types'
 
 
 const tracer = trace.getTracer('worker')
@@ -33,10 +35,12 @@ const workerId = `worker-${nanoid()}`
 
 const workerHostname = os.hostname()
 
+let healthServerInstance: ReturnType<typeof createServer> | null = null
+
 let sandboxManagers: SandboxManager[] = []
 
 export const worker = {
-    async start({ apiUrl, socketUrl, workerToken }: WorkerStartParams): Promise<void> {
+    async start({ apiUrl, socketUrl, workerToken, withHealthServer = false }: WorkerStartParams): Promise<void> {
         const platformIdForDedicatedWorker = system.get(WorkerSystemProp.PLATFORM_ID_FOR_DEDICATED_WORKER)
         socket = io(socketUrl.url, {
             auth: { token: workerToken, workerId, platformIdForDedicatedWorker },
@@ -66,6 +70,9 @@ export const worker = {
             logger.error({ error: error.message }, 'Socket.IO connection error')
         })
 
+        if (withHealthServer) {
+            healthServerInstance = startHealthServer()
+        }
         logger.info({ apiUrl, socketUrl }, 'Worker started, polling for jobs...')
     },
 
@@ -75,6 +82,8 @@ export const worker = {
         sandboxManagers = []
         socket?.disconnect()
         socket = null
+        healthServerInstance?.close()
+        healthServerInstance = null
         logger.info('Worker stopped')
     },
 }
@@ -123,15 +132,15 @@ async function pollAndExecute(apiClient: WorkerToApiContract, sbManager: Sandbox
             continue
         }
 
-        workerLog.info({ jobId: job.jobId, jobType: job.jobData.jobType }, 'Job received from poll')
+        workerLog.debug({ jobId: job.jobId, jobType: job.jobData.jobType }, 'Job received from poll')
 
         const lockExtensionInterval = setInterval(() => {
-            void tryCatch(() => apiClient.extendLock({ jobId: job.jobId })).then(({ error }) => {
+            void tryCatch(() => apiClient.extendLock({ jobId: job.jobId, token: job.token, queueName: job.queueName })).then(({ error }) => {
                 if (error) {
                     workerLog.warn({ error, jobId: job.jobId }, 'Failed to extend lock')
                 }
             })
-        }, 90_000)
+        }, 30_000)
 
         const { data: result, error: execError } = await tryCatch(() =>
             executeJob(apiClient, job, sbManager),
@@ -142,10 +151,15 @@ async function pollAndExecute(apiClient: WorkerToApiContract, sbManager: Sandbox
         const { error: completeError } = await tryCatch(() =>
             apiClient.completeJob({
                 jobId: job.jobId,
-                status: execError ? ConsumeJobResponseStatus.INTERNAL_ERROR : ConsumeJobResponseStatus.OK,
-                errorMessage: execError?.message,
-                delayInSeconds: result?.delayInSeconds,
-                response: result?.response,
+                token: job.token,
+                queueName: job.queueName,
+                status: execError
+                    ? EngineResponseStatus.INTERNAL_ERROR
+                    : result?.kind === JobResultKind.SYNCHRONOUS ? result.status : EngineResponseStatus.OK,
+                errorMessage: buildErrorMessage(execError ?? undefined, result ?? undefined),
+                logs: extractLogs(execError ?? undefined, result ?? undefined),
+                delayInSeconds: result?.kind === JobResultKind.FIRE_AND_FORGET ? result.delayInSeconds : undefined,
+                response: result?.kind === JobResultKind.SYNCHRONOUS ? result.response : undefined,
             }),
         )
 
@@ -167,7 +181,7 @@ async function executeJob(apiClient: WorkerToApiContract, job: ConsumeJobRequest
         const log = logger.child({ jobId: job.jobId, jobType: jobData.jobType })
         const apiUrl = getApiUrl()
         const { PUBLIC_URL: publicUrl } = await workerSettings.waitForSettings()
-        log.info({ apiUrl, publicUrl }, 'Worker settings resolved')
+        log.debug({ apiUrl, publicUrl }, 'Worker settings resolved')
         const ctx: JobContext = {
             apiClient,
             sandboxManager: sbManager,
@@ -179,14 +193,14 @@ async function executeJob(apiClient: WorkerToApiContract, job: ConsumeJobRequest
         }
         try {
             const handler = getHandler(jobData.jobType)
-            log.info({ handlerType: handler.jobType }, 'Executing job with handler')
+            log.debug({ handlerType: handler.jobType }, 'Executing job with handler')
             const { data: result, error } = await tryCatch(() => handler.execute(ctx, jobData))
             if (error) {
                 log.error({ error }, 'Job execution failed')
                 span.recordException(error)
                 throw error
             }
-            log.info('Job completed')
+            log.debug('Job completed')
             return result
         }
         finally {
@@ -270,12 +284,57 @@ async function warmupPiecesOnStartup(apiClient: WorkerToApiContract): Promise<vo
     logger.info({ count: pieces.length }, 'Piece cache warmup complete')
 }
 
+function buildErrorMessage(execError: Error | undefined, result: JobResult | undefined): string | undefined {
+    if (execError) {
+        return execError.message
+    }
+    const isFailure = result?.kind === JobResultKind.SYNCHRONOUS && result.status !== EngineResponseStatus.OK
+    if (!isFailure) {
+        return undefined
+    }
+    return result.errorMessage
+}
+
+function extractLogs(execError: Error | undefined, result: JobResult | undefined): string | undefined {
+    if (execError instanceof ActivepiecesError) {
+        const params = execError.error.params as Record<string, unknown>
+        const parts: string[] = []
+        if (params?.['standardOutput']) parts.push(`stdout:\n${params['standardOutput']}`)
+        if (params?.['standardError']) parts.push(`stderr:\n${params['standardError']}`)
+        return parts.length > 0 ? parts.join('\n') : undefined
+    }
+    if (result && 'logs' in result) {
+        return result.logs
+    }
+    return undefined
+}
+
 function sleep(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+
+function startHealthServer(): ReturnType<typeof createServer> {
+    const port = Number(system.get(WorkerSystemProp.PORT))
+    const server = createServer((req, res) => {
+        if (req.method === 'GET' && req.url === '/worker/health') {
+            res.writeHead(200, { 'Content-Type': 'application/json' })
+            res.end(JSON.stringify({ status: 'ok' }))
+        }
+        else {
+            res.writeHead(404)
+            res.end()
+        }
+    })
+    server.listen(port, () => {
+        logger.info({ port }, 'Health server listening')
+    })
+    return server
 }
 
 type WorkerStartParams = {
     apiUrl: string
     socketUrl: { url: string, path: string }
     workerToken: string
+    withHealthServer?: boolean
 }

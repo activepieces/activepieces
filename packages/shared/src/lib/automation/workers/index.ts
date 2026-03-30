@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { BaseModelSchema } from '../../core/common'
+import { EngineResponseStatus } from '../engine/engine-operation'
 import { JobData } from './job-data'
 
 export enum WorkerMachineStatus {
@@ -51,18 +52,16 @@ export const ConsumeJobRequest = z.object({
     timeoutInSeconds: z.number(),
     attempsStarted: z.number(),
     engineToken: z.string(),
+    token: z.string(),
+    queueName: z.string(),
 })
-
-export enum ConsumeJobResponseStatus {
-    OK = 'OK',
-    INTERNAL_ERROR = 'INTERNAL_ERROR',
-}
 
 export type ConsumeJobRequest = z.infer<typeof ConsumeJobRequest>
 
 export const ConsumeJobResponse = z.object({
-    status: z.nativeEnum(ConsumeJobResponseStatus),
+    status: z.nativeEnum(EngineResponseStatus),
     errorMessage: z.string().optional(),
+    logs: z.string().optional(),
     delayInSeconds: z.number().optional(),
     response: z.unknown().optional(),
 })

@@ -18,6 +18,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { TagWithBright } from '@/components/custom/tag-with-bright';
+import { useEmbedding } from '@/components/providers/embed-provider';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ImportFlowDialog } from '@/features/automations/components/import-flow-dialog';
@@ -25,6 +26,8 @@ import { flowHooks } from '@/features/flows/hooks/flow-hooks';
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
 import { ImportTableDialog } from '@/features/tables/components/import-table-dialog';
 import { tableHooks } from '@/features/tables/hooks/table-hooks';
+import { TemplatesBrowseDialog } from '@/features/templates';
+import { UseTemplateDialog } from '@/features/templates/components/use-template-dialog';
 import { templatesHooks } from '@/features/templates/hooks/templates-hook';
 import { useGradientFromPieces } from '@/features/templates/hooks/use-gradient-from-pieces';
 import { useAuthorization } from '@/hooks/authorization-hooks';
@@ -198,7 +201,14 @@ export const AutomationsEmptyState = ({
   onRefresh,
 }: AutomationsEmptyStateProps) => {
   const navigate = useNavigate();
+  const { embedState } = useEmbedding();
   const [isImportTableDialogOpen, setIsImportTableDialogOpen] = useState(false);
+  const [isTemplatesBrowseDialogOpen, setIsTemplatesBrowseDialogOpen] =
+    useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(
+    null,
+  );
+  const [useTemplateDialogOpen, setUseTemplateDialogOpen] = useState(false);
 
   const { checkAccess } = useAuthorization();
   const userHasPermissionToWriteFlow = checkAccess(Permission.WRITE_FLOW);
@@ -219,11 +229,20 @@ export const AutomationsEmptyState = ({
     tableHooks.useCreateTable(UncategorizedFolderId);
 
   const handleTemplateSelect = (template: Template) => {
-    navigate(`/templates/${template.id}`);
+    if (embedState.isEmbedded) {
+      setSelectedTemplate(template);
+      setUseTemplateDialogOpen(true);
+    } else {
+      navigate(`/templates/${template.id}`);
+    }
   };
 
   const handleViewAllTemplates = () => {
-    navigate('/templates');
+    if (embedState.isEmbedded) {
+      setIsTemplatesBrowseDialogOpen(true);
+    } else {
+      navigate('/templates');
+    }
   };
 
   const topTemplates = templates?.slice(0, 3) || [];
@@ -274,7 +293,13 @@ export const AutomationsEmptyState = ({
             <ActionRow
               icon={<Sparkles className="h-4 w-4" />}
               label={t('Use Templates')}
-              onClick={handleViewAllTemplates}
+              onClick={() => {
+                if (embedState.isEmbedded) {
+                  setIsTemplatesBrowseDialogOpen(true);
+                } else {
+                  navigate('/templates');
+                }
+              }}
               hasPermission={userHasPermissionToWriteFlow}
             />
           </GetStartedCard>
@@ -342,6 +367,21 @@ export const AutomationsEmptyState = ({
         setIsOpen={setIsImportTableDialogOpen}
         showTrigger={false}
       />
+      <TemplatesBrowseDialog
+        open={isTemplatesBrowseDialogOpen}
+        onOpenChange={setIsTemplatesBrowseDialogOpen}
+      />
+      {selectedTemplate && (
+        <UseTemplateDialog
+          key={selectedTemplate.id}
+          template={selectedTemplate}
+          open={useTemplateDialogOpen}
+          onOpenChange={(isOpen) => {
+            setUseTemplateDialogOpen(isOpen);
+            if (!isOpen) setSelectedTemplate(null);
+          }}
+        />
+      )}
     </div>
   );
 };
