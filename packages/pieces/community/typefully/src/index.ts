@@ -17,7 +17,7 @@ export const typefully = createPiece({
 	auth: typefullyAuth,
 	minimumSupportedRelease: '0.36.1',
 	logoUrl: 'https://cdn.activepieces.com/pieces/typefully.png',
-	authors: [],
+	authors: ['bst1n'],
 	categories: [PieceCategory.MARKETING],
 	actions: [
 		createDraftAction,

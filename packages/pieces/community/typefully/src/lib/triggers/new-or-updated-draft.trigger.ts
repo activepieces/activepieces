@@ -19,19 +19,37 @@ const polling: Polling<
 > = {
 	strategy: DedupeStrategy.TIMEBASED,
 	items: async ({ auth, propsValue, lastFetchEpochMS }) => {
-		const response = await typefullyApiCall<
-			TypefullyPaginatedResponse<TypefullyDraft>
-		>({
-			apiKey: auth.secret_text,
-			method: HttpMethod.GET,
-			resourceUri: `/social-sets/${propsValue.social_set_id}/drafts`,
-			query: {
-				order_by: '-updated_at',
-				limit: 50,
-			},
-		});
+		const allResults: TypefullyDraft[] = [];
+		let offset = 0;
+		const limit = 50;
 
-		return response.results
+		while (true) {
+			const response = await typefullyApiCall<
+				TypefullyPaginatedResponse<TypefullyDraft>
+			>({
+				apiKey: auth.secret_text,
+				method: HttpMethod.GET,
+				resourceUri: `/social-sets/${propsValue.social_set_id}/drafts`,
+				query: {
+					order_by: '-updated_at',
+					limit,
+					offset,
+				},
+			});
+
+			allResults.push(...response.results);
+
+			const oldestInPage = response.results[response.results.length - 1];
+			const hasMore = response.results.length === limit && response.next !== null;
+			const oldestStillRelevant =
+				oldestInPage &&
+				new Date(oldestInPage.updated_at).getTime() > lastFetchEpochMS;
+
+			if (!hasMore || !oldestStillRelevant) break;
+			offset += limit;
+		}
+
+		return allResults
 			.filter(
 				(draft) =>
 					new Date(draft.updated_at).getTime() > lastFetchEpochMS,

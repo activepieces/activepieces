@@ -58,8 +58,8 @@ export const listDraftsAction = createAction({
 			method: HttpMethod.GET,
 			resourceUri: `/social-sets/${social_set_id}/drafts`,
 			query: {
-				status: status ?? undefined,
-				order_by: order_by ?? undefined,
+				status,
+				order_by,
 				limit: limit ?? 10,
 			},
 		});
