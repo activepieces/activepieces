@@ -243,8 +243,8 @@ export function AIChatBox() {
           </div>
         ) : (
           <>
-            <div className="msgs-area" style={{ flex: 1, overflowY: 'auto', padding: '24px 24px 0', display: 'flex', flexDirection: 'column' }}>
-              <div style={{ width: '100%', padding: '0 0 40px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <div className="msgs-area" style={{ flex: 1, overflowY: 'auto', padding: '24px 0 0', display: 'flex', flexDirection: 'column' }}>
+              <div style={{ maxWidth: '720px', width: '100%', margin: '0 auto', padding: '0 0 40px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
                 {messages.map((msg) =>
                   msg.role === 'ai' ? (
                     <div key={msg.id} className="msg-enter" style={{ padding: '8px 0' }}>
