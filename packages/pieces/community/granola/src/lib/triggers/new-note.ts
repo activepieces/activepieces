@@ -21,12 +21,16 @@ const polling: Polling<
   Record<string, never>
 > = {
   strategy: DedupeStrategy.TIMEBASED,
-  items: async ({ auth }) => {
+  items: async ({ auth, lastFetchEpochMS }) => {
+    const queryParams: Record<string, string> = { page_size: '30' };
+    if (lastFetchEpochMS > 0) {
+      queryParams['created_after'] = new Date(lastFetchEpochMS).toISOString();
+    }
     const response = await granolaApiCall<GranolaListResponse>({
       token: auth.secret_text,
       method: HttpMethod.GET,
       path: '/notes',
-      queryParams: { page_size: '30' },
+      queryParams,
     });
 
     return response.body.notes.map((note) => ({
