@@ -98,6 +98,48 @@ describe('packageRunner.build (integration)', () => {
         expect(await mod.code({ arr: [1, 2, 3] })).toBe(6)
     })
 
+    it('code using hello-world-npm — full install + build pipeline', { timeout: 30_000 }, async () => {
+        const packageJsonFile = join(tempDir, 'package.json')
+        const entryFile = join(tempDir, 'index.ts')
+        const outputFile = join(tempDir, 'index.js')
+
+        await writeFile(packageJsonFile, JSON.stringify({ dependencies: { 'hello-world-npm': '1.1.1' } }))
+        await packageRunner(fakeLog).install({ path: tempDir })
+
+        await writeFile(entryFile, [
+            `import helloWorldNpm from 'hello-world-npm';`,
+            `export const code = async (inputs) => {`,
+            `  return helloWorldNpm();`,
+            `};`,
+        ].join('\n'))
+
+        await packageRunner(fakeLog).build({ path: tempDir, entryFile, outputFile })
+
+        const mod = requireDynamic(outputFile)
+        expect(await mod.code({})).toBe('Hello World NPM')
+    })
+
+    it('hello-world@0.0.2 has no main entry — install succeeds but build rejects', { timeout: 30_000 }, async () => {
+        // hello-world@0.0.2 has no "main" field and no index.js — no bundler can resolve it.
+        // This was always broken (verified: bun build fails identically). Not a regression.
+        const packageJsonFile = join(tempDir, 'package.json')
+        const entryFile = join(tempDir, 'index.ts')
+        const outputFile = join(tempDir, 'index.js')
+
+        await writeFile(packageJsonFile, JSON.stringify({ dependencies: { 'hello-world': '0.0.2' } }))
+        await packageRunner(fakeLog).install({ path: tempDir })
+
+        await writeFile(entryFile, [
+            `import helloWorld from 'hello-world';`,
+            `export const code = async (inputs) => {`,
+            `  const result = helloWorld();`,
+            `  return result;`,
+            `};`,
+        ].join('\n'))
+
+        await expect(packageRunner(fakeLog).build({ path: tempDir, entryFile, outputFile })).rejects.toThrow()
+    })
+
     it('code using dayjs — full install + build pipeline', { timeout: 30_000 }, async () => {
         const packageJsonFile = join(tempDir, 'package.json')
         const entryFile = join(tempDir, 'index.ts')

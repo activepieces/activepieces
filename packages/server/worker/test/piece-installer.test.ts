@@ -79,7 +79,7 @@ afterEach(async () => {
 })
 
 describe('pieceInstaller', () => {
-    it('two pieces succeed — both marked ready, install called once per piece', async () => {
+    it('two pieces succeed — both marked ready, install called once (batch)', async () => {
         const piece1 = makePiece('@activepieces/piece-a')
         const piece2 = makePiece('@activepieces/piece-b')
         const installer = pieceInstaller(fakeLog, fakeApiClient)
@@ -88,23 +88,10 @@ describe('pieceInstaller', () => {
 
         await installer.install({ pieces: [piece1, piece2] })
 
-        expect(mockInstall).toHaveBeenCalledTimes(2)
+        expect(mockInstall).toHaveBeenCalledTimes(1)
+        expect(mockInstall).toHaveBeenCalledWith({ path: testWorkspace })
         expect(await pathExists(readyFilePath(piece1))).toBe(true)
         expect(await pathExists(readyFilePath(piece2))).toBe(true)
-    })
-
-    it('each piece is installed in its own directory', async () => {
-        const piece1 = makePiece('@activepieces/piece-a')
-        const piece2 = makePiece('@activepieces/piece-b')
-        const installer = pieceInstaller(fakeLog, fakeApiClient)
-
-        mockInstall.mockResolvedValue({ output: '' })
-
-        await installer.install({ pieces: [piece1, piece2] })
-
-        const paths = mockInstall.mock.calls.map((call: [{ path: string }]) => call[0].path)
-        expect(paths).toContain(pieceDirPath(piece1))
-        expect(paths).toContain(pieceDirPath(piece2))
     })
 
     it('good piece succeeds, bad piece fails — good marked ready, bad rolled back, error names bad', async () => {
@@ -113,6 +100,9 @@ describe('pieceInstaller', () => {
         const installer = pieceInstaller(fakeLog, fakeApiClient)
 
         mockInstall.mockImplementation(({ path }: { path: string }) => {
+            if (path === testWorkspace) {
+                return Promise.reject(new Error('batch install failure'))
+            }
             if (path.includes('piece-bad')) {
                 return Promise.reject(new Error('install failure'))
             }
@@ -150,11 +140,11 @@ describe('pieceInstaller', () => {
         const piece = makePiece('@activepieces/piece-solo')
         const installer = pieceInstaller(fakeLog, fakeApiClient)
 
-        mockInstall.mockRejectedValueOnce(new Error('install failure'))
+        mockInstall.mockRejectedValue(new Error('install failure'))
 
         await expect(installer.install({ pieces: [piece] })).rejects.toThrow('@activepieces/piece-solo@1.0.0')
 
-        expect(mockInstall).toHaveBeenCalledOnce()
+        expect(mockInstall).toHaveBeenCalledTimes(2)
         expect(await pathExists(pieceDirPath(piece))).toBe(false)
     })
 
