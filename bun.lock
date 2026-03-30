@@ -1,5 +1,6 @@
 {
   "lockfileVersion": 1,
+  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "activepieces",
@@ -5271,6 +5272,16 @@
         "tslib": "2.6.2",
       },
     },
+    "packages/pieces/community/postmark": {
+      "name": "@activepieces/piece-postmark",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/predict-leads": {
       "name": "@activepieces/piece-predict-leads",
       "version": "0.1.4",
@@ -8949,6 +8960,8 @@
     "@activepieces/piece-postgres": ["@activepieces/piece-postgres@workspace:packages/pieces/community/postgres"],
 
     "@activepieces/piece-posthog": ["@activepieces/piece-posthog@workspace:packages/pieces/community/posthog"],
+
+    "@activepieces/piece-postmark": ["@activepieces/piece-postmark@workspace:packages/pieces/community/postmark"],
 
     "@activepieces/piece-predict-leads": ["@activepieces/piece-predict-leads@workspace:packages/pieces/community/predict-leads"],
 

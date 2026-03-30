@@ -497,6 +497,9 @@
       "@activepieces/piece-google-contacts": [
         "packages/pieces/community/google-contacts/src/index.ts"
       ],
+      "@activepieces/piece-postmark": [
+        "packages/pieces/community/postmark/src/index.ts"
+      ],
       "@activepieces/piece-google-docs": [
         "packages/pieces/community/google-docs/src/index.ts"
       ],
