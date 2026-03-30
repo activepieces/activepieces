@@ -27,22 +27,36 @@ const polling: Polling<
     const now = Date.now();
     const startAt = lastFetchEpochMS > 0 ? lastFetchEpochMS : now - 24 * 60 * 60 * 1000;
 
-    const response = await umamiApiCall<{
-      data: { eventName: string; createdAt: string; id: string; urlPath: string }[];
-      count: number;
-    }>({
-      serverUrl: base_url,
-      apiKey: api_key,
-      method: HttpMethod.GET,
-      path: `/websites/${propsValue.websiteId}/events`,
-      queryParams: {
-        startAt: String(startAt),
-        endAt: String(now),
-        pageSize: '100',
-      },
-    });
+    const allEvents: { eventName: string; createdAt: string; id: string; urlPath: string }[] = [];
+    let page = 1;
+    const pageSize = 100;
 
-    return response.body.data.map((event) => ({
+    while (true) {
+      const response = await umamiApiCall<{
+        data: { eventName: string; createdAt: string; id: string; urlPath: string }[];
+        count: number;
+      }>({
+        serverUrl: base_url,
+        apiKey: api_key,
+        method: HttpMethod.GET,
+        path: `/websites/${propsValue.websiteId}/events`,
+        queryParams: {
+          startAt: String(startAt),
+          endAt: String(now),
+          pageSize: String(pageSize),
+          page: String(page),
+        },
+      });
+
+      allEvents.push(...response.body.data);
+
+      if (response.body.data.length < pageSize) {
+        break;
+      }
+      page++;
+    }
+
+    return allEvents.map((event) => ({
       epochMilliSeconds: new Date(event.createdAt).getTime(),
       data: {
         id: event.id,

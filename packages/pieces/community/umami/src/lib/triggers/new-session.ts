@@ -27,29 +27,50 @@ const polling: Polling<
     const now = Date.now();
     const startAt = lastFetchEpochMS > 0 ? lastFetchEpochMS : now - 24 * 60 * 60 * 1000;
 
-    const response = await umamiApiCall<{
-      data: {
-        id: string;
-        browser: string;
-        os: string;
-        device: string;
-        country: string;
-        createdAt: string;
-      }[];
-      count: number;
-    }>({
-      serverUrl: base_url,
-      apiKey: api_key,
-      method: HttpMethod.GET,
-      path: `/websites/${propsValue.websiteId}/sessions`,
-      queryParams: {
-        startAt: String(startAt),
-        endAt: String(now),
-        pageSize: '100',
-      },
-    });
+    const allSessions: {
+      id: string;
+      browser: string;
+      os: string;
+      device: string;
+      country: string;
+      createdAt: string;
+    }[] = [];
+    let page = 1;
+    const pageSize = 100;
 
-    return response.body.data.map((session) => ({
+    while (true) {
+      const response = await umamiApiCall<{
+        data: {
+          id: string;
+          browser: string;
+          os: string;
+          device: string;
+          country: string;
+          createdAt: string;
+        }[];
+        count: number;
+      }>({
+        serverUrl: base_url,
+        apiKey: api_key,
+        method: HttpMethod.GET,
+        path: `/websites/${propsValue.websiteId}/sessions`,
+        queryParams: {
+          startAt: String(startAt),
+          endAt: String(now),
+          pageSize: String(pageSize),
+          page: String(page),
+        },
+      });
+
+      allSessions.push(...response.body.data);
+
+      if (response.body.data.length < pageSize) {
+        break;
+      }
+      page++;
+    }
+
+    return allSessions.map((session) => ({
       epochMilliSeconds: new Date(session.createdAt).getTime(),
       data: {
         id: session.id,

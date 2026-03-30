@@ -60,7 +60,7 @@ export const sendEvent = createAction({
       url: `${baseUrl}/api/send`,
       headers: {
         'Content-Type': 'application/json',
-        'User-Agent': 'Activepieces/1.0',
+        'User-Agent': 'Mozilla/5.0 (compatible; Activepieces/1.0)',
       },
       body: {
         type: 'event',
@@ -68,6 +68,6 @@ export const sendEvent = createAction({
       },
     });
 
-    return { success: response.status === 200 };
+    return { success: response.status >= 200 && response.status < 300 };
   },
 });

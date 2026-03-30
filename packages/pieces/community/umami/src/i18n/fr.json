@@ -46,6 +46,8 @@
   "Week": "Semaine",
   "Month": "Mois",
   "Year": "Année",
+  "Timezone": "Fuseau horaire",
+  "IANA timezone for time-series bucketing (e.g. \"Europe/Paris\", \"America/New_York\"). Defaults to UTC.": "Fuseau horaire IANA pour le découpage des séries temporelles (ex : \"Europe/Paris\", \"America/New_York\"). UTC par défaut.",
   "Send Event": "Envoyer un événement",
   "Send a custom event or pageview to Umami. This uses the public tracking endpoint (no authentication required by the API, but uses your server URL).": "Envoyer un événement personnalisé ou une page vue à Umami. Utilise le point de terminaison de suivi public (pas d'authentification requise par l'API, mais utilise l'URL de votre serveur).",
   "Page URL": "URL de la page",

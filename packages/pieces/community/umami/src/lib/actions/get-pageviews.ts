@@ -27,10 +27,16 @@ export const getPageviews = createAction({
         ],
       },
     }),
+    timezone: Property.ShortText({
+      displayName: 'Timezone',
+      description: 'IANA timezone for time-series bucketing (e.g. "Europe/Paris", "America/New_York"). Defaults to UTC.',
+      required: false,
+      defaultValue: 'UTC',
+    }),
   },
   async run(context) {
     const { base_url, api_key } = context.auth.props;
-    const { websiteId, startDate, endDate, unit } = context.propsValue;
+    const { websiteId, startDate, endDate, unit, timezone } = context.propsValue;
 
     const response = await umamiApiCall<{
       pageviews: { x: string; y: number }[];
@@ -44,6 +50,7 @@ export const getPageviews = createAction({
         startAt: String(new Date(startDate).getTime()),
         endAt: String(new Date(endDate).getTime()),
         unit: unit ?? 'day',
+        timezone: timezone ?? 'UTC',
       },
     });
 

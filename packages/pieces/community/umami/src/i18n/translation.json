@@ -46,6 +46,8 @@
   "Week": "Week",
   "Month": "Month",
   "Year": "Year",
+  "Timezone": "Timezone",
+  "IANA timezone for time-series bucketing (e.g. \"Europe/Paris\", \"America/New_York\"). Defaults to UTC.": "IANA timezone for time-series bucketing (e.g. \"Europe/Paris\", \"America/New_York\"). Defaults to UTC.",
   "Send Event": "Send Event",
   "Send a custom event or pageview to Umami. This uses the public tracking endpoint (no authentication required by the API, but uses your server URL).": "Send a custom event or pageview to Umami. This uses the public tracking endpoint (no authentication required by the API, but uses your server URL).",
   "Page URL": "Page URL",
