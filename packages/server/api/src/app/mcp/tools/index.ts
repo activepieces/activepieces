@@ -12,6 +12,7 @@ import { apDeleteTableTool } from './ap-delete-table'
 import { apFindRecordsTool } from './ap-find-records'
 import { apFlowStructureTool } from './ap-flow-structure'
 import { apInsertRecordsTool } from './ap-insert-records'
+import { apListAiModelsTool } from './ap-list-ai-models'
 import { apListConnectionsTool } from './ap-list-connections'
 import { apListFlowsTool } from './ap-list-flows'
 import { apListPiecesTool } from './ap-list-pieces'
@@ -29,6 +30,7 @@ export const LOCKED_TOOL_NAMES: string[] = [
     'ap_flow_structure',
     'ap_list_pieces',
     'ap_list_connections',
+    'ap_list_ai_models',
     'ap_list_tables',
     'ap_find_records',
 ]
@@ -72,6 +74,7 @@ export const activepiecesTools = (mcp: McpServer, log: FastifyBaseLogger): McpTo
     apLockAndPublishTool(mcp, log),
     apChangeFlowStatusTool(mcp, log),
     apManageNotesTool(mcp, log),
+    apListAiModelsTool(mcp, log),
     apListTablesTool(mcp, log),
     apFindRecordsTool(mcp, log),
     apCreateTableTool(mcp, log),
