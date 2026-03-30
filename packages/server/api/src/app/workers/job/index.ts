@@ -15,7 +15,7 @@ export enum JobStatus {
 
 export enum QueueName {
     WORKER_JOBS = 'workerJobs',
-    CANARY_JOBS = '__canaryShared__',
+    CANARY_JOBS = 'canaryWorkerJobs',
     RUNS_METADATA = 'runsMetadata',
 }
 

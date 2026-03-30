@@ -22,7 +22,7 @@ Browser / External Webhook
    └─────────────────────────────┘               │
                                                   ▼
                                          Canary Worker
-                                         (polls platform-{id}-jobs queue)
+                                         (polls canaryWorkerJobs queue)
 ```
 
 All traffic enters the primary app. The `canaryRoutingMiddleware` runs as a Fastify `preHandler` hook on every request. If the resolved `platformId` is in the canary list, the request is proxied in-process to the canary app and the response is returned directly to the caller — the primary app never processes it further.
@@ -48,7 +48,7 @@ Dedicated workers that connect to the canary app instead of the primary app:
 | Env var | Value |
 |---|---|
 | `AP_FRONTEND_URL` | canary app's URL |
-| `AP_PLATFORM_ID_FOR_DEDICATED_WORKER` | platform ID this worker is dedicated to |
+| `AP_CANARY_PLATFORM_IDS` | Comma-separated list of platform IDs this worker handles |
 
 Workers use `AP_FRONTEND_URL` for their Socket.IO RPC channel and for posting engine results back to the app. Canary workers are registered with the canary app, so the RPC path is fully isolated.
 
@@ -73,37 +73,19 @@ Socket.IO is configured with a **Redis adapter** (`@socket.io/redis-adapter`). E
 
 | Queue | Primary App | Canary App |
 |---|---|---|
-| `platform-{id}-jobs` | Not consumed (dedicated workers only) | Not consumed (dedicated workers only) |
+| `workerJobs` | ✅ Consumed by primary workers | Not consumed |
 | `runsMetadata` | ✅ Consumed | ✅ Consumed |
 | `system-job-queue` | ✅ Consumed | ✅ Consumed |
+| `canaryWorkerJobs` | Not consumed | ✅ Consumed by canary workers |
 
-Canary workers push jobs to `platform-{platformId}-jobs` which canary workers then pick up — fully isolated from the primary worker fleet.
+Jobs for canary platforms are enqueued to `canaryWorkerJobs`, which only canary workers poll — fully isolated from the pfrimary worker fleet.
 
 
 ## Adding a Platform to Canary
 
-### 1. Enable dedicated workers for the platform
+### 1. Add the platform ID to the routing list
 
-Call the admin endpoint on the primary app to enable dedicated workers and create the platform-specific BullMQ queue:
-
-```bash
-curl -X POST https://cloud.activepieces.com/api/v1/admin/platforms/dedicated-workers \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer $AP_API_KEY" \
-  -d '{
-    "operation": "enable",
-    "platformId": "<platformId>",
-    "trustedEnvironment": false
-  }'
-```
-
-### 2. Deploy a canary worker for the platform
-
-Spawn a canary worker with `AP_PLATFORM_ID_FOR_DEDICATED_WORKER` set to the platform ID. The worker will connect to the canary app via `AP_FRONTEND_URL` and exclusively poll the `platform-{platformId}-jobs` queue.
-
-### 3. Add the platform ID to the routing list
-
-Update `AP_CANARY_PLATFORM_IDS` on the primary app — no restart of the canary app or workers is needed. The middleware reads the env var on every request.
+Update `AP_CANARY_PLATFORM_IDS` on both the **primary app** (HTTP routing) and the **canary app** (job enqueue routing).
 
 ```bash
 # Single platform
@@ -112,9 +94,3 @@ AP_CANARY_PLATFORM_IDS=<platformId>
 # Multiple platforms
 AP_CANARY_PLATFORM_IDS=<platformId1>,<platformId2>
 ```
-
-## Removing a Platform from Canary
-
-1. Remove the platform ID from `AP_CANARY_PLATFORM_IDS` on the primary app — traffic immediately reverts to the primary app.
-2. Shut down the canary worker for that platform.
-3. Disable dedicated workers via the admin endpoint with `"operation": "disable"`.
