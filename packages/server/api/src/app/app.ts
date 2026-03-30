@@ -180,15 +180,15 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
         }
     })
 
-    const canaryAppUrl = system.get(AppSystemProp.CANARY_APP_URL)
-    if (!isNil(canaryAppUrl)) {
-        await app.register(replyFrom, { base: canaryAppUrl })
-    }
-
     app.addHook('preHandler', authenticationMiddleware)
     app.addHook('preHandler', authorizationMiddleware)
     app.addHook('preHandler', rbacMiddleware)
-    app.addHook('preHandler', canaryRoutingMiddleware)
+    
+    const canaryAppUrl = system.get(AppSystemProp.CANARY_APP_URL)
+    if (!isNil(canaryAppUrl)) {
+        await app.register(replyFrom, { base: canaryAppUrl })
+        app.addHook('preHandler', canaryRoutingMiddleware)
+    }
 
     await systemJobsSchedule(app.log).init()
     await app.register(fileModule)
