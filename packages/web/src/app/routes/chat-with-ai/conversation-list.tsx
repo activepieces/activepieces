@@ -47,7 +47,7 @@ function isYesterday(date: Date) {
 }
 
 const css = `
-  .conv-item { display: flex; align-items: center; padding: 8px 12px; border-radius: 8px; cursor: pointer; transition: background 0.15s; border: none; background: transparent; width: 100%; text-align: left; font-family: inherit; color: hsl(var(--foreground)); }
+  .conv-item { display: flex; align-items: center; padding: 4px 8px; border-radius: 6px; cursor: pointer; transition: background 0.15s; border: none; background: transparent; width: 100%; text-align: left; font-family: inherit; color: hsl(var(--foreground)); }
   .conv-item:hover { background: rgba(0,0,0,0.05); }
   .dark .conv-item:hover { background: rgba(255,255,255,0.07); }
   .conv-item.active { background: rgba(0,0,0,0.08); }
@@ -63,9 +63,9 @@ const css = `
   .conv-sidebar { background: transparent !important; opacity: 0.4; transition: opacity 0.2s; }
   .conv-sidebar:hover { opacity: 1; }
   .dark .conv-sidebar { background: transparent !important; }
-  .group-label { transition: color 0.15s, background 0.15s; border-radius: 6px; }
-  .group-label:hover { color: hsl(var(--foreground)) !important; background: rgba(0,0,0,0.05); }
-  .dark .group-label:hover { background: rgba(255,255,255,0.07); }
+  .group-label { color: hsl(var(--muted-foreground)); transition: color 0.15s, background 0.15s; border-radius: 6px; }
+  .group-label:hover { color: hsl(var(--foreground)); background: rgba(0,0,0,0.08); }
+  .dark .group-label:hover { color: #fff; background: rgba(255,255,255,0.12); }
 `;
 
 export function ConversationList({ onSelect }: { onSelect?: (id: string) => void }) {
@@ -94,7 +94,7 @@ export function ConversationList({ onSelect }: { onSelect?: (id: string) => void
           className="group-label"
           onClick={() => toggleGroup(label)}
           style={{
-            fontSize: '11px', fontWeight: 600, color: 'hsl(var(--muted-foreground))',
+            fontSize: '11px', fontWeight: 600,
             padding: '4px 12px', margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px',
             background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex',
             alignItems: 'center', gap: '2px', fontFamily: 'inherit',
