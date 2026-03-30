@@ -166,7 +166,13 @@ export const FormulaEditor = ({
           )}
         </div>
       ) : (
-        <div className={cn(wrapperClass, 'formula-editor !p-0')}>
+        <div
+          className={cn(
+            wrapperClass,
+            'formula-editor !p-0',
+            textMentionUtils.inputWithMentionsCssClass,
+          )}
+        >
           <CodeMirror
             value={docValue}
             onChange={handleChange}
