@@ -36,6 +36,8 @@ A second instance of the server API running a different image tag. It is configu
 | Env var | Value |
 |---|---|
 | `AP_FRONTEND_URL` | canary app's public URL |
+| `AP_CANARY_PLATFORM_IDS` | Comma-separated list of platform IDs to route to canary |
+
 
 The canary app runs as a full app instance. Global queue consumers (`runsMetadata`, `system-job-queue`) run on both the primary and canary app — this is safe because BullMQ ensures each job is processed by exactly one consumer.
 
