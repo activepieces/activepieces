@@ -27,7 +27,7 @@ export const getDealAction = createAction({
     const pipelineUid = context.propsValue.pipelineUid;
 
     const items = await client.getAllPages<any>(
-      `/api/v1/crm/deals?$filter=DealPipelineStage/DealPipeline/Uid eq '${encodeURIComponent(pipelineUid)}'`
+      `/api/v1/crm/deals?$filter=DealPipelineStage/DealPipeline/Uid eq '${encodeURIComponent(pipelineUid)}'&fields=*,DealPeople,DealPeople.Person,DealPipelineStage,DealPipelineStage.DealPipeline,Account`
     );
 
     const match = items.find((deal: any) => {
