@@ -5,7 +5,6 @@ import {
     FlowTriggerType,
     FlowVersion,
     isNil,
-    tryCatch,
 } from '@activepieces/shared'
 import { system } from '../../../helper/system/system'
 import { pieceMetadataService } from '../../../pieces/metadata/piece-metadata-service'
@@ -33,13 +32,11 @@ export const migrateV19StripPieceVersionWildcards: Migration = {
             if (!version.startsWith('~') && !version.startsWith('^')) {
                 continue
             }
-            const { data: pieceMetadata } = await tryCatch(async () =>
-                pieceMetadataService(log).getOrThrow({
-                    platformId,
-                    name: step.settings.pieceName,
-                    version,
-                }),
-            )
+            const pieceMetadata = await pieceMetadataService(log).get({
+                platformId,
+                name: step.settings.pieceName,
+                version,
+            })
             stepNameToExactVersion[step.name] = isNil(pieceMetadata)
                 ? flowPieceUtil.getExactVersion(version)
                 : pieceMetadata.version
