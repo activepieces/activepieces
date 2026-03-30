@@ -163,6 +163,7 @@ export function FunctionSearchPopover({
       {hoveredFn && hoverItemRect && (
         <FunctionTooltipCard
           fnDef={hoveredFn}
+          errorMessage={null}
           top={hoverItemRect.top}
           left={hoverItemRect.left - 256 - 8}
         />

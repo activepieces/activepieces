@@ -24,3 +24,9 @@
     outline: 2px solid #7c3aed !important;
     outline-offset: 1px;
 }
+
+.ap-fn-error {
+    background-color: rgba(239, 68, 68, 0.15) !important;
+    border-color: #ef4444 !important;
+    color: #b91c1c !important;
+}

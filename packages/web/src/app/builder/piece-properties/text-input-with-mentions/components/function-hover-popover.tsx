@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 type TooltipState = {
   visible: boolean;
   functionName: string;
+  errorMessage: string | null;
   top: number;
   left: number;
 };
@@ -19,6 +20,7 @@ export function FunctionEditorTooltip({
   const [tooltip, setTooltip] = useState<TooltipState>({
     visible: false,
     functionName: '',
+    errorMessage: null,
     top: 0,
     left: 0,
   });
@@ -54,7 +56,6 @@ export function FunctionEditorTooltip({
 
       if (!openId) return;
 
-      // Highlight both badges
       const matchStart = el.querySelector(`[data-function-start="${openId}"]`);
       const matchEnd = el.querySelector(`[data-function-end="${openId}"]`);
       matchStart?.classList.add('ap-fn-active');
@@ -67,9 +68,16 @@ export function FunctionEditorTooltip({
 
       const badge = (startEl ?? endEl)!;
       const rect = badge.getBoundingClientRect();
+
+      const errorMessage =
+        startEl?.getAttribute('data-fn-error-msg') ??
+        matchStart?.getAttribute('data-fn-error-msg') ??
+        null;
+
       setTooltip({
         visible: true,
         functionName: name,
+        errorMessage,
         top: rect.top,
         left: rect.left,
       });
@@ -101,6 +109,7 @@ export function FunctionEditorTooltip({
   return (
     <FunctionTooltipCard
       fnDef={fnDef}
+      errorMessage={tooltip.errorMessage}
       top={tooltip.top}
       left={tooltip.left}
       onMouseEnter={() => {
@@ -123,6 +132,7 @@ type FnDef = (typeof AP_FUNCTIONS)[number];
 
 type FunctionTooltipCardProps = {
   fnDef: FnDef;
+  errorMessage: string | null;
   top: number;
   left: number;
   onMouseEnter?: () => void;
@@ -131,6 +141,7 @@ type FunctionTooltipCardProps = {
 
 export function FunctionTooltipCard({
   fnDef,
+  errorMessage,
   top,
   left,
   onMouseEnter,
@@ -145,6 +156,12 @@ export function FunctionTooltipCard({
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >
+      {errorMessage && (
+        <div className="flex items-start gap-1.5 text-[12px] text-red-400 leading-snug pb-1 border-b border-gray-700">
+          <span className="shrink-0">⚠</span>
+          <span>{errorMessage}</span>
+        </div>
+      )}
       <p className="text-[12px] text-gray-100 leading-snug">
         {t(fnDef.description)}
       </p>

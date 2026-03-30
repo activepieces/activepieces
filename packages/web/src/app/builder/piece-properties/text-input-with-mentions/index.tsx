@@ -3,6 +3,7 @@ import {
   evaluateExpression,
   flowStructureUtil,
   isNil,
+  typeCheckTiptapDoc,
 } from '@activepieces/shared';
 import { Extensions } from '@tiptap/core';
 import { Document } from '@tiptap/extension-document';
@@ -210,10 +211,12 @@ export const TextInputWithMentions = ({
       if (onChange) {
         onChange(textResult);
       }
-      // Keep preview value in sync
       if (previewMode) {
         updatePreview(textResult);
       }
+      requestAnimationFrame(() => {
+        applyTypeErrors(editorContent, editorWrapperRef.current);
+      });
     },
     onFocus: () => {
       setInsertMentionHandler(insertMention);
@@ -304,8 +307,40 @@ export const TextInputWithMentions = ({
   );
 };
 
-// Flattens { trigger: { output: { name: 'John' } } } into
-// { 'trigger.output.name': 'John' } for variable resolution.
+function applyTypeErrors(
+  doc: import('@tiptap/react').JSONContent,
+  wrapperEl: HTMLElement | null,
+) {
+  if (!wrapperEl) return;
+  const errors = typeCheckTiptapDoc(doc);
+
+  wrapperEl
+    .querySelectorAll<HTMLElement>('[data-function-start]')
+    .forEach((badge) => {
+      const id = badge.getAttribute('data-function-start');
+      const err = id ? errors.get(id) : undefined;
+      if (err) {
+        badge.classList.add('ap-fn-error');
+        badge.setAttribute('data-fn-error-msg', err);
+      } else {
+        badge.classList.remove('ap-fn-error');
+        badge.removeAttribute('data-fn-error-msg');
+      }
+    });
+
+  wrapperEl
+    .querySelectorAll<HTMLElement>('[data-function-end]')
+    .forEach((badge) => {
+      const openId = badge.getAttribute('data-function-end');
+      const err = openId ? errors.get(openId) : undefined;
+      if (err) {
+        badge.classList.add('ap-fn-error');
+      } else {
+        badge.classList.remove('ap-fn-error');
+      }
+    });
+}
+
 function flattenSampleData(
   sampleData: Record<string, unknown>,
 ): Record<string, unknown> {

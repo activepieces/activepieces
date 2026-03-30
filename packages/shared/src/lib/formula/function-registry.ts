@@ -8,6 +8,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '"John Smith"',
         minArgs: 2,
         maxArgs: 3,
+        argTypes: ['any', 'any', 'string'],
+        returnType: 'string',
     },
     {
         name: 'uppercase',
@@ -18,6 +20,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '"ACME INC"',
         minArgs: 1,
         maxArgs: 1,
+        argTypes: ['string'],
+        returnType: 'string',
     },
     {
         name: 'lowercase',
@@ -28,6 +32,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '"john@acme.com"',
         minArgs: 1,
         maxArgs: 1,
+        argTypes: ['string'],
+        returnType: 'string',
     },
     {
         name: 'titlecase',
@@ -38,6 +44,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '"John Smith"',
         minArgs: 1,
         maxArgs: 1,
+        argTypes: ['string'],
+        returnType: 'string',
     },
     {
         name: 'trim',
@@ -48,6 +56,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '"Hello World"',
         minArgs: 1,
         maxArgs: 1,
+        argTypes: ['string'],
+        returnType: 'string',
     },
     {
         name: 'prefix',
@@ -58,6 +68,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '"ORD-10042"',
         minArgs: 2,
         maxArgs: 2,
+        argTypes: ['string', 'string'],
+        returnType: 'string',
     },
     {
         name: 'suffix',
@@ -68,6 +80,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '"Acme Ltd."',
         minArgs: 2,
         maxArgs: 2,
+        argTypes: ['string', 'string'],
+        returnType: 'string',
     },
     {
         name: 'replace',
@@ -78,6 +92,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '"first name"',
         minArgs: 3,
         maxArgs: 3,
+        argTypes: ['string', 'string', 'string'],
+        returnType: 'string',
     },
     {
         name: 'remove',
@@ -88,6 +104,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '"004420712"',
         minArgs: 2,
         maxArgs: 2,
+        argTypes: ['string', 'string'],
+        returnType: 'string',
     },
     {
         name: 'first_n',
@@ -98,6 +116,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '"Jon"',
         minArgs: 2,
         maxArgs: 2,
+        argTypes: ['string', 'number'],
+        returnType: 'string',
     },
     {
         name: 'last_n',
@@ -108,6 +128,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '"7890"',
         minArgs: 2,
         maxArgs: 2,
+        argTypes: ['string', 'number'],
+        returnType: 'string',
     },
     {
         name: 'truncate',
@@ -118,6 +140,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '"Annual Revenue..."',
         minArgs: 2,
         maxArgs: 2,
+        argTypes: ['string', 'number'],
+        returnType: 'string',
     },
     {
         name: 'split',
@@ -128,6 +152,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '"John"',
         minArgs: 3,
         maxArgs: 3,
+        argTypes: ['string', 'string', 'number'],
+        returnType: 'string',
     },
     {
         name: 'extract_between',
@@ -138,6 +164,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '"urgent"',
         minArgs: 3,
         maxArgs: 3,
+        argTypes: ['string', 'string', 'string'],
+        returnType: 'string',
     },
     {
         name: 'extract_email',
@@ -148,6 +176,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '"john@acme.com"',
         minArgs: 1,
         maxArgs: 1,
+        argTypes: ['string'],
+        returnType: 'string',
     },
     {
         name: 'extract_url',
@@ -158,6 +188,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '"https://acme.com"',
         minArgs: 1,
         maxArgs: 1,
+        argTypes: ['string'],
+        returnType: 'string',
     },
     {
         name: 'length',
@@ -168,6 +200,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '11',
         minArgs: 1,
         maxArgs: 1,
+        argTypes: ['string'],
+        returnType: 'number',
     },
     {
         name: 'contains',
@@ -178,6 +212,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: 'TRUE',
         minArgs: 2,
         maxArgs: 2,
+        argTypes: ['string', 'string'],
+        returnType: 'boolean',
     },
     {
         name: 'starts_with',
@@ -188,6 +224,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: 'FALSE',
         minArgs: 2,
         maxArgs: 2,
+        argTypes: ['string', 'string'],
+        returnType: 'boolean',
     },
     {
         name: 'ends_with',
@@ -198,6 +236,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: 'TRUE',
         minArgs: 2,
         maxArgs: 2,
+        argTypes: ['string', 'string'],
+        returnType: 'boolean',
     },
     {
         name: 'remove_spaces',
@@ -208,6 +248,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '"hello world"',
         minArgs: 1,
         maxArgs: 1,
+        argTypes: ['string'],
+        returnType: 'string',
     },
     {
         name: 'word_count',
@@ -218,6 +260,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '4',
         minArgs: 1,
         maxArgs: 1,
+        argTypes: ['string'],
+        returnType: 'number',
     },
     {
         name: 'add',
@@ -228,6 +272,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '54.99',
         minArgs: 2,
         maxArgs: 2,
+        argTypes: ['number', 'number'],
+        returnType: 'number',
     },
     {
         name: 'subtract',
@@ -238,6 +284,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '89.5',
         minArgs: 2,
         maxArgs: 2,
+        argTypes: ['number', 'number'],
+        returnType: 'number',
     },
     {
         name: 'multiply',
@@ -248,6 +296,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '149.97',
         minArgs: 2,
         maxArgs: 2,
+        argTypes: ['number', 'number'],
+        returnType: 'number',
     },
     {
         name: 'divide',
@@ -258,6 +308,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '49.99',
         minArgs: 2,
         maxArgs: 2,
+        argTypes: ['number', 'number'],
+        returnType: 'number',
     },
     {
         name: 'round',
@@ -268,6 +320,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '49.99',
         minArgs: 2,
         maxArgs: 2,
+        argTypes: ['number', 'number'],
+        returnType: 'number',
     },
     {
         name: 'round_up',
@@ -278,6 +332,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '8',
         minArgs: 1,
         maxArgs: 1,
+        argTypes: ['number'],
+        returnType: 'number',
     },
     {
         name: 'round_down',
@@ -288,6 +344,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '7',
         minArgs: 1,
         maxArgs: 1,
+        argTypes: ['number'],
+        returnType: 'number',
     },
     {
         name: 'absolute',
@@ -298,6 +356,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '42',
         minArgs: 1,
         maxArgs: 1,
+        argTypes: ['number'],
+        returnType: 'number',
     },
     {
         name: 'percentage',
@@ -308,6 +368,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '75%',
         minArgs: 2,
         maxArgs: 2,
+        argTypes: ['number', 'number'],
+        returnType: 'number',
     },
     {
         name: 'format_number',
@@ -318,6 +380,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '"1,250,000.00"',
         minArgs: 2,
         maxArgs: 2,
+        argTypes: ['number', 'number'],
+        returnType: 'string',
     },
     {
         name: 'format_currency',
@@ -328,6 +392,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '"$49.99"',
         minArgs: 2,
         maxArgs: 2,
+        argTypes: ['number', 'string'],
+        returnType: 'string',
     },
     {
         name: 'cents_to_dollars',
@@ -338,6 +404,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '"$49.99"',
         minArgs: 1,
         maxArgs: 1,
+        argTypes: ['number'],
+        returnType: 'string',
     },
     {
         name: 'min',
@@ -348,6 +416,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '87',
         minArgs: 2,
         maxArgs: 2,
+        argTypes: ['number', 'number'],
+        returnType: 'number',
     },
     {
         name: 'max',
@@ -358,6 +428,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '0',
         minArgs: 2,
         maxArgs: 2,
+        argTypes: ['number', 'number'],
+        returnType: 'number',
     },
     {
         name: 'to_number',
@@ -368,6 +440,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '1990',
         minArgs: 1,
         maxArgs: 1,
+        argTypes: ['any'],
+        returnType: 'number',
     },
     {
         name: 'format_date',
@@ -378,6 +452,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '"Jan 15, 2025"',
         minArgs: 2,
         maxArgs: 2,
+        argTypes: ['date', 'string'],
+        returnType: 'string',
     },
     {
         name: 'format_date_long',
@@ -388,6 +464,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '"Friday, January 15, 2025"',
         minArgs: 1,
         maxArgs: 1,
+        argTypes: ['date'],
+        returnType: 'string',
     },
     {
         name: 'format_time',
@@ -398,6 +476,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '"2:30 PM"',
         minArgs: 2,
         maxArgs: 2,
+        argTypes: ['date', 'string'],
+        returnType: 'string',
     },
     {
         name: 'relative_time',
@@ -408,6 +488,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '"3 days ago"',
         minArgs: 1,
         maxArgs: 1,
+        argTypes: ['date'],
+        returnType: 'string',
     },
     {
         name: 'add_days',
@@ -418,6 +500,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '"Feb 14, 2025"',
         minArgs: 2,
         maxArgs: 2,
+        argTypes: ['date', 'number'],
+        returnType: 'date',
     },
     {
         name: 'subtract_days',
@@ -428,6 +512,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '"Jan 08, 2025"',
         minArgs: 2,
         maxArgs: 2,
+        argTypes: ['date', 'number'],
+        returnType: 'date',
     },
     {
         name: 'add_hours',
@@ -438,6 +524,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '"2025-01-15T16:30:00Z"',
         minArgs: 2,
         maxArgs: 2,
+        argTypes: ['date', 'number'],
+        returnType: 'date',
     },
     {
         name: 'days_between',
@@ -448,6 +536,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '14',
         minArgs: 2,
         maxArgs: 2,
+        argTypes: ['date', 'date'],
+        returnType: 'number',
     },
     {
         name: 'get_day',
@@ -458,6 +548,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '15',
         minArgs: 1,
         maxArgs: 1,
+        argTypes: ['date'],
+        returnType: 'number',
     },
     {
         name: 'get_month',
@@ -468,6 +560,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '"January"',
         minArgs: 1,
         maxArgs: 1,
+        argTypes: ['date'],
+        returnType: 'string',
     },
     {
         name: 'get_year',
@@ -478,6 +572,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '2025',
         minArgs: 1,
         maxArgs: 1,
+        argTypes: ['date'],
+        returnType: 'number',
     },
     {
         name: 'get_day_of_week',
@@ -488,6 +584,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '"Wednesday"',
         minArgs: 1,
         maxArgs: 1,
+        argTypes: ['date'],
+        returnType: 'string',
     },
     {
         name: 'start_of_month',
@@ -498,6 +596,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '"Jan 01, 2025"',
         minArgs: 1,
         maxArgs: 1,
+        argTypes: ['date'],
+        returnType: 'date',
     },
     {
         name: 'end_of_month',
@@ -508,6 +608,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '"Jan 31, 2025"',
         minArgs: 1,
         maxArgs: 1,
+        argTypes: ['date'],
+        returnType: 'date',
     },
     {
         name: 'convert_timezone',
@@ -518,6 +620,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '"Jan 15, 9:30 AM EST"',
         minArgs: 2,
         maxArgs: 2,
+        argTypes: ['date', 'string'],
+        returnType: 'string',
     },
     {
         name: 'now',
@@ -528,6 +632,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '"2025-01-15T14:30:00Z"',
         minArgs: 0,
         maxArgs: 0,
+        argTypes: [],
+        returnType: 'date',
     },
     {
         name: 'today',
@@ -538,6 +644,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '"2025-01-15"',
         minArgs: 0,
         maxArgs: 0,
+        argTypes: [],
+        returnType: 'date',
     },
     {
         name: 'to_date',
@@ -548,6 +656,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '"2025-01-15T00:00:00Z"',
         minArgs: 1,
         maxArgs: 1,
+        argTypes: ['any'],
+        returnType: 'date',
     },
     {
         name: 'filter_list',
@@ -558,6 +668,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '[3 of 10 items]',
         minArgs: 3,
         maxArgs: 3,
+        argTypes: ['list', 'string', 'any'],
+        returnType: 'list',
     },
     {
         name: 'sort_list',
@@ -568,6 +680,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '[sorted: 500, 200, 50]',
         minArgs: 3,
         maxArgs: 3,
+        argTypes: ['list', 'string', 'string'],
+        returnType: 'list',
     },
     {
         name: 'pluck',
@@ -578,6 +692,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '["ana@x.com", "bob@x.com"]',
         minArgs: 2,
         maxArgs: 2,
+        argTypes: ['list', 'string'],
+        returnType: 'list',
     },
     {
         name: 'join_list',
@@ -588,6 +704,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '"bug, urgent, backend"',
         minArgs: 2,
         maxArgs: 2,
+        argTypes: ['list', 'string'],
+        returnType: 'string',
     },
     {
         name: 'first_item',
@@ -598,6 +716,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '"apple"',
         minArgs: 1,
         maxArgs: 1,
+        argTypes: ['list'],
+        returnType: 'any',
     },
     {
         name: 'last_item',
@@ -608,6 +728,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '"cherry"',
         minArgs: 1,
         maxArgs: 1,
+        argTypes: ['list'],
+        returnType: 'any',
     },
     {
         name: 'item_at',
@@ -618,6 +740,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '"banana"',
         minArgs: 2,
         maxArgs: 2,
+        argTypes: ['list', 'number'],
+        returnType: 'any',
     },
     {
         name: 'count',
@@ -628,6 +752,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '3',
         minArgs: 1,
         maxArgs: 1,
+        argTypes: ['list'],
+        returnType: 'number',
     },
     {
         name: 'sum',
@@ -638,6 +764,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '4820.5',
         minArgs: 2,
         maxArgs: 2,
+        argTypes: ['list', 'string'],
+        returnType: 'number',
     },
     {
         name: 'average',
@@ -648,6 +776,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '82.4',
         minArgs: 2,
         maxArgs: 2,
+        argTypes: ['list', 'string'],
+        returnType: 'number',
     },
     {
         name: 'max_in_list',
@@ -658,6 +788,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '1200',
         minArgs: 2,
         maxArgs: 2,
+        argTypes: ['list', 'string'],
+        returnType: 'number',
     },
     {
         name: 'min_in_list',
@@ -668,6 +800,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '9.99',
         minArgs: 2,
         maxArgs: 2,
+        argTypes: ['list', 'string'],
+        returnType: 'number',
     },
     {
         name: 'deduplicate',
@@ -678,6 +812,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '[7 of 10 items]',
         minArgs: 2,
         maxArgs: 2,
+        argTypes: ['list', 'string'],
+        returnType: 'list',
     },
     {
         name: 'flatten',
@@ -688,6 +824,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '["a","b","c","d"]',
         minArgs: 1,
         maxArgs: 1,
+        argTypes: ['list'],
+        returnType: 'list',
     },
     {
         name: 'split_text_to_list',
@@ -698,6 +836,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '["bug","urgent","backend"]',
         minArgs: 2,
         maxArgs: 2,
+        argTypes: ['string', 'string'],
+        returnType: 'list',
     },
     {
         name: 'if',
@@ -708,6 +848,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '"High value"',
         minArgs: 3,
         maxArgs: 3,
+        argTypes: ['boolean', 'any', 'any'],
+        returnType: 'any',
     },
     {
         name: 'if_empty',
@@ -718,6 +860,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '"No name"',
         minArgs: 2,
         maxArgs: 2,
+        argTypes: ['any', 'any'],
+        returnType: 'any',
     },
     {
         name: 'if_null',
@@ -728,6 +872,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '"N/A"',
         minArgs: 2,
         maxArgs: 2,
+        argTypes: ['any', 'any'],
+        returnType: 'any',
     },
     {
         name: 'switch',
@@ -738,6 +884,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '"North America"',
         minArgs: 3,
         maxArgs: -1,
+        argTypes: ['any', 'any', 'any'],
+        returnType: 'any',
     },
     {
         name: 'is_empty',
@@ -748,6 +896,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: 'TRUE',
         minArgs: 1,
         maxArgs: 1,
+        argTypes: ['any'],
+        returnType: 'boolean',
     },
     {
         name: 'is_not_empty',
@@ -758,6 +908,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: 'TRUE',
         minArgs: 1,
         maxArgs: 1,
+        argTypes: ['any'],
+        returnType: 'boolean',
     },
     {
         name: 'is_equal',
@@ -768,6 +920,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: 'TRUE',
         minArgs: 2,
         maxArgs: 2,
+        argTypes: ['any', 'any'],
+        returnType: 'boolean',
     },
     {
         name: 'and',
@@ -778,6 +932,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: 'TRUE',
         minArgs: 2,
         maxArgs: 2,
+        argTypes: ['boolean', 'boolean'],
+        returnType: 'boolean',
     },
     {
         name: 'or',
@@ -788,6 +944,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: 'TRUE',
         minArgs: 2,
         maxArgs: 2,
+        argTypes: ['boolean', 'boolean'],
+        returnType: 'boolean',
     },
     {
         name: 'not',
@@ -798,6 +956,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: 'TRUE',
         minArgs: 1,
         maxArgs: 1,
+        argTypes: ['boolean'],
+        returnType: 'boolean',
     },
     {
         name: 'coalesce',
@@ -808,8 +968,12 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '"John"',
         minArgs: 2,
         maxArgs: -1,
+        argTypes: ['any'],
+        returnType: 'any',
     },
 ]
+
+export type ApFunctionArgType = 'string' | 'number' | 'boolean' | 'date' | 'list' | 'any'
 
 export type ApFunction = {
     name: string
@@ -820,4 +984,6 @@ export type ApFunction = {
     exampleResult: string
     minArgs: number
     maxArgs: number
+    argTypes: ApFunctionArgType[]
+    returnType: ApFunctionArgType
 }
