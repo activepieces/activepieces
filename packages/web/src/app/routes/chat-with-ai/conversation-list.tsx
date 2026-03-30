@@ -52,10 +52,13 @@ const css = `
   .dark .conv-item:hover { background: rgba(255,255,255,0.07); }
   .conv-item.active { background: rgba(0,0,0,0.08); }
   .dark .conv-item.active { background: rgba(255,255,255,0.1); }
-  .conv-list::-webkit-scrollbar { width: 4px; }
-  .conv-list::-webkit-scrollbar-track { background: transparent; }
-  .conv-list::-webkit-scrollbar-thumb { background: transparent; border-radius: 4px; }
-  .conv-list:hover::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); }
+  .conv-list { scrollbar-width: none; }
+  .conv-list::-webkit-scrollbar { width: 0; }
+  .conv-list:hover { scrollbar-width: thin; scrollbar-color: rgba(0,0,0,0.15) transparent; }
+  .conv-list:hover::-webkit-scrollbar { width: 4px; }
+  .conv-list:hover::-webkit-scrollbar-track { background: transparent; }
+  .conv-list:hover::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 4px; }
+  .dark .conv-list:hover { scrollbar-color: rgba(255,255,255,0.2) transparent; }
   .dark .conv-list:hover::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); }
   .conv-sidebar { background: transparent !important; }
   .dark .conv-sidebar { background: transparent !important; }
