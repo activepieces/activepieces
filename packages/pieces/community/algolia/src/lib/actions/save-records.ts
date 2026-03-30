@@ -13,7 +13,7 @@ export const saveRecordsAction = createAction({
     indexName: Property.ShortText({
       displayName: 'Index Name',
       description:
-        'Enter the Algolia index name. Algolia creates the index automatically if it does not exist yet.',
+        'Enter an existing index name or a new one — Algolia creates it automatically.',
       required: true,
     }),
     records: Property.Json({

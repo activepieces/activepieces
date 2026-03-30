@@ -12,7 +12,7 @@ export const algoliaProps = {
       displayName: 'Index',
       description: 'Select the Algolia index to use.',
       required,
-      refreshers: [],
+      refreshers: ['auth'],
       options: async ({ auth }) => {
         if (!isAlgoliaAuthValue(auth)) {
           return {

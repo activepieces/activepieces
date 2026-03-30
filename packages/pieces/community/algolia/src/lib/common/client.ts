@@ -76,9 +76,11 @@ export async function saveAlgoliaRecords({
 export async function browseAlgoliaRecords({
   auth,
   indexName,
+  limit = 10_000,
 }: {
   auth: AlgoliaAuthValue;
   indexName: string;
+  limit?: number;
 }): Promise<AlgoliaRecord[]> {
   const records: AlgoliaRecord[] = [];
   let cursor: string | undefined;
@@ -88,18 +90,14 @@ export async function browseAlgoliaRecords({
       auth,
       method: HttpMethod.POST,
       path: `/indexes/${encodeURIComponent(indexName)}/browse`,
-      body: cursor
-        ? {
-            cursor,
-          }
-        : {},
+      body: cursor ? { cursor } : {},
     });
 
     records.push(...response.hits);
     cursor = response.cursor;
-  } while (cursor);
+  } while (cursor && records.length < limit);
 
-  return records;
+  return records.slice(0, limit);
 }
 
 export async function deleteAlgoliaRecords({
@@ -157,7 +155,7 @@ async function waitForTask({
     await sleep(ALGOLIA_TASK_POLL_INTERVAL_MILLISECONDS);
   }
 
-  throw new Error('Algolia task did not finish before the timeout.');
+  throw new Error('The Algolia operation is taking too long. Try again or check your Algolia dashboard for the task status.');
 }
 
 async function sendRequest<TResponse>({

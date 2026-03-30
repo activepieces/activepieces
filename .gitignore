@@ -85,4 +85,3 @@ deploy/terraform/**/*.tfstate.backup
 deploy/terraform/**/.terraform.lock.hcl
 deploy/terraform/**/terraform.tfvars
 deploy/terraform/**/terraform-*.tfvars
-bun.lockb

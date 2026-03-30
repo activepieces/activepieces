@@ -10,10 +10,9 @@ import { algoliaAuth } from './lib/common/auth';
 export const algolia = createPiece({
   displayName: 'Algolia',
   description:
-    'Search and discovery API for indexing, browsing, and deleting records.',
+    'Manage your Algolia search indices — add, browse, and delete records.',
   minimumSupportedRelease: '0.36.1',
-  logoUrl:
-    'https://mintcdn.com/algolia/kiecJp3hu-WXhj-3/logo/light.svg?fit=max&auto=format&n=kiecJp3hu-WXhj-3&q=85&s=bf613e260ca94c0eb23384e6c0d5c77f',
+  logoUrl: 'https://cdn.activepieces.com/pieces/algolia.png',
   categories: [PieceCategory.DEVELOPER_TOOLS],
   authors: ['veri5ied'],
   auth: algoliaAuth,
@@ -38,5 +37,3 @@ export const algolia = createPiece({
   ],
   triggers: [],
 });
-
-export { algoliaAuth };
