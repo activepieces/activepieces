@@ -1,6 +1,7 @@
 import fs from 'fs'
 import os from 'os'
 import { MachineInformation, tryCatch } from '@activepieces/shared'
+import checkDiskSpace from 'check-disk-space'
 import si from 'systeminformation'
 import { fileSystemUtils } from './file-system-utils'
 
@@ -89,16 +90,13 @@ export const systemUsage = {
 
     async getDiskInfo(): Promise<MachineInformation['diskInfo']> {
         const { data, error } = await tryCatch(async () => {
-            const disks = await si.fsSize()
-            const root = disks.find(d => d.mount === '/') ?? disks[0]
-            if (!root) {
-                return { total: 0, free: 0, used: 0, percentage: 0 }
-            }
+            const { size, free } = await checkDiskSpace('/')
+            const used = size - free
             return {
-                total: root.size,
-                free: root.available,
-                used: root.used,
-                percentage: root.use,
+                total: size,
+                free,
+                used,
+                percentage: size > 0 ? (used / size) * 100 : 0,
             }
         })
         if (error) {
