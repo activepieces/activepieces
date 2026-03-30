@@ -30,10 +30,17 @@ import {
   FunctionSlashExtension,
   SlashCommandState,
   insertFunctionAtPos,
+  insertFunctionInline,
   registerSlashCommandHandler,
   unregisterSlashCommandHandler,
+  registerInlineAutocompleteHandler,
+  unregisterInlineAutocompleteHandler,
 } from './extensions/function-slash-extension';
-import { FunctionStartNode } from './extensions/function-start-node';
+import {
+  FunctionStartNode,
+  FUNCTION_START_NODE_TYPE,
+  FUNCTION_END_NODE_TYPE,
+} from './extensions/function-start-node';
 import { textMentionUtils } from './text-input-utils';
 
 type TiptapEditorProps = {
@@ -124,6 +131,11 @@ export const TiptapEditor = ({
   const slashStateRef = useRef(slashState);
   slashStateRef.current = slashState;
 
+  const [inlineState, setInlineState] =
+    useState<SlashCommandState>(INITIAL_SLASH_STATE);
+  const inlineStateRef = useRef(inlineState);
+  inlineStateRef.current = inlineState;
+
   const [previewMode, setPreviewMode] = useState(false);
   const [previewValue, setPreviewValue] = useState<string>('');
   const [previewError, setPreviewError] = useState(false);
@@ -137,6 +149,10 @@ export const TiptapEditor = ({
     setSlashState(INITIAL_SLASH_STATE);
   }, []);
 
+  const closeInline = useCallback(() => {
+    setInlineState(INITIAL_SLASH_STATE);
+  }, []);
+
   const handleFunctionSelect = useCallback((fn: ApFunction) => {
     const editor = editorRef.current;
     if (!editor) return;
@@ -147,6 +163,18 @@ export const TiptapEditor = ({
       slashStateRef.current.query,
     );
     setSlashState(INITIAL_SLASH_STATE);
+  }, []);
+
+  const handleInlineFunctionSelect = useCallback((fn: ApFunction) => {
+    const editor = editorRef.current;
+    if (!editor) return;
+    insertFunctionInline(
+      editor,
+      fn,
+      inlineStateRef.current.from,
+      inlineStateRef.current.query.length,
+    );
+    setInlineState(INITIAL_SLASH_STATE);
   }, []);
 
   const insertMention = (propertyPath: string) => {
@@ -170,6 +198,47 @@ export const TiptapEditor = ({
       ),
     },
     editorProps: {
+      handleKeyDown: (view, event) => {
+        if (event.key !== ')') return false;
+
+        const { state } = view;
+
+        // Collect open and closed function node IDs
+        const openIds = new Set<string>();
+        const closedIds = new Set<string>();
+        state.doc.descendants((node) => {
+          if (node.type.name === FUNCTION_START_NODE_TYPE) {
+            openIds.add(node.attrs.id as string);
+          }
+          if (node.type.name === FUNCTION_END_NODE_TYPE) {
+            closedIds.add(node.attrs.openId as string);
+          }
+        });
+
+        const unclosed = [...openIds].filter((id) => !closedIds.has(id));
+        if (unclosed.length === 0) return false; // no open function, type normally
+
+        // Find the innermost: the last function_start in doc order that is unclosed
+        let innermostId: string | null = null;
+        state.doc.descendants((node) => {
+          if (
+            node.type.name === FUNCTION_START_NODE_TYPE &&
+            unclosed.includes(node.attrs.id as string)
+          ) {
+            innermostId = node.attrs.id as string;
+          }
+        });
+
+        if (!innermostId) return false;
+
+        // Insert FunctionEndNode at cursor
+        const { tr } = state;
+        const endNode = state.schema.nodes[FUNCTION_END_NODE_TYPE].create({
+          openId: innermostId,
+        });
+        view.dispatch(tr.replaceSelectionWith(endNode));
+        return true; // consumed
+      },
       attributes: {
         class: cn(
           className ?? cn(inputClass, 'py-2 h-[unset] block   min-h-9  '),
@@ -182,6 +251,7 @@ export const TiptapEditor = ({
       const editorContent = e.getJSON();
       requestAnimationFrame(() => {
         applyTypeErrors(editorContent, editorWrapperRef.current);
+        applyUnclosedErrors(editorWrapperRef.current);
       });
     },
     onUpdate: ({ editor: e }) => {
@@ -192,6 +262,7 @@ export const TiptapEditor = ({
       if (previewModeRef.current) updatePreview(textResult);
       requestAnimationFrame(() => {
         applyTypeErrors(editorContent, editorWrapperRef.current);
+        applyUnclosedErrors(editorWrapperRef.current);
       });
     },
     onFocus: () => {
@@ -209,7 +280,14 @@ export const TiptapEditor = ({
       getState: () => slashStateRef.current,
       setState: setSlashState,
     });
-    return () => unregisterSlashCommandHandler();
+    registerInlineAutocompleteHandler({
+      getState: () => inlineStateRef.current,
+      setState: setInlineState,
+    });
+    return () => {
+      unregisterSlashCommandHandler();
+      unregisterInlineAutocompleteHandler();
+    };
   }, [editor]);
 
   const updatePreview = useCallback(
@@ -277,6 +355,15 @@ export const TiptapEditor = ({
           onClose={closeSlash}
         />
       )}
+
+      {inlineState.open && (
+        <FunctionSearchPopover
+          query={inlineState.query}
+          position={inlineState.position}
+          onSelect={handleInlineFunctionSelect}
+          onClose={closeInline}
+        />
+      )}
     </div>
   );
 };
@@ -317,6 +404,33 @@ function applyTypeErrors(
       if (err) badge.classList.add('ap-fn-error');
       else badge.classList.remove('ap-fn-error');
     });
+}
+
+function applyUnclosedErrors(wrapperEl: HTMLElement | null) {
+  if (!wrapperEl) return;
+
+  const startBadges = wrapperEl.querySelectorAll<HTMLElement>(
+    '[data-function-start]',
+  );
+  const endBadges = wrapperEl.querySelectorAll<HTMLElement>(
+    '[data-function-end]',
+  );
+
+  const closedOpenIds = new Set<string>();
+  endBadges.forEach((badge) => {
+    const openId = badge.getAttribute('data-function-end');
+    if (openId) closedOpenIds.add(openId);
+  });
+
+  startBadges.forEach((badge) => {
+    const id = badge.getAttribute('data-function-start');
+    if (!id) return;
+    if (!closedOpenIds.has(id)) {
+      badge.classList.add('ap-fn-unclosed');
+    } else {
+      badge.classList.remove('ap-fn-unclosed');
+    }
+  });
 }
 
 function flattenSampleData(

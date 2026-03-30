@@ -31,6 +31,16 @@
     color: #b91c1c !important;
 }
 
+.ap-fn-unclosed {
+    background-color: rgba(239, 68, 68, 0.12) !important;
+    border-color: #ef4444 !important;
+    color: #b91c1c !important;
+    text-decoration: underline;
+    text-decoration-color: #ef4444;
+    text-decoration-style: wavy;
+    text-underline-offset: 2px;
+}
+
 /* Formula Editor */
 .ap-variable-pill {
     display: inline-flex;
