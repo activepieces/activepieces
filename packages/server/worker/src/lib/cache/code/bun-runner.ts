@@ -1,7 +1,7 @@
 import { apDayjsDuration, fileSystemUtils } from '@activepieces/server-utils'
 import { tryCatch } from '@activepieces/shared'
 import { Logger } from 'pino'
-import { CommandOutput, execPromise, spawnWithKill } from '../../utils/exec'
+import { CommandOutput, spawnWithKill } from '../../utils/exec'
 
 export const bunRunner = (log: Logger) => ({
     async install({ path, filtersPath }: InstallParams): Promise<CommandOutput> {
@@ -28,15 +28,17 @@ export const bunRunner = (log: Logger) => ({
         return data
     },
     async build({ path, entryFile, outputFile }: BuildParams): Promise<CommandOutput> {
-        const config = [
-            `${entryFile}`,
-            '--target node',
-            '--production',
-            '--format cjs',
-            `--outfile ${outputFile}`,
-        ]
-        log.debug({ path, entryFile, outputFile, config }, '[bunRunner#build]')
-        return execPromise(`bun build ${config.join(' ')}`, { cwd: path })
+        const args = ['build', entryFile, '--target', 'node', '--production', '--format', 'cjs', '--outfile', outputFile]
+        log.debug({ path, entryFile, outputFile, args }, '[bunRunner#build]')
+        return spawnWithKill({
+            cmd: `bun ${args.join(' ')}`,
+            options: {
+                cwd: path,
+                shell: false,
+            },
+            printOutput: false,
+            timeoutMs: apDayjsDuration(10, 'minutes').asMilliseconds(),
+        })
     },
 })
 

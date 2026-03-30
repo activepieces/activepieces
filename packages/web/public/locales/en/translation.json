@@ -1268,6 +1268,7 @@
   "New Folder Name": "New Folder Name",
   "This field is required": "This field is required",
   "required": "Required",
+  "invalidStepName": "Step name may only contain letters, numbers, and underscores",
   "Your submission was successfully received.": "Your submission was successfully received.",
   "The flow you are trying to submit to does not exist.": "The flow you are trying to submit to does not exist.",
   "The flow failed to execute.": "The flow failed to execute.",

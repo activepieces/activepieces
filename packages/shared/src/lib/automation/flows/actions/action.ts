@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { formErrors } from '../../../form-errors'
 import { VersionType } from '../../pieces'
 import { PropertySettings } from '../properties'
 import { SampleDataSetting } from '../sample-data'
@@ -20,8 +21,10 @@ export enum BranchExecutionType {
     CONDITION = 'CONDITION',
 }
 
+const STEP_NAME_REGEX = /^[a-zA-Z_][a-zA-Z0-9_]*$/
+
 const commonActionProps = {
-    name: z.string(),
+    name: z.string().regex(STEP_NAME_REGEX, formErrors.invalidStepName),
     valid: z.boolean(),
     displayName: z.string(),
     skip: z.boolean().optional(),
