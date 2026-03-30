@@ -66,7 +66,7 @@ const css = `
 
 export function ConversationList({ onSelect }: { onSelect?: (id: string) => void }) {
   const [activeId, setActiveId] = useState<string>('1');
-  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({ Older: true });
 
   const today = FAKE_CONVERSATIONS.filter((c) => isToday(c.date));
   const yesterdayList = FAKE_CONVERSATIONS.filter((c) => isYesterday(c.date));
