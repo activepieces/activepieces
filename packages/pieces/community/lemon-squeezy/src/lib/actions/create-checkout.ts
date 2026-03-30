@@ -1,7 +1,13 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { lemonSqueezyAuth } from '../common/auth';
-import { LEMON_SQUEEZY_API_BASE, getLemonSqueezyHeaders } from '../common/api';
+import {
+  LEMON_SQUEEZY_API_BASE,
+  getLemonSqueezyHeaders,
+  fetchStoreOptions,
+  fetchProductOptions,
+  fetchVariantOptions,
+} from '../common/api';
 
 export const createCheckout = createAction({
   name: 'create_checkout',
@@ -9,15 +15,47 @@ export const createCheckout = createAction({
   description: 'Create a checkout URL for a specific Lemon Squeezy product variant.',
   auth: lemonSqueezyAuth,
   props: {
-    storeId: Property.ShortText({
-      displayName: 'Store ID',
-      description: 'The ID of the store the checkout belongs to.',
+    storeId: Property.Dropdown({
+      displayName: 'Store',
+      description: 'The store the checkout belongs to.',
       required: true,
+      auth: lemonSqueezyAuth,
+      refreshers: ['auth'],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return { disabled: true, placeholder: 'Connect your account first.', options: [] };
+        }
+        const options = await fetchStoreOptions(auth.secret_text);
+        return { options };
+      },
     }),
-    variantId: Property.ShortText({
-      displayName: 'Variant ID',
-      description: 'The ID of the product variant to create a checkout for.',
+    productId: Property.Dropdown({
+      displayName: 'Product',
+      description: 'Select a product to filter the variant list below.',
+      required: false,
+      auth: lemonSqueezyAuth,
+      refreshers: ['auth', 'storeId'],
+      options: async ({ auth, storeId }) => {
+        if (!auth) {
+          return { disabled: true, placeholder: 'Connect your account first.', options: [] };
+        }
+        const options = await fetchProductOptions(auth.secret_text, storeId as string | undefined);
+        return { options };
+      },
+    }),
+    variantId: Property.Dropdown({
+      displayName: 'Variant',
+      description: 'The product variant to create a checkout for.',
       required: true,
+      auth: lemonSqueezyAuth,
+      refreshers: ['auth', 'productId'],
+      options: async ({ auth, productId }) => {
+        if (!auth) {
+          return { disabled: true, placeholder: 'Connect your account first.', options: [] };
+        }
+        const options = await fetchVariantOptions(auth.secret_text, productId as string | undefined);
+        return { options };
+      },
     }),
     customerEmail: Property.ShortText({
       displayName: 'Customer Email',
@@ -88,7 +126,7 @@ export const createCheckout = createAction({
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
       url: `${LEMON_SQUEEZY_API_BASE}/checkouts`,
-      headers: getLemonSqueezyHeaders(auth as string),
+      headers: getLemonSqueezyHeaders(auth.secret_text),
       body: {
         data: {
           type: 'checkouts',

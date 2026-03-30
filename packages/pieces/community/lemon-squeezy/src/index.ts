@@ -1,4 +1,4 @@
-import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
+import { createPiece } from "@activepieces/pieces-framework";
 import { createCustomApiCallAction } from "@activepieces/pieces-common";
 import { lemonSqueezyAuth } from "./lib/common/auth";
 import { LEMON_SQUEEZY_API_BASE } from "./lib/common/api";
@@ -43,7 +43,7 @@ export const lemonSqueezy = createPiece({
       auth: lemonSqueezyAuth,
       baseUrl: () => LEMON_SQUEEZY_API_BASE,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${auth as string}`,
+        Authorization: `Bearer ${auth.secret_text}`,
         Accept: 'application/vnd.api+json',
         'Content-Type': 'application/vnd.api+json',
       }),

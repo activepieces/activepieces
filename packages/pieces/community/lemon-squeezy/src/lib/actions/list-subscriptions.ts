@@ -1,7 +1,15 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { lemonSqueezyAuth } from '../common/auth';
-import { LEMON_SQUEEZY_API_BASE, getLemonSqueezyHeaders, buildQueryString } from '../common/api';
+import {
+  LEMON_SQUEEZY_API_BASE,
+  getLemonSqueezyHeaders,
+  buildQueryString,
+  fetchStoreOptions,
+  fetchOrderOptions,
+  fetchProductOptions,
+  fetchVariantOptions,
+} from '../common/api';
 
 export const listSubscriptions = createAction({
   name: 'list_subscriptions',
@@ -9,30 +17,66 @@ export const listSubscriptions = createAction({
   description: 'Retrieve a paginated list of subscriptions from your Lemon Squeezy store.',
   auth: lemonSqueezyAuth,
   props: {
-    storeId: Property.ShortText({
-      displayName: 'Store ID',
-      description: 'Filter subscriptions by a specific store ID.',
+    storeId: Property.Dropdown({
+      displayName: 'Store',
+      description: 'Filter subscriptions by store.',
       required: false,
+      auth: lemonSqueezyAuth,
+      refreshers: ['auth'],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return { disabled: true, placeholder: 'Connect your account first.', options: [] };
+        }
+        const options = await fetchStoreOptions(auth.secret_text);
+        return { options };
+      },
     }),
-    orderId: Property.ShortText({
-      displayName: 'Order ID',
-      description: 'Filter subscriptions by a specific order ID.',
+    orderId: Property.Dropdown({
+      displayName: 'Order',
+      description: 'Filter subscriptions by order.',
       required: false,
+      auth: lemonSqueezyAuth,
+      refreshers: ['auth', 'storeId'],
+      options: async ({ auth, storeId }) => {
+        if (!auth) {
+          return { disabled: true, placeholder: 'Connect your account first.', options: [] };
+        }
+        const options = await fetchOrderOptions(auth.secret_text, storeId as string | undefined);
+        return { options };
+      },
     }),
     orderItemId: Property.ShortText({
       displayName: 'Order Item ID',
       description: 'Filter subscriptions by a specific order item ID.',
       required: false,
     }),
-    productId: Property.ShortText({
-      displayName: 'Product ID',
-      description: 'Filter subscriptions by a specific product ID.',
+    productId: Property.Dropdown({
+      displayName: 'Product',
+      description: 'Filter subscriptions by product.',
       required: false,
+      auth: lemonSqueezyAuth,
+      refreshers: ['auth', 'storeId'],
+      options: async ({ auth, storeId }) => {
+        if (!auth) {
+          return { disabled: true, placeholder: 'Connect your account first.', options: [] };
+        }
+        const options = await fetchProductOptions(auth.secret_text, storeId as string | undefined);
+        return { options };
+      },
     }),
-    variantId: Property.ShortText({
-      displayName: 'Variant ID',
-      description: 'Filter subscriptions by a specific variant ID.',
+    variantId: Property.Dropdown({
+      displayName: 'Variant',
+      description: 'Filter subscriptions by variant.',
       required: false,
+      auth: lemonSqueezyAuth,
+      refreshers: ['auth', 'productId'],
+      options: async ({ auth, productId }) => {
+        if (!auth) {
+          return { disabled: true, placeholder: 'Connect your account first.', options: [] };
+        }
+        const options = await fetchVariantOptions(auth.secret_text, productId as string | undefined);
+        return { options };
+      },
     }),
     userEmail: Property.ShortText({
       displayName: 'Customer Email',
@@ -89,7 +133,7 @@ export const listSubscriptions = createAction({
     const response = await httpClient.sendRequest({
       method: HttpMethod.GET,
       url,
-      headers: getLemonSqueezyHeaders(auth as string),
+      headers: getLemonSqueezyHeaders(auth.secret_text),
     });
 
     return response.body;

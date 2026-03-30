@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { lemonSqueezyAuth } from '../common/auth';
-import { LEMON_SQUEEZY_API_BASE, getLemonSqueezyHeaders, buildQueryString } from '../common/api';
+import { LEMON_SQUEEZY_API_BASE, getLemonSqueezyHeaders, buildQueryString, fetchStoreOptions } from '../common/api';
 
 export const listProducts = createAction({
   name: 'list_products',
@@ -9,10 +9,19 @@ export const listProducts = createAction({
   description: 'Retrieve a paginated list of products from your Lemon Squeezy store.',
   auth: lemonSqueezyAuth,
   props: {
-    storeId: Property.ShortText({
-      displayName: 'Store ID',
-      description: 'Filter products by a specific store ID. Leave empty to return products from all stores.',
+    storeId: Property.Dropdown({
+      displayName: 'Store',
+      description: 'Filter products by store. Leave empty to return products from all stores.',
       required: false,
+      auth: lemonSqueezyAuth,
+      refreshers: ['auth'],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return { disabled: true, placeholder: 'Connect your account first.', options: [] };
+        }
+        const options = await fetchStoreOptions(auth.secret_text);
+        return { options };
+      },
     }),
     page: Property.Number({
       displayName: 'Page',
@@ -41,7 +50,7 @@ export const listProducts = createAction({
     const response = await httpClient.sendRequest({
       method: HttpMethod.GET,
       url,
-      headers: getLemonSqueezyHeaders(auth as string),
+      headers: getLemonSqueezyHeaders(auth.secret_text),
     });
 
     return response.body;
