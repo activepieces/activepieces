@@ -34,7 +34,7 @@ export const FlowVersion = z.object({
     connectionIds: z.array(z.string()),
     backupFiles: Nullable(z.record(z.string(), z.string())),
     notes: z.array(Note),
-    pieceStepsVersionsBackups: z.record(z.string(), PieceStepVersionBackupEntry).optional(),
+    pieceStepsVersionsBackups: Nullable(z.record(z.string(), PieceStepVersionBackupEntry)),
 })
 
 export type PieceStepVersionBackupEntry = z.infer<typeof PieceStepVersionBackupEntry>

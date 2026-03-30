@@ -6,7 +6,7 @@ import { flowStructureUtil } from '../util/flow-structure-util'
 import { UpdateActionRequest } from './index'
 
 function _updateAction(flowVersion: FlowVersion, request: UpdateActionRequest): FlowVersion {
-    return flowStructureUtil.transferFlow(flowVersion, (stepToUpdate) => {
+    const next = flowStructureUtil.transferFlow(flowVersion, (stepToUpdate) => {
         if (stepToUpdate.name !== request.name) {
             return stepToUpdate
         }
@@ -38,10 +38,9 @@ function _updateAction(flowVersion: FlowVersion, request: UpdateActionRequest): 
             }
             case FlowActionType.PIECE: {
                 const existingSampleData = stepToUpdate.type === FlowActionType.PIECE ? stepToUpdate.settings.sampleData : undefined
-                const existingVersionUpdateBackup = stepToUpdate.type === FlowActionType.PIECE ? stepToUpdate.settings.versionUpdateBackup : undefined
                 updatedAction = {
                     ...baseProps,
-                    settings: { ...request.settings, sampleData: existingSampleData, versionUpdateBackup: existingVersionUpdateBackup },
+                    settings: { ...request.settings, sampleData: existingSampleData },
                     type: FlowActionType.PIECE,
                     nextAction: stepToUpdate.nextAction,
                 }
@@ -80,6 +79,22 @@ function _updateAction(flowVersion: FlowVersion, request: UpdateActionRequest): 
             valid,
         }
     })
+    if (request.type !== FlowActionType.PIECE) {
+        return next
+    }
+    const backup = flowVersion.pieceStepsVersionsBackups?.[request.name]
+    if (backup === undefined) {
+        return next
+    }
+    const actionName = request.settings.actionName ?? ''
+    if (backup.pieceName === request.settings.pieceName && backup.actionOrTriggerName === actionName) {
+        return next
+    }
+    const { [request.name]: _removed, ...rest } = next.pieceStepsVersionsBackups ?? {}
+    return {
+        ...next,
+        pieceStepsVersionsBackups: Object.keys(rest).length > 0 ? rest : undefined,
+    }
 }
 
 export { _updateAction }

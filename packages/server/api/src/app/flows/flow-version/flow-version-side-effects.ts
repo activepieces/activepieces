@@ -1,13 +1,16 @@
 import {
     FileType,
+    FlowActionType,
     FlowOperationRequest,
     FlowOperationType,
     flowStructureUtil,
+    FlowTriggerType,
     FlowVersion,
     isNil,
     ProjectId,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { fileService } from '../../file/file.service'
 import { exceptionHandler } from '../../helper/exception-handler'
 import { triggerSourceService } from '../../trigger/trigger-source/trigger-source-service'
 import { flowService } from '../flow/flow.service'
@@ -27,6 +30,7 @@ export const flowVersionSideEffects = (log: FastifyBaseLogger) => ({
         operation,
     }: OnApplyOperationParams): Promise<void> {
         try {
+            await handlePieceStepsVersionBackupInvalidation(projectId, flowVersion, operation, log)
             await handleSampleDataDeletion(projectId, flowVersion, operation, log)
             await handleUpdateTriggerWebhookSimulation(projectId, flowVersion, operation, log)
             await handleUpdateFlowLastModified(projectId, flowVersion, log)
@@ -38,6 +42,47 @@ export const flowVersionSideEffects = (log: FastifyBaseLogger) => ({
     },
 })
 
+
+
+
+async function handlePieceStepsVersionBackupInvalidation(
+    projectId: ProjectId,
+    flowVersion: FlowVersion,
+    operation: FlowOperationRequest,
+    log: FastifyBaseLogger,
+): Promise<void> {
+    if (operation.type === FlowOperationType.UPDATE_ACTION && operation.request.type === FlowActionType.PIECE) {
+        const backup = flowVersion.pieceStepsVersionsBackups?.[operation.request.name]
+        if (isNil(backup)) {
+            return
+        }
+        const actionName = operation.request.settings.actionName ?? ''
+        if (backup.pieceName === operation.request.settings.pieceName && backup.actionOrTriggerName === actionName) {
+            return
+        }
+        await fileService(log).deleteOne({
+            projectId,
+            fileId: backup.fileId,
+            type: FileType.PIECE_STEP_VERSION_BACKUP,
+        })
+        return
+    }
+    if (operation.type === FlowOperationType.UPDATE_TRIGGER && operation.request.type === FlowTriggerType.PIECE) {
+        const backup = flowVersion.pieceStepsVersionsBackups?.[operation.request.name]
+        if (isNil(backup)) {
+            return
+        }
+        const triggerName = operation.request.settings.triggerName ?? ''
+        if (backup.pieceName === operation.request.settings.pieceName && backup.actionOrTriggerName === triggerName) {
+            return
+        }
+        await fileService(log).deleteOne({
+            projectId,
+            fileId: backup.fileId,
+            type: FileType.PIECE_STEP_VERSION_BACKUP,
+        })
+    }
+}
 
 async function handleSampleDataDeletion(projectId: ProjectId, flowVersion: FlowVersion, operation: FlowOperationRequest, log: FastifyBaseLogger): Promise<void> {
     if (operation.type !== FlowOperationType.UPDATE_TRIGGER && operation.type !== FlowOperationType.DELETE_ACTION) {

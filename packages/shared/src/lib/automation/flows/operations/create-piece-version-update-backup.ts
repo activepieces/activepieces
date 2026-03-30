@@ -8,26 +8,32 @@ function _createPieceVersionUpdateBackup(
     flowVersion: FlowVersion,
     request: CreatePieceVersionUpdateBackupRequest,
 ): FlowVersion {
-    return flowStructureUtil.transferFlow(flowVersion, (step) => {
-        if (step.name !== request.stepName) {
-            return step
-        }
-        if (step.type === FlowActionType.PIECE) {
-            const { versionUpdateBackup: _existing, ...backup } = step.settings
-            return {
-                ...step,
-                settings: { ...step.settings, versionUpdateBackup: backup },
-            }
-        }
-        if (step.type === FlowTriggerType.PIECE) {
-            const { versionUpdateBackup: _existing, ...backup } = step.settings
-            return {
-                ...step,
-                settings: { ...step.settings, versionUpdateBackup: backup },
-            }
-        }
-        return step
-    })
+    const step = flowStructureUtil.getStep(request.stepName, flowVersion.trigger)
+    if (step === undefined) {
+        return flowVersion
+    }
+    if (step.type !== FlowActionType.PIECE && step.type !== FlowTriggerType.PIECE) {
+        return flowVersion
+    }
+    const pieceName = step.settings.pieceName
+    const pieceVersion = step.settings.pieceVersion
+    const actionOrTriggerName =
+        step.type === FlowTriggerType.PIECE
+            ? (step.settings.triggerName ?? '')
+            : (step.settings.actionName ?? '')
+    const existing = flowVersion.pieceStepsVersionsBackups ?? {}
+    return {
+        ...flowVersion,
+        pieceStepsVersionsBackups: {
+            ...existing,
+            [request.stepName]: {
+                pieceName,
+                pieceVersion,
+                actionOrTriggerName,
+                fileId: '',
+            },
+        },
+    }
 }
 
 export { _createPieceVersionUpdateBackup }

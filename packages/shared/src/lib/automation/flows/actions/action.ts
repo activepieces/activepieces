@@ -78,7 +78,6 @@ const pieceActionSettingsFields = {
 
 export const PieceActionSettings = z.object({
     ...pieceActionSettingsFields,
-    versionUpdateBackup: z.object(pieceActionSettingsFields).optional(),
 })
 
 export type PieceActionSettings = z.infer<typeof PieceActionSettings>

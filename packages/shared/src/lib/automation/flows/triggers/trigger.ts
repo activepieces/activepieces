@@ -19,7 +19,6 @@ const pieceTriggerSettingsFields = {
 
 export const PieceTriggerSettings = z.object({
     ...pieceTriggerSettingsFields,
-    versionUpdateBackup: z.object(pieceTriggerSettingsFields).optional(),
 })
 
 export type PieceTriggerSettings = z.infer<typeof PieceTriggerSettings>
