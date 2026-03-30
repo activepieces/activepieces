@@ -45,19 +45,21 @@ const polling: Polling<
       },
     });
 
-    return response.body.posts.map((post) => ({
-      epochMilliSeconds: new Date(post.publishDate).getTime(),
-      data: {
-        id: post.id,
-        content: post.content,
-        publish_date: post.publishDate,
-        release_url: post.releaseURL ?? null,
-        state: post.state,
-        integration_id: post.integration?.id ?? null,
-        integration_provider: post.integration?.providerIdentifier ?? null,
-        integration_name: post.integration?.name ?? null,
-      },
-    }));
+    return response.body.posts
+      .filter((post) => post.state === 'PUBLISHED')
+      .map((post) => ({
+        epochMilliSeconds: new Date(post.publishDate).getTime(),
+        data: {
+          id: post.id,
+          content: post.content,
+          publish_date: post.publishDate,
+          release_url: post.releaseURL ?? null,
+          state: post.state,
+          integration_id: post.integration?.id ?? null,
+          integration_provider: post.integration?.providerIdentifier ?? null,
+          integration_name: post.integration?.name ?? null,
+        },
+      }));
   },
 };
 
