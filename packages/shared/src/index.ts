@@ -103,3 +103,7 @@ export * from './lib/ee/event-destinations'
 export * from './lib/ee/secret-managers'
 export * from './lib/ee/scim'
 export * from './lib/management/project/project-requests'
+
+// formula
+export * from './lib/formula/function-registry'
+export * from './lib/formula/function-evaluator'

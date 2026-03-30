@@ -1,4 +1,9 @@
-import { flowStructureUtil, isNil } from '@activepieces/shared';
+import {
+  ApFunction,
+  evaluateExpression,
+  flowStructureUtil,
+  isNil,
+} from '@activepieces/shared';
 import { Extensions } from '@tiptap/core';
 import { Document } from '@tiptap/extension-document';
 import { HardBreak } from '@tiptap/extension-hard-break';
@@ -9,6 +14,7 @@ import { Placeholder } from '@tiptap/extension-placeholder';
 import { Text } from '@tiptap/extension-text';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { inputClass } from '@/components/ui/input';
 import { stepsHooks } from '@/features/pieces';
@@ -16,6 +22,17 @@ import { cn } from '@/lib/utils';
 
 import { useBuilderStateContext } from '../../builder-hooks';
 
+import { FunctionEditorTooltip } from './components/function-hover-popover';
+import { FunctionSearchPopover } from './components/function-search-popover';
+import { FunctionEndNode } from './extensions/function-end-node';
+import {
+  FunctionSlashExtension,
+  SlashCommandState,
+  insertFunctionAtPos,
+  registerSlashCommandHandler,
+  unregisterSlashCommandHandler,
+} from './extensions/function-slash-extension';
+import { FunctionStartNode } from './extensions/function-start-node';
 import { textMentionUtils } from './text-input-utils';
 
 type TextInputWithMentionsProps = {
@@ -25,6 +42,13 @@ type TextInputWithMentionsProps = {
   placeholder?: string;
   disabled?: boolean;
   enableMarkdown?: boolean;
+};
+
+const INITIAL_SLASH_STATE: SlashCommandState = {
+  open: false,
+  query: '',
+  position: { top: 0, left: 0 },
+  from: 0,
 };
 
 function getExtensions({
@@ -49,6 +73,9 @@ function getExtensions({
         return textMentionUtils.generateMentionHtmlElement(mentionAttrs);
       },
     }),
+    FunctionStartNode,
+    FunctionEndNode,
+    FunctionSlashExtension,
   ];
 
   if (enableMarkdown) {
@@ -110,9 +137,40 @@ export const TextInputWithMentions = ({
       return undefined;
     });
 
+  const sampleData = useBuilderStateContext((state) => state.outputSampleData);
+
   const setInsertMentionHandler = useBuilderStateContext(
     (state) => state.setInsertMentionHandler,
   );
+
+  // Slash command popover state
+  const [slashState, setSlashState] =
+    useState<SlashCommandState>(INITIAL_SLASH_STATE);
+  const slashStateRef = useRef(slashState);
+  slashStateRef.current = slashState;
+
+  // Preview mode state
+  const [previewMode, setPreviewMode] = useState(false);
+  const [previewValue, setPreviewValue] = useState<string>('');
+
+  const editorRef = useRef<ReturnType<typeof useEditor> | null>(null);
+  const editorWrapperRef = useRef<HTMLDivElement>(null);
+
+  const closeSlash = useCallback(() => {
+    setSlashState(INITIAL_SLASH_STATE);
+  }, []);
+
+  const handleFunctionSelect = useCallback((fn: ApFunction) => {
+    const editor = editorRef.current;
+    if (!editor) return;
+    insertFunctionAtPos(
+      editor,
+      fn,
+      slashStateRef.current.from,
+      slashStateRef.current.query,
+    );
+    setSlashState(INITIAL_SLASH_STATE);
+  }, []);
 
   const insertMention = (propertyPath: string) => {
     const mentionNode = textMentionUtils.createMentionNodeFromText(
@@ -120,7 +178,7 @@ export const TextInputWithMentions = ({
       steps,
       stepsMetadata,
     );
-    editor?.chain().focus().insertContent(mentionNode).run();
+    editorRef.current?.chain().focus().insertContent(mentionNode).run();
   };
 
   const editor = useEditor({
@@ -145,12 +203,16 @@ export const TextInputWithMentions = ({
         ),
       },
     },
-    onUpdate: ({ editor }) => {
-      const editorContent = editor.getJSON();
+    onUpdate: ({ editor: e }) => {
+      const editorContent = e.getJSON();
       const textResult =
         textMentionUtils.convertTiptapJsonToText(editorContent);
       if (onChange) {
         onChange(textResult);
+      }
+      // Keep preview value in sync
+      if (previewMode) {
+        updatePreview(textResult);
       }
     },
     onFocus: () => {
@@ -158,13 +220,120 @@ export const TextInputWithMentions = ({
     },
   });
 
+  // Keep editorRef in sync
+  useEffect(() => {
+    editorRef.current = editor;
+  }, [editor]);
+
+  // Register the slash handler whenever editor changes
+  useEffect(() => {
+    if (!editor) return;
+    registerSlashCommandHandler({
+      getState: () => slashStateRef.current,
+      setState: setSlashState,
+    });
+    return () => {
+      unregisterSlashCommandHandler();
+    };
+  }, [editor]);
+
+  const updatePreview = useCallback(
+    (expression: string) => {
+      const flatData = flattenSampleData(sampleData ?? {});
+      const result = evaluateExpression(expression, flatData);
+      setPreviewValue(result != null ? String(result) : '');
+    },
+    [sampleData],
+  );
+
+  const togglePreview = () => {
+    if (!previewMode && editor) {
+      const text = textMentionUtils.convertTiptapJsonToText(editor.getJSON());
+      updatePreview(text);
+    }
+    setPreviewMode((prev) => !prev);
+  };
+
   if (!editor) {
     return null;
   }
 
   return (
-    <div className="w-full">
-      <EditorContent editor={editor} />
+    <div className="w-full" ref={editorWrapperRef}>
+      {/* Preview toggle */}
+      <div className="flex justify-end mb-0.5">
+        <button
+          type="button"
+          onClick={togglePreview}
+          className="text-[11px] text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
+        >
+          {previewMode ? 'Edit' : 'Preview'}
+        </button>
+      </div>
+
+      {previewMode ? (
+        <div
+          className={cn(
+            className ?? cn(inputClass, 'py-2 h-[unset] block min-h-9'),
+            'whitespace-pre-wrap break-all text-sm',
+          )}
+        >
+          {previewValue || (
+            <span className="text-muted-foreground opacity-50">
+              {placeholder}
+            </span>
+          )}
+        </div>
+      ) : (
+        <EditorContent editor={editor} />
+      )}
+
+      {/* Hover tooltip for function badges in the editor */}
+      <FunctionEditorTooltip editorRef={editorWrapperRef} />
+
+      {/* Function search popover */}
+      {slashState.open && (
+        <FunctionSearchPopover
+          query={slashState.query}
+          position={slashState.position}
+          onSelect={handleFunctionSelect}
+          onClose={closeSlash}
+        />
+      )}
     </div>
   );
 };
+
+// Flattens { trigger: { output: { name: 'John' } } } into
+// { 'trigger.output.name': 'John' } for variable resolution.
+function flattenSampleData(
+  sampleData: Record<string, unknown>,
+): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+
+  function walk(obj: unknown, prefix: string) {
+    if (obj === null || obj === undefined) {
+      result[prefix] = obj;
+      return;
+    }
+    if (typeof obj !== 'object') {
+      result[prefix] = obj;
+      return;
+    }
+    if (Array.isArray(obj)) {
+      result[prefix] = obj;
+      obj.forEach((item, i) => walk(item, `${prefix}.${i}`));
+      return;
+    }
+    result[prefix] = obj;
+    for (const [k, v] of Object.entries(obj as Record<string, unknown>)) {
+      walk(v, prefix ? `${prefix}.${k}` : k);
+    }
+  }
+
+  for (const [k, v] of Object.entries(sampleData)) {
+    walk(v, k);
+  }
+
+  return result;
+}

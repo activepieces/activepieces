@@ -1,4 +1,5 @@
 import {
+  AP_FUNCTIONS,
   FlowAction,
   FlowTrigger,
   assertNotNullOrUndefined,
@@ -8,6 +9,11 @@ import { MentionNodeAttrs } from '@tiptap/extension-mention';
 import { JSONContent } from '@tiptap/react';
 
 import { StepMetadata } from '@/features/pieces';
+
+import {
+  FUNCTION_END_NODE_TYPE,
+  FUNCTION_START_NODE_TYPE,
+} from './extensions/function-start-node';
 
 const removeQuotes = (text: string) => {
   if (
@@ -47,63 +53,122 @@ enum TipTapNodeTypes {
   mention = 'mention',
 }
 
-const isMentionNodeText = (item: string) => {
-  const itemIsToken = item.match(/^\{\{(.*)\}\}$/);
-  if (itemIsToken) {
-    const content = itemIsToken[1].trim();
-    const itemIsFlattenedArray = content.match(flattenNestedKeysRegex);
-    if (itemIsFlattenedArray) {
-      return true;
-    }
-    return /^(step_\d+|trigger)/.test(content);
-  }
-  return false;
-};
-
 type StepMetadataWithDisplayName = StepMetadata & { stepDisplayName: string };
+
+type ExprToken =
+  | { kind: 'fn_open'; name: string }
+  | { kind: 'fn_close' }
+  | { kind: 'variable'; value: string }
+  | { kind: 'newline' }
+  | { kind: 'text'; value: string };
+
+function tokenizeExpression(expr: string): ExprToken[] {
+  const tokens: ExprToken[] = [];
+  const fnNames = new Set(AP_FUNCTIONS.map((f) => f.name));
+  let i = 0;
+
+  while (i < expr.length) {
+    // Variable reference {{...}}
+    if (expr[i] === '{' && expr[i + 1] === '{') {
+      const end = expr.indexOf('}}', i + 2);
+      if (end !== -1) {
+        tokens.push({ kind: 'variable', value: expr.slice(i, end + 2) });
+        i = end + 2;
+        continue;
+      }
+    }
+
+    // Newline
+    if (expr[i] === '\n') {
+      tokens.push({ kind: 'newline' });
+      i++;
+      continue;
+    }
+
+    // Check for functionName( — word chars followed by (
+    const fnMatch = expr.slice(i).match(/^([a-z_][a-z0-9_]*)\(/i);
+    if (fnMatch && fnNames.has(fnMatch[1])) {
+      tokens.push({ kind: 'fn_open', name: fnMatch[1] });
+      i += fnMatch[1].length + 1; // skip name + "("
+      continue;
+    }
+
+    // Closing paren — always emit as fn_close (the receiver decides if inside a function)
+    if (expr[i] === ')') {
+      tokens.push({ kind: 'fn_close' });
+      i++;
+      continue;
+    }
+
+    // Accumulate plain text until the next special sequence
+    let text = '';
+    while (i < expr.length) {
+      if (expr[i] === '{' && expr[i + 1] === '{') break;
+      if (expr[i] === '\n') break;
+      if (expr[i] === ')') break;
+      const ahead = expr.slice(i).match(/^([a-z_][a-z0-9_]*)\(/i);
+      if (ahead && fnNames.has(ahead[1])) break;
+      text += expr[i];
+      i++;
+    }
+    if (text) tokens.push({ kind: 'text', value: text });
+  }
+
+  return tokens;
+}
 
 function convertTextToTipTapJsonContent(
   userInputText: string,
   steps: (FlowAction | FlowTrigger)[],
   stepsMetadata: (StepMetadataWithDisplayName | undefined)[],
-): {
-  type: TipTapNodeTypes.paragraph;
-  content: JSONContent[];
-}[] {
-  const inputSplitToNodesContent = userInputText
-    .split(/(\{\{.*?\}\})/)
-    .map((el) => el.split(new RegExp(`(\n)`)))
-    .flat(1)
-    .filter((el) => el);
-  return inputSplitToNodesContent.reduce(
-    (result, node) => {
-      if (node === '\n') {
-        result.push({
-          type: TipTapNodeTypes.paragraph,
-          content: [],
+): { type: TipTapNodeTypes.paragraph; content: JSONContent[] }[] {
+  const tokens = tokenizeExpression(userInputText);
+  const paragraphs: {
+    type: TipTapNodeTypes.paragraph;
+    content: JSONContent[];
+  }[] = [{ type: TipTapNodeTypes.paragraph, content: [] }];
+  const fnStack: string[] = [];
+
+  for (const token of tokens) {
+    const para = paragraphs[paragraphs.length - 1];
+    switch (token.kind) {
+      case 'fn_open': {
+        const id = crypto.randomUUID();
+        fnStack.push(id);
+        para.content.push({
+          type: FUNCTION_START_NODE_TYPE,
+          attrs: { id, functionName: token.name },
         });
-      } else if (isMentionNodeText(node)) {
-        result[result.length - 1].content.push(
-          createMentionNodeFromText(node, steps, stepsMetadata),
-        );
-      } else {
-        result[result.length - 1].content.push({
-          type: TipTapNodeTypes.text,
-          text: node,
-        });
+        break;
       }
-      return result;
-    },
-    [
-      {
-        content: [],
-        type: TipTapNodeTypes.paragraph,
-      },
-    ] as {
-      type: TipTapNodeTypes.paragraph;
-      content: JSONContent[];
-    }[],
-  );
+      case 'fn_close': {
+        const openId = fnStack.pop();
+        if (openId !== undefined) {
+          para.content.push({
+            type: FUNCTION_END_NODE_TYPE,
+            attrs: { openId },
+          });
+        } else {
+          // Unmatched ) — treat as plain text
+          para.content.push({ type: TipTapNodeTypes.text, text: ')' });
+        }
+        break;
+      }
+      case 'variable':
+        para.content.push(
+          createMentionNodeFromText(token.value, steps, stepsMetadata),
+        );
+        break;
+      case 'newline':
+        paragraphs.push({ type: TipTapNodeTypes.paragraph, content: [] });
+        break;
+      case 'text':
+        para.content.push({ type: TipTapNodeTypes.text, text: token.value });
+        break;
+    }
+  }
+
+  return paragraphs;
 }
 
 function parseFlattenArrayPath(input: string): {
@@ -214,6 +279,13 @@ function convertTiptapJsonToText(nodes: JSONContent[]): string {
         return node.attrs?.label
           ? JSON.parse(node.attrs.label).serverValue
           : '';
+      }
+      case FUNCTION_START_NODE_TYPE: {
+        const attrs = node.attrs as { functionName?: string } | undefined;
+        return `${attrs?.functionName ?? ''}(`;
+      }
+      case FUNCTION_END_NODE_TYPE: {
+        return ')';
       }
       case TipTapNodeTypes.paragraph: {
         return `${

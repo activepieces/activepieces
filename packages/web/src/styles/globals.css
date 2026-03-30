@@ -14,4 +14,13 @@
             rgba(17, 24, 39, 0.9) 100%
         );
     }
-} 
+}
+
+/* ── Formula function bracket highlighting ─────────────────────────────── */
+.ap-fn-active {
+    background-color: #7c3aed !important;
+    color: #fff !important;
+    border-color: #6d28d9 !important;
+    outline: 2px solid #7c3aed !important;
+    outline-offset: 1px;
+}
