@@ -2,12 +2,10 @@ import { describe, expect, it, vi, beforeEach } from 'vitest'
 import type { Logger } from 'pino'
 
 const mockSpawnWithKill = vi.fn()
-const mockExecPromise = vi.fn()
 const mockThreadSafeMkdir = vi.fn()
 
 vi.mock('../../../../src/lib/utils/exec', () => ({
     spawnWithKill: mockSpawnWithKill,
-    execPromise: mockExecPromise,
 }))
 
 vi.mock('@activepieces/server-utils', () => ({
@@ -55,8 +53,8 @@ describe('packageRunner.install', () => {
 })
 
 describe('packageRunner.build', () => {
-    it('calls esbuild with correct args', async () => {
-        mockExecPromise.mockResolvedValueOnce({ stdout: '', stderr: '' })
+    it('calls esbuild via spawnWithKill with explicit args — no shell interpolation', async () => {
+        mockSpawnWithKill.mockResolvedValueOnce({ stdout: '', stderr: '' })
 
         await packageRunner(fakeLog).build({
             path: '/path',
@@ -64,8 +62,32 @@ describe('packageRunner.build', () => {
             outputFile: '/path/index.js',
         })
 
-        expect(mockExecPromise).toHaveBeenCalledOnce()
-        const [cmd] = mockExecPromise.mock.calls[0]
-        expect(cmd).toBe('esbuild /path/index.ts --bundle --platform=node --format=cjs --outfile=/path/index.js')
+        expect(mockSpawnWithKill).toHaveBeenCalledTimes(1)
+        const { cmd, args, options } = mockSpawnWithKill.mock.calls[0][0]
+        expect(cmd).toBe('esbuild')
+        expect(args).toEqual([
+            '/path/index.ts',
+            '--bundle',
+            '--platform=node',
+            '--format=cjs',
+            '--outfile=/path/index.js',
+        ])
+        expect(options.cwd).toBe('/path')
+    })
+
+    it('shell metacharacters in path are passed as literal args, not interpreted', async () => {
+        mockSpawnWithKill.mockResolvedValueOnce({ stdout: '', stderr: '' })
+
+        const maliciousPath = '/codes/abc/; touch /tmp/rce; #'
+        await packageRunner(fakeLog).build({
+            path: maliciousPath,
+            entryFile: `${maliciousPath}/index.ts`,
+            outputFile: `${maliciousPath}/index.js`,
+        })
+
+        const { cmd, args } = mockSpawnWithKill.mock.calls[0][0]
+        // The malicious string must appear verbatim in the args array, never split by shell
+        expect(cmd).toBe('esbuild')
+        expect(args[0]).toBe(`${maliciousPath}/index.ts`)
     })
 })

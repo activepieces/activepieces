@@ -1,6 +1,6 @@
 import { apDayjsDuration, fileSystemUtils } from '@activepieces/server-utils'
 import { Logger } from 'pino'
-import { CommandOutput, execPromise, spawnWithKill } from '../../utils/exec'
+import { CommandOutput, spawnWithKill } from '../../utils/exec'
 
 export const packageRunner = (log: Logger) => ({
     async install({ path }: InstallParams): Promise<CommandOutput> {
@@ -14,15 +14,21 @@ export const packageRunner = (log: Logger) => ({
         })
     },
     async build({ path, entryFile, outputFile }: BuildParams): Promise<CommandOutput> {
-        const config = [
-            `${entryFile}`,
+        const args = [
+            entryFile,
             '--bundle',
             '--platform=node',
             '--format=cjs',
             `--outfile=${outputFile}`,
         ]
-        log.debug({ path, entryFile, outputFile, config }, '[packageRunner#build]')
-        return execPromise(`esbuild ${config.join(' ')}`, { cwd: path })
+        log.debug({ path, entryFile, outputFile, args }, '[packageRunner#build]')
+        return spawnWithKill({
+            cmd: 'esbuild',
+            args,
+            options: { cwd: path },
+            printOutput: false,
+            timeoutMs: apDayjsDuration(5, 'minutes').asMilliseconds(),
+        })
     },
 })
 
