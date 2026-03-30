@@ -60,7 +60,8 @@ const css = `
   .conv-list:hover::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 4px; }
   .dark .conv-list:hover { scrollbar-color: rgba(255,255,255,0.2) transparent; }
   .dark .conv-list:hover::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); }
-  .conv-sidebar { background: transparent !important; }
+  .conv-sidebar { background: transparent !important; opacity: 0.4; transition: opacity 0.2s; }
+  .conv-sidebar:hover { opacity: 1; }
   .dark .conv-sidebar { background: transparent !important; }
 `;
 
