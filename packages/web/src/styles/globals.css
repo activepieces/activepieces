@@ -30,3 +30,31 @@
     border-color: #ef4444 !important;
     color: #b91c1c !important;
 }
+
+/* Formula Editor */
+.ap-variable-pill {
+    display: inline-flex;
+    align-items: center;
+    background: hsl(var(--primary) / 0.12);
+    border: 1px solid hsl(var(--primary) / 0.4);
+    color: hsl(var(--primary));
+    border-radius: 4px;
+    padding: 0 6px;
+    font-size: 11px;
+    font-weight: 500;
+    white-space: nowrap;
+    cursor: default;
+    user-select: none;
+    vertical-align: middle;
+    margin: 0 1px;
+}
+
+.ap-fn-name-token { color: #7c3aed; font-weight: 600; }
+.ap-fn-paren-open-token { color: #7c3aed; }
+.ap-fn-paren-close-token { color: #7c3aed; }
+
+/* CodeMirror formula editor reset */
+.formula-editor .cm-editor { outline: none; }
+.formula-editor .cm-focused { outline: none !important; }
+.formula-editor .cm-scroller { overflow: hidden; }
+.formula-editor .cm-content { padding: 0; white-space: pre-wrap; word-break: break-all; }
