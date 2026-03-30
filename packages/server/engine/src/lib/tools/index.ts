@@ -109,12 +109,11 @@ async function resolveProperties(
         if (Object.keys(propertyToFill).length === 0) continue
 
         const schemaObject = zodSchema(z.object(propertyToFill).strict())
-        const sanitizedExistingValues = sanitizeExistingValuesForPrompt(result, action.props)
         const extractionPrompt = constructExtractionPrompt(
             instruction,
             propertyToFill,
             propertyDetails,
-            sanitizedExistingValues,
+            result,
         )
 
         const { output } = await generateText({
@@ -177,20 +176,14 @@ async function execute(operation: ExecuteToolOperationWithModel): Promise<Execut
             constants: EngineConstants.fromExecuteActionInput(operation),
         })
         const { output: stepOutput, errorMessage, status } = output.steps[operation.actionName]
-        const redactedInput = Object.fromEntries(
-            Object.entries(resolvedInput).map(([key, value]) => {
-                const propertyType = pieceAction.props[key]?.type
-                if (key === 'auth' || propertyType === PropertyType.SECRET_TEXT) {
-                    return [key, 'Redacted']
-                }
-                return [key, value]
-            }),
-        )
-
+        
         return {
             status: status === StepOutputStatus.FAILED ? ExecutionToolStatus.FAILED : ExecutionToolStatus.SUCCESS,
             output: stepOutput,
-            resolvedInput: redactedInput,
+            resolvedInput: {
+                ...resolvedInput,
+                auth: 'Redacted',
+            },
             errorMessage,
         }
     }
@@ -301,12 +294,12 @@ async function propertyToSchema(propertyName: string, property: PieceProperty, o
             schema = z.boolean()
             break
         case PropertyType.CUSTOM:
-        case PropertyType.SECRET_TEXT:
             schema = z.string()
             break
         case PropertyType.OAUTH2:
         case PropertyType.BASIC_AUTH:
         case PropertyType.CUSTOM_AUTH:
+        case PropertyType.SECRET_TEXT:
             throw new Error(`Unsupported property type: ${property.type}`)
     }
     if (property.description) {
@@ -387,18 +380,6 @@ async function loadOptions(propertyName: string, property: PieceProperty, operat
     }) as unknown as ExecutePropsResult<PropertyType.DROPDOWN | PropertyType.MULTI_SELECT_DROPDOWN>
     const options = response.options
     return options.options
-}
-
-function sanitizeExistingValuesForPrompt(existingValues: Record<string, unknown>, props: Record<string, PieceProperty>): Record<string, unknown> {
-    return Object.fromEntries(
-        Object.entries(existingValues).map(([key, value]) => {
-            const propertyType = props[key]?.type
-            if (key === 'auth' || propertyType === PropertyType.SECRET_TEXT) {
-                return [key, 'Redacted']
-            }
-            return [key, value]
-        }),
-    )
 }
 
 function buildExistingValuesSection(existingValues: Record<string, unknown>): string {
