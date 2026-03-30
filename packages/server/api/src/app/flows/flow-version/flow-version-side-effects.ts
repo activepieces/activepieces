@@ -4,6 +4,7 @@ import {
     FlowOperationRequest,
     FlowOperationType,
     flowStructureUtil,
+    FlowTriggerType,
     FlowVersion,
     isNil,
     ProjectId,
@@ -55,7 +56,7 @@ async function handlePieceStepsVersionBackupInvalidation(
         case FlowOperationType.UPDATE_TRIGGER:
         {
             const step = flowStructureUtil.getStep(operation.request.name, flowVersion.trigger)
-            if (step?.type !== FlowActionType.PIECE) {
+            if (step?.type !== FlowActionType.PIECE && step?.type !== FlowTriggerType.PIECE) {
                 return
             }
             const backup = flowVersion.pieceStepsVersionsBackups?.[operation.request.name]

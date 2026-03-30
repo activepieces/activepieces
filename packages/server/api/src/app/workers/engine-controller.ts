@@ -32,10 +32,7 @@ export const flowEngineWorker: FastifyPluginAsyncZod = async (app) => {
             id: flowVersion.flowId,
             projectId: request.principal.projectId,
         })
-        return flowVersionService(request.log).lockPieceVersions({
-            flowVersion,
-            projectId: request.principal.projectId,
-        })
+        return flowVersion
     })
 
 
