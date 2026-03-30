@@ -97,6 +97,8 @@ RUN mkdir -p \
 # Copy root config files needed for dependency resolution
 COPY --from=build /usr/src/app/package.json ./
 COPY --from=build /usr/src/app/.npmrc ./
+COPY --from=build /usr/src/app/bun.lock ./
+COPY --from=build /usr/src/app/bunfig.toml ./
 COPY --from=build /usr/src/app/LICENSE .
 
 # Copy workspace package.json files (needed for workspace resolution)
@@ -105,9 +107,12 @@ COPY --from=build /usr/src/app/packages ./packages
 # Copy built engine
 COPY --from=build /usr/src/app/dist/packages/engine/ ./dist/packages/engine/
 
+# Copy bun from build stage (needed to resolve workspace:* protocol in package.json files)
+COPY --from=build /usr/local/bin/bun /usr/local/bin/bun
+
 # Install production dependencies
-RUN --mount=type=cache,target=/root/.npm \
-    npm install --omit=dev
+RUN --mount=type=cache,target=/root/.bun/install/cache \
+    bun install --production
 
 # Copy frontend files
 COPY --from=build /usr/src/app/dist/packages/web ./dist/packages/web/
