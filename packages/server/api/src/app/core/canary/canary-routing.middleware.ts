@@ -24,8 +24,9 @@ async function awaitProxy(request: FastifyRequest, reply: FastifyReply): Promise
     return new Promise<void>((resolve) => {
         reply.raw.once('finish', resolve)
         void reply.from(request.url, {
-            onError: (_, { error: proxyError }) => {
+            onError: (reply, { error: proxyError }) => {
                 request.log.error({ err: proxyError }, '[canaryRoutingMiddleware] proxy failed')
+                reply.send(proxyError)
             },
         })
     })
