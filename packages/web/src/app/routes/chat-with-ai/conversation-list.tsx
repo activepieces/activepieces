@@ -86,7 +86,7 @@ export function ConversationList({ onSelect }: { onSelect?: (id: string) => void
     if (items.length === 0) return null;
     const isCollapsed = collapsed[label];
     return (
-      <div style={{ marginBottom: '8px' }}>
+      <div style={{ marginBottom: '8px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
         <button
           onClick={() => toggleGroup(label)}
           style={{
