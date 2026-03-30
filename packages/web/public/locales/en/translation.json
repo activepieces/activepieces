@@ -1425,6 +1425,7 @@
   "Restore previous version": "Restore previous version",
   "Revert to restore your previous settings.": "Revert to restore your previous settings.",
   "Revert to v{version}": "Revert to v{version}",
+  "pieceStepVersionBackupExpired": "The backup for this step has expired and can no longer be reverted.",
   "Significant update available": "Significant update available",
   "Newer version available": "Newer version available",
   "Your input will be reset and the step will need to be reconfigured. A backup will be saved so you can revert.": "Your input will be reset and the step will need to be reconfigured. A backup will be saved so you can revert.",

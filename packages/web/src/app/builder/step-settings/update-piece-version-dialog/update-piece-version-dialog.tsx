@@ -39,7 +39,9 @@ import {
   MinorOrMajorSelectionAlert,
   PatchDowngradeInfoAlert,
   PatchUpgradeInfoAlert,
+  pieceStepVersionBackupExpiredMessageKey,
   RevertVersionCollapsible,
+  useRevertPieceVersionUpdateMutation,
   VersionChangeType,
 } from './update-piece-version-utils';
 import { UpgradePieceVersionContent } from './upgrade-piece-version-dialog';
@@ -153,10 +155,15 @@ const AdvancedForm: React.FC<AdvancedFormProps> = ({
   const applyOperation = useBuilderStateContext(
     (state) => state.applyOperation,
   );
+  const waitForPendingFlowUpdates = useBuilderStateContext(
+    (state) => state.waitForPendingFlowUpdates,
+  );
+  const flowVersion = useBuilderStateContext((state) => state.flowVersion);
   const [showAllVersions, setShowAllVersions] = useState(false);
   const [versionSelectOpen, setVersionSelectOpen] = useState(false);
 
-  const versionUpdateBackup = step.settings.versionUpdateBackup;
+  const pieceStepVersionBackup =
+    flowVersion.pieceStepsVersionsBackups?.[step.name];
 
   const patchVersions = (pieceVersions ?? []).filter((p) => {
     const changeType = changeVersionUtils.getVersionChangeType({
@@ -251,6 +258,7 @@ const AdvancedForm: React.FC<AdvancedFormProps> = ({
         });
 
         if (changeType === VersionChangeType.MINOR_OR_MAJOR) {
+          await waitForPendingFlowUpdates();
           applyOperation({
             type: FlowOperationType.CREATE_PIECE_VERSION_UPDATE_BACKUP,
             request: { stepName: step.name },
@@ -310,31 +318,19 @@ const AdvancedForm: React.FC<AdvancedFormProps> = ({
   );
 
   const { mutate: revertVersionUpdate, isPending: isRevertPending } =
-    useMutation({
-      mutationFn: async () => {
-        if (!versionUpdateBackup) return;
-        const backupVersion = versionUpdateBackup.pieceVersion;
-        await piecesApi.get({ name: pieceName, version: backupVersion });
-
-        applyOperation({
-          type: FlowOperationType.REVERT_PIECE_VERSION_UPDATE,
-          request: { stepName: step.name },
-        });
-        applyOperation({
-          type: FlowOperationType.UPDATE_SAMPLE_DATA_INFO,
-          request: {
-            stepName: step.name,
-            sampleDataSettings: undefined,
-          },
-        });
-      },
+    useRevertPieceVersionUpdateMutation({
+      stepName: step.name,
       onSuccess: () => {
         onClose();
       },
-      onError: (error) => {
+      onError: (message) => {
+        const display =
+          message === pieceStepVersionBackupExpiredMessageKey
+            ? t(pieceStepVersionBackupExpiredMessageKey)
+            : message;
         form.setError('root.serverError', {
           type: 'manual',
-          message: error.message,
+          message: display,
         });
       },
     });
@@ -387,11 +383,12 @@ const AdvancedForm: React.FC<AdvancedFormProps> = ({
           )}
         />
 
-        {versionUpdateBackup && (
+        {pieceStepVersionBackup && (
           <RevertVersionCollapsible
-            backupPieceVersion={versionUpdateBackup.pieceVersion}
+            backupPieceVersion={pieceStepVersionBackup.pieceVersion}
             onRevert={revertVersionUpdate}
             isRevertPending={isRevertPending}
+            revertDisabled={isApplyPending}
           />
         )}
 
@@ -421,7 +418,11 @@ const AdvancedForm: React.FC<AdvancedFormProps> = ({
           <Button type="button" variant="outline" onClick={onClose}>
             {t('Cancel')}
           </Button>
-          <Button type="submit" loading={isApplyPending}>
+          <Button
+            type="submit"
+            loading={isApplyPending}
+            disabled={isRevertPending}
+          >
             {t('Apply')}
           </Button>
         </DialogFooter>

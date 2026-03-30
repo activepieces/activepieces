@@ -26,6 +26,8 @@ import { PromiseQueue } from '@/lib/promise-queue';
 import { BuilderState } from '../builder-hooks';
 import { flowCanvasUtils } from '../flow-canvas/utils/flow-canvas-utils';
 
+
+
 export type FlowState = {
   flow: PopulatedFlow;
   flowVersion: FlowVersion;
@@ -44,7 +46,8 @@ export type FlowState = {
     type: 'input' | 'output';
     value: unknown;
   }) => void;
-  setVersion: (flowVersion: FlowVersion) => void;
+  setVersion: (flowVersion: FlowVersion, shouldReselectInitialStep?: boolean) => void;
+  waitForPendingFlowUpdates: () => Promise<void>;
   addOperationListener: (
     listener: (
       flowVersion: FlowVersion,
@@ -256,7 +259,7 @@ export const createFlowState = (
 
         return { flowVersion: newFlowVersion };
       }),
-    setVersion: (flowVersion: FlowVersion) => {
+    setVersion: (flowVersion: FlowVersion, shouldReselectInitialStep: boolean = true) => {
       const initiallySelectedStep =
         flowCanvasUtils.determineInitiallySelectedStep(null, flowVersion);
       const isEmptyTriggerInitiallySelected =
@@ -265,7 +268,7 @@ export const createFlowState = (
       set((state) => ({
         flowVersion,
         run: null,
-        selectedStep: initiallySelectedStep,
+        selectedStep: shouldReselectInitialStep ?initiallySelectedStep: state.selectedStep,
         readonly:
           state.flow.publishedVersionId !== flowVersion.id &&
           flowVersion.state === FlowVersionState.LOCKED,
@@ -275,6 +278,19 @@ export const createFlowState = (
             : RightSideBarType.NONE,
         selectedBranchIndex: null,
       }));
+    },
+    waitForPendingFlowUpdates: () =>
+    {
+      return new Promise((resolve) => {
+        const tick = () => {
+          if (flowUpdatesQueue.size() === 0) {
+            resolve();
+            return;
+          }
+          setTimeout(tick, 300);
+        };
+        tick();
+      });
     },
     operationListeners: [],
     addOperationListener: (

@@ -1,4 +1,6 @@
 import { OAuth2Props, PiecePropertyMap } from '@activepieces/pieces-framework';
+import { ErrorCode, FlowOperationType } from '@activepieces/shared';
+import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import {
   AlertTriangle,
@@ -21,7 +23,11 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
+import { flowsApi } from '@/features/flows';
 import { formUtils } from '@/features/pieces';
+import { api } from '@/lib/api';
+
+import { useBuilderStateContext } from '../../builder-hooks';
 
 function getVersionChangeType({
   currentVersion,
@@ -139,6 +145,7 @@ export function RevertVersionBackupAlert({
   backupPieceVersion,
   onRevert,
   isRevertPending,
+  revertDisabled,
 }: RevertVersionBackupAlertProps) {
   return (
     <Alert layout="inlineAction" variant="primary">
@@ -152,6 +159,7 @@ export function RevertVersionBackupAlert({
           variant="outline"
           size="sm"
           loading={isRevertPending}
+          disabled={revertDisabled}
           onClick={() => onRevert()}
         >
           {t('Revert to v{version}', {
@@ -167,6 +175,7 @@ export function RevertVersionCollapsible({
   backupPieceVersion,
   onRevert,
   isRevertPending,
+  revertDisabled,
 }: RevertVersionBackupAlertProps) {
   return (
     <Collapsible className="w-full">
@@ -185,6 +194,7 @@ export function RevertVersionCollapsible({
           backupPieceVersion={backupPieceVersion}
           onRevert={onRevert}
           isRevertPending={isRevertPending}
+          revertDisabled={revertDisabled}
         />
       </CollapsibleContent>
     </Collapsible>
@@ -228,6 +238,65 @@ export function PatchDowngradeInfoAlert() {
   );
 }
 
+export function useRevertPieceVersionUpdateMutation({
+  stepName,
+  onSuccess,
+  onError,
+}: {
+  stepName: string;
+  onSuccess?: () => void;
+  onError?: (message: string) => void;
+}) {
+  const [flowId, setVersion, applyOperation] = useBuilderStateContext((s) => [s.flow.id, s.setVersion, s.applyOperation]);
+
+  const waitForPendingFlowUpdates = useBuilderStateContext(
+    (s) => s.waitForPendingFlowUpdates,
+  );
+
+  return useMutation({
+    mutationFn: async () => {
+      await waitForPendingFlowUpdates();
+      try {
+        const result = await flowsApi.update(
+          flowId,
+          {
+            type: FlowOperationType.REVERT_PIECE_VERSION_UPDATE,
+            request: { stepName },
+          },
+          true,
+        );
+        setVersion(result.version, false);
+        applyOperation({
+          type: FlowOperationType.UPDATE_SAMPLE_DATA_INFO,
+          request: {
+            stepName,
+            sampleDataSettings: undefined,
+          },
+        });
+      } catch (err: unknown) {
+        if (api.isApError(err, ErrorCode.ENTITY_NOT_FOUND)) {
+          throw new Error(pieceStepVersionBackupExpiredMessageKey);
+        }
+        throw err;
+      }
+    },
+    onSuccess,
+    onError: (error: unknown) => {
+      const message =
+        error instanceof Error &&
+        error.message === pieceStepVersionBackupExpiredMessageKey
+          ? pieceStepVersionBackupExpiredMessageKey
+          : error instanceof Error
+          ? error.message
+          : String(error);
+      onError?.(message);
+    },
+  });
+}
+
+export const pieceStepVersionBackupExpiredMessageKey =
+  'pieceStepVersionBackupExpired';
+
 export const changeVersionUtils = {
   getVersionChangeType,
   getInputAfterVersionChange,
@@ -249,4 +318,5 @@ type RevertVersionBackupAlertProps = {
   backupPieceVersion: string;
   onRevert: () => void;
   isRevertPending: boolean;
+  revertDisabled?: boolean;
 };

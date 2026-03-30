@@ -19,7 +19,9 @@ import { useBuilderStateContext } from '../../builder-hooks';
 import {
   changeVersionUtils,
   LatestVersionAvailableAlert,
+  pieceStepVersionBackupExpiredMessageKey,
   RevertVersionCollapsible,
+  useRevertPieceVersionUpdateMutation,
   VersionChangeType,
 } from './update-piece-version-utils';
 
@@ -38,11 +40,16 @@ export const UpgradePieceVersionContent: React.FC<
     step.type === FlowTriggerType.PIECE
       ? step.settings.triggerName ?? ''
       : step.settings.actionName ?? '';
-  const versionUpdateBackup = step.settings.versionUpdateBackup;
+  const flowVersion = useBuilderStateContext((state) => state.flowVersion);
+  const pieceStepVersionBackup =
+    flowVersion.pieceStepsVersionsBackups?.[step.name];
   const [serverError, setServerError] = useState<string | undefined>(undefined);
 
   const applyOperation = useBuilderStateContext(
     (state) => state.applyOperation,
+  );
+  const waitForPendingFlowUpdates = useBuilderStateContext(
+    (state) => state.waitForPendingFlowUpdates,
   );
 
   const { mutate: applyUpgrade, isPending: isUpgradePending } = useMutation({
@@ -83,6 +90,7 @@ export const UpgradePieceVersionContent: React.FC<
       });
 
       if (changeType === VersionChangeType.MINOR_OR_MAJOR) {
+        await waitForPendingFlowUpdates();
         applyOperation({
           type: FlowOperationType.CREATE_PIECE_VERSION_UPDATE_BACKUP,
           request: { stepName: step.name },
@@ -138,29 +146,17 @@ export const UpgradePieceVersionContent: React.FC<
   });
 
   const { mutate: revertVersionUpdate, isPending: isRevertPending } =
-    useMutation({
-      mutationFn: async () => {
-        if (!versionUpdateBackup) return;
-        const backupVersion = versionUpdateBackup.pieceVersion;
-        await piecesApi.get({ name: pieceName, version: backupVersion });
-
-        applyOperation({
-          type: FlowOperationType.REVERT_PIECE_VERSION_UPDATE,
-          request: { stepName: step.name },
-        });
-        applyOperation({
-          type: FlowOperationType.UPDATE_SAMPLE_DATA_INFO,
-          request: {
-            stepName: step.name,
-            sampleDataSettings: undefined,
-          },
-        });
-      },
+    useRevertPieceVersionUpdateMutation({
+      stepName: step.name,
       onSuccess: () => {
         onClose();
       },
-      onError: (error) => {
-        setServerError(error.message);
+      onError: (message) => {
+        const display =
+          message === pieceStepVersionBackupExpiredMessageKey
+            ? t(pieceStepVersionBackupExpiredMessageKey)
+            : message;
+        setServerError(display);
       },
     });
 
@@ -170,11 +166,12 @@ export const UpgradePieceVersionContent: React.FC<
         isLatestMinorOrMajor={isLatestMinorOrMajor}
       />
 
-      {versionUpdateBackup && (
+      {pieceStepVersionBackup && (
         <RevertVersionCollapsible
-          backupPieceVersion={versionUpdateBackup.pieceVersion}
+          backupPieceVersion={pieceStepVersionBackup.pieceVersion}
           onRevert={revertVersionUpdate}
           isRevertPending={isRevertPending}
+          revertDisabled={isUpgradePending}
         />
       )}
 
@@ -197,6 +194,7 @@ export const UpgradePieceVersionContent: React.FC<
         <Button
           type="button"
           loading={isUpgradePending}
+          disabled={isRevertPending}
           onClick={() => applyUpgrade()}
         >
           {isLatestMinorOrMajor
