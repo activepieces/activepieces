@@ -20,6 +20,19 @@ const FAKE_CONVERSATIONS: Conversation[] = [
   { id: '5', title: 'Webhook trigger setup', date: older },
   { id: '6', title: 'Data transformation help', date: older },
   { id: '7', title: 'API integration questions', date: older },
+  { id: '8', title: 'Connect Stripe payments', date: older },
+  { id: '9', title: 'Discord bot automation', date: older },
+  { id: '10', title: 'CSV file processing', date: older },
+  { id: '11', title: 'Email parser workflow', date: older },
+  { id: '12', title: 'Google Drive sync setup', date: older },
+  { id: '13', title: 'Notion database trigger', date: older },
+  { id: '14', title: 'Slack notification flow', date: older },
+  { id: '15', title: 'Airtable integration help', date: older },
+  { id: '16', title: 'HTTP request debugging', date: older },
+  { id: '17', title: 'Scheduling cron jobs', date: older },
+  { id: '18', title: 'Form submission handler', date: older },
+  { id: '19', title: 'Twitter API automation', date: older },
+  { id: '20', title: 'Database backup workflow', date: older },
 ];
 
 function isToday(date: Date) {
@@ -105,23 +118,7 @@ export function ConversationList({ onSelect }: { onSelect?: (id: string) => void
     <>
       <style>{css}</style>
       <div className="conv-sidebar" style={{ width: '200px', flexShrink: 0, display: 'flex', flexDirection: 'column', height: '100%', background: 'transparent' }}>
-        <div style={{ padding: '8px 8px 0', display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
-          <button
-            style={{
-              width: '28px', height: '28px', borderRadius: '8px', border: 'none',
-              background: 'transparent', cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: 'hsl(var(--muted-foreground))', transition: 'background 0.15s',
-            }}
-            className="conv-item"
-            title="New conversation"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-              <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-            </svg>
-          </button>
-        </div>
-        <div className="conv-list" style={{ flex: 1, overflowY: 'auto', padding: '0 8px 12px' }}>
+        <div className="conv-list" style={{ flex: 1, overflowY: 'auto', padding: '12px 8px 12px' }}>
           {renderGroup('Today', today)}
           {renderGroup('Yesterday', yesterdayList)}
           {renderGroup('Older', olderList)}
