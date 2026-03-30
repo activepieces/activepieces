@@ -247,7 +247,11 @@ export function useRevertPieceVersionUpdateMutation({
   onSuccess?: () => void;
   onError?: (message: string) => void;
 }) {
-  const [flowId, setVersion, applyOperation] = useBuilderStateContext((s) => [s.flow.id, s.setVersion, s.applyOperation]);
+  const [flowId, setVersion, applyOperation] = useBuilderStateContext((s) => [
+    s.flow.id,
+    s.setVersion,
+    s.applyOperation,
+  ]);
 
   const waitForPendingFlowUpdates = useBuilderStateContext(
     (s) => s.waitForPendingFlowUpdates,
