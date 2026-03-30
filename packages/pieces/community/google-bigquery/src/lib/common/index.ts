@@ -41,7 +41,8 @@ export const bigQueryAuth = [
       }),
       serviceAccountJson: Property.ShortText({
         displayName: 'Service Account JSON',
-        description: 'Paste the full contents of the downloaded .json key file here',
+        description:
+          'Paste the full contents of the downloaded .json key file here',
         required: true,
       }),
     },
@@ -51,7 +52,8 @@ export const bigQueryAuth = [
         if (!parsed.client_email || !parsed.private_key) {
           return {
             valid: false,
-            error: 'Service account JSON must contain "client_email" and "private_key" fields',
+            error:
+              'Service account JSON must contain "client_email" and "private_key" fields',
           };
         }
         const jwtClient = new google.auth.JWT({
@@ -65,14 +67,18 @@ export const bigQueryAuth = [
       } catch (e) {
         return {
           valid: false,
-          error: `Service account authentication failed: ${(e as Error).message}`,
+          error: `Service account authentication failed: ${
+            (e as Error).message
+          }`,
         };
       }
     },
   }),
 ];
 
-export type BigQueryAuthValue = AppConnectionValueForAuthProperty<typeof bigQueryAuth>;
+export type BigQueryAuthValue = AppConnectionValueForAuthProperty<
+  typeof bigQueryAuth
+>;
 
 export async function getAccessToken(auth: BigQueryAuthValue): Promise<string> {
   if (auth.type === AppConnectionType.CUSTOM_AUTH) {
@@ -84,7 +90,9 @@ export async function getAccessToken(auth: BigQueryAuthValue): Promise<string> {
     });
     const response = await jwtClient.getAccessToken();
     if (response.token) return response.token;
-    throw new Error('Could not retrieve access token from service account JSON');
+    throw new Error(
+      'Could not retrieve access token from service account JSON'
+    );
   }
   return (auth as OAuth2PropertyValue).access_token;
 }
@@ -93,7 +101,11 @@ export async function getAccessToken(auth: BigQueryAuthValue): Promise<string> {
 // Shared dropdown props
 // ---------------------------------------------------------------------------
 
-export const projectIdProp = Property.Dropdown<string, true, typeof bigQueryAuth>({
+export const projectIdProp = Property.Dropdown<
+  string,
+  true,
+  typeof bigQueryAuth
+>({
   auth: bigQueryAuth,
   displayName: 'Project',
   description: 'Select your Google Cloud project',
@@ -101,7 +113,11 @@ export const projectIdProp = Property.Dropdown<string, true, typeof bigQueryAuth
   required: true,
   options: async ({ auth }) => {
     if (!auth) {
-      return { disabled: true, options: [], placeholder: 'Please connect your account first' };
+      return {
+        disabled: true,
+        options: [],
+        placeholder: 'Please connect your account first',
+      };
     }
     try {
       const token = await getAccessToken(auth as BigQueryAuthValue);
@@ -137,7 +153,11 @@ export const projectIdProp = Property.Dropdown<string, true, typeof bigQueryAuth
   },
 });
 
-export const datasetIdProp = Property.Dropdown<string, true, typeof bigQueryAuth>({
+export const datasetIdProp = Property.Dropdown<
+  string,
+  true,
+  typeof bigQueryAuth
+>({
   auth: bigQueryAuth,
   displayName: 'Dataset',
   description: 'Select the BigQuery dataset',
@@ -145,7 +165,11 @@ export const datasetIdProp = Property.Dropdown<string, true, typeof bigQueryAuth
   required: true,
   options: async ({ auth, project_id }) => {
     if (!auth || !project_id) {
-      return { disabled: true, options: [], placeholder: 'Please select a project first' };
+      return {
+        disabled: true,
+        options: [],
+        placeholder: 'Please select a project first',
+      };
     }
     try {
       const token = await getAccessToken(auth as BigQueryAuthValue);
@@ -186,59 +210,61 @@ export const datasetIdProp = Property.Dropdown<string, true, typeof bigQueryAuth
   },
 });
 
-export const tableIdProp = Property.Dropdown<string, true, typeof bigQueryAuth>({
-  auth: bigQueryAuth,
-  displayName: 'Table',
-  description: 'Select the BigQuery table',
-  refreshers: ['project_id', 'dataset_id'],
-  required: true,
-  options: async ({ auth, project_id, dataset_id }) => {
-    if (!auth || !project_id || !dataset_id) {
-      return {
-        disabled: true,
-        options: [],
-        placeholder: 'Please select a project and dataset first',
-      };
-    }
-    try {
-      const token = await getAccessToken(auth as BigQueryAuthValue);
-      const tables: Array<{ label: string; value: string }> = [];
-      let pageToken: string | undefined;
-      do {
-        const response = await httpClient.sendRequest<{
-          tables?: Array<{
-            tableReference: { tableId: string };
-            friendlyName?: string;
-            type?: string;
-          }>;
-          nextPageToken?: string;
-        }>({
-          method: HttpMethod.GET,
-          url: `${BASE_URL}/projects/${project_id}/datasets/${dataset_id}/tables`,
-          headers: { Authorization: `Bearer ${token}` },
-          queryParams: {
-            maxResults: '200',
-            ...(pageToken ? { pageToken } : {}),
-          },
-        });
-        for (const tbl of response.body.tables ?? []) {
-          const label = tbl.friendlyName
-            ? `${tbl.friendlyName} (${tbl.tableReference.tableId})`
-            : tbl.tableReference.tableId;
-          tables.push({ label, value: tbl.tableReference.tableId });
-        }
-        pageToken = response.body.nextPageToken;
-      } while (pageToken);
-      return { disabled: false, options: tables };
-    } catch {
-      return {
-        disabled: true,
-        options: [],
-        placeholder: 'Failed to load tables. Check your dataset selection.',
-      };
-    }
-  },
-});
+export const tableIdProp = Property.Dropdown<string, true, typeof bigQueryAuth>(
+  {
+    auth: bigQueryAuth,
+    displayName: 'Table',
+    description: 'Select the BigQuery table',
+    refreshers: ['project_id', 'dataset_id'],
+    required: true,
+    options: async ({ auth, project_id, dataset_id }) => {
+      if (!auth || !project_id || !dataset_id) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Please select a project and dataset first',
+        };
+      }
+      try {
+        const token = await getAccessToken(auth as BigQueryAuthValue);
+        const tables: Array<{ label: string; value: string }> = [];
+        let pageToken: string | undefined;
+        do {
+          const response = await httpClient.sendRequest<{
+            tables?: Array<{
+              tableReference: { tableId: string };
+              friendlyName?: string;
+              type?: string;
+            }>;
+            nextPageToken?: string;
+          }>({
+            method: HttpMethod.GET,
+            url: `${BASE_URL}/projects/${project_id}/datasets/${dataset_id}/tables`,
+            headers: { Authorization: `Bearer ${token}` },
+            queryParams: {
+              maxResults: '200',
+              ...(pageToken ? { pageToken } : {}),
+            },
+          });
+          for (const tbl of response.body.tables ?? []) {
+            const label = tbl.friendlyName
+              ? `${tbl.friendlyName} (${tbl.tableReference.tableId})`
+              : tbl.tableReference.tableId;
+            tables.push({ label, value: tbl.tableReference.tableId });
+          }
+          pageToken = response.body.nextPageToken;
+        } while (pageToken);
+        return { disabled: false, options: tables };
+      } catch {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Failed to load tables. Check your dataset selection.',
+        };
+      }
+    },
+  }
+);
 
 // ---------------------------------------------------------------------------
 // BigQuery row format utilities
@@ -262,7 +288,7 @@ export interface BQRow {
  */
 export function bigQueryRowsToFlat(
   fields: BQField[],
-  rows: BQRow[],
+  rows: BQRow[]
 ): Record<string, string | number | boolean | null>[] {
   return rows.map((row) => {
     const obj: Record<string, string | number | boolean | null> = {};
@@ -274,7 +300,9 @@ export function bigQueryRowsToFlat(
         // REPEATED mode — array of { v: ... } cells
         obj[field.name] = (value as Array<{ v: unknown }>)
           .map((cell) =>
-            typeof cell.v === 'object' ? JSON.stringify(cell.v) : String(cell.v ?? ''),
+            typeof cell.v === 'object'
+              ? JSON.stringify(cell.v)
+              : String(cell.v ?? '')
           )
           .join(', ');
       } else if (typeof value === 'object') {
@@ -295,9 +323,11 @@ export async function getTableSchema(
   token: string,
   projectId: string,
   datasetId: string,
-  tableId: string,
+  tableId: string
 ): Promise<BQField[]> {
-  const response = await httpClient.sendRequest<{ schema?: { fields: BQField[] } }>({
+  const response = await httpClient.sendRequest<{
+    schema?: { fields: BQField[] };
+  }>({
     method: HttpMethod.GET,
     url: `${BASE_URL}/projects/${projectId}/datasets/${datasetId}/tables/${tableId}`,
     headers: { Authorization: `Bearer ${token}` },
@@ -314,7 +344,7 @@ export async function runDmlQuery(
   token: string,
   projectId: string,
   query: string,
-  location?: string,
+  location?: string
 ): Promise<{
   jobId: string;
   affectedRowCount: number;
@@ -362,7 +392,9 @@ export async function runDmlQuery(
 
     if (jobResp.body.status.state === 'DONE') {
       if (jobResp.body.status.errorResult) {
-        throw new Error(`Query failed: ${jobResp.body.status.errorResult.message}`);
+        throw new Error(
+          `Query failed: ${jobResp.body.status.errorResult.message}`
+        );
       }
       const s = jobResp.body.statistics?.query?.dmlStats ?? {};
       const deleted = parseInt(s.deletedRowCount ?? '0', 10);
@@ -390,7 +422,7 @@ export async function waitForJobResults(
   token: string,
   projectId: string,
   jobId: string,
-  location?: string,
+  location?: string
 ): Promise<{
   schema?: { fields: BQField[] };
   rows?: BQRow[];
@@ -426,6 +458,6 @@ export async function waitForJobResults(
     if (response.body.jobComplete) return response.body;
   }
   throw new Error(
-    'Query did not complete within 10 minutes. Try simplifying your query or using a smaller dataset.',
+    'Query did not complete within 10 minutes. Try simplifying your query or using a smaller dataset.'
   );
 }

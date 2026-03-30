@@ -52,12 +52,18 @@ export const createRowsAction = createAction({
     }),
   },
   async run(context) {
-    const { project_id, dataset_id, table_id, rows, skip_invalid_rows, ignore_unknown_values } =
-      context.propsValue;
+    const {
+      project_id,
+      dataset_id,
+      table_id,
+      rows,
+      skip_invalid_rows,
+      ignore_unknown_values,
+    } = context.propsValue;
 
     if (!Array.isArray(rows) || rows.length === 0) {
       throw new Error(
-        'Rows must be a non-empty JSON array of objects, e.g. [{"column": "value"}]',
+        'Rows must be a non-empty JSON array of objects, e.g. [{"column": "value"}]'
       );
     }
 
@@ -86,7 +92,9 @@ export const createRowsAction = createAction({
     if (insertErrors.length > 0 && !(skip_invalid_rows ?? false)) {
       const firstError = insertErrors[0]?.errors[0];
       throw new Error(
-        `Insert failed on row ${insertErrors[0]?.index}: ${firstError?.message ?? 'Unknown error'} (reason: ${firstError?.reason ?? 'unknown'})`,
+        `Insert failed on row ${insertErrors[0]?.index}: ${
+          firstError?.message ?? 'Unknown error'
+        } (reason: ${firstError?.reason ?? 'unknown'})`
       );
     }
 

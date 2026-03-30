@@ -43,7 +43,8 @@ const props = {
   }),
   max_results: Property.Number({
     displayName: 'Max Rows per Check',
-    description: 'Maximum number of updated rows to return per poll (default: 500).',
+    description:
+      'Maximum number of updated rows to return per poll (default: 500).',
     required: false,
     defaultValue: 500,
   }),
@@ -62,20 +63,29 @@ const polling: Polling<
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue, lastFetchEpochMS }) => {
-    const { project_id, dataset_id, table_id, updated_at_column, created_at_column, max_results } =
-      propsValue;
+    const {
+      project_id,
+      dataset_id,
+      table_id,
+      updated_at_column,
+      created_at_column,
+      max_results,
+    } = propsValue;
     const limit = (max_results as number) ?? 500;
     const token = await getAccessToken(auth as BigQueryAuthValue);
 
     const threshold = lastFetchEpochMS ?? Date.now() - 7 * 24 * 60 * 60 * 1000;
-    const fullTable = `\`${project_id as string}.${dataset_id as string}.${table_id as string}\``;
+    const fullTable = `\`${project_id as string}.${dataset_id as string}.${
+      table_id as string
+    }\``;
     const updCol = updated_at_column as string;
 
     // Filter: updated after threshold; optionally exclude brand-new rows
-    const createdFilter =
-      created_at_column
-        ? ` AND \`${created_at_column as string}\` < TIMESTAMP_MILLIS(${threshold})`
-        : '';
+    const createdFilter = created_at_column
+      ? ` AND \`${
+          created_at_column as string
+        }\` < TIMESTAMP_MILLIS(${threshold})`
+      : '';
 
     const query = [
       `SELECT * FROM ${fullTable}`,
@@ -97,7 +107,9 @@ const polling: Polling<
       for (let i = 0; i < 30 && !result.jobComplete; i++) {
         const poll = await httpClient.sendRequest<QueryResponse>({
           method: HttpMethod.GET,
-          url: `${BASE_URL}/projects/${project_id as string}/queries/${result.jobReference.jobId}`,
+          url: `${BASE_URL}/projects/${project_id as string}/queries/${
+            result.jobReference.jobId
+          }`,
           headers: { Authorization: `Bearer ${token}` },
           queryParams: { timeoutMs: '10000', maxResults: String(limit) },
         });
@@ -113,7 +125,10 @@ const polling: Polling<
       let epochMs: number;
       if (typeof tsValue === 'string') {
         const parsed = parseFloat(tsValue);
-        epochMs = !isNaN(parsed) && parsed > 1e9 ? parsed * 1000 : new Date(tsValue).getTime();
+        epochMs =
+          !isNaN(parsed) && parsed > 1e9
+            ? parsed * 1000
+            : new Date(tsValue).getTime();
       } else if (typeof tsValue === 'number') {
         epochMs = tsValue > 1e12 ? tsValue : tsValue * 1000;
       } else {
@@ -133,8 +148,16 @@ export const updatedRowTrigger = createTrigger({
   props,
   sampleData: { id: '1', updated_at: '2024-01-15T10:30:00Z', status: 'active' },
   type: TriggerStrategy.POLLING,
-  async test(context) { return await pollingHelper.test(polling, context); },
-  async onEnable(context) { await pollingHelper.onEnable(polling, context); },
-  async onDisable(context) { await pollingHelper.onDisable(polling, context); },
-  async run(context) { return await pollingHelper.poll(polling, context); },
+  async test(context) {
+    return await pollingHelper.test(polling, context);
+  },
+  async onEnable(context) {
+    await pollingHelper.onEnable(polling, context);
+  },
+  async onDisable(context) {
+    await pollingHelper.onDisable(polling, context);
+  },
+  async run(context) {
+    return await pollingHelper.poll(polling, context);
+  },
 });

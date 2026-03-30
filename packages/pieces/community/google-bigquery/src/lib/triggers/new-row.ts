@@ -37,7 +37,8 @@ const props = {
   }),
   max_results: Property.Number({
     displayName: 'Max Rows per Check',
-    description: 'Maximum number of new rows to return per poll (default: 500).',
+    description:
+      'Maximum number of new rows to return per poll (default: 500).',
     required: false,
     defaultValue: 500,
   }),
@@ -56,13 +57,16 @@ const polling: Polling<
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue, lastFetchEpochMS }) => {
-    const { project_id, dataset_id, table_id, sort_column, max_results } = propsValue;
+    const { project_id, dataset_id, table_id, sort_column, max_results } =
+      propsValue;
     const limit = (max_results as number) ?? 500;
     const token = await getAccessToken(auth as BigQueryAuthValue);
 
     // First run: look back 7 days; subsequent runs: since last check
     const threshold = lastFetchEpochMS ?? Date.now() - 7 * 24 * 60 * 60 * 1000;
-    const fullTable = `\`${project_id as string}.${dataset_id as string}.${table_id as string}\``;
+    const fullTable = `\`${project_id as string}.${dataset_id as string}.${
+      table_id as string
+    }\``;
     const col = sort_column as string;
 
     const query = `SELECT * FROM ${fullTable} WHERE \`${col}\` > TIMESTAMP_MILLIS(${threshold}) ORDER BY \`${col}\` ASC LIMIT ${limit}`;
@@ -80,7 +84,9 @@ const polling: Polling<
       for (let i = 0; i < 30 && !result.jobComplete; i++) {
         const poll = await httpClient.sendRequest<QueryResponse>({
           method: HttpMethod.GET,
-          url: `${BASE_URL}/projects/${project_id as string}/queries/${result.jobReference.jobId}`,
+          url: `${BASE_URL}/projects/${project_id as string}/queries/${
+            result.jobReference.jobId
+          }`,
           headers: { Authorization: `Bearer ${token}` },
           queryParams: { timeoutMs: '10000', maxResults: String(limit) },
         });
@@ -96,7 +102,10 @@ const polling: Polling<
       let epochMs: number;
       if (typeof tsValue === 'string') {
         const parsed = parseFloat(tsValue);
-        epochMs = !isNaN(parsed) && parsed > 1e9 ? parsed * 1000 : new Date(tsValue).getTime();
+        epochMs =
+          !isNaN(parsed) && parsed > 1e9
+            ? parsed * 1000
+            : new Date(tsValue).getTime();
       } else if (typeof tsValue === 'number') {
         epochMs = tsValue > 1e12 ? tsValue : tsValue * 1000;
       } else {
@@ -114,10 +123,22 @@ export const newRowTrigger = createTrigger({
   description:
     'Triggers when a new row is added to a BigQuery table. Polls every 5 minutes by comparing the latest value in a sort column against the previous check.',
   props,
-  sampleData: { id: '1', created_at: '2024-01-15T10:30:00Z', name: 'Example row' },
+  sampleData: {
+    id: '1',
+    created_at: '2024-01-15T10:30:00Z',
+    name: 'Example row',
+  },
   type: TriggerStrategy.POLLING,
-  async test(context) { return await pollingHelper.test(polling, context); },
-  async onEnable(context) { await pollingHelper.onEnable(polling, context); },
-  async onDisable(context) { await pollingHelper.onDisable(polling, context); },
-  async run(context) { return await pollingHelper.poll(polling, context); },
+  async test(context) {
+    return await pollingHelper.test(polling, context);
+  },
+  async onEnable(context) {
+    await pollingHelper.onEnable(polling, context);
+  },
+  async onDisable(context) {
+    await pollingHelper.onDisable(polling, context);
+  },
+  async run(context) {
+    return await pollingHelper.poll(polling, context);
+  },
 });

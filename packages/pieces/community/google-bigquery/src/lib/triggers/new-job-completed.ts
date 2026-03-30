@@ -24,7 +24,8 @@ const props = {
   project_id: projectIdProp,
   include_failed: Property.Checkbox({
     displayName: 'Include Failed Jobs',
-    description: 'If enabled, jobs that completed with an error are also returned. Default: off (only successful jobs).',
+    description:
+      'If enabled, jobs that completed with an error are also returned. Default: off (only successful jobs).',
     required: false,
     defaultValue: false,
   }),
@@ -72,7 +73,8 @@ const polling: Polling<
     const token = await getAccessToken(auth as BigQueryAuthValue);
 
     // Look back an hour before lastFetch to capture long-running jobs
-    const minCreationTime = (lastFetchEpochMS ?? Date.now() - 24 * 60 * 60 * 1000) - 60 * 60 * 1000;
+    const minCreationTime =
+      (lastFetchEpochMS ?? Date.now() - 24 * 60 * 60 * 1000) - 60 * 60 * 1000;
 
     const response = await httpClient.sendRequest<{ jobs?: JobListItem[] }>({
       method: HttpMethod.GET,
@@ -114,7 +116,10 @@ const polling: Polling<
             ? new Date(parseInt(j.statistics.startTime, 10)).toISOString()
             : null,
           completed_at: endTime ? new Date(endTime).toISOString() : null,
-          bytes_processed: j.statistics.query?.totalBytesProcessed ?? j.statistics.totalBytesProcessed ?? null,
+          bytes_processed:
+            j.statistics.query?.totalBytesProcessed ??
+            j.statistics.totalBytesProcessed ??
+            null,
           cache_hit: j.statistics.query?.cacheHit ?? null,
           dml_inserted_rows: dml?.insertedRowCount ?? null,
           dml_deleted_rows: dml?.deletedRowCount ?? null,
@@ -146,8 +151,16 @@ export const newJobCompletedTrigger = createTrigger({
     user_email: 'user@example.com',
   },
   type: TriggerStrategy.POLLING,
-  async test(context) { return await pollingHelper.test(polling, context); },
-  async onEnable(context) { await pollingHelper.onEnable(polling, context); },
-  async onDisable(context) { await pollingHelper.onDisable(polling, context); },
-  async run(context) { return await pollingHelper.poll(polling, context); },
+  async test(context) {
+    return await pollingHelper.test(polling, context);
+  },
+  async onEnable(context) {
+    await pollingHelper.onEnable(polling, context);
+  },
+  async onDisable(context) {
+    await pollingHelper.onDisable(polling, context);
+  },
+  async run(context) {
+    return await pollingHelper.poll(polling, context);
+  },
 });

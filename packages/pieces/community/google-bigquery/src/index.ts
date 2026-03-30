@@ -1,7 +1,12 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
-import { bigQueryAuth, BigQueryAuthValue, BASE_URL, getAccessToken } from './lib/common';
+import {
+  bigQueryAuth,
+  BigQueryAuthValue,
+  BASE_URL,
+  getAccessToken,
+} from './lib/common';
 
 // Actions
 import { runQueryAction } from './lib/actions/run-query';
@@ -46,7 +51,9 @@ export const googleBigQuery = createPiece({
       baseUrl: () => BASE_URL,
       auth: bigQueryAuth,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${await getAccessToken(auth as BigQueryAuthValue)}`,
+        Authorization: `Bearer ${await getAccessToken(
+          auth as BigQueryAuthValue
+        )}`,
       }),
     }),
   ],

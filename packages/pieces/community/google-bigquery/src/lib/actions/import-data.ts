@@ -24,7 +24,8 @@ function parseInputData(data: unknown): Record<string, unknown>[] {
   if (typeof data === 'string') {
     const trimmed = data.trim();
     // JSON array
-    if (trimmed.startsWith('[')) return JSON.parse(trimmed) as Record<string, unknown>[];
+    if (trimmed.startsWith('['))
+      return JSON.parse(trimmed) as Record<string, unknown>[];
     // Newline-delimited JSON (NDJSON)
     return trimmed
       .split('\n')
@@ -32,7 +33,9 @@ function parseInputData(data: unknown): Record<string, unknown>[] {
       .filter((line) => line.length > 0)
       .map((line) => JSON.parse(line) as Record<string, unknown>);
   }
-  throw new Error('Data must be a JSON array or a newline-delimited JSON (NDJSON) string.');
+  throw new Error(
+    'Data must be a JSON array or a newline-delimited JSON (NDJSON) string.'
+  );
 }
 
 export const importDataAction = createAction({
@@ -67,8 +70,14 @@ export const importDataAction = createAction({
     }),
   },
   async run(context) {
-    const { project_id, dataset_id, table_id, data, skip_invalid_rows, ignore_unknown_values } =
-      context.propsValue;
+    const {
+      project_id,
+      dataset_id,
+      table_id,
+      data,
+      skip_invalid_rows,
+      ignore_unknown_values,
+    } = context.propsValue;
 
     const rows = parseInputData(data);
     if (rows.length === 0) throw new Error('Data contains no rows to import.');
@@ -83,7 +92,9 @@ export const importDataAction = createAction({
     for (let offset = 0; offset < rows.length; offset += CHUNK_SIZE) {
       const chunk = rows.slice(offset, offset + CHUNK_SIZE);
       const bqRows = chunk.map((row, i) => ({
-        insertId: `${now}-${offset + i}-${Math.random().toString(36).slice(2, 9)}`,
+        insertId: `${now}-${offset + i}-${Math.random()
+          .toString(36)
+          .slice(2, 9)}`,
         json: row,
       }));
 
@@ -103,7 +114,9 @@ export const importDataAction = createAction({
       if (chunkErrors.length > 0 && !(skip_invalid_rows ?? false)) {
         const first = chunkErrors[0]?.errors[0];
         throw new Error(
-          `Import failed on row ${offset + (chunkErrors[0]?.index ?? 0)}: ${first?.message ?? 'Unknown error'}`,
+          `Import failed on row ${offset + (chunkErrors[0]?.index ?? 0)}: ${
+            first?.message ?? 'Unknown error'
+          }`
         );
       }
 
@@ -114,7 +127,7 @@ export const importDataAction = createAction({
           row_index: offset + e.index,
           first_error: e.errors[0]?.message ?? 'Unknown',
           reason: e.errors[0]?.reason ?? null,
-        })),
+        }))
       );
     }
 

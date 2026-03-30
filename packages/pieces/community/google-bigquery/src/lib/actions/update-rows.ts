@@ -13,7 +13,8 @@ export const updateRowsAction = createAction({
   auth: bigQueryAuth,
   name: 'update_rows',
   displayName: 'Update Row(s)',
-  description: 'Updates one or more existing rows in a BigQuery table using SQL SET and WHERE expressions.',
+  description:
+    'Updates one or more existing rows in a BigQuery table using SQL SET and WHERE expressions.',
   props: {
     project_id: projectIdProp,
     dataset_id: datasetIdProp,
@@ -32,19 +33,31 @@ export const updateRowsAction = createAction({
     }),
     location: Property.ShortText({
       displayName: 'Location',
-      description: 'Dataset location (e.g. US, EU). Leave blank to use the default.',
+      description:
+        'Dataset location (e.g. US, EU). Leave blank to use the default.',
       required: false,
     }),
   },
   async run(context) {
-    const { project_id, dataset_id, table_id, set_expression, where_clause, location } =
-      context.propsValue;
+    const {
+      project_id,
+      dataset_id,
+      table_id,
+      set_expression,
+      where_clause,
+      location,
+    } = context.propsValue;
     const token = await getAccessToken(context.auth as BigQueryAuthValue);
 
     const fullTable = `\`${project_id}.${dataset_id}.${table_id}\``;
     const query = `UPDATE ${fullTable} SET ${set_expression} WHERE ${where_clause}`;
 
-    const result = await runDmlQuery(token, project_id as string, query, location as string ?? undefined);
+    const result = await runDmlQuery(
+      token,
+      project_id as string,
+      query,
+      (location as string) ?? undefined
+    );
 
     return {
       success: true,

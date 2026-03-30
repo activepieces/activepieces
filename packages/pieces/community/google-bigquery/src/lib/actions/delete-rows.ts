@@ -13,7 +13,8 @@ export const deleteRowsAction = createAction({
   auth: bigQueryAuth,
   name: 'delete_rows',
   displayName: 'Delete Rows',
-  description: 'Deletes one or more rows from a BigQuery table using a SQL WHERE condition.',
+  description:
+    'Deletes one or more rows from a BigQuery table using a SQL WHERE condition.',
   props: {
     project_id: projectIdProp,
     dataset_id: datasetIdProp,
@@ -26,18 +27,25 @@ export const deleteRowsAction = createAction({
     }),
     location: Property.ShortText({
       displayName: 'Location',
-      description: 'Dataset location (e.g. US, EU). Leave blank to use the default.',
+      description:
+        'Dataset location (e.g. US, EU). Leave blank to use the default.',
       required: false,
     }),
   },
   async run(context) {
-    const { project_id, dataset_id, table_id, where_clause, location } = context.propsValue;
+    const { project_id, dataset_id, table_id, where_clause, location } =
+      context.propsValue;
     const token = await getAccessToken(context.auth as BigQueryAuthValue);
 
     const fullTable = `\`${project_id}.${dataset_id}.${table_id}\``;
     const query = `DELETE FROM ${fullTable} WHERE ${where_clause}`;
 
-    const result = await runDmlQuery(token, project_id as string, query, location as string ?? undefined);
+    const result = await runDmlQuery(
+      token,
+      project_id as string,
+      query,
+      (location as string) ?? undefined
+    );
 
     return {
       success: true,

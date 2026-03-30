@@ -45,13 +45,20 @@ export const findOneRowAction = createAction({
     }),
     location: Property.ShortText({
       displayName: 'Location',
-      description: 'Dataset location (e.g. US, EU). Leave blank to use the default.',
+      description:
+        'Dataset location (e.g. US, EU). Leave blank to use the default.',
       required: false,
     }),
   },
   async run(context) {
-    const { project_id, dataset_id, table_id, where_clause, order_by, location } =
-      context.propsValue;
+    const {
+      project_id,
+      dataset_id,
+      table_id,
+      where_clause,
+      order_by,
+      location,
+    } = context.propsValue;
     const token = await getAccessToken(context.auth as BigQueryAuthValue);
 
     const fullTable = `\`${project_id}.${dataset_id}.${table_id}\``;
@@ -79,7 +86,7 @@ export const findOneRowAction = createAction({
         token,
         project_id as string,
         result.jobReference.jobId,
-        location as string ?? undefined,
+        (location as string) ?? undefined
       );
       result = { ...polled, jobReference: result.jobReference };
       schema = polled.schema?.fields ?? schema;

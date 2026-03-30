@@ -20,7 +20,9 @@ interface InsertResponse {
 }
 
 function fieldToProperty(field: BQField) {
-  const description = `Type: ${field.type}${field.mode ? ` · Mode: ${field.mode}` : ''}`;
+  const description = `Type: ${field.type}${
+    field.mode ? ` · Mode: ${field.mode}` : ''
+  }`;
   return Property.ShortText({
     displayName: field.name,
     description,
@@ -32,14 +34,16 @@ export const createRowAction = createAction({
   auth: bigQueryAuth,
   name: 'create_row',
   displayName: 'Create Row',
-  description: 'Creates a single new row in a BigQuery table. Column fields are loaded from the table schema.',
+  description:
+    'Creates a single new row in a BigQuery table. Column fields are loaded from the table schema.',
   props: {
     project_id: projectIdProp,
     dataset_id: datasetIdProp,
     table_id: tableIdProp,
     values: Property.DynamicProperties({
       displayName: 'Row Values',
-      description: 'Enter a value for each column. Fields are loaded from the table schema.',
+      description:
+        'Enter a value for each column. Fields are loaded from the table schema.',
       required: true,
       auth: bigQueryAuth,
       refreshers: ['project_id', 'dataset_id', 'table_id'],
@@ -51,13 +55,13 @@ export const createRowAction = createAction({
             token,
             project_id as string,
             dataset_id as string,
-            table_id as string,
+            table_id as string
           );
           // Only expose simple (non-RECORD) fields as individual inputs
           return Object.fromEntries(
             fields
               .filter((f) => f.type !== 'RECORD')
-              .map((f) => [f.name, fieldToProperty(f)]),
+              .map((f) => [f.name, fieldToProperty(f)])
           );
         } catch {
           return {};
@@ -72,7 +76,9 @@ export const createRowAction = createAction({
     const rowData = values as Record<string, unknown>;
     // Strip empty strings so we don't overwrite nullable columns with ''
     const cleanRow = Object.fromEntries(
-      Object.entries(rowData).filter(([, v]) => v !== '' && v !== null && v !== undefined),
+      Object.entries(rowData).filter(
+        ([, v]) => v !== '' && v !== null && v !== undefined
+      )
     );
 
     const insertId = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
@@ -91,7 +97,9 @@ export const createRowAction = createAction({
     if (errors.length > 0) {
       const first = errors[0]?.errors[0];
       throw new Error(
-        `Row insert failed: ${first?.message ?? 'Unknown error'} (reason: ${first?.reason ?? 'unknown'}, field: ${first?.location ?? 'unknown'})`,
+        `Row insert failed: ${first?.message ?? 'Unknown error'} (reason: ${
+          first?.reason ?? 'unknown'
+        }, field: ${first?.location ?? 'unknown'})`
       );
     }
 

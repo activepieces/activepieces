@@ -52,13 +52,20 @@ export const findOrCreateRowAction = createAction({
     }),
     location: Property.ShortText({
       displayName: 'Location',
-      description: 'Dataset location (e.g. US, EU). Leave blank to use the default.',
+      description:
+        'Dataset location (e.g. US, EU). Leave blank to use the default.',
       required: false,
     }),
   },
   async run(context) {
-    const { project_id, dataset_id, table_id, where_clause, create_data, location } =
-      context.propsValue;
+    const {
+      project_id,
+      dataset_id,
+      table_id,
+      where_clause,
+      create_data,
+      location,
+    } = context.propsValue;
     const token = await getAccessToken(context.auth as BigQueryAuthValue);
 
     // --- Step 1: Find ---
@@ -86,7 +93,7 @@ export const findOrCreateRowAction = createAction({
         token,
         project_id as string,
         findResult.jobReference.jobId,
-        location as string ?? undefined,
+        (location as string) ?? undefined
       );
       findResult = { ...polled, jobReference: findResult.jobReference };
       schema = polled.schema?.fields ?? schema;
@@ -120,7 +127,9 @@ export const findOrCreateRowAction = createAction({
     if (errors.length > 0) {
       const first = errors[0]?.errors[0];
       throw new Error(
-        `Row creation failed: ${first?.message ?? 'Unknown error'} (reason: ${first?.reason ?? 'unknown'})`,
+        `Row creation failed: ${first?.message ?? 'Unknown error'} (reason: ${
+          first?.reason ?? 'unknown'
+        })`
       );
     }
 

@@ -27,7 +27,8 @@ export const runQueryAction = createAction({
   auth: bigQueryAuth,
   name: 'run_query',
   displayName: 'Run a Query',
-  description: 'Execute a SQL query on BigQuery and return the results as flat rows',
+  description:
+    'Execute a SQL query on BigQuery and return the results as flat rows',
   props: {
     project_id: projectIdProp,
     query: Property.LongText({
@@ -50,13 +51,15 @@ export const runQueryAction = createAction({
     }),
     use_legacy_sql: Property.Checkbox({
       displayName: 'Use Legacy SQL',
-      description: 'Enable only if your query uses BigQuery Legacy SQL syntax (not recommended)',
+      description:
+        'Enable only if your query uses BigQuery Legacy SQL syntax (not recommended)',
       required: false,
       defaultValue: false,
     }),
   },
   async run(context) {
-    const { project_id, query, max_results, location, use_legacy_sql } = context.propsValue;
+    const { project_id, query, max_results, location, use_legacy_sql } =
+      context.propsValue;
     const limit = Math.min((max_results as number) ?? 1000, 10000);
     const token = await getAccessToken(context.auth as BigQueryAuthValue);
 
@@ -80,8 +83,16 @@ export const runQueryAction = createAction({
     // If job is still running, poll until it completes
     if (!result.jobComplete) {
       const jobId = result.jobReference.jobId;
-      const polled = await waitForJobResults(token, project_id as string, jobId, location as string ?? undefined);
-      result = { ...polled, jobReference: { projectId: project_id as string, jobId } };
+      const polled = await waitForJobResults(
+        token,
+        project_id as string,
+        jobId,
+        (location as string) ?? undefined
+      );
+      result = {
+        ...polled,
+        jobReference: { projectId: project_id as string, jobId },
+      };
       schema = polled.schema?.fields ?? schema;
     }
 

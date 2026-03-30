@@ -37,13 +37,15 @@ export const getRowsForJobAction = createAction({
     }),
     max_results: Property.Number({
       displayName: 'Max Rows',
-      description: 'Maximum number of rows to return (up to 10,000). Default: 1,000.',
+      description:
+        'Maximum number of rows to return (up to 10,000). Default: 1,000.',
       required: false,
       defaultValue: 1000,
     }),
     location: Property.ShortText({
       displayName: 'Location',
-      description: 'Dataset location where the job ran (e.g. US, EU). Leave blank for US.',
+      description:
+        'Dataset location where the job ran (e.g. US, EU). Leave blank for US.',
       required: false,
     }),
   },
@@ -76,7 +78,7 @@ export const getRowsForJobAction = createAction({
       const body = response.body;
       if (!body.jobComplete) {
         throw new Error(
-          `Job ${job_id} has not completed yet. Wait for the job to finish before fetching results.`,
+          `Job ${job_id} has not completed yet. Wait for the job to finish before fetching results.`
         );
       }
 
