@@ -46,7 +46,7 @@ export const granola = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/granola.png',
   categories: [PieceCategory.PRODUCTIVITY],
   auth: granolaAuth,
-  authors: [],
+  authors: ['bst1n'],
   actions: [
     listNotesAction,
     getNoteAction,

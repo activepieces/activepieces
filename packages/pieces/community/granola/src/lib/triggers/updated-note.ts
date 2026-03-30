@@ -29,10 +29,12 @@ const polling: Polling<
       queryParams: { page_size: '30' },
     });
 
-    return response.body.notes.map((note) => ({
-      epochMilliSeconds: new Date(note.updated_at).getTime(),
-      data: flattenNote(note),
-    }));
+    return response.body.notes
+      .filter((note) => note.updated_at !== note.created_at)
+      .map((note) => ({
+        epochMilliSeconds: new Date(note.updated_at).getTime(),
+        data: flattenNote(note),
+      }));
   },
 };
 

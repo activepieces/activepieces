@@ -50,9 +50,8 @@ export const listNotesAction = createAction({
     if (context.propsValue.updated_after) {
       queryParams['updated_after'] = context.propsValue.updated_after;
     }
-    if (context.propsValue.page_size) {
-      queryParams['page_size'] = String(context.propsValue.page_size);
-    }
+    const pageSize = Math.min(Math.max(context.propsValue.page_size ?? 10, 1), 30);
+    queryParams['page_size'] = String(pageSize);
 
     const response = await granolaApiCall<GranolaListResponse>({
       token: context.auth.secret_text,
@@ -61,6 +60,10 @@ export const listNotesAction = createAction({
       queryParams,
     });
 
-    return response.body.notes.map(flattenNote);
+    return {
+      notes: response.body.notes.map(flattenNote),
+      hasMore: response.body.hasMore,
+      cursor: response.body.cursor ?? null,
+    };
   },
 });
