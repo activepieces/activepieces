@@ -7,12 +7,19 @@ import { FlowTrigger } from './triggers/trigger'
 
 export type FlowVersionId = ApId
 
-export const LATEST_FLOW_SCHEMA_VERSION = '18'
+export const LATEST_FLOW_SCHEMA_VERSION = '19'
 
 export enum FlowVersionState {
     LOCKED = 'LOCKED',
     DRAFT = 'DRAFT',
 }
+
+const PieceStepVersionBackupEntry = z.object({
+    pieceVersion: z.string(),
+    pieceName: z.string(),
+    actionOrTriggerName: z.string(),
+    fileId: z.string(),
+})
 
 export const FlowVersion = z.object({
     ...BaseModelSchema,
@@ -27,7 +34,10 @@ export const FlowVersion = z.object({
     connectionIds: z.array(z.string()),
     backupFiles: Nullable(z.record(z.string(), z.string())),
     notes: z.array(Note),
+    pieceStepsVersionsBackups: z.record(z.string(), PieceStepVersionBackupEntry).optional(),
 })
+
+export type PieceStepVersionBackupEntry = z.infer<typeof PieceStepVersionBackupEntry>
 
 export type FlowVersion = z.infer<typeof FlowVersion>
 

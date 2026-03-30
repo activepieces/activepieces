@@ -209,11 +209,13 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
         })
     },
     async getFlowState(flow: PopulatedFlow): Promise<FlowState> {
+        const migratedVersion = await flowMigrations.apply(flow.version)
+        const { pieceStepsVersionsBackups: _pieceStepsVersionsBackups, ...versionWithoutBackup } = migratedVersion
         const flowState: FlowState = {
             ...flow,
             operationStatus: flow.operationStatus ?? FlowOperationStatus.NONE,
             externalId: flow.externalId ?? flow.id,
-            version: await flowMigrations.apply(flow.version),
+            version: versionWithoutBackup,
         }
         const cleanedFlowState = FlowState.parse(flowState)
         cleanedFlowState.version.trigger.nextAction = isNil(cleanedFlowState.version.trigger.nextAction) ? undefined : FlowAction.parse(cleanedFlowState.version.trigger.nextAction)
