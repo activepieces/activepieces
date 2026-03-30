@@ -50,8 +50,8 @@ const css = `
   .conv-item { display: flex; align-items: center; padding: 4px 8px; border-radius: 6px; cursor: pointer; transition: background 0.15s; border: none; background: transparent; width: 100%; text-align: left; font-family: inherit; color: hsl(var(--foreground)); }
   .conv-item:hover { background: rgba(0,0,0,0.05); }
   .dark .conv-item:hover { background: rgba(255,255,255,0.07); }
-  .conv-item.active { background: rgba(0,0,0,0.08); }
-  .dark .conv-item.active { background: rgba(255,255,255,0.1); }
+  .conv-item.active { background: rgba(0,0,0,0.08); font-weight: 600; }
+  .dark .conv-item.active { background: rgba(255,255,255,0.1); font-weight: 600; }
   .conv-list { scrollbar-width: none; }
   .conv-list::-webkit-scrollbar { width: 0; }
   .conv-list:hover { scrollbar-width: thin; scrollbar-color: rgba(0,0,0,0.15) transparent; }
