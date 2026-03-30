@@ -2147,6 +2147,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "Angelebeats",
+      "name": "Angelebeats",
+      "avatar_url": "https://avatars.githubusercontent.com/u/271780508?v=4",
+      "profile": "https://github.com/Angelebeats",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "commitType": "docs"

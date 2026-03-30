@@ -32,6 +32,14 @@ export const TOOL_CATEGORIES: ToolCategory[] = [
         description:
           'List OAuth/app connections in the project — required before adding steps that need auth',
       },
+      {
+        name: 'ap_list_tables',
+        description: 'List all tables and their fields in the current project',
+      },
+      {
+        name: 'ap_find_records',
+        description: 'Query records from a table with optional filtering',
+      },
     ],
   },
   {
@@ -95,6 +103,35 @@ export const TOOL_CATEGORIES: ToolCategory[] = [
       {
         name: 'ap_manage_notes',
         description: 'Add, update, or delete canvas notes on a flow',
+      },
+    ],
+  },
+  {
+    label: 'Tables',
+    tools: [
+      {
+        name: 'ap_create_table',
+        description: 'Create a new table with initial fields',
+      },
+      {
+        name: 'ap_delete_table',
+        description: 'Permanently delete a table and all its data',
+      },
+      {
+        name: 'ap_manage_fields',
+        description: 'Add, rename, or delete fields on a table',
+      },
+      {
+        name: 'ap_insert_records',
+        description: 'Insert one or more records into a table',
+      },
+      {
+        name: 'ap_update_record',
+        description: 'Update specific cells in a record',
+      },
+      {
+        name: 'ap_delete_records',
+        description: 'Delete records by their IDs',
       },
     ],
   },
