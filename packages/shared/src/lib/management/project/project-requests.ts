@@ -38,3 +38,12 @@ export const ListProjectRequestForPlatformQueryParams = z.object({
 })
 
 export type ListProjectRequestForPlatformQueryParams = z.infer<typeof ListProjectRequestForPlatformQueryParams>
+
+export const ListProjectsByUserQueryParams = z.object({
+    limit: z.coerce.number().optional(),
+    cursor: z.string().optional(),
+    displayName: z.string().optional(),
+    types: OptionalArrayFromQuery(z.nativeEnum(ProjectType)),
+})
+
+export type ListProjectsByUserQueryParams = z.infer<typeof ListProjectsByUserQueryParams>
