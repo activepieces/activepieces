@@ -114,6 +114,7 @@ export const newEventTrigger = createTrigger({
       body: { url: context.webhookUrl },
     });
     await context.store.put('webhookId', response.body.id);
+    await context.store.put('webhookSecret', response.body.secret);
   },
 
   async onDisable(context) {
@@ -146,6 +147,10 @@ export const newEventTrigger = createTrigger({
   },
 
   async test(context) {
+    const selectedTypes = context.propsValue.event_types as string[] | undefined;
+    const hasEventTypes = !selectedTypes || selectedTypes.length === 0 || selectedTypes.some((t) => t.startsWith('event.'));
+    if (!hasEventTypes) return [];
+
     const selectedLinkIds = context.propsValue.link_ids as string[] | undefined;
     const queryParams: Record<string, string> = { limit: '10' };
     if (selectedLinkIds && selectedLinkIds.length === 1) {
