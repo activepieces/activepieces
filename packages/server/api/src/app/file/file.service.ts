@@ -145,6 +145,19 @@ export const fileService = (log: FastifyBaseLogger) => ({
             fileName: file.fileName ?? undefined,
         }
     },
+    async deleteOne(params: GetOneParams): Promise<void> {
+        const file = await this.getFile(params)
+        if (isNil(file)) {
+            return
+        }
+        if (!isNil(file.s3Key)) {
+            await s3Helper(log).deleteFiles([file.s3Key])
+        }
+        await fileRepo().delete({
+            id: file.id,
+            projectId: params.projectId,
+        })
+    },
     async deleteStaleBulk(types: FileType[]) {
         const retentionDateBoundary = dayjs().subtract(EXECUTION_DATA_RETENTION_DAYS, 'days').toISOString()
         const maximumFilesToDeletePerIteration = 4000
@@ -252,6 +265,7 @@ function isExecutionDataFileThatExpires(type: FileType) {
         case FileType.TRIGGER_PAYLOAD:
         case FileType.TRIGGER_EVENT_FILE:
         case FileType.WEBHOOK_PAYLOAD:
+        case FileType.PIECE_STEP_VERSION_BACKUP:
             return true
         case FileType.PLATFORM_ASSET:
         case FileType.USER_PROFILE_PICTURE:
