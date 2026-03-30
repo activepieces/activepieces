@@ -297,7 +297,7 @@ describe('Execute Flow E2E', () => {
             valid: true,
             settings: {
                 pieceName: '@activepieces/piece-data-mapper',
-                pieceVersion: '~0.3.15',
+                pieceVersion: '0.3.15',
                 actionName: 'advanced_mapping',
                 input: {
                     mapping: {
@@ -327,7 +327,7 @@ describe('Execute Flow E2E', () => {
                 lastUpdatedDate: new Date().toISOString(),
                 settings: {
                     pieceName: '@activepieces/piece-webhook',
-                    pieceVersion: '~0.1.29',
+                    pieceVersion: '0.1.29',
                     triggerName: 'catch_webhook',
                     input: { authType: 'none' },
                     propertySettings: {},
@@ -372,7 +372,7 @@ describe('Execute Flow E2E', () => {
                 projectId: mockProject.id,
             })
         }
-
+        console.log(result)
         // Assertions
         expect(result.status).toBe(FlowRunStatus.SUCCEEDED)
         expect(result.steps.step_1.output).toEqual(
@@ -435,7 +435,7 @@ describe('Execute Flow E2E', () => {
                 lastUpdatedDate: new Date().toISOString(),
                 settings: {
                     pieceName: '@activepieces/piece-webhook',
-                    pieceVersion: '~0.1.29',
+                    pieceVersion: '0.1.29',
                     triggerName: 'catch_webhook',
                     input: { authType: 'none' },
                     propertySettings: {},
@@ -579,7 +579,7 @@ describe('Execute Flow E2E', () => {
             valid: true,
             settings: {
                 pieceName: '@activepieces/piece-delay',
-                pieceVersion: '~0.3.26',
+                pieceVersion: '0.3.26',
                 actionName: 'delayFor',
                 input: {
                     unit: 'seconds',
@@ -607,7 +607,7 @@ describe('Execute Flow E2E', () => {
                 lastUpdatedDate: new Date().toISOString(),
                 settings: {
                     pieceName: '@activepieces/piece-webhook',
-                    pieceVersion: '~0.1.29',
+                    pieceVersion: '0.1.29',
                     triggerName: 'catch_webhook',
                     input: { authType: 'none' },
                     propertySettings: {},
