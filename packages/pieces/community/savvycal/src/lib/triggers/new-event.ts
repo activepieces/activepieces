@@ -139,7 +139,10 @@ export const newEventTrigger = createTrigger({
     const linkId = body.payload?.link?.id;
     if (selectedLinkIds && selectedLinkIds.length > 0 && linkId !== undefined && !selectedLinkIds.includes(linkId)) return [];
 
-    return [{ event_type: body.type, ...flattenEvent(body.payload) }];
+    const payload = body.type.startsWith('event.')
+      ? flattenEvent(body.payload)
+      : (body.payload as unknown as Record<string, unknown>);
+    return [{ event_type: body.type, ...payload }];
   },
 
   async test(context) {
