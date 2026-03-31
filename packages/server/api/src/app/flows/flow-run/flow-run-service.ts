@@ -81,10 +81,13 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         })
 
 
-        let query = queryBuilderForFlowRun(flowRunRepo()).where({
+        const whereClause: Record<string, unknown> = {
             projectId: params.projectId,
-            environment: RunEnvironment.PRODUCTION,
-        })
+        }
+        if (!isNil(params.environment)) {
+            whereClause.environment = params.environment
+        }
+        let query = queryBuilderForFlowRun(flowRunRepo()).where(whereClause)
 
         if (!params.includeArchived) {
             query = query.andWhere({
@@ -741,6 +744,7 @@ type ListParams = {
     failedStepName?: string
     flowRunIds?: FlowRunId[]
     includeArchived?: boolean
+    environment?: RunEnvironment
 }
 
 type GetOneParams = {
@@ -784,7 +788,7 @@ type StartParams = {
 type TestParams = {
     projectId: ProjectId
     flowVersionId: FlowVersionId
-    triggeredBy: string
+    triggeredBy?: string
     parentRunId?: FlowRunId
     stepNameToTest?: string
 }
