@@ -57,7 +57,7 @@ export const umami = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/umami.png',
   categories: [PieceCategory.BUSINESS_INTELLIGENCE],
   auth: umamiAuth,
-  authors: [],
+  authors: ['bst1n'],
   actions: [
     getWebsiteStats,
     getWebsiteMetrics,
