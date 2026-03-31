@@ -7524,7 +7524,7 @@
     },
     "packages/shared": {
       "name": "@activepieces/shared",
-      "version": "0.41.0",
+      "version": "0.41.1",
       "dependencies": {
         "@sinclair/typebox": "0.34.11",
         "deepmerge-ts": "7.1.0",
