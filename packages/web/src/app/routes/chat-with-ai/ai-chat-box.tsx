@@ -1083,24 +1083,6 @@ export function AIChatBox({
           </div>
         </div>
       </div>
-      <p style={{ textAlign: 'center', fontSize: '11px', margin: '8px 0 0' }}>
-        <a
-          href="https://www.activepieces.com/product/ai-adoption"
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{
-            color: '#a3a3a3',
-            textDecoration: 'none',
-            transition: 'color 0.15s',
-          }}
-          onMouseEnter={(e) =>
-            (e.currentTarget.style.color = 'hsl(var(--foreground))')
-          }
-          onMouseLeave={(e) => (e.currentTarget.style.color = '#a3a3a3')}
-        >
-          Activepieces AI can help you automate anything.
-        </a>
-      </p>
     </div>
   );
 
@@ -1664,6 +1646,24 @@ export function AIChatBox({
             </div>
           </div>
         )}
+        <p style={{ textAlign: 'center', fontSize: '11px', padding: '6px 0 12px', flexShrink: 0 }}>
+          <a
+            href="https://www.activepieces.com/product/ai-adoption"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              color: '#a3a3a3',
+              textDecoration: 'none',
+              transition: 'color 0.15s',
+            }}
+            onMouseEnter={(e) =>
+              (e.currentTarget.style.color = 'hsl(var(--foreground))')
+            }
+            onMouseLeave={(e) => (e.currentTarget.style.color = '#a3a3a3')}
+          >
+            Activepieces AI can help you automate anything.
+          </a>
+        </p>
       </div>
       {replyPopup &&
         createPortal(
