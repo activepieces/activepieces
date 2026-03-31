@@ -1,7 +1,4 @@
-/* eslint-disable no-console, import-x/order, @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports */
-const path = require('path')
-require('dotenv').config({ path: path.resolve(__dirname, '../../../../.env.dev') })
-
+/* eslint-disable no-console */
 import { databaseConnection } from './app/database/database-connection'
 import { rollbackToVersion } from './app/database/rollback-migrations'
 

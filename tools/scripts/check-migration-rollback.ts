@@ -1,4 +1,5 @@
 import { execSync } from 'child_process'
+import semver from 'semver'
 import { Migration } from '../../packages/server/api/src/app/database/migration'
 
 const MIGRATION_DIRS = [
@@ -44,8 +45,8 @@ async function checkMigrationFile(filePath: string): Promise<string[]> {
         errors.push('Missing "breaking" property (must be set to true or false)')
     }
 
-    if (!instance.release) {
-        errors.push("Missing \"release\" property (must be a semver string, e.g. release = '0.78.0')")
+    if (!instance.release || !semver.valid(instance.release)) {
+        errors.push("Missing or invalid \"release\" property (must be valid semver, e.g. release = '0.78.0')")
     }
 
     if (instance.breaking !== true) {
