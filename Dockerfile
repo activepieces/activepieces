@@ -35,7 +35,7 @@ RUN --mount=type=cache,target=/root/.npm \
     pm2@6.0.10 \
     typescript@4.9.4 \
     pnpm@10.33.0 \
-    esbuild
+    esbuild@0.25.0
 
 # Install isolated-vm globally (needed for sandboxes)
 RUN --mount=type=cache,target=/root/.npm \
