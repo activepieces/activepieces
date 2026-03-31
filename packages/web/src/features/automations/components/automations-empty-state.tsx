@@ -254,7 +254,7 @@ export const AutomationsEmptyState = ({
     <div className="flex flex-col gap-8 py-8 px-4 max-w-5xl mx-auto">
       <div>
         <h2 className="text-sm font-medium text-muted-foreground mb-4">
-          {t('Get started with {{brandName}}', {
+          {t('Get started with {brandName}', {
             brandName: branding.websiteName ?? platform.name,
           })}
         </h2>
