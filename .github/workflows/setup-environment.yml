@@ -40,17 +40,12 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-            const { data: issue } = await github.rest.issues.get({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-            });
-            const labels = issue.labels.map(label => label.name);
+            const labels = context.payload.pull_request.labels.map(label => label.name);
             const hasPreviewLabel = labels.includes('preview');
-
+            
             console.log('PR labels:', labels);
             console.log('Has preview label:', hasPreviewLabel);
-
+            
             core.setOutput('should-setup', hasPreviewLabel);
             return hasPreviewLabel;
           
