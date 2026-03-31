@@ -1,6 +1,6 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { tapfiliateAuth } from '../..';
+import { tapfiliateAuth } from '../common/auth';
 import { tapfiliateApiCall } from '../common/tapfiliate.client';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -25,7 +25,7 @@ export const createAffiliateAction = createAction({
       displayName: 'Email',
       required: true,
     }),
-    password: Property.SecretText({
+    password: Property.ShortText({
       displayName: 'Password',
       description: 'Password for the new affiliate account.',
       required: true,
@@ -115,7 +115,7 @@ export const createAffiliateAction = createAction({
     return await tapfiliateApiCall({
       method: HttpMethod.POST,
       path: '/affiliates/',
-      apiKey: context.auth.props.apiKey,
+      apiKey: context.auth.secret_text,
       body: {
         firstname: context.propsValue.firstname,
         lastname: context.propsValue.lastname,

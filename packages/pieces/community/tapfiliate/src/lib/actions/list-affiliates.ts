@@ -1,6 +1,6 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { tapfiliateAuth } from '../..';
+import { tapfiliateAuth } from '../common/auth';
 import {
   buildTapfiliateQuery,
   tapfiliatePaginatedApiCall,
@@ -41,7 +41,7 @@ export const listAffiliatesAction = createAction({
     return await tapfiliatePaginatedApiCall({
       method: HttpMethod.GET,
       path: '/affiliates/',
-      apiKey: context.auth.props.apiKey,
+      apiKey: context.auth.secret_text,
       query: buildTapfiliateQuery({
         click_id: context.propsValue.clickId,
         source_id: context.propsValue.sourceId,

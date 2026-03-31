@@ -1,6 +1,6 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { tapfiliateAuth } from '../..';
+import { tapfiliateAuth } from '../common/auth';
 import { tapfiliateApiCall } from '../common/tapfiliate.client';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -11,22 +11,27 @@ export const createConversionAction = createAction({
   auth: tapfiliateAuth,
   name: 'create_conversion',
   displayName: 'Create Conversion',
-  description: 'Creates a conversion in Tapfiliate.',
+  description:
+    'Creates a conversion in Tapfiliate. At least one attribution field is required: Customer ID, Referral Code, Tracking ID, Click ID, Coupon, or Asset ID + Source ID together.',
   props: {
     referralCode: Property.ShortText({
       displayName: 'Referral Code',
+      description: "The affiliate's referral code used to attribute this conversion.",
       required: false,
     }),
     trackingId: Property.ShortText({
       displayName: 'Tracking ID',
+      description: 'The Tapfiliate tracking ID stored in the affiliate click cookie.',
       required: false,
     }),
     clickId: Property.ShortText({
       displayName: 'Click ID',
+      description: 'The Tapfiliate click ID from the affiliate referral link.',
       required: false,
     }),
     coupon: Property.ShortText({
       displayName: 'Coupon',
+      description: 'A coupon code linked to an affiliate to attribute this conversion.',
       required: false,
     }),
     currency: Property.ShortText({
@@ -36,15 +41,17 @@ export const createConversionAction = createAction({
     }),
     assetId: Property.ShortText({
       displayName: 'Asset ID',
+      description: 'The Tapfiliate asset ID. Must be provided together with Source ID.',
       required: false,
     }),
     sourceId: Property.ShortText({
       displayName: 'Source ID',
+      description: 'The Tapfiliate source ID. Must be provided together with Asset ID.',
       required: false,
     }),
     externalId: Property.ShortText({
       displayName: 'External ID',
-      description: 'Unique ID such as an order number.',
+      description: 'Your own unique identifier for this conversion, such as an order number.',
       required: false,
     }),
     amount: Property.Number({
@@ -54,6 +61,7 @@ export const createConversionAction = createAction({
     }),
     customerId: Property.ShortText({
       displayName: 'Customer ID',
+      description: 'Your customer identifier to attribute this conversion to the matching affiliate.',
       required: false,
     }),
     overrideMaxCookieTime: Property.Checkbox({
@@ -101,7 +109,7 @@ export const createConversionAction = createAction({
     return await tapfiliateApiCall({
       method: HttpMethod.POST,
       path: '/conversions/',
-      apiKey: context.auth.props.apiKey,
+      apiKey: context.auth.secret_text,
       query: context.propsValue.overrideMaxCookieTime
         ? { override_max_cookie_time: 'true' }
         : undefined,

@@ -1,6 +1,6 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { tapfiliateAuth } from '../..';
+import { tapfiliateAuth } from '../common/auth';
 import { tapfiliateApiCall } from '../common/tapfiliate.client';
 
 export const getAffiliateAction = createAction({
@@ -11,6 +11,7 @@ export const getAffiliateAction = createAction({
   props: {
     affiliateId: Property.ShortText({
       displayName: 'Affiliate ID',
+      description: 'The unique Tapfiliate affiliate ID. Find it on the affiliate detail page in your Tapfiliate dashboard.',
       required: true,
     }),
   },
@@ -18,7 +19,7 @@ export const getAffiliateAction = createAction({
     return await tapfiliateApiCall({
       method: HttpMethod.GET,
       path: `/affiliates/${context.propsValue.affiliateId}/`,
-      apiKey: context.auth.props.apiKey,
+      apiKey: context.auth.secret_text,
     });
   },
 });

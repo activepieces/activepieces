@@ -124,8 +124,9 @@ export async function tapfiliatePaginatedApiCall<T extends HttpMessageBody>({
 }: TapfiliateApiCallParams): Promise<T[]> {
   const results: T[] = [];
   let currentQuery = query;
+  let pageCount = 0;
 
-  while (true) {
+  while (pageCount < TAPFILIATE_MAX_PAGES) {
     const response = await httpClient.sendRequest<T[]>(
       buildTapfiliateRequest({
         method,
@@ -142,6 +143,7 @@ export async function tapfiliatePaginatedApiCall<T extends HttpMessageBody>({
     }
 
     results.push(...response.body);
+    pageCount += 1;
 
     const nextPage = parseTapfiliateNextPage(
       response.headers?.['link'] ?? response.headers?.['Link']
@@ -156,4 +158,8 @@ export async function tapfiliatePaginatedApiCall<T extends HttpMessageBody>({
       page: nextPage,
     };
   }
+
+  return results;
 }
+
+const TAPFILIATE_MAX_PAGES = 500;
