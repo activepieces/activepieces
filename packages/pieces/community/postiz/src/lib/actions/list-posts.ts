@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { postizAuth } from '../../';
-import { postizApiCall, PostizAuth } from '../common';
+import { postizAuth } from '../common/auth';
+import { postizApiCall } from '../common';
 
 export const listPosts = createAction({
   auth: postizAuth,
@@ -21,7 +21,7 @@ export const listPosts = createAction({
     }),
   },
   async run(context) {
-    const auth = context.auth as PostizAuth;
+    const auth = context.auth;
 
     const response = await postizApiCall<{
       posts: {

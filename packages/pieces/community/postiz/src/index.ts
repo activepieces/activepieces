@@ -1,13 +1,5 @@
-import {
-  createPiece,
-  PieceAuth,
-  Property,
-} from '@activepieces/pieces-framework';
-import {
-  createCustomApiCallAction,
-  HttpMethod,
-  httpClient,
-} from '@activepieces/pieces-common';
+import { createPiece } from '@activepieces/pieces-framework';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { PieceCategory } from '@activepieces/shared';
 import { createPost } from './lib/actions/create-post';
 import { listPosts } from './lib/actions/list-posts';
@@ -18,46 +10,7 @@ import { getPlatformAnalytics } from './lib/actions/get-platform-analytics';
 import { getPostAnalytics } from './lib/actions/get-post-analytics';
 import { uploadFileFromUrl } from './lib/actions/upload-file-from-url';
 import { newPost } from './lib/triggers/new-post';
-
-export const postizAuth = PieceAuth.CustomAuth({
-  displayName: 'Postiz Connection',
-  required: true,
-  props: {
-    base_url: Property.ShortText({
-      displayName: 'Base URL',
-      description:
-        'The API base URL. Use `https://api.postiz.com/public/v1` for Postiz Cloud, or `https://your-domain.com/api/public/v1` for self-hosted instances.',
-      required: true,
-      defaultValue: 'https://api.postiz.com/public/v1',
-    }),
-    api_key: PieceAuth.SecretText({
-      displayName: 'API Key',
-      description: `To get your API key:
-1. Log in to your Postiz dashboard
-2. Go to **Settings > Developers > Public API**
-3. Generate a new API key and copy it`,
-      required: true,
-    }),
-  },
-  validate: async ({ auth }) => {
-    try {
-      const baseUrl = auth.base_url?.trim().replace(/\/+$/, '');
-      await httpClient.sendRequest({
-        method: HttpMethod.GET,
-        url: `${baseUrl}/is-connected`,
-        headers: {
-          Authorization: auth.api_key,
-        },
-      });
-      return { valid: true };
-    } catch {
-      return {
-        valid: false,
-        error: 'Invalid API key or base URL. Please check your credentials.',
-      };
-    }
-  },
-});
+import { postizAuth } from './lib/common/auth';
 
 export const postiz = createPiece({
   displayName: 'Postiz',
@@ -67,7 +20,7 @@ export const postiz = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/postiz.png',
   categories: [PieceCategory.MARKETING],
   auth: postizAuth,
-  authors: ['bst1n'],
+  authors: ['bst1n', 'onyedikachi-david'],
   actions: [
     createPost,
     listPosts,
@@ -78,15 +31,17 @@ export const postiz = createPiece({
     getPostAnalytics,
     uploadFileFromUrl,
     createCustomApiCallAction({
-      baseUrl: (auth) =>
-        (auth as { props: { base_url: string } }).props.base_url
-          ?.trim()
-          .replace(/\/+$/, ''),
+      baseUrl: (auth) => {
+        const { base_url } = (auth as { props: { base_url: string; api_key: string } }).props;
+        return base_url?.trim().replace(/\/+$/, '');
+      },
       auth: postizAuth,
       authMapping: async (auth) => ({
-        Authorization: (auth as { props: { api_key: string } }).props.api_key,
+        Authorization: (auth as { props: { base_url: string; api_key: string } }).props.api_key,
       }),
     }),
   ],
   triggers: [newPost],
 });
+
+export { postizAuth } from './lib/common/auth';

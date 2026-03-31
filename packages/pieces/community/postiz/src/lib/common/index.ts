@@ -5,16 +5,9 @@ import {
   HttpResponse,
 } from '@activepieces/pieces-common';
 import { Property } from '@activepieces/pieces-framework';
-import { postizAuth } from '../../';
+import { postizAuth, PostizAuth } from './auth';
 
 const DEFAULT_BASE_URL = 'https://api.postiz.com/public/v1';
-
-export type PostizAuth = {
-  props: {
-    base_url: string;
-    api_key: string;
-  };
-};
 
 function buildBaseUrl(auth: PostizAuth): string {
   const url = auth.props.base_url?.trim();
@@ -52,7 +45,7 @@ export const postizCommon = {
   integrationDropdown: Property.Dropdown({
     displayName: 'Channel',
     description: 'Select the connected social media channel',
-    refreshers: [],
+    refreshers: ['auth'],
     required: true,
     auth: postizAuth,
     options: async ({ auth }) => {
@@ -85,3 +78,5 @@ export const postizCommon = {
     },
   }),
 };
+
+export type { PostizAuth } from './auth';

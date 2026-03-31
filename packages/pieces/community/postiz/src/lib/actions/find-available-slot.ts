@@ -1,7 +1,7 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { postizAuth } from '../../';
-import { postizApiCall, PostizAuth, postizCommon } from '../common';
+import { postizAuth } from '../common/auth';
+import { postizApiCall, postizCommon } from '../common';
 
 export const findAvailableSlot = createAction({
   auth: postizAuth,
@@ -13,7 +13,7 @@ export const findAvailableSlot = createAction({
     integration: postizCommon.integrationDropdown,
   },
   async run(context) {
-    const auth = context.auth as PostizAuth;
+    const auth = context.auth;
 
     const response = await postizApiCall<{ date: string }>({
       auth,

@@ -9,7 +9,7 @@ import {
   pollingHelper,
   HttpMethod,
 } from '@activepieces/pieces-common';
-import { postizAuth } from '../../';
+import { postizAuth, PostizAuth } from '../common/auth';
 import { postizApiCall } from '../common';
 
 const polling: Polling<
@@ -36,7 +36,7 @@ const polling: Polling<
         };
       }[];
     }>({
-      auth: auth as { props: { base_url: string; api_key: string } },
+      auth: auth as PostizAuth,
       method: HttpMethod.GET,
       path: '/posts',
       queryParams: {

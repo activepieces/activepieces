@@ -1,6 +1,6 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { postizAuth } from '../../';
+import { postizAuth } from '../common/auth';
 import { postizApiCall, PostizAuth } from '../common';
 
 export const listIntegrations = createAction({
@@ -10,7 +10,7 @@ export const listIntegrations = createAction({
   description: 'List all connected social media channels in your organization',
   props: {},
   async run(context) {
-    const auth = context.auth as PostizAuth;
+    const auth = context.auth;
 
     const response = await postizApiCall<
       {

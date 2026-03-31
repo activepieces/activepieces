@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { postizAuth } from '../../';
-import { postizApiCall, PostizAuth } from '../common';
+import { postizAuth } from '../common/auth';
+import { postizApiCall } from '../common';
 
 export const getPostAnalytics = createAction({
   auth: postizAuth,
@@ -24,14 +24,14 @@ export const getPostAnalytics = createAction({
     }),
   },
   async run(context) {
-    const auth = context.auth as PostizAuth;
+    const auth = context.auth;
 
     const response = await postizApiCall<
       {
         label: string;
         total: number;
         percentageChange: number;
-        data: { date: string; value: number }[];
+        data: { date: string; total: number }[];
       }[]
     >({
       auth,
@@ -47,7 +47,7 @@ export const getPostAnalytics = createAction({
       total: metric.total,
       percentage_change: metric.percentageChange,
       daily_data: metric.data
-        ?.map((d) => `${d.date}:${d.value}`)
+        ?.map((d) => `${d.date}:${d.total}`)
         .join(', ') ?? null,
     }));
   },

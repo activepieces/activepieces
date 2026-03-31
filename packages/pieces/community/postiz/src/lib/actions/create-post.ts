@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { postizAuth } from '../../';
-import { postizApiCall, PostizAuth, postizCommon } from '../common';
+import { postizAuth } from '../common/auth';
+import { postizApiCall, postizCommon } from '../common';
 
 export const createPost = createAction({
   auth: postizAuth,
@@ -35,9 +35,9 @@ export const createPost = createAction({
       required: true,
     }),
     media: Property.Array({
-      displayName: 'Media URLs',
+      displayName: 'Media Paths',
       description:
-        'URLs of images or videos to attach. Upload media first using the "Upload File from URL" action, then paste the returned path here.',
+        'File paths of images or videos to attach. Upload media first using the "Upload File from URL" action, then paste the returned path here.',
       required: false,
     }),
     shortLink: Property.Checkbox({
@@ -46,18 +46,29 @@ export const createPost = createAction({
       required: false,
       defaultValue: false,
     }),
+    settings: Property.Json({
+      displayName: 'Settings',
+      description: 'Optional platform-specific settings (e.g. approval workflow overrides)',
+      required: false,
+    }),
   },
   async run(context) {
-    const { type, date, integration, content, media, shortLink } = context.propsValue;
-    const auth = context.auth as PostizAuth;
+    const { type, date, integration, content, media, shortLink, settings } = context.propsValue;
+    const auth = context.auth;
 
-    const postItem: Record<string, unknown> = {
-      content,
-      integration: { id: integration },
-    };
+    const value: Record<string, unknown> = { content };
 
     if (media && (media as string[]).length > 0) {
-      postItem['image'] = (media as string[]).map((url) => ({ url }));
+      value['image'] = (media as string[]).map((path) => ({ path }));
+    }
+
+    const postItem: Record<string, unknown> = {
+      integration: { id: integration },
+      value: [value],
+    };
+
+    if (settings) {
+      postItem['settings'] = settings;
     }
 
     const body: Record<string, unknown> = {

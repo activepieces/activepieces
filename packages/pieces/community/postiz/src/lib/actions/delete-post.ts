@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { postizAuth } from '../../';
+import { postizAuth } from '../common/auth';
 import { postizApiCall, PostizAuth } from '../common';
 
 export const deletePost = createAction({
@@ -17,7 +17,7 @@ export const deletePost = createAction({
     }),
   },
   async run(context) {
-    const auth = context.auth as PostizAuth;
+    const auth = context.auth;
 
     const response = await postizApiCall<{ id: string }>({
       auth,
