@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 
 import dropMediaImg from '@/assets/img/drop-media.svg';
 
@@ -18,6 +19,7 @@ type Message = {
   streaming?: boolean;
   images?: string[];
   files?: Attachment[];
+  quotes?: { text: string; msgId: number }[];
 };
 
 const FILE_ACCEPT = 'image/*,.pdf,.doc,.docx,.txt,.md,.xlsx,.xls,.csv,.json,.yaml,.yml,.js,.ts,.py';
@@ -187,6 +189,18 @@ const keyframes = `
   .chat-img:hover { opacity: 0.85; }
   .drop-overlay { position: absolute; top: 0; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 700px; z-index: 50; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.85); pointer-events: none; }
   .dark .drop-overlay { background: rgba(9,9,11,0.85); }
+  @keyframes replyPopIn { from { opacity: 0; transform: translate(-50%, -100%) translateY(4px); } to { opacity: 1; transform: translate(-50%, -100%) translateY(0); } }
+  .reply-popup { position: fixed; z-index: 100; transform: translate(-50%, -100%); animation: replyPopIn 0.15s ease forwards; }
+  .reply-quote { display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-start; padding: 5px 6px 2px; border-radius: 10px; background: rgba(120,120,120,0.1); border: 1px solid #e5e5e5; width: 80px; min-width: 80px; height: 56px; gap: 3px; position: relative; box-sizing: border-box; transition: background 0.15s, border-color 0.15s; }
+  .reply-quote:hover { background: rgba(120,120,120,0.18); border-color: #d4d4d4; }
+  .dark .reply-quote { background: rgba(255,255,255,0.06); border-color: #404040; border-left-color: #525252; }
+  .dark .reply-quote:hover { background: rgba(255,255,255,0.12); border-color: #525252; }
+  .reply-quote .reply-remove { position: absolute; top: -6px; right: -6px; width: 18px; height: 18px; border-radius: 50%; background: #525252; color: #fff; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 11px; line-height: 1; opacity: 0; transition: opacity 0.15s; outline: none; }
+  .reply-quote:hover .reply-remove { opacity: 1; }
+  .reply-popup button { display: flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 8px; border: none; background: #1a1a1a; color: #fff; font-size: 13px; font-weight: 500; font-family: inherit; cursor: pointer; transition: background 0.15s; white-space: nowrap; }
+  .reply-popup button:hover { background: #333; }
+  .dark .reply-popup button { background: #e5e5e5; color: #1a1a1a; }
+  .dark .reply-popup button:hover { background: #fff; }
   .msgs-fade { background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,1)); }
   .dark .msgs-fade { background: linear-gradient(to bottom, rgba(9,9,11,0), rgba(9,9,11,1)); }
 `;
@@ -201,6 +215,8 @@ export function AIChatBox({ onFirstMessage }: { onFirstMessage?: (text: string) 
   const [pendingFiles, setPendingFiles] = useState<Attachment[]>([]);
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [replyPopup, setReplyPopup] = useState<{ x: number; y: number; text: string; msgId: number } | null>(null);
+  const [replyQuotes, setReplyQuotes] = useState<{ text: string; msgId: number }[]>([]);
   const dragCounterRef = useRef(0);
   const attachRowRef = useRef<HTMLDivElement>(null);
   const attachDrag = useRef({ active: false, startX: 0, scrollLeft: 0 });
@@ -281,6 +297,55 @@ export function AIChatBox({ onFirstMessage }: { onFirstMessage?: (text: string) 
     setPendingFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const handleTextSelect = () => {
+    const sel = window.getSelection();
+    if (!sel || sel.isCollapsed || !sel.toString().trim()) {
+      setReplyPopup(null);
+      return;
+    }
+    const text = sel.toString().trim();
+    const range = sel.getRangeAt(0);
+    const rect = range.getBoundingClientRect();
+    // Find which AI message contains the selection
+    let node: Node | null = range.startContainer;
+    let msgId = 0;
+    while (node) {
+      if (node instanceof HTMLElement && node.id?.startsWith('msg-')) {
+        msgId = parseInt(node.id.replace('msg-', ''), 10);
+        break;
+      }
+      node = node.parentNode;
+    }
+    setReplyPopup({ x: rect.left + rect.width / 2, y: rect.top - 8, text, msgId });
+  };
+
+  useEffect(() => {
+    const clearHighlights = () => {
+      document.querySelectorAll('mark[data-reply-highlight]').forEach((mark) => {
+        const parent = mark.parentNode;
+        if (parent) { parent.replaceChild(document.createTextNode(mark.textContent || ''), mark); parent.normalize(); }
+      });
+    };
+    document.addEventListener('click', clearHighlights);
+    return () => document.removeEventListener('click', clearHighlights);
+  }, []);
+
+  useEffect(() => {
+    const hideOnClick = () => setReplyPopup(null);
+    const checkSelection = () => {
+      const sel = window.getSelection();
+      if (!sel || sel.isCollapsed || !sel.toString().trim()) {
+        setReplyPopup(null);
+      }
+    };
+    document.addEventListener('mousedown', hideOnClick);
+    document.addEventListener('selectionchange', checkSelection);
+    return () => {
+      document.removeEventListener('mousedown', hideOnClick);
+      document.removeEventListener('selectionchange', checkSelection);
+    };
+  }, []);
+
   const handleDragEnter = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -328,14 +393,17 @@ export function AIChatBox({ onFirstMessage }: { onFirstMessage?: (text: string) 
 
   const sendMessage = () => {
     const text = input.trim();
-    const hasAttachments = pendingImages.length > 0 || pendingFiles.length > 0;
+    const hasAttachments = pendingImages.length > 0 || pendingFiles.length > 0 || replyQuotes.length > 0;
     if ((!text && !hasAttachments) || typing) return;
+    const fullText = text;
     setInput('');
     if (textareaRef.current) textareaRef.current.style.height = 'auto';
     const images = pendingImages.length > 0 ? [...pendingImages] : undefined;
     const files = pendingFiles.length > 0 ? [...pendingFiles] : undefined;
+    const quotes = replyQuotes.length > 0 ? [...replyQuotes] : undefined;
     setPendingImages([]);
     setPendingFiles([]);
+    setReplyQuotes([]);
 
     if (!hasCalledFirstMessage.current) {
       hasCalledFirstMessage.current = true;
@@ -344,7 +412,7 @@ export function AIChatBox({ onFirstMessage }: { onFirstMessage?: (text: string) 
 
     setMessages((prev) => [
       ...prev,
-      { id: Date.now(), role: 'user', text, time: getTime(), fullDate: getFullDate(), images, files },
+      { id: Date.now(), role: 'user', text: fullText, time: getTime(), fullDate: getFullDate(), images, files, quotes },
     ]);
     setTyping(true);
 
@@ -440,7 +508,7 @@ export function AIChatBox({ onFirstMessage }: { onFirstMessage?: (text: string) 
         borderRadius: '16px', padding: '0',
       }}>
         <input ref={fileInputRef} type="file" accept={FILE_ACCEPT} multiple hidden onChange={handleFileSelect} />
-        {(pendingImages.length > 0 || pendingFiles.length > 0) && (
+        {(pendingImages.length > 0 || pendingFiles.length > 0 || replyQuotes.length > 0) && (
           <div
             ref={attachRowRef}
             onMouseDown={(e) => {
@@ -479,6 +547,15 @@ export function AIChatBox({ onFirstMessage }: { onFirstMessage?: (text: string) 
                 <button className="img-remove" onClick={() => removePendingFile(i)}>×</button>
               </div>
             ))}
+            {replyQuotes.map((quote, i) => (
+              <div key={'quote-' + i} className="reply-quote" style={{ flexShrink: 0, userSelect: 'none' }}>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#525252" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                  <path d="M9 14L4 9l5-5"/><path d="M20 20v-7a4 4 0 00-4-4H4"/>
+                </svg>
+                <span style={{ fontSize: quote.text.length > 80 ? '7px' : quote.text.length > 40 ? '8px' : '9px', color: 'hsl(var(--foreground))', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', lineHeight: 1.3, wordBreak: 'break-word', maxWidth: '100%' }}>{quote.text}</span>
+                <button className="reply-remove" onClick={() => setReplyQuotes((prev) => prev.filter((_, idx) => idx !== i))}>×</button>
+              </div>
+            ))}
           </div>
         )}
         <textarea
@@ -502,7 +579,7 @@ export function AIChatBox({ onFirstMessage }: { onFirstMessage?: (text: string) 
             className="plus-btn"
             onClick={() => fileInputRef.current?.click()}
             style={{
-              width: '26px', height: '26px', borderRadius: '50%', border: 'none',
+              width: '26px', height: '26px', borderRadius: '8px', border: 'none',
               background: 'transparent', cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               color: 'hsl(var(--muted-foreground))', transition: 'background 0.15s',
@@ -513,12 +590,12 @@ export function AIChatBox({ onFirstMessage }: { onFirstMessage?: (text: string) 
             </svg>
           </button>
           <button
-            className={`send-btn ${(input.trim() || pendingImages.length > 0 || pendingFiles.length > 0) && !typing && !isStreaming ? 'send-btn-active' : 'send-btn-disabled'}`}
+            className={`send-btn ${(input.trim() || pendingImages.length > 0 || pendingFiles.length > 0 || replyQuotes.length > 0) && !typing && !isStreaming ? 'send-btn-active' : 'send-btn-disabled'}`}
             onClick={sendMessage}
-            disabled={(!input.trim() && pendingImages.length === 0 && pendingFiles.length === 0) || typing || isStreaming}
+            disabled={(!input.trim() && pendingImages.length === 0 && pendingFiles.length === 0 && replyQuotes.length === 0) || typing || isStreaming}
             style={{
-              width: '26px', height: '26px', borderRadius: '50%', border: 'none',
-              cursor: (input.trim() || pendingImages.length > 0 || pendingFiles.length > 0) && !typing && !isStreaming ? 'pointer' : 'default',
+              width: '26px', height: '26px', borderRadius: '8px', border: 'none',
+              cursor: (input.trim() || pendingImages.length > 0 || pendingFiles.length > 0 || replyQuotes.length > 0) && !typing && !isStreaming ? 'pointer' : 'default',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               flexShrink: 0,
             }}
@@ -586,7 +663,7 @@ export function AIChatBox({ onFirstMessage }: { onFirstMessage?: (text: string) 
               <div style={{ maxWidth: '560px', width: '100%', margin: '0 auto', padding: '0 0 40px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
                 {messages.map((msg) =>
                   msg.role === 'ai' ? (
-                    <div key={msg.id} className="msg-enter" style={{ padding: '8px 0' }}>
+                    <div key={msg.id} id={`msg-${msg.id}`} className="msg-enter" style={{ padding: '8px 0' }} onMouseUp={handleTextSelect}>
                       <p style={{ margin: 0, fontSize: '14px', lineHeight: 1.65, color: 'hsl(var(--foreground))', whiteSpace: 'pre-wrap' }}>
                         {msg.text}
                         {msg.streaming && <span className="cursor" />}
@@ -611,6 +688,49 @@ export function AIChatBox({ onFirstMessage }: { onFirstMessage?: (text: string) 
                                   <div style={{ fontSize: '12px', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'hsl(var(--foreground))' }}>{file.name}</div>
                                   <div style={{ fontSize: '10px', color: '#a3a3a3' }}>{file.size}</div>
                                 </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        {msg.quotes && msg.quotes.length > 0 && (
+                          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: msg.text ? '6px' : 0, justifyContent: 'flex-end' }}>
+                            {msg.quotes.map((quote, i) => (
+                              <div key={i} className="reply-quote" style={{ userSelect: 'none', cursor: 'pointer' }} onClick={(e) => { e.stopPropagation();
+                                const el = document.getElementById(`msg-${quote.msgId}`);
+                                if (!el) return;
+                                // Clear any existing highlights first
+                                document.querySelectorAll('mark[data-reply-highlight]').forEach((m) => {
+                                  const p = m.parentNode;
+                                  if (p) { p.replaceChild(document.createTextNode(m.textContent || ''), m); p.normalize(); }
+                                });
+                                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                // Highlight the specific quoted text within the message
+                                const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+                                let node: Text | null;
+                                while ((node = walker.nextNode() as Text | null)) {
+                                  const idx = node.textContent?.indexOf(quote.text) ?? -1;
+                                  if (idx === -1) continue;
+                                  const range = document.createRange();
+                                  range.setStart(node, idx);
+                                  range.setEnd(node, idx + quote.text.length);
+                                  const mark = document.createElement('mark');
+                                  mark.setAttribute('data-reply-highlight', '');
+                                  const isDark = document.documentElement.classList.contains('dark');
+                                  mark.style.background = isDark ? 'rgba(200,200,200,0.3)' : 'rgba(120,120,120,0.2)';
+                                  mark.style.color = 'inherit';
+                                  mark.style.borderRadius = '0';
+                                  mark.style.padding = '2px 0';
+                                  mark.style.transition = 'background 0.4s ease';
+                                  range.surroundContents(mark);
+                                  setTimeout(() => { mark.style.background = 'transparent'; }, 3000);
+                                  setTimeout(() => { const parent = mark.parentNode; if (parent) { parent.replaceChild(document.createTextNode(mark.textContent || ''), mark); parent.normalize(); } }, 3500);
+                                  break;
+                                }
+                              }}>
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#525252" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                                  <path d="M9 14L4 9l5-5"/><path d="M20 20v-7a4 4 0 00-4-4H4"/>
+                                </svg>
+                                <span style={{ fontSize: quote.text.length > 80 ? '7px' : quote.text.length > 40 ? '8px' : '9px', color: 'hsl(var(--foreground))', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', lineHeight: 1.3, wordBreak: 'break-word', maxWidth: '100%' }}>{quote.text}</span>
                               </div>
                             ))}
                           </div>
@@ -696,6 +816,24 @@ export function AIChatBox({ onFirstMessage }: { onFirstMessage?: (text: string) 
           </div>
         )}
       </div>
+      {replyPopup && createPortal(
+        <div className="reply-popup" style={{ left: replyPopup.x, top: replyPopup.y }}>
+          <button onMouseDown={(e) => {
+            e.preventDefault();
+            setReplyQuotes((prev) => [...prev, { text: replyPopup.text, msgId: replyPopup.msgId }]);
+            setReplyPopup(null);
+            window.getSelection()?.removeAllRanges();
+            textareaRef.current?.focus();
+          }}>
+            Reply
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: 'scaleX(-1)' }}>
+              <polyline points="15 17 20 12 15 7"/>
+              <path d="M4 18v-2a4 4 0 014-4h12"/>
+            </svg>
+          </button>
+        </div>,
+        document.body
+      )}
       {lightboxSrc && (
         <div className="lightbox" onClick={() => setLightboxSrc(null)}>
           <button
