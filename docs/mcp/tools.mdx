@@ -48,7 +48,7 @@ List configured AI providers and their available models. Use this to discover va
 
 | Input | Type | Required | Description |
 |-------|------|----------|-------------|
-| `provider` | string | No | Filter by provider (openai, anthropic, google, azure, openrouter) |
+| `provider` | string | No | Filter by provider (`openai`, `anthropic`, `google`, `azure`, `openrouter`, `activepieces`, `cloudflare-gateway`, `custom`) |
 
 ### ap_list_tables
 
@@ -155,6 +155,7 @@ Set or update the trigger for a flow.
 | `triggerName` | string | Yes | Trigger name from the piece |
 | `input` | object | No | Trigger configuration |
 | `auth` | string | No | Connection externalId |
+| `displayName` | string | No | Display name for the trigger step |
 
 ### ap_add_step
 
@@ -241,6 +242,7 @@ Add, update, or delete canvas notes on a flow.
 | `content` | string | No | Note text (required for ADD) |
 | `color` | string | No | Note color |
 | `position` | object | No | `{x, y}` canvas position |
+| `size` | object | No | `{width, height}` note dimensions (default 200x200) |
 
 ---
 
