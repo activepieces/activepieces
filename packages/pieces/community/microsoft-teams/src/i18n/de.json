@@ -51,6 +51,7 @@
   "No Error on Failure": "Kein Fehler bei Fehler",
   "Timeout (in seconds)": "Timeout (in Sekunden)",
   "Follow redirects": "Weiterleitungen folgen",
+  "Use @username to mention team members in the message.": "Nutze @username um Teammitglieder in der Nachricht zu erwähnen.",
   "ID of the parent message to reply to.": "ID der zu antwortenden übergeordneten Nachricht.",
   "The ID of the message to retrieve.": "Die ID der zu holenden Nachricht.",
   "The ID of the message to delete.": "Die ID der zu löschenden Nachricht.",
