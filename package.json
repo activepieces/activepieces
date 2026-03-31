@@ -1,7 +1,7 @@
 {
   "name": "activepieces",
-  "version": "0.79.2",
-  "rcVersion": "0.80.0-rc.0",
+  "version": "0.80.0",
+  "rcVersion": "0.81.0-rc.0",
   "packageManager": "bun@1.3.3",
   "scripts": {
     "prebuild": "node tools/scripts/install-bun.js",
