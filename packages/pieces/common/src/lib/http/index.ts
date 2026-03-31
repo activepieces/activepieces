@@ -1,5 +1,4 @@
 export * from './axios/axios-http-client';
-export * from './axios/ssrf';
 export * from './core/base-http-client';
 export * from './core/delegating-authentication-converter';
 export * from './core/http-client';

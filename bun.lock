@@ -1,5 +1,6 @@
 {
   "lockfileVersion": 1,
+  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "activepieces",
@@ -7436,6 +7437,9 @@
         "https-proxy-agent": "7.0.4",
         "tslib": "2.6.2",
       },
+      "devDependencies": {
+        "vitest": "3.0.8",
+      },
     },
     "packages/pieces/core/image-helper": {
       "name": "@activepieces/piece-image-helper",
@@ -7879,7 +7883,7 @@
     },
     "packages/shared": {
       "name": "@activepieces/shared",
-      "version": "0.50.0",
+      "version": "0.50.1",
       "dependencies": {
         "dayjs": "1.11.9",
         "deepmerge-ts": "7.1.0",
