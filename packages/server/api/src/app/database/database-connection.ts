@@ -34,6 +34,9 @@ import { FolderEntity } from '../flows/folder/folder.entity'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
 import { McpServerEntity } from '../mcp/mcp-entity'
+import { McpOAuthClientEntity } from '../mcp/oauth/mcp-oauth-client-entity'
+import { McpOAuthAuthorizationCodeEntity } from '../mcp/oauth/mcp-oauth-code-entity'
+import { McpOAuthTokenEntity } from '../mcp/oauth/mcp-oauth-token-entity'
 import { PieceMetadataEntity } from '../pieces/metadata/piece-metadata-entity'
 import { PieceTagEntity } from '../pieces/tags/pieces/piece-tag.entity'
 import { TagEntity } from '../pieces/tags/tag-entity'
@@ -88,6 +91,9 @@ function getEntities(): EntitySchema<unknown>[] {
         TableWebhookEntity,
         UserIdentityEntity,
         McpServerEntity,
+        McpOAuthClientEntity,
+        McpOAuthAuthorizationCodeEntity,
+        McpOAuthTokenEntity,
         TriggerSourceEntity,
         UserBadgeEntity,
         // Enterprise
