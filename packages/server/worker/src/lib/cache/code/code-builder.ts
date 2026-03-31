@@ -146,7 +146,6 @@ function getPackageJson(packageJson: string): string {
     return JSON.stringify({
         ...packageJsonObject,
         dependencies: {
-            '@types/node': '18.17.1',
             ...(packageJsonObject?.['dependencies'] ?? {}),
         },
     })
