@@ -17,7 +17,7 @@ export const tapfiliate = createPiece({
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/tapfiliate.png',
   categories: [PieceCategory.MARKETING, PieceCategory.SALES_AND_CRM],
-  authors: ['Harmatta', 'onyedikachi'],
+  authors: ['Harmatta', 'onyedikachi-david'],
   auth: tapfiliateAuth,
   actions: [
     createAffiliateAction,
