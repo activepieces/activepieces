@@ -102,6 +102,7 @@ export const WorkerSettingsResponse = z.object({
     EVENT_DESTINATION_TIMEOUT_SECONDS: z.number(),
     PLATFORM_ID_FOR_DEDICATED_WORKER: z.string().optional(),
     EDITION: z.string(),
+    SSRF_ALLOW_LIST: z.array(z.string()),
 })
 
 export type WorkerSettingsResponse = z.infer<typeof WorkerSettingsResponse>

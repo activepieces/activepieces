@@ -75,6 +75,9 @@ function buildSandboxEnv(settings: ReturnType<typeof workerSettings.getSettings>
     if (settings.DEV_PIECES.length > 0) {
         env['AP_DEV_PIECES'] = settings.DEV_PIECES.join(',')
     }
+    if (settings.SSRF_ALLOW_LIST.length > 0) {
+        env['AP_SSRF_ALLOW_LIST'] = settings.SSRF_ALLOW_LIST.join(',')
+    }
     for (const key of settings.SANDBOX_PROPAGATED_ENV_VARS) {
         if (process.env[key]) {
             env[key] = process.env[key]!
