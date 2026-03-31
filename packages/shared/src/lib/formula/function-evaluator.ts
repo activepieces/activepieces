@@ -264,9 +264,9 @@ parser.functions.split_text_to_list = (s: unknown, sep: unknown = ',') =>
 
 parser.functions.if = (cond: unknown, a: unknown, b: unknown) => (cond ? a : b)
 parser.functions.if_empty = (val: unknown, fallback: unknown) =>
-    val === '' || val == null ? fallback : val
+    val === '' || val == null || val === 'undefined' ? fallback : val
 parser.functions.if_null = (val: unknown, fallback: unknown) =>
-    val == null ? fallback : val
+    val == null || val === 'undefined' ? fallback : val
 parser.functions.switch = (...args: unknown[]) => {
     const [val, ...pairs] = args
     for (let i = 0; i + 1 < pairs.length; i += 2) {
@@ -309,7 +309,8 @@ function preprocessExpression(
     let idx = 0
     const processed = expression.replace(/\{\{([^}]+)\}\}/g, (_, path: string) => {
         const key = `_v${idx++}`
-        vars[key] = resolveVariable(path.trim(), sampleData)
+        const resolved = resolveVariable(path.trim(), sampleData)
+        vars[key] = resolved === undefined ? null : resolved
         return key
     })
     return { processed, vars }
