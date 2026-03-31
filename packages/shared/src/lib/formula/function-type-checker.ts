@@ -33,7 +33,7 @@ export function typeCheckTiptapDoc(doc: DocNode): Map<string, string> {
             continue
         }
 
-        if (argCount > 0 && argCount < fn.minArgs) {
+        if (argCount < fn.minArgs) {
             errors.set(
                 id,
                 `${fnName}() needs at least ${fn.minArgs} argument${fn.minArgs === 1 ? '' : 's'} (${argCount} given)`,
@@ -161,6 +161,7 @@ function inferArgType(argNodes: DocNode[]): ApFunctionArgType | null {
     let depth = 0
     let topLevelFnName: string | null = null
     let topLevelCount = 0
+    let hasFunctionOrMention = false
 
     for (const node of argNodes) {
         if (node.type === 'function_start') {
@@ -169,16 +170,35 @@ function inferArgType(argNodes: DocNode[]): ApFunctionArgType | null {
                 topLevelCount++
             }
             depth++
+            hasFunctionOrMention = true
         }
         else if (node.type === 'function_end') {
             depth--
         }
+        else if (node.type === 'mention') {
+            hasFunctionOrMention = true
+        }
     }
 
-    if (topLevelCount !== 1 || !topLevelFnName) return null
+    if (topLevelCount === 1 && topLevelFnName) {
+        const fn = AP_FUNCTIONS.find((f) => f.name === topLevelFnName)
+        return fn?.returnType ?? null
+    }
 
-    const fn = AP_FUNCTIONS.find((f) => f.name === topLevelFnName)
-    return fn?.returnType ?? null
+    if (!hasFunctionOrMention) {
+        const text = argNodes
+            .filter((n) => n.type === 'text')
+            .map((n) => n.text ?? '')
+            .join('')
+            .trim()
+
+        if (!text) return null
+        if (text === 'true' || text === 'false') return 'boolean'
+        if (text !== '' && !Number.isNaN(Number(text))) return 'number'
+        return 'string'
+    }
+
+    return null
 }
 
 function ordinal(n: number): string {

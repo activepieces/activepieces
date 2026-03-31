@@ -17,27 +17,25 @@
 }
 
 /* ── Formula function bracket highlighting ─────────────────────────────── */
-.ap-fn-active {
+span.ap-fn-badge.ap-fn-active {
     background-color: #7c3aed !important;
     color: #fff !important;
     border-color: #6d28d9 !important;
-    outline: 2px solid #7c3aed !important;
+    outline: 2px solid #7c3aed;
     outline-offset: 1px;
 }
 
-.ap-fn-error {
-    background-color: rgba(239, 68, 68, 0.15) !important;
+span.ap-fn-badge.ap-fn-error {
+    background-color: rgba(239, 68, 68, 0.18) !important;
     border-color: #ef4444 !important;
     color: #b91c1c !important;
 }
 
-.ap-fn-unclosed {
-    background-color: rgba(239, 68, 68, 0.12) !important;
+span.ap-fn-badge.ap-fn-unclosed {
+    background-color: rgba(239, 68, 68, 0.15) !important;
     border-color: #ef4444 !important;
     color: #b91c1c !important;
-    text-decoration: underline;
-    text-decoration-color: #ef4444;
-    text-decoration-style: wavy;
+    text-decoration: underline wavy #ef4444;
     text-underline-offset: 2px;
 }
 

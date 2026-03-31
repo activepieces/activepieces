@@ -23,7 +23,10 @@ import { cn } from '@/lib/utils';
 
 import { useBuilderStateContext } from '../../builder-hooks';
 
-import { FunctionEditorTooltip } from './components/function-hover-popover';
+import {
+  ActiveFunctionInfo,
+  FunctionEditorTooltip,
+} from './components/function-hover-popover';
 import { FunctionSearchPopover } from './components/function-search-popover';
 import { FunctionEndNode } from './extensions/function-end-node';
 import {
@@ -136,6 +139,7 @@ export const TiptapEditor = ({
   const inlineStateRef = useRef(inlineState);
   inlineStateRef.current = inlineState;
 
+  const [activeFn, setActiveFn] = useState<ActiveFunctionInfo | null>(null);
   const [previewMode, setPreviewMode] = useState(false);
   const [previewValue, setPreviewValue] = useState<string>('');
   const [previewError, setPreviewError] = useState(false);
@@ -265,6 +269,10 @@ export const TiptapEditor = ({
         applyUnclosedErrors(editorWrapperRef.current);
       });
     },
+    onSelectionUpdate: ({ editor: e }) => {
+      const info = getActiveFunctionAtCursor(e, editorWrapperRef.current);
+      setActiveFn(info);
+    },
     onFocus: () => {
       setInsertMentionHandler(insertMention);
     },
@@ -345,7 +353,7 @@ export const TiptapEditor = ({
         <EditorContent editor={editor} />
       )}
 
-      <FunctionEditorTooltip editorRef={editorWrapperRef} />
+      <FunctionEditorTooltip editorRef={editorWrapperRef} activeFn={activeFn} />
 
       {slashState.open && (
         <FunctionSearchPopover
@@ -431,6 +439,84 @@ function applyUnclosedErrors(wrapperEl: HTMLElement | null) {
       badge.classList.remove('ap-fn-unclosed');
     }
   });
+}
+
+function getActiveFunctionAtCursor(
+  editor: import('@tiptap/react').Editor,
+  wrapperEl: HTMLElement | null,
+): ActiveFunctionInfo | null {
+  if (!wrapperEl) return null;
+  const { state } = editor;
+  const cursorPos = state.selection.from;
+
+  // Collect all function nodes with their positions
+  const startMap = new Map<string, { pos: number; functionName: string }>();
+  const endMap = new Map<string, number>();
+
+  state.doc.descendants((node, pos) => {
+    if (node.type.name === FUNCTION_START_NODE_TYPE) {
+      startMap.set(node.attrs.id as string, {
+        pos,
+        functionName: node.attrs.functionName as string,
+      });
+    }
+    if (node.type.name === FUNCTION_END_NODE_TYPE) {
+      endMap.set(node.attrs.openId as string, pos);
+    }
+  });
+
+  // Find innermost function_start whose range contains the cursor
+  let innermostId: string | null = null;
+  let innermostPos = -1;
+
+  for (const [id, { pos }] of startMap) {
+    // Cursor must be strictly after the start badge
+    if (pos >= cursorPos) continue;
+    // Cursor must be before (or at) the end badge, or inside unclosed function
+    const endPos = endMap.has(id) ? endMap.get(id)! : Infinity;
+    if (cursorPos > endPos) continue;
+    if (pos > innermostPos) {
+      innermostId = id;
+      innermostPos = pos;
+    }
+  }
+
+  if (!innermostId) return null;
+
+  const { functionName } = startMap.get(innermostId)!;
+
+  // Count commas between our function_start and cursor, skipping nested functions
+  let argIndex = 0;
+  let depth = 0;
+
+  state.doc.descendants((node, pos) => {
+    // Skip the start node itself and everything before it
+    if (pos <= innermostPos) return;
+    // Skip nodes at or past the cursor
+    if (pos >= cursorPos) return;
+
+    if (node.type.name === FUNCTION_START_NODE_TYPE) {
+      depth++;
+    } else if (node.type.name === FUNCTION_END_NODE_TYPE) {
+      if (depth > 0) depth--;
+    } else if (node.isText && depth === 0) {
+      const text = node.text ?? '';
+      // Only consider characters before the cursor
+      const limit = cursorPos - pos;
+      const relevant = text.slice(0, limit);
+      for (const ch of relevant) {
+        if (ch === ',') argIndex++;
+      }
+    }
+  });
+
+  const startEl = wrapperEl.querySelector<HTMLElement>(
+    `[data-function-start="${innermostId}"]`,
+  );
+  const anchorRect = startEl?.getBoundingClientRect() ?? null;
+  const errorMessage = startEl?.getAttribute('data-fn-error-msg') ?? null;
+
+  return { functionName, argIndex, errorMessage, anchorRect };
 }
 
 function flattenSampleData(
