@@ -7,7 +7,7 @@
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
-    "@zip.js/zip.js": "^2.8.15",
+    "@zip.js/zip.js": "2.8.23",
     "mime-types": "2.1.35",
     "tslib": "2.6.2"
   },

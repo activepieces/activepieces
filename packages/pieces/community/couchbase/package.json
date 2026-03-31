@@ -8,8 +8,8 @@
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
-    "couchbase": "^4.6.0",
-    "tslib": "^2.3.0"
+    "couchbase": "4.6.1",
+    "tslib": "2.6.2"
   },
   "scripts": {
     "build": "tsc -p tsconfig.lib.json && cp package.json dist/",

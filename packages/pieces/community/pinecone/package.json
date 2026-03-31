@@ -8,8 +8,8 @@
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
-    "@pinecone-database/pinecone": "^6.1.1",
-    "tslib": "^2.3.0"
+    "@pinecone-database/pinecone": "6.1.4",
+    "tslib": "2.6.2"
   },
   "scripts": {
     "build": "tsc -p tsconfig.lib.json && cp package.json dist/",

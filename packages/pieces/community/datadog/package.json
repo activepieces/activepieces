@@ -8,8 +8,8 @@
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
-    "@datadog/datadog-api-client": "^1.43.0",
-    "tslib": "^2.3.0",
+    "@datadog/datadog-api-client": "1.53.0",
+    "tslib": "2.6.2",
     "zod": "4.3.6"
   },
   "scripts": {
