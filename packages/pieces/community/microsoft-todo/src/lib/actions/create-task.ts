@@ -103,11 +103,9 @@ export const createTask = createAction({
 			},
 		});
 
-		const taskBody: TodoTask = {};
-
-		if (title) {
-			taskBody.title = title;
-		}
+		const taskBody: TodoTask = {
+			title,
+		};
 
 		if (body_content) {
 			taskBody.body = {
