@@ -77,3 +77,39 @@ export interface ListWebhookPayload {
 		parent_record_id: string;
 	}>;
 }
+
+export interface MeetingResponse {
+	id: {
+		workspace_id: string;
+		meeting_id: string;
+	};
+	title: string;
+	start: { datetime?: string; date?: string; timezone?: string } | null;
+}
+
+export interface CallRecordingResponse {
+	id: {
+		workspace_id: string;
+		meeting_id: string;
+		call_recording_id: string;
+	};
+	status: 'processing' | 'completed' | 'failed';
+	created_at: string;
+	web_url: string;
+}
+
+export interface CallRecordingWebhookPayload {
+	webhook_id: string;
+	events: Array<{
+		event_type: string;
+		id: {
+			workspace_id: string;
+			meeting_id: string;
+			call_recording_id: string;
+		};
+		actor: {
+			id: string | null;
+			type: 'api-token' | 'workspace-member' | 'system' | 'app' | null;
+		};
+	}>;
+}
