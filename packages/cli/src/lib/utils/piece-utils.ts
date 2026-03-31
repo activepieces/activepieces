@@ -7,7 +7,7 @@ import axios from 'axios'
 import chalk from 'chalk'
 import FormData from 'form-data';
 import fs from 'fs';
-import { buildWorkspaceVersionMap, resolveWorkspaceDependencies } from './workspace-utils';
+import { buildWorkspaceVersionMap, resolveWorkspaceDependencies, stripSemverRanges } from './workspace-utils';
 
 export const piecesPath = () => path.join(cwd(), 'packages', 'pieces')
 export const customPiecePath = () => path.join(piecesPath(), 'custom')
@@ -182,8 +182,8 @@ export const assertPieceExists = async (pieceName: string | null) => {
 function resolveWorkspaceDepsInPackageJson(packageJsonPath: string, rootDir: string): void {
     const versionMap = buildWorkspaceVersionMap(rootDir)
     const json = JSON.parse(fs.readFileSync(packageJsonPath).toString())
-    json.dependencies = resolveWorkspaceDependencies(json.dependencies, versionMap)
-    json.devDependencies = resolveWorkspaceDependencies(json.devDependencies, versionMap)
-    json.peerDependencies = resolveWorkspaceDependencies(json.peerDependencies, versionMap)
+    json.dependencies = stripSemverRanges(resolveWorkspaceDependencies(json.dependencies, versionMap))
+    json.devDependencies = stripSemverRanges(resolveWorkspaceDependencies(json.devDependencies, versionMap))
+    json.peerDependencies = stripSemverRanges(resolveWorkspaceDependencies(json.peerDependencies, versionMap))
     fs.writeFileSync(packageJsonPath, JSON.stringify(json, null, 2))
 }

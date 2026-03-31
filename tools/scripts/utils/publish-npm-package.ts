@@ -4,7 +4,31 @@ import { execSync } from 'node:child_process'
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { readPackageJson } from './files'
 import { packagePrePublishChecks } from './package-pre-publish-checks'
-import { buildWorkspaceVersionMap, resolveWorkspaceDependencies } from './workspace-utils'
+import { buildWorkspaceVersionMap, resolveWorkspaceDependencies, stripSemverRanges } from '../../../packages/cli/src/lib/utils/workspace-utils'
+
+function assertNoSemverRanges(packageJsonPath: string): void {
+  const json = JSON.parse(readFileSync(packageJsonPath).toString())
+  const depFields = ['dependencies', 'devDependencies', 'peerDependencies'] as const
+  const ranged: string[] = []
+
+  for (const field of depFields) {
+    const deps: Record<string, string> | undefined = json[field]
+    if (!deps) {
+      continue
+    }
+    for (const [name, version] of Object.entries(deps)) {
+      if (/^[\^~>=<]/.test(version)) {
+        ranged.push(`${field}.${name}: ${version}`)
+      }
+    }
+  }
+
+  if (ranged.length > 0) {
+    throw new Error(
+      `[publishPackage] refusing to publish ${json.name}@${json.version} — semver ranges found:\n  ${ranged.join('\n  ')}`,
+    )
+  }
+}
 
 function assertNoUnresolvedWorkspaceDeps(packageJsonPath: string): void {
   const json = JSON.parse(readFileSync(packageJsonPath).toString())
@@ -53,12 +77,13 @@ export const publishNpmPackage = async (path: string): Promise<void> => {
   json.version = version
   json.main = './src/index.js'
   json.types = './src/index.d.ts'
-  json.dependencies = resolveWorkspaceDependencies(json.dependencies, versionMap)
-  json.devDependencies = resolveWorkspaceDependencies(json.devDependencies, versionMap)
-  json.peerDependencies = resolveWorkspaceDependencies(json.peerDependencies, versionMap)
+  json.dependencies = stripSemverRanges(resolveWorkspaceDependencies(json.dependencies, versionMap))
+  json.devDependencies = stripSemverRanges(resolveWorkspaceDependencies(json.devDependencies, versionMap))
+  json.peerDependencies = stripSemverRanges(resolveWorkspaceDependencies(json.peerDependencies, versionMap))
   writeFileSync(`${outputPath}/package.json`, JSON.stringify(json, null, 2))
 
   assertNoUnresolvedWorkspaceDeps(`${outputPath}/package.json`)
+  assertNoSemverRanges(`${outputPath}/package.json`)
 
   execSync(`npm publish --access public --tag latest`, { cwd: outputPath, stdio: 'inherit' })
 

@@ -55,3 +55,16 @@ export function resolveWorkspaceDependencies(
   }
   return resolved
 }
+
+export function stripSemverRanges(
+  deps: Record<string, string> | undefined,
+): Record<string, string> | undefined {
+  if (!deps) {
+    return deps
+  }
+  const stripped: Record<string, string> = {}
+  for (const [name, version] of Object.entries(deps)) {
+    stripped[name] = version.replace(/^[\^~>=<]+/, '')
+  }
+  return stripped
+}
