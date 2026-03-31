@@ -31,7 +31,6 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarMenu,
-  SidebarSeparator,
   useSidebar,
   SidebarGroupLabel,
   SidebarMenuItem,
@@ -81,7 +80,6 @@ export function ProjectDashboardSidebar({
       setSearchQuery('');
     }
   }, [searchOpen]);
-
 
   const shouldShowNewProjectButton = useMemo(() => {
     if (platform.plan.teamProjectsLimit === TeamProjectsLimit.NONE) {
@@ -262,7 +260,9 @@ export function ProjectDashboardSidebar({
 
           <SidebarGroup className="flex-1 overflow-hidden w-full py-0">
             <div className="flex items-center justify-between group-data-[collapsible=icon]:hidden px-2">
-              <SidebarGroupLabel className="font-normal">{t('Projects')}</SidebarGroupLabel>
+              <SidebarGroupLabel className="font-normal">
+                {t('Projects')}
+              </SidebarGroupLabel>
               <div className="flex items-center justify-center gap-1">
                 {shouldShowNewProjectButton && (
                   <>
@@ -345,9 +345,7 @@ export function ProjectDashboardSidebar({
                 )}
               </div>
             </div>
-            {isProjectsScrolled && (
-              <div className="border-t border-border" />
-            )}
+            {isProjectsScrolled && <div className="border-t border-border" />}
             <div
               ref={projectsScrollRef}
               className="relative flex-1 grow min-h-0 flex flex-col overflow-hidden"

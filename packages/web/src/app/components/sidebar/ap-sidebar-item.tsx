@@ -58,7 +58,18 @@ export const ApSidebarItem = (item: SidebarItemType) => {
         onMouseLeave={() => setIsHovered(false)}
       >
         {item.icon && renderIcon(item.icon, iconRef)}
-        {!isCollapsed && <span className={cn('text-sm', isLinkActive ? 'font-semibold text-foreground' : 'font-normal text-sidebar-accent-foreground')}>{item.label}</span>}
+        {!isCollapsed && (
+          <span
+            className={cn(
+              'text-sm',
+              isLinkActive
+                ? 'font-semibold text-foreground'
+                : 'font-normal text-sidebar-accent-foreground',
+            )}
+          >
+            {item.label}
+          </span>
+        )}
         {!isCollapsed && item.locked && (
           <LockKeyhole className="size-3.5! ml-auto" />
         )}

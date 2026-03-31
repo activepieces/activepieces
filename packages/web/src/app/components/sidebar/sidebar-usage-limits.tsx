@@ -1,9 +1,10 @@
 import { ApEdition, ApFlagId, isNil, PlatformRole } from '@activepieces/shared';
 import { t } from 'i18next';
-import { ChevronRight, Info, Play, Sparkles, Workflow } from 'lucide-react';
+import { ChevronRight, Info } from 'lucide-react';
 import React, { ReactNode, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 
+import { useSidebar } from '@/components/ui/sidebar-shadcn';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Tooltip,
@@ -14,7 +15,6 @@ import { projectCollectionUtils } from '@/features/projects';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
-import { useSidebar } from '@/components/ui/sidebar-shadcn';
 import { formatUtils } from '@/lib/format-utils';
 
 const SidebarUsageLimits = React.memo(() => {
@@ -138,7 +138,11 @@ const UsageRow = ({
           </Tooltip>
         )}
       </div>
-      <div className={`flex items-center gap-2 text-foreground shrink-0 transition-opacity duration-150 ${showValues ? 'opacity-100' : 'opacity-0'}`}>
+      <div
+        className={`flex items-center gap-2 text-foreground shrink-0 transition-opacity duration-150 ${
+          showValues ? 'opacity-100' : 'opacity-0'
+        }`}
+      >
         {isUnlimited ? (
           <span>∞ {t('Unlimited')}</span>
         ) : suffix ? (
