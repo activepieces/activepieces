@@ -93,15 +93,52 @@ const css = `
   .dark .group-label:hover { color: #fff; background: rgba(255,255,255,0.12); }
 `;
 
-export function ConversationList({ onSelect, newChat, onNewChat }: { onSelect?: (id: string) => void; newChat?: { title: string; key: number } | null; onNewChat?: () => void }) {
+export function ConversationList({
+  onSelect,
+  newChat,
+  onNewChat,
+}: {
+  onSelect?: (id: string) => void;
+  newChat?: { title: string; key: number } | null;
+  onNewChat?: () => void;
+}) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [archivedIds, setArchivedIds] = useState<Set<string>>(new Set());
   const [extraConvs, setExtraConvs] = useState<Conversation[]>([]);
   const [streamingId, setStreamingId] = useState<string | null>(null);
   const [streamingText, setStreamingText] = useState('');
   const streamIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({ Older: true });
-  const [archiveTip, setArchiveTip] = useState<{ x: number; y: number } | null>(null);
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>(() => {
+    const groups = ['Today', 'Yesterday', 'Older', 'Archived'];
+    const state: Record<string, boolean> = {};
+    let firstOpened = false;
+    const allItems = [...FAKE_CONVERSATIONS];
+    const todayItems = allItems.filter((c) => isToday(c.date));
+    const yesterdayItems = allItems.filter((c) => isYesterday(c.date));
+    const olderItems = allItems.filter(
+      (c) => !isToday(c.date) && !isYesterday(c.date),
+    );
+    const counts: Record<string, number> = {
+      Today: todayItems.length,
+      Yesterday: yesterdayItems.length,
+      Older: olderItems.length,
+      Archived: 0,
+    };
+    for (const g of groups) {
+      if (!firstOpened && counts[g] > 0) {
+        state[g] = false;
+        firstOpened = true;
+      } else {
+        state[g] = true;
+      }
+    }
+    return state;
+  });
+  const [archiveTip, setArchiveTip] = useState<{
+    x: number;
+    y: number;
+    text: string;
+  } | null>(null);
   const [showTopFade, setShowTopFade] = useState(false);
   const [showBottomFade, setShowBottomFade] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
@@ -113,7 +150,9 @@ export function ConversationList({ onSelect, newChat, onNewChat }: { onSelect?: 
     setShowBottomFade(el.scrollTop + el.clientHeight < el.scrollHeight - 5);
   }, []);
 
-  useEffect(() => { checkFades(); }, [collapsed, checkFades]);
+  useEffect(() => {
+    checkFades();
+  }, [collapsed, checkFades]);
 
   const lastKeyRef = useRef<number | undefined>(undefined);
   const delayRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -149,10 +188,14 @@ export function ConversationList({ onSelect, newChat, onNewChat }: { onSelect?: 
     };
   }, [newChat]);
 
-  const allConversations = [...extraConvs, ...FAKE_CONVERSATIONS].filter((c) => !archivedIds.has(c.id));
+  const allItems = [...extraConvs, ...FAKE_CONVERSATIONS];
+  const allConversations = allItems.filter((c) => !archivedIds.has(c.id));
+  const archivedList = allItems.filter((c) => archivedIds.has(c.id));
   const today = allConversations.filter((c) => isToday(c.date));
   const yesterdayList = allConversations.filter((c) => isYesterday(c.date));
-  const olderList = allConversations.filter((c) => !isToday(c.date) && !isYesterday(c.date));
+  const olderList = allConversations.filter(
+    (c) => !isToday(c.date) && !isYesterday(c.date),
+  );
 
   const handleClick = (id: string) => {
     setActiveId(id);
@@ -171,55 +214,138 @@ export function ConversationList({ onSelect, newChat, onNewChat }: { onSelect?: 
     setCollapsed((prev) => ({ ...prev, [label]: !prev[label] }));
   };
 
+  const handleUnarchive = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    setArchivedIds((prev) => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
+    toast('Conversation restored.', { duration: 2500 });
+  };
+
   const renderGroup = (label: string, items: Conversation[]) => {
     if (items.length === 0) return null;
     const isCollapsed = collapsed[label];
+    const isArchived = label === 'Archived';
     return (
-      <div style={{ marginBottom: '8px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+      <div
+        style={{
+          marginBottom: '8px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '2px',
+        }}
+      >
         <button
           className="group-label"
           onClick={() => toggleGroup(label)}
           style={{
-            fontSize: '11px', fontWeight: 600,
-            padding: '4px 8px', margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px',
-            background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex',
-            alignItems: 'center', gap: '2px', fontFamily: 'inherit',
+            fontSize: '11px',
+            fontWeight: 600,
+            padding: '4px 8px',
+            margin: 0,
+            textTransform: 'uppercase',
+            letterSpacing: '0.5px',
+            background: 'transparent',
+            border: 'none',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '2px',
+            fontFamily: 'inherit',
           }}
         >
           {label}
           <svg
-            width="10" height="10" viewBox="0 0 24 24" fill="none"
-            style={{ transition: 'transform 0.15s', transform: isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)', flexShrink: 0 }}
+            width="10"
+            height="10"
+            viewBox="0 0 24 24"
+            fill="none"
+            style={{
+              transition: 'transform 0.15s',
+              transform: isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)',
+              flexShrink: 0,
+            }}
           >
-            <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <path
+              d="M6 9l6 6 6-6"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
           </svg>
         </button>
-        {!isCollapsed && items.map((conv) => (
-          <button
-            key={conv.id}
-            className={`conv-item ${activeId === conv.id ? 'active' : ''}`}
-            onClick={() => handleClick(conv.id)}
-          >
-            <span style={{ fontSize: '12px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', paddingRight: '18px' }}>
-              {streamingId === conv.id ? streamingText : conv.title}
-            </span>
-            <span
-              className="archive-btn"
-              onClick={(e) => handleArchive(e, conv.id)}
-              onMouseEnter={(e) => {
-                const rect = e.currentTarget.getBoundingClientRect();
-                setArchiveTip({ x: rect.left + rect.width / 2, y: rect.bottom + 6 });
-              }}
-              onMouseLeave={() => setArchiveTip(null)}
+        {!isCollapsed &&
+          items.map((conv) => (
+            <button
+              key={conv.id}
+              className={`conv-item ${activeId === conv.id ? 'active' : ''}`}
+              onClick={() => handleClick(conv.id)}
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="2" y="3" width="20" height="5" rx="1"/>
-                <path d="M4 8v11a2 2 0 002 2h12a2 2 0 002-2V8"/>
-                <path d="M10 12h4"/>
-              </svg>
-            </span>
-          </button>
-        ))}
+              <span
+                style={{
+                  fontSize: '12px',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  paddingRight: '18px',
+                  opacity: isArchived ? 0.5 : 1,
+                }}
+              >
+                {streamingId === conv.id ? streamingText : conv.title}
+              </span>
+              <span
+                className="archive-btn"
+                onClick={(e) =>
+                  isArchived
+                    ? handleUnarchive(e, conv.id)
+                    : handleArchive(e, conv.id)
+                }
+                onMouseEnter={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  setArchiveTip({
+                    x: rect.left + rect.width / 2,
+                    y: rect.bottom + 6,
+                    text: isArchived ? 'Restore' : 'Archive',
+                  });
+                }}
+                onMouseLeave={() => setArchiveTip(null)}
+              >
+                {isArchived ? (
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                    <path d="M3 3v5h5" />
+                  </svg>
+                ) : (
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <rect x="2" y="3" width="20" height="5" rx="1" />
+                    <path d="M4 8v11a2 2 0 002 2h12a2 2 0 002-2V8" />
+                    <path d="M10 12h4" />
+                  </svg>
+                )}
+              </span>
+            </button>
+          ))}
       </div>
     );
   };
@@ -227,12 +353,34 @@ export function ConversationList({ onSelect, newChat, onNewChat }: { onSelect?: 
   return (
     <>
       <style>{css}</style>
-      <div className="conv-sidebar" style={{ width: '200px', flexShrink: 0, display: 'flex', flexDirection: 'column', height: '100%', background: 'transparent' }}>
+      <div
+        className="conv-sidebar"
+        style={{
+          width: 'min(200px, 25vw)',
+          flexShrink: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          height: '100%',
+          background: 'transparent',
+        }}
+      >
         <div style={{ padding: '12px 8px 8px' }}>
-          <button className="new-chat-btn" style={{ justifyContent: 'space-between' }} onClick={() => { setActiveId(null); onNewChat?.(); }}>
+          <button
+            className="new-chat-btn"
+            style={{ justifyContent: 'space-between' }}
+            onClick={() => {
+              setActiveId(null);
+              onNewChat?.();
+            }}
+          >
             <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                <path
+                  d="M12 5v14M5 12h14"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
               </svg>
               New chat
             </span>
@@ -240,24 +388,73 @@ export function ConversationList({ onSelect, newChat, onNewChat }: { onSelect?: 
           </button>
         </div>
         <div style={{ flex: 1, position: 'relative', minHeight: 0 }}>
-          {showTopFade && <div className="conv-fade-top" style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '20px', pointerEvents: 'none', zIndex: 1 }} />}
-          <div ref={listRef} onScroll={checkFades} className="conv-list" style={{ height: '100%', overflowY: 'scroll', padding: '0 8px 12px' }}>
+          {showTopFade && (
+            <div
+              className="conv-fade-top"
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                height: '20px',
+                pointerEvents: 'none',
+                zIndex: 1,
+              }}
+            />
+          )}
+          <div
+            ref={listRef}
+            onScroll={checkFades}
+            className="conv-list"
+            style={{
+              height: '100%',
+              overflowY: 'scroll',
+              padding: '0 8px 12px',
+            }}
+          >
             {renderGroup('Today', today)}
             {renderGroup('Yesterday', yesterdayList)}
             {renderGroup('Older', olderList)}
+            {renderGroup('Archived', archivedList)}
           </div>
-          {showBottomFade && <div className="conv-fade-bottom" style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '70px', pointerEvents: 'none', zIndex: 1 }} />}
+          {showBottomFade && (
+            <div
+              className="conv-fade-bottom"
+              style={{
+                position: 'absolute',
+                bottom: 0,
+                left: 0,
+                right: 0,
+                height: '70px',
+                pointerEvents: 'none',
+                zIndex: 1,
+              }}
+            />
+          )}
         </div>
       </div>
-      {archiveTip && createPortal(
-        <div style={{
-          position: 'fixed', left: archiveTip.x, top: archiveTip.y,
-          transform: 'translateX(-50%)', padding: '4px 8px', borderRadius: '4px',
-          fontSize: '12px', whiteSpace: 'nowrap', pointerEvents: 'none', zIndex: 9999,
-          background: '#262626', color: '#e5e5e5',
-        }}>Archive</div>,
-        document.body
-      )}
+      {archiveTip &&
+        createPortal(
+          <div
+            style={{
+              position: 'fixed',
+              left: archiveTip.x,
+              top: archiveTip.y,
+              transform: 'translateX(-50%)',
+              padding: '4px 8px',
+              borderRadius: '4px',
+              fontSize: '12px',
+              whiteSpace: 'nowrap',
+              pointerEvents: 'none',
+              zIndex: 9999,
+              background: '#262626',
+              color: '#e5e5e5',
+            }}
+          >
+            {archiveTip.text}
+          </div>,
+          document.body,
+        )}
     </>
   );
 }
