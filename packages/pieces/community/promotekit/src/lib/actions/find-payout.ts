@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { promotekitAuth } from '../..';
-import { promotekitApiCall } from '../common';
+import { promotekitApiCall, promotekitCommon } from '../common';
 
 export const findPayout = createAction({
   auth: promotekitAuth,
@@ -23,6 +23,6 @@ export const findPayout = createAction({
       method: HttpMethod.GET,
       path: `/payouts/${context.propsValue.payout_id}`,
     });
-    return response.body.data;
+    return promotekitCommon.flattenPayout(response.body.data);
   },
 });

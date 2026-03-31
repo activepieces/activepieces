@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { promotekitAuth } from '../..';
-import { promotekitApiCall } from '../common';
+import { promotekitApiCall, promotekitCommon } from '../common';
 
 export const listPayouts = createAction({
   auth: promotekitAuth,
@@ -34,6 +34,6 @@ export const listPayouts = createAction({
         limit: String(context.propsValue.limit ?? 10),
       },
     });
-    return response.body.data;
+    return response.body.data.map(promotekitCommon.flattenPayout);
   },
 });

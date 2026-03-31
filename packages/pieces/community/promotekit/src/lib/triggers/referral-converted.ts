@@ -1,12 +1,17 @@
-import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
+import {
+  createTrigger,
+  TriggerStrategy,
+  Property,
+} from '@activepieces/pieces-framework';
 import { promotekitAuth } from '../..';
-import { promotekitCommon } from '../common';
-
+import { promotekitApiCall, promotekitCommon } from '../common';
+import { HttpMethod } from '@activepieces/pieces-common';
 export const referralConverted = createTrigger({
   auth: promotekitAuth,
   name: 'referral_converted',
   displayName: 'Referral Converted',
-  description: 'Triggers when a referral receives its first commission (first paid conversion).',
+  description:
+    'Triggers when a referral receives its first commission (first paid conversion).',
   props: {
     instructions: Property.MarkDown({
       value: `### Setup Instructions
@@ -42,13 +47,15 @@ export const referralConverted = createTrigger({
   },
 
   async run(context) {
-    const payload = context.payload.body as { type: string; data: Record<string, unknown> };
+    const payload = context.payload.body as {
+      type: string;
+      data: Record<string, unknown>;
+    };
+    if (payload.type !== 'referral.converted') return [];
     return [promotekitCommon.flattenReferral(payload.data)];
   },
 
   async test(context) {
-    const { promotekitApiCall } = await import('../common');
-    const { HttpMethod } = await import('@activepieces/pieces-common');
     const response = await promotekitApiCall<{
       data: Record<string, unknown>[];
     }>({
