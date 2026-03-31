@@ -890,6 +890,9 @@
       "@activepieces/piece-productboard": [
         "packages/pieces/community/productboard/src/index.ts"
       ],
+      "@activepieces/piece-promotekit": [
+        "packages/pieces/community/promotekit/src/index.ts"
+      ],
       "@activepieces/piece-prompthub": [
         "packages/pieces/community/prompthub/src/index.ts"
       ],
