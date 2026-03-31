@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "activepieces-web",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["turbo", "run", "serve", "--filter=web", "--", "--mode=cloud"],
+      "port": 4200
+    }
+  ]
+}
