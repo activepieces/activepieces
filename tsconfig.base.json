@@ -252,6 +252,9 @@
       "@activepieces/piece-clockify": [
         "packages/pieces/community/clockify/src/index.ts"
       ],
+      "@activepieces/piece-everhour": [
+        "packages/pieces/community/everhour/src/index.ts"
+      ],
       "@activepieces/piece-clockodo": [
         "packages/pieces/community/clockodo/src/index.ts"
       ],
@@ -470,6 +473,9 @@
       "@activepieces/piece-generatebanners": [
         "packages/pieces/community/generatebanners/src/index.ts"
       ],
+      "@activepieces/piece-getresponse": [
+        "packages/pieces/community/getresponse/src/index.ts"
+      ],
       "@activepieces/piece-ghostcms": [
         "packages/pieces/community/ghostcms/src/index.ts"
       ],
@@ -481,6 +487,9 @@
       ],
       "@activepieces/piece-gmail": [
         "packages/pieces/community/gmail/src/index.ts"
+      ],
+      "@activepieces/piece-google-bigquery": [
+        "packages/pieces/community/google-bigquery/src/index.ts"
       ],
       "@activepieces/piece-google-calendar": [
         "packages/pieces/community/google-calendar/src/index.ts"
@@ -875,11 +884,17 @@
       "@activepieces/piece-posthog": [
         "packages/pieces/community/posthog/src/index.ts"
       ],
+      "@activepieces/piece-postiz": [
+        "packages/pieces/community/postiz/src/index.ts"
+      ],
       "@activepieces/piece-predict-leads": [
         "packages/pieces/community/predict-leads/src/index.ts"
       ],
       "@activepieces/piece-productboard": [
         "packages/pieces/community/productboard/src/index.ts"
+      ],
+      "@activepieces/piece-promotekit": [
+        "packages/pieces/community/promotekit/src/index.ts"
       ],
       "@activepieces/piece-prompthub": [
         "packages/pieces/community/prompthub/src/index.ts"
@@ -1122,6 +1137,9 @@
       "@activepieces/piece-tally": [
         "packages/pieces/community/tally/src/index.ts"
       ],
+      "@activepieces/piece-tapfiliate": [
+        "packages/pieces/community/tapfiliate/src/index.ts"
+      ],
       "@activepieces/piece-tarvent": [
         "packages/pieces/community/tarvent/src/index.ts"
       ],
@@ -1179,6 +1197,9 @@
       ],
       "@activepieces/piece-twilio": [
         "packages/pieces/community/twilio/src/index.ts"
+      ],
+      "@activepieces/piece-typefully": [
+        "packages/pieces/community/typefully/src/index.ts"
       ],
       "@activepieces/piece-twin-labs": [
         "packages/pieces/community/twin-labs/src/index.ts"
@@ -1840,6 +1861,9 @@
       "@activepieces/piece-alai": [
         "packages/pieces/community/alai/src/index.ts"
       ],
+      "@activepieces/piece-algolia": [
+        "packages/pieces/community/algolia/src/index.ts"
+      ],
       "@activepieces/piece-kapso": [
         "packages/pieces/community/kapso/src/index.ts"
       ],
@@ -1869,6 +1893,9 @@
       ],
       "@activepieces/piece-emailit": [
         "packages/pieces/community/emailit/src/index.ts"
+      ],
+      "@activepieces/piece-bland-ai": [
+        "packages/pieces/community/bland-ai/src/index.ts"
       ]
     },
     "resolveJsonModule": true

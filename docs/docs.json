@@ -60,6 +60,13 @@
                   ]
                },
                {
+                  "group": "MCP Server",
+                  "pages": [
+                     "mcp/overview",
+                     "mcp/tools"
+                  ]
+               },
+               {
                   "group": "About",
                   "pages": [
                      "about/i18n",

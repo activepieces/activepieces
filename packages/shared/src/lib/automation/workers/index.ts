@@ -61,6 +61,7 @@ export type ConsumeJobRequest = z.infer<typeof ConsumeJobRequest>
 export const ConsumeJobResponse = z.object({
     status: z.nativeEnum(EngineResponseStatus),
     errorMessage: z.string().optional(),
+    logs: z.string().optional(),
     delayInSeconds: z.number().optional(),
     response: z.unknown().optional(),
 })

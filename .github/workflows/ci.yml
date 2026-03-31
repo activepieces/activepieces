@@ -24,6 +24,8 @@ jobs:
         with:
           bun-version: latest
 
+      - run: npm install -g pnpm@latest
+
       - run: bun install
 
       - name: Turbo Cache
