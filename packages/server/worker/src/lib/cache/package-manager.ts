@@ -2,6 +2,7 @@
 import {
     CommandOutput,
     execFilePromise,
+    execPromise,
     fileSystemUtils,
     spawnWithKill,
 } from '@activepieces/server-common'
