@@ -20,8 +20,10 @@ export enum BranchExecutionType {
     CONDITION = 'CONDITION',
 }
 
+const ACTION_NAME_REGEX = /^[a-zA-Z_][a-zA-Z0-9_]*$/
+
 const commonActionProps = {
-    name: Type.String({}),
+    name: Type.String({ pattern: ACTION_NAME_REGEX.source }),
     valid: Type.Boolean({}),
     displayName: Type.String({}),
     skip: Type.Optional(Type.Boolean({})),

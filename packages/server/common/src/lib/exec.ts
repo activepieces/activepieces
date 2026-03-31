@@ -1,22 +1,22 @@
-import { exec as execCallback, spawn } from 'node:child_process'
+import { exec as execCallback, execFile as execFileCallback, spawn } from 'node:child_process'
 import type { SpawnOptions } from 'node:child_process'
 import { promisify } from 'node:util'
 import treeKill from 'tree-kill'
 
 export const execPromise = promisify(execCallback)
+export const execFilePromise = promisify(execFileCallback)
 
 export async function spawnWithKill({
     cmd,
+    args = [],
     options = {},
     printOutput,
     timeoutMs,
 }: SpawnWithKillParams): Promise<CommandOutput> {
 
     return new Promise((resolve, reject) => {
-        const [command, ...args] = cmd.split(' ')
-        const cp = spawn(command, args, {
+        const cp = spawn(cmd, args, {
             detached: true,
-            shell: true,
             ...options,
         })
 
@@ -83,6 +83,7 @@ export async function spawnWithKill({
 
 type SpawnWithKillParams = {
     cmd: string
+    args?: string[]
     options?: SpawnOptions
     printOutput?: boolean
     timeoutMs?: number
