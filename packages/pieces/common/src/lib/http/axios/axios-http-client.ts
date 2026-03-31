@@ -11,7 +11,7 @@ import { HttpResponse } from '../core/http-response';
 import { HttpRequestBody } from '../core/http-request-body';
 import { getSsrfAgents } from './ssrf';
 
-const { allowedHostnames, httpSsrfAgent, httpsSsrfAgent } = getSsrfAgents(process.env['AP_SSRF_ALLOW_LIST']?.split(',').map((s) => s.trim()).filter(Boolean) ?? []);
+const { httpSsrfAgent, httpsSsrfAgent } = getSsrfAgents(process.env['AP_SSRF_ALLOW_LIST']?.split(',').map((s) => s.trim()).filter(Boolean) ?? []);
 
 export class AxiosHttpClient extends BaseHttpClient {
   constructor(
@@ -41,11 +41,6 @@ export class AxiosHttpClient extends BaseHttpClient {
       }
 
       
-      const { hostname } = new URL(urlWithoutQueryParams);
-      const ssrfAgents = allowedHostnames.has(hostname)
-        ? {}
-        : { httpAgent: httpSsrfAgent, httpsAgent: httpsSsrfAgent };
-
       const config: AxiosRequestConfig = {
         method: axiosRequestMethod,
         url: urlWithoutQueryParams,
@@ -54,7 +49,8 @@ export class AxiosHttpClient extends BaseHttpClient {
         data: request.body,
         timeout,
         responseType,
-        ...ssrfAgents,
+        httpAgent: httpSsrfAgent,
+        httpsAgent: httpsSsrfAgent,
       };
 
       if (request.followRedirects === false) {
