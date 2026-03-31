@@ -231,7 +231,7 @@ function preparePieceDistForPublish(piecePath: string, rootDir: string, lockData
     console.info(`[preparePiece] prepared ${piecePath} (${Object.keys(json.dependencies ?? {}).length} deps)`)
 }
 
-export { parseBunLock, preparePieceDistForPublish }
+export { parseBunLock, flattenTransitiveDeps, preparePieceDistForPublish }
 
 type BunLockEntry = {
     pkgName: string

@@ -5,6 +5,7 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { readPackageJson } from './files'
 import { packagePrePublishChecks } from './package-pre-publish-checks'
 import { buildWorkspaceVersionMap, resolveWorkspaceDependencies, stripSemverRanges } from '../../../packages/cli/src/lib/utils/workspace-utils'
+import { parseBunLock, flattenTransitiveDeps } from '../../../packages/cli/src/lib/utils/prepare-piece-utils'
 
 function assertNoSemverRanges(packageJsonPath: string): void {
   const json = JSON.parse(readFileSync(packageJsonPath).toString())
@@ -80,6 +81,13 @@ export const publishNpmPackage = async (path: string): Promise<void> => {
   json.dependencies = stripSemverRanges(resolveWorkspaceDependencies(json.dependencies, versionMap))
   json.devDependencies = stripSemverRanges(resolveWorkspaceDependencies(json.devDependencies, versionMap))
   json.peerDependencies = stripSemverRanges(resolveWorkspaceDependencies(json.peerDependencies, versionMap))
+
+  if (json.dependencies) {
+    const lockData = parseBunLock(process.cwd())
+    const transitiveDeps = flattenTransitiveDeps(json.dependencies, lockData)
+    json.dependencies = { ...transitiveDeps, ...json.dependencies }
+  }
+
   writeFileSync(`${outputPath}/package.json`, JSON.stringify(json, null, 2))
 
   assertNoUnresolvedWorkspaceDeps(`${outputPath}/package.json`)
