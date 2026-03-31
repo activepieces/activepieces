@@ -22,14 +22,22 @@ type Message = {
   quotes?: { text: string; msgId: number }[];
 };
 
-const FILE_ACCEPT = 'image/*,.pdf,.doc,.docx,.txt,.md,.xlsx,.xls,.csv,.json,.yaml,.yml,.js,.ts,.py';
+const FILE_ACCEPT =
+  'image/*,.pdf,.doc,.docx,.txt,.md,.xlsx,.xls,.csv,.json,.yaml,.yml,.js,.ts,.py';
 
 const getFileType = (name: string): Attachment['type'] => {
   const ext = name.split('.').pop()?.toLowerCase() || '';
-  if (['png','jpg','jpeg','gif','svg','webp','bmp'].includes(ext)) return 'image';
-  if (['pdf','doc','docx','txt','md','rtf'].includes(ext)) return 'document';
-  if (['xlsx','xls','csv','tsv'].includes(ext)) return 'spreadsheet';
-  if (['json','yaml','yml','js','ts','py','html','css','xml'].includes(ext)) return 'code';
+  if (['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp', 'bmp'].includes(ext))
+    return 'image';
+  if (['pdf', 'doc', 'docx', 'txt', 'md', 'rtf'].includes(ext))
+    return 'document';
+  if (['xlsx', 'xls', 'csv', 'tsv'].includes(ext)) return 'spreadsheet';
+  if (
+    ['json', 'yaml', 'yml', 'js', 'ts', 'py', 'html', 'css', 'xml'].includes(
+      ext,
+    )
+  )
+    return 'code';
   return 'other';
 };
 
@@ -66,7 +74,14 @@ const getTime = () =>
   new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
 const getFullDate = () =>
-  new Date().toLocaleString([], { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  new Date().toLocaleString([], {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  });
 
 const keyframes = `
   @keyframes fadeSlideUp {
@@ -205,7 +220,11 @@ const keyframes = `
   .dark .msgs-fade { background: linear-gradient(to bottom, rgba(9,9,11,0), rgba(9,9,11,1)); }
 `;
 
-export function AIChatBox({ onFirstMessage }: { onFirstMessage?: (text: string) => void }) {
+export function AIChatBox({
+  onFirstMessage,
+}: {
+  onFirstMessage?: (text: string) => void;
+}) {
   const hasCalledFirstMessage = useRef(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -215,8 +234,15 @@ export function AIChatBox({ onFirstMessage }: { onFirstMessage?: (text: string) 
   const [pendingFiles, setPendingFiles] = useState<Attachment[]>([]);
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const [replyPopup, setReplyPopup] = useState<{ x: number; y: number; text: string; msgId: number } | null>(null);
-  const [replyQuotes, setReplyQuotes] = useState<{ text: string; msgId: number }[]>([]);
+  const [replyPopup, setReplyPopup] = useState<{
+    x: number;
+    y: number;
+    text: string;
+    msgId: number;
+  } | null>(null);
+  const [replyQuotes, setReplyQuotes] = useState<
+    { text: string; msgId: number }[]
+  >([]);
   const dragCounterRef = useRef(0);
   const attachRowRef = useRef<HTMLDivElement>(null);
   const attachDrag = useRef({ active: false, startX: 0, scrollLeft: 0 });
@@ -231,7 +257,9 @@ export function AIChatBox({ onFirstMessage }: { onFirstMessage?: (text: string) 
 
   useEffect(() => {
     if (!lightboxSrc) return;
-    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') setLightboxSrc(null); };
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setLightboxSrc(null);
+    };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, [lightboxSrc]);
@@ -247,7 +275,14 @@ export function AIChatBox({ onFirstMessage }: { onFirstMessage?: (text: string) 
 
     setMessages((prev) => [
       ...prev,
-      { id: msgId, role: 'ai', text: '', time, fullDate: getFullDate(), streaming: true },
+      {
+        id: msgId,
+        role: 'ai',
+        text: '',
+        time,
+        fullDate: getFullDate(),
+        streaming: true,
+      },
     ]);
 
     let i = 0;
@@ -256,7 +291,9 @@ export function AIChatBox({ onFirstMessage }: { onFirstMessage?: (text: string) 
       const partial = words.slice(0, i).join(' ');
       setMessages((prev) =>
         prev.map((m) =>
-          m.id === msgId ? { ...m, text: partial, streaming: i < words.length } : m,
+          m.id === msgId
+            ? { ...m, text: partial, streaming: i < words.length }
+            : m,
         ),
       );
       if (i >= words.length) {
@@ -316,15 +353,28 @@ export function AIChatBox({ onFirstMessage }: { onFirstMessage?: (text: string) 
       }
       node = node.parentNode;
     }
-    setReplyPopup({ x: rect.left + rect.width / 2, y: rect.top - 8, text, msgId });
+    setReplyPopup({
+      x: rect.left + rect.width / 2,
+      y: rect.top - 8,
+      text,
+      msgId,
+    });
   };
 
   useEffect(() => {
     const clearHighlights = () => {
-      document.querySelectorAll('mark[data-reply-highlight]').forEach((mark) => {
-        const parent = mark.parentNode;
-        if (parent) { parent.replaceChild(document.createTextNode(mark.textContent || ''), mark); parent.normalize(); }
-      });
+      document
+        .querySelectorAll('mark[data-reply-highlight]')
+        .forEach((mark) => {
+          const parent = mark.parentNode;
+          if (parent) {
+            parent.replaceChild(
+              document.createTextNode(mark.textContent || ''),
+              mark,
+            );
+            parent.normalize();
+          }
+        });
     };
     document.addEventListener('click', clearHighlights);
     return () => document.removeEventListener('click', clearHighlights);
@@ -393,7 +443,10 @@ export function AIChatBox({ onFirstMessage }: { onFirstMessage?: (text: string) 
 
   const sendMessage = () => {
     const text = input.trim();
-    const hasAttachments = pendingImages.length > 0 || pendingFiles.length > 0 || replyQuotes.length > 0;
+    const hasAttachments =
+      pendingImages.length > 0 ||
+      pendingFiles.length > 0 ||
+      replyQuotes.length > 0;
     if ((!text && !hasAttachments) || typing) return;
     const fullText = text;
     setInput('');
@@ -412,12 +465,22 @@ export function AIChatBox({ onFirstMessage }: { onFirstMessage?: (text: string) 
 
     setMessages((prev) => [
       ...prev,
-      { id: Date.now(), role: 'user', text: fullText, time: getTime(), fullDate: getFullDate(), images, files, quotes },
+      {
+        id: Date.now(),
+        role: 'user',
+        text: fullText,
+        time: getTime(),
+        fullDate: getFullDate(),
+        images,
+        files,
+        quotes,
+      },
     ]);
     setTyping(true);
 
     setTimeout(() => {
-      const reply = FAKE_RESPONSES[Math.floor(Math.random() * FAKE_RESPONSES.length)];
+      const reply =
+        FAKE_RESPONSES[Math.floor(Math.random() * FAKE_RESPONSES.length)];
       setTyping(false);
       streamResponse(reply);
     }, 800 + Math.random() * 600);
@@ -487,7 +550,8 @@ export function AIChatBox({ onFirstMessage }: { onFirstMessage?: (text: string) 
         val = before + '• ' + val.substring(pos);
         setInput(val);
         ta.value = val;
-        ta.selectionStart = ta.selectionEnd = lineStart + (before.substring(lineStart).length) + 2;
+        ta.selectionStart = ta.selectionEnd =
+          lineStart + before.substring(lineStart).length + 2;
         ta.style.height = 'auto';
         ta.style.height = Math.min(ta.scrollHeight, 140) + 'px';
         return;
@@ -503,18 +567,36 @@ export function AIChatBox({ onFirstMessage }: { onFirstMessage?: (text: string) 
 
   const promptBox = (
     <div style={{ maxWidth: '560px', margin: '0 auto', width: '100%' }}>
-      <div className="prompt-box" style={{
-        display: 'flex', flexDirection: 'column',
-        borderRadius: '16px', padding: '0',
-      }}>
-        <input ref={fileInputRef} type="file" accept={FILE_ACCEPT} multiple hidden onChange={handleFileSelect} />
-        {(pendingImages.length > 0 || pendingFiles.length > 0 || replyQuotes.length > 0) && (
+      <div
+        className="prompt-box"
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          borderRadius: '16px',
+          padding: '0',
+        }}
+      >
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept={FILE_ACCEPT}
+          multiple
+          hidden
+          onChange={handleFileSelect}
+        />
+        {(pendingImages.length > 0 ||
+          pendingFiles.length > 0 ||
+          replyQuotes.length > 0) && (
           <div
             ref={attachRowRef}
             onMouseDown={(e) => {
               const el = attachRowRef.current;
               if (!el) return;
-              attachDrag.current = { active: true, startX: e.pageX - el.offsetLeft, scrollLeft: el.scrollLeft };
+              attachDrag.current = {
+                active: true,
+                startX: e.pageX - el.offsetLeft,
+                scrollLeft: el.scrollLeft,
+              };
               el.style.cursor = 'grabbing';
             }}
             onMouseMove={(e) => {
@@ -523,37 +605,142 @@ export function AIChatBox({ onFirstMessage }: { onFirstMessage?: (text: string) 
               if (!el) return;
               e.preventDefault();
               const x = e.pageX - el.offsetLeft;
-              el.scrollLeft = attachDrag.current.scrollLeft - (x - attachDrag.current.startX);
+              el.scrollLeft =
+                attachDrag.current.scrollLeft - (x - attachDrag.current.startX);
             }}
-            onMouseUp={() => { attachDrag.current.active = false; if (attachRowRef.current) attachRowRef.current.style.cursor = 'grab'; }}
-            onMouseLeave={() => { attachDrag.current.active = false; if (attachRowRef.current) attachRowRef.current.style.cursor = 'grab'; }}
-            style={{ display: 'flex', gap: '8px', padding: '12px 12px 0', flexWrap: 'nowrap', alignItems: 'flex-end', overflowX: 'auto', overflowY: 'hidden', scrollbarWidth: 'none', cursor: 'grab' }}
+            onMouseUp={() => {
+              attachDrag.current.active = false;
+              if (attachRowRef.current)
+                attachRowRef.current.style.cursor = 'grab';
+            }}
+            onMouseLeave={() => {
+              attachDrag.current.active = false;
+              if (attachRowRef.current)
+                attachRowRef.current.style.cursor = 'grab';
+            }}
+            style={{
+              display: 'flex',
+              gap: '8px',
+              padding: '12px 12px 0',
+              flexWrap: 'nowrap',
+              alignItems: 'flex-end',
+              overflowX: 'auto',
+              overflowY: 'hidden',
+              scrollbarWidth: 'none',
+              cursor: 'grab',
+            }}
           >
             {pendingImages.map((src, i) => (
-              <div key={'img-' + i} className="img-preview-wrap" style={{ display: 'flex', flexShrink: 0, userSelect: 'none' }}>
-                <img src={src} alt="" draggable={false} style={{ height: '52px', borderRadius: '8px', objectFit: 'cover', display: 'block', border: '1px solid #e5e5e5', pointerEvents: attachDrag.current.active ? 'none' : 'auto' }} />
-                <button className="img-remove" onClick={() => removePendingImage(i)}>×</button>
+              <div
+                key={'img-' + i}
+                className="img-preview-wrap"
+                style={{ display: 'flex', flexShrink: 0, userSelect: 'none' }}
+              >
+                <img
+                  src={src}
+                  alt=""
+                  draggable={false}
+                  style={{
+                    height: '52px',
+                    borderRadius: '8px',
+                    objectFit: 'cover',
+                    display: 'block',
+                    border: '1px solid #e5e5e5',
+                    pointerEvents: attachDrag.current.active ? 'none' : 'auto',
+                  }}
+                />
+                <button
+                  className="img-remove"
+                  onClick={() => removePendingImage(i)}
+                >
+                  ×
+                </button>
               </div>
             ))}
             {pendingFiles.map((file, i) => (
-              <div key={'file-' + i} className="file-chip-pending" style={{ flexShrink: 0, userSelect: 'none' }}>
+              <div
+                key={'file-' + i}
+                className="file-chip-pending"
+                style={{ flexShrink: 0, userSelect: 'none' }}
+              >
                 <div className="file-chip">
-                  <span style={{ fontSize: '20px' }}>{FILE_ICONS[file.type]}</span>
+                  <span style={{ fontSize: '20px' }}>
+                    {FILE_ICONS[file.type]}
+                  </span>
                   <div style={{ minWidth: 0 }}>
-                    <div style={{ fontSize: '12px', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'hsl(var(--foreground))' }}>{file.name}</div>
-                    <div style={{ fontSize: '10px', color: '#a3a3a3' }}>{file.size}</div>
+                    <div
+                      style={{
+                        fontSize: '12px',
+                        fontWeight: 500,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        color: 'hsl(var(--foreground))',
+                      }}
+                    >
+                      {file.name}
+                    </div>
+                    <div style={{ fontSize: '10px', color: '#a3a3a3' }}>
+                      {file.size}
+                    </div>
                   </div>
                 </div>
-                <button className="img-remove" onClick={() => removePendingFile(i)}>×</button>
+                <button
+                  className="img-remove"
+                  onClick={() => removePendingFile(i)}
+                >
+                  ×
+                </button>
               </div>
             ))}
             {replyQuotes.map((quote, i) => (
-              <div key={'quote-' + i} className="reply-quote" style={{ flexShrink: 0, userSelect: 'none' }}>
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#525252" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                  <path d="M9 14L4 9l5-5"/><path d="M20 20v-7a4 4 0 00-4-4H4"/>
+              <div
+                key={'quote-' + i}
+                className="reply-quote"
+                style={{ flexShrink: 0, userSelect: 'none' }}
+              >
+                <svg
+                  width="10"
+                  height="10"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#525252"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  style={{ flexShrink: 0 }}
+                >
+                  <path d="M9 14L4 9l5-5" />
+                  <path d="M20 20v-7a4 4 0 00-4-4H4" />
                 </svg>
-                <span style={{ fontSize: quote.text.length > 80 ? '7px' : quote.text.length > 40 ? '8px' : '9px', color: 'hsl(var(--foreground))', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', lineHeight: 1.3, wordBreak: 'break-word', maxWidth: '100%' }}>{quote.text}</span>
-                <button className="reply-remove" onClick={() => setReplyQuotes((prev) => prev.filter((_, idx) => idx !== i))}>×</button>
+                <span
+                  style={{
+                    fontSize:
+                      quote.text.length > 80
+                        ? '7px'
+                        : quote.text.length > 40
+                        ? '8px'
+                        : '9px',
+                    color: 'hsl(var(--foreground))',
+                    overflow: 'hidden',
+                    display: '-webkit-box',
+                    WebkitLineClamp: 3,
+                    WebkitBoxOrient: 'vertical',
+                    lineHeight: 1.3,
+                    wordBreak: 'break-word',
+                    maxWidth: '100%',
+                  }}
+                >
+                  {quote.text}
+                </span>
+                <button
+                  className="reply-remove"
+                  onClick={() =>
+                    setReplyQuotes((prev) => prev.filter((_, idx) => idx !== i))
+                  }
+                >
+                  ×
+                </button>
               </div>
             ))}
           </div>
@@ -567,48 +754,128 @@ export function AIChatBox({ onFirstMessage }: { onFirstMessage?: (text: string) 
           onKeyDown={handleKey}
           onPaste={handlePaste}
           style={{
-            width: '100%', background: 'transparent', border: 'none',
-            color: 'hsl(var(--foreground))', fontSize: '14px',
-            lineHeight: 1.6, resize: 'none', maxHeight: '140px',
-            fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box',
+            width: '100%',
+            background: 'transparent',
+            border: 'none',
+            color: 'hsl(var(--foreground))',
+            fontSize: '14px',
+            lineHeight: 1.6,
+            resize: 'none',
+            maxHeight: '140px',
+            fontFamily: 'inherit',
+            outline: 'none',
+            boxSizing: 'border-box',
             padding: '12px',
           }}
         />
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 6px 6px' }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: '0 6px 6px',
+          }}
+        >
           <button
             className="plus-btn"
             onClick={() => fileInputRef.current?.click()}
             style={{
-              width: '26px', height: '26px', borderRadius: '8px', border: 'none',
-              background: 'transparent', cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: 'hsl(var(--muted-foreground))', transition: 'background 0.15s',
+              width: '26px',
+              height: '26px',
+              borderRadius: '8px',
+              border: 'none',
+              background: 'transparent',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'hsl(var(--muted-foreground))',
+              transition: 'background 0.15s',
             }}
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"/>
+              <path
+                d="M12 5v14M5 12h14"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+              />
             </svg>
           </button>
           <button
-            className={`send-btn ${(input.trim() || pendingImages.length > 0 || pendingFiles.length > 0 || replyQuotes.length > 0) && !typing && !isStreaming ? 'send-btn-active' : 'send-btn-disabled'}`}
+            className={`send-btn ${
+              (input.trim() ||
+                pendingImages.length > 0 ||
+                pendingFiles.length > 0 ||
+                replyQuotes.length > 0) &&
+              !typing &&
+              !isStreaming
+                ? 'send-btn-active'
+                : 'send-btn-disabled'
+            }`}
             onClick={sendMessage}
-            disabled={(!input.trim() && pendingImages.length === 0 && pendingFiles.length === 0 && replyQuotes.length === 0) || typing || isStreaming}
+            disabled={
+              (!input.trim() &&
+                pendingImages.length === 0 &&
+                pendingFiles.length === 0 &&
+                replyQuotes.length === 0) ||
+              typing ||
+              isStreaming
+            }
             style={{
-              width: '26px', height: '26px', borderRadius: '8px', border: 'none',
-              cursor: (input.trim() || pendingImages.length > 0 || pendingFiles.length > 0 || replyQuotes.length > 0) && !typing && !isStreaming ? 'pointer' : 'default',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              width: '26px',
+              height: '26px',
+              borderRadius: '8px',
+              border: 'none',
+              cursor:
+                (input.trim() ||
+                  pendingImages.length > 0 ||
+                  pendingFiles.length > 0 ||
+                  replyQuotes.length > 0) &&
+                !typing &&
+                !isStreaming
+                  ? 'pointer'
+                  : 'default',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
               flexShrink: 0,
             }}
           >
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
-              <path d="M12 19V5" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M5 12L12 5L19 12" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <path
+                d="M12 19V5"
+                stroke="white"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M5 12L12 5L19 12"
+                stroke="white"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </svg>
           </button>
         </div>
       </div>
       <p style={{ textAlign: 'center', fontSize: '11px', margin: '8px 0 0' }}>
-        <a href="https://www.activepieces.com/product/ai-adoption" target="_blank" rel="noopener noreferrer" style={{ color: '#a3a3a3', textDecoration: 'none', transition: 'color 0.15s' }} onMouseEnter={(e) => e.currentTarget.style.color = 'hsl(var(--foreground))'} onMouseLeave={(e) => e.currentTarget.style.color = '#a3a3a3'}>
+        <a
+          href="https://www.activepieces.com/product/ai-adoption"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            color: '#a3a3a3',
+            textDecoration: 'none',
+            transition: 'color 0.15s',
+          }}
+          onMouseEnter={(e) =>
+            (e.currentTarget.style.color = 'hsl(var(--foreground))')
+          }
+          onMouseLeave={(e) => (e.currentTarget.style.color = '#a3a3a3')}
+        >
           Activepieces AI can help you automate anything.
         </a>
       </p>
@@ -623,33 +890,103 @@ export function AIChatBox({ onFirstMessage }: { onFirstMessage?: (text: string) 
         onDragLeave={handleDragLeave}
         onDragOver={handleDragOver}
         onDrop={handleDrop}
-        style={{ display: 'flex', flexDirection: 'column', height: '100%', position: 'relative', background: 'hsl(var(--background))' }}
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          height: '100%',
+          position: 'relative',
+          background: 'hsl(var(--background))',
+        }}
       >
-
         {isEmpty ? (
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '24px', padding: '32px 24px' }}>
-            <h2 style={{ fontSize: '32px', fontWeight: 700, margin: 0, textAlign: 'center', fontFamily: '"Sentient", serif', color: 'hsl(var(--foreground))', maxWidth: '560px', width: '100%', textWrap: 'balance', lineHeight: 1.2 }}>
+          <div
+            style={{
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '24px',
+              padding: '32px 24px',
+            }}
+          >
+            <h2
+              style={{
+                fontSize: '32px',
+                fontWeight: 700,
+                margin: 0,
+                textAlign: 'center',
+                fontFamily: '"Sentient", serif',
+                color: 'hsl(var(--foreground))',
+                maxWidth: '560px',
+                width: '100%',
+                textWrap: 'balance',
+                lineHeight: 1.2,
+              }}
+            >
               {(() => {
                 const hour = new Date().getHours();
-                if (hour >= 6 && hour < 12) return <>Everything starts with an idea… what's yours?</>;
-                if (hour >= 12 && hour < 18) return <>Let's turn ideas into something real</>;
+                if (hour >= 6 && hour < 12)
+                  return (
+                    <>Everything starts with an idea… what&apos;s yours?</>
+                  );
+                if (hour >= 12 && hour < 18)
+                  return <>Let&apos;s turn ideas into something real</>;
                 return <>Quiet moments build the best things</>;
               })()}
             </h2>
             <div style={{ width: '100%' }}>{promptBox}</div>
-            <div style={{ maxWidth: '560px', width: '100%', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px' }}>
-              {([
-                { text: 'Summarize a document for me', icon: '📄', color: '#f0e6ff', darkColor: 'rgba(160,108,232,0.15)' },
-                { text: 'Help me write an automation flow', icon: '⚡', color: '#fff3e0', darkColor: 'rgba(255,167,38,0.15)' },
-                { text: 'What integrations do you support?', icon: '🔌', color: '#e8f5e9', darkColor: 'rgba(76,175,80,0.15)' },
-                { text: 'How do I connect two apps?', icon: '🔗', color: '#e3f2fd', darkColor: 'rgba(66,165,245,0.15)' },
-              ]).map((item) => (
+            <div
+              style={{
+                maxWidth: '560px',
+                width: '100%',
+                display: 'grid',
+                gridTemplateColumns: 'repeat(4, 1fr)',
+                gap: '10px',
+              }}
+            >
+              {[
+                {
+                  text: 'Summarize a document for me',
+                  icon: '📄',
+                  color: '#f0e6ff',
+                  darkColor: 'rgba(160,108,232,0.15)',
+                },
+                {
+                  text: 'Help me write an automation flow',
+                  icon: '⚡',
+                  color: '#fff3e0',
+                  darkColor: 'rgba(255,167,38,0.15)',
+                },
+                {
+                  text: 'What integrations do you support?',
+                  icon: '🔌',
+                  color: '#e8f5e9',
+                  darkColor: 'rgba(76,175,80,0.15)',
+                },
+                {
+                  text: 'How do I connect two apps?',
+                  icon: '🔗',
+                  color: '#e3f2fd',
+                  darkColor: 'rgba(66,165,245,0.15)',
+                },
+              ].map((item) => (
                 <button
                   key={item.text}
                   className="suggest-chip"
-                  onClick={() => { setInput(item.text); textareaRef.current?.focus(); }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = document.documentElement.classList.contains('dark') ? item.darkColor : item.color; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+                  onClick={() => {
+                    setInput(item.text);
+                    textareaRef.current?.focus();
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background =
+                      document.documentElement.classList.contains('dark')
+                        ? item.darkColor
+                        : item.color;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'transparent';
+                  }}
                 >
                   <span className="suggest-icon">{item.icon}</span>
                   <span>{item.text}</span>
@@ -659,122 +996,376 @@ export function AIChatBox({ onFirstMessage }: { onFirstMessage?: (text: string) 
           </div>
         ) : (
           <>
-            <div className="msgs-area" style={{ flex: 1, overflowY: 'auto', padding: '24px 0 0', display: 'flex', flexDirection: 'column' }}>
-              <div style={{ maxWidth: '560px', width: '100%', margin: '0 auto', padding: '0 0 40px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <div
+              className="msgs-area"
+              style={{
+                flex: 1,
+                overflowY: 'auto',
+                padding: '24px 0 0',
+                display: 'flex',
+                flexDirection: 'column',
+              }}
+            >
+              <div
+                style={{
+                  maxWidth: '560px',
+                  width: '100%',
+                  margin: '0 auto',
+                  padding: '0 0 40px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '4px',
+                }}
+              >
                 {messages.map((msg) =>
                   msg.role === 'ai' ? (
-                    <div key={msg.id} id={`msg-${msg.id}`} className="msg-enter" style={{ padding: '8px 0' }} onMouseUp={handleTextSelect}>
-                      <p style={{ margin: 0, fontSize: '14px', lineHeight: 1.65, color: 'hsl(var(--foreground))', whiteSpace: 'pre-wrap' }}>
+                    <div
+                      key={msg.id}
+                      id={`msg-${msg.id}`}
+                      className="msg-enter"
+                      style={{ padding: '8px 0' }}
+                      onMouseUp={handleTextSelect}
+                    >
+                      <p
+                        style={{
+                          margin: 0,
+                          fontSize: '14px',
+                          lineHeight: 1.65,
+                          color: 'hsl(var(--foreground))',
+                          whiteSpace: 'pre-wrap',
+                        }}
+                      >
                         {msg.text}
                         {msg.streaming && <span className="cursor" />}
                       </p>
                     </div>
                   ) : (
-                    <div key={msg.id} className="msg-enter user-msg-wrap" style={{ display: 'flex', justifyContent: 'flex-end', padding: '8px 0' }}>
+                    <div
+                      key={msg.id}
+                      className="msg-enter user-msg-wrap"
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'flex-end',
+                        padding: '8px 0',
+                      }}
+                    >
                       <div style={{ maxWidth: '75%' }}>
                         {msg.images && msg.images.length > 0 && (
-                          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: msg.text ? '6px' : 0, justifyContent: 'flex-end' }}>
+                          <div
+                            style={{
+                              display: 'flex',
+                              gap: '6px',
+                              flexWrap: 'wrap',
+                              marginBottom: msg.text ? '6px' : 0,
+                              justifyContent: 'flex-end',
+                            }}
+                          >
                             {msg.images.map((src, i) => (
-                              <img key={i} src={src} alt="" className="chat-img" onClick={() => setLightboxSrc(src)} style={{ maxWidth: '200px', maxHeight: '150px', borderRadius: '12px', objectFit: 'cover', display: 'block' }} />
+                              <img
+                                key={i}
+                                src={src}
+                                alt=""
+                                className="chat-img"
+                                onClick={() => setLightboxSrc(src)}
+                                style={{
+                                  maxWidth: '200px',
+                                  maxHeight: '150px',
+                                  borderRadius: '12px',
+                                  objectFit: 'cover',
+                                  display: 'block',
+                                }}
+                              />
                             ))}
                           </div>
                         )}
                         {msg.files && msg.files.length > 0 && (
-                          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: msg.text ? '6px' : 0, justifyContent: 'flex-end' }}>
+                          <div
+                            style={{
+                              display: 'flex',
+                              gap: '6px',
+                              flexWrap: 'wrap',
+                              marginBottom: msg.text ? '6px' : 0,
+                              justifyContent: 'flex-end',
+                            }}
+                          >
                             {msg.files.map((file, i) => (
                               <div key={i} className="file-chip">
-                                <span style={{ fontSize: '18px' }}>{FILE_ICONS[file.type]}</span>
+                                <span style={{ fontSize: '18px' }}>
+                                  {FILE_ICONS[file.type]}
+                                </span>
                                 <div style={{ minWidth: 0 }}>
-                                  <div style={{ fontSize: '12px', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'hsl(var(--foreground))' }}>{file.name}</div>
-                                  <div style={{ fontSize: '10px', color: '#a3a3a3' }}>{file.size}</div>
+                                  <div
+                                    style={{
+                                      fontSize: '12px',
+                                      fontWeight: 500,
+                                      overflow: 'hidden',
+                                      textOverflow: 'ellipsis',
+                                      whiteSpace: 'nowrap',
+                                      color: 'hsl(var(--foreground))',
+                                    }}
+                                  >
+                                    {file.name}
+                                  </div>
+                                  <div
+                                    style={{
+                                      fontSize: '10px',
+                                      color: '#a3a3a3',
+                                    }}
+                                  >
+                                    {file.size}
+                                  </div>
                                 </div>
                               </div>
                             ))}
                           </div>
                         )}
                         {msg.quotes && msg.quotes.length > 0 && (
-                          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: msg.text ? '6px' : 0, justifyContent: 'flex-end' }}>
+                          <div
+                            style={{
+                              display: 'flex',
+                              gap: '6px',
+                              flexWrap: 'wrap',
+                              marginBottom: msg.text ? '6px' : 0,
+                              justifyContent: 'flex-end',
+                            }}
+                          >
                             {msg.quotes.map((quote, i) => (
-                              <div key={i} className="reply-quote" style={{ userSelect: 'none', cursor: 'pointer' }} onClick={(e) => { e.stopPropagation();
-                                const el = document.getElementById(`msg-${quote.msgId}`);
-                                if (!el) return;
-                                // Clear any existing highlights first
-                                document.querySelectorAll('mark[data-reply-highlight]').forEach((m) => {
-                                  const p = m.parentNode;
-                                  if (p) { p.replaceChild(document.createTextNode(m.textContent || ''), m); p.normalize(); }
-                                });
-                                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                // Highlight the specific quoted text within the message
-                                const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
-                                let node: Text | null;
-                                while ((node = walker.nextNode() as Text | null)) {
-                                  const idx = node.textContent?.indexOf(quote.text) ?? -1;
-                                  if (idx === -1) continue;
-                                  const range = document.createRange();
-                                  range.setStart(node, idx);
-                                  range.setEnd(node, idx + quote.text.length);
-                                  const mark = document.createElement('mark');
-                                  mark.setAttribute('data-reply-highlight', '');
-                                  const isDark = document.documentElement.classList.contains('dark');
-                                  mark.style.background = isDark ? 'rgba(200,200,200,0.3)' : 'rgba(120,120,120,0.2)';
-                                  mark.style.color = 'inherit';
-                                  mark.style.borderRadius = '0';
-                                  mark.style.padding = '2px 0';
-                                  mark.style.transition = 'background 0.4s ease';
-                                  range.surroundContents(mark);
-                                  setTimeout(() => { mark.style.background = 'transparent'; }, 3000);
-                                  setTimeout(() => { const parent = mark.parentNode; if (parent) { parent.replaceChild(document.createTextNode(mark.textContent || ''), mark); parent.normalize(); } }, 3500);
-                                  break;
-                                }
-                              }}>
-                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#525252" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                                  <path d="M9 14L4 9l5-5"/><path d="M20 20v-7a4 4 0 00-4-4H4"/>
+                              <div
+                                key={i}
+                                className="reply-quote"
+                                style={{
+                                  userSelect: 'none',
+                                  cursor: 'pointer',
+                                }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const el = document.getElementById(
+                                    `msg-${quote.msgId}`,
+                                  );
+                                  if (!el) return;
+                                  // Clear any existing highlights first
+                                  document
+                                    .querySelectorAll(
+                                      'mark[data-reply-highlight]',
+                                    )
+                                    .forEach((m) => {
+                                      const p = m.parentNode;
+                                      if (p) {
+                                        p.replaceChild(
+                                          document.createTextNode(
+                                            m.textContent || '',
+                                          ),
+                                          m,
+                                        );
+                                        p.normalize();
+                                      }
+                                    });
+                                  el.scrollIntoView({
+                                    behavior: 'smooth',
+                                    block: 'center',
+                                  });
+                                  // Highlight the specific quoted text within the message
+                                  const walker = document.createTreeWalker(
+                                    el,
+                                    NodeFilter.SHOW_TEXT,
+                                  );
+                                  let node: Text | null;
+                                  while (
+                                    (node = walker.nextNode() as Text | null)
+                                  ) {
+                                    const idx =
+                                      node.textContent?.indexOf(quote.text) ??
+                                      -1;
+                                    if (idx === -1) continue;
+                                    const range = document.createRange();
+                                    range.setStart(node, idx);
+                                    range.setEnd(node, idx + quote.text.length);
+                                    const mark = document.createElement('mark');
+                                    mark.setAttribute(
+                                      'data-reply-highlight',
+                                      '',
+                                    );
+                                    const isDark =
+                                      document.documentElement.classList.contains(
+                                        'dark',
+                                      );
+                                    mark.style.background = isDark
+                                      ? 'rgba(200,200,200,0.3)'
+                                      : 'rgba(120,120,120,0.2)';
+                                    mark.style.color = 'inherit';
+                                    mark.style.borderRadius = '0';
+                                    mark.style.padding = '2px 0';
+                                    mark.style.transition =
+                                      'background 0.4s ease';
+                                    range.surroundContents(mark);
+                                    setTimeout(() => {
+                                      mark.style.background = 'transparent';
+                                    }, 3000);
+                                    setTimeout(() => {
+                                      const parent = mark.parentNode;
+                                      if (parent) {
+                                        parent.replaceChild(
+                                          document.createTextNode(
+                                            mark.textContent || '',
+                                          ),
+                                          mark,
+                                        );
+                                        parent.normalize();
+                                      }
+                                    }, 3500);
+                                    break;
+                                  }
+                                }}
+                              >
+                                <svg
+                                  width="10"
+                                  height="10"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="#525252"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  style={{ flexShrink: 0 }}
+                                >
+                                  <path d="M9 14L4 9l5-5" />
+                                  <path d="M20 20v-7a4 4 0 00-4-4H4" />
                                 </svg>
-                                <span style={{ fontSize: quote.text.length > 80 ? '7px' : quote.text.length > 40 ? '8px' : '9px', color: 'hsl(var(--foreground))', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', lineHeight: 1.3, wordBreak: 'break-word', maxWidth: '100%' }}>{quote.text}</span>
+                                <span
+                                  style={{
+                                    fontSize:
+                                      quote.text.length > 80
+                                        ? '7px'
+                                        : quote.text.length > 40
+                                        ? '8px'
+                                        : '9px',
+                                    color: 'hsl(var(--foreground))',
+                                    overflow: 'hidden',
+                                    display: '-webkit-box',
+                                    WebkitLineClamp: 3,
+                                    WebkitBoxOrient: 'vertical',
+                                    lineHeight: 1.3,
+                                    wordBreak: 'break-word',
+                                    maxWidth: '100%',
+                                  }}
+                                >
+                                  {quote.text}
+                                </span>
                               </div>
                             ))}
                           </div>
                         )}
                         {msg.text && (
-                          <div style={{
-                            background: 'rgba(120, 120, 120, 0.18)',
-                            color: 'hsl(var(--foreground))', padding: '10px 16px',
-                            borderRadius: '18px 18px 4px 18px',
-                            fontSize: '14px', lineHeight: 1.6, whiteSpace: 'pre-wrap',
-                            wordBreak: 'break-word', overflowWrap: 'break-word',
-                          }}>
+                          <div
+                            style={{
+                              background: 'rgba(120, 120, 120, 0.18)',
+                              color: 'hsl(var(--foreground))',
+                              padding: '10px 16px',
+                              borderRadius: '18px 18px 4px 18px',
+                              fontSize: '14px',
+                              lineHeight: 1.6,
+                              whiteSpace: 'pre-wrap',
+                              wordBreak: 'break-word',
+                              overflowWrap: 'break-word',
+                            }}
+                          >
                             {msg.text}
                           </div>
                         )}
-                        <div className="msg-meta" style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '6px', marginTop: '4px' }}>
+                        <div
+                          className="msg-meta"
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'flex-end',
+                            gap: '6px',
+                            marginTop: '4px',
+                          }}
+                        >
                           <span className="msg-tip">
-                            <span style={{ fontSize: '12px', color: '#a3a3a3' }}>{msg.time}</span>
+                            <span
+                              style={{ fontSize: '12px', color: '#a3a3a3' }}
+                            >
+                              {msg.time}
+                            </span>
                             <span className="tip-text">{msg.fullDate}</span>
                           </span>
                           {msg.text && (
                             <>
                               <span className="msg-tip">
-                                <button className="msg-action" onClick={() => { navigator.clipboard.writeText(msg.text); setCopiedId(msg.id); setTimeout(() => setCopiedId(null), 1500); }}>
+                                <button
+                                  className="msg-action"
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(msg.text);
+                                    setCopiedId(msg.id);
+                                    setTimeout(() => setCopiedId(null), 1500);
+                                  }}
+                                >
                                   {copiedId === msg.id ? (
-                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
-                                      <path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                                    <svg
+                                      width="15"
+                                      height="15"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                    >
+                                      <path
+                                        d="M20 6L9 17l-5-5"
+                                        stroke="currentColor"
+                                        strokeWidth="2.5"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                      />
                                     </svg>
                                   ) : (
-                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
-                                      <rect x="9" y="9" width="13" height="13" rx="2" stroke="currentColor" strokeWidth="2"/>
-                                      <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" stroke="currentColor" strokeWidth="2"/>
+                                    <svg
+                                      width="15"
+                                      height="15"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                    >
+                                      <rect
+                                        x="9"
+                                        y="9"
+                                        width="13"
+                                        height="13"
+                                        rx="2"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                      />
+                                      <path
+                                        d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                      />
                                     </svg>
                                   )}
                                 </button>
-                                <span className="tip-text">{copiedId === msg.id ? 'Copied!' : 'Copy'}</span>
+                                <span className="tip-text">
+                                  {copiedId === msg.id ? 'Copied!' : 'Copy'}
+                                </span>
                               </span>
                               <span className="msg-tip">
-                                <button className="msg-action" onClick={() => { setInput(msg.text); textareaRef.current?.focus(); }}>
-                                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                    <line x1="3" x2="21" y1="6" y2="6"/>
-                                    <path d="M3 12h15a3 3 0 1 1 0 6h-4"/>
-                                    <polyline points="16 16 14 18 16 20"/>
-                                    <line x1="3" x2="10" y1="18" y2="18"/>
+                                <button
+                                  className="msg-action"
+                                  onClick={() => {
+                                    setInput(msg.text);
+                                    textareaRef.current?.focus();
+                                  }}
+                                >
+                                  <svg
+                                    width="15"
+                                    height="15"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  >
+                                    <line x1="3" x2="21" y1="6" y2="6" />
+                                    <path d="M3 12h15a3 3 0 1 1 0 6h-4" />
+                                    <polyline points="16 16 14 18 16 20" />
+                                    <line x1="3" x2="10" y1="18" y2="18" />
                                   </svg>
                                 </button>
                                 <span className="tip-text">Add to prompt</span>
@@ -784,22 +1375,40 @@ export function AIChatBox({ onFirstMessage }: { onFirstMessage?: (text: string) 
                         </div>
                       </div>
                     </div>
-                  )
+                  ),
                 )}
                 {typing && (
                   <div className="msg-enter" style={{ padding: '8px 0' }}>
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <div
+                      style={{
+                        display: 'flex',
+                        gap: '8px',
+                        alignItems: 'center',
+                      }}
+                    >
                       <div className="thinking-spinner" />
-                      <span className="thinking-label" style={{ fontSize: '13px', fontWeight: 500 }}>Thinking</span>
+                      <span
+                        className="thinking-label"
+                        style={{ fontSize: '13px', fontWeight: 500 }}
+                      >
+                        Thinking
+                      </span>
                     </div>
                   </div>
                 )}
                 <div ref={bottomRef} />
               </div>
-              <div className="msgs-fade" style={{
-                position: 'sticky', bottom: 0, height: '28px', marginTop: '-28px',
-                pointerEvents: 'none', flexShrink: 0,
-              }} />
+              <div
+                className="msgs-fade"
+                style={{
+                  position: 'sticky',
+                  bottom: 0,
+                  height: '28px',
+                  marginTop: '-28px',
+                  pointerEvents: 'none',
+                  flexShrink: 0,
+                }}
+              />
             </div>
             <div style={{ padding: '0 24px 10px', flexShrink: 0 }}>
               {promptBox}
@@ -808,51 +1417,123 @@ export function AIChatBox({ onFirstMessage }: { onFirstMessage?: (text: string) 
         )}
         {isDragging && (
           <div className="drop-overlay">
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-              <img src={dropMediaImg} alt="" style={{ width: '120px', height: '120px', objectFit: 'contain' }} />
-              <span style={{ fontSize: '16px', fontWeight: 700, color: 'hsl(var(--foreground))' }}>Add anything</span>
-              <span style={{ fontSize: '14px', color: 'hsl(var(--foreground))' }}>Drop any file here to add it to the conversation</span>
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '8px',
+              }}
+            >
+              <img
+                src={dropMediaImg}
+                alt=""
+                style={{
+                  width: '120px',
+                  height: '120px',
+                  objectFit: 'contain',
+                }}
+              />
+              <span
+                style={{
+                  fontSize: '16px',
+                  fontWeight: 700,
+                  color: 'hsl(var(--foreground))',
+                }}
+              >
+                Add anything
+              </span>
+              <span
+                style={{ fontSize: '14px', color: 'hsl(var(--foreground))' }}
+              >
+                Drop any file here to add it to the conversation
+              </span>
             </div>
           </div>
         )}
       </div>
-      {replyPopup && createPortal(
-        <div className="reply-popup" style={{ left: replyPopup.x, top: replyPopup.y }}>
-          <button onMouseDown={(e) => {
-            e.preventDefault();
-            setReplyQuotes((prev) => [...prev, { text: replyPopup.text, msgId: replyPopup.msgId }]);
-            setReplyPopup(null);
-            window.getSelection()?.removeAllRanges();
-            textareaRef.current?.focus();
-          }}>
-            Reply
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: 'scaleX(-1)' }}>
-              <polyline points="15 17 20 12 15 7"/>
-              <path d="M4 18v-2a4 4 0 014-4h12"/>
-            </svg>
-          </button>
-        </div>,
-        document.body
-      )}
+      {replyPopup &&
+        createPortal(
+          <div
+            className="reply-popup"
+            style={{ left: replyPopup.x, top: replyPopup.y }}
+          >
+            <button
+              onMouseDown={(e) => {
+                e.preventDefault();
+                setReplyQuotes((prev) => [
+                  ...prev,
+                  { text: replyPopup.text, msgId: replyPopup.msgId },
+                ]);
+                setReplyPopup(null);
+                window.getSelection()?.removeAllRanges();
+                textareaRef.current?.focus();
+              }}
+            >
+              Reply
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                style={{ transform: 'scaleX(-1)' }}
+              >
+                <polyline points="15 17 20 12 15 7" />
+                <path d="M4 18v-2a4 4 0 014-4h12" />
+              </svg>
+            </button>
+          </div>,
+          document.body,
+        )}
       {lightboxSrc && (
         <div className="lightbox" onClick={() => setLightboxSrc(null)}>
           <button
             onClick={() => setLightboxSrc(null)}
             style={{
-              position: 'absolute', top: '20px', right: '20px',
-              width: '36px', height: '36px', borderRadius: '50%',
-              background: 'rgba(255,255,255,0.15)', border: 'none',
-              cursor: 'pointer', display: 'flex', alignItems: 'center',
-              justifyContent: 'center', color: '#fff', transition: 'background 0.15s',
+              position: 'absolute',
+              top: '20px',
+              right: '20px',
+              width: '36px',
+              height: '36px',
+              borderRadius: '50%',
+              background: 'rgba(255,255,255,0.15)',
+              border: 'none',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#fff',
+              transition: 'background 0.15s',
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.25)')}
-            onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.15)')}
+            onMouseEnter={(e) =>
+              (e.currentTarget.style.background = 'rgba(255,255,255,0.25)')
+            }
+            onMouseLeave={(e) =>
+              (e.currentTarget.style.background = 'rgba(255,255,255,0.15)')
+            }
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-              <path d="M18 6L6 18M6 6l12 12"/>
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+            >
+              <path d="M18 6L6 18M6 6l12 12" />
             </svg>
           </button>
-          <img src={lightboxSrc} alt="" onClick={(e) => e.stopPropagation()} style={{ cursor: 'default' }} />
+          <img
+            src={lightboxSrc}
+            alt=""
+            onClick={(e) => e.stopPropagation()}
+            style={{ cursor: 'default' }}
+          />
         </div>
       )}
     </>
