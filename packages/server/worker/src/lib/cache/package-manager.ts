@@ -1,7 +1,7 @@
 
 import {
     CommandOutput,
-    execPromise,
+    execFilePromise,
     fileSystemUtils,
     spawnWithKill,
 } from '@activepieces/server-common'
@@ -15,16 +15,19 @@ export const packageManager = (log: FastifyBaseLogger) => ({
         await execPromise('bun install')
     },
     async install({ path, filtersPath }: InstallParams): Promise<CommandOutput> {
-        const args = [
+        const installArgs = [
+            'install',
             '--ignore-scripts',
         ]
         const filters: string[] = filtersPath
             .map(sanitizeFilterPath)
-            .map((path) => `--filter ./${path}`)
+            .flatMap((p) => ['--filter', `./${p}`])
         await fileSystemUtils.threadSafeMkdir(path)
-        log.debug({ path, args, filters }, '[PackageManager#install]')
+        const allArgs = [...installArgs, ...filters]
+        log.debug({ path, args: allArgs }, '[PackageManager#install]')
         const { error, data } = await tryCatch(async () => spawnWithKill({
-            cmd: `bun install ${args.join(' ')} ${filters.join(' ')}`,
+            cmd: 'bun',
+            args: allArgs,
             options: {
                 cwd: path,
             },
@@ -38,15 +41,16 @@ export const packageManager = (log: FastifyBaseLogger) => ({
         return data
     },
     async build({ path, entryFile, outputFile }: BuildParams): Promise<CommandOutput> {
-        const config = [
-            `${entryFile}`,
-            '--target node',
+        const buildArgs = [
+            'build',
+            entryFile,
+            '--target', 'node',
             '--production',
-            '--format cjs',
-            `--outfile ${outputFile}`,
+            '--format', 'cjs',
+            '--outfile', outputFile,
         ]
-        log.debug({ path, entryFile, outputFile, config }, '[PackageManager#build]')
-        return execPromise(`bun build ${config.join(' ')}`, { cwd: path })
+        log.debug({ path, entryFile, outputFile, args: buildArgs }, '[PackageManager#build]')
+        return execFilePromise('bun', buildArgs, { cwd: path })
     },
 
 })

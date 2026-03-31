@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { CodeModule, CodeSandbox } from '../../core/code/code-sandbox-common'
+import fs from 'node:fs/promises'
+import { CodeSandbox } from '../../core/code/code-sandbox-common'
 
 const ONE_HUNDRED_TWENTY_EIGHT_MEGABYTES = 128
 
@@ -17,7 +18,8 @@ const getIvm = () => {
  * Runs code in a V8 Isolate sandbox
  */
 export const v8IsolateCodeSandbox: CodeSandbox = {
-    async runCodeModule({ codeModule, inputs }) {
+    async runCodeModule({ codeFilePath, inputs }) {
+        const sourceCode = await fs.readFile(codeFilePath, 'utf8')
         const ivm = getIvm()
         const isolate = new ivm.Isolate({ memoryLimit: ONE_HUNDRED_TWENTY_EIGHT_MEGABYTES })
 
@@ -29,12 +31,12 @@ export const v8IsolateCodeSandbox: CodeSandbox = {
                 },
             })
 
-            const serializedCodeModule = serializeCodeModule(codeModule)
+            const wrappedCode = wrapCjsModuleSource(sourceCode)
 
             return await executeIsolate({
                 isolate,
                 isolateContext,
-                code: serializedCodeModule,
+                code: wrappedCode,
             })
         }
         finally {
@@ -89,14 +91,18 @@ const executeIsolate = async ({ isolate, isolateContext, code }: ExecuteIsolateP
     return outRef.copy()
 }
 
-const serializeCodeModule = (codeModule: CodeModule): string => {
-    const serializedCodeFunction = Object.keys(codeModule)
-        .reduce((acc, key) => 
-            acc + `const ${key} = ${(codeModule as any)[key].toString()};`, 
-        '')
-
-    // replace the exports.function_name with function_name
-    return serializedCodeFunction.replace(/\(0, exports\.(\w+)\)/g, '$1') + 'code(inputs);'
+function wrapCjsModuleSource(sourceCode: string): string {
+    return `
+(function() {
+    const module = { exports: {} };
+    const exports = module.exports;
+    function require(name) {
+        throw new Error('Cannot require module "' + name + '" in sandboxed code');
+    }
+    ${sourceCode}
+    return module.exports.code(inputs);
+})();
+`
 }
 
 type InitContextParams = {

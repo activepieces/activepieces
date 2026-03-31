@@ -19,9 +19,9 @@ async function buildPieces(piecesInfo: PieceInfo[], io: Server, log: FastifyBase
         }
     }
 
-    const pieceFilters = piecesInfo.map(p => `--filter=@activepieces/piece-${p.pieceName}`).join(' ')
-    const sharedFilters = '--filter=@activepieces/pieces-framework --filter=@activepieces/pieces-common --filter=@activepieces/shared'
-    const filterArgs = `${sharedFilters} ${pieceFilters} --force`
+    const pieceFilters = piecesInfo.flatMap(p => ['--filter', `@activepieces/piece-${p.pieceName}`])
+    const sharedFilters = ['--filter', '@activepieces/pieces-framework', '--filter', '@activepieces/pieces-common', '--filter', '@activepieces/shared']
+    const filterArgs = [...sharedFilters, ...pieceFilters, '--force']
     log.info(chalk.blue.bold(`🤌 Building ${piecesInfo.length} piece(s): ${piecesInfo.map(p => p.pieceName).join(',')}... 🤌`))
 
     let lock: ApLock | undefined
@@ -29,7 +29,7 @@ async function buildPieces(piecesInfo: PieceInfo[], io: Server, log: FastifyBase
         lock = await memoryLock.acquire(PIECES_BUILDER_MUTEX_KEY)
 
         const startTime = performance.now()
-        await spawnWithKill({ cmd: `npx turbo run build ${filterArgs}`, printOutput: true })
+        await spawnWithKill({ cmd: 'npx', args: ['turbo', 'run', 'build', ...filterArgs], printOutput: true })
         const endTime = performance.now()
         const buildTime = (endTime - startTime) / 1000
 
