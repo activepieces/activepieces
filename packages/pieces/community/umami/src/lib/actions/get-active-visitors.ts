@@ -12,12 +12,11 @@ export const getActiveVisitors = createAction({
     websiteId: umamiCommon.websiteDropdown,
   },
   async run(context) {
-    const { base_url, api_key } = context.auth.props;
     const { websiteId } = context.propsValue;
 
     const response = await umamiApiCall<{ visitors: number }>({
-      serverUrl: base_url,
-      apiKey: api_key,
+      serverUrl: context.auth.props.base_url,
+      auth: context.auth.props,
       method: HttpMethod.GET,
       path: `/websites/${websiteId}/active`,
     });

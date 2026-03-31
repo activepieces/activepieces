@@ -35,15 +35,14 @@ export const getPageviews = createAction({
     }),
   },
   async run(context) {
-    const { base_url, api_key } = context.auth.props;
     const { websiteId, startDate, endDate, unit, timezone } = context.propsValue;
 
     const response = await umamiApiCall<{
       pageviews: { x: string; y: number }[];
       sessions: { x: string; y: number }[];
     }>({
-      serverUrl: base_url,
-      apiKey: api_key,
+      serverUrl: context.auth.props.base_url,
+      auth: context.auth.props,
       method: HttpMethod.GET,
       path: `/websites/${websiteId}/pageviews`,
       queryParams: {

@@ -14,12 +14,11 @@ export const getWebsiteStats = createAction({
     endDate: umamiCommon.dateRange.endDate,
   },
   async run(context) {
-    const { base_url, api_key } = context.auth.props;
     const { websiteId, startDate, endDate } = context.propsValue;
 
     const response = await umamiApiCall<Record<string, unknown>>({
-      serverUrl: base_url,
-      apiKey: api_key,
+      serverUrl: context.auth.props.base_url,
+      auth: context.auth.props,
       method: HttpMethod.GET,
       path: `/websites/${websiteId}/stats`,
       queryParams: {

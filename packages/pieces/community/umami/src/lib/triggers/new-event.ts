@@ -23,7 +23,7 @@ const polling: Polling<
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue, lastFetchEpochMS }) => {
-    const { base_url, api_key } = (auth as unknown as { props: { base_url: string; api_key: string } }).props;
+    const authProps = (auth as unknown as { props: { base_url: string; auth_mode: string; username?: string; password?: string; api_key?: string } }).props;
     const now = Date.now();
     const startAt = lastFetchEpochMS > 0 ? lastFetchEpochMS : now - 24 * 60 * 60 * 1000;
 
@@ -36,8 +36,8 @@ const polling: Polling<
         data: { eventName: string; createdAt: string; id: string; urlPath: string }[];
         count: number;
       }>({
-        serverUrl: base_url,
-        apiKey: api_key,
+        serverUrl: authProps.base_url,
+        auth: authProps,
         method: HttpMethod.GET,
         path: `/websites/${propsValue.websiteId}/events`,
         queryParams: {

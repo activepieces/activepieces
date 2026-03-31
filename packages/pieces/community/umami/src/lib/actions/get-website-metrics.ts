@@ -45,12 +45,11 @@ export const getWebsiteMetrics = createAction({
     }),
   },
   async run(context) {
-    const { base_url, api_key } = context.auth.props;
     const { websiteId, startDate, endDate, type, limit } = context.propsValue;
 
     const response = await umamiApiCall<{ x: string; y: number }[]>({
-      serverUrl: base_url,
-      apiKey: api_key,
+      serverUrl: context.auth.props.base_url,
+      auth: context.auth.props,
       method: HttpMethod.GET,
       path: `/websites/${websiteId}/metrics`,
       queryParams: {
