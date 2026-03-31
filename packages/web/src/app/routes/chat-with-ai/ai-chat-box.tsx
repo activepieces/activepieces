@@ -82,18 +82,22 @@ const keyframes = `
     100% { opacity: 1; transform: scale(1); }
   }
   .drop-overlay img { animation: zoomPush 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
-  @keyframes bounce {
-    0%, 80%, 100% { transform: translateY(0); opacity: 0.5; }
-    40%           { transform: translateY(-5px); opacity: 1; }
+  @keyframes spin {
+    to { transform: rotate(360deg); }
   }
+  @keyframes shine {
+    0%   { background-position: -100% 0; }
+    100% { background-position: 200% 0; }
+  }
+  .thinking-label { background: linear-gradient(90deg, #737373 0%, #a3a3a3 40%, #d4d4d4 50%, #a3a3a3 60%, #737373 100%); background-size: 200% 100%; -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: shine 2s ease-in-out infinite; }
+  .dark .thinking-label { background: linear-gradient(90deg, #a3a3a3 0%, #d4d4d4 40%, #f5f5f5 50%, #d4d4d4 60%, #a3a3a3 100%); background-size: 200% 100%; -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
   @keyframes blink {
     0%, 100% { opacity: 1; }
     50%       { opacity: 0; }
   }
   .msg-enter { animation: fadeSlideUp 0.22s ease forwards; }
-  .dot-1 { animation: bounce 1.2s infinite 0s; }
-  .dot-2 { animation: bounce 1.2s infinite 0.18s; }
-  .dot-3 { animation: bounce 1.2s infinite 0.36s; }
+  .thinking-spinner { width: 16px; height: 16px; border: 2px solid #d4d4d4; border-top-color: #737373; border-radius: 50%; animation: spin 0.8s linear infinite; flex-shrink: 0; }
+  .dark .thinking-spinner { border-color: #525252; border-top-color: #a3a3a3; }
   .cursor { display: inline-block; width: 2px; height: 14px; background: currentColor; margin-left: 2px; vertical-align: middle; animation: blink 0.7s infinite; }
   .send-btn:hover { opacity: 0.85; transform: scale(1.05); }
   .send-btn:active { transform: scale(0.96); }
@@ -113,7 +117,7 @@ const keyframes = `
   .msg-tip .tip-text { visibility: hidden; opacity: 0; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); margin-top: 4px; padding: 4px 8px; border-radius: 4px; font-size: 12px; white-space: nowrap; background: #262626; color: #e5e5e5; pointer-events: none; transition: opacity 0.15s; z-index: 20; }
   .dark .msg-tip .tip-text { background: #404040; color: #f5f5f5; }
   .msg-tip:hover .tip-text { visibility: visible; opacity: 1; }
-  .msgs-area::-webkit-scrollbar { width: 4px; }
+  .msgs-area::-webkit-scrollbar { width: 8px; }
   .msgs-area::-webkit-scrollbar-track { background: transparent; }
   .msgs-area::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 4px; }
   .dark .msgs-area::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
@@ -356,6 +360,34 @@ export function AIChatBox({ onFirstMessage }: { onFirstMessage?: (text: string) 
       e.preventDefault();
       sendMessage();
     }
+    // Continue bullet list on Shift+Enter
+    if (e.key === 'Enter' && e.shiftKey) {
+      const ta = e.currentTarget;
+      const pos = ta.selectionStart;
+      const val = ta.value;
+      const lineStart = val.lastIndexOf('\n', pos - 1) + 1;
+      const currentLine = val.substring(lineStart, pos);
+      if (currentLine.trimStart().startsWith('• ')) {
+        // Empty bullet — remove it instead of adding new one
+        if (currentLine.trim() === '•') {
+          e.preventDefault();
+          const newVal = val.substring(0, lineStart) + val.substring(pos);
+          setInput(newVal);
+          ta.value = newVal;
+          ta.selectionStart = ta.selectionEnd = lineStart;
+          return;
+        }
+        e.preventDefault();
+        const indent = currentLine.match(/^(\s*)/)?.[1] || '';
+        const insert = '\n' + indent + '• ';
+        const newVal = val.substring(0, pos) + insert + val.substring(pos);
+        setInput(newVal);
+        ta.value = newVal;
+        ta.selectionStart = ta.selectionEnd = pos + insert.length;
+        ta.style.height = 'auto';
+        ta.style.height = Math.min(ta.scrollHeight, 140) + 'px';
+      }
+    }
   };
 
   const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
@@ -376,8 +408,24 @@ export function AIChatBox({ onFirstMessage }: { onFirstMessage?: (text: string) 
   };
 
   const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setInput(e.target.value);
     const ta = e.target;
+    let val = ta.value;
+    const pos = ta.selectionStart;
+    // Auto-convert "- " at line start to "• "
+    if (pos >= 2 && val.substring(pos - 2, pos) === '- ') {
+      const before = val.substring(0, pos - 2);
+      const lineStart = before.lastIndexOf('\n') + 1;
+      if (before.substring(lineStart).trim() === '') {
+        val = before + '• ' + val.substring(pos);
+        setInput(val);
+        ta.value = val;
+        ta.selectionStart = ta.selectionEnd = lineStart + (before.substring(lineStart).length) + 2;
+        ta.style.height = 'auto';
+        ta.style.height = Math.min(ta.scrollHeight, 140) + 'px';
+        return;
+      }
+    }
+    setInput(val);
     ta.style.height = 'auto';
     ta.style.height = Math.min(ta.scrollHeight, 140) + 'px';
   };
@@ -482,8 +530,10 @@ export function AIChatBox({ onFirstMessage }: { onFirstMessage?: (text: string) 
           </button>
         </div>
       </div>
-      <p style={{ textAlign: 'center', fontSize: '11px', color: '#a3a3a3', margin: '8px 0 0' }}>
-        Press Enter to send · Shift+Enter for new line
+      <p style={{ textAlign: 'center', fontSize: '11px', margin: '8px 0 0' }}>
+        <a href="https://www.activepieces.com/product/ai-adoption" target="_blank" rel="noopener noreferrer" style={{ color: '#a3a3a3', textDecoration: 'none', transition: 'color 0.15s' }} onMouseEnter={(e) => e.currentTarget.style.color = 'hsl(var(--foreground))'} onMouseLeave={(e) => e.currentTarget.style.color = '#a3a3a3'}>
+          Activepieces AI can help you automate anything.
+        </a>
       </p>
     </div>
   );
@@ -501,10 +551,15 @@ export function AIChatBox({ onFirstMessage }: { onFirstMessage?: (text: string) 
 
         {isEmpty ? (
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '24px', padding: '32px 24px' }}>
-            <h2 style={{ fontSize: '26px', fontWeight: 700, margin: 0, textAlign: 'center' }}>
-              <span style={{ color: 'hsl(var(--foreground))' }}>What would you like to </span>
-              <span style={{ background: 'linear-gradient(135deg, #8142E3, #C9A8F5)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>build today?</span>
+            <h2 style={{ fontSize: '32px', fontWeight: 700, margin: 0, textAlign: 'center', fontFamily: '"Sentient", serif', color: 'hsl(var(--foreground))', maxWidth: '560px', width: '100%', textWrap: 'balance', lineHeight: 1.2 }}>
+              {(() => {
+                const hour = new Date().getHours();
+                if (hour >= 6 && hour < 12) return <>Everything starts with an idea… what's yours?</>;
+                if (hour >= 12 && hour < 18) return <>Let's turn ideas into something real</>;
+                return <>Quiet moments build the best things</>;
+              })()}
             </h2>
+            <div style={{ width: '100%' }}>{promptBox}</div>
             <div style={{ maxWidth: '560px', width: '100%', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px' }}>
               {([
                 { text: 'Summarize a document for me', icon: '📄', color: '#f0e6ff', darkColor: 'rgba(160,108,232,0.15)' },
@@ -524,7 +579,6 @@ export function AIChatBox({ onFirstMessage }: { onFirstMessage?: (text: string) 
                 </button>
               ))}
             </div>
-            <div style={{ width: '100%' }}>{promptBox}</div>
           </div>
         ) : (
           <>
@@ -614,10 +668,9 @@ export function AIChatBox({ onFirstMessage }: { onFirstMessage?: (text: string) 
                 )}
                 {typing && (
                   <div className="msg-enter" style={{ padding: '8px 0' }}>
-                    <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
-                      <div className="dot-1" style={{ width: '7px', height: '7px', borderRadius: '50%', background: 'hsl(var(--muted-foreground))' }} />
-                      <div className="dot-2" style={{ width: '7px', height: '7px', borderRadius: '50%', background: 'hsl(var(--muted-foreground))' }} />
-                      <div className="dot-3" style={{ width: '7px', height: '7px', borderRadius: '50%', background: 'hsl(var(--muted-foreground))' }} />
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <div className="thinking-spinner" />
+                      <span className="thinking-label" style={{ fontSize: '13px', fontWeight: 500 }}>Thinking</span>
                     </div>
                   </div>
                 )}
