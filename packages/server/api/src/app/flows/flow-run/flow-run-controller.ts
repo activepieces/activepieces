@@ -14,6 +14,7 @@ import {
     PrincipalType,
     ProgressUpdateType,
     RetryFlowRequestBody,
+    RunEnvironment,
     SeekPage,
     SERVICE_KEY_SECURITY_OPENAPI,
 } from '@activepieces/shared'
@@ -41,6 +42,7 @@ export const flowRunController: FastifyPluginAsyncZod = async (app) => {
             createdBefore: request.query.createdBefore,
             flowRunIds: request.query.flowRunIds,
             includeArchived: request.query.includeArchived,
+            environment: RunEnvironment.PRODUCTION,
         })
     })
 
