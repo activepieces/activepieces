@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 
+import dropMediaImg from '@/assets/img/drop-media.svg';
+
 type Attachment = {
   name: string;
   type: 'image' | 'document' | 'spreadsheet' | 'code' | 'other';
@@ -69,6 +71,17 @@ const keyframes = `
     from { opacity: 0; transform: translateY(8px); }
     to   { opacity: 1; transform: translateY(0); }
   }
+  @keyframes borderRotate {
+    0%   { background-position: 0% 50%; }
+    50%  { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+  @keyframes zoomPush {
+    0%   { opacity: 0; transform: scale(0.5); }
+    70%  { opacity: 1; transform: scale(1.08); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+  .drop-overlay img { animation: zoomPush 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
   @keyframes bounce {
     0%, 80%, 100% { transform: translateY(0); opacity: 0.5; }
     40%           { transform: translateY(-5px); opacity: 1; }
@@ -104,11 +117,12 @@ const keyframes = `
   .msgs-area::-webkit-scrollbar-track { background: transparent; }
   .msgs-area::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 4px; }
   .dark .msgs-area::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
-  .suggest-chip { background: transparent; border: 1px solid #e5e5e5; border-radius: 10px; padding: 10px 14px; font-size: 13px; color: hsl(var(--foreground)); cursor: pointer; text-align: left; transition: background 0.15s; font-family: inherit; outline: none; }
+  .suggest-chip { background: transparent; border: 1px solid #e5e5e5; border-radius: 10px; padding: 10px; font-size: 11px; color: hsl(var(--foreground)); cursor: pointer; text-align: left; transition: all 0.2s ease; font-family: inherit; outline: none; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
   .suggest-chip:focus-visible { border-color: hsl(var(--ring)); box-shadow: 0 0 0 3px hsl(var(--ring) / 0.5); }
-  .suggest-chip:hover { background: rgba(0,0,0,0.05); }
+  .suggest-chip:hover { border-color: transparent; }
   .dark .suggest-chip { border-color: #3f3f46; }
-  .dark .suggest-chip:hover { background: rgba(255,255,255,0.07); }
+  .dark .suggest-chip:hover { border-color: transparent; }
+  .suggest-icon { font-size: 14px; flex-shrink: 0; line-height: 1; }
   .img-preview-wrap img { border: 1px solid #e5e5e5 !important; }
   .dark .img-preview-wrap img { border-color: #404040 !important; }
   .img-preview-wrap { position: relative; display: inline-block; }
@@ -120,18 +134,45 @@ const keyframes = `
   .file-chip-pending .img-remove { position: absolute; top: -6px; right: -6px; width: 18px; height: 18px; border-radius: 50%; background: #525252; color: #fff; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 11px; line-height: 1; opacity: 0; transition: opacity 0.15s; outline: none; }
   .file-chip-pending:hover .img-remove { opacity: 1; }
   .prompt-box {
-    background: #f5f5f5;
-    border: 1px solid #e5e5e5;
+    background: #ffffff;
+    border: 1px solid transparent;
+    background-clip: padding-box;
+    position: relative;
+    box-shadow: 0 3px 10px -3px rgba(168,85,247,0.15), 0 3px 10px -3px rgba(251,146,60,0.1);
+    transition: box-shadow 0.3s ease;
+  }
+  .prompt-box::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: inherit;
+    padding: 2px;
+    background: linear-gradient(90deg, #f9a8d4, #93c5fd, #fdba74, #f9a8d4, #93c5fd, #fdba74);
+    background-size: 300% 100%;
+    animation: borderRotate 6s ease-in-out infinite;
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
   }
   .dark .prompt-box {
-    background: #262626;
-    border: 1px solid #525252;
+    background: hsl(var(--background));
+    border: 1px solid transparent;
+    box-shadow: 0 3px 10px -3px rgba(168,85,247,0.2), 0 3px 10px -3px rgba(251,146,60,0.15);
+    transition: box-shadow 0.3s ease;
+  }
+  .dark .prompt-box::before {
+    background: linear-gradient(90deg, #f472b6, #60a5fa, #fb923c, #f472b6, #60a5fa, #fb923c);
+    background-size: 300% 100%;
+    opacity: 0.7;
   }
   .send-btn-active { background: hsl(var(--primary)); }
   .plus-btn:hover { background: rgba(0,0,0,0.08) !important; }
   .dark .plus-btn:hover { background: rgba(255,255,255,0.08) !important; }
-  .prompt-box:focus-within { border-color: #a3a3a3 !important; }
-  .dark .prompt-box:focus-within { border-color: #737373 !important; }
+  .prompt-box:focus-within { box-shadow: 0 6px 20px -2px rgba(168,85,247,0.35), 0 6px 20px -2px rgba(251,146,60,0.25); }
+  .prompt-box:focus-within::before { opacity: 1; background: linear-gradient(90deg, #f472b6, #60a5fa, #fb923c, #f472b6, #60a5fa, #fb923c); background-size: 300% 100%; animation: borderRotate 4s ease-in-out infinite; }
+  .dark .prompt-box:focus-within { box-shadow: 0 6px 20px -2px rgba(168,85,247,0.5), 0 6px 20px -2px rgba(251,146,60,0.35); }
+  .dark .prompt-box:focus-within::before { opacity: 0.7; }
   .send-btn-disabled { background: #d4d4d4 !important; }
   .dark .send-btn-disabled { background: #525252 !important; }
   .lightbox { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 100; cursor: default; animation: fadeIn 0.15s ease; }
@@ -157,10 +198,16 @@ export function AIChatBox({ onFirstMessage }: { onFirstMessage?: (text: string) 
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const dragCounterRef = useRef(0);
+  const attachRowRef = useRef<HTMLDivElement>(null);
+  const attachDrag = useRef({ active: false, startX: 0, scrollLeft: 0 });
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const streamRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    textareaRef.current?.focus();
+  }, []);
 
   useEffect(() => {
     if (!lightboxSrc) return;
@@ -346,15 +393,34 @@ export function AIChatBox({ onFirstMessage }: { onFirstMessage?: (text: string) 
       }}>
         <input ref={fileInputRef} type="file" accept={FILE_ACCEPT} multiple hidden onChange={handleFileSelect} />
         {(pendingImages.length > 0 || pendingFiles.length > 0) && (
-          <div style={{ display: 'flex', gap: '8px', padding: '12px 12px 0', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+          <div
+            ref={attachRowRef}
+            onMouseDown={(e) => {
+              const el = attachRowRef.current;
+              if (!el) return;
+              attachDrag.current = { active: true, startX: e.pageX - el.offsetLeft, scrollLeft: el.scrollLeft };
+              el.style.cursor = 'grabbing';
+            }}
+            onMouseMove={(e) => {
+              if (!attachDrag.current.active) return;
+              const el = attachRowRef.current;
+              if (!el) return;
+              e.preventDefault();
+              const x = e.pageX - el.offsetLeft;
+              el.scrollLeft = attachDrag.current.scrollLeft - (x - attachDrag.current.startX);
+            }}
+            onMouseUp={() => { attachDrag.current.active = false; if (attachRowRef.current) attachRowRef.current.style.cursor = 'grab'; }}
+            onMouseLeave={() => { attachDrag.current.active = false; if (attachRowRef.current) attachRowRef.current.style.cursor = 'grab'; }}
+            style={{ display: 'flex', gap: '8px', padding: '12px 12px 0', flexWrap: 'nowrap', alignItems: 'flex-end', overflowX: 'auto', overflowY: 'hidden', scrollbarWidth: 'none', cursor: 'grab' }}
+          >
             {pendingImages.map((src, i) => (
-              <div key={'img-' + i} className="img-preview-wrap" style={{ display: 'flex' }}>
-                <img src={src} alt="" style={{ height: '52px', borderRadius: '8px', objectFit: 'cover', display: 'block', border: '1px solid #e5e5e5' }} />
+              <div key={'img-' + i} className="img-preview-wrap" style={{ display: 'flex', flexShrink: 0, userSelect: 'none' }}>
+                <img src={src} alt="" draggable={false} style={{ height: '52px', borderRadius: '8px', objectFit: 'cover', display: 'block', border: '1px solid #e5e5e5', pointerEvents: attachDrag.current.active ? 'none' : 'auto' }} />
                 <button className="img-remove" onClick={() => removePendingImage(i)}>×</button>
               </div>
             ))}
             {pendingFiles.map((file, i) => (
-              <div key={'file-' + i} className="file-chip-pending">
+              <div key={'file-' + i} className="file-chip-pending" style={{ flexShrink: 0, userSelect: 'none' }}>
                 <div className="file-chip">
                   <span style={{ fontSize: '20px' }}>{FILE_ICONS[file.type]}</span>
                   <div style={{ minWidth: 0 }}>
@@ -435,23 +501,26 @@ export function AIChatBox({ onFirstMessage }: { onFirstMessage?: (text: string) 
 
         {isEmpty ? (
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '24px', padding: '32px 24px' }}>
-            <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <h2 style={{ fontSize: '22px', fontWeight: 700, color: 'hsl(var(--foreground))', margin: 0 }}>
-                How can I help you today?
-              </h2>
-              <p style={{ fontSize: '14px', color: 'hsl(var(--muted-foreground))', margin: 0 }}>
-                Ask me anything — I'm here to assist.
-              </p>
-            </div>
-            <div style={{ maxWidth: '560px', width: '100%', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-              {[
-                'Summarize a document for me',
-                'Help me write an automation flow',
-                'What integrations do you support?',
-                'How do I connect two apps?',
-              ].map((prompt) => (
-                <button key={prompt} className="suggest-chip" onClick={() => { setInput(prompt); textareaRef.current?.focus(); }}>
-                  {prompt}
+            <h2 style={{ fontSize: '26px', fontWeight: 700, margin: 0, textAlign: 'center' }}>
+              <span style={{ color: 'hsl(var(--foreground))' }}>What would you like to </span>
+              <span style={{ background: 'linear-gradient(135deg, #8142E3, #C9A8F5)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>build today?</span>
+            </h2>
+            <div style={{ maxWidth: '560px', width: '100%', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px' }}>
+              {([
+                { text: 'Summarize a document for me', icon: '📄', color: '#f0e6ff', darkColor: 'rgba(160,108,232,0.15)' },
+                { text: 'Help me write an automation flow', icon: '⚡', color: '#fff3e0', darkColor: 'rgba(255,167,38,0.15)' },
+                { text: 'What integrations do you support?', icon: '🔌', color: '#e8f5e9', darkColor: 'rgba(76,175,80,0.15)' },
+                { text: 'How do I connect two apps?', icon: '🔗', color: '#e3f2fd', darkColor: 'rgba(66,165,245,0.15)' },
+              ]).map((item) => (
+                <button
+                  key={item.text}
+                  className="suggest-chip"
+                  onClick={() => { setInput(item.text); textareaRef.current?.focus(); }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = document.documentElement.classList.contains('dark') ? item.darkColor : item.color; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+                >
+                  <span className="suggest-icon">{item.icon}</span>
+                  <span>{item.text}</span>
                 </button>
               ))}
             </div>
@@ -566,7 +635,8 @@ export function AIChatBox({ onFirstMessage }: { onFirstMessage?: (text: string) 
         )}
         {isDragging && (
           <div className="drop-overlay">
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+              <img src={dropMediaImg} alt="" style={{ width: '120px', height: '120px', objectFit: 'contain' }} />
               <span style={{ fontSize: '16px', fontWeight: 700, color: 'hsl(var(--foreground))' }}>Add anything</span>
               <span style={{ fontSize: '14px', color: 'hsl(var(--foreground))' }}>Drop any file here to add it to the conversation</span>
             </div>
