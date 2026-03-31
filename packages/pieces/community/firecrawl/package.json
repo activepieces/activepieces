@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-firecrawl",
-  "version": "0.3.5",
+  "version": "0.3.6",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "scripts": {

@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-google-vertexai",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "dependencies": {
