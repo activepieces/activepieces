@@ -1,5 +1,6 @@
 import { readFileSync, writeFileSync, existsSync, copyFileSync, readdirSync, mkdirSync, symlinkSync } from 'node:fs'
 import { join, resolve } from 'node:path'
+import { buildWorkspaceVersionMap, resolveWorkspaceDependencies, stripSemverRanges } from './workspace-utils'
 
 function parseBunLock(rootDir: string): BunLockData {
     const lockPath = join(rootDir, 'bun.lock')
@@ -101,73 +102,6 @@ function flattenTransitiveDeps(
     return result
 }
 
-function buildWorkspaceVersionMap(rootDir: string): Map<string, string> {
-    const versionMap = new Map<string, string>()
-    const rootPkg = JSON.parse(readFileSync(join(rootDir, 'package.json')).toString())
-    const workspacePatterns: string[] = rootPkg.workspaces ?? []
-
-    for (const pattern of workspacePatterns) {
-        if (pattern.endsWith('/*')) {
-            const dir = join(rootDir, pattern.slice(0, -2))
-            if (!existsSync(dir)) {
-                continue
-            }
-            for (const entry of readdirSync(dir, { withFileTypes: true })) {
-                if (entry.isDirectory()) {
-                    const pkgPath = join(dir, entry.name, 'package.json')
-                    if (existsSync(pkgPath)) {
-                        const pkg = JSON.parse(readFileSync(pkgPath).toString())
-                        versionMap.set(pkg.name, pkg.version)
-                    }
-                }
-            }
-        } else {
-            const pkgPath = join(rootDir, pattern, 'package.json')
-            if (existsSync(pkgPath)) {
-                const pkg = JSON.parse(readFileSync(pkgPath).toString())
-                versionMap.set(pkg.name, pkg.version)
-            }
-        }
-    }
-
-    return versionMap
-}
-
-function resolveWorkspaceDeps(
-    deps: Record<string, string> | undefined,
-    versionMap: Map<string, string>,
-): Record<string, string> | undefined {
-    if (!deps) {
-        return deps
-    }
-    const resolved: Record<string, string> = {}
-    for (const [name, version] of Object.entries(deps)) {
-        if (version.startsWith('workspace:')) {
-            const resolvedVersion = versionMap.get(name)
-            if (resolvedVersion) {
-                resolved[name] = resolvedVersion
-            } else {
-                throw new Error(`Failed to resolve workspace dependency ${name}: ${version}`)
-            }
-        } else {
-            resolved[name] = version
-        }
-    }
-    return resolved
-}
-
-function stripSemverRanges(
-    deps: Record<string, string> | undefined,
-): Record<string, string> | undefined {
-    if (!deps) {
-        return deps
-    }
-    const stripped: Record<string, string> = {}
-    for (const [name, version] of Object.entries(deps)) {
-        stripped[name] = version.replace(/^[\^~>=<]+/, '')
-    }
-    return stripped
-}
 
 function copyPackageJson(piecePath: string, distPath: string): void {
     const srcPackageJson = join(piecePath, 'package.json')
@@ -218,9 +152,9 @@ function preparePieceDistForPublish(piecePath: string, rootDir: string, lockData
     const distPackageJsonPath = join(distPath, 'package.json')
     const json = JSON.parse(readFileSync(distPackageJsonPath, 'utf-8'))
 
-    json.dependencies = stripSemverRanges(resolveWorkspaceDeps(json.dependencies, workspaceVersionMap))
-    json.devDependencies = stripSemverRanges(resolveWorkspaceDeps(json.devDependencies, workspaceVersionMap))
-    json.peerDependencies = stripSemverRanges(resolveWorkspaceDeps(json.peerDependencies, workspaceVersionMap))
+    json.dependencies = stripSemverRanges(resolveWorkspaceDependencies(json.dependencies, workspaceVersionMap))
+    json.devDependencies = stripSemverRanges(resolveWorkspaceDependencies(json.devDependencies, workspaceVersionMap))
+    json.peerDependencies = stripSemverRanges(resolveWorkspaceDependencies(json.peerDependencies, workspaceVersionMap))
 
     if (json.dependencies) {
         const transitiveDeps = flattenTransitiveDeps(json.dependencies, resolvedLockData)
