@@ -55,17 +55,22 @@ export const executeFlowJob: JobHandler<ExecuteFlowJobData, FireAndForgetJobResu
                 { timeoutInSeconds },
             )
 
-            if (result.engine.status === EngineResponseStatus.INTERNAL_ERROR) {
+            if (result.status === EngineResponseStatus.LOG_SIZE_EXCEEDED) {
+                await reportFlowStatus(ctx, data, FlowRunStatus.LOG_SIZE_EXCEEDED)
+                return { kind: JobResultKind.FIRE_AND_FORGET, logs: result.logs }
+            }
+
+            if (result.status === EngineResponseStatus.INTERNAL_ERROR) {
                 await reportFlowStatus(ctx, data, FlowRunStatus.INTERNAL_ERROR)
-                return { kind: JobResultKind.FIRE_AND_FORGET }
+                return { kind: JobResultKind.FIRE_AND_FORGET, logs: result.logs }
             }
 
-            const delayInSeconds = result.engine.delayInSeconds
+            const delayInSeconds = result.delayInSeconds
             if (delayInSeconds && delayInSeconds > 0) {
-                return { kind: JobResultKind.FIRE_AND_FORGET, delayInSeconds }
+                return { kind: JobResultKind.FIRE_AND_FORGET, delayInSeconds, logs: result.logs }
             }
 
-            return { kind: JobResultKind.FIRE_AND_FORGET }
+            return { kind: JobResultKind.FIRE_AND_FORGET, logs: result.logs }
         }
         catch (e) {
             await ctx.sandboxManager.invalidate(ctx.log)
