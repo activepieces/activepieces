@@ -43,6 +43,9 @@ jobs:
       - name: Install dependencies
         run: bun install
 
+      - name: Check for semver ranges in piece dependencies
+        run: npx ts-node -r tsconfig-paths/register -P packages/server/engine/tsconfig.lib.json tools/scripts/pieces/check-no-ranges.ts
+
       - name: copy project .npmrc to user level
         run: cp .npmrc $HOME/.npmrc
 
