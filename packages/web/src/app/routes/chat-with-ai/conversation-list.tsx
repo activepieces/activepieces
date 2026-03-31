@@ -1,4 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { createPortal } from 'react-dom';
+import { toast } from 'sonner';
 
 type Conversation = {
   id: string;
@@ -52,7 +54,11 @@ function isYesterday(date: Date) {
 }
 
 const css = `
-  .conv-item { display: flex; align-items: center; padding: 4px 8px; border-radius: 6px; cursor: pointer; transition: background 0.15s; border: none; background: transparent; width: 100%; text-align: left; font-family: inherit; color: hsl(var(--foreground)); outline: none !important; box-shadow: none; }
+  .conv-item { display: flex; align-items: center; padding: 4px 8px; border-radius: 6px; cursor: pointer; transition: background 0.15s; border: none; background: transparent; width: 100%; text-align: left; font-family: inherit; color: hsl(var(--foreground)); outline: none !important; box-shadow: none; position: relative; }
+  .conv-item .archive-btn { opacity: 0; position: absolute; right: 4px; top: 50%; transform: translateY(-50%); background: transparent; border: none; cursor: pointer; padding: 4px; border-radius: 6px; color: #a3a3a3; transition: opacity 0.15s, color 0.15s, background 0.15s; outline: none !important; }
+  .conv-item:hover .archive-btn { opacity: 1; }
+  .conv-item .archive-btn:hover { color: #404040; background: rgba(0,0,0,0.08); }
+  .dark .conv-item .archive-btn:hover { color: #d4d4d4; background: rgba(255,255,255,0.1); }
   .conv-item:focus { outline: none !important; box-shadow: none !important; }
   .conv-item:focus-visible { box-shadow: 0 0 0 2px hsl(var(--sidebar-ring)) !important; }
   .conv-item:hover { background: rgba(0,0,0,0.05); }
@@ -89,11 +95,13 @@ const css = `
 
 export function ConversationList({ onSelect, newChat, onNewChat }: { onSelect?: (id: string) => void; newChat?: { title: string; key: number } | null; onNewChat?: () => void }) {
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [archivedIds, setArchivedIds] = useState<Set<string>>(new Set());
   const [extraConvs, setExtraConvs] = useState<Conversation[]>([]);
   const [streamingId, setStreamingId] = useState<string | null>(null);
   const [streamingText, setStreamingText] = useState('');
   const streamIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({ Older: true });
+  const [archiveTip, setArchiveTip] = useState<{ x: number; y: number } | null>(null);
   const [showTopFade, setShowTopFade] = useState(false);
   const [showBottomFade, setShowBottomFade] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
@@ -141,7 +149,7 @@ export function ConversationList({ onSelect, newChat, onNewChat }: { onSelect?: 
     };
   }, [newChat]);
 
-  const allConversations = [...extraConvs, ...FAKE_CONVERSATIONS];
+  const allConversations = [...extraConvs, ...FAKE_CONVERSATIONS].filter((c) => !archivedIds.has(c.id));
   const today = allConversations.filter((c) => isToday(c.date));
   const yesterdayList = allConversations.filter((c) => isYesterday(c.date));
   const olderList = allConversations.filter((c) => !isToday(c.date) && !isYesterday(c.date));
@@ -149,6 +157,14 @@ export function ConversationList({ onSelect, newChat, onNewChat }: { onSelect?: 
   const handleClick = (id: string) => {
     setActiveId(id);
     onSelect?.(id);
+  };
+
+  const handleArchive = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    setArchivedIds((prev) => new Set(prev).add(id));
+    setArchiveTip(null);
+    if (activeId === id) setActiveId(null);
+    toast('Conversation archived.', { duration: 2500 });
   };
 
   const toggleGroup = (label: string) => {
@@ -184,8 +200,23 @@ export function ConversationList({ onSelect, newChat, onNewChat }: { onSelect?: 
             className={`conv-item ${activeId === conv.id ? 'active' : ''}`}
             onClick={() => handleClick(conv.id)}
           >
-            <span style={{ fontSize: '12px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <span style={{ fontSize: '12px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', paddingRight: '18px' }}>
               {streamingId === conv.id ? streamingText : conv.title}
+            </span>
+            <span
+              className="archive-btn"
+              onClick={(e) => handleArchive(e, conv.id)}
+              onMouseEnter={(e) => {
+                const rect = e.currentTarget.getBoundingClientRect();
+                setArchiveTip({ x: rect.left + rect.width / 2, y: rect.bottom + 6 });
+              }}
+              onMouseLeave={() => setArchiveTip(null)}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="2" y="3" width="20" height="5" rx="1"/>
+                <path d="M4 8v11a2 2 0 002 2h12a2 2 0 002-2V8"/>
+                <path d="M10 12h4"/>
+              </svg>
             </span>
           </button>
         ))}
@@ -218,6 +249,15 @@ export function ConversationList({ onSelect, newChat, onNewChat }: { onSelect?: 
           {showBottomFade && <div className="conv-fade-bottom" style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '70px', pointerEvents: 'none', zIndex: 1 }} />}
         </div>
       </div>
+      {archiveTip && createPortal(
+        <div style={{
+          position: 'fixed', left: archiveTip.x, top: archiveTip.y,
+          transform: 'translateX(-50%)', padding: '4px 8px', borderRadius: '4px',
+          fontSize: '12px', whiteSpace: 'nowrap', pointerEvents: 'none', zIndex: 9999,
+          background: '#262626', color: '#e5e5e5',
+        }}>Archive</div>,
+        document.body
+      )}
     </>
   );
 }
