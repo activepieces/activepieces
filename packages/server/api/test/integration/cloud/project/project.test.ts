@@ -14,6 +14,8 @@ import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { generateMockToken } from '../../../helpers/auth'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
+import { distributedStore, redisConnections } from '../../../../src/app/database/redis-connections'
+import { getProjectMaxConcurrentJobsKey } from '../../../../src/app/database/redis/keys'
 import { db } from '../../../helpers/db'
 import {
     createMockApiKey,
@@ -382,6 +384,135 @@ describe('Project API', () => {
             expect(responseBody.id).toBe(mockProject.id)
             expect(responseBody.displayName).toBe(request.displayName)
             expect(responseBody.metadata).toEqual(metadata)
+        })
+
+        it('it should set maxConcurrentJobs in redis when value is positive', async () => {
+            const { mockOwner: mockUser, mockPlatform } = await mockAndSaveBasicSetup()
+
+            mockUser.platformId = mockPlatform.id
+            mockUser.platformRole = PlatformRole.ADMIN
+
+            await db.save('user', mockUser)
+
+            const mockProject = createMockProject({
+                ownerId: mockUser.id,
+                platformId: mockPlatform.id,
+            })
+            await db.save('project', mockProject)
+
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockUser.id,
+                platform: {
+                    id: mockPlatform.id,
+                },
+            })
+
+            const maxConcurrentJobs = 7
+            const redisKey = getProjectMaxConcurrentJobsKey(mockProject.id)
+
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/projects/' + mockProject.id,
+                body: {
+                    displayName: faker.animal.bird(),
+                    maxConcurrentJobs,
+                },
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(await distributedStore.get<number>(redisKey)).toBe(maxConcurrentJobs)
+
+            const redis = await redisConnections.useExisting()
+            await redis.del(redisKey)
+        })
+
+        it('it should remove maxConcurrentJobs in redis when value is zero', async () => {
+            const { mockOwner: mockUser, mockPlatform } = await mockAndSaveBasicSetup()
+
+            mockUser.platformId = mockPlatform.id
+            mockUser.platformRole = PlatformRole.ADMIN
+
+            await db.save('user', mockUser)
+
+            const mockProject = createMockProject({
+                ownerId: mockUser.id,
+                platformId: mockPlatform.id,
+            })
+            await db.save('project', mockProject)
+
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockUser.id,
+                platform: {
+                    id: mockPlatform.id,
+                },
+            })
+
+            const redisKey = getProjectMaxConcurrentJobsKey(mockProject.id)
+            await distributedStore.put(redisKey, 4)
+
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/projects/' + mockProject.id,
+                body: {
+                    displayName: faker.animal.bird(),
+                    maxConcurrentJobs: 0,
+                },
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(await distributedStore.get<number>(redisKey)).toBeNull()
+        })
+
+        it('it should keep maxConcurrentJobs in redis unchanged when value is omitted', async () => {
+            const { mockOwner: mockUser, mockPlatform } = await mockAndSaveBasicSetup()
+
+            mockUser.platformId = mockPlatform.id
+            mockUser.platformRole = PlatformRole.ADMIN
+
+            await db.save('user', mockUser)
+
+            const mockProject = createMockProject({
+                ownerId: mockUser.id,
+                platformId: mockPlatform.id,
+            })
+            await db.save('project', mockProject)
+
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockUser.id,
+                platform: {
+                    id: mockPlatform.id,
+                },
+            })
+
+            const redisKey = getProjectMaxConcurrentJobsKey(mockProject.id)
+            const existingMaxConcurrentJobs = 11
+            await distributedStore.put(redisKey, existingMaxConcurrentJobs)
+
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/projects/' + mockProject.id,
+                body: {
+                    displayName: faker.animal.bird(),
+                },
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(await distributedStore.get<number>(redisKey)).toBe(existingMaxConcurrentJobs)
+
+            const redis = await redisConnections.useExisting()
+            await redis.del(redisKey)
         })
     })
 

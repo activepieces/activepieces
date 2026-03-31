@@ -95,6 +95,17 @@ export const projectService = (log: FastifyBaseLogger) => ({
         } : {}
 
         await projectRepo(entityManager).update({ id: projectId }, { ...baseUpdate, ...teamUpdate })
+
+        if (!isNil(request.maxConcurrentJobs)) {
+            const key = getProjectMaxConcurrentJobsKey(projectId)
+            if (request.maxConcurrentJobs <= 0) {
+                await distributedStore.delete(key)
+            }
+            else {
+                await distributedStore.put(key, request.maxConcurrentJobs)
+            }
+        }
+
         return this.getOneOrThrow(projectId)
     },
 

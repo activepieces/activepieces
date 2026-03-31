@@ -15,6 +15,7 @@ export const UpdateProjectPlatformRequest = z.object({
         piecesFilterType: z.nativeEnum(PiecesFilterType).optional(),
     }).optional(),
     globalConnectionExternalIds: z.array(z.string()).optional(),
+    maxConcurrentJobs: z.number().nonnegative({ message: 'Max concurrent jobs must be a positive number' }).optional(),
 })
 
 export type UpdateProjectPlatformRequest = z.infer<typeof UpdateProjectPlatformRequest>
