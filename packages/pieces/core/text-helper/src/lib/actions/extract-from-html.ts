@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { JSDOM, VirtualConsole } from 'jsdom';  
+import { JSDOM, VirtualConsole } from 'jsdom';
 
 export const extractFromHtml = createAction({
   name: 'extract_from_html',
@@ -19,7 +19,7 @@ export const extractFromHtml = createAction({
         disabled: false,
         options: [
           { label: 'Page Title', value: 'title' },
-          { label: 'All Links (URLs)', value: 'links' },
+          { label: 'All Links (<a> elements)', value: 'links' },
           { label: 'All Images', value: 'images' },
           { label: 'Main Headings (H1, H2, H3)', value: 'headings' },
           { label: 'Paragraphs / Text Blocks', value: 'paragraphs' },
@@ -30,7 +30,8 @@ export const extractFromHtml = createAction({
     }),
     selector: Property.ShortText({
       displayName: 'Custom CSS Selector',
-      description: 'ONLY required if "Extraction Target" is set to "Custom CSS Selector". (e.g., .price, #main-title)',
+      description:
+        'ONLY required if "Extraction Target" is set to "Custom CSS Selector". (e.g., .price, #main-title)',
       required: false,
     }),
     extractionType: Property.StaticDropdown({
@@ -50,22 +51,33 @@ export const extractFromHtml = createAction({
     }),
     attributeName: Property.ShortText({
       displayName: 'Attribute Name',
-      description: 'ONLY required if "Extraction Type" is set to "Attribute". (e.g., href, src, data-id)',
+      description:
+        'ONLY required if "Extraction Type" is set to "Attribute". (e.g., href, src, data-id)',
       required: false,
     }),
     returnMultiple: Property.Checkbox({
       displayName: 'Return Multiple Elements',
-      description: 'If checked, returns a list of all matching elements. If unchecked, returns only the first match.',
+      description:
+        'If checked, returns a list of all matching elements. If unchecked, returns only the first match.',
       required: true,
       defaultValue: false,
     }),
   },
   async run(context) {
-    const { html, target, selector, extractionType, attributeName, returnMultiple } = context.propsValue;
+    const {
+      html,
+      target,
+      selector,
+      extractionType,
+      attributeName,
+      returnMultiple,
+    } = context.propsValue;
     let finalSelector = '';
     if (target === 'custom') {
       if (!selector) {
-        throw new Error('You must provide a "Custom CSS Selector" when the target is set to Custom.');
+        throw new Error(
+          'You must provide a "Custom CSS Selector" when the target is set to Custom.'
+        );
       }
       finalSelector = selector;
     } else {
@@ -80,22 +92,26 @@ export const extractFromHtml = createAction({
     }
 
     // Create an empty virtual console to swallow spam/errors from malicious HTML
-    const virtualConsole = new VirtualConsole(); 
-    
+    const virtualConsole = new VirtualConsole();
+
     const dom = new JSDOM(html, {
       includeNodeLocations: false, // Performance: We don't need line numbers
-      runScripts: undefined,       // Security: Explicitly disable JS execution (Default, but good to be explicit)
-      virtualConsole,              // Security: Prevent log spoofing
+      runScripts: undefined, // Security: Explicitly disable JS execution (Default, but good to be explicit)
+      virtualConsole, // Security: Prevent log spoofing
     });
 
     try {
       const document = dom.window.document;
       let elements: NodeListOf<Element>;
-      
+
       try {
         elements = document.querySelectorAll(finalSelector);
       } catch (error) {
-        throw new Error(`Invalid CSS selector: "${finalSelector}". Error: ${(error as Error).message}`);
+        throw new Error(
+          `Invalid CSS selector: "${finalSelector}". Error: ${
+            (error as Error).message
+          }`
+        );
       }
 
       if (elements.length === 0) {
@@ -112,9 +128,11 @@ export const extractFromHtml = createAction({
             return el.outerHTML;
           case 'attribute':
             if (!attributeName) {
-              throw new Error('You must provide an "Attribute Name" when the extraction type is Attribute.');
+              throw new Error(
+                'You must provide an "Attribute Name" when the extraction type is Attribute.'
+              );
             }
-            return el.getAttribute(attributeName);
+            return el.getAttribute(attributeName) ?? '';
           default:
             return '';
         }
