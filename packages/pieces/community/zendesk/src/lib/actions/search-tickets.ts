@@ -1,5 +1,5 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { zendeskAuth } from '../../auth';
+import { zendeskAuth } from '../..';
 import { Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
