@@ -184,7 +184,9 @@ const systemPropValidators: {
     [AppSystemProp.MAX_WEBHOOK_PAYLOAD_SIZE_MB]: numberValidator,
     [AppSystemProp.WEBHOOK_PAYLOAD_INLINE_THRESHOLD_KB]: numberValidator,
 
+    // SSRF protection
     [AppSystemProp.SSRF_ALLOW_LIST]: stringValidator,
+    [AppSystemProp.SSRF_PROTECTION_ENABLED]: booleanValidator,
 }
 
 

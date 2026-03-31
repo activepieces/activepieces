@@ -59,6 +59,7 @@ async function buildSettingsResponse(log: FastifyBaseLogger, platformIdForDedica
         EVENT_DESTINATION_TIMEOUT_SECONDS: system.getNumberOrThrow(AppSystemProp.EVENT_DESTINATION_TIMEOUT_SECONDS),
         EDITION: system.getOrThrow(AppSystemProp.EDITION),
         SSRF_ALLOW_LIST: system.get(AppSystemProp.SSRF_ALLOW_LIST)?.split(',').map(f => f.trim()) ?? [],
+        SSRF_PROTECTION_ENABLED: system.get(AppSystemProp.SSRF_PROTECTION_ENABLED) === 'true',
     }
     settingsCache.set(cacheKey, settings)
     return settings

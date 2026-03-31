@@ -40,8 +40,6 @@ export class AxiosHttpClient extends BaseHttpClient {
         urlQueryParams.append(key, value);
       }
 
-    const { httpSsrfAgent, httpsSsrfAgent } = getSsrfAgents(process.env['AP_SSRF_ALLOW_LIST']?.split(',').map((s) => s.trim()).filter(Boolean) ?? []);
-
       const config: AxiosRequestConfig = {
         method: axiosRequestMethod,
         url: urlWithoutQueryParams,
@@ -50,9 +48,17 @@ export class AxiosHttpClient extends BaseHttpClient {
         data: request.body,
         timeout,
         responseType,
-        httpAgent: httpSsrfAgent,
-        httpsAgent: httpsSsrfAgent,
       };
+
+      const ssrfProtectionEnabled = process.env['AP_SSRF_PROTECTION_ENABLED'] === 'true';
+      const ssrfAllowList = process.env['AP_SSRF_ALLOW_LIST']?.split(',').map((s) => s.trim()).filter(Boolean) ?? [];
+      
+      if (ssrfProtectionEnabled) {
+        const { httpSsrfAgent, httpsSsrfAgent } = getSsrfAgents(ssrfAllowList);
+
+        config.httpAgent = httpSsrfAgent;
+        config.httpsAgent = httpsSsrfAgent;
+      }
 
       if (request.followRedirects === false) {
         config.maxRedirects = 0;
