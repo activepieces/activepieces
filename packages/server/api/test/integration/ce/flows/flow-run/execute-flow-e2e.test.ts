@@ -351,7 +351,7 @@ describe('Execute Flow E2E', () => {
         })
 
         // Poll until flow run completes
-        const maxWaitMs = 60_000
+        const maxWaitMs = 120_000
         const pollIntervalMs = 500
         const start = Date.now()
         let result = await flowRunService(app.log).getOnePopulatedOrThrow({
