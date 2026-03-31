@@ -6,25 +6,15 @@ export interface TypefullySocialSet {
 export interface TypefullyDraft {
 	id: string;
 	status: string;
-	title: string | null;
+	preview: string;
 	created_at: string;
 	updated_at: string;
 	published_at: string | null;
-	scheduled_at: string | null;
-	posts: TypefullyPost[];
-	tags: TypefullyTag[];
+	scheduled_date: string | null;
 	share_url: string | null;
-}
-
-export interface TypefullyPost {
-	text: string;
-	platforms: string[];
-	media_ids: string[];
-}
-
-export interface TypefullyTag {
-	id: string;
-	name: string;
+	private_url: string | null;
+	tags: string[];
+	platforms: Record<string, unknown>;
 }
 
 export interface TypefullyPaginatedResponse<T> {
@@ -35,3 +25,10 @@ export interface TypefullyPaginatedResponse<T> {
 	next: string | null;
 	previous: string | null;
 }
+
+export interface TypefullyTag {
+	id: string;
+	name: string;
+}
+
+export type PlatformKey = 'x' | 'linkedin' | 'threads' | 'bluesky' | 'mastodon';

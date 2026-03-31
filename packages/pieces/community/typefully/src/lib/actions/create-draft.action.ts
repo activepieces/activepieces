@@ -5,6 +5,9 @@ import { typefullyApiCall } from '../common/client';
 import { socialSetDropdown, tagsMultiSelectDropdown } from '../common/props';
 import { TypefullyDraft } from '../common/types';
 
+const PLATFORM_OPTIONS = ['x', 'linkedin', 'threads', 'bluesky', 'mastodon'] as const;
+type PlatformKey = (typeof PLATFORM_OPTIONS)[number];
+
 export const createDraftAction = createAction({
 	auth: typefullyAuth,
 	name: 'typefully_create_draft',
@@ -20,8 +23,9 @@ export const createDraftAction = createAction({
 		}),
 		platforms: Property.StaticMultiSelectDropdown({
 			displayName: 'Platforms',
-			description: 'Which platforms to publish to. If empty, uses the social set defaults.',
-			required: false,
+			description:
+				'Which platforms to publish to. At least one platform must be selected.',
+			required: true,
 			options: {
 				disabled: false,
 				options: [
@@ -33,13 +37,13 @@ export const createDraftAction = createAction({
 				],
 			},
 		}),
-		title: Property.ShortText({
+		draft_title: Property.ShortText({
 			displayName: 'Draft Title',
 			description: 'An optional title for the draft (visible only in Typefully).',
 			required: false,
 		}),
 		tags: tagsMultiSelectDropdown,
-		generate_share_url: Property.Checkbox({
+		share: Property.Checkbox({
 			displayName: 'Generate Share URL',
 			description: 'Generate a share URL for the draft.',
 			required: false,
@@ -62,26 +66,30 @@ export const createDraftAction = createAction({
 			social_set_id,
 			text,
 			platforms,
-			title,
+			draft_title,
 			tags,
-			generate_share_url,
+			share,
 			publish_at,
 			reply_to_url,
 		} = context.propsValue;
 
-		const post: Record<string, unknown> = { text };
-		if (platforms && platforms.length > 0) {
-			post['platforms'] = platforms;
+		const platformsBody: Record<string, unknown> = {};
+		for (const platform of platforms as PlatformKey[]) {
+			const platformConfig: Record<string, unknown> = {
+				enabled: true,
+				posts: [{ text }],
+			};
+			if (platform === 'x' && reply_to_url) {
+				platformConfig['settings'] = { reply_to_url };
+			}
+			platformsBody[platform] = platformConfig;
 		}
 
-		const body: Record<string, unknown> = {
-			posts: [post],
-		};
-		if (title) body['title'] = title;
+		const body: Record<string, unknown> = { platforms: platformsBody };
+		if (draft_title) body['draft_title'] = draft_title;
 		if (tags && tags.length > 0) body['tags'] = tags;
-		if (generate_share_url) body['generate_share_url'] = true;
+		if (share) body['share'] = true;
 		if (publish_at) body['publish_at'] = publish_at;
-		if (reply_to_url) body['reply_to_url'] = reply_to_url;
 
 		return await typefullyApiCall<TypefullyDraft>({
 			apiKey: context.auth.secret_text,

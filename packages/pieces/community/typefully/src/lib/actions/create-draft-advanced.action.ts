@@ -10,22 +10,21 @@ export const createDraftAdvancedAction = createAction({
 	name: 'typefully_create_draft_advanced',
 	displayName: 'Create Draft Advanced',
 	description:
-		'Create multi-post threads with full control. Supports different content and media per post using JSON format.',
+		'Create multi-post threads with full control. Supports different content per platform and post using JSON format.',
 	props: {
 		social_set_id: socialSetDropdown,
-		posts_json: Property.Json({
-			displayName: 'Posts (JSON)',
-			description:
-				'A JSON array of post objects. Each post can have: text (string), platforms (array of strings), media_ids (array of strings). Example: [{"text": "First post"}, {"text": "Second post"}]',
+		platforms_json: Property.Json({
+			displayName: 'Platforms (JSON)',
+			description: `A JSON object defining per-platform content. Each key is a platform name (x, linkedin, threads, bluesky, mastodon) with an object containing "enabled" (boolean) and "posts" (array of {text} objects). For threads/X, add multiple posts. X also supports "settings": {"reply_to_url": "..."}. Example: {"x": {"enabled": true, "posts": [{"text": "Tweet 1"}, {"text": "Tweet 2"}]}, "linkedin": {"enabled": true, "posts": [{"text": "LinkedIn post"}]}}`,
 			required: true,
 		}),
-		title: Property.ShortText({
+		draft_title: Property.ShortText({
 			displayName: 'Draft Title',
 			description: 'An optional title for the draft.',
 			required: false,
 		}),
 		tags: tagsMultiSelectDropdown,
-		generate_share_url: Property.Checkbox({
+		share: Property.Checkbox({
 			displayName: 'Generate Share URL',
 			description: 'Generate a share URL for the draft.',
 			required: false,
@@ -37,42 +36,35 @@ export const createDraftAdvancedAction = createAction({
 				'Schedule the draft for a specific date/time. Leave empty to save as draft.',
 			required: false,
 		}),
-		reply_to_url: Property.ShortText({
-			displayName: 'X Reply To URL',
-			description: 'URL of an X post to reply to.',
-			required: false,
-		}),
 	},
 	async run(context) {
 		const {
 			social_set_id,
-			posts_json,
-			title,
+			platforms_json,
+			draft_title,
 			tags,
-			generate_share_url,
+			share,
 			publish_at,
-			reply_to_url,
 		} = context.propsValue;
 
-		let posts: unknown;
-		if (typeof posts_json === 'string') {
-			posts = JSON.parse(posts_json);
+		let platforms: unknown;
+		if (typeof platforms_json === 'string') {
+			platforms = JSON.parse(platforms_json);
 		} else {
-			posts = posts_json;
+			platforms = platforms_json;
 		}
 
-		if (!Array.isArray(posts)) {
+		if (typeof platforms !== 'object' || platforms === null || Array.isArray(platforms)) {
 			throw new Error(
-				'Posts must be a JSON array of post objects. Example: [{"text": "Hello"}]',
+				'Platforms must be a JSON object. Example: {"x": {"enabled": true, "posts": [{"text": "Hello"}]}}',
 			);
 		}
 
-		const body: Record<string, unknown> = { posts };
-		if (title) body['title'] = title;
+		const body: Record<string, unknown> = { platforms };
+		if (draft_title) body['draft_title'] = draft_title;
 		if (tags && tags.length > 0) body['tags'] = tags;
-		if (generate_share_url) body['generate_share_url'] = true;
+		if (share) body['share'] = true;
 		if (publish_at) body['publish_at'] = publish_at;
-		if (reply_to_url) body['reply_to_url'] = reply_to_url;
 
 		return await typefullyApiCall<TypefullyDraft>({
 			apiKey: context.auth.secret_text,
