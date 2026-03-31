@@ -1,7 +1,14 @@
 import { DynamicPropsValue, Property } from '@activepieces/pieces-framework';
 import { attioApiCall, attioPaginatedApiCall } from './client';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { AttributeResponse, ListResponse, ObjectResponse, SelectOptionResponse } from './types';
+import {
+	AttributeResponse,
+	CallRecordingResponse,
+	ListResponse,
+	MeetingResponse,
+	ObjectResponse,
+	SelectOptionResponse,
+} from './types';
 import { isNil } from '@activepieces/shared';
 import { attioAuth } from '../auth';
 
@@ -70,6 +77,80 @@ export const listIdDropdown = (params: DropdownParams) =>
 				options: response.data.map((obj) => ({
 					label: obj.name,
 					value: obj.id.list_id,
+				})),
+			};
+		},
+	});
+
+export const meetingIdDropdown = (params: DropdownParams) =>
+	Property.Dropdown({
+		auth: attioAuth,
+		displayName: params.displayName,
+		description: params.description,
+		required: params.required,
+		refreshers: [],
+		options: async ({ auth }) => {
+			if (!auth) {
+				return {
+					disabled: true,
+					options: [],
+					placeholder: 'Please connect your account first.',
+				};
+			}
+
+			const response = await attioApiCall<{ data: Array<MeetingResponse> }>({
+				accessToken: auth.secret_text,
+				method: HttpMethod.GET,
+				resourceUri: '/meetings',
+				query: { limit: 200, sort: 'start_desc' },
+			});
+
+			return {
+				disabled: false,
+				options: response.data.map((meeting) => ({
+					label: meeting.title || meeting.id.meeting_id,
+					value: meeting.id.meeting_id,
+				})),
+			};
+		},
+	});
+
+export const callRecordingIdDropdown = (params: DropdownParams) =>
+	Property.Dropdown({
+		auth: attioAuth,
+		displayName: params.displayName,
+		description: params.description,
+		required: params.required,
+		refreshers: ['meeting_id'],
+		options: async ({ auth, meeting_id }) => {
+			if (!auth) {
+				return {
+					disabled: true,
+					options: [],
+					placeholder: 'Please connect your account first.',
+				};
+			}
+
+			if (!meeting_id) {
+				return {
+					disabled: true,
+					options: [],
+					placeholder: 'Please select a meeting first.',
+				};
+			}
+
+			const response = await attioApiCall<{ data: Array<CallRecordingResponse> }>({
+				accessToken: auth.secret_text,
+				method: HttpMethod.GET,
+				resourceUri: `/meetings/${meeting_id}/call_recordings`,
+				query: { limit: 200 },
+			});
+
+			return {
+				disabled: false,
+				options: response.data.map((rec) => ({
+					label: `${rec.created_at} (${rec.status})`,
+					value: rec.id.call_recording_id,
 				})),
 			};
 		},
