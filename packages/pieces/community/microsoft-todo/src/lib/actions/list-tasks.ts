@@ -65,7 +65,8 @@ export const listTasksAction = createAction({
 			filters.push(`status eq '${status}'`);
 		}
 		if (search) {
-			filters.push(`contains(title, '${search}')`);
+			const escapedSearch = search.replace(/'/g, "''");
+			filters.push(`contains(title, '${escapedSearch}')`);
 		}
 
 		if (filters.length > 0) {
