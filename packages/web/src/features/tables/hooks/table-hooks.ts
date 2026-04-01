@@ -3,6 +3,7 @@ import {
   SharedTemplate,
   TableTemplate,
   Table,
+  UncategorizedFolderId,
 } from '@activepieces/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -17,6 +18,21 @@ import { tablesApi } from '../api/tables-api';
 const queryKeys = (searchParams: URLSearchParams, projectId: string) => {
   return ['tables', searchParams.toString(), projectId];
 };
+export const tableMutations = {
+  useRenameTable: ({ onSuccess }: { onSuccess: () => void }) => {
+    return useMutation({
+      mutationFn: async ({
+        tableId,
+        name,
+      }: {
+        tableId: string;
+        name: string;
+      }) => tablesApi.update(tableId, { name }),
+      onSuccess,
+    });
+  },
+};
+
 export const tableHooks = {
   useTables: (limit?: number) => {
     const projectId = authenticationSession.getProjectId() ?? '';
@@ -36,14 +52,18 @@ export const tableHooks = {
         }),
     });
   },
-  useCreateTable: () => {
+  useCreateTable: (folderId: string) => {
     const projectId = authenticationSession.getProjectId() ?? '';
     const navigate = useNavigate();
     const queryClient = useQueryClient();
     const [searchParams] = useSearchParams();
     return useMutation({
       mutationFn: async (data: { name: string }) => {
-        const table = await tablesApi.create({ projectId, name: data.name });
+        const table = await tablesApi.create({
+          projectId,
+          name: data.name,
+          folderId: folderId === UncategorizedFolderId ? undefined : folderId,
+        });
         const field = await fieldsApi.create({
           name: 'Name',
           type: FieldType.TEXT,
@@ -51,7 +71,7 @@ export const tableHooks = {
         });
         await recordsApi.create({
           records: [
-            ...Array.from({ length: 1 }, (_) => [
+            ...Array.from({ length: 1 }, () => [
               {
                 fieldId: field.id,
                 value: '',

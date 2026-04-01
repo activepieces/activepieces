@@ -1,15 +1,16 @@
-import { AppSystemProp, networkUtils } from '@activepieces/server-common'
 import RateLimitPlugin from '@fastify/rate-limit'
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import FastifyPlugin from 'fastify-plugin'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { redisConnections } from '../../database/redis-connections'
+import { networkUtils } from '../../helper/network-utils'
 import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-props'
 
 const API_RATE_LIMIT_AUTHN_ENABLED = system.getBoolean(
     AppSystemProp.API_RATE_LIMIT_AUTHN_ENABLED,
 )
 
-export const rateLimitModule: FastifyPluginAsyncTypebox = FastifyPlugin(
+export const rateLimitModule: FastifyPluginAsyncZod = FastifyPlugin(
     async (app) => {
         if (API_RATE_LIMIT_AUTHN_ENABLED) {
             await app.register(RateLimitPlugin, {

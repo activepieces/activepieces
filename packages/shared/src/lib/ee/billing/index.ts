@@ -1,4 +1,4 @@
-import { Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
 import { isNil, Nullable } from '../../core/common'
 import { AiCreditsAutoTopUpState, PlanName, PlatformPlanWithOnlyLimits, PlatformUsageMetric, TeamProjectsLimit } from '../../management/platform'
 import { PiecesFilterType } from '../../management/project'
@@ -27,33 +27,33 @@ export const METRIC_TO_USAGE_MAPPING = {
     [PlatformUsageMetric.ACTIVE_FLOWS]: 'activeFlows',
 } as const
 
-export const UpdateActiveFlowsAddonParamsSchema = Type.Object({
-    newActiveFlowsLimit: Type.Number(),
+export const UpdateActiveFlowsAddonParamsSchema = z.object({
+    newActiveFlowsLimit: z.number(),
 })
-export type UpdateActiveFlowsAddonParams = Static<typeof UpdateActiveFlowsAddonParamsSchema>
+export type UpdateActiveFlowsAddonParams = z.infer<typeof UpdateActiveFlowsAddonParamsSchema>
 
-export const CreateCheckoutSessionParamsSchema = Type.Object({
-    newActiveFlowsLimit: Type.Number(),
+export const CreateCheckoutSessionParamsSchema = z.object({
+    newActiveFlowsLimit: z.number(),
 })
-export type CreateSubscriptionParams = Static<typeof CreateCheckoutSessionParamsSchema>
+export type CreateSubscriptionParams = z.infer<typeof CreateCheckoutSessionParamsSchema>
 
-export const CreateAICreditCheckoutSessionParamsSchema = Type.Object({
-    aiCredits: Type.Number(),
+export const CreateAICreditCheckoutSessionParamsSchema = z.object({
+    aiCredits: z.number(),
 })
-export type CreateAICreditCheckoutSessionParamsSchema = Static<typeof CreateAICreditCheckoutSessionParamsSchema>
+export type CreateAICreditCheckoutSessionParamsSchema = z.infer<typeof CreateAICreditCheckoutSessionParamsSchema>
 
-export const UpdateAICreditsAutoTopUpParamsSchema = Type.Union([
-    Type.Object({
-        state: Type.Literal(AiCreditsAutoTopUpState.ENABLED),
-        minThreshold: Type.Number(),
-        creditsToAdd: Type.Number(),
-        maxMonthlyLimit: Nullable(Type.Number()),
+export const UpdateAICreditsAutoTopUpParamsSchema = z.union([
+    z.object({
+        state: z.literal(AiCreditsAutoTopUpState.ENABLED),
+        minThreshold: z.number(),
+        creditsToAdd: z.number(),
+        maxMonthlyLimit: Nullable(z.number()),
     }),
-    Type.Object({
-        state: Type.Literal(AiCreditsAutoTopUpState.DISABLED),
+    z.object({
+        state: z.literal(AiCreditsAutoTopUpState.DISABLED),
     }),
 ])
-export type UpdateAICreditsAutoTopUpParamsSchema = Static<typeof UpdateAICreditsAutoTopUpParamsSchema>
+export type UpdateAICreditsAutoTopUpParamsSchema = z.infer<typeof UpdateAICreditsAutoTopUpParamsSchema>
 
 export enum PRICE_NAMES {
     AI_CREDITS = 'ai-credit',
@@ -80,6 +80,7 @@ export const STANDARD_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     projectsLimit: 1,
     aiCreditsAutoTopUpState: AiCreditsAutoTopUpState.DISABLED,
     embeddingEnabled: false,
+    agentsEnabled: true,
     globalConnectionsEnabled: false,
     customRolesEnabled: false,
     environmentsEnabled: false,
@@ -101,6 +102,7 @@ export const STANDARD_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
 export const OPEN_SOURCE_PLAN: PlatformPlanWithOnlyLimits = {
     tablesEnabled: true,
     embeddingEnabled: false,
+    agentsEnabled: true,
     globalConnectionsEnabled: false,
     customRolesEnabled: false,
     includedAiCredits: 0,
@@ -132,7 +134,7 @@ export const APPSUMO_PLAN = (planName: PlanName): PlatformPlanWithOnlyLimits => 
     activeFlowsLimit: undefined,
 })
 
-export const isCloudPlanButNotEnterprise = (plan?: string): boolean => {
+export const isCloudPlanButNotEnterprise = (plan?: string | null): boolean => {
     if (isNil(plan)) {
         return false
     }

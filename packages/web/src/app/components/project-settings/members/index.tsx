@@ -8,16 +8,17 @@ import { t } from 'i18next';
 import { Users } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 
+import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import { DataTable } from '@/components/custom/data-table';
 import { DataTableInputPopover } from '@/components/custom/data-table/data-table-input-popover';
-import { Button } from '@/components/ui/button';
+import { UserRoundPlusIcon } from '@/components/icons/user-round-plus';
 import {
   InviteUserDialog,
   projectMembersHooks,
   userInvitationsHooks,
 } from '@/features/members';
+import { platformUserHooks } from '@/features/platform-admin/hooks/platform-user-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { platformUserHooks } from '@/hooks/platform-user-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 
 import { membersTableColumns, MemberRowData } from './columns';
@@ -136,9 +137,13 @@ export const MembersSettings = () => {
           handleFilterChange={setFilterValue}
         />
         {userHasPermissionToInviteUser && (
-          <Button onClick={() => setInviteOpen(true)}>
+          <AnimatedIconButton
+            icon={UserRoundPlusIcon}
+            iconSize={16}
+            onClick={() => setInviteOpen(true)}
+          >
             {t('Add Members')}
-          </Button>
+          </AnimatedIconButton>
         )}
       </div>
       <DataTable

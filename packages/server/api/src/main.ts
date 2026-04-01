@@ -7,24 +7,22 @@ import { appPostBoot } from './app/app'
 import { initializeDatabase } from './app/database'
 import { distributedLock } from './app/database/redis-connections'
 import { system } from './app/helper/system/system'
+import { WorkerSystemProp } from './app/helper/system/system-props'
 import { setupServer } from './app/server'
-import { workerPostBoot } from './app/worker'
 
 const start = async (app: FastifyInstance): Promise<void> => {
     try {
+        const port = Number(system.get(WorkerSystemProp.PORT))
         await app.listen({
-            host: '0.0.0.0',
-            port: 3000,
+            host: '::',
+            port,
         })
-        if (system.isWorker()) {
-            await workerPostBoot(app)
-        }
         if (system.isApp()) {
             await appPostBoot(app)
         }
     }
     catch (err) {
-        app.log.error(err)
+        app.log.error({ err }, 'Failed to start server')
         process.exit(1)
     }
 }
@@ -42,8 +40,7 @@ const stop = async (app: FastifyInstance): Promise<void> => {
         process.exit(0)
     }
     catch (err) {
-        app.log.error('Error stopping server')
-        app.log.error(err)
+        app.log.error({ err }, 'Error stopping server')
         process.exit(1)
     }
 }

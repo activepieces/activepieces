@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import fs from 'node:fs/promises'
+import { readFile } from 'node:fs/promises'
 import { CodeSandbox } from '../../core/code/code-sandbox-common'
 
 const ONE_HUNDRED_TWENTY_EIGHT_MEGABYTES = 128
@@ -19,7 +19,6 @@ const getIvm = () => {
  */
 export const v8IsolateCodeSandbox: CodeSandbox = {
     async runCodeModule({ codeFilePath, inputs }) {
-        const sourceCode = await fs.readFile(codeFilePath, 'utf8')
         const ivm = getIvm()
         const isolate = new ivm.Isolate({ memoryLimit: ONE_HUNDRED_TWENTY_EIGHT_MEGABYTES })
 
@@ -31,12 +30,12 @@ export const v8IsolateCodeSandbox: CodeSandbox = {
                 },
             })
 
-            const wrappedCode = wrapCjsModuleSource(sourceCode)
+            const source = await readFile(codeFilePath, 'utf8')
 
             return await executeIsolate({
                 isolate,
                 isolateContext,
-                code: wrappedCode,
+                code: wrapCjsModule(source),
             })
         }
         finally {
@@ -91,18 +90,16 @@ const executeIsolate = async ({ isolate, isolateContext, code }: ExecuteIsolateP
     return outRef.copy()
 }
 
-function wrapCjsModuleSource(sourceCode: string): string {
-    return `
-(function() {
-    const module = { exports: {} };
-    const exports = module.exports;
-    function require(name) {
-        throw new Error('Cannot require module "' + name + '" in sandboxed code');
-    }
-    ${sourceCode}
-    return module.exports.code(inputs);
-})();
-`
+// Wrap CJS source so `exports`/`module` are defined but `require` is NOT,
+// blocking all Node.js built-in access inside the isolate.
+// `inputs` is already injected as a global by initIsolateContext.
+function wrapCjsModule(source: string): string {
+    return `(function() {
+  const exports = Object.create(null);
+  const module = { exports };
+  ${source}
+  return module.exports.code(inputs);
+})()`
 }
 
 type InitContextParams = {

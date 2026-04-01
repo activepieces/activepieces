@@ -4,7 +4,6 @@ import {
   UserInvitation,
   UserWithMetaInformation,
 } from '@activepieces/shared';
-import { useMutation, useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { Info, Trash2, User, Shield, ChevronDown } from 'lucide-react';
@@ -27,8 +26,9 @@ import {
   projectMembersApi,
   userInvitationApi,
   RoleSelector,
+  projectMembersMutations,
 } from '@/features/members';
-import { projectRoleApi } from '@/features/platform-admin';
+import { projectRoleQueries } from '@/features/platform-admin';
 import { projectCollectionUtils } from '@/features/projects';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { formatUtils } from '@/lib/format-utils';
@@ -61,10 +61,7 @@ const RoleCell = ({
   row: { original: MemberRowData };
   refetch: () => void;
 }) => {
-  const { data: rolesData } = useQuery({
-    queryKey: ['project-roles'],
-    queryFn: () => projectRoleApi.list(),
-  });
+  const { data: rolesData } = projectRoleQueries.useProjectRoles(true);
 
   const roles = rolesData?.data ?? [];
   const { checkAccess } = useAuthorization();
@@ -80,15 +77,7 @@ const RoleCell = ({
   const isPlatformAdminOrOperator =
     row.original.type === 'platform-admin-operator';
 
-  const { mutate } = useMutation({
-    mutationFn: (newRole: string) => {
-      if (row.original.type === 'member') {
-        return projectMembersApi.update(row.original.data.id, {
-          role: newRole,
-        });
-      }
-      return Promise.resolve();
-    },
+  const { mutate } = projectMembersMutations.useUpdateMemberRole({
     onSuccess: () => {
       toast.success(t('Role updated successfully'));
       refetch();
@@ -99,7 +88,9 @@ const RoleCell = ({
   });
 
   const handleValueChange = (value: string) => {
-    mutate(value);
+    if (row.original.type === 'member') {
+      mutate({ memberId: row.original.data.id, role: value });
+    }
   };
 
   const roleName =
@@ -193,16 +184,18 @@ const ActionsCell = ({
       ? `${row.original.data.user.firstName} ${row.original.data.user.lastName}`
       : row.original.data.email;
 
-  const removeLabel = `${t('Remove')} ${displayName}`;
-
   return (
     <PermissionNeededTooltip hasPermission={userHasPermissionToDelete}>
       <ConfirmationDeleteDialog
-        title={removeLabel}
+        title={
+          row.original.type === 'invitation'
+            ? t('Remove Invitation')
+            : t('Remove Member')
+        }
         message={
           row.original.type === 'invitation'
-            ? t('Are you sure you want to remove this invitation?')
-            : t('Are you sure you want to remove this member?')
+            ? t('This invitation will be revoked immediately.')
+            : t('This member will lose access to the project immediately.')
         }
         mutationFn={() => deleteMember()}
         entityName={displayName}

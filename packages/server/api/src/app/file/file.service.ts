@@ -1,4 +1,3 @@
-import { AppSystemProp, exceptionHandler, fileCompressor, WorkerSystemProp } from '@activepieces/server-common'
 import {
     ActivepiecesError,
     apId,
@@ -17,7 +16,10 @@ import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { In, LessThanOrEqual } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
+import { exceptionHandler } from '../helper/exception-handler'
 import { system } from '../helper/system/system'
+import { AppSystemProp, WorkerSystemProp } from '../helper/system/system-props'
+import { fileCompressor } from './file-compressor'
 import { FileEntity } from './file.entity'
 import { s3Helper } from './s3-helper'
 
@@ -138,9 +140,9 @@ export const fileService = (log: FastifyBaseLogger) => ({
             compression: file.compression,
         })
         return {
-            metadata: file.metadata,
+            metadata: file.metadata ?? undefined,
             data,
-            fileName: file.fileName,
+            fileName: file.fileName ?? undefined,
         }
     },
     async deleteStaleBulk(types: FileType[]) {
@@ -249,6 +251,7 @@ function isExecutionDataFileThatExpires(type: FileType) {
         case FileType.FLOW_STEP_FILE:
         case FileType.TRIGGER_PAYLOAD:
         case FileType.TRIGGER_EVENT_FILE:
+        case FileType.WEBHOOK_PAYLOAD:
             return true
         case FileType.PLATFORM_ASSET:
         case FileType.USER_PROFILE_PICTURE:

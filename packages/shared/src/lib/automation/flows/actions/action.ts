@@ -1,4 +1,5 @@
-import { Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
+import { STEP_NAME_REGEX } from '../../../core/common'
 import { VersionType } from '../../pieces'
 import { PropertySettings } from '../properties'
 import { SampleDataSetting } from '../sample-data'
@@ -20,87 +21,81 @@ export enum BranchExecutionType {
     CONDITION = 'CONDITION',
 }
 
-const ACTION_NAME_REGEX = /^[a-zA-Z_][a-zA-Z0-9_]*$/
-
 const commonActionProps = {
-    name: Type.String({ pattern: ACTION_NAME_REGEX.source }),
-    valid: Type.Boolean({}),
-    displayName: Type.String({}),
-    skip: Type.Optional(Type.Boolean({})),
+    name: z.string().regex(STEP_NAME_REGEX),
+    valid: z.boolean(),
+    displayName: z.string(),
+    skip: z.boolean().optional(),
+    lastUpdatedDate: z.string(),
 }
 const commonActionSettings = {
-    sampleData: Type.Optional(SampleDataSetting),
-    customLogoUrl: Type.Optional(Type.String()),
+    sampleData: SampleDataSetting.optional(),
+    customLogoUrl: z.string().optional(),
 }
 
-export const ActionErrorHandlingOptions = Type.Optional(
-    Type.Object({
-        continueOnFailure: Type.Optional(
-            Type.Object({
-                value: Type.Optional(Type.Boolean()),
-            }),
-        ),
-        retryOnFailure: Type.Optional(
-            Type.Object({
-                value: Type.Optional(Type.Boolean()),
-            }),
-        ),
-    }),
-)
-export type ActionErrorHandlingOptions = Static<
+export const ActionErrorHandlingOptions = z.object({
+    continueOnFailure: z.object({
+        value: z.boolean().optional(),
+    }).optional(),
+    retryOnFailure: z.object({
+        value: z.boolean().optional(),
+    }).optional(),
+}).optional()
+
+export type ActionErrorHandlingOptions = z.infer<
   typeof ActionErrorHandlingOptions
 >
 
-export const SourceCode = Type.Object({
-    packageJson: Type.String({}),
-    code: Type.String({}),
+export const SourceCode = z.object({
+    packageJson: z.string(),
+    code: z.string(),
 })
 
-export type SourceCode = Static<typeof SourceCode>
+export type SourceCode = z.infer<typeof SourceCode>
 
-export const CodeActionSettings = Type.Object({
+export const CodeActionSettings = z.object({
     ...commonActionSettings,
     sourceCode: SourceCode,
-    input: Type.Record(Type.String({}), Type.Any()),
+    input: z.record(z.string(), z.any()),
     errorHandlingOptions: ActionErrorHandlingOptions,
 })
 
-export type CodeActionSettings = Static<typeof CodeActionSettings>
+export type CodeActionSettings = z.infer<typeof CodeActionSettings>
 
-export const CodeActionSchema = Type.Object({
+export const CodeActionSchema = z.object({
     ...commonActionProps,
-    type: Type.Literal(FlowActionType.CODE),
+    type: z.literal(FlowActionType.CODE),
     settings: CodeActionSettings,
 })
-export const PieceActionSettings = Type.Object({
+export const PieceActionSettings = z.object({
     ...commonActionSettings,
-    propertySettings: Type.Record(Type.String(), PropertySettings),
-    pieceName: Type.String({}),
+    propertySettings: z.record(z.string(), PropertySettings),
+    pieceName: z.string(),
     pieceVersion: VersionType,
-    actionName: Type.Optional(Type.String({})),
-    input: Type.Record(Type.String({}), Type.Unknown()),
+    actionName: z.string().optional(),
+    input: z.record(z.string(), z.unknown()),
     errorHandlingOptions: ActionErrorHandlingOptions,
 })
-export type PieceActionSettings = Static<typeof PieceActionSettings>
+export type PieceActionSettings = z.infer<typeof PieceActionSettings>
 
-export const PieceActionSchema = Type.Object({
+export const PieceActionSchema = z.object({
     ...commonActionProps,
-    type: Type.Literal(FlowActionType.PIECE),
+    type: z.literal(FlowActionType.PIECE),
     settings: PieceActionSettings,
 })
 
 // Loop Items
-export const LoopOnItemsActionSettings = Type.Object({
+export const LoopOnItemsActionSettings = z.object({
     ...commonActionSettings,
-    items: Type.String(),
+    items: z.string(),
 })
-export type LoopOnItemsActionSettings = Static<
+export type LoopOnItemsActionSettings = z.infer<
   typeof LoopOnItemsActionSettings
 >
 
-export const LoopOnItemsActionSchema = Type.Object({
+export const LoopOnItemsActionSchema = z.object({
     ...commonActionProps,
-    type: Type.Literal(FlowActionType.LOOP_ON_ITEMS),
+    type: z.literal(FlowActionType.LOOP_ON_ITEMS),
     settings: LoopOnItemsActionSettings,
 })
 
@@ -152,194 +147,207 @@ export const textConditions = [
 ]
 
 const BranchOperatorTextLiterals = [
-    Type.Literal(BranchOperator.TEXT_CONTAINS),
-    Type.Literal(BranchOperator.TEXT_DOES_NOT_CONTAIN),
-    Type.Literal(BranchOperator.TEXT_EXACTLY_MATCHES),
-    Type.Literal(BranchOperator.TEXT_DOES_NOT_EXACTLY_MATCH),
-    Type.Literal(BranchOperator.TEXT_STARTS_WITH),
-    Type.Literal(BranchOperator.TEXT_DOES_NOT_START_WITH),
-    Type.Literal(BranchOperator.TEXT_ENDS_WITH),
-    Type.Literal(BranchOperator.TEXT_DOES_NOT_END_WITH),
-    Type.Literal(BranchOperator.LIST_CONTAINS),
-    Type.Literal(BranchOperator.LIST_DOES_NOT_CONTAIN),
-]
+    z.literal(BranchOperator.TEXT_CONTAINS),
+    z.literal(BranchOperator.TEXT_DOES_NOT_CONTAIN),
+    z.literal(BranchOperator.TEXT_EXACTLY_MATCHES),
+    z.literal(BranchOperator.TEXT_DOES_NOT_EXACTLY_MATCH),
+    z.literal(BranchOperator.TEXT_STARTS_WITH),
+    z.literal(BranchOperator.TEXT_DOES_NOT_START_WITH),
+    z.literal(BranchOperator.TEXT_ENDS_WITH),
+    z.literal(BranchOperator.TEXT_DOES_NOT_END_WITH),
+    z.literal(BranchOperator.LIST_CONTAINS),
+    z.literal(BranchOperator.LIST_DOES_NOT_CONTAIN),
+] as const
 
 const BranchOperatorNumberLiterals = [
-    Type.Literal(BranchOperator.NUMBER_IS_GREATER_THAN),
-    Type.Literal(BranchOperator.NUMBER_IS_LESS_THAN),
-    Type.Literal(BranchOperator.NUMBER_IS_EQUAL_TO),
-]
+    z.literal(BranchOperator.NUMBER_IS_GREATER_THAN),
+    z.literal(BranchOperator.NUMBER_IS_LESS_THAN),
+    z.literal(BranchOperator.NUMBER_IS_EQUAL_TO),
+] as const
 
 const BranchOperatorDateLiterals = [
-    Type.Literal(BranchOperator.DATE_IS_BEFORE),
-    Type.Literal(BranchOperator.DATE_IS_EQUAL),
-    Type.Literal(BranchOperator.DATE_IS_AFTER),
-]
+    z.literal(BranchOperator.DATE_IS_BEFORE),
+    z.literal(BranchOperator.DATE_IS_EQUAL),
+    z.literal(BranchOperator.DATE_IS_AFTER),
+] as const
 
 const BranchOperatorSingleValueLiterals = [
-    Type.Literal(BranchOperator.EXISTS),
-    Type.Literal(BranchOperator.DOES_NOT_EXIST),
-    Type.Literal(BranchOperator.BOOLEAN_IS_TRUE),
-    Type.Literal(BranchOperator.BOOLEAN_IS_FALSE),
-    Type.Literal(BranchOperator.LIST_IS_EMPTY),
-    Type.Literal(BranchOperator.LIST_IS_NOT_EMPTY),
-]
+    z.literal(BranchOperator.EXISTS),
+    z.literal(BranchOperator.DOES_NOT_EXIST),
+    z.literal(BranchOperator.BOOLEAN_IS_TRUE),
+    z.literal(BranchOperator.BOOLEAN_IS_FALSE),
+    z.literal(BranchOperator.LIST_IS_EMPTY),
+    z.literal(BranchOperator.LIST_IS_NOT_EMPTY),
+] as const
 
-const BranchTextConditionValid = (addMinLength: boolean) =>
-    Type.Object({
-        firstValue: Type.String(addMinLength ? { minLength: 1 } : {}),
-        secondValue: Type.String(addMinLength ? { minLength: 1 } : {}),
-        caseSensitive: Type.Optional(Type.Boolean()),
-        operator: Type.Optional(Type.Union(BranchOperatorTextLiterals)),
+function buildBranchTextConditionValid(addMinLength: boolean) {
+    return z.object({
+        firstValue: addMinLength ? z.string().min(1) : z.string(),
+        secondValue: addMinLength ? z.string().min(1) : z.string(),
+        caseSensitive: z.boolean().optional(),
+        operator: z.union(BranchOperatorTextLiterals).optional(),
     })
+}
 
-const BranchNumberConditionValid = (addMinLength: boolean) =>
-    Type.Object({
-        firstValue: Type.String(addMinLength ? { minLength: 1 } : {}),
-        secondValue: Type.String(addMinLength ? { minLength: 1 } : {}),
-        operator: Type.Optional(Type.Union(BranchOperatorNumberLiterals)),
+function buildBranchNumberConditionValid(addMinLength: boolean) {
+    return z.object({
+        firstValue: addMinLength ? z.string().min(1) : z.string(),
+        secondValue: addMinLength ? z.string().min(1) : z.string(),
+        operator: z.union(BranchOperatorNumberLiterals).optional(),
     })
+}
 
-const BranchDateConditionValid = (addMinLength: boolean) =>
-    Type.Object({
-        firstValue: Type.String(addMinLength ? { minLength: 1 } : {}),
-        secondValue: Type.String(addMinLength ? { minLength: 1 } : {}),
-        operator: Type.Optional(Type.Union(BranchOperatorDateLiterals)),
+function buildBranchDateConditionValid(addMinLength: boolean) {
+    return z.object({
+        firstValue: addMinLength ? z.string().min(1) : z.string(),
+        secondValue: addMinLength ? z.string().min(1) : z.string(),
+        operator: z.union(BranchOperatorDateLiterals).optional(),
     })
+}
 
-const BranchSingleValueConditionValid = (addMinLength: boolean) =>
-    Type.Object({
-        firstValue: Type.String(addMinLength ? { minLength: 1 } : {}),
-        operator: Type.Optional(Type.Union(BranchOperatorSingleValueLiterals)),
+function buildBranchSingleValueConditionValid(addMinLength: boolean) {
+    return z.object({
+        firstValue: addMinLength ? z.string().min(1) : z.string(),
+        operator: z.union(BranchOperatorSingleValueLiterals).optional(),
     })
+}
 
-const BranchConditionValid = (addMinLength: boolean) =>
-    Type.Union([
-        BranchTextConditionValid(addMinLength),
-        BranchNumberConditionValid(addMinLength),
-        BranchDateConditionValid(addMinLength),
-        BranchSingleValueConditionValid(addMinLength),
+function buildBranchConditionValid(addMinLength: boolean) {
+    return z.union([
+        buildBranchTextConditionValid(addMinLength),
+        buildBranchNumberConditionValid(addMinLength),
+        buildBranchDateConditionValid(addMinLength),
+        buildBranchSingleValueConditionValid(addMinLength),
     ])
+}
 
-export const ValidBranchCondition = BranchConditionValid(true)
-export type ValidBranchCondition = Static<typeof ValidBranchCondition>
+export const ValidBranchCondition = buildBranchConditionValid(true)
+export type ValidBranchCondition = z.infer<typeof ValidBranchCondition>
 
 // TODO remove this and use ValidBranchCondition everywhere
-export const BranchCondition = BranchConditionValid(false)
-export type BranchCondition = Static<typeof BranchCondition>
+export const BranchCondition = buildBranchConditionValid(false)
+export type BranchCondition = z.infer<typeof BranchCondition>
 
-export const BranchTextCondition = BranchTextConditionValid(false)
-export type BranchTextCondition = Static<typeof BranchTextCondition>
+export const BranchTextCondition = buildBranchTextConditionValid(false)
+export type BranchTextCondition = z.infer<typeof BranchTextCondition>
 
-export const BranchNumberCondition = BranchNumberConditionValid(false)
-export type BranchNumberCondition = Static<typeof BranchNumberCondition>
+export const BranchNumberCondition = buildBranchNumberConditionValid(false)
+export type BranchNumberCondition = z.infer<typeof BranchNumberCondition>
 
-export const BranchDateCondition = BranchDateConditionValid(false)
-export type BranchDateCondition = Static<typeof BranchDateCondition>
+export const BranchDateCondition = buildBranchDateConditionValid(false)
+export type BranchDateCondition = z.infer<typeof BranchDateCondition>
 
 export const BranchSingleValueCondition =
-  BranchSingleValueConditionValid(false)
-export type BranchSingleValueCondition = Static<
+  buildBranchSingleValueConditionValid(false)
+export type BranchSingleValueCondition = z.infer<
   typeof BranchSingleValueCondition
 >
 
 
 export const RouterBranchesSchema = (addMinLength: boolean) =>
-    Type.Array(
-        Type.Union([
-            Type.Object({
-                conditions: Type.Array(Type.Array(BranchConditionValid(addMinLength))),
-                branchType: Type.Literal(BranchExecutionType.CONDITION),
-                branchName: Type.String(),
+    z.array(
+        z.union([
+            z.object({
+                conditions: z.array(z.array(buildBranchConditionValid(addMinLength))),
+                branchType: z.literal(BranchExecutionType.CONDITION),
+                branchName: z.string(),
             }),
-            Type.Object({
-                branchType: Type.Literal(BranchExecutionType.FALLBACK),
-                branchName: Type.String(),
+            z.object({
+                branchType: z.literal(BranchExecutionType.FALLBACK),
+                branchName: z.string(),
             }),
         ]),
     )
 
-export const RouterActionSettings = Type.Object({
+export const RouterActionSettings = z.object({
     ...commonActionSettings,
     branches: RouterBranchesSchema(false),
-    executionType: Type.Enum(RouterExecutionType),
+    executionType: z.nativeEnum(RouterExecutionType),
 })
 
-export const RouterActionSettingsWithValidation = Type.Object({
+export const RouterActionSettingsWithValidation = z.object({
     branches: RouterBranchesSchema(true),
-    executionType: Type.Enum(RouterExecutionType),
+    executionType: z.nativeEnum(RouterExecutionType),
 })
 
-export type RouterActionSettings = Static<typeof RouterActionSettings>
+export type RouterActionSettings = z.infer<typeof RouterActionSettings>
 
 
 
 // Union of all actions
 
-export const FlowAction = Type.Recursive((action) =>
-    Type.Union([
-        Type.Intersect([
-            CodeActionSchema,
-            Type.Object({
-                nextAction: Type.Optional(action),
-            }),
-        ]),
-        Type.Intersect([
-            PieceActionSchema,
-            Type.Object({
-                nextAction: Type.Optional(action),
-            }),
-        ]),
-        Type.Intersect([
-            LoopOnItemsActionSchema,
-            Type.Object({
-                nextAction: Type.Optional(action),
-                firstLoopAction: Type.Optional(action),
-            }),
-        ]),
-        Type.Intersect([
-            Type.Object({
-                ...commonActionProps,
-                type: Type.Literal(FlowActionType.ROUTER),
-                settings: RouterActionSettings,
-            }),
-            Type.Object({
-                nextAction: Type.Optional(action),
-                children: Type.Array(Type.Union([action, Type.Null()])),
-            }),
-        ]),
+export const FlowAction: z.ZodType<FlowAction> = z.lazy(() =>
+    z.union([
+        CodeActionSchema.extend({
+            nextAction: FlowAction.optional(),
+        }),
+        PieceActionSchema.extend({
+            nextAction: FlowAction.optional(),
+        }),
+        LoopOnItemsActionSchema.extend({
+            nextAction: FlowAction.optional(),
+            firstLoopAction: FlowAction.optional(),
+        }),
+        z.object({
+            ...commonActionProps,
+            type: z.literal(FlowActionType.ROUTER),
+            settings: RouterActionSettings,
+            nextAction: FlowAction.optional(),
+            children: z.array(z.union([FlowAction, z.null()])),
+        }),
     ]),
 )
-export const RouterActionSchema = Type.Object({
+export const RouterActionSchema = z.object({
     ...commonActionProps,
-    type: Type.Literal(FlowActionType.ROUTER),
+    type: z.literal(FlowActionType.ROUTER),
     settings: RouterActionSettings,
 })
 
-export const SingleActionSchema = Type.Union([
+export const SingleActionSchema = z.union([
     CodeActionSchema,
     PieceActionSchema,
     LoopOnItemsActionSchema,
     RouterActionSchema,
 ])
-export type FlowAction = Static<typeof FlowAction>
 
+// Manually defined to avoid z.infer in recursive types (causes TypeScript OOM)
+type BaseActionProps = {
+    name: string
+    valid: boolean
+    displayName: string
+    skip?: boolean
+    lastUpdatedDate: string
+}
 
-export type RouterAction = Static<typeof RouterActionSchema> & {
+export type FlowAction =
+    | (BaseActionProps & { type: FlowActionType.CODE, settings: CodeActionSettings, nextAction?: FlowAction })
+    | (BaseActionProps & { type: FlowActionType.PIECE, settings: PieceActionSettings, nextAction?: FlowAction })
+    | (BaseActionProps & { type: FlowActionType.LOOP_ON_ITEMS, settings: LoopOnItemsActionSettings, nextAction?: FlowAction, firstLoopAction?: FlowAction })
+    | (BaseActionProps & { type: FlowActionType.ROUTER, settings: RouterActionSettings, nextAction?: FlowAction, children: (FlowAction | null)[] })
+
+export type RouterAction = BaseActionProps & {
+    type: FlowActionType.ROUTER
+    settings: RouterActionSettings
     nextAction?: FlowAction
     children: (FlowAction | null)[]
 }
 
-export type LoopOnItemsAction = Static<typeof LoopOnItemsActionSchema> & {
+export type LoopOnItemsAction = BaseActionProps & {
+    type: FlowActionType.LOOP_ON_ITEMS
+    settings: LoopOnItemsActionSettings
     nextAction?: FlowAction
     firstLoopAction?: FlowAction
 }
 
-export type PieceAction = Static<typeof PieceActionSchema> & {
+export type PieceAction = BaseActionProps & {
+    type: FlowActionType.PIECE
+    settings: PieceActionSettings
     nextAction?: FlowAction
 }
 
-export type CodeAction = Static<typeof CodeActionSchema> & {
+export type CodeAction = BaseActionProps & {
+    type: FlowActionType.CODE
+    settings: CodeActionSettings
     nextAction?: FlowAction
 }
 

@@ -1,13 +1,13 @@
-import { apDayjs, AppSystemProp, getPlatformPlanNameKey } from '@activepieces/server-common'
+import { apDayjs } from '@activepieces/server-utils'
 import { ActivepiecesError, AiCreditsAutoTopUpState, ApEdition, ApEnvironment, apId, ErrorCode, FlowStatus, isCloudPlanButNotEnterprise, isNil, OPEN_SOURCE_PLAN, PlatformPlan, PlatformPlanLimits, PlatformPlanWithOnlyLimits, PlatformUsage, PlatformUsageMetric, PRICE_ID_MAP, PRICE_NAMES, STANDARD_CLOUD_PLAN, UserWithMetaInformation } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { In } from 'typeorm'
 import { repoFactory } from '../../../core/db/repo-factory'
+import { getPlatformPlanNameKey } from '../../../database/redis/keys'
 import { distributedLock, distributedStore } from '../../../database/redis-connections'
 import { flowRepo } from '../../../flows/flow/flow.repo'
 import { system } from '../../../helper/system/system'
+import { AppSystemProp } from '../../../helper/system/system-props'
 import { platformService } from '../../../platform/platform.service'
-import { projectService } from '../../../project/project-service'
 import { userService } from '../../../user/user-service'
 import { platformAiCreditsService } from './platform-ai-credits.service'
 import { PlatformPlanEntity } from './platform-plan.entity'
@@ -78,7 +78,7 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
 
         try {
             const upcomingInvoice = await stripe.invoices.createPreview({
-                subscription: subscriptionId,
+                subscription: subscriptionId ?? undefined,
             })
 
             return upcomingInvoice.amount_due ? upcomingInvoice.amount_due / 100 : 0
@@ -92,13 +92,12 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
         return isCloudPlanButNotEnterprise(platformPlan.plan)
     },
     async getUsage(platformId: string): Promise<PlatformUsage> {
-        const projectIds = await projectService.getProjectIdsByPlatform(platformId)
-        const activeFlowsCount = await flowRepo().count({
-            where: {
-                projectId: In(projectIds),
-                status: FlowStatus.ENABLED,
-            },
-        })
+        const activeFlowsCount = await flowRepo()
+            .createQueryBuilder('flow')
+            .innerJoin('project', 'project', 'project.id = flow."projectId"')
+            .where('project."platformId" = :platformId', { platformId })
+            .andWhere('flow.status = :status', { status: FlowStatus.ENABLED })
+            .getCount()
         const aiCreditsUsage = await platformAiCreditsService(log).getUsage(platformId)
         return {
             activeFlows: activeFlowsCount,
@@ -112,7 +111,7 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
         if (ApEdition.COMMUNITY === edition) {
             return
         }
-        const platformPlan = await platformPlanService(system.globalLogger()).getOrCreateForPlatform(platformId)
+        const platformPlan = await platformPlanService(log).getOrCreateForPlatform(platformId)
         const usage = await platformPlanService(log).getUsage(platformId)
         if (!isNil(platformPlan.activeFlowsLimit) && usage.activeFlows >= platformPlan.activeFlowsLimit) {
             throw new ActivepiecesError({
@@ -149,8 +148,8 @@ function getInitialPlanByEdition(): PlatformPlanWithOnlyLimits {
 }
 
 async function createInitialBilling(platformId: string, log: FastifyBaseLogger): Promise<PlatformPlan> {
-    const platform = await platformService.getOneOrThrow(platformId)
-    const user = await userService.getMetaInformation({ id: platform.ownerId })
+    const platform = await platformService(log).getOneOrThrow(platformId)
+    const user = await userService(log).getMetaInformation({ id: platform.ownerId })
     const stripeCustomerId = await createInitialCustomer(user, platformId, log)
 
     const defaultStartDate = apDayjs().startOf('month').unix()
@@ -188,5 +187,5 @@ async function createInitialCustomer(user: UserWithMetaInformation, platformId: 
 }
 
 type GetBillingAmountParams = {
-    subscriptionId?: string
+    subscriptionId?: string | null
 }

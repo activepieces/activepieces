@@ -1,3 +1,4 @@
+import type { FlowRunId } from '../../automation/flow-run/flow-run'
 import type { FlowId } from '../../automation/flows/flow'
 import type { FlowVersionId } from '../../automation/flows/flow-version'
 import type { PlatformUsageMetric } from '../../management/platform'
@@ -31,6 +32,7 @@ export type ApErrorParams =
     | FlowIsLockedErrorParams
     | FlowOperationErrorParams
     | FlowOperationInProgressErrorParams
+    | FlowRunRetryOutsideRetentionErrorParams
     | InvalidApiKeyParams
     | InvalidAppConnectionParams
     | InvalidBearerTokenParams
@@ -84,6 +86,7 @@ export type ApErrorParams =
     | MachineNotConnectedParams
     | DoesNotMeetBusinessRequirementsParams
     | PieceSyncNotSupportedErrorParams
+    | SandboxLogSizeExceededParams
     | SecretManagerConnectionFailedParams
     | SecretManagerGetSecretFailedParams
     | SecretManagerKeyNotSecretParams
@@ -166,6 +169,14 @@ export type SystemInvalidErrorParams = BaseErrorParams<
 ErrorCode.SYSTEM_PROP_INVALID,
 {
     prop: string
+}
+>
+
+export type FlowRunRetryOutsideRetentionErrorParams = BaseErrorParams<
+ErrorCode.FLOW_RUN_RETRY_OUTSIDE_RETENTION,
+{
+    flowRunId: FlowRunId
+    failedJobRetentionDays: number
 }
 >
 
@@ -437,6 +448,11 @@ export type DoesNotMeetBusinessRequirementsParams = BaseErrorParams<ErrorCode.DO
     message: string
 }>
 
+export type SandboxLogSizeExceededParams = BaseErrorParams<ErrorCode.SANDBOX_LOG_SIZE_EXCEEDED, {
+    standardOutput: string
+    standardError: string
+}>
+
 export type SecretManagerConnectionFailedParams = BaseErrorParams<ErrorCode.SECRET_MANAGER_CONNECTION_FAILED, {
     message: string
     provider: string
@@ -459,6 +475,7 @@ export type InvalidAIProviderCredentialsParams = BaseErrorParams<ErrorCode.INVAL
 }>
 
 export enum ErrorCode {
+    INTERNAL_SERVER_ERROR = 'INTERNAL_SERVER_ERROR',
     MACHINE_NOT_CONNECTED = 'MACHINE_NOT_CONNECTED',
     MACHINE_NOT_AVAILABLE = 'MACHINE_NOT_AVAILABLE',
     INVALID_CUSTOM_DOMAIN = 'INVALID_CUSTOM_DOMAIN',
@@ -484,6 +501,7 @@ export enum ErrorCode {
     FLOW_OPERATION_INVALID = 'FLOW_OPERATION_INVALID',
     FLOW_OPERATION_IN_PROGRESS = 'FLOW_OPERATION_IN_PROGRESS',
     FLOW_IN_USE = 'FLOW_IN_USE',
+    FLOW_RUN_RETRY_OUTSIDE_RETENTION = 'FLOW_RUN_RETRY_OUTSIDE_RETENTION',
     INVALID_API_KEY = 'INVALID_API_KEY',
     INVALID_APP_CONNECTION = 'INVALID_APP_CONNECTION',
     INVALID_BEARER_TOKEN = 'INVALID_BEARER_TOKEN',
@@ -520,6 +538,7 @@ export enum ErrorCode {
     SUBFLOW_FAILED = 'SUBFLOW_FAILED',
     DOES_NOT_MEET_BUSINESS_REQUIREMENTS = 'DOES_NOT_MEET_BUSINESS_REQUIREMENTS',
     PIECE_SYNC_NOT_SUPPORTED = 'PIECE_SYNC_NOT_SUPPORTED',
+    SANDBOX_LOG_SIZE_EXCEEDED = 'SANDBOX_LOG_SIZE_EXCEEDED',
     SECRET_MANAGER_CONNECTION_FAILED = 'SECRET_MANAGER_CONNECTION_FAILED',
     SECRET_MANAGER_GET_SECRET_FAILED = 'SECRET_MANAGER_GET_SECRET_FAILED',
     SECRET_MANAGER_KEY_NOT_SECRET = 'SECRET_MANAGER_KEY_NOT_SECRET',

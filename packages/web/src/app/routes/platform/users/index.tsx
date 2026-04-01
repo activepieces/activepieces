@@ -1,26 +1,24 @@
 import {
-  InvitationType,
   UserInvitation,
   UserStatus,
   UserWithMetaInformation,
 } from '@activepieces/shared';
-import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { User, UserPlus } from 'lucide-react';
+import { User } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { toast } from 'sonner';
 
-import { platformUserApi } from '@/api/platform-user-api';
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { DataTable } from '@/components/custom/data-table';
+import { UserRoundPlusIcon } from '@/components/icons/user-round-plus';
 import { Button } from '@/components/ui/button';
-import { userInvitationApi, InviteUserDialog } from '@/features/members';
-import { platformUserHooks } from '@/hooks/platform-user-hooks';
+import { InviteUserDialog } from '@/features/members';
+import {
+  platformUserHooks,
+  platformUserMutations,
+} from '@/features/platform-admin/hooks/platform-user-hooks';
 
-import { DeleteUserAction } from './actions/delete-user-action';
-import { EditUserAction } from './actions/edit-user-action';
-import { ToggleUserStatusAction } from './actions/toggle-user-status-action';
+import { UserActions } from './actions/user-actions';
 import { createUsersTableColumns } from './columns';
 
 export type UserRowData =
@@ -48,20 +46,7 @@ export default function UsersPage() {
     data: invitationsData,
     isLoading: invitationsLoading,
     refetch: refetchInvitations,
-  } = useQuery<UserInvitation[]>({
-    queryFn: () => {
-      return userInvitationApi
-        .list({
-          type: InvitationType.PLATFORM,
-          cursor: undefined,
-          limit: 100,
-          projectId: null,
-        })
-        .then((res) => res.data);
-    },
-    queryKey: ['platform-invitations'],
-    staleTime: 0,
-  });
+  } = platformUserHooks.usePlatformInvitations();
 
   const refetch = () => {
     refetchUsers();
@@ -88,57 +73,15 @@ export default function UsersPage() {
 
   const isLoading = usersLoading || invitationsLoading;
 
-  const { mutate: deleteUser, isPending: isDeleting } = useMutation({
-    mutationKey: ['delete-user'],
-    mutationFn: async (userId: string) => {
-      await platformUserApi.delete(userId);
-    },
-    onSuccess: () => {
-      refetch();
-      toast.success(t('User deleted successfully'), {
-        duration: 3000,
-      });
-    },
+  const { mutate: deleteUser } = platformUserMutations.useDeleteUser({
+    onSuccess: refetch,
   });
 
-  const { mutate: deleteInvitation, isPending: isDeletingInvitation } =
-    useMutation({
-      mutationKey: ['delete-invitation'],
-      mutationFn: async (invitationId: string) => {
-        await userInvitationApi.delete(invitationId);
-      },
-      onSuccess: () => {
-        refetch();
-        toast.success(t('Invitation deleted successfully'), {
-          duration: 3000,
-        });
-      },
-    });
+  const { mutate: deleteInvitation } =
+    platformUserMutations.useDeleteInvitation({ onSuccess: refetch });
 
-  const { mutate: updateUserStatus, isPending: isUpdatingStatus } = useMutation(
-    {
-      mutationFn: async (data: { userId: string; status: UserStatus }) => {
-        await platformUserApi.update(data.userId, {
-          status: data.status,
-        });
-        return {
-          userId: data.userId,
-          status: data.status,
-        };
-      },
-      onSuccess: (data) => {
-        refetch();
-        toast.success(
-          data.status === UserStatus.ACTIVE
-            ? t('User activated successfully')
-            : t('User deactivated successfully'),
-          {
-            duration: 3000,
-          },
-        );
-      },
-    },
-  );
+  const { mutate: updateUserStatus, isPending: isUpdatingStatus } =
+    platformUserMutations.useUpdateUserStatus({ onSuccess: refetch });
 
   const handleDelete = (id: string, isInvitation: boolean) => {
     if (isInvitation) {
@@ -173,16 +116,7 @@ export default function UsersPage() {
           description={t(
             'Manage, delete, activate and deactivate users on platform',
           )}
-        >
-          <Button
-            className="gap-2"
-            size="sm"
-            onClick={() => setInviteOpen(true)}
-          >
-            <UserPlus className="w-4 h-4" />
-            <span className="text-sm font-medium">{t('Invite')}</span>
-          </Button>
-        </DashboardPageHeader>
+        />
         <DataTable
           emptyStateTextTitle={t('No users found')}
           emptyStateTextDescription={t('Start inviting users to your project')}
@@ -195,20 +129,25 @@ export default function UsersPage() {
           }}
           hidePagination={true}
           isLoading={isLoading}
+          toolbarButtons={[
+            <Button
+              key="invite"
+              className="gap-2"
+              size="sm"
+              onClick={() => setInviteOpen(true)}
+            >
+              <UserRoundPlusIcon size={16} />
+              <span className="text-sm font-medium">{t('Invite')}</span>
+            </Button>,
+          ]}
           actions={[
-            (row) => <EditUserAction row={row} onUpdate={refetch} />,
             (row) => (
-              <ToggleUserStatusAction
+              <UserActions
                 row={row}
                 isUpdatingStatus={isUpdatingStatus}
-                onToggleStatus={handleToggleStatus}
-              />
-            ),
-            (row) => (
-              <DeleteUserAction
-                row={row}
-                isDeleting={isDeleting || isDeletingInvitation}
                 onDelete={handleDelete}
+                onToggleStatus={handleToggleStatus}
+                onUpdate={refetch}
               />
             ),
           ]}

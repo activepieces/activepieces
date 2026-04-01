@@ -22,13 +22,13 @@ import { TagWithBright } from '@/components/custom/tag-with-bright';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useSidebar } from '@/components/ui/sidebar-shadcn';
+import { UseTemplateDialog } from '@/features/templates/components/use-template-dialog';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/format-utils';
 import { FROM_QUERY_PARAM } from '@/lib/navigation-utils';
 
 import { FlowCard } from './flow-card';
 import { PieceCard } from './piece-card';
-import { UseTemplateDialog } from './use-template-dialog';
 
 type TemplateDetailsPageProps = {
   template: Template;
@@ -143,7 +143,7 @@ const TemplateDetailsPage = ({ template }: TemplateDetailsPageProps) => {
               className="flex items-center gap-2"
             >
               <ArrowLeft className="w-4 h-4" />
-              <span className="text-sm font-semibold whitespace-nowrap">
+              <span className="text-sm font-medium whitespace-nowrap">
                 {t('All Templates')}
               </span>
             </Button>
@@ -158,7 +158,7 @@ const TemplateDetailsPage = ({ template }: TemplateDetailsPageProps) => {
         <div className="grid grid-cols-1 lg:grid-cols-[2fr_3fr] h-full w-full overflow-hidden">
           <ScrollArea className="h-full w-full">
             <div className="flex flex-col gap-4 px-6 mt-6 min-w-0">
-              <span className="text-2xl font-bold">{template.name}</span>
+              <span className="text-xl font-medium">{template.name}</span>
 
               {!isNil(template.tags) && template.tags.length > 0 && (
                 <div className="flex gap-2 flex-wrap min-w-0">
@@ -199,7 +199,7 @@ const TemplateDetailsPage = ({ template }: TemplateDetailsPageProps) => {
                 </div>
 
                 <div className="flex flex-col gap-2">
-                  <span className="text-sm font-semibold">
+                  <span className="text-sm font-medium">
                     {t('About this template')}
                   </span>
                   <p className="text-sm text-muted-foreground leading-relaxed">
@@ -209,7 +209,7 @@ const TemplateDetailsPage = ({ template }: TemplateDetailsPageProps) => {
 
                 {template.flows && (
                   <div className="flex flex-col gap-2">
-                    <span className="text-sm font-semibold">
+                    <span className="text-sm font-medium">
                       {t("What's included?")}
                     </span>
 
@@ -234,7 +234,7 @@ const TemplateDetailsPage = ({ template }: TemplateDetailsPageProps) => {
                 )}
 
                 <div className="flex flex-col gap-2">
-                  <span className="text-sm font-semibold">
+                  <span className="text-sm font-medium">
                     {t('Used Pieces')}
                   </span>
                   <div className="flex flex-wrap gap-2">

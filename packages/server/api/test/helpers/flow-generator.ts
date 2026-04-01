@@ -1,4 +1,5 @@
-import { apId, FlowAction, FlowActionType, FlowOperationStatus, FlowStatus, FlowTrigger, FlowTriggerType, FlowVersion, FlowVersionState, PopulatedFlow } from '@activepieces/shared'
+import { apId, FlowAction, FlowActionType, FlowOperationStatus, FlowStatus, FlowTrigger, FlowTriggerType, FlowVersion, FlowVersionState, PopulatedFlow, PropertyExecutionType } from '@activepieces/shared'
+import dayjs from 'dayjs'
 import { faker } from '@faker-js/faker'
 
 
@@ -54,10 +55,10 @@ function randomizeTriggerMetadata(trigger: FlowTrigger): FlowTrigger {
         settings: {
             ...trigger.settings,
             propertySettings: {
-                server: faker.internet.url(),
-                port: faker.color.cmyk(),
-                username: faker.internet.userName(),
-                password: faker.internet.password(),
+                server: { type: PropertyExecutionType.MANUAL },
+                port: { type: PropertyExecutionType.MANUAL },
+                username: { type: PropertyExecutionType.DYNAMIC },
+                password: { type: PropertyExecutionType.MANUAL },
             },
         },
     }
@@ -68,6 +69,7 @@ function generateAction(): FlowAction {
         displayName: faker.hacker.noun(),
         name: apId(),
         skip: false,
+        lastUpdatedDate: dayjs().toISOString(),
         settings: {
             input: {},
             pieceName: faker.helpers.arrayElement(['@activepieces/piece-schedule', '@activepieces/piece-webhook']),
@@ -84,6 +86,7 @@ function generateTrigger(): FlowTrigger {
         type: FlowTriggerType.PIECE,
         displayName: faker.hacker.noun(),
         name: apId(),
+        lastUpdatedDate: dayjs().toISOString(),
         settings: {
             pieceName: faker.helpers.arrayElement(['@activepieces/piece-schedule', '@activepieces/piece-webhook']),
             pieceVersion: faker.system.semver(),

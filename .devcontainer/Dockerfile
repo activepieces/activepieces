@@ -1,5 +1,5 @@
-# [Choice] Node.js version: 22, 20, 18
-ARG VARIANT=22-bullseye
+# [Choice] Node.js version: 24, 22, 20
+ARG VARIANT=24-bullseye
 FROM mcr.microsoft.com/devcontainers/javascript-node:${VARIANT}
 
 # [Optional] Uncomment this section to install additional OS packages.
@@ -31,8 +31,8 @@ ENV LC_ALL en_US.UTF-8
 
 COPY default.cf /usr/local/etc/isolate
 
-RUN npm i -g bun@1.3.1 npm@9.9.3 cross-env@7.0.3
+RUN npm i -g bun@1.3.1 cross-env@7.0.3 pnpm@10.33.0 esbuild@0.25.0
 
 
 # install isolated-vm in a parent directory to avoid linking the package in every sandbox
-RUN cd /usr/src && bun i isolated-vm@5.0.1
+RUN cd /usr/src && bun i isolated-vm@6.0.2

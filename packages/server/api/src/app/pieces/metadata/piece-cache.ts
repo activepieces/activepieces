@@ -1,5 +1,4 @@
 import { pieceTranslation } from '@activepieces/pieces-framework'
-import { AppSystemProp } from '@activepieces/server-common'
 import { ApEnvironment, isNil, LocalesEnum, PieceType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { lru, LRU } from 'tiny-lru'
@@ -7,6 +6,7 @@ import { In, IsNull } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { pubsub } from '../../helper/pubsub'
 import { system } from '../../helper/system/system'
+import { AppSystemProp, apVersionUtil } from '../../helper/system/system-props'
 import { PieceMetadataEntity, PieceMetadataSchema } from './piece-metadata-entity'
 import { filterPieceBasedOnType, isNewerVersion, isSupportedRelease, lastVersionOfEachPiece, loadDevPiecesIfEnabled } from './utils'
 
@@ -22,12 +22,14 @@ export enum PieceMetadataRefreshType {
     CREATE = 'CREATE',
     DELETE = 'DELETE',
     UPDATE_USAGE = 'UPDATE_USAGE',
+    BULK_SYNC = 'BULK_SYNC',
 }
 
 export type PieceMetadataRefreshMessage =
     | { type: PieceMetadataRefreshType.CREATE, piece: PieceMetadataSchema }
     | { type: PieceMetadataRefreshType.DELETE, pieces: { name: string, version: string }[] }
     | { type: PieceMetadataRefreshType.UPDATE_USAGE, piece: { name: string, version: string, platformId?: string, projectUsage: number } }
+    | { type: PieceMetadataRefreshType.BULK_SYNC }
 
 const CACHE_KEY = {
     list: (locale: LocalesEnum): string => `list:${locale}`,
@@ -64,10 +66,11 @@ export const pieceCache = (log: FastifyBaseLogger) => {
                 pieceTranslation.translatePiece<PieceMetadataSchema>({ piece, locale, mutate: true }),
             )
 
+            const currentRelease = await apVersionUtil.getCurrentRelease()
             const devPieceNames = new Set(translatedDevPieces.map((p) => p.name))
-            const filteredPieces = [...cachedPieces.filter((p) => !devPieceNames.has(p.name)), ...translatedDevPieces].filter((piece) =>
-                filterPieceBasedOnType(platformId, piece),
-            )
+            const filteredPieces = [...cachedPieces.filter((p) => !devPieceNames.has(p.name)), ...translatedDevPieces]
+                .filter((piece) => filterPieceBasedOnType(platformId, piece))
+                .filter((piece) => isSupportedRelease(currentRelease, piece))
             return lastVersionOfEachPiece(filteredPieces)
         },
 
@@ -220,6 +223,9 @@ function handleRefreshMessage(message: PieceMetadataRefreshMessage): void {
             }
             break
         }
+        case PieceMetadataRefreshType.BULK_SYNC:
+            invalidateAggregateCaches()
+            break
     }
 }
 

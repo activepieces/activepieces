@@ -71,6 +71,9 @@
       "@activepieces/piece-amazon-sqs": [
         "packages/pieces/community/amazon-sqs/src/index.ts"
       ],
+      "@activepieces/piece-amazon-textract": [
+        "packages/pieces/community/amazon-textract/src/index.ts"
+      ],
       "@activepieces/piece-aminos": [
         "packages/pieces/community/aminos/src/index.ts"
       ],
@@ -219,6 +222,9 @@
       "@activepieces/piece-chatbase": [
         "packages/pieces/community/chatbase/src/index.ts"
       ],
+      "@activepieces/piece-chatwoot": [
+      "packages/pieces/community/chatwoot/src/index.ts"
+      ],
       "@activepieces/piece-checkout": [
         "packages/pieces/community/checkout/src/index.ts"
       ],
@@ -246,11 +252,17 @@
       "@activepieces/piece-clockify": [
         "packages/pieces/community/clockify/src/index.ts"
       ],
+      "@activepieces/piece-everhour": [
+        "packages/pieces/community/everhour/src/index.ts"
+      ],
       "@activepieces/piece-clockodo": [
         "packages/pieces/community/clockodo/src/index.ts"
       ],
       "@activepieces/piece-close": [
         "packages/pieces/community/close/src/index.ts"
+      ],
+      "@activepieces/piece-cohere": [
+      "packages/pieces/community/cohere/src/index.ts"
       ],
       "@activepieces/piece-cloudconvert": [
         "packages/pieces/community/cloudconvert/src/index.ts"
@@ -367,6 +379,9 @@
       "@activepieces/piece-drupal": [
         "packages/pieces/community/drupal/src/index.ts"
       ],
+      "@activepieces/piece-dub": [
+        "packages/pieces/community/dub/src/index.ts"
+      ],
       "@activepieces/piece-dumpling-ai": [
         "packages/pieces/community/dumpling-ai/src/index.ts"
       ],
@@ -388,6 +403,9 @@
       ],
       "@activepieces/piece-facebook-pages": [
         "packages/pieces/community/facebook-pages/src/index.ts"
+      ],
+      "@activepieces/piece-fathom-analytics": [
+        "packages/pieces/community/fathom-analytics/src/index.ts"
       ],
       "@activepieces/piece-figma": [
         "packages/pieces/community/figma/src/index.ts"
@@ -455,6 +473,9 @@
       "@activepieces/piece-generatebanners": [
         "packages/pieces/community/generatebanners/src/index.ts"
       ],
+      "@activepieces/piece-getresponse": [
+        "packages/pieces/community/getresponse/src/index.ts"
+      ],
       "@activepieces/piece-ghostcms": [
         "packages/pieces/community/ghostcms/src/index.ts"
       ],
@@ -466,6 +487,9 @@
       ],
       "@activepieces/piece-gmail": [
         "packages/pieces/community/gmail/src/index.ts"
+      ],
+      "@activepieces/piece-google-bigquery": [
+        "packages/pieces/community/google-bigquery/src/index.ts"
       ],
       "@activepieces/piece-google-calendar": [
         "packages/pieces/community/google-calendar/src/index.ts"
@@ -584,6 +608,9 @@
       "@activepieces/piece-jira-cloud": [
         "packages/pieces/community/jira-cloud/src/index.ts"
       ],
+      "@activepieces/piece-jira-data-center": [
+        "packages/pieces/community/jira-data-center/src/index.ts"
+      ],
       "@activepieces/piece-jotform": [
         "packages/pieces/community/jotform/src/index.ts"
       ],
@@ -598,6 +625,9 @@
       ],
       "@activepieces/piece-kizeo-forms": [
         "packages/pieces/community/kizeo-forms/src/index.ts"
+      ],
+      "@activepieces/piece-klaviyo": [
+        "packages/pieces/community/klaviyo/src/index.ts"
       ],
       "@activepieces/piece-knack": [
         "packages/pieces/community/knack/src/index.ts"
@@ -811,7 +841,7 @@
       "@activepieces/piece-pastefy": [
         "packages/pieces/community/pastefy/src/index.ts"
       ],
-      "@activepieces/piece-pdf": ["packages/pieces/community/pdf/src/index.ts"],
+      "@activepieces/piece-pdf": ["packages/pieces/core/pdf/src/index.ts"],
       "@activepieces/piece-pdf-co": [
         "packages/pieces/community/pdf-co/src/index.ts"
       ],
@@ -854,11 +884,17 @@
       "@activepieces/piece-posthog": [
         "packages/pieces/community/posthog/src/index.ts"
       ],
+      "@activepieces/piece-postiz": [
+        "packages/pieces/community/postiz/src/index.ts"
+      ],
       "@activepieces/piece-predict-leads": [
         "packages/pieces/community/predict-leads/src/index.ts"
       ],
       "@activepieces/piece-productboard": [
         "packages/pieces/community/productboard/src/index.ts"
+      ],
+      "@activepieces/piece-promotekit": [
+        "packages/pieces/community/promotekit/src/index.ts"
       ],
       "@activepieces/piece-prompthub": [
         "packages/pieces/community/prompthub/src/index.ts"
@@ -939,6 +975,9 @@
       "@activepieces/piece-salesforce": [
         "packages/pieces/community/salesforce/src/index.ts"
       ],
+      "@activepieces/piece-savvycal": [
+        "packages/pieces/community/savvycal/src/index.ts"
+      ],
       "@activepieces/piece-scenario": [
         "packages/pieces/community/scenario/src/index.ts"
       ],
@@ -971,6 +1010,9 @@
       ],
       "@activepieces/piece-sendy": [
         "packages/pieces/community/sendy/src/index.ts"
+      ],
+      "@activepieces/piece-senja": [
+        "packages/pieces/community/senja/src/index.ts"
       ],
       "@activepieces/piece-serp-api": [
         "packages/pieces/community/serp-api/src/index.ts"
@@ -1095,6 +1137,9 @@
       "@activepieces/piece-tally": [
         "packages/pieces/community/tally/src/index.ts"
       ],
+      "@activepieces/piece-tapfiliate": [
+        "packages/pieces/community/tapfiliate/src/index.ts"
+      ],
       "@activepieces/piece-tarvent": [
         "packages/pieces/community/tarvent/src/index.ts"
       ],
@@ -1153,11 +1198,17 @@
       "@activepieces/piece-twilio": [
         "packages/pieces/community/twilio/src/index.ts"
       ],
+      "@activepieces/piece-typefully": [
+        "packages/pieces/community/typefully/src/index.ts"
+      ],
       "@activepieces/piece-twin-labs": [
         "packages/pieces/community/twin-labs/src/index.ts"
       ],
       "@activepieces/piece-twitter": [
         "packages/pieces/community/twitter/src/index.ts"
+      ],
+      "@activepieces/piece-twenty": [
+        "packages/pieces/community/twenty/src/index.ts"
       ],
       "@activepieces/piece-typeform": [
         "packages/pieces/community/typeform/src/index.ts"
@@ -1218,6 +1269,9 @@
       ],
       "@activepieces/piece-whatsapp": [
         "packages/pieces/community/whatsapp/src/index.ts"
+      ],
+      "@activepieces/piece-whatsscale": [
+        "packages/pieces/community/whatsscale/src/index.ts"
       ],
       "@activepieces/piece-wonderchat": [
         "packages/pieces/community/wonderchat/src/index.ts"
@@ -1290,8 +1344,7 @@
       "@activepieces/piece-meistertask": [
         "packages/pieces/community/meistertask/src/index.ts"
       ],
-      "@activepieces/sandbox": ["packages/server/sandbox/src/index.ts"],
-      "@activepieces/server-common": ["packages/server/common/src/index.ts"],
+      "@activepieces/server-utils": ["packages/server/utils/src/index.ts"],
       "@activepieces/shared": ["packages/shared/src/index.ts"],
       "@ee/*": ["packages/ee/*"],
       "Aminos": ["packages/pieces/community/Aminos/src/index.ts"],
@@ -1314,7 +1367,6 @@
         "packages/pieces/community/cashfree-payments/src/index.ts"
       ],
       "ee-embed-sdk": ["packages/ee/embed-sdk/src/index.ts"],
-      "worker": ["packages/server/worker/src/index.ts"],
       "ui-feature-forms": ["packages/ui/features-forms/src/index.ts"],
       "@activepieces/piece-kissflow": [
         "packages/pieces/community/kissflow/src/index.ts"
@@ -1333,6 +1385,9 @@
       ],
       "@activepieces/piece-formspark": [
         "packages/pieces/community/formspark/src/index.ts"
+      ],
+      "@activepieces/piece-webex": [
+        "packages/pieces/community/webex/src/index.ts"
       ],
       "@activepieces/piece-tableau": [
         "packages/pieces/community/tableau/src/index.ts"
@@ -1557,6 +1612,9 @@
       "@activepieces/piece-lofty": [
         "packages/pieces/community/lofty/src/index.ts"
       ],
+      "@activepieces/piece-loops": [
+        "packages/pieces/community/loops/src/index.ts"
+      ],
       "@activepieces/piece-youcanbookme": [
         "packages/pieces/community/youcanbookme/src/index.ts"
       ],
@@ -1667,6 +1725,9 @@
       ],
       "@activepieces/piece-barcode-lookup": [
         "packages/pieces/community/barcode-lookup/src/index.ts"
+      ],
+      "@activepieces/piece-intruder": [
+        "packages/pieces/community/intruder/src/index.ts"
       ],
       "@activepieces/piece-tidely": [
         "packages/pieces/community/tidely/src/index.ts"
@@ -1788,6 +1849,9 @@
       "@activepieces/piece-google-search": [
         "packages/pieces/community/google-search/src/index.ts"
       ],
+      "@activepieces/piece-microsoft-copilot": [
+        "packages/pieces/community/microsoft-copilot/src/index.ts"
+      ],
       "@activepieces/piece-asknews": [
         "packages/pieces/community/asknews/src/index.ts"
       ],
@@ -1796,6 +1860,9 @@
       ],
       "@activepieces/piece-alai": [
         "packages/pieces/community/alai/src/index.ts"
+      ],
+      "@activepieces/piece-algolia": [
+        "packages/pieces/community/algolia/src/index.ts"
       ],
       "@activepieces/piece-kapso": [
         "packages/pieces/community/kapso/src/index.ts"
@@ -1815,6 +1882,21 @@
       "@activepieces/piece-validatedmails": [
         "packages/pieces/community/validatedmails/src/index.ts"
       ],
+      "@activepieces/piece-coralogix": [
+        "packages/pieces/community/coralogix/src/index.ts"
+      ],
+      "@activepieces/piece-pocketbase": [
+        "packages/pieces/community/pocketbase/src/index.ts"
+      ],
+      "@activepieces/piece-carbone": [
+        "packages/pieces/community/carbone/src/index.ts"
+      ],
+      "@activepieces/piece-emailit": [
+        "packages/pieces/community/emailit/src/index.ts"
+      ],
+      "@activepieces/piece-bland-ai": [
+        "packages/pieces/community/bland-ai/src/index.ts"
+      ]
     },
     "resolveJsonModule": true
   },

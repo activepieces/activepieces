@@ -35,12 +35,13 @@ const ApFieldActionMenuItemRenderer = ({
         <ConfirmationDeleteDialog
           title={t('Delete Field')}
           message={t(
-            'Are you sure you want to delete this field? This action cannot be undone.',
+            'This field and all its data will be permanently deleted.',
           )}
           mutationFn={async () => {
             await deleteField(field.index);
           }}
           entityName={t('field')}
+          buttonText={t('Delete')}
         >
           <DropdownMenuItem
             onSelect={(e) => {
@@ -58,7 +59,7 @@ const ApFieldActionMenuItemRenderer = ({
     case FieldActionType.RENAME:
       return (
         <DropdownMenuItem
-          onSelect={(e) => {
+          onSelect={() => {
             setPopoverContent(<RenameFieldPopoverContent name={field.name} />);
             //this is needed because the popover is not open when the content is set
             // so we need to wait for the next frame to open it

@@ -1,8 +1,8 @@
 import { PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
-import { ProjectResourceType, securityAccess } from '@activepieces/server-common'
 import {
     ActivepiecesError,
     ALL_PRINCIPAL_TYPES,
+    EngineResponse,
     ErrorCode,
     GetPieceRequestParams,
     GetPieceRequestQuery,
@@ -18,21 +18,20 @@ import {
     SampleDataFileType,
     WorkerJobType,
 } from '@activepieces/shared'
-import {
-    FastifyPluginAsyncTypebox,
-} from '@fastify/type-provider-typebox'
-import { EngineHelperPropResult, OperationResponse } from 'worker'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import { ProjectResourceType } from '../../core/security/authorization/common'
+import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { flowService } from '../../flows/flow/flow.service'
 import { sampleDataService } from '../../flows/step-run/sample-data.service'
 import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
 import { pieceSyncService } from '../piece-sync-service'
 import { getPiecePackageWithoutArchive, pieceMetadataService } from './piece-metadata-service'
 
-export const pieceModule: FastifyPluginAsyncTypebox = async (app) => {
+export const pieceModule: FastifyPluginAsyncZod = async (app) => {
     await app.register(basePiecesController, { prefix: '/v1/pieces' })
 }
 
-const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
+const basePiecesController: FastifyPluginAsyncZod = async (app) => {
 
     app.get(
         '/categories',
@@ -135,7 +134,7 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
                 versionId: req.body.flowVersionId,
             })
             const sampleData = await sampleDataService(req.log).getSampleDataForFlow(projectId, flow.version, SampleDataFileType.OUTPUT)
-            const { result } = await userInteractionWatcher(req.log).submitAndWaitForResponse<OperationResponse<EngineHelperPropResult>>({
+            const { response } = await userInteractionWatcher.submitAndWaitForResponse<EngineResponse<unknown>>({
                 jobType: WorkerJobType.EXECUTE_PROPERTY,
                 platformId: platform.id,
                 projectId,
@@ -146,8 +145,8 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
                 sampleData,
                 searchValue: req.body.searchValue,
                 piece: await getPiecePackageWithoutArchive(req.log, platform.id, req.body),
-            })
-            return result
+            }, req.log)
+            return response
         },
     )
 

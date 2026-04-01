@@ -1,6 +1,5 @@
 import {
   FlowStatus,
-  FlowStatusUpdatedResponse,
   Permission,
   PopulatedFlow,
   isNil,
@@ -43,13 +42,13 @@ const FlowStatusToggle = ({ flow }: FlowStatusToggleProps) => {
     flowHooks.useChangeFlowStatus({
       flowId: flow.id,
       change: isFlowPublished ? FlowStatus.DISABLED : FlowStatus.ENABLED,
-      onSuccess: (response: FlowStatusUpdatedResponse) => {
-        setIsFlowPublished(response.flow.status === FlowStatus.ENABLED);
+      onSuccess: (updatedFlow: PopulatedFlow) => {
+        setIsFlowPublished(updatedFlow.status === FlowStatus.ENABLED);
       },
     });
 
   return (
-    <>
+    <div className="flex items-center justify-start">
       <ApErrorDialog />
       <Tooltip>
         <TooltipTrigger asChild>
@@ -91,7 +90,7 @@ const FlowStatusToggle = ({ flow }: FlowStatusToggleProps) => {
           </Tooltip>
         )
       )}
-    </>
+    </div>
   );
 };
 

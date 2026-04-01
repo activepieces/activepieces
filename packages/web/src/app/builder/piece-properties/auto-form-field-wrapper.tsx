@@ -122,7 +122,7 @@ function AutoFormFielWrapperErrorBoundary({
     <ErrorBoundary
       fallbackRender={() => (
         <div className="text-sm  flex items-center justify-between">
-          <div className="text-red-500">
+          <div className="text-destructive">
             {t('input value is invalid, please contact support')}
           </div>
           <Button

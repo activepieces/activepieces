@@ -2,6 +2,7 @@ import { PieceMetadata, PieceMetadataModel } from '@activepieces/pieces-framewor
 import {
     ActivepiecesError,
     AddPieceRequestBody,
+    EngineResponse,
     EngineResponseStatus,
     ErrorCode,
     ExecuteExtractPieceMetadata,
@@ -17,7 +18,6 @@ import {
     WorkerJobType,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { OperationResponse } from 'worker'
 import { fileService } from '../file/file.service'
 import { userInteractionWatcher } from '../workers/user-interaction-watcher'
 import { pieceMetadataService } from './metadata/piece-metadata-service'
@@ -98,17 +98,17 @@ async function savePiecePackage(platformId: string | undefined, params: AddPiece
 }
 
 const extractPieceInformation = async (request: ExecuteExtractPieceMetadata, log: FastifyBaseLogger): Promise<PieceMetadata> => {
-    const engineResponse = await userInteractionWatcher(log).submitAndWaitForResponse<OperationResponse<PieceMetadata>>({
+    const engineResponse = await userInteractionWatcher.submitAndWaitForResponse<EngineResponse<PieceMetadata>>({
         jobType: WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
         platformId: request.platformId,
         piece: request,
         projectId: undefined,
-    })
+    }, log)
 
     if (engineResponse.status !== EngineResponseStatus.OK) {
-        throw new Error(engineResponse.standardError)
+        throw new Error(engineResponse.error)
     }
-    return engineResponse.result
+    return engineResponse.response
 }
 
 const saveArchive = async (

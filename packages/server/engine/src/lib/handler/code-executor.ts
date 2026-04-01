@@ -45,11 +45,11 @@ const executeAction: ActionHandler<CodeAction> = async ({ action, executionState
             throw new EngineGenericError('RunEnvironmentNotSetError', 'Run environment is not set')
         }
 
-        const codeFilePath = path.resolve(`${constants.baseCodeDirectory}/${constants.flowVersionId}/${action.name}/index.js`)
+        const artifactPath = path.resolve(`${constants.baseCodeDirectory}/${constants.flowVersionId}/${action.name}/index.js`)
         const codeSandbox = await initCodeSandbox()
 
         const output = await codeSandbox.runCodeModule({
-            codeFilePath,
+            codeFilePath: artifactPath,
             inputs: resolvedInput,
         })
     

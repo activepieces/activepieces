@@ -38,25 +38,6 @@ function SidebarLogoCollapsed({ linkTo }: { linkTo?: string }) {
   );
 }
 
-function SidebarLogoFull({ linkTo }: { linkTo?: string }) {
-  const branding = flagsHooks.useWebsiteBranding();
-  const navigate = useNavigate();
-
-  return (
-    <SidebarMenuButton
-      onClick={() => navigate(linkTo || '/')}
-      className="h-10! group-data-[collapsible=icon]:h-10! justify-start items-center"
-    >
-      <img
-        src={branding.logos.fullLogoUrl}
-        alt={t('home')}
-        className="h-8 object-contain animate-in fade-in duration-100 delay-[100ms] fill-mode-backwards"
-        draggable={false}
-      />
-    </SidebarMenuButton>
-  );
-}
-
 export const AppSidebarHeader = () => {
   const { embedState } = useEmbedding();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
@@ -65,19 +46,19 @@ export const AppSidebarHeader = () => {
   const { platform: currentPlatform } = platformHooks.useCurrentPlatform();
   const { checkAccess } = useAuthorization();
   const defaultRoute = determineDefaultRoute(checkAccess);
+  const branding = flagsHooks.useWebsiteBranding();
 
   if (!showSwitcher) {
     return (
-      <SidebarHeader>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            {state === 'collapsed' ? (
-              <SidebarLogoCollapsed />
-            ) : (
-              <SidebarLogoFull />
-            )}
-          </SidebarMenuItem>
-        </SidebarMenu>
+      <SidebarHeader className="pb-0">
+        <div className="w-full flex items-center gap-2">
+          <SidebarLogoCollapsed linkTo={defaultRoute} />
+          {state !== 'collapsed' && (
+            <h1 className="truncate text-sm font-medium">
+              {branding.websiteName}
+            </h1>
+          )}
+        </div>
       </SidebarHeader>
     );
   }

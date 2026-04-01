@@ -1,4 +1,3 @@
-import { AppSystemProp } from '@activepieces/server-common'
 import {
     File,
     FileCompression,
@@ -11,6 +10,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { domainHelper } from '../../ee/custom-domains/domain-helper'
 import { jwtUtils } from '../../helper/jwt-utils'
 import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-props'
 import { fileService } from '../file.service'
 import { s3Helper } from '../s3-helper'
 
@@ -31,7 +31,7 @@ export const stepFileService = (log: FastifyBaseLogger) => ({
             size: params.contentLength,
         })
         return {
-            uploadUrl: await constructUploadUrl(log, file.s3Key, params.data, params.contentLength),
+            uploadUrl: await constructUploadUrl(log, file.s3Key ?? undefined, params.data, params.contentLength),
             url: await constructDownloadUrl(params.platformId, file),
         }
     },
@@ -43,7 +43,7 @@ async function constructUploadUrl(log: FastifyBaseLogger, s3Key: string | undefi
     if (isNotS3 || dataSent) {
         return undefined
     }
-    return s3Helper(log).putS3SignedUrl(s3Key, contentLength)
+    return s3Helper(log).putS3SignedUrl({ s3Key, contentLength })
 }
 
 async function constructDownloadUrl(platformId: string, file: File): Promise<string> {

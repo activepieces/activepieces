@@ -106,7 +106,7 @@ const ApMarkdown = React.memo(
           className={cn('grow w-full ', className)}
           remarkPlugins={[gfm, breaks]}
           components={{
-            code(props) {
+            code({ node: _node, ref: _ref, ...props }) {
               const isLanguageText = props.className?.includes('language-text');
               if (!isLanguageText) {
                 return <code {...props} className="text-wrap" />;
@@ -135,35 +135,38 @@ const ApMarkdown = React.memo(
                 </div>
               );
             },
-            h1: ({ node, ...props }) => (
+            h1: ({ node: _node, ref: _ref, ...props }) => (
               <h1
                 className="scroll-m-20 text-xl font-extrabold tracking-tight lg:text-3xl"
                 {...props}
               />
             ),
-            h2: ({ node, ...props }) => (
+            h2: ({ node: _node, ref: _ref, ...props }) => (
               <h2
                 className="scroll-m-20 text-lg text-xl font-semibold tracking-tight first:mt-0"
                 {...props}
               />
             ),
-            h3: ({ node, ...props }) => (
+            h3: ({ node: _node, ref: _ref, ...props }) => (
               <h3
                 className="scroll-m-20 text-lg font-semibold tracking-tight"
                 {...props}
               />
             ),
-            p: ({ node, ...props }) => (
-              <p className="leading-7 not-first:mt-2 w-full" {...props} />
+            p: ({ node: _node, ref: _ref, ...props }) => (
+              <p
+                className="leading-5 first-of-type:mt-1 not-first-of-type:mt-2 w-full mb-2"
+                {...props}
+              />
             ),
-            ul: ({ node, ...props }) => (
+            ul: ({ node: _node, ref: _ref, ...props }) => (
               <ul className="mt-4 ml-6 list-disc [&>li]:mt-2" {...props} />
             ),
-            ol: ({ node, ...props }) => (
+            ol: ({ node: _node, ref: _ref, ...props }) => (
               <ol className="mt-4 ml-6 list-decimal [&>li]:mt-2" {...props} />
             ),
-            li: ({ node, ...props }) => <li {...props} />,
-            a: ({ node, ...props }) => (
+            li: ({ node: _node, ref: _ref, ...props }) => <li {...props} />,
+            a: ({ node: _node, ref: _ref, ...props }) => (
               <a
                 className="font-medium text-primary underline underline-offset-4"
                 target="_blank"
@@ -171,31 +174,35 @@ const ApMarkdown = React.memo(
                 {...props}
               />
             ),
-            blockquote: ({ node, ...props }) => (
+            blockquote: ({ node: _node, ref: _ref, ...props }) => (
               <blockquote
                 className="mt-4 first:mt-0 border-l-2 pl-6 italic"
                 {...props}
               />
             ),
-            hr: ({ node, ...props }) => (
+            hr: ({ node: _node, ref: _ref, ...props }) => (
               <hr className="my-4 border-t border-border/50" {...props} />
             ),
-            img: ({ node, ...props }) => <img className="my-8" {...props} />,
-            b: ({ node, ...props }) => <b {...props} />,
-            em: ({ node, ...props }) => <em {...props} />,
-            table: ({ node, ...props }) => (
+            img: ({ node: _node, ref: _ref, ...props }) => (
+              <img className="my-8" {...props} />
+            ),
+            b: ({ node: _node, ref: _ref, ...props }) => <b {...props} />,
+            em: ({ node: _node, ref: _ref, ...props }) => <em {...props} />,
+            table: ({ node: _node, ref: _ref, ...props }) => (
               <table className="w-full my-4 border-collapse" {...props} />
             ),
-            thead: ({ node, ...props }) => (
+            thead: ({ node: _node, ref: _ref, ...props }) => (
               <thead className="bg-muted" {...props} />
             ),
-            tr: ({ node, ...props }) => (
+            tr: ({ node: _node, ref: _ref, ...props }) => (
               <tr className="border-b border-border" {...props} />
             ),
-            th: ({ node, ...props }) => (
+            th: ({ node: _node, ref: _ref, ...props }) => (
               <th className="text-left p-2 font-medium" {...props} />
             ),
-            td: ({ node, ...props }) => <td className="p-2" {...props} />,
+            td: ({ node: _node, ref: _ref, ...props }) => (
+              <td className="p-2" {...props} />
+            ),
           }}
         >
           {markdownProcessed.trim()}

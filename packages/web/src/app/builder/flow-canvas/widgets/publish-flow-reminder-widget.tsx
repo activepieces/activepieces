@@ -1,14 +1,14 @@
 import {
   FlowRun,
-  FlowStatusUpdatedResponse,
   FlowVersion,
   FlowVersionState,
   isNil,
   Permission,
+  PopulatedFlow,
 } from '@activepieces/shared';
-import { InfoCircledIcon } from '@radix-ui/react-icons';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
+import { Info } from 'lucide-react';
 
 import { RightSideBarType } from '@/app/builder/types';
 import { LoadingSpinner } from '@/components/custom/spinner';
@@ -72,9 +72,9 @@ const PublishFlowReminderWidget = () => {
   const { mutateAsync: publish } = flowHooks.useChangeFlowStatus({
     flowId: flow.id,
     change: 'publish',
-    onSuccess: (response: FlowStatusUpdatedResponse) => {
-      setFlow(response.flow);
-      setVersion(response.flow.version);
+    onSuccess: (updatedFlow: PopulatedFlow) => {
+      setFlow(updatedFlow);
+      setVersion(updatedFlow.version);
     },
     setIsPublishing: setIsPublishing,
   });
@@ -98,7 +98,7 @@ const PublishFlowReminderWidget = () => {
   return (
     <LargeWidgetWrapper>
       <div className="flex items-center gap-2">
-        <InfoCircledIcon className="size-5" />
+        <Info className="size-5" />
         {showLoading ? loadingText : t('You have unpublished changes')}
       </div>
       {showLoading ? (

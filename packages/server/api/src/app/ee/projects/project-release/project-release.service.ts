@@ -1,4 +1,4 @@
-import { memoryLock } from '@activepieces/server-common'
+import { memoryLock } from '@activepieces/server-utils'
 import { ActivepiecesError, apId, ApId, CreateProjectReleaseRequestBody, DiffReleaseRequest, DiffState, ErrorCode, FlowProjectOperation, FlowProjectOperationType, FlowSyncError, isNil, ListProjectReleasesRequest, PlatformId, ProjectId, ProjectRelease, ProjectReleaseType, ProjectState, ProjectSyncPlan, SeekPage } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../../core/db/repo-factory'
@@ -51,7 +51,7 @@ export const projectReleaseService = {
             errors: [],
         })
     },
-    async list({ projectId, request }: ListParams): Promise<SeekPage<ProjectRelease>> {
+    async list({ projectId, request, log }: ListParams): Promise<SeekPage<ProjectRelease>> {
         const decodedCursor = paginationHelper.decodeCursor(request.cursor ?? null)
         const paginator = buildPaginator({
             entity: ProjectReleaseEntity,
@@ -69,14 +69,14 @@ export const projectReleaseService = {
             })
             .orderBy('created', 'DESC'))
         const enrichedData = await Promise.all(data.map(
-            async (projectRelease) => this.enrich(projectRelease),
+            async (projectRelease) => this.enrich(projectRelease, log),
         ))
         return paginationHelper.createPage<ProjectRelease>(enrichedData, cursor)
     },
-    async enrich(projectRelease: ProjectRelease): Promise<ProjectRelease> {
+    async enrich(projectRelease: ProjectRelease, log: FastifyBaseLogger): Promise<ProjectRelease> {
         return {
             ...projectRelease,
-            importedByUser: isNil(projectRelease.importedBy) ? undefined : await userService.getMetaInformation({
+            importedByUser: isNil(projectRelease.importedBy) ? undefined : await userService(log).getMetaInformation({
                 id: projectRelease.importedBy,
             }) ?? undefined,
         }
@@ -184,6 +184,7 @@ type toResponseParams = {
 type ListParams = {
     projectId: ProjectId
     request: ListProjectReleasesRequest
+    log: FastifyBaseLogger
 }
 
 type GetOneProjectReleaseParams = {

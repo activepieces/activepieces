@@ -2,7 +2,7 @@ import {
   AddSigningKeyRequestBody,
   AddSigningKeyResponse,
 } from '@activepieces/shared';
-import { typeboxResolver } from '@hookform/resolvers/typebox';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
@@ -37,7 +37,7 @@ export const NewSigningKeyDialog = ({
     AddSigningKeyResponse | undefined
   >(undefined);
   const form = useForm<AddSigningKeyRequestBody>({
-    resolver: typeboxResolver(AddSigningKeyRequestBody),
+    resolver: zodResolver(AddSigningKeyRequestBody),
   });
 
   const { mutate, isPending } = useMutation({

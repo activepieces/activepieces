@@ -1,5 +1,5 @@
-import { Static, Type } from '@sinclair/typebox'
-import { BaseModelSchema, DiscriminatedUnion } from '../../core/common/base-model'
+import { z } from 'zod'
+import { BaseModelSchema } from '../../core/common/base-model'
 
 export enum AIProviderName {
     OPENAI = 'openai',
@@ -18,85 +18,83 @@ export enum AIProviderModelType {
     TEXT = 'text',
 }
 
-export const BaseAIProviderAuthConfig = Type.Object({
-    apiKey: Type.String(),
+export const BaseAIProviderAuthConfig = z.object({
+    apiKey: z.string(),
 })
-export type BaseAIProviderAuthConfig = Static<typeof BaseAIProviderAuthConfig>
+export type BaseAIProviderAuthConfig = z.infer<typeof BaseAIProviderAuthConfig>
 
 export const AnthropicProviderAuthConfig = BaseAIProviderAuthConfig
-export type AnthropicProviderAuthConfig = Static<typeof AnthropicProviderAuthConfig>
+export type AnthropicProviderAuthConfig = z.infer<typeof AnthropicProviderAuthConfig>
 
-export const ActivePiecesProviderAuthConfig = Type.Intersect([
-    BaseAIProviderAuthConfig,
-    Type.Object({
-        apiKeyHash: Type.String(),
-    }),
-])
-export type ActivePiecesProviderAuthConfig = Static<typeof ActivePiecesProviderAuthConfig>
+export const ActivePiecesProviderAuthConfig = BaseAIProviderAuthConfig.extend({
+    apiKeyHash: z.string(),
+})
+export type ActivePiecesProviderAuthConfig = z.infer<typeof ActivePiecesProviderAuthConfig>
 
 export const OpenAICompatibleProviderAuthConfig = BaseAIProviderAuthConfig
-export type OpenAICompatibleProviderAuthConfig = Static<typeof OpenAICompatibleProviderAuthConfig>
+export type OpenAICompatibleProviderAuthConfig = z.infer<typeof OpenAICompatibleProviderAuthConfig>
 
 export const CloudflareGatewayProviderAuthConfig = BaseAIProviderAuthConfig
-export type CloudflareGatewayProviderAuthConfig = Static<typeof CloudflareGatewayProviderAuthConfig>
+export type CloudflareGatewayProviderAuthConfig = z.infer<typeof CloudflareGatewayProviderAuthConfig>
 
 export const AzureProviderAuthConfig = BaseAIProviderAuthConfig
-export type AzureProviderAuthConfig = Static<typeof AzureProviderAuthConfig>
+export type AzureProviderAuthConfig = z.infer<typeof AzureProviderAuthConfig>
 
 export const GoogleProviderAuthConfig = BaseAIProviderAuthConfig
-export type GoogleProviderAuthConfig = Static<typeof GoogleProviderAuthConfig>
+export type GoogleProviderAuthConfig = z.infer<typeof GoogleProviderAuthConfig>
 
 export const OpenAIProviderAuthConfig = BaseAIProviderAuthConfig
-export type OpenAIProviderAuthConfig = Static<typeof OpenAIProviderAuthConfig>
+export type OpenAIProviderAuthConfig = z.infer<typeof OpenAIProviderAuthConfig>
 
 export const OpenRouterProviderAuthConfig = BaseAIProviderAuthConfig
-export type OpenRouterProviderAuthConfig = Static<typeof OpenRouterProviderAuthConfig>
+export type OpenRouterProviderAuthConfig = z.infer<typeof OpenRouterProviderAuthConfig>
 
-export const AnthropicProviderConfig = Type.Object({})
-export type AnthropicProviderConfig = Static<typeof AnthropicProviderConfig>
+export const AnthropicProviderConfig = z.object({})
+export type AnthropicProviderConfig = z.infer<typeof AnthropicProviderConfig>
 
-export const ActivePiecesProviderConfig = Type.Object({})
-export type ActivePiecesProviderConfig = Static<typeof ActivePiecesProviderConfig>
+export const ActivePiecesProviderConfig = z.object({})
+export type ActivePiecesProviderConfig = z.infer<typeof ActivePiecesProviderConfig>
 
-export const ProviderModelConfig = Type.Object({
-    modelId: Type.String(),
-    modelName: Type.String(),
-    modelType: Type.Enum(AIProviderModelType),
+export const ProviderModelConfig = z.object({
+    modelId: z.string(),
+    modelName: z.string(),
+    modelType: z.nativeEnum(AIProviderModelType),
 })
-export type ProviderModelConfig = Static<typeof ProviderModelConfig>
+export type ProviderModelConfig = z.infer<typeof ProviderModelConfig>
 
-export const OpenAICompatibleProviderConfig = Type.Object({
-    apiKeyHeader: Type.String(),
-    baseUrl: Type.String(),
-    models: Type.Array(ProviderModelConfig),
+export const OpenAICompatibleProviderConfig = z.object({
+    apiKeyHeader: z.string(),
+    baseUrl: z.string(),
+    models: z.array(ProviderModelConfig),
+    defaultHeaders: z.record(z.string(), z.string()).optional(),
 })
-export type OpenAICompatibleProviderConfig = Static<typeof OpenAICompatibleProviderConfig>
+export type OpenAICompatibleProviderConfig = z.infer<typeof OpenAICompatibleProviderConfig>
 
 
-export const CloudflareGatewayProviderConfig = Type.Object({
-    accountId: Type.String(),
-    gatewayId: Type.String(),
-    models: Type.Array(ProviderModelConfig),
-    vertexProject: Type.Optional(Type.String()),
-    vertexRegion: Type.Optional(Type.String()),
+export const CloudflareGatewayProviderConfig = z.object({
+    accountId: z.string(),
+    gatewayId: z.string(),
+    models: z.array(ProviderModelConfig),
+    vertexProject: z.string().optional(),
+    vertexRegion: z.string().optional(),
 })
-export type CloudflareGatewayProviderConfig = Static<typeof CloudflareGatewayProviderConfig>
+export type CloudflareGatewayProviderConfig = z.infer<typeof CloudflareGatewayProviderConfig>
 
-export const AzureProviderConfig = Type.Object({
-    resourceName: Type.String(),
+export const AzureProviderConfig = z.object({
+    resourceName: z.string(),
 })
-export type AzureProviderConfig = Static<typeof AzureProviderConfig>
+export type AzureProviderConfig = z.infer<typeof AzureProviderConfig>
 
-export const GoogleProviderConfig = Type.Object({})
-export type GoogleProviderConfig = Static<typeof GoogleProviderConfig>
+export const GoogleProviderConfig = z.object({})
+export type GoogleProviderConfig = z.infer<typeof GoogleProviderConfig>
 
-export const OpenAIProviderConfig = Type.Object({})
-export type OpenAIProviderConfig = Static<typeof OpenAIProviderConfig>
+export const OpenAIProviderConfig = z.object({})
+export type OpenAIProviderConfig = z.infer<typeof OpenAIProviderConfig>
 
-export const OpenRouterProviderConfig = Type.Object({})
-export type OpenRouterProviderConfig = Static<typeof OpenRouterProviderConfig>
+export const OpenRouterProviderConfig = z.object({})
+export type OpenRouterProviderConfig = z.infer<typeof OpenRouterProviderConfig>
 
-export const AIProviderAuthConfig = Type.Union([
+export const AIProviderAuthConfig = z.union([
     AnthropicProviderAuthConfig,
     AzureProviderAuthConfig,
     GoogleProviderAuthConfig,
@@ -106,9 +104,9 @@ export const AIProviderAuthConfig = Type.Union([
     OpenAICompatibleProviderAuthConfig,
     ActivePiecesProviderAuthConfig,
 ])
-export type AIProviderAuthConfig = Static<typeof AIProviderAuthConfig>
+export type AIProviderAuthConfig = z.infer<typeof AIProviderAuthConfig>
 // Order matters, put schemas with required fields first, empty ones last. This is to avoid empty objects matching any object.
-export const AIProviderConfig = Type.Union([
+export const AIProviderConfig = z.union([
     OpenAICompatibleProviderConfig,
     CloudflareGatewayProviderConfig,
     AzureProviderConfig,
@@ -118,114 +116,112 @@ export const AIProviderConfig = Type.Union([
     OpenRouterProviderConfig,
     ActivePiecesProviderConfig,
 ])
-export type AIProviderConfig = Static<typeof AIProviderConfig>
+export type AIProviderConfig = z.infer<typeof AIProviderConfig>
 
-const ProviderConfigUnion = DiscriminatedUnion('provider', [
-    Type.Object({
-        displayName: Type.String({ minLength: 1 }),
-        provider: Type.Literal(AIProviderName.OPENAI),
+const ProviderConfigUnion = z.discriminatedUnion('provider', [
+    z.object({
+        displayName: z.string().min(1),
+        provider: z.literal(AIProviderName.OPENAI),
         config: OpenAIProviderConfig,
         auth: OpenAIProviderAuthConfig,
     }),
-    Type.Object({
-        displayName: Type.String({ minLength: 1 }),
-        provider: Type.Literal(AIProviderName.OPENROUTER),
+    z.object({
+        displayName: z.string().min(1),
+        provider: z.literal(AIProviderName.OPENROUTER),
         config: OpenRouterProviderConfig,
         auth: OpenRouterProviderAuthConfig,
     }),
-    Type.Object({
-        displayName: Type.String({ minLength: 1 }),
-        provider: Type.Literal(AIProviderName.ANTHROPIC),
+    z.object({
+        displayName: z.string().min(1),
+        provider: z.literal(AIProviderName.ANTHROPIC),
         config: AnthropicProviderConfig,
         auth: AnthropicProviderAuthConfig,
     }),
-    Type.Object({
-        displayName: Type.String({ minLength: 1 }),
-        provider: Type.Literal(AIProviderName.AZURE),
+    z.object({
+        displayName: z.string().min(1),
+        provider: z.literal(AIProviderName.AZURE),
         config: AzureProviderConfig,
         auth: AzureProviderAuthConfig,
     }),
-    Type.Object({
-        displayName: Type.String({ minLength: 1 }),
-        provider: Type.Literal(AIProviderName.GOOGLE),
+    z.object({
+        displayName: z.string().min(1),
+        provider: z.literal(AIProviderName.GOOGLE),
         config: GoogleProviderConfig,
         auth: GoogleProviderAuthConfig,
     }),
-    Type.Object({
-        displayName: Type.String({ minLength: 1 }),
-        provider: Type.Literal(AIProviderName.CLOUDFLARE_GATEWAY),
+    z.object({
+        displayName: z.string().min(1),
+        provider: z.literal(AIProviderName.CLOUDFLARE_GATEWAY),
         config: CloudflareGatewayProviderConfig,
         auth: CloudflareGatewayProviderAuthConfig,
     }),
-    Type.Object({
-        displayName: Type.String({ minLength: 1 }),
-        provider: Type.Literal(AIProviderName.CUSTOM),
+    z.object({
+        displayName: z.string().min(1),
+        provider: z.literal(AIProviderName.CUSTOM),
         config: OpenAICompatibleProviderConfig,
         auth: OpenAICompatibleProviderAuthConfig,
     }),
-    Type.Object({
-        displayName: Type.String({ minLength: 1 }),
-        provider: Type.Literal(AIProviderName.ACTIVEPIECES),
+    z.object({
+        displayName: z.string().min(1),
+        provider: z.literal(AIProviderName.ACTIVEPIECES),
         config: ActivePiecesProviderConfig,
         auth: ActivePiecesProviderAuthConfig,
     }),
 ])
 
-export const AIProvider = Type.Intersect([
-    Type.Object({ ...BaseModelSchema }),
-    ProviderConfigUnion,
-    Type.Object({
-        displayName: Type.String({ minLength: 1 }),
-        platformId: Type.String(),
-    }),
-])
+export const AIProvider = z.object({
+    ...BaseModelSchema,
+    displayName: z.string().min(1),
+    platformId: z.string(),
+}).and(ProviderConfigUnion)
 
-export type AIProvider = Static<typeof AIProvider>
+export type AIProvider = z.infer<typeof AIProvider>
 
-export const AIProviderWithoutSensitiveData = Type.Object({
-    id: Type.String(),
-    name: Type.String(),
-    provider: Type.Enum(AIProviderName),
+export const AIProviderWithoutSensitiveData = z.object({
+    id: z.string(),
+    name: z.string(),
+    provider: z.nativeEnum(AIProviderName),
     config: AIProviderConfig,
 })
-export type AIProviderWithoutSensitiveData = Static<typeof AIProviderWithoutSensitiveData>
+export type AIProviderWithoutSensitiveData = z.infer<typeof AIProviderWithoutSensitiveData>
 
-export const AIProviderModel = Type.Object({
-    id: Type.String(),
-    name: Type.String(),
-    type: Type.Enum(AIProviderModelType),
+export const AIProviderModel = z.object({
+    id: z.string(),
+    name: z.string(),
+    type: z.nativeEnum(AIProviderModelType),
 })
-export type AIProviderModel = Static<typeof AIProviderModel>
+export type AIProviderModel = z.infer<typeof AIProviderModel>
 
 export const CreateAIProviderRequest = ProviderConfigUnion
-export type CreateAIProviderRequest = Static<typeof CreateAIProviderRequest>
+export type CreateAIProviderRequest = z.infer<typeof CreateAIProviderRequest>
 
 
-export const UpdateAIProviderRequest = Type.Object({
-    displayName: Type.String({ minLength: 1 }),
-    config: Type.Optional(AIProviderConfig),
-    auth: Type.Optional(AIProviderAuthConfig),
+export const UpdateAIProviderRequest = z.object({
+    displayName: z.string().min(1),
+    config: AIProviderConfig.optional(),
+    auth: AIProviderAuthConfig.optional(),
 })
-export type UpdateAIProviderRequest = Static<typeof UpdateAIProviderRequest>
+export type UpdateAIProviderRequest = z.infer<typeof UpdateAIProviderRequest>
 
 
-export const GetProviderConfigResponse = Type.Object({
-    provider: Type.Enum(AIProviderName),
+export const GetProviderConfigResponse = z.object({
+    provider: z.nativeEnum(AIProviderName),
     config: AIProviderConfig,
     auth: AIProviderAuthConfig,
+    platformId: z.string(),
 })
-export type GetProviderConfigResponse = Static<typeof GetProviderConfigResponse>
+export type GetProviderConfigResponse = z.infer<typeof GetProviderConfigResponse>
 
 
-export const AIErrorResponse = Type.Object({
-    error: Type.Object({
-        message: Type.String(),
-        type: Type.String(),
-        code: Type.String(),
+export const AIErrorResponse = z.object({
+    error: z.object({
+        message: z.string(),
+        type: z.string(),
+        code: z.string(),
     }),
 })
 
-export type AIErrorResponse = Static<typeof AIErrorResponse>
+export type AIErrorResponse = z.infer<typeof AIErrorResponse>
 /**
  * Splits a Cloudflare Gateway model ID into provider and model, i.e. "google-vertex-ai/google/gemini-2.5-pro" -> { provider: "google-vertex-ai", model: "google/gemini-2.5-pro" }.
  * @param modelId - The model ID to split.

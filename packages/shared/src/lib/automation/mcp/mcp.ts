@@ -1,4 +1,4 @@
-import { Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
 import { BaseModelSchema } from '../../core/common'
 import { ApId } from '../../core/common/id-generator'
 import { PopulatedFlow } from '../flows/flow'
@@ -12,23 +12,39 @@ export enum McpServerStatus {
     DISABLED = 'DISABLED',
 }
 
-export const McpServer = Type.Object({
+export const McpServer = z.object({
     ...BaseModelSchema,
     projectId: ApId,
-    status: Type.Enum(McpServerStatus),
+    status: z.nativeEnum(McpServerStatus),
     token: ApId,
+    enabledTools: z.array(z.string()).nullable(),
 })
 
-export const PopulatedMcpServer = Type.Composite([McpServer, Type.Object({
-    flows: Type.Array(PopulatedFlow),
-})])
-export type PopulatedMcpServer = Static<typeof PopulatedMcpServer>
+export const PopulatedMcpServer = McpServer.extend({
+    flows: z.array(PopulatedFlow),
+})
+export type PopulatedMcpServer = z.infer<typeof PopulatedMcpServer>
 
-export type McpServer = Static<typeof McpServer>
+export type McpServer = z.infer<typeof McpServer>
 
 
-export const UpdateMcpServerRequest = Type.Object({
-    status: Type.Enum(McpServerStatus),
+export const UpdateMcpServerRequest = z.object({
+    status: z.nativeEnum(McpServerStatus).optional(),
+    enabledTools: z.array(z.string()).optional(),
 })
 
-export type UpdateMcpServerRequest = Static<typeof UpdateMcpServerRequest>
+export type UpdateMcpServerRequest = z.infer<typeof UpdateMcpServerRequest>
+
+/** Tool definition for MCP: inputSchema is a raw Zod shape (same as MCP expects). */
+export type McpToolDefinition = {
+    title: string
+    description: string
+    inputSchema: Record<string, z.ZodTypeAny>
+    annotations?: {
+        readOnlyHint?: boolean
+        destructiveHint?: boolean
+        idempotentHint?: boolean
+        openWorldHint?: boolean
+    }
+    execute: (args: Record<string, unknown>) => Promise<{ content: Array<{ type: 'text', text: string }> }>
+}

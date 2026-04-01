@@ -1,11 +1,14 @@
-import { AppSystemProp, apVersionUtil, rejectedPromiseHandler } from '@activepieces/server-common'
-import { groupBy, PieceSyncMode, PieceType } from '@activepieces/shared'
+import { groupBy, PieceSyncMode, PieceType, tryCatch } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import semver from 'semver'
+import { rejectedPromiseHandler } from '../helper/promise-handler'
+import { pubsub } from '../helper/pubsub'
 import { system } from '../helper/system/system'
+import { AppSystemProp, apVersionUtil } from '../helper/system/system-props'
 import { SystemJobName } from '../helper/system-jobs/common'
 import { systemJobHandlers } from '../helper/system-jobs/job-handlers'
 import { systemJobsSchedule } from '../helper/system-jobs/system-job'
+import { PIECE_METADATA_REFRESH_CHANNEL, PieceMetadataRefreshMessage, PieceMetadataRefreshType } from './metadata/piece-cache'
 import { PieceMetadataSchema } from './metadata/piece-metadata-entity'
 import { pieceMetadataService, pieceRepos } from './metadata/piece-metadata-service'
 
@@ -22,6 +25,7 @@ export const pieceSyncService = (log: FastifyBaseLogger) => ({
             job: {
                 name: SystemJobName.PIECES_SYNC,
                 data: {},
+                jobId: SystemJobName.PIECES_SYNC,
             },
             schedule: {
                 type: 'repeated',
@@ -67,7 +71,7 @@ async function deletePiecesIfNotOnCloud(dbPieces: PieceMetadataOnly[], cloudPiec
     return piecesToDelete.length
 }
 
-async function installNewPieces(cloudPieces: PieceRegistryResponse[], dbPieces: PieceMetadataOnly[], log: FastifyBaseLogger, publishCacheRefresh: boolean): Promise<number> {
+async function installNewPieces(cloudPieces: PieceRegistryResponse[], dbPieces: PieceMetadataOnly[], log: FastifyBaseLogger, _publishCacheRefresh: boolean): Promise<number> {
     const dbMap = new Map<string, true>(dbPieces.map(dbPiece => [`${dbPiece.name}:${dbPiece.version}`, true]))
     const newPiecesToFetch = cloudPieces.filter(piece => !dbMap.has(`${piece.name}:${piece.version}`))
     const batchSize = 5
@@ -81,13 +85,18 @@ async function installNewPieces(cloudPieces: PieceRegistryResponse[], dbPieces: 
                 return
             }
             const pieceMetadata = await response.json()
-            await pieceMetadataService(log).create({
+            const { error } = await tryCatch(() => pieceMetadataService(log).create({
                 pieceMetadata,
                 packageType: pieceMetadata.packageType,
                 pieceType: pieceMetadata.pieceType,
-                publishCacheRefresh,
-            })
+                publishCacheRefresh: false,
+            }))
+            if (error) {
+                log.debug({ pieceName: piece.name, version: piece.version }, '[pieceSyncService#installNewPieces] Piece already exists, skipping')
+            }
         }))
+        const message: PieceMetadataRefreshMessage = { type: PieceMetadataRefreshType.BULK_SYNC }
+        await pubsub.publish(PIECE_METADATA_REFRESH_CHANNEL, JSON.stringify(message))
     }
     return newPiecesToFetch.length
 }

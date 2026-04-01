@@ -1,4 +1,4 @@
-import { AppSystemProp } from '@activepieces/server-common'
+import { apDayjs } from '@activepieces/server-utils'
 import {
     ActivepiecesError,
     apId,
@@ -12,8 +12,11 @@ import {
     FlowRun,
     FlowRunId,
     FlowRunStatus,
+    FlowRunWithRetryError,
     FlowVersionId,
+    isFlowRunStateTerminal,
     isNil,
+    JobPayload,
     LATEST_JOB_DATA_SCHEMA_VERSION,
     PauseMetadata,
     PauseType,
@@ -37,10 +40,11 @@ import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { Order } from '../../helper/pagination/paginator'
 import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-props'
 import { projectService } from '../../project/project-service'
 import { engineResponseWatcher } from '../../workers/engine-response-watcher'
-import { jobQueue } from '../../workers/queue/job-queue'
-import { JobType } from '../../workers/queue/queue-manager'
+import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
+import { payloadOffloader } from '../../workers/payload-offloader'
 import { sampleDataService } from '../step-run/sample-data.service'
 import { FlowRunEntity } from './flow-run-entity'
 import { flowRunSideEffects } from './flow-run-side-effects'
@@ -77,10 +81,13 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         })
 
 
-        let query = queryBuilderForFlowRun(flowRunRepo()).where({
+        const whereClause: Record<string, unknown> = {
             projectId: params.projectId,
-            environment: RunEnvironment.PRODUCTION,
-        })
+        }
+        if (!isNil(params.environment)) {
+            whereClause.environment = params.environment
+        }
+        let query = queryBuilderForFlowRun(flowRunRepo()).where(whereClause)
 
         if (!params.includeArchived) {
             query = query.andWhere({
@@ -126,11 +133,26 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         const { data, cursor: newCursor } = await paginator.paginate(query)
         return paginationHelper.createPage<FlowRun>(data, newCursor)
     },
-    async retry({ flowRunId, strategy, projectId }: RetryParams): Promise<FlowRun | null> {
+    async retry({ flowRunId, strategy, projectId }: RetryParams): Promise<FlowRun> {
         const oldFlowRun = await flowRunService(log).getOnePopulatedOrThrow({
             id: flowRunId,
             projectId,
         })
+        log.info({ runId: flowRunId, flowId: oldFlowRun.flowId, strategy }, 'Flow run retry initiated')
+        
+        const retentionDays = system.getNumberOrThrow(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS)
+        if (
+            isFlowRunStateTerminal({ status: oldFlowRun.status, ignoreInternalError: false }) &&
+            isOutsideRetentionWindow(oldFlowRun.created, retentionDays)
+        ) {
+            throw new ActivepiecesError({
+                code: ErrorCode.FLOW_RUN_RETRY_OUTSIDE_RETENTION,
+                params: {
+                    flowRunId: oldFlowRun.id,
+                    failedJobRetentionDays: retentionDays,
+                },
+            })
+        }
 
         switch (strategy) {
             case FlowRetryStrategy.FROM_FAILED_STEP:
@@ -154,7 +176,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                 return this.start({
                     flowId: oldFlowRun.flowId,
                     payload,
-                    platformId: await projectService.getPlatformId(oldFlowRun.projectId),
+                    platformId: await projectService(log).getPlatformId(oldFlowRun.projectId),
                     executionType: ExecutionType.BEGIN,
                     progressUpdateType: ProgressUpdateType.NONE,
                     synchronousHandlerId: undefined,
@@ -185,7 +207,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         log.info({
             flowRunsCount: flowRuns.length,
             childFlowCount: childFlows.length,
-        }, '[cancelChildFlows] Found cancellable descendant flows (paused/queued)')
+        }, 'Found cancellable descendant flows')
 
         const canceChildlPromises = await Promise.allSettled(childFlows.map(flowRun => cancelSingleRun(log, flowRun, platformId)))
         if (cancelParentFlowRuns.some(r => r.status === 'rejected')) {
@@ -207,14 +229,27 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             archivedAt: new Date().toISOString(),
         })
     },
-    async bulkRetry(params: BulkRetryParams): Promise<(FlowRun | null)[]> {
+    async bulkRetry(params: BulkRetryParams): Promise<FlowRunWithRetryError[]> {
         const filteredFlowRuns = await filterFlowRunsAndApplyFilters(params)
         const limit = pLimit(10)
-        return Promise.all(
+        const results = await Promise.allSettled(
             filteredFlowRuns.map(flowRun =>
                 limit(() => this.retry({ flowRunId: flowRun.id, strategy: params.strategy, projectId: params.projectId })),
             ),
         )
+        return results.map((result, i) => {
+            if (result.status === 'fulfilled') {
+                return result.value
+            }
+            const error = result.reason instanceof ActivepiecesError ? result.reason : undefined
+            return {
+                ...filteredFlowRuns[i],
+                error: {
+                    errorCode: error?.error.code ?? ErrorCode.INTERNAL_SERVER_ERROR,
+                    errorMessage: error?.message ?? 'Internal server error',
+                },
+            }
+        })
     },
     async resume({
         flowRunId,
@@ -223,42 +258,30 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         progressUpdateType,
         executionType,
         checkRequestId,
-    }: ResumeWebhookParams): Promise<FlowRun | null> {
+    }: ResumeWebhookParams): Promise<FlowRun> {
         log.info({
             runId: flowRunId,
-        }, '[flowRunService#resume] Adding flow run to queue')
+        }, 'Resuming flow run')
 
-        const flowRun = await queryBuilderForFlowRun(flowRunRepo()).where({ id: flowRunId }).getOne()
+        const flowRun = await findFlowRunOrThrow(flowRunId)
+        const resolvedRun = resolveFlowRunForResume({ flowRun, requestId, checkRequestId })
 
-        if (isNil(flowRun)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.ENTITY_NOT_FOUND,
-                params: {
-                    entityType: 'flow_run',
-                    entityId: flowRunId,
-                    message: 'Flow run not found',
-                },
-            })
+        if (isNil(resolvedRun)) {
+            return flowRun
         }
 
-
-        const pauseMetadata = flowRun.pauseMetadata
-        const matchRequestId = isNil(pauseMetadata) || (pauseMetadata.type === PauseType.WEBHOOK && requestId === pauseMetadata.requestId)
-        const platformId = await projectService.getPlatformId(flowRun.projectId)
-        if (matchRequestId || !checkRequestId) {
-            return addToQueue({
-                payload,
-                flowRun,
-                platformId,
-                synchronousHandlerId: returnHandlerId(pauseMetadata, requestId, log),
-                httpRequestId: flowRun.pauseMetadata?.requestIdToReply ?? undefined,
-                progressUpdateType,
-                executeTrigger: false,
-                executionType,
-            }, log)
-        }
-        await flowRunSideEffects(log).onResume(flowRun)
-        return flowRun
+        const platformId = await projectService(log).getPlatformId(resolvedRun.projectId)
+        await flowRunSideEffects(log).onResume(resolvedRun)
+        return addToQueue({
+            payload,
+            flowRun: resolvedRun,
+            platformId,
+            synchronousHandlerId: returnHandlerId(resolvedRun.pauseMetadata, requestId, log),
+            httpRequestId: resolvedRun.pauseMetadata?.type === PauseType.WEBHOOK ? resolvedRun.pauseMetadata.requestIdToReply ?? undefined : undefined,
+            progressUpdateType,
+            executeTrigger: false,
+            executionType,
+        }, log)
     },
 
     async start({
@@ -315,6 +338,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
 
                 span.setAttribute('flowRun.queued', true)
                 await flowRunSideEffects(log).onStart(newFlowRun)
+                log.info({ runId: newFlowRun.id, flowId, projectId, executionType }, 'Flow run started')
                 return newFlowRun
             }
             finally {
@@ -348,7 +372,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             executionType: ExecutionType.BEGIN,
             synchronousHandlerId: undefined,
             httpRequestId: undefined,
-            platformId: await projectService.getPlatformId(projectId),
+            platformId: await projectService(log).getPlatformId(projectId),
             executeTrigger: false,
             progressUpdateType: ProgressUpdateType.TEST_FLOW,
             sampleData: !isNil(stepNameToTest) ? await sampleDataService(log).getSampleDataForFlow(projectId, flowVersion, SampleDataFileType.OUTPUT) : undefined,
@@ -373,7 +397,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             executionType: ExecutionType.BEGIN,
             synchronousHandlerId: undefined,
             httpRequestId: undefined,
-            platformId: await projectService.getPlatformId(projectId),
+            platformId: await projectService(log).getPlatformId(projectId),
             executeTrigger: false,
             progressUpdateType: ProgressUpdateType.TEST_FLOW,
             sampleData: undefined,
@@ -426,26 +450,28 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             projectId: undefined,
         })
         const synchronousHandlerId = engineResponseWatcher(log).getServerId()
-        const matchRequestId = isNil(flowRun.pauseMetadata) || (flowRun.pauseMetadata.type === PauseType.WEBHOOK && requestId === flowRun.pauseMetadata.requestId)
-        assertNotNullOrUndefined(synchronousHandlerId, 'synchronousHandlerId is required for sync resume request is required')
-        if (!matchRequestId) {
+        assertNotNullOrUndefined(synchronousHandlerId, 'synchronousHandlerId is required for sync resume request')
+        const resolvedRun = resolveFlowRunForResume({ flowRun, requestId, checkRequestId: true })
+        if (isNil(resolvedRun)) {
             return {
                 status: StatusCodes.NOT_FOUND,
                 body: {},
                 headers: {},
             }
         }
-        if (flowRun.status !== FlowRunStatus.PAUSED) {
+        if (resolvedRun.status !== FlowRunStatus.PAUSED) {
             return {
                 status: StatusCodes.CONFLICT,
-                body: { 'message': 'Flow run is not paused', 'flowRunStatus': flowRun.status },
+                body: { 'message': 'Flow run is not paused', 'flowRunStatus': resolvedRun.status },
                 headers: {},
             }
         }
+        const platformId = await projectService(log).getPlatformId(resolvedRun.projectId)
+        await flowRunSideEffects(log).onResume(resolvedRun)
         await addToQueue({
             payload,
-            flowRun,
-            platformId: await projectService.getPlatformId(flowRun.projectId),
+            flowRun: resolvedRun,
+            platformId,
             synchronousHandlerId,
             httpRequestId: requestId,
             executeTrigger: false,
@@ -472,8 +498,9 @@ async function cancelSingleRun(log: FastifyBaseLogger, flowRun: FlowRun, platfor
         status: FlowRunStatus.CANCELED,
     })
     log.info({
-        flowRunId: flowRun.id,
-    }, '[cancelFlowRuns] Canceled flow run')
+        runId: flowRun.id,
+        flowId: flowRun.flowId,
+    }, 'Flow run cancelled')
 }
 
 async function getAllChildRuns(parentRunIds: string[]): Promise<FlowRun[]> {
@@ -592,6 +619,14 @@ async function addToQueue(params: AddToQueueParams, log: FastifyBaseLogger): Pro
     const traceContext: Record<string, string> = {}
     propagation.inject(context.active(), traceContext)
 
+    let jobPayload: JobPayload = { type: 'inline', value: null }
+    if (!isNil(params.payload) && isNil(params.synchronousHandlerId)) {
+        jobPayload = await payloadOffloader.offloadPayload(log, params.payload, params.flowRun.projectId, params.platformId)
+    }
+    else if (!isNil(params.payload)) {
+        jobPayload = await payloadOffloader.maybeOffloadPayload(log, params.payload, params.flowRun.projectId, params.platformId)
+    }
+
     await jobQueue(log).add({
         id: params.flowRun.id,
         type: JobType.ONE_TIME,
@@ -605,12 +640,12 @@ async function addToQueue(params: AddToQueueParams, log: FastifyBaseLogger): Pro
             runId: params.flowRun.id,
             jobType: WorkerJobType.EXECUTE_FLOW,
             flowVersionId: params.flowRun.flowVersionId,
-            payload: params.payload,
+            payload: jobPayload,
             executeTrigger: params.executeTrigger,
             httpRequestId: params.httpRequestId,
             executionType: params.executionType,
             progressUpdateType: params.progressUpdateType,
-            stepNameToTest: params.flowRun.stepNameToTest,
+            stepNameToTest: params.flowRun.stepNameToTest ?? undefined,
             sampleData: params.sampleData,
             logsUploadUrl,
             logsFileId,
@@ -618,6 +653,34 @@ async function addToQueue(params: AddToQueueParams, log: FastifyBaseLogger): Pro
         },
     })
     return params.flowRun
+}
+
+async function findFlowRunOrThrow(flowRunId: FlowRunId): Promise<FlowRun> {
+    const flowRun = await queryBuilderForFlowRun(flowRunRepo()).where({ id: flowRunId }).getOne()
+    if (isNil(flowRun)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.ENTITY_NOT_FOUND,
+            params: {
+                entityType: 'flow_run',
+                entityId: flowRunId,
+                message: 'Flow run not found',
+            },
+        })
+    }
+    return flowRun
+}
+
+function matchesPauseRequestId(pauseMetadata: PauseMetadata | undefined, requestId: string | undefined): boolean {
+    return isNil(pauseMetadata) || (pauseMetadata.type === PauseType.WEBHOOK && requestId === pauseMetadata.requestId)
+}
+
+function resolveFlowRunForResume(
+    { flowRun, requestId, checkRequestId }: { flowRun: FlowRun, requestId: string | undefined, checkRequestId: boolean },
+): FlowRun | null {
+    if (!checkRequestId || matchesPauseRequestId(flowRun.pauseMetadata, requestId)) {
+        return flowRun
+    }
+    return null
 }
 
 function queryBuilderForFlowRun(repo: Repository<FlowRun>): SelectQueryBuilder<FlowRun> {
@@ -653,7 +716,10 @@ async function queueOrCreateInstantly(params: CreateParams, log: FastifyBaseLogg
     }
 }
 
-
+function isOutsideRetentionWindow(createdTime: string, retentionDays: number): boolean {
+    if (!createdTime) return false
+    return apDayjs(createdTime).add(retentionDays, 'day').isBefore(apDayjs())
+}
 
 type CreateParams = {
     projectId: ProjectId
@@ -678,6 +744,7 @@ type ListParams = {
     failedStepName?: string
     flowRunIds?: FlowRunId[]
     includeArchived?: boolean
+    environment?: RunEnvironment
 }
 
 type GetOneParams = {
@@ -688,7 +755,7 @@ type GetOneParams = {
 type AddToQueueParams = {
     flowRun: FlowRun
     platformId: PlatformId
-    payload: unknown
+    payload?: unknown
     executeTrigger: boolean
     executionType: ExecutionType
     synchronousHandlerId: string | undefined
@@ -721,7 +788,7 @@ type StartParams = {
 type TestParams = {
     projectId: ProjectId
     flowVersionId: FlowVersionId
-    triggeredBy: string
+    triggeredBy?: string
     parentRunId?: FlowRunId
     stepNameToTest?: string
 }

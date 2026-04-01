@@ -19,10 +19,6 @@ import {
   RouterBranchesSchema,
   SampleDataSetting,
   RouterExecutionType,
-  UpsertOAuth2Request,
-  UpsertCloudOAuth2Request,
-  UpsertPlatformOAuth2Request,
-  UpsertAppConnectionRequestBody,
   UpsertCustomAuthRequest,
   UpsertBasicAuthRequest,
   UpsertSecretTextRequest,
@@ -34,14 +30,14 @@ import {
   PropertySettings,
   PieceTriggerSettings,
 } from '@activepieces/shared';
-import { TSchema, Type } from '@sinclair/typebox';
 import { t } from 'i18next';
+import { z, ZodType } from 'zod';
 
 function buildInputSchemaForStep(
   type: FlowActionType | FlowTriggerType,
   piece: PieceMetadata | null,
   actionNameOrTriggerName: string,
-): TSchema {
+): ZodType {
   switch (type) {
     case FlowActionType.PIECE: {
       if (
@@ -55,7 +51,7 @@ function buildInputSchemaForStep(
           piece.actions[actionNameOrTriggerName].requireAuth,
         );
       }
-      return Type.Object({});
+      return z.object({});
     }
     case FlowTriggerType.PIECE: {
       if (
@@ -69,7 +65,7 @@ function buildInputSchemaForStep(
           piece.triggers[actionNameOrTriggerName].requireAuth,
         );
       }
-      return Type.Object({});
+      return z.object({});
     }
     default:
       throw new Error('Unsupported type: ' + type);
@@ -177,92 +173,58 @@ function getDefaultValueForProperties({
 
 function buildConnectionSchema(auth: PieceAuthProperty) {
   if (isNil(auth)) {
-    return Type.Object({
-      request: Type.Composite([
-        Type.Omit(UpsertAppConnectionRequestBody, ['externalId']),
-      ]),
+    return z.object({
+      request: z.object({}).passthrough(),
     });
   }
-  const connectionSchema = Type.Object({
-    externalId: Type.String({
-      pattern: '^[A-Za-z0-9_\\-@\\+\\.]*$',
-      minLength: 1,
-      errorMessage: t('Name can only contain letters, numbers and underscores'),
-    }),
+  const connectionSchema = z.object({
+    externalId: z
+      .string()
+      .min(1, t('Name can only contain letters, numbers and underscores'))
+      .regex(
+        /^[A-Za-z0-9_\-@+.]*$/,
+        t('Name can only contain letters, numbers and underscores'),
+      ),
   });
 
   switch (auth.type) {
     case PropertyType.SECRET_TEXT:
-      return Type.Object({
-        request: Type.Composite([
-          Type.Omit(UpsertSecretTextRequest, ['externalId', 'displayName']),
-          connectionSchema,
-        ]),
+      return z.object({
+        request: UpsertSecretTextRequest.omit({
+          externalId: true,
+          displayName: true,
+        }).merge(connectionSchema),
       });
     case PropertyType.BASIC_AUTH:
-      return Type.Object({
-        request: Type.Composite([
-          Type.Omit(UpsertBasicAuthRequest, ['externalId', 'displayName']),
-          connectionSchema,
-        ]),
+      return z.object({
+        request: UpsertBasicAuthRequest.omit({
+          externalId: true,
+          displayName: true,
+        }).merge(connectionSchema),
       });
     case PropertyType.CUSTOM_AUTH:
-      return Type.Object({
-        request: Type.Composite([
-          Type.Omit(UpsertCustomAuthRequest, [
-            'externalId',
-            'value',
-            'displayName',
-          ]),
-          connectionSchema,
-          Type.Object({
-            value: Type.Object({
-              props: piecePropertiesUtils.buildSchema(auth.props, undefined),
+      return z.object({
+        request: UpsertCustomAuthRequest.omit({
+          externalId: true,
+          value: true,
+          displayName: true,
+        })
+          .merge(connectionSchema)
+          .merge(
+            z.object({
+              value: z.object({
+                props: piecePropertiesUtils.buildSchema(auth.props, undefined),
+              }),
             }),
-          }),
-        ]),
+          ),
       });
     case PropertyType.OAUTH2:
-      return Type.Object({
-        request: Type.Composite([
-          Type.Omit(
-            Type.Union([
-              UpsertOAuth2Request,
-              UpsertCloudOAuth2Request,
-              UpsertPlatformOAuth2Request,
-            ]),
-            ['externalId', 'displayName', 'value'],
-          ),
-          Type.Object({
-            //props in the request schema is any object, so we need to build a schema for it
-            value: Type.Composite([
-              Type.Omit(
-                Type.Union([
-                  UpsertOAuth2Request.properties.value,
-                  UpsertCloudOAuth2Request.properties.value,
-                  UpsertPlatformOAuth2Request.properties.value,
-                ]),
-                ['props'],
-              ),
-              Type.Object({
-                props: Type.Optional(
-                  piecePropertiesUtils.buildSchema(auth.props ?? {}, undefined),
-                ),
-              }),
-            ]),
-          }),
-          connectionSchema,
-        ]),
+      return z.object({
+        request: z.object({}).passthrough(),
       });
     default:
-      return Type.Object({
-        request: Type.Composite([
-          Type.Omit(UpsertAppConnectionRequestBody, [
-            'externalId',
-            'displayName',
-          ]),
-          connectionSchema,
-        ]),
+      return z.object({
+        request: z.object({}).passthrough().merge(connectionSchema),
       });
   }
 }
@@ -296,68 +258,62 @@ export const formUtils = {
   ) => {
     switch (type) {
       case FlowActionType.LOOP_ON_ITEMS:
-        return Type.Composite([
-          Type.Omit(LoopOnItemsActionSchema, ['settings']),
-          Type.Object({
-            settings: Type.Object({
-              items: Type.String({
-                minLength: 1,
-              }),
+        return LoopOnItemsActionSchema.omit({ settings: true }).merge(
+          z.object({
+            settings: z.object({
+              items: z.string().min(1),
             }),
           }),
-        ]);
+        );
       case FlowActionType.ROUTER:
-        return Type.Intersect([
-          Type.Omit(RouterActionSchema, ['settings']),
-          Type.Object({
-            settings: Type.Object({
+        return RouterActionSchema.omit({ settings: true }).merge(
+          z.object({
+            settings: z.object({
               branches: RouterBranchesSchema(true),
-              executionType: Type.Enum(RouterExecutionType),
+              executionType: z.nativeEnum(RouterExecutionType),
               sampleData: SampleDataSetting,
             }),
           }),
-        ]);
+        );
       case FlowActionType.CODE:
         return CodeActionSchema;
       case FlowActionType.PIECE: {
-        return Type.Composite([
-          Type.Omit(PieceActionSchema, ['settings']),
-          Type.Object({
-            settings: Type.Composite([
-              Type.Omit(PieceActionSettings, ['input', 'actionName']),
-              Type.Object({
-                actionName: Type.String({
-                  minLength: 1,
-                }),
+        return PieceActionSchema.omit({ settings: true }).merge(
+          z.object({
+            settings: PieceActionSettings.omit({
+              input: true,
+              actionName: true,
+            }).merge(
+              z.object({
+                actionName: z.string().min(1),
                 input: buildInputSchemaForStep(
                   type,
                   piece,
                   actionNameOrTriggerName,
                 ),
               }),
-            ]),
+            ),
           }),
-        ]);
+        );
       }
       case FlowTriggerType.PIECE: {
-        return Type.Composite([
-          Type.Omit(PieceTrigger, ['settings']),
-          Type.Object({
-            settings: Type.Composite([
-              Type.Omit(PieceTriggerSettings, ['input', 'triggerName']),
-              Type.Object({
-                triggerName: Type.String({
-                  minLength: 1,
-                }),
+        return PieceTrigger.omit({ settings: true }).merge(
+          z.object({
+            settings: PieceTriggerSettings.omit({
+              input: true,
+              triggerName: true,
+            }).merge(
+              z.object({
+                triggerName: z.string().min(1),
                 input: buildInputSchemaForStep(
                   type,
                   piece,
                   actionNameOrTriggerName,
                 ),
               }),
-            ]),
+            ),
           }),
-        ]);
+        );
       }
       default: {
         throw new Error('Unsupported type: ' + type);

@@ -1,5 +1,5 @@
 import { LATEST_CONTEXT_VERSION, PieceMetadata } from '@activepieces/pieces-framework'
-import { apDayjs } from '@activepieces/server-common'
+import { apDayjs } from '@activepieces/server-utils'
 import {
     AiCreditsAutoTopUpState,
     AIProvider,
@@ -245,6 +245,7 @@ export const createMockPlatformPlan = (platformPlan?: Partial<PlatformPlan>): Pl
         stripeSubscriptionStatus: undefined,
         showPoweredBy: platformPlan?.showPoweredBy ?? false,
         embeddingEnabled: platformPlan?.embeddingEnabled ?? false,
+        agentsEnabled: platformPlan?.agentsEnabled ?? false,
         teamProjectsLimit: platformPlan?.teamProjectsLimit ?? TeamProjectsLimit.NONE,
         projectRolesEnabled: platformPlan?.projectRolesEnabled ?? false,
         customDomainsEnabled: platformPlan?.customDomainsEnabled ?? false,
@@ -253,6 +254,7 @@ export const createMockPlatformPlan = (platformPlan?: Partial<PlatformPlan>): Pl
         plan: platformPlan?.plan,
         secretManagersEnabled: platformPlan?.secretManagersEnabled ?? false,
         scimEnabled: platformPlan?.scimEnabled ?? false,
+        agentsEnabled: platformPlan?.agentsEnabled ?? false,
     }
 }
 export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
@@ -446,7 +448,7 @@ export const createMockCustomDomain = (
         updated: customDomain?.updated ?? faker.date.recent().toISOString(),
         domain: customDomain?.domain ?? faker.internet.domainName(),
         platformId: customDomain?.platformId ?? apId(),
-        status: customDomain?.status ?? faker.helpers.enumValue(CustomDomainStatus),
+        status: customDomain?.status ?? CustomDomainStatus.ACTIVE,
     }
 }
 
@@ -515,6 +517,7 @@ export const createMockFlowVersion = (
         settings: {},
         valid: false,
         displayName: 'Select Trigger',
+        lastUpdatedDate: dayjs().toISOString(),
     } as const
 
     return {
@@ -554,10 +557,11 @@ export const createMockConnection = (connection: Partial<AppConnection>, ownerId
         externalId: connection?.externalId ?? apId(),
         owner: null,
         pieceVersion: connection?.pieceVersion ?? '0.0.0',
+        preSelectForNewProjects: connection?.preSelectForNewProjects ?? false,
     }
 }
 
-const createMockTable = ({ projectId }: { projectId: string }): Table => {
+export const createMockTable = ({ projectId }: { projectId: string }): Table => {
     return {
         id: apId(),
         created: faker.date.recent().toISOString(),
@@ -568,7 +572,7 @@ const createMockTable = ({ projectId }: { projectId: string }): Table => {
     }
 }
 
-const createMockField = ({ tableId, projectId }: { tableId: string, projectId: string }): Field => {
+export const createMockField = ({ tableId, projectId }: { tableId: string, projectId: string }): Field => {
     return {
         id: apId(),
         created: faker.date.recent().toISOString(),
@@ -583,7 +587,7 @@ const createMockField = ({ tableId, projectId }: { tableId: string, projectId: s
         type: FieldType.STATIC_DROPDOWN,
     }
 }
-const createMockRecord = ({ tableId, projectId }: { tableId: string, projectId: string }): Record => {
+export const createMockRecord = ({ tableId, projectId }: { tableId: string, projectId: string }): Record => {
     return {
         id: apId(),
         created: faker.date.recent().toISOString(),
@@ -593,7 +597,7 @@ const createMockRecord = ({ tableId, projectId }: { tableId: string, projectId: 
     }
 }
 
-const createMockCell = ({ recordId, fieldId, projectId }: { recordId: string, fieldId: string, projectId: string }): Cell => {
+export const createMockCell = ({ recordId, fieldId, projectId }: { recordId: string, fieldId: string, projectId: string }): Cell => {
     return {
         id: apId(),
         created: faker.date.recent().toISOString(),
@@ -780,7 +784,7 @@ export const createMockAIProvider = async (aiProvider?: Partial<AIProvider>): Pr
         auth: await encryptUtils.encryptObject({
             apiKey: process.env.OPENAI_API_KEY ?? faker.string.uuid(),
         }),
-        config: {},
+        config: aiProvider?.config ?? {},
     }
     
 }

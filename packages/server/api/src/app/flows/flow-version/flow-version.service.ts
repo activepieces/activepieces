@@ -3,14 +3,12 @@ import {
     apId,
     Cursor,
     ErrorCode,
-    FlowAction,
     FlowActionType,
     FlowId,
     FlowOperationRequest,
     flowOperations,
     FlowOperationType,
     flowStructureUtil,
-    FlowTrigger,
     FlowTriggerType,
     FlowVersion,
     FlowVersionId,
@@ -52,7 +50,7 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
         }
 
         const pieceVersion: Record<string, string> = {}
-        const platformId = await projectService.getPlatformId(projectId)
+        const platformId = await projectService(log).getPlatformId(projectId)
         const steps = flowStructureUtil.getAllSteps(flowVersion.trigger)
         for (const step of steps) {
             const stepTypeIsPiece = [FlowActionType.PIECE, FlowTriggerType.PIECE].includes(
@@ -107,25 +105,20 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
                 break
             }
             case FlowOperationType.SAVE_SAMPLE_DATA: {
-                const modifiedStep = await sampleDataService(log).saveSampleDataFileIdsInStep({
+                const sampleDataSettings = await sampleDataService(log).saveSampleDataFileIdsInStep({
                     projectId,
                     flowVersionId: mutatedFlowVersion.id,
                     stepName: userOperation.request.stepName,
                     payload: userOperation.request.payload,
                     type: userOperation.request.type,
                 })
-                if (flowStructureUtil.isAction(modifiedStep.type)) {
-                    operations = [{
-                        type: FlowOperationType.UPDATE_ACTION,
-                        request: modifiedStep as FlowAction,
-                    }]
-                }
-                else {
-                    operations = [{
-                        type: FlowOperationType.UPDATE_TRIGGER,
-                        request: modifiedStep as FlowTrigger,
-                    }]
-                }
+                operations = [{
+                    type: FlowOperationType.UPDATE_SAMPLE_DATA_INFO,
+                    request: {
+                        stepName: userOperation.request.stepName,
+                        sampleDataSettings,
+                    },
+                }]
                 break
             }
             case FlowOperationType.LOCK_FLOW: {
@@ -173,7 +166,7 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
         if (isNil(id)) {
             return null
         }
-        return findOne({
+        return findOne(log, {
             where: {
                 id,
             },
@@ -188,7 +181,7 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
         })
     },
     async getLatestVersion(flowId: FlowId, state: FlowVersionState): Promise<FlowVersion | null> {
-        return findOne({
+        return findOne(log, {
             where: {
                 flowId,
                 state,
@@ -251,7 +244,7 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
         const promises = paginationResult.data.map(async (flowVersion) => {
             return {
                 ...flowVersion,
-                updatedByUser: isNil(flowVersion.updatedBy) ? null : await userService.getMetaInformation({
+                updatedByUser: isNil(flowVersion.updatedBy) ? null : await userService(log).getMetaInformation({
                     id: flowVersion.updatedBy,
                 }),
             }
@@ -269,7 +262,7 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
         entityManager,
         projectId,
     }: GetFlowVersionOrThrowParams): Promise<FlowVersion> {
-        const flowVersion: FlowVersion | null = await findOne({
+        const flowVersion: FlowVersion | null = await findOne(log, {
             where: {
                 flowId,
                 id: versionId,
@@ -314,6 +307,7 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
                 settings: {},
                 valid: false,
                 displayName: 'Select Trigger',
+                lastUpdatedDate: dayjs().toISOString(),
             },
             schemaVersion: LATEST_FLOW_SCHEMA_VERSION,
             connectionIds: [],
@@ -346,12 +340,12 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
 
 
 
-async function findOne(options: FindOneOptions, entityManager?: EntityManager, projectId?: ProjectId): Promise<FlowVersion | null> {
+async function findOne(log: FastifyBaseLogger, options: FindOneOptions, entityManager?: EntityManager, projectId?: ProjectId): Promise<FlowVersion | null> {
     const flowVersion = await flowVersionRepo(entityManager).findOne(options)
     if (isNil(flowVersion)) {
         return null
     }
-    return flowVersionMigrationService.migrate(flowVersion, projectId)
+    return flowVersionMigrationService(log).migrate(flowVersion, projectId)
 }
 
 

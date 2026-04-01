@@ -1,7 +1,6 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
-# Allow skipping this hook by setting SKIP_CHECK env variable
 if [ ! -z "$SKIP_CHECK" ]; then
   exit 0
 fi
@@ -13,3 +12,27 @@ do
         exit 1
     fi
 done
+
+if [ "$CLAUDE_PUSH" = "yes" ]; then
+  RUN_CHECKS="y"
+elif { true > /dev/tty; } 2>/dev/null; then
+  printf "Run lint and tests before pushing? [Y/n] " > /dev/tty
+  read RUN_CHECKS < /dev/tty
+else
+  # No controlling terminal (GUI clients, CI) — skip checks
+  RUN_CHECKS="n"
+fi
+
+case "$RUN_CHECKS" in
+  [nN][oO]|[nN])
+    echo "Skipping lint and tests."
+    ;;
+  *)
+    echo "Running lint..."
+    npm run lint-core || { echo ""; echo "Lint failed. To auto-fix issues, run:"; echo "  npm run lint-dev"; echo "Or target a specific package:"; echo "  npx turbo run lint --filter=\"<packageName>\" --force -- --fix"; exit 1; }
+    npm run lint-affected || { echo ""; echo "Lint failed. To auto-fix issues, run:"; echo "  npm run lint-dev"; echo "Or target a specific package:"; echo "  npx turbo run lint --filter=\"<packageName>\" --force -- --fix"; exit 1; }
+    echo "Running tests..."
+    npm run test-unit || { echo ""; echo "Unit tests failed. Check the output above for details."; exit 1; }
+    npm run test-api || { echo ""; echo "API tests failed. Check the output above for details."; exit 1; }
+    ;;
+esac

@@ -1,4 +1,3 @@
-import { securityAccess } from '@activepieces/server-common'
 import { ActivepiecesError, AddSigningKeyRequestBody,
     ApId,
     ApplicationEventName,
@@ -7,15 +6,14 @@ import { ActivepiecesError, AddSigningKeyRequestBody,
     isNil,
     PrincipalType,
 } from '@activepieces/shared'
-import {
-    FastifyPluginAsyncTypebox,
-    Type,
-} from '@fastify/type-provider-typebox'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
+import { z } from 'zod'
+import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { applicationEvents } from '../../helper/application-events'
 import { signingKeyService } from './signing-key-service'
 
-export const signingKeyController: FastifyPluginAsyncTypebox = async (app) => {
+export const signingKeyController: FastifyPluginAsyncZod = async (app) => {
     app.post('/', AddSigningKeyRequest, async (req, res) => {
         const platformId = req.principal.platform.id
         const newSigningKey = await signingKeyService.add({
@@ -88,7 +86,7 @@ const GetSigningKeyRequest = {
         security: securityAccess.platformAdminOnly([PrincipalType.USER]),
     },
     schema: {
-        params: Type.Object({
+        params: z.object({
             id: ApId,
         }),
     },
@@ -99,7 +97,7 @@ const DeleteSigningKeyRequest = {
         security: securityAccess.platformAdminOnly([PrincipalType.USER]),
     },
     schema: {
-        params: Type.Object({
+        params: z.object({
             id: ApId,
         }),
     },

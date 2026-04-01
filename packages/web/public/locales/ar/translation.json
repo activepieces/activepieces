@@ -1012,6 +1012,8 @@
   "all except": "all except",
   "all": "all",
   "Only failed runs can be retried from failed step": "Only failed runs can be retried from failed step",
+  "Retry is only available for {failedJobRetentionDays} after a run fails.": "إعادة المحاولة متاحة فقط {failedJobRetentionDays, plural, =0 {0 أيام} =1 {يوم واحد} other {# أيام}} بعد فشل التشغيل.",
+  "Retry failed": "فشلت إعادة المحاولة",
   "No flow runs found": "No flow runs found",
   "Come back later when your automations start running": "Come back later when your automations start running",
   "Step running": "الخطوة قيد التشغيل",

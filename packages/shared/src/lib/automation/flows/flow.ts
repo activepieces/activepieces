@@ -1,4 +1,4 @@
-import { Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
 import { BaseModelSchema, Nullable } from '../../core/common/base-model'
 import { ApId } from '../../core/common/id-generator'
 import { Metadata } from '../../core/common/metadata'
@@ -14,7 +14,9 @@ export enum FlowStatus {
 export enum FlowOperationStatus {
     NONE = 'NONE',
     DELETING = 'DELETING',
+    /** @deprecated No longer set — status changes are now synchronous via distributed lock */
     ENABLING = 'ENABLING',
+    /** @deprecated No longer set — status changes are now synchronous via distributed lock */
     DISABLING = 'DISABLING',
 }
 
@@ -28,36 +30,31 @@ export type FlowExecutionState = {
     flow: Flow
     platformId: string
 }
-export const Flow = Type.Object({
+export const Flow = z.object({
     ...BaseModelSchema,
-    projectId: Type.String(),
-    externalId: Type.String(),
-    ownerId: Nullable(Type.String()),
-    folderId: Nullable(Type.String()),
-    status: Type.Enum(FlowStatus),
-    publishedVersionId: Nullable(Type.String()),
+    projectId: z.string(),
+    externalId: z.string(),
+    ownerId: Nullable(z.string()),
+    folderId: Nullable(z.string()),
+    status: z.nativeEnum(FlowStatus),
+    publishedVersionId: Nullable(z.string()),
     metadata: Nullable(Metadata),
-    operationStatus: Type.Enum(FlowOperationStatus),
-    timeSavedPerRun: Nullable(Type.Number()),
-    templateId: Nullable(Type.String()),
+    /** @deprecated Only DELETING is actively used — ENABLING/DISABLING are no longer set */
+    operationStatus: z.nativeEnum(FlowOperationStatus),
+    timeSavedPerRun: Nullable(z.number()),
+    templateId: Nullable(z.string()),
 })
 
-export type Flow = Static<typeof Flow>
-export const PopulatedFlow = Type.Composite([
-    Flow,
-    Type.Object({
-        version: FlowVersion,
-        triggerSource: Type.Optional(Type.Pick(TriggerSource, ['schedule'])),
-    }),
-])
+export type Flow = z.infer<typeof Flow>
+export const PopulatedFlow = Flow.extend({
+    version: FlowVersion,
+    triggerSource: TriggerSource.pick({ schedule: true }).optional(),
+})
 
-export type PopulatedFlow = Static<typeof PopulatedFlow>
+export type PopulatedFlow = z.infer<typeof PopulatedFlow>
 
 
-export const PopulatedTriggerSource = Type.Composite([
-    TriggerSource,
-    Type.Object({
-        flow: Flow,
-    }),
-])
-export type PopulatedTriggerSource = Static<typeof PopulatedTriggerSource>
+export const PopulatedTriggerSource = TriggerSource.extend({
+    flow: Flow,
+})
+export type PopulatedTriggerSource = z.infer<typeof PopulatedTriggerSource>

@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-crypto",
-  "version": "0.0.19",
+  "version": "0.0.20",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "dependencies": {
@@ -9,7 +9,7 @@
     "@activepieces/shared": "workspace:*",
     "buffer": "6.0.3",
     "openpgp": "^6.2.0",
-    "zod": "4.1.13",
+    "zod": "4.3.6",
     "tslib": "2.6.2"
   },
   "scripts": {

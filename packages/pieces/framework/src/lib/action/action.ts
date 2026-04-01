@@ -1,4 +1,4 @@
-import { Static, Type } from '@sinclair/typebox';
+import { z } from 'zod';
 import { ActionContext } from '../context';
 import { ActionBase } from '../piece-metadata';
 import { InputPropertyMap } from '../property';
@@ -7,17 +7,17 @@ import { ExtractPieceAuthPropertyTypeForMethods, PieceAuthProperty } from '../pr
 export type ActionRunner<PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | undefined = PieceAuthProperty, ActionProps extends InputPropertyMap = InputPropertyMap> =
   (ctx: ActionContext<PieceAuth, ActionProps>) => Promise<unknown | void>
 
-export const ErrorHandlingOptionsParam = Type.Object({
-  retryOnFailure: Type.Object({
-    defaultValue: Type.Optional(Type.Boolean()),
-    hide: Type.Optional(Type.Boolean()),
+export const ErrorHandlingOptionsParam = z.object({
+  retryOnFailure: z.object({
+    defaultValue: z.boolean().optional(),
+    hide: z.boolean().optional(),
   }),
-  continueOnFailure: Type.Object({
-    defaultValue: Type.Optional(Type.Boolean()),
-    hide: Type.Optional(Type.Boolean()),
+  continueOnFailure: z.object({
+    defaultValue: z.boolean().optional(),
+    hide: z.boolean().optional(),
   }),
 })
-export type ErrorHandlingOptionsParam = Static<typeof ErrorHandlingOptionsParam>
+export type ErrorHandlingOptionsParam = z.infer<typeof ErrorHandlingOptionsParam>
 
 type CreateActionParams<PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | undefined, ActionProps extends InputPropertyMap> = {
   /**
@@ -37,6 +37,7 @@ type CreateActionParams<PieceAuth extends PieceAuthProperty | PieceAuthProperty[
   errorHandlingOptions?: ErrorHandlingOptionsParam
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export class IAction<PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | undefined = any, ActionProps extends InputPropertyMap = InputPropertyMap> implements ActionBase {
   constructor(
     public readonly name: string,
@@ -50,6 +51,7 @@ export class IAction<PieceAuth extends PieceAuthProperty | PieceAuthProperty[] |
   ) { }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type Action<
   PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | undefined = any,
   ActionProps extends InputPropertyMap = any,
@@ -57,6 +59,7 @@ export type Action<
 
 export const createAction = <
   PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | undefined = PieceAuthProperty,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ActionProps extends InputPropertyMap = any
 >(
   params: CreateActionParams<PieceAuth, ActionProps>,

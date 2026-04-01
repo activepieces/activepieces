@@ -1,10 +1,9 @@
-import { typeboxResolver } from '@hookform/resolvers/typebox';
-import { DialogTrigger } from '@radix-ui/react-dialog';
-import { Static, Type } from '@sinclair/typebox';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { t } from 'i18next';
 import { Pencil } from 'lucide-react';
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { z } from 'zod';
 
 import { GlobalConnectionWarning } from '@/components/custom/global-connection-utils';
 import { Button } from '@/components/ui/button';
@@ -15,6 +14,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from '@/components/ui/dialog';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -25,17 +25,16 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 
+import { ProjectSelector } from '../../projects/components/projects-selector';
 import { globalConnectionsMutations } from '../hooks/global-connections-hooks';
 
-import { AssignConnectionToProjectsControl } from './assign-global-connection-to-projects';
-
-const EditGlobalConnectionSchema = Type.Object({
-  displayName: Type.String(),
-  projectIds: Type.Array(Type.String()),
-  preSelectForNewProjects: Type.Boolean(),
+const EditGlobalConnectionSchema = z.object({
+  displayName: z.string(),
+  projectIds: z.array(z.string()),
+  preSelectForNewProjects: z.boolean(),
 });
 
-type EditGlobalConnectionSchema = Static<typeof EditGlobalConnectionSchema>;
+type EditGlobalConnectionSchema = z.infer<typeof EditGlobalConnectionSchema>;
 
 type EditGlobalConnectionDialogProps = {
   connectionId: string;
@@ -57,7 +56,7 @@ const EditGlobalConnectionDialog: React.FC<EditGlobalConnectionDialogProps> = ({
   const [isOpen, setIsOpen] = useState(false);
 
   const editConnectionForm = useForm<EditGlobalConnectionSchema>({
-    resolver: typeboxResolver(EditGlobalConnectionSchema),
+    resolver: zodResolver(EditGlobalConnectionSchema),
     defaultValues: {
       displayName: currentName,
       projectIds: projectIds,
@@ -132,7 +131,7 @@ const EditGlobalConnectionDialog: React.FC<EditGlobalConnectionDialogProps> = ({
                     </FormItem>
                   )}
                 />
-                <AssignConnectionToProjectsControl
+                <ProjectSelector
                   control={editConnectionForm.control}
                   name="projectIds"
                 />

@@ -1,6 +1,8 @@
 import { Template, TemplateType } from '@activepieces/shared';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { t } from 'i18next';
 import { useSearchParams } from 'react-router-dom';
+import { toast } from 'sonner';
 import { useDebounce } from 'use-debounce';
 
 import { templatesApi } from '../api/templates-api';
@@ -13,6 +15,7 @@ export const templatesHooks = {
         const result = await templatesApi.getCategories();
         return (result?.value ?? []) as string[];
       },
+      staleTime: 5 * 60 * 1000,
     });
   },
 
@@ -89,5 +92,68 @@ export const templatesHooks = {
       category: category || 'All',
       setCategory,
     };
+  },
+};
+
+export const templateKeys = {
+  all: ['templates'] as const,
+  custom: ['custom-templates'] as const,
+};
+
+export const templatesMutations = {
+  useCreateTemplate: ({
+    onDone,
+    onError,
+  }: {
+    onDone: () => void;
+    onError?: (error: Error) => void;
+  }) => {
+    const queryClient = useQueryClient();
+    return useMutation({
+      mutationFn: (request: Parameters<typeof templatesApi.create>[0]) =>
+        templatesApi.create(request),
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: templateKeys.custom });
+        toast.success(t('Template created successfully'), { duration: 3000 });
+        onDone();
+      },
+      onError,
+    });
+  },
+  useUpdateTemplate: ({
+    onDone,
+    onError,
+  }: {
+    onDone: () => void;
+    onError?: (error: Error) => void;
+  }) => {
+    const queryClient = useQueryClient();
+    return useMutation({
+      mutationFn: ({
+        templateId,
+        request,
+      }: {
+        templateId: string;
+        request: Parameters<typeof templatesApi.update>[1];
+      }) => templatesApi.update(templateId, request),
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: templateKeys.custom });
+        toast.success(t('Template updated successfully'), { duration: 3000 });
+        onDone();
+      },
+      onError,
+    });
+  },
+  useBulkDeleteTemplates: ({ onSuccess }: { onSuccess: () => void }) => {
+    const queryClient = useQueryClient();
+    return useMutation({
+      mutationFn: async (templateIds: string[]) => {
+        await Promise.all(templateIds.map((id) => templatesApi.delete(id)));
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: templateKeys.custom });
+        onSuccess();
+      },
+    });
   },
 };

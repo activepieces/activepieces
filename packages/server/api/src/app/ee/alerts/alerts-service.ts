@@ -1,4 +1,4 @@
-import { apDayjsDuration } from '@activepieces/server-common'
+import { apDayjsDuration } from '@activepieces/server-utils'
 import { ActivepiecesError, Alert, AlertChannel, ApEdition, ApId, apId, ErrorCode, ListAlertsParams, SeekPage } from '@activepieces/shared'
 
 import dayjs from 'dayjs'
@@ -43,7 +43,7 @@ export const alertsService = (log: FastifyBaseLogger) => ({
             return
         }
 
-        const project = await projectService.getOneOrThrow(issueToAlert.projectId)
+        const project = await projectService(log).getOneOrThrow(issueToAlert.projectId)
         const flowVersion = await flowVersionService(log).getLatestLockedVersionOrThrow(issueToAlert.flowId)
 
         const alertsInfo = {

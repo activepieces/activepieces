@@ -1,18 +1,23 @@
 import {
   isNil,
+  PROJECT_COLOR_PALETTE,
   PlatformRole,
   ProjectType,
   TeamProjectsLimit,
   TemplateTelemetryEventType,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Search, Plus, LineChart, Trophy, Compass } from 'lucide-react';
+import { Search, Plus } from 'lucide-react';
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useDebounce } from 'use-debounce';
 
 import { NewProjectDialog } from '@/app/routes/platform/projects/new-project-dialog';
 import { SearchInput } from '@/components/custom/search-input';
+import { ChartLineIcon } from '@/components/icons/chart-line';
+import { CompassIcon } from '@/components/icons/compass';
+import { ShieldIcon } from '@/components/icons/shield';
+import { TrophyIcon } from '@/components/icons/trophy';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { Button } from '@/components/ui/button';
 import {
@@ -37,12 +42,16 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { VirtualizedScrollArea } from '@/components/ui/virtualized-scroll-area';
-import { projectCollectionUtils } from '@/features/projects';
+import { projectCollectionUtils, getProjectName } from '@/features/projects';
 import { templatesTelemetryApi } from '@/features/templates';
+import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { cn } from '@/lib/utils';
 
+import { recordAccess } from '../../global-search/access-history';
+import { GlobalSearchCommand } from '../../global-search/global-search-command';
+import { STATIC_PAGES } from '../../global-search/static-pages';
 import { SidebarGeneralItemType } from '../ap-sidebar-group';
 import { ApSidebarItem, SidebarItemType } from '../ap-sidebar-item';
 import ProjectSideBarItem from '../project';
@@ -50,7 +59,9 @@ import { AppSidebarHeader } from '../sidebar-header';
 import SidebarUsageLimits from '../sidebar-usage-limits';
 import { SidebarUser } from '../sidebar-user';
 
-export function ProjectDashboardSidebar() {
+export function ProjectDashboardSidebar({
+  className,
+}: { className?: string } = {}) {
   const { data: projects } = projectCollectionUtils.useAll();
   const { embedState } = useEmbedding();
   const { state } = useSidebar();
@@ -106,11 +117,27 @@ export function ProjectDashboardSidebar() {
 
   const handleProjectSelect = useCallback(
     async (projectId: string) => {
+      const project = projects.find((p) => p.id === projectId);
+      if (project) {
+        const palette = project.icon
+          ? PROJECT_COLOR_PALETTE[project.icon.color]
+          : null;
+        const name = getProjectName(project);
+        recordAccess({
+          id: `project-${projectId}`,
+          type: 'project',
+          label: name,
+          href: `/projects/${projectId}/automations`,
+          iconBgColor: palette?.color,
+          iconTextColor: palette?.textColor,
+          iconLetter: name.charAt(0).toUpperCase(),
+        });
+      }
       projectCollectionUtils.setCurrentProject(projectId);
-      navigate(`/projects/${projectId}/flows`);
+      navigate(`/projects/${projectId}/automations`);
       setSearchOpen(false);
     },
-    [navigate],
+    [navigate, projects],
   );
 
   const permissionFilter = (link: SidebarGeneralItemType) => {
@@ -131,30 +158,60 @@ export function ProjectDashboardSidebar() {
     to: '/templates',
     label: t('Explore'),
     show: true,
-    icon: Compass,
+    icon: CompassIcon,
     hasPermission: true,
     isSubItem: false,
-    onClick: handleExploreClick,
+    onClick: () => {
+      handleExploreClick();
+      const page = STATIC_PAGES.find((p) => p.href === '/templates');
+      if (page)
+        recordAccess({
+          id: page.id,
+          type: 'page',
+          label: page.label,
+          href: page.href,
+        });
+    },
   };
 
   const impactLink: SidebarItemType = {
     type: 'link',
     to: '/impact',
     label: t('Impact'),
-    icon: LineChart,
+    icon: ChartLineIcon,
     show: true,
     hasPermission: true,
     isSubItem: false,
+    onClick: () => {
+      const page = STATIC_PAGES.find((p) => p.href === '/impact');
+      if (page)
+        recordAccess({
+          id: page.id,
+          type: 'page',
+          label: page.label,
+          href: page.href,
+        });
+    },
   };
 
   const leaderboardLink: SidebarItemType = {
     type: 'link',
     to: '/leaderboard',
     label: t('Leaderboard'),
-    icon: Trophy,
+    icon: TrophyIcon,
     show: true,
     hasPermission: true,
     isSubItem: false,
+    onClick: () => {
+      const page = STATIC_PAGES.find((p) => p.href === '/leaderboard');
+      if (page)
+        recordAccess({
+          id: page.id,
+          type: 'page',
+          label: page.label,
+          href: page.href,
+        });
+    },
   };
 
   const items = [exploreLink, impactLink, leaderboardLink].filter(
@@ -163,11 +220,18 @@ export function ProjectDashboardSidebar() {
 
   return (
     !embedState.hideSideNav && (
-      <Sidebar collapsible="icon" className="max-h-[100vh]">
+      <Sidebar
+        collapsible="icon"
+        id={SIDEBAR_ID}
+        className={cn('max-h-[100vh]', className)}
+      >
         <AppSidebarHeader />
 
         <SidebarContent className="overflow-x-hidden">
           <SidebarGroup>
+            <div className="mb-1 group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center">
+              <GlobalSearchCommand />
+            </div>
             <SidebarMenu>
               {items.map((item) => (
                 <ApSidebarItem key={item.label} {...item} />
@@ -307,6 +371,7 @@ export function ProjectDashboardSidebar() {
         </SidebarContent>
         <SidebarFooter>
           {state === 'expanded' && <DelayedSidebarUsageLimits />}
+          <SidebarPlatformAdminLink />
           <SidebarUser />
         </SidebarFooter>
       </Sidebar>
@@ -328,3 +393,41 @@ function DelayedSidebarUsageLimits() {
     </div>
   ) : null;
 }
+
+function SidebarPlatformAdminLink() {
+  const showPlatformAdmin = useIsPlatformAdmin();
+  const { embedState } = useEmbedding();
+
+  if (embedState.isEmbedded || !showPlatformAdmin) {
+    return null;
+  }
+
+  return (
+    <SidebarMenu>
+      <ApSidebarItem
+        type="link"
+        to="/platform/projects"
+        label={t('Platform Admin')}
+        icon={ShieldIcon}
+        isSubItem={false}
+        show={true}
+        hasPermission={true}
+        onClick={() => {
+          const page = STATIC_PAGES.find(
+            (p) =>
+              p.href === '/platform/projects' && p.id === 'page-platform-admin',
+          );
+          if (page)
+            recordAccess({
+              id: page.id,
+              type: 'page',
+              label: page.label,
+              href: page.href,
+            });
+        }}
+      />
+    </SidebarMenu>
+  );
+}
+
+export const SIDEBAR_ID = 'project-sidebar';
