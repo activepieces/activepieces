@@ -17,6 +17,7 @@
     "test:e2e": "npx playwright test --config=packages/tests-e2e/playwright.config.ts",
     "db-migration": "npx turbo run db-migration --filter=api --",
     "check-migrations": "npx turbo run check-migrations --filter=api",
+    "rollback": "npm run rollback --workspace=packages/server/api --",
     "lint-core": "turbo run lint --filter=@activepieces/shared --filter=@activepieces/engine --filter=api --filter=web --filter=@activepieces/server-utils --filter=worker --filter=ee-embed-sdk",
     "lint-pieces": "turbo run lint --filter='@activepieces/piece-*'",
     "lint-affected": "turbo run lint --affected",
