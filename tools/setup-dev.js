@@ -38,11 +38,12 @@ try {
 
 execSync('bun install', { stdio: 'inherit' });
 
+const IGNORED_DIRS = new Set(['node_modules', 'dist', 'framework', 'common']);
+
 const findAllPieceFolders = (folderPath) => {
-  const ignored = new Set(['node_modules', 'dist', 'framework', 'common']);
   const results = [];
   for (const entry of fs.readdirSync(folderPath)) {
-    if (ignored.has(entry)) continue;
+    if (IGNORED_DIRS.has(entry)) continue;
     const full = path.join(folderPath, entry);
     if (!fs.statSync(full).isDirectory()) continue;
     if (fs.existsSync(path.join(full, 'package.json'))) {
