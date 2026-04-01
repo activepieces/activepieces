@@ -63,7 +63,7 @@ const AuthorizeRequest = {
             client_id: z.string(),
             redirect_uri: z.string(),
             response_type: z.string(),
-            code_challenge: z.string(),
+            code_challenge: z.string().max(256),
             code_challenge_method: z.string().default('S256'),
             state: z.string().max(512).optional(),
             scope: z.string().optional(),
