@@ -33,7 +33,7 @@ export const attio = createPiece({
 	minimumSupportedRelease: '0.36.1',
 	logoUrl: 'https://cdn.activepieces.com/pieces/attio.png',
 	categories: [PieceCategory.SALES_AND_CRM],
-	authors: ['AnkitSharmaOnGithub', 'kishanprmr'],
+	authors: ['AnkitSharmaOnGithub', 'kishanprmr', 'onyedikachi-david'],
 	actions: [
 		createRecordAction,
 		updateRecordAction,
