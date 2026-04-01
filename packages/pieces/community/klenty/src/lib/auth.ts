@@ -6,7 +6,7 @@ import { KLENTY_API_BASE, KLENTY_DOCS_API_BASE } from './common/constants';
 async function validateHost(
   baseUrl: string,
   username: string,
-  apiKey: string,
+  apiKey: string
 ): Promise<boolean> {
   const response = await httpClient.sendRequest({
     method: HttpMethod.GET,
@@ -24,16 +24,7 @@ async function validateHost(
 export const klentyAuth = PieceAuth.CustomAuth({
   required: true,
   description: `
-To authenticate with Klenty, provide:
-1. Your Klenty username/email used in the API path
-2. Your Klenty API key
-
-Evidence:
-- Klenty public help articles document user-scoped endpoints at /apis/v1/user/{username}
-- Pipedream's maintained Klenty component sends the API key using the x-API-key header
-
-This piece sends both x-API-key and api_key for compatibility when references differ.
-  `,
+ `,
   props: {
     username: Property.ShortText({
       displayName: 'Username / Email',
@@ -49,29 +40,16 @@ This piece sends both x-API-key and api_key for compatibility when references di
   },
   validate: async ({ auth }) => {
     try {
-      if (
-        await validateHost(KLENTY_API_BASE, auth.username, auth.apiKey)
-      ) {
-        return { valid: true };
-      }
+      await validateHost(KLENTY_API_BASE, auth.username, auth.apiKey);
+      return {
+        valid: true,
+      };
     } catch {
-      // Try the docs host below
+      return {
+        valid: false,
+        error:
+          'Invalid Klenty credentials. Verify the username/email used in the path and the API key.',
+      };
     }
-
-    try {
-      if (
-        await validateHost(KLENTY_DOCS_API_BASE, auth.username, auth.apiKey)
-      ) {
-        return { valid: true };
-      }
-    } catch {
-      // ignore and return invalid below
-    }
-
-    return {
-      valid: false,
-      error:
-        'Invalid Klenty credentials. Verify the username/email used in the path and the API key.',
-    };
   },
 });

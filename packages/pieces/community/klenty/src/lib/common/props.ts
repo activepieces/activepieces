@@ -35,6 +35,7 @@ export type ProspectPayloadInput = {
   listName?: string;
   tags?: string;
   outcome?: string;
+  owner?: string;
   customFields?: unknown[];
 };
 
@@ -180,6 +181,11 @@ export const prospectCommonProps = {
     description: 'Klenty outcome value. Case-sensitive.',
     required: false,
   }),
+  owner: Property.ShortText({
+    displayName: 'Owner',
+    description: 'Email address of the Klenty user to assign as prospect owner.',
+    required: false,
+  }),
   customFields: Property.Array({
     displayName: 'Custom Fields',
     description: 'Key/value pairs to send in Klenty CustomFields.',
@@ -235,6 +241,7 @@ export function buildProspectPayload(
       List: input.listName,
       Tags: input.tags,
       Outcome: input.outcome,
+      Owner: input.owner,
       CustomFields: customFields.length > 0 ? customFields : undefined,
     }).filter(([, value]) => value !== undefined && value !== null && value !== ''),
   );

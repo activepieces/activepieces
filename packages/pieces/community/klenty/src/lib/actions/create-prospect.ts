@@ -15,11 +15,11 @@ export const createProspectAction = createAction({
       displayName: 'Email',
       required: true,
     }),
-    ...prospectCommonProps,
     firstName: Property.ShortText({
       displayName: 'First Name',
       required: true,
     }),
+    ...prospectCommonProps,
   },
   async run({ auth, propsValue }) {
     const response = await klentyRequest({

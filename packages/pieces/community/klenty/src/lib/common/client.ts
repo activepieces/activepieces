@@ -55,42 +55,16 @@ export async function klentyRequest<T = unknown>({
 export async function findKlentyProspectByEmail({
   auth,
   email,
-  listName,
 }: {
   auth: KlentyAuthValue;
   email: string;
-  listName?: string;
 }): Promise<KlentyProspect | null> {
-  let start = 1;
+  const prospect = await klentyRequest<KlentyProspect | null>({
+    auth,
+    method: HttpMethod.GET,
+    path: '/prospects',
+    queryParams: { Email: email },
+  });
 
-  while (start <= 10000) {
-    const prospects = await klentyRequest<KlentyProspect[]>({
-      auth,
-      method: HttpMethod.GET,
-      path: '/prospects',
-      queryParams: {
-        start: String(start),
-        limit: String(DEFAULT_PAGE_SIZE),
-        ...(listName ? { listName } : {}),
-      },
-    });
-
-    const currentBatch = prospects ?? [];
-    const match = currentBatch.find(
-      (prospect) =>
-        String(prospect.Email ?? '').toLowerCase() === email.toLowerCase(),
-    );
-
-    if (match) {
-      return match;
-    }
-
-    if (currentBatch.length < DEFAULT_PAGE_SIZE) {
-      return null;
-    }
-
-    start += DEFAULT_PAGE_SIZE;
-  }
-
-  return null;
+  return prospect ?? null;
 }
