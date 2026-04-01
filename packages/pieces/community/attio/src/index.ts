@@ -10,6 +10,11 @@ import { updateEntryAction } from './lib/actions/update-entry';
 import { findListEntryAction } from './lib/actions/find-list-entry';
 import { createNoteAction } from './lib/actions/create-note';
 import { getCallTranscriptAction } from './lib/actions/get-call-transcript';
+import { createTaskAction } from './lib/actions/create-task';
+import { listTasksAction } from './lib/actions/list-tasks';
+import { getTaskAction } from './lib/actions/get-task';
+import { deleteTaskAction } from './lib/actions/delete-task';
+import { updateTaskAction } from './lib/actions/update-task';
 
 // Import triggers
 import { recordCreatedTrigger } from './lib/triggers/record-created';
@@ -38,6 +43,11 @@ export const attio = createPiece({
 		findListEntryAction,
 		createNoteAction,
 		getCallTranscriptAction,
+		createTaskAction,
+		listTasksAction,
+		getTaskAction,
+		deleteTaskAction,
+		updateTaskAction,
 		createCustomApiCallAction({
 			auth: attioAuth,
 			baseUrl: () => BASE_URL,
