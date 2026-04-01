@@ -316,8 +316,9 @@ function sleep(ms: number): Promise<void> {
 
 function startHealthServer(): ReturnType<typeof createServer> {
     const port = Number(system.get(WorkerSystemProp.PORT))
+    const healthPaths = new Set(['/worker/health', '/v1/health'])
     const server = createServer((req, res) => {
-        if (req.method === 'GET' && req.url === '/worker/health') {
+        if (req.method === 'GET' && req.url && healthPaths.has(req.url)) {
             res.writeHead(200, { 'Content-Type': 'application/json' })
             res.end(JSON.stringify({ status: 'ok' }))
         }
