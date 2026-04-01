@@ -1,21 +1,29 @@
 import { AP_FUNCTIONS } from '@activepieces/shared';
 import React, { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 
 import { cn } from '@/lib/utils';
 
+const TOOLTIP_WIDTH = 320;
+const TOOLTIP_GAP = 6;
+const SCREEN_MARGIN = 8;
+const TOOLTIP_MIN_HEIGHT = 140;
+
 type HoverState = {
   functionName: string;
   errorMessage: string | null;
-  top: number;
-  left: number;
+  anchorTop: number;
+  anchorBottom: number;
+  anchorLeft: number;
 } | null;
 
 type DisplayState = {
   functionName: string;
   errorMessage: string | null;
-  top: number;
-  left: number;
+  anchorTop: number;
+  anchorBottom: number;
+  anchorLeft: number;
   currentArgIndex: number | null;
 };
 
@@ -35,14 +43,24 @@ export function FunctionEditorTooltip({
     const el = editorRef.current;
     if (!el) return;
 
-    const clearHighlights = () => {
+    const clearHoverHighlights = () => {
       el.querySelectorAll('.ap-fn-active').forEach((n) =>
         n.classList.remove('ap-fn-active'),
       );
     };
 
-    const show = (e: MouseEvent) => {
+    const scheduleHide = () => {
+      if (hideTimer.current) clearTimeout(hideTimer.current);
+      hideTimer.current = setTimeout(() => {
+        setHoverState(null);
+        clearHoverHighlights();
+        hideTimer.current = null;
+      }, 120);
+    };
+
+    const onMouseOver = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
+
       const startEl = target.closest<HTMLElement>('[data-function-start]');
       const endEl = target.closest<HTMLElement>('[data-function-end]');
 
@@ -53,7 +71,7 @@ export function FunctionEditorTooltip({
         hideTimer.current = null;
       }
 
-      clearHighlights();
+      clearHoverHighlights();
 
       const openId = startEl
         ? startEl.getAttribute('data-function-start')
@@ -61,8 +79,12 @@ export function FunctionEditorTooltip({
 
       if (!openId) return;
 
-      const matchStart = el.querySelector(`[data-function-start="${openId}"]`);
-      const matchEnd = el.querySelector(`[data-function-end="${openId}"]`);
+      const matchStart = el.querySelector<HTMLElement>(
+        `[data-function-start="${openId}"]`,
+      );
+      const matchEnd = el.querySelector<HTMLElement>(
+        `[data-function-end="${openId}"]`,
+      );
       matchStart?.classList.add('ap-fn-active');
       matchEnd?.classList.add('ap-fn-active');
 
@@ -82,33 +104,26 @@ export function FunctionEditorTooltip({
       setHoverState({
         functionName: name,
         errorMessage,
-        top: rect.top,
-        left: rect.left,
+        anchorTop: rect.top,
+        anchorBottom: rect.bottom,
+        anchorLeft: rect.left,
       });
     };
 
-    const hide = (e: MouseEvent) => {
-      const related = e.relatedTarget as HTMLElement | null;
-      if (related?.closest('[data-fn-tooltip]')) return;
-      hideTimer.current = setTimeout(() => {
-        setHoverState(null);
-        clearHighlights();
-      }, 100);
-    };
+    // mouseleave fires only when the pointer fully exits the element (not between children)
+    const onMouseLeave = () => scheduleHide();
 
-    el.addEventListener('mouseover', show);
-    el.addEventListener('mouseout', hide);
+    el.addEventListener('mouseover', onMouseOver);
+    el.addEventListener('mouseleave', onMouseLeave);
     return () => {
-      el.removeEventListener('mouseover', show);
-      el.removeEventListener('mouseout', hide);
+      el.removeEventListener('mouseover', onMouseOver);
+      el.removeEventListener('mouseleave', onMouseLeave);
       if (hideTimer.current) clearTimeout(hideTimer.current);
     };
   }, [editorRef]);
 
-  // Merge hover and cursor states into a single display state
   let displayState: DisplayState | null = null;
   if (hoverState) {
-    // When hovering, also show arg index if cursor is inside the same function
     const cursorArgIndex =
       activeFn?.functionName === hoverState.functionName
         ? activeFn.argIndex
@@ -118,8 +133,9 @@ export function FunctionEditorTooltip({
     displayState = {
       functionName: activeFn.functionName,
       errorMessage: activeFn.errorMessage,
-      top: activeFn.anchorRect.top,
-      left: activeFn.anchorRect.left,
+      anchorTop: activeFn.anchorRect.top,
+      anchorBottom: activeFn.anchorRect.bottom,
+      anchorLeft: activeFn.anchorRect.left,
       currentArgIndex: activeFn.argIndex,
     };
   }
@@ -128,53 +144,41 @@ export function FunctionEditorTooltip({
     ? AP_FUNCTIONS.find((f) => f.name === displayState!.functionName)
     : null;
 
-  // Keep last known state so the fade-out animation has content to show
-  const lastDisplayRef = useRef<
-    | {
-        display: DisplayState;
-        fnDef: typeof fnDef;
-      }
-    | undefined
+  const lastRenderRef = useRef<
+    { display: DisplayState; fnDef: typeof fnDef } | undefined
   >(undefined);
   if (displayState && fnDef) {
-    lastDisplayRef.current = { display: displayState, fnDef };
+    lastRenderRef.current = { display: displayState, fnDef };
   }
-  const renderData =
-    displayState && fnDef
-      ? { display: displayState, fnDef }
-      : lastDisplayRef.current ?? null;
 
+  // Don't render anything until we've had at least one hover/cursor event
+  if (!lastRenderRef.current) return null;
+
+  const renderData = lastRenderRef.current;
   const visible = displayState !== null && fnDef !== null;
 
   return (
-    <div
-      className={cn(
-        'transition-opacity duration-150',
-        visible ? 'opacity-100' : 'opacity-0 pointer-events-none',
-      )}
-    >
-      {renderData && (
-        <FunctionTooltipCard
-          fnDef={renderData.fnDef!}
-          errorMessage={renderData.display.errorMessage}
-          top={renderData.display.top}
-          left={renderData.display.left}
-          currentArgIndex={renderData.display.currentArgIndex}
-          onMouseEnter={() => {
-            if (hideTimer.current) {
-              clearTimeout(hideTimer.current);
-              hideTimer.current = null;
-            }
-          }}
-          onMouseLeave={() => {
-            setHoverState(null);
-            editorRef.current
-              ?.querySelectorAll('.ap-fn-active')
-              .forEach((n) => n.classList.remove('ap-fn-active'));
-          }}
-        />
-      )}
-    </div>
+    <FunctionTooltipCard
+      visible={visible}
+      fnDef={renderData.fnDef!}
+      errorMessage={renderData.display.errorMessage}
+      anchorTop={renderData.display.anchorTop}
+      anchorBottom={renderData.display.anchorBottom}
+      anchorLeft={renderData.display.anchorLeft}
+      currentArgIndex={renderData.display.currentArgIndex}
+      onMouseEnter={() => {
+        if (hideTimer.current) {
+          clearTimeout(hideTimer.current);
+          hideTimer.current = null;
+        }
+      }}
+      onMouseLeave={() => {
+        setHoverState(null);
+        editorRef.current
+          ?.querySelectorAll('.ap-fn-active')
+          .forEach((n) => n.classList.remove('ap-fn-active'));
+      }}
+    />
   );
 }
 
@@ -183,9 +187,11 @@ type FnDef = (typeof AP_FUNCTIONS)[number];
 type FunctionTooltipCardProps = {
   fnDef: FnDef;
   errorMessage: string | null;
-  top: number;
-  left: number;
+  anchorTop: number;
+  anchorBottom: number;
+  anchorLeft: number;
   currentArgIndex?: number | null;
+  visible?: boolean;
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
 };
@@ -193,20 +199,39 @@ type FunctionTooltipCardProps = {
 export function FunctionTooltipCard({
   fnDef,
   errorMessage,
-  top,
-  left,
+  anchorTop,
+  anchorBottom,
+  anchorLeft,
   currentArgIndex,
+  visible = true,
   onMouseEnter,
   onMouseLeave,
 }: FunctionTooltipCardProps) {
   const { t } = useTranslation();
   const argNames = parseSyntaxArgs(fnDef.syntax);
 
-  return (
+  const showAbove = anchorTop > TOOLTIP_MIN_HEIGHT + SCREEN_MARGIN;
+  const top = showAbove ? anchorTop - TOOLTIP_GAP : anchorBottom + TOOLTIP_GAP;
+  const left = Math.min(
+    Math.max(anchorLeft, SCREEN_MARGIN),
+    window.innerWidth - TOOLTIP_WIDTH - SCREEN_MARGIN,
+  );
+
+  return createPortal(
     <div
       data-fn-tooltip
-      className="fixed z-50 w-80 bg-gray-900 border border-gray-700 rounded-lg shadow-xl p-3 space-y-2 pointer-events-auto"
-      style={{ top, left, transform: 'translateY(-100%) translateY(-6px)' }}
+      className={cn(
+        'fixed z-[9999] bg-gray-900 border border-gray-700 rounded-lg shadow-2xl p-3 space-y-2 transition-opacity duration-150',
+        visible
+          ? 'opacity-100 pointer-events-auto'
+          : 'opacity-0 pointer-events-none',
+      )}
+      style={{
+        top,
+        left,
+        width: TOOLTIP_WIDTH,
+        transform: showAbove ? 'translateY(-100%)' : undefined,
+      }}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >
@@ -219,16 +244,16 @@ export function FunctionTooltipCard({
       <p className="text-[12px] text-gray-100 leading-snug">
         {t(fnDef.description)}
       </p>
-      {argNames.length > 0 && currentArgIndex !== null && (
-        <div className="flex flex-wrap gap-x-1 gap-y-0.5 text-[11px] font-mono">
+      {argNames.length > 0 && currentArgIndex != null && (
+        <div className="flex flex-wrap gap-x-0.5 gap-y-0.5 text-[12px] font-mono bg-gray-800 rounded px-2 py-1">
           <span className="text-purple-400">{fnDef.name}(</span>
           {argNames.map((arg, i) => (
             <React.Fragment key={i}>
-              {i > 0 && <span className="text-gray-500">,</span>}
+              {i > 0 && <span className="text-gray-500">, </span>}
               <span
                 className={cn(
                   i === currentArgIndex
-                    ? 'text-red-400 font-semibold'
+                    ? 'text-amber-400 font-semibold'
                     : 'text-gray-400',
                 )}
               >
@@ -241,19 +266,18 @@ export function FunctionTooltipCard({
       )}
       <div className="space-y-1">
         <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">
-          {t('Example')}
+          Example
         </p>
-        <code className="block bg-gray-800 rounded px-2 py-1 text-[11px] font-mono text-gray-100 break-all">
+        <code className="block bg-gray-800 rounded px-2 py-1.5 text-[11px] font-mono text-gray-100 break-all leading-relaxed">
           {t(fnDef.example)}
         </code>
-        <div className="flex items-center gap-1 text-[11px]">
-          <span className="text-gray-400">↳</span>
-          <span className="font-mono text-gray-200">
-            {t(fnDef.exampleResult)}
-          </span>
-        </div>
+        <code className="flex items-center gap-1.5 bg-gray-800 rounded px-2 py-1.5 text-[11px] font-mono break-all leading-relaxed">
+          <span className="text-gray-500 shrink-0">↳</span>
+          <span className="text-green-400">{t(fnDef.exampleResult)}</span>
+        </code>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
@@ -265,6 +289,7 @@ function parseSyntaxArgs(syntax: string): string[] {
 
 export type ActiveFunctionInfo = {
   functionName: string;
+  openId: string;
   argIndex: number;
   errorMessage: string | null;
   anchorRect: DOMRect | null;

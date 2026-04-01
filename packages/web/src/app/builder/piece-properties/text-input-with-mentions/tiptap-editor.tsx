@@ -270,8 +270,26 @@ export const TiptapEditor = ({
       });
     },
     onSelectionUpdate: ({ editor: e }) => {
-      const info = getActiveFunctionAtCursor(e, editorWrapperRef.current);
+      const wrapperEl = editorWrapperRef.current;
+      wrapperEl
+        ?.querySelectorAll('.ap-fn-cursor-active')
+        .forEach((n) => n.classList.remove('ap-fn-cursor-active'));
+      const info = getActiveFunctionAtCursor(e, wrapperEl);
+      if (info && wrapperEl) {
+        wrapperEl
+          .querySelector(`[data-function-start="${info.openId}"]`)
+          ?.classList.add('ap-fn-cursor-active');
+        wrapperEl
+          .querySelector(`[data-function-end="${info.openId}"]`)
+          ?.classList.add('ap-fn-cursor-active');
+      }
       setActiveFn(info);
+    },
+    onBlur: () => {
+      setActiveFn(null);
+      editorWrapperRef.current
+        ?.querySelectorAll('.ap-fn-cursor-active')
+        .forEach((n) => n.classList.remove('ap-fn-cursor-active'));
     },
     onFocus: () => {
       setInsertMentionHandler(insertMention);
@@ -516,7 +534,13 @@ function getActiveFunctionAtCursor(
   const anchorRect = startEl?.getBoundingClientRect() ?? null;
   const errorMessage = startEl?.getAttribute('data-fn-error-msg') ?? null;
 
-  return { functionName, argIndex, errorMessage, anchorRect };
+  return {
+    functionName,
+    openId: innermostId,
+    argIndex,
+    errorMessage,
+    anchorRect,
+  };
 }
 
 function flattenSampleData(

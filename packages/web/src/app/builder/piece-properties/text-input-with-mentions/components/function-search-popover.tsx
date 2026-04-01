@@ -1,10 +1,14 @@
 import { AP_FUNCTIONS, ApFunction } from '@activepieces/shared';
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 
 import { cn } from '@/lib/utils';
 
 import { FunctionTooltipCard } from './function-hover-popover';
+
+const LIST_WIDTH = 256;
+const SCREEN_MARGIN = 8;
 
 const CATEGORY_COLORS: Record<string, string> = {
   text: 'bg-blue-100 text-blue-700 border-blue-200',
@@ -67,14 +71,21 @@ export function FunctionSearchPopover({
     return () => window.removeEventListener('keydown', handler, true);
   }, [filtered, activeIdx, onSelect, onClose]);
 
+  // Clamp left so the popover never goes off the right edge of the screen
+  const clampedLeft = Math.min(
+    Math.max(position.left, SCREEN_MARGIN),
+    window.innerWidth - LIST_WIDTH - SCREEN_MARGIN,
+  );
+
   if (filtered.length === 0) {
-    return (
+    return createPortal(
       <div
-        className="fixed z-50 w-64 bg-popover border border-border rounded-lg shadow-lg p-3 text-sm text-muted-foreground"
-        style={{ top: position.top, left: position.left }}
+        className="fixed z-[9998] bg-popover border border-border rounded-lg shadow-lg p-3 text-sm text-muted-foreground"
+        style={{ top: position.top, left: clampedLeft, width: LIST_WIDTH }}
       >
         {t('No functions found')}
-      </div>
+      </div>,
+      document.body,
     );
   }
 
@@ -86,11 +97,14 @@ export function FunctionSearchPopover({
 
   let globalIdx = 0;
 
-  return (
+  // Show tooltip to the left of the list; flip right if near left edge
+  const tooltipOnRight = clampedLeft < 340;
+
+  return createPortal(
     <>
       <div
-        className="fixed z-50 w-64 bg-popover border border-border rounded-lg shadow-lg overflow-hidden"
-        style={{ top: position.top, left: position.left }}
+        className="fixed z-[9998] bg-popover border border-border rounded-lg shadow-lg overflow-hidden"
+        style={{ top: position.top, left: clampedLeft, width: LIST_WIDTH }}
       >
         <div
           ref={listRef}
@@ -159,15 +173,21 @@ export function FunctionSearchPopover({
         </div>
       </div>
 
-      {/* Description panel shown to the left of the hovered item */}
+      {/* Tooltip shown to the left (or right if near left edge) of hovered item */}
       {hoveredFn && hoverItemRect && (
         <FunctionTooltipCard
           fnDef={hoveredFn}
           errorMessage={null}
-          top={hoverItemRect.top}
-          left={hoverItemRect.left - 256 - 8}
+          anchorTop={hoverItemRect.top}
+          anchorBottom={hoverItemRect.bottom}
+          anchorLeft={
+            tooltipOnRight
+              ? hoverItemRect.right + 8
+              : hoverItemRect.left - 320 - 8
+          }
         />
       )}
-    </>
+    </>,
+    document.body,
   );
 }
