@@ -4,14 +4,15 @@ import { FastifyBaseLogger, FastifyReply, FastifyRequest } from 'fastify'
 import { flowExecutionCache } from '../../flows/flow/flow-execution-cache'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
+import { platformCanaryService } from './platform-canary.service'
 
 export const canaryRoutingMiddleware = async (request: FastifyRequest, reply: FastifyReply): Promise<void> => {
     if (request.headers.upgrade === 'websocket') return
 
     const canaryAppUrl = system.get(AppSystemProp.CANARY_APP_URL)
-    const canaryPlatformIds = system.getList(AppSystemProp.CANARY_PLATFORM_IDS)
-    if (isNil(canaryAppUrl) || isNil(canaryPlatformIds)) return
+    if (isNil(canaryAppUrl)) return
 
+    const canaryPlatformIds = await platformCanaryService(request.log).getCanaryPlatformIds()
     const { data: platformId, error } = await tryCatch(() => resolvePlatformId(request, request.log))
     if (error || isNil(platformId) || !canaryPlatformIds.includes(platformId)) return
 

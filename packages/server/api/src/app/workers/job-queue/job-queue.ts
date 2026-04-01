@@ -3,6 +3,7 @@ import { ApId, EventDestinationJobData, ExecuteFlowJobData, getDefaultJobPriorit
 import { Job, Queue } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
 import { FastifyBaseLogger } from 'fastify'
+import { platformCanaryService } from '../../core/canary/platform-canary.service'
 import { redisConnections } from '../../database/redis-connections'
 import { dedicatedWorkers } from '../../ee/platform/platform-plan/platform-dedicated-workers'
 import { system } from '../../helper/system/system'
@@ -197,7 +198,7 @@ async function getQueueName(platformId: string | null, log: FastifyBaseLogger): 
     if (!platformId) {
         return QueueName.WORKER_JOBS
     }
-    const canaryPlatformIds = system.getList(AppSystemProp.CANARY_PLATFORM_IDS)
+    const canaryPlatformIds = await platformCanaryService(log).getCanaryPlatformIds()
     if (canaryPlatformIds.includes(platformId)) {
         return QueueName.CANARY_JOBS
     }

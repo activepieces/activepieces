@@ -199,6 +199,7 @@ import { ChangeManualTasksToTodo1742432827826 } from './migration/postgres/17424
 import { ChangeManualTasksCommentsToTodoComments1742433144687 } from './migration/postgres/1742433144687-ChangeManualTasksCommentsToTodoComments'
 import { RenameApprovalUrlToResolveUrl1742991137557 } from './migration/postgres/1742991137557-RenameApprovalUrlToResolveUrl'
 import { AddMCP1743128816786 } from './migration/postgres/1743128816786-AddMCP'
+import { AddCanaryToPlatformPlan1743500000000 } from './migration/postgres/1743500000000-AddCanaryToPlatformPlan'
 import { AddMetadataFields1743780156664 } from './migration/postgres/1743780156664-AddMetadataFields'
 import { AddLastChangelogDismissed1744053592923 } from './migration/postgres/1744053592923-AddLastChangelogDismissed'
 import { AddRecordIndexForTableIdAndProjectIdAndRecordId1744187975994 } from './migration/postgres/1744187975994-AddRecordIndexForTableIdAndProjectIdAndRecordId'
@@ -712,6 +713,7 @@ export const getMigrations = (): (new () => MigrationInterface)[] => {
         AddMissingCascadeDeleteIndices1774100000000,
         AddUserIdentityIdIndex1774400000000,
         AddUserFkIndices1774449358000,
+        AddCanaryToPlatformPlan1743500000000,
     ]
     return migrations
 }

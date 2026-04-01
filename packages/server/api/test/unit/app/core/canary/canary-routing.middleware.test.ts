@@ -5,14 +5,21 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 // --- mocks (must be before the import under test) ---
 
-const mockSystemGet = vi.fn()
-const mockSystemGetList = vi.fn()
+const { mockSystemGet, mockGetCanaryPlatformIds } = vi.hoisted(() => ({
+    mockSystemGet: vi.fn(),
+    mockGetCanaryPlatformIds: vi.fn(),
+}))
 
 vi.mock('../../../../../src/app/helper/system/system', () => ({
     system: {
         get: (...args: unknown[]) => mockSystemGet(...args),
-        getList: (...args: unknown[]) => mockSystemGetList(...args),
     },
+}))
+
+vi.mock('../../../../../src/app/core/canary/platform-canary.service', () => ({
+    platformCanaryService: () => ({
+        getCanaryPlatformIds: mockGetCanaryPlatformIds,
+    }),
 }))
 
 const mockFlowExecutionCacheGet = vi.fn()
@@ -97,6 +104,7 @@ function makeReply(opts: { sent?: boolean, proxyError?: Error } = {}): FastifyRe
 describe('canaryRoutingMiddleware', () => {
     beforeEach(() => {
         vi.clearAllMocks()
+        mockGetCanaryPlatformIds.mockResolvedValue([])
     })
 
     it('does nothing when CANARY_APP_URL is not set', async () => {
@@ -121,6 +129,7 @@ describe('canaryRoutingMiddleware', () => {
 
     it('does nothing when platform ID cannot be resolved', async () => {
         mockSystemGet.mockReturnValue('http://canary:3000')
+        mockGetCanaryPlatformIds.mockResolvedValue(['platform-abc'])
         const request = makeRequest({ params: {}, principal: undefined })
         const reply = makeReply()
 
@@ -131,7 +140,7 @@ describe('canaryRoutingMiddleware', () => {
 
     it('does nothing when platform is not in canary list', async () => {
         mockSystemGet.mockReturnValue('http://canary:3000')
-        mockSystemGetList.mockReturnValue(['other-platform'])
+        mockGetCanaryPlatformIds.mockResolvedValue(['other-platform'])
         const request = makeRequest({
             principal: { type: PrincipalType.USER, platform: { id: 'platform-abc' } } as never,
         })
@@ -146,7 +155,7 @@ describe('canaryRoutingMiddleware', () => {
         mockSystemGet.mockImplementation((prop: AppSystemProp) =>
             prop === AppSystemProp.CANARY_APP_URL ? 'http://canary:3000' : undefined,
         )
-        mockSystemGetList.mockReturnValue(['platform-abc'])
+        mockGetCanaryPlatformIds.mockResolvedValue(['platform-abc'])
 
         const request = makeRequest({
             method: 'GET',
@@ -167,7 +176,7 @@ describe('canaryRoutingMiddleware', () => {
         mockSystemGet.mockImplementation((prop: AppSystemProp) =>
             prop === AppSystemProp.CANARY_APP_URL ? 'http://canary:3000' : undefined,
         )
-        mockSystemGetList.mockReturnValue(['platform-xyz'])
+        mockGetCanaryPlatformIds.mockResolvedValue(['platform-xyz'])
         mockFlowExecutionCacheGet.mockResolvedValue({ exists: true, platformId: 'platform-xyz' })
 
         const request = makeRequest({

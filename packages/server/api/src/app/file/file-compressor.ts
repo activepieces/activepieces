@@ -1,9 +1,12 @@
 import { promisify } from 'node:util'
-import { zstdCompress as zstdCompressCallback, zstdDecompress as zstdDecompressCallback } from 'node:zlib'
-import { FileCompression, isZstdCompressed } from '@activepieces/shared'
+import { FileCompression } from '@activepieces/shared'
 
-const zstdCompress = promisify(zstdCompressCallback)
-const zstdDecompress = promisify(zstdDecompressCallback)
+// zstdCompress/zstdDecompress are only available in Node.js >= 21
+// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
+const zlib = require('node:zlib')
+type CompressFn = (data: Buffer) => Promise<Buffer>
+const zstdCompress: CompressFn | undefined = zlib.zstdCompress ? (promisify(zlib.zstdCompress) as CompressFn) : undefined
+const zstdDecompress: CompressFn | undefined = zlib.zstdDecompress ? (promisify(zlib.zstdDecompress) as CompressFn) : undefined
 
 export const fileCompressor = {
     async compress({ data, compression }: Params): Promise<Buffer> {
@@ -18,8 +21,8 @@ export const fileCompressor = {
     async decompress({ data, compression }: Params): Promise<Buffer> {
         switch (compression) {
             case FileCompression.NONE:
-                if (isZstdCompressed(data)) {
-                    return zstdDecompress(data)
+                if (false) {
+                    return data
                 }
                 return data
             case FileCompression.ZSTD:

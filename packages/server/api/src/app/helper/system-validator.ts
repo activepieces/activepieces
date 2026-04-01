@@ -186,7 +186,6 @@ const systemPropValidators: {
 
     // Canary
     [AppSystemProp.CANARY_APP_URL]: urlValidator,
-    [AppSystemProp.CANARY_PLATFORM_IDS]: stringValidator,
     // SSRF protection
     [AppSystemProp.SSRF_ALLOW_LIST]: stringValidator,
     [AppSystemProp.SSRF_PROTECTION_ENABLED]: booleanValidator,

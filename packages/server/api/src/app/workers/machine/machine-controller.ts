@@ -13,8 +13,7 @@ export const workerMachineController: FastifyPluginAsyncZod = async (app) => {
         return async (request: WorkerMachineHealthcheckRequest, _principal, _projectId, callback?: (data: unknown) => void) => {
             const rawPlatformId = socket.handshake.auth?.platformIdForDedicatedWorker
             const platformIdForDedicatedWorker = typeof rawPlatformId === 'string' ? rawPlatformId : undefined
-            const rawCanaryPlatformIds = socket.handshake.auth?.canaryPlatformIds
-            const isCanaryWorker = Array.isArray(rawCanaryPlatformIds) && rawCanaryPlatformIds.length > 0
+            const isCanaryWorker = socket.handshake.auth?.isCanaryWorker === true
             const response = await machineService(app.log).onConnection(request, platformIdForDedicatedWorker)
             callback?.(response)
             createRpcServer<WorkerToApiContract>(socket, createHandlers(app.log, platformIdForDedicatedWorker, isCanaryWorker))
