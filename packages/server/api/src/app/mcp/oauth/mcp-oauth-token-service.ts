@@ -4,7 +4,7 @@ import { apId } from '@activepieces/shared'
 import { repoFactory } from '../../core/db/repo-factory'
 import { jwtUtils } from '../../helper/jwt-utils'
 import { system } from '../../helper/system/system'
-import { WorkerSystemProp } from '../../helper/system/system-props'
+import { AppSystemProp, WorkerSystemProp } from '../../helper/system/system-props'
 import { mcpOAuthPkce } from './mcp-oauth-pkce'
 import { McpOAuthToken, McpOAuthTokenEntity } from './mcp-oauth-token-entity'
 
@@ -121,7 +121,8 @@ export const mcpOAuthTokenService = {
     },
 
     getIssuerUrl(): string {
-        return system.getOrThrow(WorkerSystemProp.FRONTEND_URL)
+        return system.get(AppSystemProp.MCP_OAUTH_ISSUER_URL)
+            ?? system.getOrThrow(WorkerSystemProp.FRONTEND_URL)
     },
 }
 
