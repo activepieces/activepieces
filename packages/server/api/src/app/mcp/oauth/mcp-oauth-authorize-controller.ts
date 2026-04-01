@@ -7,7 +7,7 @@ import { system } from '../../helper/system/system'
 import { WorkerSystemProp } from '../../helper/system/system-props'
 import { mcpOAuthClientService } from './mcp-oauth-client-service'
 
-const AUTH_REQUEST_TTL_SECONDS = 10 * 60
+const AUTH_REQUEST_TTL_10_MINUTES_SECONDS = 10 * 60
 
 export const mcpOAuthAuthorizeController: FastifyPluginAsyncZod = async (app) => {
 
@@ -44,7 +44,7 @@ export const mcpOAuthAuthorizeController: FastifyPluginAsyncZod = async (app) =>
                 type: 'mcp_auth_request',
             },
             key,
-            expiresInSeconds: AUTH_REQUEST_TTL_SECONDS,
+            expiresInSeconds: AUTH_REQUEST_TTL_10_MINUTES_SECONDS,
         })
 
         const frontendUrl = system.getOrThrow(WorkerSystemProp.FRONTEND_URL)

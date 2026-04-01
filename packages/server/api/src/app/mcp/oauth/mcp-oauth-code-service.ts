@@ -5,7 +5,7 @@ import { McpOAuthAuthorizationCode, McpOAuthAuthorizationCodeEntity } from './mc
 
 const repo = repoFactory(McpOAuthAuthorizationCodeEntity)
 
-const CODE_TTL_MS = 10 * 60 * 1000
+const CODE_TTL_10_MINUTES_MS = 10 * 60 * 1000
 
 function generateCode(): string {
     return randomBytes(48).toString('base64url')
@@ -26,7 +26,7 @@ export const mcpOAuthCodeService = {
             codeChallengeMethod: params.codeChallengeMethod,
             scopes: params.scopes ?? [],
             state: params.state ?? null,
-            expiresAt: new Date(Date.now() + CODE_TTL_MS).toISOString(),
+            expiresAt: new Date(Date.now() + CODE_TTL_10_MINUTES_MS).toISOString(),
             used: false,
             created: new Date().toISOString(),
             updated: new Date().toISOString(),

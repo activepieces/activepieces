@@ -10,8 +10,8 @@ import { McpOAuthToken, McpOAuthTokenEntity } from './mcp-oauth-token-entity'
 
 const repo = repoFactory(McpOAuthTokenEntity)
 
-const ACCESS_TOKEN_TTL_SECONDS = 15 * 60
-const REFRESH_TOKEN_TTL_MS = 30 * 24 * 60 * 60 * 1000
+const ACCESS_TOKEN_TTL_15_MINUTES_SECONDS = 15 * 60
+const REFRESH_TOKEN_TTL_30_DAYS_MS = 30 * 24 * 60 * 60 * 1000
 
 function generateRefreshToken(): string {
     return randomBytes(48).toString('base64url')
@@ -33,7 +33,7 @@ async function issueAccessToken(params: IssueAccessTokenParams): Promise<string>
             type: 'mcp_oauth',
         },
         key,
-        expiresInSeconds: ACCESS_TOKEN_TTL_SECONDS,
+        expiresInSeconds: ACCESS_TOKEN_TTL_15_MINUTES_SECONDS,
     })
 }
 
@@ -55,7 +55,7 @@ export const mcpOAuthTokenService = {
             projectId: params.projectId,
             platformId: params.platformId,
             scopes: params.scopes,
-            expiresAt: new Date(Date.now() + REFRESH_TOKEN_TTL_MS).toISOString(),
+            expiresAt: new Date(Date.now() + REFRESH_TOKEN_TTL_30_DAYS_MS).toISOString(),
             revoked: false,
             created: new Date().toISOString(),
             updated: new Date().toISOString(),
@@ -73,7 +73,7 @@ export const mcpOAuthTokenService = {
         return {
             access_token: accessToken,
             token_type: 'Bearer',
-            expires_in: ACCESS_TOKEN_TTL_SECONDS,
+            expires_in: ACCESS_TOKEN_TTL_15_MINUTES_SECONDS,
             refresh_token: rawRefreshToken,
         }
     },
@@ -99,7 +99,7 @@ export const mcpOAuthTokenService = {
         return {
             access_token: accessToken,
             token_type: 'Bearer',
-            expires_in: ACCESS_TOKEN_TTL_SECONDS,
+            expires_in: ACCESS_TOKEN_TTL_15_MINUTES_SECONDS,
         }
     },
 
