@@ -1,6 +1,11 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { createPortal } from 'react-dom';
 import { toast } from 'sonner';
+
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 type Conversation = {
   id: string;
@@ -55,10 +60,10 @@ function isYesterday(date: Date) {
 
 const css = `
   .conv-item { display: flex; align-items: center; padding: 4px 8px; border-radius: 6px; cursor: pointer; transition: background 0.15s; border: none; background: transparent; width: 100%; text-align: left; font-family: inherit; color: hsl(var(--foreground)); outline: none !important; box-shadow: none; position: relative; }
-  .conv-item .archive-btn { opacity: 0; position: absolute; right: 4px; top: 50%; transform: translateY(-50%); background: transparent; border: none; cursor: pointer; padding: 4px; border-radius: 6px; color: #a3a3a3; transition: opacity 0.15s, color 0.15s, background 0.15s; outline: none !important; }
+  .conv-item .archive-btn { opacity: 0; position: absolute; right: 4px; top: 50%; transform: translateY(-50%); background: transparent; border: none; cursor: pointer; padding: 4px; border-radius: 6px; color: hsl(var(--muted-foreground)); transition: opacity 0.15s, color 0.15s, background 0.15s; outline: none !important; }
   .conv-item:hover .archive-btn { opacity: 1; }
-  .conv-item .archive-btn:hover { color: #404040; background: rgba(0,0,0,0.08); }
-  .dark .conv-item .archive-btn:hover { color: #d4d4d4; background: rgba(255,255,255,0.1); }
+  .conv-item .archive-btn:hover { color: hsl(var(--foreground)); background: hsl(var(--accent)); }
+  .dark .conv-item .archive-btn:hover { color: hsl(var(--foreground)); background: hsl(var(--accent)); }
   .conv-item:focus { outline: none !important; box-shadow: none !important; }
   .conv-item:focus-visible { box-shadow: 0 0 0 2px hsl(var(--sidebar-ring)) !important; }
   .conv-item:hover { background: rgba(0,0,0,0.05); }
@@ -86,11 +91,11 @@ const css = `
   .new-chat-btn:hover { background: #f5f5f5; }
   .dark .new-chat-btn { border-color: #525252; color: #d4d4d4; }
   .dark .new-chat-btn:hover { background: #262626; }
-  .group-label { color: #a3a3a3; transition: color 0.15s, background 0.15s; border-radius: 6px; outline: none !important; }
+  .group-label { color: hsl(var(--muted-foreground)); transition: color 0.15s, background 0.15s; border-radius: 6px; outline: none !important; }
   .group-label:focus { outline: none !important; box-shadow: none !important; }
   .group-label:focus-visible { box-shadow: 0 0 0 2px hsl(var(--sidebar-ring)) !important; }
-  .group-label:hover { color: hsl(var(--foreground)); background: rgba(0,0,0,0.08); }
-  .dark .group-label:hover { color: #fff; background: rgba(255,255,255,0.12); }
+  .group-label:hover { color: hsl(var(--foreground)); background: hsl(var(--accent)); }
+  .dark .group-label:hover { color: hsl(var(--foreground)); background: hsl(var(--accent)); }
 `;
 
 export function ConversationList({
@@ -134,11 +139,6 @@ export function ConversationList({
     }
     return state;
   });
-  const [archiveTip, setArchiveTip] = useState<{
-    x: number;
-    y: number;
-    text: string;
-  } | null>(null);
   const [showTopFade, setShowTopFade] = useState(false);
   const [showBottomFade, setShowBottomFade] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
@@ -205,7 +205,6 @@ export function ConversationList({
   const handleArchive = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
     setArchivedIds((prev) => new Set(prev).add(id));
-    setArchiveTip(null);
     if (activeId === id) setActiveId(null);
     toast('Conversation archived.', { duration: 2500 });
   };
@@ -296,54 +295,52 @@ export function ConversationList({
               >
                 {streamingId === conv.id ? streamingText : conv.title}
               </span>
-              <span
-                className="archive-btn"
-                onClick={(e) =>
-                  isArchived
-                    ? handleUnarchive(e, conv.id)
-                    : handleArchive(e, conv.id)
-                }
-                onMouseEnter={(e) => {
-                  const rect = e.currentTarget.getBoundingClientRect();
-                  setArchiveTip({
-                    x: rect.left + rect.width / 2,
-                    y: rect.bottom + 6,
-                    text: isArchived ? 'Restore' : 'Archive',
-                  });
-                }}
-                onMouseLeave={() => setArchiveTip(null)}
-              >
-                {isArchived ? (
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span
+                    className="archive-btn"
+                    onClick={(e) =>
+                      isArchived
+                        ? handleUnarchive(e, conv.id)
+                        : handleArchive(e, conv.id)
+                    }
                   >
-                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-                    <path d="M3 3v5h5" />
-                  </svg>
-                ) : (
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <rect x="2" y="3" width="20" height="5" rx="1" />
-                    <path d="M4 8v11a2 2 0 002 2h12a2 2 0 002-2V8" />
-                    <path d="M10 12h4" />
-                  </svg>
-                )}
-              </span>
+                    {isArchived ? (
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                        <path d="M3 3v5h5" />
+                      </svg>
+                    ) : (
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <rect x="2" y="3" width="20" height="5" rx="1" />
+                        <path d="M4 8v11a2 2 0 002 2h12a2 2 0 002-2V8" />
+                        <path d="M10 12h4" />
+                      </svg>
+                    )}
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" align="center">
+                  {isArchived ? 'Restore' : 'Archive'}
+                </TooltipContent>
+              </Tooltip>
             </button>
           ))}
       </div>
@@ -433,28 +430,6 @@ export function ConversationList({
           )}
         </div>
       </div>
-      {archiveTip &&
-        createPortal(
-          <div
-            style={{
-              position: 'fixed',
-              left: archiveTip.x,
-              top: archiveTip.y,
-              transform: 'translateX(-50%)',
-              padding: '4px 8px',
-              borderRadius: '4px',
-              fontSize: '12px',
-              whiteSpace: 'nowrap',
-              pointerEvents: 'none',
-              zIndex: 9999,
-              background: '#262626',
-              color: '#e5e5e5',
-            }}
-          >
-            {archiveTip.text}
-          </div>,
-          document.body,
-        )}
     </>
   );
 }
