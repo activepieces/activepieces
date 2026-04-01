@@ -19,8 +19,11 @@ function _createPieceVersionUpdateBackup(
     const pieceVersion = step.settings.pieceVersion
     const actionOrTriggerName =
         step.type === FlowTriggerType.PIECE
-            ? (step.settings.triggerName ?? '')
-            : (step.settings.actionName ?? '')
+            ? step.settings.triggerName 
+            : step.settings.actionName 
+    if (actionOrTriggerName === undefined) {
+        throw new Error('Action or trigger name is required')
+    }
     const existing = flowVersion.pieceStepsVersionsBackups ?? {}
     return {
         ...flowVersion,

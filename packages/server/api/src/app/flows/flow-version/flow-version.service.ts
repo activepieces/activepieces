@@ -3,6 +3,9 @@ import {
     apId,
     Cursor,
     ErrorCode,
+    FileCompression,
+    FileType,
+    FlowActionType,
     FlowId,
     FlowOperationRequest,
     flowOperations,
@@ -15,6 +18,8 @@ import {
     isNil,
     LATEST_FLOW_SCHEMA_VERSION,
     Note,
+    PieceActionSettings,
+    PieceTriggerSettings,
     PlatformId,
     ProjectId,
     sanitizeObjectForPostgresql,
@@ -25,6 +30,7 @@ import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { EntityManager, FindOneOptions } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
+import { fileService } from '../../file/file.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { userService } from '../../user/user-service'
@@ -81,6 +87,80 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
                         sampleDataSettings,
                     },
                 }]
+                break
+            }
+            case FlowOperationType.CREATE_PIECE_VERSION_UPDATE_BACKUP: {
+                const stepName = userOperation.request.stepName
+                const step = flowStructureUtil.getStep(stepName, flowVersion.trigger)
+                if (
+                    isNil(step)
+                    || (step.type !== FlowActionType.PIECE && step.type !== FlowTriggerType.PIECE)
+                ) {
+                    throw new ActivepiecesError({
+                        code: ErrorCode.VALIDATION,
+                        params: { message: 'Step is not a piece step' },
+                    })
+                }
+                const actionOrTriggerName = step.type === FlowTriggerType.PIECE
+                    ? step.settings.triggerName
+                    : step.settings.actionName
+                if (isNil(actionOrTriggerName)) {
+                    throw new ActivepiecesError({
+                        code: ErrorCode.VALIDATION,
+                        params: { message: 'Action or trigger name is required' },
+                    })
+                }
+                const buffer = Buffer.from(JSON.stringify(step.settings))
+                const file = await fileService(log).save({
+                    projectId,
+                    platformId,
+                    data: buffer,
+                    size: buffer.length,
+                    type: FileType.PIECE_STEP_VERSION_BACKUP,
+                    compression: FileCompression.NONE,
+                })
+                const existing = mutatedFlowVersion.pieceStepsVersionsBackups ?? {}
+                mutatedFlowVersion = {
+                    ...mutatedFlowVersion,
+                    pieceStepsVersionsBackups: {
+                        ...existing,
+                        [stepName]: {
+                            pieceName: step.settings.pieceName,
+                            pieceVersion: step.settings.pieceVersion,
+                            actionOrTriggerName,
+                            fileId: file.id,
+                        },
+                    },
+                }
+                await flowVersionSideEffects(log).preApplyOperation({
+                    projectId,
+                    flowVersion,
+                    operation: userOperation,
+                })
+                operations = []
+                break
+            }
+            case FlowOperationType.REVERT_PIECE_VERSION_UPDATE: {
+                const stepName = userOperation.request.stepName
+                const backup = flowVersion.pieceStepsVersionsBackups?.[stepName]
+                if (isNil(backup)) {
+                    throw new ActivepiecesError({
+                        code: ErrorCode.ENTITY_NOT_FOUND,
+                        params: { entityType: 'pieceStepVersionBackup', entityId: stepName },
+                    })
+                }
+                const { data } = await fileService(log).getDataOrThrow({
+                    fileId: backup.fileId,
+                    projectId,
+                    type: FileType.PIECE_STEP_VERSION_BACKUP,
+                })
+                const rawSettings = JSON.parse(data.toString('utf-8')) as unknown
+                operations = buildRevertOperations({ flowVersion, stepName, rawSettings })
+                const { [stepName]: _removed, ...withoutStepBackup } = mutatedFlowVersion.pieceStepsVersionsBackups ?? {}
+                mutatedFlowVersion = {
+                    ...mutatedFlowVersion,
+                    pieceStepsVersionsBackups: withoutStepBackup,
+                }
                 break
             }
             default: {
@@ -317,6 +397,69 @@ async function applySingleOperation(
     const preparedOperation = await flowVersionValidationUtil(log).prepareRequest({ platformId, request: operation, userId })
     const updatedFlowVersion = flowOperations.apply(flowVersion, preparedOperation)
     return updatedFlowVersion
+}
+
+function buildRevertOperations({ flowVersion, stepName, rawSettings }: {
+    flowVersion: FlowVersion
+    stepName: string
+    rawSettings: unknown
+}): FlowOperationRequest[] {
+    const ops: FlowOperationRequest[] = []
+    const isTrigger = flowVersion.trigger.name === stepName
+        && flowVersion.trigger.type === FlowTriggerType.PIECE
+
+    const settingsParsed = isTrigger
+        ? PieceTriggerSettings.safeParse(rawSettings)
+        : PieceActionSettings.safeParse(rawSettings)
+
+    if (!settingsParsed.success) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: { message: `Invalid backup data for ${isTrigger ? 'trigger' : 'action'}` },
+        })
+    }
+
+    const { sampleData, ...settingsWithoutSampleData } = settingsParsed.data
+    if (!isNil(sampleData)) {
+        ops.push({
+            type: FlowOperationType.UPDATE_SAMPLE_DATA_INFO,
+            request: { stepName, sampleDataSettings: sampleData },
+        })
+    }
+
+    const step = flowStructureUtil.getStepOrThrow(stepName, flowVersion.trigger)
+    if (isTrigger) {
+        ops.push({
+            type: FlowOperationType.UPDATE_TRIGGER,
+            request: {
+                name: step.name,
+                type: FlowTriggerType.PIECE,
+                displayName: step.displayName,
+                valid: step.valid,
+                settings: settingsWithoutSampleData,
+            },
+        })
+    }
+    else {
+        if (step.type !== FlowActionType.PIECE) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: { message: 'Invalid backup step for revert' },
+            })
+        }
+        ops.push({
+            type: FlowOperationType.UPDATE_ACTION,
+            request: {
+                name: step.name,
+                displayName: step.displayName,
+                skip: step.skip,
+                valid: step.valid,
+                type: FlowActionType.PIECE,
+                settings: settingsWithoutSampleData,
+            },
+        })
+    }
+    return ops
 }
 
 function removeConnectionsFromInput(

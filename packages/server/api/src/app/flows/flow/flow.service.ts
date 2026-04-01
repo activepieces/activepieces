@@ -6,25 +6,18 @@ import {
     CreateFlowRequest,
     Cursor,
     ErrorCode,
-    FileCompression,
-    FileType,
     Flow,
-    FlowActionType,
     FlowId,
     FlowOperationRequest,
     FlowOperationStatus,
     FlowOperationType,
     flowPieceUtil,
     FlowStatus,
-    flowStructureUtil,
-    FlowTriggerType,
     FlowVersion,
     FlowVersionId,
     FlowVersionState,
     isNil,
     Metadata,
-    PieceActionSettings,
-    PieceTriggerSettings,
     PlatformId,
     PopulatedFlow,
     ProjectId,
@@ -43,7 +36,6 @@ import { FastifyBaseLogger } from 'fastify'
 import { EntityManager, In, IsNull, Not } from 'typeorm'
 import { transaction } from '../../core/db/transaction'
 import { distributedLock } from '../../database/redis-connections'
-import { fileService } from '../../file/file.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import Paginator, { Order } from '../../helper/pagination/paginator'
@@ -425,206 +417,6 @@ export const flowService = (log: FastifyBaseLogger) => ({
                     flowVersion: lastVersion,
                     userOperation: operation,
                 })
-                break
-            }
-            case FlowOperationType.CREATE_PIECE_VERSION_UPDATE_BACKUP: {
-                const lastVersion = await createNewDraftIfVersionIsPublished({
-                    flowId: id,
-                    projectId,
-                    platformId,
-                    userId,
-                    log,
-                })
-                const stepName = operation.request.stepName
-                const step = flowStructureUtil.getStep(stepName, lastVersion.trigger)
-                if (
-                    isNil(step)
-                    || (step.type !== FlowActionType.PIECE && step.type !== FlowTriggerType.PIECE)
-                ) {
-                    throw new ActivepiecesError({
-                        code: ErrorCode.VALIDATION,
-                        params: {
-                            message: 'Step is not a piece step',
-                        },
-                    })
-                }
-                const buffer = Buffer.from(JSON.stringify(step.settings))
-                const file = await fileService(log).save({
-                    projectId,
-                    platformId,
-                    data: buffer,
-                    size: buffer.length,
-                    type: FileType.PIECE_STEP_VERSION_BACKUP,
-                    compression: FileCompression.NONE,
-                })
-                const actionOrTriggerName =
-                    step.type === FlowTriggerType.PIECE
-                        ? (step.settings.triggerName ?? '')
-                        : (step.settings.actionName ?? '')
-                const existing = lastVersion.pieceStepsVersionsBackups ?? {}
-                await flowVersionRepo().update(
-                    { id: lastVersion.id },
-                    {
-                        pieceStepsVersionsBackups: {
-                            ...existing,
-                            [stepName]: {
-                                pieceName: step.settings.pieceName,
-                                pieceVersion: step.settings.pieceVersion,
-                                actionOrTriggerName,
-                                fileId: file.id,
-                            },
-                        },
-                        updated: dayjs().toISOString(),
-                        ...(userId ? { updatedBy: userId } : {}),
-                    },
-                )
-                await flowService(log).updateLastModified(id, projectId)
-                break
-            }
-            case FlowOperationType.REVERT_PIECE_VERSION_UPDATE: {
-                const lastVersion = await createNewDraftIfVersionIsPublished({
-                    flowId: id,
-                    projectId,
-                    platformId,
-                    userId,
-                    log,
-                })
-                const stepName = operation.request.stepName
-                const backup = lastVersion.pieceStepsVersionsBackups?.[stepName]
-                if (isNil(backup)) {
-                    throw new ActivepiecesError({
-                        code: ErrorCode.ENTITY_NOT_FOUND,
-                        params: {
-                            entityType: 'pieceStepVersionBackup',
-                            entityId: stepName,
-                        },
-                    })
-                }
-                const { data } = await fileService(log).getDataOrThrow({
-                    fileId: backup.fileId,
-                    projectId,
-                    type: FileType.PIECE_STEP_VERSION_BACKUP,
-                })
-                const rawUnknownJson = JSON.parse(data.toString('utf-8')) as unknown
-                let afterVersion: FlowVersion = lastVersion
-
-                if (lastVersion.trigger.name === stepName && lastVersion.trigger.type === FlowTriggerType.PIECE) {
-                    const settingsParsed = PieceTriggerSettings.safeParse(rawUnknownJson)
-                    if (!settingsParsed.success) {
-                        throw new ActivepiecesError({
-                            code: ErrorCode.VALIDATION,
-                            params: {
-                                message: 'Invalid backup data for trigger',
-                            },
-                        })
-                    }
-                    const { sampleData, ...settingsWithoutSampleData } = settingsParsed.data
-                    if (!isNil(sampleData)) {
-                        afterVersion = await flowVersionService(log).applyOperation({
-                            userId,
-                            projectId,
-                            platformId,
-                            flowVersion: afterVersion,
-                            userOperation: {
-                                type: FlowOperationType.UPDATE_SAMPLE_DATA_INFO,
-                                request: {
-                                    stepName,
-                                    sampleDataSettings: sampleData,
-                                },
-                            },
-                        })
-                    }
-                    const triggerStep = flowStructureUtil.getStepOrThrow(stepName, afterVersion.trigger)
-                    afterVersion = await flowVersionService(log).applyOperation({
-                        userId,
-                        projectId,
-                        platformId,
-                        flowVersion: afterVersion,
-                        userOperation: {
-                            type: FlowOperationType.UPDATE_TRIGGER,
-                            request: {
-                                name: triggerStep.name,
-                                type: FlowTriggerType.PIECE,
-                                displayName: triggerStep.displayName,
-                                valid: triggerStep.valid,
-                                settings: settingsWithoutSampleData,
-                            },
-                        },
-                    })
-                }
-                else {
-                    const step = flowStructureUtil.getStepOrThrow(stepName, lastVersion.trigger)
-                    if (step.type !== FlowActionType.PIECE) {
-                        throw new ActivepiecesError({
-                            code: ErrorCode.VALIDATION,
-                            params: {
-                                message: 'Invalid backup step for revert',
-                            },
-                        })
-                    }
-                    const settingsParsed = PieceActionSettings.safeParse(rawUnknownJson)
-                    if (!settingsParsed.success) {
-                        throw new ActivepiecesError({
-                            code: ErrorCode.VALIDATION,
-                            params: {
-                                message: 'Invalid backup data for action',
-                            },
-                        })
-                    }
-                    const { sampleData, ...settingsWithoutSampleData } = settingsParsed.data
-                    if (!isNil(sampleData)) {
-                        afterVersion = await flowVersionService(log).applyOperation({
-                            userId,
-                            projectId,
-                            platformId,
-                            flowVersion: afterVersion,
-                            userOperation: {
-                                type: FlowOperationType.UPDATE_SAMPLE_DATA_INFO,
-                                request: {
-                                    stepName,
-                                    sampleDataSettings: sampleData,
-                                },
-                            },
-                        })
-                    }
-                    const actionStep = flowStructureUtil.getStepOrThrow(stepName, afterVersion.trigger)
-                    if (actionStep.type !== FlowActionType.PIECE) {
-                        throw new ActivepiecesError({
-                            code: ErrorCode.VALIDATION,
-                            params: {
-                                message: 'Invalid backup step for revert',
-                            },
-                        })
-                    }
-                    afterVersion = await flowVersionService(log).applyOperation({
-                        userId,
-                        projectId,
-                        platformId,
-                        flowVersion: afterVersion,
-                        userOperation: {
-                            type: FlowOperationType.UPDATE_ACTION,
-                            request: {
-                                name: actionStep.name,
-                                displayName: actionStep.displayName,
-                                skip: actionStep.skip,
-                                valid: actionStep.valid,
-                                type: FlowActionType.PIECE,
-                                settings: settingsWithoutSampleData,
-                            },
-                        },
-                    })
-                }
-
-                const { [stepName]: _removed, ...withoutStepBackup } = afterVersion.pieceStepsVersionsBackups ?? {}
-                await flowVersionRepo().update(
-                    { id: afterVersion.id },
-                    {
-                        pieceStepsVersionsBackups: withoutStepBackup,
-                        updated: dayjs().toISOString(),
-                        ...(userId ? { updatedBy: userId } : {}),
-                    },
-                )
-                await flowService(log).updateLastModified(id, projectId)
                 break
             }
             default: {

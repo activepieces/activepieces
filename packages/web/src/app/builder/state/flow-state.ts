@@ -286,10 +286,16 @@ export const createFlowState = (
       }));
     },
     waitForPendingFlowUpdates: () => {
-      return new Promise((resolve) => {
+      return new Promise((resolve, reject) => {
+        const startTime = Date.now();
+        const timeoutMs = 30_000;
         const tick = () => {
           if (flowUpdatesQueue.size() === 0) {
             resolve();
+            return;
+          }
+          if (Date.now() - startTime >= timeoutMs) {
+            reject(new Error(waitForPendingFlowUpdatesTimeoutMessageKey));
             return;
           }
           setTimeout(tick, 300);
@@ -467,3 +473,6 @@ const handleUpdatingSampleDataForStepLocallyAfterServerUpdate = ({
     },
   });
 };
+
+export const waitForPendingFlowUpdatesTimeoutMessageKey =
+  'waitForPendingFlowUpdatesTimeout';
