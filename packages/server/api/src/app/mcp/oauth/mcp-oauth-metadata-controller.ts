@@ -30,11 +30,11 @@ export const mcpOAuthMetadataController: FastifyPluginAsyncZod = async (app) => 
 }
 
 const AuthorizationServerMetadataRequest = {
-    config: { security: securityAccess.public(), skipAuth: true },
+    config: { security: securityAccess.public() },
     schema: { hide: true },
 }
 
 const ProtectedResourceMetadataRequest = {
-    config: { security: securityAccess.public(), skipAuth: true },
+    config: { security: securityAccess.public() },
     schema: { hide: true },
 }

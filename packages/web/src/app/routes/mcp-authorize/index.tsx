@@ -133,7 +133,7 @@ function McpAuthorizePage() {
               type="button"
               variant="outline"
               className="flex-1"
-              onClick={() => window.close()}
+              onClick={() => window.history.back()}
             >
               {t('Deny')}
             </Button>

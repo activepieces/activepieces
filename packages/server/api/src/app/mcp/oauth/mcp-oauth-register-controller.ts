@@ -20,7 +20,7 @@ export const mcpOAuthRegisterController: FastifyPluginAsyncZod = async (app) => 
 }
 
 const RegisterRequest = {
-    config: { security: securityAccess.public(), skipAuth: true },
+    config: { security: securityAccess.public() },
     schema: {
         hide: true,
         body: z.object({
@@ -28,7 +28,7 @@ const RegisterRequest = {
                 const scheme = new URL(uri).protocol
                 return scheme === 'http:' || scheme === 'https:'
             }, { message: 'Only http and https redirect URIs are allowed' })).min(1),
-            client_name: z.string().optional(),
+            client_name: z.string().max(255).optional(),
             grant_types: z.array(z.string()).optional(),
             response_types: z.array(z.string()).optional(),
             token_endpoint_auth_method: z.string().optional(),

@@ -11,14 +11,13 @@ export const mcpOAuthRevokeController: FastifyPluginAsyncZod = async (app) => {
         if (token_type_hint === 'refresh_token' || !token_type_hint) {
             await mcpOAuthTokenService.revokeRefreshToken(token)
         }
-        // Access tokens are JWTs — revocation is a no-op (they expire in 15min)
-        // Per RFC 7009, return 200 even if token is invalid
+        // Per RFC 7009, return 200 even if token is invalid or unrecognized
         return reply.status(200).send()
     })
 }
 
 const RevokeRequest = {
-    config: { security: securityAccess.public(), skipAuth: true },
+    config: { security: securityAccess.public() },
     schema: {
         hide: true,
         body: z.object({

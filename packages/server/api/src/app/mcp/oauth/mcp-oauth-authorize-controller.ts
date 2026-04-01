@@ -56,7 +56,7 @@ export const mcpOAuthAuthorizeController: FastifyPluginAsyncZod = async (app) =>
 }
 
 const AuthorizeRequest = {
-    config: { security: securityAccess.public(), skipAuth: true },
+    config: { security: securityAccess.public() },
     schema: {
         hide: true,
         querystring: z.object({
@@ -65,7 +65,7 @@ const AuthorizeRequest = {
             response_type: z.string(),
             code_challenge: z.string(),
             code_challenge_method: z.string().default('S256'),
-            state: z.string().optional(),
+            state: z.string().max(512).optional(),
             scope: z.string().optional(),
             resource: z.string().optional(),
         }),

@@ -47,8 +47,8 @@ async function handleAuthorizationCode(body: TokenRequestBody, reply: FastifyRep
         return
     }
 
-    if (client.tokenEndpointAuthMethod === 'client_secret_post' && body.client_secret) {
-        if (!mcpOAuthClientService.validateClientSecret(client, body.client_secret)) {
+    if (client.tokenEndpointAuthMethod === 'client_secret_post') {
+        if (!body.client_secret || !mcpOAuthClientService.validateClientSecret(client, body.client_secret)) {
             await reply.status(400).send({ error: 'invalid_client', error_description: 'Invalid client secret' })
             return
         }
@@ -101,7 +101,7 @@ const tokenRequestSchema = z.object({
 })
 
 const TokenRequest = {
-    config: { security: securityAccess.public(), skipAuth: true },
+    config: { security: securityAccess.public() },
     schema: {
         hide: true,
         body: tokenRequestSchema,

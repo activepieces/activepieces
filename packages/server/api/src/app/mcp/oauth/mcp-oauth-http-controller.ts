@@ -8,14 +8,14 @@ import { mcpOAuthTokenService, OAuthTokenError } from './mcp-oauth-token-service
 
 export const mcpOAuthHttpController: FastifyPluginAsyncZod = async (app) => {
 
-    app.get('/', McpGetRequest, async (_req, reply) => {
+    app.get('/', McpEndpointConfig, async (_req, reply) => {
         return reply.status(405).send({
             error: 'Method Not Allowed',
             message: 'Use POST with Authorization: Bearer <token> for MCP requests.',
         })
     })
 
-    app.post('/', McpPostRequest, async (req, reply) => {
+    app.post('/', McpEndpointConfig, async (req, reply) => {
         const authHeader = req.headers.authorization
         const [type, token] = authHeader?.split(' ') ?? []
 
@@ -73,12 +73,7 @@ async function resolveProjectId(token: string, log: FastifyBaseLogger): Promise<
     return null
 }
 
-const McpGetRequest = {
-    config: { security: securityAccess.public(), skipAuth: true },
-    schema: { hide: true },
-}
-
-const McpPostRequest = {
-    config: { security: securityAccess.public(), skipAuth: true },
+const McpEndpointConfig = {
+    config: { security: securityAccess.public() },
     schema: { hide: true },
 }
