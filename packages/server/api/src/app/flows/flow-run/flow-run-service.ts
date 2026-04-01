@@ -267,9 +267,8 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
 
         // Guard against the race condition where the engine has not yet committed its PAUSED
         // state (and pauseMetadata) to the DB by the time the subflow calls this resume URL.
-        // Wait up to 5 s for pauseMetadata to appear before proceeding.
         const PAUSE_WAIT_INTERVAL_MS = 200
-        const PAUSE_WAIT_TIMEOUT_MS = 5000
+        const PAUSE_WAIT_TIMEOUT_MS = 30000
         const waitStart = Date.now()
         while (
             isNil(flowRun.pauseMetadata) &&
@@ -278,6 +277,12 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         ) {
             await new Promise((resolve) => setTimeout(resolve, PAUSE_WAIT_INTERVAL_MS))
             flowRun = await findFlowRunOrThrow(flowRunId)
+        }
+        if (isNil(flowRun.pauseMetadata) && (flowRun.status === FlowRunStatus.RUNNING || flowRun.status === FlowRunStatus.QUEUED)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.PAUSE_METADATA_MISSING,
+                params: {},
+            })
         }
 
         const resolvedRun = resolveFlowRunForResume({ flowRun, requestId, checkRequestId })
