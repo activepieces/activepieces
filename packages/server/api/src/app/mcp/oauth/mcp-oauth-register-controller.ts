@@ -31,7 +31,7 @@ const RegisterRequest = {
             client_name: z.string().max(255).optional(),
             grant_types: z.array(z.string()).optional(),
             response_types: z.array(z.string()).optional(),
-            token_endpoint_auth_method: z.string().optional(),
+            token_endpoint_auth_method: z.enum(['none', 'client_secret_post']).optional(),
         }),
     },
 }
