@@ -57,7 +57,7 @@ export const McpOAuthClientEntity = new EntitySchema<McpOAuthClient>({
             type: String,
             length: 64,
             nullable: false,
-            default: '\'none\'',
+            default: 'none',
         },
     },
     indices: [

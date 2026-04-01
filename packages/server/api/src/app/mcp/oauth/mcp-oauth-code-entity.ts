@@ -50,7 +50,7 @@ export const McpOAuthAuthorizationCodeEntity = new EntitySchema<McpOAuthAuthoriz
             type: String,
             length: 8,
             nullable: false,
-            default: '\'S256\'',
+            default: 'S256',
         },
         scopes: {
             type: String,
