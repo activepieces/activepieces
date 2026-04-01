@@ -4,7 +4,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { mcpServerRepository, mcpServerService } from '../mcp-service'
-import { mcpOAuthTokenService, OAuthTokenError } from './mcp-oauth-token-service'
+import { mcpOAuthTokenService } from './mcp-oauth-token-service'
 
 export const mcpOAuthHttpController: FastifyPluginAsyncZod = async (app) => {
 
@@ -58,10 +58,8 @@ async function resolveProjectId(token: string, log: FastifyBaseLogger): Promise<
             return payload.projectId
         }
         catch (e) {
-            if (e instanceof OAuthTokenError) {
-                return null
-            }
-            log.debug({ err: e }, 'Token is not a valid OAuth JWT, trying legacy auth')
+            log.debug({ err: e }, 'JWT verification failed')
+            return null
         }
     }
 

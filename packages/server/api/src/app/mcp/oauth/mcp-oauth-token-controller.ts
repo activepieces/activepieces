@@ -60,8 +60,8 @@ async function authenticateClient(body: TokenRequestBody, reply: FastifyReply): 
 
 async function handleAuthorizationCode(body: TokenRequestBody, reply: FastifyReply): Promise<void> {
     const { code, code_verifier, redirect_uri } = body
-    if (!code || !code_verifier) {
-        await reply.status(400).send({ error: 'invalid_request', error_description: 'Missing code or code_verifier' })
+    if (!code || !code_verifier || !redirect_uri) {
+        await reply.status(400).send({ error: 'invalid_request', error_description: 'Missing code, code_verifier, or redirect_uri' })
         return
     }
 

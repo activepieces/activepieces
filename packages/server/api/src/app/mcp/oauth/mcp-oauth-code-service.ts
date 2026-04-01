@@ -35,14 +35,11 @@ export const mcpOAuthCodeService = {
         return code
     },
 
-    async consume(code: string, clientId: string, redirectUri: string | undefined): Promise<McpOAuthAuthorizationCode | null> {
-        const whereClause = redirectUri
-            ? '"code" = :code AND "used" = false AND "expiresAt" > NOW() AND "clientId" = :clientId AND "redirectUri" = :redirectUri'
-            : '"code" = :code AND "used" = false AND "expiresAt" > NOW() AND "clientId" = :clientId'
+    async consume(code: string, clientId: string, redirectUri: string): Promise<McpOAuthAuthorizationCode | null> {
         const updateResult = await repo().createQueryBuilder()
             .update()
             .set({ used: true })
-            .where(whereClause, { code, clientId, redirectUri })
+            .where('"code" = :code AND "used" = false AND "expiresAt" > NOW() AND "clientId" = :clientId AND "redirectUri" = :redirectUri', { code, clientId, redirectUri })
             .execute()
 
         if (updateResult.affected === 0) {
