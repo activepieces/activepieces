@@ -1,3 +1,4 @@
+import { PropertyType } from '@activepieces/pieces-framework'
 import {
     FlowActionType,
     FlowOperationRequest,
@@ -11,7 +12,9 @@ import {
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
+import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
 import { projectService } from '../../project/project-service'
+import { mcpToolError } from './mcp-utils'
 
 const updateStepInput = z.object({
     flowId: z.string(),
@@ -97,6 +100,14 @@ export const apUpdateStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
                 }
             }
 
+            if (step.type === FlowActionType.PIECE && input !== undefined) {
+                await fillDefaultsForMissingOptionalProps({
+                    settings: updatedSettings,
+                    platformId: project.platformId,
+                    log,
+                })
+            }
+
             const payload = {
                 type: step.type,
                 name: step.name,
@@ -144,11 +155,48 @@ export const apUpdateStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
                 }
             }
             catch (err) {
-                const message = err instanceof Error ? err.message : String(err)
-                return {
-                    content: [{ type: 'text', text: `❌ Step update failed: ${message}` }],
-                }
+                return mcpToolError('Step update failed', err)
             }
         },
+    }
+}
+
+async function fillDefaultsForMissingOptionalProps({ settings, platformId, log }: {
+    settings: Record<string, unknown>
+    platformId: string
+    log: FastifyBaseLogger
+}): Promise<void> {
+    const pieceName = settings.pieceName
+    const pieceVersion = settings.pieceVersion
+    const actionName = settings.actionName
+    if (typeof pieceName !== 'string' || typeof pieceVersion !== 'string' || typeof actionName !== 'string') {
+        return
+    }
+    try {
+        const piece = await pieceMetadataService(log).getOrThrow({
+            platformId,
+            name: pieceName,
+            version: pieceVersion,
+        })
+        const action = piece.actions[actionName]
+        if (isNil(action)) {
+            return
+        }
+        const defaults: Record<string, unknown> = {}
+        for (const [propName, prop] of Object.entries(action.props)) {
+            if (prop.type === PropertyType.ARRAY && !prop.required) {
+                defaults[propName] = []
+            }
+            else if (prop.type === PropertyType.DYNAMIC && !prop.required) {
+                defaults[propName] = {}
+            }
+            else if (prop.type === PropertyType.CHECKBOX && !prop.required) {
+                defaults[propName] = prop.defaultValue ?? false
+            }
+        }
+        settings.input = { ...defaults, ...(typeof settings.input === 'object' && settings.input !== null ? settings.input : {}) }
+    }
+    catch (err) {
+        log.warn({ err, pieceName, actionName }, 'fillDefaultsForMissingOptionalProps: failed to fetch piece metadata, skipping defaults')
     }
 }

@@ -12,6 +12,7 @@ import {
     isNil,
     ResumeExecuteFlowOperation,
     ResumePayload,
+    tryCatch,
     WorkerJobType,
     WorkerToApiContract,
 } from '@activepieces/shared'
@@ -33,7 +34,11 @@ export const executeFlowJob: JobHandler<ExecuteFlowJobData, FireAndForgetJobResu
             return { kind: JobResultKind.FIRE_AND_FORGET }
         }
 
-        const provisioned = await provisionFlowPieces({ flowVersion, platformId: data.platformId, flowId: data.flowId, projectId: data.projectId, log: ctx.log, apiClient: ctx.apiClient })
+        const { data: provisioned, error: provisionError } = await tryCatch(() => provisionFlowPieces({ flowVersion, platformId: data.platformId, flowId: data.flowId, projectId: data.projectId, log: ctx.log, apiClient: ctx.apiClient }))
+        if (provisionError) {
+            await reportFlowStatus(ctx, data, FlowRunStatus.INTERNAL_ERROR)
+            throw provisionError
+        }
         if (!provisioned) {
             await reportFlowStatus(ctx, data, FlowRunStatus.FAILED)
             return { kind: JobResultKind.FIRE_AND_FORGET }
@@ -57,20 +62,20 @@ export const executeFlowJob: JobHandler<ExecuteFlowJobData, FireAndForgetJobResu
 
             if (result.status === EngineResponseStatus.LOG_SIZE_EXCEEDED) {
                 await reportFlowStatus(ctx, data, FlowRunStatus.LOG_SIZE_EXCEEDED)
-                return { kind: JobResultKind.FIRE_AND_FORGET, stdOut: result.stdOut, stdError: result.stdError }
+                return { kind: JobResultKind.FIRE_AND_FORGET, logs: result.logs }
             }
 
             if (result.status === EngineResponseStatus.INTERNAL_ERROR) {
                 await reportFlowStatus(ctx, data, FlowRunStatus.INTERNAL_ERROR)
-                return { kind: JobResultKind.FIRE_AND_FORGET, stdOut: result.stdOut, stdError: result.stdError }
+                return { kind: JobResultKind.FIRE_AND_FORGET, logs: result.logs }
             }
 
             const delayInSeconds = result.delayInSeconds
             if (delayInSeconds && delayInSeconds > 0) {
-                return { kind: JobResultKind.FIRE_AND_FORGET, delayInSeconds, stdOut: result.stdOut, stdError: result.stdError }
+                return { kind: JobResultKind.FIRE_AND_FORGET, delayInSeconds, logs: result.logs }
             }
 
-            return { kind: JobResultKind.FIRE_AND_FORGET, stdOut: result.stdOut, stdError: result.stdError }
+            return { kind: JobResultKind.FIRE_AND_FORGET, logs: result.logs }
         }
         catch (e) {
             await ctx.sandboxManager.invalidate(ctx.log)
