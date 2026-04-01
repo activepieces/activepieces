@@ -457,7 +457,17 @@ describe('worker integration', () => {
                 workerToken: 'test-token',
                 withHealthServer: true,
             })
-            await new Promise<void>((resolve) => setTimeout(resolve, 100))
+            for (let i = 0; i < 50; i++) {
+                try {
+                    const res = await fetch(`http://127.0.0.1:${healthPort}/v1/health`)
+                    if (res.ok) return
+                }
+                catch {
+                    // server not ready yet
+                }
+                await new Promise<void>((resolve) => setTimeout(resolve, 100))
+            }
+            throw new Error(`Health server on port ${healthPort} did not start in time`)
         }
 
         it('responds 200 with status ok on /v1/health', async () => {
