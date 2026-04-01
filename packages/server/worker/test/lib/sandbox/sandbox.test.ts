@@ -179,7 +179,7 @@ describe('createSandbox', () => {
                 { timeoutInSeconds: 10 },
             )
 
-            expect(result).toEqual({ ...engineResponse, stdOut: '', stdError: '' })
+            expect(result).toEqual({ ...engineResponse, logs: undefined })
         })
 
         it('recovers after engine returns INTERNAL_ERROR and handles next job', async () => {
@@ -242,7 +242,7 @@ describe('createSandbox', () => {
                 { timeoutInSeconds: 10 },
             )
 
-            expect(result).toEqual({ ...engineResponse, stdOut: 'line1\nline2\n', stdError: 'err1\n' })
+            expect(result).toEqual({ ...engineResponse, logs: 'stdout:\nline1\nline2\n\nstderr:\nerr1\n' })
         })
 
         it('delegates worker contract calls to handlers', async () => {
