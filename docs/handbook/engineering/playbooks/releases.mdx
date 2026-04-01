@@ -7,12 +7,12 @@ All changes flow through a staging environment before reaching production. There
 
 ## How It Works
 
-The `continuous-delivery.yml` workflow handles everything:
+Four separate workflows cover the full delivery lifecycle:
 
-1. **Merge to `main`** — automatically builds a Docker image and deploys to **staging** (`stg.activepieces.com`).
+1. **Merge to `main`** — `continuous-delivery-stg.yml` automatically builds a Docker image and deploys to **staging** (`stg.activepieces.com`).
 2. **Staging freeze (5 PM UTC)** — merges to `main` after 5 PM UTC are accepted but **not deployed** to staging. The content team uses the frozen staging environment overnight.
-3. **Daily promotion (9 AM UTC)** — a scheduled job compares staging vs production. If they differ, staging is promoted to production. After promotion, a catch-up deploy brings staging up to the latest `main`.
-4. **Weekly release (Sundays)** — after promotion, the workflow publishes the GitHub release, creates a git tag, and builds official multi-platform Docker images (`activepieces/activepieces:X.Y.Z` + `latest`).
+3. **Daily promotion (9 AM UTC)** — `continuous-delivery-cloud.yml` promotes staging to production. After promotion, a catch-up deploy brings staging up to the latest `main`.
+4. **Weekly release (Sundays)** — `continuous-delivery-release.yml` publishes the GitHub release, creates a git tag, and builds official multi-platform Docker images (`activepieces/activepieces:X.Y.Z` + `latest`).
 
 ## Environments
 
@@ -24,7 +24,7 @@ The `continuous-delivery.yml` workflow handles everything:
 
 ## Hotfix Workflow
 
-- **Normal hotfix**: Merge fix to `main` → deploys to staging → trigger `continuous-delivery.yml` manually with action `promote-to-production`.
+- **Normal hotfix**: Merge fix to `main` → deploys to staging → trigger `continuous-delivery-stg.yml` manually with action `cloud-hotfix` (builds, deploys to staging, and promotes to production in one step).
 - **Emergency**: Use `emergency-cloud-deploy.yml` (manual dispatch) to bypass staging and deploy directly to production.
 
 ## Self-Hosted Release
@@ -37,27 +37,56 @@ To release a self-hosted version from any branch:
 
 ## GitHub Actions Workflows
 
-We have three workflows. To run any of them manually, go to the repo's **Actions** tab, select the workflow, and click **Run workflow**.
+To run any workflow manually, go to the repo's **Actions** tab, select the workflow, and click **Run workflow**.
 
-### `continuous-delivery.yml`
-
-The main workflow. It has three trigger paths:
+### `continuous-delivery-stg.yml` — Staging
 
 | Trigger | What happens |
 |---|---|
-| **Push to `main`** | Builds a Docker image and deploys to staging. Skipped automatically if the push happens during the freeze window (5 PM – 9 AM UTC). |
-| **Scheduled (daily 9 AM UTC)** | Compares staging vs production versions. If different, promotes staging to production (requires reviewer approval via the `production` GitHub Environment). After promotion, triggers a catch-up deploy to bring staging to latest `main`. On Sundays, also runs the weekly release (git tag, GitHub release, official Docker images). |
+| **Push to `main`** | Builds a `version.sha.beta` image and deploys to staging. Skipped automatically during the freeze window (5 PM – 9 AM UTC). |
 | **Manual dispatch** | Presents a dropdown with three choices (see below). |
 
 #### Manual dispatch choices
 
-- **`deploy-staging`** — Re-deploy the latest `main` to staging. Use this after an infra change, or to override the freeze window when you know it's safe.
-- **`promote-to-production`** — Immediately promote whatever is running on staging to production. This is the hotfix path — merge your fix to `main`, wait for it to deploy to staging, then trigger this to push it to prod without waiting for the next 9 AM cycle.
-- **`weekly-release`** — Manually trigger the weekly self-hosted release (git tag, publish GitHub release notes, build multi-platform Docker images). Normally this runs automatically on Sundays, but use this if a Sunday run was skipped or you need an off-cycle release.
+- **`deploy-staging`** — Re-deploy the latest `main` to staging. Use this after an infra change, or to force a deploy that was skipped due to the freeze window.
+- **`deploy-staging-skip-freeze`** — Same as above but explicitly bypasses the freeze window check.
+- **`cloud-hotfix`** — Build, deploy to staging, then immediately promote to production in one go. Use this for hotfixes that cannot wait for the next scheduled promotion.
+
+### `continuous-delivery-cloud.yml` — Production Promotion
+
+| Trigger | What happens |
+|---|---|
+| **Scheduled (daily 9 AM UTC)** | Resolves the current staging image tag and promotes it to production (requires approval via the `production` GitHub Environment). After promotion, triggers a catch-up staging deploy and a smoke test. |
+| **Manual dispatch / `workflow_call`** | Deploys a specific image tag to production. |
+
+#### `image_tag` input
+
+| Value | Behaviour |
+|---|---|
+| _(blank)_ or `staging` | Reads the currently running staging tag and promotes it |
+| `canary` | Reads the currently running canary tag and promotes it |
+| Any other value | Deploys that exact tag |
+
+### `continuous-delivery-release.yml` — Weekly Release
+
+| Trigger | What happens |
+|---|---|
+| **Scheduled (Sundays 9 AM UTC)** | Publishes a GitHub release with changelog, creates a git tag, and builds official multi-platform Docker images (`activepieces/activepieces:X.Y.Z` + `latest`). |
+| **Manual dispatch** | Same as above, on demand. Use this if a Sunday run was skipped or you need an off-cycle release. |
+
+### `continuous-delivery-canary.yml` — Canary
+
+Manual dispatch only. Builds a `version.sha.canary` image, deploys the canary app and workers, and optionally updates platform routing in the database.
+
+| Input | Description |
+|---|---|
+| `platform_ids` | Comma-separated platform IDs to route to canary. Leave blank to deploy without changing routing. |
+
+See the [Canary Deployment playbook](/handbook/engineering/playbooks/canary-deployment) for full details.
 
 ### `emergency-cloud-deploy.yml`
 
-Break-glass workflow. Manual dispatch only, no choices — it builds from the current `main` and deploys **directly to production**, bypassing staging entirely. Use only for critical incidents where staging soak is not acceptable.
+Break-glass workflow. Manual dispatch only — builds from the current `main` and deploys **directly to production**, bypassing staging entirely. Use only for critical incidents where staging soak is not acceptable.
 
 ### `release-self-hosted.yml`
 

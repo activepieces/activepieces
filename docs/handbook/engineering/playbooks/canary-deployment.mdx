@@ -84,17 +84,43 @@ Socket.IO is configured with a **Redis adapter** (`@socket.io/redis-adapter`). E
 Jobs for canary platforms are enqueued to `canaryWorkerJobs`, which only canary workers poll — fully isolated from the primary worker fleet.
 
 
-## Adding a Platform to Canary
+## Deploying a New Canary Build
 
-Call the admin API endpoint to set the canary flag on a platform:
+Trigger the **Continuous Delivery — Canary** workflow from GitHub Actions (`continuous-delivery-canary.yml`). It accepts one optional input:
+
+| Input | Description |
+|---|---|
+| `platform_ids` | Comma-separated platform IDs to route to this canary build. Leave blank to deploy without changing routing. |
+
+The workflow:
+1. Builds and pushes a new image tagged `<version>.<sha>.canary`
+2. Deploys the canary app (`config/app-canary.yml`) and canary workers
+3. If `platform_ids` is provided, calls `POST /v1/admin/platforms/canary` on the primary app for each ID — enabling canary routing immediately without a restart
+
+Required GitHub secrets: `AP_API_KEY` (the primary app's `AP_API_KEY` value).
+
+## Promoting canary build to production
+
+Dispatch [Continuous Delivery — Cloud](/handbook/engineering/playbooks/releases#continuous-delivery-cloud-yml-%E2%80%94-production-promotion) with **image_tag = canary**
+
+## Managing Platform Routing
+
+### Enable canary routing for a platform
 
 ```bash
-curl -X POST https://<host>/v1/admin/platforms/canary \
+curl -X POST https://cloud.activepieces.com/v1/admin/platforms/canary \
   -H "api-key: <AP_API_KEY>" \
   -H "Content-Type: application/json" \
   -d '{"platformId": "<platformId>", "canary": true}'
 ```
 
-This updates `platform_plan.canary` in the database and invalidates the Redis cache. The change takes effect on the next request — no restart required.
+### Disable canary routing for a platform
 
-To remove a platform from canary, send the same request with `"canary": false`.
+```bash
+curl -X POST https://cloud.activepieces.com/v1/admin/platforms/canary \
+  -H "api-key: <AP_API_KEY>" \
+  -H "Content-Type: application/json" \
+  -d '{"platformId": "<platformId>", "canary": false}'
+```
+
+Both calls update `platform_plan.canary` in the database and invalidate the Redis cache (`canary-platform-ids`). The change takes effect on the next request — no restart required.

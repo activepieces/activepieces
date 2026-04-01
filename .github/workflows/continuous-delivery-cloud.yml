@@ -6,13 +6,13 @@ on:
   workflow_dispatch:
     inputs:
       image_tag:
-        description: 'Image tag to deploy (leave blank to use current staging tag)'
+        description: 'Image tag to deploy. Leave blank or "staging" to use current staging tag, "canary" to use current canary tag, or provide an explicit tag.'
         required: false
         default: ''
   workflow_call:
     inputs:
       image_tag:
-        description: 'Image tag to deploy (leave blank to use current staging tag)'
+        description: 'Image tag to deploy. Leave blank or "staging" to use current staging tag, "canary" to use current canary tag, or provide an explicit tag.'
         type: string
         required: false
         default: ''
@@ -48,9 +48,12 @@ jobs:
         id: image
         run: |
           TAG="${{ inputs.image_tag }}"
-          if [ -z "$TAG" ]; then
+          if [ -z "$TAG" ] || [ "$TAG" = "staging" ]; then
             TAG=$(ssh ops -t -t 'bash -ic "cd mrsk/stg && kamal app version 2>&1 | grep -oE \"[0-9]+\.[0-9]+\.[0-9]+\.[a-f0-9]+\.beta\" | head -1 | tr -d \"[:space:]\"; exit"' | tr -d '\r' | grep -oE '[0-9]+\.[0-9]+\.[0-9]+\.[a-f0-9]+\.beta' | head -1)
-            echo "No tag provided — resolved staging tag: $TAG"
+            echo "Resolved staging tag: $TAG"
+          elif [ "$TAG" = "canary" ]; then
+            TAG=$(ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal app version --config-file=config/app-canary.yml 2>&1 | grep -oE \"[0-9]+\.[0-9]+\.[0-9]+\.[a-f0-9]+\.canary\" | head -1 | tr -d \"[:space:]\"; exit"' | tr -d '\r' | grep -oE '[0-9]+\.[0-9]+\.[0-9]+\.[a-f0-9]+\.canary' | head -1)
+            echo "Resolved canary tag: $TAG"
           else
             echo "Using provided image tag: $TAG"
           fi

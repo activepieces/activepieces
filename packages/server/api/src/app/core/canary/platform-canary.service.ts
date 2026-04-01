@@ -9,8 +9,14 @@ export const platformCanaryService = (log: FastifyBaseLogger) => ({
     async getCanaryPlatformIds(): Promise<string[]> {
         const cached = await distributedStore.get<string[]>(CANARY_PLATFORM_IDS_KEY)
         if (!isNil(cached)) return cached
-        const plans = await platformPlanRepo().findBy({ canary: true })
-        const ids = plans.map(p => p.platformId)
+
+        const plans = await platformPlanRepo().find({
+            select: ['platformId'],
+            where: {
+                canary: true,
+            },
+        })
+        const ids = plans.map(({ platformId }) => platformId)
         await distributedStore.put(CANARY_PLATFORM_IDS_KEY, ids)
         return ids
     },
