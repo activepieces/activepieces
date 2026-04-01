@@ -3,6 +3,7 @@ import { FastifyReply } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { z } from 'zod'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
+import { McpOAuthClient } from './mcp-oauth-client-entity'
 import { mcpOAuthClientService } from './mcp-oauth-client-service'
 import { mcpOAuthCodeService } from './mcp-oauth-code-service'
 import { mcpOAuthTokenService, OAuthTokenError } from './mcp-oauth-token-service'
@@ -34,27 +35,40 @@ export const mcpOAuthTokenController: FastifyPluginAsyncZod = async (app) => {
     })
 }
 
-async function handleAuthorizationCode(body: TokenRequestBody, reply: FastifyReply): Promise<void> {
-    const { code, client_id, code_verifier, redirect_uri } = body
-    if (!code || !client_id || !code_verifier) {
-        await reply.status(400).send({ error: 'invalid_request', error_description: 'Missing code, client_id, or code_verifier' })
-        return
+async function authenticateClient(body: TokenRequestBody, reply: FastifyReply): Promise<McpOAuthClient | null> {
+    const { client_id } = body
+    if (!client_id) {
+        await reply.status(400).send({ error: 'invalid_request', error_description: 'Missing client_id' })
+        return null
     }
 
     const client = await mcpOAuthClientService.getByClientId(client_id)
     if (isNil(client)) {
         await reply.status(400).send({ error: 'invalid_client' })
-        return
+        return null
     }
 
     if (client.tokenEndpointAuthMethod === 'client_secret_post') {
         if (!body.client_secret || !mcpOAuthClientService.validateClientSecret(client, body.client_secret)) {
             await reply.status(400).send({ error: 'invalid_client', error_description: 'Invalid client secret' })
-            return
+            return null
         }
     }
 
-    const authCode = await mcpOAuthCodeService.consume(code, client_id, redirect_uri)
+    return client
+}
+
+async function handleAuthorizationCode(body: TokenRequestBody, reply: FastifyReply): Promise<void> {
+    const { code, code_verifier, redirect_uri } = body
+    if (!code || !code_verifier) {
+        await reply.status(400).send({ error: 'invalid_request', error_description: 'Missing code or code_verifier' })
+        return
+    }
+
+    const client = await authenticateClient(body, reply)
+    if (isNil(client)) return
+
+    const authCode = await mcpOAuthCodeService.consume(code, client.clientId, redirect_uri)
     if (isNil(authCode)) {
         await reply.status(400).send({ error: 'invalid_grant', error_description: 'Invalid or expired authorization code' })
         return
@@ -64,7 +78,7 @@ async function handleAuthorizationCode(body: TokenRequestBody, reply: FastifyRep
         codeVerifier: code_verifier,
         codeChallenge: authCode.codeChallenge,
         codeChallengeMethod: authCode.codeChallengeMethod,
-        clientId: client_id,
+        clientId: client.clientId,
         userId: authCode.userId,
         projectId: authCode.projectId,
         platformId: authCode.platformId,
@@ -75,15 +89,18 @@ async function handleAuthorizationCode(body: TokenRequestBody, reply: FastifyRep
 }
 
 async function handleRefreshToken(body: TokenRequestBody, reply: FastifyReply): Promise<void> {
-    const { refresh_token, client_id } = body
-    if (!refresh_token || !client_id) {
-        await reply.status(400).send({ error: 'invalid_request', error_description: 'Missing refresh_token or client_id' })
+    const { refresh_token } = body
+    if (!refresh_token) {
+        await reply.status(400).send({ error: 'invalid_request', error_description: 'Missing refresh_token' })
         return
     }
 
+    const client = await authenticateClient(body, reply)
+    if (isNil(client)) return
+
     const tokens = await mcpOAuthTokenService.refreshAccessToken({
         refreshToken: refresh_token,
-        clientId: client_id,
+        clientId: client.clientId,
     })
 
     await reply.status(200).send(tokens)

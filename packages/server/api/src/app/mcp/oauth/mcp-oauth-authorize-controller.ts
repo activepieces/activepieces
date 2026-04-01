@@ -35,6 +35,7 @@ export const mcpOAuthAuthorizeController: FastifyPluginAsyncZod = async (app) =>
         const authRequestToken = await jwtUtils.sign({
             payload: {
                 clientId: client_id,
+                clientName: client.clientName ?? 'Unknown app',
                 redirectUri: redirect_uri,
                 codeChallenge: code_challenge,
                 codeChallengeMethod: code_challenge_method,
@@ -49,7 +50,6 @@ export const mcpOAuthAuthorizeController: FastifyPluginAsyncZod = async (app) =>
         const frontendUrl = system.getOrThrow(WorkerSystemProp.FRONTEND_URL)
         const authorizePageUrl = new URL('/mcp-authorize', frontendUrl)
         authorizePageUrl.searchParams.set('authRequestId', authRequestToken)
-        authorizePageUrl.searchParams.set('clientName', client.clientName ?? 'Unknown app')
 
         return reply.redirect(authorizePageUrl.toString())
     })

@@ -27,7 +27,7 @@ import { authenticationSession } from '@/lib/authentication-session';
 function McpAuthorizePage() {
   const [searchParams] = useSearchParams();
   const authRequestId = searchParams.get('authRequestId');
-  const clientName = searchParams.get('clientName') ?? t('Unknown app');
+  const clientName = decodeJwtClientName(authRequestId);
   const [selectedProjectId, setSelectedProjectId] = useState<string>('');
   const isLoggedIn = authenticationSession.isLoggedIn();
 
@@ -151,6 +151,16 @@ function McpAuthorizePage() {
       </Card>
     </div>
   );
+}
+
+function decodeJwtClientName(token: string | null): string {
+  try {
+    if (!token) return t('Unknown app');
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return payload.clientName ?? t('Unknown app');
+  } catch {
+    return t('Unknown app');
+  }
 }
 
 export { McpAuthorizePage };
