@@ -1,6 +1,7 @@
 import { ProjectWithLimits, SeekPage } from '@activepieces/shared';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
+import { jwtDecode } from 'jwt-decode';
 import { Blocks, Shield } from 'lucide-react';
 import { useState } from 'react';
 import { Navigate, useSearchParams } from 'react-router-dom';
@@ -156,7 +157,7 @@ function McpAuthorizePage() {
 function decodeJwtClientName(token: string | null): string {
   try {
     if (!token) return t('Unknown app');
-    const payload = JSON.parse(atob(token.split('.')[1]));
+    const payload = jwtDecode<{ clientName?: string }>(token);
     return payload.clientName ?? t('Unknown app');
   } catch {
     return t('Unknown app');

@@ -5,7 +5,7 @@ import { McpOAuthAuthorizationCode, McpOAuthAuthorizationCodeEntity } from './mc
 
 const repo = repoFactory(McpOAuthAuthorizationCodeEntity)
 
-const CODE_TTL_MS = 10 * 60 * 1000 // 10 minutes
+const CODE_TTL_MS = 10 * 60 * 1000
 
 function generateCode(): string {
     return randomBytes(48).toString('base64url')
@@ -43,13 +43,12 @@ export const mcpOAuthCodeService = {
             .update()
             .set({ used: true })
             .where(whereClause, { code, clientId, redirectUri })
-            .returning('*')
             .execute()
 
         if (updateResult.affected === 0) {
             return null
         }
-        return updateResult.raw[0]
+        return repo().findOneByOrFail({ code })
     },
 }
 

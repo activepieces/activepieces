@@ -10,8 +10,8 @@ import { McpOAuthToken, McpOAuthTokenEntity } from './mcp-oauth-token-entity'
 
 const repo = repoFactory(McpOAuthTokenEntity)
 
-const ACCESS_TOKEN_TTL_SECONDS = 15 * 60 // 15 minutes
-const REFRESH_TOKEN_TTL_MS = 30 * 24 * 60 * 60 * 1000 // 30 days
+const ACCESS_TOKEN_TTL_SECONDS = 15 * 60
+const REFRESH_TOKEN_TTL_MS = 30 * 24 * 60 * 60 * 1000
 
 function generateRefreshToken(): string {
     return randomBytes(48).toString('base64url')
