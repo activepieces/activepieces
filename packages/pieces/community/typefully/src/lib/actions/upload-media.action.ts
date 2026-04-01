@@ -33,17 +33,22 @@ export const uploadMediaAction = createAction({
 			body: { file_name: fileName },
 		});
 
-		const fileResponse = await httpClient.sendRequest({
+		const contentType = mimeTypeFromFileName(fileName);
+
+		const fileResponse = await httpClient.sendRequest<ArrayBuffer>({
 			method: HttpMethod.GET,
 			url: file_url,
 			headers: {},
+			responseType: 'arraybuffer',
 		});
 
 		await httpClient.sendRequest({
 			method: HttpMethod.PUT,
 			url: uploadResponse.upload_url,
 			body: fileResponse.body,
-			headers: {},
+			headers: {
+				'Content-Type': contentType,
+			},
 		});
 
 		return {
@@ -59,5 +64,20 @@ function extractFileName(url: string): string {
 	if (lastSegment && /\.(jpg|jpeg|png|webp|gif|mp4|mov|pdf)$/i.test(lastSegment)) {
 		return lastSegment;
 	}
-	return 'upload.jpg';
+	return 'upload.bin';
+}
+
+function mimeTypeFromFileName(fileName: string): string {
+	const ext = fileName.split('.').pop()?.toLowerCase() ?? '';
+	const map: Record<string, string> = {
+		jpg: 'image/jpeg',
+		jpeg: 'image/jpeg',
+		png: 'image/png',
+		webp: 'image/webp',
+		gif: 'image/gif',
+		mp4: 'video/mp4',
+		mov: 'video/quicktime',
+		pdf: 'application/pdf',
+	};
+	return map[ext] ?? 'application/octet-stream';
 }
