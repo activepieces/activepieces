@@ -109,7 +109,6 @@ describe('Resume flow run', () => {
                     requestId,
                     response: {},
                 },
-                logsFileId: apId(),
             })
         }, 500)
 
