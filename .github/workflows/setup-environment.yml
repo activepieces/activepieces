@@ -5,8 +5,8 @@ on:
     types: [opened, reopened, synchronize, edited, closed, labeled]
 
 concurrency:
-  group: setup-environment
-  cancel-in-progress: false
+  group: setup-environment-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 
 jobs:
   Setup-Preview-Environment:
