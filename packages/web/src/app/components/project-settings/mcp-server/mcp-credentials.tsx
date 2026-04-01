@@ -1,12 +1,11 @@
 import { ApFlagId, Permission, PopulatedMcpServer } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Eye, EyeOff, Info, RefreshCw } from 'lucide-react';
+import { Eye, EyeOff, RefreshCw } from 'lucide-react';
 import { useState } from 'react';
 
 import { ButtonWithTooltip } from '@/components/custom/button-with-tooltip';
 import { CopyButton } from '@/components/custom/clipboard/copy-button';
 import { CollapsibleJson } from '@/components/custom/collapsible-json';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -43,18 +42,13 @@ export function McpCredentials({ mcpServer }: McpCredentialsProps) {
 
   return (
     <div className="space-y-4">
-      <Alert>
-        <Info className="h-4 w-4" />
-        <AlertDescription>
-          {t(
-            'For Claude.ai, just paste the Server URL as a Custom Connector — no token needed.',
-          )}
-        </AlertDescription>
-      </Alert>
-
-
       <div className="flex flex-col gap-1.5">
         <label className="text-sm font-medium">{t('Server URL')}</label>
+        <p className="text-xs text-muted-foreground">
+          {t(
+            'Use this URL to connect from Claude.ai, Cursor, Windsurf, or any MCP-compatible client.',
+          )}
+        </p>
         <div className="flex items-center gap-2">
           <div className="bg-muted/50 rounded-md px-3 py-2 text-sm flex-1 overflow-x-auto">
             {serverUrl}
