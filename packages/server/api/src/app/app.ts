@@ -215,7 +215,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(userBadgeModule)
     await app.register(platformAnalyticsModule)
     systemJobHandlers.registerJobHandler(SystemJobName.DELETE_FLOW, (data) => flowBackgroundJobs(app.log).deleteFlowHandler(data))
-    systemJobHandlers.registerJobHandler(SystemJobName.UPDATE_FLOW_STATUS, (data) => flowBackgroundJobs(app.log).updateStatusHandler(data))
     systemJobHandlers.registerJobHandler(SystemJobName.HARD_DELETE_PROJECT, (data) => platformProjectBackgroundJobs(app.log).hardDeleteProjectHandler(data))
 
     app.get(
@@ -234,9 +233,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
                 return reply
                     .type('text/html')
                     .send(
-                        `<script>if(window.opener){window.opener.postMessage({ 'code': '${encodeURIComponent(
-                            params.code,
-                        )}' },'*')}</script> <html>Redirect succuesfully, this window should close now</html>`,
+                        `<script>if(window.opener){window.opener.postMessage({ 'code': ${JSON.stringify(params.code)} },'*')}</script> <html>Redirect succuesfully, this window should close now</html>`,
                     )
             }
         },

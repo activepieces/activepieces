@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { klaviyoAuth, KlaviyoAuthValue } from '../common/auth';
 import { listIdDropdown, profileIdsMultiSelectDropdown } from '../common/props';
-import { makeRequest } from '../common/client';
+import { makeRequest, normalizeProfileIds } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
 
 export const unsubscribeProfile = createAction({
@@ -35,11 +35,12 @@ export const unsubscribeProfile = createAction({
   async run({ auth, propsValue }) {
     const {
       list_id,
-      profile_ids,
+      profile_ids: rawProfileIds,
       unsubscribe_email,
       unsubscribe_sms,
       unsubscribe_sms_transactional,
     } = propsValue;
+    const profile_ids = normalizeProfileIds(rawProfileIds);
 
     if (!profile_ids || profile_ids.length === 0) {
       throw new Error('At least one profile must be selected.');

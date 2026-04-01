@@ -5,8 +5,7 @@ import {
   httpClient,
   HttpRequest,
 } from '@activepieces/pieces-common';
-import { sendgridCommon } from '../common';
-import { sendgridAuth } from '../..';
+import { getApiKey, getBaseUrl, sendgridAuth } from '../common';
 import { Attachment } from 'nodemailer/lib/mailer';
 import mime from 'mime-types';
 
@@ -96,7 +95,7 @@ export const sendEmail = createAction({
 
     const request: HttpRequest = {
       method: HttpMethod.POST,
-      url: `${sendgridCommon.baseUrl(context.auth.props?.dataResidency)}/mail/send`,
+      url: `${getBaseUrl(context.auth)}/mail/send`,
       body: {
         personalizations: to.map((x) => {
           return {
@@ -125,7 +124,7 @@ export const sendEmail = createAction({
       },
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth.props?.apiKey,
+        token: getApiKey(context.auth),
       },
       queryParams: {},
     };

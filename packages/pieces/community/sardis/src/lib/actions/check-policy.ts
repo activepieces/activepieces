@@ -1,13 +1,13 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { sardisAuth } from '../..';
-import { sardisCommon, makeSardisClient } from '../common';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { sardisAuth } from '../auth';
+import { sardisCommon, sardisApiCall } from '../common';
 
-export const sardisCheckPolicy = createAction({
+export const checkPolicyAction = createAction({
   name: 'check_policy',
   auth: sardisAuth,
   displayName: 'Check Policy',
-  description:
-    'Simulate a transaction against spending policies without executing it. Returns whether the payment would be allowed.',
+  description: 'Simulate a transaction against spending policies without executing it.',
   props: {
     walletId: sardisCommon.walletId,
     amount: Property.Number({
@@ -18,30 +18,24 @@ export const sardisCheckPolicy = createAction({
     merchant: Property.ShortText({
       displayName: 'Merchant',
       description: 'Recipient address or merchant identifier',
-      required: false,
+      required: true,
     }),
-    currency: Property.StaticDropdown({
-      displayName: 'Currency',
-      required: false,
-      defaultValue: 'USD',
-      options: {
-        options: [
-          { label: 'USD', value: 'USD' },
-          { label: 'USDC', value: 'USDC' },
-          { label: 'USDT', value: 'USDT' },
-        ],
-      },
-    }),
+    token: sardisCommon.token,
+    chain: sardisCommon.chain,
   },
   async run(context) {
-    const { walletId, amount, merchant, currency } = context.propsValue;
-    const client = makeSardisClient(context.auth.secret_text);
-
-    return await client.policies.check({
-      agent_id: walletId,
-      amount: amount.toString(),
-      currency: currency ?? 'USD',
-      merchant_id: merchant ?? undefined,
-    });
+    const { walletId, amount, merchant, token, chain } = context.propsValue;
+    return sardisApiCall(
+      context.auth.secret_text,
+      HttpMethod.POST,
+      '/api/v2/simulate',
+      {
+        wallet_id: walletId,
+        amount: amount.toString(),
+        destination: merchant,
+        token: token ?? 'USDC',
+        chain: chain ?? 'base',
+      },
+    );
   },
 });

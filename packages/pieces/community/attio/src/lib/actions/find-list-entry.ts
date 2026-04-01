@@ -28,7 +28,7 @@ export const findListEntryAction = createAction({
 
 		const formattedFields = await formatInputFields(accessToken, 'lists', listId, inputFields, true);
 
-		// https://docs.attio.com/rest-api/endpoint-reference/entries/create-an-entry-add-record-to-list
+		// https://docs.attio.com/rest-api/endpoint-reference/entries/list-entries
 		const response = await attioPaginatedApiCall({
 			method: HttpMethod.POST,
 			accessToken,

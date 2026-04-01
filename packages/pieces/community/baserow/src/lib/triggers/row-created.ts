@@ -26,18 +26,9 @@ export const rowCreatedTrigger = createTrigger({
     }),
   },
   sampleData: {
-    table_id: 1,
-    database_id: 1,
-    workspace_id: 1,
-    event_id: 'event_123',
-    event_type: 'rows.created',
-    items: [
-      {
-        id: 1,
-        order: '1.00000000000000000000',
-        Name: 'Example row',
-      },
-    ],
+    id: 1,
+    order: '1.00000000000000000000',
+    Name: 'Example row',
   },
   async onEnable() {
     // Manual setup required — user registers the webhook URL in Baserow UI.
@@ -46,6 +37,7 @@ export const rowCreatedTrigger = createTrigger({
     // Manual cleanup — user deletes the webhook in Baserow UI.
   },
   async run(context) {
-    return [context.payload.body];
+    const body = context.payload.body as { items?: unknown[] };
+    return body.items ?? [];
   },
 });
