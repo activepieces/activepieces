@@ -83,8 +83,8 @@ export const publishNpmPackage = async (path: string): Promise<void> => {
   json.peerDependencies = stripSemverRanges(resolveWorkspaceDependencies(json.peerDependencies, versionMap))
 
   if (json.dependencies) {
-    const lockData = parseBunLock(process.cwd())
-    const transitiveDeps = flattenTransitiveDeps(json.dependencies, lockData)
+    const parsedBunLock = parseBunLock()
+    const transitiveDeps = flattenTransitiveDeps(json.dependencies, parsedBunLock)
     json.dependencies = { ...transitiveDeps, ...json.dependencies }
   }
 

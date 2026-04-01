@@ -55,7 +55,7 @@ export async function buildPiece(pieceFolder: string): Promise<{ outputFolder: s
 
     const compiledPath = `packages/${removeStartingSlashes(pieceFolder).split(path.sep + 'packages')[1]}/dist`;
 
-    preparePieceDistForPublish(pieceFolder, cwd());
+    preparePieceDistForPublish(pieceFolder);
 
     const { stdout } = await exec('npm pack --json', { cwd: compiledPath });
     const tarFileName = JSON.parse(stdout)[0].filename;

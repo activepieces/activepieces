@@ -1,4 +1,3 @@
-import { cwd } from 'node:process'
 import { findAllPiecesDirectoryInSource } from '../utils/piece-script-utils'
 import { parseBunLock, preparePieceDistForPublish } from '../../../packages/cli/src/lib/utils/prepare-piece-utils'
 
@@ -11,17 +10,16 @@ function getChangedPiecePaths(): string[] | null {
 }
 
 async function main(): Promise<void> {
-    const rootDir = cwd()
     const changedPaths = getChangedPiecePaths()
     const piecePaths = changedPaths ?? await findAllPiecesDirectoryInSource()
 
     console.info(`[preparePieces] processing ${piecePaths.length} pieces${changedPaths ? ' (scoped to changed)' : ' (all)'}`)
 
-    const lockData = parseBunLock(rootDir)
+    const parsedBunLock = parseBunLock()
 
     let preparedCount = 0
     for (const piecePath of piecePaths) {
-        preparePieceDistForPublish(piecePath, rootDir, lockData)
+        preparePieceDistForPublish(piecePath, parsedBunLock)
         preparedCount++
     }
 

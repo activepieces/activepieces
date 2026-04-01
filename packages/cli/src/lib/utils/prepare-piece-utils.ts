@@ -1,11 +1,19 @@
 import { readFileSync, writeFileSync, existsSync, copyFileSync, readdirSync, mkdirSync, symlinkSync } from 'node:fs'
 import { join, resolve } from 'node:path'
+import { cwd } from 'node:process'
+import { parse as parseJsonc, printParseErrorCode } from 'jsonc-parser'
+import type { ParseError } from 'jsonc-parser'
 import { buildWorkspaceVersionMap, resolveWorkspaceDependencies, stripSemverRanges } from './workspace-utils'
 
-function parseBunLock(rootDir: string): BunLockData {
-    const lockPath = join(rootDir, 'bun.lock')
-    const raw = readFileSync(lockPath, 'utf-8').replace(/,(\s*[}\]])/g, '$1')
-    const lock = JSON.parse(raw)
+function parseBunLock(): BunLockData {
+    const lockPath = join(cwd(), 'bun.lock')
+    const raw = readFileSync(lockPath, 'utf-8')
+    const errors: ParseError[] = []
+    const lock = parseJsonc(raw, errors, { allowTrailingComma: true })
+    if (errors.length > 0) {
+        const details = errors.map((e) => `${printParseErrorCode(e.error)} at offset ${e.offset}`).join(', ')
+        throw new Error(`[parseBunLock] failed to parse ${lockPath}: ${details}`)
+    }
     const packages: Record<string, [string, ...unknown[]]> = lock.packages
 
     const resolvedVersions = new Map<string, string>()
@@ -59,9 +67,9 @@ function resolveEntry(depName: string, scope: string, entries: Map<string, BunLo
 
 function flattenTransitiveDeps(
     directDeps: Record<string, string>,
-    lockData: BunLockData,
+    parsedBunLock: BunLockData,
 ): Record<string, string> {
-    const { entries } = lockData
+    const { entries } = parsedBunLock
     const result: Record<string, string> = {}
     const visited = new Set<string>()
     const queue: { name: string, scope: string }[] = []
@@ -135,7 +143,7 @@ function symlinkNodeModules(piecePath: string, distPath: string): void {
     symlinkSync(resolve(srcNodeModules), distNodeModules, 'dir')
 }
 
-function preparePieceDistForPublish(piecePath: string, rootDir: string, lockData?: BunLockData): void {
+function preparePieceDistForPublish(piecePath: string, parsedBunLock?: BunLockData): void {
     const distPath = join(piecePath, 'dist')
 
     if (!existsSync(distPath)) {
@@ -146,8 +154,8 @@ function preparePieceDistForPublish(piecePath: string, rootDir: string, lockData
     copyI18nAssets(piecePath, distPath)
     symlinkNodeModules(piecePath, distPath)
 
-    const resolvedLockData = lockData ?? parseBunLock(rootDir)
-    const workspaceVersionMap = buildWorkspaceVersionMap(rootDir)
+    const resolvedLockData = parsedBunLock ?? parseBunLock()
+    const workspaceVersionMap = buildWorkspaceVersionMap(cwd())
 
     const distPackageJsonPath = join(distPath, 'package.json')
     const json = JSON.parse(readFileSync(distPackageJsonPath, 'utf-8'))
