@@ -1,12 +1,25 @@
+import {
+  ArrowUp,
+  Check,
+  ChevronDown,
+  Copy,
+  Paperclip,
+  Plus,
+  Reply,
+  Square,
+  X,
+} from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 
 import dropMediaImg from '@/assets/img/drop-media.svg';
+import { cn } from '@/lib/utils';
 import {
-  Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+
+import { DelayedTooltip } from './delayed-tooltip';
 
 type Attachment = {
   name: string;
@@ -111,64 +124,51 @@ const keyframes = `
     0%   { background-position: -100% 0; }
     100% { background-position: 200% 0; }
   }
-  .thinking-label { background: linear-gradient(90deg, #737373 0%, #a3a3a3 40%, #d4d4d4 50%, #a3a3a3 60%, #737373 100%); background-size: 200% 100%; -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: shine 2s ease-in-out infinite; }
-  .dark .thinking-label { background: linear-gradient(90deg, #a3a3a3 0%, #d4d4d4 40%, #f5f5f5 50%, #d4d4d4 60%, #a3a3a3 100%); background-size: 200% 100%; -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .thinking-label { background: linear-gradient(90deg, var(--muted-foreground) 0%, color-mix(in srgb, var(--muted-foreground) 60%, transparent) 40%, color-mix(in srgb, var(--muted-foreground) 30%, transparent) 50%, color-mix(in srgb, var(--muted-foreground) 60%, transparent) 60%, var(--muted-foreground) 100%); background-size: 200% 100%; -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: shine 2s ease-in-out infinite; }
   @keyframes blink {
     0%, 100% { opacity: 1; }
     50%       { opacity: 0; }
   }
   .msg-enter { animation: fadeSlideUp 0.22s ease forwards; }
-  .thinking-spinner { width: 16px; height: 16px; border: 2px solid #d4d4d4; border-top-color: #737373; border-radius: 50%; animation: spin 0.8s linear infinite; flex-shrink: 0; }
-  .dark .thinking-spinner { border-color: #525252; border-top-color: #a3a3a3; }
+  .thinking-spinner { width: 16px; height: 16px; border: 2px solid var(--border); border-top-color: var(--muted-foreground); border-radius: 50%; animation: spin 0.8s linear infinite; flex-shrink: 0; }
   .cursor { display: inline-block; width: 2px; height: 14px; background: currentColor; margin-left: 2px; vertical-align: middle; animation: blink 0.7s infinite; }
-  .openai-icon { color: #000000; }
-  .dark .openai-icon { color: #e5e5e5; }
-  .model-btn { display: flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 8px; border: none; background: transparent; cursor: pointer; font-family: inherit; font-size: 12px; color: #8a8a8a; transition: background 0.15s, color 0.15s; outline: none; white-space: nowrap; }
-  .dark .model-btn { color: #8a8a8a; }
-  .model-btn:hover, .model-btn.open { background: rgba(0,0,0,0.06); color: hsl(var(--foreground)); }
-  .dark .model-btn:hover, .dark .model-btn.open { background: rgba(255,255,255,0.08); color: #e5e5e5; }
-  .model-menu { position: absolute; bottom: 100%; left: 0; margin-bottom: 6px; background: #fff; border: 1px solid #e5e5e5; border-radius: 10px; padding: 4px; min-width: 160px; box-shadow: 0 4px 16px rgba(0,0,0,0.1); z-index: 20; animation: fadeSlideUp 0.12s ease; }
-  .dark .model-menu { background: #1c1c1e; border-color: #3f3f46; box-shadow: 0 4px 16px rgba(0,0,0,0.4); }
-  .model-option { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 7px 10px; border-radius: 7px; border: none; background: transparent; cursor: pointer; font-family: inherit; font-size: 12px; color: hsl(var(--foreground)); transition: background 0.12s; outline: none; text-align: left; }
-  .model-option:hover { background: rgba(0,0,0,0.06); }
-  .dark .model-option:hover { background: rgba(255,255,255,0.08); }
+  .openai-icon { color: var(--foreground); }
+  .model-btn { display: flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 8px; border: none; background: transparent; cursor: pointer; font-family: inherit; font-size: 12px; color: var(--muted-foreground); transition: background 0.15s, color 0.15s; outline: none; white-space: nowrap; }
+  .model-btn:hover, .model-btn.open { background: var(--muted); color: var(--foreground); }
+  .dark .model-btn:hover, .dark .model-btn.open { background: var(--accent); }
+  .model-menu { position: absolute; bottom: 100%; left: 0; margin-bottom: 6px; background: var(--popover); border: 1px solid var(--border); border-radius: 10px; padding: 4px; min-width: 160px; box-shadow: 0 4px 16px rgba(0,0,0,0.1); z-index: 20; animation: fadeSlideUp 0.12s ease; }
+  .model-option { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 7px 10px; border-radius: 7px; border: none; background: transparent; cursor: pointer; font-family: inherit; font-size: 12px; color: var(--foreground); transition: background 0.12s; outline: none; text-align: left; }
+  .model-option:hover { background: var(--muted); }
+  .dark .model-option:hover { background: var(--accent); }
   .model-option.active { font-weight: 600; }
-  .send-btn:hover { opacity: 0.85; transform: scale(1.05); }
-  .send-btn:active { transform: scale(0.96); }
-  .send-btn { transition: opacity 0.15s, transform 0.15s; outline: none; }
-  .send-btn:focus-visible { box-shadow: 0 0 0 3px hsl(var(--ring) / 0.5); }
+  .send-btn:hover { opacity: 0.85; }
+  .send-btn { transition: opacity 0.15s; outline: none; }
+  .send-btn:focus-visible { box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 50%, transparent); }
   .plus-btn { outline: none; }
-  .plus-btn:focus-visible { box-shadow: 0 0 0 3px hsl(var(--ring) / 0.5); }
+  .plus-btn:focus-visible { box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 50%, transparent); }
   textarea:focus { outline: none; }
   .user-msg-wrap .msg-meta { opacity: 0; transition: opacity 0.15s; }
   .user-msg-wrap:hover .msg-meta { opacity: 1; }
-  .msg-action { background: transparent; border: none; cursor: pointer; padding: 2px; border-radius: 4px; color: #a3a3a3; outline: none !important; transition: color 0.15s; position: relative; }
+  .msg-action { background: transparent; border: none; cursor: pointer; padding: 2px; border-radius: 4px; color: var(--muted-foreground); outline: none !important; transition: color 0.15s; position: relative; }
   .msg-action:focus { outline: none !important; }
-  .msg-action:hover { color: #404040; }
-  .dark .msg-action { color: #a3a3a3; }
-  .dark .msg-action:hover { color: #d4d4d4; }
+  .msg-action:hover { color: var(--foreground); }
   .msgs-area::-webkit-scrollbar { width: 8px; }
   .msgs-area::-webkit-scrollbar-track { background: transparent; }
-  .msgs-area::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 4px; }
-  .dark .msgs-area::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
-  .suggest-chip { background: transparent; border: 1px solid #e5e5e5; border-radius: 10px; padding: 10px; font-size: 11px; color: hsl(var(--foreground)); cursor: pointer; text-align: left; transition: all 0.2s ease; font-family: inherit; outline: none; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
-  .suggest-chip:focus-visible { border-color: hsl(var(--ring)); box-shadow: 0 0 0 3px hsl(var(--ring) / 0.5); }
+  .msgs-area::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--muted-foreground) 20%, transparent); border-radius: 4px; }
+  .suggest-chip { background: transparent; border: 1px solid var(--border); border-radius: 10px; padding: 10px; font-size: 11px; color: var(--foreground); cursor: pointer; text-align: left; transition: all 0.2s ease; font-family: inherit; outline: none; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+  .suggest-chip:focus-visible { border-color: var(--ring); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 50%, transparent); }
   .suggest-chip:hover { border-color: transparent; }
-  .dark .suggest-chip { border-color: #3f3f46; }
-  .dark .suggest-chip:hover { border-color: transparent; }
   .suggest-icon { font-size: 14px; flex-shrink: 0; line-height: 1; }
-  .img-preview-wrap img { border: 1px solid #e5e5e5 !important; }
-  .dark .img-preview-wrap img { border-color: #404040 !important; }
+  .img-preview-wrap img { border: 1px solid var(--border) !important; }
   .img-preview-wrap { position: relative; display: inline-block; }
-  .img-preview-wrap .img-remove { position: absolute; top: -6px; right: -6px; width: 18px; height: 18px; border-radius: 50%; background: #525252; color: #fff; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 11px; line-height: 1; opacity: 0; transition: opacity 0.15s; outline: none; }
+  .img-preview-wrap .img-remove { position: absolute; top: -6px; right: -6px; width: 18px; height: 18px; border-radius: 50%; background: var(--muted-foreground); color: var(--background); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 11px; line-height: 1; opacity: 0; transition: opacity 0.15s; outline: none; }
   .img-preview-wrap:hover .img-remove { opacity: 1; }
-  .file-chip { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 10px; background: rgba(120,120,120,0.1); border: 1px solid #e5e5e5; font-family: inherit; max-width: 200px; }
-  .dark .file-chip { border-color: #404040; background: rgba(255,255,255,0.06); }
+  .file-chip { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 10px; background: var(--muted); border: 1px solid var(--border); font-family: inherit; max-width: 200px; }
   .file-chip-pending { position: relative; }
-  .file-chip-pending .img-remove { position: absolute; top: -6px; right: -6px; width: 18px; height: 18px; border-radius: 50%; background: #525252; color: #fff; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 11px; line-height: 1; opacity: 0; transition: opacity 0.15s; outline: none; }
+  .file-chip-pending .img-remove { position: absolute; top: -6px; right: -6px; width: 18px; height: 18px; border-radius: 50%; background: var(--muted-foreground); color: var(--background); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 11px; line-height: 1; opacity: 0; transition: opacity 0.15s; outline: none; }
   .file-chip-pending:hover .img-remove { opacity: 1; }
   .prompt-box {
-    background: #ffffff;
+    background: var(--background);
     border: 1px solid transparent;
     background-clip: padding-box;
     position: relative;
@@ -190,7 +190,7 @@ const keyframes = `
     pointer-events: none;
   }
   .dark .prompt-box {
-    background: hsl(var(--background));
+    background: var(--background);
     border: 1px solid transparent;
     box-shadow: 0 3px 10px -3px rgba(168,85,247,0.2), 0 3px 10px -3px rgba(251,146,60,0.15);
     transition: box-shadow 0.3s ease;
@@ -200,42 +200,34 @@ const keyframes = `
     background-size: 300% 100%;
     opacity: 0.7;
   }
-  .send-btn-active { background: hsl(var(--primary)); }
-  .plus-btn:hover, .plus-btn.open { background: rgba(0,0,0,0.08) !important; }
-  .dark .plus-btn:hover, .dark .plus-btn.open { background: rgba(255,255,255,0.08) !important; }
-  .plus-menu { position: absolute; bottom: 100%; left: 0; background: #fff; border: 1px solid #e5e5e5; border-radius: 10px; padding: 4px; min-width: 200px; box-shadow: 0 4px 16px rgba(0,0,0,0.1); z-index: 20; margin-bottom: 4px; animation: fadeSlideUp 0.12s ease-out; }
-  .dark .plus-menu { background: #1c1c1e; border-color: #3f3f46; box-shadow: 0 4px 16px rgba(0,0,0,0.3); }
-  .plus-menu-item { display: flex; align-items: center; gap: 8px; width: 100%; padding: 7px 10px; border-radius: 7px; border: none; background: transparent; cursor: pointer; font-family: inherit; font-size: 12px; color: hsl(var(--foreground)); transition: background 0.1s; outline: none; }
-  .plus-menu-item:hover { background: rgba(0,0,0,0.06); }
-  .dark .plus-menu-item:hover { background: rgba(255,255,255,0.08); }
+  .send-btn-active { background: var(--color-primary); }
+  .plus-btn:hover, .plus-btn.open { background: var(--muted) !important; }
+  .dark .plus-btn:hover, .dark .plus-btn.open { background: var(--accent) !important; }
+  .plus-menu { position: absolute; bottom: 100%; left: 0; background: var(--popover); border: 1px solid var(--border); border-radius: 10px; padding: 4px; min-width: 200px; box-shadow: 0 4px 16px rgba(0,0,0,0.1); z-index: 20; margin-bottom: 4px; animation: fadeSlideUp 0.12s ease-out; }
+  .plus-menu-item { display: flex; align-items: center; gap: 8px; width: 100%; padding: 7px 10px; border-radius: 7px; border: none; background: transparent; cursor: pointer; font-family: inherit; font-size: 12px; color: var(--foreground); transition: background 0.1s; outline: none; }
+  .plus-menu-item:hover { background: var(--muted); }
+  .dark .plus-menu-item:hover { background: var(--accent); }
   .prompt-box:focus-within { box-shadow: 0 6px 20px -2px rgba(168,85,247,0.35), 0 6px 20px -2px rgba(251,146,60,0.25); }
   .prompt-box:focus-within::before { opacity: 1; background: linear-gradient(90deg, #f472b6, #60a5fa, #fb923c, #f472b6, #60a5fa, #fb923c); background-size: 300% 100%; animation: borderRotate 4s ease-in-out infinite; }
   .dark .prompt-box:focus-within { box-shadow: 0 6px 20px -2px rgba(168,85,247,0.5), 0 6px 20px -2px rgba(251,146,60,0.35); }
   .dark .prompt-box:focus-within::before { opacity: 0.7; }
-  .send-btn-disabled { background: #d4d4d4 !important; }
-  .dark .send-btn-disabled { background: #525252 !important; }
+  .send-btn-disabled { background: var(--border) !important; }
+  .dark .send-btn-disabled { background: var(--accent) !important; }
   .lightbox { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 100; cursor: default; animation: fadeIn 0.15s ease; }
   .lightbox img { max-width: 90vw; max-height: 90vh; border-radius: 8px; object-fit: contain; }
   @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-  .chat-img { cursor: pointer; transition: opacity 0.15s; border: 1px solid #e5e5e5; }
-  .dark .chat-img { border-color: #404040; }
+  .chat-img { cursor: pointer; transition: opacity 0.15s; border: 1px solid var(--border); }
   .chat-img:hover { opacity: 0.85; }
-  .drop-overlay { position: absolute; top: 0; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 700px; z-index: 50; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.85); pointer-events: none; }
-  .dark .drop-overlay { background: rgba(9,9,11,0.85); }
+  .drop-overlay { position: absolute; top: 0; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 700px; z-index: 50; display: flex; align-items: center; justify-content: center; background: color-mix(in srgb, var(--background) 85%, transparent); pointer-events: none; }
   @keyframes replyPopIn { from { opacity: 0; transform: translate(-50%, -100%) translateY(4px); } to { opacity: 1; transform: translate(-50%, -100%) translateY(0); } }
   .reply-popup { position: fixed; z-index: 100; transform: translate(-50%, -100%); animation: replyPopIn 0.15s ease forwards; }
-  .reply-quote { display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-start; padding: 5px 6px 2px; border-radius: 10px; background: rgba(120,120,120,0.1); border: 1px solid #e5e5e5; width: 80px; min-width: 80px; height: 56px; gap: 3px; position: relative; box-sizing: border-box; transition: background 0.15s, border-color 0.15s; }
-  .reply-quote:hover { background: rgba(120,120,120,0.18); border-color: #d4d4d4; }
-  .dark .reply-quote { background: rgba(255,255,255,0.06); border-color: #404040; border-left-color: #525252; }
-  .dark .reply-quote:hover { background: rgba(255,255,255,0.12); border-color: #525252; }
-  .reply-quote .reply-remove { position: absolute; top: -6px; right: -6px; width: 18px; height: 18px; border-radius: 50%; background: #525252; color: #fff; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 11px; line-height: 1; opacity: 0; transition: opacity 0.15s; outline: none; }
+  .reply-quote { display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-start; padding: 5px 6px 2px; border-radius: 10px; background: var(--muted); border: 1px solid var(--border); width: 80px; min-width: 80px; height: 56px; gap: 3px; position: relative; box-sizing: border-box; transition: background 0.15s, border-color 0.15s; }
+  .reply-quote:hover { background: var(--muted); border-color: var(--border); }
+  .reply-quote .reply-remove { position: absolute; top: -6px; right: -6px; width: 18px; height: 18px; border-radius: 50%; background: var(--muted-foreground); color: var(--background); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 11px; line-height: 1; opacity: 0; transition: opacity 0.15s; outline: none; }
   .reply-quote:hover .reply-remove { opacity: 1; }
-  .reply-popup button { display: flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 8px; border: none; background: #1a1a1a; color: #fff; font-size: 13px; font-weight: 500; font-family: inherit; cursor: pointer; transition: background 0.15s; white-space: nowrap; }
-  .reply-popup button:hover { background: #333; }
-  .dark .reply-popup button { background: #e5e5e5; color: #1a1a1a; }
-  .dark .reply-popup button:hover { background: #fff; }
-  .msgs-fade { background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,1)); }
-  .dark .msgs-fade { background: linear-gradient(to bottom, rgba(9,9,11,0), rgba(9,9,11,1)); }
+  .reply-popup button { display: flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 8px; border: none; background: var(--foreground); color: var(--background); font-size: 13px; font-weight: 500; font-family: inherit; cursor: pointer; transition: background 0.15s; white-space: nowrap; }
+  .reply-popup button:hover { opacity: 0.9; }
+  .msgs-fade { background: linear-gradient(to bottom, color-mix(in srgb, var(--background) 0%, transparent), var(--background)); }
 `;
 
 export function AIChatBox({
@@ -273,6 +265,7 @@ export function AIChatBox({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const streamRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const thinkingRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     textareaRef.current?.focus();
@@ -324,6 +317,19 @@ export function AIChatBox({
         streamRef.current = null;
       }
     }, 60);
+  };
+
+  const stopStreaming = () => {
+    if (thinkingRef.current) {
+      clearTimeout(thinkingRef.current);
+      thinkingRef.current = null;
+      setTyping(false);
+    }
+    if (streamRef.current) {
+      clearInterval(streamRef.current);
+      streamRef.current = null;
+    }
+    setMessages((prev) => prev.filter((m) => !m.streaming));
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -501,7 +507,8 @@ export function AIChatBox({
     ]);
     setTyping(true);
 
-    setTimeout(() => {
+    thinkingRef.current = setTimeout(() => {
+      thinkingRef.current = null;
       const reply =
         FAKE_RESPONSES[Math.floor(Math.random() * FAKE_RESPONSES.length)];
       setTyping(false);
@@ -587,24 +594,20 @@ export function AIChatBox({
 
   const isStreaming = messages.some((m) => m.streaming);
   const isEmpty = messages.length === 0 && !typing;
+  const canSend =
+    (!!input.trim() ||
+      pendingImages.length > 0 ||
+      pendingFiles.length > 0 ||
+      replyQuotes.length > 0) &&
+    !typing &&
+    !isStreaming;
 
   const promptBox = (
     <div
-      style={{
-        maxWidth: 'clamp(280px, calc(100vw - 700px), 560px)',
-        margin: '0 auto',
-        width: '100%',
-      }}
+      className="w-full mx-auto"
+      style={{ maxWidth: 'clamp(280px, calc(100vw - 700px), 560px)' }}
     >
-      <div
-        className="prompt-box"
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          borderRadius: '16px',
-          padding: '0',
-        }}
-      >
+      <div className="prompt-box flex flex-col rounded-2xl p-0">
         <input
           ref={fileInputRef}
           type="file"
@@ -647,34 +650,20 @@ export function AIChatBox({
               if (attachRowRef.current)
                 attachRowRef.current.style.cursor = 'grab';
             }}
-            style={{
-              display: 'flex',
-              gap: '8px',
-              padding: '12px 12px 0',
-              flexWrap: 'nowrap',
-              alignItems: 'flex-end',
-              overflowX: 'auto',
-              overflowY: 'hidden',
-              scrollbarWidth: 'none',
-              cursor: 'grab',
-            }}
+            className="flex gap-2 pt-3 px-3 flex-nowrap items-end overflow-x-auto overflow-y-hidden cursor-grab"
+            style={{ scrollbarWidth: 'none' }}
           >
             {pendingImages.map((src, i) => (
               <div
                 key={'img-' + i}
-                className="img-preview-wrap"
-                style={{ display: 'flex', flexShrink: 0, userSelect: 'none' }}
+                className="img-preview-wrap flex shrink-0 select-none"
               >
                 <img
                   src={src}
                   alt=""
                   draggable={false}
+                  className="h-[52px] rounded-lg object-cover block border border-border"
                   style={{
-                    height: '52px',
-                    borderRadius: '8px',
-                    objectFit: 'cover',
-                    display: 'block',
-                    border: '1px solid #e5e5e5',
                     pointerEvents: attachDrag.current.active ? 'none' : 'auto',
                   }}
                 />
@@ -689,27 +678,15 @@ export function AIChatBox({
             {pendingFiles.map((file, i) => (
               <div
                 key={'file-' + i}
-                className="file-chip-pending"
-                style={{ flexShrink: 0, userSelect: 'none' }}
+                className="file-chip-pending shrink-0 select-none"
               >
                 <div className="file-chip">
-                  <span style={{ fontSize: '20px' }}>
-                    {FILE_ICONS[file.type]}
-                  </span>
-                  <div style={{ minWidth: 0 }}>
-                    <div
-                      style={{
-                        fontSize: '12px',
-                        fontWeight: 500,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                        color: 'hsl(var(--foreground))',
-                      }}
-                    >
+                  <span className="text-xl">{FILE_ICONS[file.type]}</span>
+                  <div className="min-w-0">
+                    <div className="text-xs font-medium overflow-hidden text-ellipsis whitespace-nowrap text-foreground">
                       {file.name}
                     </div>
-                    <div style={{ fontSize: '10px', color: '#a3a3a3' }}>
+                    <div className="text-[10px] text-muted-foreground">
                       {file.size}
                     </div>
                   </div>
@@ -725,24 +702,11 @@ export function AIChatBox({
             {replyQuotes.map((quote, i) => (
               <div
                 key={'quote-' + i}
-                className="reply-quote"
-                style={{ flexShrink: 0, userSelect: 'none' }}
+                className="reply-quote shrink-0 select-none"
               >
-                <svg
-                  width="10"
-                  height="10"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="#525252"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  style={{ flexShrink: 0 }}
-                >
-                  <path d="M9 14L4 9l5-5" />
-                  <path d="M20 20v-7a4 4 0 00-4-4H4" />
-                </svg>
+                <Reply size={10} className="shrink-0 text-muted-foreground" />
                 <span
+                  className="text-foreground overflow-hidden line-clamp-3 max-w-full break-words"
                   style={{
                     fontSize:
                       quote.text.length > 80
@@ -750,14 +714,7 @@ export function AIChatBox({
                         : quote.text.length > 40
                         ? '8px'
                         : '9px',
-                    color: 'hsl(var(--foreground))',
-                    overflow: 'hidden',
-                    display: '-webkit-box',
-                    WebkitLineClamp: 3,
-                    WebkitBoxOrient: 'vertical',
                     lineHeight: 1.3,
-                    wordBreak: 'break-word',
-                    maxWidth: '100%',
                   }}
                 >
                   {quote.text}
@@ -782,60 +739,23 @@ export function AIChatBox({
           onChange={handleInput}
           onKeyDown={handleKey}
           onPaste={handlePaste}
-          style={{
-            width: '100%',
-            background: 'transparent',
-            border: 'none',
-            color: 'hsl(var(--foreground))',
-            fontSize: '14px',
-            lineHeight: 1.6,
-            resize: 'none',
-            maxHeight: '140px',
-            fontFamily: 'inherit',
-            outline: 'none',
-            boxSizing: 'border-box',
-            padding: '12px',
-          }}
+          className="w-full bg-transparent border-none text-foreground text-sm leading-relaxed resize-none max-h-[140px] font-inherit outline-none box-border p-3"
         />
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            padding: '6px 6px 6px',
-          }}
-        >
-          <div style={{ position: 'relative' }}>
+        <div className="flex justify-between items-center p-1.5">
+          <div className="relative">
             <button
-              className={`plus-btn ${plusMenuOpen ? 'open' : ''}`}
+              className={cn(
+                'plus-btn w-[26px] h-[26px] rounded-lg border-none bg-transparent cursor-pointer flex items-center justify-center text-muted-foreground transition-colors',
+                plusMenuOpen && 'open',
+              )}
               onClick={() => setPlusMenuOpen(!plusMenuOpen)}
-              style={{
-                width: '26px',
-                height: '26px',
-                borderRadius: '8px',
-                border: 'none',
-                background: 'transparent',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'hsl(var(--muted-foreground))',
-                transition: 'background 0.15s',
-              }}
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                <path
-                  d="M12 5v14M5 12h14"
-                  stroke="currentColor"
-                  strokeWidth="2.2"
-                  strokeLinecap="round"
-                />
-              </svg>
+              <Plus size={16} strokeWidth={2.2} />
             </button>
             {plusMenuOpen && (
               <>
                 <div
-                  style={{ position: 'fixed', inset: 0, zIndex: 19 }}
+                  className="fixed inset-0 z-[19]"
                   onClick={() => setPlusMenuOpen(false)}
                 />
                 <div className="plus-menu">
@@ -846,18 +766,7 @@ export function AIChatBox({
                       fileInputRef.current?.click();
                     }}
                   >
-                    <svg
-                      width="14"
-                      height="14"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="m16 6-8.414 8.586a2 2 0 0 0 2.829 2.829l8.414-8.586a4 4 0 1 0-5.657-5.657l-8.379 8.551a6 6 0 1 0 8.485 8.485l8.379-8.551" />
-                    </svg>
+                    <Paperclip size={14} />
                     Upload files or images
                   </button>
                   <button
@@ -885,38 +794,25 @@ export function AIChatBox({
               </>
             )}
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <div style={{ position: 'relative' }}>
+          <div className="flex items-center gap-1.5">
+            <div className="relative">
               <button
-                className={`model-btn ${modelMenuOpen ? 'open' : ''}`}
+                className={cn('model-btn', modelMenuOpen && 'open')}
                 onClick={() => setModelMenuOpen(!modelMenuOpen)}
               >
                 {selectedModel}
-                <svg
-                  width="10"
-                  height="10"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  style={{
-                    transition: 'transform 0.15s',
-                    transform: modelMenuOpen
-                      ? 'rotate(180deg)'
-                      : 'rotate(0deg)',
-                  }}
-                >
-                  <path
-                    d="M6 9l6 6 6-6"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
+                <ChevronDown
+                  size={10}
+                  className={cn(
+                    'transition-transform duration-150',
+                    modelMenuOpen && 'rotate-180',
+                  )}
+                />
               </button>
               {modelMenuOpen && (
                 <>
                   <div
-                    style={{ position: 'fixed', inset: 0, zIndex: 19 }}
+                    className="fixed inset-0 z-[19]"
                     onClick={() => setModelMenuOpen(false)}
                   />
                   <div
@@ -992,31 +888,12 @@ export function AIChatBox({
                           setModelMenuOpen(false);
                         }}
                       >
-                        <span
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '8px',
-                          }}
-                        >
+                        <span className="flex items-center gap-2">
                           {icon}
                           {name}
                         </span>
                         {selectedModel === name && (
-                          <svg
-                            width="12"
-                            height="12"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                          >
-                            <path
-                              d="M20 6L9 17l-5-5"
-                              stroke="currentColor"
-                              strokeWidth="2.5"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                          </svg>
+                          <Check size={12} strokeWidth={2.5} />
                         )}
                       </button>
                     ))}
@@ -1024,63 +901,32 @@ export function AIChatBox({
                 </>
               )}
             </div>
-            <button
-              className={`send-btn ${
-                (input.trim() ||
-                  pendingImages.length > 0 ||
-                  pendingFiles.length > 0 ||
-                  replyQuotes.length > 0) &&
-                !typing &&
-                !isStreaming
-                  ? 'send-btn-active'
-                  : 'send-btn-disabled'
-              }`}
-              onClick={sendMessage}
-              disabled={
-                (!input.trim() &&
-                  pendingImages.length === 0 &&
-                  pendingFiles.length === 0 &&
-                  replyQuotes.length === 0) ||
-                typing ||
-                isStreaming
-              }
-              style={{
-                width: '26px',
-                height: '26px',
-                borderRadius: '8px',
-                border: 'none',
-                cursor:
-                  (input.trim() ||
-                    pendingImages.length > 0 ||
-                    pendingFiles.length > 0 ||
-                    replyQuotes.length > 0) &&
-                  !typing &&
-                  !isStreaming
-                    ? 'pointer'
-                    : 'default',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-              }}
-            >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
-                <path
-                  d="M12 19V5"
-                  stroke="white"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
+            {isStreaming || typing ? (
+              <button
+                className="send-btn send-btn-active flex items-center gap-1.5 h-[26px] px-2.5 rounded-lg border-none cursor-pointer shrink-0"
+                onClick={stopStreaming}
+              >
+                <Square size={10} className="text-white" fill="white" />
+                <span className="text-white text-xs font-medium">Stop</span>
+              </button>
+            ) : (
+              <button
+                className={cn(
+                  'send-btn w-[26px] h-[26px] rounded-lg border-none flex items-center justify-center shrink-0',
+                  canSend
+                    ? 'send-btn-active cursor-pointer'
+                    : 'send-btn-disabled cursor-default',
+                )}
+                onClick={sendMessage}
+                disabled={!canSend}
+              >
+                <ArrowUp
+                  size={13}
+                  strokeWidth={2.5}
+                  className={canSend ? 'text-white' : 'text-muted-foreground'}
                 />
-                <path
-                  d="M5 12L12 5L19 12"
-                  stroke="white"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </button>
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -1095,42 +941,21 @@ export function AIChatBox({
         onDragLeave={handleDragLeave}
         onDragOver={handleDragOver}
         onDrop={handleDrop}
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          height: '100%',
-          position: 'relative',
-          background: 'hsl(var(--background))',
-        }}
+        className="flex flex-col h-full relative"
       >
         {isEmpty ? (
-          <div
-            style={{
-              flex: 1,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '24px',
-              padding: '32px 24px',
-            }}
-          >
+          <div className="flex-1 flex flex-col items-center justify-center gap-6 py-8 px-6">
             <h2
+              className="text-[32px] font-bold m-0 text-center text-foreground w-full"
               style={{
-                fontSize: '32px',
-                fontWeight: 700,
-                margin: 0,
-                textAlign: 'center',
                 fontFamily: '"Sentient", serif',
-                color: 'hsl(var(--foreground))',
                 maxWidth: 'clamp(280px, calc(100vw - 700px), 560px)',
-                width: '100%',
                 textWrap: 'balance',
                 lineHeight: 1.2,
               }}
             >
               {incognito ? (
-                <>Incognito Chat</>
+                <>Private Chat</>
               ) : (
                 (() => {
                   const hour = new Date().getHours();
@@ -1146,117 +971,61 @@ export function AIChatBox({
             </h2>
             {incognito && (
               <p
+                className="text-xl text-muted-foreground text-center"
                 style={{
-                  fontSize: '20px',
                   fontFamily: '"Sentient", serif',
-                  color: 'hsl(var(--muted-foreground))',
                   margin: '-16px 0 0',
-                  textAlign: 'center',
                 }}
               >
                 This chat won&apos;t appear in your chat history.
               </p>
             )}
-            <div style={{ width: '100%' }}>{promptBox}</div>
-            <div
-              style={{
-                maxWidth: 'clamp(280px, calc(100vw - 700px), 560px)',
-                width: '100%',
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))',
-                gap: '10px',
-              }}
-            >
-              {[
-                {
-                  text: 'Summarize a document for me',
-                  icon: '📄',
-                  color: '#f0e6ff',
-                  darkColor: 'rgba(160,108,232,0.15)',
-                },
-                {
-                  text: 'Help me write an automation flow',
-                  icon: '⚡',
-                  color: '#fff3e0',
-                  darkColor: 'rgba(255,167,38,0.15)',
-                },
-                {
-                  text: 'What integrations do you support?',
-                  icon: '🔌',
-                  color: '#e8f5e9',
-                  darkColor: 'rgba(76,175,80,0.15)',
-                },
-                {
-                  text: 'How do I connect two apps?',
-                  icon: '🔗',
-                  color: '#e3f2fd',
-                  darkColor: 'rgba(66,165,245,0.15)',
-                },
-              ].map((item) => (
-                <button
-                  key={item.text}
-                  className="suggest-chip"
-                  onClick={() => {
-                    setInput(item.text);
-                    textareaRef.current?.focus();
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background =
-                      document.documentElement.classList.contains('dark')
-                        ? item.darkColor
-                        : item.color;
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'transparent';
-                  }}
-                >
-                  <span className="suggest-icon">{item.icon}</span>
-                  <span>{item.text}</span>
-                </button>
-              ))}
-            </div>
+            <div className="w-full">{promptBox}</div>
+            {!incognito && (
+              <div
+                className="w-full grid gap-2.5"
+                style={{
+                  maxWidth: 'clamp(280px, calc(100vw - 700px), 560px)',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))',
+                }}
+              >
+                {[
+                  { text: 'Summarize a document for me', icon: '📄' },
+                  { text: 'Help me write an automation flow', icon: '⚡' },
+                  { text: 'What integrations do you support?', icon: '🔌' },
+                  { text: 'How do I connect two apps?', icon: '🔗' },
+                ].map((item) => (
+                  <button
+                    key={item.text}
+                    className="suggest-chip hover:bg-muted"
+                    onClick={() => {
+                      setInput(item.text);
+                      textareaRef.current?.focus();
+                    }}
+                  >
+                    <span className="suggest-icon">{item.icon}</span>
+                    <span>{item.text}</span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         ) : (
           <>
-            <div
-              className="msgs-area"
-              style={{
-                flex: 1,
-                overflowY: 'auto',
-                padding: '24px 0 0',
-                display: 'flex',
-                flexDirection: 'column',
-              }}
-            >
+            <div className="msgs-area flex-1 overflow-y-auto pt-6 flex flex-col">
               <div
-                style={{
-                  maxWidth: 'clamp(280px, calc(100vw - 700px), 560px)',
-                  width: '100%',
-                  margin: '0 auto',
-                  padding: '0 0 40px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '4px',
-                }}
+                className="w-full mx-auto pb-10 flex flex-col gap-1"
+                style={{ maxWidth: 'clamp(280px, calc(100vw - 700px), 560px)' }}
               >
                 {messages.map((msg) =>
                   msg.role === 'ai' ? (
                     <div
                       key={msg.id}
                       id={`msg-${msg.id}`}
-                      className="msg-enter"
-                      style={{ padding: '8px 0' }}
+                      className="msg-enter py-2"
                       onMouseUp={handleTextSelect}
                     >
-                      <p
-                        style={{
-                          margin: 0,
-                          fontSize: '14px',
-                          lineHeight: 1.65,
-                          color: 'hsl(var(--foreground))',
-                          whiteSpace: 'pre-wrap',
-                        }}
-                      >
+                      <p className="m-0 text-sm leading-relaxed text-foreground whitespace-pre-wrap">
                         {msg.text}
                         {msg.streaming && <span className="cursor" />}
                       </p>
@@ -1264,76 +1033,44 @@ export function AIChatBox({
                   ) : (
                     <div
                       key={msg.id}
-                      className="msg-enter user-msg-wrap"
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'flex-end',
-                        padding: '8px 0',
-                      }}
+                      className="msg-enter user-msg-wrap flex justify-end py-2"
                     >
-                      <div style={{ maxWidth: '75%' }}>
+                      <div className="max-w-[75%]">
                         {msg.images && msg.images.length > 0 && (
                           <div
-                            style={{
-                              display: 'flex',
-                              gap: '6px',
-                              flexWrap: 'wrap',
-                              marginBottom: msg.text ? '6px' : 0,
-                              justifyContent: 'flex-end',
-                            }}
+                            className={cn(
+                              'flex gap-1.5 flex-wrap justify-end',
+                              msg.text && 'mb-1.5',
+                            )}
                           >
                             {msg.images.map((src, i) => (
                               <img
                                 key={i}
                                 src={src}
                                 alt=""
-                                className="chat-img"
+                                className="chat-img max-w-[200px] max-h-[150px] rounded-xl object-cover block"
                                 onClick={() => setLightboxSrc(src)}
-                                style={{
-                                  maxWidth: '200px',
-                                  maxHeight: '150px',
-                                  borderRadius: '12px',
-                                  objectFit: 'cover',
-                                  display: 'block',
-                                }}
                               />
                             ))}
                           </div>
                         )}
                         {msg.files && msg.files.length > 0 && (
                           <div
-                            style={{
-                              display: 'flex',
-                              gap: '6px',
-                              flexWrap: 'wrap',
-                              marginBottom: msg.text ? '6px' : 0,
-                              justifyContent: 'flex-end',
-                            }}
+                            className={cn(
+                              'flex gap-1.5 flex-wrap justify-end',
+                              msg.text && 'mb-1.5',
+                            )}
                           >
                             {msg.files.map((file, i) => (
                               <div key={i} className="file-chip">
-                                <span style={{ fontSize: '18px' }}>
+                                <span className="text-lg">
                                   {FILE_ICONS[file.type]}
                                 </span>
-                                <div style={{ minWidth: 0 }}>
-                                  <div
-                                    style={{
-                                      fontSize: '12px',
-                                      fontWeight: 500,
-                                      overflow: 'hidden',
-                                      textOverflow: 'ellipsis',
-                                      whiteSpace: 'nowrap',
-                                      color: 'hsl(var(--foreground))',
-                                    }}
-                                  >
+                                <div className="min-w-0">
+                                  <div className="text-xs font-medium overflow-hidden text-ellipsis whitespace-nowrap text-foreground">
                                     {file.name}
                                   </div>
-                                  <div
-                                    style={{
-                                      fontSize: '10px',
-                                      color: '#a3a3a3',
-                                    }}
-                                  >
+                                  <div className="text-[10px] text-muted-foreground">
                                     {file.size}
                                   </div>
                                 </div>
@@ -1343,22 +1080,15 @@ export function AIChatBox({
                         )}
                         {msg.quotes && msg.quotes.length > 0 && (
                           <div
-                            style={{
-                              display: 'flex',
-                              gap: '6px',
-                              flexWrap: 'wrap',
-                              marginBottom: msg.text ? '6px' : 0,
-                              justifyContent: 'flex-end',
-                            }}
+                            className={cn(
+                              'flex gap-1.5 flex-wrap justify-end',
+                              msg.text && 'mb-1.5',
+                            )}
                           >
                             {msg.quotes.map((quote, i) => (
                               <div
                                 key={i}
-                                className="reply-quote"
-                                style={{
-                                  userSelect: 'none',
-                                  cursor: 'pointer',
-                                }}
+                                className="reply-quote select-none cursor-pointer"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   const el = document.getElementById(
@@ -1439,21 +1169,9 @@ export function AIChatBox({
                                   }
                                 }}
                               >
-                                <svg
-                                  width="10"
-                                  height="10"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="#525252"
-                                  strokeWidth="2"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  style={{ flexShrink: 0 }}
-                                >
-                                  <path d="M9 14L4 9l5-5" />
-                                  <path d="M20 20v-7a4 4 0 00-4-4H4" />
-                                </svg>
+                                <Reply size={10} className="shrink-0 text-muted-foreground" />
                                 <span
+                                  className="text-foreground overflow-hidden line-clamp-3 max-w-full break-words"
                                   style={{
                                     fontSize:
                                       quote.text.length > 80
@@ -1461,14 +1179,7 @@ export function AIChatBox({
                                         : quote.text.length > 40
                                         ? '8px'
                                         : '9px',
-                                    color: 'hsl(var(--foreground))',
-                                    overflow: 'hidden',
-                                    display: '-webkit-box',
-                                    WebkitLineClamp: 3,
-                                    WebkitBoxOrient: 'vertical',
                                     lineHeight: 1.3,
-                                    wordBreak: 'break-word',
-                                    maxWidth: '100%',
                                   }}
                                 >
                                   {quote.text}
@@ -1478,50 +1189,26 @@ export function AIChatBox({
                           </div>
                         )}
                         {msg.text && (
-                          <div
-                            style={{
-                              background: 'rgba(120, 120, 120, 0.18)',
-                              color: 'hsl(var(--foreground))',
-                              padding: '10px 16px',
-                              borderRadius: '18px 18px 4px 18px',
-                              fontSize: '14px',
-                              lineHeight: 1.6,
-                              whiteSpace: 'pre-wrap',
-                              wordBreak: 'break-word',
-                              overflowWrap: 'break-word',
-                            }}
-                          >
+                          <div className="bg-muted text-foreground px-4 py-2.5 rounded-[18px_18px_4px_18px] text-sm leading-relaxed whitespace-pre-wrap break-words overflow-wrap-break-word">
                             {msg.text}
                           </div>
                         )}
-                        <div
-                          className="msg-meta"
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'flex-end',
-                            gap: '6px',
-                            marginTop: '4px',
-                          }}
-                        >
-                          <Tooltip>
+                        <div className="msg-meta flex items-center justify-end gap-1.5 mt-1">
+                          <DelayedTooltip>
                             <TooltipTrigger asChild>
-                              <span
-                                style={{
-                                  fontSize: '12px',
-                                  color: '#a3a3a3',
-                                  cursor: 'default',
-                                }}
-                              >
+                              <span className="text-xs text-muted-foreground cursor-default">
                                 {msg.time}
                               </span>
                             </TooltipTrigger>
-                            <TooltipContent side="bottom">
+                            <TooltipContent
+                              side="bottom"
+                              className="pointer-events-none"
+                            >
                               {msg.fullDate}
                             </TooltipContent>
-                          </Tooltip>
+                          </DelayedTooltip>
                           {msg.text && (
-                            <Tooltip>
+                            <DelayedTooltip>
                               <TooltipTrigger asChild>
                                 <button
                                   className="msg-action"
@@ -1532,49 +1219,19 @@ export function AIChatBox({
                                   }}
                                 >
                                   {copiedId === msg.id ? (
-                                    <svg
-                                      width="15"
-                                      height="15"
-                                      viewBox="0 0 24 24"
-                                      fill="none"
-                                    >
-                                      <path
-                                        d="M20 6L9 17l-5-5"
-                                        stroke="currentColor"
-                                        strokeWidth="2.5"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                      />
-                                    </svg>
+                                    <Check size={15} strokeWidth={2.5} />
                                   ) : (
-                                    <svg
-                                      width="15"
-                                      height="15"
-                                      viewBox="0 0 24 24"
-                                      fill="none"
-                                    >
-                                      <rect
-                                        x="9"
-                                        y="9"
-                                        width="13"
-                                        height="13"
-                                        rx="2"
-                                        stroke="currentColor"
-                                        strokeWidth="2"
-                                      />
-                                      <path
-                                        d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"
-                                        stroke="currentColor"
-                                        strokeWidth="2"
-                                      />
-                                    </svg>
+                                    <Copy size={15} />
                                   )}
                                 </button>
                               </TooltipTrigger>
-                              <TooltipContent side="bottom">
+                              <TooltipContent
+                                side="bottom"
+                                className="pointer-events-none"
+                              >
                                 {copiedId === msg.id ? 'Copied!' : 'Copy'}
                               </TooltipContent>
-                            </Tooltip>
+                            </DelayedTooltip>
                           )}
                         </div>
                       </div>
@@ -1582,19 +1239,10 @@ export function AIChatBox({
                   ),
                 )}
                 {typing && (
-                  <div className="msg-enter" style={{ padding: '8px 0' }}>
-                    <div
-                      style={{
-                        display: 'flex',
-                        gap: '8px',
-                        alignItems: 'center',
-                      }}
-                    >
+                  <div className="msg-enter py-2">
+                    <div className="flex gap-2 items-center">
                       <div className="thinking-spinner" />
-                      <span
-                        className="thinking-label"
-                        style={{ fontSize: '13px', fontWeight: 500 }}
-                      >
+                      <span className="thinking-label text-[13px] font-medium">
                         Thinking
                       </span>
                     </div>
@@ -1602,73 +1250,36 @@ export function AIChatBox({
                 )}
                 <div ref={bottomRef} />
               </div>
-              <div
-                className="msgs-fade"
-                style={{
-                  position: 'sticky',
-                  bottom: 0,
-                  height: '28px',
-                  marginTop: '-28px',
-                  pointerEvents: 'none',
-                  flexShrink: 0,
-                }}
-              />
+              <div className="msgs-fade sticky bottom-0 h-7 -mt-7 pointer-events-none shrink-0" />
             </div>
-            <div style={{ padding: '0 24px 10px', flexShrink: 0 }}>
+            <div className="px-6 pb-2.5 shrink-0">
               {promptBox}
             </div>
           </>
         )}
         {isDragging && (
           <div className="drop-overlay">
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: '8px',
-              }}
-            >
+            <div className="flex flex-col items-center gap-2">
               <img
                 src={dropMediaImg}
                 alt=""
-                style={{
-                  width: '120px',
-                  height: '120px',
-                  objectFit: 'contain',
-                }}
+                className="w-[120px] h-[120px] object-contain"
               />
-              <span
-                style={{
-                  fontSize: '16px',
-                  fontWeight: 700,
-                  color: 'hsl(var(--foreground))',
-                }}
-              >
+              <span className="text-base font-bold text-foreground">
                 Add anything
               </span>
-              <span
-                style={{ fontSize: '14px', color: 'hsl(var(--foreground))' }}
-              >
+              <span className="text-sm text-foreground">
                 Drop any file here to add it to the conversation
               </span>
             </div>
           </div>
         )}
-        <p style={{ textAlign: 'center', fontSize: '11px', padding: '6px 0 12px', flexShrink: 0 }}>
+        <p className="text-center text-[11px] py-1.5 pb-3 shrink-0">
           <a
             href="https://www.activepieces.com/product/ai-adoption"
             target="_blank"
             rel="noopener noreferrer"
-            style={{
-              color: '#a3a3a3',
-              textDecoration: 'none',
-              transition: 'color 0.15s',
-            }}
-            onMouseEnter={(e) =>
-              (e.currentTarget.style.color = 'hsl(var(--foreground))')
-            }
-            onMouseLeave={(e) => (e.currentTarget.style.color = '#a3a3a3')}
+            className="text-muted-foreground no-underline transition-colors hover:text-foreground"
           >
             Activepieces AI can help you automate anything.
           </a>
@@ -1693,20 +1304,7 @@ export function AIChatBox({
               }}
             >
               Reply
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                style={{ transform: 'scaleX(-1)' }}
-              >
-                <polyline points="15 17 20 12 15 7" />
-                <path d="M4 18v-2a4 4 0 014-4h12" />
-              </svg>
+              <Reply size={14} className="-scale-x-100" />
             </button>
           </div>,
           document.body,
@@ -1715,46 +1313,15 @@ export function AIChatBox({
         <div className="lightbox" onClick={() => setLightboxSrc(null)}>
           <button
             onClick={() => setLightboxSrc(null)}
-            style={{
-              position: 'absolute',
-              top: '20px',
-              right: '20px',
-              width: '36px',
-              height: '36px',
-              borderRadius: '50%',
-              background: 'rgba(255,255,255,0.15)',
-              border: 'none',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#fff',
-              transition: 'background 0.15s',
-            }}
-            onMouseEnter={(e) =>
-              (e.currentTarget.style.background = 'rgba(255,255,255,0.25)')
-            }
-            onMouseLeave={(e) =>
-              (e.currentTarget.style.background = 'rgba(255,255,255,0.15)')
-            }
+            className="absolute top-5 right-5 w-9 h-9 rounded-full bg-white/15 border-none cursor-pointer flex items-center justify-center text-white transition-colors hover:bg-white/25"
           >
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-            >
-              <path d="M18 6L6 18M6 6l12 12" />
-            </svg>
+            <X size={18} strokeWidth={2.5} />
           </button>
           <img
             src={lightboxSrc}
             alt=""
             onClick={(e) => e.stopPropagation()}
-            style={{ cursor: 'default' }}
+            className="cursor-default"
           />
         </div>
       )}

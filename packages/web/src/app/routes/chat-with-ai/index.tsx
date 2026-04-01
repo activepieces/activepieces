@@ -1,10 +1,14 @@
 import { t } from 'i18next';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
+import { cn } from '@/lib/utils';
+import { GhostIcon } from '@/components/icons/ghost';
+import type { GhostIconHandle } from '@/components/icons/ghost';
+import { SlidersHorizontalIcon } from '@/components/icons/sliders-horizontal';
+import type { SlidersHorizontalIconHandle } from '@/components/icons/sliders-horizontal';
 import { PageHeader } from '@/components/custom/page-header';
 import { Separator } from '@/components/ui/separator';
 import {
-  Tooltip,
   TooltipTrigger,
   TooltipContent,
 } from '@/components/ui/tooltip';
@@ -12,6 +16,7 @@ import {
 import { AIChatBox } from './ai-chat-box';
 import { ChatSettingsDialog } from './chat-settings-dialog';
 import { ConversationList } from './conversation-list';
+import { DelayedTooltip } from './delayed-tooltip';
 
 export function ChatWithAIPage() {
   const [newChat, setNewChat] = useState<{ title: string; key: number } | null>(
@@ -22,6 +27,8 @@ export function ChatWithAIPage() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [incognito, setIncognito] = useState(false);
   const [chatStarted, setChatStarted] = useState(false);
+  const ghostRef = useRef<GhostIconHandle>(null);
+  const settingsRef = useRef<SlidersHorizontalIconHandle>(null);
 
   const handleNewChat = useCallback(() => {
     setChatKey((k) => k + 1);
@@ -47,193 +54,80 @@ export function ChatWithAIPage() {
 
   return (
     <div className="flex flex-col h-full -mx-4">
-      <div
-        style={{
-          padding: '8px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-        }}
-      >
+      <div className="p-2 flex items-center justify-between">
         <PageHeader
           title={t('AI Piecer')}
           showSidebarToggle={true}
           className="flex-1 !p-0"
         />
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '4px',
-            flexShrink: 0,
-          }}
-        >
+        <div className="flex items-center gap-1 shrink-0">
           {!chatStarted ? (
-            <Tooltip>
+            <DelayedTooltip>
               <TooltipTrigger asChild>
                 <button
                   onClick={() => setIncognito(!incognito)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    width: '28px',
-                    height: '28px',
-                    borderRadius: '6px',
-                    border: 'none',
-                    background: incognito
-                      ? 'hsl(var(--primary) / 0.1)'
-                      : 'transparent',
-                    cursor: 'pointer',
-                    color: incognito
-                      ? 'hsl(var(--primary))'
-                      : 'hsl(var(--muted-foreground))',
-                    transition: 'background 0.15s, color 0.15s',
-                    flexShrink: 0,
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!incognito) {
-                      e.currentTarget.style.background = 'rgba(0,0,0,0.06)';
-                      e.currentTarget.style.color = 'hsl(var(--foreground))';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!incognito) {
-                      e.currentTarget.style.background = 'transparent';
-                      e.currentTarget.style.color =
-                        'hsl(var(--muted-foreground))';
-                    }
-                  }}
+                  onMouseEnter={() => ghostRef.current?.startAnimation()}
+                  onMouseLeave={() => ghostRef.current?.stopAnimation()}
+                  className={cn(
+                    'flex items-center gap-1.5 h-7 px-2 rounded-md border-none cursor-pointer shrink-0 transition-colors text-xs font-medium',
+                    incognito
+                      ? 'bg-primary/10 dark:bg-primary/20 text-primary'
+                      : 'bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground',
+                  )}
                 >
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill={incognito ? 'currentColor' : 'none'}
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M14 18a2 2 0 0 0-4 0" />
-                    <path d="m19 11-2.11-6.657a2 2 0 0 0-2.752-1.148l-1.276.61A2 2 0 0 1 12 4H8.5a2 2 0 0 0-1.925 1.456L5 11" />
-                    <path d="M2 11h20" />
-                    <circle cx="17" cy="18" r="3" />
-                    <circle cx="7" cy="18" r="3" />
-                  </svg>
+                  <GhostIcon ref={ghostRef} size={16} />
+                  Private
                 </button>
               </TooltipTrigger>
-              <TooltipContent side="bottom" align="center">
-                {incognito ? 'Exit Incognito' : 'Incognito Chat'}
+              <TooltipContent
+                side="bottom"
+                align="center"
+                className="pointer-events-none"
+              >
+                {incognito ? 'Switch to Default Chat' : 'Switch to Private Chat'}
               </TooltipContent>
-            </Tooltip>
+            </DelayedTooltip>
           ) : incognito ? (
-            <Tooltip>
+            <DelayedTooltip>
               <TooltipTrigger asChild>
-                <span
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    padding: '4px 10px',
-                    borderRadius: '6px',
-                    background: 'transparent',
-                    color: '#9ca3af',
-                    fontSize: '12px',
-                    fontWeight: 500,
-                    fontFamily: 'inherit',
-                    flexShrink: 0,
-                  }}
-                >
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M14 18a2 2 0 0 0-4 0" />
-                    <path d="m19 11-2.11-6.657a2 2 0 0 0-2.752-1.148l-1.276.61A2 2 0 0 1 12 4H8.5a2 2 0 0 0-1.925 1.456L5 11" />
-                    <path d="M2 11h20" />
-                    <circle cx="17" cy="18" r="3" />
-                    <circle cx="7" cy="18" r="3" />
-                  </svg>
-                  Incognito Chat
+                <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium shrink-0 text-muted-foreground">
+                  <GhostIcon size={16} />
+                  Private Chat
                 </span>
               </TooltipTrigger>
               <TooltipContent
                 side="bottom"
                 align="center"
-                style={{ whiteSpace: 'pre-line', textAlign: 'center' }}
+                className="pointer-events-none whitespace-pre-line text-center"
               >
                 {"This chat won't appear\nin your chat history."}
               </TooltipContent>
-            </Tooltip>
+            </DelayedTooltip>
           ) : null}
-          <Tooltip>
+          <DelayedTooltip>
             <TooltipTrigger asChild>
               <button
                 onClick={() => setSettingsOpen(true)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: '28px',
-                  height: '28px',
-                  borderRadius: '6px',
-                  border: 'none',
-                  background: 'transparent',
-                  cursor: 'pointer',
-                  color: 'hsl(var(--muted-foreground))',
-                  transition: 'background 0.15s, color 0.15s',
-                  flexShrink: 0,
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(0,0,0,0.06)';
-                  e.currentTarget.style.color = 'hsl(var(--foreground))';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'transparent';
-                  e.currentTarget.style.color = 'hsl(var(--muted-foreground))';
-                }}
+                onMouseEnter={() => settingsRef.current?.startAnimation()}
+                onMouseLeave={() => settingsRef.current?.stopAnimation()}
+                className="flex items-center justify-center w-7 h-7 rounded-md border-none bg-transparent cursor-pointer text-muted-foreground hover:bg-muted hover:text-foreground transition-colors shrink-0"
               >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M14 17H5" />
-                  <path d="M19 7h-9" />
-                  <circle cx="17" cy="17" r="3" />
-                  <circle cx="7" cy="7" r="3" />
-                </svg>
+                <SlidersHorizontalIcon ref={settingsRef} size={16} />
               </button>
             </TooltipTrigger>
-            <TooltipContent side="bottom" align="end">
+            <TooltipContent
+              side="bottom"
+              align="end"
+              className="pointer-events-none"
+            >
               Settings
             </TooltipContent>
-          </Tooltip>
+          </DelayedTooltip>
         </div>
       </div>
       <Separator />
-      <div className="flex-1 overflow-hidden" style={{ position: 'relative' }}>
-        <div
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            bottom: '140px',
-            zIndex: 10,
-          }}
-        >
+      <div className="flex-1 overflow-hidden relative">
+        <div className="absolute top-0 left-0 bottom-[140px] z-10">
           <ConversationList newChat={newChat} onNewChat={handleNewChat} />
         </div>
         <AIChatBox
