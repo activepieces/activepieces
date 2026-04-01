@@ -23,7 +23,7 @@ afterAll(async () => {
 })
 
 describe('User projects API', () => {
-    describe('GET /v1/users/:externalUserId/projects', () => {
+    describe('GET /v1/users/projects?externalId=...', () => {
         it('lists projects visible to the target user when caller uses platform API key', async () => {
             const { mockPlatform } = await mockAndSaveBasicSetup()
             const memberExternalId = 'ext-user-for-project-list'
@@ -46,7 +46,7 @@ describe('User projects API', () => {
 
             const response = await app!.inject({
                 method: 'GET',
-                url: `/api/v1/users/${encodeURIComponent(memberExternalId)}/projects`,
+                url: `/api/v1/users/projects?externalId=${encodeURIComponent(memberExternalId)}`,
                 headers: {
                     authorization: `Bearer ${apiKey.value}`,
                 },
@@ -82,7 +82,7 @@ describe('User projects API', () => {
 
             const response = await app!.inject({
                 method: 'GET',
-                url: `/api/v1/users/${encodeURIComponent(targetExternalId)}/projects`,
+                url: `/api/v1/users/projects?externalId=${encodeURIComponent(targetExternalId)}`,
                 headers: {
                     authorization: `Bearer ${memberToken}`,
                 },
@@ -99,7 +99,7 @@ describe('User projects API', () => {
 
             const response = await app!.inject({
                 method: 'GET',
-                url: '/api/v1/users/non-existent-external-id/projects',
+                url: '/api/v1/users/projects?externalId=non-existent-external-id',
                 headers: {
                     authorization: `Bearer ${apiKey.value}`,
                 },
@@ -134,7 +134,7 @@ describe('User projects API', () => {
 
             const response = await app!.inject({
                 method: 'GET',
-                url: `/api/v1/users/${encodeURIComponent(memberExternalId)}/projects`,
+                url: `/api/v1/users/projects?externalId=${encodeURIComponent(memberExternalId)}`,
                 headers: {
                     authorization: `Bearer ${apiKey.value}`,
                 },

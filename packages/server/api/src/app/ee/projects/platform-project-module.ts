@@ -5,6 +5,6 @@ import { usersProjectController } from './platform-user-project-controller'
 
 export const platformProjectModule: FastifyPluginAsyncZod = async (app) => {
     await app.register(platformProjectController, { prefix: '/v1/projects' })
-    await app.register(usersProjectController, { prefix: '/v1/users' })
+    await app.register(usersProjectController, { prefix: '/v1/users/projects' })
     await app.register(projectWorkerController, { prefix: '/v1/worker/project' })
 }

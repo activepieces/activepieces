@@ -26,7 +26,7 @@ const DEFAULT_LIMIT_SIZE = 50
 export const usersProjectController: FastifyPluginAsyncZod = async (
     fastify,
 ) => {
-    fastify.get('/projects/platforms', ListProjectsForPlatforms, async (request) => {
+    fastify.get('/platforms', ListProjectsForPlatforms, async (request) => {
         const loggedInUser = await userService(request.log).getOneOrFail({ id: request.principal.id })
         const platforms = await getPlatformsForUser(loggedInUser.identityId, request.principal.platform.id, request.log)
         const projects = await Promise.all(platforms.map(async (platform) => {
@@ -48,16 +48,16 @@ export const usersProjectController: FastifyPluginAsyncZod = async (
         return projects.flat()
     })
 
-    fastify.get('/:externalUserId/projects', ListProjectsByUserRequest, async (request) => {
+    fastify.get('/', ListProjectsByUserRequest, async (request) => {
         const platformId = request.principal.platform.id
         const targetUser = await userService(request.log).getByPlatformAndExternalId({
             platformId,
-            externalId: request.params.externalUserId,
+            externalId: request.query.externalId,
         })
         if (isNil(targetUser)) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
-                params: { entityType: 'user', entityId: request.params.externalUserId },
+                params: { entityType: 'user', entityId: request.query.externalId },
             })
         }
         const isPrivileged = userService(request.log).isUserPrivileged(targetUser)
@@ -100,9 +100,6 @@ const ListProjectsByUserRequest = {
     schema: {
         tags: ['users'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
-        params: z.object({
-            externalUserId: z.string(),
-        }),
         querystring: ListProjectsByUserQueryParams,
         response: {
             [StatusCodes.OK]: SeekPage(ProjectWithLimits),
