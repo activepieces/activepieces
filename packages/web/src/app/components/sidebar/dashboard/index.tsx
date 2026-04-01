@@ -8,7 +8,7 @@ import {
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Search, Plus } from 'lucide-react';
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useDebounce } from 'use-debounce';
 
@@ -31,7 +31,6 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarMenu,
-  SidebarSeparator,
   useSidebar,
   SidebarGroupLabel,
   SidebarMenuItem,
@@ -72,6 +71,9 @@ export function ProjectDashboardSidebar({
   const navigate = useNavigate();
   const { data: currentUser } = userHooks.useCurrentUser();
   const { platform } = platformHooks.useCurrentPlatform();
+  const [isProjectsScrolled, setIsProjectsScrolled] = useState(false);
+  const [hasMoreBelow, setHasMoreBelow] = useState(false);
+  const projectsScrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!searchOpen) {
@@ -114,6 +116,23 @@ export function ProjectDashboardSidebar({
     }
     return projects;
   }, [isSearchMode, debouncedSearchQuery, projects]);
+
+  useEffect(() => {
+    const container = projectsScrollRef.current;
+    const viewport = container?.querySelector(
+      '[data-radix-scroll-area-viewport]',
+    );
+    if (!viewport) return;
+    const checkScroll = () => {
+      setIsProjectsScrolled(viewport.scrollTop > 0);
+      setHasMoreBelow(
+        viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight > 1,
+      );
+    };
+    checkScroll();
+    viewport.addEventListener('scroll', checkScroll);
+    return () => viewport.removeEventListener('scroll', checkScroll);
+  }, [displayProjects.length]);
 
   const handleProjectSelect = useCallback(
     async (projectId: string) => {
@@ -228,8 +247,8 @@ export function ProjectDashboardSidebar({
         <AppSidebarHeader />
 
         <SidebarContent className="overflow-x-hidden">
-          <SidebarGroup>
-            <div className="mb-1 group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center">
+          <SidebarGroup className="px-2 pb-1 pt-1">
+            <div className="mb-1 pb-1 group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center">
               <GlobalSearchCommand />
             </div>
             <SidebarMenu>
@@ -239,12 +258,12 @@ export function ProjectDashboardSidebar({
             </SidebarMenu>
           </SidebarGroup>
 
-          <SidebarSeparator />
-
-          <SidebarGroup className="flex-1 overflow-hidden">
-            <div className="flex items-center justify-between group-data-[collapsible=icon]:hidden">
-              <SidebarGroupLabel>{t('Projects')}</SidebarGroupLabel>
-              <div className="flex items-center justify-center gap-2">
+          <SidebarGroup className="flex-1 overflow-hidden w-full py-0">
+            <div className="flex items-center justify-between group-data-[collapsible=icon]:hidden px-2">
+              <SidebarGroupLabel className="font-normal">
+                {t('Projects')}
+              </SidebarGroupLabel>
+              <div className="flex items-center justify-center gap-1">
                 {shouldShowNewProjectButton && (
                   <>
                     {!shouldDisableNewProjectButton ? (
@@ -256,9 +275,9 @@ export function ProjectDashboardSidebar({
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-6 w-6 hover:bg-accent"
+                          className="h-6 w-6 hover:bg-sidebar-accent"
                         >
-                          <Plus />
+                          <Plus className="size-4" />
                         </Button>
                       </NewProjectDialog>
                     ) : (
@@ -271,7 +290,7 @@ export function ProjectDashboardSidebar({
                               disabled
                               className="h-6 w-6"
                             >
-                              <Plus />
+                              <Plus className="size-4" />
                             </Button>
                           </div>
                         </TooltipTrigger>
@@ -303,9 +322,9 @@ export function ProjectDashboardSidebar({
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-6 w-6 hover:bg-accent"
+                        className="h-6 w-6 hover:bg-sidebar-accent"
                       >
-                        <Search />
+                        <Search className="size-4" />
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent
@@ -326,8 +345,10 @@ export function ProjectDashboardSidebar({
                 )}
               </div>
             </div>
+            {isProjectsScrolled && <div className="border-t border-border" />}
             <div
-              className="flex-1 grow min-h-0 flex flex-col overflow-hidden"
+              ref={projectsScrollRef}
+              className="relative flex-1 grow min-h-0 flex flex-col overflow-hidden"
               onClick={(e) => {
                 e.stopPropagation();
               }}
@@ -342,11 +363,11 @@ export function ProjectDashboardSidebar({
                         : 'scrollbar-hover',
                     )}
                     items={displayProjects}
-                    estimateSize={() => 35}
+                    estimateSize={() => 34}
                     getItemKey={(index) => displayProjects[index]?.id ?? index}
                     overscan={10}
                     renderItem={(project) => (
-                      <SidebarMenuItem className="w-full">
+                      <SidebarMenuItem className="w-full px-2">
                         <ProjectSideBarItem
                           key={project.id}
                           project={project}
@@ -366,11 +387,16 @@ export function ProjectDashboardSidebar({
                   )
                 )}
               </div>
+              {hasMoreBelow && (
+                <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-sidebar to-transparent" />
+              )}
             </div>
           </SidebarGroup>
         </SidebarContent>
-        <SidebarFooter>
-          {state === 'expanded' && <DelayedSidebarUsageLimits />}
+        <SidebarFooter className="pt-0 gap-0.5">
+          <div className="group-data-[state=collapsed]:hidden">
+            <SidebarUsageLimits />
+          </div>
           <SidebarPlatformAdminLink />
           <SidebarUser />
         </SidebarFooter>

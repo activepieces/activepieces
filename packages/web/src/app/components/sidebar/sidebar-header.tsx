@@ -26,7 +26,7 @@ function SidebarLogoCollapsed({ linkTo }: { linkTo?: string }) {
       variant="ghost"
       size="icon"
       onClick={() => navigate(linkTo || '/')}
-      className="h-10! w-8! p-0! group-data-[collapsible=icon]:h-10! items-center justify-center"
+      className="h-8! w-8! p-0! group-data-[collapsible=icon]:h-8! items-center justify-center"
     >
       <img
         src={branding.logos.logoIconUrl}
@@ -50,7 +50,7 @@ export const AppSidebarHeader = () => {
 
   if (!showSwitcher) {
     return (
-      <SidebarHeader className="pb-0">
+      <SidebarHeader className="pb-2">
         <div className="w-full flex items-center gap-2">
           <SidebarLogoCollapsed linkTo={defaultRoute} />
           {state !== 'collapsed' && (
@@ -64,18 +64,18 @@ export const AppSidebarHeader = () => {
   }
 
   return (
-    <SidebarHeader>
+    <SidebarHeader className="pb-2">
       <SidebarMenu>
         <SidebarMenuItem className="flex items-center">
           <SidebarLogoCollapsed linkTo={defaultRoute} />
           {state !== 'collapsed' && (
             <div className="flex-1 min-w-0">
               <PlatformSwitcher>
-                <SidebarMenuButton className="h-10! w-full">
-                  <span className="truncate font-medium flex-1 text-left text-sm">
+                <SidebarMenuButton className="h-8! w-full">
+                  <span className="truncate font-semibold flex-1 text-left text-sm">
                     {currentPlatform?.name ?? t('platform')}
                   </span>
-                  <ChevronsUpDown className="ml-auto size-3! shrink-0" />
+                  <ChevronsUpDown className="ml-auto size-3.5! shrink-0" />
                 </SidebarMenuButton>
               </PlatformSwitcher>
             </div>
