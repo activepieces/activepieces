@@ -71,8 +71,6 @@
   "List Websites": "List Websites",
   "List all websites tracked in your Umami account.": "List all websites tracked in your Umami account.",
   "Maximum number of websites to return.": "Maximum number of websites to return.",
-  "New Event": "New Event",
-  "Triggers when a new custom event is recorded on a website.": "Triggers when a new custom event is recorded on a website.",
-  "New Session": "New Session",
-  "Triggers when a new visitor session is detected on a website.": "Triggers when a new visitor session is detected on a website."
+  "New Referrer Detected": "New Referrer Detected",
+  "Triggers when traffic from a new referring domain is detected for the first time.": "Triggers when traffic from a new referring domain is detected for the first time."
 }

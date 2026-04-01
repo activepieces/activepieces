@@ -7,8 +7,7 @@ import { getActiveVisitors } from './lib/actions/get-active-visitors';
 import { getPageviews } from './lib/actions/get-pageviews';
 import { sendEvent } from './lib/actions/send-event';
 import { listWebsites } from './lib/actions/list-websites';
-import { newEvent } from './lib/triggers/new-event';
-import { newSession } from './lib/triggers/new-session';
+import { newReferrerDetected } from './lib/triggers/new-referrer-detected';
 import { resolveAuthHeaders } from './lib/common';
 
 export const umamiAuth = PieceAuth.CustomAuth({
@@ -98,7 +97,7 @@ export const umami = createPiece({
       },
     }),
   ],
-  triggers: [newEvent, newSession],
+  triggers: [newReferrerDetected],
 });
 
 type UmamiAuthProps = {

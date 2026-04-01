@@ -71,8 +71,6 @@
   "List Websites": "Lister les sites web",
   "List all websites tracked in your Umami account.": "Lister tous les sites web suivis dans votre compte Umami.",
   "Maximum number of websites to return.": "Nombre maximum de sites web à retourner.",
-  "New Event": "Nouvel événement",
-  "Triggers when a new custom event is recorded on a website.": "Se déclenche lorsqu'un nouvel événement personnalisé est enregistré sur un site web.",
-  "New Session": "Nouvelle session",
-  "Triggers when a new visitor session is detected on a website.": "Se déclenche lorsqu'une nouvelle session de visiteur est détectée sur un site web."
+  "New Referrer Detected": "Nouveau référent détecté",
+  "Triggers when traffic from a new referring domain is detected for the first time.": "Se déclenche lorsque du trafic provenant d'un nouveau domaine référent est détecté pour la première fois."
 }
