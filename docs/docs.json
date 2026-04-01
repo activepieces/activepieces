@@ -180,7 +180,8 @@
                      "install/guides/setup-opentelemetry",
                      "install/guides/setup-s3",
                      "install/guides/separate-workers",
-                     "install/guides/setup-app-webhooks"
+                     "install/guides/setup-app-webhooks",
+                     "install/guides/rollback"
                   ]
                },
                {
