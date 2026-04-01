@@ -27,7 +27,7 @@
     "@bull-board/fastify": "6.10.1",
     "@electric-sql/pglite": "0.3.14",
     "unpdf": "1.4.0",
-    "mammoth": "1.8.0",
+    "mammoth": "1.11.0",
     "csv-parse": "5.6.0",
     "@hyperdx/node-opentelemetry": "0.8.2",
     "@sentry/node": "7.120.0",
