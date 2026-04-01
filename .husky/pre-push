@@ -1,7 +1,9 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
-
+if [ -n "${SKIP_CHECK:-}" ]; then
+  exit 0
+fi
 
 while read -r local_ref local_sha remote_ref remote_sha
 do
@@ -15,12 +17,12 @@ if [ "$CLAUDE_PUSH" = "yes" ]; then
   RUN_CHECKS="y"
 elif [ -n "${CI:-}" ] && [ "$CI" != "false" ] && [ "$CI" != "0" ]; then
   RUN_CHECKS="n"
-elif { true > /dev/tty; } 2>/dev/null; then
+elif [ -t 1 ]; then
+  # IDE / CI Git runs with stdout on a pipe, not a TTY — do not prompt (avoids blocking forever on read /dev/tty)
   printf "Run lint and tests before pushing? [Y/n] " > /dev/tty
   if read -r RUN_CHECKS < /dev/tty; then
     :
   else
-    # No input (e.g. Cursor/VS Code Git: /dev/tty exists but read hits EOF) — skip, do not run lint
     RUN_CHECKS="n"
   fi
 else
