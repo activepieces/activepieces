@@ -1,7 +1,7 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { listIdDropdown, profileIdsMultiSelectDropdown } from '../common/props';
+import { allProfileIdsMultiSelectDropdown, listIdDropdown } from '../common/props';
 import { klaviyoAuth, KlaviyoAuthValue } from '../common/auth';
-import { makeRequest } from '../common/client';
+import { makeRequest, normalizeProfileIds } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
 
 export const addProfileToList = createAction({
@@ -12,19 +12,14 @@ export const addProfileToList = createAction({
     'Add profiles to a specific list without changing subscription status.',
   props: {
     list_id: listIdDropdown,
-    profile_id: profileIdsMultiSelectDropdown,
+    profile_id: allProfileIdsMultiSelectDropdown,
   },
   async run({ auth, propsValue }) {
-    const { list_id, profile_id } = propsValue;
+    const { list_id, profile_id: rawProfileId } = propsValue;
+    const profile_id = normalizeProfileIds(rawProfileId);
 
     if (!profile_id || profile_id.length === 0) {
       throw new Error('At least one profile is required');
-    }
-
-    if (profile_id.length > 1000) {
-      throw new Error(
-        'Maximum of 1000 profiles can be added to a list at once'
-      );
     }
 
     const body = {

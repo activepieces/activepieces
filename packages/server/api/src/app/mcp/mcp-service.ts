@@ -63,9 +63,13 @@ export const mcpServerService = (log: FastifyBaseLogger) => {
                 description: 'Automation and workflow MCP server by Activepieces',
                 icons: [
                     {
-                        src: 'https://cdn.activepieces.com/pieces/activepieces.png',
+                        src: 'https://cdn.activepieces.com/brand/logo.svg',
+                        mimeType: 'image/svg+xml',
+                    },
+                    {
+                        src: 'https://cdn.activepieces.com/brand/logo-192.png',
                         mimeType: 'image/png',
-                        sizes: ['48x48', '96x96'],
+                        sizes: ['192x192'],
                     },
                 ],
             })

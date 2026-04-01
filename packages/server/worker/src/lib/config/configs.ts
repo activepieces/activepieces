@@ -41,7 +41,7 @@ const defaultValues: Partial<Record<WorkerSystemProp, string>> = {
     [WorkerSystemProp.LOG_LEVEL]: 'info',
     [WorkerSystemProp.LOG_PRETTY]: 'false',
     [WorkerSystemProp.OTEL_ENABLED]: 'false',
-    [WorkerSystemProp.WORKER_CONCURRENCY]: '1',
+    [WorkerSystemProp.WORKER_CONCURRENCY]: '5',
 }
 
 export const system = {

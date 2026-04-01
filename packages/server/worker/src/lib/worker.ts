@@ -158,6 +158,7 @@ async function pollAndExecute(apiClient: WorkerToApiContract, sbManager: Sandbox
                     ? EngineResponseStatus.INTERNAL_ERROR
                     : result?.kind === JobResultKind.SYNCHRONOUS ? result.status : EngineResponseStatus.OK,
                 errorMessage: buildErrorMessage(execError ?? undefined, result ?? undefined),
+                logs: extractLogs(execError ?? undefined, result ?? undefined),
                 delayInSeconds: result?.kind === JobResultKind.FIRE_AND_FORGET ? result.delayInSeconds : undefined,
                 response: result?.kind === JobResultKind.SYNCHRONOUS ? result.response : undefined,
             }),
@@ -273,7 +274,7 @@ async function warmupPiecesOnStartup(apiClient: WorkerToApiContract): Promise<vo
     }
     logger.info({ count: pieces.length }, 'Starting piece cache warmup')
     const { error: installError } = await tryCatch(() =>
-        pieceInstaller(logger, apiClient).install({ pieces, includeFilters: false }),
+        pieceInstaller(logger, apiClient).install({ pieces }),
     )
     if (installError) {
         logger.error({ error: installError }, 'Failed to install pieces during startup warmup')
@@ -286,34 +287,27 @@ async function warmupPiecesOnStartup(apiClient: WorkerToApiContract): Promise<vo
 
 function buildErrorMessage(execError: Error | undefined, result: JobResult | undefined): string | undefined {
     if (execError) {
-        const parts: string[] = [execError.message]
-        if (execError instanceof ActivepiecesError) {
-            const params = execError.error.params as Record<string, unknown>
-            if (params?.['standardOutput']) {
-                parts.push(`stdOut=${params['standardOutput']}`)
-            }
-            if (params?.['standardError']) {
-                parts.push(`stdError=${params['standardError']}`)
-            }
-        }
-        return parts.join(' ')
+        return execError.message
     }
     const isFailure = result?.kind === JobResultKind.SYNCHRONOUS && result.status !== EngineResponseStatus.OK
-    const baseMessage = isFailure ? result.errorMessage : undefined
     if (!isFailure) {
         return undefined
     }
-    const parts: string[] = []
-    if (baseMessage) {
-        parts.push(baseMessage)
+    return result.errorMessage
+}
+
+function extractLogs(execError: Error | undefined, result: JobResult | undefined): string | undefined {
+    if (execError instanceof ActivepiecesError) {
+        const params = execError.error.params as Record<string, unknown>
+        const parts: string[] = []
+        if (params?.['standardOutput']) parts.push(`stdout:\n${params['standardOutput']}`)
+        if (params?.['standardError']) parts.push(`stderr:\n${params['standardError']}`)
+        return parts.length > 0 ? parts.join('\n') : undefined
     }
-    if (result.stdOut) {
-        parts.push(`stdOut=${result.stdOut}`)
+    if (result && 'logs' in result) {
+        return result.logs
     }
-    if (result.stdError) {
-        parts.push(`stdError=${result.stdError}`)
-    }
-    return parts.length > 0 ? parts.join(' ') : undefined
+    return undefined
 }
 
 function sleep(ms: number): Promise<void> {

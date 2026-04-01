@@ -60,6 +60,13 @@
                   ]
                },
                {
+                  "group": "MCP Server",
+                  "pages": [
+                     "mcp/overview",
+                     "mcp/tools"
+                  ]
+               },
+               {
                   "group": "About",
                   "pages": [
                      "about/i18n",
@@ -494,7 +501,7 @@
                   "icon": "code",
                   "pages": [
                      "handbook/engineering/playbooks/run-ee",
-                     "handbook/engineering/playbooks/setup-incident-io",
+                     "handbook/engineering/playbooks/setup-betterstack",
                      "handbook/engineering/playbooks/releases",
                      "handbook/engineering/playbooks/canary-deployment",
                      "handbook/engineering/playbooks/infrastructure",
