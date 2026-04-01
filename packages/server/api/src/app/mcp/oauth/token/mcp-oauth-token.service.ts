@@ -1,12 +1,11 @@
 import { randomBytes } from 'crypto'
 import { cryptoUtils } from '@activepieces/server-utils'
-import { apId } from '@activepieces/shared'
+import { apId, McpOAuthToken } from '@activepieces/shared'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { jwtUtils } from '../../../helper/jwt-utils'
 import { system } from '../../../helper/system/system'
 import { AppSystemProp, WorkerSystemProp } from '../../../helper/system/system-props'
 import { mcpOAuthPkce } from '../mcp-oauth.pkce'
-import { McpOAuthToken } from '@activepieces/shared'
 import { McpOAuthTokenEntity } from './mcp-oauth-token.entity'
 
 const repo = repoFactory(McpOAuthTokenEntity)

@@ -1,8 +1,7 @@
 import { randomBytes } from 'crypto'
 import { cryptoUtils } from '@activepieces/server-utils'
-import { apId } from '@activepieces/shared'
+import { apId, McpOAuthClient } from '@activepieces/shared'
 import { repoFactory } from '../../../core/db/repo-factory'
-import { McpOAuthClient } from '@activepieces/shared'
 import { McpOAuthClientEntity } from './mcp-oauth-client.entity'
 
 const repo = repoFactory(McpOAuthClientEntity)
