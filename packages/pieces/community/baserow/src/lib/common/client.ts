@@ -7,7 +7,7 @@ import {
 import { BaserowField, BaserowTable } from './types';
 
 function emptyValueFilter(
-  accessor: (key: string) => any
+  accessor: (key: string) => unknown
 ): (key: string) => boolean {
   return (key: string) => {
     const val = accessor(key);
@@ -19,19 +19,36 @@ function emptyValueFilter(
   };
 }
 
-export function prepareQuery(request?: Record<string, any>): QueryParams {
+export function prepareQuery(request?: Record<string, unknown>): QueryParams {
   const params: QueryParams = {};
   if (!request) return params;
   Object.keys(request)
     .filter(emptyValueFilter((k) => request[k]))
     .forEach((k: string) => {
-      params[k] = (request as Record<string, any>)[k].toString();
+      params[k] = (request as Record<string, unknown>)[k]!.toString();
     });
   return params;
 }
 
 export class BaserowClient {
-  constructor(private baseUrl: string, private token: string) {}
+  constructor(
+    private baseUrl: string,
+    private authHeader: string
+  ) {}
+
+  static async getJwtToken(
+    baseUrl: string,
+    email: string,
+    password: string
+  ): Promise<string> {
+    const res = await httpClient.sendRequest<{ token: string }>({
+      method: HttpMethod.POST,
+      url: `${baseUrl}/api/user/token-auth/`,
+      body: { email, password },
+    });
+    return res.body.token;
+  }
+
   async makeRequest<T extends HttpMessageBody>(
     method: HttpMethod,
     url: string,
@@ -41,7 +58,7 @@ export class BaserowClient {
     const res = await httpClient.sendRequest<T>({
       method,
       url: `${this.baseUrl}/api${url}`,
-      headers: { Authorization: `Token ${this.token}` },
+      headers: { Authorization: this.authHeader },
       queryParams: query,
       body,
     });
@@ -59,7 +76,7 @@ export class BaserowClient {
       `/database/fields/table/${table_id}/`
     );
   }
-  async createRow(table_id: number, request: Record<string, any>) {
+  async createRow(table_id: number, request: Record<string, unknown>) {
     return await this.makeRequest(
       HttpMethod.POST,
       `/database/rows/table/${table_id}/`,
@@ -72,7 +89,7 @@ export class BaserowClient {
   async updateRow(
     table_id: number,
     row_id: number,
-    request: Record<string, any>
+    request: Record<string, unknown>
   ) {
     return await this.makeRequest(
       HttpMethod.PATCH,
@@ -129,5 +146,31 @@ export class BaserowClient {
       `/database/rows/table/${table_id}/aggregation/`,
       { [`field_${field_id}`]: aggregation_type }
     );
+  }
+  async createWebhook(
+    tableId: number,
+    url: string,
+    events: string[],
+    name: string
+  ): Promise<{ id: number }> {
+    return await this.makeRequest<{ id: number }>(
+      HttpMethod.POST,
+      `/database/webhooks/table/${tableId}/`,
+      undefined,
+      {
+        url,
+        events,
+        name,
+        request_method: 'POST',
+        use_user_field_names: true,
+      }
+    );
+  }
+  async deleteWebhook(webhookId: number): Promise<void> {
+    await httpClient.sendRequest({
+      method: HttpMethod.DELETE,
+      url: `${this.baseUrl}/api/database/webhooks/${webhookId}/`,
+      headers: { Authorization: this.authHeader },
+    });
   }
 }

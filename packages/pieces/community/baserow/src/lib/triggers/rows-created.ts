@@ -1,31 +1,19 @@
-import { Property, createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { MarkdownVariant } from '@activepieces/shared';
-import { baserowAuth } from '../auth';
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { baserowJwtAuth } from '../auth';
+import { baserowCommon } from '../common';
+import { createWebhookTriggerHooks } from '../common/webhook-trigger';
+
+const webhookHooks = createWebhookTriggerHooks('rows.created', 'baserow_rows_created');
 
 export const rowsCreatedTrigger = createTrigger({
   name: 'baserow_rows_created',
-  auth: baserowAuth,
+  auth: baserowJwtAuth,
   displayName: 'Rows Created (Batch)',
   description:
     'Triggers when new rows are created in a Baserow table. Returns all rows from the event as a single batch.',
   type: TriggerStrategy.WEBHOOK,
   props: {
-    instructions: Property.MarkDown({
-      value: `
-## Setup Instructions
-
-1. In Baserow, click the **···** menu beside your table and select **Webhooks**.
-2. Click **Create webhook +**.
-3. Set the HTTP method to **POST**.
-4. Paste the following URL into the endpoint field:
-\`\`\`text
-{{webhookUrl}}
-\`\`\`
-5. Under events, select **Rows created**.
-6. Click **Save**.
-`,
-      variant: MarkdownVariant.INFO,
-    }),
+    table_id: baserowCommon.tableId(),
   },
   sampleData: {
     rows: [
@@ -34,8 +22,12 @@ export const rowsCreatedTrigger = createTrigger({
     ],
     count: 2,
   },
-  async onEnable() {},
-  async onDisable() {},
+  async onEnable(context) {
+    await webhookHooks.onEnable(context);
+  },
+  async onDisable(context) {
+    await webhookHooks.onDisable(context);
+  },
   async run(context) {
     const body = context.payload.body as { items?: unknown[] };
     const rows = body.items ?? [];

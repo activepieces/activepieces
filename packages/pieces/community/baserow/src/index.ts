@@ -1,8 +1,6 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import {
   createPiece,
-  PieceAuth,
-  Property,
 } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { createRowAction } from './lib/actions/create-row';
@@ -19,7 +17,8 @@ import { rowDeletedTrigger } from './lib/triggers/row-deleted';
 import { rowsCreatedTrigger } from './lib/triggers/rows-created';
 import { rowsUpdatedTrigger } from './lib/triggers/rows-updated';
 import { rowsDeletedTrigger } from './lib/triggers/rows-deleted';
-import { baserowAuth } from './lib/auth';
+import { baserowAuth, isDatabaseTokenAuth } from './lib/auth';
+import { BaserowClient } from './lib/common/client';
 
 export const baserow = createPiece({
   displayName: 'Baserow',
@@ -46,9 +45,17 @@ export const baserow = createPiece({
         return auth.props.apiUrl;
       },
       auth: baserowAuth,
-      authMapping: async (auth) => ({
-        Authorization: `Token ${auth.props.token}`,
-      }),
+      authMapping: async (auth) => {
+        if (isDatabaseTokenAuth(auth)) {
+          return { Authorization: `Token ${auth.props.token}` };
+        }
+        const jwt = await BaserowClient.getJwtToken(
+          auth.props.apiUrl,
+          auth.props.email,
+          auth.props.password
+        );
+        return { Authorization: `JWT ${jwt}` };
+      },
     }),
   ],
   triggers: [

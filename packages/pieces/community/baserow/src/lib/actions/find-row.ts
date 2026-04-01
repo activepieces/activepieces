@@ -3,7 +3,7 @@ import {
   createAction,
   DropdownState,
 } from '@activepieces/pieces-framework';
-import { baserowAuth } from '../auth';
+import { baserowAuth, BaserowAuthValue } from '../auth';
 import { baserowCommon, makeClient } from '../common';
 import { BaserowFieldType } from '../common/constants';
 
@@ -29,7 +29,7 @@ export const findRowAction = createAction({
             options: [],
           };
         }
-        const client = makeClient(auth.props);
+        const client = await makeClient(auth as unknown as BaserowAuthValue);
         const fields = await client.listTableFields(
           table_id as unknown as number
         );
@@ -75,7 +75,7 @@ export const findRowAction = createAction({
     if (!field_name || !field_value) {
       return { found: false, row: null, count: 0 };
     }
-    const client = makeClient(context.auth.props);
+    const client = await makeClient(context.auth);
     const response = (await client.listRows(
       table_id,
       undefined,

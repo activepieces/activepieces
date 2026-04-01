@@ -78,10 +78,6 @@
   "Triggers when an existing row is updated in a Baserow table.": "Triggers when an existing row is updated in a Baserow table.",
   "Triggers when a row is deleted from a Baserow table.": "Triggers when a row is deleted from a Baserow table.",
   "Markdown": "Markdown",
-  "\n## Setup Instructions\n\n1. In Baserow, click the **···** menu beside your table and select **Webhooks**.\n2. Click **Create webhook +**.\n3. Set the HTTP method to **POST**.\n4. Paste the following URL into the endpoint field:\n```text\n{{webhookUrl}}\n```\n5. Under events, select **Rows created**.\n6. Click **Save**.\n": "\n## Setup Instructions\n\n1. In Baserow, click the **···** menu beside your table and select **Webhooks**.\n2. Click **Create webhook +**.\n3. Set the HTTP method to **POST**.\n4. Paste the following URL into the endpoint field:\n```text\n{{webhookUrl}}\n```\n5. Under events, select **Rows created**.\n6. Click **Save**.\n",
-  "\n## Setup Instructions\n\n1. In Baserow, click the **···** menu beside your table and select **Webhooks**.\n2. Click **Create webhook +**.\n3. Set the HTTP method to **POST**.\n4. Paste the following URL into the endpoint field:\n```text\n{{webhookUrl}}\n```\n5. Under events, select **Rows updated**.\n6. Click **Save**.\n": "\n## Setup Instructions\n\n1. In Baserow, click the **···** menu beside your table and select **Webhooks**.\n2. Click **Create webhook +**.\n3. Set the HTTP method to **POST**.\n4. Paste the following URL into the endpoint field:\n```text\n{{webhookUrl}}\n```\n5. Under events, select **Rows updated**.\n6. Click **Save**.\n",
-  "\n## Setup Instructions\n\n1. In Baserow, click the **···** menu beside your table and select **Webhooks**.\n2. Click **Create webhook +**.\n3. Set the HTTP method to **POST**.\n4. Paste the following URL into the endpoint field:\n```text\n{{webhookUrl}}\n```\n5. Under events, select **Rows deleted**.\n6. Click **Save**.\n\n> **Note:** The payload contains only the deleted row IDs (`row_ids`), not the full row data.\n": "\n## Setup Instructions\n\n1. In Baserow, click the **···** menu beside your table and select **Webhooks**.\n2. Click **Create webhook +**.\n3. Set the HTTP method to **POST**.\n4. Paste the following URL into the endpoint field:\n```text\n{{webhookUrl}}\n```\n5. Under events, select **Rows deleted**.\n6. Click **Save**.\n\n> **Note:** The payload contains only the deleted row IDs (`row_ids`), not the full row data.\n"
-,
   "Calculates an aggregation (sum, average, min, max, count, etc.) over all values of a field in a table.": "Calculates an aggregation (sum, average, min, max, count, etc.) over all values of a field in a table.",
   "Select the field to aggregate.": "Select the field to aggregate.",
   "Aggregation Type": "Aggregation Type",
@@ -95,12 +91,15 @@
   "Count (unique values)": "Count (unique values)",
   "Median": "Median",
   "Standard deviation": "Standard deviation",
-  "Variance": "Variance"
-,
+  "Variance": "Variance",
   "Rows Created (Batch)": "Rows Created (Batch)",
   "Rows Updated (Batch)": "Rows Updated (Batch)",
   "Rows Deleted (Batch)": "Rows Deleted (Batch)",
   "Triggers when new rows are created in a Baserow table. Returns all rows from the event as a single batch.": "Triggers when new rows are created in a Baserow table. Returns all rows from the event as a single batch.",
   "Triggers when existing rows are updated in a Baserow table. Returns all rows from the event as a single batch.": "Triggers when existing rows are updated in a Baserow table. Returns all rows from the event as a single batch.",
-  "Triggers when rows are deleted from a Baserow table. Returns all deleted row IDs from the event as a single batch.": "Triggers when rows are deleted from a Baserow table. Returns all deleted row IDs from the event as a single batch."
+  "Triggers when rows are deleted from a Baserow table. Returns all deleted row IDs from the event as a single batch.": "Triggers when rows are deleted from a Baserow table. Returns all deleted row IDs from the event as a single batch.",
+  "Email & Password (JWT)": "Email & Password (JWT)",
+  "Authenticate with your Baserow email and password. This mode enables automatic webhook registration for triggers — no manual setup needed.": "Authenticate with your Baserow email and password. This mode enables automatic webhook registration for triggers — no manual setup needed.",
+  "Email": "Email",
+  "Password": "Password"
 }

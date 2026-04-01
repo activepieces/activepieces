@@ -3,7 +3,7 @@ import {
   createAction,
   DropdownState,
 } from '@activepieces/pieces-framework';
-import { baserowAuth } from '../auth';
+import { baserowAuth, BaserowAuthValue } from '../auth';
 import { baserowCommon, makeClient } from '../common';
 
 export const aggregateFieldAction = createAction({
@@ -28,7 +28,7 @@ export const aggregateFieldAction = createAction({
             options: [],
           };
         }
-        const client = makeClient(auth.props);
+        const client = await makeClient(auth as unknown as BaserowAuthValue);
         const fields = await client.listTableFields(
           table_id as unknown as number
         );
@@ -66,7 +66,7 @@ export const aggregateFieldAction = createAction({
       field_id: number;
       aggregation_type: string;
     };
-    const client = makeClient(context.auth.props);
+    const client = await makeClient(context.auth);
     const raw = (await client.aggregateField(
       table_id,
       field_id,
