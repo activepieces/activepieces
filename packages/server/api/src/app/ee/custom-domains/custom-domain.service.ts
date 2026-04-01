@@ -39,6 +39,7 @@ export const customDomainService = {
     }): Promise<CustomDomain | null> {
         return customDomainRepo().findOneBy({
             domain: request.domain,
+            status: CustomDomainStatus.ACTIVE,
         })
     },
     async getOneByPlatform(request: {
