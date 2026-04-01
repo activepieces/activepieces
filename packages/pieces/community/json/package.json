@@ -11,6 +11,7 @@
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
+    "node-jq": "^6.3.1",
     "tslib": "2.6.2"
   }
 }
