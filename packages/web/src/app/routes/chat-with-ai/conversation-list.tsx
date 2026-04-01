@@ -1,11 +1,14 @@
+import { Archive, ChevronDown, Plus, RotateCcw } from 'lucide-react';
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { toast } from 'sonner';
 
+import { cn } from '@/lib/utils';
 import {
-  Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+
+import { DelayedTooltip } from './delayed-tooltip';
 
 type Conversation = {
   id: string;
@@ -59,43 +62,27 @@ function isYesterday(date: Date) {
 }
 
 const css = `
-  .conv-item { display: flex; align-items: center; padding: 4px 8px; border-radius: 6px; cursor: pointer; transition: background 0.15s; border: none; background: transparent; width: 100%; text-align: left; font-family: inherit; color: hsl(var(--foreground)); outline: none !important; box-shadow: none; position: relative; }
-  .conv-item .archive-btn { opacity: 0; position: absolute; right: 4px; top: 50%; transform: translateY(-50%); background: transparent; border: none; cursor: pointer; padding: 4px; border-radius: 6px; color: hsl(var(--muted-foreground)); transition: opacity 0.15s, color 0.15s, background 0.15s; outline: none !important; }
+  .conv-item { display: flex; align-items: center; padding: 4px 8px; border-radius: 6px; cursor: pointer; transition: background 0.15s; border: none; background: transparent; width: 100%; text-align: left; font-family: inherit; color: var(--foreground); outline: none !important; box-shadow: none; position: relative; }
+  .conv-item .archive-btn { opacity: 0; position: absolute; right: 1px; top: 50%; transform: translateY(-50%); background: transparent; border: none; cursor: pointer; padding: 4px; border-radius: 6px; color: var(--muted-foreground); transition: opacity 0.15s, color 0.15s, background 0.15s; outline: none !important; }
   .conv-item:hover .archive-btn { opacity: 1; }
-  .conv-item .archive-btn:hover { color: hsl(var(--foreground)); background: hsl(var(--accent)); }
-  .dark .conv-item .archive-btn:hover { color: hsl(var(--foreground)); background: hsl(var(--accent)); }
+  .conv-item .archive-btn:hover { color: var(--foreground); background: rgba(0,0,0,0.08); }
+  .dark .conv-item .archive-btn:hover { color: var(--foreground); background: rgba(255,255,255,0.1); }
   .conv-item:focus { outline: none !important; box-shadow: none !important; }
-  .conv-item:focus-visible { box-shadow: 0 0 0 2px hsl(var(--sidebar-ring)) !important; }
+  .conv-item:focus-visible { box-shadow: 0 0 0 2px var(--sidebar-ring) !important; }
   .conv-item:hover { background: rgba(0,0,0,0.05); }
   .dark .conv-item:hover { background: rgba(255,255,255,0.07); }
   .conv-item.active { background: rgba(0,0,0,0.08); font-weight: 600; }
   .dark .conv-item.active { background: rgba(255,255,255,0.1); font-weight: 600; }
   .conv-list { scrollbar-width: none; }
   .conv-list::-webkit-scrollbar { width: 0; }
-  .conv-list:hover { scrollbar-width: thin; scrollbar-color: rgba(0,0,0,0.15) transparent; }
+  .conv-list:hover { scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--muted-foreground) 20%, transparent) transparent; }
   .conv-list:hover::-webkit-scrollbar { width: 4px; }
   .conv-list:hover::-webkit-scrollbar-track { background: transparent; }
-  .conv-list:hover::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 4px; }
-  .dark .conv-list:hover { scrollbar-color: rgba(255,255,255,0.2) transparent; }
-  .dark .conv-list:hover::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); }
-  .conv-fade-top { background: linear-gradient(to bottom, rgba(255,255,255,1), transparent); }
-  .dark .conv-fade-top { background: linear-gradient(to bottom, rgba(9,9,11,1), transparent); }
-  .conv-fade-bottom { background: linear-gradient(to top, rgba(255,255,255,1), transparent); }
-  .dark .conv-fade-bottom { background: linear-gradient(to top, rgba(9,9,11,1), transparent); }
+  .conv-list:hover::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--muted-foreground) 20%, transparent); border-radius: 4px; }
+  .conv-fade-top { background: linear-gradient(to bottom, var(--background), transparent); }
+  .conv-fade-bottom { background: linear-gradient(to top, var(--background), transparent); }
   .conv-sidebar { background: transparent !important; opacity: 0.4; transition: opacity 0.2s; }
   .conv-sidebar:hover { opacity: 1; }
-  .dark .conv-sidebar { background: transparent !important; }
-  .new-chat-btn { display: flex; align-items: center; gap: 6px; padding: 6px 8px; border-radius: 6px; border: 1px solid #d4d4d4; background: transparent; cursor: pointer; font-family: inherit; font-size: 12px; color: #404040; transition: background 0.15s; width: 100%; outline: none !important; }
-  .new-chat-btn:focus { outline: none !important; box-shadow: none !important; }
-  .new-chat-btn:focus-visible { box-shadow: 0 0 0 2px hsl(var(--sidebar-ring)) !important; }
-  .new-chat-btn:hover { background: #f5f5f5; }
-  .dark .new-chat-btn { border-color: #525252; color: #d4d4d4; }
-  .dark .new-chat-btn:hover { background: #262626; }
-  .group-label { color: hsl(var(--muted-foreground)); transition: color 0.15s, background 0.15s; border-radius: 6px; outline: none !important; }
-  .group-label:focus { outline: none !important; box-shadow: none !important; }
-  .group-label:focus-visible { box-shadow: 0 0 0 2px hsl(var(--sidebar-ring)) !important; }
-  .group-label:hover { color: hsl(var(--foreground)); background: hsl(var(--accent)); }
-  .dark .group-label:hover { color: hsl(var(--foreground)); background: hsl(var(--accent)); }
 `;
 
 export function ConversationList({
@@ -228,53 +215,19 @@ export function ConversationList({
     const isCollapsed = collapsed[label];
     const isArchived = label === 'Archived';
     return (
-      <div
-        style={{
-          marginBottom: '8px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '2px',
-        }}
-      >
+      <div className="mb-2 flex flex-col gap-0.5">
         <button
-          className="group-label"
+          className="flex items-center gap-0.5 rounded-md bg-transparent border-none cursor-pointer font-inherit text-[11px] font-semibold px-2 py-1 m-0 uppercase tracking-wider text-muted-foreground transition-colors hover:text-foreground outline-none! focus:outline-none! focus:shadow-none! focus-visible:ring-2 focus-visible:ring-sidebar-ring"
           onClick={() => toggleGroup(label)}
-          style={{
-            fontSize: '11px',
-            fontWeight: 600,
-            padding: '4px 8px',
-            margin: 0,
-            textTransform: 'uppercase',
-            letterSpacing: '0.5px',
-            background: 'transparent',
-            border: 'none',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '2px',
-            fontFamily: 'inherit',
-          }}
         >
           {label}
-          <svg
-            width="10"
-            height="10"
-            viewBox="0 0 24 24"
-            fill="none"
-            style={{
-              transition: 'transform 0.15s',
-              transform: isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)',
-              flexShrink: 0,
-            }}
-          >
-            <path
-              d="M6 9l6 6 6-6"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
+          <ChevronDown
+            size={10}
+            className={cn(
+              'shrink-0 transition-transform duration-150',
+              isCollapsed && '-rotate-90',
+            )}
+          />
         </button>
         {!isCollapsed &&
           items.map((conv) => (
@@ -284,18 +237,14 @@ export function ConversationList({
               onClick={() => handleClick(conv.id)}
             >
               <span
-                style={{
-                  fontSize: '12px',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                  paddingRight: '18px',
-                  opacity: isArchived ? 0.5 : 1,
-                }}
+                className={cn(
+                  'text-xs overflow-hidden text-ellipsis whitespace-nowrap pr-[18px]',
+                  isArchived && 'opacity-50',
+                )}
               >
                 {streamingId === conv.id ? streamingText : conv.title}
               </span>
-              <Tooltip>
+              <DelayedTooltip>
                 <TooltipTrigger asChild>
                   <span
                     className="archive-btn"
@@ -306,41 +255,20 @@ export function ConversationList({
                     }
                   >
                     {isArchived ? (
-                      <svg
-                        width="14"
-                        height="14"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-                        <path d="M3 3v5h5" />
-                      </svg>
+                      <RotateCcw size={14} />
                     ) : (
-                      <svg
-                        width="14"
-                        height="14"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <rect x="2" y="3" width="20" height="5" rx="1" />
-                        <path d="M4 8v11a2 2 0 002 2h12a2 2 0 002-2V8" />
-                        <path d="M10 12h4" />
-                      </svg>
+                      <Archive size={14} />
                     )}
                   </span>
                 </TooltipTrigger>
-                <TooltipContent side="bottom" align="center">
+                <TooltipContent
+                  side="right"
+                  align="center"
+                  className="pointer-events-none"
+                >
                   {isArchived ? 'Restore' : 'Archive'}
                 </TooltipContent>
-              </Tooltip>
+              </DelayedTooltip>
             </button>
           ))}
       </div>
@@ -351,63 +279,32 @@ export function ConversationList({
     <>
       <style>{css}</style>
       <div
-        className="conv-sidebar"
-        style={{
-          width: 'min(200px, 25vw)',
-          flexShrink: 0,
-          display: 'flex',
-          flexDirection: 'column',
-          height: '100%',
-          background: 'transparent',
-        }}
+        className="conv-sidebar flex flex-col h-full shrink-0 bg-transparent"
+        style={{ width: 'min(200px, 25vw)' }}
       >
-        <div style={{ padding: '12px 8px 8px' }}>
+        <div className="px-2 pt-3 pb-2">
           <button
-            className="new-chat-btn"
-            style={{ justifyContent: 'space-between' }}
+            className="flex items-center justify-between gap-1.5 w-full px-2 py-1.5 rounded-md border border-border bg-transparent cursor-pointer font-inherit text-xs text-foreground transition-colors hover:bg-accent outline-none! focus:outline-none! focus:shadow-none! focus-visible:ring-2 focus-visible:ring-sidebar-ring"
             onClick={() => {
               setActiveId(null);
               onNewChat?.();
             }}
           >
-            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                <path
-                  d="M12 5v14M5 12h14"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                />
-              </svg>
+            <span className="flex items-center gap-1.5">
+              <Plus size={14} />
               New chat
             </span>
-            <span style={{ fontSize: '11px', opacity: 0.5 }}>⇧⌘O</span>
+            <span className="text-[11px] opacity-50">⇧⌘O</span>
           </button>
         </div>
-        <div style={{ flex: 1, position: 'relative', minHeight: 0 }}>
+        <div className="flex-1 relative min-h-0">
           {showTopFade && (
-            <div
-              className="conv-fade-top"
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                height: '20px',
-                pointerEvents: 'none',
-                zIndex: 1,
-              }}
-            />
+            <div className="conv-fade-top absolute top-0 left-0 right-0 h-5 pointer-events-none z-[1]" />
           )}
           <div
             ref={listRef}
             onScroll={checkFades}
-            className="conv-list"
-            style={{
-              height: '100%',
-              overflowY: 'scroll',
-              padding: '0 8px 12px',
-            }}
+            className="conv-list h-full overflow-y-scroll px-2 pb-3"
           >
             {renderGroup('Today', today)}
             {renderGroup('Yesterday', yesterdayList)}
@@ -415,18 +312,7 @@ export function ConversationList({
             {renderGroup('Archived', archivedList)}
           </div>
           {showBottomFade && (
-            <div
-              className="conv-fade-bottom"
-              style={{
-                position: 'absolute',
-                bottom: 0,
-                left: 0,
-                right: 0,
-                height: '70px',
-                pointerEvents: 'none',
-                zIndex: 1,
-              }}
-            />
+            <div className="conv-fade-bottom absolute bottom-0 left-0 right-0 h-[70px] pointer-events-none z-[1]" />
           )}
         </div>
       </div>
