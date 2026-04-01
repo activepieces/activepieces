@@ -1,20 +1,20 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { umamiAuth } from '../..';
+import { umamiAuth } from '../auth';
 import { umamiApiCall, umamiCommon } from '../common';
 
 export const getPageviews = createAction({
   auth: umamiAuth,
   name: 'get_pageviews',
   displayName: 'Get Pageviews',
-  description: 'Get pageview and session count time series for a website over a date range.',
+  description: 'Returns pageview and session counts over time, broken down by hour, day, week, month, or year.',
   props: {
     websiteId: umamiCommon.websiteDropdown,
     startDate: umamiCommon.dateRange.startDate,
     endDate: umamiCommon.dateRange.endDate,
     unit: Property.StaticDropdown({
-      displayName: 'Time Unit',
-      description: 'The time grouping for the data.',
+      displayName: 'Group By',
+      description: 'How to bucket the results over time.',
       required: false,
       defaultValue: 'day',
       options: {
@@ -29,7 +29,7 @@ export const getPageviews = createAction({
     }),
     timezone: Property.ShortText({
       displayName: 'Timezone',
-      description: 'IANA timezone for time-series bucketing (e.g. "Europe/Paris", "America/New_York"). Defaults to UTC.',
+      description: 'Timezone for date grouping, e.g. Europe/Paris or America/New_York. Defaults to UTC.',
       required: false,
       defaultValue: 'UTC',
     }),
@@ -41,8 +41,7 @@ export const getPageviews = createAction({
       pageviews: { x: string; y: number }[];
       sessions: { x: string; y: number }[];
     }>({
-      serverUrl: context.auth.props.base_url,
-      auth: context.auth.props,
+      auth: context.auth,
       method: HttpMethod.GET,
       path: `/websites/${websiteId}/pageviews`,
       queryParams: {

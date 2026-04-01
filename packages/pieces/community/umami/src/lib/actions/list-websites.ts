@@ -1,16 +1,16 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { umamiAuth } from '../..';
+import { umamiAuth } from '../auth';
 import { umamiApiCall } from '../common';
 
 export const listWebsites = createAction({
   auth: umamiAuth,
   name: 'list_websites',
   displayName: 'List Websites',
-  description: 'List all websites tracked in your Umami account.',
+  description: 'Returns all websites tracked in your Umami account.',
   props: {
     limit: Property.Number({
-      displayName: 'Limit',
+      displayName: 'Max Results',
       description: 'Maximum number of websites to return.',
       required: false,
       defaultValue: 100,
@@ -29,8 +29,7 @@ export const listWebsites = createAction({
       }[];
       count: number;
     }>({
-      serverUrl: context.auth.props.base_url,
-      auth: context.auth.props,
+      auth: context.auth,
       method: HttpMethod.GET,
       path: '/websites',
       queryParams: {

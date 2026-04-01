@@ -3,67 +3,35 @@ import {
   HttpMethod,
   HttpMessageBody,
   HttpResponse,
+  QueryParams,
 } from '@activepieces/pieces-common';
-import { Property } from '@activepieces/pieces-framework';
-import { umamiAuth } from '../..';
-
-interface UmamiAuthProps {
-  base_url: string;
-  auth_mode: string;
-  username?: string;
-  password?: string;
-  api_key?: string;
-}
-
-export async function resolveAuthHeaders(
-  auth: UmamiAuthProps,
-): Promise<Record<string, string>> {
-  const baseUrl = auth.base_url.replace(/\/+$/, '');
-
-  if (auth.auth_mode === 'cloud') {
-    return { 'x-umami-api-key': auth.api_key ?? '' };
-  }
-
-  const loginResponse = await httpClient.sendRequest<{ token: string }>({
-    method: HttpMethod.POST,
-    url: `${baseUrl}/api/auth/login`,
-    body: {
-      username: auth.username,
-      password: auth.password,
-    },
-  });
-
-  return { Authorization: `Bearer ${loginResponse.body.token}` };
-}
+import { AppConnectionValueForAuthProperty, Property } from '@activepieces/pieces-framework';
+import { umamiAuth, getAuthHeaders, getBaseUrl } from '../auth';
 
 export async function umamiApiCall<T extends HttpMessageBody>({
-  serverUrl,
   auth,
   method,
   path,
   body,
   queryParams,
 }: {
-  serverUrl: string;
-  auth: UmamiAuthProps;
+  auth: AppConnectionValueForAuthProperty<typeof umamiAuth>;
   method: HttpMethod;
   path: string;
+  queryParams?: QueryParams;
   body?: unknown;
-  queryParams?: Record<string, string>;
 }): Promise<HttpResponse<T>> {
-  const baseUrl = serverUrl.replace(/\/+$/, '');
-  const headers = await resolveAuthHeaders(auth);
+  const baseUrl = getBaseUrl(auth);
+
+  const headers = await getAuthHeaders(auth);
+
   return await httpClient.sendRequest<T>({
     method,
-    url: `${baseUrl}/api${path}`,
+    url: `${baseUrl}${path}`,
     headers,
     queryParams,
     body,
   });
-}
-
-function extractAuth(auth: unknown): UmamiAuthProps {
-  return (auth as { props: UmamiAuthProps }).props;
 }
 
 export const umamiCommon = {
@@ -78,14 +46,12 @@ export const umamiCommon = {
         return {
           disabled: true,
           options: [],
-          placeholder: 'Please connect your account first',
+          placeholder: 'please connect your account first',
         };
       }
-      const authProps = extractAuth(auth);
       try {
         const response = await umamiApiCall<{ data: { id: string; name: string; domain: string }[] }>({
-          serverUrl: authProps.base_url,
-          auth: authProps,
+          auth: auth,
           method: HttpMethod.GET,
           path: '/websites',
           queryParams: { pageSize: '100' },

@@ -1,46 +1,45 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { umamiAuth } from '../..';
+import { umamiAuth } from '../auth';
 import { umamiCommon } from '../common';
 
 export const sendEvent = createAction({
   auth: umamiAuth,
   name: 'send_event',
   displayName: 'Send Event',
-  description: 'Send a custom event or pageview to Umami. This uses the public tracking endpoint (no authentication required by the API, but uses your server URL).',
+  description: 'Records a custom event or pageview on a website. Leave the event name blank to track a plain pageview.',
   props: {
     websiteId: umamiCommon.websiteDropdown,
     url: Property.ShortText({
-      displayName: 'Page URL',
-      description: 'The URL path of the page (e.g. "/pricing").',
+      displayName: 'Page Path',
+      description: 'Path of the page to record, e.g. /pricing.',
       required: true,
     }),
     eventName: Property.ShortText({
       displayName: 'Event Name',
-      description: 'Name of the custom event (e.g. "signup-button-click"). Leave empty to track a simple pageview.',
+      description: 'Name of the custom event, e.g. signup-button-click. Leave blank to record a pageview.',
       required: false,
     }),
     eventData: Property.Object({
-      displayName: 'Event Data',
-      description: 'Additional key-value data to attach to the event.',
+      displayName: 'Event Properties',
+      description: 'Extra key-value pairs to attach to the event.',
       required: false,
     }),
     referrer: Property.ShortText({
       displayName: 'Referrer',
-      description: 'The referrer URL.',
+      description: 'URL the visitor came from.',
       required: false,
     }),
     title: Property.ShortText({
       displayName: 'Page Title',
-      description: 'Title of the page.',
+      description: 'Title of the page being recorded.',
       required: false,
     }),
   },
   async run(context) {
-    const { base_url } = context.auth.props;
     const { websiteId, url, eventName, eventData, referrer, title } = context.propsValue;
 
-    const baseUrl = base_url.replace(/\/+$/, '');
+    const baseUrl = context.auth.props.authMode === 'cloud' ? 'https://cloud.umami.is' : context.auth.props.baseUrl?.replace(/\/+$/, '');
 
     const payload: Record<string, unknown> = {
       website: websiteId,

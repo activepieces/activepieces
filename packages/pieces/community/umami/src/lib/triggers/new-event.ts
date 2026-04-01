@@ -10,7 +10,7 @@ import {
   pollingHelper,
   HttpMethod,
 } from '@activepieces/pieces-common';
-import { umamiAuth } from '../..';
+import { umamiAuth } from '../auth';
 import { umamiApiCall, umamiCommon } from '../common';
 
 const props = {
@@ -23,21 +23,20 @@ const polling: Polling<
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue, lastFetchEpochMS }) => {
-    const authProps = (auth as unknown as { props: { base_url: string; auth_mode: string; username?: string; password?: string; api_key?: string } }).props;
     const now = Date.now();
     const startAt = lastFetchEpochMS > 0 ? lastFetchEpochMS : now - 24 * 60 * 60 * 1000;
 
     const allEvents: { eventName: string; createdAt: string; id: string; urlPath: string }[] = [];
+    const pageSize = 20;
     let page = 1;
-    const pageSize = 100;
+    let hasMore = true;
 
-    while (true) {
+    while (hasMore) {
       const response = await umamiApiCall<{
         data: { eventName: string; createdAt: string; id: string; urlPath: string }[];
         count: number;
       }>({
-        serverUrl: authProps.base_url,
-        auth: authProps,
+        auth,
         method: HttpMethod.GET,
         path: `/websites/${propsValue.websiteId}/events`,
         queryParams: {
@@ -49,21 +48,13 @@ const polling: Polling<
       });
 
       allEvents.push(...response.body.data);
-
-      if (response.body.data.length < pageSize) {
-        break;
-      }
+      hasMore = response.body.data.length === pageSize;
       page++;
     }
 
     return allEvents.map((event) => ({
       epochMilliSeconds: new Date(event.createdAt).getTime(),
-      data: {
-        id: event.id,
-        event_name: event.eventName,
-        url_path: event.urlPath,
-        created_at: event.createdAt,
-      },
+      data: event,
     }));
   },
 };

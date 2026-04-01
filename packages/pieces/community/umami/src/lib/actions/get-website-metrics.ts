@@ -1,25 +1,25 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { umamiAuth } from '../..';
+import { umamiAuth } from '../auth';
 import { umamiApiCall, umamiCommon } from '../common';
 
 export const getWebsiteMetrics = createAction({
   auth: umamiAuth,
   name: 'get_website_metrics',
   displayName: 'Get Website Metrics',
-  description: 'Get metrics (URLs, referrers, browsers, OS, countries, etc.) for a website over a date range.',
+  description: 'Returns a ranked list for a chosen metric category (e.g. top pages, browsers, or countries) over a date range.',
   props: {
     websiteId: umamiCommon.websiteDropdown,
     startDate: umamiCommon.dateRange.startDate,
     endDate: umamiCommon.dateRange.endDate,
     type: Property.StaticDropdown({
-      displayName: 'Metric Type',
-      description: 'The type of metric to retrieve.',
+      displayName: 'Metric',
+      description: 'Which metric to rank results by.',
       required: true,
       defaultValue: 'url',
       options: {
         options: [
-          { label: 'URLs', value: 'url' },
+          { label: 'Pages', value: 'url' },
           { label: 'Referrers', value: 'referrer' },
           { label: 'Browsers', value: 'browser' },
           { label: 'Operating Systems', value: 'os' },
@@ -28,9 +28,9 @@ export const getWebsiteMetrics = createAction({
           { label: 'Regions', value: 'region' },
           { label: 'Cities', value: 'city' },
           { label: 'Languages', value: 'language' },
-          { label: 'Screens', value: 'screen' },
+          { label: 'Screen Sizes', value: 'screen' },
           { label: 'Events', value: 'event' },
-          { label: 'Titles', value: 'title' },
+          { label: 'Page Titles', value: 'title' },
           { label: 'Tags', value: 'tag' },
           { label: 'Hosts', value: 'host' },
           { label: 'Query Parameters', value: 'query' },
@@ -38,7 +38,7 @@ export const getWebsiteMetrics = createAction({
       },
     }),
     limit: Property.Number({
-      displayName: 'Limit',
+      displayName: 'Max Results',
       description: 'Maximum number of results to return.',
       required: false,
       defaultValue: 500,
@@ -48,8 +48,7 @@ export const getWebsiteMetrics = createAction({
     const { websiteId, startDate, endDate, type, limit } = context.propsValue;
 
     const response = await umamiApiCall<{ x: string; y: number }[]>({
-      serverUrl: context.auth.props.base_url,
-      auth: context.auth.props,
+      auth: context.auth,
       method: HttpMethod.GET,
       path: `/websites/${websiteId}/metrics`,
       queryParams: {
