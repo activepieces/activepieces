@@ -42,3 +42,5 @@ case "$RUN_CHECKS" in
     npm run test-api || { echo ""; echo "API tests failed. Check the output above for details."; exit 1; }
     ;;
 esac
+
+
