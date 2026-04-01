@@ -65,6 +65,7 @@ import { SystemJobName } from './helper/system-jobs/common'
 import { systemJobHandlers } from './helper/system-jobs/job-handlers'
 import { systemJobsSchedule } from './helper/system-jobs/system-job'
 import { validateEnvPropsOnStartup } from './helper/system-validator'
+import { knowledgeBaseModule } from './knowledge-base/knowledge-base.module'
 import { mcpServerModule } from './mcp/mcp-module'
 import { mcpOAuthApproveController } from './mcp/oauth/mcp-oauth-approve-controller'
 import { communityPiecesModule } from './pieces/community-piece-module'
@@ -212,6 +213,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(aiProviderModule)
     await app.register(licenseKeysModule)
     await app.register(tablesModule)
+    await app.register(knowledgeBaseModule)
     await app.register(userModule)
     await app.register(templateModule)
     await app.register(userBadgeModule)

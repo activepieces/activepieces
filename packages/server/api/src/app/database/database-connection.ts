@@ -33,6 +33,8 @@ import { FlowVersionEntity } from '../flows/flow-version/flow-version-entity'
 import { FolderEntity } from '../flows/folder/folder.entity'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
+import { KnowledgeBaseChunkEntity } from '../knowledge-base/knowledge-base-chunk.entity'
+import { KnowledgeBaseFileEntity } from '../knowledge-base/knowledge-base-file.entity'
 import { McpServerEntity } from '../mcp/mcp-entity'
 import { McpOAuthClientEntity } from '../mcp/oauth/mcp-oauth-client-entity'
 import { McpOAuthAuthorizationCodeEntity } from '../mcp/oauth/mcp-oauth-code-entity'
@@ -94,6 +96,8 @@ function getEntities(): EntitySchema<unknown>[] {
         McpOAuthClientEntity,
         McpOAuthAuthorizationCodeEntity,
         McpOAuthTokenEntity,
+        KnowledgeBaseFileEntity,
+        KnowledgeBaseChunkEntity,
         TriggerSourceEntity,
         UserBadgeEntity,
         // Enterprise
