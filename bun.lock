@@ -3695,6 +3695,16 @@
         "tslib": "2.6.2",
       },
     },
+    "packages/pieces/community/klenty": {
+      "name": "@activepieces/piece-klenty",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/knack": {
       "name": "@activepieces/piece-knack",
       "version": "0.1.4",
@@ -8706,6 +8716,8 @@
     "@activepieces/piece-kizeo-forms": ["@activepieces/piece-kizeo-forms@workspace:packages/pieces/community/kizeo-forms"],
 
     "@activepieces/piece-klaviyo": ["@activepieces/piece-klaviyo@workspace:packages/pieces/community/klaviyo"],
+
+    "@activepieces/piece-klenty": ["@activepieces/piece-klenty@workspace:packages/pieces/community/klenty"],
 
     "@activepieces/piece-knack": ["@activepieces/piece-knack@workspace:packages/pieces/community/knack"],
 
