@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-ampeco",
-  "version": "0.2.6",
+  "version": "0.2.5",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "apiVersion": "3.96.4",

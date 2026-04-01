@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-brave-search",
-  "version": "0.0.4",
+  "version": "0.0.3",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "scripts": {
