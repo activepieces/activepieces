@@ -82,6 +82,84 @@ export const listIdDropdown = (params: DropdownParams) =>
 		},
 	});
 
+export const taskIdDropdown = (params: DropdownParams) =>
+	Property.Dropdown({
+		auth: attioAuth,
+		displayName: params.displayName,
+		description: params.description,
+		required: params.required,
+		refreshers: [],
+		options: async ({ auth }) => {
+			if (!auth) {
+				return {
+					disabled: true,
+					options: [],
+					placeholder: 'Please connect your account first.',
+				};
+			}
+
+			const response = await attioApiCall<{ data: Array<Record<string, any>> }>({
+				accessToken: auth.secret_text,
+				method: HttpMethod.GET,
+				resourceUri: '/tasks',
+				query: { limit: 200 },
+			});
+
+			return {
+				disabled: false,
+				options: response.data.map((task) => ({
+					label: task['content_plaintext'] ?? task['id']?.task_id,
+					value: task['id']?.task_id,
+				})),
+			};
+		},
+	});
+
+export const linkedRecordDropdown = (params: DropdownParams) =>
+	Property.Dropdown({
+		auth: attioAuth,
+		displayName: params.displayName,
+		description: params.description,
+		required: params.required,
+		refreshers: ['linked_object'],
+		options: async ({ auth, linked_object }) => {
+			if (!auth) {
+				return {
+					disabled: true,
+					options: [],
+					placeholder: 'Please connect your account first.',
+				};
+			}
+
+			if (!linked_object) {
+				return {
+					disabled: true,
+					options: [],
+					placeholder: 'Please select a Linked Object first.',
+				};
+			}
+
+			const response = await attioApiCall<{ data: Array<Record<string, any>> }>({
+				accessToken: auth.secret_text,
+				method: HttpMethod.POST,
+				resourceUri: `/objects/${linked_object}/records/query`,
+				body: { limit: 200, offset: 0 },
+			});
+
+			return {
+				disabled: false,
+				options: response.data.map((record) => {
+					const nameValues: Array<any> = record['values']?.['name'] ?? [];
+					const label =
+						nameValues[0]?.full_name ??
+						nameValues[0]?.value ??
+						record['id']?.record_id;
+					return { label: String(label), value: record['id']?.record_id };
+				}),
+			};
+		},
+	});
+
 export const meetingIdDropdown = (params: DropdownParams) =>
 	Property.Dropdown({
 		auth: attioAuth,
