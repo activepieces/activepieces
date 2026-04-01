@@ -57,19 +57,14 @@ export function McpCredentials({ mcpServer }: McpCredentialsProps) {
         </div>
       </div>
 
-
       <div className="flex flex-col gap-1.5">
         <label className="text-sm font-medium">{t('Bearer Token')}</label>
         <p className="text-xs text-muted-foreground">
-          {t(
-            'For clients that do not support OAuth (Cursor, Windsurf, etc.).',
-          )}
+          {t('For clients that do not support OAuth (Cursor, Windsurf, etc.).')}
         </p>
         <div className="flex items-center gap-2">
           <div className="bg-muted/50 rounded-md px-3 py-2 text-sm flex-1 overflow-x-auto">
-            {showToken
-              ? mcpServer?.token
-              : maskToken(mcpServer?.token ?? '')}
+            {showToken ? mcpServer?.token : maskToken(mcpServer?.token ?? '')}
           </div>
           <ButtonWithTooltip
             className="h-9 w-9"
@@ -106,7 +101,6 @@ export function McpCredentials({ mcpServer }: McpCredentialsProps) {
           <CopyButton textToCopy={mcpServer?.token ?? ''} />
         </div>
       </div>
-
 
       <CollapsibleJson
         json={jsonConfiguration}

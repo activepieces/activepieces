@@ -95,7 +95,9 @@ export function McpTools({ mcpServer }: McpToolsProps) {
                     checked={
                       allChecked ? true : someChecked ? 'indeterminate' : false
                     }
-                    onCheckedChange={(v) => toggleCategory(toolNames, v === true)}
+                    onCheckedChange={(v) =>
+                      toggleCategory(toolNames, v === true)
+                    }
                     onClick={(e) => e.stopPropagation()}
                     aria-label={t('Select all in {{category}}', {
                       category: category.label,
