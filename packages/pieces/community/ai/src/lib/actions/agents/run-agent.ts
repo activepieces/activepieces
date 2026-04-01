@@ -164,7 +164,6 @@ export const runAgent = createAction({
     const structuredOutput = hasStructuredOutput ? context.propsValue.structuredOutput as AgentOutputField[] : undefined;
     const agentTools = context.propsValue.agentTools as AgentTool[];
 
-    // Check knowledge base tool presence (used for embedding model + system prompt)
     const hasKnowledgeBaseTools = agentTools.some(t => t.type === AgentToolType.KNOWLEDGE_BASE);
     const kbFileTools = agentTools.filter(
       (t): t is AgentKnowledgeBaseTool => t.type === AgentToolType.KNOWLEDGE_BASE && t.sourceType === KnowledgeBaseSourceType.FILE,

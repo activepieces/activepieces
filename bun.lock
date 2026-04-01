@@ -1,6 +1,5 @@
 {
   "lockfileVersion": 1,
-  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "activepieces",
@@ -2831,7 +2830,7 @@
     },
     "packages/pieces/community/github": {
       "name": "@activepieces/piece-github",
-      "version": "0.6.6",
+      "version": "0.6.7",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -2906,7 +2905,7 @@
     },
     "packages/pieces/community/google-calendar": {
       "name": "@activepieces/piece-google-calendar",
-      "version": "0.9.0",
+      "version": "0.9.1",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -3058,7 +3057,7 @@
     },
     "packages/pieces/community/google-slides": {
       "name": "@activepieces/piece-google-slides",
-      "version": "0.1.5",
+      "version": "0.1.6",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -4289,7 +4288,7 @@
     },
     "packages/pieces/community/microsoft-365-people": {
       "name": "@activepieces/piece-microsoft-365-people",
-      "version": "0.1.10",
+      "version": "0.1.11",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -4302,7 +4301,7 @@
     },
     "packages/pieces/community/microsoft-365-planner": {
       "name": "@activepieces/piece-microsoft-365-planner",
-      "version": "0.1.10",
+      "version": "0.1.11",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -4315,7 +4314,7 @@
     },
     "packages/pieces/community/microsoft-copilot": {
       "name": "@activepieces/piece-microsoft-copilot",
-      "version": "0.0.1",
+      "version": "0.0.2",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -4327,7 +4326,7 @@
     },
     "packages/pieces/community/microsoft-dynamics-365-business-central": {
       "name": "@activepieces/piece-microsoft-dynamics-365-business-central",
-      "version": "0.1.6",
+      "version": "0.1.7",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -4338,7 +4337,7 @@
     },
     "packages/pieces/community/microsoft-dynamics-crm": {
       "name": "@activepieces/piece-microsoft-dynamics-crm",
-      "version": "0.2.6",
+      "version": "0.2.7",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -4348,7 +4347,7 @@
     },
     "packages/pieces/community/microsoft-excel-365": {
       "name": "@activepieces/piece-microsoft-excel-365",
-      "version": "0.5.2",
+      "version": "0.5.3",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -4361,7 +4360,7 @@
     },
     "packages/pieces/community/microsoft-onedrive": {
       "name": "@activepieces/piece-microsoft-onedrive",
-      "version": "0.1.10",
+      "version": "0.1.11",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -4378,7 +4377,7 @@
     },
     "packages/pieces/community/microsoft-onenote": {
       "name": "@activepieces/piece-microsoft-onenote",
-      "version": "0.1.9",
+      "version": "0.1.10",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -4390,7 +4389,7 @@
     },
     "packages/pieces/community/microsoft-outlook": {
       "name": "@activepieces/piece-microsoft-outlook",
-      "version": "0.2.13",
+      "version": "0.2.14",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -4403,7 +4402,7 @@
     },
     "packages/pieces/community/microsoft-outlook-calendar": {
       "name": "@activepieces/piece-microsoft-outlook-calendar",
-      "version": "0.1.6",
+      "version": "0.1.7",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -4414,7 +4413,7 @@
     },
     "packages/pieces/community/microsoft-power-bi": {
       "name": "@activepieces/piece-microsoft-power-bi",
-      "version": "0.1.6",
+      "version": "0.1.7",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -4424,7 +4423,7 @@
     },
     "packages/pieces/community/microsoft-sharepoint": {
       "name": "@activepieces/piece-microsoft-sharepoint",
-      "version": "0.2.13",
+      "version": "0.2.14",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -4450,7 +4449,7 @@
     },
     "packages/pieces/community/microsoft-todo": {
       "name": "@activepieces/piece-microsoft-todo",
-      "version": "0.2.11",
+      "version": "0.2.12",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -5708,7 +5707,7 @@
     },
     "packages/pieces/community/salesforce": {
       "name": "@activepieces/piece-salesforce",
-      "version": "0.7.0",
+      "version": "0.7.1",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -7241,7 +7240,7 @@
     },
     "packages/pieces/community/zoho-books": {
       "name": "@activepieces/piece-zoho-books",
-      "version": "0.1.4",
+      "version": "0.1.5",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -7251,7 +7250,7 @@
     },
     "packages/pieces/community/zoho-campaigns": {
       "name": "@activepieces/piece-zoho-campaigns",
-      "version": "0.1.5",
+      "version": "0.1.6",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -7263,7 +7262,7 @@
     },
     "packages/pieces/community/zoho-crm": {
       "name": "@activepieces/piece-zoho-crm",
-      "version": "0.2.5",
+      "version": "0.2.6",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -7274,7 +7273,7 @@
     },
     "packages/pieces/community/zoho-desk": {
       "name": "@activepieces/piece-zoho-desk",
-      "version": "0.1.4",
+      "version": "0.1.5",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -7284,7 +7283,7 @@
     },
     "packages/pieces/community/zoho-invoice": {
       "name": "@activepieces/piece-zoho-invoice",
-      "version": "0.1.4",
+      "version": "0.1.5",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -7295,7 +7294,7 @@
     },
     "packages/pieces/community/zoho-mail": {
       "name": "@activepieces/piece-zoho-mail",
-      "version": "0.1.4",
+      "version": "0.1.5",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -7320,7 +7319,7 @@
     },
     "packages/pieces/community/zoom": {
       "name": "@activepieces/piece-zoom",
-      "version": "0.6.0",
+      "version": "0.6.1",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -17512,6 +17511,8 @@
 
     "@activepieces/piece-ai/@modelcontextprotocol/sdk/ajv": ["ajv@8.18.0", "", { "dependencies": { "fast-deep-equal": "^3.1.3", "fast-uri": "^3.0.1", "json-schema-traverse": "^1.0.0", "require-from-string": "^2.0.2" } }, "sha512-PlXPeEWMXMZ7sPYOHqmDyCJzcfNrUr3fGNKtezX14ykXOEIvyK81d+qydx89KY5O71FKMPaQ2vBfBFI5NHR63A=="],
 
+    "@activepieces/piece-ai/@modelcontextprotocol/sdk/eventsource-parser": ["eventsource-parser@3.0.6", "", {}, "sha512-Vo1ab+QXPzZ4tCa8SwIHJFaSzy4R6SHf7BY79rFBDf0idraZWAkYrDjDj8uWaSm3S2TK+hJ7/t1CEmZ7jXw+pg=="],
+
     "@activepieces/piece-amazon-secrets-manager/@aws-sdk/client-secrets-manager/@aws-sdk/util-endpoints": ["@aws-sdk/util-endpoints@3.989.0", "", { "dependencies": { "@aws-sdk/types": "^3.973.1", "@smithy/types": "^4.12.0", "@smithy/url-parser": "^4.2.8", "@smithy/util-endpoints": "^3.2.8", "tslib": "^2.6.2" } }, "sha512-eKmAOeQM4Qusq0jtcbZPiNWky8XaojByKC/n+THbJ8vJf7t4ys8LlcZ4PrBSHZISe9cC484mQsPVOQh6iySjqw=="],
 
     "@activepieces/piece-amazon-secrets-manager/@aws-sdk/client-secrets-manager/@smithy/node-http-handler": ["@smithy/node-http-handler@4.5.0", "", { "dependencies": { "@smithy/abort-controller": "^4.2.12", "@smithy/protocol-http": "^5.3.12", "@smithy/querystring-builder": "^4.2.12", "@smithy/types": "^4.13.1", "tslib": "^2.6.2" } }, "sha512-Rnq9vQWiR1+/I6NZZMNzJHV6pZYyEHt2ZnuV3MG8z2NNenC4i/8Kzttz7CjZiHSmsN5frhXhg17z3Zqjjhmz1A=="],
@@ -18819,8 +18820,6 @@
     "@activepieces/piece-google-vertexai/google-auth-library/jws/jwa": ["jwa@2.0.1", "", { "dependencies": { "buffer-equal-constant-time": "^1.0.1", "ecdsa-sig-formatter": "1.0.11", "safe-buffer": "^5.0.1" } }, "sha512-hRF04fqJIP8Abbkq5NKGN0Bbr3JxlQ+qhZufXVr0DvujKy93ZCbXZMHDL4EOtodSbCWxOqR8MS1tXA5hwqCXDg=="],
 
     "@activepieces/piece-text-helper/jsdom/cssstyle/rrweb-cssom": ["rrweb-cssom@0.8.0", "", {}, "sha512-guoltQEx+9aMf2gDZ0s62EcV8lsXR+0w8915TC3ITdn2YueuNjdAYh/levpU9nFaoChh9RUS5ZdQMrKfVEN9tw=="],
-
-    "@ai-sdk/google-vertex/google-auth-library/gaxios/https-proxy-agent": ["https-proxy-agent@7.0.6", "", { "dependencies": { "agent-base": "^7.1.2", "debug": "4" } }, "sha512-vK9P5/iUfdl95AI+JVyUuIcVtd4ofvtrOr3HNtM2yxC9bnMbEdp3x01OhQNnjb8IJYi38VlTE3mBXwcfvywuSw=="],
 
     "@ai-sdk/google-vertex/google-auth-library/gaxios/node-fetch": ["node-fetch@3.3.2", "", { "dependencies": { "data-uri-to-buffer": "^4.0.0", "fetch-blob": "^3.1.4", "formdata-polyfill": "^4.0.10" } }, "sha512-dRB78srN/l6gqWulah9SrxeYnxeddIG30+GOqK/9OlLVyLg3HPnr6SqOWTWOXKRwC2eGYCkZ59NNuSgvSrpgOA=="],
 
