@@ -263,7 +263,23 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             runId: flowRunId,
         }, 'Resuming flow run')
 
-        const flowRun = await findFlowRunOrThrow(flowRunId)
+        let flowRun = await findFlowRunOrThrow(flowRunId)
+
+        // Guard against the race condition where the engine has not yet committed its PAUSED
+        // state (and pauseMetadata) to the DB by the time the subflow calls this resume URL.
+        // Wait up to 5 s for pauseMetadata to appear before proceeding.
+        const PAUSE_WAIT_INTERVAL_MS = 200
+        const PAUSE_WAIT_TIMEOUT_MS = 5000
+        const waitStart = Date.now()
+        while (
+            isNil(flowRun.pauseMetadata) &&
+            (flowRun.status === FlowRunStatus.RUNNING || flowRun.status === FlowRunStatus.QUEUED) &&
+            Date.now() - waitStart < PAUSE_WAIT_TIMEOUT_MS
+        ) {
+            await new Promise((resolve) => setTimeout(resolve, PAUSE_WAIT_INTERVAL_MS))
+            flowRun = await findFlowRunOrThrow(flowRunId)
+        }
+
         const resolvedRun = resolveFlowRunForResume({ flowRun, requestId, checkRequestId })
 
         if (isNil(resolvedRun)) {
