@@ -2,6 +2,11 @@ import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 
 import dropMediaImg from '@/assets/img/drop-media.svg';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 type Attachment = {
   name: string;
@@ -142,10 +147,6 @@ const keyframes = `
   .msg-action:hover { color: #404040; }
   .dark .msg-action { color: #a3a3a3; }
   .dark .msg-action:hover { color: #d4d4d4; }
-  .msg-tip { position: relative; display: inline-flex; }
-  .msg-tip .tip-text { visibility: hidden; opacity: 0; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); margin-top: 4px; padding: 4px 8px; border-radius: 4px; font-size: 12px; white-space: nowrap; background: #262626; color: #e5e5e5; pointer-events: none; transition: opacity 0.15s; z-index: 20; }
-  .dark .msg-tip .tip-text { background: #404040; color: #f5f5f5; }
-  .msg-tip:hover .tip-text { visibility: visible; opacity: 1; }
   .msgs-area::-webkit-scrollbar { width: 8px; }
   .msgs-area::-webkit-scrollbar-track { background: transparent; }
   .msgs-area::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 4px; }
@@ -1503,17 +1504,25 @@ export function AIChatBox({
                             marginTop: '4px',
                           }}
                         >
-                          <span className="msg-tip">
-                            <span
-                              style={{ fontSize: '12px', color: '#a3a3a3' }}
-                            >
-                              {msg.time}
-                            </span>
-                            <span className="tip-text">{msg.fullDate}</span>
-                          </span>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span
+                                style={{
+                                  fontSize: '12px',
+                                  color: '#a3a3a3',
+                                  cursor: 'default',
+                                }}
+                              >
+                                {msg.time}
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent side="bottom">
+                              {msg.fullDate}
+                            </TooltipContent>
+                          </Tooltip>
                           {msg.text && (
-                            <>
-                              <span className="msg-tip">
+                            <Tooltip>
+                              <TooltipTrigger asChild>
                                 <button
                                   className="msg-action"
                                   onClick={() => {
@@ -1561,11 +1570,11 @@ export function AIChatBox({
                                     </svg>
                                   )}
                                 </button>
-                                <span className="tip-text">
-                                  {copiedId === msg.id ? 'Copied!' : 'Copy'}
-                                </span>
-                              </span>
-                            </>
+                              </TooltipTrigger>
+                              <TooltipContent side="bottom">
+                                {copiedId === msg.id ? 'Copied!' : 'Copy'}
+                              </TooltipContent>
+                            </Tooltip>
                           )}
                         </div>
                       </div>
