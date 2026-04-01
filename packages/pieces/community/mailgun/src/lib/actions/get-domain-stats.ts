@@ -1,7 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { mailgunAuth } from '../..';
-import { mailgunCommon, mailgunApiCall } from '../common';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { mailgunCommon, mailgunApiCallAbsoluteUrl } from '../common';
 
 export const getDomainStats = createAction({
   auth: mailgunAuth,
@@ -49,7 +48,16 @@ export const getDomainStats = createAction({
     const { domain, event, duration } = context.propsValue;
     const auth = context.auth;
 
-    const response = await mailgunApiCall<{
+    const baseUrl =
+      auth.props.region === 'eu'
+        ? 'https://api.eu.mailgun.net'
+        : 'https://api.mailgun.net';
+    const params = new URLSearchParams({ duration });
+    for (const e of event) {
+      params.append('event', e);
+    }
+
+    const response = await mailgunApiCallAbsoluteUrl<{
       stats: {
         time: string;
         accepted?: { total: number };
@@ -63,13 +71,7 @@ export const getDomainStats = createAction({
       }[];
     }>({
       apiKey: auth.props.api_key,
-      region: auth.props.region,
-      method: HttpMethod.GET,
-      path: `/v3/${domain}/stats/total`,
-      queryParams: {
-        event: event.join(','),
-        duration,
-      },
+      url: `${baseUrl}/v3/${domain}/stats/total?${params.toString()}`,
     });
 
     const stats = response.body.stats;
