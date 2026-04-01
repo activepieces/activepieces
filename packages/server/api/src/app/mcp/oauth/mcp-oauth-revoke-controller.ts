@@ -23,7 +23,7 @@ export const mcpOAuthRevokeController: FastifyPluginAsyncZod = async (app) => {
         }
 
         if (token_type_hint === 'refresh_token' || !token_type_hint) {
-            await mcpOAuthTokenService.revokeRefreshToken(token)
+            await mcpOAuthTokenService.revokeRefreshToken(token, client_id)
         }
         // Per RFC 7009, return 200 even if token is invalid or unrecognized
         return reply.status(200).send()

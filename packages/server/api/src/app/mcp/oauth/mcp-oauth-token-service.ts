@@ -115,9 +115,12 @@ export const mcpOAuthTokenService = {
         return payload
     },
 
-    async revokeRefreshToken(refreshToken: string): Promise<void> {
+    async revokeRefreshToken(refreshToken: string, clientId: string | undefined): Promise<void> {
         const hashed = hashRefreshToken(refreshToken)
-        await repo().update({ refreshToken: hashed }, { revoked: true })
+        const criteria = clientId
+            ? { refreshToken: hashed, clientId }
+            : { refreshToken: hashed }
+        await repo().update(criteria, { revoked: true })
     },
 
     getIssuerUrl(): string {
