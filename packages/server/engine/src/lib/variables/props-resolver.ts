@@ -238,11 +238,12 @@ function flattenNestedKeys(data: unknown, pathToMatch: string[]): unknown[] {
     return []
 }
 
+const AP_FUNCTION_CALL_REGEX = new RegExp(
+    `\\b(${AP_FUNCTIONS.map((fn) => fn.name).join('|')})\\s*\\(`,
+)
+
 function isFormulaExpression(input: string): boolean {
-    const trimmed = input.trim()
-    return AP_FUNCTIONS.some(
-        (fn) => trimmed.startsWith(`${fn.name}(`) && trimmed.endsWith(')'),
-    )
+    return AP_FUNCTION_CALL_REGEX.test(input)
 }
 
 type ResolveSingleTokenParams = {

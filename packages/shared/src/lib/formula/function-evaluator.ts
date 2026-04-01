@@ -4,6 +4,8 @@ import timezoneDayjs from 'dayjs/plugin/timezone'
 import utcDayjs from 'dayjs/plugin/utc'
 import { Parser } from 'expr-eval'
 
+import { AP_FUNCTIONS } from './function-registry'
+
 dayjs.extend(relativeTimeDayjs)
 dayjs.extend(timezoneDayjs)
 dayjs.extend(utcDayjs)
@@ -290,15 +292,138 @@ export function evaluateExpression(
     const trimmed = expression.trim()
     if (!trimmed) return { result: '', error: null }
 
-    const { processed, vars } = preprocessExpression(trimmed, sampleData)
+    const segments = tokenizeFormulaTemplate(trimmed)
 
+    // Single formula segment — preserve the result type (number, boolean, array, etc.)
+    if (segments.length === 1 && segments[0].type === 'formula') {
+        return evaluateSingleFormula(segments[0].value, sampleData)
+    }
+
+    // Mixed template — evaluate each formula and join everything as a string
+    const parts: string[] = []
+    for (const seg of segments) {
+        if (seg.type === 'text') {
+            parts.push(resolveTextVars(seg.value, sampleData))
+        }
+        else {
+            const { result, error } = evaluateSingleFormula(seg.value, sampleData)
+            if (error) return { result: null, error }
+            parts.push(result != null ? String(result) : '')
+        }
+    }
+    return { result: parts.join(''), error: null }
+}
+
+function evaluateSingleFormula(
+    expression: string,
+    sampleData: Record<string, unknown>,
+): { result: unknown, error: string | null } {
+    const { processed, vars } = preprocessExpression(expression, sampleData)
     try {
         const result = parser.evaluate(processed, vars as Record<string, number>)
         return { result, error: null }
     }
     catch (e) {
-        return { result: null, error: (e as Error).message }
+        return { result: null, error: friendlyError(e) }
     }
+}
+
+function tokenizeFormulaTemplate(
+    template: string,
+): Array<{ type: 'text' | 'formula', value: string }> {
+    const fnNames = new Set(AP_FUNCTIONS.map((f) => f.name))
+    const segments: Array<{ type: 'text' | 'formula', value: string }> = []
+    let pos = 0
+
+    while (pos < template.length) {
+        const next = findNextFunctionCall(template, pos, fnNames)
+
+        if (next === null) {
+            // No more formula calls — rest is plain text
+            segments.push({ type: 'text', value: template.slice(pos) })
+            break
+        }
+
+        // Plain text before this formula call
+        if (next.start > pos) {
+            segments.push({ type: 'text', value: template.slice(pos, next.start) })
+        }
+
+        const closePos = findMatchingParen(template, next.openParen)
+        if (closePos === -1) {
+            // Unclosed — treat the rest as plain text
+            segments.push({ type: 'text', value: template.slice(next.start) })
+            break
+        }
+
+        segments.push({ type: 'formula', value: template.slice(next.start, closePos + 1) })
+        pos = closePos + 1
+    }
+
+    return segments.filter((s) => s.value !== '')
+}
+
+function findNextFunctionCall(
+    text: string,
+    fromPos: number,
+    fnNames: Set<string>,
+): { start: number, openParen: number } | null {
+    for (let i = fromPos; i < text.length; i++) {
+        if (!/[a-z_]/i.test(text[i])) continue
+        const wordMatch = text.slice(i).match(/^([a-z_][a-z0-9_]*)\s*\(/i)
+        if (wordMatch && fnNames.has(wordMatch[1])) {
+            const openParen = i + wordMatch[0].length - 1
+            return { start: i, openParen }
+        }
+    }
+    return null
+}
+
+function findMatchingParen(text: string, openPos: number): number {
+    let depth = 0
+    let inString: '"' | '\'' | null = null
+    for (let i = openPos; i < text.length; i++) {
+        const ch = text[i]
+        if (inString) {
+            if (ch === inString && (i === 0 || text[i - 1] !== '\\')) inString = null
+        }
+        else if (ch === '"' || ch === '\'') {
+            inString = ch
+        }
+        else if (ch === '(') {
+            depth++
+        }
+        else if (ch === ')') {
+            depth--
+            if (depth === 0) return i
+        }
+    }
+    return -1
+}
+
+function resolveTextVars(text: string, sampleData: Record<string, unknown>): string {
+    return text.replace(/\{\{([^}]+)\}\}/g, (_, path: string) => {
+        const resolved = resolveVariable(path.trim(), sampleData)
+        return resolved != null ? String(resolved) : ''
+    })
+}
+
+function friendlyError(e: unknown): string {
+    const msg = String((e as Error).message ?? e)
+    if (/parse error|Expected EOF|unexpected token/i.test(msg)) {
+        return 'Invalid formula syntax — check parentheses and quotes'
+    }
+    if (/is not defined/i.test(msg)) {
+        const m = msg.match(/(\w+) is not defined/)
+        return m ? `Unknown function or variable: "${m[1]}"` : 'Unknown function or variable'
+    }
+    if (/wrong number of arguments/i.test(msg)) {
+        return 'Wrong number of arguments'
+    }
+    if (/not a function/i.test(msg)) {
+        return 'That is not a function'
+    }
+    return 'Formula evaluation error'
 }
 
 function preprocessExpression(
