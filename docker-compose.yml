@@ -24,6 +24,8 @@ services:
       - 'POSTGRES_DB=${AP_POSTGRES_DATABASE}'
       - 'POSTGRES_PASSWORD=${AP_POSTGRES_PASSWORD}'
       - 'POSTGRES_USER=${AP_POSTGRES_USERNAME}'
+    ports:
+      - '5432:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
@@ -32,6 +34,8 @@ services:
     image: 'redis:7.0.7'
     container_name: redis
     restart: unless-stopped
+    ports:
+      - '6379:6379'
     volumes:
       - 'redis_data:/data'
     networks:

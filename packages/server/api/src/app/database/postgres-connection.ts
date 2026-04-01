@@ -707,7 +707,9 @@ export const createPostgresDataSource = (): DataSource => {
 
     const url = system.get(AppSystemProp.POSTGRES_URL)
 
-    if (!isNil(url)) {
+    // If `AP_POSTGRES_URL` is set but empty, don't attempt to use it (empty URL can
+    // cause pg to receive `password: undefined`, resulting in SCRAM type errors).
+    if (typeof url === 'string' && url.trim().length > 0) {
         return new DataSource({
             type: 'postgres',
             url,
@@ -721,6 +723,12 @@ export const createPostgresDataSource = (): DataSource => {
     const database = system.getOrThrow(AppSystemProp.POSTGRES_DATABASE)
     const host = system.getOrThrow(AppSystemProp.POSTGRES_HOST)
     const password = system.getOrThrow(AppSystemProp.POSTGRES_PASSWORD)
+    if (typeof password !== 'string') {
+        throw new Error(`AP_POSTGRES_PASSWORD must be a string, got: ${typeof password}`)
+    }
+    if (password.trim().length === 0) {
+        throw new Error('AP_POSTGRES_PASSWORD must be a non-empty string')
+    }
     const serializedPort = system.getOrThrow(AppSystemProp.POSTGRES_PORT)
     const port = Number.parseInt(serializedPort, 10)
     const idleTimeoutMillis = system.getNumberOrThrow(AppSystemProp.POSTGRES_IDLE_TIMEOUT_MS)
