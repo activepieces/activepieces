@@ -1,19 +1,6 @@
+import { McpOAuthClient } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import { BaseColumnSchemaPart } from '../../../database/database-common'
-
-export type McpOAuthClient = {
-    id: string
-    clientId: string
-    clientSecret: string | null
-    clientSecretExpiresAt: number
-    clientIdIssuedAt: number
-    redirectUris: string[]
-    clientName: string | null
-    grantTypes: string[]
-    tokenEndpointAuthMethod: string
-    created: string
-    updated: string
-}
 
 export const McpOAuthClientEntity = new EntitySchema<McpOAuthClient>({
     name: 'mcp_oauth_client',

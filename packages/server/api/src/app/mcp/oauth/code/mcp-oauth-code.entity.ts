@@ -1,23 +1,6 @@
+import { McpOAuthAuthorizationCode } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import { ApIdSchema, BaseColumnSchemaPart } from '../../../database/database-common'
-
-export type McpOAuthAuthorizationCode = {
-    id: string
-    code: string
-    clientId: string
-    userId: string
-    projectId: string
-    platformId: string
-    redirectUri: string
-    codeChallenge: string
-    codeChallengeMethod: string
-    scopes: string[] | null
-    state: string | null
-    expiresAt: string
-    used: boolean
-    created: string
-    updated: string
-}
 
 export const McpOAuthAuthorizationCodeEntity = new EntitySchema<McpOAuthAuthorizationCode>({
     name: 'mcp_oauth_authorization_code',

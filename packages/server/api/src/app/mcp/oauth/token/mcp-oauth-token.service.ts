@@ -6,7 +6,8 @@ import { jwtUtils } from '../../../helper/jwt-utils'
 import { system } from '../../../helper/system/system'
 import { AppSystemProp, WorkerSystemProp } from '../../../helper/system/system-props'
 import { mcpOAuthPkce } from '../mcp-oauth.pkce'
-import { McpOAuthToken, McpOAuthTokenEntity } from './mcp-oauth-token.entity'
+import { McpOAuthToken } from '@activepieces/shared'
+import { McpOAuthTokenEntity } from './mcp-oauth-token.entity'
 
 const repo = repoFactory(McpOAuthTokenEntity)
 

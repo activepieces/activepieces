@@ -1,19 +1,6 @@
+import { McpOAuthToken } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import { ApIdSchema, BaseColumnSchemaPart } from '../../../database/database-common'
-
-export type McpOAuthToken = {
-    id: string
-    refreshToken: string
-    clientId: string
-    userId: string
-    projectId: string
-    platformId: string
-    scopes: string[] | null
-    expiresAt: string
-    revoked: boolean
-    created: string
-    updated: string
-}
 
 export const McpOAuthTokenEntity = new EntitySchema<McpOAuthToken>({
     name: 'mcp_oauth_token',
