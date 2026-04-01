@@ -350,6 +350,7 @@ import { ReAddAgentsEnabledToPlatformPlan1774000000000 } from './migration/postg
 import { AddMissingCascadeDeleteIndices1774100000000 } from './migration/postgres/1774100000000-AddMissingCascadeDeleteIndices'
 import { AddUserIdentityIdIndex1774400000000 } from './migration/postgres/1774400000000-AddUserIdentityIdIndex'
 import { AddUserFkIndices1774449358000 } from './migration/postgres/1774449358000-AddUserFkIndices'
+import { AddMcpOAuthTables1774500000000 } from './migration/postgres/1774500000000-AddMcpOAuthTables'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -716,6 +717,7 @@ export const getMigrations = (): (new () => MigrationInterface)[] => {
         AddUserFkIndices1774449358000,
         AddPgVectorExtension1773627989514,
         AddKnowledgeBaseChunkTable1773627989515,
+        AddMcpOAuthTables1774500000000,
     ]
     return migrations
 }
