@@ -1,5 +1,5 @@
 import { OAuth2Props, PiecePropertyMap } from '@activepieces/pieces-framework';
-import { ErrorCode, FlowOperationType } from '@activepieces/shared';
+import { ApFlagId, ErrorCode, FlowOperationType } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import {
@@ -25,6 +25,7 @@ import {
 } from '@/components/ui/collapsible';
 import { flowsApi } from '@/features/flows';
 import { formUtils } from '@/features/pieces';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { api } from '@/lib/api';
 
 import { useBuilderStateContext } from '../../builder-hooks';
@@ -113,6 +114,9 @@ function getLatestVersion({
 export function LatestVersionAvailableAlert({
   isLatestMinorOrMajor,
 }: LatestVersionAvailableAlertProps) {
+  const { data: executionDataRetentionDays } = flagsHooks.useFlag<number>(
+    ApFlagId.EXECUTION_DATA_RETENTION_DAYS,
+  );
   return (
     <Alert variant={isLatestMinorOrMajor ? 'warning' : 'default'}>
       {isLatestMinorOrMajor ? (
@@ -127,9 +131,7 @@ export function LatestVersionAvailableAlert({
       </AlertTitle>
       <AlertDescription>
         {isLatestMinorOrMajor
-          ? t(
-              "Input will reset — you'll need to reconfigure. A backup will be saved so you can revert.",
-            )
+          ? t('MajorUpgradeNote', { retentionDays: executionDataRetentionDays })
           : t(
               'Settings will carry over. Retest the step as the output may have changed.',
             )}
@@ -199,13 +201,14 @@ export function RevertVersionCollapsible({
 }
 
 export function MinorOrMajorSelectionAlert() {
+  const { data: executionDataRetentionDays } = flagsHooks.useFlag<number>(
+    ApFlagId.EXECUTION_DATA_RETENTION_DAYS,
+  );
   return (
     <Alert variant="warning">
       <AlertTriangle className="size-4" />
       <AlertDescription>
-        {t(
-          "Settings won't carry over — you'll need to reconfigure and retest. A backup will be saved so you can revert.",
-        )}
+        {t('MajorUpgradeNote', { retentionDays: executionDataRetentionDays })}
       </AlertDescription>
     </Alert>
   );
@@ -264,7 +267,7 @@ export function useRevertPieceVersionUpdateMutation({
             type: FlowOperationType.REVERT_PIECE_VERSION_UPDATE,
             request: { stepName },
           },
-          true,
+          false,
         );
         setVersion(result.version, false);
         applyOperation({

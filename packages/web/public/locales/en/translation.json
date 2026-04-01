@@ -1442,7 +1442,7 @@
   "Major": "Major",
   "Older": "Older",
   "Older patch": "Older patch",
-  "This is a significant update. Your current step settings won't carry over — you'll need to configure the step again. A backup of your previous settings will be saved so you can revert.": "This is a significant update. Your current step settings won't carry over — you'll need to configure the step again. A backup of your previous settings will be saved so you can revert.",
+  "MajorUpgradeNote": "Step settings will reset, you have to reconfigure and retest the step, a backup which lasts for {retentionDays} days will be saved so you can revert.",
   "Settings won't carry over — you'll need to reconfigure. A backup will be saved so you can revert.": "Settings won't carry over — you'll need to reconfigure. A backup will be saved so you can revert.",
   "Your settings will carry over. The output may have changed — remember to retest the step.": "Your settings will carry over. The output may have changed — remember to retest the step.",
   "Settings will carry over. Retest as the output may have changed.": "Settings will carry over. Retest as the output may have changed.",

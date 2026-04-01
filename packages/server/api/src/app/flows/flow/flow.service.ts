@@ -879,6 +879,15 @@ async function createNewDraftIfVersionIsPublished({
                 request: lastVersionWithArtifacts,
             },
         })
+        if (!isNil(lastVersionWithArtifacts.pieceStepsVersionsBackups)) {
+            await flowVersionRepo().update(lastVersion.id, {
+                pieceStepsVersionsBackups: lastVersionWithArtifacts.pieceStepsVersionsBackups,
+            })
+            lastVersion = {
+                ...lastVersion,
+                pieceStepsVersionsBackups: lastVersionWithArtifacts.pieceStepsVersionsBackups,
+            }
+        }
     }
     return lastVersion
 }

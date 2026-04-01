@@ -290,12 +290,12 @@ export const createFlowState = (
         const startTime = Date.now();
         const timeoutMs = 30_000;
         const tick = () => {
-          if (flowUpdatesQueue.size() === 0) {
+          if (!get().saving) {
             resolve();
             return;
           }
           if (Date.now() - startTime >= timeoutMs) {
-            reject(new Error(waitForPendingFlowUpdatesTimeoutMessageKey));
+            reject(new Error('Timeout waiting for flow saving to finish'));
             return;
           }
           setTimeout(tick, 300);
@@ -473,6 +473,3 @@ const handleUpdatingSampleDataForStepLocallyAfterServerUpdate = ({
     },
   });
 };
-
-export const waitForPendingFlowUpdatesTimeoutMessageKey =
-  'waitForPendingFlowUpdatesTimeout';
