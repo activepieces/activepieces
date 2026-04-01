@@ -15,8 +15,8 @@ export const klenty = createPiece({
     'Sales engagement platform for managing prospects and adding them to outreach cadences.',
   auth: klentyAuth,
   minimumSupportedRelease: '0.36.1',
-  logoUrl: 'https://app.klenty.com/favicon.ico',
-  authors: ['Harmatta'],
+  logoUrl: 'https://cdn.activepieces.com/pieces/klenty.png',
+  authors: ['Harmatta', 'sanket-a11y'],
   categories: [PieceCategory.SALES_AND_CRM, PieceCategory.MARKETING],
   actions: [
     createProspectAction,

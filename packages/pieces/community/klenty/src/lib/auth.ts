@@ -24,7 +24,14 @@ async function validateHost(
 export const klentyAuth = PieceAuth.CustomAuth({
   required: true,
   description: `
- `,
+**Generating Klenty API Key**
+
+To access the Klenty REST APIs, you need to authenticate your requests using the Klenty API Key.
+
+1. Login to your Klenty account.
+2. Go to **Settings → Integrations → Klenty API Key**.
+3. Click on the key icon to generate an API Key.
+  `,
   props: {
     username: Property.ShortText({
       displayName: 'Username / Email',

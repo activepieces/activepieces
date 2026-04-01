@@ -5,12 +5,13 @@ import { findKlentyProspectByEmail } from '../common/client';
 
 export const getProspectAction = createAction({
   name: 'get_prospect',
-  displayName: 'Get Prospect',
+  displayName: 'Get Prospect by Email',
   description: 'Find a prospect by email address in Klenty.',
   auth: klentyAuth,
   props: {
     email: Property.ShortText({
       displayName: 'Email',
+      description: 'Email address of the prospect to find.',
       required: true,
     }),
   },

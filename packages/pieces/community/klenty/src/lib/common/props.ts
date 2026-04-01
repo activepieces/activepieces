@@ -11,6 +11,7 @@ type KlentyList = {
 
 type KlentyCadence = {
   name?: string;
+  id?: string | number;
 };
 
 export type ProspectPayloadInput = {
