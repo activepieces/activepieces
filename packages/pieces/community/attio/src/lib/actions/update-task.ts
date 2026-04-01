@@ -16,6 +16,11 @@ export const updateTaskAction = createAction({
 			description: 'The task to update.',
 			required: true,
 		}),
+		content: Property.LongText({
+			displayName: 'Task Content',
+			description: 'Update the text content of the task.',
+			required: false,
+		}),
 		deadline_at: Property.DateTime({
 			displayName: 'Deadline',
 			description: 'Update the task deadline. Leave empty to keep existing value.',
@@ -50,11 +55,15 @@ export const updateTaskAction = createAction({
 		}),
 	},
 	async run(context) {
-		const { task_id, deadline_at, is_completed, linked_object, linked_record_id, assignee_email } =
+		const { task_id, content, deadline_at, is_completed, linked_object, linked_record_id, assignee_email } =
 			context.propsValue;
 
 		const body: Record<string, unknown> = {};
 
+		if (content) {
+			body['content'] = content;
+			body['format'] = 'plaintext';
+		}
 		if (!isNil(deadline_at)) body['deadline_at'] = deadline_at;
 		if (!isNil(is_completed)) body['is_completed'] = is_completed === 'true';
 
@@ -66,6 +75,10 @@ export const updateTaskAction = createAction({
 
 		if (assignee_email) {
 			body['assignees'] = [{ workspace_member_email_address: assignee_email }];
+		}
+
+		if (Object.keys(body).length === 0) {
+			throw new Error('At least one field must be provided to update the task.');
 		}
 
 		const response = await attioApiCall<{ data: Record<string, unknown> }>({
