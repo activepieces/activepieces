@@ -273,7 +273,7 @@ async function warmupPiecesOnStartup(apiClient: WorkerToApiContract): Promise<vo
     }
     logger.info({ count: pieces.length }, 'Starting piece cache warmup')
     const { error: installError } = await tryCatch(() =>
-        pieceInstaller(logger, apiClient).install({ pieces, includeFilters: false }),
+        pieceInstaller(logger, apiClient).install({ pieces }),
     )
     if (installError) {
         logger.error({ error: installError }, 'Failed to install pieces during startup warmup')
