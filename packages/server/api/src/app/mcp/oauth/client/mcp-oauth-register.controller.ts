@@ -1,7 +1,7 @@
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { z } from 'zod'
-import { securityAccess } from '../../core/security/authorization/fastify-security'
-import { mcpOAuthClientService } from './mcp-oauth-client-service'
+import { securityAccess } from '../../../core/security/authorization/fastify-security'
+import { mcpOAuthClientService } from './mcp-oauth-client.service'
 
 export const mcpOAuthRegisterController: FastifyPluginAsyncZod = async (app) => {
 

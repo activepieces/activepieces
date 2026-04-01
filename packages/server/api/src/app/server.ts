@@ -18,8 +18,8 @@ import { exceptionHandler } from './helper/exception-handler'
 import { rejectedPromiseHandler } from './helper/promise-handler'
 import { system } from './helper/system/system'
 import { AppSystemProp } from './helper/system/system-props'
-import { mcpOAuthHttpController } from './mcp/oauth/mcp-oauth-http-controller'
-import { mcpOAuthRootModule } from './mcp/oauth/mcp-oauth-module'
+import { mcpOAuthHttpController } from './mcp/oauth/mcp-oauth.controller'
+import { mcpOAuthRootModule } from './mcp/oauth/mcp-oauth.module'
 
 
 export let app: FastifyInstance | undefined = undefined

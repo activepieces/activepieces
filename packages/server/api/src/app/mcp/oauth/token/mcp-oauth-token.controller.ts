@@ -2,11 +2,11 @@ import { isNil } from '@activepieces/shared'
 import { FastifyReply } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { z } from 'zod'
-import { securityAccess } from '../../core/security/authorization/fastify-security'
-import { McpOAuthClient } from './mcp-oauth-client-entity'
-import { mcpOAuthClientService } from './mcp-oauth-client-service'
-import { mcpOAuthCodeService } from './mcp-oauth-code-service'
-import { mcpOAuthTokenService, OAuthTokenError } from './mcp-oauth-token-service'
+import { securityAccess } from '../../../core/security/authorization/fastify-security'
+import { McpOAuthClient } from '../client/mcp-oauth-client.entity'
+import { mcpOAuthClientService } from '../client/mcp-oauth-client.service'
+import { mcpOAuthCodeService } from '../code/mcp-oauth-code.service'
+import { mcpOAuthTokenService, OAuthTokenError } from './mcp-oauth-token.service'
 
 export const mcpOAuthTokenController: FastifyPluginAsyncZod = async (app) => {
 

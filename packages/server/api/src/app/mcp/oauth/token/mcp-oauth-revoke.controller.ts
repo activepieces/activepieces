@@ -1,9 +1,9 @@
 import { isNil } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { z } from 'zod'
-import { securityAccess } from '../../core/security/authorization/fastify-security'
-import { mcpOAuthClientService } from './mcp-oauth-client-service'
-import { mcpOAuthTokenService } from './mcp-oauth-token-service'
+import { securityAccess } from '../../../core/security/authorization/fastify-security'
+import { mcpOAuthClientService } from '../client/mcp-oauth-client.service'
+import { mcpOAuthTokenService } from './mcp-oauth-token.service'
 
 export const mcpOAuthRevokeController: FastifyPluginAsyncZod = async (app) => {
 

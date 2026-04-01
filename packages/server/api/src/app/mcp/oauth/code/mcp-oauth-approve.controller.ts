@@ -1,10 +1,10 @@
 import { Permission, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { z } from 'zod'
-import { ProjectResourceType } from '../../core/security/authorization/common'
-import { securityAccess } from '../../core/security/authorization/fastify-security'
-import { jwtUtils } from '../../helper/jwt-utils'
-import { mcpOAuthCodeService } from './mcp-oauth-code-service'
+import { ProjectResourceType } from '../../../core/security/authorization/common'
+import { securityAccess } from '../../../core/security/authorization/fastify-security'
+import { jwtUtils } from '../../../helper/jwt-utils'
+import { mcpOAuthCodeService } from './mcp-oauth-code.service'
 
 export const mcpOAuthApproveController: FastifyPluginAsyncZod = async (app) => {
 

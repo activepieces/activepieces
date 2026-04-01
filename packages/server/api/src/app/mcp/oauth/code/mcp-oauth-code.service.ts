@@ -1,7 +1,7 @@
 import { randomBytes } from 'crypto'
 import { apId } from '@activepieces/shared'
-import { repoFactory } from '../../core/db/repo-factory'
-import { McpOAuthAuthorizationCode, McpOAuthAuthorizationCodeEntity } from './mcp-oauth-code-entity'
+import { repoFactory } from '../../../core/db/repo-factory'
+import { McpOAuthAuthorizationCode, McpOAuthAuthorizationCodeEntity } from './mcp-oauth-code.entity'
 
 const repo = repoFactory(McpOAuthAuthorizationCodeEntity)
 

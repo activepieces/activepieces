@@ -1,11 +1,11 @@
 import { isNil } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { z } from 'zod'
-import { securityAccess } from '../../core/security/authorization/fastify-security'
-import { jwtUtils } from '../../helper/jwt-utils'
-import { system } from '../../helper/system/system'
-import { WorkerSystemProp } from '../../helper/system/system-props'
-import { mcpOAuthClientService } from './mcp-oauth-client-service'
+import { securityAccess } from '../../../core/security/authorization/fastify-security'
+import { jwtUtils } from '../../../helper/jwt-utils'
+import { system } from '../../../helper/system/system'
+import { WorkerSystemProp } from '../../../helper/system/system-props'
+import { mcpOAuthClientService } from '../client/mcp-oauth-client.service'
 
 const AUTH_REQUEST_TTL_10_MINUTES_SECONDS = 10 * 60
 
