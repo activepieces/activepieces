@@ -675,6 +675,9 @@
       "@activepieces/piece-mailchimp": [
         "packages/pieces/community/mailchimp/src/index.ts"
       ],
+      "@activepieces/piece-mailgun": [
+        "packages/pieces/community/mailgun/src/index.ts"
+      ],
       "@activepieces/piece-mailer-lite": [
         "packages/pieces/community/mailer-lite/src/index.ts"
       ],
