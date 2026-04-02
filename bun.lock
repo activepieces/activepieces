@@ -6709,7 +6709,7 @@
     },
     "packages/pieces/community/umami": {
       "name": "@activepieces/piece-umami",
-      "version": "0.0.1",
+      "version": "0.1.0",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
