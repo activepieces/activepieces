@@ -5,7 +5,11 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { readPackageJson } from './files'
 import { packagePrePublishChecks } from './package-pre-publish-checks'
 import { buildWorkspaceVersionMap, resolveWorkspaceDependencies, stripSemverRanges } from '../../../packages/cli/src/lib/utils/workspace-utils'
-import { parseBunLock, flattenTransitiveDeps } from '../../../packages/cli/src/lib/utils/prepare-piece-utils'
+import { parseBunLock, pinDependenciesFromLockfile } from '../../../packages/cli/src/lib/utils/prepare-piece-utils'
+
+function isExactVersion(version: string): boolean {
+  return /^\d+\.\d+\.\d+/.test(version)
+}
 
 function assertNoSemverRanges(packageJsonPath: string): void {
   const json = JSON.parse(readFileSync(packageJsonPath).toString())
@@ -18,7 +22,7 @@ function assertNoSemverRanges(packageJsonPath: string): void {
       continue
     }
     for (const [name, version] of Object.entries(deps)) {
-      if (/^[\^~>=<]/.test(version)) {
+      if (!isExactVersion(version)) {
         ranged.push(`${field}.${name}: ${version}`)
       }
     }
@@ -26,7 +30,7 @@ function assertNoSemverRanges(packageJsonPath: string): void {
 
   if (ranged.length > 0) {
     throw new Error(
-      `[publishPackage] refusing to publish ${json.name}@${json.version} — semver ranges found:\n  ${ranged.join('\n  ')}`,
+      `[publishPackage] refusing to publish ${json.name}@${json.version} — non-exact versions found:\n  ${ranged.join('\n  ')}`,
     )
   }
 }
@@ -83,9 +87,7 @@ export const publishNpmPackage = async (path: string): Promise<void> => {
   json.peerDependencies = stripSemverRanges(resolveWorkspaceDependencies(json.peerDependencies, versionMap))
 
   if (json.dependencies) {
-    const parsedBunLock = parseBunLock()
-    const transitiveDeps = flattenTransitiveDeps(json.dependencies, parsedBunLock)
-    json.dependencies = { ...transitiveDeps, ...json.dependencies }
+    json.dependencies = pinDependenciesFromLockfile(json.dependencies, parseBunLock())
   }
 
   writeFileSync(`${outputPath}/package.json`, JSON.stringify(json, null, 2))

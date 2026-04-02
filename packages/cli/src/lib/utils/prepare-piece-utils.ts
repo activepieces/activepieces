@@ -111,6 +111,22 @@ function flattenTransitiveDeps(
 }
 
 
+function pinDependenciesFromLockfile(
+    deps: Record<string, string>,
+    parsedBunLock: BunLockData,
+): Record<string, string> {
+    const transitiveDeps = flattenTransitiveDeps(deps, parsedBunLock)
+    const merged: Record<string, string> = { ...transitiveDeps }
+    for (const [name, version] of Object.entries(deps)) {
+        if (name.startsWith('@activepieces/')) {
+            merged[name] = version
+        } else {
+            merged[name] = transitiveDeps[name] ?? version
+        }
+    }
+    return merged
+}
+
 function copyPackageJson(piecePath: string, distPath: string): void {
     const srcPackageJson = join(piecePath, 'package.json')
     if (!existsSync(srcPackageJson)) {
@@ -165,15 +181,14 @@ function preparePieceDistForPublish(piecePath: string, parsedBunLock?: BunLockDa
     json.peerDependencies = stripSemverRanges(resolveWorkspaceDependencies(json.peerDependencies, workspaceVersionMap))
 
     if (json.dependencies) {
-        const transitiveDeps = flattenTransitiveDeps(json.dependencies, resolvedLockData)
-        json.dependencies = { ...transitiveDeps, ...json.dependencies }
+        json.dependencies = pinDependenciesFromLockfile(json.dependencies, resolvedLockData)
     }
 
     writeFileSync(distPackageJsonPath, JSON.stringify(json, null, 2) + '\n')
     console.info(`[preparePiece] prepared ${piecePath} (${Object.keys(json.dependencies ?? {}).length} deps)`)
 }
 
-export { parseBunLock, flattenTransitiveDeps, preparePieceDistForPublish }
+export { parseBunLock, flattenTransitiveDeps, pinDependenciesFromLockfile, preparePieceDistForPublish }
 
 type BunLockEntry = {
     pkgName: string
