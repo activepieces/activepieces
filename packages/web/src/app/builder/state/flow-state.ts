@@ -26,8 +26,6 @@ import { PromiseQueue } from '@/lib/promise-queue';
 import { BuilderState } from '../builder-hooks';
 import { flowCanvasUtils } from '../flow-canvas/utils/flow-canvas-utils';
 
-
-
 export type FlowState = {
   flow: PopulatedFlow;
   flowVersion: FlowVersion;
