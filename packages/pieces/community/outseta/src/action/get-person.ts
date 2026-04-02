@@ -23,7 +23,7 @@ export const getPersonAction = createAction({
 
     const email = context.propsValue.email;
     const items = await client.getAllPages<any>(
-      `/api/v1/crm/people?$filter=Email eq '${encodeURIComponent(email)}'`
+      `/api/v1/crm/people?$filter=Email eq '${OutsetaClient.escapeOData(email)}'`
     );
 
     const person = items.find(

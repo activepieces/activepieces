@@ -57,6 +57,10 @@ export class OutsetaClient {
     return this.request<T>(HttpMethod.DELETE, path);
   }
 
+  static escapeOData(value: string): string {
+    return encodeURIComponent(value.replace(/'/g, "''"));
+  }
+
   async getAllPages<T>(basePath: string, pageSize = 100): Promise<T[]> {
     const allItems: T[] = [];
     let offset = 0;
