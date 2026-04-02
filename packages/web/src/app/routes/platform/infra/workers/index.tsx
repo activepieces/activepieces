@@ -1,4 +1,6 @@
 import {
+  ApEdition,
+  ApFlagId,
   WorkerMachineStatus,
   WorkerMachineType,
   WorkerMachineWithStatus,
@@ -29,13 +31,15 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { workersQueries } from '@/features/platform-admin';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { useTimeAgo } from '@/hooks/use-time-ago';
 import { cn } from '@/lib/utils';
 
 import { WorkerConfigsModal } from './worker-configs-dialog';
 
 export default function WorkersPage() {
-  const isCloud = true;
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+  const isCloud = edition === ApEdition.CLOUD;
   const { data: workersData, isLoading } = workersQueries.useWorkerMachines();
 
   const fleetType = workersData?.[0]?.type;

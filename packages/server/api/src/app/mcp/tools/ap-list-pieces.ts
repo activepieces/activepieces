@@ -8,6 +8,7 @@ import {
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
+import { mcpToolError } from './mcp-utils'
 
 const listPiecesSchema = z.object({
     categories: z.array(z.enum(Object.values(PieceCategory) as [string, ...string[]])).optional(),
@@ -94,10 +95,7 @@ export const apListPiecesTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
                 }
             }
             catch (err) {
-                const message = err instanceof Error ? err.message : String(err)
-                return {
-                    content: [{ type: 'text', text: `❌ Failed to list pieces: ${message}` }],
-                }
+                return mcpToolError('Failed to list pieces', err)
             }
         },
     }

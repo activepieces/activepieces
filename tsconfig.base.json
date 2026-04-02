@@ -488,6 +488,9 @@
       "@activepieces/piece-gmail": [
         "packages/pieces/community/gmail/src/index.ts"
       ],
+      "@activepieces/piece-google-bigquery": [
+        "packages/pieces/community/google-bigquery/src/index.ts"
+      ],
       "@activepieces/piece-google-calendar": [
         "packages/pieces/community/google-calendar/src/index.ts"
       ],
@@ -526,6 +529,9 @@
       ],
       "@activepieces/piece-gotify": [
         "packages/pieces/community/gotify/src/index.ts"
+      ],
+      "@activepieces/piece-granola": [
+        "packages/pieces/community/granola/src/index.ts"
       ],
       "@activepieces/piece-graphql": [
         "packages/pieces/core/graphql/src/index.ts"
@@ -626,6 +632,9 @@
       "@activepieces/piece-klaviyo": [
         "packages/pieces/community/klaviyo/src/index.ts"
       ],
+      "@activepieces/piece-klenty": [
+        "packages/pieces/community/klenty/src/index.ts"
+      ],
       "@activepieces/piece-knack": [
         "packages/pieces/community/knack/src/index.ts"
       ],
@@ -673,6 +682,9 @@
       ],
       "@activepieces/piece-mailchimp": [
         "packages/pieces/community/mailchimp/src/index.ts"
+      ],
+      "@activepieces/piece-mailgun": [
+        "packages/pieces/community/mailgun/src/index.ts"
       ],
       "@activepieces/piece-mailer-lite": [
         "packages/pieces/community/mailer-lite/src/index.ts"
@@ -881,11 +893,17 @@
       "@activepieces/piece-posthog": [
         "packages/pieces/community/posthog/src/index.ts"
       ],
+      "@activepieces/piece-postiz": [
+        "packages/pieces/community/postiz/src/index.ts"
+      ],
       "@activepieces/piece-predict-leads": [
         "packages/pieces/community/predict-leads/src/index.ts"
       ],
       "@activepieces/piece-productboard": [
         "packages/pieces/community/productboard/src/index.ts"
+      ],
+      "@activepieces/piece-promotekit": [
+        "packages/pieces/community/promotekit/src/index.ts"
       ],
       "@activepieces/piece-prompthub": [
         "packages/pieces/community/prompthub/src/index.ts"
@@ -1128,6 +1146,9 @@
       "@activepieces/piece-tally": [
         "packages/pieces/community/tally/src/index.ts"
       ],
+      "@activepieces/piece-tapfiliate": [
+        "packages/pieces/community/tapfiliate/src/index.ts"
+      ],
       "@activepieces/piece-tarvent": [
         "packages/pieces/community/tarvent/src/index.ts"
       ],
@@ -1186,6 +1207,9 @@
       "@activepieces/piece-twilio": [
         "packages/pieces/community/twilio/src/index.ts"
       ],
+      "@activepieces/piece-typefully": [
+        "packages/pieces/community/typefully/src/index.ts"
+      ],
       "@activepieces/piece-twin-labs": [
         "packages/pieces/community/twin-labs/src/index.ts"
       ],
@@ -1197,6 +1221,9 @@
       ],
       "@activepieces/piece-typeform": [
         "packages/pieces/community/typeform/src/index.ts"
+      ],
+      "@activepieces/piece-umami": [
+        "packages/pieces/community/umami/src/index.ts"
       ],
       "@activepieces/piece-upgradechat": [
         "packages/pieces/community/upgradechat/src/index.ts"
@@ -1845,6 +1872,9 @@
       ],
       "@activepieces/piece-alai": [
         "packages/pieces/community/alai/src/index.ts"
+      ],
+      "@activepieces/piece-algolia": [
+        "packages/pieces/community/algolia/src/index.ts"
       ],
       "@activepieces/piece-kapso": [
         "packages/pieces/community/kapso/src/index.ts"
