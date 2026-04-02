@@ -113,7 +113,9 @@ export const flowController: FastifyPluginAsyncZod = async (app) => {
                 PlatformUsageMetric.ACTIVE_FLOWS,
             )
         }
-        await assertThatFlowIsNotBeingUsed(flow, userId)
+        if (request.principal.type !== PrincipalType.SERVICE) {
+            await assertThatFlowIsNotBeingUsed(flow, userId)
+        }
         const updatedFlow = await flowService(request.log).update({
             id: request.params.id,
             userId: request.principal.type === PrincipalType.SERVICE ? null : userId,
