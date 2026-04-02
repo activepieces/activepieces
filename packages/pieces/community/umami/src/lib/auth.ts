@@ -7,6 +7,7 @@ import {
   PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
+import { AppConnectionType } from '@activepieces/shared';
 
 const selfHostedAuth = PieceAuth.CustomAuth({
   displayName: 'Self-hosted (Username & Password)',
@@ -57,24 +58,17 @@ const selfHostedAuth = PieceAuth.CustomAuth({
   },
 });
 
-const cloudAuth = PieceAuth.CustomAuth({
+const cloudAuth = PieceAuth.SecretText({
   displayName: 'Umami Cloud (API Key)',
   description:
     'Connect to Umami Cloud using an API key. Create one in **Settings → API Keys**.',
   required: true,
-  props: {
-    apiKey: PieceAuth.SecretText({
-      displayName: 'API Key',
-      description: 'Your Umami Cloud API key from Settings → API Keys.',
-      required: true,
-    }),
-  },
   validate: async ({ auth }) => {
     try {
       await httpClient.sendRequest({
         method: HttpMethod.GET,
         url: 'https://api.umami.is/v1/websites',
-        headers: { 'x-umami-api-key': auth.apiKey },
+        headers: { 'x-umami-api-key': auth },
         queryParams: { pageSize: '1' },
       });
       return { valid: true };
@@ -94,38 +88,27 @@ export type UmamiAuthValue = AppConnectionValueForAuthProperty<
   typeof umamiAuth
 >;
 
-type SelfHostedProps = { baseUrl: string; username: string; password: string };
-type CloudProps = { apiKey: string };
-type AuthProps = SelfHostedProps | CloudProps;
 
-export function isCloud(props: AuthProps): props is CloudProps {
-  return 'apiKey' in props;
-}
-
-export function getProps(auth: UmamiAuthValue): AuthProps {
-  return (auth as { props: AuthProps }).props;
-}
 
 export function getBaseUrl(auth: UmamiAuthValue): string {
-  const props = getProps(auth);
-  if (isCloud(props)) {
+
+  if (auth.type === AppConnectionType.SECRET_TEXT) {
     return 'https://api.umami.is/v1';
   }
-  return props.baseUrl.replace(/\/+$/, '') + '/api';
+  return auth.props.baseUrl.replace(/\/+$/, '') + '/api';
 }
 
 export async function getAuthHeaders(
   auth: UmamiAuthValue,
 ): Promise<Record<string, string>> {
-  const props = getProps(auth);
-  if (isCloud(props)) {
-    return { 'x-umami-api-key': props.apiKey };
+  if (auth.type === AppConnectionType.SECRET_TEXT) {
+    return { 'x-umami-api-key': auth.secret_text };
   }
-  const baseUrl = props.baseUrl.replace(/\/+$/, '');
+  const baseUrl = auth.props.baseUrl.replace(/\/+$/, '');
   const loginResponse = await httpClient.sendRequest<{ token: string }>({
     method: HttpMethod.POST,
     url: `${baseUrl}/api/auth/login`,
-    body: { username: props.username, password: props.password },
+    body: { username: auth.props.username, password: auth.props.password },
   });
   return { Authorization: `Bearer ${loginResponse.body.token}` };
 }

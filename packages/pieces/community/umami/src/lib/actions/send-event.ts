@@ -1,7 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { umamiAuth, UmamiAuthValue, isCloud, getProps } from '../auth';
+import { umamiAuth, UmamiAuthValue } from '../auth';
 import { umamiCommon } from '../common';
+import { AppConnectionType } from '@activepieces/shared';
 
 export const sendEvent = createAction({
   auth: umamiAuth,
@@ -42,11 +43,9 @@ export const sendEvent = createAction({
     const { websiteId, url, eventName, eventData, referrer, title } =
       context.propsValue;
     const auth = context.auth as UmamiAuthValue;
-    const props = getProps(auth);
-
-    const sendUrl = isCloud(props)
+    const sendUrl = auth.type === AppConnectionType.SECRET_TEXT
       ? 'https://cloud.umami.is/api/send'
-      : `${props.baseUrl.replace(/\/+$/, '')}/api/send`;
+      : `${auth.props.baseUrl.replace(/\/+$/, '')}/api/send`;
 
     const payload: Record<string, unknown> = {
       website: websiteId,
