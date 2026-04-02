@@ -154,6 +154,26 @@ export const TOOL_CATEGORIES: ToolCategory[] = [
     ],
   },
   {
+    label: 'Storage',
+    tools: [
+      {
+        name: 'ap_store_get',
+        description:
+          'Get a persistent value from project- or flow-scoped storage',
+      },
+      {
+        name: 'ap_store_put',
+        description:
+          'Store or overwrite a persistent value in project- or flow-scoped storage',
+      },
+      {
+        name: 'ap_store_delete',
+        description:
+          'Delete a persistent value from project- or flow-scoped storage',
+      },
+    ],
+  },
+  {
     label: 'Testing & Runs',
     tools: [
       {
