@@ -183,7 +183,7 @@ function GlobalSearchDialogContent({
                       item={item}
                       query={hasQuery ? debouncedSearch : undefined}
                     />
-                    <CornerDownLeft className="ml-auto size-2.5 shrink-0 text-muted-foreground/70 opacity-0 transition-opacity group-data-[selected=true]:opacity-100" />
+                    <CornerDownLeft className="ml-auto size-2 shrink-0 text-muted-foreground/70 opacity-0 transition-opacity group-data-[selected=true]:opacity-100" />
                   </CommandItem>
                 ))
               )}

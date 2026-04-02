@@ -139,7 +139,9 @@ export const AutomationsFilters = ({
 
   return (
     <>
-      <div className={cn('overflow-x-auto mb-4', DASHBOARD_CONTENT_PADDING_X)}>
+      <div
+        className={cn('overflow-x-auto mt-4 mb-4', DASHBOARD_CONTENT_PADDING_X)}
+      >
         <div className="flex items-center justify-between gap-4 min-w-max">
           <div className="flex items-center gap-2">
             <div className="relative">
