@@ -6,7 +6,7 @@ import {
   AuthenticationType,
 } from '@activepieces/pieces-common';
 
-const BASE_URL = 'https://public-api.granola.ai/v1';
+export const BASE_URL = 'https://public-api.granola.ai/v1';
 
 export async function granolaApiCall<T extends HttpMessageBody>({
   token,
@@ -79,8 +79,8 @@ function flattenNote(note: GranolaNote) {
     scheduled_end_time: note.calendar_event?.scheduled_end_time ?? null,
     attendees: note.attendees
       ? note.attendees
-          .map((a) => a.name ?? a.email)
-          .join(', ')
+        .map((a) => a.name ?? a.email)
+        .join(', ')
       : null,
     folders: note.folder_membership
       ? note.folder_membership.map((f) => f.name).join(', ')
@@ -96,8 +96,8 @@ function flattenNoteWithTranscript(note: GranolaNote) {
     ...flat,
     transcript: note.transcript
       ? note.transcript
-          .map((t) => `[${t.speaker.source}] ${t.text}`)
-          .join('\n')
+        .map((t) => `[${t.speaker.source}] ${t.text}`)
+        .join('\n')
       : null,
   };
 }
