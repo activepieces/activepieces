@@ -1,6 +1,6 @@
 {
-  "name": "@activepieces/piece-json",
-  "version": "0.1.5",
+  "name": "@activepieces/piece-mailgun",
+  "version": "0.0.1",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "scripts": {
@@ -11,7 +11,6 @@
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
-    "jsonata": "^2.0.0",
     "tslib": "2.6.2"
   }
 }
