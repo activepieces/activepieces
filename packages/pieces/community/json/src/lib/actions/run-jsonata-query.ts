@@ -32,7 +32,8 @@ export const runJsonataQuery = createAction({
       // We convert this to `null` so Activepieces receives valid, serializable JSON.
       return result === undefined ? null : result;
     } catch (error) {
-      throw new Error(`JSONata Execution Failed. Please check your query syntax. Details: ${(error as Error).message}`);
+      const message = error instanceof Error ? error.message : JSON.stringify(error);
+      throw new Error(`JSONata Execution Failed. Please check your query syntax. Details: ${message}`);
     }
   },
 });

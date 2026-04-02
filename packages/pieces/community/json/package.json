@@ -11,7 +11,7 @@
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
-    "jsonata": "^2.0.0", 
+    "jsonata": "^2.0.0",
     "tslib": "2.6.2"
   }
 }
