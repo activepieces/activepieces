@@ -190,7 +190,7 @@ export const promotekitCommon = {
         id: string;
         name: string;
       }>({
-        token: auth.secret_text,
+        token: auth as string,
         path: '/campaigns',
       });
       return {
@@ -223,7 +223,7 @@ export const promotekitCommon = {
         first_name: string;
         last_name: string;
       }>({
-        token: auth.secret_text,
+        token: auth as string,
         path: '/affiliates',
       });
       return {
