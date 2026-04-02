@@ -530,6 +530,9 @@
       "@activepieces/piece-gotify": [
         "packages/pieces/community/gotify/src/index.ts"
       ],
+      "@activepieces/piece-granola": [
+        "packages/pieces/community/granola/src/index.ts"
+      ],
       "@activepieces/piece-graphql": [
         "packages/pieces/core/graphql/src/index.ts"
       ],
