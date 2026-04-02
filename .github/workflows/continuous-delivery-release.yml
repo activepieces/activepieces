@@ -1,0 +1,71 @@
+name: Continuous Delivery — Release
+
+on:
+  schedule:
+    - cron: '0 9 * * 0'  # Every Sunday at 9 AM UTC
+  workflow_dispatch:
+
+jobs:
+  weekly-release:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set version from package.json
+        id: version
+        run: |
+          RELEASE=$(node --print "require('./package.json').version")
+          echo "release=$RELEASE" >> $GITHUB_OUTPUT
+
+      - name: Fail if Docker tag already exists
+        run: '! docker manifest inspect activepieces/activepieces:${{ steps.version.outputs.release }}'
+
+      - name: Create or update changelog via release-drafter
+        uses: release-drafter/release-drafter@v5
+        with:
+          commitish: main
+          prerelease: false
+          tag: ${{ steps.version.outputs.release }}
+          name: ${{ steps.version.outputs.release }}
+          version: ${{ steps.version.outputs.release }}
+          latest: true
+          publish: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create git tag
+        run: |
+          git tag -f ${{ steps.version.outputs.release }}
+          git push origin ${{ steps.version.outputs.release }} --force
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: depot/setup-action@v1
+
+      - name: Build and push official release images
+        uses: depot/build-push-action@v1
+        with:
+          project: du7O4b0e8P
+          token: ${{ secrets.DEPOT_PROJECT_TOKEN }}
+          context: .
+          file: ./Dockerfile
+          platforms: |
+            linux/amd64
+            linux/arm64
+          push: true
+          tags: |
+            activepieces/activepieces:${{ steps.version.outputs.release }}
+            activepieces/activepieces:latest
+            ghcr.io/activepieces/activepieces:${{ steps.version.outputs.release }}
+            ghcr.io/activepieces/activepieces:latest

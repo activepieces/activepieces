@@ -20,15 +20,20 @@ async function buildPieces(app: FastifyInstance, piecesInfo: PieceInfo[]): Promi
         }
     }
 
-    const pieceFilters = piecesInfo.map(p => `--filter=@activepieces/piece-${p.pieceName}`).join(' ')
-    const sharedFilters = '--filter=@activepieces/pieces-framework --filter=@activepieces/pieces-common --filter=@activepieces/shared'
-    const filterArgs = `${sharedFilters} ${pieceFilters} --force`
+    const pieceFilters = piecesInfo.map(p => `--filter=${p.packageName}`)
+    const filterArgs = [
+        '--filter=@activepieces/pieces-framework',
+        '--filter=@activepieces/pieces-common',
+        '--filter=@activepieces/shared',
+        ...pieceFilters,
+        '--force',
+    ]
     app.log.info(`Building ${piecesInfo.length} piece(s): ${piecesInfo.map(p => p.pieceName).join(',')}...`)
 
     const lock = await memoryLock.acquire(PIECES_BUILDER_MUTEX_KEY)
     try {
         const startTime = performance.now()
-        await spawnAndWait(`npx turbo run build ${filterArgs}`)
+        await spawnAndWait('npx', ['turbo', 'run', 'build', ...filterArgs])
         const buildTime = (performance.now() - startTime) / 1000
 
         app.log.info(`Build completed in ${buildTime.toFixed(2)} seconds`)
@@ -132,12 +137,12 @@ export async function startDevPieceWatcher(app: FastifyInstance): Promise<void> 
     process.once('SIGTERM', () => void cleanup())
 }
 
-function spawnAndWait(cmd: string): Promise<void> {
+function spawnAndWait(cmd: string, args: string[]): Promise<void> {
     return new Promise((resolve, reject) => {
-        const child = spawn(cmd, {
+        const child = spawn(cmd, args, {
             cwd: process.cwd(),
             stdio: 'inherit',
-            shell: true,
+            shell: false,
         })
         child.on('close', (code) => {
             if (code === 0) {
