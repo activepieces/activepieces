@@ -448,7 +448,7 @@ export const createMockCustomDomain = (
         updated: customDomain?.updated ?? faker.date.recent().toISOString(),
         domain: customDomain?.domain ?? faker.internet.domainName(),
         platformId: customDomain?.platformId ?? apId(),
-        status: customDomain?.status ?? faker.helpers.enumValue(CustomDomainStatus),
+        status: customDomain?.status ?? CustomDomainStatus.ACTIVE,
     }
 }
 
