@@ -2,7 +2,7 @@
 import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
 import { convertTextToJson } from "./lib/actions/convert-text-to-json";
 import { convertJsonToText } from "./lib/actions/convert-json-to-text";
-import { runJqQuery } from "./lib/actions/jq-query";
+import { runJsonataQuery } from "./lib/actions/run-jsonata-query";
 
 export const jsonAuth = PieceAuth.SecretText({
   displayName: 'API Key',
@@ -17,6 +17,6 @@ export const json = createPiece({
   minimumSupportedRelease: '0.30.0',
   logoUrl: "https://cdn.activepieces.com/pieces/new-core/json-helper.svg",
   authors: ["leenmashni","abuaboud"],
-  actions: [convertJsonToText, convertTextToJson, runJqQuery],
+  actions: [convertJsonToText, convertTextToJson, runJsonataQuery],
   triggers: [],
 });
