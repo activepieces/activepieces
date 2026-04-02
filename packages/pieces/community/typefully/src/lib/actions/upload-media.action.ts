@@ -58,11 +58,15 @@ export const uploadMediaAction = createAction({
 });
 
 function extractFileName(url: string): string {
-	const pathname = new URL(url).pathname;
-	const segments = pathname.split('/');
-	const lastSegment = segments[segments.length - 1];
-	if (lastSegment && /\.(jpg|jpeg|png|webp|gif|mp4|mov|pdf)$/i.test(lastSegment)) {
-		return lastSegment;
+	try {
+		const pathname = new URL(url).pathname;
+		const segments = pathname.split('/');
+		const lastSegment = segments[segments.length - 1];
+		if (lastSegment && /\.(jpg|jpeg|png|webp|gif|mp4|mov|pdf)$/i.test(lastSegment)) {
+			return lastSegment;
+		}
+	} catch {
+		// Invalid URL — fall through to default
 	}
 	return 'upload.bin';
 }
