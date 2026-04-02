@@ -1,7 +1,7 @@
 {
-  "Receive form submissions from Tally forms": "Receive form submissions from Tally forms",
-  "New Submission": "New Submission",
-  "Triggers when form receives a new submission": "Triggers when form receives a new submission",
-  "Markdown": "Markdown",
-  "\nTo set up the trigger for new form submissions, follow these steps:\n\n1. Go to the \"Dashboard\" section.\n2. Select the form where you want the trigger to occur.\n3. Click on the \"Integrations\" section.\n4. Find the \"Webhooks\" integration and click on \"Connect\" to activate it.\n5. In the webhook settings, paste the following URL: \n  ```text\n  {{webhookUrl}}\n  ```\n\n  \n6. Click on \"Submit\".\n": "\nTo set up the trigger for new form submissions, follow these steps:\n\n1. Go to the \"Dashboard\" section.\n2. Select the form where you want the trigger to occur.\n3. Click on the \"Integrations\" section.\n4. Find the \"Webhooks\" integration and click on \"Connect\" to activate it.\n5. In the webhook settings, paste the following URL: \n  ```text\n  {{webhookUrl}}\n  ```\n\n  \n6. Click on \"Submit\".\n"
+  "Receive form submissions from Tally forms": "从Tally forms 接收表单提交",
+  "Your Tally API key. Go to **Settings > API keys** in your Tally dashboard to create one.": "您的 Tally API 密钥。转到Tally 仪表盘中的 **设置 > API 密钥** 创建一个密钥。",
+  "New Submission": "新建提交",
+  "Triggers when a form receives a new submission": "当一个表单收到一个新的提交书时触发",
+  "Form": "形式"
 }
