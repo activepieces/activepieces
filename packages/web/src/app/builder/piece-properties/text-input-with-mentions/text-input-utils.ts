@@ -10,6 +10,7 @@ import { JSONContent } from '@tiptap/react';
 
 import { StepMetadata } from '@/features/pieces';
 
+import { FUNCTION_SEP_NODE_TYPE } from './extensions/function-sep-node';
 import {
   FUNCTION_END_NODE_TYPE,
   FUNCTION_START_NODE_TYPE,
@@ -286,6 +287,9 @@ function convertTiptapJsonToText(nodes: JSONContent[]): string {
       }
       case FUNCTION_END_NODE_TYPE: {
         return ')';
+      }
+      case FUNCTION_SEP_NODE_TYPE: {
+        return ', ';
       }
       case TipTapNodeTypes.paragraph: {
         return `${

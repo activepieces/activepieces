@@ -30,14 +30,15 @@ import {
 import { FunctionSearchPopover } from './components/function-search-popover';
 import { FunctionEndNode } from './extensions/function-end-node';
 import {
+  FunctionArgSeparatorNode,
+  FUNCTION_SEP_NODE_TYPE,
+} from './extensions/function-sep-node';
+import {
   FunctionSlashExtension,
   SlashCommandState,
   insertFunctionAtPos,
-  insertFunctionInline,
   registerSlashCommandHandler,
   unregisterSlashCommandHandler,
-  registerInlineAutocompleteHandler,
-  unregisterInlineAutocompleteHandler,
 } from './extensions/function-slash-extension';
 import {
   FunctionStartNode,
@@ -84,6 +85,7 @@ function getExtensions({
     }),
     FunctionStartNode,
     FunctionEndNode,
+    FunctionArgSeparatorNode,
     FunctionSlashExtension,
   ];
 
@@ -134,11 +136,6 @@ export const TiptapEditor = ({
   const slashStateRef = useRef(slashState);
   slashStateRef.current = slashState;
 
-  const [inlineState, setInlineState] =
-    useState<SlashCommandState>(INITIAL_SLASH_STATE);
-  const inlineStateRef = useRef(inlineState);
-  inlineStateRef.current = inlineState;
-
   const [activeFn, setActiveFn] = useState<ActiveFunctionInfo | null>(null);
   const [previewMode, setPreviewMode] = useState(false);
   const [previewValue, setPreviewValue] = useState<string>('');
@@ -153,10 +150,6 @@ export const TiptapEditor = ({
     setSlashState(INITIAL_SLASH_STATE);
   }, []);
 
-  const closeInline = useCallback(() => {
-    setInlineState(INITIAL_SLASH_STATE);
-  }, []);
-
   const handleFunctionSelect = useCallback((fn: ApFunction) => {
     const editor = editorRef.current;
     if (!editor) return;
@@ -167,18 +160,6 @@ export const TiptapEditor = ({
       slashStateRef.current.query,
     );
     setSlashState(INITIAL_SLASH_STATE);
-  }, []);
-
-  const handleInlineFunctionSelect = useCallback((fn: ApFunction) => {
-    const editor = editorRef.current;
-    if (!editor) return;
-    insertFunctionInline(
-      editor,
-      fn,
-      inlineStateRef.current.from,
-      inlineStateRef.current.query.length,
-    );
-    setInlineState(INITIAL_SLASH_STATE);
   }, []);
 
   const insertMention = (propertyPath: string) => {
@@ -306,13 +287,8 @@ export const TiptapEditor = ({
       getState: () => slashStateRef.current,
       setState: setSlashState,
     });
-    registerInlineAutocompleteHandler({
-      getState: () => inlineStateRef.current,
-      setState: setInlineState,
-    });
     return () => {
       unregisterSlashCommandHandler();
-      unregisterInlineAutocompleteHandler();
     };
   }, [editor]);
 
@@ -381,15 +357,6 @@ export const TiptapEditor = ({
           onClose={closeSlash}
         />
       )}
-
-      {inlineState.open && (
-        <FunctionSearchPopover
-          query={inlineState.query}
-          position={inlineState.position}
-          onSelect={handleInlineFunctionSelect}
-          onClose={closeInline}
-        />
-      )}
     </div>
   );
 };
@@ -426,6 +393,15 @@ function applyTypeErrors(
     .querySelectorAll<HTMLElement>('[data-function-end]')
     .forEach((badge) => {
       const openId = badge.getAttribute('data-function-end');
+      const err = openId ? errors.get(openId) : undefined;
+      if (err) badge.classList.add('ap-fn-error');
+      else badge.classList.remove('ap-fn-error');
+    });
+
+  wrapperEl
+    .querySelectorAll<HTMLElement>('[data-function-sep]')
+    .forEach((badge) => {
+      const openId = badge.getAttribute('data-function-sep');
       const err = openId ? errors.get(openId) : undefined;
       if (err) badge.classList.add('ap-fn-error');
       else badge.classList.remove('ap-fn-error');
@@ -517,14 +493,8 @@ function getActiveFunctionAtCursor(
       depth++;
     } else if (node.type.name === FUNCTION_END_NODE_TYPE) {
       if (depth > 0) depth--;
-    } else if (node.isText && depth === 0) {
-      const text = node.text ?? '';
-      // Only consider characters before the cursor
-      const limit = cursorPos - pos;
-      const relevant = text.slice(0, limit);
-      for (const ch of relevant) {
-        if (ch === ',') argIndex++;
-      }
+    } else if (node.type.name === FUNCTION_SEP_NODE_TYPE && depth === 0) {
+      argIndex++;
     }
   });
 

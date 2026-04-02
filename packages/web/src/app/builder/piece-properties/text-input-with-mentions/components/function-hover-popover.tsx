@@ -87,6 +87,9 @@ export function FunctionEditorTooltip({
       );
       matchStart?.classList.add('ap-fn-active');
       matchEnd?.classList.add('ap-fn-active');
+      el.querySelectorAll<HTMLElement>(
+        `[data-function-sep="${openId}"]`,
+      ).forEach((sep) => sep.classList.add('ap-fn-active'));
 
       const name =
         startEl?.getAttribute('data-function-name') ??

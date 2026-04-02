@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 
 import { FunctionTooltipCard } from './function-hover-popover';
 
-const LIST_WIDTH = 256;
+const LIST_WIDTH = 360;
 const SCREEN_MARGIN = 8;
 
 const CATEGORY_COLORS: Record<string, string> = {

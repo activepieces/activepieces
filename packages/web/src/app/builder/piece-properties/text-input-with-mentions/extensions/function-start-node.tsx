@@ -2,6 +2,8 @@ import { AP_FUNCTIONS, ApFunction } from '@activepieces/shared';
 import { InputRule, Node, mergeAttributes } from '@tiptap/core';
 import { JSONContent } from '@tiptap/react';
 
+import { FUNCTION_SEP_NODE_TYPE } from './function-sep-node';
+
 export const FUNCTION_START_NODE_TYPE = 'function_start';
 export const FUNCTION_END_NODE_TYPE = 'function_end';
 
@@ -9,12 +11,13 @@ const fnNamePattern = AP_FUNCTIONS.map((f) => f.name).join('|');
 const inputRuleRegex = new RegExp(`(${fnNamePattern})\\($`);
 
 function buildInputRuleContent(fn: ApFunction, id: string): JSONContent[] {
-  const sepText = new Array(Math.max(1, fn.minArgs)).fill('').join(', ');
   const content: JSONContent[] = [
     { type: FUNCTION_START_NODE_TYPE, attrs: { id, functionName: fn.name } },
   ];
-  if (sepText) {
-    content.push({ type: 'text', text: sepText });
+  for (let i = 0; i < fn.minArgs; i++) {
+    if (i > 0) {
+      content.push({ type: FUNCTION_SEP_NODE_TYPE, attrs: { openId: id } });
+    }
   }
   content.push({ type: FUNCTION_END_NODE_TYPE, attrs: { openId: id } });
   return content;
