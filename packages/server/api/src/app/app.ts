@@ -65,7 +65,9 @@ import { SystemJobName } from './helper/system-jobs/common'
 import { systemJobHandlers } from './helper/system-jobs/job-handlers'
 import { systemJobsSchedule } from './helper/system-jobs/system-job'
 import { validateEnvPropsOnStartup } from './helper/system-validator'
+import { knowledgeBaseModule } from './knowledge-base/knowledge-base.module'
 import { mcpServerModule } from './mcp/mcp-module'
+import { mcpOAuthApproveController } from './mcp/oauth/code/mcp-oauth-approve.controller'
 import { communityPiecesModule } from './pieces/community-piece-module'
 import { startDevPieceWatcher } from './pieces/dev-piece-watcher'
 import { pieceModule } from './pieces/metadata/piece-metadata-controller'
@@ -202,6 +204,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(humanInputModule)
     await app.register(tagsModule)
     await app.register(mcpServerModule)
+    await app.register(mcpOAuthApproveController)
     await app.register(platformUserModule)
     await app.register(alertsModule)
     await app.register(invitationModule)
@@ -210,12 +213,12 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(aiProviderModule)
     await app.register(licenseKeysModule)
     await app.register(tablesModule)
+    await app.register(knowledgeBaseModule)
     await app.register(userModule)
     await app.register(templateModule)
     await app.register(userBadgeModule)
     await app.register(platformAnalyticsModule)
     systemJobHandlers.registerJobHandler(SystemJobName.DELETE_FLOW, (data) => flowBackgroundJobs(app.log).deleteFlowHandler(data))
-    systemJobHandlers.registerJobHandler(SystemJobName.UPDATE_FLOW_STATUS, (data) => flowBackgroundJobs(app.log).updateStatusHandler(data))
     systemJobHandlers.registerJobHandler(SystemJobName.HARD_DELETE_PROJECT, (data) => platformProjectBackgroundJobs(app.log).hardDeleteProjectHandler(data))
 
     app.get(
@@ -234,9 +237,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
                 return reply
                     .type('text/html')
                     .send(
-                        `<script>if(window.opener){window.opener.postMessage({ 'code': '${encodeURIComponent(
-                            params.code,
-                        )}' },'*')}</script> <html>Redirect succuesfully, this window should close now</html>`,
+                        `<script>if(window.opener){window.opener.postMessage({ 'code': ${JSON.stringify(params.code)} },'*')}</script> <html>Redirect succuesfully, this window should close now</html>`,
                     )
             }
         },
