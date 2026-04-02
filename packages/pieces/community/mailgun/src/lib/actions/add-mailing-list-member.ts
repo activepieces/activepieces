@@ -45,13 +45,13 @@ export const addMailingListMember = createAction({
       context.propsValue;
     const auth = context.auth;
 
-    const body: Record<string, string> = {
+    const bodyFields: Record<string, string> = {
       address,
       upsert: upsert ? 'yes' : 'no',
       subscribed: subscribed === false ? 'no' : 'yes',
     };
-    if (name) body['name'] = name;
-    if (vars) body['vars'] = JSON.stringify(vars);
+    if (name) bodyFields['name'] = name;
+    if (vars) bodyFields['vars'] = JSON.stringify(vars);
 
     const response = await mailgunApiCall<{
       member: {
@@ -66,7 +66,8 @@ export const addMailingListMember = createAction({
       region: auth.props.region,
       method: HttpMethod.POST,
       path: `/v3/lists/${list}/members`,
-      body,
+      body: new URLSearchParams(bodyFields).toString(),
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     });
 
     const member = response.body.member;

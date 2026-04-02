@@ -5,7 +5,7 @@ import {
   AuthenticationType,
 } from '@activepieces/pieces-common';
 import { PieceAuth, Property, createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory, tryCatch } from '@activepieces/shared';
 import { sendEmail } from './lib/actions/send-email';
 import { validateEmail } from './lib/actions/validate-email';
 import { addMailingListMember } from './lib/actions/add-mailing-list-member';
@@ -48,12 +48,12 @@ export const mailgunAuth = PieceAuth.CustomAuth({
     }),
   },
   validate: async ({ auth }) => {
-    try {
-      const baseUrl =
-        auth.region === 'eu'
-          ? 'https://api.eu.mailgun.net'
-          : 'https://api.mailgun.net';
-      await httpClient.sendRequest({
+    const baseUrl =
+      auth.region === 'eu'
+        ? 'https://api.eu.mailgun.net'
+        : 'https://api.mailgun.net';
+    const { error } = await tryCatch(() =>
+      httpClient.sendRequest({
         method: HttpMethod.GET,
         url: `${baseUrl}/v3/domains`,
         authentication: {
@@ -62,15 +62,15 @@ export const mailgunAuth = PieceAuth.CustomAuth({
           password: auth.api_key,
         },
         queryParams: { limit: '1' },
-      });
-      return { valid: true };
-    } catch {
+      }),
+    );
+    if (error) {
       return {
         valid: false,
-        error:
-          'Invalid API key or region. Please check your credentials and try again.',
+        error: 'Invalid API key or region. Please check your credentials and try again.',
       };
     }
+    return { valid: true };
   },
 });
 
@@ -82,7 +82,7 @@ export const mailgun = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/mailgun.png',
   categories: [PieceCategory.MARKETING, PieceCategory.COMMUNICATION],
   auth: mailgunAuth,
-  authors: ['bst1n'],
+  authors: ['bst1n', 'onyedikachi-david'],
   actions: [
     sendEmail,
     validateEmail,
@@ -92,16 +92,14 @@ export const mailgun = createPiece({
     listBounces,
     createCustomApiCallAction({
       baseUrl: (auth) => {
-        const { props } = auth as unknown as { props: { api_key: string; region: string } };
-        return props.region === 'eu'
+        return auth?.props.region === 'eu'
           ? 'https://api.eu.mailgun.net/v3'
           : 'https://api.mailgun.net/v3';
       },
       auth: mailgunAuth,
       authMapping: async (auth) => {
-        const { props: { api_key } } = auth as unknown as { props: { api_key: string; region: string } };
         return {
-          Authorization: `Basic ${Buffer.from(`api:${api_key}`).toString('base64')}`,
+          Authorization: `Basic ${Buffer.from(`api:${auth.props.api_key}`).toString('base64')}`,
         };
       },
     }),

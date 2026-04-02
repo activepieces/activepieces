@@ -63,16 +63,16 @@ export const sendEmail = createAction({
       );
     }
 
-    const body: Record<string, string> = {
+    const bodyFields: Record<string, string> = {
       from,
       to,
       subject,
     };
-    if (cc) body['cc'] = cc;
-    if (bcc) body['bcc'] = bcc;
-    if (replyTo) body['h:Reply-To'] = replyTo;
-    if (text) body['text'] = text;
-    if (html) body['html'] = html;
+    if (cc) bodyFields['cc'] = cc;
+    if (bcc) bodyFields['bcc'] = bcc;
+    if (replyTo) bodyFields['h:Reply-To'] = replyTo;
+    if (text) bodyFields['text'] = text;
+    if (html) bodyFields['html'] = html;
 
     const response = await mailgunApiCall<{
       id: string;
@@ -82,7 +82,8 @@ export const sendEmail = createAction({
       region: auth.props.region,
       method: HttpMethod.POST,
       path: `/v3/${domain}/messages`,
-      body,
+      body: new URLSearchParams(bodyFields).toString(),
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     });
 
     return {

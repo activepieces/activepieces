@@ -1,12 +1,14 @@
-import { createHmac } from 'crypto';
+import { createHmac, timingSafeEqual } from 'crypto';
 import {
   httpClient,
   HttpMethod,
   AuthenticationType,
   HttpMessageBody,
   HttpResponse,
+  HttpError,
 } from '@activepieces/pieces-common';
 import { Property } from '@activepieces/pieces-framework';
+import { tryCatch } from '@activepieces/shared';
 import { mailgunAuth } from '../..';
 
 export function verifyMailgunSignature(
@@ -18,13 +20,12 @@ export function verifyMailgunSignature(
   const expected = createHmac('sha256', apiKey)
     .update(timestamp + token)
     .digest('hex');
-  return expected === signature;
-}
-
-function getBaseUrl(region: string): string {
-  return region === 'eu'
-    ? 'https://api.eu.mailgun.net'
-    : 'https://api.mailgun.net';
+  const expectedBuf = Buffer.from(expected);
+  const signatureBuf = Buffer.from(signature);
+  if (expectedBuf.length !== signatureBuf.length) {
+    return false;
+  }
+  return timingSafeEqual(expectedBuf, signatureBuf);
 }
 
 export async function mailgunApiCall<T extends HttpMessageBody>({
@@ -71,16 +72,29 @@ export async function subscribeWebhook({
   eventType: string;
   webhookUrl: string;
 }): Promise<void> {
-  await mailgunApiCall({
-    apiKey,
-    region,
-    method: HttpMethod.POST,
-    path: `/v3/domains/${domain}/webhooks`,
-    body: {
-      id: eventType,
-      url: [webhookUrl],
-    },
-  });
+  const formHeaders = { 'Content-Type': 'application/x-www-form-urlencoded' };
+  const { error } = await tryCatch(() =>
+    mailgunApiCall({
+      apiKey,
+      region,
+      method: HttpMethod.POST,
+      path: `/v3/domains/${domain}/webhooks`,
+      body: new URLSearchParams({ id: eventType, url: webhookUrl }).toString(),
+      headers: formHeaders,
+    }),
+  );
+
+  if (error) {
+    // Webhook already exists — update it with PUT instead
+    await mailgunApiCall({
+      apiKey,
+      region,
+      method: HttpMethod.PUT,
+      path: `/v3/domains/${domain}/webhooks/${eventType}`,
+      body: new URLSearchParams({ url: webhookUrl }).toString(),
+      headers: formHeaders,
+    });
+  }
 }
 
 export async function unsubscribeWebhook({
@@ -94,12 +108,22 @@ export async function unsubscribeWebhook({
   domain: string;
   eventType: string;
 }): Promise<void> {
-  await mailgunApiCall({
-    apiKey,
-    region,
-    method: HttpMethod.DELETE,
-    path: `/v3/domains/${domain}/webhooks/${eventType}`,
-  });
+  const { error } = await tryCatch(() =>
+    mailgunApiCall({
+      apiKey,
+      region,
+      method: HttpMethod.DELETE,
+      path: `/v3/domains/${domain}/webhooks/${eventType}`,
+    }),
+  );
+
+  // 404 means the webhook was already removed — ignore it
+  if (error && error instanceof HttpError && error.response.status === 404) {
+    return;
+  }
+  if (error) {
+    throw error;
+  }
 }
 
 export async function mailgunApiCallAbsoluteUrl<T extends HttpMessageBody>({
@@ -135,12 +159,11 @@ export const mailgunCommon = {
           placeholder: 'Please connect your Mailgun account first',
         };
       }
-      const authValue = auth as { props: { api_key: string; region: string } };
       const response = await mailgunApiCall<{
         items: { name: string; state: string }[];
       }>({
-        apiKey: authValue.props.api_key,
-        region: authValue.props.region,
+        apiKey: auth.props.api_key,
+        region: auth.props.region,
         method: HttpMethod.GET,
         path: '/v3/domains',
         queryParams: { limit: '1000' },
@@ -168,12 +191,11 @@ export const mailgunCommon = {
           placeholder: 'Please connect your Mailgun account first',
         };
       }
-      const authValue = auth as { props: { api_key: string; region: string } };
       const response = await mailgunApiCall<{
         items: { address: string; name: string; members_count: number }[];
       }>({
-        apiKey: authValue.props.api_key,
-        region: authValue.props.region,
+        apiKey: auth.props.api_key,
+        region: auth.props.region,
         method: HttpMethod.GET,
         path: '/v3/lists/pages',
         queryParams: { limit: '100' },
@@ -190,3 +212,9 @@ export const mailgunCommon = {
     },
   }),
 };
+
+function getBaseUrl(region: string): string {
+  return region === 'eu'
+    ? 'https://api.eu.mailgun.net'
+    : 'https://api.mailgun.net';
+}
