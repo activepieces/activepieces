@@ -1,8 +1,8 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { attioApiCall, verifyWebhookSignature } from '../common/client';
 import { attioAuth } from '../auth';
-import { objectTypeIdDropdown } from '../common/props';
+import { objectAttributeDropdown, objectTypeIdDropdown } from '../common/props';
 import { ObjectWebhookPayload, WebhookResponse } from '../common/types';
 import { isNil } from '@activepieces/shared';
 
@@ -19,9 +19,20 @@ export const recordUpdatedTrigger = createTrigger({
 			displayName: 'Object',
 			required: true,
 		}),
+		filter_attribute: objectAttributeDropdown({
+			displayName: 'Filter Field',
+			description: 'Only trigger when this field is involved in the update.',
+			required: false,
+		}),
+		filter_value: Property.ShortText({
+			displayName: 'Filter Value',
+			description:
+				'Only trigger when the selected field equals this value (case-insensitive). Leave empty to trigger on any update to that field.',
+			required: false,
+		}),
 	},
 	type: TriggerStrategy.WEBHOOK,
-	sampleData:{},
+	sampleData: {},
 	async onEnable(context) {
 		const response = await attioApiCall<{ data: WebhookResponse }>({
 			accessToken: context.auth.secret_text,
@@ -70,10 +81,7 @@ export const recordUpdatedTrigger = createTrigger({
 			accessToken: context.auth.secret_text,
 			method: HttpMethod.POST,
 			resourceUri: `/objects/${context.propsValue.objectTypeId}/records/query`,
-			body: {
-				limit: 5,
-				offset: 0,
-			},
+			body: { limit: 5, offset: 0 },
 		});
 
 		return response.data;
@@ -99,6 +107,40 @@ export const recordUpdatedTrigger = createTrigger({
 			method: HttpMethod.GET,
 			resourceUri: `/objects/${context.propsValue.objectTypeId}/records/${recordId}`,
 		});
-		return [response.data];
+
+		const record = response.data;
+		const { filter_attribute, filter_value } = context.propsValue;
+
+		if (filter_attribute) {
+			const attrValues: Array<Record<string, any>> = record['values']?.[filter_attribute] ?? [];
+
+			if (filter_value) {
+				const matched = attrValues.some((v) => {
+					const current = extractAttributeDisplayValue(v);
+					return current !== null && current.toLowerCase() === filter_value.toLowerCase();
+				});
+				if (!matched) return [];
+			} else if (attrValues.length === 0) {
+				return [];
+			}
+		}
+
+		return [record];
 	},
 });
+
+function extractAttributeDisplayValue(valueObj: Record<string, any>): string | null {
+	if (isNil(valueObj)) return null;
+	// active_until being non-null means the value is no longer active
+	if (!isNil(valueObj['active_until'])) return null;
+
+	return (
+		valueObj['full_name'] ??
+		valueObj['email_address'] ??
+		valueObj['domain'] ??
+		valueObj['phone_number'] ??
+		(valueObj['status'] as Record<string, any> | undefined)?.['title'] ??
+		(valueObj['option'] as Record<string, any> | undefined)?.['title'] ??
+		(valueObj['value'] !== undefined ? String(valueObj['value']) : null)
+	);
+}
