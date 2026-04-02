@@ -36,6 +36,7 @@ export enum ToolCallType {
     PIECE = 'PIECE',
     FLOW = 'FLOW',
     MCP = 'MCP',
+    KNOWLEDGE_BASE = 'KNOWLEDGE_BASE',
     UNKNOWN = 'UNKNOWN',
 }
 
@@ -105,6 +106,12 @@ export const ToolCallContentBlock = z.discriminatedUnion('toolCallType', [
         toolCallType: z.literal(ToolCallType.MCP),
         displayName: z.string(),
         serverUrl: z.string(),
+    }),
+    z.object({
+        ...ToolCallBaseSchema.shape,
+        toolCallType: z.literal(ToolCallType.KNOWLEDGE_BASE),
+        displayName: z.string(),
+        sourceType: z.string(),
     }),
     z.object({
         ...ToolCallBaseSchema.shape,

@@ -530,6 +530,9 @@
       "@activepieces/piece-gotify": [
         "packages/pieces/community/gotify/src/index.ts"
       ],
+      "@activepieces/piece-granola": [
+        "packages/pieces/community/granola/src/index.ts"
+      ],
       "@activepieces/piece-graphql": [
         "packages/pieces/core/graphql/src/index.ts"
       ],
@@ -628,6 +631,9 @@
       ],
       "@activepieces/piece-klaviyo": [
         "packages/pieces/community/klaviyo/src/index.ts"
+      ],
+      "@activepieces/piece-klenty": [
+        "packages/pieces/community/klenty/src/index.ts"
       ],
       "@activepieces/piece-knack": [
         "packages/pieces/community/knack/src/index.ts"
@@ -1212,6 +1218,9 @@
       ],
       "@activepieces/piece-typeform": [
         "packages/pieces/community/typeform/src/index.ts"
+      ],
+      "@activepieces/piece-umami": [
+        "packages/pieces/community/umami/src/index.ts"
       ],
       "@activepieces/piece-upgradechat": [
         "packages/pieces/community/upgradechat/src/index.ts"

@@ -561,7 +561,6 @@
   "No trigger data available": "No trigger data available",
   "Trigger health information will appear here": "Trigger health information will appear here",
   "Check the health of your workers": "Check the health of your workers",
-  "Workers": "Workers",
   "No workers found": "No workers found",
   "You don't have any workers yet. Spin up new workers to execute your automations": "You don't have any workers yet. Spin up new workers to execute your automations",
   "Shared Workers": "Shared Workers",
@@ -1413,5 +1412,19 @@
   "Activation failed, invalid license key": "Activation failed, invalid license key",
   "Today": "Today",
   "Yesterday": "Yesterday",
-  "Configure credentials for {managerName} secret manager.": "Configure credentials for {managerName} secret manager."
+  "Configure credentials for {managerName} secret manager.": "Configure credentials for {managerName} secret manager.",
+  "Authorize Application": "Authorize Application",
+  "wants to access your Activepieces account": "wants to access your Activepieces account",
+  "This will allow the app to execute automations and access tools in your selected project.": "This will allow the app to execute automations and access tools in your selected project.",
+  "Select Project": "Select Project",
+  "Loading projects...": "Loading projects...",
+  "Choose a project": "Choose a project",
+  "Authorization failed. Please try again.": "Authorization failed. Please try again.",
+  "Deny": "Deny",
+  "Authorize": "Authorize",
+  "Unknown app": "Unknown app",
+  "Embedding model for knowledge base: {model}": "Embedding model for knowledge base: {model}",
+  "This provider does not support knowledge base embeddings.": "This provider does not support knowledge base embeddings.",
+  "Knowledge base requires a provider that supports embeddings, such as OpenAI or Google.": "Knowledge base requires a provider that supports embeddings, such as OpenAI or Google.",
+  "The selected provider does not support embeddings. Switch to a provider like OpenAI or Google for knowledge base to work.": "The selected provider does not support embeddings. Switch to a provider like OpenAI or Google for knowledge base to work."
 }
