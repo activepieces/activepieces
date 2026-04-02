@@ -42,7 +42,7 @@ const databaseTokenAuth = PieceAuth.CustomAuth({
 
 export const baserowJwtAuth = PieceAuth.CustomAuth({
   displayName: 'Email & Password (JWT)',
-  description: `Authenticate with your Baserow email and password. This mode enables automatic webhook registration for triggers — no manual setup needed.`,
+  description: `Authenticate with your Baserow email and password. This mode enables automatic webhook registration for triggers — no manual setup needed.\n\n**Note:** Two-factor authentication (2FA) is not supported. If your Baserow account has 2FA enabled, use the Database Token authentication instead.`,
   required: true,
   props: {
     apiUrl: Property.ShortText({

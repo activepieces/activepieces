@@ -92,7 +92,6 @@
   "Triggers when existing rows are updated in a Baserow table. Returns all rows from the event as a single batch.": "Triggers when existing rows are updated in a Baserow table. Returns all rows from the event as a single batch.",
   "Triggers when rows are deleted from a Baserow table. Returns all deleted row IDs from the event as a single batch.": "Triggers when rows are deleted from a Baserow table. Returns all deleted row IDs from the event as a single batch.",
   "Email & Password (JWT)": "Email & Password (JWT)",
-  "Authenticate with your Baserow email and password. This mode enables automatic webhook registration for triggers — no manual setup needed.": "Authenticate with your Baserow email and password. This mode enables automatic webhook registration for triggers — no manual setup needed.",
   "Email": "Email",
   "Password": "Password",
   "Batch Create Rows": "Batch Create Rows",
@@ -145,5 +144,6 @@
   "Has File Type": "Has File Type",
   "Files Lower Than": "Files Lower Than",
   "Length Is Lower Than": "Length Is Lower Than",
-  "Is Even And Whole": "Is Even And Whole"
+  "Is Even And Whole": "Is Even And Whole",
+  "Authenticate with your Baserow email and password. This mode enables automatic webhook registration for triggers — no manual setup needed.\n\n**Note:** Two-factor authentication (2FA) is not supported. If your Baserow account has 2FA enabled, use the Database Token authentication instead.": "Authenticate with your Baserow email and password. This mode enables automatic webhook registration for triggers — no manual setup needed.\n\n**Note:** Two-factor authentication (2FA) is not supported. If your Baserow account has 2FA enabled, use the Database Token authentication instead."
 }
