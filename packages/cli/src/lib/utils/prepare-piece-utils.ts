@@ -5,7 +5,11 @@ import { parse as parseJsonc, printParseErrorCode } from 'jsonc-parser'
 import type { ParseError } from 'jsonc-parser'
 import { buildWorkspaceVersionMap, resolveWorkspaceDependencies, stripSemverRanges } from './workspace-utils'
 
-function parseBunLock(): BunLockData {
+/**
+ * Parses bun.lock and builds a map of every resolved (non-workspace) package.
+ * Workspace entries (e.g. "name@workspace:path") are skipped.
+ */
+function parseBunLock(): ParsedBunLock {
     const lockPath = join(cwd(), 'bun.lock')
     const raw = readFileSync(lockPath, 'utf-8')
     const errors: ParseError[] = []
@@ -14,108 +18,109 @@ function parseBunLock(): BunLockData {
         const details = errors.map((e) => `${printParseErrorCode(e.error)} at offset ${e.offset}`).join(', ')
         throw new Error(`[parseBunLock] failed to parse ${lockPath}: ${details}`)
     }
-    const packages: Record<string, [string, ...unknown[]]> = lock.packages
+    const packages: Record<string, BunLockPackageTuple> = lock.packages
 
-    const resolvedVersions = new Map<string, string>()
-    const entries = new Map<string, BunLockEntry>()
+    const resolvedPackages = new Map<string, ResolvedPackage>()
 
-    for (const [key, entry] of Object.entries(packages)) {
-        const resolved = entry[0] as string
-        if (!resolved || resolved.includes('workspace:')) {
+    for (const [packagePath, [nameAtVersion, _registry, metadata]] of Object.entries(packages)) {
+        if (!nameAtVersion || nameAtVersion.includes('workspace:')) {
             continue
         }
 
-        const atIndex = resolved.lastIndexOf('@')
+        const atIndex = nameAtVersion.lastIndexOf('@')
         if (atIndex <= 0) {
             continue
         }
 
-        const pkgName = resolved.slice(0, atIndex)
-        const version = resolved.slice(atIndex + 1)
+        const pkgName = nameAtVersion.slice(0, atIndex)
+        const version = nameAtVersion.slice(atIndex + 1)
 
-        if (!resolvedVersions.has(pkgName)) {
-            resolvedVersions.set(pkgName, version)
-        }
-
-        const meta = entry[2] as { dependencies?: Record<string, string> } | undefined
-        entries.set(key, {
+        resolvedPackages.set(packagePath, {
             pkgName,
             version,
-            dependencies: meta?.dependencies ?? {},
+            dependencies: metadata?.dependencies ?? {},
         })
     }
 
-    return { resolvedVersions, entries }
+    return { resolvedPackages }
 }
 
-function resolveEntry(depName: string, scope: string, entries: Map<string, BunLockEntry>): { key: string, entry: BunLockEntry } | null {
-    if (scope) {
-        const scopedKey = `${scope}/${depName}`
-        const entry = entries.get(scopedKey)
-        if (entry) {
-            return { key: scopedKey, entry }
+/**
+ * Looks up a dependency in the resolved packages map.
+ * Bun nests duplicates under their parent's path (e.g. "axios/follow-redirects"),
+ * so we first check `parentPackagePath/depName`, then fall back to the top-level `depName`.
+ */
+function lookupResolvedPackage({ depName, parentPackagePath, resolvedPackages }: { depName: string, parentPackagePath: string, resolvedPackages: Map<string, ResolvedPackage> }): { packagePath: string, pkg: ResolvedPackage } | null {
+    if (parentPackagePath) {
+        const nestedKey = `${parentPackagePath}/${depName}`
+        const pkg = resolvedPackages.get(nestedKey)
+        if (pkg) {
+            return { packagePath: nestedKey, pkg }
         }
     }
 
-    const entry = entries.get(depName)
-    if (entry) {
-        return { key: depName, entry }
+    const pkg = resolvedPackages.get(depName)
+    if (pkg) {
+        return { packagePath: depName, pkg }
     }
 
     return null
 }
 
+/**
+ * BFS-walks the dependency tree starting from `directDeps`, collecting every
+ * transitive dependency with its exact pinned version from the lockfile.
+ */
 function flattenTransitiveDeps(
     directDeps: Record<string, string>,
-    parsedBunLock: BunLockData,
+    parsedLock: ParsedBunLock,
 ): Record<string, string> {
-    const { entries } = parsedBunLock
+    const { resolvedPackages } = parsedLock
     const result: Record<string, string> = {}
     const visited = new Set<string>()
-    const queue: { name: string, scope: string }[] = []
+    const queue: { name: string, parentPackagePath: string }[] = []
 
     for (const depName of Object.keys(directDeps)) {
         if (depName.startsWith('@activepieces/')) {
             continue
         }
-        queue.push({ name: depName, scope: '' })
+        queue.push({ name: depName, parentPackagePath: '' })
     }
 
     while (queue.length > 0) {
-        const { name, scope } = queue.shift()!
+        const { name, parentPackagePath } = queue.shift()!
 
-        const resolved = resolveEntry(name, scope, entries)
+        const resolved = lookupResolvedPackage({ depName: name, parentPackagePath, resolvedPackages })
         if (!resolved) {
             continue
         }
 
-        const { key, entry } = resolved
-        if (visited.has(key)) {
+        const { packagePath, pkg } = resolved
+        if (visited.has(packagePath)) {
             continue
         }
-        visited.add(key)
+        visited.add(packagePath)
 
-        if (!(entry.pkgName in result)) {
-            result[entry.pkgName] = entry.version
+        if (!(pkg.pkgName in result)) {
+            result[pkg.pkgName] = pkg.version
         }
 
-        for (const subDepName of Object.keys(entry.dependencies)) {
+        for (const subDepName of Object.keys(pkg.dependencies)) {
             if (subDepName.startsWith('@activepieces/')) {
                 continue
             }
-            queue.push({ name: subDepName, scope: key })
+            queue.push({ name: subDepName, parentPackagePath: packagePath })
         }
     }
 
     return result
 }
 
-
 function pinDependenciesFromLockfile(
     deps: Record<string, string>,
-    parsedBunLock: BunLockData,
+    parsedLock: ParsedBunLock,
 ): Record<string, string> {
-    const transitiveDeps = flattenTransitiveDeps(deps, parsedBunLock)
+    const transitiveDeps = flattenTransitiveDeps(deps, parsedLock)
     const merged: Record<string, string> = { ...transitiveDeps }
     for (const [name, version] of Object.entries(deps)) {
         if (name.startsWith('@activepieces/')) {
@@ -127,7 +132,7 @@ function pinDependenciesFromLockfile(
     return merged
 }
 
-function copyPackageJson(piecePath: string, distPath: string): void {
+function copyPackageJson({ piecePath, distPath }: PieceDistPaths): void {
     const srcPackageJson = join(piecePath, 'package.json')
     if (!existsSync(srcPackageJson)) {
         return
@@ -135,7 +140,7 @@ function copyPackageJson(piecePath: string, distPath: string): void {
     copyFileSync(srcPackageJson, join(distPath, 'package.json'))
 }
 
-function copyI18nAssets(piecePath: string, distPath: string): void {
+function copyI18nAssets({ piecePath, distPath }: PieceDistPaths): void {
     const i18nSrc = join(piecePath, 'src', 'i18n')
     if (!existsSync(i18nSrc)) {
         return
@@ -150,7 +155,7 @@ function copyI18nAssets(piecePath: string, distPath: string): void {
     }
 }
 
-function symlinkNodeModules(piecePath: string, distPath: string): void {
+function symlinkNodeModules({ piecePath, distPath }: PieceDistPaths): void {
     const srcNodeModules = resolve(piecePath, 'node_modules')
     const distNodeModules = join(distPath, 'node_modules')
     if (!existsSync(srcNodeModules) || existsSync(distNodeModules)) {
@@ -159,18 +164,19 @@ function symlinkNodeModules(piecePath: string, distPath: string): void {
     symlinkSync(resolve(srcNodeModules), distNodeModules, 'dir')
 }
 
-function preparePieceDistForPublish(piecePath: string, parsedBunLock?: BunLockData): void {
+function preparePieceDistForPublish(piecePath: string, parsedLock?: ParsedBunLock): void {
     const distPath = join(piecePath, 'dist')
 
     if (!existsSync(distPath)) {
         throw new Error(`[preparePiece] no dist output at ${distPath} for ${piecePath}`)
     }
 
-    copyPackageJson(piecePath, distPath)
-    copyI18nAssets(piecePath, distPath)
-    symlinkNodeModules(piecePath, distPath)
+    const paths = { piecePath, distPath }
+    copyPackageJson(paths)
+    copyI18nAssets(paths)
+    symlinkNodeModules(paths)
 
-    const resolvedLockData = parsedBunLock ?? parseBunLock()
+    const resolvedLockData = parsedLock ?? parseBunLock()
     const workspaceVersionMap = buildWorkspaceVersionMap(cwd())
 
     const distPackageJsonPath = join(distPath, 'package.json')
@@ -190,13 +196,31 @@ function preparePieceDistForPublish(piecePath: string, parsedBunLock?: BunLockDa
 
 export { parseBunLock, flattenTransitiveDeps, pinDependenciesFromLockfile, preparePieceDistForPublish }
 
-type BunLockEntry = {
+/**
+ * Shape of each entry in bun.lock's `packages` record:
+ *   [0] = resolved identifier, e.g. "axios@1.13.5"
+ *   [1] = registry (empty string = default npm)
+ *   [2] = metadata object containing `dependencies`
+ *   [3] = integrity hash
+ */
+type BunLockPackageTuple = [
+    nameAtVersion: string,
+    registry: string,
+    metadata?: { dependencies?: Record<string, string> },
+    integrity?: string,
+]
+
+type ResolvedPackage = {
     pkgName: string
     version: string
     dependencies: Record<string, string>
 }
 
-type BunLockData = {
-    resolvedVersions: Map<string, string>
-    entries: Map<string, BunLockEntry>
+type ParsedBunLock = {
+    resolvedPackages: Map<string, ResolvedPackage>
+}
+
+type PieceDistPaths = {
+    piecePath: string
+    distPath: string
 }
