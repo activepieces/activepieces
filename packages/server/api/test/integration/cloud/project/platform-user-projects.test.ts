@@ -110,9 +110,9 @@ describe('User projects API', () => {
             expect(body.code).toBe(ErrorCode.ENTITY_NOT_FOUND)
         })
 
-        it('lists projects when caller uses platform API key', async () => {
+        it('returns only projects matching the displayName filter', async () => {
             const { mockPlatform } = await mockAndSaveBasicSetup()
-            const memberExternalId = 'ext-user-api-key-list'
+            const memberExternalId = 'ext-user-displayname-filter'
             const { mockUser: memberUser } = await mockBasicUser({
                 user: {
                     platformId: mockPlatform.id,
@@ -120,21 +120,27 @@ describe('User projects API', () => {
                     externalId: memberExternalId,
                 },
             })
-            const memberPersonalProject = createMockProject({
+            const matchingProject = createMockProject({
                 ownerId: memberUser.id,
                 platformId: mockPlatform.id,
                 type: ProjectType.PERSONAL,
+                displayName: 'alpha-project',
             })
-            await db.save('project', memberPersonalProject)
-
-            const apiKey = createMockApiKey({
+            const otherProject = createMockProject({
+                ownerId: memberUser.id,
                 platformId: mockPlatform.id,
+                type: ProjectType.TEAM,
+                displayName: 'beta-project',
             })
+            await db.save('project', matchingProject)
+            await db.save('project', otherProject)
+
+            const apiKey = createMockApiKey({ platformId: mockPlatform.id })
             await db.save('api_key', apiKey)
 
             const response = await app!.inject({
                 method: 'GET',
-                url: `/api/v1/users/projects?externalId=${encodeURIComponent(memberExternalId)}`,
+                url: `/api/v1/users/projects?externalId=${encodeURIComponent(memberExternalId)}&displayName=alpha-project`,
                 headers: {
                     authorization: `Bearer ${apiKey.value}`,
                 },
@@ -142,7 +148,8 @@ describe('User projects API', () => {
 
             expect(response.statusCode).toBe(StatusCodes.OK)
             const body = response.json() as { data: { id: string }[] }
-            expect(body.data.some((p) => p.id === memberPersonalProject.id)).toBe(true)
+            expect(body.data.some((p) => p.id === matchingProject.id)).toBe(true)
+            expect(body.data.some((p) => p.id === otherProject.id)).toBe(false)
         })
     })
 })
