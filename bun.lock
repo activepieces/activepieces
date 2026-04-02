@@ -1,6 +1,5 @@
 {
   "lockfileVersion": 1,
-  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "activepieces",
@@ -199,7 +198,6 @@
         "jshint": "2.13.6",
         "json-server": "1.0.0-beta.0",
         "json-to-pretty-yaml": "1.2.2",
-        "jsonc-parser": "3.3.1",
         "jsoneditor": "10.0.3",
         "jsonlint-mod": "1.7.6",
         "jsonrepair": "3.2.0",
@@ -430,7 +428,7 @@
         "tslib": "2.6.2",
       },
       "devDependencies": {
-        "@types/node": "24.11.0",
+        "@types/node": "^24",
       },
     },
     "packages/pieces/community/acuity-scheduling": {
@@ -472,7 +470,7 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "dayjs": "1.11.9",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/ai": {
@@ -482,20 +480,20 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "@ai-sdk/anthropic": "3.0.58",
-        "@ai-sdk/azure": "3.0.42",
-        "@ai-sdk/google": "3.0.43",
+        "@ai-sdk/anthropic": "^3.0.0",
+        "@ai-sdk/azure": "^3.0.0",
+        "@ai-sdk/google": "^3.0.0",
         "@ai-sdk/mcp": "1.0.11",
-        "@ai-sdk/openai": "3.0.41",
+        "@ai-sdk/openai": "^3.0.0",
         "@ai-sdk/openai-compatible": "2.0.16",
-        "@ai-sdk/provider-utils": "4.0.19",
+        "@ai-sdk/provider-utils": "^4.0.0",
         "@modelcontextprotocol/sdk": "1.26.0",
         "@openrouter/ai-sdk-provider": "2.1.1",
-        "ai": "6.0.116",
+        "ai": "^6.0.0",
         "ai-gateway-provider": "3.1.1",
         "ajv": "8.12.0",
         "mime-types": "2.1.35",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
         "zod": "4.3.6",
       },
       "devDependencies": {
@@ -519,7 +517,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/air-ops": {
@@ -539,7 +537,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/airparser": {
@@ -572,7 +570,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
         "zod": "4.3.6",
       },
     },
@@ -583,7 +581,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/algolia": {
@@ -593,7 +591,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/alt-text-ai": {
@@ -603,7 +601,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/alttextify": {
@@ -614,7 +612,7 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "mime-types": "2.1.35",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
       "devDependencies": {
         "@types/mime-types": "2.1.1",
@@ -628,11 +626,11 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "@aws-crypto/sha256-js": "5.2.0",
-        "@aws-sdk/client-bedrock": "3.1012.0",
-        "@aws-sdk/client-bedrock-runtime": "3.1012.0",
+        "@aws-sdk/client-bedrock": "^3.987.0",
+        "@aws-sdk/client-bedrock-runtime": "^3.987.0",
         "@smithy/protocol-http": "5.3.8",
         "@smithy/signature-v4": "5.3.8",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/amazon-s3": {
@@ -643,11 +641,11 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "@aws-sdk/client-s3": "3.974.0",
-        "@aws-sdk/client-secrets-manager": "3.997.0",
+        "@aws-sdk/client-secrets-manager": "^3.0.0",
         "@aws-sdk/s3-request-presigner": "3.894.0",
         "dayjs": "1.11.9",
         "mime-types": "2.1.35",
-        "openpgp": "6.3.0",
+        "openpgp": "^6.3.0",
         "tslib": "2.6.2",
       },
       "devDependencies": {
@@ -662,7 +660,7 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "@aws-sdk/client-secrets-manager": "3.989.0",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/amazon-ses": {
@@ -694,7 +692,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "@aws-sdk/client-sqs": "3.1012.0",
+        "@aws-sdk/client-sqs": "^3.806.0",
         "tslib": "2.6.2",
       },
     },
@@ -705,8 +703,8 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "@aws-sdk/client-textract": "3.1012.0",
-        "tslib": "2.6.2",
+        "@aws-sdk/client-textract": "^3.0.0",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/aminos": {
@@ -778,7 +776,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/apollo": {
@@ -799,7 +797,7 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "dayjs": "1.11.9",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/asana": {
@@ -830,7 +828,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/asknews": {
@@ -840,7 +838,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/assembled": {
@@ -850,7 +848,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/assemblyai": {
@@ -864,13 +862,13 @@
         "tslib": "2.6.2",
       },
       "devDependencies": {
-        "@readme/openapi-parser": "2.7.0",
-        "@types/node": "24.11.0",
-        "dotenv": "17.2.3",
-        "mergician": "2.0.2",
-        "title-case": "4.3.2",
-        "tsx": "4.21.0",
-        "typescript": "5.5.4",
+        "@readme/openapi-parser": "^2.6.0",
+        "@types/node": "^24",
+        "dotenv": "^16.4.5",
+        "mergician": "^2.0.2",
+        "title-case": "^4.3.1",
+        "tsx": "^4.19.0",
+        "typescript": "^5.6.2",
       },
     },
     "packages/pieces/community/attio": {
@@ -901,7 +899,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/azure-blob-storage": {
@@ -913,7 +911,7 @@
         "@activepieces/shared": "workspace:*",
         "@azure/identity": "4.13.0",
         "@azure/storage-blob": "12.29.1",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/azure-communication-services": {
@@ -979,7 +977,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/baremetrics": {
@@ -989,7 +987,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/base44": {
@@ -999,8 +997,8 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "@base44/sdk": "0.8.22",
-        "tslib": "2.6.2",
+        "@base44/sdk": "^0.8.4",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/baserow": {
@@ -1053,7 +1051,7 @@
         "@activepieces/shared": "workspace:*",
         "dayjs": "1.11.9",
         "form-data": "4.0.4",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/bigcommerce": {
@@ -1063,7 +1061,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/bigin-by-zoho": {
@@ -1073,7 +1071,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/bika": {
@@ -1083,7 +1081,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/billplz": {
@@ -1093,7 +1091,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/binance": {
@@ -1113,7 +1111,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/bland-ai": {
@@ -1145,7 +1143,7 @@
         "@activepieces/shared": "workspace:*",
         "@atproto/api": "0.16.0",
         "dayjs": "1.11.9",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/bokio": {
@@ -1156,7 +1154,7 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "i18next": "23.13.0",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/bolna": {
@@ -1166,7 +1164,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/bonjoro": {
@@ -1187,7 +1185,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/box": {
@@ -1227,7 +1225,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/browserless": {
@@ -1237,7 +1235,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/bubble": {
@@ -1257,7 +1255,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/bursty-ai": {
@@ -1267,7 +1265,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/buttondown": {
@@ -1317,8 +1315,8 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "form-data": "4.0.4",
-        "tslib": "2.6.2",
+        "form-data": "^4.0.4",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/campaign-monitor": {
@@ -1339,7 +1337,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/captain-data": {
@@ -1380,7 +1378,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/certopus": {
@@ -1400,7 +1398,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/chainalysis-api": {
@@ -1421,7 +1419,7 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "form-data": "4.0.4",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/chargekeep": {
@@ -1441,7 +1439,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/chat-aid": {
@@ -1452,7 +1450,7 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "form-data": "4.0.4",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/chat-data": {
@@ -1463,7 +1461,7 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "form-data": "4.0.4",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
         "zod": "4.3.6",
       },
     },
@@ -1484,7 +1482,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/chatling": {
@@ -1495,7 +1493,7 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "dayjs": "1.11.9",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/chatnode": {
@@ -1505,7 +1503,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/chatsistant": {
@@ -1515,7 +1513,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/chatwoot": {
@@ -1535,7 +1533,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/circle": {
@@ -1595,7 +1593,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/clicdata": {
@@ -1605,7 +1603,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/clickfunnels": {
@@ -1615,7 +1613,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/clicksend": {
@@ -1681,7 +1679,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
         "zod": "4.3.6",
       },
     },
@@ -1726,7 +1724,7 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "mime-types": "2.1.35",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
       "devDependencies": {
         "@types/mime-types": "2.1.1",
@@ -1759,7 +1757,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
         "zod": "4.3.6",
       },
     },
@@ -1817,8 +1815,8 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "contextual-client": "0.10.0",
-        "tslib": "2.6.2",
+        "contextual-client": "^0.10.0",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/contiguity": {
@@ -1849,7 +1847,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/copy-ai": {
@@ -1879,8 +1877,8 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "couchbase": "4.6.1",
-        "tslib": "2.6.2",
+        "couchbase": "^4.6.0",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/crisp": {
@@ -1892,7 +1890,7 @@
         "@activepieces/shared": "workspace:*",
         "axios": "1.13.5",
         "dayjs": "1.11.9",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/cryptolens": {
@@ -1902,7 +1900,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/cursor": {
@@ -1912,7 +1910,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/customer-io": {
@@ -1934,7 +1932,7 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "dayjs": "1.11.9",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
         "zod": "4.3.6",
       },
     },
@@ -1945,7 +1943,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/dappier": {
@@ -1965,7 +1963,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/datadog": {
@@ -1975,8 +1973,8 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "@datadog/datadog-api-client": "1.53.0",
-        "tslib": "2.6.2",
+        "@datadog/datadog-api-client": "^1.43.0",
+        "tslib": "^2.3.0",
         "zod": "4.3.6",
       },
     },
@@ -1987,7 +1985,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/datocms": {
@@ -2043,7 +2041,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/detecting-ai": {
@@ -2053,7 +2051,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/devin": {
@@ -2073,7 +2071,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/digital-pilot": {
@@ -2083,7 +2081,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/dimo": {
@@ -2126,7 +2124,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/docsbot": {
@@ -2136,7 +2134,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
         "zod": "4.3.6",
       },
     },
@@ -2148,7 +2146,7 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "form-data": "4.0.4",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/documentpro": {
@@ -2158,7 +2156,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/documerge": {
@@ -2168,7 +2166,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/docusign": {
@@ -2213,7 +2211,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
       "peerDependencies": {
         "@activepieces/pieces-common": "*",
@@ -2239,7 +2237,7 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "@duckdb/node-api": "1.4.3-r.2",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/dumpling-ai": {
@@ -2274,7 +2272,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/echowin": {
@@ -2285,7 +2283,7 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "dayjs": "1.11.9",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/eden-ai": {
@@ -2327,7 +2325,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/enrichlayer": {
@@ -2347,7 +2345,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/eth-name-service": {
@@ -2387,7 +2385,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/facebook-leads": {
@@ -2429,8 +2427,8 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "fathom-typescript": "0.0.36",
-        "tslib": "2.6.2",
+        "fathom-typescript": "^0.0.36",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/fathom-analytics": {
@@ -2451,7 +2449,7 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "dayjs": "1.11.9",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/fellow": {
@@ -2462,7 +2460,7 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "dayjs": "1.11.9",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/figma": {
@@ -2493,7 +2491,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/firecrawl": {
@@ -2524,7 +2522,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/fliqr-ai": {
@@ -2555,7 +2553,7 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "dayjs": "1.11.9",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/flowise": {
@@ -2568,7 +2566,7 @@
         "tslib": "2.6.2",
       },
       "devDependencies": {
-        "@types/is-url": "1.2.32",
+        "@types/is-url": "^1.2.32",
       },
     },
     "packages/pieces/community/flowlu": {
@@ -2589,7 +2587,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/foreplay-co": {
@@ -2599,7 +2597,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
         "zod": "4.3.6",
       },
     },
@@ -2620,7 +2618,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/formsite": {
@@ -2630,7 +2628,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/formspark": {
@@ -2640,7 +2638,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/formstack": {
@@ -2661,7 +2659,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/fragment": {
@@ -2671,8 +2669,8 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "dayjs": "1.11.9",
-        "tslib": "2.6.2",
+        "dayjs": "^1.11.7",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/frame": {
@@ -2692,7 +2690,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/freshdesk": {
@@ -2722,7 +2720,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/gameball": {
@@ -2742,7 +2740,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/gcloud-pubsub": {
@@ -2763,7 +2761,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/generatebanners": {
@@ -2783,7 +2781,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/ghostcms": {
@@ -2807,7 +2805,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/gistly": {
@@ -2859,7 +2857,7 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "form-data": "4.0.4",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/gmail": {
@@ -2925,7 +2923,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/google-contacts": {
@@ -2997,12 +2995,12 @@
         "mime-types": "2.1.35",
         "nanoid": "3.3.8",
         "tslib": "2.6.2",
-        "wav": "1.0.2",
+        "wav": "^1.0.2",
         "zod": "4.3.6",
       },
       "devDependencies": {
         "@types/mime-types": "2.1.1",
-        "@types/wav": "1.0.4",
+        "@types/wav": "^1.0.4",
       },
     },
     "packages/pieces/community/google-my-business": {
@@ -3024,7 +3022,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/google-search-console": {
@@ -3101,7 +3099,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
         "zod": "4.3.6",
       },
     },
@@ -3122,7 +3120,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/gravityforms": {
@@ -3142,7 +3140,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/greip": {
@@ -3152,7 +3150,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/griptape": {
@@ -3163,7 +3161,7 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "dayjs": "1.11.9",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/grist": {
@@ -3184,7 +3182,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
         "zod": "4.3.6",
       },
     },
@@ -3206,7 +3204,7 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "dayjs": "1.11.9",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/hackernews": {
@@ -3237,7 +3235,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/hastewire": {
@@ -3247,7 +3245,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/heartbeat": {
@@ -3268,7 +3266,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/help-scout": {
@@ -3279,7 +3277,7 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "axios": "1.13.5",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
         "zod": "4.3.6",
       },
     },
@@ -3301,7 +3299,7 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "dayjs": "1.11.9",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/housecall-pro": {
@@ -3311,7 +3309,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
         "zod": "4.3.6",
       },
     },
@@ -3359,8 +3357,8 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "hume": "0.15.15",
-        "tslib": "2.6.2",
+        "hume": "^0.15.6",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/hunter": {
@@ -3370,7 +3368,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/hystruct": {
@@ -3380,7 +3378,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/ibm-cognose": {
@@ -3390,7 +3388,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/image-router": {
@@ -3401,7 +3399,7 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "form-data": "4.0.4",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/imap": {
@@ -3427,7 +3425,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/insightly": {
@@ -3437,7 +3435,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/insighto-ai": {
@@ -3447,7 +3445,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
         "zod": "4.3.6",
       },
     },
@@ -3458,7 +3456,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/instabase": {
@@ -3469,7 +3467,7 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "form-data": "4.0.4",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/instagram-business": {
@@ -3583,7 +3581,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
         "zod": "4.3.6",
       },
     },
@@ -3614,7 +3612,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/kallabot-ai": {
@@ -3634,8 +3632,8 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "@kapso/whatsapp-cloud-api": "0.1.1",
-        "tslib": "2.6.2",
+        "@kapso/whatsapp-cloud-api": "^0.1.1",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/katana": {
@@ -3645,7 +3643,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/kimai": {
@@ -3667,7 +3665,7 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "content-disposition": "0.5.4",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
       "devDependencies": {
         "@types/content-disposition": "0.5.9",
@@ -3713,7 +3711,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/kommo": {
@@ -3743,7 +3741,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
         "zod": "4.3.6",
       },
     },
@@ -3769,7 +3767,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/leexi": {
@@ -3780,7 +3778,7 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "dayjs": "1.11.9",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/lemlist": {
@@ -3790,7 +3788,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/lemon-squeezy": {
@@ -3800,7 +3798,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/lets-calendar": {
@@ -3811,7 +3809,7 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "dayjs": "1.11.9",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/letta": {
@@ -3822,7 +3820,7 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "@letta-ai/letta-client": "1.3.1",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/lever": {
@@ -3846,7 +3844,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/line": {
@@ -3902,7 +3900,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/livesession": {
@@ -3912,7 +3910,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/llmrails": {
@@ -3953,7 +3951,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/logrocket": {
@@ -3963,7 +3961,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/logsnag": {
@@ -3983,7 +3981,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/loops": {
@@ -4003,7 +4001,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/lusha": {
@@ -4023,7 +4021,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/magical-api": {
@@ -4033,7 +4031,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/magicslides": {
@@ -4043,7 +4041,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/mailchain": {
@@ -4053,7 +4051,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "@mailchain/sdk": "0.31.0",
+        "@mailchain/sdk": "^0.31.0",
         "tslib": "2.6.2",
       },
     },
@@ -4090,7 +4088,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/maileroo": {
@@ -4121,7 +4119,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/manychat": {
@@ -4218,7 +4216,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/meistertask": {
@@ -4285,7 +4283,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/microsoft-365-people": {
@@ -4298,7 +4296,7 @@
         "@microsoft/microsoft-graph-client": "3.0.7",
         "@microsoft/microsoft-graph-types": "2.40.0",
         "dayjs": "1.11.9",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/microsoft-365-planner": {
@@ -4311,7 +4309,7 @@
         "@microsoft/microsoft-graph-client": "3.0.7",
         "@microsoft/microsoft-graph-types": "2.40.0",
         "dayjs": "1.11.9",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/microsoft-copilot": {
@@ -4386,7 +4384,7 @@
         "@activepieces/shared": "workspace:*",
         "@microsoft/microsoft-graph-client": "3.0.7",
         "dayjs": "1.11.9",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/microsoft-outlook": {
@@ -4469,7 +4467,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/mind-studio": {
@@ -4479,7 +4477,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/mindee": {
@@ -4500,7 +4498,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/mistral-ai": {
@@ -4542,7 +4540,7 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "dayjs": "1.11.9",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/monday": {
@@ -4577,7 +4575,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/mooninvoice": {
@@ -4587,7 +4585,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/motion": {
@@ -4608,7 +4606,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/moveo-ai": {
@@ -4618,7 +4616,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/moxie-crm": {
@@ -4639,7 +4637,7 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "form-data": "4.0.4",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/mycase-piece": {
@@ -4649,7 +4647,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/mysendingbox": {
@@ -4684,7 +4682,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/netsuite": {
@@ -4705,7 +4703,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/nifty": {
@@ -4783,7 +4781,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/odoo": {
@@ -4794,12 +4792,12 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "tslib": "2.6.2",
-        "url": "0.11.3",
-        "xmlrpc": "1.3.2",
+        "url": "^0.11.3",
+        "xmlrpc": "^1.3.2",
         "zod": "4.3.6",
       },
       "devDependencies": {
-        "@types/xmlrpc": "1.3.10",
+        "@types/xmlrpc": "^1.3.10",
       },
     },
     "packages/pieces/community/okta": {
@@ -4819,7 +4817,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/omnihr": {
@@ -4839,7 +4837,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/oneclickimpact": {
@@ -4849,7 +4847,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/onfleet": {
@@ -4874,7 +4872,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/open-router": {
@@ -4913,7 +4911,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/opnform": {
@@ -4923,7 +4921,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/opportify": {
@@ -4933,7 +4931,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/oracle-database": {
@@ -4944,8 +4942,8 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "dayjs": "1.11.9",
-        "oracledb": "6.10.0",
-        "tslib": "2.6.2",
+        "oracledb": "^6.10.0",
+        "tslib": "^2.3.0",
       },
       "devDependencies": {
         "@types/oracledb": "6.10.1",
@@ -4958,7 +4956,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/orimon": {
@@ -4968,7 +4966,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/outseta": {
@@ -4998,7 +4996,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/parser-expert": {
@@ -5009,7 +5007,7 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "form-data": "4.0.4",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/parseur": {
@@ -5019,7 +5017,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/pastebin": {
@@ -5054,7 +5052,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
         "zod": "4.3.6",
       },
     },
@@ -5075,8 +5073,8 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "form-data": "4.0.4",
-        "tslib": "2.6.2",
+        "form-data": "^4.0.0",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/pdfmonkey": {
@@ -5087,7 +5085,7 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "dayjs": "1.11.9",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/peekshot": {
@@ -5129,7 +5127,7 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "semver": "7.6.0",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/phone-validator": {
@@ -5139,7 +5137,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/photoroom": {
@@ -5159,7 +5157,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/pinecone": {
@@ -5169,8 +5167,8 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "@pinecone-database/pinecone": "6.1.4",
-        "tslib": "2.6.2",
+        "@pinecone-database/pinecone": "^6.1.1",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/pinterest": {
@@ -5215,7 +5213,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/pocketbase": {
@@ -5235,7 +5233,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/pollybot-ai": {
@@ -5245,7 +5243,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/poper": {
@@ -5292,7 +5290,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/predict-leads": {
@@ -5312,7 +5310,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/presenton": {
@@ -5323,7 +5321,7 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "dayjs": "1.11.9",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/productboard": {
@@ -5333,7 +5331,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/promotekit": {
@@ -5343,7 +5341,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/prompthub": {
@@ -5353,8 +5351,8 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
-        "zod": "4.3.6",
+        "tslib": "^2.3.0",
+        "zod": "^3.22.4",
       },
     },
     "packages/pieces/community/promptmate": {
@@ -5364,7 +5362,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/pushbullet": {
@@ -5374,7 +5372,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/pushover": {
@@ -5415,7 +5413,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/queue": {
@@ -5435,7 +5433,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/quickbooks": {
@@ -5466,7 +5464,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/rabbitmq": {
@@ -5492,7 +5490,7 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "form-data": "4.0.4",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/rapidtext-ai": {
@@ -5502,7 +5500,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/razorpay": {
@@ -5532,7 +5530,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/reddit": {
@@ -5582,7 +5580,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/retable": {
@@ -5602,7 +5600,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/retune": {
@@ -5643,7 +5641,7 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "@modelcontextprotocol/sdk": "1.26.0",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/rss": {
@@ -5670,7 +5668,7 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "@runware/sdk-js": "1.1.44",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
         "zod": "4.3.6",
       },
     },
@@ -5726,7 +5724,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/sardis": {
@@ -5788,7 +5786,7 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "form-data": "4.0.4",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/segment": {
@@ -5865,7 +5863,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/sendy": {
@@ -5917,9 +5915,9 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "dayjs": "1.11.9",
-        "form-data": "4.0.4",
-        "tslib": "2.6.2",
-        "zod": "4.3.6",
+        "form-data": "^4.0.0",
+        "tslib": "^2.3.0",
+        "zod": "^3.22.4",
       },
     },
     "packages/pieces/community/sessions-us": {
@@ -5950,7 +5948,7 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "dayjs": "1.11.9",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/shopify": {
@@ -5971,7 +5969,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/sign-now": {
@@ -5992,7 +5990,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/simplepdf": {
@@ -6012,7 +6010,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/simplybookme": {
@@ -6022,7 +6020,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/sitespeakai": {
@@ -6033,7 +6031,7 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "dayjs": "1.11.9",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/skyprep": {
@@ -6044,7 +6042,7 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "dayjs": "1.11.9",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/skyvern": {
@@ -6078,7 +6076,7 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "form-data": "4.0.4",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/smaily": {
@@ -6129,7 +6127,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/smsmode": {
@@ -6139,7 +6137,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/snowflake": {
@@ -6171,7 +6169,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/softr": {
@@ -6182,7 +6180,7 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "dayjs": "1.11.9",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/sperse": {
@@ -6202,7 +6200,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/spotify": {
@@ -6327,7 +6325,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/synthesia": {
@@ -6337,7 +6335,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/systeme-io": {
@@ -6347,7 +6345,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/tableau": {
@@ -6357,7 +6355,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/talkable": {
@@ -6387,7 +6385,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/tarvent": {
@@ -6428,7 +6426,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/teamleader": {
@@ -6438,7 +6436,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/teamwork": {
@@ -6448,7 +6446,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/telegram-bot": {
@@ -6469,7 +6467,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/textcortex-ai": {
@@ -6479,7 +6477,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/thankster": {
@@ -6510,7 +6508,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/tidycal": {
@@ -6531,7 +6529,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/timelines-ai": {
@@ -6542,7 +6540,7 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "dayjs": "1.11.9",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/tiny-talk-ai": {
@@ -6552,7 +6550,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/tl-dv": {
@@ -6562,7 +6560,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/todoist": {
@@ -6583,7 +6581,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/totalcms": {
@@ -6659,7 +6657,7 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "dayjs": "1.11.9",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/twitter": {
@@ -6726,7 +6724,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/vadoo-ai": {
@@ -6736,7 +6734,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
         "zod": "4.3.6",
       },
     },
@@ -6747,7 +6745,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/valyu": {
@@ -6757,7 +6755,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/vbout": {
@@ -6777,7 +6775,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/vero": {
@@ -6787,7 +6785,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/videoask": {
@@ -6797,7 +6795,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/vidlab7": {
@@ -6807,7 +6805,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/vidnoz": {
@@ -6818,7 +6816,7 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "form-data": "4.0.4",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/village": {
@@ -6839,7 +6837,7 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "dayjs": "1.11.9",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/visible": {
@@ -6849,7 +6847,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/vlm-run": {
@@ -6860,7 +6858,7 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "form-data": "4.0.4",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
         "zod": "4.3.6",
       },
     },
@@ -6872,7 +6870,7 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "dayjs": "1.11.9",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/vouchery-io": {
@@ -6882,7 +6880,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
         "zod": "4.3.6",
       },
     },
@@ -6919,7 +6917,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/wealthbox": {
@@ -6930,7 +6928,7 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "dayjs": "1.11.9",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/webex": {
@@ -6971,7 +6969,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/wedof": {
@@ -6992,7 +6990,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/what-converts": {
@@ -7002,7 +7000,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/whatsable": {
@@ -7042,7 +7040,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/woocommerce": {
@@ -7063,7 +7061,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/wootric": {
@@ -7095,7 +7093,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/wrike": {
@@ -7105,7 +7103,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/writesonic-bulk": {
@@ -7115,7 +7113,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/wufoo": {
@@ -7146,7 +7144,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/youform": {
@@ -7156,7 +7154,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/youtube": {
@@ -7206,7 +7204,7 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "buffer": "6.0.3",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/zeplin": {
@@ -7216,7 +7214,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/zerobounce": {
@@ -7236,7 +7234,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
         "zod": "4.3.6",
       },
     },
@@ -7258,7 +7256,7 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "dayjs": "1.11.9",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
         "zod": "4.3.6",
       },
     },
@@ -7367,7 +7365,7 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "buffer": "6.0.3",
-        "openpgp": "6.3.0",
+        "openpgp": "^6.2.0",
         "tslib": "2.6.2",
         "zod": "4.3.6",
       },
@@ -7451,7 +7449,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "@zip.js/zip.js": "2.8.23",
+        "@zip.js/zip.js": "^2.8.15",
         "mime-types": "2.1.35",
         "tslib": "2.6.2",
       },
@@ -7511,7 +7509,7 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "exifreader": "4.20.0",
-        "jimp": "0.22.12",
+        "jimp": "^0.22.12",
         "mime-types": "2.1.35",
         "tslib": "2.6.2",
       },
@@ -7527,7 +7525,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/core/math-helper": {
@@ -7551,7 +7549,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "jimp": "0.22.12",
+        "jimp": "^0.22.12",
         "nanoid": "3.3.8",
         "pdf-lib": "1.17.1",
         "tslib": "2.6.2",
@@ -7572,7 +7570,7 @@
         "tslib": "2.6.2",
       },
       "devDependencies": {
-        "@types/qrcode": "1.5.6",
+        "@types/qrcode": "^1.5.5",
         "vitest": "3.0.8",
       },
     },
@@ -7678,7 +7676,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "jsdom": "23.0.1",
+        "jsdom": "^24.0.0",
         "showdown": "2.1.0",
         "slugify": "1.6.6",
         "string-strip-html": "8.5.0",
@@ -7687,7 +7685,7 @@
         "zod": "4.3.6",
       },
       "devDependencies": {
-        "@types/jsdom": "21.1.7",
+        "@types/jsdom": "^21.1.6",
         "@types/showdown": "2.0.6",
         "@types/turndown": "5.0.6",
         "vitest": "3.0.8",
@@ -7728,7 +7726,7 @@
       "version": "0.26.0",
       "dependencies": {
         "@activepieces/shared": "workspace:*",
-        "ai": "6.0.116",
+        "ai": "^6.0.0",
         "semver": "7.6.0",
         "tslib": "2.6.2",
         "zod": "4.3.6",
@@ -9507,6 +9505,8 @@
 
     "@apify/utilities": ["@apify/utilities@2.25.5", "", { "dependencies": { "@apify/consts": "^2.51.1", "@apify/log": "^2.5.33" } }, "sha512-I53XgSbNw2mYHPbPTIM7CjooHBHapWzvW6eKxpzt5IO9zB3OIzWOk2xRCodi1pAt3+A+BGiJJyddF/cQYGJenA=="],
 
+    "@asamuzakjp/css-color": ["@asamuzakjp/css-color@3.2.0", "", { "dependencies": { "@csstools/css-calc": "^2.1.3", "@csstools/css-color-parser": "^3.0.9", "@csstools/css-parser-algorithms": "^3.0.4", "@csstools/css-tokenizer": "^3.0.3", "lru-cache": "^10.4.3" } }, "sha512-K1A6z8tS3XsmCMM86xoWdn7Fkdn9m6RSVtocUrJYIwZnFVkng/PvkEoWtOWmP+Scc6saYWHWZYbndEEXxl24jw=="],
+
     "@atlaskit/adf-schema": ["@atlaskit/adf-schema@50.4.0", "", { "dependencies": { "@atlaskit/editor-prosemirror": "*", "@atlaskit/feature-gate-js-client": "^4.26.4", "@babel/runtime": "^7.26.10", "css-color-names": "0.0.4", "linkify-it": "^2.0.3", "memoize-one": "^6.0.0" } }, "sha512-/iumWw4c9Xs+JDV0lCo9fd4dAIv8D+nX95DNxfMLEQFtwrAXIT3/CSsHa53rqyIIhQSfBx6YOt3Mh0bYUBp+CA=="],
 
     "@atlaskit/adf-schema-generator": ["@atlaskit/adf-schema-generator@2.2.0", "", { "dependencies": { "@atlaskit/editor-prosemirror": "^7.3.0", "@babel/runtime": "^7.0.0", "lodash": "^4.17.21" } }, "sha512-6YtAVbMOBv2MncdT61/KgYQOcqaYlDXLAch+DgfoFDkLj+gr/3W/fxquXw9mSwqFuk7Ikn0BhyCLD1y2G0wBtw=="],
@@ -9832,6 +9832,16 @@
     "@crawlee/types": ["@crawlee/types@3.16.0", "", { "dependencies": { "tslib": "^2.4.0" } }, "sha512-CcIM+JDVx4gzQzMPl+9RJiEeqdzTrx2RLPA7y4IMJSyfZm3J/VrEunielKA3NQrk095j9OuvS/rQL2y8mBV1qw=="],
 
     "@cspotcode/source-map-support": ["@cspotcode/source-map-support@0.8.1", "", { "dependencies": { "@jridgewell/trace-mapping": "0.3.9" } }, "sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw=="],
+
+    "@csstools/color-helpers": ["@csstools/color-helpers@5.1.0", "", {}, "sha512-S11EXWJyy0Mz5SYvRmY8nJYTFFd1LCNV+7cXyAgQtOOuzb4EsgfqDufL+9esx72/eLhsRdGZwaldu/h+E4t4BA=="],
+
+    "@csstools/css-calc": ["@csstools/css-calc@2.1.4", "", { "peerDependencies": { "@csstools/css-parser-algorithms": "^3.0.5", "@csstools/css-tokenizer": "^3.0.4" } }, "sha512-3N8oaj+0juUw/1H3YwmDDJXCgTB1gKU6Hc/bB502u9zR0q2vd786XJH9QfrKIEgFlZmhZiq6epXl4rHqhzsIgQ=="],
+
+    "@csstools/css-color-parser": ["@csstools/css-color-parser@3.1.0", "", { "dependencies": { "@csstools/color-helpers": "^5.1.0", "@csstools/css-calc": "^2.1.4" }, "peerDependencies": { "@csstools/css-parser-algorithms": "^3.0.5", "@csstools/css-tokenizer": "^3.0.4" } }, "sha512-nbtKwh3a6xNVIp/VRuXV64yTKnb1IjTAEEh3irzS+HkKjAOYLTGNb9pmVNntZ8iVBHcWDA2Dof0QtPgFI1BaTA=="],
+
+    "@csstools/css-parser-algorithms": ["@csstools/css-parser-algorithms@3.0.5", "", { "peerDependencies": { "@csstools/css-tokenizer": "^3.0.4" } }, "sha512-DaDeUkXZKjdGhgYaHNJTV9pV7Y9B3b644jCLs9Upc3VeNGg6LWARAT6O+Q+/COo+2gg/bM5rhpMAtf70WqfBdQ=="],
+
+    "@csstools/css-tokenizer": ["@csstools/css-tokenizer@3.0.4", "", {}, "sha512-Vd/9EVDiu6PPJt9yAh6roZP6El1xHrdvIVGjyBsHR0RYwNHgL7FJPyIIW4fANJNG6FtyZfvlRPpFI4ZM/lubvw=="],
 
     "@dabh/diagnostics": ["@dabh/diagnostics@2.0.8", "", { "dependencies": { "@so-ric/colorspace": "^1.1.6", "enabled": "2.0.x", "kuler": "^2.0.0" } }, "sha512-R4MSXTVnuMzGD7bzHdW2ZhhdPC/igELENcq5IjEverBvq5hn1SXCWcsi6eSsdWP0/Ur+SItRRjAktmdoX/8R/Q=="],
 
@@ -13105,8 +13115,6 @@
 
     "jsonc-eslint-parser": ["jsonc-eslint-parser@2.4.1", "", { "dependencies": { "acorn": "^8.5.0", "eslint-visitor-keys": "^3.0.0", "espree": "^9.0.0", "semver": "^7.3.5" } }, "sha512-uuPNLJkKN8NXAlZlQ6kmUF9qO+T6Kyd7oV4+/7yy8Jz6+MZNyhPq8EdLpdfnPVzUC8qSf1b4j1azKaGnFsjmsw=="],
 
-    "jsonc-parser": ["jsonc-parser@3.3.1", "", {}, "sha512-HUgH65KyejrUFPvHFPbqOY0rsFip3Bo5wb4ngvdi1EpCYWUQDC5V+Y7mZws+DLkr4M//zQJoanu1SP+87Dv1oQ=="],
-
     "jsoneditor": ["jsoneditor@10.0.3", "", { "dependencies": { "ace-builds": "^1.33.1", "ajv": "^6.12.6", "javascript-natural-sort": "^0.7.1", "jmespath": "^0.16.0", "json-source-map": "^0.6.1", "jsonrepair": "^3.7.0", "mobius1-selectr": "^2.4.13", "picomodal": "^3.0.0", "vanilla-picker": "^2.12.3" } }, "sha512-dCEtrms+zsIQjDZC5Yo6FBWNvNlXSR2nZ5aprEjawAD689CI8/qqv/Ytj0wPqcz6H1p1ebFfM/wkf8L1wrWk5w=="],
 
     "jsonfile": ["jsonfile@6.2.0", "", { "dependencies": { "universalify": "^2.0.0" }, "optionalDependencies": { "graceful-fs": "^4.1.6" } }, "sha512-FGuPw30AdOIUTRMC2OMRtQV+jkVj2cfPqSeWXv1NEAJ1qZ5zb1X6z1mFhbfOB/iy3ssJCD+3KuZ8r8C3uVFlAg=="],
@@ -15001,17 +15009,25 @@
 
     "@activepieces/piece-ai/@modelcontextprotocol/sdk": ["@modelcontextprotocol/sdk@1.26.0", "", { "dependencies": { "@hono/node-server": "^1.19.9", "ajv": "^8.17.1", "ajv-formats": "^3.0.1", "content-type": "^1.0.5", "cors": "^2.8.5", "cross-spawn": "^7.0.5", "eventsource": "^3.0.2", "eventsource-parser": "^3.0.0", "express": "^5.2.1", "express-rate-limit": "^8.2.1", "hono": "^4.11.4", "jose": "^6.1.3", "json-schema-typed": "^8.0.2", "pkce-challenge": "^5.0.0", "raw-body": "^3.0.0", "zod": "^3.25 || ^4.0", "zod-to-json-schema": "^3.25.1" }, "peerDependencies": { "@cfworker/json-schema": "^4.1.1" }, "optionalPeers": ["@cfworker/json-schema"] }, "sha512-Y5RmPncpiDtTXDbLKswIJzTqu2hyBKxTNsgKqKclDbhIgg1wgtf1fRuvxgTnRfcnxtvvgbIEcqUOzZrJ6iSReg=="],
 
+    "@activepieces/piece-algolia/tslib": ["tslib@2.8.1", "", {}, "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="],
+
     "@activepieces/piece-amazon-secrets-manager/@aws-sdk/client-secrets-manager": ["@aws-sdk/client-secrets-manager@3.989.0", "", { "dependencies": { "@aws-crypto/sha256-browser": "5.2.0", "@aws-crypto/sha256-js": "5.2.0", "@aws-sdk/core": "^3.973.9", "@aws-sdk/credential-provider-node": "^3.972.8", "@aws-sdk/middleware-host-header": "^3.972.3", "@aws-sdk/middleware-logger": "^3.972.3", "@aws-sdk/middleware-recursion-detection": "^3.972.3", "@aws-sdk/middleware-user-agent": "^3.972.9", "@aws-sdk/region-config-resolver": "^3.972.3", "@aws-sdk/types": "^3.973.1", "@aws-sdk/util-endpoints": "3.989.0", "@aws-sdk/util-user-agent-browser": "^3.972.3", "@aws-sdk/util-user-agent-node": "^3.972.7", "@smithy/config-resolver": "^4.4.6", "@smithy/core": "^3.23.0", "@smithy/fetch-http-handler": "^5.3.9", "@smithy/hash-node": "^4.2.8", "@smithy/invalid-dependency": "^4.2.8", "@smithy/middleware-content-length": "^4.2.8", "@smithy/middleware-endpoint": "^4.4.14", "@smithy/middleware-retry": "^4.4.31", "@smithy/middleware-serde": "^4.2.9", "@smithy/middleware-stack": "^4.2.8", "@smithy/node-config-provider": "^4.3.8", "@smithy/node-http-handler": "^4.4.10", "@smithy/protocol-http": "^5.3.8", "@smithy/smithy-client": "^4.11.3", "@smithy/types": "^4.12.0", "@smithy/url-parser": "^4.2.8", "@smithy/util-base64": "^4.3.0", "@smithy/util-body-length-browser": "^4.2.0", "@smithy/util-body-length-node": "^4.2.1", "@smithy/util-defaults-mode-browser": "^4.3.30", "@smithy/util-defaults-mode-node": "^4.2.33", "@smithy/util-endpoints": "^3.2.8", "@smithy/util-middleware": "^4.2.8", "@smithy/util-retry": "^4.2.8", "@smithy/util-utf8": "^4.2.0", "tslib": "^2.6.2" } }, "sha512-GFZgQTnkjojn6Vif0DwDy0Gdi74hZLXUw+WtRNFWMrmXbKFsb+W/qVUJTQLlZn8jPZHoxwZg4v3vFovRUDOavw=="],
 
     "@activepieces/piece-assemblyai/dotenv": ["dotenv@16.6.1", "", {}, "sha512-uBq4egWHTcTt33a72vpSG0z3HnPuIl6NqYcTrKEg2azoEyl2hpW0zqlxysq2pK9HlDIHyHyakeYaYnSAwd8bow=="],
 
     "@activepieces/piece-assemblyai/typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
 
+    "@activepieces/piece-drupal/tslib": ["tslib@2.8.1", "", {}, "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="],
+
     "@activepieces/piece-google-vertexai/@google/genai": ["@google/genai@1.43.0", "", { "dependencies": { "google-auth-library": "^10.3.0", "p-retry": "^4.6.2", "protobufjs": "^7.5.4", "ws": "^8.18.0" }, "peerDependencies": { "@modelcontextprotocol/sdk": "^1.25.2" }, "optionalPeers": ["@modelcontextprotocol/sdk"] }, "sha512-hklCsJNdMlDM1IwcCVcGQFBg2izY0+t5BIGbRsxi2UnKi6AGKL7pqJqmBDNRbw0bYCs4y3NA7TB+fkKfP/Nrdw=="],
 
     "@activepieces/piece-google-vertexai/google-auth-library": ["google-auth-library@10.6.1", "", { "dependencies": { "base64-js": "^1.3.0", "ecdsa-sig-formatter": "^1.0.11", "gaxios": "7.1.3", "gcp-metadata": "8.1.2", "google-logging-utils": "1.1.3", "jws": "^4.0.0" } }, "sha512-5awwuLrzNol+pFDmKJd0dKtZ0fPLAtoA5p7YO4ODsDu6ONJUVqbYwvv8y2ZBO5MBNp9TJXigB19710kYpBPdtA=="],
 
     "@activepieces/piece-oracle-database/tslib": ["tslib@2.8.1", "", {}, "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="],
+
+    "@activepieces/piece-postiz/tslib": ["tslib@2.8.1", "", {}, "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="],
+
+    "@activepieces/piece-promotekit/tslib": ["tslib@2.8.1", "", {}, "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="],
 
     "@activepieces/piece-prompthub/zod": ["zod@3.25.76", "", {}, "sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ=="],
 
@@ -15026,8 +15042,6 @@
     "@activepieces/piece-tapfiliate/tslib": ["tslib@2.8.1", "", {}, "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="],
 
     "@activepieces/piece-text-helper/jsdom": ["jsdom@24.1.3", "", { "dependencies": { "cssstyle": "^4.0.1", "data-urls": "^5.0.0", "decimal.js": "^10.4.3", "form-data": "^4.0.0", "html-encoding-sniffer": "^4.0.0", "http-proxy-agent": "^7.0.2", "https-proxy-agent": "^7.0.5", "is-potential-custom-element-name": "^1.0.1", "nwsapi": "^2.2.12", "parse5": "^7.1.2", "rrweb-cssom": "^0.7.1", "saxes": "^6.0.0", "symbol-tree": "^3.2.4", "tough-cookie": "^4.1.4", "w3c-xmlserializer": "^5.0.0", "webidl-conversions": "^7.0.0", "whatwg-encoding": "^3.1.1", "whatwg-mimetype": "^4.0.0", "whatwg-url": "^14.0.0", "ws": "^8.18.0", "xml-name-validator": "^5.0.0" }, "peerDependencies": { "canvas": "^2.11.2" }, "optionalPeers": ["canvas"] }, "sha512-MyL55p3Ut3cXbeBEG7Hcv0mVM8pp8PBNWxRqchZnSfAiES1v1mRnMeFfaHWIPULpwsYfvO+ZmMZz5tGCnjzDUQ=="],
-
-    "@activepieces/pieces-framework/ai": ["ai@6.0.116", "", { "dependencies": { "@ai-sdk/gateway": "3.0.66", "@ai-sdk/provider": "3.0.8", "@ai-sdk/provider-utils": "4.0.19", "@opentelemetry/api": "1.9.0" }, "peerDependencies": { "zod": "^3.25.76 || ^4.1.8" } }, "sha512-7yM+cTmyRLeNIXwt4Vj+mrrJgVQ9RMIW5WO0ydoLoYkewIvsMcvUmqS4j2RJTUXaF1HphwmSKUMQ/HypNRGOmA=="],
 
     "@actual-app/api/node-fetch": ["node-fetch@3.3.2", "", { "dependencies": { "data-uri-to-buffer": "^4.0.0", "fetch-blob": "^3.1.4", "formdata-polyfill": "^4.0.10" } }, "sha512-dRB78srN/l6gqWulah9SrxeYnxeddIG30+GOqK/9OlLVyLg3HPnr6SqOWTWOXKRwC2eGYCkZ59NNuSgvSrpgOA=="],
 
@@ -15068,6 +15082,8 @@
     "@anthropic-ai/sdk/@types/node": ["@types/node@18.19.130", "", { "dependencies": { "undici-types": "~5.26.4" } }, "sha512-GRaXQx6jGfL8sKfaIDD6OupbIHBr9jv7Jnaml9tB7l4v068PAOXqfcujMMo5PhbIs6ggR1XODELqahT2R8v0fg=="],
 
     "@anthropic-ai/sdk/formdata-node": ["formdata-node@4.4.1", "", { "dependencies": { "node-domexception": "1.0.0", "web-streams-polyfill": "4.0.0-beta.3" } }, "sha512-0iirZp3uVDjVGt9p49aTaqjk84TrglENEDuqfdlZQ1roC9CWlPk6Avf8EEnZNcAqPonwkG35x4n3ww/1THYAeQ=="],
+
+    "@asamuzakjp/css-color/lru-cache": ["lru-cache@10.4.3", "", {}, "sha512-JNAzZcXrCt42VGLuYz0zfAzDfAvJWW6AfYlDBQyDV5DClI2m5sAmK+OIO7s59XfsRsWHp02jAJrRadPRGTt6SQ=="],
 
     "@atlaskit/adf-schema/linkify-it": ["linkify-it@2.2.0", "", { "dependencies": { "uc.micro": "^1.0.1" } }, "sha512-GnAl/knGn+i1U/wjBz3akz2stz+HrHLsxMwHQGofCDfPvlf+gDKN58UtfmUquTY4/MXeE2x7k19KQmeoZi94Iw=="],
 
@@ -17517,9 +17533,13 @@
 
     "@activepieces/piece-roe-ai/@modelcontextprotocol/sdk/eventsource-parser": ["eventsource-parser@3.0.6", "", {}, "sha512-Vo1ab+QXPzZ4tCa8SwIHJFaSzy4R6SHf7BY79rFBDf0idraZWAkYrDjDj8uWaSm3S2TK+hJ7/t1CEmZ7jXw+pg=="],
 
-    "@activepieces/pieces-framework/ai/@ai-sdk/gateway": ["@ai-sdk/gateway@3.0.66", "", { "dependencies": { "@ai-sdk/provider": "3.0.8", "@ai-sdk/provider-utils": "4.0.19", "@vercel/oidc": "3.1.0" }, "peerDependencies": { "zod": "^3.25.76 || ^4.1.8" } }, "sha512-SIQ0YY0iMuv+07HLsZ+bB990zUJ6S4ujORAh+Jv1V2KGNn73qQKnGO0JBk+w+Res8YqOFSycwDoWcFlQrVxS4A=="],
+    "@activepieces/piece-text-helper/jsdom/cssstyle": ["cssstyle@4.6.0", "", { "dependencies": { "@asamuzakjp/css-color": "^3.2.0", "rrweb-cssom": "^0.8.0" } }, "sha512-2z+rWdzbbSZv6/rhtvzvqeZQHrBaqgogqt85sqFNbabZOuFbCVFb8kPeEtZjiKkbrm395irpNKiYeFeLiQnFPg=="],
 
-    "@activepieces/pieces-framework/ai/@ai-sdk/provider-utils": ["@ai-sdk/provider-utils@4.0.19", "", { "dependencies": { "@ai-sdk/provider": "3.0.8", "@standard-schema/spec": "^1.1.0", "eventsource-parser": "^3.0.6" }, "peerDependencies": { "zod": "^3.25.76 || ^4.1.8" } }, "sha512-3eG55CrSWCu2SXlqq2QCsFjo3+E7+Gmg7i/oRVoSZzIodTuDSfLb3MRje67xE9RFea73Zao7Lm4mADIfUETKGg=="],
+    "@activepieces/piece-text-helper/jsdom/form-data": ["form-data@4.0.5", "", { "dependencies": { "asynckit": "^0.4.0", "combined-stream": "^1.0.8", "es-set-tostringtag": "^2.1.0", "hasown": "^2.0.2", "mime-types": "^2.1.12" } }, "sha512-8RipRLol37bNs2bhoV67fiTEvdTrbMUYcFTiy3+wuuOnUog2QBHCZWXDRijWQfAkhBj2Uf5UnVaiWwA5vdd82w=="],
+
+    "@activepieces/piece-text-helper/jsdom/https-proxy-agent": ["https-proxy-agent@7.0.6", "", { "dependencies": { "agent-base": "^7.1.2", "debug": "4" } }, "sha512-vK9P5/iUfdl95AI+JVyUuIcVtd4ofvtrOr3HNtM2yxC9bnMbEdp3x01OhQNnjb8IJYi38VlTE3mBXwcfvywuSw=="],
+
+    "@activepieces/piece-text-helper/jsdom/rrweb-cssom": ["rrweb-cssom@0.7.1", "", {}, "sha512-TrEMa7JGdVm0UThDJSx7ddw5nVm3UJS9o9CCIZ72B1vSyEZoziDqBYP3XIoi/12lKrJR8rE3jeFHMok2F/Mnsg=="],
 
     "@ai-sdk/google-vertex/@ai-sdk/provider-utils/eventsource-parser": ["eventsource-parser@3.0.6", "", {}, "sha512-Vo1ab+QXPzZ4tCa8SwIHJFaSzy4R6SHf7BY79rFBDf0idraZWAkYrDjDj8uWaSm3S2TK+hJ7/t1CEmZ7jXw+pg=="],
 
@@ -18799,7 +18819,7 @@
 
     "@activepieces/piece-google-vertexai/google-auth-library/jws/jwa": ["jwa@2.0.1", "", { "dependencies": { "buffer-equal-constant-time": "^1.0.1", "ecdsa-sig-formatter": "1.0.11", "safe-buffer": "^5.0.1" } }, "sha512-hRF04fqJIP8Abbkq5NKGN0Bbr3JxlQ+qhZufXVr0DvujKy93ZCbXZMHDL4EOtodSbCWxOqR8MS1tXA5hwqCXDg=="],
 
-    "@activepieces/pieces-framework/ai/@ai-sdk/provider-utils/eventsource-parser": ["eventsource-parser@3.0.6", "", {}, "sha512-Vo1ab+QXPzZ4tCa8SwIHJFaSzy4R6SHf7BY79rFBDf0idraZWAkYrDjDj8uWaSm3S2TK+hJ7/t1CEmZ7jXw+pg=="],
+    "@activepieces/piece-text-helper/jsdom/cssstyle/rrweb-cssom": ["rrweb-cssom@0.8.0", "", {}, "sha512-guoltQEx+9aMf2gDZ0s62EcV8lsXR+0w8915TC3ITdn2YueuNjdAYh/levpU9nFaoChh9RUS5ZdQMrKfVEN9tw=="],
 
     "@ai-sdk/google-vertex/google-auth-library/gaxios/node-fetch": ["node-fetch@3.3.2", "", { "dependencies": { "data-uri-to-buffer": "^4.0.0", "fetch-blob": "^3.1.4", "formdata-polyfill": "^4.0.10" } }, "sha512-dRB78srN/l6gqWulah9SrxeYnxeddIG30+GOqK/9OlLVyLg3HPnr6SqOWTWOXKRwC2eGYCkZ59NNuSgvSrpgOA=="],
 
