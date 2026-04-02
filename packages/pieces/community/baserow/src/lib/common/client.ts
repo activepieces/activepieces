@@ -121,19 +121,48 @@ export class BaserowClient {
     limit?: number,
     search?: string,
     order_by?: string,
-    filters?: Record<string, string>
+    filters?: Record<string, string>,
+    advancedFilters?: { filter_type: string; filters: { field: number; type: string; value: string }[] }
   ) {
+    const query = prepareQuery({
+      user_field_names: 'true',
+      page: page,
+      size: limit,
+      search: search,
+      order_by: order_by,
+      ...filters,
+    });
+    if (advancedFilters && advancedFilters.filters.length > 0) {
+      query['filters'] = JSON.stringify(advancedFilters);
+    }
     return await this.makeRequest(
       HttpMethod.GET,
       `/database/rows/table/${table_id}/`,
-      prepareQuery({
-        user_field_names: 'true',
-        page: page,
-        size: limit,
-        search: search,
-        order_by: order_by,
-        ...filters,
-      })
+      query
+    );
+  }
+  async batchCreateRows(table_id: number, items: Record<string, unknown>[]) {
+    return await this.makeRequest(
+      HttpMethod.POST,
+      `/database/rows/table/${table_id}/batch/`,
+      { user_field_names: 'true' },
+      { items }
+    );
+  }
+  async batchUpdateRows(table_id: number, items: Record<string, unknown>[]) {
+    return await this.makeRequest(
+      HttpMethod.PATCH,
+      `/database/rows/table/${table_id}/batch/`,
+      { user_field_names: 'true' },
+      { items }
+    );
+  }
+  async batchDeleteRows(table_id: number, ids: number[]) {
+    return await this.makeRequest(
+      HttpMethod.POST,
+      `/database/rows/table/${table_id}/batch-delete/`,
+      undefined,
+      { items: ids }
     );
   }
   async aggregateField(

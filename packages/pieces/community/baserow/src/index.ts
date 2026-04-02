@@ -11,6 +11,9 @@ import { updateRowAction } from './lib/actions/update-row';
 import { findRowAction } from './lib/actions/find-row';
 import { cleanRowAction } from './lib/actions/clean-row';
 import { aggregateFieldAction } from './lib/actions/aggregate-field';
+import { batchCreateRowsAction } from './lib/actions/batch-create-rows';
+import { batchUpdateRowsAction } from './lib/actions/batch-update-rows';
+import { batchDeleteRowsAction } from './lib/actions/batch-delete-rows';
 import { rowCreatedTrigger } from './lib/triggers/row-created';
 import { rowUpdatedTrigger } from './lib/triggers/row-updated';
 import { rowDeletedTrigger } from './lib/triggers/row-deleted';
@@ -37,6 +40,9 @@ export const baserow = createPiece({
     findRowAction,
     cleanRowAction,
     aggregateFieldAction,
+    batchCreateRowsAction,
+    batchUpdateRowsAction,
+    batchDeleteRowsAction,
     createCustomApiCallAction({
       baseUrl: (auth) => {
         if (!auth) {
