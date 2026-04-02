@@ -69,5 +69,13 @@
   "File URL": "File URL",
   "The URL of the file to upload.": "The URL of the file to upload.",
   "New Event (Webhook)": "New Event (Webhook)",
-  "Triggers when a webhook event is received from Typefully (draft created, published, scheduled, deleted, etc.).": "Triggers when a webhook event is received from Typefully (draft created, published, scheduled, deleted, etc.)."
+  "Triggers when a specific webhook event is received from Typefully.": "Triggers when a specific webhook event is received from Typefully.",
+  "Event": "Event",
+  "The Typefully event to listen for.": "The Typefully event to listen for.",
+  "Draft Created": "Draft Created",
+  "Draft Scheduled": "Draft Scheduled",
+  "Draft Published": "Draft Published",
+  "Draft Status Changed": "Draft Status Changed",
+  "Draft Tags Changed": "Draft Tags Changed",
+  "Draft Deleted": "Draft Deleted"
 }

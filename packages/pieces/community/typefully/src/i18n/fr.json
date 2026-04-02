@@ -69,5 +69,13 @@
   "File URL": "URL du fichier",
   "The URL of the file to upload.": "L'URL du fichier à uploader.",
   "New Event (Webhook)": "Nouvel événement (Webhook)",
-  "Triggers when a webhook event is received from Typefully (draft created, published, scheduled, deleted, etc.).": "Se déclenche quand un événement webhook est reçu de Typefully (brouillon créé, publié, planifié, supprimé, etc.)."
+  "Triggers when a specific webhook event is received from Typefully.": "Se déclenche quand un événement webhook spécifique est reçu de Typefully.",
+  "Event": "Événement",
+  "The Typefully event to listen for.": "L'événement Typefully à écouter.",
+  "Draft Created": "Brouillon créé",
+  "Draft Scheduled": "Brouillon planifié",
+  "Draft Published": "Brouillon publié",
+  "Draft Status Changed": "Statut du brouillon modifié",
+  "Draft Tags Changed": "Tags du brouillon modifiés",
+  "Draft Deleted": "Brouillon supprimé"
 }
