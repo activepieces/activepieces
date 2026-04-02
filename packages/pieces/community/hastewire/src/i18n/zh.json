@@ -1,13 +1,13 @@
 {
-  "You can obtain API key from [Settings](https://hastewire.com/humanizer/account/api-keys).": "您可以从 [Settings](https://hastewire.com/humanizer/account/api-keys 获取API密钥。",
-  "Detect Text": "检测文本",
-  "Humanize Text": "人性化文本",
-  "Analyzes text and returns the likelihood of it being AI-generated or human-written.": "分析文本并返回为 AI生成或人类写入的可能性。",
-  "Rephrases a given AI-generated text to be more human like.": "将给定的 AI生成的文本改写为更像人类。",
+  "You can obtain API key from [Settings](https://hastewire.com/humanizer/account/api-keys).": "You can obtain API key from [Settings](https://hastewire.com/humanizer/account/api-keys).",
+  "Detect Text": "Detect Text",
+  "Humanize Text": "Humanize Text",
+  "Analyzes text and returns the likelihood of it being AI-generated or human-written.": "Analyzes text and returns the likelihood of it being AI-generated or human-written.",
+  "Rephrases a given AI-generated text to be more human like.": "Rephrases a given AI-generated text to be more human like.",
   "Input Text": "Input Text",
-  "Text Style": "文本样式",
-  "The desired writing style for the output.": "输出所需的写入风格。",
-  "formal": "正式的",
-  "standard": "标准的",
-  "academic": "学历"
+  "Text Style": "Text Style",
+  "The desired writing style for the output.": "The desired writing style for the output.",
+  "formal": "formal",
+  "standard": "standard",
+  "academic": "academic"
 }
