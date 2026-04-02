@@ -89,7 +89,7 @@ export const ConfirmationDeleteDialog = ({
             <AlertDescription>{warning}</AlertDescription>
           </Alert>
         )}
-        <DialogFooter className="mt-4">
+        <DialogFooter className="mt-3">
           <Button
             variant="outline"
             disabled={isPending}

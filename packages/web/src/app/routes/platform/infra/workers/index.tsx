@@ -45,7 +45,7 @@ export default function WorkersPage() {
   const fleetType = workersData?.[0]?.type;
 
   return (
-    <div className="flex flex-col w-full gap-4">
+    <div className="flex flex-col w-full gap-4 px-4">
       <DashboardPageHeader
         description={t('Check the health of your workers')}
         title={t('Workers')}
