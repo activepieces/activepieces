@@ -21,7 +21,7 @@ export const ThemeToggle = () => {
         {t('Theme')}
       </Label>
       <Select value={theme} onValueChange={setTheme}>
-        <SelectTrigger className="h-9">
+        <SelectTrigger>
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
