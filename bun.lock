@@ -2297,6 +2297,17 @@
         "zod": "4.3.6",
       },
     },
+    "packages/pieces/community/elastic-email": {
+      "name": "@activepieces/piece-elastic-email",
+      "version": "0.2.0",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
+        "zod": "4.3.6",
+      },
+    },
     "packages/pieces/community/elevenlabs": {
       "name": "@activepieces/piece-elevenlabs",
       "version": "0.2.4",
@@ -3123,6 +3134,16 @@
         "tslib": "^2.3.0",
       },
     },
+    "packages/pieces/community/granola": {
+      "name": "@activepieces/piece-granola",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/gravityforms": {
       "name": "@activepieces/piece-gravityforms",
       "version": "0.1.3",
@@ -3597,11 +3618,12 @@
     },
     "packages/pieces/community/json": {
       "name": "@activepieces/piece-json",
-      "version": "0.1.4",
+      "version": "0.1.5",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
+        "jsonata": "^2.0.0",
         "tslib": "2.6.2",
       },
     },
@@ -3707,6 +3729,16 @@
     "packages/pieces/community/knack": {
       "name": "@activepieces/piece-knack",
       "version": "0.1.4",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "^2.3.0",
+      },
+    },
+    "packages/pieces/community/knock": {
+      "name": "@activepieces/piece-knock",
+      "version": "0.1.0",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -4099,6 +4131,16 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "form-data": "4.0.4",
+        "tslib": "2.6.2",
+      },
+    },
+    "packages/pieces/community/mailgun": {
+      "name": "@activepieces/piece-mailgun",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
         "tslib": "2.6.2",
       },
     },
@@ -6699,7 +6741,7 @@
     },
     "packages/pieces/community/umami": {
       "name": "@activepieces/piece-umami",
-      "version": "0.0.1",
+      "version": "0.1.0",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -8467,6 +8509,8 @@
 
     "@activepieces/piece-eden-ai": ["@activepieces/piece-eden-ai@workspace:packages/pieces/community/eden-ai"],
 
+    "@activepieces/piece-elastic-email": ["@activepieces/piece-elastic-email@workspace:packages/pieces/community/elastic-email"],
+
     "@activepieces/piece-elevenlabs": ["@activepieces/piece-elevenlabs@workspace:packages/pieces/community/elevenlabs"],
 
     "@activepieces/piece-emailit": ["@activepieces/piece-emailit@workspace:packages/pieces/community/emailit"],
@@ -8619,6 +8663,8 @@
 
     "@activepieces/piece-gptzero-detect-ai": ["@activepieces/piece-gptzero-detect-ai@workspace:packages/pieces/community/gptzero-detect-ai"],
 
+    "@activepieces/piece-granola": ["@activepieces/piece-granola@workspace:packages/pieces/community/granola"],
+
     "@activepieces/piece-graphql": ["@activepieces/piece-graphql@workspace:packages/pieces/core/graphql"],
 
     "@activepieces/piece-gravityforms": ["@activepieces/piece-gravityforms@workspace:packages/pieces/community/gravityforms"],
@@ -8733,6 +8779,8 @@
 
     "@activepieces/piece-knack": ["@activepieces/piece-knack@workspace:packages/pieces/community/knack"],
 
+    "@activepieces/piece-knock": ["@activepieces/piece-knock@workspace:packages/pieces/community/knock"],
+
     "@activepieces/piece-kommo": ["@activepieces/piece-kommo@workspace:packages/pieces/community/kommo"],
 
     "@activepieces/piece-krisp-call": ["@activepieces/piece-krisp-call@workspace:packages/pieces/community/krisp-call"],
@@ -8804,6 +8852,8 @@
     "@activepieces/piece-mailercheck": ["@activepieces/piece-mailercheck@workspace:packages/pieces/community/mailercheck"],
 
     "@activepieces/piece-maileroo": ["@activepieces/piece-maileroo@workspace:packages/pieces/community/maileroo"],
+
+    "@activepieces/piece-mailgun": ["@activepieces/piece-mailgun@workspace:packages/pieces/community/mailgun"],
 
     "@activepieces/piece-mailjet": ["@activepieces/piece-mailjet@workspace:packages/pieces/community/mailjet"],
 
@@ -13113,6 +13163,8 @@
 
     "json5": ["json5@2.2.3", "", { "bin": { "json5": "lib/cli.js" } }, "sha512-XmOWe7eyHYH14cLdVPoyg+GOH3rYX++KpzrylJwSW98t3Nk+U8XOl8FWKOgwtzdb8lXGf6zYwDUzeHMWfxasyg=="],
 
+    "jsonata": ["jsonata@2.1.0", "", {}, "sha512-OCzaRMK8HobtX8fp37uIVmL8CY1IGc/a6gLsDqz3quExFR09/U78HUzWYr7T31UEB6+Eu0/8dkVD5fFDOl9a8w=="],
+
     "jsonc-eslint-parser": ["jsonc-eslint-parser@2.4.1", "", { "dependencies": { "acorn": "^8.5.0", "eslint-visitor-keys": "^3.0.0", "espree": "^9.0.0", "semver": "^7.3.5" } }, "sha512-uuPNLJkKN8NXAlZlQ6kmUF9qO+T6Kyd7oV4+/7yy8Jz6+MZNyhPq8EdLpdfnPVzUC8qSf1b4j1azKaGnFsjmsw=="],
 
     "jsoneditor": ["jsoneditor@10.0.3", "", { "dependencies": { "ace-builds": "^1.33.1", "ajv": "^6.12.6", "javascript-natural-sort": "^0.7.1", "jmespath": "^0.16.0", "json-source-map": "^0.6.1", "jsonrepair": "^3.7.0", "mobius1-selectr": "^2.4.13", "picomodal": "^3.0.0", "vanilla-picker": "^2.12.3" } }, "sha512-dCEtrms+zsIQjDZC5Yo6FBWNvNlXSR2nZ5aprEjawAD689CI8/qqv/Ytj0wPqcz6H1p1ebFfM/wkf8L1wrWk5w=="],
@@ -15022,6 +15074,8 @@
     "@activepieces/piece-google-vertexai/@google/genai": ["@google/genai@1.43.0", "", { "dependencies": { "google-auth-library": "^10.3.0", "p-retry": "^4.6.2", "protobufjs": "^7.5.4", "ws": "^8.18.0" }, "peerDependencies": { "@modelcontextprotocol/sdk": "^1.25.2" }, "optionalPeers": ["@modelcontextprotocol/sdk"] }, "sha512-hklCsJNdMlDM1IwcCVcGQFBg2izY0+t5BIGbRsxi2UnKi6AGKL7pqJqmBDNRbw0bYCs4y3NA7TB+fkKfP/Nrdw=="],
 
     "@activepieces/piece-google-vertexai/google-auth-library": ["google-auth-library@10.6.1", "", { "dependencies": { "base64-js": "^1.3.0", "ecdsa-sig-formatter": "^1.0.11", "gaxios": "7.1.3", "gcp-metadata": "8.1.2", "google-logging-utils": "1.1.3", "jws": "^4.0.0" } }, "sha512-5awwuLrzNol+pFDmKJd0dKtZ0fPLAtoA5p7YO4ODsDu6ONJUVqbYwvv8y2ZBO5MBNp9TJXigB19710kYpBPdtA=="],
+
+    "@activepieces/piece-knock/tslib": ["tslib@2.8.1", "", {}, "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="],
 
     "@activepieces/piece-oracle-database/tslib": ["tslib@2.8.1", "", {}, "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="],
 

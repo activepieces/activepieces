@@ -1,7 +1,6 @@
 import {
   createTrigger,
   TriggerStrategy,
-  AppConnectionValueForAuthProperty,
   StaticPropsValue,
 } from '@activepieces/pieces-framework';
 import {
@@ -10,30 +9,38 @@ import {
   pollingHelper,
   HttpMethod,
 } from '@activepieces/pieces-common';
-import { umamiAuth } from '../auth';
+import { umamiAuth, UmamiAuthValue } from '../auth';
 import { umamiApiCall, umamiCommon } from '../common';
 
 const props = {
   websiteId: umamiCommon.websiteDropdown,
 };
 
-const polling: Polling<
-  AppConnectionValueForAuthProperty<typeof umamiAuth>,
-  StaticPropsValue<typeof props>
-> = {
+const polling: Polling<UmamiAuthValue, StaticPropsValue<typeof props>> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue, lastFetchEpochMS }) => {
     const now = Date.now();
-    const startAt = lastFetchEpochMS > 0 ? lastFetchEpochMS : now - 24 * 60 * 60 * 1000;
+    const startAt =
+      lastFetchEpochMS > 0 ? lastFetchEpochMS : now - 24 * 60 * 60 * 1000;
 
-    const allEvents: { eventName: string; createdAt: string; id: string; urlPath: string }[] = [];
+    const allEvents: {
+      eventName: string;
+      createdAt: string;
+      id: string;
+      urlPath: string;
+    }[] = [];
     const pageSize = 20;
     let page = 1;
     let hasMore = true;
 
     while (hasMore) {
       const response = await umamiApiCall<{
-        data: { eventName: string; createdAt: string; id: string; urlPath: string }[];
+        data: {
+          eventName: string;
+          createdAt: string;
+          id: string;
+          urlPath: string;
+        }[];
         count: number;
       }>({
         auth,
@@ -63,7 +70,8 @@ export const newEvent = createTrigger({
   auth: umamiAuth,
   name: 'new_event',
   displayName: 'New Event',
-  description: 'Triggers when a new custom event is recorded on a website.',
+  description:
+    'Triggers when a new custom event is recorded on a website.',
   props,
   sampleData: {
     id: 'abc123',
