@@ -1,6 +1,6 @@
 {
-  "name": "@activepieces/piece-umami",
-  "version": "0.1.0",
+  "name": "@activepieces/piece-elastic-email",
+  "version": "0.2.0",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "scripts": {
@@ -11,6 +11,7 @@
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
+    "zod": "4.3.6",
     "tslib": "2.6.2"
   }
 }
