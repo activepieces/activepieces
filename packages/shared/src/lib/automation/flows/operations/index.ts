@@ -11,7 +11,6 @@ import { flowStructureUtil } from '../util/flow-structure-util'
 import { _addAction } from './add-action'
 import { _addBranch } from './add-branch'
 import { _getActionsForCopy } from './copy-action-operations'
-import { _createPieceVersionUpdateBackup } from './create-piece-version-update-backup'
 import { _deleteAction } from './delete-action'
 import { _deleteBranch } from './delete-branch'
 import { _duplicateBranch, _duplicateStep } from './duplicate-step'
@@ -20,7 +19,6 @@ import { _moveAction } from './move-action'
 import { _moveBranch } from './move-branch'
 import { notesOperations } from './notes-operations'
 import { _getOperationsForPaste } from './paste-operations'
-import { _revertPieceVersionUpdate } from './revert-piece-version-update'
 import { _skipAction } from './skip-action'
 import { _updateAction } from './update-action'
 import { _updateSampleDataInfo } from './update-sample-data-info'
@@ -53,8 +51,6 @@ export enum FlowOperationType {
     DELETE_NOTE = 'DELETE_NOTE',
     ADD_NOTE = 'ADD_NOTE',
     UPDATE_SAMPLE_DATA_INFO = 'UPDATE_SAMPLE_DATA_INFO',
-    CREATE_PIECE_VERSION_UPDATE_BACKUP = 'CREATE_PIECE_VERSION_UPDATE_BACKUP',
-    REVERT_PIECE_VERSION_UPDATE = 'REVERT_PIECE_VERSION_UPDATE',
 }
 
 export const DeleteBranchRequest = z.object({
@@ -215,20 +211,6 @@ export const UpdateOwnerRequest = z.object({
 })
 export type UpdateOwnerRequest = z.infer<typeof UpdateOwnerRequest>
 
-export const CreatePieceVersionUpdateBackupRequest = z.object({
-    stepName: z.string(),
-})
-export type CreatePieceVersionUpdateBackupRequest = z.infer<
-    typeof CreatePieceVersionUpdateBackupRequest
->
-
-export const RevertPieceVersionUpdateRequest = z.object({
-    stepName: z.string(),
-})
-export type RevertPieceVersionUpdateRequest = z.infer<
-    typeof RevertPieceVersionUpdateRequest
->
-
 export const FlowOperationRequest = z.union([
     z.object({
         type: z.literal(FlowOperationType.MOVE_ACTION),
@@ -334,14 +316,6 @@ export const FlowOperationRequest = z.union([
         type: z.literal(FlowOperationType.UPDATE_SAMPLE_DATA_INFO),
         request: UpdateSampleDataInfoRequest,
     }).describe('Update Sample Data Info'),
-    z.object({
-        type: z.literal(FlowOperationType.CREATE_PIECE_VERSION_UPDATE_BACKUP),
-        request: CreatePieceVersionUpdateBackupRequest,
-    }).describe('Create Step Backup for Updating Piece Version'),
-    z.object({
-        type: z.literal(FlowOperationType.REVERT_PIECE_VERSION_UPDATE),
-        request: RevertPieceVersionUpdateRequest,
-    }).describe('Revert Piece Version Update'),
 ])
 
 
@@ -436,15 +410,6 @@ export const flowOperations = {
                 clonedVersion = _updateSampleDataInfo(clonedVersion, operation.request)
                 break
             }
-            case FlowOperationType.CREATE_PIECE_VERSION_UPDATE_BACKUP: {
-                clonedVersion = _createPieceVersionUpdateBackup(clonedVersion, operation.request)
-                break
-            }
-            case FlowOperationType.REVERT_PIECE_VERSION_UPDATE: {
-                clonedVersion = _revertPieceVersionUpdate(clonedVersion, operation.request)
-                break
-            }
-
             default:
                 break
         }

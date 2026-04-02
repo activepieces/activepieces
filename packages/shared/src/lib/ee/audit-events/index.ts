@@ -416,9 +416,5 @@ function convertUpdateActionToDetails(event: FlowUpdatedEvent) {
             return `Deleted note in flow "${event.data.flowVersion.displayName}".`
         case FlowOperationType.UPDATE_SAMPLE_DATA_INFO:
             return `Updated sample data info for step "${event.data.request.request.stepName}" in flow "${event.data.flowVersion.displayName}".`
-        case FlowOperationType.CREATE_PIECE_VERSION_UPDATE_BACKUP:
-            return `Saved version backup for step "${event.data.request.request.stepName}" in flow "${event.data.flowVersion.displayName}".`
-        case FlowOperationType.REVERT_PIECE_VERSION_UPDATE:
-            return `Reverted version update for step "${event.data.request.request.stepName}" in flow "${event.data.flowVersion.displayName}".`
     }
 }

@@ -19,9 +19,6 @@ import { useBuilderStateContext } from '../../builder-hooks';
 import {
   changeVersionUtils,
   LatestVersionAvailableAlert,
-  pieceStepVersionBackupExpiredMessageKey,
-  RevertVersionCollapsible,
-  useRevertPieceVersionUpdateMutation,
   VersionChangeType,
 } from './update-piece-version-utils';
 
@@ -40,16 +37,10 @@ export const UpgradePieceVersionContent: React.FC<
     step.type === FlowTriggerType.PIECE
       ? step.settings.triggerName ?? ''
       : step.settings.actionName ?? '';
-  const flowVersion = useBuilderStateContext((state) => state.flowVersion);
-  const pieceStepVersionBackup =
-    flowVersion.pieceStepsVersionsBackups?.[step.name];
   const [serverError, setServerError] = useState<string | undefined>(undefined);
 
   const applyOperation = useBuilderStateContext(
     (state) => state.applyOperation,
-  );
-  const waitForPendingFlowUpdates = useBuilderStateContext(
-    (state) => state.waitForPendingFlowUpdates,
   );
 
   const { mutate: applyUpgrade, isPending: isUpgradePending } = useMutation({
@@ -88,14 +79,6 @@ export const UpgradePieceVersionContent: React.FC<
         input,
         requireAuth: actionOrTriggerDef.requireAuth,
       });
-
-      if (changeType === VersionChangeType.MINOR_OR_MAJOR) {
-        await waitForPendingFlowUpdates();
-        applyOperation({
-          type: FlowOperationType.CREATE_PIECE_VERSION_UPDATE_BACKUP,
-          request: { stepName: step.name },
-        });
-      }
 
       if (step.type === FlowTriggerType.PIECE) {
         applyOperation({
@@ -145,35 +128,11 @@ export const UpgradePieceVersionContent: React.FC<
     },
   });
 
-  const { mutate: revertVersionUpdate, isPending: isRevertPending } =
-    useRevertPieceVersionUpdateMutation({
-      stepName: step.name,
-      onSuccess: () => {
-        onClose();
-      },
-      onError: (message) => {
-        const display =
-          message === pieceStepVersionBackupExpiredMessageKey
-            ? t(pieceStepVersionBackupExpiredMessageKey)
-            : message;
-        setServerError(display);
-      },
-    });
-
   return (
     <div className="flex flex-col gap-4">
       <LatestVersionAvailableAlert
         isLatestMinorOrMajor={isLatestMinorOrMajor}
       />
-
-      {pieceStepVersionBackup && (
-        <RevertVersionCollapsible
-          backupPieceVersion={pieceStepVersionBackup.pieceVersion}
-          onRevert={revertVersionUpdate}
-          isRevertPending={isRevertPending}
-          revertDisabled={isUpgradePending}
-        />
-      )}
 
       {serverError && (
         <p className="text-sm font-medium text-destructive">{serverError}</p>
@@ -194,7 +153,6 @@ export const UpgradePieceVersionContent: React.FC<
         <Button
           type="button"
           loading={isUpgradePending}
-          disabled={isRevertPending}
           onClick={() => applyUpgrade()}
         >
           {isLatestMinorOrMajor

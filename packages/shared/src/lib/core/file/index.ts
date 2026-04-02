@@ -31,10 +31,6 @@ export enum FileType {
      * Large webhook payloads offloaded from Redis to file storage.
      */
     WEBHOOK_PAYLOAD = 'WEBHOOK_PAYLOAD',
-    /**
-     * Temporary backup of a piece step's settings before a version update, cleaned up by the stale file job.
-     */
-    PIECE_STEP_VERSION_BACKUP = 'PIECE_STEP_VERSION_BACKUP',
 }
 export enum FileCompression {
     NONE = 'NONE',

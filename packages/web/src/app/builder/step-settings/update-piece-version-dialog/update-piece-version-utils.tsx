@@ -1,34 +1,10 @@
 import { OAuth2Props, PiecePropertyMap } from '@activepieces/pieces-framework';
-import { ApFlagId, ErrorCode, FlowOperationType } from '@activepieces/shared';
-import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import {
-  AlertTriangle,
-  ArrowUp,
-  ChevronDown,
-  Info,
-  RotateCcw,
-} from 'lucide-react';
+import { AlertTriangle, ArrowUp, Info } from 'lucide-react';
 import semver from 'semver';
 
-import {
-  Alert,
-  AlertAction,
-  AlertDescription,
-  AlertTitle,
-} from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible';
-import { flowsApi } from '@/features/flows';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { formUtils } from '@/features/pieces';
-import { flagsHooks } from '@/hooks/flags-hooks';
-import { api } from '@/lib/api';
-
-import { useBuilderStateContext } from '../../builder-hooks';
 
 function getVersionChangeType({
   currentVersion,
@@ -114,9 +90,6 @@ function getLatestVersion({
 export function LatestVersionAvailableAlert({
   isLatestMinorOrMajor,
 }: LatestVersionAvailableAlertProps) {
-  const { data: executionDataRetentionDays } = flagsHooks.useFlag<number>(
-    ApFlagId.EXECUTION_DATA_RETENTION_DAYS,
-  );
   return (
     <Alert variant={isLatestMinorOrMajor ? 'warning' : 'default'}>
       {isLatestMinorOrMajor ? (
@@ -131,7 +104,7 @@ export function LatestVersionAvailableAlert({
       </AlertTitle>
       <AlertDescription>
         {isLatestMinorOrMajor
-          ? t('MajorUpgradeNote', { retentionDays: executionDataRetentionDays })
+          ? t('MajorUpgradeNote')
           : t(
               'Settings will carry over. Retest the step as the output may have changed.',
             )}
@@ -140,75 +113,12 @@ export function LatestVersionAvailableAlert({
   );
 }
 
-export function RevertVersionBackupAlert({
-  backupPieceVersion,
-  onRevert,
-  isRevertPending,
-  revertDisabled,
-}: RevertVersionBackupAlertProps) {
-  return (
-    <Alert variant="primary">
-      <RotateCcw className="size-4" />
-      <AlertDescription>
-        {t('Revert to restore your previous settings.')}
-      </AlertDescription>
-      <AlertAction>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          loading={isRevertPending}
-          disabled={revertDisabled}
-          onClick={() => onRevert()}
-        >
-          {t('Revert to v{version}', {
-            version: backupPieceVersion,
-          })}
-        </Button>
-      </AlertAction>
-    </Alert>
-  );
-}
-
-export function RevertVersionCollapsible({
-  backupPieceVersion,
-  onRevert,
-  isRevertPending,
-  revertDisabled,
-}: RevertVersionBackupAlertProps) {
-  return (
-    <Collapsible className="w-full">
-      <CollapsibleTrigger asChild>
-        <Button
-          type="button"
-          variant="ghost"
-          className="group flex h-auto w-full items-center justify-between gap-2 !px-0 py-2 text-sm font-medium hover:bg-transparent hover:text-foreground"
-        >
-          {t('Restore previous version')}
-          <ChevronDown className="size-4 shrink-0 transition-transform group-data-[state=open]:rotate-180" />
-        </Button>
-      </CollapsibleTrigger>
-      <CollapsibleContent className="pt-2">
-        <RevertVersionBackupAlert
-          backupPieceVersion={backupPieceVersion}
-          onRevert={onRevert}
-          isRevertPending={isRevertPending}
-          revertDisabled={revertDisabled}
-        />
-      </CollapsibleContent>
-    </Collapsible>
-  );
-}
-
 export function MinorOrMajorSelectionAlert() {
-  const { data: executionDataRetentionDays } = flagsHooks.useFlag<number>(
-    ApFlagId.EXECUTION_DATA_RETENTION_DAYS,
-  );
   return (
     <Alert variant="warning">
       <AlertTriangle className="size-4" />
       <AlertDescription>
-        {t('MajorUpgradeNote', { retentionDays: executionDataRetentionDays })}
+        {t('MajorUpgradeNote')}
       </AlertDescription>
     </Alert>
   );
@@ -238,69 +148,6 @@ export function PatchDowngradeInfoAlert() {
   );
 }
 
-export function useRevertPieceVersionUpdateMutation({
-  stepName,
-  onSuccess,
-  onError,
-}: {
-  stepName: string;
-  onSuccess?: () => void;
-  onError?: (message: string) => void;
-}) {
-  const [flowId, setVersion, applyOperation] = useBuilderStateContext((s) => [
-    s.flow.id,
-    s.setVersion,
-    s.applyOperation,
-  ]);
-
-  const waitForPendingFlowUpdates = useBuilderStateContext(
-    (s) => s.waitForPendingFlowUpdates,
-  );
-
-  return useMutation({
-    mutationFn: async () => {
-      await waitForPendingFlowUpdates();
-      try {
-        const result = await flowsApi.update(
-          flowId,
-          {
-            type: FlowOperationType.REVERT_PIECE_VERSION_UPDATE,
-            request: { stepName },
-          },
-          false,
-        );
-        setVersion(result.version, false);
-        applyOperation({
-          type: FlowOperationType.UPDATE_SAMPLE_DATA_INFO,
-          request: {
-            stepName,
-            sampleDataSettings: undefined,
-          },
-        });
-      } catch (err: unknown) {
-        if (api.isApError(err, ErrorCode.ENTITY_NOT_FOUND)) {
-          throw new Error(pieceStepVersionBackupExpiredMessageKey);
-        }
-        throw err;
-      }
-    },
-    onSuccess,
-    onError: (error: unknown) => {
-      const message =
-        error instanceof Error &&
-        error.message === pieceStepVersionBackupExpiredMessageKey
-          ? pieceStepVersionBackupExpiredMessageKey
-          : error instanceof Error
-          ? error.message
-          : String(error);
-      onError?.(message);
-    },
-  });
-}
-
-export const pieceStepVersionBackupExpiredMessageKey =
-  'pieceStepVersionBackupExpired';
-
 export const changeVersionUtils = {
   getVersionChangeType,
   getInputAfterVersionChange,
@@ -316,11 +163,4 @@ export enum VersionChangeType {
 
 type LatestVersionAvailableAlertProps = {
   isLatestMinorOrMajor: boolean;
-};
-
-type RevertVersionBackupAlertProps = {
-  backupPieceVersion: string;
-  onRevert: () => void;
-  isRevertPending: boolean;
-  revertDisabled?: boolean;
 };

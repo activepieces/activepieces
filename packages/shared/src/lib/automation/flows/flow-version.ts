@@ -14,13 +14,6 @@ export enum FlowVersionState {
     DRAFT = 'DRAFT',
 }
 
-const PieceStepVersionBackupEntry = z.object({
-    pieceVersion: z.string(),
-    pieceName: z.string(),
-    actionOrTriggerName: z.string(),
-    fileId: z.string(),
-})
-
 export const FlowVersion = z.object({
     ...BaseModelSchema,
     flowId: z.string(),
@@ -34,10 +27,7 @@ export const FlowVersion = z.object({
     connectionIds: z.array(z.string()),
     backupFiles: Nullable(z.record(z.string(), z.string())),
     notes: z.array(Note),
-    pieceStepsVersionsBackups: Nullable(z.record(z.string(), PieceStepVersionBackupEntry)),
 })
-
-export type PieceStepVersionBackupEntry = z.infer<typeof PieceStepVersionBackupEntry>
 
 export type FlowVersion = z.infer<typeof FlowVersion>
 

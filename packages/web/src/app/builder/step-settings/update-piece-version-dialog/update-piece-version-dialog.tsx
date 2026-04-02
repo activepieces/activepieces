@@ -39,9 +39,6 @@ import {
   MinorOrMajorSelectionAlert,
   PatchDowngradeInfoAlert,
   PatchUpgradeInfoAlert,
-  pieceStepVersionBackupExpiredMessageKey,
-  RevertVersionCollapsible,
-  useRevertPieceVersionUpdateMutation,
   VersionChangeType,
 } from './update-piece-version-utils';
 import { UpgradePieceVersionContent } from './upgrade-piece-version-dialog';
@@ -54,7 +51,7 @@ const UpdatePieceVersionDialog: React.FC<UpdatePieceVersionDialogProps> = ({
 }) => {
   const [view, setView] = useState<DialogView | null>(null);
   const pieceName = step.settings.pieceName;
-  const { pieceVersions } = piecesHooks.usePieceVersions(pieceName);
+  const { pieceVersions, isLoading } = piecesHooks.usePieceVersions(pieceName);
   const latestVersion = changeVersionUtils.getLatestVersion({
     currentVersion,
     versions: pieceVersions ?? [],
@@ -81,6 +78,7 @@ const UpdatePieceVersionDialog: React.FC<UpdatePieceVersionDialogProps> = ({
             size="icon"
             className="size-6"
             onClick={handleOpen}
+            loading={isLoading}
           >
             {hasNewerVersion ? (
               <ArrowUp className="size-3.5 text-green-500" />
@@ -155,15 +153,8 @@ const AdvancedForm: React.FC<AdvancedFormProps> = ({
   const applyOperation = useBuilderStateContext(
     (state) => state.applyOperation,
   );
-  const waitForPendingFlowUpdates = useBuilderStateContext(
-    (state) => state.waitForPendingFlowUpdates,
-  );
-  const flowVersion = useBuilderStateContext((state) => state.flowVersion);
   const [showAllVersions, setShowAllVersions] = useState(false);
   const [versionSelectOpen, setVersionSelectOpen] = useState(false);
-
-  const pieceStepVersionBackup =
-    flowVersion.pieceStepsVersionsBackups?.[step.name];
 
   const patchVersions = (pieceVersions ?? []).filter((p) => {
     const changeType = changeVersionUtils.getVersionChangeType({
@@ -257,14 +248,6 @@ const AdvancedForm: React.FC<AdvancedFormProps> = ({
           requireAuth: actionOrTriggerDef.requireAuth,
         });
 
-        if (changeType === VersionChangeType.MINOR_OR_MAJOR) {
-          await waitForPendingFlowUpdates();
-          applyOperation({
-            type: FlowOperationType.CREATE_PIECE_VERSION_UPDATE_BACKUP,
-            request: { stepName: step.name },
-          });
-        }
-
         if (step.type === FlowTriggerType.PIECE) {
           applyOperation({
             type: FlowOperationType.UPDATE_TRIGGER,
@@ -317,24 +300,6 @@ const AdvancedForm: React.FC<AdvancedFormProps> = ({
     },
   );
 
-  const { mutate: revertVersionUpdate, isPending: isRevertPending } =
-    useRevertPieceVersionUpdateMutation({
-      stepName: step.name,
-      onSuccess: () => {
-        onClose();
-      },
-      onError: (message) => {
-        const display =
-          message === pieceStepVersionBackupExpiredMessageKey
-            ? t(pieceStepVersionBackupExpiredMessageKey)
-            : message;
-        form.setError('root.serverError', {
-          type: 'manual',
-          message: display,
-        });
-      },
-    });
-
   return (
     <Form {...form}>
       <form
@@ -383,15 +348,6 @@ const AdvancedForm: React.FC<AdvancedFormProps> = ({
           )}
         />
 
-        {pieceStepVersionBackup && (
-          <RevertVersionCollapsible
-            backupPieceVersion={pieceStepVersionBackup.pieceVersion}
-            onRevert={revertVersionUpdate}
-            isRevertPending={isRevertPending}
-            revertDisabled={isApplyPending}
-          />
-        )}
-
         {isMinorOrMajor && <MinorOrMajorSelectionAlert />}
 
         {isPatchUpgrade && <PatchUpgradeInfoAlert />}
@@ -418,11 +374,7 @@ const AdvancedForm: React.FC<AdvancedFormProps> = ({
           <Button type="button" variant="outline" onClick={onClose}>
             {t('Cancel')}
           </Button>
-          <Button
-            type="submit"
-            loading={isApplyPending}
-            disabled={isRevertPending}
-          >
+          <Button type="submit" loading={isApplyPending}>
             {t('Apply')}
           </Button>
         </DialogFooter>

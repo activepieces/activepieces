@@ -79,22 +79,7 @@ function _updateAction(flowVersion: FlowVersion, request: UpdateActionRequest): 
             valid,
         }
     })
-    if (request.type !== FlowActionType.PIECE) {
-        return next
-    }
-    const backup = flowVersion.pieceStepsVersionsBackups?.[request.name]
-    if (backup === undefined) {
-        return next
-    }
-    const actionName = request.settings.actionName ?? ''
-    if (backup.pieceName === request.settings.pieceName && backup.actionOrTriggerName === actionName) {
-        return next
-    }
-    const { [request.name]: _removed, ...rest } = next.pieceStepsVersionsBackups ?? {}
-    return {
-        ...next,
-        pieceStepsVersionsBackups: Object.keys(rest).length > 0 ? rest : undefined,
-    }
+    return next
 }
 
 export { _updateAction }

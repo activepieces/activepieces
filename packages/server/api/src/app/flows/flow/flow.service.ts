@@ -527,13 +527,12 @@ export const flowService = (log: FastifyBaseLogger) => ({
             removeSampleData: true,
         })
 
-        const { pieceStepsVersionsBackups: _pieceStepsVersionsBackups, ...versionWithoutBackup } = flow.version
         const template: SharedTemplate = {
             name: flow.version.displayName,
             summary: '',
             description: '',
             pieces: Array.from(new Set(flowPieceUtil.getUsedPieces(flow.version.trigger))),
-            flows: [versionWithoutBackup],
+            flows: [flow.version],
             tags: [],
             blogUrl: '',
             metadata: {
@@ -879,15 +878,6 @@ async function createNewDraftIfVersionIsPublished({
                 request: lastVersionWithArtifacts,
             },
         })
-        if (!isNil(lastVersionWithArtifacts.pieceStepsVersionsBackups)) {
-            await flowVersionRepo().update(lastVersion.id, {
-                pieceStepsVersionsBackups: lastVersionWithArtifacts.pieceStepsVersionsBackups,
-            })
-            lastVersion = {
-                ...lastVersion,
-                pieceStepsVersionsBackups: lastVersionWithArtifacts.pieceStepsVersionsBackups,
-            }
-        }
     }
     return lastVersion
 }

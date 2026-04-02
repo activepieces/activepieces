@@ -51,22 +51,7 @@ function _updateTrigger(flowVersion: FlowVersion, request: UpdateTriggerRequest)
         }
         return parentStep
     })
-    if (request.type !== FlowTriggerType.PIECE) {
-        return next
-    }
-    const backup = flowVersion.pieceStepsVersionsBackups?.[request.name]
-    if (backup === undefined) {
-        return next
-    }
-    const triggerName = request.settings.triggerName ?? ''
-    if (backup.pieceName === request.settings.pieceName && backup.actionOrTriggerName === triggerName) {
-        return next
-    }
-    const { [request.name]: _removed, ...rest } = next.pieceStepsVersionsBackups ?? {}
-    return {
-        ...next,
-        pieceStepsVersionsBackups: Object.keys(rest).length > 0 ? rest : undefined,
-    }
+    return next
 }
 
 export { _updateTrigger }

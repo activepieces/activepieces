@@ -54,10 +54,6 @@ export const FlowVersionEntity = new EntitySchema<FlowVersionSchema>({
             type: 'jsonb',
             nullable: false,
         },
-        pieceStepsVersionsBackups: {
-            type: 'jsonb',
-            nullable: true,
-        },
     },
     indices: [
         {
