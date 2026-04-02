@@ -1,7 +1,7 @@
 import { createPiece } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { PieceCategory } from '@activepieces/shared';
-import { umamiAuth, getAuthHeaders, getBaseUrl } from './lib/auth';
+import { umamiAuth, UmamiAuthValue, getAuthHeaders, getBaseUrl } from './lib/auth';
 import { getWebsiteStats } from './lib/actions/get-website-stats';
 import { getWebsiteMetrics } from './lib/actions/get-website-metrics';
 import { getActiveVisitors } from './lib/actions/get-active-visitors';
@@ -28,8 +28,8 @@ export const umami = createPiece({
     listWebsites,
     createCustomApiCallAction({
       auth: umamiAuth,
-      baseUrl: (auth) => auth ? getBaseUrl(auth) : 'https://api.umami.is',
-      authMapping: async (auth) => getAuthHeaders(auth),
+      baseUrl: (auth) => (auth ? getBaseUrl(auth as UmamiAuthValue) : 'https://api.umami.is/v1'),
+      authMapping: async (auth) => getAuthHeaders(auth as UmamiAuthValue),
     }),
   ],
   triggers: [newEvent, newSession],
