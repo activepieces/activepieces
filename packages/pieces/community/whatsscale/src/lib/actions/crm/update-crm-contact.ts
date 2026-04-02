@@ -26,9 +26,9 @@ export const updateCrmContactAction = createAction({
     const auth = context.auth.secret_text;
     const { contactId, name, tags } = context.propsValue;
 
-      const body: Record<string, unknown> = {};
-      if (name !== undefined && name !== null) body['name'] = name;
-    if (tags !== undefined && tags !== null) body['tags'] = tags;
+    const body: Record<string, unknown> = {};
+    if (name !== undefined && name !== null) body.name = name;
+    if (tags !== undefined && tags !== null) body.tags = tags;
 
     const response = await whatsscaleClient(
       auth,

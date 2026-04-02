@@ -35,6 +35,7 @@ export const sendImageToContactAction = createAction({
       chatId: contact,
       file: preparedUrl,
       caption: caption ?? '',
+      platform: 'activepieces',
     });
 
     return response.body;

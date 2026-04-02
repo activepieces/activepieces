@@ -59,6 +59,7 @@ export const sendVideoManualAction = createAction({
       ...recipientBody,
       file: preparedUrl,
       caption: caption ?? '',
+      platform: 'activepieces',
     });
 
     const { jobId } = sendResponse.body as { jobId: string };

@@ -1,8 +1,4 @@
-import {
-  createAction,
-  Property,
-  DropdownState,
-} from '@activepieces/pieces-framework';
+import { createAction, Property, DropdownState } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { whatsscaleAuth } from '../../auth';
 import { whatsscaleClient } from '../../common/client';
@@ -11,8 +7,7 @@ export const listCrmContactsAction = createAction({
   auth: whatsscaleAuth,
   name: 'whatsscale_list_crm_contacts',
   displayName: 'List CRM Contacts',
-  description:
-    'Retrieve a paginated list of CRM contacts with optional filters',
+  description: 'Retrieve a paginated list of CRM contacts with optional filters',
   props: {
     tag: Property.Dropdown<string, false, typeof whatsscaleAuth>({
       auth: whatsscaleAuth,
@@ -22,11 +17,7 @@ export const listCrmContactsAction = createAction({
       refreshers: [],
       options: async ({ auth }): Promise<DropdownState<string>> => {
         if (!auth) {
-          return {
-            disabled: true,
-            options: [],
-            placeholder: 'Please connect your account',
-          };
+          return { disabled: true, options: [], placeholder: 'Please connect your account' };
         }
         try {
           const response = await whatsscaleClient(
@@ -37,26 +28,13 @@ export const listCrmContactsAction = createAction({
           );
           const tags = response.body as { label: string; value: string }[];
           if (!tags || tags.length === 0) {
-            return {
-              disabled: true,
-              options: [],
-              placeholder: 'No tags found',
-            };
+            return { disabled: true, options: [], placeholder: 'No tags found' };
           }
           return { disabled: false, options: tags };
         } catch {
-          return {
-            disabled: true,
-            options: [],
-            placeholder: 'Failed to load tags',
-          };
+          return { disabled: true, options: [], placeholder: 'Failed to load tags' };
         }
       },
-    }),
-    search: Property.ShortText({
-      displayName: 'Search',
-      description: 'Optional. Search contacts by name or phone number.',
-      required: false,
     }),
     limit: Property.Number({
       displayName: 'Limit',
@@ -72,13 +50,11 @@ export const listCrmContactsAction = createAction({
   async run(context) {
     const auth = context.auth.secret_text;
     const { tag, limit, page } = context.propsValue;
-    const search = context.propsValue['search'] as string | undefined;
 
     const qp: Record<string, string> = {};
-    if (tag) qp['tag'] = tag;
-    if (search) qp['search'] = search;
-    if (limit != null) qp['limit'] = String(limit);
-    if (page != null) qp['page'] = String(page);
+    if (tag)           qp.tag   = tag;
+    if (limit != null) qp.limit = String(limit);
+    if (page  != null) qp.page  = String(page);
 
     const params = Object.keys(qp).length > 0 ? qp : undefined;
 

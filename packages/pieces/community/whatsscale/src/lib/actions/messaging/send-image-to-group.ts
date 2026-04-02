@@ -35,6 +35,7 @@ export const sendImageToGroupAction = createAction({
       chatId: group,
       file: preparedUrl,
       caption: caption ?? '',
+      platform: 'activepieces',
     });
 
     return response.body;

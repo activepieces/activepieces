@@ -37,6 +37,7 @@ export const sendVideoToCrmContactAction = createAction({
       crm_contact_id: crmContact,
       file: preparedUrl,
       caption: caption ?? '',
+      platform: 'activepieces',
     });
 
     const { jobId } = sendResponse.body as { jobId: string };

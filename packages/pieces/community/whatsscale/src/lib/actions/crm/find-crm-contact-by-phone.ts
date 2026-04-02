@@ -11,6 +11,7 @@ export const findCrmContactByPhoneAction = createAction({
   props: {
     phone: Property.ShortText({
       displayName: 'Phone Number',
+      description: 'With country code e.g. +31612345678',
       required: true,
     }),
   },
