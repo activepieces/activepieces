@@ -4,7 +4,6 @@ import {
 } from '@activepieces/pieces-framework';
 import { baserowAuth } from '../auth';
 import { baserowCommon, makeClient } from '../common';
-import { BASEROW_FILTER_OPERATORS } from '../common/constants';
 
 export const listRowsAction = createAction({
   name: 'baserow_list_rows',
@@ -55,15 +54,6 @@ export const listRowsAction = createAction({
       description:
         'List of filters. Each filter is an object with "field" (field ID as number), "type" (operator), and "value" (filter value).',
       required: false,
-    }),
-    filter_operator: Property.StaticDropdown({
-      displayName: 'Filter Operator',
-      description: 'The operator to use when adding a single filter via the Filters array.',
-      required: false,
-      options: {
-        disabled: false,
-        options: BASEROW_FILTER_OPERATORS,
-      },
     }),
   },
   async run(context) {
