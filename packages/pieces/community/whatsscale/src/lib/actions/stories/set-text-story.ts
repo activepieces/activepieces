@@ -28,7 +28,7 @@ export const setTextStoryAction = createAction({
     const auth = context.auth.secret_text;
 
     const body: Record<string, unknown> = { session, text };
-    if (backgroundColor) body['backgroundColor'] = backgroundColor;
+    if (backgroundColor) body.backgroundColor = backgroundColor;
 
     const response = await whatsscaleClient(
       auth,
