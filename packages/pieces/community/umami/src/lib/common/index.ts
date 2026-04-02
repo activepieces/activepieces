@@ -5,8 +5,13 @@ import {
   HttpResponse,
   QueryParams,
 } from '@activepieces/pieces-common';
-import { AppConnectionValueForAuthProperty, Property } from '@activepieces/pieces-framework';
-import { umamiAuth, getAuthHeaders, getBaseUrl } from '../auth';
+import { Property } from '@activepieces/pieces-framework';
+import {
+  umamiAuth,
+  getAuthHeaders,
+  getBaseUrl,
+  UmamiAuthValue,
+} from '../auth';
 
 export async function umamiApiCall<T extends HttpMessageBody>({
   auth,
@@ -15,14 +20,13 @@ export async function umamiApiCall<T extends HttpMessageBody>({
   body,
   queryParams,
 }: {
-  auth: AppConnectionValueForAuthProperty<typeof umamiAuth>;
+  auth: UmamiAuthValue;
   method: HttpMethod;
   path: string;
   queryParams?: QueryParams;
   body?: unknown;
 }): Promise<HttpResponse<T>> {
   const baseUrl = getBaseUrl(auth);
-
   const headers = await getAuthHeaders(auth);
 
   return await httpClient.sendRequest<T>({
@@ -46,12 +50,14 @@ export const umamiCommon = {
         return {
           disabled: true,
           options: [],
-          placeholder: 'please connect your account first',
+          placeholder: 'Please connect your account first.',
         };
       }
       try {
-        const response = await umamiApiCall<{ data: { id: string; name: string; domain: string }[] }>({
-          auth: auth,
+        const response = await umamiApiCall<{
+          data: { id: string; name: string; domain: string }[];
+        }>({
+          auth: auth as UmamiAuthValue,
           method: HttpMethod.GET,
           path: '/websites',
           queryParams: { pageSize: '100' },
