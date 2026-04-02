@@ -148,7 +148,7 @@ export const progressService = {
                 status: flowExecutorContext.verdict.status,
                 progressUpdateType: engineConstants.progressUpdateType,
                 logsFileId: engineConstants.logsFileId,
-                failedStep: flowExecutorContext.verdict.status === FlowRunStatus.FAILED ? flowExecutorContext.verdict.failedStep : undefined,
+                failedStep: 'failedStep' in flowExecutorContext.verdict ? flowExecutorContext.verdict.failedStep : undefined,
                 stepNameToTest: engineConstants.stepNameToTest,
                 stepResponse,
                 pauseMetadata: flowExecutorContext.verdict.status === FlowRunStatus.PAUSED ? flowExecutorContext.verdict.pauseMetadata : undefined,
@@ -167,20 +167,17 @@ export const progressService = {
         if (!backupController) {
             return
         }
-        
-        console.log('[Progress] Shutdown called, stopping backup loop')
+
         backupController.abort()
-        
+
         if (backupLoopPromise) {
-            console.log('[Progress] Waiting for in-progress backup to complete')
             await backupLoopPromise
         }
-        
+
         backupController = null
         backupLoopPromise = null
         latestUpdateParams = null
         savedStartTime = null
-        console.log('[Progress] Shutdown complete')
     },
 }
 
