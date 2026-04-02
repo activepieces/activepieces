@@ -4,6 +4,7 @@ import { execSync } from 'node:child_process'
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { readPackageJson } from './files'
 import { packagePrePublishChecks } from './package-pre-publish-checks'
+import { preparePieceDistForPublish } from '../../../packages/cli/src/lib/utils/prepare-piece-utils'
 function isExactVersion(version: string): boolean {
   return /^\d+\.\d+\.\d+/.test(version)
 }
@@ -72,6 +73,11 @@ export const publishNpmPackage = async (path: string): Promise<void> => {
     return;
   }
   const { version } = await readPackageJson(path)
+
+  // Pins all dependency versions (including transitive) from bun.lock.
+  // For pieces built via CLI or prepare-pieces-for-publish, this already ran during build — calling it
+  // again is idempotent. For shared/common/framework, this is the only place it runs before publish.
+  preparePieceDistForPublish(path)
 
   const json = JSON.parse(readFileSync(`${outputPath}/package.json`).toString())
   json.version = version
