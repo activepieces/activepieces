@@ -50,7 +50,7 @@ export const findOrAddDealAction = createAction({
 
     // Search for the person by email
     const people = await client.getAllPages<any>(
-      `/api/v1/crm/people?Email=${encodeURIComponent(context.propsValue.contactEmail)}`
+      `/api/v1/crm/people?$filter=Email eq '${encodeURIComponent(context.propsValue.contactEmail)}'`
     );
     const person = people.find(
       (item: any) =>

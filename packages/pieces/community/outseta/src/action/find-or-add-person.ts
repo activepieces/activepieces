@@ -62,11 +62,9 @@ export const findOrAddPersonAction = createAction({
       apiSecret: context.auth.props.apiSecret,
     });
 
-    const searchResult = await client.get<any>(
-      `/api/v1/crm/people?Email=${encodeURIComponent(context.propsValue.email)}&$top=100`
+    const items = await client.getAllPages<any>(
+      `/api/v1/crm/people?$filter=Email eq '${encodeURIComponent(context.propsValue.email)}'`
     );
-
-    const items = searchResult?.items ?? searchResult?.Items ?? [];
     const exactMatch = items.find(
       (item: any) =>
         item.Email?.toLowerCase() === context.propsValue.email.toLowerCase()
