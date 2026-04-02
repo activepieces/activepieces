@@ -77,7 +77,7 @@ export const recordUpdatedTrigger = createTrigger({
 		}
 	},
 	async test(context) {
-		const response = await attioApiCall<{ data: Array<Record<string, any>> }>({
+		const response = await attioApiCall<{ data: Array<Record<string, unknown>> }>({
 			accessToken: context.auth.secret_text,
 			method: HttpMethod.POST,
 			resourceUri: `/objects/${context.propsValue.objectTypeId}/records/query`,
@@ -100,9 +100,13 @@ export const recordUpdatedTrigger = createTrigger({
 		}
 
 		const payload = context.payload.body as ObjectWebhookPayload;
-		const recordId = payload.events[0].id.record_id;
+		const event = payload.events?.[0];
 
-		const response = await attioApiCall<{ data: Record<string, any> }>({
+		if (!event) return [];
+
+		const recordId = event.id.record_id;
+
+		const response = await attioApiCall<{ data: Record<string, unknown> }>({
 			accessToken: context.auth.secret_text,
 			method: HttpMethod.GET,
 			resourceUri: `/objects/${context.propsValue.objectTypeId}/records/${recordId}`,
@@ -112,7 +116,11 @@ export const recordUpdatedTrigger = createTrigger({
 		const { filter_attribute, filter_value } = context.propsValue;
 
 		if (filter_attribute) {
-			const attrValues: Array<Record<string, any>> = record['values']?.[filter_attribute] ?? [];
+			const values = record['values'];
+			const attrValues: Array<Record<string, unknown>> =
+				values !== null && typeof values === 'object' && !Array.isArray(values)
+					? ((values as Record<string, unknown>)[filter_attribute] as Array<Record<string, unknown>> ?? [])
+					: [];
 
 			if (filter_value) {
 				const matched = attrValues.some((v) => {
@@ -129,18 +137,25 @@ export const recordUpdatedTrigger = createTrigger({
 	},
 });
 
-function extractAttributeDisplayValue(valueObj: Record<string, any>): string | null {
+function extractAttributeDisplayValue(valueObj: Record<string, unknown>): string | null {
 	if (isNil(valueObj)) return null;
 	// active_until being non-null means the value is no longer active
 	if (!isNil(valueObj['active_until'])) return null;
 
+	const status = valueObj['status'];
+	const option = valueObj['option'];
+
 	return (
-		valueObj['full_name'] ??
-		valueObj['email_address'] ??
-		valueObj['domain'] ??
-		valueObj['phone_number'] ??
-		(valueObj['status'] as Record<string, any> | undefined)?.['title'] ??
-		(valueObj['option'] as Record<string, any> | undefined)?.['title'] ??
+		(typeof valueObj['full_name'] === 'string' ? valueObj['full_name'] : null) ??
+		(typeof valueObj['email_address'] === 'string' ? valueObj['email_address'] : null) ??
+		(typeof valueObj['domain'] === 'string' ? valueObj['domain'] : null) ??
+		(typeof valueObj['phone_number'] === 'string' ? valueObj['phone_number'] : null) ??
+		(status !== null && typeof status === 'object'
+			? ((status as Record<string, unknown>)['title'] as string | undefined) ?? null
+			: null) ??
+		(option !== null && typeof option === 'object'
+			? ((option as Record<string, unknown>)['title'] as string | undefined) ?? null
+			: null) ??
 		(valueObj['value'] !== undefined ? String(valueObj['value']) : null)
 	);
 }
