@@ -16,7 +16,7 @@ export const json = createPiece({
   auth: PieceAuth.None(),
   minimumSupportedRelease: '0.30.0',
   logoUrl: "https://cdn.activepieces.com/pieces/new-core/json-helper.svg",
-  authors: ["leenmashni","abuaboud"],
+  authors: ["leenmashni","abuaboud","bertrandong"],
   actions: [convertJsonToText, convertTextToJson, runJsonataQuery],
   triggers: [],
 });
