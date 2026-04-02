@@ -29,6 +29,16 @@ export default defineConfig(({ command, mode }) => {
           },
           ws: true,
         },
+        '/mcp': {
+          target: 'http://127.0.0.1:3000',
+          secure: false,
+          changeOrigin: true,
+        },
+        '/.well-known/oauth-authorization-server': {
+          target: 'http://127.0.0.1:3000',
+          secure: false,
+          changeOrigin: true,
+        },
       },
       port: 4200,
       host: '0.0.0.0',
