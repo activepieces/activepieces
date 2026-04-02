@@ -8,12 +8,12 @@
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
-    "tslib": "2.6.2"
+    "tslib": "^2.3.0"
   },
   "peerDependencies": {
-    "@activepieces/shared": "workspace:*",
-    "@activepieces/pieces-framework": "workspace:*",
-    "@activepieces/pieces-common": "workspace:*"
+    "@activepieces/shared": "*",
+    "@activepieces/pieces-framework": "*",
+    "@activepieces/pieces-common": "*"
   },
   "scripts": {
     "build": "tsc -p tsconfig.lib.json && cp package.json dist/",

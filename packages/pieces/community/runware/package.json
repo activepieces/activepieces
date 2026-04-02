@@ -9,7 +9,7 @@
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
     "@runware/sdk-js": "1.1.44",
-    "tslib": "2.6.2",
+    "tslib": "^2.3.0",
     "zod": "4.3.6"
   },
   "scripts": {

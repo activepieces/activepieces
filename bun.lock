@@ -1,5 +1,6 @@
 {
   "lockfileVersion": 1,
+  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "activepieces",
@@ -198,6 +199,7 @@
         "jshint": "2.13.6",
         "json-server": "1.0.0-beta.0",
         "json-to-pretty-yaml": "1.2.2",
+        "jsonc-parser": "3.3.1",
         "jsoneditor": "10.0.3",
         "jsonlint-mod": "1.7.6",
         "jsonrepair": "3.2.0",
@@ -13114,6 +13116,8 @@
     "json5": ["json5@2.2.3", "", { "bin": { "json5": "lib/cli.js" } }, "sha512-XmOWe7eyHYH14cLdVPoyg+GOH3rYX++KpzrylJwSW98t3Nk+U8XOl8FWKOgwtzdb8lXGf6zYwDUzeHMWfxasyg=="],
 
     "jsonc-eslint-parser": ["jsonc-eslint-parser@2.4.1", "", { "dependencies": { "acorn": "^8.5.0", "eslint-visitor-keys": "^3.0.0", "espree": "^9.0.0", "semver": "^7.3.5" } }, "sha512-uuPNLJkKN8NXAlZlQ6kmUF9qO+T6Kyd7oV4+/7yy8Jz6+MZNyhPq8EdLpdfnPVzUC8qSf1b4j1azKaGnFsjmsw=="],
+
+    "jsonc-parser": ["jsonc-parser@3.3.1", "", {}, "sha512-HUgH65KyejrUFPvHFPbqOY0rsFip3Bo5wb4ngvdi1EpCYWUQDC5V+Y7mZws+DLkr4M//zQJoanu1SP+87Dv1oQ=="],
 
     "jsoneditor": ["jsoneditor@10.0.3", "", { "dependencies": { "ace-builds": "^1.33.1", "ajv": "^6.12.6", "javascript-natural-sort": "^0.7.1", "jmespath": "^0.16.0", "json-source-map": "^0.6.1", "jsonrepair": "^3.7.0", "mobius1-selectr": "^2.4.13", "picomodal": "^3.0.0", "vanilla-picker": "^2.12.3" } }, "sha512-dCEtrms+zsIQjDZC5Yo6FBWNvNlXSR2nZ5aprEjawAD689CI8/qqv/Ytj0wPqcz6H1p1ebFfM/wkf8L1wrWk5w=="],
 
