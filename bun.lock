@@ -1,5 +1,6 @@
 {
   "lockfileVersion": 1,
+  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "activepieces",
@@ -6099,7 +6100,7 @@
     },
     "packages/pieces/community/slack": {
       "name": "@activepieces/piece-slack",
-      "version": "0.14.2",
+      "version": "0.15.0",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -7136,6 +7137,16 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "tslib": "^2.3.0",
+      },
+    },
+    "packages/pieces/community/workday": {
+      "name": "@activepieces/piece-workday",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
       },
     },
     "packages/pieces/community/wrike": {
@@ -9438,6 +9449,8 @@
     "@activepieces/piece-wordpress": ["@activepieces/piece-wordpress@workspace:packages/pieces/community/wordpress"],
 
     "@activepieces/piece-workable": ["@activepieces/piece-workable@workspace:packages/pieces/community/workable"],
+
+    "@activepieces/piece-workday": ["@activepieces/piece-workday@workspace:packages/pieces/community/workday"],
 
     "@activepieces/piece-wrike": ["@activepieces/piece-wrike@workspace:packages/pieces/community/wrike"],
 
