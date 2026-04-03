@@ -28,6 +28,7 @@ export enum ApplicationEventName {
     FLOW_RUN_RESUMED = 'flow.run.resumed',
     FLOW_RUN_STARTED = 'flow.run.started',
     FLOW_RUN_FINISHED = 'flow.run.finished',
+    FLOW_RUN_RETRIED = 'flow.run.retried',
     FOLDER_CREATED = 'folder.created',
     FOLDER_UPDATED = 'folder.updated',
     FOLDER_DELETED = 'folder.deleted',
