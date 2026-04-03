@@ -3,16 +3,16 @@ import { createAction } from '@activepieces/pieces-framework';
 import { hedyAuth } from '../../auth';
 import { createClient } from '../../common/client';
 import { commonProps } from '../../common/props';
-import { PaginatedResponse, Todo } from '../../common/types';
+import { Highlight, PaginatedResponse } from '../../common/types';
 import { assertIdPrefix, assertLimit } from '../../common/validation';
 
-function toTodoArray(result: unknown): Todo[] {
+function toHighlightArray(result: unknown): Highlight[] {
   if (Array.isArray(result)) {
-    return result as Todo[];
+    return result as Highlight[];
   }
 
   if (result && typeof result === 'object' && 'data' in result) {
-    const data = (result as PaginatedResponse<Todo>).data;
+    const data = (result as PaginatedResponse<Highlight>).data;
     if (Array.isArray(data)) {
       return data;
     }
@@ -21,36 +21,40 @@ function toTodoArray(result: unknown): Todo[] {
   return [];
 }
 
-export const listSessionTodos = createAction({
+export const listSessionHighlights = createAction({
   auth: hedyAuth,
-  name: 'list-session-todos',
-  displayName: 'List Session Todos',
-  description: 'Retrieve todos generated for a specific session.',
+  name: 'list-session-highlights',
+  displayName: 'List Session Highlights',
+  description: 'Retrieve highlights for a specific session.',
   props: {
     sessionId: commonProps.sessionId,
     returnAll: commonProps.returnAll,
     limit: commonProps.limit,
   },
   async run(context) {
-    const sessionId = assertIdPrefix(context.propsValue.sessionId as string, 'sess_', 'Session ID');
+    const sessionId = assertIdPrefix(
+      context.propsValue.sessionId as string,
+      'sess_',
+      'Session ID',
+    );
     const client = createClient(context.auth);
     const { returnAll, limit } = context.propsValue as {
       returnAll?: boolean;
       limit?: number;
     };
 
-    const response = await client.request<Todo[]>({
+    const response = await client.request<Highlight[]>({
       method: HttpMethod.GET,
-      path: `/sessions/${sessionId}/todos`,
+      path: `/sessions/${sessionId}/highlights`,
     });
 
-    const todos = toTodoArray(response);
+    const highlights = toHighlightArray(response);
 
     if (!returnAll) {
       const limited = assertLimit(limit);
-      return limited ? todos.slice(0, limited) : todos.slice(0, 50);
+      return limited ? highlights.slice(0, limited) : highlights.slice(0, 50);
     }
 
-    return todos;
+    return highlights;
   },
 });
