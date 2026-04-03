@@ -39,8 +39,9 @@ export const connectucAuth = PieceAuth.OAuth2({
         valid: false,
         error: "Failed to validate ConnectUC credentials"
       };
-    } catch (error: any) {
-      if (error.response?.status === 401) {
+    } catch (error: unknown) {
+      const err = error as { response?: { status?: number }; message?: string };
+      if (err.response?.status === 401) {
         return {
           valid: false,
           error: "Invalid or expired access token. Please reconnect your ConnectUC account."
@@ -49,7 +50,7 @@ export const connectucAuth = PieceAuth.OAuth2({
 
       return {
         valid: false,
-        error: `Connection validation failed: ${error.message || "Unknown error occurred"}`
+        error: `Connection validation failed: ${err.message ?? "Unknown error occurred"}`
       };
     }
   },
