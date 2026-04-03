@@ -3,23 +3,27 @@ import { createAction } from '@activepieces/pieces-framework';
 import { hedyAuth } from '../../auth';
 import { createClient, unwrapResource } from '../../common/client';
 import { commonProps } from '../../common/props';
-import { Topic } from '../../common/types';
+import { SessionContext } from '../../common/types';
 import { assertIdPrefix } from '../../common/validation';
 
-export const getTopic = createAction({
+export const getContext = createAction({
   auth: hedyAuth,
-  name: 'get-topic',
-  displayName: 'Get Topic',
-  description: 'Retrieve details for a specific topic.',
+  name: 'get-context',
+  displayName: 'Get Session Context',
+  description: 'Retrieve a specific session context by ID.',
   props: {
-    topicId: commonProps.topicId,
+    contextId: commonProps.contextId,
   },
   async run(context) {
-    const topicId = assertIdPrefix(context.propsValue.topicId as string, 'topic_', 'Topic ID');
+    const contextId = assertIdPrefix(
+      context.propsValue.contextId as string,
+      'ctx_',
+      'Context ID',
+    );
     const client = createClient(context.auth);
-    const response = await client.request<Topic>({
+    const response = await client.request<SessionContext>({
       method: HttpMethod.GET,
-      path: `/topics/${topicId}`,
+      path: `/contexts/${contextId}`,
     });
 
     return unwrapResource(response);
