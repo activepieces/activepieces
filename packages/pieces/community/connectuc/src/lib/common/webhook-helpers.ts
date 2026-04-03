@@ -75,8 +75,6 @@ export async function registerConnectUCWebhook(params: RegisterWebhookParams): P
             body: webhookBody,
         });
 
-        console.log('Webhook created successfully:', response.body);
-
         // Store webhook ID for later deletion
         await context.store.put(CONNECTUC_WEBHOOK_TRIGGER_KEY, {
             webhookId: response.body.id,
@@ -112,7 +110,6 @@ export async function unregisterConnectUCWebhook(params: UnregisterWebhookParams
                 },
             });
 
-            console.log('Webhook deleted successfully:', webhookData.webhookId);
         } catch (error) {
             console.error('Failed to delete ConnectUC webhook:', error);
             // Don't throw - webhook may already be deleted

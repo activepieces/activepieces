@@ -22,9 +22,6 @@ export const connectucAuth = PieceAuth.OAuth2({
   scope: ['offline_access'],
   validate: async ({ auth }) => {
     try {
-      console.log("Validating ConnectUC OAuth2 credentials...");
-      console.log("Access token:", (auth as OAuth2PropertyValue).access_token);
-
       const response = await httpClient.sendRequest({
         method: HttpMethod.GET,
         url: "https://auth.uc-technologies.com/oauth2/userinfo",
@@ -33,9 +30,6 @@ export const connectucAuth = PieceAuth.OAuth2({
           token: (auth as OAuth2PropertyValue).access_token,
         },
       });
-
-      console.log("Response status:", response.status);
-      console.log("Response body:", response.body);
 
       if (response.status === 200) {
         return { valid: true };
@@ -46,9 +40,6 @@ export const connectucAuth = PieceAuth.OAuth2({
         error: "Failed to validate ConnectUC credentials"
       };
     } catch (error: any) {
-      console.log("Validation error:", error);
-      console.log("Error response:", error.response);
-
       if (error.response?.status === 401) {
         return {
           valid: false,
@@ -65,7 +56,7 @@ export const connectucAuth = PieceAuth.OAuth2({
 });
 
 export const connectuc = createPiece({
-  displayName: "ConnectUC (Beta)",
+  displayName: "ConnectUC",
   auth: connectucAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: "https://cuc-media.s3.us-east-1.amazonaws.com/cuc_logo_120x120.png",
