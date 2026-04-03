@@ -1,5 +1,5 @@
 {
-  "name": "@skyswitch/piece-connectuc-beta",
+  "name": "@skyswitch/piece-connectuc",
   "version": "0.0.11",
   "type": "commonjs",
   "main": "./src/index.js",
