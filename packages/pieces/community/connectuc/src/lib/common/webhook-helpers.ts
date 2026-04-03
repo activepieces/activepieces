@@ -16,7 +16,7 @@ interface RegisterWebhookParams {
     webhookUrl: string;
     event?: string;  // Singular event type
     events?: string[];  // Array of event types (for future use)
-    context: TriggerHookContext<any, any, any>;
+    context: TriggerHookContext<unknown, unknown, unknown>;
 }
 
 interface UnregisterWebhookParams {
@@ -24,7 +24,7 @@ interface UnregisterWebhookParams {
         access_token: string;
     };
     webhookUrl: string;
-    context: TriggerHookContext<any, any, any>;
+    context: TriggerHookContext<unknown, unknown, unknown>;
 }
 
 /**
@@ -46,7 +46,7 @@ export async function registerConnectUCWebhook(params: RegisterWebhookParams): P
         }
 
         // Build webhook body
-        const webhookBody: any = {
+        const webhookBody: Record<string, unknown> = {
             url: webhookUrl,
             flowId: context.flows.current.id,
             flowVersionId: context.flows.current.version.id,
@@ -107,6 +107,7 @@ export async function unregisterConnectUCWebhook(params: UnregisterWebhookParams
                 },
                 body: {
                     url: webhookUrl,
+                    webhookId: webhookData.webhookId,
                 },
             });
 

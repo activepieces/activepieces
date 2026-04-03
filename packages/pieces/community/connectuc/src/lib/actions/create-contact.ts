@@ -56,7 +56,7 @@ export const createContactAction = createAction({
         const body: Record<string, unknown> = {
             first_name: first_name,
             last_name: last_name,
-            emails: [{ value: email, type: 'work' }],
+            emails: email ? [{ value: email, type: 'work' }] : [],
             tels: tels,
             company: company || '',
             tags: formattedTags,
