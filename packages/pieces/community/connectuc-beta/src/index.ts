@@ -2,6 +2,7 @@ import { createPiece, PieceAuth, OAuth2PropertyValue } from "@activepieces/piece
 import { httpClient, HttpMethod, AuthenticationType } from "@activepieces/pieces-common";
 import { newRecording } from "./lib/triggers/new-recording";
 import { newCallTranscription } from "./lib/triggers/new-call-transcription";
+import { newCallSummary } from "./lib/triggers/new-call-summary";
 import { newCdr } from "./lib/triggers/new-cdr";
 import { newIncomingCall } from "./lib/triggers/new-incoming-call";
 import { newOutgoingCall } from "./lib/triggers/new-outgoing-call";
@@ -70,5 +71,5 @@ export const connectuc = createPiece({
   logoUrl: "https://cuc-media.s3.us-east-1.amazonaws.com/cuc_logo_120x120.png",
   authors: [],
   actions: [createContactAction, doNotDisturbAction, findCdrAction, initiateCallAction, sendSmsAction, updateCdrAction],
-  triggers: [newRecording, newCallTranscription, newCdr, newIncomingCall, newOutgoingCall, newVoicemail, newSms],
+  triggers: [newRecording, newCallTranscription, newCallSummary, newCdr, newIncomingCall, newOutgoingCall, newVoicemail, newSms],
 });
