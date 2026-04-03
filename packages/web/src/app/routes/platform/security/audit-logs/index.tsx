@@ -411,7 +411,8 @@ function extractEventDetails(event: ApplicationEvent): EventDetailRow[] {
   switch (event.action) {
     case ApplicationEventName.FLOW_RUN_STARTED:
     case ApplicationEventName.FLOW_RUN_FINISHED:
-    case ApplicationEventName.FLOW_RUN_RESUMED: {
+    case ApplicationEventName.FLOW_RUN_RESUMED:
+    case ApplicationEventName.FLOW_RUN_RETRIED: {
       const { flowRun } = event.data;
       const rows: EventDetailRow[] = [
         {
