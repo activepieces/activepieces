@@ -170,6 +170,22 @@ export const funnelIdDropdown = Property.Dropdown({
   },
 });
 
+export const funnelActionDropdown = Property.StaticDropdown({
+  displayName: 'Action',
+  description: 'Filter by specific funnel action (optional)',
+  required: false,
+  options: {
+    disabled: false,
+    options: [
+      { label: 'Published', value: 'published' },
+      { label: 'Unpublished', value: 'unpublished' },
+      { label: 'Archived', value: 'archived' },
+      { label: 'Page Updated', value: 'page_updated' },
+      { label: 'Version Restored', value: 'version_restored' },
+    ],
+  },
+});
+
 export const tagDropdown = Property.Dropdown({
   auth: PieceAuth.None(),
   displayName: 'Tag',

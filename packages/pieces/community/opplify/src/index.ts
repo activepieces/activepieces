@@ -3,7 +3,7 @@ import { PieceCategory } from '@activepieces/shared';
 import { opplifyAuth } from './lib/common/auth';
 
 // ============================================================================
-// TRIGGERS (67 total, 10 categories)
+// TRIGGERS (59 total, 10 categories)
 // ============================================================================
 
 // Category 1: Contacts / Leads (10)
@@ -18,33 +18,22 @@ import { tagRemoved } from './lib/triggers/contacts/tag-removed';
 import { customFieldChanged } from './lib/triggers/contacts/custom-field-changed';
 import { leadDeleted } from './lib/triggers/contacts/lead-deleted';
 
-// Category 2: Funnels, Pages & Forms (12)
+// Category 2: Funnels, Pages & Forms (4)
 import { funnelCreated } from './lib/triggers/funnels/funnel-created';
-import { funnelPublished } from './lib/triggers/funnels/funnel-published';
-import { funnelUnpublished } from './lib/triggers/funnels/funnel-unpublished';
-import { funnelArchived } from './lib/triggers/funnels/funnel-archived';
-import { funnelUpdated } from './lib/triggers/funnels/funnel-updated';
-import { funnelVersionRestored } from './lib/triggers/funnels/funnel-version-restored';
+import { funnelActivity } from './lib/triggers/funnels/funnel-activity';
 import { formSubmitted } from './lib/triggers/funnels/form-submitted';
-import { funnelFormSubmitted } from './lib/triggers/funnels/funnel-form-submitted';
-import { formPartiallyCompleted } from './lib/triggers/funnels/form-partially-completed';
-import { formViewed } from './lib/triggers/funnels/form-viewed';
 import { funnelPageVisited } from './lib/triggers/funnels/funnel-page-visited';
-import { pricingPageVisited } from './lib/triggers/funnels/pricing-page-visited';
-import { conversionEvent } from './lib/triggers/funnels/conversion-event';
 
-// Category 3: Communication (12)
+// Category 3: Communication (13)
 import { emailSent } from './lib/triggers/communication/email-sent';
 import { emailDelivered } from './lib/triggers/communication/email-delivered';
 import { emailOpened } from './lib/triggers/communication/email-opened';
 import { emailLinkClicked } from './lib/triggers/communication/email-link-clicked';
 import { emailBounced } from './lib/triggers/communication/email-bounced';
-import { emailReplied } from './lib/triggers/communication/email-replied';
 import { spamReported } from './lib/triggers/communication/spam-reported';
 import { smsSent } from './lib/triggers/communication/sms-sent';
 import { smsDelivered } from './lib/triggers/communication/sms-delivered';
 import { smsFailed } from './lib/triggers/communication/sms-failed';
-import { callLogged } from './lib/triggers/communication/call-logged';
 import { noteCreated } from './lib/triggers/communication/note-created';
 
 // Category 4: Appointments / Scheduling (6)
@@ -176,27 +165,17 @@ export const opplify = createPiece({
     tagRemoved,
     customFieldChanged,
     leadDeleted,
-    // Funnels, Pages & Forms (12)
+    // Funnels, Pages & Forms (4)
     funnelCreated,
-    funnelPublished,
-    funnelUnpublished,
-    funnelArchived,
-    funnelUpdated,
-    funnelVersionRestored,
+    funnelActivity,
     formSubmitted,
-    funnelFormSubmitted,
-    formPartiallyCompleted,
-    formViewed,
     funnelPageVisited,
-    pricingPageVisited,
-    conversionEvent,
-    // Communication (15)
+    // Communication (13)
     emailSent,
     emailDelivered,
     emailOpened,
     emailLinkClicked,
     emailBounced,
-    emailReplied,
     emailReceived,
     emailUnsubscribed,
     spamReported,
@@ -204,7 +183,6 @@ export const opplify = createPiece({
     smsDelivered,
     smsFailed,
     smsReceived,
-    callLogged,
     noteCreated,
     // Appointments / Scheduling (6)
     appointmentBooked,
