@@ -18,7 +18,7 @@ export const connectucAuth = PieceAuth.OAuth2({
   authUrl: "https://auth.uc-technologies.com/oauth2/authorize",
   tokenUrl: "https://auth.uc-technologies.com/oauth2/token",
   required: true,
-  scope: [],
+  scope: ['offline_access'],
   validate: async ({ auth }) => {
     try {
       console.log("Validating ConnectUC OAuth2 credentials...");
@@ -64,7 +64,7 @@ export const connectucAuth = PieceAuth.OAuth2({
 });
 
 export const connectuc = createPiece({
-  displayName: "ConnectUC",
+  displayName: "ConnectUC (Beta)",
   auth: connectucAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: "https://cuc-media.s3.us-east-1.amazonaws.com/cuc_logo_120x120.png",

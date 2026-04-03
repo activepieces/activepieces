@@ -1,6 +1,7 @@
-import { createTrigger, TriggerStrategy, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy, OAuth2PropertyValue } from '@activepieces/pieces-framework';
 import { connectucAuth } from '../../index';
 import { registerConnectUCWebhook, unregisterConnectUCWebhook } from '../common/webhook-helpers';
+import { domainProp, usersProp, smsRecipientsProp } from '../common/props';
 
 export const newSms = createTrigger({
     auth: connectucAuth,
@@ -8,11 +9,9 @@ export const newSms = createTrigger({
     displayName: 'New SMS',
     description: 'Triggers when a new SMS message is received',
     props: {
-        recipients: Property.LongText({
-            displayName: 'Recipients',
-            description: 'Add comma-separated recipients to which this trigger applies',
-            required: false,
-        }),
+        domain: domainProp(),
+        users: usersProp(),
+        recipients: smsRecipientsProp(),
     },
     sampleData: {
         conversationId: 1234567,

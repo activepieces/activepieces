@@ -1,7 +1,7 @@
 {
-  "name": "pieces-connectuc",
+  "name": "pieces-connectuc-beta",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "packages/pieces/community/connectuc/src",
+  "sourceRoot": "packages/pieces/community/connectuc-beta/src",
   "projectType": "library",
   "release": {
     "version": {
@@ -20,14 +20,14 @@
         "{options.outputPath}"
       ],
       "options": {
-        "outputPath": "dist/packages/pieces/community/connectuc",
-        "tsConfig": "packages/pieces/community/connectuc/tsconfig.lib.json",
-        "packageJson": "packages/pieces/community/connectuc/package.json",
-        "main": "packages/pieces/community/connectuc/src/index.ts",
+        "outputPath": "dist/packages/pieces/community/connectuc-beta",
+        "tsConfig": "packages/pieces/community/connectuc-beta/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/connectuc-beta/package.json",
+        "main": "packages/pieces/community/connectuc-beta/src/index.ts",
         "assets": [
-          "packages/pieces/community/connectuc/*.md",
+          "packages/pieces/community/connectuc-beta/*.md",
           {
-            "input": "packages/pieces/community/connectuc/src/i18n",
+            "input": "packages/pieces/community/connectuc-beta/src/i18n",
             "output": "./src/i18n",
             "glob": "**/!(i18n.json)"
           }
@@ -52,7 +52,7 @@
       ],
       "executor": "nx:run-commands",
       "options": {
-        "cwd": "packages/pieces/community/connectuc",
+        "cwd": "packages/pieces/community/connectuc-beta",
         "command": "bun install --no-save --silent"
       }
     },
