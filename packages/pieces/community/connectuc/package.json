@@ -1,6 +1,6 @@
 {
   "name": "@skyswitch/piece-connectuc",
-  "version": "0.0.11",
+  "version": "1.0.0",
   "type": "commonjs",
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
