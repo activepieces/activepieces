@@ -398,6 +398,10 @@ function convertToDetails(event: ApplicationEvent): string {
       return `Flow run resumed in ${formatUtils.convertEnumToHumanReadable(
         event.data.flowRun.environment,
       )} environment`;
+    case ApplicationEventName.FLOW_RUN_RETRIED:
+      return `Flow run retried from failed step in ${formatUtils.convertEnumToHumanReadable(
+        event.data.flowRun.environment,
+      )} environment`;
     case ApplicationEventName.FLOW_CREATED:
       return t('A new flow was created');
     case ApplicationEventName.FLOW_DELETED:
