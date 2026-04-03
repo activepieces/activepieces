@@ -39,19 +39,13 @@ export const linearNewComment = createTrigger({
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
     const client = makeClient(context.auth);
-    const teamIds = context.propsValue['team_ids'] as string[] | undefined;
 
-    const baseConfig = {
+    const webhook = await client.createWebhook({
       label: 'ActivePieces New Comment',
       url: context.webhookUrl,
       resourceTypes: ['Comment'],
-    };
-
-    const webhook = await client.createWebhook(
-      teamIds && teamIds.length === 1
-        ? { ...baseConfig, teamId: teamIds[0] }
-        : { ...baseConfig, allPublicTeams: true },
-    );
+      allPublicTeams: true,
+    });
 
     if (webhook.success && webhook.webhook) {
       await context.store?.put<WebhookInformation>('_new_comment_trigger', {
