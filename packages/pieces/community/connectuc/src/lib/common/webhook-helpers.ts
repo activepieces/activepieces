@@ -2,7 +2,7 @@ import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces
 import { TriggerHookContext } from '@activepieces/pieces-framework';
 import { isNil } from '@activepieces/shared';
 
-export const CONNECTUC_BASE_URL = 'https://staging.connectuc.engineering/activepieces';
+export const CONNECTUC_BASE_URL = 'https://api.connectuc.io/activepieces';
 export const CONNECTUC_WEBHOOK_TRIGGER_KEY = 'connectuc_webhook';
 
 interface WebhookResponse {

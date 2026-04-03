@@ -1,6 +1,6 @@
 import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
 
-export const CONNECTUC_BASE_URL = 'https://staging.connectuc.engineering';
+export const CONNECTUC_BASE_URL = 'https://api.connectuc.io';
 
 interface ApiCallParams {
     accessToken: string;
