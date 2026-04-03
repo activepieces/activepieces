@@ -21,13 +21,11 @@ export const doNotDisturbAction = createAction({
     async run(context) {
         const { user, dnd } = context.propsValue;
 
-        // Build request body
         const body: Record<string, unknown> = {
             dnd: dnd,
         };
 
         try {
-            // Make API call to set DND status
             const response = await connectucApiCall({
                 accessToken: context.auth.access_token,
                 endpoint: `/users/${user}/dnd/update`,
@@ -37,10 +35,8 @@ export const doNotDisturbAction = createAction({
 
             return response;
         } catch (error: unknown) {
-            // Provide helpful error message
-            const err = error as { response?: { body?: { message?: string } }; message?: string };
-            const errorMessage = err.response?.body?.message || err.message || 'Unknown error occurred';
-            throw new Error(`Failed to set Do Not Disturb status: ${errorMessage}`);
+            const message = error instanceof Error ? error.message : 'Unknown error occurred';
+            throw new Error(`Failed to set Do Not Disturb status: ${message}`);
         }
     },
 });

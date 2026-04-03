@@ -10,11 +10,6 @@ interface ApiCallParams {
     queryParams?: Record<string, string>;
 }
 
-/**
- * Makes an authenticated API call to the ConnectUC API
- * @param params - API call parameters including auth token, endpoint, method, and optional body
- * @returns The response body from the API
- */
 export async function connectucApiCall<T = unknown>(params: ApiCallParams): Promise<T> {
     const { accessToken, endpoint, method, body, queryParams } = params;
 
@@ -32,11 +27,6 @@ export async function connectucApiCall<T = unknown>(params: ApiCallParams): Prom
     return response.body;
 }
 
-/**
- * Gets the user ID from the OAuth2 userinfo endpoint
- * @param accessToken - The OAuth2 access token
- * @returns The user ID (sub claim) from the userinfo endpoint
- */
 export async function getUserId(accessToken: string): Promise<string> {
     const userInfoResponse = await httpClient.sendRequest<{ sub: string }>({
         method: HttpMethod.GET,

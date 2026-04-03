@@ -31,15 +31,14 @@ export const sendSmsAction = createAction({
     async run(context) {
         const { recipients, content, sender, attachment_urls } = context.propsValue;
 
-        const media = attachment_urls && (attachment_urls as unknown[]).length > 0 ? (attachment_urls as string[]).map((url: string) => {
-            const filename = url.split('/').pop();
-            return ({
-                url: url,
-                filename: filename ? filename : 'attachment'
-            });
+        const media = attachment_urls && attachment_urls.length > 0 ? attachment_urls.map((url) => {
+            const urlStr = String(url);
+            return {
+                url: urlStr,
+                filename: urlStr.split('/').pop() ?? 'attachment',
+            };
         }) : [];
 
-        // Build request body
         const body: Record<string, unknown> = {
             application: 'connectuc',
             content: content,
@@ -50,7 +49,6 @@ export const sendSmsAction = createAction({
         };
 
         try {
-            // Make API call to send SMS
             const response = await connectucApiCall({
                 accessToken: context.auth.access_token,
                 endpoint: '/sms/messages',
@@ -60,10 +58,8 @@ export const sendSmsAction = createAction({
 
             return response;
         } catch (error: unknown) {
-            // Provide helpful error message
-            const err = error as { response?: { body?: { message?: string } }; message?: string };
-            const errorMessage = err.response?.body?.message || err.message || 'Unknown error occurred';
-            throw new Error(`Failed to send SMS: ${errorMessage}`);
+            const message = error instanceof Error ? error.message : 'Unknown error occurred';
+            throw new Error(`Failed to send SMS: ${message}`);
         }
     },
 });

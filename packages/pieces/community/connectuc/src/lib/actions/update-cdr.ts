@@ -34,10 +34,8 @@ export const updateCdrAction = createAction({
         const { cdrId, note, disposition, reason } = context.propsValue;
 
         try {
-            // Get user ID from OAuth2 token
             const userId = await getUserId(context.auth.access_token);
 
-            // Build request body with mandatory note and optional fields
             const body: Record<string, unknown> = {
                 note,
             };
@@ -49,7 +47,6 @@ export const updateCdrAction = createAction({
                 body['reason'] = reason;
             }
 
-            // Make API call to update CDR
             const response = await connectucApiCall({
                 accessToken: context.auth.access_token,
                 endpoint: `/users/${userId}/call/${cdrId}/notes`,
@@ -59,10 +56,8 @@ export const updateCdrAction = createAction({
 
             return response;
         } catch (error: unknown) {
-            // Provide helpful error message
-            const err = error as { response?: { body?: { message?: string } }; message?: string };
-            const errorMessage = err.response?.body?.message || err.message || 'Unknown error occurred';
-            throw new Error(`Failed to update CDR: ${errorMessage}`);
+            const message = error instanceof Error ? error.message : 'Unknown error occurred';
+            throw new Error(`Failed to update CDR: ${message}`);
         }
     },
 });

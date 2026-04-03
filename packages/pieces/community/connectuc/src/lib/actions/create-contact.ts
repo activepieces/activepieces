@@ -46,13 +46,9 @@ export const createContactAction = createAction({
     async run(context) {
         const { user, first_name, last_name, email, phones, company, tags } = context.propsValue;
 
-        // Map phones to the required format
-        const tels = (phones as string[]).map((phone: string) => ({ number: phone, type: 'work' }));
+        const tels = phones.map((phone) => ({ number: String(phone), type: 'work' }));
+        const formattedTags = tags ? tags.map((tag) => ({ name: String(tag) })) : [];
 
-        // Map tags to the required format
-        const formattedTags = tags ? (tags as string[]).map((tag: string) => ({ name: tag })) : [];
-
-        // Build request body - always send all fields with defaults
         const body: Record<string, unknown> = {
             first_name: first_name,
             last_name: last_name,
@@ -63,7 +59,6 @@ export const createContactAction = createAction({
         };
 
         try {
-            // Make API call to create contact
             const response = await connectucApiCall({
                 accessToken: context.auth.access_token,
                 endpoint: `/users/${user}/contacts`,
@@ -73,10 +68,8 @@ export const createContactAction = createAction({
 
             return response;
         } catch (error: unknown) {
-            // Provide helpful error message
-            const err = error as { response?: { body?: { message?: string } }; message?: string };
-            const errorMessage = err.response?.body?.message || err.message || 'Unknown error occurred';
-            throw new Error(`Failed to create contact: ${errorMessage}`);
+            const message = error instanceof Error ? error.message : 'Unknown error occurred';
+            throw new Error(`Failed to create contact: ${message}`);
         }
     },
 });

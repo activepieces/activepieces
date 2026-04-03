@@ -22,14 +22,12 @@ export const initiateCallAction = createAction({
     async run(context) {
         const { user, device, toNumber } = context.propsValue;
 
-        // Build request body
         const body: Record<string, unknown> = {
             fromUid: device,
             toNumber: toNumber,
         };
 
         try {
-            // Make API call to initiate call
             const response = await connectucApiCall({
                 accessToken: context.auth.access_token,
                 endpoint: `/users/${user}/activepieces/initiate-call`,
@@ -39,10 +37,8 @@ export const initiateCallAction = createAction({
 
             return response;
         } catch (error: unknown) {
-            // Provide helpful error message
-            const err = error as { response?: { body?: { message?: string } }; message?: string };
-            const errorMessage = err.response?.body?.message || err.message || 'Unknown error occurred';
-            throw new Error(`Failed to initiate call: ${errorMessage}`);
+            const message = error instanceof Error ? error.message : 'Unknown error occurred';
+            throw new Error(`Failed to initiate call: ${message}`);
         }
     },
 });

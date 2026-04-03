@@ -19,10 +19,8 @@ export const findCdrAction = createAction({
         const { origCallid } = context.propsValue;
 
         try {
-            // Get user ID from OAuth2 token
             const userId = await getUserId(context.auth.access_token);
 
-            // Make API call to find CDR by origCallid
             const response = await connectucApiCall({
                 accessToken: context.auth.access_token,
                 endpoint: `/users/${userId}/cdrs/${origCallid}`,
@@ -31,10 +29,8 @@ export const findCdrAction = createAction({
 
             return response;
         } catch (error: unknown) {
-            // Provide helpful error message
-            const err = error as { response?: { body?: { message?: string } }; message?: string };
-            const errorMessage = err.response?.body?.message || err.message || 'Unknown error occurred';
-            throw new Error(`Failed to find CDR: ${errorMessage}`);
+            const message = error instanceof Error ? error.message : 'Unknown error occurred';
+            throw new Error(`Failed to find CDR: ${message}`);
         }
     },
 });
