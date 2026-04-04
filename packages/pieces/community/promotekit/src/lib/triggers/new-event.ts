@@ -6,11 +6,13 @@ import {
 import { promotekitAuth } from '../..';
 import { promotekitApiCall, promotekitCommon } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
-export const newAffiliate = createTrigger({
+
+export const newEvent = createTrigger({
   auth: promotekitAuth,
-  name: 'new_affiliate',
-  displayName: 'New Affiliate',
-  description: 'Triggers when a new affiliate is created in PromoteKit.',
+  name: 'new_event',
+  displayName: 'New Event',
+  description:
+    'Triggers when a PromoteKit webhook event is received. Configure which events to send from the PromoteKit dashboard.',
   props: {
     instructions: Property.MarkDown({
       value: `### Setup Instructions
@@ -19,11 +21,14 @@ export const newAffiliate = createTrigger({
 2. Navigate to **Settings > Webhooks**
 3. Click **Add Endpoint**
 4. Paste the webhook URL shown below
-5. Select the **affiliate.created** event
-6. Save the endpoint`,
+5. Select the event types you want to receive
+6. Save the endpoint
+
+**Supported events:** \`affiliate.created\`, \`affiliate.approved\`, \`referral.created\`, \`referral.converted\`, \`commission.created\``,
     }),
   },
   sampleData: {
+    event_type: 'affiliate.created',
     id: '123',
     email: 'affiliate@example.com',
     first_name: 'Jane',
@@ -56,19 +61,37 @@ export const newAffiliate = createTrigger({
       type: string;
       data: Record<string, unknown>;
     };
-    if (payload.type !== 'affiliate.created') return [];
-    return [promotekitCommon.flattenAffiliate(payload.data)];
+    return [{ event_type: payload.type, ...flattenByType(payload.type, payload.data) }];
   },
 
   async test(context) {
     const response = await promotekitApiCall<{
       data: Record<string, unknown>[];
     }>({
-      token: context.auth as unknown as string,
+      token: context.auth as string,
       method: HttpMethod.GET,
       path: '/affiliates',
       queryParams: { limit: '5' },
     });
-    return response.body.data.map(promotekitCommon.flattenAffiliate);
+    return response.body.data.map((a) => ({
+      event_type: 'affiliate.created',
+      ...promotekitCommon.flattenAffiliate(a),
+    }));
   },
 });
+
+function flattenByType(
+  type: string,
+  data: Record<string, unknown>
+): Record<string, unknown> {
+  if (type === 'affiliate.created' || type === 'affiliate.approved') {
+    return promotekitCommon.flattenAffiliate(data);
+  }
+  if (type === 'referral.created' || type === 'referral.converted') {
+    return promotekitCommon.flattenReferral(data);
+  }
+  if (type === 'commission.created') {
+    return promotekitCommon.flattenCommission(data);
+  }
+  return data;
+}

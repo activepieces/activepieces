@@ -18,11 +18,7 @@ import { listCampaigns } from './lib/actions/list-campaigns';
 import { findCampaign } from './lib/actions/find-campaign';
 import { listPayouts } from './lib/actions/list-payouts';
 import { findPayout } from './lib/actions/find-payout';
-import { newAffiliate } from './lib/triggers/new-affiliate';
-import { affiliateApproved } from './lib/triggers/affiliate-approved';
-import { newReferral } from './lib/triggers/new-referral';
-import { referralConverted } from './lib/triggers/referral-converted';
-import { newCommission } from './lib/triggers/new-commission';
+import { newEvent } from './lib/triggers/new-event';
 
 export const promotekitAuth = PieceAuth.SecretText({
   displayName: 'API Key',
@@ -78,11 +74,5 @@ export const promotekit = createPiece({
       }),
     }),
   ],
-  triggers: [
-    newAffiliate,
-    affiliateApproved,
-    newReferral,
-    referralConverted,
-    newCommission,
-  ],
+  triggers: [newEvent],
 });
