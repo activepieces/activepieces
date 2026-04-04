@@ -1,4 +1,4 @@
-import { ProjectWithLimits, SeekPage } from '@activepieces/shared';
+import { ProjectType, ProjectWithLimits, SeekPage } from '@activepieces/shared';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { jwtDecode } from 'jwt-decode';
@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { Navigate, useSearchParams } from 'react-router-dom';
 
 import { FullLogo } from '@/components/custom/full-logo';
+import { SearchableSelect } from '@/components/custom/searchable-select';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -15,13 +16,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 
@@ -29,14 +24,17 @@ function McpAuthorizePage() {
   const [searchParams] = useSearchParams();
   const authRequestId = searchParams.get('authRequestId');
   const clientName = decodeJwtClientName(authRequestId);
-  const [selectedProjectId, setSelectedProjectId] = useState<string>('');
+  const [selectedProjectId, setSelectedProjectId] = useState<
+    string | undefined
+  >(undefined);
+  const [projectTypeFilter, setProjectTypeFilter] = useState<string>('all');
   const isLoggedIn = authenticationSession.isLoggedIn();
 
   const { data: projectsPage, isLoading: projectsLoading } = useQuery({
     queryKey: ['mcp-authorize-projects'],
     queryFn: () =>
       api.get<SeekPage<ProjectWithLimits>>('/v1/projects', {
-        params: { limit: 100 },
+        params: { limit: 1000 },
       }),
     enabled: isLoggedIn && !!authRequestId,
   });
@@ -60,6 +58,10 @@ function McpAuthorizePage() {
   }
 
   const projects = projectsPage?.data ?? [];
+  const filteredProjects =
+    projectTypeFilter === 'all'
+      ? projects
+      : projects.filter((p) => p.type === projectTypeFilter);
 
   const handleAuthorize = () => {
     if (!selectedProjectId) return;
@@ -99,28 +101,40 @@ function McpAuthorizePage() {
 
           <div className="flex flex-col gap-2">
             <label className="text-sm font-medium">{t('Select Project')}</label>
-            <Select
-              value={selectedProjectId}
-              onValueChange={setSelectedProjectId}
-              disabled={projectsLoading}
+            <Tabs
+              value={projectTypeFilter}
+              onValueChange={(value) => {
+                setProjectTypeFilter(value);
+                setSelectedProjectId(undefined);
+              }}
             >
-              <SelectTrigger>
-                <SelectValue
-                  placeholder={
-                    projectsLoading
-                      ? t('Loading projects...')
-                      : t('Choose a project')
-                  }
-                />
-              </SelectTrigger>
-              <SelectContent>
-                {projects.map((project) => (
-                  <SelectItem key={project.id} value={project.id}>
-                    {project.displayName}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              <TabsList className="w-full">
+                <TabsTrigger value="all" className="flex-1">
+                  {t('All')}
+                </TabsTrigger>
+                <TabsTrigger value={ProjectType.PERSONAL} className="flex-1">
+                  {t('Personal')}
+                </TabsTrigger>
+                <TabsTrigger value={ProjectType.TEAM} className="flex-1">
+                  {t('Team')}
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+            <SearchableSelect<string>
+              options={filteredProjects.map((project) => ({
+                value: project.id,
+                label: project.displayName,
+              }))}
+              onChange={(value) => setSelectedProjectId(value ?? undefined)}
+              value={selectedProjectId}
+              placeholder={
+                projectsLoading
+                  ? t('Loading projects...')
+                  : t('Search projects...')
+              }
+              disabled={projectsLoading}
+              loading={projectsLoading}
+            />
           </div>
 
           {approveMutation.isError && (
