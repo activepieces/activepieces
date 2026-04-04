@@ -56,6 +56,43 @@ export const profileIdDropdown = Property.Dropdown({
   },
 });
 
+export const allProfileIdsMultiSelectDropdown = Property.MultiSelectDropdown({
+  displayName: 'Profile Ids',
+  description: 'Select one or more Klaviyo profiles',
+  required: true,
+  auth: klaviyoAuth,
+  refreshers: ['auth'],
+  options: async ({ auth }) => {
+    if (!auth) {
+      return {
+        disabled: true,
+        placeholder: 'Connect your account',
+        options: [],
+      };
+    }
+    const profiles = await makeRequest(
+      auth as KlaviyoAuthValue,
+      HttpMethod.GET,
+      '/profiles',
+    );
+
+    const options = (profiles.data as KlaviyoProfile[]).map((field) => {
+      const firstName = field.attributes.first_name || '';
+      const lastName = field.attributes.last_name || '';
+      const email = field.attributes.email || '';
+      const label =
+        [firstName, lastName].filter(Boolean).join(' ') +
+        (email ? ` (${email})` : '');
+      return {
+        label: label || field.id,
+        value: field.id,
+      };
+    });
+
+    return { options };
+  },
+});
+
 export const profileIdsMultiSelectDropdown = Property.MultiSelectDropdown({
   displayName: 'Profile Ids',
   description: 'Select one or more Klaviyo profiles',

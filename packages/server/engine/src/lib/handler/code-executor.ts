@@ -1,9 +1,7 @@
 import path from 'path'
-import importFresh from '@activepieces/import-fresh-webpack'
 import { LATEST_CONTEXT_VERSION } from '@activepieces/pieces-framework'
 import { CodeAction, EngineGenericError, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, StepOutputStatus } from '@activepieces/shared'
 import { initCodeSandbox } from '../core/code/code-sandbox'
-import { CodeModule } from '../core/code/code-sandbox-common'
 import { continueIfFailureHandler, runWithExponentialBackoff } from '../helper/error-handling'
 import { progressService } from '../services/progress.service'
 import { utils } from '../utils'
@@ -48,11 +46,10 @@ const executeAction: ActionHandler<CodeAction> = async ({ action, executionState
         }
 
         const artifactPath = path.resolve(`${constants.baseCodeDirectory}/${constants.flowVersionId}/${action.name}/index.js`)
-        const codeModule: CodeModule = await importFresh(artifactPath)
         const codeSandbox = await initCodeSandbox()
-    
+
         const output = await codeSandbox.runCodeModule({
-            codeModule,
+            codeFilePath: artifactPath,
             inputs: resolvedInput,
         })
     
