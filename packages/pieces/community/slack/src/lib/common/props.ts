@@ -104,25 +104,8 @@ export const userId = <R extends boolean>(required: R) =>
           options: [],
         };
       }
-
-    const accessToken = getBotToken(auth as SlackAuthValue);
-
-      const client = new WebClient(accessToken);
-      const users: { label: string; value: string }[] = [];
-      for await (const page of client.paginate('users.list', {
-        limit: 1000, // Only limits page size, not total number of results
-      })) {
-        const response = page as UsersListResponse;
-        if (response.members) {
-          users.push(
-            ...response.members
-              .filter((member) => !member.deleted)
-              .map((member) => {
-                return { label: member.name || '', value: member.id || '' };
-              })
-          );
-        }
-      }
+      const accessToken = getBotToken(auth as SlackAuthValue);
+      const users = await getUsers(accessToken);
       return {
         disabled: false,
         placeholder: 'Select User',
@@ -130,6 +113,59 @@ export const userId = <R extends boolean>(required: R) =>
       };
     },
   });
+
+export const userIds = Property.MultiSelectDropdown({
+  auth: slackAuth,
+  displayName: 'Users',
+  required: false,
+  refreshers: [],
+  async options({ auth }) {
+    if (!auth) {
+      return {
+        disabled: true,
+        placeholder: 'connect slack account',
+        options: [],
+      };
+    }
+    const accessToken = getBotToken(auth as SlackAuthValue);
+    const users = await getUsers(accessToken);
+    return {
+      disabled: false,
+      placeholder: 'Select Users',
+      options: users,
+    };
+  },
+});
+
+export const usergroupIds = Property.MultiSelectDropdown({
+  auth: slackAuth,
+  displayName: 'User Groups',
+  required: false,
+  refreshers: [],
+  async options({ auth }) {
+    if (!auth) {
+      return {
+        disabled: true,
+        placeholder: 'connect slack account',
+        options: [],
+      };
+    }
+    const accessToken = getBotToken(auth as SlackAuthValue);
+    const client = new WebClient(accessToken);
+    const response = await client.usergroups.list();
+    const usergroups = (response.usergroups ?? [])
+      .filter((ug) => !ug.date_delete)
+      .map((ug) => ({
+        label: ug.handle || ug.name || '',
+        value: ug.id || '',
+      }));
+    return {
+      disabled: false,
+      placeholder: 'Select User Groups',
+      options: usergroups,
+    };
+  },
+});
 
 export const text = Property.LongText({
   displayName: 'Message',
@@ -158,6 +194,27 @@ export const actions = Property.Array({
     }),
   },
 });
+
+async function getUsers(accessToken: string) {
+  const client = new WebClient(accessToken);
+  const users: { label: string; value: string }[] = [];
+  for await (const page of client.paginate('users.list', {
+    limit: 1000,
+  })) {
+    const response = page as UsersListResponse;
+    if (response.members) {
+      users.push(
+        ...response.members
+          .filter((member) => !member.deleted)
+          .map((member) => ({
+            label: member.name || '',
+            value: member.id || '',
+          }))
+      );
+    }
+  }
+  return users;
+}
 
 export async function getChannels(accessToken: string) {
   const client = new WebClient(accessToken);
