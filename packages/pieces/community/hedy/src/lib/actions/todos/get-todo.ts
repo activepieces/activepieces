@@ -17,11 +17,11 @@ export const getTodo = createAction({
   },
   async run(context) {
     const sessionId = assertIdPrefix(
-      context.propsValue.sessionId as string,
+      context.propsValue['sessionId'] as string,
       'sess_',
       'Session ID',
     );
-    const todoId = context.propsValue.todoId as string;
+    const todoId = context.propsValue['todoId'] as string;
     if (!todoId) {
       throw new Error('Todo ID is required.');
     }
