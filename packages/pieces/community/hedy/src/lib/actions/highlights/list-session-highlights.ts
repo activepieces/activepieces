@@ -33,7 +33,7 @@ export const listSessionHighlights = createAction({
   },
   async run(context) {
     const sessionId = assertIdPrefix(
-      context.propsValue.sessionId as string,
+      context.propsValue['sessionId'] as string,
       'sess_',
       'Session ID',
     );
