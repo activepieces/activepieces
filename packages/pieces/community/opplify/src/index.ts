@@ -3,7 +3,7 @@ import { PieceCategory } from '@activepieces/shared';
 import { opplifyAuth } from './lib/common/auth';
 
 // ============================================================================
-// TRIGGERS (59 total, 10 categories)
+// TRIGGERS (55 total, 10 categories)
 // ============================================================================
 
 // Category 1: Contacts / Leads (10)
@@ -36,24 +36,20 @@ import { smsDelivered } from './lib/triggers/communication/sms-delivered';
 import { smsFailed } from './lib/triggers/communication/sms-failed';
 import { noteCreated } from './lib/triggers/communication/note-created';
 
-// Category 4: Appointments / Scheduling (6)
+// Category 4: Appointments / Scheduling (5)
 import { appointmentBooked } from './lib/triggers/appointments/appointment-booked';
 import { appointmentRescheduled } from './lib/triggers/appointments/appointment-rescheduled';
 import { appointmentCancelled } from './lib/triggers/appointments/appointment-cancelled';
 import { appointmentCompleted } from './lib/triggers/appointments/appointment-completed';
 import { appointmentNoShow } from './lib/triggers/appointments/appointment-no-show';
-import { appointmentReminderDue } from './lib/triggers/appointments/appointment-reminder-due';
 
-// Category 5: Deals / Opportunities (6)
+// Category 5: Deals / Opportunities (4)
 import { dealCreated } from './lib/triggers/deals/deal-created';
 import { dealStageChanged } from './lib/triggers/deals/deal-stage-changed';
-import { dealClosedWon } from './lib/triggers/deals/deal-closed-won';
-import { dealClosedLost } from './lib/triggers/deals/deal-closed-lost';
 import { dealAmountChanged } from './lib/triggers/deals/deal-amount-changed';
 import { dealAssigned } from './lib/triggers/deals/deal-assigned';
 
-// Category 6: Orders & Payments (6)
-import { orderPlaced } from './lib/triggers/orders/order-placed';
+// Category 6: Orders & Payments (5)
 import { paymentCompleted } from './lib/triggers/orders/payment-completed';
 import { paymentFailed } from './lib/triggers/orders/payment-failed';
 import { orderFulfilled } from './lib/triggers/orders/order-fulfilled';
@@ -184,22 +180,18 @@ export const opplify = createPiece({
     smsFailed,
     smsReceived,
     noteCreated,
-    // Appointments / Scheduling (6)
+    // Appointments / Scheduling (5)
     appointmentBooked,
     appointmentRescheduled,
     appointmentCancelled,
     appointmentCompleted,
     appointmentNoShow,
-    appointmentReminderDue,
-    // Deals / Opportunities (6)
+    // Deals / Opportunities (4)
     dealCreated,
     dealStageChanged,
-    dealClosedWon,
-    dealClosedLost,
     dealAmountChanged,
     dealAssigned,
-    // Orders & Payments (6)
-    orderPlaced,
+    // Orders & Payments (5)
     paymentCompleted,
     paymentFailed,
     orderFulfilled,

@@ -56,18 +56,14 @@ export const SAMPLE_DATA: Record<string, unknown> = {
   appointment_cancelled: { event: 'appointment_cancelled', timestamp: NOW, lead: SAMPLE_LEAD, data: { appointmentId: '550e8400-0000-0000-0000-000000000030', cancelledBy: 'contact', reason: 'Schedule conflict' } },
   appointment_completed: { event: 'appointment_completed', timestamp: NOW, lead: SAMPLE_LEAD, data: { appointmentId: '550e8400-0000-0000-0000-000000000030' } },
   appointment_no_show: { event: 'appointment_no_show', timestamp: NOW, lead: SAMPLE_LEAD, data: { appointmentId: '550e8400-0000-0000-0000-000000000030' } },
-  appointment_reminder: { event: 'appointment_reminder', timestamp: NOW, lead: SAMPLE_LEAD, data: { appointmentId: '550e8400-0000-0000-0000-000000000030', reminderAt: NOW } },
 
   // -- Deals --
   deal_created: { event: 'deal_created', timestamp: NOW, lead: SAMPLE_LEAD, data: { dealId: '550e8400-0000-0000-0000-000000000040', stage: 'discovery', amount: 5000, title: 'Enterprise Plan' } },
   deal_stage_changed: { event: 'deal_stage_changed', timestamp: NOW, lead: SAMPLE_LEAD, data: { dealId: '550e8400-0000-0000-0000-000000000040', oldStage: 'discovery', newStage: 'proposal' } },
-  deal_closed_won: { event: 'deal_closed_won', timestamp: NOW, lead: SAMPLE_LEAD, data: { dealId: '550e8400-0000-0000-0000-000000000040', amount: 5000 } },
-  deal_closed_lost: { event: 'deal_closed_lost', timestamp: NOW, lead: SAMPLE_LEAD, data: { dealId: '550e8400-0000-0000-0000-000000000040', amount: 5000 } },
   deal_amount_changed: { event: 'deal_amount_changed', timestamp: NOW, lead: SAMPLE_LEAD, data: { dealId: '550e8400-0000-0000-0000-000000000040', oldAmount: 5000, newAmount: 7500 } },
   deal_assigned: { event: 'deal_assigned', timestamp: NOW, lead: SAMPLE_LEAD, data: { dealId: '550e8400-0000-0000-0000-000000000040', assignedTo: '550e8400-0000-0000-0000-000000000003' } },
 
   // -- Orders & Payments --
-  order_placed: { event: 'order_placed', timestamp: NOW, lead: SAMPLE_LEAD, data: { orderId: '550e8400-0000-0000-0000-000000000050', totalAmount: 99.99, currency: 'USD' } },
   payment_completed: { event: 'payment_completed', timestamp: NOW, lead: SAMPLE_LEAD, data: { orderId: '550e8400-0000-0000-0000-000000000050', amount: 99.99, paymentMethod: 'stripe' } },
   payment_failed: { event: 'payment_failed', timestamp: NOW, lead: SAMPLE_LEAD, data: { orderId: '550e8400-0000-0000-0000-000000000050', amount: 99.99, errorReason: 'Card declined' } },
   order_fulfilled: { event: 'order_fulfilled', timestamp: NOW, lead: SAMPLE_LEAD, data: { orderId: '550e8400-0000-0000-0000-000000000050', fulfilledAt: NOW } },
