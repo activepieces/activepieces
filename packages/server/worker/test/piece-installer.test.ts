@@ -79,7 +79,7 @@ afterEach(async () => {
 })
 
 describe('pieceInstaller', () => {
-    it('two pieces succeed — both marked ready, install called once (batch)', async () => {
+    it('two pieces succeed — both marked ready, install called per piece', async () => {
         const piece1 = makePiece('@activepieces/piece-a')
         const piece2 = makePiece('@activepieces/piece-b')
         const installer = pieceInstaller(fakeLog, fakeApiClient)
@@ -88,8 +88,9 @@ describe('pieceInstaller', () => {
 
         await installer.install({ pieces: [piece1, piece2] })
 
-        expect(mockInstall).toHaveBeenCalledTimes(1)
-        expect(mockInstall).toHaveBeenCalledWith({ path: testWorkspace })
+        expect(mockInstall).toHaveBeenCalledTimes(2)
+        expect(mockInstall).toHaveBeenCalledWith({ path: pieceDirPath(piece1) })
+        expect(mockInstall).toHaveBeenCalledWith({ path: pieceDirPath(piece2) })
         expect(await pathExists(readyFilePath(piece1))).toBe(true)
         expect(await pathExists(readyFilePath(piece2))).toBe(true)
     })
@@ -100,9 +101,6 @@ describe('pieceInstaller', () => {
         const installer = pieceInstaller(fakeLog, fakeApiClient)
 
         mockInstall.mockImplementation(({ path }: { path: string }) => {
-            if (path === testWorkspace) {
-                return Promise.reject(new Error('batch install failure'))
-            }
             if (path.includes('piece-bad')) {
                 return Promise.reject(new Error('install failure'))
             }
@@ -144,7 +142,8 @@ describe('pieceInstaller', () => {
 
         await expect(installer.install({ pieces: [piece] })).rejects.toThrow('@activepieces/piece-solo@1.0.0')
 
-        expect(mockInstall).toHaveBeenCalledTimes(2)
+        expect(mockInstall).toHaveBeenCalledTimes(1)
+        expect(mockInstall).toHaveBeenCalledWith({ path: pieceDirPath(piece) })
         expect(await pathExists(pieceDirPath(piece))).toBe(false)
     })
 
