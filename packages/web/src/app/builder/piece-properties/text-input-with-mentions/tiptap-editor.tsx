@@ -376,7 +376,9 @@ export const TiptapEditor = ({
               </button>
             </div>
             <div className="px-3 py-2 text-foreground break-all whitespace-pre-wrap">
-              {previewResult || <span className="text-muted-foreground italic">empty</span>}
+              {previewResult || (
+                <span className="text-muted-foreground italic">empty</span>
+              )}
             </div>
           </div>
         </div>
@@ -396,9 +398,7 @@ export const TiptapEditor = ({
   );
 };
 
-function collectTypeErrors(
-  doc: import('@tiptap/react').JSONContent,
-): string[] {
+function collectTypeErrors(doc: import('@tiptap/react').JSONContent): string[] {
   const errors = typeCheckTiptapDoc(doc);
   return [...new Set(errors.values())].filter(Boolean);
 }

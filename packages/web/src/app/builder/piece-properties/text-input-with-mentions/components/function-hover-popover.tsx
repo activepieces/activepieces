@@ -204,7 +204,7 @@ type FunctionTooltipCardProps = {
 
 export function FunctionTooltipCard({
   fnDef,
-  errorMessage,
+  errorMessage: _errorMessage,
   anchorTop,
   anchorBottom,
   anchorLeft,
