@@ -27,8 +27,7 @@ import { resolvePayload } from '../utils/resolve-payload'
 export const executeFlowJob: JobHandler<ExecuteFlowJobData, FireAndForgetJobResult> = {
     jobType: WorkerJobType.EXECUTE_FLOW,
     async execute(ctx: JobContext, data: ExecuteFlowJobData): Promise<FireAndForgetJobResult> {
-        const settings = workerSettings.getSettings()
-        const timeoutInSeconds = settings.FLOW_TIMEOUT_SECONDS
+        const timeoutInSeconds = workerSettings.getSettings().FLOW_TIMEOUT_SECONDS
 
         const flowVersion = await flowCache(ctx.log, ctx.apiClient).getVersion({ flowVersionId: data.flowVersionId })
         if (isNil(flowVersion)) {

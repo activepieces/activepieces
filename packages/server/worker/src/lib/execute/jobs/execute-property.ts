@@ -13,8 +13,7 @@ import { isSandboxTimeout } from '../utils/sandbox-helpers'
 export const executePropertyJob: JobHandler<ExecutePropertyJobData, SynchronousJobResult> = {
     jobType: WorkerJobType.EXECUTE_PROPERTY,
     async execute(ctx: JobContext, data: ExecutePropertyJobData): Promise<SynchronousJobResult> {
-        const settings = workerSettings.getSettings()
-        const timeoutInSeconds = settings.TRIGGER_TIMEOUT_SECONDS
+        const timeoutInSeconds = workerSettings.getSettings().TRIGGER_TIMEOUT_SECONDS
 
         await provisioner(ctx.log, ctx.apiClient).provision({
             pieces: [data.piece],

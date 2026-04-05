@@ -17,7 +17,13 @@ export function createRpcClient<T extends Contract>(
     return new Proxy({} as T, {
         get(_target, method: string) {
             return async (payload: unknown) => {
-                return socket.timeout(timeoutMs).emitWithAck(RPC_EVENT, { method, payload })
+                try {
+                    return await socket.timeout(timeoutMs).emitWithAck(RPC_EVENT, { method, payload })
+                }
+                catch (error) {
+                    const message = error instanceof Error ? error.message : String(error)
+                    throw new Error(`RPC [${method}] timed out after ${timeoutMs}ms: ${message}`)
+                }
             }
         },
     })
