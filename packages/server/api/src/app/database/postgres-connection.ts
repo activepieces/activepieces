@@ -200,7 +200,6 @@ import { ChangeManualTasksToTodo1742432827826 } from './migration/postgres/17424
 import { ChangeManualTasksCommentsToTodoComments1742433144687 } from './migration/postgres/1742433144687-ChangeManualTasksCommentsToTodoComments'
 import { RenameApprovalUrlToResolveUrl1742991137557 } from './migration/postgres/1742991137557-RenameApprovalUrlToResolveUrl'
 import { AddMCP1743128816786 } from './migration/postgres/1743128816786-AddMCP'
-import { AddCanaryToPlatformPlan1743500000000 } from './migration/postgres/1743500000000-AddCanaryToPlatformPlan'
 import { AddMetadataFields1743780156664 } from './migration/postgres/1743780156664-AddMetadataFields'
 import { AddLastChangelogDismissed1744053592923 } from './migration/postgres/1744053592923-AddLastChangelogDismissed'
 import { AddRecordIndexForTableIdAndProjectIdAndRecordId1744187975994 } from './migration/postgres/1744187975994-AddRecordIndexForTableIdAndProjectIdAndRecordId'
@@ -353,6 +352,7 @@ import { AddMissingCascadeDeleteIndices1774100000000 } from './migration/postgre
 import { AddUserIdentityIdIndex1774400000000 } from './migration/postgres/1774400000000-AddUserIdentityIdIndex'
 import { AddUserFkIndices1774449358000 } from './migration/postgres/1774449358000-AddUserFkIndices'
 import { AddMcpOAuthTables1774500000000 } from './migration/postgres/1774500000000-AddMcpOAuthTables'
+import { AddCanaryToPlatformPlan1774600000000 } from './migration/postgres/1774600000000-AddCanaryToPlatformPlan'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -717,10 +717,10 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddMissingCascadeDeleteIndices1774100000000,
         AddUserIdentityIdIndex1774400000000,
         AddUserFkIndices1774449358000,
-        AddCanaryToPlatformPlan1743500000000,
         AddPgVectorExtension1773627989514,
         AddKnowledgeBaseChunkTable1773627989515,
         AddMcpOAuthTables1774500000000,
+        AddCanaryToPlatformPlan1774600000000,
     ]
     return migrations
 }

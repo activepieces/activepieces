@@ -1,10 +1,10 @@
 import { QueryRunner } from 'typeorm'
 import { Migration } from '../../migration'
 
-export class AddCanaryToPlatformPlan1743500000000 implements Migration {
-    name = 'AddCanaryToPlatformPlan1743500000000'
+export class AddCanaryToPlatformPlan1774600000000 implements Migration {
+    name = 'AddCanaryToPlatformPlan1774600000000'
     breaking = false
-    release = '0.80.2'
+    release = '0.81.4'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query('ALTER TABLE "platform_plan" ADD "canary" boolean NOT NULL DEFAULT false')
