@@ -1,5 +1,3 @@
-import { inspect } from 'util'
-
 const RPC_EVENT = 'rpc'
 const NOTIFY_EVENT = 'rpc-notify'
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -49,7 +47,7 @@ export function createRpcServer<T extends Contract>(
             ack(result)
         }
         catch (error) {
-            ack({ __rpcError: inspect(error) })
+            ack({ __rpcError: error instanceof Error ? error.message : String(error) })
         }
     })
 }
