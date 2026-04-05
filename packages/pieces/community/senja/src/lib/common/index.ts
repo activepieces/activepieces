@@ -33,8 +33,6 @@ export async function senjaApiCall<T extends HttpMessageBody>({
   });
 }
 
-export const SENJA_BASE_URL = BASE_URL;
-
 export function mapTestimonial(t: Record<string, unknown>, eventType?: string | null) {
   const video = t['video'] as Record<string, unknown> | null | undefined;
   const mp4Urls = video?.['mp4_urls'] as Record<string, unknown> | undefined;
@@ -77,6 +75,8 @@ export function mapTestimonial(t: Record<string, unknown>, eventType?: string | 
     updated_at: t['updated_at'] ?? null,
   };
 }
+
+export const SENJA_BASE_URL = BASE_URL;
 
 export const INTEGRATION_OPTIONS = [
   { label: 'Twitter', value: 'twitter' },
