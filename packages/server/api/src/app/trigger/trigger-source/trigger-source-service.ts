@@ -1,5 +1,6 @@
-import { ActivepiecesError, apId, ErrorCode, FlowVersion, isNil, PopulatedTriggerSource, TemplateTelemetryEventType, TriggerSource } from '@activepieces/shared'
+import { ActivepiecesError, apId, ErrorCode, FlowId, FlowVersion, isNil, PopulatedTriggerSource, TemplateTelemetryEventType, TriggerSource } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { templateTelemetryService } from '../../template/template-telemetry/template-telemetry.service'
@@ -92,6 +93,23 @@ export const triggerSourceService = (log: FastifyBaseLogger) => {
                 },
             })
         },
+        async getByFlowIds(params: GetByFlowIdsParams): Promise<Map<FlowId, TriggerSource>> {
+            const { flowIds, projectId } = params
+            if (flowIds.length === 0) {
+                return new Map()
+            }
+            const triggerSources = await triggerSourceRepo().find({
+                where: {
+                    flowId: In(flowIds),
+                    projectId,
+                },
+            })
+            const result = new Map<FlowId, TriggerSource>()
+            for (const ts of triggerSources) {
+                result.set(ts.flowId, ts)
+            }
+            return result
+        },
         async getByFlowIdPopulated(params: GetByFlowIdParams): Promise<PopulatedTriggerSource | null> {
             const { flowId, simulate } = params
             return triggerSourceRepo().findOne({
@@ -183,6 +201,11 @@ type GetByFlowIdParams = {
     flowId: string
     projectId?: string
     simulate: boolean
+}
+
+type GetByFlowIdsParams = {
+    flowIds: FlowId[]
+    projectId: string
 }
 
 type GetFlowIdParamsWithProjectId = {
