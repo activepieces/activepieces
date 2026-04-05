@@ -47,7 +47,8 @@ RUN --mount=type=cache,target=/root/.npm \
     node-gyp \
     npm@11.11.0 \
     pm2@6.0.10 \
-    typescript@4.9.4
+    typescript@4.9.4 \
+    esbuild@0.25.0
 
 # Install isolated-vm globally (needed for sandboxes)
 RUN --mount=type=cache,target=/root/.bun/install/cache \

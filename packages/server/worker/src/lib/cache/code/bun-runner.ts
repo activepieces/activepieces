@@ -33,15 +33,15 @@ export const bunRunner = (log: Logger) => ({
     async build({ path, entryFile, outputFile }: BuildParams): Promise<CommandOutput> {
         const args = [
             entryFile,
-            '--target', 'node',
-            '--production',
-            '--format', 'cjs',
-            '--outfile', outputFile,
+            '--bundle',
+            '--platform=node',
+            '--format=cjs',
+            `--outfile=${outputFile}`,
         ]
         log.debug({ path, entryFile, outputFile, args }, '[bunRunner#build]')
         return spawnWithKill({
-            cmd: 'bun',
-            args: ['build', ...args],
+            cmd: 'esbuild',
+            args,
             options: { cwd: path },
             printOutput: false,
             timeoutMs: apDayjsDuration(5, 'minutes').asMilliseconds(),
