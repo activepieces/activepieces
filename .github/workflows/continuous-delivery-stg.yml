@@ -14,7 +14,6 @@ on:
         options:
           - deploy-staging              # Re-deploy to staging (e.g., after infra change)
           - deploy-staging-skip-freeze  # Deploy to staging, ignoring the freeze window
-          - cloud-hotfix                # Build, deploy to staging, then promote to prod in one go
 
 jobs:
   detect-hotfix-merge:
@@ -63,7 +62,7 @@ jobs:
     if: |
       always() &&
       ((github.event_name == 'push' && needs.check-freeze.outputs.frozen == 'false') ||
-       (github.event_name == 'workflow_dispatch' && (github.event.inputs.action == 'deploy-staging' || github.event.inputs.action == 'deploy-staging-skip-freeze' || github.event.inputs.action == 'cloud-hotfix')))
+       (github.event_name == 'workflow_dispatch' && (github.event.inputs.action == 'deploy-staging' || github.event.inputs.action == 'deploy-staging-skip-freeze')))
     runs-on: ubuntu-24.04
     concurrency:
       group: deploy-staging
@@ -187,11 +186,3 @@ jobs:
           git tag -f release-candidate ${{ steps.tag.outputs.sha }}
           git push origin release-candidate --force
 
-  # For cloud-hotfix: promote the just-deployed staging image to production
-  promote-after-hotfix:
-    needs: [build-image, deploy-staging]
-    if: always() && github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'cloud-hotfix' && needs.deploy-staging.result == 'success'
-    uses: ./.github/workflows/continuous-delivery-cloud.yml
-    with:
-      image_tag: ${{ needs.build-image.outputs.image_tag }}
-    secrets: inherit

@@ -4,15 +4,50 @@ on:
   schedule:
     - cron: '0 9 * * 0'  # Sunday 9 AM UTC — promote release candidate to prod
   workflow_call:
+  workflow_dispatch:
     inputs:
-      image_tag:
-        description: 'Image tag to deploy. Leave blank to deploy release-candidate.'
-        type: string
-        required: false
-        default: ''
+      action:
+        description: 'Action to perform'
+        required: true
+        type: choice
+        options:
+          - cloud-hotfix  # Build from current branch and deploy directly to production, bypassing staging
 
 jobs:
+  build-image:
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'cloud-hotfix'
+    runs-on: ubuntu-24.04
+    outputs:
+      image_tag: ${{ steps.set-tag.outputs.image_tag }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set image tag
+        id: set-tag
+        run: |
+          RELEASE=$(node --print "require('./package.json').version")
+          echo "image_tag=${RELEASE}.${{ github.sha }}.beta" >> $GITHUB_OUTPUT
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: depot/setup-action@v1
+      - uses: depot/build-push-action@v1
+        with:
+          project: du7O4b0e8P
+          token: ${{ secrets.DEPOT_PROJECT_TOKEN }}
+          context: .
+          file: ./Dockerfile
+          platforms: |
+            linux/amd64
+            linux/arm64
+          push: true
+          no-cache: true
+          tags: ghcr.io/activepieces/activepieces-cloud:${{ steps.set-tag.outputs.image_tag }}
+
   promote-to-production:
+    needs: [build-image]
+    if: always() && (needs.build-image.result == 'success' || needs.build-image.result == 'skipped')
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -43,11 +78,11 @@ jobs:
       - name: Set image tag
         id: image
         run: |
-          TAG="${{ inputs.image_tag }}"
-          if [ -z "$TAG" ]; then
-            TAG="release-candidate"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "image_tag=${{ needs.build-image.outputs.image_tag }}" >> $GITHUB_OUTPUT
+          else
+            echo "image_tag=release-candidate" >> $GITHUB_OUTPUT
           fi
-          echo "image_tag=$TAG" >> $GITHUB_OUTPUT
 
       - name: Deploy App to production
         run: |
@@ -80,4 +115,3 @@ jobs:
     if: github.event_name == 'schedule'
     uses: ./.github/workflows/smoke-test.yml
     secrets: inherit
-

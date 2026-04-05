@@ -28,8 +28,8 @@ Four separate workflows cover the full delivery lifecycle:
 - **Normal hotfix**:
   1. Checkout from the current `deploy/cloud/YYYY-MM-DD` branch (created by the last Sunday promotion).
   2. Push your fix commit(s) to that branch.
-  3. Manually trigger `continuous-delivery-stg.yml` with action `cloud-hotfix` **on the hotfix branch** (not `main`). This builds the image, deploys it to staging, and promotes it to production.
-  4. Merge the hotfix branch into `main`. This automatically triggers `tag-release-candidate`, which SSHes to staging (the hotfix image is still running there) and retrags it as `release-candidate`. Sunday's scheduled run will re-deploy the hotfix image — a safe no-op.
+  3. Manually trigger `continuous-delivery-cloud.yml` with action `cloud-hotfix` **on the hotfix branch** (not `main`). This builds the image and deploys directly to production — staging is not involved.
+  4. Merge the hotfix branch into `main`. This automatically triggers `tag-release-candidate`, which SSHes to staging and retrags whatever image is running there as `release-candidate`. Sunday's scheduled run will re-deploy — a safe no-op.
 - **Emergency**: Use `emergency-cloud-deploy.yml` (manual dispatch) to bypass staging and deploy directly to production.
 
 ## Self-Hosted Release
@@ -47,13 +47,12 @@ To run any workflow manually, go to the repo's **Actions** tab, select the workf
 | Trigger | What happens |
 |---|---|
 | **Push to `main`** | Builds a `version.sha.beta` image and deploys to staging. Skipped automatically during the freeze window (5 PM – 9 AM UTC). |
-| **Manual dispatch** | Presents a dropdown with three choices (see below). |
+| **Manual dispatch** | Presents a dropdown with two choices (see below). |
 
 #### Manual dispatch choices
 
 - **`deploy-staging`** — Re-deploy the latest `main` to staging. Use this after an infra change, or to force a deploy that was skipped due to the freeze window.
 - **`deploy-staging-skip-freeze`** — Same as above but explicitly bypasses the freeze window check.
-- **`cloud-hotfix`** — Build, deploy to staging, then promote to production. Must be triggered **on the hotfix branch** (`deploy/cloud/YYYY-MM-DD`), not `main`. After promotion, merge the hotfix branch into `main` — this automatically updates `release-candidate` to the hotfix image so Sunday's scheduled run is a no-op.
 
 ### `continuous-delivery-cloud.yml` — Production Promotion
 
@@ -61,6 +60,7 @@ To run any workflow manually, go to the repo's **Actions** tab, select the workf
 |---|---|
 | **Scheduled (Sunday 9 AM UTC)** | Promotes `release-candidate` to production (requires approval via the `production` GitHub Environment). After promotion, creates a `deploy/cloud/YYYY-MM-DD` branch and runs a smoke test. |
 | **`workflow_call`** | Same as above, triggered by another workflow. |
+| **Manual dispatch — `cloud-hotfix`** | Builds the image from the current branch and deploys directly to production, bypassing staging. Trigger this **on the hotfix branch** (`deploy/cloud/YYYY-MM-DD`), not `main`. After promotion, merge the hotfix branch into `main` to automatically retag `release-candidate`. |
 
 ### `continuous-delivery-release.yml` — Weekly Release
 
