@@ -10,7 +10,10 @@ export const deletedFlowInterceptor: JobInterceptor = {
         return { verdict: InterceptorVerdict.ALLOW }
     },
 
-    async onJobFinished({ jobData, log }): Promise<void> {
+    async onJobFinished({ jobData, failed, log }): Promise<void> {
+        if (!failed) {
+            return
+        }
         if (jobData.jobType === WorkerJobType.EXECUTE_FLOW) {
             await handleExecuteFlowFinished(jobData as ExecuteFlowJobData, log)
         }
