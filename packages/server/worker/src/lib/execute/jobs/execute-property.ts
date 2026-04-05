@@ -1,11 +1,14 @@
 import {
     EngineOperationType,
+    EngineResponseStatus,
     ExecutePropertyJobData,
+    tryCatch,
     WorkerJobType,
 } from '@activepieces/shared'
 import { provisioner } from '../../cache/provisioner'
 import { workerSettings } from '../../config/worker-settings'
 import { JobContext, JobHandler, JobResultKind, SynchronousJobResult } from '../types'
+import { isSandboxTimeout } from '../utils/sandbox-helpers'
 
 export const executePropertyJob: JobHandler<ExecutePropertyJobData, SynchronousJobResult> = {
     jobType: WorkerJobType.EXECUTE_PROPERTY,
@@ -19,14 +22,14 @@ export const executePropertyJob: JobHandler<ExecutePropertyJobData, SynchronousJ
         })
 
         const sandbox = ctx.sandboxManager.acquire({ log: ctx.log, apiClient: ctx.apiClient })
-        try {
+        const { data: result, error } = await tryCatch(async () => {
             await sandbox.start({
                 flowVersionId: undefined,
                 platformId: data.platformId,
                 mounts: [],
             })
 
-            const result = await sandbox.execute(
+            return sandbox.execute(
                 EngineOperationType.EXECUTE_PROPERTY,
                 {
                     piece: data.piece,
@@ -45,21 +48,23 @@ export const executePropertyJob: JobHandler<ExecutePropertyJobData, SynchronousJ
                 },
                 { timeoutInSeconds },
             )
+        })
+        await ctx.sandboxManager.release(ctx.log)
 
-            return {
-                kind: JobResultKind.SYNCHRONOUS,
-                status: result.status,
-                response: result.response,
-                errorMessage: result.error,
-                logs: result.logs,
-            }
-        }
-        catch (e) {
+        if (error) {
             await ctx.sandboxManager.invalidate(ctx.log)
-            throw e
+            if (isSandboxTimeout(error)) {
+                return { kind: JobResultKind.SYNCHRONOUS, status: EngineResponseStatus.TIMEOUT, response: {} }
+            }
+            throw error
         }
-        finally {
-            await ctx.sandboxManager.release(ctx.log)
+
+        return {
+            kind: JobResultKind.SYNCHRONOUS,
+            status: result.status,
+            response: result.response,
+            errorMessage: result.error,
+            logs: result.logs,
         }
     },
 }
