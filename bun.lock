@@ -388,7 +388,7 @@
         "axios-retry": "4.4.1",
         "form-data": "4.0.4",
         "mime-types": "2.1.35",
-        "request-filtering-agent": "3.2.0",
+        "request-filtering-agent": "2.0.1",
         "tslib": "2.6.2",
         "zod": "4.3.6",
       },
@@ -14212,7 +14212,7 @@
 
     "replicate": ["replicate@0.34.1", "", { "optionalDependencies": { "readable-stream": ">=4.0.0" } }, "sha512-kQ5ULqowkZsx34WdUhlAtp9IcpalIfkaSRrFPUGP3gEpXouCxGsjXpn57e3Ic7K3mNw74cLkIrtAgcrlP+pzvg=="],
 
-    "request-filtering-agent": ["request-filtering-agent@3.2.0", "", { "dependencies": { "ipaddr.js": "^2.1.0" } }, "sha512-tKPrKdsmTFuGG1/pBEpzTB66mDZ2lZLW8kjW4N6jj4QjnxUTKrIfv5p2zuJRfztOos86jRPD41lRaGjh+1QqDw=="],
+    "request-filtering-agent": ["request-filtering-agent@2.0.1", "", { "dependencies": { "ipaddr.js": "^2.1.0" } }, "sha512-QvD3qwthEt9J+2hCdQ3wTn3Z/ZsgyiMECjY9yVJ0F8FtnGfNQG+dRz65eKayYRHIRQ6OGjH8Zuqr1lw7G6pz1Q=="],
 
     "require-directory": ["require-directory@2.1.1", "", {}, "sha512-fGxEI7+wsG9xrvdjsrlmL22OMTTiHRwAMroiEeMgq8gzoLC/PQr7RsRDSTLUg/bZAZtF+TVIkHc6/4RIKrui+Q=="],
 
