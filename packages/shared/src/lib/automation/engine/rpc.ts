@@ -52,10 +52,6 @@ export function createRpcServer<T extends Contract>(
     })
 }
 
-function isRpcErrorEnvelope(value: unknown): value is { __rpcError: string } {
-    return typeof value === 'object' && value !== null && '__rpcError' in value
-}
-
 export function createNotifyClient<T extends Contract>(
     socket: RpcSocket,
 ): T {
@@ -76,4 +72,8 @@ export function createNotifyServer<T extends Contract>(
         const handler = handlers[msg.method as keyof T]
         handler(msg.payload)
     })
+}
+
+function isRpcErrorEnvelope(value: unknown): value is { __rpcError: string } {
+    return typeof value === 'object' && value !== null && '__rpcError' in value
 }
