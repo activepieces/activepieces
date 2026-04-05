@@ -2,7 +2,7 @@ name: Continuous Delivery — Release
 
 on:
   schedule:
-    - cron: '0 9 * * 0'  # Every Sunday at 9 AM UTC
+    - cron: '0 9 * * 1'  # Every Monday at 9 AM UTC
   workflow_dispatch:
 
 jobs:
@@ -10,6 +10,9 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: release-candidate
 
       - name: Set version from package.json
         id: version
@@ -51,24 +54,14 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: depot/setup-action@v1
-
-      - name: Build and push official release images
-        uses: depot/build-push-action@v1
-        with:
-          project: du7O4b0e8P
-          token: ${{ secrets.DEPOT_PROJECT_TOKEN }}
-          context: .
-          file: ./Dockerfile
-          platforms: |
-            linux/amd64
-            linux/arm64
-          push: true
-          tags: |
-            activepieces/activepieces:${{ steps.version.outputs.release }}
-            activepieces/activepieces:latest
-            ghcr.io/activepieces/activepieces:${{ steps.version.outputs.release }}
-            ghcr.io/activepieces/activepieces:latest
+      - name: Publish release images
+        run: |
+          docker buildx imagetools create \
+            --tag activepieces/activepieces:${{ steps.version.outputs.release }} \
+            --tag activepieces/activepieces:latest \
+            --tag ghcr.io/activepieces/activepieces:${{ steps.version.outputs.release }} \
+            --tag ghcr.io/activepieces/activepieces:latest \
+            ghcr.io/activepieces/activepieces-cloud:release-candidate
 
       - name: Check for breaking migrations
         id: migration-check
