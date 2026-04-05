@@ -27,7 +27,7 @@ Four separate workflows cover the full delivery lifecycle:
 
   1. Checkout from the current `deploy/cloud/YYYY-MM-DD` branch (created by the last Sunday promotion).
   2. Push your fix commit(s) to that branch.
-  3. Manually trigger `continuous-delivery-cloud.yml` with action `cloud-hotfix` **on the hotfix branch** (not `main`). This builds the image and deploys directly to production — staging is not involved.
+  3. Manually trigger `continuous-delivery-cloud.yml` with action `cloud-hotfix` **on the hotfix branch** (not `main`). This builds the image and deploys directly to production — staging is not involved. If the next scheduled Sunday promotion is within 1 hour, the workflow will refuse to run — just wait for the scheduled run instead.
   4. Merge the hotfix branch into `main`. This automatically triggers `tag-release-candidate`, which SSHes to staging and retrags whatever image is running there as `release-candidate`. Sunday's scheduled run will re-deploy — a safe no-op.
 - **Emergency**: Use `emergency-cloud-deploy.yml` (manual dispatch) to bypass staging and deploy directly to production.
 
@@ -59,7 +59,7 @@ To run any workflow manually, go to the repo's **Actions** tab, select the workf
 |---|---|
 | **Scheduled (Sunday 9 AM UTC)** | Promotes `release-candidate` to production (requires approval via the `production` GitHub Environment). After promotion, creates a `deploy/cloud/YYYY-MM-DD` branch and runs a smoke test. |
 | **`workflow_call`** | Same as above, triggered by another workflow. |
-| **Manual dispatch — `cloud-hotfix`** | Builds the image from the current branch and deploys directly to production, bypassing staging. Trigger this **on the hotfix branch** (`deploy/cloud/YYYY-MM-DD`), not `main`. After promotion, merge the hotfix branch into `main` to automatically retag `release-candidate`. |
+| **Manual dispatch — `cloud-hotfix`** | Builds the image from the current branch and deploys directly to production, bypassing staging. Trigger this **on the hotfix branch** (`deploy/cloud/YYYY-MM-DD`), not `main`. After promotion, merge the hotfix branch into `main` to automatically retag `release-candidate`. Blocked automatically if the next scheduled Sunday promotion is within 1 hour. |
 
 ### `continuous-delivery-release.yml` — Weekly Release
 

@@ -14,8 +14,35 @@ on:
           - cloud-hotfix  # Build from current branch and deploy directly to production, bypassing staging
 
 jobs:
-  build-image:
+  guard:
     if: github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'cloud-hotfix'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check proximity to scheduled promotion
+        run: |
+          NOW=$(date -u +%s)
+          DOW=$(date -u +%u)  # ISO: 1=Mon … 7=Sun
+          if [ "$DOW" -eq 7 ]; then
+            TODAY_9AM=$(date -u -d "today 09:00" +%s)
+            if [ "$NOW" -lt "$TODAY_9AM" ]; then
+              NEXT_RUN=$TODAY_9AM
+            else
+              NEXT_RUN=$(date -u -d "next sunday 09:00" +%s)
+            fi
+          else
+            NEXT_RUN=$(date -u -d "next sunday 09:00" +%s)
+          fi
+          SECONDS_UNTIL=$(( NEXT_RUN - NOW ))
+          MINS=$(( SECONDS_UNTIL / 60 ))
+          if [ "$SECONDS_UNTIL" -le 3600 ]; then
+            echo "Scheduled promotion is in ${MINS}m — no hotfix needed, wait for the scheduled run."
+            exit 1
+          fi
+          echo "Next scheduled promotion in ${MINS}m — proceeding with hotfix."
+
+  build-image:
+    needs: [guard]
+    if: needs.guard.result == 'success'
     runs-on: ubuntu-24.04
     outputs:
       image_tag: ${{ steps.set-tag.outputs.image_tag }}
@@ -47,7 +74,10 @@ jobs:
 
   promote-to-production:
     needs: [build-image]
-    if: always() && (needs.build-image.result == 'success' || needs.build-image.result == 'skipped')
+    if: |
+      always() &&
+      (needs.build-image.result == 'success' ||
+       (needs.build-image.result == 'skipped' && github.event_name != 'workflow_dispatch'))
     runs-on: ubuntu-latest
     permissions:
       contents: write
