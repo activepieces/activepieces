@@ -16,12 +16,9 @@ import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 
 import dropMediaImg from '@/assets/img/drop-media.svg';
-import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import {
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
 
 import { DelayedTooltip } from './delayed-tooltip';
 
@@ -79,20 +76,18 @@ const FILE_ICONS: Record<Attachment['type'], string> = {
   other: '📎',
 };
 
-const FAKE_RESPONSES = [
-  "That's a great question! Let me think about that for you. 🤔",
-  'I understand what you mean. Everything depends on context!',
-  "Interesting! I'd suggest breaking this down into smaller steps.",
-  'Great point! Have you considered looking at it from a different angle?',
-  'هذا سؤال رائع! دعني أساعدك في ذلك. 😊',
-  'بالتأكيد، يمكنني مساعدتك في هذا الأمر!',
-  "I'm not 100% sure, but based on what I know — I'd say yes!",
-  "That's fascinating! Tell me more about what you're trying to achieve.",
-  "Here's a tip: always start simple and build from there. 🚀",
-  'لا تقلق، هذا أمر طبيعي جداً. كلنا نمر بهذه المرحلة!',
-  "Great! I think you're on the right track. Keep going! 💪",
-  'يبدو أن لديك فكرة رائعة. دعنا نستكشفها معاً!',
+const ANTHROPIC_KEY = import.meta.env.VITE_ANTHROPIC_API_KEY || '';
+
+const IMAGE_KEYWORDS = [
+  'صورة', 'صوره', 'ارسم', 'ارسملي', 'اعمل صور', 'ولد صور', 'اعملي صور',
+  'generate image', 'draw', 'create image', 'make image', 'picture of',
+  'generate a', 'create a photo', 'make a photo', 'صمم', 'صمملي',
 ];
+
+const isImageRequest = (text: string) => {
+  const lower = text.toLowerCase();
+  return IMAGE_KEYWORDS.some((kw) => lower.includes(kw));
+};
 
 const getTime = () =>
   new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -248,10 +243,22 @@ export function AIChatBox({
   onFirstMessage?: (text: string) => void;
   incognito?: boolean;
 }) {
+  const thinkingPhrases = [
+    'Gathering information',
+    'Retrieving my memory',
+    'Analyzing your question',
+    'Putting thoughts together',
+  ];
+  const pickThinkingText = () =>
+    thinkingPhrases[Math.floor(Math.random() * thinkingPhrases.length)];
+
   const hasCalledFirstMessage = useRef(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [typing, setTyping] = useState(false);
+  const [thinkingText, setThinkingText] = useState('Thinking');
+  const [imgProgress, setImgProgress] = useState<Record<number, number>>({});
+  const imgTimersRef = useRef<Record<number, ReturnType<typeof setInterval>>>({});
   const [copiedId, setCopiedId] = useState<number | null>(null);
   const [selectedModel, setSelectedModel] = useState('GPT-4o');
   const [modelMenuOpen, setModelMenuOpen] = useState(false);
@@ -277,10 +284,38 @@ export function AIChatBox({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const streamRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const thinkingRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     textareaRef.current?.focus();
   }, []);
+
+  const startImgProgress = (msgId: number) => {
+    setImgProgress((prev) => ({ ...prev, [msgId]: 0 }));
+    imgTimersRef.current[msgId] = setInterval(() => {
+      setImgProgress((prev) => {
+        const current = prev[msgId] ?? 0;
+        if (current >= 90) return prev;
+        const increment = current < 30 ? 5 : current < 60 ? 3 : 1;
+        return { ...prev, [msgId]: current + increment };
+      });
+    }, 300);
+  };
+
+  const finishImgProgress = (msgId: number) => {
+    if (imgTimersRef.current[msgId]) {
+      clearInterval(imgTimersRef.current[msgId]);
+      delete imgTimersRef.current[msgId];
+    }
+    setImgProgress((prev) => ({ ...prev, [msgId]: 100 }));
+    setTimeout(() => {
+      setImgProgress((prev) => {
+        const next = { ...prev };
+        delete next[msgId];
+        return next;
+      });
+    }, 500);
+  };
 
   useEffect(() => {
     if (!lightboxSrc) return;
@@ -295,10 +330,33 @@ export function AIChatBox({
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, typing]);
 
-  const streamResponse = (fullText: string) => {
-    const words = fullText.split(' ');
+  const callClaude = async (msgs: { role: 'user' | 'assistant'; content: string }[]) => {
+    const res = await fetch('/claude-api/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': ANTHROPIC_KEY,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1024,
+        messages: msgs,
+      }),
+    });
+    if (!res.ok) throw new Error(`${res.status} ${await res.text()}`);
+    const data = await res.json();
+    return data.content?.[0]?.text || '';
+  };
+
+  const streamClaude = async (chatMessages: { role: 'user' | 'assistant'; content: string | Array<{ type: string; text?: string; source?: { type: string; media_type: string; data: string } }> }[]) => {
     const msgId = Date.now() + 1;
     const time = getTime();
+    const lastContent = chatMessages[chatMessages.length - 1]?.content || '';
+    const userText = typeof lastContent === 'string' ? lastContent : ([...lastContent].reverse().find((b) => b.type === 'text' && !b.text?.startsWith('--- File:'))?.text || '');
+    const hasAttachments = typeof lastContent !== 'string';
+    const wantsImage = !hasAttachments && isImageRequest(userText);
 
     setMessages((prev) => [
       ...prev,
@@ -312,25 +370,120 @@ export function AIChatBox({
       },
     ]);
 
-    let i = 0;
-    streamRef.current = setInterval(() => {
-      i++;
-      const partial = words.slice(0, i).join(' ');
-      setMessages((prev) =>
-        prev.map((m) =>
-          m.id === msgId
-            ? { ...m, text: partial, streaming: i < words.length }
-            : m,
-        ),
-      );
-      if (i >= words.length) {
-        clearInterval(streamRef.current!);
-        streamRef.current = null;
+    try {
+      abortRef.current = new AbortController();
+
+      if (wantsImage) {
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === msgId ? { ...m, text: 'Generating image...' } : m,
+          ),
+        );
+
+        const imagePrompt = await callClaude([
+          {
+            role: 'user',
+            content: `Extract the image description from this message and reply with ONLY a short English image prompt, maximum 6 words. No extra text, no quotes: "${userText}"`,
+          },
+        ]);
+
+        const seed = Math.floor(Math.random() * 100000);
+        const cleanPrompt = imagePrompt.replace(/[^a-zA-Z0-9 ]/g, '').trim();
+        const imageUrl = `/img-proxy/prompt/${encodeURIComponent(cleanPrompt)}?width=512&height=512&nologo=true&seed=${seed}`;
+
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === msgId
+              ? { ...m, text: '', images: [imageUrl], streaming: false }
+              : m,
+          ),
+        );
+        startImgProgress(msgId);
+      } else {
+        // Stream from Claude
+        const res = await fetch('/claude-api/v1/messages', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': ANTHROPIC_KEY,
+            'anthropic-version': '2023-06-01',
+            'anthropic-dangerous-direct-browser-access': 'true',
+          },
+          body: JSON.stringify({
+            model: 'claude-sonnet-4-20250514',
+            max_tokens: 4096,
+            stream: true,
+            messages: chatMessages,
+          }),
+          signal: abortRef.current.signal,
+        });
+
+        if (!res.ok) throw new Error(`${res.status} ${await res.text()}`);
+
+        const reader = res.body!.getReader();
+        const decoder = new TextDecoder();
+        let fullText = '';
+        let buffer = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+
+          for (const line of lines) {
+            if (!line.startsWith('data: ')) continue;
+            const data = line.slice(6);
+            if (data === '[DONE]') continue;
+            try {
+              const event = JSON.parse(data);
+              if (event.type === 'content_block_delta' && event.delta?.text) {
+                fullText += event.delta.text;
+                const captured = fullText;
+                setMessages((prev) =>
+                  prev.map((m) =>
+                    m.id === msgId ? { ...m, text: captured } : m,
+                  ),
+                );
+              }
+            } catch { /* skip */ }
+          }
+        }
+
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === msgId ? { ...m, text: fullText, streaming: false } : m,
+          ),
+        );
       }
-    }, 60);
+    } catch (err) {
+      if ((err as Error).name !== 'AbortError') {
+        console.error('Claude error:', err);
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === msgId
+              ? { ...m, text: `Error: ${(err as Error).message}`, streaming: false }
+              : m,
+          ),
+        );
+      }
+    }
+    abortRef.current = null;
   };
 
-  const regenerateResponse = (msgId: number) => {
+  const regenerateResponse = async (msgId: number) => {
+    // Find the last user message before this AI message
+    const msgIndex = messages.findIndex((m) => m.id === msgId);
+    let lastUserText = '';
+    for (let i = msgIndex - 1; i >= 0; i--) {
+      if (messages[i].role === 'user') {
+        lastUserText = messages[i].text;
+        break;
+      }
+    }
+
     setMessages((prev) =>
       prev.map((m) => {
         if (m.id !== msgId) return m;
@@ -338,7 +491,7 @@ export function AIChatBox({
         return {
           ...m,
           text: '',
-          streaming: false,
+          streaming: true,
           responses: prevResponses,
           responseIndex: prevResponses.length,
         };
@@ -346,49 +499,95 @@ export function AIChatBox({
     );
 
     setTyping(true);
+    setThinkingText(pickThinkingText());
 
-    thinkingRef.current = setTimeout(() => {
-      thinkingRef.current = null;
+    // Build history up to the user message
+    const chatHistory: { role: 'user' | 'assistant'; content: string }[] = messages
+      .slice(0, msgIndex)
+      .filter((m) => m.text)
+      .map((m) => ({
+        role: m.role === 'user' ? 'user' as const : 'assistant' as const,
+        content: m.text,
+      }));
+    if (!chatHistory.length) {
+      chatHistory.push({ role: 'user', content: lastUserText || 'Hello' });
+    }
+
+    try {
+      abortRef.current = new AbortController();
+      const res = await fetch('/claude-api/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': ANTHROPIC_KEY,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true',
+        },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 4096,
+          stream: true,
+          messages: chatHistory,
+        }),
+        signal: abortRef.current.signal,
+      });
+
       setTyping(false);
+      const reader = res.body!.getReader();
+      const decoder = new TextDecoder();
+      let fullText = '';
+      let buffer = '';
 
-      const reply =
-        FAKE_RESPONSES[Math.floor(Math.random() * FAKE_RESPONSES.length)];
-      const words = reply.split(' ');
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
 
-      setMessages((prev) =>
-        prev.map((m) =>
-          m.id === msgId ? { ...m, streaming: true } : m,
-        ),
-      );
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
 
-      let i = 0;
-      streamRef.current = setInterval(() => {
-      i++;
-      const partial = words.slice(0, i).join(' ');
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          const data = line.slice(6);
+          if (data === '[DONE]') continue;
+          try {
+            const event = JSON.parse(data);
+            if (event.type === 'content_block_delta' && event.delta?.text) {
+              fullText += event.delta.text;
+              const captured = fullText;
+              setMessages((prev) =>
+                prev.map((m) =>
+                  m.id === msgId ? { ...m, text: captured } : m,
+                ),
+              );
+            }
+          } catch { /* skip */ }
+        }
+      }
+
+      const finalText = fullText;
       setMessages((prev) =>
         prev.map((m) => {
           if (m.id !== msgId) return m;
-          const done = i >= words.length;
-          const responses = done
-            ? [...(m.responses || []), partial]
-            : m.responses;
+          const responses = [...(m.responses || []), finalText];
           return {
             ...m,
-            text: partial,
-            streaming: !done,
+            text: finalText,
+            streaming: false,
             responses,
-            responseIndex: done
-              ? (responses?.length ?? 1) - 1
-              : m.responseIndex,
+            responseIndex: responses.length - 1,
           };
         }),
       );
-      if (i >= words.length) {
-        clearInterval(streamRef.current!);
-        streamRef.current = null;
-      }
-    }, 60);
-    }, 800 + Math.random() * 600);
+    } catch {
+      setTyping(false);
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === msgId ? { ...m, streaming: false } : m,
+        ),
+      );
+    }
+    abortRef.current = null;
   };
 
   const stopStreaming = () => {
@@ -396,6 +595,10 @@ export function AIChatBox({
       clearTimeout(thinkingRef.current);
       thinkingRef.current = null;
       setTyping(false);
+    }
+    if (abortRef.current) {
+      abortRef.current.abort();
+      abortRef.current = null;
     }
     if (streamRef.current) {
       clearInterval(streamRef.current);
@@ -421,7 +624,24 @@ export function AIChatBox({
           src: '',
           size: formatSize(file.size),
         };
-        setPendingFiles((prev) => [...prev, attachment]);
+        const binaryExts = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'zip', 'rar', 'exe', 'dmg', 'mp3', 'mp4', 'mov', 'avi'];
+        const ext = file.name.split('.').pop()?.toLowerCase() || '';
+        if (!binaryExts.includes(ext)) {
+          const reader = new FileReader();
+          reader.onload = (ev) => {
+            const text = ev.target?.result as string;
+            // Check if content looks like text (not binary garbage)
+            const isBinary = text.slice(0, 200).split('').some((c) => {
+              const code = c.charCodeAt(0);
+              return code < 9 || (code > 13 && code < 32 && code !== 27);
+            });
+            attachment.src = isBinary ? '' : text;
+            setPendingFiles((prev) => [...prev, attachment]);
+          };
+          reader.readAsText(file);
+        } else {
+          setPendingFiles((prev) => [...prev, attachment]);
+        }
       }
     });
     e.target.value = '';
@@ -537,7 +757,23 @@ export function AIChatBox({
           src: '',
           size: formatSize(file.size),
         };
-        setPendingFiles((prev) => [...prev, attachment]);
+        const binaryExts = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'zip', 'rar', 'exe', 'dmg', 'mp3', 'mp4', 'mov', 'avi'];
+        const ext = file.name.split('.').pop()?.toLowerCase() || '';
+        if (!binaryExts.includes(ext)) {
+          const reader = new FileReader();
+          reader.onload = (ev) => {
+            const text = ev.target?.result as string;
+            const isBinary = text.slice(0, 200).split('').some((c) => {
+              const code = c.charCodeAt(0);
+              return code < 9 || (code > 13 && code < 32 && code !== 27);
+            });
+            attachment.src = isBinary ? '' : text;
+            setPendingFiles((prev) => [...prev, attachment]);
+          };
+          reader.readAsText(file);
+        } else {
+          setPendingFiles((prev) => [...prev, attachment]);
+        }
       }
     });
   };
@@ -548,7 +784,7 @@ export function AIChatBox({
       pendingImages.length > 0 ||
       pendingFiles.length > 0 ||
       replyQuotes.length > 0;
-    if ((!text && !hasAttachments) || typing) return;
+    if ((!text && !hasAttachments) || typing || messages.some((m) => m.streaming)) return;
     const fullText = text;
     setInput('');
     if (textareaRef.current) textareaRef.current.style.height = 'auto';
@@ -578,14 +814,49 @@ export function AIChatBox({
       },
     ]);
     setTyping(true);
+    setThinkingText(pickThinkingText());
 
-    thinkingRef.current = setTimeout(() => {
+    const chatHistory: { role: 'user' | 'assistant'; content: string | Array<{ type: string; text?: string; source?: { type: string; media_type: string; data: string } }> }[] = messages
+      .filter((m) => m.text)
+      .map((m) => ({
+        role: m.role === 'user' ? 'user' as const : 'assistant' as const,
+        content: m.text,
+      }));
+
+    // Build content for current message with images/files
+    const hasImages = images && images.length > 0;
+    const hasFiles = files && files.some((f) => f.src);
+    if (hasImages || hasFiles) {
+      const contentBlocks: Array<{ type: string; text?: string; source?: { type: string; media_type: string; data: string } }> = [];
+      if (images) {
+        for (const img of images) {
+          const match = img.match(/^data:(image\/\w+);base64,(.+)$/);
+          if (match) {
+            contentBlocks.push({
+              type: 'image',
+              source: { type: 'base64', media_type: match[1], data: match[2] },
+            });
+          }
+        }
+      }
+      if (files) {
+        for (const f of files) {
+          if (f.src) {
+            contentBlocks.push({ type: 'text', text: `--- File: ${f.name} ---\n${f.src}` });
+          }
+        }
+      }
+      if (fullText) contentBlocks.push({ type: 'text', text: fullText });
+      chatHistory.push({ role: 'user', content: contentBlocks });
+    } else {
+      chatHistory.push({ role: 'user', content: fullText });
+    }
+
+    thinkingRef.current = setTimeout(async () => {
       thinkingRef.current = null;
-      const reply =
-        FAKE_RESPONSES[Math.floor(Math.random() * FAKE_RESPONSES.length)];
       setTyping(false);
-      streamResponse(reply);
-    }, 800 + Math.random() * 600);
+      await streamClaude(chatHistory);
+    }, 500);
   };
 
   const handleKey = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -1084,15 +1355,17 @@ export function AIChatBox({
           </div>
         ) : (
           <>
-            <div className="msgs-area flex-1 overflow-y-auto pt-6 flex flex-col" style={{ scrollbarGutter: 'stable' }}>
+            <div
+              className="msgs-area flex-1 overflow-y-auto pt-6 flex flex-col"
+              style={{ scrollbarGutter: 'stable' }}
+            >
               <div
                 className="w-full mx-auto pb-10 flex flex-col gap-1"
                 style={{ maxWidth: 'clamp(280px, calc(100vw - 700px), 560px)' }}
               >
                 {messages.map((msg, msgIdx) => {
                   const isLastAiMsg =
-                    msg.role === 'ai' &&
-                    msgIdx === messages.length - 1;
+                    msg.role === 'ai' && msgIdx === messages.length - 1;
                   return msg.role === 'ai' ? (
                     <div
                       key={msg.id}
@@ -1100,12 +1373,42 @@ export function AIChatBox({
                       className="ai-msg msg-enter py-1"
                       onMouseUp={handleTextSelect}
                     >
+                      {msg.images && msg.images.length > 0 && (
+                        <div className="flex gap-1.5 flex-wrap mb-2">
+                          {msg.images.map((src, i) => (
+                            <div key={i} className="relative">
+                              <img
+                                src={src}
+                                alt="Generated image"
+                                referrerPolicy="no-referrer"
+                                className="chat-img rounded-xl object-cover block bg-muted"
+                                style={{ width: 400, height: 400, maxWidth: '100%' }}
+                                onClick={() => setLightboxSrc(src)}
+                                onLoad={() => finishImgProgress(msg.id)}
+                                onError={() => finishImgProgress(msg.id)}
+                              />
+                              {imgProgress[msg.id] !== undefined && imgProgress[msg.id] < 100 && (
+                                <div className="absolute inset-0 flex flex-col items-center justify-center rounded-xl bg-muted z-10">
+                                  <div className="thinking-spinner" style={{ width: 24, height: 24 }} />
+                                  <div className="text-sm text-muted-foreground mt-3">
+                                    Generating image...
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
                       <p className="m-0 text-base leading-relaxed text-accent-foreground dark:text-neutral-300 whitespace-pre-wrap">
                         {msg.text}
-                        {msg.streaming && <span className="cursor" />}
                       </p>
                       {!msg.streaming && msg.text && (
-                        <div className={cn('flex items-center gap-1 mt-1.5', !isLastAiMsg && 'ai-msg-actions')}>
+                        <div
+                          className={cn(
+                            'flex items-center gap-1 mt-1.5',
+                            !isLastAiMsg && 'ai-msg-actions',
+                          )}
+                        >
                           {msg.responses && msg.responses.length > 1 && (
                             <div className="flex items-center gap-0.5">
                               <DelayedTooltip>
@@ -1239,7 +1542,7 @@ export function AIChatBox({
                       key={msg.id}
                       className="msg-enter user-msg-wrap flex justify-end py-1"
                     >
-                      <div className="max-w-[75%]">
+                      <div className="max-w-[75%] w-fit ml-auto">
                         {msg.images && msg.images.length > 0 && (
                           <div
                             className={cn(
@@ -1373,7 +1676,10 @@ export function AIChatBox({
                                   }
                                 }}
                               >
-                                <Reply size={10} className="shrink-0 text-muted-foreground" />
+                                <Reply
+                                  size={10}
+                                  className="shrink-0 text-muted-foreground"
+                                />
                                 <span
                                   className="text-foreground overflow-hidden line-clamp-3 max-w-full break-words"
                                   style={{
@@ -1393,7 +1699,7 @@ export function AIChatBox({
                           </div>
                         )}
                         {msg.text && (
-                          <div className="bg-muted text-accent-foreground dark:text-neutral-300 px-4 py-2.5 rounded-[18px_18px_4px_18px] text-base leading-relaxed whitespace-pre-wrap break-words overflow-wrap-break-word">
+                          <div className="bg-muted text-accent-foreground dark:text-neutral-300 px-4 py-2.5 rounded-[18px_18px_4px_18px] text-base leading-relaxed whitespace-pre-wrap break-words overflow-wrap-break-word w-fit ml-auto">
                             {msg.text}
                           </div>
                         )}
@@ -1444,12 +1750,12 @@ export function AIChatBox({
                     </div>
                   );
                 })}
-                {typing && (
+                {(typing || messages.some((m) => m.streaming && !m.text)) && (
                   <div className="msg-enter py-2">
                     <div className="flex gap-2 items-center">
                       <div className="thinking-spinner" />
-                      <span className="thinking-label text-[13px] font-medium">
-                        Thinking
+                      <span className="thinking-label text-base font-medium">
+                        {thinkingText}
                       </span>
                     </div>
                   </div>

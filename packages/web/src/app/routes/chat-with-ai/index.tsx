@@ -1,17 +1,14 @@
 import { t } from 'i18next';
 import { useState, useEffect, useCallback, useRef } from 'react';
 
-import { cn } from '@/lib/utils';
+import { PageHeader } from '@/components/custom/page-header';
 import { GhostIcon } from '@/components/icons/ghost';
 import type { GhostIconHandle } from '@/components/icons/ghost';
 import { SlidersHorizontalIcon } from '@/components/icons/sliders-horizontal';
 import type { SlidersHorizontalIconHandle } from '@/components/icons/sliders-horizontal';
-import { PageHeader } from '@/components/custom/page-header';
 import { Separator } from '@/components/ui/separator';
-import {
-  TooltipTrigger,
-  TooltipContent,
-} from '@/components/ui/tooltip';
+import { TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
 
 import { AIChatBox } from './ai-chat-box';
 import { ChatSettingsDialog } from './chat-settings-dialog';
@@ -84,7 +81,9 @@ export function ChatWithAIPage() {
                 align="center"
                 className="pointer-events-none"
               >
-                {incognito ? 'Switch to Default Chat' : 'Switch to Private Chat'}
+                {incognito
+                  ? 'Switch to Default Chat'
+                  : 'Switch to Private Chat'}
               </TooltipContent>
             </DelayedTooltip>
           ) : incognito ? (

@@ -29,6 +29,16 @@ export default defineConfig(({ command, mode }) => {
           },
           ws: true,
         },
+        '/img-proxy': {
+          target: 'https://image.pollinations.ai',
+          changeOrigin: true,
+          rewrite: (p) => p.replace(/^\/img-proxy/, ''),
+        },
+        '/claude-api': {
+          target: 'https://api.anthropic.com',
+          changeOrigin: true,
+          rewrite: (p) => p.replace(/^\/claude-api/, ''),
+        },
       },
       port: 4200,
       host: '0.0.0.0',
