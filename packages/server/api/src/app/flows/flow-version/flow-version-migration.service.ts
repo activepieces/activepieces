@@ -1,11 +1,14 @@
 import {
+    ErrorCode,
     FlowVersion,
     isNil,
     LATEST_FLOW_SCHEMA_VERSION,
     ProjectId,
     spreadIfDefined,
+    tryCatch,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { onCallService } from '../../helper/on-call.service'
 import { flowVersionBackupService } from './flow-version-backup.service'
 import { flowVersionRepo } from './flow-version.service'
 import { flowMigrations } from './migrations'
@@ -24,7 +27,11 @@ export const flowVersionMigrationService = (log: FastifyBaseLogger) => ({
             backupFiles[flowVersion.schemaVersion] = await flowVersionBackupService(log).store(flowVersion)
         }
 
-        const migratedFlowVersion: FlowVersion = await flowMigrations.apply(flowVersion, { log, projectId })
+        const { data: migratedFlowVersion, error: migrationError } = await tryCatch(flowMigrations.apply(flowVersion, { log, projectId }))
+        if (migrationError) {
+            await onCallService(log).page(ErrorCode.FLOW_MIGRATION_FAILED)
+            throw migrationError
+        }
 
         await flowVersionRepo().update(flowVersion.id, {
             schemaVersion: migratedFlowVersion.schemaVersion,

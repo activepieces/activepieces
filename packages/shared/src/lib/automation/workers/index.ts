@@ -104,6 +104,7 @@ export const WorkerSettingsResponse = z.object({
     EDITION: z.string(),
     SSRF_PROTECTION_ENABLED: z.boolean(),
     SSRF_ALLOW_LIST: z.array(z.string()),
+    PAGE_ONCALL_WEBHOOK: z.string().optional(),
 })
 
 export type WorkerSettingsResponse = z.infer<typeof WorkerSettingsResponse>
