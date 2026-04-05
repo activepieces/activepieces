@@ -5,16 +5,19 @@ import { CommandOutput, spawnWithKill } from '../../utils/exec'
 
 export const bunRunner = (log: Logger) => ({
     async install({ path, filtersPath }: InstallParams): Promise<CommandOutput> {
-        const args = [
-            '--ignore-scripts',
-        ]
-        const filters: string[] = filtersPath
+        const filterArgs: string[] = filtersPath
             .map(sanitizeFilterPath)
-            .map((path) => `--filter ./${path}`)
+            .flatMap((p) => ['--filter', `./${p}`])
+        const args = [
+            'install',
+            '--ignore-scripts',
+            ...filterArgs,
+        ]
         await fileSystemUtils.threadSafeMkdir(path)
-        log.debug({ path, args, filters }, '[bunRunner#install]')
+        log.debug({ path, args }, '[bunRunner#install]')
         const { error, data } = await tryCatch(async () => spawnWithKill({
-            cmd: `bun install ${args.join(' ')} ${filters.join(' ')}`,
+            cmd: 'bun',
+            args,
             options: {
                 cwd: path,
             },

@@ -20,7 +20,7 @@ async function buildPieces(app: FastifyInstance, piecesInfo: PieceInfo[]): Promi
         }
     }
 
-    const pieceFilters = piecesInfo.map(p => `--filter=@activepieces/piece-${p.pieceName}`)
+    const pieceFilters = piecesInfo.map(p => `--filter=${p.packageName}`)
     const filterArgs = [
         '--filter=@activepieces/pieces-framework',
         '--filter=@activepieces/pieces-common',

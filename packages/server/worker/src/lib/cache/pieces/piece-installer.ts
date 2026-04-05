@@ -146,6 +146,7 @@ async function installPieces(rootWorkspace: string, pieces: PiecePackage[], incl
 async function rollbackInstallation(rootWorkspace: string, pieces: PiecePackage[]): Promise<void> {
     await Promise.all(pieces.map(piece => rm(path.resolve(rootWorkspace, relativePiecePath(piece)), {
         recursive: true,
+        force: true,
     })))
 }
 
