@@ -19,18 +19,19 @@ import { Logger } from 'pino'
 import writeFileAtomic from 'write-file-atomic'
 import { workerSettings } from '../../config/worker-settings'
 import { getGlobalCacheCommonPath, getGlobalCachePathLatestVersion } from '../cache-paths'
-import { packageRunner } from '../code/package-runner'
+import { bunRunner } from '../code/bun-runner'
 
 const tracer = trace.getTracer('piece-installer')
 
 const usedPiecesMemoryCache: Record<string, boolean> = {}
+const relativePiecePath = (piece: PiecePackage) => join('./', 'pieces', `${piece.pieceName}-${piece.pieceVersion}`)
 const piecePath = (rootWorkspace: string, piece: PiecePackage) => join(rootWorkspace, 'pieces', `${piece.pieceName}-${piece.pieceVersion}`)
 
 export const pieceInstaller = (log: Logger, apiClient: WorkerToApiContract) => ({
-    async install({ pieces }: InstallParams): Promise<void> {
+    async install({ pieces, includeFilters }: InstallParams): Promise<void> {
         const groupedPieces = groupPiecesByPackagePath(pieces)
         const installPromises = Object.entries(groupedPieces).map(async ([packagePath, piecesInGroup]) => {
-            await installPieces(packagePath, piecesInGroup, log, apiClient)
+            await installPieces(packagePath, piecesInGroup, includeFilters, log, apiClient)
         })
         await Promise.all(installPromises)
     },
@@ -51,7 +52,7 @@ function getCustomPiecesPath(platformId: string): string {
     }
 }
 
-async function installPieces(rootWorkspace: string, pieces: PiecePackage[], log: Logger, apiClient: WorkerToApiContract): Promise<void> {
+async function installPieces(rootWorkspace: string, pieces: PiecePackage[], includeFilters: boolean, log: Logger, apiClient: WorkerToApiContract): Promise<void> {
     const devPieces = workerSettings.getSettings().DEV_PIECES
     const nonDevPieces = pieces.filter(piece => !devPieces.includes(getPieceNameFromAlias(piece.pieceName)))
     const { piecesToInstall } = await partitionPiecesToInstall(rootWorkspace, nonDevPieces)
@@ -78,46 +79,44 @@ async function installPieces(rootWorkspace: string, pieces: PiecePackage[], log:
                 pieces: piecesToInstall.map(piece => `${piece.pieceName}-${piece.pieceVersion}`),
             }, '[pieceInstaller] acquired lock and starting to install pieces')
 
-            await savePackageArchivesToDiskIfNotCached(rootWorkspace, piecesToInstall, apiClient)
-            await createRootPackageJson({ path: rootWorkspace })
-            await createPnpmWorkspaceYaml({ path: rootWorkspace })
-            await Promise.all(piecesToInstall.map(piece => createPiecePackageJson({ rootWorkspace, piecePackage: piece })))
+            await createRootPackageJson({
+                path: rootWorkspace,
+            })
 
-            await tracer.startActiveSpan('pieceInstaller.install', async (span) => {
+            await savePackageArchivesToDiskIfNotCached(rootWorkspace, piecesToInstall, apiClient)
+
+            await Promise.all(piecesToInstall.map(piece => createPiecePackageJson({
+                rootWorkspace,
+                piecePackage: piece,
+            })))
+
+            await tracer.startActiveSpan('pieceInstaller.bunInstall', async (span) => {
                 try {
                     span.setAttribute('pieces.count', piecesToInstall.length)
                     span.setAttribute('pieces.rootWorkspace', rootWorkspace)
 
-                    const { error: batchError } = await tryCatch(() => packageRunner(log).install({ path: rootWorkspace }))
-
-                    if (!batchError) {
-                        await markPiecesAsUsed(rootWorkspace, piecesToInstall)
-                        log.info({ rootWorkspace, piecesCount: piecesToInstall.length }, '[pieceInstaller] Installed pieces using pnpm workspace')
-                        return
-                    }
-
-                    log.warn({ error: batchError, pieces: piecesToInstall.map(p => `${p.pieceName}@${p.pieceVersion}`) },
-                        '[pieceInstaller] Batch install failed, retrying pieces individually')
-                    await rm(join(rootWorkspace, 'pnpm-workspace.yaml'), { force: true })
-
-                    const failures: PiecePackage[] = []
-                    await Promise.all(piecesToInstall.map(async (piece) => {
-                        const { error } = await tryCatch(() => packageRunner(log).install({ path: piecePath(rootWorkspace, piece) }))
-                        if (error) {
-                            span.recordException(error instanceof Error ? error : new Error(String(error)))
-                            log.error({ piece: `${piece.pieceName}@${piece.pieceVersion}`, error }, '[pieceInstaller] Individual piece failed, rolling back')
-                            await rm(piecePath(rootWorkspace, piece), { recursive: true, force: true })
-                            failures.push(piece)
-                        }
-                        else {
-                            await markPiecesAsUsed(rootWorkspace, [piece])
-                        }
+                    const { error: installError } = await tryCatch(async () => bunRunner(log).install({
+                        path: rootWorkspace,
+                        filtersPath: includeFilters ? piecesToInstall.map(relativePiecePath) : [],
                     }))
 
-                    if (failures.length > 0) {
-                        const names = failures.map(p => `${p.pieceName}@${p.pieceVersion}`).join(', ')
-                        throw new Error(`[pieceInstaller] Failed to install: ${names}`)
+                    if (!isNil(installError)) {
+                        log.error({
+                            rootWorkspace,
+                            pieces: piecesToInstall.map(piece => `${piece.pieceName}-${piece.pieceVersion}`),
+                            error: installError,
+                        }, '[pieceInstaller] Piece installation failed, rolling back')
+                        span.recordException(installError instanceof Error ? installError : new Error(String(installError)))
+                        await rollbackInstallation(rootWorkspace, piecesToInstall)
+                        throw installError
                     }
+
+                    await markPiecesAsUsed(rootWorkspace, piecesToInstall)
+
+                    log.info({
+                        rootWorkspace,
+                        piecesCount: piecesToInstall.length,
+                    }, '[pieceInstaller] Installed registry pieces using bun')
                 }
                 finally {
                     span.end()
@@ -125,6 +124,12 @@ async function installPieces(rootWorkspace: string, pieces: PiecePackage[], log:
             })
         },
     })
+}
+
+async function rollbackInstallation(rootWorkspace: string, pieces: PiecePackage[]): Promise<void> {
+    await Promise.all(pieces.map(piece => rm(path.resolve(rootWorkspace, relativePiecePath(piece)), {
+        recursive: true,
+    })))
 }
 
 function groupPiecesByPackagePath(pieces: PiecePackage[]): Record<string, PiecePackage[]> {
@@ -164,6 +169,18 @@ async function savePackageArchivesToDiskIfNotCached(
     await Promise.all(saveToDiskJobs)
 }
 
+async function createRootPackageJson({ path }: { path: string }): Promise<void> {
+    const packageJsonPath = join(path, 'package.json')
+    await fileSystemUtils.threadSafeMkdir(dirname(packageJsonPath))
+    await writeFileAtomic(packageJsonPath, JSON.stringify({
+        'name': 'fast-workspace',
+        'version': '1.0.0',
+        'workspaces': [
+            'pieces/**',
+        ],
+    }, null, 2), 'utf8')
+}
+
 async function createPiecePackageJson({ rootWorkspace, piecePackage }: {
     rootWorkspace: string
     piecePackage: PiecePackage
@@ -179,21 +196,6 @@ async function createPiecePackageJson({ rootWorkspace, piecePackage }: {
     }
     await fileSystemUtils.threadSafeMkdir(dirname(packageJsonPath))
     await writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2), 'utf8')
-}
-
-async function createRootPackageJson({ path }: { path: string }): Promise<void> {
-    const packageJsonPath = join(path, 'package.json')
-    await fileSystemUtils.threadSafeMkdir(dirname(packageJsonPath))
-    await writeFileAtomic(packageJsonPath, JSON.stringify({
-        name: 'fast-workspace',
-        version: '1.0.0',
-        workspaces: ['pieces/**'],
-    }, null, 2), 'utf8')
-}
-
-async function createPnpmWorkspaceYaml({ path }: { path: string }): Promise<void> {
-    const workspacePath = join(path, 'pnpm-workspace.yaml')
-    await writeFileAtomic(workspacePath, 'packages:\n  - \'pieces/**\'\n', 'utf8')
 }
 
 async function partitionPiecesToInstall(rootWorkspace: string, pieces: PiecePackage[]): Promise<PieceInstallationResult> {
@@ -238,6 +240,7 @@ function getPackageArchivePathForPiece(rootWorkspace: string, piecePackage: Priv
 
 type InstallParams = {
     pieces: PiecePackage[]
+    includeFilters: boolean
 }
 
 type PieceInstallationResult = {
