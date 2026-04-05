@@ -147,7 +147,6 @@ async function pollAndExecute(apiClient: WorkerToApiContract, sbManager: Sandbox
             executeJob(apiClient, job, sbManager),
         )
 
-        clearInterval(lockExtensionInterval)
 
         const { error: completeError } = await tryCatch(() =>
             apiClient.completeJob({
@@ -163,6 +162,8 @@ async function pollAndExecute(apiClient: WorkerToApiContract, sbManager: Sandbox
                 response: result?.kind === JobResultKind.SYNCHRONOUS ? result.response : undefined,
             }),
         )
+
+        clearInterval(lockExtensionInterval)
 
         if (completeError) {
             workerLog.error({ error: completeError, jobId: job.jobId }, 'Failed to complete job')
@@ -274,7 +275,7 @@ async function warmupPiecesOnStartup(apiClient: WorkerToApiContract): Promise<vo
     }
     logger.info({ count: pieces.length }, 'Starting piece cache warmup')
     const { error: installError } = await tryCatch(() =>
-        pieceInstaller(logger, apiClient).install({ pieces }),
+        pieceInstaller(logger, apiClient).install({ pieces, includeFilters: false }),
     )
     if (installError) {
         logger.error({ error: installError }, 'Failed to install pieces during startup warmup')

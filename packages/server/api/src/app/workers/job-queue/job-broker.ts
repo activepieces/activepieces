@@ -9,7 +9,9 @@ import { AppSystemProp } from '../../helper/system/system-props'
 import { engineResponseWatcher } from '../engine-response-watcher'
 import { QueueName } from '../job'
 import { jobMigrations } from '../migrations/job-data-migrations'
+import { deletedFlowInterceptor } from './interceptors/deleted-flow-interceptor'
 import { rateLimiterInterceptor } from './interceptors/rate-limiter-interceptor'
+import { zombiePollingInterceptor } from './interceptors/zombie-polling-interceptor'
 import { InterceptorVerdict, JobInterceptor } from './job-interceptor'
 import { isUserInteractionJobData } from './job-queue'
 import { createQueueDispatcher, QueueDispatcher } from './queue-dispatcher'
@@ -17,7 +19,7 @@ import { createQueueDispatcher, QueueDispatcher } from './queue-dispatcher'
 const DRAIN_DELAY_SECONDS = 15
 const LOCK_DURATION_MS = 120_000
 
-const interceptors: JobInterceptor[] = [rateLimiterInterceptor]
+const interceptors: JobInterceptor[] = [rateLimiterInterceptor, zombiePollingInterceptor, deletedFlowInterceptor]
 const workerPromises = new Map<string, Promise<BullMQWorker>>()
 const dispatchers = new Map<string, QueueDispatcher>()
 
@@ -99,6 +101,10 @@ async function tryDequeue(worker: BullMQWorker, queueName: string, log: FastifyB
     }
 
     const interceptorResult = await runInterceptors({ jobId, jobData: migratedData, job, log })
+    if (interceptorResult === 'DISCARD') {
+        await job.moveToCompleted(null, token, false)
+        return tryDequeue(worker, queueName, log)
+    }
     if (interceptorResult !== null) {
         await job.moveToDelayed(Date.now() + interceptorResult.delayInMs, token)
         if (interceptorResult.priority !== undefined) {
@@ -116,7 +122,6 @@ async function tryDequeue(worker: BullMQWorker, queueName: string, log: FastifyB
     return {
         jobId,
         jobData: migratedData,
-        timeoutInSeconds: 600,
         attempsStarted: job.attemptsMade,
         engineToken,
         token,
@@ -132,7 +137,7 @@ async function returnJobToQueue(jobId: string, token: string, queueName: string,
     const jobData = JobData.parse(job.data)
     await job.moveToDelayed(Date.now() + 100, token)
     for (const interceptor of interceptors) {
-        const { error } = await tryCatch(() => interceptor.onJobFinished({ jobId, jobData, log }))
+        const { error } = await tryCatch(() => interceptor.onJobFinished({ jobId, jobData, failed: false, log }))
         if (error) {
             log.error({ jobId, error: String(error) }, '[jobBroker#returnJobToQueue] interceptor cleanup failed')
         }
@@ -140,13 +145,22 @@ async function returnJobToQueue(jobId: string, token: string, queueName: string,
     log.info({ jobId }, '[jobBroker#returnJobToQueue] orphaned job returned to queue')
 }
 
-async function runInterceptors({ jobId, jobData, job, log }: { jobId: string, jobData: JobData, job: Job, log: FastifyBaseLogger }): Promise<{ delayInMs: number, priority?: number } | null> {
+async function runInterceptors({ jobId, jobData, job, log }: { jobId: string, jobData: JobData, job: Job, log: FastifyBaseLogger }): Promise<{ delayInMs: number, priority?: number } | 'DISCARD' | null> {
     const passed: JobInterceptor[] = []
     for (const interceptor of interceptors) {
         const result = await interceptor.preDispatch({ jobId, jobData, job, log })
+        if (result.verdict === InterceptorVerdict.DISCARD) {
+            for (const passedInterceptor of passed) {
+                const { error } = await tryCatch(() => passedInterceptor.onJobFinished({ jobId, jobData, failed: false, log }))
+                if (error) {
+                    log.error({ jobId, error: String(error) }, '[jobBroker] Failed to clean up interceptor on discard')
+                }
+            }
+            return 'DISCARD'
+        }
         if (result.verdict === InterceptorVerdict.REJECT) {
             for (const passedInterceptor of passed) {
-                const { error } = await tryCatch(() => passedInterceptor.onJobFinished({ jobId, jobData, log }))
+                const { error } = await tryCatch(() => passedInterceptor.onJobFinished({ jobId, jobData, failed: false, log }))
                 if (error) {
                     log.error({ jobId, error: String(error) }, '[jobBroker] Failed to clean up interceptor on reject')
                 }
@@ -160,7 +174,7 @@ async function runInterceptors({ jobId, jobData, job, log }: { jobId: string, jo
 
 function isStalledJobError(error: unknown): boolean {
     const msg = error instanceof Error ? error.message : String(error)
-    return msg.includes('Missing lock') || msg.includes('job stalled')
+    return msg.includes('Missing lock') || msg.includes('job stalled') || msg.includes('Cannot read properties of null (reading \'moveToFinishedArgs\')')
 }
 
 function buildFailedReason(errorMessage: string, logs?: string): string {
@@ -223,10 +237,10 @@ export const jobBroker = (log: FastifyBaseLogger) => ({
         })
         if (error) {
             if (isStalledJobError(error)) {
-                log.warn({ jobId: input.jobId, error: String(error) }, '[jobBroker] Stalled job error during completeJob')
+                log.warn({ jobId: input.jobId, error: String(error), originalError: input.errorMessage }, '[jobBroker] Stalled job error during completeJob')
             }
             else {
-                log.error({ jobId: input.jobId, error: String(error) }, '[jobBroker] Failed to move job to final state')
+                log.error({ jobId: input.jobId, error: String(error), originalError: input.errorMessage }, '[jobBroker] Failed to move job to final state')
             }
             if (userJobData) {
                 await engineResponseWatcher(log).publish(userJobData.webserverId, userJobData.requestId, {
@@ -237,8 +251,9 @@ export const jobBroker = (log: FastifyBaseLogger) => ({
             }
         }
 
+        const failed = input.status === EngineResponseStatus.INTERNAL_ERROR || !isNil(error)
         for (const interceptor of interceptors) {
-            const { error: interceptorError } = await tryCatch(() => interceptor.onJobFinished({ jobId: input.jobId, jobData, log }))
+            const { error: interceptorError } = await tryCatch(() => interceptor.onJobFinished({ jobId: input.jobId, jobData, failed, log }))
             if (interceptorError) {
                 log.error({ jobId: input.jobId, error: String(interceptorError) }, '[jobBroker] Interceptor onJobFinished failed')
             }
