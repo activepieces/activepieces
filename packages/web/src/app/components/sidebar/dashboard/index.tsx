@@ -224,9 +224,12 @@ export function ProjectDashboardSidebar({
     },
   };
 
-  const items = [chatWithAILink, exploreLink, impactLink, leaderboardLink].filter(
-    permissionFilter,
-  );
+  const items = [
+    chatWithAILink,
+    exploreLink,
+    impactLink,
+    leaderboardLink,
+  ].filter(permissionFilter);
 
   return (
     !embedState.hideSideNav && (

@@ -2,11 +2,8 @@ import { Archive, ChevronDown, Plus, RotateCcw } from 'lucide-react';
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { toast } from 'sonner';
 
+import { TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import {
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 
 import { DelayedTooltip } from './delayed-tooltip';
 
