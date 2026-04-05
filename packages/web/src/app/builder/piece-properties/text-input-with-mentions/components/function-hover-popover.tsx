@@ -64,7 +64,10 @@ export function FunctionEditorTooltip({
       const startEl = target.closest<HTMLElement>('[data-function-start]');
       const endEl = target.closest<HTMLElement>('[data-function-end]');
 
-      if (!startEl && !endEl) return;
+      if (!startEl && !endEl) {
+        scheduleHide();
+        return;
+      }
 
       if (hideTimer.current) {
         clearTimeout(hideTimer.current);
@@ -238,12 +241,6 @@ export function FunctionTooltipCard({
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >
-      {errorMessage && (
-        <div className="flex items-start gap-1.5 text-[12px] text-red-400 leading-snug pb-1 border-b border-gray-700">
-          <span className="shrink-0">⚠</span>
-          <span>{errorMessage}</span>
-        </div>
-      )}
       <p className="text-[12px] text-gray-100 leading-snug">
         {t(fnDef.description)}
       </p>

@@ -25,7 +25,7 @@ export const FunctionEndNode = Node.create({
       mergeAttributes(HTMLAttributes, {
         'data-function-end': node.attrs.openId,
         class:
-          'ap-fn-badge inline-flex items-center bg-[#ede9fe] border border-[#a78bfa] text-[#5b21b6] rounded-[4px] px-[6px] py-[2px] mx-[2px] my-[2px] text-[12px] font-medium cursor-default select-none whitespace-nowrap',
+          'ap-fn-badge inline-flex items-center bg-primary/15 text-primary rounded-none px-[3px] mx-[1px] text-[12px] font-medium cursor-default select-none whitespace-nowrap',
         contenteditable: 'false',
       }),
       ')',

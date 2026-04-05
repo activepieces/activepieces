@@ -113,15 +113,16 @@ function countArgs(nodes: DocNode[]): number {
         else if (node.type === 'function_end') {
             depth--
         }
+        else if (node.type === 'function_sep' && depth === 0) {
+            separators++
+        }
         else if (node.type === 'mention') {
             hasContent = true
         }
         else if (node.type === 'text' && depth === 0) {
             const text = node.text ?? ''
-            const stripped = text.replace(/, /g, '').trim()
+            const stripped = text.trim()
             if (stripped) hasContent = true
-            const m = text.match(/, /g)
-            separators += m ? m.length : 0
         }
     }
 
@@ -142,12 +143,8 @@ function splitIntoArgs(nodes: DocNode[]): DocNode[][] {
             depth--
             args[args.length - 1].push(node)
         }
-        else if (node.type === 'text' && depth === 0 && node.text) {
-            const parts = node.text.split(', ')
-            for (let i = 0; i < parts.length; i++) {
-                if (i > 0) args.push([])
-                if (parts[i]) args[args.length - 1].push({ type: 'text', text: parts[i] })
-            }
+        else if (node.type === 'function_sep' && depth === 0) {
+            args.push([])
         }
         else {
             args[args.length - 1].push(node)

@@ -15,6 +15,7 @@ import { Placeholder } from '@tiptap/extension-placeholder';
 import { Text } from '@tiptap/extension-text';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
+import { Copy } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { inputClass } from '@/components/ui/input';
@@ -137,11 +138,15 @@ export const TiptapEditor = ({
   slashStateRef.current = slashState;
 
   const [activeFn, setActiveFn] = useState<ActiveFunctionInfo | null>(null);
-  const [previewMode, setPreviewMode] = useState(false);
-  const [previewValue, setPreviewValue] = useState<string>('');
-  const [previewError, setPreviewError] = useState(false);
-  const previewModeRef = useRef(previewMode);
-  previewModeRef.current = previewMode;
+  const [isFocused, setIsFocused] = useState(false);
+  const [hasFunctions, setHasFunctions] = useState(false);
+  const [previewResult, setPreviewResult] = useState<string>('');
+  const [previewErrorMsg, setPreviewErrorMsg] = useState<string | null>(null);
+  const [typeErrors, setTypeErrors] = useState<string[]>([]);
+  const isFocusedRef = useRef(isFocused);
+  isFocusedRef.current = isFocused;
+  const hasFunctionsRef = useRef(hasFunctions);
+  hasFunctionsRef.current = hasFunctions;
 
   const editorRef = useRef<ReturnType<typeof useEditor> | null>(null);
   const editorWrapperRef = useRef<HTMLDivElement>(null);
@@ -234,6 +239,8 @@ export const TiptapEditor = ({
     },
     onCreate: ({ editor: e }) => {
       const editorContent = e.getJSON();
+      setHasFunctions(docHasFunctions(e));
+      setTypeErrors(collectTypeErrors(editorContent));
       requestAnimationFrame(() => {
         applyTypeErrors(editorContent, editorWrapperRef.current);
         applyUnclosedErrors(editorWrapperRef.current);
@@ -244,7 +251,10 @@ export const TiptapEditor = ({
       const textResult =
         textMentionUtils.convertTiptapJsonToText(editorContent);
       if (onChange) onChange(textResult);
-      if (previewModeRef.current) updatePreview(textResult);
+      const nowHasFunctions = docHasFunctions(e);
+      setHasFunctions(nowHasFunctions);
+      setTypeErrors(collectTypeErrors(editorContent));
+      if (isFocusedRef.current && nowHasFunctions) updatePreview(textResult);
       requestAnimationFrame(() => {
         applyTypeErrors(editorContent, editorWrapperRef.current);
         applyUnclosedErrors(editorWrapperRef.current);
@@ -268,12 +278,18 @@ export const TiptapEditor = ({
     },
     onBlur: () => {
       setActiveFn(null);
+      setIsFocused(false);
       editorWrapperRef.current
         ?.querySelectorAll('.ap-fn-cursor-active')
         .forEach((n) => n.classList.remove('ap-fn-cursor-active'));
     },
-    onFocus: () => {
+    onFocus: ({ editor: e }) => {
+      setIsFocused(true);
       setInsertMentionHandler(insertMention);
+      if (hasFunctionsRef.current) {
+        const text = textMentionUtils.convertTiptapJsonToText(e.getJSON());
+        updatePreview(text);
+      }
     },
   });
 
@@ -296,55 +312,74 @@ export const TiptapEditor = ({
     (expression: string) => {
       const flatData = flattenSampleData(sampleData ?? {});
       const { result, error } = evaluateExpression(expression, flatData);
-      setPreviewValue(error ?? (result != null ? String(result) : ''));
-      setPreviewError(error !== null);
+      setPreviewErrorMsg(error);
+      setPreviewResult(result != null ? String(result) : '');
     },
     [sampleData],
   );
 
-  const togglePreview = () => {
-    if (!previewMode && editor) {
-      const text = textMentionUtils.convertTiptapJsonToText(editor.getJSON());
-      updatePreview(text);
-    }
-    setPreviewMode((prev) => !prev);
-  };
-
   if (!editor) return null;
 
-  return (
-    <div className="w-full" ref={editorWrapperRef}>
-      <div className="flex justify-end mb-0.5">
-        <button
-          type="button"
-          onClick={togglePreview}
-          className="text-[11px] text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
-        >
-          {previewMode ? 'Edit' : 'Preview'}
-        </button>
-      </div>
+  const showPreview = isFocused && hasFunctions;
 
-      {previewMode ? (
+  return (
+    <div className="relative w-full" ref={editorWrapperRef}>
+      <EditorContent editor={editor} />
+
+      {showPreview && (
         <div
-          className={cn(
-            className ?? cn(inputClass, 'py-2 h-[unset] block min-h-9'),
-            'whitespace-pre-wrap break-all text-sm',
-            previewError && 'border-red-400',
-          )}
+          className="absolute left-0 right-0 top-full z-50 rounded-b-md border border-t-0 border-border bg-background shadow-md text-[13px]"
+          onMouseDown={(e) => e.preventDefault()}
         >
-          {previewValue ? (
-            <span className={previewError ? 'text-red-500' : undefined}>
-              {previewError && '⚠ '}
-              {previewValue}
-            </span>
-          ) : (
-            <span className="text-muted-foreground opacity-50">
-              {placeholder}
-            </span>
+          {(typeErrors.length > 0 || previewErrorMsg) && (
+            <div className="border-b border-border">
+              <div className="flex items-center justify-between px-3 py-1.5 bg-red-50 dark:bg-red-950/30 rounded-t-md">
+                <span className="flex items-center gap-1.5 text-red-600 dark:text-red-400 font-medium text-xs">
+                  <span className="text-base leading-none">⊗</span>
+                  Error
+                </span>
+                <button
+                  type="button"
+                  onClick={() =>
+                    navigator.clipboard.writeText(
+                      [...typeErrors, previewErrorMsg ?? '']
+                        .filter(Boolean)
+                        .join('\n'),
+                    )
+                  }
+                  className="text-red-400 hover:text-red-600 transition-colors"
+                >
+                  <Copy size={13} />
+                </button>
+              </div>
+              <div className="px-3 py-2 text-red-500 dark:text-red-400 break-all whitespace-pre-wrap space-y-0.5">
+                {typeErrors.map((err, i) => (
+                  <div key={i}>{err}</div>
+                ))}
+                {previewErrorMsg && <div>{previewErrorMsg}</div>}
+              </div>
+            </div>
           )}
+
+          <div>
+            <div className="flex items-center justify-between px-3 py-1.5 bg-green-50 dark:bg-green-950/20 rounded-b-md">
+              <span className="flex items-center gap-1.5 text-muted-foreground font-medium text-xs">
+                <span>›</span>
+                Preview
+              </span>
+              <button
+                type="button"
+                onClick={() => navigator.clipboard.writeText(previewResult)}
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <Copy size={13} />
+              </button>
+            </div>
+            <div className="px-3 py-2 text-foreground break-all whitespace-pre-wrap">
+              {previewResult || <span className="text-muted-foreground italic">empty</span>}
+            </div>
+          </div>
         </div>
-      ) : (
-        <EditorContent editor={editor} />
       )}
 
       <FunctionEditorTooltip editorRef={editorWrapperRef} activeFn={activeFn} />
@@ -360,6 +395,21 @@ export const TiptapEditor = ({
     </div>
   );
 };
+
+function collectTypeErrors(
+  doc: import('@tiptap/react').JSONContent,
+): string[] {
+  const errors = typeCheckTiptapDoc(doc);
+  return [...new Set(errors.values())].filter(Boolean);
+}
+
+function docHasFunctions(editor: import('@tiptap/react').Editor): boolean {
+  let found = false;
+  editor.state.doc.descendants((node) => {
+    if (node.type.name === FUNCTION_START_NODE_TYPE) found = true;
+  });
+  return found;
+}
 
 function convertToText(value: unknown): string {
   if (isNil(value)) return '';
