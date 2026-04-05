@@ -188,6 +188,9 @@ const systemPropValidators: {
     // SSRF protection
     [AppSystemProp.SSRF_ALLOW_LIST]: stringValidator,
     [AppSystemProp.SSRF_PROTECTION_ENABLED]: booleanValidator,
+
+    // On-call
+    [AppSystemProp.PAGE_ONCALL_WEBHOOK]: urlValidator,
 }
 
 

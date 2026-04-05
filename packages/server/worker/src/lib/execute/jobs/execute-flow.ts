@@ -16,8 +16,10 @@ import {
     WorkerJobType,
     WorkerToApiContract,
 } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { flowCache } from '../../cache/flow/flow-cache'
 import { workerSettings } from '../../config/worker-settings'
+import { onCallService } from '../../utils/on-call.service'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../types'
 import { provisionFlowPieces } from '../utils/flow-helpers'
 import { resolvePayload } from '../utils/resolve-payload'
@@ -128,7 +130,7 @@ async function buildFlowOperation(
     }
 
     if (data.executionType === ExecutionType.RESUME) {
-        const executionState = await fetchExecutionState(ctx.apiClient, data)
+        const executionState = await fetchExecutionState(ctx.apiClient, data, ctx.log)
         if (Object.keys(executionState.steps).length === 0) {
             ctx.log.error({ runId: data.runId, executionType: data.executionType }, 'RESUME operation has empty execution state — this is a bug that would cause an infinite loop')
             throw new ActivepiecesError({
@@ -156,28 +158,24 @@ async function buildFlowOperation(
     }
 }
 
-async function fetchExecutionState(apiClient: WorkerToApiContract, data: ExecuteFlowJobData): Promise<ExecutionState> {
+async function fetchExecutionState(apiClient: WorkerToApiContract, data: ExecuteFlowJobData, log: FastifyBaseLogger): Promise<ExecutionState> {
     if (isNil(data.logsFileId)) {
-        throw new ActivepiecesError({
-            code: ErrorCode.ENTITY_NOT_FOUND,
-            params: {
-                message: 'logsFileId is missing for RESUME operation',
-                entityType: 'logs_file',
-                entityId: data.runId,
-            },
-        })
+        const error = new ActivepiecesError({
+            code: ErrorCode.RESUME_LOGS_FILE_MISSING,
+            params: { runId: data.runId },
+        }, 'logsFileId is missing for RESUME operation')
+        await onCallService(log).page(error)
+        throw error
     }
     const buffer = await apiClient.getPayloadFile({ fileId: data.logsFileId, projectId: data.projectId })
     const parsed = JSON.parse(buffer.toString('utf-8'))
     if (isNil(parsed.executionState)) {
-        throw new ActivepiecesError({
-            code: ErrorCode.ENTITY_NOT_FOUND,
-            params: {
-                message: 'executionState is missing in logs file',
-                entityType: 'execution_state',
-                entityId: data.logsFileId,
-            },
-        })
+        const error = new ActivepiecesError({
+            code: ErrorCode.EXECUTION_STATE_MISSING,
+            params: { logsFileId: data.logsFileId },
+        }, 'executionState is missing in logs file')
+        await onCallService(log).page(error)
+        throw error
     }
     return parsed.executionState
 }
