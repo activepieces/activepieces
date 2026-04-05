@@ -3,6 +3,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { templateTelemetryService } from '../../template/template-telemetry/template-telemetry.service'
+import { jobQueue } from '../../workers/job-queue/job-queue'
 import { flowTriggerSideEffect } from './flow-trigger-side-effect'
 import { TriggerSourceEntity } from './trigger-source-entity'
 import { triggerUtils } from './trigger-utils'
@@ -20,6 +21,14 @@ export const triggerSourceService = (log: FastifyBaseLogger) => {
                 simulate,
             }, '[triggerSourceService#enable] Enabling trigger source')
             const pieceTrigger = await triggerUtils(log).getPieceTriggerOrThrow({ flowVersion, projectId })
+            const existingTriggerSource = await triggerSourceRepo().findOneBy({
+                flowId: flowVersion.flowId,
+                projectId,
+                simulate,
+            })
+            if (!isNil(existingTriggerSource)) {
+                await jobQueue(log).removeRepeatingJob({ flowVersionId: existingTriggerSource.flowVersionId })
+            }
             await triggerSourceRepo().softDelete({
                 flowId: flowVersion.flowId,
                 projectId,
