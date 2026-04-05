@@ -22,7 +22,7 @@ export function createRpcClient<T extends Contract>(
                 }
                 catch (error) {
                     const message = error instanceof Error ? error.message : String(error)
-                    throw new Error(`RPC [${method}] timed out after ${timeoutMs}ms: ${message}`)
+                    throw new Error(`RPC [${method}] failed (timeout: ${timeoutMs}ms): ${message}`)
                 }
             }
         },
