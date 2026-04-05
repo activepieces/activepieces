@@ -15,6 +15,8 @@ on:
 jobs:
   rollback:
     runs-on: ubuntu-latest
+    environment:
+      name: canary
     steps:
       - name: Configure SSH
         run: |

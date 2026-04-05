@@ -99,6 +99,9 @@ jobs:
     needs: build-image
     if: always() && needs.build-image.result == 'success'
     runs-on: ubuntu-latest
+    environment:
+      name: staging
+      url: https://stg.activepieces.com
     steps:
       - name: Configure SSH
         run: |
