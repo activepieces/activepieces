@@ -21,7 +21,7 @@ import { flowCache } from '../../cache/flow/flow-cache'
 import { workerSettings } from '../../config/worker-settings'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../types'
 import { provisionFlowPieces } from '../utils/flow-helpers'
-import { onCallService } from '../utils/on-call.service'
+import { onCallService } from '../../utils/on-call.service'
 import { resolvePayload } from '../utils/resolve-payload'
 
 export const executeFlowJob: JobHandler<ExecuteFlowJobData, FireAndForgetJobResult> = {
