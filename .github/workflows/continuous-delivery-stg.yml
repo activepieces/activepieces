@@ -128,11 +128,12 @@ jobs:
   # hotfix image at that point (multi-arch build takes 10–15 min), so the SSH
   # lookup returns the hotfix version.sha.beta which gets retagged as release-candidate.
   tag-release-candidate:
-    needs: [detect-hotfix-merge]
+    needs: [detect-hotfix-merge, deploy-staging]
     if: |
       always() &&
       (github.event_name == 'schedule' ||
-       (github.event_name == 'push' && needs.detect-hotfix-merge.outputs.is_hotfix_merge == 'true'))
+       (github.event_name == 'push' && needs.detect-hotfix-merge.outputs.is_hotfix_merge == 'true' &&
+        (needs.deploy-staging.result == 'success' || needs.deploy-staging.result == 'skipped')))
     runs-on: ubuntu-latest
     permissions:
       contents: write
