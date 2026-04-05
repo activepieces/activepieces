@@ -1,4 +1,5 @@
 import {
+    ActivepiecesError,
     ErrorCode,
     FlowVersion,
     isNil,
@@ -27,9 +28,13 @@ export const flowVersionMigrationService = (log: FastifyBaseLogger) => ({
             backupFiles[flowVersion.schemaVersion] = await flowVersionBackupService(log).store(flowVersion)
         }
 
-        const { data: migratedFlowVersion, error: migrationError } = await tryCatch(flowMigrations.apply(flowVersion, { log, projectId }))
+        const { data: migratedFlowVersion, error: migrationError } = await tryCatch(() => flowMigrations.apply(flowVersion, { log, projectId }))
         if (migrationError) {
-            await onCallService(log).page(ErrorCode.FLOW_MIGRATION_FAILED)
+            const apError = new ActivepiecesError({
+                code: ErrorCode.FLOW_MIGRATION_FAILED,
+                params: { flowVersionId: flowVersion.id, message: migrationError.message },
+            })
+            await onCallService(log).page(apError)
             throw migrationError
         }
 

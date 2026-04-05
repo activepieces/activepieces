@@ -160,28 +160,22 @@ async function buildFlowOperation(
 
 async function fetchExecutionState(apiClient: WorkerToApiContract, data: ExecuteFlowJobData, log: FastifyBaseLogger): Promise<ExecutionState> {
     if (isNil(data.logsFileId)) {
-        await onCallService(log).page(ErrorCode.RESUME_LOGS_FILE_MISSING)
-        throw new ActivepiecesError({
-            code: ErrorCode.ENTITY_NOT_FOUND,
-            params: {
-                message: 'logsFileId is missing for RESUME operation',
-                entityType: 'logs_file',
-                entityId: data.runId,
-            },
-        })
+        const error = new ActivepiecesError({
+            code: ErrorCode.RESUME_LOGS_FILE_MISSING,
+            params: { runId: data.runId },
+        }, 'logsFileId is missing for RESUME operation')
+        await onCallService(log).page(error)
+        throw error
     }
     const buffer = await apiClient.getPayloadFile({ fileId: data.logsFileId, projectId: data.projectId })
     const parsed = JSON.parse(buffer.toString('utf-8'))
     if (isNil(parsed.executionState)) {
-        await onCallService(log).page(ErrorCode.EXECUTION_STATE_MISSING)
-        throw new ActivepiecesError({
-            code: ErrorCode.ENTITY_NOT_FOUND,
-            params: {
-                message: 'executionState is missing in logs file',
-                entityType: 'execution_state',
-                entityId: data.logsFileId,
-            },
-        })
+        const error = new ActivepiecesError({
+            code: ErrorCode.EXECUTION_STATE_MISSING,
+            params: { logsFileId: data.logsFileId },
+        }, 'executionState is missing in logs file')
+        await onCallService(log).page(error)
+        throw error
     }
     return parsed.executionState
 }

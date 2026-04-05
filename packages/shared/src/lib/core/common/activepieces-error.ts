@@ -91,6 +91,9 @@ export type ApErrorParams =
     | SecretManagerGetSecretFailedParams
     | SecretManagerKeyNotSecretParams
     | InvalidAIProviderCredentialsParams
+    | FlowMigrationFailedParams
+    | ResumeLogsFileMissingParams
+    | ExecutionStateMissingParams
 
 export type TriggerExecutionFailedParams = BaseErrorParams<ErrorCode.TRIGGER_EXECUTION_FAILED, {
     flowId: FlowId
@@ -472,6 +475,19 @@ export type InvalidAIProviderCredentialsParams = BaseErrorParams<ErrorCode.INVAL
     provider: string
     message: string
     httpErrorResponse: string
+}>
+
+export type FlowMigrationFailedParams = BaseErrorParams<ErrorCode.FLOW_MIGRATION_FAILED, {
+    flowVersionId: string
+    message: string
+}>
+
+export type ResumeLogsFileMissingParams = BaseErrorParams<ErrorCode.RESUME_LOGS_FILE_MISSING, {
+    runId: string
+}>
+
+export type ExecutionStateMissingParams = BaseErrorParams<ErrorCode.EXECUTION_STATE_MISSING, {
+    logsFileId: string
 }>
 
 export enum ErrorCode {
