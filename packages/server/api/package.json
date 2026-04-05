@@ -35,6 +35,7 @@
     "@fastify/cors": "11.0.1",
     "@fastify/formbody": "8.0.2",
     "@fastify/http-proxy": "11.3.0",
+    "@fastify/reply-from": "12.6.1",
     "@fastify/multipart": "9.0.3",
     "@fastify/otel": "0.9.3",
     "@fastify/rate-limit": "10.3.0",

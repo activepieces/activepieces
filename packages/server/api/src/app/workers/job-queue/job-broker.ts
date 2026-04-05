@@ -7,7 +7,7 @@ import { redisConnections } from '../../database/redis-connections'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { engineResponseWatcher } from '../engine-response-watcher'
-import { getPlatformQueueName, QueueName } from '../job'
+import { QueueName } from '../job'
 import { jobMigrations } from '../migrations/job-data-migrations'
 import { deletedFlowInterceptor } from './interceptors/deleted-flow-interceptor'
 import { rateLimiterInterceptor } from './interceptors/rate-limiter-interceptor'
@@ -190,8 +190,7 @@ export const jobBroker = (log: FastifyBaseLogger) => ({
         log.info('[jobBroker] Job broker initialized')
     },
 
-    async poll(platformId?: string): Promise<ConsumeJobRequest | null> {
-        const queueName = platformId ? getPlatformQueueName(platformId) : QueueName.WORKER_JOBS
+    async poll(queueName: string = QueueName.WORKER_JOBS): Promise<ConsumeJobRequest | null> {
         const worker = await ensureBullMQWorker(queueName, log)
         const dispatcher = ensureDispatcher(queueName, worker, log)
         return dispatcher.poll()
