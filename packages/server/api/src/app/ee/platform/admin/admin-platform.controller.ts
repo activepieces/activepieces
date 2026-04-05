@@ -90,14 +90,14 @@ const ConfigureDedicatedWorkersRequest = {
         }),
     },
     config: {
-        security: securityAccess.unscoped([PrincipalType.SERVICE]),
+        security: securityAccess.public(),
     },
 }
 
 const DisableAllCanaryRequest = {
     schema: {},
     config: {
-        security: securityAccess.unscoped([PrincipalType.SERVICE]),
+        security: securityAccess.public(),
     },
 }
 
@@ -109,7 +109,7 @@ const UpdateCanaryRequest = {
         }),
     },
     config: {
-        security: securityAccess.unscoped([PrincipalType.SERVICE]),
+        security: securityAccess.public(),
     },
 }
 
