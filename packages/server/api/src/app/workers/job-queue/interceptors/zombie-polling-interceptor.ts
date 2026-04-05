@@ -23,7 +23,7 @@ export const zombiePollingInterceptor: JobInterceptor = {
         return { verdict: InterceptorVerdict.DISCARD }
     },
 
-    async onJobFinished(_params: { jobId: string, jobData: JobData, log: FastifyBaseLogger }): Promise<void> {
+    async onJobFinished(_params: { jobId: string, jobData: JobData, failed: boolean, log: FastifyBaseLogger }): Promise<void> {
         // Nothing to release
     },
 }
