@@ -58,8 +58,8 @@ export function SidebarUser() {
       <SidebarMenuItem>
         <DropdownMenu modal>
           <DropdownMenuTrigger asChild className="w-full">
-            <SidebarMenuButton className="h-10! pl-1! group-data-[collapsible=icon]:h-10! group-data-[collapsible=icon]:pl-1!">
-              <div className="size-6 shrink-0 overflow-hidden flex items-center justify-center rounded-full">
+            <SidebarMenuButton className="h-10! pl-2! group-data-[collapsible=icon]:h-10! group-data-[collapsible=icon]:pl-2!">
+              <div className="size-[18px] shrink-0 overflow-hidden flex items-center justify-center rounded-full">
                 <UserAvatar
                   className={cn('size-full object-cover', {
                     'scale-150': isNil(user.imageUrl),
@@ -67,7 +67,7 @@ export function SidebarUser() {
                   name={user.firstName + ' ' + user.lastName}
                   email={user.email}
                   imageUrl={user.imageUrl}
-                  size={24}
+                  size={18}
                   disableTooltip={true}
                 />
               </div>

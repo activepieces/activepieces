@@ -81,10 +81,13 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         })
 
 
-        let query = queryBuilderForFlowRun(flowRunRepo()).where({
+        const whereClause: Record<string, unknown> = {
             projectId: params.projectId,
-            environment: RunEnvironment.PRODUCTION,
-        })
+        }
+        if (!isNil(params.environment)) {
+            whereClause.environment = params.environment
+        }
+        let query = queryBuilderForFlowRun(flowRunRepo()).where(whereClause)
 
         if (!params.includeArchived) {
             query = query.andWhere({
@@ -152,19 +155,26 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         }
 
         switch (strategy) {
-            case FlowRetryStrategy.FROM_FAILED_STEP:
+            case FlowRetryStrategy.FROM_FAILED_STEP: {
                 await flowRunRepo().update({
                     id: oldFlowRun.id,
                     projectId: oldFlowRun.projectId,
                 }, {
                     status: FlowRunStatus.QUEUED,
                 })
-                return flowRunService(log).resume({
-                    flowRunId: oldFlowRun.id,
-                    executionType: ExecutionType.RESUME,
+                const updatedFlowRun = await findFlowRunOrThrow(oldFlowRun.id)
+                const platformId = await projectService(log).getPlatformId(updatedFlowRun.projectId)
+                await flowRunSideEffects(log).onRetry(updatedFlowRun)
+                return addToQueue({
+                    flowRun: updatedFlowRun,
+                    platformId,
                     progressUpdateType: ProgressUpdateType.NONE,
-                    checkRequestId: false,
-                })
+                    executeTrigger: false,
+                    executionType: ExecutionType.RESUME,
+                    synchronousHandlerId: undefined,
+                    httpRequestId: undefined,
+                }, log)
+            }
             case FlowRetryStrategy.ON_LATEST_VERSION: {
                 const latestFlowVersion = await flowVersionService(log).getLatestLockedVersionOrThrow(
                     oldFlowRun.flowId,
@@ -260,7 +270,28 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             runId: flowRunId,
         }, 'Resuming flow run')
 
-        const flowRun = await findFlowRunOrThrow(flowRunId)
+        let flowRun = await findFlowRunOrThrow(flowRunId)
+
+        // Guard against the race condition where the engine has not yet committed its PAUSED
+        // state (and pauseMetadata) to the DB by the time the subflow calls this resume URL.
+        const PAUSE_WAIT_INTERVAL_MS = 200
+        const PAUSE_WAIT_TIMEOUT_MS = 30000
+        const waitStart = Date.now()
+        while (
+            isNil(flowRun.pauseMetadata) &&
+            (flowRun.status === FlowRunStatus.RUNNING || flowRun.status === FlowRunStatus.QUEUED) &&
+            Date.now() - waitStart < PAUSE_WAIT_TIMEOUT_MS
+        ) {
+            await new Promise((resolve) => setTimeout(resolve, PAUSE_WAIT_INTERVAL_MS))
+            flowRun = await findFlowRunOrThrow(flowRunId)
+        }
+        if (isNil(flowRun.pauseMetadata) && (flowRun.status === FlowRunStatus.RUNNING || flowRun.status === FlowRunStatus.QUEUED)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.PAUSE_METADATA_MISSING,
+                params: {},
+            })
+        }
+
         const resolvedRun = resolveFlowRunForResume({ flowRun, requestId, checkRequestId })
 
         if (isNil(resolvedRun)) {
@@ -741,6 +772,7 @@ type ListParams = {
     failedStepName?: string
     flowRunIds?: FlowRunId[]
     includeArchived?: boolean
+    environment?: RunEnvironment
 }
 
 type GetOneParams = {
@@ -784,7 +816,7 @@ type StartParams = {
 type TestParams = {
     projectId: ProjectId
     flowVersionId: FlowVersionId
-    triggeredBy: string
+    triggeredBy?: string
     parentRunId?: FlowRunId
     stepNameToTest?: string
 }
