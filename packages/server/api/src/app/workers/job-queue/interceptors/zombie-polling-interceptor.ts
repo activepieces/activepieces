@@ -1,6 +1,6 @@
 import { isNil, JobData, PollingJobData, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { flowVersionService } from '../../../flows/flow-version/flow-version.service'
+import { triggerSourceRepo } from '../../../trigger/trigger-source/trigger-source-service'
 import { InterceptorResult, InterceptorVerdict, JobInterceptor } from '../job-interceptor'
 import { jobQueue } from '../job-queue'
 
@@ -10,11 +10,13 @@ export const zombiePollingInterceptor: JobInterceptor = {
             return { verdict: InterceptorVerdict.ALLOW }
         }
         const { flowVersionId } = jobData as PollingJobData
-        const flowVersion = await flowVersionService(log).getOne(flowVersionId)
-        if (!isNil(flowVersion)) {
+        // An active trigger source exists only when the flow is enabled and this exact version is current.
+        // If soft-deleted (disabled or re-published to a new version), findOneBy returns null.
+        const activeTriggerSource = await triggerSourceRepo().findOneBy({ flowVersionId })
+        if (!isNil(activeTriggerSource)) {
             return { verdict: InterceptorVerdict.ALLOW }
         }
-        log.warn({ flowVersionId }, '[zombiePollingInterceptor] Flow version not found — discarding zombie repeat job')
+        log.warn({ flowVersionId }, '[zombiePollingInterceptor] No active trigger source — discarding repeat job (flow disabled, re-published, or deleted)')
         await jobQueue(log).removeRepeatingJob({ flowVersionId })
         return { verdict: InterceptorVerdict.DISCARD }
     },
