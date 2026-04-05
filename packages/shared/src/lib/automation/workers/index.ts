@@ -49,7 +49,6 @@ export type WorkerMachineWithStatus = z.infer<typeof WorkerMachineWithStatus>
 export const ConsumeJobRequest = z.object({
     jobId: z.string(),
     jobData: JobData,
-    timeoutInSeconds: z.number(),
     attempsStarted: z.number(),
     engineToken: z.string(),
     token: z.string(),

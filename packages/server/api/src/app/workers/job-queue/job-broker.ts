@@ -122,7 +122,6 @@ async function tryDequeue(worker: BullMQWorker, queueName: string, log: FastifyB
     return {
         jobId,
         jobData: migratedData,
-        timeoutInSeconds: 600,
         attempsStarted: job.attemptsMade,
         engineToken,
         token,
