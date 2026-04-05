@@ -71,6 +71,14 @@ jobs:
         run: |
           ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal deploy --version ${{ steps.image.outputs.image_tag }} --config-file=config/worker.yml --skip-push; exit"'
 
+      - name: Disable all canary platforms
+        if: inputs.image_tag == 'canary'
+        env:
+          AP_API_KEY: ${{ secrets.AP_API_KEY }}
+        run: |
+          curl --fail-with-body -s -X DELETE "https://cloud.activepieces.com/v1/admin/platforms/canary" \
+            -H "api-key: $AP_API_KEY"
+
   # Run smoke test after scheduled promotion
   smoke-test:
     needs: promote-to-production

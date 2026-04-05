@@ -1,5 +1,5 @@
 import { ErrorHandlingOptionsParam, PieceMetadata, PieceMetadataModel, WebhookRenewConfiguration } from '@activepieces/pieces-framework'
-import { AdminRetryRunsRequestBody, ApplyLicenseKeyByEmailRequestBody, ExactVersionType, IncreaseAICreditsForPlatformRequestBody, isNil, PackageType, PieceCategory, PieceType, TriggerStrategy, TriggerTestStrategy, WebhookHandshakeConfiguration } from '@activepieces/shared'
+import { AdminRetryRunsRequestBody, ApplyLicenseKeyByEmailRequestBody, ExactVersionType, IncreaseAICreditsForPlatformRequestBody, isNil, PackageType, PieceCategory, PieceType, PrincipalType, TriggerStrategy, TriggerTestStrategy, WebhookHandshakeConfiguration } from '@activepieces/shared'
 import { FastifyReply, FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -73,6 +73,11 @@ const adminPlatformController: FastifyPluginAsyncZod = async (
         await platformCanaryService(req.log).updateCanary(req.body.platformId, req.body.canary)
         return res.status(StatusCodes.OK).send()
     })
+
+    app.delete('/platforms/canary', DisableAllCanaryRequest, async (req, res) => {
+        await platformCanaryService(req.log).disableAll()
+        return res.status(StatusCodes.OK).send()
+    })
 }
 
 
@@ -85,7 +90,14 @@ const ConfigureDedicatedWorkersRequest = {
         }),
     },
     config: {
-        security: securityAccess.public(),
+        security: securityAccess.unscoped([PrincipalType.SERVICE]),
+    },
+}
+
+const DisableAllCanaryRequest = {
+    schema: {},
+    config: {
+        security: securityAccess.unscoped([PrincipalType.SERVICE]),
     },
 }
 
@@ -97,7 +109,7 @@ const UpdateCanaryRequest = {
         }),
     },
     config: {
-        security: securityAccess.public(),
+        security: securityAccess.unscoped([PrincipalType.SERVICE]),
     },
 }
 

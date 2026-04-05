@@ -24,4 +24,8 @@ export const platformCanaryService = (log: FastifyBaseLogger) => ({
         await platformPlanService(log).update({ platformId, canary })
         await distributedStore.delete(CANARY_PLATFORM_IDS_KEY)
     },
+    async disableAll(): Promise<void> {
+        await platformPlanRepo().update({ canary: true }, { canary: false })
+        await distributedStore.delete(CANARY_PLATFORM_IDS_KEY)
+    },
 })
