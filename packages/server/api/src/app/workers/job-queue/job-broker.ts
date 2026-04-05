@@ -174,7 +174,7 @@ async function runInterceptors({ jobId, jobData, job, log }: { jobId: string, jo
 
 function isStalledJobError(error: unknown): boolean {
     const msg = error instanceof Error ? error.message : String(error)
-    return msg.includes('Missing lock') || msg.includes('job stalled') || msg.includes('Cannot read properties of null')
+    return msg.includes('Missing lock') || msg.includes('job stalled') || msg.includes("Cannot read properties of null (reading 'moveToFinishedArgs')")
 }
 
 function buildFailedReason(errorMessage: string, logs?: string): string {
