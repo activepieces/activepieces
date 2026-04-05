@@ -21,10 +21,13 @@ export const triggerSourceService = (log: FastifyBaseLogger) => {
                 simulate,
             }, '[triggerSourceService#enable] Enabling trigger source')
             const pieceTrigger = await triggerUtils(log).getPieceTriggerOrThrow({ flowVersion, projectId })
-            const existingTriggerSource = await triggerSourceRepo().findOneBy({
-                flowId: flowVersion.flowId,
-                projectId,
-                simulate,
+            const existingTriggerSource = await triggerSourceRepo().findOne({
+                where: {
+                    flowId: flowVersion.flowId,
+                    projectId,
+                    simulate,
+                },
+                withDeleted: true,
             })
             if (!isNil(existingTriggerSource)) {
                 await jobQueue(log).removeRepeatingJob({ flowVersionId: existingTriggerSource.flowVersionId })
