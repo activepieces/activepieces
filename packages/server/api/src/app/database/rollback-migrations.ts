@@ -16,11 +16,64 @@ export async function rollbackToVersion(params: {
     }
 
     const migrationClasses = getMigrations()
-    const candidates = identifyCandidates(migrationClasses, targetVersion)
+    const candidates = identifyReleaseCandidates(migrationClasses, targetVersion)
     if (candidates.length === 0) {
         console.log(`No migrations found to rollback for versions after ${targetVersion}`)
         return
     }
+
+    await executeRollback({ dataSource, candidates, force })
+}
+
+export async function rollbackToManifest(params: {
+    dataSource: DataSource
+    targetMigrationNames: string[]
+    force: boolean
+}): Promise<void> {
+    const { dataSource, targetMigrationNames, force } = params
+
+    const migrationClasses = getMigrations()
+    const candidates = identifyCandidatesByManifest(migrationClasses, targetMigrationNames)
+    if (candidates.length === 0) {
+        console.log('No migrations found to rollback against the provided manifest')
+        return
+    }
+
+    await executeRollback({ dataSource, candidates, force })
+}
+
+export function identifyReleaseCandidates(
+    migrationClasses: (new () => Migration)[],
+    targetVersion: string,
+): Migration[] {
+    const instances = migrationClasses.map((MigrationClass) => new MigrationClass())
+
+    const candidates = instances.filter((m) => {
+        if (!m.release) {
+            return false
+        }
+        return semver.gt(m.release, targetVersion)
+    })
+
+    return candidates.reverse()
+}
+
+export function identifyCandidatesByManifest(
+    migrationClasses: (new () => Migration)[],
+    targetMigrationNames: string[],
+): Migration[] {
+    const targetSet = new Set(targetMigrationNames)
+    const instances = migrationClasses.map(M => new M())
+    const candidates = instances.filter(m => m.name && !targetSet.has(m.name))
+    return candidates.reverse()
+}
+
+async function executeRollback(params: {
+    dataSource: DataSource
+    candidates: Migration[]
+    force: boolean
+}): Promise<void> {
+    const { dataSource, candidates, force } = params
 
     console.log(`Found ${candidates.length} migration(s) to rollback:`)
     for (const m of candidates) {
@@ -48,22 +101,6 @@ export async function rollbackToVersion(params: {
     }
 
     console.log(`\nRollback complete. Reverted ${candidates.length} migration(s).`)
-}
-
-export function identifyCandidates(
-    migrationClasses: (new () => Migration)[],
-    targetVersion: string,
-): Migration[] {
-    const instances = migrationClasses.map((MigrationClass) => new MigrationClass())
-
-    const candidates = instances.filter((m) => {
-        if (!m.release) {
-            return false
-        }
-        return semver.gt(m.release, targetVersion)
-    })
-
-    return candidates.reverse()
 }
 
 export async function verifyDatabaseState(

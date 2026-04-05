@@ -128,6 +128,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
                     [ApplicationEventName.FOLDER_DELETED]: FolderEvent,
                     [ApplicationEventName.FLOW_RUN_STARTED]: FlowRunEvent,
                     [ApplicationEventName.FLOW_RUN_FINISHED]: FlowRunEvent,
+                    [ApplicationEventName.FLOW_RUN_RETRIED]: FlowRunEvent,
                     [ApplicationEventName.USER_SIGNED_UP]: SignUpEvent,
                     [ApplicationEventName.USER_SIGNED_IN]: AuthenticationEvent,
                     [ApplicationEventName.USER_PASSWORD_RESET]: AuthenticationEvent,

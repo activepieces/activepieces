@@ -69,6 +69,9 @@ export function createHandlers(log: FastifyBaseLogger, platformIdForDedicatedWor
                 const result = await flowRunRepo().update(input.runId, {
                     status: input.status,
                     ...spreadIfDefined('pauseMetadata', input.pauseMetadata as PauseMetadata),
+                    // Also persist logsFileId so that a concurrent resume() call can build the
+                    // correct RESUME job pointing at the right execution-state file.
+                    ...spreadIfDefined('logsFileId', input.logsFileId),
                 })
                 if (!result.affected) {
                     // Run not yet in DB (PRODUCTION runs are created async via queue).
@@ -80,6 +83,7 @@ export function createHandlers(log: FastifyBaseLogger, platformIdForDedicatedWor
                             ...runMetadata,
                             status: input.status,
                             pauseMetadata: input.pauseMetadata as PauseMetadata,
+                            logsFileId: input.logsFileId,
                         })
                     }
                 }
