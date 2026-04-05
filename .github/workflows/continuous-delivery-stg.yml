@@ -14,7 +14,6 @@ on:
         options:
           - deploy-staging              # Re-deploy to staging (e.g., after infra change)
           - deploy-staging-skip-freeze  # Deploy to staging, ignoring the freeze window
-          - cloud-hotfix                # Build, deploy to staging, then promote to prod in one go
 
 jobs:
   detect-hotfix-merge:
@@ -63,7 +62,7 @@ jobs:
     if: |
       always() &&
       ((github.event_name == 'push' && needs.check-freeze.outputs.frozen == 'false') ||
-       (github.event_name == 'workflow_dispatch' && (github.event.inputs.action == 'deploy-staging' || github.event.inputs.action == 'deploy-staging-skip-freeze' || github.event.inputs.action == 'cloud-hotfix')))
+       (github.event_name == 'workflow_dispatch' && (github.event.inputs.action == 'deploy-staging' || github.event.inputs.action == 'deploy-staging-skip-freeze')))
     runs-on: ubuntu-24.04
     concurrency:
       group: deploy-staging
@@ -100,6 +99,9 @@ jobs:
     needs: build-image
     if: always() && needs.build-image.result == 'success'
     runs-on: ubuntu-latest
+    environment:
+      name: staging
+      url: https://stg.activepieces.com
     steps:
       - name: Configure SSH
         run: |
@@ -126,11 +128,12 @@ jobs:
   # hotfix image at that point (multi-arch build takes 10–15 min), so the SSH
   # lookup returns the hotfix version.sha.beta which gets retagged as release-candidate.
   tag-release-candidate:
-    needs: [detect-hotfix-merge]
+    needs: [detect-hotfix-merge, deploy-staging]
     if: |
       always() &&
       (github.event_name == 'schedule' ||
-       (github.event_name == 'push' && needs.detect-hotfix-merge.outputs.is_hotfix_merge == 'true'))
+       (github.event_name == 'push' && needs.detect-hotfix-merge.outputs.is_hotfix_merge == 'true' &&
+        (needs.deploy-staging.result == 'success' || needs.deploy-staging.result == 'skipped')))
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -187,11 +190,3 @@ jobs:
           git tag -f release-candidate ${{ steps.tag.outputs.sha }}
           git push origin release-candidate --force
 
-  # For cloud-hotfix: promote the just-deployed staging image to production
-  promote-after-hotfix:
-    needs: [build-image, deploy-staging]
-    if: always() && github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'cloud-hotfix' && needs.deploy-staging.result == 'success'
-    uses: ./.github/workflows/continuous-delivery-cloud.yml
-    with:
-      image_tag: ${{ needs.build-image.outputs.image_tag }}
-    secrets: inherit

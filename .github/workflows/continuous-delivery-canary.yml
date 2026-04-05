@@ -90,6 +90,8 @@ jobs:
   deploy-canary:
     needs: [build-image, check-migrations]
     runs-on: ubuntu-latest
+    environment:
+      name: canary
     steps:
       - name: Configure SSH
         run: |
