@@ -86,18 +86,33 @@ Jobs for canary platforms are enqueued to `canaryWorkerJobs`, which only canary 
 
 ## Deploying a New Canary Build
 
-Trigger the **Continuous Delivery — Canary** workflow from GitHub Actions (`continuous-delivery-canary.yml`). It accepts one optional input:
+Trigger the **Continuous Delivery — Canary** workflow from GitHub Actions (`continuous-delivery-canary.yml`). It accepts these optional inputs:
 
 | Input | Description |
 |---|---|
 | `platform_ids` | Comma-separated platform IDs to route to this canary build. Leave blank to deploy without changing routing. |
+| `force_breaking_migrations` | Force deployment even if breaking migrations are detected. Default: `false`. |
 
 The workflow:
 1. Builds and pushes a new image tagged `<version>.<sha>.canary`
-2. Deploys the canary app (`config/app-canary.yml`) and canary workers
-3. If `platform_ids` is provided, calls `POST /v1/admin/platforms/canary` on the primary app for each ID — enabling canary routing immediately without a restart
+2. Checks if any new migrations are breaking — fails the workflow if they are (override with `force_breaking_migrations=true`)
+3. Deploys the canary app (`config/app-canary.yml`) and canary workers
+4. If `platform_ids` is provided, calls `POST /v1/admin/platforms/canary` on the primary app for each ID — enabling canary routing immediately without a restart
 
 Required GitHub secrets: `AP_API_KEY` (the primary app's `AP_API_KEY` value).
+
+## Rolling Back a Canary Deployment
+
+Trigger the **Continuous Delivery — Rollback Canary** workflow (`continuous-delivery-rollback-canary.yml`) with the image tag you want to roll back to. The workflow:
+
+1. Extracts the migration manifest from the target image
+2. Rolls back DB migrations not present in that manifest
+3. Redeploys the canary app and workers to the target image
+
+| Input | Description |
+|---|---|
+| `rollback_to_image_tag` | Image tag to roll back to (e.g. `0.51.0.abc1234.canary`) |
+| `force` | Force rollback even if breaking migrations exist. Default: `false`. |
 
 ## Promoting canary build to production
 

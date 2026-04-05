@@ -81,8 +81,18 @@ Manual dispatch only. Builds a `version.sha.canary` image, deploys the canary ap
 | Input | Description |
 |---|---|
 | `platform_ids` | Comma-separated platform IDs to route to canary. Leave blank to deploy without changing routing. |
+| `force_breaking_migrations` | Force deployment even if breaking migrations are detected. Default: `false`. |
 
 See the [Canary Deployment playbook](/handbook/engineering/playbooks/canary-deployment) for full details.
+
+### `continuous-delivery-rollback-canary.yml` — Canary Rollback
+
+Manual dispatch only. Rolls back the canary environment to a previous image tag. Reverses DB migrations not present in the target image's manifest, then redeploys the canary app and workers to that tag.
+
+| Input | Description |
+|---|---|
+| `rollback_to_image_tag` | Target image tag to roll back to (e.g. `0.51.0.abc1234.canary`) |
+| `force` | Force rollback even if breaking migrations exist. Default: `false`. |
 
 ### `emergency-cloud-deploy.yml`
 

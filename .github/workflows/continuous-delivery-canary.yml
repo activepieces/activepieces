@@ -7,6 +7,10 @@ on:
         description: 'Comma-separated platform IDs to route to canary (leave blank to skip routing update)'
         required: false
         default: ''
+      force_breaking_migrations:
+        description: 'Force deployment even if breaking migrations are detected'
+        type: boolean
+        default: false
 
 jobs:
   build-image:
@@ -46,8 +50,54 @@ jobs:
           no-cache: true
           tags: ghcr.io/activepieces/activepieces-cloud:${{ steps.set-tag.outputs.image_tag }}
 
-  deploy-canary:
+  check-migrations:
     needs: build-image
+    runs-on: ubuntu-latest
+    outputs:
+      has_breaking: ${{ steps.check.outputs.has_breaking }}
+      breaking_names: ${{ steps.check.outputs.breaking_names }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh/
+          echo "$SSH_KEY" > ~/.ssh/ops.key
+          chmod 600 ~/.ssh/ops.key
+          cat >>~/.ssh/config <<END
+          Host ops
+            HostName $SSH_HOST
+            User $SSH_USER
+            IdentityFile ~/.ssh/ops.key
+            StrictHostKeyChecking no
+          END
+        env:
+          SSH_USER: ${{ secrets.DEV_OPS_USERNAME }}
+          SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_HOST: ${{ secrets.DEV_OPS_HOST }}
+
+      - name: Get current canary manifest
+        id: current-manifest
+        run: |
+          MANIFEST=$(ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal app exec \
+            --config-file=config/app-canary.yml -- \
+            cat /usr/src/app/packages/server/api/dist/src/migration-manifest.json; exit"' \
+            2>/dev/null || echo '[]')
+          echo "json=$MANIFEST" >> $GITHUB_OUTPUT
+
+      - name: Check for breaking migrations
+        id: check
+        run: npx tsx tools/scripts/check-manifest-migrations.ts '${{ steps.current-manifest.outputs.json }}'
+
+      - name: Fail on breaking migrations
+        if: steps.check.outputs.has_breaking == 'true' && !inputs.force_breaking_migrations
+        run: |
+          echo "Breaking migrations detected: ${{ steps.check.outputs.breaking_names }}"
+          echo "Use force_breaking_migrations=true to override."
+          exit 1
+
+  deploy-canary:
+    needs: [build-image, check-migrations]
     runs-on: ubuntu-latest
     steps:
       - name: Configure SSH
