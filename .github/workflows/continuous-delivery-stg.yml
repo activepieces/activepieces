@@ -158,7 +158,42 @@ jobs:
 
   # For cloud-hotfix: promote the just-deployed staging image to production
   promote-after-hotfix:
-    needs: [deploy-staging]
+    needs: [build-image, deploy-staging]
     if: always() && github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'cloud-hotfix' && needs.deploy-staging.result == 'success'
     uses: ./.github/workflows/continuous-delivery-cloud.yml
     secrets: inherit
+
+  # Advance release-candidate Docker tag and git tag to the hotfix commit so
+  # Sunday's scheduled run re-deploys what's already on prod (safe no-op).
+  retag-release-candidate:
+    needs: [build-image, promote-after-hotfix]
+    if: always() && github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'cloud-hotfix' && needs.promote-after-hotfix.result == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Advance release-candidate Docker tag to hotfix
+        run: |
+          docker buildx imagetools create \
+            --tag ghcr.io/activepieces/activepieces-cloud:release-candidate \
+            ghcr.io/activepieces/activepieces-cloud:${{ needs.build-image.outputs.image_tag }}
+
+      - name: Advance release-candidate git tag to hotfix
+        run: |
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git tag -f release-candidate ${{ github.sha }}
+          git push origin release-candidate --force

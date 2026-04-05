@@ -52,6 +52,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create deploy branch
+        if: github.event_name == 'schedule'
         run: |
           SHA=$(git rev-parse refs/tags/release-candidate 2>/dev/null || git rev-parse release-candidate)
           DATE=$(date -u +%Y-%m-%d)
