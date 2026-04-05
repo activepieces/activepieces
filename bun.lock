@@ -7989,7 +7989,7 @@
     },
     "packages/shared": {
       "name": "@activepieces/shared",
-      "version": "0.51.2",
+      "version": "0.51.4",
       "dependencies": {
         "dayjs": "1.11.9",
         "deepmerge-ts": "7.1.0",
