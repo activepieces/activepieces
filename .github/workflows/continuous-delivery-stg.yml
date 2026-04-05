@@ -3,6 +3,8 @@ name: Continuous Delivery — Staging
 on:
   push:
     branches: [main]
+  schedule:
+    - cron: '0 17 * * 4'  # Thursday 5 PM UTC — only for tagging release candidate
   workflow_dispatch:
     inputs:
       action:
@@ -94,6 +96,65 @@ jobs:
       - name: Deploy to staging
         run: |
           ssh ops -t -t 'bash -ic "cd mrsk/stg && kamal deploy --version ${{ needs.build-image.outputs.image_tag }} --skip-push; exit"'
+
+  # Thursday 5 PM UTC: tag current staging image + commit as release-candidate
+  tag-release-candidate:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh/
+          echo "$SSH_KEY" > ~/.ssh/ops.key
+          chmod 600 ~/.ssh/ops.key
+          cat >>~/.ssh/config <<END
+          Host ops
+            HostName $SSH_HOST
+            User $SSH_USER
+            IdentityFile ~/.ssh/ops.key
+            StrictHostKeyChecking no
+          END
+        env:
+          SSH_USER: ${{ secrets.DEV_OPS_USERNAME }}
+          SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_HOST: ${{ secrets.DEV_OPS_HOST }}
+
+      - name: Get current staging tag
+        id: tag
+        run: |
+          CURRENT=$(ssh ops -t -t 'bash -ic "cd mrsk/stg && kamal app version 2>&1 | grep -oE \"[0-9]+\.[0-9]+\.[0-9]+\.[a-f0-9]+\.beta\" | head -1 | tr -d \"[:space:]\"; exit"' | tr -d '\r' | grep -oE '[0-9]+\.[0-9]+\.[0-9]+\.[a-f0-9]+\.beta' | head -1)
+          SHA=$(echo "$CURRENT" | grep -oE '\.[a-f0-9]{7,40}\.' | head -1 | tr -d '.')
+          echo "current_tag=$CURRENT" >> $GITHUB_OUTPUT
+          echo "sha=$SHA" >> $GITHUB_OUTPUT
+          echo "Staging tag: $CURRENT (SHA: $SHA)"
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Tag release candidate image
+        run: |
+          docker buildx imagetools create \
+            --tag ghcr.io/activepieces/activepieces-cloud:release-candidate \
+            ghcr.io/activepieces/activepieces-cloud:${{ steps.tag.outputs.current_tag }}
+
+      - name: Create release-candidate git tag
+        run: |
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git tag -f release-candidate ${{ steps.tag.outputs.sha }}
+          git push origin release-candidate --force
 
   # For cloud-hotfix: promote the just-deployed staging image to production
   promote-after-hotfix:

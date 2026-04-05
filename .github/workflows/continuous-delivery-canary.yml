@@ -1,16 +1,8 @@
 name: Continuous Delivery — Canary
 
 on:
-  workflow_dispatch:
-    inputs:
-      platform_ids:
-        description: 'Comma-separated platform IDs to route to canary (leave blank to skip routing update)'
-        required: false
-        default: ''
-      force_breaking_migrations:
-        description: 'Force deployment even if breaking migrations are detected'
-        type: boolean
-        default: false
+  schedule:
+    - cron: '0 9 * * *'  # Daily 9 AM UTC
 
 jobs:
   build-image:
@@ -90,10 +82,9 @@ jobs:
         run: npx tsx tools/scripts/check-manifest-migrations.ts '${{ steps.current-manifest.outputs.json }}'
 
       - name: Fail on breaking migrations
-        if: steps.check.outputs.has_breaking == 'true' && !inputs.force_breaking_migrations
+        if: steps.check.outputs.has_breaking == 'true'
         run: |
           echo "Breaking migrations detected: ${{ steps.check.outputs.breaking_names }}"
-          echo "Use force_breaking_migrations=true to override."
           exit 1
 
   deploy-canary:
@@ -125,18 +116,3 @@ jobs:
         run: |
           ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal deploy --version ${{ needs.build-image.outputs.image_tag }} --config-file=config/worker.yml --roles=canary --skip-push; exit"'
 
-      - name: Update canary platform routing
-        if: ${{ inputs.platform_ids != '' }}
-        env:
-          PLATFORM_IDS: ${{ inputs.platform_ids }}
-          AP_API_KEY: ${{ secrets.AP_API_KEY }}
-        run: |
-          IFS=',' read -ra IDS <<< "$PLATFORM_IDS"
-          for ID in "${IDS[@]}"; do
-            ID=$(echo "$ID" | tr -d '[:space:]')
-            echo "Enabling canary routing for platform: $ID"
-            curl --fail-with-body -s -X POST "https://cloud.activepieces.com/v1/admin/platforms/canary" \
-              -H "api-key: $AP_API_KEY" \
-              -H "Content-Type: application/json" \
-              -d "{\"platformId\":\"$ID\",\"canary\":true}"
-          done

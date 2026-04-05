@@ -2,24 +2,14 @@ name: Continuous Delivery — Cloud
 
 on:
   schedule:
-    - cron: '0 9 * * *'  # Daily at 9 AM UTC — promote staging to prod
-  workflow_dispatch:
-    inputs:
-      image_tag:
-        description: 'Image tag to deploy. Leave blank or "staging" to use current staging tag, "canary" to use current canary tag, or provide an explicit tag.'
-        required: false
-        default: ''
+    - cron: '0 9 * * 0'  # Sunday 9 AM UTC — promote release candidate to prod
   workflow_call:
-    inputs:
-      image_tag:
-        description: 'Image tag to deploy. Leave blank or "staging" to use current staging tag, "canary" to use current canary tag, or provide an explicit tag.'
-        type: string
-        required: false
-        default: ''
 
 jobs:
   promote-to-production:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     environment:
       name: production
       url: https://cloud.activepieces.com
@@ -44,24 +34,9 @@ jobs:
           SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           SSH_HOST: ${{ secrets.DEV_OPS_HOST }}
 
-      - name: Resolve image tag
+      - name: Set image tag
         id: image
-        run: |
-          TAG="${{ inputs.image_tag }}"
-          if [ -z "$TAG" ] || [ "$TAG" = "staging" ]; then
-            TAG=$(ssh ops -t -t 'bash -ic "cd mrsk/stg && kamal app version 2>&1 | grep -oE \"[0-9]+\.[0-9]+\.[0-9]+\.[a-f0-9]+\.beta\" | head -1 | tr -d \"[:space:]\"; exit"' | tr -d '\r' | grep -oE '[0-9]+\.[0-9]+\.[0-9]+\.[a-f0-9]+\.beta' | head -1)
-            echo "Resolved staging tag: $TAG"
-          elif [ "$TAG" = "canary" ]; then
-            TAG=$(ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal app version --config-file=config/app-canary.yml 2>&1 | grep -oE \"[0-9]+\.[0-9]+\.[0-9]+\.[a-f0-9]+\.canary\" | head -1 | tr -d \"[:space:]\"; exit"' | tr -d '\r' | grep -oE '[0-9]+\.[0-9]+\.[0-9]+\.[a-f0-9]+\.canary' | head -1)
-            echo "Resolved canary tag: $TAG"
-          else
-            echo "Using provided image tag: $TAG"
-          fi
-          if [ -z "$TAG" ]; then
-            echo "ERROR: Could not resolve an image tag to deploy."
-            exit 1
-          fi
-          echo "image_tag=$TAG" >> $GITHUB_OUTPUT
+        run: echo "image_tag=release-candidate" >> $GITHUB_OUTPUT
 
       - name: Deploy App to production
         run: |
@@ -71,13 +46,21 @@ jobs:
         run: |
           ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal deploy --version ${{ steps.image.outputs.image_tag }} --config-file=config/worker.yml --skip-push; exit"'
 
-      - name: Disable all canary platforms
-        if: inputs.image_tag == 'canary'
-        env:
-          AP_API_KEY: ${{ secrets.AP_API_KEY }}
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create deploy branch
         run: |
-          curl --fail-with-body -s -X DELETE "https://cloud.activepieces.com/v1/admin/platforms/canary" \
-            -H "api-key: $AP_API_KEY"
+          SHA=$(git rev-parse refs/tags/release-candidate 2>/dev/null || git rev-parse release-candidate)
+          DATE=$(date -u +%Y-%m-%d)
+          BRANCH="deploy/cloud/$DATE"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git checkout -b "$BRANCH" "$SHA"
+          git push origin "$BRANCH" --force
+          echo "Created $BRANCH at $SHA"
 
   # Run smoke test after scheduled promotion
   smoke-test:
@@ -86,16 +69,3 @@ jobs:
     uses: ./.github/workflows/smoke-test.yml
     secrets: inherit
 
-  # After scheduled promotion, re-deploy latest main to staging (catch-up for merges during freeze)
-  catch-up-staging:
-    needs: promote-to-production
-    if: github.event_name == 'schedule'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Trigger staging catch-up deploy
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh workflow run continuous-delivery-stg.yml \
-            --repo ${{ github.repository }} \
-            -f action=deploy-staging

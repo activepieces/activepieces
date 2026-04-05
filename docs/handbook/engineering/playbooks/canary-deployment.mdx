@@ -86,18 +86,12 @@ Jobs for canary platforms are enqueued to `canaryWorkerJobs`, which only canary 
 
 ## Deploying a New Canary Build
 
-Trigger the **Continuous Delivery — Canary** workflow from GitHub Actions (`continuous-delivery-canary.yml`). It accepts these optional inputs:
-
-| Input | Description |
-|---|---|
-| `platform_ids` | Comma-separated platform IDs to route to this canary build. Leave blank to deploy without changing routing. |
-| `force_breaking_migrations` | Force deployment even if breaking migrations are detected. Default: `false`. |
+The **Continuous Delivery — Canary** workflow (`continuous-delivery-canary.yml`) runs automatically every day at 9 AM UTC, building from the latest `main`.
 
 The workflow:
 1. Builds and pushes a new image tagged `<version>.<sha>.canary`
-2. Checks if any new migrations are breaking — fails the workflow if they are (override with `force_breaking_migrations=true`)
+2. Checks if any new migrations are breaking — fails the workflow if they are (no override)
 3. Deploys the canary app (`config/app-canary.yml`) and canary workers
-4. If `platform_ids` is provided, calls `POST /v1/admin/platforms/canary` on the primary app for each ID — enabling canary routing immediately without a restart
 
 Required GitHub secrets: `AP_API_KEY` (the primary app's `AP_API_KEY` value).
 
@@ -116,7 +110,7 @@ Trigger the **Continuous Delivery — Rollback Canary** workflow (`continuous-de
 
 ## Promoting canary build to production
 
-Dispatch [Continuous Delivery — Cloud](/handbook/engineering/playbooks/releases#continuous-delivery-cloud-yml-%E2%80%94-production-promotion) with **image_tag = canary**
+Canary is a validation environment, not a promotion path. Full promotion happens via the Sunday scheduled cloud workflow, which deploys `release-candidate` to production. If a canary build has been validated and the corresponding commit has been tagged as `release-candidate`, it will automatically reach production on the next Sunday.
 
 ## Managing Platform Routing
 
