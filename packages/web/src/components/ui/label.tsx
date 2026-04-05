@@ -3,10 +3,20 @@ import * as React from 'react';
 
 import { cn } from '@/lib/utils';
 
+type LabelProps = React.ComponentProps<typeof LabelPrimitive.Root> & {
+  showRequiredIndicator?: boolean;
+};
+
+function RequiredFieldAsterisk() {
+  return <span className="text-destructive">*</span>;
+}
+
 function Label({
   className,
+  showRequiredIndicator,
+  children,
   ...props
-}: React.ComponentProps<typeof LabelPrimitive.Root>) {
+}: LabelProps) {
   return (
     <LabelPrimitive.Root
       data-slot="label"
@@ -15,8 +25,12 @@ function Label({
         className,
       )}
       {...props}
-    />
+    >
+      {children}
+      {showRequiredIndicator && <RequiredFieldAsterisk />}
+    </LabelPrimitive.Root>
   );
 }
 
-export { Label };
+export { Label, RequiredFieldAsterisk };
+export type { LabelProps };

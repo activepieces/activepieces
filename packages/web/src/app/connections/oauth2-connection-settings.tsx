@@ -89,11 +89,15 @@ function OAuth2ConnectionSettings({
             control={form.control}
             render={({ field }) => (
               <FormItem className="flex flex-col gap-2">
-                <FormLabel>{t('Client ID')}</FormLabel>
+                <FormLabel
+                  className="flex items-center gap-1"
+                  showRequiredIndicator
+                >
+                  <span>{t('Client ID')}</span>
+                </FormLabel>
                 <FormControl>
                   <SecretInput {...field} type="text" />
                 </FormControl>
-                <FormMessage />
               </FormItem>
             )}
           ></FormField>
@@ -102,11 +106,15 @@ function OAuth2ConnectionSettings({
             control={form.control}
             render={({ field }) => (
               <FormItem className="flex flex-col gap-2">
-                <FormLabel>{t('Client Secret')}</FormLabel>
+                <FormLabel
+                  className="flex items-center gap-1"
+                  showRequiredIndicator
+                >
+                  <span>{t('Client Secret')}</span>
+                </FormLabel>
                 <FormControl>
                   <SecretInput {...field} type="password" />
                 </FormControl>
-                <FormMessage />
               </FormItem>
             )}
           ></FormField>
