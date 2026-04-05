@@ -9,7 +9,6 @@ import { AppSystemProp } from '../../helper/system/system-props'
 import { engineResponseWatcher } from '../engine-response-watcher'
 import { QueueName } from '../job'
 import { jobMigrations } from '../migrations/job-data-migrations'
-import { deletedFlowInterceptor } from './interceptors/deleted-flow-interceptor'
 import { rateLimiterInterceptor } from './interceptors/rate-limiter-interceptor'
 import { zombiePollingInterceptor } from './interceptors/zombie-polling-interceptor'
 import { InterceptorVerdict, JobInterceptor } from './job-interceptor'
@@ -19,7 +18,7 @@ import { createQueueDispatcher, QueueDispatcher } from './queue-dispatcher'
 const DRAIN_DELAY_SECONDS = 15
 const LOCK_DURATION_MS = 120_000
 
-const interceptors: JobInterceptor[] = [rateLimiterInterceptor, zombiePollingInterceptor, deletedFlowInterceptor]
+const interceptors: JobInterceptor[] = [rateLimiterInterceptor, zombiePollingInterceptor]
 const workerPromises = new Map<string, Promise<BullMQWorker>>()
 const dispatchers = new Map<string, QueueDispatcher>()
 
