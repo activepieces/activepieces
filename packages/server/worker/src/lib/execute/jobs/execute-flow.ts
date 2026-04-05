@@ -19,9 +19,9 @@ import {
 import { FastifyBaseLogger } from 'fastify'
 import { flowCache } from '../../cache/flow/flow-cache'
 import { workerSettings } from '../../config/worker-settings'
+import { onCallService } from '../../utils/on-call.service'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../types'
 import { provisionFlowPieces } from '../utils/flow-helpers'
-import { onCallService } from '../../utils/on-call.service'
 import { resolvePayload } from '../utils/resolve-payload'
 
 export const executeFlowJob: JobHandler<ExecuteFlowJobData, FireAndForgetJobResult> = {
