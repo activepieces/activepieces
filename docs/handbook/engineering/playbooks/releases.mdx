@@ -25,7 +25,11 @@ Four separate workflows cover the full delivery lifecycle:
 
 ## Hotfix Workflow
 
-- **Normal hotfix**: Merge fix to `main` → trigger `continuous-delivery-stg.yml` manually with action `cloud-hotfix`. This builds, deploys to staging, promotes to production, and advances `release-candidate` to the hotfix commit so Sunday's scheduled run is a no-op.
+- **Normal hotfix**:
+  1. Checkout from the current `deploy/cloud/YYYY-MM-DD` branch (created by the last Sunday promotion).
+  2. Push your fix commit(s) to that branch.
+  3. Manually trigger `continuous-delivery-stg.yml` with action `cloud-hotfix` **on the hotfix branch** (not `main`). This builds the image, deploys it to staging, and promotes it to production.
+  4. Merge the hotfix branch into `main`. This automatically triggers `tag-release-candidate`, which SSHes to staging (the hotfix image is still running there) and retrags it as `release-candidate`. Sunday's scheduled run will re-deploy the hotfix image — a safe no-op.
 - **Emergency**: Use `emergency-cloud-deploy.yml` (manual dispatch) to bypass staging and deploy directly to production.
 
 ## Self-Hosted Release
@@ -49,7 +53,7 @@ To run any workflow manually, go to the repo's **Actions** tab, select the workf
 
 - **`deploy-staging`** — Re-deploy the latest `main` to staging. Use this after an infra change, or to force a deploy that was skipped due to the freeze window.
 - **`deploy-staging-skip-freeze`** — Same as above but explicitly bypasses the freeze window check.
-- **`cloud-hotfix`** — Build, deploy to staging, promote to production, then advance the `release-candidate` Docker tag and git tag to the hotfix commit. Sunday's scheduled run will re-deploy what is already on prod — a safe no-op. Use this for hotfixes that cannot wait for the next scheduled promotion.
+- **`cloud-hotfix`** — Build, deploy to staging, then promote to production. Must be triggered **on the hotfix branch** (`deploy/cloud/YYYY-MM-DD`), not `main`. After promotion, merge the hotfix branch into `main` — this automatically updates `release-candidate` to the hotfix image so Sunday's scheduled run is a no-op.
 
 ### `continuous-delivery-cloud.yml` — Production Promotion
 

@@ -4,6 +4,12 @@ on:
   schedule:
     - cron: '0 9 * * 0'  # Sunday 9 AM UTC — promote release candidate to prod
   workflow_call:
+    inputs:
+      image_tag:
+        description: 'Image tag to deploy. Leave blank to deploy release-candidate.'
+        type: string
+        required: false
+        default: ''
 
 jobs:
   promote-to-production:
@@ -36,7 +42,12 @@ jobs:
 
       - name: Set image tag
         id: image
-        run: echo "image_tag=release-candidate" >> $GITHUB_OUTPUT
+        run: |
+          TAG="${{ inputs.image_tag }}"
+          if [ -z "$TAG" ]; then
+            TAG="release-candidate"
+          fi
+          echo "image_tag=$TAG" >> $GITHUB_OUTPUT
 
       - name: Deploy App to production
         run: |

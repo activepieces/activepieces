@@ -56,7 +56,7 @@ On Monday at 9 AM UTC, the self-hosted release is published: git tag, GitHub rel
 
 Sometimes the cycle needs to be bypassed:
 
-- **Hotfix**: Merge to `main`, then manually dispatch `continuous-delivery-stg.yml` with action `cloud-hotfix`. This builds, deploys to staging, promotes to production, and advances the `release-candidate` Docker tag and git tag to the hotfix commit. Sunday's scheduled run will then re-deploy what is already on prod — a safe no-op.
+- **Hotfix**: Apply your fix to the current `deploy/cloud/YYYY-MM-DD` branch, then manually dispatch `continuous-delivery-stg.yml` with action `cloud-hotfix` **on that branch** (not `main`). This builds, deploys to staging, and promotes to production. After promotion, merge the hotfix branch into `main` — this automatically triggers `tag-release-candidate`, which SSHes to staging (the hotfix image is still running there) and retrags it as `release-candidate`. Sunday's scheduled run will then re-deploy what is already on prod — a safe no-op.
 - **Emergency**: Use `emergency-cloud-deploy.yml` to deploy directly to production, bypassing staging entirely. Use sparingly.
 
 ## FAQ

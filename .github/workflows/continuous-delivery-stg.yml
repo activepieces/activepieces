@@ -17,6 +17,30 @@ on:
           - cloud-hotfix                # Build, deploy to staging, then promote to prod in one go
 
 jobs:
+  detect-hotfix-merge:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    outputs:
+      is_hotfix_merge: ${{ steps.check.outputs.is_hotfix_merge }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: Check if merge from deploy/cloud branch
+        id: check
+        run: |
+          PARENTS=$(git cat-file -p HEAD | grep -c "^parent")
+          if [ "$PARENTS" -lt 2 ]; then
+            echo "is_hotfix_merge=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          MSG=$(git log -1 --pretty=%s)
+          if echo "$MSG" | grep -qE 'deploy/cloud/[0-9]{4}-[0-9]{2}-[0-9]{2}'; then
+            echo "is_hotfix_merge=true" >> $GITHUB_OUTPUT
+          else
+            echo "is_hotfix_merge=false" >> $GITHUB_OUTPUT
+          fi
+
   check-freeze:
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
@@ -97,9 +121,16 @@ jobs:
         run: |
           ssh ops -t -t 'bash -ic "cd mrsk/stg && kamal deploy --version ${{ needs.build-image.outputs.image_tag }} --skip-push; exit"'
 
-  # Thursday 5 PM UTC: tag current staging image + commit as release-candidate
+  # Thursday 5 PM UTC: tag current staging image + commit as release-candidate.
+  # Also runs when a hotfix branch is merged to main — staging still holds the
+  # hotfix image at that point (multi-arch build takes 10–15 min), so the SSH
+  # lookup returns the hotfix version.sha.beta which gets retagged as release-candidate.
   tag-release-candidate:
-    if: github.event_name == 'schedule'
+    needs: [detect-hotfix-merge]
+    if: |
+      always() &&
+      (github.event_name == 'schedule' ||
+       (github.event_name == 'push' && needs.detect-hotfix-merge.outputs.is_hotfix_merge == 'true'))
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -161,39 +192,6 @@ jobs:
     needs: [build-image, deploy-staging]
     if: always() && github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'cloud-hotfix' && needs.deploy-staging.result == 'success'
     uses: ./.github/workflows/continuous-delivery-cloud.yml
+    with:
+      image_tag: ${{ needs.build-image.outputs.image_tag }}
     secrets: inherit
-
-  # Advance release-candidate Docker tag and git tag to the hotfix commit so
-  # Sunday's scheduled run re-deploys what's already on prod (safe no-op).
-  retag-release-candidate:
-    needs: [build-image, promote-after-hotfix]
-    if: always() && github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'cloud-hotfix' && needs.promote-after-hotfix.result == 'success'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      packages: write
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Login to GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Advance release-candidate Docker tag to hotfix
-        run: |
-          docker buildx imagetools create \
-            --tag ghcr.io/activepieces/activepieces-cloud:release-candidate \
-            ghcr.io/activepieces/activepieces-cloud:${{ needs.build-image.outputs.image_tag }}
-
-      - name: Advance release-candidate git tag to hotfix
-        run: |
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git config user.name "github-actions[bot]"
-          git tag -f release-candidate ${{ github.sha }}
-          git push origin release-candidate --force
