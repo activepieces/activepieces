@@ -25,7 +25,6 @@ Four separate workflows cover the full delivery lifecycle:
 
 ## Hotfix Workflow
 
-- **Normal hotfix**:
   1. Checkout from the current `deploy/cloud/YYYY-MM-DD` branch (created by the last Sunday promotion).
   2. Push your fix commit(s) to that branch.
   3. Manually trigger `continuous-delivery-cloud.yml` with action `cloud-hotfix` **on the hotfix branch** (not `main`). This builds the image and deploys directly to production — staging is not involved.
