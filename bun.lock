@@ -226,7 +226,6 @@
         "pino": "10.1.0",
         "pino-loki": "2.1.3",
         "pino-opentelemetry-transport": "3.0.0",
-        "pnpm": "10.33.0",
         "posthog-js": "1.195.0",
         "priority-queue-typescript": "1.0.1",
         "prismjs": "1.30.0",
@@ -7991,7 +7990,7 @@
     },
     "packages/shared": {
       "name": "@activepieces/shared",
-      "version": "0.51.2",
+      "version": "0.51.4",
       "dependencies": {
         "dayjs": "1.11.9",
         "deepmerge-ts": "7.1.0",
@@ -13927,8 +13926,6 @@
     "playwright-core": ["playwright-core@1.56.0", "", { "bin": { "playwright-core": "cli.js" } }, "sha512-1SXl7pMfemAMSDn5rkPeZljxOCYAmQnYLBTExuh6E8USHXGSX3dx6lYZN/xPpTz1vimXmPA9CDnILvmJaB8aSQ=="],
 
     "pngjs": ["pngjs@5.0.0", "", {}, "sha512-40QW5YalBNfQo5yRYmiw7Yz6TKKVr3h6970B2YE+3fQpsWcrbj1PzJgxeJ19DRQjhMbKPIuMY8rFaXc8moolVw=="],
-
-    "pnpm": ["pnpm@10.33.0", "", { "bin": { "pnpm": "bin/pnpm.cjs", "pnpx": "bin/pnpx.cjs" } }, "sha512-EFaLtKavtYyes2MNqQzJUWQXq+vT+rvmc58K55VyjaFJHp21pUTHatjrdXD1xLs9bGN7LLQb/c20f6gjyGSTGQ=="],
 
     "possible-typed-array-names": ["possible-typed-array-names@1.1.0", "", {}, "sha512-/+5VFTchJDoVj3bhoqi6UeymcD00DAwb1nJwamzPvHEszJ4FpF6SNNbUbOS8yI56qHzdV8eK0qEfOSiodkTdxg=="],
 
