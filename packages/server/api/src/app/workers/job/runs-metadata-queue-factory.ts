@@ -20,7 +20,7 @@ export const runsMetadataQueueFactory = ({
                 connection: await createRedisConnection(),
                 telemetry: config.isOtelEnabled ? new BullMQOtel(QueueName.RUNS_METADATA) : undefined,
                 defaultJobOptions: {
-                    attempts: 5,
+                    attempts: 2,
                     backoff: {
                         type: 'exponential',
                         delay: apDayjsDuration(8, 'minute').asMilliseconds(),
