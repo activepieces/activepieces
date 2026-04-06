@@ -92,6 +92,13 @@ export default defineConfig(({ command, mode }) => {
         : []),
     ],
 
+    define: {
+      // Expose AP_* env vars to the browser bundle (Vite only exposes VITE_* by default)
+      'import.meta.env.AP_FORMULA_FEATURE_ENABLED': JSON.stringify(
+        process.env.AP_FORMULA_FEATURE_ENABLED,
+      ),
+    },
+
     build: {
       outDir: '../../dist/packages/web',
       emptyOutDir: true,

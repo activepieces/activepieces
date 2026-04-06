@@ -59,7 +59,7 @@ type TiptapEditorProps = {
 };
 
 const FORMULA_FEATURE_ENABLED =
-  import.meta.env.VITE_FORMULA_FEATURE_ENABLED === 'true';
+  import.meta.env.AP_FORMULA_FEATURE_ENABLED === 'true';
 
 const INITIAL_SLASH_STATE: SlashCommandState = {
   open: false,
