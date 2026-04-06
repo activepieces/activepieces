@@ -4,28 +4,6 @@ description: "A log of all notable changes to Activepieces"
 icon: "code-commit"
 ---
 
-<Update label="0.80.0" description="Breaking Change: Piece Versions Are Now Pinned">
-
-### Piece versions are now pinned — automatic upgrades removed
-
-**What changed**
-
-Previously, when you published a flow, Activepieces automatically resolved any wildcard piece version (e.g. `~1.2.0`, `^1.2.0`) to the latest matching version available at publish time. This meant a piece could silently run on a different version each time you published — with no visibility into what changed.
-
-Starting with 0.80.0, every piece step is **pinned to an exact version** from the moment it is added. No automatic resolution happens at publish time.
-
-**Old behavior**
-- Steps were stored with wildcard versions like `~1.2.0` or `^1.2.0`
-- On publish (`LOCK_AND_PUBLISH`), Activepieces resolved each wildcard to the latest matching exact version
-- If a piece released a new version between two publishes, your flow would silently pick it up
-
-**New behavior**
-- Steps are stored with exact versions (e.g. `1.2.0`) immediately when added or updated
-- Publish no longer modifies piece versions — what you see in the builder is exactly what runs
-- To upgrade a piece, use the **version switcher** in the step settings panel
-- Major or minor upgrades create a revertible backup so you can roll back if the new version breaks your flow
-
-</Update>
 
 <Update label="March 2026" description="Stability & Reliability Improvements">
 
