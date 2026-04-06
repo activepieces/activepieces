@@ -140,6 +140,10 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
         secretManagersEnabled: {
             type: Boolean,
         },
+        canary: {
+            type: Boolean,
+            default: false,
+        },
     },
     indices: [
         {
