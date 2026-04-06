@@ -1,5 +1,9 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import {
+  AuthenticationType,
+  httpClient,
+  HttpMethod,
+} from '@activepieces/pieces-common';
 import { straleAuth } from '../auth';
 
 export const trustProfile = createAction({
@@ -37,7 +41,10 @@ export const trustProfile = createAction({
     const response = await httpClient.sendRequest({
       url: `https://api.strale.io${endpoint}`,
       method: HttpMethod.GET,
-      headers: { Accept: 'application/json' },
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN as const,
+        token: context.auth.secret_text,
+      },
     });
     return response.body;
   },

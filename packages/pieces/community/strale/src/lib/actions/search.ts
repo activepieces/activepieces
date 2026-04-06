@@ -1,5 +1,9 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import {
+  AuthenticationType,
+  httpClient,
+  HttpMethod,
+} from '@activepieces/pieces-common';
 import { straleAuth } from '../auth';
 
 export const searchCapabilities = createAction({
@@ -42,7 +46,10 @@ export const searchCapabilities = createAction({
     const response = await httpClient.sendRequest({
       url: `https://api.strale.io/v1/suggest/typeahead?${params}`,
       method: HttpMethod.GET,
-      headers: { Accept: 'application/json' },
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN as const,
+        token: context.auth.secret_text,
+      },
     });
     return response.body;
   },

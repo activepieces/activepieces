@@ -28,22 +28,14 @@ export const executeCapability = createAction({
     }),
     max_price_cents: Property.Number({
       displayName: 'Max Price (EUR cents)',
-      description:
-        'Maximum price in EUR cents. Default: 200 (2.00 EUR).',
+      description: 'Maximum price in EUR cents. Default: 200 (2.00 EUR).',
       required: false,
       defaultValue: 200,
     }),
   },
   async run(context) {
     const { slug, inputs, max_price_cents } = context.propsValue;
-    const authConfig = context.auth
-      ? {
-          authentication: {
-            type: AuthenticationType.BEARER_TOKEN as const,
-            token: context.auth,
-          },
-        }
-      : {};
+
     const response = await httpClient.sendRequest({
       url: 'https://api.strale.io/v1/do',
       method: HttpMethod.POST,
@@ -53,7 +45,10 @@ export const executeCapability = createAction({
         inputs: typeof inputs === 'string' ? JSON.parse(inputs) : inputs,
         max_price_cents: max_price_cents ?? 200,
       },
-      ...authConfig,
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN as const,
+        token: context.auth.secret_text,
+      },
     });
     return response.body;
   },

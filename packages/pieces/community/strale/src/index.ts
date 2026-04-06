@@ -14,7 +14,7 @@ export const strale = createPiece({
   auth: straleAuth,
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/strale.png',
-  authors: ['petterlindstrom79'],
+  authors: ['petterlindstrom79', 'sanket-a11y'],
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   actions: [
     searchCapabilities,
@@ -25,7 +25,7 @@ export const strale = createPiece({
       baseUrl: () => 'https://api.strale.io',
       auth: straleAuth,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       }),
     }),
   ],

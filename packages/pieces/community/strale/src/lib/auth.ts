@@ -11,9 +11,6 @@ export const straleAuth = PieceAuth.SecretText({
     'Your Strale API key (starts with sk_live_). Get one free at https://strale.dev/signup — includes 2.00 EUR trial credits. Some actions (Search, Trust Profile) work without a key.',
   required: false,
   validate: async ({ auth }) => {
-    if (!auth) {
-      return { valid: true };
-    }
     try {
       await httpClient.sendRequest({
         url: 'https://api.strale.io/v1/wallet/balance',

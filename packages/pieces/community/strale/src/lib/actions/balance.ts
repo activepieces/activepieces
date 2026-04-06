@@ -14,21 +14,15 @@ export const checkBalance = createAction({
     'Returns the current wallet balance in EUR cents and formatted EUR. Use this before executing paid capabilities to verify sufficient funds. Requires an API key.',
   props: {},
   async run(context) {
-    if (!context.auth) {
-      return {
-        error:
-          'API key required. Set your Strale API key in the connection settings.',
-      };
-    }
     const response = await httpClient.sendRequest({
       url: 'https://api.strale.io/v1/wallet/balance',
       method: HttpMethod.GET,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth,
+        token: context.auth.secret_text,
       },
     });
-    const data = response.body as { balance_cents: number; currency: string };
+    const data = response.body as any;
     return {
       balance_cents: data.balance_cents,
       balance_eur: `EUR ${(data.balance_cents / 100).toFixed(2)}`,
