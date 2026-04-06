@@ -20,19 +20,13 @@
 
 /* Cursor is inside this function — subtle outline on the pair */
 span.ap-fn-badge.ap-fn-cursor-active {
-    outline: 2px solid #7c3aed;
-    outline-offset: 1px;
     background-color: #ddd6fe !important;
-    border-color: #7c3aed !important;
 }
 
 /* Mouse is hovering on a badge — stronger highlight on the pair */
 span.ap-fn-badge.ap-fn-active {
     background-color: #7c3aed !important;
     color: #fff !important;
-    border-color: #5b21b6 !important;
-    outline: 2px solid #7c3aed;
-    outline-offset: 1px;
 }
 
 /* Type error on the function */

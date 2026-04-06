@@ -1,9 +1,12 @@
 import { JSONContent } from '@tiptap/react';
 
+import { FUNCTION_SEP_NODE_TYPE } from '../extensions/function-sep-node';
 import {
   FUNCTION_END_NODE_TYPE,
   FUNCTION_START_NODE_TYPE,
 } from '../extensions/function-start-node';
+
+const ZWS = '\u200B';
 
 // Converts a TipTap document JSONContent tree to an expression string.
 // Function start/end nodes are serialized as `name(` and `)`.
@@ -21,6 +24,8 @@ function nodeToExpression(node: JSONContent): string {
     }
     case FUNCTION_END_NODE_TYPE:
       return ')';
+    case FUNCTION_SEP_NODE_TYPE:
+      return ';';
     case 'mention': {
       if (!node.attrs?.label) return '';
       const label = JSON.parse(node.attrs.label as string) as {
@@ -29,7 +34,7 @@ function nodeToExpression(node: JSONContent): string {
       return label.serverValue ?? '';
     }
     case 'text':
-      return node.text ?? '';
+      return (node.text ?? '').replaceAll(ZWS, '');
     case 'hardBreak':
       return '\n';
     case 'paragraph': {

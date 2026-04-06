@@ -10,13 +10,17 @@ export const FUNCTION_END_NODE_TYPE = 'function_end';
 const fnNamePattern = AP_FUNCTIONS.map((f) => f.name).join('|');
 const inputRuleRegex = new RegExp(`(${fnNamePattern})\\($`);
 
+const ZWS = '\u200B';
+
 function buildInputRuleContent(fn: ApFunction, id: string): JSONContent[] {
   const content: JSONContent[] = [
     { type: FUNCTION_START_NODE_TYPE, attrs: { id, functionName: fn.name } },
+    { type: 'text', text: ZWS },
   ];
   for (let i = 0; i < fn.minArgs; i++) {
     if (i > 0) {
       content.push({ type: FUNCTION_SEP_NODE_TYPE, attrs: { openId: id } });
+      content.push({ type: 'text', text: ZWS });
     }
   }
   content.push({ type: FUNCTION_END_NODE_TYPE, attrs: { openId: id } });
@@ -48,7 +52,7 @@ export const FunctionStartNode = Node.create({
         'data-function-start': node.attrs.id,
         'data-function-name': node.attrs.functionName,
         class:
-          'ap-fn-badge inline-flex items-center bg-primary/15 text-primary rounded-none px-[3px] mx-[1px] text-[12px] font-medium cursor-default select-none whitespace-nowrap',
+          'ap-fn-badge inline-flex items-center bg-primary/15 text-primary rounded-sm px-[3px] py-[2px] mx-[6px] text-[12px] font-medium cursor-default select-none whitespace-nowrap',
         contenteditable: 'false',
       }),
       `${node.attrs.functionName}(`,
@@ -68,7 +72,7 @@ export const FunctionStartNode = Node.create({
           chain()
             .deleteRange(range)
             .insertContentAt(range.from, content)
-            .setTextSelection(range.from + 1)
+            .setTextSelection(range.from + 2)
             .run();
         },
       }),

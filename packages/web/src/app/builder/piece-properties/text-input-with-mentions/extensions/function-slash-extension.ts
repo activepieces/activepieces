@@ -42,13 +42,16 @@ export function insertFunctionAtPos(
   const deleteLen = 1 + query.length; // "/" + typed chars
   const startPos = Math.max(0, from);
 
+  const ZWS = '\u200B';
   const id = crypto.randomUUID();
   const content: JSONContent[] = [
     { type: FUNCTION_START_NODE_TYPE, attrs: { id, functionName: fn.name } },
+    { type: 'text', text: ZWS },
   ];
   for (let i = 0; i < fn.minArgs; i++) {
     if (i > 0) {
       content.push({ type: FUNCTION_SEP_NODE_TYPE, attrs: { openId: id } });
+      content.push({ type: 'text', text: ZWS });
     }
   }
   content.push({ type: FUNCTION_END_NODE_TYPE, attrs: { openId: id } });
@@ -60,8 +63,8 @@ export function insertFunctionAtPos(
     .insertContentAt(startPos, content)
     .run();
 
-  // Place cursor between the two nodes (right after the start node)
-  editor.commands.setTextSelection(startPos + 1);
+  // Place cursor after ZWS in the first arg slot
+  editor.commands.setTextSelection(startPos + 2);
 }
 
 function closeHandler(handler: SlashCommandHandler) {

@@ -24,10 +24,10 @@ export const FunctionArgSeparatorNode = Node.create({
       mergeAttributes(HTMLAttributes, {
         'data-function-sep': node.attrs.openId,
         class:
-          'ap-fn-badge inline-flex items-center bg-primary/15 text-primary rounded-none px-[3px] mx-[1px] text-[12px] font-medium cursor-default select-none whitespace-nowrap',
+          'ap-fn-badge inline-flex items-center bg-primary/15 text-primary rounded-sm px-[3px] py-[2px] mx-[6px] text-[12px] font-medium cursor-default select-none whitespace-nowrap',
         contenteditable: 'false',
       }),
-      ',',
+      ';',
     ];
   },
 });

@@ -13,6 +13,7 @@ import { MentionNodeAttrs, Mention } from '@tiptap/extension-mention';
 import { Paragraph } from '@tiptap/extension-paragraph';
 import { Placeholder } from '@tiptap/extension-placeholder';
 import { Text } from '@tiptap/extension-text';
+import { TextSelection } from '@tiptap/pm/state';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { Copy } from 'lucide-react';
@@ -189,6 +190,77 @@ export const TiptapEditor = ({
     },
     editorProps: {
       handleKeyDown: (view, event) => {
+        if (event.key === 'Backspace') {
+          const { state } = view;
+          const { from, to } = state.selection;
+          if (from === to) {
+            const $from = state.doc.resolve(from);
+            const nodeBefore = $from.nodeBefore;
+            if (
+              nodeBefore &&
+              nodeBefore.type.name === FUNCTION_START_NODE_TYPE
+            ) {
+              const fnId = nodeBefore.attrs.id as string;
+              const fnStartPos = from - nodeBefore.nodeSize;
+              let fnEndPos = -1;
+              state.doc.descendants((node, pos) => {
+                if (
+                  node.type.name === FUNCTION_END_NODE_TYPE &&
+                  node.attrs.openId === fnId
+                ) {
+                  fnEndPos = pos;
+                }
+              });
+              const deleteTo = fnEndPos >= 0 ? fnEndPos + 1 : from;
+              view.dispatch(state.tr.delete(fnStartPos, deleteTo));
+              return true;
+            }
+          }
+        }
+
+        const isArrow = event.key === 'ArrowRight' || event.key === 'ArrowLeft';
+        if (isArrow && !event.shiftKey && !event.ctrlKey && !event.metaKey) {
+          const { state } = view;
+          const { from, to } = state.selection;
+          if (from === to) {
+            if (event.key === 'ArrowRight') {
+              let pos = from;
+              // Skip a leading ZWS separator character
+              if (docCharAt(state.doc, pos) === ZWS_CHAR) pos++;
+              // Skip a structural badge node
+              const nodeAfter = state.doc.nodeAt(pos);
+              if (nodeAfter && isFormulaStructureNode(nodeAfter.type.name)) {
+                pos += nodeAfter.nodeSize;
+                // Skip the ZWS that follows the badge
+                if (docCharAt(state.doc, pos) === ZWS_CHAR) pos++;
+              }
+              if (pos !== from) {
+                view.dispatch(
+                  state.tr.setSelection(TextSelection.create(state.doc, pos)),
+                );
+                return true;
+              }
+            } else {
+              let pos = from;
+              // Skip a trailing ZWS separator character
+              if (docCharAt(state.doc, pos - 1) === ZWS_CHAR) pos--;
+              // Skip a structural badge node
+              const nodeBefore = state.doc.resolve(pos).nodeBefore;
+              if (nodeBefore && isFormulaStructureNode(nodeBefore.type.name)) {
+                pos -= nodeBefore.nodeSize;
+                // Skip the ZWS that precedes the badge
+                if (docCharAt(state.doc, pos - 1) === ZWS_CHAR) pos--;
+              }
+              if (pos !== from) {
+                view.dispatch(
+                  state.tr.setSelection(TextSelection.create(state.doc, pos)),
+                );
+                return true;
+              }
+            }
+          }
+        }
+
         if (event.key !== ')') return false;
 
         const { state } = view;
@@ -397,6 +469,26 @@ export const TiptapEditor = ({
     </div>
   );
 };
+
+const ZWS_CHAR = '\u200B';
+
+// Returns the single character at `pos` in the document, or '' if none (e.g. atom node).
+function docCharAt(doc: import('@tiptap/pm/model').Node, pos: number): string {
+  if (pos < 0 || pos >= doc.content.size) return '';
+  try {
+    return doc.textBetween(pos, pos + 1, '', '');
+  } catch {
+    return '';
+  }
+}
+
+function isFormulaStructureNode(typeName: string): boolean {
+  return (
+    typeName === FUNCTION_START_NODE_TYPE ||
+    typeName === FUNCTION_SEP_NODE_TYPE ||
+    typeName === FUNCTION_END_NODE_TYPE
+  );
+}
 
 function collectTypeErrors(doc: import('@tiptap/react').JSONContent): string[] {
   const errors = typeCheckTiptapDoc(doc);

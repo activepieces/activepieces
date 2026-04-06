@@ -56,9 +56,12 @@ enum TipTapNodeTypes {
 
 type StepMetadataWithDisplayName = StepMetadata & { stepDisplayName: string };
 
+const ZWS = '\u200B';
+
 type ExprToken =
   | { kind: 'fn_open'; name: string }
   | { kind: 'fn_close' }
+  | { kind: 'fn_sep' }
   | { kind: 'variable'; value: string }
   | { kind: 'newline' }
   | { kind: 'text'; value: string };
@@ -67,6 +70,7 @@ function tokenizeExpression(expr: string): ExprToken[] {
   const tokens: ExprToken[] = [];
   const fnNames = new Set(AP_FUNCTIONS.map((f) => f.name));
   let i = 0;
+  let fnDepth = 0;
 
   while (i < expr.length) {
     // Variable reference {{...}}
@@ -90,14 +94,31 @@ function tokenizeExpression(expr: string): ExprToken[] {
     const fnMatch = expr.slice(i).match(/^([a-z_][a-z0-9_]*)\(/i);
     if (fnMatch && fnNames.has(fnMatch[1])) {
       tokens.push({ kind: 'fn_open', name: fnMatch[1] });
-      i += fnMatch[1].length + 1; // skip name + "("
+      fnDepth++;
+      i += fnMatch[1].length + 1;
       continue;
     }
 
-    // Closing paren — always emit as fn_close (the receiver decides if inside a function)
+    // Closing paren — always emit as fn_close
     if (expr[i] === ')') {
       tokens.push({ kind: 'fn_close' });
+      if (fnDepth > 0) fnDepth--;
       i++;
+      continue;
+    }
+
+    // Separator ; inside a function (current format)
+    if (expr[i] === ';' && fnDepth > 0) {
+      tokens.push({ kind: 'fn_sep' });
+      i++;
+      continue;
+    }
+
+    // Separator , inside a function (legacy format — accept for backward compat)
+    if (expr[i] === ',' && fnDepth > 0) {
+      tokens.push({ kind: 'fn_sep' });
+      i++;
+      if (i < expr.length && expr[i] === ' ') i++; // skip optional trailing space
       continue;
     }
 
@@ -107,6 +128,8 @@ function tokenizeExpression(expr: string): ExprToken[] {
       if (expr[i] === '{' && expr[i + 1] === '{') break;
       if (expr[i] === '\n') break;
       if (expr[i] === ')') break;
+      if (expr[i] === ';' && fnDepth > 0) break;
+      if (expr[i] === ',' && fnDepth > 0) break;
       const ahead = expr.slice(i).match(/^([a-z_][a-z0-9_]*)\(/i);
       if (ahead && fnNames.has(ahead[1])) break;
       text += expr[i];
@@ -140,6 +163,19 @@ function convertTextToTipTapJsonContent(
           type: FUNCTION_START_NODE_TYPE,
           attrs: { id, functionName: token.name },
         });
+        // ZWS anchors the cursor visually between the start badge and arg content
+        para.content.push({ type: TipTapNodeTypes.text, text: ZWS });
+        break;
+      }
+      case 'fn_sep': {
+        const openId = fnStack[fnStack.length - 1];
+        if (openId !== undefined) {
+          para.content.push({
+            type: FUNCTION_SEP_NODE_TYPE,
+            attrs: { openId },
+          });
+          para.content.push({ type: TipTapNodeTypes.text, text: ZWS });
+        }
         break;
       }
       case 'fn_close': {
@@ -273,8 +309,9 @@ function convertTiptapJsonToText(nodes: JSONContent[]): string {
       case TipTapNodeTypes.hardBreak:
         return '\n';
       case TipTapNodeTypes.text: {
-        //replace &nbsp; with a normal space
-        return node.text ? node.text.replaceAll('\u00A0', ' ') : '';
+        return node.text
+          ? node.text.replaceAll('\u00A0', ' ').replaceAll(ZWS, '')
+          : '';
       }
       case TipTapNodeTypes.mention: {
         return node.attrs?.label
@@ -289,7 +326,7 @@ function convertTiptapJsonToText(nodes: JSONContent[]): string {
         return ')';
       }
       case FUNCTION_SEP_NODE_TYPE: {
-        return ', ';
+        return ';';
       }
       case TipTapNodeTypes.paragraph: {
         return `${
