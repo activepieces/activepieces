@@ -14,7 +14,7 @@ export const workdayAuth = PieceAuth.OAuth2({
 				'Integration System User username for SOAP API write operations (create, update, hire). Format: username@tenant',
 			required: false,
 		}),
-		isuPassword: Property.ShortText({
+		isuPassword: PieceAuth.SecretText({
 			displayName: 'ISU Password (for write operations)',
 			description:
 				'Integration System User password for SOAP API write operations.',
