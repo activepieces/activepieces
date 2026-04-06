@@ -1286,6 +1286,9 @@
       "@activepieces/piece-workable": [
         "packages/pieces/community/workable/src/index.ts"
       ],
+      "@activepieces/piece-workday": [
+        "packages/pieces/community/workday/src/index.ts"
+      ],
       "@activepieces/piece-wrike": [
         "packages/pieces/community/wrike/src/index.ts"
       ],
