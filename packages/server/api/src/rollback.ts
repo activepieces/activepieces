@@ -1,4 +1,5 @@
 /* eslint-disable no-console */
+import { readFileSync } from 'node:fs'
 import { databaseConnection } from './app/database/database-connection'
 import { rollbackToManifest, rollbackToVersion } from './app/database/rollback-migrations'
 
@@ -25,6 +26,10 @@ function parseArgs(): ParsedArgs {
             manifestJson = args[i + 1]
             i++
         }
+        else if (args[i] === '--manifest-file' && args[i + 1]) {
+            manifestJson = readFileSync(args[i + 1], 'utf-8').trim()
+            i++
+        }
         else if (args[i] === '--force') {
             force = true
         }
@@ -33,10 +38,11 @@ function parseArgs(): ParsedArgs {
     if (manifestJson !== undefined) {
         let targetMigrationNames: string[]
         try {
-            targetMigrationNames = JSON.parse(manifestJson)
-            if (!Array.isArray(targetMigrationNames) || !targetMigrationNames.every(n => typeof n === 'string')) {
+            const parsed: unknown = JSON.parse(manifestJson)
+            if (!Array.isArray(parsed) || !parsed.every(n => n === null || typeof n === 'string')) {
                 throw new Error('Manifest must be a JSON array of strings')
             }
+            targetMigrationNames = parsed.filter((n): n is string => n !== null)
         }
         catch (e) {
             console.error(`Invalid --manifest JSON: ${e instanceof Error ? e.message : String(e)}`)
