@@ -3,32 +3,36 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 export const parseUrl = createAction({
   name: 'parse_url',
   displayName: 'Parse URL',
-  description: 'Extract the domain, path, and query parameters from a URL. Automatically handles array-style parameters.',
+  description: 'Extract the domain, path, and query parameters from a URL.',
   props: {
     url: Property.ShortText({
       displayName: 'URL',
-      description: 'The full URL you want to parse',
+      description: 'The full URL you want to parse (e.g., https://example.com/page?utm_source=twitter)',
       required: true,
+    }),
+    returnArrays: Property.Checkbox({
+      displayName: 'Return Values as Arrays',
+      description: 'If checked, duplicate query parameters are returned as a JSON array (e.g., {"tags": ["shoes", "hats"]}). If unchecked, they are joined into a single comma-separated string (e.g., {"tags": "shoes, hats"}).',
+      required: false,
+      defaultValue: false,
     }),
   },
   async run(context) {
-    const { url } = context.propsValue;
+    const { url, returnArrays } = context.propsValue;
 
     try {
       const parsedUrl = new URL(url);
       const queryParams: Record<string, any> = {};
 
-      for (const [key, value] of parsedUrl.searchParams.entries()) {
-        const cleanKey = key.endsWith('[]') ? key.slice(0, -2) : key;
+      const keys = new Set(parsedUrl.searchParams.keys());
 
-        if (queryParams[cleanKey] !== undefined) {
-          if (Array.isArray(queryParams[cleanKey])) {
-            queryParams[cleanKey].push(value);
-          } else {
-            queryParams[cleanKey] = [queryParams[cleanKey], value];
-          }
+      for (const key of keys) {
+        const allValues = parsedUrl.searchParams.getAll(key);
+
+        if (returnArrays) {
+          queryParams[key] = allValues;
         } else {
-          queryParams[cleanKey] = value;
+          queryParams[key] = allValues.join(', ');
         }
       }
 
@@ -41,7 +45,7 @@ export const parseUrl = createAction({
       };
       
     } catch (error) {
-      throw new Error(`Failed to parse URL. Please ensure it is a valid, absolute URL (including http:// or https://). Details: ${(error as Error).message}`);
+      throw new Error(`Failed to parse URL. Please ensure it is a valid, absolute URL. Details: ${(error as Error).message}`);
     }
   },
 });
