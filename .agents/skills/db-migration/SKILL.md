@@ -58,7 +58,7 @@ export class AddMyColumn1234567890 implements Migration {
 
 CI fails if any of these are missing.
 
-### Step 5: REGISTER THE MIGRATION
+### Step 3: REGISTER THE MIGRATION
 
 Open `packages/server/api/src/app/database/postgres-connection.ts` and add the new migration class to the `getMigrations()` array (at the end, in chronological order):
 
