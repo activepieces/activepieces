@@ -36,7 +36,9 @@ function resolveAnswerWithOptions(
 ): unknown {
   if (!options || options.length === 0 || !Array.isArray(answer)) return answer;
   const optionMap = Object.fromEntries(options.map((o) => [o.id, o.text]));
-  const resolved = (answer as string[]).map((id) => optionMap[id] ?? id);
+  const resolved = answer.map((id) =>
+    typeof id === 'string' ? (optionMap[id] ?? id) : id
+  );
   return resolved.length === 1 ? resolved[0] : resolved;
 }
 

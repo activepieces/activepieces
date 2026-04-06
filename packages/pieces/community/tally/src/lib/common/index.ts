@@ -31,11 +31,6 @@ type TallySubmissionResponse = {
 type TallyQuestionOption = { id: string; text: string };
 type TallyQuestion = { id: string; title: string; options?: TallyQuestionOption[] };
 
-export type TallySubmissionsApiResponse = {
-  questions: TallyQuestion[];
-  submissions: TallySubmissionResponse[];
-};
-
 export const formsDropdown = Property.Dropdown<string, true, typeof tallyAuth>({
   auth: tallyAuth,
   displayName: 'Form',
@@ -127,4 +122,9 @@ export const tallyApiClient = {
     });
     return response.body;
   },
+};
+
+export type TallySubmissionsApiResponse = {
+  questions: TallyQuestion[];
+  submissions: TallySubmissionResponse[];
 };
