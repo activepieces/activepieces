@@ -4,8 +4,6 @@ import { Dot, FolderIcon, User } from 'lucide-react';
 import { TableIcon } from '@/components/icons/table';
 import { WorkflowIcon } from '@/components/icons/workflow';
 
-import { type SearchHistoryItem } from './search-history';
-import { STATIC_PAGES } from './static-pages';
 import { type SearchResultItem } from './use-global-search-results';
 
 function timeAgo(date: Date | string): string {
@@ -123,7 +121,44 @@ function ItemMeta({
   );
 }
 
-export function SearchResultRow({ item }: { item: SearchResultItem }) {
+function HighlightText({ text, query }: { text: string; query: string }) {
+  if (!query) return <>{text}</>;
+  const lowerText = text.toLowerCase();
+  const lowerQuery = query.toLowerCase();
+  const parts: { text: string; match: boolean }[] = [];
+  let lastIndex = 0;
+  let idx = lowerText.indexOf(lowerQuery);
+  while (idx !== -1) {
+    if (idx > lastIndex)
+      parts.push({ text: text.slice(lastIndex, idx), match: false });
+    parts.push({ text: text.slice(idx, idx + query.length), match: true });
+    lastIndex = idx + query.length;
+    idx = lowerText.indexOf(lowerQuery, lastIndex);
+  }
+  if (lastIndex < text.length)
+    parts.push({ text: text.slice(lastIndex), match: false });
+  return (
+    <>
+      {parts.map((part, i) =>
+        part.match ? (
+          <span key={i} className="font-semibold">
+            {part.text}
+          </span>
+        ) : (
+          part.text
+        ),
+      )}
+    </>
+  );
+}
+
+export function SearchResultRow({
+  item,
+  query,
+}: {
+  item: SearchResultItem;
+  query?: string;
+}) {
   return (
     <div className="flex min-w-0 flex-1 items-center gap-2">
       <ItemIcon
@@ -133,8 +168,8 @@ export function SearchResultRow({ item }: { item: SearchResultItem }) {
         iconTextColor={item.iconTextColor}
         iconLetter={item.iconLetter}
       />
-      <span className="min-w-0 shrink truncate text-sm font-medium">
-        {item.label}
+      <span className="min-w-0 shrink truncate text-sm font-normal">
+        <HighlightText text={item.label} query={query ?? ''} />
       </span>
       {item.status === 'ENABLED' && (
         <span className="shrink-0 rounded-full bg-green-500/10 px-1.5 py-0.5 text-[10px] font-medium text-green-600">
@@ -146,34 +181,6 @@ export function SearchResultRow({ item }: { item: SearchResultItem }) {
         folderName={item.folderName}
         updated={item.updated}
       />
-    </div>
-  );
-}
-
-export function HistoryResultRow({ item }: { item: SearchHistoryItem }) {
-  const pageIcon =
-    item.type === 'page'
-      ? STATIC_PAGES.find((p) => p.id === item.id)?.icon
-      : undefined;
-
-  return (
-    <div className="flex min-w-0 flex-1 items-center gap-2">
-      <ItemIcon
-        type={item.type}
-        pageIcon={pageIcon}
-        iconBgColor={item.iconBgColor}
-        iconTextColor={item.iconTextColor}
-        iconLetter={item.iconLetter}
-      />
-      <span className="min-w-0 shrink truncate text-sm font-medium">
-        {item.label}
-      </span>
-      {item.status === 'ENABLED' && (
-        <span className="shrink-0 rounded-full bg-green-500/10 px-1.5 py-0.5 text-[10px] font-medium text-green-600">
-          Live
-        </span>
-      )}
-      <ItemMeta projectName={item.projectName} folderName={item.folderName} />
     </div>
   );
 }

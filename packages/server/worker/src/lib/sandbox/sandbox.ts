@@ -71,11 +71,14 @@ export function createSandbox(
         })
     }
 
+    function isReady(): boolean {
+        return !isNil(connectedSocket) && connectedSocket.connected && !isNil(childProcess) && childProcess.exitCode === null
+    }
+
     return {
         id: sandboxId,
         start: async ({ flowVersionId, platformId, mounts }) => {
-            const ready = !isNil(connectedSocket) && connectedSocket.connected && !isNil(childProcess)
-            if (ready) {
+            if (isReady()) {
                 return
             }
             log.debug({
@@ -173,11 +176,11 @@ export function createSandbox(
                     })
                 })
 
-                log.info({ sandboxId, operationType }, '[Sandbox] Executing operation via RPC')
+                log.debug({ sandboxId, operationType }, '[Sandbox] Executing operation via RPC')
                 const operationTimeoutMs = (executeOptions.timeoutInSeconds + 5) * 1000
                 const client = createRpcClient<EngineContract>(connectedSocket!, operationTimeoutMs)
                 client.executeOperation({ operationType, operation }).then((engineResponse: EngineResponse<unknown>) => {
-                    resolve({ engine: engineResponse, stdOut, stdError })
+                    resolve({ ...engineResponse, logs: buildLogs(stdOut, stdError) })
                 }).catch((error: unknown) => {
                     log.error({ sandboxId, error: String(error) }, '[Sandbox] RPC call failed')
                     reject(error)
@@ -188,7 +191,7 @@ export function createSandbox(
                 return await operationPromise
             }
             finally {
-                log.info({
+                log.debug({
                     sandboxId,
                     operationType,
                     killedByTimeout: String(killedByTimeout),
@@ -201,9 +204,7 @@ export function createSandbox(
                 childProcess?.removeAllListeners('error')
             }
         },
-        isReady: () => {
-            return !isNil(connectedSocket) && connectedSocket.connected && !isNil(childProcess)
-        },
+        isReady,
         shutdown: async () => {
             if (!isNil(childProcess)) {
                 log.debug({ sandboxId }, 'Shutting down sandbox')
@@ -253,14 +254,15 @@ function handleProcessExit(log: SandboxLogger, params: ProcessExitParams): void 
         }))
     }
     else {
+        const reason = 'Worker exited with code ' + code + ' and signal ' + signal
         reject(new ActivepiecesError({
             code: ErrorCode.SANDBOX_INTERNAL_ERROR,
             params: {
-                reason: 'Worker exited with code ' + code + ' and signal ' + signal,
+                reason,
                 standardOutput: stdOut,
                 standardError: stdError,
             },
-        }))
+        }, `${reason} standardOutput=${stdOut} standardError=${stdError}`))
     }
 }
 
@@ -280,6 +282,13 @@ function killProcess(child: ChildProcess, log: SandboxLogger): Promise<void> {
             resolve()
         })
     })
+}
+
+function buildLogs(stdOut: string, stdError: string): string | undefined {
+    const parts: string[] = []
+    if (stdOut) parts.push(`stdout:\n${stdOut}`)
+    if (stdError) parts.push(`stderr:\n${stdError}`)
+    return parts.length > 0 ? parts.join('\n') : undefined
 }
 
 type ProcessExitParams = {

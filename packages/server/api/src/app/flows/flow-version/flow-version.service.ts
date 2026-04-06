@@ -20,6 +20,7 @@ import {
     ProjectId,
     sanitizeObjectForPostgresql,
     SeekPage,
+    TypedResult,
     UserId,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
@@ -44,9 +45,9 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
         projectId,
         flowVersion,
         entityManager,
-    }: LockPieceVersionsParams): Promise<FlowVersion> {
+    }: LockPieceVersionsParams): Promise<TypedResult<FlowVersion>> {
         if (flowVersion.state === FlowVersionState.LOCKED) {
-            return flowVersion
+            return { success: true, data: flowVersion }
         }
 
         const pieceVersion: Record<string, string> = {}
@@ -57,22 +58,28 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
                 step.type,
             )
             if (stepTypeIsPiece) {
-                const pieceMetadata = await pieceMetadataService(log).getOrThrow({
+                const pieceMetadata = await pieceMetadataService(log).get({
                     platformId,
                     name: step.settings.pieceName,
                     version: step.settings.pieceVersion,
                     entityManager,
                 })
+                if (isNil(pieceMetadata)) {
+                    return { success: false, message: `Piece not found: ${step.settings.pieceName}@${step.settings.pieceVersion}` }
+                }
                 pieceVersion[step.name] = pieceMetadata.version
             }
         }
-        return flowStructureUtil.transferFlow(flowVersion, (step) => {
-            const clonedStep = JSON.parse(JSON.stringify(step))
-            if (pieceVersion[step.name]) {
-                clonedStep.settings.pieceVersion = pieceVersion[step.name]
-            }
-            return clonedStep
-        })
+        return {
+            success: true,
+            data: flowStructureUtil.transferFlow(flowVersion, (step) => {
+                const clonedStep = JSON.parse(JSON.stringify(step))
+                if (pieceVersion[step.name]) {
+                    clonedStep.settings.pieceVersion = pieceVersion[step.name]
+                }
+                return clonedStep
+            }),
+        }
     },
 
     async applyOperation({
@@ -122,11 +129,15 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
                 break
             }
             case FlowOperationType.LOCK_FLOW: {
-                mutatedFlowVersion = await this.lockPieceVersions({
+                const lockResult = await this.lockPieceVersions({
                     projectId,
                     flowVersion: mutatedFlowVersion,
                     entityManager,
                 })
+                if (!lockResult.success) {
+                    throw new ActivepiecesError({ code: ErrorCode.GENERIC_ERROR, params: { message: lockResult.message } })
+                }
+                mutatedFlowVersion = lockResult.data
 
                 operations = [userOperation]
                 break
@@ -190,6 +201,26 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
                 created: 'DESC',
             },
         })
+    },
+
+    async getLatestVersionsByFlowIds(flowIds: FlowId[], projectId?: ProjectId): Promise<Map<FlowId, FlowVersion>> {
+        if (flowIds.length === 0) {
+            return new Map()
+        }
+        const latestVersions = await flowVersionRepo()
+            .createQueryBuilder('fv')
+            .where('fv.flowId IN (:...flowIds)', { flowIds })
+            .distinctOn(['fv.flowId'])
+            .orderBy('fv.flowId')
+            .addOrderBy('fv.created', 'DESC')
+            .getMany()
+        const migratedEntries = await Promise.all(
+            latestVersions.map(async (version) => {
+                const migrated = await flowVersionMigrationService(log).migrate(version, projectId)
+                return [version.flowId, migrated] as const
+            }),
+        )
+        return new Map(migratedEntries)
     },
 
     async getLatestLockedVersionOrThrow(flowId: FlowId): Promise<FlowVersion> {
@@ -424,3 +455,4 @@ type LockPieceVersionsParams = {
     flowVersion: FlowVersion
     entityManager?: EntityManager
 }
+

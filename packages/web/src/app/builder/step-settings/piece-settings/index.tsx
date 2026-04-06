@@ -25,7 +25,7 @@ type PieceSettingsProps = {
 const removeAuthFromProps = (
   props: Record<string, any>,
 ): Record<string, any> => {
-  const { auth, ...rest } = props;
+  const { auth: _, ...rest } = props;
   return rest;
 };
 

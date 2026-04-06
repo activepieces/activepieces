@@ -1,4 +1,4 @@
-import { Flow, FlowId, FlowStatus, PlatformId, ProjectId, UserId } from '@activepieces/shared'
+import { Flow, FlowId, PlatformId, ProjectId, UserId } from '@activepieces/shared'
 import { Job, JobsOptions } from 'bullmq'
 import { Dayjs } from 'dayjs'
 
@@ -9,7 +9,6 @@ export enum SystemJobName {
     TRIAL_TRACKER = 'trial-tracker',
     RUN_TELEMETRY = 'run-telemetry',
     DELETE_FLOW = 'delete-flow',
-    UPDATE_FLOW_STATUS = 'update-flow-status',
     AI_CREDIT_UPDATE_CHECK = 'ai-credit-update-check',
     HARD_DELETE_PROJECT = 'hard-delete-project',
     HARD_DELETE_PLATFORM = 'hard-delete-platform',
@@ -18,13 +17,6 @@ export enum SystemJobName {
 type DeleteFlowDurableSystemJobData =  {
     flow: Flow
     preDeleteDone: boolean
-}
-
-type UpdateFlowStatusDurableSystemJobData =  {
-    id: FlowId
-    projectId: ProjectId
-    newStatus: FlowStatus
-    preUpdateDone: boolean
 }
 
 type AiCreditUpdateCheckSystemJobData = {
@@ -51,7 +43,6 @@ type SystemJobDataMap = {
     [SystemJobName.RUN_TELEMETRY]: Record<string, never>
     [SystemJobName.TRIAL_TRACKER]: Record<string, never>
     [SystemJobName.DELETE_FLOW]: DeleteFlowDurableSystemJobData
-    [SystemJobName.UPDATE_FLOW_STATUS]: UpdateFlowStatusDurableSystemJobData
     [SystemJobName.AI_CREDIT_UPDATE_CHECK]: AiCreditUpdateCheckSystemJobData
     [SystemJobName.HARD_DELETE_PROJECT]: HardDeleteProjectSystemJobData
     [SystemJobName.HARD_DELETE_PLATFORM]: HardDeletePlatformSystemJobData
@@ -62,7 +53,7 @@ export type SystemJobData<T extends SystemJobName = SystemJobName> = T extends S
 export type SystemJobDefinition<T extends SystemJobName> = {
     name: T
     data: SystemJobData<T>
-    jobId?: string
+    jobId: string
 }
 
 export type SystemJobHandler<T extends SystemJobName = SystemJobName> = (data: SystemJobData<T>) => Promise<void>
@@ -87,6 +78,7 @@ type UpsertJobParams<T extends SystemJobName> = {
 
 export type SystemJobSchedule = {
     init(): Promise<void>
+    startWorker(): Promise<void>
     upsertJob<T extends SystemJobName>(params: UpsertJobParams<T>): Promise<void>
     getJob<T extends SystemJobName>(jobId: string): Promise<Job<SystemJobData<T>> | undefined>
     close(): Promise<void>

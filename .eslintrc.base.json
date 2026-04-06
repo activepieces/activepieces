@@ -9,8 +9,16 @@
     {
       "files": ["*.ts", "*.tsx"],
       "extends": ["plugin:@typescript-eslint/recommended"],
+      "plugins": ["unused-imports"],
       "rules": {
-        "@typescript-eslint/no-unused-vars": "warn",
+        "unused-imports/no-unused-imports": "warn",
+        "@typescript-eslint/no-unused-vars": [
+          "warn",
+          {
+            "varsIgnorePattern": "^_",
+            "argsIgnorePattern": "^_"
+          }
+        ],
         "@typescript-eslint/no-explicit-any": "warn"
       }
     },

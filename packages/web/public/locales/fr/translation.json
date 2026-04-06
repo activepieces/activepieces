@@ -1175,6 +1175,8 @@
   "Retry": "Réessayer",
   "on latest version": "sur la dernière version",
   "Only failed runs can be retried from failed step": "Seuls les exécutions échouées peuvent être ré-essayées à partir de l'étape échouée",
+  "Retry is only available for {failedJobRetentionDays} after a run fails.": "La réexécution n'est disponible que {failedJobRetentionDays, plural, =0 {0 jour} =1 {1 jour} other {# jours}} après l'échec d'une exécution.",
+  "Retry failed": "Échec de la réexécution",
   "from failed step": "à partir de l'étape échouée",
   "Viewing retried runs": "",
   "No flow runs found": "Aucune exécution de Flow trouvée",
@@ -1397,5 +1399,6 @@
   "{count} flows created successfully in a new folder_one": "",
   "{count} flows created successfully in a new folder_other": "",
   "This template includes {count} flows with all dependencies. A new folder will be created to organize them._one": "",
-  "This template includes {count} flows with all dependencies. A new folder will be created to organize them._other": ""
+  "This template includes {count} flows with all dependencies. A new folder will be created to organize them._other": "",
+  "Please connect your account first": "Veuillez d'abord connecter votre compte"
 }

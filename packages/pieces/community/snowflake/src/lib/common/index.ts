@@ -1,13 +1,39 @@
 import {
   DynamicPropsValue,
-  PiecePropValueSchema,
+  DropdownState,
   Property,
 } from '@activepieces/pieces-framework';
+import { AppConnectionType } from '@activepieces/shared';
 import { snowflakeAuth } from '../auth';
 import snowflake from 'snowflake-sdk';
 
 const DEFAULT_APPLICATION_NAME = 'ActivePieces';
 const DEFAULT_QUERY_TIMEOUT = 30000;
+
+export type SnowflakeAuthValue =
+  | {
+      type: AppConnectionType.OAUTH2;
+      access_token: string;
+      props: {
+        account: string;
+        database?: string;
+        warehouse?: string;
+        role?: string;
+      };
+    }
+  | {
+      type: AppConnectionType.CUSTOM_AUTH;
+      props: {
+        account: string;
+        username: string;
+        password?: string;
+        privateKey?: string;
+        privateKeyPassphrase?: string;
+        database?: string;
+        role?: string;
+        warehouse?: string;
+      };
+    };
 
 function formatPrivateKey(privateKey: string): string {
   const privateKeyLines = privateKey
@@ -24,25 +50,52 @@ function formatPrivateKey(privateKey: string): string {
 }
 
 export function configureConnection(
-  auth: PiecePropValueSchema<typeof snowflakeAuth>,
+  auth: SnowflakeAuthValue,
   application = DEFAULT_APPLICATION_NAME,
   timeout = DEFAULT_QUERY_TIMEOUT
 ) {
+  if (auth.type === AppConnectionType.OAUTH2) {
+    return snowflake.createConnection({
+      account: auth.props.account,
+      authenticator: 'OAUTH',
+      token: auth.access_token,
+      database: auth.props.database,
+      warehouse: auth.props.warehouse,
+      role: auth.props.role,
+      application,
+      timeout,
+    });
+  }
+
+  const {
+    account,
+    username,
+    password,
+    privateKey,
+    privateKeyPassphrase,
+    database,
+    role,
+    warehouse,
+  } = auth.props;
+
   const connectionOptions: snowflake.ConnectionOptions = {
-    application: application,
-    timeout: timeout,
-    username: auth.username,
-    role: auth.role,
-    database: auth.database,
-    warehouse: auth.warehouse,
-    account: auth.account,
+    account,
+    username,
+    role,
+    database,
+    warehouse,
+    application,
+    timeout,
   };
 
-  if (auth.privateKey) {
-    connectionOptions.privateKey = formatPrivateKey(auth.privateKey);
+  if (privateKey) {
+    connectionOptions.privateKey = formatPrivateKey(privateKey);
     connectionOptions.authenticator = 'SNOWFLAKE_JWT';
+    if (privateKeyPassphrase) {
+      connectionOptions.privateKeyPass = privateKeyPassphrase;
+    }
   } else {
-    connectionOptions.password = auth.password;
+    connectionOptions.password = password;
   }
 
   return snowflake.createConnection(connectionOptions);
@@ -107,25 +160,18 @@ export const snowflakeCommonProps = {
         };
       }
 
-      const authValue = auth;
-
-      const connection = configureConnection(authValue.props);
-
+      const connection = configureConnection(auth as SnowflakeAuthValue);
       await connect(connection);
-
       const response = await execute(connection, 'SHOW DATABASES', []);
-
       await destroy(connection);
 
       return {
         disabled: false,
         options: response
-          ? response.map((db: any) => {
-              return {
-                label: db.name,
-                value: db.name,
-              };
-            })
+          ? response.map((db: Record<string, unknown>) => ({
+              label: db['name'] as string,
+              value: db['name'] as string,
+            }))
           : [],
       };
     },
@@ -151,29 +197,22 @@ export const snowflakeCommonProps = {
         };
       }
 
-      const authValue = auth;
-
-      const connection = configureConnection(authValue.props);
-
+      const connection = configureConnection(auth as SnowflakeAuthValue);
       await connect(connection);
-
       const response = await execute(
         connection,
         `SHOW SCHEMAS IN DATABASE ${database}`,
         []
       );
-
       await destroy(connection);
 
       return {
         disabled: false,
         options: response
-          ? response.map((schema: any) => {
-              return {
-                label: schema.name,
-                value: schema.name,
-              };
-            })
+          ? response.map((schema: Record<string, unknown>) => ({
+              label: schema['name'] as string,
+              value: schema['name'] as string,
+            }))
           : [],
       };
     },
@@ -206,29 +245,22 @@ export const snowflakeCommonProps = {
         };
       }
 
-      const authValue = auth;
-
-      const connection = configureConnection(authValue.props);
-
+      const connection = configureConnection(auth as SnowflakeAuthValue);
       await connect(connection);
-
       const response = await execute(
         connection,
         `SHOW TABLES IN SCHEMA ${database}.${schema}`,
         []
       );
-
       await destroy(connection);
 
       return {
         disabled: false,
         options: response
-          ? response.map((table: any) => {
-              return {
-                label: table.name,
-                value: `${database}.${schema}.${table.name}`,
-              };
-            })
+          ? response.map((table: Record<string, unknown>) => ({
+              label: table['name'] as string,
+              value: `${database}.${schema}.${table['name']}`,
+            }))
           : [],
       };
     },
@@ -242,9 +274,37 @@ export const snowflakeCommonProps = {
       if (!auth) return {};
       if (!table) return {};
 
-      const authValue = auth;
+      const connection = configureConnection(auth as SnowflakeAuthValue);
+      await connect(connection);
+      const response = await execute(connection, `DESCRIBE TABLE ${table}`, []);
+      await destroy(connection);
 
-      const connection = configureConnection(authValue.props);
+      const fields: DynamicPropsValue = {};
+
+      if (response) {
+        for (const column of response) {
+          fields[column.name] = Property.ShortText({
+            displayName: column.name,
+            required: false,
+          });
+        }
+      }
+
+      return fields;
+    },
+  }),
+  table_update_values: Property.DynamicProperties({
+    auth: snowflakeAuth,
+    displayName: 'Columns to Update',
+    description:
+      'Only filled columns will be updated. Leave a column empty to keep its existing value.',
+    required: true,
+    refreshers: ['database', 'schema', 'table'],
+    props: async ({ auth, table }) => {
+      if (!auth) return {};
+      if (!table) return {};
+
+      const connection = configureConnection(auth as SnowflakeAuthValue);
       await connect(connection);
       const response = await execute(connection, `DESCRIBE TABLE ${table}`, []);
       await destroy(connection);
@@ -264,3 +324,22 @@ export const snowflakeCommonProps = {
     },
   }),
 };
+
+export async function getTableColumnOptions(
+  auth: SnowflakeAuthValue,
+  table: string
+): Promise<DropdownState<string>> {
+  const connection = configureConnection(auth);
+  await connect(connection);
+  const response = await execute(connection, `DESCRIBE TABLE ${table}`, []);
+  await destroy(connection);
+  return {
+    disabled: false,
+    options: response
+      ? (response as { name: string }[]).map((col) => ({
+          label: col.name,
+          value: col.name,
+        }))
+      : [],
+  };
+}

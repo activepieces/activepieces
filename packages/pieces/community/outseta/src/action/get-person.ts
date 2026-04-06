@@ -1,17 +1,15 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction } from '@activepieces/pieces-framework';
 import { outsetaAuth } from '../auth';
 import { OutsetaClient } from '../common/client';
+import { personUidDropdown } from '../common/dropdowns';
 
 export const getPersonAction = createAction({
   name: 'get_person',
   auth: outsetaAuth,
-  displayName: 'Get person',
-  description: 'Retrieve an Outseta person by its UID',
+  displayName: 'Get Person',
+  description: 'Retrieve an Outseta person by selecting them from the dropdown.',
   props: {
-    personUid: Property.ShortText({
-      displayName: 'Person UID',
-      required: true,
-    }),
+    personUid: personUidDropdown(),
   },
   async run(context) {
     const client = new OutsetaClient({
@@ -25,9 +23,25 @@ export const getPersonAction = createAction({
     );
 
     return {
-      personUid: context.propsValue.personUid,
-      person,
-      rawResponse: person,
+      uid: person.Uid ?? null,
+      email: person.Email ?? null,
+      first_name: person.FirstName ?? null,
+      last_name: person.LastName ?? null,
+      full_name: person.FullName ?? null,
+      phone_mobile: person.PhoneMobile ?? null,
+      phone_work: person.PhoneWork ?? null,
+      title: person.Title ?? null,
+      timezone: person.Timezone ?? null,
+      language: person.Language ?? null,
+      has_logged_in: person.HasLoggedIn ?? null,
+      created: person.Created ?? null,
+      updated: person.Updated ?? null,
+      mailing_address_line1: person.MailingAddress?.AddressLine1 ?? null,
+      mailing_address_line2: person.MailingAddress?.AddressLine2 ?? null,
+      mailing_address_city: person.MailingAddress?.City ?? null,
+      mailing_address_state: person.MailingAddress?.State ?? null,
+      mailing_address_postal_code: person.MailingAddress?.PostalCode ?? null,
+      mailing_address_country: person.MailingAddress?.Country ?? null,
     };
   },
 });

@@ -1,5 +1,5 @@
-import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
+import { CornerDownLeft, X } from 'lucide-react';
 import React, {
   createContext,
   useCallback,
@@ -20,13 +20,8 @@ import {
 } from '@/components/ui/command';
 import { projectCollectionUtils } from '@/features/projects';
 
-import {
-  addToSearchHistory,
-  clearSearchHistory,
-  getSearchHistory,
-  type SearchHistoryItem,
-} from './search-history';
-import { HistoryResultRow, SearchResultRow } from './search-result-item';
+import { recordAccess, type AccessedItemType } from './access-history';
+import { SearchResultRow } from './search-result-item';
 import {
   type SearchResultItem,
   useGlobalSearchResults,
@@ -69,19 +64,11 @@ function GlobalSearchDialogContent({
   onOpenChange: (v: boolean) => void;
 }) {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
-  const [history, setHistory] = useState<SearchHistoryItem[]>([]);
   const [commandValue, setCommandValue] = useState('');
   const [debouncedSearch] = useDebounce(search, 250);
 
   const { groups, isLoading } = useGlobalSearchResults(debouncedSearch, open);
-
-  useEffect(() => {
-    if (open) {
-      setHistory(getSearchHistory());
-    }
-  }, [open, queryClient]);
 
   const handleOpenChange = useCallback(
     (value: boolean) => {
@@ -105,26 +92,20 @@ function GlobalSearchDialogContent({
 
   const handleSelectResult = useCallback(
     (item: SearchResultItem) => {
-      addToSearchHistory({
-        id: item.id,
-        type: item.type,
-        label: item.label,
-        href: item.href,
-        status: item.status,
-        folderName: item.folderName,
-        projectName: item.projectName,
-        iconBgColor: item.iconBgColor,
-        iconTextColor: item.iconTextColor,
-        iconLetter: item.iconLetter,
-      });
-      navigateToItem(item.type, item.href);
-    },
-    [navigateToItem],
-  );
-
-  const handleSelectHistory = useCallback(
-    (item: SearchHistoryItem) => {
-      addToSearchHistory({ ...item });
+      if (item.type !== 'folder') {
+        recordAccess({
+          id: item.id,
+          type: item.type as AccessedItemType,
+          label: item.label,
+          href: item.href,
+          status: item.status,
+          folderName: item.folderName,
+          projectName: item.projectName,
+          iconBgColor: item.iconBgColor,
+          iconTextColor: item.iconTextColor,
+          iconLetter: item.iconLetter,
+        });
+      }
       navigateToItem(item.type, item.href);
     },
     [navigateToItem],
@@ -133,45 +114,8 @@ function GlobalSearchDialogContent({
   const hasQuery = debouncedSearch.length > 0;
   const noResults = hasQuery && !isLoading && groups.length === 0;
 
-  const TYPE_CATEGORIES = [
-    { type: 'flow', heading: t('Flows') },
-    { type: 'table', heading: t('Tables') },
-    { type: 'folder', heading: t('Folders') },
-    { type: 'project', heading: t('Projects') },
-    { type: 'page', heading: t('Pages') },
-  ] as const;
-
-  const mergedGroups = !hasQuery
-    ? TYPE_CATEGORIES.map(({ type, heading }) => {
-        const historyItems = history.filter((h) => h.type === type).slice(0, 5);
-        const suggestionGroup = groups.find((g) => g.type === type);
-        const useHistory = historyItems.length > 0;
-        return {
-          type,
-          heading,
-          historyItems,
-          useHistory,
-          isLoading: !useHistory && (suggestionGroup?.isLoading ?? false),
-          suggestionItems: suggestionGroup?.items ?? [],
-        };
-      }).filter(
-        (g) => g.useHistory || g.isLoading || g.suggestionItems.length > 0,
-      )
-    : [];
-
-  const hasHistory = history.length > 0;
-
-  const firstItemId = hasQuery
-    ? groups.find((g) => !g.isLoading && g.items.length > 0)?.items[0]?.id ?? ''
-    : (() => {
-        for (const g of mergedGroups) {
-          if (g.useHistory && g.historyItems.length > 0)
-            return g.historyItems[0].id;
-          if (!g.useHistory && !g.isLoading && g.suggestionItems.length > 0)
-            return g.suggestionItems[0].id;
-        }
-        return '';
-      })();
+  const firstItemId =
+    groups.find((g) => !g.isLoading && g.items.length > 0)?.items[0]?.id ?? '';
 
   useEffect(() => {
     setCommandValue(firstItemId);
@@ -185,49 +129,27 @@ function GlobalSearchDialogContent({
       shouldFilter={false}
       commandValue={commandValue}
       onCommandValueChange={setCommandValue}
-      className="sm:max-w-[620px]"
+      className="sm:max-w-[620px] h-[70vh] flex flex-col"
     >
-      <CommandInput
-        placeholder={t('Search pages, flows, tables...')}
-        value={search}
-        onValueChange={setSearch}
-      />
+      <div className="relative">
+        <CommandInput
+          placeholder={t('Search pages, flows, tables...')}
+          value={search}
+          onValueChange={setSearch}
+          containerClassName="border-b-0"
+        />
+        {search && (
+          <button
+            type="button"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+            onClick={() => setSearch('')}
+          >
+            <X className="size-3.5" />
+          </button>
+        )}
+      </div>
 
-      <CommandList className="max-h-[620px] overflow-y-auto! scrollbar-hover">
-        {!hasQuery &&
-          mergedGroups.map((group, idx) => (
-            <React.Fragment key={group.type}>
-              {idx > 0 && <CommandSeparator />}
-              <CommandGroup heading={group.heading}>
-                {group.isLoading ? (
-                  <SkeletonRows />
-                ) : group.useHistory ? (
-                  group.historyItems.map((item) => (
-                    <CommandItem
-                      key={item.id}
-                      value={item.id}
-                      onSelect={() => handleSelectHistory(item)}
-                      className="flex items-center"
-                    >
-                      <HistoryResultRow item={item} />
-                    </CommandItem>
-                  ))
-                ) : (
-                  group.suggestionItems.map((item) => (
-                    <CommandItem
-                      key={item.id}
-                      value={item.id}
-                      onSelect={() => handleSelectResult(item)}
-                      className="flex items-center"
-                    >
-                      <SearchResultRow item={item} />
-                    </CommandItem>
-                  ))
-                )}
-              </CommandGroup>
-            </React.Fragment>
-          ))}
-
+      <CommandList className="flex-1 min-h-0 max-h-none overflow-y-auto! scrollbar-hover">
         {noResults && (
           <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
             <p className="text-sm text-muted-foreground">
@@ -243,28 +165,31 @@ function GlobalSearchDialogContent({
           </div>
         )}
 
-        {hasQuery &&
-          groups.map((group, idx) => (
-            <React.Fragment key={group.type}>
-              {idx > 0 && <CommandSeparator />}
-              <CommandGroup heading={group.heading}>
-                {group.isLoading ? (
-                  <SkeletonRows />
-                ) : (
-                  group.items.map((item) => (
-                    <CommandItem
-                      key={item.id}
-                      value={item.id}
-                      onSelect={() => handleSelectResult(item)}
-                      className="flex items-center"
-                    >
-                      <SearchResultRow item={item} />
-                    </CommandItem>
-                  ))
-                )}
-              </CommandGroup>
-            </React.Fragment>
-          ))}
+        {groups.map((group, idx) => (
+          <React.Fragment key={group.type}>
+            {idx > 0 && hasQuery && <CommandSeparator />}
+            <CommandGroup heading={group.heading || undefined}>
+              {group.isLoading ? (
+                <SkeletonRows />
+              ) : (
+                group.items.map((item) => (
+                  <CommandItem
+                    key={item.id}
+                    value={item.id}
+                    onSelect={() => handleSelectResult(item)}
+                    className="group flex items-center data-[selected=true]:bg-foreground/10"
+                  >
+                    <SearchResultRow
+                      item={item}
+                      query={hasQuery ? debouncedSearch : undefined}
+                    />
+                    <CornerDownLeft className="ml-auto size-2 shrink-0 text-muted-foreground/70 opacity-0 transition-opacity group-data-[selected=true]:opacity-100" />
+                  </CommandItem>
+                ))
+              )}
+            </CommandGroup>
+          </React.Fragment>
+        ))}
       </CommandList>
 
       <div className="flex items-center gap-4 border-t bg-muted/50 px-4 py-2.5 text-[11px] text-muted-foreground">
@@ -289,17 +214,6 @@ function GlobalSearchDialogContent({
           </kbd>
           {t('to close')}
         </span>
-        {!hasQuery && hasHistory && (
-          <button
-            className="ml-auto text-[11px] text-muted-foreground underline hover:no-underline"
-            onClick={() => {
-              clearSearchHistory();
-              setHistory([]);
-            }}
-          >
-            {t('Clear history')}
-          </button>
-        )}
       </div>
     </CommandDialog>
   );

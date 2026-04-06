@@ -1,8 +1,9 @@
 import { apDayjsDuration, memoryLock } from '@activepieces/server-utils'
 import { ApId, EventDestinationJobData, ExecuteFlowJobData, getDefaultJobPriority, isNil, JOB_PRIORITY, JobData, PollingJobData, RenewWebhookJobData, ScheduleOptions, UserInteractionJobData, WebhookJobData, WorkerJobType } from '@activepieces/shared'
-import { Job, Queue, QueueEvents } from 'bullmq'
+import { Job, Queue } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
 import { FastifyBaseLogger } from 'fastify'
+import { platformCanaryService } from '../../core/canary/platform-canary.service'
 import { redisConnections } from '../../database/redis-connections'
 import { dedicatedWorkers } from '../../ee/platform/platform-plan/platform-dedicated-workers'
 import { system } from '../../helper/system/system'
@@ -15,22 +16,10 @@ const REDIS_FAILED_JOB_RETRY_COUNT = system.getNumberOrThrow(AppSystemProp.REDIS
 const CHILD_RUNS_KEY = (parentRunId: ApId) => `child_runs:${parentRunId}`
 
 const dedicatedWorkersQueues = new Map<string, Queue>()
-const dedicatedWorkersQueueEvents = new Map<string, QueueEvents>()
-let queueCreatedCallback: ((queueName: string) => Promise<void>) | null = null
 
 export const jobQueue = (log: FastifyBaseLogger) => ({
     async init(): Promise<void> {
-        const platformIdsWithDedicatedWorkers = await dedicatedWorkers(log).getPlatformIds()
-
-        await Promise.all([
-            ...platformIdsWithDedicatedWorkers.map(async (platformId) => {
-                const queueName = await getQueueName(platformId, log)
-                const queue = await ensureQueueExists({ log, queueName })
-                dedicatedWorkersQueues.set(queueName, queue)
-            }),
-            ensureQueueExists({ log, queueName: QueueName.WORKER_JOBS }),
-        ])
-
+        await ensureQueueExists({ log, queueName: QueueName.WORKER_JOBS })
         log.info('[jobQueue#init] Dynamic queue system initialized')
     },
     async promoteChildRuns(jobId: string): Promise<void> {
@@ -137,31 +126,12 @@ export const jobQueue = (log: FastifyBaseLogger) => ({
         }
         return queue
     },
-    async getQueueEvents(platformId: string | null): Promise<QueueEvents> {
-        const queueName = await getQueueName(platformId, log)
-        const existing = dedicatedWorkersQueueEvents.get(queueName)
-        if (!isNil(existing)) {
-            return existing
-        }
-        const queueEvents = new QueueEvents(queueName, {
-            connection: await redisConnections.create(),
-        })
-        await queueEvents.waitUntilReady()
-        dedicatedWorkersQueueEvents.set(queueName, queueEvents)
-        return queueEvents
-    },
-    onQueueCreated(callback: (queueName: string) => Promise<void>): void {
-        queueCreatedCallback = callback
-    },
-
     async close(): Promise<void> {
         log.info('[jobQueue#close] Closing job queue')
         const allQueues = [...dedicatedWorkersQueues.values()].filter(queue => !isNil(queue))
-        const allQueueEvents = [...dedicatedWorkersQueueEvents.values()].filter(qe => !isNil(qe))
-        await Promise.allSettled([
-            ...allQueues.map(queue => queue.close()),
-            ...allQueueEvents.map(qe => qe.close()),
-        ])
+        await Promise.allSettled(
+            allQueues.map(queue => queue.close()),
+        )
     },
 })
 
@@ -183,7 +153,7 @@ async function ensureQueueExists({ log, queueName }: { log: FastifyBaseLogger, q
                 telemetry: isOtpEnabled ? new BullMQOtel(queueName) : undefined,
                 connection: await redisConnections.create(),
                 defaultJobOptions: {
-                    attempts: 5,
+                    attempts: 2,
                     backoff: {
                         type: 'exponential',
                         delay: EIGHT_MINUTES_IN_MILLISECONDS,
@@ -204,11 +174,6 @@ async function ensureQueueExists({ log, queueName }: { log: FastifyBaseLogger, q
             log.info({
                 queueName,
             }, '[jobQueue#ensureQueueExists] Queue created')
-
-            if (queueCreatedCallback) {
-                await queueCreatedCallback(queueName)
-            }
-
             return queue
         },
     })
@@ -221,15 +186,22 @@ const USER_INTERACTION_JOB_TYPES = new Set([
     WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
 ])
 
-function isUserInteractionJob(jobType: WorkerJobType): boolean {
+export function isUserInteractionJob(jobType: WorkerJobType): boolean {
     return USER_INTERACTION_JOB_TYPES.has(jobType)
+}
+
+export function isUserInteractionJobData(jobData: JobData): jobData is UserInteractionJobData {
+    return USER_INTERACTION_JOB_TYPES.has(jobData.jobType)
 }
 
 async function getQueueName(platformId: string | null, log: FastifyBaseLogger): Promise<string> {
     if (!platformId) {
         return QueueName.WORKER_JOBS
     }
-
+    const canaryPlatformIds = await platformCanaryService(log).getCanaryPlatformIds()
+    if (canaryPlatformIds.includes(platformId)) {
+        return QueueName.CANARY_JOBS
+    }
     const isDedicatedWorkersEnabled = await dedicatedWorkers(log).isEnabledForPlatform(platformId)
     return isDedicatedWorkersEnabled ? getPlatformQueueName(platformId) : QueueName.WORKER_JOBS
 }

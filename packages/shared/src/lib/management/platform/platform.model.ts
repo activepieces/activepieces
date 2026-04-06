@@ -67,6 +67,7 @@ export const PlatformPlan = z.object({
     showPoweredBy: z.boolean(),
     auditLogEnabled: z.boolean(),
     embeddingEnabled: z.boolean(),
+    agentsEnabled: z.boolean(),
     managePiecesEnabled: z.boolean(),
     manageTemplatesEnabled: z.boolean(),
     customAppearanceEnabled: z.boolean(),
@@ -94,6 +95,7 @@ export const PlatformPlan = z.object({
     dedicatedWorkers: Nullable(z.object({
         trustedEnvironment: z.boolean(),
     })),
+    canary: z.boolean(),
 })
 export type PlatformPlan = z.infer<typeof PlatformPlan>
 

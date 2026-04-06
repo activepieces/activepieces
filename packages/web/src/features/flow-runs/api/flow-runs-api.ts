@@ -1,5 +1,6 @@
 import {
   FlowRun,
+  FlowRunWithRetryError,
   ListFlowRunsRequestQuery,
   RetryFlowRequestBody,
   TestFlowRunRequestBody,
@@ -26,8 +27,10 @@ export const flowRunsApi = {
   getPopulated(id: string): Promise<FlowRun> {
     return api.get<FlowRun>(`/v1/flow-runs/${id}`);
   },
-  bulkRetry(request: BulkActionOnRunsRequestBody): Promise<FlowRun[]> {
-    return api.post<FlowRun[]>('/v1/flow-runs/retry', request);
+  bulkRetry(
+    request: BulkActionOnRunsRequestBody,
+  ): Promise<FlowRunWithRetryError[]> {
+    return api.post<FlowRunWithRetryError[]>('/v1/flow-runs/retry', request);
   },
   bulkCancel(request: BulkCancelFlowRequestBody): Promise<FlowRun[]> {
     return api.post<FlowRun[]>('/v1/flow-runs/cancel', request);

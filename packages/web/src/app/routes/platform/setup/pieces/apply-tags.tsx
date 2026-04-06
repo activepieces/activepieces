@@ -171,7 +171,7 @@ const ApplyTags = ({ selectedPieces, onApplyTags }: ApplyTagsProps) => {
             >
               <CommandItem
                 className="justify-center text-center"
-                onSelect={(e) => {
+                onSelect={() => {
                   setCreateDialogOpen(true);
                 }}
               >
@@ -182,7 +182,7 @@ const ApplyTags = ({ selectedPieces, onApplyTags }: ApplyTagsProps) => {
             <CommandGroup>
               <CommandItem
                 className="justify-center text-center text-primary"
-                onSelect={(e) => {
+                onSelect={() => {
                   toast(t('Applying Tags...'), {});
                   applyTags({
                     piecesName: selectedPieces.map((piece) => piece.name),

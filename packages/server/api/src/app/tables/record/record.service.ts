@@ -37,9 +37,10 @@ export const recordService = {
     async create({
         request,
         projectId,
+        fields,
     }: CreateParams): Promise<PopulatedRecord[]> {
         await this.validateCount({ projectId, tableId: request.tableId }, request.records.length)
-        const existingFields = await fieldService.getAll({
+        const existingFields = fields ?? await fieldService.getAll({
             tableId: request.tableId,
             projectId,
         })
@@ -77,7 +78,7 @@ export const recordService = {
                 created: 'ASC',
             },
         })
-        return formatRecordsAndFetchField({ records: insertedRecords, tableId: request.tableId, projectId })
+        return formatRecordsAndFetchField({ records: insertedRecords, tableId: request.tableId, projectId, fields: existingFields })
     },
 
     async list({
@@ -85,8 +86,9 @@ export const recordService = {
         projectId,
         filters,
         limit,
+        fields: prefetchedFields,
     }: ListParams): Promise<SeekPage<PopulatedRecord>> {
-        const fields = await fieldService.getAll({
+        const fields = prefetchedFields ?? await fieldService.getAll({
             tableId,
             projectId,
         })
@@ -123,7 +125,7 @@ export const recordService = {
             })
         })
 
-        const populatedRecords = await formatRecordsAndFetchField({ records: filteredOutRecords, tableId, projectId })
+        const populatedRecords = await formatRecordsAndFetchField({ records: filteredOutRecords, tableId, projectId, fields })
 
         return {
             data: populatedRecords.slice(0, limit),
@@ -194,7 +196,7 @@ export const recordService = {
                         recordId: id,
                         fieldId: cellData.fieldId,
                         projectId,
-                        value: cellData.value,
+                        value: cellData.value ?? '',
                         id: apId(),
                     }
                 })
@@ -353,6 +355,7 @@ type CreateParams = {
     request: CreateRecordsRequest
     projectId: string
     logger: FastifyBaseLogger
+    fields?: Field[]
 }
 
 type ListParams = {
@@ -361,6 +364,7 @@ type ListParams = {
     cursorRequest: Cursor | null
     limit: number
     filters: Filter[] | null
+    fields?: Field[]
 }
 
 type GetByIdParams = {
@@ -413,7 +417,7 @@ type CellInsertion = {
 }
 
 function prepareRecordInsertions(
-    records: Array<Array<{ fieldId: string, value: string }>>,
+    records: Array<Array<{ fieldId: string, value: string | null }>>,
     tableId: string,
     projectId: string,
     baseDate: Date,
@@ -430,7 +434,7 @@ function prepareRecordInsertions(
 }
 
 function prepareCellInsertions(
-    records: Array<Array<{ fieldId: string, value: string }>>,
+    records: Array<Array<{ fieldId: string, value: string | null }>>,
     recordInsertions: RecordInsertion[],
     projectId: string,
 ): CellInsertion[] {
@@ -440,15 +444,15 @@ function prepareCellInsertions(
                 recordId: recordInsertions[index].id,
                 fieldId: cellData.fieldId,
                 projectId,
-                value: cellData.value,
+                value: cellData.value ?? '',
                 id: apId(),
             }
         }),
     )
 }
 
-async function formatRecordsAndFetchField({ records, tableId, projectId }: { records: RecordSchema[], tableId: string, projectId: string }): Promise<PopulatedRecord[]> {
-    const fields = await fieldService.getAll({
+async function formatRecordsAndFetchField({ records, tableId, projectId, fields: prefetchedFields }: { records: RecordSchema[], tableId: string, projectId: string, fields?: Field[] }): Promise<PopulatedRecord[]> {
+    const fields = prefetchedFields ?? await fieldService.getAll({
         tableId,
         projectId,
     })

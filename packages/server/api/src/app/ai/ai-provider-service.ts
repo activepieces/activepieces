@@ -18,6 +18,7 @@ import { openRouterApi } from '../ee/platform/platform-plan/openrouter/openroute
 import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
 import { flagService } from '../flags/flag.service'
 import { encryptUtils } from '../helper/encryption'
+import { rejectedPromiseHandler } from '../helper/promise-handler'
 import { SystemJobName } from '../helper/system-jobs/common'
 import { systemJobsSchedule } from '../helper/system-jobs/system-job'
 import { AIProviderEntity, AIProviderSchema } from './ai-provider-entity'
@@ -174,19 +175,9 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
                 auth = activePiecesAuth
             }
 
-            await systemJobsSchedule(log).upsertJob({
-                job: {
-                    name: SystemJobName.AI_CREDIT_UPDATE_CHECK,
-                    data: { apiKeyHash: (auth as ActivePiecesProviderAuthConfig).apiKeyHash, platformId },
-                },
-                schedule: {
-                    type: 'one-time',
-                    date: dayjs(),
-                },
-            })
         }
-        
-        
+
+
         return { provider: aiProvider.provider, auth, config: aiProvider.config, platformId }
     },
     async getActivepiecesProviderIfEnriched(platformId: PlatformId): Promise<ActivePiecesProviderAuthConfig | null> {
@@ -223,7 +214,19 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         }
 
         const { auth } = await this.getConfigOrThrow({ platformId, provider: AIProviderName.ACTIVEPIECES })
-        return auth as ActivePiecesProviderAuthConfig
+        const activePiecesAuth = auth as ActivePiecesProviderAuthConfig
+        rejectedPromiseHandler(systemJobsSchedule(log).upsertJob({
+            job: {
+                name: SystemJobName.AI_CREDIT_UPDATE_CHECK,
+                data: { apiKeyHash: activePiecesAuth.apiKeyHash, platformId },
+                jobId: `ai-credit-update-check-${platformId}`,
+            },
+            schedule: {
+                type: 'one-time',
+                date: dayjs(),
+            },
+        }), log)
+        return activePiecesAuth
     },
 
     async getAllActivePiecesProvidersConfigs(platformIds?: string[]): Promise<{ [platformId: string]: ActivePiecesProviderAuthConfig }> {

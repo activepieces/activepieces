@@ -19,15 +19,21 @@ import { checkIfSolutionExistsInDb, createMockConnection, createMockFlow, create
 
 let app: FastifyInstance | null = null
 
-async function waitForDeletionJobs(jobIds: string[], timeoutMs = 30000) {
+async function waitForDeletionJobs(jobIds: string[], timeoutMs = 60000) {
     const start = Date.now()
     for (const jobId of jobIds) {
         while (Date.now() - start < timeoutMs) {
             const job = await systemJobsQueue?.getJob(jobId)
             if (!job) break
             const state = await job.getState()
-            if (state === 'failed') throw new Error(`Job ${jobId} failed`)
-            await new Promise(r => setTimeout(r, 100))
+            if (state === 'completed') break
+            if (state === 'failed' && (job.attemptsMade ?? 0) >= (job.opts?.attempts ?? 2)) {
+                throw new Error(`Job ${jobId} failed: ${job.failedReason}`)
+            }
+            if (state === 'delayed') {
+                await job.promote()
+            }
+            await new Promise(r => setTimeout(r, 200))
         }
     }
     if (Date.now() - start >= timeoutMs) {

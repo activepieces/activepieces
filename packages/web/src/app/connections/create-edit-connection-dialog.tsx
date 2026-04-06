@@ -7,6 +7,7 @@ import {
 } from '@activepieces/pieces-framework';
 import {
   ApFlagId,
+  AppConnectionScope,
   AppConnectionType,
   AppConnectionWithoutSensitiveData,
   BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE,
@@ -45,7 +46,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { SkeletonList } from '@/components/ui/skeleton';
 import {
-  AssignConnectionToProjectsControl,
+  ProjectSelector,
   appConnectionsMutations,
   oauthAppsQueries,
   oauth2Utils,
@@ -71,7 +72,14 @@ function CreateOrEditConnectionSection({
   onTryAnotherMethodButtonClicked,
   showTryAnotherMethodButton,
 }: CreateOrEditConnectionSectionProps) {
-  const formSchema = formUtils.buildConnectionSchema(selectedAuth.authProperty);
+  const formSchema = formUtils.buildConnectionSchema(
+    selectedAuth.authProperty,
+    {
+      isGlobalConnection,
+      showConnectionNameField:
+        isNil(externalIdComingFromSdk) || externalIdComingFromSdk === '',
+    },
+  );
   const { externalId, displayName } = newConnectionUtils.getConnectionName(
     piece,
     reconnectConnection,
@@ -92,6 +100,7 @@ function CreateOrEditConnectionSection({
           grantType: selectedAuth.grantType,
           redirectUrl: redirectUrl ?? '',
         }),
+        ...(isGlobalConnection ? { scope: AppConnectionScope.PLATFORM } : {}),
         projectIds: reconnectConnection?.projectIds ?? [],
         preSelectForNewProjects: false,
         pieceVersion: piece.version,
@@ -156,7 +165,7 @@ function CreateOrEditConnectionSection({
                 control={form.control}
                 render={({ field }) => (
                   <FormItem className="flex flex-col gap-2">
-                    <FormLabel htmlFor="displayName">
+                    <FormLabel htmlFor="displayName" showRequiredIndicator>
                       {t('Connection Name')}
                     </FormLabel>
                     <FormControl>
@@ -175,7 +184,7 @@ function CreateOrEditConnectionSection({
             )}
             {isGlobalConnection && isNil(reconnectConnection) && (
               <div className="my-4 flex flex-col gap-4">
-                <AssignConnectionToProjectsControl
+                <ProjectSelector
                   control={form.control}
                   name="request.projectIds"
                 />
@@ -207,6 +216,7 @@ function CreateOrEditConnectionSection({
                         <FormItem>
                           <FormLabel>{t('External ID')}</FormLabel>
                           <Input {...field} />
+                          <FormMessage />
                         </FormItem>
                       )}
                     ></FormField>
@@ -215,11 +225,7 @@ function CreateOrEditConnectionSection({
               </div>
             )}
             <div className="mt-3.5">
-              <ConnectionSettings
-                selectedAuth={selectedAuth}
-                piece={piece}
-                isGlobalConnection={isGlobalConnection}
-              />
+              <ConnectionSettings selectedAuth={selectedAuth} piece={piece} />
             </div>
           </ScrollArea>
           {errorMessage && (
@@ -249,7 +255,6 @@ function CreateOrEditConnectionSection({
                 onClick={(e) => form.handleSubmit(() => upsertConnection())(e)}
                 loading={isPending}
                 type="submit"
-                disabled={!form.formState.isValid}
               >
                 {t('Save')}
               </Button>
@@ -260,31 +265,22 @@ function CreateOrEditConnectionSection({
     </>
   );
 }
-function ConnectionSettings({
-  selectedAuth,
-  piece,
-  isGlobalConnection,
-}: ConnectionSettingsProps) {
+function ConnectionSettings({ selectedAuth, piece }: ConnectionSettingsProps) {
   switch (selectedAuth.authProperty.type) {
     case PropertyType.SECRET_TEXT:
       return (
         <SecretTextConnectionSettings
           authProperty={selectedAuth.authProperty}
-          isGlobalConnection={isGlobalConnection}
         />
       );
     case PropertyType.BASIC_AUTH:
       return (
-        <BasicAuthConnectionSettings
-          authProperty={selectedAuth.authProperty}
-          isGlobalConnection={isGlobalConnection}
-        />
+        <BasicAuthConnectionSettings authProperty={selectedAuth.authProperty} />
       );
     case PropertyType.CUSTOM_AUTH:
       return (
         <CustomAuthConnectionSettings
           authProperty={selectedAuth.authProperty}
-          isGlobalConnection={isGlobalConnection}
         />
       );
     case PropertyType.OAUTH2:
@@ -511,12 +507,12 @@ type CreateOrEditConnectionSectionProps =
 type ConnectionSettingsProps = {
   piece: PieceMetadataModelSummary | PieceMetadataModel;
   selectedAuth: AuthListItem;
-  isGlobalConnection: boolean;
 };
 
 type ConnectionFormValues = {
   request: UpsertAppConnectionRequestBody & {
     projectIds: string[];
     preSelectForNewProjects: boolean;
+    scope?: AppConnectionScope;
   };
 };

@@ -12,22 +12,47 @@ export const findOrAddPersonAction = createAction({
     email: Property.ShortText({
       displayName: 'Email',
       required: true,
-      description: 'Email to search for (or to use when creating)',
+      description: 'Email to search for. If no match is found, a new person is created with this email.',
     }),
     firstName: Property.ShortText({
       displayName: 'First Name',
       required: false,
-      description: 'Used when creating a new person',
     }),
     lastName: Property.ShortText({
       displayName: 'Last Name',
       required: false,
-      description: 'Used when creating a new person',
     }),
     phoneMobile: Property.ShortText({
-      displayName: 'Mobile Phone',
+      displayName: 'Mobile #',
       required: false,
-      description: 'Used when creating a new person',
+    }),
+    phoneWork: Property.ShortText({
+      displayName: 'Work #',
+      required: false,
+    }),
+    addressLine1: Property.ShortText({
+      displayName: 'Address Line 1',
+      required: false,
+    }),
+    addressLine2: Property.ShortText({
+      displayName: 'Address Line 2',
+      required: false,
+    }),
+    city: Property.ShortText({
+      displayName: 'City',
+      required: false,
+    }),
+    state: Property.ShortText({
+      displayName: 'State/Region',
+      required: false,
+    }),
+    postalCode: Property.ShortText({
+      displayName: 'Postal Code',
+      required: false,
+    }),
+    country: Property.ShortText({
+      displayName: 'Country',
+      required: false,
     }),
   },
   async run(context) {
@@ -37,9 +62,8 @@ export const findOrAddPersonAction = createAction({
       apiSecret: context.auth.props.apiSecret,
     });
 
-    // Search for existing person by email
     const searchResult = await client.get<any>(
-      `/api/v1/crm/people?Email=${encodeURIComponent(context.propsValue.email)}`
+      `/api/v1/crm/people?Email=${encodeURIComponent(context.propsValue.email)}&$top=100`
     );
 
     const items = searchResult?.items ?? searchResult?.Items ?? [];
@@ -48,28 +72,30 @@ export const findOrAddPersonAction = createAction({
         item.Email?.toLowerCase() === context.propsValue.email.toLowerCase()
     );
     if (exactMatch) {
-      return {
-        created: false,
-        person: exactMatch,
-      };
+      return { created: false, person: exactMatch };
     }
 
-    // Not found, create a new person
     const body: Record<string, unknown> = {
       Email: context.propsValue.email,
     };
-    if (context.propsValue.firstName)
-      body['FirstName'] = context.propsValue.firstName;
-    if (context.propsValue.lastName)
-      body['LastName'] = context.propsValue.lastName;
-    if (context.propsValue.phoneMobile)
-      body['PhoneMobile'] = context.propsValue.phoneMobile;
+    if (context.propsValue.firstName) body['FirstName'] = context.propsValue.firstName;
+    if (context.propsValue.lastName) body['LastName'] = context.propsValue.lastName;
+    if (context.propsValue.phoneMobile) body['PhoneMobile'] = context.propsValue.phoneMobile;
+    if (context.propsValue.phoneWork) body['PhoneWork'] = context.propsValue.phoneWork;
 
-    const newPerson = await client.post<any>(`/api/v1/crm/people`, body);
+    const hasAddress = context.propsValue.addressLine1 || context.propsValue.city || context.propsValue.country;
+    if (hasAddress) {
+      const address: Record<string, unknown> = {};
+      if (context.propsValue.addressLine1) address['AddressLine1'] = context.propsValue.addressLine1;
+      if (context.propsValue.addressLine2) address['AddressLine2'] = context.propsValue.addressLine2;
+      if (context.propsValue.city) address['City'] = context.propsValue.city;
+      if (context.propsValue.state) address['State'] = context.propsValue.state;
+      if (context.propsValue.postalCode) address['PostalCode'] = context.propsValue.postalCode;
+      if (context.propsValue.country) address['Country'] = context.propsValue.country;
+      body['MailingAddress'] = address;
+    }
 
-    return {
-      created: true,
-      person: newPerson,
-    };
+    const newPerson = await client.post<any>('/api/v1/crm/people', body);
+    return { created: true, person: newPerson };
   },
 });

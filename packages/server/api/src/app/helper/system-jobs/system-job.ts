@@ -1,5 +1,5 @@
 import { apDayjs, apDayjsDuration } from '@activepieces/server-utils'
-import { assertNotNullOrUndefined, isNil, spreadIfDefined, tryCatch } from '@activepieces/shared'
+import { assertNotNullOrUndefined, isNil, tryCatch } from '@activepieces/shared'
 import { Job, JobsOptions, Queue, Worker } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
 import { redisConnections } from '../../database/redis-connections'
@@ -32,7 +32,15 @@ export const systemJobsSchedule = (log: FastifyBaseLogger): SystemJobSchedule =>
         }
 
         systemJobsQueue = new Queue(SYSTEM_JOB_QUEUE, queueConfig)
+        await systemJobsQueue.waitUntilReady()
 
+        const { error } = await tryCatch(async () => removeDeprecatedJobs())
+        if (!isNil(error)) {
+            log.error({ err: error }, '[systemJob#init] Error removing deprecated jobs')
+        }
+    },
+
+    async startWorker(): Promise<void> {
         systemJobWorker = new Worker(
             SYSTEM_JOB_QUEUE,
             async (job) => {
@@ -43,7 +51,7 @@ export const systemJobsSchedule = (log: FastifyBaseLogger): SystemJobSchedule =>
             },
             {
                 connection: await redisConnections.create(),
-                concurrency: 1,
+                concurrency: 5,
             },
         )
 
@@ -55,14 +63,7 @@ export const systemJobsSchedule = (log: FastifyBaseLogger): SystemJobSchedule =>
             }
         })
 
-        await Promise.all([
-            systemJobsQueue.waitUntilReady(),
-            systemJobWorker.waitUntilReady(),
-        ])
-        const { error } = await tryCatch(async () => removeDeprecatedJobs())
-        if (!isNil(error)) {
-            log.error({ err: error }, '[systemJob#init] Error removing deprecated jobs')
-        }
+        await systemJobWorker.waitUntilReady()
     },
 
     async upsertJob({ job, schedule, customConfig }): Promise<void> {
@@ -97,8 +98,8 @@ export const systemJobsSchedule = (log: FastifyBaseLogger): SystemJobSchedule =>
         }
 
         await Promise.all([
-            systemJobWorker.close(),
             systemJobsQueue.close(),
+            systemJobWorker?.close(),
         ])
     },
 })
@@ -110,24 +111,33 @@ async function removeDeprecatedJobs(): Promise<void> {
         'usage-report',
         'archive-old-issues',
         'platform-usage-report',
-        'hard-delete-project',
         'seven-days-in-trial',
         'issue-reminder',
+        'update-flow-status',
     ]
     const allSystemJobs = await systemJobsQueue.getJobSchedulers()
-    const deprecatedJobsFromQueue = allSystemJobs.filter(f => !isNil(f) && !isNil(f.id) && !isNil(f.name) && (deprecatedJobs.includes(f.name) || deprecatedJobs.some(d => f.name.startsWith(d))))
-    for (const job of deprecatedJobsFromQueue) {
-        await systemJobsQueue.removeJobScheduler(job.id ?? job.key)
-    }
+    const knownJobNames = Object.values(SystemJobName) as string[]
+    const deprecatedSchedulers = allSystemJobs.filter(f => !isNil(f) && !isNil(f.id) && !isNil(f.name) && (deprecatedJobs.includes(f.name) || deprecatedJobs.some(d => f.name.startsWith(d))))
+    const legacySchedulers = allSystemJobs.filter(f =>
+        knownJobNames.includes(f.name) && f.key.includes('::'),
+    )
+    await Promise.all(
+        [...deprecatedSchedulers, ...legacySchedulers].map(job =>
+            systemJobsQueue.removeJobScheduler(job.id ?? job.key),
+        ),
+    )
+
     const oneTimeJobs = await systemJobsQueue.getJobs()
-    const oneTimeJobsFromQueue = oneTimeJobs.filter(f => !isNil(f) && !isNil(f.id) && !isNil(f.name) && (deprecatedJobs.includes(f.name) || deprecatedJobs.some(d => f.name.startsWith(d))))
-    for (const job of oneTimeJobsFromQueue) {
-        assertNotNullOrUndefined(job.id, 'Job id is required')
-        await job.remove()
-    }
+    const deprecatedOneTimeJobs = oneTimeJobs.filter(f => !isNil(f) && !isNil(f.id) && !isNil(f.name) && (deprecatedJobs.includes(f.name) || deprecatedJobs.some(d => f.name.startsWith(d))))
+    await Promise.all(
+        deprecatedOneTimeJobs.map(job => {
+            assertNotNullOrUndefined(job.id, 'Job id is required')
+            return job.remove()
+        }),
+    )
 }
 
-const configureJobOptions = ({ schedule, jobId, customConfig }: { schedule: JobSchedule, jobId?: string, customConfig?: JobsOptions }): JobsOptions => {
+const configureJobOptions = ({ schedule, jobId, customConfig }: { schedule: JobSchedule, jobId: string, customConfig?: JobsOptions }): JobsOptions => {
     const config: JobsOptions = customConfig ?? {}
 
     switch (schedule.type) {
@@ -147,19 +157,14 @@ const configureJobOptions = ({ schedule, jobId, customConfig }: { schedule: JobS
 
     return {
         ...config,
-        ...spreadIfDefined('jobId', jobId),
+        jobId,
     }
 }
 
-const getJobByNameAndJobId = async (name: string, jobId?: string): Promise<Job | undefined> => {
-    const allSystemJobs = await systemJobsQueue.getJobs()
-    return allSystemJobs.find(job => {
-        if (isNil(job)) {
-            return false
-        }
-        if (!isNil(jobId)) {
-            return job.name === name && job.id === jobId
-        }
-        return job.name === name
-    })
+const getJobByNameAndJobId = async (name: string, jobId: string): Promise<Job | undefined> => {
+    const job = await systemJobsQueue.getJob(jobId)
+    if (!isNil(job) && job.name === name) {
+        return job
+    }
+    return undefined
 }
