@@ -1,6 +1,5 @@
 import {
   ApFunction,
-  FORMULA_FEATURE_ENABLED,
   evaluateExpression,
   flowStructureUtil,
   isNil,
@@ -58,6 +57,9 @@ type TiptapEditorProps = {
   disabled?: boolean;
   enableMarkdown?: boolean;
 };
+
+const FORMULA_FEATURE_ENABLED =
+  import.meta.env.VITE_FORMULA_FEATURE_ENABLED === 'true';
 
 const INITIAL_SLASH_STATE: SlashCommandState = {
   open: false,

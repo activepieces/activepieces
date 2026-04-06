@@ -106,7 +106,6 @@ export * from './lib/ee/scim'
 export * from './lib/management/project/project-requests'
 
 // formula
-export * from './lib/formula/feature-flag'
 export * from './lib/formula/function-registry'
 export * from './lib/formula/function-evaluator'
 export * from './lib/formula/function-type-checker'
