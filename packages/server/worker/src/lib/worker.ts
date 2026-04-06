@@ -4,7 +4,6 @@ import { systemUsage } from '@activepieces/server-utils'
 import {
     ActivepiecesError,
     ConsumeJobRequest,
-    createRpcClient,
     EngineResponseStatus,
     JobData,
     tryCatch,
@@ -13,6 +12,7 @@ import {
     WorkerSettingsResponse,
     WorkerToApiContract,
 } from '@activepieces/shared'
+import { createRpcClient } from '@activepieces/shared/server'
 import { trace } from '@opentelemetry/api'
 import { nanoid } from 'nanoid'
 import { io, Socket } from 'socket.io-client'
@@ -42,8 +42,9 @@ let sandboxManagers: SandboxManager[] = []
 export const worker = {
     async start({ apiUrl, socketUrl, workerToken, withHealthServer = false }: WorkerStartParams): Promise<void> {
         const platformIdForDedicatedWorker = system.get(WorkerSystemProp.PLATFORM_ID_FOR_DEDICATED_WORKER)
+        const isCanaryWorker = system.getBoolean(WorkerSystemProp.IS_CANARY_WORKER) ?? false
         socket = io(socketUrl.url, {
-            auth: { token: workerToken, workerId, platformIdForDedicatedWorker },
+            auth: { token: workerToken, workerId, platformIdForDedicatedWorker, isCanaryWorker },
             path: socketUrl.path,
             transports: ['websocket'],
             reconnection: true,
