@@ -3,13 +3,17 @@ type Success<T> = {
     data: T
     error: null
 }
-  
+
 type Failure<E> = {
     data: null
     error: E
 }
-  
+
 export type Result<T, E = Error> = Success<T> | Failure<E>
+
+export type TypedResult<T> =
+    | { success: true, data: T }
+    | { success: false, message: string }
   
 // Main wrapper function
 export async function tryCatch<T, E = Error>(
