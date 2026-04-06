@@ -35,6 +35,10 @@ function parseArgs(): ParsedArgs {
         }
     }
 
+    if (manifestJson === undefined && process.env.ROLLBACK_MANIFEST !== undefined) {
+        manifestJson = Buffer.from(process.env.ROLLBACK_MANIFEST, 'base64').toString('utf-8').trim()
+    }
+
     if (manifestJson !== undefined) {
         let targetMigrationNames: string[]
         try {

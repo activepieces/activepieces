@@ -73,18 +73,11 @@ jobs:
           # Base64-encode the manifest so it is safe through every shell layer
           MANIFEST_B64=$(printf '%s' "$MANIFEST" | base64 | tr -d '\n')
 
-          # Step 1: write manifest file into the running container via kamal.
-          # node writes the file — no shell redirect operators that kamal's bash wrapper would intercept.
-          # MANIFEST_B64 is injected as a docker-exec env var (-e); base64 has no shell-special chars.
+          # Pass the manifest via ROLLBACK_MANIFEST env var (base64-encoded).
+          # rollback.js decodes it internally — no JSON in shell args, no node -e flag conflict.
           ssh ops -t -t "bash -ic \"cd mrsk/prod && kamal app exec --reuse --config-file=config/app-canary.yml \
-            -e MANIFEST_B64=$MANIFEST_B64 -- \
-            node -e 'require(\\\"fs\\\").writeFileSync(\\\"/tmp/manifest.json\\\",Buffer.from(process.env.MANIFEST_B64,\\\"base64\\\").toString())' ; exit\""
-
-          # Step 2: run rollback via a node wrapper that reads the manifest from the file.
-          # JSON is never passed as a shell argument — the wrapper injects it via process.argv in-process.
-          ssh ops -t -t "bash -ic \"cd mrsk/prod && kamal app exec --reuse --config-file=config/app-canary.yml -- \
-            node -e 'const fs=require(\\\"fs\\\");const m=JSON.parse(fs.readFileSync(\\\"/tmp/manifest.json\\\",\\\"utf8\\\")).filter(function(x){return x!==null});const f=process.argv.indexOf(\\\"--force\\\")!==-1;process.argv=[\\\"n\\\",\\\"s\\\",\\\"--manifest\\\",JSON.stringify(m)];if(f){process.argv.push(\\\"--force\\\");}require(\\\"/usr/src/app/packages/server/api/dist/src/rollback.js\\\");' \
-            $FORCE_FLAG ; exit\""
+            -e ROLLBACK_MANIFEST=$MANIFEST_B64 -- \
+            node /usr/src/app/packages/server/api/dist/src/rollback.js $FORCE_FLAG ; exit\""
 
       - name: Redeploy canary app to target image
         run: |
