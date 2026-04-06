@@ -1,5 +1,6 @@
 import {
   ApFunction,
+  FORMULA_FEATURE_ENABLED,
   evaluateExpression,
   flowStructureUtil,
   isNil,
@@ -85,10 +86,14 @@ function getExtensions({
         return textMentionUtils.generateMentionHtmlElement(mentionAttrs);
       },
     }),
-    FunctionStartNode,
-    FunctionEndNode,
-    FunctionArgSeparatorNode,
-    FunctionSlashExtension,
+    ...(FORMULA_FEATURE_ENABLED
+      ? [
+          FunctionStartNode,
+          FunctionEndNode,
+          FunctionArgSeparatorNode,
+          FunctionSlashExtension,
+        ]
+      : []),
   ];
 
   if (enableMarkdown) {
@@ -392,7 +397,7 @@ export const TiptapEditor = ({
 
   if (!editor) return null;
 
-  const showPreview = isFocused && hasFunctions;
+  const showPreview = FORMULA_FEATURE_ENABLED && isFocused && hasFunctions;
 
   return (
     <div className="relative w-full" ref={editorWrapperRef}>
