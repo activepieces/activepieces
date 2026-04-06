@@ -1,6 +1,5 @@
 {
   "lockfileVersion": 1,
-  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "activepieces",
@@ -3901,7 +3900,11 @@
     },
     "packages/pieces/community/linear": {
       "name": "@activepieces/piece-linear",
+<<<<<<< HEAD
       "version": "0.3.2",
+=======
+      "version": "0.3.3",
+>>>>>>> upstream/main
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -7775,7 +7778,7 @@
     },
     "packages/pieces/framework": {
       "name": "@activepieces/pieces-framework",
-      "version": "0.26.0",
+      "version": "0.26.1",
       "dependencies": {
         "@activepieces/shared": "workspace:*",
         "ai": "^6.0.0",
