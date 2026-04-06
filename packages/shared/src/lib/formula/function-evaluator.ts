@@ -79,7 +79,9 @@ parser.functions.divide = (a: unknown, b: unknown) => {
     if (divisor === 0) throw new Error('Division by zero')
     return Number(a) / divisor
 }
-parser.functions.round = (n: unknown, decimals: unknown = 0) =>
+// expr-eval has a built-in 1-arg `round` that shadows our 2-arg version,
+// so we alias to ap_round and rewrite in normalizeExpression
+parser.functions.ap_round = (n: unknown, decimals: unknown = 0) =>
     Number(Number(n).toFixed(Number(decimals)))
 parser.functions.round_up = (n: unknown) => Math.ceil(Number(n))
 parser.functions.round_down = (n: unknown) => Math.floor(Number(n))
@@ -279,9 +281,11 @@ parser.functions.switch = (...args: unknown[]) => {
 parser.functions.is_empty = (val: unknown) => val === '' || val == null
 parser.functions.is_not_empty = (val: unknown) => val !== '' && val != null
 parser.functions.is_equal = (a: unknown, b: unknown) => a == b
-parser.functions.and = (a: unknown, b: unknown) => Boolean(a) && Boolean(b)
-parser.functions.or = (a: unknown, b: unknown) => Boolean(a) || Boolean(b)
-parser.functions.not = (a: unknown) => !a
+// and/or/not are reserved operators in expr-eval — register under prefixed names
+// and normalizeExpression() rewrites them in the expression before evaluation
+parser.functions.ap_and = (a: unknown, b: unknown) => Boolean(a) && Boolean(b)
+parser.functions.ap_or = (a: unknown, b: unknown) => Boolean(a) || Boolean(b)
+parser.functions.ap_not = (a: unknown) => !a
 parser.functions.coalesce = (...args: unknown[]) =>
     args.find((a) => a !== '' && a != null) ?? ''
 
@@ -427,13 +431,68 @@ function preprocessExpression(
 ): { processed: string, vars: Record<string, unknown> } {
     const vars: Record<string, unknown> = {}
     let idx = 0
-    const processed = expression.replace(/\{\{([^}]+)\}\}/g, (_, path: string) => {
+    const withVars = expression.replace(/\{\{([^}]+)\}\}/g, (_, path: string) => {
         const key = `_v${idx++}`
         const resolved = resolveVariable(path.trim(), sampleData)
         vars[key] = resolved === undefined ? null : resolved
         return key
     })
-    return { processed, vars }
+    return { processed: normalizeExpression(withVars), vars }
+}
+
+function normalizeExpression(expr: string): string {
+    let result = ''
+    let inString: '"' | '\'' | null = null
+    let i = 0
+
+    while (i < expr.length) {
+        const ch = expr[i]
+
+        if (inString) {
+            if (ch === inString && (i === 0 || expr[i - 1] !== '\\')) inString = null
+            result += ch
+            i++
+            continue
+        }
+
+        if (ch === '"' || ch === '\'') {
+            inString = ch
+            result += ch
+            i++
+            continue
+        }
+
+        if (ch === ';') {
+            result += ','
+            i++
+            continue
+        }
+
+        // Rewrite reserved keyword function calls to aliased names.
+        // Only rewrite when the keyword is not preceded by a word character
+        // (avoids matching e.g. "understand(" or "anderson(").
+        const prevIsWord = i > 0 && /[a-zA-Z0-9_]/.test(expr[i - 1])
+        if (!prevIsWord) {
+            const rest = expr.slice(i)
+            if (rest.startsWith('and('))   {
+                result += 'ap_and(';   i += 4; continue 
+            }
+            if (rest.startsWith('or('))    {
+                result += 'ap_or(';    i += 3; continue 
+            }
+            if (rest.startsWith('not('))   {
+                result += 'ap_not(';   i += 4; continue 
+            }
+            if (rest.startsWith('round(')) {
+                result += 'ap_round('; i += 6; continue 
+            }
+        }
+
+        result += ch
+        i++
+    }
+
+    return result
 }
 
 function resolveVariable(path: string, sampleData: Record<string, unknown>): unknown {
