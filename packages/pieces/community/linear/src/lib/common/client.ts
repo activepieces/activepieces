@@ -65,12 +65,9 @@ export class LinearClientWrapper {
     const team = await this.client.team(teamId);
     return team.templates(variables);
   }
-  async listProjectStatuses(teamIds?: string[]) {
-    const filter = teamIds?.length
-      ? `(filter: { team: { id: { in: ${JSON.stringify(teamIds)} } } }, first: 100)`
-      : `(first: 100)`;
+  async listProjectStatuses() {
     const query = `query {
-      projectStatuses${filter} {
+      projectStatuses(first: 100) {
         nodes {
           id
           name

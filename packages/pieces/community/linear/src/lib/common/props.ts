@@ -430,17 +430,17 @@ auth: linearAuth,
       displayName: 'Project Statuses',
       description: 'Filter by project status (leave empty to include all)',
       required,
-      refreshers: ['auth', 'team_ids'],
-      options: async ({ auth, team_ids }) => {
-        if (!auth || !(team_ids as string[])?.length) {
+      refreshers: ['auth'],
+      options: async ({ auth }) => {
+        if (!auth) {
           return {
             disabled: true,
-            placeholder: 'select a team to load statuses',
+            placeholder: 'connect your account first',
             options: [],
           };
         }
         const client = makeClient(auth);
-        const statuses = await client.listProjectStatuses(team_ids as string[]);
+        const statuses = await client.listProjectStatuses();
         return {
           disabled: false,
           options: statuses.map((s) => ({ label: s.name, value: s.type })),
