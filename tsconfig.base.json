@@ -110,6 +110,9 @@
       "@activepieces/piece-assemblyai": [
         "packages/pieces/community/assemblyai/src/index.ts"
       ],
+      "@activepieces/piece-assistro": [
+        "packages/pieces/community/assistro/src/index.ts"
+      ],
       "@activepieces/piece-attio": [
         "packages/pieces/community/attio/src/index.ts"
       ],
