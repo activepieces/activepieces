@@ -1,6 +1,6 @@
-import { MigrationInterface, QueryRunner } from 'typeorm'
+import { QueryRunner } from 'typeorm'
 import { Migration } from '../../../../src/app/database/migration'
-import { identifyCandidates, verifyDatabaseState } from '../../../../src/app/database/rollback-migrations'
+import { identifyCandidatesByManifest, identifyReleaseCandidates, verifyDatabaseState } from '../../../../src/app/database/rollback-migrations'
 
 function createMockMigration(overrides: Partial<Migration> & { name: string }): new () => Migration {
     return class implements Migration {
@@ -20,7 +20,7 @@ function createMockDataSource(executedMigrationNames: string[]): { query: Return
     }
 }
 
-describe('identifyCandidates', () => {
+describe('identifyReleaseCandidates', () => {
     it('should return migrations with release greater than target version', () => {
         const migrations = [
             createMockMigration({ name: 'OldMigration', release: '0.76.0', breaking: false }),
@@ -28,7 +28,7 @@ describe('identifyCandidates', () => {
             createMockMigration({ name: 'NewMigration', release: '0.78.0', breaking: false }),
         ]
 
-        const candidates = identifyCandidates(migrations, '0.77.0')
+        const candidates = identifyReleaseCandidates(migrations, '0.77.0')
 
         expect(candidates).toHaveLength(1)
         expect(candidates[0].name).toBe('NewMigration')
@@ -41,7 +41,7 @@ describe('identifyCandidates', () => {
             createMockMigration({ name: 'M3', release: '0.78.0', breaking: true }),
         ]
 
-        const candidates = identifyCandidates(migrations, '0.77.0')
+        const candidates = identifyReleaseCandidates(migrations, '0.77.0')
 
         expect(candidates).toHaveLength(2)
         expect(candidates[0].name).toBe('M3')
@@ -54,7 +54,7 @@ describe('identifyCandidates', () => {
             createMockMigration({ name: 'HasRelease', release: '0.78.0', breaking: false }),
         ]
 
-        const candidates = identifyCandidates(migrations, '0.77.0')
+        const candidates = identifyReleaseCandidates(migrations, '0.77.0')
 
         expect(candidates).toHaveLength(1)
         expect(candidates[0].name).toBe('HasRelease')
@@ -66,7 +66,7 @@ describe('identifyCandidates', () => {
             createMockMigration({ name: 'M2', release: '0.77.0', breaking: false }),
         ]
 
-        const candidates = identifyCandidates(migrations, '0.77.0')
+        const candidates = identifyReleaseCandidates(migrations, '0.77.0')
 
         expect(candidates).toHaveLength(0)
     })
@@ -77,9 +77,74 @@ describe('identifyCandidates', () => {
             createMockMigration({ name: 'M2' }),
         ]
 
-        const candidates = identifyCandidates(migrations, '0.77.0')
+        const candidates = identifyReleaseCandidates(migrations, '0.77.0')
 
         expect(candidates).toHaveLength(0)
+    })
+})
+
+describe('identifyCandidatesByManifest', () => {
+    it('should return migrations whose name is not in the manifest', () => {
+        const migrations = [
+            createMockMigration({ name: 'M1', release: '0.76.0', breaking: false }),
+            createMockMigration({ name: 'M2', release: '0.77.0', breaking: false }),
+            createMockMigration({ name: 'M3', release: '0.78.0', breaking: false }),
+        ]
+
+        const candidates = identifyCandidatesByManifest(migrations, ['M1', 'M2'])
+
+        expect(candidates).toHaveLength(1)
+        expect(candidates[0].name).toBe('M3')
+    })
+
+    it('should return multiple candidates in reverse (newest-first) order', () => {
+        const migrations = [
+            createMockMigration({ name: 'M1', release: '0.76.0', breaking: false }),
+            createMockMigration({ name: 'M2', release: '0.77.0', breaking: false }),
+            createMockMigration({ name: 'M3', release: '0.78.0', breaking: false }),
+        ]
+
+        const candidates = identifyCandidatesByManifest(migrations, ['M1'])
+
+        expect(candidates).toHaveLength(2)
+        expect(candidates[0].name).toBe('M3')
+        expect(candidates[1].name).toBe('M2')
+    })
+
+    it('should exclude migrations with no name (falsy name skipped)', () => {
+        const migrations = [
+            createMockMigration({ name: 'M1', release: '0.76.0', breaking: false }),
+            createMockMigration({ name: '', release: '0.77.0', breaking: false }),
+        ]
+
+        const candidates = identifyCandidatesByManifest(migrations, [])
+
+        expect(candidates).toHaveLength(1)
+        expect(candidates[0].name).toBe('M1')
+    })
+
+    it('should return empty array when all migrations are in the manifest', () => {
+        const migrations = [
+            createMockMigration({ name: 'M1', release: '0.76.0', breaking: false }),
+            createMockMigration({ name: 'M2', release: '0.77.0', breaking: false }),
+        ]
+
+        const candidates = identifyCandidatesByManifest(migrations, ['M1', 'M2'])
+
+        expect(candidates).toHaveLength(0)
+    })
+
+    it('should return all migrations when manifest is empty', () => {
+        const migrations = [
+            createMockMigration({ name: 'M1', release: '0.76.0', breaking: false }),
+            createMockMigration({ name: 'M2', release: '0.77.0', breaking: false }),
+        ]
+
+        const candidates = identifyCandidatesByManifest(migrations, [])
+
+        expect(candidates).toHaveLength(2)
+        expect(candidates[0].name).toBe('M2')
+        expect(candidates[1].name).toBe('M1')
     })
 })
 

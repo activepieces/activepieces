@@ -91,6 +91,9 @@ export type ApErrorParams =
     | SecretManagerGetSecretFailedParams
     | SecretManagerKeyNotSecretParams
     | InvalidAIProviderCredentialsParams
+    | FlowMigrationFailedParams
+    | ResumeLogsFileMissingParams
+    | ExecutionStateMissingParams
 
 export type TriggerExecutionFailedParams = BaseErrorParams<ErrorCode.TRIGGER_EXECUTION_FAILED, {
     flowId: FlowId
@@ -474,6 +477,19 @@ export type InvalidAIProviderCredentialsParams = BaseErrorParams<ErrorCode.INVAL
     httpErrorResponse: string
 }>
 
+export type FlowMigrationFailedParams = BaseErrorParams<ErrorCode.FLOW_MIGRATION_FAILED, {
+    flowVersionId: string
+    message: string
+}>
+
+export type ResumeLogsFileMissingParams = BaseErrorParams<ErrorCode.RESUME_LOGS_FILE_MISSING, {
+    runId: string
+}>
+
+export type ExecutionStateMissingParams = BaseErrorParams<ErrorCode.EXECUTION_STATE_MISSING, {
+    logsFileId: string
+}>
+
 export enum ErrorCode {
     INTERNAL_SERVER_ERROR = 'INTERNAL_SERVER_ERROR',
     MACHINE_NOT_CONNECTED = 'MACHINE_NOT_CONNECTED',
@@ -543,5 +559,8 @@ export enum ErrorCode {
     SECRET_MANAGER_GET_SECRET_FAILED = 'SECRET_MANAGER_GET_SECRET_FAILED',
     SECRET_MANAGER_KEY_NOT_SECRET = 'SECRET_MANAGER_KEY_NOT_SECRET',
     INVALID_AI_PROVIDER_CREDENTIALS = 'INVALID_AI_PROVIDER_CREDENTIALS',
+    FLOW_MIGRATION_FAILED = 'FLOW_MIGRATION_FAILED',
+    RESUME_LOGS_FILE_MISSING = 'RESUME_LOGS_FILE_MISSING',
+    EXECUTION_STATE_MISSING = 'EXECUTION_STATE_MISSING',
 }
 
