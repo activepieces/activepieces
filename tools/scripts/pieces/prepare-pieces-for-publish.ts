@@ -17,13 +17,11 @@ async function main(): Promise<void> {
 
     const parsedBunLock = parseBunLock()
 
-    let preparedCount = 0
     for (const piecePath of piecePaths) {
         preparePieceDistForPublish(piecePath, parsedBunLock)
-        preparedCount++
     }
 
-    console.info(`[preparePieces] done, prepared ${preparedCount} pieces`)
+    console.info(`[preparePieces] done, prepared ${piecePaths.length} pieces`)
 }
 
 main()

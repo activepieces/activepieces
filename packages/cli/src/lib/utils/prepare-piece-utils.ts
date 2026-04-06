@@ -92,7 +92,7 @@ function flattenTransitiveDeps(
 
         const resolved = lookupResolvedPackage({ depName: name, parentPackagePath, resolvedPackages })
         if (!resolved) {
-            continue
+            throw new Error(`[flattenTransitiveDeps] dependency "${name}" not found in bun.lock — lockfile may be stale, run "bun install"`)
         }
 
         const { packagePath, pkg } = resolved
@@ -101,7 +101,11 @@ function flattenTransitiveDeps(
         }
         visited.add(packagePath)
 
-        if (!(pkg.pkgName in result)) {
+        if (pkg.pkgName in result) {
+            if (result[pkg.pkgName] !== pkg.version) {
+                console.warn(`[flattenTransitiveDeps] version conflict for "${pkg.pkgName}": pinning ${result[pkg.pkgName]}, skipping ${pkg.version}`)
+            }
+        } else {
             result[pkg.pkgName] = pkg.version
         }
 
@@ -186,6 +190,8 @@ function preparePieceDistForPublish(piecePath: string, parsedLock?: ParsedBunLoc
     json.devDependencies = stripSemverRanges(resolveWorkspaceDependencies(json.devDependencies, workspaceVersionMap))
     json.peerDependencies = stripSemverRanges(resolveWorkspaceDependencies(json.peerDependencies, workspaceVersionMap))
 
+    // Only pin transitive deps for `dependencies` — devDependencies aren't installed by consumers,
+    // and peerDependencies should not be pinned (they're provided by the consumer's project).
     if (json.dependencies) {
         json.dependencies = pinDependenciesFromLockfile(json.dependencies, resolvedLockData)
     }

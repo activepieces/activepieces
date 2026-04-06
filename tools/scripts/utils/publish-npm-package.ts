@@ -5,9 +5,7 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { readPackageJson } from './files'
 import { packagePrePublishChecks } from './package-pre-publish-checks'
 import { preparePieceDistForPublish } from '../../../packages/cli/src/lib/utils/prepare-piece-utils'
-function isExactVersion(version: string): boolean {
-  return /^\d+\.\d+\.\d+/.test(version)
-}
+import { isExactVersion } from '../../../packages/cli/src/lib/utils/workspace-utils'
 
 function assertNoSemverRanges(packageJsonPath: string): void {
   const json = JSON.parse(readFileSync(packageJsonPath).toString())
