@@ -2,10 +2,17 @@ import { PieceAuth, Property } from '@activepieces/pieces-framework';
 
 export const workdayAuth = PieceAuth.OAuth2({
 	props: {
-		host: Property.ShortText({
-			displayName: 'Workday Host',
+		authHost: Property.ShortText({
+			displayName: 'Authorization Host',
 			description:
-				'Your Workday API host (e.g., "wd2-impl-services1.workday.com" for sandbox, or your production host like "wd5-services1.workday.com").',
+				'The host for OAuth authorization (e.g., "impl.workday.com" for sandbox). Found in your Authorization Endpoint URL.',
+			required: true,
+			defaultValue: 'impl.workday.com',
+		}),
+		apiHost: Property.ShortText({
+			displayName: 'API Host',
+			description:
+				'Your Workday API/services host (e.g., "wd2-impl-services1.workday.com" for sandbox). Found in your Token Endpoint or REST API Endpoint URL.',
 			required: true,
 			defaultValue: 'wd2-impl-services1.workday.com',
 		}),
@@ -30,8 +37,8 @@ export const workdayAuth = PieceAuth.OAuth2({
 	},
 	required: true,
 	description: 'Authenticate with Workday',
-	authUrl: 'https://impl.workday.com/{tenant}/authorize',
+	authUrl: 'https://{authHost}/{tenant}/authorize',
 	tokenUrl:
-		'https://{host}/ccx/oauth2/{tenant}/token',
+		'https://{apiHost}/ccx/oauth2/{tenant}/token',
 	scope: ['staffing', 'expenses', 'timeTracking', 'resourceManagement'],
 });

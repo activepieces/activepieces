@@ -14,7 +14,7 @@ const WQL_BASE = 'wql/v1';
 const SOAP_VERSION = 'v46.0';
 
 function getHost(auth: OAuth2PropertyValue): string {
-	return (auth?.props?.['host'] as string) ?? DEFAULT_HOST;
+	return (auth?.props?.['apiHost'] as string) ?? DEFAULT_HOST;
 }
 
 export const WorkdayService = {
