@@ -191,10 +191,15 @@ export function createHandlers(log: FastifyBaseLogger, platformIdForDedicatedWor
             if (isNil(flow)) {
                 return null
             }
-            return flowVersionService(log).lockPieceVersions({
+            const result = await flowVersionService(log).lockPieceVersions({
                 flowVersion,
                 projectId: flow.projectId,
             })
+            if (!result.success) {
+                log.warn({ flowVersionId: input.versionId, reason: result.message }, '[workerRpc#getFlowVersion] lockPieceVersions failed')
+                return null
+            }
+            return result.data
         },
 
         async getPiece(input) {
