@@ -78,8 +78,8 @@ export const linearUpdatedProject = createTrigger({
 
     if (body.action !== 'update') return [];
 
-    const selectedTeamIds = (context.propsValue['team_ids'] as string[]) ?? [];
-    const selectedStatuses = (context.propsValue['project_statuses'] as string[]) ?? [];
+    const selectedTeamIds = context.propsValue.team_ids ?? [];
+    const selectedStatuses = context.propsValue.project_statuses ?? [];
 
     if (selectedTeamIds.length > 0) {
       const projectTeamIds = body.data.teams?.map((t) => t.id) ?? [];
