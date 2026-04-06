@@ -61,8 +61,8 @@ jobs:
         run: |
           IMAGE="ghcr.io/activepieces/activepieces-cloud:${{ steps.target.outputs.image_tag }}"
           docker pull "$IMAGE"
-          MANIFEST=$(docker run --rm "$IMAGE" \
-            cat /usr/src/app/packages/server/api/dist/src/migration-manifest.json)
+          MANIFEST=$(docker run --rm --entrypoint cat "$IMAGE" \
+            /usr/src/app/packages/server/api/dist/src/migration-manifest.json)
           echo "json=$MANIFEST" >> $GITHUB_OUTPUT
 
       - name: Rollback DB migrations
