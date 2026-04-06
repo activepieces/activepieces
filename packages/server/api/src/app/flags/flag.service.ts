@@ -294,6 +294,12 @@ export const flagService = (log: FastifyBaseLogger) => ({
                 created,
                 updated,
             },
+            {
+                id: ApFlagId.FORMULA_FEATURE_ENABLED,
+                value: system.getBoolean(AppSystemProp.AP_FORMULA_FEATURE_ENABLED) ?? false,
+                created,
+                updated,
+            },
         )
 
         if (system.isApp()) {
