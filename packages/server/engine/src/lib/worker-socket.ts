@@ -1,13 +1,12 @@
+import { inspect } from 'node:util'
 import {
-    createNotifyClient,
-    createRpcClient,
-    createRpcServer,
     EngineContract,
     EngineResponse,
     ERROR_MESSAGES_TO_REDACT,
     WorkerContract,
     WorkerNotifyContract,
 } from '@activepieces/shared'
+import { createNotifyClient, createRpcClient, createRpcServer } from '@activepieces/shared/server'
 import { io, type Socket } from 'socket.io-client'
 import { execute } from './operations'
 import { progressService } from './services/progress.service'

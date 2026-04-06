@@ -14,7 +14,7 @@ export const noOpCodeSandbox: CodeSandbox = {
         const newContext = {
             ...scriptContext,
             ...functions,
-        }   
+        }
         const params = Object.keys(newContext)
         const args = Object.values(newContext)
         const body = `return (${script})`
