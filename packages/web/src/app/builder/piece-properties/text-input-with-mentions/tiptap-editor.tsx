@@ -1,5 +1,4 @@
 import {
-  ApFlagId,
   ApFunction,
   evaluateExpression,
   flowStructureUtil,
@@ -24,7 +23,6 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { inputClass } from '@/components/ui/input';
 import { stepsHooks } from '@/features/pieces';
-import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn } from '@/lib/utils';
 
 import { useBuilderStateContext } from '../../builder-hooks';
@@ -72,11 +70,9 @@ const INITIAL_SLASH_STATE: SlashCommandState = {
 function getExtensions({
   enableMarkdown,
   placeholder,
-  formulaFeatureEnabled,
 }: {
   placeholder?: string;
   enableMarkdown?: boolean;
-  formulaFeatureEnabled: boolean;
 }): Extensions {
   const baseExtensions = [
     Placeholder.configure({
@@ -91,14 +87,10 @@ function getExtensions({
         return textMentionUtils.generateMentionHtmlElement(mentionAttrs);
       },
     }),
-    ...(formulaFeatureEnabled
-      ? [
-          FunctionStartNode,
-          FunctionEndNode,
-          FunctionArgSeparatorNode,
-          FunctionSlashExtension,
-        ]
-      : []),
+    FunctionStartNode,
+    FunctionEndNode,
+    FunctionArgSeparatorNode,
+    FunctionSlashExtension,
   ];
 
   if (enableMarkdown) {
@@ -141,10 +133,6 @@ export const TiptapEditor = ({
   const sampleData = useBuilderStateContext((state) => state.outputSampleData);
   const setInsertMentionHandler = useBuilderStateContext(
     (state) => state.setInsertMentionHandler,
-  );
-
-  const { data: formulaFeatureEnabled } = flagsHooks.useFlag<boolean>(
-    ApFlagId.FORMULA_FEATURE_ENABLED,
   );
 
   const [slashState, setSlashState] =
@@ -193,11 +181,7 @@ export const TiptapEditor = ({
 
   const editor = useEditor({
     editable: !disabled,
-    extensions: getExtensions({
-      placeholder,
-      enableMarkdown,
-      formulaFeatureEnabled: formulaFeatureEnabled ?? false,
-    }),
+    extensions: getExtensions({ placeholder, enableMarkdown }),
     content: {
       type: 'doc',
       content: textMentionUtils.convertTextToTipTapJsonContent(
@@ -407,8 +391,7 @@ export const TiptapEditor = ({
 
   if (!editor) return null;
 
-  const showPreview =
-    (formulaFeatureEnabled ?? false) && isFocused && hasFunctions;
+  const showPreview = isFocused && hasFunctions;
 
   return (
     <div className="relative w-full" ref={editorWrapperRef}>

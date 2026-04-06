@@ -1,7 +1,6 @@
 import { ContextVersion } from '@activepieces/pieces-framework'
 import { AP_FUNCTIONS, applyFunctionToValues, evaluateExpression, isNil, isString } from '@activepieces/shared'
 
-const FORMULA_FEATURE_ENABLED = process.env.AP_FORMULA_FEATURE_ENABLED === 'true'
 import { initCodeSandbox } from '../core/code/code-sandbox'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { createConnectionService } from '../services/connections.service'
@@ -101,7 +100,7 @@ function extractReferencedStepNames(input: unknown, stepNames: string[]): Set<st
 async function resolveInputAsync(params: ResolveInputInternalParams): Promise<unknown> {
     const { input, currentState, engineToken, projectId, apiUrl, censoredInput } = params
 
-    if (FORMULA_FEATURE_ENABLED && isFormulaExpression(input)) {
+    if (isFormulaExpression(input)) {
         const { result, error } = evaluateExpression(input, currentState)
         if (error) {
             console.warn('[resolveInputAsync] Formula evaluation error:', error)
