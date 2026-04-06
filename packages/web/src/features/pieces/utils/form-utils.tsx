@@ -210,8 +210,6 @@ const GLOBAL_CONNECTION_EXTRAS_SCHEMA = z.object({
   preSelectForNewProjects: z.boolean().optional(),
 });
 
-
-
 function connectionNameSchema(required: boolean) {
   return z.object({
     externalId: EXTERNAL_ID_SCHEMA,
@@ -233,13 +231,16 @@ function buildOAuth2ValueSchema(
     auth.props ?? {},
     undefined,
   );
-  const isClientCredsGrantType =  auth.grantType === OAuth2GrantType.CLIENT_CREDENTIALS;
+  const isClientCredsGrantType =
+    auth.grantType === OAuth2GrantType.CLIENT_CREDENTIALS;
 
   const withPropsAndCode = {
     props: propsSchema.optional(),
-    code: isClientCredsGrantType ? z.string().optional() : z.string().min(1, {
-      error: t('Please connect your account first'),
-    }),
+    code: isClientCredsGrantType
+      ? z.string().optional()
+      : z.string().min(1, {
+          error: t('Please connect your account first'),
+        }),
   } as const;
 
   switch (connectionType) {
