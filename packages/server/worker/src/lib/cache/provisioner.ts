@@ -60,6 +60,7 @@ export const provisioner = (log: Logger, apiClient: WorkerToApiContract) => ({
                             piecesSpan.setAttribute('pieces.count', uniquePieces.length)
                             await pieceInstaller(log, apiClient).install({
                                 pieces: uniquePieces,
+                                includeFilters: true,
                             })
                             void tryCatch(() => apiClient.markPieceAsUsed({ pieces: uniquePieces }))
                             log.info({
