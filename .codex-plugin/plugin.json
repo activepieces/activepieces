@@ -1,0 +1,16 @@
+{
+  "name": "activepieces",
+  "version": "0.1.0",
+  "description": "AI Agents & MCPs & AI Workflow Automation \u2022 (~400 MCP servers for AI agents) \u2022 AI Automation / AI Agent with MCPs \u2022 AI Workflows & AI Agents \u2022 MCPs for AI Agents",
+  "author": {
+    "name": "activepieces",
+    "url": "https://github.com/activepieces"
+  },
+  "homepage": "https://github.com/activepieces/activepieces",
+  "repository": "https://github.com/activepieces/activepieces",
+  "keywords": [
+    "mcp",
+    "codex"
+  ],
+  "mcpServers": "./.mcp.json"
+}

@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "activepieces": {
+      "command": "npx",
+      "args": [
+        "activepieces-activepieces"
+      ]
+    }
+  }
+}
