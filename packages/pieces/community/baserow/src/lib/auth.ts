@@ -40,7 +40,7 @@ const databaseTokenAuth = PieceAuth.CustomAuth({
   },
 });
 
-export const baserowJwtAuth = PieceAuth.CustomAuth({
+const jwtAuth = PieceAuth.CustomAuth({
   displayName: 'Email & Password (JWT)',
   description: `Authenticate with your Baserow email and password. This mode enables automatic webhook registration for triggers — no manual setup needed.\n\n**Note:** Two-factor authentication (2FA) is not supported. If your Baserow account has 2FA enabled, use the Database Token authentication instead.`,
   required: true,
@@ -76,17 +76,7 @@ export const baserowJwtAuth = PieceAuth.CustomAuth({
   },
 });
 
-export const baserowAuth = [databaseTokenAuth, baserowJwtAuth];
-
-export type BaserowAuthValue = AppConnectionValueForAuthProperty<
-  typeof baserowAuth
->;
-
-export type BaserowJwtAuthValue = AppConnectionValueForAuthProperty<
-  typeof baserowJwtAuth
->;
-
-export function isDatabaseTokenAuth(
+function isDatabaseToken(
   auth: BaserowAuthValue
 ): auth is BaserowAuthValue & {
   type: typeof AppConnectionType.CUSTOM_AUTH;
@@ -96,3 +86,15 @@ export function isDatabaseTokenAuth(
     auth.type === AppConnectionType.CUSTOM_AUTH && 'token' in auth.props
   );
 }
+
+export const baserowAuth = [databaseTokenAuth, jwtAuth];
+export const baserowJwtAuth = jwtAuth;
+export const isDatabaseTokenAuth = isDatabaseToken;
+
+export type BaserowAuthValue = AppConnectionValueForAuthProperty<
+  typeof baserowAuth
+>;
+
+export type BaserowJwtAuthValue = AppConnectionValueForAuthProperty<
+  typeof baserowJwtAuth
+>;
