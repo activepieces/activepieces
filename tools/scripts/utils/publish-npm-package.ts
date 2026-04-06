@@ -53,6 +53,26 @@ export const publishNpmPackage = async (path: string): Promise<void> => {
   json.version = version
   json.main = './src/index.js'
   json.types = './src/index.d.ts'
+  if (json.exports && typeof json.exports === 'object') {
+    for (const [key, value] of Object.entries(json.exports)) {
+      if (typeof value === 'string') {
+        json.exports[key] = value.replace(/^\.\/dist\//, './')
+      }
+    }
+  } else if (typeof json.exports === 'string') {
+    json.exports = json.exports.replace(/^\.\/dist\//, './')
+  }
+  if (json.typesVersions) {
+    for (const mapping of Object.values(json.typesVersions)) {
+      if (typeof mapping === 'object' && mapping !== null) {
+        for (const [key, paths] of Object.entries(mapping as Record<string, string[]>)) {
+          (mapping as Record<string, string[]>)[key] = paths.map(
+            (p: string) => p.replace(/^\.\/dist\//, './'),
+          )
+        }
+      }
+    }
+  }
   json.dependencies = resolveWorkspaceDependencies(json.dependencies, versionMap)
   json.devDependencies = resolveWorkspaceDependencies(json.devDependencies, versionMap)
   json.peerDependencies = resolveWorkspaceDependencies(json.peerDependencies, versionMap)
