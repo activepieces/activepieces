@@ -178,49 +178,43 @@ function getDefaultValueForProperties({
   );
 }
 
-function buildExternalIdSchema() {
-  return z
-    .string()
-    .min(1, {
-      error: t('Name can only contain letters, numbers and underscores'),
-    })
-    .regex(/^[A-Za-z0-9_\-@+.]*$/, {
-      error: t('Name can only contain letters, numbers and underscores'),
-    });
-}
+const EXTERNAL_ID_SCHEMA = z
+  .string()
+  .min(1, {
+    error: t('Name can only contain letters, numbers and underscores'),
+  })
+  .regex(/^[A-Za-z0-9_\-@+.]*$/, {
+    error: t('Name can only contain letters, numbers and underscores'),
+  });
 
-function buildDisplayNameSchema(showConnectionNameField: boolean) {
-  if (showConnectionNameField) {
+function displayNameSchema(required: boolean) {
+  if (required) {
     return z.string().min(1, { error: t('required') });
   }
   return z.string();
 }
 
-function projectFormExtrasSchema(): ZodObject<z.ZodRawShape> {
+const PROJECT_FORM_EXTRAS_SCHEMA = z.object({
+  pieceVersion: z.string().optional(),
+  projectIds: z.array(z.string()),
+  preSelectForNewProjects: z.boolean(),
+});
+
+const GLOBAL_CONNECTION_EXTRAS_SCHEMA = z.object({
+  scope: z.literal(AppConnectionScope.PLATFORM),
+  projectIds: z.array(z.string()).min(1, { error: t('required') }),
+  metadata: Metadata.optional(),
+  preSelectForNewProjects: z.boolean().optional(),
+});
+
+function connectionNameSchema(required: boolean) {
   return z.object({
-    pieceVersion: z.string().optional(),
-    projectIds: z.array(z.string()),
-    preSelectForNewProjects: z.boolean(),
+    externalId: EXTERNAL_ID_SCHEMA,
+    displayName: displayNameSchema(required),
   });
 }
 
-function buildGlobalConnectionExtrasSchema(): ZodObject<z.ZodRawShape> {
-  return z.object({
-    scope: z.literal(AppConnectionScope.PLATFORM),
-    projectIds: z.array(z.string()).min(1, { error: t('required') }),
-    metadata: Metadata.optional(),
-    preSelectForNewProjects: z.boolean().optional(),
-  });
-}
-
-function connectionNameFields(showConnectionNameField: boolean) {
-  return z.object({
-    externalId: buildExternalIdSchema(),
-    displayName: buildDisplayNameSchema(showConnectionNameField),
-  });
-}
-
-function oauth2ValueWithPieceProps(
+function buildOAuth2ValueSchema(
   auth: PieceAuthProperty,
   connectionType:
     | AppConnectionType.OAUTH2
@@ -228,7 +222,7 @@ function oauth2ValueWithPieceProps(
     | AppConnectionType.PLATFORM_OAUTH2,
 ) {
   if (auth.type !== PropertyType.OAUTH2) {
-    throw new Error('oauth2ValueWithPieceProps expects OAuth2 auth');
+    throw new Error('buildOAuth2ValueSchema expects OAuth2 auth');
   }
   const propsSchema = piecePropertiesUtils.buildSchema(
     auth.props ?? {},
@@ -250,71 +244,20 @@ function oauth2ValueWithPieceProps(
   }
 }
 
-function buildOAuth2RequestSchema(
-  auth: PieceAuthProperty,
-  showConnectionNameField: boolean,
-  isGlobalConnection: boolean,
-) {
-  const names = connectionNameFields(showConnectionNameField);
-  const projectExtras = projectFormExtrasSchema();
-  const valueFor = (
-    connectionType:
-      | AppConnectionType.OAUTH2
-      | AppConnectionType.CLOUD_OAUTH2
-      | AppConnectionType.PLATFORM_OAUTH2,
-  ) => z.object({ value: oauth2ValueWithPieceProps(auth, connectionType) });
-
-  if (isGlobalConnection) {
-    const globalExtras = buildGlobalConnectionExtrasSchema();
-    const omitGlobal = {
-      projectId: true,
-      externalId: true,
-      displayName: true,
-      value: true,
-    } as const;
-    return z.object({
-      request: z.discriminatedUnion('type', [
-        UpsertOAuth2Request.omit(omitGlobal)
-          .extend(names.shape)
-          .extend(globalExtras.shape)
-          .extend(valueFor(AppConnectionType.OAUTH2).shape)
-          .extend(projectExtras.shape),
-        UpsertCloudOAuth2Request.omit(omitGlobal)
-          .extend(names.shape)
-          .extend(globalExtras.shape)
-          .extend(valueFor(AppConnectionType.CLOUD_OAUTH2).shape)
-          .extend(projectExtras.shape),
-        UpsertPlatformOAuth2Request.omit(omitGlobal)
-          .extend(names.shape)
-          .extend(globalExtras.shape)
-          .extend(valueFor(AppConnectionType.PLATFORM_OAUTH2).shape)
-          .extend(projectExtras.shape),
-      ]),
-    });
-  }
-
-  const omitProject = {
-    externalId: true,
-    displayName: true,
-    value: true,
-  } as const;
-  return z.object({
-    request: z.discriminatedUnion('type', [
-      UpsertOAuth2Request.omit(omitProject)
-        .extend(names.shape)
-        .extend(valueFor(AppConnectionType.OAUTH2).shape)
-        .extend(projectExtras.shape),
-      UpsertCloudOAuth2Request.omit(omitProject)
-        .extend(names.shape)
-        .extend(valueFor(AppConnectionType.CLOUD_OAUTH2).shape)
-        .extend(projectExtras.shape),
-      UpsertPlatformOAuth2Request.omit(omitProject)
-        .extend(names.shape)
-        .extend(valueFor(AppConnectionType.PLATFORM_OAUTH2).shape)
-        .extend(projectExtras.shape),
-    ]),
-  });
-}
+const PROJECT_NAME_OMIT = { externalId: true, displayName: true } as const;
+const GLOBAL_NAME_OMIT = {
+  projectId: true,
+  externalId: true,
+  displayName: true,
+} as const;
+const PROJECT_NAME_AND_VALUE_OMIT = {
+  ...PROJECT_NAME_OMIT,
+  value: true,
+} as const;
+const GLOBAL_NAME_AND_VALUE_OMIT = {
+  ...GLOBAL_NAME_OMIT,
+  value: true,
+} as const;
 
 const CUSTOM_AUTH_VALUE_PROPS = z.object({
   value: z.object({
@@ -322,176 +265,101 @@ const CUSTOM_AUTH_VALUE_PROPS = z.object({
   }),
 });
 
-/** Omit keys replaced by connection name fields on the create-connection form (project-scoped upsert). */
-const OMIT_UPSERT_CONNECTION_NAME_PROJECT = {
-  externalId: true,
-  displayName: true,
-} as const;
-
-/** Custom auth also omits `value` so we can attach placeholder props in the nil-default union. */
-const OMIT_UPSERT_CUSTOM_AUTH_VALUE_PROJECT = {
-  externalId: true,
-  displayName: true,
-  value: true,
-} as const;
-
-/** Omit keys for global connection upserts (includes projectId). */
-const OMIT_UPSERT_CONNECTION_NAME_GLOBAL = {
-  projectId: true,
-  externalId: true,
-  displayName: true,
-} as const;
-
-const OMIT_UPSERT_CUSTOM_AUTH_VALUE_GLOBAL = {
-  projectId: true,
-  externalId: true,
-  displayName: true,
-  value: true,
-} as const;
-
-function extendUpsertForNilDefaultUnionProjectScoped(
+function extendUpsertSchema(
   upsertSchema: ZodObject<z.ZodRawShape>,
-  names: ReturnType<typeof connectionNameFields>,
-  projectExtras: ReturnType<typeof projectFormExtrasSchema>,
+  names: ReturnType<typeof connectionNameSchema>,
+  isGlobalConnection: boolean,
 ) {
-  return upsertSchema
-    .omit(OMIT_UPSERT_CONNECTION_NAME_PROJECT)
-    .extend(names.shape)
-    .extend(projectExtras.shape);
+  const base = upsertSchema
+    .omit(isGlobalConnection ? GLOBAL_NAME_OMIT : PROJECT_NAME_OMIT)
+    .extend(names.shape);
+  return isGlobalConnection
+    ? base
+        .extend(GLOBAL_CONNECTION_EXTRAS_SCHEMA.shape)
+        .extend(PROJECT_FORM_EXTRAS_SCHEMA.shape)
+    : base.extend(PROJECT_FORM_EXTRAS_SCHEMA.shape);
 }
 
-function extendUpsertForNilDefaultUnionProjectScopedCustomAuth(
-  names: ReturnType<typeof connectionNameFields>,
-  projectExtras: ReturnType<typeof projectFormExtrasSchema>,
+function extendCustomAuthUpsertSchema(
+  names: ReturnType<typeof connectionNameSchema>,
+  isGlobalConnection: boolean,
 ) {
-  return UpsertCustomAuthRequest.omit(OMIT_UPSERT_CUSTOM_AUTH_VALUE_PROJECT)
-    .extend(names.shape)
-    .extend(projectExtras.shape)
-    .extend(CUSTOM_AUTH_VALUE_PROPS.shape);
+  const omit = isGlobalConnection
+    ? GLOBAL_NAME_AND_VALUE_OMIT
+    : PROJECT_NAME_AND_VALUE_OMIT;
+  const base = UpsertCustomAuthRequest.omit(omit).extend(names.shape);
+  const withExtras = isGlobalConnection
+    ? base
+        .extend(GLOBAL_CONNECTION_EXTRAS_SCHEMA.shape)
+        .extend(PROJECT_FORM_EXTRAS_SCHEMA.shape)
+    : base.extend(PROJECT_FORM_EXTRAS_SCHEMA.shape);
+  return withExtras.extend(CUSTOM_AUTH_VALUE_PROPS.shape);
 }
 
-function extendUpsertForNilDefaultUnionGlobal(
-  upsertSchema: ZodObject<z.ZodRawShape>,
-  names: ReturnType<typeof connectionNameFields>,
-  globalExtras: ReturnType<typeof buildGlobalConnectionExtrasSchema>,
-  projectExtras: ReturnType<typeof projectFormExtrasSchema>,
+function buildOAuth2RequestSchema(
+  auth: PieceAuthProperty,
+  showConnectionNameField: boolean,
+  isGlobalConnection: boolean,
 ) {
-  return upsertSchema
-    .omit(OMIT_UPSERT_CONNECTION_NAME_GLOBAL)
-    .extend(names.shape)
-    .extend(globalExtras.shape)
-    .extend(projectExtras.shape);
-}
+  const names = connectionNameSchema(showConnectionNameField);
+  const omit = isGlobalConnection
+    ? GLOBAL_NAME_AND_VALUE_OMIT
+    : PROJECT_NAME_AND_VALUE_OMIT;
 
-function extendUpsertForNilDefaultUnionGlobalCustomAuth(
-  names: ReturnType<typeof connectionNameFields>,
-  globalExtras: ReturnType<typeof buildGlobalConnectionExtrasSchema>,
-  projectExtras: ReturnType<typeof projectFormExtrasSchema>,
-) {
-  return UpsertCustomAuthRequest.omit(OMIT_UPSERT_CUSTOM_AUTH_VALUE_GLOBAL)
-    .extend(names.shape)
-    .extend(globalExtras.shape)
-    .extend(projectExtras.shape)
-    .extend(CUSTOM_AUTH_VALUE_PROPS.shape);
-}
-
-function buildNilOrDefaultRequestUnion(options: {
-  isGlobalConnection: boolean;
-  showConnectionNameField: boolean;
-}) {
-  const names = connectionNameFields(options.showConnectionNameField);
-  const projectExtras = projectFormExtrasSchema();
-  if (!options.isGlobalConnection) {
-    return z.object({
-      request: z.union([
-        extendUpsertForNilDefaultUnionProjectScoped(
-          UpsertSecretTextRequest,
-          names,
-          projectExtras,
-        ),
-        extendUpsertForNilDefaultUnionProjectScoped(
-          UpsertOAuth2Request,
-          names,
-          projectExtras,
-        ),
-        extendUpsertForNilDefaultUnionProjectScoped(
-          UpsertCloudOAuth2Request,
-          names,
-          projectExtras,
-        ),
-        extendUpsertForNilDefaultUnionProjectScoped(
-          UpsertPlatformOAuth2Request,
-          names,
-          projectExtras,
-        ),
-        extendUpsertForNilDefaultUnionProjectScoped(
-          UpsertBasicAuthRequest,
-          names,
-          projectExtras,
-        ),
-        extendUpsertForNilDefaultUnionProjectScopedCustomAuth(
-          names,
-          projectExtras,
-        ),
-        extendUpsertForNilDefaultUnionProjectScoped(
-          UpsertNoAuthRequest,
-          names,
-          projectExtras,
-        ),
-      ]),
+  const buildBranch = (
+    schema: ZodObject<z.ZodRawShape>,
+    connectionType:
+      | AppConnectionType.OAUTH2
+      | AppConnectionType.CLOUD_OAUTH2
+      | AppConnectionType.PLATFORM_OAUTH2,
+  ) => {
+    const valueShape = z.object({
+      value: buildOAuth2ValueSchema(auth, connectionType),
     });
-  }
-  const globalExtras = buildGlobalConnectionExtrasSchema();
+    const base = schema.omit(omit).extend(names.shape);
+    return isGlobalConnection
+      ? base
+          .extend(GLOBAL_CONNECTION_EXTRAS_SCHEMA.shape)
+          .extend(valueShape.shape)
+          .extend(PROJECT_FORM_EXTRAS_SCHEMA.shape)
+      : base.extend(valueShape.shape).extend(PROJECT_FORM_EXTRAS_SCHEMA.shape);
+  };
+
   return z.object({
-    request: z.union([
-      extendUpsertForNilDefaultUnionGlobal(
-        UpsertSecretTextRequest,
-        names,
-        globalExtras,
-        projectExtras,
-      ),
-      extendUpsertForNilDefaultUnionGlobal(
-        UpsertOAuth2Request,
-        names,
-        globalExtras,
-        projectExtras,
-      ),
-      extendUpsertForNilDefaultUnionGlobal(
-        UpsertCloudOAuth2Request,
-        names,
-        globalExtras,
-        projectExtras,
-      ),
-      extendUpsertForNilDefaultUnionGlobal(
+    request: z.discriminatedUnion('type', [
+      buildBranch(UpsertOAuth2Request, AppConnectionType.OAUTH2),
+      buildBranch(UpsertCloudOAuth2Request, AppConnectionType.CLOUD_OAUTH2),
+      buildBranch(
         UpsertPlatformOAuth2Request,
-        names,
-        globalExtras,
-        projectExtras,
-      ),
-      extendUpsertForNilDefaultUnionGlobal(
-        UpsertBasicAuthRequest,
-        names,
-        globalExtras,
-        projectExtras,
-      ),
-      extendUpsertForNilDefaultUnionGlobalCustomAuth(
-        names,
-        globalExtras,
-        projectExtras,
-      ),
-      extendUpsertForNilDefaultUnionGlobal(
-        UpsertNoAuthRequest,
-        names,
-        globalExtras,
-        projectExtras,
+        AppConnectionType.PLATFORM_OAUTH2,
       ),
     ]),
   });
 }
 
-function customAuthValueShape(auth: PieceAuthProperty) {
+function buildFallbackConnectionSchema(options: {
+  isGlobalConnection: boolean;
+  showConnectionNameField: boolean;
+}) {
+  const names = connectionNameSchema(options.showConnectionNameField);
+  const isGlobal = options.isGlobalConnection;
+
+  return z.object({
+    request: z.union([
+      extendUpsertSchema(UpsertSecretTextRequest, names, isGlobal),
+      extendUpsertSchema(UpsertOAuth2Request, names, isGlobal),
+      extendUpsertSchema(UpsertCloudOAuth2Request, names, isGlobal),
+      extendUpsertSchema(UpsertPlatformOAuth2Request, names, isGlobal),
+      extendUpsertSchema(UpsertBasicAuthRequest, names, isGlobal),
+      extendCustomAuthUpsertSchema(names, isGlobal),
+      extendUpsertSchema(UpsertNoAuthRequest, names, isGlobal),
+    ]),
+  });
+}
+
+function buildCustomAuthValueSchema(auth: PieceAuthProperty) {
   if (auth.type !== PropertyType.CUSTOM_AUTH) {
-    throw new Error('customAuthValueShape expects CUSTOM_AUTH');
+    throw new Error('buildCustomAuthValueSchema expects CUSTOM_AUTH');
   }
   return z.object({
     value: z.object({
@@ -510,85 +378,33 @@ function buildConnectionSchema(
 ) {
   const { isGlobalConnection, showConnectionNameField } = options;
   if (isNil(auth)) {
-    return buildNilOrDefaultRequestUnion({
+    return buildFallbackConnectionSchema({
       isGlobalConnection,
       showConnectionNameField,
     });
   }
 
-  const names = connectionNameFields(showConnectionNameField);
-  const projectExtras = projectFormExtrasSchema();
+  const names = connectionNameSchema(showConnectionNameField);
 
   switch (auth.type) {
-    case PropertyType.SECRET_TEXT: {
-      if (isGlobalConnection) {
-        return z.object({
-          request: UpsertSecretTextRequest.omit({
-            projectId: true,
-            externalId: true,
-            displayName: true,
-          })
-            .extend(names.shape)
-            .extend(buildGlobalConnectionExtrasSchema().shape)
-            .extend(projectExtras.shape),
-        });
-      }
-      return z.object({
-        request: UpsertSecretTextRequest.omit({
-          externalId: true,
-          displayName: true,
-        })
-          .extend(names.shape)
-          .extend(projectExtras.shape),
-      });
-    }
+    case PropertyType.SECRET_TEXT:
     case PropertyType.BASIC_AUTH: {
-      if (isGlobalConnection) {
-        return z.object({
-          request: UpsertBasicAuthRequest.omit({
-            projectId: true,
-            externalId: true,
-            displayName: true,
-          })
-            .extend(names.shape)
-            .extend(buildGlobalConnectionExtrasSchema().shape)
-            .extend(projectExtras.shape),
-        });
-      }
+      const base =
+        auth.type === PropertyType.SECRET_TEXT
+          ? UpsertSecretTextRequest
+          : UpsertBasicAuthRequest;
       return z.object({
-        request: UpsertBasicAuthRequest.omit({
-          externalId: true,
-          displayName: true,
-        })
-          .extend(names.shape)
-          .extend(projectExtras.shape),
+        request: extendUpsertSchema(base, names, isGlobalConnection),
       });
     }
     case PropertyType.CUSTOM_AUTH: {
-      const valueShape = customAuthValueShape(auth);
-      if (isGlobalConnection) {
-        return z.object({
-          request: UpsertCustomAuthRequest.omit({
-            projectId: true,
-            externalId: true,
-            displayName: true,
-            value: true,
-          })
-            .extend(names.shape)
-            .extend(buildGlobalConnectionExtrasSchema().shape)
-            .extend(projectExtras.shape)
-            .extend(valueShape.shape),
-        });
-      }
+      const valueShape = buildCustomAuthValueSchema(auth);
       return z.object({
-        request: UpsertCustomAuthRequest.omit({
-          externalId: true,
-          displayName: true,
-          value: true,
-        })
-          .extend(names.shape)
-          .extend(projectExtras.shape)
-          .extend(valueShape.shape),
+        request: extendUpsertSchema(
+          UpsertCustomAuthRequest.omit({ value: true }),
+          names,
+          isGlobalConnection,
+        ).extend(valueShape.shape),
       });
     }
     case PropertyType.OAUTH2: {
@@ -599,7 +415,7 @@ function buildConnectionSchema(
       );
     }
     default: {
-      return buildNilOrDefaultRequestUnion({
+      return buildFallbackConnectionSchema({
         isGlobalConnection,
         showConnectionNameField,
       });
