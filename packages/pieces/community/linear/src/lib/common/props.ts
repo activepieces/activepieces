@@ -424,6 +424,29 @@ auth: linearAuth,
         };
       },
     }),
+  project_statuses: (required = false) =>
+    Property.MultiSelectDropdown({
+      auth: linearAuth,
+      displayName: 'Project Statuses',
+      description: 'Filter by project status (leave empty to include all)',
+      required,
+      refreshers: ['auth', 'team_ids'],
+      options: async ({ auth, team_ids }) => {
+        if (!auth || !(team_ids as string[])?.length) {
+          return {
+            disabled: true,
+            placeholder: 'select a team to load statuses',
+            options: [],
+          };
+        }
+        const client = makeClient(auth);
+        const statuses = await client.listProjectStatuses(team_ids as string[]);
+        return {
+          disabled: false,
+          options: statuses.map((s) => ({ label: s.name, value: s.type })),
+        };
+      },
+    }),
   project_status: (required = false) =>
     Property.StaticDropdown({
       displayName: 'Project Status',
