@@ -2,7 +2,7 @@ import { readdir, rm } from 'fs/promises'
 import path from 'path'
 import { logger } from '../config/logger'
 
-export const LATEST_CACHE_VERSION = 'v10'
+export const LATEST_CACHE_VERSION = 'v11'
 
 export const GLOBAL_CACHE_ALL_VERSIONS_PATH = path.resolve('cache')
 
