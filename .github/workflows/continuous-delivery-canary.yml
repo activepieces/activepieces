@@ -3,6 +3,9 @@ name: Continuous Delivery — Canary
 on:
   schedule:
     - cron: '0 9 * * *'  # Daily 9 AM UTC
+  push:
+    branches:
+      - feat/canary
 
 jobs:
   build-image:
@@ -72,6 +75,7 @@ jobs:
         id: current-manifest
         run: |
           MANIFEST=$(ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal app exec \
+            --reuse \
             --config-file=config/app-canary.yml -- \
             cat /usr/src/app/packages/server/api/dist/src/migration-manifest.json; exit"' \
             2>/dev/null || echo '[]')
