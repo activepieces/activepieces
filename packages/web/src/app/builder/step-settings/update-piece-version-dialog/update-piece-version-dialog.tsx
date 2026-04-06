@@ -1,12 +1,4 @@
-import {
-  FlowActionType,
-  FlowOperationType,
-  FlowTriggerType,
-  formErrors,
-  isNil,
-  PieceAction,
-  PieceTrigger,
-} from '@activepieces/shared';
+import { formErrors, PieceAction, PieceTrigger } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
@@ -30,7 +22,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { piecesHooks, pieceSelectorUtils, piecesApi } from '@/features/pieces';
+import { piecesHooks } from '@/features/pieces';
 
 import { useBuilderStateContext } from '../../builder-hooks';
 
@@ -144,10 +136,6 @@ const AdvancedForm: React.FC<AdvancedFormProps> = ({
   onBack,
 }) => {
   const pieceName = step.settings.pieceName;
-  const actionOrTriggerName =
-    step.type === FlowTriggerType.PIECE
-      ? step.settings.triggerName ?? ''
-      : step.settings.actionName ?? '';
 
   const { pieceVersions, isLoading } = piecesHooks.usePieceVersions(pieceName);
   const applyOperation = useBuilderStateContext(
@@ -216,77 +204,12 @@ const AdvancedForm: React.FC<AdvancedFormProps> = ({
   const { mutate: applyVersionChange, isPending: isApplyPending } = useMutation(
     {
       mutationFn: async ({ version }: FormSchema) => {
-        const piece = await piecesApi.get({ name: pieceName, version });
-        const changeType = changeVersionUtils.getVersionChangeType({
+        await changeVersionUtils.applyPieceVersionChange({
+          step,
+          targetVersion: version,
           currentVersion,
-          selectedVersion: version,
+          applyOperation,
         });
-
-        const actionOrTriggerDef =
-          step.type === FlowTriggerType.PIECE
-            ? piece.triggers[actionOrTriggerName]
-            : piece.actions[actionOrTriggerName];
-
-        if (isNil(actionOrTriggerDef)) {
-          throw new Error(
-            t(
-              'The selected version does not include the current action or trigger. Please choose a different version.',
-            ),
-          );
-        }
-
-        const input = changeVersionUtils.getInputAfterVersionChange({
-          versionChangeType: changeType,
-          props: actionOrTriggerDef.props,
-          currentInput: step.settings.input,
-        });
-
-        const valid = pieceSelectorUtils.isPieceStepInputValid({
-          props: actionOrTriggerDef.props,
-          auth: piece.auth,
-          input,
-          requireAuth: actionOrTriggerDef.requireAuth,
-        });
-
-        if (step.type === FlowTriggerType.PIECE) {
-          applyOperation({
-            type: FlowOperationType.UPDATE_TRIGGER,
-            request: {
-              ...step,
-              type: FlowTriggerType.PIECE,
-              valid,
-              settings: {
-                ...step.settings,
-                pieceVersion: version,
-                input,
-              },
-            },
-          });
-        } else {
-          applyOperation({
-            type: FlowOperationType.UPDATE_ACTION,
-            request: {
-              ...step,
-              type: FlowActionType.PIECE,
-              valid,
-              settings: {
-                ...step.settings,
-                pieceVersion: version,
-                input,
-              },
-            },
-          });
-        }
-
-        if (changeType === VersionChangeType.MINOR_OR_MAJOR) {
-          applyOperation({
-            type: FlowOperationType.UPDATE_SAMPLE_DATA_INFO,
-            request: {
-              stepName: step.name,
-              sampleDataSettings: undefined,
-            },
-          });
-        }
       },
       onSuccess: () => {
         onClose();
@@ -374,7 +297,11 @@ const AdvancedForm: React.FC<AdvancedFormProps> = ({
           <Button type="button" variant="outline" onClick={onClose}>
             {t('Cancel')}
           </Button>
-          <Button type="submit" loading={isApplyPending}>
+          <Button
+            type="submit"
+            loading={isApplyPending}
+            disabled={selectedVersion === currentVersion}
+          >
             {t('Apply')}
           </Button>
         </DialogFooter>

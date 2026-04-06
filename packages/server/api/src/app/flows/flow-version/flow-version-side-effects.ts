@@ -41,7 +41,6 @@ export const flowVersionSideEffects = (log: FastifyBaseLogger) => ({
 
 
 
-
 async function handleSampleDataDeletion(projectId: ProjectId, flowVersion: FlowVersion, operation: FlowOperationRequest, log: FastifyBaseLogger): Promise<void> {
     if (operation.type !== FlowOperationType.UPDATE_TRIGGER && operation.type !== FlowOperationType.DELETE_ACTION) {
         return

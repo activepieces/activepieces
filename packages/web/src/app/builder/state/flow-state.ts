@@ -48,7 +48,6 @@ export type FlowState = {
     flowVersion: FlowVersion,
     shouldReselectInitialStep?: boolean,
   ) => void;
-  waitForPendingFlowUpdates: () => Promise<void>;
   addOperationListener: (
     listener: (
       flowVersion: FlowVersion,
@@ -284,24 +283,6 @@ export const createFlowState = (
             : RightSideBarType.NONE,
         selectedBranchIndex: null,
       }));
-    },
-    waitForPendingFlowUpdates: () => {
-      return new Promise((resolve, reject) => {
-        const startTime = Date.now();
-        const timeoutMs = 30_000;
-        const tick = () => {
-          if (!get().saving) {
-            resolve();
-            return;
-          }
-          if (Date.now() - startTime >= timeoutMs) {
-            reject(new Error('Timeout waiting for flow saving to finish'));
-            return;
-          }
-          setTimeout(tick, 300);
-        };
-        tick();
-      });
     },
     operationListeners: [],
     addOperationListener: (

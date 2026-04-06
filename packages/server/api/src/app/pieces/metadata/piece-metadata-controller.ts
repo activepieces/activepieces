@@ -92,7 +92,6 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
                 platformId: req.principal.platform.id,
                 projectId: req.projectId,
             })
-           
         },
     )
 

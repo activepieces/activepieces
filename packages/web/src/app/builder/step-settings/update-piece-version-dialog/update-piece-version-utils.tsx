@@ -1,10 +1,19 @@
 import { OAuth2Props, PiecePropertyMap } from '@activepieces/pieces-framework';
+import {
+  FlowActionType,
+  FlowOperationRequest,
+  FlowOperationType,
+  FlowTriggerType,
+  isNil,
+  PieceAction,
+  PieceTrigger,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import { AlertTriangle, ArrowUp, Info } from 'lucide-react';
 import semver from 'semver';
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { formUtils } from '@/features/pieces';
+import { formUtils, pieceSelectorUtils, piecesApi } from '@/features/pieces';
 
 function getVersionChangeType({
   currentVersion,
@@ -117,9 +126,7 @@ export function MinorOrMajorSelectionAlert() {
   return (
     <Alert variant="warning">
       <AlertTriangle className="size-4" />
-      <AlertDescription>
-        {t('MajorUpgradeNote')}
-      </AlertDescription>
+      <AlertDescription>{t('MajorUpgradeNote')}</AlertDescription>
     </Alert>
   );
 }
@@ -148,11 +155,105 @@ export function PatchDowngradeInfoAlert() {
   );
 }
 
+async function applyPieceVersionChange({
+  step,
+  targetVersion,
+  currentVersion,
+  applyOperation,
+}: {
+  step: PieceAction | PieceTrigger;
+  targetVersion: string;
+  currentVersion: string;
+  applyOperation: (operation: FlowOperationRequest) => void;
+}) {
+  const pieceName = step.settings.pieceName;
+  const actionOrTriggerName =
+    step.type === FlowTriggerType.PIECE
+      ? step.settings.triggerName ?? ''
+      : step.settings.actionName ?? '';
+
+  const piece = await piecesApi.get({
+    name: pieceName,
+    version: targetVersion,
+  });
+  const changeType = getVersionChangeType({
+    currentVersion,
+    selectedVersion: targetVersion,
+  });
+
+  const actionOrTriggerDef =
+    step.type === FlowTriggerType.PIECE
+      ? piece.triggers[actionOrTriggerName]
+      : piece.actions[actionOrTriggerName];
+
+  if (isNil(actionOrTriggerDef)) {
+    throw new Error(
+      t(
+        'The selected version does not include the current action or trigger. Please choose a different version.',
+      ),
+    );
+  }
+
+  const input = getInputAfterVersionChange({
+    versionChangeType: changeType,
+    props: actionOrTriggerDef.props,
+    currentInput: step.settings.input,
+  });
+
+  const valid = pieceSelectorUtils.isPieceStepInputValid({
+    props: actionOrTriggerDef.props,
+    auth: piece.auth,
+    input,
+    requireAuth: actionOrTriggerDef.requireAuth,
+  });
+
+  if (step.type === FlowTriggerType.PIECE) {
+    applyOperation({
+      type: FlowOperationType.UPDATE_TRIGGER,
+      request: {
+        ...step,
+        type: FlowTriggerType.PIECE,
+        valid,
+        settings: {
+          ...step.settings,
+          pieceVersion: targetVersion,
+          input,
+        },
+      },
+    });
+  } else {
+    applyOperation({
+      type: FlowOperationType.UPDATE_ACTION,
+      request: {
+        ...step,
+        type: FlowActionType.PIECE,
+        valid,
+        settings: {
+          ...step.settings,
+          pieceVersion: targetVersion,
+          input,
+        },
+      },
+    });
+  }
+
+  if (changeType === VersionChangeType.MINOR_OR_MAJOR) {
+    applyOperation({
+      type: FlowOperationType.UPDATE_SAMPLE_DATA_INFO,
+      request: {
+        stepName: step.name,
+        sampleDataSettings: undefined,
+      },
+    });
+  }
+}
+
 export const changeVersionUtils = {
   getVersionChangeType,
   getInputAfterVersionChange,
   getLatestMinorOrMajorUpgrade,
   getLatestVersion,
+  applyPieceVersionChange,
 };
 
 export enum VersionChangeType {

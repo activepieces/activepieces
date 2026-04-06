@@ -860,13 +860,10 @@ async function createNewDraftIfVersionIsPublished({
         versionId: undefined,
     })
     if (lastVersion.state === FlowVersionState.LOCKED) {
-        const lastVersionWithArtifacts = await flowVersionService(log).getFlowVersionOrThrow({
-            flowId,
-            versionId: undefined,
-        })
+        const lockedVersion = lastVersion
         lastVersion = await flowVersionService(log).createEmptyVersion(flowId, {
-            displayName: lastVersionWithArtifacts.displayName,
-            notes: lastVersionWithArtifacts.notes,
+            displayName: lockedVersion.displayName,
+            notes: lockedVersion.notes,
         })
         lastVersion = await flowVersionService(log).applyOperation({
             userId,
@@ -875,7 +872,7 @@ async function createNewDraftIfVersionIsPublished({
             flowVersion: lastVersion,
             userOperation: {
                 type: FlowOperationType.IMPORT_FLOW,
-                request: lastVersionWithArtifacts,
+                request: lockedVersion,
             },
         })
     }

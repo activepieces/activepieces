@@ -211,7 +211,7 @@ function cleanOperation(operation: FlowOperationRequest): FlowOperationRequest {
             settings: {
                 ...step.settings,
                 sampleData: {
-                    ...(step.settings.sampleData),
+                    ...step.settings.sampleData,
                     ...clearSampleData,
                 },
             },
