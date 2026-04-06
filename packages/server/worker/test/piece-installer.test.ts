@@ -10,12 +10,19 @@ import type { Logger } from 'pino'
 // Module-level variable updated per test so the vi.mock factory can reference it
 let testWorkspace = ''
 
-const mockInstall = vi.fn()
+const mockBunInstall = vi.fn()
+const mockPnpmInstall = vi.fn()
+let currentPm: 'bun' | 'pnpm' = 'bun'
 
-vi.mock('../src/lib/cache/code/bun-runner', () => ({
-    bunRunner: () => ({
-        install: mockInstall,
-    }),
+vi.mock('../src/lib/cache/code/package-manager-runner', () => ({
+    get packageManagerRunner() {
+        return () => ({
+            install: currentPm === 'bun' ? mockBunInstall : mockPnpmInstall,
+        })
+    },
+    get packageManagerName() {
+        return currentPm
+    },
 }))
 
 vi.mock('../src/lib/config/worker-settings', () => ({
@@ -67,18 +74,22 @@ const fakeLog = {
 // REGISTRY pieces don't call apiClient.getPieceArchive so an empty object suffices
 const fakeApiClient = {} as never
 
-beforeEach(async () => {
-    testWorkspace = join(tmpdir(), `piece-installer-test-${randomUUID()}`)
-    await mkdir(testWorkspace, { recursive: true })
-    vi.clearAllMocks()
-})
+describe.each(['bun', 'pnpm'] as const)('pieceInstaller (pm=%s)', (pm) => {
+    let mockInstall: typeof mockBunInstall
 
-afterEach(async () => {
-    const { rm } = await import('node:fs/promises')
-    await rm(testWorkspace, { recursive: true, force: true })
-})
+    beforeEach(async () => {
+        testWorkspace = join(tmpdir(), `piece-installer-test-${randomUUID()}`)
+        await mkdir(testWorkspace, { recursive: true })
+        currentPm = pm
+        mockInstall = pm === 'bun' ? mockBunInstall : mockPnpmInstall
+        vi.clearAllMocks()
+    })
 
-describe('pieceInstaller', () => {
+    afterEach(async () => {
+        const { rm } = await import('node:fs/promises')
+        await rm(testWorkspace, { recursive: true, force: true })
+    })
+
     it('batch install succeeds — all pieces marked ready', async () => {
         const piece1 = makePiece('@activepieces/piece-a')
         const piece2 = makePiece('@activepieces/piece-b')
@@ -147,7 +158,7 @@ describe('pieceInstaller', () => {
         expect(await pathExists(pieceDirPath(piece))).toBe(false)
     })
 
-    it('piece already installed — bun install never called', async () => {
+    it('piece already installed — install never called', async () => {
         const piece = makePiece('@activepieces/piece-cached')
         const pieceDir = pieceDirPath(piece)
 
@@ -160,7 +171,7 @@ describe('pieceInstaller', () => {
         expect(mockInstall).not.toHaveBeenCalled()
     })
 
-    it('individual fallback always passes --filter path regardless of includeFilters', async () => {
+    it('individual fallback always passes filter path regardless of includeFilters', async () => {
         const piece1 = makePiece('@activepieces/piece-filter-a')
         const piece2 = makePiece('@activepieces/piece-filter-b')
         const installer = pieceInstaller(fakeLog, fakeApiClient)
@@ -178,7 +189,7 @@ describe('pieceInstaller', () => {
         // Batch call uses empty filtersPath because includeFilters is false
         expect(mockInstall.mock.calls[0]?.[0]).toMatchObject({ filtersPath: [] })
 
-        // Individual calls must always include the --filter path (sequential order)
+        // Individual calls must always include the filter path (sequential order)
         expect(mockInstall.mock.calls[1]?.[0]).toMatchObject({
             filtersPath: [expect.stringContaining(`${piece1.pieceName}-${piece1.pieceVersion}`)],
         })

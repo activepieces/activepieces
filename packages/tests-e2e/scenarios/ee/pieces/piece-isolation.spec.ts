@@ -8,6 +8,10 @@ import { test, expect } from '../../../fixtures';
  * install failure does NOT prevent a standard Webhook flow from succeeding.
  *
  * Requires a platform admin token (EE only).
+ *
+ * This test covers both bun and npm package managers (controlled by
+ * AP_PACKAGE_MANAGER env var on the server). CI runs this suite once per
+ * package manager via matrix strategy.
  */
 test.describe('Piece isolation — EE', () => {
   test('broken custom piece does not prevent webhook flow from running', async ({ page, automationsPage, builderPage, request }) => {

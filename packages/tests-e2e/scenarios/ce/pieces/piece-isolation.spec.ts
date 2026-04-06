@@ -7,6 +7,10 @@ import { test, expect } from '../../../fixtures';
  * verifies the worker remains healthy by successfully running a Webhook flow.
  * A broken piece published with workspace:* dependencies must not prevent other
  * flows from executing.
+ *
+ * This test covers both bun and npm package managers (controlled by
+ * AP_PACKAGE_MANAGER env var on the server). CI runs this suite once per
+ * package manager via matrix strategy.
  */
 test.describe('Piece isolation — CE', () => {
   test('worker stays healthy after piece sync and can execute a webhook flow', async ({ page, automationsPage, builderPage, request }) => {

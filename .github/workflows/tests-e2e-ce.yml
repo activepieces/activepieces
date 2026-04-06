@@ -31,6 +31,10 @@ jobs:
   test-e2e-ce:
     runs-on: depot-ubuntu-24.04-4
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        package-manager: [bun, pnpm]
     
     services:
       postgres:
@@ -91,19 +95,20 @@ jobs:
           npm run test:e2e
         env:
           CI: true
+          AP_PACKAGE_MANAGER: ${{ matrix.package-manager }}
           
       - name: Upload Playwright Report
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: playwright-report-ce
+          name: playwright-report-ce-${{ matrix.package-manager }}
           path: packages/tests-e2e/playwright-report/
           retention-days: 10
-          
+
       - name: Upload Test Results
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: test-results-ce
+          name: test-results-ce-${{ matrix.package-manager }}
           path: packages/tests-e2e/test-results/
           retention-days: 10
