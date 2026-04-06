@@ -78,15 +78,21 @@ const FILE_ICONS: Record<Attachment['type'], string> = {
 
 const ANTHROPIC_KEY = import.meta.env.VITE_ANTHROPIC_API_KEY || '';
 
-const IMAGE_KEYWORDS = [
+const IMAGE_KEYWORDS_EXACT = [
   'صورة', 'صوره', 'ارسم', 'ارسملي', 'اعمل صور', 'ولد صور', 'اعملي صور',
-  'generate image', 'draw', 'create image', 'make image', 'picture of',
-  'generate a', 'create a photo', 'make a photo', 'صمم', 'صمملي',
+  'picture of', 'صمم', 'صمملي', 'draw',
+];
+
+const IMAGE_VERB_NOUN_PAIRS: [string[], string[]][] = [
+  [['generate', 'create', 'make', 'produce', 'اعمل', 'اعملي', 'ولد', 'سوي', 'سولي'], ['image', 'photo', 'picture', 'pic', 'صورة', 'صوره', 'صور']],
 ];
 
 const isImageRequest = (text: string) => {
   const lower = text.toLowerCase();
-  return IMAGE_KEYWORDS.some((kw) => lower.includes(kw));
+  if (IMAGE_KEYWORDS_EXACT.some((kw) => lower.includes(kw))) return true;
+  return IMAGE_VERB_NOUN_PAIRS.some(([verbs, nouns]) =>
+    verbs.some((v) => lower.includes(v)) && nouns.some((n) => lower.includes(n)),
+  );
 };
 
 const getTime = () =>
@@ -121,11 +127,10 @@ const keyframes = `
   @keyframes spin {
     to { transform: rotate(360deg); }
   }
-  @keyframes shine {
-    0%   { background-position: -100% 0; }
-    100% { background-position: 200% 0; }
-  }
-  .thinking-label { background: linear-gradient(90deg, var(--muted-foreground) 0%, color-mix(in srgb, var(--muted-foreground) 60%, transparent) 40%, color-mix(in srgb, var(--muted-foreground) 30%, transparent) 50%, color-mix(in srgb, var(--muted-foreground) 60%, transparent) 60%, var(--muted-foreground) 100%); background-size: 200% 100%; -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: shine 2s ease-in-out infinite; }
+
+  .thinking-label { background: linear-gradient(90deg, var(--muted-foreground) 0%, color-mix(in srgb, var(--muted-foreground) 60%, transparent) 40%, color-mix(in srgb, var(--muted-foreground) 30%, transparent) 50%, color-mix(in srgb, var(--muted-foreground) 60%, transparent) 60%, var(--muted-foreground) 100%); background-size: 200% 100%; -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: shineLtr 2s linear infinite; }
+  @keyframes shineLtr { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
+  .img-gen-label { background: linear-gradient(90deg, var(--muted-foreground) 0%, color-mix(in srgb, var(--muted-foreground) 60%, transparent) 40%, color-mix(in srgb, var(--muted-foreground) 30%, transparent) 50%, color-mix(in srgb, var(--muted-foreground) 60%, transparent) 60%, var(--muted-foreground) 100%); background-size: 200% 100%; -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: shineLtr 2s linear infinite; }
   @keyframes blink {
     0%, 100% { opacity: 1; }
     50%       { opacity: 0; }
@@ -134,6 +139,8 @@ const keyframes = `
   .ai-msg-actions { opacity: 0; transition: opacity 0.15s; }
   .ai-msg:hover .ai-msg-actions { opacity: 1; }
   .thinking-spinner { width: 16px; height: 16px; border: 2px solid var(--border); border-top-color: var(--muted-foreground); border-radius: 50%; animation: spin 0.8s linear infinite; flex-shrink: 0; }
+  @keyframes shimmer { 0% { background-position: 200% 200%; } 100% { background-position: -100% -100%; } }
+  .img-shimmer { background-color: var(--muted); background-image: linear-gradient(135deg, transparent 35%, color-mix(in srgb, var(--muted-foreground) 14%, var(--muted)) 50%, transparent 65%); background-size: 300% 300%; background-repeat: no-repeat; animation: shimmer 1.4s linear infinite; }
   .cursor { display: inline-block; width: 2px; height: 14px; background: currentColor; margin-left: 2px; vertical-align: middle; animation: blink 0.7s infinite; }
   .openai-icon { color: var(--foreground); }
   .model-btn { display: flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 8px; border: none; background: transparent; cursor: pointer; font-family: inherit; font-size: 12px; color: var(--muted-foreground); transition: background 0.15s, color 0.15s; outline: none; white-space: nowrap; }
@@ -376,7 +383,7 @@ export function AIChatBox({
       if (wantsImage) {
         setMessages((prev) =>
           prev.map((m) =>
-            m.id === msgId ? { ...m, text: 'Generating image...' } : m,
+            m.id === msgId ? { ...m, text: '' } : m,
           ),
         );
 
@@ -1374,29 +1381,31 @@ export function AIChatBox({
                       onMouseUp={handleTextSelect}
                     >
                       {msg.images && msg.images.length > 0 && (
-                        <div className="flex gap-1.5 flex-wrap mb-2">
-                          {msg.images.map((src, i) => (
-                            <div key={i} className="relative">
-                              <img
-                                src={src}
-                                alt="Generated image"
-                                referrerPolicy="no-referrer"
-                                className="chat-img rounded-xl object-cover block bg-muted"
-                                style={{ width: 400, height: 400, maxWidth: '100%' }}
-                                onClick={() => setLightboxSrc(src)}
-                                onLoad={() => finishImgProgress(msg.id)}
-                                onError={() => finishImgProgress(msg.id)}
-                              />
-                              {imgProgress[msg.id] !== undefined && imgProgress[msg.id] < 100 && (
-                                <div className="absolute inset-0 flex flex-col items-center justify-center rounded-xl bg-muted z-10">
-                                  <div className="thinking-spinner" style={{ width: 24, height: 24 }} />
-                                  <div className="text-sm text-muted-foreground mt-3">
-                                    Generating image...
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          ))}
+                        <div className="mb-2">
+                          {imgProgress[msg.id] !== undefined && imgProgress[msg.id] < 100 && (
+                            <span className="img-gen-label text-base font-medium mb-2 inline-block select-none">
+                              Generating image...
+                            </span>
+                          )}
+                          <div className="flex gap-1.5 flex-wrap">
+                            {msg.images.map((src, i) => (
+                              <div key={i} className="relative">
+                                <img
+                                  src={src}
+                                  alt="Generated image"
+                                  referrerPolicy="no-referrer"
+                                  className="chat-img rounded-xl object-cover block bg-muted"
+                                  style={{ width: 400, height: 400, maxWidth: '100%' }}
+                                  onClick={() => setLightboxSrc(src)}
+                                  onLoad={() => finishImgProgress(msg.id)}
+                                  onError={() => finishImgProgress(msg.id)}
+                                />
+                                {imgProgress[msg.id] !== undefined && imgProgress[msg.id] < 100 && (
+                                  <div className="absolute inset-0 rounded-xl img-shimmer z-10" />
+                                )}
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       )}
                       <p className="m-0 text-base leading-relaxed text-accent-foreground dark:text-neutral-300 whitespace-pre-wrap">
