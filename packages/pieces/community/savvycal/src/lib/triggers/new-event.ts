@@ -148,7 +148,8 @@ export const newEventTrigger = createTrigger({
 
   async test(context) {
     const selectedTypes = context.propsValue.event_types as string[] | undefined;
-    const hasEventTypes = !selectedTypes || selectedTypes.length === 0 || selectedTypes.some((t) => t.startsWith('event.'));
+    const eventTypes = selectedTypes?.filter((t) => t.startsWith('event.'));
+    const hasEventTypes = !selectedTypes || selectedTypes.length === 0 || (eventTypes && eventTypes.length > 0);
     if (!hasEventTypes) return [];
 
     const selectedLinkIds = context.propsValue.link_ids as string[] | undefined;
@@ -156,6 +157,9 @@ export const newEventTrigger = createTrigger({
     if (selectedLinkIds && selectedLinkIds.length === 1) {
       queryParams['link_id'] = selectedLinkIds[0];
     }
+    const onlyCanceled = eventTypes && eventTypes.length > 0 && eventTypes.every((t) => t === 'event.canceled' || t === 'event.declined');
+    if (onlyCanceled) queryParams['state'] = 'canceled';
+
     const response = await savvyCalApiCall<{ entries: SavvyCalEvent[] }>({
       token: context.auth.secret_text,
       method: HttpMethod.GET,
@@ -165,6 +169,7 @@ export const newEventTrigger = createTrigger({
     const events = selectedLinkIds && selectedLinkIds.length > 1
       ? response.body.entries.filter((e) => selectedLinkIds.includes(e.link?.id ?? ''))
       : response.body.entries;
-    return events.slice(0, 5).map((e) => ({ event_type: 'event.created', ...flattenEvent(e) }));
+    const inferredType = eventTypes && eventTypes.length === 1 ? eventTypes[0] : 'event.created';
+    return events.slice(0, 5).map((e) => ({ event_type: inferredType, ...flattenEvent(e) }));
   },
 });

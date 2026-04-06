@@ -56,7 +56,6 @@
   "Only search events starting before this date.": "Only search events starting before this date.",
   "Authorization headers are injected automatically from your connection.": "Authorization headers are injected automatically from your connection.",
   "Enable for files like PDFs, images, etc.": "Enable for files like PDFs, images, etc.",
-  "All": "All",
   "Confirmed": "Confirmed",
   "Canceled": "Canceled",
   "GET": "GET",

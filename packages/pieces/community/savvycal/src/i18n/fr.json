@@ -45,7 +45,6 @@
   "Maximum number of events to return. Leave empty to return all matching events.": "Nombre maximum d'événements à retourner. Laisser vide pour retourner tous les événements correspondants.",
   "Event Types": "Types d'événements",
   "Select which event types to trigger on. Leave empty to trigger on all event types.": "Sélectionnez les types d'événements sur lesquels se déclencher. Laisser vide pour se déclencher sur tous les types.",
-  "All": "Tous",
   "Confirmed": "Confirmé",
   "Canceled": "Annulé",
   "Event Created": "Événement créé",
