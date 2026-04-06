@@ -8,6 +8,8 @@ on:
 jobs:
   weekly-release:
     runs-on: ubuntu-24.04
+    environment:
+      name: release
     steps:
       - uses: actions/checkout@v4
         with:
