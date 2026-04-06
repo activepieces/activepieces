@@ -15,5 +15,5 @@ export type InterceptorResult =
 
 export type JobInterceptor = {
     preDispatch(params: { jobId: string, jobData: JobData, job: Job, log: FastifyBaseLogger }): Promise<InterceptorResult>
-    onJobFinished(params: { jobId: string, jobData: JobData, log: FastifyBaseLogger }): Promise<void>
+    onJobFinished(params: { jobId: string, jobData: JobData, failed: boolean, log: FastifyBaseLogger }): Promise<void>
 }

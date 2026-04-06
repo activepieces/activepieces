@@ -212,7 +212,7 @@ export const BuilderHeader = () => {
         title={titleContent}
         rightContent={rightContent}
         leftContent={leftContent}
-        className="select-none"
+        className="select-none border-b"
       />
     </div>
   );

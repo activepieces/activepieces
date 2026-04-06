@@ -20,9 +20,7 @@ vi.mock('../src/lib/cache/code/package-manager-runner', () => ({
             install: currentPm === 'bun' ? mockBunInstall : mockPnpmInstall,
         })
     },
-    get packageManagerName() {
-        return currentPm
-    },
+    getPackageManagerName: () => currentPm,
 }))
 
 vi.mock('../src/lib/config/worker-settings', () => ({

@@ -19,7 +19,7 @@ import { Logger } from 'pino'
 import writeFileAtomic from 'write-file-atomic'
 import { workerSettings } from '../../config/worker-settings'
 import { getGlobalCacheCommonPath, getGlobalCachePathLatestVersion } from '../cache-paths'
-import { packageManagerName, packageManagerRunner } from '../code/package-manager-runner'
+import { getPackageManagerName, packageManagerRunner } from '../code/package-manager-runner'
 
 const tracer = trace.getTracer('piece-installer')
 
@@ -105,7 +105,7 @@ async function installPieces(rootWorkspace: string, pieces: PiecePackage[], incl
                         log.info({
                             rootWorkspace,
                             piecesCount: piecesToInstall.length,
-                        }, `[pieceInstaller] Installed registry pieces using ${packageManagerName}`)
+                        }, `[pieceInstaller] Installed registry pieces using ${getPackageManagerName()}`)
                         return
                     }
 
@@ -133,7 +133,7 @@ async function installPieces(rootWorkspace: string, pieces: PiecePackage[], incl
                     log.info({
                         rootWorkspace,
                         piecesCount: piecesToInstall.length,
-                    }, `[pieceInstaller] Installed registry pieces using ${packageManagerName} (individual fallback)`)
+                    }, `[pieceInstaller] Installed registry pieces using ${getPackageManagerName()} (individual fallback)`)
                 }
                 finally {
                     span.end()
@@ -226,7 +226,7 @@ async function createRootPackageJson({ path }: { path: string }): Promise<void> 
         ],
     }, null, 2), 'utf8')
 
-    if (packageManagerName === 'pnpm') {
+    if (getPackageManagerName() === 'pnpm') {
         await writeFileAtomic(
             join(path, 'pnpm-workspace.yaml'),
             'packages:\n  - \'pieces/**\'\n',

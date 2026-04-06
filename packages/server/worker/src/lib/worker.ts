@@ -42,8 +42,9 @@ let sandboxManagers: SandboxManager[] = []
 export const worker = {
     async start({ apiUrl, socketUrl, workerToken, withHealthServer = false }: WorkerStartParams): Promise<void> {
         const platformIdForDedicatedWorker = system.get(WorkerSystemProp.PLATFORM_ID_FOR_DEDICATED_WORKER)
+        const isCanaryWorker = system.getBoolean(WorkerSystemProp.IS_CANARY_WORKER) ?? false
         socket = io(socketUrl.url, {
-            auth: { token: workerToken, workerId, platformIdForDedicatedWorker },
+            auth: { token: workerToken, workerId, platformIdForDedicatedWorker, isCanaryWorker },
             path: socketUrl.path,
             transports: ['websocket'],
             reconnection: true,
@@ -146,7 +147,6 @@ async function pollAndExecute(apiClient: WorkerToApiContract, sbManager: Sandbox
             executeJob(apiClient, job, sbManager),
         )
 
-        clearInterval(lockExtensionInterval)
 
         const { error: completeError } = await tryCatch(() =>
             apiClient.completeJob({
@@ -162,6 +162,8 @@ async function pollAndExecute(apiClient: WorkerToApiContract, sbManager: Sandbox
                 response: result?.kind === JobResultKind.SYNCHRONOUS ? result.response : undefined,
             }),
         )
+
+        clearInterval(lockExtensionInterval)
 
         if (completeError) {
             workerLog.error({ error: completeError, jobId: job.jobId }, 'Failed to complete job')

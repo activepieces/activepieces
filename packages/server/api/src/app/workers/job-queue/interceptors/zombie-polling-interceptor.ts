@@ -1,15 +1,17 @@
-import { isNil, JobData, PollingJobData, WorkerJobType } from '@activepieces/shared'
+import { isNil, JobData, PollingJobData, RenewWebhookJobData, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { triggerSourceRepo } from '../../../trigger/trigger-source/trigger-source-service'
 import { InterceptorResult, InterceptorVerdict, JobInterceptor } from '../job-interceptor'
 import { jobQueue } from '../job-queue'
 
+const ZOMBIE_REPEATING_JOB_TYPES = [WorkerJobType.EXECUTE_POLLING, WorkerJobType.RENEW_WEBHOOK]
+
 export const zombiePollingInterceptor: JobInterceptor = {
     async preDispatch({ jobData, log }): Promise<InterceptorResult> {
-        if (jobData.jobType !== WorkerJobType.EXECUTE_POLLING) {
+        if (!ZOMBIE_REPEATING_JOB_TYPES.includes(jobData.jobType)) {
             return { verdict: InterceptorVerdict.ALLOW }
         }
-        const { flowVersionId } = jobData as PollingJobData
+        const { flowVersionId } = jobData as PollingJobData | RenewWebhookJobData
         // An active trigger source exists only when the flow is enabled and this exact version is current.
         // If soft-deleted (disabled or re-published to a new version), findOneBy returns null.
         const activeTriggerSource = await triggerSourceRepo().findOneBy({ flowVersionId })
@@ -21,7 +23,7 @@ export const zombiePollingInterceptor: JobInterceptor = {
         return { verdict: InterceptorVerdict.DISCARD }
     },
 
-    async onJobFinished(_params: { jobId: string, jobData: JobData, log: FastifyBaseLogger }): Promise<void> {
+    async onJobFinished(_params: { jobId: string, jobData: JobData, failed: boolean, log: FastifyBaseLogger }): Promise<void> {
         // Nothing to release
     },
 }

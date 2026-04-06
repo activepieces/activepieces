@@ -1,13 +1,17 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { linearAuth } from '../..';
 import { makeClient } from '../common/client';
+import { props } from '../common/props';
 
 export const linearUpdatedProject = createTrigger({
   auth: linearAuth,
   name: 'updated_project',
   displayName: 'Updated Project',
   description: 'Triggers when an existing Linear project is updated',
-  props: {},
+  props: {
+    team_ids: props.team_ids(false),
+    project_statuses: props.project_statuses(false),
+  },
   sampleData: {
     action: 'update',
     data: {
@@ -15,6 +19,7 @@ export const linearUpdatedProject = createTrigger({
       name: 'Test project updated',
       description: 'This is a test project (updated)',
       state: 'started',
+      statusName: 'In Progress',
       color: '#000000',
       icon: null,
       startDate: '2023-09-05',
@@ -69,14 +74,38 @@ export const linearUpdatedProject = createTrigger({
     }
   },
   async run(context) {
-    const body = context.payload.body as { action: string; data: unknown };
-    if (body.action === 'update') {
-      return [body.data];
+    const body = context.payload.body as ProjectUpdatePayload;
+
+    if (body.action !== 'update') return [];
+
+    const selectedTeamIds = context.propsValue.team_ids ?? [];
+    const selectedStatuses = context.propsValue.project_statuses ?? [];
+
+    if (selectedTeamIds.length > 0) {
+      const projectTeamIds = body.data.teams?.map((t) => t.id) ?? [];
+      if (!selectedTeamIds.some((id) => projectTeamIds.includes(id))) {
+        return [];
+      }
     }
-    return [];
+
+    if (selectedStatuses.length > 0 && !selectedStatuses.includes(body.data.state)) {
+      return [];
+    }
+
+    return [body.data];
   },
 });
 
 interface WebhookInformation {
   webhookId: string;
+}
+
+interface ProjectUpdatePayload {
+  action: string;
+  data: {
+    state: string;
+    teams?: Array<{ id: string }>;
+    [key: string]: unknown;
+  };
+  updatedFrom: Record<string, unknown>;
 }

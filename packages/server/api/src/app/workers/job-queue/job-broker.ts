@@ -7,7 +7,7 @@ import { redisConnections } from '../../database/redis-connections'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { engineResponseWatcher } from '../engine-response-watcher'
-import { getPlatformQueueName, QueueName } from '../job'
+import { QueueName } from '../job'
 import { jobMigrations } from '../migrations/job-data-migrations'
 import { rateLimiterInterceptor } from './interceptors/rate-limiter-interceptor'
 import { zombiePollingInterceptor } from './interceptors/zombie-polling-interceptor'
@@ -121,7 +121,6 @@ async function tryDequeue(worker: BullMQWorker, queueName: string, log: FastifyB
     return {
         jobId,
         jobData: migratedData,
-        timeoutInSeconds: 600,
         attempsStarted: job.attemptsMade,
         engineToken,
         token,
@@ -137,7 +136,7 @@ async function returnJobToQueue(jobId: string, token: string, queueName: string,
     const jobData = JobData.parse(job.data)
     await job.moveToDelayed(Date.now() + 100, token)
     for (const interceptor of interceptors) {
-        const { error } = await tryCatch(() => interceptor.onJobFinished({ jobId, jobData, log }))
+        const { error } = await tryCatch(() => interceptor.onJobFinished({ jobId, jobData, failed: false, log }))
         if (error) {
             log.error({ jobId, error: String(error) }, '[jobBroker#returnJobToQueue] interceptor cleanup failed')
         }
@@ -151,7 +150,7 @@ async function runInterceptors({ jobId, jobData, job, log }: { jobId: string, jo
         const result = await interceptor.preDispatch({ jobId, jobData, job, log })
         if (result.verdict === InterceptorVerdict.DISCARD) {
             for (const passedInterceptor of passed) {
-                const { error } = await tryCatch(() => passedInterceptor.onJobFinished({ jobId, jobData, log }))
+                const { error } = await tryCatch(() => passedInterceptor.onJobFinished({ jobId, jobData, failed: false, log }))
                 if (error) {
                     log.error({ jobId, error: String(error) }, '[jobBroker] Failed to clean up interceptor on discard')
                 }
@@ -160,7 +159,7 @@ async function runInterceptors({ jobId, jobData, job, log }: { jobId: string, jo
         }
         if (result.verdict === InterceptorVerdict.REJECT) {
             for (const passedInterceptor of passed) {
-                const { error } = await tryCatch(() => passedInterceptor.onJobFinished({ jobId, jobData, log }))
+                const { error } = await tryCatch(() => passedInterceptor.onJobFinished({ jobId, jobData, failed: false, log }))
                 if (error) {
                     log.error({ jobId, error: String(error) }, '[jobBroker] Failed to clean up interceptor on reject')
                 }
@@ -190,8 +189,7 @@ export const jobBroker = (log: FastifyBaseLogger) => ({
         log.info('[jobBroker] Job broker initialized')
     },
 
-    async poll(platformId?: string): Promise<ConsumeJobRequest | null> {
-        const queueName = platformId ? getPlatformQueueName(platformId) : QueueName.WORKER_JOBS
+    async poll(queueName: string = QueueName.WORKER_JOBS): Promise<ConsumeJobRequest | null> {
         const worker = await ensureBullMQWorker(queueName, log)
         const dispatcher = ensureDispatcher(queueName, worker, log)
         return dispatcher.poll()
@@ -252,8 +250,9 @@ export const jobBroker = (log: FastifyBaseLogger) => ({
             }
         }
 
+        const failed = input.status === EngineResponseStatus.INTERNAL_ERROR || !isNil(error)
         for (const interceptor of interceptors) {
-            const { error: interceptorError } = await tryCatch(() => interceptor.onJobFinished({ jobId: input.jobId, jobData, log }))
+            const { error: interceptorError } = await tryCatch(() => interceptor.onJobFinished({ jobId: input.jobId, jobData, failed, log }))
             if (interceptorError) {
                 log.error({ jobId: input.jobId, error: String(interceptorError) }, '[jobBroker] Interceptor onJobFinished failed')
             }
