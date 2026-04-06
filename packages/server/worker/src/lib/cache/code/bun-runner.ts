@@ -11,6 +11,7 @@ export const bunRunner = (log: Logger) => ({
         const args = [
             'install',
             '--ignore-scripts',
+            '--linker=hoisted',
             ...filterArgs,
         ]
         await fileSystemUtils.threadSafeMkdir(path)
