@@ -22,7 +22,7 @@ export async function cannyRequest<T = unknown>({
       'Content-Type': 'application/json',
     },
     body: {
-      apiKey,
+      apiKey: apiKey.trim(),
       ...body,
     },
   });
