@@ -30,7 +30,7 @@ function collectFieldIdsFromFilters(flowVersion: FlowVersion): string[] {
         const input = step.settings?.input as Record<string, unknown> | undefined
         const filters = input?.filters as Record<string, unknown> | undefined
         const filtersArray = filters?.filters as { field?: { id?: string } }[] | undefined
-        if (!filtersArray) {
+        if (!Array.isArray(filtersArray)) {
             return
         }
 
@@ -82,7 +82,7 @@ export const migrateV18TablesFieldIds: Migration = {
             const input = step.settings?.input as Record<string, unknown> | undefined
             const filters = input?.filters as Record<string, unknown> | undefined
             const filtersArray = filters?.filters as { field?: { id?: string, type?: string, name?: string } }[] | undefined
-            if (!filtersArray) {
+            if (!Array.isArray(filtersArray)) {
                 return {
                     ...step,
                     settings: {

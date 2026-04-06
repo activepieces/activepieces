@@ -1,13 +1,14 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { umamiAuth } from '../auth';
+import { umamiAuth, UmamiAuthValue } from '../auth';
 import { umamiApiCall, umamiCommon } from '../common';
 
 export const getPageviews = createAction({
   auth: umamiAuth,
   name: 'get_pageviews',
   displayName: 'Get Pageviews',
-  description: 'Returns pageview and session counts over time, broken down by hour, day, week, month, or year.',
+  description:
+    'Returns pageview and session counts over time, broken down by hour, day, week, month, or year.',
   props: {
     websiteId: umamiCommon.websiteDropdown,
     startDate: umamiCommon.dateRange.startDate,
@@ -29,19 +30,21 @@ export const getPageviews = createAction({
     }),
     timezone: Property.ShortText({
       displayName: 'Timezone',
-      description: 'Timezone for date grouping, e.g. Europe/Paris or America/New_York. Defaults to UTC.',
+      description:
+        'Timezone for date grouping, e.g. Europe/Paris or America/New_York. Defaults to UTC.',
       required: false,
       defaultValue: 'UTC',
     }),
   },
   async run(context) {
-    const { websiteId, startDate, endDate, unit, timezone } = context.propsValue;
+    const { websiteId, startDate, endDate, unit, timezone } =
+      context.propsValue;
 
     const response = await umamiApiCall<{
       pageviews: { x: string; y: number }[];
       sessions: { x: string; y: number }[];
     }>({
-      auth: context.auth,
+      auth: context.auth as UmamiAuthValue,
       method: HttpMethod.GET,
       path: `/websites/${websiteId}/pageviews`,
       queryParams: {

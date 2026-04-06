@@ -7,6 +7,7 @@ import {
 } from '@activepieces/pieces-framework';
 import {
   ApFlagId,
+  AppConnectionScope,
   AppConnectionType,
   AppConnectionWithoutSensitiveData,
   BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE,
@@ -70,7 +71,14 @@ function CreateOrEditConnectionSection({
   onTryAnotherMethodButtonClicked,
   showTryAnotherMethodButton,
 }: CreateOrEditConnectionSectionProps) {
-  const formSchema = formUtils.buildConnectionSchema(selectedAuth.authProperty);
+  const formSchema = formUtils.buildConnectionSchema(
+    selectedAuth.authProperty,
+    {
+      isGlobalConnection,
+      showConnectionNameField:
+        isNil(externalIdComingFromSdk) || externalIdComingFromSdk === '',
+    },
+  );
   const { externalId, displayName } = newConnectionUtils.getConnectionName(
     piece,
     reconnectConnection,
@@ -91,6 +99,7 @@ function CreateOrEditConnectionSection({
           grantType: selectedAuth.grantType,
           redirectUrl: redirectUrl ?? '',
         }),
+        ...(isGlobalConnection ? { scope: AppConnectionScope.PLATFORM } : {}),
         projectIds: reconnectConnection?.projectIds ?? [],
         preSelectForNewProjects: false,
         pieceVersion: piece.version,
@@ -154,7 +163,7 @@ function CreateOrEditConnectionSection({
                 control={form.control}
                 render={({ field }) => (
                   <FormItem className="flex flex-col gap-2">
-                    <FormLabel htmlFor="displayName">
+                    <FormLabel htmlFor="displayName" showRequiredIndicator>
                       {t('Connection Name')}
                     </FormLabel>
                     <FormControl>
@@ -205,6 +214,7 @@ function CreateOrEditConnectionSection({
                         <FormItem>
                           <FormLabel>{t('External ID')}</FormLabel>
                           <Input {...field} />
+                          <FormMessage />
                         </FormItem>
                       )}
                     ></FormField>
@@ -243,7 +253,6 @@ function CreateOrEditConnectionSection({
                 onClick={(e) => form.handleSubmit(() => upsertConnection())(e)}
                 loading={isPending}
                 type="submit"
-                disabled={!form.formState.isValid}
               >
                 {t('Save')}
               </Button>
@@ -502,5 +511,6 @@ type ConnectionFormValues = {
   request: UpsertAppConnectionRequestBody & {
     projectIds: string[];
     preSelectForNewProjects: boolean;
+    scope?: AppConnectionScope;
   };
 };
