@@ -4,7 +4,7 @@ import {
 	createAction,
 } from '@activepieces/pieces-framework';
 import { workdayAuth } from '../auth';
-import { workdayWqlRequest } from '../common';
+import { escapeWql, workdayWqlRequest } from '../common';
 
 export const findSupplierPayment = createAction({
 	auth: workdayAuth,
@@ -26,8 +26,8 @@ export const findSupplierPayment = createAction({
 	async run(ctx) {
 		const { supplierId, paymentId } = ctx.propsValue;
 		const conditions: string[] = [];
-		if (supplierId) conditions.push(`supplier = '${supplierId}'`);
-		if (paymentId) conditions.push(`supplierPayment = '${paymentId}'`);
+		if (supplierId) conditions.push(`supplier = '${escapeWql(supplierId)}'`);
+		if (paymentId) conditions.push(`supplierPayment = '${escapeWql(paymentId)}'`);
 
 		const whereClause =
 			conditions.length > 0 ? ` WHERE ${conditions.join(' AND ')}` : '';

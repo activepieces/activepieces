@@ -2,10 +2,17 @@ import { PieceAuth, Property } from '@activepieces/pieces-framework';
 
 export const workdayAuth = PieceAuth.OAuth2({
 	props: {
+		host: Property.ShortText({
+			displayName: 'Workday Host',
+			description:
+				'Your Workday API host (e.g., "wd2-impl-services1.workday.com" for sandbox, or your production host like "wd5-services1.workday.com").',
+			required: true,
+			defaultValue: 'wd2-impl-services1.workday.com',
+		}),
 		tenant: Property.ShortText({
 			displayName: 'Tenant',
 			description:
-				'Your Workday tenant identifier (e.g., "ibmsrv_pt1"). Found in your Workday URL.',
+				'Your Workday tenant identifier. Found in your Workday URL.',
 			required: true,
 		}),
 		isuUsername: Property.ShortText({
@@ -25,6 +32,6 @@ export const workdayAuth = PieceAuth.OAuth2({
 	description: 'Authenticate with Workday',
 	authUrl: 'https://impl.workday.com/{tenant}/authorize',
 	tokenUrl:
-		'https://wd2-impl-services1.workday.com/ccx/oauth2/{tenant}/token',
+		'https://{host}/ccx/oauth2/{tenant}/token',
 	scope: ['staffing', 'expenses', 'timeTracking', 'resourceManagement'],
 });

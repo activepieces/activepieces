@@ -4,7 +4,7 @@ import {
 	createAction,
 } from '@activepieces/pieces-framework';
 import { workdayAuth } from '../auth';
-import { workdayWqlRequest } from '../common';
+import { escapeWql, workdayWqlRequest } from '../common';
 
 export const findPurchaseOrder = createAction({
 	auth: workdayAuth,
@@ -22,7 +22,7 @@ export const findPurchaseOrder = createAction({
 		const { purchaseOrderId } = ctx.propsValue;
 		const response = await workdayWqlRequest(
 			ctx.auth as OAuth2PropertyValue,
-			`SELECT purchaseOrder FROM purchaseOrders WHERE purchaseOrder = '${purchaseOrderId}'`,
+			`SELECT purchaseOrder FROM purchaseOrders WHERE purchaseOrder = '${escapeWql(purchaseOrderId)}'`,
 		);
 		return response.body;
 	},

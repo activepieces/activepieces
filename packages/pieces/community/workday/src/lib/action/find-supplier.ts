@@ -4,7 +4,7 @@ import {
 	createAction,
 } from '@activepieces/pieces-framework';
 import { workdayAuth } from '../auth';
-import { workdayWqlRequest } from '../common';
+import { escapeWql, workdayWqlRequest } from '../common';
 
 export const findSupplier = createAction({
 	auth: workdayAuth,
@@ -22,7 +22,7 @@ export const findSupplier = createAction({
 		const { supplierId } = ctx.propsValue;
 		const response = await workdayWqlRequest(
 			ctx.auth as OAuth2PropertyValue,
-			`SELECT supplier, supplierName FROM suppliers WHERE supplier = '${supplierId}'`,
+			`SELECT supplier, supplierName FROM suppliers WHERE supplier = '${escapeWql(supplierId)}'`,
 		);
 		return response.body;
 	},

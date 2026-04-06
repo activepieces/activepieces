@@ -4,7 +4,7 @@ import { workdayAuth } from '../auth';
 import { workdayWqlRequest } from '../common';
 
 const polling: Polling<AppConnectionValueForAuthProperty<typeof workdayAuth>, Record<string, never>> = {
-	strategy: DedupeStrategy.TIMEBASED,
+	strategy: DedupeStrategy.LAST_ITEM,
 	items: async ({ auth }) => {
 		const response = await workdayWqlRequest<{ total: number; data: Array<Record<string, unknown>> }>(
 			auth,
@@ -13,7 +13,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof workdayAuth>, Re
 
 		const items = response.body.data ?? [];
 		return items.map((item) => ({
-			epochMilliSeconds: Date.now(),
+			id: JSON.stringify(item),
 			data: item,
 		}));
 	},

@@ -9,10 +9,13 @@ import {
 import { OAuth2PropertyValue } from '@activepieces/pieces-framework';
 import { XMLParser } from 'fast-xml-parser';
 
-const API_HOST = 'https://wd2-impl-services1.workday.com/ccx/api';
-const SOAP_HOST = 'https://wd2-impl-services1.workday.com/ccx/service';
+const DEFAULT_HOST = 'wd2-impl-services1.workday.com';
 const WQL_BASE = 'wql/v1';
 const SOAP_VERSION = 'v46.0';
+
+function getHost(auth: OAuth2PropertyValue): string {
+	return (auth?.props?.['host'] as string) ?? DEFAULT_HOST;
+}
 
 export const WorkdayService = {
 	common: 'v1',
@@ -42,7 +45,7 @@ export async function workdayRequest<T extends HttpMessageBody>(
 	const tenant = getTenant(auth);
 	return httpClient.sendRequest<T>({
 		method,
-		url: `${API_HOST}/${service}/${tenant}${path}`,
+		url: `https://${getHost(auth)}/ccx/api/${service}/${tenant}${path}`,
 		body,
 		queryParams,
 		authentication: {
@@ -62,7 +65,7 @@ export async function workdayWqlRequest<T extends HttpMessageBody>(
 	const tenant = getTenant(auth);
 	return httpClient.sendRequest<T>({
 		method: HttpMethod.POST,
-		url: `${API_HOST}/${WQL_BASE}/${tenant}/data`,
+		url: `https://${getHost(auth)}/ccx/api/${WQL_BASE}/${tenant}/data`,
 		body: { query },
 		authentication: {
 			type: AuthenticationType.BEARER_TOKEN,
@@ -153,7 +156,7 @@ export async function workdaySoapRequest(
 
 	const response = await httpClient.sendRequest({
 		method: HttpMethod.POST,
-		url: `${SOAP_HOST}/${tenant}/${soapService}/${SOAP_VERSION}`,
+		url: `https://${getHost(auth)}/ccx/service/${tenant}/${soapService}/${SOAP_VERSION}`,
 		headers: {
 			'Content-Type': 'text/xml;charset=UTF-8',
 		},
@@ -182,4 +185,8 @@ export async function workdaySoapRequest(
 	}
 
 	return soapBody ?? parsed;
+}
+
+export function escapeWql(value: string): string {
+	return value.replace(/'/g, "''");
 }
