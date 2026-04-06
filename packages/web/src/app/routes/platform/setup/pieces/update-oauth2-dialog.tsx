@@ -11,7 +11,6 @@ import {
   Dialog,
   DialogContent,
   DialogFooter,
-  DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
@@ -102,7 +101,7 @@ export const ConfigurePieceOAuth2Dialog = forwardRef<
         </Tooltip>
       </DialogTrigger>
       <DialogContent>
-          <DialogTitle>{t('Configure OAuth2 App')}</DialogTitle>
+        <DialogTitle>{t('Configure OAuth2 App')}</DialogTitle>
 
         <Form {...form}>
           <form
@@ -119,7 +118,9 @@ export const ConfigurePieceOAuth2Dialog = forwardRef<
               name="clientId"
               render={({ field }) => (
                 <FormItem className="grid space-y-4">
-                  <Label htmlFor="clientId" showRequiredIndicator>{t('Client ID')}</Label>
+                  <Label htmlFor="clientId" showRequiredIndicator>
+                    {t('Client ID')}
+                  </Label>
                   <Input
                     {...field}
                     required
@@ -134,7 +135,9 @@ export const ConfigurePieceOAuth2Dialog = forwardRef<
               name="clientSecret"
               render={({ field }) => (
                 <FormItem className="grid space-y-4">
-                  <Label htmlFor="clientSecret" showRequiredIndicator>{t('Client Secret')}</Label>
+                  <Label htmlFor="clientSecret" showRequiredIndicator>
+                    {t('Client Secret')}
+                  </Label>
                   <Input
                     {...field}
                     required
