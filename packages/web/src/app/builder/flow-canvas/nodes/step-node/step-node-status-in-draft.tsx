@@ -6,7 +6,7 @@ import {
   isNil,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { RouteOff, TriangleAlert } from 'lucide-react';
+import { TriangleAlert } from 'lucide-react';
 import React, { useMemo } from 'react';
 
 import { InvalidStepIcon } from '@/components/custom/alert-icon';
@@ -16,12 +16,11 @@ import {
   TooltipContent,
 } from '@/components/ui/tooltip';
 import { StepStatusIcon, flowRunUtils } from '@/features/flow-runs';
+import { pieceSelectorUtils } from '@/features/pieces';
 
 import { useBuilderStateContext } from '../../../builder-hooks';
 import { flowCanvasUtils } from '../../utils/flow-canvas-utils';
-
 type DraftStepStatus =
-  | 'skipped'
   | 'invalid'
   | 'testing'
   | 'failed'
@@ -39,9 +38,16 @@ const ApStepNodeStatusInDraft = ({ stepName }: { stepName: string }) => {
     stepType,
     isInDraft,
     isStepValid,
+    isManualTrigger,
     isSkipped,
   ] = useBuilderStateContext((state) => {
     const step = flowStructureUtil.getStep(stepName, state.flowVersion.trigger);
+    const isManualTrigger =
+      step?.type === FlowTriggerType.PIECE &&
+      pieceSelectorUtils.isManualTrigger({
+        pieceName: step?.settings.pieceName,
+        triggerName: step?.settings.triggerName ?? '',
+      });
     return [
       state.run,
       state.isStepBeingTested(stepName),
@@ -51,9 +57,11 @@ const ApStepNodeStatusInDraft = ({ stepName }: { stepName: string }) => {
       step?.type,
       state.flowVersion.state === FlowVersionState.DRAFT,
       !!step?.valid,
+      isManualTrigger,
       flowCanvasUtils.isSkipped(stepName, state.flowVersion.trigger),
     ];
   });
+
   const draftStatusConfig: Record<
     DraftStepStatus,
     {
@@ -62,11 +70,6 @@ const ApStepNodeStatusInDraft = ({ stepName }: { stepName: string }) => {
       icon: React.ReactNode;
     }
   > = {
-    skipped: {
-      variant: 'default',
-      text: t('Skipped'),
-      icon: <RouteOff className="size-3" />,
-    },
     invalid: {
       variant: 'warning',
       text: t('Incomplete'),
@@ -117,7 +120,6 @@ const ApStepNodeStatusInDraft = ({ stepName }: { stepName: string }) => {
     },
   };
   const status: DraftStepStatus = useMemo(() => {
-    if (isSkipped) return 'skipped';
     if (!isStepValid) return 'invalid';
     if (isBeingTested) return 'testing';
 
@@ -130,16 +132,17 @@ const ApStepNodeStatusInDraft = ({ stepName }: { stepName: string }) => {
     if (hasError) return 'failed';
 
     return 'tested';
-  }, [
-    isSkipped,
-    isStepValid,
-    isBeingTested,
-    hasError,
-    lastTestDate,
-    lastUpdatedDate,
-  ]);
+  }, [isStepValid, isBeingTested, hasError, lastTestDate, lastUpdatedDate]);
 
-  if (!isNil(run) || stepType === FlowTriggerType.EMPTY || !isInDraft) {
+  const hasRun = !isNil(run);
+  const shouldShowDraftStatusBadge =
+    isInDraft &&
+    !hasRun &&
+    stepType !== FlowTriggerType.EMPTY &&
+    !isManualTrigger &&
+    !isSkipped;
+
+  if (!shouldShowDraftStatusBadge) {
     return null;
   }
 

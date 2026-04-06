@@ -50,6 +50,7 @@ import {
 import { projectCollectionUtils } from '@/features/projects';
 import { downloadFile } from '@/lib/dom-utils';
 import { formatUtils } from '@/lib/format-utils';
+import { cn, DASHBOARD_CONTENT_PADDING_X } from '@/lib/utils';
 
 import { TimeSavedFilterContent } from '../impact/components/time-saved-filter-content';
 import {
@@ -192,11 +193,6 @@ export default function LeaderboardPage() {
       unitMin: draftTimeUnitMin,
       unitMax: draftTimeUnitMax,
     });
-    setTimeSavedPopoverOpen(false);
-  };
-
-  const clearTimeSavedFilter = () => {
-    setAppliedFilter(emptyFilter);
     setTimeSavedPopoverOpen(false);
   };
 
@@ -430,7 +426,10 @@ export default function LeaderboardPage() {
           className="w-full mt-2"
           onValueChange={handleTabChange}
         >
-          <TabsList variant="outline" className="border-b w-full">
+          <TabsList
+            variant="outline"
+            className={cn('border-b w-full', DASHBOARD_CONTENT_PADDING_X)}
+          >
             <TabsTrigger variant="outline" value="creators">
               <Users className="w-4 h-4 mr-1.5" />
               {t('People')}
@@ -441,7 +440,12 @@ export default function LeaderboardPage() {
             </TabsTrigger>
           </TabsList>
 
-          <div className="flex items-center justify-between mt-4 mb-4">
+          <div
+            className={cn(
+              'flex items-center justify-between mt-4 mb-4',
+              DASHBOARD_CONTENT_PADDING_X,
+            )}
+          >
             <div className="flex items-center gap-2">
               <SearchInput
                 value={searchQuery}

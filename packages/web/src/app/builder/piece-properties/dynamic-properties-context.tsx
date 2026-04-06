@@ -7,8 +7,8 @@ export const DynamicPropertiesContext = createContext<{
   isLoadingDynamicProperties: boolean;
 }>({
   propertiesNamesStillLoading: [],
-  propertyLoadingFinished: (propertyName: string) => {},
-  propertyLoadingStarted: (propertyName: string) => {},
+  propertyLoadingFinished: (_propertyName: string) => {},
+  propertyLoadingStarted: (_propertyName: string) => {},
   isLoadingDynamicProperties: false,
 });
 

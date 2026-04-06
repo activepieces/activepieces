@@ -192,6 +192,26 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
         })
     },
 
+    async getLatestVersionsByFlowIds(flowIds: FlowId[], projectId?: ProjectId): Promise<Map<FlowId, FlowVersion>> {
+        if (flowIds.length === 0) {
+            return new Map()
+        }
+        const latestVersions = await flowVersionRepo()
+            .createQueryBuilder('fv')
+            .where('fv.flowId IN (:...flowIds)', { flowIds })
+            .distinctOn(['fv.flowId'])
+            .orderBy('fv.flowId')
+            .addOrderBy('fv.created', 'DESC')
+            .getMany()
+        const migratedEntries = await Promise.all(
+            latestVersions.map(async (version) => {
+                const migrated = await flowVersionMigrationService(log).migrate(version, projectId)
+                return [version.flowId, migrated] as const
+            }),
+        )
+        return new Map(migratedEntries)
+    },
+
     async getLatestLockedVersionOrThrow(flowId: FlowId): Promise<FlowVersion> {
         const lockedVersion = await this.getLatestVersion(flowId, FlowVersionState.LOCKED)
         if (isNil(lockedVersion)) {
@@ -260,6 +280,7 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
         removeConnectionsName = false,
         removeSampleData = false,
         entityManager,
+        projectId,
     }: GetFlowVersionOrThrowParams): Promise<FlowVersion> {
         const flowVersion: FlowVersion | null = await findOne(log, {
             where: {
@@ -270,7 +291,7 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
             order: {
                 created: 'DESC',
             },
-        }, entityManager)
+        }, entityManager, projectId)
 
         if (isNil(flowVersion)) {
             throw new ActivepiecesError({
@@ -339,12 +360,12 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
 
 
 
-async function findOne(log: FastifyBaseLogger, options: FindOneOptions, entityManager?: EntityManager): Promise<FlowVersion | null> {
+async function findOne(log: FastifyBaseLogger, options: FindOneOptions, entityManager?: EntityManager, projectId?: ProjectId): Promise<FlowVersion | null> {
     const flowVersion = await flowVersionRepo(entityManager).findOne(options)
     if (isNil(flowVersion)) {
         return null
     }
-    return flowVersionMigrationService(log).migrate(flowVersion)
+    return flowVersionMigrationService(log).migrate(flowVersion, projectId)
 }
 
 
@@ -398,6 +419,7 @@ type GetFlowVersionOrThrowParams = {
     removeConnectionsName?: boolean
     removeSampleData?: boolean
     entityManager?: EntityManager
+    projectId?: ProjectId
 }
 
 type NewFlowVersion = Omit<FlowVersion, 'created' | 'updated'>

@@ -59,6 +59,13 @@ export const engineResponseWatcher = (log: FastifyBaseLogger) => ({
         })
     },
 
+    async publish(webserverId: string, requestId: string, response: unknown): Promise<void> {
+        await pubsub.publish(
+            `engine-run:sync:${webserverId}`,
+            JSON.stringify({ requestId, response }),
+        )
+    },
+
     async shutdown(): Promise<void> {
         await pubsub.unsubscribe(`engine-run:sync:${SERVER_ID}`)
     },

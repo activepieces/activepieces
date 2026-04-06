@@ -1,20 +1,21 @@
 import {
-  OAuth2PropertyValue,
   Property,
   TriggerStrategy,
   createTrigger,
 } from '@activepieces/pieces-framework';
-import { getChannels, multiSelectChannelInfo, userId } from '../common/props';
+import { getChannels, multiSelectChannelInfo, userIds, usergroupIds } from '../common/props';
 import { slackAuth } from '../auth';
+import { getBotToken, getTeamId, SlackAuthValue } from '../common/auth-helpers';
 
 export const newMention = createTrigger({
   auth: slackAuth,
   name: 'new_mention',
   displayName: 'New Mention in Channel',
-  description: 'Triggers when a username is mentioned.',
+  description: 'Triggers when a user or user group is mentioned.',
   props: {
     info: multiSelectChannelInfo,
-    user: userId,
+    users: userIds,
+    usergroups: usergroupIds,
     channels: Property.MultiSelectDropdown({
       auth: slackAuth,
       displayName: 'Channels',
@@ -30,8 +31,7 @@ export const newMention = createTrigger({
             options: [],
           };
         }
-        const authentication = auth as OAuth2PropertyValue;
-        const accessToken = authentication['access_token'];
+        const accessToken = getBotToken(auth as SlackAuthValue);
         const channels = await getChannels(accessToken);
         return {
           disabled: false,
@@ -45,13 +45,17 @@ export const newMention = createTrigger({
       required: true,
       defaultValue: false,
     }),
+    removeMention: Property.Checkbox({
+      displayName: 'Remove Mention from Message',
+      description: 'If enabled, provides a clean_text field with the user and user group mentions removed from the message.',
+      required: true,
+      defaultValue: false,
+    }),
   },
   type: TriggerStrategy.APP_WEBHOOK,
   sampleData: undefined,
   onEnable: async (context) => {
-    // Older OAuth2 has team_id, newer has team.id
-    const teamId =
-      context.auth.data['team_id'] ?? context.auth.data['team']['id'];
+    const teamId = await getTeamId(context.auth as SlackAuthValue);
     context.app.createListeners({
       events: ['message'],
       identifierValue: teamId,
@@ -64,28 +68,50 @@ export const newMention = createTrigger({
   run: async (context) => {
     const payloadBody = context.payload.body as PayloadBody;
     const channels = (context.propsValue.channels as string[]) ?? [];
+    const users = (context.propsValue.users as string[]) ?? [];
+    const usergroups = (context.propsValue.usergroups as string[]) ?? [];
 
     // check if it's channel message
 		if (!['channel','group'].includes(payloadBody.event.channel_type)) {
 			return [];
 		}
 
-
-    if (channels.length === 0 || channels.includes(payloadBody.event.channel)) {
-      // check for bot messages
-      if (context.propsValue.ignoreBots && payloadBody.event.bot_id) {
-        return [];
-      }
-      // check for mention
-      if (
-        context.propsValue.user &&
-        payloadBody.event.text?.includes(`<@${context.propsValue.user}>`)
-      ) {
-        return [payloadBody.event];
-      }
+    if (channels.length > 0 && !channels.includes(payloadBody.event.channel)) {
+      return [];
     }
 
-    return [];
+    // check for bot messages
+    if (context.propsValue.ignoreBots && payloadBody.event.bot_id) {
+      return [];
+    }
+
+    const text = payloadBody.event.text ?? '';
+
+    const userMentioned = users.some((uid) => text.includes(`<@${uid}>`));
+    const usergroupMentioned = usergroups.some((gid) =>
+      new RegExp(`<!subteam\\^${gid}(\\|[^>]*)?>`).test(text)
+    );
+
+    if (!userMentioned && !usergroupMentioned) {
+      return [];
+    }
+
+    if (context.propsValue.removeMention) {
+      let cleanText = text;
+      for (const uid of users) {
+        cleanText = cleanText.replace(new RegExp(`<@${uid}>`, 'g'), '');
+      }
+      for (const gid of usergroups) {
+        cleanText = cleanText.replace(
+          new RegExp(`<!subteam\\^${gid}(\\|[^>]*)?>`, 'g'),
+          ''
+        );
+      }
+      cleanText = cleanText.trim();
+      return [{ ...payloadBody.event, clean_text: cleanText }];
+    }
+
+    return [payloadBody.event];
   },
 });
 

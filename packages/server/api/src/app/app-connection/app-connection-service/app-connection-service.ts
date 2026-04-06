@@ -1,4 +1,3 @@
-import { AppSystemProp } from '@activepieces/server-common'
 import {
     ActivepiecesError,
     ApEdition,
@@ -14,6 +13,7 @@ import {
     AppConnectionWithoutSensitiveData,
     ConnectionState,
     Cursor,
+    EngineResponse,
     EngineResponseStatus,
     ErrorCode,
     ExecuteValidateAuthResponse,
@@ -35,15 +35,15 @@ import {
 import { FastifyBaseLogger } from 'fastify'
 import semver from 'semver'
 import { ArrayContains, Equal, FindOperator, FindOptionsWhere, ILike, In } from 'typeorm'
-import { OperationResponse } from 'worker'
 import { repoFactory } from '../../core/db/repo-factory'
 import { projectMemberService } from '../../ee/projects/project-members/project-member.service'
-import { secretManagersService } from '../../ee/secret-managers/secret-managers.service'
+import { containsSecretManagerReference, secretManagersService } from '../../ee/secret-managers/secret-managers.service'
 import { flowService } from '../../flows/flow/flow.service'
 import { encryptUtils } from '../../helper/encryption'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-props'
 import {
     getPiecePackageWithoutArchive,
     pieceMetadataService,
@@ -70,7 +70,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
         validatePieceVersion(pieceVersion)
         await assertProjectIds(projectIds, platformId)
         const validatedConnectionValue = await validateConnectionValue({
-            value: scope === AppConnectionScope.PROJECT ? value : await secretManagersService(log).resolveObject({ value, platformId }),
+            value: await secretManagersService(log).resolveObject({ value, platformId, projectIds }),
             pieceName,
             projectId: projectIds[0],
             platformId,
@@ -330,8 +330,11 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
     removeSensitiveData: (
         appConnection: AppConnection | AppConnectionSchema,
     ): AppConnectionWithoutSensitiveData => {
-        const { value: _, ...appConnectionWithoutSensitiveData } = appConnection
-        return appConnectionWithoutSensitiveData as AppConnectionWithoutSensitiveData
+        const { value, ...appConnectionWithoutSensitiveData } = appConnection
+        return {
+            ...appConnectionWithoutSensitiveData,
+            usingSecretManager: containsSecretManagerReference(value),
+        }
     },
 
     async decryptAndRefreshConnection(
@@ -512,7 +515,7 @@ const engineValidateAuth = async (
         platformId,
     })
 
-    const engineResponse = await userInteractionWatcher(log).submitAndWaitForResponse<OperationResponse<ExecuteValidateAuthResponse>>({
+    const engineResponse = await userInteractionWatcher.submitAndWaitForResponse<EngineResponse<ExecuteValidateAuthResponse>>({
         piece: await getPiecePackageWithoutArchive(log, platformId, {
             pieceName,
             pieceVersion: pieceMetadata.version,
@@ -521,7 +524,7 @@ const engineValidateAuth = async (
         platformId,
         connectionValue: auth,
         jobType: WorkerJobType.EXECUTE_VALIDATION,
-    })
+    }, log)
 
     if (engineResponse.status !== EngineResponseStatus.OK) {
         log.error(
@@ -537,7 +540,7 @@ const engineValidateAuth = async (
         })
     }
 
-    const validateAuthResult = engineResponse.result
+    const validateAuthResult = engineResponse.response
 
     if (!validateAuthResult.valid) {
         throw new ActivepiecesError({
@@ -707,3 +710,4 @@ type ReplaceParams = {
     platformId: string
     userId: UserId
 }
+

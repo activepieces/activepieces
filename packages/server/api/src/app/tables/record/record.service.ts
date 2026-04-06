@@ -1,4 +1,3 @@
-import { AppSystemProp } from '@activepieces/server-common'
 import {
     ActivepiecesError,
     apId,
@@ -21,8 +20,8 @@ import { EntityManager, In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
 import { system } from '../../helper/system/system'
-import { WebhookFlowVersionToRun } from '../../webhooks/webhook-handler'
-import { webhookService } from '../../webhooks/webhook.service'
+import { AppSystemProp } from '../../helper/system/system-props'
+import { WebhookFlowVersionToRun, webhookService } from '../../webhooks/webhook.service'
 import { FieldEntity } from '../field/field.entity'
 import { fieldService } from '../field/field.service'
 import { tableService } from '../table/table.service'
@@ -38,9 +37,10 @@ export const recordService = {
     async create({
         request,
         projectId,
+        fields,
     }: CreateParams): Promise<PopulatedRecord[]> {
         await this.validateCount({ projectId, tableId: request.tableId }, request.records.length)
-        const existingFields = await fieldService.getAll({
+        const existingFields = fields ?? await fieldService.getAll({
             tableId: request.tableId,
             projectId,
         })
@@ -78,7 +78,7 @@ export const recordService = {
                 created: 'ASC',
             },
         })
-        return formatRecordsAndFetchField({ records: insertedRecords, tableId: request.tableId, projectId })
+        return formatRecordsAndFetchField({ records: insertedRecords, tableId: request.tableId, projectId, fields: existingFields })
     },
 
     async list({
@@ -86,8 +86,9 @@ export const recordService = {
         projectId,
         filters,
         limit,
+        fields: prefetchedFields,
     }: ListParams): Promise<SeekPage<PopulatedRecord>> {
-        const fields = await fieldService.getAll({
+        const fields = prefetchedFields ?? await fieldService.getAll({
             tableId,
             projectId,
         })
@@ -115,18 +116,16 @@ export const recordService = {
             if (!filters || filters.length === 0) {
                 return true
             }
-
-            const relevantCells = record.cells.filter(cell => 
-                filters.some(filter => filter.fieldId === cell.fieldId),
-            )
-
-            if (relevantCells.length === 0) {
-                return false
-            }
-            return relevantCells.every((cell) => doesCellValueMatchFilters(cell, filters))
+            return filters.every((filter) => {
+                const cell = record.cells.find(c => c.fieldId === filter.fieldId)
+                if (!cell) {
+                    return filter.operator === FilterOperator.NOT_EXISTS
+                }
+                return doesCellValueMatchFilters(cell, [filter])
+            })
         })
 
-        const populatedRecords = await formatRecordsAndFetchField({ records: filteredOutRecords, tableId, projectId })
+        const populatedRecords = await formatRecordsAndFetchField({ records: filteredOutRecords, tableId, projectId, fields })
 
         return {
             data: populatedRecords.slice(0, limit),
@@ -197,7 +196,7 @@ export const recordService = {
                         recordId: id,
                         fieldId: cellData.fieldId,
                         projectId,
-                        value: cellData.value,
+                        value: cellData.value ?? '',
                         id: apId(),
                     }
                 })
@@ -356,6 +355,7 @@ type CreateParams = {
     request: CreateRecordsRequest
     projectId: string
     logger: FastifyBaseLogger
+    fields?: Field[]
 }
 
 type ListParams = {
@@ -364,6 +364,7 @@ type ListParams = {
     cursorRequest: Cursor | null
     limit: number
     filters: Filter[] | null
+    fields?: Field[]
 }
 
 type GetByIdParams = {
@@ -416,7 +417,7 @@ type CellInsertion = {
 }
 
 function prepareRecordInsertions(
-    records: Array<Array<{ fieldId: string, value: string }>>,
+    records: Array<Array<{ fieldId: string, value: string | null }>>,
     tableId: string,
     projectId: string,
     baseDate: Date,
@@ -433,7 +434,7 @@ function prepareRecordInsertions(
 }
 
 function prepareCellInsertions(
-    records: Array<Array<{ fieldId: string, value: string }>>,
+    records: Array<Array<{ fieldId: string, value: string | null }>>,
     recordInsertions: RecordInsertion[],
     projectId: string,
 ): CellInsertion[] {
@@ -443,15 +444,15 @@ function prepareCellInsertions(
                 recordId: recordInsertions[index].id,
                 fieldId: cellData.fieldId,
                 projectId,
-                value: cellData.value,
+                value: cellData.value ?? '',
                 id: apId(),
             }
         }),
     )
 }
 
-async function formatRecordsAndFetchField({ records, tableId, projectId }: { records: RecordSchema[], tableId: string, projectId: string }): Promise<PopulatedRecord[]> {
-    const fields = await fieldService.getAll({
+async function formatRecordsAndFetchField({ records, tableId, projectId, fields: prefetchedFields }: { records: RecordSchema[], tableId: string, projectId: string, fields?: Field[] }): Promise<PopulatedRecord[]> {
+    const fields = prefetchedFields ?? await fieldService.getAll({
         tableId,
         projectId,
     })
@@ -487,10 +488,13 @@ function doesCellValueMatchFilters(cell: Cell, filters: Filter[]): boolean {
         if (filter.fieldId !== cell.fieldId) {
             return true
         }
-        if (filter.operator === undefined) {
-            return true
-        }
         switch (filter.operator) {
+            case FilterOperator.EXISTS: {
+                return cell.value !== null && cell.value !== ''
+            }
+            case FilterOperator.NOT_EXISTS: {
+                return cell.value === null || cell.value === ''
+            }
             case FilterOperator.EQ: {
                 return cell.value === filter.value
             }
@@ -515,7 +519,6 @@ function doesCellValueMatchFilters(cell: Cell, filters: Filter[]): boolean {
                 }
                 return false
             }
-
         }
     })
 

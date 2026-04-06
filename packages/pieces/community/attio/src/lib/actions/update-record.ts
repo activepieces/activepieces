@@ -20,7 +20,7 @@ export const updateRecordAction = createAction({
 			required: true,
 		}),
 
-		attributes: objectFields(true),
+		attributes: objectFields(false, true),
 	},
 	async run(context) {
 		const accessToken = context.auth.secret_text;

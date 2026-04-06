@@ -1,14 +1,21 @@
 import {
+  ApErrorParams,
   BulkActionOnRunsRequestBody,
   BulkArchiveActionOnRunsRequestBody,
   BulkCancelFlowRequestBody,
+  ErrorCode,
   FlowRetryStrategy,
   FlowRun,
+  FlowRunWithRetryError,
   PopulatedFlow,
 } from '@activepieces/shared';
 import { useMutation, useQuery } from '@tanstack/react-query';
+import { t } from 'i18next';
+import { toast } from 'sonner';
 
+import { internalErrorToast } from '@/components/ui/sonner';
 import { flowsApi } from '@/features/flows/api/flows-api';
+import { api } from '@/lib/api';
 
 import { flowRunsApi } from '../api/flow-runs-api';
 
@@ -52,17 +59,48 @@ export const flowRunMutations = {
         return { run: updatedRun, populatedFlow };
       },
       onSuccess,
+      onError: (error: unknown) => {
+        if (api.isError(error)) {
+          const apError = error.response?.data as ApErrorParams;
+          if (apError.code === ErrorCode.FLOW_RUN_RETRY_OUTSIDE_RETENTION) {
+            toast.error(t('Retry failed'), {
+              description: t(
+                'Retry is only available for {failedJobRetentionDays} after a run fails.',
+                {
+                  failedJobRetentionDays: apError.params.failedJobRetentionDays,
+                },
+              ),
+              duration: 5000,
+              closeButton: true,
+              dismissible: true,
+            });
+          }
+          return;
+        }
+        internalErrorToast();
+      },
     });
   },
   useBulkRetryRuns: ({
     onSuccess,
+    onPartialFailure,
   }: {
     onSuccess: (runs: FlowRun[]) => void;
+    onPartialFailure?: (failedRuns: Required<FlowRunWithRetryError>[]) => void;
   }) => {
     return useMutation({
       mutationFn: (request: BulkActionOnRunsRequestBody) =>
         flowRunsApi.bulkRetry(request),
-      onSuccess,
+      onSuccess: (runs) => {
+        const succeededRuns = runs.filter((r) => !r.error) as FlowRun[];
+        const failedRuns = runs.filter(
+          (r) => !!r.error,
+        ) as Required<FlowRunWithRetryError>[];
+        onSuccess(succeededRuns);
+        if (failedRuns.length > 0) {
+          onPartialFailure?.(failedRuns);
+        }
+      },
     });
   },
   useBulkCancelRuns: ({ onSuccess }: { onSuccess: () => void }) => {

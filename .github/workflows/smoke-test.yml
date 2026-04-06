@@ -1,0 +1,72 @@
+name: Smoke Test
+
+on:
+  workflow_dispatch:
+  workflow_call:
+
+jobs:
+  smoke-test:
+    concurrency:
+      group: smoke-test-${{ matrix.arch }}
+      cancel-in-progress: true
+    strategy:
+      matrix:
+        include:
+          - runner: depot-ubuntu-24.04
+            arch: amd64
+          - runner: depot-ubuntu-24.04-arm
+            arch: arm64
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 20
+    env:
+      AP_EXECUTION_MODE: SANDBOX_CODE_ONLY
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t activepieces-benchmark:local .
+
+      - name: Start stack
+        run: |
+          APP_REPLICAS=1 \
+          WORKER_REPLICAS=1 \
+            docker compose -f benchmark/docker-compose.yml up -d
+          echo "Waiting for containers to start..."
+          sleep 5
+          docker compose -f benchmark/docker-compose.yml ps
+
+      - name: Setup flow
+        id: setup
+        run: |
+          chmod +x benchmark/setup.sh
+          FLOW_ID=$(benchmark/setup.sh)
+          echo "flow_id=$FLOW_ID" >> "$GITHUB_OUTPUT"
+          echo "Flow ID: $FLOW_ID"
+
+      - name: Run smoke test
+        run: |
+          chmod +x smoke-test/verify.sh
+          smoke-test/verify.sh "${{ steps.setup.outputs.flow_id }}"
+
+      - name: Run delay flow smoke test
+        run: |
+          chmod +x smoke-test/verify-delay.sh
+          smoke-test/verify-delay.sh
+
+      - name: Show app logs on failure
+        if: failure()
+        run: docker compose -f benchmark/docker-compose.yml logs --tail=200 app
+
+      - name: Show worker logs on failure
+        if: failure()
+        run: docker compose -f benchmark/docker-compose.yml logs --tail=200 worker
+
+      - name: Show nginx logs on failure
+        if: failure()
+        run: docker compose -f benchmark/docker-compose.yml logs --tail=200 nginx
+
+      - name: Teardown
+        if: always()
+        run: docker compose -f benchmark/docker-compose.yml down -v

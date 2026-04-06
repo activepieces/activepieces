@@ -297,6 +297,9 @@ export function useAutomationsData(
         rootPage,
         pageSize,
         pinnedList,
+        filters.searchTerm,
+        folderContents,
+        folderCounts,
       );
       return { treeItems: items, totalPageItems: totalItems };
     }
@@ -331,6 +334,7 @@ export function useAutomationsData(
     rootPage,
     pageSize,
     isFiltered,
+    filters.searchTerm,
     filters.folderFilter,
     pinnedList,
   ]);
@@ -391,7 +395,6 @@ export function useAutomationsData(
     pageSize,
     changePageSize,
     totalPages,
-    totalPageItems,
     nextRootPage,
     prevRootPage,
     resetPagination,

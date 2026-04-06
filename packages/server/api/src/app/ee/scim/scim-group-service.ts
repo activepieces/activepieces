@@ -18,6 +18,8 @@ import {
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { repoFactory } from '../../core/db/repo-factory'
+import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-props'
 import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
@@ -303,10 +305,12 @@ async function addMemberToProject(params: {
         return
     }
 
+    const role = system.get<DefaultProjectRole>(AppSystemProp.SCIM_DEFAULT_PROJECT_ROLE) ?? DefaultProjectRole.EDITOR
+
     await projectMemberService(log).upsert({
         userId,
         projectId,
-        projectRoleName: DefaultProjectRole.EDITOR,
+        projectRoleName: role,
     })
 }
 

@@ -1,8 +1,8 @@
-import { securityAccess } from '@activepieces/server-common'
 import {
     ResetPasswordRequestBody,
     VerifyEmailRequestBody } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import { securityAccess } from '../../../core/security/authorization/fastify-security'
 import { enterpriseLocalAuthnService } from './enterprise-local-authn-service'
 
 export const enterpriseLocalAuthnController: FastifyPluginAsyncZod = async (

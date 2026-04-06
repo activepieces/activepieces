@@ -3,6 +3,7 @@ import { t } from 'i18next';
 import { useCallback } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
+import { recordAccess } from '@/app/components/global-search/access-history';
 import { AutomationsEmptyState } from '@/features/automations/components/automations-empty-state';
 import { AutomationsFilters as AutomationsFiltersComponent } from '@/features/automations/components/automations-filters';
 import { AutomationsNoResultsState } from '@/features/automations/components/automations-no-results-state';
@@ -26,6 +27,7 @@ import { TreeItem } from '@/features/automations/lib/types';
 import { appConnectionsQueries } from '@/features/connections';
 import { projectMembersHooks } from '@/features/members';
 import { piecesHooks } from '@/features/pieces';
+import { projectCollectionUtils, getProjectName } from '@/features/projects';
 import { ImportTableDialog } from '@/features/tables/components/import-table-dialog';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -40,6 +42,12 @@ export const AutomationsPage = () => {
 const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
   const [, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
+
+  const { data: allProjects = [] } = projectCollectionUtils.useAll();
+  const currentProjectName = (() => {
+    const p = allProjects.find((proj) => proj.id === projectId);
+    return p ? getProjectName(p) : null;
+  })();
 
   const { checkAccess } = useAuthorization();
   const userHasPermissionToWriteFlow = checkAccess(Permission.WRITE_FLOW);
@@ -80,7 +88,6 @@ const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
     pageSize,
     changePageSize,
     totalPages,
-    totalPageItems,
     nextRootPage,
     prevRootPage,
     resetPagination,
@@ -118,20 +125,56 @@ const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
   const { pieces } = piecesHooks.usePieces({});
 
   const handleRowClick = useCallback(
-    (item: TreeItem) => {
+    (item: TreeItem, ctrlKey?: boolean) => {
       if (item.type === 'folder') {
         toggleFolder(item.id);
       } else if (item.type === 'flow') {
-        navigate(
-          authenticationSession.appendProjectRoutePrefix(`/flows/${item.id}`),
+        const href = authenticationSession.appendProjectRoutePrefix(
+          `/flows/${item.id}`,
         );
+        const flowData = item.data as {
+          status?: 'ENABLED' | 'DISABLED';
+        } | null;
+        const folderName = item.folderId
+          ? folders.find((f) => f.id === item.folderId)?.displayName ?? null
+          : null;
+        recordAccess({
+          id: `flow-${item.id}`,
+          type: 'flow',
+          label: item.name,
+          href,
+          status: flowData?.status ?? null,
+          folderName,
+          projectName: currentProjectName,
+        });
+        if (ctrlKey) {
+          window.open(href, '_blank');
+        } else {
+          navigate(href);
+        }
       } else if (item.type === 'table') {
-        navigate(
-          authenticationSession.appendProjectRoutePrefix(`/tables/${item.id}`),
+        const href = authenticationSession.appendProjectRoutePrefix(
+          `/tables/${item.id}`,
         );
+        const folderName = item.folderId
+          ? folders.find((f) => f.id === item.folderId)?.displayName ?? null
+          : null;
+        recordAccess({
+          id: `table-${item.id}`,
+          type: 'table',
+          label: item.name,
+          href,
+          folderName,
+          projectName: currentProjectName,
+        });
+        if (ctrlKey) {
+          window.open(href, '_blank');
+        } else {
+          navigate(href);
+        }
       }
     },
-    [navigate, toggleFolder],
+    [navigate, toggleFolder, folders, currentProjectName],
   );
 
   const updateSearchParams = (newFolderId: string | undefined) => {
@@ -224,7 +267,6 @@ const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
 
           <AutomationsPagination
             currentPage={rootPage}
-            totalItems={totalPageItems}
             totalPages={totalPages}
             pageSize={pageSize}
             onPageSizeChange={changePageSize}

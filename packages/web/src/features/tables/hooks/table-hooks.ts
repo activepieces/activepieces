@@ -71,7 +71,7 @@ export const tableHooks = {
         });
         await recordsApi.create({
           records: [
-            ...Array.from({ length: 1 }, (_) => [
+            ...Array.from({ length: 1 }, () => [
               {
                 fieldId: field.id,
                 value: '',

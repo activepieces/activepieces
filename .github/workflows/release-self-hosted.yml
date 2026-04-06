@@ -10,7 +10,7 @@ on:
 
 jobs:
   release:
-    runs-on: depot-ubuntu-24.04
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
 
@@ -60,7 +60,7 @@ jobs:
           tag: ${{ inputs.tag }}
           name: ${{ inputs.tag }}
           version: ${{ inputs.tag }}
-          latest: true
+          latest: ${{ !contains(inputs.tag, '-rc') }}
           publish: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

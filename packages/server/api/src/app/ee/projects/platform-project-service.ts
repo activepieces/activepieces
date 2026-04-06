@@ -1,4 +1,4 @@
-import { apDayjs } from '@activepieces/server-common'
+import { apDayjs } from '@activepieces/server-utils'
 import {
     apId,
     AppConnectionScope,
@@ -227,6 +227,13 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
             schedule: {
                 type: 'one-time',
                 date: apDayjs(),
+            },
+            customConfig: {
+                attempts: 25,
+                backoff: {
+                    type: 'fixed',
+                    delay: 60000,
+                },
             },
         })
     },

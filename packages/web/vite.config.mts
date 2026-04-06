@@ -11,11 +11,8 @@ import customHtmlPlugin from './vite-plugins/html-plugin';
 export default defineConfig(({ command, mode }) => {
   const isDev = command === 'serve' || mode === 'development';
 
-  const AP_TITLE = isDev ? 'Activepieces' : '${AP_APP_TITLE}';
-
-  const AP_FAVICON = isDev
-    ? 'https://activepieces.com/favicon.ico'
-    : '${AP_FAVICON_URL}';
+  const AP_TITLE = 'Activepieces';
+  const AP_FAVICON = 'https://activepieces.com/favicon.ico';
 
   return {
     root: __dirname,
@@ -27,11 +24,20 @@ export default defineConfig(({ command, mode }) => {
           target: 'http://127.0.0.1:3000',
           secure: false,
           changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/api/, ''),
           headers: {
             Host: '127.0.0.1:4200',
           },
           ws: true,
+        },
+        '/mcp': {
+          target: 'http://127.0.0.1:3000',
+          secure: false,
+          changeOrigin: true,
+        },
+        '/.well-known/oauth-authorization-server': {
+          target: 'http://127.0.0.1:3000',
+          secure: false,
+          changeOrigin: true,
         },
       },
       port: 4200,
@@ -56,6 +62,12 @@ export default defineConfig(({ command, mode }) => {
         '@activepieces/pieces-framework': path.resolve(
           __dirname,
           '../../packages/pieces/framework/src',
+        ),
+        // request-filtering-agent extends Node.js http.Agent and cannot run in the browser.
+        // SSRF protection is server-side only, so we stub it out for the browser bundle.
+        'request-filtering-agent': path.resolve(
+          __dirname,
+          './src/stubs/request-filtering-agent.ts',
         ),
       },
     },

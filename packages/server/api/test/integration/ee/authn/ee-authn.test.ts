@@ -28,7 +28,7 @@ describe('Authentication API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/authentication/sign-up',
+                url: '/api/v1/authentication/sign-up',
                 body: mockSignUpRequest,
             })
 
@@ -77,7 +77,7 @@ describe('Authentication API', () => {
         // act
         const response = await app?.inject({
             method: 'POST',
-            url: '/v1/authentication/sign-up',
+            url: '/api/v1/authentication/sign-up',
             headers: {
                 Host: mockCustomDomain.domain,
             },

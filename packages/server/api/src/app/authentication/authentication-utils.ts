@@ -1,7 +1,7 @@
-import { AppSystemProp } from '@activepieces/server-common'
-import { ActivepiecesError, ApEdition, ApEnvironment, assertNotNullOrUndefined, AuthenticationResponse, EndpointScope, ErrorCode, isNil, PrincipalType, Project, TelemetryEventName, User, UserIdentity, UserIdentityProvider, UserStatus } from '@activepieces/shared'
+import { ActivepiecesError, ApEdition, ApEnvironment, assertNotNullOrUndefined, AuthenticationResponse, EndpointScope, ErrorCode, isNil, PrincipalType, Project, ProjectType, TelemetryEventName, User, UserIdentity, UserIdentityProvider, UserStatus } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyRequest } from 'fastify'
 import { system } from '../helper/system/system'
+import { AppSystemProp } from '../helper/system/system-props'
 import { telemetry } from '../helper/telemetry.utils'
 import { platformService } from '../platform/platform.service'
 import { projectService } from '../project/project-service'
@@ -37,7 +37,9 @@ export const authenticationUtils = (log: FastifyBaseLogger) => ({
             userId: params.userId,
             isPrivileged: userService(log).isUserPrivileged(user),
         })
-        const project = isNil(params.projectId) ? projects?.[0] : projects.find((project) => project.id === params.projectId)
+        const project = isNil(params.projectId)
+            ? findPersonalProject(projects, params.userId) ?? projects?.[0]
+            : projects.find((project) => project.id === params.projectId)
         if (isNil(project)) {
             throw new ActivepiecesError({
                 code: ErrorCode.INVITATION_ONLY_SIGN_UP,
@@ -195,6 +197,10 @@ export const authenticationUtils = (log: FastifyBaseLogger) => ({
         return project.ownerId
     },
 })
+
+function findPersonalProject(projects: Project[], userId: string): Project | undefined {
+    return projects.find((project) => project.ownerId === userId && project.type === ProjectType.PERSONAL)
+}
 
 type SendTelemetryParams = {
     identity: UserIdentity

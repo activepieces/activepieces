@@ -6,6 +6,7 @@ import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
 import { flowExecutionCache } from '../../flows/flow/flow-execution-cache'
 import { flowSideEffects } from '../../flows/flow/flow-service-side-effects'
+import { batchDeleteByFlowId } from '../../flows/flow/flow.jobs'
 import { flowRepo } from '../../flows/flow/flow.repo'
 import { SystemJobData, SystemJobName } from '../../helper/system-jobs/common'
 import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
@@ -39,6 +40,13 @@ export const platformProjectBackgroundJobs = (log: FastifyBaseLogger) => ({
             })
         }
 
+        const flowIds = allFlows.map(flow => flow.id)
+
+        for (const flowId of flowIds) {
+            await batchDeleteByFlowId(flowId)
+            await flowRepo().delete({ id: flowId })
+        }
+
         await transaction(async (entityManager) => {
             await appConnectionsRepo(entityManager).delete({
                 scope: AppConnectionScope.PROJECT,
@@ -50,6 +58,6 @@ export const platformProjectBackgroundJobs = (log: FastifyBaseLogger) => ({
             })
         })
 
-        await flowExecutionCache(log).invalidate(...allFlows.map(flow => flow.id))
+        await flowExecutionCache(log).invalidate(...flowIds)
     },
 })
