@@ -72,6 +72,7 @@ export * from './lib/automation/webhook'
 export * from './lib/automation/trigger'
 export * from './lib/automation/workers/job-data'
 
+export * from './lib/automation/engine/rpc'
 export * from './lib/automation/workers/worker-contract'
 export * from './lib/automation/workers'
 export * from './lib/automation/forms'
