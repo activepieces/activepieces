@@ -1,13 +1,14 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { umamiAuth } from '../auth';
+import { umamiAuth, UmamiAuthValue } from '../auth';
 import { umamiApiCall, umamiCommon } from '../common';
 
 export const getWebsiteMetrics = createAction({
   auth: umamiAuth,
   name: 'get_website_metrics',
   displayName: 'Get Website Metrics',
-  description: 'Returns a ranked list for a chosen metric category (e.g. top pages, browsers, or countries) over a date range.',
+  description:
+    'Returns a ranked list for a chosen metric category (e.g. top pages, browsers, or countries) over a date range.',
   props: {
     websiteId: umamiCommon.websiteDropdown,
     startDate: umamiCommon.dateRange.startDate,
@@ -48,7 +49,7 @@ export const getWebsiteMetrics = createAction({
     const { websiteId, startDate, endDate, type, limit } = context.propsValue;
 
     const response = await umamiApiCall<{ x: string; y: number }[]>({
-      auth: context.auth,
+      auth: context.auth as UmamiAuthValue,
       method: HttpMethod.GET,
       path: `/websites/${websiteId}/metrics`,
       queryParams: {

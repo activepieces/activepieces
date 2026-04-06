@@ -1,7 +1,6 @@
 import {
   createTrigger,
   TriggerStrategy,
-  AppConnectionValueForAuthProperty,
   StaticPropsValue,
 } from '@activepieces/pieces-framework';
 import {
@@ -10,21 +9,19 @@ import {
   pollingHelper,
   HttpMethod,
 } from '@activepieces/pieces-common';
-import { umamiAuth } from '../auth';
+import { umamiAuth, UmamiAuthValue } from '../auth';
 import { umamiApiCall, umamiCommon } from '../common';
 
 const props = {
   websiteId: umamiCommon.websiteDropdown,
 };
 
-const polling: Polling<
-  AppConnectionValueForAuthProperty<typeof umamiAuth>,
-  StaticPropsValue<typeof props>
-> = {
+const polling: Polling<UmamiAuthValue, StaticPropsValue<typeof props>> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue, lastFetchEpochMS }) => {
     const now = Date.now();
-    const startAt = lastFetchEpochMS > 0 ? lastFetchEpochMS : now - 24 * 60 * 60 * 1000;
+    const startAt =
+      lastFetchEpochMS > 0 ? lastFetchEpochMS : now - 24 * 60 * 60 * 1000;
 
     const allSessions: {
       id: string;
@@ -69,7 +66,7 @@ const polling: Polling<
 
     return allSessions.map((session) => ({
       epochMilliSeconds: new Date(session.createdAt).getTime(),
-      data: session
+      data: session,
     }));
   },
 };
