@@ -174,7 +174,6 @@ const ProjectReleasesPage = () => {
         toolbarButtons={[
           <PushEverythingDialog key="push">
             <Button
-              className="h-9"
               variant="outline"
               disabled={!doesUserHavePermissionToWriteRelease}
             >
@@ -188,7 +187,7 @@ const ProjectReleasesPage = () => {
             <DropdownMenu modal={false}>
               <DropdownMenuTrigger asChild>
                 <Button
-                  className="h-9 w-full"
+                  className="w-full"
                   disabled={!doesUserHavePermissionToWriteRelease}
                 >
                   {t('Create Release')}

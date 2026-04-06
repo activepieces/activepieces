@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-sardis",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "scripts": {
@@ -11,7 +11,6 @@
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
-    "@sardis/sdk": "1.0.0",
     "tslib": "2.6.2"
   }
 }

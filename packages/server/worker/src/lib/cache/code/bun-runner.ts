@@ -1,20 +1,23 @@
 import { apDayjsDuration, fileSystemUtils } from '@activepieces/server-utils'
 import { tryCatch } from '@activepieces/shared'
 import { Logger } from 'pino'
-import { CommandOutput, execPromise, spawnWithKill } from '../../utils/exec'
+import { CommandOutput, spawnWithKill } from '../../utils/exec'
 
 export const bunRunner = (log: Logger) => ({
     async install({ path, filtersPath }: InstallParams): Promise<CommandOutput> {
-        const args = [
-            '--ignore-scripts',
-        ]
-        const filters: string[] = filtersPath
+        const filterArgs: string[] = filtersPath
             .map(sanitizeFilterPath)
-            .map((path) => `--filter ./${path}`)
+            .flatMap((p) => ['--filter', `./${p}`])
+        const args = [
+            'install',
+            '--ignore-scripts',
+            ...filterArgs,
+        ]
         await fileSystemUtils.threadSafeMkdir(path)
-        log.debug({ path, args, filters }, '[bunRunner#install]')
+        log.debug({ path, args }, '[bunRunner#install]')
         const { error, data } = await tryCatch(async () => spawnWithKill({
-            cmd: `bun install ${args.join(' ')} ${filters.join(' ')}`,
+            cmd: 'bun',
+            args,
             options: {
                 cwd: path,
             },
@@ -28,15 +31,21 @@ export const bunRunner = (log: Logger) => ({
         return data
     },
     async build({ path, entryFile, outputFile }: BuildParams): Promise<CommandOutput> {
-        const config = [
-            `${entryFile}`,
-            '--target node',
-            '--production',
-            '--format cjs',
-            `--outfile ${outputFile}`,
+        const args = [
+            entryFile,
+            '--bundle',
+            '--platform=node',
+            '--format=cjs',
+            `--outfile=${outputFile}`,
         ]
-        log.debug({ path, entryFile, outputFile, config }, '[bunRunner#build]')
-        return execPromise(`bun build ${config.join(' ')}`, { cwd: path })
+        log.debug({ path, entryFile, outputFile, args }, '[bunRunner#build]')
+        return spawnWithKill({
+            cmd: 'esbuild',
+            args,
+            options: { cwd: path },
+            printOutput: false,
+            timeoutMs: apDayjsDuration(5, 'minutes').asMilliseconds(),
+        })
     },
 })
 

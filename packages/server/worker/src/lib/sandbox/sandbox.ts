@@ -1,7 +1,8 @@
 import { ChildProcess } from 'child_process'
 import { createServer, Server as HttpServer } from 'http'
 import path from 'path'
-import { ActivepiecesError, assertNotNullOrUndefined, createNotifyServer, createRpcClient, createRpcServer, EngineContract, EngineOperation, EngineOperationType, EngineResponse, EngineStderr, EngineStdout, ErrorCode, isNil, WorkerContract, WorkerNotifyContract } from '@activepieces/shared'
+import { ActivepiecesError, assertNotNullOrUndefined, EngineContract, EngineOperation, EngineOperationType, EngineResponse, EngineStderr, EngineStdout, ErrorCode, isNil, WorkerContract, WorkerNotifyContract } from '@activepieces/shared'
+import { createNotifyServer, createRpcClient, createRpcServer } from '@activepieces/shared/server'
 import { Socket, Server as SocketIOServer } from 'socket.io'
 import treeKill from 'tree-kill'
 import { getGlobalCachePathLatestVersion } from '../cache/cache-paths'
@@ -180,7 +181,7 @@ export function createSandbox(
                 const operationTimeoutMs = (executeOptions.timeoutInSeconds + 5) * 1000
                 const client = createRpcClient<EngineContract>(connectedSocket!, operationTimeoutMs)
                 client.executeOperation({ operationType, operation }).then((engineResponse: EngineResponse<unknown>) => {
-                    resolve({ ...engineResponse, stdOut, stdError })
+                    resolve({ ...engineResponse, logs: buildLogs(stdOut, stdError) })
                 }).catch((error: unknown) => {
                     log.error({ sandboxId, error: String(error) }, '[Sandbox] RPC call failed')
                     reject(error)
@@ -282,6 +283,13 @@ function killProcess(child: ChildProcess, log: SandboxLogger): Promise<void> {
             resolve()
         })
     })
+}
+
+function buildLogs(stdOut: string, stdError: string): string | undefined {
+    const parts: string[] = []
+    if (stdOut) parts.push(`stdout:\n${stdOut}`)
+    if (stdError) parts.push(`stderr:\n${stdError}`)
+    return parts.length > 0 ? parts.join('\n') : undefined
 }
 
 type ProcessExitParams = {
