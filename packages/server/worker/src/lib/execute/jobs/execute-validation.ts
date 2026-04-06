@@ -14,8 +14,7 @@ import { JobContext, JobHandler, JobResultKind, SynchronousJobResult } from '../
 export const executeValidationJob: JobHandler<ExecuteValidateAuthJobData, SynchronousJobResult> = {
     jobType: WorkerJobType.EXECUTE_VALIDATION,
     async execute(ctx: JobContext, data: ExecuteValidateAuthJobData): Promise<SynchronousJobResult> {
-        const settings = workerSettings.getSettings()
-        const timeoutInSeconds = settings.TRIGGER_TIMEOUT_SECONDS
+        const timeoutInSeconds = workerSettings.getSettings().TRIGGER_TIMEOUT_SECONDS
 
         await provisioner(ctx.log, ctx.apiClient).provision({
             pieces: [data.piece],

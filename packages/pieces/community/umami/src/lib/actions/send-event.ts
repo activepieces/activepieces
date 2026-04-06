@@ -1,13 +1,15 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { umamiAuth } from '../auth';
+import { umamiAuth, UmamiAuthValue } from '../auth';
 import { umamiCommon } from '../common';
+import { AppConnectionType } from '@activepieces/shared';
 
 export const sendEvent = createAction({
   auth: umamiAuth,
   name: 'send_event',
   displayName: 'Send Event',
-  description: 'Records a custom event or pageview on a website. Leave the event name blank to track a plain pageview.',
+  description:
+    'Records a custom event or pageview on a website. Leave the event name blank to track a plain pageview.',
   props: {
     websiteId: umamiCommon.websiteDropdown,
     url: Property.ShortText({
@@ -17,7 +19,8 @@ export const sendEvent = createAction({
     }),
     eventName: Property.ShortText({
       displayName: 'Event Name',
-      description: 'Name of the custom event, e.g. signup-button-click. Leave blank to record a pageview.',
+      description:
+        'Name of the custom event, e.g. signup-button-click. Leave blank to record a pageview.',
       required: false,
     }),
     eventData: Property.Object({
@@ -37,9 +40,12 @@ export const sendEvent = createAction({
     }),
   },
   async run(context) {
-    const { websiteId, url, eventName, eventData, referrer, title } = context.propsValue;
-
-    const baseUrl = context.auth.props.authMode === 'cloud' ? 'https://cloud.umami.is' : context.auth.props.baseUrl?.replace(/\/+$/, '');
+    const { websiteId, url, eventName, eventData, referrer, title } =
+      context.propsValue;
+    const auth = context.auth as UmamiAuthValue;
+    const sendUrl = auth.type === AppConnectionType.SECRET_TEXT
+      ? 'https://cloud.umami.is/api/send'
+      : `${auth.props.baseUrl.replace(/\/+$/, '')}/api/send`;
 
     const payload: Record<string, unknown> = {
       website: websiteId,
@@ -56,7 +62,7 @@ export const sendEvent = createAction({
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
-      url: `${baseUrl}/api/send`,
+      url: sendUrl,
       headers: {
         'Content-Type': 'application/json',
         'User-Agent': 'Mozilla/5.0 (compatible; Activepieces/1.0)',

@@ -1,0 +1,120 @@
+name: Continuous Delivery — Canary
+
+on:
+  schedule:
+    - cron: '0 9 * * *'  # Daily 9 AM UTC
+
+jobs:
+  build-image:
+    runs-on: ubuntu-24.04
+    concurrency:
+      group: canary-deploy
+      cancel-in-progress: true
+    outputs:
+      image_tag: ${{ steps.set-tag.outputs.image_tag }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set image tag
+        id: set-tag
+        run: |
+          RELEASE=$(node --print "require('./package.json').version")
+          echo "image_tag=${RELEASE}.${{ github.sha }}.canary" >> $GITHUB_OUTPUT
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: depot/setup-action@v1
+
+      - uses: depot/build-push-action@v1
+        with:
+          project: du7O4b0e8P
+          token: ${{ secrets.DEPOT_PROJECT_TOKEN }}
+          context: .
+          file: ./Dockerfile
+          platforms: |
+            linux/amd64
+            linux/arm64
+          push: true
+          no-cache: true
+          tags: ghcr.io/activepieces/activepieces-cloud:${{ steps.set-tag.outputs.image_tag }}
+
+  check-migrations:
+    needs: build-image
+    runs-on: ubuntu-latest
+    outputs:
+      has_breaking: ${{ steps.check.outputs.has_breaking }}
+      breaking_names: ${{ steps.check.outputs.breaking_names }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh/
+          echo "$SSH_KEY" > ~/.ssh/ops.key
+          chmod 600 ~/.ssh/ops.key
+          cat >>~/.ssh/config <<END
+          Host ops
+            HostName $SSH_HOST
+            User $SSH_USER
+            IdentityFile ~/.ssh/ops.key
+            StrictHostKeyChecking no
+          END
+        env:
+          SSH_USER: ${{ secrets.DEV_OPS_USERNAME }}
+          SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_HOST: ${{ secrets.DEV_OPS_HOST }}
+
+      - name: Get current canary manifest
+        id: current-manifest
+        run: |
+          MANIFEST=$(ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal app exec \
+            --config-file=config/app-canary.yml -- \
+            cat /usr/src/app/packages/server/api/dist/src/migration-manifest.json; exit"' \
+            2>/dev/null || echo '[]')
+          echo "json=$MANIFEST" >> $GITHUB_OUTPUT
+
+      - name: Check for breaking migrations
+        id: check
+        run: npx tsx tools/scripts/check-manifest-migrations.ts '${{ steps.current-manifest.outputs.json }}'
+
+      - name: Fail on breaking migrations
+        if: steps.check.outputs.has_breaking == 'true'
+        run: |
+          echo "Breaking migrations detected: ${{ steps.check.outputs.breaking_names }}"
+          exit 1
+
+  deploy-canary:
+    needs: [build-image, check-migrations]
+    runs-on: ubuntu-latest
+    environment:
+      name: canary
+    steps:
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh/
+          echo "$SSH_KEY" > ~/.ssh/ops.key
+          chmod 600 ~/.ssh/ops.key
+          cat >>~/.ssh/config <<END
+          Host ops
+            HostName $SSH_HOST
+            User $SSH_USER
+            IdentityFile ~/.ssh/ops.key
+            StrictHostKeyChecking no
+          END
+        env:
+          SSH_USER: ${{ secrets.DEV_OPS_USERNAME }}
+          SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_HOST: ${{ secrets.DEV_OPS_HOST }}
+
+      - name: Deploy canary app
+        run: |
+          ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal deploy --version ${{ needs.build-image.outputs.image_tag }} --config-file=config/app-canary.yml --skip-push; exit"'
+
+      - name: Deploy canary workers
+        run: |
+          ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal deploy --version ${{ needs.build-image.outputs.image_tag }} --config-file=config/worker.yml --roles=canary --skip-push; exit"'
+
