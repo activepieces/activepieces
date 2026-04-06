@@ -165,7 +165,7 @@ function CreateOrEditConnectionSection({
                 control={form.control}
                 render={({ field }) => (
                   <FormItem className="flex flex-col gap-2">
-                    <FormLabel htmlFor="displayName">
+                    <FormLabel htmlFor="displayName" showRequiredIndicator>
                       {t('Connection Name')}
                     </FormLabel>
                     <FormControl>
@@ -216,6 +216,7 @@ function CreateOrEditConnectionSection({
                         <FormItem>
                           <FormLabel>{t('External ID')}</FormLabel>
                           <Input {...field} />
+                          <FormMessage />
                         </FormItem>
                       )}
                     ></FormField>

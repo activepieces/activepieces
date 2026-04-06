@@ -36,6 +36,7 @@ import {
   PropertyExecutionType,
   PropertySettings,
   PieceTriggerSettings,
+  OAuth2GrantType,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { z, ZodObject, ZodType } from 'zod';
@@ -181,10 +182,10 @@ function getDefaultValueForProperties({
 const EXTERNAL_ID_SCHEMA = z
   .string()
   .min(1, {
-    error: t('Name can only contain letters, numbers and underscores'),
+    error: t('External ID can only contain letters, numbers and underscores'),
   })
   .regex(/^[A-Za-z0-9_\-@+.]*$/, {
-    error: t('Name can only contain letters, numbers and underscores'),
+    error: t('External ID can only contain letters, numbers and underscores'),
   });
 
 function displayNameSchema(required: boolean) {
@@ -202,10 +203,14 @@ const PROJECT_FORM_EXTRAS_SCHEMA = z.object({
 
 const GLOBAL_CONNECTION_EXTRAS_SCHEMA = z.object({
   scope: z.literal(AppConnectionScope.PLATFORM),
-  projectIds: z.array(z.string()).min(1, { error: t('required') }),
+  projectIds: z
+    .array(z.string())
+    .min(1, { error: t('Please select at least one project') }),
   metadata: Metadata.optional(),
   preSelectForNewProjects: z.boolean().optional(),
 });
+
+
 
 function connectionNameSchema(required: boolean) {
   return z.object({
@@ -228,19 +233,28 @@ function buildOAuth2ValueSchema(
     auth.props ?? {},
     undefined,
   );
+  const isClientCredsGrantType =  auth.grantType === OAuth2GrantType.CLIENT_CREDENTIALS;
+
+  const withPropsAndCode = {
+    props: propsSchema.optional(),
+    code: isClientCredsGrantType ? z.string().optional() : z.string().min(1, {
+      error: t('Please connect your account first'),
+    }),
+  } as const;
+
   switch (connectionType) {
     case AppConnectionType.OAUTH2:
       return UpsertOAuth2Request.shape.value
         .omit({ props: true })
-        .extend({ props: propsSchema.optional() });
+        .extend(withPropsAndCode);
     case AppConnectionType.CLOUD_OAUTH2:
       return UpsertCloudOAuth2Request.shape.value
         .omit({ props: true })
-        .extend({ props: propsSchema.optional() });
+        .extend(withPropsAndCode);
     case AppConnectionType.PLATFORM_OAUTH2:
       return UpsertPlatformOAuth2Request.shape.value
         .omit({ props: true })
-        .extend({ props: propsSchema.optional() });
+        .extend(withPropsAndCode);
   }
 }
 
@@ -305,7 +319,6 @@ function buildOAuth2RequestSchema(
   const omit = isGlobalConnection
     ? GLOBAL_NAME_AND_VALUE_OMIT
     : PROJECT_NAME_AND_VALUE_OMIT;
-
   const buildBranch = (
     schema: ZodObject<z.ZodRawShape>,
     connectionType:
