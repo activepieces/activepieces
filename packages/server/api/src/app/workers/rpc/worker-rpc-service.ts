@@ -27,16 +27,25 @@ import { projectService } from '../../project/project-service'
 import { dedupeService } from '../../trigger/dedupe-service'
 import { triggerEventService } from '../../trigger/trigger-events/trigger-event.service'
 import { triggerSourceService } from '../../trigger/trigger-source/trigger-source-service'
-import { redisMetadataKey, RunsMetadataUpsertData } from '../job'
+import { getPlatformQueueName, QueueName, redisMetadataKey, RunsMetadataUpsertData } from '../job'
 import { jobBroker } from '../job-queue/job-broker'
 import { machineService } from '../machine/machine-service'
 
-export function createHandlers(log: FastifyBaseLogger, platformIdForDedicatedWorker?: string): WorkerToApiContract {
+const getPollQueueName = (platformIdForDedicatedWorker?: string, isCanaryWorker = false): string => {
+    return isCanaryWorker
+        ? QueueName.CANARY_JOBS
+        : platformIdForDedicatedWorker
+            ? getPlatformQueueName(platformIdForDedicatedWorker)
+            : QueueName.WORKER_JOBS
+}
+
+export function createHandlers(log: FastifyBaseLogger, platformIdForDedicatedWorker?: string, isCanaryWorker = false): WorkerToApiContract {
     return {
         async poll(input) {
-            log.info({ workerId: input.workerId, platformIdForDedicatedWorker }, '[workerRpc#poll] Poll request received')
+            log.info({ workerId: input.workerId, platformIdForDedicatedWorker, isCanaryWorker }, '[workerRpc#poll] Poll request received')
             await machineService(log).onConnection(input, platformIdForDedicatedWorker)
-            const job = await jobBroker(log).poll(platformIdForDedicatedWorker)
+            const pollQueueName = getPollQueueName(platformIdForDedicatedWorker, isCanaryWorker)
+            const job = await jobBroker(log).poll(pollQueueName)
             if (job) {
                 log.info({ workerId: input.workerId, jobId: job.jobId, jobType: job.jobData.jobType }, '[workerRpc#poll] Returning job to worker')
             }
@@ -182,10 +191,15 @@ export function createHandlers(log: FastifyBaseLogger, platformIdForDedicatedWor
             if (isNil(flow)) {
                 return null
             }
-            return flowVersionService(log).lockPieceVersions({
+            const result = await flowVersionService(log).lockPieceVersions({
                 flowVersion,
                 projectId: flow.projectId,
             })
+            if (!result.success) {
+                log.warn({ flowVersionId: input.versionId, reason: result.message }, '[workerRpc#getFlowVersion] lockPieceVersions failed')
+                return null
+            }
+            return result.data
         },
 
         async getPiece(input) {

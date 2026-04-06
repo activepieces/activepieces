@@ -60,6 +60,7 @@ async function buildSettingsResponse(log: FastifyBaseLogger, platformIdForDedica
         EDITION: system.getOrThrow(AppSystemProp.EDITION),
         SSRF_ALLOW_LIST: system.get(AppSystemProp.SSRF_ALLOW_LIST)?.split(',').map(f => f.trim()) ?? [],
         SSRF_PROTECTION_ENABLED: system.get(AppSystemProp.SSRF_PROTECTION_ENABLED) === 'true',
+        PAGE_ONCALL_WEBHOOK: system.get(AppSystemProp.PAGE_ONCALL_WEBHOOK),
     }
     settingsCache.set(cacheKey, settings)
     return settings
