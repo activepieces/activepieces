@@ -1,6 +1,5 @@
 {
   "lockfileVersion": 1,
-  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "activepieces",
@@ -7765,7 +7764,7 @@
     },
     "packages/pieces/framework": {
       "name": "@activepieces/pieces-framework",
-      "version": "0.26.0",
+      "version": "0.26.1",
       "dependencies": {
         "@activepieces/shared": "workspace:*",
         "ai": "^6.0.0",
