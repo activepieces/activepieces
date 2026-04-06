@@ -70,35 +70,21 @@ jobs:
           FORCE_FLAG=${{ inputs.force && '"--force"' || '""' }}
           MANIFEST='${{ steps.manifest.outputs.json }}'
 
-          # Write manifest to remote via stdin — bypasses all shell quoting issues
-          printf '%s' "$MANIFEST" | ssh ops 'cat > /tmp/rollback-manifest.json'
+          # Base64-encode the manifest so it is safe through every shell layer
+          MANIFEST_B64=$(printf '%s' "$MANIFEST" | base64 | tr -d '\n')
 
-          # Write a node runner that reads the manifest from a file and injects it
-          # into process.argv before requiring rollback.js — avoids shell quoting of JSON
-          ssh ops 'cat > /tmp/run-rollback.js' << 'EOJS'
-          const fs = require('fs');
-          const raw = fs.readFileSync('/tmp/rollback-manifest.json', 'utf8').trim();
-          const manifest = JSON.parse(raw).filter(function(x) { return x !== null; });
-          const args = ['node', 'script', '--manifest', JSON.stringify(manifest)];
-          if (process.argv.indexOf('--force') !== -1) { args.push('--force'); }
-          process.argv = args;
-          require('/usr/src/app/packages/server/api/dist/src/rollback.js');
-          EOJS
+          # Step 1: write manifest file into the running container via kamal.
+          # node writes the file — no shell redirect operators that kamal's bash wrapper would intercept.
+          # MANIFEST_B64 is injected as a docker-exec env var (-e); base64 has no shell-special chars.
+          ssh ops -t -t "bash -ic \"cd mrsk/prod && kamal app exec --reuse --config-file=config/app-canary.yml \
+            -e MANIFEST_B64=$MANIFEST_B64 -- \
+            node -e 'require(\\\"fs\\\").writeFileSync(\\\"/tmp/manifest.json\\\",Buffer.from(process.env.MANIFEST_B64,\\\"base64\\\").toString())' ; exit\""
 
-          # Find the running canary container (no kamal needed)
-          CONTAINER=$(ssh ops 'docker ps --filter "label=service=activepieces" --filter "label=role=web" --filter status=running --format "{{.Names}}" | grep "\.canary" | head -1')
-          if [ -z "$CONTAINER" ]; then
-            echo "ERROR: Could not find running canary container"
-            exit 1
-          fi
-          echo "Target container: $CONTAINER"
-
-          # Copy files into the container
-          ssh ops "docker cp /tmp/rollback-manifest.json $CONTAINER:/tmp/rollback-manifest.json"
-          ssh ops "docker cp /tmp/run-rollback.js $CONTAINER:/tmp/run-rollback.js"
-
-          # docker exec runs node directly (no container shell) — JSON args are never shell-processed
-          ssh ops "docker exec $CONTAINER node /tmp/run-rollback.js $FORCE_FLAG"
+          # Step 2: run rollback via a node wrapper that reads the manifest from the file.
+          # JSON is never passed as a shell argument — the wrapper injects it via process.argv in-process.
+          ssh ops -t -t "bash -ic \"cd mrsk/prod && kamal app exec --reuse --config-file=config/app-canary.yml -- \
+            node -e 'const fs=require(\\\"fs\\\");const m=JSON.parse(fs.readFileSync(\\\"/tmp/manifest.json\\\",\\\"utf8\\\")).filter(function(x){return x!==null});const f=process.argv.indexOf(\\\"--force\\\")!==-1;process.argv=[\\\"n\\\",\\\"s\\\",\\\"--manifest\\\",JSON.stringify(m)];if(f){process.argv.push(\\\"--force\\\");}require(\\\"/usr/src/app/packages/server/api/dist/src/rollback.js\\\");' \
+            $FORCE_FLAG ; exit\""
 
       - name: Redeploy canary app to target image
         run: |
