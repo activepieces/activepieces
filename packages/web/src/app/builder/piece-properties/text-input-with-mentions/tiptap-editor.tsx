@@ -18,7 +18,7 @@ import { TextSelection } from '@tiptap/pm/state';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { Copy } from 'lucide-react';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { inputClass } from '@/components/ui/input';
 import { stepsHooks } from '@/features/pieces';
@@ -479,6 +479,7 @@ export const TiptapEditor = ({
         <FunctionSearchPopover
           query={slashState.query}
           position={slashState.position}
+          editorRef={editorWrapperRef}
           onSelect={handleFunctionSelect}
           onClose={closeSlash}
         />

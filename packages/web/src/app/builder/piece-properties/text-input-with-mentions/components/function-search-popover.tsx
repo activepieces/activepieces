@@ -1,5 +1,6 @@
 import { AP_FUNCTIONS, ApFunction } from '@activepieces/shared';
-import { useEffect, useRef, useState } from 'react';
+import { ExternalLink } from 'lucide-react';
+import { RefObject, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 
@@ -7,7 +8,6 @@ import { cn } from '@/lib/utils';
 
 import { FunctionTooltipCard } from './function-hover-popover';
 
-const LIST_WIDTH = 360;
 const SCREEN_MARGIN = 8;
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -21,6 +21,7 @@ const CATEGORY_COLORS: Record<string, string> = {
 type FunctionSearchPopoverProps = {
   query: string;
   position: { top: number; left: number };
+  editorRef: RefObject<HTMLDivElement | null>;
   onSelect: (fn: ApFunction) => void;
   onClose: () => void;
 };
@@ -28,6 +29,7 @@ type FunctionSearchPopoverProps = {
 export function FunctionSearchPopover({
   query,
   position,
+  editorRef,
   onSelect,
   onClose,
 }: FunctionSearchPopoverProps) {
@@ -37,9 +39,11 @@ export function FunctionSearchPopover({
   const [hoverItemRect, setHoverItemRect] = useState<DOMRect | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
-  const filtered = AP_FUNCTIONS.filter(
-    (fn) => !query || fn.name.toLowerCase().includes(query.toLowerCase()),
-  );
+  const filtered = query
+    ? AP_FUNCTIONS.filter((fn) =>
+        fn.name.toLowerCase().includes(query.toLowerCase()),
+      )
+    : [];
 
   useEffect(() => {
     setActiveIdx(0);
@@ -71,23 +75,17 @@ export function FunctionSearchPopover({
     return () => window.removeEventListener('keydown', handler, true);
   }, [filtered, activeIdx, onSelect, onClose]);
 
-  // Clamp left so the popover never goes off the right edge of the screen
-  const clampedLeft = Math.min(
-    Math.max(position.left, SCREEN_MARGIN),
-    window.innerWidth - LIST_WIDTH - SCREEN_MARGIN,
-  );
+  // Anchor horizontally to the editor input, not to the cursor
+  const editorRect = editorRef.current?.getBoundingClientRect();
+  const popoverLeft = editorRect
+    ? Math.min(
+        Math.max(editorRect.left + window.scrollX, SCREEN_MARGIN),
+        window.innerWidth - editorRect.width - SCREEN_MARGIN,
+      )
+    : position.left;
+  const popoverWidth = editorRect ? editorRect.width : 360;
 
-  if (filtered.length === 0) {
-    return createPortal(
-      <div
-        className="fixed z-[9998] bg-popover border border-border rounded-lg shadow-lg p-3 text-sm text-muted-foreground"
-        style={{ top: position.top, left: clampedLeft, width: LIST_WIDTH }}
-      >
-        {t('No functions found')}
-      </div>,
-      document.body,
-    );
-  }
+  const tooltipOnRight = popoverLeft < 340;
 
   const grouped = filtered.reduce<Record<string, ApFunction[]>>((acc, fn) => {
     if (!acc[fn.category]) acc[fn.category] = [];
@@ -97,14 +95,63 @@ export function FunctionSearchPopover({
 
   let globalIdx = 0;
 
-  // Show tooltip to the left of the list; flip right if near left edge
-  const tooltipOnRight = clampedLeft < 340;
+  const footer = (
+    <div className="border-t border-border px-3 py-2 text-xs text-muted-foreground flex items-center justify-between">
+      <div className="flex items-center gap-1">
+        {t('Press')}
+        <kbd className="bg-muted border border-border rounded px-1 flex justify-center text-[10px]">
+          ↵
+        </kbd>
+        {t('to apply')}
+      </div>
+      <a
+        href="https://www.activepieces.com/docs/workflows/data-manipulation"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center gap-0.5 hover:text-foreground transition-colors"
+        onMouseDown={(e) => e.preventDefault()}
+      >
+        {t('See All')}
+        <ExternalLink className="w-3 h-3" />
+      </a>
+    </div>
+  );
+
+  if (!query) {
+    return createPortal(
+      <div
+        className="fixed z-[9998] bg-popover border border-border rounded-lg shadow-lg overflow-hidden"
+        style={{ top: position.top, left: popoverLeft, width: popoverWidth }}
+      >
+        <div className="px-3 py-4 text-sm text-muted-foreground text-center">
+          {t('Type to search functions...')}
+        </div>
+        {footer}
+      </div>,
+      document.body,
+    );
+  }
+
+  if (filtered.length === 0) {
+    return createPortal(
+      <div
+        className="fixed z-[9998] bg-popover border border-border rounded-lg shadow-lg overflow-hidden"
+        style={{ top: position.top, left: popoverLeft, width: popoverWidth }}
+      >
+        <div className="px-3 py-4 text-sm text-muted-foreground text-center">
+          {t('No functions found')}
+        </div>
+        {footer}
+      </div>,
+      document.body,
+    );
+  }
 
   return createPortal(
     <>
       <div
-        className="fixed z-[9998] bg-popover border border-border rounded-lg shadow-lg overflow-hidden"
-        style={{ top: position.top, left: clampedLeft, width: LIST_WIDTH }}
+        className="fixed z-[999] bg-popover border border-border rounded-lg shadow-lg overflow-hidden"
+        style={{ top: position.top, left: popoverLeft, width: popoverWidth }}
       >
         <div
           ref={listRef}
@@ -165,12 +212,7 @@ export function FunctionSearchPopover({
             </div>
           ))}
         </div>
-        <div className="border-t border-border px-3 py-1.5 text-[11px] text-muted-foreground flex items-center gap-1">
-          <kbd className="bg-muted border border-border rounded px-1 text-[10px]">
-            ↵
-          </kbd>
-          {t('to apply')}
-        </div>
+        {footer}
       </div>
 
       {/* Tooltip shown to the left (or right if near left edge) of hovered item */}
