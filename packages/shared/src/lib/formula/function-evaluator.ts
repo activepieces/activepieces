@@ -294,12 +294,10 @@ export function evaluateExpression(
 
     const segments = tokenizeFormulaTemplate(trimmed)
 
-    // Single formula segment — preserve the result type (number, boolean, array, etc.)
     if (segments.length === 1 && segments[0].type === 'formula') {
         return evaluateSingleFormula(segments[0].value, sampleData)
     }
 
-    // Mixed template — evaluate each formula and join everything as a string
     const parts: string[] = []
     for (const seg of segments) {
         if (seg.type === 'text') {
@@ -339,19 +337,16 @@ function tokenizeFormulaTemplate(
         const next = findNextFunctionCall(template, pos, fnNames)
 
         if (next === null) {
-            // No more formula calls — rest is plain text
             segments.push({ type: 'text', value: template.slice(pos) })
             break
         }
 
-        // Plain text before this formula call
         if (next.start > pos) {
             segments.push({ type: 'text', value: template.slice(pos, next.start) })
         }
 
         const closePos = findMatchingParen(template, next.openParen)
         if (closePos === -1) {
-            // Unclosed — treat the rest as plain text
             segments.push({ type: 'text', value: template.slice(next.start) })
             break
         }

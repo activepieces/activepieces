@@ -17,9 +17,11 @@ import { Text } from '@tiptap/extension-text';
 import { TextSelection } from '@tiptap/pm/state';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
-import { Copy } from 'lucide-react';
+import { t } from 'i18next';
+import { ChevronRight, Copy, XCircle } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { Button } from '@/components/ui/button';
 import { inputClass } from '@/components/ui/input';
 import { stepsHooks } from '@/features/pieces';
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -281,7 +283,6 @@ export const TiptapEditor = ({
 
         const { state } = view;
 
-        // Collect open and closed function node IDs
         const openIds = new Set<string>();
         const closedIds = new Set<string>();
         state.doc.descendants((node) => {
@@ -294,9 +295,8 @@ export const TiptapEditor = ({
         });
 
         const unclosed = [...openIds].filter((id) => !closedIds.has(id));
-        if (unclosed.length === 0) return false; // no open function, type normally
+        if (unclosed.length === 0) return false;
 
-        // Find the innermost: the last function_start in doc order that is unclosed
         let innermostId: string | null = null;
         state.doc.descendants((node) => {
           if (
@@ -309,13 +309,12 @@ export const TiptapEditor = ({
 
         if (!innermostId) return false;
 
-        // Insert FunctionEndNode at cursor
         const { tr } = state;
         const endNode = state.schema.nodes[FUNCTION_END_NODE_TYPE].create({
           openId: innermostId,
         });
         view.dispatch(tr.replaceSelectionWith(endNode));
-        return true; // consumed
+        return true;
       },
       attributes: {
         class: cn(
@@ -422,13 +421,14 @@ export const TiptapEditor = ({
         >
           {(typeErrors.length > 0 || previewErrorMsg) && (
             <div className="border-b border-border">
-              <div className="flex items-center justify-between px-3 py-1.5 bg-red-50 dark:bg-red-950/30 rounded-t-md">
-                <span className="flex items-center gap-1.5 text-red-600 dark:text-red-400 font-medium text-xs">
-                  <span className="text-base leading-none">⊗</span>
-                  Error
+              <div className="flex items-center justify-between px-3 py-2">
+                <span className="flex items-center gap-1.5 text-destructive font-medium text-xs">
+                  <XCircle className="size-3" />
+                  {t('Error')}
                 </span>
-                <button
-                  type="button"
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
                   onClick={() =>
                     navigator.clipboard.writeText(
                       [...typeErrors, previewErrorMsg ?? '']
@@ -436,12 +436,11 @@ export const TiptapEditor = ({
                         .join('\n'),
                     )
                   }
-                  className="text-red-400 hover:text-red-600 transition-colors"
                 >
-                  <Copy size={13} />
-                </button>
+                  <Copy className="size-3" />
+                </Button>
               </div>
-              <div className="px-3 py-2 text-red-500 dark:text-red-400 break-all whitespace-pre-wrap space-y-0.5">
+              <div className="px-3 pb-2 text-destructive break-all whitespace-pre-wrap space-y-0.5">
                 {typeErrors.map((err, i) => (
                   <div key={i}>{err}</div>
                 ))}
@@ -451,22 +450,25 @@ export const TiptapEditor = ({
           )}
 
           <div>
-            <div className="flex items-center justify-between px-3 py-1.5 bg-green-50 dark:bg-green-950/20 rounded-b-md">
-              <span className="flex items-center gap-1.5 text-muted-foreground font-medium text-xs">
-                <span>›</span>
-                Preview
+            <div className="flex items-center justify-between px-3 py-2">
+              <span className="flex items-center gap-1.5 font-medium text-xs">
+                <ChevronRight className="size-3" />
+                {t('Preview')}
               </span>
-              <button
-                type="button"
+              <Button
+                variant="ghost"
+                size="icon-xs"
                 onClick={() => navigator.clipboard.writeText(previewResult)}
-                className="text-muted-foreground hover:text-foreground transition-colors"
               >
-                <Copy size={13} />
-              </button>
+                <Copy className="size-3" />
+              </Button>
             </div>
-            <div className="px-3 py-2 text-foreground break-all whitespace-pre-wrap">
+
+            <div className="px-3 pb-2 text-foreground break-all whitespace-pre-wrap">
               {previewResult || (
-                <span className="text-muted-foreground italic">empty</span>
+                <span className="text-muted-foreground italic">
+                  {t('empty')}
+                </span>
               )}
             </div>
           </div>
@@ -490,7 +492,6 @@ export const TiptapEditor = ({
 
 const ZWS_CHAR = '\u200B';
 
-// Returns the single character at `pos` in the document, or '' if none (e.g. atom node).
 function docCharAt(doc: import('@tiptap/pm/model').Node, pos: number): string {
   if (pos < 0 || pos >= doc.content.size) return '';
   try {
@@ -603,7 +604,6 @@ function getActiveFunctionAtCursor(
   const { state } = editor;
   const cursorPos = state.selection.from;
 
-  // Collect all function nodes with their positions
   const startMap = new Map<string, { pos: number; functionName: string }>();
   const endMap = new Map<string, number>();
 
@@ -619,14 +619,11 @@ function getActiveFunctionAtCursor(
     }
   });
 
-  // Find innermost function_start whose range contains the cursor
   let innermostId: string | null = null;
   let innermostPos = -1;
 
   for (const [id, { pos }] of startMap) {
-    // Cursor must be strictly after the start badge
     if (pos >= cursorPos) continue;
-    // Cursor must be before (or at) the end badge, or inside unclosed function
     const endPos = endMap.has(id) ? endMap.get(id)! : Infinity;
     if (cursorPos > endPos) continue;
     if (pos > innermostPos) {
@@ -639,14 +636,11 @@ function getActiveFunctionAtCursor(
 
   const { functionName } = startMap.get(innermostId)!;
 
-  // Count commas between our function_start and cursor, skipping nested functions
   let argIndex = 0;
   let depth = 0;
 
   state.doc.descendants((node, pos) => {
-    // Skip the start node itself and everything before it
     if (pos <= innermostPos) return;
-    // Skip nodes at or past the cursor
     if (pos >= cursorPos) return;
 
     if (node.type.name === FUNCTION_START_NODE_TYPE) {

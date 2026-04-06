@@ -4,6 +4,7 @@ import { RefObject, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 
+import { buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 import { FunctionTooltipCard } from './function-hover-popover';
@@ -75,7 +76,6 @@ export function FunctionSearchPopover({
     return () => window.removeEventListener('keydown', handler, true);
   }, [filtered, activeIdx, onSelect, onClose]);
 
-  // Anchor horizontally to the editor input, not to the cursor
   const editorRect = editorRef.current?.getBoundingClientRect();
   const popoverLeft = editorRect
     ? Math.min(
@@ -108,7 +108,7 @@ export function FunctionSearchPopover({
         href="https://www.activepieces.com/docs/workflows/data-manipulation"
         target="_blank"
         rel="noopener noreferrer"
-        className="flex items-center gap-0.5 hover:text-foreground transition-colors"
+        className={cn(buttonVariants({ variant: 'link', size: 'xs' }))}
         onMouseDown={(e) => e.preventDefault()}
       >
         {t('See All')}
@@ -120,10 +120,10 @@ export function FunctionSearchPopover({
   if (!query) {
     return createPortal(
       <div
-        className="fixed z-[9998] bg-popover border border-border rounded-lg shadow-lg overflow-hidden"
+        className="fixed z-9998 bg-popover border border-border rounded-lg shadow-lg overflow-hidden"
         style={{ top: position.top, left: popoverLeft, width: popoverWidth }}
       >
-        <div className="px-3 py-4 text-sm text-muted-foreground text-center">
+        <div className="px-3 py-8 text-sm text-muted-foreground text-center">
           {t('Type to search functions...')}
         </div>
         {footer}
@@ -135,10 +135,10 @@ export function FunctionSearchPopover({
   if (filtered.length === 0) {
     return createPortal(
       <div
-        className="fixed z-[9998] bg-popover border border-border rounded-lg shadow-lg overflow-hidden"
+        className="fixed z-9998 bg-popover border border-border rounded-lg shadow-lg overflow-hidden"
         style={{ top: position.top, left: popoverLeft, width: popoverWidth }}
       >
-        <div className="px-3 py-4 text-sm text-muted-foreground text-center">
+        <div className="px-3 py-8 text-sm text-muted-foreground text-center">
           {t('No functions found')}
         </div>
         {footer}
@@ -150,12 +150,12 @@ export function FunctionSearchPopover({
   return createPortal(
     <>
       <div
-        className="fixed z-[999] bg-popover border border-border rounded-lg shadow-lg overflow-hidden"
+        className="fixed z-999 bg-popover border border-border rounded-lg shadow-lg overflow-hidden"
         style={{ top: position.top, left: popoverLeft, width: popoverWidth }}
       >
         <div
           ref={listRef}
-          className="max-h-64 overflow-y-auto py-1"
+          className="max-h-64 overflow-y-auto pb-1"
           role="listbox"
         >
           {Object.entries(grouped).map(([category, fns]) => (

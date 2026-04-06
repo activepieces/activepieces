@@ -8,10 +8,6 @@ import {
 
 const ZWS = '\u200B';
 
-// Converts a TipTap document JSONContent tree to an expression string.
-// Function start/end nodes are serialized as `name(` and `)`.
-// Mention nodes are serialized as their `serverValue` (e.g. `{{trigger.name}}`).
-// Text nodes are serialized as their text content.
 export function tiptapNodesToExpression(nodes: JSONContent[]): string {
   return nodes.map(nodeToExpression).join('');
 }

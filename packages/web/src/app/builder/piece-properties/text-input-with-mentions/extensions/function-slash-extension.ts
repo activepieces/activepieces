@@ -12,7 +12,7 @@ export type SlashCommandState = {
   open: boolean;
   query: string;
   position: { top: number; left: number };
-  from: number; // position of the "/" char in the doc
+  from: number;
 };
 
 export type SlashCommandHandler = {
@@ -20,7 +20,6 @@ export type SlashCommandHandler = {
   setState: (s: SlashCommandState) => void;
 };
 
-// External ref — set by the React component that renders the slash popover.
 let _handler: SlashCommandHandler | null = null;
 
 export const registerSlashCommandHandler = (h: SlashCommandHandler) => {
@@ -31,15 +30,13 @@ export const unregisterSlashCommandHandler = () => {
   _handler = null;
 };
 
-// Called by the popover when the user selects a function (slash-triggered)
 export function insertFunctionAtPos(
   editor: import('@tiptap/core').Editor,
   fn: ApFunction,
   from: number,
   query: string,
 ) {
-  // Delete the "/" + query text that triggered the popover
-  const deleteLen = 1 + query.length; // "/" + typed chars
+  const deleteLen = 1 + query.length;
   const startPos = Math.max(0, from);
 
   const ZWS = '\u200B';
@@ -63,7 +60,6 @@ export function insertFunctionAtPos(
     .insertContentAt(startPos, content)
     .run();
 
-  // Place cursor after ZWS in the first arg slot
   editor.commands.setTextSelection(startPos + 2);
 }
 
@@ -80,10 +76,7 @@ export const FunctionSlashExtension = Extension.create({
   name: 'functionSlash',
 
   addKeyboardShortcuts() {
-    return {
-      // Intercept keystrokes to update the search query while popover is open
-      // The "/" key itself is handled via the onUpdate below
-    };
+    return {};
   },
 
   onUpdate() {
@@ -91,7 +84,6 @@ export const FunctionSlashExtension = Extension.create({
     const { selection } = state;
     const pos = selection.from;
 
-    // Check the characters before the cursor to detect "/" pattern
     const textBefore = state.doc.textBetween(Math.max(0, pos - 30), pos, '\n');
 
     if (!_handler) return;

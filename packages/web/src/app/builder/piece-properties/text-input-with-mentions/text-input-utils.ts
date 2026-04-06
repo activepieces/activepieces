@@ -73,7 +73,6 @@ function tokenizeExpression(expr: string): ExprToken[] {
   let fnDepth = 0;
 
   while (i < expr.length) {
-    // Variable reference {{...}}
     if (expr[i] === '{' && expr[i + 1] === '{') {
       const end = expr.indexOf('}}', i + 2);
       if (end !== -1) {
@@ -83,14 +82,12 @@ function tokenizeExpression(expr: string): ExprToken[] {
       }
     }
 
-    // Newline
     if (expr[i] === '\n') {
       tokens.push({ kind: 'newline' });
       i++;
       continue;
     }
 
-    // Check for functionName( — word chars followed by (
     const fnMatch = expr.slice(i).match(/^([a-z_][a-z0-9_]*)\(/i);
     if (fnMatch && fnNames.has(fnMatch[1])) {
       tokens.push({ kind: 'fn_open', name: fnMatch[1] });
@@ -99,7 +96,6 @@ function tokenizeExpression(expr: string): ExprToken[] {
       continue;
     }
 
-    // Closing paren — always emit as fn_close
     if (expr[i] === ')') {
       tokens.push({ kind: 'fn_close' });
       if (fnDepth > 0) fnDepth--;
@@ -107,7 +103,6 @@ function tokenizeExpression(expr: string): ExprToken[] {
       continue;
     }
 
-    // Separator ; inside a function (current format)
     if (expr[i] === ';' && fnDepth > 0) {
       tokens.push({ kind: 'fn_sep' });
       i++;
@@ -122,7 +117,6 @@ function tokenizeExpression(expr: string): ExprToken[] {
       continue;
     }
 
-    // Accumulate plain text until the next special sequence
     let text = '';
     while (i < expr.length) {
       if (expr[i] === '{' && expr[i + 1] === '{') break;
@@ -186,7 +180,6 @@ function convertTextToTipTapJsonContent(
             attrs: { openId },
           });
         } else {
-          // Unmatched ) — treat as plain text
           para.content.push({ type: TipTapNodeTypes.text, text: ')' });
         }
         break;
