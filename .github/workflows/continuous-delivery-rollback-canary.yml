@@ -73,11 +73,12 @@ jobs:
           # Base64-encode the manifest so it is safe through every shell layer
           MANIFEST_B64=$(printf '%s' "$MANIFEST" | base64 | tr -d '\n')
 
-          # Pass the manifest via ROLLBACK_MANIFEST env var (base64-encoded).
-          # rollback.js decodes it internally — no JSON in shell args, no node -e flag conflict.
-          ssh ops -t -t "bash -ic \"cd mrsk/prod && kamal app exec --reuse --config-file=config/app-canary.yml \
-            -e ROLLBACK_MANIFEST=$MANIFEST_B64 -- \
-            node /usr/src/app/packages/server/api/dist/src/rollback.js $FORCE_FLAG ; exit\""
+          # Pass the manifest via ROLLBACK_MANIFEST env var using env(1).
+          # kamal's -e flag prepends KEY=VALUE as the command arg rather than using
+          # docker exec's -e flag, so docker exec tries to execute the KEY=VALUE string
+          # and fails with exit 127. Using 'env KEY=VALUE cmd' bypasses this entirely.
+          ssh ops -t -t "bash -ic \"cd mrsk/prod && kamal app exec --reuse --config-file=config/app-canary.yml -- \
+            env ROLLBACK_MANIFEST=$MANIFEST_B64 node /usr/src/app/packages/server/api/dist/src/rollback.js $FORCE_FLAG ; exit\""
 
       - name: Redeploy canary app to target image
         run: |
