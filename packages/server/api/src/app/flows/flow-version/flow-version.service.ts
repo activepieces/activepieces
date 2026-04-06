@@ -19,7 +19,6 @@ import {
     ProjectId,
     sanitizeObjectForPostgresql,
     SeekPage,
-    TypedResult,
     UserId,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
