@@ -26,9 +26,7 @@ const LoopsSettings = React.memo(({ readonly }: LoopsSettingsProps) => {
       render={({ field }) => (
         <FormItem className="flex flex-col gap-2">
           <ApMarkdown markdown={markdown} />
-          <FormLabel>
-            {t('Items')} <span className="text-destructive">*</span>
-          </FormLabel>
+          <FormLabel showRequiredIndicator>{t('Items')}</FormLabel>
           <TextInputWithMentions
             disabled={readonly}
             onChange={field.onChange}
