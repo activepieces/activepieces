@@ -5,18 +5,18 @@ const CODE_RUNNER_SCRIPT = `
 process.once('message', async function(msg) {
     let settled = false
 
+    const inspect = require('util').inspect
+
     process.on('unhandledRejection', (reason) => {
         if (settled) return
         settled = true
-        const errMsg = reason instanceof Error ? reason.message : String(reason)
-        process.send({ success: false, error: errMsg }, () => process.exit(1))
+        process.send({ success: false, error: inspect(reason) }, () => process.exit(1))
     })
 
     process.on('uncaughtException', (err) => {
         if (settled) return
         settled = true
-        const errMsg = require('util').inspect(err)
-        process.send({ success: false, error: errMsg }, () => process.exit(1))
+        process.send({ success: false, error: inspect(err) }, () => process.exit(1))
     })
 
     try {
@@ -32,8 +32,7 @@ process.once('message', async function(msg) {
     } catch(e) {
         if (settled) return
         settled = true
-        const errMsg = e instanceof Error ? e.message : String(e)
-        process.send({ success: false, error: errMsg }, () => process.exit(0))
+        process.send({ success: false, error: inspect(e) }, () => process.exit(0))
     }
 })
 `
