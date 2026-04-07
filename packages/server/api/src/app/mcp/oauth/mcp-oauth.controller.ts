@@ -1,4 +1,4 @@
-import { isNil, TelemetryEventName } from '@activepieces/shared'
+import { isNil, PopulatedMcpServer, TelemetryEventName } from '@activepieces/shared'
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
@@ -45,8 +45,18 @@ export const mcpOAuthHttpController: FastifyPluginAsyncZod = async (app) => {
             },
         }), req.log)
 
-        const mcp = await mcpServerService(req.log).getPopulatedByProjectId(identity.projectId)
-        const { server } = await mcpServerService(req.log).buildServer({ mcp })
+        let mcp: PopulatedMcpServer
+        try {
+            mcp = await mcpServerService(req.log).getPopulatedByProjectId(identity.projectId)
+        }
+        catch (err) {
+            req.log.debug({ err }, 'Failed to resolve MCP server for project')
+            return reply.status(401).send({
+                error: 'unauthorized',
+                message: 'Invalid project or token.',
+            })
+        }
+        const { server } = await mcpServerService(req.log).buildServer({ mcp, userId: identity.userId })
 
         const transport = new StreamableHTTPServerTransport({
             sessionIdGenerator: undefined,
