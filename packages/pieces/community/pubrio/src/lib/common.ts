@@ -20,8 +20,9 @@ export async function pubrioRequest(
 	});
 
 	const data = response.body;
-	if (data !== null && typeof data === 'object' && 'data' in data) {
-		return (data as Record<string, unknown>)['data'];
+	if (data !== null && typeof data === 'object' && !Array.isArray(data) && 'data' in data) {
+		const record: Record<string, unknown> = data;
+		return record['data'];
 	}
 	return data;
 }
