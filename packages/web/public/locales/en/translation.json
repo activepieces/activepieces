@@ -1456,5 +1456,7 @@
   "Embedding model for knowledge base: {model}": "Embedding model for knowledge base: {model}",
   "This provider does not support knowledge base embeddings.": "This provider does not support knowledge base embeddings.",
   "Knowledge base requires a provider that supports embeddings, such as OpenAI or Google.": "Knowledge base requires a provider that supports embeddings, such as OpenAI or Google.",
-  "The selected provider does not support embeddings. Switch to a provider like OpenAI or Google for knowledge base to work.": "The selected provider does not support embeddings. Switch to a provider like OpenAI or Google for knowledge base to work."
+  "The selected provider does not support embeddings. Switch to a provider like OpenAI or Google for knowledge base to work.": "The selected provider does not support embeddings. Switch to a provider like OpenAI or Google for knowledge base to work.",
+  "Personal": "Personal",
+  "Team": "Team"
 }
