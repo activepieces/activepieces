@@ -8,7 +8,7 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '"John Smith"',
         minArgs: 2,
         maxArgs: 3,
-        argTypes: ['any', 'any', 'string'],
+        argTypes: ['string', 'string', 'string'],
         returnType: 'string',
     },
     {
@@ -440,7 +440,7 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '1990',
         minArgs: 1,
         maxArgs: 1,
-        argTypes: ['any'],
+        argTypes: [['string', 'number', 'boolean']],
         returnType: 'number',
     },
     {
@@ -656,7 +656,7 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '"2025-01-15T00:00:00Z"',
         minArgs: 1,
         maxArgs: 1,
-        argTypes: ['any'],
+        argTypes: [['string', 'date']],
         returnType: 'date',
     },
     {
@@ -668,7 +668,7 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '[3 of 10 items]',
         minArgs: 3,
         maxArgs: 3,
-        argTypes: ['list', 'string', 'any'],
+        argTypes: ['list', 'string', ['string', 'number', 'boolean']],
         returnType: 'list',
     },
     {
@@ -717,7 +717,7 @@ export const AP_FUNCTIONS: ApFunction[] = [
         minArgs: 1,
         maxArgs: 1,
         argTypes: ['list'],
-        returnType: 'any',
+        returnType: ['string', 'number', 'boolean', 'list'],
     },
     {
         name: 'last_item',
@@ -729,7 +729,7 @@ export const AP_FUNCTIONS: ApFunction[] = [
         minArgs: 1,
         maxArgs: 1,
         argTypes: ['list'],
-        returnType: 'any',
+        returnType: ['string', 'number', 'boolean'],
     },
     {
         name: 'item_at',
@@ -741,7 +741,7 @@ export const AP_FUNCTIONS: ApFunction[] = [
         minArgs: 2,
         maxArgs: 2,
         argTypes: ['list', 'number'],
-        returnType: 'any',
+        returnType: ['string', 'number', 'boolean', 'list'],
     },
     {
         name: 'count',
@@ -848,8 +848,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '"High value"',
         minArgs: 3,
         maxArgs: 3,
-        argTypes: ['boolean', 'any', 'any'],
-        returnType: 'any',
+        argTypes: ['boolean', ['string', 'number', 'boolean', 'date', 'list'], ['string', 'number', 'boolean', 'date', 'list']],
+        returnType: ['string', 'number', 'boolean', 'date', 'list'],
     },
     {
         name: 'if_empty',
@@ -860,8 +860,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '"No name"',
         minArgs: 2,
         maxArgs: 2,
-        argTypes: ['any', 'any'],
-        returnType: 'any',
+        argTypes: [['string', 'number', 'boolean', 'date', 'list'], 'string'],
+        returnType: ['string', 'number', 'boolean'],
     },
     {
         name: 'if_null',
@@ -872,8 +872,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '"N/A"',
         minArgs: 2,
         maxArgs: 2,
-        argTypes: ['any', 'any'],
-        returnType: 'any',
+        argTypes: [['string', 'number', 'boolean', 'date', 'list'], 'string'],
+        returnType: ['string', 'number', 'boolean'],
     },
     {
         name: 'switch',
@@ -884,8 +884,8 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '"North America"',
         minArgs: 3,
         maxArgs: -1,
-        argTypes: ['any', 'any', 'any'],
-        returnType: 'any',
+        argTypes: [['string', 'number', 'boolean'], ['string', 'number', 'boolean'], ['string', 'number', 'boolean']],
+        returnType: ['string', 'number', 'boolean'],
     },
     {
         name: 'is_empty',
@@ -896,7 +896,7 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: 'TRUE',
         minArgs: 1,
         maxArgs: 1,
-        argTypes: ['any'],
+        argTypes: [['string', 'number', 'boolean', 'date', 'list']],
         returnType: 'boolean',
     },
     {
@@ -908,7 +908,7 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: 'TRUE',
         minArgs: 1,
         maxArgs: 1,
-        argTypes: ['any'],
+        argTypes: [['string', 'number', 'boolean', 'date', 'list']],
         returnType: 'boolean',
     },
     {
@@ -920,7 +920,7 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: 'TRUE',
         minArgs: 2,
         maxArgs: 2,
-        argTypes: ['any', 'any'],
+        argTypes: [['string', 'number', 'boolean'], ['string', 'number', 'boolean']],
         returnType: 'boolean',
     },
     {
@@ -968,12 +968,13 @@ export const AP_FUNCTIONS: ApFunction[] = [
         exampleResult: '"John"',
         minArgs: 2,
         maxArgs: -1,
-        argTypes: ['any'],
-        returnType: 'any',
+        argTypes: [['string', 'number', 'boolean']],
+        returnType: ['string', 'number', 'boolean'],
     },
 ]
 
-export type ApFunctionArgType = 'string' | 'number' | 'boolean' | 'date' | 'list' | 'any'
+export type ApFunctionBaseType = 'string' | 'number' | 'boolean' | 'date' | 'list'
+export type ApFunctionArgType = ApFunctionBaseType | ApFunctionBaseType[]
 
 export type ApFunction = {
     name: string

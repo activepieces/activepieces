@@ -43,16 +43,18 @@ export function typeCheckTiptapDoc(doc: DocNode): Map<string, string> {
 
         const argSlots = splitIntoArgs(between)
         for (let i = 0; i < argSlots.length; i++) {
-            const expectedType = fn.argTypes[Math.min(i, fn.argTypes.length - 1)]
-            if (!expectedType || expectedType === 'any') continue
+            const expectedSpec = fn.argTypes[Math.min(i, fn.argTypes.length - 1)]
+            if (!expectedSpec) continue
+            // Union types (array) mean multiple types are valid — skip strict type check
+            if (Array.isArray(expectedSpec)) continue
 
             const actualType = inferArgType(argSlots[i])
-            if (!actualType || actualType === 'any') continue
+            if (!actualType) continue
 
-            if (actualType !== expectedType) {
+            if (actualType !== expectedSpec) {
                 errors.set(
                     id,
-                    `${ordinal(i + 1)} argument of ${fnName}() expects ${expectedType}, got ${actualType}`,
+                    `${ordinal(i + 1)} argument of ${fnName}() expects ${expectedSpec}, got ${actualType}`,
                 )
                 break
             }
@@ -179,7 +181,9 @@ function inferArgType(argNodes: DocNode[]): ApFunctionArgType | null {
 
     if (topLevelCount === 1 && topLevelFnName) {
         const fn = AP_FUNCTIONS.find((f) => f.name === topLevelFnName)
-        return fn?.returnType ?? null
+        const rt = fn?.returnType
+        if (!rt || Array.isArray(rt)) return null
+        return rt
     }
 
     if (!hasFunctionOrMention) {

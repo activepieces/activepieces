@@ -101,7 +101,9 @@ async function resolveInputAsync(params: ResolveInputInternalParams): Promise<un
     const { input, currentState, engineToken, projectId, apiUrl, censoredInput } = params
 
     if (isFormulaExpression(input)) {
-        const { result, error } = evaluateExpression(input, currentState)
+        const resolveOptions = { engineToken, projectId, apiUrl, currentState, censoredInput, contextVersion: params.contextVersion }
+        const { expression: preResolvedExpr, vars: preResolvedVars } = await preResolveFormulaVars(input, resolveOptions)
+        const { result, error } = evaluateExpression(preResolvedExpr, preResolvedVars)
         if (error) {
             console.warn('[resolveInputAsync] Formula evaluation error:', error)
             return ''
@@ -237,6 +239,33 @@ function flattenNestedKeys(data: unknown, pathToMatch: string[]): unknown[] {
         return [data]
     }
     return []
+}
+
+type PreResolveOptions = Pick<ResolveInputInternalParams, 'engineToken' | 'projectId' | 'apiUrl' | 'currentState' | 'censoredInput' | 'contextVersion'>
+
+async function preResolveFormulaVars(
+    expression: string,
+    resolveOptions: PreResolveOptions,
+): Promise<{ expression: string, vars: Record<string, unknown> }> {
+    const tokenPattern = /\{\{([^}]+)\}\}/g
+    const matches: Array<{ original: string, variableName: string, key: string }> = []
+    let idx = 0
+    let match
+    while ((match = tokenPattern.exec(expression)) !== null) {
+        matches.push({ original: match[0], variableName: match[1].trim(), key: `__ap_pv${idx++}__` })
+    }
+
+    const vars: Record<string, unknown> = {}
+    await Promise.all(matches.map(async ({ variableName, key }) => {
+        vars[key] = await resolveSingleToken({ variableName, ...resolveOptions })
+    }))
+
+    let rewritten = expression
+    for (const { original, key } of matches) {
+        rewritten = rewritten.split(original).join(`{{${key}}}`)
+    }
+
+    return { expression: rewritten, vars }
 }
 
 const AP_FUNCTION_CALL_REGEX = new RegExp(

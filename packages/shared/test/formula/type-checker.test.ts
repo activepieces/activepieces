@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import { typeCheckTiptapDoc } from '../../src/lib/formula/function-type-checker'
 
 type Node = {

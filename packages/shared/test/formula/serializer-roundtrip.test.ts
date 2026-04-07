@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import { evaluateExpression } from '../../src/lib/formula/function-evaluator'
 
 /**

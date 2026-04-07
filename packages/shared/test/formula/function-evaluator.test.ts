@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import { evaluateExpression } from '../../src/lib/formula/function-evaluator'
 
 const ok = (expr: string, data: Record<string, unknown> = {}) =>
@@ -479,4 +480,61 @@ describe('error handling', () => {
 
     it('unknown identifier treated as plain text', () =>
         expect(result('unknownfunc("x")')).toBeTruthy())
+})
+
+// ---------------------------------------------------------------------------
+// Implicit string quoting — no quotes required for string args
+// ---------------------------------------------------------------------------
+
+describe('implicit string quoting', () => {
+    it('trim without quotes', () =>
+        expect(result('trim(  hello world  )')).toBe('hello world'))
+
+    it('uppercase without quotes', () =>
+        expect(result('uppercase(hello)')).toBe('HELLO'))
+
+    it('lowercase without quotes', () =>
+        expect(result('lowercase(WORLD)')).toBe('world'))
+
+    it('prefix without quotes', () =>
+        expect(result('prefix(world; !!)')).toBe('!!world'))
+
+    it('suffix without quotes', () =>
+        expect(result('suffix(Hello; !)')).toBe('Hello!'))
+
+    it('combine without quotes on all three args', () =>
+        expect(result('combine(foo; bar; -)')).toBe('foo-bar'))
+
+    it('combine with quoted space separator still works', () =>
+        expect(result('combine(John; Smith; " ")')).toBe('John Smith'))
+
+    it('replace without quotes on search and replacement', () =>
+        expect(result('replace(hello world; world; there)')).toBe('hello there'))
+
+    it('contains without quotes', () =>
+        expect(result('contains(hello world; world)')).toBe(true))
+
+    it('starts_with without quotes', () =>
+        expect(result('starts_with(hello world; hello)')).toBe(true))
+
+    it('if_empty without quotes on fallback — first arg explicit empty string', () =>
+        expect(result('if_empty(""; fallback text)')).toBe('fallback text'))
+
+    it('if_null without quotes on fallback — variable that is null', () =>
+        expect(result('if_null({{val}}; N/A)', { val: null })).toBe('N/A'))
+
+    it('nested call result passed to string arg — no double-quoting', () =>
+        expect(result('trim(uppercase(hello))')).toBe('HELLO'))
+
+    it('variable in string arg position — not quoted', () =>
+        expect(result('uppercase({{name}})', { name: 'alice' })).toBe('ALICE'))
+
+    it('already-quoted arg not double-quoted', () =>
+        expect(result('trim("  spaces  ")')).toBe('spaces'))
+
+    it('number arg in number position not quoted', () =>
+        expect(result('add(3;4)')).toBe(7))
+
+    it('multi-word bare string preserved', () =>
+        expect(result('contains(the quick brown fox; quick brown)')).toBe(true))
 })

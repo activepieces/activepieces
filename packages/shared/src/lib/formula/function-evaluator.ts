@@ -432,12 +432,96 @@ function preprocessExpression(
     const vars: Record<string, unknown> = {}
     let idx = 0
     const withVars = expression.replace(/\{\{([^}]+)\}\}/g, (_, path: string) => {
-        const key = `_v${idx++}`
+        const key = `__ap_v${idx++}__`
         const resolved = resolveVariable(path.trim(), sampleData)
         vars[key] = resolved === undefined ? null : resolved
         return key
     })
-    return { processed: normalizeExpression(withVars), vars }
+    return { processed: normalizeExpression(wrapStringArgs(withVars)), vars }
+}
+
+function wrapStringArgs(expr: string): string {
+    const fnNames = new Set(AP_FUNCTIONS.map((f) => f.name))
+    let result = ''
+    let pos = 0
+
+    while (pos < expr.length) {
+        const next = findNextFunctionCall(expr, pos, fnNames)
+
+        if (next === null) {
+            result += expr.slice(pos)
+            break
+        }
+
+        result += expr.slice(pos, next.start)
+
+        const fnName = expr.slice(next.start, next.openParen).trim()
+        const fn = AP_FUNCTIONS.find((f) => f.name === fnName)
+        const closePos = findMatchingParen(expr, next.openParen)
+
+        if (closePos === -1) {
+            result += expr.slice(next.start)
+            break
+        }
+
+        const argsContent = expr.slice(next.openParen + 1, closePos)
+        const argParts = splitArgsBySemicolon(argsContent)
+
+        const processedArgs = argParts.map((arg, i) => {
+            const inner = wrapStringArgs(arg)
+            if (!fn) return inner
+            const expectedSpec = fn.argTypes[Math.min(i, fn.argTypes.length - 1)]
+            return expectedSpec === 'string' ? quoteIfBare(inner) : inner
+        })
+
+        result += fnName + '(' + processedArgs.join(';') + ')'
+        pos = closePos + 1
+    }
+
+    return result
+}
+
+function splitArgsBySemicolon(content: string): string[] {
+    const args: string[] = []
+    let current = ''
+    let depth = 0
+    let inString: '"' | '\'' | null = null
+
+    for (let i = 0; i < content.length; i++) {
+        const ch = content[i]
+        if (inString) {
+            if (ch === inString && content[i - 1] !== '\\') inString = null
+            current += ch
+        }
+        else if (ch === '"' || ch === '\'') {
+            inString = ch; current += ch
+        }
+        else if (ch === '(') {
+            depth++; current += ch
+        }
+        else if (ch === ')') {
+            depth--; current += ch
+        }
+        else if (ch === ';' && depth === 0) {
+            args.push(current); current = ''
+        }
+        else {
+            current += ch
+        }
+    }
+    args.push(current)
+    return args
+}
+
+function quoteIfBare(arg: string): string {
+    const trimmed = arg.trim()
+    if (!trimmed) return arg
+    if ((trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+        (trimmed.startsWith('\'') && trimmed.endsWith('\''))) return arg
+    if (trimmed.startsWith('__ap_')) return arg
+    const fnCallMatch = trimmed.match(/^([a-z_][a-z0-9_]*)\s*\(/i)
+    if (fnCallMatch && AP_FUNCTIONS.some((f) => f.name === fnCallMatch[1])) return arg
+    return '"' + trimmed.replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"'
 }
 
 function normalizeExpression(expr: string): string {
