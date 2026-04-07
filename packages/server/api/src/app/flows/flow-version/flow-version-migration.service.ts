@@ -1,5 +1,4 @@
 import {
-    ActivepiecesError,
     ErrorCode,
     FlowVersion,
     isNil,
@@ -33,11 +32,11 @@ export const flowVersionMigrationService = (log: FastifyBaseLogger) => ({
 
         const { data: migratedFlowVersion, error: migrationError } = await tryCatch(() => flowMigrations.apply(flowVersion, { log, projectId }))
         if (migrationError) {
-            const apError = new ActivepiecesError({
+            onCallService(log, system.get(AppSystemProp.PAGE_ONCALL_WEBHOOK)).page({
                 code: ErrorCode.FLOW_MIGRATION_FAILED,
-                params: { flowVersionId: flowVersion.id, message: migrationError.message },
-            })
-            onCallService(log, system.get(AppSystemProp.PAGE_ONCALL_WEBHOOK)).page(inspect(apError)).catch((pageError) => {
+                message: inspect(migrationError),
+                params: { flowVersionId: flowVersion.id },
+            }).catch((pageError) => {
                 log.error({ pageError }, '[flowVersionMigration] Failed to send on-call page')
             })
             throw migrationError

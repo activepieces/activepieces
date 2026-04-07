@@ -176,13 +176,17 @@ async function fetchExecutionState(apiClient: WorkerToApiContract, data: Execute
             }, 'executionState is missing in logs file')
         }
         return parsed.executionState
-    } catch (error) {
-        if (error instanceof ActivepiecesError) {
-            onCallService(log, workerSettings.getSettings().PAGE_ONCALL_WEBHOOK).page(inspect(error)).catch((pageError) => {
+    }
+    catch (rawError) {
+        if (rawError instanceof ActivepiecesError) {
+            onCallService(log, workerSettings.getSettings().PAGE_ONCALL_WEBHOOK).page({
+                code: rawError.error.code, 
+                message: inspect(rawError),
+            }).catch((pageError) => {
                 log.error({ pageError }, '[fetchExecutionState] Failed to send on-call page')
             })
         }
-        throw error
+        throw rawError
     }
 }
 
