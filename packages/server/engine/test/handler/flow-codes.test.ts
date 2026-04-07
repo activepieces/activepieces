@@ -81,6 +81,17 @@ describe('codeExecutor', () => {
         expect(result.verdict.failedStep?.message).toContain('Unhandled rejection from user code')
     })
 
+    it('should mark step as FAILED when code throws inside setTimeout', async () => {
+        const result = await codeExecutor.handle({
+            action: buildCodeAction({ name: 'setTimeout_error', input: {} }),
+            executionState: FlowExecutorContext.empty(),
+            constants: generateMockEngineConstants(),
+        })
+        expect(result.verdict.status).toBe(FlowRunStatus.FAILED)
+        expect(result.steps.setTimeout_error.status).toEqual('FAILED')
+        expect(result.verdict.failedStep?.message).toContain('Unexpected token')
+    })
+
     it('should execute code that requires an npm package successfully', async () => {
         const result = await codeExecutor.handle({
             action: buildCodeAction({ name: 'hello_world_npm', input: { name: 'World' } }),

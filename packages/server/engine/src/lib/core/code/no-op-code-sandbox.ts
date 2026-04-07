@@ -12,6 +12,13 @@ process.once('message', async function(msg) {
         process.send({ success: false, error: errMsg }, () => process.exit(1))
     })
 
+    process.on('uncaughtException', (err) => {
+        if (settled) return
+        settled = true
+        const errMsg = require('util').inspect(err)
+        process.send({ success: false, error: errMsg }, () => process.exit(1))
+    })
+
     try {
         const mod = require(msg.codeFilePath)
         const result = await mod.code(msg.inputs)
