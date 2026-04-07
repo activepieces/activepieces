@@ -249,6 +249,163 @@ props: {
 
 ---
 
+## 10. Use Source Selectors for Mutually Exclusive Input Methods
+
+When an action can accept input from multiple mutually exclusive sources (e.g. upload a file OR reference one in S3, enter a URL OR upload a file), **never use multiple optional fields side by side**. Users won't understand which to fill in, and there's no clear required field to guide them.
+
+Instead, use a required `StaticDropdown` as a source selector combined with `DynamicProperties` that shows the correct required fields for the chosen branch.
+
+**BAD — three optional fields, user doesn't know which to fill:**
+```typescript
+props: {
+  file: Property.File({ displayName: 'File', required: false }),
+  s3Bucket: Property.ShortText({ displayName: 'S3 Bucket', required: false }),
+  s3Key: Property.ShortText({ displayName: 'S3 File Path', required: false }),
+}
+```
+
+**GOOD — explicit source selector with DynamicProperties:**
+```typescript
+props: {
+  source: Property.StaticDropdown({
+    displayName: 'Document Source',
+    description: 'Choose how to provide the document — upload a file directly or reference one already in S3.',
+    required: true,
+    defaultValue: 'file',
+    options: {
+      options: [
+        { label: 'Upload a file', value: 'file' },
+        { label: 'From S3 bucket', value: 's3' },
+      ],
+    },
+  }),
+  document: Property.DynamicProperties({
+    auth: myAuth,
+    displayName: 'Document',
+    required: true,
+    refreshers: ['source'],
+    props: async ({ source }): Promise<DynamicPropsValue> => {
+      if (source === 's3') {
+        return {
+          s3Bucket: Property.ShortText({
+            displayName: 'S3 Bucket',
+            description: 'The name of your S3 bucket containing the document.',
+            required: true,
+          }),
+          s3Key: Property.ShortText({
+            displayName: 'S3 File Path',
+            description: 'The path to the file in your S3 bucket (e.g. "documents/invoice.pdf").',
+            required: true,
+          }),
+        };
+      }
+      return {
+        file: Property.File({
+          displayName: 'File',
+          description: 'Supported formats: JPEG, PNG, PDF (single page), TIFF. Maximum 10 MB.',
+          required: true,
+        }),
+      };
+    },
+  }),
+}
+```
+
+**Critical implementation rules for `DynamicProperties` source selectors:**
+- Always add an **explicit `Promise<DynamicPropsValue>` return type** to the `props` function — without it the UI will not re-render when the selector changes
+- Return **object literals per branch** (`return { ... }`) — do NOT build a mutable `fields` object and conditionally assign keys
+- Always end with a **fallback `return {}`** after all branches
+- Compare the selector value **directly** (`source === 's3'`) — no `as unknown as string` cast needed
+- Set a **`defaultValue`** on the source selector so the first branch renders on initial load
+
+In the `run` function, read dynamic prop values by key:
+```typescript
+const file = source === 'file' ? document['file'] : undefined;
+const s3Bucket = source === 's3' ? (document['s3Bucket'] as string) : undefined;
+const s3Key = source === 's3' ? (document['s3Key'] as string) : undefined;
+```
+
+---
+
+## 11. Avoid Service-Specific Jargon in Field Names
+
+Technical terms from a service's API are meaningless to most users. Always translate them to plain English in `displayName`, and use `description` to mention the technical term if needed (so power users can find it).
+
+| Jargon | Plain English |
+|--------|---------------|
+| `Key` (S3) | `File Path` |
+| `S3 Object Key` | `S3 File Path` |
+| `Idempotency Token` | `Deduplication Token` |
+| `S3 Prefix` | `Folder Path` |
+| `ACL` | `Access Control` |
+| `No Error on Failure` | `Return Error as Output` |
+| `Memory Key` | `Conversation Memory ID` |
+| `Top P` | `Top P` (with a plain-English description) |
+| `Normalize` (embeddings) | `Normalize Output` |
+| `Dimensions` (embeddings) | `Vector Dimensions` |
+
+**BAD:**
+```typescript
+key: Property.ShortText({
+  displayName: 'Key',
+  description: 'The key of the file to read',
+  required: true,
+})
+```
+
+**GOOD:**
+```typescript
+key: Property.ShortText({
+  displayName: 'File Path',
+  description: 'The full path to the file within your S3 bucket (e.g. "documents/report.csv"). This is also called the S3 "key".',
+  required: true,
+})
+```
+
+---
+
+## 12. Auth Descriptions Must Be Setup Guides
+
+For `CustomAuth` pieces with AWS-style credentials (access key + secret + region), the auth description should include step-by-step setup instructions with links, not just a one-liner.
+
+**BAD:**
+```typescript
+PieceAuth.CustomAuth({
+  description: 'AWS authentication using Access Key and Secret Key.',
+  ...
+})
+```
+
+**GOOD:**
+```typescript
+PieceAuth.CustomAuth({
+  description: `Connect your AWS account to use this service.
+
+**How to get your credentials:**
+1. Open the [AWS IAM Console](https://console.aws.amazon.com/iam/) and go to **Users**.
+2. Select your user (or create a new one), then go to **Security credentials**.
+3. Click **Create access key** — copy both the Access Key ID and Secret Access Key.
+4. Make sure the IAM user has the required policy attached (e.g. AmazonS3FullAccess).`,
+  props: {
+    accessKeyId: Property.ShortText({
+      displayName: 'Access Key ID',
+      description: 'Your AWS access key ID. Found in AWS IAM Console → Users → Security credentials.',
+      required: true,
+    }),
+    secretAccessKey: PieceAuth.SecretText({
+      displayName: 'Secret Access Key',
+      description: 'Your AWS secret access key. Only shown once when you create the access key — store it safely.',
+      required: true,
+    }),
+  },
+  ...
+})
+```
+
+Individual credential fields must also have descriptions — the auth description alone is often collapsed or skipped.
+
+---
+
 ## Checklist
 
 Before finishing any action, verify:
@@ -257,6 +414,9 @@ Before finishing any action, verify:
 - [ ] Complex setup steps use `Property.MarkDown()` with numbered instructions
 - [ ] Optional props have sensible `defaultValue` where applicable
 - [ ] Display names use plain language (`"Create Contact"` not `"POST /contacts"`)
-- [ ] Auth description includes step-by-step instructions to get credentials
+- [ ] Auth description includes step-by-step instructions to get credentials, and each credential field has its own description
 - [ ] Dropdown placeholders guide the user (`"Please select a project first"`)
 - [ ] Required fields come before optional fields in the props order
+- [ ] Mutually exclusive inputs (file vs URL, upload vs S3) use a source selector + DynamicProperties instead of multiple optional fields
+- [ ] No service-specific jargon in `displayName` — translate to plain English and mention the technical term in `description` if needed
+- [ ] `DynamicProperties` `props` functions have explicit `Promise<DynamicPropsValue>` return type and return object literals per branch

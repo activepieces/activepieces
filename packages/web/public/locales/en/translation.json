@@ -257,6 +257,8 @@
   "Enter your email to delete your account, including your flows, connections, agents, tables and projects.": "",
   "This action is irreversible.": "",
   "Profile picture updated successfully": "",
+  "Failed to load data": "Failed to load data",
+  "Something went wrong while loading your data. Your data is safe — please try again by refreshing the page.": "Something went wrong while loading your data. Your data is safe — please try again by refreshing the page.",
   "Failed to upload profile picture": "",
   "File size exceeds 5MB limit": "",
   "Invalid file type. Allowed types: JPEG, PNG, GIF, WEBP": "",
@@ -1241,8 +1243,10 @@
   "Flow Is Busy": "",
   "Flows have been exported.": "Flows have been exported.",
   "Untitled": "Untitled",
-  "Flow Is In Use": "Flow Is In Use",
-  "Flow is being used by another user, please try again later.": "Flow is being used by another user, please try again later.",
+  "{name} is editing": "{name} is editing",
+  "{name} is editing this flow. Only one person can edit at a time.": "{name} is editing this flow. Only one person can edit at a time.",
+  "{name} is editing this {resource}. Only one person can edit at a time.": "{name} is editing this {resource}. Only one person can edit at a time.",
+  "Take Over": "Take Over",
   "Run": "Run",
   "Real time flow": "Real time flow",
   "Flow can't be published with empty trigger {name}": "Flow can't be published with empty trigger {name}",
@@ -1458,5 +1462,6 @@
   "Knowledge base requires a provider that supports embeddings, such as OpenAI or Google.": "Knowledge base requires a provider that supports embeddings, such as OpenAI or Google.",
   "The selected provider does not support embeddings. Switch to a provider like OpenAI or Google for knowledge base to work.": "The selected provider does not support embeddings. Switch to a provider like OpenAI or Google for knowledge base to work.",
   "Personal": "Personal",
-  "Team": "Team"
+  "Team": "Team",
+  "+{count} more": "+{count} more"
 }
