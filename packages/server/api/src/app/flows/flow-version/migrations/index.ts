@@ -51,7 +51,7 @@ const migrations: Migration[] = [
     migrateV16AgentPieceToolNames,
     migrateV17AddLastUpdatedDate,
     migrateV18TablesFieldIds,
-    migrateV19StripPieceVersionWildcards
+    migrateV19StripPieceVersionWildcards,
 ] as const
 
 export const flowMigrations = {
