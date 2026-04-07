@@ -2,7 +2,7 @@ import { QueryRunner } from 'typeorm'
 import { databaseConnection, resetDatabaseConnection } from '../../../../src/app/database/database-connection'
 import { initializeDatabase } from '../../../../src/app/database'
 import { Migration } from '../../../../src/app/database/migration'
-import { identifyCandidates, verifyDatabaseState } from '../../../../src/app/database/rollback-migrations'
+import { identifyCandidatesByManifest, identifyReleaseCandidates, verifyDatabaseState } from '../../../../src/app/database/rollback-migrations'
 
 const TEST_TABLE = 'rollback_test_table'
 
@@ -106,7 +106,7 @@ describe('Rollback Integration', () => {
         await cleanupTestState(ds)
     })
 
-    describe('identifyCandidates', () => {
+    describe('identifyReleaseCandidates', () => {
         it('should return migrations with release greater than target version in reverse order', () => {
             const migrations: (new () => Migration)[] = [
                 TestMigrationSafe1999000000001,
@@ -114,7 +114,7 @@ describe('Rollback Integration', () => {
                 TestMigrationBreaking1999000000003,
             ]
 
-            const candidates = identifyCandidates(migrations, '98.0.0')
+            const candidates = identifyReleaseCandidates(migrations, '98.0.0')
 
             expect(candidates).toHaveLength(3)
             expect(candidates[0].name).toBe('TestMigrationBreaking1999000000003')
@@ -129,7 +129,7 @@ describe('Rollback Integration', () => {
                 TestMigrationBreaking1999000000003,
             ]
 
-            const candidates = identifyCandidates(migrations, '99.0.0')
+            const candidates = identifyReleaseCandidates(migrations, '99.0.0')
 
             expect(candidates).toHaveLength(1)
             expect(candidates[0].name).toBe('TestMigrationBreaking1999000000003')
@@ -137,7 +137,7 @@ describe('Rollback Integration', () => {
         })
 
         it('should return empty when no migrations are newer than target', () => {
-            const candidates = identifyCandidates([TestMigrationSafe1999000000001], '99.0.0')
+            const candidates = identifyReleaseCandidates([TestMigrationSafe1999000000001], '99.0.0')
             expect(candidates).toHaveLength(0)
         })
 
@@ -148,13 +148,94 @@ describe('Rollback Integration', () => {
                 async down(): Promise<void> { /* noop */ }
             }
 
-            const candidates = identifyCandidates(
+            const candidates = identifyReleaseCandidates(
                 [NoReleaseMigration, TestMigrationSafe1999000000001],
                 '98.0.0',
             )
 
             expect(candidates).toHaveLength(1)
             expect(candidates[0].name).toBe('TestMigrationSafe1999000000001')
+        })
+    })
+
+    describe('identifyCandidatesByManifest', () => {
+        it('should return only the migration absent from the manifest in reverse order', () => {
+            const migrations: (new () => Migration)[] = [
+                TestMigrationSafe1999000000001,
+                TestMigrationSafe1999000000002,
+                TestMigrationBreaking1999000000003,
+            ]
+
+            const candidates = identifyCandidatesByManifest(migrations, [
+                'TestMigrationSafe1999000000001',
+                'TestMigrationSafe1999000000002',
+            ])
+
+            expect(candidates).toHaveLength(1)
+            expect(candidates[0].name).toBe('TestMigrationBreaking1999000000003')
+        })
+
+        it('should return migration absent from manifest even when all share the same release version', () => {
+            const SameReleaseMigration1 = class implements Migration {
+                name = 'TestMigrationSafe1999000000001'
+                breaking = false
+                release = '99.0.0'
+                async up(): Promise<void> { /* noop */ }
+                async down(): Promise<void> { /* noop */ }
+            }
+            const SameReleaseMigration2 = class implements Migration {
+                name = 'TestMigrationSafe1999000000002'
+                breaking = false
+                release = '99.0.0'
+                async up(): Promise<void> { /* noop */ }
+                async down(): Promise<void> { /* noop */ }
+            }
+            const SameReleaseMigration3 = class implements Migration {
+                name = 'TestMigrationBreaking1999000000003'
+                breaking = true
+                release = '99.0.0'
+                async up(): Promise<void> { /* noop */ }
+                async down(): Promise<void> { /* noop */ }
+            }
+
+            const candidates = identifyCandidatesByManifest(
+                [SameReleaseMigration1, SameReleaseMigration2, SameReleaseMigration3],
+                ['TestMigrationSafe1999000000001', 'TestMigrationSafe1999000000002'],
+            )
+
+            expect(candidates).toHaveLength(1)
+            expect(candidates[0].name).toBe('TestMigrationBreaking1999000000003')
+        })
+
+        it('should return empty when manifest lists all migrations', () => {
+            const migrations: (new () => Migration)[] = [
+                TestMigrationSafe1999000000001,
+                TestMigrationSafe1999000000002,
+                TestMigrationBreaking1999000000003,
+            ]
+
+            const candidates = identifyCandidatesByManifest(migrations, [
+                'TestMigrationSafe1999000000001',
+                'TestMigrationSafe1999000000002',
+                'TestMigrationBreaking1999000000003',
+            ])
+
+            expect(candidates).toHaveLength(0)
+        })
+
+        it('should return all migrations in reverse order when manifest is empty', () => {
+            const migrations: (new () => Migration)[] = [
+                TestMigrationSafe1999000000001,
+                TestMigrationSafe1999000000002,
+                TestMigrationBreaking1999000000003,
+            ]
+
+            const candidates = identifyCandidatesByManifest(migrations, [])
+
+            expect(candidates).toHaveLength(3)
+            expect(candidates[0].name).toBe('TestMigrationBreaking1999000000003')
+            expect(candidates[1].name).toBe('TestMigrationSafe1999000000002')
+            expect(candidates[2].name).toBe('TestMigrationSafe1999000000001')
         })
     })
 
