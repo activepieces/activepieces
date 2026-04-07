@@ -58,19 +58,35 @@ export function ChatWithAIPage() {
           className="flex-1 !p-0"
         />
         <div className="flex items-center gap-1 shrink-0">
-          {!chatStarted ? (
+          {incognito ? (
             <DelayedTooltip>
               <TooltipTrigger asChild>
                 <button
-                  onClick={() => setIncognito(!incognito)}
+                  onClick={handleNewChat}
                   onMouseEnter={() => ghostRef.current?.startAnimation()}
                   onMouseLeave={() => ghostRef.current?.stopAnimation()}
-                  className={cn(
-                    'flex items-center gap-1.5 h-7 px-2 rounded-md border-none cursor-pointer shrink-0 transition-colors text-xs font-medium',
-                    incognito
-                      ? 'bg-primary/10 dark:bg-primary/20 text-primary'
-                      : 'bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground',
-                  )}
+                  className="flex items-center gap-1.5 h-7 px-2 rounded-md border-none cursor-pointer shrink-0 transition-colors text-xs font-medium bg-primary/10 dark:bg-primary/20 text-primary"
+                >
+                  <GhostIcon ref={ghostRef} size={16} />
+                  Close Private Chat
+                </button>
+              </TooltipTrigger>
+              <TooltipContent
+                side="bottom"
+                align="center"
+                className="pointer-events-none"
+              >
+                Switch to Default Chat
+              </TooltipContent>
+            </DelayedTooltip>
+          ) : !chatStarted ? (
+            <DelayedTooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => setIncognito(true)}
+                  onMouseEnter={() => ghostRef.current?.startAnimation()}
+                  onMouseLeave={() => ghostRef.current?.stopAnimation()}
+                  className="flex items-center gap-1.5 h-7 px-2 rounded-md border-none cursor-pointer shrink-0 transition-colors text-xs font-medium bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground"
                 >
                   <GhostIcon ref={ghostRef} size={16} />
                   Private
@@ -81,52 +97,41 @@ export function ChatWithAIPage() {
                 align="center"
                 className="pointer-events-none"
               >
-                {incognito
-                  ? 'Switch to Default Chat'
-                  : 'Switch to Private Chat'}
-              </TooltipContent>
-            </DelayedTooltip>
-          ) : incognito ? (
-            <DelayedTooltip>
-              <TooltipTrigger asChild>
-                <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium shrink-0 text-muted-foreground">
-                  <GhostIcon size={16} />
-                  Private Chat
-                </span>
-              </TooltipTrigger>
-              <TooltipContent
-                side="bottom"
-                align="center"
-                className="pointer-events-none whitespace-pre-line text-center"
-              >
-                {"This chat won't appear\nin your chat history."}
+                Switch to Private Chat
               </TooltipContent>
             </DelayedTooltip>
           ) : null}
-          <DelayedTooltip>
-            <TooltipTrigger asChild>
-              <button
-                onClick={() => setSettingsOpen(true)}
-                onMouseEnter={() => settingsRef.current?.startAnimation()}
-                onMouseLeave={() => settingsRef.current?.stopAnimation()}
-                className="flex items-center justify-center w-7 h-7 rounded-md border-none bg-transparent cursor-pointer text-muted-foreground hover:bg-muted hover:text-foreground transition-colors shrink-0"
+          {!incognito && (
+            <DelayedTooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => setSettingsOpen(true)}
+                  onMouseEnter={() => settingsRef.current?.startAnimation()}
+                  onMouseLeave={() => settingsRef.current?.stopAnimation()}
+                  className="flex items-center justify-center w-7 h-7 rounded-md border-none bg-transparent cursor-pointer text-muted-foreground hover:bg-muted hover:text-foreground transition-colors shrink-0"
+                >
+                  <SlidersHorizontalIcon ref={settingsRef} size={16} />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent
+                side="bottom"
+                align="end"
+                className="pointer-events-none"
               >
-                <SlidersHorizontalIcon ref={settingsRef} size={16} />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent
-              side="bottom"
-              align="end"
-              className="pointer-events-none"
-            >
-              Settings
-            </TooltipContent>
-          </DelayedTooltip>
+                Settings
+              </TooltipContent>
+            </DelayedTooltip>
+          )}
         </div>
       </div>
       <Separator />
       <div className="flex-1 overflow-hidden relative">
-        <div className="absolute top-0 left-0 bottom-[140px] z-10">
+        <div
+          className={cn(
+            'absolute top-0 left-0 bottom-[140px] z-10 transition-transform duration-300 ease-in-out',
+            incognito && '-translate-x-full',
+          )}
+        >
           <ConversationList newChat={newChat} onNewChat={handleNewChat} />
         </div>
         <AIChatBox
