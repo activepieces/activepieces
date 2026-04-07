@@ -178,11 +178,11 @@ async function fetchExecutionState(apiClient: WorkerToApiContract, data: Execute
         return parsed.executionState
     } catch (error) {
         const code = error instanceof ActivepiecesError ? error.error.code : ErrorCode.EXECUTION_STATE_MISSING
-        await onCallService(log, workerSettings.getSettings().PAGE_ONCALL_WEBHOOK).page({
+        onCallService(log, workerSettings.getSettings().PAGE_ONCALL_WEBHOOK).page({
             code,
             message: 'Failed to fetch execution state for RESUME operation',
             params: { runId: data.runId, error: inspect(error) },
-        })
+        }).catch((e) => log.error({ runId: data.runId, error: inspect(e) }, 'Failed to send on-call notification for execution state fetch failure'))
         throw error
     }
 }
