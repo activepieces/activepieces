@@ -6,15 +6,14 @@
       "name": "activepieces",
       "dependencies": {
         "@activepieces/import-fresh-webpack": "3.3.0",
-        "@ai-sdk/anthropic": "3.0.67",
-        "@ai-sdk/azure": "3.0.52",
-        "@ai-sdk/google": "3.0.59",
+        "@ai-sdk/anthropic": "^3.0.0",
+        "@ai-sdk/azure": "^3.0.0",
+        "@ai-sdk/google": "^3.0.0",
         "@ai-sdk/google-vertex": "^3.0.0",
         "@ai-sdk/mcp": "1.0.11",
-        "@ai-sdk/openai": "3.0.51",
+        "@ai-sdk/openai": "^3.0.0",
         "@ai-sdk/openai-compatible": "2.0.16",
         "@ai-sdk/provider": "^3.0.0",
-        "@ai-sdk/provider-utils": "4.0.23",
         "@ai-sdk/replicate": "2.0.8 ",
         "@authenio/samlify-node-xmllint": "2.0.0",
         "@aws-sdk/client-s3": "3.974.0",
@@ -130,7 +129,7 @@
         "@uiw/codemirror-theme-github": "4.25.7",
         "@uiw/react-codemirror": "4.25.7",
         "@xyflow/react": "12.3.5",
-        "ai": "6.0.149",
+        "ai": "^6.0.0",
         "ai-gateway-provider": "3.1.1",
         "async-mutex": "0.4.0",
         "axios": "1.13.5",
@@ -477,7 +476,7 @@
     },
     "packages/pieces/community/ai": {
       "name": "@activepieces/piece-ai",
-      "version": "0.3.1",
+      "version": "0.3.2",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -5400,7 +5399,7 @@
     },
     "packages/pieces/community/promotekit": {
       "name": "@activepieces/piece-promotekit",
-      "version": "0.1.4",
+      "version": "0.2.0",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
