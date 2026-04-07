@@ -12,7 +12,7 @@
   "Reply to an existing email.": "Reageer op een bestaande e-mail.",
   "Creates a draft reply to an existing email.": "Maakt een conceptantwoord op een bestaand e-mailadres.",
   "Get an email via Id.": "Ontvang een e-mail via Id.",
-  "Find emails using advanced search criteria.": "Zoek e-mails met behulp van geavanceerde zoekcriteria.",
+  "Find emails using advanced search criteria. At least one search filter (from, to, subject, label, category, date, content, or attachment) is required.": "Zoek e-mails met geavanceerde zoekcriteria. Ten minste één zoekfilter (van voor, onderwerp, label, datum, inhoud of bijlage) is vereist.",
   "Make a custom API call to a specific endpoint": "Maak een aangepaste API call naar een specifiek eindpunt",
   "Receiver Email (To)": "Ontvanger E-mail (Aan)",
   "CC Email": "CC e-mail",
