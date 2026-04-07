@@ -38,7 +38,8 @@
   "Prompt to guide the AI.": "Aspecto para guiar la IA.",
   "For complex schema, you can use advanced mode.": "Para esquemas complejos, puede utilizar el modo avanzado.",
   "Describe what you want the assistant to do.": "Describe lo que quieres que haga el asistente.",
-  "The numbder of interations the agent can do": "El numero de interaciones que el agente puede hacer",
+  "The number of iterations the agent can do": "El número de iteraciones que el agente puede hacer",
+  "Whether to use web search to find information for the AI to use.": "Si usar la búsqueda web para encontrar información para que la IA la utilice.",
   "Simple": "Simple",
   "Advanced": "Avanzado"
 }
