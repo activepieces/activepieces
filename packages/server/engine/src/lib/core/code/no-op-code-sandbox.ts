@@ -5,11 +5,18 @@ const CODE_RUNNER_SCRIPT = `
 process.once('message', async function(msg) {
     let settled = false
 
+    const inspect = require('util').inspect
+
     process.on('unhandledRejection', (reason) => {
         if (settled) return
         settled = true
-        const errMsg = reason instanceof Error ? reason.message : String(reason)
-        process.send({ success: false, error: errMsg }, () => process.exit(1))
+        process.send({ success: false, error: inspect(reason) }, () => process.exit(1))
+    })
+
+    process.on('uncaughtException', (err) => {
+        if (settled) return
+        settled = true
+        process.send({ success: false, error: inspect(err) }, () => process.exit(1))
     })
 
     try {
@@ -25,31 +32,12 @@ process.once('message', async function(msg) {
     } catch(e) {
         if (settled) return
         settled = true
-        const errMsg = e instanceof Error ? e.message : String(e)
-        process.send({ success: false, error: errMsg }, () => process.exit(0))
+        process.send({ success: false, error: inspect(e) }, () => process.exit(0))
     }
 })
 `
 
-export const noOpCodeSandbox: CodeSandbox = {
-    async runCodeModule({ codeFilePath, inputs }) {
-        return runInChildProcess(codeFilePath, inputs)
-    },
-
-    async runScript({ script, scriptContext, functions }) {
-        const newContext = {
-            ...scriptContext,
-            ...functions,
-        }
-        const params = Object.keys(newContext)
-        const args = Object.values(newContext)
-        const body = `return (${script})`
-        const fn = Function(...params, body)
-        return fn(...args)
-    },
-}
-
-async function runInChildProcess(codeFilePath: string, inputs: Record<string, unknown>): Promise<unknown> {
+async function runInChildProcess({ codeFilePath, inputs }: { codeFilePath: string, inputs: Record<string, unknown> }): Promise<unknown> {
     return new Promise((resolve, reject) => {
         const child = spawn(process.execPath, ['--eval', CODE_RUNNER_SCRIPT], {
             stdio: ['pipe', 'pipe', 'pipe', 'ipc'],
@@ -79,27 +67,27 @@ async function runInChildProcess(codeFilePath: string, inputs: Record<string, un
                 resolve(msg.result)
             }
             else {
-                reject(buildError(msg.error, capturedStdout, capturedStderr))
+                reject(buildError({ message: msg.error, stdout: capturedStdout, stderr: capturedStderr }))
             }
         })
 
         child.on('close', (code, signal) => {
             if (settled) return
             settled = true
-            reject(buildError(`Code process exited with code ${code} and signal ${signal}`, capturedStdout, capturedStderr))
+            reject(buildError({ message: `Code process exited with code ${code} and signal ${signal}`, stdout: capturedStdout, stderr: capturedStderr }))
         })
 
         child.on('error', (error) => {
             if (settled) return
             settled = true
-            reject(buildError(error.message, capturedStdout, capturedStderr))
+            reject(buildError({ message: error.message, stdout: capturedStdout, stderr: capturedStderr }))
         })
 
         child.send({ codeFilePath, inputs })
     })
 }
 
-function buildError(message: string | undefined, stdout: string, stderr: string): Error {
+function buildError({ message, stdout, stderr }: { message: string | undefined, stdout: string, stderr: string }): Error {
     const parts: string[] = [message ?? 'Code execution failed']
     if (stdout.trim()) {
         parts.push(`\n--- stdout ---\n${stdout.trim()}`)
@@ -108,4 +96,22 @@ function buildError(message: string | undefined, stdout: string, stderr: string)
         parts.push(`\n--- stderr ---\n${stderr.trim()}`)
     }
     return new Error(parts.join(''))
+}
+
+export const noOpCodeSandbox: CodeSandbox = {
+    async runCodeModule({ codeFilePath, inputs }) {
+        return runInChildProcess({ codeFilePath, inputs })
+    },
+
+    async runScript({ script, scriptContext, functions }) {
+        const newContext = {
+            ...scriptContext,
+            ...functions,
+        }
+        const params = Object.keys(newContext)
+        const args = Object.values(newContext)
+        const body = `return (${script})`
+        const fn = Function(...params, body)
+        return fn(...args)
+    },
 }
