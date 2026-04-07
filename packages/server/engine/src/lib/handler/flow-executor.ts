@@ -46,6 +46,12 @@ export const flowExecutor = {
                 stepNameToUpdate: trigger.name,
                 startTime: dayjs().toISOString(),
             })
+            void progressService.backup({
+                engineConstants: constants,
+                flowExecutorContext: executionState,
+            }).catch((err) => {
+                console.error('[Progress] Initial payload upload failed', err)
+            })
             executionState = applyLogSizeLimitIfExceeded(executionState, trigger)
             if (executionState.verdict.status !== FlowRunStatus.RUNNING) {
                 return executionState
