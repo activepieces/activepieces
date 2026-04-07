@@ -1,5 +1,6 @@
 {
   "lockfileVersion": 1,
+  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "activepieces",
@@ -6231,6 +6232,25 @@
         "tslib": "2.6.2",
       },
     },
+    "packages/pieces/community/stitch": {
+      "name": "@activepieces/piece-stitch",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
+      },
+    },
+    "packages/pieces/community/stitch_google": {
+      "name": "@activepieces/piece-stitch_google",
+      "version": "0.1.0",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+      },
+    },
     "packages/pieces/community/straico": {
       "name": "@activepieces/piece-straico",
       "version": "0.2.4",
@@ -9183,6 +9203,10 @@
     "@activepieces/piece-stability-ai": ["@activepieces/piece-stability-ai@workspace:packages/pieces/community/stability-ai"],
 
     "@activepieces/piece-stable-diffusion-webui": ["@activepieces/piece-stable-diffusion-webui@workspace:packages/pieces/community/stable-diffusion-webui"],
+
+    "@activepieces/piece-stitch": ["@activepieces/piece-stitch@workspace:packages/pieces/community/stitch"],
+
+    "@activepieces/piece-stitch_google": ["@activepieces/piece-stitch_google@workspace:packages/pieces/community/stitch_google"],
 
     "@activepieces/piece-store": ["@activepieces/piece-store@workspace:packages/pieces/core/store"],
 

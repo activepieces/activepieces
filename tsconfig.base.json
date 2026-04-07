@@ -1098,6 +1098,12 @@
       "@activepieces/piece-stable-diffusion-webui": [
         "packages/pieces/community/stable-diffusion-webui/src/index.ts"
       ],
+      "@activepieces/piece-stitch": [
+        "packages/pieces/community/stitch/src/index.ts"
+      ],
+      "@activepieces/piece-stitch_google": [
+        "packages/pieces/community/stitch_google/src/index.ts"
+      ],
       "@activepieces/piece-store": [
         "packages/pieces/core/store/src/index.ts"
       ],
