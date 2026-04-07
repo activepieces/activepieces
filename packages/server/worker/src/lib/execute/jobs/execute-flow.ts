@@ -33,7 +33,7 @@ export const executeFlowJob: JobHandler<ExecuteFlowJobData, FireAndForgetJobResu
         if (isNil(flowVersion)) {
             ctx.log.info({ flowVersionId: data.flowVersionId }, 'Flow version not found, skipping')
             await reportFlowStatus(ctx, data, FlowRunStatus.FAILED)
-            return { kind: JobResultKind.FIRE_AND_FORGET }
+            return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.INTERNAL_ERROR }
         }
 
         const { data: provisioned, error: provisionError } = await tryCatch(() => provisionFlowPieces({ flowVersion, platformId: data.platformId, flowId: data.flowId, projectId: data.projectId, log: ctx.log, apiClient: ctx.apiClient }))
@@ -43,7 +43,7 @@ export const executeFlowJob: JobHandler<ExecuteFlowJobData, FireAndForgetJobResu
         }
         if (!provisioned) {
             await reportFlowStatus(ctx, data, FlowRunStatus.FAILED)
-            return { kind: JobResultKind.FIRE_AND_FORGET }
+            return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.INTERNAL_ERROR }
         }
 
         const sandbox = ctx.sandboxManager.acquire({ log: ctx.log, apiClient: ctx.apiClient })
@@ -64,35 +64,35 @@ export const executeFlowJob: JobHandler<ExecuteFlowJobData, FireAndForgetJobResu
 
             if (result.status === EngineResponseStatus.LOG_SIZE_EXCEEDED) {
                 await reportFlowStatus(ctx, data, FlowRunStatus.LOG_SIZE_EXCEEDED)
-                return { kind: JobResultKind.FIRE_AND_FORGET, logs: result.logs }
+                return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.LOG_SIZE_EXCEEDED, logs: result.logs }
             }
 
             if (result.status === EngineResponseStatus.INTERNAL_ERROR) {
                 await reportFlowStatus(ctx, data, FlowRunStatus.INTERNAL_ERROR)
-                return { kind: JobResultKind.FIRE_AND_FORGET, logs: result.logs }
+                return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.INTERNAL_ERROR, logs: result.logs }
             }
 
             const delayInSeconds = result.delayInSeconds
             if (delayInSeconds && delayInSeconds > 0) {
-                return { kind: JobResultKind.FIRE_AND_FORGET, delayInSeconds, logs: result.logs }
+                return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK, delayInSeconds, logs: result.logs }
             }
 
-            return { kind: JobResultKind.FIRE_AND_FORGET, logs: result.logs }
+            return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK, logs: result.logs }
         }
         catch (e) {
             await ctx.sandboxManager.invalidate(ctx.log)
             if (e instanceof ActivepiecesError) {
                 if (e.error.code === ErrorCode.SANDBOX_EXECUTION_TIMEOUT) {
                     await reportFlowStatus(ctx, data, FlowRunStatus.TIMEOUT)
-                    return { kind: JobResultKind.FIRE_AND_FORGET }
+                    return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.TIMEOUT }
                 }
                 if (e.error.code === ErrorCode.SANDBOX_MEMORY_ISSUE) {
                     await reportFlowStatus(ctx, data, FlowRunStatus.MEMORY_LIMIT_EXCEEDED)
-                    return { kind: JobResultKind.FIRE_AND_FORGET }
+                    return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.MEMORY_ISSUE }
                 }
                 if (e.error.code === ErrorCode.SANDBOX_LOG_SIZE_EXCEEDED) {
                     await reportFlowStatus(ctx, data, FlowRunStatus.LOG_SIZE_EXCEEDED)
-                    return { kind: JobResultKind.FIRE_AND_FORGET }
+                    return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.LOG_SIZE_EXCEEDED }
                 }
             }
             await reportFlowStatus(ctx, data, FlowRunStatus.INTERNAL_ERROR)
