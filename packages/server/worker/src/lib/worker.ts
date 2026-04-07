@@ -4,6 +4,7 @@ import { systemUsage } from '@activepieces/server-utils'
 import {
     ActivepiecesError,
     ConsumeJobRequest,
+    createRpcClient,
     EngineResponseStatus,
     JobData,
     tryCatch,
@@ -12,7 +13,6 @@ import {
     WorkerSettingsResponse,
     WorkerToApiContract,
 } from '@activepieces/shared'
-import { createRpcClient } from '@activepieces/shared/server'
 import { trace } from '@opentelemetry/api'
 import { nanoid } from 'nanoid'
 import { io, Socket } from 'socket.io-client'

@@ -89,9 +89,7 @@ function ConnectionSelect(params: ConnectionSelectProps) {
         <>
           {(isLoadingConnections || !pieceWithCorrectVersion) && (
             <div className="flex flex-col gap-2">
-              <FormLabel>
-                {t('Connection')} <span className="text-destructive">*</span>
-              </FormLabel>
+              <FormLabel showRequiredIndicator>{t('Connection')}</FormLabel>
               <SearchableSelect
                 options={[]}
                 disabled={true}
