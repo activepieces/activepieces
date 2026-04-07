@@ -5,6 +5,7 @@ import { jwtDecode } from 'jwt-decode';
 import { Blocks, Shield } from 'lucide-react';
 import { useState } from 'react';
 import { Navigate, useSearchParams } from 'react-router-dom';
+import { useDebouncedCallback } from 'use-debounce';
 
 import { FullLogo } from '@/components/custom/full-logo';
 import { SearchableSelect } from '@/components/custom/searchable-select';
@@ -31,6 +32,7 @@ function McpAuthorizePage() {
     ProjectType | 'all'
   >('all');
   const [searchValue, setSearchValue] = useState('');
+  const debouncedSetSearchValue = useDebouncedCallback(setSearchValue, 300);
   const isLoggedIn = authenticationSession.isLoggedIn();
 
   const { data: projectsPage, isLoading: projectsLoading } = useQuery({
@@ -109,8 +111,15 @@ function McpAuthorizePage() {
             <Tabs
               value={projectTypeFilter}
               onValueChange={(value) => {
-                setProjectTypeFilter(value as ProjectType | 'all');
+                if (
+                  value === 'all' ||
+                  value === ProjectType.PERSONAL ||
+                  value === ProjectType.TEAM
+                ) {
+                  setProjectTypeFilter(value);
+                }
                 setSelectedProjectId(undefined);
+                setSearchValue('');
               }}
             >
               <TabsList className="w-full">
@@ -135,7 +144,7 @@ function McpAuthorizePage() {
               placeholder={t('Search projects...')}
               disabled={projectsLoading}
               loading={projectsLoading}
-              refreshOnSearch={setSearchValue}
+              refreshOnSearch={debouncedSetSearchValue}
             />
           </div>
 
