@@ -1,4 +1,5 @@
 import { Property, createAction, OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import { getGraphBaseUrl } from '../common/microsoft-cloud';
 import { microsoftToDoAuth } from '../auth';
 import { getTaskListsDropdown } from '../common';
 import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
@@ -51,10 +52,12 @@ export const listTasksAction = createAction({
 		const { auth, propsValue } = context;
 		const { task_list_id, status, search } = propsValue;
 
+		const cloud = (auth as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
 		const client = Client.initWithMiddleware({
 			authProvider: {
 				getAccessToken: () => Promise.resolve(auth.access_token),
 			},
+			baseUrl: getGraphBaseUrl(cloud),
 		});
 
 		const result: TodoTask[] = [];
