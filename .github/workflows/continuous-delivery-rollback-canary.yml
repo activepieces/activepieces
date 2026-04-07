@@ -49,22 +49,36 @@ jobs:
           fi
           echo "image_tag=$TAG" >> $GITHUB_OUTPUT
 
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Extract migration manifest from target image
         id: manifest
         run: |
           IMAGE="ghcr.io/activepieces/activepieces-cloud:${{ steps.target.outputs.image_tag }}"
           docker pull "$IMAGE"
-          MANIFEST=$(docker run --rm "$IMAGE" \
-            cat /usr/src/app/packages/server/api/dist/src/migration-manifest.json)
+          MANIFEST=$(docker run --rm --entrypoint cat "$IMAGE" \
+            /usr/src/app/packages/server/api/dist/src/migration-manifest.json)
           echo "json=$MANIFEST" >> $GITHUB_OUTPUT
 
       - name: Rollback DB migrations
         run: |
           FORCE_FLAG=${{ inputs.force && '"--force"' || '""' }}
           MANIFEST='${{ steps.manifest.outputs.json }}'
-          ssh ops -t -t "bash -ic \"cd mrsk/prod && kamal app exec --config-file=config/app-canary.yml -- \
-            node /usr/src/app/packages/server/api/dist/src/rollback.js \
-            --manifest '$MANIFEST' $FORCE_FLAG ; exit\""
+
+          printf '%s' "$MANIFEST" | ssh ops 'cat > /tmp/rollback-manifest.json'
+
+          ssh ops -t -t 'bash -ic "$(cat <<'"'"'EOF'"'"'
+          cd mrsk/prod
+          MANIFEST=$(cat /tmp/rollback-manifest.json | jq -c '"'"'[.[] | select(. != null)]'"'"')
+          MANIFEST_ESCAPED="${MANIFEST//\"/\\\"}"
+          kamal app exec --reuse --config-file=config/app-canary.yml -- node /usr/src/app/packages/server/api/dist/src/rollback.js --manifest "$MANIFEST_ESCAPED"
+          EOF
+          )"'
 
       - name: Redeploy canary app to target image
         run: |
