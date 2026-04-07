@@ -3,9 +3,6 @@ name: Continuous Delivery — Canary
 on:
   schedule:
     - cron: '0 9 * * *'  # Daily 9 AM UTC
-  push:
-    branches:
-      - feat/canary
 
 jobs:
   build-image:
