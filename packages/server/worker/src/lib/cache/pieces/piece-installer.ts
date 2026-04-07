@@ -95,28 +95,45 @@ async function installPieces(rootWorkspace: string, pieces: PiecePackage[], incl
                     span.setAttribute('pieces.count', piecesToInstall.length)
                     span.setAttribute('pieces.rootWorkspace', rootWorkspace)
 
-                    const { error: installError } = await tryCatch(async () => bunRunner(log).install({
+                    const { error: batchError } = await tryCatch(async () => bunRunner(log).install({
                         path: rootWorkspace,
                         filtersPath: includeFilters ? piecesToInstall.map(relativePiecePath) : [],
                     }))
 
-                    if (!isNil(installError)) {
-                        log.error({
+                    if (isNil(batchError)) {
+                        await markPiecesAsUsed(rootWorkspace, piecesToInstall)
+                        log.info({
                             rootWorkspace,
-                            pieces: piecesToInstall.map(piece => `${piece.pieceName}-${piece.pieceVersion}`),
-                            error: installError,
-                        }, '[pieceInstaller] Piece installation failed, rolling back')
-                        span.recordException(installError instanceof Error ? installError : new Error(String(installError)))
-                        await rollbackInstallation(rootWorkspace, piecesToInstall)
-                        throw installError
+                            piecesCount: piecesToInstall.length,
+                        }, '[pieceInstaller] Installed registry pieces using bun')
+                        return
                     }
 
-                    await markPiecesAsUsed(rootWorkspace, piecesToInstall)
+                    span.recordException(batchError instanceof Error ? batchError : new Error(String(batchError)))
+
+                    if (piecesToInstall.length === 1) {
+                        log.error({ rootWorkspace, error: batchError }, '[pieceInstaller] Piece installation failed, rolling back')
+                        await rollbackInstallation(rootWorkspace, piecesToInstall)
+                        throw batchError
+                    }
+
+                    log.warn({
+                        rootWorkspace,
+                        pieces: piecesToInstall.map(piece => `${piece.pieceName}-${piece.pieceVersion}`),
+                        error: batchError,
+                    }, '[pieceInstaller] Batch install failed, retrying pieces individually')
+
+                    const failedPieces = await tryInstallPiecesIndividually(rootWorkspace, piecesToInstall, log)
+
+                    if (failedPieces.length > 0) {
+                        const names = failedPieces.map(p => `${p.pieceName}@${p.pieceVersion}`).join(', ')
+                        throw new Error(`[pieceInstaller] Failed to install: ${names}`)
+                    }
 
                     log.info({
                         rootWorkspace,
                         piecesCount: piecesToInstall.length,
-                    }, '[pieceInstaller] Installed registry pieces using bun')
+                    }, '[pieceInstaller] Installed registry pieces using bun (individual fallback)')
                 }
                 finally {
                     span.end()
@@ -129,7 +146,36 @@ async function installPieces(rootWorkspace: string, pieces: PiecePackage[], incl
 async function rollbackInstallation(rootWorkspace: string, pieces: PiecePackage[]): Promise<void> {
     await Promise.all(pieces.map(piece => rm(path.resolve(rootWorkspace, relativePiecePath(piece)), {
         recursive: true,
+        force: true,
     })))
+}
+
+async function tryInstallPiecesIndividually(
+    rootWorkspace: string,
+    pieces: PiecePackage[],
+    log: Logger,
+): Promise<PiecePackage[]> {
+    const failures: PiecePackage[] = []
+    for (const piece of pieces) {
+        const { error } = await tryCatch(async () =>
+            bunRunner(log).install({
+                path: rootWorkspace,
+                filtersPath: [relativePiecePath(piece)],
+            }),
+        )
+        if (error) {
+            log.error({
+                piece: `${piece.pieceName}@${piece.pieceVersion}`,
+                error,
+            }, '[pieceInstaller] Individual piece installation failed, rolling back')
+            await rollbackInstallation(rootWorkspace, [piece])
+            failures.push(piece)
+        }
+        else {
+            await markPiecesAsUsed(rootWorkspace, [piece])
+        }
+    }
+    return failures
 }
 
 function groupPiecesByPackagePath(pieces: PiecePackage[]): Record<string, PiecePackage[]> {

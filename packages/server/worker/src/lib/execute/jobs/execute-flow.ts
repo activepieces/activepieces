@@ -1,3 +1,4 @@
+import { onCallService } from '@activepieces/server-utils'
 import {
     ActivepiecesError,
     BeginExecuteFlowOperation,
@@ -12,9 +13,11 @@ import {
     isNil,
     ResumeExecuteFlowOperation,
     ResumePayload,
+    tryCatch,
     WorkerJobType,
     WorkerToApiContract,
 } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { flowCache } from '../../cache/flow/flow-cache'
 import { workerSettings } from '../../config/worker-settings'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../types'
@@ -24,16 +27,20 @@ import { resolvePayload } from '../utils/resolve-payload'
 export const executeFlowJob: JobHandler<ExecuteFlowJobData, FireAndForgetJobResult> = {
     jobType: WorkerJobType.EXECUTE_FLOW,
     async execute(ctx: JobContext, data: ExecuteFlowJobData): Promise<FireAndForgetJobResult> {
-        const settings = workerSettings.getSettings()
-        const timeoutInSeconds = settings.FLOW_TIMEOUT_SECONDS
+        const timeoutInSeconds = workerSettings.getSettings().FLOW_TIMEOUT_SECONDS
 
         const flowVersion = await flowCache(ctx.log, ctx.apiClient).getVersion({ flowVersionId: data.flowVersionId })
         if (isNil(flowVersion)) {
             ctx.log.info({ flowVersionId: data.flowVersionId }, 'Flow version not found, skipping')
+            await reportFlowStatus(ctx, data, FlowRunStatus.FAILED)
             return { kind: JobResultKind.FIRE_AND_FORGET }
         }
 
-        const provisioned = await provisionFlowPieces({ flowVersion, platformId: data.platformId, flowId: data.flowId, projectId: data.projectId, log: ctx.log, apiClient: ctx.apiClient })
+        const { data: provisioned, error: provisionError } = await tryCatch(() => provisionFlowPieces({ flowVersion, platformId: data.platformId, flowId: data.flowId, projectId: data.projectId, log: ctx.log, apiClient: ctx.apiClient }))
+        if (provisionError) {
+            await reportFlowStatus(ctx, data, FlowRunStatus.INTERNAL_ERROR)
+            throw provisionError
+        }
         if (!provisioned) {
             await reportFlowStatus(ctx, data, FlowRunStatus.FAILED)
             return { kind: JobResultKind.FIRE_AND_FORGET }
@@ -55,17 +62,22 @@ export const executeFlowJob: JobHandler<ExecuteFlowJobData, FireAndForgetJobResu
                 { timeoutInSeconds },
             )
 
-            if (result.engine.status === EngineResponseStatus.INTERNAL_ERROR) {
+            if (result.status === EngineResponseStatus.LOG_SIZE_EXCEEDED) {
+                await reportFlowStatus(ctx, data, FlowRunStatus.LOG_SIZE_EXCEEDED)
+                return { kind: JobResultKind.FIRE_AND_FORGET, logs: result.logs }
+            }
+
+            if (result.status === EngineResponseStatus.INTERNAL_ERROR) {
                 await reportFlowStatus(ctx, data, FlowRunStatus.INTERNAL_ERROR)
-                return { kind: JobResultKind.FIRE_AND_FORGET }
+                return { kind: JobResultKind.FIRE_AND_FORGET, logs: result.logs }
             }
 
-            const delayInSeconds = result.engine.delayInSeconds
+            const delayInSeconds = result.delayInSeconds
             if (delayInSeconds && delayInSeconds > 0) {
-                return { kind: JobResultKind.FIRE_AND_FORGET, delayInSeconds }
+                return { kind: JobResultKind.FIRE_AND_FORGET, delayInSeconds, logs: result.logs }
             }
 
-            return { kind: JobResultKind.FIRE_AND_FORGET }
+            return { kind: JobResultKind.FIRE_AND_FORGET, logs: result.logs }
         }
         catch (e) {
             await ctx.sandboxManager.invalidate(ctx.log)
@@ -118,7 +130,7 @@ async function buildFlowOperation(
     }
 
     if (data.executionType === ExecutionType.RESUME) {
-        const executionState = await fetchExecutionState(ctx.apiClient, data)
+        const executionState = await fetchExecutionState(ctx.apiClient, data, ctx.log)
         if (Object.keys(executionState.steps).length === 0) {
             ctx.log.error({ runId: data.runId, executionType: data.executionType }, 'RESUME operation has empty execution state — this is a bug that would cause an infinite loop')
             throw new ActivepiecesError({
@@ -146,28 +158,24 @@ async function buildFlowOperation(
     }
 }
 
-async function fetchExecutionState(apiClient: WorkerToApiContract, data: ExecuteFlowJobData): Promise<ExecutionState> {
+async function fetchExecutionState(apiClient: WorkerToApiContract, data: ExecuteFlowJobData, log: FastifyBaseLogger): Promise<ExecutionState> {
     if (isNil(data.logsFileId)) {
-        throw new ActivepiecesError({
-            code: ErrorCode.ENTITY_NOT_FOUND,
-            params: {
-                message: 'logsFileId is missing for RESUME operation',
-                entityType: 'logs_file',
-                entityId: data.runId,
-            },
-        })
+        const error = new ActivepiecesError({
+            code: ErrorCode.RESUME_LOGS_FILE_MISSING,
+            params: { runId: data.runId },
+        }, 'logsFileId is missing for RESUME operation')
+        await onCallService(log, workerSettings.getSettings().PAGE_ONCALL_WEBHOOK).page(error)
+        throw error
     }
     const buffer = await apiClient.getPayloadFile({ fileId: data.logsFileId, projectId: data.projectId })
     const parsed = JSON.parse(buffer.toString('utf-8'))
     if (isNil(parsed.executionState)) {
-        throw new ActivepiecesError({
-            code: ErrorCode.ENTITY_NOT_FOUND,
-            params: {
-                message: 'executionState is missing in logs file',
-                entityType: 'execution_state',
-                entityId: data.logsFileId,
-            },
-        })
+        const error = new ActivepiecesError({
+            code: ErrorCode.EXECUTION_STATE_MISSING,
+            params: { logsFileId: data.logsFileId },
+        }, 'executionState is missing in logs file')
+        await onCallService(log, workerSettings.getSettings().PAGE_ONCALL_WEBHOOK).page(error)
+        throw error
     }
     return parsed.executionState
 }

@@ -3,6 +3,7 @@ import {
     ActivepiecesError,
     ErrorCode,
     ExecutionType,
+    FlowActionType,
     FlowRunStatus,
     FlowTriggerType,
     FlowVersionState,
@@ -36,6 +37,7 @@ vi.mock('../../../../src/lib/execute/utils/resolve-payload', () => ({
 }))
 
 import { executeFlowJob } from '../../../../src/lib/execute/jobs/execute-flow'
+import { JobResultKind } from '../../../../src/lib/execute/types'
 
 function makeFlowVersion(): FlowVersion {
     return {
@@ -47,9 +49,30 @@ function makeFlowVersion(): FlowVersion {
         trigger: {
             name: 'trigger_1',
             valid: true,
-            displayName: 'Test Trigger',
-            type: FlowTriggerType.EMPTY,
-            settings: {},
+            displayName: 'Gmail Trigger',
+            lastUpdatedDate: '2024-01-01T00:00:00Z',
+            type: FlowTriggerType.PIECE,
+            settings: {
+                pieceName: '@activepieces/piece-gmail',
+                pieceVersion: '~0.1.0',
+                triggerName: 'new_email',
+                input: {},
+                propertySettings: {},
+            },
+            nextAction: {
+                name: 'step_1',
+                valid: true,
+                displayName: 'Slack Action',
+                lastUpdatedDate: '2024-01-01T00:00:00Z',
+                type: FlowActionType.PIECE,
+                settings: {
+                    pieceName: '@activepieces/piece-slack',
+                    pieceVersion: '~0.2.0',
+                    actionName: 'send_message',
+                    input: {},
+                    propertySettings: {},
+                },
+            },
         },
         updatedBy: null,
         valid: true,
@@ -167,6 +190,25 @@ describe('executeFlowJob', () => {
             expect(ctx.apiClient.uploadRunLog).not.toHaveBeenCalledWith(
                 expect.objectContaining({ status: FlowRunStatus.INTERNAL_ERROR }),
             )
+        })
+    })
+
+    describe('missing piece handling', () => {
+        it('should mark run as FAILED and skip sandbox when flow version is not found (missing piece)', async () => {
+            mockGetVersion.mockResolvedValue(null)
+
+            const ctx = makeMockContext()
+            const data = makeResumeJobData({ executionType: ExecutionType.BEGIN })
+
+            const result = await executeFlowJob.execute(ctx, data)
+
+            expect(result.kind).toBe(JobResultKind.FIRE_AND_FORGET)
+
+            expect(ctx.apiClient.uploadRunLog).toHaveBeenCalledWith(
+                expect.objectContaining({ status: FlowRunStatus.FAILED }),
+            )
+
+            expect(ctx.sandboxManager.acquire).not.toHaveBeenCalled()
         })
     })
 })

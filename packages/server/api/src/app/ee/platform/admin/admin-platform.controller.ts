@@ -4,6 +4,7 @@ import { FastifyReply, FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
+import { platformCanaryService } from '../../../core/canary/platform-canary.service'
 import { securityAccess } from '../../../core/security/authorization/fastify-security'
 import { system } from '../../../helper/system/system'
 import { AppSystemProp } from '../../../helper/system/system-props'
@@ -67,6 +68,16 @@ const adminPlatformController: FastifyPluginAsyncZod = async (
         })
         return res.status(StatusCodes.OK).send()
     })
+
+    app.post('/platforms/canary', UpdateCanaryRequest, async (req, res) => {
+        await platformCanaryService(req.log).updateCanary(req.body.platformId, req.body.canary)
+        return res.status(StatusCodes.OK).send()
+    })
+
+    app.delete('/platforms/canary', DisableAllCanaryRequest, async (req, res) => {
+        await platformCanaryService(req.log).disableAll()
+        return res.status(StatusCodes.OK).send()
+    })
 }
 
 
@@ -76,6 +87,25 @@ const ConfigureDedicatedWorkersRequest = {
             operation: z.union([z.literal('enable'), z.literal('disable')]),
             platformId: z.string(),
             trustedEnvironment: z.boolean(),
+        }),
+    },
+    config: {
+        security: securityAccess.public(),
+    },
+}
+
+const DisableAllCanaryRequest = {
+    schema: {},
+    config: {
+        security: securityAccess.public(),
+    },
+}
+
+const UpdateCanaryRequest = {
+    schema: {
+        body: z.object({
+            platformId: z.string(),
+            canary: z.boolean(),
         }),
     },
     config: {

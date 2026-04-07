@@ -92,6 +92,11 @@ export type ApErrorParams =
     | SecretManagerKeyNotSecretParams
     | InvalidAIProviderCredentialsParams
     | MigrateFlowModelJobAlreadyExistsParams
+    | FlowMigrationFailedParams
+    | ResumeLogsFileMissingParams
+    | ExecutionStateMissingParams
+    | GenericErrorParams
+
 export type TriggerExecutionFailedParams = BaseErrorParams<ErrorCode.TRIGGER_EXECUTION_FAILED, {
     flowId: FlowId
     message?: string
@@ -477,6 +482,22 @@ export type InvalidAIProviderCredentialsParams = BaseErrorParams<ErrorCode.INVAL
 export type MigrateFlowModelJobAlreadyExistsParams = BaseErrorParams<ErrorCode.MIGRATE_FLOW_MODEL_JOB_ALREADY_EXISTS, {
     jobId: string
 }>
+export type FlowMigrationFailedParams = BaseErrorParams<ErrorCode.FLOW_MIGRATION_FAILED, {
+    flowVersionId: string
+    message: string
+}>
+
+export type ResumeLogsFileMissingParams = BaseErrorParams<ErrorCode.RESUME_LOGS_FILE_MISSING, {
+    runId: string
+}>
+
+export type ExecutionStateMissingParams = BaseErrorParams<ErrorCode.EXECUTION_STATE_MISSING, {
+    logsFileId: string
+}>
+
+export type GenericErrorParams = BaseErrorParams<ErrorCode.GENERIC_ERROR, {
+    message: string
+}>
 
 export enum ErrorCode {
     INTERNAL_SERVER_ERROR = 'INTERNAL_SERVER_ERROR',
@@ -548,5 +569,9 @@ export enum ErrorCode {
     SECRET_MANAGER_KEY_NOT_SECRET = 'SECRET_MANAGER_KEY_NOT_SECRET',
     INVALID_AI_PROVIDER_CREDENTIALS = 'INVALID_AI_PROVIDER_CREDENTIALS',
     MIGRATE_FLOW_MODEL_JOB_ALREADY_EXISTS = 'MIGRATE_FLOW_MODEL_JOB_ALREADY_EXISTS',
+    FLOW_MIGRATION_FAILED = 'FLOW_MIGRATION_FAILED',
+    RESUME_LOGS_FILE_MISSING = 'RESUME_LOGS_FILE_MISSING',
+    EXECUTION_STATE_MISSING = 'EXECUTION_STATE_MISSING',
+    GENERIC_ERROR = 'GENERIC_ERROR',
 }
 

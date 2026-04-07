@@ -14,19 +14,21 @@ import {
     ProjectId,
     sanitizeObjectForPostgresql,
     spreadIfDefined,
+    tryCatch,
     UserId,
     WebsocketClientEvent,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { websocketService } from '../../core/websockets.service'
-import { SystemJobData, SystemJobName } from '../../helper/system-jobs/common'
-import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
-import { flowExecutionCache } from '../flow/flow-execution-cache'
-import { flowRepo } from '../flow/flow.repo'
+import { onCallService } from '../../helper/on-call.service'
 import { flowVersionBackupService } from './flow-version-backup.service'
 import { flowVersionRepo } from './flow-version.service'
 import { flowMigrations } from './migrations'
+import { systemJobsSchedule } from 'src/app/helper/system-jobs/system-job'
+import { SystemJobData, SystemJobName } from 'src/app/helper/system-jobs/common'
+import { flowExecutionCache } from '../flow/flow-execution-cache'
+import { flowRepo } from '../flow/flow.repo'
+import { websocketService } from 'src/app/core/websockets.service'
 
 export const flowVersionMigrationService = (log: FastifyBaseLogger) => ({
     async migrate(flowVersion: FlowVersion, projectId?: ProjectId): Promise<FlowVersion> {
@@ -42,7 +44,15 @@ export const flowVersionMigrationService = (log: FastifyBaseLogger) => ({
             backupFiles[flowVersion.schemaVersion] = await flowVersionBackupService(log).store(flowVersion)
         }
 
-        const migratedFlowVersion: FlowVersion = await flowMigrations.apply(flowVersion, { log, projectId })
+        const { data: migratedFlowVersion, error: migrationError } = await tryCatch(() => flowMigrations.apply(flowVersion, { log, projectId }))
+        if (migrationError) {
+            const apError = new ActivepiecesError({
+                code: ErrorCode.FLOW_MIGRATION_FAILED,
+                params: { flowVersionId: flowVersion.id, message: migrationError.message },
+            })
+            await onCallService(log).page(apError)
+            throw migrationError
+        }
 
         await flowVersionRepo().update(flowVersion.id, {
             schemaVersion: migratedFlowVersion.schemaVersion,

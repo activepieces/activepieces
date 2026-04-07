@@ -1,13 +1,11 @@
-import { inspect } from 'util'
+import { inspect } from 'node:util'
 import {
     createNotifyClient,
     createRpcClient,
     createRpcServer,
     EngineContract,
     EngineResponse,
-    EngineResponseStatus,
     ERROR_MESSAGES_TO_REDACT,
-    tryCatch,
     WorkerContract,
     WorkerNotifyContract,
 } from '@activepieces/shared'
@@ -56,23 +54,14 @@ export const workerSocket = {
 
         createRpcServer<EngineContract>(socket, {
             executeOperation: async ({ operationType, operation }): Promise<EngineResponse<unknown>> => {
-                const result = await tryCatch(async () => {
-                    progressService.init()
+                progressService.init()
+                try {
                     const response = await execute(operationType, operation)
-                    await progressService.shutdown()
                     return JSON.parse(JSON.stringify(response)) as EngineResponse<unknown>
-                })
-
-                if (result.error) {
-                    console.error(result.error)
-                    return {
-                        response: undefined,
-                        status: EngineResponseStatus.INTERNAL_ERROR,
-                        error: inspect(result.error),
-                    }
                 }
-
-                return result.data
+                finally {
+                    await progressService.shutdown()
+                }
             },
         })
 

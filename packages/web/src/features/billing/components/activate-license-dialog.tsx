@@ -71,7 +71,10 @@ export const ActivateLicenseDialog = ({
         </DialogHeader>
 
         <Form {...form}>
-          <form className="space-y-4">
+          <form
+            className="space-y-4"
+            onSubmit={form.handleSubmit(handleSubmit)}
+          >
             <FormField
               control={form.control}
               name="tempLicenseKey"

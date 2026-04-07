@@ -9,6 +9,7 @@ import {
     ProgressUpdateType,
     TriggerHookType,
     TriggerPayload,
+    tryCatch,
     WebhookJobData,
     WorkerJobType,
 } from '@activepieces/shared'
@@ -17,6 +18,7 @@ import { workerSettings } from '../../config/worker-settings'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../types'
 import { provisionFlowPieces } from '../utils/flow-helpers'
 import { resolvePayload } from '../utils/resolve-payload'
+import { isSandboxTimeout } from '../utils/sandbox-helpers'
 import { getAppWebhookUrl, getWebhookUrl } from '../utils/webhook-url'
 
 function getAppWebhookDetails(flowVersion: FlowVersion, publicApiUrl: string, appWebhookSecretsJson: string): { appWebhookUrl?: string, webhookSecret?: string | Record<string, string> } {
@@ -55,7 +57,7 @@ export const executeWebhookJob: JobHandler<WebhookJobData, FireAndForgetJobResul
         }
 
         const sandbox = ctx.sandboxManager.acquire({ log: ctx.log, apiClient: ctx.apiClient })
-        try {
+        const { data: execResult, error } = await tryCatch(async () => {
             await sandbox.start({
                 flowVersionId: flowVersion.id,
                 platformId: data.platformId,
@@ -83,9 +85,9 @@ export const executeWebhookJob: JobHandler<WebhookJobData, FireAndForgetJobResul
                     { timeoutInSeconds },
                 )
 
-                if (sampleResult.engine.status === EngineResponseStatus.OK) {
-                    const sampleTriggerResult = sampleResult.engine.response as ExecuteTriggerResponse<TriggerHookType.RUN>
-                    if (sampleTriggerResult.success && sampleTriggerResult.output.length > 0) {
+                if (sampleResult.status === EngineResponseStatus.OK) {
+                    const sampleTriggerResult = sampleResult.response as ExecuteTriggerResponse<TriggerHookType.RUN>
+                    if (sampleTriggerResult.output.length > 0) {
                         await ctx.apiClient.savePayloads({
                             flowId: data.flowId,
                             flowVersionId: flowVersion.id,
@@ -97,7 +99,7 @@ export const executeWebhookJob: JobHandler<WebhookJobData, FireAndForgetJobResul
             }
 
             if (!data.execute) {
-                return { kind: JobResultKind.FIRE_AND_FORGET }
+                return null
             }
 
             const result = await sandbox.execute(
@@ -120,30 +122,39 @@ export const executeWebhookJob: JobHandler<WebhookJobData, FireAndForgetJobResul
                 { timeoutInSeconds },
             )
 
-            if (result.engine.status === EngineResponseStatus.OK) {
-                const triggerResult = result.engine.response as ExecuteTriggerResponse<TriggerHookType.RUN>
-                if (triggerResult.success && triggerResult.output.length > 0) {
-                    await ctx.apiClient.submitPayloads({
-                        flowVersionId: flowVersion.id,
-                        projectId: data.projectId,
-                        payloads: triggerResult.output,
-                        httpRequestId: data.requestId,
-                        environment: data.runEnvironment,
-                        progressUpdateType: ProgressUpdateType.NONE,
-                        parentRunId: data.parentRunId,
-                        failParentOnFailure: data.failParentOnFailure,
-                    })
-                }
-            }
+            return result
+        })
+        await ctx.sandboxManager.release(ctx.log)
 
+        if (error) {
+            await ctx.sandboxManager.invalidate(ctx.log)
+            if (isSandboxTimeout(error)) {
+                ctx.log.warn({ flowVersionId: data.flowVersionIdToRun }, 'Webhook execution timed out in sandbox')
+                return { kind: JobResultKind.FIRE_AND_FORGET }
+            }
+            throw error
+        }
+
+        if (isNil(execResult)) {
             return { kind: JobResultKind.FIRE_AND_FORGET }
         }
-        catch (e) {
-            await ctx.sandboxManager.invalidate(ctx.log)
-            throw e
+
+        if (execResult.status === EngineResponseStatus.OK) {
+            const triggerResult = execResult.response as ExecuteTriggerResponse<TriggerHookType.RUN>
+            if (triggerResult.output.length > 0) {
+                await ctx.apiClient.submitPayloads({
+                    flowVersionId: flowVersion.id,
+                    projectId: data.projectId,
+                    payloads: triggerResult.output,
+                    httpRequestId: data.requestId,
+                    environment: data.runEnvironment,
+                    progressUpdateType: ProgressUpdateType.NONE,
+                    parentRunId: data.parentRunId,
+                    failParentOnFailure: data.failParentOnFailure,
+                })
+            }
         }
-        finally {
-            await ctx.sandboxManager.release(ctx.log)
-        }
+
+        return { kind: JobResultKind.FIRE_AND_FORGET, logs: execResult.logs }
     },
 }
