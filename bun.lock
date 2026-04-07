@@ -2881,6 +2881,16 @@
         "tslib": "^2.3.0",
       },
     },
+    "packages/pieces/community/glide": {
+      "name": "@activepieces/piece-glide",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/gmail": {
       "name": "@activepieces/piece-gmail",
       "version": "0.11.6",
@@ -7561,7 +7571,7 @@
     },
     "packages/pieces/core/http": {
       "name": "@activepieces/piece-http",
-      "version": "0.11.7",
+      "version": "0.11.8",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -8023,7 +8033,7 @@
     },
     "packages/shared": {
       "name": "@activepieces/shared",
-      "version": "0.53.2",
+      "version": "0.54.0",
       "dependencies": {
         "dayjs": "1.11.9",
         "deepmerge-ts": "7.1.0",
@@ -8657,6 +8667,8 @@
     "@activepieces/piece-gitlab": ["@activepieces/piece-gitlab@workspace:packages/pieces/community/gitlab"],
 
     "@activepieces/piece-gladia": ["@activepieces/piece-gladia@workspace:packages/pieces/community/gladia"],
+
+    "@activepieces/piece-glide": ["@activepieces/piece-glide@workspace:packages/pieces/community/glide"],
 
     "@activepieces/piece-gmail": ["@activepieces/piece-gmail@workspace:packages/pieces/community/gmail"],
 
