@@ -86,7 +86,7 @@ export const projectService = (log: FastifyBaseLogger) => ({
             ...spreadIfDefined('externalId', externalId),
             ...spreadIfDefined('releasesEnabled', request.releasesEnabled),
             ...spreadIfDefined('metadata', request.metadata),
-            ...spreadIfDefined('maxConcurrentJobs', request.maxConcurrentJobs),
+            ...maxConcurrentJobsUpdatePatch(request.maxConcurrentJobs),
         }
 
         const teamUpdate = request.type === ProjectType.TEAM ? {
@@ -96,15 +96,7 @@ export const projectService = (log: FastifyBaseLogger) => ({
 
         await projectRepo(entityManager).update({ id: projectId }, { ...baseUpdate, ...teamUpdate })
 
-        if (!isNil(request.maxConcurrentJobs)) {
-            const key = getProjectMaxConcurrentJobsKey(projectId)
-            if (request.maxConcurrentJobs <= 0) {
-                await distributedStore.delete(key)
-            }
-            else {
-                await distributedStore.put(key, request.maxConcurrentJobs)
-            }
-        }
+        await syncMaxConcurrentJobsStore(projectId, request.maxConcurrentJobs)
 
         return this.getOneOrThrow(projectId)
     },
@@ -265,6 +257,31 @@ async function assertExternalIdIsUnique(externalId: string | undefined | null, p
                 },
             })
         }
+    }
+}
+
+function maxConcurrentJobsUpdatePatch(maxConcurrentJobs: number | undefined): { maxConcurrentJobs: number | null } | Record<string, never> {
+    if (maxConcurrentJobs == null) {
+        return {}
+    }
+    const value = maxConcurrentJobs
+    if (value <= 0) {
+        return { maxConcurrentJobs: null }
+    }
+    return { maxConcurrentJobs: value }
+}
+
+async function syncMaxConcurrentJobsStore(projectId: ProjectId, maxConcurrentJobs: number | undefined): Promise<void> {
+    if (maxConcurrentJobs == null) {
+        return
+    }
+    const value = maxConcurrentJobs
+    const key = getProjectMaxConcurrentJobsKey(projectId)
+    if (value <= 0) {
+        await distributedStore.delete(key)
+    }
+    else {
+        await distributedStore.put(key, value)
     }
 }
 
