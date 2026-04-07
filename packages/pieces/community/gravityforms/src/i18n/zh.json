@@ -1,7 +1,7 @@
 {
-  "Build and publish your WordPress forms": "Build and publish your WordPress forms",
-  "New Submission": "New Submission",
-  "Triggers when form receives a new submission": "Triggers when form receives a new submission",
+  "Build and publish your WordPress forms": "构建并发布您的 WordPress 表单",
+  "New Submission": "新建提交",
+  "Triggers when form receives a new submission": "当表单收到新的提交时触发",
   "Markdown": "Markdown",
   "\n- Go to the \"Plugins\" section.\n- Find and click on the \"Webhook\" plugin to activate it.\n- Now, locate the form where you want the trigger to occur.\n- Add a webhook to that form.\n- In the webhook settings, paste this URL: \n  ```text\n  {{webhookUrl}}\n  ```\n\n- Keep the other settings unchanged (default).\n": "\n- Go to the \"Plugins\" section.\n- Find and click on the \"Webhook\" plugin to activate it.\n- Now, locate the form where you want the trigger to occur.\n- Add a webhook to that form.\n- In the webhook settings, paste this URL: \n  ```text\n  {{webhookUrl}}\n  ```\n\n- Keep the other settings unchanged (default).\n"
 }
