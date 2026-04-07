@@ -1,4 +1,3 @@
-import { inspect } from 'node:util'
 import { onCallService } from '@activepieces/server-utils'
 import {
     ActivepiecesError,
@@ -24,6 +23,7 @@ import { workerSettings } from '../../config/worker-settings'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../types'
 import { provisionFlowPieces } from '../utils/flow-helpers'
 import { resolvePayload } from '../utils/resolve-payload'
+import { inspect } from 'node:util'
 
 export const executeFlowJob: JobHandler<ExecuteFlowJobData, FireAndForgetJobResult> = {
     jobType: WorkerJobType.EXECUTE_FLOW,
@@ -176,14 +176,8 @@ async function fetchExecutionState(apiClient: WorkerToApiContract, data: Execute
             }, 'executionState is missing in logs file')
         }
         return parsed.executionState
-    }
-    catch (error) {
-        const code = error instanceof ActivepiecesError ? error.error.code : ErrorCode.EXECUTION_STATE_MISSING
-        onCallService(log, workerSettings.getSettings().PAGE_ONCALL_WEBHOOK).page({
-            code,
-            message: inspect(error),
-            params: { runId: data.runId },
-        }).catch((e) => log.error({ runId: data.runId, error: inspect(e) }, 'Failed to send on-call notification for execution state fetch failure'))
+    } catch (error) {
+        await onCallService(log, workerSettings.getSettings().PAGE_ONCALL_WEBHOOK).page(inspect(error))
         throw error
     }
 }
