@@ -4,6 +4,27 @@ description: "This list shows all versions that include breaking changes and how
 icon: "hammer"
 ---
 
+## 0.82.0
+
+### What has changed?
+
+#### Piece Versions Are Now Pinned
+- Piece versions are no longer stored with wildcards (`~1.2.0`, `^1.2.0`). All piece steps now use exact versions (e.g. `1.2.0`).
+- A migration automatically strips wildcard prefixes from all existing flow versions on upgrade.
+- The `LOCK_AND_PUBLISH` operation no longer resolves piece versions at publish time — steps run with the exact version stored in the flow.
+- A new **version switcher** UI in the builder lets users upgrade or downgrade piece versions manually.
+
+#### REST API
+- `ADD_ACTION`, `UPDATE_ACTION`, and `UPDATE_TRIGGER` now strip wildcard prefixes (`~`, `^`) from `pieceVersion` before saving. If you were relying on wildcard versions to auto-resolve on publish, your steps will now be pinned to the base version (e.g. `~1.2.0` becomes `1.2.0`).
+- `LOCK_AND_PUBLISH` no longer modifies `pieceVersion` on any step. The version in the draft is the version that will run.
+- A new endpoint `GET /v1/pieces/:name/versions` is available to list all versions of a piece, useful for building custom version selection.
+
+### Do you need to take action?
+- If you use the REST API to create or update flows with wildcard piece versions (`~` or `^`), update your integration to pass exact versions instead. Wildcards will still be accepted but silently stripped to their base version.
+- If your publish workflow relied on `LOCK_AND_PUBLISH` resolving wildcards to the latest matching version, you must now explicitly set the desired exact version on each step before publishing.
+- Use the new `GET /v1/pieces/:name/versions` endpoint to discover available versions when building custom integrations.
+
+
 ## 0.80.0
 
 ### What has changed?
