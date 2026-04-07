@@ -2,13 +2,13 @@ import { createServer } from 'node:http'
 import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest'
 import { Server as IOServer } from 'socket.io'
 import {
+    createRpcServer,
     PackageType,
     PieceType,
     WorkerJobType,
     EngineResponseStatus,
     WebsocketServerEvent,
 } from '@activepieces/shared'
-import { createRpcServer } from '@activepieces/shared/server'
 import { JobResultKind } from '../../src/lib/execute/types'
 import type {
     WorkerToApiContract,
