@@ -1,0 +1,17 @@
+name: HOL Skill Validate
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+jobs:
+  validate-skill:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - name: Validate skill package
+        uses: hashgraph-online/skill-publish@8f3c91d7d4cde7b104549e5f0cccdbb4cd7ee58d # v1
+        with:
+          mode: validate
+          skill-dir: .
