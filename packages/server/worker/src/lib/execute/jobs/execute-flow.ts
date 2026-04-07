@@ -23,6 +23,7 @@ import { workerSettings } from '../../config/worker-settings'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../types'
 import { provisionFlowPieces } from '../utils/flow-helpers'
 import { resolvePayload } from '../utils/resolve-payload'
+import { inspect } from 'node:util'
 
 export const executeFlowJob: JobHandler<ExecuteFlowJobData, FireAndForgetJobResult> = {
     jobType: WorkerJobType.EXECUTE_FLOW,
@@ -159,25 +160,26 @@ async function buildFlowOperation(
 }
 
 async function fetchExecutionState(apiClient: WorkerToApiContract, data: ExecuteFlowJobData, log: FastifyBaseLogger): Promise<ExecutionState> {
-    if (isNil(data.logsFileId)) {
-        const error = new ActivepiecesError({
-            code: ErrorCode.RESUME_LOGS_FILE_MISSING,
-            params: { runId: data.runId },
-        }, 'logsFileId is missing for RESUME operation')
-        await onCallService(log, workerSettings.getSettings().PAGE_ONCALL_WEBHOOK).page(error)
+    try {
+        if (isNil(data.logsFileId)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.RESUME_LOGS_FILE_MISSING,
+                params: { runId: data.runId },
+            }, 'logsFileId is missing for RESUME operation')
+        }
+        const buffer = await apiClient.getPayloadFile({ fileId: data.logsFileId, projectId: data.projectId })
+        const parsed = JSON.parse(buffer.toString('utf-8'))
+        if (isNil(parsed.executionState)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.EXECUTION_STATE_MISSING,
+                params: { logsFileId: data.logsFileId },
+            }, 'executionState is missing in logs file')
+        }
+        return parsed.executionState
+    } catch (error) {
+        await onCallService(log, workerSettings.getSettings().PAGE_ONCALL_WEBHOOK).page(inspect(error))
         throw error
     }
-    const buffer = await apiClient.getPayloadFile({ fileId: data.logsFileId, projectId: data.projectId })
-    const parsed = JSON.parse(buffer.toString('utf-8'))
-    if (isNil(parsed.executionState)) {
-        const error = new ActivepiecesError({
-            code: ErrorCode.EXECUTION_STATE_MISSING,
-            params: { logsFileId: data.logsFileId },
-        }, 'executionState is missing in logs file')
-        await onCallService(log, workerSettings.getSettings().PAGE_ONCALL_WEBHOOK).page(error)
-        throw error
-    }
-    return parsed.executionState
 }
 
 async function reportFlowStatus(
