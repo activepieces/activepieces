@@ -1,5 +1,5 @@
 
-import { ActivepiecesError, ErrorCode, FlowVersion, GetFlowVersionForWorkerRequest, ListFlowsRequest } from '@activepieces/shared'
+import { FlowVersion, GetFlowVersionForWorkerRequest, ListFlowsRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { entitiesMustBeOwnedByCurrentProject } from '../authentication/authorization'
@@ -32,14 +32,7 @@ export const flowEngineWorker: FastifyPluginAsyncZod = async (app) => {
             id: flowVersion.flowId,
             projectId: request.principal.projectId,
         })
-        const result = await flowVersionService(request.log).lockPieceVersions({
-            flowVersion,
-            projectId: request.principal.projectId,
-        })
-        if (!result.success) {
-            throw new ActivepiecesError({ code: ErrorCode.GENERIC_ERROR, params: { message: result.message } })
-        }
-        return result.data
+        return flowVersion
     })
 
 

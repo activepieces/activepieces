@@ -8,7 +8,7 @@ import { SampleDataSetting } from '../sample-data'
 export const AUTHENTICATION_PROPERTY_NAME = 'auth'
 
 
-export const PieceTriggerSettings = z.object({
+const pieceTriggerSettingsFields = {
     sampleData: SampleDataSetting.optional(),
     propertySettings: z.record(z.string(), PropertySettings),
     customLogoUrl: z.string().optional(),
@@ -16,6 +16,10 @@ export const PieceTriggerSettings = z.object({
     pieceVersion: VersionType,
     triggerName: z.string().optional(),
     input: z.record(z.string(), z.any()),
+}
+
+export const PieceTriggerSettings = z.object({
+    ...pieceTriggerSettingsFields,
 })
 
 export type PieceTriggerSettings = z.infer<typeof PieceTriggerSettings>
