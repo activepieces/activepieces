@@ -21,7 +21,6 @@ const result = await esbuild.build({
     minifyWhitespace: true,
     metafile: true,
     alias: {
-        '@activepieces/shared/server': path.resolve(__dirname, '../../shared/src/lib/automation/engine/rpc'),
         '@activepieces/shared': path.resolve(__dirname, '../../shared/src'),
         '@activepieces/pieces-framework': path.resolve(__dirname, '../../pieces/framework/src'),
         '@activepieces/pieces-common': path.resolve(__dirname, '../../pieces/common/src'),

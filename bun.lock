@@ -874,7 +874,7 @@
     },
     "packages/pieces/community/attio": {
       "name": "@activepieces/piece-attio",
-      "version": "0.1.9",
+      "version": "0.1.10",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -1328,6 +1328,16 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "axios": "1.13.5",
+        "tslib": "2.6.2",
+      },
+    },
+    "packages/pieces/community/canny": {
+      "name": "@activepieces/piece-canny",
+      "version": "0.1.0",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
         "tslib": "2.6.2",
       },
     },
@@ -2842,7 +2852,7 @@
     },
     "packages/pieces/community/github": {
       "name": "@activepieces/piece-github",
-      "version": "0.6.7",
+      "version": "0.7.0",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -6298,6 +6308,16 @@
         "zod": "4.3.6",
       },
     },
+    "packages/pieces/community/strale": {
+      "name": "@activepieces/piece-strale",
+      "version": "0.1.0",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/stripe": {
       "name": "@activepieces/piece-stripe",
       "version": "0.6.5",
@@ -6742,7 +6762,7 @@
     },
     "packages/pieces/community/umami": {
       "name": "@activepieces/piece-umami",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -7137,6 +7157,18 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "tslib": "^2.3.0",
+      },
+    },
+    "packages/pieces/community/workday": {
+      "name": "@activepieces/piece-workday",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "dayjs": "1.11.9",
+        "fast-xml-parser": "4.5.1",
+        "tslib": "2.6.2",
       },
     },
     "packages/pieces/community/wrike": {
@@ -7992,7 +8024,7 @@
     },
     "packages/shared": {
       "name": "@activepieces/shared",
-      "version": "0.51.8",
+      "version": "0.53.0",
       "dependencies": {
         "dayjs": "1.11.9",
         "deepmerge-ts": "7.1.0",
@@ -8318,6 +8350,8 @@
     "@activepieces/piece-camb-ai": ["@activepieces/piece-camb-ai@workspace:packages/pieces/community/camb-ai"],
 
     "@activepieces/piece-campaign-monitor": ["@activepieces/piece-campaign-monitor@workspace:packages/pieces/community/campaign-monitor"],
+
+    "@activepieces/piece-canny": ["@activepieces/piece-canny@workspace:packages/pieces/community/canny"],
 
     "@activepieces/piece-capsule-crm": ["@activepieces/piece-capsule-crm@workspace:packages/pieces/community/capsule-crm"],
 
@@ -9271,6 +9305,8 @@
 
     "@activepieces/piece-straico": ["@activepieces/piece-straico@workspace:packages/pieces/community/straico"],
 
+    "@activepieces/piece-strale": ["@activepieces/piece-strale@workspace:packages/pieces/community/strale"],
+
     "@activepieces/piece-stripe": ["@activepieces/piece-stripe@workspace:packages/pieces/community/stripe"],
 
     "@activepieces/piece-subflows": ["@activepieces/piece-subflows@workspace:packages/pieces/core/subflows"],
@@ -9440,6 +9476,8 @@
     "@activepieces/piece-wordpress": ["@activepieces/piece-wordpress@workspace:packages/pieces/community/wordpress"],
 
     "@activepieces/piece-workable": ["@activepieces/piece-workable@workspace:packages/pieces/community/workable"],
+
+    "@activepieces/piece-workday": ["@activepieces/piece-workday@workspace:packages/pieces/community/workday"],
 
     "@activepieces/piece-wrike": ["@activepieces/piece-wrike@workspace:packages/pieces/community/wrike"],
 
@@ -15099,6 +15137,8 @@
 
     "@activepieces/piece-text-helper/jsdom": ["jsdom@24.1.3", "", { "dependencies": { "cssstyle": "^4.0.1", "data-urls": "^5.0.0", "decimal.js": "^10.4.3", "form-data": "^4.0.0", "html-encoding-sniffer": "^4.0.0", "http-proxy-agent": "^7.0.2", "https-proxy-agent": "^7.0.5", "is-potential-custom-element-name": "^1.0.1", "nwsapi": "^2.2.12", "parse5": "^7.1.2", "rrweb-cssom": "^0.7.1", "saxes": "^6.0.0", "symbol-tree": "^3.2.4", "tough-cookie": "^4.1.4", "w3c-xmlserializer": "^5.0.0", "webidl-conversions": "^7.0.0", "whatwg-encoding": "^3.1.1", "whatwg-mimetype": "^4.0.0", "whatwg-url": "^14.0.0", "ws": "^8.18.0", "xml-name-validator": "^5.0.0" }, "peerDependencies": { "canvas": "^2.11.2" }, "optionalPeers": ["canvas"] }, "sha512-MyL55p3Ut3cXbeBEG7Hcv0mVM8pp8PBNWxRqchZnSfAiES1v1mRnMeFfaHWIPULpwsYfvO+ZmMZz5tGCnjzDUQ=="],
 
+    "@activepieces/piece-workday/fast-xml-parser": ["fast-xml-parser@4.5.1", "", { "dependencies": { "strnum": "^1.0.5" }, "bin": { "fxparser": "src/cli/cli.js" } }, "sha512-y655CeyUQ+jj7KBbYMc4FG01V8ZQqjN+gDYGJ50RtfsUB8iG9AmwmwoAgeKLJdmueKKMrH1RJ7yXHTSoczdv5w=="],
+
     "@actual-app/api/node-fetch": ["node-fetch@3.3.2", "", { "dependencies": { "data-uri-to-buffer": "^4.0.0", "fetch-blob": "^3.1.4", "formdata-polyfill": "^4.0.10" } }, "sha512-dRB78srN/l6gqWulah9SrxeYnxeddIG30+GOqK/9OlLVyLg3HPnr6SqOWTWOXKRwC2eGYCkZ59NNuSgvSrpgOA=="],
 
     "@actual-app/api/uuid": ["uuid@9.0.1", "", { "bin": { "uuid": "dist/bin/uuid" } }, "sha512-b+1eJOlsR9K8HJpow9Ok3fiWOWSIcIzXodvv0rQjVoOVNpWMpxf1wZNpt4y9h10odCNrqnYp1OBzRktckBe3sA=="],
@@ -17596,6 +17636,8 @@
     "@activepieces/piece-text-helper/jsdom/https-proxy-agent": ["https-proxy-agent@7.0.6", "", { "dependencies": { "agent-base": "^7.1.2", "debug": "4" } }, "sha512-vK9P5/iUfdl95AI+JVyUuIcVtd4ofvtrOr3HNtM2yxC9bnMbEdp3x01OhQNnjb8IJYi38VlTE3mBXwcfvywuSw=="],
 
     "@activepieces/piece-text-helper/jsdom/rrweb-cssom": ["rrweb-cssom@0.7.1", "", {}, "sha512-TrEMa7JGdVm0UThDJSx7ddw5nVm3UJS9o9CCIZ72B1vSyEZoziDqBYP3XIoi/12lKrJR8rE3jeFHMok2F/Mnsg=="],
+
+    "@activepieces/piece-workday/fast-xml-parser/strnum": ["strnum@1.1.2", "", {}, "sha512-vrN+B7DBIoTTZjnPNewwhx6cBA/H+IS7rfW68n7XxC1y7uoiGQBxaKzqucGUgavX15dJgiGztLJ8vxuEzwqBdA=="],
 
     "@ai-sdk/google-vertex/@ai-sdk/provider-utils/eventsource-parser": ["eventsource-parser@3.0.6", "", {}, "sha512-Vo1ab+QXPzZ4tCa8SwIHJFaSzy4R6SHf7BY79rFBDf0idraZWAkYrDjDj8uWaSm3S2TK+hJ7/t1CEmZ7jXw+pg=="],
 
