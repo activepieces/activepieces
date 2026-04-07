@@ -39,7 +39,7 @@ export const parseUrl = createAction({
         domain: parsedUrl.hostname,
         path: parsedUrl.pathname,
         query_parameters: queryParams,
-        hash: parsedUrl.hash,
+        hash: parsedUrl.hash ? parsedUrl.hash.slice(1) : '',
       };
       
     } catch (error) {
