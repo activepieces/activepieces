@@ -27,14 +27,23 @@ function McpAuthorizePage() {
   const [selectedProjectId, setSelectedProjectId] = useState<
     string | undefined
   >(undefined);
-  const [projectTypeFilter, setProjectTypeFilter] = useState<string>('all');
+  const [projectTypeFilter, setProjectTypeFilter] = useState<
+    ProjectType | 'all'
+  >('all');
+  const [searchValue, setSearchValue] = useState('');
   const isLoggedIn = authenticationSession.isLoggedIn();
 
   const { data: projectsPage, isLoading: projectsLoading } = useQuery({
-    queryKey: ['mcp-authorize-projects'],
+    queryKey: ['mcp-authorize-projects', projectTypeFilter, searchValue],
     queryFn: () =>
       api.get<SeekPage<ProjectWithLimits>>('/v1/projects', {
-        params: { limit: 1000 },
+        params: {
+          limit: 100,
+          ...(projectTypeFilter !== 'all' && {
+            types: [projectTypeFilter],
+          }),
+          ...(searchValue && { displayName: searchValue }),
+        },
       }),
     enabled: isLoggedIn && !!authRequestId,
   });
@@ -58,10 +67,6 @@ function McpAuthorizePage() {
   }
 
   const projects = projectsPage?.data ?? [];
-  const filteredProjects =
-    projectTypeFilter === 'all'
-      ? projects
-      : projects.filter((p) => p.type === projectTypeFilter);
 
   const handleAuthorize = () => {
     if (!selectedProjectId) return;
@@ -104,7 +109,7 @@ function McpAuthorizePage() {
             <Tabs
               value={projectTypeFilter}
               onValueChange={(value) => {
-                setProjectTypeFilter(value);
+                setProjectTypeFilter(value as ProjectType | 'all');
                 setSelectedProjectId(undefined);
               }}
             >
@@ -121,19 +126,16 @@ function McpAuthorizePage() {
               </TabsList>
             </Tabs>
             <SearchableSelect<string>
-              options={filteredProjects.map((project) => ({
+              options={projects.map((project) => ({
                 value: project.id,
                 label: project.displayName,
               }))}
               onChange={(value) => setSelectedProjectId(value ?? undefined)}
               value={selectedProjectId}
-              placeholder={
-                projectsLoading
-                  ? t('Loading projects...')
-                  : t('Search projects...')
-              }
+              placeholder={t('Search projects...')}
               disabled={projectsLoading}
               loading={projectsLoading}
+              refreshOnSearch={setSearchValue}
             />
           </div>
 
