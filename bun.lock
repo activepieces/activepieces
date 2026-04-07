@@ -8033,7 +8033,7 @@
     },
     "packages/shared": {
       "name": "@activepieces/shared",
-      "version": "0.54.1",
+      "version": "0.54.2",
       "dependencies": {
         "dayjs": "1.11.9",
         "deepmerge-ts": "7.1.0",
