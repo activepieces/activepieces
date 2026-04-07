@@ -176,7 +176,8 @@ async function fetchExecutionState(apiClient: WorkerToApiContract, data: Execute
             }, 'executionState is missing in logs file')
         }
         return parsed.executionState
-    } catch (error) {
+    }
+    catch (error) {
         const code = error instanceof ActivepiecesError ? error.error.code : ErrorCode.EXECUTION_STATE_MISSING
         onCallService(log, workerSettings.getSettings().PAGE_ONCALL_WEBHOOK).page({
             code,
