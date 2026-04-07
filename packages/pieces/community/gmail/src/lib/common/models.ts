@@ -14,6 +14,21 @@ export interface GmailLabel {
   };
 }
 
+export interface GmailMessagePart {
+  partId: string;
+  mimeType: string;
+  filename: string;
+  headers: {
+    name: string;
+    value: string;
+  }[];
+  body: {
+    size: number;
+    data?: string;
+  };
+  parts?: GmailMessagePart[];
+}
+
 export interface GmailMessage {
   id: string;
   threadId: string;
@@ -21,33 +36,7 @@ export interface GmailMessage {
   snippet: string;
   historyId: string;
   internalDate: number;
-  payload: {
-    partId: string;
-    mimeType: string;
-    filename: string;
-    headers: {
-      name: string;
-      value: string;
-    }[];
-    body: {
-      data: any;
-      size: number;
-    };
-    parts: {
-      parts: any[];
-      partId: string;
-      mimeType: string;
-      filename: string;
-      headers: {
-        name: string;
-        value: string;
-      }[];
-      body: {
-        size: number;
-        data: string;
-      };
-    }[];
-  };
+  payload: GmailMessagePart;
   sizeEstimate: number;
   raw: string;
 }

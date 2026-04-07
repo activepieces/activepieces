@@ -61,7 +61,7 @@ export const GmailProps = {
         };
       }
 
-      const response = await GmailRequests.getLabels(auth);
+      const response = await GmailRequests.getLabels({ authentication: auth });
 
       return {
         disabled: false,
@@ -96,16 +96,15 @@ export const GmailProps = {
       }
 
       try {
-        const authValue = auth as OAuth2PropertyValue;
         const authClient = new OAuth2Client();
-        authClient.setCredentials(authValue);
+        authClient.setCredentials(auth);
 
         const gmail = google.gmail({ version: 'v1', auth: authClient });
 
-        const response = await GmailRequests.getRecentMessages(
-          auth as OAuth2PropertyValue,
-          20 // Get last 20 messages
-        );
+        const response = await GmailRequests.getRecentMessages({
+          authentication: auth,
+          maxResults: 20,
+        });
 
         if (!response.body.messages || response.body.messages.length === 0) {
           return {
@@ -131,7 +130,7 @@ export const GmailProps = {
 
                 const headers = details.data.payload?.headers || [];
                 const subject =
-                  headers.find((h: any) => h.name === 'Subject')?.value ||
+                  headers.find((h: { name: string; value: string }) => h.name === 'Subject')?.value ||
                   'No Subject';
 
                 return {
@@ -184,16 +183,15 @@ export const GmailProps = {
       }
 
       try {
-        const authValue = auth as OAuth2PropertyValue;
         const authClient = new OAuth2Client();
-        authClient.setCredentials(authValue);
+        authClient.setCredentials(auth);
 
         const gmail = google.gmail({ version: 'v1', auth: authClient });
 
-        const response = await GmailRequests.getRecentThreads(
-          auth as OAuth2PropertyValue,
-          15 // Get last 15 threads
-        );
+        const response = await GmailRequests.getRecentThreads({
+          authentication: auth,
+          maxResults: 15,
+        });
 
         if (!response.body.threads || response.body.threads.length === 0) {
           return {
@@ -210,7 +208,7 @@ export const GmailProps = {
             .slice(0, 10)
             .map(async (thread: { id: string; snippet?: string }) => {
               try {
-                const details = await await gmail.users.threads.get({
+                const details = await gmail.users.threads.get({
                   metadataHeaders: ['Subject'],
                   format: 'metadata',
                   id: thread.id,
@@ -220,7 +218,7 @@ export const GmailProps = {
                 const firstMessage = details.data.messages?.[0];
                 const headers = firstMessage?.payload?.headers || [];
                 const subject =
-                  headers.find((h: any) => h.name === 'Subject')?.value ||
+                  headers.find((h: { name: string; value: string }) => h.name === 'Subject')?.value ||
                   'No Subject';
 
                 return {

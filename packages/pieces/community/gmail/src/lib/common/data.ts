@@ -13,6 +13,7 @@ import {
 } from '@activepieces/pieces-common';
 import { Attachment, ParsedMail, simpleParser } from 'mailparser';
 import { FilesService } from '@activepieces/pieces-framework';
+import { Readable } from 'node:stream';
 
 interface SearchMailProps {
   access_token: string;
@@ -65,21 +66,19 @@ export const GmailRequests = {
       bodyParts = alternateBodyPart.parts;
     }
     const subject = headers['subject'] || '';
-    // Determine the content type of the message body
+    // Content-type is required to determine the parsing logic for multipart vs simple bodies
     const contentType = headers['content-type'] || 'text/plain';
     const isMultipart = contentType.startsWith('multipart/');
 
     if (isMultipart) {
-      // If the message is multipart, extract the plain text and HTML parts
+      // Extract both parts to provide fallback options in the UI (e.g. preview vs full view)
       const textPart = bodyParts.find((part) => part.mimeType === 'text/plain');
       const htmlPart = bodyParts.find((part) => part.mimeType === 'text/html');
 
-      // If the message is an "alternative" multipart, use the plain text part if it exists
       const preferredPart = textPart || htmlPart;
       bodyHtml = htmlPart ? decodeBase64(htmlPart.body.data) : '';
       bodyPlain = preferredPart ? decodeBase64(preferredPart.body.data) : '';
     } else {
-      // If the message is not multipart, use the body as-is
       bodyPlain = decodeBase64(payload.body.data);
       bodyHtml = '';
     }
@@ -106,13 +105,13 @@ export const GmailRequests = {
 
     return response.body;
   },
-  getLabels: async (authentication: OAuth2PropertyValue) => {
+  getLabels: async ({ authentication }: { authentication: OAuth2PropertyValue }) => {
     return await httpClient.sendRequest<{ labels: GmailLabel[] }>({
       method: HttpMethod.GET,
       url: `https://gmail.googleapis.com/gmail/v1/users/me/labels`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: (authentication as OAuth2PropertyValue).access_token,
+        token: authentication.access_token,
       },
     });
   },
@@ -180,10 +179,15 @@ export const GmailRequests = {
 
     return response.body;
   },
-  getRecentMessages: async (
-    authentication: OAuth2PropertyValue,
-    maxResults = 20
-  ) => {
+  getRecentMessages: async ({
+    authentication,
+    maxResults = 20,
+    q,
+  }: {
+    authentication: OAuth2PropertyValue;
+    maxResults?: number;
+    q?: string;
+  }) => {
     return await httpClient.sendRequest<GmailMessageList>({
       method: HttpMethod.GET,
       url: 'https://gmail.googleapis.com/gmail/v1/users/me/messages',
@@ -193,14 +197,19 @@ export const GmailRequests = {
       },
       queryParams: {
         maxResults: maxResults.toString(),
-        q: 'in:inbox OR in:sent', // Get recent messages from inbox and sent
+        q: q || 'in:inbox OR in:sent',
       },
     });
   },
-  getRecentThreads: async (
-    authentication: OAuth2PropertyValue,
-    maxResults = 15
-  ) => {
+  getRecentThreads: async ({
+    authentication,
+    maxResults = 15,
+    q,
+  }: {
+    authentication: OAuth2PropertyValue;
+    maxResults?: number;
+    q?: string;
+  }) => {
     return await httpClient.sendRequest<{
       threads: { id: string; snippet?: string }[];
     }>({
@@ -212,17 +221,34 @@ export const GmailRequests = {
       },
       queryParams: {
         maxResults: maxResults.toString(),
-        q: 'in:inbox OR in:sent', // Get recent threads from inbox and sent
+        q: q || 'in:inbox OR in:sent',
       },
     });
   },
+  trashMessage: async ({
+    authentication,
+    message_id,
+  }: {
+    authentication: OAuth2PropertyValue;
+    message_id: string;
+  }) => {
+    const response = await httpClient.sendRequest<GmailMessage>({
+      method: HttpMethod.POST,
+      url: `https://gmail.googleapis.com/gmail/v1/users/me/messages/${message_id}/trash`,
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token: authentication.access_token,
+      },
+    });
+    return response.body;
+  },
 };
 
-function decodeBase64(data: any) {
+function decodeBase64(data: string) {
   return Buffer.from(data, 'base64').toString();
 }
 
-export async function parseStream(stream: any) {
+export async function parseStream(stream: Readable | Buffer | string) {
   return new Promise<ParsedMail>((resolve, reject) => {
     simpleParser(stream, (err, parsed) => {
       if (err) {
