@@ -10,6 +10,6 @@ export const getNewsGalleries = createAction({
 	description: 'Get the list of available news galleries for filtering',
 	props: {},
 	async run(context) {
-		return await pubrioRequest(context.auth as string, HttpMethod.GET, '/companies/news/galleries');
+		return await pubrioRequest(context.auth, HttpMethod.GET, '/companies/news/galleries');
 	},
 });

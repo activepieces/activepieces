@@ -34,6 +34,6 @@ export const searchCompanies = createAction({
 		if (context.propsValue.employees_min != null || context.propsValue.employees_max != null) {
 			body.employees = [context.propsValue.employees_min ?? 1, context.propsValue.employees_max ?? 1000000];
 		}
-		return await pubrioRequest(context.auth as string, HttpMethod.POST, '/companies/search', body);
+		return await pubrioRequest(context.auth, HttpMethod.POST, '/companies/search', body);
 	},
 });

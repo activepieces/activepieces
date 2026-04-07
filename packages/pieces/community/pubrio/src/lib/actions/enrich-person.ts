@@ -25,6 +25,6 @@ export const enrichPerson = createAction({
 		const body: Record<string, unknown> = {
 			[context.propsValue.lookup_type]: context.propsValue.value,
 		};
-		return await pubrioRequest(context.auth as string, HttpMethod.POST, '/people/enrichment', body);
+		return await pubrioRequest(context.auth, HttpMethod.POST, '/people/enrichment', body);
 	},
 });

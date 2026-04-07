@@ -17,6 +17,6 @@ export const duplicateMonitor = createAction({
 			monitor_id: context.propsValue.monitor_id,
 		};
 		if (context.propsValue.name) body.name = context.propsValue.name;
-		return await pubrioRequest(context.auth as string, HttpMethod.POST, '/monitors/duplicate', body);
+		return await pubrioRequest(context.auth, HttpMethod.POST, '/monitors/duplicate', body);
 	},
 });

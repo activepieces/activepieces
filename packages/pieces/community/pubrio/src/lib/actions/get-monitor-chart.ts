@@ -19,6 +19,6 @@ export const getMonitorChart = createAction({
 			start_date: context.propsValue.start_date,
 			end_date: context.propsValue.end_date,
 		};
-		return await pubrioRequest(context.auth as string, HttpMethod.POST, '/monitors/statistics/chart', body);
+		return await pubrioRequest(context.auth, HttpMethod.POST, '/monitors/statistics/chart', body);
 	},
 });

@@ -19,6 +19,6 @@ export const retryMonitor = createAction({
 			monitor_log_id: context.propsValue.monitor_log_id,
 		};
 		if (context.propsValue.is_use_original_destination) body.is_use_original_destination = context.propsValue.is_use_original_destination;
-		return await pubrioRequest(context.auth as string, HttpMethod.POST, '/monitors/process/retry', body);
+		return await pubrioRequest(context.auth, HttpMethod.POST, '/monitors/process/retry', body);
 	},
 });

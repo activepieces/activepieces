@@ -45,6 +45,6 @@ export const searchPeople = createAction({
 		if (context.propsValue.linkedin_urls) body.linkedin_urls = splitComma(context.propsValue.linkedin_urls);
 		if (context.propsValue.companies) body.companies = splitComma(context.propsValue.companies);
 		if (context.propsValue.domains) body.domains = splitComma(context.propsValue.domains);
-		return await pubrioRequest(context.auth as string, HttpMethod.POST, '/people/search', body);
+		return await pubrioRequest(context.auth, HttpMethod.POST, '/people/search', body);
 	},
 });

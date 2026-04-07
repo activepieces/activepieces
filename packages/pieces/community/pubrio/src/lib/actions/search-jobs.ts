@@ -37,6 +37,6 @@ export const searchJobs = createAction({
 		if (context.propsValue.companies) body.companies = splitComma(context.propsValue.companies);
 		if (context.propsValue.domains) body.domains = splitComma(context.propsValue.domains);
 		if (context.propsValue.linkedin_urls) body.linkedin_urls = splitComma(context.propsValue.linkedin_urls);
-		return await pubrioRequest(context.auth as string, HttpMethod.POST, '/companies/jobs/search', body);
+		return await pubrioRequest(context.auth, HttpMethod.POST, '/companies/jobs/search', body);
 	},
 });

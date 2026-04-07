@@ -17,6 +17,6 @@ export const getMonitor = createAction({
 			monitor_id: context.propsValue.monitor_id,
 		};
 		if (context.propsValue.is_signature_reveal) body.is_signature_reveal = context.propsValue.is_signature_reveal;
-		return await pubrioRequest(context.auth as string, HttpMethod.POST, '/monitors/lookup', body);
+		return await pubrioRequest(context.auth, HttpMethod.POST, '/monitors/lookup', body);
 	},
 });

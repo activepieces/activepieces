@@ -35,6 +35,6 @@ export const searchAds = createAction({
 		if (context.propsValue.company_locations) body.company_locations = splitComma(context.propsValue.company_locations);
 		if (context.propsValue.domains) body.domains = splitComma(context.propsValue.domains);
 		if (context.propsValue.linkedin_urls) body.linkedin_urls = splitComma(context.propsValue.linkedin_urls);
-		return await pubrioRequest(context.auth as string, HttpMethod.POST, '/companies/advertisements/search', body);
+		return await pubrioRequest(context.auth, HttpMethod.POST, '/companies/advertisements/search', body);
 	},
 });

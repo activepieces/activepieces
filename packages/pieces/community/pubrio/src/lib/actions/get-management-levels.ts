@@ -10,6 +10,6 @@ export const getManagementLevels = createAction({
 	description: 'Get the list of available management levels for filtering',
 	props: {},
 	async run(context) {
-		return await pubrioRequest(context.auth as string, HttpMethod.GET, '/management_levels');
+		return await pubrioRequest(context.auth, HttpMethod.GET, '/management_levels');
 	},
 });

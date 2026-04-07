@@ -10,6 +10,6 @@ export const getTimezones = createAction({
 	description: 'Get the list of available timezones for filtering',
 	props: {},
 	async run(context) {
-		return await pubrioRequest(context.auth as string, HttpMethod.GET, '/timezones');
+		return await pubrioRequest(context.auth, HttpMethod.GET, '/timezones');
 	},
 });

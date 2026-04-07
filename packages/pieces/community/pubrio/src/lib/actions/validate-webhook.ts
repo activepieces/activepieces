@@ -33,6 +33,6 @@ export const validateWebhook = createAction({
 		if (context.propsValue.email) body.email = context.propsValue.email;
 		if (context.propsValue.sequence_identifier) body.sequence_identifier = context.propsValue.sequence_identifier;
 		if (context.propsValue.monitor_id) body.monitor_id = context.propsValue.monitor_id;
-		return await pubrioRequest(context.auth as string, HttpMethod.POST, '/monitors/webhook/validate', body);
+		return await pubrioRequest(context.auth, HttpMethod.POST, '/monitors/webhook/validate', body);
 	},
 });

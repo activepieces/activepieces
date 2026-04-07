@@ -15,6 +15,6 @@ export const queryBatchRedeem = createAction({
 		const body: Record<string, unknown> = {
 			redeem_query_id: context.propsValue.redeem_query_id,
 		};
-		return await pubrioRequest(context.auth as string, HttpMethod.POST, '/redeem/people/batch/query', body);
+		return await pubrioRequest(context.auth, HttpMethod.POST, '/redeem/people/batch/query', body);
 	},
 });

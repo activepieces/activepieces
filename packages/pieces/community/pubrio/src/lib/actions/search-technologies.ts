@@ -14,6 +14,6 @@ export const searchTechnologies = createAction({
 	async run(context) {
 		const body: Record<string, unknown> = {};
 		if (context.propsValue.keyword) body.keyword = context.propsValue.keyword;
-		return await pubrioRequest(context.auth as string, HttpMethod.POST, '/technologies', body);
+		return await pubrioRequest(context.auth, HttpMethod.POST, '/technologies', body);
 	},
 });

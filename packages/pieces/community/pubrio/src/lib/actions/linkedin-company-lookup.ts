@@ -15,6 +15,6 @@ export const linkedinCompanyLookup = createAction({
 		const body: Record<string, unknown> = {
 			linkedin_url: context.propsValue.linkedin_url,
 		};
-		return await pubrioRequest(context.auth as string, HttpMethod.POST, '/companies/linkedin/lookup', body);
+		return await pubrioRequest(context.auth, HttpMethod.POST, '/companies/linkedin/lookup', body);
 	},
 });

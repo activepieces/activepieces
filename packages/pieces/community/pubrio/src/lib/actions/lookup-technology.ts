@@ -29,6 +29,6 @@ export const lookupTechnology = createAction({
 		const body: Record<string, unknown> = {
 			[lookupType]: lookupType === 'domain_id' ? parseInt(rawValue, 10) : rawValue,
 		};
-		return await pubrioRequest(context.auth as string, HttpMethod.POST, '/technologies/lookup', body);
+		return await pubrioRequest(context.auth, HttpMethod.POST, '/technologies/lookup', body);
 	},
 });

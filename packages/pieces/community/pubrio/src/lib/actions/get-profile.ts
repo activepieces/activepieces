@@ -10,6 +10,6 @@ export const getProfile = createAction({
 	description: 'Get your Pubrio account profile information',
 	props: {},
 	async run(context) {
-		return await pubrioRequest(context.auth as string, HttpMethod.POST, '/profile');
+		return await pubrioRequest(context.auth, HttpMethod.POST, '/profile');
 	},
 });

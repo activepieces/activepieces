@@ -15,6 +15,6 @@ export const getMonitorLogDetail = createAction({
 		const body: Record<string, unknown> = {
 			monitor_log_id: context.propsValue.monitor_log_id,
 		};
-		return await pubrioRequest(context.auth as string, HttpMethod.POST, '/monitors/statistics/logs/lookup', body);
+		return await pubrioRequest(context.auth, HttpMethod.POST, '/monitors/statistics/logs/lookup', body);
 	},
 });

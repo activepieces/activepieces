@@ -10,6 +10,6 @@ export const getDepartmentFunctions = createAction({
 	description: 'Get the list of available department functions for filtering',
 	props: {},
 	async run(context) {
-		return await pubrioRequest(context.auth as string, HttpMethod.GET, '/departments/function');
+		return await pubrioRequest(context.auth, HttpMethod.GET, '/departments/function');
 	},
 });

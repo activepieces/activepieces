@@ -19,6 +19,6 @@ export const getMonitorLogs = createAction({
 			page: context.propsValue.page ?? 1,
 			per_page: context.propsValue.per_page ?? 25,
 		};
-		return await pubrioRequest(context.auth as string, HttpMethod.POST, '/monitors/statistics/logs', body);
+		return await pubrioRequest(context.auth, HttpMethod.POST, '/monitors/statistics/logs', body);
 	},
 });

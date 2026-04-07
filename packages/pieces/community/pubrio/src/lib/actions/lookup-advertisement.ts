@@ -15,6 +15,6 @@ export const lookupAdvertisement = createAction({
 		const body: Record<string, unknown> = {
 			advertisement_search_id: context.propsValue.advertisement_search_id,
 		};
-		return await pubrioRequest(context.auth as string, HttpMethod.POST, '/companies/advertisements/lookup', body);
+		return await pubrioRequest(context.auth, HttpMethod.POST, '/companies/advertisements/lookup', body);
 	},
 });

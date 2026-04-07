@@ -29,6 +29,6 @@ export const findSimilarCompanies = createAction({
 			page: context.propsValue.page ?? 1,
 			per_page: context.propsValue.per_page ?? 25,
 		};
-		return await pubrioRequest(context.auth as string, HttpMethod.POST, '/companies/lookalikes/search', body);
+		return await pubrioRequest(context.auth, HttpMethod.POST, '/companies/lookalikes/search', body);
 	},
 });

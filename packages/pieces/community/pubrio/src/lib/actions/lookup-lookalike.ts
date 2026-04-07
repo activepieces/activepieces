@@ -26,6 +26,6 @@ export const lookupLookalike = createAction({
 		const body: Record<string, unknown> = {
 			[context.propsValue.lookup_type]: context.propsValue.value,
 		};
-		return await pubrioRequest(context.auth as string, HttpMethod.POST, '/companies/lookalikes/lookup', body);
+		return await pubrioRequest(context.auth, HttpMethod.POST, '/companies/lookalikes/lookup', body);
 	},
 });

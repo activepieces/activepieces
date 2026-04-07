@@ -10,6 +10,6 @@ export const getMonitorStats = createAction({
 	description: 'Get overall monitor statistics',
 	props: {},
 	async run(context) {
-		return await pubrioRequest(context.auth as string, HttpMethod.POST, '/monitors/statistics');
+		return await pubrioRequest(context.auth, HttpMethod.POST, '/monitors/statistics');
 	},
 });

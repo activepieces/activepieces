@@ -26,9 +26,17 @@ export const enrichCompany = createAction({
 	async run(context) {
 		const lookupType = context.propsValue.lookup_type;
 		const rawValue = context.propsValue.value;
+		let lookupValue: string | number = rawValue;
+		if (lookupType === 'domain_id') {
+			const parsed = parseInt(rawValue, 10);
+			if (isNaN(parsed)) {
+				throw new Error(`domain_id must be a valid integer, got: "${rawValue}"`);
+			}
+			lookupValue = parsed;
+		}
 		const body: Record<string, unknown> = {
-			[lookupType]: lookupType === 'domain_id' ? parseInt(rawValue, 10) : rawValue,
+			[lookupType]: lookupValue,
 		};
-		return await pubrioRequest(context.auth as string, HttpMethod.POST, '/companies/lookup/enrich', body);
+		return await pubrioRequest(context.auth, HttpMethod.POST, '/companies/lookup/enrich', body);
 	},
 });

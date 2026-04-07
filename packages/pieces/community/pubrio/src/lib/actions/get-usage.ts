@@ -10,6 +10,6 @@ export const getUsage = createAction({
 	description: 'Get your Pubrio API usage statistics',
 	props: {},
 	async run(context) {
-		return await pubrioRequest(context.auth as string, HttpMethod.POST, '/profile/usage');
+		return await pubrioRequest(context.auth, HttpMethod.POST, '/profile/usage');
 	},
 });

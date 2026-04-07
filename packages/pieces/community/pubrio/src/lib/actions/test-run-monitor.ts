@@ -17,6 +17,6 @@ export const testRunMonitor = createAction({
 			monitor_id: context.propsValue.monitor_id,
 		};
 		if (context.propsValue.tried_at) body.tried_at = context.propsValue.tried_at;
-		return await pubrioRequest(context.auth as string, HttpMethod.POST, '/monitors/process/try', body);
+		return await pubrioRequest(context.auth, HttpMethod.POST, '/monitors/process/try', body);
 	},
 });

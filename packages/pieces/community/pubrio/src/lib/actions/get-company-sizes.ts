@@ -10,6 +10,6 @@ export const getCompanySizes = createAction({
 	description: 'Get the list of available company size ranges for filtering',
 	props: {},
 	async run(context) {
-		return await pubrioRequest(context.auth as string, HttpMethod.GET, '/company_sizes');
+		return await pubrioRequest(context.auth, HttpMethod.GET, '/company_sizes');
 	},
 });

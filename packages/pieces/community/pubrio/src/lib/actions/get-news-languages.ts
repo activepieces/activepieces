@@ -10,6 +10,6 @@ export const getNewsLanguages = createAction({
 	description: 'Get the list of available news languages for filtering',
 	props: {},
 	async run(context) {
-		return await pubrioRequest(context.auth as string, HttpMethod.GET, '/companies/news/languages');
+		return await pubrioRequest(context.auth, HttpMethod.GET, '/companies/news/languages');
 	},
 });

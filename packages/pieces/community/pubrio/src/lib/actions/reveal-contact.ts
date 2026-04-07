@@ -39,6 +39,6 @@ export const revealContact = createAction({
 		if (context.propsValue.people_contact_types && context.propsValue.people_contact_types.length > 0) {
 			body.people_contact_types = context.propsValue.people_contact_types;
 		}
-		return await pubrioRequest(context.auth as string, HttpMethod.POST, '/redeem/people', body);
+		return await pubrioRequest(context.auth, HttpMethod.POST, '/redeem/people', body);
 	},
 });

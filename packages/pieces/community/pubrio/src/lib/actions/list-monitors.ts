@@ -31,6 +31,6 @@ export const listMonitors = createAction({
 		};
 		if (context.propsValue.order_by) body.order_by = context.propsValue.order_by;
 		if (context.propsValue.is_ascending_order) body.is_ascending_order = context.propsValue.is_ascending_order;
-		return await pubrioRequest(context.auth as string, HttpMethod.POST, '/monitors', body);
+		return await pubrioRequest(context.auth, HttpMethod.POST, '/monitors', body);
 	},
 });

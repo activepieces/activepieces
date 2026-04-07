@@ -29,6 +29,6 @@ export const batchRedeemContacts = createAction({
 		if (context.propsValue.people_contact_types && context.propsValue.people_contact_types.length > 0) {
 			body.people_contact_types = context.propsValue.people_contact_types;
 		}
-		return await pubrioRequest(context.auth as string, HttpMethod.POST, '/redeem/people/batch', body);
+		return await pubrioRequest(context.auth, HttpMethod.POST, '/redeem/people/batch', body);
 	},
 });

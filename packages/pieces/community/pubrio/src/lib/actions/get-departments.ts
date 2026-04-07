@@ -10,6 +10,6 @@ export const getDepartments = createAction({
 	description: 'Get the list of available department titles for filtering',
 	props: {},
 	async run(context) {
-		return await pubrioRequest(context.auth as string, HttpMethod.GET, '/departments/title');
+		return await pubrioRequest(context.auth, HttpMethod.GET, '/departments/title');
 	},
 });

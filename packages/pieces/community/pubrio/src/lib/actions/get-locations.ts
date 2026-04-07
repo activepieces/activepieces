@@ -10,6 +10,6 @@ export const getLocations = createAction({
 	description: 'Get the list of available location codes for filtering',
 	props: {},
 	async run(context) {
-		return await pubrioRequest(context.auth as string, HttpMethod.GET, '/locations');
+		return await pubrioRequest(context.auth, HttpMethod.GET, '/locations');
 	},
 });

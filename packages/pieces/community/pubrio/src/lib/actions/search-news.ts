@@ -35,6 +35,6 @@ export const searchNews = createAction({
 		if (context.propsValue.news_gallery_ids) body.news_gallery_ids = splitComma(context.propsValue.news_gallery_ids);
 		if (context.propsValue.news_galleries) body.news_galleries = splitComma(context.propsValue.news_galleries);
 		if (context.propsValue.news_languages) body.news_languages = splitComma(context.propsValue.news_languages);
-		return await pubrioRequest(context.auth as string, HttpMethod.POST, '/companies/news/search', body);
+		return await pubrioRequest(context.auth, HttpMethod.POST, '/companies/news/search', body);
 	},
 });

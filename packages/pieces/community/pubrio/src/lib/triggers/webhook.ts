@@ -8,16 +8,15 @@ export const pubrioWebhookTrigger = createTrigger({
 	description: 'Triggers when a Pubrio monitor fires. Copy the webhook URL into your Pubrio monitor configuration.',
 	type: TriggerStrategy.WEBHOOK,
 	props: {},
-	async onEnable(context) {
-		// User needs to copy the webhook URL from Activepieces and paste it into
-		// their Pubrio monitor's destination config at dashboard.pubrio.com
-		console.log('Webhook URL:', context.webhookUrl);
+	async onEnable() {
+		// No-op: user copies the webhook URL from the Activepieces UI into their Pubrio monitor config.
 	},
 	async onDisable() {
 		// No cleanup needed — user manages webhook URL in Pubrio dashboard
 	},
 	async run(context) {
-		return [context.payload.body as Record<string, unknown>];
+		const body = context.payload.body ?? {};
+		return [body];
 	},
 	sampleData: {
 		monitor_id: 'mon_example123',
