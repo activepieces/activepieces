@@ -1,8 +1,10 @@
-import { isNil, PopulatedMcpServer } from '@activepieces/shared'
+import { isNil, PopulatedMcpServer, TelemetryEventName } from '@activepieces/shared'
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
+import { rejectedPromiseHandler } from '../../helper/promise-handler'
+import { telemetry } from '../../helper/telemetry.utils'
 import { mcpServerRepository, mcpServerService } from '../mcp-service'
 import { mcpOAuthTokenService } from './token/mcp-oauth-token.service'
 
@@ -33,6 +35,15 @@ export const mcpOAuthHttpController: FastifyPluginAsyncZod = async (app) => {
                 message: 'Invalid or expired access token',
             })
         }
+
+        rejectedPromiseHandler(telemetry(req.log).trackProject(identity.projectId, {
+            name: TelemetryEventName.MCP_SERVER_CONNECTED,
+            payload: {
+                authMethod: identity.authMethod,
+                projectId: identity.projectId,
+                userId: identity.userId,
+            },
+        }), req.log)
 
         let mcp: PopulatedMcpServer
         try {
@@ -65,7 +76,7 @@ async function resolveIdentity(token: string, log: FastifyBaseLogger): Promise<R
     if (token.split('.').length === 3) {
         try {
             const payload = await mcpOAuthTokenService.verifyAccessToken(token)
-            return { projectId: payload.projectId, userId: payload.sub }
+            return { projectId: payload.projectId, authMethod: 'oauth', userId: payload.sub }
         }
         catch (e) {
             log.debug({ err: e }, 'JWT verification failed')
@@ -75,7 +86,7 @@ async function resolveIdentity(token: string, log: FastifyBaseLogger): Promise<R
 
     const mcpServer = await mcpServerRepository().findOneBy({ token })
     if (!isNil(mcpServer)) {
-        return { projectId: mcpServer.projectId }
+        return { projectId: mcpServer.projectId, authMethod: 'oauth_project_token_fallback' }
     }
 
     return null
@@ -83,6 +94,7 @@ async function resolveIdentity(token: string, log: FastifyBaseLogger): Promise<R
 
 type ResolvedIdentity = {
     projectId: string
+    authMethod: 'oauth' | 'oauth_project_token_fallback'
     userId?: string
 }
 
