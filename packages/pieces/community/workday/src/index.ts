@@ -39,7 +39,7 @@ export const workday = createPiece({
 	description:
 		'Cloud-based enterprise platform for human resources, finance, and planning.',
 	minimumSupportedRelease: '0.36.1',
-	logoUrl: 'https://cdn.activepieces.com/pieces/workday.png',
+	logoUrl: 'https://cdn.activepieces.com/pieces/workday.jpg',
 	authors: [],
 	categories: [PieceCategory.HUMAN_RESOURCES],
 	auth: workdayAuth,
