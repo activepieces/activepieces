@@ -41,8 +41,7 @@ import {
   FunctionSlashExtension,
   SlashCommandState,
   insertFunctionAtPos,
-  registerSlashCommandHandler,
-  unregisterSlashCommandHandler,
+  setSlashCommandHandler,
 } from './extensions/function-slash-extension';
 import {
   FunctionStartNode,
@@ -370,12 +369,12 @@ export const TiptapEditor = ({
 
   useEffect(() => {
     if (!editor) return;
-    registerSlashCommandHandler({
+    setSlashCommandHandler(editor, {
       getState: () => slashStateRef.current,
       setState: setSlashState,
     });
     return () => {
-      unregisterSlashCommandHandler();
+      setSlashCommandHandler(editor, null);
     };
   }, [editor]);
 

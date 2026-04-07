@@ -1,5 +1,5 @@
 import { ApFunction } from '@activepieces/shared';
-import { Extension } from '@tiptap/core';
+import { Editor, Extension } from '@tiptap/core';
 import { JSONContent } from '@tiptap/react';
 
 import { FUNCTION_SEP_NODE_TYPE } from './function-sep-node';
@@ -20,18 +20,21 @@ export type SlashCommandHandler = {
   setState: (s: SlashCommandState) => void;
 };
 
-let _handler: SlashCommandHandler | null = null;
+const handlerMap = new WeakMap<Editor, SlashCommandHandler>();
 
-export const registerSlashCommandHandler = (h: SlashCommandHandler) => {
-  _handler = h;
-};
-
-export const unregisterSlashCommandHandler = () => {
-  _handler = null;
+export const setSlashCommandHandler = (
+  editor: Editor,
+  h: SlashCommandHandler | null,
+) => {
+  if (h === null) {
+    handlerMap.delete(editor);
+  } else {
+    handlerMap.set(editor, h);
+  }
 };
 
 export function insertFunctionAtPos(
-  editor: import('@tiptap/core').Editor,
+  editor: Editor,
   fn: ApFunction,
   from: number,
   query: string,
@@ -80,26 +83,27 @@ export const FunctionSlashExtension = Extension.create({
   },
 
   onUpdate() {
+    const handler = handlerMap.get(this.editor);
+    if (!handler) return;
+
     const { state } = this.editor;
     const { selection } = state;
     const pos = selection.from;
 
     const textBefore = state.doc.textBetween(Math.max(0, pos - 30), pos, '\n');
 
-    if (!_handler) return;
-
     const slashIdx = textBefore.lastIndexOf('/');
     if (slashIdx === -1) {
-      if (_handler.getState().open) {
-        closeHandler(_handler);
+      if (handler.getState().open) {
+        closeHandler(handler);
       }
       return;
     }
 
     const query = textBefore.slice(slashIdx + 1);
     if (query.includes(' ') || query.includes('\n')) {
-      if (_handler.getState().open) {
-        closeHandler(_handler);
+      if (handler.getState().open) {
+        closeHandler(handler);
       }
       return;
     }
@@ -109,7 +113,7 @@ export const FunctionSlashExtension = Extension.create({
     const scrollTop = window.scrollY;
     const scrollLeft = window.scrollX;
 
-    _handler.setState({
+    handler.setState({
       open: true,
       query,
       position: {
