@@ -54,6 +54,8 @@ import { flowSideEffects } from './flow-service-side-effects'
 import { FlowEntity } from './flow.entity'
 import { flowRepo } from './flow.repo'
 
+
+
 export const flowService = (log: FastifyBaseLogger) => ({
     async create({ projectId, request, externalId, ownerId, templateId }: CreateParams): Promise<PopulatedFlow> {
         const folderId = await getFolderIdFromRequest({ projectId, folderId: request.folderId, folderName: request.folderName, log })
@@ -418,39 +420,13 @@ export const flowService = (log: FastifyBaseLogger) => ({
                 break
             }
             default: {
-                let lastVersion = await flowVersionService(
-                    log,
-                ).getFlowVersionOrThrow({
+                const lastVersion = await createNewDraftIfVersionIsPublished({
                     flowId: id,
-                    versionId: undefined,
+                    projectId,
+                    platformId,
+                    userId,
+                    log,
                 })
-
-                if (lastVersion.state === FlowVersionState.LOCKED) {
-                    const lastVersionWithArtifacts = await flowVersionService(
-                        log,
-                    ).getFlowVersionOrThrow({
-                        flowId: id,
-                        versionId: undefined,
-                    })
-
-                    lastVersion = await flowVersionService(
-                        log,
-                    ).createEmptyVersion(id, {
-                        displayName: lastVersionWithArtifacts.displayName,
-                        notes: lastVersionWithArtifacts.notes,
-                    })
-                    // Duplicate the artifacts from the previous version, otherwise they will be deleted during update operation
-                    lastVersion = await flowVersionService(log).applyOperation({
-                        userId,
-                        projectId,
-                        platformId,
-                        flowVersion: lastVersion,
-                        userOperation: {
-                            type: FlowOperationType.IMPORT_FLOW,
-                            request: lastVersionWithArtifacts,
-                        },
-                    })
-                }
                 await flowVersionService(log).applyOperation({
                     userId,
                     projectId,
@@ -863,4 +839,42 @@ type UpdateMetadataParams = {
     id: FlowId
     projectId: ProjectId
     metadata: Metadata | null | undefined
+}
+
+/** When the latest version is locked (published snapshot), creates a new draft and imports it. */
+async function createNewDraftIfVersionIsPublished({
+    flowId,
+    projectId,
+    platformId,
+    userId,
+    log,
+}: {
+    flowId: FlowId
+    projectId: ProjectId
+    platformId: PlatformId
+    userId: UserId | null
+    log: FastifyBaseLogger
+}): Promise<FlowVersion> {
+    let lastVersion = await flowVersionService(log).getFlowVersionOrThrow({
+        flowId,
+        versionId: undefined,
+    })
+    if (lastVersion.state === FlowVersionState.LOCKED) {
+        const lockedVersion = lastVersion
+        lastVersion = await flowVersionService(log).createEmptyVersion(flowId, {
+            displayName: lockedVersion.displayName,
+            notes: lockedVersion.notes,
+        })
+        lastVersion = await flowVersionService(log).applyOperation({
+            userId,
+            projectId,
+            platformId,
+            flowVersion: lastVersion,
+            userOperation: {
+                type: FlowOperationType.IMPORT_FLOW,
+                request: lockedVersion,
+            },
+        })
+    }
+    return lastVersion
 }
