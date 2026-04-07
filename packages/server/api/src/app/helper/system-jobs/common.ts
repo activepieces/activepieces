@@ -33,10 +33,10 @@ type HardDeleteProjectSystemJobData = {
 
 type MigrateFlowsModelSystemJobData = {
     jobId: string
+    migrationId: string
     platformId: PlatformId
     userId: UserId
     request: MigrateFlowsModelRequest
-    updatedFlows?: number
 }
 
 type HardDeletePlatformSystemJobData = {

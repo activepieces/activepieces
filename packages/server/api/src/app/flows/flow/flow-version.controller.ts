@@ -1,10 +1,9 @@
-import { FlowVersionMetadata, ListFlowVersionRequest, MigrateFlowsModelRequest, PrincipalType, SeekPage } from '@activepieces/shared'
+import { FlowVersionMetadata, ListFlowVersionRequest, PrincipalType, SeekPage } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { ProjectResourceType } from '../../core/security/authorization/common'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
-import { flowVersionMigrationService } from '../flow-version/flow-version-migration.service'
 import { flowVersionService } from '../flow-version/flow-version.service'
 import { FlowEntity } from './flow.entity'
 import { flowService } from './flow.service'
@@ -25,22 +24,6 @@ export const flowVersionController: FastifyPluginAsyncZod = async (fastify) => {
         })
     })
 
-    fastify.post('/versions/migrate-ai-model', MigrateAIModel, async (request, reply) => {
-        const platformId = request.principal.platform.id
-        const userId = request.principal.id
-        await flowVersionMigrationService(request.log).enqueueMigrateFlowsModel(platformId, userId, request.body, request.log)
-        return reply.status(StatusCodes.NO_CONTENT).send()
-    })
-
-}
-
-const MigrateAIModel = {
-    config: {
-        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
-    },
-    schema: {
-        body: MigrateFlowsModelRequest,
-    },
 }
 
 const ListVersionParams = {

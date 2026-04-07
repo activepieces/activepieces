@@ -29,6 +29,7 @@ import { FileEntity } from '../file/file.entity'
 import { FlagEntity } from '../flags/flag.entity'
 import { FlowEntity } from '../flows/flow/flow.entity'
 import { FlowRunEntity } from '../flows/flow-run/flow-run-entity'
+import { FlowAiProviderMigrationEntity } from '../flows/flow-version/flow-ai-provider-migration.entity'
 import { FlowVersionEntity } from '../flows/flow-version/flow-version-entity'
 import { FolderEntity } from '../flows/folder/folder.entity'
 import { system } from '../helper/system/system'
@@ -71,6 +72,7 @@ function getEntities(): EntitySchema<unknown>[] {
         FlagEntity,
         FlowEntity,
         FlowVersionEntity,
+        FlowAiProviderMigrationEntity,
         FlowRunEntity,
         ProjectEntity,
         StoreEntryEntity,
