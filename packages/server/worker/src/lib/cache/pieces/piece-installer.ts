@@ -19,7 +19,7 @@ import { Logger } from 'pino'
 import writeFileAtomic from 'write-file-atomic'
 import { workerSettings } from '../../config/worker-settings'
 import { getGlobalCacheCommonPath, getGlobalCachePathLatestVersion } from '../cache-paths'
-import { getPackageManagerName, packageManagerRunner } from '../code/package-manager-runner'
+import { packageManager } from '../code/package-manager-runner'
 
 const tracer = trace.getTracer('piece-installer')
 
@@ -95,7 +95,7 @@ async function installPieces(rootWorkspace: string, pieces: PiecePackage[], incl
                     span.setAttribute('pieces.count', piecesToInstall.length)
                     span.setAttribute('pieces.rootWorkspace', rootWorkspace)
 
-                    const { error: batchError } = await tryCatch(async () => packageManagerRunner(log).install({
+                    const { error: batchError } = await tryCatch(async () => packageManager.runner(log).install({
                         path: rootWorkspace,
                         filtersPath: includeFilters ? piecesToInstall.map(relativePiecePath) : [],
                     }))
@@ -105,7 +105,7 @@ async function installPieces(rootWorkspace: string, pieces: PiecePackage[], incl
                         log.info({
                             rootWorkspace,
                             piecesCount: piecesToInstall.length,
-                        }, `[pieceInstaller] Installed registry pieces using ${getPackageManagerName()}`)
+                        }, `[pieceInstaller] Installed registry pieces using ${packageManager.name()}`)
                         return
                     }
 
@@ -133,7 +133,7 @@ async function installPieces(rootWorkspace: string, pieces: PiecePackage[], incl
                     log.info({
                         rootWorkspace,
                         piecesCount: piecesToInstall.length,
-                    }, `[pieceInstaller] Installed registry pieces using ${getPackageManagerName()} (individual fallback)`)
+                    }, `[pieceInstaller] Installed registry pieces using ${packageManager.name()} (individual fallback)`)
                 }
                 finally {
                     span.end()
@@ -158,7 +158,7 @@ async function tryInstallPiecesIndividually(
     const failures: PiecePackage[] = []
     for (const piece of pieces) {
         const { error } = await tryCatch(async () =>
-            packageManagerRunner(log).install({
+            packageManager.runner(log).install({
                 path: rootWorkspace,
                 filtersPath: [relativePiecePath(piece)],
             }),
@@ -226,7 +226,7 @@ async function createRootPackageJson({ path }: { path: string }): Promise<void> 
         ],
     }, null, 2), 'utf8')
 
-    if (getPackageManagerName() === 'pnpm') {
+    if (packageManager.name() === 'pnpm') {
         await writeFileAtomic(
             join(path, 'pnpm-workspace.yaml'),
             'packages:\n  - \'pieces/**\'\n',

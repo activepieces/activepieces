@@ -38,6 +38,7 @@ describe('bunRunner', () => {
         expect(call.args).toEqual([
             'install',
             '--ignore-scripts',
+            '--linker=hoisted',
             '--filter', './pieces/piece-a-1.0.0',
         ])
         expect(call.options.cwd).toBe('/tmp/test')
@@ -54,7 +55,7 @@ describe('bunRunner', () => {
 
         const call = mockSpawnWithKill.mock.calls[0][0]
         expect(call.cmd).toBe('bun')
-        expect(call.args).toEqual(['install', '--ignore-scripts'])
+        expect(call.args).toEqual(['install', '--ignore-scripts', '--linker=hoisted'])
     })
 
     it('calls esbuild for build', async () => {
@@ -170,50 +171,33 @@ describe('pnpmRunner', () => {
     })
 })
 
-describe('packageManagerRunner', () => {
-    it('defaults to bun when AP_PACKAGE_MANAGER is not set', async () => {
-        vi.doMock('../src/lib/config/configs', () => ({
-            system: { get: () => undefined },
-            WorkerSystemProp: { PACKAGE_MANAGER: 'AP_PACKAGE_MANAGER' },
-        }))
-        const { packageManagerRunner, packageManagerName } = await import('../src/lib/cache/code/package-manager-runner')
-        mockSpawnWithKill.mockResolvedValueOnce({ stdout: '', stderr: '' })
-
-        await packageManagerRunner(fakeLog).install({ path: '/tmp/test', filtersPath: [] })
-
-        const call = mockSpawnWithKill.mock.calls[0][0]
-        expect(call.cmd).toBe('bun')
-        expect(packageManagerName).toBe('bun')
-    })
-
-    it('uses pnpm when AP_PACKAGE_MANAGER=pnpm', async () => {
-        vi.doMock('../src/lib/config/configs', () => ({
-            system: { get: () => 'pnpm' },
-            WorkerSystemProp: { PACKAGE_MANAGER: 'AP_PACKAGE_MANAGER' },
-        }))
-        const { packageManagerRunner, packageManagerName } = await import('../src/lib/cache/code/package-manager-runner')
-        mockSpawnWithKill.mockResolvedValueOnce({ stdout: '', stderr: '' })
-
-        await packageManagerRunner(fakeLog).install({ path: '/tmp/test', filtersPath: [] })
-
-        const call = mockSpawnWithKill.mock.calls[0][0]
-        expect(call.cmd).toBe('pnpm')
-        expect(packageManagerName).toBe('pnpm')
-    })
-
-    it('uses bun when AP_PACKAGE_MANAGER=bun', async () => {
+describe('packageManager', () => {
+    it('uses bun when AP_PACKAGE_MANAGER=bun (no probe)', async () => {
         vi.doMock('../src/lib/config/configs', () => ({
             system: { get: () => 'bun' },
             WorkerSystemProp: { PACKAGE_MANAGER: 'AP_PACKAGE_MANAGER' },
         }))
-        const { packageManagerRunner, packageManagerName } = await import('../src/lib/cache/code/package-manager-runner')
-        mockSpawnWithKill.mockResolvedValueOnce({ stdout: '', stderr: '' })
+        const { packageManager } = await import('../src/lib/cache/code/package-manager-runner')
+        packageManager.resetForTesting()
 
-        await packageManagerRunner(fakeLog).install({ path: '/tmp/test', filtersPath: [] })
+        await packageManager.init(fakeLog)
 
-        const call = mockSpawnWithKill.mock.calls[0][0]
-        expect(call.cmd).toBe('bun')
-        expect(packageManagerName).toBe('bun')
+        expect(packageManager.name()).toBe('bun')
+        expect(mockSpawnWithKill).not.toHaveBeenCalled()
+    })
+
+    it('uses pnpm when AP_PACKAGE_MANAGER=pnpm (no probe)', async () => {
+        vi.doMock('../src/lib/config/configs', () => ({
+            system: { get: () => 'pnpm' },
+            WorkerSystemProp: { PACKAGE_MANAGER: 'AP_PACKAGE_MANAGER' },
+        }))
+        const { packageManager } = await import('../src/lib/cache/code/package-manager-runner')
+        packageManager.resetForTesting()
+
+        await packageManager.init(fakeLog)
+
+        expect(packageManager.name()).toBe('pnpm')
+        expect(mockSpawnWithKill).not.toHaveBeenCalled()
     })
 
     it('is case insensitive — AP_PACKAGE_MANAGER=PNPM works', async () => {
@@ -221,28 +205,84 @@ describe('packageManagerRunner', () => {
             system: { get: () => 'PNPM' },
             WorkerSystemProp: { PACKAGE_MANAGER: 'AP_PACKAGE_MANAGER' },
         }))
-        const { packageManagerRunner, packageManagerName } = await import('../src/lib/cache/code/package-manager-runner')
-        mockSpawnWithKill.mockResolvedValueOnce({ stdout: '', stderr: '' })
+        const { packageManager } = await import('../src/lib/cache/code/package-manager-runner')
+        packageManager.resetForTesting()
 
-        await packageManagerRunner(fakeLog).install({ path: '/tmp/test', filtersPath: [] })
+        await packageManager.init(fakeLog)
 
-        const call = mockSpawnWithKill.mock.calls[0][0]
-        expect(call.cmd).toBe('pnpm')
-        expect(packageManagerName).toBe('pnpm')
+        expect(packageManager.name()).toBe('pnpm')
     })
 
-    it('defaults to bun for unknown values', async () => {
+    it('auto-detects bun when env var is not set and bun --version succeeds', async () => {
+        vi.doMock('../src/lib/config/configs', () => ({
+            system: { get: () => undefined },
+            WorkerSystemProp: { PACKAGE_MANAGER: 'AP_PACKAGE_MANAGER' },
+        }))
+        mockSpawnWithKill.mockResolvedValueOnce({ stdout: '1.0.0', stderr: '' })
+        const { packageManager } = await import('../src/lib/cache/code/package-manager-runner')
+        packageManager.resetForTesting()
+
+        await packageManager.init(fakeLog)
+
+        expect(packageManager.name()).toBe('bun')
+        expect(mockSpawnWithKill).toHaveBeenCalledOnce()
+        const call = mockSpawnWithKill.mock.calls[0][0]
+        expect(call.cmd).toBe('bun')
+        expect(call.args).toEqual(['--version'])
+    })
+
+    it('falls back to pnpm when env var is not set and bun --version fails', async () => {
+        vi.doMock('../src/lib/config/configs', () => ({
+            system: { get: () => undefined },
+            WorkerSystemProp: { PACKAGE_MANAGER: 'AP_PACKAGE_MANAGER' },
+        }))
+        mockSpawnWithKill.mockRejectedValueOnce(new Error('bun not found'))
+        const { packageManager } = await import('../src/lib/cache/code/package-manager-runner')
+        packageManager.resetForTesting()
+
+        await packageManager.init(fakeLog)
+
+        expect(packageManager.name()).toBe('pnpm')
+    })
+
+    it('falls back to pnpm for unknown env var values and bun probe fails', async () => {
         vi.doMock('../src/lib/config/configs', () => ({
             system: { get: () => 'yarn' },
             WorkerSystemProp: { PACKAGE_MANAGER: 'AP_PACKAGE_MANAGER' },
         }))
-        const { packageManagerRunner, packageManagerName } = await import('../src/lib/cache/code/package-manager-runner')
-        mockSpawnWithKill.mockResolvedValueOnce({ stdout: '', stderr: '' })
+        mockSpawnWithKill.mockRejectedValueOnce(new Error('bun not found'))
+        const { packageManager } = await import('../src/lib/cache/code/package-manager-runner')
+        packageManager.resetForTesting()
 
-        await packageManagerRunner(fakeLog).install({ path: '/tmp/test', filtersPath: [] })
+        await packageManager.init(fakeLog)
 
-        const call = mockSpawnWithKill.mock.calls[0][0]
-        expect(call.cmd).toBe('bun')
-        expect(packageManagerName).toBe('bun')
+        expect(packageManager.name()).toBe('pnpm')
+    })
+
+    it('throws when name() is called before init', async () => {
+        vi.doMock('../src/lib/config/configs', () => ({
+            system: { get: () => undefined },
+            WorkerSystemProp: { PACKAGE_MANAGER: 'AP_PACKAGE_MANAGER' },
+        }))
+        const { packageManager } = await import('../src/lib/cache/code/package-manager-runner')
+        packageManager.resetForTesting()
+
+        expect(() => packageManager.name()).toThrow('Package manager not initialized')
+    })
+
+    it('only initializes once even if called multiple times', async () => {
+        vi.doMock('../src/lib/config/configs', () => ({
+            system: { get: () => undefined },
+            WorkerSystemProp: { PACKAGE_MANAGER: 'AP_PACKAGE_MANAGER' },
+        }))
+        mockSpawnWithKill.mockResolvedValue({ stdout: '1.0.0', stderr: '' })
+        const { packageManager } = await import('../src/lib/cache/code/package-manager-runner')
+        packageManager.resetForTesting()
+
+        await packageManager.init(fakeLog)
+        await packageManager.init(fakeLog)
+
+        expect(packageManager.name()).toBe('bun')
+        expect(mockSpawnWithKill).toHaveBeenCalledOnce()
     })
 })

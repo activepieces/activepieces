@@ -15,12 +15,12 @@ const mockPnpmInstall = vi.fn()
 let currentPm: 'bun' | 'pnpm' = 'bun'
 
 vi.mock('../src/lib/cache/code/package-manager-runner', () => ({
-    get packageManagerRunner() {
-        return () => ({
+    packageManager: {
+        runner: () => ({
             install: currentPm === 'bun' ? mockBunInstall : mockPnpmInstall,
-        })
+        }),
+        name: () => currentPm,
     },
-    getPackageManagerName: () => currentPm,
 }))
 
 vi.mock('../src/lib/config/worker-settings', () => ({
