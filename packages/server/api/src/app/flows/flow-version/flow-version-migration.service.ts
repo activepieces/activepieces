@@ -8,11 +8,14 @@ import {
     spreadIfDefined,
     tryCatch,
 } from '@activepieces/shared'
+import { onCallService } from '@activepieces/server-utils'
 import { FastifyBaseLogger } from 'fastify'
-import { onCallService } from '../../helper/on-call.service'
+import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-props'
 import { flowVersionBackupService } from './flow-version-backup.service'
 import { flowVersionRepo } from './flow-version.service'
 import { flowMigrations } from './migrations'
+import { inspect } from 'node:util'
 
 export const flowVersionMigrationService = (log: FastifyBaseLogger) => ({
     async migrate(flowVersion: FlowVersion, projectId?: ProjectId): Promise<FlowVersion> {
@@ -34,7 +37,7 @@ export const flowVersionMigrationService = (log: FastifyBaseLogger) => ({
                 code: ErrorCode.FLOW_MIGRATION_FAILED,
                 params: { flowVersionId: flowVersion.id, message: migrationError.message },
             })
-            await onCallService(log).page(apError)
+            await onCallService(log, system.get(AppSystemProp.PAGE_ONCALL_WEBHOOK)).page(inspect(apError))
             throw migrationError
         }
 
