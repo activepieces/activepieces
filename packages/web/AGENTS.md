@@ -79,6 +79,10 @@ You are working in the Activepieces web application (`packages/web`).
 - **Transforming data for rendering** — Calculate it inline during render instead.
 - **Passing data upward to a parent** — Lift state up or use a shared store.
 
+## Data Tables
+
+- **Use the `DataTable` component** (`src/components/custom/data-table`) for any paginated or list-style data display. It handles cursor-based pagination (`SeekPage`), empty states, toolbar buttons, row actions, bulk actions, sorting, and virtual scrolling out of the box. See `src/app/routes/project-release/index.tsx` for a reference implementation. Do not build raw `<Table>` layouts for paginated data.
+
 ## Guidelines
 
 - Read existing code before making changes to understand patterns
