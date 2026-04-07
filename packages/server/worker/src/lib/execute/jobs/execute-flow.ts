@@ -1,3 +1,4 @@
+import { inspect } from 'node:util'
 import { onCallService } from '@activepieces/server-utils'
 import {
     ActivepiecesError,
@@ -23,7 +24,6 @@ import { workerSettings } from '../../config/worker-settings'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../types'
 import { provisionFlowPieces } from '../utils/flow-helpers'
 import { resolvePayload } from '../utils/resolve-payload'
-import { inspect } from 'node:util'
 
 export const executeFlowJob: JobHandler<ExecuteFlowJobData, FireAndForgetJobResult> = {
     jobType: WorkerJobType.EXECUTE_FLOW,
@@ -177,7 +177,12 @@ async function fetchExecutionState(apiClient: WorkerToApiContract, data: Execute
         }
         return parsed.executionState
     } catch (error) {
-        await onCallService(log, workerSettings.getSettings().PAGE_ONCALL_WEBHOOK).page(inspect(error))
+        const code = error instanceof ActivepiecesError ? error.error.code : ErrorCode.EXECUTION_STATE_MISSING
+        onCallService(log, workerSettings.getSettings().PAGE_ONCALL_WEBHOOK).page({
+            code,
+            message: 'Failed to fetch execution state for RESUME operation',
+            params: { runId: data.runId, error: inspect(error) },
+        }).catch((e) => log.error({ runId: data.runId, error: inspect(e) }, 'Failed to send on-call notification for execution state fetch failure'))
         throw error
     }
 }
