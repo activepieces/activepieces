@@ -53,6 +53,17 @@ export const updateMonitor = createAction({
 		companies: Property.ShortText({ displayName: 'Companies', description: 'Comma-separated company names', required: false }),
 		domains: Property.ShortText({ displayName: 'Domains', description: 'Comma-separated domains', required: false }),
 		linkedin_urls: Property.ShortText({ displayName: 'LinkedIn URLs', description: 'Comma-separated LinkedIn URLs', required: false }),
+		company_filters: Property.LongText({ displayName: 'Company Filters', description: 'Advanced company filters as JSON string', required: false }),
+		signal_filters: Property.LongText({ displayName: 'Signal Filters', description: 'Signal-specific filters as JSON array string', required: false }),
+		people_enrichment_configs: Property.LongText({ displayName: 'People Enrichment Configs', description: 'People enrichment configs as JSON array string', required: false }),
+		is_company_enrichment: Property.Checkbox({ displayName: 'Company Enrichment', required: false, defaultValue: false }),
+		is_people_enrichment: Property.Checkbox({ displayName: 'People Enrichment', required: false, defaultValue: false }),
+		is_active: Property.Checkbox({ displayName: 'Is Active', required: false, defaultValue: false }),
+		is_paused: Property.Checkbox({ displayName: 'Is Paused', required: false, defaultValue: false }),
+		max_failure_trigger: Property.Number({ displayName: 'Max Failure Trigger', required: false }),
+		max_retry_per_trigger: Property.Number({ displayName: 'Max Retry Per Trigger', required: false }),
+		retry_delay_second: Property.Number({ displayName: 'Retry Delay (seconds)', required: false }),
+		notification_email: Property.ShortText({ displayName: 'Notification Email', required: false }),
 	},
 	async run(context) {
 		const body: Record<string, unknown> = {
@@ -72,6 +83,17 @@ export const updateMonitor = createAction({
 		if (context.propsValue.companies) body.companies = splitComma(context.propsValue.companies);
 		if (context.propsValue.domains) body.domains = splitComma(context.propsValue.domains);
 		if (context.propsValue.linkedin_urls) body.linkedin_urls = splitComma(context.propsValue.linkedin_urls);
+		if (context.propsValue.company_filters) body.company_filters = JSON.parse(context.propsValue.company_filters);
+		if (context.propsValue.signal_filters) body.signal_filters = JSON.parse(context.propsValue.signal_filters);
+		if (context.propsValue.people_enrichment_configs) body.people_enrichment_configs = JSON.parse(context.propsValue.people_enrichment_configs);
+		if (context.propsValue.is_company_enrichment) body.is_company_enrichment = context.propsValue.is_company_enrichment;
+		if (context.propsValue.is_people_enrichment) body.is_people_enrichment = context.propsValue.is_people_enrichment;
+		if (context.propsValue.is_active) body.is_active = context.propsValue.is_active;
+		if (context.propsValue.is_paused) body.is_paused = context.propsValue.is_paused;
+		if (context.propsValue.max_failure_trigger != null) body.max_failure_trigger = context.propsValue.max_failure_trigger;
+		if (context.propsValue.max_retry_per_trigger != null) body.max_retry_per_trigger = context.propsValue.max_retry_per_trigger;
+		if (context.propsValue.retry_delay_second != null) body.retry_delay_second = context.propsValue.retry_delay_second;
+		if (context.propsValue.notification_email) body.notification_email = context.propsValue.notification_email;
 		return await pubrioRequest(context.auth, HttpMethod.POST, '/monitors/update', body);
 	},
 });
