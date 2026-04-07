@@ -8,7 +8,6 @@ import {
     McpServer,
     McpToolDefinition,
     Permission,
-    PieceActionSettings,
     UpdateActionRequest,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -16,7 +15,7 @@ import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
 import { projectService } from '../../project/project-service'
-import { diagnosePieceProps, mcpToolError } from './mcp-utils'
+import { mcpToolError } from './mcp-utils'
 
 const updateStepInput = z.object({
     flowId: z.string(),
@@ -33,7 +32,7 @@ export const apUpdateStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
     return {
         title: 'ap_update_step',
         permission: Permission.WRITE_FLOW,
-        description: 'Update an existing step\'s settings in a flow. Use ap_flow_structure to get step names. Use ap_list_pieces to get valid pieceName, pieceVersion, actionName. If you are about to configure a CODE step, first verify with ap_list_pieces that no existing piece can accomplish the task. Provide only the fields you want to change.',
+        description: 'Update an existing step\'s settings in a flow. Use ap_flow_structure to get step names. Use ap_list_pieces to get valid pieceName, pieceVersion, actionName. Provide only the fields you want to change.',
         inputSchema: {
             flowId: z.string().describe('The id of the flow'),
             stepName: z.string().describe('The name of the step to update (e.g. "step_1"). Use ap_flow_structure to get valid values.'),
@@ -143,17 +142,13 @@ export const apUpdateStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
                 })
                 const updatedStep = flowStructureUtil.getStep(stepName, updatedFlow.version.trigger)
                 if (updatedStep && !updatedStep.valid) {
-                    const diagnosis = updatedStep.type === FlowActionType.PIECE
-                        ? await diagnoseMissingInputs({ settings: updatedStep.settings, platformId: project.platformId, log })
-                        : null
-                    const hint = (diagnosis || null)
-                        ?? (step.type === FlowActionType.PIECE
-                            ? 'Use ap_list_pieces to verify pieceName, pieceVersion, actionName and required inputs, then retry.'
-                            : 'Check the step settings and retry.')
+                    const hint = step.type === FlowActionType.PIECE
+                        ? ' Use ap_list_pieces to verify pieceName, pieceVersion, actionName and required inputs, then retry.'
+                        : ' Check the step settings and retry.'
                     return {
                         content: [{
                             type: 'text',
-                            text: `⚠️ Step "${stepName}" updated but still invalid. ${hint}`,
+                            text: `⚠️ Step "${stepName}" updated but still invalid.${hint}`,
                         }],
                     }
                 }
@@ -165,31 +160,6 @@ export const apUpdateStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
                 return mcpToolError('Step update failed', err)
             }
         },
-    }
-}
-
-async function diagnoseMissingInputs({ settings, platformId, log }: {
-    settings: PieceActionSettings
-    platformId: string
-    log: FastifyBaseLogger
-}): Promise<string | null> {
-    const { pieceName, pieceVersion, actionName } = settings
-    if (isNil(actionName)) {
-        return 'Missing actionName.'
-    }
-    try {
-        const piece = await pieceMetadataService(log).getOrThrow({ platformId, name: pieceName, version: pieceVersion })
-        const action = piece.actions[actionName]
-        if (isNil(action)) {
-            return `Action "${actionName}" not found in piece "${pieceName}". Use ap_list_pieces with includeActions=true to get valid action names.`
-        }
-        const input = settings.input ?? {}
-        const { parts } = diagnosePieceProps({ props: action.props, input, pieceAuth: piece.auth, requireAuth: action.requireAuth, componentType: 'action' })
-        return parts.join(' ')
-    }
-    catch (err) {
-        log.warn({ err, pieceName, actionName }, 'diagnoseMissingInputs: failed to fetch piece metadata')
-        return null
     }
 }
 
