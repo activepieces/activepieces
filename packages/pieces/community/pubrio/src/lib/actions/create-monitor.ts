@@ -69,43 +69,43 @@ export const createMonitor = createAction({
 			signal_types: context.propsValue.signal_types,
 			destination_type: context.propsValue.destination_type,
 		};
-		if (context.propsValue.webhook_url) body.webhook_url = context.propsValue.webhook_url;
-		if (context.propsValue.email) body.email = context.propsValue.email;
-		if (context.propsValue.sequence_identifier) body.sequence_identifier = context.propsValue.sequence_identifier;
-		if (context.propsValue.description) body.description = context.propsValue.description;
-		if (context.propsValue.frequency_minute != null) body.frequency_minute = context.propsValue.frequency_minute;
-		if (context.propsValue.max_daily_trigger != null) body.max_daily_trigger = context.propsValue.max_daily_trigger;
-		if (context.propsValue.max_records_per_trigger != null) body.max_records_per_trigger = context.propsValue.max_records_per_trigger;
-		if (context.propsValue.companies) body.companies = splitComma(context.propsValue.companies);
-		if (context.propsValue.domains) body.domains = splitComma(context.propsValue.domains);
-		if (context.propsValue.linkedin_urls) body.linkedin_urls = splitComma(context.propsValue.linkedin_urls);
+		if (context.propsValue.webhook_url) body["webhook_url"] = context.propsValue.webhook_url;
+		if (context.propsValue.email) body["email"] = context.propsValue.email;
+		if (context.propsValue.sequence_identifier) body["sequence_identifier"] = context.propsValue.sequence_identifier;
+		if (context.propsValue.description) body["description"] = context.propsValue.description;
+		if (context.propsValue.frequency_minute != null) body["frequency_minute"] = context.propsValue.frequency_minute;
+		if (context.propsValue.max_daily_trigger != null) body["max_daily_trigger"] = context.propsValue.max_daily_trigger;
+		if (context.propsValue.max_records_per_trigger != null) body["max_records_per_trigger"] = context.propsValue.max_records_per_trigger;
+		if (context.propsValue.companies) body["companies"] = splitComma(context.propsValue.companies);
+		if (context.propsValue.domains) body["domains"] = splitComma(context.propsValue.domains);
+		if (context.propsValue.linkedin_urls) body["linkedin_urls"] = splitComma(context.propsValue.linkedin_urls);
 		if (context.propsValue.company_filters) {
 			try {
-				body.company_filters = JSON.parse(context.propsValue.company_filters);
+				body["company_filters"] = JSON.parse(context.propsValue.company_filters);
 			} catch {
 				throw new Error('company_filters must be valid JSON');
 			}
 		}
 		if (context.propsValue.signal_filters) {
 			try {
-				body.signal_filters = JSON.parse(context.propsValue.signal_filters);
+				body["signal_filters"] = JSON.parse(context.propsValue.signal_filters);
 			} catch {
 				throw new Error('signal_filters must be valid JSON');
 			}
 		}
 		if (context.propsValue.people_enrichment_configs) {
 			try {
-				body.people_enrichment_configs = JSON.parse(context.propsValue.people_enrichment_configs);
+				body["people_enrichment_configs"] = JSON.parse(context.propsValue.people_enrichment_configs);
 			} catch {
 				throw new Error('people_enrichment_configs must be valid JSON');
 			}
 		}
-		if (context.propsValue.is_company_enrichment != null) body.is_company_enrichment = context.propsValue.is_company_enrichment;
-		if (context.propsValue.is_people_enrichment != null) body.is_people_enrichment = context.propsValue.is_people_enrichment;
-		if (context.propsValue.max_failure_trigger != null) body.max_failure_trigger = context.propsValue.max_failure_trigger;
-		if (context.propsValue.max_retry_per_trigger != null) body.max_retry_per_trigger = context.propsValue.max_retry_per_trigger;
-		if (context.propsValue.retry_delay_second != null) body.retry_delay_second = context.propsValue.retry_delay_second;
-		if (context.propsValue.notification_email) body.notification_email = context.propsValue.notification_email;
+		if (context.propsValue.is_company_enrichment != null) body["is_company_enrichment"] = context.propsValue.is_company_enrichment;
+		if (context.propsValue.is_people_enrichment != null) body["is_people_enrichment"] = context.propsValue.is_people_enrichment;
+		if (context.propsValue.max_failure_trigger != null) body["max_failure_trigger"] = context.propsValue.max_failure_trigger;
+		if (context.propsValue.max_retry_per_trigger != null) body["max_retry_per_trigger"] = context.propsValue.max_retry_per_trigger;
+		if (context.propsValue.retry_delay_second != null) body["retry_delay_second"] = context.propsValue.retry_delay_second;
+		if (context.propsValue.notification_email) body["notification_email"] = context.propsValue.notification_email;
 		return await pubrioRequest(context.auth, HttpMethod.POST, '/monitors/create', body);
 	},
 });
