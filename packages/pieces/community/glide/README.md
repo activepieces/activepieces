@@ -1,3 +1,5 @@
-# @activepieces/piece-glide
+# pieces-glide
 
-Activepieces community piece for Glide.
+## Building
+
+Run `turbo run build --filter=@activepieces/piece-glide` to build the library.

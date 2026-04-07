@@ -1,12 +1,11 @@
-import { PieceAuth } from '@activepieces/pieces-framework';
+import { PieceAuth, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { tryCatch } from '@activepieces/shared';
 
-import { validateGlideAuth } from './client';
+import { validateGlideAuth } from './common/client';
 
 export const glideAuth = PieceAuth.SecretText({
   displayName: 'Secret Token',
-  description: `Authenticate with your Glide secret token.
-
+  description: `
 To get your token:
 1. Open Glide and go to the **Data** editor.
 2. Open a Big Table and click **Show API**.
@@ -30,3 +29,5 @@ This piece uses Glide's Big Tables API, so the available actions work with Big T
     };
   },
 });
+
+export type GlideAuthType = AppConnectionValueForAuthProperty<typeof glideAuth>

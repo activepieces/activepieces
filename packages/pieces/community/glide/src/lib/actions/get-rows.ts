@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 
-import { glideAuth } from '../common/auth';
+import { glideAuth } from '../auth';
 import { getGlideRows } from '../common/client';
 import { glideProps } from '../common/props';
 import { flattenGlideRows, parseRequiredString } from '../common/utils';

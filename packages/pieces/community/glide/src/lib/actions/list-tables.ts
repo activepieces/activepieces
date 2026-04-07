@@ -1,6 +1,6 @@
 import { createAction } from '@activepieces/pieces-framework';
 
-import { glideAuth } from '../common/auth';
+import { glideAuth } from '../auth';
 import { listGlideTables } from '../common/client';
 
 export const listTablesAction = createAction({

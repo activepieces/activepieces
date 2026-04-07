@@ -3,12 +3,40 @@ import { AppConnectionType } from '@activepieces/shared';
 
 import {
   GlideAddRowsResponse,
-  GlideAuthValue,
   GlideGetRowsResponse,
   GlideListTablesResponse,
   GlideRow,
   GlideTable,
 } from './types';
+import { GlideAuthType } from '../auth';
+
+async function sendRequest<TResponse>({
+  auth,
+  method,
+  path,
+  body,
+  queryParams,
+}: {
+  auth: GlideAuthType;
+  method: HttpMethod;
+  path: string;
+  body?: GlideRow | GlideRow[];
+  queryParams?: Record<string, string>;
+}): Promise<TResponse> {
+  const response = await httpClient.sendRequest<TResponse>({
+    method,
+    url: `${BASE_URL}${path}`,
+    headers: {
+      Authorization: `Bearer ${auth.secret_text}`,
+      Accept: 'application/json',
+      ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
+    },
+    ...(body !== undefined ? { body } : {}),
+    ...(queryParams ? { queryParams } : {}),
+  });
+
+  return response.body;
+}
 
 export async function validateGlideAuth(auth: string): Promise<void> {
   await listGlideTables({
@@ -17,7 +45,7 @@ export async function validateGlideAuth(auth: string): Promise<void> {
   });
 }
 
-export async function listGlideTables(auth: GlideAuthValue): Promise<GlideTable[]> {
+export async function listGlideTables(auth: GlideAuthType): Promise<GlideTable[]> {
   const response = await sendRequest<GlideListTablesResponse>({
     auth,
     method: HttpMethod.GET,
@@ -32,7 +60,7 @@ export async function getGlideRows({
   tableId,
   limit,
 }: {
-  auth: GlideAuthValue;
+  auth: GlideAuthType;
   tableId: string;
   limit: number;
 }): Promise<GlideRow[]> {
@@ -68,7 +96,7 @@ export async function addGlideRows({
   tableId,
   rows,
 }: {
-  auth: GlideAuthValue;
+  auth: GlideAuthType;
   tableId: string;
   rows: GlideRow[];
 }): Promise<GlideAddRowsResponse['data']> {
@@ -88,7 +116,7 @@ export async function updateGlideRow({
   rowId,
   row,
 }: {
-  auth: GlideAuthValue;
+  auth: GlideAuthType;
   tableId: string;
   rowId: string;
   row: GlideRow;
@@ -106,7 +134,7 @@ export async function deleteGlideRow({
   tableId,
   rowId,
 }: {
-  auth: GlideAuthValue;
+  auth: GlideAuthType;
   tableId: string;
   rowId: string;
 }): Promise<void> {
@@ -117,32 +145,6 @@ export async function deleteGlideRow({
   });
 }
 
-async function sendRequest<TResponse>({
-  auth,
-  method,
-  path,
-  body,
-  queryParams,
-}: {
-  auth: GlideAuthValue;
-  method: HttpMethod;
-  path: string;
-  body?: GlideRow | GlideRow[];
-  queryParams?: Record<string, string>;
-}): Promise<TResponse> {
-  const response = await httpClient.sendRequest<TResponse>({
-    method,
-    url: `${BASE_URL}${path}`,
-    headers: {
-      Authorization: `Bearer ${auth.secret_text}`,
-      Accept: 'application/json',
-      ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
-    },
-    ...(body !== undefined ? { body } : {}),
-    ...(queryParams ? { queryParams } : {}),
-  });
 
-  return response.body;
-}
 
-const BASE_URL = 'https://api.glideapps.com';
+export const BASE_URL = 'https://api.glideapps.com';

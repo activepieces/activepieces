@@ -1,5 +1,3 @@
-import { SecretTextConnectionValue } from '@activepieces/shared';
-
 export type GlideTable = {
   id: string;
   name: string;
@@ -31,5 +29,3 @@ export type GlideAddRowsResponse = {
     rowIDs: string[];
   };
 };
-
-export type GlideAuthValue = SecretTextConnectionValue;

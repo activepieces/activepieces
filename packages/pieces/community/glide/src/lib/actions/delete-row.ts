@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 
-import { glideAuth } from '../common/auth';
+import { glideAuth } from '../auth';
 import { deleteGlideRow } from '../common/client';
 import { glideProps } from '../common/props';
 import { parseRequiredString } from '../common/utils';

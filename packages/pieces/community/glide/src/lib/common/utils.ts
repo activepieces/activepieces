@@ -1,4 +1,4 @@
-import { GlideAuthValue, GlideRow, GlideRowValue } from './types';
+import { GlideRow, GlideRowValue } from './types';
 
 export function parseRequiredString(value: unknown, fieldName: string): string {
   if (typeof value !== 'string' || value.trim().length === 0) {
@@ -28,15 +28,6 @@ export function flattenGlideRows(rows: GlideRow[]): FlatRecord[] {
   return normalizeRecords(rows.map(flattenRecord));
 }
 
-export function isGlideAuthValue(auth: unknown): auth is GlideAuthValue {
-  return (
-    typeof auth === 'object' &&
-    auth !== null &&
-    'secret_text' in auth &&
-    typeof auth.secret_text === 'string' &&
-    auth.secret_text.trim().length > 0
-  );
-}
 
 function flattenRecord(value: GlideRow): FlatRecord {
   const flattened: FlatRecord = {};

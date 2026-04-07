@@ -1,9 +1,8 @@
 import { Property } from '@activepieces/pieces-framework';
 import { tryCatch } from '@activepieces/shared';
 
-import { glideAuth } from './auth';
+import { glideAuth } from '../auth';
 import { listGlideTables } from './client';
-import { isGlideAuthValue } from './utils';
 
 export const glideProps = {
   tableId: (required = true) =>
@@ -12,9 +11,9 @@ export const glideProps = {
       displayName: 'Table',
       description: 'Select the Glide Big Table to use.',
       required,
-      refreshers: ['auth'],
+      refreshers: [],
       options: async ({ auth }) => {
-        if (!isGlideAuthValue(auth)) {
+        if (!auth) {
           return {
             disabled: true,
             options: [],
