@@ -13,7 +13,6 @@ import { migrateV17AddLastUpdatedDate } from './migrate-v17-add-last-updated-dat
 import { migrateV18TablesFieldIds } from './migrate-v18-tables-find-records-field-ids'
 import { migrateV19StripPieceVersionWildcards } from './migrate-v19-strip-piece-version-wildcards'
 import { migrateAgentPieceV2 } from './migrate-v2-agent-piece'
-import { migrateV20StripPieceVersionWildcards } from './migrate-v20-strip-piece-version-wildcards'
 import { migrateAgentPieceV3 } from './migrate-v3-agent-piece'
 import { migrateAgentPieceV4 } from './migrate-v4-agent-piece'
 import { migrateHttpToWebhookV5 } from './migrate-v5-http-to-webhook'
@@ -52,8 +51,7 @@ const migrations: Migration[] = [
     migrateV16AgentPieceToolNames,
     migrateV17AddLastUpdatedDate,
     migrateV18TablesFieldIds,
-    migrateV19StripPieceVersionWildcards,
-    migrateV20StripPieceVersionWildcards,
+    migrateV19StripPieceVersionWildcards
 ] as const
 
 export const flowMigrations = {
