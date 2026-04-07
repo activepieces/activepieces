@@ -12,9 +12,9 @@ export const parseUrl = createAction({
     }),
     returnArrays: Property.Checkbox({
       displayName: 'Return Values as Arrays',
-      description: 'If checked, duplicate query parameters are returned as a JSON array (e.g., {"tags": ["shoes", "hats"]}). If unchecked, they are joined into a single comma-separated string (e.g., {"tags": "shoes, hats"}).',
+      description: 'If checked (recommended), all query parameters are returned as JSON arrays to safely group duplicate keys (e.g., {"tags": ["shoes", "hats"]}). If unchecked, standard web behavior applies, returning only the first value as text.',
       required: false,
-      defaultValue: false,
+      defaultValue: true,
     }),
   },
   async run(context) {
