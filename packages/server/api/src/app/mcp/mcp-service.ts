@@ -160,6 +160,41 @@ export const mcpServerService = (log: FastifyBaseLogger) => {
 }
 
 
+export async function resolvePermissionChecker({ userId, projectId, log }: { userId: string | undefined, projectId: string, log: FastifyBaseLogger }): Promise<PermissionChecker> {
+    const allowAll: PermissionChecker = {
+        check: () => null,
+        wrapExecute: ({ execute }) => execute,
+    }
+    if (isNil(userId) || !EDITION_REQUIRES_RBAC) {
+        return allowAll
+    }
+
+    let userPermissions: string[]
+    try {
+        const role = await getPrincipalRoleOrThrow(userId, projectId, log)
+        userPermissions = role.permissions ?? []
+    }
+    catch (err) {
+        if (err instanceof ActivepiecesError && err.error.code === ErrorCode.AUTHORIZATION) {
+            return buildChecker((permission, toolTitle) => {
+                if (isNil(permission)) {
+                    return null
+                }
+                return noRoleError(toolTitle)
+            })
+        }
+        throw err
+    }
+
+    const permissionSet = new Set(userPermissions)
+    return buildChecker((permission, toolTitle) => {
+        if (isNil(permission) || permissionSet.has(permission)) {
+            return null
+        }
+        return missingPermissionError(permission, toolTitle)
+    })
+}
+
 async function listFlows(mcp: McpServerSchema, logger: FastifyBaseLogger): Promise<PopulatedFlow[]> {
     const flows = await flowService(logger).list({
         projectIds: [mcp.projectId],
@@ -202,14 +237,6 @@ function mcpPropertyToZod(property: McpProperty): z.ZodTypeAny {
     return property.required ? schema : schema.nullish()
 }
 
-/**
- * Registers resources/list and prompts/list so they return empty lists.
- * 
- * - Resources: register a resource template with an empty list.
- * - Prompts: register an empty prompt so the handler is set and returns [].
- * 
- * Claude Desktop (mcp-remote) does not support prompts/list, so we register an empty prompt.
- */
 function registerEmptyResourcesAndPrompts(server: McpServer): void {
     server.registerResource(
         '_',
@@ -220,43 +247,6 @@ function registerEmptyResourcesAndPrompts(server: McpServer): void {
         async () => ({ contents: [] }),
     )
     server.registerPrompt('_', {}, () => ({ messages: [] }))
-}
-
-
-
-export async function resolvePermissionChecker({ userId, projectId, log }: { userId: string | undefined, projectId: string, log: FastifyBaseLogger }): Promise<PermissionChecker> {
-    const allowAll: PermissionChecker = {
-        check: () => null,
-        wrapExecute: ({ execute }) => execute,
-    }
-    if (isNil(userId) || !EDITION_REQUIRES_RBAC) {
-        return allowAll
-    }
-
-    let userPermissions: string[]
-    try {
-        const role = await getPrincipalRoleOrThrow(userId, projectId, log)
-        userPermissions = role.permissions ?? []
-    }
-    catch (err) {
-        if (err instanceof ActivepiecesError && err.error.code === ErrorCode.AUTHORIZATION) {
-            return buildChecker((permission, toolTitle) => {
-                if (isNil(permission)) {
-                    return null
-                }
-                return noRoleError(toolTitle)
-            })
-        }
-        throw err
-    }
-
-    const permissionSet = new Set(userPermissions)
-    return buildChecker((permission, toolTitle) => {
-        if (isNil(permission) || permissionSet.has(permission)) {
-            return null
-        }
-        return missingPermissionError(permission, toolTitle)
-    })
 }
 
 function buildChecker(check: PermissionChecker['check']): PermissionChecker {
