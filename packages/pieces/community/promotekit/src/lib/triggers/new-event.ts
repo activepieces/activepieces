@@ -65,7 +65,7 @@ export const newEvent = createTrigger({
     const eventType = context.propsValue.eventType;
     if (eventType === 'affiliate.created' || eventType === 'affiliate.approved') {
       const response = await promotekitApiCall<{ data: Record<string, unknown>[] }>({
-        token: context.auth as string,
+        token: context.auth.secret_text,
         method: HttpMethod.GET,
         path: '/affiliates',
         queryParams: { limit: '5' },
@@ -74,7 +74,7 @@ export const newEvent = createTrigger({
     }
     if (eventType === 'referral.created' || eventType === 'referral.converted') {
       const response = await promotekitApiCall<{ data: Record<string, unknown>[] }>({
-        token: context.auth as string,
+        token: context.auth.secret_text,
         method: HttpMethod.GET,
         path: '/referrals',
         queryParams: { limit: '5' },
@@ -82,7 +82,7 @@ export const newEvent = createTrigger({
       return response.body.data.map(promotekitCommon.flattenReferral);
     }
     const response = await promotekitApiCall<{ data: Record<string, unknown>[] }>({
-      token: context.auth as string,
+      token: context.auth.secret_text,
       method: HttpMethod.GET,
       path: '/commissions',
       queryParams: { limit: '5' },

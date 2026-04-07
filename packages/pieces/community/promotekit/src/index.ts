@@ -23,10 +23,10 @@ import { newEvent } from './lib/triggers/new-event';
 export const promotekitAuth = PieceAuth.SecretText({
   displayName: 'API Key',
   description: `To get your API key:
-1. Log in to your PromoteKit dashboard
-2. Go to **Settings > API Keys**
-3. Click **Create API Key**
-4. Copy the key and paste it here
+1. Log in to your PromoteKit dashboard.
+2. Go to **Settings > API Keys**.
+3. Click **Create API Key**.
+4. Copy the key and paste it here.
 `,
   required: true,
   validate: async ({ auth }) => {
