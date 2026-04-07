@@ -239,8 +239,7 @@ const generateImageUsingGenerateText = async ({
 
     return {
       type: 'image',
-      image: image.file.data,
-      mediaType: fileType || 'image/jpeg',
+      image: `data:${fileType || 'image/jpeg'};base64,${image.file.base64}`,
     };
   });
 
