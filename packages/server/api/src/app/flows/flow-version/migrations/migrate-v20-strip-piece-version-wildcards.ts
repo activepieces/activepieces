@@ -12,6 +12,7 @@ import { projectService } from '../../../project/project-service'
 import { flowService } from '../../flow/flow.service'
 import { Migration } from '.'
 
+// we needed to rerun this migration
 export const migrateV20StripPieceVersionWildcards: Migration = {
     targetSchemaVersion: '20',
     migrate: async (flowVersion: FlowVersion): Promise<FlowVersion> => {
