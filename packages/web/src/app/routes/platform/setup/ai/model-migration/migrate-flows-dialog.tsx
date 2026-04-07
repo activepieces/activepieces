@@ -2,17 +2,17 @@ import {
   AIProviderName,
   AIProviderWithoutSensitiveData,
   ErrorCode,
+  isNil,
   MigrateFlowsModelRequest,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
-import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { MultiSelectPieceProperty } from '@/components/custom/multi-select-piece-property';
+import { SearchableSelect } from '@/components/custom/searchable-select';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -20,7 +20,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import {
   Form,
@@ -29,23 +28,32 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { SUPPORTED_AI_PROVIDERS } from '@/features/agents';
 import { aiProviderApi } from '@/features/platform-admin';
 import { projectCollectionUtils } from '@/features/projects';
 import { api } from '@/lib/api';
 
-type MigrateFlowsDialogProps = {
-  children: React.ReactNode;
-  providers: AIProviderWithoutSensitiveData[];
-};
+import { aiProviderMigrationKeys } from './ai-provider-migrations-hooks';
 
-const ModelSelect = ({
+export function MigrateFlowsDialog({
+  providers,
+  open,
+  onOpenChange,
+}: MigrateFlowsDialogProps) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="flex flex-col">
+        <MigrateFlowsDialogContent
+          key={open ? 'open' : 'closed'}
+          providers={providers}
+          setOpen={onOpenChange}
+        />
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function ModelSearchableSelect({
   provider,
   value,
   onChange,
@@ -53,73 +61,41 @@ const ModelSelect = ({
   provider: AIProviderName | undefined;
   value: string;
   onChange: (model: string) => void;
-}) => {
+}) {
   const { data: models, isLoading } = useQuery({
     queryKey: ['ai-models-for-migrate', provider],
     queryFn: () => aiProviderApi.listModelsForProvider(provider!),
     enabled: !!provider,
   });
 
+  const options = (models ?? []).map((m) => ({
+    value: m.id,
+    label: m.name,
+  }));
   return (
-    <Select
-      value={value}
-      onValueChange={onChange}
-      disabled={!provider || isLoading}
-    >
-      <SelectTrigger>
-        <SelectValue
-          placeholder={isLoading ? t('Loading...') : t('Select model')}
-        />
-      </SelectTrigger>
-      <SelectContent>
-        {models?.map((m) => (
-          <SelectItem key={m.id} value={m.id}>
-            {m.name}
-          </SelectItem>
-        ))}
-        {!isLoading && models?.length === 0 && provider && (
-          <div className="px-2 py-1.5 text-sm text-muted-foreground">
-            {t('No models available')}
-          </div>
-        )}
-      </SelectContent>
-    </Select>
+    <SearchableSelect
+      options={options}
+      value={value || undefined}
+      onChange={(v) => onChange(v ?? '')}
+      placeholder={provider ? t('Select model') : t('Select a provider first')}
+      disabled={isNil(provider)}
+      loading={isLoading && !isNil(provider)}
+    />
   );
-};
+}
 
-export const MigrateFlowsDialog = ({
-  children,
-  providers,
-}: MigrateFlowsDialogProps) => {
-  const [open, setOpen] = useState(false);
-
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="flex flex-col">
-        <MigrateFlowsDialogContent
-          key={open ? 'open' : 'closed'}
-          providers={providers}
-          setOpen={setOpen}
-        />
-      </DialogContent>
-    </Dialog>
-  );
-};
-
-const MigrateFlowsDialogContent = ({
+function MigrateFlowsDialogContent({
   providers,
   setOpen,
 }: {
   providers: AIProviderWithoutSensitiveData[];
   setOpen: (val: boolean) => void;
-}) => {
+}) {
+  const queryClient = useQueryClient();
   const form = useForm<MigrateFlowsModelRequest>({
     resolver: zodResolver(MigrateFlowsModelRequest),
     defaultValues: {
-      projectIds: [],
-      sourceModel: { provider: AIProviderName.ACTIVEPIECES, model: '' },
-      targetModel: { provider: AIProviderName.ACTIVEPIECES, model: '' },
+      projectIds: []
     },
   });
 
@@ -128,12 +104,43 @@ const MigrateFlowsDialogContent = ({
 
   const { data: projects } = projectCollectionUtils.useAllPlatformProjects();
 
+  const providerOptions = providers.map((p) => {
+    const info = SUPPORTED_AI_PROVIDERS.find(
+      (sp) => sp.provider === p.provider,
+    );
+    return {
+      value: p.provider,
+      label: p.name,
+      logoUrl: info?.logoUrl,
+    };
+  });
+
+  const renderProviderOption = (value: unknown) => {
+    const provider = providerOptions.find((p) => p.value === value);
+    if (!provider) return null;
+    return (
+      <div className="flex items-center gap-2">
+        {provider.logoUrl && (
+          <img
+            src={provider.logoUrl}
+            alt={provider.label}
+            className="size-4 rounded-sm object-contain"
+          />
+        )}
+        <span>{provider.label}</span>
+      </div>
+    );
+  };
+
   const { mutate, isPending } = useMutation({
     mutationFn: (data: MigrateFlowsModelRequest) =>
       aiProviderApi.migrateFlows(data),
     onSuccess: () => {
       setOpen(false);
-      toast.success(t('Migration job enqueued. Will continue in background.'));
+      toast.success(t('Migration started.'));
+      queryClient.invalidateQueries({
+        queryKey: aiProviderMigrationKeys.list(),
+      });
     },
     onError: (error) => {
       if (
@@ -180,7 +187,7 @@ const MigrateFlowsDialogContent = ({
                   onChange={(value) =>
                     field.onChange(value?.map((v) => `${v}`) ?? [])
                   }
-                  initialValues={(field.value ?? []) as string[]}
+                  initialValues={(field.value ?? [])}
                   showDeselect={(field.value?.length ?? 0) > 0}
                 />
                 <p className="text-xs text-muted-foreground">
@@ -192,37 +199,29 @@ const MigrateFlowsDialogContent = ({
           />
 
           <FormItem className="flex flex-col gap-2">
-            <FormLabel>{t('Source Model')}</FormLabel>
+            <FormLabel htmlFor="sourceModel.provider" showRequiredIndicator>{t('Source Model')}</FormLabel>
             <div className="grid grid-cols-2 gap-2">
               <FormField
                 control={form.control}
                 name="sourceModel.provider"
                 render={({ field }) => (
-                  <Select
-                    value={field.value ?? ''}
-                    onValueChange={(v) => {
+                  <SearchableSelect
+                    options={providerOptions}
+                    value={field.value}
+                    onChange={(v) => {
                       field.onChange(v);
                       form.setValue('sourceModel.model', '');
                     }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder={t('Provider')} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {providers.map((p) => (
-                        <SelectItem key={p.provider} value={p.provider}>
-                          {p.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    placeholder={t('Provider')}
+                    valuesRendering={renderProviderOption}
+                  />
                 )}
               />
               <FormField
                 control={form.control}
                 name="sourceModel.model"
                 render={({ field }) => (
-                  <ModelSelect
+                  <ModelSearchableSelect
                     provider={sourceProvider}
                     value={field.value}
                     onChange={field.onChange}
@@ -237,37 +236,29 @@ const MigrateFlowsDialogContent = ({
           </FormItem>
 
           <FormItem className="flex flex-col gap-2">
-            <FormLabel>{t('Target Model')}</FormLabel>
+            <FormLabel htmlFor="targetModel.provider" showRequiredIndicator>{t('Target Model')}</FormLabel>
             <div className="grid grid-cols-2 gap-2">
               <FormField
                 control={form.control}
                 name="targetModel.provider"
                 render={({ field }) => (
-                  <Select
-                    value={field.value ?? ''}
-                    onValueChange={(v) => {
+                  <SearchableSelect
+                    options={providerOptions}
+                    value={field.value}
+                    onChange={(v) => {
                       field.onChange(v);
                       form.setValue('targetModel.model', '');
                     }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder={t('Provider')} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {providers.map((p) => (
-                        <SelectItem key={p.provider} value={p.provider}>
-                          {p.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    placeholder={t('Provider')}
+                    valuesRendering={renderProviderOption}
+                  />
                 )}
               />
               <FormField
                 control={form.control}
                 name="targetModel.model"
                 render={({ field }) => (
-                  <ModelSelect
+                  <ModelSearchableSelect
                     provider={targetProvider}
                     value={field.value}
                     onChange={field.onChange}
@@ -296,22 +287,18 @@ const MigrateFlowsDialogContent = ({
             >
               {t('Cancel')}
             </Button>
-            <ConfirmationDeleteDialog
-              title={t('Confirm Migration')}
-              message={t(
-                'Are you sure you want to migrate all flows to the target model?',
-              )}
-              mutationFn={() => form.handleSubmit((data) => mutate(data))()}
-              buttonText={t('Migrate')}
-              entityName={t('Migration')}
-            >
-              <Button type="button" loading={isPending} disabled={isPending}>
-                {t('Migrate')}
-              </Button>
-            </ConfirmationDeleteDialog>
+            <Button type="submit" loading={isPending} disabled={isPending}>
+              {t('Migrate')}
+            </Button>
           </DialogFooter>
         </form>
       </Form>
     </>
   );
+}
+
+type MigrateFlowsDialogProps = {
+  providers: AIProviderWithoutSensitiveData[];
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 };
