@@ -37,7 +37,7 @@ function McpAuthorizePage() {
     queryFn: () =>
       api.get<SeekPage<ProjectWithLimits>>('/v1/projects', {
         params: {
-          limit: 100,
+          limit: 1000,
           ...(searchValue && { displayName: searchValue }),
         },
       }),
