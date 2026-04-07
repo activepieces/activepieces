@@ -10,7 +10,9 @@ export const searchNews = createAction({
 	description: 'Search company news and press releases',
 	props: {
 		search_term: Property.ShortText({ displayName: 'Search Term', required: false }),
+		search_terms: Property.ShortText({ displayName: 'Search Terms', description: 'Comma-separated keywords', required: false }),
 		domains: Property.ShortText({ displayName: 'Company Domains', description: 'Comma-separated', required: false }),
+		companies: Property.ShortText({ displayName: 'Companies', description: 'Comma-separated company domain_search_id UUIDs', required: false }),
 		categories: Property.ShortText({ displayName: 'News Categories', description: 'Comma-separated', required: false }),
 		published_dates: Property.ShortText({ displayName: 'Published Dates', description: 'Comma-separated date filters', required: false }),
 		locations: Property.ShortText({ displayName: 'Locations', description: 'Comma-separated locations', required: false }),
@@ -27,7 +29,9 @@ export const searchNews = createAction({
 			per_page: context.propsValue.per_page ?? 25,
 		};
 		if (context.propsValue.search_term) body.search_term = context.propsValue.search_term;
+		if (context.propsValue.search_terms) body.search_terms = splitComma(context.propsValue.search_terms);
 		if (context.propsValue.domains) body.domains = splitComma(context.propsValue.domains);
+		if (context.propsValue.companies) body.companies = splitComma(context.propsValue.companies);
 		if (context.propsValue.categories) body.categories = splitComma(context.propsValue.categories);
 		if (context.propsValue.published_dates) body.published_dates = splitComma(context.propsValue.published_dates);
 		if (context.propsValue.locations) body.locations = splitComma(context.propsValue.locations);
