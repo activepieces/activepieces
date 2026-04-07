@@ -119,7 +119,8 @@ async function isFlowChanged(fromFlow: FlowState, targetFlow: FlowState): Promis
 }
 
 async function normalize(flowVersion: FlowVersion): Promise<FlowVersion> {
-    return flowStructureUtil.transferFlow(flowVersion, (step) => {
+    const flowUpgradable = flowPieceUtil.makeFlowAutoUpgradable(flowVersion)
+    return flowStructureUtil.transferFlow(flowUpgradable, (step) => {
         const clonedStep: Step = JSON.parse(JSON.stringify(step))
         clonedStep.settings.sampleData = DEFAULT_SAMPLE_DATA_SETTINGS
         clonedStep.lastUpdatedDate = ''

@@ -26,6 +26,7 @@ import {
   Dialog,
   DialogClose,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -138,6 +139,7 @@ function CreateOrEditConnectionSection({
                 })}
           </div>
         </DialogTitle>
+        <DialogDescription></DialogDescription>
       </DialogHeader>
 
       <Form {...form}>

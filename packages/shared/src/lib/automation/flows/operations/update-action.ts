@@ -6,7 +6,7 @@ import { flowStructureUtil } from '../util/flow-structure-util'
 import { UpdateActionRequest } from './index'
 
 function _updateAction(flowVersion: FlowVersion, request: UpdateActionRequest): FlowVersion {
-    const next = flowStructureUtil.transferFlow(flowVersion, (stepToUpdate) => {
+    return flowStructureUtil.transferFlow(flowVersion, (stepToUpdate) => {
         if (stepToUpdate.name !== request.name) {
             return stepToUpdate
         }
@@ -79,7 +79,6 @@ function _updateAction(flowVersion: FlowVersion, request: UpdateActionRequest): 
             valid,
         }
     })
-    return next
 }
 
 export { _updateAction }

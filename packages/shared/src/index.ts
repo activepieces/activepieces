@@ -23,7 +23,6 @@ export * from './lib/core/license-keys'
 export * from './lib/core/support-url'
 export * from './lib/core/feedback-url'
 export * from './lib/core/health'
-export * from './lib/form-errors'
 
 // management
 export * from './lib/management/platform'

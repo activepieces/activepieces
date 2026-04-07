@@ -67,7 +67,7 @@ export const CodeActionSchema = z.object({
     type: z.literal(FlowActionType.CODE),
     settings: CodeActionSettings,
 })
-const pieceActionSettingsFields = {
+export const PieceActionSettings = z.object({
     ...commonActionSettings,
     propertySettings: z.record(z.string(), PropertySettings),
     pieceName: z.string(),
@@ -75,12 +75,7 @@ const pieceActionSettingsFields = {
     actionName: z.string().optional(),
     input: z.record(z.string(), z.unknown()),
     errorHandlingOptions: ActionErrorHandlingOptions,
-}
-
-export const PieceActionSettings = z.object({
-    ...pieceActionSettingsFields,
 })
-
 export type PieceActionSettings = z.infer<typeof PieceActionSettings>
 
 export const PieceActionSchema = z.object({

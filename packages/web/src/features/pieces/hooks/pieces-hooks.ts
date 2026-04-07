@@ -53,6 +53,7 @@ type UsePieceModelForStepSettings = {
   name: string;
   version: string | undefined;
   enabled?: boolean;
+  getExactVersion: boolean;
 };
 
 type UsePieceProps = {
@@ -98,20 +99,34 @@ export const piecesHooks = {
     name,
     version,
     enabled = true,
+    getExactVersion,
   }: UsePieceModelForStepSettings) => {
     const exactVersion = version
       ? flowPieceUtil.getExactVersion(version)
+      : undefined;
+    const latestPatchVersion = exactVersion
+      ? flowPieceUtil.getMostRecentPatchVersion(exactVersion)
       : undefined;
     const pieceQuery = piecesHooks.usePiece({
       name,
       version: exactVersion,
       enabled,
     });
+    const latestPatchQuery = piecesHooks.usePiece({
+      name,
+      version: latestPatchVersion,
+      enabled,
+    });
     return {
-      pieceModel: pieceQuery.pieceModel,
-      isLoading: pieceQuery.isLoading,
-      isSuccess: pieceQuery.isSuccess,
-      refetch: pieceQuery.refetch,
+      pieceModel: getExactVersion
+        ? pieceQuery.pieceModel
+        : latestPatchQuery.pieceModel,
+      isLoading: pieceQuery.isLoading || latestPatchQuery.isLoading,
+      isSuccess: pieceQuery.isSuccess && latestPatchQuery.isSuccess,
+      refetch: () => {
+        pieceQuery.refetch();
+        latestPatchQuery.refetch();
+      },
     };
   },
   useMultiplePieces: ({ names }: UseMultiplePiecesProps) => {
@@ -311,18 +326,6 @@ export const piecesHooks = {
       retry: 1,
       retryDelay: 1000,
     });
-  },
-  usePieceVersions: (pieceName: string) => {
-    const query = useQuery({
-      queryKey: ['piece-versions', pieceName],
-      queryFn: () => piecesApi.listVersions(pieceName),
-      staleTime: Infinity,
-      enabled: !!pieceName,
-    });
-    return {
-      pieceVersions: query.data?.data,
-      isLoading: query.isLoading,
-    };
   },
   usePieceForEmbeddingConnection: ({
     pieceName,

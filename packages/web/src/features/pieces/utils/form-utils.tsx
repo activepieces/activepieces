@@ -36,7 +36,6 @@ import {
   PropertyExecutionType,
   PropertySettings,
   PieceTriggerSettings,
-  AUTHENTICATION_PROPERTY_NAME,
   OAuth2GrantType,
 } from '@activepieces/shared';
 import { t } from 'i18next';
@@ -162,7 +161,7 @@ function getDefaultValueForProperties({
   existingInput: Record<string, unknown>;
   propertySettings?: Record<string, PropertySettings>;
 }): Record<string, unknown> {
-  const defaultValues = Object.entries(props).reduce<Record<string, unknown>>(
+  return Object.entries(props).reduce<Record<string, unknown>>(
     (defaultValues, [propertyName, property]) => {
       defaultValues[propertyName] =
         //we specifically check for undefined because null is a valid value
@@ -178,11 +177,6 @@ function getDefaultValueForProperties({
     },
     {},
   );
-  if (existingInput[AUTHENTICATION_PROPERTY_NAME]) {
-    defaultValues[AUTHENTICATION_PROPERTY_NAME] =
-      existingInput[AUTHENTICATION_PROPERTY_NAME];
-  }
-  return defaultValues;
 }
 
 const EXTERNAL_ID_SCHEMA = z
