@@ -133,7 +133,7 @@ jobs:
       always() &&
       (github.event_name == 'schedule' ||
        (github.event_name == 'push' && needs.detect-hotfix-merge.outputs.is_hotfix_merge == 'true' &&
-        (needs.deploy-staging.result == 'success' || needs.deploy-staging.result == 'skipped')))
+        needs.deploy-staging.result == 'success'))
     runs-on: ubuntu-latest
     permissions:
       contents: write
