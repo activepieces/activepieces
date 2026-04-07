@@ -124,14 +124,14 @@ export async function createAIModel({
             }
         }
         case AIProviderName.AVIAN: {
-            const avianProvider = createOpenAICompatible({
-                name: 'avian',
+            const avianProvider = createOpenAI({
+                apiKey: auth.apiKey,
                 baseURL: 'https://api.avian.io/v1',
-                headers: {
-                    'Authorization': `Bearer ${auth.apiKey}`,
-                },
             })
-            return avianProvider.chatModel(modelId)
+            if (isImage) {
+                return avianProvider.imageModel(modelId)
+            }
+            return avianProvider.chat(modelId)
         }
         case AIProviderName.CUSTOM: {
             const { apiKeyHeader, baseUrl } = config as OpenAICompatibleProviderConfig
