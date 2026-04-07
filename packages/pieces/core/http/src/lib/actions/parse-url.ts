@@ -27,12 +27,10 @@ export const parseUrl = createAction({
       const keys = new Set(parsedUrl.searchParams.keys());
 
       for (const key of keys) {
-        const allValues = parsedUrl.searchParams.getAll(key);
-
         if (returnArrays) {
-          queryParams[key] = allValues;
+          queryParams[key] = parsedUrl.searchParams.getAll(key);
         } else {
-          queryParams[key] = allValues.join(', ');
+          queryParams[key] = parsedUrl.searchParams.get(key);
         }
       }
 
