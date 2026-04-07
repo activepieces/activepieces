@@ -18,6 +18,7 @@ export const searchAds = createAction({
 		company_locations: Property.ShortText({ displayName: 'Company Locations', description: 'Comma-separated company locations', required: false }),
 		domains: Property.ShortText({ displayName: 'Company Domains', description: 'Comma-separated domains', required: false }),
 		linkedin_urls: Property.ShortText({ displayName: 'LinkedIn URLs', description: 'Comma-separated LinkedIn URLs', required: false }),
+		companies: Property.ShortText({ displayName: 'Companies', description: 'Comma-separated company domain_search_id UUIDs', required: false }),
 		page: Property.Number({ displayName: 'Page', required: false, defaultValue: 1 }),
 		per_page: Property.Number({ displayName: 'Per Page', description: 'Max 25', required: false, defaultValue: 25 }),
 	},
@@ -35,6 +36,7 @@ export const searchAds = createAction({
 		if (context.propsValue.company_locations) body.company_locations = splitComma(context.propsValue.company_locations);
 		if (context.propsValue.domains) body.domains = splitComma(context.propsValue.domains);
 		if (context.propsValue.linkedin_urls) body.linkedin_urls = splitComma(context.propsValue.linkedin_urls);
+		if (context.propsValue.companies) body.companies = splitComma(context.propsValue.companies);
 		return await pubrioRequest(context.auth, HttpMethod.POST, '/companies/advertisements/search', body);
 	},
 });
