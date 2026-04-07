@@ -4,17 +4,25 @@ import { pubrioAuth } from '../../index';
 import { pubrioRequest } from '../common';
 
 export const revealMonitorSignature = createAction({
-	auth: pubrioAuth,
-	name: 'reveal_monitor_signature',
-	displayName: 'Reveal Monitor Signature',
-	description: 'Reveal the signature for a monitor (uses credits)',
-	props: {
-		monitor_id: Property.ShortText({ displayName: 'Monitor ID', required: true }),
-	},
-	async run(context) {
-		const body: Record<string, unknown> = {
-			monitor_id: context.propsValue.monitor_id,
-		};
-		return await pubrioRequest(context.auth, HttpMethod.POST, '/monitors/signature/reveal', body);
-	},
+  auth: pubrioAuth,
+  name: 'reveal_monitor_signature',
+  displayName: 'Reveal Monitor Signature',
+  description: 'Reveal the signature for a monitor (uses credits)',
+  props: {
+    monitor_id: Property.ShortText({
+      displayName: 'Monitor ID',
+      required: true,
+    }),
+  },
+  async run(context) {
+    const body: Record<string, unknown> = {
+      monitor_id: context.propsValue.monitor_id,
+    };
+    return await pubrioRequest(
+      context.auth,
+      HttpMethod.POST,
+      '/monitors/signature/reveal',
+      body
+    );
+  },
 });
