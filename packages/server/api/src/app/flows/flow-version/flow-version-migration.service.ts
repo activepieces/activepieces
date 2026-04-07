@@ -37,7 +37,9 @@ export const flowVersionMigrationService = (log: FastifyBaseLogger) => ({
                 code: ErrorCode.FLOW_MIGRATION_FAILED,
                 params: { flowVersionId: flowVersion.id, message: migrationError.message },
             })
-            await onCallService(log, system.get(AppSystemProp.PAGE_ONCALL_WEBHOOK)).page(inspect(apError))
+            onCallService(log, system.get(AppSystemProp.PAGE_ONCALL_WEBHOOK)).page(inspect(apError)).catch((pageError) => {
+                log.error({ pageError }, '[flowVersionMigration] Failed to send on-call page')
+            })
             throw migrationError
         }
 

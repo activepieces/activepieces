@@ -177,7 +177,11 @@ async function fetchExecutionState(apiClient: WorkerToApiContract, data: Execute
         }
         return parsed.executionState
     } catch (error) {
-        await onCallService(log, workerSettings.getSettings().PAGE_ONCALL_WEBHOOK).page(inspect(error))
+        if (error instanceof ActivepiecesError) {
+            onCallService(log, workerSettings.getSettings().PAGE_ONCALL_WEBHOOK).page(inspect(error)).catch((pageError) => {
+                log.error({ pageError }, '[fetchExecutionState] Failed to send on-call page')
+            })
+        }
         throw error
     }
 }

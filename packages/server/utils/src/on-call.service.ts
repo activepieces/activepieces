@@ -1,4 +1,4 @@
-import { ActivepiecesError, tryCatch } from '@activepieces/shared'
+import { tryCatch } from '@activepieces/shared'
 
 export const onCallService = (log: OnCallLogger, webhookUrl: string | undefined) => ({
     async page(error: string): Promise<void> {
@@ -6,7 +6,7 @@ export const onCallService = (log: OnCallLogger, webhookUrl: string | undefined)
         const { error: fetchError } = await tryCatch(() =>
             fetch(webhookUrl, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'text/plain' },
                 body: error,
             }),
         )
