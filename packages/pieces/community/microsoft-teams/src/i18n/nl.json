@@ -51,6 +51,7 @@
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
   "Follow redirects": "Volg omleidingen",
+  "Use @username to mention team members in the message.": "Gebruik @username om teamleden in het bericht te vermelden.",
   "ID of the parent message to reply to.": "ID van het bovenliggende bericht waarop u wilt reageren.",
   "The ID of the message to retrieve.": "Het ID van het op te halen bericht.",
   "The ID of the message to delete.": "Het ID van het te verwijderen bericht.",
