@@ -1,10 +1,7 @@
 import { ActivepiecesError, tryCatch } from '@activepieces/shared'
-import { FastifyBaseLogger } from 'fastify'
-import { workerSettings } from '../config/worker-settings'
 
-export const onCallService = (log: FastifyBaseLogger) => ({
+export const onCallService = (log: OnCallLogger, webhookUrl: string | undefined) => ({
     async page(error: ActivepiecesError): Promise<void> {
-        const webhookUrl = workerSettings.getSettings().PAGE_ONCALL_WEBHOOK
         if (!webhookUrl) return
         const { error: fetchError } = await tryCatch(() =>
             fetch(webhookUrl, {
@@ -18,3 +15,7 @@ export const onCallService = (log: FastifyBaseLogger) => ({
         }
     },
 })
+
+type OnCallLogger = {
+    error: (obj: Record<string, unknown>, msg: string) => void
+}
