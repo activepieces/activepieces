@@ -38,7 +38,17 @@ export const mcpServerController: FastifyPluginAsyncZod = async (app) => {
     })
 
     app.post('/http', StreamableHttpRequestRequest, async (req, reply) => {
-        const mcp = await mcpServerService(req.log).getPopulatedByProjectId(req.params.projectId)
+        let mcp: PopulatedMcpServer
+        try {
+            mcp = await mcpServerService(req.log).getPopulatedByProjectId(req.params.projectId)
+        }
+        catch (err) {
+            req.log.debug({ err }, 'Failed to resolve MCP server for project')
+            return reply.status(401).send({
+                error: 'Unauthorized',
+                message: 'Invalid project or token.',
+            })
+        }
         const authHeader = req.headers['authorization']
         const tokenFromHeader = validateAuthorizationHeader(authHeader, mcp)
         const tokenFromQuery = validateTokenFromQuery(req.query, mcp)
