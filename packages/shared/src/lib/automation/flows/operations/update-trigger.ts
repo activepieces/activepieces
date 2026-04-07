@@ -45,12 +45,13 @@ function _updateTrigger(flowVersion: FlowVersion, request: UpdateTriggerRequest)
     const trigger = flowStructureUtil.getStepOrThrow(request.name, flowVersion.trigger)
     const existingSampleData = trigger.type === FlowTriggerType.PIECE ? trigger.settings.sampleData : undefined
     const updatedTrigger = createTrigger(request.name, request, trigger.nextAction, existingSampleData)
-    return flowStructureUtil.transferFlow(flowVersion, (parentStep) => {
+    const next = flowStructureUtil.transferFlow(flowVersion, (parentStep) => {
         if (parentStep.name === request.name) {
             return updatedTrigger
         }
         return parentStep
     })
+    return next
 }
 
 export { _updateTrigger }
