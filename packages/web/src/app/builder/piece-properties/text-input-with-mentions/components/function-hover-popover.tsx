@@ -63,8 +63,9 @@ export function FunctionEditorTooltip({
 
       const startEl = target.closest<HTMLElement>('[data-function-start]');
       const endEl = target.closest<HTMLElement>('[data-function-end]');
+      const sepEl = target.closest<HTMLElement>('[data-function-sep]');
 
-      if (!startEl && !endEl) {
+      if (!startEl && !endEl && !sepEl) {
         scheduleHide();
         return;
       }
@@ -78,7 +79,9 @@ export function FunctionEditorTooltip({
 
       const openId = startEl
         ? startEl.getAttribute('data-function-start')
-        : endEl!.getAttribute('data-function-end');
+        : endEl
+        ? endEl.getAttribute('data-function-end')
+        : sepEl!.getAttribute('data-function-sep');
 
       if (!openId) return;
 
@@ -99,8 +102,8 @@ export function FunctionEditorTooltip({
         matchStart?.getAttribute('data-function-name') ??
         '';
 
-      const badge = (startEl ?? endEl)!;
-      const rect = badge.getBoundingClientRect();
+      const anchorBadge = startEl ?? sepEl ?? endEl!;
+      const rect = anchorBadge.getBoundingClientRect();
 
       const errorMessage =
         startEl?.getAttribute('data-fn-error-msg') ??
@@ -249,7 +252,7 @@ export function FunctionTooltipCard({
           <span className="text-purple-400">{fnDef.name}(</span>
           {argNames.map((arg, i) => (
             <React.Fragment key={i}>
-              {i > 0 && <span className="text-gray-500">, </span>}
+              {i > 0 && <span className="text-gray-500">; </span>}
               <span
                 className={cn(
                   i === currentArgIndex
@@ -284,7 +287,7 @@ export function FunctionTooltipCard({
 function parseSyntaxArgs(syntax: string): string[] {
   const match = syntax.match(/\((.+)\)/);
   if (!match || !match[1].trim()) return [];
-  return match[1].split(',').map((s) => s.trim());
+  return match[1].split(';').map((s) => s.trim());
 }
 
 export type ActiveFunctionInfo = {

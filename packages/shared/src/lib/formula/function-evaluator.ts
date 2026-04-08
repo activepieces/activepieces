@@ -471,7 +471,9 @@ function wrapStringArgs(expr: string): string {
             const inner = wrapStringArgs(arg)
             if (!fn) return inner
             const expectedSpec = fn.argTypes[Math.min(i, fn.argTypes.length - 1)]
-            return expectedSpec === 'string' ? quoteIfBare(inner) : inner
+            const shouldQuote = expectedSpec === 'string' ||
+                (Array.isArray(expectedSpec) && (expectedSpec as string[]).includes('string'))
+            return shouldQuote ? quoteIfBare(inner) : inner
         })
 
         result += fnName + '(' + processedArgs.join(';') + ')'
@@ -521,7 +523,7 @@ function quoteIfBare(arg: string): string {
     if (trimmed.startsWith('__ap_')) return arg
     const fnCallMatch = trimmed.match(/^([a-z_][a-z0-9_]*)\s*\(/i)
     if (fnCallMatch && AP_FUNCTIONS.some((f) => f.name === fnCallMatch[1])) return arg
-    return '"' + trimmed.replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"'
+    return '"' + arg.replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"'
 }
 
 function normalizeExpression(expr: string): string {

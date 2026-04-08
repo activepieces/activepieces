@@ -12,12 +12,25 @@ export function typeCheckTiptapDoc(doc: DocNode): Map<string, string> {
     const errors = new Map<string, string>()
     const flat = flattenParagraphNodes(doc)
 
+    // Collect IDs of functions that have a matching closing node.
+    // Unclosed functions are already highlighted by applyUnclosedErrors in the
+    // editor — skip them here to avoid confusing "missing value" messages while
+    // the user is still typing.
+    const closedIds = new Set<string>()
+    for (const node of flat) {
+        if (node.type === 'function_end') {
+            const openId = node.attrs?.['openId'] as string | undefined
+            if (openId) closedIds.add(openId)
+        }
+    }
+
     for (const node of flat) {
         if (node.type !== 'function_start') continue
 
         const id = node.attrs?.['id'] as string | undefined
         const fnName = node.attrs?.['functionName'] as string | undefined
         if (!id || !fnName) continue
+        if (!closedIds.has(id)) continue
 
         const fn = AP_FUNCTIONS.find((f) => f.name === fnName)
         if (!fn) continue
@@ -28,7 +41,7 @@ export function typeCheckTiptapDoc(doc: DocNode): Map<string, string> {
         if (fn.maxArgs !== -1 && argCount > fn.maxArgs) {
             errors.set(
                 id,
-                `${fnName}() takes at most ${fn.maxArgs} argument${fn.maxArgs === 1 ? '' : 's'} (${argCount} given)`,
+                `${fnName} takes at most ${fn.maxArgs} value${fn.maxArgs === 1 ? '' : 's'}, ${argCount} given`,
             )
             continue
         }
@@ -36,7 +49,7 @@ export function typeCheckTiptapDoc(doc: DocNode): Map<string, string> {
         if (argCount < fn.minArgs) {
             errors.set(
                 id,
-                `${fnName}() needs at least ${fn.minArgs} argument${fn.minArgs === 1 ? '' : 's'} (${argCount} given)`,
+                `${fnName} needs at least ${fn.minArgs} value${fn.minArgs === 1 ? '' : 's'}, ${argCount} given`,
             )
             continue
         }
@@ -54,7 +67,7 @@ export function typeCheckTiptapDoc(doc: DocNode): Map<string, string> {
             if (actualType !== expectedSpec) {
                 errors.set(
                     id,
-                    `${ordinal(i + 1)} argument of ${fnName}() expects ${expectedSpec}, got ${actualType}`,
+                    `${fnName}: value ${i + 1} should be ${expectedSpec}, not ${actualType}`,
                 )
                 break
             }
@@ -202,8 +215,3 @@ function inferArgType(argNodes: DocNode[]): ApFunctionArgType | null {
     return null
 }
 
-function ordinal(n: number): string {
-    const s = ['th', 'st', 'nd', 'rd']
-    const v = n % 100
-    return n + (s[(v - 20) % 10] ?? s[v] ?? s[0])
-}

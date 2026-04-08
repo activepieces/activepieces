@@ -13,6 +13,7 @@ import { MentionNodeAttrs, Mention } from '@tiptap/extension-mention';
 import { Paragraph } from '@tiptap/extension-paragraph';
 import { Placeholder } from '@tiptap/extension-placeholder';
 import { Text } from '@tiptap/extension-text';
+import { Fragment } from '@tiptap/pm/model';
 import { TextSelection } from '@tiptap/pm/state';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
@@ -260,6 +261,37 @@ export const TiptapEditor = ({
               }
             }
           }
+        }
+
+        if (event.key === ';') {
+          const { state } = view;
+          const { from, to } = state.selection;
+
+          // Walk from doc start to cursor, tracking function nesting depth.
+          // If depth > 0 the cursor is inside a function — insert a sep node.
+          let depth = 0;
+          let currentOpenId: string | null = null;
+          state.doc.nodesBetween(0, from, (node) => {
+            if (node.type.name === FUNCTION_START_NODE_TYPE) {
+              depth++;
+              currentOpenId = node.attrs.id as string;
+            }
+            if (node.type.name === FUNCTION_END_NODE_TYPE) {
+              depth--;
+              if (depth === 0) currentOpenId = null;
+            }
+          });
+
+          if (depth <= 0 || !currentOpenId) return false;
+
+          const { tr } = state;
+          const sepNode = state.schema.nodes[FUNCTION_SEP_NODE_TYPE].create({
+            openId: currentOpenId,
+          });
+          const zwsText = state.schema.text(ZWS_CHAR);
+          tr.replaceWith(from, to, Fragment.fromArray([sepNode, zwsText]));
+          view.dispatch(tr);
+          return true;
         }
 
         if (event.key !== ')') return false;
