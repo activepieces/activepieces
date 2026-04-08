@@ -1,11 +1,6 @@
 import { PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework'
 
-export function mcpToolError(prefix: string, err: unknown): { content: [{ type: 'text', text: string }] } {
-    const message = err instanceof Error ? err.message : String(err)
-    return { content: [{ type: 'text', text: `❌ ${prefix}: ${message}` }] }
-}
-
-export const AUTH_PROP_TYPES = new Set<PropertyType>([
+const AUTH_TYPES = new Set<PropertyType>([
     PropertyType.OAUTH2,
     PropertyType.SECRET_TEXT,
     PropertyType.BASIC_AUTH,
@@ -18,12 +13,17 @@ const DYNAMIC_PROP_TYPES = new Set<PropertyType>([
     PropertyType.DYNAMIC,
 ])
 
-export function diagnosePieceProps({ props, input, pieceAuth, requireAuth, componentType }: DiagnosePiecePropsParams): DiagnosisResult {
+function mcpToolError(prefix: string, err: unknown): { content: [{ type: 'text', text: string }] } {
+    const message = err instanceof Error ? err.message : String(err)
+    return { content: [{ type: 'text', text: `❌ ${prefix}: ${message}` }] }
+}
+
+function diagnosePieceProps({ props, input, pieceAuth, requireAuth, componentType }: DiagnosePiecePropsParams): DiagnosisResult {
     const missing: string[] = []
     const uiRequired: string[] = []
     const allProps: string[] = []
     for (const [propName, prop] of Object.entries(props)) {
-        if (AUTH_PROP_TYPES.has(prop.type)) {
+        if (AUTH_TYPES.has(prop.type)) {
             continue
         }
         allProps.push(`${propName} (${prop.type}${prop.required ? ', required' : ''})`)
@@ -58,6 +58,8 @@ export function diagnosePieceProps({ props, input, pieceAuth, requireAuth, compo
     }
     return { parts, missing, uiRequired, hasAuth }
 }
+
+export { mcpToolError, diagnosePieceProps, AUTH_TYPES as AUTH_PROP_TYPES }
 
 type DiagnosePiecePropsParams = {
     props: PiecePropertyMap

@@ -146,7 +146,7 @@ export const apUpdateStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
                     const diagnosis = updatedStep.type === FlowActionType.PIECE
                         ? await diagnoseMissingInputs({ settings: updatedStep.settings, platformId: project.platformId, log })
                         : null
-                    const hint = diagnosis
+                    const hint = (diagnosis || null)
                         ?? (step.type === FlowActionType.PIECE
                             ? 'Use ap_list_pieces to verify pieceName, pieceVersion, actionName and required inputs, then retry.'
                             : 'Check the step settings and retry.')

@@ -35,7 +35,7 @@ export const apListFlowsTool = (mcp: McpServer, log: FastifyBaseLogger): McpTool
 function formatFlowLine(flow: PopulatedFlow): string {
     const trigger = flow.version.trigger
     const triggerLabel = trigger.type === FlowTriggerType.PIECE
-        ? trigger.settings.pieceName
+        ? (trigger.settings.pieceName ?? 'piece (unconfigured)')
         : 'no trigger'
     const published = !isNil(flow.publishedVersionId) ? 'published' : 'draft'
     return `- ${flow.version.displayName} (${flow.id}) | ${flow.status} | ${published} | trigger: ${triggerLabel}`
