@@ -415,7 +415,7 @@ export const TiptapEditor = ({
       const flatData = flattenSampleData(sampleData ?? {});
       const { result, error } = evaluateExpression(expression, flatData);
       setPreviewErrorMsg(error);
-      setPreviewResult(result != null ? String(result) : '');
+      setPreviewResult(result != null ? formatPreviewResult(result) : '');
     },
     [sampleData],
   );
@@ -534,6 +534,11 @@ function docHasFunctions(editor: import('@tiptap/react').Editor): boolean {
     if (node.type.name === FUNCTION_START_NODE_TYPE) found = true;
   });
   return found;
+}
+
+function formatPreviewResult(value: unknown): string {
+  if (typeof value === 'object') return JSON.stringify(value, null, 2);
+  return String(value);
 }
 
 function convertToText(value: unknown): string {

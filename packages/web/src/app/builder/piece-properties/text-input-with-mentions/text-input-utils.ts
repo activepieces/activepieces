@@ -109,21 +109,12 @@ function tokenizeExpression(expr: string): ExprToken[] {
       continue;
     }
 
-    // Separator , inside a function (legacy format — accept for backward compat)
-    if (expr[i] === ',' && fnDepth > 0) {
-      tokens.push({ kind: 'fn_sep' });
-      i++;
-      if (i < expr.length && expr[i] === ' ') i++; // skip optional trailing space
-      continue;
-    }
-
     let text = '';
     while (i < expr.length) {
       if (expr[i] === '{' && expr[i + 1] === '{') break;
       if (expr[i] === '\n') break;
       if (expr[i] === ')') break;
       if (expr[i] === ';' && fnDepth > 0) break;
-      if (expr[i] === ',' && fnDepth > 0) break;
       const ahead = expr.slice(i).match(/^([a-z_][a-z0-9_]*)\(/i);
       if (ahead && fnNames.has(ahead[1])) break;
       text += expr[i];
