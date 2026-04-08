@@ -490,7 +490,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
             id,
             projectId,
         })
-        if (flow.operationStatus !== FlowOperationStatus.NONE) {
+        if (flow.operationStatus !== FlowOperationStatus.NONE && flow.operationStatus !== FlowOperationStatus.DELETING) {
             throw new ActivepiecesError({
                 code: ErrorCode.FLOW_OPERATION_IN_PROGRESS,
                 params: {
