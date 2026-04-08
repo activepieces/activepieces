@@ -136,12 +136,12 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
         secretManagersEnabled: {
             type: Boolean,
         },
-        /** @deprecated use workerGroupId instead */
+        /** @deprecated use workerGroupId instead — will be removed in 0.83.0 */
         dedicatedWorkers: {
             type: 'jsonb',
             nullable: true,
         },
-        /** @deprecated use workerGroupId instead */
+        /** @deprecated use workerGroupId instead — will be removed in 0.83.0 */
         canary: {
             type: Boolean,
             default: false,
