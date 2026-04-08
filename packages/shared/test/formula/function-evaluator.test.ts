@@ -497,31 +497,34 @@ describe('implicit string quoting', () => {
         expect(result('lowercase(WORLD)')).toBe('world'))
 
     it('prefix without quotes', () =>
-        expect(result('prefix(world; !!)')).toBe('!!world'))
+        expect(result('prefix(world;!!)')).toBe('!!world'))
 
     it('suffix without quotes', () =>
-        expect(result('suffix(Hello; !)')).toBe('Hello!'))
+        expect(result('suffix(Hello;!)')).toBe('Hello!'))
 
     it('combine without quotes on all three args', () =>
-        expect(result('combine(foo; bar; -)')).toBe('foo-bar'))
+        expect(result('combine(foo;bar;-)')).toBe('foo-bar'))
 
     it('combine with quoted space separator still works', () =>
-        expect(result('combine(John; Smith; " ")')).toBe('John Smith'))
+        expect(result('combine(John;Smith;" ")')).toBe('John Smith'))
+
+    it('combine preserves spaces typed inside an arg', () =>
+        expect(result('combine(hello;    world)')).toBe('hello    world'))
 
     it('replace without quotes on search and replacement', () =>
-        expect(result('replace(hello world; world; there)')).toBe('hello there'))
+        expect(result('replace(hello world;world;there)')).toBe('hello there'))
 
     it('contains without quotes', () =>
-        expect(result('contains(hello world; world)')).toBe(true))
+        expect(result('contains(hello world;world)')).toBe(true))
 
     it('starts_with without quotes', () =>
-        expect(result('starts_with(hello world; hello)')).toBe(true))
+        expect(result('starts_with(hello world;hello)')).toBe(true))
 
     it('if_empty without quotes on fallback — first arg explicit empty string', () =>
-        expect(result('if_empty(""; fallback text)')).toBe('fallback text'))
+        expect(result('if_empty("";fallback text)')).toBe('fallback text'))
 
     it('if_null without quotes on fallback — variable that is null', () =>
-        expect(result('if_null({{val}}; N/A)', { val: null })).toBe('N/A'))
+        expect(result('if_null({{val}};N/A)', { val: null })).toBe('N/A'))
 
     it('nested call result passed to string arg — no double-quoting', () =>
         expect(result('trim(uppercase(hello))')).toBe('HELLO'))

@@ -310,7 +310,7 @@ export function evaluateExpression(
         else {
             const { result, error } = evaluateSingleFormula(seg.value, sampleData)
             if (error) return { result: null, error }
-            parts.push(result != null ? String(result) : '')
+            parts.push(result != null ? (typeof result === 'object' ? JSON.stringify(result) : String(result)) : '')
         }
     }
     return { result: parts.join(''), error: null }
@@ -603,7 +603,7 @@ function quoteIfBare(arg: string): string {
     if (trimmed.startsWith('__ap_')) return arg
     const fnCallMatch = trimmed.match(/^([a-z_][a-z0-9_]*)\s*\(/i)
     if (fnCallMatch && AP_FUNCTIONS.some((f) => f.name === fnCallMatch[1])) return arg
-    return '"' + trimmed.replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"'
+    return '"' + arg.replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"'
 }
 
 function normalizeExpression(expr: string): string {
