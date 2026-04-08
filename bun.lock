@@ -5606,6 +5606,17 @@
         "tslib": "^2.3.0",
       },
     },
+    "packages/pieces/community/recurly": {
+      "name": "@activepieces/piece-recurly",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "recurly": "4.73.0",
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/reddit": {
       "name": "@activepieces/piece-reddit",
       "version": "0.1.4",
@@ -8044,7 +8055,7 @@
     },
     "packages/shared": {
       "name": "@activepieces/shared",
-      "version": "0.54.2",
+      "version": "0.54.4",
       "dependencies": {
         "dayjs": "1.11.9",
         "deepmerge-ts": "7.1.0",
@@ -9182,6 +9193,8 @@
     "@activepieces/piece-reachinbox": ["@activepieces/piece-reachinbox@workspace:packages/pieces/community/reachinbox"],
 
     "@activepieces/piece-recall-ai": ["@activepieces/piece-recall-ai@workspace:packages/pieces/community/recall-ai"],
+
+    "@activepieces/piece-recurly": ["@activepieces/piece-recurly@workspace:packages/pieces/community/recurly"],
 
     "@activepieces/piece-reddit": ["@activepieces/piece-reddit@workspace:packages/pieces/community/reddit"],
 
@@ -14222,6 +14235,8 @@
     "recharts-scale": ["recharts-scale@0.4.5", "", { "dependencies": { "decimal.js-light": "^2.4.1" } }, "sha512-kivNFO+0OcUNu7jQquLXAxz1FIwZj8nrj+YkOKc5694NbjCvcT6aSZiIzNzd2Kul4o4rTto8QVR9lMNtxD4G1w=="],
 
     "rechoir": ["rechoir@0.8.0", "", { "dependencies": { "resolve": "^1.20.0" } }, "sha512-/vxpCXddiX8NGfGO/mTafwjq4aFa/71pvamip0++IQk3zG8cbCj0fifNPrjjF1XMXUne91jL9OoxmdykoEtifQ=="],
+
+    "recurly": ["recurly@4.73.0", "", {}, "sha512-qhp+39sVtaFPSD+9AKiWWDk+VAfzPQjHYKliWw9QLkALqQxvLET6S6YwHz/qfIJnuypcbfPP40dGZJGRJtlyiQ=="],
 
     "redent": ["redent@3.0.0", "", { "dependencies": { "indent-string": "^4.0.0", "strip-indent": "^3.0.0" } }, "sha512-6tDA8g98We0zd0GvVeMT9arEOnTw9qM03L9cJXaCjrip1OO764RDBLBfrB4cwzNGDj5OA5ioymC9GkizgWJDUg=="],
 
