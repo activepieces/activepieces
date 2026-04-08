@@ -1,4 +1,5 @@
 import { OAuth2PropertyValue, DropdownOption } from '@activepieces/pieces-framework';
+import { getGraphBaseUrl } from './microsoft-cloud';
 import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
 import { TodoTaskList, TodoTask } from '@microsoft/microsoft-graph-types';
 
@@ -16,11 +17,7 @@ export async function getTaskListsDropdown(auth: OAuth2PropertyValue): Promise<{
 	}
 
 	try {
-		const client = Client.initWithMiddleware({
-			authProvider: {
-				getAccessToken: () => Promise.resolve(auth.access_token),
-			},
-		});
+		const client = createTodoClient(auth);
 
 		const options: DropdownOption<string>[] = [];
 		let response: PageCollection = await client.api(`/me/todo/lists`).get();
@@ -65,11 +62,7 @@ export async function getTasksInListDropdown(
 	}
 
 	try {
-		const client = Client.initWithMiddleware({
-			authProvider: {
-				getAccessToken: () => Promise.resolve(auth.access_token),
-			},
-		});
+		const client = createTodoClient(auth);
 
 		const options: DropdownOption<string>[] = [];
 
@@ -109,11 +102,7 @@ export async function getIncompleteTasksInListDropdown(
 	}
 
 	try {
-		const client = Client.initWithMiddleware({
-			authProvider: {
-				getAccessToken: () => Promise.resolve(auth.access_token),
-			},
-		});
+		const client = createTodoClient(auth);
 
 		const options: DropdownOption<string>[] = [];
 
@@ -148,6 +137,21 @@ export async function getIncompleteTasksInListDropdown(
 		return { disabled: true, options: [], placeholder: 'Error fetching tasks.' };
 	}
 }
+
+function createTodoClient(auth: OAuth2PropertyValue): Client {
+	const cloud = auth.props?.['cloud'] as string | undefined;
+	const baseUrl = getGraphBaseUrl(cloud);
+	const host = new URL(baseUrl).hostname;
+	return Client.initWithMiddleware({
+		authProvider: {
+			getAccessToken: () => Promise.resolve(auth.access_token),
+		},
+		baseUrl,
+		customHosts: new Set([host]),
+	});
+}
+
+export { createTodoClient };
 
 export const microsoftTodoCommon = {
 	getTaskListsDropdown,
