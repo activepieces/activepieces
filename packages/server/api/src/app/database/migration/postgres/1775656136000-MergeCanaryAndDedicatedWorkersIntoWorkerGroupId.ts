@@ -6,8 +6,8 @@ import { Migration } from '../../migration'
 
 const isPGlite = system.get(AppSystemProp.DB_TYPE) === DatabaseType.PGLITE
 
-export class MergeCanaryAndDedicatedWorkersIntoWorkerGroupId1774800000000 implements Migration {
-    name = 'MergeCanaryAndDedicatedWorkersIntoWorkerGroupId1774800000000'
+export class MergeCanaryAndDedicatedWorkersIntoWorkerGroupId1775656136000 implements Migration {
+    name = 'MergeCanaryAndDedicatedWorkersIntoWorkerGroupId1775656136000'
     breaking = true
     release = '0.82.0'
     transaction = true
