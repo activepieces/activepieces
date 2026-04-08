@@ -3303,7 +3303,7 @@
     },
     "packages/pieces/community/hedy": {
       "name": "@activepieces/piece-hedy",
-      "version": "0.1.3",
+      "version": "0.2.0",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
