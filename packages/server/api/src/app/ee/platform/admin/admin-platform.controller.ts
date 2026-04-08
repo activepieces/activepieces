@@ -72,11 +72,6 @@ const adminPlatformController: FastifyPluginAsyncZod = async (
         await workerGroupService(req.log).updateCanary({ platformId, canary })
         return res.status(StatusCodes.OK).send()
     })
-
-    app.delete('/platforms/canary', DisableAllCanaryRequest, async (req, res) => {
-        await workerGroupService(req.log).disableAllCanary()
-        return res.status(StatusCodes.OK).send()
-    })
 }
 
 
@@ -103,14 +98,6 @@ const UpdateCanaryRequest = {
         security: securityAccess.public(),
     },
 }
-
-const DisableAllCanaryRequest = {
-    schema: {},
-    config: {
-        security: securityAccess.public(),
-    },
-}
-
 
 const AdminRetryRunsRequest = {
     schema: {

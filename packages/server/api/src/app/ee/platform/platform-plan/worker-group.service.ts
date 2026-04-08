@@ -43,18 +43,6 @@ export const workerGroupService = (log: FastifyBaseLogger) => ({
         await distributedStore.delete(getWorkerGroupCacheKey(platformId))
     },
 
-    async disableAllCanary(): Promise<void> {
-        const plans = await platformPlanRepo().find({
-            select: ['platformId'],
-            where: { workerGroupId: CANARY_WORKER_GROUP_ID },
-        })
-        await platformPlanRepo().update({ workerGroupId: CANARY_WORKER_GROUP_ID }, { workerGroupId: null })
-
-        for (const plan of plans) {
-            await distributedStore.delete(getWorkerGroupCacheKey(plan.platformId))
-        }
-    },
-
     async moveJobsToTargetQueue({ platformId, workerGroupId }: { platformId: string, workerGroupId: string | null }): Promise<void> {
         const currentGroupId = await workerGroupService(log).getWorkerGroupId({ platformId })
         const targetQueue = isNil(workerGroupId) ? QueueName.WORKER_JOBS : getWorkerGroupQueueName(workerGroupId)

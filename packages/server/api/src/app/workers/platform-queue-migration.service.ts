@@ -32,10 +32,11 @@ async function migrateRegularJobs({ sourceQueue, targetQueue, platformId, batchS
                 if (isNil(job.id)) {
                     return
                 }
+                const remainingDelay = isNil(job.opts.delay) ? undefined : Math.max(0, job.timestamp + (job.opts.delay ?? 0) - Date.now())
                 await targetQueue.add(job.name, job.data, {
                     jobId: job.id,
                     priority: job.opts.priority,
-                    delay: job.opts.delay,
+                    delay: remainingDelay,
                     attempts: job.opts.attempts,
                     backoff: job.opts.backoff,
                     removeOnComplete: job.opts.removeOnComplete,
@@ -87,6 +88,7 @@ async function migrateSchedulers({ sourceQueue, targetQueue, platformId, batchSi
                         schedulerId,
                         batch: `${offset}-${offset + batchSize - 1}`,
                     }, '[platformQueueMigrationService#migrateSchedulers] Migrated scheduler to new queue')
+                    migratedSchedulerIds.push(schedulerId)
                     await sourceQueue.removeJobScheduler(schedulerId)
                 }
                 else {
@@ -99,7 +101,6 @@ async function migrateSchedulers({ sourceQueue, targetQueue, platformId, batchSi
                 }
             })
             
-            migratedSchedulerIds.push(schedulerId)
         }
 
         offset += skipped
