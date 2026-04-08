@@ -113,6 +113,10 @@ export const jobQueue = (log: FastifyBaseLogger) => ({
         }, '[jobQueue#removeOneTimeJob] job not found in queue')
     },
 
+    async getOrCreateQueue({ queueName }: { queueName: string }): Promise<Queue> {
+        return ensureQueueExists({ log, queueName })
+    },
+
     getAllQueues(): Queue[] {
         const queues = [...dedicatedWorkersQueues.values()].filter(queue => !isNil(queue))
         return queues
