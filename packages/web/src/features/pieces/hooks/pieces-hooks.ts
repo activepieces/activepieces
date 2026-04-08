@@ -69,6 +69,7 @@ type UsePiecesProps = {
   searchQuery?: string;
   includeHidden?: boolean;
   includeTags?: boolean;
+  isTableQuery?: boolean;
 };
 type UsePiecesSearchProps = {
   searchQuery: string;
@@ -133,10 +134,15 @@ export const piecesHooks = {
     searchQuery,
     includeHidden = false,
     includeTags = false,
+    isTableQuery = false,
   }: UsePiecesProps) => {
     const { i18n } = useTranslation();
     const query = useQuery<PieceMetadataModelSummary[], Error>({
-      queryKey: ['pieces', searchQuery, includeHidden],
+      queryKey: [
+        isTableQuery ? 'pieces-table' : 'pieces',
+        searchQuery,
+        includeHidden,
+      ],
       queryFn: () =>
         piecesApi.list({
           projectId: authenticationSession.getProjectId()!,
