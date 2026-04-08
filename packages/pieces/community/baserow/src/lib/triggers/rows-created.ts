@@ -3,21 +3,24 @@ import { baserowJwtAuth } from '../auth';
 import { baserowCommon } from '../common';
 import { createWebhookTriggerHooks } from '../common/webhook-trigger';
 
-const webhookHooks = createWebhookTriggerHooks('rows.created', 'baserow_row_created');
+const webhookHooks = createWebhookTriggerHooks('rows.created', 'baserow_rows_created');
 
-export const rowCreatedTrigger = createTrigger({
-  name: 'baserow_row_created',
+export const rowsCreatedTrigger = createTrigger({
+  name: 'baserow_rows_created',
   auth: baserowJwtAuth,
-  displayName: 'Row Created',
-  description: 'Triggers when a new row is created in a Baserow table.',
+  displayName: 'Rows Created (Batch)',
+  description:
+    'Triggers when new rows are created in a Baserow table. Returns all rows from the event as a single batch.',
   type: TriggerStrategy.WEBHOOK,
   props: {
     table_id: baserowCommon.tableId(),
   },
   sampleData: {
-    id: 1,
-    order: '1.00000000000000000000',
-    Name: 'Example row',
+    rows: [
+      { id: 1, order: '1.00000000000000000000', Name: 'Row 1' },
+      { id: 2, order: '2.00000000000000000000', Name: 'Row 2' },
+    ],
+    count: 2,
   },
   async onEnable(context) {
     await webhookHooks.onEnable(context);
@@ -27,6 +30,7 @@ export const rowCreatedTrigger = createTrigger({
   },
   async run(context) {
     const body = context.payload.body as { items?: unknown[] };
-    return body.items ?? [];
+    const rows = body.items ?? [];
+    return [{ rows, count: rows.length }];
   },
 });
