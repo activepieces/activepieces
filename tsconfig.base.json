@@ -633,6 +633,9 @@
       "@activepieces/piece-knack": [
         "packages/pieces/community/knack/src/index.ts"
       ],
+      "@activepieces/piece-kustomer": [
+        "packages/pieces/community/kustomer/src/index.ts"
+      ],
       "@activepieces/piece-kommo": [
         "packages/pieces/community/kommo/src/index.ts"
       ],
