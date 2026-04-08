@@ -1,13 +1,15 @@
-import { MigrationInterface, QueryRunner } from 'typeorm'
+import { QueryRunner } from 'typeorm'
 import { system } from '../../../helper/system/system'
 import { AppSystemProp } from '../../../helper/system/system-props'
 import { DatabaseType } from '../../database-type'
+import { Migration } from '../../migration'
 
-const databaseType = system.get(AppSystemProp.DB_TYPE)
-const isPGlite = databaseType === DatabaseType.PGLITE
+const isPGlite = system.get(AppSystemProp.DB_TYPE) === DatabaseType.PGLITE
 
-export class MergeCanaryAndDedicatedWorkersIntoWorkerGroupId1774800000000 implements MigrationInterface {
+export class MergeCanaryAndDedicatedWorkersIntoWorkerGroupId1774800000000 implements Migration {
     name = 'MergeCanaryAndDedicatedWorkersIntoWorkerGroupId1774800000000'
+    breaking = true
+    release = '0.82.0'
     transaction = true
 
     public async up(queryRunner: QueryRunner): Promise<void> {

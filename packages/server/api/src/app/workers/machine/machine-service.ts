@@ -13,6 +13,7 @@ import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import { FastifyBaseLogger } from 'fastify'
 import { domainHelper } from '../../ee/custom-domains/domain-helper'
+import { workerGroupService } from '../../ee/platform/platform-plan/worker-group.service'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { workerMachineCache } from './machine-cache'
@@ -95,11 +96,14 @@ export const machineService = (log: FastifyBaseLogger) => {
 
             await workerMachineCache().delete(offLineWorkers.map(worker => worker.id))
 
-            const hasDedicated = onlineWorkers.some(w => w.type === WorkerMachineType.DEDICATED && w.workerGroupId === platformId)
+            const platformWorkerGroupId = await workerGroupService(log).getWorkerGroupId({ platformId })
             return onlineWorkers
-                .filter(worker => hasDedicated
-                    ? (worker.type === WorkerMachineType.DEDICATED && worker.workerGroupId === platformId)
-                    : worker.type !== WorkerMachineType.DEDICATED)
+                .filter(worker => {
+                    if (worker.type === WorkerMachineType.DEDICATED) {
+                        return !isNil(platformWorkerGroupId) && worker.workerGroupId === platformWorkerGroupId
+                    }
+                    return true
+                })
                 .map(worker => ({
                     ...worker,
                     status: WorkerMachineStatus.ONLINE,
