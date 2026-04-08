@@ -1,10 +1,6 @@
 {
   "lockfileVersion": 1,
-<<<<<<< HEAD
   "configVersion": 1,
-=======
-  "configVersion": 0,
->>>>>>> main
   "workspaces": {
     "": {
       "name": "activepieces",
