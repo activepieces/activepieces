@@ -1451,6 +1451,8 @@
   "This provider does not support knowledge base embeddings.": "Deze provider ondersteunt geen kennisbank embedden.",
   "Knowledge base requires a provider that supports embeddings, such as OpenAI or Google.": "De kennisbank vereist een aanbieder die embedden ondersteunt, zoals OpenAI of Google.",
   "The selected provider does not support embeddings. Switch to a provider like OpenAI or Google for knowledge base to work.": "De geselecteerde provider ondersteunt geen embedden. Schakel over naar een provider zoals OpenAI of Google voor de kennisbank om te werken.",
+  "Personal": "Persoonlijk",
+  "Team": "Team",
   "You have {count} {count, plural, one {flow} other {flows}} without time saved per run. Add it to see your complete automation impact!_one": "",
   "You have {count} {count, plural, one {flow} other {flows}} without time saved per run. Add it to see your complete automation impact!_other": "",
   "{count} flows created successfully in a new folder_one": "",
