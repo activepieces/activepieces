@@ -136,6 +136,16 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
         secretManagersEnabled: {
             type: Boolean,
         },
+        /** @deprecated use workerGroupId instead */
+        dedicatedWorkers: {
+            type: 'jsonb',
+            nullable: true,
+        },
+        /** @deprecated use workerGroupId instead */
+        canary: {
+            type: Boolean,
+            default: false,
+        },
         workerGroupId: {
             type: String,
             nullable: true,
