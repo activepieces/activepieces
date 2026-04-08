@@ -19,7 +19,7 @@ export enum QueueName {
 }
 
 export const getWorkerGroupQueueName = (workerGroupId: string): string => {
-    return `workerGroup-${workerGroupId}-jobs`
+    return `platform-${workerGroupId}-jobs`
 }
 
 export const ApQueueJob = z.object({
