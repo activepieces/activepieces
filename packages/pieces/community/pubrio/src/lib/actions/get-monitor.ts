@@ -26,7 +26,7 @@ export const getMonitor = createAction({
     if (context.propsValue.is_signature_reveal)
       body['is_signature_reveal'] = context.propsValue.is_signature_reveal;
     return await pubrioRequest(
-      context.auth,
+      context.auth.secret_text,
       HttpMethod.POST,
       '/monitors/lookup',
       body

@@ -26,7 +26,7 @@ export const testRunMonitor = createAction({
     if (context.propsValue.tried_at)
       body['tried_at'] = context.propsValue.tried_at;
     return await pubrioRequest(
-      context.auth,
+      context.auth.secret_text,
       HttpMethod.POST,
       '/monitors/process/try',
       body

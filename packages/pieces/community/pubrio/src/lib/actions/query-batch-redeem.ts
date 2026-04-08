@@ -20,7 +20,7 @@ export const queryBatchRedeem = createAction({
       redeem_query_id: context.propsValue.redeem_query_id,
     };
     return await pubrioRequest(
-      context.auth,
+      context.auth.secret_text,
       HttpMethod.POST,
       '/redeem/people/batch/query',
       body

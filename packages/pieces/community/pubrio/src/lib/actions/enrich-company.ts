@@ -46,7 +46,7 @@ export const enrichCompany = createAction({
       [lookupType]: lookupValue,
     };
     return await pubrioRequest(
-      context.auth,
+      context.auth.secret_text,
       HttpMethod.POST,
       '/companies/lookup/enrich',
       body

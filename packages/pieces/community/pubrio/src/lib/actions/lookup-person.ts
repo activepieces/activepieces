@@ -27,7 +27,7 @@ export const lookupPerson = createAction({
       [context.propsValue.lookup_type]: context.propsValue.value,
     };
     return await pubrioRequest(
-      context.auth,
+      context.auth.secret_text,
       HttpMethod.POST,
       '/people/lookup',
       body

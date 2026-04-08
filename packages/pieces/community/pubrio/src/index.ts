@@ -28,22 +28,17 @@ import { duplicateMonitor } from './lib/actions/duplicate-monitor';
 import { testRunMonitor } from './lib/actions/test-run-monitor';
 import { revealMonitorSignature } from './lib/actions/reveal-monitor-signature';
 import { pubrioWebhookTrigger } from './lib/triggers/webhook';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { pubrioRequest } from './lib/common';
 
 export const pubrioAuth = PieceAuth.SecretText({
   displayName: 'API Key',
   description:
     'Go to dashboard.pubrio.com → Settings → API Keys → Create New Key → copy the key here.',
   required: true,
-  validate: async (auth) => {
+  validate: async ({ auth }) => {
     try {
-      await httpClient.sendRequest({
-        method: HttpMethod.GET,
-        url: 'https://api.pubrio.com/timezones',
-        headers: {
-          'pubrio-api-key': `${auth}`,
-        },
-      });
+      await pubrioRequest(auth, HttpMethod.GET, '/user');
       return {
         valid: true,
       };
@@ -57,8 +52,8 @@ export const pubrio = createPiece({
   displayName: 'Pubrio',
   auth: pubrioAuth,
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://pubrio.com/favicon.ico',
-  authors: ['pubrio'],
+  logoUrl: 'https://cdn.activepieces.com/pieces/pubrio.png',
+  authors: ['pubrio', 'sanket-a11y'],
   actions: [
     searchCompanies,
     lookupCompany,

@@ -134,7 +134,7 @@ export const searchPeople = createAction({
     if (context.propsValue.domains)
       body['domains'] = splitComma(context.propsValue.domains);
     return await pubrioRequest(
-      context.auth,
+      context.auth.secret_text,
       HttpMethod.POST,
       '/people/search',
       body

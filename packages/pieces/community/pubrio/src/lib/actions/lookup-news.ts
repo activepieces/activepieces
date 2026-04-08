@@ -20,7 +20,7 @@ export const lookupNews = createAction({
       news_search_id: context.propsValue.news_search_id,
     };
     return await pubrioRequest(
-      context.auth,
+      context.auth.secret_text,
       HttpMethod.POST,
       '/companies/news/lookup',
       body

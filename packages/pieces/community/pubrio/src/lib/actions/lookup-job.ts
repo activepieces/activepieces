@@ -20,7 +20,7 @@ export const lookupJob = createAction({
       job_search_id: context.propsValue.job_search_id,
     };
     return await pubrioRequest(
-      context.auth,
+      context.auth.secret_text,
       HttpMethod.POST,
       '/companies/jobs/lookup',
       body

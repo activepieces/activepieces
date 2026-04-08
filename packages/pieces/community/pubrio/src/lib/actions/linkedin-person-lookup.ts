@@ -20,7 +20,7 @@ export const linkedinPersonLookup = createAction({
       people_linkedin_url: context.propsValue.people_linkedin_url,
     };
     return await pubrioRequest(
-      context.auth,
+      context.auth.secret_text,
       HttpMethod.POST,
       '/people/linkedin/lookup',
       body

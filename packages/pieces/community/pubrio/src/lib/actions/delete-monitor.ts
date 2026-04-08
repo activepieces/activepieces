@@ -19,7 +19,7 @@ export const deleteMonitor = createAction({
       monitor_id: context.propsValue.monitor_id,
     };
     return await pubrioRequest(
-      context.auth,
+      context.auth.secret_text,
       HttpMethod.POST,
       '/monitors/delete',
       body

@@ -47,7 +47,7 @@ export const revealContact = createAction({
       body['people_contact_types'] = context.propsValue.people_contact_types;
     }
     return await pubrioRequest(
-      context.auth,
+      context.auth.secret_text,
       HttpMethod.POST,
       '/redeem/people',
       body

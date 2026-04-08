@@ -45,7 +45,7 @@ export const lookupCompany = createAction({
       [lookupType]: lookupValue,
     };
     return await pubrioRequest(
-      context.auth,
+      context.auth.secret_text,
       HttpMethod.POST,
       '/companies/lookup',
       body

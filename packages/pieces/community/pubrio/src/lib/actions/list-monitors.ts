@@ -46,7 +46,7 @@ export const listMonitors = createAction({
     if (context.propsValue.is_ascending_order)
       body['is_ascending_order'] = context.propsValue.is_ascending_order;
     return await pubrioRequest(
-      context.auth,
+      context.auth.secret_text,
       HttpMethod.POST,
       '/monitors',
       body
