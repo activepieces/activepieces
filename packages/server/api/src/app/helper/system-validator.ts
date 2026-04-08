@@ -185,9 +185,14 @@ const systemPropValidators: {
     [AppSystemProp.MAX_WEBHOOK_PAYLOAD_SIZE_MB]: numberValidator,
     [AppSystemProp.WEBHOOK_PAYLOAD_INLINE_THRESHOLD_KB]: numberValidator,
 
+    // Canary
+    [AppSystemProp.CANARY_APP_URL]: urlValidator,
     // SSRF protection
     [AppSystemProp.SSRF_ALLOW_LIST]: stringValidator,
     [AppSystemProp.SSRF_PROTECTION_ENABLED]: booleanValidator,
+
+    // On-call
+    [AppSystemProp.PAGE_ONCALL_WEBHOOK]: urlValidator,
 }
 
 

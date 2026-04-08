@@ -10,8 +10,7 @@ import { JobContext, JobHandler, JobResultKind, SynchronousJobResult } from '../
 export const extractPieceInfoJob: JobHandler<ExecuteExtractPieceMetadataJobData, SynchronousJobResult> = {
     jobType: WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
     async execute(ctx: JobContext, data: ExecuteExtractPieceMetadataJobData): Promise<SynchronousJobResult> {
-        const settings = workerSettings.getSettings()
-        const timeoutInSeconds = settings.TRIGGER_TIMEOUT_SECONDS
+        const timeoutInSeconds = workerSettings.getSettings().TRIGGER_TIMEOUT_SECONDS
 
         await provisioner(ctx.log, ctx.apiClient).provision({
             pieces: [data.piece],

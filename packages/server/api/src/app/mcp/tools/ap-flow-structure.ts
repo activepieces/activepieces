@@ -8,6 +8,7 @@ import {
     McpServer,
     McpToolDefinition,
     Note,
+    Permission,
     StepLocationRelativeToParent,
 } from '@activepieces/shared'
 import type { Step } from '@activepieces/shared'
@@ -209,6 +210,7 @@ function formatFlowStructure(
 export const apFlowStructureTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_flow_structure',
+        permission: Permission.READ_FLOW,
         description: 'Get the structure of a flow: step tree (parent/child), each step type, configuration status (configured/unconfigured/invalid), and valid insert locations for ap_add_step.',
         inputSchema: {
             flowId: z.string().describe('The id of the flow'),
