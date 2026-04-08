@@ -9,7 +9,7 @@
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
     "recurly": "4.73.0",
-    "tslib": "^2.3.0"
+    "tslib": "2.6.2"
   },
   "scripts": {
     "build": "tsc -p tsconfig.lib.json && cp package.json dist/",

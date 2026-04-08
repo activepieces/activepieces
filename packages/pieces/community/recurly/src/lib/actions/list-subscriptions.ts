@@ -4,7 +4,7 @@ import {
   listAccountSubscriptions,
   listSubscriptions,
 } from '../common/client';
-import { recurlyAuth } from '../common/auth';
+import { recurlyAuth } from '../auth';
 import { accountCodeDropdown } from '../common/props';
 
 export const listSubscriptionsAction = createAction({
@@ -70,11 +70,11 @@ export const listSubscriptionsAction = createAction({
 
     const subscriptions = context.propsValue.accountCode
       ? await listAccountSubscriptions(
-          context.auth,
-          context.propsValue.accountCode,
-          params,
-          limit,
-        )
+        context.auth,
+        context.propsValue.accountCode,
+        params,
+        limit,
+      )
       : await listSubscriptions(context.auth, params, limit);
 
     return flattenRecurlyResourceList(subscriptions);

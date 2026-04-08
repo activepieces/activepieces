@@ -6,13 +6,12 @@ import { createAccountAction } from './lib/actions/create-account';
 import { createSubscriptionAction } from './lib/actions/create-subscription';
 import { getAccountAction } from './lib/actions/get-account';
 import { listSubscriptionsAction } from './lib/actions/list-subscriptions';
-import { recurlyAuth } from './lib/common/auth';
-import { getBasicAuthHeader } from './lib/common/client';
+import { recurlyAuth } from './lib/auth';
 
 export const recurly = createPiece({
   displayName: 'Recurly',
   description:
-    'Subscription billing and recurring revenue platform for accounts and subscriptions.',
+    'Manage subscriptions, billing accounts, and recurring revenue with Recurly.',
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/recurly.png',
   categories: [PieceCategory.COMMERCE, PieceCategory.PAYMENT_PROCESSING],
@@ -27,11 +26,10 @@ export const recurly = createPiece({
       auth: recurlyAuth,
       baseUrl: () => 'https://v3.recurly.com',
       authMapping: async (auth) => ({
-        Authorization: getBasicAuthHeader(auth),
+        Accept: 'application/vnd.recurly.v2021-02-25',
+        Authorization: `Basic ${Buffer.from(`${auth.secret_text}:`).toString('base64')}`,
       }),
     }),
   ],
   triggers: [],
 });
-
-export { recurlyAuth };

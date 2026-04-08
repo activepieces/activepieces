@@ -1,4 +1,3 @@
-import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import {
   Account,
   Client,
@@ -6,25 +5,20 @@ import {
   Plan,
   Subscription,
 } from 'recurly';
-import { recurlyAuth } from './auth';
+import { RecurlyAuthType } from '../auth';
 import { FlatRecord, flattenRecord, normalizeRecords } from './utils';
 
 const MAX_DROPDOWN_ITEMS = 100;
 
 export function createRecurlyClient(
-  auth: AppConnectionValueForAuthProperty<typeof recurlyAuth>,
+  auth: RecurlyAuthType,
 ): Client {
-  return new Client(auth.username);
+  return new Client(auth.secret_text);
 }
 
-export function getBasicAuthHeader(
-  auth: AppConnectionValueForAuthProperty<typeof recurlyAuth>,
-): string {
-  return `Basic ${Buffer.from(`${auth.username}:`).toString('base64')}`;
-}
 
 export async function listAccounts(
-  auth: AppConnectionValueForAuthProperty<typeof recurlyAuth>,
+  auth: RecurlyAuthType,
 ): Promise<Account[]> {
   return await collectPagerItems(
     createRecurlyClient(auth).listAccounts({
@@ -37,7 +31,7 @@ export async function listAccounts(
 }
 
 export async function listPlans(
-  auth: AppConnectionValueForAuthProperty<typeof recurlyAuth>,
+  auth: RecurlyAuthType,
 ): Promise<Plan[]> {
   return await collectPagerItems(
     createRecurlyClient(auth).listPlans({
@@ -50,7 +44,7 @@ export async function listPlans(
 }
 
 export async function listSubscriptions(
-  auth: AppConnectionValueForAuthProperty<typeof recurlyAuth>,
+  auth: RecurlyAuthType,
   params: Record<string, string | number>,
   limit: number,
 ): Promise<Subscription[]> {
@@ -63,7 +57,7 @@ export async function listSubscriptions(
 }
 
 export async function listAccountSubscriptions(
-  auth: AppConnectionValueForAuthProperty<typeof recurlyAuth>,
+  auth: RecurlyAuthType,
   accountCode: string,
   params: Record<string, string | number>,
   limit: number,

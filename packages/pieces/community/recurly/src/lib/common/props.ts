@@ -1,7 +1,7 @@
 import { Property } from '@activepieces/pieces-framework';
 import { tryCatch } from '@activepieces/shared';
 import { Account, Plan } from 'recurly';
-import { recurlyAuth } from './auth';
+import { recurlyAuth } from '../auth';
 import { listAccounts, listPlans } from './client';
 
 export function accountCodeDropdown(required: boolean, description: string) {
@@ -9,7 +9,7 @@ export function accountCodeDropdown(required: boolean, description: string) {
     displayName: 'Account',
     description,
     required,
-    refreshers: ['auth'],
+    refreshers: [],
     auth: recurlyAuth,
     options: async ({ auth, searchValue }) => {
       if (!auth) {

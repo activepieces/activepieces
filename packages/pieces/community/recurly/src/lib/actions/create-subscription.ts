@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { SubscriptionCreate } from 'recurly';
-import { recurlyAuth } from '../common/auth';
+import { recurlyAuth } from '../auth';
 import {
   createRecurlyClient,
   flattenRecurlyResource,

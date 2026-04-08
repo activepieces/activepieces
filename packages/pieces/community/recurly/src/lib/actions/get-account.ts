@@ -1,5 +1,5 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { recurlyAuth } from '../common/auth';
+import { recurlyAuth } from '../auth';
 import {
   createRecurlyClient,
   flattenRecurlyResource,
