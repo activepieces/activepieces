@@ -1,6 +1,10 @@
 {
   "lockfileVersion": 1,
+<<<<<<< HEAD
   "configVersion": 1,
+=======
+  "configVersion": 0,
+>>>>>>> main
   "workspaces": {
     "": {
       "name": "activepieces",
@@ -476,7 +480,7 @@
     },
     "packages/pieces/community/ai": {
       "name": "@activepieces/piece-ai",
-      "version": "0.3.0",
+      "version": "0.3.2",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -874,7 +878,7 @@
     },
     "packages/pieces/community/attio": {
       "name": "@activepieces/piece-attio",
-      "version": "0.1.12",
+      "version": "0.1.13",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -5399,7 +5403,7 @@
     },
     "packages/pieces/community/promotekit": {
       "name": "@activepieces/piece-promotekit",
-      "version": "0.1.4",
+      "version": "0.2.0",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -7171,7 +7175,7 @@
     },
     "packages/pieces/community/workday": {
       "name": "@activepieces/piece-workday",
-      "version": "0.0.3",
+      "version": "0.0.4",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -8034,7 +8038,11 @@
     },
     "packages/shared": {
       "name": "@activepieces/shared",
+<<<<<<< HEAD
       "version": "0.54.1",
+=======
+      "version": "0.54.2",
+>>>>>>> main
       "dependencies": {
         "dayjs": "1.11.9",
         "deepmerge-ts": "7.1.0",

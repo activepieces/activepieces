@@ -155,7 +155,7 @@ async function pollAndExecute(apiClient: WorkerToApiContract, sbManager: Sandbox
                 queueName: job.queueName,
                 status: execError
                     ? EngineResponseStatus.INTERNAL_ERROR
-                    : result?.kind === JobResultKind.SYNCHRONOUS ? result.status : EngineResponseStatus.OK,
+                    : result.status,
                 errorMessage: buildErrorMessage(execError ?? undefined, result ?? undefined),
                 logs: extractLogs(execError ?? undefined, result ?? undefined),
                 delayInSeconds: result?.kind === JobResultKind.FIRE_AND_FORGET ? result.delayInSeconds : undefined,

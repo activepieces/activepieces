@@ -1,12 +1,13 @@
 import { z } from 'zod'
 import { Nullable } from '../../../core/common'
 import { Metadata } from '../../../core/common/metadata'
-import { BranchCondition, CodeActionSchema, CodeActionSettings, LoopOnItemsActionSchema, LoopOnItemsActionSettings, PieceActionSchema, PieceActionSettings, RouterActionSchema, RouterActionSettings } from '../actions/action'
+import { BranchCondition, CodeActionSchema, CodeActionSettings, FlowActionType, LoopOnItemsActionSchema, LoopOnItemsActionSettings, PieceActionSchema, PieceActionSettings, RouterActionSchema, RouterActionSettings } from '../actions/action'
 import { FlowStatus } from '../flow'
 import { FlowVersion, FlowVersionState } from '../flow-version'
 import { Note } from '../note'
 import { SampleDataSetting, SaveSampleDataRequest } from '../sample-data'
 import { EmptyTrigger, FlowTrigger, FlowTriggerType, PieceTrigger, PieceTriggerSettings } from '../triggers/trigger'
+import { flowPieceUtil } from '../util/flow-piece-util'
 import { flowStructureUtil } from '../util/flow-structure-util'
 import { _addAction } from './add-action'
 import { _addBranch } from './add-branch'
@@ -356,6 +357,9 @@ export const flowOperations = {
                 clonedVersion.state = FlowVersionState.LOCKED
                 break
             case FlowOperationType.ADD_ACTION: {
+                if (operation.request.action.type === FlowActionType.PIECE) {
+                    operation.request.action.settings.pieceVersion = flowPieceUtil.getExactVersion(operation.request.action.settings.pieceVersion)
+                }
                 clonedVersion = _addAction(clonedVersion, operation.request)
                 break
             }
@@ -364,6 +368,9 @@ export const flowOperations = {
                 break
             }
             case FlowOperationType.UPDATE_TRIGGER: {
+                if (operation.request.type === FlowTriggerType.PIECE) {
+                    operation.request.settings.pieceVersion = flowPieceUtil.getExactVersion(operation.request.settings.pieceVersion)
+                }
                 clonedVersion = _updateTrigger(clonedVersion, operation.request)
                 break
             }
@@ -376,6 +383,9 @@ export const flowOperations = {
                 break
             }
             case FlowOperationType.UPDATE_ACTION: {
+                if (operation.request.type === FlowActionType.PIECE) {
+                    operation.request.settings.pieceVersion = flowPieceUtil.getExactVersion(operation.request.settings.pieceVersion)
+                }
                 clonedVersion = _updateAction(clonedVersion, operation.request)
                 break
             }
