@@ -3,7 +3,7 @@ import {
   createAction,
   DropdownState,
 } from '@activepieces/pieces-framework';
-import { baserowAuth, BaserowAuthValue } from '../auth';
+import { baserowAuth } from '../auth';
 import { baserowCommon, makeClient } from '../common';
 import { BaserowFieldType } from '../common/constants';
 
@@ -22,17 +22,15 @@ export const findRowAction = createAction({
       auth: baserowAuth,
       refreshers: ['auth', 'table_id'],
       options: async ({ auth, table_id }): Promise<DropdownState<string>> => {
-        if (!auth || !table_id) {
+        if (!auth || typeof table_id !== 'number') {
           return {
             disabled: true,
             placeholder: 'Select a table first.',
             options: [],
           };
         }
-        const client = await makeClient(auth as unknown as BaserowAuthValue);
-        const fields = await client.listTableFields(
-          table_id as unknown as number
-        );
+        const client = await makeClient(auth);
+        const fields = await client.listTableFields(table_id);
         const unsupportedTypes: string[] = [
           BaserowFieldType.LINK_TO_TABLE,
           BaserowFieldType.MULTI_SELECT,
@@ -67,17 +65,13 @@ export const findRowAction = createAction({
     }),
   },
   async run(context) {
-    const { table_id, field_name, field_value } = context.propsValue as {
-      table_id: number;
-      field_name: string;
-      field_value: string;
-    };
+    const { table_id, field_name, field_value } = context.propsValue;
     if (!field_name || !field_value) {
       return { found: false, row: null, count: 0 };
     }
     const client = await makeClient(context.auth);
     const response = (await client.listRows(
-      table_id,
+      table_id!,
       undefined,
       1,
       undefined,

@@ -8,12 +8,13 @@ export function createWebhookTriggerHooks(
   return {
     async onEnable(context: {
       auth: BaserowJwtAuthValue;
-      propsValue: { table_id: number };
+      propsValue: { table_id: number | undefined };
       webhookUrl: string;
       store: {
         put: <T>(key: string, value: T) => Promise<T>;
       };
     }): Promise<void> {
+      if (!context.propsValue.table_id) return;
       const client = await makeJwtClient(context.auth);
       const webhook = await client.createWebhook(
         context.propsValue.table_id,
@@ -27,12 +28,18 @@ export function createWebhookTriggerHooks(
       auth: BaserowJwtAuthValue;
       store: {
         get: <T>(key: string) => Promise<T | null>;
+        delete: (key: string) => Promise<void>;
       };
     }): Promise<void> {
       const data = await context.store.get<{ webhookId: number }>(storeKey);
       if (!data?.webhookId) return;
       const client = await makeJwtClient(context.auth);
-      await client.deleteWebhook(data.webhookId);
+      try {
+        await client.deleteWebhook(data.webhookId);
+      } catch {
+        // Webhook may have been manually deleted in Baserow — ignore
+      }
+      await context.store.delete(storeKey);
     },
   };
 }

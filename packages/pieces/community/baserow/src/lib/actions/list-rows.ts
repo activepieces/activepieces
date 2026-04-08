@@ -58,15 +58,7 @@ export const listRowsAction = createAction({
   },
   async run(context) {
     const { table_id, page, limit, search, order_by, filter_type, filters } =
-      context.propsValue as {
-        table_id: number;
-        page?: number;
-        limit?: number;
-        search?: string;
-        order_by?: string;
-        filter_type?: string;
-        filters?: unknown[];
-      };
+      context.propsValue;
     const client = await makeClient(context.auth);
 
     let advancedFilters:
@@ -93,7 +85,7 @@ export const listRowsAction = createAction({
     }
 
     return await client.listRows(
-      table_id,
+      table_id!,
       page,
       limit,
       search,

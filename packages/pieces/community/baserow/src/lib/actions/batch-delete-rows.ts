@@ -22,7 +22,9 @@ export const batchDeleteRowsAction = createAction({
     if (!Array.isArray(row_ids) || row_ids.length === 0) {
       throw new Error('Row IDs must be a non-empty array.');
     }
-    const ids = row_ids.map((id) => parseInt(String(id), 10));
+    const ids = row_ids
+      .map((id) => parseInt(String(id), 10))
+      .filter((id) => !isNaN(id));
     const client = await makeClient(context.auth);
     return await client.batchDeleteRows(table_id, ids);
   },

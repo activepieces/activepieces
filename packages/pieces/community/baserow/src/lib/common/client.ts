@@ -165,15 +165,22 @@ export class BaserowClient {
       { items: ids }
     );
   }
+  async listViews(table_id: number): Promise<{ id: number; name: string; type: string }[]> {
+    return await this.makeRequest(
+      HttpMethod.GET,
+      `/database/views/table/${table_id}/`,
+      { type: 'grid' }
+    );
+  }
   async aggregateField(
-    table_id: number,
+    view_id: number,
     field_id: number,
     aggregation_type: string
   ) {
     return await this.makeRequest(
       HttpMethod.GET,
-      `/database/rows/table/${table_id}/aggregation/`,
-      { [`field_${field_id}`]: aggregation_type }
+      `/database/views/grid/${view_id}/aggregation/${field_id}/`,
+      { type: aggregation_type }
     );
   }
   async createWebhook(

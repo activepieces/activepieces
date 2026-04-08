@@ -3,17 +3,39 @@ import {
   createAction,
   DropdownState,
 } from '@activepieces/pieces-framework';
-import { baserowAuth, BaserowAuthValue } from '../auth';
+import { baserowAuth } from '../auth';
 import { baserowCommon, makeClient } from '../common';
 
 export const aggregateFieldAction = createAction({
   name: 'baserow_aggregate_field',
   displayName: 'Aggregate Field',
   description:
-    'Calculates an aggregation (sum, average, min, max, count, etc.) over all values of a field in a table.',
+    'Calculates an aggregation (sum, average, min, max, count, etc.) over all values of a field in a grid view.',
   auth: baserowAuth,
   props: {
     table_id: baserowCommon.tableId(),
+    view_id: Property.Dropdown({
+      displayName: 'View',
+      description: 'Select the grid view to aggregate.',
+      required: true,
+      auth: baserowAuth,
+      refreshers: ['auth', 'table_id'],
+      options: async ({ auth, table_id }): Promise<DropdownState<number>> => {
+        if (!auth || typeof table_id !== 'number') {
+          return {
+            disabled: true,
+            placeholder: 'Select a table first.',
+            options: [],
+          };
+        }
+        const client = await makeClient(auth);
+        const views = await client.listViews(table_id);
+        return {
+          disabled: false,
+          options: views.map((v) => ({ label: v.name, value: v.id })),
+        };
+      },
+    }),
     field_id: Property.Dropdown({
       displayName: 'Field',
       description: 'Select the field to aggregate.',
@@ -21,17 +43,15 @@ export const aggregateFieldAction = createAction({
       auth: baserowAuth,
       refreshers: ['auth', 'table_id'],
       options: async ({ auth, table_id }): Promise<DropdownState<number>> => {
-        if (!auth || !table_id) {
+        if (!auth || typeof table_id !== 'number') {
           return {
             disabled: true,
             placeholder: 'Select a table first.',
             options: [],
           };
         }
-        const client = await makeClient(auth as unknown as BaserowAuthValue);
-        const fields = await client.listTableFields(
-          table_id as unknown as number
-        );
+        const client = await makeClient(auth);
+        const fields = await client.listTableFields(table_id);
         return {
           disabled: false,
           options: fields.map((f) => ({ label: f.name, value: f.id })),
@@ -61,17 +81,13 @@ export const aggregateFieldAction = createAction({
     }),
   },
   async run(context) {
-    const { table_id, field_id, aggregation_type } = context.propsValue as {
-      table_id: number;
-      field_id: number;
-      aggregation_type: string;
-    };
+    const { view_id, field_id, aggregation_type } = context.propsValue;
     const client = await makeClient(context.auth);
     const raw = (await client.aggregateField(
-      table_id,
-      field_id,
-      aggregation_type
-    )) as Record<string, unknown>;
-    return { result: raw[`field_${field_id}_${aggregation_type}`] };
+      view_id!,
+      field_id!,
+      aggregation_type!
+    )) as { value: unknown };
+    return { result: raw['value'] };
   },
 });
