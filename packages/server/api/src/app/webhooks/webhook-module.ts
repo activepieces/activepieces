@@ -1,5 +1,6 @@
 import { XMLParser } from 'fast-xml-parser'
 import { FastifyPluginAsync, FastifyRequest } from 'fastify'
+import qs from 'qs'
 import { webhookController } from './webhook-controller'
 
 export const webhookModule: FastifyPluginAsync = async (app) => {
@@ -16,6 +17,22 @@ export const webhookModule: FastifyPluginAsync = async (app) => {
             }
             catch (err) {
                 const error: Error & { statusCode?: number } = err instanceof Error ? err : new Error('JSON parsing failed')
+                error.statusCode = 400
+                done(error, undefined)
+            }
+        },
+    )
+
+    app.removeContentTypeParser('application/x-www-form-urlencoded')
+    app.addContentTypeParser(
+        'application/x-www-form-urlencoded',
+        { parseAs: 'string' },
+        (_req, body: string, done) => {
+            try {
+                done(null, qs.parse(body))
+            }
+            catch (err) {
+                const error: Error & { statusCode?: number } = err instanceof Error ? err : new Error('Form body parsing failed')
                 error.statusCode = 400
                 done(error, undefined)
             }
