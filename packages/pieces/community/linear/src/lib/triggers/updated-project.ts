@@ -6,11 +6,11 @@ import { props } from '../common/props';
 export const linearUpdatedProject = createTrigger({
   auth: linearAuth,
   name: 'updated_project',
-  displayName: 'Updated Project',
+  displayName: 'Project Status Updated',
   description: 'Triggers when an existing Linear project is updated',
   props: {
     team_ids: props.team_ids(false),
-    project_statuses: props.project_statuses(false),
+    project_status: props.project_statuses(false),
   },
   sampleData: {
     action: 'update',
@@ -79,7 +79,7 @@ export const linearUpdatedProject = createTrigger({
     if (body.action !== 'update') return [];
 
     const selectedTeamIds = context.propsValue.team_ids ?? [];
-    const selectedStatuses = context.propsValue.project_statuses ?? [];
+    const selectedStatus = context.propsValue.project_status;
 
     if (selectedTeamIds.length > 0) {
       const projectTeamIds = body.data.teams?.map((t) => t.id) ?? [];
@@ -88,7 +88,7 @@ export const linearUpdatedProject = createTrigger({
       }
     }
 
-    if (selectedStatuses.length > 0 && !selectedStatuses.includes(body.data.state)) {
+    if (selectedStatus && selectedStatus !== body.data.statusName) {
       return [];
     }
 
@@ -104,6 +104,7 @@ interface ProjectUpdatePayload {
   action: string;
   data: {
     state: string;
+    statusName: string;
     teams?: Array<{ id: string }>;
     [key: string]: unknown;
   };
