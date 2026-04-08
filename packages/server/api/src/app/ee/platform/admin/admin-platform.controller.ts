@@ -70,7 +70,7 @@ const adminPlatformController: FastifyPluginAsyncZod = async (
     })
 
     app.post('/platforms/canary', UpdateCanaryRequest, async (req, res) => {
-        await platformCanaryService(req.log).updateCanary(req.body.platformId, req.body.canary)
+        await platformCanaryService(req.log).updateCanary({ platformId: req.body.platformId, canary: req.body.canary })
         return res.status(StatusCodes.OK).send()
     })
 

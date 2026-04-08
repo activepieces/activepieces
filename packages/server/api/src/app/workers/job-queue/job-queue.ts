@@ -198,8 +198,8 @@ async function getQueueName(platformId: string | null, log: FastifyBaseLogger): 
     if (!platformId) {
         return QueueName.WORKER_JOBS
     }
-    const canaryPlatformIds = await platformCanaryService(log).getCanaryPlatformIds()
-    if (canaryPlatformIds.includes(platformId)) {
+    const isCanary = await platformCanaryService(log).shouldForwardToCanary({ platformId })
+    if (isCanary) {
         return QueueName.CANARY_JOBS
     }
     const isDedicatedWorkersEnabled = await dedicatedWorkers(log).isEnabledForPlatform(platformId)

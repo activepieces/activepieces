@@ -151,6 +151,10 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
             columns: ['platformId'],
             unique: true,
         },
+        {
+            name: 'idx_platform_plan_canary',
+            columns: ['canary'],
+        },
     ],
     relations: {
         platform: {

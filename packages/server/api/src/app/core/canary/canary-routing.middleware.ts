@@ -12,16 +12,17 @@ export const canaryRoutingMiddleware = async (request: FastifyRequest, reply: Fa
     const canaryAppUrl = system.get(AppSystemProp.CANARY_APP_URL)
     if (isNil(canaryAppUrl)) return
 
-    const { data: canaryPlatformIds, error: canaryLookupError } = await tryCatch(() =>
-        platformCanaryService(request.log).getCanaryPlatformIds(),
+    const { data: platformId, error: resolveError } = await tryCatch(() => resolvePlatformId(request, request.log))
+    if (resolveError || isNil(platformId)) return
+
+    const { data: shouldForward, error: canaryLookupError } = await tryCatch(() =>
+        platformCanaryService(request.log).shouldForwardToCanary({ platformId }),
     )
     if (canaryLookupError) {
         request.log.error({ err: canaryLookupError }, '[canaryRoutingMiddleware] failed to fetch canary platform IDs, falling through')
         return
     }
-    
-    const { data: platformId, error } = await tryCatch(() => resolvePlatformId(request, request.log))
-    if (error || isNil(platformId) || !canaryPlatformIds.includes(platformId)) return
+    if (!shouldForward) return
 
     request.log.info({ platformId }, '[canaryRoutingMiddleware] proxying to canary')
 
