@@ -306,7 +306,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             platformId,
             synchronousHandlerId: returnHandlerId(resolvedRun.pauseMetadata, requestId, log),
             httpRequestId: resolvedRun.pauseMetadata?.type === PauseType.WEBHOOK ? resolvedRun.pauseMetadata.requestIdToReply ?? undefined : undefined,
-            progressUpdateType,
+            progressUpdateType: resolvedRun.pauseMetadata?.progressUpdateType ?? progressUpdateType,
             executeTrigger: false,
             executionType,
         }, log)
