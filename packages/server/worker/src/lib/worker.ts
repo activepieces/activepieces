@@ -42,8 +42,9 @@ let sandboxManagers: SandboxManager[] = []
 export const worker = {
     async start({ apiUrl, socketUrl, workerToken, withHealthServer = false }: WorkerStartParams): Promise<void> {
         const platformIdForDedicatedWorker = system.get(WorkerSystemProp.PLATFORM_ID_FOR_DEDICATED_WORKER)
+        const isCanaryWorker = system.getBoolean(WorkerSystemProp.IS_CANARY_WORKER) ?? false
         socket = io(socketUrl.url, {
-            auth: { token: workerToken, workerId, platformIdForDedicatedWorker },
+            auth: { token: workerToken, workerId, platformIdForDedicatedWorker, isCanaryWorker },
             path: socketUrl.path,
             transports: ['websocket'],
             reconnection: true,
@@ -146,7 +147,6 @@ async function pollAndExecute(apiClient: WorkerToApiContract, sbManager: Sandbox
             executeJob(apiClient, job, sbManager),
         )
 
-        clearInterval(lockExtensionInterval)
 
         const { error: completeError } = await tryCatch(() =>
             apiClient.completeJob({
@@ -155,13 +155,15 @@ async function pollAndExecute(apiClient: WorkerToApiContract, sbManager: Sandbox
                 queueName: job.queueName,
                 status: execError
                     ? EngineResponseStatus.INTERNAL_ERROR
-                    : result?.kind === JobResultKind.SYNCHRONOUS ? result.status : EngineResponseStatus.OK,
+                    : result.status,
                 errorMessage: buildErrorMessage(execError ?? undefined, result ?? undefined),
                 logs: extractLogs(execError ?? undefined, result ?? undefined),
                 delayInSeconds: result?.kind === JobResultKind.FIRE_AND_FORGET ? result.delayInSeconds : undefined,
                 response: result?.kind === JobResultKind.SYNCHRONOUS ? result.response : undefined,
             }),
         )
+
+        clearInterval(lockExtensionInterval)
 
         if (completeError) {
             workerLog.error({ error: completeError, jobId: job.jobId }, 'Failed to complete job')
@@ -273,7 +275,7 @@ async function warmupPiecesOnStartup(apiClient: WorkerToApiContract): Promise<vo
     }
     logger.info({ count: pieces.length }, 'Starting piece cache warmup')
     const { error: installError } = await tryCatch(() =>
-        pieceInstaller(logger, apiClient).install({ pieces }),
+        pieceInstaller(logger, apiClient).install({ pieces, includeFilters: false }),
     )
     if (installError) {
         logger.error({ error: installError }, 'Failed to install pieces during startup warmup')

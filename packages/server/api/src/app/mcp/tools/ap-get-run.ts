@@ -1,4 +1,4 @@
-import { McpServer, McpToolDefinition } from '@activepieces/shared'
+import { McpServer, McpToolDefinition, Permission } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowRunService } from '../../flows/flow-run/flow-run-service'
@@ -12,6 +12,7 @@ const getRunInput = z.object({
 export const apGetRunTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_get_run',
+        permission: Permission.READ_RUN,
         description: 'Get detailed results of a flow run including step-by-step outputs, errors, and durations. Use ap_list_runs or ap_test_flow to get run IDs.',
         inputSchema: getRunInput.shape,
         annotations: { readOnlyHint: true, openWorldHint: false },

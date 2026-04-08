@@ -1,4 +1,4 @@
-import { apId, FieldType, McpServer, McpToolDefinition } from '@activepieces/shared'
+import { apId, FieldType, McpServer, McpToolDefinition, Permission } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { fieldService } from '../../tables/field/field.service'
@@ -18,6 +18,7 @@ const createTableInput = z.object({
 export const apCreateTableTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_create_table',
+        permission: Permission.WRITE_TABLE,
         description: 'Create a new table with an initial set of fields. Field types: TEXT, NUMBER, DATE, STATIC_DROPDOWN (requires options). The new table will be empty — use ap_insert_records to add data.',
         inputSchema: createTableInput.shape,
         annotations: { destructiveHint: false, idempotentHint: false, openWorldHint: false },
