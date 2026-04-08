@@ -5,12 +5,14 @@ import {
     isNil,
     McpServer,
     McpToolDefinition,
+    Permission,
     PieceTrigger,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
 import { projectService } from '../../project/project-service'
+import { mcpToolError } from './mcp-utils'
 
 const updateTriggerInput = z.object({
     flowId: z.string(),
@@ -25,6 +27,7 @@ const updateTriggerInput = z.object({
 export const apUpdateTriggerTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_update_trigger',
+        permission: Permission.WRITE_FLOW,
         description: 'Set or update the trigger for a flow. Use ap_list_pieces to get valid pieceName, pieceVersion, and triggerName. Use ap_list_connections to get the connection externalId for auth.',
         inputSchema: {
             flowId: z.string().describe('The id of the flow'),
@@ -109,10 +112,7 @@ export const apUpdateTriggerTool = (mcp: McpServer, log: FastifyBaseLogger): Mcp
                 }
             }
             catch (err) {
-                const message = err instanceof Error ? err.message : String(err)
-                return {
-                    content: [{ type: 'text', text: `❌ Trigger update failed: ${message}` }],
-                }
+                return mcpToolError('Trigger update failed', err)
             }
         },
     }

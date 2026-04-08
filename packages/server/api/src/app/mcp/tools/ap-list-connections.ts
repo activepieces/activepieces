@@ -3,11 +3,13 @@ import {
     AppConnectionStatus,
     McpServer,
     McpToolDefinition,
+    Permission,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
 import { projectService } from '../../project/project-service'
+import { mcpToolError } from './mcp-utils'
 
 const statusEnum = z.nativeEnum(AppConnectionStatus)
 
@@ -41,6 +43,7 @@ const listConnectionsSchema = z.object({
 export const apListConnectionsTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_list_connections',
+        permission: Permission.READ_APP_CONNECTION,
         description:
             'List OAuth/app connections in the current project or platform. Use this to discover available connections before adding steps that require auth (e.g. Google Drive, Slack). Filter by pieceName to find connections for a specific app, or by displayName to find a named connection. Use the `externalId` (not `id`) with the `auth` parameter of `ap_update_step`/`ap_update_trigger`.',
         inputSchema: {
@@ -74,10 +77,7 @@ export const apListConnectionsTool = (mcp: McpServer, log: FastifyBaseLogger): M
                 }
             }
             catch (err) {
-                const message = err instanceof Error ? err.message : String(err)
-                return {
-                    content: [{ type: 'text', text: `❌ Failed to list connections: ${message}` }],
-                }
+                return mcpToolError('Failed to list connections', err)
             }
         },
     }

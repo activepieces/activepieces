@@ -7,6 +7,7 @@ import {
     isNil,
     McpServer,
     McpToolDefinition,
+    Permission,
     RouterExecutionType,
     StepLocationRelativeToParent,
     UpdateActionRequest,
@@ -15,6 +16,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
 import { projectService } from '../../project/project-service'
+import { mcpToolError } from './mcp-utils'
 
 const addStepInput = z.object({
     flowId: z.string(),
@@ -31,6 +33,7 @@ const addStepInput = z.object({
 export const apAddStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_add_step',
+        permission: Permission.WRITE_FLOW,
         description: 'Add a new step to a flow (skeleton only - configure it afterwards with ap_update_step or ap_update_trigger). Use ap_flow_structure to get valid parentStepName and insert locations. Use ap_list_pieces to get pieceName, pieceVersion, and actionName for PIECE steps.',
         inputSchema: {
             flowId: z.string().describe('The id of the flow'),
@@ -168,13 +171,7 @@ export const apAddStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDe
                 }
             }
             catch (err) {
-                const message = err instanceof Error ? err.message : String(err)
-                return {
-                    content: [{
-                        type: 'text',
-                        text: `❌ Step add failed: ${message}`,
-                    }],
-                }
+                return mcpToolError('Step add failed', err)
             }
         },
     }

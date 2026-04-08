@@ -154,7 +154,10 @@ const ApMarkdown = React.memo(
               />
             ),
             p: ({ node: _node, ref: _ref, ...props }) => (
-              <p className="leading-5 not-first:mt-2 w-full mb-2" {...props} />
+              <p
+                className="leading-5 first-of-type:mt-1 not-first-of-type:mt-2 w-full mb-2"
+                {...props}
+              />
             ),
             ul: ({ node: _node, ref: _ref, ...props }) => (
               <ul className="mt-4 ml-6 list-disc [&>li]:mt-2" {...props} />

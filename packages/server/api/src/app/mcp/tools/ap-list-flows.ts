@@ -1,10 +1,12 @@
-import { McpServer, McpToolDefinition } from '@activepieces/shared'
+import { McpServer, McpToolDefinition, Permission } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { flowService } from '../../flows/flow/flow.service'
+import { mcpToolError } from './mcp-utils'
 
 export const apListFlowsTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_list_flows',
+        permission: Permission.READ_FLOW,
         description: 'List all flows in the current project',
         inputSchema: {},
         annotations: { readOnlyHint: true, openWorldHint: false },
@@ -23,13 +25,7 @@ export const apListFlowsTool = (mcp: McpServer, log: FastifyBaseLogger): McpTool
                 }
             }
             catch (err) {
-                const message = err instanceof Error ? err.message : String(err)
-                return {
-                    content: [{
-                        type: 'text',
-                        text: `❌ Failed to list flows: ${message}`,
-                    }],
-                }
+                return mcpToolError('Failed to list flows', err)
             }
         },
     }

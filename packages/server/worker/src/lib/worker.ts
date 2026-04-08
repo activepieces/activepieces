@@ -42,8 +42,9 @@ let sandboxManagers: SandboxManager[] = []
 export const worker = {
     async start({ apiUrl, socketUrl, workerToken, withHealthServer = false }: WorkerStartParams): Promise<void> {
         const platformIdForDedicatedWorker = system.get(WorkerSystemProp.PLATFORM_ID_FOR_DEDICATED_WORKER)
+        const isCanaryWorker = system.getBoolean(WorkerSystemProp.IS_CANARY_WORKER) ?? false
         socket = io(socketUrl.url, {
-            auth: { token: workerToken, workerId, platformIdForDedicatedWorker },
+            auth: { token: workerToken, workerId, platformIdForDedicatedWorker, isCanaryWorker },
             path: socketUrl.path,
             transports: ['websocket'],
             reconnection: true,
@@ -146,7 +147,6 @@ async function pollAndExecute(apiClient: WorkerToApiContract, sbManager: Sandbox
             executeJob(apiClient, job, sbManager),
         )
 
-        clearInterval(lockExtensionInterval)
 
         const { error: completeError } = await tryCatch(() =>
             apiClient.completeJob({
@@ -155,12 +155,15 @@ async function pollAndExecute(apiClient: WorkerToApiContract, sbManager: Sandbox
                 queueName: job.queueName,
                 status: execError
                     ? EngineResponseStatus.INTERNAL_ERROR
-                    : result?.kind === JobResultKind.SYNCHRONOUS ? result.status : EngineResponseStatus.OK,
+                    : result.status,
                 errorMessage: buildErrorMessage(execError ?? undefined, result ?? undefined),
+                logs: extractLogs(execError ?? undefined, result ?? undefined),
                 delayInSeconds: result?.kind === JobResultKind.FIRE_AND_FORGET ? result.delayInSeconds : undefined,
                 response: result?.kind === JobResultKind.SYNCHRONOUS ? result.response : undefined,
             }),
         )
+
+        clearInterval(lockExtensionInterval)
 
         if (completeError) {
             workerLog.error({ error: completeError, jobId: job.jobId }, 'Failed to complete job')
@@ -285,34 +288,27 @@ async function warmupPiecesOnStartup(apiClient: WorkerToApiContract): Promise<vo
 
 function buildErrorMessage(execError: Error | undefined, result: JobResult | undefined): string | undefined {
     if (execError) {
-        const parts: string[] = [execError.message]
-        if (execError instanceof ActivepiecesError) {
-            const params = execError.error.params as Record<string, unknown>
-            if (params?.['standardOutput']) {
-                parts.push(`stdOut=${params['standardOutput']}`)
-            }
-            if (params?.['standardError']) {
-                parts.push(`stdError=${params['standardError']}`)
-            }
-        }
-        return parts.join(' ')
+        return execError.message
     }
     const isFailure = result?.kind === JobResultKind.SYNCHRONOUS && result.status !== EngineResponseStatus.OK
-    const baseMessage = isFailure ? result.errorMessage : undefined
     if (!isFailure) {
         return undefined
     }
-    const parts: string[] = []
-    if (baseMessage) {
-        parts.push(baseMessage)
+    return result.errorMessage
+}
+
+function extractLogs(execError: Error | undefined, result: JobResult | undefined): string | undefined {
+    if (execError instanceof ActivepiecesError) {
+        const params = execError.error.params as Record<string, unknown>
+        const parts: string[] = []
+        if (params?.['standardOutput']) parts.push(`stdout:\n${params['standardOutput']}`)
+        if (params?.['standardError']) parts.push(`stderr:\n${params['standardError']}`)
+        return parts.length > 0 ? parts.join('\n') : undefined
     }
-    if (result.stdOut) {
-        parts.push(`stdOut=${result.stdOut}`)
+    if (result && 'logs' in result) {
+        return result.logs
     }
-    if (result.stdError) {
-        parts.push(`stdError=${result.stdError}`)
-    }
-    return parts.length > 0 ? parts.join(' ') : undefined
+    return undefined
 }
 
 function sleep(ms: number): Promise<void> {
@@ -322,8 +318,9 @@ function sleep(ms: number): Promise<void> {
 
 function startHealthServer(): ReturnType<typeof createServer> {
     const port = Number(system.get(WorkerSystemProp.PORT))
+    const healthPaths = new Set(['/worker/health', '/v1/health'])
     const server = createServer((req, res) => {
-        if (req.method === 'GET' && req.url === '/worker/health') {
+        if (req.method === 'GET' && req.url && healthPaths.has(req.url)) {
             res.writeHead(200, { 'Content-Type': 'application/json' })
             res.end(JSON.stringify({ status: 'ok' }))
         }

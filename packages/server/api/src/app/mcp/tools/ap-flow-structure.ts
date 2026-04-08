@@ -8,12 +8,14 @@ import {
     McpServer,
     McpToolDefinition,
     Note,
+    Permission,
     StepLocationRelativeToParent,
 } from '@activepieces/shared'
 import type { Step } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
+import { mcpToolError } from './mcp-utils'
 
 type StepInfo = {
     name: string
@@ -208,6 +210,7 @@ function formatFlowStructure(
 export const apFlowStructureTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_flow_structure',
+        permission: Permission.READ_FLOW,
         description: 'Get the structure of a flow: step tree (parent/child), each step type, configuration status (configured/unconfigured/invalid), and valid insert locations for ap_add_step.',
         inputSchema: {
             flowId: z.string().describe('The id of the flow'),
@@ -228,13 +231,7 @@ export const apFlowStructureTool = (mcp: McpServer, log: FastifyBaseLogger): Mcp
                 return { content: [{ type: 'text', text }] }
             }
             catch (err) {
-                const message = err instanceof Error ? err.message : String(err)
-                return {
-                    content: [{
-                        type: 'text',
-                        text: `❌ Failed to get flow structure: ${message}`,
-                    }],
-                }
+                return mcpToolError('Failed to get flow structure', err)
             }
         },
     }

@@ -1,4 +1,4 @@
-import { createAction } from '@activepieces/pieces-framework';
+import { createAction, OAuth2PropertyValue } from '@activepieces/pieces-framework';
 import { excelAuth } from '../auth';
 import { commonProps } from '../common/props';
 import { getDrivePath, createMSGraphClient } from '../common/helpers';
@@ -18,6 +18,7 @@ export const getWorksheetAction = createAction({
     async run(context) {
         const { storageSource, siteId, documentId, workbookId, worksheetId } = context.propsValue;
         const { access_token } = context.auth;
+        const cloud = (context.auth as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
 
         if (storageSource === 'sharepoint' && (!siteId || !documentId)) {
             throw new Error('please select SharePoint site and document library.');
@@ -26,7 +27,7 @@ export const getWorksheetAction = createAction({
 
         // The worksheet_id prop from excelCommon returns the worksheet's name,
         // which can be used to identify it in the API URL as per the documentation ({id|name}).
-        const client = createMSGraphClient(access_token);
+        const client = createMSGraphClient(access_token, cloud);
         const response = await client
             .api(`${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}`)
             .get();

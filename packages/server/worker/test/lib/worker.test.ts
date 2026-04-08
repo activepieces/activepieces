@@ -178,7 +178,7 @@ describe('worker integration', () => {
     }
 
     it('polls for a job, executes it, and reports completion', async () => {
-        const expectedResult = { kind: JobResultKind.FIRE_AND_FORGET, delayInSeconds: 10 }
+        const expectedResult = { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK, delayInSeconds: 10 }
         mockGetHandler.mockReturnValue({
             jobType: WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
             execute: vi.fn().mockResolvedValue(expectedResult),
@@ -229,7 +229,7 @@ describe('worker integration', () => {
     it('skips null poll responses and re-polls', async () => {
         mockGetHandler.mockReturnValue({
             jobType: WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
-            execute: vi.fn().mockResolvedValue({ kind: JobResultKind.FIRE_AND_FORGET }),
+            execute: vi.fn().mockResolvedValue({ kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }),
         })
 
         const job = buildConsumeJobRequest({ jobId: 'job-after-null' })
@@ -240,9 +240,78 @@ describe('worker integration', () => {
         expect(completeJobCalls[0].status).toBe(EngineResponseStatus.OK)
     }, 15_000)
 
+    it('forwards USER_FAILURE status from synchronous job handler', async () => {
+        mockGetHandler.mockReturnValue({
+            jobType: WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
+            execute: vi.fn().mockResolvedValue({
+                kind: JobResultKind.SYNCHRONOUS,
+                status: EngineResponseStatus.USER_FAILURE,
+                response: { message: 'Invalid API key' },
+                errorMessage: 'Connection auth failed',
+            }),
+        })
+
+        const job = buildConsumeJobRequest()
+        const { completeJobCalls } = await connectWorkerWithPoll([job, null])
+
+        expect(completeJobCalls.length).toBe(1)
+        expect(completeJobCalls[0].status).toBe(EngineResponseStatus.USER_FAILURE)
+        expect(completeJobCalls[0].response).toEqual({ message: 'Invalid API key' })
+        expect(completeJobCalls[0].errorMessage).toBe('Connection auth failed')
+    }, 15_000)
+
+    it('treats USER_FAILURE differently from INTERNAL_ERROR in fire-and-forget', async () => {
+        mockGetHandler.mockReturnValue({
+            jobType: WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
+            execute: vi.fn().mockResolvedValue({ kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }),
+        })
+
+        const job = buildConsumeJobRequest()
+        const { completeJobCalls } = await connectWorkerWithPoll([job, null])
+
+        expect(completeJobCalls.length).toBe(1)
+        expect(completeJobCalls[0].status).toBe(EngineResponseStatus.OK)
+    }, 15_000)
+
+    it('propagates INTERNAL_ERROR status from fire-and-forget result to completeJob', async () => {
+        mockGetHandler.mockReturnValue({
+            jobType: WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
+            execute: vi.fn().mockResolvedValue({
+                kind: JobResultKind.FIRE_AND_FORGET,
+                status: EngineResponseStatus.INTERNAL_ERROR,
+                logs: 'MODULE_NOT_FOUND: @activepieces/shared',
+            }),
+        })
+
+        const job = buildConsumeJobRequest({ jobId: 'job-internal-error' })
+        const { completeJobCalls } = await connectWorkerWithPoll([job, null])
+
+        expect(completeJobCalls.length).toBe(1)
+        expect(completeJobCalls[0].jobId).toBe('job-internal-error')
+        expect(completeJobCalls[0].status).toBe(EngineResponseStatus.INTERNAL_ERROR)
+        expect(completeJobCalls[0].logs).toBe('MODULE_NOT_FOUND: @activepieces/shared')
+    }, 15_000)
+
+    it('propagates TIMEOUT status from fire-and-forget result to completeJob', async () => {
+        mockGetHandler.mockReturnValue({
+            jobType: WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
+            execute: vi.fn().mockResolvedValue({
+                kind: JobResultKind.FIRE_AND_FORGET,
+                status: EngineResponseStatus.TIMEOUT,
+            }),
+        })
+
+        const job = buildConsumeJobRequest({ jobId: 'job-timeout' })
+        const { completeJobCalls } = await connectWorkerWithPoll([job, null])
+
+        expect(completeJobCalls.length).toBe(1)
+        expect(completeJobCalls[0].jobId).toBe('job-timeout')
+        expect(completeJobCalls[0].status).toBe(EngineResponseStatus.TIMEOUT)
+    }, 15_000)
+
     describe('resilience to invalid job data', () => {
         it('survives a job with invalid jobData fields and continues processing', async () => {
-            const expectedResult = { kind: JobResultKind.FIRE_AND_FORGET, delayInSeconds: 5 }
+            const expectedResult = { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK, delayInSeconds: 5 }
             mockGetHandler.mockReturnValue({
                 jobType: WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
                 execute: vi.fn().mockResolvedValue(expectedResult),
@@ -265,7 +334,7 @@ describe('worker integration', () => {
         }, 15_000)
 
         it('survives a job with an unrecognized jobType and continues polling', async () => {
-            const expectedResult = { kind: JobResultKind.FIRE_AND_FORGET, delayInSeconds: 5 }
+            const expectedResult = { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK, delayInSeconds: 5 }
             mockGetHandler.mockReturnValue({
                 jobType: WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
                 execute: vi.fn().mockResolvedValue(expectedResult),
@@ -289,7 +358,7 @@ describe('worker integration', () => {
         it('survives a job with empty object as jobData and continues polling', async () => {
             mockGetHandler.mockReturnValue({
                 jobType: WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
-                execute: vi.fn().mockResolvedValue({ kind: JobResultKind.FIRE_AND_FORGET }),
+                execute: vi.fn().mockResolvedValue({ kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }),
             })
 
             const invalidJob = buildConsumeJobRequest({
@@ -310,7 +379,7 @@ describe('worker integration', () => {
         it('survives a job with non-object primitive jobData and continues polling', async () => {
             mockGetHandler.mockReturnValue({
                 jobType: WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
-                execute: vi.fn().mockResolvedValue({ kind: JobResultKind.FIRE_AND_FORGET }),
+                execute: vi.fn().mockResolvedValue({ kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }),
             })
 
             const invalidJob = buildConsumeJobRequest({
@@ -329,7 +398,7 @@ describe('worker integration', () => {
         }, 15_000)
 
         it('survives multiple consecutive invalid jobs and still processes a valid one', async () => {
-            const expectedResult = { kind: JobResultKind.FIRE_AND_FORGET, delayInSeconds: 7 }
+            const expectedResult = { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK, delayInSeconds: 7 }
             mockGetHandler.mockReturnValue({
                 jobType: WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
                 execute: vi.fn().mockResolvedValue(expectedResult),
@@ -363,7 +432,7 @@ describe('worker integration', () => {
                 })
                 .mockReturnValueOnce({
                     jobType: WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
-                    execute: vi.fn().mockResolvedValue({ kind: JobResultKind.FIRE_AND_FORGET, delayInSeconds: 5 }),
+                    execute: vi.fn().mockResolvedValue({ kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK, delayInSeconds: 5 }),
                 })
 
             const job1 = buildConsumeJobRequest({ jobId: 'job-crash' })
@@ -383,7 +452,7 @@ describe('worker integration', () => {
         it('handles interleaved nulls, invalid jobs, and valid jobs', async () => {
             mockGetHandler.mockReturnValue({
                 jobType: WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
-                execute: vi.fn().mockResolvedValue({ kind: JobResultKind.FIRE_AND_FORGET }),
+                execute: vi.fn().mockResolvedValue({ kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }),
             })
 
             const validJob1 = buildConsumeJobRequest({ jobId: 'valid-1' })
@@ -404,7 +473,70 @@ describe('worker integration', () => {
             expect(mockGetHandler).toHaveBeenCalledTimes(2)
         }, 15_000)
     })
+
+    describe('health endpoint', () => {
+        let healthPort: number
+
+        beforeEach(async () => {
+            healthPort = await getFreePort()
+            process.env.AP_PORT = String(healthPort)
+        })
+
+        afterEach(() => {
+            delete process.env.AP_PORT
+        })
+
+        async function startWithHealthServer(): Promise<void> {
+            worker.start({
+                apiUrl: `http://127.0.0.1:${port}/api/`,
+                socketUrl: { url: `http://127.0.0.1:${port}`, path: '/api/socket.io' },
+                workerToken: 'test-token',
+                withHealthServer: true,
+            })
+            for (let i = 0; i < 50; i++) {
+                try {
+                    const res = await fetch(`http://127.0.0.1:${healthPort}/v1/health`)
+                    if (res.ok) return
+                }
+                catch {
+                    // server not ready yet
+                }
+                await new Promise<void>((resolve) => setTimeout(resolve, 100))
+            }
+            throw new Error(`Health server on port ${healthPort} did not start in time`)
+        }
+
+        it('responds 200 with status ok on /v1/health', async () => {
+            await startWithHealthServer()
+            const res = await fetch(`http://127.0.0.1:${healthPort}/v1/health`)
+            expect(res.status).toBe(200)
+            expect(await res.json()).toEqual({ status: 'ok' })
+        }, 5_000)
+
+        it('responds 200 with status ok on /worker/health', async () => {
+            await startWithHealthServer()
+            const res = await fetch(`http://127.0.0.1:${healthPort}/worker/health`)
+            expect(res.status).toBe(200)
+            expect(await res.json()).toEqual({ status: 'ok' })
+        }, 5_000)
+
+        it('responds 404 on unknown paths', async () => {
+            await startWithHealthServer()
+            const res = await fetch(`http://127.0.0.1:${healthPort}/unknown`)
+            expect(res.status).toBe(404)
+        }, 5_000)
+    })
 })
+
+function getFreePort(): Promise<number> {
+    return new Promise((resolve) => {
+        const srv = createServer()
+        srv.listen(0, () => {
+            const { port } = srv.address() as { port: number }
+            srv.close(() => resolve(port))
+        })
+    })
+}
 
 type CompleteJobCall = {
     jobId: string
@@ -412,6 +544,7 @@ type CompleteJobCall = {
     queueName: string
     status: string
     errorMessage?: string
+    logs?: string
     delayInSeconds?: number
     response?: unknown
 }

@@ -33,6 +33,7 @@ export enum WorkerSystemProp {
     LOAD_TRANSLATIONS_FOR_DEV_PIECES = 'AP_LOAD_TRANSLATIONS_FOR_DEV_PIECES',
     PLATFORM_ID_FOR_DEDICATED_WORKER = 'AP_PLATFORM_ID_FOR_DEDICATED_WORKER',
     WORKER_CONCURRENCY = 'AP_WORKER_CONCURRENCY',
+    IS_CANARY_WORKER = 'AP_IS_CANARY_WORKER',
 }
 
 const defaultValues: Partial<Record<WorkerSystemProp, string>> = {
@@ -40,7 +41,7 @@ const defaultValues: Partial<Record<WorkerSystemProp, string>> = {
     [WorkerSystemProp.LOG_LEVEL]: 'info',
     [WorkerSystemProp.LOG_PRETTY]: 'false',
     [WorkerSystemProp.OTEL_ENABLED]: 'false',
-    [WorkerSystemProp.WORKER_CONCURRENCY]: '1',
+    [WorkerSystemProp.WORKER_CONCURRENCY]: '5',
 }
 
 export const system = {
@@ -52,6 +53,10 @@ export const system = {
     },
     getBoolean(prop: WorkerSystemProp): boolean | undefined {
         return env.get(prop).asBoolStrict()
+    },
+    getList(prop: WorkerSystemProp): string[] {
+        const value = env.get(prop).asString() ?? defaultValues[prop]
+        return value ? value.split(',').map(s => s.trim()).filter(Boolean) : []
     },
 }
 

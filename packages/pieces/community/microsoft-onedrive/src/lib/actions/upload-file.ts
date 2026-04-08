@@ -39,13 +39,15 @@ export const uploadFile = createAction({
       : 'application/octet-stream'; // Fallback to a default MIME type
     const encodedFilename = encodeURIComponent(context.propsValue.fileName);
     const parentId = context.propsValue.parentId ?? 'root';
+    const cloud = context.auth.props?.['cloud'] as string | undefined;
+    const baseUrl = oneDriveCommon.getBaseUrl(cloud);
 
     if (fileData.data.length <= 4 * 1024 * 1024) {
       // If file is smaller than 4MiB, use simple upload
       const base64Data = Buffer.from(fileData.base64, 'base64');
       const result = await httpClient.sendRequest({
         method: HttpMethod.PUT,
-        url: `${oneDriveCommon.baseUrl}/items/${parentId}:/${encodedFilename}:/content`,
+        url: `${baseUrl}/items/${parentId}:/${encodedFilename}:/content`,
         body: base64Data,
         headers: {
           'Content-Type': mimeType,
@@ -62,7 +64,7 @@ export const uploadFile = createAction({
       // For files larger than 4MiB, use chunked upload
       const session = await httpClient.sendRequest({
         method: HttpMethod.POST,
-        url: `${oneDriveCommon.baseUrl}/items/${parentId}:/${encodedFilename}:/createUploadSession`,
+        url: `${baseUrl}/items/${parentId}:/${encodedFilename}:/createUploadSession`,
         body: {
           item: {
             '@microsoft.graph.conflictBehavior': 'replace',

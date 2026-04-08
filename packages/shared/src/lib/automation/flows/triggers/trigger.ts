@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { STEP_NAME_REGEX } from '../../../core/common'
 import { VersionType } from '../../pieces'
 import { CodeActionSettings, LoopOnItemsActionSettings, PieceActionSettings, RouterActionSettings } from '../actions/action'
 import { PropertySettings } from '../properties'
@@ -7,7 +8,7 @@ import { SampleDataSetting } from '../sample-data'
 export const AUTHENTICATION_PROPERTY_NAME = 'auth'
 
 
-export const PieceTriggerSettings = z.object({
+const pieceTriggerSettingsFields = {
     sampleData: SampleDataSetting.optional(),
     propertySettings: z.record(z.string(), PropertySettings),
     customLogoUrl: z.string().optional(),
@@ -15,6 +16,10 @@ export const PieceTriggerSettings = z.object({
     pieceVersion: VersionType,
     triggerName: z.string().optional(),
     input: z.record(z.string(), z.any()),
+}
+
+export const PieceTriggerSettings = z.object({
+    ...pieceTriggerSettingsFields,
 })
 
 export type PieceTriggerSettings = z.infer<typeof PieceTriggerSettings>
@@ -26,7 +31,7 @@ export enum FlowTriggerType {
 }
 
 const commonProps = {
-    name: z.string(),
+    name: z.string().regex(STEP_NAME_REGEX),
     valid: z.boolean(),
     displayName: z.string(),
     nextAction: z.any().optional(),

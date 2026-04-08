@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { Nullable } from '../../../core/common'
 import { Metadata } from '../../../core/common/metadata'
-import { BranchCondition, CodeActionSchema, CodeActionSettings, LoopOnItemsActionSchema, LoopOnItemsActionSettings, PieceActionSchema, PieceActionSettings, RouterActionSchema, RouterActionSettings } from '../actions/action'
+import { BranchCondition, CodeActionSchema, CodeActionSettings, FlowActionType, LoopOnItemsActionSchema, LoopOnItemsActionSettings, PieceActionSchema, PieceActionSettings, RouterActionSchema, RouterActionSettings } from '../actions/action'
 import { FlowStatus } from '../flow'
 import { FlowVersion, FlowVersionState } from '../flow-version'
 import { Note } from '../note'
@@ -87,7 +87,7 @@ export type SkipActionRequest = z.infer<typeof SkipActionRequest>
 
 export const UpdateSampleDataInfoRequest = z.object({
     stepName: z.string(),
-    sampleDataSettings: SampleDataSetting.omit({ lastTestDate: true }),
+    sampleDataSettings: Nullable(SampleDataSetting.omit({ lastTestDate: true })),
 })
 export type UpdateSampleDataInfoRequest = z.infer<typeof UpdateSampleDataInfoRequest>
 
@@ -211,6 +211,7 @@ export const UpdateOwnerRequest = z.object({
     ownerId: z.string(),
 })
 export type UpdateOwnerRequest = z.infer<typeof UpdateOwnerRequest>
+
 export const FlowOperationRequest = z.union([
     z.object({
         type: z.literal(FlowOperationType.MOVE_ACTION),
@@ -333,7 +334,6 @@ export const flowOperations = {
                 operations.forEach((operation) => {
                     clonedVersion = flowOperations.apply(clonedVersion, operation)
                 })
-                clonedVersion = flowPieceUtil.makeFlowAutoUpgradable(clonedVersion)
                 break
             }
             case FlowOperationType.CHANGE_NAME:
@@ -357,33 +357,36 @@ export const flowOperations = {
                 clonedVersion.state = FlowVersionState.LOCKED
                 break
             case FlowOperationType.ADD_ACTION: {
+                if (operation.request.action.type === FlowActionType.PIECE) {
+                    operation.request.action.settings.pieceVersion = flowPieceUtil.getExactVersion(operation.request.action.settings.pieceVersion)
+                }
                 clonedVersion = _addAction(clonedVersion, operation.request)
-                clonedVersion = flowPieceUtil.makeFlowAutoUpgradable(clonedVersion)
                 break
             }
             case FlowOperationType.DELETE_ACTION: {
                 clonedVersion = _deleteAction(clonedVersion, operation.request)
-                clonedVersion = flowPieceUtil.makeFlowAutoUpgradable(clonedVersion)
                 break
             }
             case FlowOperationType.UPDATE_TRIGGER: {
+                if (operation.request.type === FlowTriggerType.PIECE) {
+                    operation.request.settings.pieceVersion = flowPieceUtil.getExactVersion(operation.request.settings.pieceVersion)
+                }
                 clonedVersion = _updateTrigger(clonedVersion, operation.request)
-                clonedVersion = flowPieceUtil.makeFlowAutoUpgradable(clonedVersion)
                 break
             }
             case FlowOperationType.ADD_BRANCH: {
                 clonedVersion = _addBranch(clonedVersion, operation.request)
-                clonedVersion = flowPieceUtil.makeFlowAutoUpgradable(clonedVersion)
                 break
             }
             case FlowOperationType.DELETE_BRANCH: {
                 clonedVersion = _deleteBranch(clonedVersion, operation.request)
-                clonedVersion = flowPieceUtil.makeFlowAutoUpgradable(clonedVersion)
                 break
             }
             case FlowOperationType.UPDATE_ACTION: {
+                if (operation.request.type === FlowActionType.PIECE) {
+                    operation.request.settings.pieceVersion = flowPieceUtil.getExactVersion(operation.request.settings.pieceVersion)
+                }
                 clonedVersion = _updateAction(clonedVersion, operation.request)
-                clonedVersion = flowPieceUtil.makeFlowAutoUpgradable(clonedVersion)
                 break
             }
             case FlowOperationType.IMPORT_FLOW: {
@@ -399,7 +402,6 @@ export const flowOperations = {
             }
             case FlowOperationType.MOVE_BRANCH: {
                 clonedVersion = _moveBranch(clonedVersion, operation.request)
-                clonedVersion = flowPieceUtil.makeFlowAutoUpgradable(clonedVersion)
                 break
             }
             case FlowOperationType.UPDATE_NOTE: {
@@ -418,7 +420,6 @@ export const flowOperations = {
                 clonedVersion = _updateSampleDataInfo(clonedVersion, operation.request)
                 break
             }
-      
             default:
                 break
         }
