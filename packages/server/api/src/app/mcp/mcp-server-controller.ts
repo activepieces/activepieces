@@ -1,4 +1,4 @@
-import { AgentMcpTool, ApId, buildAuthHeaders, isNil, McpAuthConfig, McpProtocol, Permission, PopulatedMcpServer, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, UpdateMcpServerRequest } from '@activepieces/shared'
+import { AgentMcpTool, ApId, buildAuthHeaders, isNil, McpAuthConfig, McpProtocol, Permission, PopulatedMcpServer, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, TelemetryEventName, UpdateMcpServerRequest } from '@activepieces/shared'
 import { experimental_createMCPClient as createMCPClient, MCPClient, MCPTransport } from '@ai-sdk/mcp'
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js'
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'
@@ -6,6 +6,8 @@ import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { z } from 'zod'
 import { ProjectResourceType } from '../core/security/authorization/common'
 import { securityAccess } from '../core/security/authorization/fastify-security'
+import { rejectedPromiseHandler } from '../helper/promise-handler'
+import { telemetry } from '../helper/telemetry.utils'
 import { mcpServerService } from './mcp-service'
 
 export const mcpServerController: FastifyPluginAsyncZod = async (app) => {
@@ -38,7 +40,17 @@ export const mcpServerController: FastifyPluginAsyncZod = async (app) => {
     })
 
     app.post('/http', StreamableHttpRequestRequest, async (req, reply) => {
-        const mcp = await mcpServerService(req.log).getPopulatedByProjectId(req.params.projectId)
+        let mcp: PopulatedMcpServer
+        try {
+            mcp = await mcpServerService(req.log).getPopulatedByProjectId(req.params.projectId)
+        }
+        catch (err) {
+            req.log.debug({ err }, 'Failed to resolve MCP server for project')
+            return reply.status(401).send({
+                error: 'Unauthorized',
+                message: 'Invalid project or token.',
+            })
+        }
         const authHeader = req.headers['authorization']
         const tokenFromHeader = validateAuthorizationHeader(authHeader, mcp)
         const tokenFromQuery = validateTokenFromQuery(req.query, mcp)
@@ -48,6 +60,14 @@ export const mcpServerController: FastifyPluginAsyncZod = async (app) => {
                 message: 'Missing or invalid token. Use Authorization: Bearer <token> or add ?token=<token> to the URL (for clients that cannot send headers).',
             })
         }
+        rejectedPromiseHandler(telemetry(req.log).trackProject(mcp.projectId, {
+            name: TelemetryEventName.MCP_SERVER_CONNECTED,
+            payload: {
+                authMethod: 'project_token',
+                projectId: mcp.projectId,
+            },
+        }), req.log)
+
         const { server } = await mcpServerService(req.log).buildServer({
             mcp,
         })

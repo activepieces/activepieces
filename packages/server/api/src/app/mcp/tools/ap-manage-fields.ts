@@ -1,4 +1,4 @@
-import { FieldType, isNil, McpServer, McpToolDefinition } from '@activepieces/shared'
+import { FieldType, isNil, McpServer, McpToolDefinition, Permission } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { fieldService } from '../../tables/field/field.service'
@@ -17,6 +17,7 @@ const manageFieldsInput = z.object({
 export const apManageFieldsTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_manage_fields',
+        permission: Permission.WRITE_TABLE,
         description: 'Add, rename, or delete fields (columns) on a table. Use ap_list_tables to see existing fields and their IDs. Max 100 fields per table.',
         inputSchema: manageFieldsInput.shape,
         annotations: { destructiveHint: false, idempotentHint: false, openWorldHint: false },
