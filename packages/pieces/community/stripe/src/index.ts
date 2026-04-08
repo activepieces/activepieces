@@ -36,6 +36,7 @@ import { stripeCreatePaymentLink } from './lib/actions/create-payment-link';
 import { stripeDeactivatePaymentLink } from './lib/actions/deactivate-payment-link';
 import { stripeRetrievePaymentIntent } from './lib/actions/retrieve-payment-intent';
 import { stripeFindInvoice } from './lib/actions/find-invoice';
+import { refundPayment } from './lib/actions/refund-paymment';
 
 export const stripeAuth = PieceAuth.SecretText({
   displayName: 'Secret API Key',
@@ -100,6 +101,7 @@ export const stripe = createPiece({
     stripeDeactivatePaymentLink,
     stripeRetrievePaymentIntent,
     stripeFindInvoice,
+    refundPayment,
     createCustomApiCallAction({
       baseUrl: () => 'https://api.stripe.com/v1',
       auth: stripeAuth,
