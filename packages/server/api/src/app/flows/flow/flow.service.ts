@@ -490,14 +490,6 @@ export const flowService = (log: FastifyBaseLogger) => ({
             id,
             projectId,
         })
-        if (flow.operationStatus !== FlowOperationStatus.NONE) {
-            throw new ActivepiecesError({
-                code: ErrorCode.FLOW_OPERATION_IN_PROGRESS,
-                params: {
-                    message: `Flow ${id} is already being ${flow.operationStatus}`,
-                },
-            })
-        }
         await this.addDeleteFlowJob(flow)
         await flowRepo().update(id, {
             operationStatus: FlowOperationStatus.DELETING,
