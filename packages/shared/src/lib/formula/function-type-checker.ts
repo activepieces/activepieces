@@ -60,6 +60,8 @@ export function typeCheckTiptapDoc(doc: DocNode): Map<string, string> {
             if (!expectedSpec) continue
             // Union types (array) mean multiple types are valid — skip strict type check
             if (Array.isArray(expectedSpec)) continue
+            // Can't infer list type from plain text (user likely passes a variable) — skip
+            if (expectedSpec === 'list') continue
 
             const actualType = inferArgType(argSlots[i])
             if (!actualType) continue

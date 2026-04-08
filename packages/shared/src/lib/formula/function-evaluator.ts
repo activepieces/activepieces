@@ -437,7 +437,87 @@ function preprocessExpression(
         vars[key] = resolved === undefined ? null : resolved
         return key
     })
-    return { processed: normalizeExpression(wrapStringArgs(withVars)), vars }
+    const withJsonVars = replaceInlineJsonArrays(withVars, vars, { value: idx })
+    return { processed: normalizeExpression(wrapStringArgs(withJsonVars)), vars }
+}
+
+function replaceInlineJsonArrays(
+    expr: string,
+    vars: Record<string, unknown>,
+    idxRef: { value: number },
+): string {
+    let result = ''
+    let i = 0
+    let inString: '"' | '\'' | null = null
+
+    while (i < expr.length) {
+        const ch = expr[i]
+
+        if (inString) {
+            if (ch === inString && expr[i - 1] !== '\\') inString = null
+            result += ch
+            i++
+            continue
+        }
+
+        if (ch === '"' || ch === '\'') {
+            inString = ch
+            result += ch
+            i++
+            continue
+        }
+
+        if (ch === '[') {
+            let j = i + 1
+            while (j < expr.length && (expr[j] === ' ' || expr[j] === '\t')) j++
+            if (j < expr.length && expr[j] === '{') {
+                const end = findMatchingSquareBracket(expr, i)
+                if (end !== -1) {
+                    const jsonStr = expr.slice(i, end + 1)
+                    try {
+                        const parsed = JSON.parse(jsonStr) as unknown
+                        if (Array.isArray(parsed)) {
+                            const key = `__ap_v${idxRef.value++}__`
+                            vars[key] = parsed
+                            result += key
+                            i = end + 1
+                            continue
+                        }
+                    }
+                    catch {
+                        // not valid JSON — fall through and include as-is
+                    }
+                }
+            }
+        }
+
+        result += ch
+        i++
+    }
+
+    return result
+}
+
+function findMatchingSquareBracket(text: string, openPos: number): number {
+    let depth = 0
+    let inStr: '"' | '\'' | null = null
+    for (let i = openPos; i < text.length; i++) {
+        const ch = text[i]
+        if (inStr) {
+            if (ch === inStr && (i === 0 || text[i - 1] !== '\\')) inStr = null
+        }
+        else if (ch === '"' || ch === '\'') {
+            inStr = ch
+        }
+        else if (ch === '[') {
+            depth++
+        }
+        else if (ch === ']') {
+            depth--
+            if (depth === 0) return i
+        }
+    }
+    return -1
 }
 
 function wrapStringArgs(expr: string): string {
