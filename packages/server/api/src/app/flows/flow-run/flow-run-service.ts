@@ -507,8 +507,8 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             executionType: ExecutionType.RESUME,
         }, log)
         return engineResponseWatcher(log).oneTimeListener<EngineHttpResponse>(requestId, true, WEBHOOK_TIMEOUT_MS, {
-            status: StatusCodes.NO_CONTENT,
-            body: {},
+            status: StatusCodes.REQUEST_TIMEOUT,
+            body: { message: 'Flow did not return a response within the timeout period' },
             headers: {},
         })
     },
