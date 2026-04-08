@@ -3,7 +3,6 @@ import { SlidersHorizontal } from 'lucide-react';
 import React from 'react';
 
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import {
   Popover,
   PopoverContent,
@@ -11,6 +10,8 @@ import {
 } from '@/components/ui/popover';
 
 export const WorkerConfigsPopover: React.FC<Props> = ({ workerProps }) => {
+  const entries = Object.entries(workerProps ?? {});
+
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -23,27 +24,29 @@ export const WorkerConfigsPopover: React.FC<Props> = ({ workerProps }) => {
           <SlidersHorizontal size={14} />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80 max-h-[60vh] overflow-y-auto">
-        <div className="space-y-3">
-          <h4 className="text-sm font-medium">{t('Environment Variables')}</h4>
-          {Object.entries(workerProps ?? {}).map(([key, value]) => (
-            <div
-              key={key}
-              className="flex flex-col gap-1 p-2 rounded-md bg-gray-50 dark:bg-gray-800 border dark:border-gray-700"
-            >
-              <label className="text-xs font-medium text-gray-700 dark:text-gray-200">
-                {key}
-              </label>
-              <Input
-                type="text"
-                disabled={true}
-                value={value as string}
-                readOnly
-                className="pointer-events-none h-7 text-xs p-1.5 border rounded-md bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
-              />
-            </div>
-          ))}
-        </div>
+      <PopoverContent className="w-auto p-0" align="end">
+        <table className="text-xs">
+          <thead>
+            <tr className="border-b">
+              <th className="px-3 py-2 text-left font-medium text-muted-foreground">
+                {t('Variable')}
+              </th>
+              <th className="px-3 py-2 text-left font-medium text-muted-foreground">
+                {t('Value')}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {entries.map(([key, value]) => (
+              <tr key={key} className="border-b last:border-b-0">
+                <td className="px-3 py-2 font-mono font-medium">{key}</td>
+                <td className="px-3 py-2 font-mono text-muted-foreground">
+                  {value}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </PopoverContent>
     </Popover>
   );
