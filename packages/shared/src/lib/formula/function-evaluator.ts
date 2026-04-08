@@ -603,7 +603,7 @@ function quoteIfBare(arg: string): string {
     if (trimmed.startsWith('__ap_')) return arg
     const fnCallMatch = trimmed.match(/^([a-z_][a-z0-9_]*)\s*\(/i)
     if (fnCallMatch && AP_FUNCTIONS.some((f) => f.name === fnCallMatch[1])) return arg
-    return '"' + arg.replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"'
+    return '"' + trimmed.replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"'
 }
 
 function normalizeExpression(expr: string): string {
