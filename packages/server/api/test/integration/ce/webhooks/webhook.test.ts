@@ -1,19 +1,33 @@
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
-import { FlowStatus, PrincipalType } from '@activepieces/shared'
+import {
+    apId,
+    EngineResponseStatus,
+    FlowStatus,
+    PrincipalType,
+    TriggerHookType,
+    WebhookHandshakeStrategy,
+} from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import * as flowExecutionCacheModule from '../../../../src/app/flows/flow/flow-execution-cache'
+import { userInteractionWatcher } from '../../../../src/app/workers/user-interaction-watcher'
 import { generateMockToken } from '../../../helpers/auth'
 import { db } from '../../../helpers/db'
 import { createMockFlow, createMockFlowVersion, mockAndSaveBasicSetup } from '../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
 const MOCK_FLOW_ID = '8hfKOpm3kY1yAi1ApYOa1'
+
 beforeAll(async () => {
     app = await setupTestEnvironment()
 })
 
 afterAll(async () => {
     await teardownTestEnvironment()
+})
+
+afterEach(() => {
+    vi.restoreAllMocks()
 })
 describe('Webhook Service', () => {
     it('should accept webhook for enabled flow', async () => {
@@ -96,6 +110,72 @@ describe('Webhook Service', () => {
             },
         })
         expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
+    })
+
+    it('should accept handshake validation for disabled flows using NONE strategy', async () => {
+        const { mockProject, mockPlatform, mockOwner, mockFlow } = await setupDisabledWebhookFlow({
+            handshakeConfiguration: {
+                strategy: WebhookHandshakeStrategy.NONE,
+            },
+        })
+        const handshakeSpy = mockHandshakeResponse()
+        const mockToken = await generateMockToken({
+            type: PrincipalType.USER,
+            platform: {
+                id: mockPlatform.id,
+            },
+            id: mockOwner.id,
+        })
+
+        const response = await app?.inject({
+            method: 'HEAD',
+            url: `/api/v1/webhooks/${mockFlow.id}`,
+            headers: {
+                authorization: `Bearer ${mockToken}`,
+            },
+        })
+
+        expect(response?.statusCode).toBe(StatusCodes.OK)
+        expect(handshakeSpy).toHaveBeenCalledWith(expect.objectContaining({
+            hookType: TriggerHookType.HANDSHAKE,
+            flowId: mockFlow.id,
+            projectId: mockProject.id,
+        }), expect.anything())
+    })
+
+    it('should accept handshake validation for disabled flows when a body marker is present', async () => {
+        const { mockProject, mockPlatform, mockOwner, mockFlow } = await setupDisabledWebhookFlow({
+            handshakeConfiguration: {
+                strategy: WebhookHandshakeStrategy.BODY_PARAM_PRESENT,
+                paramName: 'challenge',
+            },
+        })
+        const handshakeSpy = mockHandshakeResponse()
+        const mockToken = await generateMockToken({
+            type: PrincipalType.USER,
+            platform: {
+                id: mockPlatform.id,
+            },
+            id: mockOwner.id,
+        })
+
+        const response = await app?.inject({
+            method: 'POST',
+            url: `/api/v1/webhooks/${mockFlow.id}`,
+            headers: {
+                authorization: `Bearer ${mockToken}`,
+            },
+            body: {
+                challenge: '123',
+            },
+        })
+
+        expect(response?.statusCode).toBe(StatusCodes.OK)
+        expect(handshakeSpy).toHaveBeenCalledWith(expect.objectContaining({
+            hookType: TriggerHookType.HANDSHAKE,
+            flowId: mockFlow.id,
+            projectId: mockProject.id,
+        }), expect.anything())
     })
 
     it('should pass query parameters in webhook payload', async () => {
@@ -414,3 +494,66 @@ describe('Webhook Service', () => {
         expect(response?.statusCode).toBe(StatusCodes.OK)
     })
 })
+
+async function setupDisabledWebhookFlow({
+    handshakeConfiguration,
+}: SetupDisabledWebhookFlowParams): Promise<SetupDisabledWebhookFlowResult> {
+    const { mockProject, mockPlatform, mockOwner } = await mockAndSaveBasicSetup()
+    const mockFlow = createMockFlow({
+        projectId: mockProject.id,
+        status: FlowStatus.DISABLED,
+        publishedVersionId: apId(),
+    })
+    vi.spyOn(flowExecutionCacheModule, 'flowExecutionCache').mockReturnValue({
+        get: async () => ({
+            exists: true,
+            flow: mockFlow,
+            platformId: mockPlatform.id,
+            handshakeConfiguration,
+        }),
+        invalidate: async () => undefined,
+    })
+
+    return {
+        mockProject,
+        mockPlatform,
+        mockOwner,
+        mockFlow,
+    }
+}
+
+function mockHandshakeResponse() {
+    return vi.spyOn(userInteractionWatcher, 'submitAndWaitForResponse').mockResolvedValue({
+        status: EngineResponseStatus.OK,
+        response: {
+            response: {
+                status: StatusCodes.OK,
+                body: {},
+                headers: {},
+            },
+        },
+        error: undefined,
+    })
+}
+
+type SetupDisabledWebhookFlowParams = {
+    handshakeConfiguration: {
+        strategy: WebhookHandshakeStrategy
+        paramName?: string
+    }
+}
+
+type SetupDisabledWebhookFlowResult = {
+    mockProject: {
+        id: string
+    }
+    mockPlatform: {
+        id: string
+    }
+    mockOwner: {
+        id: string
+    }
+    mockFlow: {
+        id: string
+    }
+}

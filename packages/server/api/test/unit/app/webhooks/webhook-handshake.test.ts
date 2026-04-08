@@ -1,11 +1,11 @@
 import { WebhookHandshakeStrategy } from '@activepieces/shared'
 import { isHandshakeRequest } from '../../../../src/app/webhooks/webhook-handshake'
 
-const makePayload = (overrides: { headers?: Record<string, string>, queryParams?: Record<string, string>, body?: unknown } = {}) => ({
+const makePayload = (overrides: { headers?: Record<string, string>, queryParams?: Record<string, string>, body?: unknown, method?: string } = {}) => ({
     headers: overrides.headers ?? {},
     queryParams: overrides.queryParams ?? {},
     body: overrides.body ?? {},
-    method: 'POST',
+    method: overrides.method ?? 'POST',
 })
 
 describe('isHandshakeRequest', () => {
@@ -81,6 +81,28 @@ describe('isHandshakeRequest', () => {
         })
     })
 
+    describe('NONE strategy', () => {
+        it('should return true for HEAD requests', () => {
+            const result = isHandshakeRequest({
+                payload: makePayload({ method: 'HEAD' }),
+                handshakeConfiguration: {
+                    strategy: WebhookHandshakeStrategy.NONE,
+                },
+            })
+            expect(result).toBe(true)
+        })
+
+        it('should return false for POST requests', () => {
+            const result = isHandshakeRequest({
+                payload: makePayload(),
+                handshakeConfiguration: {
+                    strategy: WebhookHandshakeStrategy.NONE,
+                },
+            })
+            expect(result).toBe(false)
+        })
+    })
+
     it('should return false when config is null', () => {
         const result = isHandshakeRequest({
             payload: makePayload(),
@@ -92,8 +114,9 @@ describe('isHandshakeRequest', () => {
     it('should return false when strategy is null', () => {
         const result = isHandshakeRequest({
             payload: makePayload(),
+            // @ts-expect-error testing invalid handshake configuration
             handshakeConfiguration: {
-                strategy: null as unknown as WebhookHandshakeStrategy,
+                strategy: null,
                 paramName: 'test',
             },
         })
@@ -103,9 +126,10 @@ describe('isHandshakeRequest', () => {
     it('should return false when paramName is null', () => {
         const result = isHandshakeRequest({
             payload: makePayload(),
+            // @ts-expect-error testing invalid handshake configuration
             handshakeConfiguration: {
                 strategy: WebhookHandshakeStrategy.HEADER_PRESENT,
-                paramName: null as unknown as string,
+                paramName: null,
             },
         })
         expect(result).toBe(false)

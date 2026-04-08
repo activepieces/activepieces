@@ -84,7 +84,8 @@ export const webhookService = {
                     }
                 }
                 const { flow } = flowExecutionResult
-                if (flow.status === FlowStatus.DISABLED && !saveSampleData) {
+                const handshakeConfiguration = flowExecutionResult.handshakeConfiguration ?? null
+                if (flow.status === FlowStatus.DISABLED && !saveSampleData && isNil(handshakeConfiguration)) {
                     pinoLogger.warn({ flowId }, 'Webhook received for disabled flow')
                     span.setAttribute('webhook.triggerSourceFound', false)
                     return {
@@ -100,10 +101,11 @@ export const webhookService = {
                 span.setAttribute('webhook.projectId', flow.projectId)
                 const flowVersionIdToRun = await webhookService.getFlowVersionIdToRun(flowVersionToRun, flow)
                 span.setAttribute('webhook.flowVersionId', flowVersionIdToRun)
+                const resolvedPayload = payload ?? await data(flow.projectId)
 
                 const response = await webhookHandshake.handleHandshakeRequest({
-                    payload: (payload ?? await data(flow.projectId)) as TriggerPayload,
-                    handshakeConfiguration: flowExecutionResult.handshakeConfiguration ?? null,
+                    payload: resolvedPayload as TriggerPayload,
+                    handshakeConfiguration,
                     flowId: flow.id,
                     flowVersionId: flowVersionIdToRun,
                     projectId: flow.projectId,
@@ -123,9 +125,19 @@ export const webhookService = {
                     }
                 }
 
-                pinoLogger.info('Adding webhook job to queue')
+                if (flow.status === FlowStatus.DISABLED && !saveSampleData) {
+                    pinoLogger.warn({ flowId }, 'Webhook received for disabled flow')
+                    span.setAttribute('webhook.triggerSourceFound', false)
+                    return {
+                        status: StatusCodes.NOT_FOUND,
+                        body: {},
+                        headers: {
+                            [webhookHeader]: webhookRequestId,
+                        },
+                    }
+                }
 
-                const resolvedPayload = payload ?? await data(flow.projectId)
+                pinoLogger.info('Adding webhook job to queue')
 
                 const payloadSize = payloadOffloader.getPayloadSizeInBytes(resolvedPayload)
                 if (payloadSize > MAX_PAYLOAD_SIZE_BYTES) {
