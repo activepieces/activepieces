@@ -92,10 +92,7 @@ export const PlatformPlan = z.object({
     projectsLimit: Nullable(z.number()),
     activeFlowsLimit: Nullable(z.number()),
 
-    dedicatedWorkers: Nullable(z.object({
-        trustedEnvironment: z.boolean(),
-    })),
-    canary: z.boolean(),
+    workerGroupId: Nullable(z.string()),
 })
 export type PlatformPlan = z.infer<typeof PlatformPlan>
 

@@ -97,7 +97,6 @@ export const STANDARD_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     ssoEnabled: false,
     secretManagersEnabled: false,
     scimEnabled: false,
-    canary: false,
 }
 
 export const OPEN_SOURCE_PLAN: PlatformPlanWithOnlyLimits = {
@@ -126,7 +125,6 @@ export const OPEN_SOURCE_PLAN: PlatformPlanWithOnlyLimits = {
     stripeSubscriptionId: undefined,
     stripeSubscriptionStatus: undefined,
     aiCreditsAutoTopUpState: AiCreditsAutoTopUpState.DISABLED,
-    canary: false,
 }
 
 export const APPSUMO_PLAN = (planName: PlanName): PlatformPlanWithOnlyLimits => ({

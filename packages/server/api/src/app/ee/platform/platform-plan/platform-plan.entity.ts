@@ -133,16 +133,12 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
         eventStreamingEnabled: {
             type: Boolean,
         },
-        dedicatedWorkers: {
-            type: 'jsonb',
-            nullable: true,
-        },
         secretManagersEnabled: {
             type: Boolean,
         },
-        canary: {
-            type: Boolean,
-            default: false,
+        workerGroupId: {
+            type: String,
+            nullable: true,
         },
     },
     indices: [
@@ -152,8 +148,8 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
             unique: true,
         },
         {
-            name: 'idx_platform_plan_canary',
-            columns: ['canary'],
+            name: 'idx_platform_plan_worker_group_id',
+            columns: ['workerGroupId'],
         },
     ],
     relations: {

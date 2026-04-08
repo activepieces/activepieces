@@ -15,12 +15,11 @@ export enum JobStatus {
 
 export enum QueueName {
     WORKER_JOBS = 'workerJobs',
-    CANARY_JOBS = 'canaryWorkerJobs',
     RUNS_METADATA = 'runsMetadata',
 }
 
-export const getPlatformQueueName = (platformId: string): string => {
-    return `platform-${platformId}-jobs`
+export const getWorkerGroupQueueName = (workerGroupId: string): string => {
+    return `workerGroup-${workerGroupId}-jobs`
 }
 
 export const ApQueueJob = z.object({

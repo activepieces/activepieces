@@ -137,7 +137,7 @@ export enum WorkerSystemProp {
     PORT = 'PORT',
 
     // Optional
-    PLATFORM_ID_FOR_DEDICATED_WORKER = 'PLATFORM_ID_FOR_DEDICATED_WORKER',
+    WORKER_GROUP_ID = 'WORKER_GROUP_ID',
     PRE_WARM_CACHE = 'PRE_WARM_CACHE',
 }
 

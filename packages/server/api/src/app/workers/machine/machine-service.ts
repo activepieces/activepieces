@@ -13,7 +13,6 @@ import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import { FastifyBaseLogger } from 'fastify'
 import { domainHelper } from '../../ee/custom-domains/domain-helper'
-import { dedicatedWorkers } from '../../ee/platform/platform-plan/platform-dedicated-workers'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { workerMachineCache } from './machine-cache'
@@ -22,13 +21,13 @@ dayjs.extend(utc)
 
 const settingsCache = new Map<string, WorkerSettingsResponse>()
 
-async function buildSettingsResponse(log: FastifyBaseLogger, platformIdForDedicatedWorker?: string): Promise<WorkerSettingsResponse> {
-    const cacheKey = platformIdForDedicatedWorker ?? '__shared__'
+async function buildSettingsResponse(_log: FastifyBaseLogger): Promise<WorkerSettingsResponse> {
+    const cacheKey = '__shared__'
     const cached = settingsCache.get(cacheKey)
     if (cached) {
         return cached
     }
-    const executionMode = await getExecutionMode(log, platformIdForDedicatedWorker)
+    const executionMode = system.getOrThrow<ExecutionMode>(AppSystemProp.EXECUTION_MODE)
     const settings = {
         TRIGGER_TIMEOUT_SECONDS: system.getNumberOrThrow(AppSystemProp.TRIGGER_TIMEOUT_SECONDS),
         PAUSED_FLOW_TIMEOUT_DAYS: system.getNumberOrThrow(AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS),
@@ -75,17 +74,17 @@ export const machineService = (log: FastifyBaseLogger) => {
             })
             await workerMachineCache().delete([request.workerId])
         },
-        async onConnection(request: WorkerMachineHealthcheckRequest, platformIdForDedicatedWorker?: string | undefined): Promise<WorkerSettingsResponse> {
+        async onConnection(request: WorkerMachineHealthcheckRequest, workerGroupId?: string | undefined): Promise<WorkerSettingsResponse> {
             const existingWorker = await workerMachineCache().findOne(request.workerId)
 
-            const type = isNil(platformIdForDedicatedWorker) ? 'SHARED' : 'DEDICATED'
+            const type = isNil(workerGroupId) ? 'SHARED' : 'DEDICATED'
             await workerMachineCache().upsert({
                 id: request.workerId,
                 information: request,
                 type,
-                platformId: platformIdForDedicatedWorker,
+                workerGroupId,
             }, existingWorker)
-            return buildSettingsResponse(log, platformIdForDedicatedWorker)
+            return buildSettingsResponse(log)
         },
         async list(platformId: string): Promise<WorkerMachineWithStatus[]> {
             const allWorkers = await workerMachineCache().find()
@@ -96,10 +95,10 @@ export const machineService = (log: FastifyBaseLogger) => {
 
             await workerMachineCache().delete(offLineWorkers.map(worker => worker.id))
 
-            const hasDedicated = onlineWorkers.some(w => w.type === WorkerMachineType.DEDICATED && w.platformId === platformId)
+            const hasDedicated = onlineWorkers.some(w => w.type === WorkerMachineType.DEDICATED && w.workerGroupId === platformId)
             return onlineWorkers
                 .filter(worker => hasDedicated
-                    ? (worker.type === WorkerMachineType.DEDICATED && worker.platformId === platformId)
+                    ? (worker.type === WorkerMachineType.DEDICATED && worker.workerGroupId === platformId)
                     : worker.type !== WorkerMachineType.DEDICATED)
                 .map(worker => ({
                     ...worker,
@@ -108,23 +107,6 @@ export const machineService = (log: FastifyBaseLogger) => {
                 }))
         },
     }
-}
-
-
-async function getExecutionMode(log: FastifyBaseLogger, platformIdForDedicatedWorker: string | undefined): Promise<ExecutionMode> {
-    const executionMode = system.getOrThrow<ExecutionMode>(AppSystemProp.EXECUTION_MODE)
-    if (isNil(platformIdForDedicatedWorker)) {
-        return executionMode
-    }
-
-    const dedicatedWorkerConfig = await dedicatedWorkers(log).getWorkerConfig(platformIdForDedicatedWorker)
-    if (isNil(dedicatedWorkerConfig)) {
-        return executionMode
-    }
-    if (dedicatedWorkerConfig.trustedEnvironment) {
-        return ExecutionMode.SANDBOX_PROCESS
-    }
-    return ExecutionMode.SANDBOX_CODE_AND_PROCESS
 }
 
 type OnDisconnectParams = {
