@@ -40,7 +40,7 @@ export const engineResponseWatcher = (log: FastifyBaseLogger) => ({
 
             if (timeoutRequest) {
                 timeout = setTimeout(() => {
-                    log.info('[engineWatcher#listen] Timeout reached')
+                    log.warn({ requestId, timeoutMs }, '[engineWatcher#listen] Timeout reached waiting for response')
                     listeners.delete(requestId)
                     resolve(defaultResponse as T)
                 }, timeoutMs)

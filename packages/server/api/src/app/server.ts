@@ -79,6 +79,9 @@ export const setupServer = async (): Promise<FastifyInstance> => {
             return reply.code(404).send({ statusCode: 404, error: 'Not Found', message: 'Route not found' })
         }
         if (system.isApp() && environment !== ApEnvironment.DEVELOPMENT) {
+            if (hasStaticFileExtension(request.url)) {
+                return reply.code(404).send({ statusCode: 404, error: 'Not Found', message: 'Asset not found' })
+            }
             return reply.sendFile('index.html')
         }
         return reply.code(404).send({ statusCode: 404, error: 'Not Found', message: 'Route not found' })
@@ -160,6 +163,15 @@ async function setupBaseApp(): Promise<FastifyInstance> {
         app.getDefaultJsonParser('ignore', 'ignore'),
     )
     return app
+}
+
+const STATIC_FILE_EXTENSIONS = new Set(['.js', '.css', '.map', '.json', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.woff', '.woff2', '.ttf', '.eot'])
+
+function hasStaticFileExtension(url: string): boolean {
+    const pathname = url.split('?')[0]
+    const lastDot = pathname.lastIndexOf('.')
+    if (lastDot === -1) return false
+    return STATIC_FILE_EXTENSIONS.has(pathname.slice(lastDot))
 }
 
 type ZodLike = { safeParse: (data: unknown) => { success: boolean, data?: unknown } }

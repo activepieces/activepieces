@@ -1,4 +1,4 @@
-import { BranchOperator, FlowRunStatus, LoopStepOutput, RouterExecutionType, RouterStepOutput } from '@activepieces/shared'
+import { BranchOperator, FlowRunStatus, LoopStepOutput, ProgressUpdateType, RouterExecutionType, RouterStepOutput } from '@activepieces/shared'
 import { FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { StepExecutionPath } from '../../src/lib/handler/context/step-execution-path'
 import { flowExecutor } from '../../src/lib/handler/flow-executor'
@@ -71,6 +71,8 @@ describe('flow with pause', () => {
                 response: {},
                 requestId: 'requestId',
                 requestIdToReply: undefined,
+                handlerId: undefined,
+                progressUpdateType: ProgressUpdateType.NONE,
                 'type': 'WEBHOOK',
             },
         })
@@ -139,6 +141,8 @@ describe('flow with pause', () => {
                 response: {},
                 requestId: 'requestId',
                 requestIdToReply: undefined,
+                handlerId: undefined,
+                progressUpdateType: ProgressUpdateType.NONE,
                 'type': 'WEBHOOK',
             },
         })
@@ -176,6 +180,8 @@ describe('flow with pause', () => {
                 response: {},
                 requestId: 'requestId',
                 requestIdToReply: undefined,
+                handlerId: undefined,
+                progressUpdateType: ProgressUpdateType.NONE,
                 'type': 'WEBHOOK',
             },
         })
@@ -255,6 +261,8 @@ describe('flow with pause', () => {
                 response: {},
                 requestId: 'requestId',
                 requestIdToReply: undefined,
+                handlerId: undefined,
+                progressUpdateType: ProgressUpdateType.NONE,
                 'type': 'WEBHOOK',
             },
         })
