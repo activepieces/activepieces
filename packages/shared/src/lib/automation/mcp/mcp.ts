@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { BaseModelSchema } from '../../core/common'
 import { ApId } from '../../core/common/id-generator'
+import { Permission } from '../../core/common/security/permission'
 import { PopulatedFlow } from '../flows/flow'
 
 export type McpId = ApId
@@ -46,5 +47,6 @@ export type McpToolDefinition = {
         idempotentHint?: boolean
         openWorldHint?: boolean
     }
+    permission?: Permission
     execute: (args: Record<string, unknown>) => Promise<{ content: Array<{ type: 'text', text: string }> }>
 }

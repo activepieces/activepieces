@@ -46,14 +46,14 @@ export const executeWebhookJob: JobHandler<WebhookJobData, FireAndForgetJobResul
         const flowVersion = await flowCache(ctx.log, ctx.apiClient).getVersion({ flowVersionId: data.flowVersionIdToRun })
         if (isNil(flowVersion)) {
             ctx.log.info({ flowVersionId: data.flowVersionIdToRun }, 'Flow version not found for webhook, skipping')
-            return { kind: JobResultKind.FIRE_AND_FORGET }
+            return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
         }
 
         const { appWebhookUrl, webhookSecret } = getAppWebhookDetails(flowVersion, ctx.publicApiUrl, settings.APP_WEBHOOK_SECRETS)
 
         const provisioned = await provisionFlowPieces({ flowVersion, platformId: data.platformId, flowId: data.flowId, projectId: data.projectId, log: ctx.log, apiClient: ctx.apiClient })
         if (!provisioned) {
-            return { kind: JobResultKind.FIRE_AND_FORGET }
+            return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
         }
 
         const sandbox = ctx.sandboxManager.acquire({ log: ctx.log, apiClient: ctx.apiClient })
@@ -130,13 +130,13 @@ export const executeWebhookJob: JobHandler<WebhookJobData, FireAndForgetJobResul
             await ctx.sandboxManager.invalidate(ctx.log)
             if (isSandboxTimeout(error)) {
                 ctx.log.warn({ flowVersionId: data.flowVersionIdToRun }, 'Webhook execution timed out in sandbox')
-                return { kind: JobResultKind.FIRE_AND_FORGET }
+                return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
             }
             throw error
         }
 
         if (isNil(execResult)) {
-            return { kind: JobResultKind.FIRE_AND_FORGET }
+            return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
         }
 
         if (execResult.status === EngineResponseStatus.OK) {
@@ -155,6 +155,6 @@ export const executeWebhookJob: JobHandler<WebhookJobData, FireAndForgetJobResul
             }
         }
 
-        return { kind: JobResultKind.FIRE_AND_FORGET, logs: execResult.logs }
+        return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK, logs: execResult.logs }
     },
 }

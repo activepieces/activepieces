@@ -1,4 +1,4 @@
-import { McpServer, McpToolDefinition } from '@activepieces/shared'
+import { McpServer, McpToolDefinition, Permission } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
@@ -7,6 +7,7 @@ import { mcpToolError } from './mcp-utils'
 export const apCreateFlowTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_create_flow',
+        permission: Permission.WRITE_FLOW,
         description: 'Create a new flow in Activepieces',
         inputSchema: {
             flowName: z.string().describe('The name of the flow'),
