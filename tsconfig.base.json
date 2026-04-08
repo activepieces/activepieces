@@ -830,6 +830,9 @@
       "@activepieces/piece-oracle-fusion-cloud-erp": [
         "packages/pieces/community/oracle-fusion-cloud-erp/src/index.ts"
       ],
+      "@activepieces/piece-paddle": [
+        "packages/pieces/community/paddle/src/index.ts"
+      ],
       "@activepieces/piece-pandadoc": [
         "packages/pieces/community/pandadoc/src/index.ts"
       ],
