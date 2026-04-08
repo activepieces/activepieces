@@ -1451,6 +1451,8 @@
   "This provider does not support knowledge base embeddings.": "Este proveedor no soporta incrustaciones de la base de conocimiento.",
   "Knowledge base requires a provider that supports embeddings, such as OpenAI or Google.": "La base de conocimientos requiere un proveedor que soporte incrustaciones, como OpenAI o Google.",
   "The selected provider does not support embeddings. Switch to a provider like OpenAI or Google for knowledge base to work.": "El proveedor seleccionado no soporta incrustaciones. Cambie a un proveedor como OpenAI o Google para que funcione la base de conocimiento.",
+  "Personal": "Personal",
+  "Team": "Equipo",
   "You have {count} {count, plural, one {flow} other {flows}} without time saved per run. Add it to see your complete automation impact!_one": "",
   "You have {count} {count, plural, one {flow} other {flows}} without time saved per run. Add it to see your complete automation impact!_other": "",
   "{count} flows created successfully in a new folder_one": "",
