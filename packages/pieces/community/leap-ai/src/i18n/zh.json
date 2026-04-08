@@ -1,16 +1,16 @@
 {
-  "Automate any workflow with AI. Build custom AI automations to scale your marketing, sales, and operations.": "Automate any workflow with AI. Build custom AI automations to scale your marketing, sales, and operations.",
+  "Automate any workflow with AI. Build custom AI automations to scale your marketing, sales, and operations.": "使用 AI自动化任何工作流。建立自定义 AI 自动化来扩大您的营销、销售和操作。",
   "Provide your Leap AI API key. \n\n**How to get your API key:**\n1. Go to [app.tryleap.ai](https://app.tryleap.ai)\n2. Click on **Settings** in the left sidebar (bottom)\n3. Navigate to the **API** section\n4. Click **Create API Key** to generate a new key\n5. Copy and paste the key here": "Provide your Leap AI API key. \n\n**How to get your API key:**\n1. Go to [app.tryleap.ai](https://app.tryleap.ai)\n2. Click on **Settings** in the left sidebar (bottom)\n3. Navigate to the **API** section\n4. Click **Create API Key** to generate a new key\n5. Copy and paste the key here",
-  "Get a Workflow Run": "Get a Workflow Run",
-  "Run a Workflow": "Run a Workflow",
-  "Retrieve the status and results of a workflow run": "Retrieve the status and results of a workflow run",
-  "Execute a Leap AI workflow and return the run ID": "Execute a Leap AI workflow and return the run ID",
-  "Workflow Run ID": "Workflow Run ID",
-  "Workflow ID": "Workflow ID",
+  "Get a Workflow Run": "获得工作流运行",
+  "Run a Workflow": "运行一个工作流程",
+  "Retrieve the status and results of a workflow run": "获取工作流的状态和结果",
+  "Execute a Leap AI workflow and return the run ID": "执行Leap AI 工作流程并返回运行的 ID",
+  "Workflow Run ID": "工作流运行 ID",
+  "Workflow ID": "工作流 ID",
   "Webhook URL": "Webhook URL",
   "Input Variables": "Input Variables",
-  "The ID of the workflow run to retrieve": "The ID of the workflow run to retrieve",
-  "The ID of the workflow to run": "The ID of the workflow to run",
-  "The URL to which workflow results should be sent on completion (optional)": "The URL to which workflow results should be sent on completion (optional)",
-  "Variables that the workflow can use globally and their values (optional)": "Variables that the workflow can use globally and their values (optional)"
+  "The ID of the workflow run to retrieve": "要检索的 Workflow 的 ID",
+  "The ID of the workflow to run": "要运行的工作流的 ID",
+  "The URL to which workflow results should be sent on completion (optional)": "工作流结果应在完成时发送到的 URL (可选)",
+  "Variables that the workflow can use globally and their values (optional)": "工作流可以全局使用的变量及其值 (可选)"
 }
