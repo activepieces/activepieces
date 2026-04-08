@@ -31,10 +31,16 @@ export const lookupTechnology = createAction({
   async run(context) {
     const lookupType = context.propsValue.lookup_type;
     const rawValue = context.propsValue.value;
-    const body: Record<string, unknown> = {
-      [lookupType]:
-        lookupType === 'domain_id' ? parseInt(rawValue, 10) : rawValue,
-    };
+    const body: Record<string, unknown> = {};
+    if (lookupType === 'domain_id') {
+      const parsed = parseInt(rawValue, 10);
+      if (isNaN(parsed)) {
+        throw new Error(`domain_id must be a valid integer, got: "${rawValue}"`);
+      }
+      body[lookupType] = parsed;
+    } else {
+      body[lookupType] = rawValue;
+    }
     return await pubrioRequest(
       context.auth.secret_text,
       HttpMethod.POST,
