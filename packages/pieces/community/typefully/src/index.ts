@@ -10,15 +10,8 @@ import { listDraftsAction } from './lib/actions/list-drafts.action';
 import { deleteDraftAction } from './lib/actions/delete-draft.action';
 import { publishDraftNowAction } from './lib/actions/publish-draft-now.action';
 import { scheduleDraftAction } from './lib/actions/schedule-draft.action';
-import { scheduleDraftNextSlotAction } from './lib/actions/schedule-draft-next-slot.action';
 import { uploadMediaAction } from './lib/actions/upload-media.action';
 import { newEventTrigger } from './lib/triggers/new-event.trigger';
-import { draftCreatedTrigger } from './lib/triggers/draft-created.trigger';
-import { draftDeletedTrigger } from './lib/triggers/draft-deleted.trigger';
-import { draftPublishedTrigger } from './lib/triggers/draft-published.trigger';
-import { draftScheduledTrigger } from './lib/triggers/draft-scheduled.trigger';
-import { draftStatusChangedTrigger } from './lib/triggers/draft-status-changed.trigger';
-import { draftTagsChangedTrigger } from './lib/triggers/draft-tags-changed.trigger';
 
 export const typefully = createPiece({
 	displayName: 'Typefully',
@@ -33,7 +26,6 @@ export const typefully = createPiece({
 		createDraftAdvancedAction,
 		publishDraftNowAction,
 		scheduleDraftAction,
-		scheduleDraftNextSlotAction,
 		getDraftAction,
 		listDraftsAction,
 		deleteDraftAction,
@@ -50,11 +42,5 @@ export const typefully = createPiece({
 	],
 	triggers: [
 		newEventTrigger,
-		draftCreatedTrigger,
-		draftDeletedTrigger,
-		draftPublishedTrigger,
-		draftScheduledTrigger,
-		draftStatusChangedTrigger,
-		draftTagsChangedTrigger,
 	],
 });

@@ -22,6 +22,7 @@ export const publishDraftNowAction = createAction({
 	async run(context) {
 		const { social_set_id, draft_id } = context.propsValue;
 
+		// https://support.typefully.com/en/articles/13133296-typefully-api-v1-v2-migration-guide#h_687086a25b
 		return await typefullyApiCall<TypefullyDraft>({
 			apiKey: context.auth.secret_text,
 			method: HttpMethod.PATCH,

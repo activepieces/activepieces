@@ -5,7 +5,7 @@ import { instructionsMarkdown, sampleData } from '../common/props';
 export const newEventTrigger = createTrigger({
 	auth: typefullyAuth,
 	name: 'typefully_new_event',
-	displayName: 'New Event (Webhook)',
+	displayName: 'New Event',
 	description:
 		'Triggers when a specific webhook event is received from Typefully.',
 	type: TriggerStrategy.WEBHOOK,
@@ -36,8 +36,8 @@ export const newEventTrigger = createTrigger({
 		// Typefully webhooks are configured manually in the dashboard (Settings → API → Webhooks).
 	},
 	async run(context) {
-		const body = context.payload.body as { event?: string };
+		const body = context.payload.body as { event: string, data: Record<string, any> };
 		if (body.event !== context.propsValue.event) return [];
-		return [body];
+		return [body.data];
 	},
 });
