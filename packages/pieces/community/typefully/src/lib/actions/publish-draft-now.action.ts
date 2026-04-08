@@ -5,29 +5,30 @@ import { typefullyApiCall } from '../common/client';
 import { socialSetDropdown } from '../common/props';
 import { TypefullyDraft } from '../common/types';
 
-export const scheduleDraftNextSlotAction = createAction({
+export const publishDraftNowAction = createAction({
 	auth: typefullyAuth,
-	name: 'typefully_schedule_draft_next_slot',
-	displayName: 'Schedule Draft in Next Free Slot',
+	name: 'typefully_publish_draft_now',
+	displayName: 'Publish Draft Now',
 	description:
-		'Schedule an existing draft to be published in the next available slot based on your publishing schedule.',
+		'Immediately publishes an existing draft to all configured platforms.',
 	props: {
 		social_set_id: socialSetDropdown,
 		draft_id: Property.ShortText({
 			displayName: 'Draft ID',
-			description: 'The ID of the draft to schedule.',
+			description: 'The ID of the draft to publish.',
 			required: true,
 		}),
 	},
 	async run(context) {
 		const { social_set_id, draft_id } = context.propsValue;
 
+		// https://support.typefully.com/en/articles/13133296-typefully-api-v1-v2-migration-guide#h_687086a25b
 		return await typefullyApiCall<TypefullyDraft>({
 			apiKey: context.auth.secret_text,
 			method: HttpMethod.PATCH,
 			resourceUri: `/social-sets/${social_set_id}/drafts/${draft_id}`,
 			body: {
-				schedule: 'next_free_slot',
+				publish_at: 'now',
 			},
 		});
 	},
