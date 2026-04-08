@@ -1,6 +1,6 @@
 import { URL } from 'url'
 import { ActionContext, backwardCompatabilityContextUtils, ConstructToolParams, InputPropertyMap, PauseHook, PauseHookParams, PieceAuthProperty, PiecePropertyMap, RespondHook, RespondHookParams, StaticPropsValue, StopHook, StopHookParams, TagsManager } from '@activepieces/pieces-framework'
-import { AUTHENTICATION_PROPERTY_NAME, EngineGenericError, ExecutionType, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, PausedFlowTimeoutError, PauseType, PieceAction, ProgressUpdateType, RespondResponse, StepOutputStatus } from '@activepieces/shared'
+import { AUTHENTICATION_PROPERTY_NAME, EngineGenericError, ExecutionType, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, PausedFlowTimeoutError, PauseType, PieceAction, RespondResponse, StepOutputStatus } from '@activepieces/shared'
 import type { ToolSet } from 'ai'
 import dayjs from 'dayjs'
 import { continueIfFailureHandler, runWithExponentialBackoff } from '../helper/error-handling'
@@ -138,13 +138,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
             run: {
                 id: constants.flowRunId,
                 stop: createStopHook(params),
-                pause: createPauseHook({
-                    hookParams: params,
-                    pauseId: executionState.pauseRequestId,
-                    requestIdToReply: constants.httpRequestId,
-                    handlerId: constants.serverHandlerId,
-                    progressUpdateType: constants.progressUpdateType,
-                }),
+                pause: createPauseHook(params, executionState.pauseRequestId, constants.httpRequestId),
                 respond: createRespondHook(params),
             },
             project: {
@@ -288,7 +282,7 @@ type CreateRespondHookParams = {
     hookResponse: HookResponse
 }
 
-function createPauseHook({ hookParams, pauseId, requestIdToReply, handlerId, progressUpdateType }: CreatePauseHookFnParams): PauseHook {
+function createPauseHook(params: CreatePauseHookParams, pauseId: string, requestIdToReply: string | null): PauseHook {
     return (req) => {
         switch (req.pauseMetadata.type) {
             case PauseType.DELAY: {
@@ -296,31 +290,27 @@ function createPauseHook({ hookParams, pauseId, requestIdToReply, handlerId, pro
                 if (diffInDays > AP_PAUSED_FLOW_TIMEOUT_DAYS) {
                     throw new PausedFlowTimeoutError(undefined, AP_PAUSED_FLOW_TIMEOUT_DAYS)
                 }
-                hookParams.hookResponse = {
-                    ...hookParams.hookResponse,
+                params.hookResponse = {
+                    ...params.hookResponse,
                     type: 'paused',
                     response: {
                         pauseMetadata: {
                             ...req.pauseMetadata,
                             requestIdToReply: requestIdToReply ?? undefined,
-                            handlerId: handlerId ?? undefined,
-                            progressUpdateType,
                         },
                     },
                 }
                 break
             }
             case PauseType.WEBHOOK:
-                hookParams.hookResponse = {
-                    ...hookParams.hookResponse,
+                params.hookResponse = {
+                    ...params.hookResponse,
                     type: 'paused',
                     response: {
                         pauseMetadata: {
                             ...req.pauseMetadata,
                             requestId: pauseId,
                             requestIdToReply: requestIdToReply ?? undefined,
-                            handlerId: handlerId ?? undefined,
-                            progressUpdateType,
                             response: req.pauseMetadata.response ?? {},
                         },
                     },
@@ -330,10 +320,6 @@ function createPauseHook({ hookParams, pauseId, requestIdToReply, handlerId, pro
     }
 }
 
-type CreatePauseHookFnParams = {
-    hookParams: { hookResponse: HookResponse }
-    pauseId: string
-    requestIdToReply: string | null
-    handlerId: string | null
-    progressUpdateType: ProgressUpdateType
+type CreatePauseHookParams = {
+    hookResponse: HookResponse
 }
