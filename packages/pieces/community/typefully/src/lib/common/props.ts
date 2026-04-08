@@ -96,8 +96,7 @@ export const tagsMultiSelectDropdown = Property.MultiSelectDropdown({
 });
 
 export const instructionsMarkdown = Property.MarkDown({
-	value: `## Setup Instructions
-
+  value: `
 1. In Typefully, go to **Settings → API**.
 2. Go to the **Webhooks** section and click **Add webhook**.
 3. Paste the following URL into the webhook endpoint field:
@@ -105,33 +104,33 @@ export const instructionsMarkdown = Property.MarkDown({
 {{webhookUrl}}
 \`\`\`
 4. Select the events you want to receive and click **Save**.`,
-	variant: MarkdownVariant.INFO,
+  variant: MarkdownVariant.INFO,
 });
 
 export const sampleData = {
-	event: 'draft.created',
-	data: {
-		id: 12345,
-		social_set_id: 67890,
-		status: 'draft',
-		created_at: '2025-01-15T10:30:00Z',
-		updated_at: '2025-01-16T09:15:00Z',
-		scheduled_date: '2025-01-20T14:00:00Z',
-		published_at: '2025-01-20T14:00:05Z',
-		draft_title: 'Weekly Newsletter',
-		tags: ['marketing', 'product'],
-		preview: 'Excited to announce our new feature!',
-		share_url: 'https://typefully.com/share/abc123',
-		private_url: 'https://typefully.com/?d=12345&a=67890',
-		platforms: {
-			x: {
-				enabled: true,
-				posts: [{ text: 'Hello world!' }],
-			},
-			linkedin: {
-				enabled: true,
-				posts: [{ text: 'Hello LinkedIn!' }],
-			},
-		},
-	},
+  event: 'draft.created',
+  data: {
+    id: 12345,
+    social_set_id: 67890,
+    status: 'draft',
+    created_at: '2025-01-15T10:30:00Z',
+    updated_at: '2025-01-16T09:15:00Z',
+    scheduled_date: '2025-01-20T14:00:00Z',
+    published_at: '2025-01-20T14:00:05Z',
+    draft_title: 'Weekly Newsletter',
+    tags: ['marketing', 'product'],
+    preview: 'Excited to announce our new feature!',
+    share_url: 'https://typefully.com/share/abc123',
+    private_url: 'https://typefully.com/?d=12345&a=67890',
+    platforms: {
+      x: {
+        enabled: true,
+        posts: [{ text: 'Hello world!' }],
+      },
+      linkedin: {
+        enabled: true,
+        posts: [{ text: 'Hello LinkedIn!' }],
+      },
+    },
+  },
 };
