@@ -3,19 +3,21 @@ import { baserowJwtAuth } from '../auth';
 import { baserowCommon } from '../common';
 import { createWebhookTriggerHooks } from '../common/webhook-trigger';
 
-const webhookHooks = createWebhookTriggerHooks('rows.deleted', 'baserow_row_deleted');
+const webhookHooks = createWebhookTriggerHooks('rows.deleted', 'baserow_rows_deleted');
 
-export const rowDeletedTrigger = createTrigger({
-  name: 'baserow_row_deleted',
+export const rowsDeletedTrigger = createTrigger({
+  name: 'baserow_rows_deleted',
   auth: baserowJwtAuth,
-  displayName: 'Row Deleted',
-  description: 'Triggers when a row is deleted from a Baserow table.',
+  displayName: 'Rows Deleted (Batch)',
+  description:
+    'Triggers when rows are deleted from a Baserow table. Returns all deleted row IDs from the event as a single batch.',
   type: TriggerStrategy.WEBHOOK,
   props: {
     table_id: baserowCommon.tableId(),
   },
   sampleData: {
-    id: 1,
+    rows: [{ id: 1 }, { id: 2 }],
+    count: 2,
   },
   async onEnable(context) {
     await webhookHooks.onEnable(context);
@@ -25,6 +27,7 @@ export const rowDeletedTrigger = createTrigger({
   },
   async run(context) {
     const body = context.payload.body as { row_ids?: number[] };
-    return (body.row_ids ?? []).map((id) => ({ id }));
+    const rows = (body.row_ids ?? []).map((id) => ({ id }));
+    return [{ rows, count: rows.length }];
   },
 });
