@@ -1,20 +1,15 @@
 {
   "name": "@activepieces/piece-vapi",
-  "version": "0.1.0",
+  "version": "0.0.1",
+  "type": "commonjs",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
-  "engines": {
-    "node": ">=18.0.0"
-  },
   "dependencies": {
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
     "@vapi-ai/server-sdk": "0.11.0",
     "tslib": "^2.3.0"
-  },
-  "peerDependencies": {
-    "@activepieces/pieces-framework": "workspace:*"
   },
   "scripts": {
     "build": "tsc -p tsconfig.lib.json && cp package.json dist/",
