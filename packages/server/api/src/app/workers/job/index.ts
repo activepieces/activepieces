@@ -19,6 +19,7 @@ export enum QueueName {
 }
 
 export const getWorkerGroupQueueName = (workerGroupId: string): string => {
+    // TODO Rename this to workerGroups-workerGroupId-jobs in the future and migrate existings jobs there.
     return `platform-${workerGroupId}-jobs`
 }
 

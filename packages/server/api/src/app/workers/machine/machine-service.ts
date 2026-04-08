@@ -102,7 +102,7 @@ export const machineService = (log: FastifyBaseLogger) => {
                     if (worker.type === WorkerMachineType.DEDICATED) {
                         return !isNil(platformWorkerGroupId) && worker.workerGroupId === platformWorkerGroupId
                     }
-                    return true
+                    return isNil(platformWorkerGroupId)
                 })
                 .map(worker => ({
                     ...worker,
