@@ -42,6 +42,7 @@ export type WorkerMachine = z.infer<typeof WorkerMachine>
 export const WorkerMachineWithStatus = WorkerMachine.extend({
     status: z.nativeEnum(WorkerMachineStatus),
     type: z.nativeEnum(WorkerMachineType),
+    workerGroupId: z.string().optional(),
 })
 
 export type WorkerMachineWithStatus = z.infer<typeof WorkerMachineWithStatus>

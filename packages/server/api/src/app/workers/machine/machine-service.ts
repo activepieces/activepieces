@@ -108,6 +108,7 @@ export const machineService = (log: FastifyBaseLogger) => {
                     ...worker,
                     status: WorkerMachineStatus.ONLINE,
                     type: worker.type === 'DEDICATED' ? WorkerMachineType.DEDICATED : WorkerMachineType.SHARED,
+                    workerGroupId: worker.workerGroupId,
                 }))
         },
     }
