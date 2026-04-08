@@ -16,7 +16,7 @@ export const engineResponseWatcher = (log: FastifyBaseLogger) => ({
         log.info('[engineResponseWatcher#init] Initializing engine run watcher')
         await pubsub.subscribe(
             `engine-run:sync:${SERVER_ID}`,
-            (_channel: string, message: string  ) => {
+            (message: string) => {
                 const parsedMessage: EngineResponseWithId<unknown> = JSON.parse(message)
                 const listener = listeners.get(parsedMessage.requestId)
                 
@@ -59,17 +59,10 @@ export const engineResponseWatcher = (log: FastifyBaseLogger) => ({
         })
     },
 
-    async publish<T>(
-        requestId: string,
-        workerServerId: string, 
-        response: T,
-    ): Promise<void> {
-        log.info({ requestId }, '[engineWatcher#publish]')
-        
-        const message: EngineResponseWithId<T> = { requestId, response }
+    async publish(webserverId: string, requestId: string, response: unknown): Promise<void> {
         await pubsub.publish(
-            `engine-run:sync:${workerServerId}`, 
-            JSON.stringify(message),
+            `engine-run:sync:${webserverId}`,
+            JSON.stringify({ requestId, response }),
         )
     },
 

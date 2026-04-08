@@ -7,6 +7,7 @@ import { createProject } from './lib/actions/create-project';
 import { listProject } from './lib/actions/list-project';
 import { updateProject } from './lib/actions/update-project';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { activePieceAuth } from './lib/auth';
 
 const markdown = `
 Activepieces Platform API is available under the Platform Edition.
@@ -15,22 +16,6 @@ Activepieces Platform API is available under the Platform Edition.
 **Note**: The API Key is available in the Platform Dashboard.
 
 `;
-
-export const activePieceAuth = PieceAuth.CustomAuth({
-  description: markdown,
-  required: true,
-  props: {
-    baseApiUrl: Property.ShortText({
-      displayName: 'Base URL',
-      required: true,
-      defaultValue: 'https://cloud.activepieces.com/api/v1',
-    }),
-    apiKey: PieceAuth.SecretText({
-      displayName: 'API Key',
-      required: true,
-    }),
-  },
-});
 
 export const activepieces = createPiece({
   displayName: 'Activepieces Platform',
@@ -45,11 +30,11 @@ export const activepieces = createPiece({
     listProject,
     createCustomApiCallAction({
       baseUrl: (auth) => {
-        return `${(auth as { baseApiUrl: string }).baseApiUrl}`;
+        return `${auth?.props.baseApiUrl}`;
       },
       auth: activePieceAuth,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${(auth as { apiKey: string }).apiKey}`,
+        Authorization: `Bearer ${auth.props.apiKey}`,
       }),
     }),
   ],

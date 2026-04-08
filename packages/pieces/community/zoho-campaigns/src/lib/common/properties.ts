@@ -1,17 +1,19 @@
-import { Property } from '@activepieces/pieces-framework';
-import { zohoCampaignsCommon } from '.';
+import { PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
+import { zohoCampaignsAuth, zohoCampaignsCommon } from '.';
 import { Tag } from './types';
 
 // Custom Properties
 const campaignDropdown = () =>
   Property.Dropdown({
+    auth: zohoCampaignsAuth,
     displayName: 'Campaign',
     description: 'Select the campaign',
     required: true,
     refreshers: ['auth'],
     options: async ({ auth }) => {
-      const { access_token: accessToken } = auth as { access_token: string };
-      if (!accessToken) {
+      const authValue = auth as PiecePropValueSchema<typeof zohoCampaignsAuth>;
+      const location = authValue.props?.['location'] || 'zoho.com';
+      if (!auth) {
         return {
           disabled: true,
           placeholder: 'Connect your Zoho Campaigns account first',
@@ -19,7 +21,8 @@ const campaignDropdown = () =>
         };
       }
       const campaigns = await zohoCampaignsCommon.listCampaigns({
-        accessToken,
+        accessToken: authValue.access_token,
+        location,
       });
       if (campaigns.length === 0) {
         return {
@@ -40,13 +43,21 @@ const campaignDropdown = () =>
 
 const tagDropdown = ({ required = true }: { required?: boolean }) =>
   Property.Dropdown({
+    auth: zohoCampaignsAuth,
     displayName: 'Tag',
     description: 'Select the tag to associate with the contact',
     required: required,
     refreshers: ['auth'],
-    options: async ({ auth }): Promise<{ disabled?: boolean; placeholder?: string; options: Array<{ label: string; value: string }> }> => {
-      const { access_token: accessToken } = auth as { access_token: string };
-      if (!accessToken) {
+    options: async ({
+      auth,
+    }): Promise<{
+      disabled?: boolean;
+      placeholder?: string;
+      options: Array<{ label: string; value: string }>;
+    }> => {
+      const authValue = auth as PiecePropValueSchema<typeof zohoCampaignsAuth>;
+      const location = authValue.props?.['location'] || 'zoho.com';
+      if (!auth) {
         return {
           disabled: true,
           placeholder: 'Connect your Zoho Campaigns account first',
@@ -54,7 +65,8 @@ const tagDropdown = ({ required = true }: { required?: boolean }) =>
         };
       }
       const tags = await zohoCampaignsCommon.listTags({
-        accessToken,
+        accessToken: authValue.access_token,
+        location,
       });
       if (!tags || tags.length === 0) {
         return {
@@ -79,13 +91,16 @@ const tagDropdown = ({ required = true }: { required?: boolean }) =>
 
 const mailingListDropdown = ({ required = true }) =>
   Property.Dropdown({
+    auth: zohoCampaignsAuth,
     displayName: 'Mailing List',
     description: 'Select the mailing list',
     required: required,
     refreshers: ['auth'],
     options: async ({ auth }) => {
-      const { access_token: accessToken } = auth as { access_token: string };
-      if (!accessToken) {
+      const authValue = auth as PiecePropValueSchema<typeof zohoCampaignsAuth>;
+      const location = authValue.props?.['location'] || 'zoho.com';
+
+      if (!auth) {
         return {
           disabled: true,
           placeholder: 'Connect your Zoho Campaigns account first',
@@ -93,7 +108,8 @@ const mailingListDropdown = ({ required = true }) =>
         };
       }
       const mailingLists = await zohoCampaignsCommon.listMailingLists({
-        accessToken,
+        accessToken: authValue.access_token,
+        location,
       });
       if (mailingLists.length === 0) {
         return {
@@ -113,13 +129,15 @@ const mailingListDropdown = ({ required = true }) =>
 
 const mailingListMultiSelectDropdown = ({ required = true }) =>
   Property.MultiSelectDropdown({
+    auth: zohoCampaignsAuth,
     displayName: 'Mailing Lists',
     description: 'Select the mailing lists',
     required: required,
     refreshers: ['auth'],
     options: async ({ auth }) => {
-      const { access_token: accessToken } = auth as { access_token: string };
-      if (!accessToken) {
+      const authValue = auth as PiecePropValueSchema<typeof zohoCampaignsAuth>;
+      const location = authValue.props?.['location'] || 'zoho.com';
+      if (!auth) {
         return {
           disabled: true,
           placeholder: 'Connect your Zoho Campaigns account first',
@@ -127,7 +145,8 @@ const mailingListMultiSelectDropdown = ({ required = true }) =>
         };
       }
       const mailingLists = await zohoCampaignsCommon.listMailingLists({
-        accessToken,
+        accessToken: authValue.access_token,
+        location,
       });
       if (mailingLists.length === 0) {
         return {
@@ -147,20 +166,25 @@ const mailingListMultiSelectDropdown = ({ required = true }) =>
 
 const topicDropdown = ({ required = true }) =>
   Property.Dropdown({
+    auth: zohoCampaignsAuth,
     displayName: 'Topic',
     description: 'Select the topic',
     required: required,
     refreshers: ['auth'],
     options: async ({ auth }) => {
-      const { access_token: accessToken } = auth as { access_token: string };
-      if (!accessToken) {
+      const authValue = auth as PiecePropValueSchema<typeof zohoCampaignsAuth>;
+      const location = authValue.props?.['location'] || 'zoho.com';
+      if (!auth) {
         return {
           disabled: true,
           placeholder: 'Connect your Zoho Campaigns account first',
           options: [],
         };
       }
-      const topics = await zohoCampaignsCommon.listTopics({ accessToken });
+      const topics = await zohoCampaignsCommon.listTopics({
+        accessToken: authValue.access_token,
+        location,
+      });
       if (topics.length === 0) {
         return {
           disabled: true,
@@ -181,6 +205,7 @@ const contactInformation = Property.DynamicProperties({
   displayName: 'Contact Information',
   description: 'Information about the contact',
   required: true,
+  auth: zohoCampaignsAuth,
   refreshers: ['auth'],
   props: async () => ({
     'Contact Email': Property.ShortText({
@@ -326,7 +351,8 @@ export const addContactToMailingList = () => ({
   listkey: mailingListDropdown({ required: true }),
   emails: Property.Array({
     displayName: 'Emails',
-    description: 'Contacts email addresses to be added to the mailing list (maximum 10 emails)',
+    description:
+      'Contacts email addresses to be added to the mailing list (maximum 10 emails)',
     required: true,
   }),
 });
@@ -340,8 +366,8 @@ export const findContact = () => ({
   }),
   status: Property.StaticDropdown({
     displayName: 'Contact Status',
-    description: 'Filter contacts by status (optional)',
-    required: false,
+    description: 'Filter contacts by status',
+    required: true,
     options: {
       options: [
         { label: 'Active', value: 'active' },
@@ -354,8 +380,8 @@ export const findContact = () => ({
   }),
   sort: Property.StaticDropdown({
     displayName: 'Sort Order',
-    description: 'Sort order for results (optional)',
-    required: false,
+    description: 'Sort order for results',
+    required: true,
     options: {
       options: [
         { label: 'Ascending', value: 'asc' },
@@ -427,31 +453,6 @@ export const findCampaign = () => ({
 
 export const newContact = () => ({
   listkey: mailingListDropdown({ required: true }),
-  status: Property.StaticDropdown({
-    displayName: 'Contact Status',
-    description: 'Filter contacts by status (default: active)',
-    required: false,
-    options: {
-      options: [
-        { label: 'Active', value: 'active' },
-        { label: 'Recent', value: 'recent' },
-        { label: 'Most Recent', value: 'most recent' },
-        { label: 'Unsubscribed', value: 'unsub' },
-        { label: 'Bounced', value: 'bounce' },
-      ],
-    },
-  }),
-  sort: Property.StaticDropdown({
-    displayName: 'Sort Order',
-    description: 'Sort order for contacts (default: descending)',
-    required: false,
-    options: {
-      options: [
-        { label: 'Ascending', value: 'asc' },
-        { label: 'Descending', value: 'desc' },
-      ],
-    },
-  }),
 });
 
 export const unsubscribe = () => ({
@@ -467,4 +468,4 @@ export const unsubscribe = () => ({
       ],
     },
   }),
-})
+});

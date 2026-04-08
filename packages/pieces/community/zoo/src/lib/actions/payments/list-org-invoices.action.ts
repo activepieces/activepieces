@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { zooAuth } from '../../../index'
+import { zooAuth } from '../../auth'
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const listOrgInvoicesAction = createAction({
@@ -25,7 +25,7 @@ export const listOrgInvoicesAction = createAction({
       method: HttpMethod.GET,
       url: 'https://api.zoo.dev/org/payment/invoices',
       headers: {
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       },
       queryParams: {
         ...(propsValue.limit && { limit: propsValue.limit.toString() }),

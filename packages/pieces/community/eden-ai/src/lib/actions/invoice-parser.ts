@@ -3,6 +3,9 @@ import { HttpMethod, propsValidation } from '@activepieces/pieces-common';
 import { edenAiApiCall } from '../common/client';
 import { createStaticDropdown } from '../common/providers';
 import { z } from 'zod';
+import { edenAiAuth } from '../..';
+
+import FormData from 'form-data';
 
 const FINANCIAL_PARSER_PROVIDERS = [
   { label: 'Affinda', value: 'affinda' },
@@ -169,23 +172,26 @@ function normalizeFinancialParserResponse(provider: string, response: any) {
 }
 
 export const invoiceParserAction = createAction({
+  auth: edenAiAuth,
   name: 'invoice_parser',
   displayName: 'Invoice Parser',
   description: 'Extract structured invoice data from files using Eden AI. Supports multiple providers, languages, and document types.',
   props: {
     provider: Property.Dropdown({
+      auth: edenAiAuth,
       displayName: 'Provider',
       description: 'The AI provider to use for financial document parsing.',
       required: true,
       refreshers: [],
       options: createStaticDropdown(FINANCIAL_PARSER_PROVIDERS),
     }),
-    file_url: Property.ShortText({
-      displayName: 'File URL',
-      description: 'Public URL to the financial document file (PDF, image, etc).',
+    file: Property.File({
+      displayName: 'File',
+      description: 'Provide the financial document file (PDF, image, etc).',
       required: true,
     }),
     document_type: Property.Dropdown({
+      auth: edenAiAuth,
       displayName: 'Document Type',
       description: 'The type of financial document to parse.',
       required: false,
@@ -194,6 +200,7 @@ export const invoiceParserAction = createAction({
       defaultValue: 'invoice',
     }),
     language: Property.Dropdown({
+      auth: edenAiAuth,
       displayName: 'Document Language',
       description: 'The language of the document. Choose "Auto Detection" if unsure.',
       required: false,
@@ -218,6 +225,7 @@ export const invoiceParserAction = createAction({
       defaultValue: false,
     }),
     fallback_providers: Property.MultiSelectDropdown({
+      auth: edenAiAuth,
       displayName: 'Fallback Providers',
       description: 'Alternative providers to try if the main provider fails (up to 5).',
       required: false,
@@ -234,7 +242,7 @@ export const invoiceParserAction = createAction({
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, {
       provider: z.string().min(1, 'Provider is required'),
-      file_url: z.string().url('Valid file URL is required'),
+     
       document_type: z.string().nullish(),
       language: z.string().nullish(),
       model: z.string().nullish(),
@@ -246,7 +254,7 @@ export const invoiceParserAction = createAction({
 
     const { 
       provider, 
-      file_url, 
+      file, 
       document_type, 
       language, 
       model, 
@@ -256,41 +264,36 @@ export const invoiceParserAction = createAction({
       show_original_response 
     } = propsValue;
 
-    const body: Record<string, any> = {
-      providers: provider,
-      file_url,
-    };
+    const formData = new FormData();
+      formData.append('providers', provider);
+      formData.append('file', Buffer.from(file.data), file.filename);
 
     if (document_type && document_type !== 'auto-detect') {
-      body['document_type'] = document_type;
+      formData.append('document_type', document_type);
     } else {
-      body['document_type'] = 'invoice';
-    }
-    
-    if (language && language !== 'auto-detect') body['language'] = language;
-    if (file_password) body['file_password'] = file_password;
-    if (convert_to_pdf) body['convert_to_pdf'] = convert_to_pdf;
-    if (show_original_response) body['show_original_response'] = true;
-    
-    if (fallback_providers && fallback_providers.length > 0) {
-      body['fallback_providers'] = fallback_providers.slice(0, 5);
+      formData.append('document_type', 'invoice');
     }
 
-    if (model) {
-      body['settings'] = { [provider]: model };
+    if (language && language !== 'auto-detect') formData.append('language', language);
+    if (file_password) formData.append('file_password', file_password);
+    if (convert_to_pdf) formData.append('convert_to_pdf', convert_to_pdf.toString());
+    if (show_original_response) formData.append('show_original_response', show_original_response.toString());
+
+    if (fallback_providers && fallback_providers.length > 0) {
+      formData.append('fallback_providers', fallback_providers.slice(0, 5).join(','));
     }
+    if (model) formData.append('settings', JSON.stringify({ [provider]: model }));
 
     try {
       const response = await edenAiApiCall({
-        apiKey: auth as string,
+        apiKey: auth.secret_text,
         method: HttpMethod.POST,
         resourceUri: '/ocr/financial_parser',
-        body,
+        body: formData,
+        headers: {
+          ...formData.getHeaders()
+        },
       });
-
-      if (!response || typeof response !== 'object') {
-        throw new Error('Invalid response from Eden AI API.');
-      }
 
       return normalizeFinancialParserResponse(provider, response);
     } catch (err: any) {

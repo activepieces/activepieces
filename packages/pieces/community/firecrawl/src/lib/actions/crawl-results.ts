@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { firecrawlAuth } from '../../index';
+import { firecrawlAuth } from '../auth';
 
 export const crawlResults = createAction({
   auth: firecrawlAuth,
@@ -19,7 +19,7 @@ export const crawlResults = createAction({
       method: HttpMethod.GET,
       url: `https://api.firecrawl.dev/v1/crawl/${propsValue.crawlId}`,
       headers: {
-        'Authorization': `Bearer ${auth}`,
+        'Authorization': `Bearer ${auth.secret_text}`,
       },
     });
 

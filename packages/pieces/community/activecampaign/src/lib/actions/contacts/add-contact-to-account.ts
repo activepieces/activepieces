@@ -1,4 +1,4 @@
-import { activeCampaignAuth } from '../../..';
+import { activeCampaignAuth } from '../../auth';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { activecampaignCommon, makeClient } from '../../common';
 
@@ -18,7 +18,7 @@ export const addContactToAccountAction = createAction({
 	async run(context) {
 		const { contactId, accountId, jobTitle } = context.propsValue;
 
-		const client = makeClient(context.auth);
+		const client = makeClient(context.auth.props);
 
 		return await client.createAccountContactAssociation(
 			Number(contactId),

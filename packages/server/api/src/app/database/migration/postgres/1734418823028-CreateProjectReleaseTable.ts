@@ -1,10 +1,14 @@
+import { ApEdition } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { isNotOneOfTheseEditions } from '../../database-common'
 
 export class CreateProjectReleaseTable1734418823028 implements MigrationInterface {
     name = 'CreateProjectReleaseTable1734418823028'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
- 
+        if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
+            return
+        }
         await queryRunner.query(`
             CREATE TABLE "project_release" (
                 "id" character varying(21) NOT NULL,
@@ -38,6 +42,9 @@ export class CreateProjectReleaseTable1734418823028 implements MigrationInterfac
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+        if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
+            return
+        }
         await queryRunner.query(`
             ALTER TABLE "project_release" DROP CONSTRAINT "fk_project_release_file_id"
         `)

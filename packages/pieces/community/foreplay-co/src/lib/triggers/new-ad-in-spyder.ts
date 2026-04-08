@@ -1,4 +1,4 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { AppConnectionValueForAuthProperty, createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { foreplayCoApiCall } from '../common';
 import {
   HttpMethod,
@@ -8,8 +8,9 @@ import {
 } from '@activepieces/pieces-common';
 import { newAdInSpyder as newAdInSpyderProperties } from '../properties';
 import { newAdInSpyderSchema } from '../schemas';
+import { foreplayCoAuth } from '../..';
 
-const polling: Polling<string, any> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof foreplayCoAuth>, Record<string, any>> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue }) => {
     const { brand_id } = propsValue;
@@ -101,7 +102,7 @@ export const newAdInSpyder = createTrigger({
   },
 
   props: newAdInSpyderProperties(),
-
+  auth: foreplayCoAuth,
   async test(context) {
     // Validate props using Zod schema
     const validation = newAdInSpyderSchema.safeParse(context.propsValue);
@@ -110,7 +111,7 @@ export const newAdInSpyder = createTrigger({
     }
 
     return await pollingHelper.test(polling, {
-      auth: context.auth as string,
+      auth: context.auth,
       store: context.store,
       propsValue: context.propsValue,
       files: context.files,
@@ -119,7 +120,7 @@ export const newAdInSpyder = createTrigger({
 
   async onEnable(context) {
     await pollingHelper.onEnable(polling, {
-      auth: context.auth as string,
+      auth: context.auth,
       store: context.store,
       propsValue: context.propsValue,
     });
@@ -129,7 +130,7 @@ export const newAdInSpyder = createTrigger({
     await pollingHelper.onDisable(polling, {
       store: context.store,
       propsValue: context.propsValue,
-      auth: context.auth as string,
+      auth: context.auth,
     });
   },
 
@@ -141,7 +142,7 @@ export const newAdInSpyder = createTrigger({
     }
 
     const result = await pollingHelper.poll(polling, {
-      auth: context.auth as string,
+      auth: context.auth,
       store: context.store,
       propsValue: context.propsValue,
       files: context.files,

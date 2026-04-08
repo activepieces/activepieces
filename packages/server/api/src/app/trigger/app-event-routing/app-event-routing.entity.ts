@@ -42,5 +42,10 @@ export const AppEventRoutingEntity = new EntitySchema<AppEventRouting>({
             columns: ['appName', 'projectId', 'flowId', 'identifierValue', 'event'],
             unique: true,
         },
+        {
+            name: 'idx_app_event_appName_identifier_event',
+            columns: ['appName', 'identifierValue', 'event'],
+            unique: false,
+        },
     ],
 })

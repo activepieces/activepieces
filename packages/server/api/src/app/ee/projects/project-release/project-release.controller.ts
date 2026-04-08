@@ -1,40 +1,44 @@
-import { ApplicationEventName } from '@activepieces/ee-shared'
-import { ApId, CreateProjectReleaseRequestBody, DiffReleaseRequest, ListProjectReleasesRequest, PrincipalType, ProjectRelease, SeekPage, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
+import { ApId, ApplicationEventName, CreateProjectReleaseRequestBody, DiffReleaseRequest, ListProjectReleasesRequest, PrincipalType, ProjectRelease, SeekPage, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
-import { eventsHooks } from '../../../helper/application-events'
+import { z } from 'zod'
+import { ProjectResourceType } from '../../../core/security/authorization/common'
+import { securityAccess } from '../../../core/security/authorization/fastify-security'
+import { applicationEvents } from '../../../helper/application-events'
 import { platformService } from '../../../platform/platform.service'
+import { ProjectReleaseEntity } from './project-release.entity'
 import { projectReleaseService } from './project-release.service'
 
-export const projectReleaseController: FastifyPluginAsyncTypebox = async (app) => {
+export const projectReleaseController: FastifyPluginAsyncZod = async (app) => {
 
     app.get('/:id', GetProjectReleaseRequest, async (req) => {
         const release = await projectReleaseService.getOneOrThrow({
             id: req.params.id,
-            projectId: req.principal.projectId,
+            projectId: req.projectId,
         })
-        return projectReleaseService.enrich(release)
+        return projectReleaseService.enrich(release, req.log)
     })
 
     app.get('/', ListProjectReleasesRequestParams, async (req) => {
         return projectReleaseService.list({
-            projectId: req.principal.projectId,
+            projectId: req.projectId,
             request: req.query,
+            log: req.log,
         })
     })
 
     app.post('/', CreateProjectReleaseRequest, async (req) => {
-        const platform = await platformService.getOneOrThrow(req.principal.platform.id)
+        const platform = await platformService(req.log).getOneOrThrow(req.principal.platform.id)
         const ownerId = platform.ownerId
         const release = await projectReleaseService.create({
             platformId: req.principal.platform.id,
-            projectId: req.principal.projectId,
+            projectId: req.projectId,
             ownerId,
             params: req.body,
             log: req.log,
         })
 
-        eventsHooks.get(req.log).sendUserEventFromRequest(req, {
+        applicationEvents(req.log).sendUserEvent(req, {
             action: ApplicationEventName.PROJECT_RELEASE_CREATED,
             data: {
                 release,
@@ -44,18 +48,25 @@ export const projectReleaseController: FastifyPluginAsyncTypebox = async (app) =
     })
 
     app.post('/diff', DiffProjectReleaseRequest, async (req) => {
-        const platform = await platformService.getOneOrThrow(req.principal.platform.id)
+        const platform = await platformService(req.log).getOneOrThrow(req.principal.platform.id)
         const ownerId = platform.ownerId
-        return projectReleaseService.releasePlan(req.principal.projectId, ownerId, req.body, req.log)
+        return projectReleaseService.releasePlan(req.projectId, ownerId, req.body, req.log)
     })
 }
 
 const GetProjectReleaseRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        security: securityAccess.project(
+            [PrincipalType.USER],
+            undefined,
+            {
+                type: ProjectResourceType.TABLE,
+                tableName: ProjectReleaseEntity,
+            },
+        ),
     },
     schema: {
-        params: Type.Object({
+        params: z.object({
             id: ApId,
         }),
     },
@@ -63,7 +74,13 @@ const GetProjectReleaseRequest = {
 
 const ListProjectReleasesRequestParams = {
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        security: securityAccess.project(
+            [PrincipalType.USER],
+            undefined,
+            {
+                type: ProjectResourceType.QUERY,
+            },
+        ),
     },
     schema: {
         querystring: ListProjectReleasesRequest,
@@ -75,7 +92,13 @@ const ListProjectReleasesRequestParams = {
 
 const DiffProjectReleaseRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        security: securityAccess.project(
+            [PrincipalType.USER],
+            undefined,
+            {
+                type: ProjectResourceType.BODY,
+            },
+        ),
     },
     schema: {
         body: DiffReleaseRequest,
@@ -84,7 +107,13 @@ const DiffProjectReleaseRequest = {
 
 const CreateProjectReleaseRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        security: securityAccess.project(
+            [PrincipalType.USER, PrincipalType.SERVICE],
+            undefined,
+            {
+                type: ProjectResourceType.BODY,
+            },
+        ),
     },
     schema: {
         tags: ['project-releases'],

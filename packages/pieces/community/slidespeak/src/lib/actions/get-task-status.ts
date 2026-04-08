@@ -1,4 +1,4 @@
-import { slidespeakAuth } from '../../index';
+import { slidespeakAuth } from '../auth';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { BASE_URL } from '../common/constants';
@@ -22,7 +22,7 @@ export const getTaskStatusAction = createAction({
       method: HttpMethod.GET,
       url: BASE_URL + `/task_status/${taskId}`,
       headers: {
-        'X-API-key': apiKey,
+        'X-API-key': apiKey.secret_text,
       },
     });
 

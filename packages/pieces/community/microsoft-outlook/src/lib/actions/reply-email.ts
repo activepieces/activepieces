@@ -1,4 +1,5 @@
 import { ApFile, createAction, Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import { getGraphBaseUrl } from '../common/microsoft-cloud';
 import { microsoftOutlookAuth } from '../common/auth';
 import { BodyType, Message } from '@microsoft/microsoft-graph-types';
 import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
@@ -10,6 +11,7 @@ export const replyEmailAction = createAction({
   description: 'Reply to an outlook email.',
   props: {
     messageId: Property.Dropdown({
+      auth: microsoftOutlookAuth,
       displayName: 'Email',
       description: 'Select the email message to reply to.',
       required: true,
@@ -22,10 +24,12 @@ export const replyEmailAction = createAction({
           };
         }
 
+        const cloud = (auth as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
         const client = Client.initWithMiddleware({
           authProvider: {
             getAccessToken: () => Promise.resolve((auth as OAuth2PropertyValue).access_token),
           },
+          baseUrl: getGraphBaseUrl(cloud),
         });
 
         try {
@@ -126,10 +130,12 @@ export const replyEmailAction = createAction({
         contentBytes: attachment.file.base64,
       })),
     };
+    const cloud = context.auth.props?.['cloud'] as string | undefined;
     const client = Client.initWithMiddleware({
       authProvider: {
         getAccessToken: () => Promise.resolve(context.auth.access_token),
       },
+      baseUrl: getGraphBaseUrl(cloud),
     });
     try {
       const response: Message = await client

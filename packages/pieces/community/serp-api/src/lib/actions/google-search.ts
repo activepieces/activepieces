@@ -1,6 +1,6 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { serpApiAuth } from '../../index';
+import { serpApiAuth } from '../auth';
 import { COUNTRY_OPTIONS } from '../constants/countries';
 import { GOOGLE_DOMAIN_OPTIONS } from '../constants/google-domains';
 import { LANGUAGE_OPTIONS } from '../constants/languages';
@@ -27,6 +27,7 @@ export const googleSearch = createAction({
     }),
 
     location: Property.Dropdown({
+      auth: serpApiAuth,
       displayName: 'Location',
       description: 'Geographic location for results',
       required: false,
@@ -198,7 +199,7 @@ export const googleSearch = createAction({
 
       // Build search configuration
       const searchConfig: GoogleSearchConfig = {
-        api_key: auth,
+        api_key: auth.secret_text,
         engine: SerpApiEngine.GOOGLE,
         q: propsValue.query,
         hl: propsValue.hl,

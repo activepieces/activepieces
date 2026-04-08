@@ -1,12 +1,13 @@
 import { readdir, stat } from 'node:fs/promises'
 import * as path from 'path'
 import { cwd } from 'node:process'
-import { readPackageJson, readProjectJson } from './files'
+import { readPackageJson } from './files'
 import { exec } from './exec'
 import axios from 'axios'
 import chalk from 'chalk'
 import FormData from 'form-data';
 import fs from 'fs';
+import { preparePieceDistForPublish } from './prepare-piece-utils';
 
 export const piecesPath = () => path.join(cwd(), 'packages', 'pieces')
 export const customPiecePath = () => path.join(piecesPath(), 'custom')
@@ -48,11 +49,13 @@ export async function findPiece(pieceName: string): Promise<string | null> {
 }
 
 export async function buildPiece(pieceFolder: string): Promise<{ outputFolder: string, outputFile: string }> {
-    const projectJson = await readProjectJson(pieceFolder);
+    const packageJson = await readPackageJson(pieceFolder);
 
-    await buildPackage(projectJson.name);
-     
-    const compiledPath = `dist/packages/${removeStartingSlashes(pieceFolder).split(path.sep + 'packages')[1]}`;
+    await buildPackage(packageJson.name);
+
+    const compiledPath = `packages/${removeStartingSlashes(pieceFolder).split(path.sep + 'packages')[1]}/dist`;
+
+    preparePieceDistForPublish(pieceFolder);
 
     const { stdout } = await exec('npm pack --json', { cwd: compiledPath });
     const tarFileName = JSON.parse(stdout)[0].filename;
@@ -62,10 +65,10 @@ export async function buildPiece(pieceFolder: string): Promise<{ outputFolder: s
     };
 }
 
-export async function buildPackage(projectName:string) {
-    await exec(`npx nx build ${projectName} --skip-cache`);
+export async function buildPackage(packageName: string) {
+    await exec(`npx turbo run build --filter=${packageName} --force`);
     return {
-        outputFolder: `dist/packages/${projectName}`,
+        outputFolder: `dist/packages/${packageName}`,
     }
 }
 
@@ -76,10 +79,9 @@ export async function publishPieceFromFolder(
   apiKey: string,
   failOnError: boolean,}
 ) {
-    const projectJson = await readProjectJson(pieceFolder);
     const packageJson = await readPackageJson(pieceFolder);
 
-    await buildPackage(projectJson.name);
+    await buildPackage(packageJson.name);
 
     const { outputFile } = await buildPiece(pieceFolder);
     const formData = new FormData();
@@ -102,9 +104,9 @@ export async function publishPieceFromFolder(
     } catch (error) {
      
         if (axios.isAxiosError(error)) {
-            if (error.response.status === 409) {
+            if (error.response?.status === 409) {
                 console.info(chalk.yellow(`Piece '${packageJson.name}' and '${packageJson.version}' already published.`));
-            } else if (Math.floor(error.response.status / 100) !== 2) {
+            } else if (error.response && Math.floor(error.response.status / 100) !== 2) {
                 console.info(chalk.red(`Error publishing piece '${packageJson.name}',  ${error}` ));
                 if (failOnError) {
                     console.info(chalk.yellow(`Terminating process due to publish failure for piece '${packageJson.name}' (fail-on-error is enabled)`));
@@ -174,3 +176,4 @@ export const assertPieceExists = async (pieceName: string | null) => {
   export const removeStartingSlashes = (str: string) => {
     return str.startsWith('/') ? str.slice(1) : str;
   }
+

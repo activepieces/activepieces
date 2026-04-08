@@ -1,7 +1,7 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { isNil } from '@activepieces/shared';
-import { clockifyAuth } from '../../index';
+import { clockifyAuth } from '../auth';
 import { clockifyApiCall } from '../common/client';
 import { workspaceId } from '../common/props';
 
@@ -23,10 +23,10 @@ export const newTimerStartedTrigger = createTrigger({
 		const { workspaceId } = context.propsValue;
 
 		const response = await clockifyApiCall<{ id: string }>({
-			apiKey: context.auth,
+			apiKey: context.auth.secret_text,
 			method: HttpMethod.POST,
 			resourceUri: `/workspaces/${workspaceId}/webhooks`,
-			body: {
+			body: {	
 				url: context.webhookUrl,
 				webhookEvent: 'NEW_TIMER_STARTED',
 				triggerSourceType: 'WORKSPACE_ID',
@@ -43,7 +43,7 @@ export const newTimerStartedTrigger = createTrigger({
 
 		if (!isNil(webhookId)) {
 			await clockifyApiCall<{ id: string }>({
-				apiKey: context.auth,
+				apiKey: context.auth.secret_text	,
 				method: HttpMethod.DELETE,
 				resourceUri: `/workspaces/${workspaceId}/webhooks/${webhookId}`,
 			});

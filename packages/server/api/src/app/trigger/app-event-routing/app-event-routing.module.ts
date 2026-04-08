@@ -2,13 +2,9 @@ import { facebookLeads } from '@activepieces/piece-facebook-leads'
 import { intercom } from '@activepieces/piece-intercom'
 import { slack } from '@activepieces/piece-slack'
 import { square } from '@activepieces/piece-square'
-import { Piece } from '@activepieces/pieces-framework'
-import {
-    rejectedPromiseHandler,
-} from '@activepieces/server-shared'
+import { Piece, PieceAuthProperty } from '@activepieces/pieces-framework'
 import {
     ActivepiecesError,
-    ALL_PRINCIPAL_TYPES,
     apId,
     assertNotNullOrUndefined,
     ErrorCode,
@@ -18,19 +14,21 @@ import {
     RunEnvironment,
     WorkerJobType,
 } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
+import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { domainHelper } from '../../ee/custom-domains/domain-helper'
 import { flowService } from '../../flows/flow/flow.service'
+import { rejectedPromiseHandler } from '../../helper/promise-handler'
 import { projectService } from '../../project/project-service'
-import { WebhookFlowVersionToRun, webhookHandler } from '../../webhooks/webhook-handler'
-import { jobQueue } from '../../workers/queue/job-queue'
-import { JobType } from '../../workers/queue/queue-manager'
+import { WebhookFlowVersionToRun, webhookService } from '../../webhooks/webhook.service'
+import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
+import { payloadOffloader } from '../../workers/payload-offloader'
 import { triggerSourceService } from '../trigger-source/trigger-source-service'
 import { appEventRoutingService } from './app-event-routing.service'
 
-const appWebhooks: Record<string, Piece> = {
+const appWebhooks: Record<string, Piece<PieceAuthProperty | PieceAuthProperty[] | undefined>> = {
     slack,
     square,
     'facebook-leads': facebookLeads,
@@ -43,11 +41,11 @@ const pieceNames: Record<string, string> = {
     intercom: '@activepieces/piece-intercom',
 }
 
-export const appEventRoutingModule: FastifyPluginAsyncTypebox = async (app) => {
+export const appEventRoutingModule: FastifyPluginAsyncZod = async (app) => {
     await app.register(appEventRoutingController, { prefix: '/v1/app-events' })
 }
 
-export const appEventRoutingController: FastifyPluginAsyncTypebox = async (
+export const appEventRoutingController: FastifyPluginAsyncZod = async (
     fastify,
 ) => {
     fastify.all(
@@ -55,7 +53,7 @@ export const appEventRoutingController: FastifyPluginAsyncTypebox = async (
         {
             config: {
                 rawBody: true,
-                allowedPrincipals: ALL_PRINCIPAL_TYPES,
+                security: securityAccess.public(),
             },
         },
         async (
@@ -78,11 +76,11 @@ export const appEventRoutingController: FastifyPluginAsyncTypebox = async (
             const piece = appWebhooks[pieceUrl]
             if (isNil(piece)) {
                 throw new ActivepiecesError({
-                    code: ErrorCode.PIECE_NOT_FOUND,
+                    code: ErrorCode.ENTITY_NOT_FOUND,
                     params: {
-                        pieceName: pieceUrl,
-                        pieceVersion: 'latest',
-                        message: 'Pieces is not found in app event routing',
+                        entityType: 'piece',
+                        entityId: pieceUrl,
+                        message: 'Piece is not found in app event routing',
                     },
                 })
             }
@@ -128,8 +126,9 @@ export const appEventRoutingController: FastifyPluginAsyncTypebox = async (
                 if (isNil(flow)) {
                     return
                 }
-                const flowVersionIdToRun = await webhookHandler.getFlowVersionIdToRun(WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST, flow)
-                const platformId = await projectService.getPlatformId(listener.projectId)
+                const flowVersionIdToRun = await webhookService.getFlowVersionIdToRun(WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST, flow)
+                const platformId = await projectService(request.log).getPlatformId(listener.projectId)
+                const jobPayload = await payloadOffloader.offloadPayload(request.log, payload, listener.projectId, platformId)
                 return jobQueue(request.log).add({
                     id: requestId,
                     type: JobType.ONE_TIME,
@@ -138,7 +137,7 @@ export const appEventRoutingController: FastifyPluginAsyncTypebox = async (
                         projectId: listener.projectId,
                         schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
                         requestId,
-                        payload,
+                        payload: jobPayload,
                         flowId: listener.flowId,
                         jobType: WorkerJobType.EXECUTE_WEBHOOK,
                         runEnvironment: RunEnvironment.PRODUCTION,

@@ -1,10 +1,12 @@
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { TableField } from './types';
+import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
+import { SoftrAuth } from './auth';
 
 export const BASE_URL = `https://tables-api.softr.io/api/v1`;
 
 export async function makeRequest<T>(
-  api_key: string,
+  api_key: AppConnectionValueForAuthProperty<typeof SoftrAuth>,
   method: HttpMethod,
   path: string,
   body?: unknown
@@ -14,7 +16,7 @@ export async function makeRequest<T>(
       method,
       url: `${BASE_URL}${path}`,
       headers: {
-        'Softr-Api-Key': api_key,
+        'Softr-Api-Key': api_key.secret_text,
         'Content-Type': 'application/json',
       },
       body,

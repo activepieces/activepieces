@@ -1,4 +1,4 @@
-import { perplexityAiAuth } from '../../';
+import { perplexityAiAuth } from '../auth';
 import {
   createAction,
   Property,
@@ -123,7 +123,7 @@ export const createChatCompletionAction = createAction({
       url: 'https://api.perplexity.ai/chat/completions',
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth,
+        token: context.auth.secret_text,
       },
       headers: {
         'Content-Type': 'application/json',

@@ -1,6 +1,6 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { attioAuth } from '../../index';
+import { attioAuth } from '../auth';
 import { attioPaginatedApiCall } from '../common/client';
 import { formatInputFields, listFields, listIdDropdown } from '../common/props';
 
@@ -18,7 +18,7 @@ export const findListEntryAction = createAction({
 		attributes: listFields(true),
 	},
 	async run(context) {
-		const accessToken = context.auth;
+		const accessToken = context.auth.secret_text;
 		const { listId } = context.propsValue;
 		const inputFields = context.propsValue.attributes ?? {};
 
@@ -26,9 +26,9 @@ export const findListEntryAction = createAction({
 			throw new Error('Provided list type is invalid.');
 		}
 
-		const formattedFields = await formatInputFields(accessToken, 'lists', listId, inputFields);
+		const formattedFields = await formatInputFields(accessToken, 'lists', listId, inputFields, true);
 
-		// https://docs.attio.com/rest-api/endpoint-reference/entries/create-an-entry-add-record-to-list
+		// https://docs.attio.com/rest-api/endpoint-reference/entries/list-entries
 		const response = await attioPaginatedApiCall({
 			method: HttpMethod.POST,
 			accessToken,

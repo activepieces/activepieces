@@ -1,6 +1,7 @@
 import { Property, createAction, OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import { getGraphBaseUrl } from '../common/microsoft-cloud';
 import { getNotebooksDropdown, getSectionsByNotebookDropdown, getPagesBySectionDropdown } from '../common';
-import { oneNoteAuth } from '../../index';
+import { oneNoteAuth } from '../auth';
 import { Client } from '@microsoft/microsoft-graph-client';
 
 export const appendNote = createAction({
@@ -10,6 +11,7 @@ export const appendNote = createAction({
 	description: 'Append content to the end of an existing note.',
 	props: {
 		notebook_id: Property.Dropdown({
+			auth: oneNoteAuth,
 			displayName: 'Notebook',
 			description: 'The notebook containing the page to append to.',
 			required: true,
@@ -26,6 +28,7 @@ export const appendNote = createAction({
 			},
 		}),
 		section_id: Property.Dropdown({
+			auth: oneNoteAuth,
 			displayName: 'Section',
 			description: 'The section containing the page to append to.',
 			required: true,
@@ -49,6 +52,7 @@ export const appendNote = createAction({
 			},
 		}),
 		page_id: Property.Dropdown({
+			auth: oneNoteAuth,
 			displayName: 'Page',
 			description: 'The page to append content to.',
 			required: true,
@@ -111,10 +115,13 @@ export const appendNote = createAction({
 		const { auth, propsValue } = context;
 		const { page_id, content_type, content, heading_level } = propsValue;
 
+		const authValue = auth as OAuth2PropertyValue;
+		const cloud = authValue.props?.['cloud'] as string | undefined;
 		const client = Client.initWithMiddleware({
 			authProvider: {
-				getAccessToken: () => Promise.resolve((auth as OAuth2PropertyValue).access_token),
+				getAccessToken: () => Promise.resolve(authValue.access_token),
 			},
+			baseUrl: getGraphBaseUrl(cloud),
 		});
 
 		let htmlContent: string;

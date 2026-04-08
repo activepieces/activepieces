@@ -1,6 +1,7 @@
 import { createAction, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { microsoftPowerBiAuth } from '../../index';
+import { getPowerBiBaseUrl, getMicrosoftCloudFromAuth } from '../common/microsoft-cloud';
+import { microsoftPowerBiAuth } from '../auth';
 
 type PowerBIRow = {
     [key: string]: string | number | boolean | null | undefined;
@@ -13,6 +14,7 @@ export const pushRowsToDatasetTableAction = createAction({
     description: 'Add rows to a table in a Power BI dataset (supports Push, Streaming, and PushStreaming modes)',
     props: {
         dataset_id: Property.Dropdown({
+            auth: microsoftPowerBiAuth,
             displayName: 'Dataset',
             description: 'Select a dataset.',
             required: true,
@@ -28,9 +30,10 @@ export const pushRowsToDatasetTableAction = createAction({
                 }
 
                 try {
+                    const cloud = getMicrosoftCloudFromAuth(auth);
                     const response = await httpClient.sendRequest<{value:{name:string,id:string}[]}>({
                         method: HttpMethod.GET,
-                        url: 'https://api.powerbi.com/v1.0/myorg/datasets',
+                        url: `${getPowerBiBaseUrl(cloud)}/datasets`,
                         headers: {
                             'Authorization': `Bearer ${auth.access_token}`
                         }
@@ -53,6 +56,7 @@ export const pushRowsToDatasetTableAction = createAction({
             }
         }),
         table_name: Property.Dropdown({
+            auth: microsoftPowerBiAuth,
             displayName: 'Table',
             description: 'Select a table',
             required: true,
@@ -69,9 +73,10 @@ export const pushRowsToDatasetTableAction = createAction({
                 }
 
                 try {
+                    const cloud = getMicrosoftCloudFromAuth(auth);
                     const response = await httpClient.sendRequest<{value:{name:string}[]}>({
                         method: HttpMethod.GET,
-                        url: `https://api.powerbi.com/v1.0/myorg/datasets/${datasetId}/tables`,
+                        url: `${getPowerBiBaseUrl(cloud)}/datasets/${datasetId}/tables`,
                         headers: {
                             'Authorization': `Bearer ${auth.access_token}`
                         }
@@ -140,7 +145,8 @@ export const pushRowsToDatasetTableAction = createAction({
         }
         
         const skipRefresh = context.propsValue.skip_refresh;
-        const baseUrl = 'https://api.powerbi.com/v1.0/myorg';
+        const cloud = getMicrosoftCloudFromAuth(auth);
+        const baseUrl = getPowerBiBaseUrl(cloud);
 
         try {
             // 1. Get dataset info

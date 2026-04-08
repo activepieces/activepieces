@@ -1,12 +1,13 @@
-import { microsoftTeamsAuth } from '../../index';
+import { microsoftTeamsAuth } from '../auth';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import {
 	createTrigger,
-	PiecePropValueSchema,
+	AppConnectionValueForAuthProperty,
 	TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import { isNil } from '@activepieces/shared';
-import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
+import { createGraphClient } from '../common/graph';
+import { PageCollection } from '@microsoft/microsoft-graph-client';
 import { Chat, ChatType } from '@microsoft/microsoft-graph-types';
 import dayjs from 'dayjs';
 
@@ -51,14 +52,11 @@ export const newChatTrigger = createTrigger({
 	},
 });
 
-const polling: Polling<PiecePropValueSchema<typeof microsoftTeamsAuth>, Props> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof microsoftTeamsAuth>, Props> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, lastFetchEpochMS }) {
-		const client = Client.initWithMiddleware({
-			authProvider: {
-				getAccessToken: () => Promise.resolve(auth.access_token),
-			},
-		});
+		const cloud = auth.props?.['cloud'] as string | undefined;
+		const client = createGraphClient(auth.access_token, cloud);
 		const lastFetchDate = dayjs(lastFetchEpochMS).toISOString();
 
 		const chats: Chat[] = [];

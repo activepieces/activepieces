@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest } from '../common';
-import { cognitoFormsAuth } from '../../index';
+import { cognitoFormsAuth } from '../auth';
 import { formIdDropdown } from '../common/props';
 
 export const getEntryAction = createAction({
@@ -18,7 +18,7 @@ export const getEntryAction = createAction({
     }),
   },
   async run(context) {
-    const apiKey = context.auth as string;
+    const apiKey = context.auth;
     const { formId, entryId } = context.propsValue;
 
     return await makeRequest(

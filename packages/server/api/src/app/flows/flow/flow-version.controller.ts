@@ -1,20 +1,21 @@
-import { FlowVersionMetadata, ListFlowVersionRequest, SeekPage } from '@activepieces/shared'
-import {
-    FastifyPluginAsyncTypebox,
-    Type,
-} from '@fastify/type-provider-typebox'
+import { FlowVersionMetadata, ListFlowVersionRequest, PrincipalType, SeekPage } from '@activepieces/shared'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
+import { z } from 'zod'
+import { ProjectResourceType } from '../../core/security/authorization/common'
+import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { flowVersionService } from '../flow-version/flow-version.service'
+import { FlowEntity } from './flow.entity'
 import { flowService } from './flow.service'
 
 const DEFAULT_PAGE_SIZE = 10
 
-export const flowVersionController: FastifyPluginAsyncTypebox = async (fastify) => {
+export const flowVersionController: FastifyPluginAsyncZod = async (fastify) => {
 
     fastify.get('/:flowId/versions', ListVersionParams, async (request) => {
         const flow = await flowService(request.log).getOneOrThrow({
             id: request.params.flowId,
-            projectId: request.principal.projectId,
+            projectId: request.projectId,
         })
         return flowVersionService(request.log).list({
             flowId: flow.id,
@@ -26,9 +27,19 @@ export const flowVersionController: FastifyPluginAsyncTypebox = async (fastify) 
 }
 
 const ListVersionParams = {
+    config: {
+        security: securityAccess.project([PrincipalType.USER], undefined, {
+            type: ProjectResourceType.TABLE,
+            tableName: FlowEntity,
+            lookup: {
+                paramKey: 'flowId',
+                entityField: 'id',
+            },
+        }),
+    },
     schema: {
-        params: Type.Object({
-            flowId: Type.String(),
+        params: z.object({
+            flowId: z.string(),
         }),
         querystring: ListFlowVersionRequest,
         response: {

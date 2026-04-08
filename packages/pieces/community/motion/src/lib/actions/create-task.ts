@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { motionAuth } from '../../index';
+import { motionAuth } from '../auth';
 import {
   BASE_URL,
   priority,
@@ -51,7 +51,7 @@ export const createTask = createAction({
       url: `${BASE_URL}/tasks`,
       headers: {
         'Content-Type': 'application/json',
-        'X-API-Key': auth,
+        'X-API-Key': auth.secret_text,
       },
       body: {
         name: propsValue.name,

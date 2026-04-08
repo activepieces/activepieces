@@ -63,8 +63,8 @@ export const createWordPressPage = createAction({
     }),
   },
   async run(context) {
-    if (!(await wordpressCommon.urlExists(context.auth.website_url.trim()))) {
-      throw new Error('Website url is invalid: ' + context.auth.website_url);
+    if (!(await wordpressCommon.urlExists(context.auth.props.website_url.trim()))) {
+      throw new Error('Website url is invalid: ' + context.auth.props.website_url);
     }
     const requestBody: Record<string, unknown> = {};
     if (context.propsValue.date) {
@@ -88,11 +88,11 @@ export const createWordPressPage = createAction({
     requestBody['title'] = context.propsValue.title;
     const request: HttpRequest = {
       method: HttpMethod.POST,
-      url: `${context.auth.website_url.trim()}/wp-json/wp/v2/pages`,
+      url: `${context.auth.props.website_url.trim()}/wp-json/wp/v2/pages`,
       authentication: {
         type: AuthenticationType.BASIC,
-        username: context.auth.username,
-        password: context.auth.password,
+        username: context.auth.props.username,
+        password: context.auth.props.password,
       },
       body: requestBody,
     };

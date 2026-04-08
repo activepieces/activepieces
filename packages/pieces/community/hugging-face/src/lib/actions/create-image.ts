@@ -2,7 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { InferenceClient } from '@huggingface/inference';
 import type { TextToImageInput } from '@huggingface/tasks';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { huggingFaceAuth } from '../../index';
+import { huggingFaceAuth } from '../auth';
 
 export const createImage = createAction({
   name: 'create_image',
@@ -42,7 +42,8 @@ export const createImage = createAction({
       displayName: 'Image Generation Model',
       description: 'Select the best model for your use case',
       required: true,
-      refreshers: ['useCase'],
+      refreshers: ['useCase'],    
+      auth: huggingFaceAuth,
       options: async ({ useCase }) => {
         const getModelsByUseCase = (type: string) => {
           switch (type) {
@@ -301,7 +302,7 @@ export const createImage = createAction({
         numInferenceSteps = 25;
     }
 
-    const hf = new InferenceClient(context.auth as string);
+    const hf = new InferenceClient(context.auth.secret_text);
 
     // Build parameters object
     const parameters: Record<string, unknown> = {

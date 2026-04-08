@@ -1,4 +1,4 @@
-import { PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
+import { AppConnectionValueForAuthProperty, PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
 import { PastebinClient } from './client';
 import { pastebinAuth } from '../..';
 
@@ -281,11 +281,11 @@ export const pastebinCommon = {
 };
 
 export async function makeClient(
-  auth: PiecePropValueSchema<typeof pastebinAuth>
+  auth: AppConnectionValueForAuthProperty<typeof pastebinAuth>
 ): Promise<PastebinClient> {
-  const client = new PastebinClient(auth.token);
-  if (auth.username && auth.password) {
-    const userKey = await client.login(auth.username, auth.password);
+  const client = new PastebinClient(auth.props.token);
+  if (auth.props.username && auth.props.password) {
+    const userKey = await client.login(auth.props.username, auth.props.password);
     client.setUserKey(userKey);
   }
   return client;

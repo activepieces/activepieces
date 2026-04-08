@@ -55,7 +55,7 @@ export const enrichCompanyBasicBulk = createAction({
     }));
     
     const headers: Record<string, string> = {
-      'secret-key': context.auth,
+      'secret-key': context.auth.secret_text,
     };
     
     if (user_identifier) {

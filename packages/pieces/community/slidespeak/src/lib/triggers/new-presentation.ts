@@ -1,4 +1,4 @@
-import { slidespeakAuth } from '../../index';
+import { slidespeakAuth } from '../auth';
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { isNil } from '@activepieces/shared';
@@ -18,7 +18,7 @@ export const newPresentationTrigger = createTrigger({
       method: HttpMethod.POST,
       url: BASE_URL + '/webhook/subscribe',
       headers: {
-        'X-API-key': apiKey,
+        'X-API-key': apiKey.secret_text,
       },
       body: {
         endpoint: context.webhookUrl,
@@ -36,7 +36,7 @@ export const newPresentationTrigger = createTrigger({
         method: HttpMethod.DELETE,
         url: BASE_URL + '/webhook/unsubscribe',
         headers: {
-          'X-API-key': apiKey,
+          'X-API-key': apiKey.secret_text,
         },
         body: {
           webhook_id: webhookId,

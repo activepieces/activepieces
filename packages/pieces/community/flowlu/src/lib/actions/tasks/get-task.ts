@@ -2,7 +2,7 @@ import {
   createAction,
   PiecePropValueSchema,
 } from '@activepieces/pieces-framework';
-import { flowluAuth } from '../../..';
+import { flowluAuth } from '../../auth';
 import { flowluCommon, makeClient } from '../../common';
 
 export const getTaskAction = createAction({
@@ -16,7 +16,7 @@ export const getTaskAction = createAction({
   async run(context) {
     const task_id = context.propsValue.task_id!;
     const client = makeClient(
-      context.auth as PiecePropValueSchema<typeof flowluAuth>
+      context.auth
     );
     return await client.getTask(task_id);
   },

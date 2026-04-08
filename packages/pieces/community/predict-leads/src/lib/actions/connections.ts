@@ -4,7 +4,7 @@ import {
   createAction,
 } from '@activepieces/pieces-framework';
 import { firstSeenAtFromField, firstSeenAtUntilField, lastSeenAtFromField, lastSeenAtUntilField, limitField, makeClient, pageField } from '../common';
-import { PredictLeadsAuth } from '../../index';
+import { PredictLeadsAuth } from '../auth';
 import { prepareQuery } from '../common/client';
 
 export const findConnectionsByDomainAction = createAction({
@@ -29,7 +29,7 @@ export const findConnectionsByDomainAction = createAction({
     const limit = context.propsValue.limit ?? 1000;
 
     const client = makeClient(
-      context.auth as PiecePropValueSchema<typeof PredictLeadsAuth>
+      context.auth
     );
 
     try {
@@ -60,7 +60,7 @@ export const findConnectionsAction = createAction({
   },
   async run(context) {
     const client = makeClient(
-      context.auth as PiecePropValueSchema<typeof PredictLeadsAuth>
+      context.auth
     );
     const page = context.propsValue.page ?? 1;
     const limit = context.propsValue.limit ?? 1000;

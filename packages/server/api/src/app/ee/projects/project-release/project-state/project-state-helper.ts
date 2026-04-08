@@ -18,7 +18,7 @@ export const projectStateHelper = (log: FastifyBaseLogger) => ({
     async updateFlowInProject(originalFlow: FlowState, newFlow: FlowState,
         projectId: string,
     ): Promise<PopulatedFlow> {
-        const project = await projectService.getOneOrThrow(projectId)
+        const project = await projectService(log).getOneOrThrow(projectId)
 
         const newFlowVersion = flowStructureUtil.transferFlow(newFlow.version, (step) => {
             const oldStep = flowStructureUtil.getStep(step.name, originalFlow.version.trigger)
@@ -32,7 +32,6 @@ export const projectStateHelper = (log: FastifyBaseLogger) => ({
             id: originalFlow.id,
             projectId,
             platformId: project.platformId,
-            lock: true,
             userId: project.ownerId,
             operation: {
                 type: FlowOperationType.IMPORT_FLOW,
@@ -40,15 +39,23 @@ export const projectStateHelper = (log: FastifyBaseLogger) => ({
                     displayName: newFlow.version.displayName,
                     trigger: newFlowVersion.trigger,
                     schemaVersion: newFlow.version.schemaVersion,
+                    notes: newFlow.version.notes,
                 },
             },
         })
 
         if (!isNil(updatedFlow.publishedVersionId)) {
-            await flowService(log).updateStatus({
+            await flowService(log).update({
                 id: updatedFlow.id,
                 projectId,
-                newStatus: newFlow.status,
+                platformId: project.platformId,
+                userId: project.ownerId,
+                operation: {
+                    type: FlowOperationType.CHANGE_STATUS,
+                    request: {
+                        status: newFlow.status,
+                    },
+                },
             })
         }
 
@@ -63,12 +70,11 @@ export const projectStateHelper = (log: FastifyBaseLogger) => ({
             }
         }
         try {
-            const project = await projectService.getOneOrThrow(projectId)
+            const project = await projectService(log).getOneOrThrow(projectId)
             await flowService(log).update({
                 id: flow.id,
                 projectId,
                 platformId: project.platformId,
-                lock: true,
                 userId: project.ownerId,
                 operation: {
                     type: FlowOperationType.LOCK_AND_PUBLISH,

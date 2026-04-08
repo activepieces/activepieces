@@ -1,29 +1,93 @@
 ---
-title: 'How to create Release'
+title: 'Releases & Deployment'
 icon: 'flask'
 ---
 
-Pre-releases are versions of the software that are released before the final version. They are used to test new features and bug fixes before they are released to the public. Pre-releases are typically labeled with a version number that includes a pre-release identifier, such as `official` or `rc`.
+All changes flow through a staging environment before reaching production. There are no release branches — everything merges to `main`.
 
-## Types of Releases
+## How It Works
 
-There are several types of releases that can be used to indicate the stability of the software:
+Five separate workflows cover the full delivery lifecycle:
 
-- **Official**: Official releases are considered to be stable and are close to the final release.
-- **Release Candidate (RC)**: Release candidates are versions of the software that are feature-complete and have been tested by a larger group of users. They are considered to be stable and are close to the final release. They are typically used for final testing before the final release.
+1. **Merge to `main`** (Mon–Thu, 9 AM–5 PM UTC) — `continuous-delivery-stg.yml` automatically builds a Docker image and deploys to **staging** (`stg.activepieces.com`).
+2. **Staging freeze (5 PM UTC)** — merges to `main` after 5 PM UTC are accepted but **not deployed** to staging. The content team uses the frozen staging environment overnight.
+3. **Daily 9 AM UTC** — `continuous-delivery-canary.yml` builds a `version.sha.canary` image from the latest `main` and deploys it to the **canary** environment. Breaking migrations block the deployment. See the [Canary Deployment playbook](/handbook/engineering/playbooks/canary-deployment) for details.
+4. **Thursday 5 PM UTC** — `tag-release-candidate` job tags the current staging image and commit as `release-candidate`.
+5. **Sunday 9 AM UTC** — `continuous-delivery-cloud.yml` promotes `release-candidate` to production and creates a `deploy/cloud/YYYY-MM-DD` branch.
+6. **Monday 9 AM UTC** — `continuous-delivery-release.yml` re-tags the `release-candidate` image and publishes the self-hosted release.
 
-## Why Use Pre-Releases
+## Environments
 
-We do pre-release when we release hot-fixes / bug fixes / small and beta features.
+| Environment | URL | Purpose |
+|---|---|---|
+| Preview | `branch-name.activepieces.com` | Per-PR ephemeral environment for review. *Requires the `preview` label on the PR.* |
+| Staging | `stg.activepieces.com` | Internal testing, content team daily use |
+| Canary | `canary.activepieces.com` | Daily cut from `main`; catches issues before they reach production |
+| Production | `cloud.activepieces.com` | Live customers |
 
-## How to Release a Pre-Release
+## Hotfix Workflow
 
-To release a pre-release version of the software, follow these steps:
+  1. Checkout from the current `deploy/cloud/YYYY-MM-DD` branch (created by the last Sunday promotion).
+  2. Push your fix commit(s) to that branch.
+  3. Manually trigger `continuous-delivery-cloud.yml` with action `cloud-hotfix` **on the hotfix branch** (not `main`). This builds the image and deploys directly to production — staging is not involved. If the next scheduled Sunday promotion is within 1 hour, the workflow will refuse to run — just wait for the scheduled run instead.
+  4. Merge the hotfix branch into `main`. This automatically triggers `tag-release-candidate`, which SSHes to staging and retrags whatever image is running there as `release-candidate`. Sunday's scheduled run will re-deploy — a safe no-op.
 
-1. **Create a new branch**: Create a new branch from the `main` branch. The branch name should be `release/vX.Y.Z` where `X.Y.Z` is the version number.
-2. **Increase the version number**: Update the `package.json` file with the new version number.
-3. **Open a Pull Request**: Open a pull request from the new branch to the `main` branch. Assign the `pre-release` label to the pull request.
-4. **Check the Changelog**: Check the [Activepieces Releases](https://github.com/activepieces/activepieces/releases) page to see if there are any new features or bug fixes that need to be included in the pre-release. Make sure all PRs are labeled correctly so they show in the correct auto-generated changelog. If not, assign the labels and rerun the changelog by removing the "pre-release" label and adding it again to the PR.
-5. Go to https://github.com/activepieces/activepieces/actions/workflows/release-rc.yml and run it on the release branch to build the rc image.
-6. **Merge the Pull Request**: Merge the pull request to the `main` branch.
-7. **Release the Notes**: Release the notes for the new version.
+## Self-Hosted Release
+
+The weekly self-hosted release runs automatically on Mondays at 9 AM UTC. It re-tags the `release-candidate` cloud image as the versioned self-hosted image — no separate build required.
+
+For off-cycle or hotfix releases from any branch, use `release-self-hosted.yml` (see below).
+
+## GitHub Actions Workflows
+
+To run any workflow manually, go to the repo's **Actions** tab, select the workflow, and click **Run workflow**.
+
+### `continuous-delivery-stg.yml` — Staging
+
+| Trigger | What happens |
+|---|---|
+| **Push to `main`** | Builds a `version.sha.beta` image and deploys to staging. Skipped automatically during the freeze window (5 PM – 9 AM UTC). |
+| **Manual dispatch** | Presents a dropdown with two choices (see below). |
+
+#### Manual dispatch choices
+
+- **`deploy-staging`** — Re-deploy the latest `main` to staging. Use this after an infra change, or to force a deploy that was skipped due to the freeze window.
+- **`deploy-staging-skip-freeze`** — Same as above but explicitly bypasses the freeze window check.
+
+### `continuous-delivery-cloud.yml` — Production Promotion
+
+| Trigger | What happens |
+|---|---|
+| **Scheduled (Sunday 9 AM UTC)** | Promotes `release-candidate` to production (requires approval via the `production` GitHub Environment). After promotion, creates a `deploy/cloud/YYYY-MM-DD` branch and runs a smoke test. |
+| **`workflow_call`** | Same as above, triggered by another workflow. |
+| **Manual dispatch — `cloud-hotfix`** | Builds the image from the current branch and deploys directly to production, bypassing staging. Trigger this **on the hotfix branch** (`deploy/cloud/YYYY-MM-DD`), not `main`. After promotion, merge the hotfix branch into `main` to automatically retag `release-candidate`. Blocked automatically if the next scheduled Sunday promotion is within 1 hour. |
+
+### `continuous-delivery-release.yml` — Weekly Release
+
+| Trigger | What happens |
+|---|---|
+| **Scheduled (Mondays 9 AM UTC)** | Publishes a GitHub release with changelog, creates a git tag, and re-tags `ghcr.io/activepieces/activepieces-cloud:release-candidate` as `activepieces/activepieces:X.Y.Z` + `latest` on Docker Hub and GHCR. |
+| **Manual dispatch** | Same as above, on demand. Use this if a Monday run was skipped or you need an off-cycle release. |
+
+### `continuous-delivery-canary.yml` — Canary
+
+Scheduled (daily 9 AM UTC) — builds a `version.sha.canary` image from the latest `main`, deploys the canary app and workers, and optionally updates platform routing in the database. Breaking migrations always block the deployment.
+
+See the [Canary Deployment playbook](/handbook/engineering/playbooks/canary-deployment) for full details.
+
+### `continuous-delivery-rollback-canary.yml` — Canary Rollback
+
+Manual dispatch only. Rolls back the canary environment to a previous image tag. Reverses DB migrations not present in the target image's manifest, then redeploys the canary app and workers to that tag.
+
+| Input | Description |
+|---|---|
+| `rollback_to_image_tag` | Target image tag to roll back to (e.g. `0.51.0.abc1234.canary`). Leave blank to roll back to the current cloud production image. |
+| `force` | Force rollback even if breaking migrations exist. Default: `false`. |
+
+### `release-self-hosted.yml`
+
+Manual dispatch only. Prompts for a **release tag** (e.g., `0.79.2` or `0.79.2-hotfix.1`). Builds multi-platform images (amd64 + arm64), pushes to Docker Hub and GHCR, and creates a git tag. Can be run from any branch — useful for patching older versions.
+
+## Changelog
+
+Before each weekly release, ensure the draft GitHub release has accurate notes. PRs should be labeled correctly so the auto-generated changelog categorizes them properly.

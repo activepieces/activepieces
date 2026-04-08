@@ -37,6 +37,7 @@ export const uploadResource = createAction({
       required: false,
     }),
     folder: Property.Dropdown({
+      auth: cloudinaryAuth,
       displayName: 'Folder',
       description: 'Select an existing folder or type a new folder path (e.g., "samples/animals")',
       required: false,
@@ -75,6 +76,7 @@ export const uploadResource = createAction({
       },
     }),
     tags: Property.MultiSelectDropdown({
+      auth: cloudinaryAuth,
       displayName: 'Tags',
       description: 'Select existing tags or type new ones',
       required: false,
@@ -125,8 +127,8 @@ export const uploadResource = createAction({
   async run({ auth, propsValue }) {
     const { file, public_id, folder, tags, overwrite, use_filename } = propsValue;
     const timestamp = Math.floor(Date.now() / 1000);
-    const api_key = auth.api_key.trim();
-    const api_secret = auth.api_secret.trim();
+    const api_key = auth.props.api_key.trim();
+    const api_secret = auth.props.api_secret.trim();
     
     const paramsToSign: Record<string, any> = {
       timestamp,

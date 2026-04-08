@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { zooAuth } from '../../../index'
+import { zooAuth } from '../../auth'
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const updateUserPaymentAction = createAction({
@@ -20,7 +20,7 @@ export const updateUserPaymentAction = createAction({
       method: HttpMethod.PUT,
       url: 'https://api.zoo.dev/user/payment',
       headers: {
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       },
       body: {
         payment_method_id: propsValue.paymentMethodId,

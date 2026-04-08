@@ -1,11 +1,12 @@
 import {
+  AppConnectionValueForAuthProperty,
   OAuth2PropertyValue,
   OAuth2Props,
   StaticPropsValue,
   TriggerStrategy,
   createTrigger,
 } from '@activepieces/pieces-framework';
-import { googleTasksAuth } from '../..';
+import { googleTasksAuth } from '../auth';
 import {
   DedupeStrategy,
   Polling,
@@ -18,7 +19,7 @@ const props = {
 };
 
 const polling: Polling<
-  OAuth2PropertyValue<OAuth2Props>,
+  AppConnectionValueForAuthProperty<typeof googleTasksAuth>,
   StaticPropsValue<typeof props>
 > = {
   strategy: DedupeStrategy.TIMEBASED,
@@ -47,25 +48,25 @@ export const newTaskTrigger = createTrigger({
   sampleData: {},
   async test(context) {
     const store = context.store;
-    const auth = context.auth as OAuth2PropertyValue<OAuth2Props>;
+    const auth = context.auth;
     const propsValue = context.propsValue;
     return await pollingHelper.test(polling, { store, auth, propsValue, files: context.files });
   },
   async onEnable(context) {
     const store = context.store;
-    const auth = context.auth as OAuth2PropertyValue<OAuth2Props>;
+    const auth = context.auth;
     const propsValue = context.propsValue;
     await pollingHelper.onEnable(polling, { store, auth, propsValue });
   },
   async onDisable(context) {
     const store = context.store;
-    const auth = context.auth as OAuth2PropertyValue<OAuth2Props>;
+    const auth = context.auth;
     const propsValue = context.propsValue;
     await pollingHelper.onEnable(polling, { store, auth, propsValue });
   },
   async run(context) {
     const store = context.store;
-    const auth = context.auth as OAuth2PropertyValue<OAuth2Props>;
+    const auth = context.auth;
     const propsValue = context.propsValue;
     return await pollingHelper.poll(polling, { store, auth, propsValue, files: context.files });
   },

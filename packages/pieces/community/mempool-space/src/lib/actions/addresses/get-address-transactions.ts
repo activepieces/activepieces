@@ -1,8 +1,9 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, PieceAuth, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { MEMPOOL_API_BASE_URL } from '../../common';
 
 export const getAddressTransactions = createAction({
+ auth:PieceAuth.None(),
     name: 'get_address_transactions',
     displayName: 'Get Address Transactions',
     description: 'Returns transaction history (up to 50 mempool + 25 confirmed transactions)',

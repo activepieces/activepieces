@@ -1,4 +1,4 @@
-import { zuoraAuth } from '../../';
+import { zuoraAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { getAccessToken } from '../common';
 import {
@@ -25,7 +25,7 @@ export const findProductAction = createAction({
 
     const request: HttpRequest = {
       method: HttpMethod.GET,
-      url: `${context.auth.environment}/object-query/products`,
+      url: `${context.auth.props.environment}/object-query/products`,
       authentication: { type: AuthenticationType.BEARER_TOKEN, token },
       queryParams: {
         'filter[]': `sku.EQ:${sku}`,

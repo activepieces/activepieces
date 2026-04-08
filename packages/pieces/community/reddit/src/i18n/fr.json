@@ -37,10 +37,12 @@
   "Method": "Méthode",
   "Headers": "En-têtes",
   "Query Parameters": "Paramètres de requête",
+  "Body Type": "Body Type",
   "Body": "Corps",
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'expiration (en secondes)",
+  "Follow redirects": "Suivre les redirections",
   "Select the category of posts to retrieve": "Sélectionnez la catégorie de messages à récupérer",
   "The subreddit to fetch posts from": "Le subreddit pour récupérer les messages de",
   "Number of posts to fetch (max 100)": "Nombre de messages à récupérer (max 100)",
@@ -60,7 +62,7 @@
   "ID of the Reddit post to delete (e.g., \"abc123\" or \"t3_abc123\").": "ID du message Reddit à supprimer (par exemple, \"abc123\" ou \"t3_abc123\").",
   "ID of the Reddit comment to delete (e.g., \"def456\" or \"t1_def456\").": "ID du commentaire Reddit à supprimer (par exemple, \"def456\" ou \"t1_def456\").",
   "Authorization headers are injected automatically from your connection.": "Les en-têtes d'autorisation sont injectés automatiquement à partir de votre connexion.",
-  "Enable for files like PDFs, images, etc..": "Activer pour les fichiers comme les PDFs, les images, etc.",
+  "Enable for files like PDFs, images, etc.": "Activer pour les fichiers comme les PDFs, les images, etc.",
   "Hot": "Chaud",
   "New": "Nouveau",
   "Top": "En haut",
@@ -73,5 +75,9 @@
   "PATCH": "PATCH",
   "PUT": "PUT",
   "DELETE": "DELETE",
-  "HEAD": "HEAD"
+  "HEAD": "HEAD",
+  "None": "Aucun",
+  "JSON": "JSON",
+  "Form Data": "Données du formulaire",
+  "Raw": "Brut"
 }

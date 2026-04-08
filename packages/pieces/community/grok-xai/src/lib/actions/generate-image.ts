@@ -85,7 +85,7 @@ export const generateImage = createAction({
         url: `${XAI_BASE_URL}/images/generations`,
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,
-          token: auth,
+          token: auth.secret_text,
         },
         body: requestBody,
         timeout: 120000,

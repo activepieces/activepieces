@@ -7,6 +7,9 @@ on:
 jobs:
   Remove-Preview-Environment:
     runs-on: ubuntu-latest
+    if: github.repository == 'activepieces/activepieces' && github.event.pull_request.head.repo.full_name == 'activepieces/activepieces'
+    env:
+      NX_NO_CLOUD: true 
     steps:
       - name: Configure SSH
         run: |

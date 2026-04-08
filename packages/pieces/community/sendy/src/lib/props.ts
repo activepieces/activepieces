@@ -9,7 +9,7 @@ export async function buildBrandDropdown(auth: SendyAuthType) {
       placeholder: 'Please authenticate first',
     };
   }
-  const response = await getBrands(auth as SendyAuthType);
+  const response = await getBrands(auth);
   const options = response.data.map((brand) => {
     return { label: brand.name, value: brand.id };
   });
@@ -26,7 +26,7 @@ export async function buildListDropdown(auth: SendyAuthType) {
       placeholder: 'Please authenticate first',
     };
   }
-  const response = await getLists(auth as SendyAuthType);
+  const response = await getLists(auth);
   const options = response.data.map((list) => {
     return { label: list.name, value: list.id };
   });

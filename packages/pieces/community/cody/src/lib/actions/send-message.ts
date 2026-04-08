@@ -18,7 +18,7 @@ export const sendMessageAction = createAction({
     },
     async run(context) {
         const { conversation_id, content } = context.propsValue;
-        const apiKey = context.auth as string;
+        const apiKey = context.auth;
 
         return await codyClient.sendMessage(apiKey, conversation_id, content);
     },

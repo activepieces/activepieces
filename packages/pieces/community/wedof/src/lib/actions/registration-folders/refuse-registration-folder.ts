@@ -1,5 +1,5 @@
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { wedofAuth } from '../../..';
+import { wedofAuth } from '../../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { wedofCommon } from '../../common/wedof';
 
@@ -16,6 +16,7 @@ export const refuseRegistrationFolder = createAction({
       required: true,
     }),
     code: Property.Dropdown({
+      auth: wedofAuth,
       displayName: 'Raison du refus du dossier de formation',
       description: 'Sélectionner la raison du refus',
       required: true,
@@ -35,7 +36,7 @@ export const refuseRegistrationFolder = createAction({
               wedofCommon.baseUrl + '/registrationFoldersReasons?type=refused',
             headers: {
               'Content-Type': 'application/json',
-              'X-Api-Key': auth as string,
+              'X-Api-Key': auth.secret_text,
             },
           })
         ).body;
@@ -73,7 +74,7 @@ export const refuseRegistrationFolder = createAction({
         body: message,
         headers: {
           'Content-Type': 'application/json',
-          'X-Api-Key': context.auth as string,
+          'X-Api-Key': context.auth.secret_text,
         },
       })
     ).body;

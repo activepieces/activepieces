@@ -8,7 +8,7 @@ import {
 	QueryParams,
 } from '@activepieces/pieces-common';
 import {
-	PiecePropValueSchema,
+	AppConnectionValueForAuthProperty,
 	StaticPropsValue,
 	TriggerStrategy,
 	createTrigger,
@@ -23,7 +23,7 @@ const props = {
 	tid: tableIdDropdown,
 };
 
-const polling: Polling<PiecePropValueSchema<typeof NinoxAuth>, StaticPropsValue<typeof props>> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof NinoxAuth>, StaticPropsValue<typeof props>> = {
 	strategy: DedupeStrategy.LAST_ITEM,
 	async items({ auth, propsValue, lastItemId }) {
 		const { teamid, dbid, tid } = propsValue;
@@ -39,7 +39,7 @@ const polling: Polling<PiecePropValueSchema<typeof NinoxAuth>, StaticPropsValue<
 			url: BASE_URL + `/teams/${teamid}/databases/${dbid}/tables/${tid}/records`,
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
-				token: auth,
+				token: auth.secret_text,
 			},
 			queryParams: qs,
 		});

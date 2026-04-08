@@ -1,5 +1,4 @@
 import { OAuth2AuthorizationMethod } from '@activepieces/pieces-framework'
-import { apAxios } from '@activepieces/server-shared'
 import { ActivepiecesError,
     AppConnectionType,
     BaseOAuth2ConnectionValue,
@@ -11,6 +10,8 @@ import { ActivepiecesError,
 } from '@activepieces/shared'
 import { AxiosError } from 'axios'
 import { FastifyBaseLogger } from 'fastify'
+import { secretManagersService } from '../../../../ee/secret-managers/secret-managers.service'
+import { apAxios } from '../../../../helper/ap-axios'
 import {
     ClaimOAuth2Request,
     OAuth2Service,
@@ -25,7 +26,7 @@ export const credentialsOauth2Service = (log: FastifyBaseLogger): OAuth2Service<
     }: ClaimOAuth2Request): Promise<OAuth2ConnectionValueWithApp> {
         try {
             const grantType = request.grantType ?? OAuth2GrantType.AUTHORIZATION_CODE
-            const body: Record<string, string> = {
+            const body: Record<string, unknown> = {
                 grant_type: grantType,
             }
             switch (grantType) {
@@ -68,8 +69,9 @@ export const credentialsOauth2Service = (log: FastifyBaseLogger): OAuth2Service<
                 default:
                     throw new Error(`Unknown authorization method: ${authorizationMethod}`)
             }
+            const urlSearchParams = new URLSearchParams(Object.fromEntries(Object.entries(body).map(([key, value]) => [key, String(value)])))
             const response = (
-                await apAxios.post(request.tokenUrl, new URLSearchParams(body), {
+                await apAxios.post(request.tokenUrl, urlSearchParams, {
                     headers,
                 })
             ).data
@@ -111,14 +113,21 @@ export const credentialsOauth2Service = (log: FastifyBaseLogger): OAuth2Service<
     },
 
     async refresh({
-        connectionValue,
+        platformId,
+        projectId,
+        connectionValue: appConnection,
     }: RefreshOAuth2Request<OAuth2ConnectionValueWithApp>): Promise<OAuth2ConnectionValueWithApp> {
-        const appConnection = connectionValue
         if (!oauth2Util(log).isExpired(appConnection)) {
             return appConnection
         }
+        const smService = secretManagersService(log)
+        const resolveParams = { platformId, projectIds: projectId ? [projectId] : undefined, throwOnFailure: true }
+        const [client_id, client_secret] = await Promise.all([
+            smService.resolveString({ key: appConnection.client_id, ...resolveParams }),
+            smService.resolveString({ key: appConnection.client_secret, ...resolveParams }),
+        ])
         const grantType =
-            connectionValue.grant_type ?? OAuth2GrantType.AUTHORIZATION_CODE
+            appConnection.grant_type ?? OAuth2GrantType.AUTHORIZATION_CODE   
         const body: Record<string, string> = {}
         switch (grantType) {
             case OAuth2GrantType.AUTHORIZATION_CODE: {
@@ -133,7 +142,7 @@ export const credentialsOauth2Service = (log: FastifyBaseLogger): OAuth2Service<
                 }
                 if (appConnection.props) {
                     Object.entries(appConnection.props).forEach(([key, value]) => {
-                        body[key] = value
+                        body[key] = String(value)
                     })
                 }
                 break
@@ -150,12 +159,12 @@ export const credentialsOauth2Service = (log: FastifyBaseLogger): OAuth2Service<
             appConnection.authorization_method || OAuth2AuthorizationMethod.BODY
         switch (authorizationMethod) {
             case OAuth2AuthorizationMethod.BODY:
-                body.client_id = appConnection.client_id
-                body.client_secret = appConnection.client_secret
+                body.client_id = client_id
+                body.client_secret = client_secret
                 break
             case OAuth2AuthorizationMethod.HEADER:
                 headers.authorization = `Basic ${Buffer.from(
-                    `${appConnection.client_id}:${appConnection.client_secret}`,
+                    `${client_id}:${client_secret}`,
                 ).toString('base64')}`
                 break
             default:
@@ -195,5 +204,5 @@ function mergeNonNull(
     return {
         ...appConnection,
         ...formattedOAuth2Response,
-    } as OAuth2ConnectionValueWithApp
+    }
 }

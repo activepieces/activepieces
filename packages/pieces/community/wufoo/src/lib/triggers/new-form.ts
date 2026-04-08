@@ -1,6 +1,6 @@
 import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { wufooAuth } from '../../index';
+import { wufooAuth } from '../auth';
 import { wufooApiCall } from '../common/client';
 
 const LAST_FORM_IDS_KEY = 'wufoo-last-form-ids';
@@ -59,11 +59,10 @@ export const newFormTrigger = createTrigger({
 
   async onEnable(context) {
     const { responseFormat } = context.propsValue;
-    const { apiKey, subdomain } = context.auth;
 
     try {
       const response = await wufooApiCall<{ Forms: WufooForm[] }>({
-        auth: { apiKey, subdomain },
+        auth: context.auth,
         method: HttpMethod.GET,
         resourceUri: `/forms.${responseFormat || 'json'}`,
       });
@@ -97,13 +96,12 @@ export const newFormTrigger = createTrigger({
 
   async run(context) {
     const { nameFilter, includeInactive, responseFormat } = context.propsValue;
-    const { apiKey, subdomain } = context.auth;
     
     try {
       const previousHashes = await context.store.get<string[]>(LAST_FORM_IDS_KEY) || [];
 
       const response = await wufooApiCall<{ Forms: WufooForm[] }>({
-        auth: { apiKey, subdomain },
+        auth: context.auth,
         method: HttpMethod.GET,
         resourceUri: `/forms.${responseFormat || 'json'}`,
       });
@@ -180,11 +178,10 @@ export const newFormTrigger = createTrigger({
 
   async test(context) {
     const { responseFormat } = context.propsValue;
-    const { apiKey, subdomain } = context.auth;
 
     try {
       const response = await wufooApiCall<{ Forms: WufooForm[] }>({
-        auth: { apiKey, subdomain },
+        auth: context.auth,
         method: HttpMethod.GET,
         resourceUri: `/forms.${responseFormat || 'json'}`,
       });

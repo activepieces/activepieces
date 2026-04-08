@@ -68,8 +68,8 @@ export const sendNotification = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const baseUrl = auth.base_url.replace(/\/$/, '');
-    const accessToken = auth.access_token;
+    const baseUrl = auth.props.base_url.replace(/\/$/, '');
+    const accessToken = auth.props.access_token;
 
     const topic = propsValue.topic;
     let title = propsValue.title;

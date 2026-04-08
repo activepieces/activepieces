@@ -3,7 +3,7 @@ import {
   Property,
   createAction,
 } from '@activepieces/pieces-framework';
-import { flowluAuth } from '../../../';
+import { flowluAuth } from '../../auth';
 import { makeClient } from '../../common';
 import { flowluProps } from '../../common/props';
 
@@ -21,7 +21,7 @@ export const createOpportunityAction = createAction({
   },
   async run(context) {
     const client = makeClient(
-      context.auth as PiecePropValueSchema<typeof flowluAuth>
+      context.auth
     );
     return await client.createOpportunity(context.propsValue);
   },

@@ -7,45 +7,19 @@ import { runMultipleQueries } from './lib/actions/run-multiple-queries';
 import { runQuery } from './lib/actions/run-query';
 import { PieceCategory } from '@activepieces/shared';
 import { insertRowAction } from './lib/actions/insert-row';
+import { updateRowAction } from './lib/actions/update-row';
+import { deleteRowAction } from './lib/actions/delete-row';
+import { upsertRowAction } from './lib/actions/upsert-row';
+import { insertMultipleRowsAction } from './lib/actions/insert-multiple-rows';
+import { getRowByIdAction } from './lib/actions/get-row-by-id';
+import { searchRowsAction } from './lib/actions/search-rows';
+import { getTableSchemaAction } from './lib/actions/get-table-schema';
+import { listTablesAction } from './lib/actions/list-tables';
+import { executeStoredProcedureAction } from './lib/actions/execute-stored-procedure';
+import { createDynamicTableAction } from './lib/actions/create-dynamic-table';
+import { loadDataFromStageAction } from './lib/actions/load-data-from-stage';
+import { snowflakeAuth } from './lib/auth';
 
-export const snowflakeAuth = PieceAuth.CustomAuth({
-  props: {
-    account: Property.ShortText({
-      displayName: 'Account',
-      required: true,
-      description: 'A string indicating the Snowflake account identifier.',
-    }),
-    username: Property.ShortText({
-      displayName: 'Username',
-      required: true,
-      description: 'The login name for your Snowflake user.',
-    }),
-    password: PieceAuth.SecretText({
-      displayName: 'Password',
-      description: 'Password for the user.',
-      required: true,
-    }),
-    database: Property.ShortText({
-      displayName: 'Database',
-      description:
-        'The default database to use for the session after connecting.',
-      required: false,
-    }),
-    role: Property.ShortText({
-      displayName: 'Role',
-      description:
-        'The default security role to use for the session after connecting.',
-      required: false,
-    }),
-    warehouse: Property.ShortText({
-      displayName: 'Warehouse',
-      description:
-        'The default virtual warehouse to use for the session after connecting. Used for performing queries, loading data, etc.',
-      required: false,
-    }),
-  },
-  required: true,
-});
 export const snowflake = createPiece({
   displayName: 'Snowflake',
   description: 'Data warehouse built for the cloud',
@@ -54,7 +28,27 @@ export const snowflake = createPiece({
   minimumSupportedRelease: '0.27.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/snowflake.png',
   categories: [PieceCategory.DEVELOPER_TOOLS],
-  authors: ['AdamSelene', 'abuaboud', 'valentin-mourtialon'],
-  actions: [runQuery, runMultipleQueries, insertRowAction],
+  authors: [
+    'AdamSelene',
+    'abuaboud',
+    'valentin-mourtialon',
+    'onyedikachi-david',
+  ],
+  actions: [
+    runQuery,
+    runMultipleQueries,
+    insertRowAction,
+    updateRowAction,
+    deleteRowAction,
+    upsertRowAction,
+    insertMultipleRowsAction,
+    getRowByIdAction,
+    searchRowsAction,
+    getTableSchemaAction,
+    listTablesAction,
+    executeStoredProcedureAction,
+    createDynamicTableAction,
+    loadDataFromStageAction,
+  ],
   triggers: [],
 });

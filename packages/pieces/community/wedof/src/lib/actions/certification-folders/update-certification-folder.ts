@@ -1,5 +1,5 @@
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { wedofAuth } from '../../..';
+import { wedofAuth } from '../../auth';
 import {
   createAction,
   Property,
@@ -116,6 +116,7 @@ export const updateCertificationFolder = createAction({
       },
     }),
     dynamicFields: Property.DynamicProperties({
+      auth: wedofAuth,
       displayName: 'Champs sélectionnés',
       refreshers: ['fieldsToUpdate'],
       required: false,
@@ -468,7 +469,7 @@ export const updateCertificationFolder = createAction({
           context.propsValue['externalId'],
         headers: {
           'Content-Type': 'application/json',
-          'X-Api-Key': context.auth as string,
+          'X-Api-Key': context.auth.secret_text,
         },
       })
     ).body;

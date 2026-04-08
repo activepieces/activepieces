@@ -16,6 +16,6 @@ export const startTraining = createAction({
  async run({ auth: apiKey, propsValue }) {
     const { knowledge_id } = propsValue;
 
-    return await aidbaseClient.startTraining(apiKey, knowledge_id);
+    return await aidbaseClient.startTraining(apiKey.secret_text, knowledge_id);
   },
 });

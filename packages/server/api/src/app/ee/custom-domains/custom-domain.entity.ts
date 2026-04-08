@@ -1,8 +1,7 @@
 import {
     CustomDomain,
     CustomDomainStatus,
-} from '@activepieces/ee-shared'
-import { Platform } from '@activepieces/shared'
+    Platform } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,
@@ -34,6 +33,11 @@ export const CustomDomainEntity = new EntitySchema<CustomDomainSchema>({
             name: 'custom_domain_domain_unique',
             unique: true,
             columns: ['domain'],
+        },
+        {
+            name: 'idx_custom_domain_platform_id',
+            columns: ['platformId'],
+            unique: false,
         },
     ],
     relations: {

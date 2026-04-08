@@ -134,7 +134,7 @@ export const textToSpeech = createAction({
     };
 
     const response = await makeRequest(
-      context.auth ,
+      context.auth.secret_text ,
       HttpMethod.POST,
       "/speech/generate",
       body

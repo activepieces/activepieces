@@ -29,7 +29,7 @@ export const downloadFileFromRecord = createAction({
 
 		try {
 			const fileMetadata = await makeRequest<{ name: string }>(
-				auth,
+				auth.secret_text,
 				HttpMethod.GET,
 				`${path}/metadata`,
 			);
@@ -39,7 +39,7 @@ export const downloadFileFromRecord = createAction({
 				url: BASE_URL + path,
 				authentication: {
 					type: AuthenticationType.BEARER_TOKEN,
-					token: auth,
+					token: auth.secret_text,
 				},
 				responseType: 'arraybuffer',
 			});

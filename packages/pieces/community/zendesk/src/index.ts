@@ -24,6 +24,7 @@ import { deleteUserAction } from './lib/actions/delete-user';
 import { findOrganizationAction } from './lib/actions/find-organization';
 import { findTicketsAction } from './lib/actions/find-tickets';
 import { findUserAction } from './lib/actions/find-user';
+import { updateUserAction } from './lib/actions/update-user';
 
 const markdownProperty = `
 **Organization**: The organization name can be found in the URL (e.g https://ORGANIZATION_NAME.zendesk.com).
@@ -61,7 +62,7 @@ export const zendesk = createPiece({
 
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/zendesk.png',
-  authors: ["kishanprmr","MoShizzle","khaledmashaly","abuaboud","aryel780","onyedikachi-david"],
+  authors: ["kishanprmr","MoShizzle","khaledmashaly","abuaboud","aryel780","onyedikachi-david","murex971"],
   categories: [PieceCategory.CUSTOMER_SUPPORT],
   auth: zendeskAuth,
   actions: [
@@ -76,16 +77,18 @@ export const zendesk = createPiece({
     findOrganizationAction,
     findTicketsAction,
     findUserAction,
+    updateUserAction,
     createCustomApiCallAction({
       baseUrl: (auth) =>
+        auth?
         `https://${
-          (auth as { subdomain: string }).subdomain
-        }.zendesk.com/api/v2`,
+          auth.props.subdomain
+        }.zendesk.com/api/v2` : '',
       auth: zendeskAuth,
       authMapping: async (auth) => ({
         Authorization: `Basic ${Buffer.from(
-          `${(auth as { email: string }).email}/token:${
-            (auth as { token: string }).token
+          `${auth.props.email}/token:${
+            auth.props.token
           }`
         ).toString('base64')}`,
       }),

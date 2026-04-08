@@ -1,6 +1,6 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { chatbaseAuth } from '../../index';
+import { chatbaseAuth } from '../auth';
 import { makeRequest } from '../common';
 
 export const createChatbotAction = createAction({
@@ -21,7 +21,7 @@ export const createChatbotAction = createAction({
 	},
 	async run(context) {
 		const { chatbotName, sourceText } = context.propsValue;
-		const apiKey = context.auth as string;
+		const apiKey = context.auth.secret_text;
 
 		const body: Record<string, unknown> = {
 			chatbotName,

@@ -30,7 +30,7 @@ export const sendpulse = createPiece({
       auth: sendpulseAuth,
       baseUrl: () => 'https://api.sendpulse.com',
       authMapping: async (auth) => {
-        const typedAuth = auth as { clientId: string; clientSecret: string };
+        const typedAuth = auth.props;
         const token = await sendpulseApiCall<{ access_token: string }>({
           method: HttpMethod.POST,
           auth: typedAuth,

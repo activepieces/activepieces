@@ -215,7 +215,7 @@ export class AddMcpToolEntitySQLITE1748365593414 implements MigrationInterface {
             DROP TABLE "mcp_piece"
         `)
 
-        log.info(`Migration AddMcpToolEntitySQLITE1748365593414 completed successfully. Added ${totalPieces} MCP piece tools and ${totalFlows} MCP flow tools`)
+        log.info({ totalPieces, totalFlows }, '[AddMcpToolEntitySQLITE1748365593414#up] Migration completed successfully')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -319,7 +319,7 @@ async function AddMcpPieceTools(queryRunner: QueryRunner, mcpId: string, pieceNa
     `, [mcpId])
 
     totalPieces += pieces.length
-    log.info(`Adding ${pieces.length} MCP piece tools for MCP ${mcpId}`)
+    log.info({ count: pieces.length, mcpId }, '[AddMcpToolEntitySQLITE1748365593414#AddMcpPieceTools] Adding MCP piece tools')
 
     await Promise.all(pieces.map(async (piece: McpPieceWithConnection) => {
         const pieceMetadataInfo = pieceNameToLatestVersion.get(piece.pieceName)
@@ -388,7 +388,7 @@ async function AddMcpFlowTools(queryRunner: QueryRunner, mcpId: string, projectI
 
     const populatedFlowsCount = populatedFlows.filter((flow) => !isNil(flow)).length
     totalFlows += populatedFlowsCount
-    log.info(`Adding ${populatedFlowsCount} MCP flow tools out of ${flows.length} flows for MCP ${mcpId} and project ${projectId}`)
+    log.info({ populatedFlowsCount, totalFlows: flows.length, mcpId, projectId }, '[AddMcpToolEntitySQLITE1748365593414#AddMcpFlowTools] Adding MCP flow tools')
 
     await Promise.all(populatedFlows.map(async (flow: Flow | null) => {
         if (isNil(flow)) {

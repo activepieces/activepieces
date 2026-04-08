@@ -1,4 +1,5 @@
 import {
+  AppConnectionValueForAuthProperty,
   createTrigger,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
@@ -11,10 +12,10 @@ import {
   pollingHelper,
 } from '@activepieces/pieces-common';
 
-const polling: Polling<string, any> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof togglTrackAuth>, Record<string, never>> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth }) => {
-    const authHeader = `Basic ${Buffer.from(`${auth}:api_token`).toString('base64')}`;
+    const authHeader = `Basic ${Buffer.from(`${auth.secret_text}:api_token`).toString('base64')}`;
     
     const response = await httpClient.sendRequest({
       method: HttpMethod.GET,

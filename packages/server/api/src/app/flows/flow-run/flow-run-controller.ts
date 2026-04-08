@@ -2,7 +2,9 @@ import {
     ActivepiecesError,
     ALL_PRINCIPAL_TYPES,
     ApId,
-    BulkRetryFlowRequestBody,
+    BulkActionOnRunsRequestBody,
+    BulkArchiveActionOnRunsRequestBody,
+    BulkCancelFlowRequestBody,
     ErrorCode,
     ExecutionType,
     FlowRun,
@@ -12,19 +14,21 @@ import {
     PrincipalType,
     ProgressUpdateType,
     RetryFlowRequestBody,
+    RunEnvironment,
     SeekPage,
     SERVICE_KEY_SECURITY_OPENAPI,
 } from '@activepieces/shared'
-import {
-    FastifyPluginAsyncTypebox,
-    Type,
-} from '@fastify/type-provider-typebox'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
+import { z } from 'zod'
+import { ProjectResourceType } from '../../core/security/authorization/common'
+import { securityAccess } from '../../core/security/authorization/fastify-security'
+import { FlowRunEntity } from './flow-run-entity'
 import { flowRunService } from './flow-run-service'
 
 const DEFAULT_PAGING_LIMIT = 10
 
-export const flowRunController: FastifyPluginAsyncTypebox = async (app) => {
+export const flowRunController: FastifyPluginAsyncZod = async (app) => {
     app.get('/', ListRequest, async (request) => {
         return flowRunService(request.log).list({
             projectId: request.query.projectId,
@@ -36,6 +40,9 @@ export const flowRunController: FastifyPluginAsyncTypebox = async (app) => {
             limit: Number(request.query.limit ?? DEFAULT_PAGING_LIMIT),
             createdAfter: request.query.createdAfter,
             createdBefore: request.query.createdBefore,
+            flowRunIds: request.query.flowRunIds,
+            includeArchived: request.query.includeArchived,
+            environment: RunEnvironment.PRODUCTION,
         })
     })
 
@@ -44,7 +51,7 @@ export const flowRunController: FastifyPluginAsyncTypebox = async (app) => {
         GetRequest,
         async (request, reply) => {
             const flowRun = await flowRunService(request.log).getOnePopulatedOrThrow({
-                projectId: request.principal.projectId,
+                projectId: request.projectId,
                 id: request.params.id,
             })
             await reply.send(flowRun)
@@ -85,6 +92,7 @@ export const flowRunController: FastifyPluginAsyncTypebox = async (app) => {
         })
         await reply.status(response.status).headers(response.headers).send(response.body)
     })
+
     app.post('/:id/retry', RetryFlowRequest, async (req) => {
         const flowRun = await flowRunService(req.log).retry({
             flowRunId: req.params.id,
@@ -94,18 +102,33 @@ export const flowRunController: FastifyPluginAsyncTypebox = async (app) => {
 
         if (isNil(flowRun)) {
             throw new ActivepiecesError({
-                code: ErrorCode.FLOW_RUN_NOT_FOUND,
+                code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {
-                    id: req.params.id,
+                    entityType: 'flow_run',
+                    entityId: req.params.id,
+                    message: 'Flow run not found',
                 },
             })
         }
         return flowRun
     })
 
+    app.post('/cancel', BulkCancelFlowRequest, async (req) => {
+        return flowRunService(req.log).cancel({
+            projectId: req.projectId,
+            platformId: req.principal.platform.id,
+            flowRunIds: req.body.flowRunIds,
+            excludeFlowRunIds: req.body.excludeFlowRunIds,
+            status: req.body.status,
+            flowId: req.body.flowId,
+            createdAfter: req.body.createdAfter,
+            createdBefore: req.body.createdBefore,
+        })
+    })
+
     app.post('/retry', BulkRetryFlowRequest, async (req) => {
         return flowRunService(req.log).bulkRetry({
-            projectId: req.principal.projectId,
+            projectId: req.projectId,
             flowRunIds: req.body.flowRunIds,
             excludeFlowRunIds: req.body.excludeFlowRunIds,
             strategy: req.body.strategy,
@@ -117,15 +140,31 @@ export const flowRunController: FastifyPluginAsyncTypebox = async (app) => {
         })
     })
 
+    app.post('/archive', ArchiveFlowRunRequest, async (req) => {
+        return flowRunService(req.log).bulkArchive({
+            projectId: req.projectId,
+            flowRunIds: req.body.flowRunIds,
+            excludeFlowRunIds: req.body.excludeFlowRunIds,
+            status: req.body.status,
+            flowId: req.body.flowId,
+            createdAfter: req.body.createdAfter,
+            createdBefore: req.body.createdBefore,
+            failedStepName: req.body.failedStepName,
+        })
+    })
+
 }
 
-const FlowRunFiltered = Type.Omit(FlowRun, ['terminationReason', 'pauseMetadata'])
-const FlowRunFilteredWithNoSteps = Type.Omit(FlowRun, ['terminationReason', 'pauseMetadata', 'steps'])
+const FlowRunFiltered = FlowRun.omit({ pauseMetadata: true })
+const FlowRunFilteredWithNoSteps = FlowRun.omit({ pauseMetadata: true, steps: true })
 
 const ListRequest = {
     config: {
-        permission: Permission.READ_RUN,
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        security: securityAccess.project(
+            [PrincipalType.USER, PrincipalType.SERVICE], 
+            Permission.READ_RUN, {
+                type: ProjectResourceType.QUERY,
+            }),
     },
     schema: {
         tags: ['flow-runs'],
@@ -140,14 +179,18 @@ const ListRequest = {
 
 const GetRequest = {
     config: {
-        permission: Permission.READ_RUN,
-        allowedPrincipals: [PrincipalType.SERVICE, PrincipalType.USER],
+        security: securityAccess.project(
+            [PrincipalType.USER, PrincipalType.SERVICE], 
+            Permission.READ_RUN, {
+                type: ProjectResourceType.TABLE,
+                tableName: FlowRunEntity,
+            }),
     },
     schema: {
         tags: ['flow-runs'],
         description: 'Get Flow Run',
         security: [SERVICE_KEY_SECURITY_OPENAPI],
-        params: Type.Object({
+        params: z.object({
             id: ApId,
         }),
         response: {
@@ -158,33 +201,71 @@ const GetRequest = {
 
 const ResumeFlowRunRequest = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        security: securityAccess.unscoped(ALL_PRINCIPAL_TYPES),
     },
     schema: {
-        params: Type.Object({
+        params: z.object({
             id: ApId,
-            requestId: Type.String(),
+            requestId: z.string(),
         }),
     },
 }
 
 const RetryFlowRequest = {
     config: {
-        permission: Permission.WRITE_RUN,
+        security: securityAccess.project(
+            [PrincipalType.USER, PrincipalType.SERVICE], 
+            Permission.WRITE_RUN, {
+                type: ProjectResourceType.TABLE,
+                tableName: FlowRunEntity,
+            }),
     },
     schema: {
-        params: Type.Object({
+        params: z.object({
             id: ApId,
         }),
         body: RetryFlowRequestBody,
     },
 }
 
-const BulkRetryFlowRequest = {
+const BulkCancelFlowRequest = {
     config: {
-        permission: Permission.WRITE_RUN,
+        security: securityAccess.project(
+            [PrincipalType.USER, PrincipalType.SERVICE], 
+            Permission.WRITE_RUN, {
+                type: ProjectResourceType.BODY,
+            }),
     },
     schema: {
-        body: BulkRetryFlowRequestBody,
+        tags: ['flow-runs'],
+        description: 'Cancel multiple paused/queued flow runs',
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        body: BulkCancelFlowRequestBody,
+    },
+}
+
+const ArchiveFlowRunRequest = {
+    config: {
+        security: securityAccess.project(
+            [PrincipalType.USER, PrincipalType.SERVICE], 
+            Permission.WRITE_RUN, {
+                type: ProjectResourceType.BODY,
+            }),
+    },
+    schema: {
+        body: BulkArchiveActionOnRunsRequestBody,
+    },
+}
+
+const BulkRetryFlowRequest = {
+    config: {
+        security: securityAccess.project(
+            [PrincipalType.USER, PrincipalType.SERVICE], 
+            Permission.WRITE_RUN, {
+                type: ProjectResourceType.BODY,
+            }),
+    },
+    schema: {
+        body: BulkActionOnRunsRequestBody,
     },
 }

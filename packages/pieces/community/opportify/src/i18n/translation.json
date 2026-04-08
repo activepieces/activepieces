@@ -1,0 +1,11 @@
+{
+  "You can obtain your API key from [API Key List](https://app.opportify.ai/api-keys/list).": "You can obtain your API key from [API Key List](https://app.opportify.ai/api-keys/list).",
+  "Analyze Email": "Analyze Email",
+  "Analyze IP Address": "Analyze IP Address",
+  "Validates an email address and returns its deliverability status.": "Validates an email address and returns its deliverability status.",
+  "Provides comprehensive insights into a specified IP address.": "Provides comprehensive insights into a specified IP address.",
+  "Email": "Email",
+  "Enable Auto Correction?": "Enable Auto Correction?",
+  "Enable AI?": "Enable AI?",
+  "Ip Address": "Ip Address"
+}

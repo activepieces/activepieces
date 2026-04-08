@@ -1,0 +1,16 @@
+{
+  "Search using Vertex AI Search (Discovery Engine)": "Suche mit Vertex KI Suche (Discovery Engine)",
+  "API Key": "API-Schlüssel",
+  "Project ID": "Projekt-ID",
+  "App ID": "App-ID",
+  "Your Google Cloud API key with Vertex AI Search access.": "Ihr Google Cloud API Schlüssel mit Vertex KI Suchzugriff.",
+  "Your Google Cloud project ID.": "Ihre Google Cloud-Projekt-ID.",
+  "The Vertex AI Search app (engine) ID.": "Die Vertex KI Search App (Motor) ID.",
+  "\nFollow these steps to obtain your Google Cloud API Key:\n\n1. Go to [Google Cloud Console](https://console.cloud.google.com/).\n2. Create or select a project.\n3. Navigate to **APIs & Services** > **Enabled APIs & services**.\n4. Click **+ ENABLE APIS AND SERVICES** and enable **Vertex AI Search** (Discovery Engine API).\n5. Go to **APIs & Services** > **Credentials**.\n6. Click **Create Credentials** > **API key**.\n7. Copy the API key and paste it below.\n": "\nFolgen Sie diesen Schritten, um Ihren Google Cloud API Schlüssel zu erhalten:\n\n1. Gehen Sie zu [Google Cloud Console](https://console.cloud.google.com/).\n2. Erstellen oder wählen Sie ein Projekt.\n3. Navigieren Sie zu **APIs & Services** > **Aktivierte APIs & Services**.\n4. Klicke **+ APIS UND SERVICES** und aktiviere **Vertex KI Search** (Discovery Engine API).\n5. Gehe zu **APIs & Services** > **Credentials**.\n6. Klicken Sie auf **Zugangsdaten erstellen** > **API-Schlüssel**.\n7. Kopieren Sie den API-Schlüssel und fügen Sie ihn unten ein.\n",
+  "Search": "Suche",
+  "Search for content using Vertex AI Search (searchLite).": "Suche nach Inhalten mit Vertex KI Search (searchLite).",
+  "Search Query": "Suchanfrage",
+  "User Pseudo ID": "Benutzer-Pseudo-ID",
+  "The query text to search.": "Der zu durchsuchende Abfragetext.",
+  "A pseudonymized identifier for the user (max 128 chars). Improves personalization.": "Ein pseudonymisierter Identifikator für den Benutzer (max. 128 Zeichen). Verbessert die Personalisierung."
+}

@@ -26,6 +26,7 @@ export const callMethod = createAction({
       required: true,
     }),
     method: Property.Dropdown({
+      auth: soapAuth(),
       description: 'The SOAP Method',
       displayName: 'Method',
       required: true,
@@ -57,6 +58,7 @@ export const callMethod = createAction({
       },
     }),
     args: Property.DynamicProperties({
+      auth: soapAuth(),
       description: 'Arguments for the SOAP method',
       displayName: 'Parameters',
       required: true,
@@ -113,7 +115,7 @@ export const callMethod = createAction({
         );
         break;
       case 'Header': // eslint-disable-next-line no-case-declarations
-        client.addSoapHeader(ctx.auth['customHeader'] as string);
+        client.addSoapHeader(ctx.auth.props.customHeader);
         break;
     }
 

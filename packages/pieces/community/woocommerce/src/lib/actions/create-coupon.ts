@@ -11,7 +11,7 @@ import {
 } from '@activepieces/pieces-common';
 import { z } from 'zod';
 
-import { wooAuth } from '../..';
+import { wooAuth } from '../auth';
 
 export const wooCreateCoupon = createAction({
   name: 'Create Coupon',
@@ -65,7 +65,7 @@ export const wooCreateCoupon = createAction({
       minimum_amount: z.number().min(0),
     });
 
-    const trimmedBaseUrl = configValue.auth.baseUrl.replace(/\/$/, '');
+    const trimmedBaseUrl = configValue.auth.props.baseUrl.replace(/\/$/, '');
     const amount = configValue.propsValue['amount'] || 0;
     const code = configValue.propsValue['code'];
     const discount_type = configValue.propsValue['discount_type'];
@@ -76,8 +76,8 @@ export const wooCreateCoupon = createAction({
       url: `${trimmedBaseUrl}/wp-json/wc/v3/coupons`,
       authentication: {
         type: AuthenticationType.BASIC,
-        username: configValue.auth.consumerKey,
-        password: configValue.auth.consumerSecret,
+        username: configValue.auth.props.consumerKey,
+        password: configValue.auth.props.consumerSecret,
       },
       body: {
         code,

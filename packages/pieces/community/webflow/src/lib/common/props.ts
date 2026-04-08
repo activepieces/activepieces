@@ -9,7 +9,9 @@ import { WebflowApiClient } from './client';
 import { webflowAuth } from '../..';
 
 export const webflowProps = {
-	site_id: Property.Dropdown({
+	site_id:  Property.Dropdown({
+auth: webflowAuth,
+
 		displayName: 'Site',
 		required: true,
 		refreshers: [],
@@ -21,7 +23,7 @@ export const webflowProps = {
 					placeholder: 'Please connect account first.',
 				};
 			}
-			const authValue = auth as PiecePropValueSchema<typeof webflowAuth>;
+			const authValue = auth;
 			const client = new WebflowApiClient(authValue.access_token);
 
 			const sites = await client.listSites();
@@ -37,7 +39,9 @@ export const webflowProps = {
 			};
 		},
 	}),
-	collection_id: Property.Dropdown({
+	collection_id:  Property.Dropdown({
+auth: webflowAuth,
+
 		displayName: 'Collection',
 		required: true,
 		refreshers: ['site_id'],
@@ -66,6 +70,7 @@ export const webflowProps = {
 		},
 	}),
 	collection_fields: Property.DynamicProperties({
+		auth: webflowAuth,
 		displayName: 'Collection Fields',
 		required: true,
 		refreshers: ['collection_id'],
@@ -157,7 +162,9 @@ export const webflowProps = {
 			return collectionFields;
 		},
 	}),
-	collection_item_id: Property.Dropdown({
+	collection_item_id:  Property.Dropdown({
+auth: webflowAuth,
+
 		displayName: 'Collection Item',
 		required: true,
 		refreshers: ['collection_id'],
@@ -191,7 +198,9 @@ export const webflowProps = {
 			};
 		},
 	}),
-	order_id: Property.Dropdown({
+	order_id:  Property.Dropdown({
+auth: webflowAuth,
+
 		displayName: 'Order',
 		required: true,
 		refreshers: ['site_id'],

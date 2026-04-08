@@ -1,6 +1,6 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { clockifyAuth } from '../../index';
+import { clockifyAuth } from '../auth';
 import { clockifyApiCall } from '../common/client';
 import { assigneeIds, projectId, workspaceId } from '../common/props';
 
@@ -53,7 +53,7 @@ export const createTaskAction = createAction({
 		const assigneeIds = context.propsValue.assigneeIds ?? [];
 
 		const response = await clockifyApiCall({
-			apiKey: context.auth,
+			apiKey: context.auth.secret_text,
 			method: HttpMethod.POST,
 			resourceUri: `/workspaces/${workspaceId}/projects/${projectId}/tasks`,
 			body: {

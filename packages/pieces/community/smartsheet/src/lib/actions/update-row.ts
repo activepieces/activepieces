@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { smartsheetAuth } from '../../index';
+import { smartsheetAuth } from '../auth';
 import { smartsheetCommon, updateRowInSmartsheet } from '../common';
 
 export const updateRow = createAction({
@@ -50,8 +50,8 @@ export const updateRow = createAction({
 		}
 
 		try {
-			const result = await updateRowInSmartsheet(context.auth as string, sheet_id as string, [
-				[rowObj],
+			const result = await updateRowInSmartsheet(context.auth.secret_text, sheet_id as string, [
+				rowObj,
 			]);
 
 			return {

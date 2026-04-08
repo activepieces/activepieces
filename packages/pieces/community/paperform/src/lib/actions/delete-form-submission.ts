@@ -23,7 +23,7 @@ export const deleteFormSubmission = createAction({
       await paperformCommon.apiCall({
         method: HttpMethod.DELETE,
         url: `/submissions/${submissionId}`,
-        auth: auth as string,
+        auth: auth.secret_text,
       });
 
       return {

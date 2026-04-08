@@ -28,6 +28,7 @@ export const updateRecord = createAction({
   props: {
     elementType: elementTypeProperty,
     id: Property.Dropdown({
+      auth: vtigerAuth,
       displayName: 'Id',
       description: "The record's id",
       required: true,
@@ -46,9 +47,9 @@ export const updateRecord = createAction({
         let instance = null;
         while (!instance && c < 3) {
           instance = await instanceLogin(
-            (auth as VTigerAuthValue).instance_url,
-            (auth as VTigerAuthValue).username,
-            (auth as VTigerAuthValue).password
+            auth.props.instance_url,
+            auth.props.username,
+            auth.props.password
           );
           await sleep(1500);
           c++;
@@ -67,7 +68,7 @@ export const updateRecord = createAction({
           result: Record<string, string>[];
         }>({
           method: HttpMethod.GET,
-          url: `${(auth as VTigerAuthValue)['instance_url']}/webservice.php`,
+          url: `${auth.props.instance_url}/webservice.php`,
           queryParams: {
             sessionName: instance.sessionId ?? instance.sessionName,
             operation: 'query',
@@ -97,6 +98,7 @@ export const updateRecord = createAction({
       },
     }),
     record: Property.DynamicProperties({
+      auth: vtigerAuth,
       displayName: 'Record Fields',
       description: 'Add new fields to be created in the new record',
       required: true,
@@ -107,9 +109,9 @@ export const updateRecord = createAction({
         }
 
         const instance = await instanceLogin(
-          auth['instance_url'],
-          auth['username'],
-          auth['password']
+          auth.props.instance_url,
+          auth.props.username,
+          auth.props.password
         );
         if (!instance) return {};
 
@@ -120,7 +122,7 @@ export const updateRecord = createAction({
             result: Record<string, unknown>;
           }>({
             method: HttpMethod.GET,
-            url: `${auth['instance_url']}/webservice.php`,
+            url: `${auth.props.instance_url}/webservice.php`,
             queryParams: {
               operation: 'retrieve',
               sessionName: instance.sessionId ?? instance.sessionName,
@@ -142,7 +144,7 @@ export const updateRecord = createAction({
           result: { fields: Field[] };
         }>({
           method: HttpMethod.GET,
-          url: `${auth['instance_url']}/webservice.php`,
+          url: `${auth.props.instance_url}/webservice.php`,
           queryParams: {
             sessionName: instance.sessionId ?? instance.sessionName,
             operation: 'describe',
@@ -194,12 +196,12 @@ export const updateRecord = createAction({
                 };
               } else if (field.type.name === 'owner') {
                 options = await getRecordReference(
-                  auth as PiecePropValueSchema<typeof vtigerAuth>,
+                  auth,
                   ['Users']
                 );
               } else if (field.type.refersTo) {
                 options = await getRecordReference(
-                  auth as PiecePropValueSchema<typeof vtigerAuth>,
+                   auth,
                   field.type.refersTo ?? []
                 );
               } else {
@@ -273,15 +275,15 @@ export const updateRecord = createAction({
   },
   async run({ propsValue: { elementType, id, record }, auth }) {
     const instance = await instanceLogin(
-      auth.instance_url,
-      auth.username,
-      auth.password
+      auth.props.instance_url,
+      auth.props.username,
+      auth.props.password
     );
 
     if (instance !== null) {
       const response = await httpClient.sendRequest<Record<string, unknown>[]>({
         method: HttpMethod.POST,
-        url: `${auth.instance_url}/webservice.php`,
+        url: `${auth.props.instance_url}/webservice.php`,
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
         },

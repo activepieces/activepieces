@@ -6,11 +6,11 @@ import {
 import {
   createTrigger,
   TriggerStrategy,
-  OAuth2PropertyValue,
+  AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
-import { getPages } from '../common';
-import { notionAuth } from '../..';
+import { getPages, NotionAuthValue } from '../common';
+import { notionAuth } from '../auth';
 
 export const updatedPage = createTrigger({
   auth: notionAuth,
@@ -104,7 +104,10 @@ export const updatedPage = createTrigger({
   },
 });
 
-const polling: Polling<OAuth2PropertyValue, Record<string, never>> = {
+const polling: Polling<
+  AppConnectionValueForAuthProperty<typeof notionAuth>,
+  Record<string, never>
+> = {
   strategy: DedupeStrategy.LAST_ITEM,
   items: async ({ auth, lastItemId }) => {
     const lastItem = lastItemId as string;
@@ -127,7 +130,7 @@ const polling: Polling<OAuth2PropertyValue, Record<string, never>> = {
 };
 
 const getUpdatedPages = async (
-  authentication: OAuth2PropertyValue,
+  authentication: NotionAuthValue,
   startDate?: Date
 ) => {
   const searchOptions = startDate ? { editedAfter: startDate } : undefined;

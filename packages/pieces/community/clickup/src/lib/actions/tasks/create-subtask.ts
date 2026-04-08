@@ -11,7 +11,7 @@ import {
   callClickUpApi,
   listAccessibleCustomFields,
 } from '../../common';
-import { clickupAuth } from '../../../';
+import { clickupAuth } from '../../auth';
 
 export const createClickupSubtask = createAction({
   auth: clickupAuth,
@@ -84,6 +84,7 @@ export const createClickupSubtask = createAction({
       variant: MarkdownVariant.INFO,
     }),
     custom_fields: Property.DynamicProperties({
+      auth: clickupAuth,
       displayName: 'Custom Fields',
       required: true,
       refreshers: ['list_id', 'auth'],

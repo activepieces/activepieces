@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { netsuiteAuth } from '../..';
-import { createOAuthHeader } from '../oauth';
+import { NetSuiteClient } from '../common/client';
 
 export const getVendor = createAction({
   name: 'getVendor',
@@ -16,32 +16,12 @@ export const getVendor = createAction({
     }),
   },
   async run(context) {
-    const { accountId, consumerKey, consumerSecret, tokenId, tokenSecret } = context.auth;
+    const client = new NetSuiteClient(context.auth.props);
     const { vendorId } = context.propsValue;
 
-    const baseUrl = `https://${accountId}.suitetalk.api.netsuite.com/services/rest/record/v1/vendor/${vendorId}`;
-    const httpMethod = HttpMethod.GET;
-
-    const authHeader = createOAuthHeader(
-      accountId,
-      consumerKey,
-      consumerSecret,
-      tokenId,
-      tokenSecret,
-      baseUrl,
-      httpMethod
-    );
-
-    const response = await httpClient.sendRequest({
-      method: httpMethod,
-      url: baseUrl,
-      headers: {
-        Authorization: authHeader,
-        'prefer': 'transient',
-        'Cookie': 'NS_ROUTING_VERSION=LAGGING',
-      },
+    return client.makeRequest({
+      method: HttpMethod.GET,
+      url: `${client.baseUrl}/services/rest/record/v1/vendor/${vendorId}`,
     });
-
-    return response.body;
   },
 });

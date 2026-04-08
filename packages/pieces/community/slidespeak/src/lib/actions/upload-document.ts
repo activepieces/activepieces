@@ -1,4 +1,4 @@
-import { slidespeakAuth } from '../../index';
+import { slidespeakAuth } from '../auth';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import FormData from 'form-data';
@@ -27,7 +27,7 @@ export const uploadDocumentAction = createAction({
       method: HttpMethod.POST,
       url: BASE_URL + '/document/upload',
       headers: {
-        'X-API-key': apiKey,
+        'X-API-key': apiKey.secret_text,
         ...formData.getHeaders(),
       },
       body:formData
@@ -49,7 +49,7 @@ export const uploadDocumentAction = createAction({
         method:HttpMethod.GET,
         url:BASE_URL + `/task_status/${taskId}`,
         headers: {
-        'X-API-key': apiKey,
+        'X-API-key': apiKey.secret_text,
         }
       })
 

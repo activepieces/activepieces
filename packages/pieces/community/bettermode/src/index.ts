@@ -6,6 +6,7 @@ import { createDiscussionAction } from './lib/actions/create-discussion';
 import { createQuestionAction } from './lib/actions/create-question';
 import { revokeBadgeAction } from './lib/actions/revoke-badge';
 import { bettermodeAuth } from './lib/auth';
+import { getAuthToken } from './lib/api';
 
 export const bettermode = createPiece({
   displayName: 'Bettermode',
@@ -21,10 +22,10 @@ export const bettermode = createPiece({
     assignBadgeAction,
     revokeBadgeAction,
     createCustomApiCallAction({
-      baseUrl: (auth) => (auth as { region: string }).region, // replace with the actual base URL
+      baseUrl: (auth) => auth ? auth.props.region : '', // replace with the actual base URL
       auth: bettermodeAuth,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${(await getAuthToken(auth.props)).token}`,
       }),
     }),
   ],

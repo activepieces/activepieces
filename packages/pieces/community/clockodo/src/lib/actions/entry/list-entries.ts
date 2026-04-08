@@ -1,7 +1,7 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { makeClient, reformatDateTime } from '../../common';
 import { BillableType, EntryListFilter } from '../../common/models/entry';
-import { clockodoAuth } from '../../../';
+import { clockodoAuth } from '../../auth';
 
 function calculateBillable(
   billable?: boolean,
@@ -74,7 +74,7 @@ export default createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const client = makeClient(auth);
+    const client = makeClient(auth.props);
     const filter: EntryListFilter = {
       users_id: propsValue.user_id_filter,
       customers_id: propsValue.customer_id_filter,

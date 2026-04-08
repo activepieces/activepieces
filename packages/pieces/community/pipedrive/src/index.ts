@@ -42,22 +42,9 @@ import { findOrganizationAction } from './lib/actions/find-organization';
 import { findPersonAction } from './lib/actions/find-person';
 import { findDealAction } from './lib/actions/find-deal';
 import { findActivityAction } from './lib/actions/find-activity';
-
-export const pipedriveAuth = PieceAuth.OAuth2({
-	description: '',
-	authUrl: 'https://oauth.pipedrive.com/oauth/authorize',
-	tokenUrl: 'https://oauth.pipedrive.com/oauth/token',
-	required: true,
-	scope: [
-		'admin',
-		'contacts:full',
-		'users:read',
-		'deals:full',
-		'activities:full',
-		'leads:full',
-		'products:full',
-	],
-});
+import { updateProductAction } from './lib/actions/update-product';
+import { findLeadAction } from './lib/actions/find-leads';
+import { pipedriveAuth } from './lib/auth';
 
 export const pipedrive = createPiece({
 	displayName: 'Pipedrive',
@@ -85,6 +72,7 @@ export const pipedrive = createPiece({
 		createPersonAction,
 		updatePersonAction,
 		createProductAction,
+		updateProductAction,
 		findDealsAssociatedWithPersonAction,
 		findProductAction,
 		findProductsAction,
@@ -95,6 +83,7 @@ export const pipedrive = createPiece({
 		findDealAction,
 		findActivityAction,
 		findUserAction,
+		findLeadAction,
 		createCustomApiCallAction({
 			baseUrl: () => 'https://api.pipedrive.com/api/v2',
 			auth: pipedriveAuth,
@@ -103,7 +92,7 @@ export const pipedrive = createPiece({
 			}),
 		}),
 	],
-	authors: ['ashrafsamhouri', 'kishanprmr', 'MoShizzle', 'khaledmashaly', 'abuaboud'],
+	authors: ['ashrafsamhouri', 'kishanprmr', 'MoShizzle', 'khaledmashaly', 'abuaboud', 'leocottaz', 'Anmol-Gup'],
 	triggers: [
 		newPerson,
 		newDeal,

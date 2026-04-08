@@ -6,6 +6,7 @@
   "Before v0.90.0": "Antes da versão 0.90.0",
   "v0.90.0 to v0.199.0": "v0.90.0 a v0.199.0",
   "v0.200.0 Onwards": "v0.200,0 Avançados",
+  "v0.260.0 Onwards": "v0.260.0 Avançados",
   "\n  1. Log in to your NocoDB Account.\n  2. Click on your profile-pic(bottom-left) and navigate to **Account Settings->Tokens**.\n  3. Create new token with any name and copy API Token.\n  4. Your Base URL is where your app is hosted.": "\n  1. Entre na sua conta do NocoDB.\n  2. Clique no seu perfil-pic(parte inferior-esquerda) e navegue para **Configurações da conta->Tokens**.\n  3. Crie um novo token com qualquer nome e copie API Token.\n  4. Sua URL Base é onde o seu aplicativo está hospedado.",
   "Create a Record": "Criar um Registro",
   "Delete a Record": "Apagar um registro",

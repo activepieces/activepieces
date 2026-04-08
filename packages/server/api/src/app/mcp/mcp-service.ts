@@ -1,255 +1,302 @@
-import {
-    ActivepiecesError,
-    apId,
-    ApId,
-    assertNotNullOrUndefined,
-    Cursor,
-    ErrorCode,
-    isNil,
-    McpTool,
-    mcpToolNaming,
-    McpToolRequest,
-    McpToolType,
-    McpWithTools,
-    SeekPage, spreadIfDefined,
-} from '@activepieces/shared'
-import dayjs from 'dayjs'
+import { ActivepiecesError, ApEdition, apId, ErrorCode, FlowStatus, FlowTriggerType, FlowVersionState, isNil, MCP_TRIGGER_PIECE_NAME, McpProperty, McpPropertyType, McpServer as McpServerSchema, McpServerStatus, McpToolDefinition, mcpToolNameUtils, McpTrigger, Permission, PopulatedFlow, PopulatedMcpServer, spreadIfNotUndefined, TelemetryEventName } from '@activepieces/shared'
+import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { FastifyBaseLogger } from 'fastify'
-import { ILike, IsNull } from 'typeorm'
+import { z } from 'zod'
 import { repoFactory } from '../core/db/repo-factory'
+import { getPrincipalRoleOrThrow } from '../ee/authentication/project-role/rbac-middleware'
 import { flowService } from '../flows/flow/flow.service'
-import { flowVersionService } from '../flows/flow-version/flow-version.service'
-import { buildPaginator } from '../helper/pagination/build-paginator'
-import { paginationHelper } from '../helper/pagination/pagination-utils'
-import { McpEntity } from './mcp-server/mcp-entity'
-import { McpToolEntity } from './tool/mcp-tool.entity'
+import { rejectedPromiseHandler } from '../helper/promise-handler'
+import { system } from '../helper/system/system'
+import { telemetry } from '../helper/telemetry.utils'
+import { WebhookFlowVersionToRun, webhookService } from '../webhooks/webhook.service'
+import { McpServerEntity } from './mcp-entity'
+import { activepiecesTools, ALL_CONTROLLABLE_TOOL_NAMES, LOCKED_TOOL_NAMES } from './tools'
 
-export const mcpRepo = repoFactory(McpEntity)
-const mcpToolRepo = repoFactory(McpToolEntity)
+const EDITION_REQUIRES_RBAC = [ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(system.getEdition())
 
-export const mcpService = (_log: FastifyBaseLogger) => ({
-    async create({ projectId, name, externalId }: CreateParams): Promise<McpWithTools> {
-        const mcp = await mcpRepo().save({
-            id: apId(),
-            externalId: externalId ?? apId(),
-            projectId,
-            name,
-            token: apId(),
-            created: dayjs().toISOString(),
-            updated: dayjs().toISOString(),
-        })
-        return this.getOrThrow({ mcpId: mcp.id, projectId })
-    },
+export const mcpServerRepository = repoFactory(McpServerEntity)
 
-    async getMcpTool(toolId: ApId): Promise<McpTool> {
-        return mcpToolRepo().findOneOrFail({ where: { id: toolId } })
-    },
-
-    async deleteFlowTool({ flowId }: DeleteFlowToolsParams): Promise<void> {
-        await mcpToolRepo().delete({ flowId })
-    },
-
-    async list({ projectId, cursorRequest, limit, name }: ListParams): Promise<SeekPage<McpWithTools>> {
-        const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
-        const paginator = buildPaginator({
-            entity: McpEntity,
-            query: {
-                limit,
-                afterCursor: decodedCursor.nextCursor,
-                beforeCursor: decodedCursor.previousCursor,
-            },
-        })
-
-        const queryWhere: Record<string, unknown> = { projectId, agentId: IsNull() }
-        if (!isNil(name)) {
-            queryWhere.name = ILike(`%${name}%`)
-        }
-
-
-        const { data, cursor } = await paginator.paginate(mcpRepo().createQueryBuilder('mcp').where(queryWhere))
-        const populatedMcps = await Promise.all(data.map(async (mcp) => this.getOrThrow({ mcpId: mcp.id, projectId })))
-        return paginationHelper.createPage(populatedMcps, cursor)
-    },
-
-    async getOrThrow({ mcpId, projectId }: GetOrThrowParams): Promise<McpWithTools> {
-        const mcp = await mcpRepo().findOne({
-            where: { id: mcpId, projectId },
-            relations: { tools: true },
-            order: { tools: { created: 'DESC' } },
-        })
-
-        if (isNil(mcp)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.ENTITY_NOT_FOUND,
-                params: { entityId: mcpId, entityType: 'MCP' },
-            })
-        }
-
-        const enrichedTools = await Promise.all(mcp.tools.map((tool) => enrichTool(tool, mcp.projectId, _log))).then(tools => tools.filter(tool => tool !== null))
-        return {
-            ...mcp,
-            tools: enrichedTools,
-        }
-    },
-
-    async getByToken({ token }: { token: string }): Promise<McpWithTools> {
-        const mcp = await mcpRepo().findOne({ where: { token } })
-        if (isNil(mcp)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.ENTITY_NOT_FOUND,
-                params: { entityId: token, entityType: 'MCP' },
-            })
-        }
-        return this.getOrThrow({ mcpId: mcp.id, projectId: mcp.projectId })
-    },
-
-    async getOneByExternalIdOrThrow({ externalId, projectId }: { externalId: string, projectId: ApId }): Promise<McpWithTools> {
-        const mcp = await mcpRepo().findOne({ where: { externalId, projectId } })
-        if (isNil(mcp)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.ENTITY_NOT_FOUND,
-                params: { entityType: 'MCP' },
-            })
-        }
-        return this.getOrThrow({ mcpId: mcp.id, projectId })
-    },
-
-    async update({ mcpId, token, name, tools, agentId }: UpdateParams): Promise<McpWithTools> {
-        const enrichedTools = !isNil(tools) ? await Promise.all(tools.map(async (tool) => {
-            const existingTool = await findToolId(mcpId, tool)
+export const mcpServerService = (log: FastifyBaseLogger) => {
+    return {
+        getPopulatedByProjectId: async (projectId: string): Promise<PopulatedMcpServer> => {
+            const mcp = await mcpServerService(log).getByProjectId(projectId)
+            const flows = await listFlows(mcp, log)
             return {
-                ...tool,
-                id: existingTool?.id || apId(),
-                externalId: existingTool?.externalId || apId(),
-                mcpId,
-                created: existingTool ? undefined : dayjs().toISOString(),
-                updated: dayjs().toISOString(),
+                ...mcp,
+                flows,
             }
-        })) : undefined
-
-        const mcp = await mcpRepo().findOneOrFail({ where: { id: mcpId } })
-
-        await mcpRepo().save({
-            ...mcp,
-            ...spreadIfDefined('token', token),
-            ...spreadIfDefined('name', name),
-            ...spreadIfDefined('tools', enrichedTools),
-            ...spreadIfDefined('agentId', agentId),
-            updated: dayjs().toISOString(),
-        })
-        return this.getOrThrow({ mcpId, projectId: mcp.projectId })
-    },
-
-    async delete({ mcpId, projectId }: { mcpId: ApId, projectId: ApId }): Promise<void> {
-        const deleteResult = await mcpRepo().delete({
-            id: mcpId,
-            projectId,
-        })
-
-        if (deleteResult.affected === 0) {
-            throw new ActivepiecesError({
-                code: ErrorCode.ENTITY_NOT_FOUND,
-                params: { entityId: mcpId, entityType: 'MCP' },
+        },
+        getByProjectId: async (projectId: string): Promise<McpServerSchema> => {
+            const mcpServer = await mcpServerRepository().findOneBy({ projectId })
+            if (isNil(mcpServer)) {
+                await mcpServerRepository().upsert({
+                    id: apId(),
+                    status: McpServerStatus.DISABLED,
+                    projectId,
+                    token: apId(72),
+                    enabledTools: ALL_CONTROLLABLE_TOOL_NAMES,
+                }, ['projectId'])
+                return mcpServerRepository().findOneByOrFail({ projectId })
+            }
+            return mcpServer
+        },
+        rotateToken: async ({ projectId }: RotateTokenRequest): Promise<PopulatedMcpServer> => {
+            const mcp = await mcpServerService(log).getByProjectId(projectId)
+            await mcpServerRepository().update(mcp.id, {
+                token: apId(72),
             })
-        }
-    },
-
-    async count({ projectId }: CountParams): Promise<number> {
-        return mcpRepo().count({
-            where: { projectId },
-        })
-    },
-
-})
-
-async function enrichTool(tool: McpTool, projectId: ApId, _log: FastifyBaseLogger): Promise<EnrichedToolResult | null> {
-    switch (tool.type) {
-        case McpToolType.PIECE: {
-            const toolName = mcpToolNaming.fixTool(tool.pieceMetadata?.actionName, tool.id, tool.type)
-            return {
-                ...tool,
-                pieceMetadata: tool.pieceMetadata,
-                toolName,
+            return mcpServerService(log).getPopulatedByProjectId(projectId)
+        },
+        update: async ({ projectId, status, enabledTools }: UpdateParams) => {
+            const mcp = await mcpServerService(log).getByProjectId(projectId)
+            const patch = {
+                ...spreadIfNotUndefined('status', status),
+                ...spreadIfNotUndefined('enabledTools', enabledTools),
             }
-        }
-        case McpToolType.FLOW: {
-            assertNotNullOrUndefined(tool.flowId, 'flowId is required')
-            const flow = await flowService(_log).getOneOrThrow({
-                id: tool.flowId,
-                projectId,
+            if (Object.keys(patch).length > 0) {
+                await mcpServerRepository().update(mcp.id, patch)
+            }
+            return mcpServerService(log).getPopulatedByProjectId(projectId)
+        },
+        buildServer: async ({ mcp, userId }: BuildServerRequest): Promise<McpServer> => {
+            const permissionChecker = await resolvePermissionChecker({ userId, projectId: mcp.projectId, log })
+
+            const server = new McpServer({
+                name: 'Activepieces',
+                title: 'Activepieces',
+                version: '1.0.0',
+                websiteUrl: 'https://activepieces.com',
+                description: 'Automation and workflow MCP server by Activepieces',
+                icons: [
+                    {
+                        src: 'https://cdn.activepieces.com/brand/logo.svg',
+                        mimeType: 'image/svg+xml',
+                    },
+                    {
+                        src: 'https://cdn.activepieces.com/brand/logo-192.png',
+                        mimeType: 'image/png',
+                        sizes: ['192x192'],
+                    },
+                ],
+            })
+            const enabledFlows = mcp.flows.filter((flow) => flow.status === FlowStatus.ENABLED)
+            for (const flow of enabledFlows) {
+                const mcpTrigger = flow.version.trigger.settings as McpTrigger
+                const mcpInputs = mcpTrigger.input?.inputSchema ?? []
+                const zodFromInputSchema = Object.fromEntries(mcpInputs.map((property) => [property.name, mcpPropertyToZod(property)]))
+
+                const baseName = (mcpTrigger.input?.toolName ?? flow.version.displayName) + '_' + flow.id.substring(0, 4)
+                const toolName = mcpToolNameUtils.createToolName(baseName)
+                const toolDescription: string = mcpTrigger.input?.toolDescription ?? ''
+
+                const flowPermissionError = permissionChecker.check(Permission.WRITE_RUN, toolName)
+                server.tool(toolName, toolDescription, zodFromInputSchema, { title: toolName }, async (args) => {
+                    if (flowPermissionError) {
+                        return flowPermissionError
+                    }
+
+                    const returnsResponse = mcpTrigger.input?.returnsResponse
+                    const response = await webhookService.handleWebhook({
+                        data: () => {
+                            return Promise.resolve({
+                                body: {},
+                                method: 'POST',
+                                headers: {},
+                                queryParams: {},
+                            })
+                        },
+                        logger: log,
+                        flowId: flow.id,
+                        async: !returnsResponse,
+                        flowVersionToRun: WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST,
+                        saveSampleData: false,
+                        payload: args,
+                        execute: true,
+                        failParentOnFailure: false,
+                    })
+                    const isOkay = Math.floor(response.status / 100) === 2
+
+                    rejectedPromiseHandler(telemetry(log).trackProject(mcp.projectId, {
+                        name: TelemetryEventName.MCP_TOOL_CALLED,
+                        payload: {
+                            mcpId: mcp.projectId,
+                            toolName,
+                        },
+                    }), log)
+                    
+                    if (isOkay) {
+                        return {
+                            content: [{
+                                type: 'text',
+                                text: `✅ Successfully executed flow ${flow.version.displayName}\n\n` +
+                                    `Output:\n\`\`\`json\n${JSON.stringify(response, null, 2)}\n\`\`\``,
+                            }],
+                        }
+                    }
+                    return {
+                        content: [
+                            {
+                                type: 'text',
+                                text: `❌ Error executing flow ${flow.version.displayName}\n\n` +
+                                    `Error details:\n\`\`\`json\n${JSON.stringify(response, null, 2) || 'Unknown error occurred'}\n\`\`\``,
+                            },
+                        ],
+                    }
+                })
+            }
+            
+            const allTools = activepiecesTools(mcp, log)
+            const enabledControllable = new Set(mcp.enabledTools ?? ALL_CONTROLLABLE_TOOL_NAMES)
+            const tools = allTools.filter(t => LOCKED_TOOL_NAMES.includes(t.title) || enabledControllable.has(t.title))
+            tools.forEach((tool) => {
+                const execute = permissionChecker.wrapExecute({ execute: tool.execute, permission: tool.permission, toolTitle: tool.title })
+                server.registerTool(tool.title, { title: tool.title, description: tool.description, inputSchema: tool.inputSchema, annotations: tool.annotations }, (args: Record<string, unknown>) => execute(args))
             })
 
-            if (flow.publishedVersionId === null) {
-                return null
-            }
-
-            const publishedVersion = await flowVersionService(_log).getFlowVersionOrThrow({
-                flowId: flow.id,
-                versionId: flow.publishedVersionId,
-            })
-            return {
-                ...tool,
-                flow: {
-                    ...flow,
-                    version: publishedVersion,
-                },
-                toolName: mcpToolNaming.fixTool(publishedVersion.displayName, tool.id, tool.type),
-            }
-        }
+            registerEmptyResourcesAndPrompts(server)
+            return server
+        },
     }
 }
 
-async function findToolId(mcpId: ApId, tool: McpToolRequest): Promise<{ id: ApId, externalId: ApId } | undefined> {
-    switch (tool.type) {
-        case McpToolType.PIECE: {
-            const result = await mcpToolRepo()
-                .createQueryBuilder('mcp_tool')
-                .where('mcp_tool.mcpId = :mcpId', { mcpId })
-                .andWhere('mcp_tool.type = :type', { type: tool.type })
-                .andWhere('mcp_tool."pieceMetadata"->>\'actionName\' = :actionName', { actionName: tool.pieceMetadata?.actionName })
-                .getOne()
-            return result ? { id: result.id, externalId: result.externalId } : undefined
+
+export async function resolvePermissionChecker({ userId, projectId, log }: { userId: string | undefined, projectId: string, log: FastifyBaseLogger }): Promise<PermissionChecker> {
+    const allowAll: PermissionChecker = {
+        check: () => null,
+        wrapExecute: ({ execute }) => execute,
+    }
+    if (isNil(userId) || !EDITION_REQUIRES_RBAC) {
+        return allowAll
+    }
+
+    let userPermissions: string[]
+    try {
+        const role = await getPrincipalRoleOrThrow(userId, projectId, log)
+        userPermissions = role.permissions ?? []
+    }
+    catch (err) {
+        if (err instanceof ActivepiecesError && err.error.code === ErrorCode.AUTHORIZATION) {
+            return buildChecker((permission, toolTitle) => {
+                if (isNil(permission)) {
+                    return null
+                }
+                return noRoleError(toolTitle)
+            })
         }
-        case McpToolType.FLOW: {
-            return mcpToolRepo().findOne({ where: { mcpId, type: tool.type, flowId: tool.flowId } }).then(tool => tool ? { id: tool.id, externalId: tool.externalId } : undefined)
+        throw err
+    }
+
+    const permissionSet = new Set(userPermissions)
+    return buildChecker((permission, toolTitle) => {
+        if (isNil(permission) || permissionSet.has(permission)) {
+            return null
         }
+        return missingPermissionError(permission, toolTitle)
+    })
+}
+
+async function listFlows(mcp: McpServerSchema, logger: FastifyBaseLogger): Promise<PopulatedFlow[]> {
+    const flows = await flowService(logger).list({
+        projectIds: [mcp.projectId],
+        limit: 1000000,
+        cursorRequest: null,
+        versionState: FlowVersionState.DRAFT,
+        includeTriggerSource: false,
+    })
+    return flows.data.filter((flow) => flow.version.trigger.type === FlowTriggerType.PIECE && flow.version.trigger.settings.pieceName === MCP_TRIGGER_PIECE_NAME)
+}
+
+function mcpPropertyToZod(property: McpProperty): z.ZodTypeAny {
+    let schema: z.ZodTypeAny
+
+    switch (property.type) {
+        case McpPropertyType.TEXT:
+        case McpPropertyType.DATE:
+            schema = z.string()
+            break
+        case McpPropertyType.NUMBER:
+            schema = z.number()
+            break
+        case McpPropertyType.BOOLEAN:
+            schema = z.boolean()
+            break
+        case McpPropertyType.ARRAY:
+            schema = z.array(z.string())
+            break
+        case McpPropertyType.OBJECT:
+            schema = z.record(z.string(), z.string())
+            break
+        default:
+            schema = z.unknown()
+    }
+
+    if (property.description) {
+        schema = schema.describe(property.description)
+    }
+
+    return property.required ? schema : schema.nullish()
+}
+
+function registerEmptyResourcesAndPrompts(server: McpServer): void {
+    server.registerResource(
+        '_',
+        new ResourceTemplate('activepieces://empty', {
+            list: async () => ({ resources: [] }),
+        }),
+        {},
+        async () => ({ contents: [] }),
+    )
+    server.registerPrompt('_', {}, () => ({ messages: [] }))
+}
+
+function buildChecker(check: PermissionChecker['check']): PermissionChecker {
+    return {
+        check,
+        wrapExecute: ({ execute, permission, toolTitle }) => {
+            const error = check(permission, toolTitle)
+            if (isNil(error)) {
+                return execute
+            }
+            return async () => error
+        },
     }
 }
 
-type CreateParams = {
-    projectId: ApId
-    name: string
-    externalId?: string
+function noRoleError(toolTitle: string): McpToolErrorResult {
+    return {
+        content: [{ type: 'text' as const, text: `❌ Permission denied: no role found for this user in the project. Cannot execute "${toolTitle}".` }],
+        isError: true,
+    }
 }
 
-type ListParams = {
-    projectId: ApId
-    cursorRequest: Cursor | null
-    limit: number
-    name: string | undefined
+function missingPermissionError(permission: Permission, toolTitle: string): McpToolErrorResult {
+    return {
+        content: [{ type: 'text' as const, text: `❌ Permission denied: your role does not have the "${permission}" permission required to use "${toolTitle}".` }],
+        isError: true,
+    }
+}
+
+type PermissionChecker = {
+    check: (permission: Permission | undefined, toolTitle: string) => McpToolErrorResult | null
+    wrapExecute: (params: { execute: McpToolDefinition['execute'], permission: Permission | undefined, toolTitle: string }) => McpToolDefinition['execute']
+}
+
+type McpToolErrorResult = {
+    content: Array<{ type: 'text', text: string }>
+    isError: boolean
+}
+
+type BuildServerRequest = {
+    mcp: PopulatedMcpServer
+    userId?: string
+}
+
+type RotateTokenRequest = {
+    projectId: string
 }
 
 type UpdateParams = {
-    mcpId: ApId
-    agentId?: ApId
-    token?: string
-    name?: string
-    tools?: McpToolRequest[]
-}
-
-type EnrichedToolResult = McpTool & {
-    toolName: string
-}
-
-type CountParams = {
-    projectId: ApId
-}
-
-type GetOrThrowParams = {
-    mcpId: ApId
-    projectId: ApId
-}
-
-type DeleteFlowToolsParams = {
-    flowId: ApId
+    status?: McpServerStatus
+    projectId: string
+    enabledTools?: string[]
 }

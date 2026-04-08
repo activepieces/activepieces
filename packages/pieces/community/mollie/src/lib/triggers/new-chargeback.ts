@@ -3,6 +3,7 @@ import {
   TriggerStrategy,
   PiecePropValueSchema,
   Property,
+  AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import {
@@ -11,7 +12,7 @@ import {
   pollingHelper,
 } from '@activepieces/pieces-common';
 import { mollieCommon } from '../common';
-import { mollieAuth } from '../../index';
+import { mollieAuth } from '../auth';
 import dayjs from 'dayjs';
 
 interface MollieChargebackResponse {
@@ -45,12 +46,12 @@ interface MollieChargebackResponse {
 }
 
 const polling: Polling<
-  PiecePropValueSchema<typeof mollieAuth>,
+  AppConnectionValueForAuthProperty<typeof mollieAuth>,
   { paymentId: string }
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, lastFetchEpochMS, propsValue }) => {
-    const apiKey = auth as string;
+    const apiKey = auth;
     const { paymentId } = propsValue;
     const isTest = lastFetchEpochMS === 0;
 
@@ -137,6 +138,7 @@ export const mollieNewChargeback = createTrigger({
 
   props: {
     paymentId: Property.Dropdown({
+  auth: mollieAuth,
       displayName: 'Payment ID',
       description: 'The payment to monitor for chargebacks',
       required: true,
@@ -151,7 +153,7 @@ export const mollieNewChargeback = createTrigger({
         }
 
         try {
-          const apiKey = auth as string;
+          const apiKey = auth;
           const response = await mollieCommon.makeRequest(
             apiKey,
             HttpMethod.GET,

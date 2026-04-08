@@ -1,37 +1,40 @@
 import fs from 'fs'
-import { AppSystemProp } from '@activepieces/server-shared'
-import { isNil } from '@activepieces/shared'
+import { assertNotNullOrUndefined, isNil } from '@activepieces/shared'
 import Redis, { RedisOptions } from 'ioredis'
-import { system } from '../../helper/system/system'
+import { RedisConnectionSettings } from './types'
 
 
-export async function createDefaultRedisConnection(): Promise<Redis> {
+export async function createDefaultRedisConnection(settings: RedisConnectionSettings): Promise<Redis> {
     const config: Partial<RedisOptions> = {
         maxRetriesPerRequest: null,
+        keepAlive: 5000,
     }
 
-    const url = system.get(AppSystemProp.REDIS_URL)
+    const url = settings.REDIS_URL
     if (isNil(url)) {
-        return createStandaloneRedisConnection(config)
+        return createStandaloneRedisConnection(settings, config)
     }
-    return createRedisConnectionUsingUrl(config)
+    return createRedisConnectionUsingUrl(settings, config)
 }
 
-function createRedisConnectionUsingUrl(config: Partial<RedisOptions>): Redis {
-    const url = system.getOrThrow(AppSystemProp.REDIS_URL)
+function createRedisConnectionUsingUrl(settings: RedisConnectionSettings, config: Partial<RedisOptions>): Redis {
+    const url = settings.REDIS_URL
+    assertNotNullOrUndefined(url, 'URL is required')
     const client = new Redis(url, config)
     return client
 }
 
-function createStandaloneRedisConnection(config: Partial<RedisOptions>): Redis {
-    const host = system.getOrThrow(AppSystemProp.REDIS_HOST)
-    const serializedPort = system.getOrThrow(AppSystemProp.REDIS_PORT)
-    const username = system.get(AppSystemProp.REDIS_USER)
-    const password = system.get(AppSystemProp.REDIS_PASSWORD)
+function createStandaloneRedisConnection(settings: RedisConnectionSettings, config: Partial<RedisOptions>): Redis {
+    const host = settings.REDIS_HOST
+    const serializedPort = settings.REDIS_PORT
+    assertNotNullOrUndefined(host, 'Host is required')
+    assertNotNullOrUndefined(serializedPort, 'Port is required')
+    const username = settings.REDIS_USER
+    const password = settings.REDIS_PASSWORD
     const port = Number.parseInt(serializedPort, 10)
-    const db = system.getNumber(AppSystemProp.REDIS_DB) ?? 0
-    const useSsl = system.getBoolean(AppSystemProp.REDIS_USE_SSL) ?? false
-    const sslCaFile = system.get(AppSystemProp.REDIS_SSL_CA_FILE)
+    const db = settings.REDIS_DB ?? 0
+    const useSsl = settings.REDIS_USE_SSL ?? false
+    const sslCaFile = settings.REDIS_SSL_CA_FILE
 
     const client = new Redis({
         ...config,
@@ -46,13 +49,6 @@ function createStandaloneRedisConnection(config: Partial<RedisOptions>): Redis {
         } : undefined,
     })
 
-    system.globalLogger().info('Created standalone Redis connection', {
-        host,
-        port,
-        db,
-        username: username ? '***' : undefined,
-        ssl: useSsl,
-    })
 
     return client
 }

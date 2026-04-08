@@ -1,6 +1,6 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { closeAuth } from '../../';
+import { closeAuth } from '../auth';
 import { CloseCRMContact } from '../common/types';
 import { customFields, leadId } from '../common/props';
 import { closeApiCall } from '../common/client';
@@ -93,7 +93,7 @@ export const createContact = createAction({
 		);
 
 		const payload: Partial<CloseCRMContact> = {
-			lead_id: lead_id,
+			lead_id: lead_id as string,
 			title: title,
 			name: name,
 			...transformedCustomFields,
@@ -120,7 +120,7 @@ export const createContact = createAction({
 
 		try {
 			const response = await closeApiCall({
-				accessToken: context.auth,
+				accessToken: context.auth.secret_text,
 				method: HttpMethod.POST,
 				resourceUri: '/contact/',
 				body: payload,

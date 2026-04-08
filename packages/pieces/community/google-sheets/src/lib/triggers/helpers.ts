@@ -1,21 +1,16 @@
 import { google } from 'googleapis';
-import { OAuth2Client } from 'googleapis-common';
-
-import { googleSheetsAuth } from '../..';
-import { PiecePropValueSchema } from '@activepieces/pieces-framework';
-
 import { nanoid } from 'nanoid';
 import dayjs from 'dayjs';
 import crypto from 'crypto';
-import { columnToLabel } from '../common/common';
+import { columnToLabel, createGoogleClient, GoogleSheetsAuthValue } from '../common/common';
+import { isNil } from '@activepieces/shared';
 
 export async function getWorkSheetName(
-	auth: PiecePropValueSchema<typeof googleSheetsAuth>,
+	auth: GoogleSheetsAuthValue,
 	spreadSheetId: string,
 	sheetId: number,
 ) {
-	const authClient = new OAuth2Client();
-	authClient.setCredentials(auth);
+	const authClient = await createGoogleClient(auth);
 
 	const sheets = google.sheets({ version: 'v4', auth: authClient });
 
@@ -31,12 +26,11 @@ export async function getWorkSheetName(
 }
 
 export async function getWorkSheetGridSize(
-	auth: PiecePropValueSchema<typeof googleSheetsAuth>,
+	auth: GoogleSheetsAuthValue,
 	spreadSheetId: string,
 	sheetId: number,
 ) {
-	const authClient = new OAuth2Client();
-	authClient.setCredentials(auth);
+	const authClient = await createGoogleClient(auth);
 
 	const sheets = google.sheets({ version: 'v4', auth: authClient });
 
@@ -51,12 +45,11 @@ export async function getWorkSheetGridSize(
 }
 
 export async function getWorkSheetValues(
-	auth: PiecePropValueSchema<typeof googleSheetsAuth>,
+	auth: GoogleSheetsAuthValue,
 	spreadsheetId: string,
 	range?: string,
 ) {
-	const authClient = new OAuth2Client();
-	authClient.setCredentials(auth);
+	const authClient = await createGoogleClient(auth);
 
 	const sheets = google.sheets({ version: 'v4', auth: authClient });
 
@@ -69,13 +62,12 @@ export async function getWorkSheetValues(
 }
 
 export async function createFileNotification(
-	auth: PiecePropValueSchema<typeof googleSheetsAuth>,
+	auth: GoogleSheetsAuthValue,
 	fileId: string,
 	url: string,
 	includeTeamDrives?: boolean,
 ) {
-	const authClient = new OAuth2Client();
-	authClient.setCredentials(auth);
+	const authClient = await createGoogleClient(auth);
 
 	const drive = google.drive({ version: 'v3', auth: authClient });
 
@@ -94,12 +86,11 @@ export async function createFileNotification(
 }
 
 export async function deleteFileNotification(
-	auth: PiecePropValueSchema<typeof googleSheetsAuth>,
+	auth: GoogleSheetsAuthValue,
 	channelId: string,
 	resourceId: string,
 ) {
-	const authClient = new OAuth2Client();
-	authClient.setCredentials(auth);
+	const authClient = await createGoogleClient(auth);
 
 	const drive = google.drive({ version: 'v3', auth: authClient });
 
@@ -128,13 +119,24 @@ export function hashObject(obj: Record<string, unknown>): string {
 	hash.update(JSON.stringify(obj));
 	return hash.digest('hex');
 }
-
-export function transformWorkSheetValues(rowValues: any[][], oldRowCount: number,headerCount: number) {
+// returns an array of row number and cells values mapped to column labels
+export function mapRowsToColumnLabels(rowValues: any[][], oldRowCount: number, headerCount: number) {
 	const result = [];
 	for (let i = 0; i < rowValues.length; i++) {
-		const values: any = {};
-		for (let j = 0; j < Math.max(headerCount,rowValues[i].length) ; j++) {
-			values[columnToLabel(j)] = rowValues[i][j] ?? "";
+		const values: Record<string, string> = {};
+		for (let j = 0; j < Math.max(headerCount, rowValues[i].length); j++) {
+			const columnLabel = columnToLabel(j);
+			if (isNil(rowValues[i][j])) {
+				values[columnLabel] = "";
+			} else if (typeof rowValues[i][j] === "string") {
+				values[columnLabel] = rowValues[i][j];
+			}
+			else if ('toString' in rowValues[i][j]) {
+				values[columnLabel] = rowValues[i][j].toString();
+			}
+			else {
+				values[columnLabel] = `${rowValues[i][j]}`;
+			}
 		}
 		result.push({
 			row: oldRowCount + i + 1,

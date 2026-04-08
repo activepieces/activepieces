@@ -39,7 +39,7 @@ export class AIProviderRedactorPostgres1748871900624 implements MigrationInterfa
                 }
 
                 if (apiKey === '') {
-                    log.error(`No API key found for AI provider ${provider.id}`)
+                    log.error({ providerId: provider.id }, '[AIProviderRedactorPostgres1748871900624#up] No API key found for AI provider')
                     continue
                 }
 
@@ -54,7 +54,10 @@ export class AIProviderRedactorPostgres1748871900624 implements MigrationInterfa
                 `, [encryptedNewConfig, provider.id])
             }
             catch (error) {
-                log.error(`Failed to transform config for provider ${provider.id}:`, error)
+                log.error({ 
+                    error,
+                    providerId: provider.id,
+                }, 'Failed to transform config for provider')
                 throw error
             }
         }
@@ -118,7 +121,10 @@ export class AIProviderRedactorPostgres1748871900624 implements MigrationInterfa
                 `, [encryptedOldConfig, provider.id])
             }
             catch (error) {
-                log.error(`Failed to reverse transform config for provider ${provider.id}:`, error)
+                log.error({ 
+                    error,
+                    providerId: provider.id,
+                }, 'Failed to reverse transform config for provider')
                 const fallbackConfig = encryptUtils.encryptObject({ defaultHeaders: {} })
                 await queryRunner.query(`
                     UPDATE "ai_provider" SET config = $1 WHERE id = $2

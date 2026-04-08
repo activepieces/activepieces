@@ -1,9 +1,10 @@
-import { ActivepiecesError, ErrorCode, isNil, PrincipalType, VerifyLicenseKeyRequestBody } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { Type } from '@sinclair/typebox'
+import { ActivepiecesError, ErrorCode, isNil, VerifyLicenseKeyRequestBody } from '@activepieces/shared'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import { z } from 'zod'
+import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { licenseKeysService } from './license-keys-service'
 
-export const licenseKeysController: FastifyPluginAsyncTypebox = async (app) => {
+export const licenseKeysController: FastifyPluginAsyncZod = async (app) => {
 
 
     app.get('/:licenseKey', GetLicenseKeyRequest, async (req) => {
@@ -32,10 +33,7 @@ export const licenseKeysController: FastifyPluginAsyncTypebox = async (app) => {
 }
 const VerifyLicenseKeyRequest = {
     config: {
-        allowedPrincipals: [
-            PrincipalType.UNKNOWN,
-            PrincipalType.USER,
-        ],
+        security: securityAccess.public(),
     },
     schema: {
         body: VerifyLicenseKeyRequestBody,
@@ -44,14 +42,11 @@ const VerifyLicenseKeyRequest = {
 
 const GetLicenseKeyRequest = {
     config: {
-        allowedPrincipals: [
-            PrincipalType.UNKNOWN,
-            PrincipalType.USER,
-        ],
+        security: securityAccess.public(),
     },
     schema: {
-        params: Type.Object({
-            licenseKey: Type.String(),
+        params: z.object({
+            licenseKey: z.string(),
         }),
     },
 }

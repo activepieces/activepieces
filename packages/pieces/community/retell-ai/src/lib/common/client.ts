@@ -5,14 +5,14 @@ import {
   HttpMessageBody,
   AuthenticationType
 } from '@activepieces/pieces-common';
-import { PiecePropValueSchema } from '@activepieces/pieces-framework';
+import { AppConnectionValueForAuthProperty, PiecePropValueSchema } from '@activepieces/pieces-framework';
 import { retellAiAuth } from './auth';
 
 export type RetellAiApiCallParams = {
   method: HttpMethod;
   url: string;
   body?: unknown;
-  auth: PiecePropValueSchema<typeof retellAiAuth>;
+  auth: AppConnectionValueForAuthProperty<typeof retellAiAuth>;
 };
 
 export async function retellAiApiCall<T extends HttpMessageBody>({
@@ -26,7 +26,7 @@ export async function retellAiApiCall<T extends HttpMessageBody>({
     url: `https://api.retellai.com${url}`,
     authentication: {
       type: AuthenticationType.BEARER_TOKEN,
-      token: auth.apiKey
+      token: auth.props.apiKey
     },
     headers: {
       'Content-Type': 'application/json',

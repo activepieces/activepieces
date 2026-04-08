@@ -1,9 +1,8 @@
 import {
-    CustomDomain,
-    CustomDomainStatus,
-    ListCustomDomainsRequest,
-} from '@activepieces/ee-shared'
-import { ActivepiecesError, ApEdition, apId, ErrorCode, isNil, SeekPage } from '@activepieces/shared'
+    ActivepiecesError,
+    ApEdition,
+    apId,
+    CustomDomain, CustomDomainStatus, ErrorCode, isNil, ListCustomDomainsRequest, SeekPage } from '@activepieces/shared'
 import { repoFactory } from '../../core/db/repo-factory'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
@@ -40,6 +39,7 @@ export const customDomainService = {
     }): Promise<CustomDomain | null> {
         return customDomainRepo().findOneBy({
             domain: request.domain,
+            status: CustomDomainStatus.ACTIVE,
         })
     },
     async getOneByPlatform(request: {

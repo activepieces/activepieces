@@ -50,7 +50,7 @@ export const newSale = createTrigger({
         const response = await systemeIoCommon.createWebhook({
             eventType: 'SALE_NEW',
             webhookUrl: context.webhookUrl,
-            auth: context.auth,
+            auth: context.auth.secret_text,
             secret: secret,
         });
         
@@ -62,7 +62,7 @@ export const newSale = createTrigger({
         if (webhookId) {
             await systemeIoCommon.deleteWebhook({
                 webhookId,
-                auth: context.auth,
+                auth: context.auth.secret_text,
             });
             await context.store.put('new_sale_webhook_id', null);
             await context.store.put('new_sale_webhook_secret', null);

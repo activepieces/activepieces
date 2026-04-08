@@ -1,5 +1,6 @@
 import { Property } from '@activepieces/pieces-framework';
 import { clickfunnelsApiService } from './requests';
+import { clickfunnelsAuth } from './constants';
 
 export const teamsDropdown = (refreshers: string[]) =>
   Property.Dropdown({
@@ -7,7 +8,8 @@ export const teamsDropdown = (refreshers: string[]) =>
     description: 'Select the team',
     required: true,
     refreshers,
-    options: async ({ auth }: any) => {
+    auth: clickfunnelsAuth,
+    options: async ({ auth }) => {
       if (!auth) {
         return {
           disabled: true,
@@ -17,7 +19,7 @@ export const teamsDropdown = (refreshers: string[]) =>
       }
 
       try {
-        const response = await clickfunnelsApiService.fetchTeams(auth);
+        const response = await clickfunnelsApiService.fetchTeams(auth.props);
 
         return {
           options: response.map((team: any) => ({
@@ -38,11 +40,12 @@ export const teamsDropdown = (refreshers: string[]) =>
 
 export const coursesDropdown = (refreshers: string[]) =>
   Property.Dropdown({
+    auth: clickfunnelsAuth,
     displayName: 'Course',
     description: 'Select a course',
     required: true,
     refreshers,
-    options: async ({ auth, workspaceId }: any) => {
+    options: async ({ auth, workspaceId }) => {
       if (!auth) {
         return {
           disabled: true,
@@ -61,8 +64,8 @@ export const coursesDropdown = (refreshers: string[]) =>
 
       try {
         const courses = await clickfunnelsApiService.fetchCourses(
-          auth,
-          workspaceId
+          auth.props,
+          workspaceId as string
         );
 
         return {
@@ -87,11 +90,12 @@ export const teamMembershipsDropdown = (
   required = true
 ) =>
   Property.Dropdown({
+    auth: clickfunnelsAuth,
     displayName: 'Assignee',
     description: 'Select an assignee on your team',
     required,
     refreshers,
-    options: async ({ auth, teamId }: any) => {
+    options: async ({ auth, teamId }) => {
       if (!auth) {
         return {
           disabled: true,
@@ -109,7 +113,7 @@ export const teamMembershipsDropdown = (
       }
 
       try {
-        const response = await clickfunnelsApiService.fetchTeam(auth, teamId);
+        const response = await clickfunnelsApiService.fetchTeam(auth.props, teamId as string);
 
         return {
           options: [
@@ -142,11 +146,12 @@ export const teamMembershipsDropdown = (
 
 export const workspacesDropdown = (refreshers: string[]) =>
   Property.Dropdown({
+    auth: clickfunnelsAuth,
     displayName: 'Workspace',
     description: 'Select the workspace',
     required: true,
     refreshers,
-    options: async ({ auth, teamId }: any) => {
+    options: async ({ auth, teamId }) => {
       if (!auth) {
         return {
           disabled: true,
@@ -165,8 +170,8 @@ export const workspacesDropdown = (refreshers: string[]) =>
 
       try {
         const workspaces = await clickfunnelsApiService.fetchWorkspaces(
-          auth,
-          teamId
+          auth.props,
+          teamId as string
         );
 
         return {
@@ -188,11 +193,12 @@ export const workspacesDropdown = (refreshers: string[]) =>
 
 export const pipelinesDropdown = (refreshers: string[]) =>
   Property.Dropdown({
+    auth: clickfunnelsAuth,
     displayName: 'Pipeline',
     description: 'Select a pipeline',
     required: true,
     refreshers,
-    options: async ({ auth, workspaceId }: any) => {
+    options: async ({ auth, workspaceId }) => {
       if (!auth) {
         return {
           disabled: true,
@@ -211,8 +217,8 @@ export const pipelinesDropdown = (refreshers: string[]) =>
 
       try {
         const pipelines = await clickfunnelsApiService.fetchPipelines(
-          auth,
-          workspaceId
+          auth.props,
+          workspaceId as string
         );
 
         return {
@@ -234,11 +240,12 @@ export const pipelinesDropdown = (refreshers: string[]) =>
 
 export const pipelineStagesDropdown = (refreshers: string[]) =>
   Property.Dropdown({
+    auth: clickfunnelsAuth,
     displayName: 'Pipeline Stage',
     description: 'Select a pipeline stage.',
     required: true,
     refreshers,
-    options: async ({ auth, pipelineId }: any) => {
+    options: async ({ auth, pipelineId }) => {
       if (!auth) {
         return {
           disabled: true,
@@ -257,8 +264,8 @@ export const pipelineStagesDropdown = (refreshers: string[]) =>
 
       try {
         const pipelineStages = await clickfunnelsApiService.fetchPipelineStages(
-          auth,
-          pipelineId
+          auth.props,
+          pipelineId as string
         );
 
         return {
@@ -280,11 +287,12 @@ export const pipelineStagesDropdown = (refreshers: string[]) =>
 
 export const contactsDropdown = (refreshers: string[]) =>
   Property.Dropdown({
+    auth: clickfunnelsAuth,
     displayName: 'Contact',
     description: 'Select a contact',
     required: true,
     refreshers,
-    options: async ({ auth, workspaceId }: any) => {
+    options: async ({ auth, workspaceId }) => {
       if (!auth) {
         return {
           disabled: true,
@@ -303,8 +311,8 @@ export const contactsDropdown = (refreshers: string[]) =>
 
       try {
         const contacts = await clickfunnelsApiService.fetchContacts(
-          auth,
-          workspaceId
+          auth.props,
+          workspaceId as string
         );
 
         return {
@@ -336,11 +344,12 @@ export const contactsDropdown = (refreshers: string[]) =>
 
 export const tagsDropdown = (refreshers: string[]) =>
   Property.Dropdown({
+    auth: clickfunnelsAuth,
     displayName: 'Tag',
     description: 'Select a tag to apply',
     required: true,
     refreshers,
-    options: async ({ auth, workspaceId }: any) => {
+    options: async ({ auth, workspaceId }) => {
       if (!auth) {
         return {
           disabled: true,
@@ -358,7 +367,7 @@ export const tagsDropdown = (refreshers: string[]) =>
       }
 
       try {
-        const tags = await clickfunnelsApiService.fetchTags(auth, workspaceId);
+        const tags = await clickfunnelsApiService.fetchTags(auth.props, workspaceId as string);
 
         return {
           options: tags.map((tag: any) => ({
@@ -377,11 +386,12 @@ export const tagsDropdown = (refreshers: string[]) =>
   });
 export const multiTagsDropdown = (refreshers: string[]) =>
   Property.MultiSelectDropdown({
+    auth: clickfunnelsAuth,
     displayName: 'Tag',
     description: 'Select tags to apply',
     required: false,
     refreshers,
-    options: async ({ auth, workspaceId }: any) => {
+    options: async ({ auth, workspaceId }) => {
       if (!auth) {
         return {
           disabled: true,
@@ -399,7 +409,7 @@ export const multiTagsDropdown = (refreshers: string[]) =>
       }
 
       try {
-        const tags = await clickfunnelsApiService.fetchTags(auth, workspaceId);
+        const tags = await clickfunnelsApiService.fetchTags(auth.props, workspaceId as string);
 
         return {
           options: tags.map((tag: any) => ({
@@ -419,11 +429,12 @@ export const multiTagsDropdown = (refreshers: string[]) =>
 
 export const appliedTagsDropdown = (refreshers: string[]) =>
   Property.Dropdown({
+    auth: clickfunnelsAuth,
     displayName: 'Tag',
     description: 'Select a tag',
     required: true,
     refreshers,
-    options: async ({ auth, contactId }: any) => {
+      options: async ({ auth, contactId }) => {
       if (!auth) {
         return {
           disabled: true,
@@ -442,8 +453,8 @@ export const appliedTagsDropdown = (refreshers: string[]) =>
 
       try {
         const tags = await clickfunnelsApiService.fetchAppliedTags(
-          auth,
-          contactId
+          auth.props,
+          contactId as string
         );
 
         return {

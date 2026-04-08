@@ -1,19 +1,22 @@
-import { OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
+import { AppConnectionValueForAuthProperty, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
+import { getGraphBaseUrl } from '../common/microsoft-cloud';
 import { getNotebooksDropdown, getSectionsByNotebookDropdown } from '../common';
-import { oneNoteAuth } from '../../index';
+import { oneNoteAuth } from '../auth';
 import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
 import dayjs from 'dayjs';
 
-const polling: Polling<OAuth2PropertyValue, { notebook_id: string; section_id: string }> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof oneNoteAuth>, { notebook_id: string; section_id: string }> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	items: async ({ auth, propsValue, store, lastFetchEpochMS }) => {
 		const sectionId = propsValue.section_id;
+		const cloud = auth.props?.['cloud'] as string | undefined;
 		const client = Client.initWithMiddleware({
 			authProvider: {
 				getAccessToken: () => Promise.resolve(auth.access_token),
 			},
+			baseUrl: getGraphBaseUrl(cloud),
 		});
 
 		try {
@@ -60,7 +63,8 @@ export const newNoteInSectionTrigger = createTrigger({
 	description: 'Fires when a new note is created in a specified section.',
 	auth: oneNoteAuth,
 	props: {
-		notebook_id: Property.Dropdown({
+		notebook_id: Property.Dropdown({	
+			auth: oneNoteAuth,
 			displayName: 'Notebook',
 			description: 'The notebook to monitor for new notes.',
 			required: true,
@@ -77,6 +81,7 @@ export const newNoteInSectionTrigger = createTrigger({
 			},
 		}),
 		section_id: Property.Dropdown({
+			auth: oneNoteAuth,
 			displayName: 'Section',
 			description: 'The section to monitor for new notes.',
 			required: true,

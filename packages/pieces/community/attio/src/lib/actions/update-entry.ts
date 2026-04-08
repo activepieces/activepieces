@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { attioAuth } from '../../index';
+import { attioAuth } from '../auth';
 import { attioApiCall } from '../common/client';
 import { formatInputFields, listFields, listIdDropdown } from '../common/props';
 
@@ -19,10 +19,10 @@ export const updateEntryAction = createAction({
 			description: 'The unique identifier of the entry to update.',
 			required: true,
 		}),
-		attributes: listFields(true),
+		attributes: listFields(false, true),
 	},
 	async run(context) {
-		const accessToken = context.auth;
+		const accessToken = context.auth.secret_text;
 		const { listId, entryId } = context.propsValue;
 		const inputFields = context.propsValue.attributes ?? {};
 

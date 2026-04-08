@@ -1,7 +1,7 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { isNil } from '@activepieces/shared';
-import { clockifyAuth } from '../../index';
+import { clockifyAuth } from '../auth';
 import { clockifyApiCall } from '../common/client';
 import { projectId, workspaceId } from '../common/props';
 
@@ -27,7 +27,7 @@ export const newTaskTrigger = createTrigger({
 		const { workspaceId, projectId } = context.propsValue;
 
 		const response = await clockifyApiCall<{ id: string }>({
-			apiKey: context.auth,
+			apiKey: context.auth.secret_text,
 			method: HttpMethod.POST,
 			resourceUri: `/workspaces/${workspaceId}/webhooks`,
 			body: {
@@ -47,7 +47,7 @@ export const newTaskTrigger = createTrigger({
 
 		if (!isNil(webhookId)) {
 			await clockifyApiCall({
-				apiKey: context.auth,
+				apiKey: context.auth.secret_text,
 				method: HttpMethod.DELETE,
 				resourceUri: `/workspaces/${workspaceId}/webhooks/${webhookId}`,
 			});
@@ -57,7 +57,7 @@ export const newTaskTrigger = createTrigger({
 		const { workspaceId, projectId } = context.propsValue;
 
 		const response = await clockifyApiCall<{ id: string }[]>({
-			apiKey: context.auth,
+			apiKey: context.auth.secret_text,
 			method: HttpMethod.GET,
 			resourceUri: `/workspaces/${workspaceId}/projects/${projectId}/tasks`,
 			query: {

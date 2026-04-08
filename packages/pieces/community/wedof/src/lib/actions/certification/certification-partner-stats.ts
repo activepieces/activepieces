@@ -3,7 +3,7 @@ import {
   HttpMethod,
   QueryParams,
 } from '@activepieces/pieces-common';
-import { wedofAuth } from '../../..';
+import { wedofAuth } from '../../auth';
 import {
   createAction,
   Property,
@@ -158,7 +158,7 @@ export const listPartnerStats = createAction({
       queryParams,
       headers: {
         'Content-Type': 'application/json',
-        'X-Api-Key': context.auth as string,
+        'X-Api-Key': context.auth.secret_text,
       },
     });
 

@@ -1,4 +1,4 @@
-import { biginAuth } from '../../index';
+import { biginAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { biginApiService } from '../common/request';
 
@@ -26,9 +26,10 @@ export const searchPipelineRecord = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const { dealName, mode } = propsValue as any;
+    const { dealName, mode } = propsValue;
 
-    const { access_token, api_domain } = auth as any;
+    const { access_token, data } = auth;
+    const api_domain = data['api_domain'];
 
     try {
       const response = await biginApiService.searchRecords(

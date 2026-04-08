@@ -1,6 +1,7 @@
 import { Property, createAction, OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import { getGraphBaseUrl } from '../common/microsoft-cloud';
 import { getNotebooksDropdown } from '../common';
-import { oneNoteAuth } from '../../index';
+import { oneNoteAuth } from '../auth';
 import { Client } from '@microsoft/microsoft-graph-client';
 
 export const createSection = createAction({
@@ -10,6 +11,7 @@ export const createSection = createAction({
 	description: 'Creates a new section in notebook.',
 	props: {
 		notebook_id: Property.Dropdown({
+			auth: oneNoteAuth,
 			displayName: 'Notebook',
 			description: 'The notebook to create the section in.',
 			required: true,
@@ -35,10 +37,13 @@ export const createSection = createAction({
 		const { auth, propsValue } = context;
 		const { notebook_id, displayName } = propsValue;
 
+		const authValue = auth as OAuth2PropertyValue;
+		const cloud = authValue.props?.['cloud'] as string | undefined;
 		const client = Client.initWithMiddleware({
 			authProvider: {
-				getAccessToken: () => Promise.resolve((auth as OAuth2PropertyValue).access_token),
+				getAccessToken: () => Promise.resolve(authValue.access_token),
 			},
+			baseUrl: getGraphBaseUrl(cloud),
 		});
 
 		const sectionBody = {

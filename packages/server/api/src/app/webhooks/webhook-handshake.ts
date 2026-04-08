@@ -1,0 +1,100 @@
+import { EngineResponse, EngineResponseStatus, ExecuteTriggerResponse, FlowId, FlowVersionId, isNil, ProjectId, TriggerHookType, TriggerPayload, TriggerSource, WebhookHandshakeConfiguration, WebhookHandshakeStrategy, WorkerJobType } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
+import { projectService } from '../project/project-service'
+import { triggerUtils } from '../trigger/trigger-source/trigger-utils'
+import { userInteractionWatcher } from '../workers/user-interaction-watcher'
+
+export const webhookHandshake = {
+    async handleHandshakeRequest(params: HandleHandshakeRequestParams): Promise<WebhookHandshakeResponse | null> {
+        const { payload, handshakeConfiguration, logger } = params
+
+        if (!isHandshakeRequest({ payload, handshakeConfiguration })) {
+            return null
+        }
+
+        const platformId = await projectService(logger).getPlatformId(params.projectId)
+
+        const engineHelperResponse = await userInteractionWatcher.submitAndWaitForResponse<EngineResponse<ExecuteTriggerResponse<TriggerHookType.HANDSHAKE>>>({
+            jobType: WorkerJobType.EXECUTE_TRIGGER_HOOK,
+            hookType: TriggerHookType.HANDSHAKE,
+            flowId: params.flowId,
+            flowVersionId: params.flowVersionId,
+            projectId: params.projectId,
+            test: false,
+            platformId,
+            triggerPayload: payload,
+        }, logger)
+
+        if (engineHelperResponse.status !== EngineResponseStatus.OK) {
+            return null
+        }
+        return engineHelperResponse.response?.response ?? null
+    },
+    async getWebhookHandshakeConfiguration(params: GetWebhookHandshakeConfigurationParams): Promise<WebhookHandshakeConfiguration | null> {
+        const { triggerSource, logger } = params
+        if (isNil(triggerSource) || isNil(triggerSource.pieceName) || isNil(triggerSource.pieceVersion) || isNil(triggerSource.triggerName) || isNil(triggerSource.projectId)) {
+            return null
+        }
+        const pieceTrigger = await triggerUtils(logger).getPieceTriggerByName({
+            pieceName: triggerSource.pieceName,
+            pieceVersion: triggerSource.pieceVersion,
+            triggerName: triggerSource.triggerName,
+            projectId: triggerSource.projectId,
+        })
+        if (isNil(pieceTrigger)) {
+            return null
+        }
+        return pieceTrigger?.handshakeConfiguration ?? null
+    },
+}
+
+export function isHandshakeRequest(params: IsHandshakeRequestParams): boolean {
+    const { payload, handshakeConfiguration } = params
+
+    if (isNil(handshakeConfiguration) || isNil(handshakeConfiguration.strategy) || isNil(handshakeConfiguration.paramName)) {
+        return false
+    }
+
+    const { strategy, paramName } = handshakeConfiguration
+
+    switch (strategy) {
+        case WebhookHandshakeStrategy.HEADER_PRESENT:
+            return paramName.toLowerCase() in payload.headers
+
+        case WebhookHandshakeStrategy.QUERY_PRESENT:
+            return paramName in payload.queryParams
+
+        case WebhookHandshakeStrategy.BODY_PARAM_PRESENT:
+            return typeof payload.body === 'object' &&
+                payload.body !== null &&
+                paramName in payload.body
+
+        default:
+            return false
+    }
+}
+
+type WebhookHandshakeResponse = {
+    status: number
+    body?: unknown
+    headers?: Record<string, string>
+}
+
+type HandleHandshakeRequestParams = {
+    payload: TriggerPayload
+    flowId: FlowId
+    flowVersionId: FlowVersionId
+    projectId: ProjectId
+    handshakeConfiguration: WebhookHandshakeConfiguration | null
+    logger: FastifyBaseLogger
+}
+
+type GetWebhookHandshakeConfigurationParams = {
+    triggerSource: TriggerSource | null
+    logger: FastifyBaseLogger
+}
+
+type IsHandshakeRequestParams = {
+    payload: TriggerPayload
+    handshakeConfiguration: WebhookHandshakeConfiguration | null
+}

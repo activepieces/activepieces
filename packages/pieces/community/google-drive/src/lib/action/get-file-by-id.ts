@@ -1,13 +1,12 @@
-import { googleDriveAuth } from '../../index';
+import { googleDriveAuth, createGoogleClient } from '../auth';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { google } from 'googleapis';
-import { OAuth2Client } from 'googleapis-common';
 import { common } from '../common';
 
 export const googleDriveGetResourceById = createAction({
   auth: googleDriveAuth,
   name: 'get-file-or-folder-by-id',
-  displayName: 'Get File',
+  displayName: 'Get File Information',
   description: 'Get a file folder for files/sub-folders',
   props: {
     id: Property.ShortText({
@@ -18,8 +17,7 @@ export const googleDriveGetResourceById = createAction({
     include_team_drives: common.properties.include_team_drives,
   },
   async run(context) {
-    const authClient = new OAuth2Client();
-    authClient.setCredentials(context.auth);
+    const authClient = await createGoogleClient(context.auth);
     const drive = google.drive({ version: 'v3', auth: authClient });
     const response = await drive.files.get({
       fileId: context.propsValue.id,

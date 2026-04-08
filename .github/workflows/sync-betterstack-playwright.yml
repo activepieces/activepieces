@@ -1,0 +1,24 @@
+name: Sync Playwright test to BetterStack
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  sync:
+    name: Update BetterStack Playwright monitor
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Upload script to BetterStack monitor
+        env:
+          BETTERSTACK_API_TOKEN: ${{ secrets.BETTERSTACK_API_TOKEN }}
+        run: |
+          SCRIPT=$(cat packages/tests-e2e/scenarios/betterstack/webhook-should-return-response.flat.spec.js)
+          curl --fail --request PATCH \
+            --url https://uptime.betterstack.com/api/v2/monitors/4211060 \
+            --header "Authorization: Bearer $BETTERSTACK_API_TOKEN" \
+            --header "Content-Type: application/json" \
+            --data "$(jq -n --arg script "$SCRIPT" '{"playwright_script": $script}')"

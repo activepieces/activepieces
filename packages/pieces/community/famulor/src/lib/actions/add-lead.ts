@@ -26,7 +26,7 @@ export const addLead = createAction({
         
         if (phoneNumber && phoneNumber.trim() !== '') {
           contacts.push({
-            phone_number: phoneNumber,
+            phone_number: phoneNumber.trim(),
             variables: variables || { customer_name: '' }
           });
         }
@@ -38,10 +38,10 @@ export const addLead = createAction({
     }
 
     return await famulorCommon.addLead({
-      auth: auth as string,
+      auth: auth.secret_text,
       campaign_id: propsValue.campaign,
       phone_number: propsValue.phone_number!,
-      variable: propsValue.variables,
+      variables: propsValue.variables,
       allow_dupplicate: propsValue.allow_dupplicate,
       secondary_contacts: secondaryContacts,
     });

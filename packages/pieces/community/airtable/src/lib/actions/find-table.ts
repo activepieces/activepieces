@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { airtableAuth } from '../../index';
+import { airtableAuth } from '../auth';
 import { airtableCommon } from '../common';
 import { AirtableTable } from '../common/models';
 
@@ -21,7 +21,7 @@ export const airtableFindTableAction = createAction({
     const { base: baseId, tableName } = propsValue;
 
     const tables: AirtableTable[] = await airtableCommon.fetchTableList({
-      token: personalToken,
+      token: personalToken.secret_text,
       baseId: baseId as string,
     });
 

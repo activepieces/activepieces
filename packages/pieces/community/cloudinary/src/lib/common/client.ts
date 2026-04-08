@@ -1,19 +1,21 @@
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { BasicAuthConnectionValue, CustomAuthConnectionValue } from '@activepieces/shared';
+import { cloudinaryAuth } from './auth';
 
 export const BASE_URL = 'https://api.cloudinary.com/v1_1';
 
 export async function makeRequest(
-    auth: any,
+    auth: AppConnectionValueForAuthProperty<typeof cloudinaryAuth>,
     method: HttpMethod,
     path: string,
     body?: unknown,
     queryParams?: Record<string, any>,
 ) {
     try {
-        const api_key = auth.api_key.trim();
-        const api_secret = auth.api_secret.trim();
-        const cloud_name = auth.cloud_name.trim();
+        const api_key = auth.props.api_key.trim();
+        const api_secret = auth.props.api_secret.trim();
+        const cloud_name = auth.props.cloud_name.trim();
 
         let headers: Record<string, string> = {};
         

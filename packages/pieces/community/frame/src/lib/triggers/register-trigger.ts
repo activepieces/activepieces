@@ -35,6 +35,7 @@ export const frameRegisterTrigger = ({
         description: 'Accounts accessible via a given User',
         required: true,
         refreshers: [],
+        auth: frameAuth,
         options: async ({ auth }) => {
           if (!auth) {
             return {
@@ -49,7 +50,7 @@ export const frameRegisterTrigger = ({
             url: `https://api.frame.io/v2/accounts`,
             authentication: {
               type: AuthenticationType.BEARER_TOKEN,
-              token: auth as unknown as string,
+              token: auth.secret_text,
             },
             queryParams: {},
           });
@@ -78,6 +79,7 @@ export const frameRegisterTrigger = ({
         description: 'Teams accessible via a given Account',
         required: true,
         refreshers: ['account_id'],
+        auth: frameAuth,
         options: async ({ auth, account_id }) => {
           if (!auth) {
             return {
@@ -99,7 +101,7 @@ export const frameRegisterTrigger = ({
             url: `https://api.frame.io/v2/accounts/${account_id}/teams`,
             authentication: {
               type: AuthenticationType.BEARER_TOKEN,
-              token: auth as unknown as string,
+              token: auth.secret_text,
             },
             queryParams: {},
           });
@@ -137,7 +139,7 @@ export const frameRegisterTrigger = ({
         },
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,
-          token: context.auth,
+          token: context.auth.secret_text,
         },
       });
       await context.store.put<WebhookInformation>(
@@ -155,7 +157,7 @@ export const frameRegisterTrigger = ({
           url: `https://api.frame.io/v2/hooks/${webhook.id}`,
           authentication: {
             type: AuthenticationType.BEARER_TOKEN,
-            token: context.auth,
+            token: context.auth.secret_text,
           },
         };
         await httpClient.sendRequest(request);

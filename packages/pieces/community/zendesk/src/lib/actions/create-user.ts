@@ -10,13 +10,8 @@ import {
   customRoleIdDropdown,
   agentBrandIdDropdown,
   groupIdDropdown,
+  userFieldsDynamicProp,
 } from '../common/props';
-
-type AuthProps = {
-  email: string;
-  token: string;
-  subdomain: string;
-};
 
 export const createUserAction = createAction({
   auth: zendeskAuth,
@@ -173,139 +168,7 @@ export const createUserAction = createAction({
       description: 'Array of tags to apply to the user',
       required: false,
     }),
-    user_fields: Property.DynamicProperties({
-      displayName: 'User Fields',
-      description: 'Custom user field values',
-      required: false,
-      refreshers: ['auth'],
-      props: async ({ auth }) => {
-        if (!auth) {
-          return {};
-        }
-
-        try {
-          const authentication = auth as AuthProps;
-          const response = await httpClient.sendRequest({
-            url: `https://${authentication.subdomain}.zendesk.com/api/v2/user_fields.json`,
-            method: HttpMethod.GET,
-            authentication: {
-              type: AuthenticationType.BASIC,
-              username: authentication.email + '/token',
-              password: authentication.token,
-            },
-          });
-
-          const fields = (response.body as { user_fields: Array<{
-            id: number;
-            key: string;
-            title: string;
-            description?: string;
-            type: string;
-            active: boolean;
-            custom_field_options?: Array<{ name: string; value: string }>;
-            regexp_for_validation?: string;
-          }> }).user_fields;
-
-          const dynamicProps: Record<string, any> = {};
-          for (const field of fields) {
-            if (!field.active) continue;
-
-            const fieldKey = `field_${field.key}`;
-            const displayName = field.title;
-            const description = field.description || `Custom ${field.type} field`;
-
-            switch (field.type) {
-              case 'tagger':
-                if (field.custom_field_options && field.custom_field_options.length > 0) {
-                  dynamicProps[fieldKey] = Property.StaticDropdown({
-                    displayName,
-                    description,
-                    required: false,
-                    options: {
-                      disabled: false,
-                      placeholder: `Select ${displayName}`,
-                      options: field.custom_field_options.map(option => ({
-                        label: option.name,
-                        value: option.value,
-                      })),
-                    },
-                  });
-                }
-                break;
-              case 'multiselect':
-                if (field.custom_field_options && field.custom_field_options.length > 0) {
-                  dynamicProps[fieldKey] = Property.StaticMultiSelectDropdown({
-                    displayName,
-                    description,
-                    required: false,
-                    options: {
-                      options: field.custom_field_options.map(option => ({
-                        label: option.name,
-                        value: option.value,
-                      })),
-                    },
-                  });
-                }
-                break;
-              case 'text':
-                dynamicProps[fieldKey] = Property.ShortText({
-                  displayName,
-                  description,
-                  required: false,
-                });
-                break;
-              case 'textarea':
-                dynamicProps[fieldKey] = Property.LongText({
-                  displayName,
-                  description,
-                  required: false,
-                });
-                break;
-              case 'integer':
-              case 'decimal':
-                dynamicProps[fieldKey] = Property.Number({
-                  displayName,
-                  description,
-                  required: false,
-                });
-                break;
-              case 'date':
-                dynamicProps[fieldKey] = Property.DateTime({
-                  displayName,
-                  description,
-                  required: false,
-                });
-                break;
-              case 'checkbox':
-                dynamicProps[fieldKey] = Property.Checkbox({
-                  displayName,
-                  description,
-                  required: false,
-                });
-                break;
-              case 'regexp':
-                dynamicProps[fieldKey] = Property.ShortText({
-                  displayName,
-                  description: `${description}${field.regexp_for_validation ? ` (Pattern: ${field.regexp_for_validation})` : ''}`,
-                  required: false,
-                });
-                break;
-              default:
-                dynamicProps[fieldKey] = Property.ShortText({
-                  displayName,
-                  description: `${description} (${field.type})`,
-                  required: false,
-                });
-            }
-          }
-
-          return dynamicProps;
-        } catch (error) {
-          console.warn('Failed to load user fields:', error);
-          return {};
-        }
-      },
-    }),
+    user_fields: userFieldsDynamicProp,
     identities: Property.Json({
       displayName: 'Identities',
       description:
@@ -314,7 +177,7 @@ export const createUserAction = createAction({
     }),
   },
   async run({ propsValue, auth }) {
-    const authentication = auth as AuthProps;
+    const authentication = auth;
     const {
       name,
       email,
@@ -426,12 +289,12 @@ export const createUserAction = createAction({
     if (user_fields && typeof user_fields === 'object') {
       try {
         const fieldsResponse = await httpClient.sendRequest({
-          url: `https://${authentication.subdomain}.zendesk.com/api/v2/user_fields.json`,
+          url: `https://${authentication.props.subdomain}.zendesk.com/api/v2/user_fields.json`,
           method: HttpMethod.GET,
           authentication: {
             type: AuthenticationType.BASIC,
-            username: authentication.email + '/token',
-            password: authentication.token,
+            username: authentication.props.email + '/token',
+            password: authentication.props.token,
           },
         });
 
@@ -492,15 +355,15 @@ export const createUserAction = createAction({
 
     try {
       const response = await httpClient.sendRequest({
-        url: `https://${authentication.subdomain}.zendesk.com/api/v2/users.json`,
+        url: `https://${authentication.props.subdomain}.zendesk.com/api/v2/users.json`,
         method: HttpMethod.POST,
         headers: {
           'Content-Type': 'application/json',
         },
         authentication: {
           type: AuthenticationType.BASIC,
-          username: authentication.email + '/token',
-          password: authentication.token,
+          username: authentication.props.email + '/token',
+          password: authentication.props.token,
         },
         body: requestBody,
       });

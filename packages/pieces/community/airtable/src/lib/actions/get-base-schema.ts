@@ -1,5 +1,5 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { airtableAuth } from '../../index';
+import { airtableAuth } from '../auth';
 import { airtableCommon } from '../common';
 
 export const airtableGetBaseSchemaAction = createAction({
@@ -16,7 +16,7 @@ export const airtableGetBaseSchemaAction = createAction({
     const { base: baseId } = propsValue;
 
     return await airtableCommon.fetchTableList({
-      token: personalToken,
+      token: personalToken.secret_text,
       baseId: baseId as string,
     });
   },

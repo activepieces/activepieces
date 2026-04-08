@@ -1,4 +1,3 @@
-import { AppSystemProp, exceptionHandler, fileCompressor } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     apId,
@@ -9,6 +8,7 @@ import {
     FileId,
     FileLocation,
     FileType,
+    isMultipartFile,
     isNil,
     ProjectId,
 } from '@activepieces/shared'
@@ -16,9 +16,14 @@ import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { In, LessThanOrEqual } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
+import { exceptionHandler } from '../helper/exception-handler'
 import { system } from '../helper/system/system'
+import { AppSystemProp, WorkerSystemProp } from '../helper/system/system-props'
+import { fileCompressor } from './file-compressor'
 import { FileEntity } from './file.entity'
 import { s3Helper } from './s3-helper'
+
+const IMAGE_MIME_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml', 'image/tiff', 'image/bmp', 'image/ico', 'image/avif', 'image/apng']
 
 export const fileRepo = repoFactory<File>(FileEntity)
 const EXECUTION_DATA_RETENTION_DAYS = system.getNumberOrThrow(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS)
@@ -72,10 +77,13 @@ export const fileService = (log: FastifyBaseLogger) => ({
             }
         }
     },
-    async updateSize(params: UpdateSizeParams): Promise<void> {
-        await fileRepo().update(params.fileId, {
-            size: params.size,
+    async exists(params: GetOneParams): Promise<boolean> {
+        const file = await fileRepo().findOneBy({
+            projectId: params.projectId,
+            id: params.fileId,
+            type: params.type,
         })
+        return !isNil(file)
     },
     async getFile({ projectId, fileId, type }: GetOneParams): Promise<File | null> {
         const file = await fileRepo().findOneBy({
@@ -89,9 +97,11 @@ export const fileService = (log: FastifyBaseLogger) => ({
         const file = await this.getFile(params)
         if (isNil(file)) {
             throw new ActivepiecesError({
-                code: ErrorCode.FILE_NOT_FOUND,
+                code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {
-                    id: params.fileId,
+                    entityType: 'file',
+                    entityId: params.fileId,
+                    message: 'File not found',
                 },
             })
         }
@@ -117,9 +127,11 @@ export const fileService = (log: FastifyBaseLogger) => ({
         })
         if (isNil(file)) {
             throw new ActivepiecesError({
-                code: ErrorCode.FILE_NOT_FOUND,
+                code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {
-                    id: fileId,
+                    entityType: 'file',
+                    entityId: fileId,
+                    message: 'File not found',
                 },
             })
         }
@@ -128,10 +140,23 @@ export const fileService = (log: FastifyBaseLogger) => ({
             compression: file.compression,
         })
         return {
-            metadata: file.metadata,
+            metadata: file.metadata ?? undefined,
             data,
-            fileName: file.fileName,
+            fileName: file.fileName ?? undefined,
         }
+    },
+    async delete(params: { projectId: ProjectId, fileId: FileId }): Promise<void> {
+        const file = await fileRepo().findOneBy({
+            id: params.fileId,
+            projectId: params.projectId,
+        })
+        if (isNil(file)) {
+            return
+        }
+        if (!isNil(file.s3Key)) {
+            await s3Helper(log).deleteFiles([file.s3Key])
+        }
+        await fileRepo().delete({ id: file.id })
     },
     async deleteStaleBulk(types: FileType[]) {
         const retentionDateBoundary = dayjs().subtract(EXECUTION_DATA_RETENTION_DAYS, 'days').toISOString()
@@ -168,17 +193,61 @@ export const fileService = (log: FastifyBaseLogger) => ({
             types,
         }, '[FileService#deleteStaleBulk] completed')
     },
+    async uploadPublicAsset(params: UploadPublicAssetParams): Promise<string | undefined> {
+        const { file, type, platformId, allowedMimeTypes = IMAGE_MIME_TYPES, maxFileSizeInBytes, metadata } = params
+        
+        if (isNil(file)) {
+            return undefined
+        }
+        
+        if (!isMultipartFile(file)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: {
+                    message: 'File must be a multipart file',
+                },
+            })
+        }
+
+        if (!allowedMimeTypes.includes(file.mimetype ?? '')) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: {
+                    message: `Invalid file type. Allowed types: ${allowedMimeTypes.join(', ')}`,
+                },
+            })
+        }
+
+        if (!isNil(maxFileSizeInBytes) && file.data.length > maxFileSizeInBytes) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: {
+                    message: `File size exceeds ${Math.round(maxFileSizeInBytes / (1024 * 1024))}MB limit`,
+                },
+            })
+        }
+
+        const savedFile = await this.save({
+            data: file.data,
+            size: file.data.length,
+            type,
+            compression: FileCompression.NONE,
+            platformId,
+            fileName: file.filename,
+            metadata: {
+                ...metadata,
+                mimetype: file.mimetype ?? '',
+            },
+        })
+
+        return `${system.get(WorkerSystemProp.FRONTEND_URL)}/api/v1/platforms/assets/${savedFile.id}`
+    },
 })
 
 type GetDataResponse = {
     metadata?: Record<string, string>
     data: Buffer
     fileName?: string
-}
-
-type UpdateSizeParams = {
-    fileId: FileId
-    size: number
 }
 
 function getLocationForFile(type: FileType) {
@@ -195,11 +264,16 @@ function isExecutionDataFileThatExpires(type: FileType) {
         case FileType.FLOW_STEP_FILE:
         case FileType.TRIGGER_PAYLOAD:
         case FileType.TRIGGER_EVENT_FILE:
+        case FileType.WEBHOOK_PAYLOAD:
             return true
+        case FileType.PLATFORM_ASSET:
+        case FileType.USER_PROFILE_PICTURE:
         case FileType.SAMPLE_DATA:
         case FileType.SAMPLE_DATA_INPUT:
         case FileType.PACKAGE_ARCHIVE:
         case FileType.PROJECT_RELEASE:
+        case FileType.FLOW_VERSION_BACKUP:
+        case FileType.KNOWLEDGE_BASE:
             return false
         default:
             throw new Error(`File type ${type} is not supported`)
@@ -222,4 +296,13 @@ type GetOneParams = {
     fileId: FileId
     projectId?: ProjectId
     type?: FileType
+}
+
+type UploadPublicAssetParams = {
+    file: unknown
+    type: FileType
+    platformId: string
+    allowedMimeTypes?: string[]
+    maxFileSizeInBytes?: number
+    metadata?: Record<string, string>
 }

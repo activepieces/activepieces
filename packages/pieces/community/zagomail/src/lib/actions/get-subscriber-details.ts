@@ -1,4 +1,4 @@
-import { zagomailAuth } from '../../';
+import { zagomailAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { zagoMailApiService } from '../common/request';
 import { listUId } from '../common/props';
@@ -20,8 +20,8 @@ export const getSubscriberDetails = createAction({
     const listUId = propsValue.listUId;
     const subsriberUid = propsValue.subscriberUid;
 
-    return await zagoMailApiService.getSubscriberDetails(
-      auth,
+    return await zagoMailApiService.getSubscriberDetails( 
+      auth.secret_text,
       listUId,
       subsriberUid
     );

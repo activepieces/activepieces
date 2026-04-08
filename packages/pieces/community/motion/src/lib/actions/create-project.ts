@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { motionAuth } from '../../index';
+import { motionAuth } from '../auth';
 import { BASE_URL, priority, workspaceId } from '../common/props';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
@@ -35,7 +35,7 @@ export const createProject = createAction({
       url: `${BASE_URL}/projects`,
       headers: {
         'Content-Type': 'application/json',
-        'X-API-Key': auth,
+        'X-API-Key': auth.secret_text,
       },
       body: {
         name: propsValue.name,

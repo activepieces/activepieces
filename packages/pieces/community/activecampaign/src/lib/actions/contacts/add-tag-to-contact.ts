@@ -1,4 +1,4 @@
-import { activeCampaignAuth } from '../../..';
+import { activeCampaignAuth } from '../../auth';
 import { createAction } from '@activepieces/pieces-framework';
 import { activecampaignCommon, makeClient } from '../../common';
 
@@ -14,7 +14,7 @@ export const addTagToContactAction = createAction({
 	async run(context) {
 		const { contactId, tagId } = context.propsValue;
 
-		const client = makeClient(context.auth);
+		const client = makeClient(context.auth.props);
 		return await client.addTagToContact(contactId, tagId);
 	},
 });

@@ -46,7 +46,7 @@ export const stripeNewCustomer = createTrigger({
     const webhook = await stripeCommon.subscribeWebhook(
       'customer.created',
       context.webhookUrl,
-      context.auth
+      context.auth.secret_text
     );
     await context.store.put<WebhookInformation>('_new_customer_trigger', {
       webhookId: webhook.id,
@@ -57,15 +57,15 @@ export const stripeNewCustomer = createTrigger({
       '_new_customer_trigger'
     );
     if (response !== null && response !== undefined) {
-      await stripeCommon.unsubscribeWebhook(response.webhookId, context.auth);
+      await stripeCommon.unsubscribeWebhook(response.webhookId, context.auth.secret_text);
     }
   },
   async test(context) {
     const response = await httpClient.sendRequest<{ data: { id: string }[] }>({
       method: HttpMethod.GET,
-      url: 'https://api.stripe.com/v1/checkout/customers',
+      url: 'https://api.stripe.com/v1/customers',
       headers: {
-        Authorization: 'Bearer ' + context.auth,
+        Authorization: 'Bearer ' + context.auth.secret_text,
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       queryParams: {

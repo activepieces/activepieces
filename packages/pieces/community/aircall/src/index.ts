@@ -35,9 +35,8 @@ export const aircall = createPiece({
       auth:aircallAuth,
       baseUrl:()=>BASE_URL,
       authMapping:async (auth)=>{
-        const { username,password } = auth as { username: string ,password:string};
         return {
-          Authorization: `Basic ${Buffer.from(`${username}:${password}`).toString(
+          Authorization: `Basic ${Buffer.from(`${auth.username}:${auth.password}`).toString(
             'base64'
           )}`,
         };

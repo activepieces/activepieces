@@ -21,6 +21,6 @@ export const addWebsite = createAction({
     const { auth: apiKey, propsValue } = context;
     const { website_url } = propsValue;
 
-    return await aidbaseClient.addWebsite(apiKey, website_url);
+    return await aidbaseClient.addWebsite(apiKey.secret_text, website_url);
   },
 });

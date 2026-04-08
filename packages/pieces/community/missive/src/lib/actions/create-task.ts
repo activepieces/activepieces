@@ -49,7 +49,7 @@ export const createTask = createAction({
             required: false,
         }),
         task_configuration: Property.DynamicProperties({
-            displayName: 'Task Configuration',
+    auth: missiveAuth,            displayName: 'Task Configuration',
             description: 'Configure task assignment and organization based on task type',
             required: false,
             refreshers: ['task_type'],
@@ -71,7 +71,7 @@ export const createTask = createAction({
 
                 try {
                     const orgsResponse = await missiveCommon.apiCall({
-                        auth: auth as unknown as string,
+                        auth: auth,
                         method: HttpMethod.GET,
                         resourceUri: '/organizations',
                     });
@@ -83,7 +83,7 @@ export const createTask = createAction({
                     if (organizationOptions.length > 0) {
                         try {
                             const teamsResponse = await missiveCommon.apiCall({
-                                auth: auth as unknown as string,
+                                auth: auth,
                                 method: HttpMethod.GET,
                                 resourceUri: `/teams?organization=${organizationOptions[0].value}`,
                             });
@@ -97,7 +97,7 @@ export const createTask = createAction({
 
                         try {
                             const usersResponse = await missiveCommon.apiCall({
-                                auth: auth as unknown as string,
+                                auth: auth,
                                 method: HttpMethod.GET,
                                 resourceUri: `/users?organization=${organizationOptions[0].value}`,
                             });
@@ -113,7 +113,7 @@ export const createTask = createAction({
                     if (task_type as unknown as string === 'subtask') {
                         try {
                             const convsResponse = await missiveCommon.apiCall({
-                                auth: auth as unknown as string,
+                                auth: auth,
                                 method: HttpMethod.GET,
                                 resourceUri: '/conversations?limit=50',
                             });

@@ -19,10 +19,12 @@
   "Method": "Method",
   "Headers": "Headers",
   "Query Parameters": "Query Parameters",
+  "Body Type": "Body Type",
   "Body": "Body",
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "The search query to find keywords for": "The search query to find keywords for",
   "Search engine to use for keyword analysis": "Search engine to use for keyword analysis",
   "List of keywords to exclude from the search": "List of keywords to exclude from the search",
@@ -38,7 +40,7 @@
   "Page number in response.": "Page number in response.",
   "Number of results per page in response.": "Number of results per page in response.",
   "Authorization headers are injected automatically from your connection.": "Authorization headers are injected automatically from your connection.",
-  "Enable for files like PDFs, images, etc..": "Enable for files like PDFs, images, etc..",
+  "Enable for files like PDFs, images, etc.": "Enable for files like PDFs, images, etc.",
   "United States": "United States",
   "Singapore": "Singapore",
   "Indonesia": "Indonesia",
@@ -57,5 +59,9 @@
   "PATCH": "PATCH",
   "PUT": "PUT",
   "DELETE": "DELETE",
-  "HEAD": "HEAD"
+  "HEAD": "HEAD",
+  "None": "None",
+  "JSON": "JSON",
+  "Form Data": "Form Data",
+  "Raw": "Raw"
 }

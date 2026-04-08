@@ -1,160 +1,132 @@
-import { AppSystemProp, QueueName, WorkerSystemProp } from '@activepieces/server-shared'
 import {
-    MachineInformation,
-    WorkerMachineHealthcheckResponse,
+    ExecutionMode,
+    isNil,
+    partition,
+    WorkerMachineHealthcheckRequest,
     WorkerMachineStatus,
+    WorkerMachineType,
     WorkerMachineWithStatus,
+    WorkerSettingsResponse,
 } from '@activepieces/shared'
-import dayjs from 'dayjs'
-import { FastifyBaseLogger } from 'fastify'
-import { Socket } from 'socket.io'
-import { In } from 'typeorm'
-import { repoFactory } from '../../core/db/repo-factory'
-import { domainHelper } from '../../ee/custom-domains/domain-helper'
-import { system } from '../../helper/system/system'
-import { app } from '../../server'
-import { jobQueue } from '../queue/job-queue'
-import { WorkerMachineEntity } from './machine-entity'
-import { machineRouting } from './machine-routing'
 
-const workerRepo = repoFactory(WorkerMachineEntity)
-const OFFLINE_THRESHOLD = dayjs.duration(60, 's').asMilliseconds()
+import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc'
+import { FastifyBaseLogger } from 'fastify'
+import { domainHelper } from '../../ee/custom-domains/domain-helper'
+import { dedicatedWorkers } from '../../ee/platform/platform-plan/platform-dedicated-workers'
+import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-props'
+import { workerMachineCache } from './machine-cache'
+
+dayjs.extend(utc)
+
+const settingsCache = new Map<string, WorkerSettingsResponse>()
+
+async function buildSettingsResponse(log: FastifyBaseLogger, platformIdForDedicatedWorker?: string): Promise<WorkerSettingsResponse> {
+    const cacheKey = platformIdForDedicatedWorker ?? '__shared__'
+    const cached = settingsCache.get(cacheKey)
+    if (cached) {
+        return cached
+    }
+    const executionMode = await getExecutionMode(log, platformIdForDedicatedWorker)
+    const settings = {
+        TRIGGER_TIMEOUT_SECONDS: system.getNumberOrThrow(AppSystemProp.TRIGGER_TIMEOUT_SECONDS),
+        PAUSED_FLOW_TIMEOUT_DAYS: system.getNumberOrThrow(AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS),
+        EXECUTION_MODE: executionMode,
+        TRIGGER_HOOKS_TIMEOUT_SECONDS: system.getNumberOrThrow(AppSystemProp.TRIGGER_HOOKS_TIMEOUT_SECONDS),
+        FLOW_TIMEOUT_SECONDS: system.getNumberOrThrow(AppSystemProp.FLOW_TIMEOUT_SECONDS),
+        LOG_LEVEL: system.getOrThrow(AppSystemProp.LOG_LEVEL),
+        LOG_PRETTY: system.getOrThrow(AppSystemProp.LOG_PRETTY),
+        ENVIRONMENT: system.getOrThrow(AppSystemProp.ENVIRONMENT),
+        APP_WEBHOOK_SECRETS: system.getOrThrow(AppSystemProp.APP_WEBHOOK_SECRETS),
+        MAX_FLOW_RUN_LOG_SIZE_MB: system.getNumberOrThrow(AppSystemProp.MAX_FLOW_RUN_LOG_SIZE_MB),
+        MAX_FILE_SIZE_MB: system.getNumberOrThrow(AppSystemProp.MAX_FILE_SIZE_MB),
+        SANDBOX_MEMORY_LIMIT: system.getOrThrow(AppSystemProp.SANDBOX_MEMORY_LIMIT),
+        SANDBOX_PROPAGATED_ENV_VARS: system.get(AppSystemProp.SANDBOX_PROPAGATED_ENV_VARS)?.split(',').map(f => f.trim()) ?? [],
+        DEV_PIECES: system.get(AppSystemProp.DEV_PIECES)?.split(',') ?? [],
+        SENTRY_DSN: system.get(AppSystemProp.SENTRY_DSN),
+        LOKI_PASSWORD: system.get(AppSystemProp.LOKI_PASSWORD),
+        LOKI_URL: system.get(AppSystemProp.LOKI_URL),
+        LOKI_USERNAME: system.get(AppSystemProp.LOKI_USERNAME),
+        BETTERSTACK_HOST: system.get(AppSystemProp.BETTERSTACK_HOST),
+        BETTERSTACK_TOKEN: system.get(AppSystemProp.BETTERSTACK_TOKEN),
+        OTEL_ENABLED: system.get(AppSystemProp.OTEL_ENABLED) === 'true',
+        PUBLIC_URL: await domainHelper.getPublicUrl({
+            path: '',
+        }),
+        FILE_STORAGE_LOCATION: system.getOrThrow(AppSystemProp.FILE_STORAGE_LOCATION),
+        S3_USE_SIGNED_URLS: system.getOrThrow(AppSystemProp.S3_USE_SIGNED_URLS),
+        EVENT_DESTINATION_TIMEOUT_SECONDS: system.getNumberOrThrow(AppSystemProp.EVENT_DESTINATION_TIMEOUT_SECONDS),
+        EDITION: system.getOrThrow(AppSystemProp.EDITION),
+        SSRF_ALLOW_LIST: system.get(AppSystemProp.SSRF_ALLOW_LIST)?.split(',').map(f => f.trim()) ?? [],
+        SSRF_PROTECTION_ENABLED: system.get(AppSystemProp.SSRF_PROTECTION_ENABLED) === 'true',
+        PAGE_ONCALL_WEBHOOK: system.get(AppSystemProp.PAGE_ONCALL_WEBHOOK),
+    }
+    settingsCache.set(cacheKey, settings)
+    return settings
+}
 
 export const machineService = (log: FastifyBaseLogger) => {
     return {
         async onDisconnect(request: OnDisconnectParams): Promise<void> {
-            system.globalLogger().info({
+            log.info({
                 message: 'Worker disconnected',
                 workerId: request.workerId,
             })
-            await workerRepo().delete({ id: request.workerId })
-            await machineRouting.onDisconnect({
-                workerId: request.workerId,
-            })
-            await machineService(log).updateConcurrency()
+            await workerMachineCache().delete([request.workerId])
         },
-        async acquire(): Promise<string> {
-            const workerId = await machineRouting.acquire()
-            const sockets = await app?.io.to(workerId).fetchSockets()
-            if (sockets && sockets.length > 0) {
-                return workerId
-            }
-            else {
-                await machineService(log).onDisconnect({
-                    workerId,
-                })
-                return machineService(log).acquire()
-            }
-        },
-        async release(workerId: string): Promise<void> {
-            await machineRouting.release(workerId)
-        },
-        async getConcurrency(): Promise<Record<QueueName, number>> {
-            const machines = await machineService(log).list()
-            const flowWorkerConcurrency = machines.reduce((acc, machine) => acc + (parseInt(machine.information.workerProps[WorkerSystemProp.WORKER_CONCURRENCY]) || 0), 0)
-            return {
-                [QueueName.WORKER_JOBS]: flowWorkerConcurrency,
-            }
-        },
-        async updateConcurrency(): Promise<void> {
-            const concurrency = await machineService(log).getConcurrency()
-            await Promise.all(Object.entries(concurrency).map(([queueName, concurrency]) => jobQueue(log).setConcurrency(queueName as QueueName, concurrency)))
-        },
-        async onHeartbeat({
-            workerId,
-            totalSandboxes,
-            diskInfo,
-            cpuUsagePercentage,
-            ramUsagePercentage,
-            totalAvailableRamInBytes,
-            workerProps,
-            ip,
-            freeSandboxes,
-        }: OnHeartbeatParams): Promise<WorkerMachineHealthcheckResponse> {
-            await machineRouting.onHeartbeat({
-                workerId,
-                totalSandboxes,
-                freeSandboxes,
-            })
-            await workerRepo().upsert({
-                information: {
-                    diskInfo,
-                    cpuUsagePercentage,
-                    ramUsagePercentage,
-                    totalAvailableRamInBytes,
-                    workerProps,
-                    ip,
-                    totalSandboxes,
-                    freeSandboxes,
-                },
-                updated: dayjs().toISOString(),
-                id: workerId,
-            }, ['id'])
+        async onConnection(request: WorkerMachineHealthcheckRequest, platformIdForDedicatedWorker?: string | undefined): Promise<WorkerSettingsResponse> {
+            const existingWorker = await workerMachineCache().findOne(request.workerId)
 
-            const response: WorkerMachineHealthcheckResponse = {
-                TRIGGER_TIMEOUT_SECONDS: system.getNumberOrThrow(AppSystemProp.TRIGGER_TIMEOUT_SECONDS),
-                PAUSED_FLOW_TIMEOUT_DAYS: system.getNumberOrThrow(AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS),
-                EXECUTION_MODE: system.getOrThrow(AppSystemProp.EXECUTION_MODE),
-                FLOW_TIMEOUT_SECONDS: system.getNumberOrThrow(AppSystemProp.FLOW_TIMEOUT_SECONDS),
-                WORKER_CONCURRENCY: system.getNumberOrThrow(WorkerSystemProp.WORKER_CONCURRENCY),
-                LOG_LEVEL: system.getOrThrow(AppSystemProp.LOG_LEVEL),
-                LOG_PRETTY: system.getOrThrow(AppSystemProp.LOG_PRETTY),
-                ENVIRONMENT: system.getOrThrow(AppSystemProp.ENVIRONMENT),
-                APP_WEBHOOK_SECRETS: system.getOrThrow(AppSystemProp.APP_WEBHOOK_SECRETS),
-                MAX_FILE_SIZE_MB: system.getNumberOrThrow(AppSystemProp.MAX_FILE_SIZE_MB),
-                SANDBOX_MEMORY_LIMIT: system.getOrThrow(AppSystemProp.SANDBOX_MEMORY_LIMIT),
-                SANDBOX_PROPAGATED_ENV_VARS: system.get(AppSystemProp.SANDBOX_PROPAGATED_ENV_VARS)?.split(',').map(f => f.trim()) ?? [],
-                PIECES_SOURCE: system.getOrThrow(AppSystemProp.PIECES_SOURCE),
-                DEV_PIECES: system.get(AppSystemProp.DEV_PIECES)?.split(',') ?? [],
-                SENTRY_DSN: system.get(AppSystemProp.SENTRY_DSN),
-                LOKI_PASSWORD: system.get(AppSystemProp.LOKI_PASSWORD),
-                LOKI_URL: system.get(AppSystemProp.LOKI_URL),
-                LOKI_USERNAME: system.get(AppSystemProp.LOKI_USERNAME),
-                OTEL_ENABLED: system.get(AppSystemProp.OTEL_ENABLED) === 'true',
-                PUBLIC_URL: await domainHelper.getPublicUrl({
-                    path: '',
-                }),
-                FILE_STORAGE_LOCATION: system.getOrThrow(AppSystemProp.FILE_STORAGE_LOCATION),
-                S3_USE_SIGNED_URLS: system.getOrThrow(AppSystemProp.S3_USE_SIGNED_URLS),
-            }
-
-            await machineService(log).updateConcurrency()
-
-            return response
+            const type = isNil(platformIdForDedicatedWorker) ? 'SHARED' : 'DEDICATED'
+            await workerMachineCache().upsert({
+                id: request.workerId,
+                information: request,
+                type,
+                platformId: platformIdForDedicatedWorker,
+            }, existingWorker)
+            return buildSettingsResponse(log, platformIdForDedicatedWorker)
         },
-        async list(): Promise<WorkerMachineWithStatus[]> {
-            const offlineThreshold = dayjs().subtract(OFFLINE_THRESHOLD, 'ms').utc()
-            const allWorkers = await workerRepo().find()
-            const workersToDelete = allWorkers.filter(worker => dayjs(worker.updated).isBefore(offlineThreshold))
+        async list(platformId: string): Promise<WorkerMachineWithStatus[]> {
+            const allWorkers = await workerMachineCache().find()
 
-            if (workersToDelete.length > 0) {
-                await workerRepo().delete({
-                    id: In(workersToDelete.map(worker => worker.id)),
-                })
-            }
+            const offlineThreshold = dayjs().subtract(60, 'seconds').utc()
 
-            const onlineWorkers = allWorkers.filter(worker => dayjs(worker.updated).isAfter(offlineThreshold))
-            return onlineWorkers.map(worker => ({
-                ...worker,
-                status: WorkerMachineStatus.ONLINE,
-            }))
+            const [onlineWorkers, offLineWorkers] = partition(allWorkers, (worker) => dayjs(worker.updated).isAfter(offlineThreshold))
+
+            await workerMachineCache().delete(offLineWorkers.map(worker => worker.id))
+
+            const hasDedicated = onlineWorkers.some(w => w.type === WorkerMachineType.DEDICATED && w.platformId === platformId)
+            return onlineWorkers
+                .filter(worker => hasDedicated
+                    ? (worker.type === WorkerMachineType.DEDICATED && worker.platformId === platformId)
+                    : worker.type !== WorkerMachineType.DEDICATED)
+                .map(worker => ({
+                    ...worker,
+                    status: WorkerMachineStatus.ONLINE,
+                    type: worker.type === 'DEDICATED' ? WorkerMachineType.DEDICATED : WorkerMachineType.SHARED,
+                }))
         },
     }
 }
 
-type OnDisconnectParams = {
-    workerId: string
+
+async function getExecutionMode(log: FastifyBaseLogger, platformIdForDedicatedWorker: string | undefined): Promise<ExecutionMode> {
+    const executionMode = system.getOrThrow<ExecutionMode>(AppSystemProp.EXECUTION_MODE)
+    if (isNil(platformIdForDedicatedWorker)) {
+        return executionMode
+    }
+
+    const dedicatedWorkerConfig = await dedicatedWorkers(log).getWorkerConfig(platformIdForDedicatedWorker)
+    if (isNil(dedicatedWorkerConfig)) {
+        return executionMode
+    }
+    if (dedicatedWorkerConfig.trustedEnvironment) {
+        return ExecutionMode.SANDBOX_PROCESS
+    }
+    return ExecutionMode.SANDBOX_CODE_AND_PROCESS
 }
 
-type OnHeartbeatParams = {
-    socket: Socket
+type OnDisconnectParams = {
     workerId: string
-    cpuUsagePercentage: number
-    diskInfo: MachineInformation['diskInfo']
-    ramUsagePercentage: number
-    totalAvailableRamInBytes: number
-    ip: string
-    totalSandboxes: number
-    freeSandboxes: number
-    workerProps: Record<string, string>
 }

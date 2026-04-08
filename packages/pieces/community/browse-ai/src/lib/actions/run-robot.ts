@@ -30,7 +30,7 @@ export const runRobotAction = createAction({
       const response = await browseAiApiCall({
         method: HttpMethod.POST,
         resourceUri: `/robots/${robotId}/tasks`,
-        auth: { apiKey: context.auth as string },
+        auth: { apiKey: context.auth.secret_text },
         body: {
           recordVideo: recordVideo || false,
           inputParameters,

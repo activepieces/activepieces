@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { airtableAuth } from '../../index';
+import { airtableAuth } from '../auth';
 import { airtableCommon } from '../common';
 import { AirtableBase } from '../common/models';
 
@@ -20,7 +20,7 @@ export const airtableFindBaseAction = createAction({
     const { baseName } = propsValue;
 
     const allBases: AirtableBase[] = await airtableCommon.fetchAllBases({
-      token: personalToken,
+      token: personalToken.secret_text,
     });
 
     const searchTerm = (baseName as string).toLowerCase();

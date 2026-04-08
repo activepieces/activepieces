@@ -2,6 +2,8 @@
   "Convert JSON to text and vice versa": "JSON converteren naar tekst en vice versa",
   "Convert Json to Text": "Json converteren naar tekst",
   "Convert Text to Json": "Tekst converteren naar Json",
+  "Stringifies JSON.": "Stringificeert JSON.",
+  "Parses text into JSON.": "Parseert tekst in JSON.",
   "JSON": "JSON",
   "Text": "Tekstveld"
 }

@@ -5,7 +5,7 @@ import {
   HttpRequest,
 } from '@activepieces/pieces-common';
 import { mauticCommon } from '../common';
-import { mauticAuth } from '../..';
+import { mauticAuth } from '../auth';
 
 export const createContact = createAction({
   auth: mauticAuth,
@@ -16,7 +16,7 @@ export const createContact = createAction({
     fields: mauticCommon.contactFields,
   },
   run: async function (context) {
-    const { base_url, username, password } = context.auth;
+    const { base_url, username, password } = context.auth.props;
     const request: HttpRequest = {
       method: HttpMethod.POST,
       url:

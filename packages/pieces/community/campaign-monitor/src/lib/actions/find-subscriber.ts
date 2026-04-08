@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest, transformCustomFields } from '../common/client';
-import { campaignMonitorAuth } from '../../index';
+import { campaignMonitorAuth } from '../auth';
 import { clientId, listId } from '../common/props';
 
 export const findSubscriberAction = createAction({
@@ -23,7 +23,7 @@ export const findSubscriberAction = createAction({
 
     try {
       const response = await makeRequest(
-        { apiKey: auth as string },
+          { apiKey: auth.secret_text },
         HttpMethod.GET,
         `/subscribers/${listId}.json?email=${encodeURIComponent(
           email

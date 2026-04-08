@@ -32,7 +32,7 @@ export const scenario = createPiece({
       baseUrl: () => `https://api.cloud.scenario.com/v1/`,
       auth: scenarioAuth,
       authMapping: async (auth) => {
-        const { username, password } = auth as BasicAuthConnectionValue;
+        const { username, password } = auth;
         return {
           Authorization: `Basic ${Buffer.from(
             `${username}:${password}`

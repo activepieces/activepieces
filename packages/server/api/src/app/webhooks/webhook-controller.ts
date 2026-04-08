@@ -1,46 +1,58 @@
 
 import {
-    ALL_PRINCIPAL_TYPES,
-    EventPayload,
-    FAIL_PARENT_ON_FAILURE_HEADER,
-    FlowRun,
-    isMultipartFile,
-    PARENT_RUN_ID_HEADER,
+    RAW_PAYLOAD_HEADER,
     WebhookUrlParams,
     WebsocketClientEvent,
 } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { trace } from '@opentelemetry/api'
 import { FastifyRequest } from 'fastify'
-import { stepFileService } from '../file/step-file/step-file.service'
-import { projectService } from '../project/project-service'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import { securityAccess } from '../core/security/authorization/fastify-security'
 import { triggerSourceService } from '../trigger/trigger-source/trigger-source-service'
-import { WebhookFlowVersionToRun } from './webhook-handler'
-import { webhookService } from './webhook.service'
+import { convertRequest, extractHeaderFromRequest } from './webhook-request-converter'
+import { WebhookFlowVersionToRun, webhookService } from './webhook.service'
 
-export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
+const tracer = trace.getTracer('webhook-controller')
+
+export const webhookController: FastifyPluginAsyncZod = async (app) => {
 
     app.all(
         '/:flowId/sync',
         WEBHOOK_PARAMS,
         async (request: FastifyRequest<{ Params: WebhookUrlParams }>, reply) => {
-            const response = await webhookService.handleWebhook({
-                data: (projectId: string) => convertRequest(request, projectId, request.params.flowId),
-                logger: request.log,
-                flowId: request.params.flowId,
-                async: false,
-                flowVersionToRun: WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST,
-                saveSampleData: await triggerSourceService(request.log).existsByFlowId({
-                    flowId: request.params.flowId,
-                    simulate: true,
+            return tracer.startActiveSpan('webhook.receive.sync', {
+                attributes: {
+                    'webhook.flowId': request.params.flowId,
+                    'webhook.method': request.method,
+                    'webhook.type': 'sync',
                 },
-                ),
-                execute: true,
-                ...extractHeaderFromRequest(request),
+            }, async (span) => {
+                try {
+                    const response = await webhookService.handleWebhook({
+                        data: (projectId: string) => convertRequest(request, projectId, request.params.flowId),
+                        logger: request.log,
+                        flowId: request.params.flowId,
+                        async: false,
+                        flowVersionToRun: WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST,
+                        saveSampleData: await triggerSourceService(request.log).existsByFlowId({
+                            flowId: request.params.flowId,
+                            simulate: true,
+                        },
+                        ),
+                        execute: true,
+                        ...extractRawPayload(request),
+                        ...extractHeaderFromRequest(request),
+                    })
+                    span.setAttribute('webhook.response.status', response.status)
+                    await reply
+                        .status(response.status)
+                        .headers(response.headers)
+                        .send(response.body)
+                }
+                finally {
+                    span.end()
+                }
             })
-            await reply
-                .status(response.status)
-                .headers(response.headers)
-                .send(response.body)
         },
     )
 
@@ -48,24 +60,39 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
         '/:flowId',
         WEBHOOK_PARAMS,
         async (request: FastifyRequest<{ Params: WebhookUrlParams }>, reply) => {
-            const response = await webhookService.handleWebhook({
-                data: (projectId: string) => convertRequest(request, projectId, request.params.flowId),
-                logger: request.log,
-                flowId: request.params.flowId,
-                async: true,
-                saveSampleData: await triggerSourceService(request.log).existsByFlowId({
-                    flowId: request.params.flowId,
-                    simulate: true,
+            return tracer.startActiveSpan('webhook.receive.async', {
+                attributes: {
+                    'webhook.flowId': request.params.flowId,
+                    'webhook.method': request.method,
+                    'webhook.type': 'async',
                 },
-                ),
-                flowVersionToRun: WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST,
-                execute: true,
-                ...extractHeaderFromRequest(request),
+            }, async (span) => {
+                try {
+                    const response = await webhookService.handleWebhook({
+                        data: (projectId: string) => convertRequest(request, projectId, request.params.flowId),
+                        logger: request.log,
+                        flowId: request.params.flowId,
+                        async: true,
+                        saveSampleData: await triggerSourceService(request.log).existsByFlowId({
+                            flowId: request.params.flowId,
+                            simulate: true,
+                        },
+                        ),
+                        flowVersionToRun: WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST,
+                        execute: true,
+                        ...extractRawPayload(request),
+                        ...extractHeaderFromRequest(request),
+                    })
+                    span.setAttribute('webhook.response.status', response.status)
+                    await reply
+                        .status(response.status)
+                        .headers(response.headers)
+                        .send(response.body)
+                }
+                finally {
+                    span.end()
+                }
             })
-            await reply
-                .status(response.status)
-                .headers(response.headers)
-                .send(response.body)
         },
     )
 
@@ -128,8 +155,7 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
 
 const WEBHOOK_PARAMS = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
-        skipAuth: true,
+        security: securityAccess.public(),
         rawBody: true,
     },
     schema: {
@@ -138,61 +164,14 @@ const WEBHOOK_PARAMS = {
 }
 
 
-async function convertRequest(
-    request: FastifyRequest,
-    projectId: string,
-    flowId: string,
-): Promise<EventPayload> {
-    return {
-        method: request.method,
-        headers: request.headers as Record<string, string>,
-        body: await convertBody(request, projectId, flowId),
-        queryParams: request.query as Record<string, string>,
-        rawBody: request.rawBody,
+function extractRawPayload(request: FastifyRequest): { payload?: Record<string, unknown> } {
+    const isRawPayload = request.headers[RAW_PAYLOAD_HEADER] === 'true'
+        && request.headers.authorization
+        && request.body != null
+        && !Array.isArray(request.body)
+        && !Buffer.isBuffer(request.body)
+    if (isRawPayload) {
+        return { payload: request.body as Record<string, unknown> }
     }
-}
-
-
-
-async function convertBody(
-    request: FastifyRequest,
-    projectId: string,
-    flowId: string,
-): Promise<unknown> {
-    if (request.isMultipart()) {
-        const jsonResult: Record<string, unknown> = {}
-        const requestBodyEntries = Object.entries(
-            request.body as Record<string, unknown>,
-        )
-
-        const platformId = await projectService.getPlatformId(projectId)
-
-        for (const [key, value] of requestBodyEntries) {
-            if (isMultipartFile(value)) {
-                const file = await stepFileService(request.log).saveAndEnrich({
-                    data: value.data as Buffer,
-                    fileName: value.filename,
-                    stepName: 'trigger',
-                    flowId,
-                    contentLength: value.data.length,
-                    platformId,
-                    projectId,
-                })
-                jsonResult[key] = file.url
-            }
-            else {
-                jsonResult[key] = value
-            }
-        }
-        return jsonResult
-    }
-    return request.body
-}
-
-
-function extractHeaderFromRequest(request: FastifyRequest): Pick<FlowRun, 'parentRunId' | 'failParentOnFailure'> {
-    return {
-        parentRunId: request.headers[PARENT_RUN_ID_HEADER] as string,
-        failParentOnFailure: request.headers[FAIL_PARENT_ON_FAILURE_HEADER] === 'true',
-    }
+    return {}
 }

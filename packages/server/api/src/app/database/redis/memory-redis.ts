@@ -1,6 +1,5 @@
 import Redis from 'ioredis'
 import { RedisMemoryServer } from 'redis-memory-server'
-import { system } from '../../helper/system/system'
 
 let redisMemoryServer: RedisMemoryServer | null = null
 
@@ -20,7 +19,6 @@ function getOrCreateRedisMemoryServer(): RedisMemoryServer {
     if (redisMemoryServer) {
         return redisMemoryServer
     }
-    system.globalLogger().info('Creating Redis Memory Server')
     redisMemoryServer = new RedisMemoryServer()
     return redisMemoryServer
 }

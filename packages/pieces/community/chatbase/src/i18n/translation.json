@@ -26,10 +26,12 @@
   "Method": "Method",
   "Headers": "Headers",
   "Query Parameters": "Query Parameters",
+  "Body Type": "Body Type",
   "Body": "Body",
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "Optional text data for training the chatbot.": "Optional text data for training the chatbot.",
   "Higher values = more random output. Between 0 and 1.": "Higher values = more random output. Between 0 and 1.",
   "Unique ID for saving this conversation in Chatbase dashboard.": "Unique ID for saving this conversation in Chatbase dashboard.",
@@ -37,7 +39,7 @@
   "Pagination page number (default = 1)": "Pagination page number (default = 1)",
   "Number of results per page (default = 10, max = 100)": "Number of results per page (default = 10, max = 100)",
   "Authorization headers are injected automatically from your connection.": "Authorization headers are injected automatically from your connection.",
-  "Enable for files like PDFs, images, etc..": "Enable for files like PDFs, images, etc..",
+  "Enable for files like PDFs, images, etc.": "Enable for files like PDFs, images, etc.",
   "o4-mini": "o4-mini",
   "o3": "o3",
   "gpt-4": "gpt-4",
@@ -80,5 +82,9 @@
   "PATCH": "PATCH",
   "PUT": "PUT",
   "DELETE": "DELETE",
-  "HEAD": "HEAD"
+  "HEAD": "HEAD",
+  "None": "None",
+  "JSON": "JSON",
+  "Form Data": "Form Data",
+  "Raw": "Raw"
 }

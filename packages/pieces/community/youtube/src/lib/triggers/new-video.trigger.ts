@@ -333,7 +333,7 @@ function getRssItems(channelId: string): Promise<any[]> {
         });
 
         feedparser.on('end', () => {
-          resolve(items);
+          resolve(items.reverse());
         });
 
         feedparser.on('error', (error: any) => {

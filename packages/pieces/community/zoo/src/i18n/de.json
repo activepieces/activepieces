@@ -1,5 +1,4 @@
 {
-  "Zoo": "Zoo",
   "Generate and iterate on 3D models from text descriptions using ML endpoints.": "Generieren und iterieren von 3D-Modellen aus Textbeschreibungen mit ML-Endpunkten.",
   "Your Zoo API Key (Bearer Token).": "Ihr Zoo API Key (Bären-Token).",
   "Generate CAD Model": "CAD-Modell generieren",

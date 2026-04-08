@@ -4,8 +4,8 @@ import {
     pollingHelper,
 } from '@activepieces/pieces-common';
 import {
+    AppConnectionValueForAuthProperty,
     createTrigger,
-    PiecePropValueSchema,
     TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
@@ -13,7 +13,7 @@ import { microsoft365PeopleAuth } from '../common/auth';
 import { microsoft365PeopleCommon } from '../common/common';
 
 const polling: Polling<
-  PiecePropValueSchema<typeof microsoft365PeopleAuth>,
+  AppConnectionValueForAuthProperty<typeof microsoft365PeopleAuth>,
   Record<string, never>
 > = {
   strategy: DedupeStrategy.TIMEBASED,

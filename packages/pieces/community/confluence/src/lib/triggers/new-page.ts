@@ -2,9 +2,10 @@ import {
 	createTrigger,
 	TriggerStrategy,
 	PiecePropValueSchema,
+	AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper, HttpMethod } from '@activepieces/pieces-common';
-import { confluenceAuth } from '../../index';
+import { confluenceAuth } from '../auth';
 import { confluenceApiCall, confluencePaginatedApiCall, PaginatedResponse } from '../common';
 import { isNil } from '@activepieces/shared';
 import { spaceIdProp } from '../common/props';
@@ -25,15 +26,15 @@ type Props = {
 	spaceId: string;
 };
 
-const polling: Polling<PiecePropValueSchema<typeof confluenceAuth>, Props> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof confluenceAuth>, Props> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, propsValue, lastFetchEpochMS }) {
 		const pages = [];
 		if (lastFetchEpochMS === 0) {
 			const response = await confluenceApiCall<PaginatedResponse<ConfluencePage>>({
-				domain: auth.confluenceDomain,
-				username: auth.username,
-				password: auth.password,
+				domain: auth.props.confluenceDomain,
+				username: auth.props.username,
+				password: auth.props.password,
 				version: 'v2',
 				method: HttpMethod.GET,
 				resourceUri: `/spaces/${propsValue.spaceId}/pages`,
@@ -48,9 +49,9 @@ const polling: Polling<PiecePropValueSchema<typeof confluenceAuth>, Props> = {
 			pages.push(...response.results);
 		} else {
 			const response = await confluencePaginatedApiCall<ConfluencePage>({
-				domain: auth.confluenceDomain,
-				username: auth.username,
-				password: auth.password,
+				domain: auth.props.confluenceDomain,
+				username: auth.props.username,
+				password: auth.props.password,
 				method: HttpMethod.GET,
 				version: 'v2',
 				resourceUri: `/spaces/${propsValue.spaceId}/pages`,

@@ -1,4 +1,4 @@
-import { hubspotAuth } from '../../';
+import { hubspotAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
     getDefaultPropertiesForObject,
@@ -45,6 +45,9 @@ export const updateProductAction = createAction({
 
         // Add additional properties to the productProperties object
         Object.entries(objectProperties).forEach(([key, value]) => {
+            if ((Array.isArray(value) && value.length === 0)) {
+                return;  
+			}
             // Format values if they are arrays
             productProperties[key] = Array.isArray(value) ? value.join(';') : value;
         });

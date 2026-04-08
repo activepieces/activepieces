@@ -1,0 +1,17 @@
+{
+  "Parse documents and extract data from PDFs, DOCX files, images, and webpages using Parser Expert's powerful API.": "Analyser les documents et extraire les données à partir de PDFs, fichiers DOCX, images et pages Web à l'aide de la puissante API de Parser Expert.",
+  "Your Parser Expert API key. You can find this in your dashboard under Integration -> New API Key.": "Votre clé API Parser Expert. Vous pouvez la trouver dans votre tableau de bord sous Intégration -> Nouvelle clé API.",
+  "Upload Document": "Télécharger le document",
+  "Get Extracted Data": "Obtenir les données extraites",
+  "Upload a document or provide a webpage URL to parse. Supported formats: PDF, DOCX, Image, Txt File (maximum 10 pages per document).": "Télécharger un document ou fournir une URL de page Web à analyser. Formats pris en charge : PDF, DOCX, Image, Txt File (maximum 10 pages par document).",
+  "Retrieve the extracted data using the parser ID and bucket ID. The parser ID is returned when you upload a document.": "Récupère les données extraites à l'aide de l'identifiant de l'analyseur et de l'ID du segment. L'identifiant de l'analyseur est retourné lorsque vous téléchargez un document.",
+  "Bucket ID": "ID du seau",
+  "File": "Ficher",
+  "Webpage URL": "URL de la page Web",
+  "Parser ID": "Parser ID",
+  "The ID of the bucket where the data will be stored. You can find this in your dashboard under Manage Bucket.": "L'ID du compartiment où les données seront stockées. Vous pouvez le trouver dans votre tableau de bord sous Gérer Bucket.",
+  "The file to upload. Supported formats: PDF, DOCX, Image, Txt File (maximum 10 pages per document). This will be ignored if webpage URL is provided.": "Le fichier à télécharger. Formats supportés : PDF, DOCX, Image, Txt File (maximum 10 pages par document). Cela sera ignoré si l'URL de la page Web est fournie.",
+  "The URL of the webpage to extract content from. This will be ignored if file is provided.": "L'URL de la page Web à partir de laquelle extraire le contenu. Cela sera ignoré si le fichier est fourni.",
+  "The ID of the parser. This is returned when content is uploaded.": "L'ID de l'analyseur. Cela est retourné lorsque le contenu est téléchargé.",
+  "The ID of the bucket where the data is stored.": "L'ID du compartiment où les données sont stockées."
+}

@@ -1,5 +1,5 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { beamerAuth } from '../../index';
+import { beamerAuth } from '../auth';
 import { beamerCommon } from '../common';
 import {
   HttpMethod,
@@ -35,7 +35,7 @@ export const createComment = createAction({
     }),
   },
   async run(context) {
-    const apiKey = context.auth;
+    const apiKey = context.auth.secret_text;
 
     const request: HttpRequest = {
       method: HttpMethod.POST,

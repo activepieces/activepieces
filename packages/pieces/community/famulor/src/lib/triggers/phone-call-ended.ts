@@ -4,6 +4,7 @@ import { famulorCommon } from '../common';
 
 const assistantDropdownForWebhook = () =>
   Property.Dropdown({
+    auth: famulorAuth,
     displayName: 'Assistant',
     description: 'Select an assistant to receive post-call webhook notifications for',
     required: true,
@@ -20,7 +21,7 @@ const assistantDropdownForWebhook = () =>
       try {
         // Get all assistants (both inbound and outbound can make calls)
         const assistants = await famulorCommon.listAllAssistants({ 
-          auth: auth as string, 
+          auth: auth.secret_text, 
           per_page: 100
         });
         
@@ -52,7 +53,7 @@ export const phoneCallEnded = createTrigger({
     auth: famulorAuth,
     name: 'phoneCallEnded',
     displayName: 'Phone Call Completed',
-    description: 'Triggers when a phone call is completed, providing full call transcript, extracted variables, and call metadata.',
+    description: 'Triggers when a phone call completes.',
     props: {
         assistant_id: assistantDropdownForWebhook(),
     },
@@ -99,14 +100,14 @@ export const phoneCallEnded = createTrigger({
     type: TriggerStrategy.WEBHOOK,
     async onEnable(context) {
         await famulorCommon.enablePostCallWebhook({
-            auth: context.auth as string,
+            auth: context.auth.secret_text,
             assistant_id: context.propsValue.assistant_id as number,
             webhook_url: context.webhookUrl,
         });
     },
     async onDisable(context) {
         await famulorCommon.disablePostCallWebhook({
-            auth: context.auth as string,
+            auth: context.auth.secret_text,
             assistant_id: context.propsValue.assistant_id as number,
         });
     },

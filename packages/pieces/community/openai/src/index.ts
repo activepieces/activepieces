@@ -15,35 +15,7 @@ import { translateAction } from './lib/actions/translation';
 import { visionPrompt } from './lib/actions/vision-prompt';
 import { baseUrl } from './lib/common/common';
 import { extractStructuredDataAction } from './lib/actions/extract-structure-data.action';
-import { SUPPORTED_AI_PROVIDERS } from '@activepieces/common-ai';
-
-export const openaiAuth = PieceAuth.SecretText({
-  description: SUPPORTED_AI_PROVIDERS.find(p => p.provider === 'openai')?.markdown,
-  displayName: 'API Key',
-  required: true,
-  validate: async (auth) => {
-    try {
-      await httpClient.sendRequest<{
-        data: { id: string }[];
-      }>({
-        url: `${baseUrl}/models`,
-        method: HttpMethod.GET,
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: auth.auth as string,
-        },
-      });
-      return {
-        valid: true,
-      };
-    } catch (e) {
-      return {
-        valid: false,
-        error: 'Invalid API key',
-      };
-    }
-  },
-});
+import { openaiAuth } from './lib/auth';
 
 export const openai = createPiece({
   displayName: 'OpenAI',
@@ -66,7 +38,7 @@ export const openai = createPiece({
       baseUrl: () => baseUrl,
       authMapping: async (auth) => {
         return {
-          Authorization: `Bearer ${auth}`,
+          Authorization: `Bearer ${auth.secret_text}`,
         };
       },
     }),

@@ -1,0 +1,7 @@
+{
+  "New Submission": "Nouvelle soumission",
+  "Triggers when form receives a new submission.": "Déclenche lorsque le formulaire reçoit une nouvelle soumission.",
+  "Markdown": "Markdown",
+  "**Live URL:**\n```text\n{{webhookUrl}}\n```\ngenerate sample data & triggers published flow.\n\n": "**URL en direct:**\n```text\n{{webhookUrl}}\n```\ngénérer des exemples de données et déclencher le Flow publié.\n\n",
+  "\nTo set up the trigger for new form submissions, follow these steps:\n\n1. Go to the \"Dashboard\" section.\n2. Select the form where you want the trigger to occur.\n3. Click on the \"Settings\" section.\n4. Find the \"Webhook URL\" field and paste above URL there.  \n6. Click on \"Save\".\n": "\nTo set up the trigger for new form submissions, follow these steps:\n\n1. Go to the \"Dashboard\" section.\n2. Select the form where you want the trigger to occur.\n3. Click on the \"Settings\" section.\n4. Find the \"Webhook URL\" field and paste above URL there.  \n6. Click on \"Save\".\n"
+}

@@ -1,7 +1,7 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { clockodoCommon, makeClient, reformatDateTime } from '../../common';
 import { TimeRecordEntry } from '../../common/models/entry';
-import { clockodoAuth } from '../../../';
+import { clockodoAuth } from '../../auth';
 
 export default createAction({
   auth: clockodoAuth,
@@ -31,7 +31,7 @@ export default createAction({
     user_id: clockodoCommon.user_id(false),
   },
   async run({ auth, propsValue }) {
-    const client = makeClient(auth);
+    const client = makeClient(auth.props);
     const res = await client.createEntry({
       customers_id: propsValue.customer_id,
       projects_id: propsValue.project_id,

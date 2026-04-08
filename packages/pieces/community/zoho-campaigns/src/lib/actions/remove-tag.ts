@@ -9,7 +9,8 @@ export const removeTag = createAction({
   description: 'Remove a tag from a contact.',
   props: zohoCampaignsCommon.removeTagProperties,
   async run({ auth, propsValue }) {
-    const { access_token: accessToken, location } = auth as any;
+    const location = auth.props?.['location'] as string || 'zoho.com';
+    const accessToken = auth.access_token;
     await propsValidation.validateZod(
       propsValue,
       zohoCampaignsCommon.removeTagSchema

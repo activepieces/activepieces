@@ -1,8 +1,16 @@
-import { Property } from '@activepieces/pieces-framework';
+import { PieceAuth, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
+const avomaAuth = PieceAuth.SecretText({
+  displayName: 'API Key',
+  description:
+    'Your Avoma API Key (Bearer token). Generate it from your Avoma API Integration settings: https://help.avoma.com/api-integration-for-avoma',
+  required: true
+});
 export const avomaCommon = {
+  avomaAuth: avomaAuth,
   meetingDropdown: Property.Dropdown({
+    auth: avomaAuth,
     displayName: 'Meeting',
     description: 'Select a meeting from your Avoma account',
     required: true,
@@ -24,7 +32,7 @@ export const avomaCommon = {
           method: HttpMethod.GET,
           url: `https://api.avoma.com/v1/meetings/?page_size=100&from_date=${encodeURIComponent(fromDate)}&to_date=${encodeURIComponent(toDate)}`,
           headers: {
-            'Authorization': `Bearer ${auth}`,
+            'Authorization': `Bearer ${auth.secret_text}`,
             'Content-Type': 'application/json'
           }
         });
@@ -65,6 +73,7 @@ export const avomaCommon = {
   }),
 
   transcriptionDropdown: Property.Dropdown({
+    auth: avomaAuth,
     displayName: 'Transcription',
     description: 'Select a transcription from your Avoma meetings',
     required: true,
@@ -86,7 +95,7 @@ export const avomaCommon = {
           method: HttpMethod.GET,
           url: `https://api.avoma.com/v1/transcriptions/?page_size=100&from_date=${encodeURIComponent(fromDate)}&to_date=${encodeURIComponent(toDate)}`,
           headers: {
-            'Authorization': `Bearer ${auth}`,
+            'Authorization': `Bearer ${auth.secret_text}`,
             'Content-Type': 'application/json'
           }
         });
@@ -111,7 +120,6 @@ export const avomaCommon = {
         return {
           disabled: false,
           options: transcriptions.map((transcription: any) => {
-            const meetingUuid = transcription.meeting_uuid || 'Unknown Meeting';
             const transcriptionUuid = transcription.uuid;
             const speakersCount = transcription.speakers?.length || 0;
             const transcriptLength = transcription.transcript?.length || 0;

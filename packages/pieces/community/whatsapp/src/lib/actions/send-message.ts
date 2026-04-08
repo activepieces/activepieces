@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { whatsappAuth } from '../..';
+import { whatsappAuth } from '../auth';
 import { commonProps } from '../common/utils';
 
 export const sendMessage = createAction({
@@ -23,7 +23,7 @@ export const sendMessage = createAction({
 	},
 	async run(context) {
 		const { to, text, phone_number_id } = context.propsValue;
-		const { access_token } = context.auth;
+		const { access_token } = context.auth.props;
 		return await httpClient.sendRequest({
 			method: HttpMethod.POST,
 			url: `https://graph.facebook.com/v17.0/${phone_number_id}/messages`,

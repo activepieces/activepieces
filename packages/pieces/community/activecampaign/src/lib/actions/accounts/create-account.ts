@@ -1,4 +1,4 @@
-import { activeCampaignAuth } from '../../..';
+import { activeCampaignAuth } from '../../auth';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { activecampaignCommon, makeClient } from '../../common';
 import { CreateAccountRequest } from '../../common/types';
@@ -31,7 +31,7 @@ export const createAccountAction = createAction({
 			createAccountParams.fields?.push({ customFieldId: Number(key), fieldValue: value });
 		});
 
-		const client = makeClient(context.auth);
+		const client = makeClient(context.auth.props);
 		return await client.createAccount(createAccountParams);
 	},
 });
