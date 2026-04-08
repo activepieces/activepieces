@@ -191,10 +191,7 @@ export function createHandlers(log: FastifyBaseLogger, platformIdForDedicatedWor
             if (isNil(flow)) {
                 return null
             }
-            return flowVersionService(log).lockPieceVersions({
-                flowVersion,
-                projectId: flow.projectId,
-            })
+            return flowVersion
         },
 
         async getPiece(input) {

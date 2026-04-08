@@ -16,6 +16,20 @@ jobs:
           fetch-depth: 0
           ref: release-candidate
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build shared package
+        run: bun run --cwd packages/shared build
+
       - name: Set version from package.json
         id: version
         run: |
@@ -67,7 +81,7 @@ jobs:
 
       - name: Check for breaking migrations
         id: migration-check
-        run: npx tsx tools/scripts/check-release-migrations.ts ${{ steps.version.outputs.release }}
+        run: bunx tsx tools/scripts/check-release-migrations.ts ${{ steps.version.outputs.release }}
     
       - name: Add breaking migration note to release
         if: steps.migration-check.outputs.has_breaking == 'true'

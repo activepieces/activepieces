@@ -1,4 +1,5 @@
 import {
+    EngineResponseStatus,
     EventDestinationJobData,
     WorkerJobType,
 } from '@activepieces/shared'
@@ -21,6 +22,6 @@ export const eventDestinationJob: JobHandler<EventDestinationJobData, FireAndFor
 
         ctx.log.info({ webhookUrl: data.webhookUrl, status: response.status }, 'Event destination sent')
 
-        return { kind: JobResultKind.FIRE_AND_FORGET }
+        return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
     },
 }

@@ -4,6 +4,7 @@ import { systemUsage } from '@activepieces/server-utils'
 import {
     ActivepiecesError,
     ConsumeJobRequest,
+    createRpcClient,
     EngineResponseStatus,
     JobData,
     tryCatch,
@@ -12,7 +13,6 @@ import {
     WorkerSettingsResponse,
     WorkerToApiContract,
 } from '@activepieces/shared'
-import { createRpcClient } from '@activepieces/shared/server'
 import { trace } from '@opentelemetry/api'
 import { nanoid } from 'nanoid'
 import { io, Socket } from 'socket.io-client'
@@ -155,7 +155,7 @@ async function pollAndExecute(apiClient: WorkerToApiContract, sbManager: Sandbox
                 queueName: job.queueName,
                 status: execError
                     ? EngineResponseStatus.INTERNAL_ERROR
-                    : result?.kind === JobResultKind.SYNCHRONOUS ? result.status : EngineResponseStatus.OK,
+                    : result.status,
                 errorMessage: buildErrorMessage(execError ?? undefined, result ?? undefined),
                 logs: extractLogs(execError ?? undefined, result ?? undefined),
                 delayInSeconds: result?.kind === JobResultKind.FIRE_AND_FORGET ? result.delayInSeconds : undefined,

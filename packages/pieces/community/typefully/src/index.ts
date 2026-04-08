@@ -8,45 +8,39 @@ import { createDraftAdvancedAction } from './lib/actions/create-draft-advanced.a
 import { getDraftAction } from './lib/actions/get-draft.action';
 import { listDraftsAction } from './lib/actions/list-drafts.action';
 import { deleteDraftAction } from './lib/actions/delete-draft.action';
-import { scheduleDraftNextSlotAction } from './lib/actions/schedule-draft-next-slot.action';
-import { draftCreatedTrigger } from './lib/triggers/draft-created.trigger';
-import { draftScheduledTrigger } from './lib/triggers/draft-scheduled.trigger';
-import { draftPublishedTrigger } from './lib/triggers/draft-published.trigger';
-import { draftStatusChangedTrigger } from './lib/triggers/draft-status-changed.trigger';
-import { draftTagsChangedTrigger } from './lib/triggers/draft-tags-changed.trigger';
-import { draftDeletedTrigger } from './lib/triggers/draft-deleted.trigger';
+import { publishDraftNowAction } from './lib/actions/publish-draft-now.action';
+import { scheduleDraftAction } from './lib/actions/schedule-draft.action';
+import { uploadMediaAction } from './lib/actions/upload-media.action';
+import { newEventTrigger } from './lib/triggers/new-event.trigger';
 
 export const typefully = createPiece({
-  displayName: 'Typefully',
-  description: 'Write, schedule, and publish social media content.',
-  auth: typefullyAuth,
-  minimumSupportedRelease: '0.36.1',
-  logoUrl: 'https://cdn.activepieces.com/pieces/typefully.png',
-  authors: ['bst1n', 'sanket-a11y'],
-  categories: [PieceCategory.MARKETING],
-  actions: [
-    createDraftAction,
-    createDraftAdvancedAction,
-    getDraftAction,
-    listDraftsAction,
-    deleteDraftAction,
-    scheduleDraftNextSlotAction,
-    createCustomApiCallAction({
-      auth: typefullyAuth,
-      baseUrl: () => TYPEFULLY_API_URL,
-      authMapping: async (auth) => {
-        return {
-          Authorization: `Bearer ${auth.secret_text}`,
-        };
-      },
-    }),
-  ],
-  triggers: [
-    draftCreatedTrigger,
-    draftScheduledTrigger,
-    draftPublishedTrigger,
-    draftStatusChangedTrigger,
-    draftTagsChangedTrigger,
-    draftDeletedTrigger,
-  ],
+	displayName: 'Typefully',
+	description: 'Write, schedule, and publish social media content.',
+	auth: typefullyAuth,
+	minimumSupportedRelease: '0.36.1',
+	logoUrl: 'https://cdn.activepieces.com/pieces/typefully.png',
+	authors: ['bst1n', 'sanket-a11y'],
+	categories: [PieceCategory.MARKETING],
+	actions: [
+		createDraftAction,
+		createDraftAdvancedAction,
+		publishDraftNowAction,
+		scheduleDraftAction,
+		getDraftAction,
+		listDraftsAction,
+		deleteDraftAction,
+		uploadMediaAction,
+		createCustomApiCallAction({
+			auth: typefullyAuth,
+			baseUrl: () => TYPEFULLY_API_URL,
+			authMapping: async (auth) => {
+				return {
+					Authorization: `Bearer ${auth.secret_text}`,
+				};
+			},
+		}),
+	],
+	triggers: [
+		newEventTrigger,
+	],
 });

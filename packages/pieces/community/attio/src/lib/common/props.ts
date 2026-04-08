@@ -50,6 +50,36 @@ export const objectTypeIdDropdown = (params: DropdownParams) =>
 		},
 	});
 
+export const objectAttributeDropdown = (params: DropdownParams) =>
+	Property.Dropdown({
+		auth: attioAuth,
+		displayName: params.displayName,
+		description: params.description,
+		required: params.required,
+		refreshers: ['objectTypeId'],
+		options: async ({ auth, objectTypeId }) => {
+			if (!auth) {
+				return { disabled: true, options: [], placeholder: 'Please connect your account first.' };
+			}
+			if (!objectTypeId) {
+				return { disabled: true, options: [], placeholder: 'Please select an Object first.' };
+			}
+
+			const response = await attioPaginatedApiCall<AttributeResponse>({
+				accessToken: auth.secret_text,
+				method: HttpMethod.GET,
+				resourceUri: `/objects/${objectTypeId}/attributes`,
+			});
+
+			return {
+				disabled: false,
+				options: response
+					.filter((attr) => !attr.is_archived)
+					.map((attr) => ({ label: attr.title, value: attr.api_slug })),
+			};
+		},
+	});
+
 export const listIdDropdown = (params: DropdownParams) =>
 	Property.Dropdown({
 		auth: attioAuth,
@@ -506,9 +536,13 @@ export async function formatInputFields(
 		switch (fieldType) {
 			case 'record-reference': {
 				if (isSearch) {
-					// Filter API shorthand: plain ID string for $eq, $in array for multiple
+					// Attio requires verbose field syntax for record-reference filters:
+					// { attributeName: { target_record_id: { $eq: "uuid" } } }
 					const ids: string[] = Array.isArray(value) ? value : [value];
-					formattedFields[key] = ids.length === 1 ? ids[0] : { $in: ids };
+					formattedFields[key] =
+						ids.length === 1
+							? { target_record_id: { $eq: ids[0] } }
+							: { target_record_id: { $in: ids } };
 				} else {
 					const targetSlug = typeMapping[key]?.object_slug;
 					const ids: string[] = Array.isArray(value) ? value : [value];

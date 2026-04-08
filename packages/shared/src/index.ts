@@ -23,6 +23,7 @@ export * from './lib/core/license-keys'
 export * from './lib/core/support-url'
 export * from './lib/core/feedback-url'
 export * from './lib/core/health'
+export * from './lib/form-errors'
 
 // management
 export * from './lib/management/platform'
@@ -72,6 +73,7 @@ export * from './lib/automation/webhook'
 export * from './lib/automation/trigger'
 export * from './lib/automation/workers/job-data'
 
+export * from './lib/automation/engine/rpc'
 export * from './lib/automation/workers/worker-contract'
 export * from './lib/automation/workers'
 export * from './lib/automation/forms'

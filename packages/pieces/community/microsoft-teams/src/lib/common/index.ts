@@ -1,8 +1,9 @@
-import { DropdownOption, PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
+import { DropdownOption, OAuth2PropertyValue, PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
 
-import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
+import { PageCollection } from '@microsoft/microsoft-graph-client';
 import { Team, Channel, Chat, ConversationMember } from '@microsoft/microsoft-graph-types';
 import { microsoftTeamsAuth } from '../auth';
+import { createGraphClient } from './graph';
 
 export const microsoftTeamsCommon = {
 	teamId: Property.Dropdown({
@@ -19,12 +20,8 @@ export const microsoftTeamsCommon = {
 				};
 			}
 			const authValue = auth as PiecePropValueSchema<typeof microsoftTeamsAuth>;
-
-			const client = Client.initWithMiddleware({
-				authProvider: {
-					getAccessToken: () => Promise.resolve(authValue.access_token),
-				},
-			});
+			const cloud = (auth as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
+			const client = createGraphClient(authValue.access_token, cloud);
 			const options: DropdownOption<string>[] = [];
 
 			// Pagination : https://learn.microsoft.com/en-us/graph/sdks/paging?view=graph-rest-1.0&tabs=typescript#manually-requesting-subsequent-pages
@@ -60,12 +57,8 @@ export const microsoftTeamsCommon = {
 				};
 			}
 			const authValue = auth as PiecePropValueSchema<typeof microsoftTeamsAuth>;
-
-			const client = Client.initWithMiddleware({
-				authProvider: {
-					getAccessToken: () => Promise.resolve(authValue.access_token),
-				},
-			});
+			const cloud = (auth as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
+			const client = createGraphClient(authValue.access_token, cloud);
 			const options: DropdownOption<string>[] = [];
 
 			// Pagination : https://learn.microsoft.com/en-us/graph/sdks/paging?view=graph-rest-1.0&tabs=typescript#manually-requesting-subsequent-pages
@@ -101,12 +94,8 @@ export const microsoftTeamsCommon = {
 				};
 			}
 			const authValue = auth as PiecePropValueSchema<typeof microsoftTeamsAuth>;
-
-			const client = Client.initWithMiddleware({
-				authProvider: {
-					getAccessToken: () => Promise.resolve(authValue.access_token),
-				},
-			});
+			const cloud = (auth as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
+			const client = createGraphClient(authValue.access_token, cloud);
 			const options: DropdownOption<string>[] = [];
 
 			let response: PageCollection = await client.api(`/teams/${teamId}/members`).get();
@@ -140,12 +129,8 @@ export const microsoftTeamsCommon = {
 				};
 			}
 			const authValue = auth as PiecePropValueSchema<typeof microsoftTeamsAuth>;
-
-			const client = Client.initWithMiddleware({
-				authProvider: {
-					getAccessToken: () => Promise.resolve(authValue.access_token),
-				},
-			});
+			const cloud = (auth as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
+			const client = createGraphClient(authValue.access_token, cloud);
 			const options: DropdownOption<string>[] = [];
 
 			let response: PageCollection = await client.api(`/teams/${teamId}/members`).get();
@@ -179,12 +164,8 @@ export const microsoftTeamsCommon = {
 				};
 			}
 			const authValue = auth as PiecePropValueSchema<typeof microsoftTeamsAuth>;
-
-			const client = Client.initWithMiddleware({
-				authProvider: {
-					getAccessToken: () => Promise.resolve(authValue.access_token),
-				},
-			});
+			const cloud = (auth as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
+			const client = createGraphClient(authValue.access_token, cloud);
 			const options: DropdownOption<string>[] = [];
 
 			// Pagination : https://learn.microsoft.com/en-us/graph/sdks/paging?view=graph-rest-1.0&tabs=typescript#manually-requesting-subsequent-pages

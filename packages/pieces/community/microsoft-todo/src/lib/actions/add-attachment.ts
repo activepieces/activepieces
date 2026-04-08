@@ -1,8 +1,7 @@
 import { Property, createAction, OAuth2PropertyValue } from '@activepieces/pieces-framework';
-import { getTaskListsDropdown, getTasksInListDropdown } from '../common';
+import { getTaskListsDropdown, getTasksInListDropdown, createTodoClient } from '../common';
 import { TaskFileAttachment } from '@microsoft/microsoft-graph-types';
 import { microsoftToDoAuth } from '../auth';
-import { Client } from '@microsoft/microsoft-graph-client';
 
 export const addAttachmentAction = createAction({
     auth: microsoftToDoAuth,
@@ -78,11 +77,7 @@ export const addAttachmentAction = createAction({
             throw new Error(`File size (${fileSizeInMB.toFixed(2)} MB) exceeds the 25 MB limit.`);
         }
 
-        const client = Client.initWithMiddleware({
-            authProvider: {
-                getAccessToken: () => Promise.resolve(auth.access_token),
-            },
-        });
+        const client = createTodoClient(auth);
 
         try {
             if (fileSizeInMB < 3) {
