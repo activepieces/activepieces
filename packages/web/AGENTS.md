@@ -42,7 +42,17 @@ You are working in the Activepieces web application (`packages/web`).
   ```tsx
   <MyForm key={open ? 'open' : 'closed'} />
   ```
-- **Separate dialog state from form logic** — The dialog component owns `open` state; the form is a separate child component. This makes `key`-based resets trivial.
+- **Separate dialog state from form logic — apply this from the start** — The dialog component owns `open` state; the form is a separate child component. This makes `key`-based resets trivial. **Do this when first writing the dialog, not as a follow-up.** Every `<Dialog>` that contains a `useForm(...)` must be structured this way:
+  ```tsx
+  // ✅ Correct — dialog wrapper + keyed form child
+  const MyDialog: React.FC<Props> = ({ open, onOpenChange }) => (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <MyForm key={open ? 'open' : 'closed'} onOpenChange={onOpenChange} />
+      </DialogContent>
+    </Dialog>
+  );
+  ```
 - **Always use `<FormField>` + `render` prop** — Wrap every field in `<FormField name="..." render={({ field }) => <FormItem>...</FormItem>} />`. Always include `<FormMessage />` inside `<FormItem>` to surface validation errors.
 - **Use `form.watch()` for conditional rendering** — When a field value controls what other fields or UI is shown, use `form.watch('fieldName')`. Do not mirror form values into separate `useState`.
 - **Use `form.setValue()` for cascading field updates** — When changing one field should reset or update related fields (e.g. selecting a provider resets its config), call `form.setValue()` inside the `onValueChange` handler.

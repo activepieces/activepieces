@@ -109,9 +109,9 @@ export const ProjectDashboardLayoutHeader = () => {
   );
 
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex flex-col">
       {!isEmbedded && <ProjectDashboardPageHeader />}
-      <Tabs className="px-3">
+      <Tabs className="px-3 pt-2 border-b">
         {!embedState.hideSideNav && (
           <TabsList variant="outline">
             {visiblePrimaryTabs.map((tab) => (

@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { umamiAuth } from '../auth';
+import { umamiAuth, UmamiAuthValue } from '../auth';
 import { umamiApiCall } from '../common';
 
 export const listWebsites = createAction({
@@ -29,7 +29,7 @@ export const listWebsites = createAction({
       }[];
       count: number;
     }>({
-      auth: context.auth,
+      auth: context.auth as UmamiAuthValue,
       method: HttpMethod.GET,
       path: '/websites',
       queryParams: {

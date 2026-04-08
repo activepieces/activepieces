@@ -5,6 +5,7 @@ import {
   FlowTrigger,
   FlowTriggerType,
   flowStructureUtil,
+  flowPieceUtil,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ChevronLeftIcon, ChevronRightIcon, Info } from 'lucide-react';
@@ -27,6 +28,8 @@ import {
 
 import { useBuilderStateContext } from '../builder-hooks';
 
+import { UpdatePieceVersionDialog } from './update-piece-version-dialog/update-piece-version-dialog';
+
 type StepInfoProps = {
   step: FlowAction | FlowTrigger;
 };
@@ -36,11 +39,17 @@ const StepInfo: React.FC<StepInfoProps> = ({ step }) => {
     step,
   });
 
+  const readonly = useBuilderStateContext((state) => state.readonly);
+
   const isPiece =
     stepMetadata?.type === FlowActionType.PIECE ||
     stepMetadata?.type === FlowTriggerType.PIECE;
   const pieceVersion = isPiece
     ? (stepMetadata as PieceStepMetadata)?.pieceVersion
+    : undefined;
+
+  const exactVersion = pieceVersion
+    ? flowPieceUtil.getExactVersion(pieceVersion)
     : undefined;
 
   return (
@@ -66,9 +75,20 @@ const StepInfo: React.FC<StepInfoProps> = ({ step }) => {
               </Tooltip>
             )}
         </div>
-        {pieceVersion && (
-          <div className="text-xs text-muted-foreground shrink-0">
-            v{pieceVersion}
+        {exactVersion && (
+          <div className="flex items-center gap-1 shrink-0">
+            <span className="text-xs text-muted-foreground">
+              v{exactVersion}
+            </span>
+            {!readonly &&
+              isPiece &&
+              (step.type === FlowActionType.PIECE ||
+                step.type === FlowTriggerType.PIECE) && (
+                <UpdatePieceVersionDialog
+                  step={step}
+                  currentVersion={exactVersion}
+                />
+              )}
           </div>
         )}
       </div>

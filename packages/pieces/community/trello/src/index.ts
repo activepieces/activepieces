@@ -1,6 +1,7 @@
 import {
   HttpMethod,
   HttpRequest,
+  createCustomApiCallAction,
   httpClient,
 } from '@activepieces/pieces-common';
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
@@ -20,14 +21,14 @@ import { deadlineTrigger } from './lib/triggers/deadline';
 const markdownProperty = `
 To obtain your API key and token, follow these steps:
 
-1. Go to https://trello.com/power-ups/admin
-2. Click **New** to create a new power-up
-3. Enter power-up information, and click **Create**
-4. From the API Key page, click **Generate a new API key**
-5. Copy **API Key** and enter it into the Trello API Key connection
-6. Click **manually generate a Token** next to the API key field
-7. Copy the token and paste it into the Trello Token connection
-8. Your connection should now work!
+1. Go to https://trello.com/power-ups/admin.
+2. Click **New** to create a new power-up.
+3. Enter power-up information, and click **Create**.
+4. From the API Key page, click **Generate a new API key**.
+5. Copy **API Key** and enter it into the Trello API Key connection.
+6. On the right side of the page, find the text *"you can manually generate a Token"* and click the **Token** link.**Do not use the Secret field below the API key**.
+7. Authorize the app and copy the generated token.
+8. Paste the token into the Trello Token field.
 `;
 export const trelloAuth = PieceAuth.BasicAuth({
   description: markdownProperty,
@@ -76,9 +77,21 @@ export const trello = createPiece({
   description: 'Project management tool for teams',
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/trello.png',
-  authors: ["Salem-Alaa","kishanprmr","MoShizzle","khaledmashaly","abuaboud","AshotZaqoyan"],
+  authors: ["Salem-Alaa", "kishanprmr", "MoShizzle", "khaledmashaly", "abuaboud", "AshotZaqoyan"],
   categories: [PieceCategory.PRODUCTIVITY],
   auth: trelloAuth,
-  actions: [createCard, getCard, updateCard, deleteCard, getCardAttachments, addCardAttachment, getCardAttachment, deleteCardAttachment],
+  actions: [createCard, getCard, updateCard, deleteCard, getCardAttachments, addCardAttachment, getCardAttachment, deleteCardAttachment,
+    createCustomApiCallAction({
+      auth: trelloAuth,
+      baseUrl: () => 'https://api.trello.com/1',
+      authLocation: 'queryParams',
+      authMapping: async (auth) => {
+        return {
+          key: auth.username,
+          token: auth.password
+        }
+      }
+    })
+  ],
   triggers: [cardMovedTrigger, newCardTrigger, deadlineTrigger],
 });

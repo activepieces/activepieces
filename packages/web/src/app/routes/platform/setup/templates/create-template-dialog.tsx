@@ -132,9 +132,8 @@ export const CreateTemplateDialog = ({
               name="displayName"
               render={({ field }) => (
                 <FormItem className="grid space-y-2">
-                  <Label htmlFor="name">
-                    {t('Name')}{' '}
-                    <span className="text-destructive-300">{'*'}</span>
+                  <Label htmlFor="name" showRequiredIndicator>
+                    {t('Name')}
                   </Label>
                   <Input
                     {...field}
@@ -200,9 +199,8 @@ export const CreateTemplateDialog = ({
               name="template"
               render={({ field }) => (
                 <FormItem className="grid space-y-2">
-                  <Label htmlFor="template">
+                  <Label htmlFor="template" showRequiredIndicator>
                     {t('Template')}
-                    <span className="text-destructive-300">{' *'} </span>
                   </Label>
                   <Input
                     type="file"

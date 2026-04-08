@@ -1,4 +1,4 @@
-import { McpServer, McpToolDefinition } from '@activepieces/shared'
+import { McpServer, McpToolDefinition, Permission } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { tableService } from '../../tables/table/table.service'
@@ -11,6 +11,7 @@ const deleteTableInput = z.object({
 export const apDeleteTableTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_delete_table',
+        permission: Permission.WRITE_TABLE,
         description: 'Permanently delete a table and all its records and fields. This action cannot be undone. Use ap_list_tables to find the table ID.',
         inputSchema: deleteTableInput.shape,
         annotations: { destructiveHint: true, openWorldHint: false },

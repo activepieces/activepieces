@@ -5,6 +5,7 @@ import {
     isNil,
     McpServer,
     McpToolDefinition,
+    Permission,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
@@ -20,6 +21,7 @@ const deleteStepInput = z.object({
 export const apDeleteStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_delete_step',
+        permission: Permission.WRITE_FLOW,
         description: 'Delete a step from a flow. Use ap_flow_structure to get valid step names.',
         inputSchema: {
             flowId: z.string().describe('The id of the flow'),
