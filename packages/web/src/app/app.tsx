@@ -34,7 +34,7 @@ const MAJOR_QUERY_PREFIXES = new Set([
   'project-members',
   'user-invitations',
   'secret-managers',
-  'pieces',
+  'pieces-table',
   'templates',
   'flow-run-table',
   'trigger-status-report',
