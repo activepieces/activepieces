@@ -1,14 +1,10 @@
-import { memoryLock } from '@activepieces/server-utils'
 import { isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { distributedStore } from '../../../database/redis-connections'
 import { platformPlanRepo } from './platform-plan.service'
 
 const CANARY_WORKER_GROUP_ID = 'canary'
-const CANARY_PLATFORM_IDS_KEY = 'canary-platform-ids'
 const getWorkerGroupCacheKey = (platformId: string): string => `platform:${platformId}:worker_group_id`
-
-let cachedCanaryIds: string[] | null = null
 
 export const workerGroupService = (_log: FastifyBaseLogger) => ({
     async getWorkerGroupId({ platformId }: { platformId: string }): Promise<string | null> {
@@ -30,21 +26,19 @@ export const workerGroupService = (_log: FastifyBaseLogger) => ({
     },
 
     async isCanaryPlatform({ platformId }: { platformId: string }): Promise<boolean> {
-        const ids = await getCanaryPlatformIds()
-        return ids.includes(platformId)
+        const groupId = await this.getWorkerGroupId({ platformId })
+        return groupId === CANARY_WORKER_GROUP_ID
     },
 
     async updateWorkerGroup({ platformId, workerGroupId }: { platformId: string, workerGroupId: string | null }): Promise<void> {
         await platformPlanRepo().update({ platformId }, { workerGroupId })
         await distributedStore.delete(getWorkerGroupCacheKey(platformId))
-        cachedCanaryIds = null
     },
 
     async updateCanary({ platformId, canary }: { platformId: string, canary: boolean }): Promise<void> {
         const workerGroupId = canary ? CANARY_WORKER_GROUP_ID : null
         await platformPlanRepo().update({ platformId }, { workerGroupId })
         await distributedStore.delete(getWorkerGroupCacheKey(platformId))
-        cachedCanaryIds = null
     },
 
     async disableAllCanary(): Promise<void> {
@@ -57,24 +51,5 @@ export const workerGroupService = (_log: FastifyBaseLogger) => ({
         for (const plan of plans) {
             await distributedStore.delete(getWorkerGroupCacheKey(plan.platformId))
         }
-        cachedCanaryIds = null
     },
 })
-
-async function getCanaryPlatformIds(): Promise<string[]> {
-    if (!isNil(cachedCanaryIds)) return cachedCanaryIds
-
-    return memoryLock.runExclusive({
-        key: CANARY_PLATFORM_IDS_KEY,
-        fn: async () => {
-            if (!isNil(cachedCanaryIds)) return cachedCanaryIds
-
-            const plans = await platformPlanRepo().find({
-                select: ['platformId'],
-                where: { workerGroupId: CANARY_WORKER_GROUP_ID },
-            })
-            cachedCanaryIds = plans.map(({ platformId }) => platformId)
-            return cachedCanaryIds
-        },
-    })
-}

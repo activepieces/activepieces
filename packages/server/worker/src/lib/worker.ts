@@ -237,6 +237,10 @@ async function fetchAndStoreSettings(sock: Socket): Promise<void> {
                 if (!processSandboxedModes.includes(response.EXECUTION_MODE as ExecutionMode)) {
                     throw new Error(`Worker group "${workerGroupId}" requires AP_EXECUTION_MODE to be one of: ${processSandboxedModes.join(', ')}. Got: ${response.EXECUTION_MODE}`)
                 }
+                const reuseSandbox = system.get(WorkerSystemProp.REUSE_SANDBOX)
+                if (isNil(reuseSandbox)) {
+                    throw new Error(`Worker group "${workerGroupId}" requires AP_REUSE_SANDBOX to be set (true or false)`)
+                }
             }
             workerSettings.set(response)
             logger.info({ environment: response.ENVIRONMENT, executionMode: response.EXECUTION_MODE }, 'Worker settings loaded')
