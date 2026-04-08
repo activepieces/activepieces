@@ -3,16 +3,16 @@ import { createAction } from '@activepieces/pieces-framework';
 import { hedyAuth } from '../../auth';
 import { createClient } from '../../common/client';
 import { commonProps } from '../../common/props';
-import { PaginatedResponse, Todo } from '../../common/types';
-import { assertIdPrefix, assertLimit } from '../../common/validation';
+import { PaginatedResponse, SessionContext } from '../../common/types';
+import { assertLimit } from '../../common/validation';
 
-function toTodoArray(result: unknown): Todo[] {
+function toContextArray(result: unknown): SessionContext[] {
   if (Array.isArray(result)) {
-    return result as Todo[];
+    return result as SessionContext[];
   }
 
   if (result && typeof result === 'object' && 'data' in result) {
-    const data = (result as PaginatedResponse<Todo>).data;
+    const data = (result as PaginatedResponse<SessionContext>).data;
     if (Array.isArray(data)) {
       return data;
     }
@@ -21,36 +21,34 @@ function toTodoArray(result: unknown): Todo[] {
   return [];
 }
 
-export const listSessionTodos = createAction({
+export const listContexts = createAction({
   auth: hedyAuth,
-  name: 'list-session-todos',
-  displayName: 'List Session Todos',
-  description: 'Retrieve todos generated for a specific session.',
+  name: 'list-contexts',
+  displayName: 'List Session Contexts',
+  description: 'Retrieve all session contexts.',
   props: {
-    sessionId: commonProps.sessionId,
     returnAll: commonProps.returnAll,
     limit: commonProps.limit,
   },
   async run(context) {
-    const sessionId = assertIdPrefix(context.propsValue.sessionId as string, 'sess_', 'Session ID');
     const client = createClient(context.auth);
     const { returnAll, limit } = context.propsValue as {
       returnAll?: boolean;
       limit?: number;
     };
 
-    const response = await client.request<Todo[]>({
+    const response = await client.request<SessionContext[]>({
       method: HttpMethod.GET,
-      path: `/sessions/${sessionId}/todos`,
+      path: '/contexts',
     });
 
-    const todos = toTodoArray(response);
+    const contexts = toContextArray(response);
 
     if (!returnAll) {
       const limited = assertLimit(limit);
-      return limited ? todos.slice(0, limited) : todos.slice(0, 50);
+      return limited ? contexts.slice(0, limited) : contexts.slice(0, 50);
     }
 
-    return todos;
+    return contexts;
   },
 });
