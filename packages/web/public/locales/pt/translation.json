@@ -1451,6 +1451,8 @@
   "This provider does not support knowledge base embeddings.": "Este provedor não suporta a incorporação da base de conhecimento.",
   "Knowledge base requires a provider that supports embeddings, such as OpenAI or Google.": "A base de conhecimento requer um provedor que suporte a incorporação, como OpenAI ou Google.",
   "The selected provider does not support embeddings. Switch to a provider like OpenAI or Google for knowledge base to work.": "O provedor selecionado não suporta a incorporação. Mude para um provedor como OpenAI ou Google para a base de conhecimento funcionar.",
+  "Personal": "pessoal",
+  "Team": "Equipe",
   "You have {count} {count, plural, one {flow} other {flows}} without time saved per run. Add it to see your complete automation impact!_one": "",
   "You have {count} {count, plural, one {flow} other {flows}} without time saved per run. Add it to see your complete automation impact!_other": "",
   "{count} flows created successfully in a new folder_one": "",
