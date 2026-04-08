@@ -38,15 +38,20 @@ export const apListAiModelsTool = (mcp: McpServer, log: FastifyBaseLogger): McpT
                     return { content: [{ type: 'text', text: `Provider "${filterProvider}" is not configured. Available providers: ${available}` }] }
                 }
 
+                const MAX_MODELS_PER_PROVIDER = 20
                 const sections = await Promise.all(
                     filteredProviders.map(async (p) => {
                         try {
                             const models = await service.listModels(project.platformId, p.provider)
                             const textModels = models.filter(m => m.type === AIProviderModelType.TEXT)
-                            const modelLines = textModels.length > 0
-                                ? textModels.map(m => `    - ${m.name} (id: ${m.id})`).join('\n')
+                            const capped = textModels.slice(0, MAX_MODELS_PER_PROVIDER)
+                            const modelLines = capped.length > 0
+                                ? capped.map(m => `    - ${m.name} (id: ${m.id})`).join('\n')
                                 : '    (no text models available)'
-                            return `- ${p.provider} (${p.name})\n  Models:\n${modelLines}`
+                            const overflow = textModels.length > MAX_MODELS_PER_PROVIDER
+                                ? `\n    ... and ${textModels.length - MAX_MODELS_PER_PROVIDER} more${filterProvider ? '' : ` (use provider="${p.provider}" to see all)`}`
+                                : ''
+                            return `- ${p.provider} (${p.name}) — ${textModels.length} text model(s)\n  Models:\n${modelLines}${overflow}`
                         }
                         catch (err) {
                             log.warn({ err, provider: p.provider }, 'ap_list_ai_models: failed to fetch models for provider')
