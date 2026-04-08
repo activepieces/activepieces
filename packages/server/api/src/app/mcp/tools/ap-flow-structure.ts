@@ -203,7 +203,7 @@ function formatFlowStructure(
     lines.push('')
     lines.push('## Referencing step outputs')
     lines.push('Use `{{stepName.output.fieldName}}` in step inputs to reference data from previous steps.')
-    lines.push('Examples: `{{trigger.output.body.email}}`, `{{step_1.output.id}}`, `{{step_2.output.results}}`')
+    lines.push('Example: `{{trigger.output.body.email}}`')
     lines.push('Use ap_test_step or ap_test_flow to generate sample data and see available output fields.')
 
     lines.push('')
