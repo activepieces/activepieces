@@ -1,4 +1,4 @@
-import { FlowAction, FlowActionType, FlowState, FlowTrigger, FlowVersion, isNil } from '@activepieces/shared'
+import { FlowAction, FlowActionType, FlowState, FlowTrigger, FlowTriggerType, FlowVersion, isNil } from '@activepieces/shared'
 
 function cleanFlowState(flowState: FlowState): FlowState {
     return {
@@ -40,47 +40,47 @@ function cleanFlowVersion(version: FlowVersion): FlowVersion {
 }
 
 function cleanTrigger(trigger: FlowTrigger): FlowTrigger {
-    return {
+    const nextAction = isNil(trigger.nextAction) ? undefined : cleanAction(trigger.nextAction)
+    const commonProps = {
         name: trigger.name,
         valid: trigger.valid,
         displayName: trigger.displayName,
         lastUpdatedDate: trigger.lastUpdatedDate,
-        type: trigger.type,
-        settings: trigger.settings,
-        nextAction: isNil(trigger.nextAction) ? undefined : cleanAction(trigger.nextAction),
-    } as FlowTrigger
+    }
+
+    switch (trigger.type) {
+        case FlowTriggerType.PIECE:
+            return { ...commonProps, type: trigger.type, settings: trigger.settings, nextAction }
+        case FlowTriggerType.EMPTY:
+            return { ...commonProps, type: trigger.type, settings: trigger.settings, nextAction }
+    }
 }
 
 function cleanAction(action: FlowAction): FlowAction {
-    const base = {
+    const nextAction = isNil(action.nextAction) ? undefined : cleanAction(action.nextAction)
+    const commonProps = {
         name: action.name,
         valid: action.valid,
         displayName: action.displayName,
         skip: action.skip,
         lastUpdatedDate: action.lastUpdatedDate,
-        type: action.type,
-        settings: action.settings,
-        nextAction: isNil(action.nextAction) ? undefined : cleanAction(action.nextAction),
     }
 
     switch (action.type) {
         case FlowActionType.CODE:
+            return { ...commonProps, type: action.type, settings: action.settings, nextAction }
         case FlowActionType.PIECE:
-            return base as FlowAction
+            return { ...commonProps, type: action.type, settings: action.settings, nextAction }
         case FlowActionType.LOOP_ON_ITEMS:
             return {
-                ...base,
+                ...commonProps, type: action.type, settings: action.settings, nextAction,
                 firstLoopAction: isNil(action.firstLoopAction) ? undefined : cleanAction(action.firstLoopAction),
-            } as FlowAction
+            }
         case FlowActionType.ROUTER:
             return {
-                ...base,
+                ...commonProps, type: action.type, settings: action.settings, nextAction,
                 children: action.children.map((child) => isNil(child) ? null : cleanAction(child)),
-            } as FlowAction
-        default: {
-            const _exhaustiveCheck: never = action
-            throw new Error(`Unhandled FlowActionType: ${_exhaustiveCheck}`)
-        }
+            }
     }
 }
 
