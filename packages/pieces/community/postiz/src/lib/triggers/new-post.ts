@@ -1,74 +1,41 @@
 import {
   createTrigger,
+  Property,
   TriggerStrategy,
-  AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { MarkdownVariant } from '@activepieces/shared';
 import {
-  DedupeStrategy,
-  Polling,
-  pollingHelper,
-  HttpMethod,
-} from '@activepieces/pieces-common';
-import { postizAuth, PostizAuth } from '../common/auth';
-import { postizApiCall } from '../common';
+  postizAuth,
+  PostizAuthValue,
+  PostizJwtAuthValue,
+  isApiKeyAuthentication,
+  getJwtToken,
+} from '../common/auth';
 
-const polling: Polling<
-  AppConnectionValueForAuthProperty<typeof postizAuth>,
-  Record<string, never>
-> = {
-  strategy: DedupeStrategy.TIMEBASED,
-  items: async ({ auth }) => {
-    const now = new Date();
-    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+const WEBHOOK_STORE_KEY = 'postiz_webhook_id';
 
-    const response = await postizApiCall<{
-      posts: {
-        id: string;
-        content: string;
-        publishDate: string;
-        releaseURL: string;
-        state: string;
-        integration: {
-          id: string;
-          providerIdentifier: string;
-          name: string;
-          picture: string;
-        };
-      }[];
-    }>({
-      auth: auth as PostizAuth,
-      method: HttpMethod.GET,
-      path: '/posts',
-      queryParams: {
-        startDate: thirtyDaysAgo.toISOString(),
-        endDate: now.toISOString(),
-      },
-    });
-
-    return response.body.posts
-      .filter((post) => post.state === 'PUBLISHED')
-      .map((post) => ({
-        epochMilliSeconds: new Date(post.publishDate).getTime(),
-        data: {
-          id: post.id,
-          content: post.content,
-          publish_date: post.publishDate,
-          release_url: post.releaseURL ?? null,
-          state: post.state,
-          integration_id: post.integration?.id ?? null,
-          integration_provider: post.integration?.providerIdentifier ?? null,
-          integration_name: post.integration?.name ?? null,
-        },
-      }));
-  },
-};
+function buildApiRoot(auth: PostizJwtAuthValue): string {
+  return auth.props.base_url.trim().replace(/\/+$/, '');
+}
 
 export const newPost = createTrigger({
   auth: postizAuth,
   name: 'new_post',
-  displayName: 'New Published Post',
-  description: 'Triggers when a post is published in Postiz',
-  props: {},
+  displayName: 'New Published Content',
+  description: 'Triggers when content is published in Postiz',
+  props: {
+    instructions: Property.MarkDown({
+      value: `**Webhook URL:**
+\`\`\`text
+{{webhookUrl}}
+\`\`\`
+If you are using **API Key** authentication, copy this URL and paste it in your Postiz dashboard under **Settings > Webhooks**.
+
+With **Email & Password (JWT)** authentication, the webhook is registered automatically.`,
+      variant: MarkdownVariant.INFO,
+    }),
+  },
   sampleData: {
     id: 'abc123',
     content: 'Hello world! Check out our latest update.',
@@ -79,17 +46,84 @@ export const newPost = createTrigger({
     integration_provider: 'x',
     integration_name: 'My X Account',
   },
-  type: TriggerStrategy.POLLING,
-  async test(context) {
-    return await pollingHelper.test(polling, context);
-  },
+  type: TriggerStrategy.WEBHOOK,
+
   async onEnable(context) {
-    await pollingHelper.onEnable(polling, context);
+    const auth = context.auth as PostizAuthValue;
+    if (isApiKeyAuthentication(auth)) {
+      return;
+    }
+    const jwtAuth = auth as PostizJwtAuthValue;
+    const apiRoot = buildApiRoot(jwtAuth);
+    const jwt = await getJwtToken(
+      jwtAuth.props.base_url,
+      jwtAuth.props.email,
+      jwtAuth.props.password,
+    );
+    const response = await httpClient.sendRequest<{ id: string }>({
+      method: HttpMethod.POST,
+      url: `${apiRoot}/api/webhooks`,
+      headers: {
+        auth: jwt,
+        'Content-Type': 'application/json',
+      },
+      body: {
+        name: `Activepieces – ${Date.now()}`,
+        url: context.webhookUrl,
+        integrations: [],
+      },
+    });
+    await context.store.put(WEBHOOK_STORE_KEY, response.body.id);
   },
+
   async onDisable(context) {
-    await pollingHelper.onDisable(polling, context);
+    const webhookId = await context.store.get<string>(WEBHOOK_STORE_KEY);
+    if (!webhookId) {
+      return;
+    }
+    const auth = context.auth as PostizJwtAuthValue;
+    const apiRoot = buildApiRoot(auth);
+    const jwt = await getJwtToken(
+      auth.props.base_url,
+      auth.props.email,
+      auth.props.password,
+    );
+    try {
+      await httpClient.sendRequest({
+        method: HttpMethod.DELETE,
+        url: `${apiRoot}/api/webhooks/${webhookId}`,
+        headers: { auth: jwt },
+      });
+    } catch {
+      // Webhook may have been manually deleted — ignore
+    }
+    await context.store.delete(WEBHOOK_STORE_KEY);
   },
+
   async run(context) {
-    return await pollingHelper.poll(polling, context);
+    const posts = context.payload.body as {
+      id: string;
+      content: string;
+      publishDate: string;
+      releaseURL: string | null;
+      state: string;
+      integration: {
+        id: string;
+        providerIdentifier: string;
+        name: string;
+        picture: string;
+      } | null;
+    }[];
+
+    return posts.map((post) => ({
+      id: post.id,
+      content: post.content,
+      publish_date: post.publishDate,
+      release_url: post.releaseURL ?? null,
+      state: post.state,
+      integration_id: post.integration?.id ?? null,
+      integration_provider: post.integration?.providerIdentifier ?? null,
+      integration_name: post.integration?.name ?? null,
+    }));
   },
 });

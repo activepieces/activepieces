@@ -10,7 +10,11 @@ import { getPlatformAnalytics } from './lib/actions/get-platform-analytics';
 import { getPostAnalytics } from './lib/actions/get-post-analytics';
 import { uploadFileFromUrl } from './lib/actions/upload-file-from-url';
 import { newPost } from './lib/triggers/new-post';
-import { postizAuth } from './lib/common/auth';
+import {
+  postizAuth,
+  isApiKeyAuthentication,
+  PostizAuthValue,
+} from './lib/common/auth';
 
 export const postiz = createPiece({
   displayName: 'Postiz',
@@ -32,13 +36,26 @@ export const postiz = createPiece({
     uploadFileFromUrl,
     createCustomApiCallAction({
       baseUrl: (auth) => {
-        const { base_url } = (auth as { props: { base_url: string; api_key: string } }).props;
-        return base_url?.trim().replace(/\/+$/, '');
+        const typedAuth = auth as PostizAuthValue;
+        if (isApiKeyAuthentication(typedAuth)) {
+          return typedAuth.props.base_url?.trim().replace(/\/+$/, '');
+        }
+        return `${typedAuth.props.base_url?.trim().replace(/\/+$/, '')}/api/public/v1`;
       },
       auth: postizAuth,
-      authMapping: async (auth) => ({
-        Authorization: (auth as { props: { base_url: string; api_key: string } }).props.api_key,
-      }),
+      authMapping: async (auth) => {
+        const typedAuth = auth as PostizAuthValue;
+        if (isApiKeyAuthentication(typedAuth)) {
+          return { Authorization: typedAuth.props.api_key };
+        }
+        const { getJwtToken } = await import('./lib/common/auth');
+        const jwt = await getJwtToken(
+          typedAuth.props.base_url,
+          typedAuth.props.email,
+          typedAuth.props.password,
+        );
+        return { auth: jwt };
+      },
     }),
   ],
   triggers: [newPost],

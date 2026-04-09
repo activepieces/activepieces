@@ -5,16 +5,35 @@ import {
   HttpResponse,
 } from '@activepieces/pieces-common';
 import { Property } from '@activepieces/pieces-framework';
-import { postizAuth, PostizAuth } from './auth';
+import {
+  postizAuth,
+  PostizAuthValue,
+  isApiKeyAuthentication,
+  getJwtToken,
+} from './auth';
 
-const DEFAULT_BASE_URL = 'https://api.postiz.com/public/v1';
+const DEFAULT_PUBLIC_API_URL = 'https://api.postiz.com/public/v1';
 
-function buildBaseUrl(auth: PostizAuth): string {
-  const url = auth.props.base_url?.trim();
-  if (!url) {
-    return DEFAULT_BASE_URL;
+function buildPublicApiUrl(auth: PostizAuthValue): string {
+  if (isApiKeyAuthentication(auth)) {
+    const url = auth.props.base_url?.trim();
+    if (!url) return DEFAULT_PUBLIC_API_URL;
+    return url.replace(/\/+$/, '');
   }
-  return url.replace(/\/+$/, '');
+  const url = auth.props.base_url?.trim().replace(/\/+$/, '');
+  return `${url}/api/public/v1`;
+}
+
+async function buildAuthHeader(auth: PostizAuthValue): Promise<string> {
+  if (isApiKeyAuthentication(auth)) {
+    return auth.props.api_key;
+  }
+  const jwt = await getJwtToken(
+    auth.props.base_url,
+    auth.props.email,
+    auth.props.password
+  );
+  return `JWT ${jwt}`;
 }
 
 export async function postizApiCall<T extends HttpMessageBody>({
@@ -24,7 +43,7 @@ export async function postizApiCall<T extends HttpMessageBody>({
   body,
   queryParams,
 }: {
-  auth: PostizAuth;
+  auth: PostizAuthValue;
   method: HttpMethod;
   path: string;
   body?: unknown;
@@ -32,9 +51,9 @@ export async function postizApiCall<T extends HttpMessageBody>({
 }): Promise<HttpResponse<T>> {
   return await httpClient.sendRequest<T>({
     method,
-    url: `${buildBaseUrl(auth)}${path}`,
+    url: `${buildPublicApiUrl(auth)}${path}`,
     headers: {
-      Authorization: auth.props.api_key,
+      Authorization: await buildAuthHeader(auth),
     },
     queryParams,
     body,
@@ -64,7 +83,7 @@ export const postizCommon = {
           profile: string;
         }[]
       >({
-        auth: auth as PostizAuth,
+        auth: auth as PostizAuthValue,
         method: HttpMethod.GET,
         path: '/integrations',
       });
@@ -79,4 +98,4 @@ export const postizCommon = {
   }),
 };
 
-export type { PostizAuth } from './auth';
+export type { PostizAuthValue, PostizApiKeyAuth } from './auth';

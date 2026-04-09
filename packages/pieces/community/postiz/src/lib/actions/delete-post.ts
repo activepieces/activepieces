@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { postizAuth } from '../common/auth';
-import { postizApiCall, PostizAuth } from '../common';
+import { postizApiCall } from '../common';
 
 export const deletePost = createAction({
   auth: postizAuth,
@@ -12,7 +12,7 @@ export const deletePost = createAction({
     postId: Property.ShortText({
       displayName: 'Post ID',
       description:
-        'The ID of the post to delete. You can get this from the "List Posts" or "New Published Post" trigger output.',
+        'The ID of the post to delete. You can get this from the "List Posts" or "New Published Content" trigger output.',
       required: true,
     }),
   },
