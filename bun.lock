@@ -8065,7 +8065,7 @@
     },
     "packages/shared": {
       "name": "@activepieces/shared",
-      "version": "0.55.1",
+      "version": "0.55.3",
       "dependencies": {
         "dayjs": "1.11.9",
         "deepmerge-ts": "7.1.0",
