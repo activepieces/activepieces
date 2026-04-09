@@ -9,7 +9,6 @@ import {
   postizAuth,
   PostizAuthValue,
   isApiKeyAuthentication,
-  getJwtToken,
 } from './auth';
 
 const DEFAULT_PUBLIC_API_URL = 'https://api.postiz.com/public/v1';
@@ -24,16 +23,8 @@ function buildPublicApiUrl(auth: PostizAuthValue): string {
   return `${url}/api/public/v1`;
 }
 
-async function buildAuthHeader(auth: PostizAuthValue): Promise<string> {
-  if (isApiKeyAuthentication(auth)) {
-    return auth.props.api_key;
-  }
-  const jwt = await getJwtToken(
-    auth.props.base_url,
-    auth.props.email,
-    auth.props.password
-  );
-  return `JWT ${jwt}`;
+function getApiKey(auth: PostizAuthValue): string {
+  return auth.props.api_key;
 }
 
 export async function postizApiCall<T extends HttpMessageBody>({
@@ -53,7 +44,7 @@ export async function postizApiCall<T extends HttpMessageBody>({
     method,
     url: `${buildPublicApiUrl(auth)}${path}`,
     headers: {
-      Authorization: await buildAuthHeader(auth),
+      Authorization: getApiKey(auth),
     },
     queryParams,
     body,
@@ -98,4 +89,4 @@ export const postizCommon = {
   }),
 };
 
-export type { PostizAuthValue, PostizApiKeyAuth } from './auth';
+export type { PostizAuthValue } from './auth';

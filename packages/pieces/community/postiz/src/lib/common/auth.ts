@@ -46,7 +46,7 @@ const apiKeyAuth = PieceAuth.CustomAuth({
 const jwtAuth = PieceAuth.CustomAuth({
   displayName: 'Email & Password (JWT)',
   description:
-    'Authenticate with your Postiz email and password. This mode enables automatic webhook registration for triggers — no polling needed.',
+    'Authenticate with your Postiz email, password, and API key. This mode enables automatic webhook registration for triggers — no manual setup needed.',
   required: true,
   props: {
     base_url: Property.ShortText({
@@ -55,6 +55,12 @@ const jwtAuth = PieceAuth.CustomAuth({
         'Your Postiz instance URL. Use `https://app.postiz.com` for Postiz Cloud, or `https://your-domain.com` for self-hosted instances.',
       required: true,
       defaultValue: 'https://app.postiz.com',
+    }),
+    api_key: PieceAuth.SecretText({
+      displayName: 'API Key',
+      description:
+        'Your API key is used for actions. Go to **Settings > Developers > Public API** to generate one.',
+      required: true,
     }),
     email: Property.ShortText({
       displayName: 'Email',
@@ -66,15 +72,28 @@ const jwtAuth = PieceAuth.CustomAuth({
     }),
   },
   validate: async ({ auth }) => {
+    const baseUrl = auth.base_url?.trim().replace(/\/+$/, '');
     try {
-      await getJwtToken(auth.base_url, auth.email, auth.password);
-      return { valid: true };
+      await httpClient.sendRequest({
+        method: HttpMethod.GET,
+        url: `${baseUrl}/api/public/v1/is-connected`,
+        headers: { Authorization: auth.api_key },
+      });
     } catch {
       return {
         valid: false,
-        error: 'Invalid email, password, or base URL.',
+        error: 'Invalid API key or base URL.',
       };
     }
+    try {
+      await getJwtToken(auth.base_url, auth.email, auth.password);
+    } catch {
+      return {
+        valid: false,
+        error: 'Invalid email or password.',
+      };
+    }
+    return { valid: true };
   },
 });
 

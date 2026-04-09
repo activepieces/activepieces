@@ -43,19 +43,9 @@ export const postiz = createPiece({
         return `${typedAuth.props.base_url?.trim().replace(/\/+$/, '')}/api/public/v1`;
       },
       auth: postizAuth,
-      authMapping: async (auth) => {
-        const typedAuth = auth as PostizAuthValue;
-        if (isApiKeyAuthentication(typedAuth)) {
-          return { Authorization: typedAuth.props.api_key };
-        }
-        const { getJwtToken } = await import('./lib/common/auth');
-        const jwt = await getJwtToken(
-          typedAuth.props.base_url,
-          typedAuth.props.email,
-          typedAuth.props.password,
-        );
-        return { auth: jwt };
-      },
+      authMapping: async (auth) => ({
+        Authorization: (auth as PostizAuthValue).props.api_key,
+      }),
     }),
   ],
   triggers: [newPost],
