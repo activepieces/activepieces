@@ -7,6 +7,7 @@ import {
   Code,
   Copy,
   FileSpreadsheet,
+  Globe,
   FileText,
   Image,
   Link,
@@ -19,8 +20,11 @@ import {
   X,
   Zap,
 } from 'lucide-react';
-import { useState, useRef, useEffect } from 'react';
+import Lottie from 'react-lottie';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
+
+import thinkingLoaderData from './thinking-loader.json';
 
 import dropMediaImg from '@/assets/img/drop-media.svg';
 import { Button } from '@/components/ui/button';
@@ -90,6 +94,7 @@ const FILE_ICON_MAP: Record<Attachment['type'], typeof FileText> = {
 };
 
 const ANTHROPIC_KEY = import.meta.env.VITE_ANTHROPIC_API_KEY || '';
+const CLAUDE_API_BASE = import.meta.env.DEV ? '/claude-api' : 'https://api.anthropic.com';
 
 const IMAGE_KEYWORDS_EXACT = [
   'صورة', 'صوره', 'ارسم', 'ارسملي', 'اعمل صور', 'ولد صور', 'اعملي صور',
@@ -144,17 +149,11 @@ const keyframes = `
   .thinking-label { background: linear-gradient(90deg, var(--muted-foreground) 0%, color-mix(in srgb, var(--muted-foreground) 60%, transparent) 40%, color-mix(in srgb, var(--muted-foreground) 30%, transparent) 50%, color-mix(in srgb, var(--muted-foreground) 60%, transparent) 60%, var(--muted-foreground) 100%); background-size: 200% 100%; -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: shineLtr 2s linear infinite; }
   @keyframes shineLtr { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
   .img-gen-label { background: linear-gradient(90deg, var(--muted-foreground) 0%, color-mix(in srgb, var(--muted-foreground) 60%, transparent) 40%, color-mix(in srgb, var(--muted-foreground) 30%, transparent) 50%, color-mix(in srgb, var(--muted-foreground) 60%, transparent) 60%, var(--muted-foreground) 100%); background-size: 200% 100%; -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: shineLtr 2s linear infinite; }
-  @keyframes blink {
-    0%, 100% { opacity: 1; }
-    50%       { opacity: 0; }
-  }
   .msg-enter { animation: fadeSlideUp 0.22s ease forwards; }
   .ai-msg-actions { opacity: 0; transition: opacity 0.15s; }
   .ai-msg:hover .ai-msg-actions { opacity: 1; }
-  .thinking-spinner { width: 16px; height: 16px; border: 2px solid var(--border); border-top-color: var(--muted-foreground); border-radius: 50%; animation: spin 0.8s linear infinite; flex-shrink: 0; }
   @keyframes shimmer { 0% { background-position: 200% 200%; } 100% { background-position: -100% -100%; } }
   .img-shimmer { background-color: var(--muted); background-image: linear-gradient(135deg, transparent 35%, color-mix(in srgb, var(--muted-foreground) 14%, var(--muted)) 50%, transparent 65%); background-size: 300% 300%; background-repeat: no-repeat; animation: shimmer 1.4s linear infinite; }
-  .cursor { display: inline-block; width: 2px; height: 14px; background: currentColor; margin-left: 2px; vertical-align: middle; animation: blink 0.7s infinite; }
   .openai-icon { color: var(--foreground); }
   .send-btn:hover { opacity: 0.85; }
   .send-btn { transition: opacity 0.15s; outline: none; }
@@ -248,6 +247,115 @@ const keyframes = `
   .prompt-float-footer { background: linear-gradient(to bottom, transparent, var(--background) 40%); max-width: calc(clamp(280px, calc(100vw - 700px), 560px) + 20px); margin: 0 auto; width: calc(100% + 20px); padding-top: 80px; margin-top: -80px; }
 `;
 
+/* ─── Mock sources for demo ─── */
+const MOCK_FAVICONS = [
+  'https://www.google.com/favicon.ico',
+  'https://www.wikipedia.org/favicon.ico',
+  'https://www.reddit.com/favicon.ico',
+  'https://www.github.com/favicon.ico',
+  'https://stackoverflow.com/favicon.ico',
+  'https://www.youtube.com/favicon.ico',
+  'https://medium.com/favicon.ico',
+  'https://www.amazon.com/favicon.ico',
+  'https://www.nytimes.com/favicon.ico',
+  'https://www.bbc.com/favicon.ico',
+];
+
+function getMockSources(msgId: number) {
+  const count = (msgId % 15) + 3;
+  // Pick favicons deterministically based on msgId
+  const favicons: string[] = [];
+  for (let i = 0; i < Math.min(count, 4); i++) {
+    favicons.push(MOCK_FAVICONS[(msgId + i) % MOCK_FAVICONS.length]);
+  }
+  return { count, favicons };
+}
+
+/* ─── Smooth streaming text component ─── */
+const WORD_INTERVAL = 50; // ms per word
+
+function StreamingText({ fullText, streaming }: { fullText: string; streaming: boolean }) {
+  // Words buffer: complete words waiting to be displayed
+  const wordBufferRef = useRef<string[]>([]);
+  // Partial token that hasn't formed a complete word yet
+  const partialRef = useRef('');
+  // Words already displayed
+  const [displayedWords, setDisplayedWords] = useState<string[]>([]);
+  const displayedCountRef = useRef(0);
+  const prevFullTextRef = useRef('');
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Push new text into the word buffer whenever fullText grows
+  useEffect(() => {
+    if (fullText.length > prevFullTextRef.current.length) {
+      const newChars = fullText.slice(prevFullTextRef.current.length);
+      // Combine with any leftover partial word
+      const combined = partialRef.current + newChars;
+      // Split into tokens preserving whitespace: ["word", " ", "word", " ", ...]
+      const tokens = combined.split(/(\s+)/);
+      // Last token might be incomplete if streaming — hold it back
+      if (streaming) {
+        partialRef.current = tokens.pop() || '';
+      } else {
+        partialRef.current = '';
+      }
+      // Push complete tokens into the buffer
+      for (const t of tokens) {
+        if (t) wordBufferRef.current.push(t);
+      }
+    }
+    prevFullTextRef.current = fullText;
+  }, [fullText, streaming]);
+
+  // When streaming ends, flush any remaining partial
+  useEffect(() => {
+    if (!streaming && partialRef.current) {
+      wordBufferRef.current.push(partialRef.current);
+      partialRef.current = '';
+    }
+  }, [streaming]);
+
+  // Interval loop: pull one word from buffer at steady rate
+  useEffect(() => {
+    timerRef.current = setInterval(() => {
+      if (wordBufferRef.current.length > 0) {
+        const word = wordBufferRef.current.shift()!;
+        displayedCountRef.current += 1;
+        setDisplayedWords((prev) => [...prev, word]);
+      } else if (!streaming) {
+        // Buffer empty and done streaming — stop the timer
+        if (timerRef.current) clearInterval(timerRef.current);
+      }
+    }, WORD_INTERVAL);
+
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [streaming]);
+
+  // When streaming stops and buffer is empty, make sure we show everything
+  useEffect(() => {
+    if (!streaming && wordBufferRef.current.length === 0 && partialRef.current === '') {
+      const allWords = fullText.split(/(\s+)/).filter(Boolean);
+      if (displayedCountRef.current < allWords.length) {
+        displayedCountRef.current = allWords.length;
+        setDisplayedWords(allWords);
+      }
+    }
+  }, [streaming, fullText, displayedWords]);
+
+  const rendered = useMemo(() => {
+    if (!displayedWords.length) return null;
+    return displayedWords.join('');
+  }, [displayedWords]);
+
+  return (
+    <p className="m-0 text-base leading-relaxed text-accent-foreground dark:text-neutral-300 whitespace-pre-wrap">
+      {rendered}
+    </p>
+  );
+}
+
 export function AIChatBox({
   onFirstMessage,
   incognito,
@@ -256,10 +364,11 @@ export function AIChatBox({
   incognito?: boolean;
 }) {
   const thinkingPhrases = [
-    'Gathering information',
-    'Retrieving my memory',
-    'Analyzing your question',
-    'Putting thoughts together',
+    'Thinking...',
+    'Analyzing your question...',
+    'Working on it...',
+    'Almost there...',
+    'Gathering thoughts...',
   ];
   const pickThinkingText = () =>
     thinkingPhrases[Math.floor(Math.random() * thinkingPhrases.length)];
@@ -343,7 +452,7 @@ export function AIChatBox({
   }, [messages, typing]);
 
   const callClaude = async (msgs: { role: 'user' | 'assistant'; content: string }[]) => {
-    const res = await fetch('/claude-api/v1/messages', {
+    const res = await fetch(`${CLAUDE_API_BASE}/v1/messages`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -401,7 +510,8 @@ export function AIChatBox({
 
         const seed = Math.floor(Math.random() * 100000);
         const cleanPrompt = imagePrompt.replace(/[^a-zA-Z0-9 ]/g, '').trim();
-        const imageUrl = `/img-proxy/prompt/${encodeURIComponent(cleanPrompt)}?width=512&height=512&nologo=true&seed=${seed}`;
+        const imgBase = import.meta.env.DEV ? '/img-proxy' : 'https://image.pollinations.ai';
+        const imageUrl = `${imgBase}/prompt/${encodeURIComponent(cleanPrompt)}?width=512&height=512&nologo=true&seed=${seed}`;
 
         setMessages((prev) =>
           prev.map((m) =>
@@ -413,7 +523,7 @@ export function AIChatBox({
         startImgProgress(msgId);
       } else {
         // Stream from Claude
-        const res = await fetch('/claude-api/v1/messages', {
+        const res = await fetch(`${CLAUDE_API_BASE}/v1/messages`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -437,6 +547,17 @@ export function AIChatBox({
         let fullText = '';
         let buffer = '';
 
+        let flushTimer: ReturnType<typeof setTimeout> | null = null;
+        const flushText = () => {
+          const captured = fullText;
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === msgId ? { ...m, text: captured } : m,
+            ),
+          );
+          flushTimer = null;
+        };
+
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
@@ -453,16 +574,16 @@ export function AIChatBox({
               const event = JSON.parse(data);
               if (event.type === 'content_block_delta' && event.delta?.text) {
                 fullText += event.delta.text;
-                const captured = fullText;
-                setMessages((prev) =>
-                  prev.map((m) =>
-                    m.id === msgId ? { ...m, text: captured } : m,
-                  ),
-                );
+                // Throttle state updates to ~50ms to reduce re-renders
+                if (!flushTimer) {
+                  flushTimer = setTimeout(flushText, 50);
+                }
               }
             } catch { /* skip */ }
           }
         }
+        // Final flush
+        if (flushTimer) clearTimeout(flushTimer);
 
         setMessages((prev) =>
           prev.map((m) =>
@@ -527,7 +648,7 @@ export function AIChatBox({
 
     try {
       abortRef.current = new AbortController();
-      const res = await fetch('/claude-api/v1/messages', {
+      const res = await fetch(`${CLAUDE_API_BASE}/v1/messages`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1358,7 +1479,7 @@ export function AIChatBox({
           <>
             <div
               className="msgs-area flex-1 overflow-y-auto pt-6 flex flex-col"
-              style={{ scrollbarGutter: 'stable' }}
+              style={{ scrollbarGutter: 'stable', overflowAnchor: 'auto' }}
             >
               <div
                 className="w-full mx-auto pb-10 flex flex-col gap-1"
@@ -1402,13 +1523,32 @@ export function AIChatBox({
                           </div>
                         </div>
                       )}
-                      <p className="m-0 text-base leading-relaxed text-accent-foreground dark:text-neutral-300 whitespace-pre-wrap">
-                        {msg.text}
-                      </p>
+                      {msg.streaming ? (
+                        <StreamingText fullText={msg.text} streaming={msg.streaming} />
+                      ) : (
+                        <p className="m-0 text-base leading-relaxed text-accent-foreground dark:text-neutral-300 whitespace-pre-wrap">
+                          {msg.text}
+                        </p>
+                      )}
+                      {msg.streaming && msg.text && (
+                        <div className="mt-3" style={{ width: 40, height: 40 }}>
+                          <Lottie
+                            options={{
+                              loop: true,
+                              autoplay: true,
+                              animationData: thinkingLoaderData,
+                              rendererSettings: { preserveAspectRatio: 'xMidYMid slice' },
+                            }}
+                            height={40}
+                            width={40}
+                            isClickToPauseDisabled={true}
+                          />
+                        </div>
+                      )}
                       {!msg.streaming && msg.text && (
                         <div
                           className={cn(
-                            'flex items-center gap-1 mt-1.5',
+                            'flex items-center gap-1.5 mt-1.5',
                             !isLastAiMsg && 'ai-msg-actions',
                           )}
                         >
@@ -1540,6 +1680,29 @@ export function AIChatBox({
                               </div>
                             </TooltipContent>
                           </DelayedTooltip>
+                          {(() => {
+                            const { count, favicons } = getMockSources(msg.id);
+                            return (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="flex items-center gap-1.5 h-7 px-2.5 rounded-full bg-muted hover:bg-accent text-muted-foreground text-xs font-medium"
+                                onClick={() => {/* TODO: expand sources */}}
+                              >
+                                <div className="flex items-center -space-x-1">
+                                  {favicons.map((src, i) => (
+                                    <img
+                                      key={i}
+                                      src={src}
+                                      alt=""
+                                      className="w-3.5 h-3.5 rounded-full ring-1 ring-muted bg-background object-contain"
+                                    />
+                                  ))}
+                                </div>
+                                <span>{count} sources</span>
+                              </Button>
+                            );
+                          })()}
                         </div>
                       )}
                     </div>
@@ -1623,16 +1786,13 @@ export function AIChatBox({
                                         p.normalize();
                                       }
                                     });
-                                  el.scrollIntoView({
-                                    behavior: 'smooth',
-                                    block: 'center',
-                                  });
-                                  // Highlight the specific quoted text within the message
+                                  // First, create the highlight mark so we can scroll to it
                                   const walker = document.createTreeWalker(
                                     el,
                                     NodeFilter.SHOW_TEXT,
                                   );
                                   let node: Text | null;
+                                  let mark: HTMLElement | null = null;
                                   while (
                                     (node = walker.nextNode() as Text | null)
                                   ) {
@@ -1643,7 +1803,7 @@ export function AIChatBox({
                                     const range = document.createRange();
                                     range.setStart(node, idx);
                                     range.setEnd(node, idx + quote.text.length);
-                                    const mark = document.createElement('mark');
+                                    mark = document.createElement('mark');
                                     mark.setAttribute(
                                       'data-reply-highlight',
                                       '',
@@ -1662,21 +1822,37 @@ export function AIChatBox({
                                       'background 0.4s ease';
                                     range.surroundContents(mark);
                                     setTimeout(() => {
-                                      mark.style.background = 'transparent';
+                                      mark!.style.background = 'transparent';
                                     }, 3000);
                                     setTimeout(() => {
-                                      const parent = mark.parentNode;
+                                      const parent = mark!.parentNode;
                                       if (parent) {
                                         parent.replaceChild(
                                           document.createTextNode(
-                                            mark.textContent || '',
+                                            mark!.textContent || '',
                                           ),
-                                          mark,
+                                          mark!,
                                         );
                                         parent.normalize();
                                       }
                                     }, 3500);
                                     break;
+                                  }
+                                  // Scroll to the highlighted text (not the message container)
+                                  const scrollTarget = mark || el;
+                                  const scrollContainer = el.closest('.msgs-area');
+                                  if (scrollContainer) {
+                                    const containerRect = scrollContainer.getBoundingClientRect();
+                                    const targetRect = scrollTarget.getBoundingClientRect();
+                                    const isVisible = targetRect.top >= containerRect.top && targetRect.bottom <= containerRect.bottom;
+                                    if (!isVisible) {
+                                      const containerCenter = containerRect.top + containerRect.height / 2;
+                                      const targetCenter = targetRect.top + targetRect.height / 2;
+                                      scrollContainer.scrollBy({
+                                        top: targetCenter - containerCenter,
+                                        behavior: 'smooth',
+                                      });
+                                    }
                                   }
                                 }}
                               >
@@ -1756,15 +1932,27 @@ export function AIChatBox({
                 })}
                 {(typing || messages.some((m) => m.streaming && !m.text)) && (
                   <div className="msg-enter py-2">
-                    <div className="flex gap-2 items-center">
-                      <div className="thinking-spinner" />
+                    <div className="flex gap-1 items-center">
+                      <div className="shrink-0" style={{ width: 28, height: 28 }}>
+                        <Lottie
+                          options={{
+                            loop: true,
+                            autoplay: true,
+                            animationData: thinkingLoaderData,
+                            rendererSettings: { preserveAspectRatio: 'xMidYMid slice' },
+                          }}
+                          height={28}
+                          width={28}
+                          isClickToPauseDisabled={true}
+                        />
+                      </div>
                       <span className="thinking-label text-base font-medium">
                         {thinkingText}
                       </span>
                     </div>
                   </div>
                 )}
-                <div className="h-[140px] shrink-0" />
+                <div className="h-[200px] shrink-0" />
                 <div ref={bottomRef} />
               </div>
             </div>
