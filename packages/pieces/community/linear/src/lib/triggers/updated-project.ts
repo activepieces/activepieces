@@ -7,7 +7,7 @@ export const linearUpdatedProject = createTrigger({
   auth: linearAuth,
   name: 'updated_project',
   displayName: 'Project Status Updated',
-  description: 'Triggers when an existing Linear project is updated',
+  description: 'Triggers when the status of an Linear project is updated',
   props: {
     team_ids: props.team_ids(false),
     project_status: props.project_statuses(false),
