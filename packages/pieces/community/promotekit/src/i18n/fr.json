@@ -68,7 +68,9 @@
   "Event Type": "Type d'événement",
   "The event type this trigger should respond to.": "Le type d'événement auquel ce déclencheur doit répondre.",
   "Affiliate Created": "Affilié créé",
+  "Affiliate Approved": "Affilié approuvé",
   "Referral Created": "Parrainage créé",
+  "Referral Converted": "Parrainage converti",
   "Commission Created": "Commission créée",
   "### Setup Instructions\n\n1. Go to your PromoteKit dashboard\n2. Navigate to **Settings > Webhooks**\n3. Click **Add Endpoint**\n4. Paste the webhook URL shown below\n5. Enable the event type you selected above (and any others you need for separate flows)\n6. Save the endpoint": "### Instructions de configuration\n\n1. Accédez à votre tableau de bord PromoteKit\n2. Allez dans **Paramètres > Webhooks**\n3. Cliquez sur **Ajouter un endpoint**\n4. Collez l'URL du webhook affichée ci-dessous\n5. Activez le type d'événement sélectionné ci-dessus (et tout autre nécessaire pour des flux séparés)\n6. Enregistrez l'endpoint"
 }
