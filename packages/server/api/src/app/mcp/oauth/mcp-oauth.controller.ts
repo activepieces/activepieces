@@ -39,7 +39,6 @@ export const mcpOAuthHttpController: FastifyPluginAsyncZod = async (app) => {
         rejectedPromiseHandler(telemetry(req.log).trackProject(identity.projectId, {
             name: TelemetryEventName.MCP_SERVER_CONNECTED,
             payload: {
-                authMethod: identity.authMethod,
                 projectId: identity.projectId,
                 userId: identity.userId,
             },
@@ -76,7 +75,7 @@ async function resolveIdentity(token: string, log: FastifyBaseLogger): Promise<R
     if (token.split('.').length === 3) {
         try {
             const payload = await mcpOAuthTokenService.verifyAccessToken(token)
-            return { projectId: payload.projectId, authMethod: 'oauth', userId: payload.sub }
+            return { projectId: payload.projectId, userId: payload.sub }
         }
         catch (e) {
             log.debug({ err: e }, 'JWT verification failed')
@@ -89,7 +88,6 @@ async function resolveIdentity(token: string, log: FastifyBaseLogger): Promise<R
 
 type ResolvedIdentity = {
     projectId: string
-    authMethod: 'oauth'
     userId: string
 }
 
