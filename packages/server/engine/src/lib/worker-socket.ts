@@ -10,6 +10,7 @@ import {
     WorkerNotifyContract,
 } from '@activepieces/shared'
 import { io, type Socket } from 'socket.io-client'
+import { requireCacheUtils } from './helper/require-cache-utils'
 import { execute } from './operations'
 import { progressService } from './services/progress.service'
 
@@ -61,6 +62,7 @@ export const workerSocket = {
                 }
                 finally {
                     await progressService.shutdown()
+                    requireCacheUtils.clearPieceCache()
                 }
             },
         })

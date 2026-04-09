@@ -1,6 +1,9 @@
 import { isNil } from '@activepieces/shared'
+import { requireCacheUtils } from './lib/helper/require-cache-utils'
 import { progressService } from './lib/services/progress.service'
 import { workerSocket } from './lib/worker-socket'
+
+requireCacheUtils.captureBaseline()
 
 const SANDBOX_ID = process.env.SANDBOX_ID
 process.title = `sandbox-${SANDBOX_ID}`

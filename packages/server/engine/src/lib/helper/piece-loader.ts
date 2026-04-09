@@ -15,7 +15,8 @@ export const pieceLoader = {
                 devPieces,
             })
             const piecePath = await pieceLoader.getPiecePath({ packageName, devPieces })
-            const module = await import(piecePath)
+            // eslint-disable-next-line @typescript-eslint/no-var-requires
+            const module = require(piecePath)
 
             const piece = extractPieceFromModule<Piece>({
                 module,
