@@ -89,12 +89,6 @@ export const flagService = (log: FastifyBaseLogger) => ({
                 updated,
             },
             {
-                id: ApFlagId.CAN_CONFIGURE_AI_PROVIDER,
-                value: true,
-                created,
-                updated,
-            },
-            {
                 id: ApFlagId.SHOW_BADGES,
                 value: true,
                 created,
