@@ -1,10 +1,10 @@
 {
-  "Automate content creation, SEO optimization, email outreach, and influencer partnerships with BurstyAI's no-code AI workflows.": "Automate content creation, SEO optimization, email outreach, and influencer partnerships with BurstyAI's no-code AI workflows.",
-  "API Key for Bursty-ai": "API Key for Bursty-ai",
-  "Run Workflow": "Run Workflow",
-  "Run a Bursty AI workflow and optionally wait for and return the results": "Run a Bursty AI workflow and optionally wait for and return the results",
-  "Workflow ID": "Workflow ID",
-  "Wait for Result": "Wait for Result",
-  "The ID of the Bursty AI workflow to run": "The ID of the Bursty AI workflow to run",
-  "Wait for the workflow to complete and return the results (default: false)": "Wait for the workflow to complete and return the results (default: false)"
+  "Automate content creation, SEO optimization, email outreach, and influencer partnerships with BurstyAI's no-code AI workflows.": "自动创建内容，SEO优化，电子邮件外联和影响者与 BurstyAI的无代码 AI 工作流。",
+  "API Key for Bursty-ai": "Bursty-ai API密钥",
+  "Run Workflow": "运行工作流",
+  "Run a Bursty AI workflow and optionally wait for and return the results": "运行 Bursty AI 工作流程，可选地等待并返回结果",
+  "Workflow ID": "工作流 ID",
+  "Wait for Result": "等待结果",
+  "The ID of the Bursty AI workflow to run": "要运行的 Bursty AI 工作流的 ID",
+  "Wait for the workflow to complete and return the results (default: false)": "等待工作流完成并返回结果(默认：false)"
 }
