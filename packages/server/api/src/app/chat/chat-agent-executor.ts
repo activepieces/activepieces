@@ -58,20 +58,20 @@ export const chatAgentExecutor = (log: FastifyBaseLogger) => ({
 
                 switch (chunk.type) {
                     case 'text-delta': {
-                        fullContent += chunk.textDelta
-                        writeSseEvent({ reply, event: 'content_delta', data: { text: chunk.textDelta } })
+                        fullContent += chunk.text
+                        writeSseEvent({ reply, event: 'content_delta', data: { text: chunk.text } })
                         break
                     }
                     case 'tool-call': {
                         toolCalls.push({
                             toolName: chunk.toolName,
                             toolCallId: chunk.toolCallId,
-                            input: chunk.args,
+                            input: chunk.input,
                         })
                         writeSseEvent({ reply, event: 'tool_call_start', data: {
                             toolCallId: chunk.toolCallId,
                             toolName: chunk.toolName,
-                            input: chunk.args,
+                            input: chunk.input,
                         } })
                         break
                     }
