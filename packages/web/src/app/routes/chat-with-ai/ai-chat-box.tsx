@@ -575,10 +575,11 @@ export function AIChatBox({
                 flushTimer = setTimeout(flushText, 50);
               }
             } else if (eventType === 'tool_call_start') {
-              fullText += `\n\n🔧 *Calling ${data.toolName}...*\n`;
+              const displayName = (data.toolName || '').replace(/^ap_/, '').replace(/_/g, ' ');
+              fullText += `\n\n> ⚙️ **${displayName}**\n\n`;
               if (!flushTimer) flushTimer = setTimeout(flushText, 50);
             } else if (eventType === 'error') {
-              fullText += `\n\n❌ ${data.message}\n`;
+              fullText += `\n\n> ❌ ${data.message}\n\n`;
               if (!flushTimer) flushTimer = setTimeout(flushText, 50);
             }
           } catch {
@@ -700,7 +701,8 @@ export function AIChatBox({
                 ),
               );
             } else if (eventType === 'tool_call_start') {
-              fullText += `\n\n🔧 *Calling ${data.toolName}...*\n`;
+              const displayName = (data.toolName || '').replace(/^ap_/, '').replace(/_/g, ' ');
+              fullText += `\n\n> ⚙️ **${displayName}**\n\n`;
             }
           } catch {
             /* skip */
@@ -1564,8 +1566,8 @@ export function AIChatBox({
               style={{ scrollbarGutter: 'stable', overflowAnchor: 'auto' }}
             >
               <div
-                className="w-full mx-auto pb-10 flex flex-col gap-1"
-                style={{ maxWidth: 'clamp(260px, calc(100vw - 730px), 530px)' }}
+                className="w-full mx-auto pb-10 px-4 flex flex-col gap-4"
+                style={{ maxWidth: 'clamp(320px, calc(100vw - 580px), 720px)' }}
               >
                 {messages.map((msg, msgIdx) => {
                   const isLastAiMsg =
@@ -1574,7 +1576,7 @@ export function AIChatBox({
                     <div
                       key={msg.id}
                       id={`msg-${msg.id}`}
-                      className="ai-msg msg-enter py-1"
+                      className="ai-msg msg-enter py-2"
                       onMouseUp={handleTextSelect}
                     >
                       {msg.images && msg.images.length > 0 && (
