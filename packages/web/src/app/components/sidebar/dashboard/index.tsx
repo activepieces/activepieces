@@ -7,7 +7,7 @@ import {
   TemplateTelemetryEventType,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Search, Plus } from 'lucide-react';
+import { Search, Plus, MessageSquare } from 'lucide-react';
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useDebounce } from 'use-debounce';
@@ -153,6 +153,16 @@ export function ProjectDashboardSidebar({
     });
   }, []);
 
+  const chatWithAILink: SidebarItemType = {
+    type: 'link',
+    to: '/chat-with-ai',
+    label: t('AI Piecer'),
+    show: true,
+    icon: MessageSquare,
+    hasPermission: true,
+    isSubItem: false,
+  };
+
   const exploreLink: SidebarItemType = {
     type: 'link',
     to: '/templates',
@@ -214,9 +224,12 @@ export function ProjectDashboardSidebar({
     },
   };
 
-  const items = [exploreLink, impactLink, leaderboardLink].filter(
-    permissionFilter,
-  );
+  const items = [
+    chatWithAILink,
+    exploreLink,
+    impactLink,
+    leaderboardLink,
+  ].filter(permissionFilter);
 
   return (
     !embedState.hideSideNav && (

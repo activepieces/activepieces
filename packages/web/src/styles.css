@@ -43,6 +43,39 @@
   src: url('assets/fonts/inter-v20-latin-800.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
 }
 
+/* sentient-light */
+@font-face {
+  font-display: swap;
+  font-family: 'Sentient';
+  font-style: normal;
+  font-weight: 300;
+  src: url('assets/fonts/Sentient-Light.woff2') format('woff2');
+}
+/* sentient-regular */
+@font-face {
+  font-display: swap;
+  font-family: 'Sentient';
+  font-style: normal;
+  font-weight: 400;
+  src: url('assets/fonts/Sentient-Regular.woff2') format('woff2');
+}
+/* sentient-medium */
+@font-face {
+  font-display: swap;
+  font-family: 'Sentient';
+  font-style: normal;
+  font-weight: 500;
+  src: url('assets/fonts/Sentient-Medium.woff2') format('woff2');
+}
+/* sentient-bold */
+@font-face {
+  font-display: swap;
+  font-family: 'Sentient';
+  font-style: normal;
+  font-weight: 700;
+  src: url('assets/fonts/Sentient-Bold.woff2') format('woff2');
+}
+
 @utility container {
   margin-inline: auto;
   padding-inline: 2rem;

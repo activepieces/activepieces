@@ -77,6 +77,13 @@ export function ProjectDashboardLayout({
       icon: TrophyIcon,
       hasPermission: true,
     },
+    {
+      to: '/chat-with-ai',
+      label: t('Chat with AI'),
+      show: !isEmbedded,
+      icon: CompassIcon,
+      hasPermission: true,
+    },
   ];
 
   const hideHeader =
