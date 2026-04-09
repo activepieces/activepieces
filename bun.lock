@@ -6140,7 +6140,7 @@
     },
     "packages/pieces/community/slack": {
       "name": "@activepieces/piece-slack",
-      "version": "0.15.0",
+      "version": "0.16.0",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -8065,7 +8065,7 @@
     },
     "packages/shared": {
       "name": "@activepieces/shared",
-      "version": "0.55.1",
+      "version": "0.55.2",
       "dependencies": {
         "dayjs": "1.11.9",
         "deepmerge-ts": "7.1.0",
