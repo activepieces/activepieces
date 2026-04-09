@@ -82,13 +82,13 @@ export const linearUpdatedProject = createTrigger({
     const selectedStatus = context.propsValue.project_status;
 
     if (selectedTeamIds.length > 0) {
-      const projectTeamIds = body.data.teams?.map((t) => t.id) ?? [];
+      const projectTeamIds = body.data.teamIds ?? [];
       if (!selectedTeamIds.some((id) => projectTeamIds.includes(id))) {
         return [];
       }
     }
 
-    if (selectedStatus && selectedStatus !== body.data.statusName) {
+    if (selectedStatus && selectedStatus !== body.data.status?.name) {
       return [];
     }
 
@@ -103,10 +103,12 @@ interface WebhookInformation {
 interface ProjectUpdatePayload {
   action: string;
   data: {
-    state: string;
-    statusName: string;
-    teams?: Array<{ id: string }>;
+    teamIds?: string[];
+    status?: { id: string; name: string; type: string; color: string };
     [key: string]: unknown;
   };
-  updatedFrom: Record<string, unknown>;
+  updatedFrom: {
+    statusId?: string;
+    [key: string]: unknown;
+  };
 }
