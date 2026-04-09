@@ -1,5 +1,5 @@
 import { QueryRunner } from 'typeorm'
-import { Migration } from '../migration'
+import { Migration } from '../../migration'
 
 export class AddAiProvidersEnabledToPlatformPlan1775728983000 implements Migration {
     name = 'AddAiProvidersEnabledToPlatformPlan1775728983000'
