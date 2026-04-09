@@ -31,7 +31,7 @@ function customer(required = true) {
           ...(normalizedSearchValue?.includes('@')
             ? { email: normalizedSearchValue }
             : {}),
-        }),
+        })
       );
 
       if (error) {
@@ -68,6 +68,76 @@ function customer(required = true) {
   });
 }
 
+function address(required = true) {
+  return Property.Dropdown({
+    displayName: 'Address',
+
+    description: 'Select the Paddle address to bill against.',
+    required,
+    refreshers: ['auth', 'customerId'],
+    auth: paddleAuth,
+    options: async ({ auth, customerId, searchValue }) => {
+      if (!auth) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Connect your Paddle account first.',
+        };
+      }
+
+      if (!customerId || typeof customerId !== 'string') {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Select a customer first.',
+        };
+      }
+
+      const normalizedSearchValue = normalizeSearchValue({
+        searchValue,
+      });
+
+      const { data: addresses, error } = await tryCatch(() =>
+        paddleClient.listAddresses({
+          auth,
+          customerId,
+        })
+      );
+
+      if (error) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Failed to load addresses. Check your connection.',
+        };
+      }
+
+      const filteredAddresses = filterAddresses({
+        addresses,
+        searchValue: normalizedSearchValue,
+      });
+
+      if (filteredAddresses.length === 0) {
+        return {
+          disabled: false,
+          options: [],
+          placeholder: 'No addresses found in Paddle.',
+        };
+      }
+
+      return {
+        disabled: false,
+        options: filteredAddresses.map((addressItem) => ({
+          label: buildAddressLabel({
+            address: addressItem,
+          }),
+          value: addressItem.id,
+        })),
+      };
+    },
+  });
+}
+
 function subscription(required = true) {
   return Property.Dropdown({
     displayName: 'Subscription',
@@ -88,7 +158,7 @@ function subscription(required = true) {
         paddleClient.listSubscriptions({
           auth,
           limit: DEFAULT_DROPDOWN_LIMIT,
-        }),
+        })
       );
 
       if (error) {
@@ -148,7 +218,7 @@ function recurringPrice(required = true) {
           auth,
           limit: DEFAULT_DROPDOWN_LIMIT,
           recurring: true,
-        }),
+        })
       );
 
       if (error) {
@@ -185,6 +255,55 @@ function recurringPrice(required = true) {
       };
     },
   });
+}
+
+function filterAddresses({
+  addresses,
+  searchValue,
+}: {
+  addresses: Array<{
+    id: string;
+    country_code?: string | null;
+    postal_code?: string | null;
+    region?: string | null;
+  }>;
+  searchValue?: string;
+}): Array<{
+  id: string;
+  country_code?: string | null;
+  postal_code?: string | null;
+  region?: string | null;
+}> {
+  if (!searchValue) {
+    return addresses;
+  }
+
+  return addresses.filter((addressItem) =>
+    buildAddressLabel({
+      address: addressItem,
+    })
+      .toLowerCase()
+      .includes(searchValue)
+  );
+}
+
+function buildAddressLabel({
+  address,
+}: {
+  address: {
+    id: string;
+    country_code?: string | null;
+    postal_code?: string | null;
+    region?: string | null;
+  };
+}): string {
+  const parts = [
+    address.country_code,
+    address.region,
+    address.postal_code,
+  ].filter((part) => part != null && part.trim().length > 0);
+
+  return parts.length > 0 ? parts.join(', ') : address.id;
 }
 
 function normalizeSearchValue({
@@ -226,7 +345,7 @@ function filterCustomers({
       customer,
     })
       .toLowerCase()
-      .includes(searchValue),
+      .includes(searchValue)
   );
 }
 
@@ -264,7 +383,7 @@ function filterSubscriptions({
       subscription: subscriptionItem,
     })
       .toLowerCase()
-      .includes(searchValue),
+      .includes(searchValue)
   );
 }
 
@@ -300,7 +419,7 @@ function filterPrices({
       price,
     })
       .toLowerCase()
-      .includes(searchValue),
+      .includes(searchValue)
   );
 }
 
@@ -346,11 +465,15 @@ function buildSubscriptionLabel({
   const firstItemName = subscription.items?.[0]?.price?.name;
 
   if (firstItemName) {
-    return `${subscription.id} (${subscription.status ?? 'unknown'}, ${firstItemName})`;
+    return `${subscription.id} (${
+      subscription.status ?? 'unknown'
+    }, ${firstItemName})`;
   }
 
   if (subscription.customer_id) {
-    return `${subscription.id} (${subscription.status ?? 'unknown'}, ${subscription.customer_id})`;
+    return `${subscription.id} (${subscription.status ?? 'unknown'}, ${
+      subscription.customer_id
+    })`;
   }
 
   return `${subscription.id} (${subscription.status ?? 'unknown'})`;
@@ -386,6 +509,7 @@ const paddleProps = {
   customer,
   recurringPrice,
   subscription,
+  address,
 };
 
 export { paddleProps };

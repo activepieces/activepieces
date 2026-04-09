@@ -13,12 +13,7 @@ const createTransactionAction = createAction({
     'Creates a Paddle transaction. When you use recurring prices, completing the transaction starts the subscription.',
   props: {
     customerId: paddleProps.customer(),
-    addressId: Property.ShortText({
-      displayName: 'Address ID',
-      description:
-        'The Paddle address ID to bill against. Use an address that belongs to the selected customer.',
-      required: true,
-    }),
+    addressId: paddleProps.address(),
     priceId: paddleProps.recurringPrice(),
     quantity: Property.Number({
       displayName: 'Quantity',

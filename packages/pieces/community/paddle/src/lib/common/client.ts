@@ -116,6 +116,62 @@ async function updateSubscription({
   return response.data;
 }
 
+async function listAddresses({
+  auth,
+  customerId,
+}: {
+  auth: PaddleAuthType;
+  customerId: string;
+}): Promise<Array<{ id: string }>> {
+  const response = await sendRequest<PaddleListResponse<{ id: string }>>({
+    auth,
+    method: HttpMethod.GET,
+    path: `/customers/${encodeURIComponent(customerId)}/addresses`,
+  });
+
+  return response.data;
+}
+
+async function createNotificationSetting({
+  auth,
+  url,
+  subscribedEvents,
+}: {
+  auth: PaddleAuthType;
+  url: string;
+  subscribedEvents: string[];
+}): Promise<{ id: string }> {
+  const response = await sendRequest<PaddleEntityResponse<{ id: string }>>({
+    auth,
+    method: HttpMethod.POST,
+    path: '/notification-settings',
+    body: {
+      type: 'url',
+      destination: url,
+      subscribed_events: subscribedEvents,
+      active: true,
+      description:"Activepieces"
+    },
+  });
+
+  return response.data;
+}
+
+async function deleteNotificationSetting({
+  auth,
+  notificationSettingId,
+}: {
+  auth: PaddleAuthType;
+  notificationSettingId: string;
+}): Promise<void> {
+  await sendRequest<unknown>({
+    auth,
+    method: HttpMethod.DELETE,
+    path: `/notification-settings/${encodeURIComponent(notificationSettingId)}`,
+  });
+}
+
+
 async function cancelSubscription({
   auth,
   subscriptionId,
@@ -285,9 +341,12 @@ const PADDLE_SANDBOX_API_BASE_URL = 'https://sandbox-api.paddle.com';
 
 const paddleClient = {
   cancelSubscription,
+  createNotificationSetting,
   createTransaction,
+  deleteNotificationSetting,
   getBaseUrl,
   getSubscription,
+  listAddresses,
   listCustomers,
   listPrices,
   listSubscriptions,

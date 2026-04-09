@@ -9,6 +9,11 @@ import { listCustomersAction } from './lib/actions/list-customers';
 import { updateSubscriptionAction } from './lib/actions/update-subscription';
 import { paddleAuth } from './lib/auth';
 import { paddleClient } from './lib/common/client';
+import { newActiveSubscription } from './lib/triggers/new-active-subscription';
+import { paymentFailed } from './lib/triggers/payment-failed';
+import { subscriptionCanceled } from './lib/triggers/subscription-canceled';
+import { subscriptionPastDue } from './lib/triggers/subscription-past-due';
+import { transactionCompleted } from './lib/triggers/transaction-completed';
 
 const paddle = createPiece({
   displayName: 'Paddle',
@@ -39,7 +44,13 @@ const paddle = createPiece({
       }),
     }),
   ],
-  triggers: [],
+  triggers: [
+    newActiveSubscription,
+    subscriptionCanceled,
+    subscriptionPastDue,
+    transactionCompleted,
+    paymentFailed,
+  ],
 });
 
 export { paddle };

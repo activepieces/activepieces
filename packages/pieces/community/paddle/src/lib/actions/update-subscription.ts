@@ -13,11 +13,11 @@ const updateSubscriptionAction = createAction({
     'Updates a Paddle subscription. Send the full recurring item list you want the subscription to keep.',
   props: {
     subscriptionId: paddleProps.subscription(),
-    items: Property.Json({
-      displayName: 'Items',
-      description:
-        'Provide the complete recurring item list as JSON, for example `[{"price_id":"pri_...","quantity":1}]`.',
-      required: true,
+    priceId: paddleProps.recurringPrice(),
+    quantity: Property.Number({
+      displayName: 'Quantity',
+      description: 'Optional quantity for the recurring price.',
+      required: false,
     }),
     prorationBillingMode: Property.StaticDropdown({
       displayName: 'Proration Billing Mode',
@@ -59,10 +59,10 @@ const updateSubscriptionAction = createAction({
       value: context.propsValue.subscriptionId,
       fieldName: 'Subscription',
     });
-    const items = paddleUtils.getLineItems({
-      value: context.propsValue.items,
-      fieldName: 'Items',
-    });
+    const items = {
+      price_id: context.propsValue.priceId,
+      quantity: context.propsValue.quantity,
+    };
     const prorationBillingMode = paddleUtils.getOptionalString({
       value: context.propsValue.prorationBillingMode,
     });
