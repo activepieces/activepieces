@@ -79,6 +79,24 @@ You are working in the Activepieces web application (`packages/web`).
 - **Transforming data for rendering** — Calculate it inline during render instead.
 - **Passing data upward to a parent** — Lift state up or use a shared store.
 
+## Query Feature Guards
+
+When a server endpoint is gated by `platformMustHaveFeatureEnabled` (returns HTTP 402 `FEATURE_DISABLED` when the plan lacks the feature), the corresponding `useQuery` hook **must** include `enabled: platform.plan.<flag>` so the request never fires when the feature is off. Without this, the global `QueryCache.onError` handler in `app.tsx` shows a misleading "Failed to load data" error dialog.
+
+**Pattern** (see `secret-managers-hooks.ts`):
+```ts
+const { platform } = platformHooks.useCurrentPlatform();
+return useQuery({
+  queryKey: [...],
+  queryFn: ...,
+  enabled: platform.plan.someFeatureEnabled,
+});
+```
+
+- `platformHooks.useCurrentPlatform()` returns instantly from cache (loaded by `InitialDataGuard`), safe to call in any hook.
+- If the query already has an `enabled` condition, combine them: `enabled: !!existing && platform.plan.<flag>`.
+- For pages with plan-gated content, also wrap with `LockedFeatureGuard` so users see an upgrade prompt instead of a broken/empty page.
+
 ## Guidelines
 
 - Read existing code before making changes to understand patterns
