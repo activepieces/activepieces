@@ -64,9 +64,15 @@ export const addLeadToCampaignAction = createAction({
       status = jobResponse.status;
     }
 
+    if (status === 'failed' || status === 'error') {
+      throw new Error(
+        `Background job ${response.id} failed with status: ${status}`,
+      );
+    }
+
     return {
       ...response,
-      status: 'success',
+      status,
     };
   },
 });
