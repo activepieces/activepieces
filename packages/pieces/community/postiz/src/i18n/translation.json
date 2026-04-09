@@ -55,9 +55,9 @@
   "Automatically shorten URLs in the post content": "Automatically shorten URLs in the post content",
   "Start of the date range (ISO 8601 format)": "Start of the date range (ISO 8601 format)",
   "End of the date range (ISO 8601 format)": "End of the date range (ISO 8601 format)",
-  "The ID of the post to delete. You can get this from the \"List Posts\" or \"New Published Content\" trigger output.": "The ID of the post to delete. You can get this from the \"List Posts\" or \"New Published Content\" trigger output.",
+  "The ID of the post to delete. You can get this from the \"List Posts\" or \"New Published Post\" trigger output.": "The ID of the post to delete. You can get this from the \"List Posts\" or \"New Published Post\" trigger output.",
   "Number of days to look back for analytics (e.g. 7, 30, 90)": "Number of days to look back for analytics (e.g. 7, 30, 90)",
-  "The ID of the published post. You can get this from the \"List Posts\" or \"New Published Content\" trigger output.": "The ID of the published post. You can get this from the \"List Posts\" or \"New Published Content\" trigger output.",
+  "The ID of the published post. You can get this from the \"List Posts\" or \"New Published Post\" trigger output.": "The ID of the published post. You can get this from the \"List Posts\" or \"New Published Post\" trigger output.",
   "The public URL of the image or video to upload": "The public URL of the image or video to upload",
   "Authorization headers are injected automatically from your connection.": "Authorization headers are injected automatically from your connection.",
   "Enable for files like PDFs, images, etc.": "Enable for files like PDFs, images, etc.",
@@ -74,6 +74,6 @@
   "JSON": "JSON",
   "Form Data": "Form Data",
   "Raw": "Raw",
-  "New Published Content": "New Published Content",
-  "Triggers when content is published in Postiz": "Triggers when content is published in Postiz"
+  "New Published Post": "New Published Post",
+  "Triggers when a post is published in Postiz": "Triggers when a post is published in Postiz"
 }

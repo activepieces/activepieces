@@ -13,7 +13,7 @@ export const getPostAnalytics = createAction({
     postId: Property.ShortText({
       displayName: 'Post ID',
       description:
-        'The ID of the published post. You can get this from the "List Posts" or "New Published Content" trigger output.',
+        'The ID of the published post. You can get this from the "List Posts" or "New Published Post" trigger output.',
       required: true,
     }),
     days: Property.Number({

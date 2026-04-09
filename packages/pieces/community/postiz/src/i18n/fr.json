@@ -72,8 +72,8 @@
   "JSON": "JSON",
   "Form Data": "Données de formulaire",
   "Raw": "Brut",
-  "New Published Content": "Nouveau contenu publié",
-  "Triggers when content is published in Postiz": "Se déclenche lorsqu'un contenu est publié dans Postiz",
-  "The ID of the post to delete. You can get this from the \"List Posts\" or \"New Published Content\" trigger output.": "L'ID du contenu à supprimer. Vous pouvez l'obtenir depuis la sortie de « Lister les contenus » ou du déclencheur « Nouveau contenu publié ».",
-  "The ID of the published post. You can get this from the \"List Posts\" or \"New Published Content\" trigger output.": "L'ID du contenu. Vous pouvez l'obtenir depuis la sortie de « Lister les contenus » ou du déclencheur « Nouveau contenu publié »."
+  "New Published Post": "Nouveau contenu publié",
+  "Triggers when a post is published in Postiz": "Se déclenche lorsqu'un contenu est publié dans Postiz",
+  "The ID of the post to delete. You can get this from the \"List Posts\" or \"New Published Post\" trigger output.": "L'ID du contenu à supprimer. Vous pouvez l'obtenir depuis la sortie de « Lister les contenus » ou du déclencheur « Nouveau contenu publié ».",
+  "The ID of the published post. You can get this from the \"List Posts\" or \"New Published Post\" trigger output.": "L'ID du contenu. Vous pouvez l'obtenir depuis la sortie de « Lister les contenus » ou du déclencheur « Nouveau contenu publié »."
 }

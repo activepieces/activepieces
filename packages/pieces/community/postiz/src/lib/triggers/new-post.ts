@@ -22,8 +22,8 @@ function buildApiRoot(auth: PostizJwtAuthValue): string {
 export const newPost = createTrigger({
   auth: postizAuth,
   name: 'new_post',
-  displayName: 'New Published Content',
-  description: 'Triggers when content is published in Postiz',
+  displayName: 'New Published Post',
+  description: 'Triggers when a post is published in Postiz',
   props: {
     instructions: Property.MarkDown({
       value: `**Webhook URL:**
