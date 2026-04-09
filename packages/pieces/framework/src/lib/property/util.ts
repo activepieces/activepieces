@@ -98,28 +98,6 @@ function buildSchema(
       case PropertyType.CUSTOM:
         propsSchema[name] = z.unknown();
         break;
-      case PropertyType.JSON:
-        propsSchema[name] = z.union([
-          z.record(z.string(), z.unknown()),
-          z.array(z.unknown()),
-          property.required ? z.string().min(1) : z.string(),
-        ]);
-        break;
-      case PropertyType.MULTI_SELECT_DROPDOWN:
-      case PropertyType.STATIC_MULTI_SELECT_DROPDOWN:
-        propsSchema[name] = z.union([
-          property.required
-            ? z.array(z.unknown()).min(1)
-            : z.array(z.unknown()),
-          property.required ? z.string().min(1) : z.string(),
-        ]);
-        break;
-      case PropertyType.DYNAMIC:
-        propsSchema[name] = z.record(z.string(), z.unknown());
-        break;
-      case PropertyType.CUSTOM:
-        propsSchema[name] = z.unknown();
-        break;
     }
 
     //optional array is checked against its children
