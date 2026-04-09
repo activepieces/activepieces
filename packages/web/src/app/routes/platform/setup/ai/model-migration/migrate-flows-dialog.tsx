@@ -95,12 +95,12 @@ function MigrateFlowsDialogContent({
   const form = useForm<MigrateFlowsModelRequest>({
     resolver: zodResolver(MigrateFlowsModelRequest),
     defaultValues: {
-      projectIds: []
+      projectIds: [],
     },
   });
 
-  const sourceProvider = form.watch('sourceModel.provider');
-  const targetProvider = form.watch('targetModel.provider');
+  const sourceProvider = form.watch('sourceModel')?.provider;
+  const targetProvider = form.watch('targetModel')?.provider;
 
   const { data: projects } = projectCollectionUtils.useAllPlatformProjects();
 
@@ -187,7 +187,7 @@ function MigrateFlowsDialogContent({
                   onChange={(value) =>
                     field.onChange(value?.map((v) => `${v}`) ?? [])
                   }
-                  initialValues={(field.value ?? [])}
+                  initialValues={field.value ?? []}
                   showDeselect={(field.value?.length ?? 0) > 0}
                 />
                 <p className="text-xs text-muted-foreground">
@@ -198,79 +198,71 @@ function MigrateFlowsDialogContent({
             )}
           />
 
-          <FormItem className="flex flex-col gap-2">
-            <FormLabel htmlFor="sourceModel.provider" showRequiredIndicator>{t('Source Model')}</FormLabel>
-            <div className="grid grid-cols-2 gap-2">
-              <FormField
-                control={form.control}
-                name="sourceModel.provider"
-                render={({ field }) => (
+          <FormField
+            control={form.control}
+            name="sourceModel"
+            render={({ field }) => (
+              <FormItem className="flex flex-col gap-2">
+                <FormLabel showRequiredIndicator>{t('Source Model')}</FormLabel>
+                <div className="grid grid-cols-2 gap-2">
                   <SearchableSelect
                     options={providerOptions}
-                    value={field.value}
+                    value={field.value?.provider}
                     onChange={(v) => {
-                      field.onChange(v);
-                      form.setValue('sourceModel.model', '');
+                      field.onChange({
+                        ...field.value,
+                        provider: v,
+                        model: '',
+                      });
                     }}
                     placeholder={t('Provider')}
                     valuesRendering={renderProviderOption}
                   />
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="sourceModel.model"
-                render={({ field }) => (
                   <ModelSearchableSelect
                     provider={sourceProvider}
-                    value={field.value}
-                    onChange={field.onChange}
+                    value={field.value?.model ?? ''}
+                    onChange={(model) => {
+                      field.onChange({ ...field.value, model });
+                    }}
                   />
-                )}
-              />
-            </div>
-            <FormMessage>
-              {form.formState.errors.sourceModel?.provider?.message ??
-                form.formState.errors.sourceModel?.model?.message}
-            </FormMessage>
-          </FormItem>
+                </div>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-          <FormItem className="flex flex-col gap-2">
-            <FormLabel htmlFor="targetModel.provider" showRequiredIndicator>{t('Target Model')}</FormLabel>
-            <div className="grid grid-cols-2 gap-2">
-              <FormField
-                control={form.control}
-                name="targetModel.provider"
-                render={({ field }) => (
+          <FormField
+            control={form.control}
+            name="targetModel"
+            render={({ field }) => (
+              <FormItem className="flex flex-col gap-2">
+                <FormLabel showRequiredIndicator>{t('Target Model')}</FormLabel>
+                <div className="grid grid-cols-2 gap-2">
                   <SearchableSelect
                     options={providerOptions}
-                    value={field.value}
+                    value={field.value?.provider}
                     onChange={(v) => {
-                      field.onChange(v);
-                      form.setValue('targetModel.model', '');
+                      field.onChange({
+                        ...field.value,
+                        provider: v,
+                        model: '',
+                      });
                     }}
                     placeholder={t('Provider')}
                     valuesRendering={renderProviderOption}
                   />
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="targetModel.model"
-                render={({ field }) => (
                   <ModelSearchableSelect
                     provider={targetProvider}
-                    value={field.value}
-                    onChange={field.onChange}
+                    value={field.value?.model ?? ''}
+                    onChange={(model) => {
+                      field.onChange({ ...field.value, model });
+                    }}
                   />
-                )}
-              />
-            </div>
-            <FormMessage>
-              {form.formState.errors.targetModel?.provider?.message ??
-                form.formState.errors.targetModel?.model?.message}
-            </FormMessage>
-          </FormItem>
+                </div>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
           {form.formState.errors.root?.serverError && (
             <FormMessage>

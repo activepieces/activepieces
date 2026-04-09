@@ -3,7 +3,7 @@ import { t } from 'i18next';
 import { ArrowLeft, ArrowLeftRight } from 'lucide-react';
 import { useState } from 'react';
 
-import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
+import { CenteredPage } from '@/app/components/centered-page';
 import { Button } from '@/components/ui/button';
 import { SUPPORTED_AI_PROVIDERS } from '@/features/agents';
 import {
@@ -42,33 +42,31 @@ export default function AIProvidersPage() {
       )}
     >
       {view === 'providers' ? (
-        <div className="flex flex-col w-full gap-4">
-          <DashboardPageHeader
-            title={t('AI Providers')}
-            description={
-              allowWrite
-                ? t(
-                    'Set provider credentials that will be used by universal AI pieces, i.e Text AI.',
-                  )
-                : t(
-                    'Available AI providers that will be used by universal AI pieces, i.e Text AI.',
-                  )
-            }
-          >
-            {allowWrite && providers && providers?.length > 0 && (
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setView('migrations')}
-                >
-                  <ArrowLeftRight className="w-4 h-4 mr-2" />
-                  {t('Migrations')}
-                </Button>
-              </div>
-            )}
-          </DashboardPageHeader>
-          <div className="flex flex-col gap-4 px-4">
+        <CenteredPage
+          title={t('AI Providers')}
+          description={
+            allowWrite
+              ? t(
+                  'Set provider credentials that will be used by universal AI pieces, i.e Text AI.',
+                )
+              : t(
+                  'Available AI providers that will be used by universal AI pieces, i.e Text AI.',
+                )
+          }
+          actions={
+            allowWrite && providers && providers?.length > 0 ? (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setView('migrations')}
+              >
+                <ArrowLeftRight className="w-4 h-4 mr-2" />
+                {t('Migrations')}
+              </Button>
+            ) : undefined
+          }
+        >
+          <div className="flex flex-col gap-4">
             {SUPPORTED_AI_PROVIDERS.map((providerDef) => {
               const config = providers?.find(
                 (p) => p.provider === providerDef.provider,
@@ -86,10 +84,13 @@ export default function AIProvidersPage() {
               );
             })}
           </div>
-        </div>
+        </CenteredPage>
       ) : (
-        <div className="flex flex-col w-full gap-4">
-          <DashboardPageHeader title={t('Migrations')}>
+        <CenteredPage
+          title={t('Migrations')}
+          description={t('View migration history and track progress.')}
+          maxWidth="max-w-[75rem]"
+          actions={
             <Button
               variant="outline"
               size="sm"
@@ -98,12 +99,13 @@ export default function AIProvidersPage() {
               <ArrowLeft className="w-4 h-4 mr-2" />
               {t('Back')}
             </Button>
-          </DashboardPageHeader>
+          }
+        >
           <AiProviderMigrationsTable
             showMigrateButton={allowWrite && (providers?.length ?? 0) > 0}
             onMigrateClick={() => setMigrateDialogOpen(true)}
           />
-        </div>
+        </CenteredPage>
       )}
       {providers && (
         <MigrateFlowsDialog

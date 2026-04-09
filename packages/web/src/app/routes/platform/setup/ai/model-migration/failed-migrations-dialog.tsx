@@ -68,9 +68,14 @@ export function FailedMigrationsDialog({
                     <span className="text-sm font-medium truncate">
                       {group.flowDisplayName}
                     </span>
-                    <p className="text-xs text-muted-foreground">
-                      {formatFailureMessage(group.versions)}
-                    </p>
+                    {group.versions.map((version) => (
+                      <p
+                        key={version.flowVersionId}
+                        className="text-xs text-muted-foreground"
+                      >
+                        {version.error}
+                      </p>
+                    ))}
                   </div>
                 </li>
               ))}
@@ -108,13 +113,6 @@ function groupByFlowId({
   }
 
   return [...groups.values()];
-}
-
-function formatFailureMessage(versions: FailedFlowVersion[]): string {
-  if (versions.length >= 2) {
-    return t('Both draft and published versions failed to migrate.');
-  }
-  return versions[0].error;
 }
 
 type FailedMigrationsDialogProps = {
