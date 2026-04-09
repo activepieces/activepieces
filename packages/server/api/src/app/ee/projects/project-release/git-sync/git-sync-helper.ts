@@ -97,13 +97,10 @@ export const gitSyncHelper = (log: FastifyBaseLogger) => ({
 
 async function readFlowsFromGit(flowFolderPath: string, log: FastifyBaseLogger): Promise<FlowState[]> {
     const flowFiles = await fs.readdir(flowFolderPath)
-    const flows: FlowState[] = []
-    for (const file of flowFiles) {
+    return Promise.all(flowFiles.map(async (file) => {
         const flow: PopulatedFlow = JSON.parse(await fs.readFile(path.join(flowFolderPath, file), 'utf-8'))
-        const flowState = await projectStateService(log).getFlowState(flow)
-        flows.push(flowState)
-    }
-    return flows
+        return projectStateService(log).getFlowState(flow)
+    }))
 }
 
 async function readConnectionsFromGit(connectionsFolderPath: string): Promise<ConnectionState[]> {
