@@ -8,7 +8,7 @@ function filterUndefined(
   obj: Record<string, unknown>,
 ): Record<string, unknown> {
   return Object.fromEntries(
-    Object.entries(obj).filter(([, v]) => v !== undefined),
+    Object.entries(obj).filter(([, v]) => v !== undefined && v !== null),
   );
 }
 
