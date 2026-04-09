@@ -104,20 +104,15 @@ async function listTablesByExternalIds(projectId: string, externalIds: string[])
         limit: 10000,
         cursor: undefined,
         name: undefined,
-        externalIds: undefined,
-    }).then((page) => page.data.filter((table) => externalIds.includes(table.externalId)))
+        externalIds,
+    })
 
-    const populatedTables = await Promise.all(tables.map(async (table) => {
-        const fields = await fieldService.getAll({
-            projectId,
-            tableId: table.id,
-        })
-        return {
-            ...table,
-            fields,
-        }
+    const tableIds = tables.data.map((t) => t.id)
+    const fieldsMap = await fieldService.getAllByTableIds({ projectId, tableIds })
+    return tables.data.map((table) => ({
+        ...table,
+        fields: fieldsMap.get(table.id) ?? [],
     }))
-    return populatedTables
 }
 
 async function pushConnectionsWithContext(log: FastifyBaseLogger, { git, flowFolderPath, connectionsFolderPath, gitRepo, platformId }: ConnectionContextParams): Promise<void> {
