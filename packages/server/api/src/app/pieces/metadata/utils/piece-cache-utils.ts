@@ -68,17 +68,13 @@ export function isCustomPiece(platformId: string | undefined, piece: PieceMetada
 }
 
 export function isSupportedRelease(release: string | undefined, piece: { minimumSupportedRelease?: string, maximumSupportedRelease?: string }): boolean {
-    if (isNil(release)) {
+    if (isNil(release) || !semVer.valid(release)) {
         return true
     }
-    if (!semVer.valid(release) || !semVer.valid(piece.minimumSupportedRelease) || !semVer.valid(piece.maximumSupportedRelease)) {
+    if (!isNil(piece.maximumSupportedRelease) && semVer.valid(piece.maximumSupportedRelease) && semVer.compare(release, piece.maximumSupportedRelease) === 1) {
         return false
     }
-
-    if (!isNil(piece.maximumSupportedRelease) && semVer.compare(release, piece.maximumSupportedRelease) == 1) {
-        return false
-    }
-    if (!isNil(piece.minimumSupportedRelease) && semVer.compare(release, piece.minimumSupportedRelease) == -1) {
+    if (!isNil(piece.minimumSupportedRelease) && semVer.valid(piece.minimumSupportedRelease) && semVer.compare(release, piece.minimumSupportedRelease) === -1) {
         return false
     }
     return true

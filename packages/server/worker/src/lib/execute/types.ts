@@ -19,13 +19,17 @@ export type JobContext = {
 
 export type FireAndForgetJobResult = {
     kind: JobResultKind.FIRE_AND_FORGET
+    status: EngineResponseStatus
     delayInSeconds?: number
+    logs?: string
 }
 
 export type SynchronousJobResult = {
     kind: JobResultKind.SYNCHRONOUS
     status: EngineResponseStatus
     response: unknown
+    errorMessage?: string
+    logs?: string
 }
 
 export type JobResult = FireAndForgetJobResult | SynchronousJobResult

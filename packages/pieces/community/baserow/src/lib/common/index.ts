@@ -1,34 +1,125 @@
 import {
   DynamicPropsValue,
-  PiecePropValueSchema,
-  Property,
   DropdownState,
+  Property,
 } from '@activepieces/pieces-framework';
-import { baserowAuth } from '../auth';
+import {
+  baserowAuth,
+  BaserowAuthValue,
+  BaserowJwtAuthValue,
+  isDatabaseTokenAuth,
+} from '../auth';
 import { BaserowClient } from './client';
 import { BaserowFieldType } from './constants';
 
-export function makeClient(
-  auth: PiecePropValueSchema<typeof baserowAuth>
-): BaserowClient {
-  const client = new BaserowClient(auth.apiUrl, auth.token);
-  return client;
+export async function makeClient(
+  auth: BaserowAuthValue
+): Promise<BaserowClient> {
+  if (isDatabaseTokenAuth(auth)) {
+    return new BaserowClient(auth.props.apiUrl, `Token ${auth.props.token}`);
+  }
+  const jwt = await BaserowClient.getJwtToken(
+    auth.props.apiUrl,
+    auth.props.email,
+    auth.props.password
+  );
+  return new BaserowClient(auth.props.apiUrl, `JWT ${jwt}`);
 }
+
+export async function makeJwtClient(
+  auth: BaserowJwtAuthValue
+): Promise<BaserowClient> {
+  const jwt = await BaserowClient.getJwtToken(
+    auth.props.apiUrl,
+    auth.props.email,
+    auth.props.password
+  );
+  return new BaserowClient(auth.props.apiUrl, `JWT ${jwt}`);
+}
+
+export function formatFieldValues(
+  input: DynamicPropsValue,
+  fieldTypeMap: Record<string, string>,
+  options: { skipEmpty: boolean }
+): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+  for (const key of Object.keys(input)) {
+    const value = input[key];
+    const fieldType = fieldTypeMap[key];
+
+    if (options.skipEmpty) {
+      if (value === null || value === undefined || value === '') continue;
+      if (Array.isArray(value) && value.length === 0) continue;
+    }
+
+    switch (fieldType) {
+      case BaserowFieldType.LINK_TO_TABLE:
+        if (Array.isArray(value) && value.length > 0) {
+          result[key] = value.map((id: string) => parseInt(id, 10));
+        } else {
+          result[key] = [];
+        }
+        break;
+      case BaserowFieldType.MULTIPLE_COLLABORATORS:
+        if (Array.isArray(value) && value.length > 0) {
+          result[key] = value.map((id: string) => ({ id: parseInt(id, 10) }));
+        } else {
+          result[key] = [];
+        }
+        break;
+      case BaserowFieldType.SINGLE_SELECT:
+        if (
+          value === null ||
+          value === undefined ||
+          value === '' ||
+          (Array.isArray(value) && value.length === 0)
+        ) {
+          result[key] = options.skipEmpty ? undefined : null;
+        } else {
+          result[key] = value;
+        }
+        break;
+      case BaserowFieldType.MULTI_SELECT:
+        if (value === null || value === undefined || value === '') {
+          result[key] = options.skipEmpty ? undefined : [];
+        } else {
+          result[key] = value;
+        }
+        break;
+      default:
+        if (value === null || value === undefined) {
+          result[key] = options.skipEmpty ? undefined : null;
+        } else {
+          result[key] = value;
+        }
+        break;
+    }
+  }
+  for (const key of Object.keys(result)) {
+    if (result[key] === undefined) {
+      delete result[key];
+    }
+  }
+  return result;
+}
+
 export const baserowCommon = {
   tableId: (required = true) =>
     Property.Dropdown({
       displayName: 'Table',
-      description: 'Select the table to watch.',
+      description: 'Select the table.',
       required,
       auth: baserowAuth,
       refreshers: ['auth'],
       options: async ({ auth }): Promise<DropdownState<number>> => {
         if (!auth) {
-          return { disabled: true, placeholder: 'Connect your account first.', options: [] };
+          return {
+            disabled: true,
+            placeholder: 'Connect your account first.',
+            options: [],
+          };
         }
-        const client = makeClient(
-          auth.props
-        );
+        const client = await makeClient(auth);
         const tables = await client.listTables();
         return {
           disabled: false,
@@ -44,11 +135,19 @@ export const baserowCommon = {
       auth: baserowAuth,
       refreshers: ['auth', 'table_id'],
       options: async ({ auth, table_id }): Promise<DropdownState<number>> => {
-        if (!auth || !table_id) {
-          return { disabled: true, placeholder: 'Select a table first.', options: [] };
+        if (!auth || typeof table_id !== 'number') {
+          return {
+            disabled: true,
+            placeholder: 'Select a table first.',
+            options: [],
+          };
         }
-        const client = makeClient(auth.props);
-        const response = await client.listRows(table_id as unknown as number) as { results: Record<string, unknown>[] };
+        const client = await makeClient(auth);
+        const response = (await client.listRows(
+          table_id,
+          undefined,
+          200
+        )) as { results: Record<string, unknown>[] };
         return {
           disabled: false,
           options: response.results.map((row) => {
@@ -56,7 +155,9 @@ export const baserowCommon = {
               .filter(([k]) => k !== 'id' && k !== 'order')
               .map(([, v]) => (typeof v === 'string' && v ? v : null))
               .find(Boolean);
-            const label = primaryValue ? `#${row['id']} ${primaryValue}` : `Row #${row['id']}`;
+            const label = primaryValue
+              ? `#${row['id']} ${primaryValue}`
+              : `Row #${row['id']}`;
             return { label, value: row['id'] as number };
           }),
         };
@@ -69,16 +170,12 @@ export const baserowCommon = {
       required,
       refreshers: ['table_id'],
       props: async ({ auth, table_id }) => {
-        if (!auth || !table_id) return {};
+        if (!auth || typeof table_id !== 'number') return {};
 
         const fields: DynamicPropsValue = {};
         try {
-          const client = makeClient(
-            auth.props
-          );
-          const tableFields = await client.listTableFields(
-            table_id as unknown as number
-          );
+          const client = await makeClient(auth);
+          const tableFields = await client.listTableFields(table_id);
           for (const field of tableFields) {
             if (
               !field.read_only &&
@@ -121,7 +218,6 @@ export const baserowCommon = {
                   fields[field.name] = Property.Array({
                     displayName: field.name,
                     required: false,
-
                     description: `Enter row ids from table(ID: ${field.link_row_table_id}) that you want to link to.`,
                   });
                   break;

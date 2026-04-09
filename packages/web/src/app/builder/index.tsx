@@ -3,7 +3,6 @@ import {
   FlowActionType,
   FlowTrigger,
   FlowTriggerType,
-  FlowVersionState,
   flowStructureUtil,
 } from '@activepieces/shared';
 import { useEffect, useRef, useState } from 'react';
@@ -80,7 +79,6 @@ const BuilderPage = () => {
       enabled:
         selectedStep?.type === FlowActionType.PIECE ||
         selectedStep?.type === FlowTriggerType.PIECE,
-      getExactVersion: flowVersion.state === FlowVersionState.LOCKED,
     });
   flowCanvasHooks.useSetSocketListener(refetchPiece);
   flowCanvasHooks.useListenToExistingRun();
@@ -200,6 +198,10 @@ function constructContainerKey({
     step?.type === FlowTriggerType.PIECE || step?.type === FlowActionType.PIECE
       ? step?.settings.pieceName
       : undefined;
+  const pieceVersion =
+    step?.type === FlowTriggerType.PIECE || step?.type === FlowActionType.PIECE
+      ? step?.settings.pieceVersion
+      : undefined;
   //we need to re-render the step settings form when the step is skipped, so when the user edits the settings after setting it to skipped the changes are reflected in the update request
   const isSkipped =
     step?.type != FlowTriggerType.EMPTY &&
@@ -207,7 +209,7 @@ function constructContainerKey({
     step?.skip;
   return `${flowVersionId}-${stepName ?? ''}-${triggerOrActionName ?? ''}-${
     pieceName ?? ''
-  }-${'skipped-' + !!isSkipped}-${
+  }-${pieceVersion ?? ''}-${'skipped-' + !!isSkipped}-${
     hasPieceModelLoaded ? 'loaded' : 'not-loaded'
   }`;
 }

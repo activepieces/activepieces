@@ -179,9 +179,7 @@ describe('createSandbox', () => {
                 { timeoutInSeconds: 10 },
             )
 
-            expect(result.engine).toEqual(engineResponse)
-            expect(result.stdOut).toBe('')
-            expect(result.stdError).toBe('')
+            expect(result).toEqual({ ...engineResponse, logs: undefined })
         })
 
         it('recovers after engine returns INTERNAL_ERROR and handles next job', async () => {
@@ -210,29 +208,30 @@ describe('createSandbox', () => {
                 {} as any,
                 { timeoutInSeconds: 10 },
             )
-            expect(firstResult.engine.status).toBe(EngineResponseStatus.INTERNAL_ERROR)
-            expect(firstResult.engine.error).toBe('Engine error: AppWebhookUrlNotAvailableError')
+            expect(firstResult.status).toBe(EngineResponseStatus.INTERNAL_ERROR)
+            expect(firstResult.error).toBe('Engine error: AppWebhookUrlNotAvailableError')
 
             const secondResult = await sandbox.execute(
                 'EXECUTE_FLOW' as any,
                 {} as any,
                 { timeoutInSeconds: 10 },
             )
-            expect(secondResult.engine.status).toBe(EngineResponseStatus.OK)
-            expect(secondResult.engine.response).toEqual({ success: true })
+            expect(secondResult.status).toBe(EngineResponseStatus.OK)
+            expect(secondResult.response).toEqual({ success: true })
         })
 
-        it('accumulates stdout and stderr from rpc-notify', async () => {
+        it('resolves with engine response and captures stdout/stderr', async () => {
             const { sandbox } = await startSandbox()
             const client = testPM.getClient()
 
+            const engineResponse = { status: 200, body: 'ok' }
             client.on('rpc', (msg: { method: string, payload: unknown }, ack: (result: unknown) => void) => {
                 if (msg.method === 'executeOperation') {
                     client.emit('rpc-notify', { method: 'stdout', payload: { message: 'line1\n' } })
                     client.emit('rpc-notify', { method: 'stderr', payload: { message: 'err1\n' } })
                     client.emit('rpc-notify', { method: 'stdout', payload: { message: 'line2\n' } })
                     setTimeout(() => {
-                        ack({ status: 200 })
+                        ack(engineResponse)
                     }, 50)
                 }
             })
@@ -243,8 +242,7 @@ describe('createSandbox', () => {
                 { timeoutInSeconds: 10 },
             )
 
-            expect(result.stdOut).toBe('line1\nline2\n')
-            expect(result.stdError).toBe('err1\n')
+            expect(result).toEqual({ ...engineResponse, logs: 'stdout:\nline1\nline2\n\nstderr:\nerr1\n' })
         })
 
         it('delegates worker contract calls to handlers', async () => {
