@@ -72,5 +72,13 @@
   "Triggers when a referral receives its first commission (first paid conversion).": "Triggers when a referral receives its first commission (first paid conversion).",
   "New Commission": "New Commission",
   "Triggers when a new commission is generated in PromoteKit.": "Triggers when a new commission is generated in PromoteKit.",
-  "Please connect your account first": "Please connect your account first"
+  "Please connect your account first": "Please connect your account first",
+  "New Event": "New Event",
+  "Triggers when a PromoteKit webhook event is received.": "Triggers when a PromoteKit webhook event is received.",
+  "Event Type": "Event Type",
+  "The event type this trigger should respond to.": "The event type this trigger should respond to.",
+  "Affiliate Created": "Affiliate Created",
+  "Referral Created": "Referral Created",
+  "Commission Created": "Commission Created",
+  "### Setup Instructions\n\n1. Go to your PromoteKit dashboard\n2. Navigate to **Settings > Webhooks**\n3. Click **Add Endpoint**\n4. Paste the webhook URL shown below\n5. Enable the event type you selected above (and any others you need for separate flows)\n6. Save the endpoint": "### Setup Instructions\n\n1. Go to your PromoteKit dashboard\n2. Navigate to **Settings > Webhooks**\n3. Click **Add Endpoint**\n4. Paste the webhook URL shown below\n5. Enable the event type you selected above (and any others you need for separate flows)\n6. Save the endpoint"
 }
