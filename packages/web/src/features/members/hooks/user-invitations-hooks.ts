@@ -19,7 +19,7 @@ export const userInvitationsHooks = {
       },
       queryKey: [userInvitationsQueryKey],
       staleTime: 0,
-      meta: { showErrorDialog: true },
+      meta: { showErrorDialog: true, loadSubsetOptions: {} },
     });
     return {
       invitations: query.data,

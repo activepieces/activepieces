@@ -48,7 +48,7 @@ export function useAutomationsData(
     queryFn: () => foldersApi.list(),
     staleTime: STALE_TIME,
     refetchOnMount: 'always',
-    meta: { showErrorDialog: true },
+    meta: { showErrorDialog: true, loadSubsetOptions: {} },
   });
 
   const folderIds = foldersQuery.data?.map((f) => f.id).join(',') ?? '';
@@ -108,7 +108,7 @@ export function useAutomationsData(
     enabled: !!foldersQuery.data && foldersQuery.data.length > 0,
     staleTime: STALE_TIME,
     refetchOnMount: 'always',
-    meta: { showErrorDialog: true },
+    meta: { showErrorDialog: true, loadSubsetOptions: {} },
   });
 
   const skipFlows =
@@ -137,7 +137,7 @@ export function useAutomationsData(
     enabled: !skipFlows,
     staleTime: STALE_TIME,
     refetchOnMount: 'always',
-    meta: { showErrorDialog: true },
+    meta: { showErrorDialog: true, loadSubsetOptions: {} },
   });
 
   const rootTablesQuery = useQuery({
@@ -153,7 +153,7 @@ export function useAutomationsData(
     enabled: !skipTables,
     staleTime: STALE_TIME,
     refetchOnMount: 'always',
-    meta: { showErrorDialog: true },
+    meta: { showErrorDialog: true, loadSubsetOptions: {} },
   });
 
   const toggleFolder = useCallback((folderId: string) => {
