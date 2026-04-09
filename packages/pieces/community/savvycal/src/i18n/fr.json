@@ -1,4 +1,5 @@
 {
+  "To get your SavvyCal API token:\n1. Log in to your SavvyCal account at https://savvycal.com\n2. Go to **Settings > Developers**\n3. Under **Personal Tokens**, click **Create a token**\n4. Give it a name, then click the **...** menu next to it to view the token\n5. Copy the **Private Key** (starts with `pt_secret_`) — not the Public Key\n\n**Note:** Keep this token secret — it gives full access to your SavvyCal account.": "Pour obtenir votre jeton API SavvyCal :\n1. Connectez-vous à votre compte SavvyCal sur https://savvycal.com\n2. Allez dans **Paramètres > Développeurs**\n3. Sous **Personal Tokens**, cliquez sur **Create a token**\n4. Donnez-lui un nom, puis cliquez sur le menu **...** à côté pour afficher le jeton\n5. Copiez la **Clé privée** (commence par `pt_secret_`) — pas la Clé publique\n\n**Remarque :** Gardez ce jeton secret — il donne un accès complet à votre compte SavvyCal.",
   "Personal Access Token (Private Key)": "Jeton d'accès personnel (Clé privée)",
   "Cancel Event": "Annuler un événement",
   "Cancels a scheduled meeting in SavvyCal.": "Annule une réunion planifiée dans SavvyCal.",
