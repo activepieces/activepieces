@@ -91,10 +91,8 @@ const FILE_ICON_MAP: Record<Attachment['type'], typeof FileText> = {
   other: Paperclip,
 };
 
-const ANTHROPIC_KEY = import.meta.env.VITE_ANTHROPIC_API_KEY || '';
-const CLAUDE_API_BASE = import.meta.env.DEV
-  ? '/claude-api'
-  : 'https://api.anthropic.com';
+import { authenticationSession } from '@/lib/authentication-session';
+import { API_URL } from '@/lib/api';
 
 const IMAGE_KEYWORDS_EXACT = [
   'صورة',
@@ -487,52 +485,26 @@ export function AIChatBox({
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, typing]);
 
-  const callClaude = async (
-    msgs: { role: 'user' | 'assistant'; content: string }[],
-  ) => {
-    const res = await fetch(`${CLAUDE_API_BASE}/v1/messages`, {
+  const conversationIdRef = useRef<string | null>(null);
+
+  const getOrCreateConversation = async (): Promise<string> => {
+    if (conversationIdRef.current) return conversationIdRef.current;
+    const projectId = authenticationSession.getProjectId();
+    const token = authenticationSession.getToken();
+    const res = await fetch(`${API_URL}/v1/chat/conversations?projectId=${projectId}`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': ANTHROPIC_KEY,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true',
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1024,
-        messages: msgs,
-      }),
+      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
     });
-    if (!res.ok) throw new Error(`${res.status} ${await res.text()}`);
-    const data = await res.json();
-    return data.content?.[0]?.text || '';
+    if (!res.ok) throw new Error(`Failed to create conversation: ${res.status}`);
+    const conv = await res.json();
+    conversationIdRef.current = conv.id;
+    return conv.id;
   };
 
-  const streamClaude = async (
-    chatMessages: {
-      role: 'user' | 'assistant';
-      content:
-        | string
-        | Array<{
-            type: string;
-            text?: string;
-            source?: { type: string; media_type: string; data: string };
-          }>;
-    }[],
-  ) => {
+  const streamFromBackend = async (userText: string) => {
     const msgId = Date.now() + 1;
     const time = getTime();
-    const lastContent = chatMessages[chatMessages.length - 1]?.content || '';
-    const userText =
-      typeof lastContent === 'string'
-        ? lastContent
-        : [...lastContent]
-            .reverse()
-            .find((b) => b.type === 'text' && !b.text?.startsWith('--- File:'))
-            ?.text || '';
-    const hasAttachments = typeof lastContent !== 'string';
-    const wantsImage = !hasAttachments && isImageRequest(userText);
 
     setMessages((prev) => [
       ...prev,
@@ -548,109 +520,80 @@ export function AIChatBox({
 
     try {
       abortRef.current = new AbortController();
+      const conversationId = await getOrCreateConversation();
+      const token = authenticationSession.getToken();
 
-      if (wantsImage) {
+      const res = await fetch(`${API_URL}/v1/chat/conversations/${conversationId}/messages`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ content: userText }),
+        signal: abortRef.current.signal,
+      });
+
+      if (!res.ok) throw new Error(`${res.status} ${await res.text()}`);
+
+      const reader = res.body!.getReader();
+      const decoder = new TextDecoder();
+      let fullText = '';
+      let buffer = '';
+
+      let flushTimer: ReturnType<typeof setTimeout> | null = null;
+      const flushText = () => {
+        const captured = fullText;
         setMessages((prev) =>
-          prev.map((m) => (m.id === msgId ? { ...m, text: '' } : m)),
+          prev.map((m) => (m.id === msgId ? { ...m, text: captured } : m)),
         );
+        flushTimer = null;
+      };
 
-        const imagePrompt = await callClaude([
-          {
-            role: 'user',
-            content: `Extract the image description from this message and reply with ONLY a short English image prompt, maximum 6 words. No extra text, no quotes: "${userText}"`,
-          },
-        ]);
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
 
-        const seed = Math.floor(Math.random() * 100000);
-        const cleanPrompt = imagePrompt.replace(/[^a-zA-Z0-9 ]/g, '').trim();
-        const imgBase = import.meta.env.DEV
-          ? '/img-proxy'
-          : 'https://image.pollinations.ai';
-        const imageUrl = `${imgBase}/prompt/${encodeURIComponent(
-          cleanPrompt,
-        )}?width=512&height=512&nologo=true&seed=${seed}`;
+        const events = buffer.split('\n\n');
+        buffer = events.pop() || '';
 
-        setMessages((prev) =>
-          prev.map((m) =>
-            m.id === msgId
-              ? { ...m, text: '', images: [imageUrl], streaming: false }
-              : m,
-          ),
-        );
-        startImgProgress(msgId);
-      } else {
-        // Stream from Claude
-        const res = await fetch(`${CLAUDE_API_BASE}/v1/messages`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-api-key': ANTHROPIC_KEY,
-            'anthropic-version': '2023-06-01',
-            'anthropic-dangerous-direct-browser-access': 'true',
-          },
-          body: JSON.stringify({
-            model: 'claude-sonnet-4-20250514',
-            max_tokens: 4096,
-            stream: true,
-            messages: chatMessages,
-          }),
-          signal: abortRef.current.signal,
-        });
+        for (const eventBlock of events) {
+          const lines = eventBlock.split('\n');
+          const eventLine = lines.find((l) => l.startsWith('event: '));
+          const dataLine = lines.find((l) => l.startsWith('data: '));
+          if (!eventLine || !dataLine) continue;
 
-        if (!res.ok) throw new Error(`${res.status} ${await res.text()}`);
-
-        const reader = res.body!.getReader();
-        const decoder = new TextDecoder();
-        let fullText = '';
-        let buffer = '';
-
-        let flushTimer: ReturnType<typeof setTimeout> | null = null;
-        const flushText = () => {
-          const captured = fullText;
-          setMessages((prev) =>
-            prev.map((m) => (m.id === msgId ? { ...m, text: captured } : m)),
-          );
-          flushTimer = null;
-        };
-
-        for (;;) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          buffer += decoder.decode(value, { stream: true });
-
-          const lines = buffer.split('\n');
-          buffer = lines.pop() || '';
-
-          for (const line of lines) {
-            if (!line.startsWith('data: ')) continue;
-            const data = line.slice(6);
-            if (data === '[DONE]') continue;
-            try {
-              const event = JSON.parse(data);
-              if (event.type === 'content_block_delta' && event.delta?.text) {
-                fullText += event.delta.text;
-                // Throttle state updates to ~50ms to reduce re-renders
-                if (!flushTimer) {
-                  flushTimer = setTimeout(flushText, 50);
-                }
+          const eventType = eventLine.replace('event: ', '');
+          try {
+            const data = JSON.parse(dataLine.replace('data: ', ''));
+            if (eventType === 'content_delta' && data.text) {
+              fullText += data.text;
+              if (!flushTimer) {
+                flushTimer = setTimeout(flushText, 50);
               }
-            } catch {
-              /* skip */
+            } else if (eventType === 'tool_call_start') {
+              fullText += `\n\n🔧 *Calling ${data.toolName}...*\n`;
+              if (!flushTimer) flushTimer = setTimeout(flushText, 50);
+            } else if (eventType === 'error') {
+              fullText += `\n\n❌ ${data.message}\n`;
+              if (!flushTimer) flushTimer = setTimeout(flushText, 50);
             }
+          } catch {
+            /* skip malformed events */
           }
         }
-        // Final flush
-        if (flushTimer) clearTimeout(flushTimer);
-
-        setMessages((prev) =>
-          prev.map((m) =>
-            m.id === msgId ? { ...m, text: fullText, streaming: false } : m,
-          ),
-        );
       }
+
+      if (flushTimer) clearTimeout(flushTimer);
+
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === msgId ? { ...m, text: fullText, streaming: false } : m,
+        ),
+      );
     } catch (err) {
       if ((err as Error).name !== 'AbortError') {
-        console.error('Claude error:', err);
+        console.error('Chat error:', err);
         setMessages((prev) =>
           prev.map((m) =>
             m.id === msgId
@@ -710,20 +653,16 @@ export function AIChatBox({
 
     try {
       abortRef.current = new AbortController();
-      const res = await fetch(`${CLAUDE_API_BASE}/v1/messages`, {
+      const conversationId = await getOrCreateConversation();
+      const authToken = authenticationSession.getToken();
+
+      const res = await fetch(`${API_URL}/v1/chat/conversations/${conversationId}/messages`, {
         method: 'POST',
         headers: {
+          'Authorization': `Bearer ${authToken}`,
           'Content-Type': 'application/json',
-          'x-api-key': ANTHROPIC_KEY,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true',
         },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 4096,
-          stream: true,
-          messages: chatHistory,
-        }),
+        body: JSON.stringify({ content: lastUserText || 'Hello' }),
         signal: abortRef.current.signal,
       });
 
@@ -738,23 +677,27 @@ export function AIChatBox({
         if (done) break;
         buffer += decoder.decode(value, { stream: true });
 
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || '';
+        const events = buffer.split('\n\n');
+        buffer = events.pop() || '';
 
-        for (const line of lines) {
-          if (!line.startsWith('data: ')) continue;
-          const data = line.slice(6);
-          if (data === '[DONE]') continue;
+        for (const eventBlock of events) {
+          const eventLines = eventBlock.split('\n');
+          const dataLine = eventLines.find((l) => l.startsWith('data: '));
+          const eventLine = eventLines.find((l) => l.startsWith('event: '));
+          if (!dataLine || !eventLine) continue;
+          const eventType = eventLine.replace('event: ', '');
           try {
-            const event = JSON.parse(data);
-            if (event.type === 'content_block_delta' && event.delta?.text) {
-              fullText += event.delta.text;
+            const data = JSON.parse(dataLine.replace('data: ', ''));
+            if (eventType === 'content_delta' && data.text) {
+              fullText += data.text;
               const captured = fullText;
               setMessages((prev) =>
                 prev.map((m) =>
                   m.id === msgId ? { ...m, text: captured } : m,
                 ),
               );
+            } else if (eventType === 'tool_call_start') {
+              fullText += `\n\n🔧 *Calling ${data.toolName}...*\n`;
             }
           } catch {
             /* skip */
@@ -1106,10 +1049,11 @@ export function AIChatBox({
       chatHistory.push({ role: 'user', content: fullText });
     }
 
+    const userText = fullText || (files ? files[0].name : 'Hello');
     thinkingRef.current = setTimeout(async () => {
       thinkingRef.current = null;
       setTyping(false);
-      await streamClaude(chatHistory);
+      await streamFromBackend(userText);
     }, 500);
   };
 
