@@ -127,7 +127,7 @@ function isApiKeyAuth(
   type: typeof AppConnectionType.CUSTOM_AUTH;
   props: { base_url: string; api_key: string };
 } {
-  return auth.type === AppConnectionType.CUSTOM_AUTH && 'api_key' in auth.props;
+  return auth.type === AppConnectionType.CUSTOM_AUTH && !('email' in auth.props);
 }
 
 export const postizAuth = [apiKeyAuth, jwtAuth];
