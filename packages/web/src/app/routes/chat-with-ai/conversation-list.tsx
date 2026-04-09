@@ -59,7 +59,7 @@ function isYesterday(date: Date) {
 }
 
 const css = `
-  .conv-item { display: flex; align-items: center; padding: 4px 8px; border-radius: 6px; cursor: pointer; transition: background 0.15s; border: none; background: transparent; width: 100%; text-align: left; font-family: inherit; color: var(--foreground); outline: none !important; box-shadow: none; position: relative; }
+  .conv-item { display: flex; align-items: center; padding: 4px 12px; border-radius: 6px; cursor: pointer; transition: background 0.15s; border: none; background: transparent; width: 100%; text-align: left; font-family: inherit; color: var(--foreground); outline: none !important; box-shadow: none; position: relative; }
   .conv-item .archive-btn { opacity: 0; position: absolute; right: 1px; top: 50%; transform: translateY(-50%); background: transparent; border: none; cursor: pointer; padding: 4px; border-radius: 6px; color: var(--muted-foreground); transition: opacity 0.15s, color 0.15s, background 0.15s; outline: none !important; }
   .conv-item:hover .archive-btn { opacity: 1; }
   .conv-item .archive-btn:hover { color: var(--foreground); background: rgba(0,0,0,0.08); }
@@ -214,7 +214,7 @@ export function ConversationList({
     return (
       <div className="mb-2 flex flex-col gap-0.5">
         <button
-          className="flex items-center gap-0.5 rounded-md bg-transparent border-none cursor-pointer font-inherit text-[11px] font-semibold px-2 py-1 m-0 uppercase tracking-wider text-muted-foreground transition-colors hover:text-foreground outline-none! focus:outline-none! focus:shadow-none! focus-visible:ring-2 focus-visible:ring-sidebar-ring"
+          className="flex items-center gap-0.5 rounded-md bg-transparent border-none cursor-pointer font-inherit text-[11px] font-semibold px-3 py-1 m-0 uppercase tracking-wider text-muted-foreground transition-colors hover:text-foreground outline-none! focus:outline-none! focus:shadow-none! focus-visible:ring-2 focus-visible:ring-sidebar-ring"
           onClick={() => toggleGroup(label)}
         >
           {label}
@@ -279,7 +279,7 @@ export function ConversationList({
         className="conv-sidebar flex flex-col h-full shrink-0 bg-transparent"
         style={{ width: 'min(200px, 25vw)' }}
       >
-        <div className="px-2 pt-3 pb-2">
+        <div className="px-3 pt-3 pb-2">
           <button
             className="flex items-center justify-between gap-1.5 w-full px-2 py-1.5 rounded-md border border-border bg-transparent cursor-pointer font-inherit text-xs text-foreground transition-colors hover:bg-accent outline-none! focus:outline-none! focus:shadow-none! focus-visible:ring-2 focus-visible:ring-sidebar-ring"
             onClick={() => {
