@@ -157,10 +157,11 @@ export function ProjectDashboardSidebar({
     type: 'link',
     to: '/chat-with-ai',
     label: t('AI Piecer'),
-    show: true,
+    show: platform.plan.chatEnabled,
     icon: MessageSquare,
-    hasPermission: true,
+    hasPermission: platform.plan.chatEnabled,
     isSubItem: false,
+    notification: true,
   };
 
   const exploreLink: SidebarItemType = {

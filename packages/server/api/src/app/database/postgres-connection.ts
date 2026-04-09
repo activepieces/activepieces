@@ -355,6 +355,7 @@ import { AddMcpOAuthTables1774500000000 } from './migration/postgres/17745000000
 import { AddCanaryToPlatformPlan1774600000000 } from './migration/postgres/1774600000000-AddCanaryToPlatformPlan'
 import { MergeCanaryAndDedicatedWorkersIntoWorkerGroupId1775656136000 } from './migration/postgres/1775656136000-MergeCanaryAndDedicatedWorkersIntoWorkerGroupId'
 import { AddChatTables1776000000000 } from './migration/postgres/1776000000000-AddChatTables'
+import { AddChatEnabled1776100000000 } from './migration/postgres/1776100000000-AddChatEnabled'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -725,6 +726,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddCanaryToPlatformPlan1774600000000,
         MergeCanaryAndDedicatedWorkersIntoWorkerGroupId1775656136000,
         AddChatTables1776000000000,
+        AddChatEnabled1776100000000,
     ]
     return migrations
 }
