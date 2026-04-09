@@ -32,6 +32,9 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { MarkdownVariant } from '@activepieces/shared';
+
+import { ApMarkdown } from '@/components/custom/markdown';
 import { cn } from '@/lib/utils';
 
 import { DelayedTooltip } from './delayed-tooltip';
@@ -1609,14 +1612,17 @@ export function AIChatBox({
                         </div>
                       )}
                       {msg.streaming ? (
-                        <StreamingText
-                          fullText={msg.text}
-                          streaming={msg.streaming}
+                        <ApMarkdown
+                          markdown={msg.text}
+                          variant={MarkdownVariant.BORDERLESS}
+                          className="text-base leading-relaxed text-accent-foreground dark:text-neutral-300 prose prose-sm max-w-none"
                         />
                       ) : (
-                        <p className="m-0 text-base leading-relaxed text-accent-foreground dark:text-neutral-300 whitespace-pre-wrap">
-                          {msg.text}
-                        </p>
+                        <ApMarkdown
+                          markdown={msg.text}
+                          variant={MarkdownVariant.BORDERLESS}
+                          className="text-base leading-relaxed text-accent-foreground dark:text-neutral-300 prose prose-sm max-w-none"
+                        />
                       )}
                       {msg.streaming && msg.text && (
                         <div className="mt-3" style={{ width: 40, height: 40 }}>
