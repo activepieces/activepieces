@@ -77,7 +77,9 @@ export const linearUpdatedProject = createTrigger({
     const body = context.payload.body as ProjectUpdatePayload;
 
     if (body.action !== 'update') return [];
-
+    // Only fire when the project status actually changed
+    if (!body.updatedFrom?.statusId) return [];
+    
     const selectedTeamIds = context.propsValue.team_ids ?? [];
     const selectedStatus = context.propsValue.project_status;
 
