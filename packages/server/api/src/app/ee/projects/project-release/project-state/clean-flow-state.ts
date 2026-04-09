@@ -66,7 +66,7 @@ function cleanAction(action: FlowAction): FlowAction {
     switch (action.type) {
         case FlowActionType.CODE:
         case FlowActionType.PIECE:
-            return { ...base } as FlowAction
+            return base as FlowAction
         case FlowActionType.LOOP_ON_ITEMS:
             return {
                 ...base,
@@ -77,6 +77,10 @@ function cleanAction(action: FlowAction): FlowAction {
                 ...base,
                 children: action.children.map((child) => isNil(child) ? null : cleanAction(child)),
             } as FlowAction
+        default: {
+            const _exhaustiveCheck: never = action
+            throw new Error(`Unhandled FlowActionType: ${_exhaustiveCheck}`)
+        }
     }
 }
 
