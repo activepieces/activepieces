@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 const mockRedisStore: Record<string, { value: string, ttl: number }> = {}
 
-vi.mock('../../../../../src/app/database/redis/index', () => ({
+vi.mock('../../../../../src/app/database/redis-connections', () => ({
     redisConnections: {
         useExisting: vi.fn().mockResolvedValue({
             get: vi.fn(async (key: string) => mockRedisStore[key]?.value ?? null),
@@ -20,19 +20,19 @@ vi.mock('../../../../../src/app/database/redis/index', () => ({
     },
 }))
 
-import { flowLockService } from '../../../../../src/app/flows/flow-lock/flow-lock.service'
+import { lockService } from '../../../../../src/app/core/collaborative/lock/lock.service'
 
 const mockLog = {
     info: vi.fn(),
     debug: vi.fn(),
     warn: vi.fn(),
     error: vi.fn(),
-} as unknown as Parameters<typeof flowLockService>[0]
+} as unknown as Parameters<typeof lockService>[0]
 
-const service = flowLockService(mockLog)
+const service = lockService(mockLog)
 
-describe('FlowLockService', () => {
-    const flowId = 'test-flow-id'
+describe('LockService', () => {
+    const resourceId = 'test-flow-id'
 
     beforeEach(() => {
         for (const key of Object.keys(mockRedisStore)) {
@@ -42,7 +42,7 @@ describe('FlowLockService', () => {
 
     it('acquires lock when no existing lock', async () => {
         const result = await service.acquire({
-            flowId,
+            resourceId,
             userId: 'user1',
             userDisplayName: 'User 1',
         })
@@ -52,12 +52,12 @@ describe('FlowLockService', () => {
 
     it('denies lock when locked by different user', async () => {
         await service.acquire({
-            flowId,
+            resourceId,
             userId: 'user1',
             userDisplayName: 'User 1',
         })
         const result = await service.acquire({
-            flowId,
+            resourceId,
             userId: 'user2',
             userDisplayName: 'User 2',
         })
@@ -67,12 +67,12 @@ describe('FlowLockService', () => {
 
     it('allows same user to refresh lock', async () => {
         await service.acquire({
-            flowId,
+            resourceId,
             userId: 'user1',
             userDisplayName: 'User 1',
         })
         const result = await service.acquire({
-            flowId,
+            resourceId,
             userId: 'user1',
             userDisplayName: 'User 1',
         })
@@ -81,12 +81,12 @@ describe('FlowLockService', () => {
 
     it('allows force takeover', async () => {
         await service.acquire({
-            flowId,
+            resourceId,
             userId: 'user1',
             userDisplayName: 'User 1',
         })
         const result = await service.acquire({
-            flowId,
+            resourceId,
             userId: 'user2',
             userDisplayName: 'User 2',
             force: true,
@@ -96,30 +96,30 @@ describe('FlowLockService', () => {
 
     it('releases lock', async () => {
         await service.acquire({
-            flowId,
+            resourceId,
             userId: 'user1',
             userDisplayName: 'User 1',
         })
-        const released = await service.release({ flowId, userId: 'user1' })
+        const released = await service.release({ resourceId, userId: 'user1' })
         expect(released).toBe(true)
-        const lock = await service.getLock({ flowId })
+        const lock = await service.getLock({ resourceId })
         expect(lock).toBeNull()
     })
 
     it('does not release lock held by another user', async () => {
         await service.acquire({
-            flowId,
+            resourceId,
             userId: 'user1',
             userDisplayName: 'User 1',
         })
-        const released = await service.release({ flowId, userId: 'user2' })
+        const released = await service.release({ resourceId, userId: 'user2' })
         expect(released).toBe(false)
-        const lock = await service.getLock({ flowId })
+        const lock = await service.getLock({ resourceId })
         expect(lock).not.toBeNull()
     })
 
     it('returns null when no lock exists', async () => {
-        const lock = await service.getLock({ flowId: 'nonexistent' })
+        const lock = await service.getLock({ resourceId: 'nonexistent' })
         expect(lock).toBeNull()
     })
 })

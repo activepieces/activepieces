@@ -1243,7 +1243,9 @@
   "Flow Is Busy": "",
   "Flows have been exported.": "Flows have been exported.",
   "Untitled": "Untitled",
+  "{name} is editing": "{name} is editing",
   "{name} is editing this flow. Only one person can edit at a time.": "{name} is editing this flow. Only one person can edit at a time.",
+  "{name} is editing this {resource}. Only one person can edit at a time.": "{name} is editing this {resource}. Only one person can edit at a time.",
   "Take Over": "Take Over",
   "Run": "Run",
   "Real time flow": "Real time flow",
@@ -1460,5 +1462,6 @@
   "Knowledge base requires a provider that supports embeddings, such as OpenAI or Google.": "Knowledge base requires a provider that supports embeddings, such as OpenAI or Google.",
   "The selected provider does not support embeddings. Switch to a provider like OpenAI or Google for knowledge base to work.": "The selected provider does not support embeddings. Switch to a provider like OpenAI or Google for knowledge base to work.",
   "Personal": "Personal",
-  "Team": "Team"
+  "Team": "Team",
+  "+{count} more": "+{count} more"
 }
