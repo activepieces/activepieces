@@ -46,22 +46,24 @@ export const ContactItemSchema = z.object({
 export type ContactItem = z.infer<typeof ContactItemSchema>;
 
 // Form schema for new-captured-form trigger
-export const FormItemSchema = z.object({
-  id: z.string(),
-  name: z.string().optional(),
-  email: z.string().optional(),
-  phone_number: z.string().optional(),
-  created_at: z.string(),
-  updated_at: z.string(),
-}).catchall(z.any()); // Allow additional properties
+export const FormItemSchema = z
+  .object({
+    id: z.string(),
+    name: z.string().optional(),
+    email: z.string().optional(),
+    phone_number: z.string().optional(),
+    created_at: z.string(),
+    updated_at: z.string(),
+  })
+  .catchall(z.unknown()); // Allow additional properties
 
 export type FormItem = z.infer<typeof FormItemSchema>;
 
 // Webhook payload schema for captured_form.created event
 export const CapturedFormWebhookSchema = z.object({
   id: z.string().uuid(),
-  object: z.literal("event"),
-  event: z.literal("captured_form.created"),
+  object: z.literal('event'),
+  event: z.literal('captured_form.created'),
   created_at: z.string(),
   data: z.object({
     captured_form_id: z.string().uuid(),
@@ -80,28 +82,30 @@ export type CapturedFormWebhook = z.infer<typeof CapturedFormWebhookSchema>;
 // Webhook payload schema for conversation.updated event
 export const ConversationWebhookSchema = z.object({
   id: z.string().uuid(),
-  object: z.literal("event"),
-  event: z.literal("conversation.updated"),
+  object: z.literal('event'),
+  event: z.literal('conversation.updated'),
   created_at: z.string(),
   data: z.object({
     conversation_id: z.string().uuid(),
     widget_id: z.string().uuid(),
     assistant_id: z.string().uuid(),
-    device_type: z.enum(["mobile", "native", "desktop", "tablet", "phone"]),
+    device_type: z.enum(['mobile', 'native', 'desktop', 'tablet', 'phone']),
     contact_id: z.string().uuid(),
     chat_count: z.number(),
-    transcript: z.array(z.object({
-      conversation_id: z.string().uuid().nullable(),
-      sender_type: z.enum(["bot", "agent", "user", "tool"]).nullable(),
-      message_type: z.enum(["voice", "text"]).nullable(),
-      text: z.string(),
-      voice_base64: z.string().nullable(),
-      data_sources: z.array(z.any()).nullable(),
-      id: z.string().uuid(),
-      updated_at: z.string().nullable(),
-      created_at: z.string().nullable(),
-      char_count: z.number().nullable(),
-    })),
+    transcript: z.array(
+      z.object({
+        conversation_id: z.string().uuid().nullable(),
+        sender_type: z.enum(['bot', 'agent', 'user', 'tool']).nullable(),
+        message_type: z.enum(['voice', 'text']).nullable(),
+        text: z.string(),
+        voice_base64: z.string().nullable(),
+        data_sources: z.array(z.unknown()).nullable(),
+        id: z.string().uuid(),
+        updated_at: z.string().nullable(),
+        created_at: z.string().nullable(),
+        char_count: z.number().nullable(),
+      }),
+    ),
     attributes: z.record(z.string(), z.unknown()),
   }),
 });
@@ -140,9 +144,11 @@ export type DataSourceItem = z.infer<typeof DataSourceItemSchema>;
 
 // API Response wrapper schema
 export const ApiResponseSchema = z.object({
-  data: z.object({
-    items: z.array(z.any()),
-  }).optional(),
+  data: z
+    .object({
+      items: z.array(z.unknown()),
+    })
+    .optional(),
 });
 
 export type ApiResponse = z.infer<typeof ApiResponseSchema>;

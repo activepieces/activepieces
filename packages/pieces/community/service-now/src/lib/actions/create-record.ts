@@ -1,11 +1,15 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { z } from 'zod';
 import { ServiceNowRecordSchema } from '../common/types';
-import { tableDropdown, createServiceNowClient, servicenowAuth } from '../common/props';
+import {
+  tableDropdown,
+  createServiceNowClient,
+  servicenowAuth,
+} from '../common/props';
 
 const CreateRecordInputSchema = z.object({
   table: z.string().min(1),
-  fields: z.record(z.string(), z.any()),
+  fields: z.record(z.string(), z.unknown()),
   sysparm_display_value: z.enum(['true', 'false', 'all']).optional(),
   sysparm_fields: z.array(z.string()).optional(),
   sysparm_input_display_value: z.boolean().optional(),
@@ -64,24 +68,24 @@ export const createRecordAction = createAction({
     }),
   },
   async run(context) {
-    const { 
-      table, 
-      fields, 
-      sysparm_display_value,
-      sysparm_fields,
-      sysparm_input_display_value,
-      sysparm_view
-    } = context.propsValue;
-
-    const input = CreateRecordInputSchema.parse({ 
-      table, 
+    const {
+      table,
       fields,
       sysparm_display_value,
       sysparm_fields,
       sysparm_input_display_value,
-      sysparm_view
+      sysparm_view,
+    } = context.propsValue;
+
+    const input = CreateRecordInputSchema.parse({
+      table,
+      fields,
+      sysparm_display_value,
+      sysparm_fields,
+      sysparm_input_display_value,
+      sysparm_view,
     });
-    
+
     const client = createServiceNowClient(context.auth);
 
     const options = {
@@ -91,7 +95,11 @@ export const createRecordAction = createAction({
       sysparm_view: input.sysparm_view,
     };
 
-    const result = await client.createRecord(input.table, input.fields, options);
+    const result = await client.createRecord(
+      input.table,
+      input.fields,
+      options,
+    );
     return ServiceNowRecordSchema.parse(result);
   },
 });

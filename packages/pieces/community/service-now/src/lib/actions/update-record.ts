@@ -11,7 +11,7 @@ import {
 const UpdateRecordInputSchema = z.object({
   table: z.string().min(1),
   sys_id: z.string().min(1),
-  fields: z.record(z.string(), z.any()),
+  fields: z.record(z.string(), z.unknown()),
   sysparm_display_value: z.enum(['true', 'false', 'all']).optional(),
   sysparm_fields: z.array(z.string()).optional(),
   sysparm_input_display_value: z.boolean().optional(),
@@ -90,7 +90,7 @@ export const updateRecordAction = createAction({
     const recordId = record || manual_sys_id;
     if (!recordId) {
       throw new Error(
-        'Either record selection or manual sys_id must be provided'
+        'Either record selection or manual sys_id must be provided',
       );
     }
 
@@ -117,7 +117,7 @@ export const updateRecordAction = createAction({
       input.table,
       input.sys_id,
       input.fields,
-      options
+      options,
     );
     return ServiceNowRecordSchema.parse(result);
   },
