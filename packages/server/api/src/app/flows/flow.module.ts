@@ -46,9 +46,8 @@ export const flowModule: FastifyPluginAsyncZod = async (app) => {
                     force: data.force,
                 })
 
-                socket.data.lockedFlowId = data.flowId
-
                 if (result.acquired) {
+                    socket.data.lockedFlowId = data.flowId
                     socket.to(projectId).emit(WebsocketClientEvent.FLOW_LOCKED, {
                         flowId: data.flowId,
                         userId: principal.id,

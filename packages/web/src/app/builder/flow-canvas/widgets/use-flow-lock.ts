@@ -26,32 +26,6 @@ function useFlowLock() {
   } | null>(null);
 
   useEffect(() => {
-    if (readonly) return;
-
-    socket.emit(
-      WebsocketServerEvent.LOCK_FLOW,
-      { flowId },
-      (response: WebsocketLockFlowResponse) => {
-        if (!response.acquired && response.lock) {
-          setLockedBy(response.lock);
-          setReadOnly(true);
-        }
-      },
-    );
-
-    const heartbeat = setInterval(() => {
-      socket.emit(
-        WebsocketServerEvent.LOCK_FLOW,
-        { flowId },
-        (response: WebsocketLockFlowResponse) => {
-          if (!response.acquired && response.lock) {
-            setLockedBy(response.lock);
-            setReadOnly(true);
-          }
-        },
-      );
-    }, 30_000);
-
     const handleLocked = (event: FlowLockedEvent) => {
       if (event.flowId === flowId && event.userId !== currentUserId) {
         setLockedBy({
@@ -83,12 +57,43 @@ function useFlowLock() {
     socket.on(WebsocketClientEvent.FLOW_UNLOCKED, handleUnlocked);
 
     return () => {
-      clearInterval(heartbeat);
       socket.off(WebsocketClientEvent.FLOW_LOCKED, handleLocked);
       socket.off(WebsocketClientEvent.FLOW_UNLOCKED, handleUnlocked);
+    };
+  }, [flowId, socket, currentUserId, setReadOnly]);
+
+  useEffect(() => {
+    if (readonly) return;
+
+    socket.emit(
+      WebsocketServerEvent.LOCK_FLOW,
+      { flowId },
+      (response: WebsocketLockFlowResponse) => {
+        if (!response.acquired && response.lock) {
+          setLockedBy(response.lock);
+          setReadOnly(true);
+        }
+      },
+    );
+
+    const heartbeat = setInterval(() => {
+      socket.emit(
+        WebsocketServerEvent.LOCK_FLOW,
+        { flowId },
+        (response: WebsocketLockFlowResponse) => {
+          if (!response.acquired && response.lock) {
+            setLockedBy(response.lock);
+            setReadOnly(true);
+          }
+        },
+      );
+    }, 30_000);
+
+    return () => {
+      clearInterval(heartbeat);
       socket.emit(WebsocketServerEvent.UNLOCK_FLOW, { flowId });
     };
-  }, [flowId, readonly, socket, currentUserId]);
+  }, [flowId, readonly, socket, setReadOnly]);
 
   const takeOver = useCallback(() => {
     socket.emit(
