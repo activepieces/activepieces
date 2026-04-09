@@ -98,12 +98,11 @@ export const flowVersionMigrationService = (log: FastifyBaseLogger) => ({
             platformId,
             userId,
             status: FlowAiProviderMigrationStatus.RUNNING,
-            totalVersions: 0,
-            processedVersions: 0,
+            migratedVersions: [],
             failedFlowVersions: [],
             sourceModel: request.sourceModel,
             targetModel: request.targetModel,
-            projectIds
+            projectIds,
         })
 
         await systemJobsSchedule(reqLog).upsertJob({
@@ -128,31 +127,30 @@ export const flowVersionMigrationService = (log: FastifyBaseLogger) => ({
     async migrateFlowsModelHandler(data: SystemJobData<SystemJobName.MIGRATE_FLOWS_MODEL>): Promise<void> {
         const { migrationId, platformId, request: { projectIds, sourceModel, targetModel } } = data
         const BATCH_SIZE = 100
-        let offset = 0
-        let processedVersions = 0
-        const failedFlowVersions: { flowVersionId: string, error: string }[] = []
-
+        const migratedVersions: FlowAiProviderMigration['migratedVersions'] = []
+        const failedFlowVersions: FlowAiProviderMigration['failedFlowVersions'] = []
         const { error: handlerError } = await tryCatch(async () => {
-            while (true) {
-                const queryBuilder = flowVersionRepo()
+            const idsQueryBuilder = flowVersionRepo()
+                .createQueryBuilder('fv')
+                .select('fv.id')
+                .innerJoin('flow', 'f', 'f.id = fv."flowId"')
+                .innerJoin('project', 'p', 'p.id = f."projectId"')
+                .where('p."platformId" = :platformId', { platformId })
+                .andWhere('(fv.id = f."publishedVersionId" OR fv.state = :draftState)',
+                    { draftState: FlowVersionState.DRAFT })
+
+            if (!isNil(projectIds) && projectIds.length > 0) {
+                idsQueryBuilder.andWhere('f."projectId" IN (:...projectIds)', { projectIds })
+            }
+
+            const allIds = (await idsQueryBuilder.getMany()).map((fv) => fv.id)
+
+            for (let i = 0; i < allIds.length; i += BATCH_SIZE) {
+                const batchIds = allIds.slice(i, i + BATCH_SIZE)
+                const flowVersions = await flowVersionRepo()
                     .createQueryBuilder('fv')
-                    .innerJoin('flow', 'f', 'f.id = fv."flowId"')
-                    .innerJoin('project', 'p', 'p.id = f."projectId"')
-                    .where('p."platformId" = :platformId', { platformId })
-                    .andWhere('(fv.id = f."publishedVersionId" OR fv.state = :draftState)',
-                        { draftState: FlowVersionState.DRAFT })
-                    .orderBy('f.id', 'ASC')
-
-                if (!isNil(projectIds) && projectIds.length > 0) {
-                    queryBuilder.andWhere('f."projectId" IN (:...projectIds)', { projectIds })
-                }
-                queryBuilder.limit(BATCH_SIZE).offset(offset)
-
-                const flowVersions = await queryBuilder.getMany()
-
-                if (flowVersions.length === 0) {
-                    break
-                }
+                    .where('fv.id IN (:...batchIds)', { batchIds })
+                    .getMany()
 
                 for (const flowVersion of flowVersions) {
                     const operations = buildMigrationOperations({ flowVersion, sourceModel, targetModel })
@@ -160,14 +158,13 @@ export const flowVersionMigrationService = (log: FastifyBaseLogger) => ({
                     if (operations.length === 0) {
                         continue
                     }
-
+                    const isDraft = flowVersion.state === FlowVersionState.DRAFT
                     const { error } = await tryCatch(async () => {
                         await transaction(async (entityManager) => {
                             let updatedVersion: FlowVersion = flowVersion
                             for (const operation of operations) {
                                 updatedVersion = flowOperations.apply(updatedVersion, operation)
                             }
-                            const isDraft = flowVersion.state === FlowVersionState.DRAFT
                             const newVersion = sanitizeObjectForPostgresql({
                                 ...updatedVersion,
                                 id: apId(),
@@ -176,26 +173,27 @@ export const flowVersionMigrationService = (log: FastifyBaseLogger) => ({
                                 updated: dayjs().toISOString(),
                             })
                             await flowVersionRepo(entityManager).save(newVersion)
-                            if (!isDraft) {
+                            if (isDraft) {
+                                await flowVersionRepo(entityManager).update(flowVersion.id, { state: FlowVersionState.LOCKED })
+                            }
+                            else {
                                 await flowRepo(entityManager).update(newVersion.flowId, { publishedVersionId: newVersion.id })
                             }
-                            await flowExecutionCache(log).invalidate(newVersion.flowId)
                         })
-                        processedVersions++
+                        await flowExecutionCache(log).invalidate(flowVersion.flowId)
+                        migratedVersions.push({ draft: isDraft, flowVersionId: flowVersion.id, flowId: flowVersion.flowId })
                     })
 
                     if (error) {
                         log.error({ flowVersionId: flowVersion.id, error }, 'Failed to migrate flow version')
-                        failedFlowVersions.push({ flowVersionId: flowVersion.id, flowId: flowVersion.flowId, error: error.message })
+                        failedFlowVersions.push({ draft: isDraft, flowVersionId: flowVersion.id, flowId: flowVersion.flowId, error: error.message })
                     }
                 }
 
                 await migrationRepo().update(migrationId, {
-                    processedVersions,
+                    migratedVersions,
                     failedFlowVersions,
                 })
-
-                offset += flowVersions.length
             }
         })
 
@@ -203,7 +201,7 @@ export const flowVersionMigrationService = (log: FastifyBaseLogger) => ({
             log.error({ migrationId, error: handlerError }, 'Flow model migration failed unexpectedly')
             await migrationRepo().update(migrationId, {
                 status: FlowAiProviderMigrationStatus.FAILED,
-                processedVersions,
+                migratedVersions,
                 failedFlowVersions,
             })
             return
@@ -211,10 +209,10 @@ export const flowVersionMigrationService = (log: FastifyBaseLogger) => ({
 
         await migrationRepo().update(migrationId, {
             status: FlowAiProviderMigrationStatus.COMPLETED,
-            processedVersions,
+            migratedVersions,
             failedFlowVersions,
         })
-        log.info({ platformId, processedVersions, failedCount: failedFlowVersions.length }, 'Flow model migration completed')
+        log.info({ platformId, migratedFlows: new Set(migratedVersions.map((v) => v.flowId)).size, failedCount: failedFlowVersions.length }, 'Flow model migration completed')
     },
 
     async getMigration({ id, platformId }: { id: string, platformId: PlatformId }): Promise<FlowAiProviderMigration> {

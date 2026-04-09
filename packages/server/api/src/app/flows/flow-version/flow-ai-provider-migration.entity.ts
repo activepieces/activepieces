@@ -19,14 +19,9 @@ export const FlowAiProviderMigrationEntity = new EntitySchema<FlowAiProviderMigr
             default: FlowAiProviderMigrationStatus.RUNNING,
             nullable: false,
         },
-        totalVersions: {
-            type: Number,
-            default: 0,
-            nullable: false,
-        },
-        processedVersions: {
-            type: Number,
-            default: 0,
+        migratedVersions: {
+            type: 'jsonb',
+            default: [],
             nullable: false,
         },
         failedFlowVersions: {

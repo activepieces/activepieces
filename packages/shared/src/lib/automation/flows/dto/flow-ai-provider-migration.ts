@@ -13,12 +13,16 @@ export const FlowAiProviderMigration = z.object({
     platformId: z.string(),
     userId: z.string(),
     status: z.nativeEnum(FlowAiProviderMigrationStatus),
-    totalVersions: z.number(),
-    processedVersions: z.number(),
+    migratedVersions: z.array(z.object({
+        flowVersionId: z.string(),
+        flowId: z.string(),
+        draft: z.boolean(),
+    })),
     failedFlowVersions: z.array(z.object({
         flowVersionId: z.string(),
         flowId: z.string(),
         error: z.string(),
+        draft: z.boolean(),
     })),
     sourceModel: AgentProviderModelSchema,
     targetModel: AgentProviderModelSchema,
