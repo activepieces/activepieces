@@ -50,6 +50,7 @@ export const tableHooks = {
             : undefined,
           name: searchParams.get('name') ?? undefined,
         }),
+      meta: { showErrorDialog: true },
     });
   },
   useCreateTable: (folderId: string) => {

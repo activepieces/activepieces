@@ -22,6 +22,7 @@ export const auditLogQueries = {
       staleTime: 0,
       gcTime: 0,
       enabled: platform.plan.auditLogEnabled,
+      meta: { showErrorDialog: true },
       queryFn: async () => {
         const cursor = searchParams.get(CURSOR_QUERY_PARAM);
         const limit = searchParams.get(LIMIT_QUERY_PARAM);

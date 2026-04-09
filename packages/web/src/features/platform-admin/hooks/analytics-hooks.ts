@@ -31,6 +31,7 @@ export const platformAnalyticsHooks = {
       queryKey: userLeaderboardQueryKey(timePeriod),
       queryFn: () => analyticsApi.getUserLeaderboard(timePeriod),
       enabled: platform.plan.analyticsEnabled,
+      meta: { showErrorDialog: true },
     });
 
     return {
@@ -47,6 +48,7 @@ export const platformAnalyticsHooks = {
       queryKey: projectLeaderboardQueryKey(timePeriod),
       queryFn: () => analyticsApi.getProjectLeaderboard(timePeriod),
       enabled: platform.plan.analyticsEnabled,
+      meta: { showErrorDialog: true },
     });
 
     return {

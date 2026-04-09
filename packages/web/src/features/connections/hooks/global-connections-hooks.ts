@@ -42,6 +42,7 @@ export const globalConnectionsQueries = {
       staleTime,
       gcTime,
       enabled: platform.plan.globalConnectionsEnabled,
+      meta: { showErrorDialog: true },
       queryFn: () => {
         return globalConnectionsApi.list(request);
       },

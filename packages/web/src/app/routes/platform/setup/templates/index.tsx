@@ -40,6 +40,7 @@ const PlatformTemplatesPage = () => {
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['templates', searchParams.toString()],
     staleTime: 0,
+    meta: { showErrorDialog: true },
     queryFn: () => {
       return templatesApi.list({
         type: TemplateType.CUSTOM,

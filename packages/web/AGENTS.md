@@ -81,7 +81,7 @@ You are working in the Activepieces web application (`packages/web`).
 
 ## Query Feature Guards
 
-When a server endpoint is gated by `platformMustHaveFeatureEnabled` (returns HTTP 402 `FEATURE_DISABLED` when the plan lacks the feature), the corresponding `useQuery` hook **must** include `enabled: platform.plan.<flag>` so the request never fires when the feature is off. Without this, the global `QueryCache.onError` handler in `app.tsx` shows a misleading "Failed to load data" error dialog.
+When a server endpoint is gated by `platformMustHaveFeatureEnabled` (returns HTTP 402 `FEATURE_DISABLED` when the plan lacks the feature), the corresponding `useQuery` hook **must** include `enabled: platform.plan.<flag>` so the request never fires when the feature is off. Without this, queries with `meta: { showErrorDialog: true }` will trigger a misleading "Failed to load data" error dialog via the global `QueryCache.onError` handler in `app.tsx`.
 
 **Pattern** (see `secret-managers-hooks.ts`):
 ```ts
