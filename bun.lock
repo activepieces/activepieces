@@ -5052,6 +5052,16 @@
         "tslib": "2.6.2",
       },
     },
+    "packages/pieces/community/pagerduty": {
+      "name": "@activepieces/piece-pagerduty",
+      "version": "0.1.0",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "^2.3.0",
+      },
+    },
     "packages/pieces/community/pandadoc": {
       "name": "@activepieces/piece-pandadoc",
       "version": "0.1.4",
@@ -9096,6 +9106,7 @@
     "@activepieces/piece-outseta": ["@activepieces/piece-outseta@workspace:packages/pieces/community/outseta"],
 
     "@activepieces/piece-paddle": ["@activepieces/piece-paddle@workspace:packages/pieces/community/paddle"],
+
     "@activepieces/piece-pagerduty": ["@activepieces/piece-pagerduty@workspace:packages/pieces/community/pagerduty"],
 
     "@activepieces/piece-pandadoc": ["@activepieces/piece-pandadoc@workspace:packages/pieces/community/pandadoc"],
