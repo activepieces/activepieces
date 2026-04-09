@@ -21,7 +21,7 @@ export const agentQueries = {
           projectId: projectId!,
         });
       },
-      meta: { showErrorDialog: true },
+      meta: { showErrorDialog: true, loadSubsetOptions: {} },
     });
   },
 };

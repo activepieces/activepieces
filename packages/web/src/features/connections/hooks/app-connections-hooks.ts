@@ -280,7 +280,7 @@ export const appConnectionsQueries = {
   }: UseConnectionsProps) => {
     return useQuery({
       queryKey: ['app-connections', ...extraKeys],
-      meta: { showErrorDialog: true },
+      meta: { showErrorDialog: true, loadSubsetOptions: {} },
       queryFn: async () => {
         const connections = await appConnectionsApi.list(request);
         if (pieceAuth) {

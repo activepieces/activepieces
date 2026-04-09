@@ -50,7 +50,7 @@ export const tableHooks = {
             : undefined,
           name: searchParams.get('name') ?? undefined,
         }),
-      meta: { showErrorDialog: true },
+      meta: { showErrorDialog: true, loadSubsetOptions: {} },
     });
   },
   useCreateTable: (folderId: string) => {
