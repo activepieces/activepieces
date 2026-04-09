@@ -58,12 +58,9 @@ export const instantlyAi = createPiece({
     createCustomApiCallAction({
       auth: instantlyAuth,
       baseUrl: () => instantlyClient.BASE_URL,
-      authMapping: async (auth) => {
-        const token = typeof auth === 'object' && auth !== null && 'secret_text' in auth
-          ? String((auth as Record<string, unknown>)['secret_text'])
-          : String(auth);
-        return { Authorization: `Bearer ${token}` };
-      },
+      authMapping: async (auth) => ({
+        Authorization: `Bearer ${extractAuthToken(auth)}`,
+      }),
     }),
   ],
   triggers: [
@@ -79,3 +76,20 @@ export const instantlyAi = createPiece({
     newLeadAddedTrigger,
   ],
 });
+
+function hasProperty<K extends PropertyKey>(
+  obj: object,
+  key: K,
+): obj is Record<K, unknown> {
+  return key in obj;
+}
+
+function extractAuthToken(auth: unknown): string {
+  if (typeof auth === 'object' && auth !== null && hasProperty(auth, 'secret_text')) {
+    const { secret_text } = auth;
+    if (typeof secret_text === 'string') {
+      return secret_text;
+    }
+  }
+  return String(auth);
+}

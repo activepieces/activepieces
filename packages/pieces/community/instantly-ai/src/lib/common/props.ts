@@ -5,16 +5,19 @@ import { instantlyAuth } from '../auth';
 import { instantlyClient } from './client';
 import { InstantlyCampaign, InstantlyLead, InstantlyLeadList } from './types';
 
+function hasProperty<K extends PropertyKey>(
+  obj: object,
+  key: K,
+): obj is Record<K, unknown> {
+  return key in obj;
+}
+
 function getAuthToken(auth: unknown): string | null {
-  if (
-    typeof auth === 'object' &&
-    auth !== null &&
-    'secret_text' in auth
-  ) {
-    const token = (auth as Record<string, unknown>)['secret_text'];
-    return typeof token === 'string' ? token : null;
+  if (typeof auth !== 'object' || auth === null || !hasProperty(auth, 'secret_text')) {
+    return null;
   }
-  return null;
+  const { secret_text } = auth;
+  return typeof secret_text === 'string' ? secret_text : null;
 }
 
 function campaignId(required = true) {

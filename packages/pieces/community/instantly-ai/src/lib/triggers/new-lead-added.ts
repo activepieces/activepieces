@@ -8,12 +8,13 @@ import {
   Polling,
   pollingHelper,
 } from '@activepieces/pieces-common';
+import { SecretTextConnectionValue } from '@activepieces/shared';
 import { instantlyAuth } from '../auth';
 import { instantlyClient } from '../common/client';
 import { InstantlyLead } from '../common/types';
 import dayjs from 'dayjs';
 
-const polling: Polling<{ secret_text: string }, Record<string, never>> = {
+const polling: Polling<SecretTextConnectionValue, Record<string, never>> = {
   strategy: DedupeStrategy.TIMEBASED,
   async items({ auth, lastFetchEpochMS }) {
     const isTest = lastFetchEpochMS === 0;
@@ -22,9 +23,6 @@ const polling: Polling<{ secret_text: string }, Record<string, never>> = {
       auth: auth.secret_text,
       path: 'leads/list',
       method: HttpMethod.POST,
-      body: {
-        limit: isTest ? 10 : 100,
-      },
       maxPages: isTest ? 1 : 50,
     });
 

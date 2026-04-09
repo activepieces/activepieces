@@ -76,10 +76,14 @@ function createDynamicWebhookTrigger({
     type: TriggerStrategy.WEBHOOK,
     sampleData,
     async onEnable(context) {
+      const eventType = context.propsValue.event_type;
+      if (!eventType) {
+        throw new Error('Event type is required.');
+      }
       const webhook = await instantlyClient.createWebhook({
         auth: context.auth.secret_text,
         webhookUrl: context.webhookUrl,
-        eventType: context.propsValue.event_type,
+        eventType,
         campaignId: context.propsValue.campaign_id ?? undefined,
       });
 
