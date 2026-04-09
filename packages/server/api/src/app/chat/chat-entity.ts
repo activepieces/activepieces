@@ -116,6 +116,8 @@ type ChatConversationSchema = {
     title: string | null
     modelProvider: string | null
     modelName: string | null
+    project: unknown
+    user: unknown
 }
 
 type ChatMessageSchema = {
@@ -128,4 +130,5 @@ type ChatMessageSchema = {
     toolCalls: ToolCallRecord[] | null
     fileUrls: string[] | null
     tokenUsage: TokenUsage | null
+    conversation: unknown
 }

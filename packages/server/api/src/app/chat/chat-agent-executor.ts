@@ -11,12 +11,17 @@ import {
 import { createAnthropic } from '@ai-sdk/anthropic'
 import { createAzure } from '@ai-sdk/azure'
 import { createGoogleGenerativeAI } from '@ai-sdk/google'
+import { experimental_createMCPClient as createMCPClient } from '@ai-sdk/mcp'
 import { createOpenAI } from '@ai-sdk/openai'
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
+import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js'
 import { createOpenRouter } from '@openrouter/ai-sdk-provider'
-import { LanguageModel, streamText } from 'ai'
+import { LanguageModel, stepCountIs, streamText, Tool } from 'ai'
 import { FastifyBaseLogger, FastifyReply } from 'fastify'
 import { aiProviderService } from '../ai/ai-provider-service'
+import { system } from '../helper/system/system'
+import { AppSystemProp } from '../helper/system/system-props'
+import { mcpServerService } from '../mcp/mcp-service'
 import { chatService } from './chat-service'
 
 const MAX_STEPS = 20
@@ -24,16 +29,23 @@ const MAX_OUTPUT_TOKENS = 16384
 const CHAT_TURN_TIMEOUT_MS = 300_000
 const CONTEXT_WINDOW_MESSAGES = 50
 
+const SYSTEM_PROMPT = `You are a helpful AI assistant integrated into Activepieces, an automation platform. You have access to tools that let you interact with the user's project — listing flows, creating tables, querying records, managing automations, and more. Use these tools when the user asks you to do something that requires interacting with their project. Always be helpful, concise, and action-oriented.`
+
 export const chatAgentExecutor = (log: FastifyBaseLogger) => ({
     async execute({ conversation, platformId, reply }: ExecuteParams): Promise<void> {
         const abortController = new AbortController()
         const timeout = setTimeout(() => abortController.abort(), CHAT_TURN_TIMEOUT_MS)
+        let mcpClient: Awaited<ReturnType<typeof createMCPClient>> | null = null
 
         try {
-            const [model, recentMessages] = await Promise.all([
+            const [model, recentMessages, mcpTools] = await Promise.all([
                 createLanguageModel({ conversation, platformId, log }),
                 chatService(log).getRecentMessages({ conversationId: conversation.id, limit: CONTEXT_WINDOW_MESSAGES }),
+                connectToProjectMcp({ projectId: conversation.projectId, log }),
             ])
+
+            mcpClient = mcpTools.client
+            const tools = mcpTools.tools
 
             const coreMessages = recentMessages.map((msg) => ({
                 role: msg.role === ChatMessageRole.USER ? 'user' as const : 'assistant' as const,
@@ -43,13 +55,15 @@ export const chatAgentExecutor = (log: FastifyBaseLogger) => ({
             writeSseEvent({ reply, event: 'message_start', data: { role: 'assistant' } })
 
             let fullContent = ''
-            const toolCalls: ToolCallRecord[] = []
+            const toolCallRecords: ToolCallRecord[] = []
 
             const result = streamText({
                 model,
+                system: SYSTEM_PROMPT,
                 messages: coreMessages,
-                maxTokens: MAX_OUTPUT_TOKENS,
-                maxSteps: MAX_STEPS,
+                tools,
+                maxOutputTokens: MAX_OUTPUT_TOKENS,
+                stopWhen: [stepCountIs(MAX_STEPS)],
                 abortSignal: abortController.signal,
             })
 
@@ -63,7 +77,7 @@ export const chatAgentExecutor = (log: FastifyBaseLogger) => ({
                         break
                     }
                     case 'tool-call': {
-                        toolCalls.push({
+                        toolCallRecords.push({
                             toolName: chunk.toolName,
                             toolCallId: chunk.toolCallId,
                             input: chunk.input,
@@ -78,7 +92,15 @@ export const chatAgentExecutor = (log: FastifyBaseLogger) => ({
                     case 'tool-result': {
                         writeSseEvent({ reply, event: 'tool_call_end', data: {
                             toolCallId: chunk.toolCallId,
-                            output: chunk.result,
+                            output: chunk.output,
+                        } })
+                        break
+                    }
+                    case 'tool-error': {
+                        log.error({ error: chunk.error, toolName: chunk.toolName }, '[chatAgentExecutor] Tool error')
+                        writeSseEvent({ reply, event: 'tool_call_end', data: {
+                            toolCallId: chunk.toolCallId,
+                            error: String(chunk.error),
                         } })
                         break
                     }
@@ -94,8 +116,8 @@ export const chatAgentExecutor = (log: FastifyBaseLogger) => ({
 
             const usage = await result.usage
             const tokenUsage = {
-                inputTokens: usage.promptTokens,
-                outputTokens: usage.completionTokens,
+                inputTokens: usage.inputTokens ?? 0,
+                outputTokens: usage.outputTokens ?? 0,
             }
 
             writeSseEvent({ reply, event: 'message_end', data: { tokenUsage } })
@@ -104,7 +126,7 @@ export const chatAgentExecutor = (log: FastifyBaseLogger) => ({
                 conversationId: conversation.id,
                 role: ChatMessageRole.ASSISTANT,
                 content: fullContent,
-                toolCalls: toolCalls.length > 0 ? toolCalls : undefined,
+                toolCalls: toolCallRecords.length > 0 ? toolCallRecords : undefined,
                 tokenUsage,
             })
         }
@@ -119,12 +141,40 @@ export const chatAgentExecutor = (log: FastifyBaseLogger) => ({
         }
         finally {
             clearTimeout(timeout)
+            if (mcpClient) {
+                await mcpClient.close().catch(() => {})
+            }
         }
     },
 })
 
 function writeSseEvent({ reply, event, data }: { reply: FastifyReply, event: string, data: unknown }): void {
     reply.raw.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`)
+}
+
+async function connectToProjectMcp({ projectId, log }: { projectId: string, log: FastifyBaseLogger }): Promise<{ client: Awaited<ReturnType<typeof createMCPClient>> | null, tools: Record<string, Tool> }> {
+    try {
+        const mcpServer = await mcpServerService(log).getByProjectId(projectId)
+        const frontendUrl = system.getOrThrow(AppSystemProp.FRONTEND_URL)
+        const mcpUrl = `${frontendUrl}/api/v1/projects/${projectId}/mcp-server/http`
+
+        const client = await createMCPClient({
+            transport: new StreamableHTTPClientTransport(new URL(mcpUrl), {
+                requestInit: {
+                    headers: {
+                        Authorization: `Bearer ${mcpServer.token}`,
+                    },
+                },
+            }),
+        })
+
+        const tools = await client.tools()
+        return { client, tools: tools as Record<string, Tool> }
+    }
+    catch (error) {
+        log.warn({ error }, '[chatAgentExecutor] Failed to connect to project MCP server, proceeding without tools')
+        return { client: null, tools: {} }
+    }
 }
 
 async function createLanguageModel({ conversation, platformId, log }: {
