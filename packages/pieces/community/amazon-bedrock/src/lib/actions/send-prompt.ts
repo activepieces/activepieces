@@ -41,44 +41,45 @@ export const sendPrompt = createAction({
     }),
     prompt: Property.LongText({
       displayName: 'Prompt',
+      description: 'The message or question to send to the model.',
       required: true,
     }),
     systemPrompt: Property.LongText({
       displayName: 'System Prompt',
       required: false,
-      description: 'Instructions that guide the model behavior.',
+      description: 'Instructions that set the model\'s behavior and persona (e.g. "You are a helpful assistant that replies concisely.").',
     }),
     temperature: Property.Number({
       displayName: 'Temperature',
       required: false,
       description:
-        'Controls randomness. Lower values produce more deterministic output.',
+        'Controls how creative or predictable the response is. Lower values (e.g. 0.2) give focused, consistent answers. Higher values (e.g. 0.9) give more varied, creative output.',
       defaultValue: 0.7,
     }),
     maxTokens: Property.Number({
       displayName: 'Maximum Tokens',
       required: false,
-      description: 'The maximum number of tokens to generate.',
+      description: 'The maximum length of the response. One token is roughly 4 characters. 2048 tokens ≈ ~1500 words.',
       defaultValue: 2048,
     }),
     topP: Property.Number({
       displayName: 'Top P',
       required: false,
       description:
-        'Nucleus sampling: the model considers tokens with top_p probability mass.',
+        'Limits the pool of words the model picks from (0–1). Lower values make responses more focused. Leave at 1 to disable this filter and use Temperature instead.',
       defaultValue: 1,
     }),
     stopSequences: Property.Array({
       displayName: 'Stop Sequences',
       required: false,
       description:
-        'Sequences that will cause the model to stop generating. Up to 4 sequences.',
+        'Text strings that, when generated, cause the model to stop immediately (e.g. "END" or "\\n\\n"). Up to 4 sequences.',
     }),
     memoryKey: Property.ShortText({
-      displayName: 'Memory Key',
+      displayName: 'Conversation Memory ID',
       required: false,
       description:
-        'A memory key that will keep the chat history shared across runs and flows. Keep it empty to leave the model without memory of previous messages.',
+        'A unique name for this conversation\'s memory (e.g. "support-chat-user-123"). When set, the model remembers previous messages in this flow. Leave empty for a single-turn interaction with no memory.',
     }),
   },
   async run({ auth, propsValue, store }) {

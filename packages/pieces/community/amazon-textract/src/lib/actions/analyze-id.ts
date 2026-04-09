@@ -27,8 +27,8 @@ export const analyzeId = createAction({
       required: false,
     }),
     s3Key: Property.ShortText({
-      displayName: 'S3 Object Key',
-      description: 'S3 object key (path) of the document. Required if no file is provided.',
+      displayName: 'S3 File Path',
+      description: 'The path to the file in your S3 bucket (e.g. "id-documents/passport.jpg"). Required if no file is uploaded above.',
       required: false,
     }),
   },
