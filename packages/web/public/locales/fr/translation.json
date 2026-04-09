@@ -257,6 +257,8 @@
   "Enter your email to delete your account, including your flows, connections, agents, tables and projects.": "",
   "This action is irreversible.": "",
   "Profile picture updated successfully": "",
+  "Failed to load data": "Impossible de charger les données",
+  "Something went wrong while loading your data. Your data is safe — please try again by refreshing the page.": "Une erreur s'est produite lors du chargement de vos données. Vos données sont sûres. Veuillez réessayer en actualisant la page.",
   "Failed to upload profile picture": "",
   "File size exceeds 5MB limit": "",
   "Invalid file type. Allowed types: JPEG, PNG, GIF, WEBP": "",
