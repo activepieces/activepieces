@@ -146,8 +146,23 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 externalId: constants.externalProjectId,
             },
             generateResumeUrl: (params) => {
-                const url = new URL(`${constants.publicApiUrl}v1/flow-runs/${constants.flowRunId}/requests/${executionState.pauseRequestId}${params.sync ? '/sync' : ''}`)
-                url.search = new URLSearchParams(params.queryParams).toString()
+                const visibility = params.visibility ?? 'public'
+                const baseApiUrl =
+                    visibility === 'internal'
+                        ? (constants.internalApiUrl ?? constants.publicApiUrl)
+                        : constants.publicApiUrl
+
+                const path = `v1/flow-runs/${constants.flowRunId}/requests/${executionState.pauseRequestId}${params.sync ? '/sync' : ''}`
+                const url = new URL(`${baseApiUrl}${path}`)
+
+                if (params.queryParams) {
+                    for (const [key, value] of Object.entries(params.queryParams)) {
+                        if (value !== undefined && value !== null) {
+                            url.searchParams.set(key, String(value))
+                        }
+                    }
+                }
+
                 return url.toString()
             },
         }

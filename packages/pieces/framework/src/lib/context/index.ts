@@ -206,7 +206,8 @@ type BaseActionContext<
   run: RunContext;
   generateResumeUrl: (params: {
     queryParams: Record<string, string>,
-    sync?: boolean
+    sync?: boolean,
+    visibility?: 'public' | 'internal'
   }) => string;
 };
 

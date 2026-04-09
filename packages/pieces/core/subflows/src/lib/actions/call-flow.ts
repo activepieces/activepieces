@@ -126,7 +126,8 @@ export const callFlow = createAction({
       body: {
         data: payload,
         callbackUrl: context.propsValue.waitForResponse ?  context.generateResumeUrl({
-          queryParams: {}
+          queryParams: {},
+          visibility: 'internal'
         }) : undefined,
       },
     });
