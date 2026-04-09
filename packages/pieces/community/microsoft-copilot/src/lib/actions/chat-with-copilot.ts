@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { microsoft365CopilotAuth } from '../common/auth';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { getGraphBaseUrl, getMicrosoftCloudFromAuth } from '../common/microsoft-cloud';
 
 export const chatWithCopilot = createAction({
   auth: microsoft365CopilotAuth,
@@ -54,18 +55,21 @@ export const chatWithCopilot = createAction({
       enableWebSearch,
     } = context.propsValue;
 
+    const cloud = getMicrosoftCloudFromAuth(context.auth);
+    const graphBaseUrl = getGraphBaseUrl(cloud);
+
     let activeConversationId = conversationId;
     if (!activeConversationId) {
       const createResponse = await httpClient.sendRequest({
         method: HttpMethod.POST,
-        url: 'https://graph.microsoft.com/beta/copilot/conversations',
+        url: `${graphBaseUrl}/beta/copilot/conversations`,
         headers: {
           Authorization: `Bearer ${context.auth.access_token}`,
           'Content-Type': 'application/json',
         },
         body: {}
       });
-      
+
       activeConversationId = createResponse.body.id;
     }
 
@@ -110,7 +114,7 @@ export const chatWithCopilot = createAction({
 
     const response: any = await httpClient.sendRequest({
       method: HttpMethod.POST,
-      url: `https://graph.microsoft.com/beta/copilot/conversations/${activeConversationId}/chat`,
+      url: `${graphBaseUrl}/beta/copilot/conversations/${activeConversationId}/chat`,
       headers: {
         Authorization: `Bearer ${context.auth.access_token}`,
         'Content-Type': 'application/json',

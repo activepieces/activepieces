@@ -1,4 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
+import { getGraphBaseUrl } from '../common/microsoft-cloud';
 import { Client } from '@microsoft/microsoft-graph-client';
 import { BodyType } from '@microsoft/microsoft-graph-types';
 import {
@@ -64,10 +65,12 @@ export const requestApprovalInMail = createAction({
         </div>
       `;
 
+        const cloud = context.auth.props?.['cloud'] as string | undefined;
         const client = Client.initWithMiddleware({
           authProvider: {
             getAccessToken: () => Promise.resolve(context.auth.access_token),
           },
+          baseUrl: getGraphBaseUrl(cloud),
         });
 
         const mailPayload = {

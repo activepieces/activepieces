@@ -55,3 +55,24 @@ export function resolveWorkspaceDependencies(
   }
   return resolved
 }
+
+export function isExactVersion(version: string): boolean {
+  return /^\d+\.\d+\.\d+(-[\w.]+)?$/.test(version)
+}
+
+export function stripSemverRanges(
+  deps: Record<string, string> | undefined,
+): Record<string, string> | undefined {
+  if (!deps) {
+    return deps
+  }
+  const stripped: Record<string, string> = {}
+  for (const [name, version] of Object.entries(deps)) {
+    const pinned = version.replace(/^[\^~]/, '')
+    if (!isExactVersion(pinned)) {
+      throw new Error(`[stripSemverRanges] unsupported version range for ${name}: "${version}"`)
+    }
+    stripped[name] = pinned
+  }
+  return stripped
+}

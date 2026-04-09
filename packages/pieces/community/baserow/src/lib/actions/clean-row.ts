@@ -20,7 +20,7 @@ export const cleanRowAction = createAction({
     };
     const tableFieldsInput = context.propsValue.table_fields!;
 
-    const client = makeClient(context.auth.props);
+    const client = await makeClient(context.auth);
     const tableSchema = await client.listTableFields(table_id);
 
     const fieldTypeMap: Record<string, string> = {};

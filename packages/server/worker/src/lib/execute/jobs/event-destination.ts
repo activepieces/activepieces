@@ -1,4 +1,5 @@
 import {
+    EngineResponseStatus,
     EventDestinationJobData,
     WorkerJobType,
 } from '@activepieces/shared'
@@ -8,8 +9,7 @@ import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '.
 export const eventDestinationJob: JobHandler<EventDestinationJobData, FireAndForgetJobResult> = {
     jobType: WorkerJobType.EVENT_DESTINATION,
     async execute(ctx: JobContext, data: EventDestinationJobData): Promise<FireAndForgetJobResult> {
-        const settings = workerSettings.getSettings()
-        const timeoutInSeconds = settings.EVENT_DESTINATION_TIMEOUT_SECONDS
+        const timeoutInSeconds = workerSettings.getSettings().EVENT_DESTINATION_TIMEOUT_SECONDS
 
         ctx.log.info({ webhookUrl: data.webhookUrl, webhookId: data.webhookId }, 'Sending event destination')
 
@@ -22,6 +22,6 @@ export const eventDestinationJob: JobHandler<EventDestinationJobData, FireAndFor
 
         ctx.log.info({ webhookUrl: data.webhookUrl, status: response.status }, 'Event destination sent')
 
-        return { kind: JobResultKind.FIRE_AND_FORGET }
+        return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
     },
 }

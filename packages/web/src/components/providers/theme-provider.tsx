@@ -25,14 +25,11 @@ const initialState: ThemeProviderState = {
 const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
 
 const setFavicon = (url: string) => {
-  let link: HTMLLinkElement | null =
-    document.querySelector("link[rel*='icon']");
-  if (!link) {
-    link = document.createElement('link');
-    link.rel = 'shortcut icon';
-    document.head.appendChild(link);
-  }
+  document.querySelectorAll("link[rel*='icon']").forEach((el) => el.remove());
+  const link = document.createElement('link');
+  link.rel = 'icon';
   link.href = url;
+  document.head.appendChild(link);
 };
 
 export function ThemeProvider({

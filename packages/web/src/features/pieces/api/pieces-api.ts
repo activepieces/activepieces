@@ -10,6 +10,7 @@ import {
   GetPieceRequestParams,
   GetPieceRequestQuery,
   ListPiecesRequestQuery,
+  ListPieceVersionsResponse,
   PackageType,
   PieceOptionRequest,
 } from '@activepieces/shared';
@@ -17,6 +18,7 @@ import { t } from 'i18next';
 
 import { internalErrorToast } from '@/components/ui/sonner';
 import { api } from '@/lib/api';
+import { authenticationSession } from '@/lib/authentication-session';
 
 export const piecesApi = {
   list(request: ListPiecesRequestQuery): Promise<PieceMetadataModelSummary[]> {
@@ -87,6 +89,15 @@ export const piecesApi = {
     return api.post<PieceMetadataModel>('/v1/pieces', formData, undefined, {
       'Content-Type': 'multipart/form-data',
     });
+  },
+  listVersions(name: string): Promise<ListPieceVersionsResponse> {
+    const projectId = authenticationSession.getProjectId()!;
+    return api.get<ListPieceVersionsResponse>(
+      `/v1/pieces/${encodeURIComponent(name)}/versions`,
+      {
+        projectId,
+      },
+    );
   },
   delete(id: string) {
     return api.delete(`/v1/pieces/${id}`);

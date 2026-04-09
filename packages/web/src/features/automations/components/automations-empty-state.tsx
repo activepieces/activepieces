@@ -31,6 +31,7 @@ import { UseTemplateDialog } from '@/features/templates/components/use-template-
 import { templatesHooks } from '@/features/templates/hooks/templates-hook';
 import { useGradientFromPieces } from '@/features/templates/hooks/use-gradient-from-pieces';
 import { useAuthorization } from '@/hooks/authorization-hooks';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 
 type ActionRowProps = {
@@ -247,12 +248,15 @@ export const AutomationsEmptyState = ({
 
   const topTemplates = templates?.slice(0, 3) || [];
   const hasTemplates = topTemplates.length > 0;
+  const branding = flagsHooks.useWebsiteBranding();
 
   return (
     <div className="flex flex-col gap-8 py-8 px-4 max-w-5xl mx-auto">
       <div>
         <h2 className="text-sm font-medium text-muted-foreground mb-4">
-          {t('Get started with Activepieces')}
+          {t('Get started with {brandName}', {
+            brandName: branding.websiteName ?? platform.name,
+          })}
         </h2>
         <div className="flex gap-4">
           <GetStartedCard

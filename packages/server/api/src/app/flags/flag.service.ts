@@ -229,6 +229,12 @@ export const flagService = (log: FastifyBaseLogger) => ({
                 updated,
             },
             {
+                id: ApFlagId.TRIGGER_TIMEOUT_SECONDS,
+                value: system.getNumberOrThrow(AppSystemProp.TRIGGER_TIMEOUT_SECONDS),
+                created,
+                updated,
+            },
+            {
                 id: ApFlagId.FLOW_RUN_MEMORY_LIMIT_KB,
                 value: system.getNumber(AppSystemProp.SANDBOX_MEMORY_LIMIT),
                 created,

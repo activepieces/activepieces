@@ -124,9 +124,8 @@ export const UpdateTemplateDialog = ({
               name="displayName"
               render={({ field }) => (
                 <FormItem className="grid space-y-2">
-                  <Label htmlFor="name">
-                    {t('Name')}{' '}
-                    <span className="text-destructive-300">{'*'}</span>
+                  <Label htmlFor="name" showRequiredIndicator>
+                    {t('Name')}
                   </Label>
                   <Input
                     {...field}

@@ -318,7 +318,7 @@ export function ProjectDashboardSidebar({
                         placeholder={t('Search projects...')}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e)}
-                        className="h-9"
+                        className="h-8"
                         autoFocus
                       />
                     </PopoverContent>
@@ -339,7 +339,7 @@ export function ProjectDashboardSidebar({
                       'flex-1',
                       state === 'collapsed'
                         ? 'flex flex-col items-center scrollbar-none'
-                        : 'scrollbar-hover',
+                        : '',
                     )}
                     items={displayProjects}
                     estimateSize={() => 35}

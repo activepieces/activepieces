@@ -40,7 +40,7 @@ export const agentUtils = {
     }
     return Object.keys(shape).length > 0 ? z.object(shape) : undefined;
   },
-  getPrompts(userPrompt: string) {
+  getPrompts(userPrompt: string, options?: { hasKnowledgeBaseTools?: boolean }) {
     return {
        prompt: `
         ${userPrompt}
@@ -57,7 +57,7 @@ export const agentUtils = {
         **Core Objective**:
         - Help the user achieve their goal as quickly, accurately, and thoroughly as possible.
         - Always prioritize user satisfaction by providing clear, concise, and relevant responses.
-        - Always make sure when u are asked a direct simple question you replay to it in simple clear and consize text response.
+        - Always make sure when you are asked a direct simple question you reply to it in simple clear and concise text response.
 
         **Reasoning and Thinking Guidelines**:
         - Think step-by-step before taking any action. Use chain-of-thought reasoning: First, understand the user's query fully. Then, break it down into sub-tasks. Evaluate what information or actions are needed. Finally, decide on the next steps.
@@ -85,6 +85,13 @@ export const agentUtils = {
         **Final Response and Completion**:
         - Once the goal is achieved or unachievable, summarize findings clearly in a final response if needed, then call the \`${TASK_COMPLETION_TOOL_NAME}\` tool as your last action.
         - Do not call the completion tool prematurely—ensure all reasonable steps are taken.
+        ${options?.hasKnowledgeBaseTools ? `
+        **Knowledge Base Guidelines**:
+        - ALWAYS search the knowledge base before answering any question. Do not answer from your own knowledge — use the search tool first.
+        - You may refine your search query ONCE if initial results aren't relevant. If the second search returns similar results, stop searching — the information is not in the knowledge base. Do not keep retrying with different phrasings.
+        - If the knowledge base does not contain the answer, say so clearly and move on.
+        - Cite the source document or table when presenting information from the knowledge base.
+        ` : ''}
       `.trim(),
     }
   },

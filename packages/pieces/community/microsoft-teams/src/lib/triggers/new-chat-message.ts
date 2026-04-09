@@ -6,7 +6,8 @@ import {
 	TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import { microsoftTeamsCommon } from '../common';
-import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
+import { createGraphClient } from '../common/graph';
+import { PageCollection } from '@microsoft/microsoft-graph-client';
 import { ChatMessage } from '@microsoft/microsoft-graph-types';
 import dayjs from 'dayjs';
 
@@ -87,11 +88,8 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof microsoftTeamsAu
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, propsValue, lastFetchEpochMS, store }) {
 		const { chatId } = propsValue;
-		const client = Client.initWithMiddleware({
-			authProvider: {
-				getAccessToken: () => Promise.resolve(auth.access_token),
-			},
-		});
+		const cloud = auth.props?.['cloud'] as string | undefined;
+		const client = createGraphClient(auth.access_token, cloud);
 
 		const messages: ChatMessage[] = [];
 

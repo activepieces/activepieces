@@ -1,3 +1,4 @@
+import { PropertyType } from '@activepieces/pieces-framework'
 import {
     FlowActionType,
     FlowOperationRequest,
@@ -6,12 +7,16 @@ import {
     isNil,
     McpServer,
     McpToolDefinition,
+    Permission,
+    PieceActionSettings,
     UpdateActionRequest,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
+import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
 import { projectService } from '../../project/project-service'
+import { diagnosePieceProps, mcpToolError } from './mcp-utils'
 
 const updateStepInput = z.object({
     flowId: z.string(),
@@ -27,7 +32,8 @@ const updateStepInput = z.object({
 export const apUpdateStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_update_step',
-        description: 'Update an existing step\'s settings in a flow. Use ap_flow_structure to get step names. Use ap_list_pieces to get valid pieceName, pieceVersion, actionName. Provide only the fields you want to change.',
+        permission: Permission.WRITE_FLOW,
+        description: 'Update an existing step\'s settings in a flow. Use ap_flow_structure to get step names. Use ap_list_pieces to get valid pieceName, pieceVersion, actionName. If you are about to configure a CODE step, first verify with ap_list_pieces that no existing piece can accomplish the task. Provide only the fields you want to change.',
         inputSchema: {
             flowId: z.string().describe('The id of the flow'),
             stepName: z.string().describe('The name of the step to update (e.g. "step_1"). Use ap_flow_structure to get valid values.'),
@@ -97,6 +103,14 @@ export const apUpdateStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
                 }
             }
 
+            if (step.type === FlowActionType.PIECE && input !== undefined) {
+                await fillDefaultsForMissingOptionalProps({
+                    settings: updatedSettings,
+                    platformId: project.platformId,
+                    log,
+                })
+            }
+
             const payload = {
                 type: step.type,
                 name: step.name,
@@ -129,13 +143,17 @@ export const apUpdateStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
                 })
                 const updatedStep = flowStructureUtil.getStep(stepName, updatedFlow.version.trigger)
                 if (updatedStep && !updatedStep.valid) {
-                    const hint = step.type === FlowActionType.PIECE
-                        ? ' Use ap_list_pieces to verify pieceName, pieceVersion, actionName and required inputs, then retry.'
-                        : ' Check the step settings and retry.'
+                    const diagnosis = updatedStep.type === FlowActionType.PIECE
+                        ? await diagnoseMissingInputs({ settings: updatedStep.settings, platformId: project.platformId, log })
+                        : null
+                    const hint = (diagnosis || null)
+                        ?? (step.type === FlowActionType.PIECE
+                            ? 'Use ap_list_pieces to verify pieceName, pieceVersion, actionName and required inputs, then retry.'
+                            : 'Check the step settings and retry.')
                     return {
                         content: [{
                             type: 'text',
-                            text: `⚠️ Step "${stepName}" updated but still invalid.${hint}`,
+                            text: `⚠️ Step "${stepName}" updated but still invalid. ${hint}`,
                         }],
                     }
                 }
@@ -144,11 +162,73 @@ export const apUpdateStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
                 }
             }
             catch (err) {
-                const message = err instanceof Error ? err.message : String(err)
-                return {
-                    content: [{ type: 'text', text: `❌ Step update failed: ${message}` }],
-                }
+                return mcpToolError('Step update failed', err)
             }
         },
+    }
+}
+
+async function diagnoseMissingInputs({ settings, platformId, log }: {
+    settings: PieceActionSettings
+    platformId: string
+    log: FastifyBaseLogger
+}): Promise<string | null> {
+    const { pieceName, pieceVersion, actionName } = settings
+    if (isNil(actionName)) {
+        return 'Missing actionName.'
+    }
+    try {
+        const piece = await pieceMetadataService(log).getOrThrow({ platformId, name: pieceName, version: pieceVersion })
+        const action = piece.actions[actionName]
+        if (isNil(action)) {
+            return `Action "${actionName}" not found in piece "${pieceName}". Use ap_list_pieces with includeActions=true to get valid action names.`
+        }
+        const input = settings.input ?? {}
+        const { parts } = diagnosePieceProps({ props: action.props, input, pieceAuth: piece.auth, requireAuth: action.requireAuth, componentType: 'action' })
+        return parts.join(' ')
+    }
+    catch (err) {
+        log.warn({ err, pieceName, actionName }, 'diagnoseMissingInputs: failed to fetch piece metadata')
+        return null
+    }
+}
+
+async function fillDefaultsForMissingOptionalProps({ settings, platformId, log }: {
+    settings: Record<string, unknown>
+    platformId: string
+    log: FastifyBaseLogger
+}): Promise<void> {
+    const pieceName = settings.pieceName
+    const pieceVersion = settings.pieceVersion
+    const actionName = settings.actionName
+    if (typeof pieceName !== 'string' || typeof pieceVersion !== 'string' || typeof actionName !== 'string') {
+        return
+    }
+    try {
+        const piece = await pieceMetadataService(log).getOrThrow({
+            platformId,
+            name: pieceName,
+            version: pieceVersion,
+        })
+        const action = piece.actions[actionName]
+        if (isNil(action)) {
+            return
+        }
+        const defaults: Record<string, unknown> = {}
+        for (const [propName, prop] of Object.entries(action.props)) {
+            if (prop.type === PropertyType.ARRAY && !prop.required) {
+                defaults[propName] = []
+            }
+            else if (prop.type === PropertyType.DYNAMIC && !prop.required) {
+                defaults[propName] = {}
+            }
+            else if (prop.type === PropertyType.CHECKBOX && !prop.required) {
+                defaults[propName] = prop.defaultValue ?? false
+            }
+        }
+        settings.input = { ...defaults, ...(typeof settings.input === 'object' && settings.input !== null ? settings.input : {}) }
+    }
+    catch (err) {
+        log.warn({ err, pieceName, actionName }, 'fillDefaultsForMissingOptionalProps: failed to fetch piece metadata, skipping defaults')
     }
 }

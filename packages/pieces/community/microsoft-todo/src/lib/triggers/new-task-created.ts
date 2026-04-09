@@ -1,9 +1,9 @@
 import { AppConnectionValueForAuthProperty, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
-import { getTaskListsDropdown } from '../common';
+import { getTaskListsDropdown, createTodoClient } from '../common';
 import { microsoftToDoAuth } from '../auth';
-import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
+import { PageCollection } from '@microsoft/microsoft-graph-client';
 import dayjs from 'dayjs';
 import { TodoTask } from '@microsoft/microsoft-graph-types';
 
@@ -11,11 +11,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof microsoftToDoAut
 	strategy: DedupeStrategy.TIMEBASED,
 	items: async ({ auth, propsValue, store, lastFetchEpochMS }) => {
 		const taskListId = propsValue.task_list_id;
-		const client = Client.initWithMiddleware({
-			authProvider: {
-				getAccessToken: () => Promise.resolve(auth.access_token),
-			},
-		});
+		const client = createTodoClient(auth);
 
 		const tasks = [];
 

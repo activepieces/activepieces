@@ -6,11 +6,13 @@ import {
     isNil,
     McpServer,
     McpToolDefinition,
+    Permission,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
 import { projectService } from '../../project/project-service'
+import { mcpToolError } from './mcp-utils'
 
 const deleteBranchInput = z.object({
     flowId: z.string(),
@@ -21,6 +23,7 @@ const deleteBranchInput = z.object({
 export const apDeleteBranchTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_delete_branch',
+        permission: Permission.WRITE_FLOW,
         description: 'Delete a branch from a router (ROUTER) step. Cannot delete the last (fallback) branch. Use ap_flow_structure to get branch indices.',
         inputSchema: {
             flowId: z.string().describe('The id of the flow'),
@@ -88,10 +91,7 @@ export const apDeleteBranchTool = (mcp: McpServer, log: FastifyBaseLogger): McpT
                 }
             }
             catch (err) {
-                const message = err instanceof Error ? err.message : String(err)
-                return {
-                    content: [{ type: 'text', text: `❌ Delete branch failed: ${message}` }],
-                }
+                return mcpToolError('Delete branch failed', err)
             }
         },
     }

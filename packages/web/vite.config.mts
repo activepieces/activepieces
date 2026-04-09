@@ -29,6 +29,17 @@ export default defineConfig(({ command, mode }) => {
           },
           ws: true,
         },
+        '^/mcp$': {
+          target: 'http://127.0.0.1:3000',
+          secure: false,
+          changeOrigin: true,
+          rewrite: (p: string) => p,
+        },
+        '/.well-known/oauth-authorization-server': {
+          target: 'http://127.0.0.1:3000',
+          secure: false,
+          changeOrigin: true,
+        },
       },
       port: 4200,
       host: '0.0.0.0',
@@ -52,6 +63,12 @@ export default defineConfig(({ command, mode }) => {
         '@activepieces/pieces-framework': path.resolve(
           __dirname,
           '../../packages/pieces/framework/src',
+        ),
+        // request-filtering-agent extends Node.js http.Agent and cannot run in the browser.
+        // SSRF protection is server-side only, so we stub it out for the browser bundle.
+        'request-filtering-agent': path.resolve(
+          __dirname,
+          './src/stubs/request-filtering-agent.ts',
         ),
       },
     },

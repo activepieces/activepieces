@@ -1,6 +1,4 @@
 import { z } from 'zod'
-import { TriggerUpdateStatusErrorParams } from '../../core/common/activepieces-error'
-import { PopulatedFlow } from '../flows/flow'
 import { StepRunResponse } from '../flows/sample-data'
 
 export enum WebsocketClientEvent {
@@ -11,13 +9,7 @@ export enum WebsocketClientEvent {
     REFRESH_PIECE = 'REFRESH_PIECE',
     FLOW_RUN_PROGRESS = 'FLOW_RUN_PROGRESS',
     BADGE_AWARDED = 'BADGE_AWARDED',
-    FLOW_STATUS_UPDATED = 'FLOW_STATUS_UPDATED',
     UPDATE_RUN_PROGRESS = 'UPDATE_RUN_PROGRESS',
-}
-
-export type FlowStatusUpdatedResponse = {
-    flow: PopulatedFlow
-    error: TriggerUpdateStatusErrorParams | undefined
 }
 
 export const BadgeAwarded = z.object({

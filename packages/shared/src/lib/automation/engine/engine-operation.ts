@@ -166,13 +166,11 @@ export type AppEventListener = {
 
 
 type ExecuteTestOrRunTriggerResponse = {
-    success: boolean
     message?: string
     output: unknown[]
 }
 
 type ExecuteHandshakeTriggerResponse = {
-    success: boolean
     message?: string
     response?: {
         status: number
@@ -289,6 +287,7 @@ export type EngineResponse<T = unknown> = {
 
 export enum EngineResponseStatus {
     OK = 'OK',
+    USER_FAILURE = 'USER_FAILURE',
     INTERNAL_ERROR = 'INTERNAL_ERROR',
     TIMEOUT = 'TIMEOUT',
     MEMORY_ISSUE = 'MEMORY_ISSUE',

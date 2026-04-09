@@ -67,7 +67,7 @@ function text(result: { content: Array<{ type: 'text', text: string }> }): strin
 
 async function createFlowAndGetId(mcp: McpServer, flowName: string): Promise<string> {
     const result = await apCreateFlowTool(mcp, mockLog).execute({ flowName })
-    const match = text(result).match(/with id (\S+)/)
+    const match = text(result).match(/\(id: (\S+?)\)/)
     if (!match) throw new Error(`Could not extract flowId from: ${text(result)}`)
     return match[1]
 }

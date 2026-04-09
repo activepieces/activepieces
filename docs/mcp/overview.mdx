@@ -1,0 +1,69 @@
+---
+title: "MCP Server"
+icon: "plug"
+description: "Connect AI assistants to Activepieces using the Model Context Protocol (MCP)"
+---
+
+Activepieces includes a built-in MCP server that allows AI assistants (Claude, GPT, etc.) to interact with your automation platform. AI agents can build flows, manage tables, test automations, and more — all through natural language.
+
+## What is MCP?
+
+The [Model Context Protocol](https://modelcontextprotocol.io/) is an open standard that lets AI assistants connect to external tools and data sources. Activepieces implements an MCP server that exposes 30 tools for managing your automation workflows.
+
+## Enable the MCP Server
+
+1. Go to **Settings** → **MCP Server**
+2. Toggle the server **on**
+3. Copy the **server URL** and **token**
+
+## Connect Your AI Assistant
+
+The MCP server uses the **Streamable HTTP** transport. Configure your AI client with:
+
+- **URL**: `https://your-instance.com/api/v1/projects/{projectId}/mcp-server/http`
+- **Authentication**: Bearer token (or `?token=` query parameter)
+
+<Tip>
+The token can be rotated at any time from the MCP Server settings page.
+</Tip>
+
+### Claude Desktop
+
+Add this to your Claude Desktop config (`claude_desktop_config.json`):
+
+```json
+{
+  "mcpServers": {
+    "activepieces": {
+      "url": "https://your-instance.com/api/v1/projects/{projectId}/mcp-server/http?token={your-token}"
+    }
+  }
+}
+```
+
+### Cursor / Other MCP Clients
+
+Use the Streamable HTTP URL with your token as a Bearer token in the Authorization header.
+
+## Tool Categories
+
+Tools are organized into categories. **Discovery tools** are always available. Other categories can be enabled or disabled per-project in the MCP Server settings.
+
+| Category | Tools | Description |
+|----------|-------|-------------|
+| [Discovery](#discovery) | 10 | Read-only tools for exploring flows, pieces, tables, runs, and AI models |
+| [Flow Management](#flow-management) | 4 | Create, rename, publish, and enable/disable flows |
+| [Flow Building](#flow-building) | 4 | Add, update, and delete steps and triggers |
+| [Router & Branching](#router-branching) | 2 | Add and delete conditional branches |
+| [Annotations](#annotations) | 1 | Manage canvas notes |
+| [Tables](#tables) | 6 | Full CRUD for tables, fields, and records |
+| [Testing & Runs](#testing-runs) | 3 | Test flows, inspect results, retry failures |
+
+See the [Tools Reference](/mcp/tools) for the complete catalog with input schemas and examples.
+
+## Security
+
+- **Credentials are never exposed** — connection secrets, API keys, and OAuth tokens are never returned by any MCP tool
+- **Project-scoped** — all operations are scoped to the authenticated project
+- **Sensitive setup** — the `ap_setup_guide` tool returns instructions for the user to configure connections and AI providers in the UI, rather than handling secrets through MCP
+- **Token rotation** — the MCP token can be rotated at any time without affecting existing connections or flows
