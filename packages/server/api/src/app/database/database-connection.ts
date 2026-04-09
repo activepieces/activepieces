@@ -4,6 +4,7 @@ import {
     EntitySchema,
 } from 'typeorm'
 import { AIProviderEntity } from '../ai/ai-provider-entity'
+import { ChatConversationEntity, ChatMessageEntity } from '../chat/chat-entity'
 import { PlatformAnalyticsReportEntity } from '../analytics/platform-analytics-report.entity'
 import { AppConnectionEntity } from '../app-connection/app-connection.entity'
 import { UserIdentityEntity } from '../authentication/user-identity/user-identity-entity'
@@ -98,6 +99,8 @@ function getEntities(): EntitySchema<unknown>[] {
         McpOAuthTokenEntity,
         KnowledgeBaseFileEntity,
         KnowledgeBaseChunkEntity,
+        ChatConversationEntity,
+        ChatMessageEntity,
         TriggerSourceEntity,
         UserBadgeEntity,
         // Enterprise
