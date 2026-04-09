@@ -34,6 +34,7 @@ export enum WorkerSystemProp {
     PLATFORM_ID_FOR_DEDICATED_WORKER = 'AP_PLATFORM_ID_FOR_DEDICATED_WORKER',
     WORKER_CONCURRENCY = 'AP_WORKER_CONCURRENCY',
     IS_CANARY_WORKER = 'AP_IS_CANARY_WORKER',
+    REUSE_SANDBOX = 'AP_REUSE_SANDBOX',
 }
 
 const defaultValues: Partial<Record<WorkerSystemProp, string>> = {

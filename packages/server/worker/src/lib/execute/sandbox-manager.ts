@@ -1,10 +1,15 @@
 import { ApEnvironment, ExecutionMode, isNil, WorkerToApiContract } from '@activepieces/shared'
 import { Logger } from 'pino'
+import { system, WorkerSystemProp } from '../config/configs'
 import { workerSettings } from '../config/worker-settings'
 import { Sandbox } from '../sandbox/types'
 import { createSandboxForJob } from './create-sandbox-for-job'
 
 function canReuseSandbox(): boolean {
+    const reuseSandbox = system.get(WorkerSystemProp.REUSE_SANDBOX)
+    if (!isNil(reuseSandbox)) {
+        return reuseSandbox === 'true'
+    }
     const settings = workerSettings.getSettings()
     if (settings.ENVIRONMENT === ApEnvironment.DEVELOPMENT) {
         return true
