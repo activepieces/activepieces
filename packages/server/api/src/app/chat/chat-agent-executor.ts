@@ -5,7 +5,9 @@ import {
     ChatMessageRole,
     GetProviderConfigResponse,
     isNil,
-    OpenAICompatibleProviderConfig, SendChatMessageRequest } from '@activepieces/shared'
+    OpenAICompatibleProviderConfig,
+    ToolCallRecord,
+} from '@activepieces/shared'
 import { createAnthropic } from '@ai-sdk/anthropic'
 import { createAzure } from '@ai-sdk/azure'
 import { createGoogleGenerativeAI } from '@ai-sdk/google'
@@ -28,26 +30,20 @@ export const chatAgentExecutor = (log: FastifyBaseLogger) => ({
         const timeout = setTimeout(() => abortController.abort(), CHAT_TURN_TIMEOUT_MS)
 
         try {
-            const model = await createLanguageModel({
-                conversation,
-                platformId,
-                log,
-            })
-
-            const recentMessages = await chatService(log).getRecentMessages({
-                conversationId: conversation.id,
-                limit: CONTEXT_WINDOW_MESSAGES,
-            })
+            const [model, recentMessages] = await Promise.all([
+                createLanguageModel({ conversation, platformId, log }),
+                chatService(log).getRecentMessages({ conversationId: conversation.id, limit: CONTEXT_WINDOW_MESSAGES }),
+            ])
 
             const coreMessages = recentMessages.map((msg) => ({
                 role: msg.role === ChatMessageRole.USER ? 'user' as const : 'assistant' as const,
                 content: msg.content,
             }))
 
-            writeSseEvent(reply, 'message_start', { role: 'assistant' })
+            writeSseEvent({ reply, event: 'message_start', data: { role: 'assistant' } })
 
             let fullContent = ''
-            const toolCalls: unknown[] = []
+            const toolCalls: ToolCallRecord[] = []
 
             const result = streamText({
                 model,
@@ -63,7 +59,7 @@ export const chatAgentExecutor = (log: FastifyBaseLogger) => ({
                 switch (chunk.type) {
                     case 'text-delta': {
                         fullContent += chunk.textDelta
-                        writeSseEvent(reply, 'content_delta', { text: chunk.textDelta })
+                        writeSseEvent({ reply, event: 'content_delta', data: { text: chunk.textDelta } })
                         break
                     }
                     case 'tool-call': {
@@ -72,23 +68,23 @@ export const chatAgentExecutor = (log: FastifyBaseLogger) => ({
                             toolCallId: chunk.toolCallId,
                             input: chunk.args,
                         })
-                        writeSseEvent(reply, 'tool_call_start', {
+                        writeSseEvent({ reply, event: 'tool_call_start', data: {
                             toolCallId: chunk.toolCallId,
                             toolName: chunk.toolName,
                             input: chunk.args,
-                        })
+                        } })
                         break
                     }
                     case 'tool-result': {
-                        writeSseEvent(reply, 'tool_call_end', {
+                        writeSseEvent({ reply, event: 'tool_call_end', data: {
                             toolCallId: chunk.toolCallId,
                             output: chunk.result,
-                        })
+                        } })
                         break
                     }
                     case 'error': {
                         log.error({ error: chunk.error }, '[chatAgentExecutor] Stream error')
-                        writeSseEvent(reply, 'error', { message: 'An error occurred during generation' })
+                        writeSseEvent({ reply, event: 'error', data: { message: 'An error occurred during generation' } })
                         break
                     }
                     default:
@@ -97,31 +93,28 @@ export const chatAgentExecutor = (log: FastifyBaseLogger) => ({
             }
 
             const usage = await result.usage
-            writeSseEvent(reply, 'message_end', {
-                tokenUsage: {
-                    inputTokens: usage.promptTokens,
-                    outputTokens: usage.completionTokens,
-                },
-            })
+            const tokenUsage = {
+                inputTokens: usage.promptTokens,
+                outputTokens: usage.completionTokens,
+            }
+
+            writeSseEvent({ reply, event: 'message_end', data: { tokenUsage } })
 
             await chatService(log).saveMessage({
                 conversationId: conversation.id,
                 role: ChatMessageRole.ASSISTANT,
                 content: fullContent,
                 toolCalls: toolCalls.length > 0 ? toolCalls : undefined,
-                tokenUsage: {
-                    inputTokens: usage.promptTokens,
-                    outputTokens: usage.completionTokens,
-                },
+                tokenUsage,
             })
         }
         catch (error: unknown) {
             if (abortController.signal.aborted) {
-                writeSseEvent(reply, 'error', { message: 'Generation timed out' })
+                writeSseEvent({ reply, event: 'error', data: { message: 'Generation timed out' } })
             }
             else {
                 log.error({ error }, '[chatAgentExecutor] Execution error')
-                writeSseEvent(reply, 'error', { message: 'An error occurred during generation' })
+                writeSseEvent({ reply, event: 'error', data: { message: 'An error occurred during generation' } })
             }
         }
         finally {
@@ -130,7 +123,7 @@ export const chatAgentExecutor = (log: FastifyBaseLogger) => ({
     },
 })
 
-function writeSseEvent(reply: FastifyReply, event: string, data: unknown): void {
+function writeSseEvent({ reply, event, data }: { reply: FastifyReply, event: string, data: unknown }): void {
     reply.raw.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`)
 }
 
@@ -139,7 +132,7 @@ async function createLanguageModel({ conversation, platformId, log }: {
     platformId: string
     log: FastifyBaseLogger
 }): Promise<LanguageModel> {
-    const providerName = conversation.modelProvider as AIProviderName | null
+    const providerName = conversation.modelProvider
     const modelId = conversation.modelName
 
     if (isNil(providerName) || isNil(modelId)) {
@@ -152,17 +145,17 @@ async function createLanguageModel({ conversation, platformId, log }: {
         if (models.length === 0) {
             throw new Error(`No models available for provider ${firstProvider.provider}`)
         }
-        return createModelFromConfig(
-            await aiProviderService(log).getConfigOrThrow({ platformId, provider: firstProvider.provider }),
-            models[0].id,
-        )
+        return createModelFromConfig({
+            providerConfig: await aiProviderService(log).getConfigOrThrow({ platformId, provider: firstProvider.provider }),
+            modelId: models[0].id,
+        })
     }
 
-    const config = await aiProviderService(log).getConfigOrThrow({ platformId, provider: providerName })
-    return createModelFromConfig(config, modelId)
+    const config = await aiProviderService(log).getConfigOrThrow({ platformId, provider: providerName as AIProviderName })
+    return createModelFromConfig({ providerConfig: config, modelId })
 }
 
-function createModelFromConfig(providerConfig: GetProviderConfigResponse, modelId: string): LanguageModel {
+function createModelFromConfig({ providerConfig, modelId }: { providerConfig: GetProviderConfigResponse, modelId: string }): LanguageModel {
     const { provider, auth, config } = providerConfig
 
     switch (provider) {
@@ -176,17 +169,17 @@ function createModelFromConfig(providerConfig: GetProviderConfigResponse, modelI
             return createGoogleGenerativeAI({ apiKey: auth.apiKey })(modelId)
         }
         case AIProviderName.AZURE: {
-            const { resourceName } = config as AzureProviderConfig
-            return createAzure({ resourceName, apiKey: auth.apiKey }).chat(modelId)
+            const azureConfig = config as AzureProviderConfig
+            return createAzure({ resourceName: azureConfig.resourceName, apiKey: auth.apiKey }).chat(modelId)
         }
         case AIProviderName.CUSTOM: {
-            const { apiKeyHeader, baseUrl, defaultHeaders } = config as OpenAICompatibleProviderConfig
+            const customConfig = config as OpenAICompatibleProviderConfig
             return createOpenAICompatible({
                 name: 'openai-compatible',
-                baseURL: baseUrl,
+                baseURL: customConfig.baseUrl,
                 headers: {
-                    ...(defaultHeaders ?? {}),
-                    [apiKeyHeader]: auth.apiKey,
+                    ...(customConfig.defaultHeaders ?? {}),
+                    [customConfig.apiKeyHeader]: auth.apiKey,
                 },
             }).chatModel(modelId)
         }
@@ -202,8 +195,6 @@ function createModelFromConfig(providerConfig: GetProviderConfigResponse, modelI
 
 type ExecuteParams = {
     conversation: ChatConversation
-    userMessage: SendChatMessageRequest
-    projectId: string
     platformId: string
     reply: FastifyReply
 }

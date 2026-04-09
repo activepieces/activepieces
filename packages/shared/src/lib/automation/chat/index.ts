@@ -1,12 +1,26 @@
 import { z } from 'zod'
 import { BaseModelSchema } from '../../core/common/base-model'
-import { AIProviderName } from '../../management/ai-providers'
 
-export enum ChatMessageRole {
-    USER = 'USER',
-    ASSISTANT = 'ASSISTANT',
-    TOOL = 'TOOL',
-}
+export const ChatMessageRole = {
+    USER: 'USER',
+    ASSISTANT: 'ASSISTANT',
+    TOOL: 'TOOL',
+} as const
+
+export type ChatMessageRole = (typeof ChatMessageRole)[keyof typeof ChatMessageRole]
+
+export const ToolCallRecord = z.object({
+    toolName: z.string(),
+    toolCallId: z.string(),
+    input: z.unknown(),
+})
+export type ToolCallRecord = z.infer<typeof ToolCallRecord>
+
+export const TokenUsage = z.object({
+    inputTokens: z.number(),
+    outputTokens: z.number(),
+})
+export type TokenUsage = z.infer<typeof TokenUsage>
 
 export const ChatConversation = z.object({
     ...BaseModelSchema,
@@ -21,24 +35,24 @@ export type ChatConversation = z.infer<typeof ChatConversation>
 export const ChatMessage = z.object({
     ...BaseModelSchema,
     conversationId: z.string(),
-    role: z.nativeEnum(ChatMessageRole),
+    role: z.enum([ChatMessageRole.USER, ChatMessageRole.ASSISTANT, ChatMessageRole.TOOL]),
     content: z.string(),
-    toolCalls: z.unknown().nullable(),
+    toolCalls: z.array(ToolCallRecord).nullable(),
     fileUrls: z.array(z.string()).nullable(),
-    tokenUsage: z.unknown().nullable(),
+    tokenUsage: TokenUsage.nullable(),
 })
 export type ChatMessage = z.infer<typeof ChatMessage>
 
 export const CreateChatConversationRequest = z.object({
     title: z.string().nullable().optional(),
-    modelProvider: z.nativeEnum(AIProviderName).nullable().optional(),
+    modelProvider: z.string().nullable().optional(),
     modelName: z.string().nullable().optional(),
 })
 export type CreateChatConversationRequest = z.infer<typeof CreateChatConversationRequest>
 
 export const UpdateChatConversationRequest = z.object({
     title: z.string().nullable().optional(),
-    modelProvider: z.nativeEnum(AIProviderName).nullable().optional(),
+    modelProvider: z.string().nullable().optional(),
     modelName: z.string().nullable().optional(),
 })
 export type UpdateChatConversationRequest = z.infer<typeof UpdateChatConversationRequest>
@@ -48,17 +62,3 @@ export const SendChatMessageRequest = z.object({
     fileUrls: z.array(z.string()).optional(),
 })
 export type SendChatMessageRequest = z.infer<typeof SendChatMessageRequest>
-
-export const ListChatConversationsRequest = z.object({
-    projectId: z.string(),
-    cursor: z.string().optional(),
-    limit: z.coerce.number().int().min(1).max(100).default(20),
-})
-export type ListChatConversationsRequest = z.infer<typeof ListChatConversationsRequest>
-
-export const ListChatMessagesRequest = z.object({
-    conversationId: z.string(),
-    cursor: z.string().optional(),
-    limit: z.coerce.number().int().min(1).max(100).default(50),
-})
-export type ListChatMessagesRequest = z.infer<typeof ListChatMessagesRequest>

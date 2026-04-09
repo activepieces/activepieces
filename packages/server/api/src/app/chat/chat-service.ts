@@ -8,6 +8,8 @@ import {
     ErrorCode,
     isNil,
     SeekPage,
+    TokenUsage,
+    ToolCallRecord,
     UpdateChatConversationRequest,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -19,16 +21,14 @@ const messageRepo = repoFactory(ChatMessageEntity)
 
 export const chatService = (_log: FastifyBaseLogger) => ({
     async createConversation({ projectId, userId, request }: CreateConversationParams): Promise<ChatConversation> {
-        const conversation = {
+        return conversationRepo().save({
             id: apId(),
             projectId,
             userId,
             title: request.title ?? null,
             modelProvider: request.modelProvider ?? null,
             modelName: request.modelName ?? null,
-        }
-        const saved = await conversationRepo().save(conversation)
-        return saved as ChatConversation
+        }) as Promise<ChatConversation>
     },
 
     async listConversations({ projectId, userId, cursor, limit }: ListConversationsParams): Promise<SeekPage<ChatConversation>> {
@@ -55,8 +55,7 @@ export const chatService = (_log: FastifyBaseLogger) => ({
     },
 
     async getConversation({ id, projectId }: GetConversationParams): Promise<ChatConversation | null> {
-        const conversation = await conversationRepo().findOneBy({ id, projectId })
-        return conversation as ChatConversation | null
+        return conversationRepo().findOneBy({ id, projectId }) as Promise<ChatConversation | null>
     },
 
     async getConversationOrThrow({ id, projectId }: GetConversationParams): Promise<ChatConversation> {
@@ -72,7 +71,7 @@ export const chatService = (_log: FastifyBaseLogger) => ({
 
     async updateConversation({ id, projectId, request }: UpdateConversationParams): Promise<ChatConversation> {
         const conversation = await this.getConversationOrThrow({ id, projectId })
-        const updates: Record<string, unknown> = {}
+        const updates: Partial<Pick<ChatConversation, 'title' | 'modelProvider' | 'modelName'>> = {}
         if (request.title !== undefined) updates.title = request.title
         if (request.modelProvider !== undefined) updates.modelProvider = request.modelProvider
         if (request.modelName !== undefined) updates.modelName = request.modelName
@@ -80,7 +79,7 @@ export const chatService = (_log: FastifyBaseLogger) => ({
         if (Object.keys(updates).length > 0) {
             await conversationRepo().update(conversation.id, updates)
         }
-        return { ...conversation, ...updates } as ChatConversation
+        return { ...conversation, ...updates }
     },
 
     async deleteConversation({ id, projectId }: GetConversationParams): Promise<void> {
@@ -89,7 +88,7 @@ export const chatService = (_log: FastifyBaseLogger) => ({
     },
 
     async saveMessage({ conversationId, role, content, toolCalls, fileUrls, tokenUsage }: SaveMessageParams): Promise<ChatMessage> {
-        const message = {
+        return messageRepo().save({
             id: apId(),
             conversationId,
             role,
@@ -97,9 +96,7 @@ export const chatService = (_log: FastifyBaseLogger) => ({
             toolCalls: toolCalls ?? null,
             fileUrls: fileUrls ?? null,
             tokenUsage: tokenUsage ?? null,
-        }
-        const saved = await messageRepo().save(message)
-        return saved as ChatMessage
+        }) as Promise<ChatMessage>
     },
 
     async listMessages({ conversationId, cursor, limit }: ListMessagesParams): Promise<SeekPage<ChatMessage>> {
@@ -163,9 +160,9 @@ type SaveMessageParams = {
     conversationId: string
     role: ChatMessageRole
     content: string
-    toolCalls?: unknown
+    toolCalls?: ToolCallRecord[]
     fileUrls?: string[]
-    tokenUsage?: unknown
+    tokenUsage?: TokenUsage
 }
 
 type ListMessagesParams = {
