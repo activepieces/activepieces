@@ -25,6 +25,8 @@ export enum Permission {
     WRITE_TABLE = 'WRITE_TABLE',
     READ_KNOWLEDGE_BASE = 'READ_KNOWLEDGE_BASE',
     WRITE_KNOWLEDGE_BASE = 'WRITE_KNOWLEDGE_BASE',
+    READ_CHAT = 'READ_CHAT',
+    WRITE_CHAT = 'WRITE_CHAT',
 }
 
 export enum RoleType {

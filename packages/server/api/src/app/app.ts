@@ -10,6 +10,7 @@ import { platformAnalyticsModule } from './analytics/platform-analytics.module'
 import { setPlatformOAuthService } from './app-connection/app-connection-service/oauth2'
 import { appConnectionModule } from './app-connection/app-connection.module'
 import { authenticationModule } from './authentication/authentication.module'
+import { chatModule } from './chat/chat.module'
 import { canaryRoutingMiddleware } from './core/canary/canary-routing.middleware'
 import { rateLimitModule } from './core/security/rate-limit'
 import { authenticationMiddleware } from './core/security/v2/authn/authentication-middleware'
@@ -223,6 +224,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(licenseKeysModule)
     await app.register(tablesModule)
     await app.register(knowledgeBaseModule)
+    await app.register(chatModule)
     await app.register(userModule)
     await app.register(templateModule)
     await app.register(userBadgeModule)
