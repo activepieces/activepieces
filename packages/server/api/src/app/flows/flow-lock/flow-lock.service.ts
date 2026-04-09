@@ -9,22 +9,31 @@ export const flowLockService = (log: FastifyBaseLogger) => ({
         log.info({ flowId, userId, force }, '[FlowLock] Attempting to acquire lock')
         const redis = await redisConnections.useExisting()
         const key = KEY_PREFIX + flowId
-        const existing = await redis.get(key)
+        const value = JSON.stringify({ userId, userDisplayName })
 
-        if (existing) {
-            const lock: FlowLockValue = JSON.parse(existing)
-            if (lock.userId === userId || force) {
-                log.info({ flowId, userId, force, previousUserId: lock.userId }, '[FlowLock] Reacquiring lock (same user or force)')
-                await redis.set(key, JSON.stringify({ userId, userDisplayName }), 'EX', LOCK_TTL_SECONDS)
-                return { acquired: true, lock: null }
-            }
-            log.info({ flowId, userId, lockedByUserId: lock.userId, lockedByDisplayName: lock.userDisplayName }, '[FlowLock] Lock already held by another user')
-            return { acquired: false, lock }
+        if (force) {
+            await redis.set(key, value, 'EX', LOCK_TTL_SECONDS)
+            log.info({ flowId, userId }, '[FlowLock] Lock force-acquired')
+            return { acquired: true, lock: null }
         }
 
-        await redis.set(key, JSON.stringify({ userId, userDisplayName }), 'EX', LOCK_TTL_SECONDS)
-        log.info({ flowId, userId }, '[FlowLock] Lock acquired')
-        return { acquired: true, lock: null }
+        const setResult = await redis.set(key, value, 'EX', LOCK_TTL_SECONDS, 'NX')
+        if (setResult !== null) {
+            log.info({ flowId, userId }, '[FlowLock] Lock acquired')
+            return { acquired: true, lock: null }
+        }
+
+        const existing = await redis.get(key)
+        const lock: FlowLockValue | null = existing ? JSON.parse(existing) : null
+
+        if (lock && lock.userId === userId) {
+            await redis.set(key, value, 'EX', LOCK_TTL_SECONDS)
+            log.info({ flowId, userId }, '[FlowLock] Lock renewed (same user)')
+            return { acquired: true, lock: null }
+        }
+
+        log.info({ flowId, userId, lockedByUserId: lock?.userId }, '[FlowLock] Lock already held by another user')
+        return { acquired: false, lock }
     },
 
     async release({ flowId, userId }: ReleaseParams): Promise<boolean> {

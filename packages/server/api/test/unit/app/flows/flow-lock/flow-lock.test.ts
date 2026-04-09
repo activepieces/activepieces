@@ -6,8 +6,12 @@ vi.mock('../../../../../src/app/database/redis/index', () => ({
     redisConnections: {
         useExisting: vi.fn().mockResolvedValue({
             get: vi.fn(async (key: string) => mockRedisStore[key]?.value ?? null),
-            set: vi.fn(async (key: string, value: string, _ex: string, ttl: number) => {
+            set: vi.fn(async (key: string, value: string, _ex: string, ttl: number, nx?: string) => {
+                if (nx === 'NX' && mockRedisStore[key]) {
+                    return null
+                }
                 mockRedisStore[key] = { value, ttl }
+                return 'OK'
             }),
             del: vi.fn(async (key: string) => {
                 delete mockRedisStore[key]
