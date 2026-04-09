@@ -59,7 +59,10 @@ const queryClient = new QueryClient({
           description: t(
             'Something went wrong while loading your data. Your data is safe — please try again by refreshing the page.',
           ),
-          error: api.isError(error) ? error.response?.data : error,
+          error: {
+            queryKey: query.queryKey,
+            details: api.isError(error) ? error.response?.data : String(error),
+          },
         });
       }
     },
