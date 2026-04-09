@@ -18,7 +18,7 @@ import { In, LessThanOrEqual } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { exceptionHandler } from '../helper/exception-handler'
 import { system } from '../helper/system/system'
-import { AppSystemProp, WorkerSystemProp } from '../helper/system/system-props'
+import { AppSystemProp } from '../helper/system/system-props'
 import { fileCompressor } from './file-compressor'
 import { FileEntity } from './file.entity'
 import { s3Helper } from './s3-helper'
@@ -240,7 +240,7 @@ export const fileService = (log: FastifyBaseLogger) => ({
             },
         })
 
-        return `${system.get(WorkerSystemProp.FRONTEND_URL)}/api/v1/platforms/assets/${savedFile.id}`
+        return `${system.get(AppSystemProp.FRONTEND_URL)}/api/v1/platforms/assets/${savedFile.id}`
     },
 })
 

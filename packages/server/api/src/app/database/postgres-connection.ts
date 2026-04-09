@@ -353,6 +353,7 @@ import { AddUserIdentityIdIndex1774400000000 } from './migration/postgres/177440
 import { AddUserFkIndices1774449358000 } from './migration/postgres/1774449358000-AddUserFkIndices'
 import { AddMcpOAuthTables1774500000000 } from './migration/postgres/1774500000000-AddMcpOAuthTables'
 import { AddCanaryToPlatformPlan1774600000000 } from './migration/postgres/1774600000000-AddCanaryToPlatformPlan'
+import { MergeCanaryAndDedicatedWorkersIntoWorkerGroupId1775656136000 } from './migration/postgres/1775656136000-MergeCanaryAndDedicatedWorkersIntoWorkerGroupId'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -721,6 +722,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddKnowledgeBaseChunkTable1773627989515,
         AddMcpOAuthTables1774500000000,
         AddCanaryToPlatformPlan1774600000000,
+        MergeCanaryAndDedicatedWorkersIntoWorkerGroupId1775656136000,
     ]
     return migrations
 }

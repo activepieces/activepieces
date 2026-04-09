@@ -35,7 +35,7 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { useTimeAgo } from '@/hooks/use-time-ago';
 import { cn } from '@/lib/utils';
 
-import { WorkerConfigsModal } from './worker-configs-dialog';
+import { WorkerConfigsPopover } from './worker-configs-popover';
 
 export default function WorkersPage() {
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
@@ -231,7 +231,7 @@ function WorkerCard({ worker, index, isCloud }: WorkerCardProps) {
             <Badge variant={isOnline ? 'success' : 'destructive'}>
               {t(worker.status.toLowerCase())}
             </Badge>
-            <WorkerConfigsModal workerProps={workerProps} />
+            <WorkerConfigsPopover workerProps={workerProps} />
           </div>
         </div>
       </CardHeader>
