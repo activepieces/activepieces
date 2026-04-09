@@ -1,7 +1,9 @@
 import {
     AgentPieceProps,
     AIProviderName,
+    apId,
     FlowActionType,
+    FlowAiProviderMigrationStatus,
     FlowTriggerType,
     FlowVersionState,
     flowStructureUtil,
@@ -254,6 +256,424 @@ describe('Flow Version API', () => {
 
             const versions = await databaseConnection().getRepository('flow_version').find({ where: { flowId: flowB.id } })
             expect(versions).toHaveLength(1)
+        })
+
+        it('never creates duplicate drafts for a single flow', async () => {
+            const { mockProject, mockPlatform } = await mockAndSaveBasicSetup()
+
+            const sourceModel = { provider: AIProviderName.OPENAI, model: 'gpt-4' }
+            const targetModel = { provider: AIProviderName.ANTHROPIC, model: 'claude-3-opus' }
+
+            const mockFlow = createMockFlow({ projectId: mockProject.id })
+            await databaseConnection().getRepository('flow').save(mockFlow)
+            await databaseConnection().getRepository('flow_version').save(
+                createMockFlowVersion({
+                    flowId: mockFlow.id,
+                    state: FlowVersionState.DRAFT,
+                    trigger: makeAiTriggerWithStep(sourceModel) as never,
+                }),
+            )
+
+            const migrationId = apId()
+            await databaseConnection().getRepository('flow_ai_provider_migration').save({
+                id: migrationId,
+                platformId: mockPlatform.id,
+                userId: apId(),
+                status: FlowAiProviderMigrationStatus.RUNNING,
+                migratedVersions: [],
+                failedFlowVersions: [],
+                sourceModel,
+                targetModel,
+                projectIds: null,
+            })
+
+            await flowVersionMigrationService(app!.log).migrateFlowsModelHandler({
+                jobId: 'test-job-id',
+                migrationId,
+                platformId: mockPlatform.id,
+                userId: 'test-user-id',
+                request: { sourceModel, targetModel },
+            })
+
+            const versions = await databaseConnection()
+                .getRepository('flow_version')
+                .find({ where: { flowId: mockFlow.id } })
+
+            const draftVersions = versions.filter(v => v.state === FlowVersionState.DRAFT)
+            const lockedVersions = versions.filter(v => v.state === FlowVersionState.LOCKED)
+
+            expect(versions).toHaveLength(2)
+            expect(draftVersions).toHaveLength(1)
+            expect(lockedVersions).toHaveLength(1)
+        })
+
+        it('never creates duplicate drafts when flow has both draft and published versions', async () => {
+            const { mockProject, mockPlatform } = await mockAndSaveBasicSetup()
+
+            const sourceModel = { provider: AIProviderName.OPENAI, model: 'gpt-4' }
+            const targetModel = { provider: AIProviderName.ANTHROPIC, model: 'claude-3-opus' }
+
+            const publishedVersion = createMockFlowVersion({
+                state: FlowVersionState.LOCKED,
+                trigger: makeAiTriggerWithStep(sourceModel) as never,
+            })
+            const mockFlow = createMockFlow({
+                projectId: mockProject.id,
+                publishedVersionId: publishedVersion.id,
+            })
+            publishedVersion.flowId = mockFlow.id
+
+            const draftVersion = createMockFlowVersion({
+                flowId: mockFlow.id,
+                state: FlowVersionState.DRAFT,
+                trigger: makeAiTriggerWithStep(sourceModel) as never,
+            })
+
+            await databaseConnection().getRepository('flow').save(mockFlow)
+            await databaseConnection().getRepository('flow_version').save([publishedVersion, draftVersion])
+
+            const migrationId = apId()
+            await databaseConnection().getRepository('flow_ai_provider_migration').save({
+                id: migrationId,
+                platformId: mockPlatform.id,
+                userId: apId(),
+                status: FlowAiProviderMigrationStatus.RUNNING,
+                migratedVersions: [],
+                failedFlowVersions: [],
+                sourceModel,
+                targetModel,
+                projectIds: null,
+            })
+
+            await flowVersionMigrationService(app!.log).migrateFlowsModelHandler({
+                jobId: 'test-job-id',
+                migrationId,
+                platformId: mockPlatform.id,
+                userId: 'test-user-id',
+                request: { sourceModel, targetModel },
+            })
+
+            const versions = await databaseConnection()
+                .getRepository('flow_version')
+                .find({ where: { flowId: mockFlow.id } })
+
+            const draftVersions = versions.filter(v => v.state === FlowVersionState.DRAFT)
+            expect(draftVersions).toHaveLength(1)
+
+            const updatedFlow = await databaseConnection()
+                .getRepository('flow')
+                .findOneBy({ id: mockFlow.id })
+            expect(updatedFlow?.publishedVersionId).not.toBe(publishedVersion.id)
+
+            const newPublished = versions.find(v => v.id === updatedFlow?.publishedVersionId)
+            expect(newPublished).toBeDefined()
+            expect(newPublished?.state).toBe(FlowVersionState.LOCKED)
+
+            const newPublishedSteps = flowStructureUtil.getAllSteps(newPublished!.trigger)
+            const step1 = newPublishedSteps.find(s => s.name === 'step_1')
+            expect((step1?.settings.input as Record<string, unknown>)[AgentPieceProps.AI_PROVIDER_MODEL]).toEqual(targetModel)
+        })
+
+        it('is idempotent — running migration twice does not create extra versions', async () => {
+            const { mockProject, mockPlatform } = await mockAndSaveBasicSetup()
+
+            const sourceModel = { provider: AIProviderName.OPENAI, model: 'gpt-4' }
+            const targetModel = { provider: AIProviderName.ANTHROPIC, model: 'claude-3-opus' }
+
+            const mockFlow = createMockFlow({ projectId: mockProject.id })
+            await databaseConnection().getRepository('flow').save(mockFlow)
+            await databaseConnection().getRepository('flow_version').save(
+                createMockFlowVersion({
+                    flowId: mockFlow.id,
+                    state: FlowVersionState.DRAFT,
+                    trigger: makeAiTriggerWithStep(sourceModel) as never,
+                }),
+            )
+
+            const migrationId1 = apId()
+            await databaseConnection().getRepository('flow_ai_provider_migration').save({
+                id: migrationId1,
+                platformId: mockPlatform.id,
+                userId: apId(),
+                status: FlowAiProviderMigrationStatus.RUNNING,
+                migratedVersions: [],
+                failedFlowVersions: [],
+                sourceModel,
+                targetModel,
+                projectIds: null,
+            })
+
+            await flowVersionMigrationService(app!.log).migrateFlowsModelHandler({
+                jobId: 'test-job-id-1',
+                migrationId: migrationId1,
+                platformId: mockPlatform.id,
+                userId: 'test-user-id',
+                request: { sourceModel, targetModel },
+            })
+
+            const versionsAfterFirst = await databaseConnection()
+                .getRepository('flow_version')
+                .find({ where: { flowId: mockFlow.id } })
+            expect(versionsAfterFirst).toHaveLength(2)
+
+            const migrationId2 = apId()
+            await databaseConnection().getRepository('flow_ai_provider_migration').save({
+                id: migrationId2,
+                platformId: mockPlatform.id,
+                userId: apId(),
+                status: FlowAiProviderMigrationStatus.RUNNING,
+                migratedVersions: [],
+                failedFlowVersions: [],
+                sourceModel,
+                targetModel,
+                projectIds: null,
+            })
+
+            await flowVersionMigrationService(app!.log).migrateFlowsModelHandler({
+                jobId: 'test-job-id-2',
+                migrationId: migrationId2,
+                platformId: mockPlatform.id,
+                userId: 'test-user-id',
+                request: { sourceModel, targetModel },
+            })
+
+            const versionsAfterSecond = await databaseConnection()
+                .getRepository('flow_version')
+                .find({ where: { flowId: mockFlow.id } })
+            expect(versionsAfterSecond).toHaveLength(2)
+
+            const draftVersions = versionsAfterSecond.filter(v => v.state === FlowVersionState.DRAFT)
+            expect(draftVersions).toHaveLength(1)
+        })
+
+        it('updates publishedVersionId to point to a valid migrated version', async () => {
+            const { mockProject, mockPlatform } = await mockAndSaveBasicSetup()
+
+            const sourceModel = { provider: AIProviderName.OPENAI, model: 'gpt-4' }
+            const targetModel = { provider: AIProviderName.ANTHROPIC, model: 'claude-3-opus' }
+
+            const publishedVersion = createMockFlowVersion({
+                state: FlowVersionState.LOCKED,
+                trigger: makeAiTriggerWithStep(sourceModel) as never,
+            })
+            const mockFlow = createMockFlow({
+                projectId: mockProject.id,
+                publishedVersionId: publishedVersion.id,
+            })
+            publishedVersion.flowId = mockFlow.id
+
+            await databaseConnection().getRepository('flow').save(mockFlow)
+            await databaseConnection().getRepository('flow_version').save(publishedVersion)
+
+            const migrationId = apId()
+            await databaseConnection().getRepository('flow_ai_provider_migration').save({
+                id: migrationId,
+                platformId: mockPlatform.id,
+                userId: apId(),
+                status: FlowAiProviderMigrationStatus.RUNNING,
+                migratedVersions: [],
+                failedFlowVersions: [],
+                sourceModel,
+                targetModel,
+                projectIds: null,
+            })
+
+            await flowVersionMigrationService(app!.log).migrateFlowsModelHandler({
+                jobId: 'test-job-id',
+                migrationId,
+                platformId: mockPlatform.id,
+                userId: 'test-user-id',
+                request: { sourceModel, targetModel },
+            })
+
+            const updatedFlow = await databaseConnection()
+                .getRepository('flow')
+                .findOneBy({ id: mockFlow.id })
+            expect(updatedFlow?.publishedVersionId).not.toBe(publishedVersion.id)
+
+            const newPublished = await databaseConnection()
+                .getRepository('flow_version')
+                .findOneBy({ id: updatedFlow!.publishedVersionId! })
+            expect(newPublished).toBeDefined()
+            expect(newPublished?.state).toBe(FlowVersionState.LOCKED)
+
+            const allSteps = flowStructureUtil.getAllSteps(newPublished!.trigger)
+            const step1 = allSteps.find(s => s.name === 'step_1')
+            expect((step1?.settings.input as Record<string, unknown>)[AgentPieceProps.AI_PROVIDER_MODEL]).toEqual(targetModel)
+        })
+
+        it('migrates all flows across multiple batches (>100 flows)', async () => {
+            const { mockProject, mockPlatform } = await mockAndSaveBasicSetup()
+
+            const sourceModel = { provider: AIProviderName.OPENAI, model: 'gpt-4' }
+            const targetModel = { provider: AIProviderName.ANTHROPIC, model: 'claude-3-opus' }
+
+            const flowCount = 150
+            const flows = Array.from({ length: flowCount }, () =>
+                createMockFlow({ projectId: mockProject.id }),
+            )
+            await databaseConnection().getRepository('flow').save(flows)
+
+            const versions = flows.map(flow =>
+                createMockFlowVersion({
+                    flowId: flow.id,
+                    state: FlowVersionState.DRAFT,
+                    trigger: makeAiTriggerWithStep(sourceModel) as never,
+                }),
+            )
+            await databaseConnection().getRepository('flow_version').save(versions)
+
+            const migrationId = apId()
+            await databaseConnection().getRepository('flow_ai_provider_migration').save({
+                id: migrationId,
+                platformId: mockPlatform.id,
+                userId: apId(),
+                status: FlowAiProviderMigrationStatus.RUNNING,
+                migratedVersions: [],
+                failedFlowVersions: [],
+                sourceModel,
+                targetModel,
+                projectIds: null,
+            })
+
+            await flowVersionMigrationService(app!.log).migrateFlowsModelHandler({
+                jobId: 'test-job-id',
+                migrationId,
+                platformId: mockPlatform.id,
+                userId: 'test-user-id',
+                request: { sourceModel, targetModel },
+            })
+
+            for (const flow of flows) {
+                const flowVersions = await databaseConnection()
+                    .getRepository('flow_version')
+                    .find({ where: { flowId: flow.id } })
+                expect(flowVersions).toHaveLength(2)
+
+                const draftVersions = flowVersions.filter(v => v.state === FlowVersionState.DRAFT)
+                expect(draftVersions).toHaveLength(1)
+            }
+
+            const migration = await databaseConnection()
+                .getRepository('flow_ai_provider_migration')
+                .findOneBy({ id: migrationId })
+            expect(migration?.status).toBe(FlowAiProviderMigrationStatus.COMPLETED)
+            expect(migration?.migratedVersions).toHaveLength(flowCount)
+        }, 120000)
+
+        it('only migrates matching flows in a mixed batch', async () => {
+            const { mockProject, mockPlatform } = await mockAndSaveBasicSetup()
+
+            const sourceModel = { provider: AIProviderName.OPENAI, model: 'gpt-4' }
+            const targetModel = { provider: AIProviderName.ANTHROPIC, model: 'claude-3-opus' }
+            const differentModel = { provider: AIProviderName.OPENAI, model: 'gpt-3.5-turbo' }
+
+            const matchingFlows = Array.from({ length: 3 }, () =>
+                createMockFlow({ projectId: mockProject.id }),
+            )
+            const nonMatchingFlows = Array.from({ length: 2 }, () =>
+                createMockFlow({ projectId: mockProject.id }),
+            )
+            await databaseConnection().getRepository('flow').save([...matchingFlows, ...nonMatchingFlows])
+
+            const matchingVersions = matchingFlows.map(flow =>
+                createMockFlowVersion({
+                    flowId: flow.id,
+                    state: FlowVersionState.DRAFT,
+                    trigger: makeAiTriggerWithStep(sourceModel) as never,
+                }),
+            )
+            const nonMatchingVersions = nonMatchingFlows.map(flow =>
+                createMockFlowVersion({
+                    flowId: flow.id,
+                    state: FlowVersionState.DRAFT,
+                    trigger: makeAiTriggerWithStep(differentModel) as never,
+                }),
+            )
+            await databaseConnection().getRepository('flow_version').save([...matchingVersions, ...nonMatchingVersions])
+
+            const migrationId = apId()
+            await databaseConnection().getRepository('flow_ai_provider_migration').save({
+                id: migrationId,
+                platformId: mockPlatform.id,
+                userId: apId(),
+                status: FlowAiProviderMigrationStatus.RUNNING,
+                migratedVersions: [],
+                failedFlowVersions: [],
+                sourceModel,
+                targetModel,
+                projectIds: null,
+            })
+
+            await flowVersionMigrationService(app!.log).migrateFlowsModelHandler({
+                jobId: 'test-job-id',
+                migrationId,
+                platformId: mockPlatform.id,
+                userId: 'test-user-id',
+                request: { sourceModel, targetModel },
+            })
+
+            for (const flow of matchingFlows) {
+                const flowVersions = await databaseConnection()
+                    .getRepository('flow_version')
+                    .find({ where: { flowId: flow.id } })
+                expect(flowVersions).toHaveLength(2)
+
+                const draftVersions = flowVersions.filter(v => v.state === FlowVersionState.DRAFT)
+                expect(draftVersions).toHaveLength(1)
+            }
+
+            for (const flow of nonMatchingFlows) {
+                const flowVersions = await databaseConnection()
+                    .getRepository('flow_version')
+                    .find({ where: { flowId: flow.id } })
+                expect(flowVersions).toHaveLength(1)
+                expect(flowVersions[0].state).toBe(FlowVersionState.DRAFT)
+            }
+        })
+
+        it('does not touch flows with no AI steps', async () => {
+            const { mockProject, mockPlatform } = await mockAndSaveBasicSetup()
+
+            const sourceModel = { provider: AIProviderName.OPENAI, model: 'gpt-4' }
+            const targetModel = { provider: AIProviderName.ANTHROPIC, model: 'claude-3-opus' }
+
+            const mockFlow = createMockFlow({ projectId: mockProject.id })
+            await databaseConnection().getRepository('flow').save(mockFlow)
+
+            const versionWithNoAi = createMockFlowVersion({
+                flowId: mockFlow.id,
+                state: FlowVersionState.DRAFT,
+            })
+            await databaseConnection().getRepository('flow_version').save(versionWithNoAi)
+
+            const migrationId = apId()
+            await databaseConnection().getRepository('flow_ai_provider_migration').save({
+                id: migrationId,
+                platformId: mockPlatform.id,
+                userId: apId(),
+                status: FlowAiProviderMigrationStatus.RUNNING,
+                migratedVersions: [],
+                failedFlowVersions: [],
+                sourceModel,
+                targetModel,
+                projectIds: null,
+            })
+
+            await flowVersionMigrationService(app!.log).migrateFlowsModelHandler({
+                jobId: 'test-job-id',
+                migrationId,
+                platformId: mockPlatform.id,
+                userId: 'test-user-id',
+                request: { sourceModel, targetModel },
+            })
+
+            const versions = await databaseConnection()
+                .getRepository('flow_version')
+                .find({ where: { flowId: mockFlow.id } })
+            expect(versions).toHaveLength(1)
+            expect(versions[0].state).toBe(FlowVersionState.DRAFT)
+            expect(versions[0].id).toBe(versionWithNoAi.id)
         })
 
         it('uses the latest flow version regardless of its state', async () => {
