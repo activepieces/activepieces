@@ -5,7 +5,7 @@ import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { rejectedPromiseHandler } from '../../helper/promise-handler'
 import { telemetry } from '../../helper/telemetry.utils'
-import { mcpServerRepository, mcpServerService } from '../mcp-service'
+import { mcpServerService } from '../mcp-service'
 import { mcpOAuthTokenService } from './token/mcp-oauth-token.service'
 
 export const mcpOAuthHttpController: FastifyPluginAsyncZod = async (app) => {
@@ -84,18 +84,13 @@ async function resolveIdentity(token: string, log: FastifyBaseLogger): Promise<R
         }
     }
 
-    const mcpServer = await mcpServerRepository().findOneBy({ token })
-    if (!isNil(mcpServer)) {
-        return { projectId: mcpServer.projectId, authMethod: 'oauth_project_token_fallback' }
-    }
-
     return null
 }
 
 type ResolvedIdentity = {
     projectId: string
-    authMethod: 'oauth' | 'oauth_project_token_fallback'
-    userId?: string
+    authMethod: 'oauth'
+    userId: string
 }
 
 const McpEndpointConfig = {
