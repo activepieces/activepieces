@@ -149,7 +149,9 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 const visibility = params.visibility ?? 'public'
                 const baseApiUrl =
                     visibility === 'internal'
-                        ? (constants.internalApiUrl ?? constants.publicApiUrl)
+                const baseApiUrl =
+                    visibility === 'internal'
+                        ? constants.internalApiUrl
                         : constants.publicApiUrl
 
                 const path = `v1/flow-runs/${constants.flowRunId}/requests/${executionState.pauseRequestId}${params.sync ? '/sync' : ''}`
