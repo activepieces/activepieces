@@ -36,6 +36,7 @@ export const templatesHooks = {
         return result.data;
       },
       staleTime: 5 * 60 * 1000,
+      meta: { showErrorDialog: true },
     });
   },
 
@@ -58,6 +59,7 @@ export const templatesHooks = {
         return templates.data;
       },
       staleTime: 5 * 60 * 1000,
+      meta: { showErrorDialog: true },
     });
 
     const setSearch = (newSearch: string) => {
