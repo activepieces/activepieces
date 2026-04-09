@@ -117,15 +117,12 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
         })
 
         const reader = response.body!.getReader()
-        const pump = async () => {
-            for (;;) {
-                const { done, value } = await reader.read()
-                if (done) break
-                reply.raw.write(value)
-            }
-            reply.raw.end()
+        for (;;) {
+            const { done, value } = await reader.read()
+            if (done) break
+            reply.raw.write(value)
         }
-        await pump()
+        reply.raw.end()
         return reply
     })
 }
