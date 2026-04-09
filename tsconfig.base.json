@@ -839,6 +839,9 @@
       "@activepieces/piece-paperform": [
         "packages/pieces/community/paperform/src/index.ts"
       ],
+      "@activepieces/piece-pagerduty": [
+        "packages/pieces/community/pagerduty/src/index.ts"
+      ],
       "@activepieces/piece-parseur": [
         "packages/pieces/community/parseur/src/index.ts"
       ],

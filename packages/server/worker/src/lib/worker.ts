@@ -6,6 +6,8 @@ import {
     ConsumeJobRequest,
     createRpcClient,
     EngineResponseStatus,
+    ExecutionMode,
+    isNil,
     JobData,
     tryCatch,
     WebsocketServerEvent,
@@ -41,10 +43,9 @@ let sandboxManagers: SandboxManager[] = []
 
 export const worker = {
     async start({ apiUrl, socketUrl, workerToken, withHealthServer = false }: WorkerStartParams): Promise<void> {
-        const platformIdForDedicatedWorker = system.get(WorkerSystemProp.PLATFORM_ID_FOR_DEDICATED_WORKER)
-        const isCanaryWorker = system.getBoolean(WorkerSystemProp.IS_CANARY_WORKER) ?? false
+        const workerGroupId = system.get(WorkerSystemProp.WORKER_GROUP_ID)
         socket = io(socketUrl.url, {
-            auth: { token: workerToken, workerId, platformIdForDedicatedWorker, isCanaryWorker },
+            auth: { token: workerToken, workerId, workerGroupId },
             path: socketUrl.path,
             transports: ['websocket'],
             reconnection: true,
@@ -226,6 +227,21 @@ async function fetchAndStoreSettings(sock: Socket): Promise<void> {
     }
     return new Promise<void>((resolve) => {
         sock.emit(WebsocketServerEvent.FETCH_WORKER_SETTINGS, request, (response: WorkerSettingsResponse) => {
+            const localExecutionMode = system.get(WorkerSystemProp.EXECUTION_MODE)
+            if (!isNil(localExecutionMode)) {
+                response.EXECUTION_MODE = localExecutionMode
+            }
+            const workerGroupId = system.get(WorkerSystemProp.WORKER_GROUP_ID)
+            if (!isNil(workerGroupId)) {
+                const processSandboxedModes = [ExecutionMode.SANDBOX_PROCESS, ExecutionMode.SANDBOX_CODE_AND_PROCESS]
+                if (!processSandboxedModes.includes(response.EXECUTION_MODE as ExecutionMode)) {
+                    throw new Error(`Worker group "${workerGroupId}" requires AP_EXECUTION_MODE to be one of: ${processSandboxedModes.join(', ')}. Got: ${response.EXECUTION_MODE}`)
+                }
+                const reuseSandbox = system.get(WorkerSystemProp.REUSE_SANDBOX)
+                if (isNil(reuseSandbox)) {
+                    throw new Error(`Worker group "${workerGroupId}" requires AP_REUSE_SANDBOX to be set (true or false)`)
+                }
+            }
             workerSettings.set(response)
             logger.info({ environment: response.ENVIRONMENT, executionMode: response.EXECUTION_MODE }, 'Worker settings loaded')
             resolve()
@@ -240,6 +256,7 @@ function getWorkerProps(): Record<string, string> {
             EXECUTION_MODE: settings.EXECUTION_MODE,
             WORKER_CONCURRENCY: system.get(WorkerSystemProp.WORKER_CONCURRENCY)!,
             SANDBOX_MEMORY_LIMIT: settings.SANDBOX_MEMORY_LIMIT,
+            REUSE_SANDBOX: system.get(WorkerSystemProp.REUSE_SANDBOX) ?? 'false',
         }
     }
     catch {
