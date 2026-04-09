@@ -47,7 +47,7 @@ function cleanTrigger(trigger: FlowTrigger): FlowTrigger {
         lastUpdatedDate: trigger.lastUpdatedDate,
         type: trigger.type,
         settings: trigger.settings,
-        nextAction: isNil(trigger.nextAction) ? undefined : cleanAction(trigger.nextAction as FlowAction),
+        nextAction: isNil(trigger.nextAction) ? undefined : cleanAction(trigger.nextAction),
     } as FlowTrigger
 }
 
@@ -60,30 +60,23 @@ function cleanAction(action: FlowAction): FlowAction {
         lastUpdatedDate: action.lastUpdatedDate,
         type: action.type,
         settings: action.settings,
+        nextAction: isNil(action.nextAction) ? undefined : cleanAction(action.nextAction),
     }
 
     switch (action.type) {
         case FlowActionType.CODE:
-        case FlowActionType.PIECE: {
+        case FlowActionType.PIECE:
+            return { ...base } as FlowAction
+        case FlowActionType.LOOP_ON_ITEMS:
             return {
                 ...base,
-                nextAction: isNil(action.nextAction) ? undefined : cleanAction(action.nextAction),
-            } as FlowAction
-        }
-        case FlowActionType.LOOP_ON_ITEMS: {
-            return {
-                ...base,
-                nextAction: isNil(action.nextAction) ? undefined : cleanAction(action.nextAction),
                 firstLoopAction: isNil(action.firstLoopAction) ? undefined : cleanAction(action.firstLoopAction),
             } as FlowAction
-        }
-        case FlowActionType.ROUTER: {
+        case FlowActionType.ROUTER:
             return {
                 ...base,
-                nextAction: isNil(action.nextAction) ? undefined : cleanAction(action.nextAction),
                 children: action.children.map((child) => isNil(child) ? null : cleanAction(child)),
             } as FlowAction
-        }
     }
 }
 
