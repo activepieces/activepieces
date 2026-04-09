@@ -160,7 +160,7 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
                 eventStreamingEnabled: key.eventStreamingEnabled,
                 secretManagersEnabled: key.secretManagersEnabled,
                 agentsEnabled: key.agentsEnabled,
-                aiProvidersEnabled: key.aiProvidersEnabled,
+                aiProvidersEnabled: key.aiProvidersEnabled ?? true,
             },
         })
     },
