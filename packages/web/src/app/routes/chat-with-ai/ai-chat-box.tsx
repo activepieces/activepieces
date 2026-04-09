@@ -32,9 +32,10 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { MarkdownVariant } from '@activepieces/shared';
+import ReactMarkdown from 'react-markdown';
+import breaks from 'remark-breaks';
+import gfm from 'remark-gfm';
 
-import { ApMarkdown } from '@/components/custom/markdown';
 import { cn } from '@/lib/utils';
 
 import { DelayedTooltip } from './delayed-tooltip';
@@ -298,6 +299,59 @@ function getMockSources(msgId: number) {
 
 /* ─── Smooth streaming text component ─── */
 const WORD_INTERVAL = 50; // ms per word
+
+function ToolCallPill({ name }: { name: string }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 my-1 rounded-lg bg-accent/50 border border-border/60 text-xs font-medium text-muted-foreground select-none">
+      <Zap className="w-3 h-3 text-primary/70" />
+      <span className="capitalize">{name}</span>
+    </span>
+  );
+}
+
+function ChatMarkdown({ markdown }: { markdown: string }) {
+  if (!markdown) return null;
+
+  return (
+    <ReactMarkdown
+      remarkPlugins={[gfm, breaks]}
+      className="text-base leading-relaxed text-accent-foreground dark:text-neutral-300 prose prose-sm max-w-none"
+      components={{
+        code({ children, className }) {
+          const text = String(children).trim();
+          if (text.startsWith('tool:')) {
+            return <ToolCallPill name={text.replace('tool:', '')} />;
+          }
+          if (text.startsWith('error:')) {
+            return (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 my-1 rounded-lg bg-destructive/10 border border-destructive/20 text-xs font-medium text-destructive select-none">
+                {text.replace('error:', '')}
+              </span>
+            );
+          }
+          return <code className={cn('text-wrap', className)}>{children}</code>;
+        },
+        h1: ({ node: _node, ref: _ref, ...props }) => <h1 className="scroll-m-20 text-xl font-extrabold tracking-tight" {...props} />,
+        h2: ({ node: _node, ref: _ref, ...props }) => <h2 className="scroll-m-20 text-lg font-semibold tracking-tight mt-4 first:mt-0" {...props} />,
+        h3: ({ node: _node, ref: _ref, ...props }) => <h3 className="scroll-m-20 text-base font-semibold tracking-tight mt-3" {...props} />,
+        p: ({ node: _node, ref: _ref, ...props }) => <p className="leading-6 first-of-type:mt-0 not-first-of-type:mt-2 mb-2" {...props} />,
+        ul: ({ node: _node, ref: _ref, ...props }) => <ul className="mt-2 ml-5 list-disc [&>li]:mt-1.5" {...props} />,
+        ol: ({ node: _node, ref: _ref, ...props }) => <ol className="mt-2 ml-5 list-decimal [&>li]:mt-1.5" {...props} />,
+        li: ({ node: _node, ref: _ref, ...props }) => <li className="leading-6" {...props} />,
+        a: ({ node: _node, ref: _ref, ...props }) => <a className="font-medium text-primary underline underline-offset-4" target="_blank" rel="noreferrer noopener" {...props} />,
+        blockquote: ({ node: _node, ref: _ref, ...props }) => <blockquote className="mt-3 border-l-2 border-primary/30 pl-4 italic text-muted-foreground" {...props} />,
+        table: ({ node: _node, ref: _ref, ...props }) => <div className="my-3 overflow-x-auto rounded-lg border border-border/60"><table className="w-full text-sm" {...props} /></div>,
+        thead: ({ node: _node, ref: _ref, ...props }) => <thead className="bg-accent/40" {...props} />,
+        tr: ({ node: _node, ref: _ref, ...props }) => <tr className="border-b border-border/40" {...props} />,
+        th: ({ node: _node, ref: _ref, ...props }) => <th className="text-left px-3 py-2 font-medium text-muted-foreground" {...props} />,
+        td: ({ node: _node, ref: _ref, ...props }) => <td className="px-3 py-2" {...props} />,
+        hr: ({ node: _node, ref: _ref, ...props }) => <hr className="my-4 border-border/40" {...props} />,
+      }}
+    >
+      {markdown.trim()}
+    </ReactMarkdown>
+  );
+}
 
 function StreamingText({
   fullText,
@@ -576,10 +630,10 @@ export function AIChatBox({
               }
             } else if (eventType === 'tool_call_start') {
               const displayName = (data.toolName || '').replace(/^ap_/, '').replace(/_/g, ' ');
-              fullText += `\n\n> ⚙️ **${displayName}**\n\n`;
+              fullText += `\n\n\`tool:${displayName}\`\n\n`;
               if (!flushTimer) flushTimer = setTimeout(flushText, 50);
             } else if (eventType === 'error') {
-              fullText += `\n\n> ❌ ${data.message}\n\n`;
+              fullText += `\n\n\`error:${data.message}\`\n\n`;
               if (!flushTimer) flushTimer = setTimeout(flushText, 50);
             }
           } catch {
@@ -702,7 +756,7 @@ export function AIChatBox({
               );
             } else if (eventType === 'tool_call_start') {
               const displayName = (data.toolName || '').replace(/^ap_/, '').replace(/_/g, ' ');
-              fullText += `\n\n> ⚙️ **${displayName}**\n\n`;
+              fullText += `\n\n\`tool:${displayName}\`\n\n`;
             }
           } catch {
             /* skip */
@@ -1614,17 +1668,9 @@ export function AIChatBox({
                         </div>
                       )}
                       {msg.streaming ? (
-                        <ApMarkdown
-                          markdown={msg.text}
-                          variant={MarkdownVariant.BORDERLESS}
-                          className="text-base leading-relaxed text-accent-foreground dark:text-neutral-300 prose prose-sm max-w-none"
-                        />
+                        <ChatMarkdown markdown={msg.text} />
                       ) : (
-                        <ApMarkdown
-                          markdown={msg.text}
-                          variant={MarkdownVariant.BORDERLESS}
-                          className="text-base leading-relaxed text-accent-foreground dark:text-neutral-300 prose prose-sm max-w-none"
-                        />
+                        <ChatMarkdown markdown={msg.text} />
                       )}
                       {msg.streaming && msg.text && (
                         <div className="mt-3" style={{ width: 40, height: 40 }}>
