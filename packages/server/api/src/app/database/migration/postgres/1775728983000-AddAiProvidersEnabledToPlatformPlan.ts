@@ -8,7 +8,7 @@ export class AddAiProvidersEnabledToPlatformPlan1775728983000 implements Migrati
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query('ALTER TABLE "platform_plan" ADD COLUMN IF NOT EXISTS "aiProvidersEnabled" boolean')
-        await queryRunner.query(`UPDATE "platform_plan" SET "aiProvidersEnabled" = CASE WHEN plan = 'standard' THEN false ELSE true END`)
+        await queryRunner.query('UPDATE "platform_plan" SET "aiProvidersEnabled" = CASE WHEN plan = \'standard\' THEN false ELSE true END')
         await queryRunner.query('ALTER TABLE "platform_plan" ALTER COLUMN "aiProvidersEnabled" SET NOT NULL')
     }
 
