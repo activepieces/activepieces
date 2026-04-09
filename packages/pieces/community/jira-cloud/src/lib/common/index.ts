@@ -8,6 +8,7 @@ import {
 } from '@activepieces/pieces-common';
 import { JiraAuth } from '../../auth';
 import { isNil } from '@activepieces/shared';
+import { JiraSearchResponse } from './types';
 
 export async function sendJiraRequest(request: HttpRequest & { auth: JiraAuth }) {
 	return httpClient.sendRequest({
@@ -124,44 +125,54 @@ export async function executeJql({
 }
 
 export async function searchIssuesByJql({
-	auth,
-	jql,
-	maxResults,
-	sanitizeJql,
+    auth,
+    jql,
+    maxResults,
+    sanitizeJql,
+    nextPageToken,
+    fields,
 }: {
-	auth: JiraAuth;
-	jql: string;
-	maxResults: number;
-	sanitizeJql: boolean;
-}) {
-	const respJql = (
-		(await executeJql({
-			auth,
-			url: 'search/jql',
-			method: HttpMethod.POST,
-			jql,
-			body: {
-				maxResults,
-			},
-			sanitizeJql,
-		})) as { issues: any[] }
-	).issues;
+    auth: JiraAuth;
+    jql: string;
+    maxResults: number;
+    sanitizeJql: boolean;
+    nextPageToken?: string;
+    fields?: string[];
+}): Promise<JiraSearchResponse> {
+	const bodyPayload: Record<string, any> = { maxResults };
+	if (nextPageToken) bodyPayload['nextPageToken'] = nextPageToken;
 
-	const issueIds = respJql.map(issue => issue['id']);
-	if (issueIds.length === 0) {
-		return [];
+	const searchResult = (await executeJql({
+		auth,
+		url: 'search/jql',
+		method: HttpMethod.POST,
+		jql,
+		body: bodyPayload,
+		sanitizeJql,
+	})) as { issues?: any[]; nextPageToken?: string };
+
+	if (!searchResult.issues?.length) {
+		return [] as unknown as JiraSearchResponse;
 	}
 
-	return (
-    (await sendJiraRequest({
-      auth,
-      url: 'issue/bulkfetch',
-      method: HttpMethod.POST,
-      body: {
-        issueIdsOrKeys: issueIds,
-      },
-    })).body as any as { issues: any[] }
-  ).issues;
+	const issueIds = searchResult.issues.map((issue) => issue.id);
+
+	const bulkFetchResponse = await sendJiraRequest({
+		auth,
+		url: 'issue/bulkfetch',
+		method: HttpMethod.POST,
+		body: {
+			issueIdsOrKeys: issueIds,
+			fields,
+		},
+	});
+
+	const body = bulkFetchResponse.body as { issues?: any[] };
+	
+	const finalIssues = (body?.issues || []) as JiraSearchResponse;
+	finalIssues.nextPageToken = searchResult.nextPageToken;
+
+	return finalIssues;
 }
 
 export async function createJiraIssue(data: CreateIssueParams) {
