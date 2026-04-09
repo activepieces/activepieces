@@ -1,13 +1,7 @@
 import { createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { oroAuth } from './lib/common';
-import { newOrder, removedOrder, updatedOrder } from './lib/triggers/order';
-import {
-  newInvoice,
-  removedInvoice,
-  updatedInvoice,
-  paymentForInvoice,
-} from './lib/triggers/invoice';
+import { oroWebhookTopicTrigger } from './lib/triggers/webhook-topic-trigger';
 import {
   createInvoiceAction,
   createOrderAction,
@@ -32,13 +26,5 @@ export const orocommerce = createPiece({
     serializeJsonApiAction,
     unserializeJsonApiAction,
   ],
-  triggers: [
-    newOrder,
-    removedOrder,
-    updatedOrder,
-    newInvoice,
-    removedInvoice,
-    updatedInvoice,
-    paymentForInvoice,
-  ],
+  triggers: [oroWebhookTopicTrigger],
 });
