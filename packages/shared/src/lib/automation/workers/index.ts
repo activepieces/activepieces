@@ -42,6 +42,7 @@ export type WorkerMachine = z.infer<typeof WorkerMachine>
 export const WorkerMachineWithStatus = WorkerMachine.extend({
     status: z.nativeEnum(WorkerMachineStatus),
     type: z.nativeEnum(WorkerMachineType),
+    workerGroupId: z.string().optional(),
 })
 
 export type WorkerMachineWithStatus = z.infer<typeof WorkerMachineWithStatus>
@@ -99,7 +100,7 @@ export const WorkerSettingsResponse = z.object({
     FILE_STORAGE_LOCATION: z.string(),
     S3_USE_SIGNED_URLS: z.string(),
     EVENT_DESTINATION_TIMEOUT_SECONDS: z.number(),
-    PLATFORM_ID_FOR_DEDICATED_WORKER: z.string().optional(),
+    WORKER_GROUP_ID: z.string().optional(),
     EDITION: z.string(),
     SSRF_PROTECTION_ENABLED: z.boolean(),
     SSRF_ALLOW_LIST: z.array(z.string()),

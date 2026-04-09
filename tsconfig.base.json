@@ -836,6 +836,9 @@
       "@activepieces/piece-paperform": [
         "packages/pieces/community/paperform/src/index.ts"
       ],
+      "@activepieces/piece-pagerduty": [
+        "packages/pieces/community/pagerduty/src/index.ts"
+      ],
       "@activepieces/piece-parseur": [
         "packages/pieces/community/parseur/src/index.ts"
       ],
@@ -962,6 +965,9 @@
       ],
       "@activepieces/piece-returning-ai": [
         "packages/pieces/community/returning-ai/src/index.ts"
+      ],
+      "@activepieces/piece-recurly": [
+        "packages/pieces/community/recurly/src/index.ts"
       ],
       "@activepieces/piece-robolly": [
         "packages/pieces/community/robolly/src/index.ts"
@@ -1898,6 +1904,9 @@
       ],
       "@activepieces/piece-bland-ai": [
         "packages/pieces/community/bland-ai/src/index.ts"
+      ],
+      "@activepieces/piece-vapi": [
+        "packages/pieces/community/vapi/src/index.ts"
       ],
       "@activepieces/piece-canny": [
         "packages/pieces/community/canny/src/index.ts"

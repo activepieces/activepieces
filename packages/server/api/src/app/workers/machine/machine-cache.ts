@@ -8,7 +8,7 @@ export type WorkerMachine = {
     created: string
     information: MachineInformation
     type?: 'SHARED' | 'DEDICATED'
-    platformId?: string
+    workerGroupId?: string
 }
 
 const REDIS_KEY = 'workerMachines'

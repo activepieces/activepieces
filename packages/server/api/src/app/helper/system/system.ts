@@ -14,7 +14,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { DatabaseType } from '../../database/database-type'
 import { RedisType } from '../../database/redis/types'
 import { pinoLogging } from '../logger'
-import { AppSystemProp, ContainerType, environmentVariables, SystemProp, WorkerSystemProp } from './system-props'
+import { AppSystemProp, ContainerType, environmentVariables, SystemProp } from './system-props'
 
 
 
@@ -29,8 +29,8 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.DB_TYPE]: DatabaseType.POSTGRES,
     [AppSystemProp.EDITION]: ApEdition.COMMUNITY,
     [AppSystemProp.APP_WEBHOOK_SECRETS]: '{}',
-    [WorkerSystemProp.CONTAINER_TYPE]: ContainerType.WORKER_AND_APP,
-    [WorkerSystemProp.PORT]: '3000',
+    [AppSystemProp.CONTAINER_TYPE]: ContainerType.WORKER_AND_APP,
+    [AppSystemProp.PORT]: '3000',
     [AppSystemProp.EXECUTION_DATA_RETENTION_DAYS]: '30',
     [AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS]: '30',
     [AppSystemProp.PIECES_CACHE_MAX_ENTRIES]: '1000',
@@ -167,12 +167,12 @@ export const system = {
     },
     isWorker(): boolean {
         return [ContainerType.WORKER, ContainerType.WORKER_AND_APP].includes(
-            this.getOrThrow<ContainerType>(WorkerSystemProp.CONTAINER_TYPE),
+            this.getOrThrow<ContainerType>(AppSystemProp.CONTAINER_TYPE),
         )
     },
     isApp(): boolean {
         return [ContainerType.APP, ContainerType.WORKER_AND_APP].includes(
-            this.getOrThrow<ContainerType>(WorkerSystemProp.CONTAINER_TYPE),
+            this.getOrThrow<ContainerType>(AppSystemProp.CONTAINER_TYPE),
         )
     },
 }

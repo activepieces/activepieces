@@ -39,6 +39,12 @@ export const flowExecutor = {
     }): Promise<FlowExecutorContext> {
         const trigger = input.flowVersion.trigger
         if (input.executionType === ExecutionType.BEGIN) {
+            void progressService.backup({
+                engineConstants: constants,
+                flowExecutorContext: executionState,
+            }).catch((err) => {
+                console.error('[Progress] Initial payload upload failed', err)
+            })
             await triggerHelper.executeOnStart(trigger, constants, input.triggerPayload)
             await progressService.sendUpdate({
                 engineConstants: constants,

@@ -10,7 +10,7 @@ export const createDraftAdvancedAction = createAction({
 	name: 'typefully_create_draft_advanced',
 	displayName: 'Create Draft Advanced',
 	description:
-		'Create multi-post threads with full control. Supports different content per platform and post using JSON format.',
+		'Create multi-post threads with full control. Supports threads (multiple posts), different content and media per post with pre-uploaded media IDs using JSON format. For single posts with simple text and media URLs, use "Create Draft Simple" instead.',
 	props: {
 		social_set_id: socialSetDropdown,
 		platforms_json: Property.Json({

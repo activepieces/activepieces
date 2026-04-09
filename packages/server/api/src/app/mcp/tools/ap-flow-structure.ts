@@ -36,11 +36,11 @@ function getConfigStatus(step: Step): string {
     const s = step.settings as { triggerName?: string, actionName?: string }
     switch (step.type) {
         case FlowTriggerType.EMPTY:
-            return 'unconfigured (no trigger set)'
+            return 'unconfigured (no trigger set — use ap_update_trigger)'
         case FlowTriggerType.PIECE:
-            return s.triggerName ? 'invalid (check required inputs)' : 'unconfigured (triggerName missing)'
+            return s.triggerName ? 'invalid (use ap_update_trigger to fix — check required inputs)' : 'unconfigured (triggerName missing)'
         case FlowActionType.PIECE:
-            return s.actionName ? 'invalid (check required inputs)' : 'unconfigured (actionName missing)'
+            return s.actionName ? 'invalid (use ap_update_step to fix — check required inputs)' : 'unconfigured (actionName missing)'
         case FlowActionType.CODE:
             return 'invalid (check sourceCode/input)'
         case FlowActionType.LOOP_ON_ITEMS:
@@ -52,9 +52,18 @@ function getConfigStatus(step: Step): string {
     }
 }
 
-function buildFlowStructure(trigger: Step): StepInfo[] {
+function hasSampleData(step: Step): boolean {
+    if (!('sampleData' in step.settings)) {
+        return false
+    }
+    const sampleData = step.settings.sampleData
+    return typeof sampleData === 'object' && sampleData !== null && 'sampleDataFileId' in sampleData && sampleData.sampleDataFileId != null
+}
+
+function buildFlowStructure(trigger: Step): { structure: StepInfo[], stepByName: Map<string, Step> } {
     const allSteps = flowStructureUtil.getAllSteps(trigger)
-    return allSteps.map((step): StepInfo => {
+    const stepByName = new Map(allSteps.map(s => [s.name, s]))
+    const structure = allSteps.map((step): StepInfo => {
         if (flowStructureUtil.isTrigger(step.type)) {
             return {
                 name: step.name,
@@ -106,13 +115,14 @@ function buildFlowStructure(trigger: Step): StepInfo[] {
             configStatus: getConfigStatus(step),
         }
     })
+    return { structure, stepByName }
 }
 
 function formatFlowStructure(
     flowDisplayName: string,
     flowId: string,
     structure: StepInfo[],
-    trigger: Step,
+    stepByName: Map<string, Step>,
     positions: Map<string, { x: number, y: number }>,
     notes: Note[],
 ): string {
@@ -127,14 +137,15 @@ function formatFlowStructure(
         const skipLabel = step.skip ? ' [SKIPPED]' : ''
         const pos = positions.get(step.name)
         const canvasLabel = pos ? ` | canvas: (${Math.round(pos.x)}, ${Math.round(pos.y)})` : ''
+        const fullStep = stepByName.get(step.name)
+        const sampleLabel = fullStep && hasSampleData(fullStep) ? ' | has sample data' : ''
 
         if (step.relationship === 'trigger') {
             let triggerDetail = ''
-            if (trigger.type === FlowTriggerType.PIECE) {
-                const s = trigger.settings as { pieceName?: string, triggerName?: string }
-                triggerDetail = s.pieceName ? ` (piece: ${s.pieceName}, trigger: ${s.triggerName ?? 'not set'})` : ''
+            if (fullStep && fullStep.type === FlowTriggerType.PIECE) {
+                triggerDetail = ` (piece: ${fullStep.settings.pieceName}, trigger: ${fullStep.settings.triggerName ?? 'not set'})`
             }
-            lines.push(`- [TRIGGER] ${step.name} | ${step.type} | "${step.displayName}"${triggerDetail} | parent: — | ${step.configStatus}${skipLabel}${canvasLabel}`)
+            lines.push(`- [TRIGGER] ${step.name} | ${step.type} | "${step.displayName}"${triggerDetail} | parent: — | ${step.configStatus}${sampleLabel}${skipLabel}${canvasLabel}`)
             continue
         }
 
@@ -147,16 +158,14 @@ function formatFlowStructure(
 
         let stepDetail = ''
         if (step.type === FlowActionType.PIECE) {
-            const fullStep = flowStructureUtil.getStep(step.name, trigger)
             const s = fullStep?.settings as { pieceName?: string, actionName?: string } | undefined
             if (s?.pieceName) stepDetail = ` (piece: ${s.pieceName}, action: ${s.actionName ?? 'not set'})`
         }
 
-        lines.push(`- ${step.name} | ${step.type} | "${step.displayName}"${stepDetail} | parent: ${step.parentName} | ${rel} | ${step.configStatus}${skipLabel}${canvasLabel}`)
+        lines.push(`- ${step.name} | ${step.type} | "${step.displayName}"${stepDetail} | parent: ${step.parentName} | ${rel} | ${step.configStatus}${sampleLabel}${skipLabel}${canvasLabel}`)
 
-        if (step.type === FlowActionType.ROUTER) {
-            const fullStep = flowStructureUtil.getStep(step.name, trigger)
-            const branches = (fullStep as { settings?: { branches?: { branchName?: string, branchType?: string }[] } } | undefined)?.settings?.branches ?? []
+        if (step.type === FlowActionType.ROUTER && fullStep) {
+            const branches = (fullStep.settings as { branches?: { branchName?: string, branchType?: string }[] })?.branches ?? []
             branches.forEach((b, i) => {
                 const btype = b.branchType === BranchExecutionType.FALLBACK ? 'fallback' : 'condition'
                 lines.push(`  branch[${i}]: "${b.branchName ?? ''}" (${btype})`)
@@ -181,8 +190,8 @@ function formatFlowStructure(
             lines.push(`  Inside loop of "${step.name}": parentStepName="${step.name}", stepLocationRelativeToParent="${StepLocationRelativeToParent.INSIDE_LOOP}"`)
         }
         if (step.type === FlowActionType.ROUTER) {
-            const fullStep = flowStructureUtil.getStep(step.name, trigger)
-            const branches = (fullStep as { settings?: { branches?: { branchName?: string }[] } } | undefined)?.settings?.branches ?? []
+            const routerStep = stepByName.get(step.name)
+            const branches = (routerStep?.settings as { branches?: { branchName?: string }[] } | undefined)?.branches ?? []
             branches.forEach((b, i) => {
                 lines.push(`  Branch ${i} of "${step.name}"${b.branchName ? ` ("${b.branchName}")` : ''}: parentStepName="${step.name}", stepLocationRelativeToParent="${StepLocationRelativeToParent.INSIDE_BRANCH}", branchIndex=${i}`)
             })
@@ -191,6 +200,11 @@ function formatFlowStructure(
 
     lines.push('')
     lines.push('Step types: trigger = EMPTY | PIECE_TRIGGER; action = CODE | PIECE | LOOP_ON_ITEMS | ROUTER')
+    lines.push('')
+    lines.push('## Referencing step outputs')
+    lines.push('Use `{{stepName.output.fieldName}}` in step inputs to reference data from previous steps.')
+    lines.push('Example: `{{trigger.output.body.email}}`')
+    lines.push('Use ap_test_step or ap_test_flow to generate sample data and see available output fields.')
 
     lines.push('')
     lines.push('## Canvas Notes')
@@ -219,15 +233,15 @@ export const apFlowStructureTool = (mcp: McpServer, log: FastifyBaseLogger): Mcp
         execute: async ({ flowId }) => {
             try {
                 const flow = await flowService(log).getOnePopulated({
-                    id: flowId as string,
+                    id: String(flowId),
                     projectId: mcp.projectId,
                 })
                 if (isNil(flow)) {
                     return { content: [{ type: 'text', text: '❌ Flow not found' }] }
                 }
-                const structure = buildFlowStructure(flow.version.trigger)
+                const { structure, stepByName } = buildFlowStructure(flow.version.trigger)
                 const positions = flowCanvasUtils.computeStepPositions(flow.version.trigger)
-                const text = formatFlowStructure(flow.version.displayName, flow.id, structure, flow.version.trigger, positions, flow.version.notes ?? [])
+                const text = formatFlowStructure(flow.version.displayName, flow.id, structure, stepByName, positions, flow.version.notes ?? [])
                 return { content: [{ type: 'text', text }] }
             }
             catch (err) {
