@@ -22,7 +22,7 @@ export const platformUserHooks = {
   useUsers: () => {
     return useQuery<SeekPage<UserWithMetaInformation>, Error>({
       queryKey: platformUserKeys.users,
-      meta: { showErrorDialog: true },
+      meta: { showErrorDialog: true, loadSubsetOptions: {} },
       queryFn: async () => {
         const results = await platformUserApi.list({
           limit: 2000,
@@ -45,7 +45,7 @@ export const platformUserHooks = {
       },
       queryKey: platformUserKeys.invitations,
       staleTime: 0,
-      meta: { showErrorDialog: true },
+      meta: { showErrorDialog: true, loadSubsetOptions: {} },
     });
   },
 };
