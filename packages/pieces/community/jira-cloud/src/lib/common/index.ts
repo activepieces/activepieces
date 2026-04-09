@@ -149,13 +149,12 @@ export async function searchIssuesByJql({
 		jql,
 		body: bodyPayload,
 		sanitizeJql,
-	})) as { issues?: any[]; nextPageToken?: string };
-
-	if (!searchResult.issues?.length) {
-		return [] as unknown as JiraSearchResponse;
-	}
+	})) as { issues: any[]; nextPageToken?: string };
 
 	const issueIds = searchResult.issues.map((issue) => issue.id);
+	if (issueIds.length === 0) {
+		return [];
+	}
 
 	const bulkFetchResponse = await sendJiraRequest({
 		auth,
@@ -167,9 +166,9 @@ export async function searchIssuesByJql({
 		},
 	});
 
-	const body = bulkFetchResponse.body as { issues?: any[] };
+	const body = bulkFetchResponse.body as { issues: any[] };
 	
-	const finalIssues = (body?.issues || []) as JiraSearchResponse;
+	const finalIssues = body.issues as JiraSearchResponse;
 	finalIssues.nextPageToken = searchResult.nextPageToken;
 
 	return finalIssues;

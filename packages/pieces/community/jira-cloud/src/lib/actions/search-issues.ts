@@ -12,14 +12,13 @@ export const searchIssues = createAction({
   props: {
     jql: Property.LongText({
       displayName: 'JQL',
-      description: "The JQL query (Tip: Use single quotes for strings/dates)",
+      description: "The JQL query to use in search (Tip: Use single quotes for strings/dates)",
       defaultValue: `type = story and created > '2023-12-13 14:00'`,
       required: true,
     }),
-    fields: Property.ShortText({
+    fields: Property.Array({
       displayName: 'Fields to Return',
-      description: 'Comma-separated fields to return (e.g., summary,status). Leave blank to return all fields.',
-      required: false,
+      description: "List of exact Jira Fields to return (e.g., 'summary', 'customfield_10016'). Special commands: Use '*all' for every field, or '*navigable' for standard fields (default if left blank). Prefix with a minus to exclude (e.g., '-description'). Example: '*all' and '-comment' returns everything except comments.",      required: false,
     }),
     maxResults: Property.Number({
       displayName: 'Max Results',
@@ -38,11 +37,11 @@ export const searchIssues = createAction({
     });
 
     const { jql, maxResults, sanitizeJql, fields } = propsValue;
-    const fieldList = fields ? fields.split(',').map((f) => f.trim()) : undefined;
+    const fieldList = fields as string[] | undefined;
 
     const allIssues: any[] = [];
     let nextPageToken: string | undefined;
-    const PAGE_SIZE = 50;
+    const PAGE_SIZE = 100; 
 
     while (allIssues.length < maxResults) {
       const limit = Math.min(PAGE_SIZE, maxResults - allIssues.length);
