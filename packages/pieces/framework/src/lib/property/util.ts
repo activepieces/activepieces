@@ -93,12 +93,7 @@ function buildSchema(
         ]);
         break;
       case PropertyType.DYNAMIC:
-        propsSchema[name] = z.union([
-          //for inline items mode
-          z.record(z.string(), z.unknown()),
-          //for normal dynamic input mode
-          property.required ? z.string().min(1) : z.string(),
-        ]);
+        propsSchema[name] = z.record(z.string(), z.unknown());
         break;
       case PropertyType.CUSTOM:
         propsSchema[name] = z.unknown();
