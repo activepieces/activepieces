@@ -161,7 +161,6 @@ export function ProjectDashboardSidebar({
     icon: MessageSquare,
     hasPermission: platform.plan.chatEnabled,
     isSubItem: false,
-    notification: true,
   };
 
   const exploreLink: SidebarItemType = {
