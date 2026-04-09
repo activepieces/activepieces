@@ -1,3 +1,9 @@
+declare module '@tanstack/query-db-collection' {
+  interface QueryCollectionMeta {
+    showErrorDialog?: boolean;
+  }
+}
+
 declare module '*.module.css' {
   const classes: { readonly [key: string]: string };
   export default classes;
