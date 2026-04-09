@@ -425,9 +425,9 @@ auth: linearAuth,
       },
     }),
   project_statuses: (required = false) =>
-    Property.MultiSelectDropdown({
+    Property.Dropdown({
       auth: linearAuth,
-      displayName: 'Project Statuses',
+      displayName: 'Project Status',
       description: 'Filter by project status (leave empty to include all)',
       required,
       refreshers: ['auth'],
@@ -449,7 +449,7 @@ auth: linearAuth,
         // });
         return {
           disabled: false,
-          options: statuses.map((s) => ({ label: s.name, value: s.type })),
+          options: statuses.map((s) => ({ label: s.name, value: s.name })),
         };
       },
     }),

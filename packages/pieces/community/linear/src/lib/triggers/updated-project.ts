@@ -6,11 +6,11 @@ import { props } from '../common/props';
 export const linearUpdatedProject = createTrigger({
   auth: linearAuth,
   name: 'updated_project',
-  displayName: 'Updated Project',
-  description: 'Triggers when an existing Linear project is updated',
+  displayName: 'Project Status Updated',
+  description: 'Triggers when the status of an Linear project is updated',
   props: {
     team_ids: props.team_ids(false),
-    project_statuses: props.project_statuses(false),
+    project_status: props.project_statuses(false),
   },
   sampleData: {
     action: 'update',
@@ -77,18 +77,20 @@ export const linearUpdatedProject = createTrigger({
     const body = context.payload.body as ProjectUpdatePayload;
 
     if (body.action !== 'update') return [];
-
+    // Only fire when the project status actually changed
+    if (!body.updatedFrom?.statusId) return [];
+    
     const selectedTeamIds = context.propsValue.team_ids ?? [];
-    const selectedStatuses = context.propsValue.project_statuses ?? [];
+    const selectedStatus = context.propsValue.project_status;
 
     if (selectedTeamIds.length > 0) {
-      const projectTeamIds = body.data.teams?.map((t) => t.id) ?? [];
+      const projectTeamIds = body.data.teamIds ?? [];
       if (!selectedTeamIds.some((id) => projectTeamIds.includes(id))) {
         return [];
       }
     }
 
-    if (selectedStatuses.length > 0 && !selectedStatuses.includes(body.data.state)) {
+    if (selectedStatus && selectedStatus !== body.data.status?.name) {
       return [];
     }
 
@@ -103,9 +105,12 @@ interface WebhookInformation {
 interface ProjectUpdatePayload {
   action: string;
   data: {
-    state: string;
-    teams?: Array<{ id: string }>;
+    teamIds?: string[];
+    status?: { id: string; name: string; type: string; color: string };
     [key: string]: unknown;
   };
-  updatedFrom: Record<string, unknown>;
+  updatedFrom: {
+    statusId?: string;
+    [key: string]: unknown;
+  };
 }
