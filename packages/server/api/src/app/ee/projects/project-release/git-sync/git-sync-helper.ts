@@ -11,14 +11,12 @@ import { gitHelper } from './git-helper'
 export const gitSyncHelper = (log: FastifyBaseLogger) => ({
     async getStateFromGit({ flowPath, connectionsFolderPath, tablesFolderPath }: GetStateFromGitParams): Promise<ProjectState> {
         try {
-            const flows = await readFlowsFromGit(flowPath, log)
-            const connections = await readConnectionsFromGit(connectionsFolderPath)
-            const tables = await readTablesFromGit(tablesFolderPath, log)
-            return {
-                flows,
-                connections,
-                tables,
-            }
+            const [flows, connections, tables] = await Promise.all([
+                readFlowsFromGit(flowPath, log),
+                readConnectionsFromGit(connectionsFolderPath),
+                readTablesFromGit(tablesFolderPath, log),
+            ])
+            return { flows, connections, tables }
         }
         catch (error) {
             log.error({ err: error }, '[gitSyncHelper#getStateFromGit] Failed to read flow files')
