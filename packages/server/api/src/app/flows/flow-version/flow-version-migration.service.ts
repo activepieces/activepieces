@@ -5,8 +5,9 @@ import {
     apId,
     ErrorCode,
     FlowActionType,
-    FlowAiProviderMigration,
-    FlowAiProviderMigrationStatus,
+    FlowMigration,
+    FlowMigrationStatus,
+    FlowMigrationType,
     FlowOperationRequest,
     flowOperations,
     FlowOperationType,
@@ -35,12 +36,12 @@ import { systemJobsSchedule } from 'src/app/helper/system-jobs/system-job'
 import { onCallService } from '../../helper/on-call.service'
 import { flowExecutionCache } from '../flow/flow-execution-cache'
 import { flowRepo } from '../flow/flow.repo'
-import { FlowAiProviderMigrationEntity } from './flow-ai-provider-migration.entity'
+import { FlowMigrationEntity } from './flow-migration.entity'
 import { flowVersionBackupService } from './flow-version-backup.service'
 import { flowVersionRepo } from './flow-version.service'
 import { flowMigrations } from './migrations'
 
-const migrationRepo = repoFactory(FlowAiProviderMigrationEntity)
+const migrationRepo = repoFactory(FlowMigrationEntity)
 
 export const flowVersionMigrationService = (log: FastifyBaseLogger) => ({
     async migrate(flowVersion: FlowVersion, projectId?: ProjectId): Promise<FlowVersion> {
@@ -81,7 +82,7 @@ export const flowVersionMigrationService = (log: FastifyBaseLogger) => ({
         userId: UserId
         request: MigrateFlowsModelRequest
         reqLog: FastifyBaseLogger
-    }): Promise<FlowAiProviderMigration> {
+    }): Promise<FlowMigration> {
         const jobId = `migrate-flow-model-${platformId}`
         const existingJob = await systemJobsSchedule(reqLog).getJob<SystemJobName.MIGRATE_FLOWS_MODEL>(jobId)
         const SKIP_JOB_STATES = ['active', 'delayed', 'waiting']
@@ -97,12 +98,15 @@ export const flowVersionMigrationService = (log: FastifyBaseLogger) => ({
             id: migrationId,
             platformId,
             userId,
-            status: FlowAiProviderMigrationStatus.RUNNING,
+            type: FlowMigrationType.AI_PROVIDER_MODEL,
+            status: FlowMigrationStatus.RUNNING,
             migratedVersions: [],
             failedFlowVersions: [],
-            sourceModel: request.sourceModel,
-            targetModel: request.targetModel,
-            projectIds,
+            params: {
+                sourceModel: request.sourceModel,
+                targetModel: request.targetModel,
+                projectIds,
+            },
         })
 
         await systemJobsSchedule(reqLog).upsertJob({
@@ -127,8 +131,8 @@ export const flowVersionMigrationService = (log: FastifyBaseLogger) => ({
     async migrateFlowsModelHandler(data: SystemJobData<SystemJobName.MIGRATE_FLOWS_MODEL>): Promise<void> {
         const { migrationId, platformId, request: { projectIds, sourceModel, targetModel } } = data
         const BATCH_SIZE = 100
-        const migratedVersions: FlowAiProviderMigration['migratedVersions'] = []
-        const failedFlowVersions: FlowAiProviderMigration['failedFlowVersions'] = []
+        const migratedVersions: FlowMigration['migratedVersions'] = []
+        const failedFlowVersions: FlowMigration['failedFlowVersions'] = []
         const { error: handlerError } = await tryCatch(async () => {
             const idsQueryBuilder = flowVersionRepo()
                 .createQueryBuilder('fv')
@@ -200,7 +204,7 @@ export const flowVersionMigrationService = (log: FastifyBaseLogger) => ({
         if (handlerError) {
             log.error({ migrationId, error: handlerError }, 'Flow model migration failed unexpectedly')
             await migrationRepo().update(migrationId, {
-                status: FlowAiProviderMigrationStatus.FAILED,
+                status: FlowMigrationStatus.FAILED,
                 migratedVersions,
                 failedFlowVersions,
             })
@@ -208,19 +212,19 @@ export const flowVersionMigrationService = (log: FastifyBaseLogger) => ({
         }
 
         await migrationRepo().update(migrationId, {
-            status: FlowAiProviderMigrationStatus.COMPLETED,
+            status: FlowMigrationStatus.COMPLETED,
             migratedVersions,
             failedFlowVersions,
         })
         log.info({ platformId, migratedFlows: new Set(migratedVersions.map((v) => v.flowId)).size, failedCount: failedFlowVersions.length }, 'Flow model migration completed')
     },
 
-    async getMigration({ id, platformId }: { id: string, platformId: PlatformId }): Promise<FlowAiProviderMigration> {
+    async getMigration({ id, platformId }: { id: string, platformId: PlatformId }): Promise<FlowMigration> {
         const migration = await migrationRepo().findOneBy({ id, platformId })
         if (isNil(migration)) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
-                params: { entityType: 'FlowAiProviderMigration', entityId: id },
+                params: { entityType: 'FlowMigration', entityId: id },
             })
         }
         return migration
@@ -230,10 +234,10 @@ export const flowVersionMigrationService = (log: FastifyBaseLogger) => ({
         platformId: PlatformId
         limit: number
         cursor: string | null
-    }): Promise<SeekPage<FlowAiProviderMigration>> {
+    }): Promise<SeekPage<FlowMigration>> {
         const decodedCursor = paginationHelper.decodeCursor(cursor)
         const paginator = buildPaginator({
-            entity: FlowAiProviderMigrationEntity,
+            entity: FlowMigrationEntity,
             query: {
                 limit,
                 order: 'DESC',
@@ -242,10 +246,10 @@ export const flowVersionMigrationService = (log: FastifyBaseLogger) => ({
             },
         })
         const queryBuilder = migrationRepo()
-            .createQueryBuilder('flow_ai_provider_migration')
+            .createQueryBuilder('flow_migration')
             .where({ platformId })
         const { data, cursor: pageCursor } = await paginator.paginate(queryBuilder)
-        return paginationHelper.createPage<FlowAiProviderMigration>(data, pageCursor)
+        return paginationHelper.createPage<FlowMigration>(data, pageCursor)
     },
 })
 

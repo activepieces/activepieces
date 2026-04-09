@@ -4,13 +4,13 @@ import { websocketService } from '../core/websockets.service'
 import { flowVersionController } from './flow/flow-version.controller'
 import { flowController } from './flow/flow.controller'
 import { flowRunService } from './flow-run/flow-run-service'
-import { flowAiProviderMigrationController } from './flow-version/flow-ai-provider-migration.controller'
+import { flowMigrationController } from './flow-version/flow-migration.controller'
 import { sampleDataController } from './step-run/sample-data.controller'
 
 export const flowModule: FastifyPluginAsyncZod = async (app) => {
     await app.register(flowVersionController, { prefix: '/v1/flows' })
     await app.register(flowController, { prefix: '/v1/flows' })
-    await app.register(flowAiProviderMigrationController, { prefix: '/v1/ai-provider-migrations' })
+    await app.register(flowMigrationController, { prefix: '/v1/flow-migrations' })
     await app.register(sampleDataController, { prefix: '/v1/sample-data' })
     websocketService.addListener(PrincipalType.USER, WebsocketServerEvent.TEST_FLOW_RUN, (socket) => {
         return async (data: TestFlowRunRequestBody, principal, projectId) => {

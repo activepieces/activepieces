@@ -1,11 +1,11 @@
-import { FlowAiProviderMigration, MigrateFlowsModelRequest, PrincipalType, SeekPage } from '@activepieces/shared'
+import { FlowMigration, MigrateFlowsModelRequest, PrincipalType, SeekPage } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { flowVersionMigrationService } from './flow-version-migration.service'
 
-export const flowAiProviderMigrationController: FastifyPluginAsyncZod = async (fastify) => {
+export const flowMigrationController: FastifyPluginAsyncZod = async (fastify) => {
 
     fastify.post('/', StartMigration, async (request) => {
         const platformId = request.principal.platform.id
@@ -42,7 +42,7 @@ const StartMigration = {
     schema: {
         body: MigrateFlowsModelRequest,
         response: {
-            [StatusCodes.OK]: FlowAiProviderMigration,
+            [StatusCodes.OK]: FlowMigration,
         },
     },
 }
@@ -54,7 +54,7 @@ const GetMigration = {
     schema: {
         params: z.object({ id: z.string() }),
         response: {
-            [StatusCodes.OK]: FlowAiProviderMigration,
+            [StatusCodes.OK]: FlowMigration,
         },
     },
 }
@@ -69,7 +69,7 @@ const ListMigrations = {
             cursor: z.string().optional(),
         }),
         response: {
-            [StatusCodes.OK]: SeekPage(FlowAiProviderMigration),
+            [StatusCodes.OK]: SeekPage(FlowMigration),
         },
     },
 }

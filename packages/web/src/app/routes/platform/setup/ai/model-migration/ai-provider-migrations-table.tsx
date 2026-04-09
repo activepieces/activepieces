@@ -1,7 +1,4 @@
-import {
-  FlowAiProviderMigration,
-  FlowAiProviderMigrationStatus,
-} from '@activepieces/shared';
+import { FlowMigration, FlowMigrationStatus } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import {
@@ -34,15 +31,13 @@ export function AiProviderMigrationsTable({
   showMigrateButton,
 }: AiProviderMigrationsTableProps) {
   const { data, isLoading } = useAiProviderMigrations({ limit: 10 });
-  const [failedMigration, setFailedMigration] =
-    useState<FlowAiProviderMigration | null>(null);
+  const [failedMigration, setFailedMigration] = useState<FlowMigration | null>(
+    null,
+  );
   const [migratedMigration, setMigratedMigration] =
-    useState<FlowAiProviderMigration | null>(null);
+    useState<FlowMigration | null>(null);
 
-  const columns: ColumnDef<
-    RowDataWithActions<FlowAiProviderMigration>,
-    unknown
-  >[] = [
+  const columns: ColumnDef<RowDataWithActions<FlowMigration>, unknown>[] = [
     {
       accessorKey: 'models',
       header: ({ column }) => (
@@ -57,16 +52,16 @@ export function AiProviderMigrationsTable({
           <Tooltip>
             <TooltipTrigger asChild>
               <div className="flex items-center gap-2 text-sm">
-                <span>{row.original.sourceModel.model}</span>
+                <span>{row.original.params.sourceModel.model}</span>
                 <ArrowRight className="w-3 h-3 text-muted-foreground shrink-0" />
-                <span>{row.original.targetModel.model}</span>
+                <span>{row.original.params.targetModel.model}</span>
               </div>
             </TooltipTrigger>
             <TooltipContent side="bottom" align="start">
-              {row.original.sourceModel.provider}/
-              {row.original.sourceModel.model} →{' '}
-              {row.original.targetModel.provider}/
-              {row.original.targetModel.model}
+              {row.original.params.sourceModel.provider}/
+              {row.original.params.sourceModel.model} →{' '}
+              {row.original.params.targetModel.provider}/
+              {row.original.params.targetModel.model}
             </TooltipContent>
           </Tooltip>
         </div>
@@ -188,23 +183,23 @@ function StatusBadge({
   status,
   failedCount,
 }: {
-  status: FlowAiProviderMigrationStatus;
+  status: FlowMigrationStatus;
   failedCount: number;
 }) {
   switch (status) {
-    case FlowAiProviderMigrationStatus.RUNNING:
+    case FlowMigrationStatus.RUNNING:
       return (
         <Badge variant="default">
           <Loader2 className="size-3 animate-spin mr-1" />
           {t('Running')}
         </Badge>
       );
-    case FlowAiProviderMigrationStatus.COMPLETED:
+    case FlowMigrationStatus.COMPLETED:
       if (failedCount > 0) {
         return <Badge variant="destructive">{t('Failed')}</Badge>;
       }
       return <Badge variant="success">{t('Completed')}</Badge>;
-    case FlowAiProviderMigrationStatus.FAILED:
+    case FlowMigrationStatus.FAILED:
       return <Badge variant="destructive">{t('Failed')}</Badge>;
   }
 }

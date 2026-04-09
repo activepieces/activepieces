@@ -1,4 +1,4 @@
-import { FlowAiProviderMigrationStatus } from '@activepieces/shared';
+import { FlowMigrationStatus } from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
 
 import { aiProviderApi } from '@/features/platform-admin';
@@ -20,7 +20,7 @@ export function useAiProviderMigrations({
     queryFn: () => aiProviderApi.listMigrations({ cursor, limit }),
     refetchInterval: (query) => {
       const hasRunning = query.state.data?.data.some(
-        (m) => m.status === FlowAiProviderMigrationStatus.RUNNING,
+        (m) => m.status === FlowMigrationStatus.RUNNING,
       );
       return hasRunning ? 3000 : false;
     },

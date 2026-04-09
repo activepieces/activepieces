@@ -1,4 +1,4 @@
-import { FlowAiProviderMigration, PopulatedFlow } from '@activepieces/shared';
+import { FlowMigration, PopulatedFlow } from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { CheckCircle2, Loader2 } from 'lucide-react';
@@ -12,7 +12,7 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { flowsApi } from '@/features/flows';
 
-type MigratedVersion = FlowAiProviderMigration['migratedVersions'][number];
+type MigratedVersion = FlowMigration['migratedVersions'][number];
 
 function MigratedFlowsDialogContent({
   migratedVersions,

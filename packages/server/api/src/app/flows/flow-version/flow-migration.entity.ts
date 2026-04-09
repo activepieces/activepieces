@@ -1,9 +1,13 @@
-import { FlowAiProviderMigration, FlowAiProviderMigrationStatus } from '@activepieces/shared'
+import { FlowMigration, Platform } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import { ApIdSchema, BaseColumnSchemaPart } from '../../database/database-common'
 
-export const FlowAiProviderMigrationEntity = new EntitySchema<FlowAiProviderMigration>({
-    name: 'flow_ai_provider_migration',
+type FlowMigrationSchema = FlowMigration & {
+    platform: Platform
+}
+
+export const FlowMigrationEntity = new EntitySchema<FlowMigrationSchema>({
+    name: 'flow_migration',
     columns: {
         ...BaseColumnSchemaPart,
         platformId: {
@@ -14,37 +18,30 @@ export const FlowAiProviderMigrationEntity = new EntitySchema<FlowAiProviderMigr
             ...ApIdSchema,
             nullable: false,
         },
+        type: {
+            type: String,
+            nullable: false,
+        },
         status: {
             type: String,
-            default: FlowAiProviderMigrationStatus.RUNNING,
             nullable: false,
         },
         migratedVersions: {
             type: 'jsonb',
-            default: [],
             nullable: false,
         },
         failedFlowVersions: {
             type: 'jsonb',
-            default: [],
             nullable: false,
         },
-        sourceModel: {
+        params: {
             type: 'jsonb',
             nullable: false,
-        },
-        targetModel: {
-            type: 'jsonb',
-            nullable: false,
-        },
-        projectIds: {
-            type: 'jsonb',
-            nullable: true,
         },
     },
     indices: [
         {
-            name: 'idx_flow_ai_provider_migration_platform_id',
+            name: 'idx_flow_migration_platform_id',
             columns: ['platformId'],
         },
     ],
@@ -55,7 +52,7 @@ export const FlowAiProviderMigrationEntity = new EntitySchema<FlowAiProviderMigr
             joinColumn: {
                 name: 'platformId',
                 referencedColumnName: 'id',
-                foreignKeyConstraintName: 'fk_flow_ai_provider_migration_platform',
+                foreignKeyConstraintName: 'fk_flow_migration_platform',
             },
             onDelete: 'CASCADE',
         },

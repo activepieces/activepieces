@@ -32,6 +32,13 @@ You are working in the Activepieces server API (`packages/server/api`).
       nullable: false,
   }
   ```
+- **TypeORM entity relations**: When an entity has relations (e.g. a foreign key to `platform`), create an extended schema type that adds the relation properties, then use that as the `EntitySchema` generic. Never pass the base shared type directly — TypeORM requires relation keys to exist on the type. See `ProjectEntity` for reference:
+  ```ts
+  type MyEntitySchema = MySharedType & {
+      platform: Platform
+  }
+  export const MyEntity = new EntitySchema<MyEntitySchema>({ ... })
+  ```
 
 ## Guidelines
 
