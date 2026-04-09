@@ -94,6 +94,7 @@ export type ApErrorParams =
     | FlowMigrationFailedParams
     | ResumeLogsFileMissingParams
     | ExecutionStateMissingParams
+    | GenericErrorParams
 
 export type TriggerExecutionFailedParams = BaseErrorParams<ErrorCode.TRIGGER_EXECUTION_FAILED, {
     flowId: FlowId
@@ -490,6 +491,10 @@ export type ExecutionStateMissingParams = BaseErrorParams<ErrorCode.EXECUTION_ST
     logsFileId: string
 }>
 
+export type GenericErrorParams = BaseErrorParams<ErrorCode.GENERIC_ERROR, {
+    message: string
+}>
+
 export enum ErrorCode {
     INTERNAL_SERVER_ERROR = 'INTERNAL_SERVER_ERROR',
     MACHINE_NOT_CONNECTED = 'MACHINE_NOT_CONNECTED',
@@ -562,5 +567,6 @@ export enum ErrorCode {
     FLOW_MIGRATION_FAILED = 'FLOW_MIGRATION_FAILED',
     RESUME_LOGS_FILE_MISSING = 'RESUME_LOGS_FILE_MISSING',
     EXECUTION_STATE_MISSING = 'EXECUTION_STATE_MISSING',
+    GENERIC_ERROR = 'GENERIC_ERROR',
 }
 

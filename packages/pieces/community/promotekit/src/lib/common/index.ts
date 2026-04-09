@@ -190,7 +190,7 @@ export const promotekitCommon = {
         id: string;
         name: string;
       }>({
-        token: auth.secret_text,
+        token: auth.secret_text as string,
         path: '/campaigns',
       });
       return {
@@ -223,15 +223,14 @@ export const promotekitCommon = {
         first_name: string;
         last_name: string;
       }>({
-        token: auth.secret_text,
+        token: auth.secret_text as string,
         path: '/affiliates',
       });
       return {
         disabled: false,
         options: affiliates.map((a) => ({
-          label: `${a.first_name ?? ''} ${a.last_name ?? ''} (${
-            a.email
-          })`.trim(),
+          label: `${a.first_name ?? ''} ${a.last_name ?? ''} (${a.email
+            })`.trim(),
           value: a.id,
         })),
       };

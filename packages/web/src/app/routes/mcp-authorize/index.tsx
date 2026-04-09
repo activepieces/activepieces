@@ -1,12 +1,15 @@
-import { ProjectWithLimits, SeekPage } from '@activepieces/shared';
+import { ProjectType, ProjectWithLimits, SeekPage } from '@activepieces/shared';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { jwtDecode } from 'jwt-decode';
 import { Blocks, Shield } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Navigate, useSearchParams } from 'react-router-dom';
+import { useDebouncedCallback } from 'use-debounce';
 
 import { FullLogo } from '@/components/custom/full-logo';
+import { SearchableSelect } from '@/components/custom/searchable-select';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -15,13 +18,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 
@@ -29,14 +25,21 @@ function McpAuthorizePage() {
   const [searchParams] = useSearchParams();
   const authRequestId = searchParams.get('authRequestId');
   const clientName = decodeJwtClientName(authRequestId);
-  const [selectedProjectId, setSelectedProjectId] = useState<string>('');
+  const [selectedProjectId, setSelectedProjectId] = useState<
+    string | undefined
+  >(undefined);
+  const [searchValue, setSearchValue] = useState('');
+  const debouncedSetSearchValue = useDebouncedCallback(setSearchValue, 300);
   const isLoggedIn = authenticationSession.isLoggedIn();
 
   const { data: projectsPage, isLoading: projectsLoading } = useQuery({
-    queryKey: ['mcp-authorize-projects'],
+    queryKey: ['mcp-authorize-projects', searchValue],
     queryFn: () =>
       api.get<SeekPage<ProjectWithLimits>>('/v1/projects', {
-        params: { limit: 100 },
+        params: {
+          limit: 1000,
+          ...(searchValue && { displayName: searchValue }),
+        },
       }),
     enabled: isLoggedIn && !!authRequestId,
   });
@@ -49,6 +52,12 @@ function McpAuthorizePage() {
     },
   });
 
+  const projects = projectsPage?.data ?? [];
+  const projectsMap = useMemo(
+    () => new Map(projects.map((p) => [p.id, p])),
+    [projectsPage?.data],
+  );
+
   if (!authRequestId) {
     return <Navigate to="/404" replace />;
   }
@@ -58,8 +67,6 @@ function McpAuthorizePage() {
     const loginParams = new URLSearchParams({ from: returnUrl });
     return <Navigate to={`/sign-in?${loginParams.toString()}`} replace />;
   }
-
-  const projects = projectsPage?.data ?? [];
 
   const handleAuthorize = () => {
     if (!selectedProjectId) return;
@@ -99,28 +106,32 @@ function McpAuthorizePage() {
 
           <div className="flex flex-col gap-2">
             <label className="text-sm font-medium">{t('Select Project')}</label>
-            <Select
+            <SearchableSelect<string>
+              options={projects.map((project) => ({
+                value: project.id,
+                label: project.displayName,
+              }))}
+              onChange={(value) => setSelectedProjectId(value ?? undefined)}
               value={selectedProjectId}
-              onValueChange={setSelectedProjectId}
+              placeholder={t('Search projects...')}
               disabled={projectsLoading}
-            >
-              <SelectTrigger>
-                <SelectValue
-                  placeholder={
-                    projectsLoading
-                      ? t('Loading projects...')
-                      : t('Choose a project')
-                  }
-                />
-              </SelectTrigger>
-              <SelectContent>
-                {projects.map((project) => (
-                  <SelectItem key={project.id} value={project.id}>
-                    {project.displayName}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              loading={projectsLoading}
+              refreshOnSearch={debouncedSetSearchValue}
+              valuesRendering={(value) => {
+                const project = projectsMap.get(String(value));
+                if (!project) return null;
+                return (
+                  <span className="flex w-full items-center justify-between gap-2">
+                    <span className="truncate">{project.displayName}</span>
+                    <Badge variant="outline" className="shrink-0 text-[10px]">
+                      {project.type === ProjectType.PERSONAL
+                        ? t('Personal')
+                        : t('Team')}
+                    </Badge>
+                  </span>
+                );
+              }}
+            />
           </div>
 
           {approveMutation.isError && (

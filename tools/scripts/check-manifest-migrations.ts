@@ -13,10 +13,11 @@ function main(): void {
 
     let targetMigrationNames: string[]
     try {
-        targetMigrationNames = JSON.parse(manifestArg)
-        if (!Array.isArray(targetMigrationNames) || !targetMigrationNames.every(n => typeof n === 'string')) {
-            throw new Error('Must be a JSON array of strings')
+        const parsed: unknown[] = JSON.parse(manifestArg)
+        if (!Array.isArray(parsed)) {
+            throw new Error('Must be a JSON array')
         }
+        targetMigrationNames = parsed.filter((n): n is string => typeof n === 'string')
     }
     catch (e) {
         console.error(`Invalid manifest JSON: ${e instanceof Error ? e.message : String(e)}`)

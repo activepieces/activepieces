@@ -1,4 +1,5 @@
 export { cryptoUtils } from './crypto'
+export { onCallService } from './on-call.service'
 export { apDayjs, apDayjsDuration } from './dayjs-helper'
 export { fileSystemUtils, INFINITE_LOCK_TIMEOUT } from './file-system-utils'
 export { memoryLock } from './memory-lock'

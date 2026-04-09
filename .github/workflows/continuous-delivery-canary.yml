@@ -1,6 +1,7 @@
 name: Continuous Delivery — Canary
 
 on:
+  workflow_dispatch:
   schedule:
     - cron: '0 9 * * *'  # Daily 9 AM UTC
 
@@ -51,6 +52,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build shared package
+        run: bun run --cwd packages/shared build
+
       - name: Configure SSH
         run: |
           mkdir -p ~/.ssh/
@@ -72,14 +87,15 @@ jobs:
         id: current-manifest
         run: |
           MANIFEST=$(ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal app exec \
+            --reuse \
             --config-file=config/app-canary.yml -- \
             cat /usr/src/app/packages/server/api/dist/src/migration-manifest.json; exit"' \
-            2>/dev/null || echo '[]')
+            2>/dev/null | grep '^\[' || echo '[]')
           echo "json=$MANIFEST" >> $GITHUB_OUTPUT
 
       - name: Check for breaking migrations
         id: check
-        run: npx tsx tools/scripts/check-manifest-migrations.ts '${{ steps.current-manifest.outputs.json }}'
+        run: bunx tsx tools/scripts/check-manifest-migrations.ts '${{ steps.current-manifest.outputs.json }}'
 
       - name: Fail on breaking migrations
         if: steps.check.outputs.has_breaking == 'true'

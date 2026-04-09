@@ -1,3 +1,5 @@
+import { inspect } from 'node:util'
+import { onCallService } from '@activepieces/server-utils'
 import {
     ActivepiecesError,
     BeginExecuteFlowOperation,
@@ -19,7 +21,6 @@ import {
 import { FastifyBaseLogger } from 'fastify'
 import { flowCache } from '../../cache/flow/flow-cache'
 import { workerSettings } from '../../config/worker-settings'
-import { onCallService } from '../../utils/on-call.service'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../types'
 import { provisionFlowPieces } from '../utils/flow-helpers'
 import { resolvePayload } from '../utils/resolve-payload'
@@ -32,7 +33,8 @@ export const executeFlowJob: JobHandler<ExecuteFlowJobData, FireAndForgetJobResu
         const flowVersion = await flowCache(ctx.log, ctx.apiClient).getVersion({ flowVersionId: data.flowVersionId })
         if (isNil(flowVersion)) {
             ctx.log.info({ flowVersionId: data.flowVersionId }, 'Flow version not found, skipping')
-            return { kind: JobResultKind.FIRE_AND_FORGET }
+            await reportFlowStatus(ctx, data, FlowRunStatus.FAILED)
+            return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.INTERNAL_ERROR }
         }
 
         const { data: provisioned, error: provisionError } = await tryCatch(() => provisionFlowPieces({ flowVersion, platformId: data.platformId, flowId: data.flowId, projectId: data.projectId, log: ctx.log, apiClient: ctx.apiClient }))
@@ -42,7 +44,7 @@ export const executeFlowJob: JobHandler<ExecuteFlowJobData, FireAndForgetJobResu
         }
         if (!provisioned) {
             await reportFlowStatus(ctx, data, FlowRunStatus.FAILED)
-            return { kind: JobResultKind.FIRE_AND_FORGET }
+            return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.INTERNAL_ERROR }
         }
 
         const sandbox = ctx.sandboxManager.acquire({ log: ctx.log, apiClient: ctx.apiClient })
@@ -63,35 +65,35 @@ export const executeFlowJob: JobHandler<ExecuteFlowJobData, FireAndForgetJobResu
 
             if (result.status === EngineResponseStatus.LOG_SIZE_EXCEEDED) {
                 await reportFlowStatus(ctx, data, FlowRunStatus.LOG_SIZE_EXCEEDED)
-                return { kind: JobResultKind.FIRE_AND_FORGET, logs: result.logs }
+                return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.LOG_SIZE_EXCEEDED, logs: result.logs }
             }
 
             if (result.status === EngineResponseStatus.INTERNAL_ERROR) {
                 await reportFlowStatus(ctx, data, FlowRunStatus.INTERNAL_ERROR)
-                return { kind: JobResultKind.FIRE_AND_FORGET, logs: result.logs }
+                return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.INTERNAL_ERROR, logs: result.logs }
             }
 
             const delayInSeconds = result.delayInSeconds
             if (delayInSeconds && delayInSeconds > 0) {
-                return { kind: JobResultKind.FIRE_AND_FORGET, delayInSeconds, logs: result.logs }
+                return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK, delayInSeconds, logs: result.logs }
             }
 
-            return { kind: JobResultKind.FIRE_AND_FORGET, logs: result.logs }
+            return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK, logs: result.logs }
         }
         catch (e) {
             await ctx.sandboxManager.invalidate(ctx.log)
             if (e instanceof ActivepiecesError) {
                 if (e.error.code === ErrorCode.SANDBOX_EXECUTION_TIMEOUT) {
                     await reportFlowStatus(ctx, data, FlowRunStatus.TIMEOUT)
-                    return { kind: JobResultKind.FIRE_AND_FORGET }
+                    return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.TIMEOUT }
                 }
                 if (e.error.code === ErrorCode.SANDBOX_MEMORY_ISSUE) {
                     await reportFlowStatus(ctx, data, FlowRunStatus.MEMORY_LIMIT_EXCEEDED)
-                    return { kind: JobResultKind.FIRE_AND_FORGET }
+                    return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.MEMORY_ISSUE }
                 }
                 if (e.error.code === ErrorCode.SANDBOX_LOG_SIZE_EXCEEDED) {
                     await reportFlowStatus(ctx, data, FlowRunStatus.LOG_SIZE_EXCEEDED)
-                    return { kind: JobResultKind.FIRE_AND_FORGET }
+                    return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.LOG_SIZE_EXCEEDED }
                 }
             }
             await reportFlowStatus(ctx, data, FlowRunStatus.INTERNAL_ERROR)
@@ -158,25 +160,32 @@ async function buildFlowOperation(
 }
 
 async function fetchExecutionState(apiClient: WorkerToApiContract, data: ExecuteFlowJobData, log: FastifyBaseLogger): Promise<ExecutionState> {
-    if (isNil(data.logsFileId)) {
-        const error = new ActivepiecesError({
-            code: ErrorCode.RESUME_LOGS_FILE_MISSING,
+    try {
+        if (isNil(data.logsFileId)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.RESUME_LOGS_FILE_MISSING,
+                params: { runId: data.runId },
+            }, 'logsFileId is missing for RESUME operation')
+        }
+        const buffer = await apiClient.getPayloadFile({ fileId: data.logsFileId, projectId: data.projectId })
+        const parsed = JSON.parse(buffer.toString('utf-8'))
+        if (isNil(parsed.executionState)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.EXECUTION_STATE_MISSING,
+                params: { logsFileId: data.logsFileId },
+            }, 'executionState is missing in logs file')
+        }
+        return parsed.executionState
+    }
+    catch (error) {
+        const code = error instanceof ActivepiecesError ? error.error.code : ErrorCode.EXECUTION_STATE_MISSING
+        onCallService(log, workerSettings.getSettings().PAGE_ONCALL_WEBHOOK).page({
+            code,
+            message: inspect(error),
             params: { runId: data.runId },
-        }, 'logsFileId is missing for RESUME operation')
-        await onCallService(log).page(error)
+        }).catch((e) => log.error({ runId: data.runId, error: inspect(e) }, 'Failed to send on-call notification for execution state fetch failure'))
         throw error
     }
-    const buffer = await apiClient.getPayloadFile({ fileId: data.logsFileId, projectId: data.projectId })
-    const parsed = JSON.parse(buffer.toString('utf-8'))
-    if (isNil(parsed.executionState)) {
-        const error = new ActivepiecesError({
-            code: ErrorCode.EXECUTION_STATE_MISSING,
-            params: { logsFileId: data.logsFileId },
-        }, 'executionState is missing in logs file')
-        await onCallService(log).page(error)
-        throw error
-    }
-    return parsed.executionState
 }
 
 async function reportFlowStatus(

@@ -7,13 +7,14 @@ All changes flow through a staging environment before reaching production. There
 
 ## How It Works
 
-Four separate workflows cover the full delivery lifecycle:
+Five separate workflows cover the full delivery lifecycle:
 
 1. **Merge to `main`** (Mon–Thu, 9 AM–5 PM UTC) — `continuous-delivery-stg.yml` automatically builds a Docker image and deploys to **staging** (`stg.activepieces.com`).
 2. **Staging freeze (5 PM UTC)** — merges to `main` after 5 PM UTC are accepted but **not deployed** to staging. The content team uses the frozen staging environment overnight.
-3. **Thursday 5 PM UTC** — `tag-release-candidate` job tags the current staging image and commit as `release-candidate`.
-4. **Sunday 9 AM UTC** — `continuous-delivery-cloud.yml` promotes `release-candidate` to production and creates a `deploy/cloud/YYYY-MM-DD` branch.
-5. **Monday 9 AM UTC** — `continuous-delivery-release.yml` re-tags the `release-candidate` image and publishes the self-hosted release.
+3. **Daily 9 AM UTC** — `continuous-delivery-canary.yml` builds a `version.sha.canary` image from the latest `main` and deploys it to the **canary** environment. Breaking migrations block the deployment. See the [Canary Deployment playbook](/handbook/engineering/playbooks/canary-deployment) for details.
+4. **Thursday 5 PM UTC** — `tag-release-candidate` job tags the current staging image and commit as `release-candidate`.
+5. **Sunday 9 AM UTC** — `continuous-delivery-cloud.yml` promotes `release-candidate` to production and creates a `deploy/cloud/YYYY-MM-DD` branch.
+6. **Monday 9 AM UTC** — `continuous-delivery-release.yml` re-tags the `release-candidate` image and publishes the self-hosted release.
 
 ## Environments
 
@@ -21,6 +22,7 @@ Four separate workflows cover the full delivery lifecycle:
 |---|---|---|
 | Preview | `branch-name.activepieces.com` | Per-PR ephemeral environment for review. *Requires the `preview` label on the PR.* |
 | Staging | `stg.activepieces.com` | Internal testing, content team daily use |
+| Canary | `canary.activepieces.com` | Daily cut from `main`; catches issues before they reach production |
 | Production | `cloud.activepieces.com` | Live customers |
 
 ## Hotfix Workflow
@@ -29,7 +31,6 @@ Four separate workflows cover the full delivery lifecycle:
   2. Push your fix commit(s) to that branch.
   3. Manually trigger `continuous-delivery-cloud.yml` with action `cloud-hotfix` **on the hotfix branch** (not `main`). This builds the image and deploys directly to production — staging is not involved. If the next scheduled Sunday promotion is within 1 hour, the workflow will refuse to run — just wait for the scheduled run instead.
   4. Merge the hotfix branch into `main`. This automatically triggers `tag-release-candidate`, which SSHes to staging and retrags whatever image is running there as `release-candidate`. Sunday's scheduled run will re-deploy — a safe no-op.
-- **Emergency**: Use `emergency-cloud-deploy.yml` (manual dispatch) to bypass staging and deploy directly to production.
 
 ## Self-Hosted Release
 
@@ -82,10 +83,6 @@ Manual dispatch only. Rolls back the canary environment to a previous image tag.
 |---|---|
 | `rollback_to_image_tag` | Target image tag to roll back to (e.g. `0.51.0.abc1234.canary`). Leave blank to roll back to the current cloud production image. |
 | `force` | Force rollback even if breaking migrations exist. Default: `false`. |
-
-### `emergency-cloud-deploy.yml`
-
-Break-glass workflow. Manual dispatch only — builds from the current `main` and deploys **directly to production**, bypassing staging entirely. Use only for critical incidents where staging soak is not acceptable.
 
 ### `release-self-hosted.yml`
 

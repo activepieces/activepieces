@@ -1,8 +1,9 @@
 import { microsoftTeamsAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
+import { PageCollection } from '@microsoft/microsoft-graph-client';
 import { ConversationMember } from '@microsoft/microsoft-graph-types';
 import { microsoftTeamsCommon } from '../common';
+import { createGraphClient } from '../common/graph';
 
 export const sendChannelMessageAction = createAction({
   auth: microsoftTeamsAuth,
@@ -39,11 +40,8 @@ export const sendChannelMessageAction = createAction({
   async run(context) {
     const { teamId, channelId, contentType, content } = context.propsValue;
 
-    const client = Client.initWithMiddleware({
-      authProvider: {
-        getAccessToken: () => Promise.resolve(context.auth.access_token),
-      },
-    });
+    const cloud = context.auth.props?.['cloud'] as string | undefined;
+    const client = createGraphClient(context.auth.access_token, cloud);
 
     let messageContent = content;
     const messageMentions: Array<{

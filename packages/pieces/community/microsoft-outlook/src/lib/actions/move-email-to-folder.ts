@@ -1,6 +1,6 @@
-import { createAction, Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
-import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
-import { MailFolder } from '@microsoft/microsoft-graph-types';
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { getGraphBaseUrl } from '../common/microsoft-cloud';
+import { Client } from '@microsoft/microsoft-graph-client';
 import { microsoftOutlookAuth } from '../common/auth';
 import { mailFolderIdDropdown, messageIdDropdown } from '../common/props';
 
@@ -24,10 +24,12 @@ export const moveEmailToFolderAction = createAction({
 	async run(context) {
 		const { messageId, destinationFolderId } = context.propsValue;
 
+		const cloud = context.auth.props?.['cloud'] as string | undefined;
 		const client = Client.initWithMiddleware({
 			authProvider: {
 				getAccessToken: () => Promise.resolve(context.auth.access_token),
 			},
+			baseUrl: getGraphBaseUrl(cloud),
 		});
 
 		const response = await client.api(`/me/messages/${messageId}/move`).post({

@@ -7,7 +7,6 @@ import {
 import { t } from 'i18next';
 import { useEffect, useState } from 'react';
 
-import { ApErrorDialog } from '@/components/custom/ap-error-dialog/ap-error-dialog';
 import { LoadingSpinner } from '@/components/custom/spinner';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 
@@ -49,7 +48,6 @@ const FlowStatusToggle = ({ flow }: FlowStatusToggleProps) => {
 
   return (
     <div className="flex items-center justify-start">
-      <ApErrorDialog />
       <Tooltip>
         <TooltipTrigger asChild>
           <div className="flex items-center justify-center">

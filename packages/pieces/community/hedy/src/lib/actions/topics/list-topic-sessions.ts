@@ -1,24 +1,44 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction } from '@activepieces/pieces-framework';
 import { hedyAuth } from '../../auth';
-import { HedyApiClient } from '../../common/client';
+import { createClient } from '../../common/client';
 import { commonProps } from '../../common/props';
-import { PaginatedResponse, Session } from '../../common/types';
-import { assertLimit } from '../../common/validation';
+import { Session } from '../../common/types';
+import { assertIdPrefix, assertLimit } from '../../common/validation';
 
-function toSessionArray(result: unknown): Session[] {
+interface TopicSessionsPage {
+  sessions?: Session[];
+  pagination?: {
+    hasMore: boolean;
+    nextCursor?: string;
+  };
+}
+
+function extractSessions(result: unknown): { sessions: Session[]; pagination?: TopicSessionsPage['pagination'] } {
   if (Array.isArray(result)) {
-    return result as Session[];
+    return { sessions: result as Session[] };
   }
 
-  if (result && typeof result === 'object' && 'data' in result) {
-    const data = (result as PaginatedResponse<Session>).data;
-    if (Array.isArray(data)) {
-      return data;
+  if (result && typeof result === 'object') {
+    const obj = result as Record<string, unknown>;
+
+    // Handle { data: { sessions, pagination } } wrapper
+    const inner = (obj['data'] ?? obj) as Record<string, unknown>;
+
+    if (Array.isArray(inner['sessions'])) {
+      return {
+        sessions: inner['sessions'] as Session[],
+        pagination: inner['pagination'] as TopicSessionsPage['pagination'],
+      };
+    }
+
+    // Fallback: { data: Session[] }
+    if (Array.isArray(inner['data'])) {
+      return { sessions: inner['data'] as Session[] };
     }
   }
 
-  return [];
+  return { sessions: [] };
 }
 
 export const listTopicSessions = createAction({
@@ -32,25 +52,52 @@ export const listTopicSessions = createAction({
     limit: commonProps.limit,
   },
   async run(context) {
-    const topicId = context.propsValue.topicId as string;
-    const client = new HedyApiClient(context.auth.secret_text);
+    const topicId = assertIdPrefix(context.propsValue['topicId'] as string, 'topic_', 'Topic ID');
+    const client = createClient(context.auth);
     const { returnAll, limit } = context.propsValue as {
       returnAll?: boolean;
       limit?: number;
     };
 
-    const response = await client.request<Session[]>({
-      method: HttpMethod.GET,
-      path: `/topics/${topicId}/sessions`,
-    });
+    const validLimit = assertLimit(limit);
+    const pageSize = 50;
 
-    const sessions = toSessionArray(response);
+    if (returnAll) {
+      const allSessions: Session[] = [];
+      let startAfter: string | undefined;
+      let hasMore = true;
 
-    if (!returnAll) {
-      const limited = assertLimit(limit);
-      return limited ? sessions.slice(0, limited) : sessions.slice(0, 50);
+      while (hasMore) {
+        const queryParams: Record<string, unknown> = { limit: pageSize };
+        if (startAfter) queryParams['startAfter'] = startAfter;
+
+        const response = await client.request<unknown>({
+          method: HttpMethod.GET,
+          path: `/topics/${topicId}/sessions`,
+          queryParams,
+        });
+
+        const page = extractSessions(response);
+        allSessions.push(...page.sessions);
+
+        hasMore = page.pagination?.hasMore ?? false;
+        startAfter = page.pagination?.nextCursor;
+
+        if (allSessions.length >= 1000) break;
+      }
+
+      return allSessions;
     }
 
-    return sessions;
+    const queryParams: Record<string, unknown> = { limit: validLimit ?? pageSize };
+    const response = await client.request<unknown>({
+      method: HttpMethod.GET,
+      path: `/topics/${topicId}/sessions`,
+      queryParams,
+    });
+
+    const page = extractSessions(response);
+    const cap = validLimit ?? 50;
+    return page.sessions.slice(0, cap);
   },
 });

@@ -11,9 +11,9 @@ type PlatformKey = (typeof PLATFORM_OPTIONS)[number];
 export const createDraftAction = createAction({
 	auth: typefullyAuth,
 	name: 'typefully_create_draft',
-	displayName: 'Create Draft',
+	displayName: 'Create Draft Simple',
 	description:
-		'Create a single-post draft with text and optional media URLs.',
+		'Create cross-platform, single-post drafts with text and optional media URLs. For threads (multiple posts) or advanced control, use "Create Draft Advanced" instead.',
 	props: {
 		social_set_id: socialSetDropdown,
 		text: Property.LongText({

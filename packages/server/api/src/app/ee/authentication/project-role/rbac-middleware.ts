@@ -77,7 +77,7 @@ export async function assertUserHasPermissionToFlow(
             await assertRoleHasPermission(principal, projectId, Permission.WRITE_FLOW, log)
             break
         }
-      
+
     }
 }
 

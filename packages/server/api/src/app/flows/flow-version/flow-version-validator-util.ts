@@ -7,6 +7,7 @@ import {
     FlowActionType,
     FlowOperationRequest,
     FlowOperationType,
+    flowPieceUtil,
     FlowTriggerType,
     isNil,
     LoopOnItemsActionSettings,
@@ -43,6 +44,7 @@ export const flowVersionValidationUtil = (log: FastifyBaseLogger) => ({
                         ).success
                         break
                     case FlowActionType.PIECE: {
+                        clonedRequest.request.action.settings.pieceVersion = flowPieceUtil.getExactVersion(clonedRequest.request.action.settings.pieceVersion)
                         const result = await validateAction(
                             { settings: clonedRequest.request.action.settings, platformId, log },
                         )
@@ -70,6 +72,7 @@ export const flowVersionValidationUtil = (log: FastifyBaseLogger) => ({
                         ).success
                         break
                     case FlowActionType.PIECE: {
+                        clonedRequest.request.settings.pieceVersion = flowPieceUtil.getExactVersion(clonedRequest.request.settings.pieceVersion)
                         const result = await validateAction(
                             { settings: clonedRequest.request.settings, platformId, log },
                         )
@@ -95,6 +98,7 @@ export const flowVersionValidationUtil = (log: FastifyBaseLogger) => ({
                         clonedRequest.request.valid = false
                         break
                     case FlowTriggerType.PIECE: {
+                        clonedRequest.request.settings.pieceVersion = flowPieceUtil.getExactVersion(clonedRequest.request.settings.pieceVersion)
                         const result = await validateTrigger(
                             { settings: clonedRequest.request.settings, platformId, log },
                         )

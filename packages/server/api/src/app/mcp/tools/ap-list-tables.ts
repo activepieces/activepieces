@@ -1,4 +1,4 @@
-import { McpServer, McpToolDefinition } from '@activepieces/shared'
+import { McpServer, McpToolDefinition, Permission } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { fieldService } from '../../tables/field/field.service'
 import { tableService } from '../../tables/table/table.service'
@@ -8,6 +8,7 @@ import { formatFieldInfo } from './table-utils'
 export const apListTablesTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_list_tables',
+        permission: Permission.READ_TABLE,
         description: 'List all tables in the current project with their fields (name, type, id) and row counts. Use this to discover available tables before querying or modifying data. Returns table IDs needed by other table tools.',
         inputSchema: {},
         annotations: { readOnlyHint: true, openWorldHint: false },

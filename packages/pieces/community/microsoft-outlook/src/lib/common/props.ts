@@ -1,4 +1,5 @@
 import { OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
+import { getGraphBaseUrl } from './microsoft-cloud';
 import { PageCollection, Client } from '@microsoft/microsoft-graph-client';
 import { MailFolder, Message } from '@microsoft/microsoft-graph-types';
 import { microsoftOutlookAuth } from './auth';
@@ -25,10 +26,12 @@ export const messageIdDropdown = (params: DropdownParams) =>
 				};
 			}
 
+			const cloud = (auth as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
 			const client = Client.initWithMiddleware({
 				authProvider: {
 					getAccessToken: () => Promise.resolve((auth as OAuth2PropertyValue).access_token),
 				},
+				baseUrl: getGraphBaseUrl(cloud),
 			});
 
 			try {
@@ -71,10 +74,12 @@ export const draftMessageIdDropdown = (params: DropdownParams) =>
 				};
 			}
 
+			const cloud = (auth as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
 			const client = Client.initWithMiddleware({
 				authProvider: {
 					getAccessToken: () => Promise.resolve((auth as OAuth2PropertyValue).access_token),
 				},
+				baseUrl: getGraphBaseUrl(cloud),
 			});
 
 			try {
@@ -117,10 +122,12 @@ export const mailFolderIdDropdown = (params: DropdownParams) =>
 				};
 			}
 
+			const cloud = (auth as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
 			const client = Client.initWithMiddleware({
 				authProvider: {
 					getAccessToken: () => Promise.resolve((auth as OAuth2PropertyValue).access_token),
 				},
+				baseUrl: getGraphBaseUrl(cloud),
 			});
 
 			try {

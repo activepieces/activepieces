@@ -2,7 +2,7 @@ import path from 'path'
 import { assertNotNullOrUndefined } from '@activepieces/shared'
 import { environmentMigrations } from './env-migrations'
 
-export type SystemProp = AppSystemProp | WorkerSystemProp
+export type SystemProp = AppSystemProp
 
 let cachedVersion: string | undefined
 
@@ -122,6 +122,9 @@ export enum AppSystemProp {
     SSRF_ALLOW_LIST = 'SSRF_ALLOW_LIST',
     SSRF_PROTECTION_ENABLED = 'SSRF_PROTECTION_ENABLED',
     MCP_OAUTH_ISSUER_URL = 'MCP_OAUTH_ISSUER_URL',
+    CONTAINER_TYPE = 'CONTAINER_TYPE',
+    FRONTEND_URL = 'FRONTEND_URL',
+    PORT = 'PORT',
 }
 
 export enum ContainerType {
@@ -130,36 +133,24 @@ export enum ContainerType {
     WORKER_AND_APP = 'WORKER_AND_APP',
 }
 
-export enum WorkerSystemProp {
-    WORKER_TOKEN = 'WORKER_TOKEN',
-    CONTAINER_TYPE = 'CONTAINER_TYPE',
-    FRONTEND_URL = 'FRONTEND_URL',
-    PORT = 'PORT',
-
-    // Optional
-    PLATFORM_ID_FOR_DEDICATED_WORKER = 'PLATFORM_ID_FOR_DEDICATED_WORKER',
-    PRE_WARM_CACHE = 'PRE_WARM_CACHE',
-}
-
-
 export const environmentVariables = {
     hasAppModules(): boolean {
-        const environment = this.getEnvironment(WorkerSystemProp.CONTAINER_TYPE) ?? ContainerType.WORKER_AND_APP
+        const environment = this.getEnvironment(AppSystemProp.CONTAINER_TYPE) ?? ContainerType.WORKER_AND_APP
         return [ContainerType.APP, ContainerType.WORKER_AND_APP].includes(environment as ContainerType)
     },
-    getNumberEnvironment: (prop: WorkerSystemProp | AppSystemProp): number | undefined => {
+    getNumberEnvironment: (prop: AppSystemProp): number | undefined => {
         const value = environmentVariables.getEnvironment(prop)
         return value ? parseInt(value) : undefined
     },
-    getBooleanEnvironment: (prop: WorkerSystemProp | AppSystemProp): boolean | undefined => {
+    getBooleanEnvironment: (prop: AppSystemProp): boolean | undefined => {
         const value = environmentVariables.getEnvironment(prop)
         return value ? value === 'true' : undefined
     },
-    getEnvironment: (prop: WorkerSystemProp | AppSystemProp): string | undefined => {
+    getEnvironment: (prop: AppSystemProp): string | undefined => {
         const environmnetVariables = environmentMigrations.migrate()
         return environmnetVariables['AP_' + prop]
     },
-    getEnvironmentOrThrow: (prop: WorkerSystemProp | AppSystemProp): string => {
+    getEnvironmentOrThrow: (prop: AppSystemProp): string => {
         const value = environmentVariables.getEnvironment(prop)
         assertNotNullOrUndefined(value, `Environment variable ${prop} is not set`)
         return value
