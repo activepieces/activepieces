@@ -1,6 +1,6 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { createAction, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
-import { raindropAuth } from '../../';
+import { raindropAuth } from '../auth';
 import { raindropCommons } from '../common';
 
 export const deleteRaindropAction = createAction({

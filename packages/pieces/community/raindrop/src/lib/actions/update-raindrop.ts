@@ -1,6 +1,6 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { createAction, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
-import { raindropAuth } from '../../';
+import { raindropAuth } from '../auth';
 import { raindropCommons } from '../common';
 
 export const updateRaindropAction = createAction({
@@ -55,7 +55,7 @@ export const updateRaindropAction = createAction({
     if (collection_id !== null && collection_id !== undefined) {
       body['collection'] = { $id: collection_id };
     }
-    if (tags !== undefined && tags !== null) body['tags'] = tags;
+    if (tags && (tags as string[]).length > 0) body['tags'] = tags;
     if (important !== undefined && important !== null) body['important'] = important;
 
     const response = await httpClient.sendRequest<{ item: RaindropApiResponse }>({
