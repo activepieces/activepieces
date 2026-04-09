@@ -32,6 +32,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { useChat } from '@ai-sdk/react';
 import ReactMarkdown from 'react-markdown';
 import breaks from 'remark-breaks';
 import gfm from 'remark-gfm';
@@ -496,114 +497,45 @@ export function AIChatBox({
     return conv.id;
   };
 
+  const chatHook = useChat({
+    api: `${API_URL}/v1/chat/conversations/placeholder/messages`,
+    headers: {
+      'Authorization': `Bearer ${authenticationSession.getToken()}`,
+    },
+    maxSteps: 20,
+    fetch: async (input, init) => {
+      const convId = await getOrCreateConversation();
+      const url = `${API_URL}/v1/chat/conversations/${convId}/messages`;
+      return fetch(url, init);
+    },
+  });
+
   const streamFromBackend = async (userText: string) => {
-    const msgId = Date.now() + 1;
-    const time = getTime();
+    await chatHook.append({ role: 'user', content: userText });
+  };
 
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: msgId,
-        role: 'ai',
-        text: '',
-        time,
-        fullDate: getFullDate(),
-        streaming: true,
-      },
-    ]);
-
-    try {
-      abortRef.current = new AbortController();
-      const conversationId = await getOrCreateConversation();
-      const token = authenticationSession.getToken();
-
-      const res = await fetch(`${API_URL}/v1/chat/conversations/${conversationId}/messages`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ content: userText }),
-        signal: abortRef.current.signal,
-      });
-
-      if (!res.ok) throw new Error(`${res.status} ${await res.text()}`);
-
-      const reader = res.body!.getReader();
-      const decoder = new TextDecoder();
-      let fullText = '';
-      let buffer = '';
-
-      let flushTimer: ReturnType<typeof setTimeout> | null = null;
-      const flushText = () => {
-        const captured = fullText;
-        setMessages((prev) =>
-          prev.map((m) => (m.id === msgId ? { ...m, text: captured } : m)),
-        );
-        flushTimer = null;
-      };
-
-      for (;;) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-
-        const events = buffer.split('\n\n');
-        buffer = events.pop() || '';
-
-        for (const eventBlock of events) {
-          const lines = eventBlock.split('\n');
-          const eventLine = lines.find((l) => l.startsWith('event: '));
-          const dataLine = lines.find((l) => l.startsWith('data: '));
-          if (!eventLine || !dataLine) continue;
-
-          const eventType = eventLine.replace('event: ', '');
-          try {
-            const data = JSON.parse(dataLine.replace('data: ', ''));
-            if (eventType === 'content_delta' && data.text) {
-              fullText += data.text;
-              if (!flushTimer) {
-                flushTimer = setTimeout(flushText, 50);
-              }
-            } else if (eventType === 'tool_call_start') {
-              const displayName = (data.toolName || '').replace(/^ap_/, '').replace(/_/g, ' ');
-              fullText += `\n\n\`tool:${displayName}\`\n\n`;
-              if (!flushTimer) flushTimer = setTimeout(flushText, 50);
-            } else if (eventType === 'error') {
-              fullText += `\n\n\`error:${data.message}\`\n\n`;
-              if (!flushTimer) flushTimer = setTimeout(flushText, 50);
-            }
-          } catch {
-            /* skip malformed events */
-          }
+  useEffect(() => {
+    const mapped: Message[] = chatHook.messages.map((m, i) => {
+      let text = '';
+      for (const part of m.parts) {
+        if (part.type === 'text') {
+          text += part.text;
+        } else if (part.type === 'tool-invocation') {
+          const displayName = (part.toolInvocation.toolName || '').replace(/^ap_/, '').replace(/_/g, ' ');
+          text += `\n\n\`tool:${displayName}\`\n\n`;
         }
       }
-
-      if (flushTimer) clearTimeout(flushTimer);
-
-      setMessages((prev) =>
-        prev.map((m) =>
-          m.id === msgId ? { ...m, text: fullText, streaming: false } : m,
-        ),
-      );
-    } catch (err) {
-      if ((err as Error).name !== 'AbortError') {
-        console.error('Chat error:', err);
-        setMessages((prev) =>
-          prev.map((m) =>
-            m.id === msgId
-              ? {
-                  ...m,
-                  text: `Error: ${(err as Error).message}`,
-                  streaming: false,
-                }
-              : m,
-          ),
-        );
-      }
-    }
-    abortRef.current = null;
-  };
+      return {
+        id: i,
+        role: m.role === 'user' ? 'user' as const : 'ai' as const,
+        text,
+        time: getTime(),
+        fullDate: getFullDate(),
+        streaming: chatHook.status === 'streaming' && i === chatHook.messages.length - 1 && m.role === 'assistant',
+      };
+    });
+    setMessages(mapped);
+  }, [chatHook.messages, chatHook.status]);
 
   const regenerateResponse = async (msgId: number) => {
     // Find the last user message before this AI message
@@ -725,6 +657,7 @@ export function AIChatBox({
   };
 
   const stopStreaming = () => {
+    chatHook.stop();
     if (thinkingRef.current) {
       clearTimeout(thinkingRef.current);
       thinkingRef.current = null;

@@ -86,20 +86,30 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
             fileUrls: request.body.fileUrls,
         })
 
-        reply.raw.writeHead(200, {
+        const result = await chatAgentExecutor(request.log).executeStream({
+            conversation,
+            platformId: request.principal.platform.id,
+        })
+
+        const response = result.toUIMessageStreamResponse()
+
+        reply.raw.writeHead(response.status ?? 200, {
             'Content-Type': 'text/event-stream',
             'Cache-Control': 'no-cache',
             'Connection': 'keep-alive',
             'X-Accel-Buffering': 'no',
         })
 
-        await chatAgentExecutor(request.log).execute({
-            conversation,
-            platformId: request.principal.platform.id,
-            reply,
-        })
-
-        reply.raw.end()
+        const reader = response.body!.getReader()
+        const pump = async () => {
+            for (;;) {
+                const { done, value } = await reader.read()
+                if (done) break
+                reply.raw.write(value)
+            }
+            reply.raw.end()
+        }
+        await pump()
         return reply
     })
 }

@@ -6,7 +6,6 @@ import {
     GetProviderConfigResponse,
     isNil,
     OpenAICompatibleProviderConfig,
-    ToolCallRecord,
 } from '@activepieces/shared'
 import { createAnthropic } from '@ai-sdk/anthropic'
 import { createAzure } from '@ai-sdk/azure'
@@ -17,7 +16,7 @@ import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js'
 import { createOpenRouter } from '@openrouter/ai-sdk-provider'
 import { LanguageModel, stepCountIs, streamText, Tool } from 'ai'
-import { FastifyBaseLogger, FastifyReply } from 'fastify'
+import { FastifyBaseLogger } from 'fastify'
 import { aiProviderService } from '../ai/ai-provider-service'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
@@ -26,131 +25,49 @@ import { chatService } from './chat-service'
 
 const MAX_STEPS = 20
 const MAX_OUTPUT_TOKENS = 16384
-const CHAT_TURN_TIMEOUT_MS = 300_000
 const CONTEXT_WINDOW_MESSAGES = 50
 
 const SYSTEM_PROMPT = `You are a helpful AI assistant integrated into Activepieces, an automation platform. You have access to tools that let you interact with the user's project — listing flows, creating tables, querying records, managing automations, and more. Use these tools when the user asks you to do something that requires interacting with their project. Always be helpful, concise, and action-oriented.`
 
 export const chatAgentExecutor = (log: FastifyBaseLogger) => ({
-    async execute({ conversation, platformId, reply }: ExecuteParams): Promise<void> {
-        const abortController = new AbortController()
-        const timeout = setTimeout(() => abortController.abort(), CHAT_TURN_TIMEOUT_MS)
-        let mcpClient: Awaited<ReturnType<typeof createMCPClient>> | null = null
+    async executeStream({ conversation, platformId }: ExecuteParams) {
+        const [model, recentMessages, mcpTools] = await Promise.all([
+            createLanguageModel({ conversation, platformId, log }),
+            chatService(log).getRecentMessages({ conversationId: conversation.id, limit: CONTEXT_WINDOW_MESSAGES }),
+            connectToProjectMcp({ projectId: conversation.projectId, log }),
+        ])
 
-        try {
-            const [model, recentMessages, mcpTools] = await Promise.all([
-                createLanguageModel({ conversation, platformId, log }),
-                chatService(log).getRecentMessages({ conversationId: conversation.id, limit: CONTEXT_WINDOW_MESSAGES }),
-                connectToProjectMcp({ projectId: conversation.projectId, log }),
-            ])
+        const coreMessages = recentMessages.map((msg) => ({
+            role: msg.role === ChatMessageRole.USER ? 'user' as const : 'assistant' as const,
+            content: msg.content,
+        }))
 
-            mcpClient = mcpTools.client
-            const tools = mcpTools.tools
-
-            const coreMessages = recentMessages.map((msg) => ({
-                role: msg.role === ChatMessageRole.USER ? 'user' as const : 'assistant' as const,
-                content: msg.content,
-            }))
-
-            writeSseEvent({ reply, event: 'message_start', data: { role: 'assistant' } })
-
-            let fullContent = ''
-            const toolCallRecords: ToolCallRecord[] = []
-
-            const result = streamText({
-                model,
-                system: SYSTEM_PROMPT,
-                messages: coreMessages,
-                tools,
-                maxOutputTokens: MAX_OUTPUT_TOKENS,
-                stopWhen: [stepCountIs(MAX_STEPS)],
-                abortSignal: abortController.signal,
-            })
-
-            for await (const chunk of result.fullStream) {
-                if (abortController.signal.aborted) break
-
-                switch (chunk.type) {
-                    case 'text-delta': {
-                        fullContent += chunk.text
-                        writeSseEvent({ reply, event: 'content_delta', data: { text: chunk.text } })
-                        break
-                    }
-                    case 'tool-call': {
-                        toolCallRecords.push({
-                            toolName: chunk.toolName,
-                            toolCallId: chunk.toolCallId,
-                            input: chunk.input,
-                        })
-                        writeSseEvent({ reply, event: 'tool_call_start', data: {
-                            toolCallId: chunk.toolCallId,
-                            toolName: chunk.toolName,
-                            input: chunk.input,
-                        } })
-                        break
-                    }
-                    case 'tool-result': {
-                        writeSseEvent({ reply, event: 'tool_call_end', data: {
-                            toolCallId: chunk.toolCallId,
-                            output: chunk.output,
-                        } })
-                        break
-                    }
-                    case 'tool-error': {
-                        log.error({ error: chunk.error, toolName: chunk.toolName }, '[chatAgentExecutor] Tool error')
-                        writeSseEvent({ reply, event: 'tool_call_end', data: {
-                            toolCallId: chunk.toolCallId,
-                            error: String(chunk.error),
-                        } })
-                        break
-                    }
-                    case 'error': {
-                        log.error({ error: chunk.error }, '[chatAgentExecutor] Stream error')
-                        writeSseEvent({ reply, event: 'error', data: { message: 'An error occurred during generation' } })
-                        break
-                    }
-                    default:
-                        break
+        const result = streamText({
+            model,
+            system: SYSTEM_PROMPT,
+            messages: coreMessages,
+            tools: mcpTools.tools,
+            maxOutputTokens: MAX_OUTPUT_TOKENS,
+            stopWhen: [stepCountIs(MAX_STEPS)],
+            onFinish: async ({ text, usage }) => {
+                if (mcpTools.client) {
+                    await mcpTools.client.close().catch(() => {})
                 }
-            }
+                await chatService(log).saveMessage({
+                    conversationId: conversation.id,
+                    role: ChatMessageRole.ASSISTANT,
+                    content: text,
+                    tokenUsage: {
+                        inputTokens: usage.inputTokens ?? 0,
+                        outputTokens: usage.outputTokens ?? 0,
+                    },
+                })
+            },
+        })
 
-            const usage = await result.usage
-            const tokenUsage = {
-                inputTokens: usage.inputTokens ?? 0,
-                outputTokens: usage.outputTokens ?? 0,
-            }
-
-            writeSseEvent({ reply, event: 'message_end', data: { tokenUsage } })
-
-            await chatService(log).saveMessage({
-                conversationId: conversation.id,
-                role: ChatMessageRole.ASSISTANT,
-                content: fullContent,
-                toolCalls: toolCallRecords.length > 0 ? toolCallRecords : undefined,
-                tokenUsage,
-            })
-        }
-        catch (error: unknown) {
-            if (abortController.signal.aborted) {
-                writeSseEvent({ reply, event: 'error', data: { message: 'Generation timed out' } })
-            }
-            else {
-                log.error({ error }, '[chatAgentExecutor] Execution error')
-                writeSseEvent({ reply, event: 'error', data: { message: 'An error occurred during generation' } })
-            }
-        }
-        finally {
-            clearTimeout(timeout)
-            if (mcpClient) {
-                await mcpClient.close().catch(() => {})
-            }
-        }
+        return result
     },
 })
-
-function writeSseEvent({ reply, event, data }: { reply: FastifyReply, event: string, data: unknown }): void {
-    reply.raw.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`)
-}
 
 async function connectToProjectMcp({ projectId, log }: { projectId: string, log: FastifyBaseLogger }): Promise<{ client: Awaited<ReturnType<typeof createMCPClient>> | null, tools: Record<string, Tool> }> {
     try {
@@ -246,5 +163,4 @@ function createModelFromConfig({ providerConfig, modelId }: { providerConfig: Ge
 type ExecuteParams = {
     conversation: ChatConversation
     platformId: string
-    reply: FastifyReply
 }
