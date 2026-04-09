@@ -930,6 +930,9 @@
       "@activepieces/piece-rabbitmq": [
         "packages/pieces/community/rabbitmq/src/index.ts"
       ],
+      "@activepieces/piece-raindrop": [
+        "packages/pieces/community/raindrop/src/index.ts"
+      ],
       "@activepieces/piece-razorpay": [
         "packages/pieces/community/razorpay/src/index.ts"
       ],
