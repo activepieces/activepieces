@@ -8,6 +8,9 @@ import { listIncidents } from './lib/actions/list-incidents';
 import { resolveIncident } from './lib/actions/resolve-incident';
 import { pagerDutyAuth } from './lib/auth';
 import { PAGERDUTY_API_BASE_URL, pagerDutyHeaders } from './lib/common/client';
+import { incidentAcknowledged } from './lib/triggers/incident-acknowledged';
+import { incidentResolved } from './lib/triggers/incident-resolved';
+import { newIncident } from './lib/triggers/new-incident';
 
 export const pagerduty = createPiece({
   displayName: 'PagerDuty',
@@ -16,7 +19,7 @@ export const pagerduty = createPiece({
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/pagerduty.png',
   categories: [PieceCategory.DEVELOPER_TOOLS],
-  authors: ['Harmatta'],
+  authors: ['Harmatta', 'sanket-a11y'],
   actions: [
     createIncident,
     listIncidents,
@@ -31,5 +34,5 @@ export const pagerduty = createPiece({
       authMapping: async (auth) => pagerDutyHeaders(auth.secret_text),
     }),
   ],
-  triggers: [],
+  triggers: [newIncident, incidentResolved, incidentAcknowledged],
 });

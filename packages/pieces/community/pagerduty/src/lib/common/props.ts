@@ -1,4 +1,59 @@
+import { HttpMethod } from '@activepieces/pieces-common';
 import { Property } from '@activepieces/pieces-framework';
+import { pagerDutyAuth } from '../auth';
+import { pagerDutyApiCall } from './client';
+
+export const serviceIdProp = Property.Dropdown({
+  auth: pagerDutyAuth,
+  displayName: 'Service',
+  description: 'The PagerDuty service to associate with the incident.',
+  required: true,
+  refreshers: [],
+  options: async ({ auth }) => {
+    if (!auth) {
+      return {
+        disabled: true,
+        options: [],
+        placeholder: 'Please connect your account first.',
+      };
+    }
+
+    try {
+      const services: { id: string; name: string }[] = [];
+      let offset = 0;
+      const limit = 100;
+      let more = true;
+
+      while (more) {
+        const response = await pagerDutyApiCall({
+          apiKey: auth.secret_text,
+          method: HttpMethod.GET,
+          path: '/services',
+          query: { limit: String(limit), offset: String(offset) },
+        });
+
+        const data = response as {
+          services: { id: string; name: string }[];
+          more: boolean;
+        };
+        services.push(...data.services);
+        more = data.more;
+        offset += limit;
+      }
+
+      return {
+        disabled: false,
+        options: services.map((s) => ({ label: s.name, value: s.id })),
+      };
+    } catch {
+      return {
+        disabled: true,
+        options: [],
+        placeholder: 'Error loading services. Check your API key.',
+      };
+    }
+  },
+});
 
 export const incidentIdProp = Property.ShortText({
   displayName: 'Incident ID',
@@ -10,13 +65,6 @@ export const fromEmailProp = Property.ShortText({
   displayName: 'From Email',
   description:
     'PagerDuty REST write operations require the email address of a valid PagerDuty user on the account.',
-  required: true,
-});
-
-export const serviceIdProp = Property.ShortText({
-  displayName: 'Service ID',
-  description:
-    'PagerDuty REST incident creation uses a service reference. Routing keys belong to the Events API and are not used by POST /incidents.',
   required: true,
 });
 
@@ -59,4 +107,14 @@ export const statusesProp = Property.StaticMultiSelectDropdown({
       { label: 'Resolved', value: 'resolved' },
     ],
   },
+});
+
+export const instructionProp = Property.MarkDown({
+  value: `To receive new incident events, create a webhook subscription in PagerDuty with the following settings:
+  - Go to **Integrations** > **Generic Webhook(V3)** in the PagerDuty dashboard.
+  - Set the **Endpoint URL** {{webhookUrl}} to the URL of this trigger.
+  - Add Scope types and Scope
+  - Select event type.
+  - create webhook
+`,
 });

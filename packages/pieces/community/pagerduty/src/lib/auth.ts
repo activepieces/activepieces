@@ -8,13 +8,6 @@ export const pagerDutyAuth = PieceAuth.SecretText({
     'PagerDuty REST API token from Integrations > API Access Keys. Activepieces sends it as Authorization: Token token=<API_KEY>.',
   required: true,
   validate: async ({ auth }) => {
-    if (!auth) {
-      return {
-        valid: false,
-        error: 'API key is required.',
-      };
-    }
-
     try {
       await httpClient.sendRequest({
         method: HttpMethod.GET,
