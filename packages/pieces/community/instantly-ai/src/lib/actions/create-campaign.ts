@@ -1,10 +1,19 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { makeRequest } from '../common/client';
-import { instantlyAiAuth } from '../auth';
+import { instantlyAuth } from '../auth';
+import { instantlyClient } from '../common/client';
+import { InstantlyCampaign, InstantlyCampaignSchedule } from '../common/types';
+
+function filterUndefined(
+  obj: Record<string, unknown>,
+): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(obj).filter(([, v]) => v !== undefined),
+  );
+}
 
 export const createCampaignAction = createAction({
-  auth: instantlyAiAuth,
+  auth: instantlyAuth,
   name: 'create_campaign',
   displayName: 'Create Campaign',
   description: 'Create a new cold email campaign in Instantly',
@@ -120,7 +129,8 @@ export const createCampaignAction = createAction({
     }),
     stop_for_company: Property.Checkbox({
       displayName: 'Stop for Company',
-      description: 'Stop campaign for the company (domain) when a lead replies',
+      description:
+        'Stop campaign for the company (domain) when a lead replies',
       required: false,
     }),
     insert_unsubscribe_header: Property.Checkbox({
@@ -149,137 +159,43 @@ export const createCampaignAction = createAction({
       weekend_sending,
       start_date,
       end_date,
-      pl_value,
-      is_evergreen,
-      email_gap,
-      random_wait_max,
-      text_only,
-      daily_limit,
-      stop_on_reply,
-      link_tracking,
-      open_tracking,
-      stop_on_auto_reply,
-      daily_max_leads,
-      prioritize_new_leads,
-      match_lead_esp,
-      stop_for_company,
-      insert_unsubscribe_header,
-      allow_risky_contacts,
-      disable_bounce_protect,
+      ...optionalFields
     } = context.propsValue;
-    const { auth: apiKey } = context;
 
-    // Build the campaign schedule according to API requirements
-    const campaignSchedule: Record<string, any> = {
+    const campaignSchedule: InstantlyCampaignSchedule = {
       schedules: [
         {
-          name: "Default Schedule",
+          name: 'Default Schedule',
           timing: {
             from: schedule_time_from,
             to: schedule_time_to,
           },
           days: {
-            0: weekday_sending, // Monday
-            1: weekday_sending, // Tuesday
-            2: weekday_sending, // Wednesday
-            3: weekday_sending, // Thursday
-            4: weekday_sending, // Friday
-            5: weekend_sending, // Saturday
-            6: weekend_sending, // Sunday
+            '0': weekday_sending ?? true,
+            '1': weekday_sending ?? true,
+            '2': weekday_sending ?? true,
+            '3': weekday_sending ?? true,
+            '4': weekday_sending ?? true,
+            '5': weekend_sending ?? false,
+            '6': weekend_sending ?? false,
           },
           timezone: schedule_timezone,
-        }
+        },
       ],
+      ...(start_date ? { start_date } : {}),
+      ...(end_date ? { end_date } : {}),
     };
 
-    // Add optional start and end dates if provided
-    if (start_date) {
-      campaignSchedule['start_date'] = start_date;
-    }
-
-    if (end_date) {
-      campaignSchedule['end_date'] = end_date;
-    }
-
-    // Build the payload with required fields
-    const payload: Record<string, unknown> = {
+    const payload = filterUndefined({
       name,
       campaign_schedule: campaignSchedule,
-    };
+      ...optionalFields,
+    });
 
-    // Add optional fields if provided
-    if (pl_value !== undefined) {
-      payload['pl_value'] = pl_value;
-    }
-
-    if (is_evergreen !== undefined) {
-      payload['is_evergreen'] = is_evergreen;
-    }
-
-    if (email_gap !== undefined) {
-      payload['email_gap'] = email_gap;
-    }
-
-    if (random_wait_max !== undefined) {
-      payload['random_wait_max'] = random_wait_max;
-    }
-
-    if (text_only !== undefined) {
-      payload['text_only'] = text_only;
-    }
-
-    if (daily_limit !== undefined) {
-      payload['daily_limit'] = daily_limit;
-    }
-
-    if (stop_on_reply !== undefined) {
-      payload['stop_on_reply'] = stop_on_reply;
-    }
-
-    if (link_tracking !== undefined) {
-      payload['link_tracking'] = link_tracking;
-    }
-
-    if (open_tracking !== undefined) {
-      payload['open_tracking'] = open_tracking;
-    }
-
-    if (stop_on_auto_reply !== undefined) {
-      payload['stop_on_auto_reply'] = stop_on_auto_reply;
-    }
-
-    if (daily_max_leads !== undefined) {
-      payload['daily_max_leads'] = daily_max_leads;
-    }
-
-    if (prioritize_new_leads !== undefined) {
-      payload['prioritize_new_leads'] = prioritize_new_leads;
-    }
-
-    if (match_lead_esp !== undefined) {
-      payload['match_lead_esp'] = match_lead_esp;
-    }
-
-    if (stop_for_company !== undefined) {
-      payload['stop_for_company'] = stop_for_company;
-    }
-
-    if (insert_unsubscribe_header !== undefined) {
-      payload['insert_unsubscribe_header'] = insert_unsubscribe_header;
-    }
-
-    if (allow_risky_contacts !== undefined) {
-      payload['allow_risky_contacts'] = allow_risky_contacts;
-    }
-
-    if (disable_bounce_protect !== undefined) {
-      payload['disable_bounce_protect'] = disable_bounce_protect;
-    }
-
-    return await makeRequest({
-      endpoint: 'campaigns',
+    return instantlyClient.makeRequest<InstantlyCampaign>({
+      auth: context.auth.secret_text,
       method: HttpMethod.POST,
-      apiKey: apiKey,
+      path: 'campaigns',
       body: payload,
     });
   },
