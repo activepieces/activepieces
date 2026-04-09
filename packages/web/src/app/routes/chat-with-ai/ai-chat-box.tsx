@@ -98,46 +98,6 @@ const FILE_ICON_MAP: Record<Attachment['type'], typeof FileText> = {
 import { authenticationSession } from '@/lib/authentication-session';
 import { API_URL } from '@/lib/api';
 
-const IMAGE_KEYWORDS_EXACT = [
-  'صورة',
-  'صوره',
-  'ارسم',
-  'ارسملي',
-  'اعمل صور',
-  'ولد صور',
-  'اعملي صور',
-  'picture of',
-  'صمم',
-  'صمملي',
-  'draw',
-];
-
-const IMAGE_VERB_NOUN_PAIRS: [string[], string[]][] = [
-  [
-    [
-      'generate',
-      'create',
-      'make',
-      'produce',
-      'اعمل',
-      'اعملي',
-      'ولد',
-      'سوي',
-      'سولي',
-    ],
-    ['image', 'photo', 'picture', 'pic', 'صورة', 'صوره', 'صور'],
-  ],
-];
-
-const isImageRequest = (text: string) => {
-  const lower = text.toLowerCase();
-  if (IMAGE_KEYWORDS_EXACT.some((kw) => lower.includes(kw))) return true;
-  return IMAGE_VERB_NOUN_PAIRS.some(
-    ([verbs, nouns]) =>
-      verbs.some((v) => lower.includes(v)) &&
-      nouns.some((n) => lower.includes(n)),
-  );
-};
 
 const getTime = () =>
   new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -273,29 +233,6 @@ const keyframes = `
   .prompt-float-footer { background: linear-gradient(to bottom, transparent, var(--background) 40%); max-width: calc(clamp(280px, calc(100vw - 700px), 560px) + 20px); margin: 0 auto; width: calc(100% + 20px); padding-top: 80px; margin-top: -80px; }
 `;
 
-/* ─── Mock sources for demo ─── */
-const MOCK_FAVICONS = [
-  'https://www.google.com/favicon.ico',
-  'https://www.wikipedia.org/favicon.ico',
-  'https://www.reddit.com/favicon.ico',
-  'https://www.github.com/favicon.ico',
-  'https://stackoverflow.com/favicon.ico',
-  'https://www.youtube.com/favicon.ico',
-  'https://medium.com/favicon.ico',
-  'https://www.amazon.com/favicon.ico',
-  'https://www.nytimes.com/favicon.ico',
-  'https://www.bbc.com/favicon.ico',
-];
-
-function getMockSources(msgId: number) {
-  const count = (msgId % 15) + 3;
-  // Pick favicons deterministically based on msgId
-  const favicons: string[] = [];
-  for (let i = 0; i < Math.min(count, 4); i++) {
-    favicons.push(MOCK_FAVICONS[(msgId + i) % MOCK_FAVICONS.length]);
-  }
-  return { count, favicons };
-}
 
 /* ─── Smooth streaming text component ─── */
 const WORD_INTERVAL = 50; // ms per word
@@ -1826,31 +1763,6 @@ export function AIChatBox({
                               </div>
                             </TooltipContent>
                           </DelayedTooltip>
-                          {(() => {
-                            const { count, favicons } = getMockSources(msg.id);
-                            return (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="flex items-center gap-1.5 h-7 px-2.5 rounded-full bg-muted hover:bg-accent text-muted-foreground text-xs font-medium"
-                                onClick={() => {
-                                  /* TODO: expand sources */
-                                }}
-                              >
-                                <div className="flex items-center -space-x-1">
-                                  {favicons.map((src, i) => (
-                                    <img
-                                      key={i}
-                                      src={src}
-                                      alt=""
-                                      className="w-3.5 h-3.5 rounded-full ring-1 ring-muted bg-background object-contain"
-                                    />
-                                  ))}
-                                </div>
-                                <span>{count} sources</span>
-                              </Button>
-                            );
-                          })()}
                         </div>
                       )}
                     </div>
