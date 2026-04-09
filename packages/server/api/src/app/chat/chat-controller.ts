@@ -3,7 +3,6 @@ import {
     CreateChatConversationRequest,
     Permission,
     PrincipalType,
-    SendChatMessageRequest,
     SERVICE_KEY_SECURITY_OPENAPI,
     UpdateChatConversationRequest,
 } from '@activepieces/shared'
@@ -79,12 +78,29 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
             projectId: request.projectId,
         })
 
-        await chatService(request.log).saveMessage({
-            conversationId: conversation.id,
-            role: ChatMessageRole.USER,
-            content: request.body.content,
-            fileUrls: request.body.fileUrls,
-        })
+        const body = request.body as Record<string, unknown>
+        let userContent = ''
+        if (typeof body.content === 'string') {
+            userContent = body.content
+        }
+        else if (Array.isArray(body.messages)) {
+            const lastUserMsg = [...body.messages].reverse().find((m: Record<string, unknown>) => m.role === 'user')
+            if (lastUserMsg?.parts) {
+                const textPart = (lastUserMsg.parts as Array<Record<string, unknown>>).find((p) => p.type === 'text')
+                userContent = (textPart?.text as string) ?? ''
+            }
+            else if (typeof lastUserMsg?.content === 'string') {
+                userContent = lastUserMsg.content
+            }
+        }
+
+        if (userContent) {
+            await chatService(request.log).saveMessage({
+                conversationId: conversation.id,
+                role: ChatMessageRole.USER,
+                content: userContent,
+            })
+        }
 
         const result = await chatAgentExecutor(request.log).executeStream({
             conversation,
@@ -229,6 +245,6 @@ const SendMessageRoute = {
         params: z.object({
             id: z.string(),
         }),
-        body: SendChatMessageRequest,
+        body: z.any(),
     },
 }
