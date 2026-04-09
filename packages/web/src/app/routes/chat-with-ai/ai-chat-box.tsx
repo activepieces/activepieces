@@ -33,6 +33,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useChat } from '@ai-sdk/react';
+import { DefaultChatTransport } from 'ai';
 import ReactMarkdown from 'react-markdown';
 import breaks from 'remark-breaks';
 import gfm from 'remark-gfm';
@@ -498,20 +499,21 @@ export function AIChatBox({
   };
 
   const chatHook = useChat({
-    api: `${API_URL}/v1/chat/conversations/placeholder/messages`,
-    headers: {
-      'Authorization': `Bearer ${authenticationSession.getToken()}`,
-    },
-    maxSteps: 20,
-    fetch: async (input, init) => {
-      const convId = await getOrCreateConversation();
-      const url = `${API_URL}/v1/chat/conversations/${convId}/messages`;
-      return fetch(url, init);
-    },
+    transport: new DefaultChatTransport({
+      api: `${API_URL}/v1/chat/conversations/placeholder/messages`,
+      headers: {
+        'Authorization': `Bearer ${authenticationSession.getToken()}`,
+      },
+      fetch: async (input, init) => {
+        const convId = await getOrCreateConversation();
+        const url = `${API_URL}/v1/chat/conversations/${convId}/messages`;
+        return fetch(url, init);
+      },
+    }),
   });
 
   const streamFromBackend = async (userText: string) => {
-    await chatHook.append({ role: 'user', content: userText });
+    await chatHook.sendMessage({ text: userText });
   };
 
   useEffect(() => {
@@ -520,8 +522,12 @@ export function AIChatBox({
       for (const part of m.parts) {
         if (part.type === 'text') {
           text += part.text;
-        } else if (part.type === 'tool-invocation') {
-          const displayName = (part.toolInvocation.toolName || '').replace(/^ap_/, '').replace(/_/g, ' ');
+        } else if (part.type === 'dynamic-tool') {
+          const displayName = (part.toolName || '').replace(/^ap_/, '').replace(/_/g, ' ');
+          text += `\n\n\`tool:${displayName}\`\n\n`;
+        } else if (typeof part.type === 'string' && part.type.startsWith('tool-')) {
+          const toolName = part.type.replace('tool-', '');
+          const displayName = toolName.replace(/^ap_/, '').replace(/_/g, ' ');
           text += `\n\n\`tool:${displayName}\`\n\n`;
         }
       }
