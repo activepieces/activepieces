@@ -276,8 +276,8 @@ export function ConversationList({
     <>
       <style>{css}</style>
       <div
-        className="conv-sidebar flex flex-col h-full shrink-0 bg-transparent"
-        style={{ width: 'min(200px, 25vw)' }}
+        className="conv-sidebar flex flex-col h-full shrink-0 bg-transparent pl-2"
+        style={{ width: 'min(210px, 25vw)' }}
       >
         <div className="px-3 pt-3 pb-2">
           <button
