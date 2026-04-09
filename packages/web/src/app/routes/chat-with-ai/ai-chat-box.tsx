@@ -733,7 +733,7 @@ export function AIChatBox({
       let fullText = '';
       let buffer = '';
 
-      while (true) {
+      for (;;) {
         const { done, value } = await reader.read();
         if (done) break;
         buffer += decoder.decode(value, { stream: true });

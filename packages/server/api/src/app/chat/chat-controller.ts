@@ -95,8 +95,6 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
 
         await chatAgentExecutor(request.log).execute({
             conversation,
-            userMessage: request.body,
-            projectId: request.projectId,
             platformId: request.principal.platform.id,
             reply,
         })

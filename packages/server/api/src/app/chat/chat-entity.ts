@@ -1,29 +1,6 @@
-import { ChatMessageRole } from '@activepieces/shared'
+import { ChatMessageRole, TokenUsage, ToolCallRecord } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import { ApIdSchema, BaseColumnSchemaPart } from '../database/database-common'
-
-type ChatConversationSchema = {
-    id: string
-    created: string
-    updated: string
-    projectId: string
-    userId: string
-    title: string | null
-    modelProvider: string | null
-    modelName: string | null
-}
-
-type ChatMessageSchema = {
-    id: string
-    created: string
-    updated: string
-    conversationId: string
-    role: ChatMessageRole
-    content: string
-    toolCalls: unknown
-    fileUrls: string[] | null
-    tokenUsage: unknown
-}
 
 export const ChatConversationEntity = new EntitySchema<ChatConversationSchema>({
     name: 'chat_conversation',
@@ -52,12 +29,8 @@ export const ChatConversationEntity = new EntitySchema<ChatConversationSchema>({
     },
     indices: [
         {
-            name: 'idx_chat_conversation_project_id',
-            columns: ['projectId'],
-        },
-        {
-            name: 'idx_chat_conversation_user_id',
-            columns: ['userId'],
+            name: 'idx_chat_conversation_project_user_created',
+            columns: ['projectId', 'userId', 'created'],
         },
     ],
     relations: {
@@ -116,8 +89,8 @@ export const ChatMessageEntity = new EntitySchema<ChatMessageSchema>({
     },
     indices: [
         {
-            name: 'idx_chat_message_conversation_id',
-            columns: ['conversationId'],
+            name: 'idx_chat_message_conversation_created',
+            columns: ['conversationId', 'created'],
         },
     ],
     relations: {
@@ -133,3 +106,26 @@ export const ChatMessageEntity = new EntitySchema<ChatMessageSchema>({
         },
     },
 })
+
+type ChatConversationSchema = {
+    id: string
+    created: string
+    updated: string
+    projectId: string
+    userId: string
+    title: string | null
+    modelProvider: string | null
+    modelName: string | null
+}
+
+type ChatMessageSchema = {
+    id: string
+    created: string
+    updated: string
+    conversationId: string
+    role: ChatMessageRole
+    content: string
+    toolCalls: ToolCallRecord[] | null
+    fileUrls: string[] | null
+    tokenUsage: TokenUsage | null
+}

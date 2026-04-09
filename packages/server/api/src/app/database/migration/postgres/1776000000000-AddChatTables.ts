@@ -27,11 +27,8 @@ export class AddChatTables1776000000000 implements Migration {
         `)
 
         await queryRunner.query(`
-            CREATE INDEX "idx_chat_conversation_project_id" ON "chat_conversation" ("projectId")
-        `)
-
-        await queryRunner.query(`
-            CREATE INDEX "idx_chat_conversation_user_id" ON "chat_conversation" ("userId")
+            CREATE INDEX "idx_chat_conversation_project_user_created"
+            ON "chat_conversation" ("projectId", "userId", "created" DESC)
         `)
 
         await queryRunner.query(`
@@ -52,7 +49,8 @@ export class AddChatTables1776000000000 implements Migration {
         `)
 
         await queryRunner.query(`
-            CREATE INDEX "idx_chat_message_conversation_id" ON "chat_message" ("conversationId")
+            CREATE INDEX "idx_chat_message_conversation_created"
+            ON "chat_message" ("conversationId", "created")
         `)
     }
 
