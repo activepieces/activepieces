@@ -180,15 +180,6 @@ export async function searchIssuesByJql({
 	return finalIssues;
 }
 
-export async function getJiraFields(auth: any): Promise<{ id: string; name: string }[]> {
-  const response = await sendJiraRequest({
-    auth,
-    url: 'field',
-    method: HttpMethod.GET,
-  });
-  return response.body as { id: string; name: string }[];
-}
-
 export async function createJiraIssue(data: CreateIssueParams) {
 	const fields: any = {
 		project: {

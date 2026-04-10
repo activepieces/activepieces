@@ -1,31 +1,9 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { MarkdownVariant } from '@activepieces/shared';
 import { jiraCloudAuth } from '../../auth';
-import { searchIssuesByJql, getJiraFields, mapFieldNames } from '../common';
+import { searchIssuesByJql, mapFieldNames } from '../common';
 import { z } from 'zod';
 import { propsValidation } from '@activepieces/pieces-common';
-
-function resolveFieldIds(userFields: string[], jiraFields: { id: string; name: string }[]): string[] {
-  const nameToIdMap = new Map<string, string>();
-  for (const f of jiraFields) {
-    nameToIdMap.set(f.name.toLowerCase(), f.id);
-  }
-
-  return userFields.map(input => {
-    const cleanInput = input.trim();
-    const lowerInput = cleanInput.toLowerCase();
-
-    if (lowerInput.startsWith('*') || lowerInput.startsWith('-')) {
-      return cleanInput;
-    }
-
-    if (nameToIdMap.has(lowerInput)) {
-      return nameToIdMap.get(lowerInput)!;
-    }
-
-    return cleanInput;
-  });
-}
 
 export const searchIssues = createAction({
   name: 'search_issues',
@@ -78,15 +56,6 @@ Example: *all and -comment returns everything except comments.`,
     const { jql, maxResults, sanitizeJql, fields, mapNames } = propsValue;
     
     let fieldList = fields as string[];
-
-    if (mapNames && fieldList.length > 0) {
-      try {
-        const jiraFields = await getJiraFields(auth as any);
-        fieldList = resolveFieldIds(fieldList, jiraFields);
-      } catch (error) {
-        fieldList = fieldList;
-      }
-    }
 
     let expandParams = mapNames ? ['names'] : [];
 
