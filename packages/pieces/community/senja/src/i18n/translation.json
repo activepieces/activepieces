@@ -150,6 +150,6 @@
   "Permanently delete a testimonial from your Senja project. This action cannot be undone.": "Permanently delete a testimonial from your Senja project. This action cannot be undone.",
   "The unique ID of the testimonial to delete. You can find it in the URL when viewing a testimonial in Senja, or from the output of a \"List Testimonials\" step.": "The unique ID of the testimonial to delete. You can find it in the URL when viewing a testimonial in Senja, or from the output of a \"List Testimonials\" step.",
   "Search": "Search",
-  "Full-text search across testimonial text, title, customer name, customer email, and customer tagline.": "Full-text search across testimonial text, title, customer name, customer email, and customer tagline."
+  "Full-text search across testimonial text, title, customer name, customer email, and customer tagline.": "Full-text search across testimonial text, title, customer name, customer email, and customer tagline.",
   "List of image URLs to attach to this testimonial. Each entry must be a JSON object with a \"url\" field and optionally \"alt\" text, e.g. {\"url\": \"https://...\", \"alt\": \"description\"}.": "List of image URLs to attach to this testimonial. Each entry must be a JSON object with a \"url\" field and optionally \"alt\" text, e.g. {\"url\": \"https://...\", \"alt\": \"description\"}."
 }
