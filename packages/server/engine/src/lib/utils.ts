@@ -1,8 +1,8 @@
 import fs from 'fs/promises'
 import { inspect } from 'node:util'
 import path from 'path'
-import { ConnectionsManager, ContextVersion, PauseHookParams, RespondHookParams, StopHookParams } from '@activepieces/pieces-framework'
-import { ExecutionError, ExecutionErrorType, Result, tryCatch } from '@activepieces/shared'
+import { ConnectionsManager, ContextVersion, RespondHookParams, StopHookParams } from '@activepieces/pieces-framework'
+import { ExecutionError, ExecutionErrorType, RespondResponse, Result, tryCatch } from '@activepieces/shared'
 import { createConnectionService } from './services/connections.service'
 
 export type FileEntry = {
@@ -90,10 +90,17 @@ function isEngineError(error: unknown): error is ExecutionError {
     return error instanceof ExecutionError && error.type === ExecutionErrorType.ENGINE
 }
 
+export type PendingWaitpoint = {
+    type: 'DELAY' | 'WEBHOOK'
+    resumeDateTime?: string
+    responseToSend?: RespondResponse
+}
+
 export type HookResponse = {
     type: 'paused'
     tags: string[]
-    response: PauseHookParams
+    waitpointId?: string
+    pendingWaitpoint?: PendingWaitpoint
 } | {
     type: 'stopped'
     tags: string[]

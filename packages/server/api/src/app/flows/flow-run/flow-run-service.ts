@@ -257,21 +257,6 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             }
         })
     },
-    async resume({ flowRunId, payload, requestId, progressUpdateType, executionType }: ResumeWebhookParams): Promise<FlowRun> {
-        log.info({ runId: flowRunId }, 'Resuming flow run')
-        const flowRun = await findFlowRunOrThrow(flowRunId)
-        await waitpointService(log).handleResumeSignal({
-            flowRunId,
-            flowRunStatus: flowRun.status,
-            projectId: flowRun.projectId,
-            resumeData: { payload, requestId, progressUpdateType, executionType },
-            onReady: async (waitpoint, resumeData) => {
-                await enqueueResume({ flowRun, waitpoint, resumeData }, log)
-            },
-        })
-        return flowRun
-    },
-
     async resumeFromWaitpoint({ flowRunId, resumePayload, workerHandlerId, httpRequestId }: ResumeFromWaitpointParams): Promise<FlowRun> {
         const flowRun = await findFlowRunOrThrow(flowRunId)
         await waitpointService(log).handleResumeSignal({
@@ -837,14 +822,6 @@ type ResumePayload = {
     body?: unknown
     headers?: Record<string, string>
     queryParams?: Record<string, string>
-}
-
-type ResumeWebhookParams = {
-    flowRunId: FlowRunId
-    requestId?: string
-    progressUpdateType: ProgressUpdateType
-    payload?: ResumePayload
-    executionType: ExecutionType
 }
 
 type ResumeFromWaitpointParams = {

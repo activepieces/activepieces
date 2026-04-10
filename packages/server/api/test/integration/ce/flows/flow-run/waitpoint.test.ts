@@ -227,6 +227,32 @@ describe('Waitpoint service', () => {
         })
     })
 
+    describe('concurrent complete calls', () => {
+        it('should handle two concurrent complete calls safely', async () => {
+            const { flowRun } = await createFlowRun({ status: FlowRunStatus.RUNNING })
+
+            const [result1, result2] = await Promise.all([
+                waitpointService(app.log).complete({
+                    flowRunId: flowRun.id,
+                    projectId: ctx.project.id,
+                    resumePayload: { first: true },
+                }),
+                waitpointService(app.log).complete({
+                    flowRunId: flowRun.id,
+                    projectId: ctx.project.id,
+                    resumePayload: { second: true },
+                }),
+            ])
+
+            const completedCount = [result1.completedExisting, result2.completedExisting].filter(Boolean).length
+            expect(completedCount).toBeLessThanOrEqual(1)
+
+            const stored = await db.findOneBy<{ status: string }>('waitpoint', { flowRunId: flowRun.id })
+            expect(stored).not.toBeNull()
+            expect(stored!.status).toBe('COMPLETED')
+        })
+    })
+
     describe('handleResumeSignal', () => {
         it('should call onReady and delete waitpoint when flow is PAUSED', async () => {
             const { flowRun } = await createFlowRun({ status: FlowRunStatus.PAUSED })

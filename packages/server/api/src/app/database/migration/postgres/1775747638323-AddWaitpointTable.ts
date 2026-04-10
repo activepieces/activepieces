@@ -43,9 +43,32 @@ export class AddWaitpointTable1775747638323 implements Migration {
         await queryRunner.query(`
             ALTER TABLE "flow_run" DROP COLUMN IF EXISTS "pauseMetadata"
         `)
+        await queryRunner.query(`
+            ALTER TABLE "flow_run"
+            ADD COLUMN "waitpointId" character varying(21)
+        `)
+        await queryRunner.query(`
+            CREATE INDEX "idx_run_waitpoint_id" ON "flow_run" ("waitpointId")
+        `)
+        await queryRunner.query(`
+            ALTER TABLE "flow_run"
+            ADD CONSTRAINT "fk_flow_run_waitpoint_id"
+            FOREIGN KEY ("waitpointId") REFERENCES "waitpoint"("id")
+            ON DELETE SET NULL ON UPDATE NO ACTION
+        `)
+        await queryRunner.query(`
+            UPDATE "flow_run"
+            SET "waitpointId" = w.id
+            FROM "waitpoint" w
+            WHERE w."flowRunId" = "flow_run".id
+        `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+        await queryRunner.query('ALTER TABLE "flow_run" DROP CONSTRAINT "fk_flow_run_waitpoint_id"')
+        await queryRunner.query('DROP INDEX "idx_run_waitpoint_id"')
+        await queryRunner.query('ALTER TABLE "flow_run" DROP COLUMN "waitpointId"')
+
         await queryRunner.query(`
             ALTER TABLE "flow_run" ADD "pauseMetadata" jsonb
         `)

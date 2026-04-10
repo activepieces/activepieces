@@ -73,11 +73,6 @@ export const executeFlowJob: JobHandler<ExecuteFlowJobData, FireAndForgetJobResu
                 return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.INTERNAL_ERROR, logs: result.logs }
             }
 
-            const delayInSeconds = result.delayInSeconds
-            if (delayInSeconds && delayInSeconds > 0) {
-                return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK, delayInSeconds, logs: result.logs }
-            }
-
             return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK, logs: result.logs }
         }
         catch (e) {

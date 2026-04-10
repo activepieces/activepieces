@@ -1,9 +1,11 @@
-import { apId, isNil } from '@activepieces/shared'
+import { ActivepiecesError, apId, ErrorCode, FlowRunStatus, isNil } from '@activepieces/shared'
+import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { transaction } from '../../../core/db/transaction'
+import { SystemJobName } from '../../../helper/system-jobs/common'
+import { systemJobsSchedule } from '../../../helper/system-jobs/system-job'
 import { WaitpointEntity } from './waitpoint-entity'
-import { ActivepiecesError, ErrorCode, FlowRunStatus } from '@activepieces/shared'
 import { CompleteParams, CompleteResult, CreateForPauseParams, CreateForPauseResult, HandleResumeSignalParams, Waitpoint, WaitpointStatus, WaitpointType } from './waitpoint-types'
 
 const waitpointRepo = repoFactory(WaitpointEntity)
@@ -35,6 +37,19 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
         const inserted = waitpoint.id === id
         if (inserted) {
             log.info({ flowRunId: params.flowRunId, waitpointId: id }, '[waitpointService#createForPause] Waitpoint created')
+            if (params.type === WaitpointType.DELAY && !isNil(params.resumeDateTime)) {
+                await systemJobsSchedule(log).upsertJob({
+                    job: {
+                        name: SystemJobName.RESUME_DELAY_WAITPOINT,
+                        data: { flowRunId: params.flowRunId, projectId: params.projectId },
+                        jobId: `resume-delay-${params.flowRunId}`,
+                    },
+                    schedule: {
+                        type: 'one-time',
+                        date: dayjs(params.resumeDateTime),
+                    },
+                })
+            }
         }
         else {
             log.info({ flowRunId: params.flowRunId, existingStatus: waitpoint.status }, '[waitpointService#createForPause] Waitpoint already exists')

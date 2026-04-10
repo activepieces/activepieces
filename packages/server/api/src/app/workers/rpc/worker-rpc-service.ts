@@ -6,8 +6,6 @@ import {
     FlowStatus,
     isFlowRunStateTerminal,
     isNil,
-    PauseMetadata,
-    PauseType,
     PiecePackage,
     ProgressUpdateType,
     spreadIfDefined,
@@ -22,7 +20,7 @@ import { flowService } from '../../flows/flow/flow.service'
 import { flowRunRepo, flowRunService } from '../../flows/flow-run/flow-run-service'
 import { runsMetadataQueue } from '../../flows/flow-run/flow-runs-queue'
 import { waitpointService } from '../../flows/flow-run/waitpoint/waitpoint-service'
-import { CreateForPauseParams, WaitpointStatus, WaitpointType } from '../../flows/flow-run/waitpoint/waitpoint-types'
+import { WaitpointStatus } from '../../flows/flow-run/waitpoint/waitpoint-types'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { rejectedPromiseHandler } from '../../helper/promise-handler'
 import { pubsub } from '../../helper/pubsub'
@@ -65,35 +63,24 @@ export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string): 
         },
 
         async uploadRunLog(input) {
-            if (input.pauseMetadata) {
-                await waitpointService(log).createForPause(
-                    convertPauseMetadataToWaitpoint({
-                        pauseMetadata: input.pauseMetadata,
-                        flowRunId: input.runId,
-                        projectId: input.projectId,
-                        workerHandlerId: input.workerHandlerId ?? undefined,
-                        httpRequestId: input.httpRequestId ?? undefined,
-                    }),
-                )
-
+            if (input.status === FlowRunStatus.PAUSED && input.waitpointId) {
                 await persistFlowRunStatus({
                     runId: input.runId,
                     status: input.status,
                     logsFileId: input.logsFileId,
+                    waitpointId: input.waitpointId,
                 })
 
-                if (input.pauseMetadata.type === PauseType.WEBHOOK) {
-                    const latestWaitpoint = await waitpointService(log).getByFlowRunId(input.runId)
-                    const isPreCompleted = !isNil(latestWaitpoint)
-                        && latestWaitpoint.status === WaitpointStatus.COMPLETED
-                    if (isPreCompleted) {
-                        await flowRunService(log).resumeFromWaitpoint({
-                            flowRunId: input.runId,
-                            resumePayload: latestWaitpoint.resumePayload,
-                            workerHandlerId: input.workerHandlerId ?? undefined,
-                            httpRequestId: input.httpRequestId ?? undefined,
-                        })
-                    }
+                const latestWaitpoint = await waitpointService(log).getByFlowRunId(input.runId)
+                const isPreCompleted = !isNil(latestWaitpoint)
+                    && latestWaitpoint.status === WaitpointStatus.COMPLETED
+                if (isPreCompleted) {
+                    await flowRunService(log).resumeFromWaitpoint({
+                        flowRunId: input.runId,
+                        resumePayload: latestWaitpoint.resumePayload,
+                        workerHandlerId: input.workerHandlerId ?? undefined,
+                        httpRequestId: input.httpRequestId ?? undefined,
+                    })
                 }
             }
             const logData: RunsMetadataUpsertData = {
@@ -268,33 +255,16 @@ export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string): 
     }
 }
 
-function convertPauseMetadataToWaitpoint({ pauseMetadata, flowRunId, projectId, workerHandlerId, httpRequestId }: {
-    pauseMetadata: PauseMetadata
-    flowRunId: string
-    projectId: string
-    workerHandlerId?: string
-    httpRequestId?: string
-}): CreateForPauseParams {
-    const common = {
-        flowRunId,
-        projectId,
-        workerHandlerId: workerHandlerId ?? pauseMetadata.handlerId,
-        httpRequestId: httpRequestId ?? pauseMetadata.requestIdToReply,
-    }
-    if (pauseMetadata.type === PauseType.DELAY) {
-        return { ...common, type: WaitpointType.DELAY, resumeDateTime: pauseMetadata.resumeDateTime }
-    }
-    return { ...common, type: WaitpointType.WEBHOOK, responseToSend: pauseMetadata.response }
-}
-
-async function persistFlowRunStatus({ runId, status, logsFileId }: {
+async function persistFlowRunStatus({ runId, status, logsFileId, waitpointId }: {
     runId: string
     status: FlowRunStatus
     logsFileId?: string
+    waitpointId?: string
 }): Promise<void> {
     const result = await flowRunRepo().update(runId, {
         status,
         ...spreadIfDefined('logsFileId', logsFileId),
+        ...spreadIfDefined('waitpointId', waitpointId),
     })
     if (!result.affected) {
         const key = redisMetadataKey(runId)
@@ -304,6 +274,7 @@ async function persistFlowRunStatus({ runId, status, logsFileId }: {
                 ...runMetadata,
                 status,
                 logsFileId,
+                waitpointId,
             })
         }
     }

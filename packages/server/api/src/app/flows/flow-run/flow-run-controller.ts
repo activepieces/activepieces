@@ -61,16 +61,18 @@ export const flowRunController: FastifyPluginAsyncZod = async (app) => {
     app.all('/:id/requests/:requestId', ResumeFlowRunRequest, async (req, reply) => {
         const headers = req.headers as Record<string, string>
         const queryParams = req.query as Record<string, string>
-        await flowRunService(req.log).resume({
+        await flowRunService(req.log).resumeFromWaitpoint({
             flowRunId: req.params.id,
-            requestId: req.params.requestId,
-            payload: {
-                body: req.body,
-                headers,
-                queryParams,
+            resumePayload: {
+                payload: {
+                    body: req.body,
+                    headers,
+                    queryParams,
+                },
+                requestId: req.params.requestId,
+                progressUpdateType: ProgressUpdateType.TEST_FLOW,
+                executionType: ExecutionType.RESUME,
             },
-            progressUpdateType: ProgressUpdateType.TEST_FLOW,
-            executionType: ExecutionType.RESUME,
         })
         await reply.send({
             message: 'Your response has been recorded. You can close this page now.',

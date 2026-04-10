@@ -1,5 +1,4 @@
-import { assertEqual, BaseStepOutput, EngineGenericError, executionJournal, FailedStep, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, LoopStepOutput, LoopStepResult, PauseMetadata, PauseType, RespondResponse, StepOutput, StepOutputStatus } from '@activepieces/shared'
-import dayjs from 'dayjs'
+import { assertEqual, BaseStepOutput, EngineGenericError, executionJournal, FailedStep, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, LoopStepOutput, LoopStepResult, RespondResponse, StepOutput, StepOutputStatus } from '@activepieces/shared'
 import { nanoid } from 'nanoid'
 import { loggingUtils } from '../../helper/logging-utils'
 import { StepExecutionPath } from './step-execution-path'
@@ -7,7 +6,7 @@ import { StepExecutionPath } from './step-execution-path'
 
 export type FlowVerdict = {
     status: FlowRunStatus.PAUSED
-    pauseMetadata: PauseMetadata
+    waitpointId: string
 } | {
     status: FlowRunStatus.SUCCEEDED
     stopResponse: RespondResponse | undefined
@@ -52,13 +51,6 @@ export class FlowExecutorContext {
             ...this,
             pauseRequestId,
         })
-    }
-
-    public getDelayedInSeconds(): number | undefined {
-        if (this.verdict.status === FlowRunStatus.PAUSED && this.verdict.pauseMetadata.type === PauseType.DELAY) {
-            return dayjs(this.verdict.pauseMetadata.resumeDateTime).diff(Date.now(), 'seconds')
-        }
-        return undefined
     }
 
     public finishExecution(): FlowExecutorContext {

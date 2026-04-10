@@ -1,8 +1,15 @@
 import { BranchOperator, FlowRunStatus, LoopStepOutput, RouterExecutionType, RouterStepOutput } from '@activepieces/shared'
+import { vi } from 'vitest'
 import { FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { StepExecutionPath } from '../../src/lib/handler/context/step-execution-path'
 import { flowExecutor } from '../../src/lib/handler/flow-executor'
 import { buildCodeAction, buildPieceAction, buildRouterWithOneCondition, buildSimpleLoopAction, generateMockEngineConstants } from './test-helper'
+
+vi.mock('../../src/lib/services/waitpoint-client', () => ({
+    waitpointClient: {
+        create: vi.fn().mockResolvedValue({ id: 'mock-waitpoint-id', resumeUrl: 'http://localhost/resume' }),
+    },
+}))
 
 
 const simplePauseFlow = buildPieceAction({
@@ -67,12 +74,7 @@ describe('flow with pause', () => {
         })
         expect(pauseResult.verdict).toEqual({
             status: FlowRunStatus.PAUSED,
-            pauseMetadata: {
-                response: {},
-                requestId: 'requestId',
-                requestIdToReply: undefined,
-                'type': 'WEBHOOK',
-            },
+            waitpointId: 'mock-waitpoint-id',
         })
         expect(Object.keys(pauseResult.steps)).toEqual(['loop'])
 
@@ -135,12 +137,7 @@ describe('flow with pause', () => {
         })
         expect(resumeResult1.verdict).toStrictEqual({
             status: FlowRunStatus.PAUSED,
-            pauseMetadata: {
-                response: {},
-                requestId: 'requestId',
-                requestIdToReply: undefined,
-                'type': 'WEBHOOK',
-            },
+            waitpointId: 'mock-waitpoint-id',
         })
         const resumeResult2 = await flowExecutor.execute({
             action: flawWithTwoPause,
@@ -172,12 +169,7 @@ describe('flow with pause', () => {
         })
         expect(pauseResult.verdict).toStrictEqual({
             status: FlowRunStatus.PAUSED,
-            pauseMetadata: {
-                response: {},
-                requestId: 'requestId',
-                requestIdToReply: undefined,
-                'type': 'WEBHOOK',
-            },
+            waitpointId: 'mock-waitpoint-id',
         })
         const currentState = pauseResult.currentState()
         expect(Object.keys(currentState).length).toBe(1)
@@ -251,12 +243,7 @@ describe('flow with pause', () => {
 
         expect(result.verdict).toStrictEqual({
             status: FlowRunStatus.PAUSED,
-            pauseMetadata: {
-                response: {},
-                requestId: 'requestId',
-                requestIdToReply: undefined,
-                'type': 'WEBHOOK',
-            },
+            waitpointId: 'mock-waitpoint-id',
         })
 
         const routerOutput = result.steps.router as RouterStepOutput

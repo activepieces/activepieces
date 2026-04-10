@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { Nullable } from '../../core/common'
-import { FlowRunStatus, PauseMetadata } from '../flow-run/execution/flow-execution'
+import { FlowRunStatus } from '../flow-run/execution/flow-execution'
 import { StepOutput } from '../flow-run/execution/step-output'
 import { FailedStep, FlowRun } from '../flow-run/flow-run'
 import { StepRunResponse } from '../flows/sample-data'
@@ -22,7 +22,7 @@ export const UploadRunLogsRequest = z.object({
     startTime: z.string().optional(),
     finishTime: z.string().optional(),
     stepResponse: StepRunResponse.optional(),
-    pauseMetadata: PauseMetadata.optional(),
+    waitpointId: z.string().optional(),
     stepsCount: z.number().optional(),
 })
 

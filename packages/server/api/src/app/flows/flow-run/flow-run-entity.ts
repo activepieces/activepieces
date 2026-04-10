@@ -18,6 +18,7 @@ type FlowRunSchema = FlowRun & {
     flowVersion: FlowVersion
     logsFile: File
     triggeredByUser?: User
+    waitpointId?: string
 }
 
 export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
@@ -82,6 +83,10 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
             nullable: false,
             default: 0,
         },
+        waitpointId: {
+            ...ApIdSchema,
+            nullable: true,
+        },
     },
     indices: [
         {
@@ -119,6 +124,10 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
         {
             name: 'idx_run_triggered_by',
             columns: ['triggeredBy'],
+        },
+        {
+            name: 'idx_run_waitpoint_id',
+            columns: ['waitpointId'],
         },
     ],
     relations: {
@@ -170,6 +179,16 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
             joinColumn: {
                 name: 'logsFileId',
                 foreignKeyConstraintName: 'fk_flow_run_logs_file_id',
+            },
+        },
+        waitpoint: {
+            type: 'many-to-one',
+            target: 'waitpoint',
+            cascade: true,
+            onDelete: 'SET NULL',
+            joinColumn: {
+                name: 'waitpointId',
+                foreignKeyConstraintName: 'fk_flow_run_waitpoint_id',
             },
         },
     },

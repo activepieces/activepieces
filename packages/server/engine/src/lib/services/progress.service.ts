@@ -151,7 +151,7 @@ export const progressService = {
                 failedStep: 'failedStep' in flowExecutorContext.verdict ? flowExecutorContext.verdict.failedStep : undefined,
                 stepNameToTest: engineConstants.stepNameToTest,
                 stepResponse,
-                pauseMetadata: flowExecutorContext.verdict.status === FlowRunStatus.PAUSED ? flowExecutorContext.verdict.pauseMetadata : undefined,
+                waitpointId: flowExecutorContext.verdict.status === FlowRunStatus.PAUSED ? flowExecutorContext.verdict.waitpointId : undefined,
                 startTime: savedStartTime ?? undefined,
                 finishTime: isFlowRunStateTerminal({
                     status: flowExecutorContext.verdict.status,
