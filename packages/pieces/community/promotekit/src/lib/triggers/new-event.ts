@@ -7,26 +7,12 @@ import { promotekitAuth } from '../..';
 import { promotekitApiCall, promotekitCommon } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 
-const EVENT_TYPE_OPTIONS = [
-  { label: 'Affiliate Created', value: 'affiliate.created' },
-  { label: 'Affiliate Approved', value: 'affiliate.approved' },
-  { label: 'Referral Created', value: 'referral.created' },
-  { label: 'Referral Converted', value: 'referral.converted' },
-  { label: 'Commission Created', value: 'commission.created' },
-];
-
 export const newEvent = createTrigger({
   auth: promotekitAuth,
   name: 'new_event',
   displayName: 'New Event',
   description: 'Triggers when a PromoteKit webhook event is received.',
   props: {
-    eventType: Property.StaticDropdown({
-      displayName: 'Event Type',
-      description: 'The event type this trigger should respond to.',
-      required: true,
-      options: { options: EVENT_TYPE_OPTIONS },
-    }),
     instructions: Property.MarkDown({
       value: `### Setup Instructions
 
@@ -34,12 +20,18 @@ export const newEvent = createTrigger({
 2. Navigate to **Settings > Webhooks**
 3. Click **Add Endpoint**
 4. Paste the webhook URL shown below
-5. Enable the event type you selected above (and any others you need for separate flows)
-6. Save the endpoint`,
+5. Select the event types you want this flow to react to
+6. Save the endpoint
+
+**Need different flows for different events?** Create a separate flow with its own webhook URL, then add a new endpoint in PromoteKit with only the events for that flow.`,
     }),
   },
   sampleData: {
-    id: 'sample-id',
+    type: 'affiliate.created',
+    id: 'aff_sample',
+    email: 'affiliate@example.com',
+    first_name: 'John',
+    last_name: 'Doe',
     created_at: '2024-01-01T00:00:00Z',
   },
   type: TriggerStrategy.WEBHOOK,
@@ -57,37 +49,25 @@ export const newEvent = createTrigger({
       type: string;
       data: Record<string, unknown>;
     };
-    if (payload.type !== context.propsValue.eventType) return [];
-    return [flattenByType(payload.type, payload.data)];
+    return [
+      {
+        type: payload.type,
+        ...flattenByType(payload.type, payload.data),
+      },
+    ];
   },
 
   async test(context) {
-    const eventType = context.propsValue.eventType;
-    if (eventType === 'affiliate.created' || eventType === 'affiliate.approved') {
-      const response = await promotekitApiCall<{ data: Record<string, unknown>[] }>({
-        token: context.auth.secret_text,
-        method: HttpMethod.GET,
-        path: '/affiliates',
-        queryParams: { limit: '5' },
-      });
-      return response.body.data.map(promotekitCommon.flattenAffiliate);
-    }
-    if (eventType === 'referral.created' || eventType === 'referral.converted') {
-      const response = await promotekitApiCall<{ data: Record<string, unknown>[] }>({
-        token: context.auth.secret_text,
-        method: HttpMethod.GET,
-        path: '/referrals',
-        queryParams: { limit: '5' },
-      });
-      return response.body.data.map(promotekitCommon.flattenReferral);
-    }
     const response = await promotekitApiCall<{ data: Record<string, unknown>[] }>({
       token: context.auth.secret_text,
       method: HttpMethod.GET,
-      path: '/commissions',
+      path: '/affiliates',
       queryParams: { limit: '5' },
     });
-    return response.body.data.map(promotekitCommon.flattenCommission);
+    return response.body.data.map((item) => ({
+      type: 'affiliate.created',
+      ...promotekitCommon.flattenAffiliate(item),
+    }));
   },
 });
 

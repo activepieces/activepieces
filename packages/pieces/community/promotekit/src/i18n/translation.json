@@ -65,12 +65,5 @@
   "Please connect your account first": "Please connect your account first",
   "New Event": "New Event",
   "Triggers when a PromoteKit webhook event is received.": "Triggers when a PromoteKit webhook event is received.",
-  "Event Type": "Event Type",
-  "The event type this trigger should respond to.": "The event type this trigger should respond to.",
-  "Affiliate Created": "Affiliate Created",
-  "Affiliate Approved": "Affiliate Approved",
-  "Referral Created": "Referral Created",
-  "Referral Converted": "Referral Converted",
-  "Commission Created": "Commission Created",
-  "### Setup Instructions\n\n1. Go to your PromoteKit dashboard\n2. Navigate to **Settings > Webhooks**\n3. Click **Add Endpoint**\n4. Paste the webhook URL shown below\n5. Enable the event type you selected above (and any others you need for separate flows)\n6. Save the endpoint": "### Setup Instructions\n\n1. Go to your PromoteKit dashboard\n2. Navigate to **Settings > Webhooks**\n3. Click **Add Endpoint**\n4. Paste the webhook URL shown below\n5. Enable the event type you selected above (and any others you need for separate flows)\n6. Save the endpoint"
+  "### Setup Instructions\n\n1. Go to your PromoteKit dashboard\n2. Navigate to **Settings > Webhooks**\n3. Click **Add Endpoint**\n4. Paste the webhook URL shown below\n5. Select the event types you want this flow to react to\n6. Save the endpoint\n\n**Need different flows for different events?** Create a separate flow with its own webhook URL, then add a new endpoint in PromoteKit with only the events for that flow.": "### Setup Instructions\n\n1. Go to your PromoteKit dashboard\n2. Navigate to **Settings > Webhooks**\n3. Click **Add Endpoint**\n4. Paste the webhook URL shown below\n5. Select the event types you want this flow to react to\n6. Save the endpoint\n\n**Need different flows for different events?** Create a separate flow with its own webhook URL, then add a new endpoint in PromoteKit with only the events for that flow."
 }
