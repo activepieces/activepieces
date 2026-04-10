@@ -66,7 +66,7 @@ export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string): 
 
         async uploadRunLog(input) {
             if (input.pauseMetadata) {
-                const waitpointResult = await waitpointService(log).createForPause(
+                await waitpointService(log).createForPause(
                     convertPauseMetadataToWaitpoint({
                         pauseMetadata: input.pauseMetadata,
                         flowRunId: input.runId,
@@ -82,16 +82,18 @@ export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string): 
                     logsFileId: input.logsFileId,
                 })
 
-                const isPreCompleted = input.pauseMetadata.type === PauseType.WEBHOOK
-                    && !waitpointResult.inserted
-                    && waitpointResult.waitpoint.status === WaitpointStatus.COMPLETED
-                if (isPreCompleted) {
-                    await flowRunService(log).resumeFromWaitpoint({
-                        flowRunId: input.runId,
-                        resumePayload: waitpointResult.waitpoint.resumePayload,
-                        workerHandlerId: input.workerHandlerId ?? undefined,
-                        httpRequestId: input.httpRequestId ?? undefined,
-                    })
+                if (input.pauseMetadata.type === PauseType.WEBHOOK) {
+                    const latestWaitpoint = await waitpointService(log).getByFlowRunId(input.runId)
+                    const isPreCompleted = !isNil(latestWaitpoint)
+                        && latestWaitpoint.status === WaitpointStatus.COMPLETED
+                    if (isPreCompleted) {
+                        await flowRunService(log).resumeFromWaitpoint({
+                            flowRunId: input.runId,
+                            resumePayload: latestWaitpoint.resumePayload,
+                            workerHandlerId: input.workerHandlerId ?? undefined,
+                            httpRequestId: input.httpRequestId ?? undefined,
+                        })
+                    }
                 }
             }
             const logData: RunsMetadataUpsertData = {
