@@ -50,6 +50,9 @@
       "@activepieces/piece-aidbase": [
         "packages/pieces/community/aidbase/src/index.ts"
       ],
+      "@activepieces/piece-aiprise": [
+        "packages/pieces/community/aiprise/src/index.ts"
+      ],
       "@activepieces/piece-aircall": [
         "packages/pieces/community/aircall/src/index.ts"
       ],
