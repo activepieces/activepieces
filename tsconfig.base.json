@@ -957,6 +957,9 @@
       "@activepieces/piece-respond-io": [
         "packages/pieces/community/respond-io/src/index.ts"
       ],
+      "@activepieces/piece-reply-io": [
+        "packages/pieces/community/reply-io/src/index.ts"
+      ],
       "@activepieces/piece-retable": [
         "packages/pieces/community/retable/src/index.ts"
       ],
