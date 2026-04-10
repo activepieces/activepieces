@@ -6,6 +6,34 @@ import {
 import { AppConnectionType } from '@activepieces/shared';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 
+export async function getJwtToken({
+  baseUrl,
+  email,
+  password,
+}: {
+  baseUrl: string;
+  email: string;
+  password: string;
+}): Promise<string> {
+  const url = baseUrl.trim().replace(/\/+$/, '');
+  const res = await httpClient.sendRequest({
+    method: HttpMethod.POST,
+    url: `${url}/api/auth/login`,
+    body: { provider: 'LOCAL', email, password },
+  });
+  const setCookie = res.headers?.['set-cookie'];
+  if (setCookie) {
+    const cookies = Array.isArray(setCookie) ? setCookie : [setCookie];
+    for (const cookie of cookies) {
+      const match = cookie.match(/auth=([^;]+)/);
+      if (match) return match[1];
+    }
+  }
+  const authHeader = res.headers?.['auth'];
+  if (authHeader) return authHeader;
+  throw new Error('Could not extract JWT from login response');
+}
+
 const apiKeyAuth = PieceAuth.CustomAuth({
   displayName: 'API Key',
   description: `Authenticate with your Postiz API key. Triggers require manual webhook setup in your Postiz dashboard.\n\nTo get your API key:\n1. Log in to your Postiz dashboard\n2. Go to **Settings > Developers > Public API**\n3. Generate a new API key and copy it`,
@@ -100,34 +128,6 @@ const jwtAuth = PieceAuth.CustomAuth({
     return { valid: true };
   },
 });
-
-export async function getJwtToken({
-  baseUrl,
-  email,
-  password,
-}: {
-  baseUrl: string;
-  email: string;
-  password: string;
-}): Promise<string> {
-  const url = baseUrl.trim().replace(/\/+$/, '');
-  const res = await httpClient.sendRequest({
-    method: HttpMethod.POST,
-    url: `${url}/api/auth/login`,
-    body: { provider: 'LOCAL', email, password },
-  });
-  const setCookie = res.headers?.['set-cookie'];
-  if (setCookie) {
-    const cookies = Array.isArray(setCookie) ? setCookie : [setCookie];
-    for (const cookie of cookies) {
-      const match = cookie.match(/auth=([^;]+)/);
-      if (match) return match[1];
-    }
-  }
-  const authHeader = res.headers?.['auth'];
-  if (authHeader) return authHeader;
-  throw new Error('Could not extract JWT from login response');
-}
 
 function isApiKeyAuth(
   auth: PostizAuthValue

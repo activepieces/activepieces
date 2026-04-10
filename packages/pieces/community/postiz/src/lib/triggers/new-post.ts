@@ -81,21 +81,24 @@ With **Email & Password (JWT)** authentication, the webhook is registered automa
     if (!webhookId) {
       return;
     }
-    const auth = context.auth as PostizJwtAuthValue;
-    const apiRoot = buildApiRoot(auth);
-    const jwt = await getJwtToken({
-      baseUrl: auth.props.base_url,
-      email: auth.props.email,
-      password: auth.props.password,
-    });
-    try {
-      await httpClient.sendRequest({
-        method: HttpMethod.DELETE,
-        url: `${apiRoot}/api/webhooks/${webhookId}`,
-        headers: { auth: jwt },
-      });
-    } catch {
-      // Webhook may have been manually deleted — ignore
+    const auth = context.auth as PostizAuthValue;
+    if (!isApiKeyAuthentication(auth)) {
+      const jwtAuth = auth as PostizJwtAuthValue;
+      const apiRoot = buildApiRoot(jwtAuth);
+      try {
+        const jwt = await getJwtToken({
+          baseUrl: jwtAuth.props.base_url,
+          email: jwtAuth.props.email,
+          password: jwtAuth.props.password,
+        });
+        await httpClient.sendRequest({
+          method: HttpMethod.DELETE,
+          url: `${apiRoot}/api/webhooks/${webhookId}`,
+          headers: { auth: jwt },
+        });
+      } catch {
+        // Webhook may have been manually deleted or credentials changed — ignore
+      }
     }
     await context.store.delete(WEBHOOK_STORE_KEY);
   },
