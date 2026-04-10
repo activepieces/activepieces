@@ -16,7 +16,7 @@ export const analyzeDocument = createAction({
   name: 'analyze-document',
   displayName: 'Analyze Document',
   description:
-    'Extract text, forms (key-value pairs), tables, and signatures from a document. Supports JPEG, PNG, PDF, and TIFF. For multi-page PDFs, use Start Document Analysis instead.',
+    'Extract text, forms (key-value pairs), tables, and signatures from a document. Supports JPEG and PNG via direct upload; PDF and TIFF via S3 only. For multi-page PDFs, use Start Document Analysis instead.',
   props: {
     source: Property.StaticDropdown({
       displayName: 'Document Source',
