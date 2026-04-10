@@ -8,6 +8,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useContext } from 'react';
 
 import { analyticsApi } from '@/features/platform-admin/api/analytics-api';
+import { platformHooks } from '@/hooks/platform-hooks';
 
 import { RefreshAnalyticsContext } from '../stores/refresh-analytics-context';
 
@@ -25,9 +26,12 @@ export const platformAnalyticsHooks = {
   useUsersLeaderboard: (
     timePeriod: AnalyticsTimePeriod,
   ): { data: UserLeaderboardItem[] | null; isLoading: boolean } => {
+    const { platform } = platformHooks.useCurrentPlatform();
     const { data, isLoading } = useQuery({
       queryKey: userLeaderboardQueryKey(timePeriod),
       queryFn: () => analyticsApi.getUserLeaderboard(timePeriod),
+      enabled: platform.plan.analyticsEnabled,
+      meta: { showErrorDialog: true, loadSubsetOptions: {} },
     });
 
     return {
@@ -39,9 +43,12 @@ export const platformAnalyticsHooks = {
   useProjectLeaderboard: (
     timePeriod: AnalyticsTimePeriod,
   ): { data: ProjectLeaderboardItem[] | null; isLoading: boolean } => {
+    const { platform } = platformHooks.useCurrentPlatform();
     const { data, isLoading } = useQuery({
       queryKey: projectLeaderboardQueryKey(timePeriod),
       queryFn: () => analyticsApi.getProjectLeaderboard(timePeriod),
+      enabled: platform.plan.analyticsEnabled,
+      meta: { showErrorDialog: true, loadSubsetOptions: {} },
     });
 
     return {
@@ -54,9 +61,11 @@ export const platformAnalyticsHooks = {
     data: PlatformAnalyticsReport | undefined;
     isLoading: boolean;
   } => {
+    const { platform } = platformHooks.useCurrentPlatform();
     const { data, isLoading } = useQuery({
       queryKey: analyticsQueryKey,
       queryFn: () => analyticsApi.get(),
+      enabled: platform.plan.analyticsEnabled,
     });
     return { data, isLoading };
   },
@@ -85,10 +94,12 @@ export const platformAnalyticsHooks = {
       [projectId],
     );
 
+    const { platform } = platformHooks.useCurrentPlatform();
     const { data, isLoading } = useQuery({
       queryKey: [...analyticsQueryKey, timePeriod],
       queryFn: () => analyticsApi.get(timePeriod),
       select: selectFilteredByProject,
+      enabled: platform.plan.analyticsEnabled,
     });
 
     return {
