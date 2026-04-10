@@ -33,6 +33,10 @@ function McpAuthorizePage() {
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const debouncedSetSearchValue = useDebouncedCallback(setSearchValue, 300);
   const isLoggedIn = authenticationSession.isLoggedIn();
+  const projectTypeOptions = [
+    { value: ProjectType.TEAM, label: t('Team') },
+    { value: ProjectType.PERSONAL, label: t('Personal') },
+  ];
 
   const { data: projectsPage, isLoading: projectsLoading } = useQuery({
     queryKey: ['mcp-authorize-projects', searchValue, selectedTypes],
@@ -115,7 +119,7 @@ function McpAuthorizePage() {
               <MultiSelectFilter
                 label={t('Type')}
                 icon={<FolderKanban className="size-4" />}
-                options={PROJECT_TYPE_OPTIONS}
+                options={projectTypeOptions}
                 selectedValues={selectedTypes}
                 onChange={setSelectedTypes}
               />
@@ -185,10 +189,5 @@ function decodeJwtClientName(token: string | null): string {
     return t('Unknown app');
   }
 }
-
-const PROJECT_TYPE_OPTIONS = [
-  { value: ProjectType.TEAM, label: 'Team' },
-  { value: ProjectType.PERSONAL, label: 'Personal' },
-];
 
 export { McpAuthorizePage };
