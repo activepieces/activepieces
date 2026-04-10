@@ -2,7 +2,7 @@ import { ProjectType, ProjectWithLimits, SeekPage } from '@activepieces/shared';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { jwtDecode } from 'jwt-decode';
-import { Blocks, Shield } from 'lucide-react';
+import { Blocks, FolderKanban, Shield } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Navigate, useSearchParams } from 'react-router-dom';
 import { useDebouncedCallback } from 'use-debounce';
@@ -18,6 +18,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { MultiSelectFilter } from '@/features/automations/components/multi-select-filter';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 
@@ -29,17 +30,21 @@ function McpAuthorizePage() {
     string | undefined
   >(undefined);
   const [searchValue, setSearchValue] = useState('');
+  const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const debouncedSetSearchValue = useDebouncedCallback(setSearchValue, 300);
   const isLoggedIn = authenticationSession.isLoggedIn();
+  const projectTypeOptions = [
+    { value: ProjectType.TEAM, label: t('Team') },
+    { value: ProjectType.PERSONAL, label: t('Personal') },
+  ];
 
   const { data: projectsPage, isLoading: projectsLoading } = useQuery({
-    queryKey: ['mcp-authorize-projects', searchValue],
+    queryKey: ['mcp-authorize-projects', searchValue, selectedTypes],
     queryFn: () =>
       api.get<SeekPage<ProjectWithLimits>>('/v1/projects', {
-        params: {
-          limit: 1000,
-          ...(searchValue && { displayName: searchValue }),
-        },
+        limit: 1000,
+        ...(searchValue && { displayName: searchValue }),
+        ...(selectedTypes.length > 0 && { types: selectedTypes }),
       }),
     enabled: isLoggedIn && !!authRequestId,
   });
@@ -52,11 +57,13 @@ function McpAuthorizePage() {
     },
   });
 
-  const projects = projectsPage?.data ?? [];
-  const projectsMap = useMemo(
-    () => new Map(projects.map((p) => [p.id, p])),
-    [projectsPage?.data],
-  );
+  const { projectsMap, options } = useMemo(() => {
+    const list = projectsPage?.data ?? [];
+    return {
+      projectsMap: new Map(list.map((p) => [p.id, p])),
+      options: list.map((p) => ({ value: p.id, label: p.displayName })),
+    };
+  }, [projectsPage?.data]);
 
   if (!authRequestId) {
     return <Navigate to="/404" replace />;
@@ -105,12 +112,20 @@ function McpAuthorizePage() {
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium">{t('Select Project')}</label>
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium">
+                {t('Select Project')}
+              </label>
+              <MultiSelectFilter
+                label={t('Type')}
+                icon={<FolderKanban className="size-4" />}
+                options={projectTypeOptions}
+                selectedValues={selectedTypes}
+                onChange={setSelectedTypes}
+              />
+            </div>
             <SearchableSelect<string>
-              options={projects.map((project) => ({
-                value: project.id,
-                label: project.displayName,
-              }))}
+              options={options}
               onChange={(value) => setSelectedProjectId(value ?? undefined)}
               value={selectedProjectId}
               placeholder={t('Search projects...')}
@@ -121,14 +136,14 @@ function McpAuthorizePage() {
                 const project = projectsMap.get(String(value));
                 if (!project) return null;
                 return (
-                  <span className="flex w-full items-center justify-between gap-2">
+                  <div className="flex w-full items-center justify-between gap-2">
                     <span className="truncate">{project.displayName}</span>
                     <Badge variant="outline" className="shrink-0 text-[10px]">
                       {project.type === ProjectType.PERSONAL
                         ? t('Personal')
                         : t('Team')}
                     </Badge>
-                  </span>
+                  </div>
                 );
               }}
             />
