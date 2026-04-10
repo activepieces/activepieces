@@ -50,6 +50,12 @@ export const updateTestimonialAction = createAction({
     if (remove_tags && Array.isArray(remove_tags) && remove_tags.length > 0)
       body['remove_tags'] = remove_tags;
 
+    if (Object.keys(body).length === 0) {
+      throw new Error(
+        'At least one field must be provided: Approval Status, Add Tags, or Remove Tags.',
+      );
+    }
+
     const response = await senjaApiCall<Record<string, unknown>>({
       token: context.auth.secret_text,
       method: HttpMethod.PATCH,
