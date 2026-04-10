@@ -11,7 +11,10 @@ export const newEventTrigger = createTrigger({
 	props: {
 		instructions: instructionsMarkdown,
 	},
-	sampleData: draftSampleData,
+	sampleData: {
+		event: 'draft.created',
+		data: draftSampleData,
+	},
 	async onEnable() {
 		// Typefully webhooks are configured manually in the dashboard (Settings → API → Webhooks).
 	},
