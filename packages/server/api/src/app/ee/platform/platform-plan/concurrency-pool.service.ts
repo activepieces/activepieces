@@ -13,14 +13,14 @@ export const concurrencyPoolService = (_log: FastifyBaseLogger) => ({
 
     async upsertPool({ platformId, projectIds, maxConcurrentJobs }: UpsertPoolParams): Promise<{ poolId: string }> {
         const existingProjects = await projectRepo().find({
-            where: { id: In(projectIds) },
+            where: { id: In(projectIds), platformId },
             select: { id: true, poolId: true },
         })
         const oldPoolIds = [...new Set(existingProjects.map(p => p.poolId).filter((id): id is string => !isNil(id)))]
 
         const poolId = apId()
         await concurrencyPoolRepo().save({ id: poolId, platformId, maxConcurrentJobs })
-        await projectRepo().update({ id: In(projectIds) }, { poolId })
+        await projectRepo().update({ id: In(projectIds), platformId }, { poolId })
 
         await distributedStore.delete([
             ...projectIds.map(id => getProjectConcurrencyPoolKey(id)),
