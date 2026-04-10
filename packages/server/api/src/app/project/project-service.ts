@@ -16,14 +16,12 @@ import {
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Brackets, EntityManager, IsNull, Not, ObjectLiteral, SelectQueryBuilder } from 'typeorm'
-import { repoFactory } from '../core/db/repo-factory'
-import { getProjectMaxConcurrentJobsKey } from '../database/redis/keys'
-import { distributedStore } from '../database/redis-connections'
+import { concurrencyPoolService } from '../ee/platform/platform-plan/concurrency-pool.service'
 import { userService } from '../user/user-service'
-import { ProjectEntity } from './project-entity'
 import { projectHooks } from './project-hooks'
+import { projectRepo } from './project-repo'
 
-export const projectRepo = repoFactory(ProjectEntity)
+export { projectRepo }
 
 export const projectService = (log: FastifyBaseLogger) => ({
     async create(params: CreateParams): Promise<Project> {
@@ -95,7 +93,15 @@ export const projectService = (log: FastifyBaseLogger) => ({
         } : {}
 
         await projectRepo(entityManager).update({ id: projectId }, { ...baseUpdate, ...teamUpdate })
-        return this.getOneOrThrow(projectId)
+        const updatedProject = await this.getOneOrThrow(projectId)
+        if (!isNil(request.maxConcurrentJobs)) {
+            await concurrencyPoolService(log).setProjectConcurrencyLimit({
+                projectId,
+                platformId: updatedProject.platformId,
+                maxConcurrentJobs: request.maxConcurrentJobs,
+            })
+        }
+        return updatedProject
     },
 
     async getPlatformId(projectId: ProjectId): Promise<string> {
@@ -214,7 +220,11 @@ export const projectService = (log: FastifyBaseLogger) => ({
     callProjectPostCreateHooks: async (savedProject: Project)=>{
         await projectHooks.get(log).postCreate(savedProject)
         if (!isNil(savedProject.maxConcurrentJobs)) {
-            await distributedStore.put(getProjectMaxConcurrentJobsKey(savedProject.id), savedProject.maxConcurrentJobs)
+            await concurrencyPoolService(log).setProjectConcurrencyLimit({
+                projectId: savedProject.id,
+                platformId: savedProject.platformId,
+                maxConcurrentJobs: savedProject.maxConcurrentJobs,
+            })
         }
     },
 })

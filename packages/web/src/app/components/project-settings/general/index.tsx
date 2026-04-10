@@ -34,6 +34,7 @@ export type FormValues = {
   projectName: string;
   icon: ProjectIcon;
   externalId?: string;
+  maxConcurrentJobs?: number | null;
 };
 
 type GeneralSettingsProps = {
@@ -154,6 +155,40 @@ export const GeneralSettings = ({ form }: GeneralSettingsProps) => {
                 />
                 <FormDescription className="text-xs text-muted-foreground">
                   {t('Used to identify the project based on your SaaS ID')}
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
+        {platformRole === PlatformRole.ADMIN && (
+          <FormField
+            name="maxConcurrentJobs"
+            render={({ field }) => (
+              <FormItem>
+                <Label
+                  htmlFor="maxConcurrentJobs"
+                  className="text-sm font-medium"
+                >
+                  {t('Max Concurrent Jobs')}
+                </Label>
+                <Input
+                  {...field}
+                  id="maxConcurrentJobs"
+                  type="number"
+                  min={1}
+                  value={field.value ?? ''}
+                  onChange={(e) =>
+                    field.onChange(
+                      e.target.value ? Number(e.target.value) : null,
+                    )
+                  }
+                  disabled={form.formState.disabled}
+                />
+                <FormDescription className="text-xs text-muted-foreground">
+                  {t(
+                    'Maximum number of flows that can run at the same time for this project',
+                  )}
                 </FormDescription>
                 <FormMessage />
               </FormItem>
