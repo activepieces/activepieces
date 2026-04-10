@@ -1,4 +1,4 @@
-import { ExecutionType, FlowRun, FlowRunStatus, isNil, ProgressUpdateType, spreadIfDefined } from '@activepieces/shared'
+import { ExecutionType, FlowRun, FlowRunStatus, isFlowRunStateTerminal, isNil, ProgressUpdateType, spreadIfDefined } from '@activepieces/shared'
 import { Queue, Worker } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
 import { FastifyBaseLogger } from 'fastify'
@@ -172,7 +172,7 @@ async function markParentRunAsFailed({
         id: parentRunId,
     })
 
-    if (isNil(flowRun) || flowRun.status === FlowRunStatus.CANCELED) {
+    if (isNil(flowRun) || isFlowRunStateTerminal({ status: flowRun.status, ignoreInternalError: false })) {
         return
     }
 

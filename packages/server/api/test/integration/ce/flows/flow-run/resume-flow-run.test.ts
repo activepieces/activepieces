@@ -471,4 +471,56 @@ describe('Resume flow run', () => {
         const waitpointAfter = await db.findOneBy('waitpoint', { flowRunId: parentRun.id })
         expect(waitpointAfter).toBeNull()
     })
+
+    it('should not create orphaned waitpoint when parent is already in terminal state', async () => {
+        const flow = createMockFlow({ projectId: ctx.project.id })
+        await db.save('flow', flow)
+
+        const flowVersion = createMockFlowVersion({
+            flowId: flow.id,
+            state: FlowVersionState.LOCKED,
+        })
+        await db.save('flow_version', flowVersion)
+
+        const parentRun = createMockFlowRun({
+            projectId: ctx.project.id,
+            flowId: flow.id,
+            flowVersionId: flowVersion.id,
+            status: FlowRunStatus.FAILED,
+            environment: RunEnvironment.PRODUCTION,
+        })
+        await db.save('flow_run', parentRun)
+
+        await waitpointService(app.log).complete({
+            flowRunId: parentRun.id,
+            projectId: ctx.project.id,
+            resumePayload: {
+                payload: { body: { status: 'error', data: { message: 'Subflow execution failed' } } },
+                progressUpdateType: ProgressUpdateType.TEST_FLOW,
+                executionType: ExecutionType.RESUME,
+            },
+        })
+
+        const waitpoint = await db.findOneBy('waitpoint', { flowRunId: parentRun.id })
+        expect(waitpoint).not.toBeNull()
+
+        await waitpointService(app.log).deleteByFlowRunId(parentRun.id)
+
+        await waitpointService(app.log).handleResumeSignal({
+            flowRunId: parentRun.id,
+            flowRunStatus: FlowRunStatus.FAILED,
+            projectId: ctx.project.id,
+            resumeData: {
+                payload: { body: { status: 'error' } },
+                progressUpdateType: ProgressUpdateType.TEST_FLOW,
+                executionType: ExecutionType.RESUME,
+            },
+            onReady: async () => {
+                throw new Error('onReady should not be called for terminal state')
+            },
+        })
+
+        const orphanedWaitpoint = await db.findOneBy('waitpoint', { flowRunId: parentRun.id })
+        expect(orphanedWaitpoint).toBeNull()
+    })
 })
