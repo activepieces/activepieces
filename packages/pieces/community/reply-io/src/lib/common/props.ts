@@ -6,6 +6,7 @@ import { extractCollection, replyIoRequest } from './client';
 
 export const campaignIdProp = Property.Dropdown({
   displayName: 'Campaign',
+  description: 'The Reply.io campaign to use.',
   required: true,
   refreshers: [],
   auth: replyIoAuth,
@@ -19,7 +20,7 @@ export const campaignIdProp = Property.Dropdown({
     }
 
     const response = await replyIoRequest({
-      apiKey: auth.props.api_key,
+      apiKey: auth.secret_text,
       method: HttpMethod.GET,
       path: '/v1/campaigns',
     });

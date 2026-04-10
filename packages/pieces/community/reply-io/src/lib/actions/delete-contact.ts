@@ -4,25 +4,25 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import { replyIoAuth } from '../auth';
 import { replyIoRequest } from '../common/client';
 
-export const markFinishedAction = createAction({
-  name: 'mark_finished',
-  displayName: 'Mark Contact as Finished',
+export const deleteContactAction = createAction({
+  name: 'delete_contact',
+  displayName: 'Delete Contact',
   description:
-    'Mark a contact as finished so they no longer receive emails in any campaign. Use this when you have completed all outreach to that contact.',
+    'Permanently delete a contact from Reply.io by their email address. This cannot be undone.',
   auth: replyIoAuth,
   props: {
     email: Property.ShortText({
       displayName: 'Contact Email Address',
-      description: 'Email address of the contact to mark as finished.',
+      description: 'Email address of the contact to permanently delete.',
       required: true,
     }),
   },
   async run({ auth, propsValue }) {
     const response = await replyIoRequest({
       apiKey: auth.secret_text,
-      method: HttpMethod.POST,
-      path: '/v1/actions/markasfinished',
-      body: {
+      method: HttpMethod.DELETE,
+      path: '/v1/people',
+      queryParams: {
         email: propsValue.email,
       },
     });

@@ -4,16 +4,16 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import { replyIoAuth } from '../auth';
 import { replyIoRequest } from '../common/client';
 
-export const markFinishedAction = createAction({
-  name: 'mark_finished',
-  displayName: 'Mark Contact as Finished',
+export const removeFromAllCampaignsAction = createAction({
+  name: 'remove_from_all_campaigns',
+  displayName: 'Remove Contact from All Campaigns',
   description:
-    'Mark a contact as finished so they no longer receive emails in any campaign. Use this when you have completed all outreach to that contact.',
+    'Remove a contact from every campaign they are enrolled in. No further emails will be sent to them. Their contact record is kept in Reply.io.',
   auth: replyIoAuth,
   props: {
     email: Property.ShortText({
       displayName: 'Contact Email Address',
-      description: 'Email address of the contact to mark as finished.',
+      description: 'Email address of the contact to remove from all campaigns.',
       required: true,
     }),
   },
@@ -21,7 +21,7 @@ export const markFinishedAction = createAction({
     const response = await replyIoRequest({
       apiKey: auth.secret_text,
       method: HttpMethod.POST,
-      path: '/v1/actions/markasfinished',
+      path: '/v1/actions/removepersonfromallcampaigns',
       body: {
         email: propsValue.email,
       },

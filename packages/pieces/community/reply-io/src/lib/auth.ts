@@ -3,21 +3,15 @@ import { PieceAuth } from '@activepieces/pieces-framework';
 
 import { replyIoRequest } from './common/client';
 
-export const replyIoAuth = PieceAuth.CustomAuth({
+export const replyIoAuth = PieceAuth.SecretText({
   displayName: 'Reply.io',
   required: true,
-  description: 'Use your Reply.io API key. The piece sends both Api-Key and X-Api-Key headers with the same value for compatibility because public references conflict on the exact header name.',
-  props: {
-    api_key: PieceAuth.SecretText({
-      displayName: 'API Key',
-      description: 'Your Reply.io API key.',
-      required: true,
-    }),
-  },
+  description: 'Your Reply.io API key. Find it in Reply.io under **Settings → API**.',
+  
   validate: async ({ auth }) => {
     try {
       await replyIoRequest({
-        apiKey: auth.api_key,
+        apiKey: auth,
         method: HttpMethod.GET,
         path: '/v1/campaigns',
       });
