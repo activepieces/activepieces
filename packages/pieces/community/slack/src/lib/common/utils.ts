@@ -1,4 +1,5 @@
 import { ApFile } from '@activepieces/pieces-framework';
+import { tryCatch } from '@activepieces/shared';
 import { Block, KnownBlock, WebClient } from '@slack/web-api';
 
 const SLACK_SECTION_TEXT_MAX_LENGTH = 3000;
@@ -140,41 +141,54 @@ export function getFirstFiveOrAll(array: unknown[]) {
   }
 }
 
+
+export async function tryAddBotToChannel({ botToken, userToken, channel }: { botToken: string; userToken: string | undefined; channel: string }): Promise<void> {
+  const botClient = new WebClient(botToken);
+  const { error: joinError } = await tryCatch(() => botClient.conversations.join({ channel }));
+  if (joinError && userToken) {
+    // Public join failed — likely a private channel; use user token to invite the bot
+    const authResponse = await botClient.auth.test();
+    const botUserId = authResponse.user_id as string;
+    const userClient = new WebClient(userToken);
+    await tryCatch(() => userClient.conversations.invite({ channel, users: botUserId }));
+  }
+}
+
 /**
 * Parse a message text to extract command and arguments
 */
 export function parseCommand(
- text: string,
- botUserId: string,
- validCommands: string[]
+  text: string,
+  botUserId: string,
+  validCommands: string[]
 ): { command: string; args: string[] } | null {
- if (!botUserId) {
-   return null;
- }
+  if (!botUserId) {
+    return null;
+  }
 
- // Check if the message mentions the bot
- const mentionRegex = new RegExp(`<@${botUserId}>\\s+(.+)`, 's');
- const mentionMatch = text.match(mentionRegex);
+  // Check if the message mentions the bot
+  const mentionRegex = new RegExp(`<@${botUserId}>\\s+(.+)`, 's');
+  const mentionMatch = text.match(mentionRegex);
 
- if (!mentionMatch) {
-   return null;
- }
+  if (!mentionMatch) {
+    return null;
+  }
 
- // Extract the text after the mention
- const commandText = mentionMatch[1].trim();
+  // Extract the text after the mention
+  const commandText = mentionMatch[1].trim();
 
- // Split into command and arguments (first word is command, rest are args)
- const parts = commandText.split(/\s+/);
- const command = parts[0].toLowerCase();
- const args = parts.slice(1);
+  // Split into command and arguments (first word is command, rest are args)
+  const parts = commandText.split(/\s+/);
+  const command = parts[0].toLowerCase();
+  const args = parts.slice(1);
 
- // Check if it's a valid command
- if (!validCommands.includes(command)) {
-   return null;
- }
+  // Check if it's a valid command
+  if (!validCommands.includes(command)) {
+    return null;
+  }
 
- return {
-   command,
-   args,
- };
+  return {
+    command,
+    args,
+  };
 }

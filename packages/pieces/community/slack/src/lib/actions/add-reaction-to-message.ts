@@ -1,9 +1,8 @@
 import { slackAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { singleSelectChannelInfo, slackChannel } from '../common/props';
-
+import { autoAddBot, singleSelectChannelInfo, slackChannel } from '../common/props';
 import { WebClient } from '@slack/web-api';
-import { processMessageTimestamp } from '../common/utils';
+import { processMessageTimestamp, tryAddBotToChannel } from '../common/utils';
 import {
   getBotToken,
   getUserToken,
@@ -20,6 +19,7 @@ export const addRectionToMessageAction = createAction({
   props: {
     info: singleSelectChannelInfo,
     channel: slackChannel(true),
+    autoAddBot,
     ts: Property.ShortText({
       displayName: 'Message Timestamp',
       description:
@@ -41,24 +41,30 @@ export const addRectionToMessageAction = createAction({
   },
 
   async run(context) {
-    const { channel, ts, reaction, reactAsUser } = context.propsValue;
+    const { channel, ts, reaction, reactAsUser, autoAddBot: shouldAddBot } = context.propsValue;
 
+    const botToken = getBotToken(context.auth as SlackAuthValue);
     const token = reactAsUser
       ? requireUserToken(context.auth as SlackAuthValue)
-      : getBotToken(context.auth as SlackAuthValue);
+      : botToken;
+
+    if (shouldAddBot) {
+      await tryAddBotToChannel({
+        botToken,
+        userToken: getUserToken(context.auth as SlackAuthValue),
+        channel,
+      });
+    }
 
     const slack = new WebClient(token);
-
     const messageTimestamp = processMessageTimestamp(ts);
 
     if (messageTimestamp) {
-      const response = await slack.reactions.add({
+      return await slack.reactions.add({
         channel,
         timestamp: messageTimestamp,
         name: reaction,
       });
-
-      return response;
     } else {
       throw new Error('Invalid Timestamp Value.');
     }

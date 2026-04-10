@@ -1,7 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { slackAuth } from '../auth';
-import { assertNotNullOrUndefined } from '@activepieces/shared';
+import { assertNotNullOrUndefined, ExecutionType } from '@activepieces/shared';
 import {
+  autoAddBot,
   profilePicture,
   text,
   slackChannel,
@@ -11,7 +12,9 @@ import {
   threadTs,
   mentionOriginFlow,
 } from '../common/props';
+import { tryAddBotToChannel } from '../common/utils';
 import { requestAction } from '../common/request-action';
+import { getBotToken, getUserToken, SlackAuthValue } from '../common/auth-helpers';
 
 export const requestActionMessageAction = createAction({
   auth: slackAuth,
@@ -22,6 +25,7 @@ export const requestActionMessageAction = createAction({
   props: {
     info: singleSelectChannelInfo,
     channel: slackChannel(true),
+    autoAddBot,
     text,
     actions,
     threadTs,
@@ -36,8 +40,16 @@ export const requestActionMessageAction = createAction({
     mentionOriginFlow,
   },
   async run(context) {
-    const { channel } = context.propsValue;
+    const { channel, autoAddBot: shouldAddBot } = context.propsValue;
     assertNotNullOrUndefined(channel, 'channel');
+
+    if (shouldAddBot && context.executionType === ExecutionType.BEGIN) {
+      await tryAddBotToChannel({
+        botToken: getBotToken(context.auth as SlackAuthValue),
+        userToken: getUserToken(context.auth as SlackAuthValue),
+        channel,
+      });
+    }
 
     return await requestAction(channel, context);
   },

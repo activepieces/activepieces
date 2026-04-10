@@ -1,9 +1,9 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { slackAuth } from '../auth';
-import { singleSelectChannelInfo, slackChannel } from '../common/props';
-import { processMessageTimestamp } from '../common/utils';
+import { autoAddBot, singleSelectChannelInfo, slackChannel } from '../common/props';
+import { processMessageTimestamp, tryAddBotToChannel } from '../common/utils';
 import { WebClient } from '@slack/web-api';
-import { requireUserToken, SlackAuthValue } from '../common/auth-helpers';
+import { getBotToken, getUserToken, requireUserToken, SlackAuthValue } from '../common/auth-helpers';
 
 export const deleteMessageAction = createAction({
   name: 'delete-message',
@@ -13,6 +13,7 @@ export const deleteMessageAction = createAction({
   props: {
     info: singleSelectChannelInfo,
     channel: slackChannel(true),
+    autoAddBot,
     ts: Property.ShortText({
       displayName: 'Message Timestamp',
       description:
@@ -24,6 +25,14 @@ export const deleteMessageAction = createAction({
     const messageTimestamp = processMessageTimestamp(propsValue.ts);
     if (!messageTimestamp) {
       throw new Error('Invalid Timestamp Value.');
+    }
+
+    if (propsValue.autoAddBot) {
+      await tryAddBotToChannel({
+        botToken: getBotToken(auth as SlackAuthValue),
+        userToken: getUserToken(auth as SlackAuthValue),
+        channel: propsValue.channel,
+      });
     }
 
     const userAccessToken = requireUserToken(auth as SlackAuthValue);

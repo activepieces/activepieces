@@ -1,11 +1,11 @@
 import { ConversationsHistoryResponse, WebClient } from '@slack/web-api';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { slackAuth } from '../auth';
-import { singleSelectChannelInfo, slackChannel } from '../common/props';
-import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
+import { autoAddBot, singleSelectChannelInfo, slackChannel } from '../common/props';
+import { tryAddBotToChannel } from '../common/utils';
+import { getBotToken, getUserToken, SlackAuthValue } from '../common/auth-helpers';
 
 export const getChannelHistory = createAction({
-  // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
   name: 'getChannelHistory',
   auth: slackAuth,
   displayName: 'Get channel history',
@@ -14,6 +14,7 @@ export const getChannelHistory = createAction({
   props: {
     info: singleSelectChannelInfo,
     channel: slackChannel(true),
+    autoAddBot,
     oldest: Property.Number({
       displayName: 'Oldest',
       description:
@@ -41,14 +42,23 @@ export const getChannelHistory = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const client = new WebClient(getBotToken(auth as SlackAuthValue));
+    const botToken = getBotToken(auth as SlackAuthValue);
+
+    if (propsValue.autoAddBot) {
+      await tryAddBotToChannel({
+        botToken,
+        userToken: getUserToken(auth as SlackAuthValue),
+        channel: propsValue.channel,
+      });
+    }
+
+    const client = new WebClient(botToken);
     const messages = [];
-    await client.conversations.history({ channel: propsValue.channel });
     for await (const page of client.paginate('conversations.history', {
       channel: propsValue.channel,
       oldest: propsValue.oldest,
       latest: propsValue.latest,
-      limit: 200, // page size, does not limit the total number of results
+      limit: 200,
       include_all_metadata: propsValue.includeAllMetadata,
       inclusive: propsValue.inclusive,
     })) {

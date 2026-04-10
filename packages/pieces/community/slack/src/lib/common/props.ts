@@ -167,6 +167,14 @@ export const usergroupIds = Property.MultiSelectDropdown({
   },
 });
 
+export const autoAddBot = Property.Checkbox({
+  displayName: 'Add bot to channel automatically?',
+  description:
+    'Automatically add the bot to the channel before the action runs. For public channels this uses conversations.join; for private channels it uses your user token to invite the bot.',
+  required: true,
+  defaultValue: true,
+});
+
 export const text = Property.LongText({
   displayName: 'Message',
   required: true,

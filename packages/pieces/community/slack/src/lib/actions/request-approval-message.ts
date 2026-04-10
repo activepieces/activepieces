@@ -1,5 +1,5 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { buildFlowOriginContextBlock, slackSendMessage, textToSectionBlocks } from '../common/utils';
+import { buildFlowOriginContextBlock, slackSendMessage, textToSectionBlocks, tryAddBotToChannel } from '../common/utils';
 import { slackAuth } from '../auth';
 import {
   assertNotNullOrUndefined,
@@ -7,6 +7,7 @@ import {
   PauseType,
 } from '@activepieces/shared';
 import {
+  autoAddBot,
   profilePicture,
   singleSelectChannelInfo,
   slackChannel,
@@ -15,7 +16,7 @@ import {
   mentionOriginFlow,
 } from '../common/props';
 import { ChatPostMessageResponse, WebClient } from '@slack/web-api';
-import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
+import { getBotToken, getUserToken, SlackAuthValue } from '../common/auth-helpers';
 
 export const requestSendApprovalMessageAction = createAction({
   auth: slackAuth,
@@ -26,6 +27,7 @@ export const requestSendApprovalMessageAction = createAction({
   props: {
     info: singleSelectChannelInfo,
     channel: slackChannel(true),
+    autoAddBot,
     text,
     username,
     profilePicture,
@@ -34,11 +36,19 @@ export const requestSendApprovalMessageAction = createAction({
   async run(context) {
     if (context.executionType === ExecutionType.BEGIN) {
       const token = getBotToken(context.auth as SlackAuthValue);
-      const { channel, username, profilePicture, mentionOriginFlow } = context.propsValue;
+      const { channel, username, profilePicture, mentionOriginFlow, autoAddBot: shouldAddBot } = context.propsValue;
 
       assertNotNullOrUndefined(token, 'token');
       assertNotNullOrUndefined(text, 'text');
       assertNotNullOrUndefined(channel, 'channel');
+
+      if (shouldAddBot) {
+        await tryAddBotToChannel({
+          botToken: token,
+          userToken: getUserToken(context.auth as SlackAuthValue),
+          channel,
+        });
+      }
 
       const postMessage = await slackSendMessage({
         token,
@@ -47,7 +57,7 @@ export const requestSendApprovalMessageAction = createAction({
         profilePicture,
         conversationId: channel,
       });
-      const messageTs = (postMessage as ChatPostMessageResponse).ts as string
+      const messageTs = (postMessage as ChatPostMessageResponse).ts as string;
 
       const approvalLink = context.generateResumeUrl({
         queryParams: { action: 'approve', channel, messageTs },
@@ -101,8 +111,8 @@ export const requestSendApprovalMessageAction = createAction({
       });
 
       return {
-        approved: false, // default approval is false
-        messageTs
+        approved: false,
+        messageTs,
       };
     } else {
       const approved = context.resumePayload.queryParams['action'] === 'approve';
