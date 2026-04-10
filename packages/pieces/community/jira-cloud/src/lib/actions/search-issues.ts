@@ -1,18 +1,9 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { MarkdownVariant } from '@activepieces/shared';
 import { jiraCloudAuth } from '../../auth';
-import { searchIssuesByJql, getJiraFields } from '../common';
+import { searchIssuesByJql, getJiraFields, mapFieldNames } from '../common';
 import { z } from 'zod';
 import { propsValidation } from '@activepieces/pieces-common';
-
-function mapFieldNames(fields: Record<string, any>, fieldNames: Record<string, string>) {
-  const mappedFields = {} as Record<string, any>;
-  for (const [fieldId, fieldValue] of Object.entries(fields)) {
-    const fieldName = fieldNames?.[fieldId];
-    mappedFields[fieldName || fieldId] = fieldValue;
-  }
-  return mappedFields;
-}
 
 function resolveFieldIds(userFields: string[], jiraFields: { id: string; name: string }[]): string[] {
   const nameToIdMap = new Map<string, string>();

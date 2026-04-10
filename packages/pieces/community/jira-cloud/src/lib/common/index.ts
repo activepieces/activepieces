@@ -405,3 +405,22 @@ export async function jiraPaginatedApiCall<T extends HttpMessageBody, K extends 
 
 	return resultData;
 }
+
+export function mapFieldNames(
+  fields: Record<string, any>,
+  fieldNames: Record<string, string>
+) {
+  const mappedFields = {} as Record<string, any>;
+
+  for (const [fieldId, fieldValue] of Object.entries(fields)) {
+    const fieldName = fieldNames?.[fieldId];
+    if (fieldName) {
+      mappedFields[fieldName] = fieldValue;
+    } else {
+      // fallback in case field cannot be mapped (but this should not happen)
+      mappedFields[fieldId] = fieldValue;
+    }
+  }
+
+  return mappedFields;
+}
