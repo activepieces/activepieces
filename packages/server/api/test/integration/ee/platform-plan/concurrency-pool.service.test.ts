@@ -3,7 +3,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { getConcurrencyPoolLimitKey, getProjectConcurrencyPoolKey } from '../../../../src/app/database/redis/keys'
 import { distributedStore, redisConnections } from '../../../../src/app/database/redis-connections'
-import { concurrencyPoolService } from '../../../../src/app/ee/platform/platform-plan/concurrency-pool.service'
+import { concurrencyPoolService } from '../../../../src/app/ee/platform/concurrency-pool/concurrency-pool.service'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 import { createMockProject, mockAndSaveBasicSetup } from '../../../helpers/mocks'
 

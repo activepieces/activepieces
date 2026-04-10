@@ -16,7 +16,7 @@ import {
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Brackets, EntityManager, IsNull, Not, ObjectLiteral, SelectQueryBuilder } from 'typeorm'
-import { concurrencyPoolService } from '../ee/platform/platform-plan/concurrency-pool.service'
+import { concurrencyPoolService } from '../ee/platform/concurrency-pool/concurrency-pool.service'
 import { userService } from '../user/user-service'
 import { projectHooks } from './project-hooks'
 import { projectRepo } from './project-repo'
@@ -161,7 +161,7 @@ export const projectService = (log: FastifyBaseLogger) => ({
 
     async getAllForUser(params: GetAllForUserParams): Promise<Project[]> {
         assertNotNullOrUndefined(params.platformId, 'platformId is undefined')
-        
+
         const queryBuilder = projectRepo()
             .createQueryBuilder('project')
             .where('project."platformId" = :platformId', { platformId: params.platformId })
@@ -180,7 +180,7 @@ export const projectService = (log: FastifyBaseLogger) => ({
     },
     async userHasProjects(params: GetAllForUserParams): Promise<boolean> {
         assertNotNullOrUndefined(params.platformId, 'platformId is undefined')
-        
+
         const queryBuilder = projectRepo()
             .createQueryBuilder('project')
             .where('project."platformId" = :platformId', { platformId: params.platformId })

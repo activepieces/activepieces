@@ -64,7 +64,7 @@ export function ProjectSettingsDialog({
 
   const { data: showAlerts } = flagsHooks.useFlag(ApFlagId.SHOW_ALERTS);
   const { data: showProjectMembers } = flagsHooks.useFlag(
-    ApFlagId.SHOW_PROJECT_MEMBERS
+    ApFlagId.SHOW_PROJECT_MEMBERS,
   );
   const { platform } = platformHooks.useCurrentPlatform();
   const platformRole = userHooks.getCurrentUserPlatformRole();
@@ -233,7 +233,7 @@ export function ProjectSettingsDialog({
                       'flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm font-medium transition-all cursor-pointer hover:bg-sidebar-accent',
                       {
                         'bg-sidebar-accent': activeTab === tab.id,
-                      }
+                      },
                     )}
                     onClick={() => setActiveTab(tab.id)}
                   >

@@ -5,9 +5,9 @@ import { repoFactory } from '../../../core/db/repo-factory'
 import { getConcurrencyPoolLimitKey, getProjectConcurrencyPoolKey } from '../../../database/redis/keys'
 import { distributedStore } from '../../../database/redis-connections'
 import { projectRepo } from '../../../project/project-repo'
-import { ConcurrencyPoolEntity } from './concurrency-pool.entity'
+import { ConcurrencyPoolEntity, ConcurrencyPoolEntitySchema } from './concurrency-pool.entity'
 
-const concurrencyPoolRepo = repoFactory(ConcurrencyPoolEntity)
+const concurrencyPoolRepo = repoFactory<ConcurrencyPoolEntitySchema>(ConcurrencyPoolEntity)
 
 export const concurrencyPoolService = (_log: FastifyBaseLogger) => ({
 

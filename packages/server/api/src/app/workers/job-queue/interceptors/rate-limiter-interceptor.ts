@@ -3,7 +3,7 @@ import { ApEdition, ExecuteFlowJobData, isNil, JOB_PRIORITY, JobData, PlanName, 
 import { FastifyBaseLogger } from 'fastify'
 import { getConcurrencyPoolSetKey, getPlatformPlanNameKey } from '../../../database/redis/keys'
 import { distributedStore, redisConnections } from '../../../database/redis-connections'
-import { concurrencyPoolService } from '../../../ee/platform/platform-plan/concurrency-pool.service'
+import { concurrencyPoolService } from '../../../ee/platform/concurrency-pool/concurrency-pool.service'
 import { system } from '../../../helper/system/system'
 import { AppSystemProp } from '../../../helper/system/system-props'
 import { InterceptorResult, InterceptorVerdict, JobInterceptor } from '../job-interceptor'
