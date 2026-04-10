@@ -9,6 +9,12 @@ export const listTestimonialsAction = createAction({
   displayName: 'List Testimonials',
   description: 'Retrieve all testimonials from your Senja project.',
   props: {
+    query: Property.ShortText({
+      displayName: 'Search',
+      description:
+        'Full-text search across testimonial text, title, customer name, customer email, and customer tagline.',
+      required: false,
+    }),
     sort: Property.StaticDropdown({
       displayName: 'Sort By',
       description: 'Field used to sort the results.',
@@ -96,6 +102,7 @@ export const listTestimonialsAction = createAction({
   },
   async run(context) {
     const {
+      query,
       sort,
       order,
       approved,
@@ -109,6 +116,7 @@ export const listTestimonialsAction = createAction({
     } = context.propsValue;
 
     const queryParams: Record<string, string> = {};
+    if (query) queryParams['query'] = query;
     if (sort) queryParams['sort'] = sort;
     if (order) queryParams['order'] = order;
     if (approved !== undefined && approved !== null)

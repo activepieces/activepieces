@@ -84,6 +84,8 @@
   "Maximum number of testimonials to return (1–1000).": "Nombre maximum de témoignages à retourner (1–1000).",
   "Page": "Page",
   "Page number for pagination. Start at 1.": "Numéro de page pour la pagination. Commencer à 1.",
+  "Search": "Recherche",
+  "Full-text search across testimonial text, title, customer name, customer email, and customer tagline.": "Recherche plein texte dans le contenu du témoignage, le titre, le nom du client, l'e-mail et l'accroche.",
   "Update Testimonial": "Mettre à jour un témoignage",
   "Approve, unapprove, or update tags on an existing testimonial.": "Approuver, désapprouver ou mettre à jour les tags d'un témoignage existant.",
   "Set to \"Approved\" to publish the testimonial, or \"Pending\" to unpublish it. Leave empty to keep the current status.": "Choisissez \"Approuvé\" pour publier le témoignage, ou \"En attente\" pour le dépublier. Laissez vide pour conserver le statut actuel.",
