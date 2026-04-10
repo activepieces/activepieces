@@ -1,4 +1,4 @@
-import { apId, FlowRunStatus, FlowVersionState, RunEnvironment } from '@activepieces/shared'
+import { apId, ExecutionType, FlowRunStatus, FlowVersionState, ProgressUpdateType, RunEnvironment } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { waitpointService } from '../../../../../src/app/flows/flow-run/waitpoint/waitpoint-service'
 import { WaitpointStatus, WaitpointType } from '../../../../../src/app/flows/flow-run/waitpoint/waitpoint-types'
@@ -224,6 +224,72 @@ describe('Waitpoint service', () => {
             const result = await waitpointService(app.log).getByFlowRunId(flowRun.id)
             expect(result).not.toBeNull()
             expect(result!.flowRunId).toBe(flowRun.id)
+        })
+    })
+
+    describe('handleResumeSignal', () => {
+        it('should call onReady and delete waitpoint when flow is PAUSED', async () => {
+            const { flowRun } = await createFlowRun({ status: FlowRunStatus.PAUSED })
+
+            await waitpointService(app.log).createForPause({
+                flowRunId: flowRun.id,
+                projectId: ctx.project.id,
+                type: WaitpointType.WEBHOOK,
+            })
+
+            let calledWith: { workerHandlerId: string | null } | null = null
+            await waitpointService(app.log).handleResumeSignal({
+                flowRunId: flowRun.id,
+                flowRunStatus: FlowRunStatus.PAUSED,
+                projectId: ctx.project.id,
+                resumeData: { progressUpdateType: ProgressUpdateType.NONE, executionType: ExecutionType.RESUME },
+                onReady: async (waitpoint) => {
+                    calledWith = { workerHandlerId: waitpoint.workerHandlerId }
+                },
+            })
+
+            expect(calledWith).not.toBeNull()
+            const deleted = await db.findOneBy('waitpoint', { flowRunId: flowRun.id })
+            expect(deleted).toBeNull()
+        })
+
+        it('should buffer resume data when flow is RUNNING', async () => {
+            const { flowRun } = await createFlowRun({ status: FlowRunStatus.RUNNING })
+
+            let onReadyCalled = false
+            await waitpointService(app.log).handleResumeSignal({
+                flowRunId: flowRun.id,
+                flowRunStatus: FlowRunStatus.RUNNING,
+                projectId: ctx.project.id,
+                resumeData: { payload: { body: { msg: 'hello' } }, progressUpdateType: ProgressUpdateType.NONE, executionType: ExecutionType.RESUME },
+                onReady: async () => {
+                    onReadyCalled = true
+                },
+            })
+
+            expect(onReadyCalled).toBe(false)
+            const waitpoint = await db.findOneBy<{ status: string, resumePayload: unknown }>('waitpoint', { flowRunId: flowRun.id })
+            expect(waitpoint).not.toBeNull()
+            expect(waitpoint!.status).toBe('COMPLETED')
+        })
+
+        it('should be a no-op when flow is in terminal state', async () => {
+            const { flowRun } = await createFlowRun({ status: FlowRunStatus.SUCCEEDED })
+
+            let onReadyCalled = false
+            await waitpointService(app.log).handleResumeSignal({
+                flowRunId: flowRun.id,
+                flowRunStatus: FlowRunStatus.SUCCEEDED,
+                projectId: ctx.project.id,
+                resumeData: { progressUpdateType: ProgressUpdateType.NONE, executionType: ExecutionType.RESUME },
+                onReady: async () => {
+                    onReadyCalled = true
+                },
+            })
+
+            expect(onReadyCalled).toBe(false)
+            const waitpoint = await db.findOneBy('waitpoint', { flowRunId: flowRun.id })
+            expect(waitpoint).toBeNull()
         })
     })
 })

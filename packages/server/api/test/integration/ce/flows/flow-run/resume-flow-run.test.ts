@@ -1,9 +1,12 @@
-import { apId, FlowRunStatus, FlowVersionState, PauseType, RunEnvironment } from '@activepieces/shared'
+import { apId, ExecutionType, FlowRunStatus, FlowVersionState, PauseType, ProgressUpdateType, RunEnvironment } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { distributedStore } from '../../../../../src/app/database/redis-connections'
 import { pubsub } from '../../../../../src/app/helper/pubsub'
 import { engineResponseWatcher } from '../../../../../src/app/workers/engine-response-watcher'
 import { redisMetadataKey, RunsMetadataUpsertData } from '../../../../../src/app/workers/job'
+import { flowRunSideEffects } from '../../../../../src/app/flows/flow-run/flow-run-side-effects'
+import { waitpointService } from '../../../../../src/app/flows/flow-run/waitpoint/waitpoint-service'
+import { WaitpointType } from '../../../../../src/app/flows/flow-run/waitpoint/waitpoint-types'
 import { createHandlers } from '../../../../../src/app/workers/rpc/worker-rpc-service'
 import { createTestContext, TestContext } from '../../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../../helpers/test-setup'
@@ -307,5 +310,157 @@ describe('Resume flow run', () => {
             body: { status: 'success', data: { greeting: 'Hello' } },
         })
         expect(response.statusCode).toBe(200)
+    })
+
+    it('should create DELAY waitpoint with resumeDateTime via uploadRunLog', async () => {
+        const flow = createMockFlow({ projectId: ctx.project.id })
+        await db.save('flow', flow)
+
+        const flowVersion = createMockFlowVersion({
+            flowId: flow.id,
+            state: FlowVersionState.LOCKED,
+        })
+        await db.save('flow_version', flowVersion)
+
+        const runId = apId()
+        const resumeDateTime = new Date(Date.now() + 60000).toISOString()
+
+        const runMetadata: RunsMetadataUpsertData = {
+            id: runId,
+            projectId: ctx.project.id,
+            flowId: flow.id,
+            flowVersionId: flowVersion.id,
+            environment: RunEnvironment.PRODUCTION,
+            status: FlowRunStatus.RUNNING,
+        }
+        await distributedStore.merge(redisMetadataKey(runId), runMetadata)
+
+        const handlers = createHandlers(app.log)
+        await handlers.uploadRunLog({
+            runId,
+            projectId: ctx.project.id,
+            status: FlowRunStatus.PAUSED,
+            workerHandlerId: null,
+            httpRequestId: null,
+            pauseMetadata: {
+                type: PauseType.DELAY,
+                resumeDateTime,
+            },
+        })
+
+        const waitpoint = await db.findOneBy<{ status: string, type: string, resumeDateTime: string }>('waitpoint', { flowRunId: runId })
+        expect(waitpoint).not.toBeNull()
+        expect(waitpoint!.type).toBe('DELAY')
+        expect(waitpoint!.status).toBe('PENDING')
+        expect(new Date(waitpoint!.resumeDateTime).toISOString()).toBe(resumeDateTime)
+    })
+
+    it('should clean up waitpoint when flow run finishes (onFinish)', async () => {
+        const { flowRun } = await createPausedFlowRunWithWaitpoint({
+            projectId: ctx.project.id,
+            pauseRequestId: apId(),
+        })
+
+        const waitpointBefore = await db.findOneBy('waitpoint', { flowRunId: flowRun.id })
+        expect(waitpointBefore).not.toBeNull()
+
+        await db.update('flow_run', flowRun.id, { status: FlowRunStatus.SUCCEEDED })
+        const updatedRun = await db.findOneByOrFail<{ id: string, status: string, projectId: string }>('flow_run', { id: flowRun.id })
+        await flowRunSideEffects(app.log).onFinish(updatedRun as any)
+
+        const waitpointAfter = await db.findOneBy('waitpoint', { flowRunId: flowRun.id })
+        expect(waitpointAfter).toBeNull()
+    })
+
+    it('markParentRunAsFailed should complete waitpoint when parent is PAUSED', async () => {
+        const { flowRun: parentRun } = await createPausedFlowRunWithWaitpoint({
+            projectId: ctx.project.id,
+            pauseRequestId: apId(),
+        })
+
+        const childRun = createMockFlowRun({
+            projectId: ctx.project.id,
+            flowId: parentRun.flowId,
+            flowVersionId: parentRun.flowVersionId,
+            status: FlowRunStatus.FAILED,
+            environment: RunEnvironment.PRODUCTION,
+            parentRunId: parentRun.id,
+            failParentOnFailure: true,
+        })
+        await db.save('flow_run', childRun)
+
+        await waitpointService(app.log).complete({
+            flowRunId: parentRun.id,
+            projectId: ctx.project.id,
+            resumePayload: {
+                payload: { body: { status: 'error', data: { message: 'Subflow execution failed' } } },
+                progressUpdateType: ProgressUpdateType.TEST_FLOW,
+                executionType: ExecutionType.RESUME,
+            },
+        })
+
+        const waitpoint = await db.findOneBy<{ status: string, resumePayload: unknown }>('waitpoint', { flowRunId: parentRun.id })
+        expect(waitpoint).not.toBeNull()
+        expect(waitpoint!.status).toBe('COMPLETED')
+    })
+
+    it('markParentRunAsFailed should pre-complete when parent has NOT paused yet', async () => {
+        const flow = createMockFlow({ projectId: ctx.project.id })
+        await db.save('flow', flow)
+
+        const flowVersion = createMockFlowVersion({
+            flowId: flow.id,
+            state: FlowVersionState.LOCKED,
+        })
+        await db.save('flow_version', flowVersion)
+
+        const parentRun = createMockFlowRun({
+            projectId: ctx.project.id,
+            flowId: flow.id,
+            flowVersionId: flowVersion.id,
+            status: FlowRunStatus.RUNNING,
+            environment: RunEnvironment.PRODUCTION,
+        })
+        await db.save('flow_run', parentRun)
+
+        await waitpointService(app.log).complete({
+            flowRunId: parentRun.id,
+            projectId: ctx.project.id,
+            resumePayload: {
+                payload: { body: { status: 'error', data: { message: 'Subflow execution failed' } } },
+                progressUpdateType: ProgressUpdateType.TEST_FLOW,
+                executionType: ExecutionType.RESUME,
+            },
+        })
+
+        const waitpoint = await db.findOneBy<{ status: string }>('waitpoint', { flowRunId: parentRun.id })
+        expect(waitpoint).not.toBeNull()
+        expect(waitpoint!.status).toBe('COMPLETED')
+
+        await distributedStore.merge(redisMetadataKey(parentRun.id), {
+            id: parentRun.id,
+            projectId: ctx.project.id,
+            flowId: flow.id,
+            flowVersionId: flowVersion.id,
+            environment: RunEnvironment.PRODUCTION,
+            status: FlowRunStatus.RUNNING,
+        })
+
+        const handlers = createHandlers(app.log)
+        await handlers.uploadRunLog({
+            runId: parentRun.id,
+            projectId: ctx.project.id,
+            status: FlowRunStatus.PAUSED,
+            workerHandlerId: null,
+            httpRequestId: null,
+            pauseMetadata: {
+                type: PauseType.WEBHOOK,
+                requestId: apId(),
+                response: {},
+            },
+        })
+
+        const waitpointAfter = await db.findOneBy('waitpoint', { flowRunId: parentRun.id })
+        expect(waitpointAfter).toBeNull()
     })
 })
