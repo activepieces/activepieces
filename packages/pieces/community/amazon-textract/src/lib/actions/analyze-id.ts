@@ -50,7 +50,7 @@ export const analyzeId = createAction({
         return {
           file: Property.File({
             displayName: 'File',
-            description: 'The ID document to analyze. Supported formats: JPEG, PNG, PDF (single page), TIFF. Maximum 10 MB.',
+            description: 'The ID document to analyze. Only JPEG and PNG are supported for direct upload (max 5 MB). For PDF or TIFF files, use the "From S3 bucket" option instead.',
             required: true,
           }),
         };
