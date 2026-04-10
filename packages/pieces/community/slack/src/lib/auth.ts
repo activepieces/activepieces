@@ -36,6 +36,8 @@ export const slackOAuth2Auth = PieceAuth.OAuth2({
     'users.profile:read',
     'channels:write.invites',
     'groups:write.invites',
+    'channels:join',
+    'conversations.connect:write'
   ],
 });
 

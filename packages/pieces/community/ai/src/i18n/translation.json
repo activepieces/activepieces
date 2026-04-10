@@ -38,7 +38,7 @@
   "Prompt to guide the AI.": "Prompt to guide the AI.",
   "For complex schema, you can use advanced mode.": "For complex schema, you can use advanced mode.",
   "Describe what you want the assistant to do.": "Describe what you want the assistant to do.",
-  "The numbder of interations the agent can do": "The numbder of interations the agent can do",
+  "The number of iterations the agent can do": "The number of iterations the agent can do",
   "Whether to use web search to find information for the AI to use.": "Whether to use web search to find information for the AI to use.",
   "Simple": "Simple",
   "Advanced": "Advanced"

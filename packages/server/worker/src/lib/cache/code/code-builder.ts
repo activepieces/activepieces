@@ -114,7 +114,7 @@ export const codeBuilder = (log: Logger) => ({
                     }
                 })
 
-                // node_modules is no longer needed after bun build bundles everything into index.js
+                // node_modules is no longer needed after esbuild bundles everything into index.js
                 await tryCatch(() => rm(path.join(codePath, 'node_modules'), { recursive: true }))
                 return currentHash
             },

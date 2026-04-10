@@ -29,7 +29,8 @@ async function getWorksheets(
   if (!workbookId) return [];
 
   try {
-    const client = createMSGraphClient(auth.access_token);
+    const cloud = auth.props?.['cloud'] as string | undefined;
+    const client = createMSGraphClient(auth.access_token, cloud);
     const response = await client
       .api(`${drivePath}/items/${workbookId}/workbook/worksheets`)
       .get();

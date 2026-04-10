@@ -1,0 +1,118 @@
+---
+title: "Rollback Guide"
+description: "How to rollback Activepieces to a previous version"
+---
+
+## Overview
+
+Activepieces ships a rollback command that reverses database migrations when you need to downgrade to a previous version. Most releases are fully rollback-safe — the release notes will let you know if one isn't.
+
+## Backups
+
+For most upgrades you won't need a backup, but if you want to be extra safe:
+
+### PostgreSQL
+
+```bash
+pg_dump -Fc $DATABASE_URL > backup-pre-upgrade.dump
+```
+
+### PGLite
+
+Copy the `pglite` folder inside your configured `AP_CONFIG_PATH`:
+
+```bash
+cp -r /path/to/config/pglite /path/to/config/pglite-backup
+```
+
+## Release Notes
+
+Releases that include non-reversible database changes will have a note at the bottom of the release notes mentioning which migrations are affected. If you don't see a note, the release is rollback-safe.
+
+## Rolling Back
+
+The rollback command runs against the **current (newer) image** since it has the migration reversal logic. After rolling back the database, you swap to the older image.
+
+### Step 1: Stop Activepieces
+
+```bash
+docker compose down
+```
+
+### Step 2: Run the rollback command
+
+Replace `0.78.0` with your current version and `0.77.0` with the version you want to go back to:
+
+```bash
+docker run --rm --env-file .env --entrypoint npm \
+  activepieces/activepieces:0.78.0 \
+  run rollback -- --to 0.77.0
+```
+
+If the release has breaking migrations, the command will ask you to confirm with `--force`:
+
+```bash
+docker run --rm --env-file .env --entrypoint npm \
+  activepieces/activepieces:0.78.0 \
+  run rollback -- --to 0.77.0 --force
+```
+
+### Step 3: Switch to the older image
+
+Update your `docker-compose.yml`:
+
+```yaml
+services:
+  activepieces:
+    image: activepieces/activepieces:0.77.0
+```
+
+### Step 4: Start Activepieces
+
+```bash
+docker compose up -d
+```
+
+## Restoring From Backup
+
+If you took a backup and prefer to restore from it:
+
+```bash
+dropdb activepieces
+createdb activepieces
+pg_restore -d activepieces backup-pre-upgrade.dump
+```
+
+Then switch your `docker-compose.yml` to the previous image version and start Activepieces.
+
+## For Contributors
+
+Every new database migration must:
+
+1. **Implement `Migration`** instead of `MigrationInterface`
+2. **Set `breaking`** to `true` (destructive changes) or `false` (additive only)
+3. **Set `release`** to the target release version (e.g., `'0.78.0'`)
+4. **Implement `down()`** with working rollback queries
+
+Example:
+
+```typescript
+import { Migration } from '../../migration'
+import { QueryRunner } from 'typeorm'
+
+export class AddNewColumn1710000000000 implements Migration {
+    name = 'AddNewColumn1710000000000'
+    breaking = false
+    release = '0.78.0'
+
+    public async up(queryRunner: QueryRunner): Promise<void> {
+        await queryRunner.query(`ALTER TABLE "project" ADD COLUMN "description" text`)
+    }
+
+    public async down(queryRunner: QueryRunner): Promise<void> {
+        await queryRunner.query(`ALTER TABLE "project" DROP COLUMN "description"`)
+    }
+}
+```
+
+These requirements are enforced by CI — PRs with migrations that don't meet them will fail checks.

@@ -113,6 +113,7 @@ async function removeDeprecatedJobs(): Promise<void> {
         'platform-usage-report',
         'seven-days-in-trial',
         'issue-reminder',
+        'update-flow-status',
     ]
     const allSystemJobs = await systemJobsQueue.getJobSchedulers()
     const knownJobNames = Object.values(SystemJobName) as string[]

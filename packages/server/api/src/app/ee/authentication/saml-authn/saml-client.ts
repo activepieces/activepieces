@@ -51,16 +51,23 @@ class SamlClient {
     }
 }
 
-let instance: SamlClient | null = null
+const instanceCache = new Map<string, SamlClient>()
 
 export const createSamlClient = async (platformId: string, samlProvider: SAMLAuthnProviderConfig): Promise<SamlClient> => {
-    if (instance) {
-        return instance
+    const cached = instanceCache.get(platformId)
+    if (cached) {
+        return cached
     }
     saml.setSchemaValidator(validator)
     const idp = createIdp(samlProvider.idpMetadata)
     const sp = await createSp(platformId, samlProvider.idpCertificate)
-    return instance = new SamlClient(idp, sp)
+    const client = new SamlClient(idp, sp)
+    instanceCache.set(platformId, client)
+    return client
+}
+
+export const invalidateSamlClientCache = (platformId: string): void => {
+    instanceCache.delete(platformId)
 }
 
 const createIdp = (metadata: string): saml.IdentityProviderInstance => {

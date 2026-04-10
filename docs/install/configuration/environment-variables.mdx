@@ -81,16 +81,22 @@ it will produce these values. </Tip>
 | `AP_MAX_FLOW_RUN_LOG_SIZE_MB`      | The maximum allowed size (in megabytes) of the **flow run logs**—this is the total combined size of all inputs and outputs for each step in a single flow run. If logs exceed this size, they will be truncated, which may cause flow execution issues. | `25`                                                                         | `25`                                                                   |
 | `AP_MAX_WEBHOOK_PAYLOAD_SIZE_MB`   | Maximum webhook payload size in MB. Payloads exceeding this are rejected with HTTP 413. | `5` | `10` |
 | `AP_WEBHOOK_PAYLOAD_INLINE_THRESHOLD_KB` | Webhook payloads below this size (in KB) are stored inline in Redis for fastest processing. Payloads above this are offloaded to file storage to protect Redis memory. | `512` | `1024` |
+| `AP_WORKER_CONCURRENCY` | The number of concurrent jobs the worker can process simultaneously. Each concurrent job uses one sandbox instance. | `5` | `10` |
 | `AP_FILE_STORAGE_LOCATION`         | The location to store files. Possible values are `DB` for storing files in the database or `S3` for storing files in an S3-compatible storage service.                                                               | `DB`                                                                           |                                                                        |
 | `AP_PAUSED_FLOW_TIMEOUT_DAYS`      | The maximum allowed pause duration in days for a paused flow, please note it can not exceed `AP_EXECUTION_DATA_RETENTION_DAYS`                                                                                                                                                            | `30`                                                                           |                                                                        
 | `AP_MAX_RECORDS_PER_TABLE`         | The maximum allowed number of records per table                                                                | `10000` | `10000`
 | `AP_MAX_FIELDS_PER_TABLE` |  The maximum allowed number of fields per table  | `100` | `100`
 | `AP_MAX_TABLES_PER_PROJECT` | The maximum allowed number of tables per project | `20` | `20`
 | `AP_MAX_MCPS_PER_PROJECT` | The maximum allowed number of mcp per project | `20` | `20`
+| `AP_MCP_OAUTH_ISSUER_URL` | The issuer URL used for MCP OAuth token generation and metadata discovery. Falls back to `AP_FRONTEND_URL` if not set. | None | `https://mcp.example.com`
 | `AP_ENABLE_FLOW_ON_PUBLISH` | Whether publishing a new flow version should automatically enable the flow | `true` | `false`  
 | `AP_ISSUE_ARCHIVE_DAYS`            | Controls the automatic archival of issues in the system. Issues that have not been updated for this many days will be automatically moved to an archived state.| `14`  | `1`
 | `AP_LOAD_TRANSLATIONS_FOR_DEV_PIECES`  | Load translations for dev pieces (configured via `AP_DEV_PIECES`). When disabled, dev pieces are loaded without translations. This only affects development mode.| `false`  | `true`
 | `AP_CONTAINER_TYPE` | Controls which services to run in the Docker container. `APP` starts only the API server, `WORKER` starts only the worker, `WORKER_AND_APP` starts both. | `WORKER_AND_APP` | `APP`
+| `AP_SSRF_PROTECTION_ENABLED` | Controls whether pieces can make http requests to private IPs. | `false` | ``
+| `AP_SSRF_ALLOW_LIST` | Controls allowed private IPs for pieces http requests if AP_SSRF_PROTECTION_ENABLED is enabled. | `false` | ``
+
+
 
 <Warning>
   The frontend URL is essential for webhooks and app triggers to work. It must

@@ -135,35 +135,37 @@ export function createSandbox(
         execute: async (operationType: EngineOperationType, operation: EngineOperation, executeOptions: SandboxOptions) => {
             let killedByTimeout = false
             let timeout: NodeJS.Timeout | null = null
+            const executeSocket = connectedSocket
+            const executeProcess = childProcess
             const operationPromise = new Promise<SandboxResult>((resolve, reject) => {
-                assertNotNullOrUndefined(childProcess, 'Sandbox process should not be null')
-                assertNotNullOrUndefined(connectedSocket, 'Connected socket should not be null')
+                assertNotNullOrUndefined(executeProcess, 'Sandbox process should not be null')
+                assertNotNullOrUndefined(executeSocket, 'Connected socket should not be null')
 
                 let stdError = ''
                 let stdOut = ''
 
-                createNotifyServer<WorkerNotifyContract>(connectedSocket!, {
+                createNotifyServer<WorkerNotifyContract>(executeSocket, {
                     stdout: (input: EngineStdout) => {
-                        stdOut += input.message 
+                        stdOut += input.message
                     },
                     stderr: (input: EngineStderr) => {
-                        stdError += input.message 
+                        stdError += input.message
                     },
                 })
 
                 timeout = setTimeout(async () => {
                     killedByTimeout = true
                     log.debug({ sandboxId }, 'Killing sandbox by timeout')
-                    if (!isNil(childProcess)) {
-                        await killProcess(childProcess, log)
+                    if (!isNil(executeProcess)) {
+                        await killProcess(executeProcess, log)
                     }
                 }, executeOptions.timeoutInSeconds * 1000)
 
-                childProcess.on('error', (error) => {
+                executeProcess.on('error', (error) => {
                     log.error({ sandboxId, error: String(error) }, 'Sandbox process error')
                 })
 
-                childProcess.on('exit', (code, signal) => {
+                executeProcess.on('exit', (code, signal) => {
                     handleProcessExit(log, {
                         sandboxId,
                         operationType,
@@ -178,9 +180,9 @@ export function createSandbox(
 
                 log.debug({ sandboxId, operationType }, '[Sandbox] Executing operation via RPC')
                 const operationTimeoutMs = (executeOptions.timeoutInSeconds + 5) * 1000
-                const client = createRpcClient<EngineContract>(connectedSocket!, operationTimeoutMs)
+                const client = createRpcClient<EngineContract>(executeSocket, operationTimeoutMs)
                 client.executeOperation({ operationType, operation }).then((engineResponse: EngineResponse<unknown>) => {
-                    resolve({ engine: engineResponse, stdOut, stdError })
+                    resolve({ ...engineResponse, logs: buildLogs(stdOut, stdError) })
                 }).catch((error: unknown) => {
                     log.error({ sandboxId, error: String(error) }, '[Sandbox] RPC call failed')
                     reject(error)
@@ -199,9 +201,9 @@ export function createSandbox(
                 if (!isNil(timeout)) {
                     clearTimeout(timeout)
                 }
-                connectedSocket?.removeAllListeners('rpc-notify')
-                childProcess?.removeAllListeners('exit')
-                childProcess?.removeAllListeners('error')
+                executeSocket?.removeAllListeners('rpc-notify')
+                executeProcess?.removeAllListeners('exit')
+                executeProcess?.removeAllListeners('error')
             }
         },
         isReady,
@@ -282,6 +284,13 @@ function killProcess(child: ChildProcess, log: SandboxLogger): Promise<void> {
             resolve()
         })
     })
+}
+
+function buildLogs(stdOut: string, stdError: string): string | undefined {
+    const parts: string[] = []
+    if (stdOut) parts.push(`stdout:\n${stdOut}`)
+    if (stdError) parts.push(`stderr:\n${stdError}`)
+    return parts.length > 0 ? parts.join('\n') : undefined
 }
 
 type ProcessExitParams = {

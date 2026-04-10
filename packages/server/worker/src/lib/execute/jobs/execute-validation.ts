@@ -14,8 +14,7 @@ import { JobContext, JobHandler, JobResultKind, SynchronousJobResult } from '../
 export const executeValidationJob: JobHandler<ExecuteValidateAuthJobData, SynchronousJobResult> = {
     jobType: WorkerJobType.EXECUTE_VALIDATION,
     async execute(ctx: JobContext, data: ExecuteValidateAuthJobData): Promise<SynchronousJobResult> {
-        const settings = workerSettings.getSettings()
-        const timeoutInSeconds = settings.TRIGGER_TIMEOUT_SECONDS
+        const timeoutInSeconds = workerSettings.getSettings().TRIGGER_TIMEOUT_SECONDS
 
         await provisioner(ctx.log, ctx.apiClient).provision({
             pieces: [data.piece],
@@ -46,8 +45,10 @@ export const executeValidationJob: JobHandler<ExecuteValidateAuthJobData, Synchr
 
             return {
                 kind: JobResultKind.SYNCHRONOUS,
-                status: result.engine.status,
-                response: result.engine.response,
+                status: result.status,
+                response: result.response,
+                errorMessage: result.error,
+                logs: result.logs,
             }
         }
         catch (e) {

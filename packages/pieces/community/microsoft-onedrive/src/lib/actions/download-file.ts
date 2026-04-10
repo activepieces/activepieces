@@ -21,10 +21,12 @@ export const downloadFile = createAction({
   },
   async run(context) {
     const fileId = context.propsValue.fileId;
+    const cloud = context.auth.props?.['cloud'] as string | undefined;
+    const baseUrl = oneDriveCommon.getBaseUrl(cloud);
 
     const fileDetails = await httpClient.sendRequest<{name:string}>({
       method:HttpMethod.GET,
-      url:`${oneDriveCommon.baseUrl}/items/${fileId}?$select=name`,
+      url:`${baseUrl}/items/${fileId}?$select=name`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token: context.auth.access_token,
@@ -33,7 +35,7 @@ export const downloadFile = createAction({
 
     const result = await httpClient.sendRequest({
       method: HttpMethod.GET,
-      url: `${oneDriveCommon.baseUrl}/items/${fileId}/content`,
+      url: `${baseUrl}/items/${fileId}/content`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token: context.auth.access_token,

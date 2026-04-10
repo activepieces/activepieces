@@ -1399,5 +1399,6 @@
   "{count} flows created successfully in a new folder_one": "",
   "{count} flows created successfully in a new folder_other": "",
   "This template includes {count} flows with all dependencies. A new folder will be created to organize them._one": "",
-  "This template includes {count} flows with all dependencies. A new folder will be created to organize them._other": ""
+  "This template includes {count} flows with all dependencies. A new folder will be created to organize them._other": "",
+  "Please connect your account first": "Veuillez d'abord connecter votre compte"
 }

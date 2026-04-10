@@ -1,18 +1,34 @@
 @import 'tailwindcss';
-@import "tw-animate-css";
+@import 'tw-animate-css';
 @custom-variant dark (&:is(.dark *));
 
 /* inter-regular - latin */
 @font-face {
-  font-display: swap; 
+  font-display: swap;
   font-family: 'Inter';
   font-style: normal;
   font-weight: 400;
   src: url('assets/fonts/inter-v20-latin-regular.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
 }
+/* inter-500 - latin */
+@font-face {
+  font-display: swap;
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 500;
+  src: url('assets/fonts/inter-v20-latin-500.ttf') format('truetype');
+}
+/* inter-600 - latin */
+@font-face {
+  font-display: swap;
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 600;
+  src: url('assets/fonts/inter-v20-latin-600.ttf') format('truetype');
+}
 /* inter-700 - latin */
 @font-face {
-  font-display: swap; 
+  font-display: swap;
   font-family: 'Inter';
   font-style: normal;
   font-weight: 700;
@@ -20,7 +36,7 @@
 }
 /* inter-800 - latin */
 @font-face {
-  font-display: swap; 
+  font-display: swap;
   font-family: 'Inter';
   font-style: normal;
   font-weight: 800;
@@ -82,7 +98,7 @@
 
   --color-primary-100: hsl(var(--primary-100));
   --color-primary-300: hsl(var(--primary-300));
-  --color-primary:  hsl(var(--primary));
+  --color-primary: hsl(var(--primary));
   --color-primary-foreground: hsl(var(--primary-foreground));
 
   --color-success-50: hsl(var(--success-50));
@@ -126,7 +142,7 @@
   --color-card: var(--background);
   --color-card-foreground: var(--foreground);
 
-  --radius-lg: var(--radius);
+  --radius-lg: 0.75rem;
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-xs: calc(var(--radius) - 8px);
@@ -145,8 +161,9 @@
   --animate-slide-in-from-bottom: slide-in-from-bottom 0.2s ease-out forwards;
   --animate-primary-color-pulse: primary-color-pulse 1s ease-in-out infinite
     alternate;
-  --font-sans: "Inter",ui-sans-serif,system-ui,sans-serif,"Apple Color Emoji","Segoe UI Emoji",Segoe UI Symbol,"Noto Color Emoji";
-  --shadow-step-container: 0px 0px 22px hsl(var(--border) / 0.4);
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif,
+    'Apple Color Emoji', 'Segoe UI Emoji', Segoe UI Symbol, 'Noto Color Emoji';
+  --shadow-step-container: 0px 0px 22px hsl(var(--border) / 0.3);
   --shadow-add-button: var(--add-button-shadow);
   --color-builder-background: var(--builder-background);
   --color-builder-background-pattern: var(--builder-background-pattern);
@@ -226,104 +243,6 @@
   ::file-selector-button {
     border-color: var(--color-gray-200, currentcolor);
   }
-
-}
-
-@utility scrollbar-hover {
-  /* Firefox — thin track, hidden by default, visible on hover */
-  scrollbar-width: thin;
-  scrollbar-color: transparent transparent;
-
-  /* Chromium / WebKit (Chrome, Edge, Safari) */
-  &::-webkit-scrollbar {
-    width: 8px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  /*
-   * Transparent border + background-clip: content-box creates a 2px inset on
-   * each side, making the visible thumb ~4px wide and visually "floating" —
-   * matching the macOS overlay scrollbar look on all platforms.
-   */
-  &::-webkit-scrollbar-thumb {
-    background-color: transparent;
-    border-radius: 9999px;
-    border: 2px solid transparent;
-    background-clip: content-box;
-    transition: background-color 0.2s;
-  }
-
-  &:hover::-webkit-scrollbar-thumb {
-    background-color: rgba(0, 0, 0, 0.35);
-  }
-
-  .group:hover &::-webkit-scrollbar-thumb {
-    background-color: rgba(0, 0, 0, 0.35);
-  }
-
-  .dark &:hover::-webkit-scrollbar-thumb {
-    background-color: rgba(255, 255, 255, 0.35);
-  }
-
-  .dark .group:hover &::-webkit-scrollbar-thumb {
-    background-color: rgba(255, 255, 255, 0.35);
-  }
-
-  /* Firefox hover */
-  &:hover {
-    scrollbar-color: rgba(0, 0, 0, 0.35) transparent;
-  }
-
-  .dark &:hover {
-    scrollbar-color: rgba(255, 255, 255, 0.35) transparent;
-  }
-
-  .group:hover & {
-    scrollbar-color: rgba(0, 0, 0, 0.35) transparent;
-  }
-
-  .dark .group:hover & {
-    scrollbar-color: rgba(255, 255, 255, 0.35) transparent;
-  }
-}
-
-@utility group {
-  &:hover .scrollbar-hover::-webkit-scrollbar-thumb {
-    background-color: rgba(0, 0, 0, 0.35);
-  }
-
-  .dark &:hover .scrollbar-hover::-webkit-scrollbar-thumb {
-    background-color: rgba(255, 255, 255, 0.35);
-  }
-
-  &:hover .scrollbar-hover {
-    scrollbar-color: rgba(0, 0, 0, 0.35) transparent;
-  }
-
-  .dark &:hover .scrollbar-hover {
-    scrollbar-color: rgba(255, 255, 255, 0.35) transparent;
-  }
-}
-
-@utility dark {
-  & .scrollbar-hover:hover::-webkit-scrollbar-thumb {
-    background-color: rgba(255, 255, 255, 0.35);
-  }
-
-  & .group:hover .scrollbar-hover::-webkit-scrollbar-thumb {
-    background-color: rgba(255, 255, 255, 0.35);
-  }
-
-  & .scrollbar-hover:hover {
-    scrollbar-color: rgba(255, 255, 255, 0.35) transparent;
-  }
-
-  & .group:hover .scrollbar-hover {
-    scrollbar-color: rgba(255, 255, 255, 0.35) transparent;
-  }
 }
 
 @utility scrollbar-none {
@@ -336,14 +255,13 @@
 
 /* You can add global styles to this file, and also import other style files */
 @layer base {
-
   input[type='number']::-webkit-inner-spin-button,
   input[type='number']::-webkit-outer-spin-button {
     -webkit-appearance: none;
     margin: 0;
   }
 
-:root {
+  :root {
     --background: theme('colors.white');
     --foreground: theme('colors.neutral.950');
     --popover: theme('colors.white');
@@ -361,7 +279,7 @@
     --input: theme('colors.neutral.200');
 
     --ring: theme('colors.neutral.400');
-    --radius: 0.625rem;
+    --radius: 0.5rem;
 
     --primary-100: 257 75% 85%;
     --primary: 257 74% 57%;
@@ -423,70 +341,123 @@
     --sidebar-foreground: theme('colors.neutral.950');
     --sidebar-primary: 257 74% 57%;
     --sidebar-primary-foreground: theme('colors.neutral.50');
-    --sidebar-accent: color-mix(in srgb, theme('colors.neutral.200') 60%, transparent);
+    --sidebar-accent: color-mix(
+      in srgb,
+      theme('colors.neutral.200') 60%,
+      transparent
+    );
     --sidebar-accent-foreground: theme('colors.neutral.900');
     --sidebar-border: theme('colors.neutral.200');
     --sidebar-ring: theme('colors.neutral.400');
     --sidebar-progress: 0 0% 50%;
-    --builder-background: #FBFBFB;
+    --builder-background: #fbfbfb;
     --builder-background-pattern: #b2b2b2;
   }
 
-.dark {
-  --background: theme('colors.neutral.950');
-  --foreground: theme('colors.neutral.50');
-  --popover: theme('colors.neutral.800');
-  --muted: theme('colors.neutral.800');
-  --muted-foreground: theme('colors.neutral.400');
+  .dark {
+    --background: theme('colors.neutral.950');
+    --foreground: theme('colors.neutral.50');
+    --popover: theme('colors.neutral.800');
+    --muted: theme('colors.neutral.800');
+    --muted-foreground: theme('colors.neutral.400');
 
-  --secondary: theme('colors.neutral.800');
-  --secondary-foreground: theme('colors.neutral.50');
+    --secondary: theme('colors.neutral.800');
+    --secondary-foreground: theme('colors.neutral.50');
 
-  --accent: theme('colors.neutral.700');
-  --accent-foreground: theme('colors.neutral.50');
+    --accent: theme('colors.neutral.700');
+    --accent-foreground: theme('colors.neutral.50');
 
-  --primary-100: 210 80% 40%;
-  --primary: 210 90% 50%;
-  --primary-300: 210 100% 85%;
-  --primary-foreground: 210 90% 98%;
+    --primary-100: 210 80% 40%;
+    --primary: 210 90% 50%;
+    --primary-300: 210 100% 85%;
+    --primary-foreground: 210 90% 98%;
 
-  --success: var(--success-400);
-  --destructive: var(--destructive-400);
+    --success: var(--success-400);
+    --destructive: var(--destructive-400);
 
-  --warning: var(--warning-400);
+    --warning: var(--warning-400);
 
-  --border: hsla(0, 0%, 100%, 0.1);
-  --input:hsla(0, 0%, 100%, 0.1);
+    --border: hsla(0, 0%, 100%, 0.08);
+    --input: hsla(0, 0%, 100%, 0.08);
 
-  --ring: theme('colors.neutral.500');
-  --radius: 0.625rem;
+    --ring: theme('colors.neutral.500');
+    --radius: 0.5rem;
 
-  --add-button-shadow: 0 0 0 6px hsl(var(--primary-100) / 0.4);
+    --add-button-shadow: 0 0 0 6px hsl(var(--primary-100) / 0.4);
 
-  --chart-1: 210 85% 55%;
-  --chart-2: 160 80% 50%;
-  --chart-3: 35 90% 55%;
-  --chart-4: 280 75% 65%;
-  --chart-5: 340 80% 60%;
+    --chart-1: 210 85% 55%;
+    --chart-2: 160 80% 50%;
+    --chart-3: 35 90% 55%;
+    --chart-4: 280 75% 65%;
+    --chart-5: 340 80% 60%;
 
-  --sidebar-background:theme('colors.neutral.800');
-  --sidebar-foreground: theme('colors.neutral.50');
-  --sidebar-primary: 210 85% 65%;
-  --sidebar-primary-foreground: 210 90% 98%;
-  --sidebar-accent: theme('colors.neutral.700');
-  --sidebar-accent-foreground: theme('colors.neutral.50');
-  --sidebar-border: hsla(0, 0%, 100%, 0.1);
-  --sidebar-ring: theme('colors.neutral.600');
-  --sidebar-progress: 210 15% 40%;
-  --builder-background: hsla(0, 0%, 9%, 1);
-  --builder-background-pattern: hsla(0, 0%, 45%, 1);
-}
-
+    --sidebar-background: theme('colors.neutral.800');
+    --sidebar-foreground: theme('colors.neutral.50');
+    --sidebar-primary: 210 85% 65%;
+    --sidebar-primary-foreground: 210 90% 98%;
+    --sidebar-accent: theme('colors.neutral.700');
+    --sidebar-accent-foreground: theme('colors.neutral.50');
+    --sidebar-border: hsla(0, 0%, 100%, 0.08);
+    --sidebar-ring: theme('colors.neutral.600');
+    --sidebar-progress: 210 15% 40%;
+    --builder-background: hsla(0, 0%, 9%, 1);
+    --builder-background-pattern: hsla(0, 0%, 45%, 1);
+  }
 }
 
 @layer base {
   * {
     @apply border-border;
+  }
+
+  /*
+   * Global sleek scrollbar — 6px pill thumb, hidden at rest, fades in on hover.
+   * Consistent across all overflow containers. scrollbar-none opts out.
+   */
+  *::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background-color: transparent;
+    border-radius: 9999px;
+    transition: background-color 0.2s;
+  }
+
+  *:hover::-webkit-scrollbar-thumb {
+    background-color: var(--border);
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background-color: var(--ring);
+  }
+
+  *::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  /* Firefox — thin track, hidden at rest, visible on hover */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+  }
+
+  *:hover {
+    scrollbar-color: var(--border) transparent;
+  }
+
+  /* Restore scrollbar-none for elements that opt out */
+  .scrollbar-none {
+    scrollbar-width: none;
+  }
+
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
   }
 
   body {
@@ -495,7 +466,7 @@
   }
 
   button:not([disabled]),
-  [role="button"]:not([disabled]) {
+  [role='button']:not([disabled]) {
     cursor: pointer;
   }
 }
@@ -514,8 +485,8 @@
     --xy-selection-background-color-default: hsl(
       var(--primary-100) / 0.25
     ) !important;
-    --xy-resize-background-color:transparent !important;
-    .react-flow__resize-control.handle{
+    --xy-resize-background-color: transparent !important;
+    .react-flow__resize-control.handle {
       border: 0 !important;
     }
   }
@@ -535,32 +506,31 @@
     pointer-events: auto !important;
   }
 
-  [data-state="open"] {
+  [data-state='open'] {
     --tw-enter-translate-y: initial !important;
     --tw-enter-translate-x: initial !important;
   }
-  [data-state="closed"] {
+  [data-state='closed'] {
     --tw-exit-translate-y: initial !important;
     --tw-exit-translate-x: initial !important;
   }
 
   /* Restore slide animation for Sheet panels (overrides the broad reset above) */
-  [data-slot="sheet-content"][data-state="open"] {
+  [data-slot='sheet-content'][data-state='open'] {
     --tw-enter-translate-x: 100% !important;
   }
-  [data-slot="sheet-content"][data-state="closed"] {
+  [data-slot='sheet-content'][data-state='closed'] {
     --tw-exit-translate-x: 100% !important;
   }
 }
 
 @layer base {
-
   body {
     @apply font-sans;
-    }
+  }
   html {
     @apply font-sans;
-    }
+  }
 }
 .tiptap p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
@@ -569,7 +539,8 @@
   pointer-events: none;
 }
 
-.note-node,.note-drag-overlay {
+.note-node,
+.note-drag-overlay {
   ::-webkit-scrollbar {
     width: 4px;
     height: 8px;
@@ -582,16 +553,15 @@
     background: transparent;
     border-radius: 100px;
     border: 1px;
-   }
-
+  }
 }
 
-.note-node:focus-within:hover  {
+.note-node:focus-within:hover {
   ::-webkit-scrollbar-thumb {
     background: hsla(0, 1%, 66%, 0.328);
     border-radius: 100px;
     border: 1px;
-   }
+  }
 }
 
 .tiptap {
