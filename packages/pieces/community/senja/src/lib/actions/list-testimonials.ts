@@ -147,6 +147,6 @@ export const listTestimonialsAction = createAction({
 
     const testimonials = response.body.testimonials ?? [];
 
-    return testimonials.map((t) => mapTestimonial(t));
+    return testimonials.map((t) => mapTestimonial({ testimonial: t }));
   },
 });

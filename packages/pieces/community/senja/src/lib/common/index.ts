@@ -33,36 +33,42 @@ export async function senjaApiCall<T extends HttpMessageBody>({
   });
 }
 
-export function mapTestimonial(t: Record<string, unknown>, eventType?: string | null) {
-  const video = t['video'] as Record<string, unknown> | null | undefined;
-  const mp4Urls = video?.['mp4_urls'] as Record<string, unknown> | undefined;
+export function mapTestimonial({
+  testimonial,
+  eventType,
+}: {
+  testimonial: Record<string, unknown>;
+  eventType?: string | null;
+}) {
+  const video = isRecord(testimonial['video']) ? testimonial['video'] : null;
+  const mp4Urls = video && isRecord(video['mp4_urls']) ? video['mp4_urls'] : null;
   return {
     ...(eventType !== undefined ? { event_type: eventType ?? null } : {}),
-    id: t['id'] ?? null,
-    type: t['type'] ?? null,
-    title: t['title'] ?? null,
-    text: t['text'] ?? null,
-    rating: t['rating'] ?? null,
-    url: t['url'] ?? null,
-    date: t['date'] ?? null,
-    approved: t['approved'] ?? null,
-    integration: t['integration'] ?? null,
-    tags: (t['tags'] as string[]) ?? [],
-    lang: t['lang'] ?? null,
-    video_url: t['video_url'] ?? null,
-    thumbnail_url: t['thumbnail_url'] ?? null,
-    form_id: t['form_id'] ?? null,
-    project_id: t['project_id'] ?? null,
-    customer_name: t['customer_name'] ?? null,
-    customer_email: t['customer_email'] ?? null,
-    customer_company: t['customer_company'] ?? null,
-    customer_tagline: t['customer_tagline'] ?? null,
-    customer_username: t['customer_username'] ?? null,
-    customer_url: t['customer_url'] ?? null,
-    customer_avatar: t['customer_avatar'] ?? null,
-    customer_company_logo: t['customer_company_logo'] ?? null,
-    customer_custom_data: t['customer_custom_data'] ?? null,
-    media: (t['media'] as unknown[]) ?? [],
+    id: testimonial['id'] ?? null,
+    type: testimonial['type'] ?? null,
+    title: testimonial['title'] ?? null,
+    text: testimonial['text'] ?? null,
+    rating: testimonial['rating'] ?? null,
+    url: testimonial['url'] ?? null,
+    date: testimonial['date'] ?? null,
+    approved: testimonial['approved'] ?? null,
+    integration: testimonial['integration'] ?? null,
+    tags: Array.isArray(testimonial['tags']) ? testimonial['tags'] : [],
+    lang: testimonial['lang'] ?? null,
+    video_url: testimonial['video_url'] ?? null,
+    thumbnail_url: testimonial['thumbnail_url'] ?? null,
+    form_id: testimonial['form_id'] ?? null,
+    project_id: testimonial['project_id'] ?? null,
+    customer_name: testimonial['customer_name'] ?? null,
+    customer_email: testimonial['customer_email'] ?? null,
+    customer_company: testimonial['customer_company'] ?? null,
+    customer_tagline: testimonial['customer_tagline'] ?? null,
+    customer_username: testimonial['customer_username'] ?? null,
+    customer_url: testimonial['customer_url'] ?? null,
+    customer_avatar: testimonial['customer_avatar'] ?? null,
+    customer_company_logo: testimonial['customer_company_logo'] ?? null,
+    customer_custom_data: testimonial['customer_custom_data'] ?? null,
+    media: Array.isArray(testimonial['media']) ? testimonial['media'] : [],
     video_duration: video?.['duration'] ?? null,
     video_aspect_ratio: video?.['aspect_ratio'] ?? null,
     video_hls_url: video?.['hls_url'] ?? null,
@@ -70,10 +76,14 @@ export function mapTestimonial(t: Record<string, unknown>, eventType?: string | 
     video_mp4_medium: mp4Urls?.['medium'] ?? null,
     video_mp4_high: mp4Urls?.['high'] ?? null,
     video_transcript: video?.['transcript'] ?? null,
-    translations: (t['translations'] as unknown[]) ?? [],
-    created_at: t['created_at'] ?? null,
-    updated_at: t['updated_at'] ?? null,
+    translations: Array.isArray(testimonial['translations']) ? testimonial['translations'] : [],
+    created_at: testimonial['created_at'] ?? null,
+    updated_at: testimonial['updated_at'] ?? null,
   };
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 export const SENJA_BASE_URL = BASE_URL;

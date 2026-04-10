@@ -57,6 +57,6 @@ export const updateTestimonialAction = createAction({
       body,
     });
 
-    return mapTestimonial(response.body);
+    return mapTestimonial({ testimonial: response.body });
   },
 });

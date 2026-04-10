@@ -23,6 +23,6 @@ export const getTestimonialAction = createAction({
       path: `/testimonials/${context.propsValue.id}`,
     });
 
-    return mapTestimonial(response.body);
+    return mapTestimonial({ testimonial: response.body });
   },
 });
