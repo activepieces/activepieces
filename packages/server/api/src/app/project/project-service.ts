@@ -290,7 +290,7 @@ type UpdateTeamProjectParams = {
     externalId?: string
     releasesEnabled?: boolean
     metadata?: Metadata
-    maxConcurrentJobs?: number
+    maxConcurrentJobs?: number | null
     icon?: ProjectIcon
 }
 
@@ -299,7 +299,7 @@ type UpdatePersonalProjectParams = {
     externalId?: string
     releasesEnabled?: boolean
     metadata?: Metadata
-    maxConcurrentJobs?: number
+    maxConcurrentJobs?: number | null
 }
 
 type UpdateParams = UpdateTeamProjectParams | UpdatePersonalProjectParams
