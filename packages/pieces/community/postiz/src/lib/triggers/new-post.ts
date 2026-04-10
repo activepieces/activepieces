@@ -55,11 +55,11 @@ With **Email & Password (JWT)** authentication, the webhook is registered automa
     }
     const jwtAuth = auth as PostizJwtAuthValue;
     const apiRoot = buildApiRoot(jwtAuth);
-    const jwt = await getJwtToken(
-      jwtAuth.props.base_url,
-      jwtAuth.props.email,
-      jwtAuth.props.password,
-    );
+    const jwt = await getJwtToken({
+      baseUrl: jwtAuth.props.base_url,
+      email: jwtAuth.props.email,
+      password: jwtAuth.props.password,
+    });
     const response = await httpClient.sendRequest<{ id: string }>({
       method: HttpMethod.POST,
       url: `${apiRoot}/api/webhooks`,
@@ -83,11 +83,11 @@ With **Email & Password (JWT)** authentication, the webhook is registered automa
     }
     const auth = context.auth as PostizJwtAuthValue;
     const apiRoot = buildApiRoot(auth);
-    const jwt = await getJwtToken(
-      auth.props.base_url,
-      auth.props.email,
-      auth.props.password,
-    );
+    const jwt = await getJwtToken({
+      baseUrl: auth.props.base_url,
+      email: auth.props.email,
+      password: auth.props.password,
+    });
     try {
       await httpClient.sendRequest({
         method: HttpMethod.DELETE,
@@ -101,19 +101,8 @@ With **Email & Password (JWT)** authentication, the webhook is registered automa
   },
 
   async run(context) {
-    const posts = context.payload.body as {
-      id: string;
-      content: string;
-      publishDate: string;
-      releaseURL: string | null;
-      state: string;
-      integration: {
-        id: string;
-        providerIdentifier: string;
-        name: string;
-        picture: string;
-      } | null;
-    }[];
+    const body = context.payload.body as PostizWebhookPost | PostizWebhookPost[];
+    const posts = Array.isArray(body) ? body : [body];
 
     return posts.map((post) => ({
       id: post.id,
@@ -127,3 +116,17 @@ With **Email & Password (JWT)** authentication, the webhook is registered automa
     }));
   },
 });
+
+type PostizWebhookPost = {
+  id: string;
+  content: string;
+  publishDate: string;
+  releaseURL: string | null;
+  state: string;
+  integration: {
+    id: string;
+    providerIdentifier: string;
+    name: string;
+    picture: string;
+  } | null;
+};

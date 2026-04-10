@@ -86,7 +86,11 @@ const jwtAuth = PieceAuth.CustomAuth({
       };
     }
     try {
-      await getJwtToken(auth.base_url, auth.email, auth.password);
+      await getJwtToken({
+        baseUrl: auth.base_url,
+        email: auth.email,
+        password: auth.password,
+      });
     } catch {
       return {
         valid: false,
@@ -97,11 +101,15 @@ const jwtAuth = PieceAuth.CustomAuth({
   },
 });
 
-export async function getJwtToken(
-  baseUrl: string,
-  email: string,
-  password: string
-): Promise<string> {
+export async function getJwtToken({
+  baseUrl,
+  email,
+  password,
+}: {
+  baseUrl: string;
+  email: string;
+  password: string;
+}): Promise<string> {
   const url = baseUrl.trim().replace(/\/+$/, '');
   const res = await httpClient.sendRequest({
     method: HttpMethod.POST,
@@ -140,10 +148,3 @@ export type PostizAuthValue = AppConnectionValueForAuthProperty<
 export type PostizJwtAuthValue = AppConnectionValueForAuthProperty<
   typeof jwtAuth
 >;
-
-export type PostizApiKeyAuth = {
-  props: {
-    base_url: string;
-    api_key: string;
-  };
-};
