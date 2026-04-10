@@ -58,7 +58,7 @@ async function getMaxConcurrentJobs({ poolId, platformId, log }: { poolId: strin
     return getMaxConcurrentJobsForPlatformPlan({ platformId })
 }
 
-async function tryAcquireSlot(jobId: string, jobData: ExecuteFlowJobData, log: FastifyBaseLogger): Promise<boolean> {
+async function tryAcquireSlot({ jobId, jobData, log }: { jobId: string, jobData: ExecuteFlowJobData, log: FastifyBaseLogger }): Promise<boolean> {
     const flowTimeoutInMilliseconds = apDayjsDuration(system.getNumberOrThrow(AppSystemProp.FLOW_TIMEOUT_SECONDS), 'seconds').add(1, 'minute').asMilliseconds()
     const { data: poolId } = await tryCatch(() => concurrencyPoolService(log).getProjectPoolId(jobData.projectId))
     const effectivePoolId = poolId ?? jobData.projectId
@@ -108,7 +108,7 @@ return 0
     return result === 0
 }
 
-async function releaseSlot(jobId: string, jobData: ExecuteFlowJobData, log: FastifyBaseLogger): Promise<void> {
+async function releaseSlot({ jobId, jobData, log }: { jobId: string, jobData: ExecuteFlowJobData, log: FastifyBaseLogger }): Promise<void> {
     const { data: poolId } = await tryCatch(() => concurrencyPoolService(log).getProjectPoolId(jobData.projectId))
     const effectivePoolId = poolId ?? jobData.projectId
     const setKey = getConcurrencyPoolSetKey(effectivePoolId)
@@ -133,7 +133,7 @@ export const rateLimiterInterceptor: JobInterceptor = {
             return { verdict: InterceptorVerdict.ALLOW }
         }
 
-        const allowed = await tryAcquireSlot(jobId, jobData, log)
+        const allowed = await tryAcquireSlot({ jobId, jobData, log })
         if (allowed) {
             log.debug({ jobId, projectId: jobData.projectId }, '[rateLimiterInterceptor] Job allowed')
             return { verdict: InterceptorVerdict.ALLOW }
@@ -152,7 +152,7 @@ export const rateLimiterInterceptor: JobInterceptor = {
         if (!shouldContinue(jobData)) {
             return
         }
-        await releaseSlot(jobId, jobData, log)
+        await releaseSlot({ jobId, jobData, log })
         log.debug({ jobId, projectId: jobData.projectId }, '[rateLimiterInterceptor] Slot released')
     },
 }

@@ -94,7 +94,10 @@ export const platformController: FastifyPluginAsyncZod = async (app) => {
     })
 
     app.post('/concurrency-pool', UpsertConcurrencyPoolRequest, async (req, res) => {
-        const result = await concurrencyPoolService(req.log).upsertPool(req.body)
+        const result = await concurrencyPoolService(req.log).upsertPool({
+            ...req.body,
+            platformId: req.principal.platform.id,
+        })
         return res.status(StatusCodes.OK).send(result)
     })
 
