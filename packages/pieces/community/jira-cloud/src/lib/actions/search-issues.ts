@@ -1,15 +1,51 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
+import { MarkdownVariant } from '@activepieces/shared';
 import { jiraCloudAuth } from '../../auth';
-import { searchIssuesByJql } from '../common';
+import { searchIssuesByJql, getJiraFields } from '../common';
 import { z } from 'zod';
 import { propsValidation } from '@activepieces/pieces-common';
+
+function mapFieldNames(fields: Record<string, any>, fieldNames: Record<string, string>) {
+  const mappedFields = {} as Record<string, any>;
+  for (const [fieldId, fieldValue] of Object.entries(fields)) {
+    const fieldName = fieldNames?.[fieldId];
+    mappedFields[fieldName || fieldId] = fieldValue;
+  }
+  return mappedFields;
+}
+
+function resolveFieldIds(userFields: string[], jiraFields: { id: string; name: string }[]): string[] {
+  const nameToIdMap = new Map<string, string>();
+  for (const f of jiraFields) {
+    nameToIdMap.set(f.name.toLowerCase(), f.id);
+  }
+
+  return userFields.map(input => {
+    const cleanInput = input.trim();
+    const lowerInput = cleanInput.toLowerCase();
+
+    if (lowerInput.startsWith('*') || lowerInput.startsWith('-')) {
+      return cleanInput;
+    }
+
+    if (nameToIdMap.has(lowerInput)) {
+      return nameToIdMap.get(lowerInput)!;
+    }
+
+    return cleanInput;
+  });
+}
 
 export const searchIssues = createAction({
   name: 'search_issues',
   displayName: 'Search Issues',
-  description: 'Search for issues with JQL (supports pagination and field selection)',
+  description: 'Search for issues with JQL',
   auth: jiraCloudAuth,
   props: {
+    memoryWarning: Property.MarkDown({
+      value: `Fetching a large number of issues without specifying **Fields to Return** may exceed your flow's memory limits. Use field selection to reduce payload size.`,
+      variant: MarkdownVariant.WARNING,
+    }),
     jql: Property.LongText({
       displayName: 'JQL',
       description: "The JQL query to use in search (Tip: Use single quotes for strings/dates)",
@@ -19,14 +55,18 @@ export const searchIssues = createAction({
     fields: Property.Array({
       displayName: 'Fields to Return',
       description: `List of exact Jira Field IDs to return (e.g., 'summary', 'customfield_10016').
-
 Special commands:
 - Use *all for every field.
 - Use *navigable for standard fields (default).
 - Prefix with a minus to exclude (e.g., -description).
-
 Example: *all and -comment returns everything except comments.`,
       required: false,
+    }),
+    mapNames: Property.Checkbox({
+      displayName: 'Map Field Names',
+      description: `Map human readable names to Fields in the output.\nNotes:\n- If there are fields with the same name, they may be overridden.`,
+      required: true,
+      defaultValue: false,
     }),
     maxResults: Property.Number({
       displayName: 'Max Results',
@@ -44,8 +84,20 @@ Example: *all and -comment returns everything except comments.`,
       maxResults: z.number().min(1).max(5000),
     });
 
-    const { jql, maxResults, sanitizeJql, fields } = propsValue;
-    const fieldList = fields as string[];
+    const { jql, maxResults, sanitizeJql, fields, mapNames } = propsValue;
+    
+    let fieldList = fields as string[];
+
+    if (mapNames && fieldList.length > 0) {
+      try {
+        const jiraFields = await getJiraFields(auth as any);
+        fieldList = resolveFieldIds(fieldList, jiraFields);
+      } catch (error) {
+        fieldList = fieldList;
+      }
+    }
+
+    let expandParams = mapNames ? ['names'] : [];
 
     const allIssues: any[] = [];
     let nextPageToken: string | undefined;
@@ -61,7 +113,18 @@ Example: *all and -comment returns everything except comments.`,
         sanitizeJql,
         nextPageToken,
         fields: fieldList,
+        expand: expandParams,
       });
+
+      const fieldNames = response.names || {};
+      
+      if (mapNames && Object.keys(fieldNames).length > 0) {
+        for (const issue of response) {
+          if (issue.fields) {
+            issue.fields = mapFieldNames(issue.fields, fieldNames);
+          }
+        }
+      }
 
       allIssues.push(...response);
       nextPageToken = response.nextPageToken;

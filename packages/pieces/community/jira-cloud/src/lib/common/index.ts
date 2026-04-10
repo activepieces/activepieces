@@ -131,6 +131,7 @@ export async function searchIssuesByJql({
     sanitizeJql,
     nextPageToken,
     fields,
+		expand,
 }: {
     auth: JiraAuth;
     jql: string;
@@ -138,6 +139,7 @@ export async function searchIssuesByJql({
     sanitizeJql: boolean;
     nextPageToken?: string;
     fields?: string[];
+		expand?: string[];
 }): Promise<JiraSearchResponse> {
 	const bodyPayload: Record<string, any> = { maxResults };
 	if (nextPageToken) bodyPayload['nextPageToken'] = nextPageToken;
@@ -163,15 +165,28 @@ export async function searchIssuesByJql({
 		body: {
 			issueIdsOrKeys: issueIds,
 			fields,
+			expand,
 		},
 	});
 
-	const body = bulkFetchResponse.body as { issues: any[] };
+	const body = bulkFetchResponse.body as { issues: any[]; names?: Record<string, string> };
 	
 	const finalIssues = body.issues as JiraSearchResponse;
 	finalIssues.nextPageToken = searchResult.nextPageToken;
+	if (body.names) {
+		finalIssues.names = body.names;
+  }
 
 	return finalIssues;
+}
+
+export async function getJiraFields(auth: any): Promise<{ id: string; name: string }[]> {
+  const response = await sendJiraRequest({
+    auth,
+    url: 'field',
+    method: HttpMethod.GET,
+  });
+  return response.body as { id: string; name: string }[];
 }
 
 export async function createJiraIssue(data: CreateIssueParams) {

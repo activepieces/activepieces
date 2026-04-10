@@ -19,6 +19,7 @@ export type IssueFieldMetaData ={
 
 export type JiraSearchResponse = any[] & {
     nextPageToken?: string;
+	names?: Record<string, string>;
 };
 
 export const VALID_CUSTOM_FIELD_TYPES = [
