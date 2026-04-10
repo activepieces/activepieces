@@ -3,7 +3,6 @@ import { ApId, ExecutionType, FlowRunStatus, ProgressUpdateType } from '@activep
 enum WaitpointStatus {
     PENDING = 'PENDING',
     COMPLETED = 'COMPLETED',
-    TIMED_OUT = 'TIMED_OUT',
 }
 
 enum WaitpointType {

@@ -134,18 +134,26 @@ describe('Resume flow run', () => {
         })
         await db.save('flow_version', flowVersion)
 
-        const runId = apId()
+        const flowRun = createMockFlowRun({
+            projectId: ctx.project.id,
+            flowId: flow.id,
+            flowVersionId: flowVersion.id,
+            status: FlowRunStatus.RUNNING,
+            environment: RunEnvironment.PRODUCTION,
+        })
+        await db.save('flow_run', flowRun)
+
+        const runId = flowRun.id
         const requestId = apId()
 
-        const runMetadata: RunsMetadataUpsertData = {
+        await distributedStore.merge(redisMetadataKey(runId), {
             id: runId,
             projectId: ctx.project.id,
             flowId: flow.id,
             flowVersionId: flowVersion.id,
             environment: RunEnvironment.PRODUCTION,
             status: FlowRunStatus.RUNNING,
-        }
-        await distributedStore.merge(redisMetadataKey(runId), runMetadata)
+        })
 
         await db.save('waitpoint', {
             id: apId(),

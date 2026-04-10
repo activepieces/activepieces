@@ -38,7 +38,6 @@ export class AddWaitpointTable1775747638323 implements Migration {
             FOREIGN KEY ("projectId") REFERENCES "project"("id")
             ON DELETE CASCADE ON UPDATE NO ACTION
         `)
-
         await this.migrateExistingPausedRuns(queryRunner)
 
         await queryRunner.query(`

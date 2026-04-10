@@ -1,4 +1,4 @@
-import { apId, isNil, tryCatch } from '@activepieces/shared'
+import { apId, isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { transaction } from '../../../core/db/transaction'
@@ -11,8 +11,11 @@ const waitpointRepo = repoFactory(WaitpointEntity)
 export const waitpointService = (log: FastifyBaseLogger) => ({
     async createForPause(params: CreateForPauseParams): Promise<CreateForPauseResult> {
         const id = apId()
-        const { error } = await tryCatch(() =>
-            waitpointRepo().save({
+        await waitpointRepo()
+            .createQueryBuilder()
+            .insert()
+            .into('waitpoint')
+            .values({
                 id,
                 flowRunId: params.flowRunId,
                 projectId: params.projectId,
@@ -20,25 +23,23 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
                 status: WaitpointStatus.PENDING,
                 resumeDateTime: params.resumeDateTime ?? null,
                 timeoutSeconds: params.timeoutSeconds ?? null,
-                responseToSend: params.responseToSend ?? null,
+                responseToSend: params.responseToSend ? () => `'${JSON.stringify(params.responseToSend)}'::jsonb` : null,
                 workerHandlerId: params.workerHandlerId ?? null,
                 httpRequestId: params.httpRequestId ?? null,
                 resumePayload: null,
-            }),
-        )
+            })
+            .orIgnore()
+            .execute()
 
-        if (isNil(error)) {
-            const inserted = await waitpointRepo().findOneByOrFail({ id })
+        const waitpoint = await waitpointRepo().findOneByOrFail({ flowRunId: params.flowRunId })
+        const inserted = waitpoint.id === id
+        if (inserted) {
             log.info({ flowRunId: params.flowRunId, waitpointId: id }, '[waitpointService#createForPause] Waitpoint created')
-            return { inserted: true, waitpoint: inserted }
         }
-
-        const existing = await waitpointRepo().findOneByOrFail({ flowRunId: params.flowRunId })
-        log.info({
-            flowRunId: params.flowRunId,
-            existingStatus: existing.status,
-        }, '[waitpointService#createForPause] Waitpoint already exists')
-        return { inserted: false, waitpoint: existing }
+        else {
+            log.info({ flowRunId: params.flowRunId, existingStatus: waitpoint.status }, '[waitpointService#createForPause] Waitpoint already exists')
+        }
+        return { inserted, waitpoint }
     },
 
     async complete(params: CompleteParams): Promise<CompleteResult> {
@@ -71,10 +72,12 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
                 return { completedExisting: false, waitpoint: existing }
             }
 
-            const id = apId()
-            const { error } = await tryCatch(() =>
-                repo.save({
-                    id,
+            await repo
+                .createQueryBuilder()
+                .insert()
+                .into('waitpoint')
+                .values({
+                    id: apId(),
                     flowRunId: params.flowRunId,
                     projectId: params.projectId,
                     type: WaitpointType.WEBHOOK,
@@ -84,15 +87,10 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
                     responseToSend: null,
                     workerHandlerId: null,
                     httpRequestId: null,
-                    resumePayload: params.resumePayload,
-                }),
-            )
-
-            if (!isNil(error)) {
-                const concurrent = await repo.findOneByOrFail({ flowRunId: params.flowRunId })
-                log.info({ flowRunId: params.flowRunId }, '[waitpointService#complete] Concurrent insert, returning existing')
-                return { completedExisting: false, waitpoint: concurrent }
-            }
+                    resumePayload: () => `'${JSON.stringify(params.resumePayload)}'::jsonb`,
+                })
+                .orIgnore()
+                .execute()
 
             const preCompleted = await repo.findOneByOrFail({ flowRunId: params.flowRunId })
             log.info({ flowRunId: params.flowRunId }, '[waitpointService#complete] Pre-completed waitpoint (resume arrived before pause)')
