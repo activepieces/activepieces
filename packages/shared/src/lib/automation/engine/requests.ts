@@ -1,5 +1,4 @@
 import { z } from 'zod'
-import { Nullable } from '../../core/common'
 import { FlowRunStatus } from '../flow-run/execution/flow-execution'
 import { StepOutput } from '../flow-run/execution/step-output'
 import { FailedStep, FlowRun } from '../flow-run/flow-run'
@@ -14,15 +13,12 @@ export const UploadRunLogsRequest = z.object({
     status: z.nativeEnum(FlowRunStatus),
     projectId: z.string(),
     progressUpdateType: z.nativeEnum(ProgressUpdateType).optional(),
-    workerHandlerId: Nullable(z.string()),
-    httpRequestId: Nullable(z.string()),
     logsFileId: z.string().optional(),
     stepNameToTest: z.string().optional(),
     failedStep: FailedStep.optional(),
     startTime: z.string().optional(),
     finishTime: z.string().optional(),
     stepResponse: StepRunResponse.optional(),
-    waitpointId: z.string().optional(),
     stepsCount: z.number().optional(),
 })
 

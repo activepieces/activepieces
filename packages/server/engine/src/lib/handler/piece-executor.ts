@@ -3,6 +3,7 @@ import { ActionContext, backwardCompatabilityContextUtils, ConstructToolParams, 
 import { AUTHENTICATION_PROPERTY_NAME, EngineGenericError, ExecutionType, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, PausedFlowTimeoutError, PauseType, PieceAction, RespondResponse, StepOutputStatus } from '@activepieces/shared'
 import type { ToolSet } from 'ai'
 import dayjs from 'dayjs'
+import { nanoid } from 'nanoid'
 import { continueIfFailureHandler, runWithExponentialBackoff } from '../helper/error-handling'
 import { pieceLoader } from '../helper/piece-loader'
 import { createFlowsContext } from '../services/flows.service'
@@ -140,9 +141,9 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
             run: {
                 id: constants.flowRunId,
                 stop: createStopHook(params),
-                pause: createLegacyPauseShim(params),
+                pause: createLegacyPauseShim(params, action.name),
                 respond: createRespondHook(params),
-                createWaitpoint: createWaitpointHook({ hookParams: params, constants }),
+                createWaitpoint: createWaitpointHook({ hookParams: params, constants, stepName: action.name }),
                 waitForWaitpoint: createWaitForWaitpointHook({ hookParams: params }),
             },
             project: {
@@ -150,7 +151,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 externalId: constants.externalProjectId,
             },
             generateResumeUrl: (params) => {
-                const url = new URL(`${constants.publicApiUrl}v1/flow-runs/${constants.flowRunId}/requests/${executionState.pauseRequestId}${params.sync ? '/sync' : ''}`)
+                const url = new URL(`${constants.publicApiUrl}v1/flow-runs/${constants.flowRunId}/requests/${nanoid()}${params.sync ? '/sync' : ''}`)
                 url.search = new URLSearchParams(params.queryParams).toString()
                 return url.toString()
             },
@@ -199,6 +200,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                     engineToken: constants.engineToken,
                     flowRunId: constants.flowRunId,
                     projectId: constants.projectId,
+                    stepName: pending.stepName,
                     type: pending.type,
                     resumeDateTime: pending.resumeDateTime,
                     responseToSend: pending.responseToSend,
@@ -299,7 +301,7 @@ type CreateRespondHookParams = {
     hookResponse: HookResponse
 }
 
-function createWaitpointHook({ constants }: { hookParams: { hookResponse: HookResponse }, constants: EngineConstants }): CreateWaitpointHook {
+function createWaitpointHook({ constants, stepName }: { hookParams: { hookResponse: HookResponse }, constants: EngineConstants, stepName: string }): CreateWaitpointHook {
     return async (req: CreateWaitpointParams): Promise<CreateWaitpointResult> => {
         if (req.type === 'DELAY' && req.resumeDateTime) {
             const diffInDays = dayjs(req.resumeDateTime).diff(dayjs(), 'days')
@@ -312,6 +314,7 @@ function createWaitpointHook({ constants }: { hookParams: { hookResponse: HookRe
             engineToken: constants.engineToken,
             flowRunId: constants.flowRunId,
             projectId: constants.projectId,
+            stepName,
             type: req.type,
             resumeDateTime: req.resumeDateTime,
             responseToSend: req.responseToSend,
@@ -339,7 +342,7 @@ function createWaitForWaitpointHook({ hookParams }: { hookParams: { hookResponse
     }
 }
 
-function createLegacyPauseShim(params: { hookResponse: HookResponse }): PauseHook {
+function createLegacyPauseShim(params: { hookResponse: HookResponse }, stepName: string): PauseHook {
     return (req) => {
         const type = req.pauseMetadata.type === PauseType.DELAY ? 'DELAY' as const : 'WEBHOOK' as const
         if (type === 'DELAY') {
@@ -353,6 +356,7 @@ function createLegacyPauseShim(params: { hookResponse: HookResponse }): PauseHoo
             type: 'paused',
             pendingWaitpoint: {
                 type,
+                stepName,
                 resumeDateTime: req.pauseMetadata.type === PauseType.DELAY ? req.pauseMetadata.resumeDateTime : undefined,
                 responseToSend: req.pauseMetadata.type === PauseType.WEBHOOK ? req.pauseMetadata.response : undefined,
             },

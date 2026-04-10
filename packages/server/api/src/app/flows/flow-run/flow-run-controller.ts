@@ -58,6 +58,41 @@ export const flowRunController: FastifyPluginAsyncZod = async (app) => {
         },
     )
 
+    app.all('/:id/waitpoints/:waitpointId', ResumeByWaitpointRequest, async (req, reply) => {
+        const headers = req.headers as Record<string, string>
+        const queryParams = req.query as Record<string, string>
+        await flowRunService(req.log).resumeFromWaitpoint({
+            flowRunId: req.params.id,
+            resumePayload: {
+                payload: {
+                    body: req.body,
+                    headers,
+                    queryParams,
+                },
+                progressUpdateType: ProgressUpdateType.TEST_FLOW,
+                executionType: ExecutionType.RESUME,
+            },
+        })
+        await reply.send({
+            message: 'Your response has been recorded. You can close this page now.',
+        })
+    })
+
+    app.all('/:id/waitpoints/:waitpointId/sync', ResumeByWaitpointRequest, async (req, reply) => {
+        const headers = req.headers as Record<string, string>
+        const queryParams = req.query as Record<string, string>
+        const response = await flowRunService(req.log).handleSyncResumeFlow({
+            runId: req.params.id,
+            payload: {
+                body: req.body,
+                headers,
+                queryParams,
+            },
+            correlationId: req.params.waitpointId,
+        })
+        await reply.status(response.status).headers(response.headers).send(response.body)
+    })
+
     app.all('/:id/requests/:requestId', ResumeFlowRunRequest, async (req, reply) => {
         const headers = req.headers as Record<string, string>
         const queryParams = req.query as Record<string, string>
@@ -69,7 +104,6 @@ export const flowRunController: FastifyPluginAsyncZod = async (app) => {
                     headers,
                     queryParams,
                 },
-                requestId: req.params.requestId,
                 progressUpdateType: ProgressUpdateType.TEST_FLOW,
                 executionType: ExecutionType.RESUME,
             },
@@ -89,7 +123,7 @@ export const flowRunController: FastifyPluginAsyncZod = async (app) => {
                 headers,
                 queryParams,
             },
-            requestId: req.params.requestId,
+            correlationId: req.params.requestId,
         })
         await reply.status(response.status).headers(response.headers).send(response.body)
     })
@@ -196,6 +230,18 @@ const GetRequest = {
         response: {
             [StatusCodes.OK]: FlowRun,
         },
+    },
+}
+
+const ResumeByWaitpointRequest = {
+    config: {
+        security: securityAccess.unscoped(ALL_PRINCIPAL_TYPES),
+    },
+    schema: {
+        params: z.object({
+            id: ApId,
+            waitpointId: z.string(),
+        }),
     },
 }
 

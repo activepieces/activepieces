@@ -49,6 +49,10 @@ export const WaitpointEntity = new EntitySchema<WaitpointSchema>({
             type: String,
             nullable: true,
         },
+        stepName: {
+            type: String,
+            nullable: false,
+        },
         resumePayload: {
             type: 'jsonb',
             nullable: true,
@@ -56,8 +60,8 @@ export const WaitpointEntity = new EntitySchema<WaitpointSchema>({
     },
     indices: [
         {
-            name: 'idx_waitpoint_flow_run_id',
-            columns: ['flowRunId'],
+            name: 'idx_waitpoint_flow_run_id_step_name',
+            columns: ['flowRunId', 'stepName'],
             unique: true,
         },
         {

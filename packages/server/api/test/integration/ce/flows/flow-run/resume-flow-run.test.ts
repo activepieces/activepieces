@@ -14,6 +14,17 @@ import { setupTestEnvironment, teardownTestEnvironment } from '../../../../helpe
 import { createMockFlow, createMockFlowRun, createMockFlowVersion } from '../../../../helpers/mocks'
 import { db } from '../../../../helpers/db'
 
+async function waitForCondition(fn: () => Promise<boolean>, timeoutMs = 5000): Promise<void> {
+    const start = Date.now()
+    while (Date.now() - start < timeoutMs) {
+        if (await fn()) {
+            return
+        }
+        await new Promise((resolve) => setTimeout(resolve, 100))
+    }
+    throw new Error('waitForCondition timed out')
+}
+
 let app: FastifyInstance
 let ctx: TestContext
 
@@ -31,7 +42,6 @@ beforeEach(async () => {
 
 async function createPausedFlowRunWithWaitpoint(params: {
     projectId: string
-    pauseRequestId: string
 }) {
     const flow = createMockFlow({ projectId: params.projectId })
     await db.save('flow', flow)
@@ -55,6 +65,7 @@ async function createPausedFlowRunWithWaitpoint(params: {
         id: apId(),
         flowRunId: flowRun.id,
         projectId: params.projectId,
+        stepName: 'approval',
         type: 'WEBHOOK',
         status: 'PENDING',
         httpRequestId: null,
@@ -70,7 +81,6 @@ describe('Resume flow run', () => {
 
         const { flowRun } = await createPausedFlowRunWithWaitpoint({
             projectId: ctx.project.id,
-            pauseRequestId: requestId,
         })
 
         const response = await app.inject({
@@ -156,16 +166,15 @@ describe('Resume flow run', () => {
             status: FlowRunStatus.RUNNING,
         })
 
-        const waitpointId = apId()
         await db.save('waitpoint', {
-            id: waitpointId,
+            id: apId(),
             flowRunId: runId,
             projectId: ctx.project.id,
+            stepName: 'approval',
             type: 'WEBHOOK',
             status: 'COMPLETED',
             resumePayload: {
                 payload: { body: { status: 'success' } },
-                requestId,
                 progressUpdateType: 'TEST_FLOW',
                 executionType: 'RESUME',
             },
@@ -176,9 +185,11 @@ describe('Resume flow run', () => {
             runId,
             projectId: ctx.project.id,
             status: FlowRunStatus.PAUSED,
-            workerHandlerId: null,
-            httpRequestId: null,
-            waitpointId,
+        })
+
+        await waitForCondition(async () => {
+            const wp = await db.findOneBy('waitpoint', { flowRunId: runId })
+            return wp === null
         })
 
         const dbRun = await db.findOneBy<{ id: string, status: string }>('flow_run', { id: runId })
@@ -249,7 +260,6 @@ describe('Resume flow run', () => {
 
         const { flowRun } = await createPausedFlowRunWithWaitpoint({
             projectId: ctx.project.id,
-            pauseRequestId: requestId,
         })
 
         const responsePromise = app.inject({
@@ -268,7 +278,7 @@ describe('Resume flow run', () => {
         expect(response.statusCode).toBe(200)
     })
 
-    it('should persist PAUSED status with waitpointId for a Redis-only run', async () => {
+    it('should persist PAUSED status for a Redis-only run', async () => {
         const flow = createMockFlow({ projectId: ctx.project.id })
         await db.save('flow', flow)
 
@@ -291,11 +301,11 @@ describe('Resume flow run', () => {
         }
         await distributedStore.merge(redisMetadataKey(runId), runMetadata)
 
-        const waitpointId = apId()
         await db.save('waitpoint', {
-            id: waitpointId,
+            id: apId(),
             flowRunId: runId,
             projectId: ctx.project.id,
+            stepName: 'approval',
             type: 'WEBHOOK',
             status: 'PENDING',
             httpRequestId: null,
@@ -307,9 +317,11 @@ describe('Resume flow run', () => {
             runId,
             projectId: ctx.project.id,
             status: FlowRunStatus.PAUSED,
-            workerHandlerId: null,
-            httpRequestId: null,
-            waitpointId,
+        })
+
+        await waitForCondition(async () => {
+            const dbRun = await db.findOneBy<{ status: string }>('flow_run', { id: runId })
+            return dbRun?.status === FlowRunStatus.PAUSED
         })
 
         const waitpoint = await db.findOneBy<{ status: string, type: string }>('waitpoint', { flowRunId: runId })
@@ -348,11 +360,11 @@ describe('Resume flow run', () => {
         }
         await distributedStore.merge(redisMetadataKey(runId), runMetadata)
 
-        const waitpointId = apId()
         await db.save('waitpoint', {
-            id: waitpointId,
+            id: apId(),
             flowRunId: runId,
             projectId: ctx.project.id,
+            stepName: 'delay_step',
             type: 'DELAY',
             status: 'PENDING',
             resumeDateTime,
@@ -365,9 +377,11 @@ describe('Resume flow run', () => {
             runId,
             projectId: ctx.project.id,
             status: FlowRunStatus.PAUSED,
-            workerHandlerId: null,
-            httpRequestId: null,
-            waitpointId,
+        })
+
+        await waitForCondition(async () => {
+            const dbRun = await db.findOneBy<{ status: string }>('flow_run', { id: runId })
+            return dbRun?.status === FlowRunStatus.PAUSED
         })
 
         const waitpoint = await db.findOneBy<{ status: string, type: string, resumeDateTime: string }>('waitpoint', { flowRunId: runId })
@@ -380,7 +394,6 @@ describe('Resume flow run', () => {
     it('should clean up waitpoint when flow run finishes (onFinish)', async () => {
         const { flowRun } = await createPausedFlowRunWithWaitpoint({
             projectId: ctx.project.id,
-            pauseRequestId: apId(),
         })
 
         const waitpointBefore = await db.findOneBy('waitpoint', { flowRunId: flowRun.id })
@@ -397,7 +410,6 @@ describe('Resume flow run', () => {
     it('markParentRunAsFailed should complete waitpoint when parent is PAUSED', async () => {
         const { flowRun: parentRun } = await createPausedFlowRunWithWaitpoint({
             projectId: ctx.project.id,
-            pauseRequestId: apId(),
         })
 
         const childRun = createMockFlowRun({
@@ -476,9 +488,11 @@ describe('Resume flow run', () => {
             runId: parentRun.id,
             projectId: ctx.project.id,
             status: FlowRunStatus.PAUSED,
-            workerHandlerId: null,
-            httpRequestId: null,
-            waitpointId: preCompletedWaitpoint!.id,
+        })
+
+        await waitForCondition(async () => {
+            const wp = await db.findOneBy('waitpoint', { flowRunId: parentRun.id })
+            return wp === null
         })
 
         const waitpointAfter = await db.findOneBy('waitpoint', { flowRunId: parentRun.id })
@@ -537,58 +551,29 @@ describe('Resume flow run', () => {
         expect(orphanedWaitpoint).toBeNull()
     })
 
-    it('should set waitpointId on flow_run when uploadRunLog persists PAUSED status', async () => {
-        const flow = createMockFlow({ projectId: ctx.project.id })
-        await db.save('flow', flow)
-
-        const flowVersion = createMockFlowVersion({
-            flowId: flow.id,
-            state: FlowVersionState.LOCKED,
-        })
-        await db.save('flow_version', flowVersion)
-
-        const runId = apId()
-        const requestId = apId()
-
-        await distributedStore.merge(redisMetadataKey(runId), {
-            id: runId,
+    it('should resume via new /:id/waitpoints/:waitpointId route', async () => {
+        const { flowRun } = await createPausedFlowRunWithWaitpoint({
             projectId: ctx.project.id,
-            flowId: flow.id,
-            flowVersionId: flowVersion.id,
-            environment: RunEnvironment.PRODUCTION,
-            status: FlowRunStatus.RUNNING,
         })
 
-        const waitpointId = apId()
-        await db.save('waitpoint', {
-            id: waitpointId,
-            flowRunId: runId,
-            projectId: ctx.project.id,
-            type: 'WEBHOOK',
-            status: 'PENDING',
-            httpRequestId: null,
-            workerHandlerId: null,
+        const waitpoint = await db.findOneBy<{ id: string }>('waitpoint', { flowRunId: flowRun.id })
+        expect(waitpoint).not.toBeNull()
+
+        const response = await app.inject({
+            method: 'POST',
+            url: `/api/v1/flow-runs/${flowRun.id}/waitpoints/${waitpoint!.id}`,
+            body: { status: 'success', data: { greeting: 'Hello' } },
         })
 
-        const handlers = createHandlers(app.log)
-        await handlers.uploadRunLog({
-            runId,
-            projectId: ctx.project.id,
-            status: FlowRunStatus.PAUSED,
-            workerHandlerId: null,
-            httpRequestId: null,
-            waitpointId,
-        })
+        expect(response.statusCode).toBe(200)
 
-        const dbRun = await db.findOneBy<{ id: string, waitpointId: string | null }>('flow_run', { id: runId })
-        expect(dbRun).not.toBeNull()
-        expect(dbRun!.waitpointId).toBe(waitpointId)
+        const waitpointAfter = await db.findOneBy('waitpoint', { flowRunId: flowRun.id })
+        expect(waitpointAfter).toBeNull()
     })
 
     it('should clean up waitpoints when flow is deleted via batchDeleteByFlowId', async () => {
         const { flowRun, flow } = await createPausedFlowRunWithWaitpoint({
             projectId: ctx.project.id,
-            pauseRequestId: apId(),
         })
 
         const waitpointBefore = await db.findOneBy('waitpoint', { flowRunId: flowRun.id })

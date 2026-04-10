@@ -12,6 +12,15 @@ const waitpointRepo = repoFactory(WaitpointEntity)
 
 export const waitpointService = (log: FastifyBaseLogger) => ({
     async createForPause(params: CreateForPauseParams): Promise<CreateForPauseResult> {
+        const preCompleted = await waitpointRepo().findOneBy({
+            flowRunId: params.flowRunId,
+            status: WaitpointStatus.COMPLETED,
+        })
+        if (!isNil(preCompleted)) {
+            log.info({ flowRunId: params.flowRunId, existingStatus: preCompleted.status }, '[waitpointService#createForPause] Waitpoint already pre-completed')
+            return { inserted: false, waitpoint: preCompleted }
+        }
+
         const id = apId()
         await waitpointRepo()
             .createQueryBuilder()
@@ -21,6 +30,7 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
                 id,
                 flowRunId: params.flowRunId,
                 projectId: params.projectId,
+                stepName: params.stepName,
                 type: params.type,
                 status: WaitpointStatus.PENDING,
                 resumeDateTime: params.resumeDateTime ?? null,
@@ -33,7 +43,7 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
             .orIgnore()
             .execute()
 
-        const waitpoint = await waitpointRepo().findOneByOrFail({ flowRunId: params.flowRunId })
+        const waitpoint = await waitpointRepo().findOneByOrFail({ flowRunId: params.flowRunId, stepName: params.stepName })
         const inserted = waitpoint.id === id
         if (inserted) {
             log.info({ flowRunId: params.flowRunId, waitpointId: id }, '[waitpointService#createForPause] Waitpoint created')
@@ -95,6 +105,7 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
                     id: apId(),
                     flowRunId: params.flowRunId,
                     projectId: params.projectId,
+                    stepName: '',
                     type: WaitpointType.WEBHOOK,
                     status: WaitpointStatus.COMPLETED,
                     resumeDateTime: null,
@@ -107,7 +118,7 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
                 .orIgnore()
                 .execute()
 
-            const preCompleted = await repo.findOneByOrFail({ flowRunId: params.flowRunId })
+            const preCompleted = await repo.findOneByOrFail({ flowRunId: params.flowRunId, stepName: '' })
             log.info({ flowRunId: params.flowRunId }, '[waitpointService#complete] Pre-completed waitpoint (resume arrived before pause)')
             return { completedExisting: false, waitpoint: preCompleted }
         })

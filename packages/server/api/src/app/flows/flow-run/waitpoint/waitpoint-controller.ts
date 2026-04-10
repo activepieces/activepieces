@@ -9,10 +9,11 @@ import { WaitpointType } from './waitpoint-types'
 
 export const waitpointController: FastifyPluginAsyncZod = async (app) => {
     app.post('/', CreateWaitpointParams, async (request, reply) => {
-        const { flowRunId, projectId, type, resumeDateTime, responseToSend, workerHandlerId, httpRequestId } = request.body
+        const { flowRunId, projectId, stepName, type, resumeDateTime, responseToSend, workerHandlerId, httpRequestId } = request.body
         const { waitpoint } = await waitpointService(request.log).createForPause({
             flowRunId,
             projectId,
+            stepName,
             type: type === 'DELAY' ? WaitpointType.DELAY : WaitpointType.WEBHOOK,
             resumeDateTime,
             responseToSend: responseToSend ?? undefined,
@@ -20,7 +21,7 @@ export const waitpointController: FastifyPluginAsyncZod = async (app) => {
             httpRequestId: httpRequestId ?? undefined,
         })
         const frontendUrl = system.getOrThrow(WorkerSystemProp.FRONTEND_URL)
-        const resumeUrl = `${frontendUrl}api/v1/flow-runs/${flowRunId}/resume`
+        const resumeUrl = `${frontendUrl}api/v1/flow-runs/${flowRunId}/waitpoints/${waitpoint.id}`
         return reply.status(StatusCodes.CREATED).send({
             id: waitpoint.id,
             resumeUrl,

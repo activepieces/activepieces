@@ -69,7 +69,7 @@ describe('flow with pause', () => {
     it('should pause and resume successfully with loops and branch', async () => {
         const pauseResult = await flowExecutor.execute({
             action: pauseFlowWithLoopAndBranch,
-            executionState: FlowExecutorContext.empty().setPauseRequestId('requestId'),
+            executionState: FlowExecutorContext.empty(),
             constants: generateMockEngineConstants({ stepNames: ['loop'] }),
         })
         expect(pauseResult.verdict).toEqual({
@@ -119,7 +119,7 @@ describe('flow with pause', () => {
     it('should pause and resume with two different steps in same flow successfully', async () => {
         const pauseResult1 = await flowExecutor.execute({
             action: flawWithTwoPause,
-            executionState: FlowExecutorContext.empty().setPauseRequestId('requestId'),
+            executionState: FlowExecutorContext.empty(),
             constants: generateMockEngineConstants(),
         })
         const resumeResult1 = await flowExecutor.execute({
@@ -164,7 +164,7 @@ describe('flow with pause', () => {
     it('should pause and resume successfully', async () => {
         const pauseResult = await flowExecutor.execute({
             action: simplePauseFlow,
-            executionState: FlowExecutorContext.empty().setPauseRequestId('requestId'),
+            executionState: FlowExecutorContext.empty(),
             constants: generateMockEngineConstants(),
         })
         expect(pauseResult.verdict).toStrictEqual({
@@ -237,7 +237,7 @@ describe('flow with pause', () => {
 
         const result = await flowExecutor.execute({
             action: routerWithTwoPauseActions,
-            executionState: FlowExecutorContext.empty().setPauseRequestId('requestId'),
+            executionState: FlowExecutorContext.empty(),
             constants: generateMockEngineConstants(),
         })
 

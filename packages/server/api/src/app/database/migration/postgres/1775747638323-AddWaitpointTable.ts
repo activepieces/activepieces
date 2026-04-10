@@ -17,6 +17,7 @@ export class AddWaitpointTable1775747638323 implements Migration {
                 "projectId" character varying(21) NOT NULL,
                 "type" character varying NOT NULL,
                 "status" character varying NOT NULL,
+                "stepName" character varying NOT NULL DEFAULT '',
                 "resumeDateTime" TIMESTAMP WITH TIME ZONE,
                 "timeoutSeconds" integer,
                 "responseToSend" jsonb,
@@ -27,7 +28,7 @@ export class AddWaitpointTable1775747638323 implements Migration {
             )
         `)
         await queryRunner.query(`
-            CREATE UNIQUE INDEX "idx_waitpoint_flow_run_id" ON "waitpoint" ("flowRunId")
+            CREATE UNIQUE INDEX "idx_waitpoint_flow_run_id_step_name" ON "waitpoint" ("flowRunId", "stepName")
         `)
         await queryRunner.query(`
             CREATE INDEX "idx_waitpoint_project_id" ON "waitpoint" ("projectId")
@@ -43,32 +44,9 @@ export class AddWaitpointTable1775747638323 implements Migration {
         await queryRunner.query(`
             ALTER TABLE "flow_run" DROP COLUMN IF EXISTS "pauseMetadata"
         `)
-        await queryRunner.query(`
-            ALTER TABLE "flow_run"
-            ADD COLUMN "waitpointId" character varying(21)
-        `)
-        await queryRunner.query(`
-            CREATE INDEX "idx_run_waitpoint_id" ON "flow_run" ("waitpointId")
-        `)
-        await queryRunner.query(`
-            ALTER TABLE "flow_run"
-            ADD CONSTRAINT "fk_flow_run_waitpoint_id"
-            FOREIGN KEY ("waitpointId") REFERENCES "waitpoint"("id")
-            ON DELETE SET NULL ON UPDATE NO ACTION
-        `)
-        await queryRunner.query(`
-            UPDATE "flow_run"
-            SET "waitpointId" = w.id
-            FROM "waitpoint" w
-            WHERE w."flowRunId" = "flow_run".id
-        `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query('ALTER TABLE "flow_run" DROP CONSTRAINT "fk_flow_run_waitpoint_id"')
-        await queryRunner.query('DROP INDEX "idx_run_waitpoint_id"')
-        await queryRunner.query('ALTER TABLE "flow_run" DROP COLUMN "waitpointId"')
-
         await queryRunner.query(`
             ALTER TABLE "flow_run" ADD "pauseMetadata" jsonb
         `)
@@ -77,7 +55,7 @@ export class AddWaitpointTable1775747638323 implements Migration {
 
         await queryRunner.query('ALTER TABLE "waitpoint" DROP CONSTRAINT "fk_waitpoint_project_id"')
         await queryRunner.query('DROP INDEX "idx_waitpoint_project_id"')
-        await queryRunner.query('DROP INDEX "idx_waitpoint_flow_run_id"')
+        await queryRunner.query('DROP INDEX "idx_waitpoint_flow_run_id_step_name"')
         await queryRunner.query('DROP TABLE "waitpoint"')
     }
 
@@ -98,10 +76,10 @@ export class AddWaitpointTable1775747638323 implements Migration {
 
             await queryRunner.query(`
                 INSERT INTO "waitpoint" (
-                    "id", "flowRunId", "projectId", "type", "status",
+                    "id", "flowRunId", "projectId", "type", "status", "stepName",
                     "resumeDateTime", "responseToSend", "workerHandlerId", "httpRequestId"
-                ) VALUES ($1, $2, $3, $4, 'PENDING', $5, $6, $7, $8)
-                ON CONFLICT ("flowRunId") DO NOTHING
+                ) VALUES ($1, $2, $3, $4, 'PENDING', '', $5, $6, $7, $8)
+                ON CONFLICT ("flowRunId", "stepName") DO NOTHING
             `, [
                 apId(),
                 run.id,

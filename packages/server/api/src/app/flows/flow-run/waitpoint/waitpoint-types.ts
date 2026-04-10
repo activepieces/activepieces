@@ -22,7 +22,6 @@ type WaitpointResumePayload = {
         headers?: Record<string, string>
         queryParams?: Record<string, string>
     }
-    requestId?: string
     workerHandlerId?: string
     progressUpdateType?: ProgressUpdateType
     executionType?: ExecutionType
@@ -36,6 +35,7 @@ type Waitpoint = {
     projectId: ApId
     type: WaitpointType
     status: WaitpointStatus
+    stepName: string
     resumeDateTime: string | null
     timeoutSeconds: number | null
     responseToSend: WaitpointResponseToSend | null
@@ -47,6 +47,7 @@ type Waitpoint = {
 type CreateForPauseParams = {
     flowRunId: ApId
     projectId: ApId
+    stepName: string
     type: WaitpointType
     resumeDateTime?: string
     timeoutSeconds?: number

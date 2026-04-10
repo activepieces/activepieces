@@ -4,6 +4,7 @@ import { RespondResponse } from '../execution/flow-execution'
 export const CreateWaitpointRequest = z.object({
     flowRunId: z.string(),
     projectId: z.string(),
+    stepName: z.string(),
     type: z.enum(['DELAY', 'WEBHOOK']),
     resumeDateTime: z.string().optional(),
     responseToSend: RespondResponse.optional(),

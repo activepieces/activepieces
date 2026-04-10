@@ -13,6 +13,7 @@ import { flowService } from '../flow/flow.service'
 import { flowRunRepo, flowRunService } from './flow-run-service'
 import { flowRunSideEffects } from './flow-run-side-effects'
 import { waitpointService } from './waitpoint/waitpoint-service'
+import { WaitpointStatus } from './waitpoint/waitpoint-types'
 
 let runsMetadataWorker: Worker<RunsMetadataJobData> | undefined = undefined
 
@@ -113,6 +114,18 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                             }
                             if (!isNil(runMetadata.finishTime)) {
                                 await flowRunSideEffects(log).onFinish(savedFlowRun)
+                            }
+
+                            if (savedFlowRun.status === FlowRunStatus.PAUSED) {
+                                const latestWaitpoint = await waitpointService(log).getByFlowRunId(savedFlowRun.id)
+                                const isPreCompleted = !isNil(latestWaitpoint)
+                                    && latestWaitpoint.status === WaitpointStatus.COMPLETED
+                                if (isPreCompleted) {
+                                    await flowRunService(log).resumeFromWaitpoint({
+                                        flowRunId: savedFlowRun.id,
+                                        resumePayload: latestWaitpoint.resumePayload,
+                                    })
+                                }
                             }
                         }
                         catch (error) {

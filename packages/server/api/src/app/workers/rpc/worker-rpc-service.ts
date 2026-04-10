@@ -2,13 +2,11 @@ import {
     ExecutionType,
     FileType,
     FlowOperationType,
-    FlowRunStatus,
     FlowStatus,
     isFlowRunStateTerminal,
     isNil,
     PiecePackage,
     ProgressUpdateType,
-    spreadIfDefined,
     WebsocketClientEvent,
     WorkerToApiContract,
 } from '@activepieces/shared'
@@ -17,10 +15,8 @@ import { websocketService } from '../../core/websockets.service'
 import { distributedStore } from '../../database/redis-connections'
 import { fileService } from '../../file/file.service'
 import { flowService } from '../../flows/flow/flow.service'
-import { flowRunRepo, flowRunService } from '../../flows/flow-run/flow-run-service'
+import { flowRunService } from '../../flows/flow-run/flow-run-service'
 import { runsMetadataQueue } from '../../flows/flow-run/flow-runs-queue'
-import { waitpointService } from '../../flows/flow-run/waitpoint/waitpoint-service'
-import { WaitpointStatus } from '../../flows/flow-run/waitpoint/waitpoint-types'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { rejectedPromiseHandler } from '../../helper/promise-handler'
 import { pubsub } from '../../helper/pubsub'
@@ -63,26 +59,6 @@ export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string): 
         },
 
         async uploadRunLog(input) {
-            if (input.status === FlowRunStatus.PAUSED && input.waitpointId) {
-                await persistFlowRunStatus({
-                    runId: input.runId,
-                    status: input.status,
-                    logsFileId: input.logsFileId,
-                    waitpointId: input.waitpointId,
-                })
-
-                const latestWaitpoint = await waitpointService(log).getByFlowRunId(input.runId)
-                const isPreCompleted = !isNil(latestWaitpoint)
-                    && latestWaitpoint.status === WaitpointStatus.COMPLETED
-                if (isPreCompleted) {
-                    await flowRunService(log).resumeFromWaitpoint({
-                        flowRunId: input.runId,
-                        resumePayload: latestWaitpoint.resumePayload,
-                        workerHandlerId: input.workerHandlerId ?? undefined,
-                        httpRequestId: input.httpRequestId ?? undefined,
-                    })
-                }
-            }
             const logData: RunsMetadataUpsertData = {
                 id: input.runId,
                 projectId: input.projectId,
@@ -255,27 +231,3 @@ export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string): 
     }
 }
 
-async function persistFlowRunStatus({ runId, status, logsFileId, waitpointId }: {
-    runId: string
-    status: FlowRunStatus
-    logsFileId?: string
-    waitpointId?: string
-}): Promise<void> {
-    const result = await flowRunRepo().update(runId, {
-        status,
-        ...spreadIfDefined('logsFileId', logsFileId),
-        ...spreadIfDefined('waitpointId', waitpointId),
-    })
-    if (!result.affected) {
-        const key = redisMetadataKey(runId)
-        const runMetadata = await distributedStore.hgetJson<RunsMetadataUpsertData>(key)
-        if (!isNil(runMetadata) && Object.keys(runMetadata).length > 0) {
-            await flowRunRepo().save({
-                ...runMetadata,
-                status,
-                logsFileId,
-                waitpointId,
-            })
-        }
-    }
-}

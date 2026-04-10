@@ -92,6 +92,7 @@ function isEngineError(error: unknown): error is ExecutionError {
 
 export type PendingWaitpoint = {
     type: 'DELAY' | 'WEBHOOK'
+    stepName: string
     resumeDateTime?: string
     responseToSend?: RespondResponse
 }

@@ -257,7 +257,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             }
         })
     },
-    async resumeFromWaitpoint({ flowRunId, resumePayload, workerHandlerId, httpRequestId }: ResumeFromWaitpointParams): Promise<FlowRun> {
+    async resumeFromWaitpoint({ flowRunId, resumePayload }: ResumeFromWaitpointParams): Promise<FlowRun> {
         const flowRun = await findFlowRunOrThrow(flowRunId)
         await waitpointService(log).handleResumeSignal({
             flowRunId,
@@ -269,8 +269,6 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                     flowRun,
                     waitpoint,
                     resumeData,
-                    workerHandlerIdOverride: workerHandlerId,
-                    httpRequestIdOverride: httpRequestId,
                 }, log)
             },
         })
@@ -437,7 +435,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             steps,
         }
     },
-    async handleSyncResumeFlow({ runId, payload, requestId }: { runId: string, payload: ResumePayload, requestId: string }): Promise<EngineHttpResponse> {
+    async handleSyncResumeFlow({ runId, payload, correlationId }: { runId: string, payload: ResumePayload, correlationId: string }): Promise<EngineHttpResponse> {
         const flowRun = await flowRunService(log).getOnePopulatedOrThrow({
             id: runId,
             projectId: undefined,
@@ -458,7 +456,6 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             projectId: flowRun.projectId,
             resumeData: {
                 payload,
-                requestId,
                 workerHandlerId: syncServerId,
                 progressUpdateType: ProgressUpdateType.TEST_FLOW,
                 executionType: ExecutionType.RESUME,
@@ -468,7 +465,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             },
         })
 
-        return engineResponseWatcher(log).oneTimeListener<EngineHttpResponse>(requestId, true, WEBHOOK_TIMEOUT_MS, {
+        return engineResponseWatcher(log).oneTimeListener<EngineHttpResponse>(correlationId, true, WEBHOOK_TIMEOUT_MS, {
             status: StatusCodes.NO_CONTENT,
             body: {},
             headers: {},
@@ -590,8 +587,8 @@ async function enqueueResume(params: EnqueueResumeParams, log: FastifyBaseLogger
         payload: resumeData.payload,
         flowRun,
         platformId,
-        synchronousHandlerId: params.workerHandlerIdOverride ?? waitpoint.workerHandlerId ?? undefined,
-        httpRequestId: params.httpRequestIdOverride ?? waitpoint.httpRequestId ?? undefined,
+        synchronousHandlerId: waitpoint.workerHandlerId ?? undefined,
+        httpRequestId: waitpoint.httpRequestId ?? undefined,
         progressUpdateType: resumeData.progressUpdateType ?? ProgressUpdateType.NONE,
         executeTrigger: false,
         executionType: resumeData.executionType ?? ExecutionType.RESUME,
@@ -827,16 +824,12 @@ type ResumePayload = {
 type ResumeFromWaitpointParams = {
     flowRunId: FlowRunId
     resumePayload: WaitpointResumePayload | null
-    workerHandlerId?: string
-    httpRequestId?: string
 }
 
 type EnqueueResumeParams = {
     flowRun: FlowRun
     waitpoint: Waitpoint
     resumeData: WaitpointResumePayload
-    workerHandlerIdOverride?: string
-    httpRequestIdOverride?: string
 }
 
 type FilterFlowRunsAndApplyFiltersParams = {

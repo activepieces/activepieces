@@ -1,5 +1,4 @@
 import { assertEqual, BaseStepOutput, EngineGenericError, executionJournal, FailedStep, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, LoopStepOutput, LoopStepResult, RespondResponse, StepOutput, StepOutputStatus } from '@activepieces/shared'
-import { nanoid } from 'nanoid'
 import { loggingUtils } from '../../helper/logging-utils'
 import { StepExecutionPath } from './step-execution-path'
 
@@ -20,7 +19,6 @@ export type FlowVerdict = {
 export class FlowExecutorContext {
     tags: readonly string[]
     steps: Readonly<Record<string, StepOutput>>
-    pauseRequestId: string
     verdict: FlowVerdict
     currentPath: StepExecutionPath
     stepNameToTest?: boolean
@@ -34,7 +32,6 @@ export class FlowExecutorContext {
     constructor(copyFrom?: FlowExecutorContext) {
         this.tags = copyFrom?.tags ?? []
         this.steps = copyFrom?.steps ?? {}
-        this.pauseRequestId = copyFrom?.pauseRequestId ?? nanoid()
         this.duration = copyFrom?.duration ?? -1
         this.verdict = copyFrom?.verdict ?? { status: FlowRunStatus.RUNNING }
         this.currentPath = copyFrom?.currentPath ?? StepExecutionPath.empty()
@@ -44,13 +41,6 @@ export class FlowExecutorContext {
 
     static empty(): FlowExecutorContext {
         return new FlowExecutorContext()
-    }
-
-    public setPauseRequestId(pauseRequestId: string): FlowExecutorContext {
-        return new FlowExecutorContext({
-            ...this,
-            pauseRequestId,
-        })
     }
 
     public finishExecution(): FlowExecutorContext {
