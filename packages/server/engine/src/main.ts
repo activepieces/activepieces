@@ -3,8 +3,6 @@ import { requireCacheUtils } from './lib/helper/require-cache-utils'
 import { progressService } from './lib/services/progress.service'
 import { workerSocket } from './lib/worker-socket'
 
-requireCacheUtils.captureBaseline()
-
 const SANDBOX_ID = process.env.SANDBOX_ID
 process.title = `sandbox-${SANDBOX_ID}`
 
@@ -12,6 +10,8 @@ if (!isNil(SANDBOX_ID)) {
     workerSocket.init(SANDBOX_ID)
     progressService.init()
 }
+
+requireCacheUtils.captureBaseline()
 
 process.on('uncaughtException', (error) => {
     workerSocket.sendError(error)
