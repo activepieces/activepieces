@@ -60,6 +60,9 @@ const LICENSE_PROPS_MAP = {
   agentsEnabled: {
     label: 'AI & Agents',
   },
+  aiProvidersEnabled: {
+    label: 'AI Providers',
+  },
 };
 
 export const FeatureStatus = ({

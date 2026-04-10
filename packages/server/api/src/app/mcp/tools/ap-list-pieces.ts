@@ -1,3 +1,4 @@
+import { PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework'
 import {
     LocalesEnum,
     McpServer,
@@ -8,7 +9,7 @@ import {
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
-import { mcpToolError } from './mcp-utils'
+import { AUTH_PROP_TYPES, mcpToolError } from './mcp-utils'
 
 const listPiecesSchema = z.object({
     categories: z.array(z.enum(Object.values(PieceCategory) as [string, ...string[]])).optional(),
@@ -23,7 +24,7 @@ const listPiecesSchema = z.object({
 export const apListPiecesTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_list_pieces',
-        description: 'List pieces (pieceName, pieceVersion, actions count, triggers count). Use includeActions=true to get action names and descriptions. Use includeTriggers=true to get trigger names and descriptions. Call before ap_add_step or ap_update_trigger to get valid piece names and action/trigger names.',
+        description: 'List available integration pieces (pieceName, pieceVersion, actions count, triggers count). IMPORTANT: Always search for a suitable piece before resorting to a CODE step — this should be the first tool you call when building or modifying a flow. Use includeActions=true to get action names, descriptions, and required input fields. Use includeTriggers=true to get trigger names, descriptions, and required input fields. Use suggestionType=ACTION or TRIGGER to filter pieces that only have relevant actions or triggers. Use specific searchQuery terms (e.g. "gmail" not "email send") for best results.',
         inputSchema: {
             categories: listPiecesSchema.shape.categories,
             tags: listPiecesSchema.shape.tags,
@@ -49,15 +50,17 @@ export const apListPiecesTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
 
                 if (!params.includeActions && !params.includeTriggers) {
                     const totalCount = pieces.length
-                    const capped = pieces.slice(0, 50)
-                    const hint = totalCount > 50 ? ` (showing 50 of ${totalCount} — use searchQuery to narrow results)` : ''
+                    const LIST_CAP = 50
+                    const capped = pieces.slice(0, LIST_CAP)
+                    const hint = totalCount > LIST_CAP ? ` (showing ${LIST_CAP} of ${totalCount} — use searchQuery to narrow results)` : ''
                     return {
                         content: [{ type: 'text', text: `✅ Successfully listed pieces${hint}:\n${JSON.stringify(capped)}` }],
                     }
                 }
 
                 const totalCount = pieces.length
-                const piecesToEnrich = pieces.slice(0, 50)
+                const ENRICHED_CAP = 10
+                const piecesToEnrich = pieces.slice(0, ENRICHED_CAP)
                 const enrichedPieces = await Promise.all(piecesToEnrich.map(async (piece) => {
                     const base: Record<string, unknown> = {
                         name: piece.name,
@@ -77,6 +80,8 @@ export const apListPiecesTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
                                 name: a.name,
                                 displayName: a.displayName,
                                 description: a.description,
+                                requireAuth: a.requireAuth,
+                                ...summarizeProps(a.props),
                             }))
                         }
                         if (params.includeTriggers) {
@@ -84,14 +89,19 @@ export const apListPiecesTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
                                 name: t.name,
                                 displayName: t.displayName,
                                 description: t.description,
+                                requireAuth: t.requireAuth,
+                                ...summarizeProps(t.props),
                             }))
                         }
                     }
                     return base
                 }))
 
+                const overflowHint = totalCount > ENRICHED_CAP
+                    ? ` (showing top ${ENRICHED_CAP} of ${totalCount} results — use a more specific searchQuery to narrow results)`
+                    : ''
                 return {
-                    content: [{ type: 'text', text: `✅ Successfully listed pieces${totalCount > piecesToEnrich.length ? ` (showing ${piecesToEnrich.length} of ${totalCount} — use searchQuery to narrow results)` : ''}:\n${JSON.stringify(enrichedPieces)}` }],
+                    content: [{ type: 'text', text: `✅ Successfully listed pieces${overflowHint}:\n${JSON.stringify(enrichedPieces)}` }],
                 }
             }
             catch (err) {
@@ -99,4 +109,38 @@ export const apListPiecesTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
             }
         },
     }
+}
+
+function summarizeProps(props: PiecePropertyMap): { inputProps: PropSummary[] } {
+    const entries = Object.entries(props)
+        .filter(([, prop]) => !AUTH_PROP_TYPES.has(prop.type))
+        .map(([name, prop]) => {
+            const summary: PropSummary = {
+                name,
+                type: prop.type,
+                required: prop.required ?? false,
+                displayName: prop.displayName ?? name,
+            }
+            if (prop.description) {
+                summary.description = prop.description
+            }
+            if (prop.defaultValue !== undefined) {
+                summary.defaultValue = prop.defaultValue
+            }
+            if ((prop.type === PropertyType.STATIC_DROPDOWN || prop.type === PropertyType.STATIC_MULTI_SELECT_DROPDOWN) && 'options' in prop && prop.options?.options) {
+                summary.options = prop.options.options.map((o: { label: string }) => o.label)
+            }
+            return summary
+        })
+    return { inputProps: entries }
+}
+
+type PropSummary = {
+    name: string
+    type: string
+    required: boolean
+    displayName: string
+    description?: string
+    defaultValue?: unknown
+    options?: string[]
 }

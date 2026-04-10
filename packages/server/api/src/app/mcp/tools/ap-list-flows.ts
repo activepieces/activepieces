@@ -1,4 +1,4 @@
-import { McpServer, McpToolDefinition, Permission } from '@activepieces/shared'
+import { FlowTriggerType, isNil, McpServer, McpToolDefinition, Permission, PopulatedFlow } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { flowService } from '../../flows/flow/flow.service'
 import { mcpToolError } from './mcp-utils'
@@ -7,7 +7,7 @@ export const apListFlowsTool = (mcp: McpServer, log: FastifyBaseLogger): McpTool
     return {
         title: 'ap_list_flows',
         permission: Permission.READ_FLOW,
-        description: 'List all flows in the current project',
+        description: 'List all flows in the current project with status, trigger type, and published state.',
         inputSchema: {},
         annotations: { readOnlyHint: true, openWorldHint: false },
         execute: async () => {
@@ -17,10 +17,11 @@ export const apListFlowsTool = (mcp: McpServer, log: FastifyBaseLogger): McpTool
                     cursorRequest: null,
                     limit: 1000000,
                 })
+                const lines = flows.data.map((flow) => formatFlowLine(flow))
                 return {
                     content: [{
                         type: 'text',
-                        text: `✅ Successfully listed flows:\n${flows.data.map((flow) => `- ${flow.version.displayName} (${flow.id})`).join('\n')}`,
+                        text: `✅ Listed ${lines.length} flow(s):\n${lines.join('\n')}`,
                     }],
                 }
             }
@@ -29,4 +30,13 @@ export const apListFlowsTool = (mcp: McpServer, log: FastifyBaseLogger): McpTool
             }
         },
     }
+}
+
+function formatFlowLine(flow: PopulatedFlow): string {
+    const trigger = flow.version.trigger
+    const triggerLabel = trigger.type === FlowTriggerType.PIECE
+        ? (trigger.settings.pieceName ?? 'piece (unconfigured)')
+        : 'no trigger'
+    const published = !isNil(flow.publishedVersionId) ? 'published' : 'draft'
+    return `- ${flow.version.displayName} (${flow.id}) | ${flow.status} | ${published} | trigger: ${triggerLabel}`
 }

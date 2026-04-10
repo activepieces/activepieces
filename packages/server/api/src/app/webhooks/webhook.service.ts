@@ -307,8 +307,8 @@ async function handleSync(params: SyncWebhookParams): Promise<EngineHttpResponse
             params.onRunCreated?.(createdRun)
 
             const listenerResult = await engineResponseWatcher(logger).oneTimeListener<EngineHttpResponse>(webhookRequestId, true, WEBHOOK_TIMEOUT_MS, {
-                status: StatusCodes.REQUEST_TIMEOUT,
-                body: { message: 'Flow did not return a response within the timeout period' },
+                status: StatusCodes.NO_CONTENT,
+                body: {},
                 headers: {},
             })
             return listenerResult

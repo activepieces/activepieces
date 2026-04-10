@@ -306,7 +306,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             platformId,
             synchronousHandlerId: returnHandlerId(resolvedRun.pauseMetadata, requestId, log),
             httpRequestId: resolvedRun.pauseMetadata?.type === PauseType.WEBHOOK ? resolvedRun.pauseMetadata.requestIdToReply ?? undefined : undefined,
-            progressUpdateType: resolvedRun.pauseMetadata?.progressUpdateType ?? progressUpdateType,
+            progressUpdateType,
             executeTrigger: false,
             executionType,
         }, log)
@@ -507,8 +507,8 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             executionType: ExecutionType.RESUME,
         }, log)
         return engineResponseWatcher(log).oneTimeListener<EngineHttpResponse>(requestId, true, WEBHOOK_TIMEOUT_MS, {
-            status: StatusCodes.REQUEST_TIMEOUT,
-            body: { message: 'Flow did not return a response within the timeout period' },
+            status: StatusCodes.NO_CONTENT,
+            body: {},
             headers: {},
         })
     },

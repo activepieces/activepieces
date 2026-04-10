@@ -11,8 +11,9 @@ import {
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
+import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
 import { projectService } from '../../project/project-service'
-import { mcpToolError } from './mcp-utils'
+import { diagnosePieceProps, mcpToolError } from './mcp-utils'
 
 const updateTriggerInput = z.object({
     flowId: z.string(),
@@ -100,10 +101,12 @@ export const apUpdateTriggerTool = (mcp: McpServer, log: FastifyBaseLogger): Mcp
                 })
                 const trigger = updatedFlow.version.trigger
                 if (!trigger.valid) {
+                    const diagnosis = await diagnoseMissingTriggerInputs({ pieceName, pieceVersion, triggerName, input, platformId: project.platformId, log })
+                    const hint = diagnosis ?? 'Check that triggerName is correct and all required inputs are provided. Use ap_list_connections to get a valid connection externalId for auth.'
                     return {
                         content: [{
                             type: 'text',
-                            text: '⚠️ Trigger updated but still invalid. Check that triggerName is correct and all required inputs are provided. Use ap_list_connections to get a valid connection externalId for auth.',
+                            text: `⚠️ Trigger updated but still invalid. ${hint}`,
                         }],
                     }
                 }
@@ -115,5 +118,31 @@ export const apUpdateTriggerTool = (mcp: McpServer, log: FastifyBaseLogger): Mcp
                 return mcpToolError('Trigger update failed', err)
             }
         },
+    }
+}
+
+async function diagnoseMissingTriggerInputs({ pieceName, pieceVersion, triggerName, input, platformId, log }: {
+    pieceName: string
+    pieceVersion: string
+    triggerName: string
+    input: Record<string, unknown>
+    platformId: string
+    log: FastifyBaseLogger
+}): Promise<string | null> {
+    try {
+        const piece = await pieceMetadataService(log).getOrThrow({ platformId, name: pieceName, version: pieceVersion })
+        const trigger = piece.triggers[triggerName]
+        if (isNil(trigger)) {
+            return `Trigger "${triggerName}" not found in piece "${pieceName}". Use ap_list_pieces with includeTriggers=true to get valid trigger names.`
+        }
+        const { parts, missing, uiRequired, hasAuth } = diagnosePieceProps({ props: trigger.props, input, pieceAuth: piece.auth, requireAuth: trigger.requireAuth, componentType: 'trigger' })
+        if (missing.length === 0 && uiRequired.length === 0 && !hasAuth) {
+            return 'All inputs are provided but the trigger may need sample data. Ask the user to send a test event or configure the trigger in the Activepieces UI.'
+        }
+        return parts.join(' ')
+    }
+    catch (err) {
+        log.warn({ err, pieceName, triggerName }, 'diagnoseMissingTriggerInputs: failed to fetch piece metadata')
+        return null
     }
 }
