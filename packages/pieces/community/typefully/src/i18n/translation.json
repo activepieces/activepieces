@@ -70,13 +70,5 @@
   "The ID of the draft to delete.": "The ID of the draft to delete.",
   "The ID of the draft to schedule.": "The ID of the draft to schedule.",
   "New Event": "New Event",
-  "Triggers when a specific webhook event is received from Typefully.": "Triggers when a specific webhook event is received from Typefully.",
-  "Event": "Event",
-  "The Typefully event to listen for.": "The Typefully event to listen for.",
-  "Draft Created": "Draft Created",
-  "Draft Scheduled": "Draft Scheduled",
-  "Draft Published": "Draft Published",
-  "Draft Status Changed": "Draft Status Changed",
-  "Draft Tags Changed": "Draft Tags Changed",
-  "Draft Deleted": "Draft Deleted"
+  "Triggers when a webhook event is received from Typefully.": "Triggers when a webhook event is received from Typefully."
 }
