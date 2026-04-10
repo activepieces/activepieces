@@ -6,7 +6,7 @@ set -euo pipefail
 #   execution_mode: SANDBOXED | SANDBOX_CODE_ONLY (default: SANDBOXED)
 #   total_requests: number of requests for hey (default: 500)
 
-EXECUTION_MODE=${1:-SANDBOX_CODE_AND_PROCESS}
+EXECUTION_MODE=${1:-SANDBOX_CODE_ONLY}
 TOTAL_REQUESTS=${2:-500}
 APP_REPLICAS=${APP_REPLICAS:-1}
 WORKER_REPLICAS=${WORKER_REPLICAS:-2}
