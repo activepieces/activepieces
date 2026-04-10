@@ -18,7 +18,15 @@ export const searchIssues = createAction({
     }),
     fields: Property.Array({
       displayName: 'Fields to Return',
-      description: "List of exact Jira Fields to return (e.g., 'summary', 'customfield_10016'). Special commands: Use '*all' for every field, or '*navigable' for standard fields (default if left blank). Prefix with a minus to exclude (e.g., '-description'). Example: '*all' and '-comment' returns everything except comments.",      required: false,
+      description: `List of exact Jira Field IDs to return (e.g., 'summary', 'customfield_10016').
+
+Special commands:
+- Use *all for every field.
+- Use *navigable for standard fields (default).
+- Prefix with a minus to exclude (e.g., -description).
+
+Example: *all and -comment returns everything except comments.`,
+      required: false,
     }),
     maxResults: Property.Number({
       displayName: 'Max Results',
@@ -37,7 +45,7 @@ export const searchIssues = createAction({
     });
 
     const { jql, maxResults, sanitizeJql, fields } = propsValue;
-    const fieldList = fields as string[] | undefined;
+    const fieldList = fields as string[];
 
     const allIssues: any[] = [];
     let nextPageToken: string | undefined;
