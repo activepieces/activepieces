@@ -1,4 +1,5 @@
 const path = require('path');
+const webpack = require('webpack');
 const IgnoreDynamicRequire = require('webpack-ignore-dynamic-require');
 
 module.exports = {
@@ -21,7 +22,10 @@ module.exports = {
   module: {
     rules: [{ test: /\.ts$/, use: 'ts-loader', exclude: /node_modules/ }],
   },
-  plugins: [new IgnoreDynamicRequire()],
+  plugins: [
+    new IgnoreDynamicRequire(),
+    new webpack.optimize.LimitChunkCountPlugin({ maxChunks: 1 }),
+  ],
   externals: {
     'isolated-vm': 'commonjs2 isolated-vm',
     'utf-8-validate': 'commonjs2 utf-8-validate',
@@ -30,5 +34,7 @@ module.exports = {
   devtool: 'source-map',
   optimization: {
     minimize: false,
+    splitChunks: false,
+    runtimeChunk: false,
   },
 };
