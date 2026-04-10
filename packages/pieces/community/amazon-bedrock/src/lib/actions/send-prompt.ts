@@ -1,15 +1,19 @@
 import {
   createAction,
+  DynamicPropsValue,
   Property,
   StoreScope,
 } from '@activepieces/pieces-framework';
 import {
+  ContentBlock,
   ConverseCommand,
   ConversationRole,
   Message,
 } from '@aws-sdk/client-bedrock-runtime';
 import { awsBedrockAuth } from '../auth';
 import {
+  buildFileContentBlock,
+  buildS3ContentBlock,
   createBedrockRuntimeClient,
   getBedrockModelOptions,
   formatBedrockError,
@@ -81,6 +85,49 @@ export const sendPrompt = createAction({
       description:
         'A unique name for this conversation\'s memory (e.g. "support-chat-user-123"). When set, the model remembers previous messages in this flow. Leave empty for a single-turn interaction with no memory.',
     }),
+    attachmentSource: Property.StaticDropdown({
+      displayName: 'Attachment Source (Optional)',
+      description: 'Optionally include a file alongside your prompt. Choose whether to upload directly or reference one from S3.',
+      required: false,
+      options: {
+        options: [
+          { label: 'Upload a file', value: 'file' },
+          { label: 'From S3 bucket', value: 's3' },
+        ],
+      },
+    }),
+    attachment: Property.DynamicProperties({
+      auth: awsBedrockAuth,
+      displayName: 'Attachment',
+      required: false,
+      refreshers: ['attachmentSource'],
+      props: async ({ attachmentSource }): Promise<DynamicPropsValue> => {
+        if (attachmentSource === 'file') {
+          return {
+            file: Property.File({
+              displayName: 'File',
+              description: 'Supported: images (png, jpg, gif, webp), documents (pdf, csv, doc, docx, xls, xlsx, html, txt, md), videos (mp4, mov, mkv, etc.), audio (mp3, wav, aac, flac, etc.). Not all models support all file types.',
+              required: true,
+            }),
+          };
+        }
+        if (attachmentSource === 's3') {
+          return {
+            s3Bucket: Property.ShortText({
+              displayName: 'S3 Bucket',
+              description: 'The name of your S3 bucket containing the file.',
+              required: true,
+            }),
+            s3Key: Property.ShortText({
+              displayName: 'S3 File Path',
+              description: 'The path to the file in your S3 bucket (e.g. "documents/report.pdf"). The file extension determines the media type sent to the model.',
+              required: true,
+            }),
+          };
+        }
+        return {};
+      },
+    }),
   },
   async run({ auth, propsValue, store }) {
     const client = createBedrockRuntimeClient(auth.props);
@@ -93,6 +140,8 @@ export const sendPrompt = createAction({
       topP,
       stopSequences,
       memoryKey,
+      attachmentSource,
+      attachment,
     } = propsValue;
 
     let messageHistory: Message[] = [];
@@ -101,9 +150,16 @@ export const sendPrompt = createAction({
         (await store.get<Message[]>(memoryKey, StoreScope.PROJECT)) ?? [];
     }
 
+    const userContent: ContentBlock[] = [{ text: prompt }];
+    if (attachmentSource === 'file' && attachment?.['file']) {
+      userContent.push(buildFileContentBlock(attachment['file']));
+    } else if (attachmentSource === 's3' && attachment?.['s3Bucket'] && attachment?.['s3Key']) {
+      userContent.push(buildS3ContentBlock(attachment['s3Bucket'] as string, attachment['s3Key'] as string));
+    }
+
     messageHistory.push({
       role: ConversationRole.USER,
-      content: [{ text: prompt }],
+      content: userContent,
     });
 
     try {
