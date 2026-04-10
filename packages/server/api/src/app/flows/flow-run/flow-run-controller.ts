@@ -69,7 +69,6 @@ export const flowRunController: FastifyPluginAsyncZod = async (app) => {
                 headers,
                 queryParams,
             },
-            checkRequestId: true,
             progressUpdateType: ProgressUpdateType.TEST_FLOW,
             executionType: ExecutionType.RESUME,
         })
@@ -155,8 +154,7 @@ export const flowRunController: FastifyPluginAsyncZod = async (app) => {
 
 }
 
-const FlowRunFiltered = FlowRun.omit({ pauseMetadata: true })
-const FlowRunFilteredWithNoSteps = FlowRun.omit({ pauseMetadata: true, steps: true })
+const FlowRunFilteredWithNoSteps = FlowRun.omit({ steps: true })
 
 const ListRequest = {
     config: {
@@ -194,7 +192,7 @@ const GetRequest = {
             id: ApId,
         }),
         response: {
-            [StatusCodes.OK]: FlowRunFiltered,
+            [StatusCodes.OK]: FlowRun,
         },
     },
 }

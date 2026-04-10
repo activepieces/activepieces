@@ -2,10 +2,12 @@ import {
     ExecutionType,
     FileType,
     FlowOperationType,
+    FlowRunStatus,
     FlowStatus,
     isFlowRunStateTerminal,
     isNil,
     PauseMetadata,
+    PauseType,
     PiecePackage,
     ProgressUpdateType,
     spreadIfDefined,
@@ -19,6 +21,8 @@ import { fileService } from '../../file/file.service'
 import { flowService } from '../../flows/flow/flow.service'
 import { flowRunRepo, flowRunService } from '../../flows/flow-run/flow-run-service'
 import { runsMetadataQueue } from '../../flows/flow-run/flow-runs-queue'
+import { waitpointService } from '../../flows/flow-run/waitpoint/waitpoint-service'
+import { CreateForPauseParams, WaitpointStatus, WaitpointType } from '../../flows/flow-run/waitpoint/waitpoint-types'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { rejectedPromiseHandler } from '../../helper/promise-handler'
 import { pubsub } from '../../helper/pubsub'
@@ -62,26 +66,32 @@ export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string): 
 
         async uploadRunLog(input) {
             if (input.pauseMetadata) {
-                const result = await flowRunRepo().update(input.runId, {
+                const waitpointResult = await waitpointService(log).createForPause(
+                    convertPauseMetadataToWaitpoint({
+                        pauseMetadata: input.pauseMetadata,
+                        flowRunId: input.runId,
+                        projectId: input.projectId,
+                        workerHandlerId: input.workerHandlerId ?? undefined,
+                        httpRequestId: input.httpRequestId ?? undefined,
+                    }),
+                )
+
+                await persistFlowRunStatus({
+                    runId: input.runId,
                     status: input.status,
-                    ...spreadIfDefined('pauseMetadata', input.pauseMetadata as PauseMetadata),
-                    // Also persist logsFileId so that a concurrent resume() call can build the
-                    // correct RESUME job pointing at the right execution-state file.
-                    ...spreadIfDefined('logsFileId', input.logsFileId),
+                    logsFileId: input.logsFileId,
                 })
-                if (!result.affected) {
-                    // Run not yet in DB (PRODUCTION runs are created async via queue).
-                    // Force-flush the run metadata from Redis to DB so resume works immediately.
-                    const key = redisMetadataKey(input.runId)
-                    const runMetadata = await distributedStore.hgetJson<RunsMetadataUpsertData>(key)
-                    if (!isNil(runMetadata) && Object.keys(runMetadata).length > 0) {
-                        await flowRunRepo().save({
-                            ...runMetadata,
-                            status: input.status,
-                            pauseMetadata: input.pauseMetadata as PauseMetadata,
-                            logsFileId: input.logsFileId,
-                        })
-                    }
+
+                const isPreCompleted = input.pauseMetadata.type === PauseType.WEBHOOK
+                    && !waitpointResult.inserted
+                    && waitpointResult.waitpoint.status === WaitpointStatus.COMPLETED
+                if (isPreCompleted) {
+                    await flowRunService(log).resumeFromWaitpoint({
+                        flowRunId: input.runId,
+                        resumePayload: waitpointResult.waitpoint.resumePayload,
+                        workerHandlerId: input.workerHandlerId ?? undefined,
+                        httpRequestId: input.httpRequestId ?? undefined,
+                    })
                 }
             }
             const logData: RunsMetadataUpsertData = {
@@ -93,7 +103,6 @@ export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string): 
                 failedStep: input.failedStep,
                 startTime: input.startTime,
                 finishTime: input.finishTime,
-                pauseMetadata: input.pauseMetadata,
                 stepsCount: input.stepsCount,
                 stepNameToTest: input.stepNameToTest,
             }
@@ -254,5 +263,46 @@ export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string): 
             })
             log.info({ flowId, projectId }, '[workerRpc#disableFlow] Flow disabled by worker request')
         },
+    }
+}
+
+function convertPauseMetadataToWaitpoint({ pauseMetadata, flowRunId, projectId, workerHandlerId, httpRequestId }: {
+    pauseMetadata: PauseMetadata
+    flowRunId: string
+    projectId: string
+    workerHandlerId?: string
+    httpRequestId?: string
+}): CreateForPauseParams {
+    const common = {
+        flowRunId,
+        projectId,
+        workerHandlerId: workerHandlerId ?? pauseMetadata.handlerId,
+        httpRequestId: httpRequestId ?? pauseMetadata.requestIdToReply,
+    }
+    if (pauseMetadata.type === PauseType.DELAY) {
+        return { ...common, type: WaitpointType.DELAY, resumeDateTime: pauseMetadata.resumeDateTime }
+    }
+    return { ...common, type: WaitpointType.WEBHOOK, responseToSend: pauseMetadata.response }
+}
+
+async function persistFlowRunStatus({ runId, status, logsFileId }: {
+    runId: string
+    status: FlowRunStatus
+    logsFileId?: string
+}): Promise<void> {
+    const result = await flowRunRepo().update(runId, {
+        status,
+        ...spreadIfDefined('logsFileId', logsFileId),
+    })
+    if (!result.affected) {
+        const key = redisMetadataKey(runId)
+        const runMetadata = await distributedStore.hgetJson<RunsMetadataUpsertData>(key)
+        if (!isNil(runMetadata) && Object.keys(runMetadata).length > 0) {
+            await flowRunRepo().save({
+                ...runMetadata,
+                status,
+                logsFileId,
+            })
+        }
     }
 }

@@ -1,19 +1,18 @@
-import { assertNotNullOrUndefined, FlowRun, FlowRunStatus, isNil, PauseMetadata, PauseType, spreadIfDefined } from '@activepieces/shared'
+import { ExecutionType, FlowRun, FlowRunStatus, isNil, ProgressUpdateType, spreadIfDefined } from '@activepieces/shared'
 import { Queue, Worker } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
 import { FastifyBaseLogger } from 'fastify'
 import { distributedLock, distributedStore, redisConnections } from '../../database/redis-connections'
 import { domainHelper } from '../../ee/custom-domains/domain-helper'
-import { apAxios } from '../../helper/ap-axios'
 import { exceptionHandler } from '../../helper/exception-handler'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { projectService } from '../../project/project-service'
 import { QueueName, redisMetadataKey, RunsMetadataJobData, RunsMetadataQueueConfig, runsMetadataQueueFactory, RunsMetadataUpsertData } from '../../workers/job'
-import { jobQueue } from '../../workers/job-queue/job-queue'
 import { flowService } from '../flow/flow.service'
-import { flowRunRepo } from './flow-run-service'
+import { flowRunRepo, flowRunService } from './flow-run-service'
 import { flowRunSideEffects } from './flow-run-side-effects'
+import { waitpointService } from './waitpoint/waitpoint-service'
 
 let runsMetadataWorker: Worker<RunsMetadataJobData> | undefined = undefined
 
@@ -65,7 +64,6 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                                     ...spreadIfDefined('finishTime', runMetadata.finishTime),
                                     ...spreadIfDefined('status', runMetadata.status),
                                     ...spreadIfDefined('tags', runMetadata.tags),
-                                    ...spreadIfDefined('pauseMetadata', runMetadata.pauseMetadata as PauseMetadata),
                                     ...spreadIfDefined('failedStep', runMetadata.failedStep),
                                     ...spreadIfDefined('stepNameToTest', runMetadata.stepNameToTest),
                                     ...spreadIfDefined('parentRunId', runMetadata.parentRunId),
@@ -106,6 +104,7 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                                     childRunId: savedFlowRun.id,
                                     projectId: savedFlowRun.projectId,
                                     platformId,
+                                    log,
                                 })
                             }
 
@@ -114,9 +113,6 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                             }
                             if (!isNil(runMetadata.finishTime)) {
                                 await flowRunSideEffects(log).onFinish(savedFlowRun)
-                            }
-                            if (runMetadata.status === FlowRunStatus.PAUSED) {
-                                await jobQueue(log).promoteChildRuns(savedFlowRun.id)
                             }
                         }
                         catch (error) {
@@ -170,6 +166,7 @@ async function markParentRunAsFailed({
     childRunId,
     projectId,
     platformId,
+    log,
 }: MarkParentRunAsFailedParams): Promise<void> {
     const flowRun = await flowRunRepo().findOneBy({
         id: parentRunId,
@@ -179,18 +176,35 @@ async function markParentRunAsFailed({
         return
     }
 
-    const requestId = flowRun.pauseMetadata?.type === PauseType.WEBHOOK ? flowRun.pauseMetadata?.requestId : undefined
-    assertNotNullOrUndefined(requestId, 'Parent run has no request id')
-
-    const callbackUrl = await domainHelper.getApiUrlForWorker({ path: `/v1/flow-runs/${parentRunId}/requests/${requestId}`, platformId })
     const childRunUrl = await domainHelper.getPublicUrl({ path: `/projects/${projectId}/runs/${childRunId}`, platformId })
-    await apAxios.post(callbackUrl, {
-        status: 'error',
-        data: {
-            message: 'Subflow execution failed',
-            link: childRunUrl,
+    const errorPayload = {
+        body: {
+            status: 'error',
+            data: {
+                message: 'Subflow execution failed',
+                link: childRunUrl,
+            },
+        },
+        headers: {},
+        queryParams: {},
+    }
+
+    const result = await waitpointService(log).complete({
+        flowRunId: parentRunId,
+        projectId: flowRun.projectId,
+        resumePayload: {
+            payload: errorPayload,
+            progressUpdateType: ProgressUpdateType.TEST_FLOW,
+            executionType: ExecutionType.RESUME,
         },
     })
+
+    if (result.completedExisting) {
+        await flowRunService(log).resumeFromWaitpoint({
+            flowRunId: parentRunId,
+            resumePayload: result.waitpoint.resumePayload,
+        })
+    }
 }
 
 type MarkParentRunAsFailedParams = {
@@ -198,4 +212,5 @@ type MarkParentRunAsFailedParams = {
     childRunId: string
     projectId: string
     platformId: string
+    log: FastifyBaseLogger
 }

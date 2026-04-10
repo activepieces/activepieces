@@ -232,7 +232,6 @@ async function handleAsync(params: AsyncWebhookParams): Promise<EngineHttpRespon
                     failParentOnFailure,
                     traceContext,
                 },
-                dependOnJobId: !isNil(parentRunId) && failParentOnFailure ? parentRunId : undefined,
             })
             logger.info('Async webhook request completed')
             span.setAttribute('webhook.queuedSuccessfully', true)

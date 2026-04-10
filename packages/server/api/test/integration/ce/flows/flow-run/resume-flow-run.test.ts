@@ -25,7 +25,7 @@ beforeEach(async () => {
     ctx = await createTestContext(app)
 })
 
-async function createPausedFlowRun(params: {
+async function createPausedFlowRunWithWaitpoint(params: {
     projectId: string
     pauseRequestId: string
 }) {
@@ -47,30 +47,31 @@ async function createPausedFlowRun(params: {
     })
     await db.save('flow_run', flowRun)
 
-    // Set pauseMetadata via update since createMockFlowRun doesn't support it
-    await db.update('flow_run', flowRun.id, {
-        pauseMetadata: {
-            type: PauseType.WEBHOOK,
-            requestId: params.pauseRequestId,
-            response: {},
-        },
+    await db.save('waitpoint', {
+        id: apId(),
+        flowRunId: flowRun.id,
+        projectId: params.projectId,
+        type: 'WEBHOOK',
+        status: 'PENDING',
+        httpRequestId: null,
+        workerHandlerId: null,
     })
 
     return { flow, flowVersion, flowRun }
 }
 
 describe('Resume flow run', () => {
-    it('should resume successfully when requestId matches DB pauseMetadata', async () => {
-        const correctRequestId = apId()
+    it('should resume successfully when flow is PAUSED with a PENDING waitpoint', async () => {
+        const requestId = apId()
 
-        const { flowRun } = await createPausedFlowRun({
+        const { flowRun } = await createPausedFlowRunWithWaitpoint({
             projectId: ctx.project.id,
-            pauseRequestId: correctRequestId,
+            pauseRequestId: requestId,
         })
 
         const response = await app.inject({
             method: 'POST',
-            url: `/api/v1/flow-runs/${flowRun.id}/requests/${correctRequestId}`,
+            url: `/api/v1/flow-runs/${flowRun.id}/requests/${requestId}`,
             body: {
                 status: 'success',
                 data: { greeting: 'Hello' },
@@ -78,9 +79,12 @@ describe('Resume flow run', () => {
         })
 
         expect(response.statusCode).toBe(200)
+
+        const waitpoint = await db.findOneBy('waitpoint', { flowRunId: flowRun.id })
+        expect(waitpoint).toBeNull()
     })
 
-    it('should resume when pauseMetadata appears in DB after a short delay (race condition)', async () => {
+    it('should pre-complete waitpoint when flow is RUNNING (race condition)', async () => {
         const flow = createMockFlow({ projectId: ctx.project.id })
         await db.save('flow', flow)
 
@@ -100,18 +104,6 @@ describe('Resume flow run', () => {
         })
         await db.save('flow_run', flowRun)
 
-        // Simulate the engine committing pauseMetadata after a short delay
-        setTimeout(async () => {
-            await db.update('flow_run', flowRun.id, {
-                status: FlowRunStatus.PAUSED,
-                pauseMetadata: {
-                    type: PauseType.WEBHOOK,
-                    requestId,
-                    response: {},
-                },
-            })
-        }, 500)
-
         const response = await app.inject({
             method: 'POST',
             url: `/api/v1/flow-runs/${flowRun.id}/requests/${requestId}`,
@@ -122,50 +114,14 @@ describe('Resume flow run', () => {
         })
 
         expect(response.statusCode).toBe(200)
+
+        const waitpoint = await db.findOneBy<{ status: string, resumePayload: unknown }>('waitpoint', { flowRunId: flowRun.id })
+        expect(waitpoint).not.toBeNull()
+        expect(waitpoint!.status).toBe('COMPLETED')
+        expect(waitpoint!.resumePayload).toBeDefined()
     })
 
-    it('should not resume when requestId mismatches DB', async () => {
-        const dbRequestId = apId()
-        const unknownRequestId = apId()
-
-        const { flowRun } = await createPausedFlowRun({
-            projectId: ctx.project.id,
-            pauseRequestId: dbRequestId,
-        })
-
-        const response = await app.inject({
-            method: 'POST',
-            url: `/api/v1/flow-runs/${flowRun.id}/requests/${unknownRequestId}`,
-            body: {
-                status: 'success',
-                data: { greeting: 'Hello' },
-            },
-        })
-
-        // The run was not actually resumed (returned as-is), verify it's still PAUSED
-        const run = await db.findOneByOrFail<{ status: string }>('flow_run', { id: flowRun.id })
-        expect(run.status).toBe(FlowRunStatus.PAUSED)
-    })
-
-    it('sync: should return 404 when requestId mismatches DB', async () => {
-        const dbRequestId = apId()
-        const unknownRequestId = apId()
-
-        const { flowRun } = await createPausedFlowRun({
-            projectId: ctx.project.id,
-            pauseRequestId: dbRequestId,
-        })
-
-        const response = await app.inject({
-            method: 'POST',
-            url: `/api/v1/flow-runs/${flowRun.id}/requests/${unknownRequestId}/sync`,
-            body: { data: 'test' },
-        })
-
-        expect(response.statusCode).toBe(404)
-    })
-
-    it('should persist pauseMetadata to DB when run only exists in Redis (race condition)', async () => {
+    it('should trigger resume when uploadRunLog finds a pre-completed waitpoint', async () => {
         const flow = createMockFlow({ projectId: ctx.project.id })
         await db.save('flow', flow)
 
@@ -178,7 +134,6 @@ describe('Resume flow run', () => {
         const runId = apId()
         const requestId = apId()
 
-        // Simulate queueOrCreateInstantly: run metadata is in Redis but NOT in DB
         const runMetadata: RunsMetadataUpsertData = {
             id: runId,
             projectId: ctx.project.id,
@@ -189,7 +144,20 @@ describe('Resume flow run', () => {
         }
         await distributedStore.merge(redisMetadataKey(runId), runMetadata)
 
-        // Call uploadRunLog with pauseMetadata — run does NOT exist in DB yet
+        await db.save('waitpoint', {
+            id: apId(),
+            flowRunId: runId,
+            projectId: ctx.project.id,
+            type: 'WEBHOOK',
+            status: 'COMPLETED',
+            resumePayload: {
+                payload: { body: { status: 'success' } },
+                requestId,
+                progressUpdateType: 'TEST_FLOW',
+                executionType: 'RESUME',
+            },
+        })
+
         const handlers = createHandlers(app.log)
         await handlers.uploadRunLog({
             runId,
@@ -204,44 +172,83 @@ describe('Resume flow run', () => {
             },
         })
 
-        // Verify the run was force-flushed to DB with pauseMetadata
-        const dbRun = await db.findOneBy<{ id: string, status: string, pauseMetadata: unknown }>('flow_run', { id: runId })
+        const dbRun = await db.findOneBy<{ id: string, status: string }>('flow_run', { id: runId })
         expect(dbRun).not.toBeNull()
-        expect(dbRun!.status).toBe(FlowRunStatus.PAUSED)
-        expect(dbRun!.pauseMetadata).toEqual(expect.objectContaining({
-            type: PauseType.WEBHOOK,
-            requestId,
-        }))
 
-        // Verify resume endpoint works with the persisted pauseMetadata
+        const waitpoint = await db.findOneBy('waitpoint', { flowRunId: runId })
+        expect(waitpoint).toBeNull()
+    })
+
+    it('should not resume when flow is in terminal state', async () => {
+        const flow = createMockFlow({ projectId: ctx.project.id })
+        await db.save('flow', flow)
+
+        const flowVersion = createMockFlowVersion({
+            flowId: flow.id,
+            state: FlowVersionState.LOCKED,
+        })
+        await db.save('flow_version', flowVersion)
+
+        const flowRun = createMockFlowRun({
+            projectId: ctx.project.id,
+            flowId: flow.id,
+            flowVersionId: flowVersion.id,
+            status: FlowRunStatus.SUCCEEDED,
+            environment: RunEnvironment.PRODUCTION,
+        })
+        await db.save('flow_run', flowRun)
+
         const response = await app.inject({
             method: 'POST',
-            url: `/api/v1/flow-runs/${runId}/requests/${requestId}`,
-            body: {
-                status: 'success',
-                data: { greeting: 'Hello' },
-            },
+            url: `/api/v1/flow-runs/${flowRun.id}/requests/${apId()}`,
+            body: { data: 'test' },
         })
+
         expect(response.statusCode).toBe(200)
     })
 
-    it('sync: should accept request when DB has matching requestId', async () => {
+    it('sync: should return 400 when no waitpoint exists for PAUSED flow', async () => {
+        const flow = createMockFlow({ projectId: ctx.project.id })
+        await db.save('flow', flow)
+
+        const flowVersion = createMockFlowVersion({
+            flowId: flow.id,
+            state: FlowVersionState.LOCKED,
+        })
+        await db.save('flow_version', flowVersion)
+
+        const flowRun = createMockFlowRun({
+            projectId: ctx.project.id,
+            flowId: flow.id,
+            flowVersionId: flowVersion.id,
+            status: FlowRunStatus.PAUSED,
+            environment: RunEnvironment.PRODUCTION,
+        })
+        await db.save('flow_run', flowRun)
+
+        const response = await app.inject({
+            method: 'POST',
+            url: `/api/v1/flow-runs/${flowRun.id}/requests/${apId()}/sync`,
+            body: { data: 'test' },
+        })
+
+        expect(response.statusCode).toBe(400)
+    })
+
+    it('sync: should accept request when PAUSED with waitpoint', async () => {
         const requestId = apId()
 
-        const { flowRun } = await createPausedFlowRun({
+        const { flowRun } = await createPausedFlowRunWithWaitpoint({
             projectId: ctx.project.id,
             pauseRequestId: requestId,
         })
 
-        // Publish a mock engine response right after injection starts,
-        // so the sync handler's oneTimeListener resolves immediately.
         const responsePromise = app.inject({
             method: 'POST',
             url: `/api/v1/flow-runs/${flowRun.id}/requests/${requestId}/sync`,
             body: { data: 'test' },
         })
 
-        // Small delay to let the handler register its listener before we publish
         await new Promise((resolve) => setTimeout(resolve, 500))
         await pubsub.publish(`engine-run:sync:${engineResponseWatcher(app.log).getServerId()}`, JSON.stringify({
             requestId,
@@ -249,6 +256,56 @@ describe('Resume flow run', () => {
         }))
 
         const response = await responsePromise
+        expect(response.statusCode).toBe(200)
+    })
+
+    it('should create a waitpoint when uploadRunLog is called with pauseMetadata for a Redis-only run', async () => {
+        const flow = createMockFlow({ projectId: ctx.project.id })
+        await db.save('flow', flow)
+
+        const flowVersion = createMockFlowVersion({
+            flowId: flow.id,
+            state: FlowVersionState.LOCKED,
+        })
+        await db.save('flow_version', flowVersion)
+
+        const runId = apId()
+        const requestId = apId()
+
+        const runMetadata: RunsMetadataUpsertData = {
+            id: runId,
+            projectId: ctx.project.id,
+            flowId: flow.id,
+            flowVersionId: flowVersion.id,
+            environment: RunEnvironment.PRODUCTION,
+            status: FlowRunStatus.RUNNING,
+        }
+        await distributedStore.merge(redisMetadataKey(runId), runMetadata)
+
+        const handlers = createHandlers(app.log)
+        await handlers.uploadRunLog({
+            runId,
+            projectId: ctx.project.id,
+            status: FlowRunStatus.PAUSED,
+            workerHandlerId: null,
+            httpRequestId: null,
+            pauseMetadata: {
+                type: PauseType.WEBHOOK,
+                requestId,
+                response: {},
+            },
+        })
+
+        const waitpoint = await db.findOneBy<{ status: string, type: string }>('waitpoint', { flowRunId: runId })
+        expect(waitpoint).not.toBeNull()
+        expect(waitpoint!.status).toBe('PENDING')
+        expect(waitpoint!.type).toBe('WEBHOOK')
+
+        const response = await app.inject({
+            method: 'POST',
+            url: `/api/v1/flow-runs/${runId}/requests/${requestId}`,
+            body: { status: 'success', data: { greeting: 'Hello' } },
+        })
         expect(response.statusCode).toBe(200)
     })
 })

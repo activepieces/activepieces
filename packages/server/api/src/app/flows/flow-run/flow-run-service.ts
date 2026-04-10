@@ -2,7 +2,6 @@ import { apDayjs } from '@activepieces/server-utils'
 import {
     ActivepiecesError,
     apId,
-    assertNotNullOrUndefined,
     Cursor,
     EngineHttpResponse,
     ErrorCode,
@@ -18,8 +17,6 @@ import {
     isNil,
     JobPayload,
     LATEST_JOB_DATA_SCHEMA_VERSION,
-    PauseMetadata,
-    PauseType,
     PlatformId,
     ProgressUpdateType,
     ProjectId,
@@ -50,6 +47,8 @@ import { FlowRunEntity } from './flow-run-entity'
 import { flowRunSideEffects } from './flow-run-side-effects'
 import { runsMetadataQueue } from './flow-runs-queue'
 import { flowRunLogsService } from './logs/flow-run-logs-service'
+import { waitpointService } from './waitpoint/waitpoint-service'
+import { Waitpoint, WaitpointResumePayload } from './waitpoint/waitpoint-types'
 
 const CANCELLABLE_STATUSES: FlowRunStatus[] = [FlowRunStatus.PAUSED, FlowRunStatus.QUEUED]
 
@@ -258,58 +257,39 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             }
         })
     },
-    async resume({
-        flowRunId,
-        payload,
-        requestId,
-        progressUpdateType,
-        executionType,
-        checkRequestId,
-    }: ResumeWebhookParams): Promise<FlowRun> {
-        log.info({
-            runId: flowRunId,
-        }, 'Resuming flow run')
+    async resume({ flowRunId, payload, requestId, progressUpdateType, executionType }: ResumeWebhookParams): Promise<FlowRun> {
+        log.info({ runId: flowRunId }, 'Resuming flow run')
+        const flowRun = await findFlowRunOrThrow(flowRunId)
+        await waitpointService(log).handleResumeSignal({
+            flowRunId,
+            flowRunStatus: flowRun.status,
+            projectId: flowRun.projectId,
+            resumeData: { payload, requestId, progressUpdateType, executionType },
+            onReady: async (waitpoint, resumeData) => {
+                await enqueueResume({ flowRun, waitpoint, resumeData }, log)
+            },
+        })
+        return flowRun
+    },
 
-        let flowRun = await findFlowRunOrThrow(flowRunId)
-
-        // Guard against the race condition where the engine has not yet committed its PAUSED
-        // state (and pauseMetadata) to the DB by the time the subflow calls this resume URL.
-        const PAUSE_WAIT_INTERVAL_MS = 200
-        const PAUSE_WAIT_TIMEOUT_MS = 30000
-        const waitStart = Date.now()
-        while (
-            isNil(flowRun.pauseMetadata) &&
-            (flowRun.status === FlowRunStatus.RUNNING || flowRun.status === FlowRunStatus.QUEUED) &&
-            Date.now() - waitStart < PAUSE_WAIT_TIMEOUT_MS
-        ) {
-            await new Promise((resolve) => setTimeout(resolve, PAUSE_WAIT_INTERVAL_MS))
-            flowRun = await findFlowRunOrThrow(flowRunId)
-        }
-        if (isNil(flowRun.pauseMetadata) && (flowRun.status === FlowRunStatus.RUNNING || flowRun.status === FlowRunStatus.QUEUED)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.PAUSE_METADATA_MISSING,
-                params: {},
-            })
-        }
-
-        const resolvedRun = resolveFlowRunForResume({ flowRun, requestId, checkRequestId })
-
-        if (isNil(resolvedRun)) {
-            return flowRun
-        }
-
-        const platformId = await projectService(log).getPlatformId(resolvedRun.projectId)
-        await flowRunSideEffects(log).onResume(resolvedRun)
-        return addToQueue({
-            payload,
-            flowRun: resolvedRun,
-            platformId,
-            synchronousHandlerId: returnHandlerId(resolvedRun.pauseMetadata, requestId, log),
-            httpRequestId: resolvedRun.pauseMetadata?.type === PauseType.WEBHOOK ? resolvedRun.pauseMetadata.requestIdToReply ?? undefined : undefined,
-            progressUpdateType,
-            executeTrigger: false,
-            executionType,
-        }, log)
+    async resumeFromWaitpoint({ flowRunId, resumePayload, workerHandlerId, httpRequestId }: ResumeFromWaitpointParams): Promise<FlowRun> {
+        const flowRun = await findFlowRunOrThrow(flowRunId)
+        await waitpointService(log).handleResumeSignal({
+            flowRunId,
+            flowRunStatus: flowRun.status,
+            projectId: flowRun.projectId,
+            resumeData: resumePayload ?? {},
+            onReady: async (waitpoint, resumeData) => {
+                await enqueueResume({
+                    flowRun,
+                    waitpoint,
+                    resumeData,
+                    workerHandlerIdOverride: workerHandlerId,
+                    httpRequestIdOverride: httpRequestId,
+                }, log)
+            },
+        })
+        return flowRun
     },
 
     async start({
@@ -472,40 +452,37 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             steps,
         }
     },
-    async handleSyncResumeFlow({ runId, payload, requestId }: { runId: string, payload: unknown, requestId: string }): Promise<EngineHttpResponse> {
+    async handleSyncResumeFlow({ runId, payload, requestId }: { runId: string, payload: ResumePayload, requestId: string }): Promise<EngineHttpResponse> {
         const flowRun = await flowRunService(log).getOnePopulatedOrThrow({
             id: runId,
             projectId: undefined,
         })
-        const synchronousHandlerId = engineResponseWatcher(log).getServerId()
-        assertNotNullOrUndefined(synchronousHandlerId, 'synchronousHandlerId is required for sync resume request')
-        const resolvedRun = resolveFlowRunForResume({ flowRun, requestId, checkRequestId: true })
-        if (isNil(resolvedRun)) {
-            return {
-                status: StatusCodes.NOT_FOUND,
-                body: {},
-                headers: {},
-            }
-        }
-        if (resolvedRun.status !== FlowRunStatus.PAUSED) {
+
+        if (isFlowRunStateTerminal({ status: flowRun.status, ignoreInternalError: false })) {
             return {
                 status: StatusCodes.CONFLICT,
-                body: { 'message': 'Flow run is not paused', 'flowRunStatus': resolvedRun.status },
+                body: { message: 'Flow run is not paused', flowRunStatus: flowRun.status },
                 headers: {},
             }
         }
-        const platformId = await projectService(log).getPlatformId(resolvedRun.projectId)
-        await flowRunSideEffects(log).onResume(resolvedRun)
-        await addToQueue({
-            payload,
-            flowRun: resolvedRun,
-            platformId,
-            synchronousHandlerId,
-            httpRequestId: requestId,
-            executeTrigger: false,
-            progressUpdateType: ProgressUpdateType.TEST_FLOW,
-            executionType: ExecutionType.RESUME,
-        }, log)
+
+        const syncServerId = engineResponseWatcher(log).getServerId()
+        await waitpointService(log).handleResumeSignal({
+            flowRunId: runId,
+            flowRunStatus: flowRun.status,
+            projectId: flowRun.projectId,
+            resumeData: {
+                payload,
+                requestId,
+                workerHandlerId: syncServerId,
+                progressUpdateType: ProgressUpdateType.TEST_FLOW,
+                executionType: ExecutionType.RESUME,
+            },
+            onReady: async (waitpoint, resumeData) => {
+                await enqueueResume({ flowRun, waitpoint, resumeData }, log)
+            },
+        })
+
         return engineResponseWatcher(log).oneTimeListener<EngineHttpResponse>(requestId, true, WEBHOOK_TIMEOUT_MS, {
             status: StatusCodes.NO_CONTENT,
             body: {},
@@ -620,20 +597,21 @@ async function filterFlowRunsAndApplyFilters(
 }
 
 
-function returnHandlerId(pauseMetadata: PauseMetadata | undefined, requestId: string | undefined, log: FastifyBaseLogger): string {
-    const handlerId = engineResponseWatcher(log).getServerId()
-    if (isNil(pauseMetadata)) {
-        return handlerId
-    }
-
-    if (pauseMetadata.type === PauseType.WEBHOOK && requestId === pauseMetadata.requestId && pauseMetadata.handlerId) {
-        return pauseMetadata.handlerId
-    }
-    else {
-        return handlerId
-    }
+async function enqueueResume(params: EnqueueResumeParams, log: FastifyBaseLogger): Promise<void> {
+    const { flowRun, waitpoint, resumeData } = params
+    const platformId = await projectService(log).getPlatformId(flowRun.projectId)
+    await flowRunSideEffects(log).onResume(flowRun)
+    await addToQueue({
+        payload: resumeData.payload,
+        flowRun,
+        platformId,
+        synchronousHandlerId: params.workerHandlerIdOverride ?? waitpoint.workerHandlerId ?? undefined,
+        httpRequestId: params.httpRequestIdOverride ?? waitpoint.httpRequestId ?? undefined,
+        progressUpdateType: resumeData.progressUpdateType ?? ProgressUpdateType.NONE,
+        executeTrigger: false,
+        executionType: resumeData.executionType ?? ExecutionType.RESUME,
+    }, log)
 }
-
 
 async function addToQueue(params: AddToQueueParams, log: FastifyBaseLogger): Promise<FlowRun> {
     const logsFileId = params.flowRun.logsFileId ?? apId()
@@ -696,19 +674,6 @@ async function findFlowRunOrThrow(flowRunId: FlowRunId): Promise<FlowRun> {
         })
     }
     return flowRun
-}
-
-function matchesPauseRequestId(pauseMetadata: PauseMetadata | undefined, requestId: string | undefined): boolean {
-    return isNil(pauseMetadata) || (pauseMetadata.type === PauseType.WEBHOOK && requestId === pauseMetadata.requestId)
-}
-
-function resolveFlowRunForResume(
-    { flowRun, requestId, checkRequestId }: { flowRun: FlowRun, requestId: string | undefined, checkRequestId: boolean },
-): FlowRun | null {
-    if (!checkRequestId || matchesPauseRequestId(flowRun.pauseMetadata, requestId)) {
-        return flowRun
-    }
-    return null
 }
 
 function queryBuilderForFlowRun(repo: Repository<FlowRun>): SelectQueryBuilder<FlowRun> {
@@ -868,13 +833,33 @@ type BulkArchiveActionParams = {
     failedStepName?: string
 }
 
+type ResumePayload = {
+    body?: unknown
+    headers?: Record<string, string>
+    queryParams?: Record<string, string>
+}
+
 type ResumeWebhookParams = {
     flowRunId: FlowRunId
     requestId?: string
     progressUpdateType: ProgressUpdateType
-    payload?: unknown
+    payload?: ResumePayload
     executionType: ExecutionType
-    checkRequestId: boolean
+}
+
+type ResumeFromWaitpointParams = {
+    flowRunId: FlowRunId
+    resumePayload: WaitpointResumePayload | null
+    workerHandlerId?: string
+    httpRequestId?: string
+}
+
+type EnqueueResumeParams = {
+    flowRun: FlowRun
+    waitpoint: Waitpoint
+    resumeData: WaitpointResumePayload
+    workerHandlerIdOverride?: string
+    httpRequestIdOverride?: string
 }
 
 type FilterFlowRunsAndApplyFiltersParams = {
