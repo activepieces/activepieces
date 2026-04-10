@@ -32,6 +32,7 @@ export const secretManagersHooks = {
         return result.data;
       },
       enabled: platform.plan.secretManagersEnabled,
+      meta: { showErrorDialog: true, loadSubsetOptions: {} },
     });
   },
   useCreateSecretManagerConnection: ({

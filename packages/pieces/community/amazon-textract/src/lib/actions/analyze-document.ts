@@ -1,4 +1,4 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
+import { DynamicPropsValue, Property, createAction } from '@activepieces/pieces-framework';
 import {
   AnalyzeDocumentCommand,
   FeatureType,
@@ -18,21 +18,46 @@ export const analyzeDocument = createAction({
   description:
     'Extract text, forms (key-value pairs), tables, and signatures from a document. Supports JPEG, PNG, PDF, and TIFF. For multi-page PDFs, use Start Document Analysis instead.',
   props: {
-    file: Property.File({
-      displayName: 'File',
-      description:
-        'The document to analyze. Supported formats: JPEG, PNG, PDF (single page), TIFF. Maximum 10 MB. Provide this OR the S3 fields below.',
-      required: false,
+    source: Property.StaticDropdown({
+      displayName: 'Document Source',
+      description: 'Choose how to provide the document — upload a file directly or reference one already in S3.',
+      required: true,
+      defaultValue: 'file',
+      options: {
+        options: [
+          { label: 'Upload a file', value: 'file' },
+          { label: 'From S3 bucket', value: 's3' },
+        ],
+      },
     }),
-    s3Bucket: Property.ShortText({
-      displayName: 'S3 Bucket',
-      description: 'S3 bucket containing the document. Required if no file is provided.',
-      required: false,
-    }),
-    s3Key: Property.ShortText({
-      displayName: 'S3 Object Key',
-      description: 'S3 object key (path) of the document. Required if no file is provided.',
-      required: false,
+    document: Property.DynamicProperties({
+      auth: amazonTextractAuth,
+      displayName: 'Document',
+      required: true,
+      refreshers: ['source'],
+      props: async ({ source }): Promise<DynamicPropsValue> => {
+        if (source === 's3') {
+          return {
+            s3Bucket: Property.ShortText({
+              displayName: 'S3 Bucket',
+              description: 'The name of your S3 bucket containing the document.',
+              required: true,
+            }),
+            s3Key: Property.ShortText({
+              displayName: 'S3 File Path',
+              description: 'The path to the file in your S3 bucket (e.g. "documents/invoice.pdf").',
+              required: true,
+            }),
+          };
+        }
+        return {
+          file: Property.File({
+            displayName: 'File',
+            description: 'The document to analyze. Supported formats: JPEG, PNG, PDF (single page), TIFF. Maximum 10 MB.',
+            required: true,
+          }),
+        };
+      },
     }),
     featureTypes: Property.StaticMultiSelectDropdown({
       displayName: 'Feature Types',
@@ -55,11 +80,15 @@ export const analyzeDocument = createAction({
     }),
   },
   async run(context) {
-    const { file, s3Bucket, s3Key, featureTypes, queries } = context.propsValue;
+    const { source, document, featureTypes, queries } = context.propsValue;
+
+    const file = source === 'file' ? document['file'] : undefined;
+    const s3Bucket = source === 's3' ? (document['s3Bucket'] as string) : undefined;
+    const s3Key = source === 's3' ? (document['s3Key'] as string) : undefined;
 
     try {
       const client = createTextractClient(context.auth.props);
-      const document = buildDocumentInput(file, s3Bucket, s3Key);
+      const documentInput = buildDocumentInput(file, s3Bucket, s3Key);
 
       // Always strip QUERIES from dropdown value — it requires QueriesConfig
       const resolvedFeatureTypes: FeatureType[] = (featureTypes as FeatureType[]).filter(
@@ -67,7 +96,7 @@ export const analyzeDocument = createAction({
       );
 
       const command: ConstructorParameters<typeof AnalyzeDocumentCommand>[0] = {
-        Document: document,
+        Document: documentInput,
         FeatureTypes: resolvedFeatureTypes,
       };
 
@@ -83,10 +112,7 @@ export const analyzeDocument = createAction({
         }
       }
 
-      const response = await client.send(
-        new AnalyzeDocumentCommand(command)
-      );
-
+      const response = await client.send(new AnalyzeDocumentCommand(command));
       return parseAnalysisBlocks(response.Blocks ?? []);
     } catch (e) {
       throw new Error(formatTextractError(e));

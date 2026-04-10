@@ -9,8 +9,8 @@ export const deleteFile = createAction({
   description: 'Deletes an existing file.',
   props: {
     key: Property.ShortText({
-      displayName: 'Key',
-      description: 'The key of the file to delete.',
+      displayName: 'File Path',
+      description: 'The full path to the file within your S3 bucket (e.g. "documents/report.csv" or "myfile.txt"). This is also called the S3 "key".',
       required: true,
     }),
   },
