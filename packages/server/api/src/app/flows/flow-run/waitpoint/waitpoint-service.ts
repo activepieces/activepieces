@@ -1,4 +1,4 @@
-import { ActivepiecesError, apId, ErrorCode, FlowRunStatus, isNil } from '@activepieces/shared'
+import { ActivepiecesError, apId, ErrorCode, FlowRunStatus, isNil, PauseType } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../../core/db/repo-factory'
@@ -6,7 +6,7 @@ import { transaction } from '../../../core/db/transaction'
 import { SystemJobName } from '../../../helper/system-jobs/common'
 import { systemJobsSchedule } from '../../../helper/system-jobs/system-job'
 import { WaitpointEntity } from './waitpoint-entity'
-import { CompleteParams, CompleteResult, CreateForPauseParams, CreateForPauseResult, HandleResumeSignalParams, Waitpoint, WaitpointStatus, WaitpointType } from './waitpoint-types'
+import { CompleteParams, CompleteResult, CreateForPauseParams, CreateForPauseResult, HandleResumeSignalParams, Waitpoint, WaitpointStatus } from './waitpoint-types'
 
 const waitpointRepo = repoFactory(WaitpointEntity)
 
@@ -47,7 +47,7 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
         const inserted = waitpoint.id === id
         if (inserted) {
             log.info({ flowRunId: params.flowRunId, waitpointId: id }, '[waitpointService#createForPause] Waitpoint created')
-            if (params.type === WaitpointType.DELAY && !isNil(params.resumeDateTime)) {
+            if (params.type === PauseType.DELAY && !isNil(params.resumeDateTime)) {
                 await systemJobsSchedule(log).upsertJob({
                     job: {
                         name: SystemJobName.RESUME_DELAY_WAITPOINT,
@@ -81,12 +81,12 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
                 .getOne()
 
             if (!isNil(pending)) {
-                await repo.save({
+                const updated: Waitpoint = {
                     ...pending,
                     status: WaitpointStatus.COMPLETED,
                     resumePayload: params.resumePayload,
-                })
-                const updated = await repo.findOneByOrFail({ id: pending.id })
+                }
+                await repo.save(updated)
                 log.info({ flowRunId: params.flowRunId }, '[waitpointService#complete] Completed existing PENDING waitpoint')
                 return { completedExisting: true, waitpoint: updated }
             }
@@ -106,7 +106,7 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
                     flowRunId: params.flowRunId,
                     projectId: params.projectId,
                     stepName: '',
-                    type: WaitpointType.WEBHOOK,
+                    type: PauseType.WEBHOOK,
                     status: WaitpointStatus.COMPLETED,
                     resumeDateTime: null,
                     timeoutSeconds: null,

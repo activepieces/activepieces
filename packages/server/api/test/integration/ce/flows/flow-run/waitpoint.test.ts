@@ -1,7 +1,7 @@
-import { apId, ExecutionType, FlowRunStatus, FlowVersionState, ProgressUpdateType, RunEnvironment } from '@activepieces/shared'
+import { apId, ExecutionType, FlowRunStatus, FlowVersionState, PauseType, ProgressUpdateType, RunEnvironment } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { waitpointService } from '../../../../../src/app/flows/flow-run/waitpoint/waitpoint-service'
-import { WaitpointStatus, WaitpointType } from '../../../../../src/app/flows/flow-run/waitpoint/waitpoint-types'
+import { WaitpointStatus } from '../../../../../src/app/flows/flow-run/waitpoint/waitpoint-types'
 import { createTestContext, TestContext } from '../../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../../helpers/test-setup'
 import { createMockFlow, createMockFlowRun, createMockFlowVersion } from '../../../../helpers/mocks'
@@ -53,13 +53,13 @@ describe('Waitpoint service', () => {
                 flowRunId: flowRun.id,
                 projectId: ctx.project.id,
                 stepName: 'approval',
-                type: WaitpointType.WEBHOOK,
+                type: PauseType.WEBHOOK,
             })
 
             expect(result.inserted).toBe(true)
             expect(result.waitpoint.status).toBe(WaitpointStatus.PENDING)
             expect(result.waitpoint.flowRunId).toBe(flowRun.id)
-            expect(result.waitpoint.type).toBe(WaitpointType.WEBHOOK)
+            expect(result.waitpoint.type).toBe(PauseType.WEBHOOK)
         })
 
         it('should return pre-completed waitpoint when resume arrived first', async () => {
@@ -75,7 +75,7 @@ describe('Waitpoint service', () => {
                 flowRunId: flowRun.id,
                 projectId: ctx.project.id,
                 stepName: 'approval',
-                type: WaitpointType.WEBHOOK,
+                type: PauseType.WEBHOOK,
             })
 
             expect(result.inserted).toBe(false)
@@ -91,14 +91,14 @@ describe('Waitpoint service', () => {
                 flowRunId: flowRun.id,
                 projectId: ctx.project.id,
                 stepName: 'delay_step',
-                type: WaitpointType.DELAY,
+                type: PauseType.DELAY,
                 resumeDateTime: resumeAt,
                 workerHandlerId: 'server-1',
                 httpRequestId: 'reply-1',
             })
 
             expect(result.inserted).toBe(true)
-            expect(result.waitpoint.type).toBe(WaitpointType.DELAY)
+            expect(result.waitpoint.type).toBe(PauseType.DELAY)
             expect(new Date(result.waitpoint.resumeDateTime!).toISOString()).toBe(resumeAt)
             expect(result.waitpoint.workerHandlerId).toBe('server-1')
             expect(result.waitpoint.httpRequestId).toBe('reply-1')
@@ -111,13 +111,13 @@ describe('Waitpoint service', () => {
                 flowRunId: flowRun.id,
                 projectId: ctx.project.id,
                 stepName: 'webhook_step',
-                type: WaitpointType.WEBHOOK,
+                type: PauseType.WEBHOOK,
                 responseToSend: { status: 200, body: 'ok' },
                 workerHandlerId: 'server-2',
             })
 
             expect(result.inserted).toBe(true)
-            expect(result.waitpoint.type).toBe(WaitpointType.WEBHOOK)
+            expect(result.waitpoint.type).toBe(PauseType.WEBHOOK)
             expect(result.waitpoint.responseToSend).toEqual({ status: 200, body: 'ok' })
             expect(result.waitpoint.workerHandlerId).toBe('server-2')
         })
@@ -131,7 +131,7 @@ describe('Waitpoint service', () => {
                 flowRunId: flowRun.id,
                 projectId: ctx.project.id,
                 stepName: 'approval',
-                type: WaitpointType.WEBHOOK,
+                type: PauseType.WEBHOOK,
             })
 
             const result = await waitpointService(app.log).complete({
@@ -192,7 +192,7 @@ describe('Waitpoint service', () => {
                 flowRunId: flowRun.id,
                 projectId: ctx.project.id,
                 stepName: 'approval',
-                type: WaitpointType.WEBHOOK,
+                type: PauseType.WEBHOOK,
             })
 
             await waitpointService(app.log).deleteByFlowRunId(flowRun.id)
@@ -204,12 +204,12 @@ describe('Waitpoint service', () => {
                 flowRunId: flowRun.id,
                 projectId: ctx.project.id,
                 stepName: 'delay_step',
-                type: WaitpointType.DELAY,
+                type: PauseType.DELAY,
                 resumeDateTime: new Date().toISOString(),
             })
 
             expect(result.inserted).toBe(true)
-            expect(result.waitpoint.type).toBe(WaitpointType.DELAY)
+            expect(result.waitpoint.type).toBe(PauseType.DELAY)
         })
     })
 
@@ -226,7 +226,7 @@ describe('Waitpoint service', () => {
                 flowRunId: flowRun.id,
                 projectId: ctx.project.id,
                 stepName: 'approval',
-                type: WaitpointType.WEBHOOK,
+                type: PauseType.WEBHOOK,
             })
 
             const result = await waitpointService(app.log).getByFlowRunId(flowRun.id)
@@ -269,7 +269,7 @@ describe('Waitpoint service', () => {
                 flowRunId: flowRun.id,
                 projectId: ctx.project.id,
                 stepName: 'approval',
-                type: WaitpointType.WEBHOOK,
+                type: PauseType.WEBHOOK,
             })
 
             let calledWith: { workerHandlerId: string | null } | null = null

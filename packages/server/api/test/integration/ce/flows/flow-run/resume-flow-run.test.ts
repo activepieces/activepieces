@@ -7,7 +7,6 @@ import { redisMetadataKey, RunsMetadataUpsertData } from '../../../../../src/app
 import { batchDeleteByFlowId } from '../../../../../src/app/flows/flow/flow.jobs'
 import { flowRunSideEffects } from '../../../../../src/app/flows/flow-run/flow-run-side-effects'
 import { waitpointService } from '../../../../../src/app/flows/flow-run/waitpoint/waitpoint-service'
-import { WaitpointType } from '../../../../../src/app/flows/flow-run/waitpoint/waitpoint-types'
 import { createHandlers } from '../../../../../src/app/workers/rpc/worker-rpc-service'
 import { createTestContext, TestContext } from '../../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../../helpers/test-setup'

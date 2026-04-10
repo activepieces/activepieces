@@ -5,7 +5,6 @@ import { securityAccess } from '../../../core/security/authorization/fastify-sec
 import { system } from '../../../helper/system/system'
 import { WorkerSystemProp } from '../../../helper/system/system-props'
 import { waitpointService } from './waitpoint-service'
-import { WaitpointType } from './waitpoint-types'
 
 export const waitpointController: FastifyPluginAsyncZod = async (app) => {
     app.post('/', CreateWaitpointParams, async (request, reply) => {
@@ -14,7 +13,7 @@ export const waitpointController: FastifyPluginAsyncZod = async (app) => {
             flowRunId,
             projectId,
             stepName,
-            type: type === 'DELAY' ? WaitpointType.DELAY : WaitpointType.WEBHOOK,
+            type,
             resumeDateTime,
             responseToSend: responseToSend ?? undefined,
             workerHandlerId: workerHandlerId ?? undefined,

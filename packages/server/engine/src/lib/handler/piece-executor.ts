@@ -143,7 +143,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 stop: createStopHook(params),
                 pause: createLegacyPauseShim(params, action.name),
                 respond: createRespondHook(params),
-                createWaitpoint: createWaitpointHook({ hookParams: params, constants, stepName: action.name }),
+                createWaitpoint: createWaitpointHook({ constants, stepName: action.name }),
                 waitForWaitpoint: createWaitForWaitpointHook({ hookParams: params }),
             },
             project: {
@@ -301,14 +301,9 @@ type CreateRespondHookParams = {
     hookResponse: HookResponse
 }
 
-function createWaitpointHook({ constants, stepName }: { hookParams: { hookResponse: HookResponse }, constants: EngineConstants, stepName: string }): CreateWaitpointHook {
+function createWaitpointHook({ constants, stepName }: { constants: EngineConstants, stepName: string }): CreateWaitpointHook {
     return async (req: CreateWaitpointParams): Promise<CreateWaitpointResult> => {
-        if (req.type === 'DELAY' && req.resumeDateTime) {
-            const diffInDays = dayjs(req.resumeDateTime).diff(dayjs(), 'days')
-            if (diffInDays > AP_PAUSED_FLOW_TIMEOUT_DAYS) {
-                throw new PausedFlowTimeoutError(undefined, AP_PAUSED_FLOW_TIMEOUT_DAYS)
-            }
-        }
+        assertDelayWithinTimeout(req.resumeDateTime)
         const result = await waitpointClient.create({
             apiUrl: constants.internalApiUrl,
             engineToken: constants.engineToken,
@@ -346,10 +341,7 @@ function createLegacyPauseShim(params: { hookResponse: HookResponse }, stepName:
     return (req) => {
         const type = req.pauseMetadata.type === PauseType.DELAY ? 'DELAY' as const : 'WEBHOOK' as const
         if (type === 'DELAY') {
-            const diffInDays = dayjs(req.pauseMetadata.resumeDateTime).diff(dayjs(), 'days')
-            if (diffInDays > AP_PAUSED_FLOW_TIMEOUT_DAYS) {
-                throw new PausedFlowTimeoutError(undefined, AP_PAUSED_FLOW_TIMEOUT_DAYS)
-            }
+            assertDelayWithinTimeout(req.pauseMetadata.resumeDateTime)
         }
         params.hookResponse = {
             ...params.hookResponse,
@@ -361,5 +353,15 @@ function createLegacyPauseShim(params: { hookResponse: HookResponse }, stepName:
                 responseToSend: req.pauseMetadata.type === PauseType.WEBHOOK ? req.pauseMetadata.response : undefined,
             },
         }
+    }
+}
+
+function assertDelayWithinTimeout(resumeDateTime?: string): void {
+    if (isNil(resumeDateTime)) {
+        return
+    }
+    const diffInDays = dayjs(resumeDateTime).diff(dayjs(), 'days')
+    if (diffInDays > AP_PAUSED_FLOW_TIMEOUT_DAYS) {
+        throw new PausedFlowTimeoutError(undefined, AP_PAUSED_FLOW_TIMEOUT_DAYS)
     }
 }

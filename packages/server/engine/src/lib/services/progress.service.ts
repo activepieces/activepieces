@@ -129,7 +129,7 @@ export const progressService = {
             if (isNil(logsUploadUrl)) {
                 throw new EngineGenericError('LogsUploadUrlNotSetError', 'Logs upload URL is not set')
             }
-            const uploadLogResponse = await uploadExecutionState(logsUploadUrl!, executionState)
+            const uploadLogResponse = await uploadExecutionState(logsUploadUrl, executionState)
             if (!uploadLogResponse.ok) {
                 throw new EngineGenericError('ProgressUpdateError', 'Failed to upload execution state', uploadLogResponse)
             }

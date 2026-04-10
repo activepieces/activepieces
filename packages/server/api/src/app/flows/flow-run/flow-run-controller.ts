@@ -18,6 +18,7 @@ import {
     SeekPage,
     SERVICE_KEY_SECURITY_OPENAPI,
 } from '@activepieces/shared'
+import { FastifyBaseLogger, FastifyReply } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
@@ -61,71 +62,25 @@ export const flowRunController: FastifyPluginAsyncZod = async (app) => {
     app.all('/:id/waitpoints/:waitpointId', ResumeByWaitpointRequest, async (req, reply) => {
         const headers = req.headers as Record<string, string>
         const queryParams = req.query as Record<string, string>
-        await flowRunService(req.log).resumeFromWaitpoint({
-            flowRunId: req.params.id,
-            resumePayload: {
-                payload: {
-                    body: req.body,
-                    headers,
-                    queryParams,
-                },
-                progressUpdateType: ProgressUpdateType.TEST_FLOW,
-                executionType: ExecutionType.RESUME,
-            },
-        })
-        await reply.send({
-            message: 'Your response has been recorded. You can close this page now.',
-        })
+        await handleAsyncResume({ flowRunId: req.params.id, body: req.body, headers, queryParams, log: req.log, reply })
     })
 
     app.all('/:id/waitpoints/:waitpointId/sync', ResumeByWaitpointRequest, async (req, reply) => {
         const headers = req.headers as Record<string, string>
         const queryParams = req.query as Record<string, string>
-        const response = await flowRunService(req.log).handleSyncResumeFlow({
-            runId: req.params.id,
-            payload: {
-                body: req.body,
-                headers,
-                queryParams,
-            },
-            correlationId: req.params.waitpointId,
-        })
-        await reply.status(response.status).headers(response.headers).send(response.body)
+        await handleSyncResume({ flowRunId: req.params.id, body: req.body, headers, queryParams, log: req.log, reply, correlationId: req.params.waitpointId })
     })
 
     app.all('/:id/requests/:requestId', ResumeFlowRunRequest, async (req, reply) => {
         const headers = req.headers as Record<string, string>
         const queryParams = req.query as Record<string, string>
-        await flowRunService(req.log).resumeFromWaitpoint({
-            flowRunId: req.params.id,
-            resumePayload: {
-                payload: {
-                    body: req.body,
-                    headers,
-                    queryParams,
-                },
-                progressUpdateType: ProgressUpdateType.TEST_FLOW,
-                executionType: ExecutionType.RESUME,
-            },
-        })
-        await reply.send({
-            message: 'Your response has been recorded. You can close this page now.',
-        })
+        await handleAsyncResume({ flowRunId: req.params.id, body: req.body, headers, queryParams, log: req.log, reply })
     })
 
     app.all('/:id/requests/:requestId/sync', ResumeFlowRunRequest, async (req, reply) => {
         const headers = req.headers as Record<string, string>
         const queryParams = req.query as Record<string, string>
-        const response = await flowRunService(req.log).handleSyncResumeFlow({
-            runId: req.params.id,
-            payload: {
-                body: req.body,
-                headers,
-                queryParams,
-            },
-            correlationId: req.params.requestId,
-        })
-        await reply.status(response.status).headers(response.headers).send(response.body)
+        await handleSyncResume({ flowRunId: req.params.id, body: req.body, headers, queryParams, log: req.log, reply, correlationId: req.params.requestId })
     })
 
     app.post('/:id/retry', RetryFlowRequest, async (req) => {
@@ -306,7 +261,7 @@ const ArchiveFlowRunRequest = {
 const BulkRetryFlowRequest = {
     config: {
         security: securityAccess.project(
-            [PrincipalType.USER, PrincipalType.SERVICE], 
+            [PrincipalType.USER, PrincipalType.SERVICE],
             Permission.WRITE_RUN, {
                 type: ProjectResourceType.BODY,
             }),
@@ -314,4 +269,44 @@ const BulkRetryFlowRequest = {
     schema: {
         body: BulkActionOnRunsRequestBody,
     },
+}
+
+async function handleAsyncResume({ flowRunId, body, headers, queryParams, log, reply }: ResumeHandlerParams): Promise<void> {
+    await flowRunService(log).resumeFromWaitpoint({
+        flowRunId,
+        resumePayload: {
+            payload: {
+                body,
+                headers,
+                queryParams,
+            },
+            progressUpdateType: ProgressUpdateType.TEST_FLOW,
+            executionType: ExecutionType.RESUME,
+        },
+    })
+    await reply.send({
+        message: 'Your response has been recorded. You can close this page now.',
+    })
+}
+
+async function handleSyncResume({ flowRunId, body, headers, queryParams, log, reply, correlationId }: ResumeHandlerParams & { correlationId: string }): Promise<void> {
+    const response = await flowRunService(log).handleSyncResumeFlow({
+        runId: flowRunId,
+        payload: {
+            body,
+            headers,
+            queryParams,
+        },
+        correlationId,
+    })
+    await reply.status(response.status).headers(response.headers).send(response.body)
+}
+
+type ResumeHandlerParams = {
+    flowRunId: string
+    body: unknown
+    headers: Record<string, string>
+    queryParams: Record<string, string>
+    log: FastifyBaseLogger
+    reply: FastifyReply
 }

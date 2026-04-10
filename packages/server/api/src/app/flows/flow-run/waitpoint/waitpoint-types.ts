@@ -1,19 +1,8 @@
-import { ApId, ExecutionType, FlowRunStatus, ProgressUpdateType } from '@activepieces/shared'
+import { ApId, ExecutionType, FlowRunStatus, PauseType, ProgressUpdateType, RespondResponse } from '@activepieces/shared'
 
 enum WaitpointStatus {
     PENDING = 'PENDING',
     COMPLETED = 'COMPLETED',
-}
-
-enum WaitpointType {
-    DELAY = 'DELAY',
-    WEBHOOK = 'WEBHOOK',
-}
-
-type WaitpointResponseToSend = {
-    status?: number
-    body?: unknown
-    headers?: Record<string, string>
 }
 
 type WaitpointResumePayload = {
@@ -33,12 +22,12 @@ type Waitpoint = {
     updated: string
     flowRunId: ApId
     projectId: ApId
-    type: WaitpointType
+    type: `${PauseType}`
     status: WaitpointStatus
     stepName: string
     resumeDateTime: string | null
     timeoutSeconds: number | null
-    responseToSend: WaitpointResponseToSend | null
+    responseToSend: RespondResponse | null
     workerHandlerId: string | null
     httpRequestId: string | null
     resumePayload: WaitpointResumePayload | null
@@ -48,10 +37,10 @@ type CreateForPauseParams = {
     flowRunId: ApId
     projectId: ApId
     stepName: string
-    type: WaitpointType
+    type: `${PauseType}`
     resumeDateTime?: string
     timeoutSeconds?: number
-    responseToSend?: WaitpointResponseToSend
+    responseToSend?: RespondResponse
     workerHandlerId?: string
     httpRequestId?: string
 }
@@ -80,5 +69,5 @@ type HandleResumeSignalParams = {
     onReady: (waitpoint: Waitpoint, resumeData: WaitpointResumePayload) => Promise<void>
 }
 
-export { WaitpointStatus, WaitpointType }
-export type { Waitpoint, WaitpointResponseToSend, WaitpointResumePayload, CreateForPauseParams, CreateForPauseResult, CompleteParams, CompleteResult, HandleResumeSignalParams }
+export { WaitpointStatus }
+export type { Waitpoint, WaitpointResumePayload, CreateForPauseParams, CreateForPauseResult, CompleteParams, CompleteResult, HandleResumeSignalParams }

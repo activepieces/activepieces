@@ -1,7 +1,7 @@
-import { Project } from '@activepieces/shared'
+import { PauseType, Project } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import { ApIdSchema, BaseColumnSchemaPart } from '../../../database/database-common'
-import { Waitpoint, WaitpointStatus, WaitpointType } from './waitpoint-types'
+import { Waitpoint, WaitpointStatus } from './waitpoint-types'
 
 type WaitpointSchema = Waitpoint & {
     project: Project
@@ -22,7 +22,7 @@ export const WaitpointEntity = new EntitySchema<WaitpointSchema>({
         type: {
             type: String,
             nullable: false,
-            enum: WaitpointType,
+            enum: PauseType,
         },
         status: {
             type: String,
