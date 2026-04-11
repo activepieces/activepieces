@@ -82,7 +82,7 @@ export const concurrencyPoolService = (_log: FastifyBaseLogger) => ({
         await projectRepo().update({ id: projectId }, { poolId: null })
         await distributedStore.delete(getProjectConcurrencyPoolKey(projectId))
 
-        const stillReferenced = await projectRepo().count({ where: { id: projectId, poolId: existingPoolId } })
+        const stillReferenced = await projectRepo().count({ where: { platformId, poolId: existingPoolId } })
         if (stillReferenced === 0) {
             await concurrencyPoolRepo().delete({ id: existingPoolId })
             await distributedStore.delete(getConcurrencyPoolLimitKey(existingPoolId))
