@@ -94,12 +94,20 @@ export const projectService = (log: FastifyBaseLogger) => ({
 
         await projectRepo(entityManager).update({ id: projectId }, { ...baseUpdate, ...teamUpdate })
         const updatedProject = await this.getOneOrThrow(projectId)
-        if (!isNil(request.maxConcurrentJobs)) {
-            await concurrencyPoolService(log).setProjectConcurrencyLimit({
-                projectId,
-                platformId: updatedProject.platformId,
-                maxConcurrentJobs: request.maxConcurrentJobs,
-            })
+        if (request.maxConcurrentJobs !== undefined) {
+            if (!isNil(request.maxConcurrentJobs)) {
+                await concurrencyPoolService(log).setProjectConcurrencyLimit({
+                    projectId,
+                    platformId: updatedProject.platformId,
+                    maxConcurrentJobs: request.maxConcurrentJobs,
+                })
+            }
+            else {
+                await concurrencyPoolService(log).clearProjectConcurrencyLimit({
+                    projectId,
+                    platformId: updatedProject.platformId,
+                })
+            }
         }
         return updatedProject
     },

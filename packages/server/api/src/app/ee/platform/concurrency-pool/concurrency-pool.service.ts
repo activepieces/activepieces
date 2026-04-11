@@ -66,9 +66,27 @@ export const concurrencyPoolService = (_log: FastifyBaseLogger) => ({
             await distributedStore.delete(getProjectConcurrencyPoolKey(projectId))
         }
         // no pool for the project or the project is in a pool with more than 1 project ( move it to his own pool )
-        const { poolId } = await concurrencyPoolService(_log).createPool({ platformId, projectIds, maxConcurrentJobs })
+        const { poolId } = await concurrencyPoolService(_log).createPool({ platformId, projectIds: [projectId], maxConcurrentJobs })
         await distributedStore.put(getConcurrencyPoolLimitKey(poolId), maxConcurrentJobs)
         await distributedStore.put(getProjectConcurrencyPoolKey(projectId), poolId)
+    },
+
+    async clearProjectConcurrencyLimit({ projectId, platformId }: ClearProjectLimitParams): Promise<void> {
+        const project = await projectRepo().findOne({
+            where: { id: projectId, platformId },
+            select: { poolId: true },
+        })
+        const existingPoolId = project?.poolId ?? null
+        if (isNil(existingPoolId)) return
+
+        await projectRepo().update({ id: projectId }, { poolId: null })
+        await distributedStore.delete(getProjectConcurrencyPoolKey(projectId))
+
+        const stillReferenced = await projectRepo().count({ where: { id: projectId, poolId: existingPoolId } })
+        if (stillReferenced === 0) {
+            await concurrencyPoolRepo().delete({ id: existingPoolId })
+            await distributedStore.delete(getConcurrencyPoolLimitKey(existingPoolId))
+        }
     },
 
     async getProjectPoolId(projectId: string): Promise<string | null> {
@@ -105,3 +123,4 @@ export const concurrencyPoolService = (_log: FastifyBaseLogger) => ({
 type CreatePoolParams = { platformId: string, projectIds: string[], maxConcurrentJobs: number }
 type UpsertPoolParams = { platformId: string, projectIds: string[], maxConcurrentJobs: number }
 type SetProjectLimitParams = { projectId: string, platformId: string, maxConcurrentJobs: number }
+type ClearProjectLimitParams = { projectId: string, platformId: string }

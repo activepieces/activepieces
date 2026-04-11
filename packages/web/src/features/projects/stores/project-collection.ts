@@ -54,7 +54,7 @@ export const projectCollection = createCollection<ProjectWithLimits, string>(
               : undefined,
           icon: modified.icon,
           plan: modified.plan,
-          maxConcurrentJobs: modified.maxConcurrentJobs ?? undefined,
+          maxConcurrentJobs: modified.maxConcurrentJobs,
         };
         await api.post<ProjectWithLimits>(
           `/v1/projects/${original.id}`,
