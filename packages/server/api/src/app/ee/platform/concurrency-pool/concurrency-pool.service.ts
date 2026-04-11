@@ -2,6 +2,7 @@ import { apId, isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { In } from 'typeorm'
 import { repoFactory } from '../../../core/db/repo-factory'
+import { transaction } from '../../../core/db/transaction'
 import { getConcurrencyPoolLimitKey, getProjectConcurrencyPoolKey } from '../../../database/redis/keys'
 import { distributedStore } from '../../../database/redis-connections'
 import { projectRepo } from '../../../project/project-repo'
@@ -11,6 +12,15 @@ const concurrencyPoolRepo = repoFactory<ConcurrencyPoolEntitySchema>(Concurrency
 
 export const concurrencyPoolService = (_log: FastifyBaseLogger) => ({
 
+    async createPool({ platformId, projectIds, maxConcurrentJobs }: CreatePoolParams): Promise<{ poolId: string }> {
+        const poolId = apId()
+        await transaction(async (entityManager) =>{
+            await concurrencyPoolRepo(entityManager).save({ id: poolId, platformId, maxConcurrentJobs })
+            await projectRepo(entityManager).update({ id: In(projectIds), platformId }, { poolId })
+        })
+        return { poolId }
+    },
+
     async upsertPool({ platformId, projectIds, maxConcurrentJobs }: UpsertPoolParams): Promise<{ poolId: string }> {
         const existingProjects = await projectRepo().find({
             where: { id: In(projectIds), platformId },
@@ -18,9 +28,7 @@ export const concurrencyPoolService = (_log: FastifyBaseLogger) => ({
         })
         const oldPoolIds = [...new Set(existingProjects.map(p => p.poolId).filter((id): id is string => !isNil(id)))]
 
-        const poolId = apId()
-        await concurrencyPoolRepo().save({ id: poolId, platformId, maxConcurrentJobs })
-        await projectRepo().update({ id: In(projectIds), platformId }, { poolId })
+        const { poolId } = await concurrencyPoolService(_log).createPool({ platformId, projectIds, maxConcurrentJobs })
 
         await distributedStore.delete([
             ...projectIds.map(id => getProjectConcurrencyPoolKey(id)),
@@ -58,9 +66,7 @@ export const concurrencyPoolService = (_log: FastifyBaseLogger) => ({
             await distributedStore.delete(getProjectConcurrencyPoolKey(projectId))
         }
         // no pool for the project or the project is in a pool with more than 1 project ( move it to his own pool )
-        const poolId = apId()
-        await concurrencyPoolRepo().save({ id: poolId, platformId, maxConcurrentJobs })
-        await projectRepo().update({ id: projectId }, { poolId })
+        const { poolId } = await concurrencyPoolService(_log).createPool({ platformId, projectIds, maxConcurrentJobs })
         await distributedStore.put(getConcurrencyPoolLimitKey(poolId), maxConcurrentJobs)
         await distributedStore.put(getProjectConcurrencyPoolKey(projectId), poolId)
     },
@@ -96,5 +102,6 @@ export const concurrencyPoolService = (_log: FastifyBaseLogger) => ({
     },
 })
 
+type CreatePoolParams = { platformId: string, projectIds: string[], maxConcurrentJobs: number }
 type UpsertPoolParams = { platformId: string, projectIds: string[], maxConcurrentJobs: number }
 type SetProjectLimitParams = { projectId: string, platformId: string, maxConcurrentJobs: number }
