@@ -76,7 +76,11 @@ describe('flow with delay', () => {
                 status: FlowRunStatus.RUNNING,
             }),
             constants: generateMockEngineConstants({
-                resumePayload: {},
+                resumePayload: {
+                    queryParams: {},
+                    body: {},
+                    headers: {},
+                },
             }),
         })
 
