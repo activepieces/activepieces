@@ -128,9 +128,6 @@ export async function createAIModel({
                 apiKey: auth.apiKey,
                 baseURL: 'https://api.avian.io/v1',
             })
-            if (isImage) {
-                return avianProvider.imageModel(modelId)
-            }
             return avianProvider.chat(modelId)
         }
         case AIProviderName.CUSTOM: {
