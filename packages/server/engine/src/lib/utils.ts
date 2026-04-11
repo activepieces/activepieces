@@ -90,18 +90,10 @@ function isEngineError(error: unknown): error is ExecutionError {
     return error instanceof ExecutionError && error.type === ExecutionErrorType.ENGINE
 }
 
-export type PendingWaitpoint = {
-    type: 'DELAY' | 'WEBHOOK'
-    stepName: string
-    resumeDateTime?: string
-    responseToSend?: RespondResponse
-}
-
 export type HookResponse = {
     type: 'paused'
     tags: string[]
-    waitpointId?: string
-    pendingWaitpoint?: PendingWaitpoint
+    responseToSend?: RespondResponse
 } | {
     type: 'stopped'
     tags: string[]

@@ -141,7 +141,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
             run: {
                 id: constants.flowRunId,
                 stop: createStopHook(params),
-                pause: createLegacyPauseShim(params, action.name),
+                pause: createLegacyPauseShim({ hookParams: params, constants, stepName: action.name }),
                 respond: createRespondHook(params),
                 createWaitpoint: createWaitpointHook({ constants, stepName: action.name }),
                 waitForWaitpoint: createWaitForWaitpointHook({ hookParams: params }),
@@ -191,34 +191,10 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
             })
         }
         if (params.hookResponse.type === 'paused') {
-            let waitpointId = params.hookResponse.waitpointId
-            const pending = params.hookResponse.pendingWaitpoint
-
-            if (isNil(waitpointId) && !isNil(pending)) {
-                const result = await waitpointClient.create({
-                    apiUrl: constants.internalApiUrl,
-                    engineToken: constants.engineToken,
-                    flowRunId: constants.flowRunId,
-                    projectId: constants.projectId,
-                    stepName: pending.stepName,
-                    type: pending.type,
-                    resumeDateTime: pending.resumeDateTime,
-                    responseToSend: pending.responseToSend,
-                    workerHandlerId: constants.serverHandlerId ?? undefined,
-                    httpRequestId: constants.httpRequestId ?? undefined,
-                })
-                waitpointId = result.id
-            }
-
-            if (isNil(waitpointId)) {
-                throw new EngineGenericError('WaitpointIdNotSetError', 'Neither waitpointId nor pendingWaitpoint was set for paused verdict')
-            }
-
-            return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output).setStatus(StepOutputStatus.PAUSED).setDuration(stepEndTime - stepStartTime)).incrementStepsExecuted()
-                .setVerdict({
-                    status: FlowRunStatus.PAUSED,
-                    waitpointId,
-                })
+            return newExecutionContext
+                .upsertStep(action.name, stepOutput.setOutput(output).setStatus(StepOutputStatus.PAUSED).setDuration(stepEndTime - stepStartTime))
+                .incrementStepsExecuted()
+                .setVerdict({ status: FlowRunStatus.PAUSED })
         }
         return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output).setStatus(StepOutputStatus.SUCCEEDED).setDuration(stepEndTime - stepStartTime)).incrementStepsExecuted().setVerdict({ status: FlowRunStatus.RUNNING })
 
@@ -250,7 +226,7 @@ function getResponse(hookResponse: HookResponse): RespondResponse | undefined {
         case 'respond':
             return hookResponse.response.response
         case 'paused':
-            return hookResponse.pendingWaitpoint?.responseToSend
+            return hookResponse.responseToSend
         case 'none':
             return undefined
     }
@@ -328,31 +304,32 @@ function createWaitpointHook({ constants, stepName }: { constants: EngineConstan
 }
 
 function createWaitForWaitpointHook({ hookParams }: { hookParams: { hookResponse: HookResponse } }): WaitForWaitpointHook {
-    return (waitpointId: string) => {
+    return (_waitpointId: string) => {
         hookParams.hookResponse = {
             ...hookParams.hookResponse,
             type: 'paused',
-            waitpointId,
         }
     }
 }
 
-function createLegacyPauseShim(params: { hookResponse: HookResponse }, stepName: string): PauseHook {
+function createLegacyPauseShim({ hookParams, constants, stepName }: {
+    hookParams: { hookResponse: HookResponse }
+    constants: EngineConstants
+    stepName: string
+}): PauseHook {
+    const createWaitpoint = createWaitpointHook({ constants, stepName })
     return (req) => {
         const type = req.pauseMetadata.type === PauseType.DELAY ? 'DELAY' as const : 'WEBHOOK' as const
         if (type === 'DELAY') {
             assertDelayWithinTimeout(req.pauseMetadata.resumeDateTime)
         }
-        params.hookResponse = {
-            ...params.hookResponse,
-            type: 'paused',
-            pendingWaitpoint: {
-                type,
-                stepName,
-                resumeDateTime: req.pauseMetadata.type === PauseType.DELAY ? req.pauseMetadata.resumeDateTime : undefined,
-                responseToSend: req.pauseMetadata.type === PauseType.WEBHOOK ? req.pauseMetadata.response : undefined,
-            },
-        }
+        const responseToSend = req.pauseMetadata.type === PauseType.WEBHOOK ? req.pauseMetadata.response : undefined
+        hookParams.hookResponse = { ...hookParams.hookResponse, type: 'paused', responseToSend }
+        void createWaitpoint({
+            type,
+            resumeDateTime: req.pauseMetadata.type === PauseType.DELAY ? req.pauseMetadata.resumeDateTime : undefined,
+            responseToSend,
+        })
     }
 }
 

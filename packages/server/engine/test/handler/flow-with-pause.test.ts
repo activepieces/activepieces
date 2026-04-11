@@ -74,7 +74,6 @@ describe('flow with pause', () => {
         })
         expect(pauseResult.verdict).toEqual({
             status: FlowRunStatus.PAUSED,
-            waitpointId: 'mock-waitpoint-id',
         })
         expect(Object.keys(pauseResult.steps)).toEqual(['loop'])
 
@@ -137,7 +136,6 @@ describe('flow with pause', () => {
         })
         expect(resumeResult1.verdict).toStrictEqual({
             status: FlowRunStatus.PAUSED,
-            waitpointId: 'mock-waitpoint-id',
         })
         const resumeResult2 = await flowExecutor.execute({
             action: flawWithTwoPause,
@@ -169,7 +167,6 @@ describe('flow with pause', () => {
         })
         expect(pauseResult.verdict).toStrictEqual({
             status: FlowRunStatus.PAUSED,
-            waitpointId: 'mock-waitpoint-id',
         })
         const currentState = pauseResult.currentState()
         expect(Object.keys(currentState).length).toBe(1)
@@ -243,7 +240,6 @@ describe('flow with pause', () => {
 
         expect(result.verdict).toStrictEqual({
             status: FlowRunStatus.PAUSED,
-            waitpointId: 'mock-waitpoint-id',
         })
 
         const routerOutput = result.steps.router as RouterStepOutput

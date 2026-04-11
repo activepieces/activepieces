@@ -5,7 +5,6 @@ import { StepExecutionPath } from './step-execution-path'
 
 export type FlowVerdict = {
     status: FlowRunStatus.PAUSED
-    waitpointId: string
 } | {
     status: FlowRunStatus.SUCCEEDED
     stopResponse: RespondResponse | undefined
