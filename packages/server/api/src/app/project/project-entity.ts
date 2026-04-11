@@ -99,6 +99,11 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
             columns: ['platformId'],
             unique: false,
         },
+        {
+            name: 'idx_project_pool_id',
+            columns: ['poolId'],
+            unique: false,
+        },
     ],
     relations: {
         owner: {
