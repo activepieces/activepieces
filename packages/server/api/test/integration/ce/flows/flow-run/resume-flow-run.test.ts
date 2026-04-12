@@ -226,7 +226,7 @@ describe('Resume flow run', () => {
         expect(response.statusCode).toBe(200)
     })
 
-    it('sync: should return 400 when no waitpoint exists for PAUSED flow', async () => {
+    it('sync: should return 410 when no waitpoint exists for PAUSED flow', async () => {
         const flow = createMockFlow({ projectId: ctx.project.id })
         await db.save('flow', flow)
 
@@ -251,7 +251,7 @@ describe('Resume flow run', () => {
             body: { data: 'test' },
         })
 
-        expect(response.statusCode).toBe(400)
+        expect(response.statusCode).toBe(410)
     })
 
     it('sync: should accept request when PAUSED with waitpoint', async () => {
@@ -422,9 +422,11 @@ describe('Resume flow run', () => {
         })
         await db.save('flow_run', childRun)
 
+        const existingWaitpoint = await db.findOneBy<{ id: string }>('waitpoint', { flowRunId: parentRun.id })
         await waitpointService(app.log).complete({
             flowRunId: parentRun.id,
             projectId: ctx.project.id,
+            waitpointId: existingWaitpoint!.id,
             resumePayload: {
                 payload: { body: { status: 'error', data: { message: 'Subflow execution failed' } } },
                 streamStepProgress: StreamStepProgress.WEBSOCKET,
@@ -459,6 +461,7 @@ describe('Resume flow run', () => {
         await waitpointService(app.log).complete({
             flowRunId: parentRun.id,
             projectId: ctx.project.id,
+            waitpointId: apId(),
             resumePayload: {
                 payload: { body: { status: 'error', data: { message: 'Subflow execution failed' } } },
                 streamStepProgress: StreamStepProgress.WEBSOCKET,
@@ -520,6 +523,7 @@ describe('Resume flow run', () => {
         await waitpointService(app.log).complete({
             flowRunId: parentRun.id,
             projectId: ctx.project.id,
+            waitpointId: apId(),
             resumePayload: {
                 payload: { body: { status: 'error', data: { message: 'Subflow execution failed' } } },
                 streamStepProgress: StreamStepProgress.WEBSOCKET,
@@ -534,13 +538,10 @@ describe('Resume flow run', () => {
 
         await waitpointService(app.log).handleResumeSignal({
             flowRunId: parentRun.id,
+            waitpointId: apId(),
             flowRunStatus: FlowRunStatus.FAILED,
             projectId: ctx.project.id,
-            resumeData: {
-                payload: { body: { status: 'error' } },
-                streamStepProgress: StreamStepProgress.WEBSOCKET,
-                executionType: ExecutionType.RESUME,
-            },
+            resumePayload: { body: { status: 'error' } },
             onReady: async () => {
                 throw new Error('onReady should not be called for terminal state')
             },

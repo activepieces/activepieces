@@ -1,6 +1,7 @@
 import {
     ActivepiecesError,
     ALL_PRINCIPAL_TYPES,
+    apId,
     ApId,
     BulkActionOnRunsRequestBody,
     BulkArchiveActionOnRunsRequestBody,
@@ -24,6 +25,7 @@ import { ProjectResourceType } from '../../core/security/authorization/common'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { FlowRunEntity } from './flow-run-entity'
 import { flowRunService } from './flow-run-service'
+import { waitpointService } from './waitpoint/waitpoint-service'
 
 const DEFAULT_PAGING_LIMIT = 10
 
@@ -60,25 +62,27 @@ export const flowRunController: FastifyPluginAsyncZod = async (app) => {
     app.all('/:id/waitpoints/:waitpointId', ResumeByWaitpointRequest, async (req, reply) => {
         const headers = req.headers as Record<string, string>
         const queryParams = req.query as Record<string, string>
-        await handleAsyncResume({ flowRunId: req.params.id, body: req.body, headers, queryParams, log: req.log, reply })
+        await handleAsyncResume({ flowRunId: req.params.id, waitpointId: req.params.waitpointId, body: req.body, headers, queryParams, log: req.log, reply })
     })
 
     app.all('/:id/waitpoints/:waitpointId/sync', ResumeByWaitpointRequest, async (req, reply) => {
         const headers = req.headers as Record<string, string>
         const queryParams = req.query as Record<string, string>
-        await handleSyncResume({ flowRunId: req.params.id, body: req.body, headers, queryParams, log: req.log, reply, correlationId: req.params.waitpointId })
+        await handleSyncResume({ flowRunId: req.params.id, waitpointId: req.params.waitpointId, body: req.body, headers, queryParams, log: req.log, reply, correlationId: req.params.waitpointId })
     })
 
     app.all('/:id/requests/:requestId', ResumeFlowRunRequest, async (req, reply) => {
+        const waitpoint = await waitpointService(req.log).getByFlowRunId(req.params.id)
         const headers = req.headers as Record<string, string>
         const queryParams = req.query as Record<string, string>
-        await handleAsyncResume({ flowRunId: req.params.id, body: req.body, headers, queryParams, log: req.log, reply })
+        await handleAsyncResume({ flowRunId: req.params.id, waitpointId: waitpoint?.id ?? apId(), body: req.body, headers, queryParams, log: req.log, reply })
     })
 
     app.all('/:id/requests/:requestId/sync', ResumeFlowRunRequest, async (req, reply) => {
+        const waitpoint = await waitpointService(req.log).getByFlowRunId(req.params.id)
         const headers = req.headers as Record<string, string>
         const queryParams = req.query as Record<string, string>
-        await handleSyncResume({ flowRunId: req.params.id, body: req.body, headers, queryParams, log: req.log, reply, correlationId: req.params.requestId })
+        await handleSyncResume({ flowRunId: req.params.id, waitpointId: waitpoint?.id ?? apId(), body: req.body, headers, queryParams, log: req.log, reply, correlationId: req.params.requestId })
     })
 
     app.post('/:id/retry', RetryFlowRequest, async (req) => {
@@ -269,19 +273,27 @@ const BulkRetryFlowRequest = {
     },
 }
 
-async function handleAsyncResume({ flowRunId, body, headers, queryParams, log, reply }: ResumeHandlerParams): Promise<void> {
-    await flowRunService(log).resumeFromWaitpoint({
+async function handleAsyncResume({ flowRunId, waitpointId, body, headers, queryParams, log, reply }: ResumeHandlerParams): Promise<void> {
+    const { stale } = await flowRunService(log).resumeFromWaitpoint({
         flowRunId,
+        waitpointId,
         resumePayload: { body, headers, queryParams },
     })
+    if (stale) {
+        await reply.send({
+            message: 'This link has expired. The action may have already been processed.',
+        })
+        return
+    }
     await reply.send({
         message: 'Your response has been recorded. You can close this page now.',
     })
 }
 
-async function handleSyncResume({ flowRunId, body, headers, queryParams, log, reply, correlationId }: ResumeHandlerParams & { correlationId: string }): Promise<void> {
+async function handleSyncResume({ flowRunId, waitpointId, body, headers, queryParams, log, reply, correlationId }: ResumeHandlerParams & { correlationId: string }): Promise<void> {
     const response = await flowRunService(log).handleSyncResumeFlow({
         runId: flowRunId,
+        waitpointId,
         payload: {
             body,
             headers,
@@ -294,6 +306,7 @@ async function handleSyncResume({ flowRunId, body, headers, queryParams, log, re
 
 type ResumeHandlerParams = {
     flowRunId: string
+    waitpointId: string
     body: unknown
     headers: Record<string, string>
     queryParams: Record<string, string>

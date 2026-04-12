@@ -48,6 +48,7 @@ type CreateForPauseResult = {
 type CompleteParams = {
     flowRunId: ApId
     projectId: ApId
+    waitpointId: ApId
     resumePayload: WaitpointResumePayload
     workerHandlerId?: string
 }
@@ -59,6 +60,7 @@ type CompleteResult = {
 
 type HandleResumeSignalParams = {
     flowRunId: ApId
+    waitpointId: ApId
     flowRunStatus: FlowRunStatus
     projectId: ApId
     resumePayload: WaitpointResumePayload

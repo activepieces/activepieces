@@ -79,6 +79,7 @@ export const flowRunModule: FastifyPluginAsync = async (app) => {
             '[RESUME_DELAY_WAITPOINT] Resuming flow')
         await flowRunService(app.log).resumeFromWaitpoint({
             flowRunId: data.flowRunId,
+            waitpointId: data.waitpointId,
             resumePayload: null,
         })
     })

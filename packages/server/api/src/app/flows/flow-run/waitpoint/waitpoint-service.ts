@@ -1,4 +1,4 @@
-import { ActivepiecesError, apId, ErrorCode, FlowRunStatus, isNil, PauseType } from '@activepieces/shared'
+import { apId, FlowRunStatus, isNil, PauseType } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../../core/db/repo-factory'
@@ -74,10 +74,7 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
             const pending = await repo
                 .createQueryBuilder('waitpoint')
                 .setLock('pessimistic_write')
-                .where({
-                    flowRunId: params.flowRunId,
-                    status: WaitpointStatus.PENDING,
-                })
+                .where({ id: params.waitpointId, status: WaitpointStatus.PENDING })
                 .getOne()
 
             if (!isNil(pending)) {
@@ -125,37 +122,40 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
         })
     },
 
-    async handleResumeSignal(params: HandleResumeSignalParams): Promise<void> {
-        const { flowRunId, flowRunStatus, projectId, resumePayload, workerHandlerId, onReady } = params
+    async handleResumeSignal(params: HandleResumeSignalParams): Promise<boolean> {
+        const { flowRunId, waitpointId, flowRunStatus, projectId, resumePayload, workerHandlerId, onReady } = params
 
         if (flowRunStatus === FlowRunStatus.PAUSED) {
-            await transaction(async (entityManager) => {
+            const waitpoint = await transaction(async (entityManager) => {
                 const repo = waitpointRepo(entityManager)
-                const waitpoint = await repo
+                const found = await repo
                     .createQueryBuilder('waitpoint')
                     .setLock('pessimistic_write')
-                    .where({ flowRunId })
+                    .where({ id: waitpointId, flowRunId })
                     .getOne()
-                if (isNil(waitpoint)) {
-                    throw new ActivepiecesError({
-                        code: ErrorCode.PAUSE_METADATA_MISSING,
-                        params: {},
-                    })
+                if (isNil(found)) {
+                    return null
                 }
-                await onReady(waitpoint)
-                await repo.delete({ flowRunId })
+                await onReady(found)
+                await repo.delete({ id: found.id })
+                return found
             })
-            log.info({ flowRunId }, '[waitpointService#handleResumeSignal] Resume triggered')
-            return
+            if (isNil(waitpoint)) {
+                log.info({ flowRunId, waitpointId }, '[waitpointService#handleResumeSignal] Stale waitpointId, ignoring')
+                return false
+            }
+            log.info({ flowRunId, waitpointId }, '[waitpointService#handleResumeSignal] Resume triggered')
+            return true
         }
 
         if (flowRunStatus === FlowRunStatus.RUNNING || flowRunStatus === FlowRunStatus.QUEUED) {
-            await this.complete({ flowRunId, projectId, resumePayload, workerHandlerId })
+            await this.complete({ flowRunId, projectId, waitpointId, resumePayload, workerHandlerId })
             log.info({ flowRunId }, '[waitpointService#handleResumeSignal] Resume signal buffered (pre-completed)')
-            return
+            return true
         }
 
         log.info({ flowRunId, flowRunStatus }, '[waitpointService#handleResumeSignal] Flow run not in resumable state, ignoring')
+        return false
     },
 
     async getByFlowRunId(flowRunId: string): Promise<Waitpoint | null> {

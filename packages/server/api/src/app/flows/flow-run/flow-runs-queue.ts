@@ -1,4 +1,4 @@
-import { FlowRun, FlowRunStatus, isFlowRunStateTerminal, isNil, spreadIfDefined } from '@activepieces/shared'
+import { apId, FlowRun, FlowRunStatus, isFlowRunStateTerminal, isNil, spreadIfDefined } from '@activepieces/shared'
 import { Queue, Worker } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
 import { FastifyBaseLogger } from 'fastify'
@@ -123,6 +123,7 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                                 if (isPreCompleted) {
                                     await flowRunService(log).resumeFromWaitpoint({
                                         flowRunId: savedFlowRun.id,
+                                        waitpointId: latestWaitpoint.id,
                                         resumePayload: latestWaitpoint.resumePayload,
                                     })
                                 }
@@ -202,15 +203,18 @@ async function markParentRunAsFailed({
         queryParams: {},
     }
 
+    const existingWaitpoint = await waitpointService(log).getByFlowRunId(parentRunId)
     const result = await waitpointService(log).complete({
         flowRunId: parentRunId,
         projectId: flowRun.projectId,
+        waitpointId: existingWaitpoint?.id ?? apId(),
         resumePayload: errorPayload,
     })
 
     if (result.completedExisting) {
         await flowRunService(log).resumeFromWaitpoint({
             flowRunId: parentRunId,
+            waitpointId: result.waitpoint.id,
             resumePayload: result.waitpoint.resumePayload,
         })
     }

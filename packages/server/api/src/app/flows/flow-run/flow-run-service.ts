@@ -257,10 +257,11 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             }
         })
     },
-    async resumeFromWaitpoint({ flowRunId, resumePayload, workerHandlerId }: ResumeFromWaitpointParams): Promise<FlowRun> {
+    async resumeFromWaitpoint({ flowRunId, waitpointId, resumePayload, workerHandlerId }: ResumeFromWaitpointParams): Promise<ResumeFromWaitpointResult> {
         const flowRun = await findFlowRunOrThrow(flowRunId)
-        await waitpointService(log).handleResumeSignal({
+        const processed = await waitpointService(log).handleResumeSignal({
             flowRunId,
+            waitpointId,
             flowRunStatus: flowRun.status,
             projectId: flowRun.projectId,
             resumePayload: resumePayload ?? null,
@@ -274,7 +275,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                 }, log)
             },
         })
-        return flowRun
+        return { flowRun, stale: !processed }
     },
 
     async start({
@@ -437,7 +438,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             steps,
         }
     },
-    async handleSyncResumeFlow({ runId, payload, correlationId }: { runId: string, payload: SyncResumePayload, correlationId: string }): Promise<EngineHttpResponse> {
+    async handleSyncResumeFlow({ runId, waitpointId, payload, correlationId }: { runId: string, waitpointId: string, payload: SyncResumePayload, correlationId: string }): Promise<EngineHttpResponse> {
         const flowRun = await flowRunService(log).getOnePopulatedOrThrow({
             id: runId,
             projectId: undefined,
@@ -452,11 +453,20 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         }
 
         const syncServerId = engineResponseWatcher(log).getServerId()
-        await this.resumeFromWaitpoint({
+        const { stale } = await this.resumeFromWaitpoint({
             flowRunId: runId,
+            waitpointId,
             resumePayload: payload,
             workerHandlerId: syncServerId,
         })
+
+        if (stale) {
+            return {
+                status: StatusCodes.GONE,
+                body: { message: 'This link has expired. The action may have already been processed.' },
+                headers: {},
+            }
+        }
 
         return engineResponseWatcher(log).oneTimeListener<EngineHttpResponse>(correlationId, true, WEBHOOK_TIMEOUT_MS, {
             status: StatusCodes.NO_CONTENT,
@@ -818,8 +828,14 @@ type SyncResumePayload = {
 
 type ResumeFromWaitpointParams = {
     flowRunId: FlowRunId
+    waitpointId: string
     resumePayload: WaitpointResumePayload
     workerHandlerId?: string
+}
+
+type ResumeFromWaitpointResult = {
+    flowRun: FlowRun
+    stale: boolean
 }
 
 type EnqueueResumeParams = {
