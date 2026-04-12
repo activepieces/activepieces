@@ -143,7 +143,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 stop: createStopHook(params),
                 pause: createLegacyPauseShim({ hookParams: params, constants, stepName: action.name }),
                 respond: createRespondHook(params),
-                createWaitpoint: createWaitpointHook({ constants, stepName: action.name }),
+                createWaitpoint: createWaitpointHook({ constants, stepName: action.name, hookParams: params }),
                 waitForWaitpoint: createWaitForWaitpointHook({ hookParams: params }),
             },
             project: {
@@ -277,7 +277,7 @@ type CreateRespondHookParams = {
     hookResponse: HookResponse
 }
 
-function createWaitpointHook({ constants, stepName }: { constants: EngineConstants, stepName: string }): CreateWaitpointHook {
+function createWaitpointHook({ constants, stepName, hookParams }: { constants: EngineConstants, stepName: string, hookParams: { hookResponse: HookResponse } }): CreateWaitpointHook {
     return async (req: CreateWaitpointParams): Promise<CreateWaitpointResult> => {
         assertDelayWithinTimeout(req.resumeDateTime)
         const result = await waitpointClient.create({
@@ -292,6 +292,9 @@ function createWaitpointHook({ constants, stepName }: { constants: EngineConstan
             workerHandlerId: constants.workerHandlerId ?? undefined,
             httpRequestId: constants.httpRequestId ?? undefined,
         })
+        if (!isNil(req.responseToSend)) {
+            hookParams.hookResponse = { ...hookParams.hookResponse, responseToSend: req.responseToSend }
+        }
         return {
             ...result,
             buildResumeUrl: (params: { queryParams: Record<string, string>, sync?: boolean }): string => {
