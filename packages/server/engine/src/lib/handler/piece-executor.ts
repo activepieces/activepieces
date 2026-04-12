@@ -320,7 +320,7 @@ function createLegacyPauseShim({ hookParams, constants, stepName }: {
     const createWaitpoint = createWaitpointHook({ constants, stepName })
     return (req) => {
         const type = req.pauseMetadata.type === PauseType.DELAY ? 'DELAY' as const : 'WEBHOOK' as const
-        if (type === 'DELAY') {
+        if (req.pauseMetadata.type === PauseType.DELAY) {
             assertDelayWithinTimeout(req.pauseMetadata.resumeDateTime)
         }
         const responseToSend = req.pauseMetadata.type === PauseType.WEBHOOK ? req.pauseMetadata.response : undefined

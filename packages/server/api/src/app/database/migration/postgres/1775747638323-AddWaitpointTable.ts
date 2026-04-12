@@ -1,4 +1,3 @@
-import { apId } from '@activepieces/shared'
 import { QueryRunner } from 'typeorm'
 import { Migration } from '../../migration'
 
@@ -60,67 +59,50 @@ export class AddWaitpointTable1775747638323 implements Migration {
     }
 
     private async migrateExistingPausedRuns(queryRunner: QueryRunner): Promise<void> {
-        const pausedRuns = await queryRunner.query(`
-            SELECT id, "projectId", "pauseMetadata"
-            FROM flow_run
-            WHERE "pauseMetadata" IS NOT NULL
-              AND status IN ('PAUSED', 'RUNNING')
+        await queryRunner.query(`
+            INSERT INTO "waitpoint" (
+                "id", "flowRunId", "projectId", "type", "status", "stepName",
+                "resumeDateTime", "responseToSend", "workerHandlerId", "httpRequestId"
+            )
+            SELECT
+                substr(md5(random()::text), 1, 21),
+                fr.id,
+                fr."projectId",
+                CASE WHEN (fr."pauseMetadata"->>'type') = 'DELAY' THEN 'DELAY' ELSE 'WEBHOOK' END,
+                'PENDING',
+                '',
+                (fr."pauseMetadata"->>'resumeDateTime')::timestamptz,
+                fr."pauseMetadata"->'response',
+                fr."pauseMetadata"->>'handlerId',
+                fr."pauseMetadata"->>'requestIdToReply'
+            FROM flow_run fr
+            WHERE fr.status IN ('PAUSED', 'RUNNING')
+              AND fr."pauseMetadata" IS NOT NULL
+            ON CONFLICT ("flowRunId", "stepName") DO NOTHING
         `)
-
-        for (const run of pausedRuns) {
-            const meta = typeof run.pauseMetadata === 'string'
-                ? JSON.parse(run.pauseMetadata)
-                : run.pauseMetadata
-
-            const type = meta.type === 'DELAY' ? 'DELAY' : 'WEBHOOK'
-
-            await queryRunner.query(`
-                INSERT INTO "waitpoint" (
-                    "id", "flowRunId", "projectId", "type", "status", "stepName",
-                    "resumeDateTime", "responseToSend", "workerHandlerId", "httpRequestId"
-                ) VALUES ($1, $2, $3, $4, 'PENDING', '', $5, $6, $7, $8)
-                ON CONFLICT ("flowRunId", "stepName") DO NOTHING
-            `, [
-                apId(),
-                run.id,
-                run.projectId,
-                type,
-                meta.resumeDateTime ?? null,
-                meta.response ? JSON.stringify(meta.response) : null,
-                meta.handlerId ?? null,
-                meta.requestIdToReply ?? null,
-            ])
-        }
     }
 
     private async restorePauseMetadata(queryRunner: QueryRunner): Promise<void> {
-        const waitpoints = await queryRunner.query(`
-            SELECT w."flowRunId", w."type", w."resumeDateTime",
-                   w."responseToSend", w."workerHandlerId", w."httpRequestId"
+        await queryRunner.query(`
+            UPDATE "flow_run" fr
+            SET "pauseMetadata" = CASE
+                WHEN w."type" = 'DELAY' THEN jsonb_build_object(
+                    'type', 'DELAY',
+                    'resumeDateTime', w."resumeDateTime",
+                    'handlerId', w."workerHandlerId",
+                    'requestIdToReply', w."httpRequestId"
+                )
+                ELSE jsonb_build_object(
+                    'type', 'WEBHOOK',
+                    'requestId', substr(md5(random()::text), 1, 21),
+                    'response', COALESCE(w."responseToSend", '{}'::jsonb),
+                    'handlerId', w."workerHandlerId",
+                    'requestIdToReply', w."httpRequestId"
+                )
+            END
             FROM "waitpoint" w
-            JOIN "flow_run" fr ON fr.id = w."flowRunId"
-            WHERE w.status = 'PENDING'
+            WHERE w."flowRunId" = fr.id
+              AND w.status = 'PENDING'
         `)
-
-        for (const wp of waitpoints) {
-            const pauseMetadata = wp.type === 'DELAY'
-                ? {
-                    type: 'DELAY',
-                    resumeDateTime: wp.resumeDateTime,
-                    handlerId: wp.workerHandlerId,
-                    requestIdToReply: wp.httpRequestId,
-                }
-                : {
-                    type: 'WEBHOOK',
-                    requestId: apId(),
-                    response: wp.responseToSend ?? {},
-                    handlerId: wp.workerHandlerId,
-                    requestIdToReply: wp.httpRequestId,
-                }
-
-            await queryRunner.query(`
-                UPDATE "flow_run" SET "pauseMetadata" = $1 WHERE id = $2
-            `, [JSON.stringify(pauseMetadata), wp.flowRunId])
-        }
     }
 }

@@ -25,7 +25,7 @@ import { projectService } from '../../project/project-service'
 import { dedupeService } from '../../trigger/dedupe-service'
 import { triggerEventService } from '../../trigger/trigger-events/trigger-event.service'
 import { triggerSourceService } from '../../trigger/trigger-source/trigger-source-service'
-import { getWorkerGroupQueueName, QueueName, redisMetadataKey, RunsMetadataUpsertData } from '../job'
+import { getWorkerGroupQueueName, QueueName, RunsMetadataUpsertData } from '../job'
 import { jobBroker } from '../job-queue/job-broker'
 import { machineService } from '../machine/machine-service'
 
