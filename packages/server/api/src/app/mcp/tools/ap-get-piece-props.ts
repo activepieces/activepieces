@@ -6,13 +6,7 @@ import {
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
-import { buildPropSummaries, mcpToolError } from './mcp-utils'
-
-const getPiecePropsInput = z.object({
-    pieceName: z.string().describe('The piece name (e.g. "@activepieces/piece-slack"). Use ap_list_pieces to get valid values.'),
-    actionOrTriggerName: z.string().describe('The action or trigger name (e.g. "send_channel_message"). Use ap_list_pieces with includeActions=true or includeTriggers=true to get valid values.'),
-    type: z.enum(['action', 'trigger']).describe('Whether to look up an action or a trigger.'),
-})
+import { mcpUtils } from './mcp-utils'
 
 export const apGetPiecePropsTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
@@ -45,7 +39,7 @@ export const apGetPiecePropsTool = (mcp: McpServer, log: FastifyBaseLogger): Mcp
                     }
                 }
 
-                const props = buildPropSummaries(component.props)
+                const props = mcpUtils.buildPropSummaries(component.props)
                 const requiresAuth = component.requireAuth && !isNil(piece.auth)
 
                 const result = {
@@ -62,8 +56,14 @@ export const apGetPiecePropsTool = (mcp: McpServer, log: FastifyBaseLogger): Mcp
                 }
             }
             catch (err) {
-                return mcpToolError('Failed to get piece props', err)
+                return mcpUtils.mcpToolError('Failed to get piece props', err)
             }
         },
     }
 }
+
+const getPiecePropsInput = z.object({
+    pieceName: z.string().describe('The piece name (e.g. "@activepieces/piece-slack"). Use ap_list_pieces to get valid values.'),
+    actionOrTriggerName: z.string().describe('The action or trigger name (e.g. "send_channel_message"). Use ap_list_pieces with includeActions=true or includeTriggers=true to get valid values.'),
+    type: z.enum(['action', 'trigger']).describe('Whether to look up an action or a trigger.'),
+})

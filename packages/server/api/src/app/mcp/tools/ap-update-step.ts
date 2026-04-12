@@ -16,7 +16,7 @@ import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
 import { projectService } from '../../project/project-service'
-import { diagnosePieceProps, mcpToolError } from './mcp-utils'
+import { mcpUtils } from './mcp-utils'
 
 const updateStepInput = z.object({
     flowId: z.string(),
@@ -180,7 +180,7 @@ export const apUpdateStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
                 }
             }
             catch (err) {
-                return mcpToolError('Step update failed', err)
+                return mcpUtils.mcpToolError('Step update failed', err)
             }
         },
     }
@@ -202,7 +202,7 @@ async function diagnoseMissingInputs({ settings, platformId, log }: {
             return `Action "${actionName}" not found in piece "${pieceName}". Use ap_list_pieces with includeActions=true to get valid action names.`
         }
         const input = settings.input ?? {}
-        const { parts } = diagnosePieceProps({ props: action.props, input, pieceAuth: piece.auth, requireAuth: action.requireAuth, componentType: 'action' })
+        const { parts } = mcpUtils.diagnosePieceProps({ props: action.props, input, pieceAuth: piece.auth, requireAuth: action.requireAuth, componentType: 'action' })
         return parts.join(' ')
     }
     catch (err) {

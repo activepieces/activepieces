@@ -96,11 +96,12 @@ function normalizePieceName(pieceName: string | undefined): string | undefined {
     if (pieceName.startsWith('@')) {
         return pieceName
     }
-    const normalized = pieceName.replace(/_/g, '-')
+    const stripped = pieceName.startsWith('piece-') ? pieceName.slice('piece-'.length) : pieceName
+    const normalized = stripped.replace(/_/g, '-')
     return `@activepieces/piece-${normalized}`
 }
 
-export { mcpToolError, diagnosePieceProps, buildPropSummaries, normalizePieceName }
+export const mcpUtils = { mcpToolError, diagnosePieceProps, buildPropSummaries, normalizePieceName }
 
 type DiagnosePiecePropsParams = {
     props: PiecePropertyMap

@@ -8,7 +8,7 @@ import {
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
-import { buildPropSummaries, mcpToolError } from './mcp-utils'
+import { mcpUtils } from './mcp-utils'
 
 const listPiecesSchema = z.object({
     categories: z.array(z.enum(Object.values(PieceCategory) as [string, ...string[]])).optional(),
@@ -80,7 +80,7 @@ export const apListPiecesTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
                                 displayName: a.displayName,
                                 description: a.description,
                                 requireAuth: a.requireAuth,
-                                inputProps: buildPropSummaries(a.props),
+                                inputProps: mcpUtils.buildPropSummaries(a.props),
                             }))
                         }
                         if (params.includeTriggers) {
@@ -89,7 +89,7 @@ export const apListPiecesTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
                                 displayName: t.displayName,
                                 description: t.description,
                                 requireAuth: t.requireAuth,
-                                inputProps: buildPropSummaries(t.props),
+                                inputProps: mcpUtils.buildPropSummaries(t.props),
                             }))
                         }
                     }
@@ -104,7 +104,7 @@ export const apListPiecesTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
                 }
             }
             catch (err) {
-                return mcpToolError('Failed to list pieces', err)
+                return mcpUtils.mcpToolError('Failed to list pieces', err)
             }
         },
     }

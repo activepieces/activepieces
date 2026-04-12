@@ -8,7 +8,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
 import { projectService } from '../../project/project-service'
-import { mcpToolError, normalizePieceName } from './mcp-utils'
+import { mcpUtils } from './mcp-utils'
 
 const statusEnum = z.enum(Object.values(AppConnectionStatus) as [AppConnectionStatus, ...AppConnectionStatus[]])
 
@@ -56,7 +56,7 @@ export const apListConnectionsTool = (mcp: McpServer, log: FastifyBaseLogger): M
                     scope: undefined,
                     displayName: params.displayName,
                     status: params.status,
-                    pieceName: normalizePieceName(params.pieceName),
+                    pieceName: mcpUtils.normalizePieceName(params.pieceName),
                     limit: 200,
                     externalIds: undefined,
                 })
@@ -69,7 +69,7 @@ export const apListConnectionsTool = (mcp: McpServer, log: FastifyBaseLogger): M
                 }
             }
             catch (err) {
-                return mcpToolError('Failed to list connections', err)
+                return mcpUtils.mcpToolError('Failed to list connections', err)
             }
         },
     }
