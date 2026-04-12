@@ -1,3 +1,8 @@
+@keyframes boltGlow {
+    0%   { filter: drop-shadow(0 0 4px rgba(196, 167, 255, 0.5)); }
+    100% { filter: drop-shadow(0 0 10px rgb(110, 65, 226)); }
+}
+
 .welcome-gradient {
     background: linear-gradient(
         to bottom right,

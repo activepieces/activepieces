@@ -3,19 +3,14 @@ import {
   ThirdPartyAuthnProvidersToShowMap,
 } from '@activepieces/shared';
 import { t } from 'i18next';
+import { Link2, Shield, Zap } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 
 import { FullLogo } from '@/components/custom/full-logo';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
 import { authenticationSession } from '@/lib/authentication-session';
 import { useRedirectAfterLogin } from '@/lib/navigation-utils';
+import { cn } from '@/lib/utils';
 
 import { HorizontalSeparatorWithText } from '../../../components/ui/separator';
 import { flagsHooks } from '../../../hooks/flags-hooks';
@@ -29,21 +24,21 @@ const BottomNote = ({ isSignup }: { isSignup: boolean }) => {
   const searchQuery = searchParams.toString();
 
   return isSignup ? (
-    <div className="mb-4 text-center text-sm">
+    <div className="mt-6 text-center text-sm text-muted-foreground">
       {t('Already have an account?')}
       <Link
         to={`/sign-in?${searchQuery}`}
-        className="pl-1 text-muted-foreground hover:text-primary text-sm transition-all duration-200"
+        className="pl-1 font-medium text-foreground hover:underline transition-all duration-200"
       >
         {t('Sign in')}
       </Link>
     </div>
   ) : (
-    <div className="mb-4 text-center text-sm">
+    <div className="mt-6 text-center text-sm text-muted-foreground">
       {t("Don't have an account?")}
       <Link
         to={`/sign-up?${searchQuery}`}
-        className="pl-1 text-muted-foreground hover:text-primary text-sm transition-all duration-200"
+        className="pl-1 font-medium text-foreground hover:underline transition-all duration-200"
       >
         {t('Sign up')}
       </Link>
@@ -63,10 +58,125 @@ const AuthSeparator = ({
 
   return (thirdPartyAuthProviders?.google || thirdPartyAuthProviders?.saml) &&
     isEmailAuthEnabled ? (
-    <HorizontalSeparatorWithText className="my-4">
+    <HorizontalSeparatorWithText className="my-5">
       {t('OR')}
     </HorizontalSeparatorWithText>
   ) : null;
+};
+
+const BRAND_FEATURES = [
+  {
+    icon: Zap,
+    iconBg: 'bg-amber-100',
+    iconColor: 'text-amber-600',
+    title: 'No-code automation',
+    desc: 'Build powerful workflows without writing a single line of code.',
+  },
+  {
+    icon: Link2,
+    iconBg: 'bg-blue-100',
+    iconColor: 'text-blue-600',
+    title: '200+ integrations',
+    desc: 'Connect Slack, Notion, HubSpot, and hundreds more apps.',
+  },
+  {
+    icon: Shield,
+    iconBg: 'bg-green-100',
+    iconColor: 'text-green-600',
+    title: 'Enterprise-ready',
+    desc: 'SSO, audit logs, and on-prem deployment for full data control.',
+  },
+] as const;
+
+const BrandPanel = () => {
+  return (
+    <div
+      className="hidden lg:flex lg:w-1/2 flex-col p-12 relative overflow-hidden border-r border-[#E0DCF0]"
+      style={{ backgroundColor: '#F4F3FC' }}
+    >
+      <div className="absolute -top-20 -right-16 w-80 h-80 rounded-full bg-violet-400/10 pointer-events-none" />
+      <div className="absolute -bottom-10 -left-14 w-60 h-60 rounded-full bg-blue-400/10 pointer-events-none" />
+      <div className="absolute top-[42%] right-14 w-28 h-28 rounded-full bg-orange-300/10 pointer-events-none" />
+      <div
+        className="absolute top-10 left-8 w-52 h-36 opacity-28 pointer-events-none"
+        style={{
+          backgroundImage:
+            'radial-gradient(circle, #7C6EE8 1px, transparent 1px)',
+          backgroundSize: '24px 24px',
+        }}
+      />
+      <div
+        className="absolute bottom-12 right-7 w-40 h-32 opacity-22 pointer-events-none"
+        style={{
+          backgroundImage:
+            'radial-gradient(circle, #7C6EE8 1px, transparent 1px)',
+          backgroundSize: '24px 24px',
+        }}
+      />
+
+      <div className="relative z-10 flex flex-col h-full gap-8">
+        <div>
+          <FullLogo />
+        </div>
+
+        <div className="flex-1 flex flex-col justify-center gap-5">
+          <div className="w-16 h-1 rounded-full bg-violet-600" />
+          <h2 className="text-[42px] font-bold text-[#221A45] leading-tight tracking-tight">
+            {t('Build faster,')}
+            <br />
+            {t('automate smarter.')}
+          </h2>
+          <p className="text-[#5C528E] text-[16px] leading-relaxed max-w-sm">
+            {t(
+              'Join thousands of teams using Activepieces to connect their apps and automate workflows effortlessly.',
+            )}
+          </p>
+
+          <div className="flex flex-col gap-3">
+            {BRAND_FEATURES.map(
+              ({ icon: Icon, iconBg, iconColor, title, desc }) => (
+                <div
+                  key={title}
+                  className="flex items-center gap-4 bg-white/70 border border-[#E0DCF0] rounded-xl px-4 py-3"
+                >
+                  <div
+                    className={cn(
+                      'w-9 h-9 rounded-full flex items-center justify-center shrink-0',
+                      iconBg,
+                    )}
+                  >
+                    <Icon className={cn('w-4 h-4', iconColor)} />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-[#221A45]">
+                      {t(title)}
+                    </p>
+                    <p className="text-xs text-[#6B6299] leading-relaxed mt-0.5">
+                      {t(desc)}
+                    </p>
+                  </div>
+                </div>
+              ),
+            )}
+          </div>
+
+          <div className="bg-violet-600 rounded-2xl px-5 py-4 relative overflow-hidden">
+            <span className="absolute top-1 left-4 text-white/25 text-5xl font-bold leading-none select-none">
+              &ldquo;
+            </span>
+            <p className="relative text-white text-sm italic leading-relaxed mt-4">
+              {t(
+                'Activepieces replaced 3 tools we were paying for. Our ops team built 40 automations in the first week.',
+              )}
+            </p>
+            <p className="text-white/70 text-xs font-semibold mt-2.5">
+              {t('Sarah K. · Head of Operations')}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 const AuthFormTemplate = React.memo(
@@ -81,14 +191,12 @@ const AuthFormTemplate = React.memo(
     const isCloud = window.location.hostname === 'cloud.activepieces.com';
     const data = {
       signin: {
-        title: t('Welcome Back!'),
-        description: t('Enter your email below to sign in to your account'),
-        showNameFields: false,
+        title: t('Welcome back'),
+        description: t('Sign in to your account to continue'),
       },
       signup: {
-        title: t("Let's Get Started!"),
-        description: t('Create your account and start flowing!'),
-        showNameFields: true,
+        title: t("Let's get started"),
+        description: t('Create your account and start flowing'),
       },
     }[form];
 
@@ -103,28 +211,43 @@ const AuthFormTemplate = React.memo(
     }
 
     return (
-      <>
-        {isCloud && (
-          <Link to="https://activepieces.com" target="_blank" rel="noreferrer">
-            <FullLogo />
-          </Link>
-        )}
-        {!isCloud && <FullLogo />}
-        <Card className="w-md rounded-sm drop-shadow-xl">
-          {!showCheckYourEmailNote && (
-            <CardHeader className="text-center">
-              <CardTitle className="text-2xl">{data.title}</CardTitle>
-              <CardDescription>{data.description}</CardDescription>
-            </CardHeader>
-          )}
+      <div className="flex h-screen w-full">
+        <BrandPanel />
 
-          <CardContent>
+        <div className="flex w-full lg:w-1/2 flex-col items-center justify-center p-8 overflow-y-auto">
+          <div className="w-full max-w-sm flex flex-col gap-0">
+            <div className="mb-8">
+              {isCloud ? (
+                <Link
+                  to="https://activepieces.com"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <FullLogo />
+                </Link>
+              ) : (
+                <FullLogo />
+              )}
+            </div>
+
+            {!showCheckYourEmailNote && (
+              <div className="mb-6">
+                <h1 className="text-2xl font-bold tracking-tight">
+                  {data.title}
+                </h1>
+                <p className="text-muted-foreground text-sm mt-1.5">
+                  {data.description}
+                </p>
+              </div>
+            )}
+
             {!showCheckYourEmailNote && <ThirdPartyLogin isSignUp={isSignUp} />}
             <AuthSeparator
               isEmailAuthEnabled={
                 (isEmailAuthEnabled ?? true) && !showCheckYourEmailNote
               }
-            ></AuthSeparator>
+            />
+
             {isEmailAuthEnabled ? (
               isSignUp ? (
                 <SignUpForm
@@ -135,11 +258,11 @@ const AuthFormTemplate = React.memo(
                 <SignInForm />
               )
             ) : null}
-          </CardContent>
 
-          <BottomNote isSignup={isSignUp}></BottomNote>
-        </Card>
-      </>
+            <BottomNote isSignup={isSignUp} />
+          </div>
+        </div>
+      </div>
     );
   },
 );

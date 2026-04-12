@@ -1,6 +1,6 @@
 import { ResetPasswordRequestBody } from '@activepieces/shared';
 import { t } from 'i18next';
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -16,12 +16,7 @@ import {
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
-import { PasswordValidator } from '@/features/authentication/components/password-validator';
+import { PasswordStrengthBolt } from '@/features/authentication/components/password-validator';
 import { passwordValidation } from '@/features/authentication/utils/password-validation-utils';
 
 import { authMutations } from '../hooks/auth-hooks';
@@ -30,8 +25,6 @@ const ChangePasswordForm = () => {
   const navigate = useNavigate();
   const queryParams = new URLSearchParams(window.location.search);
   const [serverError, setServerError] = useState('');
-  const [isPasswordFocused, setPasswordFocused] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
   const form = useForm<{
     otp: string;
     identityId: string;
@@ -80,32 +73,21 @@ const ChangePasswordForm = () => {
                 validate: passwordValidation,
               }}
               render={({ field }) => (
-                <FormItem
-                  className="grid space-y-2"
-                  onClick={() => inputRef?.current?.focus()}
-                  onFocus={() => setPasswordFocused(true)}
-                >
+                <FormItem className="grid space-y-2">
                   <Label htmlFor="newPassword">{t('Password')}</Label>
-                  <Popover open={isPasswordFocused}>
-                    <PopoverTrigger asChild>
-                      <Input
-                        {...field}
-                        required
-                        id="newPassword"
-                        type="password"
-                        placeholder={'********'}
-                        className="rounded-sm"
-                        ref={inputRef}
-                        onBlur={() => setPasswordFocused(false)}
-                        onChange={(e) => field.onChange(e)}
-                      />
-                    </PopoverTrigger>
-                    <PopoverContent className="absolute border-2 bg-background p-2 rounded-md right-60 -bottom-16 flex flex-col">
-                      <PasswordValidator
-                        password={form.getValues().newPassword}
-                      />
-                    </PopoverContent>
-                  </Popover>
+                  <div className="relative flex items-center">
+                    <Input
+                      {...field}
+                      required
+                      id="newPassword"
+                      type="password"
+                      placeholder={'********'}
+                      className="rounded-sm pr-10"
+                    />
+                    <div className="absolute right-3">
+                      <PasswordStrengthBolt password={field.value ?? ''} />
+                    </div>
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}
