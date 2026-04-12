@@ -177,6 +177,7 @@ export const GeneralSettings = ({ form }: GeneralSettingsProps) => {
                   id="maxConcurrentJobs"
                   type="number"
                   min={1}
+                  placeholder={t('Default')}
                   value={field.value ?? ''}
                   onChange={(e) =>
                     field.onChange(

@@ -322,6 +322,7 @@
   "Used to identify the project based on your SaaS ID": "Used to identify the project based on your SaaS ID",
   "Max Concurrent Jobs": "Max Concurrent Jobs",
   "Maximum number of flows that can run at the same time for this project": "Maximum number of flows that can run at the same time for this project",
+  "Default": "Default",
   "Your changes have been saved.": "Your changes have been saved.",
   "General": "General",
   "Members": "",
