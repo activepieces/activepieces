@@ -17,7 +17,7 @@ export const apListRunsTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolD
     return {
         title: 'ap_list_runs',
         permission: Permission.READ_RUN,
-        description: 'List recent flow runs with optional filters. Returns run ID, status, environment, timestamps, and failed step info. Does not include step outputs — use ap_get_run for full details.',
+        description: 'List recent flow runs with optional filters. Returns run ID, status, timestamps, and failed step info.',
         inputSchema: listRunsInput.shape,
         annotations: { readOnlyHint: true, openWorldHint: false },
         execute: async (args) => {

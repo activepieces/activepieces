@@ -33,7 +33,7 @@ export const apFindRecordsTool = (mcp: McpServer, log: FastifyBaseLogger): McpTo
     return {
         title: 'ap_find_records',
         permission: Permission.READ_TABLE,
-        description: 'Query records from a table with optional filtering. Use ap_list_tables first to discover table IDs and field names. Supports operators: eq, neq, gt, gte, lt, lte, co (contains), exists, not_exists. Use field names (not IDs) in filters.',
+        description: 'Query records from a table with optional filtering. Operators: eq, neq, gt, gte, lt, lte, co, exists, not_exists.',
         inputSchema: findRecordsInput.shape,
         annotations: { readOnlyHint: true, openWorldHint: false },
         execute: async (args) => {

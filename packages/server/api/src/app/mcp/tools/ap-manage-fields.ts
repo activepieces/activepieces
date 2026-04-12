@@ -18,7 +18,7 @@ export const apManageFieldsTool = (mcp: McpServer, log: FastifyBaseLogger): McpT
     return {
         title: 'ap_manage_fields',
         permission: Permission.WRITE_TABLE,
-        description: 'Add, rename, or delete fields (columns) on a table. Use ap_list_tables to see existing fields and their IDs. Max 100 fields per table.',
+        description: 'Add, rename, or delete fields on a table. Max 100 fields per table.',
         inputSchema: manageFieldsInput.shape,
         annotations: { destructiveHint: false, idempotentHint: false, openWorldHint: false },
         execute: async (args) => {

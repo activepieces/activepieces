@@ -22,7 +22,7 @@ export const apChangeFlowStatusTool = (mcp: McpServer, log: FastifyBaseLogger): 
     return {
         title: 'ap_change_flow_status',
         permission: Permission.UPDATE_FLOW_STATUS,
-        description: 'Enable or disable a flow. The flow must be published first (use ap_lock_and_publish). Use ap_list_flows to get flow IDs.',
+        description: 'Enable or disable a published flow.',
         inputSchema: {
             flowId: z.string().describe('The id of the flow'),
             status: z.enum([FlowStatus.ENABLED, FlowStatus.DISABLED]).describe('The new status: ENABLED to activate the flow, DISABLED to pause it'),

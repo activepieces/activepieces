@@ -19,7 +19,7 @@ export const apCreateTableTool = (mcp: McpServer, log: FastifyBaseLogger): McpTo
     return {
         title: 'ap_create_table',
         permission: Permission.WRITE_TABLE,
-        description: 'Create a new table with an initial set of fields. Field types: TEXT, NUMBER, DATE, STATIC_DROPDOWN (requires options). The new table will be empty — use ap_insert_records to add data.',
+        description: 'Create a new table with an initial set of fields. Types: TEXT, NUMBER, DATE, STATIC_DROPDOWN.',
         inputSchema: createTableInput.shape,
         annotations: { destructiveHint: false, idempotentHint: false, openWorldHint: false },
         execute: async (args) => {
