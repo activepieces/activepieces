@@ -1,5 +1,6 @@
 {
   "lockfileVersion": 1,
+  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "activepieces",
@@ -8016,6 +8017,7 @@
         "@activepieces/import-fresh-webpack": "3.3.0",
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/server-utils": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "ai": "^6.0.0",
         "async-mutex": "0.4.0",
@@ -8038,7 +8040,7 @@
     },
     "packages/server/utils": {
       "name": "@activepieces/server-utils",
-      "version": "0.1.1",
+      "version": "0.1.0",
       "dependencies": {
         "@activepieces/shared": "workspace:*",
         "async-mutex": "0.4.0",
@@ -8086,7 +8088,7 @@
     },
     "packages/shared": {
       "name": "@activepieces/shared",
-      "version": "0.57.2",
+      "version": "0.57.1",
       "dependencies": {
         "dayjs": "1.11.9",
         "deepmerge-ts": "7.1.0",

@@ -112,4 +112,23 @@ describe('MCP Tool RBAC', () => {
         })
     })
 
+    describe('without userId (project token path)', () => {
+        it('allows write tools without RBAC checks', async () => {
+            const ctx = await createTestContext(app)
+            const mcp = makeMcp(ctx.project.id)
+
+            const checker = await resolvePermissionChecker({ userId: undefined, projectId: ctx.project.id, log: mockLog })
+            const tool = apCreateFlowTool(mcp, mockLog)
+
+            const error = checker.check(tool.permission, tool.title)
+            expect(error).toBeNull()
+
+            const execute = checker.wrapExecute({ execute: tool.execute, permission: tool.permission, toolTitle: tool.title })
+            expect(execute).toBe(tool.execute)
+
+            const result = await execute({ flowName: 'Token Flow' })
+            expect(text(result)).toContain('✅')
+            expect(text(result)).toContain('Token Flow')
+        })
+    })
 })

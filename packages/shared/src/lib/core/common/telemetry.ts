@@ -142,8 +142,9 @@ type McpToolCalled = {
 }
 
 type McpServerConnected = {
+    authMethod: 'project_token' | 'oauth' | 'oauth_project_token_fallback'
     projectId: string
-    userId: string
+    userId?: string
 }
 
 type PieceSelectorSearch = {
@@ -183,6 +184,7 @@ export enum TelemetryEventName {
     AI_PROVIDER_CONFIGURED = 'ai.provider.configured',
     MCP_TOOL_CALLED = 'mcp.tool.called',
     MCP_SERVER_CONNECTED = 'mcp.server.connected',
+
     UPGRADE_POPUP_OPENED = 'upgrade.popup.opened',
     UPGRADE_CLICKED = 'upgrade.clicked',
     OPENED_PRICING_FROM_DASHBOARD = 'opened.pricing.from.dashboard',

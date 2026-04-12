@@ -160,12 +160,12 @@ export const mcpServerService = (log: FastifyBaseLogger) => {
 }
 
 
-export async function resolvePermissionChecker({ userId, projectId, log }: { userId: string, projectId: string, log: FastifyBaseLogger }): Promise<PermissionChecker> {
+export async function resolvePermissionChecker({ userId, projectId, log }: { userId: string | undefined, projectId: string, log: FastifyBaseLogger }): Promise<PermissionChecker> {
     const allowAll: PermissionChecker = {
         check: () => null,
         wrapExecute: ({ execute }) => execute,
     }
-    if (!EDITION_REQUIRES_RBAC) {
+    if (isNil(userId) || !EDITION_REQUIRES_RBAC) {
         return allowAll
     }
 
@@ -288,7 +288,7 @@ type McpToolErrorResult = {
 
 type BuildServerRequest = {
     mcp: PopulatedMcpServer
-    userId: string
+    userId?: string
 }
 
 type RotateTokenRequest = {
