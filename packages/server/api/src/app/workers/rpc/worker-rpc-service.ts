@@ -6,7 +6,7 @@ import {
     isFlowRunStateTerminal,
     isNil,
     PiecePackage,
-    ProgressUpdateType,
+    StreamStepProgress,
     WebsocketClientEvent,
     WorkerToApiContract,
 } from '@activepieces/shared'
@@ -73,7 +73,7 @@ export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string): 
             }
             await runsMetadataQueue(log).add(logData)
 
-            if (input.stepResponse && input.progressUpdateType === ProgressUpdateType.TEST_FLOW) {
+            if (input.stepResponse && input.streamStepProgress === StreamStepProgress.WEBSOCKET) {
                 const stepData = { ...input.stepResponse, projectId: input.projectId }
                 const isTerminalStatus = isFlowRunStateTerminal({
                     status: input.status,
@@ -100,7 +100,7 @@ export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string): 
         },
 
         async submitPayloads(input) {
-            const { flowVersionId, projectId, payloads, httpRequestId, progressUpdateType, environment, parentRunId, failParentOnFailure } = input
+            const { flowVersionId, projectId, payloads, httpRequestId, streamStepProgress, environment, parentRunId, failParentOnFailure } = input
 
             const flowVersion = await flowVersionService(log).getOne(flowVersionId)
             if (!flowVersion) {
@@ -120,9 +120,9 @@ export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string): 
                         projectId,
                         platformId,
                         httpRequestId,
-                        synchronousHandlerId: undefined,
+                        workerHandlerId: undefined,
                         executionType: ExecutionType.BEGIN,
-                        progressUpdateType,
+                        streamStepProgress,
                         executeTrigger: false,
                         parentRunId,
                         failParentOnFailure,

@@ -1,4 +1,4 @@
-import { apId, ExecutionType, FlowRunStatus, FlowVersionState, ProgressUpdateType, RunEnvironment } from '@activepieces/shared'
+import { apId, ExecutionType, FlowRunStatus, FlowVersionState, StreamStepProgress, RunEnvironment } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { distributedStore } from '../../../../../src/app/database/redis-connections'
 import { pubsub } from '../../../../../src/app/helper/pubsub'
@@ -427,7 +427,7 @@ describe('Resume flow run', () => {
             projectId: ctx.project.id,
             resumePayload: {
                 payload: { body: { status: 'error', data: { message: 'Subflow execution failed' } } },
-                progressUpdateType: ProgressUpdateType.TEST_FLOW,
+                streamStepProgress: StreamStepProgress.WEBSOCKET,
                 executionType: ExecutionType.RESUME,
             },
         })
@@ -461,7 +461,7 @@ describe('Resume flow run', () => {
             projectId: ctx.project.id,
             resumePayload: {
                 payload: { body: { status: 'error', data: { message: 'Subflow execution failed' } } },
-                progressUpdateType: ProgressUpdateType.TEST_FLOW,
+                streamStepProgress: StreamStepProgress.WEBSOCKET,
                 executionType: ExecutionType.RESUME,
             },
         })
@@ -522,7 +522,7 @@ describe('Resume flow run', () => {
             projectId: ctx.project.id,
             resumePayload: {
                 payload: { body: { status: 'error', data: { message: 'Subflow execution failed' } } },
-                progressUpdateType: ProgressUpdateType.TEST_FLOW,
+                streamStepProgress: StreamStepProgress.WEBSOCKET,
                 executionType: ExecutionType.RESUME,
             },
         })
@@ -538,7 +538,7 @@ describe('Resume flow run', () => {
             projectId: ctx.project.id,
             resumeData: {
                 payload: { body: { status: 'error' } },
-                progressUpdateType: ProgressUpdateType.TEST_FLOW,
+                streamStepProgress: StreamStepProgress.WEBSOCKET,
                 executionType: ExecutionType.RESUME,
             },
             onReady: async () => {

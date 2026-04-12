@@ -144,7 +144,7 @@ export const progressService = {
                 runId: engineConstants.flowRunId,
                 projectId: engineConstants.projectId,
                 status: flowExecutorContext.verdict.status,
-                progressUpdateType: engineConstants.progressUpdateType,
+                streamStepProgress: engineConstants.streamStepProgress,
                 logsFileId: engineConstants.logsFileId,
                 failedStep: 'failedStep' in flowExecutorContext.verdict ? flowExecutorContext.verdict.failedStep : undefined,
                 stepNameToTest: engineConstants.stepNameToTest,

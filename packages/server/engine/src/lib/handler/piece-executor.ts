@@ -167,9 +167,9 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
 
         const webhookResponse = getResponse(params.hookResponse)
         const isSamePiece = constants.triggerPieceName === action.settings.pieceName
-        if (!isNil(webhookResponse) && !isNil(constants.serverHandlerId) && !isNil(constants.httpRequestId) && isSamePiece) {
+        if (!isNil(webhookResponse) && !isNil(constants.workerHandlerId) && !isNil(constants.httpRequestId) && isSamePiece) {
             await workerSocket.getWorkerClient().sendFlowResponse({
-                workerHandlerId: constants.serverHandlerId,
+                workerHandlerId: constants.workerHandlerId,
                 httpRequestId: constants.httpRequestId,
                 runResponse: {
                     status: webhookResponse.status ?? 200,
@@ -289,7 +289,7 @@ function createWaitpointHook({ constants, stepName }: { constants: EngineConstan
             type: req.type,
             resumeDateTime: req.resumeDateTime,
             responseToSend: req.responseToSend,
-            workerHandlerId: constants.serverHandlerId ?? undefined,
+            workerHandlerId: constants.workerHandlerId ?? undefined,
             httpRequestId: constants.httpRequestId ?? undefined,
         })
         return {
@@ -325,10 +325,12 @@ function createLegacyPauseShim({ hookParams, constants, stepName }: {
         }
         const responseToSend = req.pauseMetadata.type === PauseType.WEBHOOK ? req.pauseMetadata.response : undefined
         hookParams.hookResponse = { ...hookParams.hookResponse, type: 'paused', responseToSend }
-        void createWaitpoint({
+        createWaitpoint({
             type,
             resumeDateTime: req.pauseMetadata.type === PauseType.DELAY ? req.pauseMetadata.resumeDateTime : undefined,
             responseToSend,
+        }).catch((err) => {
+            console.error('[createLegacyPauseShim] Failed to create waitpoint — run may be stuck in PAUSED state', err)
         })
     }
 }

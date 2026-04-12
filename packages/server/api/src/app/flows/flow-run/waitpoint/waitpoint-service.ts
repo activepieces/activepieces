@@ -51,7 +51,7 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
                 await systemJobsSchedule(log).upsertJob({
                     job: {
                         name: SystemJobName.RESUME_DELAY_WAITPOINT,
-                        data: { flowRunId: params.flowRunId, projectId: params.projectId },
+                        data: { flowRunId: params.flowRunId, projectId: params.projectId, waitpointId: id },
                         jobId: `resume-delay-${params.flowRunId}`,
                     },
                     schedule: {
@@ -85,6 +85,7 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
                     ...pending,
                     status: WaitpointStatus.COMPLETED,
                     resumePayload: params.resumePayload,
+                    workerHandlerId: params.workerHandlerId ?? pending.workerHandlerId,
                 }
                 await repo.save(updated)
                 log.info({ flowRunId: params.flowRunId }, '[waitpointService#complete] Completed existing PENDING waitpoint')
@@ -111,7 +112,7 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
                     resumeDateTime: null,
                     timeoutSeconds: null,
                     responseToSend: null,
-                    workerHandlerId: null,
+                    workerHandlerId: params.workerHandlerId ?? null,
                     httpRequestId: null,
                     resumePayload: () => `'${JSON.stringify(params.resumePayload)}'::jsonb`,
                 })
@@ -125,7 +126,7 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
     },
 
     async handleResumeSignal(params: HandleResumeSignalParams): Promise<void> {
-        const { flowRunId, flowRunStatus, projectId, resumeData, onReady } = params
+        const { flowRunId, flowRunStatus, projectId, resumePayload, workerHandlerId, onReady } = params
 
         if (flowRunStatus === FlowRunStatus.PAUSED) {
             await transaction(async (entityManager) => {
@@ -141,7 +142,7 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
                         params: {},
                     })
                 }
-                await onReady(waitpoint, resumeData)
+                await onReady(waitpoint)
                 await repo.delete({ flowRunId })
             })
             log.info({ flowRunId }, '[waitpointService#handleResumeSignal] Resume triggered')
@@ -149,7 +150,7 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
         }
 
         if (flowRunStatus === FlowRunStatus.RUNNING || flowRunStatus === FlowRunStatus.QUEUED) {
-            await this.complete({ flowRunId, projectId, resumePayload: resumeData })
+            await this.complete({ flowRunId, projectId, resumePayload, workerHandlerId })
             log.info({ flowRunId }, '[waitpointService#handleResumeSignal] Resume signal buffered (pre-completed)')
             return
         }
@@ -158,7 +159,8 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
     },
 
     async getByFlowRunId(flowRunId: string): Promise<Waitpoint | null> {
-        return waitpointRepo().findOneBy({ flowRunId })
+        const completed = await waitpointRepo().findOneBy({ flowRunId, status: WaitpointStatus.COMPLETED })
+        return completed ?? waitpointRepo().findOneBy({ flowRunId })
     },
 
     async deleteByFlowRunId(flowRunId: string): Promise<void> {

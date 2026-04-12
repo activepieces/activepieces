@@ -18,11 +18,11 @@ import {
     JobPayload,
     LATEST_JOB_DATA_SCHEMA_VERSION,
     PlatformId,
-    ProgressUpdateType,
     ProjectId,
     RunEnvironment,
     SampleDataFileType,
     SeekPage,
+    StreamStepProgress,
     UploadLogsBehavior,
     WorkerJobType,
 } from '@activepieces/shared'
@@ -167,10 +167,10 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                 return addToQueue({
                     flowRun: updatedFlowRun,
                     platformId,
-                    progressUpdateType: ProgressUpdateType.NONE,
+                    streamStepProgress: StreamStepProgress.NONE,
                     executeTrigger: false,
                     executionType: ExecutionType.RESUME,
-                    synchronousHandlerId: undefined,
+                    workerHandlerId: undefined,
                     httpRequestId: undefined,
                 }, log)
             }
@@ -184,8 +184,8 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                     payload,
                     platformId: await projectService(log).getPlatformId(oldFlowRun.projectId),
                     executionType: ExecutionType.BEGIN,
-                    progressUpdateType: ProgressUpdateType.NONE,
-                    synchronousHandlerId: undefined,
+                    streamStepProgress: StreamStepProgress.NONE,
+                    workerHandlerId: undefined,
                     httpRequestId: undefined,
                     executeTrigger: false,
                     environment: oldFlowRun.environment,
@@ -257,18 +257,20 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             }
         })
     },
-    async resumeFromWaitpoint({ flowRunId, resumePayload }: ResumeFromWaitpointParams): Promise<FlowRun> {
+    async resumeFromWaitpoint({ flowRunId, resumePayload, workerHandlerId }: ResumeFromWaitpointParams): Promise<FlowRun> {
         const flowRun = await findFlowRunOrThrow(flowRunId)
         await waitpointService(log).handleResumeSignal({
             flowRunId,
             flowRunStatus: flowRun.status,
             projectId: flowRun.projectId,
-            resumeData: resumePayload ?? {},
-            onReady: async (waitpoint, resumeData) => {
+            resumePayload: resumePayload ?? null,
+            workerHandlerId,
+            onReady: async (waitpoint) => {
                 await enqueueResume({
                     flowRun,
                     waitpoint,
-                    resumeData,
+                    resumePayload,
+                    workerHandlerIdOverride: workerHandlerId,
                 }, log)
             },
         })
@@ -280,8 +282,8 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         payload,
         executeTrigger,
         executionType,
-        synchronousHandlerId,
-        progressUpdateType,
+        workerHandlerId,
+        streamStepProgress,
         httpRequestId,
         projectId,
         flowVersionId,
@@ -297,7 +299,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                 'flowRun.projectId': projectId,
                 'flowRun.environment': environment,
                 'flowRun.executionType': executionType,
-                'flowRun.progressUpdateType': progressUpdateType,
+                'flowRun.streamStepProgress': streamStepProgress,
                 'flowRun.executeTrigger': executeTrigger,
                 'flowRun.httpRequestId': httpRequestId ?? 'none',
             },
@@ -322,9 +324,9 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                     payload,
                     executeTrigger,
                     executionType,
-                    synchronousHandlerId,
+                    workerHandlerId,
                     httpRequestId,
-                    progressUpdateType,
+                    streamStepProgress,
                 }, log)
 
                 span.setAttribute('flowRun.queued', true)
@@ -361,11 +363,11 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             flowRun,
             payload: triggerPayload,
             executionType: ExecutionType.BEGIN,
-            synchronousHandlerId: undefined,
+            workerHandlerId: undefined,
             httpRequestId: undefined,
             platformId: await projectService(log).getPlatformId(projectId),
             executeTrigger: false,
-            progressUpdateType: ProgressUpdateType.TEST_FLOW,
+            streamStepProgress: StreamStepProgress.WEBSOCKET,
             sampleData: !isNil(stepNameToTest) ? await sampleDataService(log).getSampleDataForFlow(projectId, flowVersion, SampleDataFileType.OUTPUT) : undefined,
         }, log)
     },
@@ -386,11 +388,11 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             flowRun,
             payload: triggerPayload,
             executionType: ExecutionType.BEGIN,
-            synchronousHandlerId: undefined,
+            workerHandlerId: undefined,
             httpRequestId: undefined,
             platformId: await projectService(log).getPlatformId(projectId),
             executeTrigger: false,
-            progressUpdateType: ProgressUpdateType.TEST_FLOW,
+            streamStepProgress: StreamStepProgress.WEBSOCKET,
             sampleData: undefined,
         }, log)
     },
@@ -435,7 +437,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             steps,
         }
     },
-    async handleSyncResumeFlow({ runId, payload, correlationId }: { runId: string, payload: ResumePayload, correlationId: string }): Promise<EngineHttpResponse> {
+    async handleSyncResumeFlow({ runId, payload, correlationId }: { runId: string, payload: SyncResumePayload, correlationId: string }): Promise<EngineHttpResponse> {
         const flowRun = await flowRunService(log).getOnePopulatedOrThrow({
             id: runId,
             projectId: undefined,
@@ -450,19 +452,10 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         }
 
         const syncServerId = engineResponseWatcher(log).getServerId()
-        await waitpointService(log).handleResumeSignal({
+        await this.resumeFromWaitpoint({
             flowRunId: runId,
-            flowRunStatus: flowRun.status,
-            projectId: flowRun.projectId,
-            resumeData: {
-                payload,
-                workerHandlerId: syncServerId,
-                progressUpdateType: ProgressUpdateType.TEST_FLOW,
-                executionType: ExecutionType.RESUME,
-            },
-            onReady: async (waitpoint, resumeData) => {
-                await enqueueResume({ flowRun, waitpoint, resumeData }, log)
-            },
+            resumePayload: payload,
+            workerHandlerId: syncServerId,
         })
 
         return engineResponseWatcher(log).oneTimeListener<EngineHttpResponse>(correlationId, true, WEBHOOK_TIMEOUT_MS, {
@@ -580,18 +573,20 @@ async function filterFlowRunsAndApplyFilters(
 
 
 async function enqueueResume(params: EnqueueResumeParams, log: FastifyBaseLogger): Promise<void> {
-    const { flowRun, waitpoint, resumeData } = params
+    const { flowRun, waitpoint, resumePayload, workerHandlerIdOverride } = params
     const platformId = await projectService(log).getPlatformId(flowRun.projectId)
     await flowRunSideEffects(log).onResume(flowRun)
     await addToQueue({
-        payload: resumeData.payload,
+        payload: resumePayload,
         flowRun,
         platformId,
-        synchronousHandlerId: waitpoint.workerHandlerId ?? undefined,
+        workerHandlerId: workerHandlerIdOverride ?? waitpoint.workerHandlerId ?? undefined,
         httpRequestId: waitpoint.httpRequestId ?? undefined,
-        progressUpdateType: resumeData.progressUpdateType ?? ProgressUpdateType.NONE,
+        streamStepProgress: flowRun.environment === RunEnvironment.TESTING
+            ? StreamStepProgress.WEBSOCKET
+            : StreamStepProgress.NONE,
         executeTrigger: false,
-        executionType: resumeData.executionType ?? ExecutionType.RESUME,
+        executionType: ExecutionType.RESUME,
     }, log)
 }
 
@@ -608,7 +603,7 @@ async function addToQueue(params: AddToQueueParams, log: FastifyBaseLogger): Pro
     propagation.inject(context.active(), traceContext)
 
     let jobPayload: JobPayload = { type: 'inline', value: null }
-    if (!isNil(params.payload) && isNil(params.synchronousHandlerId)) {
+    if (!isNil(params.payload) && isNil(params.workerHandlerId)) {
         jobPayload = await payloadOffloader.offloadPayload(log, params.payload, params.flowRun.projectId, params.platformId)
     }
     else if (!isNil(params.payload)) {
@@ -620,7 +615,7 @@ async function addToQueue(params: AddToQueueParams, log: FastifyBaseLogger): Pro
         type: JobType.ONE_TIME,
         data: {
             schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
-            synchronousHandlerId: params.synchronousHandlerId ?? null,
+            workerHandlerId: params.workerHandlerId ?? null,
             projectId: params.flowRun.projectId,
             platformId: params.platformId,
             environment: params.flowRun.environment,
@@ -632,7 +627,7 @@ async function addToQueue(params: AddToQueueParams, log: FastifyBaseLogger): Pro
             executeTrigger: params.executeTrigger,
             httpRequestId: params.httpRequestId,
             executionType: params.executionType,
-            progressUpdateType: params.progressUpdateType,
+            streamStepProgress: params.streamStepProgress,
             stepNameToTest: params.flowRun.stepNameToTest ?? undefined,
             sampleData: params.sampleData,
             logsUploadUrl,
@@ -733,9 +728,9 @@ type AddToQueueParams = {
     payload?: unknown
     executeTrigger: boolean
     executionType: ExecutionType
-    synchronousHandlerId: string | undefined
+    workerHandlerId: string | undefined
     httpRequestId: string | undefined
-    progressUpdateType: ProgressUpdateType
+    streamStepProgress: StreamStepProgress
     sampleData?: Record<string, unknown>
 }
 
@@ -752,9 +747,9 @@ type StartParams = {
     stepNameToTest?: string
     executeTrigger: boolean
     executionType: ExecutionType
-    synchronousHandlerId: string | undefined
+    workerHandlerId: string | undefined
     httpRequestId: string | undefined
-    progressUpdateType: ProgressUpdateType
+    streamStepProgress: StreamStepProgress
     sampleData?: Record<string, unknown>
 }
 
@@ -815,7 +810,7 @@ type BulkArchiveActionParams = {
     failedStepName?: string
 }
 
-type ResumePayload = {
+type SyncResumePayload = {
     body?: unknown
     headers?: Record<string, string>
     queryParams?: Record<string, string>
@@ -823,13 +818,15 @@ type ResumePayload = {
 
 type ResumeFromWaitpointParams = {
     flowRunId: FlowRunId
-    resumePayload: WaitpointResumePayload | null
+    resumePayload: WaitpointResumePayload
+    workerHandlerId?: string
 }
 
 type EnqueueResumeParams = {
     flowRun: FlowRun
     waitpoint: Waitpoint
-    resumeData: WaitpointResumePayload
+    resumePayload: WaitpointResumePayload
+    workerHandlerIdOverride?: string
 }
 
 type FilterFlowRunsAndApplyFiltersParams = {

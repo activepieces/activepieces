@@ -40,6 +40,7 @@ type HardDeletePlatformSystemJobData = {
 type ResumeDelayWaitpointSystemJobData = {
     flowRunId: FlowRunId
     projectId: ProjectId
+    waitpointId: string
 }
 
 type SystemJobDataMap = {

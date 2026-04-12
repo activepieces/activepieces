@@ -1,4 +1,4 @@
-import { apId, ExecutionType, FlowRunStatus, FlowVersionState, PauseType, ProgressUpdateType, RunEnvironment } from '@activepieces/shared'
+import { apId, FlowRunStatus, FlowVersionState, PauseType, RunEnvironment } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { waitpointService } from '../../../../../src/app/flows/flow-run/waitpoint/waitpoint-service'
 import { WaitpointStatus } from '../../../../../src/app/flows/flow-run/waitpoint/waitpoint-types'
@@ -68,7 +68,7 @@ describe('Waitpoint service', () => {
             await waitpointService(app.log).complete({
                 flowRunId: flowRun.id,
                 projectId: ctx.project.id,
-                resumePayload: { data: 'test' },
+                resumePayload: { body: { data: 'test' } },
             })
 
             const result = await waitpointService(app.log).createForPause({
@@ -80,7 +80,7 @@ describe('Waitpoint service', () => {
 
             expect(result.inserted).toBe(false)
             expect(result.waitpoint.status).toBe(WaitpointStatus.COMPLETED)
-            expect(result.waitpoint.resumePayload).toEqual({ data: 'test' })
+            expect(result.waitpoint.resumePayload).toEqual({ body: { data: 'test' } })
         })
 
         it('should correctly map DELAY pause fields', async () => {
@@ -168,19 +168,19 @@ describe('Waitpoint service', () => {
             await waitpointService(app.log).complete({
                 flowRunId: flowRun.id,
                 projectId: ctx.project.id,
-                resumePayload: { first: true },
+                resumePayload: { body: { first: true } },
             })
 
             const result = await waitpointService(app.log).complete({
                 flowRunId: flowRun.id,
                 projectId: ctx.project.id,
-                resumePayload: { second: true },
+                resumePayload: { body: { second: true } },
             })
 
             expect(result.completedExisting).toBe(false)
 
             const stored = await db.findOneBy<{ resumePayload: unknown }>('waitpoint', { flowRunId: flowRun.id })
-            expect(stored!.resumePayload).toEqual({ first: true })
+            expect(stored!.resumePayload).toEqual({ body: { first: true } })
         })
     })
 
@@ -243,12 +243,12 @@ describe('Waitpoint service', () => {
                 waitpointService(app.log).complete({
                     flowRunId: flowRun.id,
                     projectId: ctx.project.id,
-                    resumePayload: { first: true },
+                    resumePayload: { body: { first: true } },
                 }),
                 waitpointService(app.log).complete({
                     flowRunId: flowRun.id,
                     projectId: ctx.project.id,
-                    resumePayload: { second: true },
+                    resumePayload: { body: { second: true } },
                 }),
             ])
 
@@ -277,7 +277,7 @@ describe('Waitpoint service', () => {
                 flowRunId: flowRun.id,
                 flowRunStatus: FlowRunStatus.PAUSED,
                 projectId: ctx.project.id,
-                resumeData: { progressUpdateType: ProgressUpdateType.NONE, executionType: ExecutionType.RESUME },
+                resumePayload: null,
                 onReady: async (waitpoint) => {
                     calledWith = { workerHandlerId: waitpoint.workerHandlerId }
                 },
@@ -296,7 +296,7 @@ describe('Waitpoint service', () => {
                 flowRunId: flowRun.id,
                 flowRunStatus: FlowRunStatus.RUNNING,
                 projectId: ctx.project.id,
-                resumeData: { payload: { body: { msg: 'hello' } }, progressUpdateType: ProgressUpdateType.NONE, executionType: ExecutionType.RESUME },
+                resumePayload: { body: { msg: 'hello' } },
                 onReady: async () => {
                     onReadyCalled = true
                 },
@@ -316,7 +316,7 @@ describe('Waitpoint service', () => {
                 flowRunId: flowRun.id,
                 flowRunStatus: FlowRunStatus.SUCCEEDED,
                 projectId: ctx.project.id,
-                resumeData: { progressUpdateType: ProgressUpdateType.NONE, executionType: ExecutionType.RESUME },
+                resumePayload: null,
                 onReady: async () => {
                     onReadyCalled = true
                 },

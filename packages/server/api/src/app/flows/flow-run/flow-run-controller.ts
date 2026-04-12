@@ -6,13 +6,11 @@ import {
     BulkArchiveActionOnRunsRequestBody,
     BulkCancelFlowRequestBody,
     ErrorCode,
-    ExecutionType,
     FlowRun,
     isNil,
     ListFlowRunsRequestQuery,
     Permission,
     PrincipalType,
-    ProgressUpdateType,
     RetryFlowRequestBody,
     RunEnvironment,
     SeekPage,
@@ -274,15 +272,7 @@ const BulkRetryFlowRequest = {
 async function handleAsyncResume({ flowRunId, body, headers, queryParams, log, reply }: ResumeHandlerParams): Promise<void> {
     await flowRunService(log).resumeFromWaitpoint({
         flowRunId,
-        resumePayload: {
-            payload: {
-                body,
-                headers,
-                queryParams,
-            },
-            progressUpdateType: ProgressUpdateType.TEST_FLOW,
-            executionType: ExecutionType.RESUME,
-        },
+        resumePayload: { body, headers, queryParams },
     })
     await reply.send({
         message: 'Your response has been recorded. You can close this page now.',

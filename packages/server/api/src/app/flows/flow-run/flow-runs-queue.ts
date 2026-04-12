@@ -1,4 +1,4 @@
-import { ExecutionType, FlowRun, FlowRunStatus, isFlowRunStateTerminal, isNil, ProgressUpdateType, spreadIfDefined } from '@activepieces/shared'
+import { FlowRun, FlowRunStatus, isFlowRunStateTerminal, isNil, spreadIfDefined } from '@activepieces/shared'
 import { Queue, Worker } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
 import { FastifyBaseLogger } from 'fastify'
@@ -205,11 +205,7 @@ async function markParentRunAsFailed({
     const result = await waitpointService(log).complete({
         flowRunId: parentRunId,
         projectId: flowRun.projectId,
-        resumePayload: {
-            payload: errorPayload,
-            progressUpdateType: ProgressUpdateType.TEST_FLOW,
-            executionType: ExecutionType.RESUME,
-        },
+        resumePayload: errorPayload,
     })
 
     if (result.completedExisting) {

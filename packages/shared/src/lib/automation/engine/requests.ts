@@ -3,7 +3,7 @@ import { FlowRunStatus } from '../flow-run/execution/flow-execution'
 import { StepOutput } from '../flow-run/execution/step-output'
 import { FailedStep, FlowRun } from '../flow-run/flow-run'
 import { StepRunResponse } from '../flows/sample-data'
-import { ProgressUpdateType } from './engine-operation'
+import { StreamStepProgress } from './engine-operation'
 
 
 
@@ -12,7 +12,7 @@ export const UploadRunLogsRequest = z.object({
     tags: z.array(z.string()).optional(),
     status: z.nativeEnum(FlowRunStatus),
     projectId: z.string(),
-    progressUpdateType: z.nativeEnum(ProgressUpdateType).optional(),
+    streamStepProgress: z.nativeEnum(StreamStepProgress).optional(),
     logsFileId: z.string().optional(),
     stepNameToTest: z.string().optional(),
     failedStep: FailedStep.optional(),

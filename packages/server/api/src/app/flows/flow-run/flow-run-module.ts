@@ -71,10 +71,12 @@ export const flowRunModule: FastifyPluginAsync = async (app) => {
     systemJobHandlers.registerJobHandler(SystemJobName.RESUME_DELAY_WAITPOINT, async (data: SystemJobData<SystemJobName.RESUME_DELAY_WAITPOINT>) => {
         const flowRun = await flowRunService(app.log).getOneOrThrow({ id: data.flowRunId, projectId: data.projectId })
         if (flowRun.status !== FlowRunStatus.PAUSED) {
-            app.log.info({ flowRunId: data.flowRunId, status: flowRun.status },
+            app.log.info({ flowRunId: data.flowRunId, waitpointId: data.waitpointId, status: flowRun.status },
                 '[RESUME_DELAY_WAITPOINT] Flow not PAUSED, skipping')
             return
         }
+        app.log.info({ flowRunId: data.flowRunId, waitpointId: data.waitpointId },
+            '[RESUME_DELAY_WAITPOINT] Resuming flow')
         await flowRunService(app.log).resumeFromWaitpoint({
             flowRunId: data.flowRunId,
             resumePayload: null,

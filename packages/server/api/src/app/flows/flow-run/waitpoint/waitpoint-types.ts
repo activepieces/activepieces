@@ -1,4 +1,4 @@
-import { ApId, ExecutionType, FlowRunStatus, PauseType, ProgressUpdateType, RespondResponse } from '@activepieces/shared'
+import { ApId, FlowRunStatus, PauseType, RespondResponse } from '@activepieces/shared'
 
 enum WaitpointStatus {
     PENDING = 'PENDING',
@@ -6,15 +6,10 @@ enum WaitpointStatus {
 }
 
 type WaitpointResumePayload = {
-    payload?: {
-        body?: unknown
-        headers?: Record<string, string>
-        queryParams?: Record<string, string>
-    }
-    workerHandlerId?: string
-    progressUpdateType?: ProgressUpdateType
-    executionType?: ExecutionType
-}
+    body?: unknown
+    headers?: Record<string, string>
+    queryParams?: Record<string, string>
+} | null
 
 type Waitpoint = {
     id: ApId
@@ -54,6 +49,7 @@ type CompleteParams = {
     flowRunId: ApId
     projectId: ApId
     resumePayload: WaitpointResumePayload
+    workerHandlerId?: string
 }
 
 type CompleteResult = {
@@ -65,8 +61,9 @@ type HandleResumeSignalParams = {
     flowRunId: ApId
     flowRunStatus: FlowRunStatus
     projectId: ApId
-    resumeData: WaitpointResumePayload
-    onReady: (waitpoint: Waitpoint, resumeData: WaitpointResumePayload) => Promise<void>
+    resumePayload: WaitpointResumePayload
+    workerHandlerId?: string
+    onReady: (waitpoint: Waitpoint) => Promise<void>
 }
 
 export { WaitpointStatus }
