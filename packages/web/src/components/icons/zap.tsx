@@ -1,19 +1,11 @@
-'use client';
-
 import { motion, useAnimation } from 'motion/react';
 import type { HTMLAttributes } from 'react';
 import { forwardRef, useCallback, useImperativeHandle, useRef } from 'react';
 
 import { cn } from '@/lib/utils';
 
-// Exact path from lucide-react v0.407.0 Zap icon
 const ZAP_PATH =
   'M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z';
-
-export interface ZapIconHandle {
-  startAnimation: () => void;
-  stopAnimation: () => void;
-}
 
 interface ZapIconProps extends HTMLAttributes<HTMLDivElement> {
   size?: number;
@@ -81,13 +73,11 @@ const ZapIcon = forwardRef<ZapIconHandle, ZapIconProps>(
           transition={{ duration: 0.7, ease: 'easeOut' }}
           style={{ transformOrigin: 'center' }}
         >
-          {/* Dim base — always shows the full bolt silhouette */}
           <path
             d={ZAP_PATH}
             fill="currentColor"
             className="text-muted-foreground/20"
           />
-          {/* Colored fill — clips from top, revealing upward from the bottom */}
           <path
             d={ZAP_PATH}
             style={{
@@ -105,3 +95,7 @@ const ZapIcon = forwardRef<ZapIconHandle, ZapIconProps>(
 ZapIcon.displayName = 'ZapIcon';
 
 export { ZapIcon };
+export interface ZapIconHandle {
+  startAnimation: () => void;
+  stopAnimation: () => void;
+}

@@ -1,3 +1,4 @@
+import { t } from 'i18next';
 import { Check, X } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 
@@ -61,7 +62,7 @@ const PasswordStrengthBolt = ({ password }: { password: string }) => {
         )}
       >
         <p className="text-xs font-semibold text-foreground mb-2">
-          Password requirements
+          {t('Password requirements')}
         </p>
         <div className="flex flex-col gap-1.5">
           {results.map((rule) => (
