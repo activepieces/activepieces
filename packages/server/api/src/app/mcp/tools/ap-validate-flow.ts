@@ -74,9 +74,12 @@ function validateFlow({ trigger }: { trigger: Step }): ValidationResult {
         }
 
         const strings = collectStringValues({ step })
+        const seenRefs = new Set<string>()
         for (const str of strings) {
             const refs = extractReferencedStepNames({ value: str })
             for (const ref of refs) {
+                if (seenRefs.has(ref)) continue
+                seenRefs.add(ref)
                 if (!allStepNames.has(ref)) {
                     issues.push({ category: 'template_reference', stepName: step.name, message: `"${step.displayName}" references "{{${ref}...}}" which does not exist in the flow.` })
                 }
@@ -87,10 +90,8 @@ function validateFlow({ trigger }: { trigger: Step }): ValidationResult {
         }
 
         if (step.type === FlowActionType.ROUTER) {
-            const children = 'children' in step ? (step.children as unknown[]) : []
-            const branches = 'settings' in step && typeof step.settings === 'object' && step.settings !== null && 'branches' in step.settings
-                ? (step.settings.branches as { branchName?: string }[])
-                : []
+            const { children, settings } = step
+            const branches = settings.branches ?? []
             for (let i = 0; i < children.length; i++) {
                 if (isNil(children[i])) {
                     const branchName = branches[i]?.branchName ?? `Branch ${i}`
@@ -174,7 +175,8 @@ const CATEGORY_LABELS: Record<ValidationIssue['category'], string> = {
 
 function formatValidationResult({ result, flowDisplayName }: { result: ValidationResult, flowDisplayName: string }): string {
     if (result.issues.length === 0) {
-        return `✅ Flow "${flowDisplayName}" is ready to publish (${result.totalSteps} steps, all valid).`
+        const skippedNote = result.skippedSteps > 0 ? `, ${result.skippedSteps} skipped` : ''
+        return `✅ Flow "${flowDisplayName}" is ready to publish (${result.totalSteps} steps, ${result.validSteps} valid${skippedNote}).`
     }
 
     const grouped = new Map<ValidationIssue['category'], ValidationIssue[]>()
