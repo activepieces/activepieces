@@ -24,6 +24,14 @@ Get the structure of a flow: step tree, configuration status, and valid insert l
 |-------|------|----------|-------------|
 | `flowId` | string | Yes | The flow ID |
 
+### ap_validate_flow
+
+Validate a flow for structural issues without publishing. Checks step validity, template references, and empty branches.
+
+| Input | Type | Required | Description |
+|-------|------|----------|-------------|
+| `flowId` | string | Yes | The flow ID |
+
 ### ap_list_pieces
 
 List available pieces with their actions and triggers. Required before adding or updating steps.
