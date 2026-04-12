@@ -8,7 +8,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
 import { projectService } from '../../project/project-service'
-import { mcpToolError } from './mcp-utils'
+import { mcpToolError, normalizePieceName } from './mcp-utils'
 
 const statusEnum = z.enum(Object.values(AppConnectionStatus) as [AppConnectionStatus, ...AppConnectionStatus[]])
 
@@ -17,7 +17,7 @@ const listConnectionsSchema = z.object({
         .string()
         .optional()
         .describe(
-            'Filter by piece/app name (exact match). Examples: "google_drive", "slack", "notion". Use when you need connections for a specific integration.',
+            'Filter by piece name. Short names like "slack" or "google-drive" are auto-expanded to full format (e.g. "@activepieces/piece-slack"). You can also pass the full name directly.',
         ),
     displayName: z
         .string()
@@ -56,7 +56,7 @@ export const apListConnectionsTool = (mcp: McpServer, log: FastifyBaseLogger): M
                     scope: undefined,
                     displayName: params.displayName,
                     status: params.status,
-                    pieceName: params.pieceName,
+                    pieceName: normalizePieceName(params.pieceName),
                     limit: 200,
                     externalIds: undefined,
                 })

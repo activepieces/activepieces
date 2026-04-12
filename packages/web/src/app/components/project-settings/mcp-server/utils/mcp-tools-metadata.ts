@@ -28,6 +28,11 @@ export const TOOL_CATEGORIES: ToolCategory[] = [
           'List pieces with actions and triggers — required before adding or updating steps',
       },
       {
+        name: 'ap_get_piece_props',
+        description:
+          'Get detailed property schema for a specific piece action or trigger',
+      },
+      {
         name: 'ap_list_connections',
         description:
           'List OAuth/app connections in the project — required before adding steps that need auth',
