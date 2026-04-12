@@ -1,0 +1,10 @@
+{
+  "name": "@activepieces/piece-klaviyo",
+  "displayName": "Klaviyo (MCP)",
+  "version": "0.0.1",
+  "authors": ["nomadicwealthguide"],
+  "main": "src/index.ts",
+  "dependencies": {
+    "@activepieces/pieces-framework": "workspace:*"
+  }
+}
