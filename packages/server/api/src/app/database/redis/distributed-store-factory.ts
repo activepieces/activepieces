@@ -13,42 +13,12 @@ export const distributedStoreFactory = (getRedisClient: () => Promise<Redis>) =>
         }
     },
 
-    async putMany(keyValuePairs: Array<{ key: string, value: unknown }>, ttlInSeconds?: number): Promise<void> {
-        if (keyValuePairs.length === 0) return
-        const redisClient = await getRedisClient()
-        if (ttlInSeconds) {
-            const multi = redisClient.multi()
-            for (const { key, value } of keyValuePairs) {
-                multi.setex(key, ttlInSeconds, JSON.stringify(value))
-            }
-            await multi.exec()
-        }
-        else {
-            const args: string[] = []
-            for (const { key, value } of keyValuePairs) {
-                args.push(key, JSON.stringify(value))
-            }
-            await redisClient.mset(...args)
-        }
-    },
-
     async get<T>(key: string): Promise<T | null> {
         const redisClient = await getRedisClient()
         const value = await redisClient.get(key)
         if (!value) return null
 
         return JSON.parse(value) as T
-    },
-
-    async getAll<T>(keys: string[]): Promise<Record<string, T | null>> {
-        const redisClient = await getRedisClient()
-        const values = await redisClient.mget(keys)
-        return values.reduce<Record<string, T | null>>((result, value, index) => {
-            if (value) {
-                result[keys[index]] = JSON.parse(value)
-            }
-            return result
-        }, {})
     },
 
     async delete(keys: string | string[]): Promise<void> {

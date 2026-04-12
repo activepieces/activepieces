@@ -35,9 +35,9 @@ export const concurrencyPoolService = (_log: FastifyBaseLogger) => ({
             ...oldPoolIds.map(id => getConcurrencyPoolLimitKey(id)),
         ])
 
-        await distributedStore.putMany([
-            ...projectIds.map(id => ({ key: getProjectConcurrencyPoolKey(id), value: poolId })),
-            { key: getConcurrencyPoolLimitKey(poolId), value: maxConcurrentJobs },
+        await Promise.all([
+            ...projectIds.map(id => distributedStore.put(getProjectConcurrencyPoolKey(id), poolId)),
+            distributedStore.put(getConcurrencyPoolLimitKey(poolId), maxConcurrentJobs),
         ])
 
         await concurrencyPoolRepo()
