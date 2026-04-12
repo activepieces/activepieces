@@ -44,6 +44,23 @@ Get the detailed input property schema for a specific piece action or trigger. R
 | `actionOrTriggerName` | string | Yes | Action or trigger name (e.g., `send_channel_message`) |
 | `type` | string | Yes | `action` or `trigger` |
 
+### ap_validate_step_config
+
+Validate a step configuration before applying it. Returns field-level errors without modifying any flow.
+
+| Input | Type | Required | Description |
+|-------|------|----------|-------------|
+| `stepType` | string | Yes | `PIECE_ACTION`, `PIECE_TRIGGER`, `CODE`, `LOOP_ON_ITEMS`, or `ROUTER` |
+| `pieceName` | string | No | For PIECE types: piece name (short names like `slack` accepted) |
+| `actionName` | string | No | For PIECE_ACTION: action name |
+| `triggerName` | string | No | For PIECE_TRIGGER: trigger name |
+| `input` | object | No | For PIECE types: input config to validate |
+| `auth` | string | No | For PIECE types: any non-empty string indicates auth is provided |
+| `sourceCode` | string | No | For CODE: JavaScript/TypeScript source code |
+| `packageJson` | string | No | For CODE: package.json as JSON string |
+| `loopItems` | string | No | For LOOP_ON_ITEMS: items expression |
+| `settings` | object | No | For ROUTER: raw router settings |
+
 ### ap_list_connections
 
 List OAuth/app connections in the project. Required before adding steps that need authentication.
