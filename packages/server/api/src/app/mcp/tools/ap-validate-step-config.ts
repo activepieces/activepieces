@@ -27,7 +27,7 @@ export const apValidateStepConfigTool = (mcp: McpServer, log: FastifyBaseLogger)
                             const missing = !params.pieceName ? 'pieceName' : (componentType === 'action' ? 'actionName' : 'triggerName')
                             return { content: [{ type: 'text', text: `❌ ${missing} is required for ${componentType} validation.` }] }
                         }
-                        return validatePieceComponent({ pieceName: params.pieceName, componentName, componentType, input: params.input ?? {}, auth: params.auth, projectId: mcp.projectId, log })
+                        return await validatePieceComponent({ pieceName: params.pieceName, componentName, componentType, input: params.input ?? {}, auth: params.auth, projectId: mcp.projectId, log })
                     }
                     case 'CODE':
                         return validateWithSchema({ schema: codeValidator, data: { sourceCode: { code: params.sourceCode ?? '', packageJson: params.packageJson ?? '{}' }, input: {} }, label: 'CODE' })
