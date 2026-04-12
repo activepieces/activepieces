@@ -137,8 +137,8 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
             await projectService(log).update(projectId, {
                 type: project.type,
                 ...rest,
-                ...spreadIfDefined('poolId', poolId),
-                ...spreadIfDefined('maxConcurrentJobs', maxConcurrentJobs),
+                ...(poolId !== undefined ? { poolId } : {}),
+                ...(maxConcurrentJobs !== undefined ? { maxConcurrentJobs } : {}),
             }, entityManager)
             if (poolId !== undefined) {
                 await concurrencyPoolService(log).assignProject({ projectId, poolId })
