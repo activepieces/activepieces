@@ -138,7 +138,11 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
                 type: project.type,
                 ...rest,
                 ...spreadIfDefined('poolId', poolId),
+                ...spreadIfDefined('maxConcurrentJobs', maxConcurrentJobs),
             }, entityManager)
+            if (poolId !== undefined) {
+                await concurrencyPoolService(log).assignProject({ projectId, poolId })
+            }
             if (platformPlan.globalConnectionsEnabled && globalConnectionExternalIds) {
                 const projectGlobalConnections = await appConnectionsRepo(entityManager).find({
                     where: {

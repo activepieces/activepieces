@@ -43,6 +43,15 @@ export const concurrencyPoolService = (_log: FastifyBaseLogger) => ({
         return poolId
     },
 
+    async assignProject({ projectId, poolId }: { projectId: string, poolId: string | null }): Promise<void> {
+        if (!isNil(poolId)) {
+            await distributedStore.put(getProjectConcurrencyPoolKey(projectId), poolId, CACHE_TTL_SECONDS)
+        }
+        else {
+            await distributedStore.delete(getProjectConcurrencyPoolKey(projectId))
+        }
+    },
+
     async getPoolLimit(poolId: string): Promise<number | null> {
         const cached = await distributedStore.get<number>(getConcurrencyPoolLimitKey(poolId))
         if (!isNil(cached)) return cached

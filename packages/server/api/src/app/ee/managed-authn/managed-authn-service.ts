@@ -54,6 +54,7 @@ export const managedAuthnService = (log: FastifyBaseLogger) => ({
             }
             const { poolId } = await concurrencyPoolService(log).upsertPool(upsertParams)
             await projectService(log).update(project.id, { type: project.type, poolId })
+            await concurrencyPoolService(log).assignProject({ projectId: project.id, poolId })
         }
 
         await updateProjectLimits({
