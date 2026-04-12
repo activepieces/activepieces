@@ -41,7 +41,7 @@ const FlowBuilderPage = () => {
     );
   }
 
-  if (isNil(flow) || isError) {
+  if (isNil(flow) || isError || isNil(flow.version)) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
         <div className="rounded-full bg-muted p-4">
@@ -69,7 +69,7 @@ const FlowBuilderPage = () => {
     <ReactFlowProvider>
       <BuilderStateProvider
         flow={flow}
-        flowVersion={flow!.version}
+        flowVersion={flow.version}
         readonly={false}
         hideTestWidget={false}
         run={null}

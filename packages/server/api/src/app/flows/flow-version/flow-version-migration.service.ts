@@ -34,11 +34,11 @@ import { buildPaginator } from 'src/app/helper/pagination/build-paginator'
 import { paginationHelper } from 'src/app/helper/pagination/pagination-utils'
 import { SystemJobData, SystemJobName } from 'src/app/helper/system-jobs/common'
 import { systemJobsSchedule } from 'src/app/helper/system-jobs/system-job'
+import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-props'
 import { flowExecutionCache } from '../flow/flow-execution-cache'
 import { flowRepo } from '../flow/flow.repo'
 import { FlowMigrationEntity } from './flow-migration.entity'
-import { system } from '../../helper/system/system'
-import { AppSystemProp } from '../../helper/system/system-props'
 import { flowVersionBackupService } from './flow-version-backup.service'
 import { flowVersionRepo } from './flow-version.service'
 import { flowMigrations } from './migrations'
@@ -151,13 +151,14 @@ export const flowVersionMigrationService = (log: FastifyBaseLogger) => ({
                 idsQueryBuilder.andWhere('f."projectId" IN (:...projectIds)', { projectIds })
             }
 
-            const allIds = (await idsQueryBuilder.getMany()).map((fv) => fv.id)
+            const allIds = (await idsQueryBuilder.orderBy('fv.state', 'DESC').getMany()).map((fv) => fv.id)
 
             for (let i = 0; i < allIds.length; i += BATCH_SIZE) {
                 const batchIds = allIds.slice(i, i + BATCH_SIZE)
                 const flowVersions = await flowVersionRepo()
                     .createQueryBuilder('fv')
                     .where('fv.id IN (:...batchIds)', { batchIds })
+                    .orderBy('fv.state', 'DESC')
                     .getMany()
 
                 for (const flowVersion of flowVersions) {
@@ -305,5 +306,47 @@ function buildMigrationOperations({ flowVersion, sourceModel, targetModel }: {
         })
     }
 
+    if (operations.length > 0) {
+        const lastStepName = findLastStepInMainChain(flowVersion)
+        const existingNames = allSteps.map((s) => s.name)
+        const uniqueName = flowStructureUtil.findUnusedName(existingNames)
+        operations.push({
+            type: FlowOperationType.ADD_ACTION,
+            request: {
+                parentStep: lastStepName,
+                action: {
+                    name: uniqueName,
+                    displayName: 'Code',
+                    valid: true,
+                    skip: false,
+                    type: FlowActionType.CODE,
+                    settings: {
+                        sourceCode: {
+                            code: 'export const code = async (inputs) => {\n  return 123;\n};',
+                            packageJson: '{}',
+                        },
+                        input: {},
+                        errorHandlingOptions: {
+                            continueOnFailure: {
+                                value: false,
+                            },
+                            retryOnFailure: {
+                                value: false,
+                            },
+                        },
+                    },
+                },
+            },
+        })
+    }
+
     return operations
+}
+
+function findLastStepInMainChain(flowVersion: FlowVersion): string {
+    let current: { name: string, nextAction?: unknown } = flowVersion.trigger
+    while (current.nextAction) {
+        current = current.nextAction as { name: string, nextAction?: unknown }
+    }
+    return current.name
 }

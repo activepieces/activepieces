@@ -24,7 +24,11 @@ export default function AIProvidersPage() {
   const { data: currentUser } = userHooks.useCurrentUser();
   const [view, setView] = useState<'providers' | 'migrations'>('providers');
   const [migrateDialogOpen, setMigrateDialogOpen] = useState(false);
-  const { platform: { plan:{aiProvidersEnabled}} } = platformHooks.useCurrentPlatform();
+  const {
+    platform: {
+      plan: { aiProvidersEnabled },
+    },
+  } = platformHooks.useCurrentPlatform();
 
   const { mutateAsync: deleteProvider } =
     aiProviderMutations.useDeleteAiProvider({
@@ -101,7 +105,9 @@ export default function AIProvidersPage() {
           }
         >
           <AiProviderMigrationsTable
-            showMigrateButton={aiProvidersEnabled && (providers?.length ?? 0) > 0}
+            showMigrateButton={
+              aiProvidersEnabled && (providers?.length ?? 0) > 0
+            }
             onMigrateClick={() => setMigrateDialogOpen(true)}
           />
         </CenteredPage>
