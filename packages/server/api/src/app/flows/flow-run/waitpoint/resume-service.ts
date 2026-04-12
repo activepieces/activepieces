@@ -6,7 +6,6 @@ import {
     isFlowRunStateTerminal,
     RunEnvironment,
     StreamStepProgress,
-    WaitpointResumePayload,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -15,7 +14,7 @@ import { engineResponseWatcher } from '../../../workers/engine-response-watcher'
 import { addToQueue, findFlowRunOrThrow, flowRunService, WEBHOOK_TIMEOUT_MS } from '../flow-run-service'
 import { flowRunSideEffects } from '../flow-run-side-effects'
 import { waitpointService } from './waitpoint-service'
-import { Waitpoint } from './waitpoint-types'
+import { Waitpoint, WaitpointResumePayload } from './waitpoint-types'
 
 export const resumeService = (log: FastifyBaseLogger) => ({
     async resumeFromWaitpoint({ flowRunId, waitpointId, resumePayload, workerHandlerId }: ResumeFromWaitpointParams): Promise<ResumeFromWaitpointResult> {
