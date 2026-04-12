@@ -54,6 +54,7 @@ beforeAll(async () => {
                 props: {
                     to: { type: 'SHORT_TEXT', displayName: 'To', required: true },
                     subject: { type: 'SHORT_TEXT', displayName: 'Subject', required: true },
+                    folder: { type: 'DROPDOWN', displayName: 'Folder', required: false, refreshers: [] },
                 },
             },
         },
@@ -494,5 +495,109 @@ describe('MCP Tools integration', () => {
         expect(text(result)).toContain('Empty Branches')
         expect(text(result)).toContain('My Router')
         expect(text(result)).toContain('empty branch')
+    })
+
+    it('22. ap_get_piece_props — without auth returns note for dropdown fields', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const result = await apGetPiecePropsTool(mcp, mockLog).execute({
+            pieceName: '@activepieces/piece-gmail',
+            actionOrTriggerName: 'send_email',
+            type: 'action',
+        })
+
+        expect(text(result)).toContain('✅')
+        expect(text(result)).toContain('folder')
+        expect(text(result)).toContain('DROPDOWN')
+        expect(text(result)).toContain('Dynamic dropdown')
+    })
+
+    it('23. ap_get_piece_props — with auth attempts dropdown resolution and falls back gracefully', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const result = await apGetPiecePropsTool(mcp, mockLog).execute({
+            pieceName: '@activepieces/piece-gmail',
+            actionOrTriggerName: 'send_email',
+            type: 'action',
+            auth: 'fake-connection-id',
+        })
+
+        expect(text(result)).toContain('✅')
+        expect(text(result)).toContain('folder')
+        expect(text(result)).toContain('DROPDOWN')
+        expect(text(result)).toContain('to')
+        expect(text(result)).toContain('subject')
+    })
+
+    it('24. ap_get_piece_props — with auth on piece with no dropdowns returns clean schema', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const result = await apGetPiecePropsTool(mcp, mockLog).execute({
+            pieceName: '@activepieces/piece-gmail',
+            actionOrTriggerName: 'new_email',
+            type: 'trigger',
+            auth: 'fake-connection-id',
+        })
+
+        expect(text(result)).toContain('✅')
+        expect(text(result)).not.toContain('DROPDOWN')
+        expect(text(result)).not.toContain('Dynamic dropdown')
+    })
+
+    it('25. ap_get_piece_props — with auth and invalid piece returns error before resolution', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const result = await apGetPiecePropsTool(mcp, mockLog).execute({
+            pieceName: '@activepieces/piece-nonexistent',
+            actionOrTriggerName: 'fake_action',
+            type: 'action',
+            auth: 'some-connection',
+        })
+
+        expect(text(result)).toContain('❌')
+        expect(text(result)).toContain('not found')
+    })
+
+    it('26. ap_get_piece_props — with auth and invalid action returns error with available list', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const result = await apGetPiecePropsTool(mcp, mockLog).execute({
+            pieceName: '@activepieces/piece-gmail',
+            actionOrTriggerName: 'nonexistent_action',
+            type: 'action',
+            auth: 'some-connection',
+        })
+
+        expect(text(result)).toContain('❌')
+        expect(text(result)).toContain('not found')
+        expect(text(result)).toContain('send_email')
+    })
+
+    it('27. ap_get_piece_props — static dropdowns always return options regardless of auth', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const withAuth = await apGetPiecePropsTool(mcp, mockLog).execute({
+            pieceName: '@activepieces/piece-gmail',
+            actionOrTriggerName: 'send_email',
+            type: 'action',
+            auth: 'fake-connection',
+        })
+
+        const withoutAuth = await apGetPiecePropsTool(mcp, mockLog).execute({
+            pieceName: '@activepieces/piece-gmail',
+            actionOrTriggerName: 'send_email',
+            type: 'action',
+        })
+
+        expect(text(withAuth)).toContain('to')
+        expect(text(withAuth)).toContain('subject')
+        expect(text(withoutAuth)).toContain('to')
+        expect(text(withoutAuth)).toContain('subject')
     })
 })
