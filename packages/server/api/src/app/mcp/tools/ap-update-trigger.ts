@@ -29,7 +29,7 @@ export const apUpdateTriggerTool = (mcp: McpServer, log: FastifyBaseLogger): Mcp
     return {
         title: 'ap_update_trigger',
         permission: Permission.WRITE_FLOW,
-        description: 'Set or update the trigger for a flow. Use ap_list_pieces to get valid pieceName, pieceVersion, and triggerName. Use ap_list_connections to get the connection externalId for auth.',
+        description: 'Set or update the trigger for a flow.',
         inputSchema: {
             flowId: z.string().describe('The id of the flow'),
             pieceName: z.string().describe('The piece name for the trigger (e.g. "@activepieces/piece-gmail"). Use ap_list_pieces to get valid values.'),

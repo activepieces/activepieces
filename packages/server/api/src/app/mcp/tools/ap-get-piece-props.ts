@@ -10,7 +10,7 @@ import { mcpUtils } from './mcp-utils'
 export const apGetPiecePropsTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_get_piece_props',
-        description: 'Get the detailed input property schema for a specific piece action or trigger. Returns field names, types, required/optional, descriptions, default values, and dropdown options. Use this before ap_update_step or ap_update_trigger to know exactly which fields to set and what values are accepted.',
+        description: 'Get the input property schema for a piece action or trigger. Returns field names, types, required/optional, defaults, and options.',
         inputSchema: getPiecePropsInput.shape,
         annotations: { readOnlyHint: true, openWorldHint: false },
         execute: async (args) => {

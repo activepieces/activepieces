@@ -35,7 +35,7 @@ export const apUpdateStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
     return {
         title: 'ap_update_step',
         permission: Permission.WRITE_FLOW,
-        description: 'Update an existing step\'s settings in a flow. Use ap_flow_structure to get step names. Use ap_list_pieces to get valid pieceName, pieceVersion, actionName. If you are about to configure a CODE step, first verify with ap_list_pieces that no existing piece can accomplish the task. Provide only the fields you want to change.',
+        description: 'Update an existing step\'s settings. Provide only the fields you want to change.',
         inputSchema: {
             flowId: z.string().describe('The id of the flow'),
             stepName: z.string().describe('The name of the step to update (e.g. "step_1"). Use ap_flow_structure to get valid values.'),

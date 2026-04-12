@@ -23,7 +23,7 @@ const listPiecesSchema = z.object({
 export const apListPiecesTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_list_pieces',
-        description: 'List available integration pieces (pieceName, pieceVersion, actions count, triggers count). IMPORTANT: Always search for a suitable piece before resorting to a CODE step — this should be the first tool you call when building or modifying a flow. Use includeActions=true to get action names, descriptions, and required input fields. Use includeTriggers=true to get trigger names, descriptions, and required input fields. Use suggestionType=ACTION or TRIGGER to filter pieces that only have relevant actions or triggers. Use specific searchQuery terms (e.g. "gmail" not "email send") for best results.',
+        description: 'List available pieces with their actions and triggers. Use includeActions/includeTriggers for details.',
         inputSchema: {
             categories: listPiecesSchema.shape.categories,
             tags: listPiecesSchema.shape.tags,

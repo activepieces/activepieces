@@ -12,7 +12,7 @@ export const apDeleteRecordsTool = (mcp: McpServer, log: FastifyBaseLogger): Mcp
     return {
         title: 'ap_delete_records',
         permission: Permission.WRITE_TABLE,
-        description: 'Permanently delete one or more records from a table by their IDs. This action cannot be undone. Use ap_find_records to get record IDs.',
+        description: 'Permanently delete one or more records by their IDs.',
         inputSchema: deleteRecordsInput.shape,
         annotations: { destructiveHint: true, openWorldHint: false },
         execute: async (args) => {
