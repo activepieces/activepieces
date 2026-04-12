@@ -1,5 +1,9 @@
 {
   "Create and manage Power BI datasets and push data to them": "Maken en beheren van Power BI datasets en push-gegevens naar hen",
+  "Cloud Environment": "Cloud Omgeving",
+  "Select your Microsoft cloud environment.": "Selecteer je Microsoft cloud omgeving.",
+  "Commercial (Global)": "Commerciële (globaal)",
+  "US Government (GCC High)": "Amerikaanse regering (GCC High)",
   "If you'd like to use your own custom Azure app instead of the default Activepieces app, follow the [Azure app creation guide](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app#register-an-application),\n set the **Redirect URI** to {{redirectUrl}} and add the following **Power BI Service (Delegated) permissions** under **API permissions**:\n - Dataset.ReadWrite.All\n - offline_access": "Als u uw eigen aangepaste Azure app wilt gebruiken in plaats van de standaard Activepieces app, volg dan de [Azure app creatie guide](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app#register-an-application),\n zet de **Redirect URI** naar {{redirectUrl}} en voeg de volgende **Power BI Service (Delegated) permissies** toe onder **API permissies**:\n - Dataset. eadWrite.Alle\n - offline_access",
   "Create Dataset": "Dataset aanmaken",
   "Push Rows to Dataset Table": "Duw rijen naar Dataset Tabel",
