@@ -1,4 +1,4 @@
-import { AppConnectionScope, AppConnectionStatus, AppConnectionType, ConnectionOperationType, ConnectionState, DiffState, FieldState, FieldType, FileCompression, FileId, FileType, FlowAction, FlowOperationStatus, FlowProjectOperationType, FlowState, FlowStatus, FlowSyncError, isNil, PopulatedFlow, PopulatedTable, ProjectId, ProjectState, TableOperationType, TableState } from '@activepieces/shared'
+import { AppConnectionScope, AppConnectionStatus, AppConnectionType, ConnectionOperationType, ConnectionState, DiffState, FieldState, FieldType, FileCompression, FileId, FileType, FlowOperationStatus, FlowProjectOperationType, FlowState, FlowStatus, FlowSyncError, isNil, PopulatedFlow, PopulatedTable, ProjectId, ProjectState, TableOperationType, TableState } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { appConnectionService } from '../../../../app-connection/app-connection-service/app-connection-service'
 import { fileService } from '../../../../file/file.service'
@@ -8,6 +8,7 @@ import { flowMigrations } from '../../../../flows/flow-version/migrations'
 import { fieldService } from '../../../../tables/field/field.service'
 import { tableService } from '../../../../tables/table/table.service'
 import { triggerSourceService } from '../../../../trigger/trigger-source/trigger-source-service'
+import { cleanFlowStateUtil } from './clean-flow-state'
 import { projectStateHelper } from './project-state-helper'
 
 export const projectStateService = (log: FastifyBaseLogger) => ({
@@ -204,12 +205,11 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
                 }
             })
 
-        const populatedTables = await Promise.all(tables.data.map(async (table) => {
-            const fields = await fieldService.getAll({
-                projectId,
-                tableId: table.id,
-            })
-            return { ...table, fields }
+        const tableIds = tables.data.map((t) => t.id)
+        const fieldsMap = await fieldService.getAllByTableIds({ projectId, tableIds })
+        const populatedTables = tables.data.map((table) => ({
+            ...table,
+            fields: fieldsMap.get(table.id) ?? [],
         }))
 
         return toProjectState({
@@ -227,9 +227,7 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
             externalId: flow.externalId ?? flow.id,
             version: migratedVersion,
         }
-        const cleanedFlowState = FlowState.parse(flowState)
-        cleanedFlowState.version.trigger.nextAction = isNil(cleanedFlowState.version.trigger.nextAction) ? undefined : FlowAction.parse(cleanedFlowState.version.trigger.nextAction)
-        return cleanedFlowState
+        return cleanFlowStateUtil.cleanFlowState(flowState)
     },
     getTableState(table: PopulatedTable): TableState {
         const fields: FieldState[] = table.fields.map((field) => ({

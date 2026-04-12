@@ -1,4 +1,4 @@
-import { PlatformRole, ApFlagId } from '@activepieces/shared';
+import { PlatformRole } from '@activepieces/shared';
 import { t } from 'i18next';
 
 import { CenteredPage } from '@/app/components/centered-page';
@@ -7,7 +7,7 @@ import {
   aiProviderQueries,
   aiProviderMutations,
 } from '@/features/platform-admin';
-import { flagsHooks } from '@/hooks/flags-hooks';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 
 import LockedFeatureGuard from '../../../../components/locked-feature-guard';
@@ -17,8 +17,8 @@ import { AIProviderCard } from './universal-pieces/ai-provider-card';
 export default function AIProvidersPage() {
   const { data: providers, refetch } = aiProviderQueries.useAiProviders();
   const { data: currentUser } = userHooks.useCurrentUser();
-  const { data: flags } = flagsHooks.useFlags();
-  const allowWrite = flags?.[ApFlagId.CAN_CONFIGURE_AI_PROVIDER] === true;
+  const { platform } = platformHooks.useCurrentPlatform();
+  const allowWrite = platform.plan.aiProvidersEnabled;
 
   const { mutateAsync: deleteProvider } =
     aiProviderMutations.useDeleteAiProvider({

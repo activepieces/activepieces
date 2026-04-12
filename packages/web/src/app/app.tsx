@@ -24,42 +24,20 @@ import { EmbeddingFontLoader } from './components/embedding-font-loader';
 import { InitialDataGuard } from './components/initial-data-guard';
 import { ApRouter } from './guards';
 
-const MAJOR_QUERY_PREFIXES = new Set([
-  'audit-logs',
-  'project-releases',
-  'users',
-  'platform-invitations',
-  'app-connections',
-  'globalConnections',
-  'project-members',
-  'user-invitations',
-  'secret-managers',
-  'pieces-table',
-  'templates',
-  'flow-run-table',
-  'trigger-status-report',
-  'flows',
-  'folders',
-  'all-folder-contents',
-  'root-flows',
-  'root-tables',
-  'tables',
-  'user-leaderboard',
-  'project-leaderboard',
-]);
-
 const queryClient = new QueryClient({
   queryCache: new QueryCache({
     onError: (error, query) => {
-      const prefix = query.queryKey[0];
-      if (typeof prefix === 'string' && MAJOR_QUERY_PREFIXES.has(prefix)) {
+      if (query.meta?.showErrorDialog) {
         const { openDialog } = useApErrorDialogStore.getState();
         openDialog({
           title: t('Failed to load data'),
           description: t(
             'Something went wrong while loading your data. Your data is safe — please try again by refreshing the page.',
           ),
-          error: api.isError(error) ? error.response?.data : error,
+          error: {
+            queryKey: query.queryKey,
+            details: api.isError(error) ? error.response?.data : String(error),
+          },
         });
       }
     },
