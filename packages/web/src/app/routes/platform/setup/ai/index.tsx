@@ -1,4 +1,4 @@
-import { PlatformRole, ApFlagId } from '@activepieces/shared';
+import { PlatformRole } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ArrowLeft, ArrowLeftRight } from 'lucide-react';
 import { useState } from 'react';
@@ -10,7 +10,7 @@ import {
   aiProviderQueries,
   aiProviderMutations,
 } from '@/features/platform-admin';
-import { flagsHooks } from '@/hooks/flags-hooks';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 
 import LockedFeatureGuard from '../../../../components/locked-feature-guard';
@@ -22,10 +22,9 @@ import { AIProviderCard } from './universal-pieces/ai-provider-card';
 export default function AIProvidersPage() {
   const { data: providers, refetch } = aiProviderQueries.useAiProviders();
   const { data: currentUser } = userHooks.useCurrentUser();
-  const { data: flags } = flagsHooks.useFlags();
-  const allowWrite = flags?.[ApFlagId.CAN_CONFIGURE_AI_PROVIDER] === true;
   const [view, setView] = useState<'providers' | 'migrations'>('providers');
   const [migrateDialogOpen, setMigrateDialogOpen] = useState(false);
+  const { platform: { plan:{aiProvidersEnabled}} } = platformHooks.useCurrentPlatform();
 
   const { mutateAsync: deleteProvider } =
     aiProviderMutations.useDeleteAiProvider({
@@ -45,7 +44,7 @@ export default function AIProvidersPage() {
         <CenteredPage
           title={t('AI Providers')}
           description={
-            allowWrite
+            aiProvidersEnabled
               ? t(
                   'Set provider credentials that will be used by universal AI pieces, i.e Text AI.',
                 )
@@ -54,7 +53,7 @@ export default function AIProvidersPage() {
                 )
           }
           actions={
-            allowWrite && providers && providers?.length > 0 ? (
+            aiProvidersEnabled && providers && providers?.length > 0 ? (
               <Button
                 variant="outline"
                 size="sm"
@@ -79,7 +78,7 @@ export default function AIProvidersPage() {
                   providerConfig={config}
                   onDelete={(id) => deleteProvider(id)}
                   onSave={() => refetch()}
-                  allowWrite={allowWrite}
+                  allowWrite={aiProvidersEnabled}
                 />
               );
             })}
@@ -102,7 +101,7 @@ export default function AIProvidersPage() {
           }
         >
           <AiProviderMigrationsTable
-            showMigrateButton={allowWrite && (providers?.length ?? 0) > 0}
+            showMigrateButton={aiProvidersEnabled && (providers?.length ?? 0) > 0}
             onMigrateClick={() => setMigrateDialogOpen(true)}
           />
         </CenteredPage>

@@ -6,6 +6,7 @@ import {
     isNil,
     McpServer,
     McpToolDefinition,
+    Permission,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
@@ -22,6 +23,7 @@ const deleteBranchInput = z.object({
 export const apDeleteBranchTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_delete_branch',
+        permission: Permission.WRITE_FLOW,
         description: 'Delete a branch from a router (ROUTER) step. Cannot delete the last (fallback) branch. Use ap_flow_structure to get branch indices.',
         inputSchema: {
             flowId: z.string().describe('The id of the flow'),

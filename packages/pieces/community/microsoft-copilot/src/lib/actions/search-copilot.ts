@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { microsoft365CopilotAuth } from '../common/auth';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { getGraphBaseUrl, getMicrosoftCloudFromAuth } from '../common/microsoft-cloud';
 
 export const searchCopilot = createAction({
   auth: microsoft365CopilotAuth,
@@ -31,6 +32,9 @@ export const searchCopilot = createAction({
   async run(context) {
     const { query, filterExpression, resourceMetadata } = context.propsValue;
 
+    const cloud = getMicrosoftCloudFromAuth(context.auth);
+    const graphBaseUrl = getGraphBaseUrl(cloud);
+
     const requestBody: any = {
       query: query,
     };
@@ -59,7 +63,7 @@ export const searchCopilot = createAction({
 
     const response: any = await httpClient.sendRequest({
       method: HttpMethod.POST,
-      url: 'https://graph.microsoft.com/beta/copilot/search',
+      url: `${graphBaseUrl}/beta/copilot/search`,
       headers: {
         Authorization: `Bearer ${context.auth.access_token}`,
         'Content-Type': 'application/json',

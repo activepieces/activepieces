@@ -5,6 +5,7 @@ import {
     isNil,
     McpServer,
     McpToolDefinition,
+    Permission,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
@@ -20,6 +21,7 @@ const changeFlowStatusInput = z.object({
 export const apChangeFlowStatusTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_change_flow_status',
+        permission: Permission.UPDATE_FLOW_STATUS,
         description: 'Enable or disable a flow. The flow must be published first (use ap_lock_and_publish). Use ap_list_flows to get flow IDs.',
         inputSchema: {
             flowId: z.string().describe('The id of the flow'),

@@ -1,4 +1,4 @@
-import { McpServer, McpToolDefinition } from '@activepieces/shared'
+import { McpServer, McpToolDefinition, Permission } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { recordService } from '../../tables/record/record.service'
@@ -14,6 +14,7 @@ const updateRecordInput = z.object({
 export const apUpdateRecordTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_update_record',
+        permission: Permission.WRITE_TABLE,
         description: 'Update specific cells in a record. Pass field names and new values — only specified fields are updated, others remain unchanged. Use ap_find_records to get record IDs.',
         inputSchema: updateRecordInput.shape,
         annotations: { destructiveHint: false, idempotentHint: true, openWorldHint: false },

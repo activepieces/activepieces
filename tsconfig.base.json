@@ -830,11 +830,17 @@
       "@activepieces/piece-oracle-fusion-cloud-erp": [
         "packages/pieces/community/oracle-fusion-cloud-erp/src/index.ts"
       ],
+      "@activepieces/piece-paddle": [
+        "packages/pieces/community/paddle/src/index.ts"
+      ],
       "@activepieces/piece-pandadoc": [
         "packages/pieces/community/pandadoc/src/index.ts"
       ],
       "@activepieces/piece-paperform": [
         "packages/pieces/community/paperform/src/index.ts"
+      ],
+      "@activepieces/piece-pagerduty": [
+        "packages/pieces/community/pagerduty/src/index.ts"
       ],
       "@activepieces/piece-parseur": [
         "packages/pieces/community/parseur/src/index.ts"
@@ -951,6 +957,9 @@
       "@activepieces/piece-respond-io": [
         "packages/pieces/community/respond-io/src/index.ts"
       ],
+      "@activepieces/piece-reply-io": [
+        "packages/pieces/community/reply-io/src/index.ts"
+      ],
       "@activepieces/piece-retable": [
         "packages/pieces/community/retable/src/index.ts"
       ],
@@ -962,6 +971,9 @@
       ],
       "@activepieces/piece-returning-ai": [
         "packages/pieces/community/returning-ai/src/index.ts"
+      ],
+      "@activepieces/piece-recurly": [
+        "packages/pieces/community/recurly/src/index.ts"
       ],
       "@activepieces/piece-robolly": [
         "packages/pieces/community/robolly/src/index.ts"
@@ -1405,6 +1417,9 @@
       ],
       "@activepieces/piece-gladia": [
         "packages/pieces/community/gladia/src/index.ts"
+      ],
+      "@activepieces/piece-glide": [
+        "packages/pieces/community/glide/src/index.ts"
       ],
       "@activepieces/piece-manus": [
         "packages/pieces/community/manus/src/index.ts"
@@ -1895,6 +1910,9 @@
       ],
       "@activepieces/piece-bland-ai": [
         "packages/pieces/community/bland-ai/src/index.ts"
+      ],
+      "@activepieces/piece-vapi": [
+        "packages/pieces/community/vapi/src/index.ts"
       ],
       "@activepieces/piece-canny": [
         "packages/pieces/community/canny/src/index.ts"

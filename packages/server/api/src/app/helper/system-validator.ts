@@ -7,7 +7,7 @@ import { s3Helper } from '../file/s3-helper'
 import { encryptUtils } from './encryption'
 import { jwtUtils } from './jwt-utils'
 import { system } from './system/system'
-import { AppSystemProp, ContainerType, SystemProp, WorkerSystemProp } from './system/system-props'
+import { AppSystemProp, ContainerType, SystemProp } from './system/system-props'
 
 
 function enumValidator<T extends string>(enumValues: T[]) {
@@ -71,12 +71,9 @@ const systemPropValidators: {
     [AppSystemProp.BETTERSTACK_HOST]: stringValidator,
     [AppSystemProp.OTEL_ENABLED]: booleanValidator,
     [AppSystemProp.HYPERDX_TOKEN]: stringValidator,
-    [WorkerSystemProp.FRONTEND_URL]: urlValidator,
-    [WorkerSystemProp.CONTAINER_TYPE]: enumValidator(Object.values(ContainerType)),
-    [WorkerSystemProp.WORKER_TOKEN]: stringValidator,
-    [WorkerSystemProp.PORT]: numberValidator,
-    [WorkerSystemProp.PLATFORM_ID_FOR_DEDICATED_WORKER]: stringValidator,
-    [WorkerSystemProp.PRE_WARM_CACHE]: booleanValidator,
+    [AppSystemProp.FRONTEND_URL]: urlValidator,
+    [AppSystemProp.CONTAINER_TYPE]: enumValidator(Object.values(ContainerType)),
+    [AppSystemProp.PORT]: numberValidator,
     // AppSystemProp
     [AppSystemProp.API_KEY]: stringValidator,
     [AppSystemProp.TEMPLATES_API_KEY]: stringValidator,

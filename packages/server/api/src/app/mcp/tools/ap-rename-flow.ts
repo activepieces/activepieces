@@ -4,6 +4,7 @@ import {
     isNil,
     McpServer,
     McpToolDefinition,
+    Permission,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
@@ -19,6 +20,7 @@ const renameFlowInput = z.object({
 export const apRenameFlowTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_rename_flow',
+        permission: Permission.WRITE_FLOW,
         description: 'Rename a flow. Use ap_list_flows to get valid flow IDs.',
         inputSchema: {
             flowId: z.string().describe('The id of the flow to rename'),

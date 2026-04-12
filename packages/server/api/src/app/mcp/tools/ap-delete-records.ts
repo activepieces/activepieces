@@ -1,4 +1,4 @@
-import { McpServer, McpToolDefinition } from '@activepieces/shared'
+import { McpServer, McpToolDefinition, Permission } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { recordService } from '../../tables/record/record.service'
@@ -11,6 +11,7 @@ const deleteRecordsInput = z.object({
 export const apDeleteRecordsTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_delete_records',
+        permission: Permission.WRITE_TABLE,
         description: 'Permanently delete one or more records from a table by their IDs. This action cannot be undone. Use ap_find_records to get record IDs.',
         inputSchema: deleteRecordsInput.shape,
         annotations: { destructiveHint: true, openWorldHint: false },

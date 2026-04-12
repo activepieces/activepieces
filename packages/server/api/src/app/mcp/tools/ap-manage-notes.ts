@@ -6,6 +6,7 @@ import {
     McpServer,
     McpToolDefinition,
     NoteColorVariant,
+    Permission,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
@@ -32,6 +33,7 @@ const manageNotesInput = z.object({
 export const apManageNotesTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_manage_notes',
+        permission: Permission.WRITE_FLOW,
         description: 'Add, update, or delete canvas notes on a flow. Notes are visual annotations on the flow canvas.',
         inputSchema: {
             flowId: z.string().describe('The id of the flow'),

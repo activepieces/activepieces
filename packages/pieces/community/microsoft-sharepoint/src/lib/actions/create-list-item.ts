@@ -1,5 +1,6 @@
 import { microsoftSharePointAuth } from '../auth';
 import { createAction } from '@activepieces/pieces-framework';
+import { getGraphBaseUrl } from '../common/microsoft-cloud';
 import { microsoftSharePointCommon } from '../common';
 import { Client } from '@microsoft/microsoft-graph-client';
 
@@ -16,10 +17,12 @@ export const createListItemAction = createAction({
   async run(context) {
     const { siteId, listId, listColumns } = context.propsValue;
 
+    const cloud = context.auth.props?.['cloud'] as string | undefined;
     const client = Client.initWithMiddleware({
       authProvider: {
         getAccessToken: () => Promise.resolve(context.auth.access_token),
       },
+      baseUrl: getGraphBaseUrl(cloud),
     });
     const fieldWithArrayValues: Record<string, string> = {};
 

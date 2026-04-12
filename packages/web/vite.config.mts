@@ -29,10 +29,11 @@ export default defineConfig(({ command, mode }) => {
           },
           ws: true,
         },
-        '/mcp': {
+        '^/mcp$': {
           target: 'http://127.0.0.1:3000',
           secure: false,
           changeOrigin: true,
+          rewrite: (p: string) => p,
         },
         '/.well-known/oauth-authorization-server': {
           target: 'http://127.0.0.1:3000',

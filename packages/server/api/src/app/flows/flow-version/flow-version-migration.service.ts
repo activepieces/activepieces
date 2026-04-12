@@ -1,3 +1,4 @@
+import { onCallService } from '@activepieces/server-utils'
 import {
     ActivepiecesError,
     AgentPieceProps,
@@ -33,10 +34,11 @@ import { buildPaginator } from 'src/app/helper/pagination/build-paginator'
 import { paginationHelper } from 'src/app/helper/pagination/pagination-utils'
 import { SystemJobData, SystemJobName } from 'src/app/helper/system-jobs/common'
 import { systemJobsSchedule } from 'src/app/helper/system-jobs/system-job'
-import { onCallService } from '../../helper/on-call.service'
 import { flowExecutionCache } from '../flow/flow-execution-cache'
 import { flowRepo } from '../flow/flow.repo'
 import { FlowMigrationEntity } from './flow-migration.entity'
+import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-props'
 import { flowVersionBackupService } from './flow-version-backup.service'
 import { flowVersionRepo } from './flow-version.service'
 import { flowMigrations } from './migrations'
@@ -58,11 +60,13 @@ export const flowVersionMigrationService = (log: FastifyBaseLogger) => ({
 
         const { data: migratedFlowVersion, error: migrationError } = await tryCatch(() => flowMigrations.apply(flowVersion, { log, projectId }))
         if (migrationError) {
-            const apError = new ActivepiecesError({
+            onCallService(log, system.get(AppSystemProp.PAGE_ONCALL_WEBHOOK)).page({
                 code: ErrorCode.FLOW_MIGRATION_FAILED,
-                params: { flowVersionId: flowVersion.id, message: migrationError.message },
+                message: migrationError.message,
+                params: { flowVersionId: flowVersion.id },
+            }).catch((pageError) => {
+                log.error({ pageError }, '[flowVersionMigration] Failed to send on-call page')
             })
-            await onCallService(log).page(apError)
             throw migrationError
         }
 

@@ -1,7 +1,6 @@
 import { OAuth2PropertyValue, Property, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
-import { getTaskListsDropdown } from '../common';
+import { getTaskListsDropdown, createTodoClient } from '../common';
 import { microsoftToDoAuth } from '../auth';
-import { Client } from '@microsoft/microsoft-graph-client';
 import dayjs from 'dayjs';
 import { TodoTask } from '@microsoft/microsoft-graph-types';
 
@@ -47,9 +46,7 @@ export const taskCompletedTrigger = createTrigger({
 
     async onEnable(context) {
         try {
-            const client = Client.initWithMiddleware({
-                authProvider: { getAccessToken: () => Promise.resolve(context.auth.access_token) },
-            });
+            const client = createTodoClient(context.auth);
 
             const clientState = Math.random().toString(36).substring(7);
             const expirationDateTime = dayjs().add(2, 'days').toISOString();
@@ -73,9 +70,7 @@ export const taskCompletedTrigger = createTrigger({
         try {
             const subscriptionId = await context.store.get('subscriptionId') as string | null;
             if (subscriptionId) {
-                const client = Client.initWithMiddleware({
-                    authProvider: { getAccessToken: () => Promise.resolve(context.auth.access_token) },
-                });
+                const client = createTodoClient(context.auth);
                 await client.api(`/subscriptions/${subscriptionId}`).delete();
                 await context.store.delete('subscriptionId');
                 await context.store.delete('clientState');
@@ -89,9 +84,7 @@ export const taskCompletedTrigger = createTrigger({
         try {
             const subscriptionId = await context.store.get('subscriptionId') as string | null;
             if (subscriptionId) {
-                const client = Client.initWithMiddleware({
-                    authProvider: { getAccessToken: () => Promise.resolve(context.auth.access_token) },
-                });
+                const client = createTodoClient(context.auth);
                 await client.api(`/subscriptions/${subscriptionId}`).patch({
                     expirationDateTime: dayjs().add(2, 'days').toISOString(),
                 });
@@ -114,10 +107,8 @@ export const taskCompletedTrigger = createTrigger({
 
         const completedTasks: TodoTask[] = [];
 
-        const client = Client.initWithMiddleware({
-            authProvider: { getAccessToken: () => Promise.resolve(context.auth.access_token) },
-        });
-        
+        const client = createTodoClient(context.auth);
+
         for (const notification of payload.value) {
             const taskId = notification.resourceData?.id;
             if (!taskId) continue;
