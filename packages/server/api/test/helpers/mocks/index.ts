@@ -255,7 +255,7 @@ export const createMockPlatformPlan = (platformPlan?: Partial<PlatformPlan>): Pl
         plan: platformPlan?.plan,
         secretManagersEnabled: platformPlan?.secretManagersEnabled ?? false,
         scimEnabled: platformPlan?.scimEnabled ?? false,
-        agentsEnabled: platformPlan?.agentsEnabled ?? false,
+        canary: platformPlan?.canary ?? false
     }
 }
 export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
