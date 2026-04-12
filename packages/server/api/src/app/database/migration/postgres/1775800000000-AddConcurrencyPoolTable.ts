@@ -24,8 +24,8 @@ export class AddConcurrencyPoolTable1775800000000 implements Migration {
                 CONSTRAINT "pk_concurrency_pool" PRIMARY KEY ("id")
             )
         `)
-        await queryRunner.query(`CREATE UNIQUE INDEX "idx_concurrency_pool_platform_key" ON "concurrency_pool" ("platformId", "key")`)
-        await queryRunner.query(`ALTER TABLE "project" ADD "poolId" character varying(21)`)
+        await queryRunner.query('CREATE UNIQUE INDEX "idx_concurrency_pool_platform_key" ON "concurrency_pool" ("platformId", "key")')
+        await queryRunner.query('ALTER TABLE "project" ADD "poolId" character varying(21)')
         await queryRunner.query(`
             ALTER TABLE "project"
             ADD CONSTRAINT "fk_project_pool_id"
@@ -33,23 +33,23 @@ export class AddConcurrencyPoolTable1775800000000 implements Migration {
             ON DELETE SET NULL
         `)
         if (isPGlite) {
-            await queryRunner.query(`CREATE INDEX "idx_project_pool_id" ON "project" ("poolId")`)
+            await queryRunner.query('CREATE INDEX "idx_project_pool_id" ON "project" ("poolId")')
         }
         else {
-            await queryRunner.query(`CREATE INDEX CONCURRENTLY "idx_project_pool_id" ON "project" ("poolId")`)
+            await queryRunner.query('CREATE INDEX CONCURRENTLY "idx_project_pool_id" ON "project" ("poolId")')
         }
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         if (isPGlite) {
-            await queryRunner.query(`DROP INDEX "idx_project_pool_id"`)
+            await queryRunner.query('DROP INDEX "idx_project_pool_id"')
         }
         else {
-            await queryRunner.query(`DROP INDEX CONCURRENTLY "idx_project_pool_id"`)
+            await queryRunner.query('DROP INDEX CONCURRENTLY "idx_project_pool_id"')
         }
-        await queryRunner.query(`ALTER TABLE "project" DROP CONSTRAINT "fk_project_pool_id"`)
-        await queryRunner.query(`ALTER TABLE "project" DROP COLUMN "poolId"`)
-        await queryRunner.query(`DROP INDEX "idx_concurrency_pool_platform_key"`)
-        await queryRunner.query(`DROP TABLE "concurrency_pool"`)
+        await queryRunner.query('ALTER TABLE "project" DROP CONSTRAINT "fk_project_pool_id"')
+        await queryRunner.query('ALTER TABLE "project" DROP COLUMN "poolId"')
+        await queryRunner.query('DROP INDEX "idx_concurrency_pool_platform_key"')
+        await queryRunner.query('DROP TABLE "concurrency_pool"')
     }
 }
