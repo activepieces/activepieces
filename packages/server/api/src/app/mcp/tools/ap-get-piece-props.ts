@@ -87,6 +87,7 @@ const getPiecePropsInput = z.object({
 })
 
 const DROPDOWN_TYPES = new Set([PropertyType.DROPDOWN, PropertyType.MULTI_SELECT_DROPDOWN])
+const DROPDOWN_TIMEOUT_MS = 15_000
 
 async function resolveDropdownOptions({ props, componentProps, pieceName, pieceVersion, actionOrTriggerName, auth, flowId, projectId, log }: ResolveDropdownParams): Promise<void> {
     const project = await projectService(log).getOneOrThrow(projectId)
@@ -111,8 +112,8 @@ async function resolveDropdownOptions({ props, componentProps, pieceName, pieceV
 
     await Promise.all(dropdownProps.map(async (prop) => {
         try {
-            const result = await withTimeout(
-                userInteractionWatcher.submitAndWaitForResponse<EngineResponse<{
+            const result = await withTimeout({
+                promise: userInteractionWatcher.submitAndWaitForResponse<EngineResponse<{
                     options: Array<{ label: string, value: unknown }>
                     disabled?: boolean
                 }>>({
@@ -127,8 +128,8 @@ async function resolveDropdownOptions({ props, componentProps, pieceName, pieceV
                     searchValue: undefined,
                     piece: piecePackage,
                 }, log),
-                DROPDOWN_TIMEOUT_MS,
-            )
+                ms: DROPDOWN_TIMEOUT_MS,
+            })
 
             if (result.status === EngineResponseStatus.OK && result.response?.options && Array.isArray(result.response.options)) {
                 prop.options = result.response.options.map((o: { label: string, value: unknown }) => ({ label: o.label, value: o.value }))
@@ -141,9 +142,7 @@ async function resolveDropdownOptions({ props, componentProps, pieceName, pieceV
     }))
 }
 
-const DROPDOWN_TIMEOUT_MS = 15_000
-
-function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+function withTimeout<T>({ promise, ms }: { promise: Promise<T>, ms: number }): Promise<T> {
     let timer: ReturnType<typeof setTimeout>
     return Promise.race([
         promise.finally(() => clearTimeout(timer)),
