@@ -1,11 +1,11 @@
-import { ApFlagId, PopulatedMcpServer } from '@activepieces/shared';
+import { ApFlagId } from '@activepieces/shared';
 import { t } from 'i18next';
 
 import { CopyButton } from '@/components/custom/clipboard/copy-button';
 import { CollapsibleJson } from '@/components/custom/collapsible-json';
 import { flagsHooks } from '@/hooks/flags-hooks';
 
-export function McpCredentials(_props: McpCredentialsProps) {
+export function McpCredentials() {
   const { data: publicUrl } = flagsHooks.useFlag<string>(ApFlagId.PUBLIC_URL);
   const serverUrl = `${(publicUrl ?? '').replace(/\/$/, '')}/mcp`;
 
@@ -45,7 +45,3 @@ export function McpCredentials(_props: McpCredentialsProps) {
     </div>
   );
 }
-
-type McpCredentialsProps = {
-  mcpServer: PopulatedMcpServer;
-};

@@ -109,9 +109,19 @@ export const recordService = {
                 recordId: In(records.map((record) => record.id)),
             },
         })
-        records.map((record) => {
-            record.cells = cells.filter((cell) => cell.recordId === record.id)
-        })
+        const cellsByRecordId = new Map<string, typeof cells>()
+        for (const cell of cells) {
+            const group = cellsByRecordId.get(cell.recordId)
+            if (group) {
+                group.push(cell)
+            }
+            else {
+                cellsByRecordId.set(cell.recordId, [cell])
+            }
+        }
+        for (const record of records) {
+            record.cells = cellsByRecordId.get(record.id) ?? []
+        }
         const filteredOutRecords = records.filter((record) => {
             if (!filters || filters.length === 0) {
                 return true

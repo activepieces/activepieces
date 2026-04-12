@@ -100,7 +100,7 @@ function normalizePieceName(pieceName: string | undefined): string | undefined {
     return `@activepieces/piece-${normalized}`
 }
 
-export { mcpToolError, diagnosePieceProps, buildPropSummaries, normalizePieceName, AUTH_TYPES as AUTH_PROP_TYPES }
+export { mcpToolError, diagnosePieceProps, buildPropSummaries, normalizePieceName }
 
 type DiagnosePiecePropsParams = {
     props: PiecePropertyMap
