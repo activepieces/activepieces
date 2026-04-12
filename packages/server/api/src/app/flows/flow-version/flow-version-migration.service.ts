@@ -306,47 +306,5 @@ function buildMigrationOperations({ flowVersion, sourceModel, targetModel }: {
         })
     }
 
-    if (operations.length > 0) {
-        const lastStepName = findLastStepInMainChain(flowVersion)
-        const existingNames = allSteps.map((s) => s.name)
-        const uniqueName = flowStructureUtil.findUnusedName(existingNames)
-        operations.push({
-            type: FlowOperationType.ADD_ACTION,
-            request: {
-                parentStep: lastStepName,
-                action: {
-                    name: uniqueName,
-                    displayName: 'Code',
-                    valid: true,
-                    skip: false,
-                    type: FlowActionType.CODE,
-                    settings: {
-                        sourceCode: {
-                            code: 'export const code = async (inputs) => {\n  return 123;\n};',
-                            packageJson: '{}',
-                        },
-                        input: {},
-                        errorHandlingOptions: {
-                            continueOnFailure: {
-                                value: false,
-                            },
-                            retryOnFailure: {
-                                value: false,
-                            },
-                        },
-                    },
-                },
-            },
-        })
-    }
-
     return operations
-}
-
-function findLastStepInMainChain(flowVersion: FlowVersion): string {
-    let current: { name: string, nextAction?: unknown } = flowVersion.trigger
-    while (current.nextAction) {
-        current = current.nextAction as { name: string, nextAction?: unknown }
-    }
-    return current.name
 }
