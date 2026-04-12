@@ -13,7 +13,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
 import { projectService } from '../../project/project-service'
-import { mcpToolError } from './mcp-utils'
+import { mcpUtils } from './mcp-utils'
 
 const addBranchInput = z.object({
     flowId: z.string(),
@@ -98,7 +98,7 @@ export const apAddBranchTool = (mcp: McpServer, log: FastifyBaseLogger): McpTool
                 }
             }
             catch (err) {
-                return mcpToolError('Add branch failed', err)
+                return mcpUtils.mcpToolError('Add branch failed', err)
             }
         },
     }

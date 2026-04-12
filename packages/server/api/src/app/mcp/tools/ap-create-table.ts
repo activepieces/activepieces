@@ -3,7 +3,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { fieldService } from '../../tables/field/field.service'
 import { tableService } from '../../tables/table/table.service'
-import { mcpToolError } from './mcp-utils'
+import { mcpUtils } from './mcp-utils'
 import { fieldTypeSchema, formatFieldInfo } from './table-utils'
 
 const createTableInput = z.object({
@@ -65,7 +65,7 @@ export const apCreateTableTool = (mcp: McpServer, log: FastifyBaseLogger): McpTo
             }
             catch (err) {
                 log.error({ err, projectId: mcp.projectId }, 'ap_create_table failed')
-                return mcpToolError('Failed to create table', err)
+                return mcpUtils.mcpToolError('Failed to create table', err)
             }
         },
     }
