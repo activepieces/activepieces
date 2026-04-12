@@ -1,6 +1,7 @@
 import { ApEdition, ExecutionType, JOB_PRIORITY, PlanName, ProgressUpdateType, RATE_LIMIT_PRIORITY, RunEnvironment, WorkerJobType } from '@activepieces/shared'
 import { Job } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
+import { Redis } from 'ioredis'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { getConcurrencyPoolLimitKey, getConcurrencyPoolSetKey, getPlatformPlanNameKey, getProjectConcurrencyPoolKey } from '../../../../../../src/app/database/redis/keys'
 import { distributedStore, redisConnections } from '../../../../../../src/app/database/redis-connections'
@@ -58,6 +59,13 @@ function disableRateLimiter() {
     })
 }
 
+async function deleteKeysByPattern(redis: Redis, pattern: string): Promise<void> {
+    const stream = redis.scanStream({ match: pattern, count: 100 })
+    for await (const keys of stream) {
+        if (keys.length > 0) await redis.del(...keys)
+    }
+}
+
 describe('rateLimiterInterceptor', () => {
     beforeEach(async () => {
         vi.restoreAllMocks()
@@ -70,26 +78,11 @@ describe('rateLimiterInterceptor', () => {
         vi.spyOn(system, 'getEdition').mockReturnValue(ApEdition.COMMUNITY)
 
         const redis = await redisConnections.useExisting()
-        const keys = await redis.keys('active_jobs_set:*')
-        if (keys.length > 0) {
-            await redis.del(...keys)
-        }
-        const projectKeys = await redis.keys('project:max-concurrent-jobs:*')
-        if (projectKeys.length > 0) {
-            await redis.del(...projectKeys)
-        }
-        const planKeys = await redis.keys('platform_plan:plan:*')
-        if (planKeys.length > 0) {
-            await redis.del(...planKeys)
-        }
-        const poolMappingKeys = await redis.keys('project:concurrency-pool:*')
-        if (poolMappingKeys.length > 0) {
-            await redis.del(...poolMappingKeys)
-        }
-        const poolLimitKeys = await redis.keys('concurrency-pool:limit:*')
-        if (poolLimitKeys.length > 0) {
-            await redis.del(...poolLimitKeys)
-        }
+        await deleteKeysByPattern(redis, 'active_jobs_set:*')
+        await deleteKeysByPattern(redis, 'project:max-concurrent-jobs:*')
+        await deleteKeysByPattern(redis, 'platform_plan:plan:*')
+        await deleteKeysByPattern(redis, 'project:concurrency-pool:*')
+        await deleteKeysByPattern(redis, 'concurrency-pool:limit:*')
     })
 
     describe('skip guards', () => {

@@ -1,3 +1,4 @@
+import { Redis } from 'ioredis'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
@@ -6,6 +7,13 @@ import { distributedStore, redisConnections } from '../../../../src/app/database
 import { concurrencyPoolService } from '../../../../src/app/ee/platform/concurrency-pool/concurrency-pool.service'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 import { mockAndSaveBasicSetup } from '../../../helpers/mocks'
+
+async function deleteKeysByPattern(redis: Redis, pattern: string): Promise<void> {
+    const stream = redis.scanStream({ match: pattern, count: 100 })
+    for await (const keys of stream) {
+        if (keys.length > 0) await redis.del(...keys)
+    }
+}
 
 let app: FastifyInstance
 let log: FastifyBaseLogger
@@ -21,12 +29,8 @@ afterAll(async () => {
 
 beforeEach(async () => {
     const redis = await redisConnections.useExisting()
-    const poolLimitKeys = await redis.keys('concurrency-pool:limit:*')
-    const projectPoolKeys = await redis.keys('project:concurrency-pool:*')
-    const allKeys = [...poolLimitKeys, ...projectPoolKeys]
-    if (allKeys.length > 0) {
-        await redis.del(...allKeys)
-    }
+    await deleteKeysByPattern(redis, 'concurrency-pool:limit:*')
+    await deleteKeysByPattern(redis, 'project:concurrency-pool:*')
 })
 
 describe('concurrencyPoolService', () => {

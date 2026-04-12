@@ -30,6 +30,7 @@ import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
 import { platformService } from '../../platform/platform.service'
 import { ProjectEntity } from '../../project/project-entity'
 import { applyProjectsAccessFilters, projectService } from '../../project/project-service'
+import { concurrencyPoolService } from '../platform/concurrency-pool/concurrency-pool.service'
 import { platformPlanService } from '../platform/platform-plan/platform-plan.service'
 import { projectMemberService } from './project-members/project-member.service'
 import { ProjectPlanEntity } from './project-plan/project-plan.entity'
@@ -130,11 +131,13 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
     }: UpdateParams): Promise<ProjectWithLimits> {
         const project = await projectService(log).getOneOrThrow(projectId)
         const platformPlan = await platformPlanService(log).getOrCreateForPlatform(project.platformId)
-        const { globalConnectionExternalIds, ...rest } = request
+        const { globalConnectionExternalIds, maxConcurrentJobs, ...rest } = request
         await transaction(async (entityManager) => {
+            const poolId = await resolvePoolId({ platformId: project.platformId, projectId, maxConcurrentJobs, log })
             await projectService(log).update(projectId, {
                 type: project.type,
                 ...rest,
+                ...spreadIfDefined('poolId', poolId),
             }, entityManager)
             if (platformPlan.globalConnectionsEnabled && globalConnectionExternalIds) {
                 const projectGlobalConnections = await appConnectionsRepo(entityManager).find({
@@ -269,6 +272,27 @@ async function enrichProjects(
     })
 }
 
+async function resolvePoolId({ platformId, projectId, maxConcurrentJobs, log }: ResolvePoolIdParams): Promise<string | null | undefined> {
+    if (typeof maxConcurrentJobs === 'number') {
+        const { poolId } = await concurrencyPoolService(log).upsertPool({
+            platformId,
+            key: projectId,
+            maxConcurrentJobs,
+        })
+        return poolId
+    }
+    if (maxConcurrentJobs === null) {
+        return null
+    }
+    return undefined
+}
+
+type ResolvePoolIdParams = {
+    platformId: string
+    projectId: string
+    maxConcurrentJobs: number | null | undefined
+    log: FastifyBaseLogger
+}
 
 type GetAllForParamsAndUser = {
     userId: string

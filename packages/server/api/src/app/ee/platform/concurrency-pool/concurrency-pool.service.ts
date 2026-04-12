@@ -7,6 +7,7 @@ import { projectRepo } from '../../../project/project-repo'
 import { ConcurrencyPoolEntity, ConcurrencyPoolEntitySchema } from './concurrency-pool.entity'
 
 const concurrencyPoolRepo = repoFactory<ConcurrencyPoolEntitySchema>(ConcurrencyPoolEntity)
+const CACHE_TTL_SECONDS = 86400 // 24 hours
 
 export const concurrencyPoolService = (_log: FastifyBaseLogger) => ({
 
@@ -22,7 +23,7 @@ export const concurrencyPoolService = (_log: FastifyBaseLogger) => ({
             maxConcurrentJobs: maxConcurrentJobs ?? existing?.maxConcurrentJobs ?? 1,
         }, ['platformId', 'key'])
         if (!isNil(maxConcurrentJobs)) {
-            await distributedStore.put(getConcurrencyPoolLimitKey(poolId), maxConcurrentJobs)
+            await distributedStore.put(getConcurrencyPoolLimitKey(poolId), maxConcurrentJobs, CACHE_TTL_SECONDS)
         }
         return { poolId }
     },
@@ -37,7 +38,7 @@ export const concurrencyPoolService = (_log: FastifyBaseLogger) => ({
         })
         const poolId = project?.poolId ?? null
         if (!isNil(poolId)) {
-            await distributedStore.put(getProjectConcurrencyPoolKey(projectId), poolId)
+            await distributedStore.put(getProjectConcurrencyPoolKey(projectId), poolId, CACHE_TTL_SECONDS)
         }
         return poolId
     },
@@ -52,7 +53,7 @@ export const concurrencyPoolService = (_log: FastifyBaseLogger) => ({
         })
         const limit = pool?.maxConcurrentJobs ?? null
         if (!isNil(limit)) {
-            await distributedStore.put(getConcurrencyPoolLimitKey(poolId), limit)
+            await distributedStore.put(getConcurrencyPoolLimitKey(poolId), limit, CACHE_TTL_SECONDS)
         }
         return limit
     },
