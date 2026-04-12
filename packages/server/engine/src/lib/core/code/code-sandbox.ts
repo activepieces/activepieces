@@ -1,9 +1,7 @@
-import { environmentMigrations } from '@activepieces/server-utils'
 import { EngineGenericError, ExecutionMode, isNil } from '@activepieces/shared'
 import { CodeSandbox } from '../../core/code/code-sandbox-common'
 
-const migratedEnv = environmentMigrations.migrate()
-export const EXECUTION_MODE = migratedEnv.AP_EXECUTION_MODE as ExecutionMode | undefined
+export const EXECUTION_MODE = process.env.AP_EXECUTION_MODE as ExecutionMode | undefined
 
 const loadNoOpCodeSandbox = async (): Promise<CodeSandbox> => {
     const noOpCodeSandboxModule = await import('./no-op-code-sandbox')
