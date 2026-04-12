@@ -42,7 +42,7 @@ jobs:
 
   build-image:
     needs: [guard]
-    if: needs.guard.result == 'success'
+    if: github.event_name != 'schedule' && needs.guard.result == 'success'
     runs-on: ubuntu-24.04
     outputs:
       image_tag: ${{ steps.set-tag.outputs.image_tag }}
