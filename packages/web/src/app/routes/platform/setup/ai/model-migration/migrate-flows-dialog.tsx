@@ -193,7 +193,6 @@ function MigrateFlowsDialogContent({
                 <p className="text-xs text-muted-foreground">
                   {t('Leave empty to apply to all projects.')}
                 </p>
-                <FormMessage />
               </FormItem>
             )}
           />
@@ -226,7 +225,6 @@ function MigrateFlowsDialogContent({
                     }}
                   />
                 </div>
-                <FormMessage />
               </FormItem>
             )}
           />
@@ -259,7 +257,6 @@ function MigrateFlowsDialogContent({
                     }}
                   />
                 </div>
-                <FormMessage />
               </FormItem>
             )}
           />
