@@ -1,6 +1,7 @@
+import { environmentMigrations } from '@activepieces/server-utils'
 import { from } from 'env-var'
 
-const env = from(process.env)
+const env = from(environmentMigrations.migrate())
 
 function getApiUrl(): string {
     const containerType = system.get(WorkerSystemProp.CONTAINER_TYPE) ?? 'WORKER_AND_APP'
