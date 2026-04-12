@@ -1,6 +1,6 @@
 import path from 'path'
+import { environmentMigrations } from '@activepieces/server-utils'
 import { assertNotNullOrUndefined } from '@activepieces/shared'
-import { environmentMigrations } from './env-migrations'
 
 export type SystemProp = AppSystemProp
 
