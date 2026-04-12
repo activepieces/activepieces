@@ -8,6 +8,7 @@ import { ConcurrencyPoolEntity, ConcurrencyPoolEntitySchema } from './concurrenc
 
 const concurrencyPoolRepo = repoFactory<ConcurrencyPoolEntitySchema>(ConcurrencyPoolEntity)
 const CACHE_TTL_SECONDS = 86400 // 24 hours
+const NO_POOL_SENTINEL = 'none'
 
 export const concurrencyPoolService = (_log: FastifyBaseLogger) => ({
 
@@ -43,16 +44,20 @@ export const concurrencyPoolService = (_log: FastifyBaseLogger) => ({
 
     async getProjectPoolId(projectId: string): Promise<string | null> {
         const cached = await distributedStore.get<string>(getProjectConcurrencyPoolKey(projectId))
-        if (!isNil(cached)) return cached
+        if (!isNil(cached)) {
+            return cached === NO_POOL_SENTINEL ? null : cached
+        }
 
         const project = await projectRepo().findOne({
             where: { id: projectId },
             select: { poolId: true },
         })
         const poolId = project?.poolId ?? null
-        if (!isNil(poolId)) {
-            await distributedStore.put(getProjectConcurrencyPoolKey(projectId), poolId, CACHE_TTL_SECONDS)
-        }
+        await distributedStore.put(
+            getProjectConcurrencyPoolKey(projectId),
+            poolId ?? NO_POOL_SENTINEL,
+            CACHE_TTL_SECONDS,
+        )
         return poolId
     },
 
