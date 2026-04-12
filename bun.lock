@@ -8017,6 +8017,7 @@
         "@activepieces/import-fresh-webpack": "3.3.0",
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/server-utils": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "ai": "^6.0.0",
         "async-mutex": "0.4.0",
