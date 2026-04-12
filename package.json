@@ -323,7 +323,7 @@
     "usehooks-ts": "3.1.0",
     "vaul": "1.1.2",
     "write-file-atomic": "5.0.1",
-    "yaml": "2.4.1",
+    "yaml": "2.8.3",
     "zod": "4.3.6",
     "zone.js": "0.14.4",
     "zustand": "4.5.4"
