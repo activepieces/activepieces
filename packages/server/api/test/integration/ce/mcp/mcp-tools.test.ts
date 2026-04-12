@@ -45,6 +45,27 @@ beforeAll(async () => {
         pieceType: PieceType.OFFICIAL,
         packageType: PackageType.REGISTRY,
         platformId: undefined,
+        actions: {
+            send_email: {
+                name: 'send_email',
+                displayName: 'Send Email',
+                description: 'Send an email',
+                requireAuth: true,
+                props: {
+                    to: { type: 'SHORT_TEXT', displayName: 'To', required: true },
+                    subject: { type: 'SHORT_TEXT', displayName: 'Subject', required: true },
+                },
+            },
+        },
+        triggers: {
+            new_email: {
+                name: 'new_email',
+                displayName: 'New Email',
+                description: 'Triggers on new email',
+                requireAuth: false,
+                props: {},
+            },
+        },
     })
     await db.save('piece_metadata', gmailPiece)
 })
@@ -288,7 +309,9 @@ describe('MCP Tools integration', () => {
         })
 
         expect(text(result)).toContain('✅')
-        expect(text(result)).toContain('schema')
+        expect(text(result)).toContain('send_email')
+        expect(text(result)).toContain('to')
+        expect(text(result)).toContain('subject')
     })
 
     it('12. ap_get_piece_props — returns error for non-existent piece', async () => {
@@ -408,7 +431,10 @@ describe('MCP Tools integration', () => {
 
         const result = await apValidateFlowTool(mcp, mockLog).execute({ flowId })
 
+        expect(text(result)).toContain('✅')
         expect(text(result)).toContain('ready to publish')
+        expect(text(result)).not.toContain('⚠️')
+        expect(text(result)).not.toContain('issue')
     })
 
     it('20. ap_validate_flow — flow with invalid step lists it', async () => {
@@ -436,8 +462,10 @@ describe('MCP Tools integration', () => {
         const result = await apValidateFlowTool(mcp, mockLog).execute({ flowId })
 
         expect(text(result)).toContain('⚠️')
-        expect(text(result)).toContain('invalid')
+        expect(text(result)).toContain('Step Validity')
         expect(text(result)).toContain('Unconfigured Piece')
+        expect(text(result)).toContain('invalid')
+        expect(text(result)).toContain('1 invalid')
     })
 
     it('21. ap_validate_flow — detects empty router branches', async () => {
@@ -462,6 +490,9 @@ describe('MCP Tools integration', () => {
 
         const result = await apValidateFlowTool(mcp, mockLog).execute({ flowId })
 
+        expect(text(result)).toContain('⚠️')
+        expect(text(result)).toContain('Empty Branches')
+        expect(text(result)).toContain('My Router')
         expect(text(result)).toContain('empty branch')
     })
 })
