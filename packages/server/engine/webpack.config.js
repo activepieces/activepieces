@@ -14,6 +14,7 @@ module.exports = {
   resolve: {
     extensions: ['.ts', '.js'],
     alias: {
+      '@activepieces/server-utils': path.resolve(__dirname, '../utils/src'),
       '@activepieces/shared': path.resolve(__dirname, '../../shared/src'),
       '@activepieces/pieces-framework': path.resolve(__dirname, '../../pieces/framework/src'),
       '@activepieces/pieces-common': path.resolve(__dirname, '../../pieces/common/src'),

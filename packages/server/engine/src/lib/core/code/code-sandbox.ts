@@ -1,6 +1,9 @@
+import { environmentMigrations } from '@activepieces/server-utils'
 import { EngineGenericError, ExecutionMode, isNil } from '@activepieces/shared'
 import { CodeSandbox } from '../../core/code/code-sandbox-common'
-export const EXECUTION_MODE = (process.env.AP_EXECUTION_MODE as ExecutionMode)
+
+const migratedEnv = environmentMigrations.migrate()
+export const EXECUTION_MODE = migratedEnv.AP_EXECUTION_MODE as ExecutionMode | undefined
 
 const loadNoOpCodeSandbox = async (): Promise<CodeSandbox> => {
     const noOpCodeSandboxModule = await import('./no-op-code-sandbox')
@@ -25,6 +28,9 @@ const loadCodeSandbox = async (): Promise<CodeSandbox> => {
     }
     
     const loader = loaders[EXECUTION_MODE]
+    if (isNil(loader)) {
+        throw new EngineGenericError('InvalidExecutionModeError', `Invalid AP_EXECUTION_MODE: ${EXECUTION_MODE}`)
+    }
     return loader()
 }
 
