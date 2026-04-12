@@ -53,7 +53,7 @@ const AuthSeparator = ({
 }) => {
   const { data: thirdPartyAuthProviders } =
     flagsHooks.useFlag<ThirdPartyAuthnProvidersToShowMap>(
-      ApFlagId.THIRD_PARTY_AUTH_PROVIDERS_TO_SHOW_MAP
+      ApFlagId.THIRD_PARTY_AUTH_PROVIDERS_TO_SHOW_MAP,
     );
 
   return (thirdPartyAuthProviders?.google || thirdPartyAuthProviders?.saml) &&
@@ -121,14 +121,14 @@ const BrandPanel = () => {
 
         <div className="flex-1 flex flex-col justify-center gap-5">
           <div className="w-16 h-1 rounded-full bg-violet-600" />
-          <h2 className="text-[42px] font-bold text-[#221A45] leading-tight tracking-tight">
+          <h2 className="text-[42px] font-bold text-foreground leading-tight tracking-tight">
             {t('Build faster,')}
             <br />
             {t('automate smarter.')}
           </h2>
-          <p className="text-[#5C528E] text-[16px] leading-relaxed max-w-sm">
+          <p className="text-muted-foreground text-[16px] leading-relaxed max-w-sm">
             {t(
-              'Join thousands of teams using Activepieces to connect their apps and automate workflows effortlessly.'
+              'Join thousands of teams using Activepieces to connect their apps and automate workflows effortlessly.',
             )}
           </p>
 
@@ -142,21 +142,21 @@ const BrandPanel = () => {
                   <div
                     className={cn(
                       'w-9 h-9 rounded-full flex items-center justify-center shrink-0',
-                      iconBg
+                      iconBg,
                     )}
                   >
                     <Icon className={cn('w-4 h-4', iconColor)} />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-[#221A45]">
+                    <p className="text-sm font-semibold text-foreground">
                       {t(title)}
                     </p>
-                    <p className="text-xs text-[#6B6299] leading-relaxed mt-0.5">
+                    <p className="text-xs text-muted-foreground leading-relaxed mt-0.5">
                       {t(desc)}
                     </p>
                   </div>
                 </div>
-              )
+              ),
             )}
           </div>
         </div>
@@ -172,7 +172,7 @@ const AuthFormTemplate = React.memo(
     const redirectAfterLogin = useRedirectAfterLogin();
     const [showCheckYourEmailNote, setShowCheckYourEmailNote] = useState(false);
     const { data: isEmailAuthEnabled } = flagsHooks.useFlag<boolean>(
-      ApFlagId.EMAIL_AUTH_ENABLED
+      ApFlagId.EMAIL_AUTH_ENABLED,
     );
     const isCloud = window.location.hostname === 'cloud.activepieces.com';
     const data = {
@@ -250,7 +250,7 @@ const AuthFormTemplate = React.memo(
         </div>
       </div>
     );
-  }
+  },
 );
 
 AuthFormTemplate.displayName = 'AuthFormTemplate';
