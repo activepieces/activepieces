@@ -35,7 +35,7 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
                 status: WaitpointStatus.PENDING,
                 resumeDateTime: params.resumeDateTime ?? null,
                 timeoutSeconds: params.timeoutSeconds ?? null,
-                responseToSend: params.responseToSend ? () => `'${JSON.stringify(params.responseToSend)}'::jsonb` : null,
+                responseToSend: params.responseToSend ?? null,
                 workerHandlerId: params.workerHandlerId ?? null,
                 httpRequestId: params.httpRequestId ?? null,
                 resumePayload: null,
@@ -111,7 +111,7 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
                     responseToSend: null,
                     workerHandlerId: params.workerHandlerId ?? null,
                     httpRequestId: null,
-                    resumePayload: () => `'${JSON.stringify(params.resumePayload)}'::jsonb`,
+                    resumePayload: params.resumePayload,
                 })
                 .orIgnore()
                 .execute()
