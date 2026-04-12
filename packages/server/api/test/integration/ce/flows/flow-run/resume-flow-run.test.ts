@@ -75,6 +75,40 @@ async function createPausedFlowRunWithWaitpoint(params: {
 }
 
 describe('Resume flow run', () => {
+    it('should resume legacy PAUSED flow with no waitpoint via async endpoint', async () => {
+        const flow = createMockFlow({ projectId: ctx.project.id })
+        await db.save('flow', flow)
+
+        const flowVersion = createMockFlowVersion({
+            flowId: flow.id,
+            state: FlowVersionState.LOCKED,
+        })
+        await db.save('flow_version', flowVersion)
+
+        const flowRun = createMockFlowRun({
+            projectId: ctx.project.id,
+            flowId: flow.id,
+            flowVersionId: flowVersion.id,
+            status: FlowRunStatus.PAUSED,
+            environment: RunEnvironment.PRODUCTION,
+        })
+        await db.save('flow_run', flowRun)
+        await db.update('flow_run', flowRun.id, {
+            pauseMetadata: { type: 'WEBHOOK', requestId: apId(), response: {} },
+        })
+
+        const response = await app.inject({
+            method: 'POST',
+            url: `/api/v1/flow-runs/${flowRun.id}/requests/${apId()}`,
+            body: { data: 'test' },
+        })
+
+        expect(response.statusCode).toBe(200)
+        expect(response.json()).toEqual({
+            message: 'Your response has been recorded. You can close this page now.',
+        })
+    })
+
     it('should resume successfully when flow is PAUSED with a PENDING waitpoint', async () => {
         const requestId = apId()
 
@@ -226,7 +260,46 @@ describe('Resume flow run', () => {
         expect(response.statusCode).toBe(200)
     })
 
-    it('sync: should return 410 when no waitpoint exists for PAUSED flow', async () => {
+    it('sync: should resume legacy PAUSED flow with no waitpoint', async () => {
+        const flow = createMockFlow({ projectId: ctx.project.id })
+        await db.save('flow', flow)
+
+        const flowVersion = createMockFlowVersion({
+            flowId: flow.id,
+            state: FlowVersionState.LOCKED,
+        })
+        await db.save('flow_version', flowVersion)
+
+        const requestId = apId()
+        const flowRun = createMockFlowRun({
+            projectId: ctx.project.id,
+            flowId: flow.id,
+            flowVersionId: flowVersion.id,
+            status: FlowRunStatus.PAUSED,
+            environment: RunEnvironment.PRODUCTION,
+        })
+        await db.save('flow_run', flowRun)
+        await db.update('flow_run', flowRun.id, {
+            pauseMetadata: { type: 'WEBHOOK', requestId: apId(), response: {} },
+        })
+
+        const responsePromise = app.inject({
+            method: 'POST',
+            url: `/api/v1/flow-runs/${flowRun.id}/requests/${requestId}/sync`,
+            body: { data: 'test' },
+        })
+
+        await new Promise((resolve) => setTimeout(resolve, 500))
+        await pubsub.publish(`engine-run:sync:${engineResponseWatcher(app.log).getServerId()}`, JSON.stringify({
+            requestId,
+            response: { status: 200, body: { ok: true }, headers: {} },
+        }))
+
+        const response = await responsePromise
+        expect(response.statusCode).toBe(200)
+    })
+
+    it('sync: should return 410 when PAUSED with no waitpoint and no legacy pauseMetadata', async () => {
         const flow = createMockFlow({ projectId: ctx.project.id })
         await db.save('flow', flow)
 

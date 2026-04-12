@@ -3,7 +3,7 @@ import { ErrorCode } from '../../core/common/activepieces-error'
 import { BaseModelSchema, Nullable } from '../../core/common/base-model'
 import { ApId } from '../../core/common/id-generator'
 import { ExecutionState } from './execution/execution-output'
-import { FlowRunStatus } from './execution/flow-execution'
+import { FlowRunStatus, PauseMetadata } from './execution/flow-execution'
 
 export const PARENT_RUN_ID_HEADER = 'ap-parent-run-id'
 export const FAIL_PARENT_ON_FAILURE_HEADER = 'ap-fail-parent-on-failure'
@@ -52,6 +52,8 @@ export const FlowRun = z.object({
     stepNameToTest: z.string().optional(),
     archivedAt: Nullable(z.string()),
     stepsCount: z.number().optional(),
+    /** @deprecated Use waitpoint table instead. Remove after 2026-10-12. */
+    pauseMetadata: PauseMetadata.optional(),
 })
 
 export const FailedStep = z.object({

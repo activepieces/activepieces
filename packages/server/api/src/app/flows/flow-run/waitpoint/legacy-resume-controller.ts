@@ -1,14 +1,12 @@
 import {
     ALL_PRINCIPAL_TYPES,
-    apId,
     ApId,
 } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyReply } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { z } from 'zod'
 import { securityAccess } from '../../../core/security/authorization/fastify-security'
-import { resumeService } from './resume-service'
-import { waitpointService } from './waitpoint-service'
+import { legacyResumeService } from './legacy-resume-service'
 
 /**
  * @deprecated Deprecated since 2026-04-12. Scheduled for removal after 2026-10-12.
@@ -17,17 +15,15 @@ import { waitpointService } from './waitpoint-service'
  */
 export const legacyResumeController: FastifyPluginAsyncZod = async (app) => {
     app.all('/:id/requests/:requestId', ResumeFlowRunRequest, async (req, reply) => {
-        const waitpoint = await waitpointService(req.log).getByFlowRunId(req.params.id)
         const headers = req.headers as Record<string, string>
         const queryParams = req.query as Record<string, string>
-        await handleAsyncResume({ flowRunId: req.params.id, waitpointId: waitpoint?.id ?? apId(), body: req.body, headers, queryParams, log: req.log, reply })
+        await handleAsyncResume({ flowRunId: req.params.id, body: req.body, headers, queryParams, log: req.log, reply })
     })
 
     app.all('/:id/requests/:requestId/sync', ResumeFlowRunRequest, async (req, reply) => {
-        const waitpoint = await waitpointService(req.log).getByFlowRunId(req.params.id)
         const headers = req.headers as Record<string, string>
         const queryParams = req.query as Record<string, string>
-        await handleSyncResume({ flowRunId: req.params.id, waitpointId: waitpoint?.id ?? apId(), body: req.body, headers, queryParams, log: req.log, reply, correlationId: req.params.requestId })
+        await handleSyncResume({ flowRunId: req.params.id, body: req.body, headers, queryParams, log: req.log, reply, correlationId: req.params.requestId })
     })
 }
 
@@ -43,10 +39,9 @@ const ResumeFlowRunRequest = {
     },
 }
 
-async function handleAsyncResume({ flowRunId, waitpointId, body, headers, queryParams, log, reply }: ResumeHandlerParams): Promise<void> {
-    const { stale } = await resumeService(log).resumeFromWaitpoint({
+async function handleAsyncResume({ flowRunId, body, headers, queryParams, log, reply }: ResumeHandlerParams): Promise<void> {
+    const { stale } = await legacyResumeService(log).resumeAsync({
         flowRunId,
-        waitpointId,
         resumePayload: { body, headers, queryParams },
     })
     if (stale) {
@@ -60,15 +55,10 @@ async function handleAsyncResume({ flowRunId, waitpointId, body, headers, queryP
     })
 }
 
-async function handleSyncResume({ flowRunId, waitpointId, body, headers, queryParams, log, reply, correlationId }: ResumeHandlerParams & { correlationId: string }): Promise<void> {
-    const response = await resumeService(log).handleSyncResumeFlow({
-        runId: flowRunId,
-        waitpointId,
-        payload: {
-            body,
-            headers,
-            queryParams,
-        },
+async function handleSyncResume({ flowRunId, body, headers, queryParams, log, reply, correlationId }: ResumeHandlerParams & { correlationId: string }): Promise<void> {
+    const response = await legacyResumeService(log).resumeSync({
+        flowRunId,
+        resumePayload: { body, headers, queryParams },
         correlationId,
     })
     await reply.status(response.status).headers(response.headers).send(response.body)
@@ -76,7 +66,6 @@ async function handleSyncResume({ flowRunId, waitpointId, body, headers, queryPa
 
 type ResumeHandlerParams = {
     flowRunId: string
-    waitpointId: string
     body: unknown
     headers: Record<string, string>
     queryParams: Record<string, string>
