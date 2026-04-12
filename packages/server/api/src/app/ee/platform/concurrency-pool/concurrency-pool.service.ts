@@ -1,4 +1,4 @@
-import { apId, isNil } from '@activepieces/shared'
+import { apId, isNil, tryCatch } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { getConcurrencyPoolLimitKey, getProjectConcurrencyPoolKey } from '../../../database/redis/keys'
@@ -15,13 +15,26 @@ export const concurrencyPoolService = (_log: FastifyBaseLogger) => ({
         const existing = await concurrencyPoolRepo().findOne({
             where: { platformId, key },
         })
-        const poolId = existing?.id ?? apId()
-        await concurrencyPoolRepo().upsert({
+        if (!isNil(existing)) {
+            const updatedLimit = maxConcurrentJobs ?? existing.maxConcurrentJobs
+            await concurrencyPoolRepo().update({ id: existing.id }, { maxConcurrentJobs: updatedLimit })
+            if (!isNil(maxConcurrentJobs)) {
+                await distributedStore.put(getConcurrencyPoolLimitKey(existing.id), maxConcurrentJobs, CACHE_TTL_SECONDS)
+            }
+            return { poolId: existing.id }
+        }
+        const poolId = apId()
+        const { error } = await tryCatch(() => concurrencyPoolRepo().insert({
             id: poolId,
             platformId,
             key,
-            maxConcurrentJobs: maxConcurrentJobs ?? existing?.maxConcurrentJobs ?? 1,
-        }, ['platformId', 'key'])
+            maxConcurrentJobs: maxConcurrentJobs ?? 1,
+        }))
+        if (!isNil(error)) {
+            // Unique constraint violation — another request created the pool concurrently
+            const raceWinner = await concurrencyPoolRepo().findOneOrFail({ where: { platformId, key } })
+            return { poolId: raceWinner.id }
+        }
         if (!isNil(maxConcurrentJobs)) {
             await distributedStore.put(getConcurrencyPoolLimitKey(poolId), maxConcurrentJobs, CACHE_TTL_SECONDS)
         }
