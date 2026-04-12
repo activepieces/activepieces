@@ -3,7 +3,7 @@ import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { securityAccess } from '../../../core/security/authorization/fastify-security'
 import { system } from '../../../helper/system/system'
-import { WorkerSystemProp } from '../../../helper/system/system-props'
+import { AppSystemProp } from '../../../helper/system/system-props'
 import { waitpointService } from './waitpoint-service'
 
 export const waitpointController: FastifyPluginAsyncZod = async (app) => {
@@ -19,8 +19,8 @@ export const waitpointController: FastifyPluginAsyncZod = async (app) => {
             workerHandlerId: workerHandlerId ?? undefined,
             httpRequestId: httpRequestId ?? undefined,
         })
-        const frontendUrl = system.getOrThrow(WorkerSystemProp.FRONTEND_URL)
-        const resumeUrl = `${frontendUrl}api/v1/flow-runs/${flowRunId}/waitpoints/${waitpoint.id}`
+        const frontendUrl = system.getOrThrow(AppSystemProp.FRONTEND_URL)
+        const resumeUrl = `${frontendUrl}/api/v1/flow-runs/${flowRunId}/waitpoints/${waitpoint.id}`
         return reply.status(StatusCodes.CREATED).send({
             id: waitpoint.id,
             resumeUrl,
