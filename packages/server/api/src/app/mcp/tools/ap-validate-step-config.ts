@@ -30,11 +30,11 @@ export const apValidateStepConfigTool = (mcp: McpServer, log: FastifyBaseLogger)
                         return validatePieceComponent({ pieceName: params.pieceName, componentName, componentType, input: params.input ?? {}, auth: params.auth, projectId: mcp.projectId, log })
                     }
                     case 'CODE':
-                        return validateWithSchema(codeValidator, { sourceCode: { code: params.sourceCode ?? '', packageJson: params.packageJson ?? '{}' }, input: {} }, 'CODE')
+                        return validateWithSchema({ schema: codeValidator, data: { sourceCode: { code: params.sourceCode ?? '', packageJson: params.packageJson ?? '{}' }, input: {} }, label: 'CODE' })
                     case 'LOOP_ON_ITEMS':
-                        return validateWithSchema(loopValidator, { items: params.loopItems ?? '' }, 'LOOP_ON_ITEMS')
+                        return validateWithSchema({ schema: loopValidator, data: { items: params.loopItems ?? '' }, label: 'LOOP_ON_ITEMS' })
                     case 'ROUTER':
-                        return validateWithSchema(RouterActionSettingsWithValidation, params.settings ?? {}, 'ROUTER')
+                        return validateWithSchema({ schema: RouterActionSettingsWithValidation, data: params.settings ?? {}, label: 'ROUTER' })
                 }
             }
             catch (err) {
@@ -84,13 +84,16 @@ async function validatePieceComponent({ pieceName, componentName, componentType,
     })
 
     if (diagnosis.missing.length === 0) {
-        return { content: [{ type: 'text', text: `✅ Valid configuration for ${componentType.toUpperCase()} "${normalized}/${componentName}".` }] }
+        const uiHint = diagnosis.uiRequired.length > 0
+            ? `\nNote: these fields require configuration in the Activepieces UI: ${diagnosis.uiRequired.join(', ')}.`
+            : ''
+        return { content: [{ type: 'text', text: `✅ Valid configuration for ${componentType.toUpperCase()} "${normalized}/${componentName}".${uiHint}` }] }
     }
 
     return { content: [{ type: 'text', text: `⚠️ Invalid configuration:\n${diagnosis.parts.join('\n')}` }] }
 }
 
-function validateWithSchema(schema: z.ZodType, data: unknown, label: string): McpResult {
+function validateWithSchema({ schema, data, label }: { schema: z.ZodType, data: unknown, label: string }): McpResult {
     const result = schema.safeParse(data)
     if (result.success) {
         return { content: [{ type: 'text', text: `✅ Valid ${label} configuration.` }] }
@@ -104,7 +107,7 @@ const codeValidator = z.object({
         code: z.string().min(1),
         packageJson: z.string().min(1),
     })),
-    input: z.record(z.string(), z.any()),
+    input: z.record(z.string(), z.unknown()),
 })
 
 const loopValidator = z.object({
