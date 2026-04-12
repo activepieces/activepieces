@@ -16,7 +16,7 @@ import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
 import { projectService } from '../../project/project-service'
-import { diagnosePieceProps, mcpToolError } from './mcp-utils'
+import { mcpUtils } from './mcp-utils'
 
 const updateStepInput = z.object({
     flowId: z.string(),
@@ -27,6 +27,8 @@ const updateStepInput = z.object({
     actionName: z.string().optional(),
     loopItems: z.string().optional(),
     skip: z.boolean().optional(),
+    sourceCode: z.string().optional(),
+    packageJson: z.string().optional(),
 })
 
 export const apUpdateStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
@@ -43,10 +45,12 @@ export const apUpdateStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
             actionName: z.string().optional().describe('For PIECE steps: the action to perform. Use ap_list_pieces to get valid values.'),
             loopItems: z.string().optional().describe('For LOOP steps: expression for the items to iterate over'),
             skip: z.boolean().optional().describe('Whether to skip this step during execution'),
+            sourceCode: z.string().optional().describe('For CODE steps only: the JavaScript/TypeScript source code. Must export a `run` function: `export const run = async (inputs) => { ... }`.'),
+            packageJson: z.string().optional().describe('For CODE steps only: package.json content as a JSON string for npm dependencies. Defaults to "{}".'),
         },
         annotations: { destructiveHint: false, idempotentHint: true, openWorldHint: false },
         execute: async (args) => {
-            const { flowId, stepName, displayName, input, auth, actionName, loopItems, skip } = updateStepInput.parse(args)
+            const { flowId, stepName, displayName, input, auth, actionName, loopItems, skip, sourceCode, packageJson } = updateStepInput.parse(args)
 
             const [flow, project] = await Promise.all([
                 flowService(log).getOnePopulated({ id: flowId, projectId: mcp.projectId }),
@@ -102,6 +106,20 @@ export const apUpdateStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
                     return { content: [{ type: 'text', text: `❌ loopItems can only be set on LOOP_ON_ITEMS steps, but "${stepName}" is type ${step.type}.` }] }
                 }
             }
+            if (sourceCode !== undefined || packageJson !== undefined) {
+                if (step.type !== FlowActionType.CODE) {
+                    const param = sourceCode !== undefined ? 'sourceCode' : 'packageJson'
+                    return { content: [{ type: 'text', text: `❌ ${param} can only be set on CODE steps, but "${stepName}" is type ${step.type}.` }] }
+                }
+                const existing = currentSettings.sourceCode
+                const isObj = typeof existing === 'object' && existing !== null
+                const existingCode = isObj && 'code' in existing ? String(existing.code) : ''
+                const existingPkg = isObj && 'packageJson' in existing ? String(existing.packageJson) : '{}'
+                updatedSettings.sourceCode = {
+                    code: sourceCode ?? existingCode,
+                    packageJson: packageJson ?? existingPkg,
+                }
+            }
 
             if (step.type === FlowActionType.PIECE && input !== undefined) {
                 await fillDefaultsForMissingOptionalProps({
@@ -115,7 +133,7 @@ export const apUpdateStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
                 type: step.type,
                 name: step.name,
                 displayName: displayName ?? step.displayName,
-                valid: step.valid,
+                valid: true,
                 settings: updatedSettings,
                 ...(skip !== undefined && { skip }),
             }
@@ -162,7 +180,7 @@ export const apUpdateStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
                 }
             }
             catch (err) {
-                return mcpToolError('Step update failed', err)
+                return mcpUtils.mcpToolError('Step update failed', err)
             }
         },
     }
@@ -184,7 +202,7 @@ async function diagnoseMissingInputs({ settings, platformId, log }: {
             return `Action "${actionName}" not found in piece "${pieceName}". Use ap_list_pieces with includeActions=true to get valid action names.`
         }
         const input = settings.input ?? {}
-        const { parts } = diagnosePieceProps({ props: action.props, input, pieceAuth: piece.auth, requireAuth: action.requireAuth, componentType: 'action' })
+        const { parts } = mcpUtils.diagnosePieceProps({ props: action.props, input, pieceAuth: piece.auth, requireAuth: action.requireAuth, componentType: 'action' })
         return parts.join(' ')
     }
     catch (err) {

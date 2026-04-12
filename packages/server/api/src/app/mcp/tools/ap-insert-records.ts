@@ -2,7 +2,7 @@ import { McpServer, McpToolDefinition, Permission } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { recordService } from '../../tables/record/record.service'
-import { mcpToolError } from './mcp-utils'
+import { mcpUtils } from './mcp-utils'
 import { resolveFieldNamesForTable } from './table-utils'
 
 const insertRecordsInput = z.object({
@@ -50,7 +50,7 @@ export const apInsertRecordsTool = (mcp: McpServer, log: FastifyBaseLogger): Mcp
             }
             catch (err) {
                 log.error({ err, projectId: mcp.projectId }, 'ap_insert_records failed')
-                return mcpToolError('Failed to insert records', err)
+                return mcpUtils.mcpToolError('Failed to insert records', err)
             }
         },
     }

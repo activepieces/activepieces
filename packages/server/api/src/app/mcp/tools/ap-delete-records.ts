@@ -2,7 +2,7 @@ import { McpServer, McpToolDefinition, Permission } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { recordService } from '../../tables/record/record.service'
-import { mcpToolError } from './mcp-utils'
+import { mcpUtils } from './mcp-utils'
 
 const deleteRecordsInput = z.object({
     recordIds: z.array(z.string()).describe('Array of record IDs to delete. Use ap_find_records to find them.'),
@@ -37,7 +37,7 @@ export const apDeleteRecordsTool = (mcp: McpServer, log: FastifyBaseLogger): Mcp
             }
             catch (err) {
                 log.error({ err, projectId: mcp.projectId }, 'ap_delete_records failed')
-                return mcpToolError('Failed to delete records', err)
+                return mcpUtils.mcpToolError('Failed to delete records', err)
             }
         },
     }

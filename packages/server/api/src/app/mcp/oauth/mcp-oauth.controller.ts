@@ -10,6 +10,25 @@ import { mcpOAuthTokenService } from './token/mcp-oauth-token.service'
 
 export const mcpOAuthHttpController: FastifyPluginAsyncZod = async (app) => {
 
+    app.addContentTypeParser(
+        'application/json',
+        { parseAs: 'string' },
+        (_req, body: string, done) => {
+            if (body == null || body.trim() === '') {
+                return done(null, {})
+            }
+
+            try {
+                done(null, JSON.parse(body))
+            }
+            catch (err) {
+                const error: Error & { statusCode?: number } = err instanceof Error ? err : new Error('JSON parsing failed')
+                error.statusCode = 400
+                done(error, undefined)
+            }
+        },
+    )
+
     app.get('/', McpEndpointConfig, async (_req, reply) => {
         return reply.status(405).send({
             error: 'Method Not Allowed',

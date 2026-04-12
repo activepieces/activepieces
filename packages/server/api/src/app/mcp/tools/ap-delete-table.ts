@@ -2,7 +2,7 @@ import { McpServer, McpToolDefinition, Permission } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { tableService } from '../../tables/table/table.service'
-import { mcpToolError } from './mcp-utils'
+import { mcpUtils } from './mcp-utils'
 
 const deleteTableInput = z.object({
     tableId: z.string().describe('The ID of the table to delete. Use ap_list_tables to find it.'),
@@ -38,7 +38,7 @@ export const apDeleteTableTool = (mcp: McpServer, log: FastifyBaseLogger): McpTo
             }
             catch (err) {
                 log.error({ err, projectId: mcp.projectId }, 'ap_delete_table failed')
-                return mcpToolError('Failed to delete table', err)
+                return mcpUtils.mcpToolError('Failed to delete table', err)
             }
         },
     }

@@ -2,7 +2,7 @@ import { McpServer, McpToolDefinition, Permission } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { recordService } from '../../tables/record/record.service'
-import { mcpToolError } from './mcp-utils'
+import { mcpUtils } from './mcp-utils'
 import { formatPopulatedRecord, resolveFieldNamesForTable } from './table-utils'
 
 const updateRecordInput = z.object({
@@ -52,7 +52,7 @@ export const apUpdateRecordTool = (mcp: McpServer, log: FastifyBaseLogger): McpT
             }
             catch (err) {
                 log.error({ err, projectId: mcp.projectId }, 'ap_update_record failed')
-                return mcpToolError('Failed to update record', err)
+                return mcpUtils.mcpToolError('Failed to update record', err)
             }
         },
     }

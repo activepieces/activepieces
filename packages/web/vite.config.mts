@@ -35,7 +35,27 @@ export default defineConfig(({ command, mode }) => {
           changeOrigin: true,
           rewrite: (p: string) => p,
         },
-        '/.well-known/oauth-authorization-server': {
+        '/.well-known': {
+          target: 'http://127.0.0.1:3000',
+          secure: false,
+          changeOrigin: true,
+        },
+        '/register': {
+          target: 'http://127.0.0.1:3000',
+          secure: false,
+          changeOrigin: true,
+        },
+        '/authorize': {
+          target: 'http://127.0.0.1:3000',
+          secure: false,
+          changeOrigin: true,
+        },
+        '/token': {
+          target: 'http://127.0.0.1:3000',
+          secure: false,
+          changeOrigin: true,
+        },
+        '/revoke': {
           target: 'http://127.0.0.1:3000',
           secure: false,
           changeOrigin: true,

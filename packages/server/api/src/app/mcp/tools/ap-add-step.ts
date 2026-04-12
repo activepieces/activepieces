@@ -16,7 +16,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
 import { projectService } from '../../project/project-service'
-import { mcpToolError } from './mcp-utils'
+import { mcpUtils } from './mcp-utils'
 
 const addStepInput = z.object({
     flowId: z.string(),
@@ -171,7 +171,7 @@ export const apAddStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDe
                 }
             }
             catch (err) {
-                return mcpToolError('Step add failed', err)
+                return mcpUtils.mcpToolError('Step add failed', err)
             }
         },
     }

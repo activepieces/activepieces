@@ -34,13 +34,25 @@ List available pieces with their actions and triggers. Required before adding or
 | `includeActions` | boolean | No | Include action details |
 | `includeTriggers` | boolean | No | Include trigger details |
 
+### ap_get_piece_props
+
+Get the detailed input property schema for a specific piece action or trigger. Returns field names, types, required/optional, descriptions, default values, and dropdown options. Use this before `ap_update_step` or `ap_update_trigger` to know exactly which fields to set.
+
+| Input | Type | Required | Description |
+|-------|------|----------|-------------|
+| `pieceName` | string | Yes | Piece name (e.g., `@activepieces/piece-slack`) |
+| `actionOrTriggerName` | string | Yes | Action or trigger name (e.g., `send_channel_message`) |
+| `type` | string | Yes | `action` or `trigger` |
+
 ### ap_list_connections
 
 List OAuth/app connections in the project. Required before adding steps that need authentication.
 
 | Input | Type | Required | Description |
 |-------|------|----------|-------------|
-| — | — | — | No inputs required |
+| `pieceName` | string | No | Filter by piece name. Short names like `slack` or `google-sheets` are auto-expanded. |
+| `displayName` | string | No | Filter by connection display name (partial match) |
+| `status` | array | No | Filter by status: `ACTIVE`, `MISSING`, or `ERROR` |
 
 ### ap_list_ai_models
 
@@ -186,6 +198,8 @@ Update an existing step's settings. Auto-fills default values for optional prope
 | `auth` | string | No | Connection externalId |
 | `actionName` | string | No | For PIECE steps |
 | `loopItems` | string | No | For LOOP steps |
+| `sourceCode` | string | No | For CODE steps: JavaScript/TypeScript source code |
+| `packageJson` | string | No | For CODE steps: npm dependencies as JSON string |
 | `skip` | boolean | No | Skip this step |
 
 <Tip>
