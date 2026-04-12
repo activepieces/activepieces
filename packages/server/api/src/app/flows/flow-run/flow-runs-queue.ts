@@ -10,8 +10,9 @@ import { AppSystemProp } from '../../helper/system/system-props'
 import { projectService } from '../../project/project-service'
 import { QueueName, redisMetadataKey, RunsMetadataJobData, RunsMetadataQueueConfig, runsMetadataQueueFactory, RunsMetadataUpsertData } from '../../workers/job'
 import { flowService } from '../flow/flow.service'
-import { flowRunRepo, flowRunService } from './flow-run-service'
+import { flowRunRepo } from './flow-run-service'
 import { flowRunSideEffects } from './flow-run-side-effects'
+import { resumeService } from './waitpoint/resume-service'
 import { waitpointService } from './waitpoint/waitpoint-service'
 import { WaitpointStatus } from './waitpoint/waitpoint-types'
 
@@ -121,7 +122,7 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                                 const isPreCompleted = !isNil(latestWaitpoint)
                                     && latestWaitpoint.status === WaitpointStatus.COMPLETED
                                 if (isPreCompleted) {
-                                    await flowRunService(log).resumeFromWaitpoint({
+                                    await resumeService(log).resumeFromWaitpoint({
                                         flowRunId: savedFlowRun.id,
                                         waitpointId: latestWaitpoint.id,
                                         resumePayload: latestWaitpoint.resumePayload,
@@ -212,7 +213,7 @@ async function markParentRunAsFailed({
     })
 
     if (result.completedExisting) {
-        await flowRunService(log).resumeFromWaitpoint({
+        await resumeService(log).resumeFromWaitpoint({
             flowRunId: parentRunId,
             waitpointId: result.waitpoint.id,
             resumePayload: result.waitpoint.resumePayload,

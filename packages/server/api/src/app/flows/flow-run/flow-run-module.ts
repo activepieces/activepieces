@@ -11,12 +11,17 @@ import { engineResponseWatcher } from '../../workers/engine-response-watcher'
 import { flowRunController } from './flow-run-controller'
 import { flowRunRepo, flowRunService } from './flow-run-service'
 import { flowRunLogsController } from './logs/flow-run-logs-controller'
+import { legacyResumeController } from './waitpoint/legacy-resume-controller'
+import { resumeService } from './waitpoint/resume-service'
 import { waitpointController } from './waitpoint/waitpoint-controller'
+import { waitpointResumeController } from './waitpoint/waitpoint-resume-controller'
 
 
 export const flowRunModule: FastifyPluginAsync = async (app) => {
     app.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
     await app.register(flowRunController, { prefix: '/v1/flow-runs' })
+    await app.register(waitpointResumeController, { prefix: '/v1/flow-runs' })
+    await app.register(legacyResumeController, { prefix: '/v1/flow-runs' })
     await app.register(flowRunLogsController, { prefix: '/v1/flow-runs' })
     await app.register(waitpointController, { prefix: '/v1/waitpoints' })
     systemJobHandlers.registerJobHandler(SystemJobName.RUN_TELEMETRY, async (_job: SystemJobData<SystemJobName.RUN_TELEMETRY>) => {
@@ -77,7 +82,7 @@ export const flowRunModule: FastifyPluginAsync = async (app) => {
         }
         app.log.info({ flowRunId: data.flowRunId, waitpointId: data.waitpointId },
             '[RESUME_DELAY_WAITPOINT] Resuming flow')
-        await flowRunService(app.log).resumeFromWaitpoint({
+        await resumeService(app.log).resumeFromWaitpoint({
             flowRunId: data.flowRunId,
             waitpointId: data.waitpointId,
             resumePayload: null,
