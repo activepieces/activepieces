@@ -1,5 +1,7 @@
-import { PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework'
+import { PieceMetadataModel, PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework'
 import { isNil } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
+import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
 
 const AUTH_TYPES = new Set<PropertyType>([
     PropertyType.OAUTH2,
@@ -101,7 +103,25 @@ function normalizePieceName(pieceName: string | undefined): string | undefined {
     return `@activepieces/piece-${normalized}`
 }
 
-export const mcpUtils = { mcpToolError, diagnosePieceProps, buildPropSummaries, normalizePieceName }
+async function lookupPieceComponent({ pieceName, componentName, componentType, projectId, log }: LookupPieceComponentParams): Promise<LookupPieceComponentResult> {
+    const normalized = normalizePieceName(pieceName)
+    if (isNil(normalized)) {
+        return { error: mcpToolError('Validation failed', new Error('pieceName is required')) }
+    }
+    const piece = await pieceMetadataService(log).get({ name: normalized, projectId })
+    if (isNil(piece)) {
+        return { error: { content: [{ type: 'text', text: `❌ Piece "${normalized}" not found. Use ap_list_pieces to get valid piece names.` }] } }
+    }
+    const componentMap = componentType === 'action' ? piece.actions : piece.triggers
+    const label = componentType === 'action' ? 'Action' : 'Trigger'
+    const component = componentMap[componentName]
+    if (isNil(component)) {
+        return { error: { content: [{ type: 'text', text: `❌ ${label} "${componentName}" not found in "${normalized}". Available: ${Object.keys(componentMap).join(', ')}` }] } }
+    }
+    return { piece, component, pieceName: normalized }
+}
+
+export const mcpUtils = { mcpToolError, diagnosePieceProps, buildPropSummaries, normalizePieceName, lookupPieceComponent }
 
 type DiagnosePiecePropsParams = {
     props: PiecePropertyMap
@@ -128,3 +148,15 @@ type PropSummary = {
     options?: Array<{ label: string, value: unknown }>
     note?: string
 }
+
+type LookupPieceComponentParams = {
+    pieceName: string
+    componentName: string
+    componentType: 'action' | 'trigger'
+    projectId: string
+    log: FastifyBaseLogger
+}
+
+type LookupPieceComponentResult =
+    | { piece: PieceMetadataModel, component: { props: PiecePropertyMap, requireAuth: boolean, name: string, displayName: string, description: string }, pieceName: string, error?: never }
+    | { error: { content: [{ type: 'text', text: string }] }, piece?: never, component?: never, pieceName?: never }

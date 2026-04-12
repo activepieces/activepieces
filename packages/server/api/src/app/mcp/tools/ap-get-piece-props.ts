@@ -5,7 +5,6 @@ import {
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
-import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
 import { mcpUtils } from './mcp-utils'
 
 export const apGetPiecePropsTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
@@ -18,32 +17,24 @@ export const apGetPiecePropsTool = (mcp: McpServer, log: FastifyBaseLogger): Mcp
             try {
                 const { pieceName, actionOrTriggerName, type } = getPiecePropsInput.parse(args)
 
-                const piece = await pieceMetadataService(log).get({
-                    name: pieceName,
+                const lookup = await mcpUtils.lookupPieceComponent({
+                    pieceName,
+                    componentName: actionOrTriggerName,
+                    componentType: type,
                     projectId: mcp.projectId,
+                    log,
                 })
-
-                if (isNil(piece)) {
-                    return { content: [{ type: 'text', text: `❌ Piece "${pieceName}" not found. Use ap_list_pieces to get valid piece names.` }] }
+                if (lookup.error) {
+                    return lookup.error
                 }
 
-                const componentMap = type === 'action' ? piece.actions : piece.triggers
+                const { piece, component, pieceName: normalized } = lookup
                 const label = type === 'action' ? 'Action' : 'Trigger'
-                const component = componentMap[actionOrTriggerName]
-                if (isNil(component)) {
-                    return {
-                        content: [{
-                            type: 'text',
-                            text: `❌ ${label} "${actionOrTriggerName}" not found in "${pieceName}". Available: ${Object.keys(componentMap).join(', ')}`,
-                        }],
-                    }
-                }
-
                 const props = mcpUtils.buildPropSummaries(component.props)
                 const requiresAuth = component.requireAuth && !isNil(piece.auth)
 
                 const result = {
-                    piece: pieceName,
+                    piece: normalized,
                     name: component.name,
                     displayName: component.displayName,
                     description: component.description,
@@ -52,7 +43,7 @@ export const apGetPiecePropsTool = (mcp: McpServer, log: FastifyBaseLogger): Mcp
                 }
 
                 return {
-                    content: [{ type: 'text', text: `✅ ${label} schema for "${pieceName}/${actionOrTriggerName}":\n${JSON.stringify(result, null, 2)}` }],
+                    content: [{ type: 'text', text: `✅ ${label} schema for "${normalized}/${actionOrTriggerName}":\n${JSON.stringify(result, null, 2)}` }],
                 }
             }
             catch (err) {
