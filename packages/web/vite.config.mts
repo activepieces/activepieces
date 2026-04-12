@@ -70,6 +70,12 @@ export default defineConfig(({ command, mode }) => {
       host: 'localhost',
     },
     resolve: {
+      dedupe: [
+        '@codemirror/state',
+        '@codemirror/view',
+        '@codemirror/language',
+        '@codemirror/commands',
+      ],
       alias: {
         '@': path.resolve(__dirname, './src'),
         '@activepieces/shared': path.resolve(
