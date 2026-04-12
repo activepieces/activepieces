@@ -16,7 +16,6 @@ import {
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Brackets, EntityManager, IsNull, Not, ObjectLiteral, SelectQueryBuilder } from 'typeorm'
-import { concurrencyPoolService } from '../ee/platform/concurrency-pool/concurrency-pool.service'
 import { userService } from '../user/user-service'
 import { projectHooks } from './project-hooks'
 import { projectRepo } from './project-repo'
@@ -84,7 +83,7 @@ export const projectService = (log: FastifyBaseLogger) => ({
             ...spreadIfDefined('externalId', externalId),
             ...spreadIfDefined('releasesEnabled', request.releasesEnabled),
             ...spreadIfDefined('metadata', request.metadata),
-            ...spreadIfDefined('maxConcurrentJobs', request.maxConcurrentJobs),
+            ...spreadIfDefined('poolId', request.poolId),
         }
 
         const teamUpdate = request.type === ProjectType.TEAM ? {
@@ -93,23 +92,7 @@ export const projectService = (log: FastifyBaseLogger) => ({
         } : {}
 
         await projectRepo(entityManager).update({ id: projectId }, { ...baseUpdate, ...teamUpdate })
-        const updatedProject = await this.getOneOrThrow(projectId)
-        if (request.maxConcurrentJobs !== undefined) {
-            if (!isNil(request.maxConcurrentJobs)) {
-                await concurrencyPoolService(log).setProjectConcurrencyLimit({
-                    projectId,
-                    platformId: updatedProject.platformId,
-                    maxConcurrentJobs: request.maxConcurrentJobs,
-                })
-            }
-            else {
-                await concurrencyPoolService(log).clearProjectConcurrencyLimit({
-                    projectId,
-                    platformId: updatedProject.platformId,
-                })
-            }
-        }
-        return updatedProject
+        return this.getOneOrThrow(projectId)
     },
 
     async getPlatformId(projectId: ProjectId): Promise<string> {
@@ -227,13 +210,6 @@ export const projectService = (log: FastifyBaseLogger) => ({
     },
     callProjectPostCreateHooks: async (savedProject: Project)=>{
         await projectHooks.get(log).postCreate(savedProject)
-        if (!isNil(savedProject.maxConcurrentJobs)) {
-            await concurrencyPoolService(log).setProjectConcurrencyLimit({
-                projectId: savedProject.id,
-                platformId: savedProject.platformId,
-                maxConcurrentJobs: savedProject.maxConcurrentJobs,
-            })
-        }
     },
 })
 
@@ -298,7 +274,7 @@ type UpdateTeamProjectParams = {
     externalId?: string
     releasesEnabled?: boolean
     metadata?: Metadata
-    maxConcurrentJobs?: number | null
+    poolId?: string
     icon?: ProjectIcon
 }
 
@@ -307,7 +283,7 @@ type UpdatePersonalProjectParams = {
     externalId?: string
     releasesEnabled?: boolean
     metadata?: Metadata
-    maxConcurrentJobs?: number | null
+    poolId?: string
 }
 
 type UpdateParams = UpdateTeamProjectParams | UpdatePersonalProjectParams

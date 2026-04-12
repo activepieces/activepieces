@@ -11,10 +11,11 @@ export const ConcurrencyPoolEntity = new EntitySchema<ConcurrencyPoolEntitySchem
     columns: {
         ...BaseColumnSchemaPart,
         platformId: ApIdSchema,
+        key: { type: String },
         maxConcurrentJobs: { type: Number },
     },
     indices: [
-        { name: 'idx_concurrency_pool_platform_id', columns: ['platformId'] },
+        { name: 'idx_concurrency_pool_platform_key', columns: ['platformId', 'key'], unique: true },
     ],
     relations: {
         projects: {

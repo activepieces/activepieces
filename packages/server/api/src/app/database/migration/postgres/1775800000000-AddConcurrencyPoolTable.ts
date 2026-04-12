@@ -13,11 +13,12 @@ export class AddConcurrencyPoolTable1775800000000 implements Migration {
                 "created" TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
                 "updated" TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
                 "platformId" character varying(21) NOT NULL,
+                "key" character varying(255) NOT NULL,
                 "maxConcurrentJobs" integer NOT NULL,
                 CONSTRAINT "pk_concurrency_pool" PRIMARY KEY ("id")
             )
         `)
-        await queryRunner.query('CREATE INDEX "idx_concurrency_pool_platform_id" ON "concurrency_pool" ("platformId")')
+        await queryRunner.query('CREATE UNIQUE INDEX "idx_concurrency_pool_platform_key" ON "concurrency_pool" ("platformId", "key")')
         await queryRunner.query('ALTER TABLE "project" ADD "poolId" character varying(21)')
         await queryRunner.query(`
             ALTER TABLE "project"
@@ -32,7 +33,7 @@ export class AddConcurrencyPoolTable1775800000000 implements Migration {
         await queryRunner.query('DROP INDEX "idx_project_pool_id"')
         await queryRunner.query('ALTER TABLE "project" DROP CONSTRAINT "fk_project_pool_id"')
         await queryRunner.query('ALTER TABLE "project" DROP COLUMN "poolId"')
-        await queryRunner.query('DROP INDEX "idx_concurrency_pool_platform_id"')
+        await queryRunner.query('DROP INDEX "idx_concurrency_pool_platform_key"')
         await queryRunner.query('DROP TABLE "concurrency_pool"')
     }
 }

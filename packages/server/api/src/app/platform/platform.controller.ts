@@ -10,7 +10,6 @@ import {
     PrincipalType,
     SERVICE_KEY_SECURITY_OPENAPI,
     UpdatePlatformRequestBody,
-    UpsertConcurrencyPoolRequestBody,
     UserStatus,
 } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
@@ -18,7 +17,6 @@ import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { securityAccess } from '../core/security/authorization/fastify-security'
 import { platformToEditMustBeOwnedByCurrentUser } from '../ee/authentication/ee-authorization'
-import { concurrencyPoolService } from '../ee/platform/concurrency-pool/concurrency-pool.service'
 import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
 import { stripeHelper } from '../ee/platform/platform-plan/stripe-helper'
 import { platformProjectService } from '../ee/projects/platform-project-service'
@@ -93,13 +91,6 @@ export const platformController: FastifyPluginAsyncZod = async (app) => {
             .send(data.data)
     })
 
-    app.post('/concurrency-pool', UpsertConcurrencyPoolRequest, async (req, res) => {
-        const result = await concurrencyPoolService(req.log).upsertPool({
-            ...req.body,
-            platformId: req.principal.platform.id,
-        })
-        return res.status(StatusCodes.OK).send(result)
-    })
 
     if (edition === ApEdition.CLOUD) {
         app.delete('/:id', DeletePlatformRequest, async (req, res) => {
@@ -223,11 +214,3 @@ const GetAssetRequest = {
     },
 }
 
-const UpsertConcurrencyPoolRequest = {
-    config: {
-        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
-    },
-    schema: {
-        body: UpsertConcurrencyPoolRequestBody,
-    },
-}

@@ -53,10 +53,3 @@ export const IncreaseAICreditsForPlatformRequestBody = z.object({
 
 export type IncreaseAICreditsForPlatformRequestBody = z.infer<typeof IncreaseAICreditsForPlatformRequestBody>
 
-export const UpsertConcurrencyPoolRequestBody = z.object({
-    platformId: ApId,
-    projectIds: z.array(ApId).min(1),
-    maxConcurrentJobs: z.number().int().positive(),
-})
-
-export type UpsertConcurrencyPoolRequestBody = z.infer<typeof UpsertConcurrencyPoolRequestBody>

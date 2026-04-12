@@ -19,6 +19,7 @@ import { pieceTagService } from '../../pieces/tags/pieces/piece-tag.service'
 import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
+import { concurrencyPoolService } from '../platform/concurrency-pool/concurrency-pool.service'
 import { projectMemberService } from '../projects/project-members/project-member.service'
 import { projectLimitsService } from '../projects/project-plan/project-plan.service'
 import { externalTokenExtractor } from './lib/external-token-extractor'
@@ -41,6 +42,18 @@ export const managedAuthnService = (log: FastifyBaseLogger) => ({
                 type: project.type,
                 displayName: externalPrincipal.projectDisplayName,
             })
+        }
+
+        if (!isNil(externalPrincipal.concurrencyPoolKey)) {
+            const upsertParams: { platformId: string, key: string, maxConcurrentJobs?: number } = {
+                platformId: externalPrincipal.platformId,
+                key: externalPrincipal.concurrencyPoolKey,
+            }
+            if (!isNil(externalPrincipal.concurrencyPoolLimit)) {
+                upsertParams.maxConcurrentJobs = externalPrincipal.concurrencyPoolLimit
+            }
+            const { poolId } = await concurrencyPoolService(log).upsertPool(upsertParams)
+            await projectService(log).update(project.id, { type: project.type, poolId })
         }
 
         await updateProjectLimits({
