@@ -3,7 +3,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowRunService } from '../../flows/flow-run/flow-run-service'
 import { formatRunResult } from './flow-run-utils'
-import { mcpToolError } from './mcp-utils'
+import { mcpUtils } from './mcp-utils'
 
 const getRunInput = z.object({
     flowRunId: z.string().describe('The ID of the flow run. Use ap_list_runs to find it.'),
@@ -34,7 +34,7 @@ export const apGetRunTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDef
             }
             catch (err) {
                 log.error({ err, projectId: mcp.projectId }, 'ap_get_run failed')
-                return mcpToolError('Failed to get run', err)
+                return mcpUtils.mcpToolError('Failed to get run', err)
             }
         },
     }

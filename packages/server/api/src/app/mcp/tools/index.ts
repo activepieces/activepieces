@@ -11,6 +11,7 @@ import { apDeleteStepTool } from './ap-delete-step'
 import { apDeleteTableTool } from './ap-delete-table'
 import { apFindRecordsTool } from './ap-find-records'
 import { apFlowStructureTool } from './ap-flow-structure'
+import { apGetPiecePropsTool } from './ap-get-piece-props'
 import { apGetRunTool } from './ap-get-run'
 import { apInsertRecordsTool } from './ap-insert-records'
 import { apListAiModelsTool } from './ap-list-ai-models'
@@ -35,6 +36,7 @@ export const LOCKED_TOOL_NAMES: string[] = [
     'ap_list_flows',
     'ap_flow_structure',
     'ap_list_pieces',
+    'ap_get_piece_props',
     'ap_list_connections',
     'ap_list_ai_models',
     'ap_list_tables',
@@ -76,6 +78,7 @@ export const activepiecesTools = (mcp: McpServer, log: FastifyBaseLogger): McpTo
     apListFlowsTool(mcp, log),
     apFlowStructureTool(mcp, log),
     apListPiecesTool(mcp, log),
+    apGetPiecePropsTool(mcp, log),
     apListConnectionsTool(mcp, log),
     apUpdateTriggerTool(mcp, log),
     apAddStepTool(mcp, log),

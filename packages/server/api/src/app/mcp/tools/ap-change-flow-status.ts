@@ -11,7 +11,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
 import { projectService } from '../../project/project-service'
-import { mcpToolError } from './mcp-utils'
+import { mcpUtils } from './mcp-utils'
 
 const changeFlowStatusInput = z.object({
     flowId: z.string(),
@@ -67,7 +67,7 @@ export const apChangeFlowStatusTool = (mcp: McpServer, log: FastifyBaseLogger): 
                 }
             }
             catch (err) {
-                return mcpToolError('Status change failed', err)
+                return mcpUtils.mcpToolError('Status change failed', err)
             }
         },
     }

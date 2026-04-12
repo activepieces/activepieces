@@ -4,7 +4,7 @@ import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
 import { flowRunService } from '../../flows/flow-run/flow-run-service'
 import { formatRunResult, pollForRunCompletion } from './flow-run-utils'
-import { mcpToolError } from './mcp-utils'
+import { mcpUtils } from './mcp-utils'
 
 const retryStrategyValues = Object.values(FlowRetryStrategy) as [FlowRetryStrategy, ...FlowRetryStrategy[]]
 
@@ -62,7 +62,7 @@ export const apRetryRunTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolD
             }
             catch (err) {
                 log.error({ err, projectId: mcp.projectId }, 'ap_retry_run failed')
-                return mcpToolError('Failed to retry run', err)
+                return mcpUtils.mcpToolError('Failed to retry run', err)
             }
         },
     }

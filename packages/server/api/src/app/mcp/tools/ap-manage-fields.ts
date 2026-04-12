@@ -2,7 +2,7 @@ import { FieldType, isNil, McpServer, McpToolDefinition, Permission } from '@act
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { fieldService } from '../../tables/field/field.service'
-import { mcpToolError } from './mcp-utils'
+import { mcpUtils } from './mcp-utils'
 import { fieldTypeSchema, formatFieldInfo } from './table-utils'
 
 const manageFieldsInput = z.object({
@@ -83,7 +83,7 @@ export const apManageFieldsTool = (mcp: McpServer, log: FastifyBaseLogger): McpT
             }
             catch (err) {
                 log.error({ err, projectId: mcp.projectId }, 'ap_manage_fields failed')
-                return mcpToolError('Field operation failed', err)
+                return mcpUtils.mcpToolError('Field operation failed', err)
             }
         },
     }

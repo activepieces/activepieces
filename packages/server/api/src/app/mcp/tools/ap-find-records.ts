@@ -2,7 +2,7 @@ import { FilterOperator, McpServer, McpToolDefinition, Permission } from '@activ
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { recordService } from '../../tables/record/record.service'
-import { mcpToolError } from './mcp-utils'
+import { mcpUtils } from './mcp-utils'
 import { formatPopulatedRecord, resolveFieldNamesForTable } from './table-utils'
 
 const OPERATOR_VALUES = [
@@ -90,7 +90,7 @@ export const apFindRecordsTool = (mcp: McpServer, log: FastifyBaseLogger): McpTo
             }
             catch (err) {
                 log.error({ err, projectId: mcp.projectId }, 'ap_find_records failed')
-                return mcpToolError('Failed to find records', err)
+                return mcpUtils.mcpToolError('Failed to find records', err)
             }
         },
     }
