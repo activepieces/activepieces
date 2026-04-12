@@ -77,6 +77,7 @@ export function FunctionSearchPopover({
   }, [filtered, activeIdx, onSelect, onClose]);
 
   const editorRect = editorRef.current?.getBoundingClientRect();
+  const popoverTop = editorRect ? editorRect.bottom + 4 : position.top;
   const popoverLeft = editorRect
     ? Math.min(
         Math.max(editorRect.left + window.scrollX, SCREEN_MARGIN),
@@ -121,7 +122,7 @@ export function FunctionSearchPopover({
     return createPortal(
       <div
         className="fixed z-9998 bg-popover border border-border rounded-lg shadow-lg overflow-hidden"
-        style={{ top: position.top, left: popoverLeft, width: popoverWidth }}
+        style={{ top: popoverTop, left: popoverLeft, width: popoverWidth }}
       >
         <div className="px-3 py-8 text-sm text-muted-foreground text-center">
           {t('Type to search functions...')}
@@ -136,7 +137,7 @@ export function FunctionSearchPopover({
     return createPortal(
       <div
         className="fixed z-9998 bg-popover border border-border rounded-lg shadow-lg overflow-hidden"
-        style={{ top: position.top, left: popoverLeft, width: popoverWidth }}
+        style={{ top: popoverTop, left: popoverLeft, width: popoverWidth }}
       >
         <div className="px-3 py-8 text-sm text-muted-foreground text-center">
           {t('No functions found')}
@@ -151,7 +152,7 @@ export function FunctionSearchPopover({
     <>
       <div
         className="fixed z-999 bg-popover border border-border rounded-lg shadow-lg overflow-hidden"
-        style={{ top: position.top, left: popoverLeft, width: popoverWidth }}
+        style={{ top: popoverTop, left: popoverLeft, width: popoverWidth }}
       >
         <div
           ref={listRef}
@@ -174,7 +175,7 @@ export function FunctionSearchPopover({
                     aria-selected={isActive}
                     className={cn(
                       'flex items-center gap-2 px-3 py-2 cursor-pointer',
-                      isActive ? 'bg-accent' : 'hover:bg-accent/50',
+                      isActive ? 'bg-accent' : 'hover:bg-accent',
                     )}
                     onMouseEnter={(e) => {
                       setActiveIdx(idx);
@@ -220,6 +221,7 @@ export function FunctionSearchPopover({
         <FunctionTooltipCard
           fnDef={hoveredFn}
           errorMessage={null}
+          centered={true}
           anchorTop={hoverItemRect.top}
           anchorBottom={hoverItemRect.bottom}
           anchorLeft={

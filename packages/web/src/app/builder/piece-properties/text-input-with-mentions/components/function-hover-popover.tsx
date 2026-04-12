@@ -16,6 +16,7 @@ type HoverState = {
   anchorTop: number;
   anchorBottom: number;
   anchorLeft: number;
+  anchorRight: number;
 } | null;
 
 type DisplayState = {
@@ -24,6 +25,7 @@ type DisplayState = {
   anchorTop: number;
   anchorBottom: number;
   anchorLeft: number;
+  anchorRight: number;
   currentArgIndex: number | null;
 };
 
@@ -116,6 +118,7 @@ export function FunctionEditorTooltip({
         anchorTop: rect.top,
         anchorBottom: rect.bottom,
         anchorLeft: rect.left,
+        anchorRight: rect.right,
       });
     };
 
@@ -145,6 +148,7 @@ export function FunctionEditorTooltip({
       anchorTop: activeFn.anchorRect.top,
       anchorBottom: activeFn.anchorRect.bottom,
       anchorLeft: activeFn.anchorRect.left,
+      anchorRight: activeFn.anchorRect.right,
       currentArgIndex: activeFn.argIndex,
     };
   }
@@ -174,6 +178,7 @@ export function FunctionEditorTooltip({
       anchorTop={renderData.display.anchorTop}
       anchorBottom={renderData.display.anchorBottom}
       anchorLeft={renderData.display.anchorLeft}
+      anchorRight={renderData.display.anchorRight}
       currentArgIndex={renderData.display.currentArgIndex}
       onMouseEnter={() => {
         if (hideTimer.current) {
@@ -199,8 +204,10 @@ type FunctionTooltipCardProps = {
   anchorTop: number;
   anchorBottom: number;
   anchorLeft: number;
+  anchorRight?: number;
   currentArgIndex?: number | null;
   visible?: boolean;
+  centered?: boolean;
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
 };
@@ -211,18 +218,28 @@ export function FunctionTooltipCard({
   anchorTop,
   anchorBottom,
   anchorLeft,
+  anchorRight,
   currentArgIndex,
   visible = true,
+  centered = false,
   onMouseEnter,
   onMouseLeave,
 }: FunctionTooltipCardProps) {
   const { t } = useTranslation();
   const argNames = parseSyntaxArgs(fnDef.syntax);
 
-  const showAbove = anchorTop > TOOLTIP_MIN_HEIGHT + SCREEN_MARGIN;
-  const top = showAbove ? anchorTop - TOOLTIP_GAP : anchorBottom + TOOLTIP_GAP;
+  const showAbove = !centered && anchorTop > TOOLTIP_MIN_HEIGHT + SCREEN_MARGIN;
+  const top = centered
+    ? (anchorTop + anchorBottom) / 2
+    : showAbove
+    ? anchorTop - TOOLTIP_GAP
+    : anchorBottom + TOOLTIP_GAP;
+
+  const badgeCenterX =
+    anchorRight != null ? (anchorLeft + anchorRight) / 2 : anchorLeft;
+  const idealLeft = badgeCenterX - TOOLTIP_WIDTH / 2;
   const left = Math.min(
-    Math.max(anchorLeft, SCREEN_MARGIN),
+    Math.max(idealLeft, SCREEN_MARGIN),
     window.innerWidth - TOOLTIP_WIDTH - SCREEN_MARGIN,
   );
 
@@ -239,7 +256,7 @@ export function FunctionTooltipCard({
         top,
         left,
         width: TOOLTIP_WIDTH,
-        transform: showAbove ? 'translateY(-100%)' : undefined,
+        transform: centered ? 'translateY(-50%)' : showAbove ? 'translateY(-100%)' : undefined,
       }}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}

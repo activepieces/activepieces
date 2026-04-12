@@ -18,10 +18,11 @@ import { TextSelection } from '@tiptap/pm/state';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { t } from 'i18next';
-import { ChevronRight, Copy, XCircle } from 'lucide-react';
+import { ChevronRight, XCircle } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { CopyButton } from '@/components/custom/clipboard/copy-button';
 import { inputClass } from '@/components/ui/input';
 import { stepsHooks } from '@/features/pieces';
 import { cn } from '@/lib/utils';
@@ -440,19 +441,14 @@ export const TiptapEditor = ({
                   <XCircle className="size-3" />
                   {t('Error')}
                 </span>
-                <Button
+                <CopyButton
                   variant="ghost"
                   size="icon-xs"
-                  onClick={() =>
-                    navigator.clipboard.writeText(
-                      [...typeErrors, previewErrorMsg ?? '']
-                        .filter(Boolean)
-                        .join('\n'),
-                    )
-                  }
-                >
-                  <Copy className="size-3" />
-                </Button>
+                  withoutTooltip
+                  textToCopy={[...typeErrors, previewErrorMsg ?? '']
+                    .filter(Boolean)
+                    .join('\n')}
+                />
               </div>
               <div className="px-3 pb-2 text-destructive break-all whitespace-pre-wrap space-y-0.5">
                 {typeErrors.map((err, i) => (
@@ -469,13 +465,12 @@ export const TiptapEditor = ({
                 <ChevronRight className="size-3" />
                 {t('Preview')}
               </span>
-              <Button
+              <CopyButton
                 variant="ghost"
                 size="icon-xs"
-                onClick={() => navigator.clipboard.writeText(previewResult)}
-              >
-                <Copy className="size-3" />
-              </Button>
+                withoutTooltip
+                textToCopy={previewResult}
+              />
             </div>
 
             <div className="px-3 pb-2 text-foreground break-all whitespace-pre-wrap">

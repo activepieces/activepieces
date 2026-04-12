@@ -41,7 +41,7 @@ export function typeCheckTiptapDoc(doc: DocNode): Map<string, string> {
         if (fn.maxArgs !== -1 && argCount > fn.maxArgs) {
             errors.set(
                 id,
-                `${fnName} takes at most ${fn.maxArgs} value${fn.maxArgs === 1 ? '' : 's'}, ${argCount} given`,
+                `${fnName}() accepts at most ${fn.maxArgs} value${fn.maxArgs === 1 ? '' : 's'}, but got ${argCount}`,
             )
             continue
         }
@@ -49,7 +49,7 @@ export function typeCheckTiptapDoc(doc: DocNode): Map<string, string> {
         if (argCount < fn.minArgs) {
             errors.set(
                 id,
-                `${fnName} needs at least ${fn.minArgs} value${fn.minArgs === 1 ? '' : 's'}, ${argCount} given`,
+                `${fnName}() needs at least ${fn.minArgs} value${fn.minArgs === 1 ? '' : 's'}, but got ${argCount}`,
             )
             continue
         }
@@ -69,7 +69,7 @@ export function typeCheckTiptapDoc(doc: DocNode): Map<string, string> {
             if (actualType !== expectedSpec) {
                 errors.set(
                     id,
-                    `${fnName}: value ${i + 1} should be ${expectedSpec}, not ${actualType}`,
+                    `Value ${i + 1} of ${fnName}() should be a ${expectedSpec}, but got a ${actualType}`,
                 )
                 break
             }

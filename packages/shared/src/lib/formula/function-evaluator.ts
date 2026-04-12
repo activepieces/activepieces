@@ -320,6 +320,9 @@ function evaluateSingleFormula(
     expression: string,
     sampleData: Record<string, unknown>,
 ): { result: unknown, error: string | null } {
+    const emptyArgError = validateFunctionArgs(expression)
+    if (emptyArgError) return { result: null, error: emptyArgError }
+
     const { processed, vars } = preprocessExpression(expression, sampleData)
     try {
         const result = parser.evaluate(processed, vars as Record<string, number>)
@@ -407,22 +410,54 @@ function resolveTextVars(text: string, sampleData: Record<string, unknown>): str
     })
 }
 
+function validateFunctionArgs(expr: string): string | null {
+    const fnNames = new Set(AP_FUNCTIONS.map((f) => f.name))
+    let pos = 0
+    while (pos < expr.length) {
+        const next = findNextFunctionCall(expr, pos, fnNames)
+        if (!next) break
+        const closePos = findMatchingParen(expr, next.openParen)
+        // Advance inside the paren so nested calls are also validated
+        pos = next.openParen + 1
+        if (closePos === -1) continue
+
+        const fnName = expr.slice(next.start, next.openParen).trim()
+        const argsContent = expr.slice(next.openParen + 1, closePos)
+        const argParts = splitArgsBySemicolon(argsContent)
+
+        // Only flag empties when separators are present — zero-arg calls are fine
+        if (argParts.length > 1) {
+            for (let i = 0; i < argParts.length; i++) {
+                if (!argParts[i].trim()) {
+                    return `${fnName}() is missing value ${i + 1} — fill in all values`
+                }
+            }
+        }
+    }
+    return null
+}
+
 function friendlyError(e: unknown): string {
     const msg = String((e as Error).message ?? e)
-    if (/parse error|Expected EOF|unexpected token/i.test(msg)) {
-        return 'Invalid formula syntax — check parentheses and quotes'
+    if (/division by zero/i.test(msg)) {
+        return 'Cannot divide by zero'
+    }
+    if (/parse error|Expected EOF|unexpected token|value expected|unexpected \)/i.test(msg)) {
+        return 'Invalid formula — check for empty values or mismatched parentheses'
     }
     if (/is not defined/i.test(msg)) {
         const m = msg.match(/(\w+) is not defined/)
-        return m ? `Unknown function or variable: "${m[1]}"` : 'Unknown function or variable'
+        return m
+            ? `"${m[1]}" is not a known function or variable — check for typos`
+            : 'Unknown function or variable — check for typos'
     }
     if (/wrong number of arguments/i.test(msg)) {
-        return 'Wrong number of arguments'
+        return 'Wrong number of values — check the function reference for the expected inputs'
     }
     if (/not a function/i.test(msg)) {
-        return 'That is not a function'
+        return 'That value is not callable as a function'
     }
-    return 'Formula evaluation error'
+    return 'Could not evaluate this formula — check all values are filled in correctly'
 }
 
 function preprocessExpression(
