@@ -18,13 +18,6 @@ type AIModelType = 'text' | 'image';
 
 const OPENAI_MODELS = ['gpt-5.2', 'gpt-5.1', 'gpt-5-mini'] as const;
 
-const ANTHROPIC_MODELS = [
-  'claude-haiku-4-5-20251001',
-  'claude-haiku-4-5',
-  'claude-sonnet-4-6',
-  'claude-opus-4-6',
-] as const;
-
 const ANTHROPIC_OPENROUTER_MODELS = [
   'claude-haiku-4-5-20251001',
   'claude-haiku-4.5',
@@ -43,9 +36,6 @@ const X_AI_OPENROUTER_MODELS = ['grok-4.1-fast'] as const;
 
 const ALLOWED_MODELS_BY_PROVIDER: Partial<Record<Provider, readonly string[]>> =
   {
-    openai: OPENAI_MODELS,
-    anthropic: ANTHROPIC_MODELS,
-    google: GOOGLE_MODELS,
     activepieces: [
       ...OPENAI_MODELS.map((model) => `${AIProviderName.OPENAI}/${model}`),
       ...ANTHROPIC_OPENROUTER_MODELS.map(
