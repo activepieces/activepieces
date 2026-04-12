@@ -133,7 +133,7 @@ export const apUpdateStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
                 type: step.type,
                 name: step.name,
                 displayName: displayName ?? step.displayName,
-                valid: true,
+                valid: step.valid,
                 settings: updatedSettings,
                 ...(skip !== undefined && { skip }),
             }
