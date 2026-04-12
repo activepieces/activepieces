@@ -21,7 +21,6 @@ import { t } from 'i18next';
 import { ChevronRight, XCircle } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { Button } from '@/components/ui/button';
 import { CopyButton } from '@/components/custom/clipboard/copy-button';
 import { inputClass } from '@/components/ui/input';
 import { stepsHooks } from '@/features/pieces';

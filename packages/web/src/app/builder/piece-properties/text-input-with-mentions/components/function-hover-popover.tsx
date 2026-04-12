@@ -256,7 +256,11 @@ export function FunctionTooltipCard({
         top,
         left,
         width: TOOLTIP_WIDTH,
-        transform: centered ? 'translateY(-50%)' : showAbove ? 'translateY(-100%)' : undefined,
+        transform: centered
+          ? 'translateY(-50%)'
+          : showAbove
+          ? 'translateY(-100%)'
+          : undefined,
       }}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
