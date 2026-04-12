@@ -87,7 +87,7 @@ function validateFlow({ trigger }: { trigger: Step }): ValidationResult {
         }
 
         if (step.type === FlowActionType.ROUTER) {
-            const children = 'children' in step ? (step.children as (unknown | null)[]) : []
+            const children = 'children' in step ? (step.children as unknown[]) : []
             const branches = 'settings' in step && typeof step.settings === 'object' && step.settings !== null && 'branches' in step.settings
                 ? (step.settings.branches as { branchName?: string }[])
                 : []
