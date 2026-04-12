@@ -3,7 +3,7 @@ import { Migration } from '../../migration'
 
 export class AddWaitpointTable1775747638323 implements Migration {
     name = 'AddWaitpointTable1775747638323'
-    breaking = true
+    breaking = false
     release = '0.82.0'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
@@ -39,17 +39,9 @@ export class AddWaitpointTable1775747638323 implements Migration {
             ON DELETE CASCADE ON UPDATE NO ACTION
         `)
         await this.migrateExistingPausedRuns(queryRunner)
-
-        await queryRunner.query(`
-            ALTER TABLE "flow_run" DROP COLUMN IF EXISTS "pauseMetadata"
-        `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`
-            ALTER TABLE "flow_run" ADD "pauseMetadata" jsonb
-        `)
-
         await this.restorePauseMetadata(queryRunner)
 
         await queryRunner.query('ALTER TABLE "waitpoint" DROP CONSTRAINT "fk_waitpoint_project_id"')

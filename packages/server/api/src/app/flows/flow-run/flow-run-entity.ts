@@ -18,6 +18,8 @@ type FlowRunSchema = FlowRun & {
     flowVersion: FlowVersion
     logsFile: File
     triggeredByUser?: User
+    /** @deprecated kept for backwards compatibility, use waitpoint table instead, remove in 0.83.0 */
+    pauseMetadata?: unknown
 }
 
 export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
@@ -81,6 +83,11 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
             type: Number,
             nullable: false,
             default: 0,
+        },
+        // @deprecated — kept for backwards compatibility, use waitpoint table instead
+        pauseMetadata: {
+            type: 'jsonb',
+            nullable: true,
         },
     },
     indices: [
