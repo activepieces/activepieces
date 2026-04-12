@@ -6,7 +6,7 @@ const env = from(environmentMigrations.migrate())
 function getApiUrl(): string {
     const containerType = system.get(WorkerSystemProp.CONTAINER_TYPE) ?? 'WORKER_AND_APP'
     if (containerType === 'WORKER_AND_APP') {
-        const port = system.get(WorkerSystemProp.PORT)
+        const port = process.env[WorkerSystemProp.PORT] ?? system.get(WorkerSystemProp.PORT)
         return `http://127.0.0.1:${port}/api/`
     }
     const frontendUrl = system.getOrThrow(WorkerSystemProp.FRONTEND_URL).replace(/\/+$/, '')
@@ -16,7 +16,7 @@ function getApiUrl(): string {
 function getSocketUrl(): { url: string, path: string } {
     const containerType = system.get(WorkerSystemProp.CONTAINER_TYPE) ?? 'WORKER_AND_APP'
     if (containerType === 'WORKER_AND_APP') {
-        const port = system.get(WorkerSystemProp.PORT)
+        const port = process.env[WorkerSystemProp.PORT] ?? system.get(WorkerSystemProp.PORT)
         return { url: `http://127.0.0.1:${port}`, path: '/api/socket.io' }
     }
     const frontendUrl = system.getOrThrow(WorkerSystemProp.FRONTEND_URL).replace(/\/+$/, '')
