@@ -66,6 +66,9 @@ jobs:
       - name: Build shared package
         run: bun run --cwd packages/shared build
 
+      - name: Build server-utils package
+        run: bun run --cwd packages/server/utils build
+
       - name: Configure SSH
         run: |
           mkdir -p ~/.ssh/
