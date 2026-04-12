@@ -1,4 +1,8 @@
 {
+  "Cloud Environment": "Entorno en la nube",
+  "Select your Microsoft cloud environment.": "Seleccione su entorno de nube de Microsoft.",
+  "Commercial (Global)": "Comercial (Global)",
+  "US Government (GCC High)": "Gobierno de EEUU (GCC Alto)",
   "\nIf you'd like to use your own custom Azure app instead of the default Activepieces app, follow the [Azure app creation guide](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app#register-an-application),\n set the **Redirect URI** to {{redirectUrl}} and add the following **Microsoft Graph (Delegated) permissions** under **API permissions**:\n  - User.Read\n\t- Channel.Create\n\t- Channel.ReadBasic.All\n\t- ChannelMessage.Send\n\t- Team.ReadBasic.All\n\t- Chat.ReadWrite\n\t- ChannelMessage.R": "\nIf you'd like to use your own custom Azure app instead of the default Activepieces app, follow the [Azure app creation guide](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app#register-an-application),\n set the **Redirect URI** to {{redirectUrl}} and add the following **Microsoft Graph (Delegated) permissions** under **API permissions**:\n  - User.Read\n\t- Channel.Create\n\t- Channel.ReadBasic.All\n\t- ChannelMessage.Send\n\t- Team.ReadBasic.All\n\t- Chat.ReadWrite\n\t- ChannelMessage.Read.All\n\t- User.ReadBasic.All\n\t- Presence.Read.All\n\t- TeamMember.Read.All\n\t- openid\n\t- email\n\t- profile\n\t- offline_access",
   "Create Channel": "Crear canal",
   "Send Channel Message": "Enviar Mensaje del Canal",
@@ -51,6 +55,7 @@
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
   "Follow redirects": "Seguir redirecciones",
+  "Use @username to mention team members in the message.": "Usa @username para mencionar a los miembros del equipo en el mensaje.",
   "ID of the parent message to reply to.": "ID del mensaje padre al que responder.",
   "The ID of the message to retrieve.": "El ID del mensaje a recuperar.",
   "The ID of the message to delete.": "El ID del mensaje a eliminar.",
