@@ -1,10 +1,8 @@
 {
   "CRM software solutions and enterprise cloud computing": "Soluções de software de CRM e computação empresarial",
-  "Environment": "Seguros",
-  "Choose environment": "Escolher ambiente",
-  "Production": "Produção",
-  "Development": "Desenvolvimento",
-  "Authenticate with Salesforce Production": "Autenticar com a produção do Salesforce",
+  "Salesforce Domain": "Domínio do Salesforce",
+  "Enter your Salesforce domain. Use \"login.salesforce.com\" for Production, \"test.salesforce.com\" for Sandbox, or your custom My Domain (e.g. \"mycompany.my.salesforce.com\" or \"mycompany.sandbox.my.salesforce.com\").": "Digite o domínio do seu Salesforce. Use \"login.salesforce.com\" para Produção, \"test.salesforce.com\" para Sandbox, ou o seu domínio personalizado (por exemplo, \"mycompany.my.salesforce.com\" ou \"mycompany.sandbox.my.salesforce.com\").",
+  "Authenticate with Salesforce": "Autenticar com Salesforce",
   "Add Contact to Campaign": "Adicionar Contato à Campanha",
   "Add File to Record": "Adicionar Arquivo para Gravar",
   "Add Lead to Campaign": "Adicionar Lead para Campanha",
