@@ -1,7 +1,5 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import {
-  createPiece,
-} from '@activepieces/pieces-framework';
+import { createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { gmailSendEmailAction } from './lib/actions/send-email-action';
 import { gmailReplyToEmailAction } from './lib/actions/reply-to-email-action';
@@ -15,7 +13,12 @@ import { gmailSearchMailAction } from './lib/actions/search-email-action';
 import { gmailGetEmailAction } from './lib/actions/get-mail-action';
 import { gmailAuth, getAccessToken, GmailAuthValue } from './lib/auth';
 
-export { gmailAuth, getAccessToken, GmailAuthValue, createGoogleClient } from './lib/auth';
+export {
+  gmailAuth,
+  getAccessToken,
+  GmailAuthValue,
+  createGoogleClient,
+} from './lib/auth';
 
 export const gmail = createPiece({
   minimumSupportedRelease: '0.30.0',
