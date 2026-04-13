@@ -68,7 +68,7 @@ describe('Flags API', () => {
 
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/flags',
+                url: '/api/v1/flags',
                 headers: {
                     Host: 'custom.example.com',
                 },

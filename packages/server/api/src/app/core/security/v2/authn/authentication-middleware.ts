@@ -1,6 +1,6 @@
-import { RouteKind } from '@activepieces/server-common'
 import { isNil } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
+import { RouteKind } from '../../authorization/common'
 import { authenticateOrThrow } from './authenticate'
 
 export const authenticationMiddleware = async (request: FastifyRequest): Promise<void> => {

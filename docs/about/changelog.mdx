@@ -4,9 +4,47 @@ description: "A log of all notable changes to Activepieces"
 icon: "code-commit"
 ---
 
-<Update label="March 2026" description="Dashboard 2.0">
 
-### Dashboard 2.0 — full UI redesign
+<Update label="March 2026" description="Stability & Reliability Improvements">
+
+### Stability & reliability improvements
+
+Major investments in worker architecture, testing, and resilience to ensure more reliable flow execution.
+
+**Worker Architecture**
+- Complete worker rewrite (worker v2) focused on stability and reliability
+- New sandbox process model with improved error handling and resource cleanup
+
+**Testing & Quality — what we added and why it matters**
+
+Race condition tests:
+- **Queue dispatcher** (12 tests) — tests orphaned job handling when a job is dequeued but all waiters have timed out, prevents double-loop spawn during close with in-flight dequeue, verifies single dequeue concurrency control, tests waiter timeout and retry behavior
+- **Subflow resume** (8 tests) — tests the race condition where the engine writes pause metadata to Redis before it's persisted to DB, verifies Redis fallback when DB is stale, simulates concurrent reads/writes with spy mocks, covers sync endpoint with concurrent Redis updates
+- **Rate limiter** (5+ tests) — tests concurrent job slot allocation, idempotency with concurrent dispatch, per-project isolation so different projects don't interfere
+- **Concurrent flow execution** — end-to-end test creating 5 concurrent flow runs verifying none get stuck or deadlocked
+- **Memory lock** — verifies mutual exclusion (two concurrent lock acquire calls on same key are serialized)
+
+Worker unit tests:
+- **Worker polling** — tests job execution lifecycle, resilience to invalid job data, null polls, unrecognized job types, mixed valid/invalid sequences
+- **Sandbox execution** — tests sandbox creation, startup, RPC communication, stdout/stderr accumulation, resource cleanup on timeout or memory issues, process cleanup and listener removal
+- **Process forking** — tests execArgv configuration (memory limits, node options), environment variable propagation
+- **Cache logic** — tests cache hit/miss, disk persistence, memory caching, cache invalidation predicates
+- **Configuration** — tests config loading for different container types (WORKER_AND_APP vs WORKER)
+
+End-to-end validation:
+- **[Smoke tests](https://github.com/activepieces/activepieces/blob/main/.github/workflows/smoke-test.yml) in GitHub Actions** — validates health checks and webhook flow execution on AMD64 and ARM64
+- **[Benchmark tests](https://github.com/activepieces/activepieces/blob/main/.github/workflows/benchmark.yml) in GitHub Actions** — load testing across 6 app/worker configurations measuring throughput, mean latency, P50, P99 ([see results](/install/architecture/benchmark))
+
+**Resilience**
+- Worker gracefully handles invalid job data, null polls, and unrecognized job types
+- Sandbox properly cleans up processes, listeners, and resources on timeout or memory issues
+- Race condition fixes for subflow resume and user interaction jobs
+
+</Update>
+
+<Update label="March 2026" description="Platform Admin">
+
+### Platform Admin — full UI redesign
 
 A comprehensive visual refresh across all Platform Admin and Project pages with a cleaner, more consistent interface.
 

@@ -41,10 +41,11 @@ export const createEventAction = createAction({
       ? propsValue.end
       : dayjs(startDateTime).add(30, 'm');
     const endDateTime = dayjs(endTime).format('YYYY-MM-DDTHH:mm:ss');
+    const cloud = (auth as unknown as { props?: Record<string, unknown> }).props?.['cloud'] as string | undefined;
 
     const request: HttpRequest = {
       method: HttpMethod.POST,
-      url: `${outlookCalendarCommon.baseUrl}/calendars/${propsValue.calendarId}/events`,
+      url: `${outlookCalendarCommon.getBaseUrl(cloud)}/calendars/${propsValue.calendarId}/events`,
       body: {
         subject: propsValue.title,
         body: {},

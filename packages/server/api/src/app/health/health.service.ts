@@ -1,4 +1,4 @@
-import { systemUsage } from '@activepieces/server-common'
+import { systemUsage } from '@activepieces/server-utils'
 import { GetSystemHealthChecksResponse } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { databaseConnection } from '../database/database-connection'
@@ -37,8 +37,8 @@ export const healthStatusService = (log: FastifyBaseLogger) => ({
         }
         return  workerHealthy && databaseHealthy
     },
-    getSystemHealthChecks: async (): Promise<GetSystemHealthChecksResponse> => {
-        const workers = await machineService(log).list()
+    getSystemHealthChecks: async (platformId: string): Promise<GetSystemHealthChecksResponse> => {
+        const workers = await machineService(log).list(platformId)
         const allWorkersPassedHealthcheck = workers.every(worker => worker.information.totalCpuCores > 1)
         const allWorkersHaveEnoughRam = workers.every(worker => worker.information.totalAvailableRamInBytes > gigaBytes(4))
         const databaseHealthy = await healthStatusService(log).checkDatabaseHealth()

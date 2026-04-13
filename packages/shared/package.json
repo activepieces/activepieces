@@ -1,10 +1,12 @@
 {
   "name": "@activepieces/shared",
-  "version": "0.42.0",
+  "version": "0.57.2",
   "type": "commonjs",
+  "sideEffects": false,
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "dependencies": {
+    "dayjs": "1.11.9",
     "deepmerge-ts": "7.1.0",
     "nanoid": "3.3.8",
     "semver": "7.6.0",

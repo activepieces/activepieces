@@ -4,11 +4,10 @@ import {
   AuthenticationType,
   HttpRequest,
 } from '@activepieces/pieces-common';
-import { Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import { Property } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
-import { OAuth2Client } from 'googleapis-common';
 import { google } from 'googleapis';
-import { googleDriveAuth } from '../auth';
+import { googleDriveAuth, GoogleDriveAuthValue, getAccessToken, createGoogleClient } from '../auth';
 
 export const common = {
   properties: {
@@ -25,7 +24,8 @@ export const common = {
             placeholder: 'Please authenticate first',
           };
         }
-        const authProp: OAuth2PropertyValue = auth as OAuth2PropertyValue;
+        const authValue = auth as GoogleDriveAuthValue;
+        const accessToken = await getAccessToken(authValue);
         let folders: { id: string; name: string }[] = [];
         let pageToken = null;
         do {
@@ -39,7 +39,7 @@ export const common = {
             },
             authentication: {
               type: AuthenticationType.BEARER_TOKEN,
-              token: authProp!['access_token'],
+              token: accessToken,
             },
           };
           if (pageToken) {
@@ -80,7 +80,7 @@ export const common = {
   },
 
   async getFiles(
-    auth: OAuth2PropertyValue,
+    auth: GoogleDriveAuthValue,
     search?: {
       parent?: string;
       createdTime?: string | number | Date;
@@ -89,8 +89,7 @@ export const common = {
     },
     order?: string
   ) {
-    const authClient = new OAuth2Client();
-    authClient.setCredentials(auth);
+    const authClient = await createGoogleClient(auth);
 
     const drive = google.drive({ version: 'v3', auth: authClient });
 
@@ -123,7 +122,7 @@ export const common = {
   },
 
   async getFolders(
-    auth: OAuth2PropertyValue,
+    auth: GoogleDriveAuthValue,
     search?: {
       parent?: string;
       createdTime?: string | number | Date;
@@ -132,8 +131,7 @@ export const common = {
     },
     order?: string
   ) {
-    const authClient = new OAuth2Client();
-    authClient.setCredentials(auth);
+    const authClient = await createGoogleClient(auth);
 
     const drive = google.drive({ version: 'v3', auth: authClient });
 
@@ -151,7 +149,7 @@ export const common = {
     do {
       const listParams: Record<string, any> = {
         q: q.join(' and '),
-        fields: 'nextPageToken, files(id, name)',
+        fields: 'nextPageToken, files(id, name, createdTime)',
         orderBy: order ?? 'createdTime desc',
         supportsAllDrives: true,
         includeItemsFromAllDrives: search?.includeTeamDrive,

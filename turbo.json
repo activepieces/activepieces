@@ -47,7 +47,7 @@
         "src/**",
         "tsconfig*.json",
         "package.json",
-        "esbuild.config.mjs",
+        "webpack.config.js",
         "!src/**/*.spec.ts",
         "!src/**/*.test.ts"
       ]

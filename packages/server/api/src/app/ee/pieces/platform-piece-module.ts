@@ -1,4 +1,3 @@
-import { securityAccess } from '@activepieces/server-common'
 import {
     ActivepiecesError,
     AddPieceRequestBody,
@@ -10,6 +9,7 @@ import {
 import { FastifyPluginAsyncZod, FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
+import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { pieceInstallService } from '../../pieces/piece-install-service'
 
 export const platformPieceModule: FastifyPluginAsyncZod = async (app) => {

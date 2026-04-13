@@ -3,6 +3,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { WebClient } from '@slack/web-api';
 import { z } from 'zod';
 import { propsValidation } from '@activepieces/pieces-common';
+import { requireUserToken, SlackAuthValue } from '../common/auth-helpers';
 
 export const setUserStatusAction = createAction({
   auth: slackAuth,
@@ -31,7 +32,7 @@ export const setUserStatusAction = createAction({
       text: z.string().max(100),
     });
 
-    const client = new WebClient(auth.data['authed_user']?.access_token);
+    const client = new WebClient(requireUserToken(auth as SlackAuthValue));
     return await client.users.profile.set({
       profile: {
         status_text: propsValue.text,

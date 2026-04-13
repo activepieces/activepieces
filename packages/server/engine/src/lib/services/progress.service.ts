@@ -1,6 +1,8 @@
+import { promisify } from 'node:util'
+import { zstdCompress as zstdCompressCallback } from 'node:zlib'
 import { setTimeout } from 'timers/promises'
 import { OutputContext } from '@activepieces/pieces-framework'
-import { DEFAULT_MCP_DATA, EngineGenericError, EngineSocketEvent, FlowActionType, FlowRunStatus, GenericStepOutput, isFlowRunStateTerminal, isNil, logSerializer, RunEnvironment, StepOutput, StepOutputStatus, StepRunResponse, UpdateRunProgressRequest, UploadRunLogsRequest } from '@activepieces/shared'
+import { CONTENT_ENCODING_ZSTD, DEFAULT_MCP_DATA, EngineGenericError, FlowActionType, FlowRunStatus, GenericStepOutput, isFlowRunStateTerminal, isNil, logSerializer, RunEnvironment, StepOutput, StepOutputStatus, StepRunResponse, UpdateRunProgressRequest, UploadRunLogsRequest } from '@activepieces/shared'
 import { Mutex } from 'async-mutex'
 import dayjs from 'dayjs'
 import fetchRetry from 'fetch-retry'
@@ -10,12 +12,14 @@ import { utils } from '../utils'
 import { workerSocket } from '../worker-socket'
 
 
+const zstdCompress = promisify(zstdCompressCallback)
 const lock = new Mutex()
 const updateLock = new Mutex()
 const fetchWithRetry = fetchRetry(global.fetch)
 
 const BACKUP_INTERVAL_MS = 15000
 export let latestUpdateParams: UpdateStepProgressParams | null = null
+let savedStartTime: string | null = null
 let backupController: AbortController | null = null
 let backupLoopPromise: Promise<void> | null = null
 
@@ -23,9 +27,7 @@ async function backupLoop(signal: AbortSignal): Promise<void> {
     while (!signal.aborted) {
         try {
             if (latestUpdateParams) {
-                console.log('[Progress] Backup interval fired, starting backup')
                 await progressService.backup(latestUpdateParams)
-                console.log('[Progress] Backup interval completed')
             }
         }
         catch (err) {
@@ -53,6 +55,9 @@ export const progressService = {
     sendUpdate: async (params: UpdateStepProgressParams): Promise<void> => {
         return updateLock.runExclusive(async () => {
             const { engineConstants, flowExecutorContext, stepNameToUpdate } = params
+            if (params.startTime) {
+                savedStartTime = params.startTime
+            }
             latestUpdateParams = params
             if (!stepNameToUpdate || !engineConstants.isTestFlow) { // live runs are updated by backup job
                 return
@@ -96,10 +101,12 @@ export const progressService = {
                     runId: engineConstants.flowRunId,
                     stepName,
                 })
-                await workerSocket.sendToWorkerWithAck(EngineSocketEvent.UPDATE_STEP_PROGRESS, {
-                    projectId: engineConstants.projectId,
-                    stepResponse,
-                })
+                if (stepResponse) {
+                    await workerSocket.getWorkerClient().updateStepProgress({
+                        projectId: engineConstants.projectId,
+                        stepResponse,
+                    })
+                }
             },
         }
     },
@@ -110,13 +117,14 @@ export const progressService = {
         }
         await lock.runExclusive(async () => {
             const { flowExecutorContext, engineConstants } = updateParams
-            const executionState = await logSerializer.serialize({
+            const serialized = await logSerializer.serialize({
                 executionState: {
                     steps: flowExecutorContext.steps,
                     tags: Array.from(flowExecutorContext.tags),
                 },
             })
-           
+            const executionState = await zstdCompress(serialized)
+
             const logsUploadUrl = engineConstants.logsUploadUrl
             if (isNil(logsUploadUrl)) {
                 throw new EngineGenericError('LogsUploadUrlNotSetError', 'Logs upload URL is not set')
@@ -140,10 +148,11 @@ export const progressService = {
                 status: flowExecutorContext.verdict.status,
                 progressUpdateType: engineConstants.progressUpdateType,
                 logsFileId: engineConstants.logsFileId,
-                failedStep: flowExecutorContext.verdict.status === FlowRunStatus.FAILED ? flowExecutorContext.verdict.failedStep : undefined,
+                failedStep: 'failedStep' in flowExecutorContext.verdict ? flowExecutorContext.verdict.failedStep : undefined,
                 stepNameToTest: engineConstants.stepNameToTest,
                 stepResponse,
                 pauseMetadata: flowExecutorContext.verdict.status === FlowRunStatus.PAUSED ? flowExecutorContext.verdict.pauseMetadata : undefined,
+                startTime: savedStartTime ?? undefined,
                 finishTime: isFlowRunStateTerminal({
                     status: flowExecutorContext.verdict.status,
                     ignoreInternalError: false,
@@ -158,19 +167,17 @@ export const progressService = {
         if (!backupController) {
             return
         }
-        
-        console.log('[Progress] Shutdown called, stopping backup loop')
+
         backupController.abort()
-        
+
         if (backupLoopPromise) {
-            console.log('[Progress] Waiting for in-progress backup to complete')
             await backupLoopPromise
         }
-        
+
         backupController = null
         backupLoopPromise = null
         latestUpdateParams = null
-        console.log('[Progress] Shutdown complete')
+        savedStartTime = null
     },
 }
 
@@ -185,20 +192,20 @@ type CreateOutputContextParams = {
 }
 
 const sendUpdateProgress = async (request: UpdateRunProgressRequest): Promise<void> => {
-    const result = await utils.tryCatchAndThrowOnEngineError(() => 
-        workerSocket.sendToWorkerWithAck(EngineSocketEvent.UPDATE_RUN_PROGRESS, request),
+    const result = await utils.tryCatchAndThrowOnEngineError(() =>
+        workerSocket.getWorkerClient().updateRunProgress(request),
     )
     if (result.error) {
-        throw new EngineGenericError('ProgressUpdateError', 'Failed to send UPDATE_RUN_PROGRESS event', result.error)
+        throw new EngineGenericError('ProgressUpdateError', 'Failed to send updateRunProgress', result.error)
     }
 }
 
 const sendLogsUpdate = async (request: UploadRunLogsRequest): Promise<void> => {
-    const result = await utils.tryCatchAndThrowOnEngineError(() => 
-        workerSocket.sendToWorkerWithAck(EngineSocketEvent.UPLOAD_RUN_LOG, request),
+    const result = await utils.tryCatchAndThrowOnEngineError(() =>
+        workerSocket.getWorkerClient().uploadRunLog(request),
     )
     if (result.error) {
-        throw new EngineGenericError('ProgressUpdateError', 'Failed to send UPLOAD_RUN_LOG event', result.error)
+        throw new EngineGenericError('ProgressUpdateError', 'Failed to send uploadRunLog', result.error)
     }
 }
 
@@ -208,6 +215,7 @@ const uploadExecutionState = async (uploadUrl: string, executionState: Buffer, f
         body: new Uint8Array(executionState),
         headers: {
             'Content-Type': 'application/octet-stream',
+            'Content-Encoding': CONTENT_ENCODING_ZSTD,
         },
         redirect: 'manual',
         retries: 3,

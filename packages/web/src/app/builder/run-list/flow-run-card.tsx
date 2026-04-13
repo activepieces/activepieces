@@ -52,7 +52,6 @@ const FlowRunCard = React.memo(
 
     const [isRetryDropdownOpen, setIsRetryDropdownOpen] =
       useState<boolean>(false);
-
     const { mutate: retryRun, isPending: isRetryingRun } =
       flowRunMutations.useRetryRun({
         onSuccess: ({ run }) => {
@@ -60,7 +59,6 @@ const FlowRunCard = React.memo(
           navigate(`/runs/${run.id}`);
         },
       });
-
     return (
       <CardListItem
         className={cn('px-3 group', {

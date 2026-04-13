@@ -50,12 +50,19 @@ export const ApSidebarItem = (item: SidebarItemType) => {
           { 'bg-sidebar-accent hover:bg-sidebar-accent!': isLinkActive },
           '',
         )}
-        onClick={() => navigate(item.to)}
+        onClick={() => {
+          item.onClick?.();
+          navigate(item.to);
+        }}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
         {item.icon && renderIcon(item.icon, iconRef)}
-        {!isCollapsed && <span className="text-sm">{item.label}</span>}
+        {!isCollapsed && (
+          <span className={cn('text-sm', { 'font-semibold': isLinkActive })}>
+            {item.label}
+          </span>
+        )}
         {!isCollapsed && item.locked && (
           <LockKeyhole className="size-3.5! ml-auto" />
         )}

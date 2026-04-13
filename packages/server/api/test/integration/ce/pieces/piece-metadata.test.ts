@@ -9,6 +9,7 @@ import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { pieceCache } from '../../../../src/app/pieces/metadata/piece-cache'
+import { pieceMetadataService } from '../../../../src/app/pieces/metadata/piece-metadata-service'
 import { generateMockToken } from '../../../helpers/auth'
 import { db } from '../../../helpers/db'
 import {
@@ -42,7 +43,7 @@ describe('Piece Metadata CE API', () => {
 
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/pieces/categories',
+                url: '/api/v1/pieces/categories',
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -72,7 +73,7 @@ describe('Piece Metadata CE API', () => {
 
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/pieces',
+                url: '/api/v1/pieces',
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -108,7 +109,7 @@ describe('Piece Metadata CE API', () => {
 
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/pieces?searchQuery=Searchable+Unique',
+                url: '/api/v1/pieces?searchQuery=Searchable+Unique',
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -139,7 +140,7 @@ describe('Piece Metadata CE API', () => {
 
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/pieces/ce-get-test-piece',
+                url: '/api/v1/pieces/ce-get-test-piece',
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -161,7 +162,7 @@ describe('Piece Metadata CE API', () => {
 
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/pieces/non-existent-piece-xyz',
+                url: '/api/v1/pieces/non-existent-piece-xyz',
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -200,6 +201,48 @@ describe('Piece Metadata CE API', () => {
 
             // Sync should succeed (200) or be accepted
             expect([StatusCodes.OK, StatusCodes.NO_CONTENT]).toContain(response?.statusCode)
+        })
+    })
+
+    describe('pieceMetadataService.get() — custom pieces', () => {
+        it('should return undefined for custom piece when platformId is not provided', async () => {
+            const platformId = apId()
+            const mockPiece = createMockPieceMetadata({
+                name: '@custom/my-piece',
+                pieceType: PieceType.CUSTOM,
+                packageType: PackageType.REGISTRY,
+                platformId,
+                version: '0.1.0',
+            })
+            await db.save('piece_metadata', mockPiece)
+            await pieceCache(mockLog).setup()
+
+            const result = await pieceMetadataService(mockLog).get({
+                name: '@custom/my-piece',
+                version: '0.1.0',
+            })
+            expect(result).toBeUndefined()
+        })
+
+        it('should return custom piece when platformId is provided', async () => {
+            const platformId = apId()
+            const mockPiece = createMockPieceMetadata({
+                name: '@custom/my-piece',
+                pieceType: PieceType.CUSTOM,
+                packageType: PackageType.REGISTRY,
+                platformId,
+                version: '0.1.0',
+            })
+            await db.save('piece_metadata', mockPiece)
+            await pieceCache(mockLog).setup()
+
+            const result = await pieceMetadataService(mockLog).get({
+                name: '@custom/my-piece',
+                version: '0.1.0',
+                platformId,
+            })
+            expect(result).toBeDefined()
+            expect(result?.name).toBe('@custom/my-piece')
         })
     })
 })

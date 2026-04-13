@@ -1,8 +1,8 @@
-import { AppSystemProp } from '@activepieces/server-common'
 import { ApEdition, ApEnvironment, UserIdentityProvider } from '@activepieces/shared'
 import { authenticationService } from '../../authentication/authentication.service'
 import { FlagEntity } from '../../flags/flag.entity'
 import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-props'
 import { databaseConnection } from '../database-connection'
 import { DataSeed } from './data-seed'
 

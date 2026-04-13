@@ -1,7 +1,6 @@
 import { URL } from 'node:url'
 import { Store, StoreScope } from '@activepieces/pieces-framework'
 import { DeleteStoreEntryRequest, ExecutionError, FetchError, FlowId, isNil, PutStoreEntryRequest, StorageError, StorageInvalidKeyError, StorageLimitError, STORE_KEY_MAX_LENGTH, STORE_VALUE_MAX_SIZE, StoreEntry } from '@activepieces/shared'
-import { StatusCodes } from 'http-status-codes'
 import { utils } from '../utils'
 
 export const createStorageService = ({ engineToken, apiUrl }: CreateStorageServiceParams): StorageService => {
@@ -150,10 +149,10 @@ const buildUrl = (apiUrl: string, key?: string): URL => {
 }
 
 const handleResponseError = async ({ key, response }: HandleResponseErrorParams): Promise<null> => {
-    if (response.status === StatusCodes.NOT_FOUND.valueOf()) {
+    if (response.status === 404) {
         return null
     }
-    if (response.status === StatusCodes.REQUEST_TOO_LONG) {
+    if (response.status === 413) {
         throw new StorageLimitError(key, STORE_VALUE_MAX_SIZE)
     }
     const cause = await response.text()

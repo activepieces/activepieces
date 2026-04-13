@@ -1,8 +1,9 @@
-import { AuthorizationRouteSecurity, AuthorizationType, ProjectAuthorizationConfig, RouteKind } from '@activepieces/server-common'
 import { ActivepiecesError, ErrorCode, isNil, PlatformRole, Principal, PrincipalType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { rbacService } from '../../../../ee/authentication/project-role/rbac-service'
 import { userService } from '../../../../user/user-service'
+import { AuthorizationRouteSecurity, ProjectAuthorizationConfig } from '../../authorization/authorization'
+import { AuthorizationType, RouteKind } from '../../authorization/common'
 
 export const authorizeOrThrow = async (principal: Principal, security: AuthorizationRouteSecurity, log: FastifyBaseLogger): Promise<void> => {
     if (security.kind === RouteKind.PUBLIC) {

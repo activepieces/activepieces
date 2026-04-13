@@ -1,16 +1,30 @@
 services:
-  activepieces:
-    image: ghcr.io/activepieces/activepieces:0.79.0
-    container_name: activepieces
+  app:
+    image: ghcr.io/activepieces/activepieces:0.80.1
+    container_name: activepieces-app
     restart: unless-stopped
-    ## Enable the following line if you already use AP_EXECUTION_MODE with SANDBOX_PROCESS or old activepieces, checking the breaking change documentation for more info.
-    ## privileged: true
     ports:
       - '8080:80'
     depends_on:
       - postgres
       - redis
     env_file: .env
+    environment:
+      - AP_CONTAINER_TYPE=APP
+    volumes:
+      - ./cache:/usr/src/app/cache
+    networks:
+      - activepieces
+  worker:
+    image: ghcr.io/activepieces/activepieces:0.79.0
+    restart: unless-stopped
+    depends_on:
+      - app
+    env_file: .env
+    environment:
+      - AP_CONTAINER_TYPE=WORKER
+    deploy:
+      replicas: 5
     volumes:
       - ./cache:/usr/src/app/cache
     networks:
@@ -41,4 +55,3 @@ volumes:
   redis_data:
 networks:
   activepieces:
-  

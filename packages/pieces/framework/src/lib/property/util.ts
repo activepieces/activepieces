@@ -40,9 +40,13 @@ function buildSchema(props: PiecePropertyMap, auth: PieceAuthProperty | PieceAut
             { message: 'Value must not be null or undefined' },
           );
           break;
+        case PropertyType.SECRET_TEXT:
+          propsSchema[name] = property.required
+            ? z.string().min(1)
+            : z.string();
+          break;
         case PropertyType.BASIC_AUTH:
         case PropertyType.CUSTOM_AUTH:
-        case PropertyType.SECRET_TEXT:
         case PropertyType.OAUTH2:
           break;
         case PropertyType.ARRAY: {

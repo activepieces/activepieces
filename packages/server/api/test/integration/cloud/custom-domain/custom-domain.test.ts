@@ -37,7 +37,7 @@ describe('Custom Domain API', () => {
             }
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/custom-domains',
+                url: '/api/v1/custom-domains',
                 body: request,
                 headers: {
                     authorization: `Bearer ${testToken}`,
@@ -76,7 +76,7 @@ describe('Custom Domain API', () => {
             }
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/custom-domains',
+                url: '/api/v1/custom-domains',
                 body: request,
                 headers: {
                     authorization: `Bearer ${testToken}`,
@@ -123,7 +123,7 @@ describe('Custom Domain API', () => {
             // act
             const response1 = await app?.inject({
                 method: 'GET',
-                url: '/v1/custom-domains',
+                url: '/api/v1/custom-domains',
                 headers: {
                     authorization: `Bearer ${testToken1}`,
                 },
@@ -162,7 +162,7 @@ describe('Custom Domain API', () => {
             // act
             const response = await app?.inject({
                 method: 'DELETE',
-                url: `/v1/custom-domains/${customDomain.id}`,
+                url: `/api/v1/custom-domains/${customDomain.id}`,
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -197,7 +197,7 @@ describe('Custom Domain API', () => {
             // act
             const response = await app?.inject({
                 method: 'DELETE',
-                url: `/v1/custom-domains/${customDomain.id}`,
+                url: `/api/v1/custom-domains/${customDomain.id}`,
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },

@@ -1,6 +1,7 @@
 import {
   AgentPieceProps,
   AgentProviderModel,
+  AIProviderName,
   isNil,
   PieceAction,
   PieceActionSettings,
@@ -48,7 +49,7 @@ export const AgentSettings = (props: AgentSettingsProps) => {
   const actionName = (props.step.settings as PieceActionSettings)
     .actionName as string;
   const selectedAction = pieceModel.actions[actionName];
-  const properties = (({ auth, ...rest }) => rest)(selectedAction.props);
+  const properties = (({ auth: _auth, ...rest }) => rest)(selectedAction.props);
 
   return (
     <div className="w-full">
@@ -99,7 +100,18 @@ const selectAgentFormComponentForProperty = (
 
   switch (propertyName) {
     case AgentPieceProps.AGENT_TOOLS: {
-      return <AgentTools disabled={disabled} toolsField={field} />;
+      const providerModel = params.form?.watch?.(
+        'settings.input.aiProviderModel',
+      ) as AgentProviderModel | undefined;
+      return (
+        <AgentTools
+          disabled={disabled}
+          toolsField={field}
+          selectedProvider={
+            providerModel?.provider as AIProviderName | undefined
+          }
+        />
+      );
     }
     case AgentPieceProps.STRUCTURED_OUTPUT: {
       return (

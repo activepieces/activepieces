@@ -1,4 +1,3 @@
-import { securityAccess } from '@activepieces/server-common'
 import {
     DeleteStoreEntryRequest,
     GetStoreEntryRequest,
@@ -8,6 +7,7 @@ import {
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import sizeof from 'object-sizeof'
+import { securityAccess } from '../core/security/authorization/fastify-security'
 import { storeEntryService } from './store-entry.service'
 
 export const storeEntryController: FastifyPluginAsyncZod = async (fastify) => {

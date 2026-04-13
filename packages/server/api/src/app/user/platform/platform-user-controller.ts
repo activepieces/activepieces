@@ -1,4 +1,3 @@
-import { securityAccess } from '@activepieces/server-common'
 import {
     ApId,
     assertNotNullOrUndefined,
@@ -12,6 +11,7 @@ import {
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
+import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { userService } from '../user-service'
 
 export const platformUserController: FastifyPluginAsyncZod = async (app) => {

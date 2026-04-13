@@ -33,7 +33,7 @@ describe('Authentication API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/authentication/sign-up',
+                url: '/api/v1/authentication/sign-up',
                 body: mockSignUpRequest,
             })
 
@@ -64,7 +64,7 @@ describe('Authentication API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/authentication/sign-up',
+                url: '/api/v1/authentication/sign-up',
                 body: mockSignUpRequest,
             })
 
@@ -90,7 +90,7 @@ describe('Authentication API', () => {
             // First sign up the user
             const signUpResponse = await app?.inject({
                 method: 'POST',
-                url: '/v1/authentication/sign-up',
+                url: '/api/v1/authentication/sign-up',
                 body: mockSignUpRequest,
             })
 
@@ -105,7 +105,7 @@ describe('Authentication API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/authentication/sign-in',
+                url: '/api/v1/authentication/sign-in',
                 body: mockSignInRequest,
             })
 
@@ -135,7 +135,7 @@ describe('Authentication API', () => {
             // First sign up the user
             await app?.inject({
                 method: 'POST',
-                url: '/v1/authentication/sign-up',
+                url: '/api/v1/authentication/sign-up',
                 body: mockSignUpRequest,
             })
 
@@ -147,7 +147,7 @@ describe('Authentication API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/authentication/sign-in',
+                url: '/api/v1/authentication/sign-in',
                 body: mockSignInRequest,
             })
 

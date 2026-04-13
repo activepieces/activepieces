@@ -1,6 +1,6 @@
 import fs from 'fs/promises'
 import path from 'path'
-import { fileSystemUtils } from '@activepieces/server-common'
+import { fileSystemUtils } from '@activepieces/server-utils'
 import { AppConnectionScope, ConnectionState, FlowState, GitRepo, PopulatedFlow, PopulatedTable, ProjectState, TableState } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { SimpleGit } from 'simple-git'
@@ -11,14 +11,12 @@ import { gitHelper } from './git-helper'
 export const gitSyncHelper = (log: FastifyBaseLogger) => ({
     async getStateFromGit({ flowPath, connectionsFolderPath, tablesFolderPath }: GetStateFromGitParams): Promise<ProjectState> {
         try {
-            const flows = await readFlowsFromGit(flowPath, log)
-            const connections = await readConnectionsFromGit(connectionsFolderPath)
-            const tables = await readTablesFromGit(tablesFolderPath, log)
-            return {
-                flows,
-                connections,
-                tables,
-            }
+            const [flows, connections, tables] = await Promise.all([
+                readFlowsFromGit(flowPath, log),
+                readConnectionsFromGit(connectionsFolderPath),
+                readTablesFromGit(tablesFolderPath, log),
+            ])
+            return { flows, connections, tables }
         }
         catch (error) {
             log.error({ err: error }, '[gitSyncHelper#getStateFromGit] Failed to read flow files')
@@ -97,38 +95,27 @@ export const gitSyncHelper = (log: FastifyBaseLogger) => ({
 
 async function readFlowsFromGit(flowFolderPath: string, log: FastifyBaseLogger): Promise<FlowState[]> {
     const flowFiles = await fs.readdir(flowFolderPath)
-    const flows: FlowState[] = []
-    for (const file of flowFiles) {
+    const stateService = projectStateService(log)
+    return Promise.all(flowFiles.map(async (file) => {
         const flow: PopulatedFlow = JSON.parse(await fs.readFile(path.join(flowFolderPath, file), 'utf-8'))
-        const flowState = await projectStateService(log).getFlowState(flow)
-        flows.push(flowState)
-    }
-    return flows
+        return stateService.getFlowState(flow)
+    }))
 }
 
 async function readConnectionsFromGit(connectionsFolderPath: string): Promise<ConnectionState[]> {
     const connectionFiles = await fs.readdir(connectionsFolderPath)
-    const connections: ConnectionState[] = []
-    for (const file of connectionFiles) {
-        const connection: ConnectionState = JSON.parse(
-            await fs.readFile(path.join(connectionsFolderPath, file), 'utf-8'),
-        )
-        connections.push(connection)
-    }
-    return connections
+    return Promise.all(connectionFiles.map(async (file) => {
+        return JSON.parse(await fs.readFile(path.join(connectionsFolderPath, file), 'utf-8')) as ConnectionState
+    }))
 }
 
 async function readTablesFromGit(tablesFolderPath: string, log: FastifyBaseLogger): Promise<TableState[]> {
     const tableFiles = await fs.readdir(tablesFolderPath)
-    const tables: TableState[] = []
-    for (const file of tableFiles) {
-        const table = JSON.parse(
-            await fs.readFile(path.join(tablesFolderPath, file), 'utf-8'),
-        )
-        const tableState = projectStateService(log).getTableState(table)
-        tables.push(tableState)
-    }
-    return tables
+    const stateService = projectStateService(log)
+    return Promise.all(tableFiles.map(async (file) => {
+        const table = JSON.parse(await fs.readFile(path.join(tablesFolderPath, file), 'utf-8'))
+        return stateService.getTableState(table)
+    }))
 }
 
 type GetStateFromGitParams = {

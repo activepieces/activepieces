@@ -52,7 +52,7 @@ describe('Project Role API', () => {
 
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/project-roles',
+                url: '/api/v1/project-roles',
                 body: projectRole,
                 headers: { authorization: `Bearer ${testToken}` },
             })
@@ -85,7 +85,7 @@ describe('Project Role API', () => {
 
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/project-roles',
+                url: '/api/v1/project-roles',
                 headers: { authorization: `Bearer ${testToken}` },
             })
 
@@ -133,7 +133,7 @@ describe('Project Role API', () => {
 
             const response = await app?.inject({
                 method: 'POST',
-                url: `/v1/project-roles/${projectRole.id}`,
+                url: `/api/v1/project-roles/${projectRole.id}`,
                 body: request,
                 headers: { authorization: `Bearer ${testToken}` },
             })
@@ -172,7 +172,7 @@ describe('Project Role API', () => {
 
             const response = await app?.inject({
                 method: 'DELETE',
-                url: `/v1/project-roles/${projectRole.id}`,
+                url: `/api/v1/project-roles/${projectRole.id}`,
                 headers: { authorization: `Bearer ${testToken}` },
             })
 

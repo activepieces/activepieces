@@ -1,4 +1,13 @@
-import { NoteColorVariant } from '@activepieces/shared';
+import {
+  FLOW_CANVAS_ARC,
+  FLOW_CANVAS_HSPACE,
+  FLOW_CANVAS_LOOP_VOFFSET,
+  FLOW_CANVAS_ROUTER_VOFFSET,
+  FLOW_CANVAS_STEP_HEIGHT,
+  FLOW_CANVAS_STEP_WIDTH,
+  FLOW_CANVAS_VSPACE,
+  NoteColorVariant,
+} from '@activepieces/shared';
 
 import { ApLoopReturnLineCanvasEdge as ApLoopReturnCanvasEdge } from '../edges/loop-return-edge';
 import { ApLoopStartLineCanvasEdge as ApLoopStartCanvasEdge } from '../edges/loop-start-edge';
@@ -13,7 +22,7 @@ import { ApStepCanvasNode } from '../nodes/step-node';
 
 import { ApEdgeType, ApNodeType } from './types';
 
-const ARC_LENGTH = 15;
+const ARC_LENGTH = FLOW_CANVAS_ARC;
 const ARC_LEFT = `a${ARC_LENGTH},${ARC_LENGTH} 0 0,0 -${ARC_LENGTH},${ARC_LENGTH}`;
 const ARC_RIGHT = `a${ARC_LENGTH},${ARC_LENGTH} 0 0,1 ${ARC_LENGTH},${ARC_LENGTH}`;
 const ARC_LEFT_DOWN = `a${ARC_LENGTH},${ARC_LENGTH} 0 0,1 -${ARC_LENGTH},${ARC_LENGTH}`;
@@ -22,21 +31,19 @@ const ARC_RIGHT_UP = `a${ARC_LENGTH},${ARC_LENGTH} 0 0,1 -${ARC_LENGTH},-${ARC_L
 const ARC_LEFT_UP = `a-${ARC_LENGTH},-${ARC_LENGTH} 0 0,0 ${ARC_LENGTH},-${ARC_LENGTH}`;
 const ARROW_DOWN = 'm6 -6 l-6 6 m-6 -6 l6 6';
 const VERTICAL_SPACE_BETWEEN_STEP_AND_LINE = 7;
-const VERTICAL_SPACE_BETWEEN_STEPS = 60;
-const VERTICAL_OFFSET_BETWEEN_LOOP_AND_CHILD =
-  VERTICAL_SPACE_BETWEEN_STEPS * 1.5 + 2 * ARC_LENGTH;
+const VERTICAL_SPACE_BETWEEN_STEPS = FLOW_CANVAS_VSPACE;
+const VERTICAL_OFFSET_BETWEEN_LOOP_AND_CHILD = FLOW_CANVAS_LOOP_VOFFSET;
 const LABEL_HEIGHT = 30;
 const LABEL_VERTICAL_PADDING = 12;
 const STEP_DRAG_OVERLAY_WIDTH = 75;
 const STEP_DRAG_OVERLAY_HEIGHT = 75;
 const NOTE_CREATION_OVERLAY_WIDTH = 150;
 const NOTE_CREATION_OVERLAY_HEIGHT = 150;
-const VERTICAL_OFFSET_BETWEEN_ROUTER_AND_CHILD =
-  VERTICAL_OFFSET_BETWEEN_LOOP_AND_CHILD + LABEL_HEIGHT;
+const VERTICAL_OFFSET_BETWEEN_ROUTER_AND_CHILD = FLOW_CANVAS_ROUTER_VOFFSET;
 const LINE_WIDTH = 1.5;
 const DRAGGED_STEP_TAG = 'dragged-step';
 const DRAGGED_NOTE_TAG = 'dragged-note';
-const HORIZONTAL_SPACE_BETWEEN_NODES = 80;
+const HORIZONTAL_SPACE_BETWEEN_NODES = FLOW_CANVAS_HSPACE;
 const AP_NODE_SIZE: Record<
   Exclude<ApNodeType, ApNodeType.GRAPH_START_WIDGET | ApNodeType.NOTE>,
   { height: number; width: number }
@@ -50,12 +57,12 @@ const AP_NODE_SIZE: Record<
     width: 20,
   },
   [ApNodeType.STEP]: {
-    height: 60,
-    width: 232,
+    height: FLOW_CANVAS_STEP_HEIGHT,
+    width: FLOW_CANVAS_STEP_WIDTH,
   },
   [ApNodeType.LOOP_RETURN_NODE]: {
-    height: 60,
-    width: 232,
+    height: FLOW_CANVAS_STEP_HEIGHT,
+    width: FLOW_CANVAS_STEP_WIDTH,
   },
   [ApNodeType.GRAPH_END_WIDGET]: {
     height: 0,

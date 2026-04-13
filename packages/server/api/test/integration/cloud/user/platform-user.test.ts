@@ -33,7 +33,7 @@ describe('Enterprise User API', () => {
             // act
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/users',
+                url: '/api/v1/users',
                 query: {
                     platformId: mockPlatform.id,
                 },
@@ -78,7 +78,7 @@ describe('Enterprise User API', () => {
 
             const response = await app?.inject({
                 method: 'POST',
-                url: `/v1/users/${mockUser.id}`,
+                url: `/api/v1/users/${mockUser.id}`,
                 headers: {
                     authorization: `Bearer ${mockUserToken}`,
                 },
@@ -113,7 +113,7 @@ describe('Enterprise User API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: `/v1/users/${mockUser.id}`,
+                url: `/api/v1/users/${mockUser.id}`,
                 headers: {
                     authorization: `Bearer ${mockUserToken}`,
                 },
@@ -139,7 +139,7 @@ describe('Enterprise User API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: `/v1/users/${mockUser.id}`,
+                url: `/api/v1/users/${mockUser.id}`,
                 headers: {
                     authorization: `Bearer ${mockApiKey.value}`,
                 },
@@ -184,7 +184,7 @@ describe('Enterprise User API', () => {
             // act
             const response = await app?.inject({
                 method: 'DELETE',
-                url: `/v1/users/${mockUser.id}`,
+                url: `/api/v1/users/${mockUser.id}`,
                 headers: {
                     authorization: `Bearer ${mockUserToken}`,
                 },
@@ -216,7 +216,7 @@ describe('Enterprise User API', () => {
             // act
             const response = await app?.inject({
                 method: 'DELETE',
-                url: `/v1/users/${mockUser.id}`,
+                url: `/api/v1/users/${mockUser.id}`,
                 headers: {
                     authorization: `Bearer ${mockOwnerToken}`,
                 },

@@ -1,7 +1,8 @@
-import { AppSystemProp } from '@activepieces/server-common'
 import { ActivepiecesError, apId, assertNotNullOrUndefined, CreateFieldRequest, ErrorCode, Field, FieldState, FieldType, isNil, UpdateFieldRequest } from '@activepieces/shared'
+import { In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-props'
 import { FieldEntity } from './field.entity'
 
 const fieldRepo = repoFactory<Field>(FieldEntity)
@@ -64,6 +65,23 @@ export const fieldService = {
                 created: 'ASC',
             },
         })
+    },
+
+    async getAllByTableIds({ projectId, tableIds }: GetAllByTableIdsParams): Promise<Map<string, Field[]>> {
+        const fields = await fieldRepo().find({
+            where: { projectId, tableId: In(tableIds) },
+            order: {
+                created: 'ASC',
+            },
+        })
+        const result = new Map<string, Field[]>()
+        for (const tableId of tableIds) {
+            result.set(tableId, [])
+        }
+        for (const field of fields) {
+            result.get(field.tableId)?.push(field)
+        }
+        return result
     },
 
     async getById({ id, projectId }: GetByIdParams): Promise<Field> {
@@ -132,6 +150,11 @@ type CreateFromStateParams = {
 type GetAllParams = {
     projectId: string
     tableId: string
+}
+
+type GetAllByTableIdsParams = {
+    projectId: string
+    tableIds: string[]
 }
 
 type GetByIdParams = {

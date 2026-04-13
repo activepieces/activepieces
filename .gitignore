@@ -11,7 +11,6 @@ firebase-admin-sdk.json
 dev
 /cache
 /logs/
-.env
 
 # SDK Build
 builds
@@ -64,7 +63,7 @@ activepieces-engine.js
 scratch.md
 
 # environment variables
-.env
+.env*
 
 .cursor/rules/nx-rules.mdc
 .github/instructions/nx.instructions.md
@@ -78,3 +77,11 @@ scratch.md
 /blob-report/
 /playwright/.cache/
 /redis-binaries/
+
+# Terraform
+deploy/terraform/**/.terraform/
+deploy/terraform/**/*.tfstate
+deploy/terraform/**/*.tfstate.backup
+deploy/terraform/**/.terraform.lock.hcl
+deploy/terraform/**/terraform.tfvars
+deploy/terraform/**/terraform-*.tfvars

@@ -1,4 +1,4 @@
-import { apDayjsDuration } from '@activepieces/server-common'
+import { apDayjsDuration } from '@activepieces/server-utils'
 import { ActivepiecesError, Alert, AlertChannel, ApEdition, ApId, apId, ErrorCode, ListAlertsParams, SeekPage } from '@activepieces/shared'
 
 import dayjs from 'dayjs'

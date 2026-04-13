@@ -2,7 +2,10 @@ import {
     ActivepiecesError,
     apId,
     Cursor,
+    EngineResponse,
+    EngineResponseStatus,
     ErrorCode,
+    ExecuteTriggerResponse,
     FileCompression,
     FileType,
     FlowId,
@@ -18,7 +21,6 @@ import {
     WorkerJobType,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { EngineHelperTriggerResult, OperationResponse } from 'worker'
 import { repoFactory } from '../../core/db/repo-factory'
 import { fileService } from '../../file/file.service'
 import { flowService } from '../../flows/flow/flow.service'
@@ -76,7 +78,7 @@ export const triggerEventService = (log: FastifyBaseLogger) => ({
         switch (trigger.type) {
             case FlowTriggerType.PIECE: {
 
-                const engineResponse = await userInteractionWatcher(log).submitAndWaitForResponse<OperationResponse<EngineHelperTriggerResult<TriggerHookType.TEST>>>({
+                const engineResponse = await userInteractionWatcher.submitAndWaitForResponse<EngineResponse<ExecuteTriggerResponse<TriggerHookType.TEST>>>({
                     hookType: TriggerHookType.TEST,
                     flowId: flow.id,
                     flowVersionId: flow.version.id,
@@ -84,21 +86,21 @@ export const triggerEventService = (log: FastifyBaseLogger) => ({
                     projectId,
                     jobType: WorkerJobType.EXECUTE_TRIGGER_HOOK,
                     platformId,
-                })
+                }, log)
                 await triggerEventRepo().delete({
                     projectId,
                     flowId: flow.id,
                 })
-                if (!engineResponse.result.success) {
+                if (engineResponse.status !== EngineResponseStatus.OK) {
                     throw new ActivepiecesError({
                         code: ErrorCode.TEST_TRIGGER_FAILED,
                         params: {
-                            message: engineResponse.result.message!,
+                            message: engineResponse.error ?? 'Unknown trigger error',
                         },
                     })
                 }
 
-                for (const output of engineResponse.result.output) {
+                for (const output of engineResponse.response.output) {
                     await this.saveEvent({
                         projectId,
                         flowId: flow.id,
@@ -110,7 +112,7 @@ export const triggerEventService = (log: FastifyBaseLogger) => ({
                     projectId,
                     flow,
                     cursor: null,
-                    limit: engineResponse.result.output.length,
+                    limit: engineResponse.response.output.length,
                 })
             }
             case FlowTriggerType.EMPTY:

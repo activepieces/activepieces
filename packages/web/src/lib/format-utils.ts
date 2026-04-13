@@ -86,7 +86,20 @@ export const formatUtils = {
     const isSameYear = inputDate.isSame(now, 'year');
 
     if (isToday) {
-      return t('Today');
+      const diffInSeconds = now.diff(inputDate, 'second');
+      const diffInMinutes = now.diff(inputDate, 'minute');
+      const diffInHours = now.diff(inputDate, 'hour');
+      if (diffInSeconds < 60) {
+        return t('Just now');
+      }
+      if (diffInMinutes < 60) {
+        return diffInMinutes === 1
+          ? t('1 min ago')
+          : t('{count} mins ago', { count: diffInMinutes });
+      }
+      return diffInHours === 1
+        ? t('1 hour ago')
+        : t('{count} hours ago', { count: diffInHours });
     }
 
     if (isYesterday) {

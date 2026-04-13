@@ -54,7 +54,7 @@ describe('User Invitation API', () => {
             }
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/user-invitations',
+                url: '/api/v1/user-invitations',
                 headers: { authorization: `Bearer ${mockApiKey.value}` },
                 query: { projectId: mockProject.id },
                 body: mockInviteProjectMemberRequest,
@@ -72,7 +72,7 @@ describe('User Invitation API', () => {
 
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/user-invitations',
+                url: '/api/v1/user-invitations',
                 headers: { authorization: `Bearer ${mockOwnerToken}` },
                 query: { projectId: mockProject.id },
                 body: {
@@ -92,7 +92,7 @@ describe('User Invitation API', () => {
 
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/user-invitations',
+                url: '/api/v1/user-invitations',
                 headers: { authorization: `Bearer ${mockApiKey.value}` },
                 query: { projectId: mockProject.id },
                 body: {
@@ -112,7 +112,7 @@ describe('User Invitation API', () => {
 
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/user-invitations',
+                url: '/api/v1/user-invitations',
                 headers: { authorization: `Bearer ${mockApiKey.value}` },
                 body: {
                     projectRole: adminRole.name,
@@ -134,7 +134,7 @@ describe('User Invitation API', () => {
 
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/user-invitations',
+                url: '/api/v1/user-invitations',
                 headers: { authorization: `Bearer ${mockApiKey.value}` },
                 body: {
                     projectRole: adminRole.name,
@@ -157,7 +157,7 @@ describe('User Invitation API', () => {
 
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/user-invitations',
+                url: '/api/v1/user-invitations',
                 headers: { authorization: `Bearer ${mockApiKey.value}` },
                 body: {
                     projectRole: adminRole.name,
@@ -175,7 +175,7 @@ describe('User Invitation API', () => {
 
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/user-invitations',
+                url: '/api/v1/user-invitations',
                 headers: { authorization: `Bearer ${mockOwnerToken}` },
                 body: {
                     projectRole: adminRole.name,
@@ -210,7 +210,7 @@ describe('User Invitation API', () => {
 
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/user-invitations',
+                url: '/api/v1/user-invitations',
                 headers: { authorization: `Bearer ${mockToken}` },
                 body: {
                     projectRole: projectRole.name,
@@ -241,7 +241,7 @@ describe('User Invitation API', () => {
 
             const listResponse = await app?.inject({
                 method: 'GET',
-                url: '/v1/user-invitations',
+                url: '/api/v1/user-invitations',
                 query: { type: InvitationType.PROJECT },
                 headers: { authorization: `Bearer ${mockOwnerToken}` },
             })
@@ -266,7 +266,7 @@ describe('User Invitation API', () => {
 
             const listResponse = await app?.inject({
                 method: 'GET',
-                url: '/v1/user-invitations',
+                url: '/api/v1/user-invitations',
                 query: { type: InvitationType.PROJECT },
                 headers: { authorization: `Bearer ${mockApiKey.value}` },
             })
@@ -293,7 +293,7 @@ describe('User Invitation API', () => {
 
             const listResponse = await app?.inject({
                 method: 'GET',
-                url: '/v1/user-invitations',
+                url: '/api/v1/user-invitations',
                 query: { type: InvitationType.PROJECT },
                 headers: { authorization: `Bearer ${anotherApiKey.value}` },
             })
@@ -320,7 +320,7 @@ describe('User Invitation API', () => {
 
             const listResponse = await app?.inject({
                 method: 'GET',
-                url: '/v1/user-invitations',
+                url: '/api/v1/user-invitations',
                 query: { projectId: project2.id, type: InvitationType.PROJECT },
                 headers: { authorization: `Bearer ${apiKey1.value}` },
             })
@@ -353,7 +353,7 @@ describe('User Invitation API', () => {
 
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/user-invitations',
+                url: '/api/v1/user-invitations',
                 headers: { authorization: `Bearer ${mockToken}` },
                 query: { type: InvitationType.PROJECT },
             })
@@ -373,7 +373,7 @@ describe('User Invitation API', () => {
             await db.save('user_invitation', mockUserInvitation)
             const deleteResponse = await app?.inject({
                 method: 'DELETE',
-                url: `/v1/user-invitations/${mockUserInvitation.id}`,
+                url: `/api/v1/user-invitations/${mockUserInvitation.id}`,
                 headers: { authorization: `Bearer ${mockOwnerToken}` },
             })
             expect(deleteResponse?.statusCode).toBe(StatusCodes.NO_CONTENT)
@@ -390,7 +390,7 @@ describe('User Invitation API', () => {
             await db.save('user_invitation', mockUserInvitation)
             const deleteResponse = await app?.inject({
                 method: 'DELETE',
-                url: `/v1/user-invitations/${mockUserInvitation.id}`,
+                url: `/api/v1/user-invitations/${mockUserInvitation.id}`,
                 headers: { authorization: `Bearer ${mockApiKey.value}` },
             })
             expect(deleteResponse?.statusCode).toBe(StatusCodes.NO_CONTENT)

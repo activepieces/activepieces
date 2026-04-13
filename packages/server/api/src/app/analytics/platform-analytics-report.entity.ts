@@ -35,6 +35,13 @@ export const PlatformAnalyticsReportEntity = new EntitySchema<PlatformAnalyticsR
             nullable: false,
         },
     },    
+    indices: [
+        {
+            name: 'idx_platform_analytics_report_platform_id',
+            columns: ['platformId'],
+            unique: false,
+        },
+    ],
     relations: {
         platform: {
             target: 'platform',

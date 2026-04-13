@@ -1,4 +1,3 @@
-import { rejectedPromiseHandler } from '@activepieces/server-common'
 import {
     ApplicationEvent,
 
@@ -11,6 +10,7 @@ import { repoFactory } from '../../core/db/repo-factory'
 import { applicationEvents } from '../../helper/application-events'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
+import { rejectedPromiseHandler } from '../../helper/promise-handler'
 import { AuditEventEntity } from './audit-event-entity'
 
 export const auditLogRepo = repoFactory(AuditEventEntity)

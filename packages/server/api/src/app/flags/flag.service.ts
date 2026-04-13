@@ -1,4 +1,3 @@
-import { AppSystemProp, apVersionUtil, webhookSecretsUtils } from '@activepieces/server-common'
 import { ApEdition, ApFlagId, ExecutionMode, Flag, isNil } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
@@ -7,8 +6,10 @@ import { repoFactory } from '../core/db/repo-factory'
 import { federatedAuthnService } from '../ee/authentication/federated-authn/federated-authn-service'
 import { domainHelper } from '../ee/custom-domains/domain-helper'
 import { system } from '../helper/system/system'
+import { AppSystemProp, apVersionUtil } from '../helper/system/system-props'
 import { FlagEntity } from './flag.entity'
 import { defaultTheme } from './theme'
+import { webhookSecretsUtils } from './webhook-secrets-util'
 
 const flagRepo = repoFactory(FlagEntity)
 
@@ -84,12 +85,6 @@ export const flagService = (log: FastifyBaseLogger) => ({
             {
                 id: ApFlagId.SHOW_PROJECT_MEMBERS,
                 value: system.getEdition() !== ApEdition.COMMUNITY,
-                created,
-                updated,
-            },
-            {
-                id: ApFlagId.CAN_CONFIGURE_AI_PROVIDER,
-                value: true,
                 created,
                 updated,
             },
@@ -228,8 +223,20 @@ export const flagService = (log: FastifyBaseLogger) => ({
                 updated,
             },
             {
+                id: ApFlagId.TRIGGER_TIMEOUT_SECONDS,
+                value: system.getNumberOrThrow(AppSystemProp.TRIGGER_TIMEOUT_SECONDS),
+                created,
+                updated,
+            },
+            {
                 id: ApFlagId.FLOW_RUN_MEMORY_LIMIT_KB,
                 value: system.getNumber(AppSystemProp.SANDBOX_MEMORY_LIMIT),
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.FLOW_RUN_LOG_SIZE_LIMIT_MB,
+                value: system.getNumber(AppSystemProp.MAX_FLOW_RUN_LOG_SIZE_MB),
                 created,
                 updated,
             },

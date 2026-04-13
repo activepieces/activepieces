@@ -12,6 +12,7 @@ import {
   iconEmoji,
 } from '../common/props';
 import { Block,KnownBlock } from '@slack/web-api';
+import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
 
 
 export const slackSendDirectMessageAction = createAction({
@@ -20,7 +21,7 @@ export const slackSendDirectMessageAction = createAction({
   displayName: 'Send Message To A User',
   description: 'Send message to a user',
   props: {
-    userId,
+    userId: userId(true),
     text,
     username,
     profilePicture,
@@ -35,7 +36,7 @@ export const slackSendDirectMessageAction = createAction({
     }),
   },
   async run(context) {
-    const token = context.auth.access_token;
+    const token = getBotToken(context.auth as SlackAuthValue);
     const { text, userId, blocks, unfurlLinks, mentionOriginFlow } = context.propsValue;
 
     assertNotNullOrUndefined(token, 'token');

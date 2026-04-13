@@ -1,8 +1,9 @@
-import { ProjectResourceType, securityAccess } from '@activepieces/server-common'
 import { ApId, PrincipalType, Project, SeekPage, SERVICE_KEY_SECURITY_OPENAPI, UpdateProjectRequestInCommunity } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
+import { ProjectResourceType } from '../core/security/authorization/common'
+import { securityAccess } from '../core/security/authorization/fastify-security'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { projectService } from './project-service'
 

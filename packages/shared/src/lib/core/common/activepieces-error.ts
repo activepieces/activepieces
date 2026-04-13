@@ -1,3 +1,4 @@
+import type { FlowRunId } from '../../automation/flow-run/flow-run'
 import type { FlowId } from '../../automation/flows/flow'
 import type { FlowVersionId } from '../../automation/flows/flow-version'
 import type { PlatformUsageMetric } from '../../management/platform'
@@ -28,9 +29,9 @@ export type ApErrorParams =
     | EngineOperationFailureParams
     | EntityNotFoundErrorParams
     | ExistingUserErrorParams
-    | FlowIsLockedErrorParams
     | FlowOperationErrorParams
     | FlowOperationInProgressErrorParams
+    | FlowRunRetryOutsideRetentionErrorParams
     | InvalidApiKeyParams
     | InvalidAppConnectionParams
     | InvalidBearerTokenParams
@@ -89,6 +90,10 @@ export type ApErrorParams =
     | SecretManagerGetSecretFailedParams
     | SecretManagerKeyNotSecretParams
     | InvalidAIProviderCredentialsParams
+    | FlowMigrationFailedParams
+    | ResumeLogsFileMissingParams
+    | ExecutionStateMissingParams
+    | GenericErrorParams
 
 export type TriggerExecutionFailedParams = BaseErrorParams<ErrorCode.TRIGGER_EXECUTION_FAILED, {
     flowId: FlowId
@@ -170,6 +175,14 @@ ErrorCode.SYSTEM_PROP_INVALID,
 }
 >
 
+export type FlowRunRetryOutsideRetentionErrorParams = BaseErrorParams<
+ErrorCode.FLOW_RUN_RETRY_OUTSIDE_RETENTION,
+{
+    flowRunId: FlowRunId
+    failedJobRetentionDays: number
+}
+>
+
 export type InvalidCredentialsErrorParams = BaseErrorParams<
 ErrorCode.INVALID_CREDENTIALS,
 null
@@ -243,13 +256,6 @@ ErrorCode.FLOW_OPERATION_INVALID,
 
 export type FlowOperationInProgressErrorParams = BaseErrorParams<
 ErrorCode.FLOW_OPERATION_IN_PROGRESS, {
-    message: string
-}>
-
-export type FlowIsLockedErrorParams = BaseErrorParams<
-ErrorCode.FLOW_IN_USE,
-{
-    flowVersionId: FlowVersionId
     message: string
 }>
 
@@ -464,7 +470,25 @@ export type InvalidAIProviderCredentialsParams = BaseErrorParams<ErrorCode.INVAL
     httpErrorResponse: string
 }>
 
+export type FlowMigrationFailedParams = BaseErrorParams<ErrorCode.FLOW_MIGRATION_FAILED, {
+    flowVersionId: string
+    message: string
+}>
+
+export type ResumeLogsFileMissingParams = BaseErrorParams<ErrorCode.RESUME_LOGS_FILE_MISSING, {
+    runId: string
+}>
+
+export type ExecutionStateMissingParams = BaseErrorParams<ErrorCode.EXECUTION_STATE_MISSING, {
+    logsFileId: string
+}>
+
+export type GenericErrorParams = BaseErrorParams<ErrorCode.GENERIC_ERROR, {
+    message: string
+}>
+
 export enum ErrorCode {
+    INTERNAL_SERVER_ERROR = 'INTERNAL_SERVER_ERROR',
     MACHINE_NOT_CONNECTED = 'MACHINE_NOT_CONNECTED',
     MACHINE_NOT_AVAILABLE = 'MACHINE_NOT_AVAILABLE',
     INVALID_CUSTOM_DOMAIN = 'INVALID_CUSTOM_DOMAIN',
@@ -489,7 +513,7 @@ export enum ErrorCode {
     PROJECT_EXTERNAL_ID_ALREADY_EXISTS = 'PROJECT_EXTERNAL_ID_ALREADY_EXISTS',
     FLOW_OPERATION_INVALID = 'FLOW_OPERATION_INVALID',
     FLOW_OPERATION_IN_PROGRESS = 'FLOW_OPERATION_IN_PROGRESS',
-    FLOW_IN_USE = 'FLOW_IN_USE',
+    FLOW_RUN_RETRY_OUTSIDE_RETENTION = 'FLOW_RUN_RETRY_OUTSIDE_RETENTION',
     INVALID_API_KEY = 'INVALID_API_KEY',
     INVALID_APP_CONNECTION = 'INVALID_APP_CONNECTION',
     INVALID_BEARER_TOKEN = 'INVALID_BEARER_TOKEN',
@@ -531,5 +555,9 @@ export enum ErrorCode {
     SECRET_MANAGER_GET_SECRET_FAILED = 'SECRET_MANAGER_GET_SECRET_FAILED',
     SECRET_MANAGER_KEY_NOT_SECRET = 'SECRET_MANAGER_KEY_NOT_SECRET',
     INVALID_AI_PROVIDER_CREDENTIALS = 'INVALID_AI_PROVIDER_CREDENTIALS',
+    FLOW_MIGRATION_FAILED = 'FLOW_MIGRATION_FAILED',
+    RESUME_LOGS_FILE_MISSING = 'RESUME_LOGS_FILE_MISSING',
+    EXECUTION_STATE_MISSING = 'EXECUTION_STATE_MISSING',
+    GENERIC_ERROR = 'GENERIC_ERROR',
 }
 

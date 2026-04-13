@@ -46,6 +46,23 @@ Files from actions or triggers are stored in the database/S3 to support retries 
   > This is the total combined size of all inputs and outputs for each step in a single flow run.
 ---
 
+### Webhook Limits
+
+- **Webhook Response Timeout**: **30 seconds**
+  (Configurable via `AP_WEBHOOK_TIMEOUT_SECONDS`, default: **30 seconds**)
+  > For synchronous webhook requests (URLs ending in `/sync`), Activepieces will wait up to this limit before returning a 408 Request Timeout response.
+
+- **Maximum Webhook Payload Size**: **5 MB**
+  (Configurable via `AP_MAX_WEBHOOK_PAYLOAD_SIZE_MB`, default: **5 MB**)
+  > Webhook payloads exceeding this limit will be rejected with HTTP 413.
+
+- **Webhook Payload Inline Threshold**: **512 KB**
+  (Configurable via `AP_WEBHOOK_PAYLOAD_INLINE_THRESHOLD_KB`, default: **512 KB**)
+  > Payloads below this threshold are stored inline in Redis for fastest processing.
+  > Payloads above this threshold are offloaded to file storage to protect Redis memory.
+
+---
+
 ### Key / Value Storage Limits
 
 Some pieces use the built-in Activepieces key store (e.g., **Store Piece**, **Queue Piece**).

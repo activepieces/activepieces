@@ -20,10 +20,12 @@ function getStatusText({
   status,
   timeout,
   memoryLimit,
+  logSizeLimit,
 }: {
   status: FlowRunStatus;
   timeout: number;
   memoryLimit: number;
+  logSizeLimit: number;
 }) {
   switch (status) {
     case FlowRunStatus.SUCCEEDED:
@@ -36,7 +38,8 @@ function getStatusText({
       return t('Quota Exceeded');
     case FlowRunStatus.LOG_SIZE_EXCEEDED:
       return t(
-        'Run failed due to output of steps exceeding the log size limit',
+        'Run failed due to output of steps exceeding the log size limit of {logSizeLimit} MB',
+        { logSizeLimit },
       );
     case FlowRunStatus.MEMORY_LIMIT_EXCEEDED:
       return t(
@@ -71,6 +74,9 @@ const RunInfoWidget = () => {
   const { data: memoryLimit } = flagsHooks.useFlag<number>(
     ApFlagId.FLOW_RUN_MEMORY_LIMIT_KB,
   );
+  const { data: logSizeLimit } = flagsHooks.useFlag<number>(
+    ApFlagId.FLOW_RUN_LOG_SIZE_LIMIT_MB,
+  );
   if (!run) {
     return null;
   }
@@ -94,6 +100,7 @@ const RunInfoWidget = () => {
               status: run.status,
               timeout: timeoutSeconds ?? -1,
               memoryLimit: memoryLimit ?? -1,
+              logSizeLimit: logSizeLimit ?? -1,
             })}
           </span>
 

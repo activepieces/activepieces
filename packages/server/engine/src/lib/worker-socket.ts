@@ -1,115 +1,79 @@
-import { inspect } from 'util'
+import { inspect } from 'node:util'
 import {
-    emitWithAck,
-    EngineOperation,
-    EngineOperationType,
+    createNotifyClient,
+    createRpcClient,
+    createRpcServer,
+    EngineContract,
     EngineResponse,
-    EngineResponseStatus,
-    EngineSocketEvent,
-    EngineStderr,
-    EngineStdout,
     ERROR_MESSAGES_TO_REDACT,
+    WorkerContract,
+    WorkerNotifyContract,
 } from '@activepieces/shared'
 import { io, type Socket } from 'socket.io-client'
 import { execute } from './operations'
 import { progressService } from './services/progress.service'
-import { utils } from './utils'
-
-const WS_URL = 'ws://127.0.0.1:12345'
 
 let socket: Socket | undefined
-
-async function executeFromSocket(operation: EngineOperation, operationType: EngineOperationType): Promise<void> {
-    const result = await execute(operationType, operation)
-    const resultParsed = JSON.parse(JSON.stringify(result))
-    await progressService.shutdown()
-    await workerSocket.sendToWorkerWithAck(EngineSocketEvent.ENGINE_RESPONSE, resultParsed)
-}
+let workerClient: WorkerContract | undefined
+let notifyClient: WorkerNotifyContract | undefined
 
 export const workerSocket = {
     init: (sandboxId: string): void => {
-   
-        socket = io(WS_URL, {
+        const wsUrl = `ws://127.0.0.1:${process.env.AP_SANDBOX_WS_PORT ?? '12345'}`
+        socket = io(wsUrl, {
             path: '/worker/ws',
-            auth: {
-                sandboxId,
-            },
+            auth: { sandboxId },
             autoConnect: false,
             reconnection: true,
         })
 
-        
-        // Redirect console.log/error/warn to socket
+        workerClient = createRpcClient<WorkerContract>(socket, 60_000)
+        notifyClient = createNotifyClient<WorkerNotifyContract>(socket)
+
         const originalLog = console.log
         console.log = function (...args): void {
-            const engineStdout: EngineStdout = {
-                message: args.join(' ') + '\n',
-            }
-            socket?.emit('command', { event: EngineSocketEvent.ENGINE_STDOUT, payload: engineStdout })
+            notifyClient?.stdout({ message: args.join(' ') + '\n' })
             originalLog.apply(console, args)
         }
 
         const originalWarn = console.warn
         console.warn = function (...args): void {
-            const engineStdout: EngineStdout = {
-                message: args.join(' ') + '\n',
-            }
-            socket?.emit('command', { event: EngineSocketEvent.ENGINE_STDOUT, payload: engineStdout })
+            notifyClient?.stdout({ message: args.join(' ') + '\n' })
             originalWarn.apply(console, args)
         }
 
         const originalError = console.error
         console.error = function (...args): void {
             let sanitizedArgs = [...args]
-            if (typeof args[0] === 'string' && ERROR_MESSAGES_TO_REDACT.some(errorMessage => args[0].includes(errorMessage))) {
+            if (typeof args[0] === 'string' && ERROR_MESSAGES_TO_REDACT.some(m => args[0].includes(m))) {
                 sanitizedArgs = [sanitizedArgs[0], 'REDACTED']
             }
-            const engineStderr: EngineStderr = {
-                message: sanitizedArgs.join(' ') + '\n',
-            }
-            socket?.emit('command', { event: EngineSocketEvent.ENGINE_STDERR, payload: engineStderr })
-
+            notifyClient?.stderr({ message: sanitizedArgs.join(' ') + '\n' })
             originalError.apply(console, sanitizedArgs)
         }
 
-        socket.on(EngineSocketEvent.ENGINE_OPERATION, async (data: { operation: EngineOperation, operationType: EngineOperationType }) => {
-            const { error: resultError } = await utils.tryCatchAndThrowOnEngineError(() =>
-                executeFromSocket(data.operation, data.operationType),
-            )
-
-            if (resultError) {
-                const engineError: EngineResponse = {
-                    response: undefined,
-                    status: EngineResponseStatus.INTERNAL_ERROR,
-                    error: utils.formatExecutionError(resultError),
+        createRpcServer<EngineContract>(socket, {
+            executeOperation: async ({ operationType, operation }): Promise<EngineResponse<unknown>> => {
+                progressService.init()
+                try {
+                    const response = await execute(operationType, operation)
+                    return JSON.parse(JSON.stringify(response)) as EngineResponse<unknown>
                 }
-                console.error(utils.formatExecutionError(resultError))
-                await workerSocket.sendToWorkerWithAck(EngineSocketEvent.ENGINE_RESPONSE, engineError)
-            }
+                finally {
+                    await progressService.shutdown()
+                }
+            },
         })
 
         socket.connect()
     },
 
-    sendToWorkerWithAck: async (
-        type: EngineSocketEvent,
-        data: unknown,
-    ): Promise<void> => {
-        await emitWithAck(socket, 'command', { event: type, payload: data }, {
-            timeoutMs: 4000,
-            retries: 4,
-            retryDelayMs: 1000,
-        })
+    getWorkerClient: (): WorkerContract => {
+        if (!workerClient) throw new Error('Worker client not initialized')
+        return workerClient
     },
 
-    sendError: async (error: unknown): Promise<void> => {
-        const engineStderr: EngineStderr = {
-            message: inspect(error),
-        }
-        await emitWithAck(socket, 'command', { event: EngineSocketEvent.ENGINE_STDERR, payload: engineStderr }, {
-            timeoutMs: 3000,
-            retries: 4,
-            retryDelayMs: 1000,
-        })
+    sendError: (error: unknown): void => {
+        notifyClient?.stderr({ message: inspect(error) })
     },
 }

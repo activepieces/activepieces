@@ -1,12 +1,13 @@
 import { inspect } from 'util'
-import { AppSystemProp, ContainerType, DatabaseType, RedisType, SystemProp, WorkerSystemProp } from '@activepieces/server-common'
-import { ApEdition, ApEnvironment, ExecutionMode, FileLocation, isNil, PieceSyncMode } from '@activepieces/shared'
+import { ApEdition, ApEnvironment, DefaultProjectRole, ExecutionMode, FileLocation, isNil, PieceSyncMode } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { packageManager, registryPieceManager } from 'worker'
+import { DatabaseType } from '../database/database-type'
+import { RedisType } from '../database/redis/types'
 import { s3Helper } from '../file/s3-helper'
 import { encryptUtils } from './encryption'
 import { jwtUtils } from './jwt-utils'
 import { system } from './system/system'
+import { AppSystemProp, ContainerType, SystemProp } from './system/system-props'
 
 
 function enumValidator<T extends string>(enumValues: T[]) {
@@ -66,13 +67,13 @@ const systemPropValidators: {
     [AppSystemProp.LOKI_URL]: urlValidator,
     [AppSystemProp.LOKI_USERNAME]: stringValidator,
 
+    [AppSystemProp.BETTERSTACK_TOKEN]: stringValidator,
+    [AppSystemProp.BETTERSTACK_HOST]: stringValidator,
     [AppSystemProp.OTEL_ENABLED]: booleanValidator,
     [AppSystemProp.HYPERDX_TOKEN]: stringValidator,
-    [WorkerSystemProp.FRONTEND_URL]: urlValidator,
-    [WorkerSystemProp.CONTAINER_TYPE]: enumValidator(Object.values(ContainerType)),
-    [WorkerSystemProp.WORKER_TOKEN]: stringValidator,
-    [WorkerSystemProp.PLATFORM_ID_FOR_DEDICATED_WORKER]: stringValidator,
-    [WorkerSystemProp.PRE_WARM_CACHE]: booleanValidator,
+    [AppSystemProp.FRONTEND_URL]: urlValidator,
+    [AppSystemProp.CONTAINER_TYPE]: enumValidator(Object.values(ContainerType)),
+    [AppSystemProp.PORT]: numberValidator,
     // AppSystemProp
     [AppSystemProp.API_KEY]: stringValidator,
     [AppSystemProp.TEMPLATES_API_KEY]: stringValidator,
@@ -143,14 +144,13 @@ const systemPropValidators: {
     [AppSystemProp.STRIPE_SECRET_KEY]: stringValidator,
     [AppSystemProp.STRIPE_WEBHOOK_SECRET]: stringValidator,
     [AppSystemProp.INTERNAL_URL]: stringValidator,
-    [AppSystemProp.PM2_ENABLED]: booleanValidator,
+    [AppSystemProp.WORKERS]: numberValidator,
     [AppSystemProp.EDITION]: enumValidator(Object.values(ApEdition)),
     [AppSystemProp.FEATUREBASE_API_KEY]: stringValidator,
     [AppSystemProp.OPENROUTER_PROVISION_KEY]: stringValidator,
+    [AppSystemProp.SCIM_DEFAULT_PROJECT_ROLE]: enumValidator(Object.values(DefaultProjectRole)),
 
     // AppSystemProp
-    [WorkerSystemProp.WORKER_CONCURRENCY]: numberValidator,
-
     // Cloud
     [AppSystemProp.GOOGLE_CLIENT_ID]: stringValidator,
     [AppSystemProp.GOOGLE_CLIENT_SECRET]: stringValidator,
@@ -168,6 +168,7 @@ const systemPropValidators: {
     [AppSystemProp.MAX_FIELDS_PER_TABLE]: numberValidator,
 
     // MCP
+    [AppSystemProp.MCP_OAUTH_ISSUER_URL]: urlValidator,
     [AppSystemProp.ENABLE_FLOW_ON_PUBLISH]: booleanValidator,
     [AppSystemProp.ISSUE_ARCHIVE_DAYS]: (value: string) => {
         const days = parseInt(value)
@@ -176,6 +177,19 @@ const systemPropValidators: {
         }
         return true
     },
+
+    // Webhook payload limits
+    [AppSystemProp.MAX_WEBHOOK_PAYLOAD_SIZE_MB]: numberValidator,
+    [AppSystemProp.WEBHOOK_PAYLOAD_INLINE_THRESHOLD_KB]: numberValidator,
+
+    // Canary
+    [AppSystemProp.CANARY_APP_URL]: urlValidator,
+    // SSRF protection
+    [AppSystemProp.SSRF_ALLOW_LIST]: stringValidator,
+    [AppSystemProp.SSRF_PROTECTION_ENABLED]: booleanValidator,
+
+    // On-call
+    [AppSystemProp.PAGE_ONCALL_WEBHOOK]: urlValidator,
 }
 
 
@@ -269,8 +283,4 @@ export const validateEnvPropsOnStartup = async (log: FastifyBaseLogger): Promise
         }
     }
 
-    if (environment !== ApEnvironment.TESTING) {
-        await packageManager(log).validate()
-        await registryPieceManager(log).validate()
-    }
 }

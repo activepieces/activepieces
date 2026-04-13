@@ -1,14 +1,17 @@
 import { PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
-import { ProjectResourceType, securityAccess } from '@activepieces/server-common'
 import {
     ActivepiecesError,
     ALL_PRINCIPAL_TYPES,
+    EngineResponse,
     ErrorCode,
     GetPieceRequestParams,
     GetPieceRequestQuery,
     GetPieceRequestWithScopeParams,
     isNil,
     ListPiecesRequestQuery,
+    ListPieceVersionsRequestParams,
+    ListPieceVersionsResponse,
+    ListPieceVersionsWithScopeRequestParams,
     LocalesEnum,
     PieceCategory,
     PieceOptionRequest,
@@ -19,7 +22,8 @@ import {
     WorkerJobType,
 } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
-import { EngineHelperPropResult, OperationResponse } from 'worker'
+import { ProjectResourceType } from '../../core/security/authorization/common'
+import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { flowService } from '../../flows/flow/flow.service'
 import { sampleDataService } from '../../flows/step-run/sample-data.service'
 import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
@@ -75,6 +79,35 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
             }
         })
     })
+
+    app.get(
+        '/:scope/:name/versions',
+        ListPieceVersionsWithScopeRequest,
+        async (req): Promise<ListPieceVersionsResponse> => {
+            const { name, scope } = req.params
+            const decodeScope = decodeURIComponent(scope)
+            const decodedName = decodeURIComponent(name)
+            return pieceMetadataService(req.log).listVersions({
+                name: `${decodeScope}/${decodedName}`,
+                platformId: req.principal.platform.id,
+                projectId: req.projectId,
+            })
+        },
+    )
+
+    app.get(
+        '/:name/versions',
+        ListPieceVersionsRequest,
+        async (req): Promise<ListPieceVersionsResponse> => {
+            const { name } = req.params
+            const decodedName = decodeURIComponent(name)
+            return pieceMetadataService(req.log).listVersions({
+                name: decodedName,
+                platformId: req.principal.platform.id,
+                projectId: req.projectId,
+            })
+        },
+    )
 
     app.get(
         '/:scope/:name',
@@ -133,7 +166,7 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
                 versionId: req.body.flowVersionId,
             })
             const sampleData = await sampleDataService(req.log).getSampleDataForFlow(projectId, flow.version, SampleDataFileType.OUTPUT)
-            const { result } = await userInteractionWatcher(req.log).submitAndWaitForResponse<OperationResponse<EngineHelperPropResult>>({
+            const { response } = await userInteractionWatcher.submitAndWaitForResponse<EngineResponse<unknown>>({
                 jobType: WorkerJobType.EXECUTE_PROPERTY,
                 platformId: platform.id,
                 projectId,
@@ -144,8 +177,8 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
                 sampleData,
                 searchValue: req.body.searchValue,
                 piece: await getPiecePackageWithoutArchive(req.log, platform.id, req.body),
-            })
-            return result
+            }, req.log)
+            return response
         },
     )
 
@@ -211,6 +244,28 @@ const OptionsPieceRequest = {
         security: securityAccess.project([PrincipalType.USER], undefined, {
             type: ProjectResourceType.BODY,
         }),
+    },
+}
+
+const ListPieceVersionsRequest = {
+    config: {
+        security: securityAccess.project([PrincipalType.USER], undefined, {
+            type: ProjectResourceType.QUERY,
+        }),
+    },
+    schema: {
+        params: ListPieceVersionsRequestParams,
+    },
+}
+
+const ListPieceVersionsWithScopeRequest = {
+    config: {
+        security: securityAccess.project([PrincipalType.USER], undefined, {
+            type: ProjectResourceType.QUERY,
+        }),
+    },
+    schema: {
+        params: ListPieceVersionsWithScopeRequestParams,
     },
 }
 

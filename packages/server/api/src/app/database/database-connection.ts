@@ -1,4 +1,3 @@
-import { AppSystemProp, DatabaseType } from '@activepieces/server-common'
 import { isNil } from '@activepieces/shared'
 import {
     DataSource,
@@ -33,7 +32,13 @@ import { FlowRunEntity } from '../flows/flow-run/flow-run-entity'
 import { FlowVersionEntity } from '../flows/flow-version/flow-version-entity'
 import { FolderEntity } from '../flows/folder/folder.entity'
 import { system } from '../helper/system/system'
+import { AppSystemProp } from '../helper/system/system-props'
+import { KnowledgeBaseChunkEntity } from '../knowledge-base/knowledge-base-chunk.entity'
+import { KnowledgeBaseFileEntity } from '../knowledge-base/knowledge-base-file.entity'
 import { McpServerEntity } from '../mcp/mcp-entity'
+import { McpOAuthClientEntity } from '../mcp/oauth/client/mcp-oauth-client.entity'
+import { McpOAuthAuthorizationCodeEntity } from '../mcp/oauth/code/mcp-oauth-code.entity'
+import { McpOAuthTokenEntity } from '../mcp/oauth/token/mcp-oauth-token.entity'
 import { PieceMetadataEntity } from '../pieces/metadata/piece-metadata-entity'
 import { PieceTagEntity } from '../pieces/tags/pieces/piece-tag.entity'
 import { TagEntity } from '../pieces/tags/tag-entity'
@@ -52,6 +57,7 @@ import { TriggerSourceEntity } from '../trigger/trigger-source/trigger-source-en
 import { UserBadgeEntity } from '../user/badges/badge-entity'
 import { UserEntity } from '../user/user-entity'
 import { UserInvitationEntity } from '../user-invitations/user-invitation.entity'
+import { DatabaseType } from './database-type'
 import { createPGliteDataSource } from './pglite-connection'
 import { createPostgresDataSource } from './postgres-connection'
 
@@ -87,6 +93,11 @@ function getEntities(): EntitySchema<unknown>[] {
         TableWebhookEntity,
         UserIdentityEntity,
         McpServerEntity,
+        McpOAuthClientEntity,
+        McpOAuthAuthorizationCodeEntity,
+        McpOAuthTokenEntity,
+        KnowledgeBaseFileEntity,
+        KnowledgeBaseChunkEntity,
         TriggerSourceEntity,
         UserBadgeEntity,
         // Enterprise

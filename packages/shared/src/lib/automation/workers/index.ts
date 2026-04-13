@@ -1,10 +1,16 @@
 import { z } from 'zod'
 import { BaseModelSchema } from '../../core/common'
+import { EngineResponseStatus } from '../engine/engine-operation'
 import { JobData } from './job-data'
 
 export enum WorkerMachineStatus {
     ONLINE = 'ONLINE',
     OFFLINE = 'OFFLINE',
+}
+
+export enum WorkerMachineType {
+    SHARED = 'SHARED',
+    DEDICATED = 'DEDICATED',
 }
 
 
@@ -22,8 +28,6 @@ export const MachineInformation = z.object({
     totalAvailableRamInBytes: z.number(),
     totalCpuCores: z.number(),
     ip: z.string(),
-    totalSandboxes: z.number(),
-    freeSandboxes: z.number(),
 })
 
 export type MachineInformation = z.infer<typeof MachineInformation>
@@ -37,6 +41,8 @@ export type WorkerMachine = z.infer<typeof WorkerMachine>
 
 export const WorkerMachineWithStatus = WorkerMachine.extend({
     status: z.nativeEnum(WorkerMachineStatus),
+    type: z.nativeEnum(WorkerMachineType),
+    workerGroupId: z.string().optional(),
 })
 
 export type WorkerMachineWithStatus = z.infer<typeof WorkerMachineWithStatus>
@@ -44,22 +50,20 @@ export type WorkerMachineWithStatus = z.infer<typeof WorkerMachineWithStatus>
 export const ConsumeJobRequest = z.object({
     jobId: z.string(),
     jobData: JobData,
-    timeoutInSeconds: z.number(),
     attempsStarted: z.number(),
     engineToken: z.string(),
+    token: z.string(),
+    queueName: z.string(),
 })
-
-export enum ConsumeJobResponseStatus {
-    OK = 'OK',
-    INTERNAL_ERROR = 'INTERNAL_ERROR',
-}
 
 export type ConsumeJobRequest = z.infer<typeof ConsumeJobRequest>
 
 export const ConsumeJobResponse = z.object({
-    status: z.nativeEnum(ConsumeJobResponseStatus),
+    status: z.nativeEnum(EngineResponseStatus),
     errorMessage: z.string().optional(),
+    logs: z.string().optional(),
     delayInSeconds: z.number().optional(),
+    response: z.unknown().optional(),
 })
 
 
@@ -76,7 +80,6 @@ export const WorkerSettingsResponse = z.object({
     PAUSED_FLOW_TIMEOUT_DAYS: z.number(),
     EXECUTION_MODE: z.string(),
     FLOW_TIMEOUT_SECONDS: z.number(),
-    WORKER_CONCURRENCY: z.number(),
     LOG_LEVEL: z.string(),
     LOG_PRETTY: z.string(),
     ENVIRONMENT: z.string(),
@@ -90,31 +93,18 @@ export const WorkerSettingsResponse = z.object({
     LOKI_PASSWORD: z.string().optional(),
     LOKI_URL: z.string().optional(),
     LOKI_USERNAME: z.string().optional(),
+    BETTERSTACK_HOST: z.string().optional(),
+    BETTERSTACK_TOKEN: z.string().optional(),
     OTEL_ENABLED: z.boolean(),
     HYPERDX_TOKEN: z.string().optional(),
     FILE_STORAGE_LOCATION: z.string(),
     S3_USE_SIGNED_URLS: z.string(),
-    QUEUE_MODE: z.string().optional(),
-    REDIS_TYPE: z.string(),
-    REDIS_SSL_CA_FILE: z.string().optional(),
-    REDIS_DB: z.number().optional(),
-    REDIS_HOST: z.string().optional(),
-    REDIS_PASSWORD: z.string().optional(),
-    REDIS_PORT: z.string().optional(),
-    REDIS_URL: z.string().optional(),
-    REDIS_USER: z.string().optional(),
-    REDIS_USE_SSL: z.boolean().optional(),
-    REDIS_SENTINEL_ROLE: z.string().optional(),
-    REDIS_SENTINEL_HOSTS: z.string().optional(),
-    REDIS_SENTINEL_NAME: z.string().optional(),
-    REDIS_FAILED_JOB_RETENTION_DAYS: z.number(),
-    REDIS_FAILED_JOB_RETENTION_MAX_COUNT: z.number(),
-    PROJECT_RATE_LIMITER_ENABLED: z.boolean(),
-    MAX_CONCURRENT_JOBS_PER_PROJECT: z.number(),
-    JWT_SECRET: z.string(),
     EVENT_DESTINATION_TIMEOUT_SECONDS: z.number(),
-    PLATFORM_ID_FOR_DEDICATED_WORKER: z.string().optional(),
+    WORKER_GROUP_ID: z.string().optional(),
     EDITION: z.string(),
+    SSRF_PROTECTION_ENABLED: z.boolean(),
+    SSRF_ALLOW_LIST: z.array(z.string()),
+    PAGE_ONCALL_WEBHOOK: z.string().optional(),
 })
 
 export type WorkerSettingsResponse = z.infer<typeof WorkerSettingsResponse>

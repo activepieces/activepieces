@@ -108,7 +108,7 @@ describe('Tags API', () => {
 
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/tags/pieces',
+                url: '/api/v1/tags/pieces',
                 headers: { authorization: `Bearer ${memberToken}` },
                 body: {
                     piecesName: ['@activepieces/piece-test'],

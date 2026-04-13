@@ -1,6 +1,5 @@
 import {
   InvitationType,
-  isNil,
   Permission,
   PlatformRole,
   ProjectType,

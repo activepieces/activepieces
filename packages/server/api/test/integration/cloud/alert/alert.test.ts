@@ -80,7 +80,7 @@ describe('Alert API', () => {
 
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/alerts',
+                url: '/api/v1/alerts',
                 query: {
                     projectId: ctxTwo.project.id,
                 },
@@ -152,7 +152,7 @@ describe('Alert API', () => {
 
             const deleteResponse = await app?.inject({
                 method: 'DELETE',
-                url: `/v1/alerts/${alertId}`,
+                url: `/api/v1/alerts/${alertId}`,
                 headers: {
                     authorization: `Bearer ${viewerToken}`,
                 },

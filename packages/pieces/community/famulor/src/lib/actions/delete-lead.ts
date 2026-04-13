@@ -7,7 +7,7 @@ export const deleteLead = createAction({
   auth: famulorAuth,
   name: 'deleteLead',
   displayName: 'Delete Lead',
-  description: '⚠️ Permanently delete a lead from the system. This action cannot be undone and will abort any ongoing calls.',
+  description: 'Permanently delete a lead and abort any ongoing calls.',
   props: famulorCommon.deleteLeadProperties(),
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, famulorCommon.deleteLeadSchema);

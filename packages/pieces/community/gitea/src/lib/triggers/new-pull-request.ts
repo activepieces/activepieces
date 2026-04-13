@@ -1,0 +1,94 @@
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { giteaAuth } from '../auth';
+import { giteaCommon } from '../common/props';
+import { giteaApiCall, WebhookInformation } from '../common/client';
+
+export const newPullRequest = createTrigger({
+  auth: giteaAuth,
+  name: 'new_pull_request',
+  displayName: 'New Pull Request',
+  description: 'Triggers when a new pull request is created.',
+  props: {
+    repository: giteaCommon.repositoryDropdown,
+  },
+  sampleData: {
+    action: 'opened',
+    number: 1,
+    pull_request: {
+      id: 1,
+      url: 'https://gitea.com/api/v1/repos/owner/repo/pulls/1',
+      number: 1,
+      user: {
+        id: 1,
+        username: 'user',
+      },
+      title: 'PR Title',
+      body: 'PR Body',
+      state: 'open',
+      head: {
+        ref: 'feature-branch',
+      },
+      base: {
+        ref: 'main',
+      },
+    },
+    repository: {
+      id: 1,
+      name: 'repo',
+      owner: {
+        login: 'owner',
+      },
+      full_name: 'owner/repo',
+    },
+    sender: {
+      id: 1,
+      username: 'user',
+    },
+  },
+  type: TriggerStrategy.WEBHOOK,
+  async onEnable(context) {
+    const { repo, owner } = context.propsValue.repository!;
+
+    const response = await giteaApiCall<{ id: number }>({
+      auth: context.auth,
+      method: HttpMethod.POST,
+      resourceUri: `/repos/${owner}/${repo}/hooks`,
+      body: {
+        type: 'gitea',
+        active: true,
+        events: ['pull_request'],
+        config: {
+          url: context.webhookUrl,
+          content_type: 'json',
+        },
+      },
+    });
+
+    await context.store.put<WebhookInformation>('gitea_new_pr_trigger', {
+      webhookId: response.body.id,
+      repo: repo,
+      owner: owner,
+    });
+  },
+  async onDisable(context) {
+    const webhook = await context.store.get<WebhookInformation>(
+      'gitea_new_pr_trigger'
+    );
+
+    if (webhook) {
+      await giteaApiCall({
+        auth: context.auth,
+        method: HttpMethod.DELETE,
+        resourceUri: `/repos/${webhook.owner}/${webhook.repo}/hooks/${webhook.webhookId}`,
+      });
+    }
+  },
+  async run(context) {
+    const payloadBody = context.payload.body as { action: string };
+    if (payloadBody.action === 'opened') {
+      return [context.payload.body];
+    }
+    return [];
+  },
+});

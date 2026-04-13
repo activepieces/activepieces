@@ -15,8 +15,6 @@ import {
   ToolCallType,
 } from '@activepieces/shared';
 
-export type ToolKeyToAgentTool = Record<string, AgentTool>;
-
 export const agentOutputBuilder = (prompt: string) => {
   let status: AgentTaskStatus = AgentTaskStatus.IN_PROGRESS;
   const steps: AgentStepBlock[] = [];
@@ -86,7 +84,7 @@ export const agentOutputBuilder = (prompt: string) => {
         output,
       };
     },
-    failToolCall({ toolCallId }: FaildToolCallParams) {
+    failToolCall({ toolCallId }: FailToolCallParams) {
       const toolIdx = steps.findIndex(
         (block) =>
           block.type === ContentBlockType.TOOL_CALL &&
@@ -128,7 +126,7 @@ type FinishToolCallParams = {
   output: Record<string, unknown>;
 };
 
-type FaildToolCallParams = {
+type FailToolCallParams = {
   toolCallId: string;
 };
 
@@ -148,7 +146,13 @@ function getToolMetadata({
   toolKeyToAgentTool,
 }: GetToolMetadataParams): ToolCallContentBlock {
   const tool = toolKeyToAgentTool[toolName];
-  assertNotNullOrUndefined(tool, `Tool ${toolName} not found`);
+  if (isNil(tool)) {
+    return {
+      ...baseTool,
+      toolCallType: ToolCallType.UNKNOWN,
+      displayName: toolName,
+    };
+  }
 
   switch (tool.type) {
     case AgentToolType.PIECE: {
@@ -179,6 +183,14 @@ function getToolMetadata({
         serverUrl: tool.serverUrl,
       };
     }
+    case AgentToolType.KNOWLEDGE_BASE: {
+      return {
+        ...baseTool,
+        toolCallType: ToolCallType.KNOWLEDGE_BASE,
+        displayName: tool.sourceName,
+        sourceType: tool.sourceType,
+      };
+    }
   }
 }
 
@@ -187,3 +199,5 @@ type GetToolMetadataParams = {
   toolKeyToAgentTool: ToolKeyToAgentTool;
   baseTool: ToolCallBase;
 };
+
+export type ToolKeyToAgentTool = Record<string, AgentTool>;

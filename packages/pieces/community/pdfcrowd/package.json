@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-pdfcrowd",
-  "version": "0.0.4",
+  "version": "0.1.1",
   "type": "commonjs",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",

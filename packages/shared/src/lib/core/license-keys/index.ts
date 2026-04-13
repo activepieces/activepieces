@@ -32,6 +32,8 @@ export const LicenseKeyEntity = z.object({
     customRolesEnabled: z.boolean(),
     eventStreamingEnabled: z.boolean(),
     secretManagersEnabled: z.boolean(),
+    agentsEnabled: z.boolean(),
+    aiProvidersEnabled: z.boolean(),
 })
 
 

@@ -1,5 +1,4 @@
 import { FlowActionType, StepOutput } from '@activepieces/shared'
-import PriorityQueue from 'priority-queue-typescript'
 import { utils } from '../utils'
 
 const TRUNCATION_TEXT_PLACEHOLDER = '(truncated)'
@@ -24,40 +23,37 @@ export const loggingUtils = {
             return steps
         }
 
-        const priorityQueue = new PriorityQueue<InputKeyEntry>(
-            undefined,
-            (a: InputKeyEntry, b: InputKeyEntry) => a.size - b.size,
-        )
-        traverseStepsAndCollectKeys(steps, priorityQueue)
+        const entries: InputKeyEntry[] = []
+        traverseStepsAndCollectKeys(steps, entries)
+        entries.sort((a, b) => a.size - b.size)
 
         // calculate minimalSize: replace all input sizes with placeholder sizes . after that we will re-replace them with actual sizes from smallest until we exceed the limit.
-        let minimalSize = getStepsSizeWithAllInputsTruncated(totalJsonSize, priorityQueue)
+        let minimalSize = getStepsSizeWithAllInputsTruncated(totalJsonSize, entries)
 
-        // pop smallest entries from queue, accumulating their sizes until we exceed the limit
-        // The keys that remain in the queue after popping are the ones we need to truncate
-        const keysToRemove = new Set<InputKeyEntry>()
-        while (priorityQueue.size() > 0) {
-            const entry = priorityQueue.poll()!
-            
-            minimalSize += entry.size - SIZE_OF_TRUNCATION_TEXT_PLACEHOLDER
+        // pop smallest entries from the sorted array, accumulating their sizes until we exceed the limit
+        // The keys that remain are the ones we need to truncate
+        let truncateFromIndex = entries.length
+        for (let i = 0; i < entries.length; i++) {
+            minimalSize += entries[i].size - SIZE_OF_TRUNCATION_TEXT_PLACEHOLDER
 
             // if minimalSize exceeds the limit, stop popping
-            // the remaining keys in the queue and current one will be truncated
+            // the remaining entries (including current) will be truncated
             if (minimalSize > maxSize) {
-                keysToRemove.add(entry) 
+                truncateFromIndex = i
                 break
             }
         }
 
-        while (priorityQueue.size() > 0) {
-            const entry = priorityQueue.poll()!
-            keysToRemove.add(entry)
+        const keysToRemove = new Set<InputKeyEntry>()
+        for (let i = truncateFromIndex; i < entries.length; i++) {
+            keysToRemove.add(entries[i])
         }
-        
+
         removeKeysFromSteps(keysToRemove)
 
         return steps
     },
+    maxLogSizeMb: MAX_LOG_SIZE / (1024 * 1024),
     isWithinSizeLimit(steps: Record<string, StepOutput>, maxSize: number = MAX_SIZE_FOR_ALL_ENTRIES): boolean {
         const totalJsonSize = getTotalStepsSize(steps)
         return totalJsonSize <= maxSize
@@ -70,14 +66,14 @@ function getTotalStepsSize(steps: Record<string, StepOutput>): number {
 
 function traverseStepsAndCollectKeys(
     steps: Record<string, StepOutput>,
-    priorityQueue: PriorityQueue<InputKeyEntry>,
+    entries: InputKeyEntry[],
 ): void {
     for (const [stepName, step] of Object.entries(steps)) {
         if (step?.input) {
             const input = step.input as Record<string, unknown>
             for (const [inputKey, value] of Object.entries(input)) {
                 const valueSize = utils.sizeof(value)
-                priorityQueue.add({
+                entries.push({
                     step,
                     stepName,
                     inputKey,
@@ -90,7 +86,7 @@ function traverseStepsAndCollectKeys(
             const loopOutput = step.output as { iterations: Record<string, StepOutput>[] }
             if (loopOutput.iterations) {
                 for (const iteration of loopOutput.iterations) {
-                    traverseStepsAndCollectKeys(iteration, priorityQueue)
+                    traverseStepsAndCollectKeys(iteration, entries)
                 }
             }
         }
@@ -108,9 +104,9 @@ function removeKeysFromSteps(
     }
 }
 
-const getStepsSizeWithAllInputsTruncated = (totalSize: number, priorityQueue: PriorityQueue<InputKeyEntry> ): number => {
+const getStepsSizeWithAllInputsTruncated = (totalSize: number, entries: InputKeyEntry[]): number => {
     let size = totalSize
-    for (const entry of priorityQueue) {
+    for (const entry of entries) {
         size = size - entry.size + SIZE_OF_TRUNCATION_TEXT_PLACEHOLDER
     }
     return size

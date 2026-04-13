@@ -1,0 +1,22 @@
+{
+  "name": "@activepieces/server-utils",
+  "version": "0.1.1",
+  "type": "commonjs",
+  "main": "./dist/src/index.js",
+  "typings": "./dist/src/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@activepieces/shared": "workspace:*",
+    "async-mutex": "0.4.0",
+    "check-disk-space": "3.4.0",
+    "dayjs": "1.11.9",
+    "systeminformation": "5.25.11"
+  },
+  "devDependencies": {
+    "@types/node": "24.11.0",
+    "vitest": "3.0.8"
+  }
+}

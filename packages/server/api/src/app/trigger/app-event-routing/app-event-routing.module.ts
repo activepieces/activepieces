@@ -4,10 +4,6 @@ import { slack } from '@activepieces/piece-slack'
 import { square } from '@activepieces/piece-square'
 import { Piece, PieceAuthProperty } from '@activepieces/pieces-framework'
 import {
-    rejectedPromiseHandler,
-    securityAccess,
-} from '@activepieces/server-common'
-import {
     ActivepiecesError,
     apId,
     assertNotNullOrUndefined,
@@ -21,16 +17,18 @@ import {
 import { FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
+import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { domainHelper } from '../../ee/custom-domains/domain-helper'
 import { flowService } from '../../flows/flow/flow.service'
+import { rejectedPromiseHandler } from '../../helper/promise-handler'
 import { projectService } from '../../project/project-service'
-import { WebhookFlowVersionToRun, webhookHandler } from '../../webhooks/webhook-handler'
-import { jobQueue } from '../../workers/queue/job-queue'
-import { JobType } from '../../workers/queue/queue-manager'
+import { WebhookFlowVersionToRun, webhookService } from '../../webhooks/webhook.service'
+import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
+import { payloadOffloader } from '../../workers/payload-offloader'
 import { triggerSourceService } from '../trigger-source/trigger-source-service'
 import { appEventRoutingService } from './app-event-routing.service'
 
-const appWebhooks: Record<string, Piece<PieceAuthProperty | undefined>> = {
+const appWebhooks: Record<string, Piece<PieceAuthProperty | PieceAuthProperty[] | undefined>> = {
     slack,
     square,
     'facebook-leads': facebookLeads,
@@ -128,8 +126,9 @@ export const appEventRoutingController: FastifyPluginAsyncZod = async (
                 if (isNil(flow)) {
                     return
                 }
-                const flowVersionIdToRun = await webhookHandler.getFlowVersionIdToRun(WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST, flow)
+                const flowVersionIdToRun = await webhookService.getFlowVersionIdToRun(WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST, flow)
                 const platformId = await projectService(request.log).getPlatformId(listener.projectId)
+                const jobPayload = await payloadOffloader.offloadPayload(request.log, payload, listener.projectId, platformId)
                 return jobQueue(request.log).add({
                     id: requestId,
                     type: JobType.ONE_TIME,
@@ -138,7 +137,7 @@ export const appEventRoutingController: FastifyPluginAsyncZod = async (
                         projectId: listener.projectId,
                         schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
                         requestId,
-                        payload,
+                        payload: jobPayload,
                         flowId: listener.flowId,
                         jobType: WorkerJobType.EXECUTE_WEBHOOK,
                         runEnvironment: RunEnvironment.PRODUCTION,

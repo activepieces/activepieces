@@ -6,14 +6,27 @@ import { PurchaseExtraFlowsDialog } from '@/features/billing';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn } from '@/lib/utils';
 
+import {
+  GlobalSearchProvider,
+  useGlobalSearch,
+} from '../global-search/global-search-context';
 import { ProjectDashboardSidebar } from '../sidebar/dashboard';
 
 export function BuilderLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <GlobalSearchProvider>
+      <BuilderLayoutInner>{children}</BuilderLayoutInner>
+    </GlobalSearchProvider>
+  );
+}
+
+function BuilderLayoutInner({ children }: { children: React.ReactNode }) {
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const { embedState } = useEmbedding();
+  const { open: searchOpen } = useGlobalSearch();
 
   return (
-    <SidebarProvider hoverMode={true} defaultOpen={false}>
+    <SidebarProvider hoverMode={!searchOpen} defaultOpen={false}>
       {!embedState.isEmbedded && <ProjectDashboardSidebar />}
       <SidebarInset className="flex flex-col h-full overflow-hidden bg-sidebar">
         <div

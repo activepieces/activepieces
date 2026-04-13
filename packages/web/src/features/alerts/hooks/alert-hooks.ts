@@ -35,7 +35,7 @@ export const alertMutations = {
           projectId: authenticationSession.getProjectId()!,
           channel: AlertChannel.EMAIL,
         }),
-      onSuccess: (data) => {
+      onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: alertsKeys.all });
         toast.success(t('Your changes have been saved.'), {
           duration: 3000,

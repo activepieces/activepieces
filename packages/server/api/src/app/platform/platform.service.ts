@@ -19,6 +19,7 @@ import { ActivepiecesError,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../core/db/repo-factory'
+import { invalidateSamlClientCache } from '../ee/authentication/saml-authn/saml-client'
 import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
 import { defaultTheme } from '../flags/theme'
 import { system } from '../helper/system/system'
@@ -126,6 +127,9 @@ export const platformService = (log: FastifyBaseLogger) => ({
                 ...params.plan,
             })
         }
+        if (!isNil(params.federatedAuthProviders?.saml)) {
+            invalidateSamlClientCache(params.id)
+        }
         log.info({ platformId: params.id }, 'Platform updated')
         return platformRepo().save(updatedPlatform)
     },
@@ -169,11 +173,15 @@ export const platformService = (log: FastifyBaseLogger) => ({
     },
     async getOneWithPlanAndUsageOrThrow(id: PlatformId): Promise<PlatformWithoutSensitiveData> {
         const platform = await this.getOneOrThrow(id)
+        const [usage, plan] = await Promise.all([
+            getUsage(log, platform),
+            getPlan(log, platform),
+        ])
         return {
             ...platform,
             federatedAuthProviders: stripSensitiveData(platform.federatedAuthProviders),
-            usage: await getUsage(log, platform),
-            plan: await getPlan(log, platform),
+            usage,
+            plan,
         }
     },
     async getOne(id: PlatformId): Promise<Platform | null> {

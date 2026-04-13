@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-notion",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "dependencies": {

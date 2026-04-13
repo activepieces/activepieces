@@ -4,10 +4,11 @@ import {
   httpClient,
   HttpMethod,
 } from '@activepieces/pieces-common';
+import { getGraphBaseUrl } from './microsoft-cloud';
 import { outlookCalendarAuth } from '../..';
 
 export const outlookCalendarCommon = {
-  baseUrl: 'https://graph.microsoft.com/v1.0/me',
+  getBaseUrl: (cloud?: string | null) => getGraphBaseUrl(cloud) + '/v1.0/me',
   calendarDropdown: Property.Dropdown({
     displayName: 'Calendar',
     required: true,
@@ -21,11 +22,12 @@ export const outlookCalendarCommon = {
         };
       }
       const authProp: OAuth2PropertyValue = auth as OAuth2PropertyValue;
+      const cloud = authProp.props?.['cloud'] as string | undefined;
       const calendars: { id: string; name: string }[] = (
         await httpClient.sendRequest<{ value: { id: string; name: string }[] }>(
           {
             method: HttpMethod.GET,
-            url: `${outlookCalendarCommon.baseUrl}/calendars`,
+            url: `${outlookCalendarCommon.getBaseUrl(cloud)}/calendars`,
             authentication: {
               type: AuthenticationType.BEARER_TOKEN,
               token: authProp['access_token'],
@@ -58,12 +60,13 @@ export const outlookCalendarCommon = {
         };
       }
       const authProp: OAuth2PropertyValue = auth as OAuth2PropertyValue;
+      const cloud = authProp.props?.['cloud'] as string | undefined;
       const timezones: { displayName: string; alias: string }[] = (
         await httpClient.sendRequest<{
           value: { displayName: string; alias: string }[];
         }>({
           method: HttpMethod.GET,
-          url: `${outlookCalendarCommon.baseUrl}/outlook/supportedTimeZones`,
+          url: `${outlookCalendarCommon.getBaseUrl(cloud)}/outlook/supportedTimeZones`,
           authentication: {
             type: AuthenticationType.BEARER_TOKEN,
             token: authProp['access_token'],

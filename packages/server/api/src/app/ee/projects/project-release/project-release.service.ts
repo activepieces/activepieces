@@ -1,4 +1,4 @@
-import { memoryLock } from '@activepieces/server-common'
+import { memoryLock } from '@activepieces/server-utils'
 import { ActivepiecesError, apId, ApId, CreateProjectReleaseRequestBody, DiffReleaseRequest, DiffState, ErrorCode, FlowProjectOperation, FlowProjectOperationType, FlowSyncError, isNil, ListProjectReleasesRequest, PlatformId, ProjectId, ProjectRelease, ProjectReleaseType, ProjectState, ProjectSyncPlan, SeekPage } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../../core/db/repo-factory'
@@ -98,8 +98,10 @@ export const projectReleaseService = {
     },
 }
 async function findDiffStates(projectId: ProjectId, ownerId: ApId, params: DiffReleaseRequest | CreateProjectReleaseRequestBody, log: FastifyBaseLogger): Promise<DiffState> {
-    const newState = await getStateFromCreateRequest(projectId, ownerId, params, log) as ProjectState
-    const currentState = await projectStateService(log).getProjectState(projectId, log) as ProjectState
+    const [newState, currentState] = await Promise.all([
+        getStateFromCreateRequest(projectId, ownerId, params, log),
+        projectStateService(log).getProjectState(projectId, log),
+    ])
     const diffs = await projectDiffService.diff({
         newState,
         currentState,

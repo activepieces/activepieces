@@ -91,7 +91,7 @@ describe('Audit Event API', () => {
             // act
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/audit-events',
+                url: '/api/v1/audit-events',
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },

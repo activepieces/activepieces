@@ -4,17 +4,50 @@ description: "This list shows all versions that include breaking changes and how
 icon: "hammer"
 ---
 
-## 0.80.0
+## 0.82.0
+
 ### What has changed?
 
+#### Piece Versions Are Now Pinned
+- Piece versions are no longer stored with wildcards (`~1.2.0`, `^1.2.0`). All piece steps now use exact versions (e.g. `1.2.0`).
+- A migration automatically strips wildcard prefixes from all existing flow versions on upgrade.
+- The `LOCK_AND_PUBLISH` operation no longer resolves piece versions at publish time — steps run with the exact version stored in the flow.
+- A new **version switcher** UI in the builder lets users upgrade or downgrade piece versions manually.
+
+#### REST API
+- `ADD_ACTION`, `UPDATE_ACTION`, and `UPDATE_TRIGGER` now strip wildcard prefixes (`~`, `^`) from `pieceVersion` before saving. If you were relying on wildcard versions to auto-resolve on publish, your steps will now be pinned to the base version (e.g. `~1.2.0` becomes `1.2.0`).
+- `LOCK_AND_PUBLISH` no longer modifies `pieceVersion` on any step. The version in the draft is the version that will run.
+- A new endpoint `GET /v1/pieces/:name/versions` is available to list all versions of a piece, useful for building custom version selection.
+
+### Do you need to take action?
+- If you use the REST API to create or update flows with wildcard piece versions (`~` or `^`), update your integration to pass exact versions instead. Wildcards will still be accepted but silently stripped to their base version.
+- If your publish workflow relied on `LOCK_AND_PUBLISH` resolving wildcards to the latest matching version, you must now explicitly set the desired exact version on each step before publishing.
+- Use the new `GET /v1/pieces/:name/versions` endpoint to discover available versions when building custom integrations.
+
+
+## 0.80.0
+
+### What has changed?
+
+#### Infrastructure
+- A new environment variable `AP_MAX_WEBHOOK_PAYLOAD_SIZE_MB` has been introduced to control the maximum allowed webhook payload size. The default is `25` MB. Webhooks exceeding this limit will be rejected with a `413 Request Too Long` response.
+- Nginx has been removed from the Docker image. Fastify now serves both the API and the React frontend directly. All API routes are now under the `/api` prefix natively. If you were using `/v1/health` as a health check endpoint (e.g. in Kubernetes probes or load balancer checks), update it to `/api/v1/health`.
+- Secret managers has been refactored, the version in **0.79.0** no longer is supported, it was not used by anyone but it's worth to mention to upgrade to **0.80.0** before considering using the feature
+
+#### API
 - A new `UPDATE_SAMPLE_DATA_INFO` flow operation has been introduced to handle sample data updates independently.
 - `UPDATE_ACTION` and `UPDATE_TRIGGER` no longer accept or apply changes to `sampleData` in step settings. Any `sampleData` fields sent in these requests will be ignored and the existing sample data will be preserved.
 - A new required `lastUpdatedDate` field has been added to all actions and triggers, tracked automatically by the server. It is not accepted in `UPDATE_ACTION` or `UPDATE_TRIGGER` requests.
-- The flow schema version has been bumped from `17` to `18`. Existing flows are migrated automatically.
+
 
 ### Do you need to take action?
-
+- If you want to restrict webhook payload sizes below the new `25` MB default, set `AP_MAX_WEBHOOK_PAYLOAD_SIZE_MB` to your desired limit.
 - If you are using the API to update sample data on steps via `UPDATE_ACTION` or `UPDATE_TRIGGER`, switch to the new `UPDATE_SAMPLE_DATA_INFO` operation instead.
+- If you have custom health checks pointing to `/v1/health`, update them to `/api/v1/health`.
+
+
+
+
 
 ## 0.78.1
 

@@ -60,6 +60,13 @@
                   ]
                },
                {
+                  "group": "MCP Server",
+                  "pages": [
+                     "mcp/overview",
+                     "mcp/tools"
+                  ]
+               },
+               {
                   "group": "About",
                   "pages": [
                      "about/i18n",
@@ -144,7 +151,7 @@
                      "install/options/docker",
                      "install/options/docker-compose",
                      {
-                        "group": "Others Options",
+                        "group": "Other Options",
                         "pages": [
                            "install/options/helm",
                            "install/options/easypanel",
@@ -173,7 +180,8 @@
                      "install/guides/setup-opentelemetry",
                      "install/guides/setup-s3",
                      "install/guides/separate-workers",
-                     "install/guides/setup-app-webhooks"
+                     "install/guides/setup-app-webhooks",
+                     "install/guides/rollback"
                   ]
                },
                {
@@ -191,7 +199,7 @@
                      "install/architecture/overview",
                      "install/architecture/workers",
                      "install/architecture/engine",
-                     "install/architecture/performance"
+                     "install/architecture/benchmark"
                   ]
                }
             ]
@@ -436,10 +444,10 @@
                         ]
                      },
                      {
-                        "group": "Queue Metrics",
-                        "icon": "gauge-high",
+                        "group": "Worker Machines",
+                        "icon": "server",
                         "pages": [
-                           "endpoints/queue-metrics/metrics"
+                           "endpoints/worker-machines/queue-metrics"
                         ]
                      }
                   ]
@@ -494,13 +502,24 @@
                   "icon": "code",
                   "pages": [
                      "handbook/engineering/playbooks/run-ee",
-                     "handbook/engineering/playbooks/setup-incident-io",
+                     "handbook/engineering/playbooks/setup-betterstack",
                      "handbook/engineering/playbooks/releases",
+                     "handbook/engineering/playbooks/canary-deployment",
                      "handbook/engineering/playbooks/infrastructure",
                      "handbook/engineering/playbooks/database-migration",
                      "handbook/engineering/playbooks/product-announcement",
                      "handbook/engineering/playbooks/frontend-best-practices",
-                     "handbook/engineering/playbooks/e2e-tests"
+                     "handbook/engineering/playbooks/e2e-tests",
+                     "handbook/engineering/playbooks/connect-claude-to-chrome",
+                     {
+                        "group": "Postmortems",
+                        "icon": "triangle-exclamation",
+                        "pages": [
+                           "handbook/engineering/postmortems/2026-03-19-redis-and-delay-overload",
+                           "handbook/engineering/postmortems/2026-03-redis-queue-events-overload",
+                           "handbook/engineering/postmortems/2026-03-16-infrastructure-upgrade"
+                        ]
+                     }
                   ]
                },
                {

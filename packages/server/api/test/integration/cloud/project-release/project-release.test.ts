@@ -46,7 +46,7 @@ describe('Project Release API', () => {
 
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/project-releases',
+                url: '/api/v1/project-releases',
                 body: request,
                 headers: {
                     authorization: `Bearer ${apiKey.value}`,

@@ -1,7 +1,8 @@
-import { AppSystemProp, rejectedPromiseHandler } from '@activepieces/server-common'
 import { ApEdition, isNil, TemplateTelemetryEvent, TemplateTelemetryEventType, tryCatch } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { rejectedPromiseHandler } from '../../helper/promise-handler'
 import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-props'
 
 const CLOUD_TELEMETRY_URL = 'https://cloud.activepieces.com/api/v1/templates-telemetry'
 const INTERNAL_TELEMETRY_URL = 'https://template-manager.activepieces.com/api/public/analytics/event'

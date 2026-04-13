@@ -45,14 +45,14 @@ import {
   pollingHelper,
 } from '@activepieces/pieces-common';
 import {
-  PiecePropValueSchema,
   TriggerStrategy,
   createTrigger,
+  AppConnectionValueForAuthProperty
 } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
 
 const polling: Polling<
-  PiecePropValueSchema<typeof gelatoAuth>,
+  AppConnectionValueForAuthProperty<typeof gelatoAuth>,
   Record<string, never>
 > = {
   strategy: DedupeStrategy.TIMEBASED,
@@ -126,9 +126,9 @@ export const gelato = createPiece({
 
 # Testing
 
-By default, the development setup only builds specific components. Open the file `packages/server/api/.env` and include "gelato" in the `AP_DEV_PIECES`.
+By default, the development setup only builds specific components. Open the file `.env.dev` and include "gelato" in the `AP_DEV_PIECES`.
 
-For more details, check out the [Piece Development](./development-setup) section.
+For more details, check out the [Piece Development](/build-pieces/building-pieces/development-setup#pieces-development) section.
 
 Once you edit the environment variable, restart the backend. The piece will be rebuilt. After this process, you'll need to **refresh** the frontend to see the changes.
 
@@ -139,7 +139,7 @@ To make your webhook accessible from the internet, you need to expose your local
 
 1. Install [localxpose](https://localxpose.io/docs#start-your-first-tunnel).
 2. Follow the documentation to start your first tunnel to localhost:4200.
-3. Copy the tunnel domain, i.e wozcsvaint.loclx.io, and replace the `AP_FRONTEND_URL` environment variable in `packages/server/api/.env` with the exposed url, i.e https://wozcsvaint.loclx.io
+3. Copy the tunnel domain, i.e wozcsvaint.loclx.io, and replace the `AP_FRONTEND_URL` environment variable in `.env.dev` with the exposed url, i.e https://wozcsvaint.loclx.io
 4. Go to /packages/web/vite.config.ts, uncomment allowedHosts and replace the value with the same tunnel domain, i.e wozcsvaint.loclx.io.
 
 Once you have completed these configurations, you will be able to test webhook triggers and run published flows that have them.

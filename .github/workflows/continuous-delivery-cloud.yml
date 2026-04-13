@@ -1,0 +1,147 @@
+name: Continuous Delivery — Cloud
+
+on:
+  schedule:
+    - cron: '0 9 * * 0'  # Sunday 9 AM UTC — promote release candidate to prod
+  workflow_call:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Action to perform'
+        required: true
+        type: choice
+        options:
+          - cloud-hotfix  # Build from current branch and deploy directly to production, bypassing staging
+
+jobs:
+  guard:
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'cloud-hotfix'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check proximity to scheduled promotion
+        run: |
+          NOW=$(date -u +%s)
+          DOW=$(date -u +%u)  # ISO: 1=Mon … 7=Sun
+          if [ "$DOW" -eq 7 ]; then
+            TODAY_9AM=$(date -u -d "today 09:00" +%s)
+            if [ "$NOW" -lt "$TODAY_9AM" ]; then
+              NEXT_RUN=$TODAY_9AM
+            else
+              NEXT_RUN=$(date -u -d "next sunday 09:00" +%s)
+            fi
+          else
+            NEXT_RUN=$(date -u -d "next sunday 09:00" +%s)
+          fi
+          SECONDS_UNTIL=$(( NEXT_RUN - NOW ))
+          MINS=$(( SECONDS_UNTIL / 60 ))
+          if [ "$SECONDS_UNTIL" -le 3600 ]; then
+            echo "Scheduled promotion is in ${MINS}m — no hotfix needed, wait for the scheduled run."
+            exit 1
+          fi
+          echo "Next scheduled promotion in ${MINS}m — proceeding with hotfix."
+
+  build-image:
+    needs: [guard]
+    if: needs.guard.result == 'success'
+    runs-on: ubuntu-24.04
+    outputs:
+      image_tag: ${{ steps.set-tag.outputs.image_tag }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set image tag
+        id: set-tag
+        run: |
+          RELEASE=$(node --print "require('./package.json').version")
+          echo "image_tag=${RELEASE}.${{ github.sha }}.beta" >> $GITHUB_OUTPUT
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: depot/setup-action@v1
+      - uses: depot/build-push-action@v1
+        with:
+          project: du7O4b0e8P
+          token: ${{ secrets.DEPOT_PROJECT_TOKEN }}
+          context: .
+          file: ./Dockerfile
+          platforms: |
+            linux/amd64
+            linux/arm64
+          push: true
+          no-cache: true
+          tags: ghcr.io/activepieces/activepieces-cloud:${{ steps.set-tag.outputs.image_tag }}
+
+  promote-to-production:
+    needs: [build-image]
+    if: |
+      always() &&
+      (needs.build-image.result == 'success' ||
+       (needs.build-image.result == 'skipped' && github.event_name != 'workflow_dispatch'))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    environment:
+      name: production
+      url: https://cloud.activepieces.com
+    concurrency:
+      group: promote-production
+      cancel-in-progress: false
+    steps:
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh/
+          echo "$SSH_KEY" > ~/.ssh/ops.key
+          chmod 600 ~/.ssh/ops.key
+          cat >>~/.ssh/config <<END
+          Host ops
+            HostName $SSH_HOST
+            User $SSH_USER
+            IdentityFile ~/.ssh/ops.key
+            StrictHostKeyChecking no
+          END
+        env:
+          SSH_USER: ${{ secrets.DEV_OPS_USERNAME }}
+          SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_HOST: ${{ secrets.DEV_OPS_HOST }}
+
+      - name: Set image tag
+        id: image
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "image_tag=${{ needs.build-image.outputs.image_tag }}" >> $GITHUB_OUTPUT
+          else
+            echo "image_tag=release-candidate" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Deploy App to production
+        run: |
+          ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal deploy --version ${{ steps.image.outputs.image_tag }} --config-file=config/app.yml --skip-push; exit"'
+
+      - name: Deploy Workers to production
+        run: |
+          ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal deploy --version ${{ steps.image.outputs.image_tag }} --config-file=config/worker.yml --skip-push; exit"'
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create deploy branch
+        if: github.event_name == 'schedule'
+        run: |
+          SHA=$(git rev-parse refs/tags/release-candidate 2>/dev/null || git rev-parse release-candidate)
+          DATE=$(date -u +%Y-%m-%d)
+          BRANCH="deploy/cloud/$DATE"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git checkout -b "$BRANCH" "$SHA"
+          git push origin "$BRANCH" --force
+          echo "Created $BRANCH at $SHA"
+
+  # Run smoke test after scheduled promotion
+  smoke-test:
+    needs: promote-to-production
+    if: github.event_name == 'schedule'
+    uses: ./.github/workflows/smoke-test.yml
+    secrets: inherit

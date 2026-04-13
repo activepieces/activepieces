@@ -1,7 +1,6 @@
 import { FlowAction } from '../actions/action'
 import { FlowVersion } from '../flow-version'
 import { flowStructureUtil } from '../util/flow-structure-util'
-import { _getImportOperations } from './import-flow'
 
 export function _getActionsForCopy(selectedSteps: string[], flowVersion: FlowVersion): FlowAction[] {
     const allSteps = flowStructureUtil.getAllSteps(flowVersion.trigger)

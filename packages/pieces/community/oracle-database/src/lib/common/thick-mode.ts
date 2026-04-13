@@ -250,17 +250,8 @@ async function registerOracleLibs(libDir: string): Promise<void> {
   }
 }
 
-async function _initOracleClient(thickMode: boolean): Promise<void> {
-  if (!thickMode) {
-    try {
-      oracledb.initOracleClient();
-      console.log('[oracle] System Oracle Client loaded. Thin mode active.');
-    } catch {
-      // No system client — staying in Thin mode
-    }
-    return;
-  }
-
+// Thick mode only — thin mode is oracledb's default, no initOracleClient() call needed.
+async function _initThickClient(): Promise<void> {
   let libDir = getOracleClientLibDir();
 
   if (!libDir) {
@@ -287,43 +278,53 @@ async function _initOracleClient(thickMode: boolean): Promise<void> {
 
   await ensureLibaio(libDir);
   await registerOracleLibs(libDir);
-  oracledb.initOracleClient({ libDir });
+
+  try {
+    oracledb.initOracleClient({ libDir });
+  } catch (err) {
+    const msg = (err as Error).message ?? '';
+    // NJS-118: thick mode cannot be enabled because a thin connection was already created.
+    // This happens when the same process previously ran a Thin Mode connection (e.g. a prior
+    // validation attempt). The process will be recycled automatically — retry in a few minutes.
+    if (msg.includes('NJS-118')) {
+      throw new Error(
+        'Thick Mode cannot be activated because a Thin Mode connection was already established ' +
+        'in this process session. This resolves automatically — please try saving the connection again in a few minutes.'
+      );
+    }
+    throw err;
+  }
+
   console.log(`[oracle] Instant Client loaded from ${libDir}. Thick mode active.`);
 }
 
 /**
  * Ensures Oracle Instant Client is ready and initialises node-oracledb.
  *
- * thickMode = false → try system client (initOracleClient with no args),
- *                     silently stay in Thin mode if none found.
- * thickMode = true  → auto-download client if missing, patch RPATH,
- *                     then initOracleClient({ libDir }).
+ * thickMode = false → thin mode is oracledb's default; no initOracleClient() call is made.
+ * thickMode = true  → auto-download Instant Client if missing, patch RPATH,
+ *                     then call initOracleClient({ libDir }).
  *
- * Promise-based singleton — concurrent callers all await the same Promise
- * so initOracleClient is never called twice (prevents NJS-077).
+ * Thin mode intentionally skips initOracleClient() — calling it with no args locks the process
+ * to whatever system client state it finds and prevents a later thick mode call in the same
+ * process (e.g. when a dedicated worker reuses the sandbox across validation attempts).
+ *
+ * Promise-based singleton for thick mode — concurrent callers all await the same Promise
+ * so initOracleClient is never called twice (prevents NJS-090).
  */
 export const ensureOracleClient: (thickMode: boolean) => Promise<void> = (() => {
-  let initPromise: Promise<void> | null = null;
-  let initializedMode: boolean | null = null;
+  let thickInitPromise: Promise<void> | null = null;
   return (thickMode: boolean): Promise<void> => {
-    // node-oracledb is process-global — thick/thin cannot be mixed in the same process
-    if (initPromise !== null && initializedMode !== thickMode) {
-      return Promise.reject(
-        new Error(
-          `Oracle client already initialised in ${initializedMode ? 'thick' : 'thin'} mode. ` +
-            `Cannot switch to ${thickMode ? 'thick' : 'thin'} mode without restarting the process.`
-        )
-      );
-    }
-    if (!initPromise) {
-      initializedMode = thickMode;
+    if (!thickMode) return Promise.resolve();
+    // Already in thick mode (initOracleClient was called successfully earlier)
+    if (!oracledb.thin) return Promise.resolve();
+    if (!thickInitPromise) {
       // Clear on failure so the next call can retry (e.g. transient network error)
-      initPromise = _initOracleClient(thickMode).catch((err) => {
-        initPromise = null;
-        initializedMode = null;
+      thickInitPromise = _initThickClient().catch((err) => {
+        thickInitPromise = null;
         throw err;
       });
     }
-    return initPromise;
+    return thickInitPromise;
   };
 })();

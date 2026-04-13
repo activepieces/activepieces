@@ -12,12 +12,15 @@ import {
   Link2,
   Loader2,
   Search,
+  Sparkles,
   Table2,
   ToggleLeft,
   User,
   Workflow,
   X,
 } from 'lucide-react';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
@@ -34,6 +37,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { useOwnerOptions } from '@/features/automations/hooks/use-owner-options';
+import { TemplatesBrowseDialog } from '@/features/templates';
 import { formatUtils } from '@/lib/format-utils';
 import { cn, DASHBOARD_CONTENT_PADDING_X } from '@/lib/utils';
 
@@ -100,8 +104,11 @@ export const AutomationsFilters = ({
   isCreatingFlow = false,
   isCreatingTable = false,
 }: AutomationsFiltersProps) => {
+  const navigate = useNavigate();
   const { embedState } = useEmbedding();
   const ownerOptions = useOwnerOptions();
+  const [isTemplatesBrowseDialogOpen, setIsTemplatesBrowseDialogOpen] =
+    useState(false);
   const typeOptions = [
     { value: 'flow', label: t('Flows') },
     { value: 'table', label: t('Tables') },
@@ -131,123 +138,166 @@ export const AutomationsFilters = ({
   });
 
   return (
-    <div className={cn('overflow-x-auto mb-4', DASHBOARD_CONTENT_PADDING_X)}>
-      <div className="flex items-center justify-between gap-4 min-w-max">
-        <div className="flex items-center gap-2">
-          <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder={t('Search flows and tables...')}
-              value={searchTerm}
-              onChange={(e) => {
-                onSearchChange(e.target.value);
-                onFilterChange?.();
-              }}
-              className="min-w-[220px] max-w-xs pl-8 pr-8"
-            />
-            {searchTerm && (
-              <button
-                onClick={() => {
-                  onSearchChange('');
+    <>
+      <div
+        className={cn('overflow-x-auto mt-4 mb-4', DASHBOARD_CONTENT_PADDING_X)}
+      >
+        <div className="flex items-center justify-between gap-4 min-w-max">
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder={t('Search flows and tables...')}
+                value={searchTerm}
+                onChange={(e) => {
+                  onSearchChange(e.target.value);
                   onFilterChange?.();
                 }}
-                className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center justify-center h-5 w-5 rounded-full bg-muted hover:bg-muted-foreground/20 text-muted-foreground hover:text-foreground transition-colors"
+                className="min-w-[300px] max-w-xs pl-8 pr-8 focus-visible:ring-0 focus-visible:ring-offset-0"
+              />
+              {searchTerm && (
+                <button
+                  onClick={() => {
+                    onSearchChange('');
+                    onFilterChange?.();
+                  }}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center justify-center h-5 w-5 rounded-full bg-muted hover:bg-muted-foreground/20 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              )}
+            </div>
+
+            <MultiSelectFilter
+              label={t('Type')}
+              icon={<Filter className="h-4 w-4" />}
+              options={typeOptions}
+              selectedValues={typeFilter}
+              onChange={(values) => {
+                onTypeFilterChange(values);
+                onFilterChange?.();
+              }}
+            />
+
+            <MultiSelectFilter
+              label={t('Status')}
+              icon={<ToggleLeft className="h-4 w-4" />}
+              options={statusOptions}
+              selectedValues={statusFilter}
+              onChange={(values) => {
+                onStatusFilterChange(values);
+                onFilterChange?.();
+              }}
+            />
+
+            <MultiSelectFilter
+              label={t('Connections')}
+              icon={<Link2 className="h-4 w-4" />}
+              options={connectionOptions}
+              selectedValues={connectionFilter}
+              onChange={(values) => {
+                onConnectionFilterChange(values);
+                onFilterChange?.();
+              }}
+              searchable
+            />
+
+            {!embedState.isEmbedded && (
+              <MultiSelectFilter
+                label={t('Owner')}
+                icon={<User className="h-4 w-4" />}
+                options={ownerOptions}
+                selectedValues={ownerFilter}
+                onChange={(values) => {
+                  onOwnerFilterChange(values);
+                  onFilterChange?.();
+                }}
+                searchable
+              />
+            )}
+
+            {folderOptions.length > 0 && (
+              <MultiSelectFilter
+                label={t('Folder')}
+                icon={<FolderIcon className="h-4 w-4" />}
+                options={folderOptions}
+                selectedValues={folderFilter}
+                onChange={(values) => {
+                  onFolderFilterChange(values);
+                  onFilterChange?.();
+                }}
+                searchable
+              />
+            )}
+
+            {hasActiveFilters && (
+              <Button
+                variant="link"
+                size="sm"
+                className="h-9 text-sm gap-1 text-muted-foreground hover:text-foreground"
+                onClick={() => {
+                  onClearAllFilters();
+                  onFilterChange?.();
+                }}
               >
-                <X className="h-3 w-3" />
-              </button>
+                <X className="h-3.5 w-3.5" />
+                {t('Clear all')}
+              </Button>
             )}
           </div>
 
-          <MultiSelectFilter
-            label={t('Type')}
-            icon={<Filter className="h-4 w-4" />}
-            options={typeOptions}
-            selectedValues={typeFilter}
-            onChange={(values) => {
-              onTypeFilterChange(values);
-              onFilterChange?.();
-            }}
-          />
+          <div className="flex items-center gap-2">
+            {!embedState.hideExportAndImportFlow && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <AnimatedIconButton
+                    icon={DownloadIcon}
+                    iconSize={16}
+                    variant="outline"
+                    size="sm"
+                    className="h-9"
+                  >
+                    {t('Import')}
+                  </AnimatedIconButton>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <PermissionNeededTooltip
+                    hasPermission={userHasPermissionToWriteFlow}
+                  >
+                    <DropdownMenuItem
+                      disabled={!userHasPermissionToWriteFlow}
+                      onClick={onImportFlow}
+                      className="cursor-pointer"
+                    >
+                      <Workflow className="h-4 w-4 mr-2" />
+                      {t('Import Flow')}
+                    </DropdownMenuItem>
+                  </PermissionNeededTooltip>
+                  <PermissionNeededTooltip
+                    hasPermission={userHasPermissionToWriteTable}
+                  >
+                    <DropdownMenuItem
+                      disabled={!userHasPermissionToWriteTable}
+                      onClick={onImportTable}
+                      className="cursor-pointer"
+                    >
+                      <Table2 className="h-4 w-4 mr-2" />
+                      {t('Import Table')}
+                    </DropdownMenuItem>
+                  </PermissionNeededTooltip>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
 
-          <MultiSelectFilter
-            label={t('Status')}
-            icon={<ToggleLeft className="h-4 w-4" />}
-            options={statusOptions}
-            selectedValues={statusFilter}
-            onChange={(values) => {
-              onStatusFilterChange(values);
-              onFilterChange?.();
-            }}
-          />
-
-          <MultiSelectFilter
-            label={t('Connections')}
-            icon={<Link2 className="h-4 w-4" />}
-            options={connectionOptions}
-            selectedValues={connectionFilter}
-            onChange={(values) => {
-              onConnectionFilterChange(values);
-              onFilterChange?.();
-            }}
-            searchable
-          />
-
-          {!embedState.isEmbedded && (
-            <MultiSelectFilter
-              label={t('Owner')}
-              icon={<User className="h-4 w-4" />}
-              options={ownerOptions}
-              selectedValues={ownerFilter}
-              onChange={(values) => {
-                onOwnerFilterChange(values);
-                onFilterChange?.();
-              }}
-              searchable
-            />
-          )}
-
-          {folderOptions.length > 0 && (
-            <MultiSelectFilter
-              label={t('Folder')}
-              icon={<FolderIcon className="h-4 w-4" />}
-              options={folderOptions}
-              selectedValues={folderFilter}
-              onChange={(values) => {
-                onFolderFilterChange(values);
-                onFilterChange?.();
-              }}
-              searchable
-            />
-          )}
-
-          {hasActiveFilters && (
-            <Button
-              variant="link"
-              size="sm"
-              className="h-9 text-sm gap-1 text-muted-foreground hover:text-foreground"
-              onClick={() => {
-                onClearAllFilters();
-                onFilterChange?.();
-              }}
-            >
-              <X className="h-3.5 w-3.5" />
-              {t('Clear all')}
-            </Button>
-          )}
-        </div>
-
-        <div className="flex items-center gap-2">
-          {!embedState.hideExportAndImportFlow && (
-            <DropdownMenu>
+            <DropdownMenu open={isCreatingFlow || isCreatingTable || undefined}>
               <DropdownMenuTrigger asChild>
                 <AnimatedIconButton
-                  icon={DownloadIcon}
+                  icon={PlusIcon}
                   iconSize={16}
-                  variant="outline"
                   size="sm"
                   className="h-9"
                 >
-                  {t('Import')}
+                  {t('Create New')}
                 </AnimatedIconButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
@@ -255,113 +305,100 @@ export const AutomationsFilters = ({
                   hasPermission={userHasPermissionToWriteFlow}
                 >
                   <DropdownMenuItem
-                    disabled={!userHasPermissionToWriteFlow}
-                    onClick={onImportFlow}
+                    disabled={
+                      !userHasPermissionToWriteFlow ||
+                      isCreatingFlow ||
+                      isCreatingTable
+                    }
+                    onSelect={(e) => {
+                      e.preventDefault();
+                      onCreateFlow();
+                    }}
                     className="cursor-pointer"
                   >
-                    <Workflow className="h-4 w-4 mr-2" />
-                    {t('Import Flow')}
+                    {isCreatingFlow ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Workflow className="h-4 w-4 mr-2" />
+                    )}
+                    {isCreatingFlow ? t('Creating...') : t('New Flow')}
+                  </DropdownMenuItem>
+                </PermissionNeededTooltip>
+                <PermissionNeededTooltip
+                  hasPermission={userHasPermissionToWriteFlow}
+                >
+                  <DropdownMenuItem
+                    disabled={
+                      !userHasPermissionToWriteFlow ||
+                      isCreatingFlow ||
+                      isCreatingTable
+                    }
+                    onSelect={() => {
+                      if (embedState.isEmbedded) {
+                        setIsTemplatesBrowseDialogOpen(true);
+                      } else {
+                        navigate('/templates');
+                      }
+                    }}
+                    className="cursor-pointer"
+                  >
+                    <Sparkles className="h-4 w-4 mr-2" />
+                    {t('Start from Template')}
                   </DropdownMenuItem>
                 </PermissionNeededTooltip>
                 <PermissionNeededTooltip
                   hasPermission={userHasPermissionToWriteTable}
                 >
                   <DropdownMenuItem
-                    disabled={!userHasPermissionToWriteTable}
-                    onClick={onImportTable}
+                    disabled={
+                      !userHasPermissionToWriteTable ||
+                      isCreatingFlow ||
+                      isCreatingTable
+                    }
+                    onSelect={(e) => {
+                      e.preventDefault();
+                      onCreateTable();
+                    }}
                     className="cursor-pointer"
                   >
-                    <Table2 className="h-4 w-4 mr-2" />
-                    {t('Import Table')}
+                    {isCreatingTable ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Table2 className="h-4 w-4 mr-2" />
+                    )}
+                    {isCreatingTable ? t('Creating...') : t('New Table')}
                   </DropdownMenuItem>
                 </PermissionNeededTooltip>
+                {!embedState.hideFolders && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <PermissionNeededTooltip
+                      hasPermission={userHasPermissionToWriteFolder}
+                    >
+                      <DropdownMenuItem
+                        disabled={
+                          !userHasPermissionToWriteFolder ||
+                          isCreatingFlow ||
+                          isCreatingTable
+                        }
+                        onClick={onCreateFolder}
+                        className="cursor-pointer"
+                      >
+                        <FolderPlus className="h-4 w-4 mr-2" />
+                        {t('New Folder')}
+                      </DropdownMenuItem>
+                    </PermissionNeededTooltip>
+                  </>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
-          )}
-
-          <DropdownMenu open={isCreatingFlow || isCreatingTable || undefined}>
-            <DropdownMenuTrigger asChild>
-              <AnimatedIconButton
-                icon={PlusIcon}
-                iconSize={16}
-                size="sm"
-                className="h-9"
-              >
-                {t('Create New')}
-              </AnimatedIconButton>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <PermissionNeededTooltip
-                hasPermission={userHasPermissionToWriteFlow}
-              >
-                <DropdownMenuItem
-                  disabled={
-                    !userHasPermissionToWriteFlow ||
-                    isCreatingFlow ||
-                    isCreatingTable
-                  }
-                  onSelect={(e) => {
-                    e.preventDefault();
-                    onCreateFlow();
-                  }}
-                  className="cursor-pointer"
-                >
-                  {isCreatingFlow ? (
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  ) : (
-                    <Workflow className="h-4 w-4 mr-2" />
-                  )}
-                  {isCreatingFlow ? t('Creating...') : t('New Flow')}
-                </DropdownMenuItem>
-              </PermissionNeededTooltip>
-              <PermissionNeededTooltip
-                hasPermission={userHasPermissionToWriteTable}
-              >
-                <DropdownMenuItem
-                  disabled={
-                    !userHasPermissionToWriteTable ||
-                    isCreatingFlow ||
-                    isCreatingTable
-                  }
-                  onSelect={(e) => {
-                    e.preventDefault();
-                    onCreateTable();
-                  }}
-                  className="cursor-pointer"
-                >
-                  {isCreatingTable ? (
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  ) : (
-                    <Table2 className="h-4 w-4 mr-2" />
-                  )}
-                  {isCreatingTable ? t('Creating...') : t('New Table')}
-                </DropdownMenuItem>
-              </PermissionNeededTooltip>
-              {!embedState.hideFolders && (
-                <>
-                  <DropdownMenuSeparator />
-                  <PermissionNeededTooltip
-                    hasPermission={userHasPermissionToWriteFolder}
-                  >
-                    <DropdownMenuItem
-                      disabled={
-                        !userHasPermissionToWriteFolder ||
-                        isCreatingFlow ||
-                        isCreatingTable
-                      }
-                      onClick={onCreateFolder}
-                      className="cursor-pointer"
-                    >
-                      <FolderPlus className="h-4 w-4 mr-2" />
-                      {t('New Folder')}
-                    </DropdownMenuItem>
-                  </PermissionNeededTooltip>
-                </>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
+          </div>
         </div>
       </div>
-    </div>
+      <TemplatesBrowseDialog
+        open={isTemplatesBrowseDialogOpen}
+        onOpenChange={setIsTemplatesBrowseDialogOpen}
+      />
+    </>
   );
 };

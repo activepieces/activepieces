@@ -18,7 +18,7 @@ It's recommended to start with the database and switch to S3 if needed. After sw
 | `AP_S3_BUCKET` | The name of the S3 bucket to use for file storage. | None | |
 | `AP_S3_ENDPOINT` | The endpoint URL for your S3-compatible storage service. Not required if `AWS_ENDPOINT_URL` is set. | None | `https://s3.amazonaws.com` |
 | `AP_S3_REGION` | The region where your S3 bucket is located. Not required if `AWS_REGION` is set. | None | `us-east-1` |
-| `AP_S3_USE_SIGNED_URLS` | It is used to route traffic to S3 directly. It should be enabled if the S3 bucket is public. | None | `true` |
+| `AP_S3_USE_SIGNED_URLS` | Routes file traffic directly to S3 using pre-signed URLs, bypassing the API server. The bucket should remain private; signed URLs provide temporary authenticated access. | None | `true` |
 | `AP_S3_USE_IRSA` | Use IAM Role for Service Accounts (IRSA) to connect to S3. When `true`, `AP_S3_ACCESS_KEY_ID` and `AP_S3_SECRET_ACCESS_KEY` are not required. | None | `true` |
 | `AP_MAX_FILE_SIZE_MB` | The maximum allowed file size in megabytes for uploads including logs of flow runs. | `10` | `10` |
 

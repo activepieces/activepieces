@@ -19,10 +19,12 @@ import { githubAddLabelsToIssueAction } from './lib/actions/add-labels-to-issue'
 import { githubCreateBranchAction } from './lib/actions/create-branch';
 import { githubDeleteBranchAction } from './lib/actions/delete-branch';
 import { githubUpdateIssueAction } from './lib/actions/update-issue';
+import { githubCreateGistAction } from './lib/actions/create-gist';
 
 import { githubFindBranchAction } from './lib/actions/find-branch';
 import { githubFindIssueAction } from './lib/actions/find-issue';
 import { githubFindUserAction } from './lib/actions/find-user';
+
 import { githubAuth } from './lib/auth';
 
 export const github = createPiece({
@@ -51,6 +53,7 @@ export const github = createPiece({
     githubFindBranchAction,
     githubFindIssueAction,
     githubFindUserAction,
+    githubCreateGistAction,
     createCustomApiCallAction({
       baseUrl: () => 'https://api.github.com',
       auth: githubAuth,

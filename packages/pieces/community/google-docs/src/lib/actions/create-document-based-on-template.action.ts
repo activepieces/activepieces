@@ -3,6 +3,17 @@ import { googleDocsAuth, createGoogleClient } from '../auth';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { google } from 'googleapis';
 
+const PLACEHOLDER_FORMATS: Record<string, string> = {
+  'curly_braces': '{{KEY}}',
+  'square_brackets': '[[KEY]]',
+  'single_curly': '{KEY}',
+  'single_square': '[KEY]',
+  '{{KEY}}': '{{KEY}}',
+  '[[KEY]]': '[[KEY]]',
+  '{KEY}': '{KEY}',
+  '[KEY]': '[KEY]',
+};
+
 export const createDocumentBasedOnTemplate = createAction({
   auth: googleDocsAuth,
   name: 'create_document_based_on_template',
@@ -30,14 +41,14 @@ export const createDocumentBasedOnTemplate = createAction({
       displayName: 'Placeholder Format',
       description: 'Choose the format of placeholders in your template',
       required: true,
-      defaultValue: '[[KEY]]',
+      defaultValue: 'square_brackets',
       options: {
           disabled: false,
           options: [
-              { label: 'Curly Braces {{}}', value: '{{KEY}}' },
-              { label: 'Square Brackets [[]]', value: '[[KEY]]' },
-              { label: 'Single Curly Braces {}', value: '{KEY}' },
-              { label: 'Single Square Brackets []', value: '[KEY]' }
+              { label: 'Curly Braces {{}}', value: 'curly_braces' },
+              { label: 'Square Brackets [[]]', value: 'square_brackets' },
+              { label: 'Single Curly Braces {}', value: 'single_curly' },
+              { label: 'Single Square Brackets []', value: 'single_square' }
           ],
         },
   }),
@@ -45,7 +56,8 @@ export const createDocumentBasedOnTemplate = createAction({
   async run(context) {
     const documentId: string = context.propsValue.template;
     const values = context.propsValue.values;
-    const placeholder_format = context.propsValue.placeholder_format;
+    const placeholderType = context.propsValue.placeholder_format;
+    const placeholder_format = PLACEHOLDER_FORMATS[placeholderType] || '[[KEY]]';
 
     const authClient = await createGoogleClient(context.auth);
     const docs = google.docs('v1');

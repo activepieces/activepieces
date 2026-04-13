@@ -1,5 +1,6 @@
 import {
   isNil,
+  PROJECT_COLOR_PALETTE,
   PlatformRole,
   ProjectType,
   TeamProjectsLimit,
@@ -41,13 +42,16 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { VirtualizedScrollArea } from '@/components/ui/virtualized-scroll-area';
-import { projectCollectionUtils } from '@/features/projects';
+import { projectCollectionUtils, getProjectName } from '@/features/projects';
 import { templatesTelemetryApi } from '@/features/templates';
 import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { cn } from '@/lib/utils';
 
+import { recordAccess } from '../../global-search/access-history';
+import { GlobalSearchCommand } from '../../global-search/global-search-command';
+import { STATIC_PAGES } from '../../global-search/static-pages';
 import { SidebarGeneralItemType } from '../ap-sidebar-group';
 import { ApSidebarItem, SidebarItemType } from '../ap-sidebar-item';
 import ProjectSideBarItem from '../project';
@@ -113,11 +117,27 @@ export function ProjectDashboardSidebar({
 
   const handleProjectSelect = useCallback(
     async (projectId: string) => {
+      const project = projects.find((p) => p.id === projectId);
+      if (project) {
+        const palette = project.icon
+          ? PROJECT_COLOR_PALETTE[project.icon.color]
+          : null;
+        const name = getProjectName(project);
+        recordAccess({
+          id: `project-${projectId}`,
+          type: 'project',
+          label: name,
+          href: `/projects/${projectId}/automations`,
+          iconBgColor: palette?.color,
+          iconTextColor: palette?.textColor,
+          iconLetter: name.charAt(0).toUpperCase(),
+        });
+      }
       projectCollectionUtils.setCurrentProject(projectId);
       navigate(`/projects/${projectId}/automations`);
       setSearchOpen(false);
     },
-    [navigate],
+    [navigate, projects],
   );
 
   const permissionFilter = (link: SidebarGeneralItemType) => {
@@ -141,7 +161,17 @@ export function ProjectDashboardSidebar({
     icon: CompassIcon,
     hasPermission: true,
     isSubItem: false,
-    onClick: handleExploreClick,
+    onClick: () => {
+      handleExploreClick();
+      const page = STATIC_PAGES.find((p) => p.href === '/templates');
+      if (page)
+        recordAccess({
+          id: page.id,
+          type: 'page',
+          label: page.label,
+          href: page.href,
+        });
+    },
   };
 
   const impactLink: SidebarItemType = {
@@ -152,6 +182,16 @@ export function ProjectDashboardSidebar({
     show: true,
     hasPermission: true,
     isSubItem: false,
+    onClick: () => {
+      const page = STATIC_PAGES.find((p) => p.href === '/impact');
+      if (page)
+        recordAccess({
+          id: page.id,
+          type: 'page',
+          label: page.label,
+          href: page.href,
+        });
+    },
   };
 
   const leaderboardLink: SidebarItemType = {
@@ -162,6 +202,16 @@ export function ProjectDashboardSidebar({
     show: true,
     hasPermission: true,
     isSubItem: false,
+    onClick: () => {
+      const page = STATIC_PAGES.find((p) => p.href === '/leaderboard');
+      if (page)
+        recordAccess({
+          id: page.id,
+          type: 'page',
+          label: page.label,
+          href: page.href,
+        });
+    },
   };
 
   const items = [exploreLink, impactLink, leaderboardLink].filter(
@@ -179,6 +229,9 @@ export function ProjectDashboardSidebar({
 
         <SidebarContent className="overflow-x-hidden">
           <SidebarGroup>
+            <div className="mb-1 group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center">
+              <GlobalSearchCommand />
+            </div>
             <SidebarMenu>
               {items.map((item) => (
                 <ApSidebarItem key={item.label} {...item} />
@@ -265,7 +318,7 @@ export function ProjectDashboardSidebar({
                         placeholder={t('Search projects...')}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e)}
-                        className="h-9"
+                        className="h-8"
                         autoFocus
                       />
                     </PopoverContent>
@@ -286,7 +339,7 @@ export function ProjectDashboardSidebar({
                       'flex-1',
                       state === 'collapsed'
                         ? 'flex flex-col items-center scrollbar-none'
-                        : 'scrollbar-hover',
+                        : '',
                     )}
                     items={displayProjects}
                     estimateSize={() => 35}
@@ -359,6 +412,19 @@ function SidebarPlatformAdminLink() {
         isSubItem={false}
         show={true}
         hasPermission={true}
+        onClick={() => {
+          const page = STATIC_PAGES.find(
+            (p) =>
+              p.href === '/platform/projects' && p.id === 'page-platform-admin',
+          );
+          if (page)
+            recordAccess({
+              id: page.id,
+              type: 'page',
+              label: page.label,
+              href: page.href,
+            });
+        }}
       />
     </SidebarMenu>
   );

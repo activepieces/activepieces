@@ -40,30 +40,40 @@ path "<secret_engine_name>/data/*" {
 ## Connecting to Activepieces
 
 1. Go to **Platform Admin → Security → Secret Managers**
-2. Select **HashiCorp Vault** from the provider list
-3. Enter the required connection details:
+2. Click **New Connection** and select **HashiCorp Vault**
+3. Enter a **Name** for the connection
+4. Choose a **Scope** — **Platform** to make it available to all projects, or **Project** to restrict it to specific projects
+5. Fill in the connection details:
    - **URL**: Your Vault server URL (e.g., `http://localhost:8200`)
    - **Role ID**: The Role ID from your AppRole configuration
    - **Secret ID**: The Secret ID from your AppRole configuration
    - **Namespace** (optional): Vault namespace if using Vault Enterprise namespaces
-4. Click **Connect** to test and save the connection
+6. Click **Save** to test and save the connection
 
 ## Using HashiCorp Vault Secrets
 
-When configuring a connection that requires credentials:
+Once the connection is saved, you can reference Vault secrets inside any piece connection dialog — in global connections (Platform Admin) or directly in the flow builder.
 
-1. Go to **Platform Admin -> Setup -> Global connections** and create a conneciton
-2. Click the **key icon** (🔑) next to the input field
-3. Select **HashiCorp Vault** from the dropdown
-4. Enter the secret path in the format: `mount/data/path/key`
-   - if key is added via cli command `vault kv put -mount=secret sec api_key='mysec'`
-   - the input value should be secret/data/mysec/api_key
+1. Open a connection dialog and click the **key icon** (🔑) next to a credential field
+2. Select your HashiCorp Vault connection from the dropdown
+3. Enter the secret path in the format: `mount/data/path/to/secret/key`
 
+For example, if you stored a secret with:
+
+```bash
+vault kv put -mount=secret mysec api_key='supersecret'
+```
+
+The path to enter would be:
+
+```
+secret/data/mysec/api_key
+```
 
 ![Manage Oauth2 apps](/resources/screenshots/secret-manager.png)
 
 The connection will automatically retrieve the secret from Vault when the flow runs.
 
 <Warning>
-  If you update existing secrets and you can't see the update reflected . refer to [caching](/admin-guide/guides/secret-managers/overview#caching)
+  If you update a secret in Vault and the change isn't reflected in your flows, the cached value may still be active. Use the **refresh icon** next to the connection in the Secret Managers page to clear its cache immediately, or wait up to 1 hour for it to expire automatically. See [Caching](/admin-guide/guides/secret-managers/overview#caching) for details.
 </Warning>

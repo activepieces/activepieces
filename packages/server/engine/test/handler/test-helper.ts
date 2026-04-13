@@ -1,4 +1,4 @@
-import { ActionErrorHandlingOptions, BranchCondition, BranchExecutionType, CodeAction, FlowAction, FlowActionType, FlowVersionState, LoopOnItemsAction, PieceAction, ProgressUpdateType, PropertyExecutionType, RouterExecutionType, RunEnvironment } from '@activepieces/shared'
+import { ActionErrorHandlingOptions, BeginExecuteFlowOperation, BranchCondition, BranchExecutionType, CodeAction, ExecutionType, FlowAction, FlowActionType, FlowVersionState, LoopOnItemsAction, PieceAction, ProgressUpdateType, PropertyExecutionType, RouterExecutionType, RunEnvironment } from '@activepieces/shared'
 import { EngineConstants } from '../../src/lib/handler/context/engine-constants'
 
 export const generateMockEngineConstants = (params?: Partial<EngineConstants>): EngineConstants => {
@@ -81,7 +81,7 @@ export function buildRouterWithOneCondition({ children, conditions, executionTyp
     }
 }
 
-export function buildCodeAction({ name, input, skip, nextAction, errorHandlingOptions }: { name: 'echo_step' | 'runtime' | 'echo_step_1', input: Record<string, unknown>, skip?: boolean, errorHandlingOptions?: ActionErrorHandlingOptions, nextAction?: FlowAction }): CodeAction {
+export function buildCodeAction({ name, input, skip, nextAction, errorHandlingOptions }: { name: 'echo_step' | 'runtime' | 'echo_step_1' | 'system_error' | 'process_exit' | 'unhandled_rejection' | 'hello_world_npm' | 'stdout_on_failure' | 'setTimeout_error', input: Record<string, unknown>, skip?: boolean, errorHandlingOptions?: ActionErrorHandlingOptions, nextAction?: FlowAction }): CodeAction {
     return {
         name,
         displayName: 'Your Action Name',
@@ -119,5 +119,29 @@ export function buildPieceAction({ name, input, skip, pieceName, actionName, nex
         },
         nextAction,
         valid: true,
+    }
+}
+
+export function buildMockBeginExecuteFlowOperation(
+    params: Partial<BeginExecuteFlowOperation> & Pick<BeginExecuteFlowOperation, 'flowVersion'>,
+): BeginExecuteFlowOperation {
+    return {
+        projectId: 'projectId',
+        engineToken: 'engineToken',
+        internalApiUrl: 'http://127.0.0.1:3000/',
+        publicApiUrl: 'http://127.0.0.1:4200/api/',
+        timeoutInSeconds: 10,
+        platformId: 'platformId',
+        flowRunId: 'flowRunId',
+        executionType: ExecutionType.BEGIN,
+        runEnvironment: RunEnvironment.TESTING,
+        executionState: { steps: {}, tags: [] },
+        serverHandlerId: null,
+        httpRequestId: null,
+        progressUpdateType: ProgressUpdateType.NONE,
+        stepNameToTest: null,
+        triggerPayload: {},
+        executeTrigger: false,
+        ...params,
     }
 }

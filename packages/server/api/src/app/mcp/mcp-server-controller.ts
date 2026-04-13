@@ -1,24 +1,24 @@
-import { ProjectResourceType, securityAccess } from '@activepieces/server-common'
-import { AgentMcpTool, ApId, buildAuthHeaders, isNil, McpAuthConfig, McpProtocol, Permission, PopulatedMcpServer, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, UpdateMcpServerRequest } from '@activepieces/shared'
+import { AgentMcpTool, ApId, buildAuthHeaders, isNil, McpAuthConfig, McpProtocol, Permission, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, UpdateMcpServerRequest } from '@activepieces/shared'
 import { experimental_createMCPClient as createMCPClient, MCPClient, MCPTransport } from '@ai-sdk/mcp'
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js'
-import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { z } from 'zod'
+import { ProjectResourceType } from '../core/security/authorization/common'
+import { securityAccess } from '../core/security/authorization/fastify-security'
 import { mcpServerService } from './mcp-service'
 
 export const mcpServerController: FastifyPluginAsyncZod = async (app) => {
-
 
     app.get('/', GetMcpRequest, async (req) => {
         return mcpServerService(req.log).getPopulatedByProjectId(req.projectId)
     })
 
     app.post('/', UpdateMcpRequest, async (req) => {
-        const { status } = req.body as UpdateMcpServerRequest
+        const { status, enabledTools } = req.body as UpdateMcpServerRequest
         return mcpServerService(req.log).update({
             projectId: req.projectId,
             status,
+            enabledTools,
         })
     })
 
@@ -26,41 +26,6 @@ export const mcpServerController: FastifyPluginAsyncZod = async (app) => {
         return mcpServerService(req.log).rotateToken({
             projectId: req.projectId,
         })
-    })
-
-    app.get('/http', StreamableHttpRequestRequest, async (_req, reply) => {
-        return reply.status(405).send({
-            error: 'Method Not Allowed',
-            message: 'Use POST with Authorization: Bearer <token> for MCP requests.',
-        })
-    })
-
-    app.post('/http', StreamableHttpRequestRequest, async (req, reply) => {
-        const mcp = await mcpServerService(req.log).getPopulatedByProjectId(req.params.projectId)
-        const authHeader = req.headers['authorization']
-        const tokenFromHeader = validateAuthorizationHeader(authHeader, mcp)
-        const tokenFromQuery = validateTokenFromQuery(req.query, mcp)
-        if (!tokenFromHeader && !tokenFromQuery) {
-            return reply.status(401).send({
-                error: 'Unauthorized',
-                message: 'Missing or invalid token. Use Authorization: Bearer <token> or add ?token=<token> to the URL (for clients that cannot send headers).',
-            })
-        }
-        const { server } = await mcpServerService(req.log).buildServer({
-            mcp,
-        })
-
-        const transport: StreamableHTTPServerTransport = new StreamableHTTPServerTransport({
-            sessionIdGenerator: undefined,
-        })
-
-        reply.raw.on('close', async () => {
-            await transport.close()
-            await server.close()
-        })
-
-        await server.connect(transport)
-        await transport.handleRequest(req.raw, reply.raw, req.body)
     })
 
     app.post('/validate-agent-mcp-tool', AddMcpServerToolRequest, async (req) => {
@@ -88,17 +53,6 @@ export const mcpServerController: FastifyPluginAsyncZod = async (app) => {
             }
         }
     })
-}
-
-function validateAuthorizationHeader(authHeader: string | undefined, mcp: PopulatedMcpServer) {
-    const [type, token] = authHeader?.split(' ') ?? []
-    return type === 'Bearer' && token === mcp.token
-}
-
-function validateTokenFromQuery(query: unknown, mcp: PopulatedMcpServer) {
-    const queryParams = query as Record<string, string | undefined>
-    const token = queryParams.token
-    return token === mcp.token
 }
 
 function createTransportConfig(
@@ -133,18 +87,6 @@ function createTransportConfig(
         default:
             throw new Error(`Unsupported MCP protocol type: ${protocol}`)
     }
-}
-
-const StreamableHttpRequestRequest = {
-    config: {
-        security: securityAccess.public(),
-        skipAuth: true,
-    },
-    schema: {
-        params: z.object({
-            projectId: ApId,
-        }),
-    },
 }
 
 export const UpdateMcpRequest = {

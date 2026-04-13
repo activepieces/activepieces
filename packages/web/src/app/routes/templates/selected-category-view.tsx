@@ -10,9 +10,9 @@ import {
   EmptyTitle,
 } from '@/components/custom/empty';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ExploreTemplateCard } from '@/features/templates/components/explore-template-card';
 
 import { TemplateCardSkeleton } from './skeletons/template-card-skeleton';
-import { ExploreTemplateCard } from './template-card';
 
 type SelectedCategoryViewSkeletonProps = {
   showCategoryTitle?: boolean;

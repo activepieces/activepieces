@@ -47,7 +47,8 @@ RUN --mount=type=cache,target=/root/.npm \
     node-gyp \
     npm@11.11.0 \
     pm2@6.0.10 \
-    typescript@4.9.4
+    typescript@4.9.4 \
+    esbuild@0.25.0
 
 # Install isolated-vm globally (needed for sandboxes)
 RUN --mount=type=cache,target=/root/.bun/install/cache \
@@ -69,8 +70,15 @@ RUN --mount=type=cache,target=/root/.bun/install/cache \
 # Copy remaining source code (turbo config, etc.)
 COPY . .
 
-# Build frontend, engine, and server API
-RUN npx turbo run build --filter=web --filter=@activepieces/engine --filter=api
+# Build frontend, engine, server API, and worker
+RUN npx turbo run build --filter=web --filter=@activepieces/engine --filter=api --filter=worker
+
+# Generate migration manifest (ordered list of migration names) for image-tag-based rollback
+RUN node -e "\
+  const {getMigrations} = require('./packages/server/api/dist/src/app/database/postgres-connection');\
+  const names = getMigrations().map(M => new M().name);\
+  process.stdout.write(JSON.stringify(names));\
+" > packages/server/api/dist/src/migration-manifest.json
 
 # Remove piece directories not needed at runtime (keeps only the 4 pieces api imports)
 # Then regenerate bun.lock so it matches the trimmed workspace
@@ -88,14 +96,7 @@ FROM base AS run
 
 WORKDIR /usr/src/app
 
-# Install Nginx and gettext in a single layer with cache mount
-RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
-    --mount=type=cache,target=/var/lib/apt,sharing=locked \
-    apt-get update && \
-    apt-get install -y --no-install-recommends nginx gettext
-
 # Copy static configuration files first (better layer caching)
-COPY nginx.react.conf /etc/nginx/nginx.conf
 COPY --from=build /usr/src/app/packages/server/api/src/assets/default.cf /usr/local/etc/isolate
 COPY docker-entrypoint.sh .
 
@@ -121,8 +122,8 @@ COPY --from=build /usr/src/app/dist/packages/engine/ ./dist/packages/engine/
 RUN --mount=type=cache,target=/root/.bun/install/cache \
     bun install --production
 
-# Copy frontend files to Nginx document root
-COPY --from=build /usr/src/app/dist/packages/web /usr/share/nginx/html/
+# Copy frontend files
+COPY --from=build /usr/src/app/dist/packages/web ./dist/packages/web/
 
 LABEL service=activepieces
 
