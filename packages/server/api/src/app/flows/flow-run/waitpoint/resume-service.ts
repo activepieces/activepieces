@@ -86,20 +86,8 @@ export const resumeService = (log: FastifyBaseLogger) => ({
         })
     },
 
-    async legacySyncResume({ runId, payload }: LegacySyncResumeParams): Promise<EngineHttpResponse> {
-        const flowRun = await flowRunService(log).getOnePopulatedOrThrow({
-            id: runId,
-            projectId: undefined,
-        })
-
-        if (isFlowRunStateTerminal({ status: flowRun.status, ignoreInternalError: false })) {
-            return {
-                status: StatusCodes.CONFLICT,
-                body: { message: 'Flow run is not paused', flowRunStatus: flowRun.status },
-                headers: {},
-            }
-        }
-
+    async legacySyncResume({ runId, payload, correlationId }: LegacySyncResumeParams): Promise<EngineHttpResponse> {
+        const flowRun = await findFlowRunOrThrow(runId)
         if (flowRun.status !== FlowRunStatus.PAUSED) {
             return {
                 status: StatusCodes.CONFLICT,
@@ -107,11 +95,9 @@ export const resumeService = (log: FastifyBaseLogger) => ({
                 headers: {},
             }
         }
-
         const syncServerId = engineResponseWatcher(log).getServerId()
-        const httpRequestId = apId()
-        await enqueueResume({ flowRun, resumePayload: payload, workerHandlerIdOverride: syncServerId, httpRequestIdOverride: httpRequestId }, log)
-        return engineResponseWatcher(log).oneTimeListener<EngineHttpResponse>(httpRequestId, true, WEBHOOK_TIMEOUT_MS, {
+        await enqueueResume({ flowRun, resumePayload: payload, workerHandlerIdOverride: syncServerId }, log)
+        return engineResponseWatcher(log).oneTimeListener<EngineHttpResponse>(correlationId, true, WEBHOOK_TIMEOUT_MS, {
             status: StatusCodes.NO_CONTENT,
             body: {},
             headers: {},
@@ -153,6 +139,7 @@ type HandleSyncResumeFlowParams = {
 type LegacySyncResumeParams = {
     runId: string
     payload: SyncResumePayload
+    correlationId: string
 }
 
 type ResumeFromWaitpointParams = {

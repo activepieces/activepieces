@@ -50,7 +50,7 @@ export const resumeController: FastifyPluginAsyncZod = async (app) => {
             await handleSyncResume({ flowRunId: req.params.id, waitpointId: waitpoint.id, body: req.body, headers, queryParams, log: req.log, reply, correlationId: waitpoint.workerHandlerId ?? waitpoint.id })
         }
         else {
-            await handleLegacySyncResume({ flowRunId: req.params.id, body: req.body, headers, queryParams, log: req.log, reply })
+            await handleLegacySyncResume({ flowRunId: req.params.id, body: req.body, headers, queryParams, log: req.log, reply, correlationId: req.params.requestId })
         }
     })
 }
@@ -90,10 +90,11 @@ async function handleLegacyAsyncResume({ flowRunId, body, headers, queryParams, 
     await reply.send({ message: 'Your response has been recorded. You can close this page now.' })
 }
 
-async function handleLegacySyncResume({ flowRunId, body, headers, queryParams, log, reply }: LegacyResumeHandlerParams): Promise<void> {
+async function handleLegacySyncResume({ flowRunId, body, headers, queryParams, log, reply, correlationId }: LegacyResumeHandlerParams & { correlationId: string }): Promise<void> {
     const response = await resumeService(log).legacySyncResume({
         runId: flowRunId,
         payload: { body, headers, queryParams },
+        correlationId,
     })
     await reply.status(response.status).headers(response.headers).send(response.body)
 }
