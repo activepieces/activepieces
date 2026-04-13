@@ -91,6 +91,7 @@ export const platformController: FastifyPluginAsyncZod = async (app) => {
             .send(data.data)
     })
 
+
     if (edition === ApEdition.CLOUD) {
         app.delete('/:id', DeletePlatformRequest, async (req, res) => {
             await platformToEditMustBeOwnedByCurrentUser.call(app, req, res)
@@ -212,3 +213,4 @@ const GetAssetRequest = {
         }),
     },
 }
+
