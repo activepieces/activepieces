@@ -63,15 +63,14 @@ export const fireWorkflowTriggerAction = createAction({
     const { trigger_id, text, prompt, scheduled, media_urls, title, link, template_variables } =
       context.propsValue;
 
-    const body: Record<string, unknown> = {};
+    // Template variables are applied first so explicit fields always take precedence
+    const body: Record<string, unknown> = { ...(template_variables ?? {}) };
     if (text) body['text'] = text;
     if (prompt) body['prompt'] = prompt;
     if (scheduled) body['scheduled'] = scheduled;
     if (media_urls && (media_urls as string[]).length > 0) body['media_urls'] = media_urls;
     if (title) body['title'] = title;
     if (link) body['link'] = link;
-    // Template variables are merged into the top-level body (e.g. [[first_name]] → { first_name: "John" })
-    if (template_variables) Object.assign(body, template_variables);
 
     const response = await feedhiveCommon.apiCall<{ success: boolean }>({
       token: context.auth as unknown as string,

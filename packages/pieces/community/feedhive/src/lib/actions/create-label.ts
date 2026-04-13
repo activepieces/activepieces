@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { feedhiveAuth } from '../../';
+import { feedhiveAuth } from '../common/auth';
 import { feedhiveCommon } from '../common';
 
 export const createLabelAction = createAction({
