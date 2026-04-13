@@ -69,7 +69,7 @@ export const apAddStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDe
                         displayName,
                         valid: false,
                         settings: {
-                            sourceCode: { code: 'export const run = async (inputs) => { return {} }', packageJson: '{}' },
+                            sourceCode: { code: 'export const code = async (inputs) => { return {} }', packageJson: '{}' },
                             input: {},
                             errorHandlingOptions: { continueOnFailure: { value: false }, retryOnFailure: { value: false } },
                         },
