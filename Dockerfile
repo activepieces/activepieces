@@ -70,7 +70,7 @@ COPY . .
 # Build both projects (already has NX_NO_CLOUD from base stage)
 RUN npx nx run-many --target=build --projects=react-ui,server-api --configuration production --parallel=2 --skip-nx-cache
 
-RUN for project in pieces-b2c2 pieces-bitgo pieces-chainalysis pieces-circle-pay pieces-mural-pay pieces-notabene pieces-one-money pieces-zroarb pieces-uuid; do \
+RUN for project in pieces-b2c2 pieces-bitgo pieces-chainalysis pieces-circle-pay pieces-mural-pay pieces-notabene pieces-one-money pieces-zroarb pieces-uuid pieces-persona; do \
       npx nx build $project --skip-nx-cache; \
     done
 # RUN NODE_OPTIONS="--max-old-space-size=4096" npx nx run-many --target=build --projects=pieces-b2c2 --parallel=1 --skip-nx-cache

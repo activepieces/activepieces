@@ -428,7 +428,8 @@
       ],
       "@zroswiss/piece-one-money": [
         "packages/pieces/custom/one-money/src/index.ts"
-      ]
+      ],
+      "@zroswiss/piece-persona": ["packages/pieces/custom/persona/src/index.ts"]
     },
     "resolveJsonModule": true
   },
