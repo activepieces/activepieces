@@ -49,7 +49,10 @@ function buildLegacyPauseHook({ context }: { context: ActionContext<PieceAuthPro
         const type = req.pauseMetadata.type === PauseType.DELAY ? 'DELAY' as const : 'WEBHOOK' as const
         const responseToSend = req.pauseMetadata.type === PauseType.WEBHOOK ? req.pauseMetadata.response : undefined
         const resumeDateTime = req.pauseMetadata.type === PauseType.DELAY ? req.pauseMetadata.resumeDateTime : undefined
-        context.run.createWaitpoint({ type, version: 'V0', resumeDateTime, responseToSend }).catch(() => {})
+        context.run.createWaitpoint({ type, version: 'V0', resumeDateTime, responseToSend }).catch((e) => {
+            console.error('[buildLegacyPauseHook] Failed to create waitpoint', e)
+            process.exit(1)
+        })
         context.run.waitForWaitpoint('')
     }
 }
