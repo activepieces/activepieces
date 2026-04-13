@@ -5,13 +5,16 @@ import { userService } from '../../user/user-service'
 import { authenticationUtils } from '../authentication-utils'
 import { accessTokenManager } from '../lib/access-token-manager'
 import { totpUtils } from '../lib/totp-utils'
-import { BackupCodeEntry, UserIdentityEntity, UserIdentitySchema } from '../user-identity/user-identity-entity'
+import { BackupCodeEntry, UserIdentityEntity } from '../user-identity/user-identity-entity'
 
 const userIdentityRepo = repoFactory(UserIdentityEntity)
 
 export const totpService = (log: FastifyBaseLogger) => ({
     async setup({ identityId }: { identityId: string }): Promise<{ secret: string, otpauthUrl: string, qrCodeDataUrl: string }> {
         const identity = await userIdentityRepo().findOneByOrFail({ id: identityId })
+        if (identity.totpEnabled) {
+            throw new ActivepiecesError({ code: ErrorCode.MFA_ALREADY_ENABLED, params: {} })
+        }
         const { secret, otpauthUrl, qrCodeDataUrl } = await totpUtils.generateSecret({
             email: identity.email,
             issuer: 'Activepieces',
@@ -47,7 +50,7 @@ export const totpService = (log: FastifyBaseLogger) => ({
         if (!identity.totpEnabled) {
             throw new ActivepiecesError({ code: ErrorCode.MFA_NOT_ENABLED, params: {} })
         }
-        const verified = await verifyTotpOrBackupCode({ identity, code })
+        const verified = await verifyTotpOrBackupCode({ identityId, code })
         if (!verified) {
             throw new ActivepiecesError({ code: ErrorCode.INVALID_2FA_CODE, params: {} })
         }
@@ -60,7 +63,7 @@ export const totpService = (log: FastifyBaseLogger) => ({
         if (!identity.totpEnabled) {
             throw new ActivepiecesError({ code: ErrorCode.MFA_NOT_ENABLED, params: {} })
         }
-        const verified = await verifyTotpOrBackupCode({ identity, code })
+        const verified = await verifyTotpOrBackupCode({ identityId, code })
         if (!verified) {
             throw new ActivepiecesError({ code: ErrorCode.INVALID_2FA_CODE, params: {} })
         }
@@ -134,19 +137,30 @@ export const totpService = (log: FastifyBaseLogger) => ({
     },
 })
 
-async function verifyTotpOrBackupCode({ identity, code }: { identity: UserIdentitySchema, code: string }): Promise<boolean> {
-    if (!isNil(identity.totpSecret)) {
-        const secret = await totpUtils.decryptSecret({ encryptedSecret: identity.totpSecret })
-        if (totpUtils.verifyCode({ secret, code })) {
-            return true
+async function verifyTotpOrBackupCode({ identityId, code }: { identityId: string, code: string }): Promise<boolean> {
+    const repo = repoFactory(UserIdentityEntity)()
+    return repo.manager.transaction(async (manager) => {
+        const identity = await manager.findOne(UserIdentityEntity, {
+            where: { id: identityId },
+            lock: { mode: 'pessimistic_write' },
+        })
+        if (isNil(identity)) {
+            return false
         }
-    }
-    for (const entry of (identity.backupCodes ?? [])) {
-        if (!entry.used && await totpUtils.verifyBackupCode({ code, hash: entry.hash })) {
-            entry.used = true
-            await repoFactory(UserIdentityEntity)().update(identity.id, { backupCodes: identity.backupCodes })
-            return true
+        if (!isNil(identity.totpSecret)) {
+            const secret = await totpUtils.decryptSecret({ encryptedSecret: identity.totpSecret })
+            if (totpUtils.verifyCode({ secret, code })) {
+                return true
+            }
         }
-    }
-    return false
+        const backupCodes = identity.backupCodes ?? []
+        for (const entry of backupCodes) {
+            if (!entry.used && await totpUtils.verifyBackupCode({ code, hash: entry.hash })) {
+                entry.used = true
+                await manager.update(UserIdentityEntity, identityId, { backupCodes })
+                return true
+            }
+        }
+        return false
+    })
 }
