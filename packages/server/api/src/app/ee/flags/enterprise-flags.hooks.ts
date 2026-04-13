@@ -21,7 +21,6 @@ export const enterpriseFlagsHooks: FlagsServiceHooks = {
             }
             return modifiedFlags
         }
-        modifiedFlags[ApFlagId.CAN_CONFIGURE_AI_PROVIDER] = edition !== ApEdition.CLOUD
         const platformWithPlan = await platformService(request.log).getOneWithPlanOrThrow(platformId)
         const platform = await platformService(request.log).getOneOrThrow(platformId)
         modifiedFlags[ApFlagId.THIRD_PARTY_AUTH_PROVIDERS_TO_SHOW_MAP] = {

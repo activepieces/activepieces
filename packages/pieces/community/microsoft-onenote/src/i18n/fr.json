@@ -1,5 +1,9 @@
 {
   "Microsoft OneNote is a note-taking app that allows you to create, edit, and share notes with others.": "Microsoft OneNote est une application de prise de notes qui vous permet de créer, modifier et partager des notes avec d'autres.",
+  "Cloud Environment": "Environnement Cloud",
+  "Select your Microsoft cloud environment.": "Sélectionnez votre environnement de cloud Microsoft.",
+  "Commercial (Global)": "Commerce (Mondial)",
+  "US Government (GCC High)": "Gouvernement américain (GCC High)",
   "\nIf you’d like to use your own custom Azure app instead of the default Activepieces app, follow the [Azure app creation guide](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app#register-an-application),\n set the **Redirect URI** to {{redirectUrl}} and add the following **Microsoft Graph (Delegated) permissions** under **API permissions**:\n - User.Read\n - Notes.ReadWrite\n - offline_access": "\nIf you’d like to use your own custom Azure app instead of the default Activepieces app, follow the [Azure app creation guide](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app#register-an-application),\n set the **Redirect URI** to {{redirectUrl}} and add the following **Microsoft Graph (Delegated) permissions** under **API permissions**:\n - User.Read\n - Notes.ReadWrite\n - offline_access",
   "Create Notebook": "Créer un carnet",
   "Create Section": "Créer une section",

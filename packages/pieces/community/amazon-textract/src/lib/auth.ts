@@ -8,10 +8,12 @@ export const amazonTextractAuth = PieceAuth.CustomAuth({
   props: {
     accessKeyId: Property.ShortText({
       displayName: 'Access Key ID',
+      description: 'Your AWS access key ID. Found in AWS IAM Console → Users → Security credentials.',
       required: true,
     }),
     secretAccessKey: PieceAuth.SecretText({
       displayName: 'Secret Access Key',
+      description: 'Your AWS secret access key. Only shown once when you create the access key — store it safely.',
       required: true,
     }),
     region: Property.StaticDropdown({

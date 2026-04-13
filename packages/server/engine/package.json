@@ -3,12 +3,13 @@
   "version": "0.7.0",
   "type": "commonjs",
   "scripts": {
-    "build": "node esbuild.config.mjs",
+    "build": "webpack --config webpack.config.js",
     "lint": "eslint 'src/**/*.ts'",
     "test": "vitest run"
   },
   "dependencies": {
     "@activepieces/import-fresh-webpack": "3.3.0",
+    "webpack-ignore-dynamic-require": "1.0.0",
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
