@@ -3921,11 +3921,7 @@
     },
     "packages/pieces/community/linear": {
       "name": "@activepieces/piece-linear",
-<<<<<<< HEAD
-      "version": "0.3.0",
-=======
       "version": "0.4.1",
->>>>>>> upstream/main
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
