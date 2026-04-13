@@ -140,9 +140,15 @@ function flattenPost(post: Record<string, unknown>): Record<string, unknown> {
     id: post['id'] ?? null,
     status: post['status'] ?? null,
     text: post['text'] ?? null,
-    accounts: Array.isArray(post['accounts']) ? (post['accounts'] as string[]).join(', ') : null,
-    labels: Array.isArray(post['labels']) ? (post['labels'] as string[]).join(', ') : null,
-    media: Array.isArray(post['media']) ? (post['media'] as string[]).join(', ') : null,
+    accounts: Array.isArray(post['accounts']) && (post['accounts'] as string[]).length > 0
+      ? (post['accounts'] as string[]).join(', ')
+      : null,
+    labels: Array.isArray(post['labels']) && (post['labels'] as string[]).length > 0
+      ? (post['labels'] as string[]).join(', ')
+      : null,
+    media: Array.isArray(post['media']) && (post['media'] as string[]).length > 0
+      ? (post['media'] as string[]).join(', ')
+      : null,
     notes: post['notes'] ?? null,
     short_link_enabled: post['short_link_enabled'] ?? null,
     scheduled_at: post['scheduled_at'] ?? null,

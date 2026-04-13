@@ -49,6 +49,10 @@ export const createPostAction = createAction({
     const { text, status, scheduled_at, accounts, labels, notes, short_link_enabled } =
       context.propsValue;
 
+    if (status === 'scheduled' && !scheduled_at) {
+      throw new Error('Scheduled Date & Time is required when Status is set to "Scheduled".');
+    }
+
     const body: Record<string, unknown> = { text, status };
     if (accounts && accounts.length > 0) body['accounts'] = accounts;
     if (labels && labels.length > 0) body['labels'] = labels;
