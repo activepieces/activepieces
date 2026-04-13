@@ -1,4 +1,5 @@
 import {
+  ApFlagId,
   ColorName,
   PlatformRole,
   PROJECT_COLOR_PALETTE,
@@ -26,6 +27,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { projectCollectionUtils } from '@/features/projects';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { cn } from '@/lib/utils';
@@ -46,6 +48,9 @@ export const GeneralSettings = ({ form }: GeneralSettingsProps) => {
   const platformRole = userHooks.getCurrentUserPlatformRole();
   const [colorPickerOpen, setColorPickerOpen] = useState(false);
   const { project } = projectCollectionUtils.useCurrentProject();
+  const { data: isRateLimiterEnabled } = flagsHooks.useFlag<boolean>(
+    ApFlagId.PROJECT_RATE_LIMITER_ENABLED,
+  );
   const showGeneralSettings = project.type === ProjectType.TEAM;
   const showExternalIdSettings =
     platform.plan.embeddingEnabled && platformRole === PlatformRole.ADMIN;
@@ -184,12 +189,16 @@ export const GeneralSettings = ({ form }: GeneralSettingsProps) => {
                       e.target.value ? Number(e.target.value) : null,
                     )
                   }
-                  disabled={form.formState.disabled}
+                  disabled={form.formState.disabled || !isRateLimiterEnabled}
                 />
                 <FormDescription className="text-xs text-muted-foreground">
-                  {t(
-                    'Maximum number of flows that can run at the same time for this project',
-                  )}
+                  {isRateLimiterEnabled === false
+                    ? t(
+                        'The rate limiting feature is disabled. Enable the PROJECT_RATE_LIMITER_ENABLED environment variable to use this feature.',
+                      )
+                    : t(
+                        'Maximum number of flows that can run at the same time for this project',
+                      )}
                 </FormDescription>
                 <FormMessage />
               </FormItem>
