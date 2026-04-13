@@ -644,6 +644,38 @@ describe('Resume flow run', () => {
         expect(waitpointAfter).toBeNull()
     })
 
+    it('should return stale message on double resume via waitpoint route', async () => {
+        const { flowRun } = await createPausedFlowRunWithWaitpoint({
+            projectId: ctx.project.id,
+        })
+
+        const waitpoint = await db.findOneBy<{ id: string }>('waitpoint', { flowRunId: flowRun.id })
+        expect(waitpoint).not.toBeNull()
+
+        const firstResponse = await app.inject({
+            method: 'POST',
+            url: `/api/v1/flow-runs/${flowRun.id}/waitpoints/${waitpoint!.id}`,
+            body: { status: 'success', data: { greeting: 'Hello' } },
+        })
+        expect(firstResponse.statusCode).toBe(200)
+        expect(firstResponse.json()).toEqual({
+            message: 'Your response has been recorded. You can close this page now.',
+        })
+
+        const secondResponse = await app.inject({
+            method: 'POST',
+            url: `/api/v1/flow-runs/${flowRun.id}/waitpoints/${waitpoint!.id}`,
+            body: { status: 'success', data: { greeting: 'Hello again' } },
+        })
+        expect(secondResponse.statusCode).toBe(200)
+        expect(secondResponse.json()).toEqual({
+            message: 'This link has expired. The action may have already been processed.',
+        })
+
+        const waitpointAfter = await db.findOneBy('waitpoint', { flowRunId: flowRun.id })
+        expect(waitpointAfter).toBeNull()
+    })
+
     it('should clean up waitpoints when flow is deleted via batchDeleteByFlowId', async () => {
         const { flowRun, flow } = await createPausedFlowRunWithWaitpoint({
             projectId: ctx.project.id,
