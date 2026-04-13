@@ -199,7 +199,7 @@ export const freshserviceCommon = {
 
   status: Property.StaticDropdown({
     displayName: 'Status',
-    required: false,
+    required: true,
     options: {
       options: [
         { label: 'Open', value: 2 },
@@ -212,7 +212,7 @@ export const freshserviceCommon = {
 
   priority: Property.StaticDropdown({
     displayName: 'Priority',
-    required: false,
+    required: true,
     options: {
       options: [
         { label: 'Low', value: 1 },
