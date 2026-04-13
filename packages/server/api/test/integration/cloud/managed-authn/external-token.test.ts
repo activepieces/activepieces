@@ -419,7 +419,7 @@ describe('Managed Authentication API', () => {
                 .findOneBy({ platformId: mockPlatform.id, key: 'no-limit-pool' }) as { id: string, maxConcurrentJobs: number } | null
 
             expect(pool).not.toBeNull()
-            expect(pool!.maxConcurrentJobs).toBe(1)
+            expect(pool!.maxConcurrentJobs).toBe(1_000_000)
 
             const project = await db.findOneByOrFail<{ poolId: string | null }>('project', { id: responseBody?.projectId })
             expect(project.poolId).toBe(pool!.id)
