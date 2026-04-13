@@ -54,12 +54,16 @@ function generateSignature(
     });
   }
 
-  // Sort parameters by key, then by value (OAuth 1.0 spec)
-  const sortedKeys = Object.keys(allParams).sort();
-  const paramPairs = sortedKeys.map(
-    (key) => `${oauthEncode(key)}=${oauthEncode(allParams[key])}`
+  // RFC 5849 §3.4.1.3: encode keys/values first, then sort the encoded pairs.
+  // Sorting on raw strings would differ from sorting on encoded strings when
+  // param names contain characters whose encoded form changes byte order (e.g. '{' → '%7B').
+  const encodedPairs = Object.entries(allParams).map(
+    ([key, value]) => [oauthEncode(key), oauthEncode(value)] as const
   );
-  const paramString = paramPairs.join('&');
+  encodedPairs.sort(([ka, va], [kb, vb]) =>
+    ka < kb ? -1 : ka > kb ? 1 : va < vb ? -1 : va > vb ? 1 : 0
+  );
+  const paramString = encodedPairs.map(([k, v]) => `${k}=${v}`).join('&');
 
   const signatureBaseString = [
     httpMethod.toUpperCase(),
