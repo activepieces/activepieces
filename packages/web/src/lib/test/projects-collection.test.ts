@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { PiecesFilterType, ProjectType } from '@activepieces/shared';
+import type { ProjectWithLimits } from '@activepieces/shared';
 import {
   and,
   createCollection,
@@ -10,8 +11,6 @@ import {
   or,
 } from '@tanstack/react-db';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-
-import type { ProjectWithLimits } from '@activepieces/shared';
 
 vi.mock('@/lib/authentication-session', () => ({
   authenticationSession: {
@@ -98,7 +97,9 @@ describe('getProjectName', () => {
   let getProjectName: (p: ProjectWithLimits) => string;
 
   beforeEach(async () => {
-    ({ getProjectName } = await import('../../features/projects/stores/project-collection'));
+    ({ getProjectName } = await import(
+      '../../features/projects/stores/project-collection'
+    ));
   });
 
   it('returns "Personal Project" for a PERSONAL type project', () => {
@@ -107,12 +108,22 @@ describe('getProjectName', () => {
   });
 
   it('returns the displayName for a TEAM type project', () => {
-    const project = makeProject('t1', ProjectType.TEAM, CURRENT_USER_ID, 'Marketing');
+    const project = makeProject(
+      't1',
+      ProjectType.TEAM,
+      CURRENT_USER_ID,
+      'Marketing',
+    );
     expect(getProjectName(project)).toBe('Marketing');
   });
 
   it('ignores displayName for PERSONAL projects', () => {
-    const project = makeProject('p2', ProjectType.PERSONAL, CURRENT_USER_ID, 'ShouldBeIgnored');
+    const project = makeProject(
+      'p2',
+      ProjectType.PERSONAL,
+      CURRENT_USER_ID,
+      'ShouldBeIgnored',
+    );
     expect(getProjectName(project)).toBe('Personal Project');
   });
 });
@@ -143,19 +154,39 @@ describe('useAll filter', () => {
   }
 
   it('includes a TEAM project owned by the current user', () => {
-    expect(query([makeProject('t1', ProjectType.TEAM, CURRENT_USER_ID)], CURRENT_USER_ID)).toContain('t1');
+    expect(
+      query(
+        [makeProject('t1', ProjectType.TEAM, CURRENT_USER_ID)],
+        CURRENT_USER_ID,
+      ),
+    ).toContain('t1');
   });
 
   it('includes a TEAM project owned by another user', () => {
-    expect(query([makeProject('t1', ProjectType.TEAM, OTHER_USER_ID)], CURRENT_USER_ID)).toContain('t1');
+    expect(
+      query(
+        [makeProject('t1', ProjectType.TEAM, OTHER_USER_ID)],
+        CURRENT_USER_ID,
+      ),
+    ).toContain('t1');
   });
 
   it("includes the current user's PERSONAL project", () => {
-    expect(query([makeProject('pMine', ProjectType.PERSONAL, CURRENT_USER_ID)], CURRENT_USER_ID)).toContain('pMine');
+    expect(
+      query(
+        [makeProject('pMine', ProjectType.PERSONAL, CURRENT_USER_ID)],
+        CURRENT_USER_ID,
+      ),
+    ).toContain('pMine');
   });
 
   it("excludes another user's PERSONAL project", () => {
-    expect(query([makeProject('pOther', ProjectType.PERSONAL, OTHER_USER_ID)], CURRENT_USER_ID)).not.toContain('pOther');
+    expect(
+      query(
+        [makeProject('pOther', ProjectType.PERSONAL, OTHER_USER_ID)],
+        CURRENT_USER_ID,
+      ),
+    ).not.toContain('pOther');
   });
 
   it('excludes all PERSONAL projects from other users', () => {
@@ -308,7 +339,10 @@ describe('useCurrentProject filter', () => {
 // ─── useHasAccessToProject filter ────────────────────────────────────────────
 
 describe('useHasAccessToProject filter', () => {
-  function hasAccess(projects: ProjectWithLimits[], projectId: string): boolean {
+  function hasAccess(
+    projects: ProjectWithLimits[],
+    projectId: string,
+  ): boolean {
     const source = makeSource(projects);
     const result = createLiveQueryCollection({
       query: (q) =>
@@ -323,11 +357,18 @@ describe('useHasAccessToProject filter', () => {
   }
 
   it('returns true when the project exists', () => {
-    expect(hasAccess([makeProject('proj1', ProjectType.TEAM, 'owner')], 'proj1')).toBe(true);
+    expect(
+      hasAccess([makeProject('proj1', ProjectType.TEAM, 'owner')], 'proj1'),
+    ).toBe(true);
   });
 
   it('returns false when the project does not exist', () => {
-    expect(hasAccess([makeProject('proj1', ProjectType.TEAM, 'owner')], 'projMissing')).toBe(false);
+    expect(
+      hasAccess(
+        [makeProject('proj1', ProjectType.TEAM, 'owner')],
+        'projMissing',
+      ),
+    ).toBe(false);
   });
 
   it('returns false for an empty collection', () => {
@@ -346,9 +387,9 @@ describe('setCurrentProject', () => {
     const session = await import('../authentication-session');
     switchToProject = session.authenticationSession
       .switchToProject as ReturnType<typeof vi.fn>;
-    ({ projectCollectionUtils: { setCurrentProject } } = await import(
-      '../../features/projects/stores/project-collection'
-    ));
+    ({
+      projectCollectionUtils: { setCurrentProject },
+    } = await import('../../features/projects/stores/project-collection'));
     Object.defineProperty(window, 'location', {
       value: { href: '' },
       writable: true,
