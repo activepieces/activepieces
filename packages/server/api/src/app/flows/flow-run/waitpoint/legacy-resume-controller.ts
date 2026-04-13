@@ -17,13 +17,13 @@ export const legacyResumeController: FastifyPluginAsyncZod = async (app) => {
     app.all('/:id/requests/:requestId', ResumeFlowRunRequest, async (req, reply) => {
         const headers = req.headers as Record<string, string>
         const queryParams = req.query as Record<string, string>
-        await handleAsyncResume({ flowRunId: req.params.id, body: req.body, headers, queryParams, log: req.log, reply })
+        await handleAsyncResume({ flowRunId: req.params.id, requestId: req.params.requestId, body: req.body, headers, queryParams, log: req.log, reply })
     })
 
     app.all('/:id/requests/:requestId/sync', ResumeFlowRunRequest, async (req, reply) => {
         const headers = req.headers as Record<string, string>
         const queryParams = req.query as Record<string, string>
-        await handleSyncResume({ flowRunId: req.params.id, body: req.body, headers, queryParams, log: req.log, reply, correlationId: req.params.requestId })
+        await handleSyncResume({ flowRunId: req.params.id, requestId: req.params.requestId, body: req.body, headers, queryParams, log: req.log, reply, correlationId: req.params.requestId })
     })
 }
 
@@ -39,9 +39,10 @@ const ResumeFlowRunRequest = {
     },
 }
 
-async function handleAsyncResume({ flowRunId, body, headers, queryParams, log, reply }: ResumeHandlerParams): Promise<void> {
+async function handleAsyncResume({ flowRunId, requestId, body, headers, queryParams, log, reply }: ResumeHandlerParams): Promise<void> {
     const { stale } = await legacyResumeService(log).resumeAsync({
         flowRunId,
+        requestId,
         resumePayload: { body, headers, queryParams },
     })
     if (stale) {
@@ -55,9 +56,10 @@ async function handleAsyncResume({ flowRunId, body, headers, queryParams, log, r
     })
 }
 
-async function handleSyncResume({ flowRunId, body, headers, queryParams, log, reply, correlationId }: ResumeHandlerParams & { correlationId: string }): Promise<void> {
+async function handleSyncResume({ flowRunId, requestId, body, headers, queryParams, log, reply, correlationId }: ResumeHandlerParams & { correlationId: string }): Promise<void> {
     const response = await legacyResumeService(log).resumeSync({
         flowRunId,
+        requestId,
         resumePayload: { body, headers, queryParams },
         correlationId,
     })
@@ -66,6 +68,7 @@ async function handleSyncResume({ flowRunId, body, headers, queryParams, log, re
 
 type ResumeHandlerParams = {
     flowRunId: string
+    requestId: string
     body: unknown
     headers: Record<string, string>
     queryParams: Record<string, string>

@@ -22,17 +22,20 @@ import { WaitpointResumePayload } from './waitpoint-types'
 const flowRunRepo = repoFactory(FlowRunEntity)
 
 export const legacyResumeService = (log: FastifyBaseLogger): LegacyResumeService => ({
-    async resumeAsync({ flowRunId, resumePayload }: LegacyResumeParams): Promise<LegacyResumeResult> {
+    async resumeAsync({ flowRunId, requestId, resumePayload }: LegacyResumeParams): Promise<LegacyResumeResult> {
         const flowRun = await findFlowRunOrThrow(flowRunId)
         if (flowRun.status !== FlowRunStatus.PAUSED) {
             return { stale: true }
         }
         const pauseMetadata = await findPauseMetadata(flowRunId)
+        if (!matchesPauseRequestId(pauseMetadata, requestId)) {
+            return { stale: true }
+        }
         await enqueueLegacyResume({ flowRun, pauseMetadata, resumePayload }, log)
         return { stale: false }
     },
 
-    async resumeSync({ flowRunId, resumePayload, correlationId }: LegacyResumeSyncParams): Promise<EngineHttpResponse> {
+    async resumeSync({ flowRunId, requestId, resumePayload, correlationId }: LegacyResumeSyncParams): Promise<EngineHttpResponse> {
         const flowRun = await findFlowRunOrThrow(flowRunId)
         if (flowRun.status !== FlowRunStatus.PAUSED) {
             return {
@@ -42,6 +45,13 @@ export const legacyResumeService = (log: FastifyBaseLogger): LegacyResumeService
             }
         }
         const pauseMetadata = await findPauseMetadata(flowRunId)
+        if (!matchesPauseRequestId(pauseMetadata, requestId)) {
+            return {
+                status: StatusCodes.GONE,
+                body: { message: 'This link has expired. The action may have already been processed.' },
+                headers: {},
+            }
+        }
         const syncServerId = engineResponseWatcher(log).getServerId()
         await enqueueLegacyResume({ flowRun, pauseMetadata, resumePayload, workerHandlerIdOverride: syncServerId }, log)
         return engineResponseWatcher(log).oneTimeListener<EngineHttpResponse>(correlationId, true, WEBHOOK_TIMEOUT_MS, {
@@ -83,6 +93,13 @@ async function enqueueLegacyResume(params: EnqueueLegacyResumeParams, log: Fasti
     }, log)
 }
 
+function matchesPauseRequestId(pauseMetadata: PauseMetadata | null, requestId: string): boolean {
+    if (isNil(pauseMetadata)) {
+        return false
+    }
+    return pauseMetadata.type === PauseType.WEBHOOK && requestId === pauseMetadata.requestId
+}
+
 type LegacyResumeService = {
     resumeAsync(params: LegacyResumeParams): Promise<LegacyResumeResult>
     resumeSync(params: LegacyResumeSyncParams): Promise<EngineHttpResponse>
@@ -90,6 +107,7 @@ type LegacyResumeService = {
 
 type LegacyResumeParams = {
     flowRunId: string
+    requestId: string
     resumePayload: WaitpointResumePayload
 }
 

@@ -141,7 +141,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
             run: {
                 id: constants.flowRunId,
                 stop: createStopHook(params),
-                pause: createLegacyPauseShim({ hookParams: params, constants, stepName: action.name }),
+                pause: createLegacyPauseShim({ hookParams: params }),
                 respond: createRespondHook(params),
                 createWaitpoint: createWaitpointHook({ constants, stepName: action.name, hookParams: params }),
                 waitForWaitpoint: createWaitForWaitpointHook({ hookParams: params }),
@@ -191,6 +191,20 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
             })
         }
         if (params.hookResponse.type === 'paused') {
+            if (!isNil(params.hookResponse.legacyPauseMetadata)) {
+                await waitpointClient.create({
+                    apiUrl: constants.internalApiUrl,
+                    engineToken: constants.engineToken,
+                    flowRunId: constants.flowRunId,
+                    projectId: constants.projectId,
+                    stepName: action.name,
+                    type: params.hookResponse.legacyPauseMetadata.type,
+                    resumeDateTime: params.hookResponse.legacyPauseMetadata.resumeDateTime,
+                    responseToSend: params.hookResponse.legacyPauseMetadata.responseToSend,
+                    workerHandlerId: constants.workerHandlerId ?? undefined,
+                    httpRequestId: constants.httpRequestId ?? undefined,
+                })
+            }
             return newExecutionContext
                 .upsertStep(action.name, stepOutput.setOutput(output).setStatus(StepOutputStatus.PAUSED).setDuration(stepEndTime - stepStartTime))
                 .incrementStepsExecuted()
@@ -315,26 +329,28 @@ function createWaitForWaitpointHook({ hookParams }: { hookParams: { hookResponse
     }
 }
 
-function createLegacyPauseShim({ hookParams, constants, stepName }: {
+/**
+ * @deprecated Since 2026-04-12. Remove after 2026-10-12 once all pieces migrate to createWaitpoint/waitForWaitpoint.
+ */
+function createLegacyPauseShim({ hookParams }: {
     hookParams: { hookResponse: HookResponse }
-    constants: EngineConstants
-    stepName: string
 }): PauseHook {
-    const createWaitpoint = createWaitpointHook({ constants, stepName })
     return (req) => {
         const type = req.pauseMetadata.type === PauseType.DELAY ? 'DELAY' as const : 'WEBHOOK' as const
         if (req.pauseMetadata.type === PauseType.DELAY) {
             assertDelayWithinTimeout(req.pauseMetadata.resumeDateTime)
         }
         const responseToSend = req.pauseMetadata.type === PauseType.WEBHOOK ? req.pauseMetadata.response : undefined
-        hookParams.hookResponse = { ...hookParams.hookResponse, type: 'paused', responseToSend }
-        createWaitpoint({
-            type,
-            resumeDateTime: req.pauseMetadata.type === PauseType.DELAY ? req.pauseMetadata.resumeDateTime : undefined,
+        hookParams.hookResponse = {
+            ...hookParams.hookResponse,
+            type: 'paused',
             responseToSend,
-        }).catch((err) => {
-            console.error('[createLegacyPauseShim] Failed to create waitpoint — run may be stuck in PAUSED state', err)
-        })
+            legacyPauseMetadata: {
+                type,
+                resumeDateTime: req.pauseMetadata.type === PauseType.DELAY ? req.pauseMetadata.resumeDateTime : undefined,
+                responseToSend,
+            },
+        }
     }
 }
 

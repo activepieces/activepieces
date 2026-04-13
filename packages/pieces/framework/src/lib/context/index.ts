@@ -124,10 +124,12 @@ export type StopHook = (params?: StopHookParams) => void;
 
 export type RespondHook = (params?: RespondHookParams) => void;
 
+/** @deprecated Since 2026-04-12. Use {@link CreateWaitpointHook} and {@link WaitForWaitpointHook} instead. */
 export type PauseHookParams = {
   pauseMetadata: PauseMetadata;
 };
 
+/** @deprecated Since 2026-04-12. Use {@link CreateWaitpointHook} and {@link WaitForWaitpointHook} instead. */
 export type PauseHook = (params: {
   pauseMetadata: Omit<DelayPauseMetadata, 'requestIdToReply'> | Omit<WebhookPauseMetadata, 'requestId' | 'requestIdToReply'>
 }) => void;

@@ -1,4 +1,4 @@
-import { FlowRunStatus, isFlowRunStateTerminal, TelemetryEventName } from '@activepieces/shared'
+import { isFlowRunStateTerminal, TelemetryEventName } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyPluginAsync } from 'fastify'
 import { Between } from 'typeorm'

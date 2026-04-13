@@ -90,20 +90,29 @@ function isEngineError(error: unknown): error is ExecutionError {
     return error instanceof ExecutionError && error.type === ExecutionErrorType.ENGINE
 }
 
+/**
+ * @deprecated Since 2026-04-12. Remove after 2026-10-12 once all pieces migrate to createWaitpoint/waitForWaitpoint.
+ */
+export type LegacyPauseMetadata = {
+    type: 'DELAY' | 'WEBHOOK'
+    resumeDateTime?: string
+    responseToSend?: RespondResponse
+}
+
 export type HookResponse = {
-    type: 'paused'
     tags: string[]
     responseToSend?: RespondResponse
+} & ({
+    type: 'paused'
+    /** @deprecated See {@link LegacyPauseMetadata}. */
+    legacyPauseMetadata?: LegacyPauseMetadata
 } | {
     type: 'stopped'
-    tags: string[]
     response: StopHookParams
 } | {
     type: 'respond'
-    tags: string[]
     response: RespondHookParams
 } | {
     type: 'none'
-    tags: string[]
-}
+})
 type CreateConnectionManagerParams = { projectId: string, engineToken: string, apiUrl: string, target: 'triggers' | 'properties', contextVersion: ContextVersion | undefined } | { projectId: string, engineToken: string, apiUrl: string, target: 'actions', hookResponse: HookResponse, contextVersion: ContextVersion | undefined }
