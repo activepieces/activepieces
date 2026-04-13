@@ -28,7 +28,7 @@ const MCP_SERVER_INSTRUCTIONS = `## Activepieces MCP Server — Agent Workflow G
 - **Step references**: Use \`{{stepName.output.field}}\` in input values to reference data from previous steps (e.g. \`{{trigger.output.body.email}}\`, \`{{step_1.output.id}}\`).
 - **Step names**: Steps are named \`trigger\`, \`step_1\`, \`step_2\`, etc. Use ap_flow_structure to see all step names and valid insertion points.
 - **Piece names**: Use the full format (e.g. "@activepieces/piece-slack") for ap_add_step and ap_update_trigger. Short names like "slack" are accepted by lookup tools (ap_list_connections, ap_get_piece_props, ap_validate_step_config).
-- **CODE steps**: Set sourceCode (must export a \`run\` function) and input (key-value pairs accessible via \`inputs.key\`).
+- **CODE steps**: Set sourceCode (must export a \`code\` function) and input (key-value pairs accessible via \`inputs.key\`).
 - **Tables**: Use field names (not IDs) when inserting or querying records.`
 
 export const mcpServerRepository = repoFactory(McpServerEntity)
