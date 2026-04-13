@@ -3,7 +3,7 @@ import React, { Suspense } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 
 import { PageTitle } from '@/app/components/page-title';
-import { LoadingScreen } from '@/components/custom/loading-screen';
+import { RouteLoadingBar } from '@/components/custom/route-loading-bar';
 import { ApTableStateProvider } from '@/features/tables';
 import { routesThatRequireProjectId } from '@/lib/route-utils';
 
@@ -50,7 +50,7 @@ const SettingsRerouter = () => {
 };
 
 function SuspenseWrapper({ children }: { children: React.ReactNode }) {
-  return <Suspense fallback={<LoadingScreen />}>{children}</Suspense>;
+  return <Suspense fallback={<RouteLoadingBar />}>{children}</Suspense>;
 }
 
 const automationsPagePermissions = [
