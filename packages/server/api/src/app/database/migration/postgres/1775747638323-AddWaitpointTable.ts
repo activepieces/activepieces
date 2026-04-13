@@ -16,6 +16,7 @@ export class AddWaitpointTable1775747638323 implements Migration {
                 "projectId" character varying(21) NOT NULL,
                 "type" character varying NOT NULL,
                 "status" character varying NOT NULL,
+                "version" character varying NOT NULL DEFAULT 'V0',
                 "stepName" character varying NOT NULL DEFAULT '',
                 "resumeDateTime" TIMESTAMP WITH TIME ZONE,
                 "timeoutSeconds" integer,

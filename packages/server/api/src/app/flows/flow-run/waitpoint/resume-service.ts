@@ -1,8 +1,10 @@
 import {
+    apId,
     EngineHttpResponse,
     ExecutionType,
     FlowRun,
     FlowRunId,
+    FlowRunStatus,
     isFlowRunStateTerminal,
     RunEnvironment,
     StreamStepProgress,
@@ -19,6 +21,15 @@ import { Waitpoint, WaitpointResumePayload } from './waitpoint-types'
 export const resumeService = (log: FastifyBaseLogger) => ({
     async resumeFromWaitpoint({ flowRunId, waitpointId, resumePayload, workerHandlerId }: ResumeFromWaitpointParams): Promise<ResumeFromWaitpointResult> {
         const flowRun = await findFlowRunOrThrow(flowRunId)
+
+        if (!waitpointId) {
+            if (flowRun.status !== FlowRunStatus.PAUSED) {
+                return { flowRun, stale: true }
+            }
+            await enqueueResume({ flowRun, resumePayload, workerHandlerIdOverride: workerHandlerId }, log)
+            return { flowRun, stale: false }
+        }
+
         const processed = await waitpointService(log).handleResumeSignal({
             flowRunId,
             waitpointId,
@@ -52,6 +63,24 @@ export const resumeService = (log: FastifyBaseLogger) => ({
             }
         }
 
+        if (!waitpointId) {
+            if (flowRun.status !== FlowRunStatus.PAUSED) {
+                return {
+                    status: StatusCodes.CONFLICT,
+                    body: { message: 'Flow run is not paused', flowRunStatus: flowRun.status },
+                    headers: {},
+                }
+            }
+            const syncServerId = engineResponseWatcher(log).getServerId()
+            const httpRequestId = apId()
+            await enqueueResume({ flowRun, resumePayload: payload, workerHandlerIdOverride: syncServerId, httpRequestIdOverride: httpRequestId }, log)
+            return engineResponseWatcher(log).oneTimeListener<EngineHttpResponse>(httpRequestId, true, WEBHOOK_TIMEOUT_MS, {
+                status: StatusCodes.NO_CONTENT,
+                body: {},
+                headers: {},
+            })
+        }
+
         const syncServerId = engineResponseWatcher(log).getServerId()
         const { stale } = await this.resumeFromWaitpoint({
             flowRunId: runId,
@@ -68,7 +97,7 @@ export const resumeService = (log: FastifyBaseLogger) => ({
             }
         }
 
-        return engineResponseWatcher(log).oneTimeListener<EngineHttpResponse>(correlationId, true, WEBHOOK_TIMEOUT_MS, {
+        return engineResponseWatcher(log).oneTimeListener<EngineHttpResponse>(correlationId!, true, WEBHOOK_TIMEOUT_MS, {
             status: StatusCodes.NO_CONTENT,
             body: {},
             headers: {},
@@ -77,15 +106,15 @@ export const resumeService = (log: FastifyBaseLogger) => ({
 })
 
 async function enqueueResume(params: EnqueueResumeParams, log: FastifyBaseLogger): Promise<void> {
-    const { flowRun, waitpoint, resumePayload, workerHandlerIdOverride } = params
+    const { flowRun, waitpoint, resumePayload, workerHandlerIdOverride, httpRequestIdOverride } = params
     const platformId = await projectService(log).getPlatformId(flowRun.projectId)
     await flowRunSideEffects(log).onResume(flowRun)
     await addToQueue({
         payload: resumePayload,
         flowRun,
         platformId,
-        workerHandlerId: workerHandlerIdOverride ?? waitpoint.workerHandlerId ?? undefined,
-        httpRequestId: waitpoint.httpRequestId ?? undefined,
+        workerHandlerId: workerHandlerIdOverride ?? waitpoint?.workerHandlerId ?? undefined,
+        httpRequestId: httpRequestIdOverride ?? waitpoint?.httpRequestId ?? apId(),
         streamStepProgress: flowRun.environment === RunEnvironment.TESTING
             ? StreamStepProgress.WEBSOCKET
             : StreamStepProgress.NONE,
@@ -102,14 +131,14 @@ type SyncResumePayload = {
 
 type HandleSyncResumeFlowParams = {
     runId: string
-    waitpointId: string
+    waitpointId?: string
     payload: SyncResumePayload
-    correlationId: string
+    correlationId?: string
 }
 
 type ResumeFromWaitpointParams = {
     flowRunId: FlowRunId
-    waitpointId: string
+    waitpointId?: string
     resumePayload: WaitpointResumePayload
     workerHandlerId?: string
 }
@@ -121,7 +150,8 @@ type ResumeFromWaitpointResult = {
 
 type EnqueueResumeParams = {
     flowRun: FlowRun
-    waitpoint: Waitpoint
+    waitpoint?: Waitpoint
     resumePayload: WaitpointResumePayload
     workerHandlerIdOverride?: string
+    httpRequestIdOverride?: string
 }

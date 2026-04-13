@@ -172,6 +172,7 @@ export type ServerContext = {
 
 export type CreateWaitpointParams = {
   type: 'DELAY' | 'WEBHOOK';
+  version?: 'V0' | 'V1';
   resumeDateTime?: string;
   responseToSend?: RespondResponse;
 };

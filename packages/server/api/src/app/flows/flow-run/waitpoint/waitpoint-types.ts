@@ -1,8 +1,13 @@
-import { ApId, FlowRunStatus, PauseType, RespondResponse } from '@activepieces/shared'
+import { ApId, FlowRunStatus, PauseType, RespondResponse, WaitpointVersion } from '@activepieces/shared'
 
 enum WaitpointStatus {
     PENDING = 'PENDING',
     COMPLETED = 'COMPLETED',
+}
+
+enum WaitpointVersionEnum {
+    V0 = 'V0',
+    V1 = 'V1',
 }
 
 type WaitpointResumePayload = {
@@ -18,6 +23,7 @@ type Waitpoint = {
     flowRunId: ApId
     projectId: ApId
     type: `${PauseType}`
+    version: WaitpointVersion
     status: WaitpointStatus
     stepName: string
     resumeDateTime: string | null
@@ -33,6 +39,7 @@ type CreateForPauseParams = {
     projectId: ApId
     stepName: string
     type: `${PauseType}`
+    version: WaitpointVersion
     resumeDateTime?: string
     timeoutSeconds?: number
     responseToSend?: RespondResponse
@@ -68,5 +75,10 @@ type HandleResumeSignalParams = {
     onReady: (waitpoint: Waitpoint) => Promise<void>
 }
 
-export { WaitpointStatus }
-export type { Waitpoint, WaitpointResumePayload, CreateForPauseParams, CreateForPauseResult, CompleteParams, CompleteResult, HandleResumeSignalParams }
+type FindPendingByVersionParams = {
+    flowRunId: ApId
+    version: WaitpointVersion
+}
+
+export { WaitpointStatus, WaitpointVersionEnum }
+export type { Waitpoint, WaitpointResumePayload, CreateForPauseParams, CreateForPauseResult, CompleteParams, CompleteResult, FindPendingByVersionParams, HandleResumeSignalParams }

@@ -90,22 +90,11 @@ function isEngineError(error: unknown): error is ExecutionError {
     return error instanceof ExecutionError && error.type === ExecutionErrorType.ENGINE
 }
 
-/**
- * @deprecated Since 2026-04-12. Remove after 2026-10-12 once all pieces migrate to createWaitpoint/waitForWaitpoint.
- */
-export type LegacyPauseMetadata = {
-    type: 'DELAY' | 'WEBHOOK'
-    resumeDateTime?: string
-    responseToSend?: RespondResponse
-}
-
 export type HookResponse = {
     tags: string[]
     responseToSend?: RespondResponse
 } & ({
     type: 'paused'
-    /** @deprecated See {@link LegacyPauseMetadata}. */
-    legacyPauseMetadata?: LegacyPauseMetadata
 } | {
     type: 'stopped'
     response: StopHookParams

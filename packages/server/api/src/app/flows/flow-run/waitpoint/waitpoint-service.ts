@@ -6,7 +6,7 @@ import { transaction } from '../../../core/db/transaction'
 import { SystemJobName } from '../../../helper/system-jobs/common'
 import { systemJobsSchedule } from '../../../helper/system-jobs/system-job'
 import { WaitpointEntity } from './waitpoint-entity'
-import { CompleteParams, CompleteResult, CreateForPauseParams, CreateForPauseResult, HandleResumeSignalParams, Waitpoint, WaitpointStatus } from './waitpoint-types'
+import { CompleteParams, CompleteResult, CreateForPauseParams, CreateForPauseResult, FindPendingByVersionParams, HandleResumeSignalParams, Waitpoint, WaitpointStatus } from './waitpoint-types'
 
 const waitpointRepo = repoFactory(WaitpointEntity)
 
@@ -32,6 +32,7 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
                 projectId: params.projectId,
                 stepName: params.stepName,
                 type: params.type,
+                version: params.version,
                 status: WaitpointStatus.PENDING,
                 resumeDateTime: params.resumeDateTime ?? null,
                 timeoutSeconds: params.timeoutSeconds ?? null,
@@ -156,6 +157,12 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
 
         log.info({ flowRunId, flowRunStatus }, '[waitpointService#handleResumeSignal] Flow run not in resumable state, ignoring')
         return false
+    },
+
+    async findPendingByVersion({ flowRunId, version }: FindPendingByVersionParams): Promise<Waitpoint | null> {
+        return waitpointRepo().findOne({
+            where: { flowRunId, status: WaitpointStatus.PENDING, version },
+        })
     },
 
     async getByFlowRunId(flowRunId: string): Promise<Waitpoint | null> {

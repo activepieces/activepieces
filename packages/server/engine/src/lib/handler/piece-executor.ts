@@ -1,9 +1,7 @@
-import { URL } from 'url'
-import { ActionContext, backwardCompatabilityContextUtils, ConstructToolParams, CreateWaitpointHook, CreateWaitpointParams, CreateWaitpointResult, InputPropertyMap, PauseHook, PieceAuthProperty, PiecePropertyMap, RespondHook, RespondHookParams, StaticPropsValue, StopHook, StopHookParams, TagsManager, WaitForWaitpointHook } from '@activepieces/pieces-framework'
-import { AUTHENTICATION_PROPERTY_NAME, EngineGenericError, ExecutionType, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, PausedFlowTimeoutError, PauseType, PieceAction, RespondResponse, StepOutputStatus } from '@activepieces/shared'
+import { ActionContext, backwardCompatabilityContextUtils, ConstructToolParams, CreateWaitpointHook, CreateWaitpointParams, CreateWaitpointResult, InputPropertyMap, PieceAuthProperty, PiecePropertyMap, RespondHook, RespondHookParams, StaticPropsValue, StopHook, StopHookParams, TagsManager, WaitForWaitpointHook } from '@activepieces/pieces-framework'
+import { AUTHENTICATION_PROPERTY_NAME, EngineGenericError, ExecutionType, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, PausedFlowTimeoutError, PieceAction, RespondResponse, StepOutputStatus } from '@activepieces/shared'
 import type { ToolSet } from 'ai'
 import dayjs from 'dayjs'
-import { nanoid } from 'nanoid'
 import { continueIfFailureHandler, runWithExponentialBackoff } from '../helper/error-handling'
 import { pieceLoader } from '../helper/piece-loader'
 import { createFlowsContext } from '../services/flows.service'
@@ -46,7 +44,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
         if (isNil(action.settings.actionName)) {
             throw new EngineGenericError('ActionNameNotSetError', 'Action name is not set')
         }
-        
+
         const { pieceAction, piece } = await pieceLoader.getPieceAndActionOrThrow({
             pieceName: action.settings.pieceName,
             pieceVersion: action.settings.pieceVersion,
@@ -60,7 +58,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
         })
 
         stepOutput.input = censoredInput
-    
+
         const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(resolvedInput, pieceAction.props, piece.auth, pieceAction.requireAuth, action.settings.propertySettings)
         if (Object.keys(errors).length > 0) {
             throw new Error(JSON.stringify(errors, null, 2))
@@ -153,15 +151,6 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
         const backwardCompatibleContext = backwardCompatabilityContextUtils.makeActionContextBackwardCompatible({
             contextVersion: piece.getContextInfo?.().version,
             context,
-            legacyHooks: {
-                pause: createLegacyPauseShim({ hookParams: params }),
-                generateResumeUrl: (params) => {
-                    // nanoid() is a placeholder since this deprecated endpoint doesn't validate requestId
-                    const url = new URL(`${constants.publicApiUrl}v1/flow-runs/${constants.flowRunId}/requests/${nanoid()}${params.sync ? '/sync' : ''}`)
-                    url.search = new URLSearchParams(params.queryParams).toString()
-                    return url.toString()
-                },
-            },
         })
         const testSingleStepMode = !isNil(constants.stepNameToTest)
         const runMethodToExecute = (testSingleStepMode && !isNil(pieceAction.test)) ? pieceAction.test : pieceAction.run
@@ -194,20 +183,6 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
             })
         }
         if (params.hookResponse.type === 'paused') {
-            if (!isNil(params.hookResponse.legacyPauseMetadata)) {
-                await waitpointClient.create({
-                    apiUrl: constants.internalApiUrl,
-                    engineToken: constants.engineToken,
-                    flowRunId: constants.flowRunId,
-                    projectId: constants.projectId,
-                    stepName: action.name,
-                    type: params.hookResponse.legacyPauseMetadata.type,
-                    resumeDateTime: params.hookResponse.legacyPauseMetadata.resumeDateTime,
-                    responseToSend: params.hookResponse.legacyPauseMetadata.responseToSend,
-                    workerHandlerId: constants.workerHandlerId ?? undefined,
-                    httpRequestId: constants.httpRequestId ?? undefined,
-                })
-            }
             return newExecutionContext
                 .upsertStep(action.name, stepOutput.setOutput(output).setStatus(StepOutputStatus.PAUSED).setDuration(stepEndTime - stepStartTime))
                 .incrementStepsExecuted()
@@ -297,6 +272,9 @@ type CreateRespondHookParams = {
 function createWaitpointHook({ constants, stepName, hookParams }: { constants: EngineConstants, stepName: string, hookParams: { hookResponse: HookResponse } }): CreateWaitpointHook {
     return async (req: CreateWaitpointParams): Promise<CreateWaitpointResult> => {
         assertDelayWithinTimeout(req.resumeDateTime)
+        if (!isNil(req.responseToSend)) {
+            hookParams.hookResponse = { ...hookParams.hookResponse, responseToSend: req.responseToSend }
+        }
         const result = await waitpointClient.create({
             apiUrl: constants.internalApiUrl,
             engineToken: constants.engineToken,
@@ -304,14 +282,12 @@ function createWaitpointHook({ constants, stepName, hookParams }: { constants: E
             projectId: constants.projectId,
             stepName,
             type: req.type,
+            version: req.version ?? 'V1',
             resumeDateTime: req.resumeDateTime,
             responseToSend: req.responseToSend,
             workerHandlerId: constants.workerHandlerId ?? undefined,
             httpRequestId: constants.httpRequestId ?? undefined,
         })
-        if (!isNil(req.responseToSend)) {
-            hookParams.hookResponse = { ...hookParams.hookResponse, responseToSend: req.responseToSend }
-        }
         return {
             ...result,
             buildResumeUrl: (params: { queryParams: Record<string, string>, sync?: boolean }): string => {
@@ -328,31 +304,6 @@ function createWaitForWaitpointHook({ hookParams }: { hookParams: { hookResponse
         hookParams.hookResponse = {
             ...hookParams.hookResponse,
             type: 'paused',
-        }
-    }
-}
-
-/**
- * @deprecated Since 2026-04-12. Remove after 2026-10-12 once all pieces migrate to createWaitpoint/waitForWaitpoint.
- */
-function createLegacyPauseShim({ hookParams }: {
-    hookParams: { hookResponse: HookResponse }
-}): PauseHook {
-    return (req) => {
-        const type = req.pauseMetadata.type === PauseType.DELAY ? 'DELAY' as const : 'WEBHOOK' as const
-        if (req.pauseMetadata.type === PauseType.DELAY) {
-            assertDelayWithinTimeout(req.pauseMetadata.resumeDateTime)
-        }
-        const responseToSend = req.pauseMetadata.type === PauseType.WEBHOOK ? req.pauseMetadata.response : undefined
-        hookParams.hookResponse = {
-            ...hookParams.hookResponse,
-            type: 'paused',
-            responseToSend,
-            legacyPauseMetadata: {
-                type,
-                resumeDateTime: req.pauseMetadata.type === PauseType.DELAY ? req.pauseMetadata.resumeDateTime : undefined,
-                responseToSend,
-            },
         }
     }
 }
