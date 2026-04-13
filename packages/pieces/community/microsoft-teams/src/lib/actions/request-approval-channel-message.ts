@@ -5,6 +5,7 @@ import { createGraphClient } from '../common/graph';
 import {
   assertNotNullOrUndefined,
   ExecutionType,
+  PauseType,
 } from '@activepieces/shared';
 import { ChatMessage } from '@microsoft/microsoft-graph-types';
 
@@ -35,13 +36,10 @@ export const requestApprovalInChannel = createAction({
       const client = createGraphClient(token, cloud);
 
       const attachmentId = Date.now().toString();
-      const waitpoint = await context.run.createWaitpoint({
-        type: 'WEBHOOK',
-      });
-      const approvalLink = waitpoint.buildResumeUrl({
+      const approvalLink = context.generateResumeUrl({
         queryParams: { action: 'approve' },
       });
-      const disapprovalLink = waitpoint.buildResumeUrl({
+      const disapprovalLink = context.generateResumeUrl({
         queryParams: { action: 'disapprove' },
       });
 
@@ -90,7 +88,12 @@ export const requestApprovalInChannel = createAction({
         .api(`/teams/${teamId}/channels/${channelId}/messages`)
         .post(chatMessage);
 
-      context.run.waitForWaitpoint(waitpoint.id);
+      context.run.pause({
+        pauseMetadata: {
+          type: PauseType.WEBHOOK,
+          response: {},
+        },
+      });
       return {
         approved: false, // default approval is false
       };

@@ -5,6 +5,7 @@ import { BodyType } from '@microsoft/microsoft-graph-types';
 import {
   assertNotNullOrUndefined,
   ExecutionType,
+  PauseType,
 } from '@activepieces/shared';
 import { microsoftOutlookAuth } from '../common/auth';
 
@@ -46,13 +47,10 @@ export const requestApprovalInMail = createAction({
         assertNotNullOrUndefined(subject, 'subject');
         assertNotNullOrUndefined(body, 'body');
 
-        const waitpoint = await context.run.createWaitpoint({
-          type: 'WEBHOOK',
-        });
-        const approvalLink = waitpoint.buildResumeUrl({
+        const approvalLink = context.generateResumeUrl({
           queryParams: { action: 'approve' },
         });
-        const disapprovalLink = waitpoint.buildResumeUrl({
+        const disapprovalLink = context.generateResumeUrl({
           queryParams: { action: 'disapprove' },
         });
 
@@ -94,7 +92,12 @@ export const requestApprovalInMail = createAction({
           message: mailPayload,
           saveToSentItems: true,
         });
-        context.run.waitForWaitpoint(waitpoint.id);
+        context.run.pause({
+          pauseMetadata: {
+            type: PauseType.WEBHOOK,
+            response: {},
+          },
+        });
 
         return {
           approved: false, // default approval is false

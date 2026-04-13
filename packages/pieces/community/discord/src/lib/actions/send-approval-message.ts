@@ -5,7 +5,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { discordAuth } from '../auth';
-import { ExecutionType } from '@activepieces/shared';
+import { ExecutionType, PauseType } from '@activepieces/shared';
 import { discordCommon } from '../common';
 
 export const discordSendApprovalMessage = createAction({
@@ -24,18 +24,22 @@ export const discordSendApprovalMessage = createAction({
   },
   async run(ctx) {
     if (ctx.executionType === ExecutionType.BEGIN) {
-      const waitpoint = await ctx.run.createWaitpoint({
-        type: 'WEBHOOK',
+      ctx.run.pause({
+        pauseMetadata: {
+          type: PauseType.WEBHOOK,
+          response: {},
+        },
       });
 
-      const approvalLink = waitpoint.buildResumeUrl({
+      const approvalLink = ctx.generateResumeUrl({
         queryParams: { action: 'approve' },
-      });
-      const disapprovalLink = waitpoint.buildResumeUrl({
+      })
+      const disapprovalLink = ctx.generateResumeUrl({
         queryParams: { action: 'disapprove' },
-      });
+      })
 
-      const request: HttpRequest = {
+
+      const request: HttpRequest<any> = {
         method: HttpMethod.POST,
         url: `https://discord.com/api/v9/channels/${ctx.propsValue.channel}/messages`,
         body: {
@@ -67,11 +71,9 @@ export const discordSendApprovalMessage = createAction({
       };
 
       await httpClient.sendRequest<never>(request);
-
-      ctx.run.waitForWaitpoint(waitpoint.id);
-
       return {};
     } else {
+
       return {
         approved: ctx.resumePayload.queryParams['action'] === 'approve',
       };

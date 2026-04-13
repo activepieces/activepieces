@@ -4,7 +4,7 @@ import {
     Property,
     createAction,
   } from '@activepieces/pieces-framework';
-  import { ExecutionType, StopResponse } from '@activepieces/shared';
+  import { ExecutionType, PauseType, StopResponse } from '@activepieces/shared';
   import { StatusCodes } from 'http-status-codes';
   
   enum ResponseType {
@@ -100,12 +100,19 @@ import {
       const { fields, responseType } = context.propsValue;
       const bodyInput = fields ['body'];
       const headers = fields['headers'] ?? {};
+      headers[RESUME_WEBHOOK_HEADER] = context.generateResumeUrl({
+        queryParams: {
+          created: new Date().toISOString(),
+          runId: context.run.id,
+        },
+        sync:true
+      });
       const status = fields['status'];
       const response: StopResponse = {
         status: status ?? StatusCodes.OK,
         headers,
       };
-
+      
       switch (responseType) {
         case ResponseType.JSON:
           response.body = praseToJson(bodyInput);
@@ -120,19 +127,14 @@ import {
           break;
       }
 
+      
       if(context.executionType === ExecutionType.BEGIN){
-        const waitpoint = await context.run.createWaitpoint({
-          type: 'WEBHOOK',
-          responseToSend: response,
-        });
-        headers[RESUME_WEBHOOK_HEADER] = waitpoint.buildResumeUrl({
-          queryParams: {
-            created: new Date().toISOString(),
-            runId: context.run.id,
+        context.run.pause({
+          pauseMetadata: {
+            type: PauseType.WEBHOOK,
+            response
           },
-          sync: true,
         });
-        context.run.waitForWaitpoint(waitpoint.id);
         return {
           nextWebhookUrl: headers[RESUME_WEBHOOK_HEADER],
         };

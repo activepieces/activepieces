@@ -90,17 +90,18 @@ type BaseExecuteFlowOperation<T extends ExecutionType> = BaseEngineOperation & {
     executionType: T
     runEnvironment: RunEnvironment
     executionState: ExecutionState
-    workerHandlerId: string | null
+    serverHandlerId: string | null
     httpRequestId: string | null
-    streamStepProgress: StreamStepProgress
+    progressUpdateType: ProgressUpdateType
     stepNameToTest: string | null
     sampleData?: Record<string, unknown>
     logsUploadUrl?: string
     logsFileId?: string
 }
 
-export enum StreamStepProgress {
-    WEBSOCKET = 'WEBSOCKET',
+export enum ProgressUpdateType {
+    WEBHOOK_RESPONSE = 'WEBHOOK_RESPONSE',
+    TEST_FLOW = 'TEST_FLOW',
     NONE = 'NONE',
 }
 
@@ -280,6 +281,7 @@ export type ExecuteValidateAuthResponse =
 export type EngineResponse<T = unknown> = {
     status: EngineResponseStatus
     response: T
+    delayInSeconds?: number
     error?: string
 }
 

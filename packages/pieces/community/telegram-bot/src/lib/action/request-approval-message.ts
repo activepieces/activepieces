@@ -5,6 +5,7 @@ import { telegramBotAuth } from '../..';
 import {
   assertNotNullOrUndefined,
   ExecutionType,
+  PauseType,
 } from '@activepieces/shared';
 
 const chatIdInfo = `
@@ -82,13 +83,10 @@ export const telegramRequestApprovalMessageAction = createAction({
       assertNotNullOrUndefined(chat_id, 'chat_id');
 
       // Generate approval and disapproval links
-      const waitpoint = await context.run.createWaitpoint({
-        type: 'WEBHOOK',
-      });
-      const approvalLink = waitpoint.buildResumeUrl({
+      const approvalLink = context.generateResumeUrl({
         queryParams: { action: 'approve', chat_id },
       });
-      const disapprovalLink = waitpoint.buildResumeUrl({
+      const disapprovalLink = context.generateResumeUrl({
         queryParams: { action: 'disapprove', chat_id },
       });
 
@@ -122,7 +120,13 @@ export const telegramRequestApprovalMessageAction = createAction({
 
       const messageId = response.body.result.message_id;
 
-      context.run.waitForWaitpoint(waitpoint.id);
+      // Pause execution waiting for webhook callback
+      context.run.pause({
+        pauseMetadata: {
+          type: PauseType.WEBHOOK,
+          response: {},
+        },
+      });
 
       return {
         approved: false, // default approval is false
