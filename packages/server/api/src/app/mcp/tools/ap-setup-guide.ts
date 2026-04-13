@@ -15,7 +15,7 @@ const setupGuideInput = z.object({
 export const apSetupGuideTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_setup_guide',
-        description: 'Get step-by-step instructions for setting up connections or AI providers. Use this when a piece needs authentication or when no AI providers are configured. Returns instructions for the user to follow in the UI — sensitive credentials are never handled through MCP.',
+        description: 'Get setup instructions for connections or AI providers. Returns steps for the user to follow in the UI.',
         inputSchema: setupGuideInput.shape,
         annotations: { readOnlyHint: true, openWorldHint: false },
         execute: async (args) => {

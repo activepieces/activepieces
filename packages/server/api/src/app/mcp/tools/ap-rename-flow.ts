@@ -21,7 +21,7 @@ export const apRenameFlowTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
     return {
         title: 'ap_rename_flow',
         permission: Permission.WRITE_FLOW,
-        description: 'Rename a flow. Use ap_list_flows to get valid flow IDs.',
+        description: 'Rename a flow.',
         inputSchema: {
             flowId: z.string().describe('The id of the flow to rename'),
             displayName: z.string().describe('The new display name for the flow'),

@@ -51,6 +51,8 @@ Get the detailed input property schema for a specific piece action or trigger. R
 | `pieceName` | string | Yes | Piece name (e.g., `@activepieces/piece-slack`) |
 | `actionOrTriggerName` | string | Yes | Action or trigger name (e.g., `send_channel_message`) |
 | `type` | string | Yes | `action` or `trigger` |
+| `auth` | string | No | Connection externalId. When provided, dynamic dropdowns return actual options (e.g., Slack channels, Google Sheets). |
+| `flowId` | string | No | Flow ID for resolving dependent dropdowns that need step context. |
 
 ### ap_validate_step_config
 

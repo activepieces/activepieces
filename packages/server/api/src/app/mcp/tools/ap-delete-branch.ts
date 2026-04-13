@@ -24,7 +24,7 @@ export const apDeleteBranchTool = (mcp: McpServer, log: FastifyBaseLogger): McpT
     return {
         title: 'ap_delete_branch',
         permission: Permission.WRITE_FLOW,
-        description: 'Delete a branch from a router (ROUTER) step. Cannot delete the last (fallback) branch. Use ap_flow_structure to get branch indices.',
+        description: 'Delete a branch from a router step. Cannot delete the fallback branch.',
         inputSchema: {
             flowId: z.string().describe('The id of the flow'),
             routerStepName: z.string().describe('The name of the ROUTER step. Use ap_flow_structure to get valid values.'),

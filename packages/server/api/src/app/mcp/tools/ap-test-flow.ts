@@ -12,7 +12,7 @@ export const apTestFlowTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolD
     return {
         title: 'ap_test_flow',
         permission: Permission.WRITE_FLOW,
-        description: 'Test a flow by running it in the test environment using saved sample/trigger data. The flow must have a configured trigger. Waits up to 120s for completion and returns step-by-step results.',
+        description: 'Test a flow end-to-end in the test environment. Requires a configured trigger. Waits up to 120s.',
         inputSchema: testFlowInput.shape,
         annotations: { destructiveHint: false, idempotentHint: false, openWorldHint: false },
         execute: async (args) => {

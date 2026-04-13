@@ -22,7 +22,7 @@ export const apDeleteStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
     return {
         title: 'ap_delete_step',
         permission: Permission.WRITE_FLOW,
-        description: 'Delete a step from a flow. Use ap_flow_structure to get valid step names.',
+        description: 'Delete a step from a flow.',
         inputSchema: {
             flowId: z.string().describe('The id of the flow'),
             stepName: z.string().describe('The name of the step to delete. Use ap_flow_structure to get valid values.'),
