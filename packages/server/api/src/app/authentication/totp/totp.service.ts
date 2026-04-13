@@ -1,4 +1,4 @@
-import { ActivepiecesError, AuthenticationResponse, ErrorCode, ForcedSetupCompleteResponse, isNil } from '@activepieces/shared'
+import { ActivepiecesError, AuthenticationResponse, EnableTotpResponse, ErrorCode, ForcedSetupCompleteResponse, isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
 import { userService } from '../../user/user-service'
@@ -10,7 +10,8 @@ import { BackupCodeEntry, UserIdentityEntity } from '../user-identity/user-ident
 const userIdentityRepo = repoFactory(UserIdentityEntity)
 
 export const totpService = (log: FastifyBaseLogger) => ({
-    async setup({ identityId }: { identityId: string }): Promise<{ secret: string, otpauthUrl: string, qrCodeDataUrl: string }> {
+    async setup({ mfaToken }: { mfaToken: string }): Promise<{ secret: string, otpauthUrl: string, qrCodeDataUrl: string }> {
+        const { identityId } = await accessTokenManager(log).verifyMfaChallengeToken({ token: mfaToken })
         const identity = await userIdentityRepo().findOneByOrFail({ id: identityId })
         if (identity.totpEnabled) {
             throw new ActivepiecesError({ code: ErrorCode.MFA_ALREADY_ENABLED, params: {} })
@@ -24,7 +25,8 @@ export const totpService = (log: FastifyBaseLogger) => ({
         return { secret, otpauthUrl, qrCodeDataUrl }
     },
 
-    async enable({ identityId, code }: { identityId: string, code: string }): Promise<{ backupCodes: string[] }> {
+    async enable({ mfaToken, code }: { mfaToken: string, code: string }): Promise<ForcedSetupCompleteResponse | EnableTotpResponse> {
+        const { identityId, platformId, setupRequired } = await accessTokenManager(log).verifyMfaChallengeToken({ token: mfaToken })
         const identity = await userIdentityRepo().findOneByOrFail({ id: identityId })
         if (identity.totpEnabled) {
             throw new ActivepiecesError({ code: ErrorCode.MFA_ALREADY_ENABLED, params: {} })
@@ -33,8 +35,7 @@ export const totpService = (log: FastifyBaseLogger) => ({
             throw new ActivepiecesError({ code: ErrorCode.MFA_NOT_ENABLED, params: {} })
         }
         const secret = await totpUtils.decryptSecret({ encryptedSecret: identity.totpSecret })
-        const valid = totpUtils.verifyCode({ secret, code })
-        if (!valid) {
+        if (!totpUtils.verifyCode({ secret, code })) {
             throw new ActivepiecesError({ code: ErrorCode.INVALID_2FA_CODE, params: {} })
         }
         const rawCodes = totpUtils.generateBackupCodes()
@@ -42,7 +43,20 @@ export const totpService = (log: FastifyBaseLogger) => ({
             rawCodes.map(async (c) => ({ hash: await totpUtils.hashBackupCode({ code: c }), used: false })),
         )
         await userIdentityRepo().update(identityId, { totpEnabled: true, backupCodes })
+        if (setupRequired) {
+            const user = await userService(log).getOneByIdentityAndPlatform({ identityId, platformId })
+            if (isNil(user)) {
+                throw new ActivepiecesError({ code: ErrorCode.AUTHENTICATION, params: { message: 'User not found' } })
+            }
+            const authResponse: AuthenticationResponse = await authenticationUtils(log).getProjectAndToken({ userId: user.id, platformId, projectId: null })
+            return { ...authResponse, backupCodes: rawCodes }
+        }
         return { backupCodes: rawCodes }
+    },
+
+    async generateMfaToken({ identityId, platformId }: { identityId: string, platformId: string }): Promise<{ mfaToken: string }> {
+        const mfaToken = await accessTokenManager(log).generateMfaChallengeToken({ identityId, platformId })
+        return { mfaToken }
     },
 
     async disable({ identityId, code }: { identityId: string, code: string }): Promise<void> {
@@ -101,40 +115,6 @@ export const totpService = (log: FastifyBaseLogger) => ({
         return { backupCodes: rawCodes }
     },
 
-    async forcedSetupInit({ mfaToken }: { mfaToken: string }): Promise<{ secret: string, otpauthUrl: string, qrCodeDataUrl: string }> {
-        const { identityId } = await accessTokenManager(log).verifyMfaChallengeToken({ token: mfaToken })
-        const identity = await userIdentityRepo().findOneByOrFail({ id: identityId })
-        const { secret, otpauthUrl, qrCodeDataUrl } = await totpUtils.generateSecret({
-            email: identity.email,
-            issuer: 'Activepieces',
-        })
-        const encryptedSecret = await totpUtils.encryptSecret({ secret })
-        await userIdentityRepo().update(identityId, { totpSecret: encryptedSecret })
-        return { secret, otpauthUrl, qrCodeDataUrl }
-    },
-
-    async forcedSetupComplete({ mfaToken, code }: { mfaToken: string, code: string }): Promise<ForcedSetupCompleteResponse> {
-        const { identityId, platformId } = await accessTokenManager(log).verifyMfaChallengeToken({ token: mfaToken })
-        const identity = await userIdentityRepo().findOneByOrFail({ id: identityId })
-        if (isNil(identity.totpSecret)) {
-            throw new ActivepiecesError({ code: ErrorCode.MFA_NOT_ENABLED, params: {} })
-        }
-        const secret = await totpUtils.decryptSecret({ encryptedSecret: identity.totpSecret })
-        if (!totpUtils.verifyCode({ secret, code })) {
-            throw new ActivepiecesError({ code: ErrorCode.INVALID_2FA_CODE, params: {} })
-        }
-        const rawCodes = totpUtils.generateBackupCodes()
-        const backupCodes: BackupCodeEntry[] = await Promise.all(
-            rawCodes.map(async (c) => ({ hash: await totpUtils.hashBackupCode({ code: c }), used: false })),
-        )
-        await userIdentityRepo().update(identityId, { totpEnabled: true, backupCodes })
-        const user = await userService(log).getOneByIdentityAndPlatform({ identityId, platformId })
-        if (isNil(user)) {
-            throw new ActivepiecesError({ code: ErrorCode.AUTHENTICATION, params: { message: 'User not found' } })
-        }
-        const authResponse: AuthenticationResponse = await authenticationUtils(log).getProjectAndToken({ userId: user.id, platformId, projectId: null })
-        return { ...authResponse, backupCodes: rawCodes }
-    },
 })
 
 async function verifyTotpOrBackupCode({ identityId, code }: { identityId: string, code: string }): Promise<boolean> {

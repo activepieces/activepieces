@@ -1,7 +1,9 @@
 import {
   CreateOtpRequestBody,
+  EnableTotpResponse,
   ForcedSetupCompleteResponse,
   GetCurrentProjectMemberRoleQuery,
+  InitMfaResponse,
   MfaChallengeResponse,
   ResetPasswordRequestBody,
   VerifyEmailRequestBody,
@@ -56,13 +58,18 @@ export const authenticationApi = {
       request,
     );
   },
-  setup2fa() {
-    return api.post<SetupTotpResponse>('/v1/authentication/2fa/setup', {});
+  initMfaSetup() {
+    return api.post<InitMfaResponse>('/v1/authentication/2fa/init', {});
   },
-  enable2fa({ code }: { code: string }) {
-    return api.post<{ backupCodes: string[] }>(
+  setup2fa({ mfaToken }: { mfaToken: string }) {
+    return api.post<SetupTotpResponse>('/v1/authentication/2fa/setup', {
+      mfaToken,
+    });
+  },
+  enable2fa({ mfaToken, code }: { mfaToken: string; code: string }) {
+    return api.post<ForcedSetupCompleteResponse | EnableTotpResponse>(
       '/v1/authentication/2fa/enable',
-      { code },
+      { mfaToken, code },
     );
   },
   disable2fa({ code }: { code: string }) {
@@ -83,23 +90,6 @@ export const authenticationApi = {
     return api.post<{ backupCodes: string[] }>(
       '/v1/authentication/2fa/backup-codes/regenerate',
       { code },
-    );
-  },
-  forcedSetup2fa({ mfaToken }: { mfaToken: string }) {
-    return api.post<SetupTotpResponse>('/v1/authentication/2fa/forced-setup', {
-      mfaToken,
-    });
-  },
-  forcedSetupComplete2fa({
-    mfaToken,
-    code,
-  }: {
-    mfaToken: string;
-    code: string;
-  }) {
-    return api.post<ForcedSetupCompleteResponse>(
-      '/v1/authentication/2fa/forced-setup/complete',
-      { mfaToken, code },
     );
   },
 };

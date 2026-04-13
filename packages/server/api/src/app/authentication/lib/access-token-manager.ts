@@ -50,19 +50,19 @@ export const accessTokenManager = (log: FastifyBaseLogger) => ({
     },
 
 
-    async generateMfaChallengeToken({ identityId, platformId }: { identityId: string, platformId: string }): Promise<string> {
+    async generateMfaChallengeToken({ identityId, platformId, setupRequired }: { identityId: string, platformId: string, setupRequired?: boolean }): Promise<string> {
         const secret = await jwtUtils.getJwtSecret()
         return jwtUtils.sign({
-            payload: { type: 'MFA_CHALLENGE', identityId, platformId },
+            payload: { type: 'MFA_CHALLENGE', identityId, platformId, setupRequired },
             key: secret,
             expiresInSeconds: dayjs.duration(5, 'minute').asSeconds(),
         })
     },
 
-    async verifyMfaChallengeToken({ token }: { token: string }): Promise<{ identityId: string, platformId: string }> {
+    async verifyMfaChallengeToken({ token }: { token: string }): Promise<{ identityId: string, platformId: string, setupRequired?: boolean }> {
         const secret = await jwtUtils.getJwtSecret()
         try {
-            const decoded = await jwtUtils.decodeAndVerify<{ type: string, identityId: string, platformId: string }>({
+            const decoded = await jwtUtils.decodeAndVerify<{ type: string, identityId: string, platformId: string, setupRequired?: boolean }>({
                 jwt: token,
                 key: secret,
             })
@@ -72,7 +72,7 @@ export const accessTokenManager = (log: FastifyBaseLogger) => ({
                     params: { message: 'Invalid MFA challenge token' },
                 })
             }
-            return { identityId: decoded.identityId, platformId: decoded.platformId }
+            return { identityId: decoded.identityId, platformId: decoded.platformId, setupRequired: decoded.setupRequired }
         }
         catch (e) {
             if (e instanceof ActivepiecesError) {

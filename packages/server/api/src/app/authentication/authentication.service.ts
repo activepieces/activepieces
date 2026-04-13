@@ -306,7 +306,7 @@ async function checkEnforceTotp({ identityId, totpEnabled, platformId, log }: { 
     if (!platform.enforceTotp) {
         return null
     }
-    const mfaToken = await accessTokenManager(log).generateMfaChallengeToken({ identityId, platformId })
+    const mfaToken = await accessTokenManager(log).generateMfaChallengeToken({ identityId, platformId, setupRequired: true })
     return { mfaRequired: true as const, setupRequired: true, mfaToken }
 }
 

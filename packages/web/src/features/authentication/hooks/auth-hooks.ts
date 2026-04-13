@@ -1,7 +1,9 @@
 import {
   AuthenticationResponse,
   CreateOtpRequestBody,
+  EnableTotpResponse,
   ForcedSetupCompleteResponse,
+  InitMfaResponse,
   MfaChallengeResponse,
   ResetPasswordRequestBody,
   SetupTotpResponse,
@@ -97,19 +99,19 @@ export const authMutations = {
       onError,
     });
   },
-  useForcedSetupComplete: ({
+  useEnable2fa: ({
     onSuccess,
     onError,
   }: {
-    onSuccess: (data: ForcedSetupCompleteResponse) => void;
+    onSuccess: (data: ForcedSetupCompleteResponse | EnableTotpResponse) => void;
     onError: (error: HttpError) => void;
   }) => {
     return useMutation<
-      ForcedSetupCompleteResponse,
+      ForcedSetupCompleteResponse | EnableTotpResponse,
       HttpError,
       { mfaToken: string; code: string }
     >({
-      mutationFn: authenticationApi.forcedSetupComplete2fa,
+      mutationFn: authenticationApi.enable2fa,
       onSuccess,
       onError,
     });
@@ -123,10 +125,18 @@ export const authQueries = {
       queryFn: () => authenticationApi.get2faStatus(),
     });
   },
-  useForcedSetup: ({ mfaToken }: { mfaToken: string | undefined }) => {
+  useInitMfaSetup: () => {
+    return useQuery<InitMfaResponse>({
+      queryKey: ['2fa-init'],
+      queryFn: () => authenticationApi.initMfaSetup(),
+      refetchOnWindowFocus: false,
+      staleTime: Infinity,
+    });
+  },
+  useSetup2fa: ({ mfaToken }: { mfaToken: string | undefined }) => {
     return useQuery<SetupTotpResponse>({
-      queryKey: ['forced-2fa-setup', mfaToken],
-      queryFn: () => authenticationApi.forcedSetup2fa({ mfaToken: mfaToken! }),
+      queryKey: ['2fa-setup', mfaToken],
+      queryFn: () => authenticationApi.setup2fa({ mfaToken: mfaToken! }),
       enabled: !isNilToken(mfaToken),
       refetchOnWindowFocus: false,
       staleTime: Infinity,

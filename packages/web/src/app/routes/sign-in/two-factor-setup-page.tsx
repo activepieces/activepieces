@@ -1,4 +1,8 @@
-import { ForcedSetupCompleteResponse, isNil } from '@activepieces/shared';
+import {
+  EnableTotpResponse,
+  ForcedSetupCompleteResponse,
+  isNil,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import { useState } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
@@ -30,18 +34,19 @@ const TwoFactorSetupPage: React.FC = () => {
 
   const redirectAfterLogin = useRedirectAfterLogin();
 
-  const { data: setupData } = authQueries.useForcedSetup({ mfaToken });
+  const { data: setupData } = authQueries.useSetup2fa({ mfaToken });
 
-  const { mutate: completeSetup, isPending } =
-    authMutations.useForcedSetupComplete({
-      onSuccess: (data) => {
+  const { mutate: completeSetup, isPending } = authMutations.useEnable2fa({
+    onSuccess: (data: ForcedSetupCompleteResponse | EnableTotpResponse) => {
+      if ('token' in data) {
         setCompleteData(data);
         setStep('backup');
-      },
-      onError: () => {
-        setVerifyError(t('Invalid code. Please try again.'));
-      },
-    });
+      }
+    },
+    onError: () => {
+      setVerifyError(t('Invalid code. Please try again.'));
+    },
+  });
 
   if (isNil(mfaToken)) {
     return <Navigate to="/sign-in" replace />;

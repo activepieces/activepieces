@@ -1,9 +1,8 @@
-import { useQueryClient, useMutation, useQuery } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
-import { authenticationApi } from '@/api/authentication-api';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -15,7 +14,10 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { OtpInput } from '@/components/ui/otp-input';
-import { HttpError } from '@/lib/api';
+import {
+  authMutations,
+  authQueries,
+} from '@/features/authentication/hooks/auth-hooks';
 
 type Step = 'qr' | 'verify' | 'backup';
 
@@ -30,36 +32,29 @@ function EnableTwoFaForm({
   const [verifyError, setVerifyError] = useState<string | null>(null);
   const [savedChecked, setSavedChecked] = useState(false);
 
-  const { data: setupData } = useQuery({
-    queryKey: ['2fa-setup'],
-    queryFn: () => authenticationApi.setup2fa(),
-    // Prevent refetch on focus: switching to the authenticator app to scan the QR
-    // would trigger a refetch, regenerate the secret in the DB, and cause the
-    // code from the already-scanned QR to fail verification.
-    refetchOnWindowFocus: false,
-    staleTime: Infinity,
-  });
+  const { data: initData } = authQueries.useInitMfaSetup();
+  const mfaToken = initData?.mfaToken;
 
-  const { mutate: enable2fa, isPending: isEnabling } = useMutation<
-    { backupCodes: string[] },
-    HttpError,
-    { code: string }
-  >({
-    mutationFn: authenticationApi.enable2fa,
-    onSuccess: (data) => {
-      setBackupCodes(data.backupCodes);
-      queryClient.invalidateQueries({ queryKey: ['2fa-status'] });
-      toast.success(t('Two-factor authentication has been enabled'));
-      setStep('backup');
-    },
-    onError: () => {
-      setVerifyError(t('Invalid code. Please try again.'));
-    },
-  });
+  const { data: setupData } = authQueries.useSetup2fa({ mfaToken });
+
+  const { mutate: enable2fa, isPending: isEnabling } =
+    authMutations.useEnable2fa({
+      onSuccess: (data) => {
+        setBackupCodes(data.backupCodes);
+        queryClient.invalidateQueries({ queryKey: ['2fa-status'] });
+        toast.success(t('Two-factor authentication has been enabled'));
+        setStep('backup');
+      },
+      onError: () => {
+        setVerifyError(t('Invalid code. Please try again.'));
+      },
+    });
 
   const handleOtpComplete = ({ value }: { value: string }) => {
     setVerifyError(null);
-    enable2fa({ code: value });
+    if (mfaToken) {
+      enable2fa({ mfaToken, code: value });
+    }
   };
 
   return (

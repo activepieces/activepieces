@@ -1,6 +1,11 @@
 import { z } from 'zod'
 import { AuthenticationResponse } from './authentication-response'
 
+export const SetupTotpRequest = z.object({
+    mfaToken: z.string(),
+})
+export type SetupTotpRequest = z.infer<typeof SetupTotpRequest>
+
 export const SetupTotpResponse = z.object({
     secret: z.string(),
     otpauthUrl: z.string(),
@@ -9,6 +14,7 @@ export const SetupTotpResponse = z.object({
 export type SetupTotpResponse = z.infer<typeof SetupTotpResponse>
 
 export const EnableTotpRequest = z.object({
+    mfaToken: z.string(),
     code: z.string(),
 })
 export type EnableTotpRequest = z.infer<typeof EnableTotpRequest>
@@ -52,16 +58,10 @@ export const ForcedSetupCompleteResponse = AuthenticationResponse.extend({
 })
 export type ForcedSetupCompleteResponse = z.infer<typeof ForcedSetupCompleteResponse>
 
-export const ForcedSetupInitRequest = z.object({
+export const InitMfaResponse = z.object({
     mfaToken: z.string(),
 })
-export type ForcedSetupInitRequest = z.infer<typeof ForcedSetupInitRequest>
-
-export const ForcedSetupCompleteRequest = z.object({
-    mfaToken: z.string(),
-    code: z.string(),
-})
-export type ForcedSetupCompleteRequest = z.infer<typeof ForcedSetupCompleteRequest>
+export type InitMfaResponse = z.infer<typeof InitMfaResponse>
 
 export const SignInResponse = z.union([AuthenticationResponse, MfaChallengeResponse])
 export type SignInResponse = z.infer<typeof SignInResponse>
