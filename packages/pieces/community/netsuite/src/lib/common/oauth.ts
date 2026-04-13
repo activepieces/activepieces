@@ -80,7 +80,7 @@ function generateSignature(
   hmac.update(signatureBaseString);
   const signature = hmac.digest('base64');
 
-  return encodeURIComponent(signature);
+  return oauthEncode(signature);
 }
 
 export function createOAuthHeader(
