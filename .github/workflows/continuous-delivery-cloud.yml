@@ -2,7 +2,7 @@ name: Continuous Delivery — Cloud
 
 on:
   schedule:
-    - cron: '0 9 * * 0'  # Sunday 9 AM UTC — promote release candidate to prod
+    - cron: '0 9 * * 0' # Sunday 9 AM UTC — promote release candidate to prod
   workflow_call:
   workflow_dispatch:
     inputs:
@@ -11,7 +11,7 @@ on:
         required: true
         type: choice
         options:
-          - cloud-hotfix  # Build from current branch and deploy directly to production, bypassing staging
+          - cloud-hotfix # Build from current branch and deploy directly to production, bypassing staging
 
 jobs:
   guard:
@@ -120,7 +120,7 @@ jobs:
 
       - name: Deploy Workers to production
         run: |
-          ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal deploy --version ${{ steps.image.outputs.image_tag }} --config-file=config/worker.yml --skip-push; exit"'
+          ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal deploy --version ${{ steps.image.outputs.image_tag }} --config-file=config/worker.yml --roles=web --skip-push; exit"'
 
       - uses: actions/checkout@v4
         with:
