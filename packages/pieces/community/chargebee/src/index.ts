@@ -11,6 +11,14 @@ import {
   getChargebeeAuthHeader,
   getChargebeeBaseUrl,
 } from './lib/common/client';
+import { customerCreated } from './lib/triggers/customer-created';
+import { invoiceGenerated } from './lib/triggers/invoice-generated';
+import { paymentFailed } from './lib/triggers/payment-failed';
+import { paymentSucceeded } from './lib/triggers/payment-succeeded';
+import { subscriptionCancelled } from './lib/triggers/subscription-cancelled';
+import { subscriptionChanged } from './lib/triggers/subscription-changed';
+import { subscriptionCreated } from './lib/triggers/subscription-created';
+import { subscriptionRenewed } from './lib/triggers/subscription-renewed';
 
 export const chargebee = createPiece({
   displayName: 'Chargebee',
@@ -18,7 +26,7 @@ export const chargebee = createPiece({
     'Subscription billing and revenue operations platform for managing customers and subscriptions.',
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/chargebee.png',
-  authors: ['Harmatta'],
+  authors: ['Harmatta', 'sanket-a11y'],
   categories: [PieceCategory.ACCOUNTING, PieceCategory.PAYMENT_PROCESSING],
   auth: chargebeeAuth,
   actions: [
@@ -34,5 +42,14 @@ export const chargebee = createPiece({
       }),
     }),
   ],
-  triggers: [],
+  triggers: [
+    subscriptionCreated,
+    subscriptionCancelled,
+    subscriptionRenewed,
+    subscriptionChanged,
+    paymentSucceeded,
+    paymentFailed,
+    invoiceGenerated,
+    customerCreated,
+  ],
 });

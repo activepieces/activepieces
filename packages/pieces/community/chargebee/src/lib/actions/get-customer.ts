@@ -4,10 +4,6 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { chargebeeAuth } from '../auth';
 import { chargebeeRequest } from '../common/client';
 
-type GetCustomerProps = {
-  customer_id: string;
-};
-
 export const getCustomer = createAction({
   name: 'get_customer',
   auth: chargebeeAuth,
@@ -20,7 +16,7 @@ export const getCustomer = createAction({
     }),
   },
   async run(context) {
-    const { customer_id } = context.propsValue as GetCustomerProps;
+    const { customer_id } = context.propsValue;
 
     return await chargebeeRequest({
       site: context.auth.props.site,

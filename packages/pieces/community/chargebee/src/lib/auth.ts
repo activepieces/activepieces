@@ -6,7 +6,7 @@ import { chargebeeRequest } from './common/client';
 export const chargebeeAuth = PieceAuth.CustomAuth({
   displayName: 'Chargebee',
   description:
-    'Authenticate with your Chargebee site name and API key. The API is called against https://{site}.chargebee.com/api/v2 using HTTP Basic auth.',
+    'Go to Settings > Configure Chargebee > API Keys and Webhooks > API Keys tab. Click Add an API Key, select Full-Access Key, and copy the generated key.',
   required: true,
   props: {
     site: Property.ShortText({
@@ -17,7 +17,8 @@ export const chargebeeAuth = PieceAuth.CustomAuth({
     }),
     api_key: PieceAuth.SecretText({
       displayName: 'API Key',
-      description: 'Chargebee API key from Settings → API Keys & Webhooks.',
+      description:
+        'Go to Settings > Configure Chargebee > API Keys and Webhooks > API Keys tab. Click Add an API Key, select Full-Access Key, and copy the generated key.',
       required: true,
     }),
   },
