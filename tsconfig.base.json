@@ -455,6 +455,9 @@
       "@activepieces/piece-freshdesk": [
         "packages/pieces/community/freshdesk/src/index.ts"
       ],
+      "@activepieces/piece-freshservice": [
+        "packages/pieces/community/freshservice/src/index.ts"
+      ],
       "@activepieces/piece-freshsales": [
         "packages/pieces/community/freshsales/src/index.ts"
       ],
