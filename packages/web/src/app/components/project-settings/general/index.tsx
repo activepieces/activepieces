@@ -11,6 +11,7 @@ import { ChevronDown } from 'lucide-react';
 import { useState } from 'react';
 import { UseFormReturn } from 'react-hook-form';
 
+import { ClearableInput } from '@/components/custom/clearable-input';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -50,6 +51,9 @@ export const GeneralSettings = ({ form }: GeneralSettingsProps) => {
   const { project } = projectCollectionUtils.useCurrentProject();
   const { data: isRateLimiterEnabled } = flagsHooks.useFlag<boolean>(
     ApFlagId.PROJECT_RATE_LIMITER_ENABLED,
+  );
+  const { data: defaultConcurrentJobsLimit } = flagsHooks.useFlag<number>(
+    ApFlagId.DEFAULT_CONCURRENT_JOBS_LIMIT,
   );
   const showGeneralSettings = project.type === ProjectType.TEAM;
   const showExternalIdSettings =
@@ -177,18 +181,25 @@ export const GeneralSettings = ({ form }: GeneralSettingsProps) => {
                 >
                   {t('Max Concurrent Jobs')}
                 </Label>
-                <Input
+                <ClearableInput
                   {...field}
                   id="maxConcurrentJobs"
                   type="number"
                   min={1}
-                  placeholder={t('Default')}
+                  placeholder={
+                    defaultConcurrentJobsLimit
+                      ? t('Default ({value})', {
+                          value: defaultConcurrentJobsLimit,
+                        })
+                      : t('Default')
+                  }
                   value={field.value ?? ''}
                   onChange={(e) =>
                     field.onChange(
                       e.target.value ? Number(e.target.value) : null,
                     )
                   }
+                  onClear={() => field.onChange(null)}
                   disabled={form.formState.disabled || !isRateLimiterEnabled}
                 />
                 <FormDescription className="text-xs text-muted-foreground">

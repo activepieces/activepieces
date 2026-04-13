@@ -72,7 +72,7 @@ describe('rateLimiterInterceptor', () => {
         enableRateLimiter()
         vi.spyOn(system, 'getNumberOrThrow').mockImplementation((prop) => {
             if (prop === AppSystemProp.FLOW_TIMEOUT_SECONDS) return 600
-            if (prop === AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT) return 100
+            if (prop === AppSystemProp.DEFAULT_CONCURRENT_JOBS_LIMIT) return 100
             return 0
         })
         vi.spyOn(system, 'getEdition').mockReturnValue(ApEdition.COMMUNITY)
@@ -125,7 +125,7 @@ describe('rateLimiterInterceptor', () => {
         it('should ALLOW first job when under limit', async () => {
             vi.spyOn(system, 'getNumberOrThrow').mockImplementation((prop) => {
                 if (prop === AppSystemProp.FLOW_TIMEOUT_SECONDS) return 600
-                if (prop === AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT) return 2
+                if (prop === AppSystemProp.DEFAULT_CONCURRENT_JOBS_LIMIT) return 2
                 return 0
             })
             const jobData = createFlowJobData()
@@ -146,7 +146,7 @@ describe('rateLimiterInterceptor', () => {
         it('should ALLOW up to max concurrent jobs', async () => {
             vi.spyOn(system, 'getNumberOrThrow').mockImplementation((prop) => {
                 if (prop === AppSystemProp.FLOW_TIMEOUT_SECONDS) return 600
-                if (prop === AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT) return 3
+                if (prop === AppSystemProp.DEFAULT_CONCURRENT_JOBS_LIMIT) return 3
                 return 0
             })
             const jobData = createFlowJobData()
@@ -169,7 +169,7 @@ describe('rateLimiterInterceptor', () => {
         it('should REJECT when at capacity', async () => {
             vi.spyOn(system, 'getNumberOrThrow').mockImplementation((prop) => {
                 if (prop === AppSystemProp.FLOW_TIMEOUT_SECONDS) return 600
-                if (prop === AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT) return 2
+                if (prop === AppSystemProp.DEFAULT_CONCURRENT_JOBS_LIMIT) return 2
                 return 0
             })
             const jobData = createFlowJobData()
@@ -193,7 +193,7 @@ describe('rateLimiterInterceptor', () => {
         it('should not double-count the same jobId', async () => {
             vi.spyOn(system, 'getNumberOrThrow').mockImplementation((prop) => {
                 if (prop === AppSystemProp.FLOW_TIMEOUT_SECONDS) return 600
-                if (prop === AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT) return 2
+                if (prop === AppSystemProp.DEFAULT_CONCURRENT_JOBS_LIMIT) return 2
                 return 0
             })
             const jobData = createFlowJobData()
@@ -213,7 +213,7 @@ describe('rateLimiterInterceptor', () => {
         it('should not let different projects interfere', async () => {
             vi.spyOn(system, 'getNumberOrThrow').mockImplementation((prop) => {
                 if (prop === AppSystemProp.FLOW_TIMEOUT_SECONDS) return 600
-                if (prop === AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT) return 1
+                if (prop === AppSystemProp.DEFAULT_CONCURRENT_JOBS_LIMIT) return 1
                 return 0
             })
             const jobDataA = createFlowJobData({ projectId: 'proj-A' })
@@ -236,7 +236,7 @@ describe('rateLimiterInterceptor', () => {
         beforeEach(() => {
             vi.spyOn(system, 'getNumberOrThrow').mockImplementation((prop) => {
                 if (prop === AppSystemProp.FLOW_TIMEOUT_SECONDS) return 600
-                if (prop === AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT) return 1
+                if (prop === AppSystemProp.DEFAULT_CONCURRENT_JOBS_LIMIT) return 1
                 return 0
             })
         })
@@ -294,7 +294,7 @@ describe('rateLimiterInterceptor', () => {
         it('should clean stale jobs and allow new ones', async () => {
             vi.spyOn(system, 'getNumberOrThrow').mockImplementation((prop) => {
                 if (prop === AppSystemProp.FLOW_TIMEOUT_SECONDS) return 1
-                if (prop === AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT) return 1
+                if (prop === AppSystemProp.DEFAULT_CONCURRENT_JOBS_LIMIT) return 1
                 return 0
             })
             const jobData = createFlowJobData()
@@ -325,7 +325,7 @@ describe('rateLimiterInterceptor', () => {
         it('should use pool override when set for project', async () => {
             vi.spyOn(system, 'getNumberOrThrow').mockImplementation((prop) => {
                 if (prop === AppSystemProp.FLOW_TIMEOUT_SECONDS) return 600
-                if (prop === AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT) return 100
+                if (prop === AppSystemProp.DEFAULT_CONCURRENT_JOBS_LIMIT) return 100
                 return 0
             })
             const projectId = `proj-${crypto.randomUUID()}`
@@ -345,7 +345,7 @@ describe('rateLimiterInterceptor', () => {
             vi.spyOn(system, 'getEdition').mockReturnValue(ApEdition.CLOUD)
             vi.spyOn(system, 'getNumberOrThrow').mockImplementation((prop) => {
                 if (prop === AppSystemProp.FLOW_TIMEOUT_SECONDS) return 600
-                if (prop === AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT) return 100
+                if (prop === AppSystemProp.DEFAULT_CONCURRENT_JOBS_LIMIT) return 100
                 return 0
             })
             const platformId = `plat-${crypto.randomUUID()}`
@@ -369,7 +369,7 @@ describe('rateLimiterInterceptor', () => {
             vi.spyOn(system, 'getEdition').mockReturnValue(ApEdition.COMMUNITY)
             vi.spyOn(system, 'getNumberOrThrow').mockImplementation((prop) => {
                 if (prop === AppSystemProp.FLOW_TIMEOUT_SECONDS) return 600
-                if (prop === AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT) return 100
+                if (prop === AppSystemProp.DEFAULT_CONCURRENT_JOBS_LIMIT) return 100
                 return 0
             })
             const platformId = `plat-${crypto.randomUUID()}`
@@ -388,7 +388,7 @@ describe('rateLimiterInterceptor', () => {
         it('should fall back to default system prop', async () => {
             vi.spyOn(system, 'getNumberOrThrow').mockImplementation((prop) => {
                 if (prop === AppSystemProp.FLOW_TIMEOUT_SECONDS) return 600
-                if (prop === AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT) return 2
+                if (prop === AppSystemProp.DEFAULT_CONCURRENT_JOBS_LIMIT) return 2
                 return 0
             })
             const jobData = createFlowJobData()
@@ -405,7 +405,7 @@ describe('rateLimiterInterceptor', () => {
         it('should release slot for completed job', async () => {
             vi.spyOn(system, 'getNumberOrThrow').mockImplementation((prop) => {
                 if (prop === AppSystemProp.FLOW_TIMEOUT_SECONDS) return 600
-                if (prop === AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT) return 2
+                if (prop === AppSystemProp.DEFAULT_CONCURRENT_JOBS_LIMIT) return 2
                 return 0
             })
             const jobData = createFlowJobData()
@@ -433,7 +433,7 @@ describe('rateLimiterInterceptor', () => {
         it('should be idempotent', async () => {
             vi.spyOn(system, 'getNumberOrThrow').mockImplementation((prop) => {
                 if (prop === AppSystemProp.FLOW_TIMEOUT_SECONDS) return 600
-                if (prop === AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT) return 2
+                if (prop === AppSystemProp.DEFAULT_CONCURRENT_JOBS_LIMIT) return 2
                 return 0
             })
             const jobData = createFlowJobData()
@@ -454,7 +454,7 @@ describe('rateLimiterInterceptor', () => {
         beforeEach(() => {
             vi.spyOn(system, 'getNumberOrThrow').mockImplementation((prop) => {
                 if (prop === AppSystemProp.FLOW_TIMEOUT_SECONDS) return 600
-                if (prop === AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT) return 100
+                if (prop === AppSystemProp.DEFAULT_CONCURRENT_JOBS_LIMIT) return 100
                 return 0
             })
         })

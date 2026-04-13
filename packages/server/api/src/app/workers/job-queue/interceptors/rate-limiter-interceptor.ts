@@ -38,14 +38,14 @@ function shouldContinue(jobData: JobData): jobData is ExecuteFlowJobData {
 
 async function getMaxConcurrentJobsForPlatformPlan({ platformId }: { platformId: PlatformId }): Promise<number> {
     if (system.getEdition() !== ApEdition.CLOUD) {
-        return system.getNumberOrThrow(AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT)
+        return system.getNumberOrThrow(AppSystemProp.DEFAULT_CONCURRENT_JOBS_LIMIT)
     }
     const platformPlanName = await distributedStore.get<string>(getPlatformPlanNameKey(platformId))
     if (!isNil(platformPlanName)) {
         const limit = PLAN_CONCURRENT_JOBS_LIMITS[platformPlanName]
         if (!isNil(limit)) return limit
     }
-    return system.getNumberOrThrow(AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT)
+    return system.getNumberOrThrow(AppSystemProp.DEFAULT_CONCURRENT_JOBS_LIMIT)
 }
 
 async function getMaxConcurrentJobs({ poolId, platformId, log }: { poolId: string | null, platformId: PlatformId, log: FastifyBaseLogger }): Promise<number> {

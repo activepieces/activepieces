@@ -324,6 +324,7 @@
   "Maximum number of flows that can run at the same time for this project": "Maximum number of flows that can run at the same time for this project",
   "The rate limiting feature is disabled. Enable the PROJECT_RATE_LIMITER_ENABLED environment variable to use this feature.": "The rate limiting feature is disabled. Enable the PROJECT_RATE_LIMITER_ENABLED environment variable to use this feature.",
   "Default": "Default",
+  "Default ({value})": "Default ({value})",
   "Your changes have been saved.": "Your changes have been saved.",
   "General": "General",
   "Members": "",
