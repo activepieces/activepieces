@@ -1,11 +1,11 @@
 ---
 name: ubiquitous-language
-description: Builds and maintains a domain terminology glossary (ubiquitous language) for Activepieces, and performs mandatory feature overlap detection before any new feature is proposed. Use when the user asks to define domain terms, build a glossary, harden terminology, create ubiquitous language, references "domain model" or "DDD", or asks about adding a new feature.
+description: Maintains feature documentation in .agents/features/ and performs mandatory feature overlap detection before any new feature is proposed. Also builds a shared domain vocabulary for Activepieces. Use when the user asks to define domain terms, build a glossary, harden terminology, create ubiquitous language, references "domain model" or "DDD", or asks about adding a new feature.
 ---
 
 # Activepieces Ubiquitous Language
 
-Establish a shared vocabulary for the Activepieces domain and prevent redundant features by detecting overlap with existing functionality before any new work begins.
+Maintain per-feature documentation in `.agents/features/`, establish a shared vocabulary for the Activepieces domain, and prevent redundant features by detecting overlap with existing functionality before any new work begins.
 
 ## Trigger Phrases
 
@@ -23,17 +23,19 @@ Activate this skill when the user:
 
 ### Step 1: FEATURE OVERLAP DETECTION (mandatory before any new feature)
 
-Before writing a single line of code or proposing a design for a new feature, you MUST search the codebase for existing features with similar or overlapping functionality. Suggesting a new feature when a suitable existing one can be extended wastes engineering effort and fragments the codebase.
+Before writing a single line of code or proposing a design for a new feature, you MUST check for existing features with similar or overlapping functionality.
 
-**Search checklist — complete all four before concluding:**
+**Search checklist — complete all five before concluding:**
 
-1. **Components / services / hooks** — use the Glob tool to find files whose names relate to the proposed concept (e.g., `packages/**/*<keyword>*.{ts,tsx}`), then use the Grep tool to search file contents for the keyword. Also search by directory name patterns (e.g., `packages/server/api/src/app/<concept>/`).
+1. **Feature docs** — read all `.md` files in `.agents/features/` to understand what features already exist, what they cover, and how they work. This is the primary source of truth for feature inventory.
 
-2. **Route definitions** — use the Grep tool to check whether an API route already covers the use case: search for the keyword in `packages/server/api/src` with glob `*.ts`.
+2. **Components / services / hooks** — use the Glob tool to find files whose names relate to the proposed concept (e.g., `packages/**/*<keyword>*.{ts,tsx}`), then use the Grep tool to search file contents for the keyword. Also search by directory name patterns (e.g., `packages/server/api/src/app/<concept>/`).
 
-3. **Shared types** — use the Grep tool to inspect `packages/shared/src/` for existing type definitions or enums that represent the concept.
+3. **Route definitions** — use the Grep tool to check whether an API route already covers the use case: search for the keyword in `packages/server/api/src` with glob `*.ts`.
 
-4. **Feature flags / plan limits** — use the Grep tool to search `packages/shared/src/lib/` for any existing capability or plan flag that may gate the feature.
+4. **Shared types** — use the Grep tool to inspect `packages/shared/src/` for existing type definitions or enums that represent the concept.
+
+5. **Feature flags / plan limits** — use the Grep tool to search `packages/shared/src/lib/` for any existing capability or plan flag that may gate the feature.
 
 **Decision rule:**
 
@@ -47,9 +49,47 @@ Always present your findings to the user before proceeding. Never silently skip 
 
 ---
 
-### Step 2: DOMAIN GLOSSARY MANAGEMENT
+### Step 2: FEATURE DOCUMENTATION
 
-#### 2a. Scan the conversation for domain terms
+Every feature in Activepieces must have a corresponding `.md` file in `.agents/features/`. This is a living registry that agents and developers use to understand what exists before building something new.
+
+#### 2a. When creating a new feature
+
+After the feature is implemented, create a new file at `.agents/features/<feature-name>.md` with this structure:
+
+```markdown
+# <Feature Name>
+
+## Summary
+One-paragraph description of what this feature does and why it exists.
+
+## Key Files
+- `packages/web/src/features/<path>` — frontend components
+- `packages/server/api/src/app/<path>` — backend service/controller
+- `packages/shared/src/lib/<path>` — shared types
+
+## Edition Availability
+Which editions support this feature (Community, Enterprise, Cloud).
+
+## Domain Terms
+Key terms used by this feature (link to glossary definitions if they exist).
+```
+
+#### 2b. When modifying an existing feature
+
+After making changes to a feature, update its `.agents/features/<feature-name>.md` to reflect:
+- New or removed key files
+- Changed edition availability
+- New domain terms introduced
+- Any scope changes to the feature's summary
+
+**This is not optional.** Every PR that changes a feature's behavior must include an update to its feature doc.
+
+---
+
+### Step 3: DOMAIN GLOSSARY MANAGEMENT
+
+#### 3a. Scan the conversation for domain terms
 
 As you read the conversation, collect every noun, verb, or phrase that:
 
@@ -58,9 +98,9 @@ As you read the conversation, collect every noun, verb, or phrase that:
 - Carries specialised meaning in this codebase that differs from everyday usage
 - Is used inconsistently or interchangeably with another term
 
-#### 2b. Flag problems before writing the glossary
+#### 3b. Flag problems before writing the glossary
 
-Before updating `UBIQUITOUS_LANGUAGE.md`, surface any of the following to the user for resolution:
+Before updating the glossary, surface any of the following to the user for resolution:
 
 | Problem type | Example | How to flag |
 |---|---|---|
@@ -70,12 +110,12 @@ Before updating `UBIQUITOUS_LANGUAGE.md`, surface any of the following to the us
 
 Do not silently resolve ambiguities — always confirm with the user.
 
-#### 2c. Write or update `UBIQUITOUS_LANGUAGE.md`
+#### 3c. Write or update `.agents/features/GLOSSARY.md`
 
-Create or update this file at the repository root (or the location the user specifies). Structure it as follows:
+Create or update this file as the central domain glossary. Structure it as follows:
 
 ```markdown
-# Ubiquitous Language — Activepieces
+# Domain Glossary — Activepieces
 
 > Last updated: <date>
 
@@ -99,22 +139,22 @@ Create or update this file at the repository root (or the location the user spec
 - The "Related terms" column lists other glossary entries that are closely connected.
 - Keep terms in **alphabetical order** within each cluster.
 
-#### 2d. Canonical term enforcement
+#### 3d. Canonical term enforcement
 
 When writing or reviewing code, use only the canonical term from the glossary. If you see a deprecated alias in existing code, inform the user about each occurrence and let them decide whether to rename it now or track it as technical debt for later.
 
 ---
 
-### Step 3: RE-INVOCATION (when called again in the same conversation)
+### Step 4: RE-INVOCATION (when called again in the same conversation)
 
 When this skill is triggered a second or subsequent time in the same session:
 
-1. Read the existing `UBIQUITOUS_LANGUAGE.md` (do not recreate it from scratch).
-2. Identify new terms introduced since the last invocation.
-3. Integrate new terms into the appropriate cluster, maintaining alphabetical order.
-4. Update any definitions that have evolved based on new discussion.
+1. Read the existing `.agents/features/` docs and `GLOSSARY.md` (do not recreate from scratch).
+2. Identify new terms or features introduced since the last invocation.
+3. Integrate new terms into the glossary, maintaining alphabetical order.
+4. Create or update feature docs as needed.
 5. Flag any fresh ambiguities or synonym collisions found in the new context.
-6. Present a diff summary to the user: which terms were added, which were updated, and which ambiguities were flagged.
+6. Present a diff summary to the user: which terms/features were added, updated, or flagged.
 
 ---
 
@@ -122,16 +162,17 @@ When this skill is triggered a second or subsequent time in the same session:
 
 | Task | Action |
 |---|---|
-| New feature requested | Run Step 1 (overlap detection) first — always |
-| New term encountered | Add to glossary via Step 2 |
+| New feature requested | Run Step 1 (overlap detection via `.agents/features/` + codebase search) — always |
+| Feature implemented or modified | Update its `.agents/features/<name>.md` via Step 2 |
+| New term encountered | Add to glossary via Step 3 |
 | Ambiguity detected | Flag to user before resolving |
-| Skill re-invoked | Follow Step 3 (incremental update) |
+| Skill re-invoked | Follow Step 4 (incremental update) |
 | Deprecated alias found in code | Inform user; let them decide to rename now or defer as tech debt |
 
 ## Critical Reminders
 
-1. **Feature overlap detection is not optional** — run it before every new feature, no exceptions.
-2. **One-sentence definitions** — longer definitions are a sign the concept needs to be split.
-3. **Never resolve ambiguities silently** — always confirm the canonical meaning with the user.
-4. **Glossary is a living document** — update it whenever the domain model evolves, not just at project start.
+1. **Feature overlap detection is not optional** — check `.agents/features/` and the codebase before every new feature, no exceptions.
+2. **Feature docs must stay current** — every change to a feature's behavior requires an update to its `.agents/features/<name>.md`.
+3. **One-sentence definitions** — longer definitions are a sign the concept needs to be split.
+4. **Never resolve ambiguities silently** — always confirm the canonical meaning with the user.
 5. **Aliases to avoid are as important as definitions** — they prevent synonym drift from creeping back into the codebase.
