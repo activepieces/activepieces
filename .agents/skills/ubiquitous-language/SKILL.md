@@ -27,20 +27,13 @@ Before writing a single line of code or proposing a design for a new feature, yo
 
 **Search checklist — complete all four before concluding:**
 
-1. **Components / services / hooks** — search for files whose names relate to the proposed concept:
-   ```
-   find packages/ -type f -name "*.ts" -o -name "*.tsx" | xargs grep -l "<keyword>" 2>/dev/null
-   ```
-   Also search by directory name patterns (e.g., `packages/server/api/src/app/<concept>/`).
+1. **Components / services / hooks** — use the Glob tool to find files whose names relate to the proposed concept (e.g., `packages/**/*<keyword>*.{ts,tsx}`), then use the Grep tool to search file contents for the keyword. Also search by directory name patterns (e.g., `packages/server/api/src/app/<concept>/`).
 
-2. **Route definitions** — check whether an API route already covers the use case:
-   ```
-   grep -r "router\.\(get\|post\|put\|patch\|delete\)" packages/server/api/src --include="*.ts" | grep "<keyword>"
-   ```
+2. **Route definitions** — use the Grep tool to check whether an API route already covers the use case: search for the keyword in `packages/server/api/src` with glob `*.ts`.
 
-3. **Shared types** — inspect `packages/shared/src/` for existing type definitions or enums that represent the concept.
+3. **Shared types** — use the Grep tool to inspect `packages/shared/src/` for existing type definitions or enums that represent the concept.
 
-4. **Feature flags / plan limits** — check `packages/shared/src/lib/pieces/platform-plan.ts` and similar files for any existing capability that may gate the feature.
+4. **Feature flags / plan limits** — use the Grep tool to search `packages/shared/src/lib/` for any existing capability or plan flag that may gate the feature.
 
 **Decision rule:**
 
