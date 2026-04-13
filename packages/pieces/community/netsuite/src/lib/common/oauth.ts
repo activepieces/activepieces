@@ -1,4 +1,4 @@
-import { createHmac } from 'crypto';
+import { createHmac, randomBytes } from 'crypto';
 
 const SIGN_METHOD = 'HMAC-SHA256';
 const OAUTH_VERSION = '1.0';
@@ -13,13 +13,8 @@ function oauthEncode(str: string): string {
 }
 
 function generateNonce(): string {
-  const length = 11;
-  const possible =
-    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  return Array.from(
-    { length },
-    () => possible[Math.floor(Math.random() * possible.length)]
-  ).join('');
+  // Use CSPRNG instead of Math.random() for unpredictable nonces.
+  return randomBytes(16).toString('hex');
 }
 
 function generateSignature(
