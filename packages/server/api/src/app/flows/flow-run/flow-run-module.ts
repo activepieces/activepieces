@@ -1,4 +1,4 @@
-import { isFlowRunStateTerminal, TelemetryEventName } from '@activepieces/shared'
+import { TelemetryEventName } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyPluginAsync } from 'fastify'
 import { Between } from 'typeorm'
@@ -9,19 +9,14 @@ import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
 import { telemetry } from '../../helper/telemetry.utils'
 import { engineResponseWatcher } from '../../workers/engine-response-watcher'
 import { flowRunController } from './flow-run-controller'
-import { flowRunRepo, flowRunService } from './flow-run-service'
+import { flowRunRepo } from './flow-run-service'
 import { flowRunLogsController } from './logs/flow-run-logs-controller'
-import { resumeController } from './waitpoint/resume-controller'
-import { resumeService } from './waitpoint/resume-service'
-import { waitpointController } from './waitpoint/waitpoint-controller'
 
 
 export const flowRunModule: FastifyPluginAsync = async (app) => {
     app.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
     await app.register(flowRunController, { prefix: '/v1/flow-runs' })
-    await app.register(resumeController, { prefix: '/v1/flow-runs' })
     await app.register(flowRunLogsController, { prefix: '/v1/flow-runs' })
-    await app.register(waitpointController, { prefix: '/v1/waitpoints' })
     systemJobHandlers.registerJobHandler(SystemJobName.RUN_TELEMETRY, async (_job: SystemJobData<SystemJobName.RUN_TELEMETRY>) => {
         if (!telemetry(app.log).isEnabled()) {
             return
@@ -70,21 +65,6 @@ export const flowRunModule: FastifyPluginAsync = async (app) => {
             type: 'repeated',
             cron: '0/50 23 * * *',
         },
-    })
-    systemJobHandlers.registerJobHandler(SystemJobName.RESUME_DELAY_WAITPOINT, async (data: SystemJobData<SystemJobName.RESUME_DELAY_WAITPOINT>) => {
-        const flowRun = await flowRunService(app.log).getOneOrThrow({ id: data.flowRunId, projectId: data.projectId })
-        if (isFlowRunStateTerminal({ status: flowRun.status, ignoreInternalError: false })) {
-            app.log.info({ flowRunId: data.flowRunId, waitpointId: data.waitpointId, status: flowRun.status },
-                '[RESUME_DELAY_WAITPOINT] Flow not PAUSED, skipping')
-            return
-        }
-        app.log.info({ flowRunId: data.flowRunId, waitpointId: data.waitpointId },
-            '[RESUME_DELAY_WAITPOINT] Resuming flow')
-        await resumeService(app.log).resumeFromWaitpoint({
-            flowRunId: data.flowRunId,
-            waitpointId: data.waitpointId,
-            resumePayload: null,
-        })
     })
     await engineResponseWatcher(app.log).init()
 }

@@ -124,12 +124,10 @@ export type StopHook = (params?: StopHookParams) => void;
 
 export type RespondHook = (params?: RespondHookParams) => void;
 
-/** @deprecated Since 2026-04-12. Use {@link CreateWaitpointHook} and {@link WaitForWaitpointHook} instead. */
 export type PauseHookParams = {
   pauseMetadata: PauseMetadata;
 };
 
-/** @deprecated Since 2026-04-12. Use {@link CreateWaitpointHook} and {@link WaitForWaitpointHook} instead. */
 export type PauseHook = (params: {
   pauseMetadata: Omit<DelayPauseMetadata, 'requestIdToReply'> | Omit<WebhookPauseMetadata, 'requestId' | 'requestIdToReply'>
 }) => void;
@@ -170,30 +168,11 @@ export type ServerContext = {
   token: string;
 };
 
-export type CreateWaitpointParams = {
-  type: 'DELAY' | 'WEBHOOK';
-  version?: 'V0' | 'V1';
-  resumeDateTime?: string;
-  responseToSend?: RespondResponse;
-};
-
-export type CreateWaitpointResult = {
-  id: string;
-  resumeUrl: string;
-  buildResumeUrl: (params: { queryParams: Record<string, string>, sync?: boolean }) => string;
-};
-
-export type CreateWaitpointHook = (params: CreateWaitpointParams) => Promise<CreateWaitpointResult>;
-export type WaitForWaitpointHook = (waitpointId: string) => void;
-
 export type RunContext = {
   id: FlowRunId;
   stop: StopHook;
-  /** @deprecated Use createWaitpoint + waitForWaitpoint instead */
-  pause?: PauseHook;
+  pause: PauseHook;
   respond: RespondHook;
-  createWaitpoint: CreateWaitpointHook;
-  waitForWaitpoint: WaitForWaitpointHook;
 }
 
 export type OnStartContext<
@@ -225,8 +204,7 @@ type BaseActionContext<
   output: OutputContext;
   agent: AgentContext;
   run: RunContext;
-  /** @deprecated Use waitpoint.buildResumeUrl() from createWaitpoint result instead */
-  generateResumeUrl?: (params: {
+  generateResumeUrl: (params: {
     queryParams: Record<string, string>,
     sync?: boolean
   }) => string;

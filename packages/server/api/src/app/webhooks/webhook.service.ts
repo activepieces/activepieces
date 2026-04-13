@@ -1,4 +1,4 @@
-import { apId, assertNotNullOrUndefined, EngineHttpResponse, EventPayload, ExecutionType, Flow, FlowRun, FlowStatus, FlowVersionId, isNil, LATEST_JOB_DATA_SCHEMA_VERSION, PlatformId, ProjectId, RunEnvironment, StreamStepProgress, TriggerPayload, WorkerJobType } from '@activepieces/shared'
+import { apId, assertNotNullOrUndefined, EngineHttpResponse, EventPayload, ExecutionType, Flow, FlowRun, FlowStatus, FlowVersionId, isNil, LATEST_JOB_DATA_SCHEMA_VERSION, PlatformId, ProgressUpdateType, ProjectId, RunEnvironment, TriggerPayload, WorkerJobType } from '@activepieces/shared'
 import { context, propagation, trace } from '@opentelemetry/api'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -168,7 +168,7 @@ export const webhookService = {
                     runEnvironment: flowVersionToRun === WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST ? RunEnvironment.PRODUCTION : RunEnvironment.TESTING,
                     logger: pinoLogger,
                     webhookRequestId,
-                    workerHandlerId: engineResponseWatcher(pinoLogger).getServerId(),
+                    synchronousHandlerId: engineResponseWatcher(pinoLogger).getServerId(),
                     flowVersionIdToRun,
                     saveSampleData,
                     flowVersionToRun,
@@ -232,6 +232,7 @@ async function handleAsync(params: AsyncWebhookParams): Promise<EngineHttpRespon
                     failParentOnFailure,
                     traceContext,
                 },
+                dependOnJobId: !isNil(parentRunId) && failParentOnFailure ? parentRunId : undefined,
             })
             logger.info('Async webhook request completed')
             span.setAttribute('webhook.queuedSuccessfully', true)
@@ -259,7 +260,7 @@ async function handleSync(params: SyncWebhookParams): Promise<EngineHttpResponse
         },
     }, async (span) => {
         try {
-            const { payload, projectId, flow, logger, webhookRequestId, workerHandlerId, flowVersionIdToRun, runEnvironment, saveSampleData, flowVersionToRun, parentRunId, failParentOnFailure, platformId } = params
+            const { payload, projectId, flow, logger, webhookRequestId, synchronousHandlerId, flowVersionIdToRun, runEnvironment, saveSampleData, flowVersionToRun, parentRunId, failParentOnFailure, platformId } = params
 
             if (saveSampleData) {
                 rejectedPromiseHandler(savePayload({
@@ -292,12 +293,12 @@ async function handleSync(params: SyncWebhookParams): Promise<EngineHttpResponse
                 flowId: flow.id,
                 flowVersionId: flowVersionIdToRun,
                 payload,
-                workerHandlerId,
+                synchronousHandlerId,
                 projectId,
                 executeTrigger: true,
                 httpRequestId: webhookRequestId,
                 executionType: ExecutionType.BEGIN,
-                streamStepProgress: StreamStepProgress.NONE,
+                progressUpdateType: ProgressUpdateType.WEBHOOK_RESPONSE,
                 parentRunId,
                 failParentOnFailure,
             })
@@ -376,7 +377,7 @@ type SyncWebhookParams = {
     flow: Flow
     logger: FastifyBaseLogger
     webhookRequestId: string
-    workerHandlerId: string
+    synchronousHandlerId: string
     flowVersionIdToRun: FlowVersionId
     onRunCreated?: (run: FlowRun) => void
     parentRunId?: string

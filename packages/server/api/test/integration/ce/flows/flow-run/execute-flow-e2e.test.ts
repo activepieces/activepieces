@@ -21,7 +21,7 @@ import {
     FlowVersionState,
     PackageType,
     PieceType,
-    StreamStepProgress,
+    ProgressUpdateType,
     RunEnvironment,
 } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
@@ -510,11 +510,11 @@ describe('Execute Flow E2E', () => {
             platformId: mockPlatform.id,
             executionType: ExecutionType.BEGIN,
             environment: RunEnvironment.TESTING,
-            streamStepProgress: StreamStepProgress.NONE,
+            progressUpdateType: ProgressUpdateType.NONE,
             executeTrigger: false,
             flowVersionId: mockFlowVersion.id,
             projectId: mockProject.id,
-            workerHandlerId: undefined,
+            synchronousHandlerId: undefined,
             httpRequestId: undefined,
             failParentOnFailure: undefined,
         })
@@ -621,11 +621,11 @@ describe('Execute Flow E2E', () => {
                     platformId: mockPlatform.id,
                     executionType: ExecutionType.BEGIN,
                     environment: RunEnvironment.TESTING,
-                    streamStepProgress: StreamStepProgress.NONE,
+                    progressUpdateType: ProgressUpdateType.NONE,
                     executeTrigger: false,
                     flowVersionId: mockFlowVersion.id,
                     projectId: mockProject.id,
-                    workerHandlerId: undefined,
+                    synchronousHandlerId: undefined,
                     httpRequestId: undefined,
                     failParentOnFailure: undefined,
                 }),
@@ -679,11 +679,11 @@ describe('Execute Flow E2E', () => {
             platformId: mockPlatform.id,
             executionType: ExecutionType.BEGIN,
             environment: RunEnvironment.TESTING,
-            streamStepProgress: StreamStepProgress.NONE,
+            progressUpdateType: ProgressUpdateType.NONE,
             executeTrigger: false,
             flowVersionId: parentFlowVersion.id,
             projectId: mockProject.id,
-            workerHandlerId: undefined,
+            synchronousHandlerId: undefined,
             httpRequestId: undefined,
             failParentOnFailure: undefined,
         })
@@ -789,11 +789,11 @@ describe('Execute Flow E2E', () => {
             platformId: mockPlatform.id,
             executionType: ExecutionType.BEGIN,
             environment: RunEnvironment.TESTING,
-            streamStepProgress: StreamStepProgress.NONE,
+            progressUpdateType: ProgressUpdateType.NONE,
             executeTrigger: false,
             flowVersionId: mockFlowVersion.id,
             projectId: mockProject.id,
-            workerHandlerId: undefined,
+            synchronousHandlerId: undefined,
             httpRequestId: undefined,
             failParentOnFailure: undefined,
         })
@@ -814,11 +814,11 @@ describe('Execute Flow E2E', () => {
             platformId: mockPlatform.id,
             executionType: ExecutionType.BEGIN,
             environment: RunEnvironment.TESTING,
-            streamStepProgress: StreamStepProgress.WEBSOCKET,
+            progressUpdateType: ProgressUpdateType.TEST_FLOW,
             executeTrigger: false,
             flowVersionId: parentFlowVersion.id,
             projectId: mockProject.id,
-            workerHandlerId: undefined,
+            synchronousHandlerId: undefined,
             httpRequestId: undefined,
             failParentOnFailure: undefined,
             stepNameToTest: 'step_1',
@@ -838,13 +838,10 @@ describe('Execute Flow E2E', () => {
         )
     }, 180_000)
 
-    // TODO: Re-enable once callFlow's waitpoint-based resume properly relays the sync webhook response.
-    // Skipped because callFlow was migrated from pause()/generateResumeUrl() to createWaitpoint()/waitForWaitpoint(),
-    // and the resumed engine's sendFlowResponse doesn't reach the original engineResponseWatcher listener.
-    it.skip('executes webhook → call subflow (wait-for-response) → return webhook response', async () => {
+    it('executes webhook → call subflow (wait-for-response) → return webhook response', async () => {
         const { parentFlow } = await setupSubflowWithWebhookResponseFixtures()
 
-        // Hit the real /sync route so workerHandlerId + httpRequestId are wired up,
+        // Hit the real /sync route so synchronousHandlerId + httpRequestId are wired up,
         // enabling the webhook Return Response step to send back the HTTP response.
         const response = await app.inject({
             method: 'POST',

@@ -1,14 +1,13 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  gmailAuth,
-  createGoogleClient,
-  getAccessToken,
-  getUserEmail,
-} from '../auth';
+import { gmailAuth, createGoogleClient, getAccessToken, getUserEmail } from '../auth';
 import { google } from 'googleapis';
 import MailComposer from 'nodemailer/lib/mail-composer';
 import Mail from 'nodemailer/lib/mailer';
-import { assertNotNullOrUndefined, ExecutionType } from '@activepieces/shared';
+import {
+  assertNotNullOrUndefined,
+  ExecutionType,
+  PauseType,
+} from '@activepieces/shared';
 
 export const requestApprovalInEmail = createAction({
   auth: gmailAuth,
@@ -79,14 +78,10 @@ export const requestApprovalInEmail = createAction({
         assertNotNullOrUndefined(subject, 'subject');
         assertNotNullOrUndefined(body, 'body');
 
-        const waitpoint = await context.run.createWaitpoint({
-          type: 'WEBHOOK',
-        });
-
-        const approvalLink = waitpoint.buildResumeUrl({
+        const approvalLink = context.generateResumeUrl({
           queryParams: { action: 'approve' },
         });
-        const disapprovalLink = waitpoint.buildResumeUrl({
+        const disapprovalLink = context.generateResumeUrl({
           queryParams: { action: 'disapprove' },
         });
 
@@ -170,7 +165,12 @@ export const requestApprovalInEmail = createAction({
             raw: encodedPayload,
           },
         });
-        context.run.waitForWaitpoint(waitpoint.id);
+        context.run.pause({
+          pauseMetadata: {
+            type: PauseType.WEBHOOK,
+            response: {},
+          },
+        });
 
         return {
           approved: false, // default approval is false

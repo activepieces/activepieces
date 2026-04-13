@@ -7,6 +7,7 @@ import { GmailLabel } from '../common/models';
 import { GmailProps } from '../common/props';
 import { gmailAuth, createGoogleClient, GmailAuthValue } from '../auth';
 import {
+  GmailRequests,
   parseStream,
   convertAttachment,
   getFirstFiveOrAll,

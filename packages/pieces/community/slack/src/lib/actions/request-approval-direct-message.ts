@@ -4,6 +4,7 @@ import { slackAuth } from '../auth';
 import {
   assertNotNullOrUndefined,
   ExecutionType,
+  PauseType,
 } from '@activepieces/shared';
 import { profilePicture, text, userId, username, mentionOriginFlow } from '../common/props';
 import { ChatPostMessageResponse, WebClient } from '@slack/web-api';
@@ -31,10 +32,6 @@ export const requestApprovalDirectMessageAction = createAction({
       assertNotNullOrUndefined(text, 'text');
       assertNotNullOrUndefined(userId, 'userId');
       
-      const waitpoint = await context.run.createWaitpoint({
-        type: 'WEBHOOK',
-      });
-
       const postMessage = await slackSendMessage({
         token,
         text: `${context.propsValue.text}`,
@@ -45,11 +42,11 @@ export const requestApprovalDirectMessageAction = createAction({
 
       const dmId = (postMessage as ChatPostMessageResponse).channel as string;
       const messageTs = (postMessage as ChatPostMessageResponse).ts as string
-
-      const approvalLink = waitpoint.buildResumeUrl({
+      
+      const approvalLink = context.generateResumeUrl({
         queryParams: { action: 'approve', channel: dmId, messageTs },
       });
-      const disapprovalLink = waitpoint.buildResumeUrl({
+      const disapprovalLink = context.generateResumeUrl({
         queryParams: { action: 'disapprove', channel: dmId, messageTs },
       });
 
@@ -90,7 +87,12 @@ export const requestApprovalDirectMessageAction = createAction({
         ],
       });
 
-      context.run.waitForWaitpoint(waitpoint.id);
+      context.run.pause({
+        pauseMetadata: {
+          type: PauseType.WEBHOOK,
+          response: {},
+        },
+      });
 
       return {
         approved: false, // default approval is false
