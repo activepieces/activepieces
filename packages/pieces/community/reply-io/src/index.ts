@@ -20,7 +20,7 @@ export const replyIo = createPiece({
     'Sales engagement platform for contacts, campaigns, and outbound outreach workflows.',
   auth: replyIoAuth,
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://logo.clearbit.com/reply.io',
+  logoUrl: 'https://cdn.activepieces.com/pieces/reply-io.png',
   authors: ['Harmatta', 'sanket-a11y'],
   categories: [PieceCategory.SALES_AND_CRM, PieceCategory.MARKETING],
   actions: [

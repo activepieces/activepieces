@@ -288,6 +288,18 @@ export const flagService = (log: FastifyBaseLogger) => ({
                 created,
                 updated,
             },
+            {
+                id: ApFlagId.PROJECT_RATE_LIMITER_ENABLED,
+                value: system.getBoolean(AppSystemProp.PROJECT_RATE_LIMITER_ENABLED) ?? false,
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.DEFAULT_CONCURRENT_JOBS_LIMIT,
+                value: system.getNumber(AppSystemProp.DEFAULT_CONCURRENT_JOBS_LIMIT),
+                created,
+                updated,
+            },
         )
 
         if (system.isApp()) {

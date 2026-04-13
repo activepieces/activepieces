@@ -335,7 +335,7 @@ describe('MCP Tools integration', () => {
 
         const result = await apValidateStepConfigTool(mcp, mockLog).execute({
             stepType: 'CODE',
-            sourceCode: 'export const run = async () => { return true; };',
+            sourceCode: 'export const code = async () => { return true; };',
         })
 
         expect(text(result)).toContain('✅')
@@ -426,7 +426,7 @@ describe('MCP Tools integration', () => {
         await apUpdateStepTool(mcp, mockLog).execute({
             flowId,
             stepName: 'step_1',
-            sourceCode: 'export const run = async () => { return { ok: true }; };',
+            sourceCode: 'export const code = async () => { return { ok: true }; };',
             input: {},
         })
 
