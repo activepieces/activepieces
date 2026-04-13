@@ -141,7 +141,6 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
             run: {
                 id: constants.flowRunId,
                 stop: createStopHook(params),
-                pause: createLegacyPauseShim({ hookParams: params }),
                 respond: createRespondHook(params),
                 createWaitpoint: createWaitpointHook({ constants, stepName: action.name, hookParams: params }),
                 waitForWaitpoint: createWaitForWaitpointHook({ hookParams: params }),
@@ -150,16 +149,19 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 id: constants.projectId,
                 externalId: constants.externalProjectId,
             },
-            generateResumeUrl: (params) => {
-                // nanoid() is a placeholder since this deprecated endpoint doesn't validate requestId
-                const url = new URL(`${constants.publicApiUrl}v1/flow-runs/${constants.flowRunId}/requests/${nanoid()}${params.sync ? '/sync' : ''}`)
-                url.search = new URLSearchParams(params.queryParams).toString()
-                return url.toString()
-            },
         }
         const backwardCompatibleContext = backwardCompatabilityContextUtils.makeActionContextBackwardCompatible({
             contextVersion: piece.getContextInfo?.().version,
             context,
+            legacyHooks: {
+                pause: createLegacyPauseShim({ hookParams: params }),
+                generateResumeUrl: (params) => {
+                    // nanoid() is a placeholder since this deprecated endpoint doesn't validate requestId
+                    const url = new URL(`${constants.publicApiUrl}v1/flow-runs/${constants.flowRunId}/requests/${nanoid()}${params.sync ? '/sync' : ''}`)
+                    url.search = new URLSearchParams(params.queryParams).toString()
+                    return url.toString()
+                },
+            },
         })
         const testSingleStepMode = !isNil(constants.stepNameToTest)
         const runMethodToExecute = (testSingleStepMode && !isNil(pieceAction.test)) ? pieceAction.test : pieceAction.run
