@@ -89,12 +89,6 @@ export const flagService = (log: FastifyBaseLogger) => ({
                 updated,
             },
             {
-                id: ApFlagId.CAN_CONFIGURE_AI_PROVIDER,
-                value: true,
-                created,
-                updated,
-            },
-            {
                 id: ApFlagId.SHOW_BADGES,
                 value: true,
                 created,
@@ -229,8 +223,20 @@ export const flagService = (log: FastifyBaseLogger) => ({
                 updated,
             },
             {
+                id: ApFlagId.TRIGGER_TIMEOUT_SECONDS,
+                value: system.getNumberOrThrow(AppSystemProp.TRIGGER_TIMEOUT_SECONDS),
+                created,
+                updated,
+            },
+            {
                 id: ApFlagId.FLOW_RUN_MEMORY_LIMIT_KB,
                 value: system.getNumber(AppSystemProp.SANDBOX_MEMORY_LIMIT),
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.FLOW_RUN_LOG_SIZE_LIMIT_MB,
+                value: system.getNumber(AppSystemProp.MAX_FLOW_RUN_LOG_SIZE_MB),
                 created,
                 updated,
             },

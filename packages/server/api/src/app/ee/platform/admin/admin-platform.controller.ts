@@ -8,7 +8,7 @@ import { securityAccess } from '../../../core/security/authorization/fastify-sec
 import { system } from '../../../helper/system/system'
 import { AppSystemProp } from '../../../helper/system/system-props'
 import { pieceMetadataService } from '../../../pieces/metadata/piece-metadata-service'
-import { dedicatedWorkers } from '../platform-plan/platform-dedicated-workers'
+import { workerGroupService } from '../platform-plan/worker-group.service'
 import { adminPlatformService } from './admin-platform.service'
 
 const API_KEY_HEADER = 'api-key'
@@ -59,25 +59,52 @@ const adminPlatformController: FastifyPluginAsyncZod = async (
         return res.status(StatusCodes.OK).send()
     })
 
-    app.post('/platforms/dedicated-workers', ConfigureDedicatedWorkersRequest, async (req, res) => {
-        await dedicatedWorkers(req.log).updateWorkerConfig({
-            operation: req.body.operation,
+    app.post('/platforms/worker-group', UpdateWorkerGroupRequest, async (req, res) => {
+        await workerGroupService(req.log).updateWorkerGroup({
             platformId: req.body.platformId,
-            trustedEnvironment: req.body.trustedEnvironment,
+            workerGroupId: req.body.workerGroupId,
         })
+        return res.status(StatusCodes.OK).send()
+    })
+
+    app.post('/platforms/canary', UpdateCanaryRequest, async (req, res) => {
+        await workerGroupService(req.log).updateCanary({ platformId: req.body.platformId, canary: req.body.canary })
+        return res.status(StatusCodes.OK).send()
+    })
+
+    app.delete('/platforms/canary', DisableAllCanaryRequest, async (req, res) => {
+        await workerGroupService(req.log).disableAllCanary()
         return res.status(StatusCodes.OK).send()
     })
 }
 
 
-const ConfigureDedicatedWorkersRequest = {
+const UpdateWorkerGroupRequest = {
     schema: {
         body: z.object({
-            operation: z.union([z.literal('enable'), z.literal('disable')]),
             platformId: z.string(),
-            trustedEnvironment: z.boolean(),
+            workerGroupId: z.string().nullable(),
         }),
     },
+    config: {
+        security: securityAccess.public(),
+    },
+}
+
+const UpdateCanaryRequest = {
+    schema: {
+        body: z.object({
+            platformId: z.string(),
+            canary: z.boolean(),
+        }),
+    },
+    config: {
+        security: securityAccess.public(),
+    },
+}
+
+const DisableAllCanaryRequest = {
+    schema: {},
     config: {
         security: securityAccess.public(),
     },

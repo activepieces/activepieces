@@ -11,22 +11,21 @@ import {
 } from '@activepieces/shared'
 import { flowCache } from '../../cache/flow/flow-cache'
 import { workerSettings } from '../../config/worker-settings'
-import { JobContext, JobHandler, JobResult } from '../types'
+import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../types'
 import { provisionFlowPieces } from '../utils/flow-helpers'
 import { getWebhookUrl } from '../utils/webhook-url'
 
-export const executePollingJob: JobHandler<PollingJobData> = {
+export const executePollingJob: JobHandler<PollingJobData, FireAndForgetJobResult> = {
     jobType: WorkerJobType.EXECUTE_POLLING,
-    async execute(ctx: JobContext, data: PollingJobData): Promise<JobResult> {
-        const settings = workerSettings.getSettings()
-        const timeoutInSeconds = settings.TRIGGER_TIMEOUT_SECONDS
+    async execute(ctx: JobContext, data: PollingJobData): Promise<FireAndForgetJobResult> {
+        const timeoutInSeconds = workerSettings.getSettings().TRIGGER_TIMEOUT_SECONDS
 
         const flowVersion = await flowCache(ctx.log, ctx.apiClient).getVersion({ flowVersionId: data.flowVersionId })
         assertNotNullOrUndefined(flowVersion, 'flowVersion')
 
         const provisioned = await provisionFlowPieces({ flowVersion, platformId: data.platformId, flowId: data.flowId, projectId: data.projectId, log: ctx.log, apiClient: ctx.apiClient })
         if (!provisioned) {
-            return {}
+            return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
         }
 
         const sandbox = ctx.sandboxManager.acquire({ log: ctx.log, apiClient: ctx.apiClient })
@@ -54,9 +53,9 @@ export const executePollingJob: JobHandler<PollingJobData> = {
                 { timeoutInSeconds },
             )
 
-            if (result.engine.status === EngineResponseStatus.OK) {
-                const triggerResult = result.engine.response as ExecuteTriggerResponse<TriggerHookType.RUN>
-                if (triggerResult.success && triggerResult.output.length > 0) {
+            if (result.status === EngineResponseStatus.OK) {
+                const triggerResult = result.response as ExecuteTriggerResponse<TriggerHookType.RUN>
+                if (triggerResult.output.length > 0) {
                     await ctx.apiClient.submitPayloads({
                         flowVersionId: data.flowVersionId,
                         projectId: data.projectId,
@@ -67,12 +66,12 @@ export const executePollingJob: JobHandler<PollingJobData> = {
                 }
             }
 
-            return {}
+            return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK, logs: result.logs }
         }
         catch (e) {
             ctx.log.error({ error: String(e) }, 'Polling trigger failed, will retry on next scheduled cycle')
             await ctx.sandboxManager.invalidate(ctx.log)
-            return {}
+            return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
         }
         finally {
             await ctx.sandboxManager.release(ctx.log)

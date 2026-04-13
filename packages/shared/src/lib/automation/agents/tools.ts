@@ -24,6 +24,12 @@ export enum AgentToolType {
     PIECE = 'PIECE',
     FLOW = 'FLOW',
     MCP = 'MCP',
+    KNOWLEDGE_BASE = 'KNOWLEDGE_BASE',
+}
+
+export enum KnowledgeBaseSourceType {
+    FILE = 'FILE',
+    TABLE = 'TABLE',
 }
 
 export enum McpProtocol {
@@ -103,9 +109,19 @@ export const AgentMcpTool = z.object({
 })
 export type AgentMcpTool = z.infer<typeof AgentMcpTool>
 
+export const AgentKnowledgeBaseTool = z.object({
+    type: z.literal(AgentToolType.KNOWLEDGE_BASE),
+    ...AgentToolBase,
+    sourceType: z.nativeEnum(KnowledgeBaseSourceType),
+    sourceId: z.string(),
+    sourceName: z.string(),
+})
+export type AgentKnowledgeBaseTool = z.infer<typeof AgentKnowledgeBaseTool>
+
 export const AgentTool = z.discriminatedUnion('type', [
     AgentPieceTool,
     AgentFlowTool,
     AgentMcpTool,
+    AgentKnowledgeBaseTool,
 ])
 export type AgentTool = z.infer<typeof AgentTool>

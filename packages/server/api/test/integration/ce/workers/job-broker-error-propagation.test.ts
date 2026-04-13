@@ -6,7 +6,6 @@ import { jobQueue, JobType } from '../../../../src/app/workers/job-queue/job-que
 import { engineResponseWatcher } from '../../../../src/app/workers/engine-response-watcher'
 import {
     apId,
-    ConsumeJobResponseStatus,
     EngineResponseStatus,
     LATEST_JOB_DATA_SCHEMA_VERSION,
     TriggerHookType,
@@ -51,7 +50,8 @@ describe('Job broker error propagation', () => {
             data: jobData,
         })
 
-        await jobBroker(app.log).poll()
+        const polledJob = await jobBroker(app.log).poll()
+        expect(polledJob).not.toBeNull()
 
         const listenerPromise = engineResponseWatcher(app.log).oneTimeListener(
             requestId,
@@ -62,7 +62,9 @@ describe('Job broker error propagation', () => {
 
         await jobBroker(app.log).completeJob({
             jobId,
-            status: ConsumeJobResponseStatus.INTERNAL_ERROR,
+            token: polledJob!.token,
+            queueName: polledJob!.queueName,
+            status: EngineResponseStatus.INTERNAL_ERROR,
             errorMessage: 'Sandbox timeout',
         })
 
@@ -99,7 +101,8 @@ describe('Job broker error propagation', () => {
             data: jobData,
         })
 
-        await jobBroker(app.log).poll()
+        const polledJob = await jobBroker(app.log).poll()
+        expect(polledJob).not.toBeNull()
 
         const listenerPromise = engineResponseWatcher(app.log).oneTimeListener(
             requestId,
@@ -110,7 +113,9 @@ describe('Job broker error propagation', () => {
 
         await jobBroker(app.log).completeJob({
             jobId,
-            status: ConsumeJobResponseStatus.INTERNAL_ERROR,
+            token: polledJob!.token,
+            queueName: polledJob!.queueName,
+            status: EngineResponseStatus.INTERNAL_ERROR,
         })
 
         const result = await listenerPromise
@@ -118,6 +123,109 @@ describe('Job broker error propagation', () => {
             status: EngineResponseStatus.INTERNAL_ERROR,
             response: undefined,
             error: 'Internal error',
+        })
+    })
+
+    it('should treat USER_FAILURE as completed and propagate error through engine response watcher', async () => {
+        const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
+        const requestId = apId()
+        const webserverId = engineResponseWatcher(app.log).getServerId()
+
+        const jobData = {
+            jobType: WorkerJobType.EXECUTE_TRIGGER_HOOK,
+            platformId: mockPlatform.id,
+            projectId: mockProject.id,
+            schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
+            flowId: apId(),
+            flowVersionId: apId(),
+            test: false,
+            hookType: TriggerHookType.ON_ENABLE,
+            requestId,
+            webserverId,
+        }
+
+        const jobId = apId()
+        await jobQueue(app.log).add({
+            type: JobType.ONE_TIME,
+            id: jobId,
+            data: jobData,
+        })
+
+        const polledJob = await jobBroker(app.log).poll()
+        expect(polledJob).not.toBeNull()
+
+        const listenerPromise = engineResponseWatcher(app.log).oneTimeListener(
+            requestId,
+            true,
+            5000,
+            undefined,
+        )
+
+        await jobBroker(app.log).completeJob({
+            jobId,
+            token: polledJob!.token,
+            queueName: polledJob!.queueName,
+            status: EngineResponseStatus.USER_FAILURE,
+            errorMessage: 'Connection expired',
+        })
+
+        const result = await listenerPromise
+        expect(result).toEqual({
+            status: EngineResponseStatus.USER_FAILURE,
+            response: undefined,
+            error: 'Connection expired',
+        })
+    })
+
+    it('should pass through USER_FAILURE response payload when provided', async () => {
+        const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
+        const requestId = apId()
+        const webserverId = engineResponseWatcher(app.log).getServerId()
+
+        const jobData = {
+            jobType: WorkerJobType.EXECUTE_TRIGGER_HOOK,
+            platformId: mockPlatform.id,
+            projectId: mockProject.id,
+            schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
+            flowId: apId(),
+            flowVersionId: apId(),
+            test: false,
+            hookType: TriggerHookType.ON_ENABLE,
+            requestId,
+            webserverId,
+        }
+
+        const jobId = apId()
+        await jobQueue(app.log).add({
+            type: JobType.ONE_TIME,
+            id: jobId,
+            data: jobData,
+        })
+
+        const polledJob = await jobBroker(app.log).poll()
+        expect(polledJob).not.toBeNull()
+
+        const listenerPromise = engineResponseWatcher(app.log).oneTimeListener(
+            requestId,
+            true,
+            5000,
+            undefined,
+        )
+
+        await jobBroker(app.log).completeJob({
+            jobId,
+            token: polledJob!.token,
+            queueName: polledJob!.queueName,
+            status: EngineResponseStatus.USER_FAILURE,
+            errorMessage: 'Bad API key',
+            response: { message: 'Invalid credentials' },
+        })
+
+        const result = await listenerPromise
+        expect(result).toEqual({
+            status: EngineResponseStatus.USER_FAILURE,
+            response: { message: 'Invalid credentials' },
+            error: 'Bad API key',
         })
     })
 
@@ -146,12 +254,8 @@ describe('Job broker error propagation', () => {
             data: jobData,
         })
 
-        await jobBroker(app.log).poll()
-
-        const expectedResponse = {
-            status: EngineResponseStatus.OK,
-            response: { message: 'trigger enabled' },
-        }
+        const polledJob = await jobBroker(app.log).poll()
+        expect(polledJob).not.toBeNull()
 
         const listenerPromise = engineResponseWatcher(app.log).oneTimeListener(
             requestId,
@@ -162,11 +266,16 @@ describe('Job broker error propagation', () => {
 
         await jobBroker(app.log).completeJob({
             jobId,
-            status: ConsumeJobResponseStatus.OK,
-            response: expectedResponse,
+            token: polledJob!.token,
+            queueName: polledJob!.queueName,
+            status: EngineResponseStatus.OK,
+            response: { message: 'trigger enabled' },
         })
 
         const result = await listenerPromise
-        expect(result).toEqual(expectedResponse)
+        expect(result).toEqual({
+            status: EngineResponseStatus.OK,
+            response: { message: 'trigger enabled' },
+        })
     })
 })

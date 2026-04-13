@@ -1,11 +1,5 @@
 {
   "Email delivery service for sending transactional and marketing emails": "Email delivery service for sending transactional and marketing emails",
-  "API Key": "API Key",
-  "Data Residency": "Data Residency",
-  "API key acquired from your SendGrid settings": "API key acquired from your SendGrid settings",
-  "Select the Data Residency for this API key": "Select the Data Residency for this API key",
-  "Global (US)": "Global (US)",
-  "EU": "EU",
   "Send Email": "Send Email",
   "Send Dynamic Template": "Send Dynamic Template",
   "Custom API Call": "Custom API Call",

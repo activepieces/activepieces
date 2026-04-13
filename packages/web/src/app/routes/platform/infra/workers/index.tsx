@@ -1,4 +1,6 @@
 import {
+  ApEdition,
+  ApFlagId,
   WorkerMachineStatus,
   WorkerMachineType,
   WorkerMachineWithStatus,
@@ -29,19 +31,21 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { workersQueries } from '@/features/platform-admin';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { useTimeAgo } from '@/hooks/use-time-ago';
 import { cn } from '@/lib/utils';
 
-import { WorkerConfigsModal } from './worker-configs-dialog';
+import { WorkerConfigsPopover } from './worker-configs-popover';
 
 export default function WorkersPage() {
-  const isCloud = true;
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+  const isCloud = edition === ApEdition.CLOUD;
   const { data: workersData, isLoading } = workersQueries.useWorkerMachines();
 
   const fleetType = workersData?.[0]?.type;
 
   return (
-    <div className="flex flex-col w-full gap-4">
+    <div className="flex flex-col w-full gap-4 px-4">
       <DashboardPageHeader
         description={t('Check the health of your workers')}
         title={t('Workers')}
@@ -227,7 +231,7 @@ function WorkerCard({ worker, index, isCloud }: WorkerCardProps) {
             <Badge variant={isOnline ? 'success' : 'destructive'}>
               {t(worker.status.toLowerCase())}
             </Badge>
-            <WorkerConfigsModal workerProps={workerProps} />
+            <WorkerConfigsPopover workerProps={workerProps} />
           </div>
         </div>
       </CardHeader>

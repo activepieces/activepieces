@@ -42,7 +42,17 @@ You are working in the Activepieces web application (`packages/web`).
   ```tsx
   <MyForm key={open ? 'open' : 'closed'} />
   ```
-- **Separate dialog state from form logic** — The dialog component owns `open` state; the form is a separate child component. This makes `key`-based resets trivial.
+- **Separate dialog state from form logic — apply this from the start** — The dialog component owns `open` state; the form is a separate child component. This makes `key`-based resets trivial. **Do this when first writing the dialog, not as a follow-up.** Every `<Dialog>` that contains a `useForm(...)` must be structured this way:
+  ```tsx
+  // ✅ Correct — dialog wrapper + keyed form child
+  const MyDialog: React.FC<Props> = ({ open, onOpenChange }) => (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <MyForm key={open ? 'open' : 'closed'} onOpenChange={onOpenChange} />
+      </DialogContent>
+    </Dialog>
+  );
+  ```
 - **Always use `<FormField>` + `render` prop** — Wrap every field in `<FormField name="..." render={({ field }) => <FormItem>...</FormItem>} />`. Always include `<FormMessage />` inside `<FormItem>` to surface validation errors.
 - **Use `form.watch()` for conditional rendering** — When a field value controls what other fields or UI is shown, use `form.watch('fieldName')`. Do not mirror form values into separate `useState`.
 - **Use `form.setValue()` for cascading field updates** — When changing one field should reset or update related fields (e.g. selecting a provider resets its config), call `form.setValue()` inside the `onValueChange` handler.
@@ -68,6 +78,24 @@ You are working in the Activepieces web application (`packages/web`).
 - **Listening to value changes to trigger other state updates** — Derive the value directly during render or handle it in the event handler that caused the change. A chain of `useEffect` → `setState` → `useEffect` is always a sign of a design problem.
 - **Transforming data for rendering** — Calculate it inline during render instead.
 - **Passing data upward to a parent** — Lift state up or use a shared store.
+
+## Query Feature Guards
+
+When a server endpoint is gated by `platformMustHaveFeatureEnabled` (returns HTTP 402 `FEATURE_DISABLED` when the plan lacks the feature), the corresponding `useQuery` hook **must** include `enabled: platform.plan.<flag>` so the request never fires when the feature is off. Without this, queries with `meta: { showErrorDialog: true }` will trigger a misleading "Failed to load data" error dialog via the global `QueryCache.onError` handler in `app.tsx`.
+
+**Pattern** (see `secret-managers-hooks.ts`):
+```ts
+const { platform } = platformHooks.useCurrentPlatform();
+return useQuery({
+  queryKey: [...],
+  queryFn: ...,
+  enabled: platform.plan.someFeatureEnabled,
+});
+```
+
+- `platformHooks.useCurrentPlatform()` returns instantly from cache (loaded by `InitialDataGuard`), safe to call in any hook.
+- If the query already has an `enabled` condition, combine them: `enabled: !!existing && platform.plan.<flag>`.
+- For pages with plan-gated content, also wrap with `LockedFeatureGuard` so users see an upgrade prompt instead of a broken/empty page.
 
 ## Guidelines
 

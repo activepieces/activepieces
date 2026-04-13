@@ -14,7 +14,7 @@ import {
   LanguageModel,
   ToolSet,
 } from 'ai';
-import { experimental_generateImage as generateImage } from 'ai';
+import { generateImage } from 'ai';
 import mime from 'mime-types';
 import { isNil } from '@activepieces/shared';
 import { createAIModel } from '../../common/ai-sdk';
@@ -239,7 +239,7 @@ const generateImageUsingGenerateText = async ({
 
     return {
       type: 'image',
-      image: `data:${fileType};base64,${image.file.base64}`,
+      image: `data:${fileType || 'image/jpeg'};base64,${image.file.base64}`,
     };
   });
 

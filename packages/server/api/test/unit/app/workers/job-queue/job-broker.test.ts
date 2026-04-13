@@ -49,6 +49,7 @@ function createMockJob(id: string, data?: Record<string, unknown>): Job {
         attemptsMade: 0,
         moveToDelayed: vi.fn().mockResolvedValue(undefined),
         changePriority: vi.fn().mockResolvedValue(undefined),
+        updateData: vi.fn().mockResolvedValue(undefined),
     } as unknown as Job
 }
 
@@ -73,6 +74,9 @@ describe('tryDequeue', () => {
         expect(result!.jobId).toBe('job-1')
         expect(result!.engineToken).toBe('engine-token')
         expect(result!.timeoutInSeconds).toBe(600)
+        expect(result!.token).toMatch(/^token-/)
+        expect(result!.queueName).toBe('test-queue')
+        expect(job.updateData).not.toHaveBeenCalled()
         expect(mockWorker.getNextJob).toHaveBeenCalledTimes(1)
     })
 

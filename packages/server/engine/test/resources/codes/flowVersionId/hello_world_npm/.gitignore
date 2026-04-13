@@ -1,0 +1,3 @@
+# Allow the local mock npm package fixture to be committed
+!node_modules
+!node_modules/**

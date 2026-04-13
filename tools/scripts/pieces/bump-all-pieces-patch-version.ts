@@ -94,8 +94,7 @@ function main(): void {
         errorCount++;
       }
     } else {
-      console.error(`Package.json not found for ${piece}`);
-      errorCount++;
+      console.warn(`Skipping ${piece} (no package.json)`);
     }
   }
   

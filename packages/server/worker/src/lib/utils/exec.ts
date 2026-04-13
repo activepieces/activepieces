@@ -7,16 +7,20 @@ export const execPromise = promisify(execCallback)
 
 export async function spawnWithKill({
     cmd,
+    args: explicitArgs,
     options = {},
     printOutput,
     timeoutMs,
 }: SpawnWithKillParams): Promise<CommandOutput> {
 
     return new Promise((resolve, reject) => {
-        const [command, ...args] = cmd.split(' ')
+        // When explicit args are provided, skip shell splitting and disable shell
+        // to prevent command injection via user-controlled path components.
+        const [command, ...splitArgs] = explicitArgs === undefined ? cmd.split(' ') : [cmd]
+        const args = explicitArgs ?? splitArgs
         const cp = spawn(command, args, {
             detached: true,
-            shell: true,
+            shell: explicitArgs === undefined,
             ...options,
         })
 
@@ -83,6 +87,7 @@ export async function spawnWithKill({
 
 type SpawnWithKillParams = {
     cmd: string
+    args?: string[]
     options?: SpawnOptions
     printOutput?: boolean
     timeoutMs?: number

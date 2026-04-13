@@ -2,7 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { klaviyoAuth, KlaviyoAuthValue } from '../common/auth';
 import { listIdDropdown, profileIdsMultiSelectDropdown } from '../common/props';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { makeRequest } from '../common/client';
+import { makeRequest, normalizeProfileIds } from '../common/client';
 
 export const removeProfileFromList = createAction({
   auth: klaviyoAuth,
@@ -14,7 +14,8 @@ export const removeProfileFromList = createAction({
     profile_ids: profileIdsMultiSelectDropdown,
   },
   async run({ propsValue, auth }) {
-    const { list_id, profile_ids } = propsValue;
+    const { list_id, profile_ids: rawProfileIds } = propsValue;
+    const profile_ids = normalizeProfileIds(rawProfileIds);
 
     if (!profile_ids || profile_ids.length === 0) {
       throw new Error('At least one profile must be selected');

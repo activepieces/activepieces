@@ -1,6 +1,5 @@
 export * from './engine-operation'
 export * from './engine-contract'
-export * from './rpc'
 export * from './requests'
 export * from './engine-constants'
 export * from './execution-errors'

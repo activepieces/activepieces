@@ -8,6 +8,7 @@ import {
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
+import { mcpUtils } from './mcp-utils'
 
 const listPiecesSchema = z.object({
     categories: z.array(z.enum(Object.values(PieceCategory) as [string, ...string[]])).optional(),
@@ -22,7 +23,7 @@ const listPiecesSchema = z.object({
 export const apListPiecesTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_list_pieces',
-        description: 'List pieces (pieceName, pieceVersion, actions count, triggers count). Use includeActions=true to get action names and descriptions. Use includeTriggers=true to get trigger names and descriptions. Call before ap_add_step or ap_update_trigger to get valid piece names and action/trigger names.',
+        description: 'List available pieces with their actions and triggers. Use includeActions/includeTriggers for details.',
         inputSchema: {
             categories: listPiecesSchema.shape.categories,
             tags: listPiecesSchema.shape.tags,
@@ -48,15 +49,17 @@ export const apListPiecesTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
 
                 if (!params.includeActions && !params.includeTriggers) {
                     const totalCount = pieces.length
-                    const capped = pieces.slice(0, 50)
-                    const hint = totalCount > 50 ? ` (showing 50 of ${totalCount} — use searchQuery to narrow results)` : ''
+                    const LIST_CAP = 50
+                    const capped = pieces.slice(0, LIST_CAP)
+                    const hint = totalCount > LIST_CAP ? ` (showing ${LIST_CAP} of ${totalCount} — use searchQuery to narrow results)` : ''
                     return {
                         content: [{ type: 'text', text: `✅ Successfully listed pieces${hint}:\n${JSON.stringify(capped)}` }],
                     }
                 }
 
                 const totalCount = pieces.length
-                const piecesToEnrich = pieces.slice(0, 50)
+                const ENRICHED_CAP = 10
+                const piecesToEnrich = pieces.slice(0, ENRICHED_CAP)
                 const enrichedPieces = await Promise.all(piecesToEnrich.map(async (piece) => {
                     const base: Record<string, unknown> = {
                         name: piece.name,
@@ -76,6 +79,8 @@ export const apListPiecesTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
                                 name: a.name,
                                 displayName: a.displayName,
                                 description: a.description,
+                                requireAuth: a.requireAuth,
+                                inputProps: mcpUtils.buildPropSummaries(a.props),
                             }))
                         }
                         if (params.includeTriggers) {
@@ -83,21 +88,23 @@ export const apListPiecesTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
                                 name: t.name,
                                 displayName: t.displayName,
                                 description: t.description,
+                                requireAuth: t.requireAuth,
+                                inputProps: mcpUtils.buildPropSummaries(t.props),
                             }))
                         }
                     }
                     return base
                 }))
 
+                const overflowHint = totalCount > ENRICHED_CAP
+                    ? ` (showing top ${ENRICHED_CAP} of ${totalCount} results — use a more specific searchQuery to narrow results)`
+                    : ''
                 return {
-                    content: [{ type: 'text', text: `✅ Successfully listed pieces${totalCount > piecesToEnrich.length ? ` (showing ${piecesToEnrich.length} of ${totalCount} — use searchQuery to narrow results)` : ''}:\n${JSON.stringify(enrichedPieces)}` }],
+                    content: [{ type: 'text', text: `✅ Successfully listed pieces${overflowHint}:\n${JSON.stringify(enrichedPieces)}` }],
                 }
             }
             catch (err) {
-                const message = err instanceof Error ? err.message : String(err)
-                return {
-                    content: [{ type: 'text', text: `❌ Failed to list pieces: ${message}` }],
-                }
+                return mcpUtils.mcpToolError('Failed to list pieces', err)
             }
         },
     }

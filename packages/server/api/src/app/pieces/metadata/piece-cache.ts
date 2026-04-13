@@ -6,7 +6,7 @@ import { In, IsNull } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { pubsub } from '../../helper/pubsub'
 import { system } from '../../helper/system/system'
-import { AppSystemProp } from '../../helper/system/system-props'
+import { AppSystemProp, apVersionUtil } from '../../helper/system/system-props'
 import { PieceMetadataEntity, PieceMetadataSchema } from './piece-metadata-entity'
 import { filterPieceBasedOnType, isNewerVersion, isSupportedRelease, lastVersionOfEachPiece, loadDevPiecesIfEnabled } from './utils'
 
@@ -66,10 +66,11 @@ export const pieceCache = (log: FastifyBaseLogger) => {
                 pieceTranslation.translatePiece<PieceMetadataSchema>({ piece, locale, mutate: true }),
             )
 
+            const currentRelease = await apVersionUtil.getCurrentRelease()
             const devPieceNames = new Set(translatedDevPieces.map((p) => p.name))
-            const filteredPieces = [...cachedPieces.filter((p) => !devPieceNames.has(p.name)), ...translatedDevPieces].filter((piece) =>
-                filterPieceBasedOnType(platformId, piece),
-            )
+            const filteredPieces = [...cachedPieces.filter((p) => !devPieceNames.has(p.name)), ...translatedDevPieces]
+                .filter((piece) => filterPieceBasedOnType(platformId, piece))
+                .filter((piece) => isSupportedRelease(currentRelease, piece))
             return lastVersionOfEachPiece(filteredPieces)
         },
 

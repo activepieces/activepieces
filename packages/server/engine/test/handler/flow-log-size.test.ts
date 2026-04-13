@@ -1,8 +1,8 @@
-import { ExecutionType, FlowRunStatus, FlowTriggerType, StepOutputStatus, GenericStepOutput } from '@activepieces/shared'
+import { ExecutionType, FlowRunStatus, FlowTriggerType, FlowVersionState, GenericStepOutput, StepOutputStatus } from '@activepieces/shared'
+import { vi } from 'vitest'
 import { FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { flowExecutor } from '../../src/lib/handler/flow-executor'
-import { buildCodeAction, buildSimpleLoopAction, generateMockEngineConstants } from './test-helper'
-import { vi } from 'vitest'
+import { buildCodeAction, buildMockBeginExecuteFlowOperation, buildSimpleLoopAction, generateMockEngineConstants } from './test-helper'
 
 vi.mock('../../src/lib/services/progress.service', () => ({
     progressService: {
@@ -24,24 +24,21 @@ describe('flow executor log size exceeded', () => {
     describe('with small log size limit', () => {
         let freshExecutor: typeof flowExecutor
         let FreshContext: typeof FlowExecutorContext
-        let progressService: { sendUpdate: ReturnType<typeof vi.fn>, backup: ReturnType<typeof vi.fn> }
 
         beforeAll(async () => {
             process.env.AP_MAX_FLOW_RUN_LOG_SIZE_MB = '0.0001'
             vi.resetModules()
             const executorModule = await import('../../src/lib/handler/flow-executor')
             const contextModule = await import('../../src/lib/handler/context/flow-execution-context')
-            const progressModule = await import('../../src/lib/services/progress.service')
             freshExecutor = executorModule.flowExecutor
             FreshContext = contextModule.FlowExecutorContext
-            progressService = progressModule.progressService as any
         })
 
         beforeEach(() => {
             vi.clearAllMocks()
         })
 
-        it('should throw LogSizeExceededError when log size exceeds limit', async () => {
+        it('should return LOG_SIZE_EXCEEDED verdict when log size exceeds limit', async () => {
             const action = buildCodeAction({
                 name: 'echo_step',
                 input: {
@@ -49,14 +46,16 @@ describe('flow executor log size exceeded', () => {
                 },
             })
 
-            await expect(freshExecutor.execute({
+            const result = await freshExecutor.execute({
                 action,
                 executionState: FreshContext.empty(),
                 constants: generateMockEngineConstants(),
-            })).rejects.toThrow('Flow run data size exceeded the maximum allowed size')
+            })
+
+            expect(result.verdict.status).toBe(FlowRunStatus.LOG_SIZE_EXCEEDED)
         })
 
-        it('should set verdict to LOG_SIZE_EXCEEDED before throwing', async () => {
+        it('should set failedStep to the step that caused log size to exceed', async () => {
             const action = buildCodeAction({
                 name: 'echo_step',
                 input: {
@@ -64,37 +63,46 @@ describe('flow executor log size exceeded', () => {
                 },
             })
 
-            try {
-                await freshExecutor.execute({
-                    action,
-                    executionState: FreshContext.empty(),
-                    constants: generateMockEngineConstants(),
-                })
-                expect.unreachable('should have thrown')
-            }
-            catch (e) {
-                expect((e as Error).name).toBe('LogSizeExceededError')
-            }
+            const result = await freshExecutor.execute({
+                action,
+                executionState: FreshContext.empty(),
+                constants: generateMockEngineConstants(),
+            })
 
-            expect(progressService.backup).toHaveBeenCalledWith(
-                expect.objectContaining({
-                    flowExecutorContext: expect.objectContaining({
-                        verdict: expect.objectContaining({
-                            status: FlowRunStatus.LOG_SIZE_EXCEEDED,
-                        }),
-                    }),
-                }),
-            )
+            expect(result.verdict.status).toBe(FlowRunStatus.LOG_SIZE_EXCEEDED)
+            expect(result.verdict.failedStep).toEqual(expect.objectContaining({
+                name: 'echo_step',
+            }))
         })
 
-        it('should throw LogSizeExceededError when trigger output exceeds log size limit', async () => {
+        it('should return LOG_SIZE_EXCEEDED verdict when terminal loop action exceeds log size limit', async () => {
+            const loopAction = buildSimpleLoopAction({
+                name: 'loop',
+                loopItems: '{{ [1, 2, 3] }}',
+                firstLoopAction: buildCodeAction({
+                    name: 'echo_step',
+                    input: { key: 'x'.repeat(10000) },
+                }),
+            })
+
+            const result = await freshExecutor.execute({
+                action: loopAction,
+                executionState: FreshContext.empty(),
+                constants: generateMockEngineConstants(),
+            })
+
+            expect(result.verdict.status).toBe(FlowRunStatus.LOG_SIZE_EXCEEDED)
+        })
+
+        it('should return LOG_SIZE_EXCEEDED verdict when trigger output exceeds log size limit', async () => {
             const triggerName = 'trigger'
             const trigger = {
                 name: triggerName,
                 displayName: 'Test Trigger',
-                type: FlowTriggerType.EMPTY,
+                type: FlowTriggerType.EMPTY as const,
                 valid: true,
                 settings: {},
+                lastUpdatedDate: '2024-01-01T00:00:00Z',
                 nextAction: buildCodeAction({
                     name: 'echo_step',
                     input: { key: 'value' },
@@ -107,32 +115,30 @@ describe('flow executor log size exceeded', () => {
                 input: {},
             }).setOutput({ data: 'x'.repeat(10000) }))
 
-            try {
-                await freshExecutor.executeFromTrigger({
-                    executionState,
-                    constants: generateMockEngineConstants(),
-                    input: {
-                        executionType: ExecutionType.BEGIN,
-                        triggerPayload: {},
-                        executeTrigger: false,
-                        flowVersion: { trigger } as any,
-                    } as any,
-                })
-                expect.unreachable('should have thrown')
-            }
-            catch (e) {
-                expect((e as Error).name).toBe('LogSizeExceededError')
-            }
-
-            expect(progressService.backup).toHaveBeenCalledWith(
-                expect.objectContaining({
-                    flowExecutorContext: expect.objectContaining({
-                        verdict: expect.objectContaining({
-                            status: FlowRunStatus.LOG_SIZE_EXCEEDED,
-                        }),
-                    }),
+            const result = await freshExecutor.executeFromTrigger({
+                executionState,
+                constants: generateMockEngineConstants(),
+                input: buildMockBeginExecuteFlowOperation({
+                    flowVersion: {
+                        id: 'flowVersionId',
+                        created: '2024-01-01T00:00:00Z',
+                        updated: '2024-01-01T00:00:00Z',
+                        flowId: 'flowId',
+                        displayName: 'Test Flow',
+                        trigger,
+                        updatedBy: null,
+                        valid: true,
+                        schemaVersion: null,
+                        agentIds: [],
+                        state: FlowVersionState.DRAFT,
+                        connectionIds: [],
+                        backupFiles: null,
+                        notes: [],
+                    },
                 }),
-            )
+            })
+
+            expect(result.verdict.status).toBe(FlowRunStatus.LOG_SIZE_EXCEEDED)
         })
     })
 
@@ -154,7 +160,7 @@ describe('flow executor log size exceeded', () => {
         expect(result.steps.echo_step.status).toBe(StepOutputStatus.SUCCEEDED)
     })
 
-    it('should skip log size check for loop actions', async () => {
+    it('should not throw for loop actions when log size is within limit', async () => {
         const loopAction = buildSimpleLoopAction({
             name: 'loop',
             loopItems: '{{ [1, 2, 3] }}',

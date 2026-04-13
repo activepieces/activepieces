@@ -60,7 +60,7 @@ jobs:
           tag: ${{ inputs.tag }}
           name: ${{ inputs.tag }}
           version: ${{ inputs.tag }}
-          latest: true
+          latest: ${{ !contains(inputs.tag, '-rc') }}
           publish: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

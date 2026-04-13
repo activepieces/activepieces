@@ -42,6 +42,18 @@ export const hmacSignature = createAction({
       description: 'The text to be hashed and encrypted',
       required: true,
     }),
+    outputEncoding: Property.StaticDropdown<'hex' | 'base64'>({
+      displayName: 'Output Encoding',
+      description: 'The encoding of the output signature',
+      required: false,
+      defaultValue: 'hex',
+      options: {
+        options: [
+          { label: 'Hex', value: 'hex' },
+          { label: 'Base64', value: 'base64' },
+        ],
+      },
+    }),
   },
   async run(context) {
     const hashAlgorithm = Crypto.createHmac(
@@ -55,7 +67,7 @@ export const hmacSignature = createAction({
     const text = context.propsValue.text;
     hashAlgorithm.update(text);
 
-    const hashedString = hashAlgorithm.digest('hex');
+    const hashedString = hashAlgorithm.digest(context.propsValue.outputEncoding ?? 'hex');
 
     return hashedString;
   },

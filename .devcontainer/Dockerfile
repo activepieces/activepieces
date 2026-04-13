@@ -31,7 +31,7 @@ ENV LC_ALL en_US.UTF-8
 
 COPY default.cf /usr/local/etc/isolate
 
-RUN npm i -g bun@1.3.1 cross-env@7.0.3
+RUN npm i -g bun@1.3.1 cross-env@7.0.3 esbuild@0.25.0 @anthropic-ai/claude-code
 
 
 # install isolated-vm in a parent directory to avoid linking the package in every sandbox

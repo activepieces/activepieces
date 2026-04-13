@@ -11,8 +11,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from '@/components/ui/carousel';
-
-import { ExploreTemplateCard } from './template-card';
+import { ExploreTemplateCard } from '@/features/templates/components/explore-template-card';
 
 type CategorySectionProps = {
   category: string;

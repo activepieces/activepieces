@@ -78,6 +78,11 @@ export const TemplateEntity = new EntitySchema<TemplateSchema>({
             columns: ['categories'],
             unique: false,
         },
+        {
+            name: 'idx_template_platform_id',
+            columns: ['platformId'],
+            unique: false,
+        },
     ],
     relations: {
         platform: {

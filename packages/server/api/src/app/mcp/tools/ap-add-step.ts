@@ -7,6 +7,7 @@ import {
     isNil,
     McpServer,
     McpToolDefinition,
+    Permission,
     RouterExecutionType,
     StepLocationRelativeToParent,
     UpdateActionRequest,
@@ -15,6 +16,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
 import { projectService } from '../../project/project-service'
+import { mcpUtils } from './mcp-utils'
 
 const addStepInput = z.object({
     flowId: z.string(),
@@ -31,13 +33,14 @@ const addStepInput = z.object({
 export const apAddStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_add_step',
-        description: 'Add a new step to a flow (skeleton only - configure it afterwards with ap_update_step or ap_update_trigger). Use ap_flow_structure to get valid parentStepName and insert locations. Use ap_list_pieces to get pieceName, pieceVersion, and actionName for PIECE steps.',
+        permission: Permission.WRITE_FLOW,
+        description: 'Add a new step to a flow (skeleton only — configure with ap_update_step afterwards). Prefer PIECE over CODE.',
         inputSchema: {
             flowId: z.string().describe('The id of the flow'),
             parentStepName: z.string().describe('The step name to insert after/into (e.g. "trigger", "step_1"). Use ap_flow_structure to get valid values.'),
             stepLocationRelativeToParent: z.enum(Object.values(StepLocationRelativeToParent) as [string, ...string[]]).describe('Where to place the step: AFTER = after the parent, INSIDE_LOOP = first action inside a loop, INSIDE_BRANCH = first action inside a router branch'),
             branchIndex: z.number().optional().describe('Branch index (required when stepLocationRelativeToParent is INSIDE_BRANCH)'),
-            stepType: z.enum([FlowActionType.CODE, FlowActionType.PIECE, FlowActionType.LOOP_ON_ITEMS, FlowActionType.ROUTER]).describe('The type of step to add'),
+            stepType: z.enum([FlowActionType.CODE, FlowActionType.PIECE, FlowActionType.LOOP_ON_ITEMS, FlowActionType.ROUTER]).describe('The type of step to add. Prefer PIECE over CODE — only use CODE when no piece exists for the task.'),
             displayName: z.string().describe('Display name for the step'),
             pieceName: z.string().optional().describe('For PIECE steps: the piece name (e.g. "@activepieces/piece-gmail"). Use ap_list_pieces to get valid values.'),
             pieceVersion: z.string().optional().describe('For PIECE steps: the piece version (e.g. "~0.1.0"). Use ap_list_pieces to get valid values.'),
@@ -66,7 +69,7 @@ export const apAddStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDe
                         displayName,
                         valid: false,
                         settings: {
-                            sourceCode: { code: 'export const run = async (inputs) => { return {} }', packageJson: '{}' },
+                            sourceCode: { code: 'export const code = async (inputs) => { return {} }', packageJson: '{}' },
                             input: {},
                             errorHandlingOptions: { continueOnFailure: { value: false }, retryOnFailure: { value: false } },
                         },
@@ -168,13 +171,7 @@ export const apAddStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDe
                 }
             }
             catch (err) {
-                const message = err instanceof Error ? err.message : String(err)
-                return {
-                    content: [{
-                        type: 'text',
-                        text: `❌ Step add failed: ${message}`,
-                    }],
-                }
+                return mcpUtils.mcpToolError('Step add failed', err)
             }
         },
     }

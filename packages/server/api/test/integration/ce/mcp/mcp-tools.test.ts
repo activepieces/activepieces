@@ -24,6 +24,10 @@ import { apDeleteStepTool } from '../../../../src/app/mcp/tools/ap-delete-step'
 import { apLockAndPublishTool } from '../../../../src/app/mcp/tools/ap-lock-and-publish'
 import { apAddBranchTool } from '../../../../src/app/mcp/tools/ap-add-branch'
 import { apDeleteBranchTool } from '../../../../src/app/mcp/tools/ap-delete-branch'
+import { apGetPiecePropsTool } from '../../../../src/app/mcp/tools/ap-get-piece-props'
+import { apValidateStepConfigTool } from '../../../../src/app/mcp/tools/ap-validate-step-config'
+import { apValidateFlowTool } from '../../../../src/app/mcp/tools/ap-validate-flow'
+import { apUpdateTriggerTool } from '../../../../src/app/mcp/tools/ap-update-trigger'
 
 let app: FastifyInstance
 let mockLog: FastifyBaseLogger
@@ -41,6 +45,28 @@ beforeAll(async () => {
         pieceType: PieceType.OFFICIAL,
         packageType: PackageType.REGISTRY,
         platformId: undefined,
+        actions: {
+            send_email: {
+                name: 'send_email',
+                displayName: 'Send Email',
+                description: 'Send an email',
+                requireAuth: true,
+                props: {
+                    to: { type: 'SHORT_TEXT', displayName: 'To', required: true },
+                    subject: { type: 'SHORT_TEXT', displayName: 'Subject', required: true },
+                    folder: { type: 'DROPDOWN', displayName: 'Folder', required: false, refreshers: [] },
+                },
+            },
+        },
+        triggers: {
+            new_email: {
+                name: 'new_email',
+                displayName: 'New Email',
+                description: 'Triggers on new email',
+                requireAuth: false,
+                props: {},
+            },
+        },
     })
     await db.save('piece_metadata', gmailPiece)
 })
@@ -67,7 +93,7 @@ function text(result: { content: Array<{ type: 'text', text: string }> }): strin
 
 async function createFlowAndGetId(mcp: McpServer, flowName: string): Promise<string> {
     const result = await apCreateFlowTool(mcp, mockLog).execute({ flowName })
-    const match = text(result).match(/with id (\S+)/)
+    const match = text(result).match(/\(id: (\S+?)\)/)
     if (!match) throw new Error(`Could not extract flowId from: ${text(result)}`)
     return match[1]
 }
@@ -271,5 +297,307 @@ describe('MCP Tools integration', () => {
             branchIndex: 1,
         })
         expect(text(errorResult)).toContain('❌')
+    })
+
+    it('11. ap_get_piece_props — returns field schemas for a piece action', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const result = await apGetPiecePropsTool(mcp, mockLog).execute({
+            pieceName: '@activepieces/piece-gmail',
+            actionOrTriggerName: 'send_email',
+            type: 'action',
+        })
+
+        expect(text(result)).toContain('✅')
+        expect(text(result)).toContain('send_email')
+        expect(text(result)).toContain('to')
+        expect(text(result)).toContain('subject')
+    })
+
+    it('12. ap_get_piece_props — returns error for non-existent piece', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const result = await apGetPiecePropsTool(mcp, mockLog).execute({
+            pieceName: '@activepieces/piece-nonexistent',
+            actionOrTriggerName: 'fake_action',
+            type: 'action',
+        })
+
+        expect(text(result)).toContain('❌')
+        expect(text(result)).toContain('not found')
+    })
+
+    it('13. ap_validate_step_config — CODE with valid source returns valid', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const result = await apValidateStepConfigTool(mcp, mockLog).execute({
+            stepType: 'CODE',
+            sourceCode: 'export const code = async () => { return true; };',
+        })
+
+        expect(text(result)).toContain('✅')
+        expect(text(result)).toContain('Valid CODE')
+    })
+
+    it('14. ap_validate_step_config — CODE with empty source returns invalid', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const result = await apValidateStepConfigTool(mcp, mockLog).execute({
+            stepType: 'CODE',
+        })
+
+        expect(text(result)).toContain('⚠️')
+        expect(text(result)).toContain('Invalid CODE')
+    })
+
+    it('15. ap_validate_step_config — LOOP with items returns valid', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const result = await apValidateStepConfigTool(mcp, mockLog).execute({
+            stepType: 'LOOP_ON_ITEMS',
+            loopItems: '{{step_1.output}}',
+        })
+
+        expect(text(result)).toContain('✅')
+        expect(text(result)).toContain('Valid LOOP')
+    })
+
+    it('16. ap_validate_step_config — LOOP without items returns invalid', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const result = await apValidateStepConfigTool(mcp, mockLog).execute({
+            stepType: 'LOOP_ON_ITEMS',
+        })
+
+        expect(text(result)).toContain('⚠️')
+        expect(text(result)).toContain('Invalid LOOP')
+    })
+
+    it('17. ap_validate_step_config — PIECE_ACTION missing pieceName returns error', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const result = await apValidateStepConfigTool(mcp, mockLog).execute({
+            stepType: 'PIECE_ACTION',
+            actionName: 'send_email',
+        })
+
+        expect(text(result)).toContain('❌')
+        expect(text(result)).toContain('pieceName')
+    })
+
+    it('18. ap_validate_flow — new flow with empty trigger has issues', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+        const flowId = await createFlowAndGetId(mcp, 'Validate Flow Test')
+
+        const result = await apValidateFlowTool(mcp, mockLog).execute({ flowId })
+
+        expect(text(result)).toContain('⚠️')
+        expect(text(result)).toContain('not configured')
+    })
+
+    it('19. ap_validate_flow — flow with configured trigger and valid CODE step is ready', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+        const flowId = await createFlowAndGetId(mcp, 'Valid Flow Test')
+
+        await apUpdateTriggerTool(mcp, mockLog).execute({
+            flowId,
+            pieceName: '@activepieces/piece-gmail',
+            pieceVersion: '~0.1.0',
+            triggerName: 'new_email',
+        })
+
+        await apAddStepTool(mcp, mockLog).execute({
+            flowId,
+            parentStepName: 'trigger',
+            stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
+            stepType: FlowActionType.CODE,
+            displayName: 'My Code',
+        })
+
+        await apUpdateStepTool(mcp, mockLog).execute({
+            flowId,
+            stepName: 'step_1',
+            sourceCode: 'export const code = async () => { return { ok: true }; };',
+            input: {},
+        })
+
+        const result = await apValidateFlowTool(mcp, mockLog).execute({ flowId })
+
+        expect(text(result)).toContain('✅')
+        expect(text(result)).toContain('ready to publish')
+        expect(text(result)).not.toContain('⚠️')
+        expect(text(result)).not.toContain('issue')
+    })
+
+    it('20. ap_validate_flow — flow with invalid step lists it', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+        const flowId = await createFlowAndGetId(mcp, 'Invalid Step Flow')
+
+        await apUpdateTriggerTool(mcp, mockLog).execute({
+            flowId,
+            pieceName: '@activepieces/piece-gmail',
+            pieceVersion: '~0.1.0',
+            triggerName: 'new_email',
+        })
+
+        await apAddStepTool(mcp, mockLog).execute({
+            flowId,
+            parentStepName: 'trigger',
+            stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
+            stepType: FlowActionType.PIECE,
+            displayName: 'Unconfigured Piece',
+            pieceName: '@activepieces/piece-gmail',
+            pieceVersion: '~0.1.0',
+        })
+
+        const result = await apValidateFlowTool(mcp, mockLog).execute({ flowId })
+
+        expect(text(result)).toContain('⚠️')
+        expect(text(result)).toContain('Step Validity')
+        expect(text(result)).toContain('Unconfigured Piece')
+        expect(text(result)).toContain('invalid')
+        expect(text(result)).toContain('1 invalid')
+    })
+
+    it('21. ap_validate_flow — detects empty router branches', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+        const flowId = await createFlowAndGetId(mcp, 'Router Validate Flow')
+
+        await apUpdateTriggerTool(mcp, mockLog).execute({
+            flowId,
+            pieceName: '@activepieces/piece-gmail',
+            pieceVersion: '~0.1.0',
+            triggerName: 'new_email',
+        })
+
+        await apAddStepTool(mcp, mockLog).execute({
+            flowId,
+            parentStepName: 'trigger',
+            stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
+            stepType: FlowActionType.ROUTER,
+            displayName: 'My Router',
+        })
+
+        const result = await apValidateFlowTool(mcp, mockLog).execute({ flowId })
+
+        expect(text(result)).toContain('⚠️')
+        expect(text(result)).toContain('Empty Branches')
+        expect(text(result)).toContain('My Router')
+        expect(text(result)).toContain('empty branch')
+    })
+
+    it('22. ap_get_piece_props — without auth returns note for dropdown fields', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const result = await apGetPiecePropsTool(mcp, mockLog).execute({
+            pieceName: '@activepieces/piece-gmail',
+            actionOrTriggerName: 'send_email',
+            type: 'action',
+        })
+
+        expect(text(result)).toContain('✅')
+        expect(text(result)).toContain('folder')
+        expect(text(result)).toContain('DROPDOWN')
+        expect(text(result)).toContain('Dynamic dropdown')
+    })
+
+    it('23. ap_get_piece_props — with auth attempts dropdown resolution and falls back gracefully', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const result = await apGetPiecePropsTool(mcp, mockLog).execute({
+            pieceName: '@activepieces/piece-gmail',
+            actionOrTriggerName: 'send_email',
+            type: 'action',
+            auth: 'fake-connection-id',
+        })
+
+        expect(text(result)).toContain('✅')
+        expect(text(result)).toContain('folder')
+        expect(text(result)).toContain('DROPDOWN')
+        expect(text(result)).toContain('to')
+        expect(text(result)).toContain('subject')
+    })
+
+    it('24. ap_get_piece_props — with auth on piece with no dropdowns returns clean schema', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const result = await apGetPiecePropsTool(mcp, mockLog).execute({
+            pieceName: '@activepieces/piece-gmail',
+            actionOrTriggerName: 'new_email',
+            type: 'trigger',
+            auth: 'fake-connection-id',
+        })
+
+        expect(text(result)).toContain('✅')
+        expect(text(result)).not.toContain('DROPDOWN')
+        expect(text(result)).not.toContain('Dynamic dropdown')
+    })
+
+    it('25. ap_get_piece_props — with auth and invalid piece returns error before resolution', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const result = await apGetPiecePropsTool(mcp, mockLog).execute({
+            pieceName: '@activepieces/piece-nonexistent',
+            actionOrTriggerName: 'fake_action',
+            type: 'action',
+            auth: 'some-connection',
+        })
+
+        expect(text(result)).toContain('❌')
+        expect(text(result)).toContain('not found')
+    })
+
+    it('26. ap_get_piece_props — with auth and invalid action returns error with available list', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const result = await apGetPiecePropsTool(mcp, mockLog).execute({
+            pieceName: '@activepieces/piece-gmail',
+            actionOrTriggerName: 'nonexistent_action',
+            type: 'action',
+            auth: 'some-connection',
+        })
+
+        expect(text(result)).toContain('❌')
+        expect(text(result)).toContain('not found')
+        expect(text(result)).toContain('send_email')
+    })
+
+    it('27. ap_get_piece_props — static dropdowns always return options regardless of auth', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const withAuth = await apGetPiecePropsTool(mcp, mockLog).execute({
+            pieceName: '@activepieces/piece-gmail',
+            actionOrTriggerName: 'send_email',
+            type: 'action',
+            auth: 'fake-connection',
+        })
+
+        const withoutAuth = await apGetPiecePropsTool(mcp, mockLog).execute({
+            pieceName: '@activepieces/piece-gmail',
+            actionOrTriggerName: 'send_email',
+            type: 'action',
+        })
+
+        expect(text(withAuth)).toContain('to')
+        expect(text(withAuth)).toContain('subject')
+        expect(text(withoutAuth)).toContain('to')
+        expect(text(withoutAuth)).toContain('subject')
     })
 })

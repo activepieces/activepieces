@@ -8,7 +8,6 @@ import {
   FieldLabel,
 } from '@/components/custom/field';
 import { LoadingSpinner } from '@/components/custom/spinner';
-import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -70,7 +69,7 @@ export const McpServerSettings = () => {
             </TabsList>
 
             <TabsContent value="connection" className="mt-4 pb-6" tabIndex={-1}>
-              <McpCredentials mcpServer={mcpServer} />
+              <McpCredentials />
             </TabsContent>
 
             <TabsContent
@@ -79,11 +78,8 @@ export const McpServerSettings = () => {
               tabIndex={-1}
             >
               <div>
-                <h3 className="font-semibold text-base mb-1 flex items-center gap-2">
+                <h3 className="font-semibold text-base mb-1">
                   {t('Internal Tools')}
-                  <Badge variant="outline" className="text-xs">
-                    {t('Beta')}
-                  </Badge>
                 </h3>
                 <p className="text-sm text-muted-foreground mb-3">
                   {t(
