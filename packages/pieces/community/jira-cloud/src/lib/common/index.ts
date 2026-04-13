@@ -154,9 +154,9 @@ export async function searchIssuesByJql({
 	})) as { issues: any[]; nextPageToken?: string };
 
 	const issueIds = searchResult.issues.map((issue) => issue.id);
-	if (issueIds.length === 0) {
-		return [];
-	}
+    if (issueIds.length === 0) {
+        return { issues: [] };
+    }
 
 	const bulkFetchResponse = await sendJiraRequest({
 		auth,
@@ -171,13 +171,11 @@ export async function searchIssuesByJql({
 
 	const body = bulkFetchResponse.body as { issues: any[]; names?: Record<string, string> };
 	
-	const finalIssues = body.issues as JiraSearchResponse;
-	finalIssues.nextPageToken = searchResult.nextPageToken;
-	if (body.names) {
-		finalIssues.names = body.names;
-  }
-
-	return finalIssues;
+	return {
+        issues: body.issues,
+        nextPageToken: searchResult.nextPageToken,
+        names: body.names
+    };
 }
 
 export async function createJiraIssue(data: CreateIssueParams) {

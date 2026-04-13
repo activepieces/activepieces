@@ -22,13 +22,13 @@ const polling: Polling<   JiraAuth,
     const searchQuery = `${jql ? jql + ' AND ' : ''}updated > '${dayjs(
       lastFetchEpochMS
     ).format('YYYY-MM-DD HH:mm')}'`;
-    const issues = await searchIssuesByJql({
+    const response = await searchIssuesByJql({
       auth,
       jql: searchQuery,
       maxResults: 50,
       sanitizeJql: sanitizeJql ?? false,
     });
-    return issues.map((issue) => ({
+    return response.issues.map((issue: any) => ({
       epochMilliSeconds: Date.parse(issue.fields.updated),
       data: issue,
     }));

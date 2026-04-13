@@ -76,20 +76,21 @@ Example: *all and -comment returns everything except comments.`,
         expand: expandParams,
       });
 
+      const fetchedIssues = response.issues;
       const fieldNames = response.names || {};
       
       if (mapNames && Object.keys(fieldNames).length > 0) {
-        for (const issue of response) {
+        for (const issue of fetchedIssues) {
           if (issue.fields) {
             issue.fields = mapFieldNames(issue.fields, fieldNames);
           }
         }
       }
 
-      allIssues.push(...response);
+      allIssues.push(...fetchedIssues);
       nextPageToken = response.nextPageToken;
 
-      if (!nextPageToken || response.length === 0) break;
+      if (!nextPageToken || fetchedIssues.length === 0) break;
     }
 
     return allIssues;

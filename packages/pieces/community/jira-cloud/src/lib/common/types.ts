@@ -17,7 +17,8 @@ export type IssueFieldMetaData ={
     allowedValues?:Array<{value:string,id:string,name:string}>
 }
 
-export type JiraSearchResponse = any[] & {
+export type JiraSearchResponse = {
+	issues: any[];
     nextPageToken?: string;
 	names?: Record<string, string>;
 };
