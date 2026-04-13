@@ -18,18 +18,29 @@ export const concurrencyPoolService = (log: FastifyBaseLogger) => ({
             key: `concurrency_pool_upsert:${platformId}:${key}`,
             timeoutInSeconds: 30,
             fn: async () => {
+                const existing = await concurrencyPoolRepo().findOne({
+                    where: { platformId, key },
+                })
+                if (!isNil(existing)) {
+                    await concurrencyPoolRepo().update({ id: existing.id }, {
+                        maxConcurrentJobs: maxConcurrentJobs ?? existing.maxConcurrentJobs,
+                    })
+                    if (!isNil(maxConcurrentJobs)) {
+                        await distributedStore.put(getConcurrencyPoolLimitKey(existing.id), maxConcurrentJobs, CACHE_TTL_SECONDS)
+                    }
+                    return { poolId: existing.id }
+                }
                 const poolId = apId()
-                await concurrencyPoolRepo().upsert({
+                await concurrencyPoolRepo().insert({
                     id: poolId,
                     platformId,
                     key,
                     maxConcurrentJobs: maxConcurrentJobs ?? UNLIMITED_CONCURRENT_JOBS,
-                }, ['platformId', 'key'])
-                const pool = await concurrencyPoolRepo().findOneOrFail({ where: { platformId, key } })
+                })
                 if (!isNil(maxConcurrentJobs)) {
-                    await distributedStore.put(getConcurrencyPoolLimitKey(pool.id), maxConcurrentJobs, CACHE_TTL_SECONDS)
+                    await distributedStore.put(getConcurrencyPoolLimitKey(poolId), maxConcurrentJobs, CACHE_TTL_SECONDS)
                 }
-                return { poolId: pool.id }
+                return { poolId }
             },
         })
     },
