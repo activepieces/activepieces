@@ -132,17 +132,15 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
         const project = await projectService(log).getOneOrThrow(projectId)
         const platformPlan = await platformPlanService(log).getOrCreateForPlatform(project.platformId)
         const { globalConnectionExternalIds, maxConcurrentJobs, ...rest } = request
+        let resolvedPoolId: string | null | undefined
         await transaction(async (entityManager) => {
-            const poolId = await resolvePoolId({ platformId: project.platformId, projectId, maxConcurrentJobs, log })
+            resolvedPoolId = await resolvePoolId({ platformId: project.platformId, projectId, maxConcurrentJobs, log })
             await projectService(log).update(projectId, {
                 type: project.type,
                 ...rest,
-                ...(poolId !== undefined ? { poolId } : {}),
+                ...(resolvedPoolId !== undefined ? { poolId: resolvedPoolId } : {}),
                 ...(maxConcurrentJobs !== undefined ? { maxConcurrentJobs } : {}),
             }, entityManager)
-            if (poolId !== undefined) {
-                await concurrencyPoolService(log).assignProject({ projectId, poolId })
-            }
             if (platformPlan.globalConnectionsEnabled && globalConnectionExternalIds) {
                 const projectGlobalConnections = await appConnectionsRepo(entityManager).find({
                     where: {
@@ -198,6 +196,9 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
                 }
             }
         })
+        if (resolvedPoolId !== undefined) {
+            await concurrencyPoolService(log).assignProject({ projectId, poolId: resolvedPoolId })
+        }
         return this.getWithPlanAndUsageOrThrow(projectId)
     },
     async getWithPlanAndUsageOrThrow(

@@ -9,6 +9,7 @@ import { ConcurrencyPoolEntity, ConcurrencyPoolEntitySchema } from './concurrenc
 const concurrencyPoolRepo = repoFactory<ConcurrencyPoolEntitySchema>(ConcurrencyPoolEntity)
 const CACHE_TTL_SECONDS = 86400 // 24 hours
 const NO_POOL_SENTINEL = 'none'
+const UNLIMITED_CONCURRENT_JOBS = 1_000_000
 
 export const concurrencyPoolService = (_log: FastifyBaseLogger) => ({
 
@@ -29,7 +30,7 @@ export const concurrencyPoolService = (_log: FastifyBaseLogger) => ({
             id: poolId,
             platformId,
             key,
-            maxConcurrentJobs: maxConcurrentJobs ?? 1,
+            maxConcurrentJobs: maxConcurrentJobs ?? UNLIMITED_CONCURRENT_JOBS,
         }))
         if (!isNil(error)) {
             // Unique constraint violation — another request created the pool concurrently
