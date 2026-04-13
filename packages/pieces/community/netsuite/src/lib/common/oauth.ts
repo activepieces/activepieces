@@ -3,6 +3,15 @@ import { createHmac } from 'crypto';
 const SIGN_METHOD = 'HMAC-SHA256';
 const OAUTH_VERSION = '1.0';
 
+// OAuth 1.0 (RFC 5849 §3.6) requires RFC 3986 percent-encoding, which encodes
+// '!', '*', "'", '(', ')' — characters that encodeURIComponent leaves unencoded.
+function oauthEncode(str: string): string {
+  return encodeURIComponent(str).replace(
+    /[!'()*]/g,
+    (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`
+  );
+}
+
 function generateNonce(): string {
   const length = 11;
   const possible =
@@ -53,19 +62,19 @@ function generateSignature(
   // Sort parameters by key, then by value (OAuth 1.0 spec)
   const sortedKeys = Object.keys(allParams).sort();
   const paramPairs = sortedKeys.map(
-    (key) => `${encodeURIComponent(key)}=${encodeURIComponent(allParams[key])}`
+    (key) => `${oauthEncode(key)}=${oauthEncode(allParams[key])}`
   );
   const paramString = paramPairs.join('&');
 
   const signatureBaseString = [
     httpMethod.toUpperCase(),
-    encodeURIComponent(baseUrl),
-    encodeURIComponent(paramString),
+    oauthEncode(baseUrl),
+    oauthEncode(paramString),
   ].join('&');
 
   const signingKey = [
-    encodeURIComponent(consumerSecret),
-    encodeURIComponent(tokenSecret),
+    oauthEncode(consumerSecret),
+    oauthEncode(tokenSecret),
   ].join('&');
 
   const hmac = createHmac('sha256', signingKey);
