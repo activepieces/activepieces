@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { gmailAuth, createGoogleClient, getAccessToken } from '../auth';
+import { gmailAuth, createGoogleClient, getAccessToken, getUserEmail } from '../auth';
 import { google } from 'googleapis';
 import MailComposer from 'nodemailer/lib/mail-composer';
 import Mail from 'nodemailer/lib/mailer';
@@ -126,11 +126,7 @@ export const requestApprovalInEmail = createAction({
 
         const senderEmail =
           context.propsValue.from ||
-          (
-            await google
-              .oauth2({ version: 'v2', auth: authClient })
-              .userinfo.get()
-          ).data.email;
+          (await getUserEmail(context.auth, authClient));
         if (senderEmail) {
           mailOptions.from = context.propsValue.sender_name
             ? `${context.propsValue['sender_name']} <${senderEmail}>`

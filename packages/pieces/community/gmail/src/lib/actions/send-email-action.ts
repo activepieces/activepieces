@@ -2,7 +2,7 @@ import { ApFile, createAction, Property } from '@activepieces/pieces-framework';
 import mime from 'mime-types';
 import MailComposer from 'nodemailer/lib/mail-composer';
 import Mail, { Attachment } from 'nodemailer/lib/mailer';
-import { gmailAuth, createGoogleClient } from '../auth';
+import { gmailAuth, createGoogleClient, getUserEmail } from '../auth';
 import { google } from 'googleapis';
 
 export const gmailSendEmailAction = createAction({
@@ -154,8 +154,7 @@ export const gmailSendEmailAction = createAction({
 
     const senderEmail =
       context.propsValue.from ||
-      (await google.oauth2({ version: 'v2', auth: authClient }).userinfo.get())
-        .data.email;
+      (await getUserEmail(context.auth, authClient));
     if (senderEmail) {
       mailOptions.from = context.propsValue.sender_name
         ? `${context.propsValue['sender_name']} <${senderEmail}>`

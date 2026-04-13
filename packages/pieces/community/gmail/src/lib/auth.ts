@@ -3,11 +3,15 @@ import { AppConnectionType } from '@activepieces/shared';
 import { google } from 'googleapis';
 import { OAuth2Client } from 'googleapis-common';
 
-export const gmailScopes = [
+const gmailServiceAccountScopes = [
   'https://www.googleapis.com/auth/gmail.send',
-  'email',
   'https://www.googleapis.com/auth/gmail.readonly',
   'https://www.googleapis.com/auth/gmail.compose',
+];
+
+export const gmailScopes = [
+  ...gmailServiceAccountScopes,
+  'email',
 ];
 
 export const gmailAuth = [PieceAuth.OAuth2({
@@ -27,8 +31,8 @@ export const gmailAuth = [PieceAuth.OAuth2({
     }),
     userEmail: Property.ShortText({
       displayName: 'User Email',
-      required: false,
-      description: 'Email address of the user to impersonate for domain-wide delegation.',
+      required: true,
+      description: 'Email address of the user to impersonate. Required for Gmail service account access via domain-wide delegation.',
     }),
   },
   validate: async ({ auth }) => {
@@ -62,7 +66,7 @@ export async function createGoogleClient(auth: GmailAuthValue): Promise<OAuth2Cl
     return new google.auth.JWT({
       email: serviceAccount.client_email,
       key: serviceAccount.private_key,
-      scopes: gmailScopes,
+      scopes: gmailServiceAccountScopes,
       subject: auth.props.userEmail?.trim() || undefined,
     });
   }
@@ -83,3 +87,10 @@ export const getAccessToken = async (auth: GmailAuthValue): Promise<string> => {
   }
   return auth.access_token;
 };
+
+export async function getUserEmail(auth: GmailAuthValue, authClient: OAuth2Client): Promise<string | undefined> {
+  if (auth.type === AppConnectionType.CUSTOM_AUTH) {
+    return auth.props.userEmail?.trim();
+  }
+  return (await google.oauth2({ version: 'v2', auth: authClient }).userinfo.get()).data.email ?? undefined;
+}

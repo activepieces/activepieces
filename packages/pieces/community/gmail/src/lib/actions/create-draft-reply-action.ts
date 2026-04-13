@@ -2,7 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import mime from 'mime-types';
 import MailComposer from 'nodemailer/lib/mail-composer';
 import Mail, { Attachment } from 'nodemailer/lib/mailer';
-import { gmailAuth, createGoogleClient } from '../auth';
+import { gmailAuth, createGoogleClient, getUserEmail } from '../auth';
 import { google } from 'googleapis';
 import { GmailProps } from '../common/props';
 
@@ -167,9 +167,7 @@ export const gmailCreateDraftReplyAction = createAction({
         toRecipients.push(senderEmail);
       }
 
-      const currentUserEmail = (
-        await google.oauth2({ version: 'v2', auth: authClient }).userinfo.get()
-      ).data.email;
+      const currentUserEmail = await getUserEmail(context.auth, authClient);
 
       if (originalTo) {
         const toEmails = originalTo.split(',').map((email) => email.trim());
@@ -201,9 +199,7 @@ export const gmailCreateDraftReplyAction = createAction({
       referencesHeader = `${originalReferences} ${originalMessageId}`;
     }
 
-    const senderEmail = (
-      await google.oauth2({ version: 'v2', auth: authClient }).userinfo.get()
-    ).data.email;
+    const senderEmail = await getUserEmail(context.auth, authClient);
 
     let draftBody = context.propsValue.body || '';
 
