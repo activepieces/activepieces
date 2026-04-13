@@ -193,8 +193,6 @@ async function reportFlowStatus(
         status,
         projectId: data.projectId,
         streamStepProgress: data.streamStepProgress,
-        workerHandlerId: data.workerHandlerId ?? null,
-        httpRequestId: data.httpRequestId ?? null,
         finishTime: new Date().toISOString(),
     })
 }
