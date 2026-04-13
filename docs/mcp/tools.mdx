@@ -24,6 +24,14 @@ Get the structure of a flow: step tree, configuration status, and valid insert l
 |-------|------|----------|-------------|
 | `flowId` | string | Yes | The flow ID |
 
+### ap_validate_flow
+
+Validate a flow for structural issues without publishing. Checks step validity, template references, and empty branches.
+
+| Input | Type | Required | Description |
+|-------|------|----------|-------------|
+| `flowId` | string | Yes | The flow ID |
+
 ### ap_list_pieces
 
 List available pieces with their actions and triggers. Required before adding or updating steps.
@@ -34,13 +42,44 @@ List available pieces with their actions and triggers. Required before adding or
 | `includeActions` | boolean | No | Include action details |
 | `includeTriggers` | boolean | No | Include trigger details |
 
+### ap_get_piece_props
+
+Get the detailed input property schema for a specific piece action or trigger. Returns field names, types, required/optional, descriptions, default values, and dropdown options. Use this before `ap_update_step` or `ap_update_trigger` to know exactly which fields to set.
+
+| Input | Type | Required | Description |
+|-------|------|----------|-------------|
+| `pieceName` | string | Yes | Piece name (e.g., `@activepieces/piece-slack`) |
+| `actionOrTriggerName` | string | Yes | Action or trigger name (e.g., `send_channel_message`) |
+| `type` | string | Yes | `action` or `trigger` |
+| `auth` | string | No | Connection externalId. When provided, dynamic dropdowns return actual options (e.g., Slack channels, Google Sheets). |
+| `flowId` | string | No | Flow ID for resolving dependent dropdowns that need step context. |
+
+### ap_validate_step_config
+
+Validate a step configuration before applying it. Returns field-level errors without modifying any flow.
+
+| Input | Type | Required | Description |
+|-------|------|----------|-------------|
+| `stepType` | string | Yes | `PIECE_ACTION`, `PIECE_TRIGGER`, `CODE`, `LOOP_ON_ITEMS`, or `ROUTER` |
+| `pieceName` | string | No | For PIECE types: piece name (short names like `slack` accepted) |
+| `actionName` | string | No | For PIECE_ACTION: action name |
+| `triggerName` | string | No | For PIECE_TRIGGER: trigger name |
+| `input` | object | No | For PIECE types: input config to validate |
+| `auth` | string | No | For PIECE types: any non-empty string indicates auth is provided |
+| `sourceCode` | string | No | For CODE: JavaScript/TypeScript source code |
+| `packageJson` | string | No | For CODE: package.json as JSON string |
+| `loopItems` | string | No | For LOOP_ON_ITEMS: items expression |
+| `settings` | object | No | For ROUTER: raw router settings |
+
 ### ap_list_connections
 
 List OAuth/app connections in the project. Required before adding steps that need authentication.
 
 | Input | Type | Required | Description |
 |-------|------|----------|-------------|
-| — | — | — | No inputs required |
+| `pieceName` | string | No | Filter by piece name. Short names like `slack` or `google-sheets` are auto-expanded. |
+| `displayName` | string | No | Filter by connection display name (partial match) |
+| `status` | array | No | Filter by status: `ACTIVE`, `MISSING`, or `ERROR` |
 
 ### ap_list_ai_models
 
@@ -186,6 +225,8 @@ Update an existing step's settings. Auto-fills default values for optional prope
 | `auth` | string | No | Connection externalId |
 | `actionName` | string | No | For PIECE steps |
 | `loopItems` | string | No | For LOOP steps |
+| `sourceCode` | string | No | For CODE steps: JavaScript/TypeScript source code |
+| `packageJson` | string | No | For CODE steps: npm dependencies as JSON string |
 | `skip` | boolean | No | Skip this step |
 
 <Tip>
