@@ -151,6 +151,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 externalId: constants.externalProjectId,
             },
             generateResumeUrl: (params) => {
+                // nanoid() is a placeholder since this deprecated endpoint doesn't validate requestId
                 const url = new URL(`${constants.publicApiUrl}v1/flow-runs/${constants.flowRunId}/requests/${nanoid()}${params.sync ? '/sync' : ''}`)
                 url.search = new URLSearchParams(params.queryParams).toString()
                 return url.toString()
