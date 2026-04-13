@@ -33,8 +33,6 @@ vi.mock('@tanstack/query-db-collection', () => ({
   }),
 }));
 
-// ─── helpers ─────────────────────────────────────────────────────────────────
-
 const CURRENT_USER_ID = 'userCurrent';
 const OTHER_USER_ID = 'userOther';
 
@@ -91,15 +89,11 @@ function idsFrom(
   return ([...collection.values()] as ProjectWithLimits[]).map((p) => p.id);
 }
 
-// ─── getProjectName ───────────────────────────────────────────────────────────
-
 describe('getProjectName', () => {
   let getProjectName: (p: ProjectWithLimits) => string;
 
   beforeEach(async () => {
-    ({ getProjectName } = await import(
-      '../../features/projects/stores/project-collection'
-    ));
+    ({ getProjectName } = await import('./project-collection'));
   });
 
   it('returns "Personal Project" for a PERSONAL type project', () => {
@@ -127,8 +121,6 @@ describe('getProjectName', () => {
     expect(getProjectName(project)).toBe('Personal Project');
   });
 });
-
-// ─── useAll filter ────────────────────────────────────────────────────────────
 
 describe('useAll filter', () => {
   function query(projects: ProjectWithLimits[], userId: string | null) {
@@ -202,8 +194,6 @@ describe('useAll filter', () => {
   });
 
   it('shows TEAM projects and only own PERSONAL from a full platform collection', () => {
-    // Simulates the admin scenario: after visiting platform admin, the collection
-    // contains personal projects from all users on the platform.
     const projects = [
       makeProject('teamA', ProjectType.TEAM, 'platformOwner'),
       makeProject('teamB', ProjectType.TEAM, 'platformOwner'),
@@ -222,8 +212,6 @@ describe('useAll filter', () => {
     expect(ids).toHaveLength(3);
   });
 });
-
-// ─── useAllPlatformProjects filter ────────────────────────────────────────────
 
 describe('useAllPlatformProjects filter', () => {
   const allProjects = [
@@ -275,8 +263,8 @@ describe('useAllPlatformProjects filter', () => {
 
   it('filters by displayName substring', () => {
     const ids = query(allProjects, { displayName: 'eta' });
-    expect(ids).toContain('t2'); // "Beta" contains "eta"
-    expect(ids).not.toContain('t1'); // "Alpha" does not
+    expect(ids).toContain('t2');
+    expect(ids).not.toContain('t1');
   });
 
   it('filters to only TEAM projects when type is [TEAM]', () => {
@@ -301,8 +289,6 @@ describe('useAllPlatformProjects filter', () => {
     ).toHaveLength(4);
   });
 });
-
-// ─── useCurrentProject filter ─────────────────────────────────────────────────
 
 describe('useCurrentProject filter', () => {
   function query(projects: ProjectWithLimits[], projectId: string | null) {
@@ -335,8 +321,6 @@ describe('useCurrentProject filter', () => {
     expect(query(projects, 'projMissing')).toHaveLength(0);
   });
 });
-
-// ─── useHasAccessToProject filter ────────────────────────────────────────────
 
 describe('useHasAccessToProject filter', () => {
   function hasAccess(
@@ -376,20 +360,18 @@ describe('useHasAccessToProject filter', () => {
   });
 });
 
-// ─── setCurrentProject ───────────────────────────────────────────────────────
-
 describe('setCurrentProject', () => {
   let switchToProject: ReturnType<typeof vi.fn>;
   let setCurrentProject: (projectId: string, pathName?: string) => void;
 
   beforeEach(async () => {
     vi.clearAllMocks();
-    const session = await import('../authentication-session');
+    const session = await import('../../../lib/authentication-session');
     switchToProject = session.authenticationSession
       .switchToProject as ReturnType<typeof vi.fn>;
     ({
       projectCollectionUtils: { setCurrentProject },
-    } = await import('../../features/projects/stores/project-collection'));
+    } = await import('./project-collection'));
     Object.defineProperty(window, 'location', {
       value: { href: '' },
       writable: true,
