@@ -107,5 +107,10 @@
   "None": "なし",
   "JSON": "JSON",
   "Form Data": "フォームデータ",
-  "Raw": "Raw"
+  "Raw": "Raw",
+  "New Folder": "新規フォルダ",
+  "Triggers when a new folder is created inside a watched Dropbox folder.": "監視対象の Dropbox フォルダー内に新しいフォルダーが作成されたときにトリガーされます。",
+  "Watched Folder Path": "監視フォルダパス",
+  "Folder path to watch. Use empty string \"\" for root.": "監視するフォルダパス。ルートには空文字列\"\"を使用してください。",
+  "Watch subfolders recursively. May return many results.": "サブフォルダを再帰的に監視します。多くの結果を返す可能性があります。"
 }

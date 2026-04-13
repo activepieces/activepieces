@@ -89,12 +89,6 @@ export const flagService = (log: FastifyBaseLogger) => ({
                 updated,
             },
             {
-                id: ApFlagId.CAN_CONFIGURE_AI_PROVIDER,
-                value: true,
-                created,
-                updated,
-            },
-            {
                 id: ApFlagId.SHOW_BADGES,
                 value: true,
                 created,
@@ -291,6 +285,18 @@ export const flagService = (log: FastifyBaseLogger) => ({
             {
                 id: ApFlagId.MAX_FILE_SIZE_MB,
                 value: system.getNumber(AppSystemProp.MAX_FILE_SIZE_MB),
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.PROJECT_RATE_LIMITER_ENABLED,
+                value: system.getBoolean(AppSystemProp.PROJECT_RATE_LIMITER_ENABLED) ?? false,
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.DEFAULT_CONCURRENT_JOBS_LIMIT,
+                value: system.getNumber(AppSystemProp.DEFAULT_CONCURRENT_JOBS_LIMIT),
                 created,
                 updated,
             },

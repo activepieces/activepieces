@@ -23,9 +23,24 @@ export const TOOL_CATEGORIES: ToolCategory[] = [
           'Get the structure of a flow: step tree, configuration status, and valid insert locations',
       },
       {
+        name: 'ap_validate_flow',
+        description:
+          'Validate a flow for structural issues without publishing — checks step validity, template references, and empty branches',
+      },
+      {
         name: 'ap_list_pieces',
         description:
           'List pieces with actions and triggers — required before adding or updating steps',
+      },
+      {
+        name: 'ap_get_piece_props',
+        description:
+          'Get detailed property schema for a specific piece action or trigger',
+      },
+      {
+        name: 'ap_validate_step_config',
+        description:
+          'Validate step configuration before applying — returns field-level errors without modifying any flow',
       },
       {
         name: 'ap_list_connections',

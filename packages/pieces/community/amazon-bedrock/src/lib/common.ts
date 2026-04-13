@@ -5,9 +5,15 @@ import {
   ModelModality,
 } from '@aws-sdk/client-bedrock';
 import {
+  AudioFormat,
   BedrockRuntimeClient,
+  ContentBlock,
   ConverseResponse,
+  DocumentFormat,
+  ImageFormat,
+  VideoFormat,
 } from '@aws-sdk/client-bedrock-runtime';
+import { ApFile } from '@activepieces/pieces-framework';
 
 export interface BedrockAuth {
   accessKeyId: string;
@@ -145,6 +151,95 @@ export async function getBedrockModelOptions(
       placeholder: 'Failed to load models. Check your credentials.',
     };
   }
+}
+
+const IMAGE_EXT_MAP: Record<string, ImageFormat> = {
+  png: ImageFormat.PNG,
+  jpg: ImageFormat.JPEG,
+  jpeg: ImageFormat.JPEG,
+  gif: ImageFormat.GIF,
+  webp: ImageFormat.WEBP,
+};
+
+const DOCUMENT_EXT_MAP: Record<string, DocumentFormat> = {
+  pdf: DocumentFormat.PDF,
+  csv: DocumentFormat.CSV,
+  doc: DocumentFormat.DOC,
+  docx: DocumentFormat.DOCX,
+  xls: DocumentFormat.XLS,
+  xlsx: DocumentFormat.XLSX,
+  html: DocumentFormat.HTML,
+  htm: DocumentFormat.HTML,
+  txt: DocumentFormat.TXT,
+  md: DocumentFormat.MD,
+};
+
+const VIDEO_EXT_MAP: Record<string, VideoFormat> = {
+  mkv: VideoFormat.MKV,
+  mov: VideoFormat.MOV,
+  mp4: VideoFormat.MP4,
+  webm: VideoFormat.WEBM,
+  flv: VideoFormat.FLV,
+  mpeg: VideoFormat.MPEG,
+  mpg: VideoFormat.MPG,
+  wmv: VideoFormat.WMV,
+  '3gp': VideoFormat.THREE_GP,
+};
+
+const AUDIO_EXT_MAP: Record<string, AudioFormat> = {
+  mp3: AudioFormat.MP3,
+  opus: AudioFormat.OPUS,
+  wav: AudioFormat.WAV,
+  aac: AudioFormat.AAC,
+  flac: AudioFormat.FLAC,
+  ogg: AudioFormat.OGG,
+  mka: AudioFormat.MKA,
+  m4a: AudioFormat.M4A,
+  pcm: AudioFormat.PCM,
+};
+
+export function buildS3ContentBlock(s3Bucket: string, s3Key: string): ContentBlock {
+  const ext = (s3Key.split('.').pop() ?? '').toLowerCase();
+  const s3Location = { uri: `s3://${s3Bucket}/${s3Key}` };
+
+  if (IMAGE_EXT_MAP[ext]) {
+    return { image: { format: IMAGE_EXT_MAP[ext], source: { s3Location } } };
+  }
+  if (DOCUMENT_EXT_MAP[ext]) {
+    const name = (s3Key.split('/').pop() ?? 'document').replace(/\.[^.]+$/, '');
+    return { document: { format: DOCUMENT_EXT_MAP[ext], name, source: { s3Location } } };
+  }
+  if (VIDEO_EXT_MAP[ext]) {
+    return { video: { format: VIDEO_EXT_MAP[ext], source: { s3Location } } };
+  }
+  if (AUDIO_EXT_MAP[ext]) {
+    return { audio: { format: AUDIO_EXT_MAP[ext], source: { s3Location } } };
+  }
+  throw new Error(
+    `Unsupported file type ".${ext}". Supported: images (png, jpg, gif, webp), documents (pdf, csv, doc, docx, xls, xlsx, html, txt, md), videos (mp4, mov, mkv, webm, flv, mpeg, mpg, wmv, 3gp), audio (mp3, wav, aac, flac, ogg, opus, mka, m4a, pcm).`
+  );
+}
+
+export function buildFileContentBlock(file: ApFile): ContentBlock {
+  const ext = (file.extension ?? '').toLowerCase();
+  const bytes = new Uint8Array(file.data);
+
+  if (IMAGE_EXT_MAP[ext]) {
+    return { image: { format: IMAGE_EXT_MAP[ext], source: { bytes } } };
+  }
+  if (DOCUMENT_EXT_MAP[ext]) {
+    const name = file.filename?.replace(/\.[^.]+$/, '') || 'document';
+    return { document: { format: DOCUMENT_EXT_MAP[ext], name, source: { bytes } } };
+  }
+  if (VIDEO_EXT_MAP[ext]) {
+    return { video: { format: VIDEO_EXT_MAP[ext], source: { bytes } } };
+  }
+  if (AUDIO_EXT_MAP[ext]) {
+    return { audio: { format: AUDIO_EXT_MAP[ext], source: { bytes } } };
+  }
+  throw new Error(
+    `Unsupported file type ".${ext}". Supported: images (png, jpg, gif, webp), documents (pdf, csv, doc, docx, xls, xlsx, html, txt, md), videos (mp4, mov, mkv, webm, flv, mpeg, mpg, wmv, 3gp), audio (mp3, wav, aac, flac, ogg, opus, mka, m4a, pcm).`
+  );
 }
 
 export function extractConverseTextResponse(response: ConverseResponse) {

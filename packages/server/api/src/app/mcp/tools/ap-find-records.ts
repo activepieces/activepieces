@@ -2,7 +2,7 @@ import { FilterOperator, McpServer, McpToolDefinition, Permission } from '@activ
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { recordService } from '../../tables/record/record.service'
-import { mcpToolError } from './mcp-utils'
+import { mcpUtils } from './mcp-utils'
 import { formatPopulatedRecord, resolveFieldNamesForTable } from './table-utils'
 
 const OPERATOR_VALUES = [
@@ -33,7 +33,7 @@ export const apFindRecordsTool = (mcp: McpServer, log: FastifyBaseLogger): McpTo
     return {
         title: 'ap_find_records',
         permission: Permission.READ_TABLE,
-        description: 'Query records from a table with optional filtering. Use ap_list_tables first to discover table IDs and field names. Supports operators: eq, neq, gt, gte, lt, lte, co (contains), exists, not_exists. Use field names (not IDs) in filters.',
+        description: 'Query records from a table with optional filtering. Operators: eq, neq, gt, gte, lt, lte, co, exists, not_exists.',
         inputSchema: findRecordsInput.shape,
         annotations: { readOnlyHint: true, openWorldHint: false },
         execute: async (args) => {
@@ -90,7 +90,7 @@ export const apFindRecordsTool = (mcp: McpServer, log: FastifyBaseLogger): McpTo
             }
             catch (err) {
                 log.error({ err, projectId: mcp.projectId }, 'ap_find_records failed')
-                return mcpToolError('Failed to find records', err)
+                return mcpUtils.mcpToolError('Failed to find records', err)
             }
         },
     }

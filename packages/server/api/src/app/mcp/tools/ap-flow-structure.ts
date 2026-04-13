@@ -15,7 +15,7 @@ import type { Step } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
-import { mcpToolError } from './mcp-utils'
+import { mcpUtils } from './mcp-utils'
 
 type StepInfo = {
     name: string
@@ -245,7 +245,7 @@ export const apFlowStructureTool = (mcp: McpServer, log: FastifyBaseLogger): Mcp
                 return { content: [{ type: 'text', text }] }
             }
             catch (err) {
-                return mcpToolError('Failed to get flow structure', err)
+                return mcpUtils.mcpToolError('Failed to get flow structure', err)
             }
         },
     }
