@@ -510,6 +510,7 @@
                      "handbook/engineering/playbooks/product-announcement",
                      "handbook/engineering/playbooks/frontend-best-practices",
                      "handbook/engineering/playbooks/e2e-tests",
+                     "handbook/engineering/playbooks/connect-claude-to-chrome",
                      {
                         "group": "Postmortems",
                         "icon": "triangle-exclamation",

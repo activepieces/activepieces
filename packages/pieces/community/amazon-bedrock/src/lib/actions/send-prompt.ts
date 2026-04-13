@@ -1,15 +1,19 @@
 import {
   createAction,
+  DynamicPropsValue,
   Property,
   StoreScope,
 } from '@activepieces/pieces-framework';
 import {
+  ContentBlock,
   ConverseCommand,
   ConversationRole,
   Message,
 } from '@aws-sdk/client-bedrock-runtime';
 import { awsBedrockAuth } from '../auth';
 import {
+  buildFileContentBlock,
+  buildS3ContentBlock,
   createBedrockRuntimeClient,
   getBedrockModelOptions,
   formatBedrockError,
@@ -41,44 +45,88 @@ export const sendPrompt = createAction({
     }),
     prompt: Property.LongText({
       displayName: 'Prompt',
+      description: 'The message or question to send to the model.',
       required: true,
     }),
     systemPrompt: Property.LongText({
       displayName: 'System Prompt',
       required: false,
-      description: 'Instructions that guide the model behavior.',
+      description: 'Instructions that set the model\'s behavior and persona (e.g. "You are a helpful assistant that replies concisely.").',
     }),
     temperature: Property.Number({
       displayName: 'Temperature',
       required: false,
       description:
-        'Controls randomness. Lower values produce more deterministic output.',
+        'Controls how creative or predictable the response is. Lower values (e.g. 0.2) give focused, consistent answers. Higher values (e.g. 0.9) give more varied, creative output.',
       defaultValue: 0.7,
     }),
     maxTokens: Property.Number({
       displayName: 'Maximum Tokens',
       required: false,
-      description: 'The maximum number of tokens to generate.',
+      description: 'The maximum length of the response. One token is roughly 4 characters. 2048 tokens ≈ ~1500 words.',
       defaultValue: 2048,
     }),
     topP: Property.Number({
       displayName: 'Top P',
       required: false,
       description:
-        'Nucleus sampling: the model considers tokens with top_p probability mass.',
+        'Limits the pool of words the model picks from (0–1). Lower values make responses more focused. Leave at 1 to disable this filter and use Temperature instead.',
       defaultValue: 1,
     }),
     stopSequences: Property.Array({
       displayName: 'Stop Sequences',
       required: false,
       description:
-        'Sequences that will cause the model to stop generating. Up to 4 sequences.',
+        'Text strings that, when generated, cause the model to stop immediately (e.g. "END" or "\\n\\n"). Up to 4 sequences.',
     }),
     memoryKey: Property.ShortText({
-      displayName: 'Memory Key',
+      displayName: 'Conversation Memory ID',
       required: false,
       description:
-        'A memory key that will keep the chat history shared across runs and flows. Keep it empty to leave the model without memory of previous messages.',
+        'A unique name for this conversation\'s memory (e.g. "support-chat-user-123"). When set, the model remembers previous messages in this flow. Leave empty for a single-turn interaction with no memory.',
+    }),
+    attachmentSource: Property.StaticDropdown({
+      displayName: 'Attachment Source (Optional)',
+      description: 'Optionally include a file alongside your prompt. Choose whether to upload directly or reference one from S3.',
+      required: false,
+      options: {
+        options: [
+          { label: 'Upload a file', value: 'file' },
+          { label: 'From S3 bucket', value: 's3' },
+        ],
+      },
+    }),
+    attachment: Property.DynamicProperties({
+      auth: awsBedrockAuth,
+      displayName: 'Attachment',
+      required: false,
+      refreshers: ['attachmentSource'],
+      props: async ({ attachmentSource }): Promise<DynamicPropsValue> => {
+        if (attachmentSource === 'file') {
+          return {
+            file: Property.File({
+              displayName: 'File',
+              description: 'Supported: images (png, jpg, gif, webp), documents (pdf, csv, doc, docx, xls, xlsx, html, txt, md), videos (mp4, mov, mkv, etc.), audio (mp3, wav, aac, flac, etc.). Not all models support all file types.',
+              required: true,
+            }),
+          };
+        }
+        if (attachmentSource === 's3') {
+          return {
+            s3Bucket: Property.ShortText({
+              displayName: 'S3 Bucket',
+              description: 'The name of your S3 bucket containing the file.',
+              required: true,
+            }),
+            s3Key: Property.ShortText({
+              displayName: 'S3 File Path',
+              description: 'The path to the file in your S3 bucket (e.g. "documents/report.pdf"). The file extension determines the media type sent to the model.',
+              required: true,
+            }),
+          };
+        }
+        return {};
+      },
     }),
   },
   async run({ auth, propsValue, store }) {
@@ -92,6 +140,8 @@ export const sendPrompt = createAction({
       topP,
       stopSequences,
       memoryKey,
+      attachmentSource,
+      attachment,
     } = propsValue;
 
     let messageHistory: Message[] = [];
@@ -100,9 +150,16 @@ export const sendPrompt = createAction({
         (await store.get<Message[]>(memoryKey, StoreScope.PROJECT)) ?? [];
     }
 
+    const userContent: ContentBlock[] = [{ text: prompt }];
+    if (attachmentSource === 'file' && attachment?.['file']) {
+      userContent.push(buildFileContentBlock(attachment['file']));
+    } else if (attachmentSource === 's3' && attachment?.['s3Bucket'] && attachment?.['s3Key']) {
+      userContent.push(buildS3ContentBlock(attachment['s3Bucket'] as string, attachment['s3Key'] as string));
+    }
+
     messageHistory.push({
       role: ConversationRole.USER,
-      content: [{ text: prompt }],
+      content: userContent,
     });
 
     try {

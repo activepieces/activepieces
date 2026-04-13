@@ -354,6 +354,8 @@ import { AddUserFkIndices1774449358000 } from './migration/postgres/177444935800
 import { AddMcpOAuthTables1774500000000 } from './migration/postgres/1774500000000-AddMcpOAuthTables'
 import { AddCanaryToPlatformPlan1774600000000 } from './migration/postgres/1774600000000-AddCanaryToPlatformPlan'
 import { MergeCanaryAndDedicatedWorkersIntoWorkerGroupId1775656136000 } from './migration/postgres/1775656136000-MergeCanaryAndDedicatedWorkersIntoWorkerGroupId'
+import { AddAiProvidersEnabledToPlatformPlan1775728983000 } from './migration/postgres/1775728983000-AddAiProvidersEnabledToPlatformPlan'
+import { AddDefaultToAiProvidersEnabled1776000000000 } from './migration/postgres/1776000000000-AddDefaultToAiProvidersEnabled'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -723,6 +725,8 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddMcpOAuthTables1774500000000,
         AddCanaryToPlatformPlan1774600000000,
         MergeCanaryAndDedicatedWorkersIntoWorkerGroupId1775656136000,
+        AddAiProvidersEnabledToPlatformPlan1775728983000,
+        AddDefaultToAiProvidersEnabled1776000000000,
     ]
     return migrations
 }

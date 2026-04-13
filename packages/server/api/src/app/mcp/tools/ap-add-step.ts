@@ -16,7 +16,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
 import { projectService } from '../../project/project-service'
-import { mcpToolError } from './mcp-utils'
+import { mcpUtils } from './mcp-utils'
 
 const addStepInput = z.object({
     flowId: z.string(),
@@ -34,7 +34,7 @@ export const apAddStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDe
     return {
         title: 'ap_add_step',
         permission: Permission.WRITE_FLOW,
-        description: 'Add a new step to a flow (skeleton only - configure it afterwards with ap_update_step or ap_update_trigger). IMPORTANT: Always search for an existing piece using ap_list_pieces before choosing stepType=CODE. CODE steps should only be used as a last resort when no suitable piece action exists. Use ap_flow_structure to get valid parentStepName and insert locations. Use ap_list_pieces to get pieceName, pieceVersion, and actionName for PIECE steps.',
+        description: 'Add a new step to a flow (skeleton only — configure with ap_update_step afterwards). Prefer PIECE over CODE.',
         inputSchema: {
             flowId: z.string().describe('The id of the flow'),
             parentStepName: z.string().describe('The step name to insert after/into (e.g. "trigger", "step_1"). Use ap_flow_structure to get valid values.'),
@@ -171,7 +171,7 @@ export const apAddStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDe
                 }
             }
             catch (err) {
-                return mcpToolError('Step add failed', err)
+                return mcpUtils.mcpToolError('Step add failed', err)
             }
         },
     }
