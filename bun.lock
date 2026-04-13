@@ -1433,6 +1433,16 @@
         "tslib": "^2.3.0",
       },
     },
+    "packages/pieces/community/chargebee": {
+      "name": "@activepieces/piece-chargebee",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/chargekeep": {
       "name": "@activepieces/piece-chargekeep",
       "version": "0.3.3",
@@ -8437,6 +8447,8 @@
     "@activepieces/piece-chainalysis-api": ["@activepieces/piece-chainalysis-api@workspace:packages/pieces/community/chainalysis-api"],
 
     "@activepieces/piece-chaindesk": ["@activepieces/piece-chaindesk@workspace:packages/pieces/community/chaindesk"],
+
+    "@activepieces/piece-chargebee": ["@activepieces/piece-chargebee@workspace:packages/pieces/community/chargebee"],
 
     "@activepieces/piece-chargekeep": ["@activepieces/piece-chargekeep@workspace:packages/pieces/community/chargekeep"],
 
