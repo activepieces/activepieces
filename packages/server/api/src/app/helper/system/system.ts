@@ -58,7 +58,7 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.TELEMETRY_ENABLED]: 'true',
     [AppSystemProp.REDIS_TYPE]: RedisType.STANDALONE,
     [AppSystemProp.TRIGGER_DEFAULT_POLL_INTERVAL]: '5',
-    [AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT]: '100',
+    [AppSystemProp.DEFAULT_CONCURRENT_JOBS_LIMIT]: '5',
     [AppSystemProp.PROJECT_RATE_LIMITER_ENABLED]: 'false',
     [AppSystemProp.MAX_RECORDS_PER_TABLE]: '10000',
     [AppSystemProp.MAX_FIELDS_PER_TABLE]: '100',
