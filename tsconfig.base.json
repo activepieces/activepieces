@@ -412,6 +412,9 @@
       "@activepieces/piece-fathom-analytics": [
         "packages/pieces/community/fathom-analytics/src/index.ts"
       ],
+      "@activepieces/piece-feedhive": [
+        "packages/pieces/community/feedhive/src/index.ts"
+      ],
       "@activepieces/piece-figma": [
         "packages/pieces/community/figma/src/index.ts"
       ],

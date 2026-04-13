@@ -2484,6 +2484,16 @@
         "tslib": "^2.3.0",
       },
     },
+    "packages/pieces/community/feedhive": {
+      "name": "@activepieces/piece-feedhive",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/fellow": {
       "name": "@activepieces/piece-fellow",
       "version": "0.1.4",
@@ -8683,6 +8693,8 @@
     "@activepieces/piece-fathom-analytics": ["@activepieces/piece-fathom-analytics@workspace:packages/pieces/community/fathom-analytics"],
 
     "@activepieces/piece-feathery": ["@activepieces/piece-feathery@workspace:packages/pieces/community/feathery"],
+
+    "@activepieces/piece-feedhive": ["@activepieces/piece-feedhive@workspace:packages/pieces/community/feedhive"],
 
     "@activepieces/piece-fellow": ["@activepieces/piece-fellow@workspace:packages/pieces/community/fellow"],
 
