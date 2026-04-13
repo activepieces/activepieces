@@ -21,15 +21,6 @@ import { Waitpoint, WaitpointResumePayload } from './waitpoint-types'
 export const resumeService = (log: FastifyBaseLogger) => ({
     async resumeFromWaitpoint({ flowRunId, waitpointId, resumePayload, workerHandlerId }: ResumeFromWaitpointParams): Promise<ResumeFromWaitpointResult> {
         const flowRun = await findFlowRunOrThrow(flowRunId)
-
-        if (!waitpointId) {
-            if (flowRun.status !== FlowRunStatus.PAUSED) {
-                return { flowRun, stale: true }
-            }
-            await enqueueResume({ flowRun, resumePayload, workerHandlerIdOverride: workerHandlerId }, log)
-            return { flowRun, stale: false }
-        }
-
         const processed = await waitpointService(log).handleResumeSignal({
             flowRunId,
             waitpointId,
@@ -49,6 +40,15 @@ export const resumeService = (log: FastifyBaseLogger) => ({
         return { flowRun, stale: !processed }
     },
 
+    async legacyResume({ flowRunId, resumePayload, workerHandlerId }: LegacyResumeParams): Promise<ResumeFromWaitpointResult> {
+        const flowRun = await findFlowRunOrThrow(flowRunId)
+        if (flowRun.status !== FlowRunStatus.PAUSED) {
+            return { flowRun, stale: true }
+        }
+        await enqueueResume({ flowRun, resumePayload, workerHandlerIdOverride: workerHandlerId }, log)
+        return { flowRun, stale: false }
+    },
+
     async handleSyncResumeFlow({ runId, waitpointId, payload, correlationId }: HandleSyncResumeFlowParams): Promise<EngineHttpResponse> {
         const flowRun = await flowRunService(log).getOnePopulatedOrThrow({
             id: runId,
@@ -61,24 +61,6 @@ export const resumeService = (log: FastifyBaseLogger) => ({
                 body: { message: 'Flow run is not paused', flowRunStatus: flowRun.status },
                 headers: {},
             }
-        }
-
-        if (!waitpointId) {
-            if (flowRun.status !== FlowRunStatus.PAUSED) {
-                return {
-                    status: StatusCodes.CONFLICT,
-                    body: { message: 'Flow run is not paused', flowRunStatus: flowRun.status },
-                    headers: {},
-                }
-            }
-            const syncServerId = engineResponseWatcher(log).getServerId()
-            const httpRequestId = apId()
-            await enqueueResume({ flowRun, resumePayload: payload, workerHandlerIdOverride: syncServerId, httpRequestIdOverride: httpRequestId }, log)
-            return engineResponseWatcher(log).oneTimeListener<EngineHttpResponse>(httpRequestId, true, WEBHOOK_TIMEOUT_MS, {
-                status: StatusCodes.NO_CONTENT,
-                body: {},
-                headers: {},
-            })
         }
 
         const syncServerId = engineResponseWatcher(log).getServerId()
@@ -97,7 +79,39 @@ export const resumeService = (log: FastifyBaseLogger) => ({
             }
         }
 
-        return engineResponseWatcher(log).oneTimeListener<EngineHttpResponse>(correlationId!, true, WEBHOOK_TIMEOUT_MS, {
+        return engineResponseWatcher(log).oneTimeListener<EngineHttpResponse>(correlationId, true, WEBHOOK_TIMEOUT_MS, {
+            status: StatusCodes.NO_CONTENT,
+            body: {},
+            headers: {},
+        })
+    },
+
+    async legacySyncResume({ runId, payload }: LegacySyncResumeParams): Promise<EngineHttpResponse> {
+        const flowRun = await flowRunService(log).getOnePopulatedOrThrow({
+            id: runId,
+            projectId: undefined,
+        })
+
+        if (isFlowRunStateTerminal({ status: flowRun.status, ignoreInternalError: false })) {
+            return {
+                status: StatusCodes.CONFLICT,
+                body: { message: 'Flow run is not paused', flowRunStatus: flowRun.status },
+                headers: {},
+            }
+        }
+
+        if (flowRun.status !== FlowRunStatus.PAUSED) {
+            return {
+                status: StatusCodes.CONFLICT,
+                body: { message: 'Flow run is not paused', flowRunStatus: flowRun.status },
+                headers: {},
+            }
+        }
+
+        const syncServerId = engineResponseWatcher(log).getServerId()
+        const httpRequestId = apId()
+        await enqueueResume({ flowRun, resumePayload: payload, workerHandlerIdOverride: syncServerId, httpRequestIdOverride: httpRequestId }, log)
+        return engineResponseWatcher(log).oneTimeListener<EngineHttpResponse>(httpRequestId, true, WEBHOOK_TIMEOUT_MS, {
             status: StatusCodes.NO_CONTENT,
             body: {},
             headers: {},
@@ -131,14 +145,25 @@ type SyncResumePayload = {
 
 type HandleSyncResumeFlowParams = {
     runId: string
-    waitpointId?: string
+    waitpointId: string
     payload: SyncResumePayload
-    correlationId?: string
+    correlationId: string
+}
+
+type LegacySyncResumeParams = {
+    runId: string
+    payload: SyncResumePayload
 }
 
 type ResumeFromWaitpointParams = {
     flowRunId: FlowRunId
-    waitpointId?: string
+    waitpointId: string
+    resumePayload: WaitpointResumePayload
+    workerHandlerId?: string
+}
+
+type LegacyResumeParams = {
+    flowRunId: FlowRunId
     resumePayload: WaitpointResumePayload
     workerHandlerId?: string
 }

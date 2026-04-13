@@ -455,4 +455,65 @@ describe('Waitpoint service', () => {
             expect(stored!.status).toBe('PENDING')
         })
     })
+
+    describe('findPendingByVersion', () => {
+        it('should return pending V0 waitpoint when one exists', async () => {
+            const { flowRun } = await createFlowRun()
+
+            await db.save('waitpoint', {
+                id: apId(),
+                flowRunId: flowRun.id,
+                projectId: ctx.project.id,
+                stepName: 'approval',
+                type: 'WEBHOOK',
+                version: 'V0',
+                status: 'PENDING',
+                httpRequestId: null,
+                workerHandlerId: null,
+            })
+
+            const result = await waitpointService(app.log).findPendingByVersion({ flowRunId: flowRun.id, version: 'V0' })
+            expect(result).not.toBeNull()
+            expect(result!.flowRunId).toBe(flowRun.id)
+            expect(result!.version).toBe('V0')
+        })
+
+        it('should return null when only a V1 waitpoint exists', async () => {
+            const { flowRun } = await createFlowRun()
+
+            await db.save('waitpoint', {
+                id: apId(),
+                flowRunId: flowRun.id,
+                projectId: ctx.project.id,
+                stepName: 'approval',
+                type: 'WEBHOOK',
+                version: 'V1',
+                status: 'PENDING',
+                httpRequestId: null,
+                workerHandlerId: null,
+            })
+
+            const result = await waitpointService(app.log).findPendingByVersion({ flowRunId: flowRun.id, version: 'V0' })
+            expect(result).toBeNull()
+        })
+
+        it('should return null when waitpoint is COMPLETED', async () => {
+            const { flowRun } = await createFlowRun()
+
+            await db.save('waitpoint', {
+                id: apId(),
+                flowRunId: flowRun.id,
+                projectId: ctx.project.id,
+                stepName: 'approval',
+                type: 'WEBHOOK',
+                version: 'V0',
+                status: 'COMPLETED',
+                httpRequestId: null,
+                workerHandlerId: null,
+            })
+
+            const result = await waitpointService(app.log).findPendingByVersion({ flowRunId: flowRun.id, version: 'V0' })
+            expect(result).toBeNull()
+        })
+    })
 })

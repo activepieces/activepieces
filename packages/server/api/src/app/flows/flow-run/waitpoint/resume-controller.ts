@@ -31,7 +31,12 @@ export const resumeController: FastifyPluginAsyncZod = async (app) => {
         const headers = req.headers as Record<string, string>
         const queryParams = req.query as Record<string, string>
         const waitpoint = await waitpointService(req.log).findPendingByVersion({ flowRunId: req.params.id, version: 'V0' })
-        await handleAsyncResume({ flowRunId: req.params.id, waitpointId: waitpoint?.id, body: req.body, headers, queryParams, log: req.log, reply })
+        if (waitpoint) {
+            await handleAsyncResume({ flowRunId: req.params.id, waitpointId: waitpoint.id, body: req.body, headers, queryParams, log: req.log, reply })
+        }
+        else {
+            await handleLegacyAsyncResume({ flowRunId: req.params.id, body: req.body, headers, queryParams, log: req.log, reply })
+        }
     })
 
     /**
@@ -41,11 +46,16 @@ export const resumeController: FastifyPluginAsyncZod = async (app) => {
         const headers = req.headers as Record<string, string>
         const queryParams = req.query as Record<string, string>
         const waitpoint = await waitpointService(req.log).findPendingByVersion({ flowRunId: req.params.id, version: 'V0' })
-        await handleSyncResume({ flowRunId: req.params.id, waitpointId: waitpoint?.id, body: req.body, headers, queryParams, log: req.log, reply, correlationId: waitpoint?.workerHandlerId ?? waitpoint?.id })
+        if (waitpoint) {
+            await handleSyncResume({ flowRunId: req.params.id, waitpointId: waitpoint.id, body: req.body, headers, queryParams, log: req.log, reply, correlationId: waitpoint.workerHandlerId ?? waitpoint.id })
+        }
+        else {
+            await handleLegacySyncResume({ flowRunId: req.params.id, body: req.body, headers, queryParams, log: req.log, reply })
+        }
     })
 }
 
-async function handleAsyncResume({ flowRunId, waitpointId, body, headers, queryParams, log, reply }: ResumeHandlerParams): Promise<void> {
+async function handleAsyncResume({ flowRunId, waitpointId, body, headers, queryParams, log, reply }: AsyncResumeHandlerParams): Promise<void> {
     const { stale } = await resumeService(log).resumeFromWaitpoint({
         flowRunId,
         waitpointId,
@@ -58,12 +68,32 @@ async function handleAsyncResume({ flowRunId, waitpointId, body, headers, queryP
     await reply.send({ message: 'Your response has been recorded. You can close this page now.' })
 }
 
-async function handleSyncResume({ flowRunId, waitpointId, body, headers, queryParams, log, reply, correlationId }: ResumeHandlerParams & { correlationId?: string }): Promise<void> {
+async function handleSyncResume({ flowRunId, waitpointId, body, headers, queryParams, log, reply, correlationId }: AsyncResumeHandlerParams & { correlationId: string }): Promise<void> {
     const response = await resumeService(log).handleSyncResumeFlow({
         runId: flowRunId,
         waitpointId,
         payload: { body, headers, queryParams },
         correlationId,
+    })
+    await reply.status(response.status).headers(response.headers).send(response.body)
+}
+
+async function handleLegacyAsyncResume({ flowRunId, body, headers, queryParams, log, reply }: LegacyResumeHandlerParams): Promise<void> {
+    const { stale } = await resumeService(log).legacyResume({
+        flowRunId,
+        resumePayload: { body, headers, queryParams },
+    })
+    if (stale) {
+        await reply.send({ message: 'This link has expired. The action may have already been processed.' })
+        return
+    }
+    await reply.send({ message: 'Your response has been recorded. You can close this page now.' })
+}
+
+async function handleLegacySyncResume({ flowRunId, body, headers, queryParams, log, reply }: LegacyResumeHandlerParams): Promise<void> {
+    const response = await resumeService(log).legacySyncResume({
+        runId: flowRunId,
+        payload: { body, headers, queryParams },
     })
     await reply.status(response.status).headers(response.headers).send(response.body)
 }
@@ -92,9 +122,18 @@ const V0ResumeFlowRunRequest = {
     },
 }
 
-type ResumeHandlerParams = {
+type AsyncResumeHandlerParams = {
     flowRunId: string
-    waitpointId?: string
+    waitpointId: string
+    body: unknown
+    headers: Record<string, string>
+    queryParams: Record<string, string>
+    log: FastifyBaseLogger
+    reply: FastifyReply
+}
+
+type LegacyResumeHandlerParams = {
+    flowRunId: string
     body: unknown
     headers: Record<string, string>
     queryParams: Record<string, string>
