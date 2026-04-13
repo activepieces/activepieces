@@ -52,6 +52,7 @@ export const WaitpointEntity = new EntitySchema<WaitpointSchema>({
         stepName: {
             type: String,
             nullable: false,
+            default: '',
         },
         resumePayload: {
             type: 'jsonb',
