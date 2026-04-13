@@ -1,4 +1,4 @@
-import { ErrorCode } from '@activepieces/shared';
+import { ErrorCode, isNil } from '@activepieces/shared';
 import { t } from 'i18next';
 import React, { useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { authenticationApi } from '@/api/authentication-api';
 import { LoadingScreen } from '@/components/custom/loading-screen';
 import { internalErrorToast } from '@/components/ui/sonner';
+import { authUtils } from '@/features/authentication/hooks/auth-hooks';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import {
@@ -38,6 +39,16 @@ const RedirectPage: React.FC = React.memo(() => {
             providerName,
             code,
           });
+          if (authUtils.isMfaChallenge(data)) {
+            if (!isNil(data.setupRequired)) {
+              navigate('/sign-in/2fa-setup', {
+                state: { mfaToken: data.mfaToken },
+              });
+            } else {
+              navigate('/sign-in/2fa', { state: { mfaToken: data.mfaToken } });
+            }
+            return;
+          }
           authenticationSession.saveResponse(data, false);
           navigate(from);
         } catch (e) {

@@ -2,7 +2,16 @@ import { UserIdentity } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import { BaseColumnSchemaPart } from '../../database/database-common'
 
-export const UserIdentityEntity = new EntitySchema<UserIdentity>({
+export type BackupCodeEntry = {
+    hash: string
+    used: boolean
+}
+
+export type UserIdentitySchema = UserIdentity & {
+    backupCodes: BackupCodeEntry[] | null
+}
+
+export const UserIdentityEntity = new EntitySchema<UserIdentitySchema>({
     name: 'user_identity',
     columns: {
         ...BaseColumnSchemaPart,
@@ -45,6 +54,19 @@ export const UserIdentityEntity = new EntitySchema<UserIdentity>({
         },
         imageUrl: {
             type: String,
+            nullable: true,
+        },
+        totpEnabled: {
+            type: Boolean,
+            nullable: false,
+            default: false,
+        },
+        totpSecret: {
+            type: String,
+            nullable: true,
+        },
+        backupCodes: {
+            type: 'jsonb',
             nullable: true,
         },
     },

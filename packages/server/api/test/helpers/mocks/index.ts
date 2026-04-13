@@ -104,6 +104,7 @@ export const createMockUserIdentity = (userIdentity?: Partial<UserIdentity>): Us
         newsLetter: userIdentity?.newsLetter ?? faker.datatype.boolean(),
         verified: userIdentity?.verified ?? faker.datatype.boolean(),
         provider: userIdentity?.provider ?? UserIdentityProvider.EMAIL,
+        totpEnabled: userIdentity?.totpEnabled ?? false,
     }
 }
 
@@ -279,6 +280,7 @@ export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
             platform?.filteredPieceBehavior ??
             faker.helpers.enumValue(FilteredPieceBehavior),
         cloudAuthEnabled: platform?.cloudAuthEnabled ?? faker.datatype.boolean(),
+        enforceTotp: platform?.enforceTotp ?? false,
     }
 }
 

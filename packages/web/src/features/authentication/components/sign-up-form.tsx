@@ -8,7 +8,7 @@ import {
 import { t } from 'i18next';
 import { useMemo } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -30,7 +30,7 @@ import { formatUtils } from '@/lib/format-utils';
 import { useRedirectAfterLogin } from '@/lib/navigation-utils';
 import { cn } from '@/lib/utils';
 
-import { authMutations } from '../hooks/auth-hooks';
+import { authMutations, authUtils } from '../hooks/auth-hooks';
 import { passwordValidation } from '../utils/password-validation-utils';
 
 type SignUpSchema = {
@@ -90,9 +90,14 @@ const SignUpForm = ({
   }, [edition, websiteName]);
 
   const redirectAfterLogin = useRedirectAfterLogin();
+  const navigate = useNavigate();
 
   const { mutate, isPending } = authMutations.useSignUp({
     onSuccess: (data) => {
+      if (authUtils.isMfaChallenge(data)) {
+        navigate('/sign-in/2fa-setup', { state: { mfaToken: data.mfaToken } });
+        return;
+      }
       if (data.verified) {
         authenticationSession.saveResponse(data, false);
         redirectAfterLogin();

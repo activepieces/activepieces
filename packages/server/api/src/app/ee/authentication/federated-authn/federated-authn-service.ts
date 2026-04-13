@@ -1,6 +1,7 @@
 import { assertNotNullOrUndefined, AuthenticationResponse,
     FederatedAuthnLoginResponse,
     isNil,
+    MfaChallengeResponse,
     UserIdentityProvider,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -29,7 +30,7 @@ export const federatedAuthnService = (log: FastifyBaseLogger) => ({
     async claim({
         platformId,
         code,
-    }: ClaimParams): Promise<AuthenticationResponse> {
+    }: ClaimParams): Promise<AuthenticationResponse | MfaChallengeResponse> {
         const { clientId, clientSecret } = await getClientIdAndSecret(platformId, log)
         const idToken = await googleAuthnProvider(log).authenticate({
             clientId,

@@ -1,6 +1,6 @@
 import { isNil } from '@activepieces/shared';
 import { t } from 'i18next';
-import { LockIcon, MailIcon, Earth } from 'lucide-react';
+import { LockIcon, MailIcon, Earth, ShieldIcon } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { CenteredPage } from '@/app/components/centered-page';
@@ -137,6 +137,29 @@ const SSOPage = () => {
                 onCheckedChange={() =>
                   toggleEmailAuthentication({
                     emailAuthEnabled: !platform.emailAuthEnabled,
+                  })
+                }
+                disabled={isPending}
+              />
+            </ItemActions>
+          </Item>
+
+          <Item variant="outline">
+            <ItemMedia variant="icon">
+              <ShieldIcon />
+            </ItemMedia>
+            <ItemContent>
+              <ItemTitle>{t('Two-Factor Authentication')}</ItemTitle>
+              <ItemDescription>
+                {t('Require all members to use two-factor authentication.')}
+              </ItemDescription>
+            </ItemContent>
+            <ItemActions>
+              <Switch
+                checked={platform.enforceTotp ?? false}
+                onCheckedChange={() =>
+                  toggleEmailAuthentication({
+                    enforceTotp: !platform.enforceTotp,
                   })
                 }
                 disabled={isPending}

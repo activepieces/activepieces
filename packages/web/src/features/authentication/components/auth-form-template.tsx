@@ -165,6 +165,17 @@ const BrandPanel = () => {
   );
 };
 
+const AuthLayout = ({ children }: { children: React.ReactNode }) => (
+  <div className="flex h-screen w-full">
+    <BrandPanel />
+    <div className="flex w-full lg:w-1/2 flex-col items-center justify-center p-8 overflow-y-auto">
+      <div className="w-full max-w-sm flex flex-col gap-0">{children}</div>
+    </div>
+  </div>
+);
+
+AuthLayout.displayName = 'AuthLayout';
+
 const AuthFormTemplate = React.memo(
   ({ form }: { form: 'signin' | 'signup' }) => {
     const isSignUp = form === 'signup';
@@ -197,62 +208,54 @@ const AuthFormTemplate = React.memo(
     }
 
     return (
-      <div className="flex h-screen w-full">
-        <BrandPanel />
-
-        <div className="flex w-full lg:w-1/2 flex-col items-center justify-center p-8 overflow-y-auto">
-          <div className="w-full max-w-sm flex flex-col gap-0">
-            <div className="mb-8">
-              {isCloud ? (
-                <Link
-                  to="https://activepieces.com"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  <FullLogo />
-                </Link>
-              ) : (
-                <FullLogo />
-              )}
-            </div>
-
-            {!showCheckYourEmailNote && (
-              <div className="mb-6">
-                <h1 className="text-2xl font-bold tracking-tight">
-                  {data.title}
-                </h1>
-                <p className="text-muted-foreground text-sm mt-1.5">
-                  {data.description}
-                </p>
-              </div>
-            )}
-
-            {!showCheckYourEmailNote && <ThirdPartyLogin isSignUp={isSignUp} />}
-            <AuthSeparator
-              isEmailAuthEnabled={
-                (isEmailAuthEnabled ?? true) && !showCheckYourEmailNote
-              }
-            />
-
-            {isEmailAuthEnabled ? (
-              isSignUp ? (
-                <SignUpForm
-                  setShowCheckYourEmailNote={setShowCheckYourEmailNote}
-                  showCheckYourEmailNote={showCheckYourEmailNote}
-                />
-              ) : (
-                <SignInForm />
-              )
-            ) : null}
-
-            <BottomNote isSignup={isSignUp} />
-          </div>
+      <AuthLayout>
+        <div className="mb-8">
+          {isCloud ? (
+            <Link
+              to="https://activepieces.com"
+              target="_blank"
+              rel="noreferrer"
+            >
+              <FullLogo />
+            </Link>
+          ) : (
+            <FullLogo />
+          )}
         </div>
-      </div>
+
+        {!showCheckYourEmailNote && (
+          <div className="mb-6">
+            <h1 className="text-2xl font-bold tracking-tight">{data.title}</h1>
+            <p className="text-muted-foreground text-sm mt-1.5">
+              {data.description}
+            </p>
+          </div>
+        )}
+
+        {!showCheckYourEmailNote && <ThirdPartyLogin isSignUp={isSignUp} />}
+        <AuthSeparator
+          isEmailAuthEnabled={
+            (isEmailAuthEnabled ?? true) && !showCheckYourEmailNote
+          }
+        />
+
+        {isEmailAuthEnabled ? (
+          isSignUp ? (
+            <SignUpForm
+              setShowCheckYourEmailNote={setShowCheckYourEmailNote}
+              showCheckYourEmailNote={showCheckYourEmailNote}
+            />
+          ) : (
+            <SignInForm />
+          )
+        ) : null}
+
+        <BottomNote isSignup={isSignUp} />
+      </AuthLayout>
     );
   },
 );
 
 AuthFormTemplate.displayName = 'AuthFormTemplate';
 
-export { AuthFormTemplate };
+export { AuthFormTemplate, AuthLayout };

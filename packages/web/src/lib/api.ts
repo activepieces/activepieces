@@ -20,6 +20,7 @@ const disallowedRoutes = [
   '/v1/managed-authn/external-token',
   '/v1/authentication/sign-in',
   '/v1/authentication/sign-up',
+  '/v1/authentication/2fa/verify',
   '/v1/authn/local/verify-email',
   '/v1/authn/federated/login',
   '/v1/authn/federated/claim',

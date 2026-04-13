@@ -50,6 +50,41 @@ export const accessTokenManager = (log: FastifyBaseLogger) => ({
     },
 
 
+    async generateMfaChallengeToken({ identityId, platformId }: { identityId: string, platformId: string }): Promise<string> {
+        const secret = await jwtUtils.getJwtSecret()
+        return jwtUtils.sign({
+            payload: { type: 'MFA_CHALLENGE', identityId, platformId },
+            key: secret,
+            expiresInSeconds: dayjs.duration(5, 'minute').asSeconds(),
+        })
+    },
+
+    async verifyMfaChallengeToken({ token }: { token: string }): Promise<{ identityId: string, platformId: string }> {
+        const secret = await jwtUtils.getJwtSecret()
+        try {
+            const decoded = await jwtUtils.decodeAndVerify<{ type: string, identityId: string, platformId: string }>({
+                jwt: token,
+                key: secret,
+            })
+            if (decoded.type !== 'MFA_CHALLENGE') {
+                throw new ActivepiecesError({
+                    code: ErrorCode.INVALID_BEARER_TOKEN,
+                    params: { message: 'Invalid MFA challenge token' },
+                })
+            }
+            return { identityId: decoded.identityId, platformId: decoded.platformId }
+        }
+        catch (e) {
+            if (e instanceof ActivepiecesError) {
+                throw e
+            }
+            throw new ActivepiecesError({
+                code: ErrorCode.INVALID_BEARER_TOKEN,
+                params: { message: 'Invalid or expired MFA challenge token' },
+            })
+        }
+    },
+
     async verifyPrincipal(token: string): Promise<Principal> {
         const secret = await jwtUtils.getJwtSecret()
 

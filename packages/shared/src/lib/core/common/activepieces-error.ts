@@ -94,6 +94,11 @@ export type ApErrorParams =
     | ResumeLogsFileMissingParams
     | ExecutionStateMissingParams
     | GenericErrorParams
+    | MfaRequiredParams
+    | Invalid2faCodeParams
+    | InvalidBackupCodeParams
+    | MfaNotEnabledParams
+    | MfaAlreadyEnabledParams
 
 export type TriggerExecutionFailedParams = BaseErrorParams<ErrorCode.TRIGGER_EXECUTION_FAILED, {
     flowId: FlowId
@@ -487,6 +492,18 @@ export type GenericErrorParams = BaseErrorParams<ErrorCode.GENERIC_ERROR, {
     message: string
 }>
 
+export type MfaRequiredParams = BaseErrorParams<ErrorCode.MFA_REQUIRED, {
+    mfaToken: string
+}>
+
+export type Invalid2faCodeParams = BaseErrorParams<ErrorCode.INVALID_2FA_CODE, Record<string, never>>
+
+export type InvalidBackupCodeParams = BaseErrorParams<ErrorCode.INVALID_BACKUP_CODE, Record<string, never>>
+
+export type MfaNotEnabledParams = BaseErrorParams<ErrorCode.MFA_NOT_ENABLED, Record<string, never>>
+
+export type MfaAlreadyEnabledParams = BaseErrorParams<ErrorCode.MFA_ALREADY_ENABLED, Record<string, never>>
+
 export enum ErrorCode {
     INTERNAL_SERVER_ERROR = 'INTERNAL_SERVER_ERROR',
     MACHINE_NOT_CONNECTED = 'MACHINE_NOT_CONNECTED',
@@ -559,5 +576,10 @@ export enum ErrorCode {
     RESUME_LOGS_FILE_MISSING = 'RESUME_LOGS_FILE_MISSING',
     EXECUTION_STATE_MISSING = 'EXECUTION_STATE_MISSING',
     GENERIC_ERROR = 'GENERIC_ERROR',
+    MFA_REQUIRED = 'MFA_REQUIRED',
+    INVALID_2FA_CODE = 'INVALID_2FA_CODE',
+    INVALID_BACKUP_CODE = 'INVALID_BACKUP_CODE',
+    MFA_NOT_ENABLED = 'MFA_NOT_ENABLED',
+    MFA_ALREADY_ENABLED = 'MFA_ALREADY_ENABLED',
 }
 

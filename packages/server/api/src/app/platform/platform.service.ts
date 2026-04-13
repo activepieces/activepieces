@@ -74,6 +74,7 @@ export const platformService = (log: FastifyBaseLogger) => ({
             federatedAuthProviders: {},
             cloudAuthEnabled: true,
             pinnedPieces: [],
+            enforceTotp: false,
         }
 
         const savedPlatform = await platformRepo().save(newPlatform)
@@ -120,6 +121,7 @@ export const platformService = (log: FastifyBaseLogger) => ({
             ),
             ...spreadIfDefined('allowedAuthDomains', params.allowedAuthDomains),
             ...spreadIfDefined('pinnedPieces', params.pinnedPieces),
+            ...spreadIfDefined('enforceTotp', params.enforceTotp),
         }
         if (!isNil(params.plan)) {
             await platformPlanService(log).update({

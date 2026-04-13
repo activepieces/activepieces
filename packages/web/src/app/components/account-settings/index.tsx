@@ -24,6 +24,7 @@ import { userHooks, userMutations } from '@/hooks/user-hooks';
 
 import { DeleteAccount } from './delete-account';
 import LanguageToggle from './language-toggle';
+import { TwoFactorAuthSection } from './security';
 import ThemeToggle from './theme-toggle';
 
 export interface AccountSettingsDialogProps {
@@ -126,6 +127,11 @@ export function AccountSettingsDialog({
               <LanguageToggle />
             </div>
             <DeleteAccount />
+            <Separator />
+            <div className="flex flex-col gap-2">
+              <p className="text-sm font-semibold">{t('Security')}</p>
+              <TwoFactorAuthSection />
+            </div>
           </div>
         </ScrollArea>
         <DialogFooter />

@@ -27,6 +27,7 @@ export const UpdatePlatformRequestBody = z.object({
     allowedAuthDomains: OptionalArrayFromQuery(z.string()),
     enforceAllowedAuthDomains: OptionalBooleanFromQuery,
     pinnedPieces: OptionalArrayFromQuery(z.string()),
+    enforceTotp: OptionalBooleanFromQuery,
 })
 
 export type UpdatePlatformRequestBody = z.infer<typeof UpdatePlatformRequestBody>

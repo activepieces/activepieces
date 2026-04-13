@@ -129,6 +129,7 @@ export const Platform = z.object({
     federatedAuthProviders: FederatedAuthnProviderConfig,
     emailAuthEnabled: z.boolean(),
     pinnedPieces: z.array(z.string()),
+    enforceTotp: z.boolean(),
 })
 export type Platform = z.infer<typeof Platform>
 
@@ -152,6 +153,7 @@ export const PlatformWithoutSensitiveData = z.object({
     allowedAuthDomains: z.array(z.string()),
     emailAuthEnabled: z.boolean(),
     pinnedPieces: z.array(z.string()),
+    enforceTotp: z.boolean(),
 })
 export type PlatformWithoutSensitiveData = z.infer<typeof PlatformWithoutSensitiveData>
 

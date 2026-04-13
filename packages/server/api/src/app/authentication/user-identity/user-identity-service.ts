@@ -39,6 +39,7 @@ export const userIdentityService = (log: FastifyBaseLogger) => ({
             newsLetter: params.newsLetter,
             tokenVersion: nanoid(),
             imageUrl: params.imageUrl,
+            totpEnabled: false,
         }
         const identity = await userIdentityRepository().save(newUserIdentity)
         return identity

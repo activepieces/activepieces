@@ -2,29 +2,28 @@ import {
   OtpType,
   ApEdition,
   ApFlagId,
-  AuthenticationResponse,
   ErrorCode,
   isNil,
   SignInRequest,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
-import { Link, Navigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 
-import { authenticationApi } from '@/api/authentication-api';
 import { Button } from '@/components/ui/button';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { HttpError, api } from '@/lib/api';
+import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/format-utils';
 import { useRedirectAfterLogin } from '@/lib/navigation-utils';
+
+import { authMutations, authUtils } from '../hooks/auth-hooks';
 
 import { CheckEmailNote } from './check-email-note';
 
@@ -50,14 +49,20 @@ const SignInForm: React.FC = () => {
 
   const { data: userCreated } = flagsHooks.useFlag(ApFlagId.USER_CREATED);
   const redirectAfterLogin = useRedirectAfterLogin();
+  const navigate = useNavigate();
 
-  const { mutate, isPending } = useMutation<
-    AuthenticationResponse,
-    HttpError,
-    SignInRequest
-  >({
-    mutationFn: authenticationApi.signIn,
+  const { mutate, isPending } = authMutations.useSignIn({
     onSuccess: (data) => {
+      if (authUtils.isMfaChallenge(data)) {
+        if (!isNil(data.setupRequired)) {
+          navigate('/sign-in/2fa-setup', {
+            state: { mfaToken: data.mfaToken },
+          });
+        } else {
+          navigate('/sign-in/2fa', { state: { mfaToken: data.mfaToken } });
+        }
+        return;
+      }
       authenticationSession.saveResponse(data, false);
       redirectAfterLogin();
     },

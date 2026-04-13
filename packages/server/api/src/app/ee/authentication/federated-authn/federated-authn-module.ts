@@ -33,17 +33,19 @@ const federatedAuthnController: FastifyPluginAsyncZod = async (app) => {
             platformId: platformId ?? undefined,
             code: req.body.code,
         })
-        applicationEvents(req.log).sendUserEvent({
-            platformId: response.platformId!,
-            userId: response.id,
-            projectId: response.projectId,
-            ip: networkUtils.extractClientRealIp(req, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
-        }, {
-            action: ApplicationEventName.USER_SIGNED_UP,
-            data: {
-                source: 'sso',
-            },
-        })
+        if ('id' in response) {
+            applicationEvents(req.log).sendUserEvent({
+                platformId: response.platformId!,
+                userId: response.id,
+                projectId: response.projectId,
+                ip: networkUtils.extractClientRealIp(req, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
+            }, {
+                action: ApplicationEventName.USER_SIGNED_UP,
+                data: {
+                    source: 'sso',
+                },
+            })
+        }
         return response
     })
 }

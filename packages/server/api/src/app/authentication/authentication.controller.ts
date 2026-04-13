@@ -29,6 +29,10 @@ export const authenticationController: FastifyPluginAsyncZod = async (
             platformId: platformId ?? null,
         })
 
+        if ('mfaRequired' in signUpResponse) {
+            return signUpResponse
+        }
+
         applicationEvents(request.log).sendUserEvent({
             platformId: signUpResponse.platformId!,
             userId: signUpResponse.id,
@@ -52,6 +56,10 @@ export const authenticationController: FastifyPluginAsyncZod = async (
             password: request.body.password,
             predefinedPlatformId,
         })
+
+        if ('mfaRequired' in response) {
+            return response
+        }
 
         const responsePlatformId = response.platformId
         assertNotNullOrUndefined(responsePlatformId, 'Platform ID is required')

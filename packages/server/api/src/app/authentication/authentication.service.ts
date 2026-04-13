@@ -1,5 +1,5 @@
 import { cryptoUtils } from '@activepieces/server-utils'
-import { ActivepiecesError, ApEdition, ApFlagId, assertNotNullOrUndefined, AuthenticationResponse, ErrorCode, isNil, OtpType, PlatformRole, PlatformWithoutSensitiveData, ProjectType, User, UserIdentity, UserIdentityProvider } from '@activepieces/shared'
+import { ActivepiecesError, ApEdition, ApFlagId, assertNotNullOrUndefined, AuthenticationResponse, ErrorCode, isNil, MfaChallengeResponse, OtpType, PlatformRole, PlatformWithoutSensitiveData, ProjectType, User, UserIdentity, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { otpService } from '../ee/authentication/otp/otp-service'
 import { flagService } from '../flags/flag.service'
@@ -10,10 +10,11 @@ import { projectService } from '../project/project-service'
 import { userService } from '../user/user-service'
 import { userInvitationsService } from '../user-invitations/user-invitation.service'
 import { authenticationUtils } from './authentication-utils'
+import { accessTokenManager } from './lib/access-token-manager'
 import { userIdentityService } from './user-identity/user-identity-service'
 
 export const authenticationService = (log: FastifyBaseLogger) => ({
-    async signUp(params: SignUpParams): Promise<AuthenticationResponse> {
+    async signUp(params: SignUpParams): Promise<AuthenticationResponse | MfaChallengeResponse> {
         if (!isNil(params.platformId)) {
             await authenticationUtils(log).assertEmailAuthIsEnabled({
                 platformId: params.platformId,
@@ -51,6 +52,11 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
             user,
         })
 
+        const setupRequired = await checkEnforceTotp({ identityId: userIdentity.id, totpEnabled: userIdentity.totpEnabled, platformId: params.platformId, log })
+        if (setupRequired) {
+            return setupRequired
+        }
+
         log.info({ email: params.email, platformId: params.platformId }, 'User signed up to existing platform')
         return authenticationUtils(log).getProjectAndToken({
             userId: user.id,
@@ -58,7 +64,7 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
             projectId: null,
         })
     },
-    async signInWithPassword(params: SignInWithPasswordParams): Promise<AuthenticationResponse> {
+    async signInWithPassword(params: SignInWithPasswordParams): Promise<AuthenticationResponse | MfaChallengeResponse> {
         const identity = await userIdentityService(log).verifyIdentityPassword(params)
         const platformId = isNil(params.predefinedPlatformId) ? await getPersonalPlatformIdForIdentity(identity.id, log) : params.predefinedPlatformId
         if (isNil(platformId)) {
@@ -82,6 +88,16 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
             platformId,
         })
         assertNotNullOrUndefined(user, 'User not found')
+
+        if (identity.totpEnabled) {
+            return requireMfa(identity, platformId, log)
+        }
+
+        const setupRequired = await checkEnforceTotp({ identityId: identity.id, totpEnabled: identity.totpEnabled, platformId, log })
+        if (setupRequired) {
+            return setupRequired
+        }
+
         log.info({ email: params.email, platformId }, 'User signed in with password')
         return authenticationUtils(log).getProjectAndToken({
             userId: user.id,
@@ -89,7 +105,7 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
             projectId: null,
         })
     },
-    async federatedAuthn(params: FederatedAuthnParams): Promise<AuthenticationResponse> {
+    async federatedAuthn(params: FederatedAuthnParams): Promise<AuthenticationResponse | MfaChallengeResponse> {
         const platformId = isNil(params.predefinedPlatformId) ? await getPersonalPlatformIdForFederatedAuthn(params.email, log) : params.predefinedPlatformId
         const userIdentity = await userIdentityService(log).getIdentityByEmail(params.email)
 
@@ -132,6 +148,16 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
             email: params.email,
             user,
         })
+
+        if (userIdentity.totpEnabled) {
+            return requireMfa(userIdentity, platformId, log)
+        }
+
+        const setupRequired = await checkEnforceTotp({ identityId: userIdentity.id, totpEnabled: userIdentity.totpEnabled, platformId, log })
+        if (setupRequired) {
+            return setupRequired
+        }
+
         return authenticationUtils(log).getProjectAndToken({
             userId: user.id,
             platformId,
@@ -264,7 +290,25 @@ async function getPersonalPlatformIdForIdentity(identityId: string, log: Fastify
     return null
 }
 
+async function requireMfa({ id }: { id: string }, platformId: string, log: FastifyBaseLogger): Promise<MfaChallengeResponse> {
+    const mfaToken = await accessTokenManager(log).generateMfaChallengeToken({
+        identityId: id,
+        platformId,
+    })
+    return { mfaRequired: true as const, mfaToken }
+}
 
+async function checkEnforceTotp({ identityId, totpEnabled, platformId, log }: { identityId: string, totpEnabled: boolean, platformId: string, log: FastifyBaseLogger }): Promise<MfaChallengeResponse | null> {
+    if (totpEnabled) {
+        return null
+    }
+    const platform = await platformService(log).getOneWithPlanOrThrow(platformId)
+    if (!platform.enforceTotp) {
+        return null
+    }
+    const mfaToken = await accessTokenManager(log).generateMfaChallengeToken({ identityId, platformId })
+    return { mfaRequired: true as const, setupRequired: true, mfaToken }
+}
 
 type FederatedAuthnParams = {
     email: string
