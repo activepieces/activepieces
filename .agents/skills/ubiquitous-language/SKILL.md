@@ -108,7 +108,7 @@ Create or update this file at the repository root (or the location the user spec
 
 #### 2d. Canonical term enforcement
 
-When writing or reviewing code, use only the canonical term from the glossary. If you see a deprecated alias in existing code, note it as technical debt (do not rename in the same PR unless the user asks).
+When writing or reviewing code, use only the canonical term from the glossary. If you see a deprecated alias in existing code, inform the user about each occurrence and let them decide whether to rename it now or track it as technical debt for later.
 
 ---
 
@@ -133,7 +133,7 @@ When this skill is triggered a second or subsequent time in the same session:
 | New term encountered | Add to glossary via Step 2 |
 | Ambiguity detected | Flag to user before resolving |
 | Skill re-invoked | Follow Step 3 (incremental update) |
-| Deprecated alias found in code | Note as tech debt; do not rename silently |
+| Deprecated alias found in code | Inform user; let them decide to rename now or defer as tech debt |
 
 ## Critical Reminders
 
