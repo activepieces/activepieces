@@ -389,7 +389,7 @@ describe('Managed Authentication API', () => {
             expect(cachedPoolId).toBe(pool!.id)
         })
 
-        it('Creates pool with default limit when token has key but no limit', async () => {
+        it('Does not create pool when token has concurrencyPoolKey but no concurrencyPoolLimit', async () => {
             const { mockPlatform } = await mockAndSaveBasicSetup()
 
             const mockSigningKey = createMockSigningKey({
@@ -418,11 +418,10 @@ describe('Managed Authentication API', () => {
                 .getRepository('concurrency_pool')
                 .findOneBy({ platformId: mockPlatform.id, key: 'no-limit-pool' }) as { id: string, maxConcurrentJobs: number } | null
 
-            expect(pool).not.toBeNull()
-            expect(pool!.maxConcurrentJobs).toBe(1_000_000)
+            expect(pool).toBeNull()
 
             const project = await db.findOneByOrFail<{ poolId: string | null }>('project', { id: responseBody?.projectId })
-            expect(project.poolId).toBe(pool!.id)
+            expect(project.poolId).toBeNull()
         })
 
         it('Reuses same pool for same concurrencyPoolKey across multiple tokens', async () => {

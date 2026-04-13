@@ -1,8 +1,8 @@
-import { apId, isNil, tryCatch } from '@activepieces/shared'
+import { apId, isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { getConcurrencyPoolLimitKey, getProjectConcurrencyPoolKey } from '../../../database/redis/keys'
-import { distributedStore } from '../../../database/redis-connections'
+import { distributedLock, distributedStore } from '../../../database/redis-connections'
 import { projectRepo } from '../../../project/project-repo'
 import { ConcurrencyPoolEntity, ConcurrencyPoolEntitySchema } from './concurrency-pool.entity'
 
@@ -11,36 +11,27 @@ const CACHE_TTL_SECONDS = 86400 // 24 hours
 const NO_POOL_SENTINEL = 'none'
 const UNLIMITED_CONCURRENT_JOBS = 1_000_000
 
-export const concurrencyPoolService = (_log: FastifyBaseLogger) => ({
+export const concurrencyPoolService = (log: FastifyBaseLogger) => ({
 
     async upsertPool({ platformId, key, maxConcurrentJobs }: UpsertPoolParams): Promise<{ poolId: string }> {
-        const existing = await concurrencyPoolRepo().findOne({
-            where: { platformId, key },
+        return distributedLock(log).runExclusive({
+            key: `concurrency_pool_upsert:${platformId}:${key}`,
+            timeoutInSeconds: 30,
+            fn: async () => {
+                const poolId = apId()
+                await concurrencyPoolRepo().upsert({
+                    id: poolId,
+                    platformId,
+                    key,
+                    maxConcurrentJobs: maxConcurrentJobs ?? UNLIMITED_CONCURRENT_JOBS,
+                }, ['platformId', 'key'])
+                const pool = await concurrencyPoolRepo().findOneOrFail({ where: { platformId, key } })
+                if (!isNil(maxConcurrentJobs)) {
+                    await distributedStore.put(getConcurrencyPoolLimitKey(pool.id), maxConcurrentJobs, CACHE_TTL_SECONDS)
+                }
+                return { poolId: pool.id }
+            },
         })
-        if (!isNil(existing)) {
-            const updatedLimit = maxConcurrentJobs ?? existing.maxConcurrentJobs
-            await concurrencyPoolRepo().update({ id: existing.id }, { maxConcurrentJobs: updatedLimit })
-            if (!isNil(maxConcurrentJobs)) {
-                await distributedStore.put(getConcurrencyPoolLimitKey(existing.id), maxConcurrentJobs, CACHE_TTL_SECONDS)
-            }
-            return { poolId: existing.id }
-        }
-        const poolId = apId()
-        const { error } = await tryCatch(() => concurrencyPoolRepo().insert({
-            id: poolId,
-            platformId,
-            key,
-            maxConcurrentJobs: maxConcurrentJobs ?? UNLIMITED_CONCURRENT_JOBS,
-        }))
-        if (!isNil(error)) {
-            // Unique constraint violation — another request created the pool concurrently
-            const raceWinner = await concurrencyPoolRepo().findOneOrFail({ where: { platformId, key } })
-            return { poolId: raceWinner.id }
-        }
-        if (!isNil(maxConcurrentJobs)) {
-            await distributedStore.put(getConcurrencyPoolLimitKey(poolId), maxConcurrentJobs, CACHE_TTL_SECONDS)
-        }
-        return { poolId }
     },
 
     async getProjectPoolId(projectId: string): Promise<string | null> {

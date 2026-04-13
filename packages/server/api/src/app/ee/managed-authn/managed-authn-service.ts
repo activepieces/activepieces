@@ -44,15 +44,12 @@ export const managedAuthnService = (log: FastifyBaseLogger) => ({
             })
         }
 
-        if (!isNil(externalPrincipal.concurrencyPoolKey)) {
-            const upsertParams: { platformId: string, key: string, maxConcurrentJobs?: number } = {
+        if (!isNil(externalPrincipal.concurrencyPoolKey) && !isNil(externalPrincipal.concurrencyPoolLimit)) {
+            const { poolId } = await concurrencyPoolService(log).upsertPool({
                 platformId: externalPrincipal.platformId,
                 key: externalPrincipal.concurrencyPoolKey,
-            }
-            if (!isNil(externalPrincipal.concurrencyPoolLimit)) {
-                upsertParams.maxConcurrentJobs = externalPrincipal.concurrencyPoolLimit
-            }
-            const { poolId } = await concurrencyPoolService(log).upsertPool(upsertParams)
+                maxConcurrentJobs: externalPrincipal.concurrencyPoolLimit,
+            })
             await projectService(log).update(project.id, { type: project.type, poolId })
             await concurrencyPoolService(log).assignProject({ projectId: project.id, poolId })
         }
