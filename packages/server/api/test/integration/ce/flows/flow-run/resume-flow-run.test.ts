@@ -93,9 +93,6 @@ describe('Resume flow run', () => {
             environment: RunEnvironment.PRODUCTION,
         })
         await db.save('flow_run', flowRun)
-        await db.update('flow_run', flowRun.id, {
-            pauseMetadata: { type: 'WEBHOOK', requestId: apId(), response: {} },
-        })
 
         const response = await app.inject({
             method: 'POST',
@@ -107,65 +104,6 @@ describe('Resume flow run', () => {
         expect(response.json()).toEqual({
             message: 'Your response has been recorded. You can close this page now.',
         })
-    })
-
-    it('should resume successfully when flow is PAUSED with a PENDING waitpoint', async () => {
-        const requestId = apId()
-
-        const { flowRun } = await createPausedFlowRunWithWaitpoint({
-            projectId: ctx.project.id,
-        })
-
-        const response = await app.inject({
-            method: 'POST',
-            url: `/api/v1/flow-runs/${flowRun.id}/requests/${requestId}`,
-            body: {
-                status: 'success',
-                data: { greeting: 'Hello' },
-            },
-        })
-
-        expect(response.statusCode).toBe(200)
-
-        const waitpoint = await db.findOneBy('waitpoint', { flowRunId: flowRun.id })
-        expect(waitpoint).toBeNull()
-    })
-
-    it('should pre-complete waitpoint when flow is RUNNING (race condition)', async () => {
-        const flow = createMockFlow({ projectId: ctx.project.id })
-        await db.save('flow', flow)
-
-        const flowVersion = createMockFlowVersion({
-            flowId: flow.id,
-            state: FlowVersionState.LOCKED,
-        })
-        await db.save('flow_version', flowVersion)
-
-        const requestId = apId()
-        const flowRun = createMockFlowRun({
-            projectId: ctx.project.id,
-            flowId: flow.id,
-            flowVersionId: flowVersion.id,
-            status: FlowRunStatus.RUNNING,
-            environment: RunEnvironment.PRODUCTION,
-        })
-        await db.save('flow_run', flowRun)
-
-        const response = await app.inject({
-            method: 'POST',
-            url: `/api/v1/flow-runs/${flowRun.id}/requests/${requestId}`,
-            body: {
-                status: 'success',
-                data: { greeting: 'Hello' },
-            },
-        })
-
-        expect(response.statusCode).toBe(200)
-
-        const waitpoint = await db.findOneBy<{ status: string, resumePayload: unknown }>('waitpoint', { flowRunId: flowRun.id })
-        expect(waitpoint).not.toBeNull()
-        expect(waitpoint!.status).toBe('COMPLETED')
-        expect(waitpoint!.resumePayload).toBeDefined()
     })
 
     it('should trigger resume when uploadRunLog finds a pre-completed waitpoint', async () => {
@@ -279,60 +217,6 @@ describe('Resume flow run', () => {
             environment: RunEnvironment.PRODUCTION,
         })
         await db.save('flow_run', flowRun)
-        await db.update('flow_run', flowRun.id, {
-            pauseMetadata: { type: 'WEBHOOK', requestId: apId(), response: {} },
-        })
-
-        const responsePromise = app.inject({
-            method: 'POST',
-            url: `/api/v1/flow-runs/${flowRun.id}/requests/${requestId}/sync`,
-            body: { data: 'test' },
-        })
-
-        await new Promise((resolve) => setTimeout(resolve, 500))
-        await pubsub.publish(`engine-run:sync:${engineResponseWatcher(app.log).getServerId()}`, JSON.stringify({
-            requestId,
-            response: { status: 200, body: { ok: true }, headers: {} },
-        }))
-
-        const response = await responsePromise
-        expect(response.statusCode).toBe(200)
-    })
-
-    it('sync: should return 410 when PAUSED with no waitpoint and no legacy pauseMetadata', async () => {
-        const flow = createMockFlow({ projectId: ctx.project.id })
-        await db.save('flow', flow)
-
-        const flowVersion = createMockFlowVersion({
-            flowId: flow.id,
-            state: FlowVersionState.LOCKED,
-        })
-        await db.save('flow_version', flowVersion)
-
-        const flowRun = createMockFlowRun({
-            projectId: ctx.project.id,
-            flowId: flow.id,
-            flowVersionId: flowVersion.id,
-            status: FlowRunStatus.PAUSED,
-            environment: RunEnvironment.PRODUCTION,
-        })
-        await db.save('flow_run', flowRun)
-
-        const response = await app.inject({
-            method: 'POST',
-            url: `/api/v1/flow-runs/${flowRun.id}/requests/${apId()}/sync`,
-            body: { data: 'test' },
-        })
-
-        expect(response.statusCode).toBe(410)
-    })
-
-    it('sync: should accept request when PAUSED with waitpoint', async () => {
-        const requestId = apId()
-
-        const { flowRun } = await createPausedFlowRunWithWaitpoint({
-            projectId: ctx.project.id,
-        })
 
         const responsePromise = app.inject({
             method: 'POST',

@@ -25,7 +25,7 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
         await waitpointRepo()
             .createQueryBuilder()
             .insert()
-            .into('waitpoint')
+            .into(WaitpointEntity)
             .values({
                 id,
                 flowRunId: params.flowRunId,
@@ -98,7 +98,7 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
             await repo
                 .createQueryBuilder()
                 .insert()
-                .into('waitpoint')
+                .into(WaitpointEntity)
                 .values({
                     id: apId(),
                     flowRunId: params.flowRunId,
