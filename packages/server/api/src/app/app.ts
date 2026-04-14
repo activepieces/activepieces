@@ -23,8 +23,6 @@ import { appCredentialModule } from './ee/app-credentials/app-credentials.module
 import { appSumoModule } from './ee/appsumo/appsumo.module'
 import { auditEventModule } from './ee/audit-logs/audit-event-module'
 import { enterpriseLocalAuthnModule } from './ee/authentication/enterprise-local-authn/enterprise-local-authn-module'
-import { federatedAuthModule } from './ee/authentication/federated-authn/federated-authn-module'
-import { otpModule } from './ee/authentication/otp/otp-module'
 import { rbacMiddleware } from './ee/authentication/project-role/rbac-middleware'
 import { authnSsoSamlModule } from './ee/authentication/saml-authn/authn-sso-saml-module'
 import { connectionKeyModule } from './ee/connection-keys/connection-key.module'
@@ -277,9 +275,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(managedAuthnModule)
             await app.register(oauthAppModule)
             await app.register(platformPieceModule)
-            await app.register(otpModule)
             await app.register(enterpriseLocalAuthnModule)
-            await app.register(federatedAuthModule)
             await app.register(apiKeyModule)
             await app.register(gitRepoModule)
             await app.register(auditEventModule)
@@ -306,9 +302,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(managedAuthnModule)
             await app.register(oauthAppModule)
             await app.register(platformPieceModule)
-            await app.register(otpModule)
             await app.register(enterpriseLocalAuthnModule)
-            await app.register(federatedAuthModule)
             await app.register(apiKeyModule)
             await app.register(gitRepoModule)
             await app.register(auditEventModule)

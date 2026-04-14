@@ -6,13 +6,12 @@ import {
 import { t } from 'i18next';
 import React from 'react';
 
-import { authenticationApi } from '@/api/authentication-api';
 import GoogleIcon from '@/assets/img/custom/auth/google-icon.svg';
 import SamlIcon from '@/assets/img/custom/auth/saml.svg';
 import { Button } from '@/components/ui/button';
-import { internalErrorToast } from '@/components/ui/sonner';
-import { oauth2Utils } from '@/features/connections/utils/oauth2-utils';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { authClient } from '@/lib/better-auth';
+import { API_URL } from '@/lib/api';
 
 const ThirdPartyIcon = ({ icon }: { icon: string }) => {
   return <img src={icon} alt="icon" width={24} height={24} className="mr-2" />;
@@ -21,28 +20,25 @@ const ThirdPartyIcon = ({ icon }: { icon: string }) => {
 const ThirdPartyLogin = React.memo(({ isSignUp }: { isSignUp: boolean }) => {
   const { data: thirdPartyAuthProviders } =
     flagsHooks.useFlag<ThirdPartyAuthnProvidersToShowMap>(
-      ApFlagId.THIRD_PARTY_AUTH_PROVIDERS_TO_SHOW_MAP,
+      ApFlagId.THIRD_PARTY_AUTH_PROVIDERS_TO_SHOW_MAP
     );
-  const { data: thirdPartyRedirectUrl } = flagsHooks.useFlag<string>(
-    ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL,
-  );
-  const thirdPartyLogin = oauth2Utils.useThirdPartyLogin();
 
   const handleProviderClick = async (
     event: React.MouseEvent<HTMLButtonElement, MouseEvent>,
-    providerName: ThirdPartyAuthnProviderEnum,
+    providerName: ThirdPartyAuthnProviderEnum
   ) => {
     event.preventDefault();
     event.stopPropagation();
-    const { loginUrl } = await authenticationApi.getFederatedAuthLoginUrl(
-      providerName,
-    );
 
-    if (!loginUrl || !thirdPartyRedirectUrl) {
-      internalErrorToast();
-      return;
-    }
-    thirdPartyLogin(loginUrl, providerName);
+    await authClient.signIn.social({
+      // redirects to provider sign page
+      provider: providerName,
+      // callbackURL: `${API_URL}/v1/better-auth/callback/${providerName}`,
+      additionalData: {
+        provider: providerName,
+        from: '/tables',
+      },
+    });
   };
 
   const signInWithSaml = () =>

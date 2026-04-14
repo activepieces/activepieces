@@ -1,18 +1,33 @@
 import { UserIdentity } from '@activepieces/shared'
-import { EntitySchema } from 'typeorm'
-import { BaseColumnSchemaPart } from '../../database/database-common'
+import { EntitySchema, EntitySchemaColumnOptions } from 'typeorm'
 
-export const UserIdentityEntity = new EntitySchema<UserIdentity>({
+type UserIdentitySchema = UserIdentity & {
+    name: string
+    image?: string
+    password?: string
+    /** @deprecated use emailVerified instead */
+    verified: boolean
+}
+
+export const UserIdentityEntity = new EntitySchema<UserIdentitySchema>({
     name: 'user_identity',
     columns: {
-        ...BaseColumnSchemaPart,
+        id: {
+            type: String,
+            primary: true,
+        } as EntitySchemaColumnOptions,
+        createdAt: {
+            type: 'timestamp with time zone',
+            createDate: true,
+        } as EntitySchemaColumnOptions,
+        updatedAt: {
+            type: 'timestamp with time zone',
+            updateDate: true,
+        } as EntitySchemaColumnOptions,
         email: {
             type: String,
             nullable: false,
             unique: true,
-        },
-        password: {
-            type: String,
         },
         trackEvents: {
             type: Boolean,
@@ -22,7 +37,13 @@ export const UserIdentityEntity = new EntitySchema<UserIdentity>({
             type: Boolean,
             nullable: true,
         },
+        /** @deprecated use emailVerified instead */
         verified: {
+            type: Boolean,
+            nullable: false,
+            default: false,
+        },
+        emailVerified: {
             type: Boolean,
             nullable: false,
             default: false,
@@ -35,6 +56,10 @@ export const UserIdentityEntity = new EntitySchema<UserIdentity>({
             type: String,
             nullable: false,
         },
+        password: {
+            type: String,
+            nullable: true,
+        },
         tokenVersion: {
             type: String,
             nullable: true,
@@ -44,6 +69,22 @@ export const UserIdentityEntity = new EntitySchema<UserIdentity>({
             nullable: false,
         },
         imageUrl: {
+            type: String,
+            nullable: true,
+        },
+        draft: {
+            type: Boolean,
+            nullable: false,
+            default: false,
+        },
+
+        // unused but required by better-auth
+        name: {
+            type: String,
+            nullable: false,
+            default: '',
+        },
+        image: {
             type: String,
             nullable: true,
         },

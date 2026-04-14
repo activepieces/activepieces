@@ -4,15 +4,13 @@ import React, { useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
-import { authenticationApi } from '@/api/authentication-api';
 import { LoadingScreen } from '@/components/custom/loading-screen';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import {
-  FROM_QUERY_PARAM,
-  LOGIN_QUERY_PARAM,
-  PROVIDER_NAME_QUERY_PARAM,
+  ERROR_QUERY_PARAM,
+  RESPONSE_QUERY_PARAM,
   STATE_QUERY_PARAM,
 } from '@/lib/navigation-utils';
 
@@ -28,17 +26,31 @@ const RedirectPage: React.FC = React.memo(() => {
     hasCheckedParams.current = true;
     const params = new URLSearchParams(location.search);
     const code = params.get('code');
+
+    const response = tryParseState(params.get(RESPONSE_QUERY_PARAM));
     const state = tryParseState(params.get(STATE_QUERY_PARAM));
-    if (state && state[LOGIN_QUERY_PARAM] && code) {
-      const providerName = state[PROVIDER_NAME_QUERY_PARAM];
-      const from = state[FROM_QUERY_PARAM];
+    const error = tryParseState(params.get(ERROR_QUERY_PARAM));
+
+    if (error) {
+      if (error.code === ErrorCode.INVITATION_ONLY_SIGN_UP) {
+        toast(t('Invitation only sign up'), {
+          description: t(
+            'Please ask your administrator to add you to the organization.',
+          ),
+        });
+      } else {
+        internalErrorToast();
+      }
+      navigate('/sign-in');
+      return;
+    }
+
+    if (state && response) {
+      const from = state.from ?? '/flows';
+
       const handleThirdPartyLogin = async () => {
         try {
-          const data = await authenticationApi.claimThirdPartyRequest({
-            providerName,
-            code,
-          });
-          authenticationSession.saveResponse(data, false);
+          authenticationSession.saveResponse(response, false);
           navigate(from);
         } catch (e) {
           if (

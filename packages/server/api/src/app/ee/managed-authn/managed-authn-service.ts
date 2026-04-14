@@ -93,7 +93,7 @@ export const managedAuthnService = (log: FastifyBaseLogger) => ({
             email: identity.email,
             trackEvents: identity.trackEvents,
             newsLetter: identity.newsLetter,
-            verified: identity.verified,
+            emailVerified: identity.emailVerified,
             token,
             projectId: project.id,
         }
@@ -162,8 +162,8 @@ const getOrCreateUserIdentity = async (
         trackEvents: true,
         newsLetter: false,
         provider: UserIdentityProvider.JWT,
-        verified: true,
     })
+    await userIdentityService(log).verify(identity.id)
     return identity
 }
 const getOrCreateProject = async ({

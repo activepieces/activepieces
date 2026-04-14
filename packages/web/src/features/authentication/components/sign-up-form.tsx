@@ -98,7 +98,7 @@ const SignUpForm = ({
 
   const { mutate, isPending } = authMutations.useSignUp({
     onSuccess: (data) => {
-      if (data.verified) {
+      if (data.emailVerified) {
         authenticationSession.saveResponse(data, false);
         redirectAfterLogin();
       } else {

@@ -4,13 +4,10 @@ import {
   ResetPasswordRequestBody,
   VerifyEmailRequestBody,
   AuthenticationResponse,
-  ClaimTokenRequest,
-  FederatedAuthnLoginResponse,
   ProjectRole,
   SignInRequest,
   SignUpRequest,
   SwitchPlatformRequest,
-  ThirdPartyAuthnProviderEnum,
   UserIdentity,
 } from '@activepieces/shared';
 
@@ -29,22 +26,11 @@ export const authenticationApi = {
       request,
     );
   },
-  getFederatedAuthLoginUrl(providerName: ThirdPartyAuthnProviderEnum) {
-    return api.get<FederatedAuthnLoginResponse>(`/v1/authn/federated/login`, {
-      providerName,
-    });
-  },
   getCurrentProjectRole(query: GetCurrentProjectMemberRoleQuery) {
     return api.get<ProjectRole | null>('/v1/project-members/role', query);
   },
-  claimThirdPartyRequest(request: ClaimTokenRequest) {
-    return api.post<AuthenticationResponse>(
-      '/v1/authn/federated/claim',
-      request,
-    );
-  },
   sendOtpEmail(request: CreateOtpRequestBody) {
-    return api.post<void>('/v1/otp', request);
+    return api.post<void>('/v1/authn/local/send-otp', request);
   },
   resetPassword(request: ResetPasswordRequestBody) {
     return api.post<void>('/v1/authn/local/reset-password', request);

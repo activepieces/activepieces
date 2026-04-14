@@ -1,6 +1,8 @@
 import {
+    CreateOtpRequestBody,
     ResetPasswordRequestBody,
-    VerifyEmailRequestBody } from '@activepieces/shared'
+    VerifyEmailRequestBody,
+} from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { securityAccess } from '../../../core/security/authorization/fastify-security'
 import { enterpriseLocalAuthnService } from './enterprise-local-authn-service'
@@ -10,6 +12,10 @@ export const enterpriseLocalAuthnController: FastifyPluginAsyncZod = async (
 ) => {
     app.post('/verify-email', VerifyEmailRequest, async (req) => {
         await enterpriseLocalAuthnService(req.log).verifyEmail(req.body)
+    }),
+
+    app.post('/send-otp', CreateOtpRequestRequest, async (req) => {
+        await enterpriseLocalAuthnService(req.log).sendOTP(req.body)
     })
 
     app.post('/reset-password', ResetPasswordRequest, async (req) => {
@@ -23,6 +29,15 @@ const VerifyEmailRequest = {
     },
     schema: {
         body: VerifyEmailRequestBody,
+    },
+}
+
+const CreateOtpRequestRequest = {
+    config: {
+        security: securityAccess.public(),
+    },
+    schema: {
+        body: CreateOtpRequestBody,
     },
 }
 

@@ -121,6 +121,7 @@
     "@activepieces/piece-square": "workspace:*",
     "@faker-js/faker": "8.2.0",
     "@types/bcrypt": "5.0.0",
+    "@types/pg": "8.11.6",
     "@types/content-disposition": "0.5.9",
     "@types/decompress": "4.2.4",
     "@types/deep-equal": "1.0.1",

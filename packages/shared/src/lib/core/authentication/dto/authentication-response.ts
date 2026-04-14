@@ -7,7 +7,7 @@ export const UserWithoutPassword = User.pick({ id: true, platformRole: true, sta
 export type UserWithoutPassword = z.infer<typeof UserWithoutPassword>
 
 export const AuthenticationResponse = UserWithoutPassword.merge(
-    UserIdentity.pick({ verified: true, firstName: true, lastName: true, email: true, trackEvents: true, newsLetter: true }),
+    UserIdentity.pick({ emailVerified: true, firstName: true, lastName: true, email: true, trackEvents: true, newsLetter: true }),
 ).merge(
     z.object({
         token: z.string(),

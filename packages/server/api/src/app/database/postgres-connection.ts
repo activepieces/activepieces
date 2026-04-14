@@ -321,6 +321,7 @@ import { AddPlatformAiCreditsPaymentTable1766186963979 } from './migration/postg
 import { AddAuthConfigInAiProviders1766328841463 } from './migration/postgres/1766328841463-addAuthConfigInAiProviders'
 import { PlatformIdAndProviderUnique1766375959255 } from './migration/postgres/1766375959255-PlatformIdAndProviderUnique'
 import { AddMaxAutoTopUpCreditsMonthlyToPlatformPlan1767016169819 } from './migration/postgres/1767016169819-AddMaxAutoTopUpCreditsMonthlyToPlatformPlan'
+import { UserIdentityForBetterAuth1776192009225 } from './migration/postgres/1776192009225-UserIdentityForBetterAuth'
 import { AnalyticsAndOwnerToFlowId1767127482383 } from './migration/postgres/1767127482383-AnalyticsAndOwnerToFlowId'
 import { AddBadges1767141831647 } from './migration/postgres/1767141831647-AddBadges'
 import { AddFlowOwnerIndex1767610587266 } from './migration/postgres/1767610587266-AddFlowOwnerIndex'
@@ -729,6 +730,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddAiProvidersEnabledToPlatformPlan1775728983000,
         AddConcurrencyPoolTable1775800000000,
         AddDefaultToAiProvidersEnabled1776000000000,
+        UserIdentityForBetterAuth1776192009225,
     ]
     return migrations
 }

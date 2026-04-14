@@ -71,6 +71,16 @@ export const UserWithBadges = z.object({
 
 export type UserWithBadges = z.infer<typeof UserWithBadges>
 
+export const UserWithMetaInformationAndProject = z.object({
+    ...UserWithMetaInformation.shape,
+    trackEvents: z.boolean(),
+    newsLetter: z.boolean(),
+    verified: z.boolean(),
+    projectId: z.string(),
+})
+
+export type UserWithMetaInformationAndProject = z.infer<typeof UserWithMetaInformationAndProject>
+
 export const AP_MAXIMUM_PROFILE_PICTURE_SIZE = 5 * 1024 * 1024 // 5 MB
 
 export const PROFILE_PICTURE_ALLOWED_TYPES = [

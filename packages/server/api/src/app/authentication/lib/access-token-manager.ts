@@ -82,7 +82,7 @@ async function assertUserSession(log: FastifyBaseLogger, decoded: Principal | Pr
     const user = await userService(log).getOneOrFail({ id: decoded.id })
     const identity = await userIdentityService(log).getOneOrFail({ id: user.identityId })
     const isExpired = (identity.tokenVersion ?? null) !== (decoded.tokenVersion ?? null)
-    if (isExpired || user.status === UserStatus.INACTIVE || !identity.verified) {
+    if (isExpired || user.status === UserStatus.INACTIVE || !identity.emailVerified) {
         throw new ActivepiecesError({
             code: ErrorCode.SESSION_EXPIRED,
             params: {

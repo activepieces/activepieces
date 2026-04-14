@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { BaseModelSchema, Nullable } from '../common'
+import { Nullable } from '../common'
 
 
 export enum UserIdentityProvider {
@@ -9,17 +9,20 @@ export enum UserIdentityProvider {
     JWT = 'JWT',
 }
 export const UserIdentity = z.object({
-    ...BaseModelSchema,
+    id: z.string(),
+    createdAt: z.date(),
+    updatedAt: z.date(),
     firstName: z.string(),
     lastName: z.string(),
     email: z.string(),
-    password: z.string(),
+    password: z.string().optional(),
     trackEvents: z.boolean(),
     newsLetter: z.boolean(),
-    verified: z.boolean(),
+    emailVerified: z.boolean(),
     tokenVersion: z.string().optional(),
     provider: z.nativeEnum(UserIdentityProvider),
     imageUrl: Nullable(z.string()),
+    draft: z.boolean().optional(),
 })
 
 export type UserIdentity = z.infer<typeof UserIdentity>

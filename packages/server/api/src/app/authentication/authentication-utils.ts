@@ -18,8 +18,10 @@ export const authenticationUtils = (log: FastifyBaseLogger) => ({
         const isInvited = await userInvitationsService(log).hasAnyAcceptedInvitations({
             platformId,
             email,
-            
+
         })
+        log.info({ isInvited }, '[socialsingin]')
+
         if (!isInvited) {
             throw new ActivepiecesError({
                 code: ErrorCode.INVITATION_ONLY_SIGN_UP,
@@ -28,7 +30,7 @@ export const authenticationUtils = (log: FastifyBaseLogger) => ({
                 },
             })
         }
-    },
+  },
 
     async getProjectAndToken(params: GetProjectAndTokenParams): Promise<AuthenticationResponse> {
         const user = await userService(log).getOneOrFail({ id: params.userId })
@@ -49,7 +51,7 @@ export const authenticationUtils = (log: FastifyBaseLogger) => ({
             })
         }
         const identity = await userIdentityService(log).getOneOrFail({ id: user.identityId })
-        if (!identity.verified) {
+        if (!identity.emailVerified) {
             throw new ActivepiecesError({
                 code: ErrorCode.EMAIL_IS_NOT_VERIFIED,
                 params: {
@@ -80,7 +82,7 @@ export const authenticationUtils = (log: FastifyBaseLogger) => ({
             email: identity.email,
             trackEvents: identity.trackEvents,
             newsLetter: identity.newsLetter,
-            verified: identity.verified,
+            emailVerified: identity.emailVerified,
             token,
             projectId: project.id,
         }
