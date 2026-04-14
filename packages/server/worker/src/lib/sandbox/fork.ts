@@ -8,6 +8,7 @@ export function simpleProcess(enginePath: string, codeDirectory: string): Sandbo
                 execArgv: [
                     // IMPORTANT DO NOT REMOVE THIS ARGUMENT: https://github.com/laverdet/isolated-vm/issues/424
                     '--no-node-snapshot',
+                    '--expose-gc',
                     `--max-old-space-size=${params.resourceLimits.memoryLimitMb}`,
                 ],
                 env: {
