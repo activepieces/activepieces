@@ -2914,7 +2914,7 @@
     },
     "packages/pieces/community/gmail": {
       "name": "@activepieces/piece-gmail",
-      "version": "0.12.0",
+      "version": "0.12.1",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -8034,7 +8034,6 @@
       "name": "@activepieces/engine",
       "version": "0.7.0",
       "dependencies": {
-        "@activepieces/import-fresh-webpack": "3.3.0",
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
@@ -8048,7 +8047,6 @@
         "nanoid": "3.3.8",
         "socket.io-client": "4.8.1",
         "tslib": "2.6.2",
-        "webpack-ignore-dynamic-require": "1.0.0",
         "zod": "4.3.6",
       },
       "devDependencies": {
