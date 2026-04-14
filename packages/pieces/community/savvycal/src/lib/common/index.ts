@@ -1,7 +1,17 @@
+import * as crypto from 'crypto';
 import { httpClient, HttpMethod, AuthenticationType, HttpMessageBody, HttpResponse } from '@activepieces/pieces-common';
 import { DropdownOption } from '@activepieces/pieces-framework';
 
 export const SAVVYCAL_BASE_URL = 'https://api.savvycal.com/v1';
+
+export function verifyWebhookSignature(secret: string, signatureHeader: string, rawBody: string): boolean {
+  const expected = 'sha256=' + crypto.createHmac('sha256', secret).update(rawBody).digest('hex').toUpperCase();
+  try {
+    return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signatureHeader));
+  } catch {
+    return false;
+  }
+}
 
 export async function savvyCalApiCall<T extends HttpMessageBody>({
   token,

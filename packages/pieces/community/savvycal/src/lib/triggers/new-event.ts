@@ -1,6 +1,6 @@
 import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { savvyCalApiCall, flattenEvent, buildTeamOptions, buildLinkOptions, SavvyCalEvent } from '../common';
+import { savvyCalApiCall, flattenEvent, buildTeamOptions, buildLinkOptions, verifyWebhookSignature, SavvyCalEvent } from '../common';
 import { savvyCalAuth } from '../../';
 
 const EVENT_TYPES = [
@@ -128,6 +128,12 @@ export const newEventTrigger = createTrigger({
   },
 
   async run(context) {
+    const secret = await context.store.get<string>('webhookSecret');
+    const signature = context.payload.headers['x-savvycal-signature'] as string | undefined;
+    if (secret && signature && !verifyWebhookSignature(secret, signature, context.payload.rawBody)) {
+      return [];
+    }
+
     const body = context.payload.body as { type: string; payload: SavvyCalEvent };
     if (!body?.payload) return [];
 
