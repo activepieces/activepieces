@@ -33,15 +33,24 @@ export function lastVersionOfEachPiece(pieces: PieceMetadataSchema[]): PieceMeta
     return Array.from(seen.values())
 }
 
+let devPiecesCache: PieceMetadataSchema[] | null = null
+
+export function invalidateDevPieceCache(): void {
+    devPiecesCache = null
+}
+
 export async function loadDevPiecesIfEnabled(log: FastifyBaseLogger): Promise<PieceMetadataSchema[]> {
     const devPiecesConfig = system.get(AppSystemProp.DEV_PIECES)
     if (isNil(devPiecesConfig) || isEmpty(devPiecesConfig)) {
         return []
     }
+    if (!isNil(devPiecesCache)) {
+        return devPiecesCache
+    }
     const piecesNames = devPiecesConfig.split(',')
     const pieces = await filePiecesUtils(log).loadDistPiecesMetadata(piecesNames)
 
-    return pieces.map((p): PieceMetadataSchema => ({
+    devPiecesCache = pieces.map((p): PieceMetadataSchema => ({
         id: apId(),
         ...p,
         projectUsage: 0,
@@ -50,6 +59,7 @@ export async function loadDevPiecesIfEnabled(log: FastifyBaseLogger): Promise<Pi
         created: new Date().toISOString(),
         updated: new Date().toISOString(),
     }))
+    return devPiecesCache
 }
 
 export function filterPieceBasedOnType(platformId: string | undefined, piece: PieceMetadataSchema | PieceRegistryEntry): boolean {
