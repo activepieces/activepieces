@@ -7,6 +7,14 @@ import { promotekitAuth } from '../..';
 import { promotekitApiCall, promotekitCommon } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 
+const EVENT_TYPE_OPTIONS = [
+  { label: 'Affiliate Created', value: 'affiliate.created' },
+  { label: 'Affiliate Approved', value: 'affiliate.approved' },
+  { label: 'Referral Created', value: 'referral.created' },
+  { label: 'Referral Converted', value: 'referral.converted' },
+  { label: 'Commission Created', value: 'commission.created' },
+];
+
 export const newEvent = createTrigger({
   auth: promotekitAuth,
   name: 'new_event',
@@ -108,11 +116,3 @@ function flattenByType(
   }
   return data;
 }
-
-const EVENT_TYPE_OPTIONS = [
-  { label: 'Affiliate Created', value: 'affiliate.created' },
-  { label: 'Affiliate Approved', value: 'affiliate.approved' },
-  { label: 'Referral Created', value: 'referral.created' },
-  { label: 'Referral Converted', value: 'referral.converted' },
-  { label: 'Commission Created', value: 'commission.created' },
-];
