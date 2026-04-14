@@ -64,6 +64,7 @@ export const newReactionAdded = createTrigger({
   run: async (context) => {
     const payloadBody = context.payload.body as PayloadBody;
     const channels = (context.propsValue.channels as string[]) ?? [];
+    const emojis = (context.propsValue.emojis as string[]) ?? [];
 
     // Filter by user if specified
     if (context.propsValue.user && payloadBody.event.user !== context.propsValue.user) {
@@ -71,10 +72,8 @@ export const newReactionAdded = createTrigger({
     }
 
     // Filter by emoji if specified
-    if (context.propsValue.emojis) {
-      if (!context.propsValue.emojis.includes(payloadBody.event.reaction)) {
-        return [];
-      }
+    if (emojis.length > 0 && !emojis.includes(payloadBody.event.reaction)) {
+      return [];
     }
 
     // Filter by channels - if no channels selected, trigger for all
