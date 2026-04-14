@@ -20,6 +20,7 @@ import {
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { flowCache } from '../../cache/flow/flow-cache'
+import { system, WorkerSystemProp } from '../../config/configs'
 import { workerSettings } from '../../config/worker-settings'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../types'
 import { provisionFlowPieces } from '../utils/flow-helpers'
@@ -202,4 +203,16 @@ async function reportFlowStatus(
         httpRequestId: data.httpRequestId ?? null,
         finishTime: new Date().toISOString(),
     })
+
+    if (status === FlowRunStatus.INTERNAL_ERROR && isDedicatedWorker()) {
+        onCallService(ctx.log, workerSettings.getSettings().PAGE_ONCALL_WEBHOOK).page({
+            code: ErrorCode.ENGINE_OPERATION_FAILURE,
+            message: `Flow run ${data.runId} ended with INTERNAL_ERROR on dedicated worker`,
+            params: { runId: data.runId, flowId: data.flowId, projectId: data.projectId },
+        }).catch((e) => ctx.log.error({ runId: data.runId, error: inspect(e) }, 'Failed to send on-call page for INTERNAL_ERROR'))
+    }
+}
+
+function isDedicatedWorker(): boolean {
+    return !isNil(system.get(WorkerSystemProp.WORKER_GROUP_ID))
 }
