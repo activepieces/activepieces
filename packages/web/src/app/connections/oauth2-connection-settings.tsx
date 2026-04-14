@@ -162,6 +162,7 @@ function OAuth2ConnectionSettings({
                           props: form.getValues().request.value.props,
                           pieceName: piece.name,
                           form,
+                          pieceVersion: piece.version,
                           setLoading,
                         });
                       } else {
@@ -193,6 +194,7 @@ async function openPopup({
   clientId,
   props,
   pieceName,
+  pieceVersion,
   form,
   setLoading,
 }: OpenPopupParams) {
@@ -203,6 +205,7 @@ async function openPopup({
       pieceName,
       clientId,
       redirectUrl,
+      pieceVersion,
       props,
     });
     authorizationUrl = result.authorizationUrl;
@@ -242,6 +245,7 @@ type OpenPopupParams = {
   clientId: string;
   props: Record<string, unknown> | undefined;
   pieceName: string;
+  pieceVersion: string;
   form: UseFormReturn<{
     request:
       | UpsertCloudOAuth2Request
