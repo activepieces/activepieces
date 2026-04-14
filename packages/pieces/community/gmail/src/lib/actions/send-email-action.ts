@@ -153,8 +153,7 @@ export const gmailSendEmailAction = createAction({
     }
 
     const senderEmail =
-      context.propsValue.from ||
-      (await getUserEmail(context.auth, authClient));
+      context.propsValue.from || (await getUserEmail(context.auth, authClient));
     if (senderEmail) {
       mailOptions.from = context.propsValue.sender_name
         ? `${context.propsValue['sender_name']} <${senderEmail}>`

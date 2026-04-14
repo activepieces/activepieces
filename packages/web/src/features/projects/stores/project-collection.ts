@@ -10,6 +10,7 @@ import {
 } from '@activepieces/shared';
 import { queryCollectionOptions } from '@tanstack/query-db-collection';
 import {
+  and,
   createCollection,
   eq,
   like,
@@ -158,7 +159,10 @@ export const projectCollectionUtils = {
           .where(({ project }) =>
             or(
               eq(project.type, ProjectType.TEAM),
-              eq(project.ownerId, currentUserId),
+              and(
+                eq(project.type, ProjectType.PERSONAL),
+                eq(project.ownerId, currentUserId),
+              ),
             ),
           )
           .orderBy(({ project }) => project.type, 'asc')
