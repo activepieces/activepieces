@@ -24,6 +24,10 @@ jobs:
         id: tag
         run: |
           SHA=$(echo "${{ inputs.image_tag }}" | grep -oE '\.[a-f0-9]{7,40}\.' | head -1 | tr -d '.')
+          if [[ -z "$SHA" ]]; then
+            echo "ERROR: could not extract a commit SHA from '${{ inputs.image_tag }}'. Expected format: <version>.<sha>.beta"
+            exit 1
+          fi
           echo "sha=$SHA" >> $GITHUB_OUTPUT
           echo "Promoting: ${{ inputs.image_tag }} (SHA: $SHA)"
 
