@@ -264,8 +264,17 @@ async function pieceCheckIfAlreadyInstalled(rootWorkspace: string, piece: PieceP
     if (usedPiecesMemoryCache[pieceFolder]) {
         return true
     }
-    usedPiecesMemoryCache[pieceFolder] = await fileSystemUtils.fileExists(join(pieceFolder, 'ready'))
-    return usedPiecesMemoryCache[pieceFolder]
+    const readyExists = await fileSystemUtils.fileExists(join(pieceFolder, 'ready'))
+    if (!readyExists) {
+        return false
+    }
+    const nodeModulesExist = await fileSystemUtils.fileExists(join(pieceFolder, 'node_modules'))
+    if (!nodeModulesExist) {
+        await rm(join(pieceFolder, 'ready'), { force: true })
+        return false
+    }
+    usedPiecesMemoryCache[pieceFolder] = true
+    return true
 }
 
 async function markPiecesAsUsed(rootWorkspace: string, pieces: PiecePackage[]): Promise<void> {

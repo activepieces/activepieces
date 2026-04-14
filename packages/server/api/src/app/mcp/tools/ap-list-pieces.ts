@@ -1,4 +1,3 @@
-import { PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework'
 import {
     LocalesEnum,
     McpServer,
@@ -9,7 +8,7 @@ import {
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
-import { AUTH_PROP_TYPES, mcpToolError } from './mcp-utils'
+import { mcpUtils } from './mcp-utils'
 
 const listPiecesSchema = z.object({
     categories: z.array(z.enum(Object.values(PieceCategory) as [string, ...string[]])).optional(),
@@ -24,7 +23,7 @@ const listPiecesSchema = z.object({
 export const apListPiecesTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_list_pieces',
-        description: 'List available integration pieces (pieceName, pieceVersion, actions count, triggers count). IMPORTANT: Always search for a suitable piece before resorting to a CODE step — this should be the first tool you call when building or modifying a flow. Use includeActions=true to get action names, descriptions, and required input fields. Use includeTriggers=true to get trigger names, descriptions, and required input fields. Use suggestionType=ACTION or TRIGGER to filter pieces that only have relevant actions or triggers. Use specific searchQuery terms (e.g. "gmail" not "email send") for best results.',
+        description: 'List available pieces with their actions and triggers. Use includeActions/includeTriggers for details.',
         inputSchema: {
             categories: listPiecesSchema.shape.categories,
             tags: listPiecesSchema.shape.tags,
@@ -81,7 +80,7 @@ export const apListPiecesTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
                                 displayName: a.displayName,
                                 description: a.description,
                                 requireAuth: a.requireAuth,
-                                ...summarizeProps(a.props),
+                                inputProps: mcpUtils.buildPropSummaries(a.props),
                             }))
                         }
                         if (params.includeTriggers) {
@@ -90,7 +89,7 @@ export const apListPiecesTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
                                 displayName: t.displayName,
                                 description: t.description,
                                 requireAuth: t.requireAuth,
-                                ...summarizeProps(t.props),
+                                inputProps: mcpUtils.buildPropSummaries(t.props),
                             }))
                         }
                     }
@@ -105,42 +104,8 @@ export const apListPiecesTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
                 }
             }
             catch (err) {
-                return mcpToolError('Failed to list pieces', err)
+                return mcpUtils.mcpToolError('Failed to list pieces', err)
             }
         },
     }
-}
-
-function summarizeProps(props: PiecePropertyMap): { inputProps: PropSummary[] } {
-    const entries = Object.entries(props)
-        .filter(([, prop]) => !AUTH_PROP_TYPES.has(prop.type))
-        .map(([name, prop]) => {
-            const summary: PropSummary = {
-                name,
-                type: prop.type,
-                required: prop.required ?? false,
-                displayName: prop.displayName ?? name,
-            }
-            if (prop.description) {
-                summary.description = prop.description
-            }
-            if (prop.defaultValue !== undefined) {
-                summary.defaultValue = prop.defaultValue
-            }
-            if ((prop.type === PropertyType.STATIC_DROPDOWN || prop.type === PropertyType.STATIC_MULTI_SELECT_DROPDOWN) && 'options' in prop && prop.options?.options) {
-                summary.options = prop.options.options.map((o: { label: string }) => o.label)
-            }
-            return summary
-        })
-    return { inputProps: entries }
-}
-
-type PropSummary = {
-    name: string
-    type: string
-    required: boolean
-    displayName: string
-    description?: string
-    defaultValue?: unknown
-    options?: string[]
 }

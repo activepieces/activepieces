@@ -6,9 +6,9 @@ import { Sandbox } from '../sandbox/types'
 import { createSandboxForJob } from './create-sandbox-for-job'
 
 function canReuseSandbox(): boolean {
-    const workerGroupId = system.get(WorkerSystemProp.WORKER_GROUP_ID)
-    if (!isNil(workerGroupId)) {
-        return system.get(WorkerSystemProp.REUSE_SANDBOX) === 'true'
+    const reuseSandbox = system.get(WorkerSystemProp.REUSE_SANDBOX)
+    if (!isNil(reuseSandbox)) {
+        return reuseSandbox === 'true'
     }
     const settings = workerSettings.getSettings()
     if (settings.ENVIRONMENT === ApEnvironment.DEVELOPMENT) {

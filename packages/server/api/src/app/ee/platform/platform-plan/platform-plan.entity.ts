@@ -70,6 +70,10 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
         agentsEnabled: {
             type: Boolean,
         },
+        aiProvidersEnabled: {
+            type: Boolean,
+            default: false,
+        },
         managePiecesEnabled: {
             type: Boolean,
         },
