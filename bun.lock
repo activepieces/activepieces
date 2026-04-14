@@ -1,6 +1,5 @@
 {
   "lockfileVersion": 1,
-  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "activepieces",
@@ -699,7 +698,7 @@
     },
     "packages/pieces/community/amazon-textract": {
       "name": "@activepieces/piece-amazon-textract",
-      "version": "0.2.2",
+      "version": "0.2.3",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -8105,7 +8104,7 @@
     },
     "packages/shared": {
       "name": "@activepieces/shared",
-      "version": "0.58.3",
+      "version": "0.58.4",
       "dependencies": {
         "dayjs": "1.11.9",
         "deepmerge-ts": "7.1.0",
