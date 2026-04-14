@@ -232,7 +232,7 @@ const UpdateParams = {
 }
 
 function assertTemplateBelongsToPlatform({ templatePlatformId, principalPlatformId }: {
-    templatePlatformId: string | null
+    templatePlatformId: string | null | undefined
     principalPlatformId: string
 }): void {
     if (templatePlatformId !== principalPlatformId) {
