@@ -1,3 +1,5 @@
+import { useChat } from '@ai-sdk/react';
+import { DefaultChatTransport } from 'ai';
 import {
   ArrowUp,
   Check,
@@ -19,9 +21,12 @@ import {
   X,
   Zap,
 } from 'lucide-react';
-import { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback, memo } from 'react';
 import { createPortal } from 'react-dom';
 import Lottie from 'react-lottie';
+import ReactMarkdown from 'react-markdown';
+import breaks from 'remark-breaks';
+import gfm from 'remark-gfm';
 
 import dropMediaImg from '@/assets/img/drop-media.svg';
 import { Button } from '@/components/ui/button';
@@ -32,6 +37,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { API_URL } from '@/lib/api';
+import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 
 import { DelayedTooltip } from './delayed-tooltip';
@@ -89,52 +96,6 @@ const FILE_ICON_MAP: Record<Attachment['type'], typeof FileText> = {
   spreadsheet: FileSpreadsheet,
   code: Code,
   other: Paperclip,
-};
-
-const ANTHROPIC_KEY = import.meta.env.VITE_ANTHROPIC_API_KEY || '';
-const CLAUDE_API_BASE = import.meta.env.DEV
-  ? '/claude-api'
-  : 'https://api.anthropic.com';
-
-const IMAGE_KEYWORDS_EXACT = [
-  'صورة',
-  'صوره',
-  'ارسم',
-  'ارسملي',
-  'اعمل صور',
-  'ولد صور',
-  'اعملي صور',
-  'picture of',
-  'صمم',
-  'صمملي',
-  'draw',
-];
-
-const IMAGE_VERB_NOUN_PAIRS: [string[], string[]][] = [
-  [
-    [
-      'generate',
-      'create',
-      'make',
-      'produce',
-      'اعمل',
-      'اعملي',
-      'ولد',
-      'سوي',
-      'سولي',
-    ],
-    ['image', 'photo', 'picture', 'pic', 'صورة', 'صوره', 'صور'],
-  ],
-];
-
-const isImageRequest = (text: string) => {
-  const lower = text.toLowerCase();
-  if (IMAGE_KEYWORDS_EXACT.some((kw) => lower.includes(kw))) return true;
-  return IMAGE_VERB_NOUN_PAIRS.some(
-    ([verbs, nouns]) =>
-      verbs.some((v) => lower.includes(v)) &&
-      nouns.some((n) => lower.includes(n)),
-  );
 };
 
 const getTime = () =>
@@ -271,123 +232,73 @@ const keyframes = `
   .prompt-float-footer { background: linear-gradient(to bottom, transparent, var(--background) 40%); max-width: calc(clamp(280px, calc(100vw - 700px), 560px) + 20px); margin: 0 auto; width: calc(100% + 20px); padding-top: 80px; margin-top: -80px; }
 `;
 
-/* ─── Mock sources for demo ─── */
-const MOCK_FAVICONS = [
-  'https://www.google.com/favicon.ico',
-  'https://www.wikipedia.org/favicon.ico',
-  'https://www.reddit.com/favicon.ico',
-  'https://www.github.com/favicon.ico',
-  'https://stackoverflow.com/favicon.ico',
-  'https://www.youtube.com/favicon.ico',
-  'https://medium.com/favicon.ico',
-  'https://www.amazon.com/favicon.ico',
-  'https://www.nytimes.com/favicon.ico',
-  'https://www.bbc.com/favicon.ico',
-];
 
-function getMockSources(msgId: number) {
-  const count = (msgId % 15) + 3;
-  // Pick favicons deterministically based on msgId
-  const favicons: string[] = [];
-  for (let i = 0; i < Math.min(count, 4); i++) {
-    favicons.push(MOCK_FAVICONS[(msgId + i) % MOCK_FAVICONS.length]);
-  }
-  return { count, favicons };
+const REMARK_PLUGINS = [gfm, breaks];
+
+function ToolCallPill({ name }: { name: string }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 my-1 rounded-lg bg-accent/50 border border-border/60 text-xs font-medium text-muted-foreground select-none">
+      <Zap className="w-3 h-3 text-primary/70" />
+      <span className="capitalize">{name}</span>
+    </span>
+  );
 }
 
-/* ─── Smooth streaming text component ─── */
-const WORD_INTERVAL = 50; // ms per word
-
-function StreamingText({
-  fullText,
-  streaming,
-}: {
-  fullText: string;
-  streaming: boolean;
-}) {
-  // Words buffer: complete words waiting to be displayed
-  const wordBufferRef = useRef<string[]>([]);
-  // Partial token that hasn't formed a complete word yet
-  const partialRef = useRef('');
-  // Words already displayed
-  const [displayedWords, setDisplayedWords] = useState<string[]>([]);
-  const displayedCountRef = useRef(0);
-  const prevFullTextRef = useRef('');
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  // Push new text into the word buffer whenever fullText grows
-  useEffect(() => {
-    if (fullText.length > prevFullTextRef.current.length) {
-      const newChars = fullText.slice(prevFullTextRef.current.length);
-      // Combine with any leftover partial word
-      const combined = partialRef.current + newChars;
-      // Split into tokens preserving whitespace: ["word", " ", "word", " ", ...]
-      const tokens = combined.split(/(\s+)/);
-      // Last token might be incomplete if streaming — hold it back
-      if (streaming) {
-        partialRef.current = tokens.pop() || '';
-      } else {
-        partialRef.current = '';
-      }
-      // Push complete tokens into the buffer
-      for (const t of tokens) {
-        if (t) wordBufferRef.current.push(t);
-      }
-    }
-    prevFullTextRef.current = fullText;
-  }, [fullText, streaming]);
-
-  // When streaming ends, flush any remaining partial
-  useEffect(() => {
-    if (!streaming && partialRef.current) {
-      wordBufferRef.current.push(partialRef.current);
-      partialRef.current = '';
-    }
-  }, [streaming]);
-
-  // Interval loop: pull one word from buffer at steady rate
-  useEffect(() => {
-    timerRef.current = setInterval(() => {
-      if (wordBufferRef.current.length > 0) {
-        const word = wordBufferRef.current.shift()!;
-        displayedCountRef.current += 1;
-        setDisplayedWords((prev) => [...prev, word]);
-      } else if (!streaming) {
-        // Buffer empty and done streaming — stop the timer
-        if (timerRef.current) clearInterval(timerRef.current);
-      }
-    }, WORD_INTERVAL);
-
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-  }, [streaming]);
-
-  // When streaming stops and buffer is empty, make sure we show everything
-  useEffect(() => {
-    if (
-      !streaming &&
-      wordBufferRef.current.length === 0 &&
-      partialRef.current === ''
-    ) {
-      const allWords = fullText.split(/(\s+)/).filter(Boolean);
-      if (displayedCountRef.current < allWords.length) {
-        displayedCountRef.current = allWords.length;
-        setDisplayedWords(allWords);
-      }
-    }
-  }, [streaming, fullText, displayedWords]);
-
-  const rendered = useMemo(() => {
-    if (!displayedWords.length) return null;
-    return displayedWords.join('');
-  }, [displayedWords]);
+const ChatMarkdown = memo(function ChatMarkdown({ markdown }: { markdown: string }) {
+  if (!markdown) return null;
 
   return (
-    <p className="m-0 text-base leading-relaxed text-accent-foreground dark:text-neutral-300 whitespace-pre-wrap">
-      {rendered}
-    </p>
+    <ReactMarkdown
+      remarkPlugins={REMARK_PLUGINS}
+      className="text-base leading-relaxed text-accent-foreground dark:text-neutral-300 prose prose-sm max-w-none"
+      components={{
+        code({ children, className }) {
+          const text = String(children).trim();
+          if (text.startsWith('tool:')) {
+            return <ToolCallPill name={text.replace('tool:', '')} />;
+          }
+          if (text.startsWith('error:')) {
+            return (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 my-1 rounded-lg bg-destructive/10 border border-destructive/20 text-xs font-medium text-destructive select-none">
+                {text.replace('error:', '')}
+              </span>
+            );
+          }
+          return <code className={cn('text-wrap', className)}>{children}</code>;
+        },
+        h1: ({ node: _node, ref: _ref, ...props }) => <h1 className="scroll-m-20 text-xl font-extrabold tracking-tight" {...props} />,
+        h2: ({ node: _node, ref: _ref, ...props }) => <h2 className="scroll-m-20 text-lg font-semibold tracking-tight mt-4 first:mt-0" {...props} />,
+        h3: ({ node: _node, ref: _ref, ...props }) => <h3 className="scroll-m-20 text-base font-semibold tracking-tight mt-3" {...props} />,
+        p: ({ node: _node, ref: _ref, ...props }) => <p className="leading-6 first-of-type:mt-0 not-first-of-type:mt-2 mb-2" {...props} />,
+        ul: ({ node: _node, ref: _ref, ...props }) => <ul className="mt-2 ml-5 list-disc [&>li]:mt-1.5" {...props} />,
+        ol: ({ node: _node, ref: _ref, ...props }) => <ol className="mt-2 ml-5 list-decimal [&>li]:mt-1.5" {...props} />,
+        li: ({ node: _node, ref: _ref, ...props }) => <li className="leading-6" {...props} />,
+        a: ({ node: _node, ref: _ref, ...props }) => <a className="font-medium text-primary underline underline-offset-4" target="_blank" rel="noreferrer noopener" {...props} />,
+        blockquote: ({ node: _node, ref: _ref, ...props }) => <blockquote className="mt-3 border-l-2 border-primary/30 pl-4 italic text-muted-foreground" {...props} />,
+        table: ({ node: _node, ref: _ref, ...props }) => <div className="my-3 overflow-x-auto rounded-lg border border-border/60"><table className="w-full text-sm" {...props} /></div>,
+        thead: ({ node: _node, ref: _ref, ...props }) => <thead className="bg-accent/40" {...props} />,
+        tr: ({ node: _node, ref: _ref, ...props }) => <tr className="border-b border-border/40" {...props} />,
+        th: ({ node: _node, ref: _ref, ...props }) => <th className="text-left px-3 py-2 font-medium text-muted-foreground" {...props} />,
+        td: ({ node: _node, ref: _ref, ...props }) => <td className="px-3 py-2" {...props} />,
+        hr: ({ node: _node, ref: _ref, ...props }) => <hr className="my-4 border-border/40" {...props} />,
+      }}
+    >
+      {markdown.trim()}
+    </ReactMarkdown>
   );
+});
+
+
+const THINKING_PHRASES = [
+  'Thinking...',
+  'Analyzing your question...',
+  'Working on it...',
+  'Almost there...',
+  'Gathering thoughts...',
+];
+
+function pickThinkingText() {
+  return THINKING_PHRASES[Math.floor(Math.random() * THINKING_PHRASES.length)];
 }
 
 export function AIChatBox({
@@ -397,16 +308,6 @@ export function AIChatBox({
   onFirstMessage?: (text: string) => void;
   incognito?: boolean;
 }) {
-  const thinkingPhrases = [
-    'Thinking...',
-    'Analyzing your question...',
-    'Working on it...',
-    'Almost there...',
-    'Gathering thoughts...',
-  ];
-  const pickThinkingText = () =>
-    thinkingPhrases[Math.floor(Math.random() * thinkingPhrases.length)];
-
   const hasCalledFirstMessage = useRef(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -447,18 +348,6 @@ export function AIChatBox({
     textareaRef.current?.focus();
   }, []);
 
-  const startImgProgress = (msgId: number) => {
-    setImgProgress((prev) => ({ ...prev, [msgId]: 0 }));
-    imgTimersRef.current[msgId] = setInterval(() => {
-      setImgProgress((prev) => {
-        const current = prev[msgId] ?? 0;
-        if (current >= 90) return prev;
-        const increment = current < 30 ? 5 : current < 60 ? 3 : 1;
-        return { ...prev, [msgId]: current + increment };
-      });
-    }, 300);
-  };
-
   const finishImgProgress = (msgId: number) => {
     if (imgTimersRef.current[msgId]) {
       clearInterval(imgTimersRef.current[msgId]);
@@ -487,185 +376,79 @@ export function AIChatBox({
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, typing]);
 
-  const callClaude = async (
-    msgs: { role: 'user' | 'assistant'; content: string }[],
-  ) => {
-    const res = await fetch(`${CLAUDE_API_BASE}/v1/messages`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': ANTHROPIC_KEY,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true',
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1024,
-        messages: msgs,
-      }),
-    });
-    if (!res.ok) throw new Error(`${res.status} ${await res.text()}`);
-    const data = await res.json();
-    return data.content?.[0]?.text || '';
-  };
+  const conversationIdRef = useRef<string | null>(null);
+  const conversationPromiseRef = useRef<Promise<string> | null>(null);
 
-  const streamClaude = async (
-    chatMessages: {
-      role: 'user' | 'assistant';
-      content:
-        | string
-        | Array<{
-            type: string;
-            text?: string;
-            source?: { type: string; media_type: string; data: string };
-          }>;
-    }[],
-  ) => {
-    const msgId = Date.now() + 1;
-    const time = getTime();
-    const lastContent = chatMessages[chatMessages.length - 1]?.content || '';
-    const userText =
-      typeof lastContent === 'string'
-        ? lastContent
-        : [...lastContent]
-            .reverse()
-            .find((b) => b.type === 'text' && !b.text?.startsWith('--- File:'))
-            ?.text || '';
-    const hasAttachments = typeof lastContent !== 'string';
-    const wantsImage = !hasAttachments && isImageRequest(userText);
+  const getOrCreateConversation = useCallback((): Promise<string> => {
+    if (conversationIdRef.current) return Promise.resolve(conversationIdRef.current);
+    if (conversationPromiseRef.current) return conversationPromiseRef.current;
 
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: msgId,
-        role: 'ai',
-        text: '',
-        time,
-        fullDate: getFullDate(),
-        streaming: true,
-      },
-    ]);
+    const promise = (async () => {
+      const projectId = authenticationSession.getProjectId();
+      const token = authenticationSession.getToken();
+      const res = await fetch(`${API_URL}/v1/chat/conversations?projectId=${projectId}`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      });
+      if (!res.ok) throw new Error(`Failed to create conversation: ${res.status}`);
+      const conv = await res.json();
+      conversationIdRef.current = conv.id;
+      return conv.id as string;
+    })();
 
-    try {
-      abortRef.current = new AbortController();
+    conversationPromiseRef.current = promise;
+    return promise;
+  }, []);
 
-      if (wantsImage) {
-        setMessages((prev) =>
-          prev.map((m) => (m.id === msgId ? { ...m, text: '' } : m)),
-        );
+  const transport = useMemo(() => new DefaultChatTransport({
+    api: `${API_URL}/v1/chat/conversations/placeholder/messages`,
+    headers: {
+      'Authorization': `Bearer ${authenticationSession.getToken()}`,
+    },
+    fetch: async (_input, init) => {
+      const convId = await getOrCreateConversation();
+      const url = `${API_URL}/v1/chat/conversations/${convId}/messages`;
+      return fetch(url, init);
+    },
+  }), [getOrCreateConversation]);
 
-        const imagePrompt = await callClaude([
-          {
-            role: 'user',
-            content: `Extract the image description from this message and reply with ONLY a short English image prompt, maximum 6 words. No extra text, no quotes: "${userText}"`,
-          },
-        ]);
+  const chatHook = useChat({ transport });
 
-        const seed = Math.floor(Math.random() * 100000);
-        const cleanPrompt = imagePrompt.replace(/[^a-zA-Z0-9 ]/g, '').trim();
-        const imgBase = import.meta.env.DEV
-          ? '/img-proxy'
-          : 'https://image.pollinations.ai';
-        const imageUrl = `${imgBase}/prompt/${encodeURIComponent(
-          cleanPrompt,
-        )}?width=512&height=512&nologo=true&seed=${seed}`;
+  const streamFromBackend = useCallback(async (userText: string) => {
+    await chatHook.sendMessage({ text: userText });
+  }, [chatHook]);
 
-        setMessages((prev) =>
-          prev.map((m) =>
-            m.id === msgId
-              ? { ...m, text: '', images: [imageUrl], streaming: false }
-              : m,
-          ),
-        );
-        startImgProgress(msgId);
-      } else {
-        // Stream from Claude
-        const res = await fetch(`${CLAUDE_API_BASE}/v1/messages`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-api-key': ANTHROPIC_KEY,
-            'anthropic-version': '2023-06-01',
-            'anthropic-dangerous-direct-browser-access': 'true',
-          },
-          body: JSON.stringify({
-            model: 'claude-sonnet-4-20250514',
-            max_tokens: 4096,
-            stream: true,
-            messages: chatMessages,
-          }),
-          signal: abortRef.current.signal,
-        });
+  useEffect(() => {
+    return () => { abortRef.current?.abort(); };
+  }, []);
 
-        if (!res.ok) throw new Error(`${res.status} ${await res.text()}`);
-
-        const reader = res.body!.getReader();
-        const decoder = new TextDecoder();
-        let fullText = '';
-        let buffer = '';
-
-        let flushTimer: ReturnType<typeof setTimeout> | null = null;
-        const flushText = () => {
-          const captured = fullText;
-          setMessages((prev) =>
-            prev.map((m) => (m.id === msgId ? { ...m, text: captured } : m)),
-          );
-          flushTimer = null;
-        };
-
-        for (;;) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          buffer += decoder.decode(value, { stream: true });
-
-          const lines = buffer.split('\n');
-          buffer = lines.pop() || '';
-
-          for (const line of lines) {
-            if (!line.startsWith('data: ')) continue;
-            const data = line.slice(6);
-            if (data === '[DONE]') continue;
-            try {
-              const event = JSON.parse(data);
-              if (event.type === 'content_block_delta' && event.delta?.text) {
-                fullText += event.delta.text;
-                // Throttle state updates to ~50ms to reduce re-renders
-                if (!flushTimer) {
-                  flushTimer = setTimeout(flushText, 50);
-                }
-              }
-            } catch {
-              /* skip */
-            }
-          }
+  useEffect(() => {
+    const mapped: Message[] = chatHook.messages.map((m, i) => {
+      let text = '';
+      for (const part of m.parts) {
+        if (part.type === 'text') {
+          text += part.text;
+        } else if (part.type === 'dynamic-tool') {
+          const displayName = (part.toolName || '').replace(/^ap_/, '').replace(/_/g, ' ');
+          text += `\n\n\`tool:${displayName}\`\n\n`;
+        } else if (typeof part.type === 'string' && part.type.startsWith('tool-')) {
+          const toolName = part.type.replace('tool-', '');
+          const displayName = toolName.replace(/^ap_/, '').replace(/_/g, ' ');
+          text += `\n\n\`tool:${displayName}\`\n\n`;
         }
-        // Final flush
-        if (flushTimer) clearTimeout(flushTimer);
-
-        setMessages((prev) =>
-          prev.map((m) =>
-            m.id === msgId ? { ...m, text: fullText, streaming: false } : m,
-          ),
-        );
       }
-    } catch (err) {
-      if ((err as Error).name !== 'AbortError') {
-        console.error('Claude error:', err);
-        setMessages((prev) =>
-          prev.map((m) =>
-            m.id === msgId
-              ? {
-                  ...m,
-                  text: `Error: ${(err as Error).message}`,
-                  streaming: false,
-                }
-              : m,
-          ),
-        );
-      }
-    }
-    abortRef.current = null;
-  };
+      return {
+        id: i,
+        role: m.role === 'user' ? 'user' as const : 'ai' as const,
+        text,
+        time: getTime(),
+        fullDate: getFullDate(),
+        streaming: chatHook.status === 'streaming' && i === chatHook.messages.length - 1 && m.role === 'assistant',
+      };
+    });
+    setMessages(mapped);
+  }, [chatHook.messages, chatHook.status]);
 
   const regenerateResponse = async (msgId: number) => {
     // Find the last user message before this AI message
@@ -710,20 +493,16 @@ export function AIChatBox({
 
     try {
       abortRef.current = new AbortController();
-      const res = await fetch(`${CLAUDE_API_BASE}/v1/messages`, {
+      const conversationId = await getOrCreateConversation();
+      const authToken = authenticationSession.getToken();
+
+      const res = await fetch(`${API_URL}/v1/chat/conversations/${conversationId}/messages`, {
         method: 'POST',
         headers: {
+          'Authorization': `Bearer ${authToken}`,
           'Content-Type': 'application/json',
-          'x-api-key': ANTHROPIC_KEY,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true',
         },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 4096,
-          stream: true,
-          messages: chatHistory,
-        }),
+        body: JSON.stringify({ content: lastUserText || 'Hello' }),
         signal: abortRef.current.signal,
       });
 
@@ -738,23 +517,28 @@ export function AIChatBox({
         if (done) break;
         buffer += decoder.decode(value, { stream: true });
 
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || '';
+        const events = buffer.split('\n\n');
+        buffer = events.pop() || '';
 
-        for (const line of lines) {
-          if (!line.startsWith('data: ')) continue;
-          const data = line.slice(6);
-          if (data === '[DONE]') continue;
+        for (const eventBlock of events) {
+          const eventLines = eventBlock.split('\n');
+          const dataLine = eventLines.find((l) => l.startsWith('data: '));
+          const eventLine = eventLines.find((l) => l.startsWith('event: '));
+          if (!dataLine || !eventLine) continue;
+          const eventType = eventLine.replace('event: ', '');
           try {
-            const event = JSON.parse(data);
-            if (event.type === 'content_block_delta' && event.delta?.text) {
-              fullText += event.delta.text;
+            const data = JSON.parse(dataLine.replace('data: ', ''));
+            if (eventType === 'content_delta' && data.text) {
+              fullText += data.text;
               const captured = fullText;
               setMessages((prev) =>
                 prev.map((m) =>
                   m.id === msgId ? { ...m, text: captured } : m,
                 ),
               );
+            } else if (eventType === 'tool_call_start') {
+              const displayName = (data.toolName || '').replace(/^ap_/, '').replace(/_/g, ' ');
+              fullText += `\n\n\`tool:${displayName}\`\n\n`;
             }
           } catch {
             /* skip */
@@ -786,6 +570,7 @@ export function AIChatBox({
   };
 
   const stopStreaming = () => {
+    chatHook.stop();
     if (thinkingRef.current) {
       clearTimeout(thinkingRef.current);
       thinkingRef.current = null;
@@ -1106,10 +891,11 @@ export function AIChatBox({
       chatHistory.push({ role: 'user', content: fullText });
     }
 
+    const userText = fullText || (files ? files[0].name : 'Hello');
     thinkingRef.current = setTimeout(async () => {
       thinkingRef.current = null;
       setTyping(false);
-      await streamClaude(chatHistory);
+      await streamFromBackend(userText);
     }, 500);
   };
 
@@ -1617,8 +1403,8 @@ export function AIChatBox({
               style={{ scrollbarGutter: 'stable', overflowAnchor: 'auto' }}
             >
               <div
-                className="w-full mx-auto pb-10 flex flex-col gap-1"
-                style={{ maxWidth: 'clamp(260px, calc(100vw - 730px), 530px)' }}
+                className="w-full mx-auto pb-10 px-4 flex flex-col gap-4"
+                style={{ maxWidth: 'clamp(320px, calc(100vw - 580px), 720px)' }}
               >
                 {messages.map((msg, msgIdx) => {
                   const isLastAiMsg =
@@ -1627,7 +1413,7 @@ export function AIChatBox({
                     <div
                       key={msg.id}
                       id={`msg-${msg.id}`}
-                      className="ai-msg msg-enter py-1"
+                      className="ai-msg msg-enter py-2"
                       onMouseUp={handleTextSelect}
                     >
                       {msg.images && msg.images.length > 0 && (
@@ -1665,14 +1451,9 @@ export function AIChatBox({
                         </div>
                       )}
                       {msg.streaming ? (
-                        <StreamingText
-                          fullText={msg.text}
-                          streaming={msg.streaming}
-                        />
+                        <ChatMarkdown markdown={msg.text} />
                       ) : (
-                        <p className="m-0 text-base leading-relaxed text-accent-foreground dark:text-neutral-300 whitespace-pre-wrap">
-                          {msg.text}
-                        </p>
+                        <ChatMarkdown markdown={msg.text} />
                       )}
                       {msg.streaming && msg.text && (
                         <div className="mt-3" style={{ width: 40, height: 40 }}>
@@ -1828,31 +1609,6 @@ export function AIChatBox({
                               </div>
                             </TooltipContent>
                           </DelayedTooltip>
-                          {(() => {
-                            const { count, favicons } = getMockSources(msg.id);
-                            return (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="flex items-center gap-1.5 h-7 px-2.5 rounded-full bg-muted hover:bg-accent text-muted-foreground text-xs font-medium"
-                                onClick={() => {
-                                  /* TODO: expand sources */
-                                }}
-                              >
-                                <div className="flex items-center -space-x-1">
-                                  {favicons.map((src, i) => (
-                                    <img
-                                      key={i}
-                                      src={src}
-                                      alt=""
-                                      className="w-3.5 h-3.5 rounded-full ring-1 ring-muted bg-background object-contain"
-                                    />
-                                  ))}
-                                </div>
-                                <span>{count} sources</span>
-                              </Button>
-                            );
-                          })()}
                         </div>
                       )}
                     </div>
