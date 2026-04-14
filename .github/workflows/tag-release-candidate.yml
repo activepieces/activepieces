@@ -22,14 +22,16 @@ jobs:
 
       - name: Extract SHA from tag
         id: tag
+        env:
+          IMAGE_TAG: ${{ inputs.image_tag }}
         run: |
-          SHA=$(echo "${{ inputs.image_tag }}" | grep -oE '\.[a-f0-9]{7,40}\.' | head -1 | tr -d '.')
+          SHA=$(echo "$IMAGE_TAG" | grep -oE '\.[a-f0-9]{7,40}\.' | head -1 | tr -d '.')
           if [[ -z "$SHA" ]]; then
-            echo "ERROR: could not extract a commit SHA from '${{ inputs.image_tag }}'. Expected format: <version>.<sha>.beta"
+            echo "ERROR: could not extract a commit SHA from '$IMAGE_TAG'. Expected format: <version>.<sha>.beta"
             exit 1
           fi
           echo "sha=$SHA" >> $GITHUB_OUTPUT
-          echo "Promoting: ${{ inputs.image_tag }} (SHA: $SHA)"
+          echo "Promoting: $IMAGE_TAG (SHA: $SHA)"
 
       - name: Login to GHCR
         uses: docker/login-action@v3
@@ -39,10 +41,12 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Tag release candidate image
+        env:
+          IMAGE_TAG: ${{ inputs.image_tag }}
         run: |
           docker buildx imagetools create \
             --tag ghcr.io/activepieces/activepieces-cloud:release-candidate \
-            ghcr.io/activepieces/activepieces-cloud:${{ inputs.image_tag }}
+            ghcr.io/activepieces/activepieces-cloud:$IMAGE_TAG
 
       - name: Create release-candidate git tag
         run: |
