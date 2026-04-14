@@ -30,7 +30,7 @@ export const generateFakeData = createAction({
     }),
     count: Property.Number({
       displayName: "Count",
-      description: "Number of records to generate.",
+      description: "Number of records to generate (Max 100).",
       required: true,
       defaultValue: 1,
     }),
@@ -58,16 +58,41 @@ export const generateFakeData = createAction({
     }),
   },
   async run(context: ActionContext) {
-    const { fields, count, locale, template } = context.propsValue as unknown as GenerateDataProps;
-    const selectedFaker: any = locales[locale || "en"] || faker;
+    const fields = context.propsValue.fields as string[];
+    const count = Math.min(Number(context.propsValue.count) || 1, 100);
+    const locale = (context.propsValue.locale as string) || "en";
+    const template = context.propsValue.template as Record<string, any>;
+    
+    const selectedFaker: any = locales[locale] || faker;
     const records = [];
+
+    const processTemplate = (obj: any): any => {
+      if (typeof obj === 'string') {
+        try {
+          return selectedFaker.helpers.fake(obj);
+        } catch {
+          return obj;
+        }
+      }
+      if (Array.isArray(obj)) {
+        return obj.map(item => processTemplate(item));
+      }
+      if (typeof obj === 'object' && obj !== null) {
+        const newObj: Record<string, any> = {};
+        for (const [key, value] of Object.entries(obj)) {
+          newObj[key] = processTemplate(value);
+        }
+        return newObj;
+      }
+      return obj;
+    };
 
     for (let i = 0; i < count; i++) {
         let record: Record<string, any> = {};
 
         if (template) {
-           // Handle custom template using faker.helpers.fake
-           record = JSON.parse(selectedFaker.helpers.fake(JSON.stringify(template)));
+           // Handle custom template safely without JSON.parse breaking on newlines
+           record = processTemplate(template);
         } else if (fields && Array.isArray(fields)) {
             fields.forEach((field) => {
                 const fieldName = String(field).toLowerCase();

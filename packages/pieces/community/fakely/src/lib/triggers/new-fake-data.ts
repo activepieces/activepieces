@@ -33,7 +33,7 @@ export const newFakeDataTrigger = createTrigger({
         locale: "en",
       },
     });
-    return [result];
+    return result as any[];
   },
   async test(context: TriggerContext<StaticPropsValue>) {
     const result = await (generateFakeData as any).run({
@@ -43,6 +43,6 @@ export const newFakeDataTrigger = createTrigger({
         locale: "en",
       },
     });
-    return [result];
+    return result as any[];
   }
 });

@@ -1,6 +1,6 @@
 import { createPiece } from "@activepieces/pieces-framework";
 import { PieceCategory } from "@activepieces/shared";
-import { generateDataAction } from "./lib/actions/generate-data";
+import { generateFakeData } from "./lib/actions/generate-data";
 import { newFakeDataTrigger } from "./lib/triggers/new-fake-data";
 
 export const fakely = createPiece({
@@ -11,6 +11,6 @@ export const fakely = createPiece({
   auth: undefined,
   minimumSupportedRelease: "0.30.0",
   categories: [PieceCategory.DEVELOPER_TOOLS],
-  actions: [generateDataAction],
+  actions: [generateFakeData],
   triggers: [newFakeDataTrigger],
 });
