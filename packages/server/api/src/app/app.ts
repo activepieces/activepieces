@@ -32,6 +32,7 @@ import { customDomainModule } from './ee/custom-domains/custom-domain.module'
 import { domainHelper } from './ee/custom-domains/domain-helper'
 import { enterpriseFlagsHooks } from './ee/flags/enterprise-flags.hooks'
 import { globalConnectionModule } from './ee/global-connections/global-connection-module'
+import { consoleUsageModule } from './ee/console-usage/console-usage-module'
 import { licenseKeysModule } from './ee/license-keys/license-keys-module'
 import { managedAuthnModule } from './ee/managed-authn/managed-authn-module'
 import { oauthAppModule } from './ee/oauth-apps/oauth-app.module'
@@ -223,6 +224,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await aiProviderService(app.log).setup()
     await app.register(aiProviderModule)
     await app.register(licenseKeysModule)
+    await app.register(consoleUsageModule)
     await app.register(tablesModule)
     await app.register(knowledgeBaseModule)
     await app.register(userModule)
