@@ -4,7 +4,6 @@ import { CodeSandbox } from '../../core/code/code-sandbox-common'
 
 const ONE_HUNDRED_TWENTY_EIGHT_MEGABYTES = 128
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 // Check this https://github.com/laverdet/isolated-vm/issues/258#issuecomment-2134341086
 let ivmCache: any
 const getIvm = () => {
@@ -12,6 +11,18 @@ const getIvm = () => {
         ivmCache = require('isolated-vm')
     }
     return ivmCache as typeof import('isolated-vm')
+}
+
+// Persistent isolate reused across all runScript calls to avoid native memory
+// leaks from repeated isolate create/dispose cycles.
+let persistentScriptIsolate: any = null
+
+const getScriptIsolate = () => {
+    if (!persistentScriptIsolate || persistentScriptIsolate.isDisposed) {
+        const ivm = getIvm()
+        persistentScriptIsolate = new ivm.Isolate({ memoryLimit: ONE_HUNDRED_TWENTY_EIGHT_MEGABYTES })
+    }
+    return persistentScriptIsolate
 }
 
 /**
@@ -44,16 +55,15 @@ export const v8IsolateCodeSandbox: CodeSandbox = {
     },
 
     async runScript({ script, scriptContext, functions }) {
-        const ivm = getIvm()
-        const isolate = new ivm.Isolate({ memoryLimit: ONE_HUNDRED_TWENTY_EIGHT_MEGABYTES })
+        const isolate = getScriptIsolate()
+
+        // It is to avoid strucutedClone issue of proxy objects / functions, It will throw cannot be cloned error.
+        const isolateContext = await initIsolateContext({
+            isolate,
+            codeContext: JSON.parse(JSON.stringify(scriptContext)),
+        })
 
         try {
-            // It is to avoid strucutedClone issue of proxy objects / functions, It will throw cannot be cloned error.
-            const isolateContext = await initIsolateContext({
-                isolate,
-                codeContext: JSON.parse(JSON.stringify(scriptContext)),
-            })
-
             const serializedFunctions = Object.entries(functions).map(([key, value]) => `const ${key} = ${value.toString()};`).join('\n')
             const scriptWithFunctions = `${serializedFunctions}\n${script}`
 
@@ -64,7 +74,7 @@ export const v8IsolateCodeSandbox: CodeSandbox = {
             })
         }
         finally {
-            isolate.dispose()
+            isolateContext.release()
         }
     },
 }
