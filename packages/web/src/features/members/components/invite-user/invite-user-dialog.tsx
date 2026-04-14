@@ -11,7 +11,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { CopyIcon, DownloadIcon } from 'lucide-react';
-import { useState, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -56,10 +56,10 @@ const FormSchema = z.object({
   emails: z
     .array(z.string())
     .min(1, t('Please enter at least one email address')),
-  type: z.nativeEnum(InvitationType, {
+  type: z.enum(InvitationType, {
     message: t('Please select invitation type'),
   }),
-  platformRole: z.nativeEnum(PlatformRole, {
+  platformRole: z.enum(PlatformRole, {
     message: t('Please select platform role'),
   }),
   projectRole: z.string().optional(),
@@ -99,6 +99,9 @@ export const InviteUserDialog = ({
 
   const resultsWithLinks = invitationResults.filter((r) => r.link);
   const hasLinks = resultsWithLinks.length > 0;
+  const addedMembersCount = invitationResults.filter(
+    (r) => r.status === InvitationStatus.ACCEPTED,
+  ).length;
 
   const { mutate, isPending } = useMutation<
     UserInvitationWithLink[],
@@ -124,21 +127,25 @@ export const InviteUserDialog = ({
       return Promise.all(promises);
     },
     onSuccess: (results) => {
-      const anyWithLink = results.some((r) => r.link);
-      if (anyWithLink) {
+      const addedCount = results.filter(
+        (r) => r.status === InvitationStatus.ACCEPTED,
+      ).length;
+      const invitedCount = results.filter((r) => r.link).length;
+
+      if (invitedCount > 0) {
         setInvitationResults(results);
       } else {
         setOpen(false);
         form.reset();
-        const allAccepted = results.every(
-          (r) => r.status === InvitationStatus.ACCEPTED,
-        );
-        toast.success(
-          allAccepted
-            ? t('Member added successfully')
-            : t('Invitation sent successfully'),
-          { duration: 3000 },
-        );
+      }
+
+      const toastMessage = buildInviteToast({
+        addedCount,
+        invitedCount,
+        sentCount: results.length - addedCount - invitedCount,
+      });
+      if (toastMessage) {
+        toast.success(toastMessage, { duration: 3000 });
       }
       refetch();
       onInviteSuccess?.();
@@ -217,9 +224,12 @@ export const InviteUserDialog = ({
   };
 
   const downloadCsv = () => {
+    const escapeCsvField = (value: string) => `"${value.replace(/"/g, '""')}"`;
     const rows = [
       'email,invitation_link',
-      ...resultsWithLinks.map((r) => `${r.email},${r.link}`),
+      ...resultsWithLinks.map(
+        (r) => `${escapeCsvField(r.email)},${escapeCsvField(r.link!)}`,
+      ),
     ].join('\n');
     const blob = new Blob([rows], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
@@ -248,6 +258,20 @@ export const InviteUserDialog = ({
     return null;
   }
 
+  const dialogTitle = hasLinks
+    ? t('Invitation Links')
+    : isPlatformPage
+    ? t('Invite to Your Platform')
+    : t('Add Members');
+
+  const dialogDescription = getDialogDescription({
+    hasLinks,
+    addedMembersCount,
+    resultsWithLinksCount: resultsWithLinks.length,
+    isPlatformPage,
+    isSmtpConfigured: isSmtpConfigured ?? false,
+  });
+
   return (
     <>
       {
@@ -265,38 +289,8 @@ export const InviteUserDialog = ({
         >
           <DialogContent className="sm:max-w-[475px]">
             <DialogHeader>
-              <DialogTitle>
-                {hasLinks
-                  ? t('Invitation Links')
-                  : isPlatformPage
-                  ? t('Invite to Your Platform')
-                  : t('Add Members')}
-              </DialogTitle>
-              <DialogDescription>
-                {hasLinks
-                  ? t(
-                      'Please copy the link below and share it with the user you want to invite, the invitation expires in 7 days.',
-                    )
-                  : isPlatformPage
-                  ? isSmtpConfigured
-                    ? t(
-                        'Invite team members to collaborate and build amazing flows together.',
-                      )
-                    : t(
-                        'Invite team members to collaborate and build amazing flows together.',
-                      ) +
-                      ' ' +
-                      t(
-                        'Invitations will be shared via link since email is not configured.',
-                      )
-                  : isSmtpConfigured
-                  ? t(
-                      'Existing platform members will be added immediately. New users will receive an invitation email.',
-                    )
-                  : t(
-                      'Existing platform members will be added immediately. New users must use the invitation link.',
-                    )}
-              </DialogDescription>
+              <DialogTitle>{dialogTitle}</DialogTitle>
+              <DialogDescription>{dialogDescription}</DialogDescription>
             </DialogHeader>
 
             {!hasLinks ? (
@@ -422,3 +416,88 @@ export const InviteUserDialog = ({
     </>
   );
 };
+
+function getDialogDescription({
+  hasLinks,
+  addedMembersCount,
+  resultsWithLinksCount,
+  isPlatformPage,
+  isSmtpConfigured,
+}: {
+  hasLinks: boolean;
+  addedMembersCount: number;
+  resultsWithLinksCount: number;
+  isPlatformPage: boolean;
+  isSmtpConfigured: boolean;
+}): string {
+  if (hasLinks) {
+    const addedPrefix =
+      addedMembersCount > 0
+        ? t('membersAddedImmediately', { count: addedMembersCount }) + ' '
+        : '';
+    const linkText =
+      resultsWithLinksCount === 1
+        ? t(
+            'Please copy the link below and share it with the user you want to invite. The invitation expires in 7 days.',
+          )
+        : t(
+            'Please copy the links below and share them with the users you want to invite. The invitations expire in 7 days.',
+          );
+    return addedPrefix + linkText;
+  }
+
+  if (isPlatformPage) {
+    const base = t(
+      'Invite team members to collaborate and build amazing flows together.',
+    );
+    return isSmtpConfigured
+      ? base
+      : base +
+          ' ' +
+          t(
+            'Invitations will be shared via link since email is not configured.',
+          );
+  }
+
+  return isSmtpConfigured
+    ? t(
+        'Existing platform members will be added immediately. New users will receive an invitation email.',
+      )
+    : t(
+        'Existing platform members will be added immediately. New users must use the invitation link.',
+      );
+}
+
+function buildInviteToast({
+  addedCount,
+  invitedCount,
+  sentCount,
+}: {
+  addedCount: number;
+  invitedCount: number;
+  sentCount: number;
+}): React.ReactNode | null {
+  const lines: string[] = [];
+  if (addedCount > 0) {
+    lines.push(t('membersAddedCount', { count: addedCount }));
+  }
+  if (invitedCount > 0) {
+    lines.push(t('invitationsLinkCount', { count: invitedCount }));
+  }
+  if (sentCount > 0) {
+    lines.push(t('invitationsSentCount', { count: sentCount }));
+  }
+  if (lines.length === 0) {
+    return null;
+  }
+  return (
+    <span>
+      {lines.map((line, i) => (
+        <React.Fragment key={i}>
+          {i > 0 && <br />}
+          {line}
+        </React.Fragment>
+      ))}
+    </span>
+  );
+}
