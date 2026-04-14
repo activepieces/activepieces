@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { stripeAuth } from '../..';
-import { getClient, stripeCommon } from '../common';
+import { stripeCommon } from '../common';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const stripeSearchCustomer = createAction({
@@ -25,6 +25,7 @@ export const stripeSearchCustomer = createAction({
       headers: {
         Authorization: 'Bearer ' + context.auth.secret_text,
         'Content-Type': 'application/x-www-form-urlencoded',
+        'Stripe-Version': '2026-02-25.clover',
       },
       body: {
         query: `email:'${customer.email}'`,
