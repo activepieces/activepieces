@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { stripeAuth } from '../..';
-import { getClient } from '../common';
+import { getClient, stripeCommon } from '../common';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const stripeSearchCustomer = createAction({
   name: 'search_customer',
@@ -18,9 +19,17 @@ export const stripeSearchCustomer = createAction({
     const customer = {
       email: context.propsValue.email,
     };
-    const client = getClient(context.auth.secret_text);
-    return await client.customers.search({
-      query: `email:'${customer.email}'`,
+    const response = await httpClient.sendRequest({
+      method: HttpMethod.GET,
+      url: `${stripeCommon.baseUrl}/customers/search`,
+      headers: {
+        Authorization: 'Bearer ' + context.auth.secret_text,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: {
+        query: `email:'${customer.email}'`,
+      },
     });
+    return response.body;
   },
 });
