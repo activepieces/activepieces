@@ -1,7 +1,11 @@
 {
   "All-in-one business management solution by Microsoft.": "All-in-one business management solution by Microsoft.",
+  "Cloud Environment": "Cloud Environment",
   "Environment": "Environment",
+  "Select your Microsoft cloud environment.": "Select your Microsoft cloud environment.",
   "Name of the environment to connect to, e.g. 'Production' or 'Sandbox'. Environment names can be found in the Business Central Admin Center.": "Name of the environment to connect to, e.g. 'Production' or 'Sandbox'. Environment names can be found in the Business Central Admin Center.",
+  "Commercial (Global)": "Commercial (Global)",
+  "US Government (GCC High)": "US Government (GCC High)",
   "\nIf you’d like to use your own custom Azure app instead of the default Activepieces app, follow the [Azure app creation guide](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app#register-an-application),\n set the **Redirect URI** to {{redirectUrl}} and add the following **Dynamics 365 Business Central permissions** under **API permissions**:\n - Financials.ReadWrite.All\n - user_impersonation\n": "\nIf you’d like to use your own custom Azure app instead of the default Activepieces app, follow the [Azure app creation guide](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app#register-an-application),\n set the **Redirect URI** to {{redirectUrl}} and add the following **Dynamics 365 Business Central permissions** under **API permissions**:\n - Financials.ReadWrite.All\n - user_impersonation\n",
   "Create Record": "Create Record",
   "Delete Record": "Delete Record",

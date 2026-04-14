@@ -16,7 +16,7 @@ export const analyzeDocument = createAction({
   name: 'analyze-document',
   displayName: 'Analyze Document',
   description:
-    'Extract text, forms (key-value pairs), tables, and signatures from a document. Supports JPEG, PNG, PDF, and TIFF. For multi-page PDFs, use Start Document Analysis instead.',
+    'Extract text, forms (key-value pairs), tables, and signatures from a document. Supports JPEG and PNG via direct upload; PDF and TIFF via S3 only. For multi-page PDFs, use Start Document Analysis instead.',
   props: {
     source: Property.StaticDropdown({
       displayName: 'Document Source',
@@ -53,7 +53,7 @@ export const analyzeDocument = createAction({
         return {
           file: Property.File({
             displayName: 'File',
-            description: 'The document to analyze. Supported formats: JPEG, PNG, PDF (single page), TIFF. Maximum 10 MB.',
+            description: 'The document to analyze. Only JPEG and PNG are supported for direct upload (max 5 MB). For PDF or TIFF files, use the "From S3 bucket" option instead.',
             required: true,
           }),
         };

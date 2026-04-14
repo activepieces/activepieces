@@ -271,6 +271,7 @@ async function setupSubflowWithWebhookResponseFixtures() {
         flowId: childFlow.id,
         state: FlowVersionState.LOCKED,
         trigger: {
+            lastUpdatedDate: new Date().toISOString(),
             type: FlowTriggerType.PIECE,
             name: 'trigger',
             displayName: 'Callable Flow',
@@ -368,6 +369,7 @@ async function setupSubflowWithWebhookResponseFixtures() {
             name: 'trigger',
             displayName: 'Catch Webhook',
             valid: true,
+            lastUpdatedDate: new Date().toISOString(),
             settings: {
                 pieceName: '@activepieces/piece-webhook',
                 pieceVersion: '0.1.29',

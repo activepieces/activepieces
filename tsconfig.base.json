@@ -213,6 +213,9 @@
       "@activepieces/piece-chainalysis-api": [
         "packages/pieces/community/chainalysis-api/src/index.ts"
       ],
+      "@activepieces/piece-chargebee": [
+        "packages/pieces/community/chargebee/src/index.ts"
+      ],
       "@activepieces/piece-chargekeep": [
         "packages/pieces/community/chargekeep/src/index.ts"
       ],
@@ -451,6 +454,9 @@
       ],
       "@activepieces/piece-freshdesk": [
         "packages/pieces/community/freshdesk/src/index.ts"
+      ],
+      "@activepieces/piece-freshservice": [
+        "packages/pieces/community/freshservice/src/index.ts"
       ],
       "@activepieces/piece-freshsales": [
         "packages/pieces/community/freshsales/src/index.ts"

@@ -42,7 +42,7 @@ export const analyzeId = createAction({
             }),
             s3Key: Property.ShortText({
               displayName: 'S3 File Path',
-              description: 'The path to the file in your S3 bucket (e.g. "id-documents/passport.jpg").',
+              description: 'The path to the image in your S3 bucket (e.g. "id-documents/passport.jpg"). Only JPEG and PNG are supported — PDF and TIFF are not accepted by this action.',
               required: true,
             }),
           };
@@ -50,7 +50,7 @@ export const analyzeId = createAction({
         return {
           file: Property.File({
             displayName: 'File',
-            description: 'The ID document to analyze. Supported formats: JPEG, PNG, PDF (single page), TIFF. Maximum 10 MB.',
+            description: 'The ID document to analyze. Only JPEG and PNG are supported (max 5 MB). PDF and TIFF are not supported by this action.',
             required: true,
           }),
         };

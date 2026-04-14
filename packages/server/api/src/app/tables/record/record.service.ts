@@ -109,9 +109,19 @@ export const recordService = {
                 recordId: In(records.map((record) => record.id)),
             },
         })
-        records.map((record) => {
-            record.cells = cells.filter((cell) => cell.recordId === record.id)
-        })
+        const cellsByRecordId = new Map<string, typeof cells>()
+        for (const cell of cells) {
+            const group = cellsByRecordId.get(cell.recordId)
+            if (group) {
+                group.push(cell)
+            }
+            else {
+                cellsByRecordId.set(cell.recordId, [cell])
+            }
+        }
+        for (const record of records) {
+            record.cells = cellsByRecordId.get(record.id) ?? []
+        }
         const filteredOutRecords = records.filter((record) => {
             if (!filters || filters.length === 0) {
                 return true
@@ -465,17 +475,28 @@ function formatRecords(records: RecordSchema[], fields: Field[]): PopulatedRecor
         return acc
     }, {} as Record<string, string>)
     return records.map((record) => {
+        const cells = record.cells.reduce<PopulatedRecord['cells']>((acc, cell) => {
+            acc[cell.fieldId] = {
+                fieldName: fieldsNamesMap[cell.fieldId],
+                value: cell.value,
+                updated: cell.updated,
+                created: cell.created,
+            }
+            return acc
+        }, {})
+        for (const field of fields) {
+            if (!(field.id in cells)) {
+                cells[field.id] = {
+                    fieldName: field.name,
+                    value: null,
+                    updated: record.updated,
+                    created: record.created,
+                }
+            }
+        }
         return {
             ...record,
-            cells: record.cells.reduce<PopulatedRecord['cells']>((acc, cell) => {
-                acc[cell.fieldId] = {
-                    fieldName: fieldsNamesMap[cell.fieldId],
-                    value: cell.value,
-                    updated: cell.updated,
-                    created: cell.created,
-                }
-                return acc
-            }, {}),
+            cells,
         }
     })
 }

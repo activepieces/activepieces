@@ -4,6 +4,21 @@ description: "A log of all notable changes to Activepieces"
 icon: "code-commit"
 ---
 
+<Update label="April 2026" description="Shared Concurrency Pools">
+
+### Shared concurrency pools
+
+Projects can now share a single concurrency limit through **concurrency pools**, giving platform operators finer control over how worker capacity is distributed.
+
+- **Per-project concurrency** — set **Max Concurrent Jobs** directly in Project Settings > General.
+- **Shared pools** — multiple projects can be grouped into the same pool so they draw from one shared limit instead of each having its own.
+- **Embedding support** — when provisioning users via JWT, include `concurrencyPoolKey` and `concurrencyPoolLimit` claims to create or reuse a pool automatically. See [Provision Users](/embedding/provision-users).
+
+![Project Settings — Max Concurrent Jobs](/resources/screenshots/manage-concurrency.png)
+
+Learn more in the [Manage Concurrency](/admin-guide/guides/manage-concurrency) guide.
+
+</Update>
 
 <Update label="March 2026" description="Stability & Reliability Improvements">
 

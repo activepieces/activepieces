@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/server-utils",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "commonjs",
   "main": "./dist/src/index.js",
   "typings": "./dist/src/index.d.ts",

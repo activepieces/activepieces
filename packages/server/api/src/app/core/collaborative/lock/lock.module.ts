@@ -21,7 +21,9 @@ export const lockModule: FastifyPluginAsyncZod = async (app) => {
                 })
 
                 if (result.acquired) {
-                    socket.data.lockedResourceId = data.resourceId
+                    if (!data.force) {
+                        socket.data.lockedResourceId = data.resourceId
+                    }
                     socket.to(projectId).emit(WebsocketClientEvent.RESOURCE_LOCKED, {
                         resourceId: data.resourceId,
                         userId: principal.id,

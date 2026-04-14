@@ -3,7 +3,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { aiProviderService } from '../../ai/ai-provider-service'
 import { projectService } from '../../project/project-service'
-import { mcpToolError } from './mcp-utils'
+import { mcpUtils } from './mcp-utils'
 
 const providerSchema = z.enum(Object.values(AIProviderName) as [AIProviderName, ...AIProviderName[]])
 
@@ -69,7 +69,7 @@ export const apListAiModelsTool = (mcp: McpServer, log: FastifyBaseLogger): McpT
             }
             catch (err) {
                 log.error({ err, projectId: mcp.projectId }, 'ap_list_ai_models failed')
-                return mcpToolError('Failed to list AI models', err)
+                return mcpUtils.mcpToolError('Failed to list AI models', err)
             }
         },
     }

@@ -87,7 +87,7 @@ function useResourceLock({ resourceId }: UseResourceLockParams) {
       { resourceId, force: true },
       (response: LockResourceResponse) => {
         if (response.acquired) {
-          isOwner.current = true;
+          isOwner.current = false;
           window.location.reload();
         }
       },

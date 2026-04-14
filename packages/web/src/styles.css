@@ -159,6 +159,8 @@
   --animate-typing: typing 0.7s steps(7) alternate;
   --animate-typing-sm: typing 0.5s steps(5) alternate;
   --animate-slide-in-from-bottom: slide-in-from-bottom 0.2s ease-out forwards;
+  --animate-indeterminate-progress: indeterminate-progress 1.5s ease-in-out
+    infinite;
   --animate-primary-color-pulse: primary-color-pulse 1s ease-in-out infinite
     alternate;
   --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif,
@@ -223,6 +225,15 @@
     }
     100% {
       transform: translateY(0%);
+    }
+  }
+
+  @keyframes indeterminate-progress {
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(400%);
     }
   }
 }

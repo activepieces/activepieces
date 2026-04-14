@@ -12,7 +12,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
 import { projectService } from '../../project/project-service'
-import { mcpToolError } from './mcp-utils'
+import { mcpUtils } from './mcp-utils'
 
 const lockAndPublishInput = z.object({
     flowId: z.string(),
@@ -68,7 +68,7 @@ export const apLockAndPublishTool = (mcp: McpServer, log: FastifyBaseLogger): Mc
                 }
             }
             catch (err) {
-                return mcpToolError('Publish failed', err)
+                return mcpUtils.mcpToolError('Publish failed', err)
             }
         },
     }

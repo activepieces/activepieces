@@ -16,14 +16,11 @@ import {
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Brackets, EntityManager, IsNull, Not, ObjectLiteral, SelectQueryBuilder } from 'typeorm'
-import { repoFactory } from '../core/db/repo-factory'
-import { getProjectMaxConcurrentJobsKey } from '../database/redis/keys'
-import { distributedStore } from '../database/redis-connections'
 import { userService } from '../user/user-service'
-import { ProjectEntity } from './project-entity'
 import { projectHooks } from './project-hooks'
+import { projectRepo } from './project-repo'
 
-export const projectRepo = repoFactory(ProjectEntity)
+export { projectRepo }
 
 export const projectService = (log: FastifyBaseLogger) => ({
     async create(params: CreateParams): Promise<Project> {
@@ -86,7 +83,8 @@ export const projectService = (log: FastifyBaseLogger) => ({
             ...spreadIfDefined('externalId', externalId),
             ...spreadIfDefined('releasesEnabled', request.releasesEnabled),
             ...spreadIfDefined('metadata', request.metadata),
-            ...spreadIfDefined('maxConcurrentJobs', request.maxConcurrentJobs),
+            ...(request.poolId !== undefined ? { poolId: request.poolId } : {}),
+            ...(request.maxConcurrentJobs !== undefined ? { maxConcurrentJobs: request.maxConcurrentJobs } : {}),
         }
 
         const teamUpdate = request.type === ProjectType.TEAM ? {
@@ -155,7 +153,7 @@ export const projectService = (log: FastifyBaseLogger) => ({
 
     async getAllForUser(params: GetAllForUserParams): Promise<Project[]> {
         assertNotNullOrUndefined(params.platformId, 'platformId is undefined')
-        
+
         const queryBuilder = projectRepo()
             .createQueryBuilder('project')
             .where('project."platformId" = :platformId', { platformId: params.platformId })
@@ -174,7 +172,7 @@ export const projectService = (log: FastifyBaseLogger) => ({
     },
     async userHasProjects(params: GetAllForUserParams): Promise<boolean> {
         assertNotNullOrUndefined(params.platformId, 'platformId is undefined')
-        
+
         const queryBuilder = projectRepo()
             .createQueryBuilder('project')
             .where('project."platformId" = :platformId', { platformId: params.platformId })
@@ -213,9 +211,6 @@ export const projectService = (log: FastifyBaseLogger) => ({
     },
     callProjectPostCreateHooks: async (savedProject: Project)=>{
         await projectHooks.get(log).postCreate(savedProject)
-        if (!isNil(savedProject.maxConcurrentJobs)) {
-            await distributedStore.put(getProjectMaxConcurrentJobsKey(savedProject.id), savedProject.maxConcurrentJobs)
-        }
     },
 })
 
@@ -280,7 +275,8 @@ type UpdateTeamProjectParams = {
     externalId?: string
     releasesEnabled?: boolean
     metadata?: Metadata
-    maxConcurrentJobs?: number
+    poolId?: string | null
+    maxConcurrentJobs?: number | null
     icon?: ProjectIcon
 }
 
@@ -289,7 +285,8 @@ type UpdatePersonalProjectParams = {
     externalId?: string
     releasesEnabled?: boolean
     metadata?: Metadata
-    maxConcurrentJobs?: number
+    poolId?: string | null
+    maxConcurrentJobs?: number | null
 }
 
 type UpdateParams = UpdateTeamProjectParams | UpdatePersonalProjectParams

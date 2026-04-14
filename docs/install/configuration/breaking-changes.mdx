@@ -4,6 +4,18 @@ description: "This list shows all versions that include breaking changes and how
 icon: "hammer"
 ---
 
+## Latest (Unreleased)
+
+### What has changed?
+
+#### Environment Variable Rename: `AP_MAX_CONCURRENT_JOBS_PER_PROJECT` → `AP_DEFAULT_CONCURRENT_JOBS_LIMIT`
+- The environment variable `AP_MAX_CONCURRENT_JOBS_PER_PROJECT` has been renamed to `AP_DEFAULT_CONCURRENT_JOBS_LIMIT`.
+- The default value has changed from `100` to `5`.
+
+### Do you need to take action?
+- If you have `AP_MAX_CONCURRENT_JOBS_PER_PROJECT` set in your environment, rename it to `AP_DEFAULT_CONCURRENT_JOBS_LIMIT`.
+- If you relied on the previous default of `100`, explicitly set `AP_DEFAULT_CONCURRENT_JOBS_LIMIT=100` to preserve the old behavior.
+
 ## 0.82.0
 
 ### What has changed?

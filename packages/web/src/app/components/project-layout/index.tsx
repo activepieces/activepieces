@@ -117,7 +117,10 @@ function ProjectDashboardLayoutInner({
       {!isEmbedded && <ProjectDashboardSidebar />}
       <SidebarInset className="flex flex-col h-full overflow-hidden bg-sidebar">
         <div className="flex-1 flex flex-col pr-2 pt-3 pb-3 overflow-hidden">
-          <div className="flex flex-col h-full bg-background rounded-xl shadow-[2px_0px_4px_-2px_rgba(0,0,0,0.05),0px_2px_4px_-2px_rgba(0,0,0,0.05)] border overflow-clip">
+          <div
+            id="dashboard-content-container"
+            className="relative flex flex-col h-full bg-background rounded-xl shadow-[2px_0px_4px_-2px_rgba(0,0,0,0.05),0px_2px_4px_-2px_rgba(0,0,0,0.05)] border overflow-clip"
+          >
             {!hideHeader && (
               <ProjectDashboardLayoutHeader key={currentProjectId} />
             )}
