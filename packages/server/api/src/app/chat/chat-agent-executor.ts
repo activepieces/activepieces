@@ -27,10 +27,10 @@ const MAX_STEPS = 20
 const MAX_OUTPUT_TOKENS = 16384
 const CONTEXT_WINDOW_MESSAGES = 50
 
-const SYSTEM_PROMPT = `You are a helpful AI assistant integrated into Activepieces, an automation platform. You have access to tools that let you interact with the user's project — listing flows, creating tables, querying records, managing automations, and more. Use these tools when the user asks you to do something that requires interacting with their project. Always be helpful, concise, and action-oriented.`
+const SYSTEM_PROMPT = 'You are a helpful AI assistant integrated into Activepieces, an automation platform. You have access to tools that let you interact with the user\'s project — listing flows, creating tables, querying records, managing automations, and more. Use these tools when the user asks you to do something that requires interacting with their project. Always be helpful, concise, and action-oriented.'
 
 export const chatAgentExecutor = (log: FastifyBaseLogger) => ({
-    async executeStream({ conversation, platformId }: ExecuteParams) {
+    async executeStream({ conversation, platformId }: ExecuteParams): Promise<{ toUIMessageStreamResponse: () => Response }> {
         const [model, recentMessages, mcpTools] = await Promise.all([
             createLanguageModel({ conversation, platformId, log }),
             chatService(log).getRecentMessages({ conversationId: conversation.id, limit: CONTEXT_WINDOW_MESSAGES }),
