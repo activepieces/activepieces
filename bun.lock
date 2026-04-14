@@ -2914,7 +2914,7 @@
     },
     "packages/pieces/community/gmail": {
       "name": "@activepieces/piece-gmail",
-      "version": "0.12.0",
+      "version": "0.12.1",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -8034,7 +8034,6 @@
       "name": "@activepieces/engine",
       "version": "0.7.0",
       "dependencies": {
-        "@activepieces/import-fresh-webpack": "3.3.0",
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
