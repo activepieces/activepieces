@@ -7,6 +7,7 @@ import {
   Code,
   Copy,
   FileSpreadsheet,
+  Globe,
   FileText,
   Image,
   Link,
@@ -19,9 +20,11 @@ import {
   X,
   Zap,
 } from 'lucide-react';
+import Lottie from 'react-lottie';
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import Lottie from 'react-lottie';
+
+import thinkingLoaderData from './thinking-loader.json';
 
 import dropMediaImg from '@/assets/img/drop-media.svg';
 import { Button } from '@/components/ui/button';
@@ -32,16 +35,9 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { useChat } from '@ai-sdk/react';
-import { DefaultChatTransport } from 'ai';
-import ReactMarkdown from 'react-markdown';
-import breaks from 'remark-breaks';
-import gfm from 'remark-gfm';
-
 import { cn } from '@/lib/utils';
 
 import { DelayedTooltip } from './delayed-tooltip';
-import thinkingLoaderData from './thinking-loader.json';
 
 type Attachment = {
   name: string;
@@ -97,9 +93,25 @@ const FILE_ICON_MAP: Record<Attachment['type'], typeof FileText> = {
   other: Paperclip,
 };
 
-import { authenticationSession } from '@/lib/authentication-session';
-import { API_URL } from '@/lib/api';
+const ANTHROPIC_KEY = import.meta.env.VITE_ANTHROPIC_API_KEY || '';
+const CLAUDE_API_BASE = import.meta.env.DEV ? '/claude-api' : 'https://api.anthropic.com';
 
+const IMAGE_KEYWORDS_EXACT = [
+  'صورة', 'صوره', 'ارسم', 'ارسملي', 'اعمل صور', 'ولد صور', 'اعملي صور',
+  'picture of', 'صمم', 'صمملي', 'draw',
+];
+
+const IMAGE_VERB_NOUN_PAIRS: [string[], string[]][] = [
+  [['generate', 'create', 'make', 'produce', 'اعمل', 'اعملي', 'ولد', 'سوي', 'سولي'], ['image', 'photo', 'picture', 'pic', 'صورة', 'صوره', 'صور']],
+];
+
+const isImageRequest = (text: string) => {
+  const lower = text.toLowerCase();
+  if (IMAGE_KEYWORDS_EXACT.some((kw) => lower.includes(kw))) return true;
+  return IMAGE_VERB_NOUN_PAIRS.some(([verbs, nouns]) =>
+    verbs.some((v) => lower.includes(v)) && nouns.some((n) => lower.includes(n)),
+  );
+};
 
 const getTime = () =>
   new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -235,70 +247,34 @@ const keyframes = `
   .prompt-float-footer { background: linear-gradient(to bottom, transparent, var(--background) 40%); max-width: calc(clamp(280px, calc(100vw - 700px), 560px) + 20px); margin: 0 auto; width: calc(100% + 20px); padding-top: 80px; margin-top: -80px; }
 `;
 
+/* ─── Mock sources for demo ─── */
+const MOCK_FAVICONS = [
+  'https://www.google.com/favicon.ico',
+  'https://www.wikipedia.org/favicon.ico',
+  'https://www.reddit.com/favicon.ico',
+  'https://www.github.com/favicon.ico',
+  'https://stackoverflow.com/favicon.ico',
+  'https://www.youtube.com/favicon.ico',
+  'https://medium.com/favicon.ico',
+  'https://www.amazon.com/favicon.ico',
+  'https://www.nytimes.com/favicon.ico',
+  'https://www.bbc.com/favicon.ico',
+];
+
+function getMockSources(msgId: number) {
+  const count = (msgId % 15) + 3;
+  // Pick favicons deterministically based on msgId
+  const favicons: string[] = [];
+  for (let i = 0; i < Math.min(count, 4); i++) {
+    favicons.push(MOCK_FAVICONS[(msgId + i) % MOCK_FAVICONS.length]);
+  }
+  return { count, favicons };
+}
 
 /* ─── Smooth streaming text component ─── */
 const WORD_INTERVAL = 50; // ms per word
 
-function ToolCallPill({ name }: { name: string }) {
-  return (
-    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 my-1 rounded-lg bg-accent/50 border border-border/60 text-xs font-medium text-muted-foreground select-none">
-      <Zap className="w-3 h-3 text-primary/70" />
-      <span className="capitalize">{name}</span>
-    </span>
-  );
-}
-
-function ChatMarkdown({ markdown }: { markdown: string }) {
-  if (!markdown) return null;
-
-  return (
-    <ReactMarkdown
-      remarkPlugins={[gfm, breaks]}
-      className="text-base leading-relaxed text-accent-foreground dark:text-neutral-300 prose prose-sm max-w-none"
-      components={{
-        code({ children, className }) {
-          const text = String(children).trim();
-          if (text.startsWith('tool:')) {
-            return <ToolCallPill name={text.replace('tool:', '')} />;
-          }
-          if (text.startsWith('error:')) {
-            return (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 my-1 rounded-lg bg-destructive/10 border border-destructive/20 text-xs font-medium text-destructive select-none">
-                {text.replace('error:', '')}
-              </span>
-            );
-          }
-          return <code className={cn('text-wrap', className)}>{children}</code>;
-        },
-        h1: ({ node: _node, ref: _ref, ...props }) => <h1 className="scroll-m-20 text-xl font-extrabold tracking-tight" {...props} />,
-        h2: ({ node: _node, ref: _ref, ...props }) => <h2 className="scroll-m-20 text-lg font-semibold tracking-tight mt-4 first:mt-0" {...props} />,
-        h3: ({ node: _node, ref: _ref, ...props }) => <h3 className="scroll-m-20 text-base font-semibold tracking-tight mt-3" {...props} />,
-        p: ({ node: _node, ref: _ref, ...props }) => <p className="leading-6 first-of-type:mt-0 not-first-of-type:mt-2 mb-2" {...props} />,
-        ul: ({ node: _node, ref: _ref, ...props }) => <ul className="mt-2 ml-5 list-disc [&>li]:mt-1.5" {...props} />,
-        ol: ({ node: _node, ref: _ref, ...props }) => <ol className="mt-2 ml-5 list-decimal [&>li]:mt-1.5" {...props} />,
-        li: ({ node: _node, ref: _ref, ...props }) => <li className="leading-6" {...props} />,
-        a: ({ node: _node, ref: _ref, ...props }) => <a className="font-medium text-primary underline underline-offset-4" target="_blank" rel="noreferrer noopener" {...props} />,
-        blockquote: ({ node: _node, ref: _ref, ...props }) => <blockquote className="mt-3 border-l-2 border-primary/30 pl-4 italic text-muted-foreground" {...props} />,
-        table: ({ node: _node, ref: _ref, ...props }) => <div className="my-3 overflow-x-auto rounded-lg border border-border/60"><table className="w-full text-sm" {...props} /></div>,
-        thead: ({ node: _node, ref: _ref, ...props }) => <thead className="bg-accent/40" {...props} />,
-        tr: ({ node: _node, ref: _ref, ...props }) => <tr className="border-b border-border/40" {...props} />,
-        th: ({ node: _node, ref: _ref, ...props }) => <th className="text-left px-3 py-2 font-medium text-muted-foreground" {...props} />,
-        td: ({ node: _node, ref: _ref, ...props }) => <td className="px-3 py-2" {...props} />,
-        hr: ({ node: _node, ref: _ref, ...props }) => <hr className="my-4 border-border/40" {...props} />,
-      }}
-    >
-      {markdown.trim()}
-    </ReactMarkdown>
-  );
-}
-
-function StreamingText({
-  fullText,
-  streaming,
-}: {
-  fullText: string;
-  streaming: boolean;
-}) {
+function StreamingText({ fullText, streaming }: { fullText: string; streaming: boolean }) {
   // Words buffer: complete words waiting to be displayed
   const wordBufferRef = useRef<string[]>([]);
   // Partial token that hasn't formed a complete word yet
@@ -359,11 +335,7 @@ function StreamingText({
 
   // When streaming stops and buffer is empty, make sure we show everything
   useEffect(() => {
-    if (
-      !streaming &&
-      wordBufferRef.current.length === 0 &&
-      partialRef.current === ''
-    ) {
+    if (!streaming && wordBufferRef.current.length === 0 && partialRef.current === '') {
       const allWords = fullText.split(/(\s+)/).filter(Boolean);
       if (displayedCountRef.current < allWords.length) {
         displayedCountRef.current = allWords.length;
@@ -407,9 +379,7 @@ export function AIChatBox({
   const [typing, setTyping] = useState(false);
   const [thinkingText, setThinkingText] = useState('Thinking');
   const [imgProgress, setImgProgress] = useState<Record<number, number>>({});
-  const imgTimersRef = useRef<Record<number, ReturnType<typeof setInterval>>>(
-    {},
-  );
+  const imgTimersRef = useRef<Record<number, ReturnType<typeof setInterval>>>({});
   const [copiedId, setCopiedId] = useState<number | null>(null);
   const [selectedModel, setSelectedModel] = useState('GPT-4o');
   const [modelMenuOpen, setModelMenuOpen] = useState(false);
@@ -481,67 +451,160 @@ export function AIChatBox({
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, typing]);
 
-  const conversationIdRef = useRef<string | null>(null);
-
-  const getOrCreateConversation = async (): Promise<string> => {
-    if (conversationIdRef.current) return conversationIdRef.current;
-    const projectId = authenticationSession.getProjectId();
-    const token = authenticationSession.getToken();
-    const res = await fetch(`${API_URL}/v1/chat/conversations?projectId=${projectId}`, {
+  const callClaude = async (msgs: { role: 'user' | 'assistant'; content: string }[]) => {
+    const res = await fetch(`${CLAUDE_API_BASE}/v1/messages`, {
       method: 'POST',
-      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({}),
-    });
-    if (!res.ok) throw new Error(`Failed to create conversation: ${res.status}`);
-    const conv = await res.json();
-    conversationIdRef.current = conv.id;
-    return conv.id;
-  };
-
-  const chatHook = useChat({
-    transport: new DefaultChatTransport({
-      api: `${API_URL}/v1/chat/conversations/placeholder/messages`,
       headers: {
-        'Authorization': `Bearer ${authenticationSession.getToken()}`,
+        'Content-Type': 'application/json',
+        'x-api-key': ANTHROPIC_KEY,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
       },
-      fetch: async (input, init) => {
-        const convId = await getOrCreateConversation();
-        const url = `${API_URL}/v1/chat/conversations/${convId}/messages`;
-        return fetch(url, init);
-      },
-    }),
-  });
-
-  const streamFromBackend = async (userText: string) => {
-    await chatHook.sendMessage({ text: userText });
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1024,
+        messages: msgs,
+      }),
+    });
+    if (!res.ok) throw new Error(`${res.status} ${await res.text()}`);
+    const data = await res.json();
+    return data.content?.[0]?.text || '';
   };
 
-  useEffect(() => {
-    const mapped: Message[] = chatHook.messages.map((m, i) => {
-      let text = '';
-      for (const part of m.parts) {
-        if (part.type === 'text') {
-          text += part.text;
-        } else if (part.type === 'dynamic-tool') {
-          const displayName = (part.toolName || '').replace(/^ap_/, '').replace(/_/g, ' ');
-          text += `\n\n\`tool:${displayName}\`\n\n`;
-        } else if (typeof part.type === 'string' && part.type.startsWith('tool-')) {
-          const toolName = part.type.replace('tool-', '');
-          const displayName = toolName.replace(/^ap_/, '').replace(/_/g, ' ');
-          text += `\n\n\`tool:${displayName}\`\n\n`;
-        }
-      }
-      return {
-        id: i,
-        role: m.role === 'user' ? 'user' as const : 'ai' as const,
-        text,
-        time: getTime(),
+  const streamClaude = async (chatMessages: { role: 'user' | 'assistant'; content: string | Array<{ type: string; text?: string; source?: { type: string; media_type: string; data: string } }> }[]) => {
+    const msgId = Date.now() + 1;
+    const time = getTime();
+    const lastContent = chatMessages[chatMessages.length - 1]?.content || '';
+    const userText = typeof lastContent === 'string' ? lastContent : ([...lastContent].reverse().find((b) => b.type === 'text' && !b.text?.startsWith('--- File:'))?.text || '');
+    const hasAttachments = typeof lastContent !== 'string';
+    const wantsImage = !hasAttachments && isImageRequest(userText);
+
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: msgId,
+        role: 'ai',
+        text: '',
+        time,
         fullDate: getFullDate(),
-        streaming: chatHook.status === 'streaming' && i === chatHook.messages.length - 1 && m.role === 'assistant',
-      };
-    });
-    setMessages(mapped);
-  }, [chatHook.messages, chatHook.status]);
+        streaming: true,
+      },
+    ]);
+
+    try {
+      abortRef.current = new AbortController();
+
+      if (wantsImage) {
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === msgId ? { ...m, text: '' } : m,
+          ),
+        );
+
+        const imagePrompt = await callClaude([
+          {
+            role: 'user',
+            content: `Extract the image description from this message and reply with ONLY a short English image prompt, maximum 6 words. No extra text, no quotes: "${userText}"`,
+          },
+        ]);
+
+        const seed = Math.floor(Math.random() * 100000);
+        const cleanPrompt = imagePrompt.replace(/[^a-zA-Z0-9 ]/g, '').trim();
+        const imgBase = import.meta.env.DEV ? '/img-proxy' : 'https://image.pollinations.ai';
+        const imageUrl = `${imgBase}/prompt/${encodeURIComponent(cleanPrompt)}?width=512&height=512&nologo=true&seed=${seed}`;
+
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === msgId
+              ? { ...m, text: '', images: [imageUrl], streaming: false }
+              : m,
+          ),
+        );
+        startImgProgress(msgId);
+      } else {
+        // Stream from Claude
+        const res = await fetch(`${CLAUDE_API_BASE}/v1/messages`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': ANTHROPIC_KEY,
+            'anthropic-version': '2023-06-01',
+            'anthropic-dangerous-direct-browser-access': 'true',
+          },
+          body: JSON.stringify({
+            model: 'claude-sonnet-4-20250514',
+            max_tokens: 4096,
+            stream: true,
+            messages: chatMessages,
+          }),
+          signal: abortRef.current.signal,
+        });
+
+        if (!res.ok) throw new Error(`${res.status} ${await res.text()}`);
+
+        const reader = res.body!.getReader();
+        const decoder = new TextDecoder();
+        let fullText = '';
+        let buffer = '';
+
+        let flushTimer: ReturnType<typeof setTimeout> | null = null;
+        const flushText = () => {
+          const captured = fullText;
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === msgId ? { ...m, text: captured } : m,
+            ),
+          );
+          flushTimer = null;
+        };
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+
+          for (const line of lines) {
+            if (!line.startsWith('data: ')) continue;
+            const data = line.slice(6);
+            if (data === '[DONE]') continue;
+            try {
+              const event = JSON.parse(data);
+              if (event.type === 'content_block_delta' && event.delta?.text) {
+                fullText += event.delta.text;
+                // Throttle state updates to ~50ms to reduce re-renders
+                if (!flushTimer) {
+                  flushTimer = setTimeout(flushText, 50);
+                }
+              }
+            } catch { /* skip */ }
+          }
+        }
+        // Final flush
+        if (flushTimer) clearTimeout(flushTimer);
+
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === msgId ? { ...m, text: fullText, streaming: false } : m,
+          ),
+        );
+      }
+    } catch (err) {
+      if ((err as Error).name !== 'AbortError') {
+        console.error('Claude error:', err);
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === msgId
+              ? { ...m, text: `Error: ${(err as Error).message}`, streaming: false }
+              : m,
+          ),
+        );
+      }
+    }
+    abortRef.current = null;
+  };
 
   const regenerateResponse = async (msgId: number) => {
     // Find the last user message before this AI message
@@ -572,30 +635,33 @@ export function AIChatBox({
     setThinkingText(pickThinkingText());
 
     // Build history up to the user message
-    const chatHistory: { role: 'user' | 'assistant'; content: string }[] =
-      messages
-        .slice(0, msgIndex)
-        .filter((m) => m.text)
-        .map((m) => ({
-          role: m.role === 'user' ? ('user' as const) : ('assistant' as const),
-          content: m.text,
-        }));
+    const chatHistory: { role: 'user' | 'assistant'; content: string }[] = messages
+      .slice(0, msgIndex)
+      .filter((m) => m.text)
+      .map((m) => ({
+        role: m.role === 'user' ? 'user' as const : 'assistant' as const,
+        content: m.text,
+      }));
     if (!chatHistory.length) {
       chatHistory.push({ role: 'user', content: lastUserText || 'Hello' });
     }
 
     try {
       abortRef.current = new AbortController();
-      const conversationId = await getOrCreateConversation();
-      const authToken = authenticationSession.getToken();
-
-      const res = await fetch(`${API_URL}/v1/chat/conversations/${conversationId}/messages`, {
+      const res = await fetch(`${CLAUDE_API_BASE}/v1/messages`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${authToken}`,
           'Content-Type': 'application/json',
+          'x-api-key': ANTHROPIC_KEY,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true',
         },
-        body: JSON.stringify({ content: lastUserText || 'Hello' }),
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 4096,
+          stream: true,
+          messages: chatHistory,
+        }),
         signal: abortRef.current.signal,
       });
 
@@ -605,37 +671,30 @@ export function AIChatBox({
       let fullText = '';
       let buffer = '';
 
-      for (;;) {
+      while (true) {
         const { done, value } = await reader.read();
         if (done) break;
         buffer += decoder.decode(value, { stream: true });
 
-        const events = buffer.split('\n\n');
-        buffer = events.pop() || '';
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
 
-        for (const eventBlock of events) {
-          const eventLines = eventBlock.split('\n');
-          const dataLine = eventLines.find((l) => l.startsWith('data: '));
-          const eventLine = eventLines.find((l) => l.startsWith('event: '));
-          if (!dataLine || !eventLine) continue;
-          const eventType = eventLine.replace('event: ', '');
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          const data = line.slice(6);
+          if (data === '[DONE]') continue;
           try {
-            const data = JSON.parse(dataLine.replace('data: ', ''));
-            if (eventType === 'content_delta' && data.text) {
-              fullText += data.text;
+            const event = JSON.parse(data);
+            if (event.type === 'content_block_delta' && event.delta?.text) {
+              fullText += event.delta.text;
               const captured = fullText;
               setMessages((prev) =>
                 prev.map((m) =>
                   m.id === msgId ? { ...m, text: captured } : m,
                 ),
               );
-            } else if (eventType === 'tool_call_start') {
-              const displayName = (data.toolName || '').replace(/^ap_/, '').replace(/_/g, ' ');
-              fullText += `\n\n\`tool:${displayName}\`\n\n`;
             }
-          } catch {
-            /* skip */
-          }
+          } catch { /* skip */ }
         }
       }
 
@@ -656,14 +715,15 @@ export function AIChatBox({
     } catch {
       setTyping(false);
       setMessages((prev) =>
-        prev.map((m) => (m.id === msgId ? { ...m, streaming: false } : m)),
+        prev.map((m) =>
+          m.id === msgId ? { ...m, streaming: false } : m,
+        ),
       );
     }
     abortRef.current = null;
   };
 
   const stopStreaming = () => {
-    chatHook.stop();
     if (thinkingRef.current) {
       clearTimeout(thinkingRef.current);
       thinkingRef.current = null;
@@ -697,36 +757,17 @@ export function AIChatBox({
           src: '',
           size: formatSize(file.size),
         };
-        const binaryExts = [
-          'pdf',
-          'doc',
-          'docx',
-          'xls',
-          'xlsx',
-          'ppt',
-          'pptx',
-          'zip',
-          'rar',
-          'exe',
-          'dmg',
-          'mp3',
-          'mp4',
-          'mov',
-          'avi',
-        ];
+        const binaryExts = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'zip', 'rar', 'exe', 'dmg', 'mp3', 'mp4', 'mov', 'avi'];
         const ext = file.name.split('.').pop()?.toLowerCase() || '';
         if (!binaryExts.includes(ext)) {
           const reader = new FileReader();
           reader.onload = (ev) => {
             const text = ev.target?.result as string;
             // Check if content looks like text (not binary garbage)
-            const isBinary = text
-              .slice(0, 200)
-              .split('')
-              .some((c) => {
-                const code = c.charCodeAt(0);
-                return code < 9 || (code > 13 && code < 32 && code !== 27);
-              });
+            const isBinary = text.slice(0, 200).split('').some((c) => {
+              const code = c.charCodeAt(0);
+              return code < 9 || (code > 13 && code < 32 && code !== 27);
+            });
             attachment.src = isBinary ? '' : text;
             setPendingFiles((prev) => [...prev, attachment]);
           };
@@ -849,35 +890,16 @@ export function AIChatBox({
           src: '',
           size: formatSize(file.size),
         };
-        const binaryExts = [
-          'pdf',
-          'doc',
-          'docx',
-          'xls',
-          'xlsx',
-          'ppt',
-          'pptx',
-          'zip',
-          'rar',
-          'exe',
-          'dmg',
-          'mp3',
-          'mp4',
-          'mov',
-          'avi',
-        ];
+        const binaryExts = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'zip', 'rar', 'exe', 'dmg', 'mp3', 'mp4', 'mov', 'avi'];
         const ext = file.name.split('.').pop()?.toLowerCase() || '';
         if (!binaryExts.includes(ext)) {
           const reader = new FileReader();
           reader.onload = (ev) => {
             const text = ev.target?.result as string;
-            const isBinary = text
-              .slice(0, 200)
-              .split('')
-              .some((c) => {
-                const code = c.charCodeAt(0);
-                return code < 9 || (code > 13 && code < 32 && code !== 27);
-              });
+            const isBinary = text.slice(0, 200).split('').some((c) => {
+              const code = c.charCodeAt(0);
+              return code < 9 || (code > 13 && code < 32 && code !== 27);
+            });
             attachment.src = isBinary ? '' : text;
             setPendingFiles((prev) => [...prev, attachment]);
           };
@@ -895,12 +917,7 @@ export function AIChatBox({
       pendingImages.length > 0 ||
       pendingFiles.length > 0 ||
       replyQuotes.length > 0;
-    if (
-      (!text && !hasAttachments) ||
-      typing ||
-      messages.some((m) => m.streaming)
-    )
-      return;
+    if ((!text && !hasAttachments) || typing || messages.some((m) => m.streaming)) return;
     const fullText = text;
     setInput('');
     if (textareaRef.current) textareaRef.current.style.height = 'auto';
@@ -932,19 +949,10 @@ export function AIChatBox({
     setTyping(true);
     setThinkingText(pickThinkingText());
 
-    const chatHistory: {
-      role: 'user' | 'assistant';
-      content:
-        | string
-        | Array<{
-            type: string;
-            text?: string;
-            source?: { type: string; media_type: string; data: string };
-          }>;
-    }[] = messages
+    const chatHistory: { role: 'user' | 'assistant'; content: string | Array<{ type: string; text?: string; source?: { type: string; media_type: string; data: string } }> }[] = messages
       .filter((m) => m.text)
       .map((m) => ({
-        role: m.role === 'user' ? ('user' as const) : ('assistant' as const),
+        role: m.role === 'user' ? 'user' as const : 'assistant' as const,
         content: m.text,
       }));
 
@@ -952,11 +960,7 @@ export function AIChatBox({
     const hasImages = images && images.length > 0;
     const hasFiles = files && files.some((f) => f.src);
     if (hasImages || hasFiles) {
-      const contentBlocks: Array<{
-        type: string;
-        text?: string;
-        source?: { type: string; media_type: string; data: string };
-      }> = [];
+      const contentBlocks: Array<{ type: string; text?: string; source?: { type: string; media_type: string; data: string } }> = [];
       if (images) {
         for (const img of images) {
           const match = img.match(/^data:(image\/\w+);base64,(.+)$/);
@@ -971,10 +975,7 @@ export function AIChatBox({
       if (files) {
         for (const f of files) {
           if (f.src) {
-            contentBlocks.push({
-              type: 'text',
-              text: `--- File: ${f.name} ---\n${f.src}`,
-            });
+            contentBlocks.push({ type: 'text', text: `--- File: ${f.name} ---\n${f.src}` });
           }
         }
       }
@@ -984,11 +985,10 @@ export function AIChatBox({
       chatHistory.push({ role: 'user', content: fullText });
     }
 
-    const userText = fullText || (files ? files[0].name : 'Hello');
     thinkingRef.current = setTimeout(async () => {
       thinkingRef.current = null;
       setTyping(false);
-      await streamFromBackend(userText);
+      await streamClaude(chatHistory);
     }, 500);
   };
 
@@ -1157,15 +1157,7 @@ export function AIChatBox({
                 className="file-chip-pending shrink-0 select-none"
               >
                 <div className="file-chip">
-                  {(() => {
-                    const Icon = FILE_ICON_MAP[file.type];
-                    return (
-                      <Icon
-                        size={20}
-                        className="text-muted-foreground shrink-0"
-                      />
-                    );
-                  })()}
+                  {(() => { const Icon = FILE_ICON_MAP[file.type]; return <Icon size={20} className="text-muted-foreground shrink-0" />; })()}
                   <div className="min-w-0">
                     <div className="text-xs font-medium overflow-hidden text-ellipsis whitespace-nowrap text-foreground">
                       {file.name}
@@ -1296,67 +1288,63 @@ export function AIChatBox({
                   />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent
-                align="end"
-                side="top"
-                className="min-w-[200px]"
-              >
+              <DropdownMenuContent align="end" side="top" className="min-w-[200px]">
                 {[
-                  {
-                    name: 'GPT-4o',
-                    icon: (
-                      <svg width="16" height="16" viewBox="0 0 24 24">
-                        <path
-                          d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.0729zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.872zm16.5963 3.8558L13.1038 8.364 15.1192 7.2a.0757.0757 0 0 1 .071 0l4.8303 2.7913a4.4944 4.4944 0 0 1-.6765 8.1042v-5.6772a.79.79 0 0 0-.407-.667zm2.0107-3.0231l-.142-.0852-4.7735-2.7818a.7759.7759 0 0 0-.7854 0L9.409 9.2297V6.8974a.0662.0662 0 0 1 .0284-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66zM8.3065 12.863l-2.02-1.1638a.0804.0804 0 0 1-.038-.0567V6.0742a4.4992 4.4992 0 0 1 7.3757-3.4537l-.142.0805L8.704 5.459a.7948.7948 0 0 0-.3927.6813zm1.0976-2.3654l2.602-1.4998 2.6069 1.4998v2.9994l-2.5974 1.4997-2.6067-1.4997Z"
-                          fill="currentColor"
-                        />
-                      </svg>
-                    ),
-                  },
-                  {
-                    name: 'GPT-4o mini',
-                    icon: (
-                      <svg width="16" height="16" viewBox="0 0 24 24">
-                        <path
-                          d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.0729zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.872zm16.5963 3.8558L13.1038 8.364 15.1192 7.2a.0757.0757 0 0 1 .071 0l4.8303 2.7913a4.4944 4.4944 0 0 1-.6765 8.1042v-5.6772a.79.79 0 0 0-.407-.667zm2.0107-3.0231l-.142-.0852-4.7735-2.7818a.7759.7759 0 0 0-.7854 0L9.409 9.2297V6.8974a.0662.0662 0 0 1 .0284-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66zM8.3065 12.863l-2.02-1.1638a.0804.0804 0 0 1-.038-.0567V6.0742a4.4992 4.4992 0 0 1 7.3757-3.4537l-.142.0805L8.704 5.459a.7948.7948 0 0 0-.3927.6813zm1.0976-2.3654l2.602-1.4998 2.6069 1.4998v2.9994l-2.5974 1.4997-2.6067-1.4997Z"
-                          fill="currentColor"
-                        />
-                      </svg>
-                    ),
-                  },
-                  {
-                    name: 'Claude Sonnet',
-                    icon: (
-                      <svg width="16" height="16" viewBox="0 0 24 24">
-                        <path
-                          d="m4.7144 15.9555 4.7174-2.6471.079-.2307-.079-.1275h-.2307l-.7893-.0486-2.6956-.0729-2.3375-.0971-2.2646-.1214-.5707-.1215-.5343-.7042.0546-.3522.4797-.3218.686.0608 1.5179.1032 2.2767.1578 1.6514.0972 2.4468.255h.3886l.0546-.1579-.1336-.0971-.1032-.0972L6.973 9.8356l-2.55-1.6879-1.3356-.9714-.7225-.4918-.3643-.4614-.1578-1.0078.6557-.7225.8803.0607.2246.0607.8925.686 1.9064 1.4754 2.4893 1.8336.3643.3035.1457-.1032.0182-.0728-.164-.2733-1.3539-2.4467-1.445-2.4893-.6435-1.032-.17-.6194c-.0607-.255-.1032-.4674-.1032-.7285L6.287.1335 6.6997 0l.9957.1336.419.3642.6192 1.4147 1.0018 2.2282 1.5543 3.0296.4553.8985.2429.8318.091.255h.1579v-.1457l.1275-1.706.2368-2.0947.2307-2.6957.0789-.7589.3764-.9107.7468-.4918.5828.2793.4797.686-.0668.4433-.2853 1.8517-.5586 2.9021-.3643 1.9429h.2125l.2429-.2429.9835-1.3053 1.6514-2.0643.7286-.8196.85-.9046.5464-.4311h1.0321l.759 1.1293-.34 1.1657-1.0625 1.3478-.8804 1.1414-1.2628 1.7-.7893 1.36.0729.1093.1882-.0183 2.8535-.607 1.5421-.2794 1.8396-.3157.8318.3886.091.3946-.3278.8075-1.967.4857-2.3072.4614-3.4364.8136-.0425.0304.0486.0607 1.5482.1457.6618.0364h1.621l3.0175.2247.7892.522.4736.6376-.079.4857-1.2142.6193-1.6393-.3886-3.825-.9107-1.3113-.3279h-.1822v.1093l1.0929 1.0686 2.0035 1.8092 2.5075 2.3314.1275.5768-.3218.4554-.34-.0486-2.2039-1.6575-.85-.7468-1.9246-1.621h-.1275v.17l.4432.6496 2.3436 3.5214.1214 1.0807-.17.3521-.6071.2125-.6679-.1214-1.3721-1.9246L14.38 17.959l-1.1414-1.9428-.1397.079-.674 7.2552-.3156.3703-.7286.2793-.6071-.4614-.3218-.7468.3218-1.4753.3886-1.9246.3157-1.53.2853-1.9004.17-.6314-.0121-.0425-.1397.0182-1.4328 1.9672-2.1796 2.9446-1.7243 1.8456-.4128.164-.7164-.3704.0667-.6618.4008-.5889 2.386-3.0357 1.4389-1.882.929-1.0868-.0062-.1579h-.0546l-6.3385 4.1164-1.1293.1457-.4857-.4554.0608-.7467.2307-.2429 1.9064-1.3114Z"
-                          fill="#D97757"
-                        />
-                      </svg>
-                    ),
-                  },
-                  {
-                    name: 'Claude Haiku',
-                    icon: (
-                      <svg width="16" height="16" viewBox="0 0 24 24">
-                        <path
-                          d="m4.7144 15.9555 4.7174-2.6471.079-.2307-.079-.1275h-.2307l-.7893-.0486-2.6956-.0729-2.3375-.0971-2.2646-.1214-.5707-.1215-.5343-.7042.0546-.3522.4797-.3218.686.0608 1.5179.1032 2.2767.1578 1.6514.0972 2.4468.255h.3886l.0546-.1579-.1336-.0971-.1032-.0972L6.973 9.8356l-2.55-1.6879-1.3356-.9714-.7225-.4918-.3643-.4614-.1578-1.0078.6557-.7225.8803.0607.2246.0607.8925.686 1.9064 1.4754 2.4893 1.8336.3643.3035.1457-.1032.0182-.0728-.164-.2733-1.3539-2.4467-1.445-2.4893-.6435-1.032-.17-.6194c-.0607-.255-.1032-.4674-.1032-.7285L6.287.1335 6.6997 0l.9957.1336.419.3642.6192 1.4147 1.0018 2.2282 1.5543 3.0296.4553.8985.2429.8318.091.255h.1579v-.1457l.1275-1.706.2368-2.0947.2307-2.6957.0789-.7589.3764-.9107.7468-.4918.5828.2793.4797.686-.0668.4433-.2853 1.8517-.5586 2.9021-.3643 1.9429h.2125l.2429-.2429.9835-1.3053 1.6514-2.0643.7286-.8196.85-.9046.5464-.4311h1.0321l.759 1.1293-.34 1.1657-1.0625 1.3478-.8804 1.1414-1.2628 1.7-.7893 1.36.0729.1093.1882-.0183 2.8535-.607 1.5421-.2794 1.8396-.3157.8318.3886.091.3946-.3278.8075-1.967.4857-2.3072.4614-3.4364.8136-.0425.0304.0486.0607 1.5482.1457.6618.0364h1.621l3.0175.2247.7892.522.4736.6376-.079.4857-1.2142.6193-1.6393-.3886-3.825-.9107-1.3113-.3279h-.1822v.1093l1.0929 1.0686 2.0035 1.8092 2.5075 2.3314.1275.5768-.3218.4554-.34-.0486-2.2039-1.6575-.85-.7468-1.9246-1.621h-.1275v.17l.4432.6496 2.3436 3.5214.1214 1.0807-.17.3521-.6071.2125-.6679-.1214-1.3721-1.9246L14.38 17.959l-1.1414-1.9428-.1397.079-.674 7.2552-.3156.3703-.7286.2793-.6071-.4614-.3218-.7468.3218-1.4753.3886-1.9246.3157-1.53.2853-1.9004.17-.6314-.0121-.0425-.1397.0182-1.4328 1.9672-2.1796 2.9446-1.7243 1.8456-.4128.164-.7164-.3704.0667-.6618.4008-.5889 2.386-3.0357 1.4389-1.882.929-1.0868-.0062-.1579h-.0546l-6.3385 4.1164-1.1293.1457-.4857-.4554.0608-.7467.2307-.2429 1.9064-1.3114Z"
-                          fill="#D97757"
-                        />
-                      </svg>
-                    ),
-                  },
-                  {
-                    name: 'Gemini Pro',
-                    icon: (
-                      <svg width="16" height="16" viewBox="0 0 24 24">
-                        <path
-                          d="M11.04 19.32Q12 21.51 12 24q0-2.49.93-4.68.96-2.19 2.58-3.81t3.81-2.55Q21.51 12 24 12q-2.49 0-4.68-.93a12.3 12.3 0 0 1-3.81-2.58 12.3 12.3 0 0 1-2.58-3.81Q12 2.49 12 0q0 2.49-.96 4.68-.93 2.19-2.55 3.81a12.3 12.3 0 0 1-3.81 2.58Q2.49 12 0 12q2.49 0 4.68.96 2.19.93 3.81 2.55t2.55 3.81"
-                          fill="#4285F4"
-                        />
-                      </svg>
-                    ),
-                  },
+                    {
+                      name: 'GPT-4o',
+                      icon: (
+                        <svg width="16" height="16" viewBox="0 0 24 24">
+                          <path
+                            d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.0729zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.872zm16.5963 3.8558L13.1038 8.364 15.1192 7.2a.0757.0757 0 0 1 .071 0l4.8303 2.7913a4.4944 4.4944 0 0 1-.6765 8.1042v-5.6772a.79.79 0 0 0-.407-.667zm2.0107-3.0231l-.142-.0852-4.7735-2.7818a.7759.7759 0 0 0-.7854 0L9.409 9.2297V6.8974a.0662.0662 0 0 1 .0284-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66zM8.3065 12.863l-2.02-1.1638a.0804.0804 0 0 1-.038-.0567V6.0742a4.4992 4.4992 0 0 1 7.3757-3.4537l-.142.0805L8.704 5.459a.7948.7948 0 0 0-.3927.6813zm1.0976-2.3654l2.602-1.4998 2.6069 1.4998v2.9994l-2.5974 1.4997-2.6067-1.4997Z"
+                            fill="currentColor"
+                          />
+                        </svg>
+                      ),
+                    },
+                    {
+                      name: 'GPT-4o mini',
+                      icon: (
+                        <svg width="16" height="16" viewBox="0 0 24 24">
+                          <path
+                            d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.0729zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.872zm16.5963 3.8558L13.1038 8.364 15.1192 7.2a.0757.0757 0 0 1 .071 0l4.8303 2.7913a4.4944 4.4944 0 0 1-.6765 8.1042v-5.6772a.79.79 0 0 0-.407-.667zm2.0107-3.0231l-.142-.0852-4.7735-2.7818a.7759.7759 0 0 0-.7854 0L9.409 9.2297V6.8974a.0662.0662 0 0 1 .0284-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66zM8.3065 12.863l-2.02-1.1638a.0804.0804 0 0 1-.038-.0567V6.0742a4.4992 4.4992 0 0 1 7.3757-3.4537l-.142.0805L8.704 5.459a.7948.7948 0 0 0-.3927.6813zm1.0976-2.3654l2.602-1.4998 2.6069 1.4998v2.9994l-2.5974 1.4997-2.6067-1.4997Z"
+                            fill="currentColor"
+                          />
+                        </svg>
+                      ),
+                    },
+                    {
+                      name: 'Claude Sonnet',
+                      icon: (
+                        <svg width="16" height="16" viewBox="0 0 24 24">
+                          <path
+                            d="m4.7144 15.9555 4.7174-2.6471.079-.2307-.079-.1275h-.2307l-.7893-.0486-2.6956-.0729-2.3375-.0971-2.2646-.1214-.5707-.1215-.5343-.7042.0546-.3522.4797-.3218.686.0608 1.5179.1032 2.2767.1578 1.6514.0972 2.4468.255h.3886l.0546-.1579-.1336-.0971-.1032-.0972L6.973 9.8356l-2.55-1.6879-1.3356-.9714-.7225-.4918-.3643-.4614-.1578-1.0078.6557-.7225.8803.0607.2246.0607.8925.686 1.9064 1.4754 2.4893 1.8336.3643.3035.1457-.1032.0182-.0728-.164-.2733-1.3539-2.4467-1.445-2.4893-.6435-1.032-.17-.6194c-.0607-.255-.1032-.4674-.1032-.7285L6.287.1335 6.6997 0l.9957.1336.419.3642.6192 1.4147 1.0018 2.2282 1.5543 3.0296.4553.8985.2429.8318.091.255h.1579v-.1457l.1275-1.706.2368-2.0947.2307-2.6957.0789-.7589.3764-.9107.7468-.4918.5828.2793.4797.686-.0668.4433-.2853 1.8517-.5586 2.9021-.3643 1.9429h.2125l.2429-.2429.9835-1.3053 1.6514-2.0643.7286-.8196.85-.9046.5464-.4311h1.0321l.759 1.1293-.34 1.1657-1.0625 1.3478-.8804 1.1414-1.2628 1.7-.7893 1.36.0729.1093.1882-.0183 2.8535-.607 1.5421-.2794 1.8396-.3157.8318.3886.091.3946-.3278.8075-1.967.4857-2.3072.4614-3.4364.8136-.0425.0304.0486.0607 1.5482.1457.6618.0364h1.621l3.0175.2247.7892.522.4736.6376-.079.4857-1.2142.6193-1.6393-.3886-3.825-.9107-1.3113-.3279h-.1822v.1093l1.0929 1.0686 2.0035 1.8092 2.5075 2.3314.1275.5768-.3218.4554-.34-.0486-2.2039-1.6575-.85-.7468-1.9246-1.621h-.1275v.17l.4432.6496 2.3436 3.5214.1214 1.0807-.17.3521-.6071.2125-.6679-.1214-1.3721-1.9246L14.38 17.959l-1.1414-1.9428-.1397.079-.674 7.2552-.3156.3703-.7286.2793-.6071-.4614-.3218-.7468.3218-1.4753.3886-1.9246.3157-1.53.2853-1.9004.17-.6314-.0121-.0425-.1397.0182-1.4328 1.9672-2.1796 2.9446-1.7243 1.8456-.4128.164-.7164-.3704.0667-.6618.4008-.5889 2.386-3.0357 1.4389-1.882.929-1.0868-.0062-.1579h-.0546l-6.3385 4.1164-1.1293.1457-.4857-.4554.0608-.7467.2307-.2429 1.9064-1.3114Z"
+                            fill="#D97757"
+                          />
+                        </svg>
+                      ),
+                    },
+                    {
+                      name: 'Claude Haiku',
+                      icon: (
+                        <svg width="16" height="16" viewBox="0 0 24 24">
+                          <path
+                            d="m4.7144 15.9555 4.7174-2.6471.079-.2307-.079-.1275h-.2307l-.7893-.0486-2.6956-.0729-2.3375-.0971-2.2646-.1214-.5707-.1215-.5343-.7042.0546-.3522.4797-.3218.686.0608 1.5179.1032 2.2767.1578 1.6514.0972 2.4468.255h.3886l.0546-.1579-.1336-.0971-.1032-.0972L6.973 9.8356l-2.55-1.6879-1.3356-.9714-.7225-.4918-.3643-.4614-.1578-1.0078.6557-.7225.8803.0607.2246.0607.8925.686 1.9064 1.4754 2.4893 1.8336.3643.3035.1457-.1032.0182-.0728-.164-.2733-1.3539-2.4467-1.445-2.4893-.6435-1.032-.17-.6194c-.0607-.255-.1032-.4674-.1032-.7285L6.287.1335 6.6997 0l.9957.1336.419.3642.6192 1.4147 1.0018 2.2282 1.5543 3.0296.4553.8985.2429.8318.091.255h.1579v-.1457l.1275-1.706.2368-2.0947.2307-2.6957.0789-.7589.3764-.9107.7468-.4918.5828.2793.4797.686-.0668.4433-.2853 1.8517-.5586 2.9021-.3643 1.9429h.2125l.2429-.2429.9835-1.3053 1.6514-2.0643.7286-.8196.85-.9046.5464-.4311h1.0321l.759 1.1293-.34 1.1657-1.0625 1.3478-.8804 1.1414-1.2628 1.7-.7893 1.36.0729.1093.1882-.0183 2.8535-.607 1.5421-.2794 1.8396-.3157.8318.3886.091.3946-.3278.8075-1.967.4857-2.3072.4614-3.4364.8136-.0425.0304.0486.0607 1.5482.1457.6618.0364h1.621l3.0175.2247.7892.522.4736.6376-.079.4857-1.2142.6193-1.6393-.3886-3.825-.9107-1.3113-.3279h-.1822v.1093l1.0929 1.0686 2.0035 1.8092 2.5075 2.3314.1275.5768-.3218.4554-.34-.0486-2.2039-1.6575-.85-.7468-1.9246-1.621h-.1275v.17l.4432.6496 2.3436 3.5214.1214 1.0807-.17.3521-.6071.2125-.6679-.1214-1.3721-1.9246L14.38 17.959l-1.1414-1.9428-.1397.079-.674 7.2552-.3156.3703-.7286.2793-.6071-.4614-.3218-.7468.3218-1.4753.3886-1.9246.3157-1.53.2853-1.9004.17-.6314-.0121-.0425-.1397.0182-1.4328 1.9672-2.1796 2.9446-1.7243 1.8456-.4128.164-.7164-.3704.0667-.6618.4008-.5889 2.386-3.0357 1.4389-1.882.929-1.0868-.0062-.1579h-.0546l-6.3385 4.1164-1.1293.1457-.4857-.4554.0608-.7467.2307-.2429 1.9064-1.3114Z"
+                            fill="#D97757"
+                          />
+                        </svg>
+                      ),
+                    },
+                    {
+                      name: 'Gemini Pro',
+                      icon: (
+                        <svg width="16" height="16" viewBox="0 0 24 24">
+                          <path
+                            d="M11.04 19.32Q12 21.51 12 24q0-2.49.93-4.68.96-2.19 2.58-3.81t3.81-2.55Q21.51 12 24 12q-2.49 0-4.68-.93a12.3 12.3 0 0 1-3.81-2.58 12.3 12.3 0 0 1-2.58-3.81Q12 2.49 12 0q0 2.49-.96 4.68-.93 2.19-2.55 3.81a12.3 12.3 0 0 1-3.81 2.58Q2.49 12 0 12q2.49 0 4.68.96 2.19.93 3.81 2.55t2.55 3.81"
+                            fill="#4285F4"
+                          />
+                        </svg>
+                      ),
+                    },
                 ].map(({ name, icon }) => (
                   <DropdownMenuItem
                     key={name}
@@ -1480,9 +1468,7 @@ export function AIChatBox({
                       textareaRef.current?.focus();
                     }}
                   >
-                    <span className="suggest-icon">
-                      <item.Icon size={14} />
-                    </span>
+                    <span className="suggest-icon"><item.Icon size={14} /></span>
                     <span>{item.text}</span>
                   </button>
                 ))}
@@ -1496,8 +1482,8 @@ export function AIChatBox({
               style={{ scrollbarGutter: 'stable', overflowAnchor: 'auto' }}
             >
               <div
-                className="w-full mx-auto pb-10 px-4 flex flex-col gap-4"
-                style={{ maxWidth: 'clamp(320px, calc(100vw - 580px), 720px)' }}
+                className="w-full mx-auto pb-10 flex flex-col gap-1"
+                style={{ maxWidth: 'clamp(260px, calc(100vw - 730px), 530px)' }}
               >
                 {messages.map((msg, msgIdx) => {
                   const isLastAiMsg =
@@ -1506,17 +1492,16 @@ export function AIChatBox({
                     <div
                       key={msg.id}
                       id={`msg-${msg.id}`}
-                      className="ai-msg msg-enter py-2"
+                      className="ai-msg msg-enter py-1"
                       onMouseUp={handleTextSelect}
                     >
                       {msg.images && msg.images.length > 0 && (
                         <div className="mb-2">
-                          {imgProgress[msg.id] !== undefined &&
-                            imgProgress[msg.id] < 100 && (
-                              <span className="img-gen-label text-base font-medium mb-2 inline-block select-none">
-                                Generating image...
-                              </span>
-                            )}
+                          {imgProgress[msg.id] !== undefined && imgProgress[msg.id] < 100 && (
+                            <span className="img-gen-label text-base font-medium mb-2 inline-block select-none">
+                              Generating image...
+                            </span>
+                          )}
                           <div className="flex gap-1.5 flex-wrap">
                             {msg.images.map((src, i) => (
                               <div key={i} className="relative">
@@ -1525,28 +1510,25 @@ export function AIChatBox({
                                   alt="Generated image"
                                   referrerPolicy="no-referrer"
                                   className="chat-img rounded-xl object-cover block bg-muted"
-                                  style={{
-                                    width: 400,
-                                    height: 400,
-                                    maxWidth: '100%',
-                                  }}
+                                  style={{ width: 400, height: 400, maxWidth: '100%' }}
                                   onClick={() => setLightboxSrc(src)}
                                   onLoad={() => finishImgProgress(msg.id)}
                                   onError={() => finishImgProgress(msg.id)}
                                 />
-                                {imgProgress[msg.id] !== undefined &&
-                                  imgProgress[msg.id] < 100 && (
-                                    <div className="absolute inset-0 rounded-xl img-shimmer z-10" />
-                                  )}
+                                {imgProgress[msg.id] !== undefined && imgProgress[msg.id] < 100 && (
+                                  <div className="absolute inset-0 rounded-xl img-shimmer z-10" />
+                                )}
                               </div>
                             ))}
                           </div>
                         </div>
                       )}
                       {msg.streaming ? (
-                        <ChatMarkdown markdown={msg.text} />
+                        <StreamingText fullText={msg.text} streaming={msg.streaming} />
                       ) : (
-                        <ChatMarkdown markdown={msg.text} />
+                        <p className="m-0 text-base leading-relaxed text-accent-foreground dark:text-neutral-300 whitespace-pre-wrap">
+                          {msg.text}
+                        </p>
                       )}
                       {msg.streaming && msg.text && (
                         <div className="mt-3" style={{ width: 40, height: 40 }}>
@@ -1555,9 +1537,7 @@ export function AIChatBox({
                               loop: true,
                               autoplay: true,
                               animationData: thinkingLoaderData,
-                              rendererSettings: {
-                                preserveAspectRatio: 'xMidYMid slice',
-                              },
+                              rendererSettings: { preserveAspectRatio: 'xMidYMid slice' },
                             }}
                             height={40}
                             width={40}
@@ -1696,12 +1676,33 @@ export function AIChatBox({
                             >
                               <div className="text-center">
                                 <div>Try again</div>
-                                <div className="text-xs text-ring">
-                                  {selectedModel}
-                                </div>
+                                <div className="text-xs text-ring">{selectedModel}</div>
                               </div>
                             </TooltipContent>
                           </DelayedTooltip>
+                          {(() => {
+                            const { count, favicons } = getMockSources(msg.id);
+                            return (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="flex items-center gap-1.5 h-7 px-2.5 rounded-full bg-muted hover:bg-accent text-muted-foreground text-xs font-medium"
+                                onClick={() => {/* TODO: expand sources */}}
+                              >
+                                <div className="flex items-center -space-x-1">
+                                  {favicons.map((src, i) => (
+                                    <img
+                                      key={i}
+                                      src={src}
+                                      alt=""
+                                      className="w-3.5 h-3.5 rounded-full ring-1 ring-muted bg-background object-contain"
+                                    />
+                                  ))}
+                                </div>
+                                <span>{count} sources</span>
+                              </Button>
+                            );
+                          })()}
                         </div>
                       )}
                     </div>
@@ -1738,15 +1739,7 @@ export function AIChatBox({
                           >
                             {msg.files.map((file, i) => (
                               <div key={i} className="file-chip">
-                                {(() => {
-                                  const Icon = FILE_ICON_MAP[file.type];
-                                  return (
-                                    <Icon
-                                      size={18}
-                                      className="text-muted-foreground shrink-0"
-                                    />
-                                  );
-                                })()}
+                                {(() => { const Icon = FILE_ICON_MAP[file.type]; return <Icon size={18} className="text-muted-foreground shrink-0" />; })()}
                                 <div className="min-w-0">
                                   <div className="text-xs font-medium overflow-hidden text-ellipsis whitespace-nowrap text-foreground">
                                     {file.name}
@@ -1847,22 +1840,14 @@ export function AIChatBox({
                                   }
                                   // Scroll to the highlighted text (not the message container)
                                   const scrollTarget = mark || el;
-                                  const scrollContainer =
-                                    el.closest('.msgs-area');
+                                  const scrollContainer = el.closest('.msgs-area');
                                   if (scrollContainer) {
-                                    const containerRect =
-                                      scrollContainer.getBoundingClientRect();
-                                    const targetRect =
-                                      scrollTarget.getBoundingClientRect();
-                                    const isVisible =
-                                      targetRect.top >= containerRect.top &&
-                                      targetRect.bottom <= containerRect.bottom;
+                                    const containerRect = scrollContainer.getBoundingClientRect();
+                                    const targetRect = scrollTarget.getBoundingClientRect();
+                                    const isVisible = targetRect.top >= containerRect.top && targetRect.bottom <= containerRect.bottom;
                                     if (!isVisible) {
-                                      const containerCenter =
-                                        containerRect.top +
-                                        containerRect.height / 2;
-                                      const targetCenter =
-                                        targetRect.top + targetRect.height / 2;
+                                      const containerCenter = containerRect.top + containerRect.height / 2;
+                                      const targetCenter = targetRect.top + targetRect.height / 2;
                                       scrollContainer.scrollBy({
                                         top: targetCenter - containerCenter,
                                         behavior: 'smooth',
@@ -1948,18 +1933,13 @@ export function AIChatBox({
                 {(typing || messages.some((m) => m.streaming && !m.text)) && (
                   <div className="msg-enter py-2">
                     <div className="flex gap-1 items-center">
-                      <div
-                        className="shrink-0"
-                        style={{ width: 28, height: 28 }}
-                      >
+                      <div className="shrink-0" style={{ width: 28, height: 28 }}>
                         <Lottie
                           options={{
                             loop: true,
                             autoplay: true,
                             animationData: thinkingLoaderData,
-                            rendererSettings: {
-                              preserveAspectRatio: 'xMidYMid slice',
-                            },
+                            rendererSettings: { preserveAspectRatio: 'xMidYMid slice' },
                           }}
                           height={28}
                           width={28}
