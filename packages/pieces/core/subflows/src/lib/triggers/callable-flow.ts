@@ -6,50 +6,75 @@ import {
   StoreScope,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
-import { callableFlowKey, CallableFlowRequest, MOCK_CALLBACK_IN_TEST_FLOW_URL } from '../common';
+import { callableFlowKey, CallableFlowRequest, MOCK_CALLBACK_IN_TEST_FLOW_URL, subflowsCommon } from '../common';
 
 export const callableFlow = createTrigger({
   name: 'callableFlow',
   displayName: 'Callable Flow',
-  description: 'Waiting to be triggered from another flow',
+  description: 'Makes this flow callable from other flows. Select a parent flow below to preview the data it will send to this flow.',
   props: {
-    mode: Property.StaticDropdown({
-      displayName: 'Mode',
-      required: true,
-      description: 'Choose Simple for key-value or Advanced for JSON.',
-      defaultValue: 'simple',
-      options: {
-        disabled: false,
-        options: [
-          {
-            label: 'Simple',
-            value: 'simple',
-          },
-          {
-            label: 'Advanced',
-            value: 'advanced',
-          },
-        ],
-      },
-    }),
-    exampleData: Property.DynamicProperties({
+    parentFlow: Property.Dropdown<ParentFlowValue>({
       auth: PieceAuth.None(),
-      displayName: 'Sample Data',
-      description: 'The schema to be passed to the flow',
-      required: true,
-      refreshers: ['mode'],
-      props: async (propsValue) => {
-        const mode = propsValue['mode'] as unknown as string;
-        const fields: DynamicPropsValue = {};
-        if (mode === 'simple') {
-          fields['sampleData'] = Property.Object({
-            displayName: 'Sample Data',
-            required: true,
+      displayName: 'Select Parent Flow',
+      description: 'Choose a parent flow that calls this flow. The payload defined in the parent will be used as sample data for testing.',
+      required: false,
+      options: async (_, context) => {
+        const childFlowId = context.flows.current.id;
+        const parents = await subflowsCommon.findParentFlowsCallingChild({
+          flowsContext: context.flows,
+          childFlowId,
+        });
+        if (parents.length === 0) {
+          return {
+            disabled: true,
+            placeholder: 'No parent flows found. First, add a "Call Flow" action in another flow that targets this flow.',
+            options: [],
+          };
+        }
+        const options = parents.map((parent) => ({
+          value: {
+            flowId: parent.flow.id,
+            flowName: parent.flow.version.displayName,
+            stepName: parent.stepName,
+            payload: parent.payload,
+          },
+          label: `${parent.flow.version.displayName} > ${parent.stepDisplayName}`,
+        }));
+        return {
+          options,
+          defaultValue: parents.length === 1 ? options[0].value : undefined,
+        };
+      },
+      refreshers: [],
+    }),
+    sampleData: Property.DynamicProperties({
+      auth: PieceAuth.None(),
+      displayName: 'Sample Data from Parent',
+      description: 'This is the payload the selected parent flow sends to this flow.',
+      required: false,
+      refreshers: ['parentFlow'],
+      props: async (propsValue, context) => {
+        let parentFlow = propsValue['parentFlow'] as unknown as ParentFlowValue | undefined;
+        if (!parentFlow) {
+          const parents = await subflowsCommon.findParentFlowsCallingChild({
+            flowsContext: context.flows,
+            childFlowId: context.flows.current.id,
           });
-        } else {
-          fields['sampleData'] = Property.Json({
-            displayName: 'Sample Data',
-            required: true,
+          if (parents.length === 1) {
+            parentFlow = {
+              flowId: parents[0].flow.id,
+              flowName: parents[0].flow.version.displayName,
+              stepName: parents[0].stepName,
+              payload: parents[0].payload,
+            };
+          }
+        }
+        const fields: DynamicPropsValue = {};
+        if (parentFlow && typeof parentFlow.payload === 'object' && parentFlow.payload !== null) {
+          fields['preview'] = Property.Json({
+            displayName: 'Payload Preview',
+            required: false,
+            defaultValue: parentFlow.payload,
           });
         }
         return fields;
@@ -65,10 +90,20 @@ export const callableFlow = createTrigger({
     // ignore
   },
   async test(context) {
-    const request: CallableFlowRequest = {
-      data: context.propsValue.exampleData['sampleData'],
-      callbackUrl: MOCK_CALLBACK_IN_TEST_FLOW_URL
+    let parentPayload = (context.propsValue.parentFlow as ParentFlowValue | undefined)?.payload;
+    if (!parentPayload) {
+      const parents = await subflowsCommon.findParentFlowsCallingChild({
+        flowsContext: context.flows,
+        childFlowId: context.flows.current.id,
+      });
+      if (parents.length > 0) {
+        parentPayload = parents[0].payload;
+      }
     }
+    const request: CallableFlowRequest = {
+      data: parentPayload ?? {},
+      callbackUrl: MOCK_CALLBACK_IN_TEST_FLOW_URL,
+    };
     return [request];
   },
   async run(context) {
@@ -79,5 +114,12 @@ export const callableFlow = createTrigger({
     if (request.callbackUrl) {
       await context.store.put(callableFlowKey(context.run.id), request.callbackUrl, StoreScope.FLOW);
     }
-  }
+  },
 });
+
+type ParentFlowValue = {
+  flowId: string;
+  flowName: string;
+  stepName: string;
+  payload: unknown;
+};

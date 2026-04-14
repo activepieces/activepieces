@@ -7879,7 +7879,7 @@
     },
     "packages/pieces/framework": {
       "name": "@activepieces/pieces-framework",
-      "version": "0.27.1",
+      "version": "0.27.2",
       "dependencies": {
         "@activepieces/shared": "workspace:*",
         "ai": "^6.0.0",
@@ -8104,7 +8104,7 @@
     },
     "packages/shared": {
       "name": "@activepieces/shared",
-      "version": "0.58.3",
+      "version": "0.59.0",
       "dependencies": {
         "dayjs": "1.11.9",
         "deepmerge-ts": "7.1.0",

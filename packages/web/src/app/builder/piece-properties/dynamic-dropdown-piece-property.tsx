@@ -12,6 +12,7 @@ import { authenticationSession } from '@/lib/authentication-session';
 
 import { MultiSelectPieceProperty } from '../../../components/custom/multi-select-piece-property';
 
+import { CreateDropdownOptionDialog } from './create-dropdown-option-dialog';
 import { DynamicPropertiesErrorBoundary } from './dynamic-piece-properties-error-boundary';
 import { DynamicPropertiesContext } from './dynamic-properties-context';
 
@@ -36,6 +37,7 @@ const DynamicDropdownPiecePropertyImplementation = React.memo(
       placeholder: t('Select an option'),
       options: [],
     });
+    const [createDialogOpen, setCreateDialogOpen] = useState(false);
     const { propertyLoadingFinished, propertyLoadingStarted } = useContext(
       DynamicPropertiesContext,
     );
@@ -98,6 +100,45 @@ const DynamicDropdownPiecePropertyImplementation = React.memo(
       );
     };
 
+    const handleCreate = async (displayName: string) => {
+      const input: Record<string, unknown> = {};
+      refreshersWithAuth.forEach((refresher, index) => {
+        input[refresher] = refresherValues[index];
+      });
+      return new Promise<void>((resolve, reject) => {
+        mutate(
+          {
+            request: {
+              projectId: authenticationSession.getProjectId()!,
+              pieceName: props.pieceName,
+              pieceVersion: props.pieceVersion,
+              propertyName: props.propertyName,
+              actionOrTriggerName: props.actionOrTriggerName,
+              input,
+              flowVersionId: flowVersion.id,
+              flowId: flowVersion.flowId,
+              createDisplayName: displayName,
+            },
+            propertyType: PropertyType.DROPDOWN,
+          },
+          {
+            onSuccess: (response) => {
+              const createdOption = response.options.options[0];
+              if (createdOption) {
+                props.onChange(createdOption.value);
+                setDropdownState((prev) => ({
+                  ...prev,
+                  options: [...prev.options, createdOption],
+                }));
+              }
+              resolve();
+            },
+            onError: reject,
+          },
+        );
+      });
+    };
+
     useEffect(() => {
       if (
         !isFirstRender.current &&
@@ -137,21 +178,33 @@ const DynamicDropdownPiecePropertyImplementation = React.memo(
         cachedOptions={firstDropdownState.current?.options ?? []}
       />
     ) : (
-      <SearchableSelect
-        options={selectOptions}
-        disabled={dropdownState.disabled || props.disabled}
-        loading={isPending}
-        placeholder={dropdownState.placeholder ?? t('Select an option')}
-        value={props.value}
-        onChange={(value) => props.onChange(value)}
-        showDeselect={
-          props.showDeselect && !isNil(props.value) && !props.disabled
-        }
-        onRefresh={refresh}
-        showRefresh={!isPending && !readonly}
-        refreshOnSearch={props.shouldRefreshOnSearch ? refresh : undefined}
-        cachedOptions={firstDropdownState.current?.options ?? []}
-      />
+      <>
+        <SearchableSelect
+          options={selectOptions}
+          disabled={dropdownState.disabled || props.disabled}
+          loading={isPending}
+          placeholder={dropdownState.placeholder ?? t('Select an option')}
+          value={props.value}
+          onChange={(value) => props.onChange(value)}
+          showDeselect={
+            props.showDeselect && !isNil(props.value) && !props.disabled
+          }
+          onRefresh={refresh}
+          showRefresh={!isPending && !readonly}
+          refreshOnSearch={props.shouldRefreshOnSearch ? refresh : undefined}
+          cachedOptions={firstDropdownState.current?.options ?? []}
+          creatableLabel={dropdownState.creatable?.label}
+          onCreateClick={() => setCreateDialogOpen(true)}
+        />
+        {dropdownState.creatable && (
+          <CreateDropdownOptionDialog
+            open={createDialogOpen}
+            onOpenChange={setCreateDialogOpen}
+            onSubmit={handleCreate}
+            title={dropdownState.creatable.label}
+          />
+        )}
+      </>
     );
   },
 );

@@ -1,6 +1,13 @@
 import deepEqual from 'deep-equal';
 import { t } from 'i18next';
-import { Check, ChevronsUpDown, RefreshCcw, Trash2, X } from 'lucide-react';
+import {
+  Check,
+  ChevronsUpDown,
+  Plus,
+  RefreshCcw,
+  Trash2,
+  X,
+} from 'lucide-react';
 import React, { useState, useRef } from 'react';
 
 import { SelectUtilButton } from '@/components/custom/select-util-button';
@@ -52,6 +59,8 @@ type SearchableSelectProps<T> = {
     label: string;
   }[];
   onOptionDelete?: (value: T) => void;
+  creatableLabel?: string;
+  onCreateClick?: () => void;
 };
 
 const useOpenState = (openStateInitializer?: {
@@ -84,6 +93,8 @@ export const SearchableSelect = <T,>({
   refreshOnSearch,
   cachedOptions = [],
   onOptionDelete,
+  creatableLabel,
+  onCreateClick,
 }: SearchableSelectProps<T>) => {
   const triggerRef = useRef<HTMLButtonElement>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -305,6 +316,21 @@ export const SearchableSelect = <T,>({
               </ScrollArea>
             </CommandList>
           </CommandGroup>
+          {creatableLabel && onCreateClick && (
+            <div className="border-t p-1">
+              <button
+                type="button"
+                className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground"
+                onClick={() => {
+                  setOpen(false);
+                  onCreateClick();
+                }}
+              >
+                <Plus className="h-4 w-4" />
+                {creatableLabel}
+              </button>
+            </div>
+          )}
         </Command>
       </PopoverContent>
     </Popover>

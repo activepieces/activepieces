@@ -84,7 +84,8 @@ export const webhookService = {
                     }
                 }
                 const { flow } = flowExecutionResult
-                if (flow.status === FlowStatus.DISABLED && !saveSampleData) {
+                const isSubflowCall = !isNil(parentRunId)
+                if (flow.status === FlowStatus.DISABLED && !saveSampleData && !isSubflowCall) {
                     pinoLogger.warn({ flowId }, 'Webhook received for disabled flow')
                     span.setAttribute('webhook.triggerSourceFound', false)
                     return {
@@ -152,7 +153,7 @@ export const webhookService = {
                         webhookRequestId,
                         runEnvironment: flowVersionToRun === WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST ? RunEnvironment.PRODUCTION : RunEnvironment.TESTING,
                         webhookHeader,
-                        execute: flow.status === FlowStatus.ENABLED && execute,
+                        execute: (flow.status === FlowStatus.ENABLED || isSubflowCall) && execute,
                         parentRunId,
                         failParentOnFailure,
                     })

@@ -190,6 +190,7 @@ export const ExecutePropertyJobData = z.object({
     input: z.record(z.string(), z.unknown()),
     sampleData: z.record(z.string(), z.unknown()),
     searchValue: z.string().optional(),
+    createDisplayName: z.string().optional(),
     requestId: z.string(),
     webserverId: z.string(),
 })

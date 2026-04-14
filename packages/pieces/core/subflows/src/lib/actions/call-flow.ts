@@ -5,39 +5,49 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { ExecutionType, FAIL_PARENT_ON_FAILURE_HEADER, isNil, PARENT_RUN_ID_HEADER } from '@activepieces/shared';
-import { CallableFlowRequest, CallableFlowResponse, findFlowByExternalIdOrThrow, listEnabledFlowsWithSubflowTrigger } from '../common';
-
-type FlowValue = {
-  externalId: string;
-  exampleData: unknown;
-};
+import { ExecutionType, FAIL_PARENT_ON_FAILURE_HEADER, FlowStatus, PARENT_RUN_ID_HEADER } from '@activepieces/shared';
+import { CallableFlowRequest, CallableFlowResponse, subflowsCommon } from '../common';
 
 export const callFlow = createAction({
   name: 'callFlow',
   displayName: 'Call Flow',
-  description: 'Call a flow that has "Callable Flow" trigger',
+  description: 'Triggers another flow (subflow) and optionally waits for its response. The target flow must use the "Callable Flow" trigger. You define the data payload here — the child flow can import it as sample data.',
   props: {
     flow: Property.Dropdown<FlowValue>({
       auth: PieceAuth.None(),
       displayName: 'Flow',
-      description: 'The flow to execute',
+      description: 'Select the subflow to call. It must have a "Callable Flow" trigger.',
       required: true,
       options: async (_, context) => {
-        const flows = await listEnabledFlowsWithSubflowTrigger({
+        const flows = await subflowsCommon.listFlowsWithSubflowTrigger({
           flowsContext: context.flows,
         });
         return {
           options: flows.map((flow) => ({
             value: {
               externalId: flow.externalId ?? flow.id,
-              exampleData: flow.version.trigger.settings.input.exampleData,
             },
-            label: flow.version.displayName,
+            label: flow.status === FlowStatus.DISABLED
+              ? `${flow.version.displayName} (Disabled)`
+              : flow.version.displayName,
           })),
         };
       },
       refreshers: [],
+      create: {
+        label: 'Create new subflow',
+        handler: async ({ displayName }, ctx) => {
+          const newFlow = await ctx.flows.create({
+            displayName,
+            triggerPieceName: '@activepieces/piece-subflows',
+            triggerName: 'callableFlow',
+          });
+          return {
+            label: newFlow.version.displayName,
+            value: { externalId: newFlow.externalId ?? newFlow.id },
+          };
+        },
+      },
     }),
     mode: Property.StaticDropdown({
       displayName: 'Mode',
@@ -63,36 +73,29 @@ export const callFlow = createAction({
       description: '',
       displayName: '',
       required: true,
-      refreshers: ['flow', 'mode'],
+      refreshers: ['mode'],
       props: async (propsValue) => {
-        const castedFlowValue = propsValue['flow'] as unknown as FlowValue;
         const mode = propsValue['mode'] as unknown as string;
         const fields: DynamicPropsValue = {};
-
-
-        if (!isNil(castedFlowValue)) {
-          if (mode === 'simple') {
-            fields['payload'] = Property.Object({
-              displayName: 'Payload',
-              required: true,
-              defaultValue: (castedFlowValue.exampleData as unknown as { sampleData: object }).sampleData,
-            });
-          }
-          else{
-            fields['payload'] = Property.Json({
-              displayName: 'Payload',
-              description:
-                'Provide the data to be passed to the flow',
-              required: true,
-              defaultValue: (castedFlowValue.exampleData as unknown as { sampleData: object }).sampleData,
-            });
-          }
+        if (mode === 'simple') {
+          fields['payload'] = Property.Object({
+            displayName: 'Payload',
+            required: true,
+          });
+        }
+        else {
+          fields['payload'] = Property.Json({
+            displayName: 'Payload',
+            description: 'Provide the data to be passed to the flow',
+            required: true,
+          });
         }
         return fields;
       },
     }),
     waitForResponse: Property.Checkbox({
       displayName: 'Wait for Response',
+      description: 'If enabled, this step pauses until the subflow finishes and returns a response using the "Return Response" action.',
       required: false,
       defaultValue: false,
     }),
@@ -110,7 +113,7 @@ export const callFlow = createAction({
       }
     }
     const payload = context.propsValue.flowProps['payload'];
-    const flow = await findFlowByExternalIdOrThrow({
+    const flow = await subflowsCommon.findFlowByExternalIdOrThrow({
       flowsContext: context.flows,
       externalId: context.propsValue.flow?.externalId,
     });
@@ -143,12 +146,16 @@ export const callFlow = createAction({
   },
   errorHandlingOptions: {
     continueOnFailure: {
-      defaultValue:false,
-      hide:false,
+      defaultValue: false,
+      hide: false,
     },
     retryOnFailure: {
-      defaultValue:false,
-      hide:false,
+      defaultValue: false,
+      hide: false,
     }
   }
 });
+
+type FlowValue = {
+  externalId: string;
+};

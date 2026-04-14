@@ -6,7 +6,7 @@ import { isNil } from '@activepieces/shared';
 export const response = createAction({
   name: 'returnResponse',
   displayName: 'Return Response',
-  description: 'Return response to the original flow',
+  description: 'Sends a response back to the parent flow that triggered this subflow. The parent must have "Wait for Response" enabled in its "Call Flow" action to receive this data.',
   props: {
     mode: Property.StaticDropdown({
       displayName: 'Mode',

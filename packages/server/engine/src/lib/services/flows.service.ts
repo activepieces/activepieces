@@ -1,4 +1,4 @@
-import { FlowsContext, ListFlowsContextParams } from '@activepieces/pieces-framework'
+import { CreateFlowContextParams, FlowsContext, ListFlowsContextParams } from '@activepieces/pieces-framework'
 import { FetchError, PopulatedFlow, SeekPage } from '@activepieces/shared'
 
 export const createFlowsContext = ({ engineToken, internalApiUrl, flowId, flowVersionId }: CreateFlowsServiceParams): FlowsContext => {
@@ -14,6 +14,21 @@ export const createFlowsContext = ({ engineToken, internalApiUrl, flowId, flowVe
                 headers: {
                     Authorization: `Bearer ${engineToken}`,
                 },
+            })
+            if (!response.ok) {
+                throw new FetchError(url, `status=${response.status}`)
+            }
+            return response.json()
+        },
+        async create(params: CreateFlowContextParams): Promise<PopulatedFlow> {
+            const url = `${internalApiUrl}v1/engine/flows`
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${engineToken}`,
+                },
+                body: JSON.stringify(params),
             })
             if (!response.ok) {
                 throw new FetchError(url, `status=${response.status}`)

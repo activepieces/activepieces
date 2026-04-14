@@ -103,7 +103,23 @@ export const pieceHelper = {
                 }
                 case PropertyType.DROPDOWN: {
                     const dropdownProperty = property as DropdownProperty<unknown, boolean>
+                    if (operation.createDisplayName && dropdownProperty.create) {
+                        const createdOption = await dropdownProperty.create.handler(
+                            { displayName: operation.createDisplayName },
+                            ctx,
+                        )
+                        return {
+                            type: PropertyType.DROPDOWN,
+                            options: {
+                                options: [createdOption],
+                                creatable: { label: dropdownProperty.create.label },
+                            },
+                        }
+                    }
                     const options = await dropdownProperty.options(resolvedInput, ctx)
+                    if (dropdownProperty.create) {
+                        options.creatable = { label: dropdownProperty.create.label }
+                    }
                     return {
                         type: PropertyType.DROPDOWN,
                         options,

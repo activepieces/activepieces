@@ -1,5 +1,5 @@
 import { BasePropertySchema, TPropertyValue } from "../common";
-import { DropdownState } from "./common";
+import { DropdownOption, DropdownState } from "./common";
 import { AppConnectionValueForAuthProperty, PropertyContext } from "../../../context";
 import { z } from "zod";
 import { PropertyType } from "../property-type";
@@ -18,6 +18,11 @@ export const DropdownProperty = z.object({
   refreshers: z.array(z.string()),
 });
 
+export type DropdownCreatable<T> = {
+  label: string;
+  handler: (params: { displayName: string }, ctx: PropertyContext) => Promise<DropdownOption<T>>;
+};
+
 export type DropdownProperty<T, R extends boolean, PieceAuth extends PieceAuthProperty | PieceAuthProperty[] |  undefined = undefined> = BasePropertySchema & {
   /**
    * A dummy property used to infer {@code PieceAuth} type
@@ -26,6 +31,7 @@ export type DropdownProperty<T, R extends boolean, PieceAuth extends PieceAuthPr
   refreshers: string[];
   refreshOnSearch?: boolean;
   options: DynamicDropdownOptions<T, PieceAuth>;
+  create?: DropdownCreatable<T>;
 } & TPropertyValue<T, PropertyType.DROPDOWN, R>;
 
 

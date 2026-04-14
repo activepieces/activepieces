@@ -136,6 +136,7 @@ export type PauseHook = (params: {
 
 export type FlowsContext = {
   list(params?: ListFlowsContextParams): Promise<SeekPage<PopulatedFlow>>
+  create(params: CreateFlowContextParams): Promise<PopulatedFlow>
   current: {
     id: string;
     version: {
@@ -150,6 +151,12 @@ export type StepContext = {
 
 export type ListFlowsContextParams = {
   externalIds?: string[]
+}
+
+export type CreateFlowContextParams = {
+  displayName: string
+  triggerPieceName?: string
+  triggerName?: string
 }
 
 

@@ -7,12 +7,14 @@ import {
     Cursor,
     ErrorCode,
     Flow,
+    FlowActionType,
     FlowId,
     FlowOperationRequest,
     FlowOperationStatus,
     FlowOperationType,
     flowPieceUtil,
     FlowStatus,
+    flowStructureUtil,
     FlowVersion,
     FlowVersionId,
     FlowVersionState,
@@ -356,6 +358,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
 
         switch (operation.type) {
             case FlowOperationType.LOCK_AND_PUBLISH: {
+                await validateSubflowsAreEnabled({ flowId: id, projectId }, log)
                 await this.updatedPublishedVersionId({
                     id,
                     userId,
@@ -717,6 +720,65 @@ async function applyStatusChange(params: {
             await flowExecutionCache(log).invalidate(params.id)
         },
     })
+}
+
+const SUBFLOWS_PIECE_NAME = '@activepieces/piece-subflows'
+const CALL_FLOW_ACTION_NAME = 'callFlow'
+
+async function validateSubflowsAreEnabled(
+    { flowId, projectId }: { flowId: FlowId, projectId: ProjectId },
+    log: FastifyBaseLogger,
+): Promise<void> {
+    const flowVersion = await flowVersionService(log).getFlowVersionOrThrow({
+        flowId,
+        versionId: undefined,
+    })
+    const steps = flowStructureUtil.getAllSteps(flowVersion.trigger)
+    const referencedExternalIds: { externalId: string, stepDisplayName: string }[] = []
+    for (const step of steps) {
+        if (
+            step.type === FlowActionType.PIECE &&
+            step.settings.pieceName === SUBFLOWS_PIECE_NAME &&
+            step.settings.actionName === CALL_FLOW_ACTION_NAME
+        ) {
+            const targetExternalId = step.settings.input?.flow?.externalId
+            if (!isNil(targetExternalId)) {
+                referencedExternalIds.push({
+                    externalId: targetExternalId,
+                    stepDisplayName: step.displayName,
+                })
+            }
+        }
+    }
+    if (referencedExternalIds.length === 0) {
+        return
+    }
+    const allFlows = await flowService(log).list({
+        projectIds: [projectId],
+        limit: 1000000,
+        cursorRequest: null,
+    })
+    for (const ref of referencedExternalIds) {
+        const childFlow = allFlows.data.find(
+            (f) => f.externalId === ref.externalId || f.id === ref.externalId,
+        )
+        if (isNil(childFlow)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: {
+                    message: `The subflow referenced in step "${ref.stepDisplayName}" was not found. Please update the step to reference an existing flow.`,
+                },
+            })
+        }
+        if (childFlow.status !== FlowStatus.ENABLED) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: {
+                    message: `The subflow "${childFlow.version.displayName}" referenced in step "${ref.stepDisplayName}" is not enabled. Please publish and enable it before publishing this flow.`,
+                },
+            })
+        }
+    }
 }
 
 export const getFolderIdFromRequest = async ({ projectId, folderId, folderName, log }: { projectId: string, folderId: string | undefined, folderName: string | undefined, log: FastifyBaseLogger }) => {

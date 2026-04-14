@@ -86,6 +86,7 @@ export const PieceOptionRequest = z.object({
     flowVersionId: z.string(),
     input: z.any(),
     searchValue: z.string().optional(),
+    createDisplayName: z.string().optional(),
 })
 
 export type PieceOptionRequest = z.infer<typeof PieceOptionRequest>

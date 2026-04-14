@@ -14,12 +14,14 @@ export type DropdownOption<T> = {
 export const DropdownState = z.object({
     disabled: z.boolean().optional(),
     placeholder: z.string().optional(),
-    options: z.array(DropdownOption)
+    options: z.array(DropdownOption),
+    creatable: z.object({ label: z.string() }).optional(),
 })
 
 export type DropdownState<T> = {
     disabled?: boolean;
     placeholder?: string;
     options: DropdownOption<T>[];
+    creatable?: { label: string };
 }
 

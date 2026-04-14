@@ -120,7 +120,13 @@ export const flowHooks = {
           return;
         }
         const apError = error.response.data as ApErrorParams;
-        if (apError.code === ErrorCode.TRIGGER_UPDATE_STATUS) {
+        if (apError.code === ErrorCode.VALIDATION) {
+          const params = apError.params as { message: string };
+          toast.error(t('Publish failed'), {
+            description: params.message,
+            duration: 10000,
+          });
+        } else if (apError.code === ErrorCode.TRIGGER_UPDATE_STATUS) {
           const params = apError.params as Record<string, string>;
           openDialog({
             title:

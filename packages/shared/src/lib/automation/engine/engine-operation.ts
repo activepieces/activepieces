@@ -82,6 +82,7 @@ export type ExecutePropsOptions = BaseEngineOperation & {
     input: Record<string, unknown>
     sampleData: Record<string, unknown>
     searchValue?: string
+    createDisplayName?: string
 }
 
 type BaseExecuteFlowOperation<T extends ExecutionType> = BaseEngineOperation & {

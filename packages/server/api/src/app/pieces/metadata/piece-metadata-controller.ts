@@ -176,6 +176,7 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
                 input: req.body.input,
                 sampleData,
                 searchValue: req.body.searchValue,
+                createDisplayName: req.body.createDisplayName,
                 piece: await getPiecePackageWithoutArchive(req.log, platform.id, req.body),
             }, req.log)
             return response
