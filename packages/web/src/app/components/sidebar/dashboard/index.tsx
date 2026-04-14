@@ -31,6 +31,7 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarMenu,
+  SidebarMenuButton,
   SidebarSeparator,
   useSidebar,
   SidebarGroupLabel,
@@ -103,6 +104,13 @@ export function ProjectDashboardSidebar({
     return false;
   }, [platform.plan.teamProjectsLimit, projects]);
 
+  const shouldShowInlineAddButton =
+    platform.plan.teamProjectsLimit !== TeamProjectsLimit.NONE &&
+    currentUser?.platformRole === PlatformRole.ADMIN &&
+    projects.filter((project) => project.type === ProjectType.TEAM).length ===
+      0;
+
+
   const isSearchMode = debouncedSearchQuery.length > 0;
 
   const displayProjects = useMemo(() => {
@@ -114,7 +122,6 @@ export function ProjectDashboardSidebar({
     }
     return projects;
   }, [isSearchMode, debouncedSearchQuery, projects]);
-
   const handleProjectSelect = useCallback(
     async (projectId: string) => {
       const project = projects.find((p) => p.id === projectId);
@@ -332,7 +339,8 @@ export function ProjectDashboardSidebar({
                 e.stopPropagation();
               }}
             >
-              <div className="flex grow max-h-[100%]">
+              
+              <div className="flex max-h-[100%]">
                 {displayProjects.length > 0 ? (
                   <VirtualizedScrollArea
                     className={cn(
@@ -366,6 +374,22 @@ export function ProjectDashboardSidebar({
                   )
                 )}
               </div>
+              {shouldShowInlineAddButton && state === 'expanded' && (
+                <SidebarMenu>
+                  <SidebarMenuItem>
+                    <NewProjectDialog
+                      onCreate={(project) => {
+                        navigate(`/projects/${project.id}/flows`);
+                      }}
+                    >
+                      <SidebarMenuButton className="text-muted-foreground gap-2">
+                        <Plus className="size-4" />
+                        <span>{t('Add team project')}</span>
+                      </SidebarMenuButton>
+                    </NewProjectDialog>
+                  </SidebarMenuItem>
+                </SidebarMenu>
+              )}
             </div>
           </SidebarGroup>
         </SidebarContent>
