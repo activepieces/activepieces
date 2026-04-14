@@ -23,6 +23,23 @@ export async function fetchProfilesByIds(
   return profileMap;
 }
 
+export function normalizeProfileIds(value: unknown): string[] {
+  if (Array.isArray(value)) return (value as string[]).filter(Boolean);
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (trimmed.startsWith('[')) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        if (Array.isArray(parsed)) return (parsed as string[]).filter(Boolean);
+      } catch {
+        // not a JSON array, fall through to treat as single ID
+      }
+    }
+    return [trimmed].filter(Boolean);
+  }
+  return [];
+}
+
 export const BASE_URL = `https://a.klaviyo.com/api`;
 
 export async function makeRequest(

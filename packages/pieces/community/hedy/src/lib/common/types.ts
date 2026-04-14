@@ -1,8 +1,27 @@
 export interface Topic {
   id: string;
   name: string;
+  description?: string;
   color?: string;
   iconName?: string;
+  topicContext?: string;
+  topicContextUpdatedAt?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  overview?: Record<string, unknown> | null;
+  overviewUpdatedAt?: string;
+  dominantSessionType?: string;
+  sessionCount?: number;
+  lastSessionDate?: string;
+}
+
+export interface SessionContext {
+  id: string;
+  title: string;
+  content?: string;
+  isDefault: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Todo {
@@ -25,25 +44,35 @@ export interface Session {
   startTime: string;
   endTime?: string;
   duration?: number;
+  session_type?: string;
+  sessionType?: string;
   transcript?: string;
+  cleaned_transcript?: string | null;
+  cleanedTranscript?: string | null;
   conversations?: Conversation[] | string;
   meeting_minutes?: string;
   meetingMinutes?: string;
   recap?: string;
+  session_notes?: string;
+  sessionNotes?: string;
   user_todos?: Todo[];
   userTodos?: Todo[];
+  highlights?: Highlight[];
   topic?: Topic;
+  exportedAt?: string;
 }
 
 export interface Highlight {
   id: string;
   sessionId: string;
   timestamp?: string;
+  timeIndex?: number;
   title?: string;
   rawQuote?: string;
   cleanedQuote?: string;
   mainIdea?: string;
   aiInsights?: string;
+  aiInsight?: string;
 }
 
 export interface TodoExportedPayload {
@@ -98,6 +127,7 @@ export interface WebhookRegistration {
 export enum HedyWebhookEvent {
   SessionCreated = 'session.created',
   SessionEnded = 'session.ended',
+  SessionExported = 'session.exported',
   HighlightCreated = 'highlight.created',
   TodoExported = 'todo.exported',
 }

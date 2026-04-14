@@ -80,7 +80,7 @@ describe('Resume flow run', () => {
         expect(response.statusCode).toBe(200)
     })
 
-    it('should resume when pauseMetadata is null in DB (first-time pause)', async () => {
+    it('should resume when pauseMetadata appears in DB after a short delay (race condition)', async () => {
         const flow = createMockFlow({ projectId: ctx.project.id })
         await db.save('flow', flow)
 
@@ -90,6 +90,7 @@ describe('Resume flow run', () => {
         })
         await db.save('flow_version', flowVersion)
 
+        const requestId = apId()
         const flowRun = createMockFlowRun({
             projectId: ctx.project.id,
             flowId: flow.id,
@@ -98,9 +99,19 @@ describe('Resume flow run', () => {
             environment: RunEnvironment.PRODUCTION,
         })
         await db.save('flow_run', flowRun)
-        // No pauseMetadata set — isNil(pauseMetadata) → matchRequestId is true
 
-        const requestId = apId()
+        // Simulate the engine committing pauseMetadata after a short delay
+        setTimeout(async () => {
+            await db.update('flow_run', flowRun.id, {
+                status: FlowRunStatus.PAUSED,
+                pauseMetadata: {
+                    type: PauseType.WEBHOOK,
+                    requestId,
+                    response: {},
+                },
+            })
+        }, 500)
+
         const response = await app.inject({
             method: 'POST',
             url: `/api/v1/flow-runs/${flowRun.id}/requests/${requestId}`,

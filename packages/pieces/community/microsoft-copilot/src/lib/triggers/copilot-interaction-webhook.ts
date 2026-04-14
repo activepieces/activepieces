@@ -3,6 +3,7 @@ import {
   TriggerStrategy,
   createTrigger,
 } from '@activepieces/pieces-framework';
+import { getGraphBaseUrl, getMicrosoftCloudFromAuth } from '../common/microsoft-cloud';
 import { microsoft365CopilotAuth } from '../common/auth';
 import { Client } from '@microsoft/microsoft-graph-client';
 
@@ -83,10 +84,12 @@ export const copilotInteractionWebhook = createTrigger({
     const { scope, userId, changeTypes, expirationHours } =
       context.propsValue;
 
+    const cloud = getMicrosoftCloudFromAuth(context.auth);
     const client = Client.initWithMiddleware({
       authProvider: {
         getAccessToken: () => Promise.resolve(context.auth.access_token),
       },
+      baseUrl: getGraphBaseUrl(cloud),
     });
 
     // Build the resource path
@@ -128,10 +131,12 @@ export const copilotInteractionWebhook = createTrigger({
   },
 
   async onDisable(context) {
+    const cloud = getMicrosoftCloudFromAuth(context.auth);
     const client = Client.initWithMiddleware({
       authProvider: {
         getAccessToken: () => Promise.resolve(context.auth.access_token),
       },
+      baseUrl: getGraphBaseUrl(cloud),
     });
 
     const subscriptionId = await context.store.get('subscription_id');

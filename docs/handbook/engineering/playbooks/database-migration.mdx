@@ -48,10 +48,38 @@ PGlite is a lightweight PostgreSQL implementation that runs embedded, so migrati
     Replace `<MIGRATION_NAME>` with a descriptive name for your migration.
   </Step>
 
-  <Step title="Review Migration File">
+  <Step title="Update Migration File">
     The command will generate a new migration file in `packages/server/api/src/app/database/migration/postgres/`.
-    
-    Review the generated file and register it in `postgres-connection.ts`.
+
+    The generated file uses `MigrationInterface` — you need to update it:
+
+    1. Change `implements MigrationInterface` to `implements Migration`
+    2. Update the import from `typeorm` to import `Migration` from `../../migration`
+    3. Add `breaking = false` (or `true` if the migration drops columns/tables or transforms data irreversibly)
+    4. Add `release = '<version>'` matching the upcoming release version (check `package.json` in the repo root)
+    5. Implement the `down()` method with queries that reverse the `up()` changes (unless `breaking = true`)
+    6. Register it in `postgres-connection.ts`
+
+    ```typescript
+    import { QueryRunner } from 'typeorm'
+    import { Migration } from '../../migration'
+
+    export class AddMyColumn1234567890 implements Migration {
+        name = 'AddMyColumn1234567890'
+        breaking = false
+        release = '0.78.0'
+
+        public async up(queryRunner: QueryRunner): Promise<void> {
+            await queryRunner.query(`ALTER TABLE "project" ADD COLUMN "description" text`)
+        }
+
+        public async down(queryRunner: QueryRunner): Promise<void> {
+            await queryRunner.query(`ALTER TABLE "project" DROP COLUMN "description"`)
+        }
+    }
+    ```
+
+    CI will fail if `breaking`, `release`, or `down()` are missing on new migrations.
   </Step>
 </Steps>
 
@@ -60,15 +88,19 @@ PGlite is a lightweight PostgreSQL implementation that runs embedded, so migrati
 While PGlite is mostly PostgreSQL-compatible, some features are not supported. When using features like `CONCURRENTLY` for index operations, you need to conditionally handle PGlite:
 
 ```typescript
-import { AppSystemProp } from '@activepieces/server-utils'
-import { MigrationInterface, QueryRunner } from 'typeorm'
-import { DatabaseType, system } from '../../../helper/system/system'
+import { QueryRunner } from 'typeorm'
+import { Migration } from '../../migration'
+import { system } from '../../../helper/system/system'
+import { AppSystemProp } from '../../../helper/system/system-props'
+import { DatabaseType } from '../../database-type'
 
 const databaseType = system.get(AppSystemProp.DB_TYPE)
 const isPGlite = databaseType === DatabaseType.PGLITE
 
-export class AddMyIndex1234567890 implements MigrationInterface {
+export class AddMyIndex1234567890 implements Migration {
     name = 'AddMyIndex1234567890'
+    breaking = false
+    release = '0.78.0'
     transaction = false // Required when using CONCURRENTLY
 
     public async up(queryRunner: QueryRunner): Promise<void> {

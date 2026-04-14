@@ -1,4 +1,5 @@
 import { PieceAuth, Property } from '@activepieces/pieces-framework';
+import { microsoftCloudProperty } from './common/microsoft-cloud';
 
 const authDesc = `
 Follow the [Azure app creation guide](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app#register-an-application),
@@ -7,6 +8,7 @@ Follow the [Azure app creation guide](https://learn.microsoft.com/en-us/entra/id
 export const dynamicsCRMAuth = PieceAuth.OAuth2({
   description: authDesc,
   props: {
+    cloud: microsoftCloudProperty,
     hostUrl: Property.ShortText({
       displayName: 'Host URL (without trailing slash)',
       description:
@@ -29,6 +31,6 @@ export const dynamicsCRMAuth = PieceAuth.OAuth2({
   required: true,
   scope: ['{hostUrl}/.default', 'openid', 'email', 'profile', 'offline_access'],
   prompt: 'omit',
-  authUrl: 'https://login.microsoftonline.com/{tenantId}/oauth2/v2.0/authorize',
-  tokenUrl: 'https://login.microsoftonline.com/{tenantId}/oauth2/v2.0/token',
+  authUrl: 'https://{cloud}/{tenantId}/oauth2/v2.0/authorize',
+  tokenUrl: 'https://{cloud}/{tenantId}/oauth2/v2.0/token',
 });

@@ -28,7 +28,7 @@ const CardList = forwardRef<
 CardList.displayName = 'CardList';
 export { CardList };
 
-const cardItemListVariants = cva('flex items-center gap-4 w-full py-4 px-2 ', {
+const cardItemListVariants = cva('flex items-center gap-3 w-full py-3 px-2 ', {
   variants: {
     interactive: {
       true: 'cursor-pointer transition-all hover:bg-accent hover:text-accent-foreground',
@@ -81,7 +81,7 @@ const CardListItemSkeleton: React.FC<CardListItemSkeletonProps> = React.memo(
     return (
       <>
         {[...Array(numberOfCards)].map((_, index) => (
-          <div key={index} className="flex items-center gap-4 w-full py-4 px-5">
+          <div key={index} className="flex items-center gap-3 w-full py-3 px-5">
             {withCircle && <Skeleton className="h-8 w-8 rounded-full" />}
             <div className="space-y-2">
               <Skeleton className="h-4 w-[250px]" />

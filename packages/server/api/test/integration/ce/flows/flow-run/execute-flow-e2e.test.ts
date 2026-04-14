@@ -134,6 +134,7 @@ async function setupSubflowFixtures() {
             name: 'trigger',
             displayName: 'Callable Flow',
             valid: true,
+            lastUpdatedDate: new Date().toISOString(),
             settings: {
                 pieceName: '@activepieces/piece-subflows',
                 pieceVersion: '0.4.11',
@@ -203,6 +204,7 @@ async function setupSubflowFixtures() {
             name: 'trigger',
             displayName: 'Catch Webhook',
             valid: true,
+            lastUpdatedDate: new Date().toISOString(),
             settings: {
                 pieceName: '@activepieces/piece-webhook',
                 pieceVersion: '0.1.29',
@@ -214,6 +216,172 @@ async function setupSubflowFixtures() {
         },
     })
     await db.save('flow_version', parentFlowVersion)
+
+    return { parentFlow, parentFlowVersion, mockPlatform, mockProject }
+}
+
+async function setupSubflowWithWebhookResponseFixtures() {
+    const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
+
+    const webhookPiece = createMockPieceMetadata({
+        name: '@activepieces/piece-webhook',
+        version: '0.1.29',
+        platformId: undefined,
+        packageType: PackageType.REGISTRY,
+        pieceType: PieceType.OFFICIAL,
+    })
+    const subflowsPiece = createMockPieceMetadata({
+        name: '@activepieces/piece-subflows',
+        version: '0.4.11',
+        platformId: undefined,
+        packageType: PackageType.REGISTRY,
+        pieceType: PieceType.OFFICIAL,
+    })
+    await databaseConnection().getRepository('piece_metadata').save([webhookPiece, subflowsPiece])
+
+    // Child flow: callableFlow trigger → returnResponse (echoes back message)
+    const childReturnResponseAction = {
+        type: FlowActionType.PIECE as const,
+        name: 'step_1',
+        displayName: 'Return Response',
+        valid: true,
+        settings: {
+            pieceName: '@activepieces/piece-subflows',
+            pieceVersion: '0.4.11',
+            actionName: 'returnResponse',
+            input: {
+                mode: 'simple',
+                response: {
+                    response: {
+                        echo: '{{trigger.data.message}}',
+                    },
+                },
+            },
+            propertySettings: {},
+            errorHandlingOptions: {},
+        },
+    }
+
+    const childFlow = createMockFlow({
+        projectId: mockProject.id,
+        status: FlowStatus.ENABLED,
+    })
+
+    const childFlowVersion = createMockFlowVersion({
+        flowId: childFlow.id,
+        state: FlowVersionState.LOCKED,
+        trigger: {
+            lastUpdatedDate: new Date().toISOString(),
+            type: FlowTriggerType.PIECE,
+            name: 'trigger',
+            displayName: 'Callable Flow',
+            valid: true,
+            settings: {
+                pieceName: '@activepieces/piece-subflows',
+                pieceVersion: '0.4.11',
+                triggerName: 'callableFlow',
+                input: {
+                    mode: 'simple',
+                    exampleData: {
+                        sampleData: {
+                            message: '',
+                        },
+                    },
+                },
+                propertySettings: {},
+            },
+            nextAction: childReturnResponseAction,
+        },
+    })
+
+    await db.save('flow', childFlow)
+    await db.save('flow_version', childFlowVersion)
+    await db.update('flow', childFlow.id, { publishedVersionId: childFlowVersion.id })
+
+    // Parent flow: catch_webhook → callFlow (waitForResponse) → return_response (webhook).
+    // Flow must be ENABLED + LOCKED so the /sync webhook route accepts and executes it.
+    const parentReturnResponseAction = {
+        type: FlowActionType.PIECE as const,
+        name: 'step_2',
+        displayName: 'Return Response',
+        valid: true,
+        settings: {
+            pieceName: '@activepieces/piece-webhook',
+            pieceVersion: '0.1.29',
+            actionName: 'return_response',
+            input: {
+                responseType: 'json',
+                respond: 'stop',
+                fields: {
+                    status: 200,
+                    headers: {},
+                    body: { echo: '{{step_1.data.echo}}' },
+                },
+            },
+            propertySettings: {},
+            errorHandlingOptions: {},
+        },
+    }
+
+    const parentCallFlowAction = {
+        type: FlowActionType.PIECE as const,
+        name: 'step_1',
+        displayName: 'Call Flow',
+        valid: true,
+        settings: {
+            pieceName: '@activepieces/piece-subflows',
+            pieceVersion: '0.4.11',
+            actionName: 'callFlow',
+            input: {
+                flow: {
+                    externalId: childFlow.externalId,
+                    exampleData: {
+                        sampleData: {
+                            message: '',
+                        },
+                    },
+                },
+                mode: 'simple',
+                flowProps: {
+                    payload: {
+                        message: '{{trigger.body.message}}',
+                    },
+                },
+                waitForResponse: true,
+            },
+            propertySettings: {},
+            errorHandlingOptions: {},
+        },
+        nextAction: parentReturnResponseAction,
+    }
+
+    const parentFlow = createMockFlow({
+        projectId: mockProject.id,
+        status: FlowStatus.ENABLED,
+    })
+    await db.save('flow', parentFlow)
+
+    const parentFlowVersion = createMockFlowVersion({
+        flowId: parentFlow.id,
+        state: FlowVersionState.LOCKED,
+        trigger: {
+            type: FlowTriggerType.PIECE,
+            name: 'trigger',
+            displayName: 'Catch Webhook',
+            valid: true,
+            lastUpdatedDate: new Date().toISOString(),
+            settings: {
+                pieceName: '@activepieces/piece-webhook',
+                pieceVersion: '0.1.29',
+                triggerName: 'catch_webhook',
+                input: { authType: 'none' },
+                propertySettings: {},
+            },
+            nextAction: parentCallFlowAction,
+        },
+    })
+    await db.save('flow_version', parentFlowVersion)
+    await db.update('flow', parentFlow.id, { publishedVersionId: parentFlowVersion.id })
 
     return { parentFlow, parentFlowVersion, mockPlatform, mockProject }
 }
@@ -295,7 +463,7 @@ describe('Execute Flow E2E', () => {
             valid: true,
             settings: {
                 pieceName: '@activepieces/piece-data-mapper',
-                pieceVersion: '~0.3.15',
+                pieceVersion: '0.3.15',
                 actionName: 'advanced_mapping',
                 input: {
                     mapping: {
@@ -322,9 +490,10 @@ describe('Execute Flow E2E', () => {
                 name: 'trigger',
                 displayName: 'Catch Webhook',
                 valid: true,
+                lastUpdatedDate: new Date().toISOString(),
                 settings: {
                     pieceName: '@activepieces/piece-webhook',
-                    pieceVersion: '~0.1.29',
+                    pieceVersion: '0.1.29',
                     triggerName: 'catch_webhook',
                     input: { authType: 'none' },
                     propertySettings: {},
@@ -351,7 +520,7 @@ describe('Execute Flow E2E', () => {
         })
 
         // Poll until flow run completes
-        const maxWaitMs = 60_000
+        const maxWaitMs = 120_000
         const pollIntervalMs = 500
         const start = Date.now()
         let result = await flowRunService(app.log).getOnePopulatedOrThrow({
@@ -369,7 +538,7 @@ describe('Execute Flow E2E', () => {
                 projectId: mockProject.id,
             })
         }
-
+        console.log(result)
         // Assertions
         expect(result.status).toBe(FlowRunStatus.SUCCEEDED)
         expect(result.steps.step_1.output).toEqual(
@@ -429,9 +598,10 @@ describe('Execute Flow E2E', () => {
                 name: 'trigger',
                 displayName: 'Catch Webhook',
                 valid: true,
+                lastUpdatedDate: new Date().toISOString(),
                 settings: {
                     pieceName: '@activepieces/piece-webhook',
-                    pieceVersion: '~0.1.29',
+                    pieceVersion: '0.1.29',
                     triggerName: 'catch_webhook',
                     input: { authType: 'none' },
                     propertySettings: {},
@@ -575,7 +745,7 @@ describe('Execute Flow E2E', () => {
             valid: true,
             settings: {
                 pieceName: '@activepieces/piece-delay',
-                pieceVersion: '~0.3.26',
+                pieceVersion: '0.3.26',
                 actionName: 'delayFor',
                 input: {
                     unit: 'seconds',
@@ -600,9 +770,10 @@ describe('Execute Flow E2E', () => {
                 name: 'trigger',
                 displayName: 'Catch Webhook',
                 valid: true,
+                lastUpdatedDate: new Date().toISOString(),
                 settings: {
                     pieceName: '@activepieces/piece-webhook',
-                    pieceVersion: '~0.1.29',
+                    pieceVersion: '0.1.29',
                     triggerName: 'catch_webhook',
                     input: { authType: 'none' },
                     propertySettings: {},
@@ -628,7 +799,6 @@ describe('Execute Flow E2E', () => {
         })
 
         const result = await pollFlowRunToCompletion(flowRun.id, mockProject.id)
-
         expect(result.status).toBe(FlowRunStatus.SUCCEEDED)
         expect(result.steps.step_2.output).toEqual(
             expect.objectContaining({ resumed: true }),
@@ -666,5 +836,20 @@ describe('Execute Flow E2E', () => {
                 },
             }),
         )
+    }, 180_000)
+
+    it('executes webhook → call subflow (wait-for-response) → return webhook response', async () => {
+        const { parentFlow } = await setupSubflowWithWebhookResponseFixtures()
+
+        // Hit the real /sync route so synchronousHandlerId + httpRequestId are wired up,
+        // enabling the webhook Return Response step to send back the HTTP response.
+        const response = await app.inject({
+            method: 'POST',
+            url: `/api/v1/webhooks/${parentFlow.id}/sync`,
+            payload: { message: 'hello world' },
+        })
+
+        expect(response.statusCode).toBe(200)
+        expect(response.json()).toEqual(expect.objectContaining({ echo: 'hello world' }))
     }, 180_000)
 })

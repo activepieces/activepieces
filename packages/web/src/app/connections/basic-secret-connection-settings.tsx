@@ -32,7 +32,9 @@ const BasicAuthConnectionSettings = React.memo(
           control={form.control}
           render={({ field }) => (
             <FormItem className="flex flex-col">
-              <FormLabel>{authProperty.username.displayName}</FormLabel>
+              <FormLabel showRequiredIndicator>
+                {authProperty.username.displayName}
+              </FormLabel>
               <FormControl>
                 <SecretInput {...field} type="text" />
               </FormControl>
@@ -47,7 +49,9 @@ const BasicAuthConnectionSettings = React.memo(
           control={form.control}
           render={({ field }) => (
             <FormItem className="flex flex-col mt-3.5">
-              <FormLabel>{authProperty.password.displayName}</FormLabel>
+              <FormLabel showRequiredIndicator>
+                {authProperty.password.displayName}
+              </FormLabel>
               <FormControl>
                 <SecretInput {...field} type="password" />
               </FormControl>

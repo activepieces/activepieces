@@ -19,6 +19,18 @@ export const commonProps = {
     required: true,
   }),
 
+  contextId: Property.ShortText({
+    displayName: 'Context ID',
+    description: 'The session context ID.',
+    required: true,
+  }),
+
+  todoId: Property.ShortText({
+    displayName: 'Todo ID',
+    description: 'The todo ID.',
+    required: true,
+  }),
+
   returnAll: Property.Checkbox({
     displayName: 'Return All',
     description: 'Return all results instead of using the limit.',

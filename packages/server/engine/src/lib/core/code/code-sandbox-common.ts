@@ -16,12 +16,12 @@ export type CodeSandbox = {
 
 type RunCodeModuleParams = {
     /**
-     * The {@link CodeModule} to execute.
+     * Path to the compiled index.js file to execute.
      */
-    codeModule: CodeModule
+    codeFilePath: string
 
     /**
-     * The inputs that are passed to the {@link CodeModule}.
+     * The inputs that are passed to the code module.
      */
     inputs: Record<string, unknown>
 }

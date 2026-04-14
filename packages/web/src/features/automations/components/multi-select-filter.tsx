@@ -64,7 +64,7 @@ export const MultiSelectFilter = ({
         <Button
           variant="outline"
           size="sm"
-          className="h-9 text-sm gap-2 whitespace-nowrap border-dashed"
+          className="text-sm gap-2 whitespace-nowrap border-dashed"
         >
           {icon}
           <span>{label}</span>

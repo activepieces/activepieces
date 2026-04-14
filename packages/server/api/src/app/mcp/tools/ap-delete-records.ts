@@ -1,8 +1,8 @@
-import { McpServer, McpToolDefinition } from '@activepieces/shared'
+import { McpServer, McpToolDefinition, Permission } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { recordService } from '../../tables/record/record.service'
-import { mcpToolError } from './mcp-utils'
+import { mcpUtils } from './mcp-utils'
 
 const deleteRecordsInput = z.object({
     recordIds: z.array(z.string()).describe('Array of record IDs to delete. Use ap_find_records to find them.'),
@@ -11,7 +11,8 @@ const deleteRecordsInput = z.object({
 export const apDeleteRecordsTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_delete_records',
-        description: 'Permanently delete one or more records from a table by their IDs. This action cannot be undone. Use ap_find_records to get record IDs.',
+        permission: Permission.WRITE_TABLE,
+        description: 'Permanently delete one or more records by their IDs.',
         inputSchema: deleteRecordsInput.shape,
         annotations: { destructiveHint: true, openWorldHint: false },
         execute: async (args) => {
@@ -36,7 +37,7 @@ export const apDeleteRecordsTool = (mcp: McpServer, log: FastifyBaseLogger): Mcp
             }
             catch (err) {
                 log.error({ err, projectId: mcp.projectId }, 'ap_delete_records failed')
-                return mcpToolError('Failed to delete records', err)
+                return mcpUtils.mcpToolError('Failed to delete records', err)
             }
         },
     }

@@ -204,7 +204,7 @@ export function PlatformSidebar() {
           <span className="truncate text-sm">{t('Back to app')}</span>
         </Link>
       </SidebarHeader>
-      <div className="flex-1 overflow-y-auto scrollbar-hover">
+      <div className="flex-1 overflow-y-auto">
         <SidebarContent className="gap-0">
           {groups.map((group, idx) => (
             <SidebarGroup key={group.label} className="cursor-default shrink-0">

@@ -39,7 +39,7 @@ export function isolateProcess(log: SandboxLogger, enginePath: string, _codeDire
             }
 
             const envArgs = Object.entries(sandboxEnv)
-                .map(([key, value]) => `--env=${key}='${value}'`)
+                .map(([key, value]) => `--env=${key}=${value}`)
 
             const dirArgs = mounts.map((m) => {
                 const suffix = m.optional ? ':maybe' : ''
@@ -66,7 +66,7 @@ export function isolateProcess(log: SandboxLogger, enginePath: string, _codeDire
             log.debug({ sandboxId, command: `${isolateBinaryPath} ${args.join(' ')}` }, 'Spawning isolate process')
 
             const child = spawn(isolateBinaryPath, args, {
-                shell: true,
+                shell: false,
             })
 
             child.stdout?.on('data', (data: Buffer) => {

@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-zoho-mail",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "dependencies": {
@@ -8,7 +8,7 @@
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
     "form-data": "4.0.4",
-    "mailparser": "3.7.5",
+    "mailparser": "3.9.3",
     "tslib": "2.6.2"
   },
   "scripts": {

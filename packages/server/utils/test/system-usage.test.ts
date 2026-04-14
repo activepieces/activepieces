@@ -18,18 +18,22 @@ vi.mock('../src/file-system-utils', () => ({
 vi.mock('systeminformation', () => ({
     default: {
         mem: vi.fn(),
-        fsSize: vi.fn(),
     },
 }))
 
+vi.mock('check-disk-space', () => ({
+    default: vi.fn(),
+}))
+
 import fs from 'fs'
+import checkDiskSpace from 'check-disk-space'
 import si from 'systeminformation'
 import { fileSystemUtils } from '../src/file-system-utils'
 
 const mockFileExists = vi.mocked(fileSystemUtils.fileExists)
 const mockReadFile = vi.mocked(fs.promises.readFile)
 const mockMem = vi.mocked(si.mem)
-const mockFsSize = vi.mocked(si.fsSize)
+const mockCheckDiskSpace = vi.mocked(checkDiskSpace)
 
 function mockCgroupFile(path: string, content: string) {
     mockFileExists.mockImplementation(async (p: string) => p === path)
@@ -143,11 +147,8 @@ describe('getContainerMemoryUsage', () => {
 })
 
 describe('getDiskInfo', () => {
-    it('should return disk info from root mount', async () => {
-        mockFsSize.mockResolvedValue([
-            { mount: '/boot', size: 500_000_000, available: 400_000_000, used: 100_000_000, use: 20 },
-            { mount: '/', size: 100_000_000_000, available: 40_000_000_000, used: 60_000_000_000, use: 60 },
-        ] as never)
+    it('should return disk info', async () => {
+        mockCheckDiskSpace.mockResolvedValue({ diskPath: '/', size: 100_000_000_000, free: 40_000_000_000 })
 
         const result = await systemUsage.getDiskInfo()
         expect(result).toEqual({
@@ -158,17 +159,10 @@ describe('getDiskInfo', () => {
         })
     })
 
-    it('should return zeros when si.fsSize() throws', async () => {
-        mockFsSize.mockRejectedValue(new Error('disk error'))
-
-        const result = await systemUsage.getDiskInfo()
-        expect(result).toEqual({ total: 0, free: 0, used: 0, percentage: 0 })
-    })
-
-    it('should use first disk when no root mount found', async () => {
-        mockFsSize.mockResolvedValue([
-            { mount: '/data', size: 50_000_000_000, available: 25_000_000_000, used: 25_000_000_000, use: 50 },
-        ] as never)
+    it('should fall back to cwd when root mount fails', async () => {
+        mockCheckDiskSpace
+            .mockRejectedValueOnce(new Error('no root mount'))
+            .mockResolvedValueOnce({ diskPath: '/app', size: 50_000_000_000, free: 25_000_000_000 })
 
         const result = await systemUsage.getDiskInfo()
         expect(result).toEqual({
@@ -179,8 +173,8 @@ describe('getDiskInfo', () => {
         })
     })
 
-    it('should return zeros when no disks are returned', async () => {
-        mockFsSize.mockResolvedValue([] as never)
+    it('should return zeros when all disk lookups fail', async () => {
+        mockCheckDiskSpace.mockRejectedValue(new Error('disk error'))
 
         const result = await systemUsage.getDiskInfo()
         expect(result).toEqual({ total: 0, free: 0, used: 0, percentage: 0 })
