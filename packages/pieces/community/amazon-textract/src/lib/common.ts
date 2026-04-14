@@ -514,6 +514,8 @@ export function formatTextractError(error: unknown): string {
       return 'The specified job ID does not exist or belongs to a different account.';
     case 'InvalidKMSKeyException':
       return 'The KMS key is invalid or the account is not authorized to use it.';
+    case 'HumanLoopQuotaExceededException':
+      return 'The maximum number of active human review workflows has been exceeded. Please try again later.';
     case 'ValidationException':
       return `Validation error: ${err.message ?? 'Check your input parameters.'}`;
     default:
