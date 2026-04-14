@@ -8,6 +8,7 @@ import {
 } from '@activepieces/pieces-common';
 import { JiraAuth } from '../../auth';
 import { isNil } from '@activepieces/shared';
+import { JiraSearchResponse } from './types';
 
 export async function sendJiraRequest(request: HttpRequest & { auth: JiraAuth }) {
 	return httpClient.sendRequest({
@@ -124,44 +125,57 @@ export async function executeJql({
 }
 
 export async function searchIssuesByJql({
-	auth,
-	jql,
-	maxResults,
-	sanitizeJql,
+    auth,
+    jql,
+    maxResults,
+    sanitizeJql,
+    nextPageToken,
+    fields,
+		expand,
 }: {
-	auth: JiraAuth;
-	jql: string;
-	maxResults: number;
-	sanitizeJql: boolean;
-}) {
-	const respJql = (
-		(await executeJql({
-			auth,
-			url: 'search/jql',
-			method: HttpMethod.POST,
-			jql,
-			body: {
-				maxResults,
-			},
-			sanitizeJql,
-		})) as { issues: any[] }
-	).issues;
+    auth: JiraAuth;
+    jql: string;
+    maxResults: number;
+    sanitizeJql: boolean;
+    nextPageToken?: string;
+    fields?: string[];
+		expand?: string[];
+}): Promise<JiraSearchResponse> {
+	const bodyPayload: Record<string, any> = { maxResults };
+	if (nextPageToken) bodyPayload['nextPageToken'] = nextPageToken;
+	if (expand && expand.length > 0) bodyPayload['expand'] = expand;
 
-	const issueIds = respJql.map(issue => issue['id']);
-	if (issueIds.length === 0) {
-		return [];
-	}
+	const searchResult = (await executeJql({
+		auth,
+		url: 'search/jql',
+		method: HttpMethod.POST,
+		jql,
+		body: bodyPayload,
+		sanitizeJql,
+	})) as { issues: any[]; nextPageToken?: string; names?: Record<string, string> };
 
-	return (
-    (await sendJiraRequest({
-      auth,
-      url: 'issue/bulkfetch',
-      method: HttpMethod.POST,
-      body: {
-        issueIdsOrKeys: issueIds,
-      },
-    })).body as any as { issues: any[] }
-  ).issues;
+	const issueIds = searchResult.issues.map((issue) => issue.id);
+    if (issueIds.length === 0) {
+        return { issues: [] };
+    }
+
+	const bulkFetchResponse = await sendJiraRequest({
+		auth,
+		url: 'issue/bulkfetch',
+		method: HttpMethod.POST,
+		body: {
+			issueIdsOrKeys: issueIds,
+			fields,
+		},
+	});
+
+	const body = bulkFetchResponse.body as { issues: any[] };
+
+	return {
+        issues: body.issues,
+        nextPageToken: searchResult.nextPageToken,
+        names: searchResult.names,
+    };
 }
 
 export async function createJiraIssue(data: CreateIssueParams) {
@@ -379,4 +393,23 @@ export async function jiraPaginatedApiCall<T extends HttpMessageBody, K extends 
 	} while (hasMore);
 
 	return resultData;
+}
+
+export function mapFieldNames(
+  fields: Record<string, any>,
+  fieldNames: Record<string, string>
+) {
+  const mappedFields = {} as Record<string, any>;
+
+  for (const [fieldId, fieldValue] of Object.entries(fields)) {
+    const fieldName = fieldNames?.[fieldId];
+    if (fieldName) {
+      mappedFields[fieldName] = fieldValue;
+    } else {
+      // fallback in case field cannot be mapped (but this should not happen)
+      mappedFields[fieldId] = fieldValue;
+    }
+  }
+
+  return mappedFields;
 }

@@ -1,16 +1,20 @@
-import { createHmac } from 'crypto';
+import { createHmac, randomBytes } from 'crypto';
 
 const SIGN_METHOD = 'HMAC-SHA256';
 const OAUTH_VERSION = '1.0';
 
+// OAuth 1.0 (RFC 5849 §3.6) requires RFC 3986 percent-encoding, which encodes
+// '!', '*', "'", '(', ')' — characters that encodeURIComponent leaves unencoded.
+function oauthEncode(str: string): string {
+  return encodeURIComponent(str).replace(
+    /[!'()*]/g,
+    (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`
+  );
+}
+
 function generateNonce(): string {
-  const length = 11;
-  const possible =
-    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  return Array.from(
-    { length },
-    () => possible[Math.floor(Math.random() * possible.length)]
-  ).join('');
+  // Use CSPRNG instead of Math.random() for unpredictable nonces.
+  return randomBytes(16).toString('hex');
 }
 
 function generateSignature(
@@ -50,29 +54,33 @@ function generateSignature(
     });
   }
 
-  // Sort parameters by key, then by value (OAuth 1.0 spec)
-  const sortedKeys = Object.keys(allParams).sort();
-  const paramPairs = sortedKeys.map(
-    (key) => `${encodeURIComponent(key)}=${encodeURIComponent(allParams[key])}`
+  // RFC 5849 §3.4.1.3: encode keys/values first, then sort the encoded pairs.
+  // Sorting on raw strings would differ from sorting on encoded strings when
+  // param names contain characters whose encoded form changes byte order (e.g. '{' → '%7B').
+  const encodedPairs = Object.entries(allParams).map(
+    ([key, value]) => [oauthEncode(key), oauthEncode(value)] as const
   );
-  const paramString = paramPairs.join('&');
+  encodedPairs.sort(([ka, va], [kb, vb]) =>
+    ka < kb ? -1 : ka > kb ? 1 : va < vb ? -1 : va > vb ? 1 : 0
+  );
+  const paramString = encodedPairs.map(([k, v]) => `${k}=${v}`).join('&');
 
   const signatureBaseString = [
     httpMethod.toUpperCase(),
-    encodeURIComponent(baseUrl),
-    encodeURIComponent(paramString),
+    oauthEncode(baseUrl),
+    oauthEncode(paramString),
   ].join('&');
 
   const signingKey = [
-    encodeURIComponent(consumerSecret),
-    encodeURIComponent(tokenSecret),
+    oauthEncode(consumerSecret),
+    oauthEncode(tokenSecret),
   ].join('&');
 
   const hmac = createHmac('sha256', signingKey);
   hmac.update(signatureBaseString);
   const signature = hmac.digest('base64');
 
-  return encodeURIComponent(signature);
+  return oauthEncode(signature);
 }
 
 export function createOAuthHeader(

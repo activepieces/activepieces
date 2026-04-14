@@ -88,6 +88,7 @@ export const customApiCall = createAction({
     }),
     method: Property.StaticDropdown({
       displayName: 'Method',
+      description: 'HTTP method for the request. Use GET to fetch data, POST/PUT to create or update, DELETE to remove.',
       required: true,
       defaultValue: HttpMethod.GET,
       options: {
@@ -122,12 +123,14 @@ export const customApiCall = createAction({
       required: false,
     }),
     failsafe: Property.Checkbox({
-      displayName: 'No Error on Failure',
+      displayName: 'Return Error as Output',
+      description: 'When enabled, errors (e.g. 4xx/5xx responses) are returned as output instead of stopping the flow. Useful when you want to handle errors in a later step.',
       required: false,
       defaultValue: false,
     }),
     timeout: Property.Number({
       displayName: 'Timeout (in seconds)',
+      description: 'How long to wait for a response before the request is cancelled. Defaults to 30 seconds.',
       required: false,
       defaultValue: 30,
     }),
