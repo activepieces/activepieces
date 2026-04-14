@@ -5,12 +5,6 @@ export const mockApiAction = createAction({
   displayName: "Mock API",
   description: "Return a simulated API response with custom status and delay.",
   props: {
-    endpoint: Property.ShortText({
-      displayName: "Endpoint Path",
-      description: "The path of the simulated endpoint (e.g., /users).",
-      required: true,
-      defaultValue: "/",
-    }),
     responseTemplate: Property.Json({
       displayName: "Response Template",
       description: "The JSON body to return in the response.",

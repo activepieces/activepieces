@@ -3,3 +3,4 @@ dist/
 coverage/
 .DS_Store
 *.log
+src/**/*.js

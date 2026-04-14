@@ -1,61 +1,46 @@
 import { createTrigger, StaticPropsValue, TriggerContext, TriggerStrategy, Property } from "@activepieces/pieces-framework";
+import { createHash } from "crypto";
 
 export const newRequestLogTrigger = createTrigger({
   name: "new_request_log",
   displayName: "New Request Log",
-  description: "Triggers periodically to provide a summary of recent mock activity.",
+  description: "Triggers periodically based on the provided mock data. Emits events when the mock data array changes.",
   type: TriggerStrategy.POLLING,
   props: {
-    limit: Property.Number({
-      displayName: "Limit Items",
-      description: "Maximum number of log entries to retrieve (default: 10).",
-      required: false,
-      defaultValue: 10,
+    mockData: Property.Json({
+      displayName: "Mock Events (Array)",
+      description: "An array of mock event objects. New events are triggered whenever this array changes.",
+      required: true,
+      defaultValue: [
+        { id: "log_1", endpoint: "/users", method: "GET" }
+      ],
     }),
   },
-  sampleData: [
-    { 
-      id: "log_123", 
-      timestamp: "2026-04-07T01:27:00Z", 
-      endpoint: "/users", 
-      method: "GET", 
-      payload: { id: "1" } 
-    }
-  ],
+  sampleData: {},
   async onEnable(context: TriggerContext<StaticPropsValue>) {
-    await context.store.put("last_poll", Date.now());
+    await context.store.put("last_hash", "");
   },
   async onDisable(context: TriggerContext<StaticPropsValue>) {
-    await context.store.delete("last_poll");
+    await context.store.delete("last_hash");
   },
   async run(context: TriggerContext<StaticPropsValue>) {
-    const limit = Number(context.propsValue['limit']) || 10;
-    const lastPoll = await context.store.get<number>("last_poll");
-    const now = Date.now();
+    const data = context.propsValue['mockData'] as any;
+    const items = Array.isArray(data) ? data : [];
+    if (items.length === 0) return [];
     
-    // Only return "new" data if 5 minutes have passed since last poll (simulation)
-    if (lastPoll && now - lastPoll < 300000) {
+    // Deduplication mechanism based on the hash of the payload
+    const currentHash = createHash("md5").update(JSON.stringify(items)).digest("hex");
+    const lastHash = await context.store.get<string>("last_hash");
+
+    if (currentHash === lastHash) {
       return [];
     }
-
-    await context.store.put("last_poll", now);
-
-    return [{
-      id: `log_${now}`,
-      timestamp: new Date(now).toISOString(),
-      endpoint: "/api/test",
-      method: "POST",
-      payload: { test: "data" },
-      limitUsed: limit,
-    }];
+    
+    await context.store.put("last_hash", currentHash);
+    return items;
   },
   async test(context: TriggerContext<StaticPropsValue>) {
-    return [{
-      id: "test-log",
-      timestamp: new Date().toISOString(),
-      endpoint: "/test",
-      method: "GET",
-      payload: {},
-    }];
+    const data = context.propsValue['mockData'] as any;
+    return Array.isArray(data) ? data : [];
   },
 });

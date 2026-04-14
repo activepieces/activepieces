@@ -1963,12 +1963,6 @@
       ],
       "@activepieces/piece-mockify": [
         "packages/pieces/community/mockify/src/index.ts"
-      ],
-      "@activepieces/piece-fakely": [
-        "packages/pieces/community/fakely/src/index.ts"
-      ],
-      "@activepieces/piece-captcha-solver": [
-        "packages/pieces/community/captcha-solver/src/index.ts"
       ]
     },
     "resolveJsonModule": true
