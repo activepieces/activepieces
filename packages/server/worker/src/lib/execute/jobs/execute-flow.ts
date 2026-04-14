@@ -179,12 +179,14 @@ async function fetchExecutionState(apiClient: WorkerToApiContract, data: Execute
         return parsed.executionState
     }
     catch (error) {
-        const code = error instanceof ActivepiecesError ? error.error.code : ErrorCode.EXECUTION_STATE_MISSING
-        onCallService(log, workerSettings.getSettings().PAGE_ONCALL_WEBHOOK).page({
-            code,
-            message: inspect(error),
-            params: { runId: data.runId },
-        }).catch((e) => log.error({ runId: data.runId, error: inspect(e) }, 'Failed to send on-call notification for execution state fetch failure'))
+        if (!isDedicatedWorker()) {
+            const code = error instanceof ActivepiecesError ? error.error.code : ErrorCode.EXECUTION_STATE_MISSING
+            onCallService(log, workerSettings.getSettings().PAGE_ONCALL_WEBHOOK).page({
+                code,
+                message: inspect(error),
+                params: { runId: data.runId },
+            }).catch((e) => log.error({ runId: data.runId, error: inspect(e) }, 'Failed to send on-call notification for execution state fetch failure'))
+        }
         throw error
     }
 }
