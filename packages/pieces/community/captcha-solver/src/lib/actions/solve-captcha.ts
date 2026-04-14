@@ -50,12 +50,6 @@ export const solveCaptchaAction = createAction({
       required: false,
       defaultValue: 20,
     }),
-    timeout: Property.Number({
-      displayName: "Timeout (seconds)",
-      description: "Maximum time to wait for a solution (default: 120s).",
-      required: false,
-      defaultValue: 120,
-    }),
     callbackUrl: Property.ShortText({
       displayName: "Callback URL",
       description: "Optional: The Activepieces webhook URL to receive the solution (Pingback).",
@@ -63,7 +57,7 @@ export const solveCaptchaAction = createAction({
     }),
   },
   async run(context: ActionContext<typeof captchaSolverAuth>) {
-    const { service, captchaType, siteKey, pageUrl, maxRetries = 20, callbackUrl } = context.propsValue as any;
+    const { service, captchaType, siteKey, pageUrl, maxRetries = 20, callbackUrl } = context.propsValue;
     const apiKey = context.auth;
 
     try {
@@ -71,25 +65,39 @@ export const solveCaptchaAction = createAction({
       
       // Step 1: Submit CAPTCHA
       if (service === "2captcha") {
-        const response = await axios.post("https://2captcha.com/in.php", null, {
-          params: {
-            key: apiKey,
-            method: captchaType === "recaptcha_v2" ? "userrecaptcha" : captchaType === "hcaptcha" ? "hcaptcha" : "userrecaptcha",
-            googlekey: siteKey,
-            pageurl: pageUrl,
-            json: 1,
-            version: captchaType === "recaptcha_v3" ? "v3" : undefined,
-            pingback: callbackUrl,
-          },
-        });
+        const params: any = {
+          key: apiKey,
+          method: captchaType === "hcaptcha" ? "hcaptcha" : "userrecaptcha",
+          pageurl: pageUrl,
+          json: 1,
+          pingback: callbackUrl,
+        };
+
+        if (captchaType === "hcaptcha") {
+          params.sitekey = siteKey;
+        } else {
+          params.googlekey = siteKey;
+        }
+
+        if (captchaType === "recaptcha_v3") {
+          params.version = "v3";
+        }
+
+        const response = await axios.post("https://2captcha.com/in.php", null, { params });
         if (response.data.status !== 1) throw new Error(response.data.request || "Failed to submit to 2Captcha");
         taskId = response.data.request;
       } else if (service === "anti-captcha" || service === "capsolver") {
         const url = service === "anti-captcha" ? "https://api.anti-captcha.com/createTask" : "https://api.capsolver.com/createTask";
+        
+        let type = "";
+        if (captchaType === "recaptcha_v2") type = "NoCaptchaTaskProxyless";
+        else if (captchaType === "recaptcha_v3") type = "RecaptchaV3TaskProxyless";
+        else if (captchaType === "hcaptcha") type = "HCaptchaTaskProxyless";
+
         const response = await axios.post(url, {
           clientKey: apiKey,
           task: {
-            type: captchaType === "recaptcha_v2" ? "NoCaptchaTaskProxyless" : captchaType === "hcaptcha" ? "HCaptchaTaskProxyless" : "NoCaptchaTaskProxyless",
+            type,
             websiteURL: pageUrl,
             websiteKey: siteKey,
           },
@@ -118,7 +126,7 @@ export const solveCaptchaAction = createAction({
           const res = await axios.post(url, { clientKey: apiKey, taskId });
           if (res.data.status === "ready") {
             return { 
-              solution: res.data.solution.gRecaptchaResponse || res.data.solution.gRecaptchaResponse || res.data.solution.token, 
+              solution: res.data.solution.gRecaptchaResponse || res.data.solution.token || res.data.solution.text, 
               status: "success" 
             };
           }
