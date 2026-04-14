@@ -111,7 +111,7 @@ export function createSandbox(
                         : {}),
                 },
                 resourceLimits: {
-                    memoryBytes: options.memoryLimitMb * 1024 * 1024,
+                    memoryLimitMb: options.memoryLimitMb,
                     cpuMsPerSec: options.cpuMsPerSec,
                     timeLimitSeconds: options.timeLimitSeconds,
                 },

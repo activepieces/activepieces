@@ -65,6 +65,14 @@ export const workerSocket = {
             },
         })
 
+        const gc = global.gc
+        if (typeof gc === 'function') {
+            const GC_INTERVAL_MS = 60_000
+            setInterval(() => {
+                gc()
+            }, GC_INTERVAL_MS)
+        }
+
         socket.connect()
     },
 
