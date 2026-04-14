@@ -82,8 +82,8 @@ const PasswordRequirementsList = ({
                 rule.passed
                   ? 'bg-green-500'
                   : isError
-                    ? 'bg-red-500'
-                    : 'bg-muted',
+                  ? 'bg-red-500'
+                  : 'bg-muted',
               )}
             >
               <Check className="w-2.5 h-2.5 text-white" />
@@ -93,8 +93,8 @@ const PasswordRequirementsList = ({
                 rule.passed
                   ? 'text-foreground'
                   : isError
-                    ? 'text-destructive'
-                    : 'text-muted-foreground',
+                  ? 'text-destructive'
+                  : 'text-muted-foreground',
               )}
             >
               {t(rule.label)}

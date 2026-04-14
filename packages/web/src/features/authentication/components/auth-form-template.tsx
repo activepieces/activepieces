@@ -76,11 +76,11 @@ const AuthLayout = ({
       className="absolute inset-0 bg-cover bg-center bg-no-repeat"
       style={{ backgroundImage: 'url(/auth-bg.png)' }}
     />
-    <div className="absolute inset-0 bg-black/30" />
+    <div className="absolute inset-0" />
 
     {/* Floating form card — left-anchored */}
-    <div className="relative z-10 flex items-center justify-center lg:justify-start w-full lg:w-[620px] p-4 lg:pl-24 lg:pr-8">
-      <div className="bg-white rounded-2xl shadow-2xl p-8 lg:p-10 w-full overflow-y-auto max-h-[95vh]">
+    <div className="relative z-10 flex justify-center lg:justify-start w-full lg:w-[620px] p-5">
+      <div className="bg-white rounded-2xl shadow-2xl p-10 w-full h-full overflow-y-auto">
         {children}
       </div>
     </div>

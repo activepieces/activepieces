@@ -1,16 +1,28 @@
 const CLIENTS = [
-  { name: 'MoneyGram', src: 'https://www.activepieces.com/logos/moneygram.svg' },
+  {
+    name: 'MoneyGram',
+    src: 'https://www.activepieces.com/logos/moneygram.svg',
+  },
   { name: 'Red Bull', src: 'https://www.activepieces.com/logos/redbull.svg' },
   { name: 'Rakuten', src: 'https://www.activepieces.com/logos/rakuten.svg' },
   { name: 'DocuSign', src: 'https://www.activepieces.com/logos/docusign.svg' },
-  { name: 'Contentful', src: 'https://www.activepieces.com/logos/contentful.svg' },
+  {
+    name: 'Contentful',
+    src: 'https://www.activepieces.com/logos/contentful.svg',
+  },
   { name: 'PostHog', src: 'https://www.activepieces.com/logos/posthog.svg' },
   { name: 'Roblox', src: 'https://www.activepieces.com/logos/roblox.svg' },
   { name: 'Alan', src: 'https://www.activepieces.com/logos/alan.svg' },
-  { name: 'Funding Societies', src: 'https://www.activepieces.com/logos/fundingsocieties-sales.png' },
+  {
+    name: 'Funding Societies',
+    src: 'https://www.activepieces.com/logos/fundingsocieties-sales.png',
+  },
   { name: 'Plivo', src: 'https://www.activepieces.com/logos/plivo.svg' },
   { name: 'Nedap', src: 'https://www.activepieces.com/logos/nedap.svg' },
-  { name: 'Experience.com', src: 'https://www.activepieces.com/logos/experience.com.svg' },
+  {
+    name: 'Experience.com',
+    src: 'https://www.activepieces.com/logos/experience.com.svg',
+  },
 ] as const;
 
 export const IntegrationLogosOverlay = () => {
