@@ -1,6 +1,6 @@
 import { t } from 'i18next';
 import { Check } from 'lucide-react';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { ZapIcon, ZapIconHandle } from '@/components/icons/zap';
 import { cn } from '@/lib/utils';
@@ -65,38 +65,39 @@ const PasswordRequirementsList = ({
   password: string;
   isSubmitted: boolean;
 }) => {
-  const results = passwordRules.map((rule) => ({
+  const [hasReachedMin, setHasReachedMin] = useState(false);
+
+  useEffect(() => {
+    if (password.length >= 8) {
+      setHasReachedMin(true);
+    }
+  }, [password]);
+
+  const isOverMaxLength = password.length > 64;
+  const isUnderAfterReaching = hasReachedMin && password.length < 8;
+  const results = passwordRules.map((rule, index) => ({
     label: rule.label,
     passed: rule.condition(password),
+    immediateError: index === 0 && (isOverMaxLength || isUnderAfterReaching),
   }));
 
   return (
     <div className="flex flex-col gap-1.5 mt-1">
       {results.map((rule) => {
-        const isError = isSubmitted && !rule.passed;
+        const isError = rule.immediateError || (isSubmitted && !rule.passed);
         return (
-          <div key={rule.label} className="flex items-center gap-2 text-xs">
+          <div key={rule.label} className="flex items-center gap-1.5 text-xs">
             <div
               className={cn(
-                'w-4 h-4 rounded-full flex items-center justify-center shrink-0',
+                'w-2 h-2 rounded-full shrink-0',
                 rule.passed
                   ? 'bg-green-500'
                   : isError
                   ? 'bg-red-500'
-                  : 'bg-muted',
+                  : 'bg-muted-foreground/40',
               )}
-            >
-              <Check className="w-2.5 h-2.5 text-white" />
-            </div>
-            <span
-              className={cn(
-                rule.passed
-                  ? 'text-foreground'
-                  : isError
-                  ? 'text-destructive'
-                  : 'text-muted-foreground',
-              )}
-            >
+            />
+            <span className="text-foreground">
               {t(rule.label)}
             </span>
           </div>

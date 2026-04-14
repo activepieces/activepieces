@@ -23,8 +23,9 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Popover, PopoverAnchor, PopoverContent, PopoverHeader, PopoverTitle } from '@/components/ui/popover';
 import { CheckEmailNote } from '@/features/authentication/components/check-email-note';
-import { PasswordRequirementsList, PasswordStrengthBolt } from '@/features/authentication/components/password-validator';
+import { PasswordRequirementsList } from '@/features/authentication/components/password-validator';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -52,6 +53,7 @@ const SignUpForm = ({
 }) => {
   const [searchParams] = useSearchParams();
   const [showPassword, setShowPassword] = useState(false);
+  const [isPasswordFocused, setIsPasswordFocused] = useState(false);
   const { data: termsOfServiceUrl } = flagsHooks.useFlag<string>(
     ApFlagId.TERMS_OF_SERVICE_URL,
   );
@@ -133,7 +135,7 @@ const SignUpForm = ({
             break;
           }
           case ErrorCode.EXISTING_USER: {
-            form.setError('root.serverError', {
+            form.setError('email', {
               message: t('Email is already used'),
             });
             break;
@@ -191,7 +193,7 @@ const SignUpForm = ({
                 required: t('First name is required'),
               }}
               render={({ field }) => (
-                <FormItem className="w-full grid space-y-2">
+                <FormItem className="w-full grid space-y-1">
                   <Label htmlFor="firstName">{t('First Name')}</Label>
                   <Input
                     {...field}
@@ -213,7 +215,7 @@ const SignUpForm = ({
                 required: t('Last name is required'),
               }}
               render={({ field }) => (
-                <FormItem className="w-full grid space-y-2">
+                <FormItem className="w-full grid space-y-1">
                   <Label htmlFor="lastName">{t('Last Name')}</Label>
                   <Input
                     {...field}
@@ -238,7 +240,7 @@ const SignUpForm = ({
                 formatUtils.emailRegex.test(email) || t('Email is invalid'),
             }}
             render={({ field }) => (
-              <FormItem className="grid space-y-2">
+              <FormItem className="grid space-y-1">
                 <Label htmlFor="email">{t('Email')}</Label>
                 <Input
                   {...field}
@@ -261,34 +263,53 @@ const SignUpForm = ({
               validate: passwordValidation,
             }}
             render={({ field }) => (
-              <FormItem className="grid space-y-2">
+              <FormItem className="grid space-y-1">
                 <Label htmlFor="password">{t('Password')}</Label>
-                <div className="relative flex items-center">
-                  <div className="absolute left-3">
-                    <PasswordStrengthBolt password={field.value ?? ''} />
-                  </div>
-                  <Input
-                    {...field}
-                    required
-                    id="password"
-                    type={showPassword ? 'text' : 'password'}
-                    placeholder={'********'}
-                    className="rounded-sm pl-10 pr-10"
-                    data-testid="sign-up-password"
-                  />
-                  <button
-                    type="button"
-                    tabIndex={-1}
-                    onClick={() => setShowPassword((v) => !v)}
-                    className="absolute right-3 text-muted-foreground hover:text-foreground transition-colors"
+                <Popover open={isPasswordFocused}>
+                  <PopoverAnchor asChild>
+                    <div className="relative flex items-center">
+                      <Input
+                        {...field}
+                        required
+                        id="password"
+                        type={showPassword ? 'text' : 'password'}
+                        placeholder={'********'}
+                        className="rounded-sm pr-10"
+                        data-testid="sign-up-password"
+                        onFocus={() => setIsPasswordFocused(true)}
+                        onBlur={() => setIsPasswordFocused(false)}
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        tabIndex={-1}
+                        onClick={() => setShowPassword((v) => !v)}
+                        className="absolute right-1 h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </Button>
+                    </div>
+                  </PopoverAnchor>
+                  <PopoverContent
+                    side="right"
+                    align="center"
+                    sideOffset={6}
+                    onOpenAutoFocus={(e) => e.preventDefault()}
+                    className="w-auto shadow-none"
                   >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-                <PasswordRequirementsList
-                  password={field.value ?? ''}
-                  isSubmitted={form.formState.submitCount > 0}
-                />
+                    <div className="absolute -left-[4.5px] top-1/2 -translate-y-1/2">
+                      <div className="w-2.5 h-2.5 rotate-45 bg-popover border-l border-b border-border" />
+                    </div>
+                    <PopoverHeader className="mb-2">
+                      <PopoverTitle className="text-xs">{t('Password Requirements')}</PopoverTitle>
+                    </PopoverHeader>
+                    <PasswordRequirementsList
+                      password={field.value ?? ''}
+                      isSubmitted={form.formState.submitCount > 0}
+                    />
+                  </PopoverContent>
+                </Popover>
                 <FormMessage />
               </FormItem>
             )}
@@ -307,8 +328,8 @@ const SignUpForm = ({
                       onCheckedChange={field.onChange}
                     ></Checkbox>
                   </FormControl>
-                  <Label htmlFor="newsLetter">
-                    {t(`Receive updates and newsletters from activepieces`)}
+                  <Label htmlFor="newsLetter" className="text-xs">
+                    {t(`Get emails about updates and newsletters`)}
                   </Label>
                   <FormMessage />
                 </FormItem>
@@ -330,37 +351,6 @@ const SignUpForm = ({
           </Button>
         </form>
       </Form>
-
-      {edition === ApEdition.CLOUD && (
-        <div
-          className={cn('text-center text-sm', {
-            'mt-4': termsOfServiceUrl || privacyPolicyUrl,
-          })}
-        >
-          {(termsOfServiceUrl || privacyPolicyUrl) &&
-            t('By creating an account, you agree to our')}
-          {termsOfServiceUrl && (
-            <Link
-              to={termsOfServiceUrl || ''}
-              target="_blank"
-              className="px-1 text-muted-foreground hover:text-primary text-sm transition-all duration-200"
-            >
-              {t('terms of service')}
-            </Link>
-          )}
-          {termsOfServiceUrl && privacyPolicyUrl && t('and')}
-          {privacyPolicyUrl && (
-            <Link
-              to={privacyPolicyUrl || ''}
-              target="_blank"
-              className="pl-1 text-muted-foreground hover:text-primary text-sm transition-all duration-200"
-            >
-              {t('privacy policy')}
-            </Link>
-          )}
-          .
-        </div>
-      )}
     </>
   );
 };

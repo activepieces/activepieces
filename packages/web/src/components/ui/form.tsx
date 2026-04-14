@@ -131,7 +131,7 @@ function FormError({
       data-slot="form-error"
       id={formMessageId}
       className={cn(
-        'text-sm font-medium text-destructive wrap-break-word',
+        'text-xs font-normal text-destructive wrap-break-word',
         className,
       )}
       {...props}
