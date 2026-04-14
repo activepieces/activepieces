@@ -8,7 +8,7 @@
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
-    "axios": "1.13.5",
+    "axios": "1.15.0",
     "dayjs": "1.11.9",
     "tslib": "^2.3.0"
   },
