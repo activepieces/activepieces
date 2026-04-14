@@ -1079,10 +1079,10 @@ function AuthAnimation() {
   const [isMorphing, setIsMorphing] = useState(false);
   const [typedPrompt, setTypedPrompt] = useState('');
   const [isTypingAnim, setIsTypingAnim] = useState(false);
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [isInitialLoad, setIsInitialLoad] = useState(false);
   const [agentPos, setAgentPos] = useState<AgentPosition>({
-    top: CANVAS_HEIGHT + 50,
-    left: 250,
+    top: 0,
+    left: 0,
     width: 340,
     height: 320,
   });
@@ -1111,19 +1111,13 @@ function AuthAnimation() {
     [],
   );
 
-  const measuredPosRef = useRef<AgentPosition | null>(null);
-
   const measureSlot = useCallback(() => {
     const canvas = canvasRef.current;
     const slotRef = getSlotRef(activeIndexRef.current);
     const slot = slotRef.current;
     if (!canvas || !slot) return;
-    const pos = measureSlotPosition(canvas, slot);
-    measuredPosRef.current = pos;
-    if (!isInitialLoad) {
-      setAgentPos(pos);
-    }
-  }, [getSlotRef, isInitialLoad]);
+    setAgentPos(measureSlotPosition(canvas, slot));
+  }, [getSlotRef]);
 
   // Start typing animation for scene 0
   const startTyping = useCallback(() => {
@@ -1200,27 +1194,14 @@ function AuthAnimation() {
     return stopAuto;
   }, [isPlaying, startAuto, stopAuto]);
 
-  // Initial setup: measure + start typing + animate from bottom
+  // Initial setup: measure + start typing
   useEffect(() => {
     const timer = setTimeout(() => {
       measureSlot();
-      // Wait 2 frames so the browser paints the card at bottom first
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          setIsInitialLoad(false);
-        });
-      });
     }, 100);
     startTyping();
     return () => clearTimeout(timer);
   }, [measureSlot, startTyping]);
-
-  // When initial load ends, apply the measured position (triggers spring transition)
-  useEffect(() => {
-    if (!isInitialLoad && measuredPosRef.current) {
-      setAgentPos(measuredPosRef.current);
-    }
-  }, [isInitialLoad]);
 
   // ResizeObserver for canvas scaling
   useEffect(() => {
