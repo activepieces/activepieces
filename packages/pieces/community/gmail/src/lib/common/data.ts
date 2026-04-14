@@ -197,10 +197,7 @@ export const GmailRequests = {
       },
     });
   },
-  getRecentThreads: async (
-    authentication: GmailAuthValue,
-    maxResults = 15
-  ) => {
+  getRecentThreads: async (authentication: GmailAuthValue, maxResults = 15) => {
     return await httpClient.sendRequest<{
       threads: { id: string; snippet?: string }[];
     }>({
