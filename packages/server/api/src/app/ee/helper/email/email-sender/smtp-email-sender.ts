@@ -140,7 +140,13 @@ const getEmailSubject = (templateName: EmailTemplateData['name'], vars: Record<s
 }
 
 const hexToLightTint = ({ hex, opacity }: { hex: string, opacity: number }): string => {
-    const raw = hex.replace('#', '')
+    let raw = hex.replace('#', '')
+    if (raw.length === 3) {
+        raw = raw[0] + raw[0] + raw[1] + raw[1] + raw[2] + raw[2]
+    }
+    if (raw.length !== 6) {
+        return '#ffffff'
+    }
     const r = Math.round(255 - (255 - parseInt(raw.substring(0, 2), 16)) * opacity)
     const g = Math.round(255 - (255 - parseInt(raw.substring(2, 4), 16)) * opacity)
     const b = Math.round(255 - (255 - parseInt(raw.substring(4, 6), 16)) * opacity)
