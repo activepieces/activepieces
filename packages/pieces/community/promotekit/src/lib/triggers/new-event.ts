@@ -13,6 +13,12 @@ export const newEvent = createTrigger({
   displayName: 'New Event',
   description: 'Triggers when a PromoteKit webhook event is received.',
   props: {
+    eventType: Property.StaticDropdown({
+      displayName: 'Event Type',
+      description: 'The event type this flow should react to.',
+      required: true,
+      options: { options: EVENT_TYPE_OPTIONS },
+    }),
     instructions: Property.MarkDown({
       value: `### Setup Instructions
 
@@ -20,10 +26,10 @@ export const newEvent = createTrigger({
 2. Navigate to **Settings > Webhooks**
 3. Click **Add Endpoint**
 4. Paste the webhook URL shown below
-5. Select the event types you want this flow to react to
+5. Enable the event type you selected above
 6. Save the endpoint
 
-**Need different flows for different events?** Create a separate flow with its own webhook URL, then add a new endpoint in PromoteKit with only the events for that flow.`,
+**Need different flows for different events?** Create a separate flow with its own webhook URL, and add a new endpoint in PromoteKit for that flow with only the matching event enabled.`,
     }),
   },
   sampleData: {
@@ -49,6 +55,7 @@ export const newEvent = createTrigger({
       type: string;
       data: Record<string, unknown>;
     };
+    if (payload.type !== context.propsValue.eventType) return [];
     return [
       {
         type: payload.type,
@@ -58,18 +65,33 @@ export const newEvent = createTrigger({
   },
 
   async test(context) {
+    const eventType = context.propsValue.eventType;
+    const { path, flatten } = resolveEndpoint(eventType);
     const response = await promotekitApiCall<{ data: Record<string, unknown>[] }>({
       token: context.auth.secret_text,
       method: HttpMethod.GET,
-      path: '/affiliates',
+      path,
       queryParams: { limit: '5' },
     });
     return response.body.data.map((item) => ({
-      type: 'affiliate.created',
-      ...promotekitCommon.flattenAffiliate(item),
+      type: eventType,
+      ...flatten(item),
     }));
   },
 });
+
+function resolveEndpoint(eventType: string): {
+  path: string;
+  flatten: (data: Record<string, unknown>) => Record<string, unknown>;
+} {
+  if (eventType === 'affiliate.created' || eventType === 'affiliate.approved') {
+    return { path: '/affiliates', flatten: promotekitCommon.flattenAffiliate };
+  }
+  if (eventType === 'referral.created' || eventType === 'referral.converted') {
+    return { path: '/referrals', flatten: promotekitCommon.flattenReferral };
+  }
+  return { path: '/commissions', flatten: promotekitCommon.flattenCommission };
+}
 
 function flattenByType(
   type: string,
@@ -86,3 +108,11 @@ function flattenByType(
   }
   return data;
 }
+
+const EVENT_TYPE_OPTIONS = [
+  { label: 'Affiliate Created', value: 'affiliate.created' },
+  { label: 'Affiliate Approved', value: 'affiliate.approved' },
+  { label: 'Referral Created', value: 'referral.created' },
+  { label: 'Referral Converted', value: 'referral.converted' },
+  { label: 'Commission Created', value: 'commission.created' },
+];
