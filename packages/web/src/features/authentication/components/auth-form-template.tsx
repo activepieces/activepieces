@@ -1,4 +1,5 @@
 import {
+  ApEdition,
   ApFlagId,
   ThirdPartyAuthnProvidersToShowMap,
 } from '@activepieces/shared';
@@ -7,12 +8,19 @@ import React, { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 
 import { FullLogo } from '@/components/custom/full-logo';
+
+const AuthLogo = () => (
+  <div className="h-[22px]">
+    <img className="h-full" src="/activepieces-logo-h.svg" alt="Activepieces" />
+  </div>
+);
 import { authenticationSession } from '@/lib/authentication-session';
 import { useRedirectAfterLogin } from '@/lib/navigation-utils';
 
 import { HorizontalSeparatorWithText } from '../../../components/ui/separator';
 import { flagsHooks } from '../../../hooks/flags-hooks';
 
+import { AuthAnimation } from './auth-animation';
 import { IntegrationLogosOverlay } from './integration-logos-overlay';
 import { SignInForm } from './sign-in-form';
 import { SignUpForm } from './sign-up-form';
@@ -23,7 +31,7 @@ const BottomNote = ({ isSignup }: { isSignup: boolean }) => {
   const searchQuery = searchParams.toString();
 
   return isSignup ? (
-    <div className="mt-6 text-center text-sm text-muted-foreground">
+    <div className="mt-6 text-center text-[14px] text-muted-foreground">
       {t('Already have an account?')}
       <Link
         to={`/sign-in?${searchQuery}`}
@@ -33,7 +41,7 @@ const BottomNote = ({ isSignup }: { isSignup: boolean }) => {
       </Link>
     </div>
   ) : (
-    <div className="mt-6 text-center text-sm text-muted-foreground">
+    <div className="mt-6 text-center text-[14px] text-muted-foreground">
       {t("Don't have an account?")}
       <Link
         to={`/sign-up?${searchQuery}`}
@@ -41,6 +49,46 @@ const BottomNote = ({ isSignup }: { isSignup: boolean }) => {
       >
         {t('Sign up')}
       </Link>
+    </div>
+  );
+};
+
+const TermsFooter = () => {
+  const { data: termsOfServiceUrl } = flagsHooks.useFlag<string>(
+    ApFlagId.TERMS_OF_SERVICE_URL,
+  );
+  const { data: privacyPolicyUrl } = flagsHooks.useFlag<string>(
+    ApFlagId.PRIVACY_POLICY_URL,
+  );
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+
+  if (edition !== ApEdition.CLOUD || (!termsOfServiceUrl && !privacyPolicyUrl)) {
+    return null;
+  }
+
+  return (
+    <div className="text-center text-xs text-muted-foreground">
+      {t('By continuing, you agree to our')}
+      {termsOfServiceUrl && (
+        <Link
+          to={termsOfServiceUrl}
+          target="_blank"
+          className="px-1 text-muted-foreground underline hover:text-primary text-xs transition-all duration-200"
+        >
+          {t('Terms of Service')}
+        </Link>
+      )}
+      {termsOfServiceUrl && privacyPolicyUrl && t('and')}
+      {privacyPolicyUrl && (
+        <Link
+          to={privacyPolicyUrl}
+          target="_blank"
+          className="pl-1 text-muted-foreground underline hover:text-primary text-xs transition-all duration-200"
+        >
+          {t('Privacy Policy')}
+        </Link>
+      )}
+      .
     </div>
   );
 };
@@ -57,8 +105,8 @@ const AuthSeparator = ({
 
   return (thirdPartyAuthProviders?.google || thirdPartyAuthProviders?.saml) &&
     isEmailAuthEnabled ? (
-    <HorizontalSeparatorWithText className="my-5">
-      {t('OR')}
+    <HorizontalSeparatorWithText className="my-5 text-muted-foreground">
+      {t('or')}
     </HorizontalSeparatorWithText>
   ) : null;
 };
@@ -70,27 +118,38 @@ const AuthLayout = ({
   children: React.ReactNode;
   isSignUp?: boolean;
 }) => (
-  <div className="relative h-screen w-full overflow-hidden flex">
-    {/* Full-cover background */}
-    <div
-      className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-      style={{ backgroundImage: 'url(/auth-bg.png)' }}
-    />
-    <div className="absolute inset-0" />
-
-    {/* Floating form card — left-anchored */}
-    <div className="relative z-10 flex justify-center lg:justify-start w-full lg:w-[620px] p-5">
-      <div className="bg-white rounded-2xl shadow-2xl p-10 w-full h-full overflow-y-auto">
-        {children}
+  <div className="h-screen w-full overflow-hidden flex bg-white relative">
+    {/* Form — left side */}
+    <div className="flex flex-col w-full lg:w-1/2 p-5 lg:px-[100px]">
+      <div className="pt-3 flex justify-center">
+        <AuthLogo />
       </div>
+      <div className="flex-1 flex items-center justify-center">
+        <div className="w-full max-w-xs overflow-y-auto px-1">
+          {children}
+        </div>
+      </div>
+      {isSignUp && (
+        <div className="pb-4">
+          <TermsFooter />
+        </div>
+      )}
     </div>
 
-    {/* Integration logos — sign-up only, right portion of bg */}
-    {isSignUp && (
-      <div className="hidden lg:flex flex-1 items-center justify-center relative z-10">
-        <IntegrationLogosOverlay />
+    {/* Right side — animation for sign-up, image for sign-in */}
+    <div className="hidden lg:flex w-1/2 py-5 pr-5">
+      <div className="relative w-full h-full rounded-2xl overflow-hidden">
+        {isSignUp ? (
+          <AuthAnimation />
+        ) : (
+          <img
+            src="/auth-bg.png"
+            alt=""
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+        )}
       </div>
-    )}
+    </div>
   </div>
 );
 
@@ -112,7 +171,7 @@ const AuthFormTemplate = React.memo(
         description: t('Sign in to pick up where you left off.'),
       },
       signup: {
-        title: t('Automate your work in minutes'),
+        title: t('Create a new account'),
         description: t('Join thousands of teams running on autopilot.'),
       },
     }[form];
@@ -129,26 +188,9 @@ const AuthFormTemplate = React.memo(
 
     return (
       <AuthLayout isSignUp={isSignUp}>
-        <div className="mb-8">
-          {isCloud ? (
-            <Link
-              to="https://activepieces.com"
-              target="_blank"
-              rel="noreferrer"
-            >
-              <FullLogo />
-            </Link>
-          ) : (
-            <FullLogo />
-          )}
-        </div>
-
         {!showCheckYourEmailNote && (
-          <div className="mb-6">
-            <h1 className="text-2xl font-bold tracking-tight">{data.title}</h1>
-            <p className="text-muted-foreground text-sm mt-1.5">
-              {data.description}
-            </p>
+          <div className="mb-6 text-center">
+            <h1 className="text-2xl font-bold tracking-tight" style={{ fontFamily: "'Sentient', serif" }}>{data.title}</h1>
           </div>
         )}
 

@@ -165,9 +165,9 @@ const SignInForm: React.FC = () => {
                   {edition !== ApEdition.COMMUNITY && (
                     <Link
                       to="/forget-password"
-                      className="text-muted-foreground text-sm hover:text-primary transition-all duration-200"
+                      className="text-muted-foreground text-xs hover:text-primary transition-all duration-200"
                     >
-                      {t('Forgot your password?')}
+                      {t('Forgot password?')}
                     </Link>
                   )}
                 </div>
