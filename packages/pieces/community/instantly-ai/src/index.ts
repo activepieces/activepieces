@@ -20,7 +20,6 @@ import { activateCampaignAction } from './lib/actions/activate-campaign';
 import { pauseCampaignAction } from './lib/actions/pause-campaign';
 import { getCampaignAnalyticsAction } from './lib/actions/get-campaign-analytics';
 
-import { newLeadAddedTrigger } from './lib/triggers/new-lead-added';
 import { replyReceivedTrigger } from './lib/triggers/reply-received';
 import { emailSentTrigger } from './lib/triggers/email-sent';
 import { emailOpenedTrigger } from './lib/triggers/email-opened';
@@ -73,7 +72,6 @@ export const instantlyAi = createPiece({
     campaignCompletedTrigger,
     leadInterestChangedTrigger,
     meetingBookedTrigger,
-    newLeadAddedTrigger,
   ],
 });
 
