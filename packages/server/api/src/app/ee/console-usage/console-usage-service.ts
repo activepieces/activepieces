@@ -6,10 +6,10 @@ import { exceptionHandler } from '../../helper/exception-handler'
 import { rejectedPromiseHandler } from '../../helper/promise-handler'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
-import { platformPlanRepo } from '../platform/platform-plan/platform-plan.service'
 import { platformService } from '../../platform/platform.service'
 import { projectRepo } from '../../project/project-repo'
 import { userRepo } from '../../user/user-service'
+import { platformPlanRepo } from '../platform/platform-plan/platform-plan.service'
 
 const CONSOLE_API_URL = 'https://console.activepieces.com'
 const CLOUD_API_URL = 'https://cloud.activepieces.com'
@@ -91,7 +91,7 @@ async function queryActiveFlowsByPlatform(): Promise<Map<string, number>> {
         .addSelect('COUNT(*)', 'count')
         .where('flow.status = :status', { status: FlowStatus.ENABLED })
         .groupBy('project.platformId')
-        .getRawMany<{ platformId: string; count: string }>()
+        .getRawMany<{ platformId: string, count: string }>()
 
     return toCountMap(rows)
 }
@@ -102,7 +102,7 @@ async function queryUsersByPlatform(): Promise<Map<string, number>> {
         .select('user.platformId', 'platformId')
         .addSelect('COUNT(*)', 'count')
         .groupBy('user.platformId')
-        .getRawMany<{ platformId: string; count: string }>()
+        .getRawMany<{ platformId: string, count: string }>()
 
     return toCountMap(rows)
 }
@@ -114,7 +114,7 @@ async function queryTeamProjectsByPlatform(): Promise<Map<string, number>> {
         .addSelect('COUNT(*)', 'count')
         .where('project.type = :type', { type: ProjectType.TEAM })
         .groupBy('project.platformId')
-        .getRawMany<{ platformId: string; count: string }>()
+        .getRawMany<{ platformId: string, count: string }>()
 
     return toCountMap(rows)
 }
@@ -126,7 +126,7 @@ async function queryExecutionsByPlatform(): Promise<Map<string, number>> {
         .select('project.platformId', 'platformId')
         .addSelect('COUNT(*)', 'count')
         .groupBy('project.platformId')
-        .getRawMany<{ platformId: string; count: string }>()
+        .getRawMany<{ platformId: string, count: string }>()
 
     return toCountMap(rows)
 }
@@ -137,7 +137,7 @@ async function queryLicenseKeysByPlatform(): Promise<Map<string, string>> {
         .select('platform_plan.platformId', 'platformId')
         .addSelect('platform_plan.licenseKey', 'licenseKey')
         .where('platform_plan.licenseKey IS NOT NULL')
-        .getRawMany<{ platformId: string; licenseKey: string }>()
+        .getRawMany<{ platformId: string, licenseKey: string }>()
 
     const map = new Map<string, string>()
     for (const row of rows) {
@@ -146,7 +146,7 @@ async function queryLicenseKeysByPlatform(): Promise<Map<string, string>> {
     return map
 }
 
-function toCountMap(rows: { platformId: string; count: string }[]): Map<string, number> {
+function toCountMap(rows: { platformId: string, count: string }[]): Map<string, number> {
     const map = new Map<string, number>()
     for (const row of rows) {
         map.set(row.platformId, parseInt(row.count, 10))
@@ -187,7 +187,7 @@ function buildSnapshotBody({
     return body
 }
 
-async function postSnapshot({ url, body, apiKey }: { url: string; body: Record<string, unknown>; apiKey?: string }): Promise<void> {
+async function postSnapshot({ url, body, apiKey }: { url: string, body: Record<string, unknown>, apiKey?: string }): Promise<void> {
     const headers: Record<string, string> = { 'Content-Type': 'application/json' }
     if (apiKey) {
         headers['Authorization'] = `Bearer ${apiKey}`
