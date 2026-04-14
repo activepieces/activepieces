@@ -32,6 +32,7 @@ import {
 import { FormField, FormItem, Form, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Tooltip,
   TooltipContent,
@@ -359,49 +360,60 @@ export const InviteUserDialog = ({
               </Form>
             ) : (
               <div className="flex flex-col gap-3">
-                {resultsWithLinks.map((result) => (
-                  <div key={result.id} className="flex items-center gap-2">
-                    <Input
-                      type="text"
-                      readOnly={true}
-                      value={result.email}
-                      className="flex-1 rounded-l-md rounded-r-none focus-visible:ring-0! focus-visible:ring-offset-0!"
-                    />
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className="rounded-l-none rounded-r-md"
-                          onClick={() => copyInvitationLink(result.link!)}
-                        >
-                          <CopyIcon height={15} width={15} />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent side="bottom">{t('Copy')}</TooltipContent>
-                    </Tooltip>
+                <ScrollArea className="max-h-[300px]">
+                  <div className="flex flex-col gap-3">
+                    {resultsWithLinks.map((result) => (
+                      <div key={result.id} className="flex flex-col gap-1">
+                        <Label className="text-sm">{result.email}</Label>
+                        <div className="flex items-center gap-2">
+                          <Input
+                            type="text"
+                            readOnly={true}
+                            value={result.link!}
+                            className="flex-1 rounded-l-md rounded-r-none focus-visible:ring-0! focus-visible:ring-offset-0!"
+                          />
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                className="rounded-l-none rounded-r-md"
+                                onClick={() => copyInvitationLink(result.link!)}
+                              >
+                                <CopyIcon height={15} width={15} />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent side="bottom">
+                              {t('Copy')}
+                            </TooltipContent>
+                          </Tooltip>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="flex-1"
-                    onClick={copyAllLinks}
-                  >
-                    <CopyIcon height={15} width={15} />
-                    {t('Copy All')}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="flex-1"
-                    onClick={downloadCsv}
-                  >
-                    <DownloadIcon height={15} width={15} />
-                    {t('Download CSV')}
-                  </Button>
-                </div>
+                </ScrollArea>
+                {resultsWithLinks.length > 1 && (
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="flex-1"
+                      onClick={copyAllLinks}
+                    >
+                      <CopyIcon height={15} width={15} />
+                      {t('Copy All')}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="flex-1"
+                      onClick={downloadCsv}
+                    >
+                      <DownloadIcon height={15} width={15} />
+                      {t('Download CSV')}
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
           </DialogContent>
