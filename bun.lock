@@ -7880,7 +7880,7 @@
     },
     "packages/pieces/framework": {
       "name": "@activepieces/pieces-framework",
-      "version": "0.26.2",
+      "version": "0.27.1",
       "dependencies": {
         "@activepieces/shared": "workspace:*",
         "ai": "^6.0.0",
