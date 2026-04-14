@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { Check, X } from 'lucide-react';
+import { Check } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 
 import { ZapIcon, ZapIconHandle } from '@/components/icons/zap';
@@ -43,7 +43,7 @@ const PasswordStrengthBolt = ({ password }: { password: string }) => {
   }, [isComplete]);
 
   return (
-    <div className="relative group flex items-center justify-center">
+    <div className="flex items-center justify-center">
       <div ref={glowRef}>
         <ZapIcon
           ref={iconRef}
@@ -52,43 +52,60 @@ const PasswordStrengthBolt = ({ password }: { password: string }) => {
           fillPercent={fillPercent}
         />
       </div>
-
-      {/* Hover tooltip */}
-      <div
-        className={cn(
-          'absolute bottom-full right-0 mb-2.5 w-52',
-          'bg-popover border border-border rounded-md shadow-lg p-3',
-          'hidden group-hover:block z-50 pointer-events-none',
-        )}
-      >
-        <p className="text-xs font-semibold text-foreground mb-2">
-          {t('Password requirements')}
-        </p>
-        <div className="flex flex-col gap-1.5">
-          {results.map((rule) => (
-            <div key={rule.label} className="flex items-center gap-2 text-xs">
-              {rule.passed ? (
-                <Check className="w-3.5 h-3.5 text-success shrink-0" />
-              ) : (
-                <X className="w-3.5 h-3.5 text-muted-foreground/60 shrink-0" />
-              )}
-              <span
-                className={cn(
-                  rule.passed ? 'text-foreground' : 'text-muted-foreground',
-                )}
-              >
-                {rule.label}
-              </span>
-            </div>
-          ))}
-        </div>
-        {/* Downward-pointing arrow */}
-        <div className="absolute top-full right-2.5 w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-border" />
-      </div>
     </div>
   );
 };
 
 PasswordStrengthBolt.displayName = 'PasswordStrengthBolt';
 
-export { PasswordStrengthBolt };
+const PasswordRequirementsList = ({
+  password,
+  isSubmitted,
+}: {
+  password: string;
+  isSubmitted: boolean;
+}) => {
+  const results = passwordRules.map((rule) => ({
+    label: rule.label,
+    passed: rule.condition(password),
+  }));
+
+  return (
+    <div className="flex flex-col gap-1.5 mt-1">
+      {results.map((rule) => {
+        const isError = isSubmitted && !rule.passed;
+        return (
+          <div key={rule.label} className="flex items-center gap-2 text-xs">
+            <div
+              className={cn(
+                'w-4 h-4 rounded-full flex items-center justify-center shrink-0',
+                rule.passed
+                  ? 'bg-green-500'
+                  : isError
+                    ? 'bg-red-500'
+                    : 'bg-muted',
+              )}
+            >
+              <Check className="w-2.5 h-2.5 text-white" />
+            </div>
+            <span
+              className={cn(
+                rule.passed
+                  ? 'text-foreground'
+                  : isError
+                    ? 'text-destructive'
+                    : 'text-muted-foreground',
+              )}
+            >
+              {t(rule.label)}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+PasswordRequirementsList.displayName = 'PasswordRequirementsList';
+
+export { PasswordStrengthBolt, PasswordRequirementsList };

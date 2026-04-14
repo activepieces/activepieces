@@ -6,9 +6,11 @@ import {
   isNil,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+
+import { Eye, EyeOff } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -22,7 +24,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { CheckEmailNote } from '@/features/authentication/components/check-email-note';
-import { PasswordStrengthBolt } from '@/features/authentication/components/password-validator';
+import { PasswordRequirementsList, PasswordStrengthBolt } from '@/features/authentication/components/password-validator';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -49,6 +51,7 @@ const SignUpForm = ({
   setShowCheckYourEmailNote: (value: boolean) => void;
 }) => {
   const [searchParams] = useSearchParams();
+  const [showPassword, setShowPassword] = useState(false);
   const { data: termsOfServiceUrl } = flagsHooks.useFlag<string>(
     ApFlagId.TERMS_OF_SERVICE_URL,
   );
@@ -261,19 +264,31 @@ const SignUpForm = ({
               <FormItem className="grid space-y-2">
                 <Label htmlFor="password">{t('Password')}</Label>
                 <div className="relative flex items-center">
+                  <div className="absolute left-3">
+                    <PasswordStrengthBolt password={field.value ?? ''} />
+                  </div>
                   <Input
                     {...field}
                     required
                     id="password"
-                    type="password"
+                    type={showPassword ? 'text' : 'password'}
                     placeholder={'********'}
-                    className="rounded-sm pr-10"
+                    className="rounded-sm pl-10 pr-10"
                     data-testid="sign-up-password"
                   />
-                  <div className="absolute right-3">
-                    <PasswordStrengthBolt password={field.value ?? ''} />
-                  </div>
+                  <button
+                    type="button"
+                    tabIndex={-1}
+                    onClick={() => setShowPassword((v) => !v)}
+                    className="absolute right-3 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
                 </div>
+                <PasswordRequirementsList
+                  password={field.value ?? ''}
+                  isSubmitted={form.formState.submitCount > 0}
+                />
                 <FormMessage />
               </FormItem>
             )}
