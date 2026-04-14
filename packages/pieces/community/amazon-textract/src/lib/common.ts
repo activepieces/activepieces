@@ -501,7 +501,7 @@ export function formatTextractError(error: unknown): string {
     case 'InvalidS3ObjectException':
       return 'The specified S3 object could not be read. Check the bucket name, key, and permissions.';
     case 'UnsupportedDocumentException':
-      return 'The document format is not supported. Use JPEG, PNG, PDF, or TIFF.';
+      return 'The document format or page count is not supported. Synchronous analysis supports JPEG, PNG, and single-page PDF or TIFF via S3. For multi-page PDFs, use the Start Document Analysis action.';
     case 'DocumentTooLargeException':
       return 'The document exceeds the maximum allowed size. Use S3 for large documents.';
     case 'BadDocumentException':
