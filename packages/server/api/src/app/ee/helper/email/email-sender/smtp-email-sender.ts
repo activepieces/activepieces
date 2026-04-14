@@ -127,13 +127,13 @@ const initSmtpClient = (): Transporter => {
 
 const getEmailSubject = (templateName: EmailTemplateData['name'], vars: Record<string, string>): string => {
     const templateToSubject: Record<EmailTemplateData['name'], string> = {
-        'invitation-email': `You have been invited to "${vars.projectName}" project`,
-        'project-member-added': `You've been added to ${vars.projectName}`,
-        'badge-awarded': 'You earned a new badge',
-        'verify-email': 'Verify your email address',
-        'reset-password': 'Reset your password',
-        'issue-created': `Flow has an issue "${vars.flowName}"`,
-        'scim-user-welcome': 'Welcome! Your account has been created',
+        'invitation-email': `You have been invited to "${vars.projectName}" project ✉️`,
+        'project-member-added': `Welcome to ${vars.projectName} 🎉`,
+        'badge-awarded': 'Congratulations, you earned a new badge! 🎉',
+        'verify-email': 'Verify your email address ✅',
+        'reset-password': 'Reset your password 🔑',
+        'issue-created': `Flow has an issue "${vars.flowName}" ⚠️`,
+        'scim-user-welcome': 'Welcome! Your account has been created 🎉',
     }
 
     return templateToSubject[templateName]
