@@ -1,5 +1,10 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { gmailAuth, createGoogleClient, getAccessToken, getUserEmail } from '../auth';
+import {
+  gmailAuth,
+  createGoogleClient,
+  getAccessToken,
+  getUserEmail,
+} from '../auth';
 import { google } from 'googleapis';
 import MailComposer from 'nodemailer/lib/mail-composer';
 import Mail from 'nodemailer/lib/mailer';
