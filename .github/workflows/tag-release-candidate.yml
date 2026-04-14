@@ -1,0 +1,56 @@
+name: Tag Release Candidate
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'Beta image tag to promote (e.g. 0.81.3.4aa37440d3992672697429f8ab747b51ed840556.beta)'
+        required: true
+        type: string
+
+jobs:
+  tag-release-candidate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract SHA from tag
+        id: tag
+        env:
+          IMAGE_TAG: ${{ inputs.image_tag }}
+        run: |
+          SHA=$(echo "$IMAGE_TAG" | grep -oE '\.[a-f0-9]{7,40}\.' | head -1 | tr -d '.')
+          if [[ -z "$SHA" ]]; then
+            echo "ERROR: could not extract a commit SHA from '$IMAGE_TAG'. Expected format: <version>.<sha>.beta"
+            exit 1
+          fi
+          echo "sha=$SHA" >> $GITHUB_OUTPUT
+          echo "Promoting: $IMAGE_TAG (SHA: $SHA)"
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Tag release candidate image
+        env:
+          IMAGE_TAG: ${{ inputs.image_tag }}
+        run: |
+          docker buildx imagetools create \
+            --tag ghcr.io/activepieces/activepieces-cloud:release-candidate \
+            ghcr.io/activepieces/activepieces-cloud:$IMAGE_TAG
+
+      - name: Create release-candidate git tag
+        run: |
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git tag -f release-candidate ${{ steps.tag.outputs.sha }}
+          git push origin release-candidate --force
