@@ -2,7 +2,7 @@ name: Continuous Delivery — Release
 
 on:
   schedule:
-    - cron: '0 14 * * 2' # Every Tuesday at 14 PM UTC
+    - cron: '0 14 * * 2' # Every Tuesday at 14:00 UTC
   workflow_dispatch:
 
 jobs:
