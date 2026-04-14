@@ -6,7 +6,10 @@ import { consoleUsageService } from './console-usage-service'
 
 export const consoleUsageController: FastifyPluginAsyncZod = async (app) => {
     app.post('/snapshots', PostSnapshotParams, async (request, reply) => {
-        consoleUsageService(app.log).processRelayedSnapshot(request.body)
+        await consoleUsageService(app.log).processRelayedSnapshot({
+            platformId: request.body.platform_id,
+            snapshot: request.body,
+        })
         return reply.status(StatusCodes.OK).send()
     })
 }

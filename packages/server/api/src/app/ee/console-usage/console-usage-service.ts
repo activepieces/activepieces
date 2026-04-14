@@ -72,8 +72,13 @@ export const consoleUsageService = (log: FastifyBaseLogger) => ({
         }
     },
 
-    processRelayedSnapshot(snapshot: Record<string, unknown>): void {
+    async processRelayedSnapshot({ platformId, snapshot }: { platformId: string, snapshot: Record<string, unknown> }): Promise<void> {
         if (system.getEdition() !== ApEdition.CLOUD || isNil(CONSOLE_API_KEY)) {
+            return
+        }
+        const platform = await platformService(log).getOne(platformId)
+        if (isNil(platform)) {
+            log.warn({ platformId }, 'Ignoring relayed snapshot for unknown platform')
             return
         }
         rejectedPromiseHandler(
@@ -119,6 +124,7 @@ async function queryTeamProjectsByPlatform(): Promise<Map<string, number>> {
     return toCountMap(rows)
 }
 
+// Cumulative all-time total — the Console tracks lifetime executions per platform for billing/usage dashboards
 async function queryExecutionsByPlatform(): Promise<Map<string, number>> {
     const rows = await flowRunRepo()
         .createQueryBuilder('flow_run')
