@@ -12,11 +12,27 @@ import {
   isApiKeyAuthentication,
   getJwtToken,
 } from '../common/auth';
+import { postizApiCall, postizCommon } from '../common';
 
 const WEBHOOK_STORE_KEY = 'postiz_webhook_id';
+const SAMPLE_POSTS_LOOKBACK_DAYS = 30;
+const SAMPLE_POSTS_LIMIT = 5;
 
 function buildApiRoot(auth: PostizJwtAuthValue): string {
   return auth.props.base_url.trim().replace(/\/+$/, '');
+}
+
+function toTriggerItem(post: PostizWebhookPost) {
+  return {
+    id: post.id,
+    content: post.content,
+    publish_date: post.publishDate,
+    release_url: post.releaseURL ?? null,
+    state: post.state,
+    integration_id: post.integration?.id ?? null,
+    integration_provider: post.integration?.providerIdentifier ?? null,
+    integration_name: post.integration?.name ?? null,
+  };
 }
 
 export const newPost = createTrigger({
@@ -35,6 +51,7 @@ If you are using **API Key** authentication, copy this URL and paste it in your 
 With **Email & Password (JWT)** authentication, the webhook is registered automatically.`,
       variant: MarkdownVariant.INFO,
     }),
+    integrations: postizCommon.integrationMultiSelect,
   },
   sampleData: {
     id: 'abc123',
@@ -60,6 +77,8 @@ With **Email & Password (JWT)** authentication, the webhook is registered automa
       email: jwtAuth.props.email,
       password: jwtAuth.props.password,
     });
+    const selectedIntegrations =
+      (context.propsValue.integrations as string[] | undefined) ?? [];
     const response = await httpClient.sendRequest<{ id: string }>({
       method: HttpMethod.POST,
       url: `${apiRoot}/api/webhooks`,
@@ -70,7 +89,7 @@ With **Email & Password (JWT)** authentication, the webhook is registered automa
       body: {
         name: `Activepieces – ${Date.now()}`,
         url: context.webhookUrl,
-        integrations: [],
+        integrations: selectedIntegrations,
       },
     });
     await context.store.put(WEBHOOK_STORE_KEY, response.body.id);
@@ -103,22 +122,49 @@ With **Email & Password (JWT)** authentication, the webhook is registered automa
     await context.store.delete(WEBHOOK_STORE_KEY);
   },
 
+  async test(context) {
+    const now = new Date();
+    const lookbackStart = new Date(
+      now.getTime() - SAMPLE_POSTS_LOOKBACK_DAYS * 24 * 60 * 60 * 1000,
+    );
+    const response = await postizApiCall<{ posts: PostizWebhookPost[] }>({
+      auth: context.auth as PostizAuthValue,
+      method: HttpMethod.GET,
+      path: '/posts',
+      queryParams: {
+        startDate: lookbackStart.toISOString(),
+        endDate: now.toISOString(),
+      },
+    });
+    const selectedIntegrations =
+      (context.propsValue.integrations as string[] | undefined) ?? [];
+    return response.body.posts
+      .filter((post) => post.state === 'PUBLISHED')
+      .filter(
+        (post) =>
+          selectedIntegrations.length === 0 ||
+          (post.integration?.id !== undefined &&
+            selectedIntegrations.includes(post.integration.id)),
+      )
+      .slice(0, SAMPLE_POSTS_LIMIT)
+      .map(toTriggerItem);
+  },
+
   async run(context) {
     const body = context.payload.body as PostizWebhookPost | PostizWebhookPost[];
     const posts = Array.isArray(body) ? body : [body];
+    const selectedIntegrations =
+      (context.propsValue.integrations as string[] | undefined) ?? [];
 
     return posts
       .filter((post) => post.state === 'PUBLISHED')
-      .map((post) => ({
-        id: post.id,
-        content: post.content,
-        publish_date: post.publishDate,
-        release_url: post.releaseURL ?? null,
-        state: post.state,
-        integration_id: post.integration?.id ?? null,
-        integration_provider: post.integration?.providerIdentifier ?? null,
-        integration_name: post.integration?.name ?? null,
-      }));
+      .filter(
+        (post) =>
+          selectedIntegrations.length === 0 ||
+          (post.integration?.id !== undefined &&
+            selectedIntegrations.includes(post.integration.id)),
+      )
+      .map(toTriggerItem);
   },
 });
 

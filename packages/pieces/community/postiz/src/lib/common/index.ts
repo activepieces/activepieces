@@ -51,6 +51,35 @@ export async function postizApiCall<T extends HttpMessageBody>({
   });
 }
 
+async function fetchIntegrationOptions(auth: unknown) {
+  if (!auth) {
+    return {
+      disabled: true,
+      options: [] as { label: string; value: string }[],
+      placeholder: 'Please connect your Postiz account first',
+    };
+  }
+  const response = await postizApiCall<
+    {
+      id: string;
+      name: string;
+      identifier: string;
+      profile: string;
+    }[]
+  >({
+    auth: auth as PostizAuthValue,
+    method: HttpMethod.GET,
+    path: '/integrations',
+  });
+  return {
+    disabled: false,
+    options: response.body.map((integration) => ({
+      label: `${integration.name} (${integration.identifier})`,
+      value: integration.id,
+    })),
+  };
+}
+
 export const postizCommon = {
   integrationDropdown: Property.Dropdown({
     displayName: 'Channel',
@@ -58,34 +87,16 @@ export const postizCommon = {
     refreshers: ['auth'],
     required: true,
     auth: postizAuth,
-    options: async ({ auth }) => {
-      if (!auth) {
-        return {
-          disabled: true,
-          options: [],
-          placeholder: 'Please connect your Postiz account first',
-        };
-      }
-      const response = await postizApiCall<
-        {
-          id: string;
-          name: string;
-          identifier: string;
-          profile: string;
-        }[]
-      >({
-        auth: auth as PostizAuthValue,
-        method: HttpMethod.GET,
-        path: '/integrations',
-      });
-      return {
-        disabled: false,
-        options: response.body.map((integration) => ({
-          label: `${integration.name} (${integration.identifier})`,
-          value: integration.id,
-        })),
-      };
-    },
+    options: fetchIntegrationOptions,
+  }),
+  integrationMultiSelect: Property.MultiSelectDropdown({
+    displayName: 'Channels',
+    description:
+      'Only trigger for posts published on these channels. Leave empty to trigger for all channels.',
+    refreshers: ['auth'],
+    required: false,
+    auth: postizAuth,
+    options: fetchIntegrationOptions,
   }),
 };
 

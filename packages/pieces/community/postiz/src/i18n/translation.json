@@ -76,5 +76,7 @@
   "Form Data": "Form Data",
   "Raw": "Raw",
   "New Published Post": "New Published Post",
-  "Triggers when a post is published in Postiz": "Triggers when a post is published in Postiz"
+  "Triggers when a post is published in Postiz": "Triggers when a post is published in Postiz",
+  "Channels": "Channels",
+  "Only trigger for posts published on these channels. Leave empty to trigger for all channels.": "Only trigger for posts published on these channels. Leave empty to trigger for all channels."
 }
