@@ -18,7 +18,8 @@ export const findOrAddDealAction = createAction({
     }),
     pipelineUid: pipelineDropdown(),
     pipelineStageUid: pipelineStageDropdown({
-      description: 'Pipeline stage for the deal (required when creating).',
+      required: false,
+      description: 'Pipeline stage for the deal (only required when creating a new one).',
     }),
     name: Property.ShortText({
       displayName: 'Deal Name',
@@ -61,7 +62,7 @@ export const findOrAddDealAction = createAction({
     // If person found, search for deals in the pipeline
     if (person) {
       const deals = await client.getAllPages<any>(
-        `/api/v1/crm/deals?$filter=DealPipelineStage/DealPipeline/Uid eq '${encodeURIComponent(context.propsValue.pipelineUid)}'&fields=*,DealPeople,DealPeople.Person,DealPipelineStage,DealPipelineStage.DealPipeline,Account`
+        `/api/v1/crm/deals?$filter=DealPipelineStage/DealPipeline/Uid eq '${OutsetaClient.escapeOData(context.propsValue.pipelineUid)}'&fields=*,DealPeople,DealPeople.Person,DealPipelineStage,DealPipelineStage.DealPipeline,Account`
       );
       const existingDeal = deals.find(
         (deal: any) =>
@@ -77,7 +78,12 @@ export const findOrAddDealAction = createAction({
       }
     }
 
-    // Create a new deal
+    if (!context.propsValue.pipelineStageUid) {
+      throw new Error(
+        'Pipeline Stage is required to create a new deal. Select a stage to enable the create path.'
+      );
+    }
+
     const body: Record<string, unknown> = {
       Name: context.propsValue.name,
       DealPipelineStage: { Uid: context.propsValue.pipelineStageUid },

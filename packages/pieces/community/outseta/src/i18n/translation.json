@@ -229,6 +229,7 @@
   "Number of records to skip (default 0).": "Number of records to skip (default 0).",
   "Pipeline stage for the deal.": "Pipeline stage for the deal.",
   "Pipeline stage for the deal (required when creating).": "Pipeline stage for the deal (required when creating).",
+  "Pipeline stage for the deal (only required when creating a new one).": "Pipeline stage for the deal (only required when creating a new one).",
   "Select the deal pipeline.": "Select the deal pipeline.",
   "Select the pipeline stage.": "Select the pipeline stage.",
   "Select the subscription plan.": "Select the subscription plan.",

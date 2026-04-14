@@ -229,6 +229,7 @@
   "Number of records to skip (default 0).": "Nombre d'enregistrements à ignorer (défaut 0).",
   "Pipeline stage for the deal.": "Étape du pipeline pour le deal.",
   "Pipeline stage for the deal (required when creating).": "Étape du pipeline pour le deal (obligatoire lors de la création).",
+  "Pipeline stage for the deal (only required when creating a new one).": "Étape du pipeline pour le deal (obligatoire uniquement lors de la création d'un nouveau deal).",
   "Select the deal pipeline.": "Sélectionner le pipeline de deals.",
   "Select the pipeline stage.": "Sélectionner l'étape du pipeline.",
   "Select the subscription plan.": "Sélectionner le forfait d'abonnement.",
