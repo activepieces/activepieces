@@ -21,7 +21,14 @@ import {
   X,
   Zap,
 } from 'lucide-react';
-import React, { useState, useRef, useEffect, useMemo, useCallback, memo } from 'react';
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  useMemo,
+  useCallback,
+  memo,
+} from 'react';
 import { createPortal } from 'react-dom';
 import Lottie from 'react-lottie';
 import ReactMarkdown from 'react-markdown';
@@ -232,7 +239,6 @@ const keyframes = `
   .prompt-float-footer { background: linear-gradient(to bottom, transparent, var(--background) 40%); max-width: calc(clamp(280px, calc(100vw - 700px), 560px) + 20px); margin: 0 auto; width: calc(100% + 20px); padding-top: 80px; margin-top: -80px; }
 `;
 
-
 const REMARK_PLUGINS = [gfm, breaks];
 
 function ToolCallPill({ name }: { name: string }) {
@@ -244,7 +250,11 @@ function ToolCallPill({ name }: { name: string }) {
   );
 }
 
-const ChatMarkdown = memo(function ChatMarkdown({ markdown }: { markdown: string }) {
+const ChatMarkdown = memo(function ChatMarkdown({
+  markdown,
+}: {
+  markdown: string;
+}) {
   if (!markdown) return null;
 
   return (
@@ -266,28 +276,82 @@ const ChatMarkdown = memo(function ChatMarkdown({ markdown }: { markdown: string
           }
           return <code className={cn('text-wrap', className)}>{children}</code>;
         },
-        h1: ({ node: _node, ref: _ref, ...props }) => <h1 className="scroll-m-20 text-xl font-extrabold tracking-tight" {...props} />,
-        h2: ({ node: _node, ref: _ref, ...props }) => <h2 className="scroll-m-20 text-lg font-semibold tracking-tight mt-4 first:mt-0" {...props} />,
-        h3: ({ node: _node, ref: _ref, ...props }) => <h3 className="scroll-m-20 text-base font-semibold tracking-tight mt-3" {...props} />,
-        p: ({ node: _node, ref: _ref, ...props }) => <p className="leading-6 first-of-type:mt-0 not-first-of-type:mt-2 mb-2" {...props} />,
-        ul: ({ node: _node, ref: _ref, ...props }) => <ul className="mt-2 ml-5 list-disc [&>li]:mt-1.5" {...props} />,
-        ol: ({ node: _node, ref: _ref, ...props }) => <ol className="mt-2 ml-5 list-decimal [&>li]:mt-1.5" {...props} />,
-        li: ({ node: _node, ref: _ref, ...props }) => <li className="leading-6" {...props} />,
-        a: ({ node: _node, ref: _ref, ...props }) => <a className="font-medium text-primary underline underline-offset-4" target="_blank" rel="noreferrer noopener" {...props} />,
-        blockquote: ({ node: _node, ref: _ref, ...props }) => <blockquote className="mt-3 border-l-2 border-primary/30 pl-4 italic text-muted-foreground" {...props} />,
-        table: ({ node: _node, ref: _ref, ...props }) => <div className="my-3 overflow-x-auto rounded-lg border border-border/60"><table className="w-full text-sm" {...props} /></div>,
-        thead: ({ node: _node, ref: _ref, ...props }) => <thead className="bg-accent/40" {...props} />,
-        tr: ({ node: _node, ref: _ref, ...props }) => <tr className="border-b border-border/40" {...props} />,
-        th: ({ node: _node, ref: _ref, ...props }) => <th className="text-left px-3 py-2 font-medium text-muted-foreground" {...props} />,
-        td: ({ node: _node, ref: _ref, ...props }) => <td className="px-3 py-2" {...props} />,
-        hr: ({ node: _node, ref: _ref, ...props }) => <hr className="my-4 border-border/40" {...props} />,
+        h1: ({ node: _node, ref: _ref, ...props }) => (
+          <h1
+            className="scroll-m-20 text-xl font-extrabold tracking-tight"
+            {...props}
+          />
+        ),
+        h2: ({ node: _node, ref: _ref, ...props }) => (
+          <h2
+            className="scroll-m-20 text-lg font-semibold tracking-tight mt-4 first:mt-0"
+            {...props}
+          />
+        ),
+        h3: ({ node: _node, ref: _ref, ...props }) => (
+          <h3
+            className="scroll-m-20 text-base font-semibold tracking-tight mt-3"
+            {...props}
+          />
+        ),
+        p: ({ node: _node, ref: _ref, ...props }) => (
+          <p
+            className="leading-6 first-of-type:mt-0 not-first-of-type:mt-2 mb-2"
+            {...props}
+          />
+        ),
+        ul: ({ node: _node, ref: _ref, ...props }) => (
+          <ul className="mt-2 ml-5 list-disc [&>li]:mt-1.5" {...props} />
+        ),
+        ol: ({ node: _node, ref: _ref, ...props }) => (
+          <ol className="mt-2 ml-5 list-decimal [&>li]:mt-1.5" {...props} />
+        ),
+        li: ({ node: _node, ref: _ref, ...props }) => (
+          <li className="leading-6" {...props} />
+        ),
+        a: ({ node: _node, ref: _ref, ...props }) => (
+          <a
+            className="font-medium text-primary underline underline-offset-4"
+            target="_blank"
+            rel="noreferrer noopener"
+            {...props}
+          />
+        ),
+        blockquote: ({ node: _node, ref: _ref, ...props }) => (
+          <blockquote
+            className="mt-3 border-l-2 border-primary/30 pl-4 italic text-muted-foreground"
+            {...props}
+          />
+        ),
+        table: ({ node: _node, ref: _ref, ...props }) => (
+          <div className="my-3 overflow-x-auto rounded-lg border border-border/60">
+            <table className="w-full text-sm" {...props} />
+          </div>
+        ),
+        thead: ({ node: _node, ref: _ref, ...props }) => (
+          <thead className="bg-accent/40" {...props} />
+        ),
+        tr: ({ node: _node, ref: _ref, ...props }) => (
+          <tr className="border-b border-border/40" {...props} />
+        ),
+        th: ({ node: _node, ref: _ref, ...props }) => (
+          <th
+            className="text-left px-3 py-2 font-medium text-muted-foreground"
+            {...props}
+          />
+        ),
+        td: ({ node: _node, ref: _ref, ...props }) => (
+          <td className="px-3 py-2" {...props} />
+        ),
+        hr: ({ node: _node, ref: _ref, ...props }) => (
+          <hr className="my-4 border-border/40" {...props} />
+        ),
       }}
     >
       {markdown.trim()}
     </ReactMarkdown>
   );
 });
-
 
 const THINKING_PHRASES = [
   'Thinking...',
@@ -380,18 +444,26 @@ export function AIChatBox({
   const conversationPromiseRef = useRef<Promise<string> | null>(null);
 
   const getOrCreateConversation = useCallback((): Promise<string> => {
-    if (conversationIdRef.current) return Promise.resolve(conversationIdRef.current);
+    if (conversationIdRef.current)
+      return Promise.resolve(conversationIdRef.current);
     if (conversationPromiseRef.current) return conversationPromiseRef.current;
 
     const promise = (async () => {
       const projectId = authenticationSession.getProjectId();
       const token = authenticationSession.getToken();
-      const res = await fetch(`${API_URL}/v1/chat/conversations?projectId=${projectId}`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({}),
-      });
-      if (!res.ok) throw new Error(`Failed to create conversation: ${res.status}`);
+      const res = await fetch(
+        `${API_URL}/v1/chat/conversations?projectId=${projectId}`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({}),
+        },
+      );
+      if (!res.ok)
+        throw new Error(`Failed to create conversation: ${res.status}`);
       const conv = await res.json();
       conversationIdRef.current = conv.id;
       return conv.id as string;
@@ -401,26 +473,35 @@ export function AIChatBox({
     return promise;
   }, []);
 
-  const transport = useMemo(() => new DefaultChatTransport({
-    api: `${API_URL}/v1/chat/conversations/placeholder/messages`,
-    headers: {
-      'Authorization': `Bearer ${authenticationSession.getToken()}`,
-    },
-    fetch: async (_input, init) => {
-      const convId = await getOrCreateConversation();
-      const url = `${API_URL}/v1/chat/conversations/${convId}/messages`;
-      return fetch(url, init);
-    },
-  }), [getOrCreateConversation]);
+  const transport = useMemo(
+    () =>
+      new DefaultChatTransport({
+        api: `${API_URL}/v1/chat/conversations/placeholder/messages`,
+        headers: {
+          Authorization: `Bearer ${authenticationSession.getToken()}`,
+        },
+        fetch: async (_input, init) => {
+          const convId = await getOrCreateConversation();
+          const url = `${API_URL}/v1/chat/conversations/${convId}/messages`;
+          return fetch(url, init);
+        },
+      }),
+    [getOrCreateConversation],
+  );
 
   const chatHook = useChat({ transport });
 
-  const streamFromBackend = useCallback(async (userText: string) => {
-    await chatHook.sendMessage({ text: userText });
-  }, [chatHook]);
+  const streamFromBackend = useCallback(
+    async (userText: string) => {
+      await chatHook.sendMessage({ text: userText });
+    },
+    [chatHook],
+  );
 
   useEffect(() => {
-    return () => { abortRef.current?.abort(); };
+    return () => {
+      abortRef.current?.abort();
+    };
   }, []);
 
   useEffect(() => {
@@ -430,9 +511,14 @@ export function AIChatBox({
         if (part.type === 'text') {
           text += part.text;
         } else if (part.type === 'dynamic-tool') {
-          const displayName = (part.toolName || '').replace(/^ap_/, '').replace(/_/g, ' ');
+          const displayName = (part.toolName || '')
+            .replace(/^ap_/, '')
+            .replace(/_/g, ' ');
           text += `\n\n\`tool:${displayName}\`\n\n`;
-        } else if (typeof part.type === 'string' && part.type.startsWith('tool-')) {
+        } else if (
+          typeof part.type === 'string' &&
+          part.type.startsWith('tool-')
+        ) {
           const toolName = part.type.replace('tool-', '');
           const displayName = toolName.replace(/^ap_/, '').replace(/_/g, ' ');
           text += `\n\n\`tool:${displayName}\`\n\n`;
@@ -440,11 +526,14 @@ export function AIChatBox({
       }
       return {
         id: i,
-        role: m.role === 'user' ? 'user' as const : 'ai' as const,
+        role: m.role === 'user' ? ('user' as const) : ('ai' as const),
         text,
         time: getTime(),
         fullDate: getFullDate(),
-        streaming: chatHook.status === 'streaming' && i === chatHook.messages.length - 1 && m.role === 'assistant',
+        streaming:
+          chatHook.status === 'streaming' &&
+          i === chatHook.messages.length - 1 &&
+          m.role === 'assistant',
       };
     });
     setMessages(mapped);
@@ -496,15 +585,18 @@ export function AIChatBox({
       const conversationId = await getOrCreateConversation();
       const authToken = authenticationSession.getToken();
 
-      const res = await fetch(`${API_URL}/v1/chat/conversations/${conversationId}/messages`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${authToken}`,
-          'Content-Type': 'application/json',
+      const res = await fetch(
+        `${API_URL}/v1/chat/conversations/${conversationId}/messages`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ content: lastUserText || 'Hello' }),
+          signal: abortRef.current.signal,
         },
-        body: JSON.stringify({ content: lastUserText || 'Hello' }),
-        signal: abortRef.current.signal,
-      });
+      );
 
       setTyping(false);
       const reader = res.body!.getReader();
@@ -537,7 +629,9 @@ export function AIChatBox({
                 ),
               );
             } else if (eventType === 'tool_call_start') {
-              const displayName = (data.toolName || '').replace(/^ap_/, '').replace(/_/g, ' ');
+              const displayName = (data.toolName || '')
+                .replace(/^ap_/, '')
+                .replace(/_/g, ' ');
               fullText += `\n\n\`tool:${displayName}\`\n\n`;
             }
           } catch {
