@@ -57,7 +57,14 @@ export const newEventTrigger = createTrigger({
     // Webhook must be removed manually in Outseta
   },
   async run(context) {
-    return [context.payload.body as Record<string, unknown>];
+    const payload = context.payload.body as Record<string, unknown>;
+    const eventType = context.propsValue.eventType as string;
+
+    if (!payloadMatchesEventType(eventType, payload)) {
+      return [];
+    }
+
+    return [payload];
   },
   async test(context) {
     const client = new OutsetaClient({
@@ -123,6 +130,38 @@ function getEndpointForEventType(eventType: string): EventEndpoint | null {
 function extractItems(res: Record<string, unknown>): Record<string, unknown>[] {
   const raw = (res?.['items'] ?? res?.['Items']) as Record<string, unknown>[] | undefined;
   return raw ?? [];
+}
+
+function payloadMatchesEventType(
+  eventType: string,
+  payload: Record<string, unknown>
+): boolean {
+  const has = (key: string) => key in payload;
+
+  const isAccount = has('AccountStage') || has('PersonAccount');
+  const isPerson = has('Email') && has('FirstName') && !has('AccountStage');
+  const isDeal = has('DealPipelineStage') || has('DealPeople');
+  const isSubscription = has('BillingRenewalTerm') && has('Plan');
+  const isInvoice = has('InvoiceLineItems') || has('InvoiceDate');
+  const isSupportTicket = has('CaseStatus') || has('Subject');
+
+  const prefix = eventType.split('_')[0];
+  switch (prefix) {
+    case 'account':
+      return isAccount || !(isPerson || isDeal || isSubscription || isInvoice || isSupportTicket);
+    case 'person':
+      return isPerson || !(isAccount || isDeal || isSubscription || isInvoice || isSupportTicket);
+    case 'deal':
+      return isDeal || !(isAccount || isPerson || isSubscription || isInvoice || isSupportTicket);
+    case 'subscription':
+      return isSubscription || !(isAccount || isPerson || isDeal || isInvoice || isSupportTicket);
+    case 'invoice':
+      return isInvoice || !(isAccount || isPerson || isDeal || isSubscription || isSupportTicket);
+    case 'support':
+      return isSupportTicket || !(isAccount || isPerson || isDeal || isSubscription || isInvoice);
+    default:
+      return true;
+  }
 }
 
 type EventEndpoint = { path: string; orderBy: string };
