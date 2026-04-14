@@ -18,7 +18,9 @@ import {
     WorkerJobType,
     WorkerToApiContract,
 } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { flowCache } from '../../cache/flow/flow-cache'
+import { system, WorkerSystemProp } from '../../config/configs'
 import { workerSettings } from '../../config/worker-settings'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../types'
 import { provisionFlowPieces } from '../utils/flow-helpers'
@@ -130,7 +132,7 @@ async function buildFlowOperation(
     }
 
     if (data.executionType === ExecutionType.RESUME) {
-        const executionState = await fetchExecutionState(ctx.apiClient, data)
+        const executionState = await fetchExecutionState({ apiClient: ctx.apiClient, data, log: ctx.log })
         if (Object.keys(executionState.steps).length === 0) {
             ctx.log.error({ runId: data.runId, executionType: data.executionType }, 'RESUME operation has empty execution state — this is a bug that would cause an infinite loop')
             throw new ActivepiecesError({
@@ -158,7 +160,7 @@ async function buildFlowOperation(
     }
 }
 
-async function fetchExecutionState(apiClient: WorkerToApiContract, data: ExecuteFlowJobData): Promise<ExecutionState> {
+async function fetchExecutionState({ apiClient, data, log }: { apiClient: WorkerToApiContract, data: ExecuteFlowJobData, log: FastifyBaseLogger }): Promise<ExecutionState> {
     if (isNil(data.logsFileId)) {
         throw new ActivepiecesError({
             code: ErrorCode.RESUME_LOGS_FILE_MISSING,
@@ -168,6 +170,13 @@ async function fetchExecutionState(apiClient: WorkerToApiContract, data: Execute
     const buffer = await apiClient.getPayloadFile({ fileId: data.logsFileId, projectId: data.projectId })
     const parsed = JSON.parse(buffer.toString('utf-8'))
     if (isNil(parsed.executionState)) {
+        if (!isDedicatedWorker()) {
+            onCallService(log, workerSettings.getSettings().PAGE_ONCALL_WEBHOOK).page({
+                code: ErrorCode.EXECUTION_STATE_MISSING,
+                message: `Flow run ${data.runId} has missing execution state in logs file ${data.logsFileId}`,
+                params: { runId: data.runId, logsFileId: data.logsFileId },
+            }).catch((e) => log.error({ runId: data.runId, error: inspect(e) }, 'Failed to send on-call page for EXECUTION_STATE_MISSING'))
+        }
         throw new ActivepiecesError({
             code: ErrorCode.EXECUTION_STATE_MISSING,
             params: { logsFileId: data.logsFileId },
@@ -191,11 +200,15 @@ async function reportFlowStatus(
         finishTime: new Date().toISOString(),
     })
 
-    if (status === FlowRunStatus.INTERNAL_ERROR) {
+    if (status === FlowRunStatus.INTERNAL_ERROR && isDedicatedWorker()) {
         onCallService(ctx.log, workerSettings.getSettings().PAGE_ONCALL_WEBHOOK).page({
             code: ErrorCode.ENGINE_OPERATION_FAILURE,
             message: `Flow run ${data.runId} ended with INTERNAL_ERROR`,
             params: { runId: data.runId, flowId: data.flowId, projectId: data.projectId },
         }).catch((e) => ctx.log.error({ runId: data.runId, error: inspect(e) }, 'Failed to send on-call page for INTERNAL_ERROR'))
     }
+}
+
+function isDedicatedWorker(): boolean {
+    return !isNil(system.get(WorkerSystemProp.WORKER_GROUP_ID))
 }
