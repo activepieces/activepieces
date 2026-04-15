@@ -238,7 +238,7 @@ export type ConstructToolParams = {
 }
 
 export interface AgentContext {
-  tools: (params: ConstructToolParams) => Promise<Tool>;
+  tools: (params: ConstructToolParams) => Promise<Record<string, Tool>>;
 }
 
 export interface FilesService {
