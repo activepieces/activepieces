@@ -99,6 +99,7 @@ export function useUserSuggestions({
 
     return filtered.slice(0, 10);
   }, [
+    isPlatformPage,
     platformUsersData,
     projectMemberEmails,
     pendingInvitationEmails,
@@ -142,6 +143,7 @@ export function useUserSuggestions({
 
     return { email, type: 'new-user', user: undefined };
   }, [
+    isPlatformPage,
     searchTerm,
     currentEmails,
     suggestedUsers,
