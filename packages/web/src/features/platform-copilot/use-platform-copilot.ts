@@ -54,10 +54,17 @@ export function useCopilotModels() {
           }
         }
       }
-      return models.sort((a, b) => {
-        const aScore = PREFERRED_MODEL_SCORE(a.modelId);
-        const bScore = PREFERRED_MODEL_SCORE(b.modelId);
-        return bScore - aScore;
+      models.sort(
+        (a, b) =>
+          PREFERRED_MODEL_SCORE(b.modelId) - PREFERRED_MODEL_SCORE(a.modelId),
+      );
+
+      const perProvider = new Map<string, number>();
+      return models.filter((m) => {
+        const count = perProvider.get(m.provider) ?? 0;
+        if (count >= 3) return false;
+        perProvider.set(m.provider, count + 1);
+        return true;
       });
     },
   });

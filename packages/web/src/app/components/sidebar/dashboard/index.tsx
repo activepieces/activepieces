@@ -8,7 +8,7 @@ import {
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Search, Plus } from 'lucide-react';
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useDebounce } from 'use-debounce';
 
@@ -42,6 +42,8 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { VirtualizedScrollArea } from '@/components/ui/virtualized-scroll-area';
+import { PlatformCopilotButton } from '@/features/platform-copilot/platform-copilot-button';
+import { PlatformCopilotSheet } from '@/features/platform-copilot/platform-copilot-sheet';
 import { projectCollectionUtils, getProjectName } from '@/features/projects';
 import { templatesTelemetryApi } from '@/features/templates';
 import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
@@ -70,6 +72,7 @@ export function ProjectDashboardSidebar({
   const [debouncedSearchQuery] = useDebounce(searchQuery, 300);
 
   const [searchOpen, setSearchOpen] = useState(false);
+  const [copilotOpen, setCopilotOpen] = React.useState(false);
   const navigate = useNavigate();
   const { data: currentUser } = userHooks.useCurrentUser();
   const { platform } = platformHooks.useCurrentPlatform();
@@ -222,6 +225,10 @@ export function ProjectDashboardSidebar({
   return (
     !embedState.hideSideNav && (
       <>
+        <PlatformCopilotSheet
+          open={copilotOpen}
+          onOpenChange={setCopilotOpen}
+        />
         <Sidebar
           collapsible="icon"
           id={SIDEBAR_ID}
@@ -231,6 +238,7 @@ export function ProjectDashboardSidebar({
 
           <SidebarContent className="overflow-x-hidden">
             <SidebarGroup>
+              <PlatformCopilotButton onClick={() => setCopilotOpen(true)} />
               <div className="mb-1 group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center">
                 <GlobalSearchCommand />
               </div>

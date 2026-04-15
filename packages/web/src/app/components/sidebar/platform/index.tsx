@@ -206,6 +206,7 @@ export function PlatformSidebar() {
           <ChevronLeftIcon ref={chevronRef} className="size-4" size={16} />
           <span className="truncate text-sm">{t('Back to app')}</span>
         </Link>
+        <PlatformCopilotButton onClick={() => setCopilotOpen(true)} />
       </SidebarHeader>
       <div className="flex-1 overflow-y-auto">
         <SidebarContent className="gap-0">
@@ -233,7 +234,6 @@ export function PlatformSidebar() {
       </div>
 
       <SidebarFooter>
-        <PlatformCopilotButton onClick={() => setCopilotOpen(true)} />
         <SidebarUser />
       </SidebarFooter>
       <PlatformCopilotSheet open={copilotOpen} onOpenChange={setCopilotOpen} />

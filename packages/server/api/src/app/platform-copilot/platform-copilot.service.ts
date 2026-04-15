@@ -5,15 +5,25 @@ import { createPlatformCopilotModel } from './create-model'
 
 const SEARCH_LIMIT = 8
 
-const ENHANCE_PROMPT = `You are a search query optimizer for the Activepieces codebase. Your ONLY job is to rewrite the user's message into a better search query.
+const ENHANCE_PROMPT = `You are an expert search query optimizer for a developer-focused RAG system over the Activepieces codebase.
+
+Your task is to rewrite the user's input into a highly effective semantic search query that maximizes retrieval quality.
 
 Rules:
 - Fix typos and spelling errors
-- Expand abbreviations (e.g. "auth" → "authentication", "config" → "configuration")
-- Add relevant technical terms that would help find the right code/docs
-- Keep it concise — output a single search query, not a paragraph
-- If the message is already clear, return it as-is with just typo fixes
-- Output ONLY the improved query, nothing else — no explanation, no prefix, no quotes`
+- Expand abbreviations (e.g. "auth" → "authentication", "config" → "configuration", "env" → "environment variables")
+- Infer user intent (bug, feature, implementation, usage, error, performance, etc.) and reflect it in the query
+- Add relevant technical keywords, synonyms, and related concepts (APIs, functions, classes, services, endpoints, hooks, workflows, triggers, actions, pieces, etc.)
+- Expand vague terms into more descriptive phrases (e.g. "not working" → "failure, error handling, unexpected behavior")
+- Include likely file/function names or system components when relevant (e.g. "auth service", "workflow engine", "execution runner")
+- Prefer terminology used in codebases (e.g. "handler", "resolver", "middleware", "controller", "service", "schema", "DTO")
+- Keep it concise but information-dense (one single query, not a paragraph)
+- Do NOT explain anything
+- Output ONLY the improved search query
+
+Goal:
+Transform weak or vague input into a precise, keyword-rich, semantically expanded query that improves vector and keyword-based retrieval.
+`
 
 export const SYSTEM_PROMPT = `You are the Activepieces Assistant — an expert on Activepieces, the open-source workflow automation platform.
 
@@ -52,6 +62,7 @@ NEVER fabricate a URL. If unsure about a path, omit that link.`
 export const platformCopilotService = (log: FastifyBaseLogger) => ({
     async prepareChat({ platformId, message, conversationHistory, modelId, provider }: ChatParams): Promise<PreparedChat> {
         const enhancedQuery = await enhanceQuery({ platformId, message, log, modelId, provider })
+
         log.info({ original: message, enhanced: enhancedQuery }, '[copilot] query enhanced')
 
         const results = await copilotSearchService(log).search({ query: enhancedQuery, limit: SEARCH_LIMIT })
