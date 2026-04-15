@@ -69,6 +69,7 @@ export const platformService = (log: FastifyBaseLogger) => ({
             emailAuthEnabled: true,
             filteredPieceNames: [],
             enforceAllowedAuthDomains: false,
+            enforceTotp: false,
             allowedAuthDomains: [],
             filteredPieceBehavior: FilteredPieceBehavior.BLOCKED,
             federatedAuthProviders: {},
@@ -119,6 +120,7 @@ export const platformService = (log: FastifyBaseLogger) => ({
                 params.enforceAllowedAuthDomains,
             ),
             ...spreadIfDefined('allowedAuthDomains', params.allowedAuthDomains),
+            ...spreadIfDefined('enforceTotp', params.enforceTotp),
             ...spreadIfDefined('pinnedPieces', params.pinnedPieces),
         }
         if (!isNil(params.plan)) {

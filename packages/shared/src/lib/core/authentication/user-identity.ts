@@ -23,6 +23,7 @@ export const UserIdentity = z.object({
     provider: z.nativeEnum(UserIdentityProvider),
     imageUrl: Nullable(z.string()),
     draft: z.boolean().optional(),
+    twoFactorEnabled: z.boolean().optional(),
 })
 
 export type UserIdentity = z.infer<typeof UserIdentity>

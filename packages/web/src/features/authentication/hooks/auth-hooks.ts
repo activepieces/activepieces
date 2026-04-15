@@ -1,6 +1,7 @@
 import {
   AuthenticationResponse,
   CreateOtpRequestBody,
+  MfaChallengeResponse,
   ResetPasswordRequestBody,
   SignInRequest,
   SignUpRequest,
@@ -17,10 +18,14 @@ export const authMutations = {
     onSuccess,
     onError,
   }: {
-    onSuccess: (data: AuthenticationResponse) => void;
+    onSuccess: (data: AuthenticationResponse | MfaChallengeResponse) => void;
     onError: (error: HttpError) => void;
   }) => {
-    return useMutation<AuthenticationResponse, HttpError, SignInRequest>({
+    return useMutation<
+      AuthenticationResponse | MfaChallengeResponse,
+      HttpError,
+      SignInRequest
+    >({
       mutationFn: authenticationApi.signIn,
       onSuccess,
       onError,
@@ -30,10 +35,14 @@ export const authMutations = {
     onSuccess,
     onError,
   }: {
-    onSuccess: (data: AuthenticationResponse) => void;
+    onSuccess: (data: AuthenticationResponse | MfaChallengeResponse) => void;
     onError: (error: HttpError) => void;
   }) => {
-    return useMutation<AuthenticationResponse, HttpError, SignUpRequest>({
+    return useMutation<
+      AuthenticationResponse | MfaChallengeResponse,
+      HttpError,
+      SignUpRequest
+    >({
       mutationFn: authenticationApi.signUp,
       onSuccess,
       onError,

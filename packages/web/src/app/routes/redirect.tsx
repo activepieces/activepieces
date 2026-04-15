@@ -45,6 +45,17 @@ const RedirectPage: React.FC = React.memo(() => {
       return;
     }
 
+    const mfa = params.get('mfa');
+    if (mfa === 'verify') {
+      navigate('/sign-in/2fa');
+      return;
+    }
+    if (mfa === 'setup') {
+      const enforced = params.get('enforced') !== 'false';
+      navigate('/sign-in/2fa-setup', { state: { enforced } });
+      return;
+    }
+
     if (state && response) {
       const from = state.from ?? '/flows';
 

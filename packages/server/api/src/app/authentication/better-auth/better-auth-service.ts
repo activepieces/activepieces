@@ -1,15 +1,15 @@
-import { ActivepiecesError, ApplicationEventName, assertNotNullOrUndefined, ErrorCode, OtpType, tryCatch } from '@activepieces/shared'
-import { AppSystemProp } from '../../helper/system/system-props'
+import { ActivepiecesError, ApplicationEventName, assertNotNullOrUndefined, ErrorCode, isMfaChallenge, OtpType, tryCatch } from '@activepieces/shared'
 import { AuthContext, MiddlewareContext, MiddlewareOptions } from 'better-auth/*'
 import { getOAuthState } from 'better-auth/api'
 import { BetterAuthOptions, User } from 'better-auth/types'
 import { FastifyBaseLogger } from 'fastify'
+import { platformUtils } from 'src/app/platform/platform.utils'
 import { domainHelper } from '../../ee/custom-domains/domain-helper'
 import { emailService } from '../../ee/helper/email/email-service'
 import { applicationEvents } from '../../helper/application-events'
 import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-props'
 import { authenticationService } from '../authentication.service'
-import { platformUtils } from 'src/app/platform/platform.utils'
 
 type SentData = {
     user: User
@@ -51,8 +51,8 @@ export const betterAuthService = (log: FastifyBaseLogger): IBetterAuthService =>
         })
     },
 
-    beforeHook: async (ctx) => {
-      return;
+    beforeHook: async (_ctx) => {
+        return
     },
     afterHook: async (ctx) => {
         if (ctx.path.startsWith('/callback')) {
@@ -67,7 +67,7 @@ export const betterAuthService = (log: FastifyBaseLogger): IBetterAuthService =>
                 from: oAuthState?.from,
             })
 
-            const { data: response, error } = await tryCatch(async () => await authenticationService(log).socialSignIn({
+            const { data: response, error } = await tryCatch(async () => authenticationService(log).socialSignIn({
                 identityId,
                 predefinedPlatformId: platformId,
             }))
@@ -79,6 +79,13 @@ export const betterAuthService = (log: FastifyBaseLogger): IBetterAuthService =>
                     ? error.error
                     : { code: ErrorCode.AUTHENTICATION, params: { message: 'Authentication failed' } }
                 throw ctx.redirect(`${redirectBaseUrl}?error=${encodeURIComponent(JSON.stringify(apError))}&state=${state}`)
+            }
+
+            if (isMfaChallenge(response)) {
+                if (response.setupRequired) {
+                    throw ctx.redirect(`${redirectBaseUrl}?mfa=setup&enforced=${response.enforced ?? true}&state=${state}`)
+                }
+                throw ctx.redirect(`${redirectBaseUrl}?mfa=verify&state=${state}`)
             }
 
             applicationEvents(log).sendUserEvent({

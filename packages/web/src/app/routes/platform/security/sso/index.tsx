@@ -1,6 +1,6 @@
 import { isNil } from '@activepieces/shared';
 import { t } from 'i18next';
-import { LockIcon, MailIcon, Earth } from 'lucide-react';
+import { LockIcon, MailIcon, Earth, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { CenteredPage } from '@/app/components/centered-page';
@@ -29,13 +29,25 @@ const SSOPage = () => {
   const googleConnected = !isNil(platform.federatedAuthProviders?.google);
   const samlConnected = !isNil(platform.federatedAuthProviders?.saml);
   const emailAuthEnabled = platform.emailAuthEnabled;
+  const enforceTotp = platform.enforceTotp;
 
-  const { mutate: toggleEmailAuthentication, isPending } =
+  const { mutate: toggleEmailAuthentication, isPending: isEmailAuthPending } =
     ssoMutations.useUpdatePlatformSso({
       platformId: platform.id,
       refetch,
       onSuccess: () => {
         toast.success(t('Email authentication updated'), { duration: 3000 });
+      },
+    });
+
+  const { mutate: toggleEnforceTotp, isPending: isEnforceTotpPending } =
+    ssoMutations.useUpdatePlatformSso({
+      platformId: platform.id,
+      refetch,
+      onSuccess: () => {
+        toast.success(t('Two-factor authentication enforcement updated'), {
+          duration: 3000,
+        });
       },
     });
 
@@ -139,7 +151,30 @@ const SSOPage = () => {
                     emailAuthEnabled: !platform.emailAuthEnabled,
                   })
                 }
-                disabled={isPending}
+                disabled={isEmailAuthPending}
+              />
+            </ItemActions>
+          </Item>
+
+          <Item variant="outline">
+            <ItemMedia variant="icon">
+              <ShieldCheck />
+            </ItemMedia>
+            <ItemContent>
+              <ItemTitle>{t('Enforce Two-Factor Authentication')}</ItemTitle>
+              <ItemDescription>
+                {t(
+                  'Require all users to set up two-factor authentication before accessing the platform.',
+                )}
+              </ItemDescription>
+            </ItemContent>
+            <ItemActions>
+              <Switch
+                checked={enforceTotp}
+                onCheckedChange={() =>
+                  toggleEnforceTotp({ enforceTotp: !platform.enforceTotp })
+                }
+                disabled={isEnforceTotpPending}
               />
             </ItemActions>
           </Item>

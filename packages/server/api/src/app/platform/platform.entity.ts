@@ -72,6 +72,11 @@ export const PlatformEntity = new EntitySchema<PlatformSchema>({
             array: true,
             nullable: false,
         },
+        enforceTotp: {
+            type: Boolean,
+            nullable: false,
+            default: false,
+        },
     },
     indices: [],
     relations: {

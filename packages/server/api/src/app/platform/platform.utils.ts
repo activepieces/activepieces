@@ -1,16 +1,16 @@
 import { ApEdition, isNil, PlatformId, PlatformWithoutSensitiveData, Principal, PrincipalType } from '@activepieces/shared'
-import { FastifyBaseLogger, FastifyRequest } from 'fastify'
+import { FastifyBaseLogger } from 'fastify'
 import { customDomainService } from '../ee/custom-domains/custom-domain.service'
 import { system } from '../helper/system/system'
 import { platformService } from './platform.service'
 
 
 type Request = {
-  principal?: Principal,
-  headers?: {
-    host?: string
-  }
-  log: FastifyBaseLogger
+    principal?: Principal
+    headers?: {
+        host?: string
+    }
+    log: FastifyBaseLogger
 }
 
 export const platformUtils = {
@@ -18,11 +18,11 @@ export const platformUtils = {
         if (req.principal && req.principal.type !== PrincipalType.UNKNOWN && req.principal.type !== PrincipalType.WORKER) {
             return req.principal.platform.id
         }
-        if(!isNil(req.headers?.host)) {
+        if (!isNil(req.headers?.host)) {
             const platformIdFromHostName = await getPlatformIdForHostname(req.headers.host)
             if (!isNil(platformIdFromHostName)) {
                 return platformIdFromHostName
-          }
+            }
         }
         if (system.getEdition() === ApEdition.CLOUD) {
             return null

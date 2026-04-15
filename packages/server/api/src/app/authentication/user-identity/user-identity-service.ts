@@ -49,12 +49,13 @@ export const userIdentityService = (log: FastifyBaseLogger) => ({
 
         return identity
     },
-    async verifyIdentityPassword(params: VerifyIdentityPasswordParams): Promise<UserIdentity> {
+    async verifyIdentityPassword(params: VerifyIdentityPasswordParams): Promise<VerifyIdentityPasswordResult> {
         const { error, data } = await tryCatch(async () => auth.api.signInEmail({
             body: {
                 email: params.email,
                 password: params.password,
             },
+            returnHeaders: true,
         }))
 
         if (error) {
@@ -64,7 +65,6 @@ export const userIdentityService = (log: FastifyBaseLogger) => ({
                     params: null,
                 })
             if (error.message === 'Email not verified') {
-
                 await this.sendVerifyEmail({ email: params.email })
                 throw new ActivepiecesError({
                     code: ErrorCode.EMAIL_IS_NOT_VERIFIED,
@@ -81,7 +81,15 @@ export const userIdentityService = (log: FastifyBaseLogger) => ({
             })
         }
 
-        return data.user as unknown as UserIdentity
+        const responseHeaders = data.headers ?? null
+        const twoFactorRedirect = (data.response as Record<string, unknown>)?.['twoFactorRedirect'] === true
+
+        if (twoFactorRedirect) {
+            const identity = await userIdentityRepository().findOneByOrFail({ email: params.email.toLowerCase().trim() })
+            return { identity: identity as UserIdentity, responseHeaders, twoFactorRedirect: true }
+        }
+
+        return { identity: data.response.user as unknown as UserIdentity, responseHeaders, twoFactorRedirect: false }
     },
     async getIdentityByEmail(email: string): Promise<UserIdentity | null> {
         const cleanedEmail = email.toLowerCase().trim()
@@ -247,4 +255,10 @@ type ResetPasswordParams = {
     identityId: string
     otp: string
     newPassword: string
+}
+
+type VerifyIdentityPasswordResult = {
+    identity: UserIdentity
+    responseHeaders: Headers | null
+    twoFactorRedirect: boolean
 }

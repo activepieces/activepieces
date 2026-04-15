@@ -26,6 +26,7 @@ export const UpdatePlatformRequestBody = z.object({
     emailAuthEnabled: OptionalBooleanFromQuery,
     allowedAuthDomains: OptionalArrayFromQuery(z.string()),
     enforceAllowedAuthDomains: OptionalBooleanFromQuery,
+    enforceTotp: OptionalBooleanFromQuery,
     pinnedPieces: OptionalArrayFromQuery(z.string()),
 })
 

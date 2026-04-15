@@ -1,0 +1,144 @@
+import { useQueryClient } from '@tanstack/react-query';
+import { t } from 'i18next';
+import { useState } from 'react';
+import { toast } from 'sonner';
+
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
+import { authClient } from '@/lib/better-auth';
+
+function BackupCodesForm({
+  backupCodesRemaining,
+  onOpenChange,
+}: {
+  backupCodesRemaining: number;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const queryClient = useQueryClient();
+  const [newCodes, setNewCodes] = useState<string[]>([]);
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [isPending, setIsPending] = useState(false);
+
+  const handleRegenerate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!password) return;
+    setError(null);
+    setIsPending(true);
+    try {
+      const { data, error: apiError } =
+        await authClient.twoFactor.generateBackupCodes({ password });
+      if (apiError || !data) {
+        setError(t('Invalid password. Please try again.'));
+        return;
+      }
+      setNewCodes(data.backupCodes);
+      await queryClient.invalidateQueries({ queryKey: ['2fa-status'] });
+      toast.success(t('Backup codes regenerated successfully'));
+    } catch {
+      setError(t('Invalid password. Please try again.'));
+    } finally {
+      setIsPending(false);
+    }
+  };
+
+  return (
+    <>
+      <DialogHeader>
+        <DialogTitle>{t('Backup Codes')}</DialogTitle>
+        <DialogDescription>
+          {backupCodesRemaining > 0
+            ? t('Remaining backup codes: {{count}}', {
+                count: backupCodesRemaining,
+              })
+            : t('Regenerate backup codes below.')}
+        </DialogDescription>
+      </DialogHeader>
+
+      {newCodes.length > 0 && (
+        <div className="flex flex-col gap-2">
+          <p className="text-sm font-medium">{t('Your new backup codes')}</p>
+          <div className="grid grid-cols-2 gap-2">
+            {newCodes.map((code) => (
+              <code
+                key={code}
+                className="text-sm font-mono bg-muted px-2 py-1 rounded text-center"
+              >
+                {code}
+              </code>
+            ))}
+          </div>
+          <Separator />
+        </div>
+      )}
+
+      <form onSubmit={handleRegenerate} className="flex flex-col gap-3">
+        <p className="text-sm font-medium">{t('Regenerate Backup Codes')}</p>
+        <p className="text-xs text-muted-foreground">
+          {t(
+            'Enter your password to generate new backup codes. This will invalidate all existing codes.',
+          )}
+        </p>
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="backup-codes-password">{t('Password')}</Label>
+          <Input
+            id="backup-codes-password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            disabled={isPending}
+          />
+        </div>
+        {error && <p className="text-sm text-destructive">{error}</p>}
+        <DialogFooter>
+          <Button
+            variant="outline"
+            type="button"
+            onClick={() => onOpenChange(false)}
+          >
+            {t('Close')}
+          </Button>
+          <Button type="submit" loading={isPending} disabled={!password}>
+            {t('Regenerate')}
+          </Button>
+        </DialogFooter>
+      </form>
+    </>
+  );
+}
+
+function BackupCodesDialog({
+  open,
+  onOpenChange,
+  backupCodesRemaining,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  backupCodesRemaining: number;
+}) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <BackupCodesForm
+          key={open ? 'open' : 'closed'}
+          backupCodesRemaining={backupCodesRemaining}
+          onOpenChange={onOpenChange}
+        />
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+BackupCodesDialog.displayName = 'BackupCodesDialog';
+
+export { BackupCodesDialog };

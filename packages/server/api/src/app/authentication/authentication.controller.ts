@@ -1,5 +1,8 @@
-import { ApplicationEventName,
+import { ActivepiecesError,
+    ApplicationEventName,
     assertNotNullOrUndefined,
+    ErrorCode,
+    isMfaChallenge,
     PrincipalType,
     SignInRequest,
     SignUpRequest,
@@ -16,56 +19,98 @@ import { AppSystemProp } from '../helper/system/system-props'
 import { platformUtils } from '../platform/platform.utils'
 import { userService } from '../user/user-service'
 import { authenticationService } from './authentication.service'
+import auth from './better-auth/auth'
 
 export const authenticationController: FastifyPluginAsyncZod = async (
     app,
 ) => {
-    app.post('/sign-up', SignUpRequestOptions, async (request) => {
+    app.post('/sign-up', SignUpRequestOptions, async (request, reply) => {
 
         const platformId = await platformUtils.getPlatformIdForRequest(request)
-        const signUpResponse = await authenticationService(request.log).signUp({
+        const { result, responseHeaders } = await authenticationService(request.log).signUp({
             ...request.body,
             provider: UserIdentityProvider.EMAIL,
             platformId: platformId ?? null,
         })
 
-        applicationEvents(request.log).sendUserEvent({
-            platformId: signUpResponse.platformId!,
-            userId: signUpResponse.id,
-            projectId: signUpResponse.projectId,
-            ip: networkUtils.extractClientRealIp(request, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
-        }, {
-            action: ApplicationEventName.USER_SIGNED_UP,
-            data: {
-                source: 'credentials',
-            },
-        })
+        if (responseHeaders) {
+            const cookies = responseHeaders.getSetCookie ? responseHeaders.getSetCookie() : (responseHeaders.get('set-cookie') ? [responseHeaders.get('set-cookie')!] : [])
+            for (const cookie of cookies) {
+                void reply.header('set-cookie', cookie)
+            }
+        }
 
-        return signUpResponse
+        if (!isMfaChallenge(result)) {
+            applicationEvents(request.log).sendUserEvent({
+                platformId: result.platformId!,
+                userId: result.id,
+                projectId: result.projectId,
+                ip: networkUtils.extractClientRealIp(request, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
+            }, {
+                action: ApplicationEventName.USER_SIGNED_UP,
+                data: {
+                    source: 'credentials',
+                },
+            })
+        }
+
+        return reply.send(result)
     })
 
-    app.post('/sign-in', SignInRequestOptions, async (request) => {
+    app.post('/sign-in', SignInRequestOptions, async (request, reply) => {
 
         const predefinedPlatformId = await platformUtils.getPlatformIdForRequest(request)
-        const response = await authenticationService(request.log).signInWithPassword({
+        const { result, responseHeaders } = await authenticationService(request.log).signInWithPassword({
             email: request.body.email,
             password: request.body.password,
             predefinedPlatformId,
         })
 
-        const responsePlatformId = response.platformId
+        if (responseHeaders) {
+            const cookies = responseHeaders.getSetCookie ? responseHeaders.getSetCookie() : (responseHeaders.get('set-cookie') ? [responseHeaders.get('set-cookie')!] : [])
+            for (const cookie of cookies) {
+                void reply.header('set-cookie', cookie)
+            }
+        }
+
+        if (isMfaChallenge(result)) {
+            return reply.send(result)
+        }
+
+        const responsePlatformId = result.platformId
         assertNotNullOrUndefined(responsePlatformId, 'Platform ID is required')
         applicationEvents(request.log).sendUserEvent({
             platformId: responsePlatformId,
-            userId: response.id,
-            projectId: response.projectId,
+            userId: result.id,
+            projectId: result.projectId,
             ip: networkUtils.extractClientRealIp(request, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
         }, {
             action: ApplicationEventName.USER_SIGNED_IN,
             data: {},
         })
 
-        return response
+        return reply.send(result)
+    })
+
+    app.post('/exchange-session', ExchangeSessionRequestOptions, async (request) => {
+        const predefinedPlatformId = await platformUtils.getPlatformIdForRequest(request)
+        const session = await auth.api.getSession({
+            headers: new Headers({ cookie: request.headers.cookie ?? '' }),
+        })
+        if (!session?.user) {
+            throw new ActivepiecesError({
+                code: ErrorCode.AUTHENTICATION,
+                params: { message: 'No valid session' },
+            })
+        }
+        return authenticationService(request.log).exchangeSession({
+            identityId: session.user.id,
+            predefinedPlatformId,
+        })
+    })
+
+    app.get('/2fa-status', TwoFaStatusRequestOptions, async (request) => {
+        return authenticationService(request.log).get2faStatus({ userId: request.principal.id })
     })
 
     app.post('/switch-platform', SwitchPlatformRequestOptions, async (request) => {
@@ -116,4 +161,19 @@ const SignInRequestOptions = {
     schema: {
         body: SignInRequest,
     },
+}
+
+const ExchangeSessionRequestOptions = {
+    config: {
+        security: securityAccess.public(),
+        rateLimit: rateLimitOptions,
+    },
+    schema: {},
+}
+
+const TwoFaStatusRequestOptions = {
+    config: {
+        security: securityAccess.publicPlatform([PrincipalType.USER]),
+    },
+    schema: {},
 }

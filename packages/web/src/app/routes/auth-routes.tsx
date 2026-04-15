@@ -5,6 +5,8 @@ import { AcceptInvitation } from '@/features/members';
 import { ChangePasswordPage } from './change-password';
 import { ResetPasswordPage } from './forget-password';
 import { SignInPage } from './sign-in';
+import { TwoFactorSetupPage } from './sign-in/two-factor-setup-page';
+import { TwoFactorVerifyPage } from './sign-in/two-factor-verify';
 import { SignUpPage } from './sign-up';
 
 export const authRoutes = [
@@ -29,6 +31,22 @@ export const authRoutes = [
     element: (
       <PageTitle title="Sign In">
         <SignInPage />
+      </PageTitle>
+    ),
+  },
+  {
+    path: '/sign-in/2fa',
+    element: (
+      <PageTitle title="Two-Factor Authentication">
+        <TwoFactorVerifyPage />
+      </PageTitle>
+    ),
+  },
+  {
+    path: '/sign-in/2fa-setup',
+    element: (
+      <PageTitle title="Set Up Two-Factor Authentication">
+        <TwoFactorSetupPage />
       </PageTitle>
     ),
   },

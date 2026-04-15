@@ -11,7 +11,6 @@ import SamlIcon from '@/assets/img/custom/auth/saml.svg';
 import { Button } from '@/components/ui/button';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { authClient } from '@/lib/better-auth';
-import { API_URL } from '@/lib/api';
 
 const ThirdPartyIcon = ({ icon }: { icon: string }) => {
   return <img src={icon} alt="icon" width={24} height={24} className="mr-2" />;
@@ -20,12 +19,12 @@ const ThirdPartyIcon = ({ icon }: { icon: string }) => {
 const ThirdPartyLogin = React.memo(({ isSignUp }: { isSignUp: boolean }) => {
   const { data: thirdPartyAuthProviders } =
     flagsHooks.useFlag<ThirdPartyAuthnProvidersToShowMap>(
-      ApFlagId.THIRD_PARTY_AUTH_PROVIDERS_TO_SHOW_MAP
+      ApFlagId.THIRD_PARTY_AUTH_PROVIDERS_TO_SHOW_MAP,
     );
 
   const handleProviderClick = async (
     event: React.MouseEvent<HTMLButtonElement, MouseEvent>,
-    providerName: ThirdPartyAuthnProviderEnum
+    providerName: ThirdPartyAuthnProviderEnum,
   ) => {
     event.preventDefault();
     event.stopPropagation();

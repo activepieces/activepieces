@@ -1,4 +1,4 @@
-import { ActivepiecesError, ApEdition, ApFlagId, assertNotNullOrUndefined, AuthenticationResponse, ErrorCode, isNil, PlatformRole, PlatformWithoutSensitiveData, ProjectType, User, UserIdentity, UserIdentityProvider } from '@activepieces/shared'
+import { ActivepiecesError, ApEdition, ApFlagId, assertNotNullOrUndefined, AuthenticationResponse, ErrorCode, isNil, MfaChallengeResponse, PlatformRole, PlatformWithoutSensitiveData, ProjectType, User, UserIdentity, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { flagService } from '../flags/flag.service'
 import { system } from '../helper/system/system'
@@ -11,14 +11,15 @@ import { authenticationUtils } from './authentication-utils'
 import { userIdentityService } from './user-identity/user-identity-service'
 
 export const authenticationService = (log: FastifyBaseLogger) => ({
-    async signUp(params: SignUpParams): Promise<AuthenticationResponse> {
+    async signUp(params: SignUpParams): Promise<{ result: AuthenticationResponse | MfaChallengeResponse, responseHeaders: Headers | null }> {
 
         if (isNil(params.platformId)) {
             const userIdentity = await userIdentityService(log).create(params)
             if (params.provider !== UserIdentityProvider.EMAIL) {
                 await userIdentityService(log).verify(userIdentity.id)
             }
-            return createUserAndPlatform(userIdentity, log)
+            const authResponse = await createUserAndPlatform(userIdentity, log)
+            return { result: authResponse, responseHeaders: null }
         }
 
         await assertCanSignup(log, {
@@ -38,14 +39,21 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
         })
 
         log.info({ email: params.email, platformId: params.platformId }, 'User signed up to existing platform')
-        return authenticationUtils(log).getProjectAndToken({
-            userId: user.id,
-            platformId: params.platformId,
-            projectId: null,
+
+        // Always offer 2FA setup after joining an existing platform.
+        // Get a better-auth session cookie so the setup page can call authClient.twoFactor.enable().
+        const { responseHeaders } = await userIdentityService(log).verifyIdentityPassword({
+            email: params.email,
+            password: params.password,
         })
+        const platform = await platformService(log).getOneOrThrow(params.platformId)
+        return {
+            result: { mfaRequired: true as const, setupRequired: true, enforced: platform.enforceTotp },
+            responseHeaders,
+        }
     },
-    async signInWithPassword(params: SignInWithPasswordParams): Promise<AuthenticationResponse> {
-        const identity = await userIdentityService(log).verifyIdentityPassword(params)
+    async signInWithPassword(params: SignInWithPasswordParams): Promise<{ result: AuthenticationResponse | MfaChallengeResponse, responseHeaders: Headers | null }> {
+        const { identity, responseHeaders, twoFactorRedirect } = await userIdentityService(log).verifyIdentityPassword(params)
         const platformId = isNil(params.predefinedPlatformId) ? await getPersonalPlatformIdForIdentity(identity.id, log) : params.predefinedPlatformId
         if (isNil(platformId)) {
             throw new ActivepiecesError({
@@ -63,19 +71,61 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
             email: params.email,
             platformId,
         })
+
+        if (twoFactorRedirect) {
+            return { result: { mfaRequired: true as const }, responseHeaders }
+        }
+
+        const platform = await platformService(log).getOneOrThrow(platformId)
+        if (platform.enforceTotp && !identity.twoFactorEnabled) {
+            return { result: { mfaRequired: true as const, setupRequired: true }, responseHeaders }
+        }
+
         const user = await userService(log).getOneByIdentityAndPlatform({
             identityId: identity.id,
             platformId,
         })
         assertNotNullOrUndefined(user, 'User not found')
         log.info({ email: params.email, platformId }, 'User signed in with password')
+        const authResponse = await authenticationUtils(log).getProjectAndToken({
+            userId: user.id,
+            platformId,
+            projectId: null,
+        })
+        return { result: authResponse, responseHeaders }
+    },
+    async exchangeSession(params: ExchangeSessionParams): Promise<AuthenticationResponse | MfaChallengeResponse> {
+        const platformId = isNil(params.predefinedPlatformId) ? await getPersonalPlatformIdForIdentity(params.identityId, log) : params.predefinedPlatformId
+        if (isNil(platformId)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.AUTHENTICATION,
+                params: {
+                    message: 'No platform found for identity',
+                },
+            })
+        }
+        const identity = await userIdentityService(log).getOneOrFail({ id: params.identityId })
+        const platform = await platformService(log).getOneOrThrow(platformId)
+        if (platform.enforceTotp && !identity.twoFactorEnabled) {
+            return { mfaRequired: true as const, setupRequired: true }
+        }
+        const user = await userService(log).getOneByIdentityAndPlatform({
+            identityId: params.identityId,
+            platformId,
+        })
+        assertNotNullOrUndefined(user, 'User not found')
         return authenticationUtils(log).getProjectAndToken({
             userId: user.id,
             platformId,
             projectId: null,
         })
     },
-    async socialSignIn(params: FederatedAuthnParams): Promise<AuthenticationResponse> {
+    async get2faStatus(params: Get2faStatusParams): Promise<{ enabled: boolean, backupCodesRemaining: number }> {
+        const user = await userService(log).getOneOrFail({ id: params.userId })
+        const identity = await userIdentityService(log).getOneOrFail({ id: user.identityId })
+        return { enabled: identity.twoFactorEnabled ?? false, backupCodesRemaining: 0 }
+    },
+    async socialSignIn(params: FederatedAuthnParams): Promise<AuthenticationResponse | MfaChallengeResponse> {
         log.info({ params }, '[socialsingin]')
 
 
@@ -105,6 +155,17 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
             email: userIdentity.email,
             user,
         })
+
+        // If user has 2FA enabled, redirect to verify flow.
+        if (userIdentity.twoFactorEnabled) {
+            return { mfaRequired: true as const }
+        }
+
+        const platform = await platformService(log).getOneOrThrow(platformId)
+        if (platform.enforceTotp) {
+            return { mfaRequired: true as const, setupRequired: true, enforced: true }
+        }
+
         return authenticationUtils(log).getProjectAndToken({
             userId: user.id,
             platformId,
@@ -277,4 +338,13 @@ type AssertSignupParams = {
     email: string
     platformId: string
     provider: UserIdentityProvider
+}
+
+type ExchangeSessionParams = {
+    identityId: string
+    predefinedPlatformId: string | null
+}
+
+type Get2faStatusParams = {
+    userId: string
 }

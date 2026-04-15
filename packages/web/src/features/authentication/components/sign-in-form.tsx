@@ -3,7 +3,9 @@ import {
   ApEdition,
   ApFlagId,
   AuthenticationResponse,
+  MfaChallengeResponse,
   ErrorCode,
+  isMfaChallenge,
   isNil,
   SignInRequest,
 } from '@activepieces/shared';
@@ -12,7 +14,7 @@ import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
-import { Link, Navigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 
 import { authenticationApi } from '@/api/authentication-api';
@@ -50,14 +52,25 @@ const SignInForm: React.FC = () => {
 
   const { data: userCreated } = flagsHooks.useFlag(ApFlagId.USER_CREATED);
   const redirectAfterLogin = useRedirectAfterLogin();
+  const navigate = useNavigate();
 
   const { mutate, isPending } = useMutation<
-    AuthenticationResponse,
+    AuthenticationResponse | MfaChallengeResponse,
     HttpError,
     SignInRequest
   >({
     mutationFn: authenticationApi.signIn,
     onSuccess: (data) => {
+      if (isMfaChallenge(data)) {
+        if (data.setupRequired) {
+          navigate('/sign-in/2fa-setup', {
+            state: { password: form.getValues().password },
+          });
+        } else {
+          navigate('/sign-in/2fa');
+        }
+        return;
+      }
       authenticationSession.saveResponse(data, false);
       redirectAfterLogin();
     },

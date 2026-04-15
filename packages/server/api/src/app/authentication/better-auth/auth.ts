@@ -1,14 +1,16 @@
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck - better-auth type references internal bun paths which are non-portable
 import { cryptoUtils } from '@activepieces/server-utils'
 import { UserIdentityProvider } from '@activepieces/shared'
 import { betterAuth } from 'better-auth'
 import { createAuthMiddleware } from 'better-auth/api'
+import { twoFactor } from 'better-auth/plugins'
 import { nanoid } from 'nanoid'
 import pg from 'pg'
 import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-props'
 import { passwordHasher } from '../lib/password-hasher'
 import { betterAuthService } from './better-auth-service'
-import { AppSystemProp } from '../../helper/system/system-props'
 
 function getEnvOrThrow(key: string): string {
     const value = process.env[key]
@@ -126,6 +128,9 @@ const auth = betterAuth({
         },
     },
     trustedOrigins: ['*'],
+    plugins: [
+        twoFactor({ issuer: 'Activepieces', allowPasswordless: true }),
+    ],
     hooks: {
         before: createAuthMiddleware(service.beforeHook),
         after: createAuthMiddleware(service.afterHook),

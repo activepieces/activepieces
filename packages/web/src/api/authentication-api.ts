@@ -4,6 +4,7 @@ import {
   ResetPasswordRequestBody,
   VerifyEmailRequestBody,
   AuthenticationResponse,
+  MfaChallengeResponse,
   ProjectRole,
   SignInRequest,
   SignUpRequest,
@@ -15,7 +16,7 @@ import { api } from '@/lib/api';
 
 export const authenticationApi = {
   signIn(request: SignInRequest) {
-    return api.post<AuthenticationResponse>(
+    return api.post<AuthenticationResponse | MfaChallengeResponse>(
       '/v1/authentication/sign-in',
       request,
     );
@@ -42,6 +43,17 @@ export const authenticationApi = {
     return api.post<AuthenticationResponse>(
       `/v1/authentication/switch-platform`,
       request,
+    );
+  },
+  exchangeSession() {
+    return api.post<AuthenticationResponse | MfaChallengeResponse>(
+      '/v1/authentication/exchange-session',
+      {},
+    );
+  },
+  get2faStatus() {
+    return api.get<{ enabled: boolean; backupCodesRemaining: number }>(
+      '/v1/authentication/2fa-status',
     );
   },
 };

@@ -1,4 +1,4 @@
-import { AuthenticationResponse, SAMLAuthnProviderConfig } from '@activepieces/shared'
+import { AuthenticationResponse, MfaChallengeResponse, SAMLAuthnProviderConfig } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { authenticationService } from '../../../authentication/authentication.service'
 import { createSamlClient, IdpLoginResponse } from './saml-client'
@@ -12,7 +12,7 @@ export const authnSsoSamlService = (log: FastifyBaseLogger) => {
                 redirectUrl,
             }
         },
-        async acs(platformId: string, samlProvider: SAMLAuthnProviderConfig, idpLoginResponse: IdpLoginResponse): Promise<AuthenticationResponse> {
+        async acs(platformId: string, samlProvider: SAMLAuthnProviderConfig, idpLoginResponse: IdpLoginResponse): Promise<AuthenticationResponse | MfaChallengeResponse> {
             const client = await createSamlClient(platformId, samlProvider)
             const _attributes = await client.parseAndValidateLoginResponse(idpLoginResponse)
             return authenticationService(log).socialSignIn({

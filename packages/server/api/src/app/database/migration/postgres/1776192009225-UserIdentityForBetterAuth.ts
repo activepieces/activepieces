@@ -15,8 +15,8 @@ export class UserIdentityForBetterAuth1776192009225 implements Migration {
             alter table "user_identity" add column "draft" boolean not null default false;
         `)
 
-        await queryRunner.query(`alter table "user_identity" alter column "password" drop not null`)
-        await queryRunner.query(`alter table "user_identity" add column "emailVerified" boolean not null default false`)
+        await queryRunner.query('alter table "user_identity" alter column "password" drop not null')
+        await queryRunner.query('alter table "user_identity" add column "emailVerified" boolean not null default false')
 
         // Backfill in batches to avoid locking the table for too long on large deployments
         await queryRunner.query(`
@@ -60,9 +60,9 @@ export class UserIdentityForBetterAuth1776192009225 implements Migration {
             create table "verification" ("id" text not null primary key, "identifier" text not null, "value" text not null, "expiresAt" timestamptz not null, "createdAt" timestamptz default CURRENT_TIMESTAMP not null, "updatedAt" timestamptz default CURRENT_TIMESTAMP not null);
         `)
 
-        await queryRunner.query(`create index "session_userId_idx" on "session" ("userId")`)
-        await queryRunner.query(`create index "account_userId_idx" on "account" ("userId")`)
-        await queryRunner.query(`create index "verification_identifier_idx" on "verification" ("identifier")`)
+        await queryRunner.query('create index "session_userId_idx" on "session" ("userId")')
+        await queryRunner.query('create index "account_userId_idx" on "account" ("userId")')
+        await queryRunner.query('create index "verification_identifier_idx" on "verification" ("identifier")')
 
         // Migrate existing email/password users into the account table in batches
         await queryRunner.query(`
@@ -143,7 +143,7 @@ export class UserIdentityForBetterAuth1776192009225 implements Migration {
         await queryRunner.query('alter table "user_identity" alter column "id" type character varying(21)')
 
         await queryRunner.query('alter table "user_identity" drop column if exists "emailVerified"')
-        await queryRunner.query(`alter table "user_identity" alter column "password" set not null`)
+        await queryRunner.query('alter table "user_identity" alter column "password" set not null')
         await queryRunner.query('alter table "user_identity" drop column if exists "draft"')
         await queryRunner.query('alter table "user_identity" drop column if exists "image"')
         await queryRunner.query('alter table "user_identity" drop column if exists "name"')

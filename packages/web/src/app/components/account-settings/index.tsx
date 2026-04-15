@@ -24,6 +24,7 @@ import { userHooks, userMutations } from '@/hooks/user-hooks';
 
 import { DeleteAccount } from './delete-account';
 import LanguageToggle from './language-toggle';
+import { TwoFactorAuthSection } from './security';
 import ThemeToggle from './theme-toggle';
 
 export interface AccountSettingsDialogProps {
@@ -125,6 +126,8 @@ export function AccountSettingsDialog({
               <ThemeToggle />
               <LanguageToggle />
             </div>
+            <Separator />
+            <TwoFactorAuthSection />
             <DeleteAccount />
           </div>
         </ScrollArea>

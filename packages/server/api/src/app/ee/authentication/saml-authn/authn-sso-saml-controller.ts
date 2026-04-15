@@ -1,4 +1,4 @@
-import { ApplicationEventName, assertNotNullOrUndefined, SAMLAuthnProviderConfig } from '@activepieces/shared'
+import { ApplicationEventName, assertNotNullOrUndefined, isMfaChallenge, SAMLAuthnProviderConfig } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { z } from 'zod'
@@ -26,17 +26,19 @@ export const authnSsoSamlController: FastifyPluginAsyncZod = async (app) => {
         })
         const url = new URL('/authenticate', `${req.protocol}://${req.hostname}`)
         url.searchParams.append('response', JSON.stringify(response))
-        applicationEvents(req.log).sendUserEvent({
-            platformId,
-            userId: response.id,
-            projectId: response.projectId,
-            ip: networkUtils.extractClientRealIp(req, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
-        }, {
-            action: ApplicationEventName.USER_SIGNED_UP,
-            data: {
-                source: 'sso',
-            },
-        })
+        if (!isMfaChallenge(response)) {
+            applicationEvents(req.log).sendUserEvent({
+                platformId,
+                userId: response.id,
+                projectId: response.projectId,
+                ip: networkUtils.extractClientRealIp(req, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
+            }, {
+                action: ApplicationEventName.USER_SIGNED_UP,
+                data: {
+                    source: 'sso',
+                },
+            })
+        }
         return res.redirect(url.toString())
     })
 }

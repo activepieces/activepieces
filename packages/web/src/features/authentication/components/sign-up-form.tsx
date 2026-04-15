@@ -4,11 +4,12 @@ import {
   ApFlagId,
   ErrorCode,
   isNil,
+  isMfaChallenge,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { useMemo, useRef, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -54,6 +55,7 @@ const SignUpForm = ({
   setShowCheckYourEmailNote: (value: boolean) => void;
 }) => {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const { data: termsOfServiceUrl } = flagsHooks.useFlag<string>(
     ApFlagId.TERMS_OF_SERVICE_URL,
   );
@@ -98,7 +100,16 @@ const SignUpForm = ({
 
   const { mutate, isPending } = authMutations.useSignUp({
     onSuccess: (data) => {
-      if (data.emailVerified) {
+      if (isMfaChallenge(data) && data.setupRequired) {
+        navigate('/sign-in/2fa-setup', {
+          state: {
+            password: form.getValues().password,
+            enforced: data.enforced ?? false,
+          },
+        });
+        return;
+      }
+      if ('emailVerified' in data && data.emailVerified) {
         authenticationSession.saveResponse(data, false);
         redirectAfterLogin();
       } else {

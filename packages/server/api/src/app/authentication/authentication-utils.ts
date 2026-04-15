@@ -30,7 +30,7 @@ export const authenticationUtils = (log: FastifyBaseLogger) => ({
                 },
             })
         }
-  },
+    },
 
     async getProjectAndToken(params: GetProjectAndTokenParams): Promise<AuthenticationResponse> {
         const user = await userService(log).getOneOrFail({ id: params.userId })
