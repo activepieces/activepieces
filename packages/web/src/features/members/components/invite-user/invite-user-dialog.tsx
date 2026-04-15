@@ -9,13 +9,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { CopyIcon } from 'lucide-react';
-import { useState, useRef } from 'react';
+import { useCallback, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
-import { TagInput } from '@/components/custom/tag-input';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { Button } from '@/components/ui/button';
 import {
@@ -48,10 +47,38 @@ import { userInvitationsHooks } from '../../hooks/user-invitations-hooks';
 
 import { UserSuggestionsPopover } from './user-suggestions-popover';
 
+const buildInvalidEmailsMessage = (emails: string[]): string => {
+  const maxShown = 3;
+  const shown = emails.slice(0, maxShown);
+  const remaining = emails.length - maxShown;
+  if (remaining > 0) {
+    return t('Fix invalid emails {list} and {count} more', {
+      list: shown.join(', '),
+      count: remaining,
+    });
+  }
+  if (shown.length === 1) {
+    return t('Fix invalid email {email}', { email: shown[0] });
+  }
+  const last = shown.pop();
+  return t('Fix invalid emails {list} and {last}', {
+    list: shown.join(', '),
+    last,
+  });
+};
+
 const FormSchema = z.object({
-  emails: z
-    .array(z.string())
-    .min(1, t('Please enter at least one email address')),
+  emails: z.array(z.string()).superRefine((emails, ctx) => {
+    if (emails.length === 0) return;
+    const invalidEmails = emails.filter(
+      (email) => !formatUtils.emailRegex.test(email.trim()),
+    );
+    if (invalidEmails.length === 0) return;
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: buildInvalidEmailsMessage(invalidEmails),
+    });
+  }),
   type: z.nativeEnum(InvitationType, {
     message: t('Please select invitation type'),
   }),
@@ -74,10 +101,7 @@ export const InviteUserDialog = ({
 }) => {
   const { embedState } = useEmbedding();
   const [invitationLink, setInvitationLink] = useState('');
-  const [inputValue, setInputValue] = useState('');
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const [tagInputKey, setTagInputKey] = useState(0);
-  const inputRef = useRef<HTMLDivElement>(null);
+  const [suggestionsOpen, setSuggestionsOpen] = useState(false);
   const { platform } = platformHooks.useCurrentPlatform();
   const { refetch } = userInvitationsHooks.useInvitations();
   const { project } = projectCollectionUtils.useCurrentProject();
@@ -146,26 +170,19 @@ export const InviteUserDialog = ({
     },
   });
 
-  // Watch emails to update suggestions
-  const currentEmails = form.watch('emails');
+  const handleEmailsChange = useCallback(
+    (emails: ReadonlyArray<string>) => {
+      form.setValue('emails', [...emails]);
+      form.trigger('emails');
+    },
+    [form],
+  );
 
   const onSubmit = (data: FormSchema) => {
     if (data.emails.length === 0) {
       form.setError('emails', {
         type: 'required',
         message: t('Please enter at least one email address'),
-      });
-      return;
-    }
-
-    const invalidEmails = data.emails.filter(
-      (email) => !formatUtils.emailRegex.test(email.trim()),
-    );
-
-    if (invalidEmails.length > 0) {
-      form.setError('emails', {
-        type: 'validation',
-        message: t('Please fix invalid email addresses'),
       });
       return;
     }
@@ -188,20 +205,6 @@ export const InviteUserDialog = ({
     });
   };
 
-  const handleSelectUser = (email: string) => {
-    const currentEmails = form.getValues('emails');
-    form.setValue('emails', [...currentEmails, email]);
-    setInputValue('');
-    setShowSuggestions(false);
-    // Force TagInput to remount and clear its internal input state
-    setTagInputKey((prev) => prev + 1);
-  };
-
-  const handleInputChange = (value: string) => {
-    setInputValue(value);
-    setShowSuggestions(value.trim().length > 0 && !isPlatformPage);
-  };
-
   if (embedState.isEmbedded || !userHasPermissionToInviteUser) {
     return null;
   }
@@ -216,12 +219,17 @@ export const InviteUserDialog = ({
             setOpen(open);
             form.reset();
             setInvitationLink('');
-            setInputValue('');
-            setShowSuggestions(false);
-            setTagInputKey(0);
           }}
         >
-          <DialogContent className="sm:max-w-[475px]">
+          <DialogContent
+            className="sm:max-w-[475px]"
+            onEscapeKeyDown={(e) => {
+              if (suggestionsOpen) {
+                e.preventDefault();
+                (document.activeElement as HTMLElement)?.blur();
+              }
+            }}
+          >
             <DialogHeader>
               <DialogTitle>
                 {invitationLink
@@ -267,23 +275,12 @@ export const InviteUserDialog = ({
                       <FormItem className="grid gap-2">
                         <Label htmlFor="emails">{t('Emails')}</Label>
                         <UserSuggestionsPopover
-                          open={showSuggestions}
-                          onOpenChange={setShowSuggestions}
-                          inputValue={inputValue}
-                          currentEmails={currentEmails}
-                          onSelectUser={handleSelectUser}
+                          value={field.value}
+                          onChange={handleEmailsChange}
+                          placeholder={t('Invite users by email')}
                           isPlatformPage={isPlatformPage}
-                        >
-                          <div ref={inputRef}>
-                            <TagInput
-                              key={tagInputKey}
-                              {...field}
-                              type="email"
-                              placeholder={t('Invite users by email')}
-                              onInputChange={handleInputChange}
-                            />
-                          </div>
-                        </UserSuggestionsPopover>
+                          onOpenChange={setSuggestionsOpen}
+                        />
                         <FormMessage />
                       </FormItem>
                     )}

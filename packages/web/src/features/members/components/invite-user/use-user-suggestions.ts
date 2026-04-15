@@ -1,15 +1,17 @@
 import {
   InvitationStatus,
   PlatformRole,
+  SeekPage,
   UserWithMetaInformation,
 } from '@activepieces/shared';
+import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
+import { platformUserApi } from '@/api/platform-user-api';
 import { projectMembersHooks } from '@/features/members/hooks/project-members-hooks';
 import { userInvitationsHooks } from '@/features/members/hooks/user-invitations-hooks';
-import { platformUserHooks } from '@/features/platform-admin/hooks/platform-user-hooks';
+import { platformUserKeys } from '@/features/platform-admin/hooks/platform-user-hooks';
 import { userHooks } from '@/hooks/user-hooks';
-import { formatUtils } from '@/lib/format-utils';
 
 import { EmailStatusType } from './types';
 
@@ -20,7 +22,6 @@ export type SuggestedUser = UserWithMetaInformation & {
 type UseUserSuggestionsParams = {
   inputValue: string;
   currentEmails: string[];
-  isPlatformPage: boolean;
 };
 
 const isPlatformAdminOrOperator = (user: { platformRole: PlatformRole }) =>
@@ -40,10 +41,16 @@ const matchesSearch = (user: UserWithMetaInformation, searchTerm: string) => {
 export function useUserSuggestions({
   inputValue,
   currentEmails,
-  isPlatformPage,
 }: UseUserSuggestionsParams) {
   const { data: currentUser } = userHooks.useCurrentUser();
-  const { data: platformUsersData } = platformUserHooks.useUsers();
+  const isAdmin = currentUser ? isPlatformAdminOrOperator(currentUser) : false;
+  const { data: platformUsersData } = useQuery<
+    SeekPage<UserWithMetaInformation>
+  >({
+    queryKey: platformUserKeys.users,
+    queryFn: () => platformUserApi.list({ limit: 2000 }),
+    enabled: isAdmin,
+  });
   const { projectMembers } = projectMembersHooks.useProjectMembers();
   const { invitations } = userInvitationsHooks.useInvitations();
 
@@ -66,7 +73,7 @@ export function useUserSuggestions({
   );
 
   const suggestedUsers = useMemo<SuggestedUser[]>(() => {
-    if (isPlatformPage || !platformUsersData?.data) return [];
+    if (!platformUsersData?.data) return [];
 
     const filtered = platformUsersData.data
       .filter((user) => {
@@ -98,7 +105,6 @@ export function useUserSuggestions({
 
     return filtered.slice(0, 10);
   }, [
-    isPlatformPage,
     platformUsersData,
     projectMemberEmails,
     pendingInvitationEmails,
@@ -108,10 +114,9 @@ export function useUserSuggestions({
   ]);
 
   const emailStatus = useMemo<EmailStatusType | null>(() => {
-    if (isPlatformPage || !searchTerm) return null;
+    if (!searchTerm) return null;
 
     const email = searchTerm.toLowerCase();
-    if (!formatUtils.emailRegex.test(email)) return null;
 
     // Skip if already in current selection or shown in suggestions
     if (emailSetHas(currentEmails, email)) return null;
@@ -140,9 +145,8 @@ export function useUserSuggestions({
       return { email, type: 'already-invited', user: platformUser };
     }
 
-    return { email, type: 'external', user: undefined };
+    return { email, type: 'new-user', user: undefined };
   }, [
-    isPlatformPage,
     searchTerm,
     currentEmails,
     suggestedUsers,
@@ -152,9 +156,34 @@ export function useUserSuggestions({
     currentUserEmail,
   ]);
 
+  const selectableItems = useMemo<string[]>(() => {
+    const items: string[] = [];
+    for (const user of suggestedUsers) {
+      if (user.memberStatus === 'available') {
+        items.push(user.email);
+      }
+    }
+    if (
+      emailStatus &&
+      (emailStatus.type === 'new-user' ||
+        emailStatus.type === 'already-invited')
+    ) {
+      items.push(emailStatus.email);
+    }
+    return items;
+  }, [suggestedUsers, emailStatus]);
+
+  const platformUserEmails = useMemo(
+    () =>
+      new Set(platformUsersData?.data.map((u) => u.email.toLowerCase()) ?? []),
+    [platformUsersData],
+  );
+
   return {
     suggestedUsers,
     emailStatus,
     hasSuggestions: suggestedUsers.length > 0 || emailStatus !== null,
+    selectableItems,
+    platformUserEmails,
   };
 }
