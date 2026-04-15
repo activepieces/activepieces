@@ -75,7 +75,7 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
             const pending = await repo
                 .createQueryBuilder('waitpoint')
                 .setLock('pessimistic_write')
-                .where({ id: params.waitpointId, status: WaitpointStatus.PENDING })
+                .where({ id: params.waitpointId, flowRunId: params.flowRunId, status: WaitpointStatus.PENDING })
                 .getOne()
 
             if (!isNil(pending)) {

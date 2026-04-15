@@ -1,12 +1,11 @@
 import { FlowRunStatus, isNil, PauseType } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { MoreThan } from 'typeorm'
+import { In, MoreThan } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { redisConnections } from '../../database/redis-connections'
 import { flowRunRepo } from '../../flows/flow-run/flow-run-service'
 import { WaitpointEntity } from '../../flows/flow-run/waitpoint/waitpoint-entity'
-import { Waitpoint } from '../../flows/flow-run/waitpoint/waitpoint-types'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { SystemJobName } from '../../helper/system-jobs/common'
@@ -34,10 +33,20 @@ export const refillPausedRuns = (log: FastifyBaseLogger) => ({
             },
         })
 
+        if (pausedRuns.length === 0) {
+            log.info('[refillPausedRuns] No paused runs found')
+            await redisConnection.set(REFILL_PAUSED_RUNS_KEY, 'true')
+            return
+        }
+
+        const flowRunIds = pausedRuns.map(r => r.id)
+        const waitpoints = await waitpointRepo().findBy({ flowRunId: In(flowRunIds) })
+        const waitpointByRunId = Object.fromEntries(waitpoints.map(w => [w.flowRunId, w]))
+
         let migratedCount = 0
 
         for (const pausedRun of pausedRuns) {
-            const waitpoint = await waitpointRepo().findOneBy({ flowRunId: pausedRun.id }) as Waitpoint | null
+            const waitpoint = waitpointByRunId[pausedRun.id]
             if (isNil(waitpoint) || waitpoint.type !== PauseType.DELAY || isNil(waitpoint.resumeDateTime)) {
                 continue
             }
