@@ -14,8 +14,8 @@ import { createCopilotEmbeddingModel } from './create-embedding-model'
 const EMBED_BATCH_SIZE = 50
 const REPO_URL = 'https://github.com/activepieces/activepieces.git'
 
-const USE_LOCAL_REPO = false
-const SERVER_ONLY = true
+const USE_LOCAL_REPO = true
+const SERVER_ONLY = false
 
 const IGNORE_PATTERNS = [
     '**/node_modules/**',
