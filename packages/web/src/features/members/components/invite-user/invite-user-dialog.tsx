@@ -437,7 +437,10 @@ function getDialogDescription({
   if (hasLinks) {
     const addedPrefix =
       addedMembersCount > 0
-        ? t('membersAddedImmediately', { count: addedMembersCount, projectName }) + ' '
+        ? t('membersAddedImmediately', {
+            count: addedMembersCount,
+            projectName,
+          }) + ' '
         : '';
     const linkText =
       resultsWithLinksCount === 1
