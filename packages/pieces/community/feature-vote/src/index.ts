@@ -14,7 +14,7 @@ export const featureVote = createPiece({
   displayName: 'FeaturesVote',
   description: 'Product feedback and feature voting board.',
   minimumSupportedRelease: '0.36.1',
-  logoUrl: 'https://cdn.activepieces.com/pieces/feature-vote.png',
+  logoUrl: 'https://features.vote/favicon.ico',
   categories: [PieceCategory.PRODUCTIVITY],
   authors: [],
   auth: featuresVoteAuth,
