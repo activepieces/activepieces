@@ -1,0 +1,8 @@
+{
+  "Send SMS": "Sms verzenden",
+  "Send an SMS message using the Telnyx Messages API.": "Stuur een SMS-bericht via de Telnyx Messages API.",
+  "Make Call": "Gesprek voeren",
+  "Initiate an outbound call using the Telnyx Call Control API.": "Start een uitgaande oproep met behulp van de Telnyx Call Control API.",
+  "Message Received": "Bericht ontvangen",
+  "Triggers when Telnyx delivers a message.received webhook event.": "Activeert wanneer Telnyx een bericht.ontvangen webhook event aflevert."
+}
