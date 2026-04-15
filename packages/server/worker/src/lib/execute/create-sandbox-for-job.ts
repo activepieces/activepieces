@@ -59,9 +59,10 @@ function getProcessMaker(executionMode: string, log: Logger, boxId: number) {
     }
 }
 
-function parseMemoryLimit(memoryLimit: string): number {
-    const parsed = parseInt(memoryLimit, 10)
-    return isNaN(parsed) ? 256 : parsed
+function parseMemoryLimit(memoryLimitKb: string): number {
+    const parsed = parseInt(memoryLimitKb, 10)
+    const kb = isNaN(parsed) ? 1048576 : parsed
+    return Math.floor(kb / 1024)
 }
 
 function buildSandboxEnv(settings: ReturnType<typeof workerSettings.getSettings>): Record<string, string> {

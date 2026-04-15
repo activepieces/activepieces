@@ -140,7 +140,7 @@ type DiagnosisResult = {
 
 type PropSummary = {
     name: string
-    type: string
+    type: PropertyType
     required: boolean
     displayName: string
     description?: string

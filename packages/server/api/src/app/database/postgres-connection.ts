@@ -358,6 +358,8 @@ import { MergeCanaryAndDedicatedWorkersIntoWorkerGroupId1775656136000 } from './
 import { AddAiProvidersEnabledToPlatformPlan1775728983000 } from './migration/postgres/1775728983000-AddAiProvidersEnabledToPlatformPlan'
 import { AddCopilotFilesAndCodeChunks1775800000000 } from './migration/postgres/1775800000000-AddCopilotFilesAndCodeChunks'
 import { RecreateCopilotCodeChunks1775800000001 } from './migration/postgres/1775800000001-RecreateCopilotCodeChunks'
+import { AddConcurrencyPoolTable1775800000000 } from './migration/postgres/1775800000000-AddConcurrencyPoolTable'
+import { AddDefaultToAiProvidersEnabled1776000000000 } from './migration/postgres/1776000000000-AddDefaultToAiProvidersEnabled'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -731,6 +733,8 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddAiProvidersEnabledToPlatformPlan1775728983000,
         AddCopilotFilesAndCodeChunks1775800000000,
         RecreateCopilotCodeChunks1775800000001,
+        AddConcurrencyPoolTable1775800000000,
+        AddDefaultToAiProvidersEnabled1776000000000,
     ]
     return migrations
 }
