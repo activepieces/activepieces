@@ -1,4 +1,4 @@
-import { isFlowRunStateTerminal, TelemetryEventName } from '@activepieces/shared'
+import { FlowRunStatus, TelemetryEventName } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyPluginAsync } from 'fastify'
 import { Between } from 'typeorm'
@@ -73,7 +73,7 @@ export const flowRunModule: FastifyPluginAsync = async (app) => {
     })
     systemJobHandlers.registerJobHandler(SystemJobName.RESUME_DELAY_WAITPOINT, async (data: SystemJobData<SystemJobName.RESUME_DELAY_WAITPOINT>) => {
         const flowRun = await flowRunService(app.log).getOneOrThrow({ id: data.flowRunId, projectId: data.projectId })
-        if (isFlowRunStateTerminal({ status: flowRun.status, ignoreInternalError: false })) {
+        if (flowRun.status !== FlowRunStatus.PAUSED) {
             app.log.info({ flowRunId: data.flowRunId, waitpointId: data.waitpointId, status: flowRun.status },
                 '[RESUME_DELAY_WAITPOINT] Flow not PAUSED, skipping')
             return
