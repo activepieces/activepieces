@@ -1,7 +1,6 @@
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
-import { platformUtils } from '../platform/platform.utils'
 import { authenticationController } from './authentication.controller'
-import { getAuthForPlatform } from './better-auth/auth'
+import auth from './better-auth/auth'
 
 export const authenticationModule: FastifyPluginAsyncZod = async (app) => {
     await app.register(authenticationController, {
@@ -25,11 +24,6 @@ export const authenticationModule: FastifyPluginAsyncZod = async (app) => {
                     body: request.body ? JSON.stringify(request.body) : undefined,
                 })
 
-                const platformId = await platformUtils.getPlatformIdForRequest({
-                    headers: { host: request.headers.host },
-                    log: request.log,
-                })
-                const auth = await getAuthForPlatform(platformId, request.log)
                 const response = await auth.handler(req)
 
                 void reply.status(response.status)
