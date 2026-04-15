@@ -1,0 +1,8 @@
+{
+  "Send SMS": "发送短信",
+  "Send an SMS message using the Telnyx Messages API.": "使用 Telnyx 消息API发送短信。",
+  "Make Call": "拨打电话",
+  "Initiate an outbound call using the Telnyx Call Control API.": "使用 Telnyx 调用控制API来发起出站呼叫。",
+  "Message Received": "收到消息",
+  "Triggers when Telnyx delivers a message.received webhook event.": "当Telnyx 发送消息时触发。接收webhook 事件。"
+}
