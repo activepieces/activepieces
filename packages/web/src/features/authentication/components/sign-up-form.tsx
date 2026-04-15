@@ -31,7 +31,7 @@ import {
   PopoverTitle,
 } from '@/components/ui/popover';
 import { CheckEmailNote } from '@/features/authentication/components/check-email-note';
-import { PasswordRequirementsList } from '@/features/authentication/components/password-validator';
+import { PasswordRequirementsList, PasswordStrengthBolt } from '@/features/authentication/components/password-validator';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -277,25 +277,28 @@ const SignUpForm = ({
                         id="password"
                         type={showPassword ? 'text' : 'password'}
                         placeholder={'********'}
-                        className="rounded-sm pr-10"
+                        className="rounded-sm pr-16"
                         data-testid="sign-up-password"
                         onFocus={() => setIsPasswordFocused(true)}
                         onBlur={() => setIsPasswordFocused(false)}
                       />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        tabIndex={-1}
-                        onClick={() => setShowPassword((v) => !v)}
-                        className="absolute right-1 h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
-                      >
-                        {showPassword ? (
-                          <EyeOff className="w-4 h-4" />
-                        ) : (
-                          <Eye className="w-4 h-4" />
-                        )}
-                      </Button>
+                      <div className="absolute right-1 flex items-center gap-0.5">
+                        <PasswordStrengthBolt password={field.value ?? ''} />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          tabIndex={-1}
+                          onClick={() => setShowPassword((v) => !v)}
+                          className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+                        >
+                          {showPassword ? (
+                            <EyeOff className="w-4 h-4" />
+                          ) : (
+                            <Eye className="w-4 h-4" />
+                          )}
+                        </Button>
+                      </div>
                     </div>
                   </PopoverAnchor>
                   <PopoverContent
