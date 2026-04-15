@@ -256,9 +256,14 @@ export const InviteUserDialog = ({
                     'Please copy the link below and share it with the user you want to invite, the invitation expires in 7 days.',
                   )
                 ) : isPlatformPage ? (
-                  t(
-                    'Invite team members to collaborate and build amazing flows together.',
-                  )
+                  <>
+                    {t(
+                      'Invite team members to collaborate and build amazing flows together.',
+                    )}{' '}
+                    {t(
+                      'Email addresses that already have access are skipped.',
+                    )}
+                  </>
                 ) : (
                   <>
                     {t('Add new members to')}{' '}
@@ -267,7 +272,10 @@ export const InviteUserDialog = ({
                     </span>
                     {'. '}
                     {t(
-                      'They will be added immediately and receive an email notification.',
+                      'Platform members get instant access to this project. New members get access after accepting the invitation.',
+                    )}{' '}
+                    {t(
+                      'Email addresses that already have access are skipped.',
                     )}
                   </>
                 )}
@@ -294,11 +302,6 @@ export const InviteUserDialog = ({
                           onOpenChange={setSuggestionsOpen}
                         />
                         <FormMessage />
-                        <p className="text-xs text-muted-foreground">
-                          {isPlatformPage
-                            ? t('Existing users will be skipped if added.')
-                            : t('Existing members will be skipped if added.')}
-                        </p>
                       </FormItem>
                     )}
                   />

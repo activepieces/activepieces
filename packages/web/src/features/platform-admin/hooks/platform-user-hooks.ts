@@ -4,6 +4,7 @@ import {
   SeekPage,
   UpdateUserRequestBody,
   User,
+  UserIdentityProvider,
   UserStatus,
   UserWithMetaInformation,
 } from '@activepieces/shared';
@@ -23,7 +24,9 @@ export const platformUserKeys = {
 export const platformUserHooks = {
   useUsers: () => {
     const { data: currentUser } = userHooks.useCurrentUser();
-    const isAdmin = currentUser?.platformRole === PlatformRole.ADMIN;
+    const canListUsers =
+      currentUser?.platformRole === PlatformRole.ADMIN ||
+      currentUser?.provider !== UserIdentityProvider.JWT;
     return useQuery<SeekPage<UserWithMetaInformation>, Error>({
       queryKey: platformUserKeys.users,
       meta: { showErrorDialog: true, loadSubsetOptions: {} },
@@ -33,7 +36,7 @@ export const platformUserHooks = {
         });
         return results;
       },
-      enabled: isAdmin,
+      enabled: canListUsers,
     });
   },
   usePlatformInvitations: () => {

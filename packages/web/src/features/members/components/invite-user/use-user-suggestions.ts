@@ -1,6 +1,7 @@
 import {
   InvitationStatus,
   PlatformRole,
+  UserIdentityProvider,
   UserWithMetaInformation,
 } from '@activepieces/shared';
 import { useMemo } from 'react';
@@ -42,7 +43,6 @@ export function useUserSuggestions({
   isPlatformPage,
 }: UseUserSuggestionsParams) {
   const { data: currentUser } = userHooks.useCurrentUser();
-  const isAdmin = currentUser?.platformRole === PlatformRole.ADMIN;
   const { data: platformUsersData } = platformUserHooks.useUsers();
   const { projectMembers } = projectMembersHooks.useProjectMembers();
   const { invitations } = userInvitationsHooks.useInvitations();
@@ -73,6 +73,7 @@ export function useUserSuggestions({
         const email = user.email.toLowerCase();
         return (
           email !== currentUserEmail &&
+          user.provider !== UserIdentityProvider.JWT &&
           !isPlatformAdminOrOperator(user) &&
           !emailSetHas(currentEmails, email) &&
           matchesSearch(user, searchTerm)
@@ -107,7 +108,7 @@ export function useUserSuggestions({
   ]);
 
   const emailStatus = useMemo<EmailStatusType | null>(() => {
-    if (isPlatformPage || !isAdmin || !searchTerm) return null;
+    if (isPlatformPage || !platformUsersData?.data || !searchTerm) return null;
 
     const email = searchTerm.toLowerCase();
 

@@ -61,7 +61,8 @@ const RoleCell = ({
   row: { original: MemberRowData };
   refetch: () => void;
 }) => {
-  const { data: rolesData } = projectRoleQueries.useProjectRoles(true);
+  const { data: rolesData, isPending: rolesLoading } =
+    projectRoleQueries.useProjectRoles(true);
 
   const roles = rolesData?.data ?? [];
   const { checkAccess } = useAuthorization();
@@ -77,15 +78,25 @@ const RoleCell = ({
   const isPlatformAdminOrOperator =
     row.original.type === 'platform-admin-operator';
 
-  const { mutate } = projectMembersMutations.useUpdateMemberRole({
-    onSuccess: () => {
-      toast.success(t('Role updated successfully'));
-      refetch();
-    },
-    onError: () => {
-      internalErrorToast();
-    },
-  });
+  const { mutate, isPending: isAssigningRole } =
+    projectMembersMutations.useUpdateMemberRole({
+      onSuccess: (variables) => {
+        if (row.original.type === 'member') {
+          const { user } = row.original.data;
+          toast.success(
+            t('{firstName} {lastName} role has become {roleName}', {
+              firstName: user.firstName,
+              lastName: user.lastName,
+              roleName: variables.role,
+            }),
+          );
+        }
+        refetch();
+      },
+      onError: () => {
+        internalErrorToast();
+      },
+    });
 
   const handleValueChange = (value: string) => {
     if (row.original.type === 'member') {
@@ -138,6 +149,8 @@ const RoleCell = ({
           onValueChange={handleValueChange}
           disabled={!userHasPermissionToUpdateRole}
           roles={roles}
+          isLoading={rolesLoading}
+          isAssigningRole={isAssigningRole}
         />
       </div>
     </PermissionNeededTooltip>

@@ -350,7 +350,7 @@
   "Use this token with the Authorization header (Bearer) for requests to this server.": "",
   "MCP Client Configuration (JSON)": "",
   "Copy this configuration to your MCP client settings file (e.g., Cursor).": "",
-  "Role updated successfully": "Role updated successfully",
+  "{firstName} {lastName} role has become {roleName}": "{firstName} {lastName} role has become {roleName}",
   "Pending Invitation": "",
   "Are you sure you want to remove this invitation?": "Are you sure you want to remove this invitation?",
   "Are you sure you want to remove this member?": "Are you sure you want to remove this member?",
@@ -1301,8 +1301,7 @@
   "Invite to Your Platform": "",
   "Please copy the link below and share it with the user you want to invite, the invitation expires in 7 days.": "",
   "Invite team members to collaborate and build amazing flows together.": "",
-  "Add new members to": "",
-  "They will be added immediately and receive an email notification.": "",
+  "Add new members to": "Add new members to",
   "Emails": "",
   "Invite users by email": "",
   "Separate email addresses with a space or comma.": "",
@@ -1313,8 +1312,6 @@
   "New Member": "",
   "Platform member": "",
   "Invalid email": "",
-  "Existing users will be skipped if added.": "",
-  "Existing members will be skipped if added.": "",
   "Suggestions": "",
   "Platform Role": "Platform Role",
   "Select a platform role": "Select a platform role",
@@ -1478,5 +1475,7 @@
   "The selected provider does not support embeddings. Switch to a provider like OpenAI or Google for knowledge base to work.": "The selected provider does not support embeddings. Switch to a provider like OpenAI or Google for knowledge base to work.",
   "Personal": "Personal",
   "Team": "Team",
-  "+{count} more": "+{count} more"
+  "+{count} more": "+{count} more",
+  "Platform members get instant access to this project. New members get access after accepting the invitation.": "Platform members get instant access to this project. New members get access after accepting the invitation.",
+  "Email addresses that already have access are skipped.": "Email addresses that already have access are skipped."
 }
