@@ -1,0 +1,205 @@
+import {
+  AIProviderModel,
+  AIProviderWithoutSensitiveData,
+} from '@activepieces/shared';
+import { useChat } from '@ai-sdk/react';
+import { useQuery } from '@tanstack/react-query';
+import { DefaultChatTransport, isTextUIPart, UIMessage } from 'ai';
+import { useEffect, useMemo } from 'react';
+
+import { aiProviderApi } from '@/features/platform-admin/api/ai-provider-api';
+import { API_URL } from '@/lib/api';
+import { authenticationSession } from '@/lib/authentication-session';
+
+export type CopilotModel = {
+  modelId: string;
+  modelName: string;
+  provider: string;
+  providerDisplayName: string;
+};
+
+export function useCopilotModels() {
+  const providersQuery = useQuery({
+    queryKey: ['copilot-providers'],
+    queryFn: () => aiProviderApi.list(),
+  });
+
+  const providers = providersQuery.data ?? [];
+  const hasProviders = providers.length > 0;
+
+  const modelsQuery = useQuery({
+    queryKey: ['copilot-models', providers.map((p) => p.provider).join(',')],
+    enabled: hasProviders,
+    queryFn: async () => {
+      const results = await Promise.allSettled(
+        providers.map((p) =>
+          aiProviderApi
+            .listModelsForProvider(p.provider)
+            .then((models) => ({ provider: p, models })),
+        ),
+      );
+
+      const models: CopilotModel[] = [];
+      for (const result of results) {
+        if (result.status !== 'fulfilled') continue;
+        const { provider, models: providerModels } = result.value;
+        for (const m of providerModels) {
+          if (m.type === 'text' && isChatModel(m.id)) {
+            models.push({
+              modelId: m.id,
+              modelName: m.name,
+              provider: provider.provider,
+              providerDisplayName: provider.name,
+            });
+          }
+        }
+      }
+      return models.sort((a, b) => {
+        const aScore = PREFERRED_MODEL_SCORE(a.modelId);
+        const bScore = PREFERRED_MODEL_SCORE(b.modelId);
+        return bScore - aScore;
+      });
+    },
+  });
+
+  return {
+    models: modelsQuery.data ?? [],
+    isLoading: providersQuery.isLoading || modelsQuery.isLoading,
+    hasProviders,
+    providers,
+  };
+}
+
+export function usePlatformCopilot(
+  {
+    selectedModel,
+  }: {
+    selectedModel: CopilotModel | null;
+  } = { selectedModel: null },
+) {
+  const storageKey = `ap-copilot-${
+    authenticationSession.getCurrentUserId() ?? 'anon'
+  }`;
+  const initialMessages = useMemo(() => loadMessages(storageKey), [storageKey]);
+
+  const chat = useChat({
+    messages: initialMessages,
+    transport: new DefaultChatTransport({
+      api: `${API_URL}/v1/platform-copilot/chat`,
+      headers: {
+        Authorization: `Bearer ${authenticationSession.getToken() ?? ''}`,
+      },
+      prepareSendMessagesRequest: ({ messages }) => {
+        const lastMessage = messages[messages.length - 1];
+        const conversationHistory = messages.slice(0, -1).map((m) => ({
+          role: m.role as 'user' | 'assistant',
+          content: getMessageText(m),
+        }));
+        return {
+          body: {
+            message: getMessageText(lastMessage),
+            conversationHistory,
+            ...(selectedModel
+              ? {
+                  modelId: selectedModel.modelId,
+                  provider: selectedModel.provider,
+                }
+              : {}),
+          },
+        };
+      },
+    }),
+  });
+
+  useEffect(() => {
+    saveMessages(storageKey, chat.messages);
+  }, [storageKey, chat.messages]);
+
+  const clearChat = () => {
+    chat.setMessages([]);
+    localStorage.removeItem(storageKey);
+  };
+
+  return { ...chat, clearChat };
+}
+
+function getMessageText(m: UIMessage | undefined): string {
+  if (!m) return '';
+  return m.parts.find(isTextUIPart)?.text ?? '';
+}
+
+function loadMessages(key: string): UIMessage[] {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as unknown[];
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(isValidMessage) as UIMessage[];
+  } catch {
+    return [];
+  }
+}
+
+function saveMessages(key: string, messages: UIMessage[]): void {
+  try {
+    if (messages.length === 0) {
+      localStorage.removeItem(key);
+      return;
+    }
+    const serializable = messages.map((m) => ({
+      id: m.id,
+      role: m.role,
+      parts: m.parts.filter((p) => p.type === 'text'),
+    }));
+    localStorage.setItem(key, JSON.stringify(serializable));
+  } catch {
+    /* storage full or unavailable */
+  }
+}
+
+function isValidMessage(item: unknown): boolean {
+  if (!item || typeof item !== 'object') return false;
+  const record = item as Record<string, unknown>;
+  return (
+    typeof record['id'] === 'string' &&
+    typeof record['role'] === 'string' &&
+    Array.isArray(record['parts'])
+  );
+}
+
+export type { AIProviderModel, AIProviderWithoutSensitiveData };
+
+const EXCLUDED_PATTERNS = [
+  'realtime',
+  'audio',
+  'vision',
+  'tts',
+  'whisper',
+  'dall-e',
+  'embedding',
+  'babbage',
+  'davinci',
+  'instruct',
+  'transcription',
+  'moderation',
+  'search',
+];
+
+function isChatModel(modelId: string): boolean {
+  const id = modelId.toLowerCase();
+  return !EXCLUDED_PATTERNS.some((p) => id.includes(p));
+}
+
+function PREFERRED_MODEL_SCORE(modelId: string): number {
+  const id = modelId.toLowerCase();
+  if (id.includes('claude-haiku')) return 100;
+  if (id.includes('gpt-4o-mini')) return 90;
+  if (id.includes('gemini-2.0-flash')) return 85;
+  if (id.includes('gemini-flash')) return 80;
+  if (id.includes('claude-sonnet')) return 75;
+  if (id.includes('gpt-4o')) return 70;
+  if (id.includes('claude')) return 60;
+  if (id.includes('gpt-4')) return 50;
+  if (id.includes('gemini')) return 40;
+  return 0;
+}

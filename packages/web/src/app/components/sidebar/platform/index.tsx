@@ -1,6 +1,6 @@
 import { ApEdition, ApFlagId, TeamProjectsLimit } from '@activepieces/shared';
 import { t } from 'i18next';
-import { ComponentType, useRef } from 'react';
+import React, { ComponentType, useRef } from 'react';
 import { Link } from 'react-router-dom';
 
 import { BotIcon } from '@/components/icons/bot';
@@ -36,6 +36,8 @@ import {
   SidebarGroupLabel,
   SidebarSeparator,
 } from '@/components/ui/sidebar-shadcn';
+import { PlatformCopilotButton } from '@/features/platform-copilot/platform-copilot-button';
+import { PlatformCopilotSheet } from '@/features/platform-copilot/platform-copilot-sheet';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -51,6 +53,7 @@ export function PlatformSidebar() {
   const { checkAccess } = useAuthorization();
   const defaultRoute = determineDefaultRoute(checkAccess);
   const chevronRef = useRef<ChevronLeftIconHandle>(null);
+  const [copilotOpen, setCopilotOpen] = React.useState(false);
 
   const setupItems = [
     {
@@ -230,8 +233,10 @@ export function PlatformSidebar() {
       </div>
 
       <SidebarFooter>
+        <PlatformCopilotButton onClick={() => setCopilotOpen(true)} />
         <SidebarUser />
       </SidebarFooter>
+      <PlatformCopilotSheet open={copilotOpen} onOpenChange={setCopilotOpen} />
     </Sidebar>
   );
 }

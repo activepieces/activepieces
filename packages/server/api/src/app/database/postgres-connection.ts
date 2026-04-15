@@ -346,6 +346,7 @@ import { AddEnabledToolsToMcpServer1772027509096 } from './migration/postgres/17
 import { AddFlowProjectIdStatusIndex1772027509097 } from './migration/postgres/1772027509097-AddFlowProjectIdStatusIndex'
 import { AddPgVectorExtension1773627989514 } from './migration/postgres/1773627989514-AddPgVectorExtension'
 import { AddKnowledgeBaseChunkTable1773627989515 } from './migration/postgres/1773627989515-AddKnowledgeBaseChunkTable'
+import { AddPlatformCopilotChunkTable1773627989516 } from './migration/postgres/1773627989516-AddPlatformCopilotChunkTable'
 import { AddProjectPlatformIdIndex1773930744000 } from './migration/postgres/1773930744000-AddProjectPlatformIdIndex'
 import { ReAddAgentsEnabledToPlatformPlan1774000000000 } from './migration/postgres/1774000000000-ReAddAgentsEnabledToPlatformPlan'
 import { AddMissingCascadeDeleteIndices1774100000000 } from './migration/postgres/1774100000000-AddMissingCascadeDeleteIndices'
@@ -355,6 +356,8 @@ import { AddMcpOAuthTables1774500000000 } from './migration/postgres/17745000000
 import { AddCanaryToPlatformPlan1774600000000 } from './migration/postgres/1774600000000-AddCanaryToPlatformPlan'
 import { MergeCanaryAndDedicatedWorkersIntoWorkerGroupId1775656136000 } from './migration/postgres/1775656136000-MergeCanaryAndDedicatedWorkersIntoWorkerGroupId'
 import { AddAiProvidersEnabledToPlatformPlan1775728983000 } from './migration/postgres/1775728983000-AddAiProvidersEnabledToPlatformPlan'
+import { AddCopilotFilesAndCodeChunks1775800000000 } from './migration/postgres/1775800000000-AddCopilotFilesAndCodeChunks'
+import { RecreateCopilotCodeChunks1775800000001 } from './migration/postgres/1775800000001-RecreateCopilotCodeChunks'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -721,10 +724,13 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddUserFkIndices1774449358000,
         AddPgVectorExtension1773627989514,
         AddKnowledgeBaseChunkTable1773627989515,
+        AddPlatformCopilotChunkTable1773627989516,
         AddMcpOAuthTables1774500000000,
         AddCanaryToPlatformPlan1774600000000,
         MergeCanaryAndDedicatedWorkersIntoWorkerGroupId1775656136000,
         AddAiProvidersEnabledToPlatformPlan1775728983000,
+        AddCopilotFilesAndCodeChunks1775800000000,
+        RecreateCopilotCodeChunks1775800000001,
     ]
     return migrations
 }

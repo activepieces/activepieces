@@ -43,6 +43,8 @@ import { PieceMetadataEntity } from '../pieces/metadata/piece-metadata-entity'
 import { PieceTagEntity } from '../pieces/tags/pieces/piece-tag.entity'
 import { TagEntity } from '../pieces/tags/tag-entity'
 import { PlatformEntity } from '../platform/platform.entity'
+import { CopilotCodeChunkEntity } from '../platform-copilot/copilot-code-chunk.entity'
+import { PlatformCopilotChunkEntity } from '../platform-copilot/platform-copilot-chunk.entity'
 import { ProjectEntity } from '../project/project-entity'
 import { StoreEntryEntity } from '../store-entry/store-entry-entity'
 import { FieldEntity } from '../tables/field/field.entity'
@@ -98,6 +100,8 @@ function getEntities(): EntitySchema<unknown>[] {
         McpOAuthTokenEntity,
         KnowledgeBaseFileEntity,
         KnowledgeBaseChunkEntity,
+        PlatformCopilotChunkEntity,
+        CopilotCodeChunkEntity,
         TriggerSourceEntity,
         UserBadgeEntity,
         // Enterprise
