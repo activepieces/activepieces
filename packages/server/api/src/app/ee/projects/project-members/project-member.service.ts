@@ -309,6 +309,7 @@ async function enrichProjectMemberWithUser(
             lastName: identity.lastName,
             created: user.created,
             updated: user.updated,
+            provider: identity.provider,
         },
     }
 }

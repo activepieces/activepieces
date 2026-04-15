@@ -611,6 +611,7 @@ function mapToUserWithMetaInformation(owner: (User & { identity?: UserIdentity }
         externalId: owner.externalId,
         created: owner.created,
         updated: owner.updated,
+        provider: identity.provider,
     }
 }
 
