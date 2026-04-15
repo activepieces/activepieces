@@ -12,6 +12,7 @@ export enum SystemJobName {
     AI_CREDIT_UPDATE_CHECK = 'ai-credit-update-check',
     HARD_DELETE_PROJECT = 'hard-delete-project',
     HARD_DELETE_PLATFORM = 'hard-delete-platform',
+    CONSOLE_USAGE_REPORT = 'console-usage-report',
 }
 
 type DeleteFlowDurableSystemJobData =  {
@@ -46,6 +47,7 @@ type SystemJobDataMap = {
     [SystemJobName.AI_CREDIT_UPDATE_CHECK]: AiCreditUpdateCheckSystemJobData
     [SystemJobName.HARD_DELETE_PROJECT]: HardDeleteProjectSystemJobData
     [SystemJobName.HARD_DELETE_PLATFORM]: HardDeletePlatformSystemJobData
+    [SystemJobName.CONSOLE_USAGE_REPORT]: Record<string, never>
 }
 
 export type SystemJobData<T extends SystemJobName = SystemJobName> = T extends SystemJobName ? SystemJobDataMap[T] : never
