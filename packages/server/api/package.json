@@ -92,7 +92,7 @@
     "nanoid": "3.3.8",
     "node-cache": "5.1.2",
     "node-cron": "3.0.3",
-    "nodemailer": "8.0.4",
+    "nodemailer": "8.0.5",
     "object-sizeof": "2.6.3",
     "p-limit": "2.3.0",
     "pg": "8.11.3",
