@@ -87,7 +87,7 @@ export const oracleDbAuth = PieceAuth.CustomAuth({
           };
         }
         connectString = typedAuth.connectionString;
-        logs.push(`[oracle] Connection type: connectionString → ${connectString}`);
+        logs.push(`[oracle] Connection type: connectionString → ${connectString.replace(/\/\/[^:]+:[^@]+@/, '//***:***@')}`);
       }
 
       logs.push(`[oracle] Thick mode: ${typedAuth.thickMode === true}`);

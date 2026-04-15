@@ -297,6 +297,7 @@ async function registerOracleLibs({ libDir, logs }: { libDir: string; logs: stri
 async function _initThickClient(logs: string[]): Promise<void> {
   // Flush any log lines captured at module load time (resolveOracleBaseDir)
   logs.push(...initLogs);
+  initLogs.length = 0;
 
   let libDir = getOracleClientLibDir();
 
