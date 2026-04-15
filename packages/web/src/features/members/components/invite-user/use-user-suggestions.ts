@@ -22,6 +22,7 @@ export type SuggestedUser = UserWithMetaInformation & {
 type UseUserSuggestionsParams = {
   inputValue: string;
   currentEmails: string[];
+  isPlatformPage: boolean;
 };
 
 const isPlatformAdminOrOperator = (user: { platformRole: PlatformRole }) =>
@@ -41,6 +42,7 @@ const matchesSearch = (user: UserWithMetaInformation, searchTerm: string) => {
 export function useUserSuggestions({
   inputValue,
   currentEmails,
+  isPlatformPage,
 }: UseUserSuggestionsParams) {
   const { data: currentUser } = userHooks.useCurrentUser();
   const isAdmin = currentUser ? isPlatformAdminOrOperator(currentUser) : false;
@@ -73,7 +75,7 @@ export function useUserSuggestions({
   );
 
   const suggestedUsers = useMemo<SuggestedUser[]>(() => {
-    if (!platformUsersData?.data) return [];
+    if (isPlatformPage || !platformUsersData?.data) return [];
 
     const filtered = platformUsersData.data
       .filter((user) => {
@@ -127,16 +129,17 @@ export function useUserSuggestions({
       (u) => u.email.toLowerCase() === email,
     );
 
-    // User has access (current user or admin/operator)
+    // User has access (current user, admin/operator, or existing platform user on platform page)
     if (
       email === currentUserEmail ||
-      (platformUser && isPlatformAdminOrOperator(platformUser))
+      (platformUser && isPlatformAdminOrOperator(platformUser)) ||
+      (isPlatformPage && platformUser)
     ) {
       return { email, type: 'has-access', user: platformUser };
     }
 
     // Already a project member
-    if (projectMemberEmails.has(email)) {
+    if (!isPlatformPage && projectMemberEmails.has(email)) {
       return { email, type: 'in-project', user: platformUser };
     }
 

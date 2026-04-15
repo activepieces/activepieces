@@ -32,6 +32,7 @@ function UserSuggestionsPopover({
   } = useUserSuggestions({
     inputValue,
     currentEmails: value as string[],
+    isPlatformPage: isPlatformPage ?? false,
   });
 
   const getTagMeta = useCallback(
