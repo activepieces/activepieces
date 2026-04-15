@@ -1,0 +1,8 @@
+{
+  "Send SMS": "SMSの送信",
+  "Send an SMS message using the Telnyx Messages API.": "Telnyx メッセージ API を使用して SMS メッセージを送信します。",
+  "Make Call": "電話をかける",
+  "Initiate an outbound call using the Telnyx Call Control API.": "Telnyx Call Control API を使用してアウトバウンドコールを開始します。",
+  "Message Received": "受信したメッセージ",
+  "Triggers when Telnyx delivers a message.received webhook event.": "Telnyx が message.received webhook イベントを配信したときにトリガーします。"
+}
