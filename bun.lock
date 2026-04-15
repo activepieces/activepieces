@@ -7792,7 +7792,7 @@
     },
     "packages/pieces/core/subflows": {
       "name": "@activepieces/piece-subflows",
-      "version": "0.4.12",
+      "version": "0.5.0",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -8104,7 +8104,7 @@
     },
     "packages/shared": {
       "name": "@activepieces/shared",
-      "version": "0.59.0",
+      "version": "0.59.1",
       "dependencies": {
         "dayjs": "1.11.9",
         "deepmerge-ts": "7.1.0",
