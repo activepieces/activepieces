@@ -1,7 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { QRCodeSVG } from 'qrcode.react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -23,11 +23,13 @@ type Step = 'password' | 'verify' | 'backup';
 
 function EnableTwoFaForm({
   onOpenChange,
+  hasPassword,
 }: {
   onOpenChange: (open: boolean) => void;
+  hasPassword: boolean;
 }) {
   const queryClient = useQueryClient();
-  const [step, setStep] = useState<Step>('password');
+  const [step, setStep] = useState<Step>(hasPassword ? 'password' : 'verify');
   const [password, setPassword] = useState('');
   const [totpUri, setTotpUri] = useState<string | null>(null);
   const [backupCodes, setBackupCodes] = useState<string[]>([]);
@@ -35,6 +37,28 @@ function EnableTwoFaForm({
   const [enableError, setEnableError] = useState<string | null>(null);
   const [isPending, setIsPending] = useState(false);
   const [savedChecked, setSavedChecked] = useState(false);
+
+  // For social (passwordless) users, call enable immediately on open
+  useEffect(() => {
+    if (hasPassword) return;
+    const enable = async () => {
+      setIsPending(true);
+      try {
+        const { data, error } = await authClient.twoFactor.enable({});
+        if (error || !data) {
+          setEnableError(t('Failed to initialize 2FA. Please try again.'));
+          return;
+        }
+        setTotpUri(data.totpURI);
+        setBackupCodes(data.backupCodes ?? []);
+      } catch {
+        setEnableError(t('Failed to initialize 2FA. Please try again.'));
+      } finally {
+        setIsPending(false);
+      }
+    };
+    enable();
+  }, [hasPassword]);
 
   const manualSecret = totpUri
     ? new URL(totpUri).searchParams.get('secret') ?? undefined
@@ -93,7 +117,9 @@ function EnableTwoFaForm({
         )}
         {step === 'verify' && (
           <DialogDescription>
-            {t('Verify your authenticator code')}
+            {t(
+              'Scan the QR code with your authenticator app, then enter the 6-digit code.',
+            )}
           </DialogDescription>
         )}
         {step === 'backup' && (
@@ -127,6 +153,9 @@ function EnableTwoFaForm({
 
       {step === 'verify' && (
         <div className="flex flex-col gap-4">
+          {enableError && (
+            <p className="text-sm text-destructive">{enableError}</p>
+          )}
           {totpUri && (
             <div className="flex flex-col items-center gap-3">
               <QRCodeSVG value={totpUri} size={180} />
@@ -200,9 +229,11 @@ function EnableTwoFaForm({
 function EnableTwoFaDialog({
   open,
   onOpenChange,
+  hasPassword,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  hasPassword: boolean;
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -210,6 +241,7 @@ function EnableTwoFaDialog({
         <EnableTwoFaForm
           key={open ? 'open' : 'closed'}
           onOpenChange={onOpenChange}
+          hasPassword={hasPassword}
         />
       </DialogContent>
     </Dialog>

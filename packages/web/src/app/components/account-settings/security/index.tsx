@@ -67,12 +67,21 @@ function TwoFactorAuthSection() {
         </div>
       </div>
 
-      <EnableTwoFaDialog open={enableOpen} onOpenChange={setEnableOpen} />
-      <DisableTwoFaDialog open={disableOpen} onOpenChange={setDisableOpen} />
+      <EnableTwoFaDialog
+        open={enableOpen}
+        onOpenChange={setEnableOpen}
+        hasPassword={status?.hasPassword ?? true}
+      />
+      <DisableTwoFaDialog
+        open={disableOpen}
+        onOpenChange={setDisableOpen}
+        hasPassword={status?.hasPassword ?? true}
+      />
       <BackupCodesDialog
         open={backupCodesOpen}
         onOpenChange={setBackupCodesOpen}
         backupCodesRemaining={status?.backupCodesRemaining ?? 0}
+        hasPassword={status?.hasPassword ?? true}
       />
     </div>
   );

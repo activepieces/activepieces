@@ -52,8 +52,10 @@ export const authenticationApi = {
     );
   },
   get2faStatus() {
-    return api.get<{ enabled: boolean; backupCodesRemaining: number }>(
-      '/v1/authentication/2fa-status',
-    );
+    return api.get<{
+      enabled: boolean;
+      backupCodesRemaining: number;
+      hasPassword: boolean;
+    }>('/v1/authentication/2fa-status');
   },
 };

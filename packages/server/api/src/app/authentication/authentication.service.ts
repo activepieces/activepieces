@@ -120,10 +120,14 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
             projectId: null,
         })
     },
-    async get2faStatus(params: Get2faStatusParams): Promise<{ enabled: boolean, backupCodesRemaining: number }> {
+    async get2faStatus(params: Get2faStatusParams): Promise<{ enabled: boolean, backupCodesRemaining: number, hasPassword: boolean }> {
         const user = await userService(log).getOneOrFail({ id: params.userId })
         const identity = await userIdentityService(log).getOneOrFail({ id: user.identityId })
-        return { enabled: identity.twoFactorEnabled ?? false, backupCodesRemaining: 0 }
+        return {
+            enabled: identity.twoFactorEnabled ?? false,
+            backupCodesRemaining: 0,
+            hasPassword: identity.provider === UserIdentityProvider.EMAIL,
+        }
     },
     async socialSignIn(params: FederatedAuthnParams): Promise<AuthenticationResponse | MfaChallengeResponse> {
         log.info({ params }, '[socialsingin]')

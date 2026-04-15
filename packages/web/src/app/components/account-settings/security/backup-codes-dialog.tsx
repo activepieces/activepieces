@@ -14,15 +14,18 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { OtpInput } from '@/components/ui/otp-input';
 import { Separator } from '@/components/ui/separator';
 import { authClient } from '@/lib/better-auth';
 
 function BackupCodesForm({
   backupCodesRemaining,
   onOpenChange,
+  hasPassword,
 }: {
   backupCodesRemaining: number;
   onOpenChange: (open: boolean) => void;
+  hasPassword: boolean;
 }) {
   const queryClient = useQueryClient();
   const [newCodes, setNewCodes] = useState<string[]>([]);
@@ -30,7 +33,7 @@ function BackupCodesForm({
   const [error, setError] = useState<string | null>(null);
   const [isPending, setIsPending] = useState(false);
 
-  const handleRegenerate = async (e: React.FormEvent) => {
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!password) return;
     setError(null);
@@ -47,6 +50,33 @@ function BackupCodesForm({
       toast.success(t('Backup codes regenerated successfully'));
     } catch {
       setError(t('Invalid password. Please try again.'));
+    } finally {
+      setIsPending(false);
+    }
+  };
+
+  const handleOtpComplete = async ({ value }: { value: string }) => {
+    setError(null);
+    setIsPending(true);
+    try {
+      const { error: verifyError } = await authClient.twoFactor.verifyTotp({
+        code: value,
+      });
+      if (verifyError) {
+        setError(t('Invalid code. Please try again.'));
+        return;
+      }
+      const { data, error: genError } =
+        await authClient.twoFactor.generateBackupCodes({});
+      if (genError || !data) {
+        setError(t('Failed to regenerate backup codes. Please try again.'));
+        return;
+      }
+      setNewCodes(data.backupCodes);
+      await queryClient.invalidateQueries({ queryKey: ['2fa-status'] });
+      toast.success(t('Backup codes regenerated successfully'));
+    } catch {
+      setError(t('Invalid code. Please try again.'));
     } finally {
       setIsPending(false);
     }
@@ -82,37 +112,60 @@ function BackupCodesForm({
         </div>
       )}
 
-      <form onSubmit={handleRegenerate} className="flex flex-col gap-3">
+      <div className="flex flex-col gap-3">
         <p className="text-sm font-medium">{t('Regenerate Backup Codes')}</p>
         <p className="text-xs text-muted-foreground">
-          {t(
-            'Enter your password to generate new backup codes. This will invalidate all existing codes.',
-          )}
+          {hasPassword
+            ? t(
+                'Enter your password to generate new backup codes. This will invalidate all existing codes.',
+              )
+            : t(
+                'Enter your authenticator code to generate new backup codes. This will invalidate all existing codes.',
+              )}
         </p>
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="backup-codes-password">{t('Password')}</Label>
-          <Input
-            id="backup-codes-password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            disabled={isPending}
-          />
-        </div>
-        {error && <p className="text-sm text-destructive">{error}</p>}
-        <DialogFooter>
-          <Button
-            variant="outline"
-            type="button"
-            onClick={() => onOpenChange(false)}
-          >
-            {t('Close')}
-          </Button>
-          <Button type="submit" loading={isPending} disabled={!password}>
-            {t('Regenerate')}
-          </Button>
-        </DialogFooter>
-      </form>
+
+        {hasPassword ? (
+          <form onSubmit={handlePasswordSubmit} className="flex flex-col gap-3">
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="backup-codes-password">{t('Password')}</Label>
+              <Input
+                id="backup-codes-password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={isPending}
+              />
+            </div>
+            {error && <p className="text-sm text-destructive">{error}</p>}
+            <DialogFooter>
+              <Button
+                variant="outline"
+                type="button"
+                onClick={() => onOpenChange(false)}
+              >
+                {t('Close')}
+              </Button>
+              <Button type="submit" loading={isPending} disabled={!password}>
+                {t('Regenerate')}
+              </Button>
+            </DialogFooter>
+          </form>
+        ) : (
+          <div className="flex flex-col gap-3">
+            <OtpInput onChange={handleOtpComplete} disabled={isPending} />
+            {error && <p className="text-sm text-destructive">{error}</p>}
+            <DialogFooter>
+              <Button
+                variant="outline"
+                type="button"
+                onClick={() => onOpenChange(false)}
+              >
+                {t('Close')}
+              </Button>
+            </DialogFooter>
+          </div>
+        )}
+      </div>
     </>
   );
 }
@@ -121,10 +174,12 @@ function BackupCodesDialog({
   open,
   onOpenChange,
   backupCodesRemaining,
+  hasPassword,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   backupCodesRemaining: number;
+  hasPassword: boolean;
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -133,6 +188,7 @@ function BackupCodesDialog({
           key={open ? 'open' : 'closed'}
           backupCodesRemaining={backupCodesRemaining}
           onOpenChange={onOpenChange}
+          hasPassword={hasPassword}
         />
       </DialogContent>
     </Dialog>
