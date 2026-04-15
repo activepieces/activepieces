@@ -1,0 +1,130 @@
+import {
+  FlowTrigger,
+  FlowActionType,
+  flowStructureUtil,
+  PieceCategory,
+} from '@activepieces/shared';
+import { cva } from 'class-variance-authority';
+import { t } from 'i18next';
+import { useMemo } from 'react';
+
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '../../../components/ui/tooltip';
+import { piecesHooks } from '../hooks/pieces-hooks';
+import { StepMetadata } from '../types';
+import { extractPieceNamesAndCoreMetadata } from '../utils/step-utils';
+
+import { PieceIcon } from './piece-icon';
+
+const extraIconVariants = cva(
+  'flex items-center justify-center rounded-md bg-background border border-solid text-xs select-none',
+  {
+    variants: {
+      size: {
+        xxl: 'size-[64px]',
+        xl: 'size-[48px]',
+        lg: 'size-[40px]',
+        md: 'size-[38px]',
+        sm: 'size-[25px]',
+        xs: 'size-[25px]',
+      },
+    },
+  },
+);
+
+export function PieceIconList({
+  maxNumberOfIconsToShow,
+  trigger,
+  size,
+  className,
+  background,
+  excludeCore = false,
+}: {
+  trigger: FlowTrigger;
+  maxNumberOfIconsToShow: number;
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl';
+  className?: string;
+  background?: string;
+  excludeCore?: boolean;
+}) {
+  const steps = flowStructureUtil.getAllSteps(trigger);
+
+  const { pieceNames, coreMetadata } = useMemo(
+    () => extractPieceNamesAndCoreMetadata(steps, excludeCore),
+    [steps, excludeCore],
+  );
+
+  const pieceQueries = piecesHooks.useMultiplePieces({ names: pieceNames });
+
+  const stepsMetadata: StepMetadata[] = useMemo(() => {
+    const pieceMetadata: StepMetadata[] = pieceQueries
+      .map((q) => q.data)
+      .filter((data): data is NonNullable<typeof data> => !!data)
+      .filter(
+        (piece) =>
+          !excludeCore || !piece.categories?.includes(PieceCategory.CORE),
+      )
+      .map((piece) => ({
+        displayName: piece.displayName,
+        logoUrl: piece.logoUrl,
+        description: piece.description,
+        type: FlowActionType.PIECE as const,
+        pieceType: piece.pieceType,
+        pieceName: piece.name,
+        pieceVersion: piece.version,
+        categories: piece.categories ?? [],
+        packageType: piece.packageType,
+        auth: piece.auth,
+      }));
+    return [...coreMetadata, ...pieceMetadata];
+  }, [pieceQueries.map((q) => q.dataUpdatedAt).join(','), coreMetadata]);
+
+  const uniqueMetadata: StepMetadata[] = stepsMetadata.filter(
+    (item, index, self) =>
+      self.findIndex(
+        (secondItem) => item.displayName === secondItem.displayName,
+      ) === index,
+  );
+  const visibleMetadata = uniqueMetadata.slice(0, maxNumberOfIconsToShow);
+  const extraPieces = uniqueMetadata.length - visibleMetadata.length;
+  const extraMetadata = uniqueMetadata.slice(maxNumberOfIconsToShow);
+
+  return (
+    <div className={className || 'flex gap-0.5 '}>
+      {visibleMetadata.map((metadata) => (
+        <PieceIcon
+          logoUrl={metadata.logoUrl}
+          showTooltip={true}
+          size={size ?? 'md'}
+          border={true}
+          displayName={metadata.displayName}
+          key={metadata.displayName}
+          background={background}
+        />
+      ))}
+      {extraPieces > 0 && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className={extraIconVariants({ size: size ?? 'xs' })}>
+              +{extraPieces}
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">
+            {extraMetadata.length > 1 &&
+              extraMetadata
+                .map((m) => m?.displayName || '')
+                .slice(0, -1)
+                .join(', ') +
+                ` ${t('and')} ${
+                  extraMetadata[extraMetadata.length - 1].displayName
+                }`}
+            {extraMetadata.length === 1 && extraMetadata[0].displayName}
+          </TooltipContent>
+        </Tooltip>
+      )}
+    </div>
+  );
+}

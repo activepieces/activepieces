@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { fountainAuth } from '../../';
+import { fountainAuth } from '../auth';
 import { getAuthHeaders, getApiUrl } from '../common/auth';
 import { getFunnelsDropdown, getStagesForFunnelDropdown } from '../common/dropdowns';
 

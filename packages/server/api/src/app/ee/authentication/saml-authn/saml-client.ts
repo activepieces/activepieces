@@ -1,19 +1,16 @@
 
 import { ActivepiecesError, ErrorCode, SAMLAuthnProviderConfig } from '@activepieces/shared'
 import * as validator from '@authenio/samlify-node-xmllint'
-import { Type } from '@sinclair/typebox'
-import { TypeCompiler } from '@sinclair/typebox/compiler'
 import * as saml from 'samlify'
+import { z } from 'zod'
 import { domainHelper } from '../../custom-domains/domain-helper'
 
 
-const samlResponseValidator = TypeCompiler.Compile(
-    Type.Object({
-        email: Type.String(),
-        firstName: Type.String(),
-        lastName: Type.String(),
-    }),
-)
+const samlResponseValidator = z.object({
+    email: z.string(),
+    firstName: z.string(),
+    lastName: z.string(),
+})
 
 class SamlClient {
     private static readonly LOGIN_REQUEST_BINDING = 'redirect'
@@ -41,7 +38,7 @@ class SamlClient {
         )
 
         const atts = loginResult.extract.attributes
-        if (!samlResponseValidator.Check(atts)) {
+        if (!samlResponseValidator.safeParse(atts).success) {
             throw new ActivepiecesError({
                 code: ErrorCode.INVALID_SAML_RESPONSE,
                 params: {
@@ -54,16 +51,23 @@ class SamlClient {
     }
 }
 
-let instance: SamlClient | null = null
+const instanceCache = new Map<string, SamlClient>()
 
 export const createSamlClient = async (platformId: string, samlProvider: SAMLAuthnProviderConfig): Promise<SamlClient> => {
-    if (instance) {
-        return instance
+    const cached = instanceCache.get(platformId)
+    if (cached) {
+        return cached
     }
     saml.setSchemaValidator(validator)
     const idp = createIdp(samlProvider.idpMetadata)
     const sp = await createSp(platformId, samlProvider.idpCertificate)
-    return instance = new SamlClient(idp, sp)
+    const client = new SamlClient(idp, sp)
+    instanceCache.set(platformId, client)
+    return client
+}
+
+export const invalidateSamlClientCache = (platformId: string): void => {
+    instanceCache.delete(platformId)
 }
 
 const createIdp = (metadata: string): saml.IdentityProviderInstance => {

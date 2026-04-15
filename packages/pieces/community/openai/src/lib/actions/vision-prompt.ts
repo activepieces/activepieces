@@ -3,7 +3,7 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 import OpenAI from 'openai';
-import { openaiAuth } from '../..';
+import { openaiAuth } from '../auth';
 import { z } from 'zod';
 import { propsValidation } from '@activepieces/pieces-common';
 

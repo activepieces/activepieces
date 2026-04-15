@@ -4,7 +4,6 @@ import {
   PieceAuth,
   ArraySubProps,
 } from '@activepieces/pieces-framework';
-
 import {
   AgentOutputField,
   AgentPieceProps,
@@ -14,13 +13,20 @@ import {
   TASK_COMPLETION_TOOL_NAME,
   AIProviderName,
   AgentProviderModel,
+  ExecutionToolStatus,
+  AgentToolType,
+  AgentKnowledgeBaseTool,
+  KnowledgeBaseSourceType,
+  normalizeToolOutputToExecuteResponse,
+  spreadIfDefined,
 } from '@activepieces/shared';
 import { hasToolCall, stepCountIs, streamText } from 'ai';
 import { agentOutputBuilder } from './agent-output-builder';
-import { createAIModel } from '../../common/ai-sdk';
+import { createAIModel, createEmbeddingModel } from '../../common/ai-sdk';
 import { inspect } from 'util';
 import { agentUtils } from './utils';
 import { constructAgentTools } from './tools';
+import { buildWebSearchOptionsProperty, buildWebSearchConfig, WebSearchOptions } from '../../common/web-search';
 
 const agentToolArrayItems: ArraySubProps<boolean> = {
   type: Property.ShortText({
@@ -53,6 +59,19 @@ const agentToolArrayItems: ArraySubProps<boolean> = {
   }),
   auth: Property.Json({
     displayName: 'Auth Configuration',
+    required: false,
+  }),
+
+  sourceType: Property.ShortText({
+    displayName: 'Source Type',
+    required: false,
+  }),
+  sourceId: Property.ShortText({
+    displayName: 'Source ID',
+    required: false,
+  }),
+  sourceName: Property.ShortText({
+    displayName: 'Source Name',
     required: false,
   }),
 }
@@ -98,23 +117,45 @@ export const runAgent = createAction({
     }),
     [AgentPieceProps.MAX_STEPS]: Property.Number({
       displayName: 'Max steps',
-      description: 'The numbder of interations the agent can do',
+      description: 'The number of iterations the agent can do',
       required: true,
       defaultValue: 20,
     }),
+    [AgentPieceProps.WEB_SEARCH]: Property.Checkbox({
+      displayName: 'Web Search',
+      required: false,
+      defaultValue: false,
+      description:
+        'Whether to use web search to find information for the AI to use.',
+    }),
+    [AgentPieceProps.WEB_SEARCH_OPTIONS]: buildWebSearchOptionsProperty(
+      (propsValue) => (propsValue['aiProviderModel'] as unknown as AgentProviderModel)?.provider,
+      ['webSearch', 'aiProviderModel'],
+      { showIncludeSources: false },
+    ),
   },
   async run(context) {
     const { prompt, maxSteps, aiProviderModel } = context.propsValue;
     const agentProviderModel = aiProviderModel as AgentProviderModel
+    const provider = agentProviderModel.provider as AIProviderName;
+    const webSearchEnabled = !!(context.propsValue.webSearch);
+    const webSearchOptions = (context.propsValue.webSearchOptions ?? {}) as WebSearchOptions;
+
+    const { tools: webSearchTools, providerOptions } = buildWebSearchConfig({
+      provider,
+      webSearchEnabled,
+      webSearchOptions,
+    });
 
     const model = await createAIModel({
       modelId: agentProviderModel.model,
-      provider: agentProviderModel.provider as AIProviderName,
+      provider,
       engineToken: context.server.token,
       apiUrl: context.server.apiUrl,
       projectId: context.project.id,
       flowId: context.flows.current.id,
       runId: context.run.id,
+      ...spreadIfDefined('openaiResponsesModel', webSearchEnabled && provider === AIProviderName.OPENAI ? true : undefined),
     });
     const outputBuilder = agentOutputBuilder(prompt);
     const hasStructuredOutput =
@@ -122,23 +163,52 @@ export const runAgent = createAction({
       context.propsValue.structuredOutput.length > 0;
     const structuredOutput = hasStructuredOutput ? context.propsValue.structuredOutput as AgentOutputField[] : undefined;
     const agentTools = context.propsValue.agentTools as AgentTool[];
-    const { mcpClients, tools } = await constructAgentTools({
+
+    const hasKnowledgeBaseTools = agentTools.some(t => t.type === AgentToolType.KNOWLEDGE_BASE);
+    const kbFileTools = agentTools.filter(
+      (t): t is AgentKnowledgeBaseTool => t.type === AgentToolType.KNOWLEDGE_BASE && t.sourceType === KnowledgeBaseSourceType.FILE,
+    );
+    const hasKbFileTools = kbFileTools.length > 0;
+    let embeddingConfig;
+    if (hasKbFileTools) {
+      try {
+        const result = await createEmbeddingModel({
+          provider: agentProviderModel.provider as AIProviderName,
+          engineToken: context.server.token,
+          apiUrl: context.server.apiUrl,
+        });
+        embeddingConfig = { model: result.model, providerOptions: result.providerOptions };
+      }
+      catch (err) {
+        outputBuilder.addMarkdown(`\n\n**Warning:** Could not create embedding model for knowledge base search: ${err instanceof Error ? err.message : 'Unknown error'}\n\n`);
+      }
+    }
+
+    const { mcpClients, tools, toolKeyToAgentTool } = await constructAgentTools({
       context,
       agentTools,
       model,
       outputBuilder,
-      structuredOutput
+      structuredOutput,
+      embeddingConfig,
     });
+    outputBuilder.setToolMap(toolKeyToAgentTool);
+
+    const allTools = webSearchTools
+      ? { ...webSearchTools, ...tools }
+      : tools;
 
     const errors: { type: string; message: string; details?: unknown }[] = [];
 
     try {
+      const prompts = agentUtils.getPrompts(prompt, { hasKnowledgeBaseTools });
       const stream = streamText({
         model: model,
-        system: agentUtils.getPrompts(prompt).system,
-        prompt: agentUtils.getPrompts(prompt).prompt,
-        tools,
+        system: prompts.system,
+        prompt: prompts.prompt,
+        tools: allTools,
         stopWhen: [stepCountIs(maxSteps), hasToolCall(TASK_COMPLETION_TOOL_NAME)],
+        providerOptions,
         onFinish: async () => {
           await Promise.all(mcpClients.map(async (client) => client.close()));
         },
@@ -151,6 +221,14 @@ export const runAgent = createAction({
               outputBuilder.addMarkdown(chunk.text);
               break;
             }
+            case 'reasoning-delta': {
+              if ('text' in chunk && typeof chunk.text === 'string') {
+                outputBuilder.addMarkdown(chunk.text);
+              } else if ('delta' in chunk && typeof chunk.delta === 'string') {
+                outputBuilder.addMarkdown(chunk.delta);
+              }
+              break;
+            }
             case 'tool-call': {
               if (agentUtils.isTaskCompletionToolCall(chunk.toolName)) {
                 continue;
@@ -159,7 +237,6 @@ export const runAgent = createAction({
                 toolName: chunk.toolName,
                 toolCallId: chunk.toolCallId,
                 input: chunk.input as Record<string, unknown>,
-                agentTools: agentTools,
               });
               break;
             }
@@ -167,9 +244,18 @@ export const runAgent = createAction({
               if (agentUtils.isTaskCompletionToolCall(chunk.toolName)) {
                 continue;
               }
+              const rawOutput = chunk.output;
+              const toolOutput = normalizeToolOutputToExecuteResponse(rawOutput);
+              
+              if (toolOutput['status'] === ExecutionToolStatus.FAILED && toolOutput['errorMessage']) {
+                outputBuilder.addMarkdown(
+                  `\n\n**Error:** ${JSON.stringify(toolOutput['errorMessage'])}\n\n`
+                );
+              }
+              
               outputBuilder.finishToolCall({
                 toolCallId: chunk.toolCallId,
-                output: chunk.output as Record<string, unknown>,
+                output: toolOutput,
               });
               break;
             }
@@ -192,19 +278,52 @@ export const runAgent = createAction({
               });
               break;
             }
+            case 'start':
+            case 'start-step':
+            case 'tool-input-start':
+            case 'tool-input-delta':
+            case 'tool-input-end':
+            case 'finish-step':
+            case 'finish':
+              break;
+            default:
+              break;
           }
           await context.output.update({ data: outputBuilder.build() });
         } catch (innerError) {
+          let detailsStr: string;
+          try {
+            detailsStr = typeof innerError === 'object' && innerError !== null && 'message' in innerError
+              ? `${(innerError as Error).message}${(innerError as Error).stack ? `\n${(innerError as Error).stack}` : ''}`
+              : inspect(innerError);
+          } catch {
+            detailsStr = String(innerError);
+          }
           errors.push({
             type: 'chunk-processing-error',
-            message: 'Error processing chunk',
-            details: inspect(innerError),
+            message: `Error processing chunk (type=${chunk.type})`,
+            details: detailsStr,
           });
         }
       }
 
+      if (!outputBuilder.hasTextContent()) {
+        try {
+          const accumulatedText = await stream.text;
+          if (accumulatedText?.trim()) {
+            outputBuilder.addMarkdown(accumulatedText);
+            await context.output.update({ data: outputBuilder.build() });
+          }
+        } catch {
+          // ignore
+        }
+      }
+
       if (errors.length > 0) {
-        const errorSummary = errors.map(e => `${e.type}: ${e.message}`).join('\n');
+        const errorSummary = errors.map(e => {
+          const detail = e.details != null ? `\n  ${String(e.details)}` : '';
+          return `${e.type}: ${e.message}${detail}`;
+        }).join('\n');
         outputBuilder.addMarkdown(`\n\n**Errors encountered:**\n${errorSummary}`);
         outputBuilder.fail({ message: 'Agent completed with errors' });
         await context.output.update({ data: outputBuilder.build() });
@@ -213,7 +332,14 @@ export const runAgent = createAction({
       }
 
     } catch (error) {
-      const errorMessage = `Agent failed unexpectedly: ${inspect(error)}`;
+      let errorMessage = `Agent failed unexpectedly: ${inspect(error)}`;
+      if (errors.length > 0) {
+        const collectedErrors = errors.map(e => {
+          const detail = e.details != null ? `\n  ${String(e.details)}` : '';
+          return `${e.type}: ${e.message}${detail}`;
+        }).join('\n');
+        errorMessage += `\n\nCollected stream errors:\n${collectedErrors}`;
+      }
       outputBuilder.fail({ message: errorMessage });
       await context.output.update({ data: outputBuilder.build() });
       await Promise.all(mcpClients.map(async (client) => client.close()));

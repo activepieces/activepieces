@@ -4,7 +4,7 @@ import {
   StoreScope,
 } from '@activepieces/pieces-framework';
 import OpenAI from 'openai';
-import { openaiAuth } from '../..';
+import { openaiAuth } from '../auth';
 import {
   calculateMessagesTokenSize,
   exceedsHistoryLimit,

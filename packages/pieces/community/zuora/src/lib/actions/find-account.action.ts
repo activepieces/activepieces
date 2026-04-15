@@ -1,4 +1,4 @@
-import { zuoraAuth } from '../../';
+import { zuoraAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { getAccessToken } from '../common';
 import {

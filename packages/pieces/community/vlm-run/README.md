@@ -1,7 +1,5 @@
 # pieces-vlm-run
 
-This library was generated with [Nx](https://nx.dev).
-
 ## Building
 
-Run `nx build pieces-vlm-run` to build the library.
+Run `turbo run build --filter=@activepieces/piece-vlm-run` to build the library.

@@ -4,7 +4,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { PiecePropValueSchema } from '@activepieces/pieces-framework';
-import { wooAuth } from '../../';
+import { wooAuth } from '../auth';
 
 export const wooCommon = {
   async createWebhook(

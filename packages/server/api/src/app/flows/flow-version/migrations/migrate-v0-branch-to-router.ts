@@ -7,7 +7,8 @@ export const migrateBranchToRouter: Migration = {
         const newVersion = flowStructureUtil.transferFlow(flowVersion, (step) => {
             const unschemedStep = step as unknown as { type: string, settings: { conditions: unknown[] }, onSuccessAction: FlowAction | null, onFailureAction: FlowAction | null }
             if (unschemedStep.type === 'BRANCH') {
-                const routerAction: RouterAction = {
+                //lastUpdatedDate is not present in this migration, so we need to omit it
+                const routerAction: Omit<RouterAction, 'lastUpdatedDate'> = {
                     displayName: step.displayName,
                     name: step.name,
                     valid: step.valid,
@@ -33,8 +34,8 @@ export const migrateBranchToRouter: Migration = {
                     },
                     nextAction: step.nextAction,
                     children: [unschemedStep.onSuccessAction ?? null, unschemedStep.onFailureAction ?? null],
-                }
-                return routerAction
+                } 
+                return routerAction as RouterAction
             }
             return step
         })

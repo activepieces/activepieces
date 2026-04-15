@@ -1,7 +1,7 @@
 import { DynamicPropsValue, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpRequest, HttpMethod } from '@activepieces/pieces-common';
 import crypto from 'crypto';
-import { smartsheetAuth } from '../..';
+import { smartsheetAuth } from '../auth';
 
 export const smartsheetCommon = {
 	baseUrl: 'https://api.smartsheet.com/2.0',

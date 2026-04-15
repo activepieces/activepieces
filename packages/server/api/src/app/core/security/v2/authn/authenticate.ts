@@ -1,16 +1,17 @@
 import { ActivepiecesError, ErrorCode, isNil, Principal, PrincipalType } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
 import { accessTokenManager } from '../../../../authentication/lib/access-token-manager'
 import { apiKeyService } from '../../../../ee/api-keys/api-key-service'
 
-export const authenticateOrThrow = async (rawToken: string | null): Promise<Principal> => {
+export const authenticateOrThrow = async (log: FastifyBaseLogger, rawToken: string | null): Promise<Principal> => {
     if (!isNil(rawToken) && rawToken.startsWith('Bearer sk-')) {
         const trimBearerPrefix = rawToken.replace('Bearer ', '')
         return createPrincipalForApiKey(trimBearerPrefix)
     }
     if (!isNil(rawToken) && rawToken.startsWith('Bearer ')) {
         const trimBearerPrefix = rawToken.replace('Bearer ', '')
-        return accessTokenManager.verifyPrincipal(trimBearerPrefix)
+        return accessTokenManager(log).verifyPrincipal(trimBearerPrefix)
     }
     return {
         id: nanoid(),

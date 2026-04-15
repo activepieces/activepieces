@@ -7,7 +7,7 @@ import {
 } from '@activepieces/pieces-common';
 import { callClickupGetTask, clickupCommon } from '../common';
 import { ClickupEventType, ClickupWebhookPayload } from '../common/models';
-import { clickupAuth } from '../../';
+import { clickupAuth } from '../auth';
 
 export const clickupRegisterTrigger = ({
   name,

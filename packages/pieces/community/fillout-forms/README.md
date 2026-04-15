@@ -1,7 +1,5 @@
 # pieces-fillout-forms
 
-This library was generated with [Nx](https://nx.dev).
-
 ## Building
 
-Run `nx build pieces-fillout-forms` to build the library.
+Run `turbo run build --filter=@activepieces/piece-fillout-forms` to build the library.

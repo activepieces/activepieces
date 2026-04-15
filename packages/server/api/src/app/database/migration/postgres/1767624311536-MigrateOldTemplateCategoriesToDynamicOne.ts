@@ -76,7 +76,7 @@ export class MigrateOldTemplateCategoriesToDynamicOne1767624311536 implements Mi
                     [categories, id],
                 )
             }
-            logger.info(`Migrated ${templateIds.length} templates`)
+            logger.info({ migratedCount: templateIds.length }, 'Migrated templates')
         }
 
         logger.info('Finished migration MigrateOldTemplateCategoriesToDynamicOne1767624311536')

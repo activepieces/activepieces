@@ -1,6 +1,6 @@
 import { Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { bookedinAuth } from '../../index';
+import { bookedinAuth } from '../auth';
 
 export const BASE_URL = 'https://api.bookedin.ai/api/v1';
 

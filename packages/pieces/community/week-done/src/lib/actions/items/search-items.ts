@@ -4,7 +4,7 @@ import {
   Property,
   createAction,
 } from '@activepieces/pieces-framework';
-import { weekdoneAuth } from '../../../index';
+import { weekdoneAuth } from '../../auth';
 import { weekdoneApiCall, weekdoneTeamsDropdown, weekdoneUsersDropdown } from '../../common';
 
 export const searchItemsAction = createAction({

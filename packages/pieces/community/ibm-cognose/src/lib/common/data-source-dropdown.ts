@@ -1,7 +1,7 @@
 import { Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { CognosClient } from './cognos-client';
-import { ibmCognoseAuth } from '../..';
+import { ibmCognoseAuth } from '../auth';
 
 export const dataSourceDropdown = Property.Dropdown({
   auth: ibmCognoseAuth,

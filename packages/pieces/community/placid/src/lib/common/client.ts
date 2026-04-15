@@ -8,7 +8,7 @@ import {
 	PlacidCreateVideoRequest,
 } from './index';
 import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
-import { placidAuth } from '../..';
+import { placidAuth } from '../auth';
 
 export class PlacidClient {
 	constructor(private apiKey: AppConnectionValueForAuthProperty<typeof placidAuth>) {}

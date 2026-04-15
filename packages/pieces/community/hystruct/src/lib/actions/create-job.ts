@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { hystructAuth } from '../../index';
+import { hystructAuth } from '../auth';
 import { hystructApiCall } from '../common';
 
 export const createJob = createAction({

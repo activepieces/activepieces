@@ -12,7 +12,9 @@ async function buildPieces(pieceName: string) {
 export const buildPieceCommand = new Command('build')
     .description('Build pieces without publishing')
     .argument('[name]', 'name of the piece to build')
-    .action(async (name) => {
+    .option('--name <pieceName>', 'name of the piece to build')
+    .action(async (positionalName, options) => {
+        const pieceName = positionalName ?? options.name;
         const questions = [
             {
                 type: 'input',
@@ -20,10 +22,10 @@ export const buildPieceCommand = new Command('build')
                 message: 'Enter the piece folder name',
                 placeholder: 'google-drive',
                 when() {
-                    return !name
+                    return !pieceName
                 }
             },
         ];
         const answers = await inquirer.prompt(questions);
-        await buildPieces(name ? name : answers.name);
+        await buildPieces(pieceName ?? answers.name);
     });

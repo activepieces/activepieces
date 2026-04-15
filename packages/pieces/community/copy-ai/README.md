@@ -1,7 +1,5 @@
 # pieces-copy-ai
 
-This library was generated with [Nx](https://nx.dev).
+## Building
 
-## Running lint
-
-Run `nx build pieces-copy-ai` to build the library.
+Run `turbo run build --filter=@activepieces/piece-copy-ai` to build the library.

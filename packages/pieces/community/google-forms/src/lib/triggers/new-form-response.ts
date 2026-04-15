@@ -8,12 +8,10 @@ import {
 import {
   AppConnectionValueForAuthProperty,
   createTrigger,
-  OAuth2PropertyValue,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
-import { googleFormsCommon } from '../common/common';
-import { googleFormsAuth } from '../../';
+import { googleFormsCommon, googleFormsAuth, getAccessToken, GoogleFormsAuthValue } from '../common/common';
 
 export const newResponse = createTrigger({
   auth: googleFormsAuth,
@@ -108,7 +106,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof googleFormsAuth>
 };
 
 const getResponse = async (
-  authentication: OAuth2PropertyValue,
+  authentication: GoogleFormsAuthValue,
   form_id: string,
   startDate: string | null
 ) => {
@@ -118,13 +116,14 @@ const getResponse = async (
       filter: 'timestamp > ' + startDate,
     };
   }
+  const accessToken = await getAccessToken(authentication);
   const response = await httpClient.sendRequest<{
     responses: { lastSubmittedTime: string }[];
   }>({
     url: `https://forms.googleapis.com/v1/forms/${form_id}/responses`,
     method: HttpMethod.GET,
     headers: {
-      Authorization: `Bearer ${authentication.access_token}`,
+      Authorization: `Bearer ${accessToken}`,
     },
     queryParams: filter,
   });

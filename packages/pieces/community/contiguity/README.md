@@ -1,7 +1,5 @@
 # pieces-contiguity
 
-This library was generated with [Nx](https://nx.dev).
-
 ## Building
 
-Run `nx build pieces-contiguity` to build the library.
+Run `turbo run build --filter=@activepieces/piece-contiguity` to build the library.

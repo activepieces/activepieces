@@ -1,7 +1,5 @@
 # pieces-google-my-business
 
-This library was generated with [Nx](https://nx.dev).
+## Building
 
-## Running lint
-
-Run `nx lint pieces-google-my-business` to execute the lint via [ESLint](https://eslint.org/).
+Run `turbo run build --filter=@activepieces/piece-google-my-business` to build the library.

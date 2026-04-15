@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { digitalPilotAuth } from '../../index';
+import { digitalPilotAuth } from '../auth';
 import { makeClient, tagIdProp, listIdProp } from '../common';
 
 export const addTargetAccountAction = createAction({

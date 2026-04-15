@@ -10,15 +10,7 @@ import { googleContactsUpdateContactAction } from './lib/action/update-contact';
 import { googleContactsSearchContactsAction } from './lib/action/search-contact';
 import { googleContactsCommon } from './lib/common';
 import { googleContactNewOrUpdatedContact } from './lib/trigger/new-contact';
-
-export const googleContactsAuth = PieceAuth.OAuth2({
-  description: '',
-
-  authUrl: 'https://accounts.google.com/o/oauth2/auth',
-  tokenUrl: 'https://oauth2.googleapis.com/token',
-  required: true,
-  scope: ['https://www.googleapis.com/auth/contacts'],
-});
+import { googleContactsAuth } from './lib/auth';
 
 export const googleContacts = createPiece({
   minimumSupportedRelease: '0.30.0',

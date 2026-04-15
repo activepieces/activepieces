@@ -4,7 +4,7 @@ import {
   PiecePropValueSchema,
   AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
-import { quickbooksAuth } from '../index';
+import { quickbooksAuth } from '../lib/auth';
 import dayjs from 'dayjs';
 import {
   DedupeStrategy,

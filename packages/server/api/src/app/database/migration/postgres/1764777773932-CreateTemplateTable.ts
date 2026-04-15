@@ -1,6 +1,6 @@
 import { apId, FlowVersion, isNil } from '@activepieces/shared'
-import { Static, Type } from '@sinclair/typebox'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { z } from 'zod'
 import { system } from '../../../helper/system/system'
 
 const cloudPlatformId = 'NgixMLyPUxy1ZgCcxw5cM'
@@ -20,18 +20,16 @@ enum TemplateCategory {
     PRODUCTIVITY = 'PRODUCTIVITY',
     SALES = 'SALES',
 }
-const ColorHex = Type.String({
-    pattern: '^#[0-9A-Fa-f]{6}$',
-})
-type ColorHex = Static<typeof ColorHex>
+const ColorHex = z.string().regex(/^#[0-9A-Fa-f]{6}$/)
+type ColorHex = z.infer<typeof ColorHex>
 
 
-const TemplateTag = Type.Object({
-    title: Type.String(),
+const TemplateTag = z.object({
+    title: z.string(),
     color: ColorHex,
-    icon: Type.Optional(Type.String()),
+    icon: z.string().optional(),
 })
-type TemplateTag = Static<typeof TemplateTag>
+type TemplateTag = z.infer<typeof TemplateTag>
 
 enum TemplateType {
     OFFICIAL = 'OFFICIAL',
@@ -39,11 +37,7 @@ enum TemplateType {
     CUSTOM = 'CUSTOM',
 }
 
-const FlowVersionTemplate = Type.Omit(
-    FlowVersion,
-    ['id', 'created', 'updated', 'flowId', 'state', 'updatedBy', 'agentIds', 'connectionIds', 'backupFiles'],
-)
-type FlowVersionTemplate = Static<typeof FlowVersionTemplate>
+type FlowVersionTemplate = Omit<FlowVersion, 'id' | 'created' | 'updated' | 'flowId' | 'state' | 'updatedBy' | 'agentIds' | 'connectionIds' | 'backupFiles'>
 
 
 export class CreateTemplateTable1764777773932 implements MigrationInterface {
@@ -152,7 +146,7 @@ export class CreateTemplateTable1764777773932 implements MigrationInterface {
             VALUES ${valuesPlaceholders}
         `, flattenedValues)
         
-        logger.info(`Finished migration CreateTemplateTable1764777773932, migrated ${flowTemplates.length} flow templates`)
+        logger.info({ migratedCount: flowTemplates.length }, 'Finished migration CreateTemplateTable1764777773932')
     }
 
     public async down(_queryRunner: QueryRunner): Promise<void> {

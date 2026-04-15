@@ -1,6 +1,6 @@
 import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { facebookLeadsCommon } from '../common';
-import { facebookLeadsAuth } from '../..';
+import { facebookLeadsAuth } from '../auth';
 import { FacebookTriggerPayloadBody, FacebookPageDropdown } from '../common/types';
 
 export const newLead = createTrigger({

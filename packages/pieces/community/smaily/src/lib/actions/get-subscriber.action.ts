@@ -3,7 +3,7 @@ import {
   httpClient,
   HttpMethod,
 } from '@activepieces/pieces-common';
-import { smailyAuth } from '../../';
+import { smailyAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 
 export const getSubscriberAction = createAction({

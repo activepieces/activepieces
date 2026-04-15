@@ -1,6 +1,5 @@
 {
   "Email delivery service for sending transactional and marketing emails": "E-mailbezorging service voor het verzenden van transactionele en marketing e-mails",
-  "API key acquired from your SendGrid settings": "API-sleutel verkregen via SendGrid instellingen",
   "Send Email": "E-mail verzenden",
   "Send Dynamic Template": "Verstuur dynamisch sjabloon",
   "Custom API Call": "Custom API Call",
@@ -14,6 +13,7 @@
   "Subject": "Onderwerp",
   "Content Type": "Type inhoud",
   "Content": "Inhoud",
+  "Attachments": "Bijlagen",
   "Template Id": "Sjabloon ID",
   "Template Data": "Sjabloon gegevens",
   "Method": "Methode",

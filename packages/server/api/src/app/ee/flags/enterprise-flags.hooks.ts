@@ -21,9 +21,8 @@ export const enterpriseFlagsHooks: FlagsServiceHooks = {
             }
             return modifiedFlags
         }
-        modifiedFlags[ApFlagId.CAN_CONFIGURE_AI_PROVIDER] = edition !== ApEdition.CLOUD
-        const platformWithPlan = await platformService.getOneWithPlanOrThrow(platformId)
-        const platform = await platformService.getOneOrThrow(platformId)
+        const platformWithPlan = await platformService(request.log).getOneWithPlanOrThrow(platformId)
+        const platform = await platformService(request.log).getOneOrThrow(platformId)
         modifiedFlags[ApFlagId.THIRD_PARTY_AUTH_PROVIDERS_TO_SHOW_MAP] = {
             [ThirdPartyAuthnProviderEnum.GOOGLE]: !isNil(
                 platform.federatedAuthProviders.google,
@@ -36,11 +35,13 @@ export const enterpriseFlagsHooks: FlagsServiceHooks = {
         modifiedFlags[ApFlagId.SHOW_POWERED_BY_IN_FORM] = platformWithPlan.plan.showPoweredBy
         modifiedFlags[ApFlagId.THEME] = await appearanceHelper.getTheme({
             platformId,
+            log: request.log,
         })
         modifiedFlags[ApFlagId.SHOW_COMMUNITY] = platformWithPlan.plan.showPoweredBy
         modifiedFlags[ApFlagId.SHOW_BILLING_PAGE] = flags[ApFlagId.SHOW_BILLING_PAGE] && !platformUtils.isCustomerOnDedicatedDomain(platformWithPlan)
         modifiedFlags[ApFlagId.CLOUD_AUTH_ENABLED] = platform.cloudAuthEnabled
         modifiedFlags[ApFlagId.SHOW_BADGES] = !platformWithPlan.plan.embeddingEnabled
+        modifiedFlags[ApFlagId.SHOW_PROJECT_MEMBERS] = platformWithPlan.plan.projectRolesEnabled
         modifiedFlags[ApFlagId.PUBLIC_URL] = await domainHelper.getPublicUrl({
             path: '',
             platformId,

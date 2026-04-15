@@ -92,6 +92,11 @@ export const FlowEntity = new EntitySchema<FlowSchema>({
             columns: ['folderId'],
             unique: false,
         },
+        {
+            name: 'idx_flow_project_id_status',
+            columns: ['projectId', 'status'],
+            unique: false,
+        },
     ],
     relations: {
         runs: {

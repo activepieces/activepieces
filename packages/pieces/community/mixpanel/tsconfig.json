@@ -13,8 +13,7 @@
   "include": [],
   "references": [
     {
-      "path": "./tsconfig.lib.json",
-      "composite": true
+      "path": "./tsconfig.lib.json"
     }
   ]
 }

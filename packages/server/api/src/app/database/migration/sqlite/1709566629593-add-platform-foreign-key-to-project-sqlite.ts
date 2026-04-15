@@ -7,9 +7,7 @@ export class AddPlatformForeignKeyToProjectSqlite1709566629593 implements Migrat
     name = 'AddPlatformForeignKeyToProjectSqlite1709566629593'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        log.info({
-            name: this.name,
-        }, 'up')
+        log.info('[AddPlatformForeignKeyToProjectSqlite1709566629593#up]')
         await queryRunner.query(`
             DROP INDEX "idx_project_owner_id"
         `)
@@ -65,9 +63,7 @@ export class AddPlatformForeignKeyToProjectSqlite1709566629593 implements Migrat
             CREATE UNIQUE INDEX "idx_project_platform_id_external_id" ON "project" ("platformId", "externalId")
         `)
 
-        log.info({
-            name: this.name,
-        }, 'up')
+        log.info('[AddPlatformForeignKeyToProjectSqlite1709566629593#up]')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -125,7 +121,7 @@ export class AddPlatformForeignKeyToProjectSqlite1709566629593 implements Migrat
             CREATE INDEX "idx_project_owner_id" ON "project" ("ownerId")
         `)
 
-        log.info({ name: this.name }, 'down')
+        log.info('[AddPlatformForeignKeyToProjectSqlite1709566629593#down]')
     }
 
 }

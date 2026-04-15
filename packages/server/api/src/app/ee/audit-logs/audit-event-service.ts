@@ -1,18 +1,16 @@
 import {
     ApplicationEvent,
-} from '@activepieces/ee-shared'
-import { rejectedPromiseHandler } from '@activepieces/server-shared'
-import {
+
     Cursor,
     isNil,
-    SeekPage,
-} from '@activepieces/shared'
+    SeekPage } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { applicationEvents } from '../../helper/application-events'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
+import { rejectedPromiseHandler } from '../../helper/promise-handler'
 import { AuditEventEntity } from './audit-event-entity'
 
 export const auditLogRepo = repoFactory(AuditEventEntity)

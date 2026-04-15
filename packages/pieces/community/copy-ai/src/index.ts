@@ -5,6 +5,7 @@ import { runWorkflowAction } from './lib/actions/run-workflow';
 import { getWorkflowRunStatusAction } from './lib/actions/get-workflow-run-status';
 import { getWorkflowRunOutputsAction } from './lib/actions/get-workflow-run-outputs';
 import { workflowRunCompletedTrigger } from './lib/triggers/workflow-run-completed';
+import { copyAiAuth } from './lib/auth';
 
 const markdownDescription = `
 To use Copy AI, you need to get an API key:
@@ -14,12 +15,6 @@ To use Copy AI, you need to get an API key:
 4. Click on the API tab.
 5. Click the Copy button below WORKSPACE API KEY.
 `;
-
-export const copyAiAuth = PieceAuth.SecretText({
-	displayName: 'API Key',
-	description: markdownDescription,
-	required: true,
-});
 
 export const copyAi = createPiece({
 	displayName: 'Copy.ai',

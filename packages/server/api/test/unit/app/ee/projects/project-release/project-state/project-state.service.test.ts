@@ -1,20 +1,34 @@
-import { PopulatedFlow } from '@activepieces/shared'
+import { FlowOperationStatus, FlowVersion, PopulatedFlow } from '@activepieces/shared'
 import { projectStateService } from '../../../../../../../src/app/ee/projects/project-release/project-state/project-state.service'
 import { system } from '../../../../../../../src/app/helper/system/system'
 import { flowGenerator } from '../../../../../../helpers/flow-generator'
 import { tableGenerator } from '../../../../../../helpers/table-generator'
 
+vi.mock('../../../../../../../src/app/flows/flow-version/migrations', () => ({
+    flowMigrations: {
+        apply: async (version: FlowVersion) => version,
+    },
+}))
+
 const logger = system.globalLogger()
 
 describe('ProjectStateService', () => {
     describe('getFlowState', () => {
-        it('should remove extra properties from flow state', () => {
+        it('should remove extra properties from flow state', async () => {
             const flow: PopulatedFlow = {
                 ...flowGenerator.simpleActionAndTrigger(),
                 extraProperty: 'should be removed',
             } as PopulatedFlow
-            const flowState = projectStateService(logger).getFlowState(flow)
+            const flowState = await projectStateService(logger).getFlowState(flow)
             expect(flowState).not.toHaveProperty('extraProperty')
+        })
+
+        it('should default operationStatus to NONE when missing (e.g. flow stored in git before field was added)', async () => {
+            const flow = flowGenerator.simpleActionAndTrigger()
+            const flowWithoutOperationStatus = { ...flow } as Partial<PopulatedFlow>
+            delete flowWithoutOperationStatus.operationStatus
+            const flowState = await projectStateService(logger).getFlowState(flowWithoutOperationStatus as PopulatedFlow)
+            expect(flowState.operationStatus).toBe(FlowOperationStatus.NONE)
         })
     })
 

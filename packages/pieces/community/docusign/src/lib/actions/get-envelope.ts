@@ -1,7 +1,8 @@
 import { EnvelopesApi } from 'docusign-esign';
 
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { docusignAuth, DocusignAuthType } from '../../';
+import { docusignAuth } from '../auth';
+import { DocusignAuthType } from '../../';
 import { createApiClient } from '../common';
 
 export const getEnvelope = createAction({

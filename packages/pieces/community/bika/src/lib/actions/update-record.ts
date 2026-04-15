@@ -5,7 +5,7 @@ import {
 	createAction,
 } from '@activepieces/pieces-framework';
 import { BikaCommon, createNewFields, makeClient } from '../common';
-import { BikaAuth } from '../../index';
+import { BikaAuth } from '../auth';
 
 export const updateRecordAction = createAction({
 	auth: BikaAuth,

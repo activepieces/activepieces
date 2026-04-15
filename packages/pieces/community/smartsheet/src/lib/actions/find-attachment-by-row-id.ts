@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod, HttpRequest } from '@activepieces/pieces-common';
-import { smartsheetAuth } from '../../index';
+import { smartsheetAuth } from '../auth';
 import { smartsheetCommon } from '../common';
 
 export const findAttachmentByRowId = createAction({

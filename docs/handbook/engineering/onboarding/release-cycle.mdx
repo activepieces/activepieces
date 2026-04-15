@@ -1,0 +1,71 @@
+---
+title: "Release Cycle"
+icon: "clock"
+---
+
+This page explains how code moves from merge to production and why each step exists.
+
+## The Cycle
+
+```
+Merge to main (Mon–Thu) ──→ Deploy to staging
+                                    │
+                          5 PM UTC Thu: staging freezes + RC tagged
+                                    │
+                          Fri–Sat: canary runs daily from main
+                                    │
+                          Sun 9 AM UTC: release-candidate → production
+                                    │                + deploy/cloud/YYYY-MM-DD branch created
+                          Mon 9 AM UTC: self-hosted release published
+```
+
+## Cutoffs & Why
+
+### Staging Freeze / RC Tag — Thursday 5 PM UTC
+
+Merges to `main` after 5 PM UTC on Thursday are **not deployed to staging**. At Thursday 5 PM UTC, the current staging image and commit are tagged as `release-candidate` — this is the stability gate for the week.
+
+**Why**: Anything merged after the Thursday cut doesn't go to cloud production until the following week. This gives the team a predictable, stable window to validate changes before they reach customers.
+
+### Promotion — Sunday 9 AM UTC
+
+At 9 AM UTC on Sunday, the cloud workflow promotes Thursday's `release-candidate` to production.
+
+**Why**: By Sunday, the release candidate has soaked in the canary environment (Fri–Sat). If something is broken, we catch it before it reaches all customers.
+
+After promotion, a `deploy/cloud/YYYY-MM-DD` branch is created.
+
+### Weekly Release — Monday 9 AM UTC
+
+On Monday at 9 AM UTC, the self-hosted release is published: git tag, GitHub release notes, and the `release-candidate` cloud image re-tagged as the versioned self-hosted image on Docker Hub and GHCR.
+
+**Why**: Publishing the day after cloud promotion means self-hosted users get the exact same bits that cloud deployed on Sunday — no separate build, no divergence. The Monday timing also allows the team to catch any issues from Sunday's cloud deployment before the self-hosted image goes public.
+
+## Putting It Together
+
+| Time | What Happens |
+|---|---|
+| Mon–Thu, 9 AM–5 PM UTC | Merge to `main` → auto-deployed to staging |
+| Mon–Thu, 5 PM–9 AM UTC | Merge to `main` → code in `main` only, staging frozen |
+| **Thu 5 PM UTC** | Staging image + commit tagged as `release-candidate` |
+| Fri–Sat | Canary deploys daily from `main`; cloud is quiet |
+| **Sun 9 AM UTC** | `release-candidate` promoted to cloud production; `deploy/cloud/YYYY-MM-DD` branch created |
+| **Mon 9 AM UTC** | Self-hosted release published (re-tags cloud RC image) |
+
+## Overrides
+
+Sometimes the cycle needs to be bypassed:
+
+- **Hotfix**: Apply your fix to the current `deploy/cloud/YYYY-MM-DD` branch, then manually dispatch `continuous-delivery-cloud.yml` with action `cloud-hotfix` **on that branch** (not `main`). This builds the image and deploys directly to production — staging is not involved. After promotion, merge the hotfix branch into `main` — this automatically triggers `tag-release-candidate`, which SSHes to staging and retrags whatever image is running there as `release-candidate`. Sunday's scheduled run will then re-deploy what is already on prod — a safe no-op.
+- **Emergency**: Use `emergency-cloud-deploy.yml` to deploy directly to production, bypassing staging entirely. Use sparingly.
+
+## FAQ
+
+**Q: I merged at 6 PM UTC on a Wednesday. When does my code reach production?**
+Your code is in `main` but staging is frozen. It won't be included in the Thursday RC tag unless it lands before 5 PM UTC Thursday. If it misses that cut, it won't reach cloud production until the following Sunday.
+
+**Q: I merged at 10 AM UTC on a Wednesday. When does my code reach production?**
+It deploys to staging immediately. As long as nothing breaks before Thursday 5 PM UTC, it will be included in the RC tag and will reach cloud production the following Sunday.
+
+**Q: Can I deploy to staging during the freeze window?**
+Yes, manually dispatch `continuous-delivery.yml` with `deploy-staging`. But consider that the content team may be relying on the frozen version.

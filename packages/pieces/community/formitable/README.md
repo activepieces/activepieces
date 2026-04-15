@@ -1,7 +1,5 @@
 # pieces-formitable
 
-This library was generated with [Nx](https://nx.dev).
-
 ## Building
 
-Run `nx build pieces-formitable` to build the library.
+Run `turbo run build --filter=@activepieces/piece-formitable` to build the library.

@@ -4,7 +4,7 @@ import {
   HttpMethod,
   HttpRequest,
 } from '@activepieces/pieces-common';
-import { freshsalesAuth } from '../../';
+import { freshsalesAuth } from '../auth';
 
 export const freshSalesCreateContact = createAction({
   auth: freshsalesAuth,

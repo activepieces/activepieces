@@ -1,5 +1,5 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { quickbaseAuth } from '../../index';
+import { quickbaseAuth } from '../auth';
 import { appIdProp, tableIdProp, fieldsMapperProp, dynamicFieldsMapperProp } from '../common/props';
 import { QuickbaseClient } from '../common/client';
 import { QuickbaseCreateRecordResponse, QuickbaseField } from '../common/types';

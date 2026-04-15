@@ -1,6 +1,6 @@
 import { OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
 import { fetchAddons, fetchAppointmentTypes, fetchCalendars, fetchLabels } from '.';
-import { acuitySchedulingAuth } from '../..';
+import { acuitySchedulingAuth } from '../auth';
 
 interface DropdownParams {
 	displayName: string;

@@ -3,7 +3,7 @@ import {
   Property,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
-import { moveoAuth } from '../../index';
+import { moveoAuth } from '../auth';
 
 export const dialogExpired = createTrigger({
   name: 'dialog_expired',

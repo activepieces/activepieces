@@ -1,4 +1,4 @@
-import { zuoraAuth } from '../../';
+import { zuoraAuth } from '../auth';
 import {
   AppConnectionValueForAuthProperty,
   DropdownOption,

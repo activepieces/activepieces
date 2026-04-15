@@ -4,7 +4,7 @@ import {
 	createTrigger,
 } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
-import { codaAuth } from '../..';
+import { codaAuth } from '../auth';
 import { CodaRow, codaClient } from '../common/types';
 import dayjs from 'dayjs';
 import { docIdDropdown, tableIdDropdown } from '../common/props';

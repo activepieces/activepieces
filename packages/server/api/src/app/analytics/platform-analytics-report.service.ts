@@ -1,4 +1,4 @@
-import { AnalyticsFlowReportItem, AnalyticsRunsUsageItem, AnalyticsTimePeriod, apId, FlowVersionState, isNil, PlatformAnalyticsReport, PlatformId, ProjectLeaderboardItem, RunEnvironment, UserLeaderboardItem, UserWithMetaInformation } from '@activepieces/shared'
+import { AnalyticsFlowReportItem, AnalyticsRunsUsageItem, AnalyticsTimePeriod, apId, FlowStatus, FlowVersionState, isNil, PlatformAnalyticsReport, PlatformId, ProjectLeaderboardItem, RunEnvironment, UserLeaderboardItem, UserWithMetaInformation } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { IsNull } from 'typeorm'
@@ -138,6 +138,7 @@ async function listFlows(platformId: PlatformId, log: FastifyBaseLogger): Promis
         cursorRequest: null,
         versionState: FlowVersionState.DRAFT,
         includeTriggerSource: false,
+        status: [FlowStatus.ENABLED],
     })
     const projects = await listProjects(platformId)
         
@@ -216,8 +217,12 @@ function getDateRange(timePeriod: AnalyticsTimePeriod): string {
             return date.subtract(1, 'week').startOf('day').toISOString()
         case AnalyticsTimePeriod.LAST_MONTH:
             return date.subtract(1, 'month').startOf('day').toISOString()
-        case AnalyticsTimePeriod.ALL_TIME:
-            return date.subtract(10, 'year').startOf('day').toISOString()
+        case AnalyticsTimePeriod.LAST_THREE_MONTHS:
+            return date.subtract(3, 'month').startOf('day').toISOString()
+        case AnalyticsTimePeriod.LAST_SIX_MONTHS:
+            return date.subtract(6, 'month').startOf('day').toISOString()
+        case AnalyticsTimePeriod.LAST_YEAR:
+            return date.subtract(1, 'year').startOf('day').toISOString()
         default:
             throw new Error(`Invalid time period: ${timePeriod}`)
     }

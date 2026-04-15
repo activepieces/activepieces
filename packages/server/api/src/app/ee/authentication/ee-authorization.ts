@@ -8,7 +8,7 @@ import {
     ProjectType,
 } from '@activepieces/shared'
 import { FastifyRequest, onRequestAsyncHookHandler } from 'fastify'
-import { requestUtils } from '../../core/request/request-utils'
+import { getProjectIdFromRequest } from '../../core/security/v2/authz/authorization-middleware'
 import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
@@ -26,7 +26,7 @@ export const platformMustHaveFeatureEnabled = (handler: (platform: PlatformWitho
             })
         }
 
-        const platform = await platformService.getOneWithPlanOrThrow(platformId)
+        const platform = await platformService(request.log).getOneWithPlanOrThrow(platformId)
         const enabled = handler(platform)
 
         if (!enabled) {
@@ -55,7 +55,7 @@ const checkIfPlatformIsOwnedByUser = async (platformId: string, request: Fastify
         return
     }
 
-    const user = await userService.getOneOrFail({
+    const user = await userService(request.log).getOneOrFail({
         id: request.principal.id,
     })
 
@@ -84,7 +84,7 @@ export const projectMustBeTeamType: onRequestAsyncHookHandler =
         if (request.principal.type !== PrincipalType.USER && request.principal.type !== PrincipalType.SERVICE) {
             return
         }
-        const projectId = requestUtils.extractProjectId(request)
+        const projectId = await getProjectIdFromRequest(request)
 
         if (isNil(projectId)) {
             throw new ActivepiecesError({
@@ -94,7 +94,7 @@ export const projectMustBeTeamType: onRequestAsyncHookHandler =
                 },
             })
         }
-        const project = await projectService.getOneOrThrow(projectId)
+        const project = await projectService(request.log).getOneOrThrow(projectId)
         if (project.type !== ProjectType.TEAM) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,

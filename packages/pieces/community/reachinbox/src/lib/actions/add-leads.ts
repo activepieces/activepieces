@@ -4,7 +4,8 @@ import {
   addLeadsToCampaign,
   reachinboxCommon,
 } from '../common/index';
-import { reachinbox, ReachinboxAuth } from '../..';
+import { ReachinboxAuth } from '../..';
+import { reachinbox } from '../..';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 
 // Define the structure for custom variables

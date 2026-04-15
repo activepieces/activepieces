@@ -22,7 +22,7 @@ import {
   AppConnectionValueForAuthProperty,
   PiecePropValueSchema,
 } from '@activepieces/pieces-framework';
-import { drupalAuth } from '../../';
+import { drupalAuth } from '../auth';
 
 export type DrupalAuthType = AppConnectionValueForAuthProperty<typeof drupalAuth>;
 

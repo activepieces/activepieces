@@ -1,0 +1,69 @@
+---
+title: "MCP Server"
+icon: "plug"
+description: "Connect AI assistants to Activepieces using the Model Context Protocol (MCP)"
+---
+
+Activepieces includes a built-in [MCP](https://modelcontextprotocol.io/) server that lets AI assistants build flows, manage tables, test automations, and more — all through natural language.
+
+## Quick Start
+
+### 1. Get Your Server URL
+
+1. Go to **Settings** → **MCP Server**
+2. Toggle the server **on**
+3. Copy the **Server URL**
+
+### 2. Connect Your Client
+
+Add the URL to your MCP client config. Authentication is handled via OAuth — your client will open a browser to authenticate on first use.
+
+```json
+{
+  "mcpServers": {
+    "activepieces": {
+      "url": "https://your-instance.com/mcp"
+    }
+  }
+}
+```
+
+| Client | Config Location |
+|--------|----------------|
+| Cursor | `.cursor/mcp.json` (project) or `~/.cursor/mcp.json` (global) |
+| Claude Desktop | `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or `%APPDATA%\Claude\claude_desktop_config.json` (Windows) |
+| Windsurf | MCP settings in editor preferences |
+| Claude.ai | **Organization Settings** → **Connectors** → **Add** → **Custom connector** |
+
+### 3. Start Building
+
+Once connected, ask your AI assistant things like:
+
+- *"Create a flow that sends a Slack message when a new row is added to Google Sheets"*
+- *"Check my flow for any issues before publishing"*
+- *"Create a Contacts table and add 3 records"*
+- *"Show me the last failed run and what went wrong"*
+- *"What Slack triggers are available?"*
+
+## Tool Categories
+
+Tools are organized into categories. **Discovery tools** are always available. Other categories can be enabled or disabled per-project in the MCP Server settings.
+
+| Category | Description |
+|----------|-------------|
+| Discovery | Read-only tools for exploring flows, pieces, connections, tables, runs, and validation |
+| Flow Management | Create, rename, publish, and enable/disable flows |
+| Flow Building | Add, update, and delete steps and triggers |
+| Router & Branching | Add and delete conditional branches |
+| Annotations | Manage canvas notes |
+| Tables | Full CRUD for tables, fields, and records |
+| Testing & Runs | Test flows, inspect results, retry failures |
+
+See the [Tools Reference](/mcp/tools) for the complete catalog with input schemas.
+
+## Security
+
+- **OAuth authentication** — secure, token-based authentication handled automatically by your MCP client
+- **Credentials are never exposed** — connection secrets, API keys, and OAuth tokens are never returned by any tool
+- **Project-scoped** — all operations are scoped to the authenticated project
+- **Sensitive setup** — `ap_setup_guide` returns instructions for the user to configure connections in the UI, rather than handling secrets through MCP

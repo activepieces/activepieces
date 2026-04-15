@@ -1,7 +1,7 @@
 import { Property, DropdownOption, createAction } from "@activepieces/pieces-framework";
 import { httpClient, HttpMethod, HttpError } from "@activepieces/pieces-common";
 import { PdfCoSuccessResponse, PdfCoErrorResponse } from "../common/types";
-import { pdfCoAuth } from "../../index";
+import { pdfCoAuth } from '../auth';
 import { BASE_URL, commonProps } from "../common/props";
 // Interface for the request body (common params for CSV/JSON/XML conversion)
 interface PdfConvertToStructuredFormatRequestBody {

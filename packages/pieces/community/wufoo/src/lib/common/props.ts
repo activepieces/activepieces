@@ -1,7 +1,7 @@
 import { Property, DynamicPropsValue } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { wufooApiCall } from './client';
-import { wufooAuth } from '../..';
+import { wufooAuth } from '../auth';
 
 interface WufooForm {
   Name: string;

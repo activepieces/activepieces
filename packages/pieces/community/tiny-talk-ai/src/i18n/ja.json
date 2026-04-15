@@ -1,0 +1,8 @@
+{
+  "You can obtain API key from [Dashboard Settings](https://dashboard.tinytalk.ai/).": "[ダッシュボード設定](https://dashboard.tinytalk.ai/)からAPIキーを取得できます。",
+  "Ask Bot": "ボットに聞いてください",
+  "Sends message to selected bot.": "選択したボットにメッセージを送信します。",
+  "Bot ID": "Bot ID",
+  "Question": "質問",
+  "You can find this in your Bot Details page in the dashboard.": "これは Bot Details のダッシュボードで確認できます。"
+}

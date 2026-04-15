@@ -8,7 +8,7 @@ import {
   HttpMethod,
   HttpRequest,
 } from '@activepieces/pieces-common';
-import { drupalAuth } from '../../';
+import { drupalAuth } from '../auth';
 type DrupalAuthType = PiecePropValueSchema<typeof drupalAuth>;
 
 export const drupalCallServiceAction = createAction({

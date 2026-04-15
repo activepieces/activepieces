@@ -6,7 +6,7 @@ export const securityHelper = {
     async getUserIdFromRequest(request: FastifyRequest): Promise<string | null> {
         switch (request.principal.type) {
             case PrincipalType.SERVICE: {
-                const platform = await platformService.getOneOrThrow(request.principal.platform.id)
+                const platform = await platformService(request.log).getOneOrThrow(request.principal.platform.id)
                 return platform.ownerId
             }
             case PrincipalType.USER:

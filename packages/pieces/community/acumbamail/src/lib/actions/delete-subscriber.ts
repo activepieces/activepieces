@@ -1,4 +1,4 @@
-import { acumbamailAuth } from '../..';
+import { acumbamailAuth } from '../auth';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { acumbamailCommon } from '../common';
 import {

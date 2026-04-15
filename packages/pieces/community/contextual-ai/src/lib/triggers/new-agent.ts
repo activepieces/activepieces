@@ -1,6 +1,6 @@
 import { createTrigger, TriggerStrategy, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
-import { contextualAiAuth } from '../../index';
+import { contextualAiAuth } from '../auth';
 import { ContextualAI } from 'contextual-client';
 import type { Agent } from 'contextual-client/resources/agents';
 

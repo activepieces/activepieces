@@ -1,7 +1,5 @@
 # pieces-ashby
 
-This library was generated with [Nx](https://nx.dev).
-
 ## Building
 
-Run `nx build pieces-ashby` to build the library.
+Run `turbo run build --filter=@activepieces/piece-ashby` to build the library.

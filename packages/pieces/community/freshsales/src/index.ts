@@ -6,6 +6,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { freshSalesCreateContact } from './lib/actions/create-contact';
+import { freshsalesAuth } from './lib/auth';
 
 const markdownDescription = `
 To obtain your API key and bundle alias, follow these steps:
@@ -16,22 +17,6 @@ To obtain your API key and bundle alias, follow these steps:
 4. You should now see your API key displayed on the screen. If you don't see an API key.
 5. Copy the alias e.g **https://<alias>.myfreshworks.com**
 `;
-
-export const freshsalesAuth = PieceAuth.BasicAuth({
-  description: markdownDescription,
-  username: Property.ShortText({
-    displayName: 'Bundle alias',
-    description:
-      'Your Freshsales bundle alias (e.g. https://<alias>.myfreshworks.com)',
-    required: true,
-  }),
-  password: Property.ShortText({
-    displayName: 'API Key',
-    description: 'The API Key supplied by Freshsales',
-    required: true,
-  }),
-  required: true,
-});
 
 export const freshsales = createPiece({
   displayName: 'Freshsales',

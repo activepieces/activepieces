@@ -46,6 +46,10 @@ export const entitiesMustBeOwnedByCurrentProject: preSerializationHookHandler<Pa
         }
 
         if (verdict === 'DENY') {
+            request.log.warn({
+                principalProjectId,
+                route: request.routeOptions.config,
+            }, 'Authorization denied: entity not owned by current project')
             throw new ActivepiecesError({
                 code: ErrorCode.AUTHORIZATION,
                 params: {

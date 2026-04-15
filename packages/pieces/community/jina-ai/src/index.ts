@@ -7,16 +7,11 @@ import {
   classifyContentAction,
   trainCustomClassifierAction
 } from './lib/actions';
+import { jinaAiAuth } from './lib/auth';
 
 const markdownDescription = `
 You can get your API key from [Jina AI](https://jina.ai).
 `;
-
-export const jinaAiAuth = PieceAuth.SecretText({
-  displayName: 'API Key',
-  description: markdownDescription,
-  required: true,
-})
 
 export const jinaAi = createPiece({
   displayName: 'Jina AI',

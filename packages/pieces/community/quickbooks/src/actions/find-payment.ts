@@ -1,5 +1,5 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { quickbooksAuth } from '../index'; // Correct path relative to actions/find-payment.ts
+import { quickbooksAuth } from '../lib/auth'; // Correct path relative to actions/find-payment.ts
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { quickbooksCommon, QuickbooksEntityResponse } from '../lib/common';
 

@@ -1,0 +1,50 @@
+---
+title: "Benchmark"
+icon: "chart-line"
+---
+
+## What's Measured
+
+The benchmark tests end-to-end webhook flow execution: an HTTP request hits a **Catch Webhook** trigger, runs a **Code** action, and returns a response via **Return Response**. This measures the full request lifecycle including routing, execution, and response delivery.
+
+## Results
+
+| Configuration | Throughput (req/s) | Mean Latency | P50 | P99 |
+|---|---|---|---|---|
+| 1 App, 2 Workers | 95.1 | 20.8 ms | 15.4 ms | 62.7 ms |
+| 2 Apps, 4 Workers | 167.6 | 23.4 ms | 20.0 ms | 65.1 ms |
+| 3 Apps, 6 Workers | 231.8 | 24.8 ms | 21.2 ms | 71.5 ms |
+| 1 App, 4 Workers | 174.5 | 22.4 ms | 19.0 ms | 56.7 ms |
+| 2 Apps, 8 Workers | 286.5 | 26.0 ms | 22.3 ms | 89.5 ms |
+| 3 Apps, 12 Workers | 336.6 | 35.1 ms | 34.8 ms | 51.5 ms |
+
+## Test Environment
+
+- **Runner**: `depot-ubuntu-24.04-16` (16 cores)
+- **App container**: 2 CPU / 4 GB memory
+- **Worker container**: 0.5 CPU / 1 GB memory
+- **Execution mode**: `SANDBOX_CODE_ONLY`
+- **Rate limiter**: Disabled (`AP_PROJECT_RATE_LIMITER_ENABLED=false`)
+- **Total requests**: 500 per configuration
+
+## How to Reproduce
+
+### Via GitHub Actions UI
+
+1. Go to the **Actions** tab in the repository
+2. Select the **Benchmark** workflow
+3. Click **Run workflow**
+4. Optionally adjust `total_requests` (default: 500)
+5. All 6 configurations (1:2 and 1:4 ratios at 1x/2x/3x scale) run in parallel automatically
+
+### Via CLI
+
+```bash
+gh workflow run benchmark.yml
+```
+
+After the workflow completes, check the **summary** job for a combined comparison table.
+
+<Tip>
+  These benchmarks run in `SANDBOX_CODE_ONLY` mode. This does **not** represent the performance of Activepieces Cloud, which uses a different sandboxing mechanism to support multi-tenancy. For more information, see [Sandboxing](/install/architecture/workers#sandboxing).
+</Tip>

@@ -1,7 +1,5 @@
 # pieces-harvest
 
-This library was generated with [Nx](https://nx.dev).
-
 ## Building
 
-Run `nx build pieces-harvest` to build the library.
+Run `turbo run build --filter=@activepieces/piece-harvest` to build the library.

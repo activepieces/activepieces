@@ -5,7 +5,7 @@ import {
 } from '@activepieces/pieces-common';
 import { createAction } from '@activepieces/pieces-framework';
 
-import { acumbamailAuth } from '../../';
+import { acumbamailAuth } from '../auth';
 import { acumbamailCommon } from '../common';
 
 export const deleteSubscriberListAction = createAction({

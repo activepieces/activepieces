@@ -2,12 +2,7 @@ import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { sendReviewInvite } from './lib/actions/send-review-invite';
 import { PieceCategory } from '@activepieces/shared';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-
-export const cloutlyAuth = PieceAuth.SecretText({
-  displayName: 'API Key',
-  required: true,
-  description: 'Please enter the API Key obtained from Cloutly.',
-});
+import { cloutlyAuth } from './lib/auth';
 
 export const cloutly = createPiece({
   displayName: 'Cloutly',

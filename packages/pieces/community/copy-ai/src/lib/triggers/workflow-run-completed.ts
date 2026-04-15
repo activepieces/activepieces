@@ -2,7 +2,7 @@ import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-f
 import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { isNil } from '@activepieces/shared';
-import { copyAiAuth } from '../../index';
+import { copyAiAuth } from '../auth';
 
 
 export const workflowRunCompletedTrigger = createTrigger({

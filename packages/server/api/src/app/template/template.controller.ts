@@ -1,4 +1,3 @@
-import { securityAccess } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ALL_PRINCIPAL_TYPES,
@@ -15,10 +14,11 @@ import {
     TemplateType,
     UpdateTemplateRequestBody,
 } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { Static, Type } from '@sinclair/typebox'
 import { FastifyBaseLogger } from 'fastify'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
+import { z } from 'zod'
+import { securityAccess } from '../core/security/authorization/fastify-security'
 import { platformMustBeOwnedByCurrentUser } from '../ee/authentication/ee-authorization'
 import { flagService } from '../flags/flag.service'
 import { migrateFlowVersionTemplateList } from '../flows/flow-version/migrations'
@@ -29,8 +29,7 @@ import { templateService } from './template.service'
 
 const edition = system.getEdition()
 
-
-export const templateController: FastifyPluginAsyncTypebox = async (app) => {
+export const templateController: FastifyPluginAsyncZod = async (app) => {
     app.get('/:id', GetParams, async (request) => {
         const template = await templateService(app.log).getOne({ id: request.params.id })
         if (!isNil(template)) {
@@ -49,9 +48,9 @@ export const templateController: FastifyPluginAsyncTypebox = async (app) => {
         })
     })
 
-    app.get('/categories', GetCategoriesParams, async () => {
+    app.get('/categories', GetCategoriesParams, async (request) => {
         if (edition === ApEdition.CLOUD) {
-            return flagService.getOne(ApFlagId.TEMPLATES_CATEGORIES)
+            return flagService(request.log).getOne(ApFlagId.TEMPLATES_CATEGORIES)
         }
         return communityTemplates.getCategories()
     })
@@ -104,6 +103,25 @@ export const templateController: FastifyPluginAsyncTypebox = async (app) => {
             request.body.flows = migratedFlows
         },
     }, async (request, reply) => {
+        const template = await templateService(app.log).getOneOrThrow({ id: request.params.id })
+
+        switch (template.type) {
+            case TemplateType.OFFICIAL:
+            case TemplateType.SHARED:
+                throw new ActivepiecesError({
+                    code: ErrorCode.AUTHORIZATION,
+                    params: { message: 'Cannot update official or shared templates' },
+                })
+            case TemplateType.CUSTOM: {
+                await platformMustBeOwnedByCurrentUser.call(app, request, reply)
+                assertTemplateBelongsToPlatform({
+                    templatePlatformId: template.platformId,
+                    principalPlatformId: request.principal.platform.id,
+                })
+                break
+            }
+        }
+
         const result = await templateService(app.log).update({ id: request.params.id, params: request.body })
         return reply.status(StatusCodes.OK).send(result)
     })
@@ -111,8 +129,21 @@ export const templateController: FastifyPluginAsyncTypebox = async (app) => {
     app.delete('/:id', DeleteParams, async (request, reply) => {
         const template = await templateService(app.log).getOneOrThrow({ id: request.params.id })
 
-        if (template.type === TemplateType.CUSTOM) {
-            await platformMustBeOwnedByCurrentUser.call(app, request, reply)
+        switch (template.type) {
+            case TemplateType.OFFICIAL:
+            case TemplateType.SHARED:
+                throw new ActivepiecesError({
+                    code: ErrorCode.AUTHORIZATION,
+                    params: { message: 'Cannot delete official or shared templates' },
+                })
+            case TemplateType.CUSTOM: {
+                await platformMustBeOwnedByCurrentUser.call(app, request, reply)
+                assertTemplateBelongsToPlatform({
+                    templatePlatformId: template.platformId,
+                    principalPlatformId: request.principal.platform.id,
+                })
+                break
+            }
         }
 
         await templateService(app.log).delete({
@@ -120,12 +151,13 @@ export const templateController: FastifyPluginAsyncTypebox = async (app) => {
         })
         return reply.status(StatusCodes.NO_CONTENT).send()
     })
+    
 }
 
-const GetIdParams = Type.Object({
-    id: Type.String(),
+const GetIdParams = z.object({
+    id: z.string(),
 })
-type GetIdParams = Static<typeof GetIdParams>
+type GetIdParams = z.infer<typeof GetIdParams>
 
 const GetCategoriesParams = {
     config: {
@@ -199,6 +231,18 @@ const UpdateParams = {
     },
 }
 
+function assertTemplateBelongsToPlatform({ templatePlatformId, principalPlatformId }: {
+    templatePlatformId: string | null | undefined
+    principalPlatformId: string
+}): void {
+    if (templatePlatformId !== principalPlatformId) {
+        throw new ActivepiecesError({
+            code: ErrorCode.AUTHORIZATION,
+            params: { message: 'Template does not belong to your platform' },
+        })
+    }
+}
+
 async function loadOfficialTemplatesOrReturnEmpty(
     log: FastifyBaseLogger,
     query: ListTemplatesRequestQuery,
@@ -230,7 +274,7 @@ async function loadCustomTemplatesOrReturnEmpty(
     if (isNil(platformId)) {
         return []
     }
-    const platform = await platformService.getOneWithPlanOrThrow(platformId)
+    const platform = await platformService(log).getOneWithPlanOrThrow(platformId)
     if (!platform.plan.manageTemplatesEnabled) {
         return []
     }

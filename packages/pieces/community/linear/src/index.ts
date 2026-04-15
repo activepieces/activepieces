@@ -6,15 +6,19 @@ import { linearUpdateIssue } from './lib/actions/issues/update-issue';
 import { linearCreateProject } from './lib/actions/projects/create-project';
 import { linearUpdateProject } from './lib/actions/projects/update-project';
 import { linearRawGraphqlQuery } from './lib/actions/raw-graphql-query';
+import { linearNewComment } from './lib/triggers/new-comment';
 import { linearNewIssue } from './lib/triggers/new-issue';
 import { linearUpdatedIssue } from './lib/triggers/updated-issue';
 import { linearRemovedIssue } from './lib/triggers/removed-issue';
+import { linearNewProject } from './lib/triggers/new-project';
+import { linearUpdatedProject } from './lib/triggers/updated-project';
+import { linearRemovedProject } from './lib/triggers/removed-project';
 
 const markdown = `
 To obtain your API key, follow these steps:
 
 1. Go to settings by clicking your profile-pic (top-left)
-2. Go to API section inside My Account.
+2. Go to Security & Access section
 3. On Personal API keys, give label and press create key.`;
 
 export const linearAuth = PieceAuth.SecretText({
@@ -50,5 +54,13 @@ export const linear = createPiece({
     linearCreateComment,
     linearRawGraphqlQuery,
   ],
-  triggers: [linearNewIssue, linearUpdatedIssue, linearRemovedIssue],
+  triggers: [
+    linearNewComment,
+    linearNewIssue,
+    linearUpdatedIssue,
+    linearRemovedIssue,
+    linearNewProject,
+    linearUpdatedProject,
+    linearRemovedProject,
+  ],
 });

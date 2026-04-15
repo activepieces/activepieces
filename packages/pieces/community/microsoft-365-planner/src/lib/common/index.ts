@@ -1,4 +1,5 @@
 import { PieceAuth } from '@activepieces/pieces-framework';
+import { microsoftCloudProperty, getGraphBaseUrl, getMicrosoftCloudFromAuth } from './microsoft-cloud';
 import { Client } from '@microsoft/microsoft-graph-client';
 import { PlannerBucket } from '@microsoft/microsoft-graph-types';
 import {
@@ -25,9 +26,20 @@ import {
   UpdateTaskParams,
 } from './types';
 
+const authDesc = `
+If you'd like to use your own custom Azure app instead of the default Activepieces app, follow the [Azure app creation guide](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app#register-an-application),
+ set the **Redirect URI** to {{redirectUrl}} and add the following **Microsoft Graph (Delegated) permissions** under **API permissions**:
+ - Group.Read.All
+ - Tasks.ReadWrite
+ - User.Read`;
+
 export const microsoft365PlannerAuth = PieceAuth.OAuth2({
-  authUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
-  tokenUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/token',
+  description: authDesc,
+  props: {
+    cloud: microsoftCloudProperty,
+  },
+  authUrl: 'https://{cloud}/common/oauth2/v2.0/authorize',
+  tokenUrl: 'https://{cloud}/common/oauth2/v2.0/token',
   required: true,
   scope: ['Tasks.ReadWrite', 'User.Read', 'Group.Read.All'],
   prompt: 'omit',
@@ -47,12 +59,14 @@ export const microsoft365PlannerCommon = {
     deleteTask: (id: string) => `/planner/tasks/${id}`,
   },
   getClient: ({ auth }: AuthenticationParams) => {
+    const cloud = getMicrosoftCloudFromAuth(auth);
     return Client.initWithMiddleware({
       authProvider: {
         getAccessToken: async () => {
           return auth.access_token;
         },
       },
+      baseUrl: getGraphBaseUrl(cloud),
     });
   },
   getUser: async ({ auth }: AuthenticationParams) => {

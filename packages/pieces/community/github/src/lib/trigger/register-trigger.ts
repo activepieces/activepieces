@@ -1,6 +1,6 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { githubApiCall, githubCommon } from '../common';
-import { githubAuth } from '../../';
+import { githubAuth } from '../auth';
 import { HttpMethod } from '@activepieces/pieces-common';
 
 export const githubRegisterTrigger = ({

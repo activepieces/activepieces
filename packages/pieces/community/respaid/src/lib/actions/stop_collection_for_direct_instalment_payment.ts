@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { respaidAuth } from '../..';
+import { respaidAuth } from '../auth';
 import { respaidCommon, respaidActionsCommon } from '../common';
 
 

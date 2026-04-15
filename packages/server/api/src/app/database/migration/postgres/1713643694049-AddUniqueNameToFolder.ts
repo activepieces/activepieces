@@ -7,7 +7,7 @@ export class AddUniqueNameToFolder1713643694049 implements MigrationInterface {
     name = 'AddUniqueNameToFolder1713643694049'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        log.info({ name: this.name }, 'Up')
+        log.info('[addUniqueNameToFolder1713643694049#up]')
         await queryRunner.query(`
             DELETE FROM "folder"
             WHERE ("projectId", LOWER("displayName")) IN (

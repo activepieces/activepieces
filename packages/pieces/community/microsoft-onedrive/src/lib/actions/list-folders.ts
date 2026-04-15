@@ -4,7 +4,7 @@ import {
   HttpMethod,
   AuthenticationType,
 } from '@activepieces/pieces-common';
-import { oneDriveAuth } from '../../';
+import { oneDriveAuth } from '../auth';
 import { oneDriveCommon } from '../common/common';
 
 export const listFolders = createAction({
@@ -18,10 +18,11 @@ export const listFolders = createAction({
   },
   async run(context) {
     const parentId = context.propsValue.parentFolder ?? 'root';
+    const cloud = context.auth.props?.['cloud'] as string | undefined;
 
     const result = await httpClient.sendRequest({
       method: HttpMethod.GET,
-      url: `${oneDriveCommon.baseUrl}/items/${parentId}/children?$filter=folder ne null`,
+      url: `${oneDriveCommon.getBaseUrl(cloud)}/items/${parentId}/children?$filter=folder ne null`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token: context.auth.access_token,

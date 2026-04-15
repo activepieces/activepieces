@@ -7,7 +7,7 @@ import {
   Property,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
-import { drupalAuth } from '../../';
+import { drupalAuth } from '../auth';
 import { DrupalAuthType } from '../common/jsonapi';
 
 export const drupalWebhook = createTrigger({

@@ -2,7 +2,7 @@ import {
 	createTrigger,
 	TriggerStrategy,
 } from '@activepieces/pieces-framework';
-import { intercomAuth } from '../..';
+import { intercomAuth } from '../auth';
 import { intercomClient } from '../common';
 import { tagIdProp } from '../common/props';
 

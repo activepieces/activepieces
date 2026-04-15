@@ -1,6 +1,6 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { buildFlowOriginContextBlock, slackSendMessage } from '../common/utils';
-import { slackAuth } from '../..';
+import { buildFlowOriginContextBlock, slackSendMessage, textToSectionBlocks } from '../common/utils';
+import { slackAuth } from '../auth';
 import {
   assertNotNullOrUndefined,
   ExecutionType,
@@ -15,6 +15,7 @@ import {
   mentionOriginFlow,
 } from '../common/props';
 import { ChatPostMessageResponse, WebClient } from '@slack/web-api';
+import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
 
 export const requestSendApprovalMessageAction = createAction({
   auth: slackAuth,
@@ -32,7 +33,7 @@ export const requestSendApprovalMessageAction = createAction({
   },
   async run(context) {
     if (context.executionType === ExecutionType.BEGIN) {
-      const token = context.auth.access_token;
+      const token = getBotToken(context.auth as SlackAuthValue);
       const { channel, username, profilePicture, mentionOriginFlow } = context.propsValue;
 
       assertNotNullOrUndefined(token, 'token');
@@ -61,13 +62,7 @@ export const requestSendApprovalMessageAction = createAction({
         ts: messageTs,
         text: context.propsValue.text,
         blocks: [
-          {
-            type: 'section',
-            text: {
-              type: 'mrkdwn',
-              text: `${context.propsValue.text}`,
-            },
-          },
+          ...textToSectionBlocks(`${context.propsValue.text}`),
           {
             type: 'actions',
             block_id: 'actions',
@@ -79,7 +74,8 @@ export const requestSendApprovalMessageAction = createAction({
                   text: 'Approve',
                 },
                 style: 'primary',
-                url: approvalLink,
+                value: approvalLink,
+                action_id: 'approve',
               },
               {
                 type: 'button',
@@ -88,7 +84,8 @@ export const requestSendApprovalMessageAction = createAction({
                   text: 'Disapprove',
                 },
                 style: 'danger',
-                url: disapprovalLink,
+                value: disapprovalLink,
+                action_id: 'disapprove',
               },
             ],
           },
@@ -108,10 +105,38 @@ export const requestSendApprovalMessageAction = createAction({
         messageTs
       };
     } else {
-      return {
-        approved: context.resumePayload.queryParams['action'] === 'approve',
-        messageTs: context.resumePayload.queryParams['messageTs']
-      };
+      const approved = context.resumePayload.queryParams['action'] === 'approve';
+      const channel = context.resumePayload.queryParams['channel'];
+      const messageTs = context.resumePayload.queryParams['messageTs'];
+
+      const token = getBotToken(context.auth as SlackAuthValue);
+      try {
+        if (token && channel && messageTs) {
+          const client = new WebClient(token);
+          const statusText = approved ? 'Approved' : 'Disapproved';
+          await client.chat.update({
+            channel,
+            ts: messageTs,
+            text: `${context.propsValue.text}\n\n${statusText}`,
+            blocks: [
+              ...textToSectionBlocks(`${context.propsValue.text}`),
+              {
+                type: 'section',
+                text: {
+                  type: 'mrkdwn',
+                  text: approved
+                    ? ':white_check_mark: *Approved*'
+                    : ':x: *Disapproved*',
+                },
+              },
+            ],
+          });
+        }
+      } catch (e) {
+        // Ignore errors from updating the message, as it's cosmetic
+      }
+
+      return { approved, messageTs };
     }
   },
 });

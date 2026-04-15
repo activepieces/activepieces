@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { openPhoneAuth } from '../../index';
+import { openPhoneAuth } from '../auth';
 import { openPhoneCommon, OpenPhoneMessageResponse } from '../common';
 
 export const sendMessage = createAction({

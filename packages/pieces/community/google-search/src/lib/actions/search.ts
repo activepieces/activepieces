@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { googleSearchAuth } from '../../index';
+import { googleSearchAuth } from '../auth';
 
 export const searchAction = createAction({
   auth: googleSearchAuth,

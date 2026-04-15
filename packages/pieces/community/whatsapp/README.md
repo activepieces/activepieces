@@ -1,7 +1,5 @@
 # pieces-whatsapp
 
-This library was generated with [Nx](https://nx.dev).
-
 ## Building
 
-Run `nx build pieces-whatsapp` to build the library.
+Run `turbo run build --filter=@activepieces/piece-whatsapp` to build the library.

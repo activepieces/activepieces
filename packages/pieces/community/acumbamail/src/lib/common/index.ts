@@ -10,7 +10,7 @@ import {
   GetTemplatesResponse,
   SubscriberListField,
 } from './types';
-import { acumbamailAuth } from '../..';
+import { acumbamailAuth } from '../auth';
 
 export const acumbamailCommon = {
   baseUrl: 'https://acumbamail.com/api/1',

@@ -1,5 +1,5 @@
 import { createHash } from 'crypto'
-import { cryptoUtils } from '@activepieces/server-shared'
+import { cryptoUtils } from '@activepieces/server-utils'
 import {
     AuthenticationResponse,
     isNil,
@@ -19,6 +19,7 @@ import { pieceTagService } from '../../pieces/tags/pieces/piece-tag.service'
 import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
+import { concurrencyPoolService } from '../platform/concurrency-pool/concurrency-pool.service'
 import { projectMemberService } from '../projects/project-members/project-member.service'
 import { projectLimitsService } from '../projects/project-plan/project-plan.service'
 import { externalTokenExtractor } from './lib/external-token-extractor'
@@ -34,13 +35,23 @@ export const managedAuthnService = (log: FastifyBaseLogger) => ({
         const { project } = await getOrCreateProject({
             platformId: externalPrincipal.platformId,
             externalProjectId: externalPrincipal.externalProjectId,
-        })
+        }, log)
 
         if (!isNil(externalPrincipal.projectDisplayName)) {
-            await projectService.update(project.id, {
+            await projectService(log).update(project.id, {
                 type: project.type,
                 displayName: externalPrincipal.projectDisplayName,
             })
+        }
+
+        if (!isNil(externalPrincipal.concurrencyPoolKey) && !isNil(externalPrincipal.concurrencyPoolLimit)) {
+            const { poolId } = await concurrencyPoolService(log).upsertPool({
+                platformId: externalPrincipal.platformId,
+                key: externalPrincipal.concurrencyPoolKey,
+                maxConcurrentJobs: externalPrincipal.concurrencyPoolLimit,
+            })
+            await projectService(log).update(project.id, { type: project.type, poolId })
+            await concurrencyPoolService(log).assignProject({ projectId: project.id, poolId })
         }
 
         await updateProjectLimits({
@@ -63,7 +74,7 @@ export const managedAuthnService = (log: FastifyBaseLogger) => ({
             id: user.identityId,
         })
 
-        const token = await accessTokenManager.generateToken({
+        const token = await accessTokenManager(log).generateToken({
             id: user.id,
             type: PrincipalType.USER,
             platform: {
@@ -116,7 +127,7 @@ const getOrCreateUser = async (
     params: GetOrCreateUserParams,
     log: FastifyBaseLogger,
 ): Promise<User> => {
-    const existingUser = await userService.getByPlatformAndExternalId({
+    const existingUser = await userService(log).getByPlatformAndExternalId({
         platformId: params.platformId,
         externalId: params.externalUserId,
     })
@@ -125,7 +136,7 @@ const getOrCreateUser = async (
         return existingUser
     }
     const identity = await getOrCreateUserIdentity(params, log)
-    const user = await userService.create({
+    const user = await userService(log).create({
         externalId: params.externalUserId,
         platformId: params.platformId,
         identityId: identity.id,
@@ -158,8 +169,8 @@ const getOrCreateUserIdentity = async (
 const getOrCreateProject = async ({
     platformId,
     externalProjectId,
-}: GetOrCreateProjectParams): Promise<{ project: Project, isNewProject: boolean }> => {
-    const existingProject = await projectService.getByPlatformIdAndExternalId({
+}: GetOrCreateProjectParams, log: FastifyBaseLogger): Promise<{ project: Project, isNewProject: boolean }> => {
+    const existingProject = await projectService(log).getByPlatformIdAndExternalId({
         platformId,
         externalId: externalProjectId,
     })
@@ -168,9 +179,9 @@ const getOrCreateProject = async ({
         return { project: existingProject, isNewProject: false }
     }
 
-    const platform = await platformService.getOneOrThrow(platformId)
+    const platform = await platformService(log).getOneOrThrow(platformId)
 
-    const project = await projectService.create({
+    const project = await projectService(log).create({
         displayName: externalProjectId,
         ownerId: platform.ownerId,
         platformId,

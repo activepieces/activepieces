@@ -6,12 +6,11 @@ import {
 import {
   createTrigger,
   TriggerStrategy,
-  OAuth2PropertyValue,
   AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
-import { getPages } from '../common';
-import { notionAuth } from '../..';
+import { getPages, NotionAuthValue } from '../common';
+import { notionAuth } from '../auth';
 
 export const updatedPage = createTrigger({
   auth: notionAuth,
@@ -131,7 +130,7 @@ const polling: Polling<
 };
 
 const getUpdatedPages = async (
-  authentication: OAuth2PropertyValue,
+  authentication: NotionAuthValue,
   startDate?: Date
 ) => {
   const searchOptions = startDate ? { editedAfter: startDate } : undefined;

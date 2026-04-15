@@ -1,0 +1,19 @@
+{
+  "lockfileVersion": 1,
+  "workspaces": {
+    "": {
+      "name": "@activepieces/piece-kapso",
+      "dependencies": {
+        "@kapso/whatsapp-cloud-api": "^0.1.1",
+        "tslib": "^2.3.0",
+      },
+    },
+  },
+  "packages": {
+    "@kapso/whatsapp-cloud-api": ["@kapso/whatsapp-cloud-api@0.1.1", "", { "dependencies": { "zod": "^4.1.11" } }, "sha512-TnT8Mq08twUHgermibkdpnjEdOVPr/fuXaOz5RUEnAh8QKdCYDeqTmPJO54GZ8AOxTIGPH4N+Q+YN++Gt+gDBg=="],
+
+    "tslib": ["tslib@2.8.1", "", {}, "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="],
+
+    "zod": ["zod@4.3.6", "", {}, "sha512-rftlrkhHZOcjDwkGlnUtZZkvaPHCsDATp4pGpuOOMDaTdDDXF91wuVDJoWoPsKX/3YPQ5fHuF3STjcYyKr+Qhg=="],
+  }
+}

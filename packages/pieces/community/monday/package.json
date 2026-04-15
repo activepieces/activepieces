@@ -1,7 +1,19 @@
 {
   "name": "@activepieces/piece-monday",
-  "version": "0.3.2",
+  "version": "0.3.3",
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
   "dependencies": {
-    "monday-sdk-js": "0.5.2"
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
+    "dayjs": "1.11.9",
+    "form-data": "4.0.4",
+    "monday-sdk-js": "0.5.2",
+    "tslib": "2.6.2"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json && cp package.json dist/",
+    "lint": "eslint 'src/**/*.ts'"
   }
 }

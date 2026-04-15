@@ -21,11 +21,16 @@ export const triggerUtils = (log: FastifyBaseLogger) => ({
         })
         if (isNil(pieceTrigger)) {
             throw new ActivepiecesError({
-                code: ErrorCode.PIECE_TRIGGER_NOT_FOUND,
+                code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {
-                    pieceName: flowVersion.trigger.settings.pieceName,
-                    pieceVersion: flowVersion.trigger.settings.pieceVersion,
-                    triggerName: flowVersion.trigger.settings.triggerName,
+                    entityType: 'piece_trigger',
+                    entityId: flowVersion.trigger.settings.triggerName,
+                    message: `Trigger not found for piece ${flowVersion.trigger.settings.pieceName}@${flowVersion.trigger.settings.pieceVersion}`,
+                    extra: {
+                        pieceName: flowVersion.trigger.settings.pieceName,
+                        pieceVersion: flowVersion.trigger.settings.pieceVersion,
+                        triggerName: flowVersion.trigger.settings.triggerName,
+                    },
                 },
             })
         }
@@ -47,7 +52,7 @@ export const triggerUtils = (log: FastifyBaseLogger) => ({
         })
     },
     async getPieceTriggerByName({ pieceName, pieceVersion, triggerName, projectId }: GetPieceTriggerByNameParams): Promise<TriggerBase | null> {
-        const platformId = await projectService.getPlatformId(projectId)
+        const platformId = await projectService(log).getPlatformId(projectId)
         const piece = await pieceMetadataService(log).get({
             platformId,
             name: pieceName,

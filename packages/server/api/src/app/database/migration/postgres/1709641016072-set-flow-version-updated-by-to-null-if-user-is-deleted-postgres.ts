@@ -16,7 +16,7 @@ export class SetFlowVersionUpdatedByToNullIfUserIsDeletedPostgres1709641016072 i
             ON DELETE SET NULL ON UPDATE NO ACTION
         `)
 
-        log.info({ name: this.name }, 'up')
+        log.info('[setFlowVersionUpdatedByToNullIfUserIsDeletedPostgres1709641016072#up]')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -29,7 +29,7 @@ export class SetFlowVersionUpdatedByToNullIfUserIsDeletedPostgres1709641016072 i
             ON DELETE CASCADE ON UPDATE NO ACTION
         `)
 
-        log.info({ name: this.name }, 'down')
+        log.info('[setFlowVersionUpdatedByToNullIfUserIsDeletedPostgres1709641016072#down]')
     }
 
 }

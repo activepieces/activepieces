@@ -1,9 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { googleCalendarCommon } from '../common';
+import { googleCalendarCommon, googleCalendarAuth, createGoogleClient } from '../common';
 import dayjs from 'dayjs';
-import { googleCalendarAuth } from '../../';
 import { google } from 'googleapis';
-import { OAuth2Client } from 'googleapis-common';
 import { randomUUID } from 'crypto';
 
 export const createEvent = createAction({
@@ -124,8 +122,7 @@ export const createEvent = createAction({
       }
     }
 
-    const authClient = new OAuth2Client();
-    authClient.setCredentials(configValue.auth);
+    const authClient = await createGoogleClient(configValue.auth);
 
     const calendar = google.calendar({ version: 'v3', auth: authClient });
 

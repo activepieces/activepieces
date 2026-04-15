@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { medullarAuth } from '../../index';
+import { medullarAuth } from '../auth';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { getUser, medullarCommon, medullarPropsCommon } from '../common';
 

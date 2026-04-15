@@ -5,7 +5,7 @@ import {
   AppConnectionValueForAuthProperty,
   StaticPropsValue,
 } from '@activepieces/pieces-framework';
-import { splitwiseAuth } from '../../index';
+import { splitwiseAuth } from '../auth';
 import {
   DedupeStrategy,
   Polling,

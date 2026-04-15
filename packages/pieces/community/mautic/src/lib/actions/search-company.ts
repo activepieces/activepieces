@@ -1,6 +1,6 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { mauticCommon, searchEntity } from '../common';
-import { mauticAuth } from '../..';
+import { mauticAuth } from '../auth';
 
 export const searchCompany = createAction({
   auth: mauticAuth,

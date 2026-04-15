@@ -1,4 +1,4 @@
-import { nocodbAuth } from '../../';
+import { nocodbAuth } from '../auth';
 import {
   DynamicPropsValue,
   AppConnectionValueForAuthProperty,

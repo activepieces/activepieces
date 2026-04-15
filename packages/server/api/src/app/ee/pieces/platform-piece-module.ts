@@ -1,4 +1,3 @@
-import { securityAccess } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     AddPieceRequestBody,
@@ -7,19 +6,17 @@ import {
     PrincipalType,
     SERVICE_KEY_SECURITY_OPENAPI,
 } from '@activepieces/shared'
-import {
-    FastifyPluginAsyncTypebox,
-    FastifyPluginCallbackTypebox,
-    Type,
-} from '@fastify/type-provider-typebox'
+import { FastifyPluginAsyncZod, FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
+import { z } from 'zod'
+import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { pieceInstallService } from '../../pieces/piece-install-service'
 
-export const platformPieceModule: FastifyPluginAsyncTypebox = async (app) => {
+export const platformPieceModule: FastifyPluginAsyncZod = async (app) => {
     await app.register(platformPieceController, { prefix: '/v1/pieces' })
 }
 
-const platformPieceController: FastifyPluginCallbackTypebox = (
+const platformPieceController: FastifyPluginCallbackZod = (
     app,
     _opts,
     done,
@@ -50,7 +47,7 @@ const installPieceParams = {
         description: 'Add a piece to a platform',
         body: AddPieceRequestBody,
         response: {
-            [StatusCodes.CREATED]: Type.Object({}),
+            [StatusCodes.CREATED]: z.object({}),
         },
     },
 }
