@@ -4,17 +4,10 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { authenticationApi } from '@/api/authentication-api';
-import { FullLogo } from '@/components/custom/full-logo';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { OtpInput } from '@/components/ui/otp-input';
+import { AuthLayout } from '@/features/authentication';
 import { authenticationSession } from '@/lib/authentication-session';
 import { authClient } from '@/lib/better-auth';
 import { useRedirectAfterLogin } from '@/lib/navigation-utils';
@@ -74,88 +67,87 @@ const TwoFactorVerifyPage: React.FC = () => {
   };
 
   return (
-    <div className="mx-auto flex h-screen flex-col items-center justify-center gap-2">
-      <FullLogo />
-      <Card className="w-md rounded-sm drop-shadow-xl">
-        <CardHeader>
-          <CardTitle className="text-2xl">
-            {t('Two-Factor Authentication')}
-          </CardTitle>
-          <CardDescription>
-            {useBackupCode
-              ? t('Enter one of your backup codes.')
-              : t('Enter the 6-digit code from your authenticator app.')}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-4">
-          {!useBackupCode ? (
-            <>
-              <OtpInput
-                onChange={handleVerifyTotp}
-                disabled={isPending}
-                autoFocus
-              />
-              {errorMessage && (
-                <p className="text-sm text-destructive">{errorMessage}</p>
-              )}
-              <button
-                type="button"
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors text-left"
-                onClick={() => {
-                  setUseBackupCode(true);
-                  setErrorMessage(null);
-                }}
-              >
-                {t('Use a backup code instead')}
-              </button>
-            </>
-          ) : (
-            <form
-              onSubmit={handleBackupCodeSubmit}
-              className="flex flex-col gap-4"
+    <AuthLayout>
+      <div className="mb-6 text-center">
+        <h1
+          className="text-2xl font-bold tracking-tight"
+          style={{ fontFamily: "'Sentient', serif" }}
+        >
+          {t('Two-Factor Authentication')}
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {useBackupCode
+            ? t('Enter one of your backup codes.')
+            : t('Enter the 6-digit code from your authenticator app.')}
+        </p>
+      </div>
+
+      <div className="flex flex-col gap-4">
+        {!useBackupCode ? (
+          <>
+            <OtpInput
+              onChange={handleVerifyTotp}
+              disabled={isPending}
+              autoFocus
+            />
+            {errorMessage && (
+              <p className="text-sm text-destructive">{errorMessage}</p>
+            )}
+            <button
+              type="button"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors text-left"
+              onClick={() => {
+                setUseBackupCode(true);
+                setErrorMessage(null);
+              }}
             >
-              <Input
-                type="text"
-                placeholder="xxxxxxxx"
-                value={backupCode}
-                onChange={(e) => setBackupCode(e.target.value)}
-                disabled={isPending}
-                autoFocus
-              />
-              {errorMessage && (
-                <p className="text-sm text-destructive">{errorMessage}</p>
-              )}
-              <Button
-                type="submit"
-                loading={isPending}
-                disabled={!backupCode.trim()}
-              >
-                {t('Confirm')}
-              </Button>
-              <button
-                type="button"
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors text-left"
-                onClick={() => {
-                  setUseBackupCode(false);
-                  setErrorMessage(null);
-                  setBackupCode('');
-                }}
-              >
-                {t('Use authenticator code instead')}
-              </button>
-            </form>
-          )}
-          <div className="mt-2">
-            <Link
-              to="/sign-in"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              {t('Use a backup code instead')}
+            </button>
+          </>
+        ) : (
+          <form
+            onSubmit={handleBackupCodeSubmit}
+            className="flex flex-col gap-4"
+          >
+            <Input
+              type="text"
+              placeholder="xxxxxxxx"
+              value={backupCode}
+              onChange={(e) => setBackupCode(e.target.value)}
+              disabled={isPending}
+              autoFocus
+            />
+            {errorMessage && (
+              <p className="text-sm text-destructive">{errorMessage}</p>
+            )}
+            <Button
+              type="submit"
+              loading={isPending}
+              disabled={!backupCode.trim()}
             >
-              &larr; {t('Back to sign in')}
-            </Link>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+              {t('Confirm')}
+            </Button>
+            <button
+              type="button"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors text-left"
+              onClick={() => {
+                setUseBackupCode(false);
+                setErrorMessage(null);
+                setBackupCode('');
+              }}
+            >
+              {t('Use authenticator code instead')}
+            </button>
+          </form>
+        )}
+        <Link
+          to="/sign-in"
+          className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+        >
+          &larr; {t('Back to sign in')}
+        </Link>
+      </div>
+    </AuthLayout>
   );
 };
 

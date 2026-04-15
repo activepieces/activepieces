@@ -7,7 +7,8 @@ import {
   isMfaChallenge,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { useMemo, useRef, useState } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
+import { useMemo, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 
@@ -24,11 +25,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
   Popover,
+  PopoverAnchor,
   PopoverContent,
-  PopoverTrigger,
+  PopoverHeader,
+  PopoverTitle,
 } from '@/components/ui/popover';
 import { CheckEmailNote } from '@/features/authentication/components/check-email-note';
-import { PasswordValidator } from '@/features/authentication/components/password-validator';
+import { PasswordRequirementsList } from '@/features/authentication/components/password-validator';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -39,14 +42,6 @@ import { cn } from '@/lib/utils';
 import { authMutations } from '../hooks/auth-hooks';
 import { passwordValidation } from '../utils/password-validation-utils';
 
-type SignUpSchema = {
-  email: string;
-  firstName: string;
-  lastName: string;
-  password: string;
-  newsLetter: boolean;
-};
-
 const SignUpForm = ({
   showCheckYourEmailNote,
   setShowCheckYourEmailNote,
@@ -56,6 +51,8 @@ const SignUpForm = ({
 }) => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const [showPassword, setShowPassword] = useState(false);
+  const [isPasswordFocused, setIsPasswordFocused] = useState(false);
   const { data: termsOfServiceUrl } = flagsHooks.useFlag<string>(
     ApFlagId.TERMS_OF_SERVICE_URL,
   );
@@ -180,9 +177,6 @@ const SignUpForm = ({
     });
   };
 
-  const [isPasswordFocused, setPasswordFocused] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
-
   return showCheckYourEmailNote ? (
     <div className="pt-6">
       <CheckEmailNote
@@ -202,7 +196,7 @@ const SignUpForm = ({
                 required: t('First name is required'),
               }}
               render={({ field }) => (
-                <FormItem className="w-full grid space-y-2">
+                <FormItem className="w-full grid space-y-1">
                   <Label htmlFor="firstName">{t('First Name')}</Label>
                   <Input
                     {...field}
@@ -224,7 +218,7 @@ const SignUpForm = ({
                 required: t('Last name is required'),
               }}
               render={({ field }) => (
-                <FormItem className="w-full grid space-y-2">
+                <FormItem className="w-full grid space-y-1">
                   <Label htmlFor="lastName">{t('Last Name')}</Label>
                   <Input
                     {...field}
@@ -249,7 +243,7 @@ const SignUpForm = ({
                 formatUtils.emailRegex.test(email) || t('Email is invalid'),
             }}
             render={({ field }) => (
-              <FormItem className="grid space-y-2">
+              <FormItem className="grid space-y-1">
                 <Label htmlFor="email">{t('Email')}</Label>
                 <Input
                   {...field}
@@ -272,32 +266,57 @@ const SignUpForm = ({
               validate: passwordValidation,
             }}
             render={({ field }) => (
-              <FormItem
-                className="grid space-y-2"
-                onClick={() => inputRef?.current?.focus()}
-                onFocus={() => {
-                  setPasswordFocused(true);
-                  setTimeout(() => inputRef?.current?.focus());
-                }}
-                onBlur={() => setPasswordFocused(false)}
-              >
+              <FormItem className="grid space-y-1">
                 <Label htmlFor="password">{t('Password')}</Label>
                 <Popover open={isPasswordFocused}>
-                  <PopoverTrigger asChild>
-                    <Input
-                      {...field}
-                      required
-                      id="password"
-                      type="password"
-                      placeholder={'********'}
-                      className="rounded-sm"
-                      ref={inputRef}
-                      data-testid="sign-up-password"
-                      onChange={(e) => field.onChange(e)}
+                  <PopoverAnchor asChild>
+                    <div className="relative flex items-center">
+                      <Input
+                        {...field}
+                        required
+                        id="password"
+                        type={showPassword ? 'text' : 'password'}
+                        placeholder={'********'}
+                        className="rounded-sm pr-10"
+                        data-testid="sign-up-password"
+                        onFocus={() => setIsPasswordFocused(true)}
+                        onBlur={() => setIsPasswordFocused(false)}
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        tabIndex={-1}
+                        onClick={() => setShowPassword((v) => !v)}
+                        className="absolute right-1 h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+                      >
+                        {showPassword ? (
+                          <EyeOff className="w-4 h-4" />
+                        ) : (
+                          <Eye className="w-4 h-4" />
+                        )}
+                      </Button>
+                    </div>
+                  </PopoverAnchor>
+                  <PopoverContent
+                    side="right"
+                    align="center"
+                    sideOffset={6}
+                    onOpenAutoFocus={(e) => e.preventDefault()}
+                    className="w-auto shadow-none"
+                  >
+                    <div className="absolute -left-[4.5px] top-1/2 -translate-y-1/2">
+                      <div className="w-2.5 h-2.5 rotate-45 bg-popover border-l border-b border-border" />
+                    </div>
+                    <PopoverHeader className="mb-2">
+                      <PopoverTitle className="text-xs">
+                        {t('Password Requirements')}
+                      </PopoverTitle>
+                    </PopoverHeader>
+                    <PasswordRequirementsList
+                      password={field.value ?? ''}
+                      isSubmitted={form.formState.submitCount > 0}
                     />
-                  </PopoverTrigger>
-                  <PopoverContent className="absolute border-2 bg-background p-2 pointer-events-none! rounded-md right-60 -bottom-16 flex flex-col">
-                    <PasswordValidator password={form.getValues().password} />
                   </PopoverContent>
                 </Popover>
                 <FormMessage />
@@ -379,3 +398,11 @@ const SignUpForm = ({
 SignUpForm.displayName = 'SignUp';
 
 export { SignUpForm };
+
+type SignUpSchema = {
+  email: string;
+  firstName: string;
+  lastName: string;
+  password: string;
+  newsLetter: boolean;
+};
