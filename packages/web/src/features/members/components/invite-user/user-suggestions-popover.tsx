@@ -91,7 +91,6 @@ function UserSuggestionsPopover({
 
   const handleInputChange = (v: string) => {
     setInputValue(v);
-    setShowSuggestions(v.trim().length > 0);
     setSelectedValue('');
   };
 
