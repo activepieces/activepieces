@@ -68,6 +68,7 @@ export function ProjectDashboardSidebar({
   const location = useLocation();
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearchQuery] = useDebounce(searchQuery, 300);
+
   const [searchOpen, setSearchOpen] = useState(false);
   const navigate = useNavigate();
   const { data: currentUser } = userHooks.useCurrentUser();
@@ -220,161 +221,165 @@ export function ProjectDashboardSidebar({
 
   return (
     !embedState.hideSideNav && (
-      <Sidebar
-        collapsible="icon"
-        id={SIDEBAR_ID}
-        className={cn('max-h-[100vh]', className)}
-      >
-        <AppSidebarHeader />
+      <>
+        <Sidebar
+          collapsible="icon"
+          id={SIDEBAR_ID}
+          className={cn('max-h-[100vh]', className)}
+        >
+          <AppSidebarHeader />
 
-        <SidebarContent className="overflow-x-hidden">
-          <SidebarGroup>
-            <div className="mb-1 group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center">
-              <GlobalSearchCommand />
-            </div>
-            <SidebarMenu>
-              {items.map((item) => (
-                <ApSidebarItem key={item.label} {...item} />
-              ))}
-            </SidebarMenu>
-          </SidebarGroup>
+          <SidebarContent className="overflow-x-hidden">
+            <SidebarGroup>
+              <div className="mb-1 group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center">
+                <GlobalSearchCommand />
+              </div>
+              <SidebarMenu>
+                {items.map((item) => (
+                  <ApSidebarItem key={item.label} {...item} />
+                ))}
+              </SidebarMenu>
+            </SidebarGroup>
 
-          <SidebarSeparator />
+            <SidebarSeparator />
 
-          <SidebarGroup className="flex-1 overflow-hidden">
-            <div className="flex items-center justify-between group-data-[collapsible=icon]:hidden">
-              <SidebarGroupLabel>{t('Projects')}</SidebarGroupLabel>
-              <div className="flex items-center justify-center gap-2">
-                {shouldShowNewProjectButton && (
-                  <>
-                    {!shouldDisableNewProjectButton ? (
-                      <NewProjectDialog
-                        onCreate={(project) => {
-                          navigate(`/projects/${project.id}/flows`);
-                        }}
-                      >
+            <SidebarGroup className="flex-1 overflow-hidden">
+              <div className="flex items-center justify-between group-data-[collapsible=icon]:hidden">
+                <SidebarGroupLabel>{t('Projects')}</SidebarGroupLabel>
+                <div className="flex items-center justify-center gap-2">
+                  {shouldShowNewProjectButton && (
+                    <>
+                      {!shouldDisableNewProjectButton ? (
+                        <NewProjectDialog
+                          onCreate={(project) => {
+                            navigate(`/projects/${project.id}/flows`);
+                          }}
+                        >
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 hover:bg-accent"
+                          >
+                            <Plus />
+                          </Button>
+                        </NewProjectDialog>
+                      ) : (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                disabled
+                                className="h-6 w-6"
+                              >
+                                <Plus />
+                              </Button>
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-[250px]">
+                            <p className="text-xs mb-1">
+                              {t(
+                                'Upgrade your plan to create additional team projects.',
+                              )}{' '}
+                              <button
+                                className="text-xs text-primary underline hover:no-underline"
+                                onClick={() =>
+                                  window.open(
+                                    'https://www.activepieces.com/pricing',
+                                    '_blank',
+                                  )
+                                }
+                              >
+                                {t('View Plans')}
+                              </button>
+                            </p>
+                          </TooltipContent>
+                        </Tooltip>
+                      )}
+                    </>
+                  )}
+                  {shouldShowSearchButton && (
+                    <Popover open={searchOpen} onOpenChange={setSearchOpen}>
+                      <PopoverTrigger asChild>
                         <Button
                           variant="ghost"
                           size="icon"
                           className="h-6 w-6 hover:bg-accent"
                         >
-                          <Plus />
+                          <Search />
                         </Button>
-                      </NewProjectDialog>
-                    ) : (
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <div>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              disabled
-                              className="h-6 w-6"
-                            >
-                              <Plus />
-                            </Button>
-                          </div>
-                        </TooltipTrigger>
-                        <TooltipContent className="max-w-[250px]">
-                          <p className="text-xs mb-1">
-                            {t(
-                              'Upgrade your plan to create additional team projects.',
-                            )}{' '}
-                            <button
-                              className="text-xs text-primary underline hover:no-underline"
-                              onClick={() =>
-                                window.open(
-                                  'https://www.activepieces.com/pricing',
-                                  '_blank',
-                                )
-                              }
-                            >
-                              {t('View Plans')}
-                            </button>
-                          </p>
-                        </TooltipContent>
-                      </Tooltip>
-                    )}
-                  </>
-                )}
-                {shouldShowSearchButton && (
-                  <Popover open={searchOpen} onOpenChange={setSearchOpen}>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6 hover:bg-accent"
+                      </PopoverTrigger>
+                      <PopoverContent
+                        className="w-[280px] p-3"
+                        align="start"
+                        side="right"
+                        sideOffset={8}
                       >
-                        <Search />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent
-                      className="w-[280px] p-3"
-                      align="start"
-                      side="right"
-                      sideOffset={8}
-                    >
-                      <SearchInput
-                        placeholder={t('Search projects...')}
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e)}
-                        className="h-8"
-                        autoFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                )}
-              </div>
-            </div>
-            <div
-              className="flex-1 grow min-h-0 flex flex-col overflow-hidden"
-              onClick={(e) => {
-                e.stopPropagation();
-              }}
-            >
-              <div className="flex grow max-h-[100%]">
-                {displayProjects.length > 0 ? (
-                  <VirtualizedScrollArea
-                    className={cn(
-                      'flex-1',
-                      state === 'collapsed'
-                        ? 'flex flex-col items-center scrollbar-none'
-                        : '',
-                    )}
-                    items={displayProjects}
-                    estimateSize={() => 35}
-                    getItemKey={(index) => displayProjects[index]?.id ?? index}
-                    overscan={10}
-                    renderItem={(project) => (
-                      <SidebarMenuItem className="w-full">
-                        <ProjectSideBarItem
-                          key={project.id}
-                          project={project}
-                          isCurrentProject={location.pathname.includes(
-                            `/projects/${project.id}`,
-                          )}
-                          handleProjectSelect={handleProjectSelect}
+                        <SearchInput
+                          placeholder={t('Search projects...')}
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e)}
+                          className="h-8"
+                          autoFocus
                         />
-                      </SidebarMenuItem>
-                    )}
-                  />
-                ) : (
-                  isSearchMode && (
-                    <div className="px-2 py-2 text-sm text-muted-foreground">
-                      {state === 'expanded' && t('No projects found.')}
-                    </div>
-                  )
-                )}
+                      </PopoverContent>
+                    </Popover>
+                  )}
+                </div>
               </div>
-            </div>
-          </SidebarGroup>
-        </SidebarContent>
-        <SidebarFooter>
-          {state === 'expanded' && <DelayedSidebarUsageLimits />}
-          <SidebarPlatformAdminLink />
-          <SidebarUser />
-        </SidebarFooter>
-      </Sidebar>
+              <div
+                className="flex-1 grow min-h-0 flex flex-col overflow-hidden"
+                onClick={(e) => {
+                  e.stopPropagation();
+                }}
+              >
+                <div className="flex grow max-h-[100%]">
+                  {displayProjects.length > 0 ? (
+                    <VirtualizedScrollArea
+                      className={cn(
+                        'flex-1',
+                        state === 'collapsed'
+                          ? 'flex flex-col items-center scrollbar-none'
+                          : '',
+                      )}
+                      items={displayProjects}
+                      estimateSize={() => 35}
+                      getItemKey={(index) =>
+                        displayProjects[index]?.id ?? index
+                      }
+                      overscan={10}
+                      renderItem={(project) => (
+                        <SidebarMenuItem className="w-full">
+                          <ProjectSideBarItem
+                            key={project.id}
+                            project={project}
+                            isCurrentProject={location.pathname.includes(
+                              `/projects/${project.id}`,
+                            )}
+                            handleProjectSelect={handleProjectSelect}
+                          />
+                        </SidebarMenuItem>
+                      )}
+                    />
+                  ) : (
+                    isSearchMode && (
+                      <div className="px-2 py-2 text-sm text-muted-foreground">
+                        {state === 'expanded' && t('No projects found.')}
+                      </div>
+                    )
+                  )}
+                </div>
+              </div>
+            </SidebarGroup>
+          </SidebarContent>
+          <SidebarFooter>
+            {state === 'expanded' && <DelayedSidebarUsageLimits />}
+            <SidebarPlatformAdminLink />
+            <SidebarUser />
+          </SidebarFooter>
+        </Sidebar>
+      </>
     )
   );
 }
