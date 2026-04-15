@@ -48,6 +48,9 @@ export async function loadDevPiecesIfEnabled(log: FastifyBaseLogger): Promise<Pi
         return devPiecesCachePromise
     }
     devPiecesCachePromise = loadDevPieces(log, devPiecesConfig)
+    devPiecesCachePromise.catch(() => {
+        devPiecesCachePromise = null
+    })
     return devPiecesCachePromise
 }
 
