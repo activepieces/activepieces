@@ -163,6 +163,8 @@ const systemPropValidators: {
     // Secret Manager
     [AppSystemProp.SECRET_MANAGER_API_KEY]: stringValidator,
 
+    [AppSystemProp.OPENAI_API_KEY]: stringValidator,
+
     // Tables
     [AppSystemProp.MAX_RECORDS_PER_TABLE]: numberValidator,
     [AppSystemProp.MAX_FIELDS_PER_TABLE]: numberValidator,

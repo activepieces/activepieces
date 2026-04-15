@@ -125,6 +125,7 @@ export enum AppSystemProp {
     CONTAINER_TYPE = 'CONTAINER_TYPE',
     FRONTEND_URL = 'FRONTEND_URL',
     PORT = 'PORT',
+    OPENAI_API_KEY = 'OPENAI_API_KEY',
 }
 
 export enum ContainerType {
