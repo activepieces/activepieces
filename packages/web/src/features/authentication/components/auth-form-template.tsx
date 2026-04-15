@@ -7,14 +7,10 @@ import { t } from 'i18next';
 import React, { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 
-const AuthLogo = () => (
-  <div className="h-[22px]">
-    <img className="h-full" src="/activepieces-logo-h.svg" alt="Activepieces" />
-  </div>
-);
 import { authenticationSession } from '@/lib/authentication-session';
 import { useRedirectAfterLogin } from '@/lib/navigation-utils';
 
+import { FullLogo } from '../../../components/custom/full-logo';
 import { HorizontalSeparatorWithText } from '../../../components/ui/separator';
 import { flagsHooks } from '../../../hooks/flags-hooks';
 
@@ -122,7 +118,7 @@ const AuthLayout = ({
     {/* Form — left side */}
     <div className="flex flex-col w-full lg:w-1/2 p-5 lg:px-[100px]">
       <div className="pt-3 flex justify-center">
-        <AuthLogo />
+        <FullLogo />
       </div>
       <div className="flex-1 flex items-center justify-center">
         <div className="w-full max-w-xs overflow-y-auto px-1">{children}</div>
@@ -141,7 +137,7 @@ const AuthLayout = ({
           <AuthAnimation />
         ) : (
           <img
-            src="/auth-bg.png"
+            src="https://cdn.activepieces.com/assets/auth-bg.webp"
             alt=""
             className="absolute inset-0 w-full h-full object-cover"
           />
