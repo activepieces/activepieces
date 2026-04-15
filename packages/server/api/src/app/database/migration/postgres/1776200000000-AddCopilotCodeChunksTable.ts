@@ -1,8 +1,8 @@
 import { QueryRunner } from 'typeorm'
 import { system } from '../../../helper/system/system'
 import { AppSystemProp } from '../../../helper/system/system-props'
-import { Migration } from '../../migration'
 import { DatabaseType } from '../../database-type'
+import { Migration } from '../../migration'
 
 const log = system.globalLogger()
 const isPGlite = system.get(AppSystemProp.DB_TYPE) === DatabaseType.PGLITE
