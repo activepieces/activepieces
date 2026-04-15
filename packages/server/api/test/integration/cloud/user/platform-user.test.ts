@@ -1,15 +1,20 @@
 
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 import {
+    Permission,
     PlatformRole,
     PrincipalType,
+    RoleType,
     UserIdentityProvider,
     UserStatus,
 } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { generateMockToken } from '../../../helpers/auth'
 import {
+    createMockProjectMember,
+    createMockProjectRole,
     mockAndSaveBasicSetup,
     mockAndSaveBasicSetupWithApiKey,
     mockBasicUser,
@@ -52,7 +57,59 @@ describe('Enterprise User API', () => {
             expect(responseBody.data[0].id).toBe(mockOwner.id)
         })
 
-        it('Allows non-JWT users to list platform users', async () => {
+        it('Allows non-JWT users with invite permission to list platform users', async () => {
+            // arrange
+            const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
+            const { mockUser } = await mockBasicUser({
+                userIdentity: {
+                    provider: UserIdentityProvider.EMAIL,
+                },
+                user: {
+                    platformId: mockPlatform.id,
+                    platformRole: PlatformRole.MEMBER,
+                    status: UserStatus.ACTIVE,
+                },
+            })
+
+            const projectRole = createMockProjectRole({
+                platformId: mockPlatform.id,
+                type: RoleType.CUSTOM,
+                permissions: [Permission.WRITE_INVITATION],
+            })
+            await databaseConnection().getRepository('project_role').save(projectRole)
+
+            const projectMember = createMockProjectMember({
+                userId: mockUser.id,
+                platformId: mockPlatform.id,
+                projectId: mockProject.id,
+                projectRoleId: projectRole.id,
+            })
+            await databaseConnection().getRepository('project_member').save(projectMember)
+
+            const mockUserToken = await generateMockToken({
+                id: mockUser.id,
+                type: PrincipalType.USER,
+                platform: {
+                    id: mockPlatform.id,
+                },
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'GET',
+                url: '/api/v1/users',
+                headers: {
+                    authorization: `Bearer ${mockUserToken}`,
+                },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const responseBody = response?.json()
+            expect(responseBody.data.length).toBeGreaterThanOrEqual(1)
+        })
+
+        it('Rejects non-JWT users without invite permission', async () => {
             // arrange
             const { mockPlatform } = await mockAndSaveBasicSetup()
             const { mockUser } = await mockBasicUser({
@@ -84,9 +141,7 @@ describe('Enterprise User API', () => {
             })
 
             // assert
-            expect(response?.statusCode).toBe(StatusCodes.OK)
-            const responseBody = response?.json()
-            expect(responseBody.data.length).toBeGreaterThanOrEqual(1)
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
         })
 
         it('Rejects JWT users from listing platform users', async () => {

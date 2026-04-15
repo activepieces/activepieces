@@ -1,7 +1,8 @@
-import { ActivepiecesError, ErrorCode, isNil, PlatformRole, Principal, PrincipalType, UserIdentityProvider } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, isNil, Permission, PlatformRole, Principal, PrincipalType, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { userIdentityService } from '../../../../authentication/user-identity/user-identity-service'
 import { rbacService } from '../../../../ee/authentication/project-role/rbac-service'
+import { projectMemberService } from '../../../../ee/projects/project-members/project-member.service'
 import { userService } from '../../../../user/user-service'
 import { AuthorizationRouteSecurity, ProjectAuthorizationConfig } from '../../authorization/authorization'
 import { AuthorizationType, RouteKind } from '../../authorization/common'
@@ -47,6 +48,19 @@ async function assertNonEmbedOrAdmin(principal: Principal, log: FastifyBaseLogge
             code: ErrorCode.AUTHORIZATION,
             params: {
                 message: 'Embed users are not allowed to access this resource.',
+            },
+        })
+    }
+    const hasInvitePermission = await projectMemberService(log).hasPermissionOnAnyProject({
+        userId: user.id,
+        platformId: user.platformId!,
+        permission: Permission.WRITE_INVITATION,
+    })
+    if (!hasInvitePermission) {
+        throw new ActivepiecesError({
+            code: ErrorCode.AUTHORIZATION,
+            params: {
+                message: 'User does not have invite permission on any project.',
             },
         })
     }

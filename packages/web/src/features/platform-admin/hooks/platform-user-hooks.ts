@@ -1,5 +1,7 @@
 import {
   InvitationType,
+  isNil,
+  Permission,
   PlatformRole,
   SeekPage,
   UpdateUserRequestBody,
@@ -14,6 +16,7 @@ import { toast } from 'sonner';
 
 import { platformUserApi } from '@/api/platform-user-api';
 import { userInvitationApi } from '@/features/members/api/user-invitation';
+import { useAuthorization } from '@/hooks/authorization-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 
 export const platformUserKeys = {
@@ -24,9 +27,13 @@ export const platformUserKeys = {
 export const platformUserHooks = {
   useUsers: () => {
     const { data: currentUser } = userHooks.useCurrentUser();
+    const { checkAccess } = useAuthorization();
+    const hasInvitePermission = checkAccess(Permission.WRITE_INVITATION);
     const canListUsers =
-      currentUser?.platformRole === PlatformRole.ADMIN ||
-      currentUser?.provider !== UserIdentityProvider.JWT;
+      !isNil(currentUser) &&
+      hasInvitePermission &&
+      (currentUser.platformRole === PlatformRole.ADMIN ||
+        currentUser.provider !== UserIdentityProvider.JWT);
     return useQuery<SeekPage<UserWithMetaInformation>, Error>({
       queryKey: platformUserKeys.users,
       meta: { showErrorDialog: true, loadSubsetOptions: {} },
