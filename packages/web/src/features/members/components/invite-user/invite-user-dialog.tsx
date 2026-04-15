@@ -143,6 +143,7 @@ export const InviteUserDialog = ({
         addedCount,
         invitedCount,
         sentCount: results.length - addedCount - invitedCount,
+        projectName: project.displayName,
       });
       if (toastMessage) {
         toast.success(toastMessage, { duration: 3000 });
@@ -270,6 +271,7 @@ export const InviteUserDialog = ({
     resultsWithLinksCount: resultsWithLinks.length,
     isPlatformPage,
     isSmtpConfigured: isSmtpConfigured ?? false,
+    projectName: project.displayName,
   });
 
   return (
@@ -423,17 +425,19 @@ function getDialogDescription({
   resultsWithLinksCount,
   isPlatformPage,
   isSmtpConfigured,
+  projectName,
 }: {
   hasLinks: boolean;
   addedMembersCount: number;
   resultsWithLinksCount: number;
   isPlatformPage: boolean;
   isSmtpConfigured: boolean;
+  projectName: string;
 }): string {
   if (hasLinks) {
     const addedPrefix =
       addedMembersCount > 0
-        ? t('membersAddedImmediately', { count: addedMembersCount }) + ' '
+        ? t('membersAddedImmediately', { count: addedMembersCount, projectName }) + ' '
         : '';
     const linkText =
       resultsWithLinksCount === 1
@@ -472,14 +476,16 @@ function buildInviteToast({
   addedCount,
   invitedCount,
   sentCount,
+  projectName,
 }: {
   addedCount: number;
   invitedCount: number;
   sentCount: number;
+  projectName: string;
 }): React.ReactNode | null {
   const lines: string[] = [];
   if (addedCount > 0) {
-    lines.push(t('membersAddedCount', { count: addedCount }));
+    lines.push(t('membersAddedCount', { count: addedCount, projectName }));
   }
   if (invitedCount > 0) {
     lines.push(t('invitationsLinkCount', { count: invitedCount }));
