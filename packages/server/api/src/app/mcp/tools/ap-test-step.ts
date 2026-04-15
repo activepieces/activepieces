@@ -2,7 +2,7 @@ import { McpServer, McpToolDefinition, Permission } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { executeFlowTest } from './flow-run-utils'
-import { mcpToolError } from './mcp-utils'
+import { mcpUtils } from './mcp-utils'
 
 const testStepInput = z.object({
     flowId: z.string().describe('The ID of the flow containing the step. Use ap_list_flows to find it.'),
@@ -23,7 +23,7 @@ export const apTestStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolD
             }
             catch (err) {
                 log.error({ err, projectId: mcp.projectId }, 'ap_test_step failed')
-                return mcpToolError('Failed to test step', err)
+                return mcpUtils.mcpToolError('Failed to test step', err)
             }
         },
     }

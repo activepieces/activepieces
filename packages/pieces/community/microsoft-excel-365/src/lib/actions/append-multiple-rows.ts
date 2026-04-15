@@ -1,4 +1,4 @@
-import { createAction, DynamicPropsValue, Property } from '@activepieces/pieces-framework';
+import { createAction, DynamicPropsValue, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
 import { MarkdownVariant } from '@activepieces/shared';
 import { WorkbookRange } from '@microsoft/microsoft-graph-types';
 import {
@@ -171,6 +171,7 @@ export const appendMultipleRowsAction = createAction({
 		} = propsValue;
 		const rawFilterValue = propsValue.filterValue?.['value'];
 		const inputValues: Array<Record<string, any>> = propsValue.values['values'] ?? [];
+		const cloud = (auth as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
 
 		if (storageSource === 'sharepoint' && (!siteId || !documentId)) {
 			throw new Error('please select SharePoint site and document library.');
@@ -183,7 +184,8 @@ export const appendMultipleRowsAction = createAction({
 			auth.access_token,
 			drivePath,
 			workbookId as unknown as string,
-			worksheetId as unknown as string
+			worksheetId as unknown as string,
+			cloud
 		);
 
 		const columnCount = firstRow.length;
@@ -241,7 +243,8 @@ export const appendMultipleRowsAction = createAction({
 			auth.access_token,
 			drivePath,
 			workbookId,
-			worksheetId
+			worksheetId,
+			cloud
 		);
 
 		const lastUsedColumn = numberToColumnName(columnCount);
@@ -249,7 +252,7 @@ export const appendMultipleRowsAction = createAction({
 		const rangeFrom = `A${lastUsedRow + 1}`;
 		const rangeTo = `${lastUsedColumn}${lastUsedRow + formattedValues.length}`;
 
-		const client = createMSGraphClient(auth.access_token);
+		const client = createMSGraphClient(auth.access_token, cloud);
 
 		const url = `${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/range(address='${rangeFrom}:${rangeTo}')`;
 

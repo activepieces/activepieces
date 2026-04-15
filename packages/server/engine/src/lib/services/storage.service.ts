@@ -6,6 +6,9 @@ import { utils } from '../utils'
 export const createStorageService = ({ engineToken, apiUrl }: CreateStorageServiceParams): StorageService => {
     return {
         async get(key: string): Promise<StoreEntry | null> {
+            if (isNil(key) || key.length === 0) {
+                throw new StorageInvalidKeyError(key)
+            }
             const url = buildUrl(apiUrl, key)
 
             const { data: storeEntry, error: storeEntryError } = await utils.tryCatchAndThrowOnEngineError((async () => {
@@ -70,6 +73,9 @@ export const createStorageService = ({ engineToken, apiUrl }: CreateStorageServi
         },
 
         async delete(request: DeleteStoreEntryRequest): Promise<null> {
+            if (isNil(request.key) || request.key.length === 0) {
+                throw new StorageInvalidKeyError(request.key)
+            }
             const url = buildUrl(apiUrl, request.key)
 
             const { data: storeEntry, error: storeEntryError } = await utils.tryCatchAndThrowOnEngineError((async () => {

@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
 import { excelAuth } from '../auth';
 import { commonProps } from '../common/props';
 import { getDrivePath, createMSGraphClient } from '../common/helpers';
@@ -39,13 +39,14 @@ export const createWorksheetAction = createAction({
   async run(context) {
     const { storageSource, siteId, documentId, workbookId, name, headers } = context.propsValue;
     const { access_token } = context.auth;
+    const cloud = (context.auth as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
 
     if (storageSource === 'sharepoint' && (!siteId || !documentId)) {
       throw new Error('please select SharePoint site and document library.');
     }
     const drivePath = getDrivePath(storageSource, siteId as string, documentId as string);
 
-    const client = createMSGraphClient(access_token);
+    const client = createMSGraphClient(access_token, cloud);
 
     // Step 1: Create the new worksheet
     const createWorksheetResponse: CreateWorksheetResponse = await client

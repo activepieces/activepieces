@@ -38,6 +38,7 @@ describe('simpleProcess', () => {
         })
 
         expect(msg.execArgv).toContain('--no-node-snapshot')
+        expect(msg.execArgv).toContain('--expose-gc')
         expect(msg.execArgv).toContain('--max-old-space-size=512')
         expect(msg.env.AP_BASE_CODE_DIRECTORY).toBe('/code-dir')
         expect(msg.env.SANDBOX_ID).toBe('sb-fork-1')

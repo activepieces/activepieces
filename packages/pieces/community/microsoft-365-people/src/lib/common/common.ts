@@ -1,6 +1,7 @@
 import { OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
 import { Client } from '@microsoft/microsoft-graph-client';
 import { Contact, ContactFolder } from '@microsoft/microsoft-graph-types';
+import { getGraphBaseUrl } from './microsoft-cloud';
 import { microsoft365PeopleAuth } from './auth';
 
 export type authProps = { auth: OAuth2PropertyValue };
@@ -24,10 +25,12 @@ type deleteContactFolderProps = getContactFolderProps;
 export const microsoft365PeopleCommon = {
   // Initialize Microsoft Graph client
   getClient: ({ auth }: authProps) => {
+    const cloud = auth.props?.['cloud'] as string | undefined;
     return Client.initWithMiddleware({
       authProvider: {
         getAccessToken: () => Promise.resolve(auth.access_token),
       },
+      baseUrl: getGraphBaseUrl(cloud),
     });
   },
 
